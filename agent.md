@@ -46,7 +46,14 @@ domain-map/
 
 ### 2. 开发过程中
 
-1. **遵循规范**:
+1. **前端开发铁律**:
+   - ⚠️ **任何前端代码编写之前,必须先创建 Figma 原型**
+   - 将 Figma 原型链接提交给用户审查
+   - 等待用户反馈/修改/批准
+   - **只有在用户明确批准后,才能开始编写前端代码**
+   - 这条规则无例外:从页面到组件,从 UI 调整到新功能
+
+2. **遵循规范**:
    - 代码风格:ESLint + Prettier(前端),Black(Python)
    - 命名约定:组件用 PascalCase,函数用 camelCase,数据库表用 snake_case
    - 注释:复杂逻辑必须注释,简单代码不过度注释
@@ -54,6 +61,7 @@ domain-map/
 2. **及时记录**:
    - 遇到问题记录到 `docs/roles/development/implementation/<phase>.md` 的"遇到的问题"章节
    - 技术决策记录到 `DOCS/06-decisions.md`(ADR 格式)
+   - **Figma 原型链接**记录到对应 Phase 的实施文档中
 
 3. **编写测试**:
    - 单元测试:`tests/unit/`
@@ -121,6 +129,7 @@ domain-map/
 - [ ] 我实现了新功能吗?→ 写 `docs/zh-cn/tutorial/<feature>.md`
 - [ ] 我修了 Bug 吗?→ 记录到 `docs/roles/testing/test-reports/bug-reports.md`
 - [ ] 我遇到技术问题吗?→ 记录到 `docs/roles/development/implementation/<phase>.md`
+- [ ] **我写了前端代码吗?→ 检查 Figma 原型是否已获用户批准**
 
 ## 插件开发规范
 
@@ -230,5 +239,6 @@ uv run python -m app.cli crawl --source xiaozhao  # 运行增量爬虫
 - **不要沉默,要沟通**:卡住时及时汇报,不要浪费时间
 - **不要跳过,要完整**:测试和文档是交付物的一部分,不是可选项
 - **不要孤立,要复用**:新代码前先搜索是否已有类似实现
+- **🎨 前端代码必须先过 Figma 原型审查**:这是硬性规则,无任何例外
 
 祝编码愉快!🚀
