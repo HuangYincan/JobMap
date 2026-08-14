@@ -1,0 +1,86 @@
+name: Test
+
+on:
+  push:
+    branches: [ dev, main ]
+  pull_request:
+    branches: [ dev, main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          cd server && npm ci
+          pip install uv
+          cd ../crawler && uv sync
+
+      - name: Lint frontend
+        run: cd server && npm run lint
+
+      - name: Lint backend
+        run: cd crawler && uv run ruff check .
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: domain_map_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          cd server && npm ci
+          pip install uv
+          cd ../crawler && uv sync
+
+      - name: Run database migrations
+        run: cd db && bash scripts/apply.sh
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/domain_map_test
+
+      - name: Run unit tests (frontend)
+        run: cd server && npm run test
+
+      - name: Run unit tests (backend)
+        run: cd crawler && uv run pytest tests/unit/ --cov=app
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./crawler/coverage.xml
