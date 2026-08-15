@@ -48,6 +48,7 @@ export function MapShell() {
   const [drawer, setDrawer] = useState<DrawerState>("mini");
   const [selectedPlace, setSelectedPlace] = useState(places[0].name);
   const [showBasemap, setShowBasemap] = useState(false);
+  const [mapStyle, setMapStyle] = useState<'normal' | 'satellite' | 'whitesmoke'>('normal');
   const [zoom, setZoom] = useState(13);
   const [mapReady, setMapReady] = useState(false);
   const [userLocationZoom, setUserLocationZoom] = useState<number | null>(null);
@@ -117,10 +118,15 @@ export function MapShell() {
       mapInstance.current = map;
       setMapReady(true);
 
+      // Set initial mapStyle state based on dark mode
+      setMapStyle(isDarkMode ? 'whitesmoke' : 'normal');
+
       // Listen for system theme changes and update map style dynamically
       const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleThemeChange = (e: MediaQueryListEvent) => {
+        const newStyleName = e.matches ? 'whitesmoke' : 'normal';
         const newMapStyle = e.matches ? 'amap://styles/whitesmoke' : 'amap://styles/normal';
+        setMapStyle(newStyleName);
         map.setMapStyle(newMapStyle);
       };
       darkModeQuery.addEventListener('change', handleThemeChange);
@@ -322,6 +328,36 @@ export function MapShell() {
     }
   };
 
+  const handleMapStyleChange = (style: 'normal' | 'satellite' | 'whitesmoke') => {
+    if (!mapInstance.current) return;
+
+    const styleMap = {
+      normal: 'amap://styles/normal',
+      satellite: 'amap://styles/satellite',
+      whitesmoke: 'amap://styles/whitesmoke',
+    };
+
+    mapInstance.current.setMapStyle(styleMap[style]);
+    setMapStyle(style);
+    setShowBasemap(false);
+  };
+
+  // Close basemap picker when clicking outside
+  useEffect(() => {
+    if (!showBasemap) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Check if click is outside basemap card and button
+      if (!target.closest(`.${styles.basemapCard}`) && !target.closest('[aria-label="Choose map style"]')) {
+        setShowBasemap(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showBasemap]);
+
   const cycleDrawer = () => setDrawer((current) => current === "mini" ? "half" : current === "half" ? "full" : "mini");
 
   return (
@@ -363,9 +399,30 @@ export function MapShell() {
         {showBasemap && (
           <div className={styles.basemapCard}>
             <span className={styles.eyebrow}>Map style</span><strong>Choose your view</strong>
-            <button className={styles.activeMap}><div className={`${styles.mapThumb} ${styles.thumb1}`} />Standard<span className={styles.check}>✓</span></button>
-            <button><div className={`${styles.mapThumb} ${styles.thumb2}`} />Satellite</button>
-            <button><div className={`${styles.mapThumb} ${styles.thumb1}`} />Transit</button>
+            <button
+              className={mapStyle === 'normal' ? styles.activeMap : ''}
+              onClick={() => handleMapStyleChange('normal')}
+            >
+              <div className={`${styles.mapThumb} ${styles.thumb1}`} />
+              Standard
+              {mapStyle === 'normal' && <span className={styles.check}>✓</span>}
+            </button>
+            <button
+              className={mapStyle === 'satellite' ? styles.activeMap : ''}
+              onClick={() => handleMapStyleChange('satellite')}
+            >
+              <div className={`${styles.mapThumb} ${styles.thumb2}`} />
+              Satellite
+              {mapStyle === 'satellite' && <span className={styles.check}>✓</span>}
+            </button>
+            <button
+              className={mapStyle === 'whitesmoke' ? styles.activeMap : ''}
+              onClick={() => handleMapStyleChange('whitesmoke')}
+            >
+              <div className={`${styles.mapThumb} ${styles.thumb3}`} />
+              Dark
+              {mapStyle === 'whitesmoke' && <span className={styles.check}>✓</span>}
+            </button>
           </div>
         )}
         <button className={styles.toolButton} onClick={() => setShowBasemap(!showBasemap)} aria-label="Choose map style" aria-pressed={showBasemap}>

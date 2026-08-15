@@ -400,6 +400,10 @@
   background: linear-gradient(90deg, #dcebd8 40%, #e4bb9a 41% 50%, #dcebd8 51%);
 }
 
+.thumb3 {
+  background: linear-gradient(135deg, #2a2a2a, #4a4a4a 45%, #6a6a6a);
+}
+
 .check {
   color: var(--blue);
   margin-left: auto;
@@ -567,6 +571,33 @@
 
   .poiCard {
     background: rgba(29, 43, 43, 0.86);
+  }
+
+  .basemapCard {
+    background: rgba(29, 43, 43, 0.92);
+    backdrop-filter: blur(24px) saturate(165%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .basemapCard .eyebrow {
+    color: rgba(221, 240, 230, 0.6);
+  }
+
+  .basemapCard > strong {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .basemapCard button {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .basemapCard button:hover,
+  .basemapCard .activeMap {
+    background: rgba(100, 150, 200, 0.15);
+  }
+
+  .mapThumb {
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
 
