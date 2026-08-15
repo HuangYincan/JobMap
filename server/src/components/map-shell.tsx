@@ -101,17 +101,29 @@ export function MapShell() {
     }
 
     function createMap(center: [number, number], zoom: number) {
+      // Detect system dark mode preference
+      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialMapStyle = isDarkMode ? 'amap://styles/dark' : 'amap://styles/normal';
+
       const map = new window.AMap.Map(mapContainer.current, {
         zoom: zoom,
         center: center,
         viewMode: "3D",
         pitch: 0,
         showLabel: true,
-        mapStyle: "amap://styles/normal",
+        mapStyle: initialMapStyle,
       });
 
       mapInstance.current = map;
       setMapReady(true);
+
+      // Listen for system theme changes and update map style dynamically
+      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleThemeChange = (e: MediaQueryListEvent) => {
+        const newMapStyle = e.matches ? 'amap://styles/dark' : 'amap://styles/normal';
+        map.setMapStyle(newMapStyle);
+      };
+      darkModeQuery.addEventListener('change', handleThemeChange);
 
       // Add AMap's built-in scale control (real, auto-updating)
       window.AMap.plugin(['AMap.Scale'], () => {
