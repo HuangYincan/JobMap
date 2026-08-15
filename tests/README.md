@@ -1,15 +1,15 @@
 # Test Strategy
 
-> **Status:** test design contract; no executable test suite exists yet
+> **Status:** current; Phase 1 unit and integration test infrastructure exists, live DB verification pending
 > **Last reviewed:** 2026-08-15
 
 ## Current State
 
-The repository has no server/importer manifests, migration runner, or test files. Do not report `make test`, E2E, coverage, security scans, or browser checks as passing until their executable artifacts are added.
+Phase 1 added the importer unit tests (`crawler/tests`, run via `make test-unit`), the database integration runner (`tests/integration/db/test_migrations.sh`, run via `make test-integration`), and a frontend smoke test (`server/tests/smoke.test.mjs`). CI runs docs policy, Python unit, frontend typecheck/test/build, and the database integration job against a PostGIS 16-3.4 service. E2E, coverage thresholds, accessibility, security, and performance scans are not yet configured; do not report them as passing.
 
 ## Phase 1 Test Baseline
 
-Phase 1 must add tests beside the implementation and wire them into a shared command contract.
+Phase 1 delivers the first evidence per layer. The following layers are covered by the current suite; API/tenant-DB and spatial layers are enforced by the CI database integration job.
 
 | Layer | Required first evidence |
 |---|---|
@@ -35,7 +35,7 @@ Use state/role-based locators and explicit readiness conditions. Do not use fixe
 
 ## CI Policy
 
-The current workflow only validates documentation policy because application artifacts do not exist. Once Phase 1 provides manifests and tests, CI must add explicit jobs for lint, migration/integration, unit, build, and coverage thresholds. E2E, accessibility, security, performance, and agent-browser screenshot artifact jobs are added only when their commands and fixtures are real. Each documented check must identify its trigger, command, artifact, and blocking status.
+CI (`.github/workflows/test.yml`) now runs: docs policy, importer unit tests (`make test-unit`), frontend typecheck/test/build, and database integration (`make test-integration`) against a PostGIS 16-3.4 service with a PostgreSQL client installed. Lint, coverage thresholds, E2E, accessibility, security, performance, and agent-browser screenshot artifact jobs are added only when their commands and fixtures are real. Each documented check must identify its trigger, command, artifact, and blocking status.
 
 ## Coverage
 

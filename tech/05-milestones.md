@@ -27,7 +27,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 
 ### Deliverables
 
-1. Create the first real server and importer manifests with one supported Node and Python version shared by CI. **Done:** `server/package.json` (Next 15.5.23, React 19.0.8, TS 5.9.3, `server/.nvmrc` = 26.5.1) and `crawler/pyproject.toml` (Python 3.12, `crawler/.python-version`).
+1. Create the first real server and importer manifests with one supported Node and Python version shared by CI. **Done:** `server/package.json` (Next 15.5.23, React 19.0.8, TS 5.9.3, `server/.nvmrc` = Node 22 LTS) and `crawler/pyproject.toml` (Python 3.12, `crawler/.python-version`). CI reads both version files (`node-version-file` / `python-version-file`).
 2. Create an executable migration ledger and runner. **Done:** `db/migrations/001-004` and `db/scripts/apply.sh` (single-transaction per migration, transaction-scoped advisory lock), `db/scripts/preflight.sh`.
 3. Implement the canonical tenant/map access model and source/provenance model. **Done:** `map_access`/`can_access_map` seams and SQL tables.
 4. Implement a declarative plugin manifest validation path. **Done:** `validate_manifest` and `normalize_import` in `crawler/app/domain_map_importer/`.

@@ -55,3 +55,15 @@ class NormalizeImportTests(unittest.TestCase):
         second = normalize_import(VALID_FIXTURE)
         self.assertEqual(first.to_json(), second.to_json())
         self.assertEqual(first.provenance.content_hash, second.provenance.content_hash)
+
+    def test_keeps_valid_records_alongside_rejected_ones(self):
+        fixture = {**VALID_FIXTURE, "records": [
+            {"external_id": "job-1", "attributes": {"title": "Analyst"}},
+            {"external_id": "job-2", "attributes": "not-an-object"},
+        ]}
+        report = normalize_import(fixture)
+        self.assertFalse(report.valid)
+        # The valid record is not silently dropped with the rejected sibling.
+        self.assertEqual([record.external_id for record in report.records], ["job-1"])
+        self.assertEqual(len(report.rejected), 1)
+        self.assertEqual(report.rejected[0].index, 1)

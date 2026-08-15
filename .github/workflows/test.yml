@@ -1,4 +1,4 @@
-name: Documentation Policy
+name: CI
 
 on:
   push:
@@ -16,6 +16,60 @@ jobs:
       - name: Report scaffold state
         run: make scaffold-status
 
-# Application lint, migration, unit, integration, E2E, accessibility, security, and
-# coverage jobs are added with their manifests and executable test suites in Phase 1+
-# rather than claiming to validate artifacts that do not yet exist.
+  python-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: crawler/.python-version
+      - name: Run importer unit tests
+        run: make test-unit
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: server/.nvmrc
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install dependencies
+        working-directory: server
+        run: npm ci
+      - name: Typecheck
+        working-directory: server
+        run: npm run typecheck
+      - name: Smoke test
+        working-directory: server
+        run: npm test
+      - name: Production build
+        working-directory: server
+        run: npm run build
+
+  db-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: domain_map_test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Run database integration tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/domain_map_test
+        run: make test-integration

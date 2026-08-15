@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass
+from collections import Counter
 from collections.abc import Mapping
+from dataclasses import asdict, dataclass
 from typing import Any
 
 _REQUIRED_SOURCE_KEYS = {"code", "original_url", "license_basis", "attribution", "retrieved_at", "parser_version", "retention_class"}
@@ -48,7 +49,7 @@ class ImportReport:
     provenance: Provenance | None
 
     def to_json(self) -> str:
-        return json.dumps(asdict(self), ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+        return _canonical_json(asdict(self))
 
 
 def _canonical_json(value: Any) -> str:
@@ -67,7 +68,7 @@ def validate_local_fixture(fixture: Mapping[str, Any]) -> ValidationResult:
         if missing:
             errors.append(f"source missing keys: {', '.join(missing)}")
         for key in _REQUIRED_SOURCE_KEYS:
-            if key in source and not isinstance(source[key], str) or key in source and not source[key].strip():
+            if key in source and (not isinstance(source[key], str) or not source[key].strip()):
                 errors.append(f"source.{key} must be a non-empty string")
         if isinstance(source, Mapping) and source.get("retention_class") not in {"public", "tenant-private"}:
             errors.append("source.retention_class must be public or tenant-private")
@@ -77,6 +78,12 @@ def validate_local_fixture(fixture: Mapping[str, Any]) -> ValidationResult:
 
 
 def normalize_import(fixture: Mapping[str, Any]) -> ImportReport:
+    """Normalize a validated local fixture.
+
+    Valid records are always kept and returned; malformed or duplicate records are
+    reported in ``rejected`` rather than silently dropped. ``valid`` is False when
+    any record failed, so a caller can fail fast while still persisting what is sound.
+    """
     validation = validate_local_fixture(fixture)
     if not validation.valid:
         return ImportReport(False, (), (), None)
@@ -88,19 +95,14 @@ def normalize_import(fixture: Mapping[str, Any]) -> ImportReport:
         attribution=source["attribution"], retrieved_at=source["retrieved_at"], parser_version=source["parser_version"],
         retention_class=source["retention_class"], content_hash=content_hash,
     )
-    seen: set[str] = set()
     duplicate_ids = {
         external_id
-        for external_id in {
+        for external_id, count in Counter(
             record.get("external_id")
             for record in records
             if isinstance(record, Mapping) and isinstance(record.get("external_id"), str)
-        }
-        if sum(
-            1
-            for record in records
-            if isinstance(record, Mapping) and record.get("external_id") == external_id
-        ) > 1
+        ).items()
+        if count > 1
     }
     normalized: list[NormalizedRecord] = []
     rejected: list[RejectedRecord] = []
@@ -116,12 +118,9 @@ def normalize_import(fixture: Mapping[str, Any]) -> ImportReport:
         if external_id in duplicate_ids:
             rejected.append(RejectedRecord(index, f"duplicate external_id: {external_id}", record))
             continue
-        seen.add(external_id)
         if not isinstance(attributes, Mapping):
             rejected.append(RejectedRecord(index, "attributes must be an object", record))
             continue
         normalized.append(NormalizedRecord(external_id, dict(attributes)))
-    if rejected:
-        return ImportReport(False, (), tuple(rejected), provenance)
     normalized.sort(key=lambda record: record.external_id)
-    return ImportReport(True, tuple(normalized), (), provenance)
+    return ImportReport(not rejected, tuple(normalized), tuple(rejected), provenance)
