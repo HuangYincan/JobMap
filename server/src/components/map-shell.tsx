@@ -103,7 +103,7 @@ export function MapShell() {
     function createMap(center: [number, number], zoom: number) {
       // Detect system dark mode preference
       const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialMapStyle = isDarkMode ? 'amap://styles/dark' : 'amap://styles/normal';
+      const initialMapStyle = isDarkMode ? 'amap://styles/whitesmoke' : 'amap://styles/normal';
 
       const map = new window.AMap.Map(mapContainer.current, {
         zoom: zoom,
@@ -120,7 +120,7 @@ export function MapShell() {
       // Listen for system theme changes and update map style dynamically
       const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleThemeChange = (e: MediaQueryListEvent) => {
-        const newMapStyle = e.matches ? 'amap://styles/dark' : 'amap://styles/normal';
+        const newMapStyle = e.matches ? 'amap://styles/whitesmoke' : 'amap://styles/normal';
         map.setMapStyle(newMapStyle);
       };
       darkModeQuery.addEventListener('change', handleThemeChange);
