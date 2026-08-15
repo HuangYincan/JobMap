@@ -3,7 +3,8 @@
 //
 // 纯逻辑类（无 React），包装一个 AMap.Map 实例：
 // - 根据 POI 列表创建/差分管理 AMap.Marker
-// - Domain 用彩色图钉，Recruitment 用圆角方块 + 公司 emoji
+// - Domain 用彩色图钉，Recruitment 用圆角方块 + 真实公司 logo
+//   （logoUrl 图片优先，缺失/加载失败回退 emoji）
 // - 支持选中（放大 + 强调环）与高亮（轻微放大 + 透明度）
 // - 全部 AMap 调用都做了防御性守卫，无浏览器环境（node 测试）下静默降级
 // ============================================================
@@ -122,10 +123,17 @@ export function domainPinSVG(color: string, state: MarkerState): string {
 }
 
 /**
- * 生成 Recruitment 公司徽章 SVG：白色圆角方块 + 公司 emoji。
- * 非 normal 状态带外圈强调环，作为放大/高亮的视觉提示。
+ * 生成 Recruitment 公司徽章 SVG：白色圆角方块 + 公司 logo。
+ * - 优先渲染真实 logo 图片（logoUrl，用 <image> 嵌入）
+ * - 图片加载失败（或缺失）时自动露出下层 emoji
+ * - 非 normal 状态带外圈强调环，作为放大/高亮的视觉提示
  */
-export function recruitmentBadgeSVG(logo: string | undefined, color: string, state: MarkerState): string {
+export function recruitmentBadgeSVG(
+  logo: string | undefined,
+  logoUrl: string | undefined,
+  color: string,
+  state: MarkerState
+): string {
   const c = normalizeColor(color);
   const emoji = toEmojiLogo(logo);
   const fillOpacity = state === 'highlighted' ? 0.9 : 1;
@@ -140,9 +148,18 @@ export function recruitmentBadgeSVG(logo: string | undefined, color: string, sta
     `<rect x="1.5" y="1.5" width="25" height="25" rx="7" fill="#ffffff" fill-opacity="${fillOpacity}" ` +
       `stroke="${c}" stroke-width="2"/>`
   );
+  // 底层 emoji（fallback）：真实 logo 加载失败/缺失时可见
   parts.push(
     `<text x="14" y="15" font-size="13" text-anchor="middle" dominant-baseline="central">${emoji}</text>`
   );
+  // 上层真实 logo 图片（加载成功覆盖 emoji，失败则透明露出 emoji）
+  if (logoUrl) {
+    parts.push(
+      `<defs><clipPath id="logo-clip"><rect x="4" y="4" width="20" height="20" rx="5"/></clipPath></defs>` +
+        `<image href="${logoUrl}" x="4" y="4" width="20" height="20" ` +
+        `preserveAspectRatio="xMidYMid meet" clip-path="url(#logo-clip)" opacity="${fillOpacity}"/>`
+    );
+  }
   if (state === 'selected') {
     parts.push(
       `<circle cx="14" cy="14" r="11.5" fill="none" stroke="${c}" stroke-width="2" opacity="0.35"/>`
@@ -285,7 +302,12 @@ class POIMarkerControllerImpl implements POIMarkerController {
     return new this.amap.Icon({
       size: new this.amap.Size(size, size),
       image: svgToDataUri(
-        recruitmentBadgeSVG(isRecruitmentPOI(poi) ? poi.company.logo : undefined, this.color, state)
+        recruitmentBadgeSVG(
+          isRecruitmentPOI(poi) ? poi.company.logo : undefined,
+          isRecruitmentPOI(poi) ? poi.company.logoUrl : undefined,
+          this.color,
+          state
+        )
       ),
       imageSize: new this.amap.Size(size, size),
     });
