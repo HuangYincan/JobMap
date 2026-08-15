@@ -113,6 +113,14 @@ export function MapShell() {
       mapInstance.current = map;
       setMapReady(true);
 
+      // Add AMap's built-in scale control (real, auto-updating)
+      window.AMap.plugin(['AMap.Scale'], () => {
+        const scale = new window.AMap.Scale({
+          position: 'RB', // Right-Bottom
+        });
+        map.addControl(scale);
+      });
+
       // Add place markers
       places.forEach((place) => {
         const marker = new window.AMap.Marker({
@@ -146,19 +154,23 @@ export function MapShell() {
       // Threshold: show circle when zoom >= 15, dot when zoom < 15
       const showCircle = currentZoom >= 15;
 
-      // Add accuracy circle if available and zoom is high enough
-      if (accuracy && showCircle) {
-        const circle = new window.AMap.Circle({
-          center: [lng, lat],
-          radius: Math.max(accuracy, 50), // Ensure minimum 50m visibility
-          fillColor: "#4A90E2",
-          fillOpacity: 0.2,
-          strokeColor: "#4A90E2",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          map: mapInstance.current,
-        });
-        accuracyCircleRef.current = circle;
+      // Always create accuracy circle with real geographic radius (30m or actual GPS accuracy)
+      const radiusMeters = accuracy ? Math.max(accuracy, 30) : 30;
+      const circle = new window.AMap.Circle({
+        center: [lng, lat],
+        radius: radiusMeters, // Real geographic distance in meters
+        fillColor: "#4A90E2",
+        fillOpacity: 0.2,
+        strokeColor: "#4A90E2",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        map: mapInstance.current,
+      });
+      accuracyCircleRef.current = circle;
+
+      // Hide circle if zoom is too low
+      if (!showCircle) {
+        circle.hide();
       }
 
       // Add user marker (dot or detailed marker based on zoom)
@@ -173,7 +185,7 @@ export function MapShell() {
           size: new window.AMap.Size(iconSize, iconSize),
           image: iconImage,
         }),
-        title: accuracy ? `Your location (±${Math.round(accuracy)}m)` : "Your location",
+        title: `Your location (±${radiusMeters}m)`,
         map: mapInstance.current,
         zIndex: 1000,
       });
@@ -255,10 +267,11 @@ export function MapShell() {
           mapInstance.current.setCenter([longitude, latitude]);
           mapInstance.current.setZoom(15);
 
-          // Add accuracy circle
+          // Add accuracy circle with real geographic radius (30m or actual GPS accuracy)
+          const radiusMeters = accuracy ? Math.max(accuracy, 30) : 30;
           const circle = new window.AMap.Circle({
             center: [longitude, latitude],
-            radius: Math.max(accuracy, 50), // Ensure minimum 50m visibility
+            radius: radiusMeters, // Real geographic distance in meters
             fillColor: "#4A90E2",
             fillOpacity: 0.2,
             strokeColor: "#4A90E2",
@@ -275,8 +288,9 @@ export function MapShell() {
               size: new window.AMap.Size(20, 20),
               image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E",
             }),
-            title: `Your location (±${Math.round(accuracy)}m)`,
+            title: `Your location (±${radiusMeters}m)`,
             map: mapInstance.current,
+            zIndex: 1000,
           });
 
           userMarkerRef.current = userMarker;
@@ -356,7 +370,6 @@ export function MapShell() {
         <button className={`${styles.toolButton} ${styles.locateButton}`} onClick={handleLocate} aria-label="Find my location">
           <Icon name="locate" />
         </button>
-        <div className={styles.scale}><i />2 km</div>
       </div>
 
       <section className={`${styles.mobileDrawer} ${drawer === "mini" ? styles.drawerMini : drawer === "half" ? styles.drawerHalf : styles.drawerFull}`} aria-label="Places drawer">
