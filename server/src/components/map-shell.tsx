@@ -50,6 +50,7 @@ export function MapShell() {
   const [showBasemap, setShowBasemap] = useState(false);
   const [zoom, setZoom] = useState(13);
   const [mapReady, setMapReady] = useState(false);
+  const [userLocationZoom, setUserLocationZoom] = useState<number | null>(null);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -125,7 +126,13 @@ export function MapShell() {
 
       // Sync zoom state
       map.on("zoomchange", () => {
-        setZoom(Math.round(map.getZoom()));
+        const currentZoom = map.getZoom();
+        setZoom(Math.round(currentZoom));
+
+        // Update user location display based on zoom level
+        if (userMarkerRef.current) {
+          updateUserLocationDisplay(currentZoom);
+        }
       });
     }
 
@@ -133,9 +140,14 @@ export function MapShell() {
       if (!mapInstance.current) return;
 
       console.log("User location:", { lng, lat, accuracy });
+      const currentZoom = mapInstance.current.getZoom();
+      setUserLocationZoom(currentZoom);
 
-      // Add accuracy circle if available
-      if (accuracy) {
+      // Threshold: show circle when zoom >= 15, dot when zoom < 15
+      const showCircle = currentZoom >= 15;
+
+      // Add accuracy circle if available and zoom is high enough
+      if (accuracy && showCircle) {
         const circle = new window.AMap.Circle({
           center: [lng, lat],
           radius: Math.max(accuracy, 50), // Ensure minimum 50m visibility
@@ -149,18 +161,52 @@ export function MapShell() {
         accuracyCircleRef.current = circle;
       }
 
-      // Add user marker on top
+      // Add user marker (dot or detailed marker based on zoom)
+      const iconSize = showCircle ? 20 : 14;
+      const iconImage = showCircle
+        ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E"
+        : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='6' fill='%234A90E2'/%3E%3Ccircle cx='7' cy='7' r='2' fill='white'/%3E%3C/svg%3E";
+
       const userMarker = new window.AMap.Marker({
         position: [lng, lat],
         icon: new window.AMap.Icon({
-          size: new window.AMap.Size(20, 20),
-          image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E",
+          size: new window.AMap.Size(iconSize, iconSize),
+          image: iconImage,
         }),
         title: accuracy ? `Your location (±${Math.round(accuracy)}m)` : "Your location",
         map: mapInstance.current,
         zIndex: 1000,
       });
       userMarkerRef.current = userMarker;
+    }
+
+    function updateUserLocationDisplay(currentZoom: number) {
+      if (!mapInstance.current || !userMarkerRef.current) return;
+
+      const showCircle = currentZoom >= 15;
+      const position = userMarkerRef.current.getPosition();
+
+      // Update marker icon with smooth transition
+      const iconSize = showCircle ? 20 : 14;
+      const iconImage = showCircle
+        ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E"
+        : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='6' fill='%234A90E2'/%3E%3Ccircle cx='7' cy='7' r='2' fill='white'/%3E%3C/svg%3E";
+
+      userMarkerRef.current.setIcon(
+        new window.AMap.Icon({
+          size: new window.AMap.Size(iconSize, iconSize),
+          image: iconImage,
+        })
+      );
+
+      // Show/hide accuracy circle based on zoom
+      if (accuracyCircleRef.current) {
+        if (showCircle) {
+          accuracyCircleRef.current.show();
+        } else {
+          accuracyCircleRef.current.hide();
+        }
+      }
     }
 
     return () => {
