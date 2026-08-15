@@ -59,6 +59,8 @@ export function MapShell() {
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lng: number; lat: number }>({ lng: 120.15, lat: 30.27 });
   const [error, setError] = useState<string | null>(null);
+  // 左侧结果面板显隐（点击导航"探索"展开）
+  const [exploreOpen, setExploreOpen] = useState(false);
 
   const modeConfig = getMode(mode);
 
@@ -364,7 +366,9 @@ export function MapShell() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [mode, query, filters, sort, mapCenter]);
+    // mapReady：地图初始化完成（= AMap 就绪）后重新拉取真实 POI，
+    // 避免首次加载时 AMap 未就绪而回退到 seed 数据。
+  }, [mode, query, filters, sort, mapCenter, mapReady]);
 
   // ---- 地图联动 ----
   usePOIMap(mapInstance.current, {
@@ -559,7 +563,16 @@ export function MapShell() {
         <nav className={styles.navList}>
           <button className={styles.navItem} data-tooltip={t('layers', lang)}><Icon name="layers" /><span>{t('layers', lang)}</span></button>
           <button className={styles.navItem} data-tooltip={t('saved', lang)}><Icon name="bookmark" /><span>{t('saved', lang)}</span></button>
-          <button className={styles.navItem} data-tooltip={t('explore', lang)}><Icon name="grid" /><span>{t('explore', lang)}</span></button>
+          <button
+            className={styles.navItem}
+            data-tooltip={t('explore', lang)}
+            aria-expanded={exploreOpen}
+            aria-pressed={exploreOpen}
+            onClick={() => setExploreOpen((v) => !v)}
+          >
+            <Icon name="grid" />
+            <span>{t('explore', lang)}</span>
+          </button>
           <button className={styles.navItem} data-tooltip={t('recent', lang)}><Icon name="history" /><span>{t('recent', lang)}</span></button>
           <button className={styles.navItem} data-tooltip={t('settings', lang)}><Icon name="settings" /><span>{t('settings', lang)}</span></button>
         </nav>
@@ -569,7 +582,8 @@ export function MapShell() {
         </button>
       </aside>
 
-      {/* Phase 2: 二级侧控栏（右侧） */}
+      {/* Phase 2: 二级侧控栏（从左侧导航展开） */}
+      {exploreOpen && (
       <SecondarySidebar
         mode={mode}
         onModeChange={handleModeChange}
@@ -588,7 +602,9 @@ export function MapShell() {
         onHover={handleHover}
         totalCount={pois.length}
         lang={lang}
+        onClose={() => setExploreOpen(false)}
       />
+      )}
 
       <div className={styles.topTools}>
         {showBasemap && (

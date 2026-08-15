@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, KeyboardEvent } from "react";
+import { useState, type CSSProperties, type KeyboardEvent } from "react";
 import {
   formatDistance,
   formatSalary,
@@ -12,6 +12,31 @@ import {
 } from "@/lib/types";
 import { t, type Language } from "@/lib/i18n";
 import styles from "./poi-card.module.css";
+
+/** 公司 Logo：优先真实图片（logoUrl），加载失败回退 emoji */
+function CompanyLogo({ logo, logoUrl }: { logo?: string; logoUrl?: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (logoUrl && !failed) {
+    return (
+      <span className={styles.logoImgWrap} aria-hidden="true">
+        <img
+          src={logoUrl}
+          alt=""
+          className={styles.logoImg}
+          loading="lazy"
+          onError={() => setFailed(true)}
+          referrerPolicy="no-referrer"
+        />
+      </span>
+    );
+  }
+  return logo ? (
+    <span className={styles.logo} aria-hidden="true">
+      {logo}
+    </span>
+  ) : null;
+}
 
 export interface POICardProps {
   poi: POI;
@@ -236,11 +261,7 @@ function RecruitmentCardContent({
   return (
     <>
       <header className={styles.recruitHeader}>
-        {poi.company.logo && (
-          <span className={styles.logo} aria-hidden="true">
-            {poi.company.logo}
-          </span>
-        )}
+        <CompanyLogo logo={poi.company.logo} logoUrl={poi.company.logoUrl} />
         <div className={styles.titleBlock}>
           <h3 className={styles.name}>{poi.name}</h3>
           {industries.length > 0 && (

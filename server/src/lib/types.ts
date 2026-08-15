@@ -100,8 +100,10 @@ export interface RecruitmentPOI extends BasePOI {
     scale: 'startup' | 'unicorn' | 'bigtech' | 'enterprise';
     /** 公司评分 */
     rating?: number;
-    /** Logo 或 emoji */
+    /** Logo 或 emoji（fallback） */
     logo?: string;
+    /** 真实 logo 图片 URL（favicon.im 等服务），加载失败回退 logo emoji */
+    logoUrl?: string;
     /** 一句话简介 */
     summary?: string;
   };

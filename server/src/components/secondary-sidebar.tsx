@@ -4,7 +4,7 @@
 // SecondarySidebar — 二级侧控栏容器（Apple Maps 风格）
 //
 // 设计遵循 tech/09-secondary-sidebar.md：
-// - 左侧主导航栏（现有） + 本二级侧控栏（420px 玻璃面板）
+// - 从左侧主导航栏展开（非右侧独立面板）
 // - 顶部：模式切换 + 搜索框
 // - 中部：筛选器 + 排序（可折叠）
 // - 下部：POI 卡片列表（虚拟滚动由外层 POIList 处理）
@@ -59,6 +59,8 @@ export interface SecondarySidebarProps {
   totalCount?: number;
   /** 语言 */
   lang?: Language;
+  /** 面板关闭回调（点击关闭按钮 / 外部） */
+  onClose?: () => void;
 }
 
 export function SecondarySidebar({
@@ -79,6 +81,7 @@ export function SecondarySidebar({
   onHover,
   totalCount,
   lang = "zh",
+  onClose,
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -86,9 +89,22 @@ export function SecondarySidebar({
 
   return (
     <aside className={styles.sidebar} aria-label="POI 详情侧栏">
-      {/* 顶部：模式切换 */}
-      <div className={styles.modeBar}>
-        <ModeSwitcher activeMode={mode} onModeChange={onModeChange} />
+      {/* 顶部：标题栏 + 模式切换 */}
+      <div className={styles.headerBar}>
+        <div className={styles.modeBar}>
+          <ModeSwitcher activeMode={mode} onModeChange={onModeChange} />
+        </div>
+        {onClose && (
+          <button
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label={lang === "zh" ? "关闭面板" : "Close panel"}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* 搜索框 */}

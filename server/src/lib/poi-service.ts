@@ -33,12 +33,10 @@ export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<POI[]>
     // Domain 首选真实高德 POI；AMap 不可用时回退到内置杭州示例，
     // 保证首屏始终有数据（AMap 就绪后自动升级为真实搜索）。
     try {
-      const result = await searchPOI({
-        keyword: '美食',
-        center,
-        radius: 5000,
-        pageSize: 20,
-      });
+      const result = await searchPOI(
+        { keyword: '美食', center, radius: 5000, pageSize: 25 },
+        4 // 并行拉取 4 页（最多 100 个 POI）
+      );
       if (result.pois.length > 0) {
         return runPOIPipeline(result.pois, options);
       }
@@ -48,7 +46,25 @@ export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<POI[]>
     return runPOIPipeline(DOMAIN_SEED, options);
   }
 
-  // 实习：seed 数据
-  const seeded = INTERNSHIP_SEED.filter((p) => p.mode === mode) as POI[];
-  return runPOIPipeline(seeded, options);
+  // 实习：seed 数据（真实公开坐标）
+  let seeded = INTERNSHIP_SEED.filter((p) => p.mode === mode) as POI[];
+  let results = runPOIPipeline(seeded, options);
+
+  // 复用高德搜索 API：当 seed 无匹配时，回退到高德实时搜索该关键词，
+  // 返回真实地点（任意公司名/地点都可在地图定位，如"小红书"）。
+  if (results.length === 0 && options.query) {
+    const center = options.center ?? { lng: 120.15, lat: 30.27 };
+    try {
+      const { pois } = await searchPOI(
+        { keyword: options.query, center, radius: 10000, city: '杭州', pageSize: 10 },
+        1
+      );
+      // 高德返回 DomainPOI，标记来源便于 UI 识别
+      results = runPOIPipeline(pois as POI[], { ...options, query: undefined });
+    } catch (err) {
+      console.warn('[poi-service] internship AMap fallback search failed:', err);
+    }
+  }
+
+  return results;
 }

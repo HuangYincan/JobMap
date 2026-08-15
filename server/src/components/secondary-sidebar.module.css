@@ -1,15 +1,15 @@
 /* ============================================================
    SecondarySidebar — Apple Maps 风格二级侧控栏
-   420px 液态玻璃面板，位于地图右侧
+   从左侧主导航栏展开（非右侧独立面板），380px 液态玻璃面板
    ============================================================ */
 
 .sidebar {
-  /* 定位：地图右侧，距边 12px，上下 12px */
+  /* 定位：紧贴左侧主导航栏（58px + 12px 边距 + 6px 间隙） */
   position: absolute;
   top: 12px;
-  right: 12px;
   bottom: 12px;
-  width: 420px;
+  left: 76px;
+  width: 380px;
 
   /* 液态玻璃 */
   background: var(--soft-strong, rgba(255, 255, 255, 0.84));
@@ -24,19 +24,56 @@
   flex-direction: column;
   overflow: hidden;
 
-  /* 动画 */
-  transition:
-    width 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-    transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 0.3s ease;
+  /* 滑入动画 */
+  animation: slide-in 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  transform-origin: left center;
 
   z-index: 4;
 }
 
-/* 模式切换条 */
-.modeBar {
-  padding: 14px 14px 8px;
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 顶部标题栏：模式切换 + 关闭按钮 */
+.headerBar {
+  display: flex;
+  align-items: center;
+  padding: 12px 10px 8px 14px;
   flex-shrink: 0;
+}
+
+.modeBar {
+  flex: 1;
+  min-width: 0;
+}
+
+.closeButton {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.72));
+  background: var(--soft, rgba(255, 255, 255, 0.68));
+  color: var(--muted, #6c7882);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.closeButton:hover {
+  background: var(--soft-strong, rgba(255, 255, 255, 0.9));
+  color: var(--ink, #18212c);
 }
 
 /* 搜索行 */
@@ -182,10 +219,6 @@
   letter-spacing: 0.02em;
 }
 
-/* POI 列表：可滚动 */
-/* POIList 内部 .list 已有滚动，这里给容器 min-height: 0 让 flex 子项滚动 */
-/* 实际滚动由 POIList 的 .list { overflow-y: auto } 承担 */
-
 /* 底部模式说明 */
 .footer {
   padding: 10px 16px;
@@ -212,10 +245,7 @@
 }
 
 /* ============================================================
-   响应式：移动端（<768px）全屏底部抽屉覆盖地图
-   注：Phase 2 移动端暂保留现有 bottom drawer（mobileDrawer），
-   二级侧控栏在移动端隐藏，避免两套抽屉冲突。
-   移动端多模式 UI 将在 Sprint 5 实现（tech/11-phase2-plan.md）。
+   响应式：移动端（<768px）隐藏（保留现有 bottom drawer）
    ============================================================ */
 @media (max-width: 767px) {
   .sidebar {
@@ -231,7 +261,8 @@
   }
 
   .searchBox,
-  .actionButton {
+  .actionButton,
+  .closeButton {
     background: rgba(28, 28, 30, 0.6);
     border-color: rgba(255, 255, 255, 0.12);
   }
@@ -241,7 +272,8 @@
     background: rgba(28, 28, 30, 0.8);
   }
 
-  .actionButton:hover {
+  .actionButton:hover,
+  .closeButton:hover {
     background: rgba(28, 28, 30, 0.85);
   }
 

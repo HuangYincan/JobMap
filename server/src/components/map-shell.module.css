@@ -380,7 +380,7 @@
 
 .topTools {
   position: absolute;
-  right: 444px;  /* 避开右侧二级侧控栏 (420px) + 边距 */
+  right: 12px;
   top: 12px;
   display: flex;
   align-items: center;

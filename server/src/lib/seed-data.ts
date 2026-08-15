@@ -150,6 +150,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.4,
       logo: '🛰️',
+      logoUrl: 'https://favicon.im/alibaba.com',
       summary: '全球领先的电子商务与云计算科技公司',
     },
     positions: [
@@ -211,6 +212,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.5,
       logo: '🐧',
+      logoUrl: 'https://favicon.im/tencent.com',
       summary: '中国领先的互联网综合服务提供商',
     },
     positions: [
@@ -250,6 +252,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.3,
       logo: '🎮',
+      logoUrl: 'https://favicon.im/163.com',
       summary: '中国领先的互联网技术公司，游戏与音乐见长',
     },
     positions: [
@@ -290,6 +293,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.6,
       logo: '📱',
+      logoUrl: 'https://favicon.im/bytedance.com',
       summary: '全球化互联网科技公司，抖音/TikTok 母公司',
     },
     positions: [
@@ -339,6 +343,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.2,
       logo: '🌍',
+      logoUrl: 'https://favicon.im/huawei.com',
       summary: '全球领先的 ICT 基础设施与智能终端提供商',
     },
     positions: [
@@ -378,6 +383,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.3,
       logo: '🐜',
+      logoUrl: 'https://favicon.im/antgroup.com',
       summary: '领先的数字支付与金融科技公司',
     },
     positions: [
@@ -417,6 +423,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'unicorn',
       rating: 4.0,
       logo: '🚗',
+      logoUrl: 'https://favicon.im/didiglobal.com',
       summary: '一站式移动出行平台',
     },
     positions: [
@@ -446,6 +453,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'unicorn',
       rating: 4.1,
       logo: '🧠',
+      logoUrl: 'https://favicon.im/zhihu.com',
       summary: '中文互联网高质量问答社区',
     },
     positions: [
@@ -504,6 +512,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'unicorn',
       rating: 4.7,
       logo: '🧩',
+      logoUrl: 'https://favicon.im/deepseek.com',
       summary: 'AI 大模型研发公司，DeepSeek 团队',
     },
     positions: [
@@ -544,6 +553,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.5,
       logo: '📺',
+      logoUrl: 'https://favicon.im/bilibili.com',
       summary: '中国年轻世代高度聚集的文化社区和视频平台',
     },
     positions: [
@@ -572,6 +582,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'enterprise',
       rating: 4.1,
       logo: '📈',
+      logoUrl: 'https://favicon.im/futunn.com',
       summary: '一站式数字化金融服务平台',
     },
     positions: [
@@ -601,6 +612,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'enterprise',
       rating: 4.0,
       logo: '📹',
+      logoUrl: 'https://favicon.im/hikvision.com',
       summary: '全球领先的智能物联解决方案提供商',
     },
     positions: [
@@ -630,6 +642,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'unicorn',
       rating: 4.0,
       logo: '👁️',
+      logoUrl: 'https://favicon.im/megvii.com',
       summary: '聚焦物联网场景的人工智能公司',
     },
     positions: [
@@ -659,6 +672,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'enterprise',
       rating: 3.9,
       logo: '📚',
+      logoUrl: 'https://favicon.im/yuewen.com',
       summary: '中国领先的网络文学平台',
     },
     positions: [

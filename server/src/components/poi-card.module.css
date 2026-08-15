@@ -113,6 +113,28 @@
   line-height: 1;
 }
 
+/* 真实 logo 图片容器（与 emoji 同尺寸） */
+.logoImgWrap {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+}
+
+.logoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 5px;
+  display: block;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;

@@ -230,68 +230,97 @@ function waitForPlugin(AMap: any, pluginName: string, timeoutMs = 8000): Promise
 }
 
 /**
- * 搜索 POI。
+ * 搜索 POI（支持分页拉取）。
  * 有 center 时走周边搜索（around），否则走关键词搜索。
- * 返回值已规范化为 DomainPOI，并附上原始数量用于聚合。
+ *
+ * 高德 PlaceSearch 每页最多 25 条；要获取更多，需并行拉取多页后合并去重。
+ * 默认拉取 4 页（最多 100 条），每页独立 HTTP 请求，开销可控（符合免费配额）。
+ * 若要全量导入（如城市级 10K+），应由数据导入管线（DB + crawler）实现。
+ *
+ * 返回值已规范化为 DomainPOI，并附上去重后的实际数量。
  */
 export async function searchPOI(
-  params: POISearchParams
+  params: POISearchParams,
+  maxPages = 4
 ): Promise<{ pois: DomainPOI[]; total: number }> {
   const AMap = await loadAMap();
 
   // 等待 PlaceSearch 插件就绪（带轮询兜底，避免 onload 竞态）
   await waitForPlugin(AMap, 'PlaceSearch');
 
-  return new Promise((resolve) => {
-    let placeSearch: any;
-    try {
-      placeSearch = new AMap.PlaceSearch({
-        pageSize: params.pageSize || 20,
-        pageIndex: params.page || 1,
-        city: params.city || '杭州',
-        extensions: 'all', // 返回详情（电话、评分、图片）
-      });
-    } catch (err) {
-      console.warn('[amap-api] PlaceSearch construct failed:', err);
-      resolve({ pois: [], total: 0 });
-      return;
-    }
+  const pageSize = Math.min(25, params.pageSize || 25);
+  const startPage = params.page || 1;
 
-    const done = (status: string, result: any) => {
-      if (status === 'complete' && result?.poiList) {
-        const rawList: AMapPOIRecord[] = result.poiList.pois || [];
-        const pois = rawList
-          .map(normalizeAMapPOI)
-          .filter((p): p is DomainPOI => p !== null);
-        resolve({ pois, total: result.poiList.count || pois.length });
-      } else {
-        resolve({ pois: [], total: 0 });
+  /** 单页搜索，返回 {records, total}；失败返回空 */
+  function searchPage(pageIndex: number): Promise<{ records: AMapPOIRecord[]; total: number }> {
+    return new Promise((resolve) => {
+      let placeSearch: any;
+      try {
+        placeSearch = new AMap.PlaceSearch({
+          pageSize,
+          pageIndex,
+          city: params.city || '杭州',
+          extensions: 'all', // 返回详情（电话、评分、图片）
+        });
+      } catch {
+        resolve({ records: [], total: 0 });
+        return;
       }
-    };
 
-    const fail = () => resolve({ pois: [], total: 0 });
+      const done = (status: string, result: any) => {
+        if (status === 'complete' && result?.poiList) {
+          resolve({
+            records: result.poiList.pois || [],
+            total: result.poiList.count || 0,
+          });
+        } else {
+          resolve({ records: [], total: 0 });
+        }
+      };
 
-    if (params.center) {
-      placeSearch.searchNearBy(
-        params.keyword,
-        [params.center.lng, params.center.lat],
-        params.radius || 5000,
-        done
-      );
-    } else {
-      placeSearch.search(params.keyword, done);
+      if (params.center) {
+        placeSearch.searchNearBy(
+          params.keyword,
+          [params.center.lng, params.center.lat],
+          params.radius || 5000,
+          done
+        );
+      } else {
+        placeSearch.search(params.keyword, done);
+      }
+      placeSearch.on('complete', (e: any) => done('complete', e));
+      placeSearch.on('error', () => resolve({ records: [], total: 0 }));
+    });
+  }
+
+  // 并行拉取多页
+  const pages = await Promise.all(
+    Array.from({ length: maxPages }, (_, i) => searchPage(startPage + i))
+  );
+
+  // 合并去重（按 id 去重，多页可能有边界重复）
+  const seen = new Set<string>();
+  const pois: DomainPOI[] = [];
+  for (const page of pages) {
+    for (const raw of page.records) {
+      const poi = normalizeAMapPOI(raw);
+      if (!poi) continue;
+      if (seen.has(poi.id)) continue;
+      seen.add(poi.id);
+      pois.push(poi);
     }
-    // PlaceSearch v2.0 的事件回调式 API
-    placeSearch.on('complete', (e: any) => done('complete', e));
-    placeSearch.on('error', fail);
-  });
+  }
+
+  const total = pages.find((p) => p.total > 0)?.total || pois.length;
+  return { pois, total };
 }
 
 /** 根据分类关键词搜索周边 POI（Domain 模式默认加载） */
 export async function searchNearbyPOIs(
   center: POILocation,
   category: string,
-  radius = 5000
+  radius = 5000,
+  maxPages = 4
 ): Promise<{ pois: DomainPOI[]; total: number }> {
-  return searchPOI({ keyword: category, center, radius, pageSize: 25 });
+  return searchPOI({ keyword: category, center, radius, pageSize: 25 }, maxPages);
 }
