@@ -42,6 +42,7 @@ export function MapShell() {
   const mapInstance = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const userMarkerRef = useRef<any>(null);
+  const accuracyCircleRef = useRef<any>(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
@@ -80,9 +81,28 @@ export function MapShell() {
     function initMap() {
       if (!mapContainer.current || mapInstance.current) return;
 
+      // Try to get user location first, then initialize map
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { longitude, latitude } = position.coords;
+            createMap([longitude, latitude], 15);
+            addUserMarker(longitude, latitude, position.coords.accuracy);
+          },
+          () => {
+            // Fallback to default location if geolocation fails
+            createMap([120.15, 30.27], 13);
+          }
+        );
+      } else {
+        createMap([120.15, 30.27], 13);
+      }
+    }
+
+    function createMap(center: [number, number], zoom: number) {
       const map = new window.AMap.Map(mapContainer.current, {
-        zoom: 13,
-        center: [120.15, 30.27],
+        zoom: zoom,
+        center: center,
         viewMode: "3D",
         pitch: 0,
         showLabel: true,
@@ -109,12 +129,45 @@ export function MapShell() {
       });
     }
 
+    function addUserMarker(lng: number, lat: number, accuracy?: number) {
+      if (!mapInstance.current) return;
+
+      // Add accuracy circle if available
+      if (accuracy) {
+        const circle = new window.AMap.Circle({
+          center: [lng, lat],
+          radius: accuracy, // meters
+          fillColor: "#4A90E2",
+          fillOpacity: 0.15,
+          strokeColor: "#4A90E2",
+          strokeOpacity: 0.5,
+          strokeWeight: 1,
+          map: mapInstance.current,
+        });
+        accuracyCircleRef.current = circle;
+      }
+
+      // Add user marker
+      const userMarker = new window.AMap.Marker({
+        position: [lng, lat],
+        icon: new window.AMap.Icon({
+          size: new window.AMap.Size(20, 20),
+          image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E",
+        }),
+        title: "Your location",
+        map: mapInstance.current,
+      });
+      userMarkerRef.current = userMarker;
+    }
+
     return () => {
       if (mapInstance.current) {
         mapInstance.current.destroy();
         mapInstance.current = null;
       }
       markersRef.current = [];
+      userMarkerRef.current = null;
+      accuracyCircleRef.current = null;
     };
   }, []);
 
@@ -137,26 +190,43 @@ export function MapShell() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { longitude, latitude } = position.coords;
+          const { longitude, latitude, accuracy } = position.coords;
 
-          // Remove old user marker if exists
+          // Remove old user marker and accuracy circle if exists
           if (userMarkerRef.current) {
             userMarkerRef.current.setMap(null);
             userMarkerRef.current = null;
+          }
+          if (accuracyCircleRef.current) {
+            accuracyCircleRef.current.setMap(null);
+            accuracyCircleRef.current = null;
           }
 
           // Center map on user location
           mapInstance.current.setCenter([longitude, latitude]);
           mapInstance.current.setZoom(15);
 
-          // Create a new user location marker with a distinct icon
+          // Add accuracy circle
+          const circle = new window.AMap.Circle({
+            center: [longitude, latitude],
+            radius: accuracy, // meters
+            fillColor: "#4A90E2",
+            fillOpacity: 0.15,
+            strokeColor: "#4A90E2",
+            strokeOpacity: 0.5,
+            strokeWeight: 1,
+            map: mapInstance.current,
+          });
+          accuracyCircleRef.current = circle;
+
+          // Create a new user location marker
           const userMarker = new window.AMap.Marker({
             position: [longitude, latitude],
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(20, 20),
               image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E",
             }),
-            title: "Your location",
+            title: `Your location (±${Math.round(accuracy)}m)`,
             map: mapInstance.current,
           });
 
