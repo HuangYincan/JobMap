@@ -132,30 +132,33 @@ export function MapShell() {
     function addUserMarker(lng: number, lat: number, accuracy?: number) {
       if (!mapInstance.current) return;
 
+      console.log("User location:", { lng, lat, accuracy });
+
       // Add accuracy circle if available
       if (accuracy) {
         const circle = new window.AMap.Circle({
           center: [lng, lat],
-          radius: accuracy, // meters
+          radius: Math.max(accuracy, 50), // Ensure minimum 50m visibility
           fillColor: "#4A90E2",
-          fillOpacity: 0.15,
+          fillOpacity: 0.2,
           strokeColor: "#4A90E2",
-          strokeOpacity: 0.5,
-          strokeWeight: 1,
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
           map: mapInstance.current,
         });
         accuracyCircleRef.current = circle;
       }
 
-      // Add user marker
+      // Add user marker on top
       const userMarker = new window.AMap.Marker({
         position: [lng, lat],
         icon: new window.AMap.Icon({
           size: new window.AMap.Size(20, 20),
           image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E",
         }),
-        title: "Your location",
+        title: accuracy ? `Your location (±${Math.round(accuracy)}m)` : "Your location",
         map: mapInstance.current,
+        zIndex: 1000,
       });
       userMarkerRef.current = userMarker;
     }
@@ -209,12 +212,12 @@ export function MapShell() {
           // Add accuracy circle
           const circle = new window.AMap.Circle({
             center: [longitude, latitude],
-            radius: accuracy, // meters
+            radius: Math.max(accuracy, 50), // Ensure minimum 50m visibility
             fillColor: "#4A90E2",
-            fillOpacity: 0.15,
+            fillOpacity: 0.2,
             strokeColor: "#4A90E2",
-            strokeOpacity: 0.5,
-            strokeWeight: 1,
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
             map: mapInstance.current,
           });
           accuracyCircleRef.current = circle;
