@@ -65,6 +65,80 @@ export const translations = {
     zh: '展开侧边栏',
     en: 'Expand sidebar',
   },
+  // ---- Phase 2 模式名称 ----
+  modeDomain: {
+    zh: '地图',
+    en: 'Map',
+  },
+  modeInternship: {
+    zh: '实习',
+    en: 'Internship',
+  },
+  modeAutumn: {
+    zh: '秋招',
+    en: 'Autumn',
+  },
+  modeSpring: {
+    zh: '春招',
+    en: 'Spring',
+  },
+  modeSocial: {
+    zh: '社招',
+    en: 'Social',
+  },
+  modeCollege: {
+    zh: '高考',
+    en: 'College',
+  },
+  modeOverseas: {
+    zh: '留学',
+    en: 'Overseas',
+  },
+  // ---- Phase 2 侧控栏 ----
+  resultsCount: {
+    zh: '个结果',
+    en: 'results',
+  },
+  filter: {
+    zh: '筛选',
+    en: 'Filter',
+  },
+  sort: {
+    zh: '排序',
+    en: 'Sort',
+  },
+  reset: {
+    zh: '重置',
+    en: 'Reset',
+  },
+  loading: {
+    zh: '加载中…',
+    en: 'Loading…',
+  },
+  noResults: {
+    zh: '未找到结果',
+    en: 'No results found',
+  },
+  noResultsHint: {
+    zh: '尝试调整关键词或筛选条件',
+    en: 'Try adjusting keywords or filters',
+  },
+  apply: {
+    zh: '应用',
+    en: 'Apply',
+  },
+  openNow: {
+    zh: '营业中',
+    en: 'Open now',
+  },
+  viewPositions: {
+    zh: '在招岗位',
+    en: 'Open positions',
+  },
+  savedMap: {
+    zh: '个人地图',
+    en: 'Personal map',
+  },
 } as const;
 
 // 获取浏览器语言偏好

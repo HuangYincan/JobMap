@@ -1,0 +1,367 @@
+"use client";
+
+import type { CSSProperties } from "react";
+import type { FilterConfig, FilterState } from "@/lib/types";
+import { t, type Language } from "@/lib/i18n";
+import styles from "./filter-panel.module.css";
+
+export interface FilterPanelProps {
+  /** Mode-specific filter configs, rendered in order. */
+  filters: FilterConfig[];
+  /** Current filter values keyed by filter key. */
+  values: FilterState;
+  /** Called whenever a control changes: `(key, value)` with the new value. */
+  onChange: (key: string, value: any) => void;
+  /** Clears all filters back to defaults. */
+  onReset: () => void;
+  /** Result count shown inside the Apply button. */
+  resultCount?: number;
+  /** When provided, renders the footer Apply button. */
+  onApply?: () => void;
+  /** UI language. */
+  lang?: Language;
+}
+
+type FilterValue = FilterState[string];
+
+function clamp(n: number, min: number, max: number): number {
+  return Math.min(Math.max(n, min), max);
+}
+
+/** Formats a number without trailing float noise (3.5, not 3.5000001). */
+function formatNum(n: number): string {
+  if (!Number.isFinite(n)) return "0";
+  const rounded = Math.round(n * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+}
+
+// ---------------------------------------------------------------------------
+// Control components (presentational, one per FilterType)
+// ---------------------------------------------------------------------------
+
+function SelectControl({
+  config,
+  value,
+  onChange,
+  lang,
+}: {
+  config: FilterConfig;
+  value: FilterValue | undefined;
+  onChange: (key: string, value: any) => void;
+  lang: Language;
+}) {
+  const current = typeof value === "string" ? value : "";
+  return (
+    <div className={styles.control}>
+      <label className={styles.label} htmlFor={`filter-${config.key}`}>
+        {config.label}
+      </label>
+      <div className={styles.selectWrap}>
+        <select
+          id={`filter-${config.key}`}
+          className={styles.select}
+          value={current}
+          onChange={(e) => onChange(config.key, e.target.value)}
+        >
+          <option value="">{lang === "zh" ? "全部" : "All"}</option>
+          {config.options?.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function MultiSelectControl({
+  config,
+  value,
+  onChange,
+}: {
+  config: FilterConfig;
+  value: FilterValue | undefined;
+  onChange: (key: string, value: any) => void;
+}) {
+  const selected = Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === "string")
+    : [];
+
+  const toggleOption = (optionValue: string) => {
+    const next = selected.includes(optionValue)
+      ? selected.filter((v) => v !== optionValue)
+      : [...selected, optionValue];
+    onChange(config.key, next);
+  };
+
+  return (
+    <div className={styles.control}>
+      <span className={styles.label}>{config.label}</span>
+      <div className={styles.chips} role="group" aria-label={config.label}>
+        {config.options?.map((option) => {
+          const active = selected.includes(option.value);
+          return (
+            <button
+              key={option.value}
+              type="button"
+              className={`${styles.chip} ${active ? styles.chipActive : ""}`}
+              aria-pressed={active}
+              onClick={() => toggleOption(option.value)}
+            >
+              {active && (
+                <span className={styles.chipCheck} aria-hidden="true">
+                  ✓
+                </span>
+              )}
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function RangeControl({
+  config,
+  value,
+  onChange,
+}: {
+  config: FilterConfig;
+  value: FilterValue | undefined;
+  onChange: (key: string, value: any) => void;
+}) {
+  const min = config.min ?? 0;
+  const max = config.max ?? 100;
+  const step = config.step ?? 1;
+  const span = max - min || 1;
+
+  const rawLo =
+    Array.isArray(value) && typeof value[0] === "number" ? value[0] : min;
+  const rawHi =
+    Array.isArray(value) && typeof value[1] === "number" ? value[1] : max;
+  const lo = clamp(Math.min(rawLo, rawHi), min, max);
+  const hi = clamp(Math.max(rawLo, rawHi), min, max);
+
+  const loPct = ((lo - min) / span) * 100;
+  const hiPct = ((hi - min) / span) * 100;
+
+  return (
+    <div className={styles.control}>
+      <div className={styles.labelRow}>
+        <span className={styles.label}>{config.label}</span>
+        <span className={styles.value}>
+          {formatNum(lo)}–{formatNum(hi)}
+          {config.unit ? ` ${config.unit}` : ""}
+        </span>
+      </div>
+      <div className={styles.rangeTrack}>
+        <div
+          className={styles.rangeFill}
+          style={{ left: `${loPct}%`, width: `${hiPct - loPct}%` }}
+        />
+        <input
+          type="range"
+          className={`${styles.rangeInput} ${styles.rangeInputMin}`}
+          min={min}
+          max={hi}
+          step={step}
+          value={lo}
+          aria-label={`${config.label} min`}
+          onChange={(e) => onChange(config.key, [Math.min(Number(e.target.value), hi), hi])}
+        />
+        <input
+          type="range"
+          className={`${styles.rangeInput} ${styles.rangeInputMax}`}
+          min={lo}
+          max={max}
+          step={step}
+          value={hi}
+          aria-label={`${config.label} max`}
+          onChange={(e) => onChange(config.key, [lo, Math.max(Number(e.target.value), lo)])}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SliderControl({
+  config,
+  value,
+  onChange,
+}: {
+  config: FilterConfig;
+  value: FilterValue | undefined;
+  onChange: (key: string, value: any) => void;
+}) {
+  const min = config.min ?? 0;
+  const max = config.max ?? 100;
+  const step = config.step ?? 1;
+  const span = max - min || 1;
+
+  const v =
+    typeof value === "number" && Number.isFinite(value)
+      ? clamp(value, min, max)
+      : min;
+  const pct = ((v - min) / span) * 100;
+
+  return (
+    <div className={styles.control}>
+      <div className={styles.labelRow}>
+        <span className={styles.label}>{config.label}</span>
+        <span className={styles.value}>
+          {formatNum(v)}
+          {config.unit ? ` ${config.unit}` : ""}
+        </span>
+      </div>
+      <input
+        type="range"
+        className={styles.slider}
+        style={{ "--fill": `${pct}%` } as CSSProperties}
+        min={min}
+        max={max}
+        step={step}
+        value={v}
+        aria-label={config.label}
+        onChange={(e) => onChange(config.key, Number(e.target.value))}
+      />
+    </div>
+  );
+}
+
+function ToggleControl({
+  config,
+  value,
+  onChange,
+}: {
+  config: FilterConfig;
+  value: FilterValue | undefined;
+  onChange: (key: string, value: any) => void;
+}) {
+  const isOn = typeof value === "boolean" ? value : false;
+  return (
+    <div className={`${styles.control} ${styles.toggleRow}`}>
+      <span className={styles.label}>{config.label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isOn}
+        aria-label={config.label}
+        className={`${styles.toggle} ${isOn ? styles.toggleOn : ""}`}
+        onClick={() => onChange(config.key, !isOn)}
+      >
+        <span className={styles.toggleKnob} />
+      </button>
+    </div>
+  );
+}
+
+function DateControl({
+  config,
+  value,
+  onChange,
+}: {
+  config: FilterConfig;
+  value: FilterValue | undefined;
+  onChange: (key: string, value: any) => void;
+}) {
+  const current = typeof value === "string" ? value : "";
+  return (
+    <div className={styles.control}>
+      <label className={styles.label} htmlFor={`filter-${config.key}`}>
+        {config.label}
+      </label>
+      <input
+        id={`filter-${config.key}`}
+        type="date"
+        className={styles.dateInput}
+        value={current}
+        onChange={(e) => onChange(config.key, e.target.value)}
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Dispatcher
+// ---------------------------------------------------------------------------
+
+function FilterControl({
+  config,
+  value,
+  onChange,
+  lang,
+}: {
+  config: FilterConfig;
+  value: FilterValue | undefined;
+  onChange: (key: string, value: any) => void;
+  lang: Language;
+}) {
+  switch (config.type) {
+    case "select":
+      return (
+        <SelectControl config={config} value={value} onChange={onChange} lang={lang} />
+      );
+    case "multi-select":
+      return <MultiSelectControl config={config} value={value} onChange={onChange} />;
+    case "range":
+      return <RangeControl config={config} value={value} onChange={onChange} />;
+    case "slider":
+      return <SliderControl config={config} value={value} onChange={onChange} />;
+    case "toggle":
+      return <ToggleControl config={config} value={value} onChange={onChange} />;
+    case "date":
+      return <DateControl config={config} value={value} onChange={onChange} />;
+    default:
+      return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// FilterPanel
+// ---------------------------------------------------------------------------
+
+export function FilterPanel({
+  filters,
+  values,
+  onChange,
+  onReset,
+  resultCount,
+  onApply,
+  lang = "zh",
+}: FilterPanelProps) {
+  return (
+    <section className={styles.panel} aria-label={t("filter", lang)}>
+      <header className={styles.header}>
+        <h2 className={styles.title}>{t("filter", lang)}</h2>
+        <button type="button" className={styles.resetButton} onClick={onReset}>
+          {t("reset", lang)}
+        </button>
+      </header>
+
+      <div className={styles.list}>
+        {filters.map((config) => (
+          <FilterControl
+            key={config.key}
+            config={config}
+            value={values[config.key]}
+            onChange={onChange}
+            lang={lang}
+          />
+        ))}
+      </div>
+
+      {onApply && (
+        <footer className={styles.footer}>
+          <button type="button" className={styles.applyButton} onClick={onApply}>
+            <span>{t("apply", lang)}</span>
+            {resultCount !== undefined && (
+              <span className={styles.applyCount}>{resultCount}</span>
+            )}
+          </button>
+        </footer>
+      )}
+    </section>
+  );
+}

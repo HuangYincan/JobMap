@@ -380,11 +380,12 @@
 
 .topTools {
   position: absolute;
-  right: 12px;
+  right: 444px;  /* 避开右侧二级侧控栏 (420px) + 边距 */
   top: 12px;
   display: flex;
   align-items: center;
   gap: 7px;
+  z-index: 5;
 }
 
 .toolButton {

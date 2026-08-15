@@ -1,23 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./map-shell.module.css";
 import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
+import type { FilterState, MapMode, POI } from "@/lib/types";
+import { getMode } from "@/lib/modes";
+import { fetchPOIsForMode } from "@/lib/poi-service";
+import { loadAMap } from "@/lib/amap-api";
+import { SecondarySidebar } from "./secondary-sidebar";
+import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
-
-declare global {
-  interface Window {
-    AMap?: any;
-    _AMapSecurityConfig?: { securityJsCode: string };
-  }
-}
-
-const places = [
-  { name: "Futureworks Campus", type: "Research district", tone: "blue", lng: 120.15, lat: 30.28 },
-  { name: "Westlake Studio Row", type: "Creative offices", tone: "orange", lng: 120.13, lat: 30.25 },
-  { name: "Civic Data Commons", type: "Public interest", tone: "purple", lng: 120.16, lat: 30.26 },
-];
 
 function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "settings" | "menu" | "compass" | "locate" }) {
   const paths: Record<string, string> = {
@@ -48,20 +41,33 @@ export function MapShell() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
-  const [selectedPlace, setSelectedPlace] = useState(places[0].name);
   const [lang, setLang] = useState<Language>('zh');
   const [showBasemap, setShowBasemap] = useState(false);
   const [mapStyle, setMapStyle] = useState<'normal' | 'satellite' | 'whitesmoke'>('normal');
   const [zoom, setZoom] = useState(13);
   const [mapReady, setMapReady] = useState(false);
-  const [userLocationZoom, setUserLocationZoom] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
+
+  // ---- Phase 2 多模式状态 ----
+  const [mode, setMode] = useState<MapMode>('domain');
+  const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<FilterState>({});
+  const [sort, setSort] = useState("distance");
+  const [pois, setPois] = useState<POI[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [mapCenter, setMapCenter] = useState<{ lng: number; lat: number }>({ lng: 120.15, lat: 30.27 });
+  const [error, setError] = useState<string | null>(null);
+
+  const modeConfig = getMode(mode);
 
   // 初始化语言设置 - 默认英文，未来可从用户偏好读取
   useEffect(() => {
     setLang('en');  // 先按全英开发
   }, []);
 
+  // 地图初始化（保留原有全部逻辑）
   useEffect(() => {
     if (!mapContainer.current) return;
 
@@ -73,21 +79,12 @@ export function MapShell() {
       return;
     }
 
-    // Set security config before loading AMap script
-    window._AMapSecurityConfig = {
-      securityJsCode: securityCode,
-    };
-
-    // Load AMap script
-    if (!window.AMap) {
-      const script = document.createElement("script");
-      script.src = `https://webapi.amap.com/maps?v=2.0&key=${apiKey}`;
-      script.async = true;
-      script.onload = () => initMap();
-      document.head.appendChild(script);
-    } else {
-      initMap();
-    }
+    // 单一 AMap 加载入口（复用 lib/amap-api.ts 的 loadAMap，避免双脚本冲突）
+    loadAMap()
+      .then(() => initMap())
+      .catch((err) => {
+        console.warn("[map-shell] AMap load failed:", err);
+      });
 
     function initMap() {
       if (!mapContainer.current || mapInstance.current) return;
@@ -98,6 +95,7 @@ export function MapShell() {
           (position) => {
             const { longitude, latitude } = position.coords;
             createMap([longitude, latitude], 15);
+            setMapCenter({ lng: longitude, lat: latitude });
             addUserMarker(longitude, latitude, position.coords.accuracy);
           },
           () => {
@@ -219,17 +217,6 @@ export function MapShell() {
         map.addControl(scale);
       });
 
-      // Add place markers
-      places.forEach((place) => {
-        const marker = new window.AMap.Marker({
-          position: [place.lng, place.lat],
-          title: place.name,
-          map: map,
-        });
-        marker.on("click", () => setSelectedPlace(place.name));
-        markersRef.current.push(marker);
-      });
-
       // Sync zoom state
       map.on("zoomchange", () => {
         const currentZoom = map.getZoom();
@@ -247,6 +234,14 @@ export function MapShell() {
         setRotation(currentRotation);
       });
 
+      // 地图移动/缩放后更新中心点（用于 POI 距离计算）
+      map.on("moveend", () => {
+        const center = map.getCenter();
+        if (center) {
+          setMapCenter({ lng: center.getLng(), lat: center.getLat() });
+        }
+      });
+
       return cleanup;
     }
 
@@ -254,17 +249,13 @@ export function MapShell() {
       if (!mapInstance.current) return;
 
       const currentZoom = mapInstance.current.getZoom();
-      setUserLocationZoom(currentZoom);
-
-      // Threshold: show circle when zoom >= 15, dot when zoom < 15
       const showCircle = currentZoom >= 15;
 
-      // Always create accuracy circle with real geographic radius (30m or actual GPS accuracy)
       const radiusMeters = accuracy ? Math.max(accuracy, 30) : 30;
 
       const circle = new window.AMap.Circle({
         center: [lng, lat],
-        radius: radiusMeters, // Real geographic distance in meters
+        radius: radiusMeters,
         fillColor: "#4A90E2",
         fillOpacity: 0.2,
         strokeColor: "#4A90E2",
@@ -274,12 +265,10 @@ export function MapShell() {
       });
       accuracyCircleRef.current = circle;
 
-      // Hide circle if zoom is too low
       if (!showCircle) {
         circle.hide();
       }
 
-      // Add user marker (dot or detailed marker based on zoom)
       const iconSize = showCircle ? 20 : 14;
       const iconImage = showCircle
         ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E"
@@ -302,9 +291,6 @@ export function MapShell() {
       if (!mapInstance.current || !userMarkerRef.current) return;
 
       const showCircle = currentZoom >= 15;
-      const position = userMarkerRef.current.getPosition();
-
-      // Update marker icon with smooth transition
       const iconSize = showCircle ? 20 : 14;
       const iconImage = showCircle
         ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E"
@@ -317,7 +303,6 @@ export function MapShell() {
         })
       );
 
-      // Show/hide accuracy circle based on zoom
       if (accuracyCircleRef.current) {
         if (showCircle) {
           accuracyCircleRef.current.show();
@@ -340,6 +325,76 @@ export function MapShell() {
       userMarkerRef.current = null;
       accuracyCircleRef.current = null;
     };
+  }, []);
+
+  // ---- Phase 2: POI 数据加载 ----
+  // mode/query/filters/sort/mapCenter 变化 → 重新获取
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchPOIsForMode({
+          mode,
+          query: query || undefined,
+          filters: Object.keys(filters).length ? filters : undefined,
+          sort: sort || undefined,
+          center: mapCenter,
+        });
+        if (!cancelled) {
+          setPois(data);
+          setSelectedId(null);
+          setHighlightedId(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load POIs');
+          setPois([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    // 搜索输入防抖 300ms（tech/10-search-filter.md）
+    const timer = setTimeout(load, query ? 300 : 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [mode, query, filters, sort, mapCenter]);
+
+  // ---- 地图联动 ----
+  usePOIMap(mapInstance.current, {
+    pois,
+    selectedId,
+    highlightedId,
+    accentColor: modeConfig.color,
+    onMarkerClick: (id) => {
+      setSelectedId(id);
+    },
+  });
+
+  // 卡片点击 → 选中（地图 marker 高亮由 usePOIMap 同步）
+  const handleSelect = useCallback((poi: POI) => {
+    setSelectedId(poi.id);
+  }, []);
+
+  // 卡片 hover → 高亮 marker
+  const handleHover = useCallback((id: string | null) => {
+    setHighlightedId(id);
+  }, []);
+
+  // 模式切换：清空查询与筛选，重置排序为默认
+  const handleModeChange = useCallback((nextMode: MapMode) => {
+    setMode(nextMode);
+    setQuery("");
+    setFilters({});
+    setSort(getMode(nextMode).defaultSort);
+    setSelectedId(null);
+    setHighlightedId(null);
   }, []);
 
   const handleZoomIn = () => {
@@ -383,12 +438,13 @@ export function MapShell() {
           // Center map on user location
           mapInstance.current.setCenter([longitude, latitude]);
           mapInstance.current.setZoom(15);
+          setMapCenter({ lng: longitude, lat: latitude });
 
           // Add accuracy circle with real geographic radius (30m or actual GPS accuracy)
           const radiusMeters = accuracy ? Math.max(accuracy, 30) : 30;
           const circle = new window.AMap.Circle({
             center: [longitude, latitude],
-            radius: radiusMeters, // Real geographic distance in meters
+            radius: radiusMeters,
             fillColor: "#4A90E2",
             fillOpacity: 0.2,
             strokeColor: "#4A90E2",
@@ -490,6 +546,7 @@ export function MapShell() {
         )}
       </section>
 
+      {/* 左侧主导航栏（保留） */}
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`} aria-label="Map navigation">
         <button className={styles.menuButton} onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={sidebarOpen ? t('collapsSidebar', lang) : t('expandSidebar', lang)}>
           <Icon name="menu" />
@@ -511,6 +568,27 @@ export function MapShell() {
           {sidebarOpen && <div className={styles.profileCopy}><strong>Alex Kim</strong><small>Personal map</small></div>}
         </button>
       </aside>
+
+      {/* Phase 2: 二级侧控栏（右侧） */}
+      <SecondarySidebar
+        mode={mode}
+        onModeChange={handleModeChange}
+        query={query}
+        onQueryChange={setQuery}
+        filters={filters}
+        onFiltersChange={setFilters}
+        onFiltersReset={() => setFilters({})}
+        sort={sort}
+        onSortChange={setSort}
+        pois={pois}
+        loading={loading}
+        selectedId={selectedId}
+        highlightedId={highlightedId}
+        onSelect={handleSelect}
+        onHover={handleHover}
+        totalCount={pois.length}
+        lang={lang}
+      />
 
       <div className={styles.topTools}>
         {showBasemap && (
@@ -570,7 +648,7 @@ export function MapShell() {
         <div className={styles.drawerContent}>
           <span className={styles.eyebrow}>Around you</span><h1>Make the map yours.</h1><p>Explore the people, places, and ideas shaping your city.</p>
           <div className={styles.quickGrid}>{["People hiring", "Open studios", "Good coffee", "Quiet corners"].map((item) => <button key={item}>{item}<span>↗</span></button>)}</div>
-          <div className={styles.selectedPlace}><span className={styles.selectedIcon}>✦</span><div><small>Selected place</small><strong>{selectedPlace}</strong></div><button aria-label="Open selected place">→</button></div>
+          <div className={styles.selectedPlace}><span className={styles.selectedIcon}>✦</span><div><small>Selected place</small><strong>{selectedId ? pois.find(p => p.id === selectedId)?.name ?? "" : "—"}</strong></div><button aria-label="Open selected place">→</button></div>
         </div>
         <div className={styles.snapControls} aria-label="Drawer states">{(["mini", "half", "full"] as DrawerState[]).map((state) => <button key={state} className={drawer === state ? styles.snapActive : ""} onClick={() => setDrawer(state)}>{state}</button>)}</div>
       </section>

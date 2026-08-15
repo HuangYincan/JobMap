@@ -1,0 +1,156 @@
+/* POI 列表 — 二级侧控栏滚动列表 */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  overflow-y: auto;
+  padding: 4px 2px 12px;
+}
+
+/* 卡片错峰进入动画 */
+.cardSlot {
+  animation: card-enter 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: calc(var(--index, 0) * 0.05s);
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- 空状态 ---------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--muted);
+  animation: card-enter 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.emptyIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 6px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--muted);
+}
+
+.emptyIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.emptyTitle {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.emptyHint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ---------- 加载骨架 ---------- */
+
+.skeleton {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+  animation: card-enter 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: calc(var(--index, 0) * 0.05s);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 80%
+  );
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeletonLine {
+  border-radius: 6px;
+  background: rgba(120, 120, 128, 0.16);
+}
+
+.skeletonPhotos {
+  height: 64px;
+  border-radius: 10px;
+  background: rgba(120, 120, 128, 0.12);
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ---------- 暗色模式 ---------- */
+
+@media (prefers-color-scheme: dark) {
+  .skeleton {
+    background: rgba(28, 28, 30, 0.72);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .skeleton::after {
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 80%
+    );
+  }
+
+  .skeletonLine,
+  .skeletonPhotos {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ---------- 减弱动效 ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .cardSlot,
+  .skeleton,
+  .empty {
+    animation: none;
+  }
+
+  .skeleton::after {
+    animation: none;
+  }
+}
