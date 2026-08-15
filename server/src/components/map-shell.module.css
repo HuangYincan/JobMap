@@ -13,6 +13,21 @@
   position: absolute;
 }
 
+/* 隐藏高德地图版权信息和 logo，但不影响比例尺 */
+.mapCanvas :global(.amap-copyright) {
+  display: none !important;
+}
+
+.mapCanvas :global(.amap-logo) {
+  display: none !important;
+}
+
+/* 确保比例尺文字在所有底图下可见 - 黑色文字带白色描边 */
+.mapCanvas :global(.amap-scale-text) {
+  color: #000 !important;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.8) !important;
+}
+
 .mapTexture {
   background-image: radial-gradient(rgba(73, 120, 99, 0.12) 1px, transparent 1px),
     radial-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px);
@@ -122,8 +137,9 @@
   padding: 12px;
   position: absolute;
   top: 12px;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
+  transition: width 0.35s cubic-bezier(0.32, 0.72, 0, 1), background 0.2s;
   width: 58px;
+  overflow: visible;
 }
 
 .sidebarOpen {
@@ -214,17 +230,63 @@
   padding: 0 8px;
 }
 
-.sidebar:not(.sidebarOpen) .searchBox input,
-.sidebar:not(.sidebarOpen) .navItem span,
-.sidebar:not(.sidebarOpen) .profileCopy,
-.sidebar:not(.sidebarOpen) .brand {
-  display: none;
+.navItem span,
+.profileCopy,
+.brand {
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1) 0s;
+  pointer-events: none;
+  position: absolute;
+  visibility: hidden;
+}
+
+.sidebarOpen .navItem span,
+.sidebarOpen .profileCopy,
+.sidebarOpen .brand {
+  opacity: 1;
+  transition: opacity 0.25s cubic-bezier(0.32, 0.72, 0, 1) 0.1s;
+  pointer-events: auto;
+  position: static;
+  visibility: visible;
+}
+
+.sidebar:not(.sidebarOpen) .searchBox input {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+/* 侧边栏折叠状态下的 tooltip */
+.sidebar:not(.sidebarOpen) .navItem[data-tooltip]:hover::after,
+.sidebar:not(.sidebarOpen) .searchBox[data-tooltip]:hover::after,
+.sidebar:not(.sidebarOpen) .profile[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 12px;
+  padding: 6px 12px;
+  background: rgba(60, 60, 67, 0.92);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .navList {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow: visible;
+}
+
+.sidebarOpen .navList {
   overflow: auto;
 }
 
@@ -239,6 +301,18 @@
   padding: 0 10px;
   text-align: left;
   white-space: nowrap;
+  transition: padding 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sidebar:not(.sidebarOpen) .navItem {
+  justify-content: center;
+  padding: 0;
+  position: relative;
+}
+
+.sidebar:not(.sidebarOpen) .searchBox,
+.sidebar:not(.sidebarOpen) .profile {
+  position: relative;
 }
 
 .navItem:hover {
@@ -255,11 +329,6 @@
   font-weight: 600;
 }
 
-.sidebar:not(.sidebarOpen) .navItem {
-  justify-content: center;
-  padding: 0;
-}
-
 .profile {
   align-items: center;
   background: transparent;
@@ -271,6 +340,11 @@
   min-height: 52px;
   padding: 11px 4px 0;
   text-align: left;
+  transition: justify-content 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sidebar:not(.sidebarOpen) .profile {
+  justify-content: center;
 }
 
 .avatar {
@@ -308,10 +382,9 @@
   position: absolute;
   right: 12px;
   top: 12px;
-}
-
-.topTools > .toolButton {
-  margin-left: 7px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .toolButton {
@@ -320,8 +393,45 @@
   width: 44px;
 }
 
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .toolButton {
+    background: rgba(28, 28, 30, 0.72);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
 .toolButton svg {
   width: 19px;
+}
+
+/* 指北针按钮 */
+.compassButton {
+  position: relative;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+}
+
+.compassNeedle {
+  width: 26px !important;
+  height: 26px !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.compassHeading {
+  font-size: 10px;
+  font-weight: 600;
+  color: #000;
+  line-height: 1;
+  margin-top: -2px;
+}
+
+/* 深色模式下指北针文字颜色 */
+@media (prefers-color-scheme: dark) {
+  .compassHeading {
+    color: #fff;
+  }
 }
 
 .basemapLogo {

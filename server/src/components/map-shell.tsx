@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./map-shell.module.css";
+import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
 
 type DrawerState = "mini" | "half" | "full";
 
@@ -43,15 +44,23 @@ export function MapShell() {
   const markersRef = useRef<any[]>([]);
   const userMarkerRef = useRef<any>(null);
   const accuracyCircleRef = useRef<any>(null);
+  const satelliteLayerRef = useRef<any>(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
   const [selectedPlace, setSelectedPlace] = useState(places[0].name);
+  const [lang, setLang] = useState<Language>('zh');
   const [showBasemap, setShowBasemap] = useState(false);
   const [mapStyle, setMapStyle] = useState<'normal' | 'satellite' | 'whitesmoke'>('normal');
   const [zoom, setZoom] = useState(13);
   const [mapReady, setMapReady] = useState(false);
   const [userLocationZoom, setUserLocationZoom] = useState<number | null>(null);
+  const [rotation, setRotation] = useState(0);
+
+  // 初始化语言设置 - 默认英文，未来可从用户偏好读取
+  useEffect(() => {
+    setLang('en');  // 先按全英开发
+  }, []);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -113,10 +122,78 @@ export function MapShell() {
         pitch: 0,
         showLabel: true,
         mapStyle: initialMapStyle,
+        rotateEnable: false,  // 禁用默认的右键旋转
       });
 
       mapInstance.current = map;
       setMapReady(true);
+
+      // 自定义中键旋转逻辑
+      let isMiddleButtonDown = false;
+      let startRotation = 0;
+      let startPitch = 0;
+      let startX = 0;
+      let startY = 0;
+
+      const handleMouseDown = (e: MouseEvent) => {
+        if (e.button === 1) {  // 中键
+          e.preventDefault();
+          isMiddleButtonDown = true;
+          startRotation = map.getRotation();
+          startPitch = map.getPitch();
+          startX = e.clientX;
+          startY = e.clientY;
+          document.body.style.cursor = 'grab';
+        }
+      };
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (isMiddleButtonDown) {
+          e.preventDefault();
+          // X 轴：旋转角度
+          const deltaX = e.clientX - startX;
+          const rotationChange = deltaX * 0.13;  // 降低旋转灵敏度
+          const newRotation = (startRotation + rotationChange) % 360;
+
+          // Y 轴：俯仰角度（向上拖动增加俯仰，向下拖动减少俯仰）
+          const deltaY = e.clientY - startY;
+          const pitchChange = -deltaY * 0.15;  // 降低俯仰灵敏度
+          const newPitch = Math.max(0, Math.min(83, startPitch + pitchChange));  // 限制在 0-83 度
+
+          map.setRotation(newRotation);
+          map.setPitch(newPitch);
+          document.body.style.cursor = 'grabbing';
+        }
+      };
+
+      const handleMouseUp = (e: MouseEvent) => {
+        if (e.button === 1) {
+          isMiddleButtonDown = false;
+          document.body.style.cursor = '';
+        }
+      };
+
+      const handleAuxClick = (e: MouseEvent) => {
+        if (e.button === 1) {
+          e.preventDefault();
+        }
+      };
+
+      const container = mapContainer.current;
+      if (!container) return;
+      container.addEventListener('mousedown', handleMouseDown);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      container.addEventListener('auxclick', handleAuxClick);
+
+      // 清理函数
+      const cleanup = () => {
+        container.removeEventListener('mousedown', handleMouseDown);
+        container.removeEventListener('auxclick', handleAuxClick);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        darkModeQuery.removeEventListener('change', handleThemeChange);
+      };
 
       // Set initial mapStyle state based on dark mode
       setMapStyle(isDarkMode ? 'whitesmoke' : 'normal');
@@ -132,10 +209,12 @@ export function MapShell() {
       darkModeQuery.addEventListener('change', handleThemeChange);
 
       // Add AMap's built-in scale control (real, auto-updating)
+      // 移动端放左上角（避开底部抽屉），桌面端放左下角
       window.AMap.plugin(['AMap.Scale'], () => {
+        const isMobile = window.innerWidth <= 767;
         const scale = new window.AMap.Scale({
-          position: 'LB', // Left-Bottom
-          offset: new window.AMap.Pixel(70, 20), // Move right to avoid sidebar
+          position: isMobile ? 'LT' : 'LB', // 移动端左上角，桌面端左下角
+          offset: isMobile ? [12, 22] : [90, 25], // 移动端避开顶部工具栏，桌面端避开侧边栏
         });
         map.addControl(scale);
       });
@@ -161,6 +240,14 @@ export function MapShell() {
           updateUserLocationDisplay(currentZoom);
         }
       });
+
+      // 监听地图旋转变化
+      map.on("rotatechange", () => {
+        const currentRotation = map.getRotation();
+        setRotation(currentRotation);
+      });
+
+      return cleanup;
     }
 
     function addUserMarker(lng: number, lat: number, accuracy?: number) {
@@ -245,6 +332,10 @@ export function MapShell() {
         mapInstance.current.destroy();
         mapInstance.current = null;
       }
+      if (satelliteLayerRef.current) {
+        satelliteLayerRef.current.destroy();
+        satelliteLayerRef.current = null;
+      }
       markersRef.current = [];
       userMarkerRef.current = null;
       accuracyCircleRef.current = null;
@@ -261,6 +352,13 @@ export function MapShell() {
     if (mapInstance.current) {
       mapInstance.current.zoomOut();
     }
+  };
+
+  const handleResetCompass = () => {
+    if (!mapInstance.current) return;
+    // 使用动画平滑过渡到正北，同时重置俯仰角
+    mapInstance.current.setRotation(0, true, 300);  // 300ms 动画
+    mapInstance.current.setPitch(0, true, 300);
   };
 
   const handleLocate = () => {
@@ -331,13 +429,32 @@ export function MapShell() {
   const handleMapStyleChange = (style: 'normal' | 'satellite' | 'whitesmoke') => {
     if (!mapInstance.current) return;
 
-    const styleMap = {
-      normal: 'amap://styles/normal',
-      satellite: 'amap://styles/satellite',
-      whitesmoke: 'amap://styles/whitesmoke',
-    };
+    if (style === 'satellite') {
+      // 卫星图需要使用图层而不是 mapStyle
+      if (!satelliteLayerRef.current) {
+        // 创建卫星图层
+        satelliteLayerRef.current = new window.AMap.TileLayer.Satellite({
+          map: mapInstance.current,
+        });
+      } else {
+        satelliteLayerRef.current.show();
+      }
+      // 隐藏标准图层（设置透明）
+      mapInstance.current.setMapStyle('amap://styles/normal');
+    } else {
+      // Standard 和 Dark 使用 mapStyle
+      const styleMap = {
+        normal: 'amap://styles/normal',
+        whitesmoke: 'amap://styles/whitesmoke',
+      };
+      mapInstance.current.setMapStyle(styleMap[style]);
 
-    mapInstance.current.setMapStyle(styleMap[style]);
+      // 隐藏卫星图层
+      if (satelliteLayerRef.current) {
+        satelliteLayerRef.current.hide();
+      }
+    }
+
     setMapStyle(style);
     setShowBasemap(false);
   };
@@ -374,22 +491,22 @@ export function MapShell() {
       </section>
 
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`} aria-label="Map navigation">
-        <button className={styles.menuButton} onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}>
+        <button className={styles.menuButton} onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={sidebarOpen ? t('collapsSidebar', lang) : t('expandSidebar', lang)}>
           <Icon name="menu" />
         </button>
         {sidebarOpen && <div className={styles.brand}><span className={styles.brandMark}>◉</span>Domain</div>}
-        <div className={styles.searchBox}>
+        <div className={styles.searchBox} data-tooltip={t('search', lang)}>
           <Icon name="search" />
-          <input type="search" placeholder="Search places" />
+          <input type="search" placeholder={t('searchPlaceholder', lang)} />
         </div>
         <nav className={styles.navList}>
-          <button className={styles.navItem}><Icon name="layers" /><span>Layers</span></button>
-          <button className={styles.navItem}><Icon name="bookmark" /><span>Saved</span></button>
-          <button className={styles.navItem}><Icon name="grid" /><span>Explore</span></button>
-          <button className={styles.navItem}><Icon name="history" /><span>Recent</span></button>
-          <button className={styles.navItem}><Icon name="settings" /><span>Settings</span></button>
+          <button className={styles.navItem} data-tooltip={t('layers', lang)}><Icon name="layers" /><span>{t('layers', lang)}</span></button>
+          <button className={styles.navItem} data-tooltip={t('saved', lang)}><Icon name="bookmark" /><span>{t('saved', lang)}</span></button>
+          <button className={styles.navItem} data-tooltip={t('explore', lang)}><Icon name="grid" /><span>{t('explore', lang)}</span></button>
+          <button className={styles.navItem} data-tooltip={t('recent', lang)}><Icon name="history" /><span>{t('recent', lang)}</span></button>
+          <button className={styles.navItem} data-tooltip={t('settings', lang)}><Icon name="settings" /><span>{t('settings', lang)}</span></button>
         </nav>
-        <button className={styles.profile} aria-label="AK Alex Kim Personal map">
+        <button className={styles.profile} aria-label="AK Alex Kim Personal map" data-tooltip={t('profile', lang)}>
           <div className={styles.avatar}>AK</div>
           {sidebarOpen && <div className={styles.profileCopy}><strong>Alex Kim</strong><small>Personal map</small></div>}
         </button>
@@ -398,13 +515,13 @@ export function MapShell() {
       <div className={styles.topTools}>
         {showBasemap && (
           <div className={styles.basemapCard}>
-            <span className={styles.eyebrow}>Map style</span><strong>Choose your view</strong>
+            <span className={styles.eyebrow}>{t('mapStyle', lang)}</span><strong>{t('chooseView', lang)}</strong>
             <button
               className={mapStyle === 'normal' ? styles.activeMap : ''}
               onClick={() => handleMapStyleChange('normal')}
             >
               <div className={`${styles.mapThumb} ${styles.thumb1}`} />
-              Standard
+              {t('standard', lang)}
               {mapStyle === 'normal' && <span className={styles.check}>✓</span>}
             </button>
             <button
@@ -412,7 +529,7 @@ export function MapShell() {
               onClick={() => handleMapStyleChange('satellite')}
             >
               <div className={`${styles.mapThumb} ${styles.thumb2}`} />
-              Satellite
+              {t('satellite', lang)}
               {mapStyle === 'satellite' && <span className={styles.check}>✓</span>}
             </button>
             <button
@@ -420,7 +537,7 @@ export function MapShell() {
               onClick={() => handleMapStyleChange('whitesmoke')}
             >
               <div className={`${styles.mapThumb} ${styles.thumb3}`} />
-              Dark
+              {t('dark', lang)}
               {mapStyle === 'whitesmoke' && <span className={styles.check}>✓</span>}
             </button>
           </div>
@@ -428,7 +545,12 @@ export function MapShell() {
         <button className={styles.toolButton} onClick={() => setShowBasemap(!showBasemap)} aria-label="Choose map style" aria-pressed={showBasemap}>
           <div className={styles.basemapLogo}>◌</div>
         </button>
-        <button className={styles.toolButton} aria-label="Reset compass"><Icon name="compass" /></button>
+        <button className={`${styles.toolButton} ${styles.compassButton}`} onClick={handleResetCompass} aria-label="Reset compass">
+          <svg className={styles.compassNeedle} viewBox="0 0 20 20" width="28" height="28" style={{ transform: `rotate(${rotation}deg)` }}>
+            <path d="M10 1 L12 10 L10 8.5 L8 10 Z" fill="#ff3b30" />
+            <path d="M10 19 L8 10 L10 11.5 L12 10 Z" fill="#e5e5ea" />
+          </svg>
+        </button>
       </div>
 
       <div className={styles.mapControls}>
@@ -437,14 +559,14 @@ export function MapShell() {
           <span>{zoom}</span>
           <button onClick={handleZoomOut} aria-label="Zoom out">−</button>
         </div>
-        <button className={`${styles.toolButton} ${styles.locateButton}`} onClick={handleLocate} aria-label="Find my location">
+        <button className={`${styles.toolButton} ${styles.locateButton}`} onClick={handleLocate} aria-label={t('locateMe', lang)}>
           <Icon name="locate" />
         </button>
       </div>
 
       <section className={`${styles.mobileDrawer} ${drawer === "mini" ? styles.drawerMini : drawer === "half" ? styles.drawerHalf : styles.drawerFull}`} aria-label="Places drawer">
         <button className={styles.drawerHandle} onClick={cycleDrawer} aria-label={`Expand drawer from ${drawer} state`}><span /></button>
-        <div className={styles.mobileSearch}><Icon name="search" /><input type="search" placeholder="Search places or addresses" /></div>
+        <div className={styles.mobileSearch}><Icon name="search" /><input type="search" placeholder={t('searchPlaceholder', lang)} /></div>
         <div className={styles.drawerContent}>
           <span className={styles.eyebrow}>Around you</span><h1>Make the map yours.</h1><p>Explore the people, places, and ideas shaping your city.</p>
           <div className={styles.quickGrid}>{["People hiring", "Open studios", "Good coffee", "Quiet corners"].map((item) => <button key={item}>{item}<span>↗</span></button>)}</div>

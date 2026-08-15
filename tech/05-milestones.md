@@ -6,7 +6,11 @@
 
 ## Current Baseline
 
-P0 is complete as a **documentation and repository scaffold**. Phase 1 is **in progress**: the importer project, PostGIS migration runner, SQL migrations, declarative plugin/import validation, and an Apple-Maps-inspired frontend shell now exist on `feature/phase-1-platform-baseline`. The importer unit tests pass (11), the frontend typechecks/tests/builds, and a browser smoke check confirmed the desktop sidebar and mobile three-state drawer render and switch correctly. **Live PostGIS verification is still blocked** until Docker/PostGIS is available.
+P0 is complete as a **documentation and repository scaffold**. Phase 1 is **in progress**: the importer project, PostGIS migration runner, SQL migrations, declarative plugin/import validation, and an Apple-Maps-inspired frontend shell now exist on `feature/phase-1-platform-baseline`. 
+
+**Frontend status (2026-08-15):** The map shell is complete and browser-verified. All core interactions work (zoom, compass, locate, middle-button 3D control), sidebar animations are polished with Apple-style transitions, responsive layouts proven on desktop and mobile viewports, dark mode functional, i18n system operational. See `tech/00-phase1-frontend-completion.md` for full implementation evidence.
+
+**Backend status:** The importer unit tests pass (11), migration runner exists. **Live PostGIS verification is still blocked** until Docker/PostGIS is available.
 
 ## Delivery Sequence
 
@@ -40,11 +44,67 @@ No calendar release date is committed. Each phase is estimated only after its en
 - Migrations run transactionally against an empty PostGIS database and are tested in CI. **Pending live DB**.
 - Cross-user/map access is denied by tested authorization rules. **Unit-tested**; DB enforcement pending.
 - No external source acquisition occurs during P1. **True.**
-- Frontend shell exists and is verified in-browser (user authorized ASCII gate relaxation for this phase). **Done** — see Phase 3 for full interface evidence.
+- Frontend shell exists and is verified in-browser (user authorized ASCII gate relaxation for this phase). **Complete (2026-08-15)** — Apple Maps-inspired responsive shell with polished animations, all map controls functional, dark mode working, i18n operational. Full evidence in `tech/00-phase1-frontend-completion.md`.
 
-## Phase 2: Recruitment Vertical Slice
+## Phase 2: Multi-Mode System + POI Display + Search & Filter
 
-P2 is limited to the approved `xiaozhao-radar` import candidate and one recruitment-domain read path. It must capture attribution, original URL, retrieval time, content hash/version, parser version, and import result. BOSS, Xiaohongshu, resume parsing, recommendation, and any PII remain out of scope.
+**Scope:** Core differentiation features - multi-mode map system with Domain and Internship modes
+
+**Duration:** 4-6 weeks (5 sprints)
+
+**Key Features:**
+1. **Multi-Mode System** - Mode switching architecture, Domain + Internship modes
+2. **POI System** - AMap POI integration + recruitment data import
+3. **Secondary Sidebar** - Apple-style glassmorphism cards with list and detail views
+4. **Search & Filter** - Full-text search, multi-dimensional filters, spatial queries
+5. **Map Interaction** - Card-map linkage (hover highlight, click fly-to, marker sync)
+
+**Sprint Breakdown:**
+- **Sprint 1 (Week 1-2):** Multi-mode architecture + API foundation + PostgreSQL/PostGIS setup
+- **Sprint 2 (Week 2-3):** Domain mode + AMap POI integration + search + sidebar list view
+- **Sprint 3 (Week 3-4):** Internship mode + recruitment data import + filter system
+- **Sprint 4 (Week 4-5):** Detail view + advanced search + sorting + spatial filters
+- **Sprint 5 (Week 5-6):** Mobile adaptation + performance optimization + testing
+
+**Data Requirements:**
+- Domain mode: ~10K POI (AMap API, Hangzhou)
+- Internship mode: ~100 companies, ~500 positions (curated public data)
+- Update frequency: Weekly (Domain), Daily (Internship)
+
+**Technical Stack:**
+- Frontend: Next.js 15.5 + React 19 + TypeScript + CSS Modules
+- Backend: Next.js API Routes + PostgreSQL 16 + PostGIS 3.4
+- Map: AMap JavaScript API v2.0
+- Testing: Jest + React Testing Library + Playwright
+
+**Success Criteria:**
+- [ ] 2 modes functional (Domain + Internship)
+- [ ] Search with autocomplete working
+- [ ] Filters: 5+ dimensions per mode
+- [ ] Secondary sidebar with list + detail views
+- [ ] Card-map linkage smooth
+- [ ] Mobile responsive
+- [ ] Performance: LCP < 2.5s, API P95 < 500ms
+- [ ] Test coverage > 70%
+- [ ] Accessibility: WCAG 2.1 AA baseline
+
+**Deliverables:**
+- Multi-mode system architecture (`tech/08-multi-mode-system.md`)
+- Secondary sidebar design spec (`tech/09-secondary-sidebar.md`)
+- Search & filter system design (`tech/10-search-filter.md`)
+- Phase 2 implementation plan (`tech/11-phase2-plan.md`)
+- Working application with 2 modes
+- API documentation
+- Test suite
+
+**Out of Scope (deferred to P3+):**
+- College/Overseas modes
+- User authentication (optional in P2)
+- Favorites/bookmarks
+- Application tracking
+- Data comparison
+- PII handling
+- Recommendation system
 
 ## Deferred Decisions
 
