@@ -234,16 +234,12 @@ class POIMarkerControllerImpl implements POIMarkerController {
 
     const icon = this.buildIcon(poi, state);
     const offset = this.buildOffset(poi, state);
-    const labelText = this.opts.getLabel?.(poi);
 
     const marker = new this.amap.Marker({
       position: [poi.location.lng, poi.location.lat],
       icon,
       offset,
-      title: poi.name,
-      ...(labelText
-        ? { label: { content: labelText, direction: 'top', offset: new this.amap.Pixel(0, -6) } }
-        : {}),
+      // 不设 label（避免所有 marker 名称堆积）；名称气泡由 applyStyle 按状态动态添加
       map: this.map,
     });
 
@@ -256,6 +252,10 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.markers.set(poi.id, marker);
     this.poiById.set(poi.id, poi);
     this.markerStates.set(poi.id, state);
+    // 初始状态非 normal 时立即显示名称气泡
+    if (state !== 'normal') {
+      this.applyLabel(marker, poi, state);
+    }
   }
 
   /** 移除指定 id 的标记（从地图上摘除并清空内部记录）。 */
@@ -269,7 +269,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.markerStates.delete(id);
   }
 
-  /** 更新已有标记的视觉样式（图标 / 锚点偏移 / zIndex）。 */
+  /** 更新已有标记的视觉样式（图标 / 锚点偏移 / zIndex / label 可见性）。 */
   private applyStyle(marker: any, poi: POI, state: MarkerState): void {
     if (!this.amap || !marker) return;
     if (this.markerStates.get(poi.id) === state) return;
@@ -277,6 +277,26 @@ class POIMarkerControllerImpl implements POIMarkerController {
     marker.setIcon(this.buildIcon(poi, state));
     marker.setOffset(this.buildOffset(poi, state));
     marker.setzIndex(this.zIndexFor(state, poi));
+    // 名称 label 只在 selected / highlighted 显示（normal 移除）
+    this.applyLabel(marker, poi, state);
+  }
+
+  /**
+   * 管理 marker 名称气泡。
+   * - selected / highlighted：setLabel 显示名称（地图内元素，层级正确）
+   * - normal：移除 label，避免地图上名称过密
+   */
+  private applyLabel(marker: any, poi: POI, state: MarkerState): void {
+    if (typeof marker.setLabel !== 'function') return;
+    if (state === 'normal') {
+      marker.setLabel(null);
+      return;
+    }
+    marker.setLabel({
+      content: this.opts.getLabel?.(poi) || poi.name,
+      direction: 'top',
+      offset: new this.amap.Pixel(0, -8),
+    });
   }
 
   /** 计算指定状态下的 zIndex：选中 > 高亮 > 普通（招聘徽章略高于图钉）。 */
@@ -345,7 +365,6 @@ class POIMarkerControllerImpl implements POIMarkerController {
       const existing = this.markers.get(poi.id);
       if (existing) {
         existing.setPosition([poi.location.lng, poi.location.lat]);
-        if (poi.name) existing.setTitle(poi.name);
         this.poiById.set(poi.id, poi);
         const state: MarkerState =
           poi.id === this.selectedId

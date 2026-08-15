@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./map-shell.module.css";
-import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
+import { t, type Language } from "@/lib/i18n";
 import type { FilterState, MapMode, POI } from "@/lib/types";
 import { getMode } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
-import { loadAMap } from "@/lib/amap-api";
-import { SecondarySidebar } from "./secondary-sidebar";
+import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
+import { SecondarySidebar, type SearchSuggestion } from "./secondary-sidebar";
 import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
@@ -61,6 +61,8 @@ export function MapShell() {
   const [error, setError] = useState<string | null>(null);
   // 左侧结果面板显隐（点击导航"探索"展开）
   const [exploreOpen, setExploreOpen] = useState(false);
+  // 搜索建议（AutoComplete）
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
 
   const modeConfig = getMode(mode);
 
@@ -91,23 +93,22 @@ export function MapShell() {
     function initMap() {
       if (!mapContainer.current || mapInstance.current) return;
 
-      // Try to get user location first, then initialize map
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { longitude, latitude } = position.coords;
-            createMap([longitude, latitude], 15);
-            setMapCenter({ lng: longitude, lat: latitude });
-            addUserMarker(longitude, latitude, position.coords.accuracy);
-          },
-          () => {
-            // Fallback to default location if geolocation fails
+      // 用 AMap.Geolocation 获取当前位置（融合 H5/IP/SDK 定位，自带精度圈 + 蓝点）
+      getCurrentPosition()
+        .then((loc) => {
+          if (!loc) {
+            // 定位失败 → 默认中心（杭州）
             createMap([120.15, 30.27], 13);
+            return;
           }
-        );
-      } else {
-        createMap([120.15, 30.27], 13);
-      }
+          const { lng, lat } = loc.position;
+          createMap([lng, lat], 15);
+          setMapCenter({ lng, lat });
+          // 由 AMap.Geolocation 插件负责绘制精度圈 + 蓝点（见 createMap 内注册）
+        })
+        .catch(() => {
+          createMap([120.15, 30.27], 13);
+        });
     }
 
     function createMap(center: [number, number], zoom: number) {
@@ -223,11 +224,6 @@ export function MapShell() {
       map.on("zoomchange", () => {
         const currentZoom = map.getZoom();
         setZoom(Math.round(currentZoom));
-
-        // Update user location display based on zoom level
-        if (userMarkerRef.current) {
-          updateUserLocationDisplay(currentZoom);
-        }
       });
 
       // 监听地图旋转变化
@@ -245,73 +241,6 @@ export function MapShell() {
       });
 
       return cleanup;
-    }
-
-    function addUserMarker(lng: number, lat: number, accuracy?: number) {
-      if (!mapInstance.current) return;
-
-      const currentZoom = mapInstance.current.getZoom();
-      const showCircle = currentZoom >= 15;
-
-      const radiusMeters = accuracy ? Math.max(accuracy, 30) : 30;
-
-      const circle = new window.AMap.Circle({
-        center: [lng, lat],
-        radius: radiusMeters,
-        fillColor: "#4A90E2",
-        fillOpacity: 0.2,
-        strokeColor: "#4A90E2",
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        map: mapInstance.current,
-      });
-      accuracyCircleRef.current = circle;
-
-      if (!showCircle) {
-        circle.hide();
-      }
-
-      const iconSize = showCircle ? 20 : 14;
-      const iconImage = showCircle
-        ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E"
-        : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='6' fill='%234A90E2'/%3E%3Ccircle cx='7' cy='7' r='2' fill='white'/%3E%3C/svg%3E";
-
-      const userMarker = new window.AMap.Marker({
-        position: [lng, lat],
-        icon: new window.AMap.Icon({
-          size: new window.AMap.Size(iconSize, iconSize),
-          image: iconImage,
-        }),
-        title: `Your location (±${radiusMeters}m)`,
-        map: mapInstance.current,
-        zIndex: 1000,
-      });
-      userMarkerRef.current = userMarker;
-    }
-
-    function updateUserLocationDisplay(currentZoom: number) {
-      if (!mapInstance.current || !userMarkerRef.current) return;
-
-      const showCircle = currentZoom >= 15;
-      const iconSize = showCircle ? 20 : 14;
-      const iconImage = showCircle
-        ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E"
-        : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='6' fill='%234A90E2'/%3E%3Ccircle cx='7' cy='7' r='2' fill='white'/%3E%3C/svg%3E";
-
-      userMarkerRef.current.setIcon(
-        new window.AMap.Icon({
-          size: new window.AMap.Size(iconSize, iconSize),
-          image: iconImage,
-        })
-      );
-
-      if (accuracyCircleRef.current) {
-        if (showCircle) {
-          accuracyCircleRef.current.show();
-        } else {
-          accuracyCircleRef.current.hide();
-        }
-      }
     }
 
     return () => {
@@ -344,6 +273,7 @@ export function MapShell() {
           filters: Object.keys(filters).length ? filters : undefined,
           sort: sort || undefined,
           center: mapCenter,
+          zoom,
         });
         if (!cancelled) {
           setPois(data);
@@ -368,7 +298,8 @@ export function MapShell() {
     };
     // mapReady：地图初始化完成（= AMap 就绪）后重新拉取真实 POI，
     // 避免首次加载时 AMap 未就绪而回退到 seed 数据。
-  }, [mode, query, filters, sort, mapCenter, mapReady]);
+    // zoom：缩放级别变化 → 视口搜索半径自适应（制图学策略）。
+  }, [mode, query, filters, sort, mapCenter, zoom, mapReady]);
 
   // ---- 地图联动 ----
   usePOIMap(mapInstance.current, {
@@ -399,6 +330,49 @@ export function MapShell() {
     setSort(getMode(nextMode).defaultSort);
     setSelectedId(null);
     setHighlightedId(null);
+    setSuggestions([]);
+  }, []);
+
+  // ---- 搜索建议（AutoComplete）----
+  // 输入变化时拉取建议（防抖 200ms）
+  useEffect(() => {
+    if (!query.trim() || query.trim().length < 1) {
+      setSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const tips = await fetchSuggestions(query.trim(), '杭州');
+        if (!cancelled) {
+          setSuggestions(
+            tips.map((tip) => ({
+              id: tip.id,
+              name: tip.name,
+              subtitle: [tip.district, tip.address].filter(Boolean).join(' · ') || tip.type,
+              location: tip.location,
+            }))
+          );
+        }
+      } catch {
+        if (!cancelled) setSuggestions([]);
+      }
+    }, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  // 选择建议 → 定位到该地点 + 设为搜索词
+  const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
+    if (s.location && mapInstance.current) {
+      mapInstance.current.setCenter([s.location.lng, s.location.lat]);
+      mapInstance.current.setZoom(16);
+      setMapCenter({ lng: s.location.lng, lat: s.location.lat });
+    }
+    setQuery(s.name);
+    setSuggestions([]);
   }, []);
 
   const handleZoomIn = () => {
@@ -423,67 +397,25 @@ export function MapShell() {
   const handleLocate = () => {
     if (!mapInstance.current) return;
 
-    // Try to get user's real location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { longitude, latitude, accuracy } = position.coords;
-
-          // Remove old user marker and accuracy circle if exists
-          if (userMarkerRef.current) {
-            userMarkerRef.current.setMap(null);
-            userMarkerRef.current = null;
-          }
-          if (accuracyCircleRef.current) {
-            accuracyCircleRef.current.setMap(null);
-            accuracyCircleRef.current = null;
-          }
-
-          // Center map on user location
-          mapInstance.current.setCenter([longitude, latitude]);
-          mapInstance.current.setZoom(15);
-          setMapCenter({ lng: longitude, lat: latitude });
-
-          // Add accuracy circle with real geographic radius (30m or actual GPS accuracy)
-          const radiusMeters = accuracy ? Math.max(accuracy, 30) : 30;
-          const circle = new window.AMap.Circle({
-            center: [longitude, latitude],
-            radius: radiusMeters,
-            fillColor: "#4A90E2",
-            fillOpacity: 0.2,
-            strokeColor: "#4A90E2",
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-            map: mapInstance.current,
-          });
-          accuracyCircleRef.current = circle;
-
-          // Create a new user location marker
-          const userMarker = new window.AMap.Marker({
-            position: [longitude, latitude],
-            icon: new window.AMap.Icon({
-              size: new window.AMap.Size(20, 20),
-              image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E",
-            }),
-            title: `Your location (±${radiusMeters}m)`,
-            map: mapInstance.current,
-            zIndex: 1000,
-          });
-
-          userMarkerRef.current = userMarker;
-        },
-        (error) => {
-          console.warn("Geolocation failed, returning to default center:", error.message);
-          // Fallback to default center
+    // 用 AMap.Geolocation 定位（自带精度圈 + 蓝点，无需手写 marker）
+    getCurrentPosition()
+      .then((loc) => {
+        if (!loc) {
+          console.warn("Geolocation failed, returning to default center");
           mapInstance.current.setCenter([120.15, 30.27]);
           mapInstance.current.setZoom(13);
+          return;
         }
-      );
-    } else {
-      // Browser doesn't support geolocation, fallback
-      mapInstance.current.setCenter([120.15, 30.27]);
-      mapInstance.current.setZoom(13);
-    }
+        const { lng, lat } = loc.position;
+        mapInstance.current.setCenter([lng, lat]);
+        mapInstance.current.setZoom(15);
+        setMapCenter({ lng, lat });
+      })
+      .catch((err) => {
+        console.warn("Geolocation error:", err);
+        mapInstance.current.setCenter([120.15, 30.27]);
+        mapInstance.current.setZoom(13);
+      });
   };
 
   const handleMapStyleChange = (style: 'normal' | 'satellite' | 'whitesmoke') => {
@@ -603,6 +535,9 @@ export function MapShell() {
         totalCount={pois.length}
         lang={lang}
         onClose={() => setExploreOpen(false)}
+        suggestions={suggestions}
+        onSelectSuggestion={handleSelectSuggestion}
+        shifted={sidebarOpen}
       />
       )}
 

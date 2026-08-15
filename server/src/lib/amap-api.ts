@@ -20,7 +20,7 @@ declare global {
 const AMAP_URL = 'https://webapi.amap.com/maps?v=2.0&key=';
 const SCRIPT_ID = 'amap-jsapi-script';
 /** 随主脚本预加载的插件（v2.0 支持 URL plugin 参数，避免 AMap.plugin 时序竞态） */
-const AMAP_PLUGINS = 'AMap.PlaceSearch';
+const AMAP_PLUGINS = 'AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation';
 
 /** 加载状态缓存，避免重复注入 */
 let loadPromise: Promise<any> | null = null;
@@ -323,4 +323,217 @@ export async function searchNearbyPOIs(
   maxPages = 4
 ): Promise<{ pois: DomainPOI[]; total: number }> {
   return searchPOI({ keyword: category, center, radius, pageSize: 25 }, maxPages);
+}
+
+// ============================================================
+// AutoComplete — 搜索建议（tech/10-search-filter.md + 高德 autocomplete）
+// ============================================================
+
+/** 搜索建议项 */
+export interface AmapSuggestion {
+  /** 高德 POI id（用于后续定位） */
+  id?: string;
+  /** 名称 */
+  name: string;
+  /** 分类 */
+  type?: string;
+  /** 经纬度（高德 POI 建议通常带，用于选中后定位） */
+  location?: { lng: number; lat: number };
+  /** 地址描述 */
+  address?: string;
+  /** 城市 */
+  city?: string[];
+  /** 区县 */
+  district?: string;
+}
+
+/**
+ * 搜索建议（AutoComplete）。
+ * 返回匹配的 POI 建议列表；无结果或失败返回空数组。
+ */
+export async function fetchSuggestions(
+  keyword: string,
+  city = '杭州'
+): Promise<AmapSuggestion[]> {
+  if (!keyword.trim()) return [];
+  const AMap = await loadAMap();
+  await waitForPlugin(AMap, 'AutoComplete');
+
+  return new Promise((resolve) => {
+    let auto: any;
+    try {
+      auto = new AMap.AutoComplete({ city });
+    } catch {
+      resolve([]);
+      return;
+    }
+
+    auto.search(keyword, (status: string, result: any) => {
+      if (status === 'complete' && Array.isArray(result?.tips)) {
+        resolve(
+          result.tips
+            .filter((tip: any) => tip?.name)
+            .map((tip: any): AmapSuggestion => {
+              // 解析 "lng,lat" 字符串（AutoComplete 建议通常带经纬度）
+              let location: { lng: number; lat: number } | undefined;
+              if (typeof tip.location === 'string' && tip.location.includes(',')) {
+                const [lngStr, latStr] = tip.location.split(',');
+                const lng = parseFloat(lngStr);
+                const lat = parseFloat(latStr);
+                if (!isNaN(lng) && !isNaN(lat)) location = { lng, lat };
+              }
+              return {
+                id: tip.id,
+                name: tip.name,
+                type: tip.typecode ? tip.type?.split(';')[0] : tip.type,
+                location,
+                address: tip.address,
+                city: tip.cityname ? [tip.cityname] : undefined,
+                district: tip.adname,
+              };
+            })
+            .slice(0, 10)
+        );
+      } else {
+        resolve([]);
+      }
+    });
+    auto.on('error', () => resolve([]));
+  });
+}
+
+// ============================================================
+// Geolocation — 定位（精度圈 + 蓝点）
+// ============================================================
+
+/** 定位结果 */
+export interface GeocodedPosition {
+  /** 经纬度 */
+  position: { lng: number; lat: number };
+  /** 精度（米） */
+  accuracy?: number;
+  /** 是否转换到高德坐标 */
+  converted?: boolean;
+  /** 格式化地址（needAddress 时） */
+  address?: string;
+  /** 状态信息 */
+  info?: string;
+}
+
+/**
+ * 获取当前位置（AMap.Geolocation 插件）。
+ * - 融合浏览器定位 / IP 定位 / SDK 辅助
+ * - 自带精度圈 + 蓝点显示
+ * 返回 null 表示定位失败（未授权 / 超时 / 不可用）。
+ */
+export async function getCurrentPosition(): Promise<GeocodedPosition | null> {
+  const AMap = await loadAMap();
+  await waitForPlugin(AMap, 'Geolocation');
+
+  return new Promise((resolve) => {
+    let geolocation: any;
+    try {
+      geolocation = new AMap.Geolocation({
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 30000,
+        convert: true,
+        needAddress: true,
+        showButton: false,
+        showCircle: true,
+        showMarker: true,
+        zoomToAccuracy: false,
+        panToLocation: false,
+      });
+    } catch {
+      resolve(null);
+      return;
+    }
+
+    geolocation.getCurrentPosition((status: string, result: any) => {
+      if (status === 'complete' && result?.position) {
+        const pos = result.position;
+        resolve({
+          position: {
+            lng: typeof pos.getLng === 'function' ? pos.getLng() : pos.lng,
+            lat: typeof pos.getLat === 'function' ? pos.getLat() : pos.lat,
+          },
+          accuracy: result.accuracy,
+          converted: !!result.isConverted,
+          address: result.formattedAddress,
+          info: result.info,
+        });
+      } else {
+        resolve(null);
+      }
+    });
+  });
+}
+
+// ============================================================
+// 视口 POI 搜索 — 按缩放层级 + 重要性均匀铺满
+// ============================================================
+
+/** 高德 POI 分类编码（主分类） */
+export const POI_CATEGORIES = [
+  '餐饮服务',       // 050000
+  '购物服务',       // 060000
+  '风景名胜',       // 110000
+  '商务住宅',       // 120000
+  '科教文化服务',   // 140000
+  '交通设施服务',   // 150000
+  '金融保险服务',   // 160000
+  '体育休闲服务',   // 080000
+  '医疗保健服务',   // 090000
+  '住宿服务',       // 100000
+  '政府机构及社会团体', // 170000
+  '公司企业',       // 070000
+] as const;
+
+/**
+ * 视口 POI 搜索（制图学策略）。
+ * - 按当前 zoom 确定搜索半径：zoom 大 → 半径小、更密集；zoom 小 → 半径大、覆盖广
+ * - 按重要性筛选：高德搜索按综合权重排序（越重要的越靠前），取每分类前 N
+ * - 多分类并行搜索 → 合并去重 → 按评分降序
+ *
+ * @param center 视口中心
+ * @param zoom 当前缩放级别（决定半径与数量）
+ * @param categories 分类列表；缺省用全部主分类
+ * @returns 均匀铺满视口的 POI（合并去重、重要性优先）
+ */
+export async function searchViewportPOIs(
+  center: POILocation,
+  zoom: number,
+  categories: readonly string[] = POI_CATEGORIES
+): Promise<DomainPOI[]> {
+  // 半径随 zoom 变化：13 级约 5km，15 级约 2km，17 级约 800m
+  const radius = Math.max(800, Math.round(50000 / Math.pow(2, zoom - 10)));
+  // 每分类取的数量随 zoom：看全城时每类少取（重要性前），放大时每类多取
+  const perCategoryPages = zoom <= 13 ? 1 : zoom <= 15 ? 2 : 3;
+  const pageSize = 25;
+
+  const results = await Promise.all(
+    categories.slice(0, 12).map((category) =>
+      searchPOI({ keyword: category, center, radius, pageSize }, perCategoryPages)
+    )
+  );
+
+  // 合并去重（按 id），保留高德返回顺序（= 重要性排序）
+  const seen = new Set<string>();
+  const merged: DomainPOI[] = [];
+  for (const { pois } of results) {
+    for (const poi of pois) {
+      if (seen.has(poi.id)) continue;
+      seen.add(poi.id);
+      merged.push(poi);
+    }
+  }
+
+  // 按评分降序（评分越高越重要），无评分的放后面
+  return merged.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+}
+
+/** 根据分类编码返回中文分类名（兼容旧调用） */
+export function categoryName(category: string): string {
+  return category;
 }

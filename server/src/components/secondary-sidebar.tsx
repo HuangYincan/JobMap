@@ -24,6 +24,14 @@ import { getMode } from "@/lib/modes";
 import type { FilterState, MapMode, POI } from "@/lib/types";
 import styles from "./secondary-sidebar.module.css";
 
+/** 搜索建议（AutoComplete 结果的 UI 形态） */
+export interface SearchSuggestion {
+  id?: string;
+  name: string;
+  subtitle?: string;
+  location?: { lng: number; lat: number };
+}
+
 export interface SecondarySidebarProps {
   /** 当前模式 */
   mode: MapMode;
@@ -61,6 +69,14 @@ export interface SecondarySidebarProps {
   lang?: Language;
   /** 面板关闭回调（点击关闭按钮 / 外部） */
   onClose?: () => void;
+  /** 搜索建议列表（AutoComplete 结果） */
+  suggestions?: SearchSuggestion[];
+  /** 选择建议回调（选中后定位到该地点） */
+  onSelectSuggestion?: (s: SearchSuggestion) => void;
+  /** 搜索框获取焦点回调（触发拉取建议） */
+  onSearchFocus?: () => void;
+  /** 左侧主导航是否已展开（展开时面板右移避开） */
+  shifted?: boolean;
 }
 
 export function SecondarySidebar({
@@ -82,13 +98,21 @@ export function SecondarySidebar({
   totalCount,
   lang = "zh",
   onClose,
+  suggestions,
+  onSelectSuggestion,
+  onSearchFocus,
+  shifted = false,
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const config = getMode(mode);
 
   return (
-    <aside className={styles.sidebar} aria-label="POI 详情侧栏">
+    <aside
+      className={`${styles.sidebar} ${shifted ? styles.shifted : ""}`}
+      aria-label="POI 详情侧栏"
+    >
       {/* 顶部：标题栏 + 模式切换 */}
       <div className={styles.headerBar}>
         <div className={styles.modeBar}>
@@ -109,41 +133,81 @@ export function SecondarySidebar({
 
       {/* 搜索框 */}
       <div className={styles.searchRow}>
-        <div className={styles.searchBox}>
-          <svg
-            className={styles.searchIcon}
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
-          <input
-            ref={searchRef}
-            type="search"
-            className={styles.searchInput}
-            placeholder={config.searchPlaceholder}
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            aria-label={t("search", lang)}
-          />
-          {query && (
-            <button
-              className={styles.clearButton}
-              onClick={() => {
-                onQueryChange("");
-                searchRef.current?.focus();
-              }}
-              aria-label={lang === "zh" ? "清空搜索" : "Clear search"}
+        <div className={styles.searchWrap}>
+          <div className={styles.searchBox}>
+            <svg
+              className={styles.searchIcon}
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
             >
-              ×
-            </button>
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              ref={searchRef}
+              type="search"
+              className={styles.searchInput}
+              placeholder={config.searchPlaceholder}
+              value={query}
+              onChange={(e) => onQueryChange(e.target.value)}
+              onFocus={() => {
+                setShowSuggestions(true);
+                onSearchFocus?.();
+              }}
+              onBlur={() => {
+                // 延迟关闭，允许点击建议项
+                setTimeout(() => setShowSuggestions(false), 150);
+              }}
+              aria-label={t("search", lang)}
+              aria-expanded={showSuggestions}
+            />
+            {query && (
+              <button
+                className={styles.clearButton}
+                onClick={() => {
+                  onQueryChange("");
+                  searchRef.current?.focus();
+                }}
+                aria-label={lang === "zh" ? "清空搜索" : "Clear search"}
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* 搜索建议下拉（AutoComplete） */}
+          {showSuggestions && suggestions && suggestions.length > 0 && (
+            <ul className={styles.suggestionList} role="listbox" aria-label="Search suggestions">
+              {suggestions.map((s, i) => (
+                <li key={`${s.id || s.name}-${i}`} role="option">
+                  <button
+                    className={styles.suggestionItem}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onSelectSuggestion?.(s);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    <span className={styles.suggestionIcon} aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M12 21s-7-5.6-7-11a7 7 0 1 1 14 0c0 5.4-7 11-7 11Z" />
+                        <circle cx="12" cy="10" r="2.5" />
+                      </svg>
+                    </span>
+                    <span className={styles.suggestionText}>
+                      <span className={styles.suggestionName}>{s.name}</span>
+                      {s.subtitle && <span className={styles.suggestionSub}>{s.subtitle}</span>}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
