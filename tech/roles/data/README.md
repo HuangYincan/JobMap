@@ -1,24 +1,31 @@
-# 数据文档
+# Data Role Records
 
-## 数据源清单(data-sources.md)
+> **状态：角色记录模板；子文件仅在有真实证据时创建。最后审查：2026-08-15**
 
-记录所有数据来源:
-- 校招雷达(xiaozhao.me)
-- BOSS 直聘
-- 小红书
-- 官网 ATS 系统
 
-## ETL 管道(etl/)
+> **Status:** current data-governance contract
+> **Last reviewed:** 2026-08-15
 
-每个数据源的 ETL 流程文档:
-- 数据获取(爬虫/API)
-- 数据清洗(去重/标准化)
-- 数据加载(upsert)
+## Source Registry Policy
 
-## 数据质量报告(data-quality.md)
+No importer or crawler is implemented yet. Every source must receive a review record before acquisition code is written or scheduled. The record must state: purpose, fields, access method, authorization/license/ToS basis, robots status, rate limit, PII classification, retention and deletion rule, attribution, refresh target, quality checks, owner, review date, and kill-switch condition.
 
-定期检查数据质量:
-- 完整性(缺失字段比例)
-- 准确性(地理编码成功率)
-- 时效性(数据更新频率)
-- 一致性(重复数据比例)
+| Source | MVP status | Permitted action | Conditions |
+|---|---|---|---|
+| `xiaozhao-radar` `jobs.json` | Candidate approved for design | Build an import only after attribution and license evidence are recorded | Apache-2.0 attribution, source URL/hash, parser version, idempotency |
+| Official ATS/API | Candidate | Per-source import after review | Explicit terms/robots/rate/retention review |
+| User-provided CSV/data | Deferred | No importer yet | Declarative template, validation, tenant visibility and audit design |
+| BOSS Direct Hire | Deferred and not approved | No automated acquisition | Requires explicit authorization and separate legal/security review |
+| Xiaohongshu | Deferred and not approved | No automated acquisition | Requires explicit authorization and separate legal/security review |
+
+Do not design or run login automation, CAPTCHA solving, rate-limit evasion, browser fingerprint evasion, or other controls intended to bypass source restrictions.
+
+## Planned Records
+
+When real work starts, add evidence-based records beneath this directory:
+
+- `data-sources.md`: reviewed sources and their authorization status.
+- `etl/<source>.md`: actual import transformation and idempotency behavior.
+- `data-quality.md`: measured completeness, geocode success, freshness, duplicates, and remediation.
+
+Do not prefill pass/fail results or authorization conclusions without evidence.

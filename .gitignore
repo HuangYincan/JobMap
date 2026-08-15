@@ -8,6 +8,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .Python
+.python-version.local
 *.so
 .venv/
 venv/
@@ -27,6 +28,7 @@ test-results/
 out/
 build/
 dist/
+*.tsbuildinfo
 
 # Environment
 .env

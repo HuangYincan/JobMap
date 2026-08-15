@@ -1,73 +1,51 @@
-# 05 - 项目里程碑
+# 05 - Milestones
 
-## 总览
+> **Status:** current execution roadmap
+> **Last reviewed:** 2026-08-15
+> **Authority:** this file is the in-repository milestone source of truth. Historical `tech/00-*` reports are context only.
 
-| Phase | 名称 | 工期 | 状态 |
-|---|---|---|---|
-| P0 | 项目初始化与文档脚手架 | 1天 | ✅ 进行中 |
-| P1 | 插件化基础设施 | 2天 | 📋 待开始 |
-| P2 | 招聘插件(MVP) | 3–4天 | 📋 待开始 |
-| P3 | 爬虫系统 | 2–3天 | 📋 待开始 |
-| P3.5 | 用户系统 | 2天 | 📋 待开始 |
-| P4 | 租房+地铁插件 | 1–2天 | 📋 待开始 |
-| P5 | 功能插件(最近大厂/通勤分析) | 1–2天 | 📋 待开始 |
-| P6 | AI 插件(用户画像+推荐系统) | 3–4天 | 📋 待开始 |
-| P7 | 院校插件(第二领域示范) | 1–2天 | 📋 待开始 |
-| P8 | 霸屏式设计精修 | 1–2天 | 📋 待开始 |
-| P9 | 插件管理系统 | 2天 | 📋 待开始 |
-| P10 | RAG 问答助手 | 2天 | 📋 待开始 |
-| P11 | 文档网站搭建 | 1天 | 📋 待开始 |
-| P12 | 文档内容撰写 | 2–3天 | 📋 待开始 |
-| P13 | 部署文档网站 | 0.5天 | 📋 待开始 |
+## Current Baseline
 
-**预计总工期**:P0–P5(核心 MVP)~8–11天;P0–P13(完整版)~20–26天
+P0 is complete as a **documentation and repository scaffold**. Phase 1 is **in progress**: the importer project, PostGIS migration runner, SQL migrations, declarative plugin/import validation, and an Apple-Maps-inspired frontend shell now exist on `feature/phase-1-platform-baseline`. The importer unit tests pass (11), the frontend typechecks/tests/builds, and a browser smoke check confirmed the desktop sidebar and mobile three-state drawer render and switch correctly. **Live PostGIS verification is still blocked** until Docker/PostGIS is available.
 
-## Phase 0:项目初始化与文档脚手架(1天)
+## Delivery Sequence
 
-**目标**:搭建项目结构,生成完整文档,初始化 GitHub,不写功能代码。
+| Phase | Scope | Status | Entry gate | Exit evidence |
+|---|---|---|---|---|
+| P0 | Documentation, constraints, GitHub initialization | Complete | None | Current technical/role docs and final audit record |
+| P1 | Platform baseline | In progress | P0 contract accepted | Version-pinned app/importer manifests; migration runner; PostGIS extension check; tenant/map and source contracts; tests that run locally |
+| P2 | Recruitment import and map read vertical slice | Planned | P1 complete; approved data-source record | Idempotent approved-data import, provenance records, spatial query API, map-read contract, integration tests |
+| P3 | Recruitment map interface | Planned | P2 complete; explicit ASCII/text approval | Approved desktop/mobile layout record, implemented UI, agent-browser screenshots, accessibility and responsive checks |
+| P4 | Map productivity features | Deferred | P3 evidence | Search, saved map overlays, controlled fly/highlight interactions |
+| P5 | Additional approved data and spatial analysis | Deferred | P4 evidence plus source review | Housing/commute or another approved domain; PostGIS correctness tests |
+| P6 | Sensitive and AI features | Deferred | Privacy/security design and evaluation plan | PII consent/retention controls, map-action validation, recommendation evaluation |
+| P7 | Public docs and production delivery | Deferred | Runnable product and operations design | Verified public docs, deploy/runbook, backup/restore and release evidence |
 
-**交付物**:
-- [x] 项目目录结构
-- [x] `README.md` / `LICENSE` / `.gitignore`
-- [x] `agent.md` - AI Agent 工作规范
-- [x] `tech/` - 技术文档(01–06)
-- [ ] `docs/` - 公众文档网站骨架
-- [ ] `docs/roles/` - 角色协作文档模板
-- [ ] `tests/README.md` - 测试指南
-- [ ] `Makefile` - 自动化命令
-- [ ] `docker-compose.yml` - PostgreSQL + PostGIS
-- [ ] `server/package.json` - Next.js 项目初始化
-- [ ] `crawler/pyproject.toml` - Python 爬虫初始化
-- [ ] GitHub 仓库初始化 + 推送
+No calendar release date is committed. Each phase is estimated only after its entry gate is satisfied.
 
-**验收标准**:
-- 所有文件生成无遗漏
-- 目录结构与 `tech/01-architecture.md` 一致
-- GitHub 仓库可访问:`https://github.com/HuangYincan/JobMap`
-- CI/CD 流水线配置完成(`.github/workflows/`)
+## Phase 1: Platform Baseline
 
-**当前进度**:
-- ✅ 目录结构已创建
-- ✅ 核心文档已生成(README/LICENSE/.gitignore/agent.md/tech/01–04)
-- 🚧 待生成:tech/05–06,docs/ 骨架,测试指南,配置文件,GitHub 初始化
+### Deliverables
 
----
+1. Create the first real server and importer manifests with one supported Node and Python version shared by CI. **Done:** `server/package.json` (Next 15.5.23, React 19.0.8, TS 5.9.3, `server/.nvmrc` = 26.5.1) and `crawler/pyproject.toml` (Python 3.12, `crawler/.python-version`).
+2. Create an executable migration ledger and runner. **Done:** `db/migrations/001-004` and `db/scripts/apply.sh` (single-transaction per migration, transaction-scoped advisory lock), `db/scripts/preflight.sh`.
+3. Implement the canonical tenant/map access model and source/provenance model. **Done:** `map_access`/`can_access_map` seams and SQL tables.
+4. Implement a declarative plugin manifest validation path. **Done:** `validate_manifest` and `normalize_import` in `crawler/app/domain_map_importer/`.
+5. Add environment examples, preflight checks, and a test command. **Done:** `.env.example`, `Makefile` targets `preflight`/`db-migrate`/`test-unit`/`test-integration`.
+6. Record actual results. **Done:** implementation record and test report under `tech/roles/`.
 
-## Phase 1–P13 详细内容
+### Acceptance criteria
 
-详见 `/Users/acccan/.claude/plans/glimmering-knitting-giraffe.md` 完整计划文档。
+- A clean clone can run the documented preflight command and receive an accurate pass/fail result. **Partially verified** — scripts pass `bash -n`; live PostGIS blocked on Docker.
+- Migrations run transactionally against an empty PostGIS database and are tested in CI. **Pending live DB**.
+- Cross-user/map access is denied by tested authorization rules. **Unit-tested**; DB enforcement pending.
+- No external source acquisition occurs during P1. **True.**
+- Frontend shell exists and is verified in-browser (user authorized ASCII gate relaxation for this phase). **Done** — see Phase 3 for full interface evidence.
 
-核心里程碑:
-- **P0–P2**:基础设施 + 招聘插件 MVP(~6天)
-- **P3–P5**:爬虫 + 用户系统 + 租房插件(~5天)
-- **P6–P7**:AI 功能 + 第二领域(~5天)
-- **P8–P10**:UI 精修 + 插件管理 + RAG(~5天)
-- **P11–P13**:文档网站(~3.5天)
+## Phase 2: Recruitment Vertical Slice
 
-## 版本发布计划
+P2 is limited to the approved `xiaozhao-radar` import candidate and one recruitment-domain read path. It must capture attribution, original URL, retrieval time, content hash/version, parser version, and import result. BOSS, Xiaohongshu, resume parsing, recommendation, and any PII remain out of scope.
 
-- **v0.1**(P0–P2):基础架构 + 招聘插件 MVP,内部演示
-- **v0.5**(P0–P7):完整招聘地图 + 院校插件,公开测试
-- **v1.0**(P0–P13):完整功能 + 文档网站,正式发布
+## Deferred Decisions
 
-预计发布时间:2026-02-10
+The following must have an ADR or security/data review before implementation: ORM, cache, pgvector, LLM provider, deployment topology, public docs framework, map-engine expansion, third-party/executable plugins, PII retention, and all additional data sources.

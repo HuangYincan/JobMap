@@ -10,7 +10,7 @@
 产品需求是"互联网大厂招聘地图",但扩展需求包括高考院校/保研/留学等多个领域。
 
 **决策**:
-采用抽象数据模型(`entities` / `items` + `domain_schemas`)而非硬编码表(`companies` / `jobs`)。
+采用带来源、地图覆盖层和租户授权的抽象数据模型，而非仅依赖硬编码表。插件 schema 与数据源授权必须分离。
 
 **理由**:
 - 一套代码支持任意领域,换数据源=换产品
@@ -35,7 +35,7 @@
 需要空间查询(最近点/缓冲区/地铁沿线)+ 事务 + 全文搜索。
 
 **决策**:
-PostgreSQL 16 + PostGIS 3.4 + pgvector。
+PostgreSQL 16 + PostGIS 3.4 是 MVP 硬约束；pgvector 延后，须另行验证镜像和 ADR。
 
 **理由**:
 - PostGIS 是业界最成熟的空间数据库(KNN/缓冲区/空间索引)
@@ -62,7 +62,7 @@ PostgreSQL 16 + PostGIS 3.4 + pgvector。
 需要快速开发全栈应用(前端地图 + 后端 API + SSR)。
 
 **决策**:
-Next.js 15 App Router + TypeScript + Tailwind CSS v4。
+Next.js 15 App Router + TypeScript + Tailwind CSS v4 是目标技术栈，当前尚未落地。
 
 **理由**:
 - App Router 简化 API 开发(不需要单独后端)
@@ -86,10 +86,10 @@ Next.js 15 App Router + TypeScript + Tailwind CSS v4。
 **状态**:已接受
 
 **背景**:
-需要爬取多个招聘平台数据(校招雷达/BOSS 直聘/小红书)。
+需要支持多个**合规的数据接入方式**，但当前仓库尚未批准或实现任何自动采集。`xiaozhao-radar` 的 `jobs.json` 是 MVP 导入候选；BOSS 直聘和小红书明确不纳入 MVP。
 
 **决策**:
-Python 3.12 + uv + BeautifulSoup4 + Playwright。
+Python 3.12 + uv 是目标导入运行时；具体库和采集方式须逐来源审查后决定。
 
 **理由**:
 - Python 爬虫生态成熟(BeautifulSoup/Playwright/Scrapy)
@@ -115,7 +115,7 @@ Python 3.12 + uv + BeautifulSoup4 + Playwright。
 需要根据用户背景推荐合适的公司/岗位。
 
 **决策**:
-5 策略融合:实力匹配(40%)+ 意向匹配(30%)+ 空间偏好(15%)+ 协同过滤(10%)+ 时间衰减(5%)。
+候选混合策略：实力匹配、意向匹配、空间偏好、协同过滤、时间衰减。权重未接受，须在有数据和评估集后决定。
 
 **理由**:
 - 单一策略容易偏颇(只看实力会推荐太难的,只看意向会推荐不匹配的)

@@ -180,7 +180,7 @@
   - 向上滑动 > 阈值(30%) → 自动吸附到**全展开**
   - 向下滑动 > 阈值(30%) → 自动吸附到**最小化**
   - 释放时若未达阈值 → 回弹到当前状态
-- 过渡动画:`transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1)` (丝滑缓动)
+- 过渡动画：使用 `transform` 在稳定容器上实现 350ms `cubic-bezier(0.4, 0, 0.2, 1)` 吸附，避免持续动画 `height`。
 
 ```
 ┌─────────────────────────────────┐
@@ -229,7 +229,7 @@
 1. **拖动手势**:
    - 监听 `touchstart`/`touchmove`/`touchend` 事件
    - 计算滑动距离与速度(velocity)
-   - 阈值公式:`moved_distance > current_height * 0.3 || velocity > 0.5`
+   - 阈值公式:`moved_distance > 48px || velocity > 500px/s`
 
 2. **自动吸附逻辑**:
    ```javascript
@@ -245,7 +245,7 @@
 3. **动画参数**:
    - 缓动函数:`cubic-bezier(0.4, 0, 0.2, 1)` (iOS 原生感)
    - 时长:`350ms`
-   - 配合 `will-change: height` 优化性能
+   - 仅在拖动期间临时设置 `will-change: transform`，结束后移除。
 
 4. **边界处理**:
    - 最小化状态向下拖动 → 无效(已到底)
@@ -406,7 +406,7 @@ font-family: 'SF Mono', 'Monaco', 'Menlo',
 
 ### 1. 液态玻璃卡片(Liquid Glass Card)
 
-**使用 `liquid-glass-react`**:
+**候选实现（必须先审查实际版本源码/API；不是无条件依赖）**:
 ```tsx
 import { GlassCard } from 'liquid-glass-react';
 
@@ -429,7 +429,7 @@ import { GlassCard } from 'liquid-glass-react';
 
 ### 2. 按钮(Button)
 
-**使用 `shadcn/ui`**:
+**候选实现（必须先审查实际版本源码/API）**:
 ```bash
 npx shadcn-ui@latest add button
 ```
@@ -459,7 +459,7 @@ npx shadcn-ui@latest add button
 
 ### 3. 输入框(Input)
 
-**使用 `shadcn/ui`**:
+**候选实现（必须先审查实际版本源码/API）**:
 ```bash
 npx shadcn-ui@latest add input
 ```
@@ -485,7 +485,7 @@ npx shadcn-ui@latest add input
 
 ### 4. 标签(Tag/Badge)
 
-**使用 `shadcn/ui`**:
+**候选实现（必须先审查实际版本源码/API）**:
 ```bash
 npx shadcn-ui@latest add badge
 ```
@@ -642,7 +642,7 @@ map.flyTo({
 ### 布局响应式
 
 **桌面端(`≥768px`)**:
-- 左侧边栏:默认展开(280px),可折叠至 60px
+- 左侧边栏:常驻且默认折叠(60px),可展开至 280px
 - 用户头像:侧边栏底部
 - 地图:占据剩余空间
 - 地图工具:右上角(指南针+底图)+ 右下角(缩放+定位)
@@ -805,8 +805,8 @@ return (
     ↑ 高度 ~85vh
 
 拖动逻辑:
-- 向上滑 > 30% || 速度 > 0.5 → 吸附到更高状态
-- 向下滑 > 30% || 速度 > 0.5 → 吸附到更低状态
+- 向上滑距离 ≥ 48px 或速度 ≥ 500px/s → 吸附到更高状态
+- 向下滑距离 ≥ 48px 或速度 ≥ 500px/s → 吸附到更低状态
 - 未达阈值 → 回弹到当前状态
 - 动画: cubic-bezier(0.4, 0, 0.2, 1), 350ms
 ```
@@ -862,7 +862,7 @@ AI Agent 行动:
 - 采用 Apple Maps 风格布局
 - 液态玻璃组件(liquid-glass-react)
 - 深色/浅色模式自动适应系统设置
-- 响应式:桌面默认展开,移动端抽屉式
+- 响应式:桌面默认折叠,移动端抽屉式
 ```
 
 ---
@@ -897,6 +897,15 @@ AI Agent 行动:
 - [ ] 深色/浅色模式都截图验证了吗?
 
 ---
+
+## ♿ 可访问性、兼容性与性能验收
+
+- 目标为 WCAG 2.2 AA：所有文本、图标、焦点环在浅色/深色和代表性地图背景上满足对比度要求。
+- 抽屉使用可命名的 landmark/dialog 语义，具备 `aria-expanded`、`aria-controls`、Escape 关闭、焦点移入/恢复、键盘方向键/Home/End 状态切换和状态播报。拖动把手必须是最小 44×44px 的可操作控件。
+- 使用 `env(safe-area-inset-top/bottom)` 与 `100dvh`；工具组的 bottom 偏移必须加上当前抽屉高度和安全区，不能被抽屉遮挡。
+- 支持 `prefers-reduced-motion`：关闭非必要动画。`backdrop-filter` 不可用时使用不透明 token；支持 `forced-colors: active`。
+- 拖动优先使用 transform/稳定容器，避免持续动画 height 造成重排；只在手势期间设置 will-change。目标设备上保持接近 60fps，并记录截图和性能证据。
+- 地图必须有列表/文本替代视图、加载/空/错误状态和键盘可达路径。
 
 ## 🎯 总结
 

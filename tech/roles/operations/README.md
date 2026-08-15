@@ -1,5 +1,8 @@
 # 运维文档
 
+> **状态：角色记录模板；子文件仅在有真实证据时创建。最后审查：2026-08-15**
+
+
 ## 部署文档(Deployment)
 
 - `vps-deployment.md` - VPS 部署指南(Docker + Caddy)

@@ -1,132 +1,79 @@
-# 03 - 插件系统开发指南
+# 03 - Plugin System Contract
 
-## 概述
+> **Status:** manifest and import validation implemented; acquisition and frontend presentation deferred
+> **Last reviewed:** 2026-08-15
 
-插件是 Domain Map Platform 的核心。新增领域只需要:
-1. 定义领域 schema(entity/item 字段)
-2. 写后端插件(数据加载)
-3. 写前端组件(UI 展示)
-4. 写爬虫插件(可选,数据源)
+## Implementation Evidence
 
-## 快速开始:复制模板
+- `crawler/app/domain_map_importer/manifest.py`: `validate_manifest()` accepts a declarative manifest and rejects unsupported keys, unknown capabilities, invalid semantic versions, and malformed `dataPolicy`.
+- `crawler/app/domain_map_importer/imports.py`: `validate_local_fixture()` / `normalize_import()` validate a local fixture shape, require provenance metadata, detect duplicate and malformed records, and produce a deterministic report with a content hash.
+- `crawler/app/domain_map_importer/access.py`: `map_access()` / `can_access_map()` enforce public-read-only and owner/editor/viewer permissions.
+- Unit tests for these seams pass (`make test-unit`, 11 tests).
 
-```bash
-bash scripts/new-plugin.sh university
-```
+## Principle
 
-这会生成:
-- `server/src/lib/plugins/university/{schema.ts,seed.ts}`
-- `server/src/components/Plugins/university/{UniversityCard.tsx,MajorList.tsx}`
-- `crawler/app/plugins/university/{schema.py,seed/}`
+A plugin is a versioned, declarative extension to a domain map. **Plugin registration, tenant enablement, data import, and automated data acquisition are separate operations.** A domain plugin never authorizes data collection.
 
-## 示例:院校插件
+The MVP will implement only the recruitment domain and one approved import path. Housing, university, user-profile, recommendation, and AI plugins are deferred.
 
-### 1. 定义 schema
+## Plugin Classes
 
-在 `server/src/lib/plugins/university/schema.ts`:
-
-```typescript
-export const universitySchema = {
-  domain: 'university',
-  entity_type: 'university',
-  entity_fields: {
-    type: 'string',        // 985 / 211 / 双一流
-    rank: 'number',
-    province: 'string',
-  },
-  item_type: 'major',
-  item_fields: {
-    category: 'string',    // 工科 / 理科
-    score_line: 'number',
-    tuition: 'number',
-  },
-  ui_config: {
-    entity_color: '#4F46E5',
-    item_icon: '📚',
-  }
-};
-```
-
-### 2. 注册插件
-
-在 `server/src/lib/plugins/registry.ts`:
-
-```typescript
-import { universitySchema } from './university/schema';
-
-export const pluginRegistry = {
-  recruitment: recruitmentSchema,
-  university: universitySchema,  // 新增
-};
-```
-
-### 3. 前端组件
-
-在 `server/src/components/Plugins/university/UniversityCard.tsx`:
-
-```tsx
-export function UniversityCard({ entity }: { entity: Entity }) {
-  const { type, rank } = entity.attributes;
-  return (
-    <div className="p-4 rounded-lg border">
-      <h3>{entity.name}</h3>
-      <Badge>{type}</Badge>
-      <p>排名: {rank}</p>
-    </div>
-  );
-}
-```
-
-### 4. 数据加载
-
-在 `crawler/app/plugins/university/seed/universities.json`:
-
-```json
-[
-  {
-    "name": "浙江大学",
-    "city": "杭州市",
-    "address": "浙江省杭州市西湖区余杭塘路866号",
-    "attributes": {
-      "type": "985",
-      "rank": 4,
-      "province": "浙江"
-    }
-  }
-]
-```
-
-运行:
-```bash
-cd crawler
-uv run python -m app.cli plugin:seed university
-```
-
-### 5. 插入 domain_schemas
-
-```sql
-INSERT INTO domain_schemas (domain, entity_type, entity_fields, item_type, item_fields, ui_config)
-VALUES (
-  'university',
-  'university',
-  '{"type":"string","rank":"number","province":"string"}',
-  'major',
-  '{"category":"string","score_line":"number","tuition":"number"}',
-  '{"entity_color":"#4F46E5","item_icon":"📚"}'
-);
-```
-
-完成!现在前端地图会自动显示院校 POI,点击会显示专业列表。
-
-## 官方插件清单
-
-| 插件 code | entity_type | item_type | 说明 |
+| Class | Purpose | MVP status | Trust boundary |
 |---|---|---|---|
-| recruitment | company | job | 互联网大厂+央国企招聘 |
-| housing | house | listing | 租房信息 |
-| university | university | major | 高考院校 |
-| user-profile | - | - | 用户画像(简历解析) |
-| recommendation | - | - | 推荐系统 |
-| ai-assistant | - | - | AI 对话助手 |
+| Domain schema | Declares entity/item fields and UI-safe metadata | Planned | Platform-reviewed declarative data |
+| Import adapter | Reads approved seed, CSV, or API input | Planned | Validated input, provenance required |
+| Acquisition adapter | Retrieves a source automatically | Deferred | Requires source-specific approval and kill switch |
+| Presentation extension | Provides reviewed UI rendering | Deferred after map shell approval | First-party, versioned code only |
+| Executable third-party plugin | Runs supplied code | Explicitly out of scope | Requires a separate sandbox/security ADR |
 
-详细开发指南见计划文档 Phase 2–P4 章节。
+User upload in the MVP means validated data mapped to a pre-approved declarative template. It never means installing or executing user-provided code.
+
+## Declarative Manifest
+
+Every platform-reviewed plugin must declare, at minimum:
+
+```ts
+type PluginManifest = {
+  code: string;                 // stable, lowercase identifier
+  version: string;              // semantic version
+  schemaVersion: number;
+  owner: 'platform' | 'tenant';
+  entityType: string;
+  itemType?: string;
+  entityFields: Record<string, FieldDefinition>;
+  itemFields?: Record<string, FieldDefinition>;
+  capabilities: Array<'seed-import' | 'api-import' | 'spatial-query' | 'map-render'>;
+  dataPolicy: {
+    sourceRequired: boolean;
+    retentionClass: 'public' | 'tenant-private';
+  };
+};
+```
+
+The server validates manifests and `attributes` against the registered schema. `code` plus `version` is unique. Schema changes require an explicit compatibility plan; incompatible changes create a new schema version and migration path.
+
+## Lifecycle
+
+1. Propose a plugin and record scope in `tech/roles/product/`.
+2. Review the manifest, capabilities, source policy, tenant visibility, and uninstall/retention behavior.
+3. Add a migration-owned registration record and validated server registry entry.
+4. Add an import adapter only after its data source is approved.
+5. Add frontend presentation only after the ASCII/text layout gate and component-source review.
+6. Test activation, rejection of invalid input, tenant isolation, deactivation, and provenance behavior.
+
+## Data Source Requirements
+
+Every import must reference a source record. It must record the original URL/API, license or authorization basis, retrieved time, content hash/version, parser version, attribution text, refresh policy, and deletion/takedown contact. Imports are idempotent on source plus external identifier within their canonical scope.
+
+## Current Registry
+
+| Plugin | Status | Notes |
+|---|---|---|
+| `recruitment` | Planned MVP | Approved-data import candidate: `xiaozhao-radar` `jobs.json`; attribution and source record required |
+| `housing` | Deferred | Requires its own approved data and spatial model |
+| `university` | Deferred | Second-domain demonstration, not an MVP feature |
+| `user-profile` | Deferred | PII/security design required |
+| `recommendation` | Deferred | Evaluation and data-governance design required |
+| `ai-assistant` | Deferred | Controlled map-action protocol required |
+
+Do not use a copy-template command until a real generator and its tests exist.

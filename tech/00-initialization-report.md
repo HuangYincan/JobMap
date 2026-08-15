@@ -1,5 +1,8 @@
 # Phase 0: 项目初始化报告
 
+> **历史记录说明（2026-08-15 复审）**：本文记录当时的计划或变更过程，不是当前实现状态或开发规范。若与 `README.md`、`agent.md`、`tech/01-07` 当前文档冲突，以后者为准。本文中的文件数量、提交、日期和“已完成”描述仅表示历史上下文，不证明相应应用、测试或部署产物存在。\n>\n> **纠偏：** 本仓库当前仅能验证文档、目录占位、Makefile、Compose 定义和文档策略 CI；后文关于完整 DDL、15 张表、应用、测试、部署、覆盖率或 CI/CD 的描述均为历史计划/目标，不得据此开始实现或报告完成。
+
+
 **完成时间**: 2026-08-15  
 **状态**: ✅ 已完成  
 **下一阶段**: Phase 1 - 插件化基础设施
@@ -277,9 +280,9 @@ domain-map/
 
 ### 供用户阅读(Phase 11-13 创建)
 
-- [ ] `docs/zh-cn/guide/quick-start.md` - 快速开始
-- [ ] `docs/zh-cn/tutorial/` - 使用教程
-- [ ] `docs/zh-cn/developers/api-reference.md` - API 参考
+- [ ] `tech/zh-cn/guide/quick-start.md` - 快速开始
+- [ ] `tech/zh-cn/tutorial/` - 使用教程
+- [ ] `tech/zh-cn/developers/api-reference.md` - API 参考
 
 ---
 
@@ -312,7 +315,7 @@ Agent D: 单元测试编写
 
 1. **代码变更 → 同步文档**
    - DDL 变更 → 更新 `tech/02-data-model.md`
-   - API 变更 → 更新 `docs/zh-cn/developers/api-reference.md`
+   - API 变更 → 更新 `tech/zh-cn/developers/api-reference.md`
    - 插件系统变更 → 更新 `tech/03-plugin-system.md`
 
 2. **新功能开发**

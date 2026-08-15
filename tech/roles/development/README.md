@@ -1,5 +1,8 @@
 # 开发文档
 
+> **状态：角色记录模板；子文件仅在有真实证据时创建。最后审查：2026-08-15**
+
+
 ## 实施记录(Implementation)
 
 每个 Phase 的开发过程记录在 `implementation/phase-X.md`,包含:

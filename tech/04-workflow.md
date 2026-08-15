@@ -1,82 +1,59 @@
-# 04 - 贡献工作流
+# 04 - Contribution and Release Workflow
 
-## 分支策略
+> **Status:** current process contract
+> **Last reviewed:** 2026-08-15
 
-- `main`:生产环境,只接受 release tag
-- `dev`:开发主分支,所有功能分支合并到这里
-- `feature/*`:功能开发分支
-- `fix/*`:Bug 修复分支
-- `docs/*`:文档更新分支
+## Branch Policy
 
-## 工作流程
+- `main` is the protected release branch. Agents do not merge, tag, publish, or deploy it.
+- `dev` is the integration branch.
+- All work, including documentation, starts from `feature/<scope>` or `fix/<scope>` and arrives in `dev` through review.
+- The user alone creates the release PR/tag from `dev` to `main`.
 
-### 1. 创建分支
+## Required Gates
 
-```bash
-git checkout dev
-git pull origin dev
-git checkout -b feature/user-profile-plugin
-```
+Before implementation, satisfy the gates that apply to the change:
 
-### 2. 开发 + 测试
+1. **Scope gate:** a PRD or recorded task exists under `tech/roles/product/` for material product work.
+2. **Data gate:** external acquisition has a source record with authorization/terms/robots/rate/retention review. No record means no acquisition code or job.
+3. **Frontend gate:** new user-facing flows or material visual/interaction changes have an ASCII/text layout record under `tech/roles/development/implementation/` and explicit user approval. Accessibility fixes and strictly internal changes may proceed under the approved design system, but must be recorded.
+4. **Decision gate:** unresolved architecture choices receive an ADR before they become implementation dependencies.
 
-```bash
-# 编写代码...
-# 编写测试...
-make test
-make lint
-```
-
-### 3. 提交代码
-
-Commit message 格式:`<type>(<scope>): <subject>`
-
-- **type**:feat / fix / docs / test / refactor / chore
-- **scope**:插件名或模块名
-- **subject**:简短描述
-
-示例:
-```bash
-git add .
-git commit -m "feat(user-profile): add resume upload and AI parsing"
-```
-
-### 4. 更新文档
-
-- 同步技术文档:`tech/`
-- 写使用教程:`docs/zh-cn/tutorial/`
-- 更新角色文档:`docs/roles/development/implementation/`
-
-### 5. 推送并创建 PR
+## Feature Workflow
 
 ```bash
-git push origin feature/user-profile-plugin
-gh pr create --base dev --title "feat(user-profile): add resume upload" --body "实现用户画像插件的简历上传功能..."
+git switch dev
+git pull --ff-only origin dev
+git switch -c feature/<scope>
 ```
 
-### 6. Code Review
+1. Read [agent.md](../agent.md), the relevant technical contract, and role record.
+2. Write/update the implementation record before coding a material feature.
+3. Implement only the approved scope; add tests at the layer affected.
+4. Run only commands that exist for the current scaffold. Do not claim a planned command passed.
+5. Update technical docs, role records, and public docs only when corresponding artifacts exist.
+6. Open a PR targeting `dev` with test evidence, source-review evidence for third-party packages, and UI evidence where applicable.
 
-使用 `/code-review` skill 自我审查,或等待人工审查。
+Use Conventional Commits: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`.
 
-### 7. 合并
+## Review Checklist
 
-PR 通过后合并到 `dev`。
+- [ ] Scope and data-source gates satisfied.
+- [ ] Tenant/map authorization and provenance impacts evaluated.
+- [ ] PostGIS queries use documented coordinate and index policy.
+- [ ] Tests are real, runnable, and accurately reported.
+- [ ] Third-party dependency source/license/security review recorded.
+- [ ] New UI has required layout approval, agent-browser evidence, and accessibility checks.
+- [ ] Documentation describes the actual implementation state rather than intended behavior.
 
-## Code Review 检查清单
+## Release Workflow
 
-- [ ] 代码符合 ESLint / Black 规范
-- [ ] 测试覆盖率 > 80%
-- [ ] 文档已更新
-- [ ] 无安全漏洞
-- [ ] 性能可接受(大查询有索引)
-- [ ] 插件系统未破坏(新代码兼容抽象层)
+The user owns release promotion:
 
-## 发布流程
+1. Review `dev` and run the then-current verified release checks.
+2. Create a release PR from `dev` to `main`.
+3. Resolve all required checks and review findings.
+4. Merge, tag, and publish release notes.
+5. Deploy only when a verified operations runbook, backup/restore procedure, and rollback plan exist.
 
-1. 从 `dev` 创建 `release/v1.0.0` 分支
-2. 运行完整验证:`make verify`
-3. 更新 `CHANGELOG.md`
-4. 合并到 `main` 并打 tag:`git tag v1.0.0`
-5. 部署到生产环境
-
-详见 `docs/roles/operations/deployment/release-checklist.md`
+`tech/roles/operations/deployment/` is currently a planned record location, not an existing release checklist.
