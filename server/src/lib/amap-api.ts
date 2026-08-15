@@ -423,28 +423,40 @@ export interface GeocodedPosition {
 /**
  * 获取当前位置（AMap.Geolocation 插件）。
  * - 融合浏览器定位 / IP 定位 / SDK 辅助
- * - 自带精度圈 + 蓝点显示
+ * - 自带精度圈 + 蓝点显示（需通过 map.addControl 绑定到地图，否则蓝点无处渲染）
  * 返回 null 表示定位失败（未授权 / 超时 / 不可用）。
+ *
+ * @param map AMap.Map 实例。Geolocation 是 Control，必须 addControl 到地图，
+ *            定位成功后蓝点 marker 与精度圈才渲染在该地图上。
  */
-export async function getCurrentPosition(): Promise<GeocodedPosition | null> {
+export async function getCurrentPosition(map: any): Promise<GeocodedPosition | null> {
   const AMap = await loadAMap();
   await waitForPlugin(AMap, 'Geolocation');
 
   return new Promise((resolve) => {
     let geolocation: any;
     try {
-      geolocation = new AMap.Geolocation({
-        enableHighAccuracy: true,
-        timeout: 8000,
-        maximumAge: 30000,
-        convert: true,
-        needAddress: true,
-        showButton: false,
-        showCircle: true,
-        showMarker: true,
-        zoomToAccuracy: false,
-        panToLocation: false,
-      });
+      // 每个 map 复用同一个 Geolocation 实例（Control 只能 addControl 一次）
+      let cached = geolocationByMap.get(map);
+      if (!cached) {
+        cached = new AMap.Geolocation({
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 30000,
+          convert: true,
+          needAddress: true,
+          showButton: false,
+          showCircle: true,
+          showMarker: true,
+          zoomToAccuracy: false,
+          panToLocation: false,
+        });
+        if (map && typeof map.addControl === 'function') {
+          map.addControl(cached);
+        }
+        geolocationByMap.set(map, cached);
+      }
+      geolocation = cached;
     } catch {
       resolve(null);
       return;
@@ -469,6 +481,9 @@ export async function getCurrentPosition(): Promise<GeocodedPosition | null> {
     });
   });
 }
+
+/** 每地图复用的 Geolocation 实例缓存（WeakMap，map 销毁自动回收） */
+const geolocationByMap = new WeakMap<object, any>();
 
 // ============================================================
 // 视口 POI 搜索 — 按缩放层级 + 重要性均匀铺满

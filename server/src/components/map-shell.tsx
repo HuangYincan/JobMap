@@ -92,23 +92,8 @@ export function MapShell() {
 
     function initMap() {
       if (!mapContainer.current || mapInstance.current) return;
-
-      // 用 AMap.Geolocation 获取当前位置（融合 H5/IP/SDK 定位，自带精度圈 + 蓝点）
-      getCurrentPosition()
-        .then((loc) => {
-          if (!loc) {
-            // 定位失败 → 默认中心（杭州）
-            createMap([120.15, 30.27], 13);
-            return;
-          }
-          const { lng, lat } = loc.position;
-          createMap([lng, lat], 15);
-          setMapCenter({ lng, lat });
-          // 由 AMap.Geolocation 插件负责绘制精度圈 + 蓝点（见 createMap 内注册）
-        })
-        .catch(() => {
-          createMap([120.15, 30.27], 13);
-        });
+      // 先创建地图（Geolocation 蓝点需绑定到已存在的 map），创建后立即定位移动中心
+      createMap([120.15, 30.27], 13);
     }
 
     function createMap(center: [number, number], zoom: number) {
@@ -128,6 +113,19 @@ export function MapShell() {
 
       mapInstance.current = map;
       setMapReady(true);
+
+      // 初始定位：成功则移动地图中心 + 显示蓝点/精度圈（Geolocation 已 addControl 绑定 map）
+      getCurrentPosition(map)
+        .then((loc) => {
+          if (!loc) return;
+          const { lng, lat } = loc.position;
+          map.setCenter([lng, lat]);
+          map.setZoom(15);
+          setMapCenter({ lng, lat });
+        })
+        .catch(() => {
+          // 定位失败保持默认中心
+        });
 
       // 自定义中键旋转逻辑
       let isMiddleButtonDown = false;
@@ -399,8 +397,8 @@ export function MapShell() {
   const handleLocate = () => {
     if (!mapInstance.current) return;
 
-    // 用 AMap.Geolocation 定位（自带精度圈 + 蓝点，无需手写 marker）
-    getCurrentPosition()
+    // 用 AMap.Geolocation 定位（addControl 绑定到 map，蓝点 + 精度圈渲染在地图上）
+    getCurrentPosition(mapInstance.current)
       .then((loc) => {
         if (!loc) {
           console.warn("Geolocation failed, returning to default center");
