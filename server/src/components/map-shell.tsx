@@ -41,6 +41,7 @@ export function MapShell() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const userMarkerRef = useRef<any>(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
@@ -130,7 +131,46 @@ export function MapShell() {
   };
 
   const handleLocate = () => {
-    if (mapInstance.current) {
+    if (!mapInstance.current) return;
+
+    // Try to get user's real location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { longitude, latitude } = position.coords;
+
+          // Remove old user marker if exists
+          if (userMarkerRef.current) {
+            userMarkerRef.current.setMap(null);
+            userMarkerRef.current = null;
+          }
+
+          // Center map on user location
+          mapInstance.current.setCenter([longitude, latitude]);
+          mapInstance.current.setZoom(15);
+
+          // Create a new user location marker with a distinct icon
+          const userMarker = new window.AMap.Marker({
+            position: [longitude, latitude],
+            icon: new window.AMap.Icon({
+              size: new window.AMap.Size(20, 20),
+              image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%234A90E2' opacity='0.3'/%3E%3Ccircle cx='10' cy='10' r='4' fill='%234A90E2'/%3E%3Ccircle cx='10' cy='10' r='2' fill='white'/%3E%3C/svg%3E",
+            }),
+            title: "Your location",
+            map: mapInstance.current,
+          });
+
+          userMarkerRef.current = userMarker;
+        },
+        (error) => {
+          console.warn("Geolocation failed, returning to default center:", error.message);
+          // Fallback to default center
+          mapInstance.current.setCenter([120.15, 30.27]);
+          mapInstance.current.setZoom(13);
+        }
+      );
+    } else {
+      // Browser doesn't support geolocation, fallback
       mapInstance.current.setCenter([120.15, 30.27]);
       mapInstance.current.setZoom(13);
     }
