@@ -116,8 +116,8 @@ export function MapShell() {
       // Add AMap's built-in scale control (real, auto-updating)
       window.AMap.plugin(['AMap.Scale'], () => {
         const scale = new window.AMap.Scale({
-          position: 'RB', // Right-Bottom
-          offset: new window.AMap.Pixel(12, 80), // Move up to avoid overlap with locate button
+          position: 'LB', // Left-Bottom
+          offset: new window.AMap.Pixel(70, 20), // Move right to avoid sidebar
         });
         map.addControl(scale);
       });
@@ -148,7 +148,6 @@ export function MapShell() {
     function addUserMarker(lng: number, lat: number, accuracy?: number) {
       if (!mapInstance.current) return;
 
-      console.log("User location:", { lng, lat, accuracy });
       const currentZoom = mapInstance.current.getZoom();
       setUserLocationZoom(currentZoom);
 
@@ -157,6 +156,7 @@ export function MapShell() {
 
       // Always create accuracy circle with real geographic radius (30m or actual GPS accuracy)
       const radiusMeters = accuracy ? Math.max(accuracy, 30) : 30;
+
       const circle = new window.AMap.Circle({
         center: [lng, lat],
         radius: radiusMeters, // Real geographic distance in meters
