@@ -117,6 +117,7 @@ export function MapShell() {
       window.AMap.plugin(['AMap.Scale'], () => {
         const scale = new window.AMap.Scale({
           position: 'RB', // Right-Bottom
+          offset: new window.AMap.Pixel(12, 80), // Move up to avoid overlap with locate button
         });
         map.addControl(scale);
       });
