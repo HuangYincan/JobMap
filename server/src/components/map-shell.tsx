@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./map-shell.module.css";
 
 type DrawerState = "mini" | "half" | "full";
 
+declare global {
+  interface Window {
+    AMap?: any;
+    _AMapSecurityConfig?: { securityJsCode: string };
+  }
+}
+
 const places = [
-  { name: "Futureworks Campus", type: "Research district", tone: "blue", x: "48%", y: "37%" },
-  { name: "Westlake Studio Row", type: "Creative offices", tone: "orange", x: "68%", y: "48%" },
-  { name: "Civic Data Commons", type: "Public interest", tone: "purple", x: "35%", y: "62%" },
+  { name: "Futureworks Campus", type: "Research district", tone: "blue", lng: 120.15, lat: 30.28 },
+  { name: "Westlake Studio Row", type: "Creative offices", tone: "orange", lng: 120.13, lat: 30.25 },
+  { name: "Civic Data Commons", type: "Public interest", tone: "purple", lng: 120.16, lat: 30.26 },
 ];
 
 function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "settings" | "menu" | "compass" | "locate" }) {
@@ -18,69 +25,184 @@ function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "his
     bookmark: "M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4V4Z",
     grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
     history: "M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2",
-    settings: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0-13v2m0 15v2M4.2 4.2l1.4 1.4m12.8 12.8 1.4 1.4M1 12h2m16 0h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4",
-    menu: "M4 6h16M4 12h16M4 18h16",
-    compass: "m15 9-2.5 5.5L7 17l2.5-5.5L15 9Z",
-    locate: "M12 2v3m0 14v3M2 12h3m14 0h3M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z",
+    settings: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0 0v5m0-17v5m7 3h-5m-9 0H0m15.36 8.36-3.54-3.54M8.18 8.18 4.64 4.64m10.72 0-3.54 3.54M8.18 15.82l-3.54 3.54",
+    menu: "M3 6h18M3 12h18M3 18h18",
+    compass: "m12 2 3 10-10 3-3-10 10-3Z",
+    locate: "M12 2v4m0 12v4M2 12h4m12 0h4m-6 6a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z",
   };
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d={paths[name]} /></svg>;
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d={paths[name]} />
+    </svg>
+  );
 }
 
 export function MapShell() {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [basemapOpen, setBasemapOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
-  const [zoom, setZoom] = useState(13);
   const [selectedPlace, setSelectedPlace] = useState(places[0].name);
+  const [showBasemap, setShowBasemap] = useState(false);
+  const [zoom, setZoom] = useState(13);
+  const [mapReady, setMapReady] = useState(false);
+
+  useEffect(() => {
+    if (!mapContainer.current) return;
+
+    const apiKey = process.env.NEXT_PUBLIC_AMAP_KEY;
+    const securityCode = process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE;
+
+    if (!apiKey || !securityCode) {
+      console.warn("NEXT_PUBLIC_AMAP_KEY and NEXT_PUBLIC_AMAP_SECURITY_CODE are required");
+      return;
+    }
+
+    // Set security config before loading AMap script
+    window._AMapSecurityConfig = {
+      securityJsCode: securityCode,
+    };
+
+    // Load AMap script
+    if (!window.AMap) {
+      const script = document.createElement("script");
+      script.src = `https://webapi.amap.com/maps?v=2.0&key=${apiKey}`;
+      script.async = true;
+      script.onload = () => initMap();
+      document.head.appendChild(script);
+    } else {
+      initMap();
+    }
+
+    function initMap() {
+      if (!mapContainer.current || mapInstance.current) return;
+
+      const map = new window.AMap.Map(mapContainer.current, {
+        zoom: 13,
+        center: [120.15, 30.27],
+        viewMode: "3D",
+        pitch: 0,
+        showLabel: true,
+        mapStyle: "amap://styles/normal",
+      });
+
+      mapInstance.current = map;
+      setMapReady(true);
+
+      // Add place markers
+      places.forEach((place) => {
+        const marker = new window.AMap.Marker({
+          position: [place.lng, place.lat],
+          title: place.name,
+          map: map,
+        });
+        marker.on("click", () => setSelectedPlace(place.name));
+        markersRef.current.push(marker);
+      });
+
+      // Sync zoom state
+      map.on("zoomchange", () => {
+        setZoom(Math.round(map.getZoom()));
+      });
+    }
+
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.destroy();
+        mapInstance.current = null;
+      }
+      markersRef.current = [];
+    };
+  }, []);
+
+  const handleZoomIn = () => {
+    if (mapInstance.current) {
+      mapInstance.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (mapInstance.current) {
+      mapInstance.current.zoomOut();
+    }
+  };
+
+  const handleLocate = () => {
+    if (mapInstance.current) {
+      mapInstance.current.setCenter([120.15, 30.27]);
+      mapInstance.current.setZoom(13);
+    }
+  };
 
   const cycleDrawer = () => setDrawer((current) => current === "mini" ? "half" : current === "half" ? "full" : "mini");
 
   return (
     <main className={styles.shell}>
       <section className={styles.mapCanvas} aria-label="Interactive map preview">
-        <div className={styles.mapGlow} />
-        <div className={styles.mapTexture} />
-        <div className={styles.water} />
-        <div className={`${styles.road} roadOne`} />
-        <div className={`${styles.road} roadTwo`} />
-        <div className={`${styles.road} roadThree`} />
-        <div className={`${styles.mapLabel} labelNorth`}>NORTH LOOP</div>
-        <div className={`${styles.mapLabel} labelSouth`}>CIVIC GREEN</div>
-        <div className={`${styles.mapLabel} labelWest`}>WESTLAKE</div>
-        {places.map((place) => (
-          <button key={place.name} className={`${styles.poi} ${styles[place.tone]}`} style={{ left: place.x, top: place.y }} onClick={() => setSelectedPlace(place.name)} aria-label={`Select ${place.name}`}>
-            <span className={styles.poiDot} />
-            <span className={styles.poiCard}><strong>{place.name}</strong><small>{place.type}</small></span>
-          </button>
-        ))}
-        <div className={styles.mapAttribution}>Preview map · adapter ready for AMap</div>
+        <div ref={mapContainer} style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />
+        {!mapReady && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 14 }}>
+            {process.env.NEXT_PUBLIC_AMAP_KEY && process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE
+              ? "Loading map..."
+              : "Set NEXT_PUBLIC_AMAP_KEY and NEXT_PUBLIC_AMAP_SECURITY_CODE in .env.local"}
+          </div>
+        )}
       </section>
 
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`} aria-label="Map navigation">
-        <button className={styles.menuButton} onClick={() => setSidebarOpen((open) => !open)} aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}><Icon name="menu" /></button>
-        {sidebarOpen && <div className={styles.brand}><span className={styles.brandMark}>◎</span><span>domain map</span></div>}
-        <div className={styles.searchBox}><Icon name="search" /><input aria-label="Search map" placeholder="Search places" /></div>
+        <button className={styles.menuButton} onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}>
+          <Icon name="menu" />
+        </button>
+        {sidebarOpen && <div className={styles.brand}><span className={styles.brandMark}>◉</span>Domain</div>}
+        <div className={styles.searchBox}>
+          <Icon name="search" />
+          <input type="search" placeholder="Search places" />
+        </div>
         <nav className={styles.navList}>
-          {[ ["layers", "Nearby domains"], ["bookmark", "Saved places"], ["grid", "Explore categories"], ["history", "Recent activity"], ["settings", "Preferences"] ].map(([icon, label]) => <button key={label} className={styles.navItem} onClick={() => setSidebarOpen(true)}><Icon name={icon as Parameters<typeof Icon>[0]["name"]} /><span>{label}</span></button>)}
+          <button className={styles.navItem}><Icon name="layers" /><span>Layers</span></button>
+          <button className={styles.navItem}><Icon name="bookmark" /><span>Saved</span></button>
+          <button className={styles.navItem}><Icon name="grid" /><span>Explore</span></button>
+          <button className={styles.navItem}><Icon name="history" /><span>Recent</span></button>
+          <button className={styles.navItem}><Icon name="settings" /><span>Settings</span></button>
         </nav>
-        <button className={styles.profile}><span className={styles.avatar}>AK</span><span className={styles.profileCopy}><strong>Alex Kim</strong><small>Personal map</small></span></button>
+        <button className={styles.profile} aria-label="AK Alex Kim Personal map">
+          <div className={styles.avatar}>AK</div>
+          {sidebarOpen && <div className={styles.profileCopy}><strong>Alex Kim</strong><small>Personal map</small></div>}
+        </button>
       </aside>
 
       <div className={styles.topTools}>
-        {basemapOpen && <div className={styles.basemapCard}><span className={styles.eyebrow}>Map style</span><strong>Choose your view</strong>{["Standard", "Satellite", "Transit"].map((name, index) => <button key={name} className={index === 0 ? styles.activeMap : ""} onClick={() => setBasemapOpen(false)}><span className={`${styles.mapThumb} ${styles[`thumb${index}`]}`} />{name}<span className={styles.check}>{index === 0 ? "✓" : ""}</span></button>)}</div>}
-        <button className={styles.toolButton} onClick={() => setBasemapOpen((open) => !open)} aria-label="Choose map style"><span className={styles.basemapLogo}>◌</span></button>
-        <button className={`${styles.toolButton} ${styles.compass}`} onClick={() => setZoom(13)} aria-label="Reset compass"><Icon name="compass" /></button>
+        {showBasemap && (
+          <div className={styles.basemapCard}>
+            <span className={styles.eyebrow}>Map style</span><strong>Choose your view</strong>
+            <button className={styles.activeMap}><div className={`${styles.mapThumb} ${styles.thumb1}`} />Standard<span className={styles.check}>✓</span></button>
+            <button><div className={`${styles.mapThumb} ${styles.thumb2}`} />Satellite</button>
+            <button><div className={`${styles.mapThumb} ${styles.thumb1}`} />Transit</button>
+          </div>
+        )}
+        <button className={styles.toolButton} onClick={() => setShowBasemap(!showBasemap)} aria-label="Choose map style" aria-pressed={showBasemap}>
+          <div className={styles.basemapLogo}>◌</div>
+        </button>
+        <button className={styles.toolButton} aria-label="Reset compass"><Icon name="compass" /></button>
       </div>
 
       <div className={styles.mapControls}>
-        <div className={styles.zoomControls}><button onClick={() => setZoom((value) => Math.min(20, value + 1))} aria-label="Zoom in">+</button><span>{zoom}</span><button onClick={() => setZoom((value) => Math.max(5, value - 1))} aria-label="Zoom out">−</button></div>
-        <button className={styles.locateButton} onClick={() => setSelectedPlace("Your location")} aria-label="Find my location"><Icon name="locate" /></button>
-        <span className={styles.scale}>2 km <i /></span>
+        <div className={styles.zoomControls}>
+          <button onClick={handleZoomIn} aria-label="Zoom in">+</button>
+          <span>{zoom}</span>
+          <button onClick={handleZoomOut} aria-label="Zoom out">−</button>
+        </div>
+        <button className={`${styles.toolButton} ${styles.locateButton}`} onClick={handleLocate} aria-label="Find my location">
+          <Icon name="locate" />
+        </button>
+        <div className={styles.scale}><i />2 km</div>
       </div>
 
-      <section className={`${styles.mobileDrawer} ${styles[`drawer${drawer[0].toUpperCase()}${drawer.slice(1)}`]}`} aria-label="Places drawer">
+      <section className={`${styles.mobileDrawer} ${drawer === "mini" ? styles.drawerMini : drawer === "half" ? styles.drawerHalf : styles.drawerFull}`} aria-label="Places drawer">
         <button className={styles.drawerHandle} onClick={cycleDrawer} aria-label={`Expand drawer from ${drawer} state`}><span /></button>
-        <div className={styles.mobileSearch}><Icon name="search" /><input aria-label="Search places" placeholder="Search places or addresses" /></div>
+        <div className={styles.mobileSearch}><Icon name="search" /><input type="search" placeholder="Search places or addresses" /></div>
         <div className={styles.drawerContent}>
           <span className={styles.eyebrow}>Around you</span><h1>Make the map yours.</h1><p>Explore the people, places, and ideas shaping your city.</p>
           <div className={styles.quickGrid}>{["People hiring", "Open studios", "Good coffee", "Quiet corners"].map((item) => <button key={item}>{item}<span>↗</span></button>)}</div>
