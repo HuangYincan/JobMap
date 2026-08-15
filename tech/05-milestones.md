@@ -52,6 +52,14 @@ No calendar release date is committed. Each phase is estimated only after its en
 
 **Duration:** 4-6 weeks (5 sprints)
 
+**Status (2026-08-15):** Sprint 1-2 core implemented and browser-verified on `feature/phase-2-multi-mode`:
+- Multi-mode architecture (7 modes configured, domain + internship active)
+- AMap POI integration with real search (20 POIs verified) + seed fallback
+- Secondary sidebar with glassmorphism POI cards (list view)
+- Search (debounced 300ms) + filter panel (7 recruitment filters) + sort
+- Card-map bidirectional linkage (click select, hover highlight)
+- API routes: `/api/modes`, `/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`, `/api/filter-options`
+
 **Key Features:**
 1. **Multi-Mode System** - Mode switching architecture, Domain + Internship modes
 2. **POI System** - AMap POI integration + recruitment data import
