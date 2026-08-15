@@ -264,6 +264,8 @@ export function MapShell() {
     let cancelled = false;
 
     async function load() {
+      // AMap 未就绪（地图未初始化）时不发请求，避免首屏回退 seed
+      if (!mapReady) return;
       setLoading(true);
       setError(null);
       try {

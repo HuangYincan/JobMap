@@ -512,17 +512,19 @@ export async function searchViewportPOIs(
   const perCategoryPages = zoom <= 13 ? 1 : zoom <= 15 ? 2 : 3;
   const pageSize = 25;
 
-  const results = await Promise.all(
+  // 用 allSettled：单个分类失败不影响整体（首次插件刚就绪时避免整体回退 seed）
+  const settled = await Promise.allSettled(
     categories.slice(0, 12).map((category) =>
       searchPOI({ keyword: category, center, radius, pageSize }, perCategoryPages)
     )
   );
 
-  // 合并去重（按 id），保留高德返回顺序（= 重要性排序）
+  // 合并去重（按 id），保留高德返回顺序（= 重要性排序）；忽略失败项
   const seen = new Set<string>();
   const merged: DomainPOI[] = [];
-  for (const { pois } of results) {
-    for (const poi of pois) {
+  for (const r of settled) {
+    if (r.status !== 'fulfilled') continue;
+    for (const poi of r.value.pois) {
       if (seen.has(poi.id)) continue;
       seen.add(poi.id);
       merged.push(poi);
