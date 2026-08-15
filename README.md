@@ -64,7 +64,7 @@ uv run python -m app.cli plugin:seed recruitment
 ## 📖 文档
 
 - **使用文档**:[https://map.nvc.ac/doc/zh-cn](docs/zh-cn/) - 快速开始/功能说明/使用教程
-- **技术文档**:[DOCS/](DOCS/) - 架构设计/数据模型/插件开发
+- **技术文档**:[tech/](tech/) - 架构设计/数据模型/插件开发
 - **开发指南**:[agent.md](agent.md) - AI Agent 工作规范
 - **API 参考**:[docs/zh-cn/developers/api-reference.md](docs/zh-cn/developers/api-reference.md)
 
@@ -81,7 +81,7 @@ Domain Map Platform 的核心是**插件化**。目前官方提供:
 | 🤖 推荐系统 | recommendation | - | - | 5 策略融合推荐 |
 | 💬 AI 助手 | ai-assistant | - | - | 对话 → 筛选/高亮/飞行地图 |
 
-**扩展到新领域**:复制插件模板 → 定义 schema → 加载数据 → 完成!(详见 [DOCS/03-plugin-system.md](DOCS/03-plugin-system.md))
+**扩展到新领域**:复制插件模板 → 定义 schema → 加载数据 → 完成!(详见 [tech/03-plugin-system.md](tech/03-plugin-system.md))
 
 ## 🏗️ 技术栈
 
@@ -91,7 +91,7 @@ Domain Map Platform 的核心是**插件化**。目前官方提供:
 **爬虫**: Python 3.12 + uv + BeautifulSoup4 + Playwright  
 **部署**: Docker Compose + Caddy(自动 HTTPS)
 
-详见 [DOCS/01-architecture.md](DOCS/01-architecture.md)
+详见 [tech/01-architecture.md](tech/01-architecture.md)
 
 ## 🗂️ 项目结构
 
@@ -102,7 +102,7 @@ domain-map/
 ├── db/             # PostgreSQL migrations
 ├── tests/          # 单元/集成/E2E 测试
 ├── docs/           # 公众文档 + 角色协作文档
-├── DOCS/           # 技术文档(开发者)
+├── tech/           # 技术文档(开发者)
 └── scripts/        # 自动化脚本
 ```
 
@@ -117,7 +117,7 @@ domain-map/
 
 **预计发布时间**:2026-02-10(v1.0)
 
-详见 [DOCS/05-milestones.md](DOCS/05-milestones.md)
+详见 [tech/05-milestones.md](tech/05-milestones.md)
 
 ## 🤝 贡献
 
@@ -129,7 +129,7 @@ domain-map/
 4. 推送分支:`git push origin feature/amazing-plugin`
 5. 提交 Pull Request
 
-详见 [DOCS/04-workflow.md](DOCS/04-workflow.md)
+详见 [tech/04-workflow.md](tech/04-workflow.md)
 
 ## 📄 许可
 

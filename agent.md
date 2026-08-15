@@ -5,7 +5,7 @@
 ## 核心原则
 
 1. **插件化思维**:一切功能皆插件,一切数据皆可换源
-2. **文档先行**:代码变更必须同步更新文档(DOCS/ 和 docs/)
+2. **文档先行**:代码变更必须同步更新文档(tech/ 和 docs/)
 3. **测试驱动**:关键模块使用 TDD,确保覆盖率 > 80%
 4. **角色协作**:按现代化团队角色维护文档(产品/开发/测试/运维/安全)
 
@@ -13,7 +13,7 @@
 
 ```
 domain-map/
-├── DOCS/              # 技术文档(架构/数据模型/插件系统/工作流/决策)
+├── tech/              # 技术文档(架构/数据模型/插件系统/工作流/决策)
 ├── docs/              # 面向公众的文档网站 + 角色协作文档
 ├── server/            # Next.js 前后端
 ├── crawler/           # Python 爬虫
@@ -22,7 +22,7 @@ domain-map/
 └── scripts/           # 自动化脚本
 ```
 
-详见 `DOCS/01-architecture.md`
+详见 `tech/01-architecture.md`
 
 ## 工作流程
 
@@ -30,11 +30,11 @@ domain-map/
 
 1. **理解需求**:
    - 阅读相关 PRD:`docs/roles/product/PRD/*.md`
-   - 查看架构文档:`DOCS/01-architecture.md`
-   - 确认数据模型:`DOCS/02-data-model.md`
+   - 查看架构文档:`tech/01-architecture.md`
+   - 确认数据模型:`tech/02-data-model.md`
 
 2. **规划实施**:
-   - 如果是新插件:参考 `DOCS/03-plugin-system.md`
+   - 如果是新插件:参考 `tech/03-plugin-system.md`
    - 如果是 Bug 修复:调用 `/diagnosing-bugs` skill
    - 如果是新功能:先写技术方案到 `docs/roles/development/implementation/`
 
@@ -47,23 +47,40 @@ domain-map/
 ### 2. 开发过程中
 
 1. **前端开发铁律**:
-   - ⚠️ **任何前端代码编写之前,必须先创建 Figma 原型**
-   - 将 Figma 原型链接提交给用户审查
+   - ⚠️ **任何前端代码编写之前,必须先创建文字符号布局图让用户审查**
+   - 使用 ASCII 艺术或简单文字符号创建布局示意图
+   - 标注关键尺寸、颜色、交互、组件说明
+   - 通知用户:"布局示意图已创建,请审查"
    - 等待用户反馈/修改/批准
    - **只有在用户明确批准后,才能开始编写前端代码**
    - 这条规则无例外:从页面到组件,从 UI 调整到新功能
 
-2. **遵循规范**:
+2. **使用现代化组件库**:
+   - ⚠️ **避免重复造轮子,优先使用已有的前端组件库**
+   - 液态玻璃组件:使用 [liquid-glass-react](https://github.com/rdev/liquid-glass-react)
+   - UI 组件:使用 [shadcn/ui](https://ui.shadcn.com/)
+   - 动画:使用 [Framer Motion](https://www.framer.com/motion/)
+   - 图标:使用 [React Icons](https://react-icons.github.io/react-icons/)
+   - 详见 `tech/07-frontend-design-system.md`
+
+3. **遵循 Apple 设计风格**:
+   - 参考 [Apple Maps](https://maps.apple.com.cn/) 布局
+   - 液态玻璃质感(半透明、毛玻璃、流动感)
+   - 深色/浅色模式自动适应系统设置
+   - 极简主义,去除冗余元素
+   - 详见 `tech/07-frontend-design-system.md`
+
+4. **遵循规范**:
    - 代码风格:ESLint + Prettier(前端),Black(Python)
    - 命名约定:组件用 PascalCase,函数用 camelCase,数据库表用 snake_case
    - 注释:复杂逻辑必须注释,简单代码不过度注释
 
-2. **及时记录**:
+5. **及时记录**:
    - 遇到问题记录到 `docs/roles/development/implementation/<phase>.md` 的"遇到的问题"章节
-   - 技术决策记录到 `DOCS/06-decisions.md`(ADR 格式)
-   - **Figma 原型链接**记录到对应 Phase 的实施文档中
+   - 技术决策记录到 `tech/06-decisions.md`(ADR 格式)
+   - **布局示意图**记录到对应 Phase 的实施文档中
 
-3. **编写测试**:
+6. **编写测试**:
    - 单元测试:`tests/unit/`
    - 集成测试:`tests/integration/`
    - E2E 测试:`tests/e2e/`(关键流程必须有)
@@ -83,7 +100,7 @@ domain-map/
      - 示例:`feat(user-profile): add resume upload and AI parsing`
 
 3. **更新文档**:
-   - 同步技术文档:`DOCS/` 相关章节
+   - 同步技术文档:`tech/` 相关章节
    - 如果是新功能,写教程:`docs/zh-cn/tutorial/<feature>.md`
    - 更新角色文档:`docs/roles/development/implementation/<phase>.md`
 
@@ -98,15 +115,15 @@ domain-map/
 
 ## 文档维护契约
 
-### 何时更新 DOCS/(技术文档)
+### 何时更新 tech/(技术文档)
 
 | 变更类型 | 需要更新的文档 |
 |---|---|
-| 数据库 schema 变更 | `DOCS/02-data-model.md` + migration 文件注释 |
-| API 端点新增/修改 | `DOCS/01-architecture.md`(API 清单) |
-| 新增插件 | `DOCS/03-plugin-system.md`(插件注册表) |
-| 工作流程变更 | `DOCS/04-workflow.md` |
-| 重大技术决策 | `DOCS/06-decisions.md`(ADR 格式) |
+| 数据库 schema 变更 | `tech/02-data-model.md` + migration 文件注释 |
+| API 端点新增/修改 | `tech/01-architecture.md`(API 清单) |
+| 新增插件 | `tech/03-plugin-system.md`(插件注册表) |
+| 工作流程变更 | `tech/04-workflow.md` |
+| 重大技术决策 | `tech/06-decisions.md`(ADR 格式) |
 
 ### 何时更新 docs/(公众文档+角色文档)
 
@@ -124,19 +141,19 @@ domain-map/
 ### 文档同步检查清单
 
 每次提交代码前,问自己:
-- [ ] 我改了数据库 schema 吗?→ 更新 `DOCS/02-data-model.md`
-- [ ] 我加了新 API 端点吗?→ 更新 `DOCS/01-architecture.md`
+- [ ] 我改了数据库 schema 吗?→ 更新 `tech/02-data-model.md`
+- [ ] 我加了新 API 端点吗?→ 更新 `tech/01-architecture.md`
 - [ ] 我实现了新功能吗?→ 写 `docs/zh-cn/tutorial/<feature>.md`
 - [ ] 我修了 Bug 吗?→ 记录到 `docs/roles/testing/test-reports/bug-reports.md`
 - [ ] 我遇到技术问题吗?→ 记录到 `docs/roles/development/implementation/<phase>.md`
-- [ ] **我写了前端代码吗?→ 检查 Figma 原型是否已获用户批准**
+- [ ] **我写了前端代码吗?→ 检查布局示意图是否已获用户批准**
 
 ## 插件开发规范
 
 新增领域插件完整清单(以"高考院校"为例):
 
 ### 1. 定义 schema
-在 `DOCS/02-data-model.md` 增加领域定义:
+在 `tech/02-data-model.md` 增加领域定义:
 ```markdown
 ## 高考院校插件(domain='gaokao')
 - entity_type: 'university'
@@ -165,7 +182,7 @@ domain-map/
 - 代码:在 `server/src/lib/plugins/registry.ts` 注册
 
 ### 6. 文档
-- 更新 `DOCS/03-plugin-system.md`:插件清单
+- 更新 `tech/03-plugin-system.md`:插件清单
 - 写教程:`docs/zh-cn/tutorial/gaokao-map.md`
 
 ## 与子 Agent 协作
@@ -239,6 +256,8 @@ uv run python -m app.cli crawl --source xiaozhao  # 运行增量爬虫
 - **不要沉默,要沟通**:卡住时及时汇报,不要浪费时间
 - **不要跳过,要完整**:测试和文档是交付物的一部分,不是可选项
 - **不要孤立,要复用**:新代码前先搜索是否已有类似实现
-- **🎨 前端代码必须先过 Figma 原型审查**:这是硬性规则,无任何例外
+- **🎨 前端代码必须先过布局示意图审查**:这是硬性规则,无任何例外
+- **🧩 使用现代化组件库,避免重复造轮子**:liquid-glass-react + shadcn/ui
+- **🍎 遵循 Apple 设计风格**:参考 Apple Maps 布局,液态玻璃质感
 
 祝编码愉快!🚀

@@ -52,7 +52,7 @@ domain-map/
 ├── Makefile                           # 自动化命令
 ├── docker-compose.yml                 # PostgreSQL + PostGIS
 │
-├── DOCS/                              # 技术文档(开发者)
+├── tech/                              # 技术文档(开发者)
 │   ├── README.md                      # 文档索引
 │   ├── 01-architecture.md             # 本文档
 │   ├── 02-data-model.md               # 抽象数据模型

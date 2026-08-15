@@ -12,7 +12,7 @@
 | [04-workflow.md](04-workflow.md) | 贡献工作流、分支策略、Code Review 规范 | 贡献者 |
 | [05-milestones.md](05-milestones.md) | 项目里程碑、阶段划分、验收标准 | 项目经理 |
 | [06-decisions.md](06-decisions.md) | 架构决策记录(ADR) | 开发者/架构师 |
-| [07-figma-workflow.md](07-figma-workflow.md) | 🎨 Figma 原型审查工作流(前端开发必读) | 前端开发者/AI Agent |
+| [07-frontend-design-system.md](07-frontend-design-system.md) | 🎨 前端设计系统(Apple 风格 + 液态玻璃 + 布局审查) | 前端开发者/AI Agent |
 
 ## 快速导航
 
@@ -23,13 +23,13 @@
 - 贡献代码 → [04-workflow.md](04-workflow.md)
 - 查看开发进度 → [05-milestones.md](05-milestones.md)
 - 了解技术决策理由 → [06-decisions.md](06-decisions.md)
-- **开发前端界面** → [07-figma-workflow.md](07-figma-workflow.md) 🎨
+- **开发前端界面** → [07-frontend-design-system.md](07-frontend-design-system.md) 🎨
 
 ## 与公众文档的关系
 
 | 文档类型 | 位置 | 受众 | 内容风格 |
 |---|---|---|---|
-| **技术文档**(本目录) | `/DOCS/` | 开发者/AI Agent | 详细的技术细节、实现方案、设计理由 |
+| **技术文档**(本目录) | `/tech/` | 开发者/AI Agent | 详细的技术细节、实现方案、设计理由 |
 | **公众文档** | `/docs/zh-cn/` | 终端用户/开源贡献者 | 使用教程、功能说明、部署指南 |
 | **角色协作文档** | `/docs/roles/` | 团队内部 | PRD/测试报告/部署记录/安全审计 |
 

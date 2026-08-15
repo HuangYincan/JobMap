@@ -28,7 +28,7 @@ domain-map/
 │   └── workflows/
 │       ├── test.yml              # CI: 自动测试
 │       └── deploy.yml            # CD: 自动部署(占位)
-├── DOCS/                          # 技术文档(开发者)
+├── tech/                          # 技术文档(开发者)
 │   ├── 00-initialization-report.md  # 本报告
 │   ├── 01-architecture.md        # 系统架构设计
 │   ├── 02-data-model.md          # 数据库设计(DDL/索引)
@@ -64,7 +64,7 @@ domain-map/
 
 ### 2. 核心文档
 
-#### 技术文档 (DOCS/)
+#### 技术文档 (tech/)
 
 | 文档 | 内容概要 | 页数估算 |
 |---|---|---|
@@ -77,7 +77,7 @@ domain-map/
 
 **总计**: ~3,200 行技术文档
 
-#### 角色协作文档 (DOCS/roles/)
+#### 角色协作文档 (tech/roles/)
 
 7 个角色文件夹,每个包含 README.md 和子文档模板:
 - 产品经理: PRD / 需求 / 竞品分析
@@ -260,20 +260,20 @@ domain-map/
 
 1. **必读**(开始开发前):
    - [ ] `README.md` - 项目概览
-   - [ ] `DOCS/01-architecture.md` - 系统架构
-   - [ ] `DOCS/03-plugin-system.md` - 插件系统
+   - [ ] `tech/01-architecture.md` - 系统架构
+   - [ ] `tech/03-plugin-system.md` - 插件系统
    - [ ] `agent.md` - AI Agent 工作规范
 
 2. **参考文档**(开发过程中):
-   - [ ] `DOCS/02-data-model.md` - 数据库设计
-   - [ ] `DOCS/04-workflow.md` - Git 工作流
-   - [ ] `DOCS/05-milestones.md` - 里程碑
+   - [ ] `tech/02-data-model.md` - 数据库设计
+   - [ ] `tech/04-workflow.md` - Git 工作流
+   - [ ] `tech/05-milestones.md` - 里程碑
    - [ ] `CONTRIBUTING.md` - 贡献指南
 
 3. **角色文档**(按需阅读):
-   - [ ] `DOCS/roles/development/` - 开发规范
-   - [ ] `DOCS/roles/testing/` - 测试规范
-   - [ ] `DOCS/roles/product/` - PRD 模板
+   - [ ] `tech/roles/development/` - 开发规范
+   - [ ] `tech/roles/testing/` - 测试规范
+   - [ ] `tech/roles/product/` - PRD 模板
 
 ### 供用户阅读(Phase 11-13 创建)
 
@@ -311,12 +311,12 @@ Agent D: 单元测试编写
 ### 文档维护规则
 
 1. **代码变更 → 同步文档**
-   - DDL 变更 → 更新 `DOCS/02-data-model.md`
+   - DDL 变更 → 更新 `tech/02-data-model.md`
    - API 变更 → 更新 `docs/zh-cn/developers/api-reference.md`
-   - 插件系统变更 → 更新 `DOCS/03-plugin-system.md`
+   - 插件系统变更 → 更新 `tech/03-plugin-system.md`
 
 2. **新功能开发**
-   - 先更新 `DOCS/` 技术文档
+   - 先更新 `tech/` 技术文档
    - 功能完成后写 `docs/` 用户教程
 
 3. **文档审查 = 代码审查**
@@ -336,7 +336,7 @@ Agent D: 单元测试编写
 
 ### 开发者体验
 
-- ✅ **快速上手**: `README.md` + `DOCS/01-architecture.md` 即可开始
+- ✅ **快速上手**: `README.md` + `tech/01-architecture.md` 即可开始
 - ✅ **自动化**: Makefile 一键启动/测试/部署
 - ✅ **规范统一**: Conventional Commits + Code Review 清单
 - ✅ **AI 友好**: `agent.md` 规范 + Skills 推荐
@@ -365,7 +365,7 @@ Agent D: 单元测试编写
 本报告记录了 Phase 0 的所有工作成果。下一阶段的 Agent 可以:
 
 1. 阅读本报告快速了解项目现状
-2. 查看 `DOCS/05-milestones.md` 了解下一步任务
+2. 查看 `tech/05-milestones.md` 了解下一步任务
 3. 阅读 `agent.md` 了解工作规范
 4. 开始 Phase 1 的开发工作
 

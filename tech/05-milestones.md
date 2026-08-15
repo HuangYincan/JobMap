@@ -30,7 +30,7 @@
 - [x] 项目目录结构
 - [x] `README.md` / `LICENSE` / `.gitignore`
 - [x] `agent.md` - AI Agent 工作规范
-- [x] `DOCS/` - 技术文档(01–06)
+- [x] `tech/` - 技术文档(01–06)
 - [ ] `docs/` - 公众文档网站骨架
 - [ ] `docs/roles/` - 角色协作文档模板
 - [ ] `tests/README.md` - 测试指南
@@ -42,14 +42,14 @@
 
 **验收标准**:
 - 所有文件生成无遗漏
-- 目录结构与 `DOCS/01-architecture.md` 一致
+- 目录结构与 `tech/01-architecture.md` 一致
 - GitHub 仓库可访问:`https://github.com/HuangYincan/JobMap`
 - CI/CD 流水线配置完成(`.github/workflows/`)
 
 **当前进度**:
 - ✅ 目录结构已创建
-- ✅ 核心文档已生成(README/LICENSE/.gitignore/agent.md/DOCS/01–04)
-- 🚧 待生成:DOCS/05–06,docs/ 骨架,测试指南,配置文件,GitHub 初始化
+- ✅ 核心文档已生成(README/LICENSE/.gitignore/agent.md/tech/01–04)
+- 🚧 待生成:tech/05–06,docs/ 骨架,测试指南,配置文件,GitHub 初始化
 
 ---
 

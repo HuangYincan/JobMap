@@ -43,7 +43,7 @@ git commit -m "feat(user-profile): add resume upload and AI parsing"
 
 ### 4. 更新文档
 
-- 同步技术文档:`DOCS/`
+- 同步技术文档:`tech/`
 - 写使用教程:`docs/zh-cn/tutorial/`
 - 更新角色文档:`docs/roles/development/implementation/`
 

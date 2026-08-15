@@ -29,7 +29,7 @@ roles/
 │       └── target-users.md
 ├── development/                     # 开发
 │   ├── README.md
-│   ├── architecture/                # 架构文档(链接到 DOCS/)
+│   ├── architecture/                # 架构文档(链接到 tech/)
 │   ├── implementation/              # 实施记录
 │   │   ├── phase-0.md               # P0 实施记录
 │   │   ├── phase-1.md
@@ -112,12 +112,12 @@ roles/
 
 | 文档类型 | 位置 | 受众 | 特点 |
 |---|---|---|---|
-| **技术文档** | `/DOCS/` | 开发者/AI Agent | 详细技术实现,架构设计 |
+| **技术文档** | `/tech/` | 开发者/AI Agent | 详细技术实现,架构设计 |
 | **公众文档** | `/docs/zh-cn/` | 终端用户 | 使用教程,功能说明 |
 | **角色文档**(本目录) | `/docs/roles/` | 团队内部 | 协作记录,过程文档 |
 
 **协作原则**:
-- 技术决策记录在 `DOCS/06-decisions.md`(ADR)
+- 技术决策记录在 `tech/06-decisions.md`(ADR)
 - 产品需求记录在 `product/PRD/`
 - 实施过程记录在 `development/implementation/`
 - 测试结果记录在 `testing/test-reports/`

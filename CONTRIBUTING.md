@@ -115,7 +115,7 @@ docs(api): update authentication endpoint docs
 
 文档位置:
 - 用户文档:`docs/zh-cn/`
-- 技术文档:`DOCS/`
+- 技术文档:`tech/`
 - API 文档:`docs/zh-cn/developers/api-reference.md`
 
 ### 4. 贡献插件
@@ -132,7 +132,7 @@ Domain Map Platform 的核心是插件化!你可以:
    - 发布到 npm
    - 在插件市场分享
 
-详见 [DOCS/03-plugin-system.md](DOCS/03-plugin-system.md)
+详见 [tech/03-plugin-system.md](tech/03-plugin-system.md)
 
 ## 📋 开发规范
 
@@ -226,10 +226,10 @@ domain-map/
 ├── db/                 # 数据库 migrations
 ├── tests/              # 集成/E2E 测试
 ├── docs/               # 公众文档 + 角色协作文档
-└── DOCS/               # 技术文档
+└── tech/               # 技术文档
 ```
 
-详见 [DOCS/01-architecture.md](DOCS/01-architecture.md)
+详见 [tech/01-architecture.md](tech/01-architecture.md)
 
 ## 🤝 社区规范
 
