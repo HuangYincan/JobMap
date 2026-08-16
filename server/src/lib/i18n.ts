@@ -5,10 +5,6 @@ export const translations = {
     zh: '搜索',
     en: 'Search',
   },
-  searchPlaceholder: {
-    zh: '搜索地点',
-    en: 'Search places',
-  },
   layers: {
     zh: '图层',
     en: 'Layers',
@@ -29,10 +25,6 @@ export const translations = {
     zh: '最近',
     en: 'Recent',
   },
-  settings: {
-    zh: '设置',
-    en: 'Settings',
-  },
   profile: {
     zh: '个人资料',
     en: 'Profile',
@@ -40,10 +32,6 @@ export const translations = {
   mapStyle: {
     zh: '地图样式',
     en: 'Map style',
-  },
-  chooseView: {
-    zh: '选择您的视图',
-    en: 'Choose your view',
   },
   standard: {
     zh: '标准',
@@ -70,18 +58,6 @@ export const translations = {
     en: 'Expand sidebar',
   },
   // ---- Phase 2 模式名称 ----
-  modeDomain: {
-    zh: '地图',
-    en: 'Map',
-  },
-  modeWork: {
-    zh: '工作',
-    en: 'Work',
-  },
-  modeInternship: {
-    zh: '工作',
-    en: 'Work',
-  },
   jobFamilyIntern: {
     zh: '实习',
     en: 'Intern',
@@ -207,10 +183,6 @@ export const translations = {
     zh: '在招岗位',
     en: 'Open positions',
   },
-  savedMap: {
-    zh: '个人地图',
-    en: 'Personal map',
-  },
   backToList: {
     zh: '返回列表',
     en: 'Back to list',
@@ -286,10 +258,6 @@ export const translations = {
   benefits: {
     zh: '福利',
     en: 'Benefits',
-  },
-  navigate: {
-    zh: '导航',
-    en: 'Directions',
   },
   savePlace: {
     zh: '收藏',
@@ -411,10 +379,6 @@ export const translations = {
     zh: '退出',
     en: 'Sign out',
   },
-  signInTitle: {
-    zh: '登录 Domain Map',
-    en: 'Sign in to Domain Map',
-  },
   signInLead: {
     zh: '默认手机号验证码，也可使用邮箱或 GitHub。',
     en: 'Phone code by default, or email / GitHub.',
@@ -467,17 +431,9 @@ export const translations = {
     zh: '发送验证码',
     en: 'Send code',
   },
-  verifyCode: {
-    zh: '验证并登录',
-    en: 'Verify and sign in',
-  },
   continueGithub: {
     zh: '使用 GitHub 继续',
     en: 'Continue with GitHub',
-  },
-  otpDemoHint: {
-    zh: '演示验证码 000000，后续接入阿里云短信。',
-    en: 'Demo code is 000000. Aliyun SMS comes later.',
   },
   closeAuth: {
     zh: '关闭登录',
