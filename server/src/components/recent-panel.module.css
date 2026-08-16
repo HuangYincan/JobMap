@@ -76,6 +76,35 @@
   padding: 24px 8px;
 }
 
+.trending {
+  padding: 10px 2px 4px;
+}
+
+.sectionLabel {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: rgba(0, 122, 255, 0.08);
+  color: var(--blue, #007AFF);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+}
+
 .list {
   list-style: none;
   margin: 10px 0 0;

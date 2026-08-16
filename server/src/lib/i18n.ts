@@ -423,6 +423,10 @@ export const translations = {
     zh: '清空',
     en: 'Clear',
   },
+  trendingSearches: {
+    zh: '热门搜索',
+    en: 'Trending',
+  },
 } as const;
 
 // 获取浏览器语言偏好

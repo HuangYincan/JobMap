@@ -9,6 +9,7 @@ import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { runPOIPipeline, suggestRecruitment } from "@/lib/search";
+import { trendingForMode } from "@/lib/trending-search";
 import { isRecruitmentMode } from "@/lib/types";
 import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
@@ -593,8 +594,15 @@ export function MapShell() {
   // ---- 搜索建议 ----
   // Domain：高德地点 AutoComplete；实习/招聘：公司 + 岗位，不走 POI
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 1) {
-      setSuggestions([]);
+    if (!query.trim()) {
+      setSuggestions(
+        trendingForMode(mode).map((item) => ({
+          id: `trend:${item.query}`,
+          name: item.query,
+          subtitle: item.label && item.label !== item.query ? item.label : undefined,
+          kind: "place" as const,
+        })),
+      );
       return;
     }
 
@@ -984,9 +992,14 @@ export function MapShell() {
           items={searchHistory}
           signedIn={Boolean(user)}
           lang={lang}
+          mode={mode}
           shifted={sidebarOpen}
           onClose={() => setRailPanel(null)}
           onPick={handlePickRecent}
+          onPickTrending={(item) => {
+            setQuery(item.query);
+            setRailPanel("explore");
+          }}
           onClear={user ? () => {
             void fetch("/api/me/search-history", { method: "DELETE" }).then(refreshHistory);
           } : undefined}

@@ -3,14 +3,18 @@
 import type { SearchHistoryEntry } from "@/lib/account";
 import { getMode } from "@/lib/modes";
 import { t, type Language } from "@/lib/i18n";
+import { trendingForMode, type TrendingQuery } from "@/lib/trending-search";
+import type { MapMode } from "@/lib/types";
 import styles from "./recent-panel.module.css";
 
 export interface RecentPanelProps {
   items: SearchHistoryEntry[];
   signedIn: boolean;
   lang: Language;
+  mode: MapMode;
   onClose: () => void;
   onPick: (entry: SearchHistoryEntry) => void;
+  onPickTrending?: (item: TrendingQuery) => void;
   onClear?: () => void;
   shifted?: boolean;
 }
@@ -19,11 +23,14 @@ export function RecentPanel({
   items,
   signedIn,
   lang,
+  mode,
   onClose,
   onPick,
+  onPickTrending,
   onClear,
   shifted = false,
 }: RecentPanelProps) {
+  const trending = trendingForMode(mode);
   return (
     <div className={`${styles.cluster} ${shifted ? styles.shifted : ""}`}>
       <aside className={styles.sidebar} aria-label={t("recent", lang)}>
@@ -42,6 +49,23 @@ export function RecentPanel({
             </button>
           </div>
         </header>
+        {trending.length > 0 && (
+          <section className={styles.trending} aria-label={t("trendingSearches", lang)}>
+            <h3 className={styles.sectionLabel}>{t("trendingSearches", lang)}</h3>
+            <div className={styles.chips}>
+              {trending.map((item) => (
+                <button
+                  key={item.query}
+                  type="button"
+                  className={styles.chip}
+                  onClick={() => onPickTrending?.(item)}
+                >
+                  {item.label || item.query}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         {!signedIn ? (
           <p className={styles.empty}>{t("recentNeedSignIn", lang)}</p>
         ) : items.length === 0 ? (

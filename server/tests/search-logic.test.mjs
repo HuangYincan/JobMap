@@ -16,6 +16,7 @@ import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
 import { resolveApplyLink, withDistance } from '../src/lib/types.ts';
 import { ACTIVE_MODES, getMode } from '../src/lib/modes.ts';
 import { positionMatchesTaxonomy } from '../src/lib/job-taxonomy.ts';
+import { trendingForMode } from '../src/lib/trending-search.ts';
 
 test('matchKeyword: case-insensitive multi-keyword AND', () => {
   assert.equal(matchKeyword('阿里巴巴 杭州', '阿里'), true);
@@ -207,6 +208,14 @@ test('runPOIPipeline: #大厂 keeps bigtech and still matches leftover keywords'
   const javaBig = runPOIPipeline(INTERNSHIP_SEED, { query: 'Java #大厂' });
   assert.ok(javaBig.some((p) => p.id === 'alibaba-xixi'));
   assert.ok(javaBig.every((p) => p.kind === 'recruitment' && p.company.scale === 'bigtech'));
+});
+
+test('trendingForMode is a plugin per map mode', () => {
+  assert.ok(trendingForMode('work').some((item) => item.query.startsWith('#')));
+  assert.ok(trendingForMode('internship').every((item) =>
+    trendingForMode('work').some((work) => work.query === item.query)
+  ));
+  assert.ok(trendingForMode('domain').every((item) => !item.query.startsWith('#')));
 });
 
 test('applyFilters: minRating keeps only highly rated domain POIs', () => {
