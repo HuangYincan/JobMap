@@ -95,6 +95,8 @@ export interface SecondarySidebarProps {
   onRefreshHere?: () => void;
   /** 在累计池上再扩一页常见 POI */
   onNeedMore?: () => void;
+  /** 空结果时扩大搜索范围 */
+  onWidenSearch?: () => void;
 }
 
 export function SecondarySidebar({
@@ -126,6 +128,7 @@ export function SecondarySidebar({
   onCloseDetail,
   onRefreshHere,
   onNeedMore,
+  onWidenSearch,
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -370,6 +373,7 @@ export function SecondarySidebar({
         loading={loading}
         lang={lang}
         accentColor={config.color}
+        onWidenSearch={onWidenSearch}
       />
       </>
       )}

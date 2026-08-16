@@ -18,6 +18,7 @@ export interface POIListProps {
   empty?: boolean;
   lang?: Language;
   accentColor?: string;
+  onWidenSearch?: () => void;
 }
 
 type CSSVarStyle = CSSProperties & Record<`--${string}`, string | number>;
@@ -34,6 +35,7 @@ export function POIList({
   empty = false,
   lang = "zh",
   accentColor,
+  onWidenSearch,
 }: POIListProps) {
   const showEmpty = !loading && (empty || pois.length === 0);
 
@@ -81,6 +83,11 @@ export function POIList({
           </span>
           <p className={styles.emptyTitle}>{t("noResults", lang)}</p>
           <p className={styles.emptyHint}>{t("noResultsHint", lang)}</p>
+          {onWidenSearch && (
+            <button type="button" className={styles.widen} onClick={onWidenSearch}>
+              {t("widenSearch", lang)}
+            </button>
+          )}
         </div>
       ) : (
         pois.map((poi, i) => (

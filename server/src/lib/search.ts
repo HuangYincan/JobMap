@@ -101,6 +101,25 @@ export function pointAtDistanceEast(
   return { lng: origin.lng + meters / metersPerDeg, lat: origin.lat };
 }
 
+/** 空结果时逐步放宽：距离 → 其他筛选 → 关键词。 */
+export function widenSearchScope(input: {
+  query: string;
+  filters: FilterState;
+}): { query: string; filters: FilterState; changed: boolean } {
+  const nextFilters = { ...input.filters };
+  if (typeof nextFilters.distance === "number" && nextFilters.distance > 0) {
+    delete nextFilters.distance;
+    return { query: input.query, filters: nextFilters, changed: true };
+  }
+  if (Object.keys(nextFilters).length > 0) {
+    return { query: input.query, filters: {}, changed: true };
+  }
+  if (input.query.trim()) {
+    return { query: "", filters: {}, changed: true };
+  }
+  return { query: input.query, filters: input.filters, changed: false };
+}
+
 /** 拆出 #标签，剩余当关键词。未知标签仍参与全文搜索。 */
 export function parseSearchQuery(raw?: string): ParsedSearchQuery {
   const source = (raw ?? '').trim();

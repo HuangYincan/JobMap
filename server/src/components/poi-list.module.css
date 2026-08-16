@@ -10,10 +10,12 @@
   padding: 4px 12px 12px;
 }
 
-/* 卡片错峰进入动画 */
+/* 卡片错峰进入动画；窗口外跳过绘制 */
 .cardSlot {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 148px;
   animation: card-enter 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
-  animation-delay: calc(var(--index, 0) * 0.05s);
+  animation-delay: calc(min(var(--index, 0), 8) * 0.04s);
 }
 
 @keyframes card-enter {
@@ -70,6 +72,16 @@
   margin: 0;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.widen {
+  margin-top: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--blue, #007aff);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
 }
 
 /* ---------- 加载骨架 ---------- */

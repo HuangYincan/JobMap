@@ -857,6 +857,23 @@
   display: none;
 }
 
+.offlineBanner {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  padding: 8px 14px;
+  border-radius: 99px;
+  background: var(--soft-strong, rgba(255, 255, 255, 0.9));
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+  pointer-events: none;
+}
+
 @media (prefers-color-scheme: dark) {
   .mapTexture {
     opacity: 0.38;

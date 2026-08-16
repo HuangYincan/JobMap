@@ -14,6 +14,7 @@ import {
   runPOIPipeline,
   sortPOIs,
   suggestRecruitment,
+  widenSearchScope,
 } from '../src/lib/search.ts';
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
 import { resolveApplyLink, withDistance } from '../src/lib/types.ts';
@@ -233,6 +234,22 @@ test('pointAtDistanceEast stays on the same latitude', () => {
   const east = pointAtDistanceEast(origin, 3000);
   assert.equal(east.lat, origin.lat);
   assert.ok(east.lng > origin.lng);
+});
+
+test('widenSearchScope drops distance, then filters, then the query', () => {
+  const dropDistance = widenSearchScope({ query: '咖啡', filters: { distance: 2, district: ['西湖区'] } });
+  assert.equal(dropDistance.filters.distance, undefined);
+  assert.deepEqual(dropDistance.filters.district, ['西湖区']);
+
+  const dropFilters = widenSearchScope({ query: '咖啡', filters: { district: ['西湖区'] } });
+  assert.deepEqual(dropFilters.filters, {});
+  assert.equal(dropFilters.query, '咖啡');
+
+  const dropQuery = widenSearchScope({ query: '咖啡', filters: {} });
+  assert.equal(dropQuery.query, '');
+  assert.equal(dropQuery.changed, true);
+
+  assert.equal(widenSearchScope({ query: '', filters: {} }).changed, false);
 });
 
 test('trendingForMode is a plugin per map mode', () => {

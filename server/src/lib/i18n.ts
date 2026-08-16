@@ -167,6 +167,14 @@ export const translations = {
     zh: '尝试调整关键词或筛选条件',
     en: 'Try adjusting keywords or filters',
   },
+  widenSearch: {
+    zh: '扩大搜索范围',
+    en: 'Widen the search',
+  },
+  offline: {
+    zh: '网络已断开，列表可能不是最新的。',
+    en: 'You are offline. The list may be out of date.',
+  },
   apply: {
     zh: '应用',
     en: 'Apply',

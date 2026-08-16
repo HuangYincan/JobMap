@@ -8,7 +8,7 @@ import { getMode } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment } from "@/lib/search";
+import { distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, widenSearchScope } from "@/lib/search";
 import { trendingForMode } from "@/lib/trending-search";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
 import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
@@ -117,12 +117,25 @@ export function MapShell() {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
+  const [online, setOnline] = useState(true);
   const drawerSwipeRef = useRef<{ y: number } | null>(null);
 
   const modeConfig = getMode(mode);
 
   useEffect(() => {
     setLang(getBrowserLanguage());
+  }, []);
+
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
   }, []);
 
   const refreshAccount = useCallback(async () => {
@@ -682,6 +695,16 @@ export function MapShell() {
     setPageOffset((n) => n + 1);
   }, []);
 
+  const handleWidenSearch = useCallback(() => {
+    const next = widenSearchScope({ query, filters });
+    if (!next.changed) {
+      handleNeedMore();
+      return;
+    }
+    setQuery(next.query);
+    setFilters(next.filters);
+  }, [query, filters, handleNeedMore]);
+
   // ---- 地图联动 ----
   usePOIMap(mapInstance.current, {
     pois,
@@ -1154,6 +1177,7 @@ export function MapShell() {
         onHover={handleHover}
         onRefreshHere={handleRefreshHere}
         onNeedMore={handleNeedMore}
+        onWidenSearch={handleWidenSearch}
         totalCount={pois.length}
         lang={lang}
         onClose={() => {
@@ -1222,6 +1246,12 @@ export function MapShell() {
           void refreshHistory();
         }}
       />
+
+      {!online && (
+        <div className={styles.offlineBanner} role="status">
+          {t("offline", lang)}
+        </div>
+      )}
 
       <div className={styles.topTools}>
         <div className={styles.basemapCluster}>
@@ -1450,6 +1480,7 @@ export function MapShell() {
                 loading={loading}
                 lang={lang}
                 accentColor={modeConfig.color}
+                onWidenSearch={handleWidenSearch}
               />
             </div>
           </>
