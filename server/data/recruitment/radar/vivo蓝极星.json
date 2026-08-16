@@ -11,7 +11,9 @@
       "id": "vivo蓝极星-site",
       "name": "vivo蓝极星计划",
       "location": {
-        "address": "上海/深圳/杭州/东莞"
+        "address": "余杭区创明路118号",
+        "lng": 120.002474,
+        "lat": 30.270049
       }
     }
   ],

@@ -11,7 +11,9 @@
       "id": "tp-link-site",
       "name": "TP-LINK",
       "location": {
-        "address": "北京/深圳/杭州/南京"
+        "address": "滨江区聚才路与江二路交叉口东南80米",
+        "lng": 120.200293,
+        "lat": 30.183539
       }
     }
   ],

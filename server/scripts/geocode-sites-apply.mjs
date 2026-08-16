@@ -1,0 +1,222 @@
+#!/usr/bin/env node
+// Resolve real Hangzhou offices for drop sites that only carry a city list
+// ("北京/杭州"), so radar-only companies can appear on the map at an address
+// that actually exists — never a city-center pin.
+//
+//   node scripts/geocode-sites-apply.mjs [--dry-run] [--only slug1,slug2]
+//
+//   --dry-run          print the plan and resolutions, write nothing (default
+//                      when AMAP_WEB_KEY is missing)
+//   --only a,b         resolve only these slugs (bypasses the confidence gate)
+//   (no flag)          resolve every non-pinned site that gets a high-confidence
+//                      match; low-confidence / unresolved stay off the map
+//
+// Writes back into the owning drop JSON (copy-on-write: only site.location is
+// replaced). Verified Hangzhou stays enforced via regeo. Reads AMAP_WEB_KEY from
+// server/.env.local. Never prints the key. Throttles at 3 req/s.
+//
+// Hand-curated resolutions can be dropped into data/recruitment/geocode-overrides.json
+// as { "<slug>": { "name", "address", "lng", "lat" } } — they apply verbatim.
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  cleanCompanySearchName,
+  gradeOfficePoi,
+  pickBestOfficePoi,
+  placeTextSearchRest,
+  regeoCityRest,
+  siteNeedsGeocode,
+} from '../src/lib/site-geocode.ts';
+import { loadOfflineWorkCatalog } from '../src/lib/server-catalog.ts';
+import { RADAR_DIR } from '../src/lib/recruitment-adapters/radar.ts';
+import { OFFICIAL_CAREER_DIR } from '../src/lib/recruitment-adapters/official-career.ts';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SERVER_DIR = path.resolve(__dirname, '..');
+const DATA_DIR = path.join(SERVER_DIR, 'data', 'recruitment');
+const OVERRIDES_FILE = path.join(DATA_DIR, 'geocode-overrides.json');
+
+// --- env (server/.env.local, without printing the key) ---------------------
+function loadEnv() {
+  const envFile = path.join(SERVER_DIR, '.env.local');
+  if (!fs.existsSync(envFile)) return {};
+  const out = {};
+  for (const line of fs.readFileSync(envFile, 'utf8').split('\n')) {
+    const m = line.match(/^([A-Za-z0-9_]+)=(.*)$/);
+    if (!m) continue;
+    out[m[1]] = m[2].replace(/^['"]|['"]$/g, '').trim();
+  }
+  return out;
+}
+const env = { ...loadEnv(), ...process.env };
+if (env.AMAP_WEB_KEY && !process.env.AMAP_WEB_KEY) process.env.AMAP_WEB_KEY = env.AMAP_WEB_KEY;
+
+const DRY_RUN = process.argv.includes('--dry-run') || !env.AMAP_WEB_KEY;
+const onlyArg = process.argv.find((a) => a.startsWith('--only=')) || process.argv.find((a, i) => process.argv[i - 1] === '--only');
+const ONLY = onlyArg
+  ? String(onlyArg.split('=')[1] ?? process.argv[process.argv.indexOf('--only') + 1] ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  : null;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const round = (x, d = 6) => Number(x.toFixed(d));
+
+function readJson(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function loadOverrides() {
+  return readJson(OVERRIDES_FILE) ?? {};
+}
+
+/** Update site.location in a parsed drop (single object or array). */
+function setSiteLocation(file, slug, siteId, location) {
+  let changed = false;
+  const raw = readJson(file);
+  if (!raw) return false;
+  const walk = (company) => {
+    if (!company || company.slug !== slug) return;
+    for (const site of company.sites ?? []) {
+      if (site.id !== siteId) continue;
+      site.location = location;
+      changed = true;
+    }
+  };
+  if (Array.isArray(raw)) raw.forEach(walk);
+  else walk(raw);
+  if (changed) fs.writeFileSync(file, JSON.stringify(raw, null, 2) + '\n');
+  return changed;
+}
+
+function dropFiles() {
+  const dirs = [RADAR_DIR, OFFICIAL_CAREER_DIR];
+  const files = [];
+  for (const dir of dirs) {
+    if (!fs.existsSync(dir)) continue;
+    for (const name of fs.readdirSync(dir).sort()) {
+      if (name.endsWith('.json') && !name.startsWith('.')) files.push(path.join(dir, name));
+    }
+  }
+  return files;
+}
+
+// --- main -------------------------------------------------------------------
+const onMap = await loadOfflineWorkCatalog();
+const pinned = new Set(onMap.map((p) => p.id.split(':')[0]));
+const overrides = loadOverrides();
+
+const files = dropFiles();
+const resolutions = [];
+const applied = [];
+const skipped = [];
+const unresolved = [];
+
+let planCount = 0;
+for (const file of files) {
+  const raw = readJson(file);
+  const companies = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  for (const company of companies) {
+    if (!company || typeof company.slug !== 'string') continue;
+    const slug = company.slug;
+    for (const site of company.sites ?? []) {
+      if (!siteNeedsGeocode(site)) continue;
+      planCount += 1;
+      if (pinned.has(slug)) {
+        skipped.push({ slug, siteId: site.id, reason: 'already-pinned' });
+        continue;
+      }
+      if (ONLY && !ONLY.includes(slug)) {
+        skipped.push({ slug, siteId: site.id, reason: 'not-in-only-list' });
+        continue;
+      }
+
+      const override = overrides[slug];
+      const query = cleanCompanySearchName(company.name);
+      let poi = null;
+      let confidence = null;
+      let reason = '';
+
+      if (override?.exclude) {
+        unresolved.push({ slug, siteId: site.id, query, reason: 'manual-exclude' });
+        continue;
+      }
+      if (override) {
+        poi = { name: override.name, address: override.address, lng: override.lng, lat: override.lat, type: 'override', adname: '', pname: '浙江省', cityname: '杭州市' };
+        confidence = 'high';
+        reason = 'manual-override';
+      } else {
+        if (DRY_RUN || env.AMAP_WEB_KEY) {
+          const hit = await placeTextSearchRest(query);
+          await sleep(340);
+          if (hit.ok && hit.pois.length) {
+            poi = pickBestOfficePoi(hit.pois, company.name);
+            if (poi) {
+              const grade = gradeOfficePoi(poi, company.name);
+              confidence = grade.confidence;
+              reason = grade.reason;
+              if (grade.confidence === 'low') poi = null;
+            }
+          } else {
+            reason = hit.reason ?? 'no-pois';
+          }
+        }
+      }
+
+      if (!poi) {
+        unresolved.push({ slug, siteId: site.id, query, reason: reason || 'no-result' });
+        continue;
+      }
+
+      // Regeo guard: a place-search hit must actually sit inside Hangzhou.
+      let verified = '';
+      if (env.AMAP_WEB_KEY && !override) {
+        const re = await regeoCityRest(poi.lng, poi.lat);
+        await sleep(340);
+        if (re.ok && re.cityname && re.cityname !== '杭州市') {
+          unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${re.cityname}` });
+          continue;
+        }
+        verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() : 'unverified';
+      }
+
+      const district = poi.adname || verified.split(' ').pop() || '';
+      const address = district && !poi.address.includes(district) ? `${district}${poi.address}` : poi.address;
+
+      resolutions.push({ slug, siteId: site.id, company: company.name, query, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified });
+      if (!DRY_RUN && (confidence === 'high' || override)) {
+        if (setSiteLocation(file, slug, site.id, { address, lng: round(poi.lng), lat: round(poi.lat) })) {
+          applied.push({ slug, siteId: site.id, address, lng: round(poi.lng), lat: round(poi.lat) });
+        }
+      }
+    }
+  }
+}
+
+// --- report -----------------------------------------------------------------
+console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
+console.log(`Sites needing a point: ${planCount} | already on map (skip): ${skipped.filter((s) => s.reason === 'already-pinned').length}`);
+console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`);
+console.log('\n=== RESOLVED ===');
+for (const r of resolutions) {
+  console.log(
+    `${String(r.confidence).padEnd(6)} ${r.slug.padEnd(26)} ${r.poi.name.padEnd(28)} ${r.poi.address.padEnd(34)} ${r.poi.lng},${r.poi.lat} [${r.reason}] regeo=${r.verified}`,
+  );
+}
+if (unresolved.length) {
+  console.log('\n=== UNRESOLVED (stayed off map) ===');
+  for (const u of unresolved) console.log(`${u.slug.padEnd(26)} ${u.query.padEnd(20)} ${u.reason}`);
+}
+if (!DRY_RUN) {
+  console.log(`\nWRITTEN: ${applied.length} site(s) updated in drop JSON.`);
+  if (applied.length !== resolutions.length) {
+    console.log(`Skipped ${resolutions.length - applied.length} low-confidence resolution(s) (use --only to force).`);
+  }
+}

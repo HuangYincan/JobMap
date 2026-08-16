@@ -9,6 +9,7 @@ help: ## Show currently supported commands
 	@printf '%s\n' '  make test-unit        Run importer unit tests (no database required)'
 	@printf '%s\n' '  make crawl-official   Dry-run polite GET of official careerUrl pages (no write)'
 	@printf '%s\n' '  make refresh-radar     Download reviewed radar snapshot and remap drops'
+	@printf '%s\n' '  make geocode-sites     Apply real Hangzhou office coords to city-list drops (needs AMAP_WEB_KEY; --dry-run prints the plan)'
 	@printf '%s\n' '  make test-integration Run database integration tests (SKIP/BLOCKED if unavailable)'
 	@printf '%s\n' '  make docs-check       Reject stale canonical documentation references'
 	@printf '%s\n' '  make scaffold-status  Show implementation prerequisites present/planned'
@@ -45,6 +46,9 @@ refresh-radar: ## Download the reviewed radar snapshot, remap drops, and validat
 	@cd crawler && PYTHONPATH=app python3 -m unittest discover -s tests -q >/dev/null && echo "crawler tests OK"
 	@cd server && node --experimental-strip-types --no-warnings scripts/plan-seed-import.mjs 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(f'import plan: {d[\"companies\"]} companies / {d[\"positions\"]} positions, {len(d[\"issues\"])} issues, {d[\"dropped\"]} dropped'); sys.exit(1 if d[\"dropped\"] or d[\"issues\"] else 0)" && echo "import plan OK"
 	@echo "Refresh done. Record the SHA-256 in tech/roles/data/data-quality.md."
+
+geocode-sites: ## Real office coords for city-list drops (AMAP_WEB_KEY; --dry-run prints the plan)
+	cd server && node --no-warnings scripts/geocode-sites-apply.mjs $(filter-out $@,$(MAKECMDGOALS))
 
 test-integration: ## Run database integration tests (SKIP/BLOCKED if unavailable)
 	tests/integration/db/test_migrations.sh

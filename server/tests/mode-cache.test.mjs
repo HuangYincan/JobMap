@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   clearModeCache,
   MODE_CACHE_PREFIX,
+  MODE_CACHE_VERSION,
   readModeCache,
   writeModeCache,
 } from '../src/lib/mode-cache.ts';
@@ -120,7 +121,7 @@ test('legacy internship cache key is readable as work', () => {
   store.set(
     `${MODE_CACHE_PREFIX}internship`,
     JSON.stringify({
-      version: 2,
+      version: MODE_CACHE_VERSION,
       mode: 'internship',
       catalog: [{ ...samplePoi, id: 'legacy', mode: 'internship' }],
       pageOffset: 1,

@@ -37,6 +37,13 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - `npm run audit:pins` added (`scripts/audit-pin-locations.mjs`, `AMAP_WEB_KEY` + `DATABASE_URL` from env).
 - **Browser cache invalidation**: `MODE_CACHE_VERSION` bumped 1→2 — stale sessionStorage catalogs refetch the corrected coordinates. Data-fix workflow documented: seed/drops → `import:seed:apply` → bump cache version → `audit:pins`.
 
+### Geocode apply — radar-only companies to real Hangzhou offices (2026-08-17)
+
+- `npm run geocode:sites:apply` (`scripts/geocode-sites-apply.mjs`): resolves city-text-only radar sites ("北京/杭州") to a **real Hangzhou office** via AMap place-text search (`v3/place/text`, city-scoped) instead of pinning a company at a city center. It regeocodes every hit to confirm it sits inside 杭州市, skips companies already on the map (no duplicate pins), and copy-on-write replaces only `site.location` in the owning drop JSON. Missing `AMAP_WEB_KEY` → dry-run.
+- New helpers in `lib/site-geocode.ts`: `cleanCompanySearchName` / `normalizeNameForMatch` (strip decor + legal forms, known aliases), `gradeOfficePoi` (rejects out-of-city and wrong-entity name mismatches — the 海天集团 trap), `pickBestOfficePoi` (office type over retail store), `placeTextSearchRest`, `regeoCityRest`. Unit tests: `tests/site-geocode.test.mjs`.
+- Hand-curated resolutions live in `data/recruitment/geocode-overrides.json` (real office for wrong-entity hits: 白贝壳 for Babycare, 游卡滨江基地, 阿里巴巴西溪园区 for 淘天集团/淘宝闪购/阿里淘天, 兴业银行杭州分行, 台达电子杭州设计中心, 华润置地浙江公司, vivo杭州研发中心, 海信星海科技, 舜宇光学(浙江)研究院, 迈瑞杭州分公司, 禾赛赫兹智能制造中心, 吉利科技大厦…) plus explicit `exclude` markers for companies with **no verifiable Hangzhou office** in AMap (奥比中光 / MPS / 星宸 / 多益 / 昆仑芯 / 拓竹 / 恒瑞 / 海天集团…).
+- **Result: map surface 14 → 79 pins**, all with a street address and 0 (0,0) pins. Import plan stays valid: 137 companies / 137 sites / 241 positions, 0 dropped, 0 issues. `MODE_CACHE_VERSION` bumped 2→3 so browsers refetch the expanded catalog. DB refresh (`import:seed:apply`) picks the coords up from the same drops when Postgres is back up.
+
 ## 2026-08-16
 
 ### Added

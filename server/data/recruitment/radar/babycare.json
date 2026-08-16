@@ -11,7 +11,9 @@
       "id": "babycare-site",
       "name": "Babycare",
       "location": {
-        "address": "杭州"
+        "address": "滨江区江虹路611号上峰电商产业园1号楼1层",
+        "lng": 120.200538,
+        "lat": 30.187653
       }
     }
   ],

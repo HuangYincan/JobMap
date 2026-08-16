@@ -58,10 +58,13 @@ test('async catalog keeps only authentic positions (radar/portal) when there is 
 
 test('radar-only companies without coordinates stay off the offline map', async () => {
   const work = await loadServerCatalog('work');
-  // 招商银行 is radar-only (city text, no coords) → must not pin at (0,0).
+  // 招商银行 / 理想汽车 were geocoded to real Hangzhou offices (2026-08-17) and now pin.
   assert.equal(work.some((p) => p.location?.lng === 0 && p.location?.lat === 0), false);
-  assert.equal(await loadServerCatalogById('work', '招商银行'), undefined);
-  assert.equal(await loadServerCatalogById('work', '理想汽车'), undefined);
+  assert.ok(await loadServerCatalogById('work', '招商银行'));
+  assert.ok(await loadServerCatalogById('work', '理想汽车'));
+  // Companies with no resolvable Hangzhou office in AMap POI (海天集团 / 恒瑞医药) stay off.
+  assert.equal(await loadServerCatalogById('work', '海天集团'), undefined);
+  assert.equal(await loadServerCatalogById('work', '恒瑞医药'), undefined);
 });
 
 test('loadWorkCatalogFromDb joins companies + sites + open positions', () => {

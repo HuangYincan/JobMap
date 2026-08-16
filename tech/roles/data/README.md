@@ -15,7 +15,7 @@ Implemented (reviewed 2026-08-17): published `xiaozhao-radar` `jobs.json` mappin
 ## AMap Web services key (`AMAP_WEB_KEY`)
 
 - **Purpose:** server-side geocoding only — the key must never be printed or committed, and is read from env (`server/.env.local`).
-- **Used by:** `geocodeAddressRest` (`server/src/lib/site-geocode.ts`, address→coordinate for `geocode:sites` apply path) and `npm run audit:pins` (`scripts/audit-pin-locations.mjs`, three-layer pin audit: geocoding + regeocoding + POI search).
+- **Used by:** `geocodeAddressRest` + `placeTextSearchRest` + `regeoCityRest` (`server/src/lib/site-geocode.ts`, address→coordinate and office discovery for `geocode:sites:apply`), and `npm run audit:pins` (`scripts/audit-pin-locations.mjs`, three-layer pin audit: geocoding + regeocoding + POI search).
 - **Not used for:** map rendering (that is the browser JS key `NEXT_PUBLIC_AMAP_KEY`), or any Domain-mode live search (browser AMap SDK).
 
 | Source | MVP status | Permitted action | Conditions |

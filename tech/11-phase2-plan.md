@@ -229,10 +229,11 @@
 - [x] 离线 catalog 过滤无坐标站点（雷达新公司不画 (0,0) 针）
 - [x] 校验器允许「仅地址」站点（待地理编码）
 - [x] **坐标审计**（2026-08-17）：`npm run audit:pins` 三层核查（geocoding/regeocoding/POI），修正 11 个 pin（蚂蚁/深度求索/贝达/泰格/群核等），14/14 PASS；`AMAP_WEB_KEY` 已配置（`tech/roles/data/README.md` 登记用途）
+- [x] **雷达公司落真实办公点**（2026-08-17）：`npm run geocode:sites:apply`（place-text 搜真实杭州办公点 + regeo 校验 + copy-on-write 落盘）为 65 家落坐标；手工 override / exclude 固化在 `data/recruitment/geocode-overrides.json`；地图 14 → **79 pin**；`MODE_CACHE_VERSION` 2→3
 - [x] 数据落盘：`server/data/recruitment/radar/`（98 公司 / 125 职位，SHA-256 记录）
 - [x] source review：`tech/roles/data/etl/xiaozhao-radar.md`、`etl/official-career.md`
 
-**交付物:** 真实校招投递链接/岗位进入工作模式 catalog；雷达新公司留待 `npm run geocode:sites`。
+**交付物:** 真实校招投递链接/岗位进入工作模式 catalog；雷达新公司经 `geocode:sites:apply` 落真实杭州办公点（79 pin）。
 
 ---
 
@@ -445,7 +446,7 @@
 ### 功能指标
 - [x] 支持 2 种模式（Domain + 工作）
 - [ ] Domain 模式 POI 数量 > 5000
-- [x] 实习模式公司数量 > 100 — **2026-08-17 数据**：导入计划 137 家（seed 50 + official-career 51 + radar 98 合并后去重）；**地图只展示真实数据**（`radar-*`/`portal-*`，示例岗位下线）→ 当前 14 个有坐标 + 真实在招信号的 pin；86 家雷达-only 公司待 `npm run geocode:sites` 上屏
+- [x] 实习模式公司数量 > 100 — **2026-08-17 数据**：导入计划 137 家（seed 50 + official-career 51 + radar 98 合并后去重）；**地图只展示真实数据**（`radar-*`/`portal-*`，示例岗位下线）→ 当前 **79 个真实办公点 pin**（14 锚点 + 65 家经 `geocode:sites:apply` 落真实杭州地址）；~21 家无 AMap 可验证办公点的雷达-only 公司不上屏
 - [ ] 搜索建议响应 < 300ms
 - [x] 筛选器支持 5+ 维度（jobTaxonomy / roleFamily / industry / scale / education / salary / district / deadline / onlyOpen / 住宿 / 班车）
 - [ ] 详情页加载 < 1s

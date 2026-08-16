@@ -11,7 +11,9 @@
       "id": "淘天集团-t-star-lab-site",
       "name": "淘天集团[T-Star  Lab )",
       "location": {
-        "address": "北京/杭州"
+        "address": "余杭区文一西路969号阿里巴巴西溪园区",
+        "lng": 120.024993,
+        "lat": 30.280062
       }
     }
   ],

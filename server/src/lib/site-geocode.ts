@@ -179,3 +179,180 @@ export async function geocodeAddressRest(
   if (!Number.isFinite(lng) || !Number.isFinite(lat)) return { ok: false, reason: 'parse' };
   return { ok: true, location: { lng, lat, address: query } };
 }
+
+// ---------------------------------------------------------------------------
+// Office discovery via AMap place-text search (Web 服务, same AMAP_WEB_KEY).
+// Used to give city-list-only radar sites a real Hangzhou office + street
+// address instead of pinning a company at a city center. Callers throttle QPS.
+// ---------------------------------------------------------------------------
+
+/** Known aliases: radar snapshot names → the name AMap actually knows. */
+export const COMPANY_QUERY_ALIASES: Record<string, string> = {
+  认养: '认养一头牛',
+  财通证劵: '财通证券',
+  字节跳动Seed大模型: '字节跳动',
+  淘天集团: '淘天集团',
+  商汤科技: '商汤科技',
+  阿里淘天: '淘天集团',
+};
+
+const BRACKET_SEG_RE = /[（(【\[「][^）)】\]」]*[）)】\]」]/g;
+const RECRUIT_TAIL_RE = /(校园招聘|人才招聘|实习生招聘|校招|秋招|春招|社招|招聘|实习生)$/g;
+const LEGAL_FORM_RE = /(股份有限公司|有限责任公司|有限公司)/g;
+
+/** Turn a display name into a place-search query (decor stripped, aliased). */
+export function cleanCompanySearchName(name: string): string {
+  const aliased = COMPANY_QUERY_ALIASES[name.trim()] ?? name;
+  return aliased
+    .replace(BRACKET_SEG_RE, '')
+    .replace(RECRUIT_TAIL_RE, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Names compared on the same normalized surface; legal forms never block a match. */
+export function normalizeNameForMatch(name: string): string {
+  return cleanCompanySearchName(name)
+    .replace(LEGAL_FORM_RE, '')
+    .toLowerCase()
+    .replace(/\s+/g, '');
+}
+
+export interface OfficePoiCandidate {
+  name: string;
+  address: string;
+  lng: number;
+  lat: number;
+  type: string;
+  adname: string;
+  pname: string;
+  cityname: string;
+}
+
+export type GeocodeConfidence = 'high' | 'medium' | 'low';
+
+export interface GeocodeResolution {
+  slug: string;
+  siteId: string;
+  query: string;
+  poi?: OfficePoiCandidate;
+  confidence: GeocodeConfidence;
+  reason: string;
+}
+
+// A "street" address carries a road / building / number — a bare district
+// ("滨江区") is not enough to claim a real office.
+const STREET_RE = /(路|街|号|大厦|园|城|座|巷|里|弄|桥|门|广场|中心|板块|大道)|\d/;
+const OFFICE_TYPE_RE = /^(公司企业|商务|科教|金融保险)/;
+
+export function parseOfficePoi(raw: Record<string, unknown>): OfficePoiCandidate | null {
+  const loc = typeof raw.location === 'string' ? raw.location.split(',') : [];
+  const lng = Number(loc[0]);
+  const lat = Number(loc[1]);
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  return {
+    name: String(raw.name ?? ''),
+    address: String(raw.address ?? ''),
+    lng,
+    lat,
+    type: String(raw.type ?? ''),
+    adname: String(raw.adname ?? ''),
+    pname: String(raw.pname ?? ''),
+    cityname: String(raw.cityname ?? ''),
+  };
+}
+
+/** Grade a candidate as a plausible Hangzhou office of `companyName`. */
+export function gradeOfficePoi(
+  poi: OfficePoiCandidate,
+  companyName: string,
+): { confidence: GeocodeConfidence; reason: string } {
+  if (poi.pname && poi.pname !== '浙江省') return { confidence: 'low', reason: `outside-zhejiang:${poi.pname}` };
+  if (poi.cityname && poi.cityname !== '杭州市') return { confidence: 'low', reason: `outside-hangzhou:${poi.cityname}` };
+  const q = normalizeNameForMatch(companyName);
+  const c = normalizeNameForMatch(poi.name);
+  const match = q.length > 0 && c.length > 0 && (q.includes(c) || c.includes(q));
+  const street = STREET_RE.test(poi.address);
+  if (!match) return { confidence: 'low', reason: `name-mismatch:${poi.name}` };
+  if (!street) return { confidence: 'medium', reason: 'name-match-no-street' };
+  return { confidence: 'high', reason: `matched:${poi.name}` };
+}
+
+/** Best AMap hit for a company's Hangzhou office; office-type wins ties. */
+export function pickBestOfficePoi(pois: OfficePoiCandidate[], companyName: string): GeocodeResolution['poi'] {
+  const scored = pois.map((poi) => {
+    const grade = gradeOfficePoi(poi, companyName);
+    const office = OFFICE_TYPE_RE.test(poi.type) ? 1 : 0;
+    const street = STREET_RE.test(poi.address) ? 1 : 0;
+    const exact = normalizeNameForMatch(poi.name) === normalizeNameForMatch(companyName) ? 2 : 0;
+    return { poi, grade, rank: exact + office * 2 + street };
+  });
+  const sorted = scored.sort((a, b) => b.rank - a.rank);
+  const best = sorted[0];
+  return best && best.grade.confidence !== 'low' ? best.poi : undefined;
+}
+
+export interface PlaceTextResult {
+  ok: boolean;
+  pois: OfficePoiCandidate[];
+  reason?: 'no-key' | 'http' | 'parse';
+}
+
+/** v3/place/text scoped to one city. No key → no-op; callers throttle. */
+export async function placeTextSearchRest(
+  query: string,
+  city = '杭州',
+  fetchImpl: typeof fetch = fetch,
+): Promise<PlaceTextResult> {
+  const key = amapWebKey();
+  if (!key) return { ok: false, pois: [], reason: 'no-key' };
+  const url = new URL('https://restapi.amap.com/v3/place/text');
+  url.searchParams.set('keywords', query);
+  url.searchParams.set('city', city);
+  url.searchParams.set('citylimit', 'true');
+  url.searchParams.set('offset', '10');
+  url.searchParams.set('output', 'JSON');
+  url.searchParams.set('key', key);
+  try {
+    const res = await fetchImpl(url);
+    if (!res.ok) return { ok: false, pois: [], reason: 'http' };
+    const payload = (await res.json()) as { status?: string; pois?: Array<Record<string, unknown>> };
+    if (payload.status !== '1') return { ok: false, pois: [], reason: 'parse' };
+    return { ok: true, pois: (payload.pois ?? []).map(parseOfficePoi).filter((p): p is OfficePoiCandidate => !!p) };
+  } catch {
+    return { ok: false, pois: [], reason: 'http' };
+  }
+}
+
+export interface RegeoResult {
+  ok: boolean;
+  cityname?: string;
+  district?: string;
+}
+
+/** v3/geocode/regeo: confirm a coordinate actually sits in Hangzhou. */
+export async function regeoCityRest(
+  lng: number,
+  lat: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<RegeoResult> {
+  const key = amapWebKey();
+  if (!key) return { ok: false };
+  const url = new URL('https://restapi.amap.com/v3/geocode/regeo');
+  url.searchParams.set('location', `${lng},${lat}`);
+  url.searchParams.set('output', 'JSON');
+  url.searchParams.set('key', key);
+  try {
+    const res = await fetchImpl(url);
+    if (!res.ok) return { ok: false };
+    const payload = (await res.json()) as {
+      status?: string;
+      regeocode?: { addressComponent?: { cityname?: string; district?: string; adcode?: string } };
+    };
+    const comp = payload.regeocode?.addressComponent;
+    if (payload.status !== '1' || !comp) return { ok: false };
+    return { ok: true, cityname: comp.cityname, district: comp.district };
+  } catch {
+    return { ok: false };
+  }
+}

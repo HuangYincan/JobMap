@@ -5,9 +5,15 @@ import { poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
 import {
   applyGeocodeHits,
+  cleanCompanySearchName,
   geocodeAddressRest,
   geocodeQueryForSite,
+  gradeOfficePoi,
+  normalizeNameForMatch,
+  pickBestOfficePoi,
+  placeTextSearchRest,
   planSiteGeocode,
+  regeoCityRest,
   siteNeedsGeocode,
 } from '../src/lib/site-geocode.ts';
 
@@ -72,5 +78,58 @@ test('geocodeAddressRest parses a successful AMap payload without logging the ke
   } finally {
     if (prev == null) delete process.env.AMAP_WEB_KEY;
     else process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+// --- office discovery (place-text) helpers ---------------------------------
+
+test('cleanCompanySearchName strips decor and applies known aliases', () => {
+  assert.equal(cleanCompanySearchName('字节跳动Seed大模型'), '字节跳动');
+  assert.equal(cleanCompanySearchName('淘天集团[T-Star  Lab )'), '淘天集团');
+  assert.equal(cleanCompanySearchName('商汤科技「无限原力」'), '商汤科技');
+  assert.equal(cleanCompanySearchName('阿里巴巴（2026 秋招）'), '阿里巴巴');
+  assert.equal(cleanCompanySearchName('认养'), '认养一头牛');
+  assert.equal(cleanCompanySearchName('财通证劵'), '财通证券');
+  assert.equal(cleanCompanySearchName('快手'), '快手');
+});
+
+test('normalizeNameForMatch strips legal forms so office names still match', () => {
+  assert.equal(normalizeNameForMatch('杭州海天管业有限公司'), '杭州海天管业');
+  assert.equal(normalizeNameForMatch('财通证券股份有限公司杭州营业部'), '财通证券杭州营业部');
+  // 海天集团 must NOT match 杭州海天管业 (wrong-entity trap).
+  const q = normalizeNameForMatch('海天集团');
+  const c = normalizeNameForMatch('杭州海天管业有限公司');
+  assert.equal(q.includes(c) || c.includes(q), false);
+});
+
+test('gradeOfficePoi rejects out-of-city and name-mismatch candidates', () => {
+  const hz = { name: '商汤科技有限公司', address: '利一路188号天人大厦29楼', lng: 120, lat: 30, type: '公司企业', adname: '萧山区', pname: '浙江省', cityname: '杭州市' };
+  assert.equal(gradeOfficePoi(hz, '商汤科技').confidence, 'high');
+  const beijing = { ...hz, pname: '北京市', cityname: '北京市' };
+  assert.equal(gradeOfficePoi(beijing, '商汤科技').confidence, 'low');
+  const wrong = { ...hz, name: '杭州海天管业有限公司' };
+  assert.equal(gradeOfficePoi(wrong, '海天集团').confidence, 'low');
+  const noStreet = { ...hz, address: '滨江区' };
+  assert.equal(gradeOfficePoi(noStreet, '商汤科技').confidence, 'medium');
+});
+
+test('pickBestOfficePoi prefers a real office over a retail store of the same brand', () => {
+  const office = { name: '快手(星耀中心7号楼)', address: '启智街515号星耀中心7号楼', lng: 120.221, lat: 30.202, type: '公司企业', adname: '滨江区', pname: '浙江省', cityname: '杭州市' };
+  const store = { name: '快手(濮院店)', address: '新洲路与坊路交叉口', lng: 120.325, lat: 30.453, type: '购物服务', adname: '临平区', pname: '浙江省', cityname: '杭州市' };
+  const best = pickBestOfficePoi([store, office], '快手');
+  assert.equal(best?.name, '快手(星耀中心7号楼)');
+});
+
+test('placeTextSearchRest and regeoCityRest are no-ops without AMAP_WEB_KEY', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  delete process.env.AMAP_WEB_KEY;
+  try {
+    const hit = await placeTextSearchRest('快手');
+    assert.equal(hit.ok, false);
+    assert.equal(hit.reason, 'no-key');
+    const re = await regeoCityRest(120, 30);
+    assert.equal(re.ok, false);
+  } finally {
+    if (prev != null) process.env.AMAP_WEB_KEY = prev;
   }
 });
