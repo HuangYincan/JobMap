@@ -27,6 +27,7 @@ node --test tests/*.test.mjs
 npm run import:seed             # 50 companies / 0 dropped today
 npm run import:seed:apply       # no-op without DATABASE_URL; upserts 006 tables when Docker is up
 npm run geocode:sites           # lists seed / imported sites still at (0,0); does not call AMap
+# Optional: drop official-career JSON in server/data/recruitment/official-career/
 ```
 
 Do not run `npx tsc` from the repo root.

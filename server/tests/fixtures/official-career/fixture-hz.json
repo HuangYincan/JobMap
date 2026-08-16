@@ -1,0 +1,24 @@
+{
+  "slug": "fixture-hz",
+  "name": "Fixture Labs",
+  "industries": ["ai"],
+  "scale": "startup",
+  "careerUrl": "https://fixture.example/jobs",
+  "sites": [
+    {
+      "id": "hq",
+      "name": "杭州总部",
+      "location": { "lng": 120.12, "lat": 30.28, "address": "西湖区" }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "fixture-fe",
+      "title": "前端实习",
+      "siteId": "hq",
+      "family": "intern",
+      "status": "open",
+      "applyUrl": "https://fixture.example/jobs/fe"
+    }
+  ]
+}

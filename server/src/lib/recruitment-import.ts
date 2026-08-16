@@ -4,6 +4,7 @@
 
 import { getPool } from './db.ts';
 import type { SourceCompany, SourcePosition } from './recruitment-source.ts';
+import { officialCareerAdapter } from './recruitment-adapters/official-career.ts';
 import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
 
 export interface ImportIssue {
@@ -135,7 +136,15 @@ export function planRecruitmentImport(input: SourceCompany[]): ImportPlan {
 }
 
 export async function planSeedImport(): Promise<ImportPlan> {
-  return planRecruitmentImport(await seedRecruitmentAdapter.list());
+  const [seed, official] = await Promise.all([
+    seedRecruitmentAdapter.list(),
+    officialCareerAdapter().list(),
+  ]);
+  return planRecruitmentImport([...seed, ...official]);
+}
+
+export async function planOfficialCareerImport(dir?: string): Promise<ImportPlan> {
+  return planRecruitmentImport(await officialCareerAdapter(dir).list());
 }
 
 export interface ImportApplyResult {

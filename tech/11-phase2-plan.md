@@ -122,7 +122,7 @@
 - [x] 公司-岗位关系建模（公司 1—N 职场；岗位挂一个 site）
 
 **3.2 招聘数据导入**
-- [x] 数据源选择（先 `seed` adapter；官方/Boss 后接）
+- [x] 数据源选择（先 `seed` adapter；`official-career` 读本地 JSON 目录，Boss 后接）
 - [x] 数据清洗 / 验证（`lib/recruitment-import.ts`；坏行进 `issues` 不入库）
 - [x] 公司地理位置匹配（seed 已带坐标；`planSiteGeocode` / `npm run geocode:sites` 列出缺坐标职场。Live AMap REST 需 `AMAP_WEB_KEY`，本机无 key 不打接口）
 - [x] 导入计划脚本（`npm run import:seed` dry-run；`import:seed:apply` 有库才写入 `006` 表）

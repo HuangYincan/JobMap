@@ -4,12 +4,16 @@ import assert from 'node:assert/strict';
 import {
   applyRecruitmentImport,
   dedupeSourceCompanies,
+  planOfficialCareerImport,
   planRecruitmentImport,
   planSeedImport,
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
+import { officialCareerAdapter, parseOfficialCareerPayload } from '../src/lib/recruitment-adapters/official-career.ts';
 import { poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 function sample() {
   return poiToSourceCompany(WORK_SEED[0]);
@@ -67,4 +71,19 @@ test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {
   assert.equal(result.wrote, false);
   assert.equal(result.reason, 'no-database');
   assert.equal(result.companies, plan.companies.length);
+});
+
+test('official-career adapter reads JSON drops and skips a missing dir', async () => {
+  const parsed = parseOfficialCareerPayload({ slug: 'x', name: 'X', sites: [], positions: [] });
+  assert.equal(parsed[0].slug, 'x');
+  assert.deepEqual(parseOfficialCareerPayload({ nope: true }), []);
+
+  const empty = await officialCareerAdapter('/tmp/domain-map-no-such-official-career').list();
+  assert.deepEqual(empty, []);
+
+  const dir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'official-career');
+  const plan = await planOfficialCareerImport(dir);
+  assert.equal(plan.dropped, 0);
+  assert.ok(plan.companies.some((c) => c.slug === 'fixture-hz'));
+  assert.equal(plan.companies.find((c) => c.slug === 'fixture-hz')?.positions[0].siteId, 'hq');
 });
