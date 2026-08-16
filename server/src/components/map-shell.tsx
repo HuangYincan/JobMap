@@ -1498,7 +1498,7 @@ export function MapShell() {
           <input
             ref={searchInputRef}
             type="search"
-            placeholder={t('searchPlaceholder', lang)}
+            placeholder={modeConfig.searchPlaceholder}
             value={query}
             tabIndex={sidebarOpen ? 0 : -1}
             onChange={(e) => {
