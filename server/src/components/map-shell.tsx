@@ -774,6 +774,10 @@ export function MapShell() {
       }),
     [catalog, query, filters, sort, distanceOrigin]
   );
+  const filterChips = useMemo(
+    () => activeFilterChips(filters, modeConfig.filters),
+    [filters, modeConfig.filters],
+  );
   catalogRef.current = catalog;
   poisRef.current = pois;
 
@@ -1834,9 +1838,9 @@ export function MapShell() {
                   />
                 </div>
               )}
-              {activeFilterChips(filters, modeConfig.filters).length > 0 && (
+              {filterChips.length > 0 && (
                 <div className={styles.mobileChips} aria-label={t("activeFilters", lang)}>
-                  {activeFilterChips(filters, modeConfig.filters).map((chip) => (
+                  {filterChips.map((chip) => (
                     <button
                       key={chip.id}
                       type="button"
