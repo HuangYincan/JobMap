@@ -283,7 +283,7 @@ make db-status         # 查看数据库服务状态
 ## 外部数据采集门禁
 
 - 没有来源授权、条款/robots、访问方式、速率、保留和删除记录，不得实现或运行自动采集。
-- `xiaozhao-radar` 仅作为待验证的 MVP 导入候选；BOSS 直聘和小红书不属于 MVP，不得直接抓取。
+- `xiaozhao-radar` 已审查（`tech/roles/data/etl/xiaozhao-radar.md`）：可映射其已发布的 `jobs.json`；不采纳其隐身/腾讯文档抓取栈。官方招聘页仅礼貌 GET + robots（`etl/official-career.md`）。BOSS 直聘、牛客、小红书、实习僧不属于 MVP，不得直接抓取。
 - 插件注册不等于数据采集授权；不得绕过登录、验证码、限流或检测。
 
 ## 记住

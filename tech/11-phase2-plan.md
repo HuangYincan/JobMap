@@ -441,11 +441,11 @@
 - [ ] 测试覆盖率 > 70%
 
 ### 功能指标
-- [ ] 支持 2 种模式（Domain + 实习）
+- [x] 支持 2 种模式（Domain + 工作）
 - [ ] Domain 模式 POI 数量 > 5000
-- [ ] 实习模式公司数量 > 100
+- [x] 实习模式公司数量 > 100 — **2026-08-17 数据**：导入计划 137 家（seed 50 + official-career 50 锚点 + radar 98 合并后去重）；离线地图展示 51 个有坐标 pin（radar-only 公司待 `npm run geocode:sites` 后上屏）
 - [ ] 搜索建议响应 < 300ms
-- [ ] 筛选器支持 5+ 维度
+- [x] 筛选器支持 5+ 维度（jobTaxonomy / roleFamily / industry / scale / education / salary / district / deadline / onlyOpen / 住宿 / 班车）
 - [ ] 详情页加载 < 1s
 
 ### 用户体验指标

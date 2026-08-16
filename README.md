@@ -8,13 +8,14 @@
 
 ## Project Status
 
-**Status: Phase 2/3/4 complete on `feature/phase-2-multi-mode` (2026-08-16).** Phase 1 baseline remains on `feature/phase-1-platform-baseline`.
+**Status: Phase 2/3/4 complete on `feature/phase-2-multi-mode` (2026-08-17).** Phase 1 baseline remains on `feature/phase-1-platform-baseline`.
 
 Implemented and verified:
-- Importer project `crawler/` (Python 3.12, uv): declarative plugin-manifest validation, deterministic local-fixture normalization with provenance, and map access policy. 11 unit tests pass.
+- Importer project `crawler/` (Python 3.12, uv): declarative plugin-manifest validation, deterministic local-fixture normalization with provenance, map access policy, and **reviewed polite acquisition** (published xiaozhao-radar `jobs.json` mapping + official career-page GET with robots + blocked commercial hosts). 30 unit tests pass (`make test-unit`).
+- Real recruitment data: `server/data/recruitment/` — 51 official-career + 98 radar companies (137 merged in the import plan, 240 positions). Radar-only companies await geocoding (`npm run geocode:sites`). Source review records: `tech/roles/data/etl/`.
 - Database `db/`: ordered PostGIS migrations `001`–`010` (identity through notifications). Live apply verified: `001`–`010` in ledger, `make test-integration` passes, `npm run import:seed:apply` wrote 51 companies / 110 open positions.
 - PostGIS spatial queries: `/api/pois` and `/api/search` use `geom && ST_MakeEnvelope` + `ST_DWithin` for viewport/distance clip. Warm local Next P95: `/api/pois` 12.7ms, bounds clip 5.8ms.
-- Frontend `server/` (Next.js 15.5.23, React 19): Domain + Work map modes, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter (30+ dimensions), sort (6 modes), autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle. 159 tests pass. `cd server && ./node_modules/.bin/tsc --noEmit && node --test tests/*.test.mjs`.
+- Frontend `server/` (Next.js 15.5.23, React 19): Domain + Work map modes, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter (30+ dimensions), sort (6 modes), autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle. Guest Recent persists in localStorage (persistable work queries only); Saved/Recent reject domain POIs. 172 tests pass. `cd server && ./node_modules/.bin/tsc --noEmit && node --test tests/*.test.mjs`.
 - Official-career file adapter: 51 companies (32 from JSON drops covering every seed slug with a public career URL, 之江实验室 as new slug). 曦曦AI stays seed-only (no career page). 110 open positions after live import.
 - Changelog: [CHANGELOG.md](CHANGELOG.md). API: [tech/14-api-contract.md](tech/14-api-contract.md). Local run: [tech/15-deploy.md](tech/15-deploy.md). Roadmap: [tech/05-milestones.md](tech/05-milestones.md).
 
@@ -72,7 +73,7 @@ domain-map/
 │   └── roles/               # internal product/development/test/ops/security/data records
 ├── db/                      # reserved for future SQL migrations
 ├── server/                  # reserved for future Next.js application
-├── crawler/                 # reserved for future Python importer/crawler
+├── crawler/                 # Python importer + reviewed polite acquisition (radar/HTML)
 ├── tests/                   # test strategy; test code arrives with implementation
 ├── scripts/                 # reserved for verified automation scripts
 ├── Makefile                 # scaffold-aware command policy
