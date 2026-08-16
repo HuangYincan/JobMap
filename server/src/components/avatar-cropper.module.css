@@ -1,7 +1,8 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 80;
+  pointer-events: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,6 +14,7 @@
 
 .card {
   width: min(420px, 100%);
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
   gap: 14px;

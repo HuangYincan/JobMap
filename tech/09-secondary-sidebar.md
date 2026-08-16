@@ -695,7 +695,7 @@ function handleKeyDown(e: KeyboardEvent) {
 - [ ] 详情页内容布局
 - [ ] 图片轮播组件
 - [ ] 返回按钮
-- [ ] 移动端手势返回
+- [x] 移动端手势返回（抽屉把手下滑先关 JD，再回列表；岗位在抽屉内替换公司页）
 
 ### Phase 2.3 - 地图联动
 - [ ] 卡片 Hover → Marker 高亮

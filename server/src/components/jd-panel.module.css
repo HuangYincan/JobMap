@@ -192,12 +192,6 @@
   filter: none;
 }
 
-@media (max-width: 767px) {
-  .panel {
-    display: none;
-  }
-}
-
 @media (prefers-color-scheme: dark) {
   .panel {
     background: rgba(28, 28, 30, 0.88);

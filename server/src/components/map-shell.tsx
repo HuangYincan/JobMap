@@ -172,7 +172,7 @@ export function MapShell() {
     setMapStyle(readMapStylePref(system));
   }, []);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers">("explore");
+  const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers" | "account" | "recent">("explore");
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
   const [mobileSuggestIndex, setMobileSuggestIndex] = useState(-1);
@@ -1134,6 +1134,7 @@ export function MapShell() {
         setFilters(tagged.filters);
         setSuggestions([]);
         setRailPanel("explore");
+        setMobileSheet("explore");
         void recordSearch(s.name, mode);
         return;
       }
@@ -1146,6 +1147,7 @@ export function MapShell() {
       if (company) {
         setSelectedId(company.id);
         setDetailPoi(company);
+        setDrawer("full");
         if (s.positionId && isRecruitmentPOI(company)) {
           const pos = company.positions.find((item) => item.id === s.positionId);
           setOpenPositionId(s.positionId);
@@ -1161,6 +1163,7 @@ export function MapShell() {
     setQuery(s.name);
     setSuggestions([]);
     setRailPanel("explore");
+    setMobileSheet("explore");
     void recordSearch(s.name, mode);
   }, [catalog, pois, mode, recordSearch, query, filters]);
 
@@ -1248,6 +1251,17 @@ export function MapShell() {
     setSidebarOpen(true);
   };
 
+  const openMobileAccount = () => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    setMobileSheet("account");
+    setDrawer("full");
+    setDetailPoi(null);
+    setMobileJd(null);
+  };
+
   const handleProfileClick = () => {
     if (!user) {
       setAuthOpen(true);
@@ -1325,14 +1339,22 @@ export function MapShell() {
     const dy = event.clientY - start.y;
     if (Math.abs(dy) < 36) return;
     if (dy < 0) {
-      if (detailPoi) return;
+      if (detailPoi || mobileJd) return;
       setDrawer((current) => (current === "mini" ? "half" : "full"));
+      return;
+    }
+    if (mobileJd) {
+      setMobileJd(null);
+      setDrawer("full");
       return;
     }
     if (detailPoi) {
       setDetailPoi(null);
-      setMobileJd(null);
       setDrawer("half");
+      return;
+    }
+    if (mobileSheet !== "explore") {
+      setMobileSheet("explore");
       return;
     }
     setDrawer((current) => (current === "full" ? "half" : "mini"));
@@ -1645,10 +1667,18 @@ export function MapShell() {
         <button
           className={styles.drawerHandle}
           onClick={() => {
+            if (mobileJd) {
+              setMobileJd(null);
+              setDrawer("full");
+              return;
+            }
             if (detailPoi) {
               setDetailPoi(null);
-              setMobileJd(null);
               setDrawer("half");
+              return;
+            }
+            if (mobileSheet !== "explore") {
+              setMobileSheet("explore");
               return;
             }
             cycleDrawer();
@@ -1658,18 +1688,32 @@ export function MapShell() {
           onPointerCancel={() => {
             drawerSwipeRef.current = null;
           }}
-          aria-label={detailPoi ? t("backToList", lang) : `Expand drawer from ${drawer} state`}
+          aria-label={mobileJd ? t("closeJd", lang) : detailPoi ? t("backToList", lang) : `Expand drawer from ${drawer} state`}
         >
           <span />
         </button>
-        {detailPoi ? (
+        {detailPoi && mobileJd && isRecruitmentPOI(detailPoi) ? (
+          <div className={styles.mobileDetail}>
+            <JdPanel
+              company={detailPoi}
+              position={mobileJd}
+              lang={lang}
+              accentColor={modeConfig.color}
+              onClose={() => setMobileJd(null)}
+              onApply={handleApply}
+            />
+          </div>
+        ) : detailPoi ? (
           <div className={styles.mobileDetail}>
             <POIDetailView
               poi={detailPoi}
               lang={lang}
               accentColor={modeConfig.color}
               selectedPositionId={mobileJd?.id}
-              onSelectPosition={(position) => setMobileJd(position)}
+              onSelectPosition={(position) => {
+                setMobileJd(position);
+                setDrawer("full");
+              }}
               saved={savedPlaces.some((item) => item.poiId === detailPoi.id)}
               onToggleSave={() => {
                 void handleToggleSave(detailPoi);
@@ -1680,16 +1724,6 @@ export function MapShell() {
                 setDrawer("half");
               }}
             />
-            {mobileJd && isRecruitmentPOI(detailPoi) && (
-              <JdPanel
-                company={detailPoi}
-                position={mobileJd}
-                lang={lang}
-                accentColor={modeConfig.color}
-                onClose={() => setMobileJd(null)}
-                onApply={handleApply}
-              />
-            )}
           </div>
         ) : (
           <>
@@ -1697,96 +1731,172 @@ export function MapShell() {
               <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} />
               <button
                 type="button"
-                className={`${styles.mobileFilterBtn} ${mobileSheet === "saved" ? styles.mobileFilterBtnActive : ""}`}
-                onClick={() => {
-                  if (!user) {
-                    setAuthOpen(true);
-                    return;
-                  }
-                  setMobileSheet((sheet) => (sheet === "saved" ? "explore" : "saved"));
-                  if (drawer === "mini") setDrawer("half");
-                }}
-                aria-pressed={mobileSheet === "saved"}
+                className={styles.mobileAvatarBtn}
+                onClick={openMobileAccount}
+                aria-label={user ? t("profile", lang) : t("notSignedIn", lang)}
               >
-                {t("saved", lang)}
-              </button>
-              <button
-                type="button"
-                className={`${styles.mobileFilterBtn} ${mobileSheet === "layers" ? styles.mobileFilterBtnActive : ""}`}
-                onClick={() => {
-                  setMobileSheet((sheet) => (sheet === "layers" ? "explore" : "layers"));
-                  if (drawer === "mini") setDrawer("half");
-                }}
-                aria-pressed={mobileSheet === "layers"}
-              >
-                {t("layers", lang)}
+                {user?.avatarUrl ? (
+                  <img className={styles.avatar} src={user.avatarUrl} alt="" />
+                ) : user ? (
+                  <div className={styles.avatar}>{initialsFromName(user.displayName)}</div>
+                ) : (
+                  <div className={`${styles.avatar} ${styles.avatarGuest}`}><Icon name="person" /></div>
+                )}
               </button>
             </div>
             {mobileSheet === "explore" && (
-            <div className={styles.mobileSearch}>
-              <Icon name="search" />
-              <input
-                type="search"
-                placeholder={modeConfig.searchPlaceholder}
-                value={query}
-                role="combobox"
-                aria-autocomplete="list"
-                aria-controls="mobile-suggest"
-                aria-expanded={suggestions.length > 0}
-                aria-activedescendant={mobileSuggestIndex >= 0 ? `mobile-suggest-${mobileSuggestIndex}` : undefined}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  if (drawer === "mini") setDrawer("half");
-                }}
-                onFocus={() => {
-                  if (drawer === "mini") setDrawer("half");
-                }}
-                onKeyDown={(e) => {
-                  const action = suggestKeyAction(e.key, mobileSuggestIndex, suggestions.length);
-                  if (action.type === "move") {
-                    e.preventDefault();
-                    setMobileSuggestIndex(action.index);
-                    return;
-                  }
-                  if (action.type === "pick") {
-                    e.preventDefault();
-                    handleSelectSuggestion(suggestions[action.index]);
-                    setMobileSuggestIndex(-1);
-                    return;
-                  }
-                  if (action.type === "close") {
-                    setMobileSuggestIndex(-1);
-                    return;
-                  }
-                  if (action.type === "commit") void recordSearch(query, mode);
-                }}
-                aria-label={t("search", lang)}
-              />
-              {suggestions.length > 0 && (
-                <ul id="mobile-suggest" className={styles.mobileSuggestions} role="listbox" aria-label="Search suggestions">
-                  {suggestions.map((s, i) => (
-                    <li key={`${s.id || s.name}-${i}`} id={`mobile-suggest-${i}`} role="option" aria-selected={i === mobileSuggestIndex}>
-                      <button
-                        type="button"
-                        className={i === mobileSuggestIndex ? styles.mobileSuggestActive : undefined}
-                        onMouseEnter={() => setMobileSuggestIndex(i)}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSelectSuggestion(s);
-                          setMobileSuggestIndex(-1);
-                        }}
-                      >
-                        <strong>{s.name}</strong>
-                        {s.subtitle && <small>{s.subtitle}</small>}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <div className={styles.mobileSearchRow}>
+              <div className={styles.mobileSearch}>
+                <Icon name="search" />
+                <input
+                  type="search"
+                  placeholder={modeConfig.searchPlaceholder}
+                  value={query}
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-controls="mobile-suggest"
+                  aria-expanded={suggestions.length > 0}
+                  aria-activedescendant={mobileSuggestIndex >= 0 ? `mobile-suggest-${mobileSuggestIndex}` : undefined}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    if (drawer === "mini") setDrawer("half");
+                  }}
+                  onFocus={() => {
+                    if (drawer === "mini") setDrawer("half");
+                  }}
+                  onKeyDown={(e) => {
+                    const action = suggestKeyAction(e.key, mobileSuggestIndex, suggestions.length);
+                    if (action.type === "move") {
+                      e.preventDefault();
+                      setMobileSuggestIndex(action.index);
+                      return;
+                    }
+                    if (action.type === "pick") {
+                      e.preventDefault();
+                      handleSelectSuggestion(suggestions[action.index]);
+                      setMobileSuggestIndex(-1);
+                      return;
+                    }
+                    if (action.type === "close") {
+                      setMobileSuggestIndex(-1);
+                      return;
+                    }
+                    if (action.type === "commit") void recordSearch(query, mode);
+                  }}
+                  aria-label={t("search", lang)}
+                />
+              </div>
+              <button
+                type="button"
+                className={`${styles.mobileAvatarBtn} ${styles.mobileSearchAvatar}`}
+                onClick={openMobileAccount}
+                aria-label={user ? t("profile", lang) : t("notSignedIn", lang)}
+              >
+                {user?.avatarUrl ? (
+                  <img className={styles.avatar} src={user.avatarUrl} alt="" />
+                ) : user ? (
+                  <div className={styles.avatar}>{initialsFromName(user.displayName)}</div>
+                ) : (
+                  <div className={`${styles.avatar} ${styles.avatarGuest}`}><Icon name="person" /></div>
+                )}
+              </button>
             </div>
             )}
+            {mobileSheet === "explore" && suggestions.length > 0 && (
+              <ul id="mobile-suggest" className={styles.mobileSuggestions} role="listbox" aria-label="Search suggestions">
+                {suggestions.map((s, i) => (
+                  <li key={`${s.id || s.name}-${i}`} id={`mobile-suggest-${i}`} role="option" aria-selected={i === mobileSuggestIndex}>
+                    <button
+                      type="button"
+                      className={i === mobileSuggestIndex ? styles.mobileSuggestActive : undefined}
+                      onMouseEnter={() => setMobileSuggestIndex(i)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectSuggestion(s);
+                        setMobileSuggestIndex(-1);
+                      }}
+                    >
+                      <strong>{s.name}</strong>
+                      {s.subtitle && <small>{s.subtitle}</small>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             <div className={styles.drawerContent}>
-              {mobileSheet === "saved" ? (
+              {mobileSheet === "account" ? (
+                <div className={styles.mobileAccount}>
+                  <div className={styles.mobileAccountNav} role="navigation" aria-label={t("profile", lang)}>
+                    <button
+                      type="button"
+                      className={styles.mobileFilterBtn}
+                      onClick={() => {
+                        if (!user) {
+                          setAuthOpen(true);
+                          return;
+                        }
+                        setMobileSheet("saved");
+                      }}
+                    >
+                      {t("saved", lang)}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.mobileFilterBtn}
+                      onClick={() => setMobileSheet("layers")}
+                    >
+                      {t("layers", lang)}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.mobileFilterBtn}
+                      onClick={() => setMobileSheet("recent")}
+                    >
+                      {t("recent", lang)}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.mobileFilterBtn}
+                      onClick={() => setMobileSheet("explore")}
+                    >
+                      {t("explore", lang)}
+                    </button>
+                  </div>
+                  {user ? (
+                    <ProfilePanel
+                      user={user}
+                      lang={lang}
+                      embedded
+                      applications={applications}
+                      notifications={inbox}
+                      onClose={() => setMobileSheet("explore")}
+                      onSave={handleSaveProfile}
+                    />
+                  ) : (
+                    <p className={styles.mobileAccountHint}>{t("signInHint", lang)}</p>
+                  )}
+                </div>
+              ) : mobileSheet === "recent" ? (
+                <RecentPanel
+                  items={searchHistory}
+                  signedIn={Boolean(user)}
+                  lang={lang}
+                  mode={mode}
+                  embedded
+                  onClose={() => setMobileSheet("account")}
+                  onPick={(entry) => {
+                    handlePickRecent(entry);
+                    setMobileSheet("explore");
+                  }}
+                  onPickTrending={(item) => {
+                    openExploreSearch(item.query);
+                    setMobileSheet("explore");
+                  }}
+                  onClear={user ? () => {
+                    void fetch("/api/me/search-history", { method: "DELETE" }).then(refreshHistory);
+                  } : undefined}
+                />
+              ) : mobileSheet === "saved" ? (
                 <SavedList
                   items={savedPlaces}
                   signedIn={Boolean(user)}

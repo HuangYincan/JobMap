@@ -68,12 +68,29 @@ test('home page lazy-loads MapShell on the client', () => {
   assert.match(loader, /MapShell/);
 });
 
+test('avatar cropper portals above pointer-events-none clusters', () => {
+  const cropper = src('components/avatar-cropper.tsx');
+  assert.match(cropper, /createPortal/);
+  assert.match(cropper, /document\.body/);
+});
+
+test('mobile JD panel stays visible inside the drawer', () => {
+  const css = src('components/jd-panel.module.css');
+  assert.doesNotMatch(css, /@media \(max-width: 767px\)[\s\S]*display:\s*none/);
+});
+
 test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   const shell = src('components/map-shell.tsx');
   const css = src('components/map-shell.module.css');
   assert.match(shell, /type DrawerState = "mini" \| "half" \| "full"/);
   assert.match(shell, /mobileSheet === "saved"/);
   assert.match(shell, /mobileSheet === "layers"/);
+  assert.match(shell, /mobileSheet === "account"/);
+  assert.match(shell, /openMobileAccount/);
+  assert.match(shell, /mobileSearchRow/);
+  assert.match(shell, /mobileJd && isRecruitmentPOI/);
+  assert.match(css, /\.mobileChips/);
+  assert.match(css, /\.mobileSearchRow/);
   assert.match(css, /@media \(max-width: 767px\)/);
 });
 

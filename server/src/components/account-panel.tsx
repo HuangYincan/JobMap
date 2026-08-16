@@ -31,6 +31,8 @@ export interface ProfilePanelProps {
   applications?: ApplicationRecord[];
   notifications?: NotificationRecord[];
   shifted?: boolean;
+  /** Drawer / sheet: no desktop cluster chrome. */
+  embedded?: boolean;
 }
 
 const STRENGTHS: { id: CareerStrength; labelKey: "strengthAlgorithm" | "strengthFrontend" | "strengthBackend" | "strengthProduct" | "strengthDesign" | "strengthData" }[] = [
@@ -66,6 +68,7 @@ export function ProfilePanel({
   applications = [],
   notifications = [],
   shifted = false,
+  embedded = false,
 }: ProfilePanelProps) {
   const [name, setName] = useState(user.displayName);
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? "");
@@ -114,16 +117,17 @@ export function ProfilePanel({
     });
   };
 
-  return (
-    <div className={`${styles.cluster} ${shifted ? styles.shifted : ""}`}>
-      <aside className={styles.sidebar} aria-label={t("profile", lang)}>
+  const body = (
+      <aside className={`${styles.sidebar} ${embedded ? styles.sheet : ""}`} aria-label={t("profile", lang)}>
         <header className={styles.header}>
           <h2 className={styles.title}>{t("profile", lang)}</h2>
+          {!embedded && (
           <button type="button" className={styles.close} onClick={onClose} aria-label={t("closePanel", lang)}>
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
+          )}
         </header>
 
         <section className={styles.identity}>
@@ -309,7 +313,11 @@ export function ProfilePanel({
           )}
         </section>
       </aside>
+  );
 
+  return (
+    <div className={embedded ? styles.embed : `${styles.cluster} ${shifted ? styles.shifted : ""}`}>
+      {body}
       <AvatarCropper
         open={cropOpen}
         lang={lang}

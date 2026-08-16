@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { createPortal } from "react-dom";
 import { t, type Language } from "@/lib/i18n";
 import styles from "./avatar-cropper.module.css";
 
@@ -41,7 +42,7 @@ export function AvatarCropper({ open, lang, onClose, onSave }: AvatarCropperProp
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   const minCover = natural.w && natural.h ? Math.max(VIEW / natural.w, VIEW / natural.h) : 1;
   const scale = minCover * zoom;
@@ -116,7 +117,7 @@ export function AvatarCropper({ open, lang, onClose, onSave }: AvatarCropperProp
     img.src = src;
   };
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose} role="presentation">
       <div
         className={styles.card}
@@ -186,6 +187,7 @@ export function AvatarCropper({ open, lang, onClose, onSave }: AvatarCropperProp
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

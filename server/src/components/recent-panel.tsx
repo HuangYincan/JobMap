@@ -17,6 +17,7 @@ export interface RecentPanelProps {
   onPickTrending?: (item: TrendingQuery) => void;
   onClear?: () => void;
   shifted?: boolean;
+  embedded?: boolean;
 }
 
 export function RecentPanel({
@@ -29,11 +30,12 @@ export function RecentPanel({
   onPickTrending,
   onClear,
   shifted = false,
+  embedded = false,
 }: RecentPanelProps) {
   const trending = trendingForMode(mode);
   return (
-    <div className={`${styles.cluster} ${shifted ? styles.shifted : ""}`}>
-      <aside className={styles.sidebar} aria-label={t("recent", lang)}>
+    <div className={embedded ? styles.embed : `${styles.cluster} ${shifted ? styles.shifted : ""}`}>
+      <aside className={`${styles.sidebar} ${embedded ? styles.sheet : ""}`} aria-label={t("recent", lang)}>
         <header className={styles.header}>
           <h2 className={styles.title}>{t("recentSearches", lang)}</h2>
           <div className={styles.headerActions}>
@@ -42,11 +44,13 @@ export function RecentPanel({
                 {t("clearHistory", lang)}
               </button>
             )}
+            {!embedded && (
             <button type="button" className={styles.close} onClick={onClose} aria-label={t("closePanel", lang)}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             </button>
+            )}
           </div>
         </header>
         {trending.length > 0 && (
