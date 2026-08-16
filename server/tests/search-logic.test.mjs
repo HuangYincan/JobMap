@@ -23,7 +23,7 @@ import {
 import { INTERNSHIP_SEED, DOMAIN_SEED } from '../src/lib/seed-data.ts';
 import { resolveApplyLink, withDistance } from '../src/lib/types.ts';
 import { ACTIVE_MODES, getMode, replayRecentSearch } from '../src/lib/modes.ts';
-import { positionMatchesTaxonomy } from '../src/lib/job-taxonomy.ts';
+import { positionMatchesRole, positionMatchesTaxonomy } from '../src/lib/job-taxonomy.ts';
 import { trendingForMode } from '../src/lib/trending-search.ts';
 
 test('matchKeyword: case-insensitive multi-keyword AND', () => {
@@ -116,6 +116,38 @@ test('applyFilters: salary range keeps companies with matching position', () => 
   assert.ok(highSalary.length > 0);
   // 深度求索（12-25K）应在结果中
   assert.ok(highSalary.some((p) => p.id === 'deepseek'));
+});
+
+test('applyFilters: roleFamily keeps companies with a matching function', () => {
+  const product = applyFilters(INTERNSHIP_SEED, { roleFamily: ['product'] });
+  assert.ok(product.length > 0);
+  assert.ok(product.every((p) =>
+    p.kind === 'recruitment' && p.positions.some((pos) => positionMatchesRole(pos, 'product'))
+  ));
+  const hashed = parseSearchQuery('#产品');
+  assert.deepEqual(hashed.filters.roleFamily, ['product']);
+  const ops = parseSearchQuery('#运营');
+  assert.deepEqual(ops.filters.roleFamily, ['ops']);
+});
+
+test('sortPOIs: deadline ranks the soonest close date first', () => {
+  const soon = {
+    ...INTERNSHIP_SEED[0],
+    id: 'soon-deadline',
+    positions: INTERNSHIP_SEED[0].positions.map((pos, i) => (
+      i === 0 ? { ...pos, deadline: '2026-09-01' } : pos
+    )),
+  };
+  const later = {
+    ...INTERNSHIP_SEED[1],
+    id: 'later-deadline',
+    positions: INTERNSHIP_SEED[1].positions.map((pos, i) => (
+      i === 0 ? { ...pos, deadline: '2026-12-01' } : pos
+    )),
+  };
+  const sorted = sortPOIs([later, soon, INTERNSHIP_SEED[2]], 'deadline');
+  assert.equal(sorted[0].id, 'soon-deadline');
+  assert.equal(sorted[1].id, 'later-deadline');
 });
 
 test('applyFilters: education keeps companies with a matching position', () => {

@@ -9,7 +9,7 @@
 import type { FilterConfig, FilterOption, FilterState, MapMode, POI, SortOption } from './types.ts';
 import { isRecruitmentPOI } from './types.ts';
 import { getMode } from './modes.ts';
-import { positionMatchesTaxonomySelection, selectedTaxonomyPaths } from './job-taxonomy.ts';
+import { positionMatchesRole, positionMatchesTaxonomySelection, selectedRoleFamilies, selectedTaxonomyPaths } from './job-taxonomy.ts';
 import { HANGZHOU_DISTRICTS, poiMatchesDistrict } from './spatial-filters.ts';
 import { categoryMatches, popularityScore } from './viewport-search.ts';
 
@@ -61,6 +61,11 @@ export const TAG_FILTERS: Record<string, { key: string; value: string }> = {
   本科: { key: 'education', value: '本科' },
   硕士: { key: 'education', value: '硕士' },
   博士: { key: 'education', value: '博士' },
+  技术: { key: 'roleFamily', value: 'tech' },
+  技术岗: { key: 'roleFamily', value: 'tech' },
+  产品: { key: 'roleFamily', value: 'product' },
+  运营: { key: 'roleFamily', value: 'ops' },
+  设计: { key: 'roleFamily', value: 'design' },
   ...districtTagFilters(),
 };
 
@@ -335,7 +340,7 @@ export function parseSearchQuery(raw?: string): ParsedSearchQuery {
       leftover.push(tag);
       continue;
     }
-    if (mapped.key === 'jobTaxonomy' || mapped.key === 'industry' || mapped.key === 'scale' || mapped.key === 'district' || mapped.key === 'education') {
+    if (mapped.key === 'jobTaxonomy' || mapped.key === 'industry' || mapped.key === 'scale' || mapped.key === 'district' || mapped.key === 'education' || mapped.key === 'roleFamily') {
       const prev = filters[mapped.key];
       const next = Array.isArray(prev) ? prev.filter((item): item is string => typeof item === 'string') : [];
       if (!next.includes(mapped.value)) next.push(mapped.value);
@@ -541,6 +546,12 @@ export function matchFilter(poi: POI, key: string, value: any): boolean {
       if (!sel.length) return true;
       return poi.positions.some((p) => !!p.education && sel.includes(p.education));
     }
+    case 'roleFamily': {
+      if (!isRecruitmentPOI(poi)) return true;
+      const sel = selectedRoleFamilies({ roleFamily: value as FilterState['roleFamily'] });
+      if (!sel.length) return true;
+      return poi.positions.some((p) => sel.some((role) => positionMatchesRole(p, role)));
+    }
     case 'salary': {
       if (!isRecruitmentPOI(poi)) return true;
       const [min, max] = value as [number, number];
@@ -600,6 +611,14 @@ function sortValue(poi: POI, key: string): number {
     }
     case 'positionCount':
       return isRecruitmentPOI(poi) ? poi.positions.length : 0;
+    case 'deadline': {
+      if (!isRecruitmentPOI(poi)) return Number.MAX_SAFE_INTEGER;
+      return poi.positions.reduce((soonest, pos) => {
+        if (!pos.deadline) return soonest;
+        const stamp = Date.parse(pos.deadline);
+        return Number.isFinite(stamp) ? Math.min(soonest, stamp) : soonest;
+      }, Number.MAX_SAFE_INTEGER);
+    }
     case 'popularity': {
       if (isRecruitmentPOI(poi)) {
         return (poi.positions.length * 30) + Math.round((poi.company.rating ?? 0) * 8);

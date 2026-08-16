@@ -86,6 +86,15 @@ const EDUCATION_OPTIONS = [
   { value: '博士', label: '博士' },
 ];
 
+/** Shared work-mode sorts. internship is a work alias, not a second list. */
+const WORK_SORT_OPTIONS: SortOption[] = [
+  { key: 'distance', label: '距离最近' },
+  { key: 'salaryDesc', label: '薪资最高' },
+  { key: 'rating', label: '公司评分' },
+  { key: 'positionCount', label: '岗位数量' },
+  { key: 'deadline', label: '截止时间' },
+];
+
 /** Shared work-mode filters. internship is a work alias, not a second list. */
 const WORK_FILTERS: FilterConfig[] = [
   ...workFilterConfigs(),
@@ -183,12 +192,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
     kind: 'recruitment',
     searchPlaceholder: '搜索公司、岗位…',
     filters: WORK_FILTERS,
-    sortOptions: [
-      { key: 'distance', label: '距离最近' },
-      { key: 'salaryDesc', label: '薪资最高' },
-      { key: 'rating', label: '公司评分' },
-      { key: 'positionCount', label: '岗位数量' },
-    ],
+    sortOptions: WORK_SORT_OPTIONS,
     defaultSort: 'distance',
     description: '寻找身边的工作机会：实习、校招、社招',
     actions: ['查看岗位', '投递', '收藏'],
@@ -203,12 +207,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
     kind: 'recruitment',
     searchPlaceholder: '搜索公司、岗位…',
     filters: WORK_FILTERS,
-    sortOptions: [
-      { key: 'distance', label: '距离最近' },
-      { key: 'salaryDesc', label: '薪资最高' },
-      { key: 'rating', label: '公司评分' },
-      { key: 'positionCount', label: '岗位数量' },
-    ],
+    sortOptions: WORK_SORT_OPTIONS,
     defaultSort: 'distance',
     description: '寻找身边的工作机会：实习、校招、社招',
     actions: ['查看岗位', '投递', '收藏'],

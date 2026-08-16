@@ -58,8 +58,52 @@ export const JOB_FAMILY_PLUGIN: FilterPlugin = {
   },
 };
 
-/** 工作模式默认挂上的筛选插件。新行业在此追加即可。 */
-export const WORK_FILTER_PLUGINS: FilterPlugin[] = [JOB_FAMILY_PLUGIN];
+/** 职能（技术/产品/运营/设计）。与 intern/campus/social 的岗位类型树分开。 */
+export const ROLE_OPTIONS: FilterOption[] = [
+  { value: 'tech', label: '技术' },
+  { value: 'product', label: '产品' },
+  { value: 'ops', label: '运营' },
+  { value: 'design', label: '设计' },
+];
+
+export const ROLE_FAMILY_PLUGIN: FilterPlugin = {
+  id: 'role-family',
+  label: '职能',
+  filter: {
+    key: 'roleFamily',
+    label: '职能',
+    type: 'multi-select',
+    options: ROLE_OPTIONS,
+  },
+};
+
+/** 工作模式默认挂上的筛选插件。新行业 / 职能在此追加即可。 */
+export const WORK_FILTER_PLUGINS: FilterPlugin[] = [JOB_FAMILY_PLUGIN, ROLE_FAMILY_PLUGIN];
+
+function roleHaystack(position: Position): string {
+  return `${position.title} ${position.department ?? ''} ${(position.skills ?? []).join(' ')}`;
+}
+
+/** 岗位标题/部门/技能是否落在某个职能桶。产品运营算运营，芯片设计算技术。 */
+export function positionMatchesRole(position: Position, role: string): boolean {
+  const hay = roleHaystack(position);
+  if (role === 'ops') return /运营/.test(hay);
+  if (role === 'product') return /产品/.test(hay) && !/运营/.test(hay);
+  if (role === 'design') return /(视觉|设计师|UI|UX)/i.test(hay) && !/芯片/.test(hay);
+  if (role === 'tech') {
+    return /(前端|后端|算法|开发|工程|Java|Android|iOS|SLAM|NLP|Infra|芯片|嵌入式|SRE|测试|数据)/i.test(hay)
+      && !/运营/.test(hay)
+      && !/产品经理/.test(hay);
+  }
+  return false;
+}
+
+export function selectedRoleFamilies(filters: FilterState): string[] {
+  const raw = filters.roleFamily;
+  if (Array.isArray(raw)) return raw.filter((item): item is string => typeof item === 'string');
+  if (typeof raw === 'string' && raw) return [raw];
+  return [];
+}
 
 export function workFilterConfigs(): FilterConfig[] {
   return WORK_FILTER_PLUGINS.map((plugin) => plugin.filter);

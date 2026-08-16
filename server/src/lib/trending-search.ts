@@ -30,6 +30,7 @@ const TRENDING: Record<'domain' | 'work', TrendingQuery[]> = {
     { query: '#互联网', label: '互联网' },
     { query: '#西湖区', label: '西湖区' },
     { query: '#在招', label: '在招' },
+    { query: '#技术', label: '技术' },
   ],
 };
 

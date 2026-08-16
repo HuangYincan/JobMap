@@ -80,6 +80,7 @@
 - `#在招` / 筛选开关 `onlyOpen` 只保留至少有一个 `status=open` 岗位的公司
 - `#住宿` / `#班车` 对应 `providesHousing` / `providesShuttle` 开关
 - `#本科` / `#硕士` / `#博士` 对应学历多选 `education`
+- `#技术` / `#产品` / `#运营` / `#设计` 对应职能多选 `roleFamily`（与 intern/campus/social 的 `jobTaxonomy` 分开）
 
 **高考模式:**
 - 搜索院校名："浙江大学"、"清华"
