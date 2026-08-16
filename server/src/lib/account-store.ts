@@ -13,6 +13,7 @@ import {
   type AccountUser,
   type AuthProvider,
   type ApplicationRecord,
+  type NotificationRecord,
   type SavedPlace,
   type SearchHistoryEntry,
   type UserPreferences,
@@ -30,7 +31,9 @@ import {
   issueOtp as memIssueOtp,
   listHistory as memListHistory,
   listApplications as memListApplications,
+  listNotifications as memListNotifications,
   listSaved as memListSaved,
+  enqueueNotification as memEnqueueNotification,
   recordApplication as memRecordApplication,
   removeSaved as memRemoveSaved,
   savePlace as memSavePlace,
@@ -505,4 +508,91 @@ export async function recordApplication(
     );
     return asApplication(result.rows[0]);
   }, () => memRecordApplication(userId, input));
+}
+
+function asNotification(row: {
+  id: string;
+  kind: NotificationRecord['kind'];
+  position_id: string | null;
+  company_poi_id: string | null;
+  title: string;
+  company_name: string | null;
+  apply_url: string | null;
+  channels: string[] | null;
+  status: NotificationRecord['status'];
+  created_at: Date;
+}): NotificationRecord {
+  return {
+    id: row.id,
+    kind: row.kind,
+    positionId: row.position_id ?? undefined,
+    companyPoiId: row.company_poi_id ?? undefined,
+    title: row.title,
+    companyName: row.company_name ?? undefined,
+    applyUrl: row.apply_url ?? undefined,
+    channels: (row.channels ?? ['inbox']) as NotificationRecord['channels'],
+    status: row.status,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+export async function listNotifications(userId: string): Promise<NotificationRecord[]> {
+  return withDb(async (db) => {
+    const result = await db.query<{
+      id: string;
+      kind: NotificationRecord['kind'];
+      position_id: string | null;
+      company_poi_id: string | null;
+      title: string;
+      company_name: string | null;
+      apply_url: string | null;
+      channels: string[] | null;
+      status: NotificationRecord['status'];
+      created_at: Date;
+    }>(
+      `SELECT id::text, kind, position_id, company_poi_id, title, company_name, apply_url, channels, status, created_at
+       FROM notifications
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId],
+    );
+    return result.rows.map(asNotification);
+  }, () => memListNotifications(userId));
+}
+
+export async function enqueueNotification(
+  userId: string,
+  input: Omit<NotificationRecord, 'id' | 'createdAt' | 'status'> & { status?: NotificationRecord['status'] },
+): Promise<NotificationRecord> {
+  return withDb(async (db) => {
+    const result = await db.query<{
+      id: string;
+      kind: NotificationRecord['kind'];
+      position_id: string | null;
+      company_poi_id: string | null;
+      title: string;
+      company_name: string | null;
+      apply_url: string | null;
+      channels: string[] | null;
+      status: NotificationRecord['status'];
+      created_at: Date;
+    }>(
+      `INSERT INTO notifications (user_id, kind, position_id, company_poi_id, title, company_name, apply_url, channels, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (user_id, kind, position_id) DO UPDATE SET title = EXCLUDED.title
+       RETURNING id::text, kind, position_id, company_poi_id, title, company_name, apply_url, channels, status, created_at`,
+      [
+        userId,
+        input.kind,
+        input.positionId ?? null,
+        input.companyPoiId ?? null,
+        input.title,
+        input.companyName ?? null,
+        input.applyUrl ?? null,
+        input.channels,
+        input.status ?? 'queued',
+      ],
+    );
+    return asNotification(result.rows[0]);
+  }, () => memEnqueueNotification(userId, input));
 }

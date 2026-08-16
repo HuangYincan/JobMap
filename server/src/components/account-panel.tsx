@@ -8,6 +8,7 @@ import {
   type ApplicationRecord,
   type CareerStrength,
   type JobSeekingStatus,
+  type NotificationRecord,
   type UserPreferences,
 } from "@/lib/account";
 import { ACTIVE_MODES, INDUSTRY_OPTIONS, getMode } from "@/lib/modes";
@@ -28,6 +29,7 @@ export interface ProfilePanelProps {
     preferences?: Partial<UserPreferences>;
   }) => Promise<void>;
   applications?: ApplicationRecord[];
+  notifications?: NotificationRecord[];
   shifted?: boolean;
 }
 
@@ -56,7 +58,15 @@ function toggleValue<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
-export function ProfilePanel({ user, lang, onClose, onSave, applications = [], shifted = false }: ProfilePanelProps) {
+export function ProfilePanel({
+  user,
+  lang,
+  onClose,
+  onSave,
+  applications = [],
+  notifications = [],
+  shifted = false,
+}: ProfilePanelProps) {
   const [name, setName] = useState(user.displayName);
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? "");
   const [prefs, setPrefs] = useState<UserPreferences>(mergePreferences(user.preferences));
@@ -261,6 +271,26 @@ export function ProfilePanel({ user, lang, onClose, onSave, applications = [], s
               </label>
             ))}
           </div>
+        </section>
+
+        <section className={styles.prefs}>
+          <h3 className={styles.sectionLabel}>{t("inbox", lang)}</h3>
+          {notifications.length === 0 ? (
+            <p className={styles.emptyApps}>{t("inboxEmpty", lang)}</p>
+          ) : (
+            <ul className={styles.appList}>
+              {notifications.map((item) => (
+                <li key={item.id} className={styles.appRow}>
+                  <strong>{item.title}</strong>
+                  <small>
+                    {[item.companyName, item.channels.filter((ch) => ch !== "inbox").join(" / ") || t("inboxOnly", lang)]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </small>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <section className={styles.prefs}>

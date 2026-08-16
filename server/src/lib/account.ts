@@ -84,6 +84,22 @@ export interface ApplicationRecord {
   createdAt: string;
 }
 
+export type NotificationKind = 'job' | 'school';
+export type NotificationStatus = 'queued' | 'read' | 'sent' | 'failed';
+
+export interface NotificationRecord {
+  id: string;
+  kind: NotificationKind;
+  positionId?: string;
+  companyPoiId?: string;
+  title: string;
+  companyName?: string;
+  applyUrl?: string;
+  channels: Array<'inbox' | 'email' | 'sms'>;
+  status: NotificationStatus;
+  createdAt: string;
+}
+
 export const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
   emailJobs: false,
   smsJobs: false,

@@ -528,7 +528,7 @@ Phase 2 完成后，Phase 3 将实现：
 - 收藏功能（`008_saved_places` + `/api/me/saved` + Saved L2；游客不写云端）
 - 用户投递记录（`009_applications` + `/api/me/applications`；JD 点投递写入，列表在 Profile 底部）
 - 数据对比（Saved 二级卡内勾选两家招聘点；`lib/compare-saved.ts`；catalog / seed 优先，快照兜底；不新开一层。手机抽屉工具栏切到 Saved，复用同一张 `SavedList`）
-- 通知系统（偏好已在 Profile；发送通道后补）
+- 通知系统（偏好已在 Profile；`010_notifications` + `/api/me/notifications` 写入账户收件箱；邮件/短信只记 `queued` 渠道，本阶段不真发）
 
 ---
 

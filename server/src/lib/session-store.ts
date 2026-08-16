@@ -7,7 +7,7 @@
 // ============================================================
 
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
-import type { AccountUser, ApplicationRecord, AuthProvider, SavedPlace, SearchHistoryEntry, UserPreferences } from './account.ts';
+import type { AccountUser, ApplicationRecord, AuthProvider, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from './account.ts';
 import { emptyPreferences, mergePreferences } from './account.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -40,6 +40,7 @@ const otps = new Map<string, OtpChallenge>();
 const history = new Map<string, SearchHistoryEntry[]>();
 const saved = new Map<string, SavedPlace[]>();
 const applications = new Map<string, ApplicationRecord[]>();
+const notifications = new Map<string, NotificationRecord[]>();
 
 function identityKey(provider: AuthProvider, subject: string): string {
   return `${provider}:${subject.trim().toLowerCase()}`;
@@ -249,5 +250,28 @@ export function recordApplication(
     createdAt: new Date().toISOString(),
   };
   applications.set(userId, [entry, ...items]);
+  return entry;
+}
+
+export function listNotifications(userId: string): NotificationRecord[] {
+  return [...(notifications.get(userId) ?? [])];
+}
+
+export function enqueueNotification(
+  userId: string,
+  input: Omit<NotificationRecord, 'id' | 'createdAt' | 'status'> & { status?: NotificationRecord['status'] },
+): NotificationRecord {
+  const items = notifications.get(userId) ?? [];
+  const existing = items.find(
+    (item) => item.kind === input.kind && item.positionId && item.positionId === input.positionId,
+  );
+  if (existing) return existing;
+  const entry: NotificationRecord = {
+    ...input,
+    status: input.status ?? 'queued',
+    id: randomUUID(),
+    createdAt: new Date().toISOString(),
+  };
+  notifications.set(userId, [entry, ...items]);
   return entry;
 }

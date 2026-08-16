@@ -691,6 +691,18 @@ export const translations = {
     zh: '福利',
     en: 'Benefits',
   },
+  inbox: {
+    zh: '岗位提醒',
+    en: 'Job alerts',
+  },
+  inboxEmpty: {
+    zh: '打开邮件或短信开关后，匹配到的岗位会先记在这里，暂不真发。',
+    en: 'Turn on email or SMS to queue matching jobs here. Nothing is sent yet.',
+  },
+  inboxOnly: {
+    zh: '仅收件箱',
+    en: 'Inbox only',
+  },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

@@ -16,7 +16,9 @@ import {
   getSessionUser,
   issueOtp,
   listHistory,
+  enqueueNotification,
   listApplications,
+  listNotifications,
   listSaved,
   recordApplication,
   removeSaved,
@@ -128,6 +130,29 @@ test('recordApplication is idempotent per position', () => {
   });
   assert.equal(first.id, again.id);
   assert.equal(listApplications(user.id).length, 1);
+});
+
+test('enqueueNotification is idempotent per position', () => {
+  const user = upsertIdentity({ provider: 'email', subject: 'alert@example.com', email: 'alert@example.com' });
+  const first = enqueueNotification(user.id, {
+    kind: 'job',
+    positionId: 'alibaba-fe',
+    companyPoiId: 'alibaba-xixi',
+    title: '前端实习',
+    companyName: '阿里巴巴',
+    channels: ['inbox', 'email'],
+  });
+  const again = enqueueNotification(user.id, {
+    kind: 'job',
+    positionId: 'alibaba-fe',
+    companyPoiId: 'alibaba-xixi',
+    title: '前端实习',
+    companyName: '阿里巴巴',
+    channels: ['inbox', 'sms'],
+  });
+  assert.equal(first.id, again.id);
+  assert.equal(listNotifications(user.id).length, 1);
+  assert.equal(listNotifications(user.id)[0].status, 'queued');
 });
 
 test('resolveCompanyLogo prefers site career icon over company fallback', () => {
