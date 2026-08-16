@@ -8,18 +8,21 @@
 
 ## Project Status
 
-**Status: Phase 2 client slice + Phase 3/4 account/overlay work on `feature/phase-2-multi-mode`.** Phase 1 baseline remains on `feature/phase-1-platform-baseline`.
+**Status: Phase 2/3/4 complete on `feature/phase-2-multi-mode` (2026-08-16).** Phase 1 baseline remains on `feature/phase-1-platform-baseline`.
 
 Implemented and verified:
 - Importer project `crawler/` (Python 3.12, uv): declarative plugin-manifest validation, deterministic local-fixture normalization with provenance, and map access policy. 11 unit tests pass.
-- Database `db/`: ordered PostGIS migrations `001`–`010` (identity through notifications). Live apply: `make db-up`, then `export PATH="/opt/homebrew/opt/libpq/bin:$PATH"` if `psql` is keg-only, then `make preflight` + `make db-migrate`.
-- Frontend `server/` (Next.js 15.5.23, React 19): Domain + Work map, Explore / detail / JD, mobile drawer, Profile / Recent / Saved / Layers. Home lazy-loads `MapShell`. `cd server && ./node_modules/.bin/tsc --noEmit && node --test tests/*.test.mjs` is the test command.
+- Database `db/`: ordered PostGIS migrations `001`–`010` (identity through notifications). Live apply verified: `001`–`010` in ledger, `make test-integration` passes, `npm run import:seed:apply` wrote 51 companies / 110 open positions.
+- PostGIS spatial queries: `/api/pois` and `/api/search` use `geom && ST_MakeEnvelope` + `ST_DWithin` for viewport/distance clip. Warm local Next P95: `/api/pois` 12.7ms, bounds clip 5.8ms.
+- Frontend `server/` (Next.js 15.5.23, React 19): Domain + Work map modes, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter (30+ dimensions), sort (6 modes), autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle. 159 tests pass. `cd server && ./node_modules/.bin/tsc --noEmit && node --test tests/*.test.mjs`.
+- Official-career file adapter: 51 companies (32 from JSON drops covering every seed slug with a public career URL, 之江实验室 as new slug). 曦曦AI stays seed-only (no career page). 110 open positions after live import.
 - Changelog: [CHANGELOG.md](CHANGELOG.md). API: [tech/14-api-contract.md](tech/14-api-contract.md). Local run: [tech/15-deploy.md](tech/15-deploy.md). Roadmap: [tech/05-milestones.md](tech/05-milestones.md).
 
-Not yet verified:
-- Live PostGIS apply is verified locally (2026-08-16): `001`–`010` in the ledger, `make test-integration` passes, `npm run import:seed:apply` wrote 51 companies / 67 open positions. Spatial query API still uses in-process `inBounds` until PostGIS `ST_DWithin` is wired.
-- No external source acquisition has occurred and none is enabled. `xiaozhao-radar` remains an import candidate only.
-- Frontend UI full interface/accessibility evidence and screenshots belong to Phase 3; the Phase 1 shell is a working base.
+Deferred to future phases:
+- No external source acquisition has occurred. `xiaozhao-radar` remains an import candidate pending license review. `boss` / `nowcoder` / `shixiseng` adapters are stubs (empty dirs).
+- VoiceOver/NVDA manual testing, Playwright E2E, cross-browser compat, aXe scan, LCP measurement.
+- Real notification send (email/SMS; currently `queued` only).
+- AMap REST batch geocoding (requires `AMAP_WEB_KEY`).
 
 ## Scope
 
