@@ -74,7 +74,7 @@
 **2.2 Domain POI 数据模型**
 - [x] `DomainPOI` TypeScript 接口
 - [x] 数据库表结构（`entities` / `items`；高德导入脚本仍后置）
-- [ ] POI 导入脚本（高德 → PostgreSQL）
+- [ ] POI 导入脚本（高德 → PostgreSQL）— **刻意不做**：Domain 累计池只在浏览器 sessionStorage；`tech/13-db-query-notes.md` 禁止把高德结果写入 `entities`。等独立 source review / ADR，不要在本阶段写 importer。
 - [x] POI 缓存策略（浏览器 sessionStorage 目录 + 公开 API 30s；Redis 后换 store）
 
 **2.3 搜索功能（基础版）**

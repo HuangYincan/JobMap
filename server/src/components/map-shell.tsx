@@ -48,6 +48,18 @@ const SavedList = dynamic(() => import("./saved-panel").then((mod) => mod.SavedL
 const SavedPanel = dynamic(() => import("./saved-panel").then((mod) => mod.SavedPanel));
 const LayersPanel = dynamic(() => import("./layers-panel").then((mod) => mod.LayersPanel));
 
+function prefetchRail(panel: "layers" | "saved" | "recent" | "profile" | "auth" | "detail") {
+  if (panel === "layers") void import("./layers-panel");
+  else if (panel === "saved") void import("./saved-panel");
+  else if (panel === "recent") void import("./recent-panel");
+  else if (panel === "profile") void import("./account-panel");
+  else if (panel === "auth") void import("./auth-modal");
+  else {
+    void import("./poi-detail");
+    void import("./jd-panel");
+  }
+}
+
 type DrawerState = "mini" | "half" | "full";
 type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;
 
@@ -1393,6 +1405,8 @@ export function MapShell() {
             data-tooltip={t("layers", lang)}
             aria-pressed={railPanel === "layers"}
             onClick={() => openRail("layers")}
+            onMouseEnter={() => prefetchRail("layers")}
+            onFocus={() => prefetchRail("layers")}
           >
             <Icon name="layers" />
             <span>{t("layers", lang)}</span>
@@ -1408,6 +1422,8 @@ export function MapShell() {
               }
               openRail("saved");
             }}
+            onMouseEnter={() => prefetchRail(user ? "saved" : "auth")}
+            onFocus={() => prefetchRail(user ? "saved" : "auth")}
           >
             <Icon name="bookmark" />
             <span>{t('saved', lang)}</span>
@@ -1418,6 +1434,8 @@ export function MapShell() {
             aria-expanded={exploreOpen}
             aria-pressed={exploreOpen}
             onClick={() => openRail("explore")}
+            onMouseEnter={() => prefetchRail("detail")}
+            onFocus={() => prefetchRail("detail")}
           >
             <Icon name="grid" />
             <span>{t('explore', lang)}</span>
@@ -1427,6 +1445,8 @@ export function MapShell() {
             data-tooltip={t('recent', lang)}
             aria-pressed={railPanel === "recent"}
             onClick={() => openRail("recent")}
+            onMouseEnter={() => prefetchRail("recent")}
+            onFocus={() => prefetchRail("recent")}
           >
             <Icon name="history" />
             <span>{t('recent', lang)}</span>
@@ -1438,6 +1458,8 @@ export function MapShell() {
             aria-label={user ? `${user.displayName} ${user.accountLabel}` : t("notSignedIn", lang)}
             data-tooltip={t('profile', lang)}
             onClick={handleProfileClick}
+            onMouseEnter={() => prefetchRail(user ? "profile" : "auth")}
+            onFocus={() => prefetchRail(user ? "profile" : "auth")}
           >
             {user?.avatarUrl ? (
               <img className={styles.avatar} src={user.avatarUrl} alt="" />

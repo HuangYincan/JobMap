@@ -17,5 +17,5 @@
 
 **拆分约定**
 
-- `page.tsx` 仍 `dynamic` 加载整个 `MapShell`。壳里的 Explore 搜索/列表/筛选保持同步 import（首屏工作路径）。详情、JD、登录、Profile / Recent / Saved / Layers 用 `next/dynamic` 拆出，点开才下。不要再为了数字把霜面卡打散。
+- `page.tsx` 仍 `dynamic` 加载整个 `MapShell`。壳里的 Explore 搜索/列表/筛选保持同步 import（首屏工作路径）。详情、JD、登录、Profile / Recent / Saved / Layers 用 `next/dynamic` 拆出，点开才下；主导航 hover / focus 预取对应 chunk。不要再为了数字把霜面卡打散。
 - 公开读 API 有 30s 进程缓存，不替代这份前端拆分。

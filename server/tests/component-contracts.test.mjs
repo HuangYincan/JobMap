@@ -52,6 +52,8 @@ test('map shell lazy-loads rail panels and detail chrome', () => {
   assert.match(shell, /import\("\.\/recent-panel"\)/);
   assert.match(shell, /import\("\.\/saved-panel"\)/);
   assert.match(shell, /import\("\.\/layers-panel"\)/);
+  assert.match(shell, /function prefetchRail/);
+  assert.match(shell, /onMouseEnter=\{\(\) => prefetchRail\("layers"\)\}/);
   assert.doesNotMatch(shell, /import \{ AuthModal \} from "\.\/auth-modal"/);
 });
 
