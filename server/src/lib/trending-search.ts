@@ -28,6 +28,7 @@ const TRENDING: Record<'domain' | 'work', TrendingQuery[]> = {
     { query: 'Java' },
     { query: '算法' },
     { query: '#互联网', label: '互联网' },
+    { query: '#西湖区', label: '西湖区' },
   ],
 };
 

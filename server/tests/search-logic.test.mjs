@@ -219,6 +219,10 @@ test('parseSearchQuery turns #tags into filter plugins', () => {
 
   const unknown = parseSearchQuery('#西湖');
   assert.equal(unknown.text, '西湖');
+
+  const district = parseSearchQuery('#西湖区');
+  assert.equal(district.text, '');
+  assert.deepEqual(district.filters.district, ['西湖区']);
 });
 
 test('applyTagSuggestion merges a known hash into filters and clears the query', () => {
@@ -238,6 +242,8 @@ test('suggestSearchTags covers scale and campus hashes, not only industries', ()
   assert.ok(autumn.some((tag) => tag.title === '#秋招' && tag.value === 'campus/autumn'));
   const big = suggestSearchTags('#大');
   assert.ok(big.some((tag) => tag.title === '#大厂' && tag.value === 'bigtech'));
+  const xihu = suggestSearchTags('西湖区');
+  assert.ok(xihu.some((tag) => tag.value === '西湖区' && tag.key === 'district'));
   assert.equal(suggestSearchTags('').length, 0);
 });
 
@@ -316,6 +322,7 @@ test('widenSearchScope drops distance, then filters, then the query', () => {
 
 test('trendingForMode is a plugin per map mode', () => {
   assert.ok(trendingForMode('work').some((item) => item.query.startsWith('#')));
+  assert.ok(trendingForMode('work').some((item) => item.query === '#西湖区'));
   assert.ok(trendingForMode('internship').every((item) =>
     trendingForMode('work').some((work) => work.query === item.query)
   ));

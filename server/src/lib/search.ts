@@ -54,6 +54,26 @@ export const TAG_FILTERS: Record<string, { key: string; value: string }> = {
   日常实习: { key: 'jobTaxonomy', value: 'intern/daily' },
   秋招: { key: 'jobTaxonomy', value: 'campus/autumn' },
   春招: { key: 'jobTaxonomy', value: 'campus/spring' },
+  // Full district names only — bare 西湖 stays a Domain keyword for the lake.
+  西湖区: { key: 'district', value: '西湖区' },
+  余杭区: { key: 'district', value: '余杭区' },
+  余杭: { key: 'district', value: '余杭区' },
+  滨江区: { key: 'district', value: '滨江区' },
+  滨江: { key: 'district', value: '滨江区' },
+  上城区: { key: 'district', value: '上城区' },
+  上城: { key: 'district', value: '上城区' },
+  拱墅区: { key: 'district', value: '拱墅区' },
+  拱墅: { key: 'district', value: '拱墅区' },
+  临平区: { key: 'district', value: '临平区' },
+  临平: { key: 'district', value: '临平区' },
+  钱塘区: { key: 'district', value: '钱塘区' },
+  钱塘: { key: 'district', value: '钱塘区' },
+  萧山区: { key: 'district', value: '萧山区' },
+  萧山: { key: 'district', value: '萧山区' },
+  富阳区: { key: 'district', value: '富阳区' },
+  富阳: { key: 'district', value: '富阳区' },
+  临安区: { key: 'district', value: '临安区' },
+  临安: { key: 'district', value: '临安区' },
 };
 
 export interface SearchTagSuggestion {
@@ -303,7 +323,7 @@ export function parseSearchQuery(raw?: string): ParsedSearchQuery {
       leftover.push(tag);
       continue;
     }
-    if (mapped.key === 'jobTaxonomy' || mapped.key === 'industry' || mapped.key === 'scale') {
+    if (mapped.key === 'jobTaxonomy' || mapped.key === 'industry' || mapped.key === 'scale' || mapped.key === 'district') {
       const prev = filters[mapped.key];
       const next = Array.isArray(prev) ? prev.filter((item): item is string => typeof item === 'string') : [];
       if (!next.includes(mapped.value)) next.push(mapped.value);

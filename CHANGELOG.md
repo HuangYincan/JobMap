@@ -25,7 +25,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Public `/api/pois` and `/api/search` clip to `bounds` (`inBounds`) instead of only using the box as a distance origin.
 - Official-career file adapter: drop JSON under `server/data/recruitment/official-career/`. `import:seed` merges it with the seed (same slug unions sites/positions). Empty dir is a no-op.
 - Work autocomplete uses `GET /api/suggest` (imported companies included). Job suggestions carry `poiId`. Offline / empty falls back to `suggestRecruitment`.
-- `/api/suggest` tag rows come from the same `TAG_FILTERS` map (`#大厂`, `#秋招`, industries), not a five-industry hardcode.
+- `/api/suggest` tag rows come from the same `TAG_FILTERS` map (`#大厂`, `#秋招`, industries, `#西湖区`), not a five-industry hardcode. Bare `#西湖` stays a Domain keyword.
 - Skip links (results / map), polite live result count, and `document.documentElement.lang` follow the UI language. `#` suggestions apply FilterPlugins via `applyTagSuggestion`.
 - Search boxes are comboboxes: Arrow / Enter / Escape share `lib/suggest-nav.ts` on desktop L2 and the mobile drawer.
 - Applied `#` plugins render as removable chips (`activeFilterChips`) so a picked tag stays visible after the query clears. Recent / trending hashes use the same `applyTagSuggestion` path. District, salary, and distance also chip when the mode configs are passed.
