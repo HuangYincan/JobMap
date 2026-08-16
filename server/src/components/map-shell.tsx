@@ -25,7 +25,7 @@ import { SortSelector } from "./sort-selector";
 import { AuthModal } from "./auth-modal";
 import { ProfilePanel } from "./account-panel";
 import { RecentPanel } from "./recent-panel";
-import { SavedPanel } from "./saved-panel";
+import { SavedList, SavedPanel } from "./saved-panel";
 import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
@@ -119,6 +119,7 @@ export function MapShell() {
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [mobileSheet, setMobileSheet] = useState<"explore" | "saved">("explore");
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [online, setOnline] = useState(true);
   const drawerSwipeRef = useRef<{ y: number } | null>(null);
@@ -767,6 +768,36 @@ export function MapShell() {
     }
   }, [user, savedPlaces, refreshSaved]);
 
+  const handlePickSaved = useCallback((place: SavedPlace) => {
+    const match =
+      catalogRef.current.find((poi) => poi.id === place.poiId) ??
+      poisRef.current.find((poi) => poi.id === place.poiId);
+    if (match) {
+      setSelectedId(match.id);
+      setDetailPoi(match);
+      setMobileJd(null);
+      setRailPanel("explore");
+      setMobileSheet("explore");
+      setDrawer("full");
+      if (match.location && mapInstance.current) {
+        mapInstance.current.setZoom(16);
+        mapInstance.current.setCenter([match.location.lng, match.location.lat]);
+      }
+      return;
+    }
+    if (typeof place.lng === "number" && typeof place.lat === "number" && mapInstance.current) {
+      mapInstance.current.setZoom(16);
+      mapInstance.current.setCenter([place.lng, place.lat]);
+    }
+    setRailPanel("explore");
+    setMobileSheet("explore");
+    setDrawer("half");
+  }, []);
+
+  const handleRemoveSaved = useCallback((poiId: string) => {
+    void fetch(`/api/me/saved?poiId=${encodeURIComponent(poiId)}`, { method: "DELETE" }).then(refreshSaved);
+  }, [refreshSaved]);
+
   const handleApply = useCallback(async (input: { position: { id: string; title: string }; company: { id: string; name: string }; url?: string }) => {
     if (!user) {
       setAuthOpen(true);
@@ -1338,27 +1369,8 @@ export function MapShell() {
           origin={distanceOrigin}
           shifted={sidebarOpen}
           onClose={() => setRailPanel(null)}
-          onPick={(place) => {
-            const match = catalogRef.current.find((poi) => poi.id === place.poiId) ?? pois.find((poi) => poi.id === place.poiId);
-            if (match) {
-              setSelectedId(match.id);
-              setDetailPoi(match);
-              setRailPanel("explore");
-              if (match.location && mapInstance.current) {
-                mapInstance.current.setZoom(16);
-                mapInstance.current.setCenter([match.location.lng, match.location.lat]);
-              }
-              return;
-            }
-            if (typeof place.lng === "number" && typeof place.lat === "number" && mapInstance.current) {
-              mapInstance.current.setZoom(16);
-              mapInstance.current.setCenter([place.lng, place.lat]);
-            }
-            setRailPanel("explore");
-          }}
-          onRemove={user ? (poiId) => {
-            void fetch(`/api/me/saved?poiId=${encodeURIComponent(poiId)}`, { method: "DELETE" }).then(refreshSaved);
-          } : undefined}
+          onPick={handlePickSaved}
+          onRemove={user ? handleRemoveSaved : undefined}
         />
       )}
 
@@ -1512,7 +1524,23 @@ export function MapShell() {
           <>
             <div className={styles.mobileToolbar}>
               <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} />
+              <button
+                type="button"
+                className={`${styles.mobileFilterBtn} ${mobileSheet === "saved" ? styles.mobileFilterBtnActive : ""}`}
+                onClick={() => {
+                  if (!user) {
+                    setAuthOpen(true);
+                    return;
+                  }
+                  setMobileSheet((sheet) => (sheet === "saved" ? "explore" : "saved"));
+                  if (drawer === "mini") setDrawer("half");
+                }}
+                aria-pressed={mobileSheet === "saved"}
+              >
+                {t("saved", lang)}
+              </button>
             </div>
+            {mobileSheet !== "saved" && (
             <div className={styles.mobileSearch}>
               <Icon name="search" />
               <input
@@ -1532,7 +1560,20 @@ export function MapShell() {
                 aria-label={t("search", lang)}
               />
             </div>
+            )}
             <div className={styles.drawerContent}>
+              {mobileSheet === "saved" ? (
+                <SavedList
+                  items={savedPlaces}
+                  signedIn={Boolean(user)}
+                  lang={lang}
+                  catalog={compareCatalog}
+                  origin={distanceOrigin}
+                  onPick={handlePickSaved}
+                  onRemove={user ? handleRemoveSaved : undefined}
+                />
+              ) : (
+              <>
               <div className={styles.mobileActions}>
                 <button
                   type="button"
@@ -1627,6 +1668,8 @@ export function MapShell() {
                 accentColor={modeConfig.color}
                 onWidenSearch={handleWidenSearch}
               />
+              </>
+              )}
             </div>
           </>
         )}

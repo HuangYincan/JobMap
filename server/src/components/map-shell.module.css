@@ -1030,7 +1030,9 @@
 
   .mobileToolbar {
     display: flex;
-    justify-content: center;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     padding: 0 0 8px;
   }
 
