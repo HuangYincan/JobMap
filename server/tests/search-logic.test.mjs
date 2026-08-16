@@ -226,6 +226,16 @@ test('trendingForMode is a plugin per map mode', () => {
   assert.ok(trendingForMode('domain').every((item) => !item.query.startsWith('#')));
 });
 
+test('applyFilters: district plugin matches Hangzhou office addresses', () => {
+  const yuhang = applyFilters(INTERNSHIP_SEED, { district: ['余杭区'] });
+  assert.ok(yuhang.some((p) => p.id === 'alibaba-xixi'));
+  assert.ok(yuhang.every((p) => (p.location.address || '').includes('余杭')));
+
+  const xihu = applyFilters(INTERNSHIP_SEED, { district: ['西湖区'] });
+  assert.ok(xihu.length > 0);
+  assert.ok(!xihu.some((p) => p.id === 'alibaba-xixi'));
+});
+
 test('applyFilters: minRating keeps only highly rated domain POIs', () => {
   const pois = [
     { id: 'a', kind: 'domain', name: 'A', mode: 'domain', source: 'amap', location: { lng: 120, lat: 30 }, category: '餐饮服务', rating: 4.6 },

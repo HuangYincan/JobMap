@@ -8,6 +8,7 @@
 
 import type { FilterConfig, MapMode, POIKind, SortOption } from './types.ts';
 import { workFilterConfigs } from './job-taxonomy.ts';
+import { districtFilterConfig } from './spatial-filters.ts';
 
 export interface ModeConfig {
   id: MapMode;
@@ -106,6 +107,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
         step: 0.5,
         unit: '分',
       },
+      districtFilterConfig(),
     ],
     sortOptions: [
       { key: 'distance', label: '距离最近' },
@@ -149,6 +151,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
         unit: 'K/月',
       },
       DISTANCE_FILTER,
+      districtFilterConfig(),
     ],
     sortOptions: [
       { key: 'distance', label: '距离最近' },
@@ -193,6 +196,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
         unit: 'K/月',
       },
       DISTANCE_FILTER,
+      districtFilterConfig(),
     ],
     sortOptions: [
       { key: 'distance', label: '距离最近' },

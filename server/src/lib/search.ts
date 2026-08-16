@@ -10,6 +10,7 @@ import type { FilterConfig, FilterState, MapMode, POI, SortOption } from './type
 import { isRecruitmentPOI } from './types.ts';
 import { getMode } from './modes.ts';
 import { positionMatchesTaxonomySelection, selectedTaxonomyPaths } from './job-taxonomy.ts';
+import { poiMatchesDistrict } from './spatial-filters.ts';
 import { categoryMatches, popularityScore } from './viewport-search.ts';
 
 // ---- 关键词匹配 ----
@@ -241,6 +242,12 @@ export function matchFilter(poi: POI, key: string, value: any): boolean {
       if (!value) return true;
       const keyword = key === 'providesHousing' ? '住宿' : '班车';
       return (poi.benefits || []).some((b) => b.includes(keyword));
+    }
+    case 'district': {
+      const sel = Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === 'string')
+        : [];
+      return poiMatchesDistrict(poi, sel);
     }
     default:
       return true;

@@ -58,7 +58,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 - Work seed shown immediately, then Geocoder-corrected; primary-nav search icon expands the rail and focuses the field
 - Secondary sidebar with glassmorphism POI cards (list + in-panel detail overlay)
 - Primary-rail search drives `query` and opens Explore; card/marker click opens `POIDetailView`; work job cards open a sibling `JdPanel` in the same flex cluster. Apply follows `apply` / `careerUrl`.
-- Search (debounced) + mode-specific filters + sort (rating ≠ popularity)
+- Search (debounced) + mode-specific filters + sort (rating ≠ popularity). `#大厂` / `#秋招` parse into filter plugins. Empty search / Recent show `trendingForMode`. Distance slider draws a blue buffer circle. District is a FilterPlugin on address text until PostGIS.
 - Card-map bidirectional linkage (click select, hover highlight)
 - API routes exist for later persistence: `/api/modes`, `/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`, `/api/filter-options`
 - Account slice (2026-08-16): default map mode is **work**; Settings rail item removed into Profile L2; Recent is search-history only (signed-in POST/GET `/api/me/search-history`; guests stay empty). Login is a centered modal (phone OTP demo `000000` + email/GitHub). Migrations `005` identities/sessions/history and `006` companies/sites/positions/logo_assets are in `db/migrations`. Demo APIs are in-memory until `DATABASE_URL` is wired. Seed logos go through `resolveCompanyLogo` (career-site icon → company icon → emoji).
