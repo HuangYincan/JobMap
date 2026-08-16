@@ -100,6 +100,11 @@
   color: var(--ink, #18212c);
 }
 
+.closeButton:focus-visible {
+  outline: 2px solid var(--blue, #007aff);
+  outline-offset: 2px;
+}
+
 /* 搜索行 */
 .searchRow {
   padding: 0 14px 8px;

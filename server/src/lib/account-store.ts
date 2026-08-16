@@ -12,6 +12,7 @@ import {
   mergePreferences,
   type AccountUser,
   type AuthProvider,
+  type SavedPlace,
   type SearchHistoryEntry,
   type UserPreferences,
 } from './account.ts';
@@ -27,6 +28,9 @@ import {
   getSessionUser as memGetSessionUser,
   issueOtp as memIssueOtp,
   listHistory as memListHistory,
+  listSaved as memListSaved,
+  removeSaved as memRemoveSaved,
+  savePlace as memSavePlace,
   updateUser as memUpdateUser,
   upsertIdentity as memUpsertIdentity,
   DEMO_OTP_CODE,
@@ -340,4 +344,85 @@ export async function clearHistory(userId: string): Promise<void> {
     await db.query(`DELETE FROM search_history WHERE user_id = $1`, [userId]);
     return undefined;
   }, () => undefined);
+}
+
+function asSaved(row: {
+  id: string;
+  poi_id: string;
+  name: string;
+  mode: MapMode;
+  kind: SavedPlace['kind'];
+  address: string | null;
+  lng: number | null;
+  lat: number | null;
+  created_at: Date;
+}): SavedPlace {
+  return {
+    id: row.id,
+    poiId: row.poi_id,
+    name: row.name,
+    mode: canonicalMode(row.mode),
+    kind: row.kind,
+    address: row.address ?? undefined,
+    lng: row.lng ?? undefined,
+    lat: row.lat ?? undefined,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+export async function listSaved(userId: string): Promise<SavedPlace[]> {
+  return withDb(async (db) => {
+    const result = await db.query<{
+      id: string;
+      poi_id: string;
+      name: string;
+      mode: MapMode;
+      kind: SavedPlace['kind'];
+      address: string | null;
+      lng: number | null;
+      lat: number | null;
+      created_at: Date;
+    }>(
+      `SELECT id::text, poi_id, name, mode, kind, address, lng, lat, created_at
+       FROM saved_places
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId],
+    );
+    return result.rows.map(asSaved);
+  }, () => memListSaved(userId));
+}
+
+export async function savePlace(
+  userId: string,
+  place: Omit<SavedPlace, 'id' | 'createdAt'>,
+): Promise<SavedPlace> {
+  const canon = canonicalMode(place.mode);
+  return withDb(async (db) => {
+    const result = await db.query<{
+      id: string;
+      poi_id: string;
+      name: string;
+      mode: MapMode;
+      kind: SavedPlace['kind'];
+      address: string | null;
+      lng: number | null;
+      lat: number | null;
+      created_at: Date;
+    }>(
+      `INSERT INTO saved_places (user_id, poi_id, name, mode, kind, address, lng, lat)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (user_id, poi_id) DO UPDATE SET name = EXCLUDED.name
+       RETURNING id::text, poi_id, name, mode, kind, address, lng, lat, created_at`,
+      [userId, place.poiId, place.name, canon, place.kind, place.address ?? null, place.lng ?? null, place.lat ?? null],
+    );
+    return asSaved(result.rows[0]);
+  }, () => memSavePlace(userId, { ...place, mode: canon }));
+}
+
+export async function removeSaved(userId: string, poiId: string): Promise<boolean> {
+  return withDb(async (db) => {
+    const result = await db.query(`DELETE FROM saved_places WHERE user_id = $1 AND poi_id = $2`, [userId, poiId]);
+    return (result.rowCount ?? 0) > 0;
+  }, () => memRemoveSaved(userId, poiId));
 }

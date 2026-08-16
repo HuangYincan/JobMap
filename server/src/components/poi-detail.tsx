@@ -46,6 +46,8 @@ export interface POIDetailViewProps {
   accentColor?: string;
   onSelectPosition?: (position: Position) => void;
   selectedPositionId?: string | null;
+  saved?: boolean;
+  onToggleSave?: () => void;
 }
 
 export function POIDetailView({
@@ -55,6 +57,8 @@ export function POIDetailView({
   accentColor = "#007AFF",
   onSelectPosition,
   selectedPositionId,
+  saved = false,
+  onToggleSave,
 }: POIDetailViewProps) {
   return (
     <div className={styles.detail} style={{ "--accent": accentColor } as CSSProperties}>
@@ -65,6 +69,17 @@ export function POIDetailView({
           </svg>
           <span>{t("backToList", lang)}</span>
         </button>
+        {onToggleSave && (
+          <button
+            type="button"
+            className={`${styles.saveButton} ${saved ? styles.saveButtonOn : ""}`}
+            onClick={onToggleSave}
+            aria-pressed={saved}
+            aria-label={saved ? t("unsavePlace", lang) : t("savePlace", lang)}
+          >
+            {saved ? t("unsavePlace", lang) : t("savePlace", lang)}
+          </button>
+        )}
       </header>
 
       <div className={styles.body}>

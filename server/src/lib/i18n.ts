@@ -607,6 +607,22 @@ export const translations = {
     zh: '热门搜索',
     en: 'Trending',
   },
+  savedPlaces: {
+    zh: '已保存',
+    en: 'Saved',
+  },
+  savedEmpty: {
+    zh: '还没有收藏的地点',
+    en: 'No saved places yet',
+  },
+  savedNeedSignIn: {
+    zh: '登录后，收藏会按账户保存在云端。',
+    en: 'Sign in to keep saved places on your account.',
+  },
+  unsavePlace: {
+    zh: '取消收藏',
+    en: 'Unsave',
+  },
 } as const;
 
 // 获取浏览器语言偏好

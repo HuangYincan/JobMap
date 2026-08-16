@@ -144,3 +144,24 @@
   color: var(--muted);
   font-size: 11px;
 }
+
+.savedRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.savedRow .row {
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.row:focus-visible,
+.close:focus-visible,
+.textBtn:focus-visible,
+.chip:focus-visible {
+  outline: 2px solid var(--blue, #007aff);
+  outline-offset: 2px;
+}

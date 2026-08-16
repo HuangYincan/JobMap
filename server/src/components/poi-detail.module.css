@@ -21,8 +21,30 @@
 .topBar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 0 6px 8px;
   flex-shrink: 0;
+}
+
+.saveButton {
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 650;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.saveButton:hover,
+.saveButton:focus-visible {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.saveButtonOn {
+  color: var(--accent);
 }
 
 .backButton {

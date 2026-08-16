@@ -59,6 +59,18 @@ export interface SearchHistoryEntry {
   createdAt: string;
 }
 
+export interface SavedPlace {
+  id: string;
+  poiId: string;
+  name: string;
+  mode: MapMode;
+  kind: 'domain' | 'recruitment';
+  address?: string;
+  lng?: number;
+  lat?: number;
+  createdAt: string;
+}
+
 export const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
   emailJobs: false,
   smsJobs: false,

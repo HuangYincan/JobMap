@@ -16,6 +16,9 @@ import {
   getSessionUser,
   issueOtp,
   listHistory,
+  listSaved,
+  removeSaved,
+  savePlace,
   updateUser,
   upsertIdentity,
 } from '../src/lib/session-store.ts';
@@ -81,6 +84,29 @@ test('otp login creates a session and search history is per user', () => {
 
   destroySession(token);
   assert.equal(getSessionUser(token), null);
+});
+
+test('saved places are per user and idempotent', () => {
+  const user = upsertIdentity({ provider: 'email', subject: 'save@example.com', email: 'save@example.com' });
+  const first = savePlace(user.id, {
+    poiId: 'alibaba-xixi',
+    name: '阿里巴巴西溪',
+    mode: 'work',
+    kind: 'recruitment',
+    address: '余杭区',
+    lng: 120.01,
+    lat: 30.28,
+  });
+  const again = savePlace(user.id, {
+    poiId: 'alibaba-xixi',
+    name: '阿里巴巴西溪园区',
+    mode: 'work',
+    kind: 'recruitment',
+  });
+  assert.equal(first.id, again.id);
+  assert.equal(listSaved(user.id).length, 1);
+  assert.equal(removeSaved(user.id, 'alibaba-xixi'), true);
+  assert.equal(listSaved(user.id).length, 0);
 });
 
 test('resolveCompanyLogo prefers site career icon over company fallback', () => {

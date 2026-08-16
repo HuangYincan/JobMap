@@ -7,7 +7,7 @@
 // ============================================================
 
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
-import type { AccountUser, AuthProvider, SearchHistoryEntry, UserPreferences } from './account.ts';
+import type { AccountUser, AuthProvider, SavedPlace, SearchHistoryEntry, UserPreferences } from './account.ts';
 import { emptyPreferences, mergePreferences } from './account.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -38,6 +38,7 @@ const sessions = new Map<string, StoredSession>();
 const identities = new Map<string, string>();
 const otps = new Map<string, OtpChallenge>();
 const history = new Map<string, SearchHistoryEntry[]>();
+const saved = new Map<string, SavedPlace[]>();
 
 function identityKey(provider: AuthProvider, subject: string): string {
   return `${provider}:${subject.trim().toLowerCase()}`;
@@ -203,4 +204,28 @@ export function addHistory(
 
 export function clearHistory(userId: string): void {
   history.set(userId, []);
+}
+
+export function listSaved(userId: string): SavedPlace[] {
+  return [...(saved.get(userId) ?? [])];
+}
+
+export function savePlace(userId: string, place: Omit<SavedPlace, 'id' | 'createdAt'>): SavedPlace {
+  const items = saved.get(userId) ?? [];
+  const existing = items.find((item) => item.poiId === place.poiId);
+  if (existing) return existing;
+  const entry: SavedPlace = {
+    ...place,
+    id: randomUUID(),
+    createdAt: new Date().toISOString(),
+  };
+  saved.set(userId, [entry, ...items]);
+  return entry;
+}
+
+export function removeSaved(userId: string, poiId: string): boolean {
+  const items = saved.get(userId) ?? [];
+  const next = items.filter((item) => item.poiId !== poiId);
+  saved.set(userId, next);
+  return next.length !== items.length;
 }

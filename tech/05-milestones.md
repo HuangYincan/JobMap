@@ -111,12 +111,12 @@ No calendar release date is committed. Each phase is estimated only after its en
 
 **Out of Scope (deferred to P3+):**
 - College/Overseas modes
-- User authentication (optional in P2)
-- Favorites/bookmarks
 - Application tracking
 - Data comparison
 - PII handling
 - Recommendation system
+
+**Phase 3 started (2026-08-16):** Saved places — migration `008_saved_places.sql`, `GET/POST/DELETE /api/me/saved`, rail Saved L2, detail bookmark. Guests are prompted to sign in.
 
 ## Deferred Decisions
 

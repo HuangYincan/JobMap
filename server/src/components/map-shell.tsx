@@ -13,7 +13,7 @@ import { trendingForMode } from "@/lib/trending-search";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
 import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
-import type { AccountUser, SearchHistoryEntry, UserPreferences } from "@/lib/account";
+import type { AccountUser, SavedPlace, SearchHistoryEntry, UserPreferences } from "@/lib/account";
 import { initialsFromName } from "@/lib/account";
 import { SecondarySidebar, type SearchSuggestion } from "./secondary-sidebar";
 import { POIList } from "./poi-list";
@@ -25,10 +25,11 @@ import { SortSelector } from "./sort-selector";
 import { AuthModal } from "./auth-modal";
 import { ProfilePanel } from "./account-panel";
 import { RecentPanel } from "./recent-panel";
+import { SavedPanel } from "./saved-panel";
 import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
-type RailPanel = "explore" | "recent" | "profile" | null;
+type RailPanel = "explore" | "recent" | "saved" | "profile" | null;
 
 function readLngLat(
   value?: { lng?: number; lat?: number; getLng?: () => number; getLat?: () => number } | null,
@@ -115,6 +116,7 @@ export function MapShell() {
   const [user, setUser] = useState<AccountUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
+  const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [online, setOnline] = useState(true);
@@ -162,12 +164,23 @@ export function MapShell() {
     }
   }, []);
 
+  const refreshSaved = useCallback(async () => {
+    try {
+      const res = await fetch("/api/me/saved");
+      const body = await res.json();
+      setSavedPlaces(Array.isArray(body.items) ? body.items : []);
+    } catch {
+      setSavedPlaces([]);
+    }
+  }, []);
+
   useEffect(() => {
     refreshAccount().then((next) => {
       if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
     });
     refreshHistory();
-  }, [refreshAccount, refreshHistory]);
+    refreshSaved();
+  }, [refreshAccount, refreshHistory, refreshSaved]);
 
   const recordSearch = useCallback(async (raw: string, searchMode: MapMode) => {
     const q = raw.trim();
@@ -705,6 +718,36 @@ export function MapShell() {
     setFilters(next.filters);
   }, [query, filters, handleNeedMore]);
 
+  const handleToggleSave = useCallback(async (poi: POI) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    const already = savedPlaces.some((item) => item.poiId === poi.id);
+    try {
+      if (already) {
+        await fetch(`/api/me/saved?poiId=${encodeURIComponent(poi.id)}`, { method: "DELETE" });
+      } else {
+        await fetch("/api/me/saved", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            poiId: poi.id,
+            name: poi.name,
+            mode: poi.mode,
+            kind: poi.kind,
+            address: poi.location.address,
+            lng: poi.location.lng,
+            lat: poi.location.lat,
+          }),
+        });
+      }
+      await refreshSaved();
+    } catch {
+      // network / guest race
+    }
+  }, [user, savedPlaces, refreshSaved]);
+
   // ---- 地图联动 ----
   usePOIMap(mapInstance.current, {
     pois,
@@ -987,7 +1030,8 @@ export function MapShell() {
       void fetch("/api/auth/me", { method: "DELETE" }).then(() => {
         setUser(null);
         setSearchHistory([]);
-        setRailPanel((current) => (current === "profile" ? null : current));
+        setSavedPlaces([]);
+        setRailPanel((current) => (current === "profile" || current === "saved" ? null : current));
       });
       return;
     }
@@ -1101,7 +1145,21 @@ export function MapShell() {
         </div>
         <nav className={styles.navList}>
           <button className={styles.navItem} data-tooltip={t('layers', lang)}><Icon name="layers" /><span>{t('layers', lang)}</span></button>
-          <button className={styles.navItem} data-tooltip={t('saved', lang)}><Icon name="bookmark" /><span>{t('saved', lang)}</span></button>
+          <button
+            className={`${styles.navItem} ${railPanel === "saved" ? styles.navItemActive : ""}`}
+            data-tooltip={t('saved', lang)}
+            aria-pressed={railPanel === "saved"}
+            onClick={() => {
+              if (!user) {
+                setAuthOpen(true);
+                return;
+              }
+              openRail("saved");
+            }}
+          >
+            <Icon name="bookmark" />
+            <span>{t('saved', lang)}</span>
+          </button>
           <button
             className={`${styles.navItem} ${exploreOpen ? styles.navItemActive : ""}`}
             data-tooltip={t('explore', lang)}
@@ -1178,6 +1236,8 @@ export function MapShell() {
         onRefreshHere={handleRefreshHere}
         onNeedMore={handleNeedMore}
         onWidenSearch={handleWidenSearch}
+        saved={Boolean(detailPoi && savedPlaces.some((item) => item.poiId === detailPoi.id))}
+        onToggleSave={handleToggleSave}
         totalCount={pois.length}
         lang={lang}
         onClose={() => {
@@ -1225,6 +1285,37 @@ export function MapShell() {
         />
       )}
 
+      {railPanel === "saved" && (
+        <SavedPanel
+          items={savedPlaces}
+          signedIn={Boolean(user)}
+          lang={lang}
+          shifted={sidebarOpen}
+          onClose={() => setRailPanel(null)}
+          onPick={(place) => {
+            const match = catalogRef.current.find((poi) => poi.id === place.poiId) ?? pois.find((poi) => poi.id === place.poiId);
+            if (match) {
+              setSelectedId(match.id);
+              setDetailPoi(match);
+              setRailPanel("explore");
+              if (match.location && mapInstance.current) {
+                mapInstance.current.setZoom(16);
+                mapInstance.current.setCenter([match.location.lng, match.location.lat]);
+              }
+              return;
+            }
+            if (typeof place.lng === "number" && typeof place.lat === "number" && mapInstance.current) {
+              mapInstance.current.setZoom(16);
+              mapInstance.current.setCenter([place.lng, place.lat]);
+            }
+            setRailPanel("explore");
+          }}
+          onRemove={user ? (poiId) => {
+            void fetch(`/api/me/saved?poiId=${encodeURIComponent(poiId)}`, { method: "DELETE" }).then(refreshSaved);
+          } : undefined}
+        />
+      )}
+
       {railPanel === "profile" && user && (
         <ProfilePanel
           user={user}
@@ -1244,6 +1335,7 @@ export function MapShell() {
             if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
           });
           void refreshHistory();
+          void refreshSaved();
         }}
       />
 
@@ -1347,6 +1439,10 @@ export function MapShell() {
               accentColor={modeConfig.color}
               selectedPositionId={mobileJd?.id}
               onSelectPosition={(position) => setMobileJd(position)}
+              saved={savedPlaces.some((item) => item.poiId === detailPoi.id)}
+              onToggleSave={() => {
+                void handleToggleSave(detailPoi);
+              }}
               onBack={() => {
                 setDetailPoi(null);
                 setMobileJd(null);

@@ -97,6 +97,8 @@ export interface SecondarySidebarProps {
   onNeedMore?: () => void;
   /** 空结果时扩大搜索范围 */
   onWidenSearch?: () => void;
+  saved?: boolean;
+  onToggleSave?: (poi: POI) => void;
 }
 
 export function SecondarySidebar({
@@ -129,6 +131,8 @@ export function SecondarySidebar({
   onRefreshHere,
   onNeedMore,
   onWidenSearch,
+  saved = false,
+  onToggleSave,
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -194,6 +198,8 @@ export function SecondarySidebar({
           accentColor={config.color}
           selectedPositionId={jdPosition?.id ?? null}
           onSelectPosition={(pos) => setJdPosition(pos)}
+          saved={saved}
+          onToggleSave={onToggleSave ? () => onToggleSave(selectedPoi) : undefined}
         />
       ) : (
       <>
