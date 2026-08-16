@@ -1766,7 +1766,7 @@ export function MapShell() {
           onPointerCancel={() => {
             drawerSwipeRef.current = null;
           }}
-          aria-label={mobileJd ? t("closeJd", lang) : detailPoi ? t("backToList", lang) : `Expand drawer from ${drawer} state`}
+          aria-label={mobileJd ? t("closeJd", lang) : detailPoi ? t("backToList", lang) : t("expandDrawer", lang)}
         >
           <span />
         </button>

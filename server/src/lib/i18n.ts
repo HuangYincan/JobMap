@@ -187,6 +187,10 @@ export const translations = {
     zh: '返回列表',
     en: 'Back to list',
   },
+  expandDrawer: {
+    zh: '展开抽屉',
+    en: 'Expand drawer',
+  },
   back: {
     zh: '返回',
     en: 'Back',
