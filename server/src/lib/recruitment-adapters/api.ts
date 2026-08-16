@@ -35,7 +35,7 @@ export async function fetchWorkCatalogFromApi(): Promise<RecruitmentPOI[]> {
 }
 
 export const apiRecruitmentAdapter: RecruitmentAdapter = {
-  kind: 'official-career',
+  kind: 'catalog',
   async list() {
     const pois = await fetchWorkCatalogFromApi();
     return pois.map((poi) => poiToSourceCompany(poi));

@@ -88,7 +88,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 - Frontend: Next.js 15.5 + React 19 + TypeScript + CSS Modules
 - Backend: Next.js API Routes + PostgreSQL 16 + PostGIS 3.4
 - Map: AMap JavaScript API v2.0
-- Testing: Jest + React Testing Library + Playwright
+- Testing: Node `node --test` + source contracts (Jest / RTL / Playwright not in package.json)
 
 **Success Criteria:**
 - [x] 2 modes functional (Domain + Work; intern is a work filter)

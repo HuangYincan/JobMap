@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { fetchWorkCatalogFromApi } from '../src/lib/recruitment-adapters/api.ts';
+import { apiRecruitmentAdapter, fetchWorkCatalogFromApi } from '../src/lib/recruitment-adapters/api.ts';
 import { resolveInternshipLocations } from '../src/lib/poi-service.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
@@ -25,6 +25,10 @@ const SAMPLE = {
   sites: [],
   positions: [],
 };
+
+test('apiRecruitmentAdapter is the catalog reader, not official-career files', () => {
+  assert.equal(apiRecruitmentAdapter.kind, 'catalog');
+});
 
 test('fetchWorkCatalogFromApi pages /api/pois and keeps catalog ids', async () => {
   const calls = [];

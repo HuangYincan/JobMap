@@ -34,6 +34,10 @@ test('async catalog merges official-career drops when there is no DATABASE_URL',
   const ali = await loadServerCatalogById('work', 'alibaba-xixi');
   assert.equal(ali?.id, 'alibaba-xixi');
   assert.ok(ali?.kind === 'recruitment' && ali.positions.some((p) => p.id === 'alibaba-campus-frontend-2026'));
+  const byte = await loadServerCatalogById('work', 'bytedance-hangzhou');
+  assert.ok(byte?.kind === 'recruitment' && byte.positions.some((p) => p.id === 'bytedance-campus-frontend-2026'));
+  assert.ok(byte?.positions.some((p) => p.id === 'bytedance-algo'));
+  assert.equal(await loadServerCatalogById('work', 'bytedance-hangzhou:bytedance-hangzhou-site'), undefined);
   assert.ok(await loadServerCatalogById('work', 'zhejiang-lab'));
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');

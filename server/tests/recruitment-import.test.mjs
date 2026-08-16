@@ -118,6 +118,11 @@ test('planSeedImport merges official-career drops onto seed slugs', async () => 
   const lab = plan.companies.find((c) => c.slug === 'zhejiang-lab');
   assert.ok(lab);
   assert.equal(lab.positions[0].siteId, 'hq');
+
+  const bytedance = plan.companies.find((c) => c.slug === 'bytedance-hangzhou');
+  assert.ok(bytedance);
+  assert.ok(bytedance.positions.some((p) => p.externalId === 'bytedance-campus-frontend-2026'));
+  assert.ok(bytedance.positions.some((p) => p.externalId === 'bytedance-algo'));
 });
 
 test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {

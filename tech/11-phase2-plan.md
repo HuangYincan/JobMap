@@ -324,16 +324,16 @@
 
 ### 后端
 - **框架:** Next.js API Routes
-- **数据库:** PostgreSQL 16 + PostGIS 3.4
-- **ORM:** Prisma（待定）/ Raw SQL
-- **缓存:** Redis（可选）
-- **认证:** NextAuth.js / Clerk
+- **数据库:** PostgreSQL 16 + PostGIS 3.4（live Docker 仍 blocked）
+- **ORM:** 未定（等 ADR）；现在 Raw SQL
+- **缓存:** 进程内 30s（`lib/public-cache.ts`）；Redis 后换 store
+- **认证:** 自研 demo OTP + OAuth stub（**不**引入 NextAuth / Clerk，等 ADR）
 
 ### 开发工具
-- **测试:** Jest + React Testing Library + Playwright
-- **Lint:** ESLint + Prettier
-- **CI/CD:** GitHub Actions
-- **部署:** Vercel / Railway
+- **测试:** Node 内置 `node --test` + 源码契约；未引 Jest / RTL / Playwright
+- **Lint:** ESLint（随 Next）
+- **CI/CD:** GitHub Actions 已有版本文件；live PostGIS 仍 blocked
+- **部署:** 本地 `npm run dev`（`tech/15-deploy.md`）；无生产主机
 
 ---
 
