@@ -160,6 +160,16 @@ class RadarMapTests(unittest.TestCase):
         self.assertEqual(anchor_slug("蚂蚁集团"), "antgroup-hangzhou")
         self.assertIsNone(anchor_slug("拓竹科技"))
 
+    def test_deadline_parsing(self):
+        from domain_map_importer.radar_jobs import parse_deadline
+        self.assertEqual(parse_deadline("2026-10-15"), "2026-10-15")
+        self.assertEqual(parse_deadline("2026 10 15"), "2026-10-15")
+        self.assertEqual(parse_deadline("2026/10/15"), "2026-10-15")
+        self.assertEqual(parse_deadline("2026 o6 30"), None)
+        self.assertEqual(parse_deadline("招满即止"), None)
+        self.assertEqual(parse_deadline(""), None)
+        self.assertEqual(parse_deadline(None), None)
+
     def test_fixture_is_valid_local_import_and_hangzhou_only(self):
         payload = {
             "updated": "2026-08-11",

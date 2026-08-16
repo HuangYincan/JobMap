@@ -24,7 +24,7 @@
       "taxonomy": {
         "family": "campus"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus-talent.alibaba.com/campus/position?batchId=100000700001&filterParams=%7B%22aliStar%22%3A%5B%22Y%22%5D%7D&search=T-Star",

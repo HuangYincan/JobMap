@@ -24,7 +24,7 @@
       "taxonomy": {
         "family": "campus"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/mobile/job/list?recommendCode=OS9215",
@@ -38,7 +38,7 @@
       "taxonomy": {
         "family": "campus"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school",
@@ -52,7 +52,7 @@
       "taxonomy": {
         "family": "intern"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school",
@@ -66,7 +66,7 @@
       "taxonomy": {
         "family": "campus"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school&sid=1",
@@ -80,7 +80,7 @@
       "taxonomy": {
         "family": "intern"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school",

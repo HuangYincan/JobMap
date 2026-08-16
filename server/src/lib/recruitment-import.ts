@@ -164,6 +164,19 @@ export interface ImportApplyResult {
   positions: number;
 }
 
+/** Normalize a position deadline to an ISO date or null (positions.deadline is a date column). */
+function normalizeDeadline(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(raw.trim());
+  if (!m) return null;
+  const [, y, mo, d] = m;
+  const date = new Date(Number(y), Number(mo) - 1, Number(d));
+  if (date.getFullYear() !== Number(y) || date.getMonth() !== Number(mo) - 1 || date.getDate() !== Number(d)) {
+    return null;
+  }
+  return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
+
 /** Upsert a validated plan. No DATABASE_URL → no-op (tests / laptop without Docker). */
 export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportApplyResult> {
   if (plan.companies.length === 0) {
@@ -320,7 +333,7 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
             pos.majors ?? [],
             pos.skills ?? [],
             pos.description ?? null,
-            pos.deadline ?? null,
+            pos.deadline ? normalizeDeadline(pos.deadline) : null,
             pos.applySource ?? null,
             pos.applyUrl ?? null,
             pos.status,

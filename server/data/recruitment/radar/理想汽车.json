@@ -24,7 +24,7 @@
       "taxonomy": {
         "family": "campus"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.lixiang.com/employ/campus/list.html?job_mode=1&project_id=15&employchannelcode=7B8MZAZ&fromJob=1&sessionid=",
@@ -38,7 +38,7 @@
       "taxonomy": {
         "family": "intern"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.lixiang.com/employ/campus/list.html?fromJob=1",

@@ -409,9 +409,41 @@ useEffect(() => {
 
 **根本原因**：`recordSearch` 在 `!user` 时直接 return；`refreshHistory` 只打 `/api/me/search-history`（游客 200 + `[]`）；`RecentPanel` 用 `!signedIn` 挡住列表。
 
-**解决方案**：`lib/guest-search-history.ts`（`dm.guest-search-history.v1`，上限 30）只写 persistable 模式。游客读写本地；登录上传后清空；登出再读本地。Recent 有条目就展示。
+**解决方案**：`lib/guest-search-history.ts`（`dm.guest-search-history.v1`，上限 30）只写 persistable 模式。游客读写本地；登录上传后保留本地镜像；登出再读本地。Recent 有条目就展示。
 
 **修改文件**：`guest-search-history.ts`、`persistable.ts`、`map-shell.tsx`、`recent-panel.tsx`
+
+---
+
+## 2026-08-17: 数据导入崩溃 + (0,0) 假针
+
+### 问题3：DB apply 因 `deadline: "招满即止"` 崩溃
+
+**症状**：`import:seed:apply` 在雷达数据上抛 `invalid input syntax for type date: "招满即止"`（22007）。
+
+**根本原因**：`positions.deadline` 是 date 列；雷达快照的截止时间是中文文本（"招满即止"、"2026 o6 30"），校验器不查格式，直接透传进 SQL。
+
+**解决方案**：双保险——`radar_jobs.py` 的 `parse_deadline` 只输出合法 ISO 日期（空格/斜杠分隔兼容）；`recruitment-import.ts` 的 `normalizeDeadline` 在入库前再归一化，非法值落 null。
+
+**修改文件**：`crawler/.../radar_jobs.py`、`server/src/lib/recruitment-import.ts`
+
+### 问题4：DB 读路径把无坐标站点画成 (0,0) 针
+
+**症状**：导入 137 家公司后 `/api/pois` total=137，雷达-only 公司（仅城市文本、无坐标）被 `lng ?? 0, lat ?? 0` 画到非洲西海岸。
+
+**根本原因**：离线路径有 `hasPlausibleCoord` 过滤；DB 读路径（`loadWorkCatalogFromDb` 无空间裁剪分支）直接 `site.lng ?? 0`。
+
+**解决方案**：DB 读路径统一过滤：无坐标站点不进 POI；全部无坐标时返回 null 回落离线目录。
+
+**修改文件**：`server/src/lib/recruitment-store.ts`
+
+### 问题5：礼貌抓取的真实世界健壮性
+
+- 瞬态 SSL/网络错误（`URLError`）与拼错 charset（`uft-8`）会中断整轮扫描 → `acquire.py` 捕获并跳过。
+- `parse_robots` 组优先级错误（具体 UA 组应覆盖 `*` 组）→ 按 RFC 9309 重写。
+- 导航 CTA（"Join Tigermed"、`javascript:` 链接、超长横幅）被误判为岗位 → 词边界匹配 + href 过滤 + 标题长度上限。
+
+**修改文件**：`crawler/app/domain_map_importer/acquire.py`、`html_jobs.py` + 测试
 
 ---
 

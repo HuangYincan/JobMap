@@ -24,7 +24,7 @@
       "taxonomy": {
         "family": "campus"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://babycare.zhiye.com/campus/jobs",
@@ -38,7 +38,7 @@
       "taxonomy": {
         "family": "intern"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://babycare.zhiye.com/intern/jobs",

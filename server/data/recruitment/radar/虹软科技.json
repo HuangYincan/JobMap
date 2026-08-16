@@ -24,7 +24,7 @@
       "taxonomy": {
         "family": "campus"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.arcsoft.com.cn/job/JobList.html",
@@ -38,7 +38,7 @@
       "taxonomy": {
         "family": "intern"
       },
-      "deadline": "招满即止",
+      "deadline": null,
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.arcsoft.com.cn/job/CadetIntroduce.html",

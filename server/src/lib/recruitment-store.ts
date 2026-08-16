@@ -56,6 +56,10 @@ function num(value: string | number | null | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+function hasPlausibleCoord(lng: number | null, lat: number | null): boolean {
+  return Number.isFinite(lng) && Number.isFinite(lat) && !(lng === 0 && lat === 0);
+}
+
 export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<RecruitmentPOI[] | null> {
   const pool = getPool();
   if (!pool) return null;
@@ -70,8 +74,13 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
     const sites = await pool.query<SiteRow>(siteSql, spatial.params);
     if (hasSpatialClip(clip) && sites.rows.length === 0) return [];
 
-    const companyIds = [...new Set(sites.rows.map((site) => site.company_id))];
-    const siteIds = sites.rows.map((site) => site.id);
+    // Ungeocoded sites (address-only, lng/lat NULL) must not pin at (0,0).
+    // A clip already restricts to geom-bearing sites; the unrestricted path filters here.
+    const located = sites.rows.filter((site) => hasPlausibleCoord(site.lng, site.lat));
+    if (located.length === 0) return null;
+
+    const companyIds = [...new Set(located.map((site) => site.company_id))];
+    const siteIds = located.map((site) => site.id);
     const companySql = hasSpatialClip(clip)
       ? `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji
          FROM companies WHERE id = ANY($1::bigint[]) ORDER BY slug`
@@ -93,7 +102,7 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
     if (companies.rows.length === 0) return [];
 
     const sitesByCompany = new Map<string, SiteRow[]>();
-    for (const site of sites.rows) {
+    for (const site of located) {
       const list = sitesByCompany.get(site.company_id) ?? [];
       list.push(site);
       sitesByCompany.set(site.company_id, list);

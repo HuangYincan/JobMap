@@ -16,7 +16,7 @@ from typing import Any
 
 from .acquire import is_blocked_host
 
-PARSER_VERSION = "1.2.0"
+PARSER_VERSION = "1.3.0"
 ATTRIBUTION = "xiaozhao-radar contributors (Apache-2.0); Domain Map field mapping"
 
 _HANGZHOU = ("杭州", "余杭", "西湖", "滨江", "萧山", "拱墅", "上城", "临平")
@@ -108,6 +108,25 @@ def mentions_hangzhou(location: str) -> bool:
     return any(token in (location or "") for token in _HANGZHOU)
 
 
+def parse_deadline(raw: str | None) -> str | None:
+    """Accept YYYY[-/ .]MM[-/ .]DD (delimiters optional); anything else → None.
+
+    Radar deadlines are human text ("招满即止", "2026 10 15") and the DB
+    positions.deadline is a date column, so non-dates must not be forwarded.
+    """
+    if not raw:
+        return None
+    text = raw.strip()
+    m = re.match(r"^(\d{4})\s*[-/.]?\s*(\d{1,2})\s*[-/.]?\s*(\d{1,2})$", text)
+    if not m:
+        return None
+    year, month, day = (int(g) for g in m.groups())
+    try:
+        return datetime(year, month, day).strftime("%Y-%m-%d")
+    except ValueError:
+        return None
+
+
 def load_radar_jobs(payload: Mapping[str, Any] | str | Path) -> dict[str, Any]:
     if isinstance(payload, (str, Path)) and Path(payload).exists():
         data = json.loads(Path(payload).read_text(encoding="utf-8"))
@@ -158,7 +177,7 @@ def map_radar_job(row: Mapping[str, Any], *, retrieved_at: str | None = None) ->
                 "siteId": site_id,
                 "family": family,
                 "taxonomy": {"family": family},
-                "deadline": str(row.get("d") or "").strip() or None,
+                "deadline": parse_deadline(str(row.get("d") or "")),
                 "status": "open",
                 "applySource": "official",
                 "applyUrl": url,
