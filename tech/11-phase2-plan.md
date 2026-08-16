@@ -243,6 +243,7 @@
 - [x] 排序逻辑实现（`runPOIPipeline`）
 - [x] 排序 API 后端支持（`POST /api/search` + `GET /api/pois` 的 `sort` 进 `runPOIPipeline`；列表仍先在客户端排，持久化后同一参数）
 - [x] 模式特定排序选项
+- [x] Domain 人均消费筛选 + `priceAsc` / `priceDesc`；两模式 `relevance` 综合排序
 
 **4.4 高级搜索**
 - [x] 标签搜索（`#大厂` `#互联网` `#秋招` `#西湖区` → 筛选插件；裸 `#西湖` 仍是关键词）

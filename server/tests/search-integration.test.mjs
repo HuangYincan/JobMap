@@ -141,6 +141,9 @@ test('GET /api/pois/[id] contract: shared catalog, 404 when missing', () => {
 test('filter options for work expose at least five dimensions', () => {
   assert.ok(MODES.work.filters.length >= 5);
   assert.ok(MODES.domain.filters.some((f) => f.key === 'category'));
+  assert.ok(MODES.domain.filters.some((f) => f.key === 'price'));
+  assert.ok(MODES.domain.sortOptions.some((option) => option.key === 'priceAsc'));
+  assert.ok(MODES.work.sortOptions.some((option) => option.key === 'relevance'));
 });
 
 test('public search clips to a tight Hangzhou west-lake box', () => {

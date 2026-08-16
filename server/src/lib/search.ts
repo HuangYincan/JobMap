@@ -596,11 +596,43 @@ export function applyFilters(pois: POI[], filters: FilterState): POI[] {
 
 // ---- 排序 ----
 
+function priceSortValue(poi: POI): number {
+  if (isRecruitmentPOI(poi)) return Number.MAX_SAFE_INTEGER;
+  return poi.priceLevel ?? Number.MAX_SAFE_INTEGER;
+}
+
+function relevanceSortValue(poi: POI, query?: string): number {
+  const q = query?.trim().toLowerCase() ?? '';
+  let score = 0;
+  if (q) {
+    const name = poi.name.toLowerCase();
+    if (name === q) score += 120;
+    else if (name.startsWith(q)) score += 80;
+    else if (poiMatchesQuery(poi, q)) score += 40;
+  }
+  if (isRecruitmentPOI(poi)) {
+    score += (poi.company.rating ?? 0) * 8;
+    score += poi.positions.length * 4;
+  } else {
+    score += (poi.rating ?? 0) * 8;
+    score += popularityScore(poi) / 20;
+  }
+  if (typeof poi.distance === 'number') {
+    score -= Math.min(poi.distance, 20_000) / 400;
+  }
+  return score;
+}
+
 /** 获取 POI 的排序分值 */
-function sortValue(poi: POI, key: string): number {
+function sortValue(poi: POI, key: string, query?: string): number {
   switch (key) {
     case 'distance':
       return poi.distance ?? Number.MAX_SAFE_INTEGER;
+    case 'relevance':
+      return relevanceSortValue(poi, query);
+    case 'priceAsc':
+    case 'priceDesc':
+      return priceSortValue(poi);
     case 'rating':
       if (isRecruitmentPOI(poi)) return poi.company.rating ?? 0;
       return poi.rating ?? 0;
@@ -638,15 +670,17 @@ const SORT_DESCENDING: Record<string, boolean> = {
   salaryDesc: true,
   positionCount: true,
   popularity: true,
+  relevance: true,
+  priceDesc: true,
   qsRank: false,
 };
 
-/** 对 POI 列表排序 */
-export function sortPOIs(pois: POI[], sortKey: string): POI[] {
+/** 对 POI 列表排序。relevance 需要关键词，缺省按评分 / 人气 / 距离打分。 */
+export function sortPOIs(pois: POI[], sortKey: string, query?: string): POI[] {
   const sorted = [...pois];
   const desc = SORT_DESCENDING[sortKey] ?? false;
   sorted.sort((a, b) => {
-    const diff = sortValue(a, sortKey) - sortValue(b, sortKey);
+    const diff = sortValue(a, sortKey, query) - sortValue(b, sortKey, query);
     return desc ? -diff : diff;
   });
   return sorted;
@@ -776,9 +810,9 @@ export function runPOIPipeline(pois: POI[], pipe: QueryPipeline): POI[] {
     result = result.filter((poi) => (poi.distance ?? Infinity) <= maxDistM);
   }
 
-  // 5. 排序
+  // 5. 排序（relevance 用去掉 #标签后的关键词）
   if (pipe.sort) {
-    result = sortPOIs(result, pipe.sort);
+    result = sortPOIs(result, pipe.sort, parsed.text);
   }
 
   return result;

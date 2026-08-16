@@ -453,6 +453,23 @@ test('activeFilterChips lists #在招 when onlyOpen is on', () => {
   assert.deepEqual(cleared.scale, ['bigtech']);
 });
 
+test('applyFilters: price range uses Domain priceLevel', () => {
+  const cheap = applyFilters(DOMAIN_SEED, { price: [0, 150] });
+  assert.ok(cheap.length > 0);
+  assert.ok(cheap.every((p) => p.kind === 'domain' && (p.priceLevel === undefined || p.priceLevel * 50 <= 150)));
+  const priced = DOMAIN_SEED.filter((p) => typeof p.priceLevel === 'number');
+  const byPrice = sortPOIs(priced, 'priceAsc');
+  const levels = byPrice.map((p) => p.kind === 'domain' ? (p.priceLevel ?? 99) : 99);
+  for (let i = 1; i < levels.length; i++) {
+    assert.ok(levels[i - 1] <= levels[i], `priceAsc at ${i}`);
+  }
+});
+
+test('sortPOIs: relevance ranks an exact name match first', () => {
+  const ranked = sortPOIs(DOMAIN_SEED, 'relevance', '西湖');
+  assert.equal(ranked[0].id, 'hz-westlake');
+});
+
 test('applyFilters: minRating keeps only highly rated domain POIs', () => {
   const pois = [
     { id: 'a', kind: 'domain', name: 'A', mode: 'domain', source: 'amap', location: { lng: 120, lat: 30 }, category: '餐饮服务', rating: 4.6 },

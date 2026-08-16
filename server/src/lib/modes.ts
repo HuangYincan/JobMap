@@ -88,6 +88,7 @@ const EDUCATION_OPTIONS = [
 
 /** Shared work-mode sorts. internship is a work alias, not a second list. */
 const WORK_SORT_OPTIONS: SortOption[] = [
+  { key: 'relevance', label: '综合排序' },
   { key: 'distance', label: '距离最近' },
   { key: 'salaryDesc', label: '薪资最高' },
   { key: 'rating', label: '公司评分' },
@@ -171,12 +172,24 @@ export const MODES: Record<MapMode, ModeConfig> = {
         step: 0.5,
         unit: '分',
       },
+      {
+        key: 'price',
+        label: '人均消费',
+        type: 'range',
+        min: 0,
+        max: 500,
+        step: 50,
+        unit: '元',
+      },
       districtFilterConfig(),
     ],
     sortOptions: [
+      { key: 'relevance', label: '相关性' },
       { key: 'distance', label: '距离最近' },
       { key: 'rating', label: '评分最高' },
       { key: 'popularity', label: '人气最高' },
+      { key: 'priceAsc', label: '价格从低到高' },
+      { key: 'priceDesc', label: '价格从高到低' },
     ],
     defaultSort: 'distance',
     description: '探索身边的餐厅、商场、娱乐和公共服务',
