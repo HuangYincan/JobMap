@@ -10,6 +10,7 @@ import { INTERNSHIP_SEED } from '@/lib/seed-data';
 import { matchKeyword } from '@/lib/search';
 import { isRecruitmentMode } from '@/lib/types';
 import type { MapMode } from '@/lib/types';
+import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 /** 热门搜索（静态种子，Phase 3 改为统计） */
 const HOT_SEARCHES = ['算法', '前端', 'Java', '人工智能', '大厂', '产品'];
@@ -18,6 +19,11 @@ export function GET(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get('q') || '').trim().toLowerCase();
   const mode = (url.searchParams.get('mode') || 'work') as MapMode;
+  const cacheKey = publicCacheKey(['suggest', mode, q]);
+  const cached = readPublicCache(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  }
 
   const suggestions = [];
 
@@ -68,9 +74,11 @@ export function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({
+  const payload = {
     suggestions: suggestions.slice(0, 10),
     recentSearches: [], // Phase 3: localStorage/DB
     hotSearches: q ? [] : HOT_SEARCHES,
-  });
+  };
+  writePublicCache(cacheKey, payload);
+  return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
 }

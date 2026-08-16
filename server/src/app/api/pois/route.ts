@@ -15,6 +15,7 @@ import { INTERNSHIP_SEED } from '@/lib/seed-data';
 import { runPOIPipeline } from '@/lib/search';
 import { isRecruitmentMode, withDistance } from '@/lib/types';
 import type { MapMode } from '@/lib/types';
+import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 /** 解析筛选 JSON，非法时返回空对象（宽容处理） */
 function parseFilters(raw: string | null): Record<string, unknown> {
@@ -46,6 +47,11 @@ export function GET(request: Request) {
   const bounds = parseBounds(url.searchParams.get('bounds'));
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
   const pageSize = Math.min(50, Math.max(1, Number(url.searchParams.get('pageSize')) || 20));
+  const cacheKey = publicCacheKey(['pois', mode, q, sort, url.searchParams.get('filters'), url.searchParams.get('bounds'), page, pageSize]);
+  const cached = readPublicCache(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  }
 
   // ---- 数据源选择 ----
   let pois;
@@ -108,7 +114,9 @@ export function GET(request: Request) {
     ];
   } else {
     // 未实现模式：空结果
-    return NextResponse.json({ total: 0, page, pageSize, results: [] });
+    const empty = { total: 0, page, pageSize, results: [] };
+    writePublicCache(cacheKey, empty);
+    return NextResponse.json(empty, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
   // ---- 空间范围过滤（bounds 中心）----
@@ -132,10 +140,12 @@ export function GET(request: Request) {
   const start = (page - 1) * pageSize;
   const results = processed.slice(start, start + pageSize);
 
-  return NextResponse.json({
+  const payload = {
     total: processed.length,
     page,
     pageSize,
     results: withDistance(results, center),
-  });
+  };
+  writePublicCache(cacheKey, payload);
+  return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
 }

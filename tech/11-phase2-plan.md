@@ -275,7 +275,7 @@
 **5.2 性能优化**
 - [x] 虚拟滚动优化（大量卡片：`content-visibility` + 固定 intrinsic size，不引入 virtuoso）
 - [x] 图片懒加载（卡片 logo / 详情轮播后续帧 `loading="lazy"`）
-- [ ] API 响应缓存
+- [x] API 响应缓存（`lib/public-cache.ts` 30s TTL；公开读接口带 `Cache-Control`；账号路由不进缓存。Redis 后只换 store）
 - [ ] 数据库查询优化
 - [ ] Bundle 分析和优化
 

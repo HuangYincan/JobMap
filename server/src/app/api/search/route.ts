@@ -11,6 +11,7 @@ import { INTERNSHIP_SEED } from '@/lib/seed-data';
 import { runPOIPipeline } from '@/lib/search';
 import { isRecruitmentMode, withDistance } from '@/lib/types';
 import type { FilterState, MapMode, POI } from '@/lib/types';
+import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 interface SearchBody {
   mode?: MapMode;
@@ -36,6 +37,20 @@ export async function POST(request: Request) {
   const mode = body.mode || 'work';
   const page = Math.max(1, Math.floor(body.page || 1));
   const pageSize = Math.min(50, Math.max(1, Math.floor(body.pageSize || 20)));
+  const cacheKey = publicCacheKey([
+    'search',
+    mode,
+    body.q,
+    JSON.stringify(body.filters ?? {}),
+    body.sort,
+    body.bounds,
+    page,
+    pageSize,
+  ]);
+  const cached = readPublicCache(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  }
 
   // 数据源
   let pois: POI[] = [];
@@ -81,11 +96,13 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({
+  const payload = {
     total: processed.length,
     page,
     pageSize,
     results: withDistance(results, center),
     aggregations: { industries },
-  });
+  };
+  writePublicCache(cacheKey, payload);
+  return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
 }

@@ -7,10 +7,16 @@
 
 import { NextResponse } from 'next/server';
 import { ACTIVE_MODES, ALL_MODES, MODES } from '@/lib/modes';
+import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 export function GET(request: Request) {
   const url = new URL(request.url);
   const includeAll = url.searchParams.get('all') === '1';
+  const cacheKey = publicCacheKey(['modes', includeAll]);
+  const cached = readPublicCache<{ modes: unknown[] }>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  }
 
   const modes = (includeAll ? ALL_MODES : ACTIVE_MODES).map((id) => {
     const config = MODES[id];
@@ -25,5 +31,7 @@ export function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({ modes });
+  const body = { modes };
+  writePublicCache(cacheKey, body);
+  return NextResponse.json(body, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
 }

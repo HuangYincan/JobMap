@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { INTERNSHIP_SEED } from '@/lib/seed-data';
 import { isRecruitmentMode } from '@/lib/types';
 import type { MapMode } from '@/lib/types';
+import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 export async function GET(
   request: Request,
@@ -18,6 +19,11 @@ export async function GET(
   const mode = (url.searchParams.get('mode') || 'work') as MapMode;
   const { id: rawId } = await params;
   const id = decodeURIComponent(rawId);
+  const cacheKey = publicCacheKey(['poi', mode, id]);
+  const cached = readPublicCache(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  }
 
   if (isRecruitmentMode(mode)) {
     const poi = INTERNSHIP_SEED.find((p) => p.id === id);
@@ -27,7 +33,8 @@ export async function GET(
         { status: 404 }
       );
     }
-    return NextResponse.json(poi);
+    writePublicCache(cacheKey, poi);
+    return NextResponse.json(poi, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
   // 其他模式：Phase 3+ 实现
