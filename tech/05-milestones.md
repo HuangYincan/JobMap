@@ -62,7 +62,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 - Search (debounced) + mode-specific filters + sort (rating ≠ popularity). `#大厂` / `#秋招` parse into filter plugins. Empty search / Recent show `trendingForMode`. Distance slider draws a blue buffer circle with an east-edge drag handle (0.5km snap). Domain detail shows real AMap reviews (never fabricated) and straight-line commute estimates. District is a FilterPlugin on address text until PostGIS.
 - Card-map bidirectional linkage (click select, hover highlight)
 - Mobile ≤767px: primary rail and desktop L2/L3 clusters hide. Bottom drawer (mini/half/full) owns search, mode switch, filters, list, detail, and JD. Drawer chrome stays `--soft-strong`; glass stays on cards.
-- API routes exist for later persistence: `/api/modes`, `/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`, `/api/filter-options`
+- API routes exist for later persistence: `/api/modes`, `/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`, `/api/filter-options`. Work list/suggest now read the same catalog; typed work autocomplete calls `/api/suggest`.
 - Account slice (2026-08-16): default map mode is **work**; Settings rail item removed into Profile L2 (career prefs + notifications + avatar crop); Recent is search-history only (signed-in POST/GET `/api/me/search-history`; guests stay empty). Login is a split glass card (phone / email / other: GitHub Google X WeChat). Migrations `005`–`007` are in `db/migrations`. Demo APIs are in-memory until `DATABASE_URL` is wired. Seed logos go through `resolveCompanyLogo` (career-site icon → company icon → emoji).
 
 **Key Features:**

@@ -79,7 +79,7 @@
 
 **2.3 搜索功能（基础版）**
 - [x] 搜索框组件 `<SearchBox />`
-- [x] 搜索建议（Autocomplete；`/api/suggest` + `trendingForMode`）
+- [x] 搜索建议（Autocomplete；工作模式 `fetchSearchSuggest` → `/api/suggest`，岗位带 `poiId`；失败回落 `suggestRecruitment`；空框 `trendingForMode`）
 - [x] 搜索历史本地存储（登录后 `/api/me/search-history`；游客不假装云端）
 - [x] 搜索 API 实现（客户端全文 + `POST /api/search`；pg_trgm 等导入后）
 

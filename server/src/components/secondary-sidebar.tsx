@@ -89,6 +89,8 @@ export interface SecondarySidebarProps {
   onOpenDetail?: (poi: POI) => void;
   /** 外部指定要打开的详情（地图 marker 点击） */
   detailPoi?: POI | null;
+  /** 打开公司详情时顺便打开该岗位（搜索建议点岗位） */
+  openPositionId?: string | null;
   /** 关闭详情（返回列表） */
   onCloseDetail?: () => void;
   /** 按当前视图重新搜索（清空累计池） */
@@ -128,6 +130,7 @@ export function SecondarySidebar({
   shifted = false,
   onOpenDetail,
   detailPoi: detailPoiProp = null,
+  openPositionId = null,
   onCloseDetail,
   onRefreshHere,
   onNeedMore,
@@ -148,6 +151,12 @@ export function SecondarySidebar({
     setLocalDetail(null);
     setJdPosition(null);
   }, [mode]);
+
+  useEffect(() => {
+    if (!openPositionId || !detailPoi || !isRecruitmentPOI(detailPoi)) return;
+    const pos = detailPoi.positions.find((item) => item.id === openPositionId);
+    if (pos) setJdPosition(pos);
+  }, [openPositionId, detailPoi]);
 
   const selectedPoi = detailPoi
     ? pois.find((p) => p.id === detailPoi.id) ?? detailPoi

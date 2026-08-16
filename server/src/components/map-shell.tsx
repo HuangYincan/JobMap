@@ -9,6 +9,7 @@ import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, widenSearchScope } from "@/lib/search";
+import { fetchSearchSuggest } from "@/lib/api";
 import { trendingForMode } from "@/lib/trending-search";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
 import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
@@ -157,6 +158,7 @@ export function MapShell() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers">("explore");
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
+  const [openPositionId, setOpenPositionId] = useState<string | null>(null);
   const [online, setOnline] = useState(true);
   const drawerSwipeRef = useRef<{ y: number } | null>(null);
 
@@ -974,6 +976,7 @@ export function MapShell() {
     setHighlightedId(null);
     setSuggestions([]);
     setDetailPoi(null);
+    setOpenPositionId(null);
     setMobileJd(null);
     setMobileFiltersOpen(false);
 
@@ -1016,20 +1019,45 @@ export function MapShell() {
     }
 
     if (isRecruitmentMode(mode)) {
-      const pool = catalog.length ? catalog : INTERNSHIP_SEED;
-      const tips = suggestRecruitment(pool, query, 8);
-      setSuggestions(
-        tips.map((tip) => ({
-          id: tip.id,
-          name: tip.name,
-          subtitle: tip.subtitle,
-          location: tip.location,
-          poiId: tip.poiId,
-          positionId: tip.positionId,
-          kind: tip.kind,
-        }))
-      );
-      return;
+      let cancelled = false;
+      const timer = setTimeout(async () => {
+        const fallback = () => {
+          const pool = catalog.length ? catalog : INTERNSHIP_SEED;
+          return suggestRecruitment(pool, query, 8).map((tip) => ({
+            id: tip.id,
+            name: tip.name,
+            subtitle: tip.subtitle,
+            location: tip.location,
+            poiId: tip.poiId,
+            positionId: tip.positionId,
+            kind: tip.kind,
+          }));
+        };
+        try {
+          const res = await fetchSearchSuggest(query.trim(), mode);
+          if (cancelled) return;
+          if (!res.suggestions.length) {
+            setSuggestions(fallback());
+            return;
+          }
+          setSuggestions(
+            res.suggestions.map((tip) => ({
+              id: tip.id,
+              name: tip.title,
+              subtitle: tip.subtitle,
+              poiId: tip.poiId ?? (tip.type === "position" || tip.type === "tag" ? undefined : tip.id),
+              positionId: tip.type === "position" ? tip.id : undefined,
+              kind: tip.type === "position" ? "job" : tip.type === "tag" ? "place" : "company",
+            })),
+          );
+        } catch {
+          if (!cancelled) setSuggestions(fallback());
+        }
+      }, 200);
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
     }
 
     let cancelled = false;
@@ -1071,7 +1099,17 @@ export function MapShell() {
       if (company) {
         setSelectedId(company.id);
         setDetailPoi(company);
+        if (s.positionId && isRecruitmentPOI(company)) {
+          const pos = company.positions.find((item) => item.id === s.positionId);
+          setOpenPositionId(s.positionId);
+          setMobileJd(pos ?? null);
+        } else {
+          setOpenPositionId(null);
+          setMobileJd(null);
+        }
       }
+    } else {
+      setOpenPositionId(null);
     }
     setQuery(s.name);
     setSuggestions([]);
@@ -1414,14 +1452,19 @@ export function MapShell() {
           setSelectedId(null);
           setHighlightedId(null);
           setDetailPoi(null);
+          setOpenPositionId(null);
+          setMobileJd(null);
         }}
         suggestions={suggestions}
         onSelectSuggestion={handleSelectSuggestion}
         onCommitSearch={(q) => { void recordSearch(q, mode); }}
         shifted={sidebarOpen}
         detailPoi={detailPoi}
+        openPositionId={openPositionId}
         onCloseDetail={() => {
           setDetailPoi(null);
+          setOpenPositionId(null);
+          setMobileJd(null);
           setSelectedId(null);
           setHighlightedId(null);
         }}

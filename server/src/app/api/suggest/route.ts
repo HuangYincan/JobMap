@@ -49,6 +49,7 @@ export async function GET(request: Request) {
             title: `${poi.company.name} · ${pos.title}`,
             subtitle: pos.department ? `${pos.department} · ${pos.education || ''}` : undefined,
             icon: '💼',
+            poiId: poi.id,
           });
         }
       }

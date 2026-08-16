@@ -70,6 +70,8 @@ export interface SearchSuggestion {
   title: string;
   subtitle?: string;
   icon: string;
+  /** Company / catalog id. Positions need this so a job pick still opens the office. */
+  poiId?: string;
 }
 
 export interface SuggestResponse {

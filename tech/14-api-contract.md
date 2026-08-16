@@ -13,7 +13,7 @@ All public GETs below send `Cache-Control: public, max-age=30, stale-while-reval
 | GET | `/api/pois?mode=&q=&filters=&sort=&bounds=&page=&pageSize=` | `loadServerCatalog` → optional bbox clip (`inBounds`) → `runPOIPipeline`. Work prefers imported SQL rows, else `INTERNSHIP_SEED`. Domain = `DOMAIN_SEED`. College/overseas = empty. |
 | GET | `/api/pois/:id?mode=` | `loadServerCatalogById`. Missing → 404. |
 | POST | `/api/search` | JSON `{ mode, q, filters, sort, bounds, page, pageSize }`. Invalid JSON → 400. `bounds` clips results to the box, then distances from the box center. Returns `aggregations.industries`. Same catalog. |
-| GET | `/api/suggest?q=&mode=` | Same catalog. Work: company / job / tag. Domain: seed names. Empty `q` → `trendingForMode` as `hotSearches`. `recentSearches` always `[]` (use `/api/me/search-history`). |
+| GET | `/api/suggest?q=&mode=` | Same catalog. Work: company / job / tag. Domain: seed names. Job rows include `poiId` (company catalog id) so the client can open the office. Empty `q` → `trendingForMode` as `hotSearches`. `recentSearches` always `[]` (use `/api/me/search-history`). MapShell work autocomplete calls this (200ms debounce) and falls back to `suggestRecruitment` if the request fails. |
 
 `pageSize` is clamped to 50. `filters` is JSON. `bounds` is `minLng,minLat,maxLng,maxLat` and **filters** the list (it is not only a sort origin).
 

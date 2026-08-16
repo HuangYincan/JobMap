@@ -56,3 +56,14 @@ test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   assert.match(shell, /mobileSheet === "layers"/);
   assert.match(css, /@media \(max-width: 767px\)/);
 });
+
+test('work autocomplete prefers GET /api/suggest and falls back locally', () => {
+  const shell = src('components/map-shell.tsx');
+  assert.match(shell, /fetchSearchSuggest/);
+  assert.match(shell, /suggestRecruitment/);
+  assert.match(shell, /tip\.poiId/);
+  assert.match(shell, /kind: tip\.type === "position" \? "job"/);
+  const api = src('lib/api.ts');
+  assert.match(api, /\/api\/suggest/);
+  assert.match(api, /poiId\?: string/);
+});
