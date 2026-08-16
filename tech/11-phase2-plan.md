@@ -256,7 +256,7 @@
 - [x] 距离缓冲圈可视化（有距离滑块时，以用户定位为圆心画蓝圈）
 - [x] 缓冲圈拖动调整（东侧蓝色把手改半径，松手后按 0.5km 扣回滑块）
 - [x] 行政区划选择器（`DISTRICT_PLUGIN`：地址文本优先，无名地址回落粗框；PostGIS 多边形后替换实现）
-- [ ] PostGIS 空间查询
+- [x] PostGIS 空间查询（`lib/spatial-query.ts`：gist `&&` + `ST_DWithin`；无库回落 `inBounds`）
 
 **交付物:**
 - [x] 详情页完整展示

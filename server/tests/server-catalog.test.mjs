@@ -58,13 +58,17 @@ test('loadWorkCatalogFromDb joins companies + sites + open positions', () => {
   assert.match(store, /FROM company_sites/);
   assert.match(store, /FROM positions WHERE status = 'open'/);
   assert.match(store, /companySites\.length === 1 \? company\.slug : `\$\{company\.slug\}:\$\{site\.id\}`/);
+  assert.match(store, /companySitesSpatialSql/);
+  assert.match(store, /s\.geom IS NOT NULL/);
   assert.match(store, /return null/);
 });
 
 test('loadServerCatalog prefers imported work rows, then seed + official-career', () => {
   const catalog = src('lib/server-catalog.ts');
   assert.match(catalog, /loadWorkCatalogFromDb/);
-  assert.match(catalog, /if \(imported && imported\.length > 0\) return imported/);
+  assert.match(catalog, /if \(imported && \(imported\.length > 0 \|\| clip\)\) return imported/);
   assert.match(catalog, /loadOfflineWorkCatalog/);
   assert.match(catalog, /mergeOfficialCareerIntoSeed/);
+  assert.match(catalog, /clip\?: SpatialClip/);
+  assert.match(catalog, /loadWorkCatalogFromDb\(clip\)/);
 });

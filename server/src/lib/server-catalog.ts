@@ -7,6 +7,7 @@ import { listOfficialCareerFiles } from './recruitment-adapters/official-career.
 import { mergeOfficialCareerIntoSeed } from './recruitment-source.ts';
 import { loadWorkCatalogFromDb } from './recruitment-store.ts';
 import { DOMAIN_SEED, INTERNSHIP_SEED } from './seed-data.ts';
+import type { SpatialClip } from './spatial-query.ts';
 import { isRecruitmentMode, type MapMode, type POI } from './types.ts';
 
 let offlineWorkCatalog: Promise<POI[]> | null = null;
@@ -28,10 +29,11 @@ export function serverCatalog(mode: MapMode): POI[] {
 }
 
 /** Prefer imported work rows when Postgres has them; otherwise seed + official-career drops. */
-export async function loadServerCatalog(mode: MapMode): Promise<POI[]> {
+export async function loadServerCatalog(mode: MapMode, clip?: SpatialClip): Promise<POI[]> {
   if (isRecruitmentMode(mode)) {
-    const imported = await loadWorkCatalogFromDb();
-    if (imported && imported.length > 0) return imported;
+    const imported = await loadWorkCatalogFromDb(clip);
+    // Clip miss must stay empty. An unclipped empty table still falls back to seed.
+    if (imported && (imported.length > 0 || clip)) return imported;
     return loadOfflineWorkCatalog();
   }
   if (mode === 'domain') return DOMAIN_SEED;

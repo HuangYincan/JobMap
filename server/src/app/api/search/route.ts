@@ -8,7 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { loadServerCatalog } from '@/lib/server-catalog';
-import { searchPublicCatalog } from '@/lib/public-search';
+import { searchPublicCatalog, spatialClipFromSearch } from '@/lib/public-search';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
@@ -49,8 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  const pois = await loadServerCatalog(mode);
-  const payload = searchPublicCatalog(pois, {
+  const query = {
     mode,
     q: body.q,
     filters: body.filters,
@@ -58,7 +57,9 @@ export async function POST(request: Request) {
     bounds: body.bounds,
     page: body.page,
     pageSize: body.pageSize,
-  });
+  };
+  const pois = await loadServerCatalog(mode, spatialClipFromSearch(query));
+  const payload = searchPublicCatalog(pois, query);
   writePublicCache(cacheKey, payload);
   return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
 }

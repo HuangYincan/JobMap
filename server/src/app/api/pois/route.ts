@@ -11,7 +11,7 @@
 
 import { NextResponse } from 'next/server';
 import { loadServerCatalog } from '@/lib/server-catalog';
-import { searchPublicCatalog } from '@/lib/public-search';
+import { searchPublicCatalog, spatialClipFromSearch } from '@/lib/public-search';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
@@ -41,8 +41,9 @@ export async function GET(request: Request) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  const pois = await loadServerCatalog(mode);
-  const found = searchPublicCatalog(pois, { mode, q, filters, sort, bounds, page, pageSize });
+  const query = { mode, q, filters, sort, bounds, page, pageSize };
+  const pois = await loadServerCatalog(mode, spatialClipFromSearch(query));
+  const found = searchPublicCatalog(pois, query);
   const payload = {
     total: found.total,
     page: found.page,

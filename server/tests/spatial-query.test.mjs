@@ -1,0 +1,54 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import { searchPublicCatalog, spatialClipFromSearch } from '../src/lib/public-search.ts';
+import {
+  companySitesSpatialSql,
+  hasSpatialClip,
+  parseDistanceKm,
+} from '../src/lib/spatial-query.ts';
+
+test('companySitesSpatialSql is empty without a clip', () => {
+  assert.equal(hasSpatialClip(undefined), false);
+  assert.deepEqual(companySitesSpatialSql(undefined), { sql: '', params: [] });
+  assert.equal(parseDistanceKm(0), null);
+  assert.equal(parseDistanceKm('2.5'), 2.5);
+});
+
+test('companySitesSpatialSql uses gist && then geography ST_DWithin', () => {
+  const box = companySitesSpatialSql({
+    bounds: { west: 120, south: 30.2, east: 120.2, north: 30.3 },
+  });
+  assert.match(box.sql, /s\.geom && ST_MakeEnvelope\(\$1, \$2, \$3, \$4, 4326\)/);
+  assert.deepEqual(box.params, [120, 30.2, 120.2, 30.3]);
+
+  const both = companySitesSpatialSql({
+    bounds: { west: 120, south: 30.2, east: 120.2, north: 30.3 },
+    origin: { lng: 120.1, lat: 30.25 },
+    radiusMeters: 2500,
+  });
+  assert.match(both.sql, /ST_DWithin\(s\.geom::geography/);
+  assert.match(both.sql, /ST_SetSRID\(ST_MakePoint\(\$5, \$6\), 4326\)::geography, \$7\)/);
+  assert.equal(both.params.at(-1), 2500);
+});
+
+test('spatialClipFromSearch maps bounds and distance km onto the SQL clip', () => {
+  const clip = spatialClipFromSearch({
+    bounds: '120.0,30.2,120.2,30.3',
+    filters: { distance: 3 },
+  });
+  assert.ok(clip?.bounds);
+  assert.equal(clip.bounds.west, 120);
+  assert.equal(clip.origin?.lng, 120.1);
+  assert.equal(clip.radiusMeters, 3000);
+  assert.equal(spatialClipFromSearch({}), undefined);
+});
+
+test('in-memory public search still clips when there is no database', () => {
+  const pois = [
+    { id: 'in', kind: 'domain', name: 'In', mode: 'domain', source: 'seed', location: { lng: 120.1, lat: 30.25 }, category: '风景名胜' },
+    { id: 'out', kind: 'domain', name: 'Out', mode: 'domain', source: 'seed', location: { lng: 121, lat: 30.25 }, category: '风景名胜' },
+  ];
+  const out = searchPublicCatalog(pois, { mode: 'domain', bounds: '120.0,30.2,120.2,30.3' });
+  assert.deepEqual(out.results.map((p) => p.id), ['in']);
+});

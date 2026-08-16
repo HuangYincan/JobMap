@@ -1,6 +1,6 @@
 # 数据库查询笔记（2026-08-16）
 
-Live PostGIS / Docker 仍不可用。本页记录**已经写进迁移的索引**和 **`account-store` 真实 SQL**，避免下次有库时再扫一遍。没有 `DATABASE_URL` 时这些语句不跑，走内存回落。
+Live PostGIS apply is verified (`001`–`010`). This page records **indexes already in migrations** and **real `account-store` SQL**. Without `DATABASE_URL` those statements do not run and callers use memory / seed. Live `EXPLAIN` of the gist plan is still a follow-up.
 
 **不要**在没有库的情况下把「查询优化」标成已用 `EXPLAIN ANALYZE` 验证。下面的索引是契约，不是实测计划。
 
@@ -9,7 +9,7 @@ Live PostGIS / Docker 仍不可用。本页记录**已经写进迁移的索引**
 | 路径 | 何时打 Postgres | 不打 |
 |---|---|---|
 | MapShell 列表 / 搜索 / 筛选 | 从不。浏览器高德 + `runPOIPipeline` | 公开读走 `loadServerCatalog`（有导入行读库，否则 seed + official-career JSON）+ 30s 进程缓存 |
-| `loadWorkCatalogFromDb` | 有 `DATABASE_URL` 且 `companies` 有行 | 无池 / 查询失败 → `null`（调用方回落 seed）；空表 → `[]` |
+| `loadWorkCatalogFromDb(clip?)` | 有 `DATABASE_URL` | 无池 / 查询失败 → `null`（调用方回落 seed）；空表无 clip → seed；带 clip 的空结果保持 `[]` |
 | `/api/me/*`、登录、Recent、Saved、投递、提醒 | 有 `DATABASE_URL` 时走 `account-store` | 没有库 → 内存 Map |
 
 连接：`lib/db.ts` 单例 `Pool({ max: 5 })`。不要打印连接串。
@@ -43,16 +43,18 @@ Live PostGIS / Docker 仍不可用。本页记录**已经写进迁移的索引**
 - `positions_title_trgm` / `entities_name_trgm` / `items_title_trgm` — `pg_trgm` GIN
 - `positions_company_id_idx` / `positions_site_id_idx` / `company_sites_company_id_idx`
 
-`loadWorkCatalogFromDb` 现在读全量开岗；`/api/pois` 和 `/api/search` 在内存里用 `inBounds` 裁 `bounds`。单站点 POI id = `companies.slug`（对齐 WORK_SEED）；多站点 = `slug:site.id`。PostGIS 视野查询落地后应是：
+`loadWorkCatalogFromDb(clip?)` 在有 `DATABASE_URL` 时读开岗。`/api/pois` 和 `/api/search` 把 `bounds` / `filters.distance` 编成 `SpatialClip`（`lib/spatial-query.ts`）再下推：站点先 `s.geom && ST_MakeEnvelope(...)`（gist），有距离再 `ST_DWithin(s.geom::geography, point, meters)`。无库或导入失败仍走 seed，内存 `inBounds` 二次裁。`/api/suggest` 和 job-alert 不传 clip，仍是全量目录。单站点 POI id = `companies.slug`（对齐 WORK_SEED）；多站点 = `slug:site.id`。
 
 ```sql
-SELECT c.*, s.*, p.*
-FROM positions p
-JOIN company_sites s ON s.id = p.site_id
-JOIN companies c ON c.id = p.company_id
-WHERE p.status = 'open'
-  AND ($family::text IS NULL OR p.family = $family)
-  AND ($bbox::geometry IS NULL OR s.geom && $bbox);
+SELECT s.id, s.company_id, s.name, s.address, s.lng, s.lat, s.career_url, s.logo_url
+FROM company_sites s
+WHERE s.geom IS NOT NULL
+  AND s.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
+  AND ST_DWithin(
+    s.geom::geography,
+    ST_SetSRID(ST_MakePoint($5, $6), 4326)::geography,
+    $7
+  );
 ```
 
 `status + family` 走 btree；视野用 `&&` 再 `ST_DWithin`，不要先 `ST_Distance` 排序全表。行政区插件今天匹配地址文本（`DISTRICT_PLUGIN`）；换成多边形后再加 `gist` 到 district 边界表，不要在 `company_sites.address` 上指望 btree。

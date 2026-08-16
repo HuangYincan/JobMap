@@ -3,6 +3,7 @@
 // No rows / no database → caller falls back to seed.
 
 import { getPool } from './db.ts';
+import { companySitesSpatialSql, hasSpatialClip, type SpatialClip } from './spatial-query.ts';
 import type { ApplySource, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
 
 interface CompanyRow {
@@ -55,19 +56,23 @@ function num(value: string | number | null | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export async function loadWorkCatalogFromDb(): Promise<RecruitmentPOI[] | null> {
+export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<RecruitmentPOI[] | null> {
   const pool = getPool();
   if (!pool) return null;
   try {
+    const spatial = companySitesSpatialSql(clip);
+    const siteSql = hasSpatialClip(clip)
+      ? `SELECT s.id::text, s.company_id::text, s.name, s.address, s.lng, s.lat, s.career_url, s.logo_url
+         FROM company_sites s
+         WHERE s.geom IS NOT NULL${spatial.sql}`
+      : `SELECT id::text, company_id::text, name, address, lng, lat, career_url, logo_url
+         FROM company_sites`;
     const [companies, sites, positions] = await Promise.all([
       pool.query<CompanyRow>(
         `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji
          FROM companies ORDER BY slug`,
       ),
-      pool.query<SiteRow>(
-        `SELECT id::text, company_id::text, name, address, lng, lat, career_url, logo_url
-         FROM company_sites`,
-      ),
+      pool.query<SiteRow>(siteSql, spatial.params),
       pool.query<PositionRow>(
         `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
                 salary_min, salary_max, education, majors, skills, description, deadline,

@@ -2,6 +2,7 @@
 // Routes stay thin; tests call this without Next aliases.
 
 import { runPOIPipeline } from './search.ts';
+import { parseDistanceKm, type SpatialClip } from './spatial-query.ts';
 import { isRecruitmentMode, withDistance, type FilterState, type MapMode, type POI } from './types.ts';
 import { boundsCenter, inBounds, parseBoundsParam } from './viewport-search.ts';
 
@@ -31,6 +32,19 @@ export function clampPage(page: number | undefined): number {
 
 export function clampPageSize(pageSize: number | undefined): number {
   return Math.min(50, Math.max(1, Math.floor(pageSize || 20)));
+}
+
+export function spatialClipFromSearch(input: PublicSearchInput): SpatialClip | undefined {
+  const bounds = parseBoundsParam(input.bounds);
+  const km = parseDistanceKm(input.filters && (input.filters as FilterState).distance);
+  const origin = bounds ? boundsCenter(bounds) : null;
+  const clip: SpatialClip = {
+    bounds,
+    origin: km && origin ? origin : null,
+    radiusMeters: km ? km * 1000 : null,
+  };
+  if (!clip.bounds && !clip.radiusMeters) return undefined;
+  return clip;
 }
 
 export function searchPublicCatalog(pois: POI[], input: PublicSearchInput): PublicSearchResult {
