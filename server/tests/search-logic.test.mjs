@@ -10,6 +10,7 @@ import {
   pointAtDistanceEast,
   matchKeyword,
   parseSearchQuery,
+  applyTagSuggestion,
   poiMatchesQuery,
   runPOIPipeline,
   sortPOIs,
@@ -215,6 +216,18 @@ test('parseSearchQuery turns #tags into filter plugins', () => {
 
   const unknown = parseSearchQuery('#西湖');
   assert.equal(unknown.text, '西湖');
+});
+
+test('applyTagSuggestion merges a known hash into filters and clears the query', () => {
+  const tagged = applyTagSuggestion({ query: '阿里', filters: { industry: ['internet'] } }, '#大厂');
+  assert.equal(tagged.applied, true);
+  assert.equal(tagged.query, '');
+  assert.deepEqual(tagged.filters.industry, ['internet']);
+  assert.deepEqual(tagged.filters.scale, ['bigtech']);
+
+  const unknownTag = applyTagSuggestion({ query: '西湖', filters: {} }, '#未知标签');
+  assert.equal(unknownTag.applied, false);
+  assert.equal(unknownTag.query, '西湖');
 });
 
 test('runPOIPipeline: #大厂 keeps bigtech and still matches leftover keywords', () => {

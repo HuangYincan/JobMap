@@ -147,6 +147,14 @@ export const translations = {
     zh: '个结果',
     en: 'results',
   },
+  skipToResults: {
+    zh: '跳到搜索结果',
+    en: 'Skip to results',
+  },
+  skipToMap: {
+    zh: '跳到地图',
+    en: 'Skip to map',
+  },
   filter: {
     zh: '筛选',
     en: 'Filter',

@@ -41,8 +41,10 @@ export function POIList({
 
   return (
     <div
+      id="explore-results"
       className={styles.list}
       role="list"
+      tabIndex={-1}
       aria-label={lang === "zh" ? "POI 搜索结果" : "POI search results"}
       aria-busy={loading}
     >

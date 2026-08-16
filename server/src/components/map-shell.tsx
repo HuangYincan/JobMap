@@ -8,7 +8,7 @@ import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, widenSearchScope } from "@/lib/search";
+import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, widenSearchScope } from "@/lib/search";
 import { fetchSearchSuggest } from "@/lib/api";
 import { trendingForMode } from "@/lib/trending-search";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
@@ -167,6 +167,10 @@ export function MapShell() {
   useEffect(() => {
     setLang(getBrowserLanguage());
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  }, [lang]);
 
   useEffect(() => {
     if (typeof navigator === "undefined") return;
@@ -1085,11 +1089,22 @@ export function MapShell() {
     };
   }, [query, mode, zoom, catalog]);
 
-  // 选择建议 → 定位；招聘建议打开对应公司
+  // 选择建议 → 定位；招聘建议打开对应公司；#标签写入筛选插件
   const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
     if (s.location) {
       flyToLocation(mapInstance.current, s.location.lng, s.location.lat);
       setMapCenter({ lng: s.location.lng, lat: s.location.lat });
+    }
+    if (s.kind === "place" && (s.name.startsWith("#") || s.id?.startsWith("tag-"))) {
+      const tagged = applyTagSuggestion({ query, filters }, s.name);
+      if (tagged.applied) {
+        setQuery(tagged.query);
+        setFilters(tagged.filters);
+        setSuggestions([]);
+        setRailPanel("explore");
+        void recordSearch(s.name, mode);
+        return;
+      }
     }
     if (s.poiId) {
       const company =
@@ -1115,7 +1130,7 @@ export function MapShell() {
     setSuggestions([]);
     setRailPanel("explore");
     void recordSearch(s.name, mode);
-  }, [catalog, pois, mode, recordSearch]);
+  }, [catalog, pois, mode, recordSearch, query, filters]);
 
   const handleZoomIn = () => {
     if (mapInstance.current) {
@@ -1287,7 +1302,12 @@ export function MapShell() {
 
   return (
     <main className={styles.shell}>
-      <section className={styles.mapCanvas} aria-label="Interactive map preview">
+      <a className={styles.skipLink} href="#explore-results">{t("skipToResults", lang)}</a>
+      <a className={styles.skipLink} href="#map-canvas">{t("skipToMap", lang)}</a>
+      <div className={styles.srOnly} aria-live="polite" aria-atomic="true">
+        {loading ? t("loading", lang) : `${pois.length} ${t("resultsCount", lang)}`}
+      </div>
+      <section id="map-canvas" className={styles.mapCanvas} aria-label="Interactive map preview">
         <div ref={mapContainer} style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />
         {!mapReady && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 14 }}>

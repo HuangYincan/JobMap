@@ -25,6 +25,7 @@ test('POIList exposes a labelled list, skeleton, and empty widen action', () => 
   const list = src('components/poi-list.tsx');
   const css = src('components/poi-list.module.css');
   assert.match(list, /role="list"/);
+  assert.match(list, /id="explore-results"/);
   assert.match(list, /aria-busy=\{loading\}/);
   assert.match(list, /SKELETON_COUNT = 3/);
   assert.match(list, /onWidenSearch/);
@@ -66,4 +67,17 @@ test('work autocomplete prefers GET /api/suggest and falls back locally', () => 
   const api = src('lib/api.ts');
   assert.match(api, /\/api\/suggest/);
   assert.match(api, /poiId\?: string/);
+});
+
+test('map shell has skip links and a live result count', () => {
+  const shell = src('components/map-shell.tsx');
+  const css = src('components/map-shell.module.css');
+  assert.match(shell, /skipToResults/);
+  assert.match(shell, /skipToMap/);
+  assert.match(shell, /aria-live="polite"/);
+  assert.match(shell, /applyTagSuggestion/);
+  assert.match(shell, /document\.documentElement\.lang/);
+  assert.match(css, /\.skipLink/);
+  const layout = src('app/layout.tsx');
+  assert.match(layout, /lang="zh-CN"/);
 });

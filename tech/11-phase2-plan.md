@@ -290,7 +290,7 @@
 
 **5.4 可访问性**
 - [x] 键盘导航测试（卡片 Enter/Space；全局 `:focus-visible`）
-- [x] ARIA 属性完善（抽屉/筛选/收藏 `aria-pressed` / `aria-label`）
+- [x] ARIA 属性完善（抽屉/筛选/收藏 `aria-pressed` / `aria-label`；结果栏 `aria-live`；跳到结果 / 跳到地图 skip link）
 - [ ] 屏幕阅读器测试（VoiceOver / NVDA）
 - [x] 颜色对比度检查（`lib/contrast.ts`：浅色 `--muted` / `--blue-ink` / 语义绿对白 ≥ 4.5；品牌蓝 `#007AFF` 只作图标/描边，按大号 3:1）
 - [x] Focus 管理（搜索展开后聚焦；卡片/关闭/收藏可见焦点环）

@@ -120,6 +120,29 @@ export function widenSearchScope(input: {
   return { query: input.query, filters: input.filters, changed: false };
 }
 
+/**
+ * Turn a picked `#大厂` / `#互联网` suggestion into a FilterPlugin.
+ * Known tags merge into filters and clear the typed query so the list
+ * is not AND-ed against the same word twice. Unknown hashes stay text.
+ */
+export function applyTagSuggestion(
+  current: { query: string; filters: FilterState },
+  raw: string,
+): { query: string; filters: FilterState; applied: boolean } {
+  const token = raw.trim();
+  if (!token) return { query: current.query, filters: current.filters, applied: false };
+  const hashed = token.startsWith('#') ? token : `#${token}`;
+  const parsed = parseSearchQuery(hashed);
+  if (!Object.keys(parsed.filters).length) {
+    return { query: current.query, filters: current.filters, applied: false };
+  }
+  return {
+    query: '',
+    filters: mergeFilters(current.filters, parsed.filters),
+    applied: true,
+  };
+}
+
 /** 拆出 #标签，剩余当关键词。未知标签仍参与全文搜索。 */
 export function parseSearchQuery(raw?: string): ParsedSearchQuery {
   const source = (raw ?? '').trim();
