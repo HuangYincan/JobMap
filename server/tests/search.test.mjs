@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
 
 test('seed data: work companies have required fields and taxonomy', () => {
-  assert.ok(INTERNSHIP_SEED.length >= 10, 'expect at least 10 companies');
+  assert.ok(INTERNSHIP_SEED.length >= 50, 'expect at least 50 Hangzhou companies');
   for (const company of INTERNSHIP_SEED) {
     assert.ok(company.id, 'company has id');
     assert.ok(company.name, 'company has name');

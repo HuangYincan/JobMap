@@ -241,7 +241,7 @@ test('sourceCompanyToPois splits one company into one POI per office site', () =
 
 test('seed adapter round-trips work companies through the plugin contract', async () => {
   const companies = await seedRecruitmentAdapter.list();
-  assert.ok(companies.length >= 10);
+  assert.ok(companies.length >= 50);
   for (const company of companies) {
     assert.ok(company.sites.length >= 1);
     assert.ok(company.positions.every((p) => company.sites.some((s) => s.id === p.siteId)));

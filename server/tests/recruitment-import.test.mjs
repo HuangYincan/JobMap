@@ -54,7 +54,7 @@ test('planSeedImport accepts every current WORK_SEED company', async () => {
   const plan = await planSeedImport();
   assert.equal(plan.dropped, 0);
   assert.equal(plan.issues.length, 0);
-  assert.ok(plan.companies.length >= 10);
+  assert.ok(plan.companies.length >= 50);
   assert.ok(plan.companies.every((c) => c.sites.length >= 1));
   assert.ok(plan.companies.every((c) => c.positions.every((p) => c.sites.some((s) => s.id === p.siteId))));
 });

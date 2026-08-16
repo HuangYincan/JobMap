@@ -24,7 +24,7 @@ Home lazy-loads `MapShell`. Without AMap keys, Work seed + chrome still load; Do
 ```bash
 ./node_modules/.bin/tsc --noEmit
 node --test tests/*.test.mjs
-npm run import:seed             # 15 companies / 0 dropped today
+npm run import:seed             # 50 companies / 0 dropped today
 ```
 
 Do not run `npx tsc` from the repo root.
