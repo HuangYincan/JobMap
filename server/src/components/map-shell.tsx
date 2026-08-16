@@ -8,7 +8,7 @@ import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
+import { applyTagSuggestion, activeFilterChips, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, removeFilterChip, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchSearchSuggest } from "@/lib/api";
 import { trendingForMode } from "@/lib/trending-search";
@@ -1828,6 +1828,22 @@ export function MapShell() {
                   />
                 </div>
               )}
+              {activeFilterChips(filters).length > 0 && (
+                <div className={styles.mobileChips} aria-label={t("activeFilters", lang)}>
+                  {activeFilterChips(filters).map((chip) => (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      className={styles.mobileChip}
+                      onClick={() => setFilters(removeFilterChip(filters, chip))}
+                      aria-label={`${t("removeFilter", lang)} ${chip.title}`}
+                    >
+                      {chip.title}
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className={styles.mobileMeta}>
                 <span>{loading ? t("loading", lang) : `${pois.length} ${t("resultsCount", lang)}`}</span>
                 <div className={styles.mobileMetaActions}>
@@ -1851,24 +1867,6 @@ export function MapShell() {
                   </button>
                 </div>
               </div>
-              {suggestions.length > 0 && (
-                <ul className={styles.mobileSuggestions}>
-                  {suggestions.slice(0, 5).map((item) => (
-                    <li key={item.id ?? item.name}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleSelectSuggestion(item);
-                          setDrawer(item.poiId ? "full" : "half");
-                        }}
-                      >
-                        <strong>{item.name}</strong>
-                        {item.subtitle && <small>{item.subtitle}</small>}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
               <POIList
                 pois={pois}
                 selectedId={selectedId}

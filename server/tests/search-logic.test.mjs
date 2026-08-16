@@ -13,6 +13,8 @@ import {
   applyTagSuggestion,
   poiMatchesQuery,
   suggestSearchTags,
+  activeFilterChips,
+  removeFilterChip,
   runPOIPipeline,
   sortPOIs,
   suggestRecruitment,
@@ -237,6 +239,18 @@ test('suggestSearchTags covers scale and campus hashes, not only industries', ()
   const big = suggestSearchTags('#大');
   assert.ok(big.some((tag) => tag.title === '#大厂' && tag.value === 'bigtech'));
   assert.equal(suggestSearchTags('').length, 0);
+});
+
+test('activeFilterChips lists applied plugins and removeFilterChip drops one', () => {
+  const filters = { scale: ['bigtech'], industry: ['internet', 'ai'] };
+  const chips = activeFilterChips(filters);
+  assert.ok(chips.some((chip) => chip.title === '#大厂'));
+  assert.ok(chips.some((chip) => chip.title === '#互联网'));
+  const dropped = removeFilterChip(filters, { key: 'industry', value: 'internet' });
+  assert.deepEqual(dropped.industry, ['ai']);
+  assert.deepEqual(dropped.scale, ['bigtech']);
+  const empty = removeFilterChip({ scale: ['bigtech'] }, { key: 'scale', value: 'bigtech' });
+  assert.equal(empty.scale, undefined);
 });
 
 test('runPOIPipeline: #大厂 keeps bigtech and still matches leftover keywords', () => {

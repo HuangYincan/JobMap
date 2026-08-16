@@ -86,6 +86,35 @@ export function suggestSearchTags(query: string, limit = 5): SearchTagSuggestion
     .slice(0, limit);
 }
 
+/** Chips for applied FilterPlugins so a picked `#大厂` stays visible after the query clears. */
+export function activeFilterChips(filters: FilterState): SearchTagSuggestion[] {
+  const chips: SearchTagSuggestion[] = [];
+  for (const tag of listSearchTags()) {
+    const raw = filters[tag.key];
+    const values = Array.isArray(raw)
+      ? raw.filter((item): item is string => typeof item === 'string')
+      : typeof raw === 'string' && raw
+        ? [raw]
+        : [];
+    if (values.includes(tag.value)) chips.push(tag);
+  }
+  return chips;
+}
+
+/** Drop one plugin value. Empty keys are removed so the badge / pipeline stay clean. */
+export function removeFilterChip(filters: FilterState, chip: Pick<SearchTagSuggestion, 'key' | 'value'>): FilterState {
+  const next: FilterState = { ...filters };
+  const raw = next[chip.key];
+  if (Array.isArray(raw)) {
+    const kept = raw.filter((item): item is string => typeof item === 'string' && item !== chip.value);
+    if (kept.length) next[chip.key] = kept;
+    else delete next[chip.key];
+    return next;
+  }
+  if (raw === chip.value) delete next[chip.key];
+  return next;
+}
+
 export interface ParsedSearchQuery {
   text: string;
   tags: string[];

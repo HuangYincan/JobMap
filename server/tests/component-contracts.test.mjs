@@ -76,8 +76,12 @@ test('map shell has skip links and a live result count', () => {
   assert.match(shell, /skipToMap/);
   assert.match(shell, /aria-live="polite"/);
   assert.match(shell, /applyTagSuggestion/);
+  assert.match(shell, /activeFilterChips/);
   assert.match(shell, /document\.documentElement\.lang/);
   assert.match(css, /\.skipLink/);
   const layout = src('app/layout.tsx');
   assert.match(layout, /lang="zh-CN"/);
+  const sidebar = src('components/secondary-sidebar.tsx');
+  assert.match(sidebar, /activeFilterChips/);
+  assert.match(sidebar, /filterChip/);
 });

@@ -155,6 +155,14 @@ export const translations = {
     zh: '跳到地图',
     en: 'Skip to map',
   },
+  activeFilters: {
+    zh: '已选筛选',
+    en: 'Active filters',
+  },
+  removeFilter: {
+    zh: '移除筛选',
+    en: 'Remove filter',
+  },
   filter: {
     zh: '筛选',
     en: 'Filter',
