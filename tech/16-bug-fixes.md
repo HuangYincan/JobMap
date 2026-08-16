@@ -151,86 +151,124 @@
 - 地图会重新开始加载，而不是持续当前的加载流程
 - 导致加载进度丢失，用户体验不连贯
 
-**根本原因**：
-- POI加载effect（`map-shell.tsx` 565-661行）依赖 `mapReady` 和 `geoSettled` 状态
-- 这两个状态在地图初始化过程中从 `false` 过渡到 `true`
-- 当用户点击卡片时，会触发多个状态更新导致组件重新渲染
-- 重新渲染时，如果 `mapReady` 或 `geoSettled` 刚好完成过渡，React检测到依赖变化
-- 这导致POI加载effect重新执行，`load()` 函数重新运行，造成加载重启
-- 这是一个经典的React effect竞态条件（race condition）
+### 调试历程
 
-**问题核心**：
-- 点击卡片会触发两个状态更新路径：
-  1. `POIList` → `onSelect` → `handleSelect` → `setSelectedId(poi.id)`
-  2. `POIList` → `onSelect` → `openDetail` → `onOpenDetail` → `setDetailPoi(poi)`
-- 即使 `handleSelect` 有守卫，`onOpenDetail` 中的 `setDetailPoi` 仍然会执行
-- 在初始化未完成时更新任何状态都会在关键时刻触发不必要的重新渲染
-- 虽然 `selectedId` 和 `detailPoi` 不在effect依赖数组中，但重新渲染本身会让effect重新评估依赖
+**第一次尝试**：在 `handleSelect` 中添加 `!mapReady || !geoSettled` 守卫
+- ❌ 问题依旧存在
 
-**解决方案**：
+**第二次尝试**：补充 `onOpenDetail` 回调中的守卫
+- 发现卡片点击触发两个状态更新路径，第一次修复遗漏了 `onOpenDetail`
+- ❌ 问题依旧存在
 
-在所有会触发状态更新的卡片点击回调中添加初始化状态守卫：
+**第三次诊断**：深入分析 effect 依赖和初始化流程
+- 发现真正的根本原因：初始化过程中的**多次连续 setState** 触发并发加载
+
+### 根本原因
+
+**初始化时的状态更新序列**（`map-shell.tsx` 365-380行）：
+```typescript
+setMapReady(true);                              // 第1次setState
+getCurrentPosition(map).then((loc) => {
+  map.setCenter([lng, lat]);
+  map.setZoom(15);
+  setMapCenter({ lng, lat });                   // 第2次setState
+  setUserLocation({ lng, lat });                // 第3次setState
+  setSearchOrigin((prev) => prev ?? { lng, lat }); // 第4次setState
+  setGeoSettled(true);                          // 第5次setState
+});
+```
+
+**effect依赖数组**（661行）：
+```typescript
+}, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin, userLocation]);
+```
+
+**竞态条件的完整流程**：
+1. `setMapReady(true)` 触发effect，但 `geoSettled=false`，guard返回
+2. `setUserLocation` 改变 `userLocation` 依赖，触发effect，但 `geoSettled` 可能还是 `false`
+3. `setGeoSettled(true)` 触发effect，此时 `mapReady=true && geoSettled=true`，开始加载
+4. **关键问题**：第2步到第3步之间如果用户点击卡片或发生其他重新渲染，会导致effect在 `geoSettled` 刚变 `true` 时再次执行
+5. 更严重的是，初始化过程中的5次 setState 可能在不同的渲染周期完成，每次都重新评估effect依赖
+6. 即使没有用户交互，React批处理的边界也可能导致effect被多次触发
+
+**为什么前两次修复无效**：
+- 阻止用户交互只能防止手动触发的重新渲染
+- 但无法防止初始化本身的多次 setState 触发并发加载
+- effect的依赖包含 `userLocation`，这个值在初始化的第3步才设置
+- 当 `setUserLocation` 触发重新渲染时，如果 `geoSettled` 恰好也变成 `true`，effect会执行两次
+
+### 解决方案
+
+使用 `loadingRef` 标志防止并发加载，在 `load()` 开始时检查并设置标志，完成后重置：
 
 ```typescript
-// map-shell.tsx 967-971行 - handleSelect
-const handleSelect = useCallback((poi: POI) => {
-  // 地图初始化期间不处理选中，避免触发重新加载
-  if (!mapReady || !geoSettled) return;
-  setSelectedId(poi.id);
-}, [mapReady, geoSettled]);
+// 添加 ref 跟踪加载状态 (154行)
+const loadingRef = useRef(false);
 
-// map-shell.tsx 1583-1588行 - onOpenDetail
-onOpenDetail={(poi) => {
-  // 地图初始化期间不处理详情打开，避免触发重新加载
+// POI加载effect (594-656行)
+async function load() {
   if (!mapReady || !geoSettled) return;
-  setDetailPoi(poi);
-  if (poi.location) flyToLocation(mapInstance.current, poi.location.lng, poi.location.lat);
-}}
+  if (loadingRef.current) return; // 防止初始化期间多次setState触发并发加载
+  if (skipFetchRef.current) {
+    skipFetchRef.current = false;
+    return;
+  }
+  // ... 缓存检查 ...
+  loadingRef.current = true;  // 标记加载开始
+  setLoading(true);
+  try {
+    // ... 加载逻辑 ...
+  } finally {
+    if (!signal.cancelled) {
+      setLoading(false);
+      loadingRef.current = false;  // 标记加载结束
+    }
+  }
+}
 ```
 
 **关键点**：
-1. 在地图完全就绪之前（`mapReady && geoSettled`），忽略所有卡片交互
-2. 两个状态更新路径都需要守卫，缺一不可
-3. 将 `mapReady` 和 `geoSettled` 加入 `useCallback` 依赖数组
-4. 这确保回调始终检查最新的初始化状态
-5. 用户在初始化期间点击卡片不会有任何副作用
+1. `loadingRef` 是同步的，在 effect 重新运行时立即检查
+2. 即使 React 在初始化期间多次触发 effect，第二次执行会立即返回
+3. `finally` 块确保无论加载成功或失败都重置标志
+4. 配合 `signal.cancelled` 检查，避免组件卸载后的状态更新
 
-**修改文件**：
-- `server/src/components/map-shell.tsx` (第967-971行，第1583-1588行)
+### 修改文件
 
-**技术细节**：
+- `server/src/components/map-shell.tsx` (154行，594行，652-655行)
+- `tech/16-bug-fixes.md` (本文档)
 
-React effect依赖的竞态条件：
-- Effect有依赖数组 `[mode, query, mapReady, geoSettled, ...]`
-- 当依赖变化时，effect会重新运行
-- 组件重新渲染时，React会重新评估所有effect的依赖
-- 如果在渲染的**同一时刻**依赖刚好变化（如 `mapReady` 从 `false` → `true`），effect会重新执行
-- 这就是为什么即使 `selectedId` 和 `detailPoi` 不在依赖数组中，点击卡片仍会触发重新加载
+### 技术细节
 
-多路径状态更新：
-- `SecondarySidebar` 的 `openDetail` 函数内部调用了两个回调：
-  - `onSelect?.(poi)` → `handleSelect` → `setSelectedId`
-  - `onOpenDetail?.(poi)` → 内联箭头函数 → `setDetailPoi`
-- 第一次修复只在 `handleSelect` 中添加了守卫，但遗漏了 `onOpenDetail`
-- `onOpenDetail` 直接更新 `setDetailPoi`，仍然会在初始化期间触发重新渲染
-- 必须在两个路径都添加守卫才能完全阻止竞态条件
+**React批处理和effect触发时机**：
+- React 18 自动批处理同步代码中的 setState
+- 但 `getCurrentPosition` 是异步的，其回调中的 setState 可能在不同的批次
+- 这导致初始化的5次 setState 可能触发1-5次重新渲染
+- 每次重新渲染都会重新评估 effect 依赖
+- 如果依赖在两次渲染之间变化，effect 会重新运行
 
-防御性编程原则：
-- 异步状态转换期间，阻止所有可能触发重新渲染的用户交互
-- 在所有回调中添加状态守卫，而不是依赖React的渲染时机
-- 对于涉及异步初始化的组件，始终在交互处理器中检查就绪状态
-- 跟踪所有状态更新路径，确保没有遗漏的入口
+**为什么用ref而不是state**：
+- `useState` 的更新是异步的，无法在同一个渲染周期内立即检查
+- `useRef` 是同步的，修改后立即生效
+- effect 在同一个渲染周期内多次检查 `loadingRef.current` 会得到最新值
+- 这是防止并发的正确模式
 
-**测试验证**：
+**与skipFetchRef的区别**：
+- `skipFetchRef`：跳过整个加载逻辑（用于缓存恢复）
+- `loadingRef`：防止并发执行（用于竞态保护）
+- 两个标志互补，解决不同的问题
+
+### 测试验证
+
 - ✅ 158个测试通过
 - ✅ TypeScript编译无错误
-- ✅ 生产构建成功
 - ⏳ 需要在浏览器中验证实际交互
 
-**用户体验改进**：
-- 地图初始化期间点击卡片不会中断加载
+### 用户体验改进
+
+- 地图初始化期间即使触发多次重新渲染也只会加载一次
+- 用户点击卡片不会中断加载（配合 `handleSelect` 和 `onOpenDetail` 的守卫）
 - 加载流程保持连贯，不会重新开始
-- 用户在地图就绪后点击卡片仍然正常工作
 
 ---
 

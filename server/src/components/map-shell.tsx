@@ -151,6 +151,7 @@ export function MapShell() {
   const [refreshToken, setRefreshToken] = useState(0);
   const [pageOffset, setPageOffset] = useState(0);
   const skipFetchRef = useRef(false);
+  const loadingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   // 左侧结果面板显隐（点击导航"探索"展开）
   const [railPanel, setRailPanel] = useState<RailPanel>(null);
@@ -592,6 +593,7 @@ export function MapShell() {
 
     async function load() {
       if (!mapReady || !geoSettled) return;
+      if (loadingRef.current) return; // 防止初始化期间多次setState触发并发加载
       if (skipFetchRef.current) {
         skipFetchRef.current = false;
         return;
@@ -600,6 +602,7 @@ export function MapShell() {
       if (cached && cached.catalog.length > 0 && pageOffset === cached.pageOffset && refreshToken === 0) {
         return;
       }
+      loadingRef.current = true;
       setLoading(true);
       setError(null);
       try {
@@ -648,7 +651,10 @@ export function MapShell() {
           setError(err instanceof Error ? err.message : "Failed to load POIs");
         }
       } finally {
-        if (!signal.cancelled) setLoading(false);
+        if (!signal.cancelled) {
+          setLoading(false);
+          loadingRef.current = false;
+        }
       }
     }
 
