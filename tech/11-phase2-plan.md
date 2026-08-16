@@ -492,7 +492,7 @@
 - [x] 组件文档完整（`tech/09-secondary-sidebar.md` + frontend skill）
 - [x] README 更新
 - [x] CHANGELOG 记录（`CHANGELOG.md`）
-- [ ] 部署文档
+- [x] 部署文档（本地 runbook：`tech/15-deploy.md`；无生产主机）
 
 ---
 

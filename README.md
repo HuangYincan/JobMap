@@ -14,7 +14,7 @@ Implemented and verified:
 - Importer project `crawler/` (Python 3.12, uv): declarative plugin-manifest validation, deterministic local-fixture normalization with provenance, and map access policy. 11 unit tests pass.
 - Database `db/`: ordered PostGIS migrations `001`–`010` (identity through notifications). Live apply is still blocked until Docker/PostGIS (`make db-up`).
 - Frontend `server/` (Next.js 15.5.23, React 19): Domain + Work map, Explore / detail / JD, mobile drawer, Profile / Recent / Saved / Layers. Home lazy-loads `MapShell`. `cd server && ./node_modules/.bin/tsc --noEmit && node --test tests/*.test.mjs` is the test command.
-- Changelog: [CHANGELOG.md](CHANGELOG.md). API: [tech/14-api-contract.md](tech/14-api-contract.md). Roadmap: [tech/05-milestones.md](tech/05-milestones.md).
+- Changelog: [CHANGELOG.md](CHANGELOG.md). API: [tech/14-api-contract.md](tech/14-api-contract.md). Local run: [tech/15-deploy.md](tech/15-deploy.md). Roadmap: [tech/05-milestones.md](tech/05-milestones.md).
 
 Not yet verified:
 - Live PostGIS migration and database integration tests are **blocked** until Docker/PostGIS is running (`make db-up`, then `make preflight` + `make db-migrate` + `make test-integration`).
