@@ -8,6 +8,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
+    "test:coverage": "node --experimental-strip-types --experimental-test-coverage --test tests/*.test.mjs",
     "import:seed": "node scripts/plan-seed-import.mjs",
     "import:seed:apply": "node scripts/plan-seed-import.mjs --apply",
     "geocode:sites": "node scripts/plan-site-geocode.mjs"
