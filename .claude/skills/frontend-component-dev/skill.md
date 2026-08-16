@@ -40,7 +40,9 @@ Develop Next.js 15 + React 19 components following Domain Map's architecture pri
    - Search tokens starting with `#` are filter plugins (`#大厂` → scale, `#互联网` → industry, `#秋招` → jobTaxonomy). Unknown tags stay in the keyword. Combine with leftover text via `parseSearchQuery` / `runPOIPipeline`. Empty search and empty Recent show `trendingForMode(mode)` chips — add new modes there, not inline in the panel.
    - Recruitment logos: prefer the career-site / subsidiary icon for that office; fall back to a curated company icon; then emoji. One company has many sites; one position has exactly one site. New sources implement `RecruitmentAdapter` in `lib/recruitment-adapters/` and register in `poi-service` — do not hardcode a second fetch path.
    - Check `src/lib/` for utilities (i18n, constants)
-   - Review CSS approach (CSS Modules + custom properties)
+   - Check `src/lib/` for utilities (i18n, constants)
+  - Review CSS approach (CSS Modules + custom properties)
+  - Home `page.tsx` lazy-loads `MapShell` with `next/dynamic` + `ssr: false`. Do not synchronously import the map shell on the server. Do not add react-virtuoso / framer-motion / zustand / Tailwind — inventory is `tech/12-bundle-notes.md`.
 
 ## Component Structure
 

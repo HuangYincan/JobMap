@@ -41,6 +41,13 @@ test('FilterPanel select is a labelled listbox', () => {
   assert.match(panel, /resultCount/);
 });
 
+test('home page lazy-loads MapShell on the client', () => {
+  const page = src('app/page.tsx');
+  assert.match(page, /next\/dynamic/);
+  assert.match(page, /ssr:\s*false/);
+  assert.match(page, /MapShell/);
+});
+
 test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   const shell = src('components/map-shell.tsx');
   const css = src('components/map-shell.module.css');

@@ -1,0 +1,21 @@
+# Bundle 盘点（2026-08-16）
+
+首页 `page.tsx` 用 `next/dynamic` + `ssr: false` 加载 `MapShell`，高德脚本仍走 `loadAMap()`，不进 npm bundle。
+
+**第一方 npm（server/package.json）**
+
+| 包 | 用途 | 客户端？ |
+|---|---|---|
+| next 15.5 / react 19 / react-dom 19 | App Router | 是 |
+| pg | 有 `DATABASE_URL` 时的账户存储 | 否，只在 API / account-store |
+
+**刻意没装**
+
+- react-virtuoso — 列表用 `content-visibility` + 固定 intrinsic size
+- framer-motion / shadcn / Tailwind — CSS Modules + 自写动画
+- zustand — 状态在 `MapShell`
+
+**拆分约定**
+
+- 地图、筛选、详情、登录全在 `MapShell` 客户端图里。下一步再按 rail 面板拆 `import()`，不要为了数字把霜面卡打散。
+- 公开读 API 有 30s 进程缓存，不替代这份前端拆分。
