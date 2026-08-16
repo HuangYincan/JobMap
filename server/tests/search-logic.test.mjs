@@ -53,6 +53,16 @@ test('matchKeyword: West Lake aliases match 西湖', () => {
   assert.equal(matchKeyword('阿里巴巴', 'westlake'), false);
 });
 
+test('matchKeyword: English company names hit Chinese titles', () => {
+  const alibaba = INTERNSHIP_SEED.find((c) => c.id === 'alibaba-xixi');
+  const bytedance = INTERNSHIP_SEED.find((c) => c.id === 'bytedance-hangzhou');
+  assert.ok(alibaba && bytedance);
+  assert.equal(poiMatchesQuery(alibaba, 'alibaba'), true);
+  assert.equal(poiMatchesQuery(alibaba, '阿里'), true);
+  assert.equal(poiMatchesQuery(bytedance, 'bytedance'), true);
+  assert.equal(poiMatchesQuery(alibaba, 'bytedance'), false);
+});
+
 test('poiMatchesQuery: recruitment matches company, industry, or position', () => {
   const alibaba = INTERNSHIP_SEED.find((c) => c.id === 'alibaba-xixi');
   assert.ok(alibaba, 'alibaba seed present');
@@ -74,6 +84,9 @@ test('suggestRecruitment: companies and jobs, never domain places', () => {
 
   const byAlias = suggestRecruitment(INTERNSHIP_SEED, 'FE');
   assert.ok(byAlias.some((s) => s.kind === 'job' && /前端|frontend/i.test(s.name + s.subtitle)));
+
+  const byEnglish = suggestRecruitment(INTERNSHIP_SEED, 'alibaba');
+  assert.ok(byEnglish.some((s) => s.kind === 'company' && s.name.includes('阿里')));
 
   const empty = suggestRecruitment(INTERNSHIP_SEED, '西湖风景名胜区');
   assert.equal(empty.length, 0);

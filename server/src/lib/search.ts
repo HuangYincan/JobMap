@@ -364,7 +364,20 @@ const PLACE_ALIAS_GROUPS: string[][] = [
   ['银泰', 'in77'],
 ];
 
-const SEARCH_ALIAS_GROUPS = [...JOB_ALIAS_GROUPS, ...PLACE_ALIAS_GROUPS];
+/** Company names: English query should hit the Chinese seed title. */
+const COMPANY_ALIAS_GROUPS: string[][] = [
+  ['阿里巴巴', '阿里', 'alibaba'],
+  ['字节跳动', '字节', 'bytedance'],
+  ['腾讯', 'tencent'],
+  ['网易', 'netease'],
+  ['华为', 'huawei'],
+  ['蚂蚁集团', '蚂蚁', 'antgroup'],
+  ['哔哩哔哩', 'b站', 'bilibili'],
+  ['深信服', 'sangfor'],
+  ['之江实验室', '之江', 'zhejiang lab'],
+];
+
+const SEARCH_ALIAS_GROUPS = [...JOB_ALIAS_GROUPS, ...PLACE_ALIAS_GROUPS, ...COMPANY_ALIAS_GROUPS];
 
 function tokenizeSearch(text: string): string[] {
   return text
