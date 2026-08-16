@@ -357,6 +357,15 @@ const JOB_ALIAS_GROUPS: string[][] = [
   ['设计', 'ui', 'ux', 'designer'],
 ];
 
+/** Domain 地点别名。西湖 stays a keyword, never a #district. */
+const PLACE_ALIAS_GROUPS: string[][] = [
+  ['西湖', 'west lake', 'westlake'],
+  ['灵隐', 'lingyin'],
+  ['银泰', 'in77'],
+];
+
+const SEARCH_ALIAS_GROUPS = [...JOB_ALIAS_GROUPS, ...PLACE_ALIAS_GROUPS];
+
 function tokenizeSearch(text: string): string[] {
   return text
     .toLowerCase()
@@ -366,7 +375,7 @@ function tokenizeSearch(text: string): string[] {
 }
 
 function aliasGroupForToken(token: string): string[] | undefined {
-  return JOB_ALIAS_GROUPS.find((group) => group.some((alias) => alias.toLowerCase() === token));
+  return SEARCH_ALIAS_GROUPS.find((group) => group.some((alias) => alias.toLowerCase() === token));
 }
 
 function textHasAliasGroup(haystack: string, group: string[]): boolean {
@@ -379,10 +388,18 @@ function textHasAliasGroup(haystack: string, group: string[]): boolean {
   });
 }
 
+function aliasGroupForQuery(query: string): string[] | undefined {
+  const normalized = query.toLowerCase().trim();
+  return SEARCH_ALIAS_GROUPS.find((group) => group.some((alias) => alias.toLowerCase() === normalized));
+}
+
 /** 判断文本是否包含关键词（大小写不敏感，支持多关键词 AND） */
 export function matchKeyword(text: string, query: string): boolean {
-  const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  if (!terms.length) return true;
+  const raw = query.toLowerCase().trim();
+  if (!raw) return true;
+  const phrase = aliasGroupForQuery(raw);
+  if (phrase) return textHasAliasGroup(text, phrase);
+  const terms = raw.split(/\s+/).filter(Boolean);
   const haystack = text.toLowerCase();
   return terms.every((term) => {
     const group = aliasGroupForToken(term);

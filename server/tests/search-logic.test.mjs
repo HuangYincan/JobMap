@@ -20,7 +20,7 @@ import {
   suggestRecruitment,
   widenSearchScope,
 } from '../src/lib/search.ts';
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { INTERNSHIP_SEED, DOMAIN_SEED } from '../src/lib/seed-data.ts';
 import { resolveApplyLink, withDistance } from '../src/lib/types.ts';
 import { ACTIVE_MODES, getMode, replayRecentSearch } from '../src/lib/modes.ts';
 import { positionMatchesTaxonomy } from '../src/lib/job-taxonomy.ts';
@@ -44,6 +44,13 @@ test('matchKeyword: FE / frontend aliases match 前端 titles', () => {
   assert.equal(matchKeyword('Java 后端开发工程师', 'FE'), false);
   assert.equal(matchKeyword('阿里巴巴', 'be'), false);
   assert.equal(matchKeyword('算法工程师', 'ml'), true);
+});
+
+test('matchKeyword: West Lake aliases match 西湖', () => {
+  assert.equal(matchKeyword('西湖', 'westlake'), true);
+  assert.equal(poiMatchesQuery(DOMAIN_SEED[0], 'West Lake'), true);
+  assert.equal(poiMatchesQuery(DOMAIN_SEED[0], 'westlake'), true);
+  assert.equal(matchKeyword('阿里巴巴', 'westlake'), false);
 });
 
 test('poiMatchesQuery: recruitment matches company, industry, or position', () => {
