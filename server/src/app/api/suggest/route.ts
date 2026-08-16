@@ -6,7 +6,8 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { matchKeyword } from '@/lib/search';
+import { matchKeyword, suggestSearchTags } from '@/lib/search';
+import { positionMatchesTaxonomySelection } from '@/lib/job-taxonomy';
 import { loadServerCatalog } from '@/lib/server-catalog';
 import { isRecruitmentMode } from '@/lib/types';
 import type { MapMode, RecruitmentPOI } from '@/lib/types';
@@ -54,24 +55,22 @@ export async function GET(request: Request) {
         }
       }
     }
-    // 行业标签匹配
-    const industries = [
-      { code: 'internet', label: '互联网' },
-      { code: 'ai', label: '人工智能' },
-      { code: 'finance', label: '金融' },
-      { code: 'game', label: '游戏' },
-      { code: 'hardware', label: '硬件' },
-    ];
-    for (const ind of industries) {
-      if (matchKeyword(ind.label, q)) {
-        suggestions.push({
-          type: 'tag',
-          id: `tag-${ind.code}`,
-          title: `#${ind.label}`,
-          subtitle: `${work.filter((p) => p.company.industries.includes(ind.code)).length} 个公司`,
-          icon: '🏷️',
-        });
-      }
+    for (const tag of suggestSearchTags(q, 6)) {
+      const count = work.filter((poi) => {
+        if (tag.key === 'industry') return poi.company.industries.includes(tag.value);
+        if (tag.key === 'scale') return poi.company.scale === tag.value;
+        if (tag.key === 'jobTaxonomy') {
+          return poi.positions.some((pos) => positionMatchesTaxonomySelection(pos, [tag.value]));
+        }
+        return false;
+      }).length;
+      suggestions.push({
+        type: 'tag',
+        id: tag.id,
+        title: tag.title,
+        subtitle: `${count} 个公司`,
+        icon: '🏷️',
+      });
     }
   } else if (q && mode === 'domain') {
     for (const poi of catalog) {

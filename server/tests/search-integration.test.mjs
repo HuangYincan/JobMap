@@ -74,6 +74,7 @@ test('GET /api/suggest contract: work matches company/job/tag; empty q uses tren
   assert.match(route, /type: 'poi'/);
   assert.match(route, /type: 'position'/);
   assert.match(route, /type: 'tag'/);
+  assert.match(route, /suggestSearchTags/);
   assert.match(route, /poiId: poi\.id/);
   assert.match(route, /slice\(0, 10\)/);
   assert.ok(trendingForMode('work').some((item) => item.query === '#大厂'));

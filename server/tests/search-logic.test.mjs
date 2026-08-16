@@ -12,6 +12,7 @@ import {
   parseSearchQuery,
   applyTagSuggestion,
   poiMatchesQuery,
+  suggestSearchTags,
   runPOIPipeline,
   sortPOIs,
   suggestRecruitment,
@@ -228,6 +229,14 @@ test('applyTagSuggestion merges a known hash into filters and clears the query',
   const unknownTag = applyTagSuggestion({ query: '西湖', filters: {} }, '#未知标签');
   assert.equal(unknownTag.applied, false);
   assert.equal(unknownTag.query, '西湖');
+});
+
+test('suggestSearchTags covers scale and campus hashes, not only industries', () => {
+  const autumn = suggestSearchTags('秋招');
+  assert.ok(autumn.some((tag) => tag.title === '#秋招' && tag.value === 'campus/autumn'));
+  const big = suggestSearchTags('#大');
+  assert.ok(big.some((tag) => tag.title === '#大厂' && tag.value === 'bigtech'));
+  assert.equal(suggestSearchTags('').length, 0);
 });
 
 test('runPOIPipeline: #大厂 keeps bigtech and still matches leftover keywords', () => {

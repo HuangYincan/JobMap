@@ -8,7 +8,7 @@ import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, widenSearchScope } from "@/lib/search";
+import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
 import { fetchSearchSuggest } from "@/lib/api";
 import { trendingForMode } from "@/lib/trending-search";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
@@ -1027,7 +1027,13 @@ export function MapShell() {
       const timer = setTimeout(async () => {
         const fallback = () => {
           const pool = catalog.length ? catalog : INTERNSHIP_SEED;
-          return suggestRecruitment(pool, query, 8).map((tip) => ({
+          const tags = suggestSearchTags(query, 3).map((tag) => ({
+            id: tag.id,
+            name: tag.title,
+            subtitle: tag.key,
+            kind: "place" as const,
+          }));
+          const tips = suggestRecruitment(pool, query, 8).map((tip) => ({
             id: tip.id,
             name: tip.name,
             subtitle: tip.subtitle,
@@ -1036,6 +1042,7 @@ export function MapShell() {
             positionId: tip.positionId,
             kind: tip.kind,
           }));
+          return [...tags, ...tips].slice(0, 8);
         };
         try {
           const res = await fetchSearchSuggest(query.trim(), mode);

@@ -32,7 +32,7 @@ const INDUSTRY_LABELS: Record<string, string> = {
 };
 
 /** 搜索框里的 #标签 → 筛选键。 intern/campus/social 走 taxonomy 插件。 */
-const TAG_FILTERS: Record<string, { key: string; value: string }> = {
+export const TAG_FILTERS: Record<string, { key: string; value: string }> = {
   大厂: { key: 'scale', value: 'bigtech' },
   独角兽: { key: 'scale', value: 'unicorn' },
   创业: { key: 'scale', value: 'startup' },
@@ -55,6 +55,36 @@ const TAG_FILTERS: Record<string, { key: string; value: string }> = {
   秋招: { key: 'jobTaxonomy', value: 'campus/autumn' },
   春招: { key: 'jobTaxonomy', value: 'campus/spring' },
 };
+
+export interface SearchTagSuggestion {
+  id: string;
+  label: string;
+  title: string;
+  key: string;
+  value: string;
+}
+
+/** Unique plugin tags (创业 / 创业公司 collapse to one). */
+export function listSearchTags(): SearchTagSuggestion[] {
+  const seen = new Set<string>();
+  const out: SearchTagSuggestion[] = [];
+  for (const [label, mapped] of Object.entries(TAG_FILTERS)) {
+    const id = `tag-${mapped.key}-${mapped.value}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push({ id, label, title: `#${label}`, key: mapped.key, value: mapped.value });
+  }
+  return out;
+}
+
+/** Match typed text (with or without #) against known FilterPlugin tags. */
+export function suggestSearchTags(query: string, limit = 5): SearchTagSuggestion[] {
+  const q = query.trim().replace(/^#/, '').toLowerCase();
+  if (!q || limit <= 0) return [];
+  return listSearchTags()
+    .filter((tag) => tag.label.toLowerCase().includes(q) || tag.value.toLowerCase().includes(q) || tag.key.toLowerCase().includes(q))
+    .slice(0, limit);
+}
 
 export interface ParsedSearchQuery {
   text: string;
