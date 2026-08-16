@@ -236,7 +236,7 @@
 **4.3 排序功能**
 - [x] 排序选择器 `<SortSelector />`
 - [x] 排序逻辑实现（`runPOIPipeline`）
-- [ ] 排序 API 后端支持（客户端先排；持久化后补）
+- [x] 排序 API 后端支持（`POST /api/search` + `GET /api/pois` 的 `sort` 进 `runPOIPipeline`；列表仍先在客户端排，持久化后同一参数）
 - [x] 模式特定排序选项
 
 **4.4 高级搜索**
@@ -296,7 +296,7 @@
 **5.5 测试**
 - [x] 单元测试（筛选逻辑、排序逻辑、对比度 token）
 - [x] 组件测试（卡片、筛选器、列表、抽屉：`tests/component-contracts.test.mjs` 源码契约；未引 RTL）
-- [ ] 集成测试（搜索流程、筛选流程）
+- [x] 集成测试（搜索流程、筛选流程：`tests/search-integration.test.mjs` 走与 `/api/search` 相同的 seed→pipeline→page 组合；Playwright E2E 仍待）
 - [ ] E2E 测试（关键路径）
 - [ ] 跨浏览器测试
 
