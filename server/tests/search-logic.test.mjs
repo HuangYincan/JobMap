@@ -6,6 +6,8 @@ import assert from 'node:assert/strict';
 import {
   applyFilters,
   distanceFilterMeters,
+  metersToDistanceKm,
+  pointAtDistanceEast,
   matchKeyword,
   parseSearchQuery,
   poiMatchesQuery,
@@ -216,6 +218,21 @@ test('distanceFilterMeters converts the km slider to meters', () => {
   assert.equal(distanceFilterMeters({}), 0);
   assert.equal(distanceFilterMeters({ distance: 0 }), 0);
   assert.equal(distanceFilterMeters({ distance: 3 }), 3000);
+});
+
+test('metersToDistanceKm snaps a dragged radius back onto the slider', () => {
+  assert.equal(metersToDistanceKm(0), 0);
+  assert.equal(metersToDistanceKm(200), 0);
+  assert.equal(metersToDistanceKm(3200), 3);
+  assert.equal(metersToDistanceKm(3400), 3.5);
+  assert.equal(metersToDistanceKm(50_000), 10);
+});
+
+test('pointAtDistanceEast stays on the same latitude', () => {
+  const origin = { lng: 120.15, lat: 30.27 };
+  const east = pointAtDistanceEast(origin, 3000);
+  assert.equal(east.lat, origin.lat);
+  assert.ok(east.lng > origin.lng);
 });
 
 test('trendingForMode is a plugin per map mode', () => {

@@ -8,9 +8,9 @@ import { getMode } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { distanceFilterMeters, runPOIPipeline, suggestRecruitment } from "@/lib/search";
+import { distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment } from "@/lib/search";
 import { trendingForMode } from "@/lib/trending-search";
-import { isRecruitmentMode } from "@/lib/types";
+import { haversineDistance, isRecruitmentMode } from "@/lib/types";
 import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, SearchHistoryEntry, UserPreferences } from "@/lib/account";
@@ -23,6 +23,16 @@ import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
 type RailPanel = "explore" | "recent" | "profile" | null;
+
+function readLngLat(
+  value?: { lng?: number; lat?: number; getLng?: () => number; getLat?: () => number } | null,
+): { lng: number; lat: number } | null {
+  if (!value) return null;
+  const lng = typeof value.getLng === "function" ? value.getLng() : value.lng;
+  const lat = typeof value.getLat === "function" ? value.getLat() : value.lat;
+  if (typeof lng !== "number" || typeof lat !== "number") return null;
+  return { lng, lat };
+}
 
 function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "menu" | "sidebar" | "chevronLeft" | "compass" | "locate" | "person" | "login" | "logout" }) {
   const paths: Record<string, string> = {
@@ -54,6 +64,8 @@ export function MapShell() {
   const userMarkerRef = useRef<any>(null);
   const accuracyCircleRef = useRef<any>(null);
   const distanceCircleRef = useRef<any>(null);
+  const distanceHandleRef = useRef<any>(null);
+  const draggingDistanceRef = useRef(false);
   const satelliteLayerRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pendingSearchFocus = useRef(false);
@@ -384,6 +396,10 @@ export function MapShell() {
       markersRef.current = [];
       userMarkerRef.current = null;
       accuracyCircleRef.current = null;
+      if (distanceHandleRef.current) {
+        distanceHandleRef.current.setMap?.(null);
+        distanceHandleRef.current = null;
+      }
       if (distanceCircleRef.current) {
         distanceCircleRef.current.setMap?.(null);
         distanceCircleRef.current = null;
@@ -492,23 +508,38 @@ export function MapShell() {
 
   const distanceOrigin = userLocation ?? mapCenter;
   const distanceRadius = distanceFilterMeters(filters);
+  const distanceOriginRef = useRef(distanceOrigin);
+  const distanceRadiusRef = useRef(distanceRadius);
+  distanceOriginRef.current = distanceOrigin;
+  distanceRadiusRef.current = distanceRadius;
 
   useEffect(() => {
     const map = mapInstance.current;
     const AMap = typeof window !== "undefined" ? window.AMap : undefined;
-    if (!map || !AMap?.Circle) return;
+    if (!map || !AMap?.Circle || !AMap?.Marker) return;
 
-    if (distanceRadius <= 0) {
+    const clearDistanceOverlay = () => {
+      if (distanceHandleRef.current) {
+        distanceHandleRef.current.setMap(null);
+        distanceHandleRef.current = null;
+      }
       if (distanceCircleRef.current) {
         distanceCircleRef.current.setMap(null);
         distanceCircleRef.current = null;
       }
+    };
+
+    if (distanceRadius <= 0) {
+      clearDistanceOverlay();
       return;
     }
 
+    const origin = distanceOrigin;
+    const handlePos = pointAtDistanceEast(origin, distanceRadius);
+
     if (!distanceCircleRef.current) {
       distanceCircleRef.current = new AMap.Circle({
-        center: [distanceOrigin.lng, distanceOrigin.lat],
+        center: [origin.lng, origin.lat],
         radius: distanceRadius,
         strokeColor: "#007AFF",
         strokeOpacity: 0.85,
@@ -519,11 +550,95 @@ export function MapShell() {
         zIndex: 20,
       });
       map.add(distanceCircleRef.current);
-    } else {
-      distanceCircleRef.current.setCenter([distanceOrigin.lng, distanceOrigin.lat]);
+    } else if (!draggingDistanceRef.current) {
+      distanceCircleRef.current.setCenter([origin.lng, origin.lat]);
       distanceCircleRef.current.setRadius(distanceRadius);
       if (!distanceCircleRef.current.getMap()) map.add(distanceCircleRef.current);
     }
+
+    if (!distanceHandleRef.current) {
+      distanceHandleRef.current = new AMap.Marker({
+        position: [handlePos.lng, handlePos.lat],
+        offset: new AMap.Pixel(-9, -9),
+        zIndex: 130,
+        cursor: "ew-resize",
+        bubble: false,
+        content:
+          '<div style="width:18px;height:18px;border-radius:50%;background:#007AFF;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,122,255,0.35)"></div>',
+      });
+      map.add(distanceHandleRef.current);
+    } else if (!draggingDistanceRef.current) {
+      distanceHandleRef.current.setPosition([handlePos.lng, handlePos.lat]);
+      if (!distanceHandleRef.current.getMap()) map.add(distanceHandleRef.current);
+    }
+
+    const applyRadius = (meters: number) => {
+      const snapped = metersToDistanceKm(meters);
+      if (snapped <= 0) {
+        setFilters((current) => {
+          if (!("distance" in current)) return current;
+          const next = { ...current };
+          delete next.distance;
+          return next;
+        });
+        return;
+      }
+      setFilters((current) => (
+        current.distance === snapped ? current : { ...current, distance: snapped }
+      ));
+    };
+
+    const startDrag = () => {
+      draggingDistanceRef.current = true;
+      ignoreNextMapClick.current = true;
+      map.setStatus({ dragEnable: false });
+    };
+    const moveTo = (lnglat: { lng: number; lat: number }) => {
+      if (!draggingDistanceRef.current) return;
+      const meters = Math.max(80, haversineDistance(distanceOriginRef.current, lnglat));
+      distanceCircleRef.current?.setRadius(meters);
+      const edge = pointAtDistanceEast(distanceOriginRef.current, meters);
+      distanceHandleRef.current?.setPosition([edge.lng, edge.lat]);
+    };
+    const endDrag = (lnglat?: { lng: number; lat: number } | null) => {
+      if (!draggingDistanceRef.current) return;
+      draggingDistanceRef.current = false;
+      map.setStatus({ dragEnable: true });
+      const raw = lnglat
+        ? haversineDistance(distanceOriginRef.current, lnglat)
+        : Number(distanceCircleRef.current?.getRadius?.() ?? distanceRadiusRef.current);
+      applyRadius(raw);
+    };
+
+    const handle = distanceHandleRef.current;
+    const onHandleDown = (e: { originEvent?: { stopPropagation?: () => void } }) => {
+      e.originEvent?.stopPropagation?.();
+      startDrag();
+    };
+    const onMapMove = (e: { lnglat?: { lng?: number; lat?: number; getLng?: () => number; getLat?: () => number } }) => {
+      const ll = readLngLat(e.lnglat);
+      if (ll) moveTo(ll);
+    };
+    const onMapUp = (e: { lnglat?: { lng?: number; lat?: number; getLng?: () => number; getLat?: () => number } }) => {
+      endDrag(readLngLat(e.lnglat));
+    };
+
+    handle.on("mousedown", onHandleDown);
+    map.on("mousemove", onMapMove);
+    map.on("mouseup", onMapUp);
+    const onDocUp = () => endDrag(null);
+    document.addEventListener("mouseup", onDocUp);
+
+    return () => {
+      handle.off("mousedown", onHandleDown);
+      map.off("mousemove", onMapMove);
+      map.off("mouseup", onMapUp);
+      document.removeEventListener("mouseup", onDocUp);
+      if (draggingDistanceRef.current) {
+        draggingDistanceRef.current = false;
+        map.setStatus({ dragEnable: true });
+      }
+    };
   }, [distanceOrigin, distanceRadius, mapReady]);
 
   const pois = useMemo(

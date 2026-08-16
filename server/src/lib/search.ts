@@ -62,11 +62,43 @@ export interface ParsedSearchQuery {
   filters: FilterState;
 }
 
+export const DISTANCE_SLIDER = {
+  min: 0,
+  max: 10,
+  step: 0.5,
+} as const;
+
 /** 距离筛选滑块（km）→ 米。未设或 ≤0 表示不画圈、不裁。 */
 export function distanceFilterMeters(filters?: FilterState): number {
   const value = filters?.distance;
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 0;
   return Math.round(value * 1000);
+}
+
+/** 把拖出来的半径米数扣回滑块步长。小于半步视为关掉距离圈。 */
+export function metersToDistanceKm(
+  meters: number,
+  opts: { min?: number; max?: number; step?: number } = {},
+): number {
+  const min = opts.min ?? DISTANCE_SLIDER.min;
+  const max = opts.max ?? DISTANCE_SLIDER.max;
+  const step = opts.step ?? DISTANCE_SLIDER.step;
+  if (!Number.isFinite(meters) || meters <= 0) return min;
+  const snapped = Math.round(meters / 1000 / step) * step;
+  if (snapped < step / 2) return min;
+  return Math.min(max, Math.max(step, snapped));
+}
+
+/** 圆心正东 `meters` 处，给距离圈边缘把手用。 */
+export function pointAtDistanceEast(
+  origin: { lng: number; lat: number },
+  meters: number,
+): { lng: number; lat: number } {
+  const metersPerDeg = 111_320 * Math.cos((origin.lat * Math.PI) / 180);
+  if (!Number.isFinite(metersPerDeg) || Math.abs(metersPerDeg) < 1) {
+    return { lng: origin.lng, lat: origin.lat };
+  }
+  return { lng: origin.lng + meters / metersPerDeg, lat: origin.lat };
 }
 
 /** 拆出 #标签，剩余当关键词。未知标签仍参与全文搜索。 */
