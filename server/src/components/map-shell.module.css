@@ -1037,7 +1037,21 @@
     padding: 0 0 8px;
   }
 
-  .mobileActions {
+  .mobileStyleRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .mobileLayers {
+    padding: 4px 2px 12px;
+  }
+
+  .mobileLayers > .mobileFilterBtn {
+    width: 100%;
+    justify-content: space-between;
+  }
     display: flex;
     align-items: center;
     gap: 8px;

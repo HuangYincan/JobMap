@@ -26,11 +26,12 @@ import { AuthModal } from "./auth-modal";
 import { ProfilePanel } from "./account-panel";
 import { RecentPanel } from "./recent-panel";
 import { SavedList, SavedPanel } from "./saved-panel";
+import { LayersPanel } from "./layers-panel";
 import { mergeMapPois, readSavedOverlayPref, savedPlacesToOverlay, writeSavedOverlayPref, overlayBounds } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
-type RailPanel = "explore" | "recent" | "saved" | "profile" | null;
+type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;
 
 function readLngLat(
   value?: { lng?: number; lat?: number; getLng?: () => number; getLat?: () => number } | null,
@@ -85,7 +86,6 @@ export function MapShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
   const [lang, setLang] = useState<Language>('zh');
-  const [showBasemap, setShowBasemap] = useState(false);
   const [mapStyle, setMapStyle] = useState<'normal' | 'satellite' | 'whitesmoke'>('normal');
   const [zoom, setZoom] = useState(13);
   const [mapReady, setMapReady] = useState(false);
@@ -126,7 +126,7 @@ export function MapShell() {
     setSavedOverlay(readSavedOverlayPref(true));
   }, []);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [mobileSheet, setMobileSheet] = useState<"explore" | "saved">("explore");
+  const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers">("explore");
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [online, setOnline] = useState(true);
   const drawerSwipeRef = useRef<{ y: number } | null>(null);
@@ -1120,24 +1120,7 @@ export function MapShell() {
     }
 
     setMapStyle(style);
-    setShowBasemap(false);
   };
-
-  // Close basemap picker when clicking outside
-  useEffect(() => {
-    if (!showBasemap) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // Check if click is outside basemap card and button
-      if (!target.closest(`.${styles.basemapCluster}`)) {
-        setShowBasemap(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showBasemap]);
 
   useEffect(() => {
     if (!sidebarOpen || !pendingSearchFocus.current) return;
@@ -1175,7 +1158,9 @@ export function MapShell() {
         setSavedPlaces([]);
         setApplications([]);
         setInbox([]);
-        setRailPanel((current) => (current === "profile" || current === "saved" ? null : current));
+        setRailPanel((current) =>
+          current === "profile" || current === "saved" || current === "layers" ? null : current,
+        );
       });
       return;
     }
@@ -1290,14 +1275,13 @@ export function MapShell() {
         </div>
         <nav className={styles.navList}>
           <button
-            className={`${styles.navItem} ${savedOverlay ? styles.navItemActive : ""}`}
-            data-tooltip={`${t("savedOverlay", lang)}${overlayPois.length ? ` · ${overlayPois.length}` : ""}`}
-            aria-pressed={savedOverlay}
-            aria-label={`${t("savedOverlay", lang)}${overlayPois.length ? ` ${overlayPois.length}` : ""}`}
-            onClick={handleToggleSavedOverlay}
+            className={`${styles.navItem} ${railPanel === "layers" ? styles.navItemActive : ""}`}
+            data-tooltip={t("layers", lang)}
+            aria-pressed={railPanel === "layers"}
+            onClick={() => openRail("layers")}
           >
             <Icon name="layers" />
-            <span>{overlayPois.length ? `${t("savedOverlay", lang)} ${overlayPois.length}` : t("savedOverlay", lang)}</span>
+            <span>{t("layers", lang)}</span>
           </button>
           <button
             className={`${styles.navItem} ${railPanel === "saved" ? styles.navItemActive : ""}`}
@@ -1440,6 +1424,20 @@ export function MapShell() {
         />
       )}
 
+      {railPanel === "layers" && (
+        <LayersPanel
+          lang={lang}
+          savedOverlay={savedOverlay}
+          overlayCount={overlayPois.length}
+          signedIn={Boolean(user)}
+          mapStyle={mapStyle}
+          shifted={sidebarOpen}
+          onToggleOverlay={handleToggleSavedOverlay}
+          onMapStyle={handleMapStyleChange}
+          onClose={() => setRailPanel(null)}
+        />
+      )}
+
       {railPanel === "saved" && (
         <SavedPanel
           items={savedPlaces}
@@ -1489,51 +1487,6 @@ export function MapShell() {
       )}
 
       <div className={styles.topTools}>
-        <div className={styles.basemapCluster}>
-          {showBasemap && (
-            <div className={styles.basemapRow} role="listbox" aria-label={t("mapStyle", lang)}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={mapStyle === "normal"}
-                className={`${styles.basemapOption} ${mapStyle === "normal" ? styles.basemapOptionActive : ""}`}
-                onClick={() => handleMapStyleChange("normal")}
-              >
-                <div className={`${styles.mapThumb} ${styles.thumb1}`} />
-                <span>{t("standard", lang)}</span>
-              </button>
-              <button
-                type="button"
-                role="option"
-                aria-selected={mapStyle === "satellite"}
-                className={`${styles.basemapOption} ${mapStyle === "satellite" ? styles.basemapOptionActive : ""}`}
-                onClick={() => handleMapStyleChange("satellite")}
-              >
-                <div className={`${styles.mapThumb} ${styles.thumb2}`} />
-                <span>{t("satellite", lang)}</span>
-              </button>
-              <button
-                type="button"
-                role="option"
-                aria-selected={mapStyle === "whitesmoke"}
-                className={`${styles.basemapOption} ${mapStyle === "whitesmoke" ? styles.basemapOptionActive : ""}`}
-                onClick={() => handleMapStyleChange("whitesmoke")}
-              >
-                <div className={`${styles.mapThumb} ${styles.thumb3}`} />
-                <span>{t("dark", lang)}</span>
-              </button>
-            </div>
-          )}
-          <button
-            className={`${styles.toolButton} ${showBasemap ? styles.toolButtonActive : ""}`}
-            onClick={() => setShowBasemap(!showBasemap)}
-            aria-label={t("mapStyle", lang)}
-            aria-expanded={showBasemap}
-            aria-pressed={showBasemap}
-          >
-            <div className={styles.basemapLogo}>◌</div>
-          </button>
-        </div>
         <button className={`${styles.toolButton} ${styles.compassButton}`} onClick={handleResetCompass} aria-label="Reset compass">
           <svg className={styles.compassNeedle} viewBox="0 0 20 20" width="28" height="28" style={{ transform: `rotate(${rotation}deg)` }}>
             <path d="M10 1 L12 10 L10 8.5 L8 10 Z" fill="#ff3b30" />
@@ -1624,14 +1577,17 @@ export function MapShell() {
               </button>
               <button
                 type="button"
-                className={`${styles.mobileFilterBtn} ${savedOverlay ? styles.mobileFilterBtnActive : ""}`}
-                onClick={handleToggleSavedOverlay}
-                aria-pressed={savedOverlay}
+                className={`${styles.mobileFilterBtn} ${mobileSheet === "layers" ? styles.mobileFilterBtnActive : ""}`}
+                onClick={() => {
+                  setMobileSheet((sheet) => (sheet === "layers" ? "explore" : "layers"));
+                  if (drawer === "mini") setDrawer("half");
+                }}
+                aria-pressed={mobileSheet === "layers"}
               >
-                {t("savedOverlay", lang)}
+                {t("layers", lang)}
               </button>
             </div>
-            {mobileSheet !== "saved" && (
+            {mobileSheet === "explore" && (
             <div className={styles.mobileSearch}>
               <Icon name="search" />
               <input
@@ -1664,6 +1620,37 @@ export function MapShell() {
                   onHover={handleHover}
                   onRemove={user ? handleRemoveSaved : undefined}
                 />
+              ) : mobileSheet === "layers" ? (
+                <div className={styles.mobileLayers}>
+                  <button
+                    type="button"
+                    className={`${styles.mobileFilterBtn} ${savedOverlay ? styles.mobileFilterBtnActive : ""}`}
+                    onClick={handleToggleSavedOverlay}
+                    aria-pressed={savedOverlay}
+                  >
+                    {overlayPois.length ? `${t("savedOverlay", lang)} ${overlayPois.length}` : t("savedOverlay", lang)}
+                  </button>
+                  <div className={styles.mobileStyleRow} role="listbox" aria-label={t("mapStyle", lang)}>
+                    {(
+                      [
+                        ["normal", "standard"],
+                        ["satellite", "satellite"],
+                        ["whitesmoke", "dark"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        role="option"
+                        aria-selected={mapStyle === value}
+                        className={`${styles.mobileFilterBtn} ${mapStyle === value ? styles.mobileFilterBtnActive : ""}`}
+                        onClick={() => handleMapStyleChange(value)}
+                      >
+                        {t(label, lang)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ) : (
               <>
               <div className={styles.mobileActions}>

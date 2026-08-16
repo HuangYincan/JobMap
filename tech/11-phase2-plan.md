@@ -523,7 +523,7 @@
 
 ## Phase 4 起步（2026-08-16）
 
-- 收藏叠加层：Layers / 抽屉开关控制 `mergeMapPois`；Explore 列表仍只走 `runPOIPipeline`。开关写入 sessionStorage；打开时视野收到收藏点。点叠加层标记打开详情 / 飞到坐标。
+- 收藏叠加层：Layers 二级霜面卡（`layers-panel.tsx`）里的开关控制 `mergeMapPois`；底图样式也在这张卡，不再放右上角第二套选择器。Explore 列表仍只走 `runPOIPipeline`。开关写入 sessionStorage；打开时视野收到收藏点。
 - 受控 fly / highlight 继续走现有 `usePOIMap`（选中优先于高亮；Saved 行 hover 也会高亮图钉）。
 - 搜索已在 Phase 2 完成；本阶段不重做搜索框。
 
