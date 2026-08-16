@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto';
 import type { Pool } from 'pg';
 import {
   DEFAULT_PREFERENCES,
+  mergePreferences,
   type AccountUser,
   type AuthProvider,
   type SearchHistoryEntry,
@@ -63,10 +64,7 @@ function asUser(row: {
     phone,
     email,
     provider: row.provider ?? 'email',
-    preferences: {
-      language: prefs.language === 'en' ? 'en' : 'zh',
-      defaultMode: canonicalMode(prefs.defaultMode || 'work'),
-    },
+    preferences: mergePreferences(prefs),
   };
 }
 
@@ -195,6 +193,14 @@ export async function updateUser(
   },
 ): Promise<AccountUser | null> {
   return withDb(async (db) => {
+    const current = await db.query<{ preferences: UserPreferences | null }>(
+      `SELECT preferences FROM users WHERE id = $1`,
+      [userId],
+    );
+    if (!current.rows[0]) return memUpdateUser(userId, patch);
+    const nextPrefs = patch.preferences
+      ? mergePreferences(current.rows[0].preferences, patch.preferences)
+      : null;
     const result = await db.query<{
       id: string;
       display_name: string | null;
@@ -207,7 +213,7 @@ export async function updateUser(
       `UPDATE users SET
          display_name = COALESCE($2, display_name),
          avatar_url = COALESCE($3, avatar_url),
-         preferences = COALESCE(preferences, '{}'::jsonb) || COALESCE($4::jsonb, '{}'::jsonb),
+         preferences = COALESCE($4::jsonb, preferences),
          updated_at = now()
        WHERE id = $1
        RETURNING id::text, display_name, avatar_url, phone, email, preferences,
@@ -216,7 +222,7 @@ export async function updateUser(
         userId,
         patch.displayName ?? null,
         patch.avatarUrl ?? null,
-        patch.preferences ? JSON.stringify(patch.preferences) : null,
+        nextPrefs ? JSON.stringify(nextPrefs) : null,
       ],
     );
     return result.rows[0] ? asUser(result.rows[0]) : memUpdateUser(userId, patch);

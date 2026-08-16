@@ -168,16 +168,20 @@
 
 1. **Recent** 只记录用户发起的搜索（提交 / 选建议），不是浏览历史。按账户持久化到数据库。未登录不写云端，本地也不假装成账户记录。
 2. **Profile** 打开二级卡（`--soft-strong` 霜面，与 Explore 同级，不是三级）：
-   - 已登录：头像、显示名、账号标识（手机 / 邮箱 / OAuth 邮箱）均可编辑；下方 Preference 卡片组（语言、默认地图模式）在**同一二级卡内**展开，不新开三级。
+   - 已登录：头像水平居中，点击打开矩形裁剪卡（上传 / 拖动 / 缩放 / 圆形裁出）；显示名可编辑；账号标识只读；**Update Profile** 绿色按钮写回；分隔线下方是选项框（语言、默认地图、求职状态 / 意向岗位 / 行业 / 个人实力、邮件/短信通知），全部在同一二级卡，不新开三级。
    - 未登录：点 Profile 或右侧登录 icon → 屏幕中央登录大卡。
-3. **删掉主导航 Settings**。语言、默认模式等全部进 Profile。
+   - 账户行点击后不持久化 hover / selected 底板；登录 / 登出 icon 用正文色，不要蓝色。
+3. **删掉主导航 Settings**。语言、默认模式、求职偏好、通知全部进 Profile。
 4. **Profile 行文案**
    - 未登录：头像是通用人像 icon；**未登录** / **Not signed in**。
    - 已登录：`<strong>` 显示名，`<small>` 账号名（手机号或邮箱；GitHub / Google 也展示邮箱）。
    - 侧栏展开时，Profile 行右侧有登录 / 登出 icon（两种样式）。
-5. **登录弹层**（最顶层矩形大卡，右上角关闭，点遮罩关闭）
-   - 默认：手机号 + 验证码。
-   - 也可：邮箱、GitHub。
+5. **登录弹层**（最顶层左右二分玻璃卡，右上角关闭，点遮罩关闭）
+   - 背景：模糊遮罩 + 缓慢漂移色斑。
+   - 左：品牌玻璃块；右：表单。不要标题/导语。
+   - 左上文字 Tab：手机 / 邮箱 / 其他登录。选中蓝+下划线，未选正文色，hover 浅蓝且去掉下划线。
+   - 发送验证码是输入框内部右侧文字按钮；主按钮绿色「登录」。
+   - 其他登录：GitHub / Google / X / 微信，走 `POST /api/auth/oauth`。
    - Demo：验证码不真发短信；后端预留 `POST /api/auth/otp/send` 给阿里云号码认证 / 短信（[个人开发者短信验证](https://help.aliyun.com/zh/pnvs/use-cases/sms-verify-for-individual-developers)）。
 6. **默认地图模式是工作（work）**。已登录读 `users.preferences.defaultMode`；未登录也是 work。语言：已登录读偏好，未登录跟浏览器。
 7. **真实招聘数据（库表先于爬虫）**
@@ -196,6 +200,9 @@
 - [x] 默认 mode = work
 - [x] Logo resolver（职场招聘页 icon > 公司保底 > emoji）
 - [x] `account-store`：有 `DATABASE_URL` 时 sessions / history 上云，否则内存回落
+- [x] `007_profile_prefs_oauth.sql`：OAuth provider 扩展 + 回填 notifications / career
+- [x] 登录卡左右二分玻璃 + 其他登录（GitHub / Google / X / 微信）
+- [x] Profile 选项框、绿色 Update Profile、头像裁剪、求职偏好与通知
 
 **相关 SKILL:** `.claude/skills/frontend-component-dev/skill.md`
 

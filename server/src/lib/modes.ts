@@ -60,7 +60,7 @@ const CATEGORY_OPTIONS = [
   { value: '公司企业', label: '公司' },
 ];
 
-const INDUSTRY_OPTIONS = [
+export const INDUSTRY_OPTIONS = [
   { value: 'internet', label: '互联网' },
   { value: 'finance', label: '金融' },
   { value: 'consulting', label: '咨询' },

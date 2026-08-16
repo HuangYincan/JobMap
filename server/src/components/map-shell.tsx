@@ -843,6 +843,7 @@ export function MapShell() {
 
   const handleSaveProfile = async (patch: {
     displayName?: string;
+    avatarUrl?: string;
     preferences?: Partial<UserPreferences>;
   }) => {
     const res = await fetch("/api/auth/me", {
@@ -946,7 +947,7 @@ export function MapShell() {
         </nav>
         <div className={styles.profileRow}>
           <button
-            className={`${styles.profile} ${railPanel === "profile" ? styles.profileActive : ""}`}
+            className={styles.profile}
             aria-label={user ? `${user.displayName} ${user.accountLabel}` : t("notSignedIn", lang)}
             data-tooltip={t('profile', lang)}
             onClick={handleProfileClick}

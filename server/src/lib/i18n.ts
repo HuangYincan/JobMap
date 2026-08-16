@@ -355,6 +355,30 @@ export const translations = {
     zh: 'GitHub',
     en: 'GitHub',
   },
+  authOther: {
+    zh: '其他登录',
+    en: 'Other',
+  },
+  authGoogle: {
+    zh: 'Google',
+    en: 'Google',
+  },
+  authX: {
+    zh: 'X',
+    en: 'X',
+  },
+  authWechat: {
+    zh: '微信',
+    en: 'WeChat',
+  },
+  authMethods: {
+    zh: '登录方式',
+    en: 'Sign-in methods',
+  },
+  resendCode: {
+    zh: '重新发送',
+    en: 'Resend',
+  },
   phoneNumber: {
     zh: '手机号',
     en: 'Phone number',
@@ -406,6 +430,114 @@ export const translations = {
   prefDefaultMode: {
     zh: '默认地图',
     en: 'Default map',
+  },
+  updateProfile: {
+    zh: '更新资料',
+    en: 'Update Profile',
+  },
+  changeAvatar: {
+    zh: '更换头像',
+    en: 'Change photo',
+  },
+  cropAvatar: {
+    zh: '裁剪头像',
+    en: 'Crop photo',
+  },
+  uploadPhoto: {
+    zh: '选择图片',
+    en: 'Choose photo',
+  },
+  zoom: {
+    zh: '缩放',
+    en: 'Zoom',
+  },
+  saveCrop: {
+    zh: '保存头像',
+    en: 'Save photo',
+  },
+  cancel: {
+    zh: '取消',
+    en: 'Cancel',
+  },
+  careerPrefs: {
+    zh: '求职偏好',
+    en: 'Job preferences',
+  },
+  seekingStatus: {
+    zh: '求职状态',
+    en: 'Job-seeking status',
+  },
+  statusOpen: {
+    zh: '积极求职',
+    en: 'Actively looking',
+  },
+  statusCasually: {
+    zh: '随便看看',
+    en: 'Open to offers',
+  },
+  statusNotLooking: {
+    zh: '暂不看机会',
+    en: 'Not looking',
+  },
+  careerFamilies: {
+    zh: '意向岗位',
+    en: 'Target roles',
+  },
+  careerIndustries: {
+    zh: '意向行业',
+    en: 'Industries',
+  },
+  careerStrengths: {
+    zh: '个人实力',
+    en: 'Strengths',
+  },
+  strengthAlgorithm: {
+    zh: '算法',
+    en: 'Algorithms',
+  },
+  strengthFrontend: {
+    zh: '前端',
+    en: 'Frontend',
+  },
+  strengthBackend: {
+    zh: '后端',
+    en: 'Backend',
+  },
+  strengthProduct: {
+    zh: '产品',
+    en: 'Product',
+  },
+  strengthDesign: {
+    zh: '设计',
+    en: 'Design',
+  },
+  strengthData: {
+    zh: '数据',
+    en: 'Data',
+  },
+  notifications: {
+    zh: '通知',
+    en: 'Notifications',
+  },
+  notifyEmailJobs: {
+    zh: '邮件通知感兴趣的岗位',
+    en: 'Email me about matching jobs',
+  },
+  notifySmsJobs: {
+    zh: '短信通知感兴趣的岗位',
+    en: 'SMS me about matching jobs',
+  },
+  notifyEmailSchools: {
+    zh: '邮件通知院校 / 项目动态',
+    en: 'Email me about school posts',
+  },
+  notifySmsSchools: {
+    zh: '短信通知院校 / 项目动态',
+    en: 'SMS me about school posts',
+  },
+  profileSaved: {
+    zh: '已保存',
+    en: 'Saved',
   },
   recentSearches: {
     zh: '搜索记录',

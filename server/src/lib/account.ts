@@ -9,11 +9,31 @@ import type { Language } from './i18n.ts';
 import type { MapMode } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
-export type AuthProvider = 'phone' | 'email' | 'github';
+export type AuthProvider = 'phone' | 'email' | 'github' | 'google' | 'x' | 'wechat';
+
+export type JobSeekingStatus = 'open' | 'casually' | 'not-looking';
+
+export type CareerStrength = 'algorithm' | 'frontend' | 'backend' | 'product' | 'design' | 'data';
+
+export interface NotificationPreferences {
+  emailJobs: boolean;
+  smsJobs: boolean;
+  emailSchools: boolean;
+  smsSchools: boolean;
+}
+
+export interface CareerPreferences {
+  status: JobSeekingStatus;
+  families: Array<'intern' | 'campus' | 'social'>;
+  industries: string[];
+  strengths: CareerStrength[];
+}
 
 export interface UserPreferences {
   language: Language;
   defaultMode: MapMode;
+  notifications: NotificationPreferences;
+  career: CareerPreferences;
 }
 
 export interface AccountUser {
@@ -39,24 +59,69 @@ export interface SearchHistoryEntry {
   createdAt: string;
 }
 
+export const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
+  emailJobs: false,
+  smsJobs: false,
+  emailSchools: false,
+  smsSchools: false,
+};
+
+export const DEFAULT_CAREER: CareerPreferences = {
+  status: 'casually',
+  families: ['intern', 'campus'],
+  industries: ['internet'],
+  strengths: [],
+};
+
 export const DEFAULT_PREFERENCES: UserPreferences = {
   language: 'zh',
   defaultMode: 'work',
+  notifications: { ...DEFAULT_NOTIFICATIONS },
+  career: { ...DEFAULT_CAREER, families: [...DEFAULT_CAREER.families], industries: [...DEFAULT_CAREER.industries], strengths: [] },
 };
 
 export const SESSION_COOKIE = 'dm_session';
+
+export function emptyPreferences(language: Language = 'zh'): UserPreferences {
+  return {
+    language,
+    defaultMode: 'work',
+    notifications: { ...DEFAULT_NOTIFICATIONS },
+    career: {
+      ...DEFAULT_CAREER,
+      families: [...DEFAULT_CAREER.families],
+      industries: [...DEFAULT_CAREER.industries],
+      strengths: [],
+    },
+  };
+}
+
+export function mergePreferences(
+  base: UserPreferences | null | undefined,
+  patch?: Partial<UserPreferences>,
+): UserPreferences {
+  const start = base ?? emptyPreferences();
+  return {
+    language: patch?.language ?? start.language,
+    defaultMode: canonicalMode(patch?.defaultMode ?? start.defaultMode ?? 'work'),
+    notifications: { ...DEFAULT_NOTIFICATIONS, ...start.notifications, ...patch?.notifications },
+    career: {
+      ...DEFAULT_CAREER,
+      ...start.career,
+      ...patch?.career,
+      families: patch?.career?.families ?? start.career?.families ?? [...DEFAULT_CAREER.families],
+      industries: patch?.career?.industries ?? start.career?.industries ?? [...DEFAULT_CAREER.industries],
+      strengths: patch?.career?.strengths ?? start.career?.strengths ?? [],
+    },
+  };
+}
 
 export function resolvePreferences(
   user: AccountUser | null,
   browserLang: Language,
 ): UserPreferences {
-  if (!user) {
-    return { language: browserLang, defaultMode: 'work' };
-  }
-  return {
-    language: user.preferences.language || browserLang,
-    defaultMode: canonicalMode(user.preferences.defaultMode || 'work'),
-  };
+  if (!user) return emptyPreferences(browserLang);
+  return mergePreferences(user.preferences, { language: user.preferences.language || browserLang });
 }
 
 export function initialsFromName(name: string): string {

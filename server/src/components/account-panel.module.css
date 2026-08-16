@@ -64,15 +64,22 @@
 .identity {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   gap: 10px;
   padding: 8px 2px 16px;
 }
 
+.avatarBtn {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 50%;
+}
+
 .avatar,
 .avatarFallback {
-  width: 64px;
-  height: 64px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -84,13 +91,14 @@
   background: linear-gradient(135deg, #5ac8fa, #007aff);
   color: #fff;
   font-weight: 800;
-  font-size: 22px;
+  font-size: 28px;
 }
 
 .nameField {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  width: 100%;
   font-size: 11px;
   font-weight: 600;
   color: var(--muted);
@@ -112,14 +120,36 @@
   font-size: 13px;
 }
 
+.update {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: #34c759;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.update:disabled {
+  opacity: 0.45;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 4px 0 14px;
+}
+
 .prefs {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 16px;
 }
 
 .sectionLabel {
-  margin: 8px 0 0;
+  margin: 0 0 2px;
   font-size: 12px;
   font-weight: 700;
   color: var(--muted);
@@ -127,27 +157,19 @@
   text-transform: uppercase;
 }
 
-.prefCard {
+.box {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
+  flex-direction: column;
+  gap: 10px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.4);
   padding: 12px 14px;
-  text-align: left;
 }
 
-.prefCard span {
+.boxLabel {
   color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.prefCard strong {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -155,7 +177,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 0 2px 6px;
 }
 
 .choice {
@@ -173,9 +194,22 @@
   color: #fff;
 }
 
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.toggleRow input {
+  accent-color: var(--blue, #007AFF);
+}
+
 @media (prefers-color-scheme: dark) {
   .nameField input,
-  .prefCard,
+  .box,
   .choice {
     background: rgba(255, 255, 255, 0.06);
   }

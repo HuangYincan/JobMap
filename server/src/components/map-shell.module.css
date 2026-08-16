@@ -476,9 +476,8 @@
   transition: justify-content 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.profileActive {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
+.profile:hover {
+  background: transparent;
 }
 
 .sidebar:not(.sidebarOpen) .profileRow {
@@ -494,7 +493,7 @@
   background: transparent;
   border: 0;
   border-radius: 10px;
-  color: var(--blue, #007AFF);
+  color: var(--ink);
   display: inline-flex;
   flex: 0 0 36px;
   height: 36px;
@@ -502,7 +501,8 @@
 }
 
 .authGlyph:hover {
-  background: rgba(0, 122, 255, 0.1);
+  background: rgba(120, 134, 145, 0.12);
+  color: var(--ink);
 }
 
 .authGlyph svg {

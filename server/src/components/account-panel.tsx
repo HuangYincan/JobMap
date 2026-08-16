@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import type { AccountUser, UserPreferences } from "@/lib/account";
-import { ACTIVE_MODES, getMode } from "@/lib/modes";
+import { useEffect, useState } from "react";
+import {
+  initialsFromName,
+  mergePreferences,
+  type AccountUser,
+  type CareerStrength,
+  type JobSeekingStatus,
+  type UserPreferences,
+} from "@/lib/account";
+import { ACTIVE_MODES, INDUSTRY_OPTIONS, getMode } from "@/lib/modes";
 import { t, type Language } from "@/lib/i18n";
 import type { MapMode } from "@/lib/types";
+import { AvatarCropper } from "./avatar-cropper";
 import styles from "./account-panel.module.css";
 
 export type RailPanel = "explore" | "recent" | "profile" | null;
@@ -15,36 +23,83 @@ export interface ProfilePanelProps {
   onClose: () => void;
   onSave: (patch: {
     displayName?: string;
+    avatarUrl?: string;
     preferences?: Partial<UserPreferences>;
   }) => Promise<void>;
   shifted?: boolean;
 }
 
+const STRENGTHS: { id: CareerStrength; labelKey: "strengthAlgorithm" | "strengthFrontend" | "strengthBackend" | "strengthProduct" | "strengthDesign" | "strengthData" }[] = [
+  { id: "algorithm", labelKey: "strengthAlgorithm" },
+  { id: "frontend", labelKey: "strengthFrontend" },
+  { id: "backend", labelKey: "strengthBackend" },
+  { id: "product", labelKey: "strengthProduct" },
+  { id: "design", labelKey: "strengthDesign" },
+  { id: "data", labelKey: "strengthData" },
+];
+
+const STATUSES: { id: JobSeekingStatus; labelKey: "statusOpen" | "statusCasually" | "statusNotLooking" }[] = [
+  { id: "open", labelKey: "statusOpen" },
+  { id: "casually", labelKey: "statusCasually" },
+  { id: "not-looking", labelKey: "statusNotLooking" },
+];
+
+const FAMILIES: { id: "intern" | "campus" | "social"; labelKey: "jobFamilyIntern" | "jobFamilyCampus" | "jobFamilySocial" }[] = [
+  { id: "intern", labelKey: "jobFamilyIntern" },
+  { id: "campus", labelKey: "jobFamilyCampus" },
+  { id: "social", labelKey: "jobFamilySocial" },
+];
+
+function toggleValue<T>(list: T[], value: T): T[] {
+  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+}
+
 export function ProfilePanel({ user, lang, onClose, onSave, shifted = false }: ProfilePanelProps) {
   const [name, setName] = useState(user.displayName);
-  const [prefs, setPrefs] = useState<UserPreferences>(user.preferences);
-  const [openPref, setOpenPref] = useState<"language" | "defaultMode" | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? "");
+  const [prefs, setPrefs] = useState<UserPreferences>(mergePreferences(user.preferences));
+  const [cropOpen, setCropOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const saveName = async () => {
-    if (!name.trim() || name.trim() === user.displayName) return;
+  useEffect(() => {
+    setName(user.displayName);
+    setAvatarUrl(user.avatarUrl ?? "");
+    setPrefs(mergePreferences(user.preferences));
+  }, [user]);
+
+  const save = async (patch: {
+    displayName?: string;
+    avatarUrl?: string;
+    preferences?: Partial<UserPreferences>;
+  }) => {
     setBusy(true);
+    setSaved(false);
     try {
-      await onSave({ displayName: name.trim() });
+      await onSave(patch);
+      setSaved(true);
     } finally {
       setBusy(false);
     }
   };
 
-  const savePref = async (next: Partial<UserPreferences>) => {
-    const merged = { ...prefs, ...next };
-    setPrefs(merged);
-    setBusy(true);
-    try {
-      await onSave({ preferences: next });
-    } finally {
-      setBusy(false);
-    }
+  const updateCareer = (career: Partial<UserPreferences["career"]>) => {
+    const next = mergePreferences(prefs, { career: { ...prefs.career, ...career } });
+    setPrefs(next);
+  };
+
+  const updateNotifications = (notifications: Partial<UserPreferences["notifications"]>) => {
+    const next = mergePreferences(prefs, { notifications: { ...prefs.notifications, ...notifications } });
+    setPrefs(next);
+  };
+
+  const commitProfile = () => {
+    const trimmed = name.trim();
+    void save({
+      displayName: trimmed || user.displayName,
+      avatarUrl: avatarUrl || undefined,
+      preferences: prefs,
+    });
   };
 
   return (
@@ -60,75 +115,159 @@ export function ProfilePanel({ user, lang, onClose, onSave, shifted = false }: P
         </header>
 
         <section className={styles.identity}>
-          {user.avatarUrl ? (
-            <img className={styles.avatar} src={user.avatarUrl} alt="" />
-          ) : (
-            <div className={styles.avatarFallback}>{user.displayName.slice(0, 1)}</div>
-          )}
+          <button
+            type="button"
+            className={styles.avatarBtn}
+            onClick={() => setCropOpen(true)}
+            aria-label={t("changeAvatar", lang)}
+          >
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img className={styles.avatar} src={avatarUrl} alt="" />
+            ) : (
+              <div className={styles.avatarFallback}>{initialsFromName(name || user.displayName).slice(0, 1)}</div>
+            )}
+          </button>
           <label className={styles.nameField}>
             <span>{t("displayName", lang)}</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={saveName}
-              disabled={busy}
-            />
+            <input value={name} onChange={(e) => setName(e.target.value)} disabled={busy} />
           </label>
           <p className={styles.accountLabel}>{user.accountLabel}</p>
+          <button type="button" className={styles.update} disabled={busy} onClick={commitProfile}>
+            {saved ? t("profileSaved", lang) : t("updateProfile", lang)}
+          </button>
         </section>
+
+        <hr className={styles.divider} />
 
         <section className={styles.prefs}>
           <h3 className={styles.sectionLabel}>{t("preferences", lang)}</h3>
-
-          <button
-            type="button"
-            className={styles.prefCard}
-            aria-expanded={openPref === "language"}
-            onClick={() => setOpenPref((v) => (v === "language" ? null : "language"))}
-          >
-            <span>{t("prefLanguage", lang)}</span>
-            <strong>{prefs.language === "zh" ? "中文" : "English"}</strong>
-          </button>
-          {openPref === "language" && (
+          <div className={styles.box}>
+            <span className={styles.boxLabel}>{t("prefLanguage", lang)}</span>
             <div className={styles.prefBody} role="group" aria-label={t("prefLanguage", lang)}>
               {(["zh", "en"] as const).map((code) => (
                 <button
                   key={code}
                   type="button"
                   className={`${styles.choice} ${prefs.language === code ? styles.choiceActive : ""}`}
-                  onClick={() => savePref({ language: code })}
+                  onClick={() => setPrefs(mergePreferences(prefs, { language: code }))}
                 >
                   {code === "zh" ? "中文" : "English"}
                 </button>
               ))}
             </div>
-          )}
-
-          <button
-            type="button"
-            className={styles.prefCard}
-            aria-expanded={openPref === "defaultMode"}
-            onClick={() => setOpenPref((v) => (v === "defaultMode" ? null : "defaultMode"))}
-          >
-            <span>{t("prefDefaultMode", lang)}</span>
-            <strong>{getMode(prefs.defaultMode).name}</strong>
-          </button>
-          {openPref === "defaultMode" && (
+          </div>
+          <div className={styles.box}>
+            <span className={styles.boxLabel}>{t("prefDefaultMode", lang)}</span>
             <div className={styles.prefBody} role="group" aria-label={t("prefDefaultMode", lang)}>
               {ACTIVE_MODES.map((mode: MapMode) => (
                 <button
                   key={mode}
                   type="button"
                   className={`${styles.choice} ${prefs.defaultMode === mode ? styles.choiceActive : ""}`}
-                  onClick={() => savePref({ defaultMode: mode })}
+                  onClick={() => setPrefs(mergePreferences(prefs, { defaultMode: mode }))}
                 >
                   {getMode(mode).name}
                 </button>
               ))}
             </div>
-          )}
+          </div>
+        </section>
+
+        <section className={styles.prefs}>
+          <h3 className={styles.sectionLabel}>{t("careerPrefs", lang)}</h3>
+          <div className={styles.box}>
+            <span className={styles.boxLabel}>{t("seekingStatus", lang)}</span>
+            <div className={styles.prefBody} role="group" aria-label={t("seekingStatus", lang)}>
+              {STATUSES.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`${styles.choice} ${prefs.career.status === item.id ? styles.choiceActive : ""}`}
+                  onClick={() => updateCareer({ status: item.id })}
+                >
+                  {t(item.labelKey, lang)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={styles.box}>
+            <span className={styles.boxLabel}>{t("careerFamilies", lang)}</span>
+            <div className={styles.prefBody} role="group" aria-label={t("careerFamilies", lang)}>
+              {FAMILIES.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`${styles.choice} ${prefs.career.families.includes(item.id) ? styles.choiceActive : ""}`}
+                  onClick={() => updateCareer({ families: toggleValue(prefs.career.families, item.id) })}
+                >
+                  {t(item.labelKey, lang)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={styles.box}>
+            <span className={styles.boxLabel}>{t("careerIndustries", lang)}</span>
+            <div className={styles.prefBody} role="group" aria-label={t("careerIndustries", lang)}>
+              {INDUSTRY_OPTIONS.map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  className={`${styles.choice} ${prefs.career.industries.includes(item.value) ? styles.choiceActive : ""}`}
+                  onClick={() => updateCareer({ industries: toggleValue(prefs.career.industries, item.value) })}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className={styles.box}>
+            <span className={styles.boxLabel}>{t("careerStrengths", lang)}</span>
+            <div className={styles.prefBody} role="group" aria-label={t("careerStrengths", lang)}>
+              {STRENGTHS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`${styles.choice} ${prefs.career.strengths.includes(item.id) ? styles.choiceActive : ""}`}
+                  onClick={() => updateCareer({ strengths: toggleValue(prefs.career.strengths, item.id) })}
+                >
+                  {t(item.labelKey, lang)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.prefs}>
+          <h3 className={styles.sectionLabel}>{t("notifications", lang)}</h3>
+          <div className={styles.box}>
+            {(
+              [
+                ["emailJobs", "notifyEmailJobs"],
+                ["smsJobs", "notifySmsJobs"],
+                ["emailSchools", "notifyEmailSchools"],
+                ["smsSchools", "notifySmsSchools"],
+              ] as const
+            ).map(([key, labelKey]) => (
+              <label key={key} className={styles.toggleRow}>
+                <span>{t(labelKey, lang)}</span>
+                <input
+                  type="checkbox"
+                  checked={prefs.notifications[key]}
+                  onChange={(e) => updateNotifications({ [key]: e.target.checked })}
+                />
+              </label>
+            ))}
+          </div>
         </section>
       </aside>
+
+      <AvatarCropper
+        open={cropOpen}
+        lang={lang}
+        onClose={() => setCropOpen(false)}
+        onSave={(dataUrl) => setAvatarUrl(dataUrl)}
+      />
     </div>
   );
 }

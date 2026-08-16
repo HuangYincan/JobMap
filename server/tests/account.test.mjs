@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DEFAULT_PREFERENCES, initialsFromName, resolvePreferences } from '../src/lib/account.ts';
+import { DEFAULT_PREFERENCES, emptyPreferences, initialsFromName, mergePreferences, resolvePreferences } from '../src/lib/account.ts';
 import {
   addHistory as storeAddHistory,
   listHistory as storeListHistory,
@@ -25,7 +25,19 @@ import { seedRecruitmentAdapter } from '../src/lib/recruitment-adapters/seed.ts'
 
 test('guest preferences default to work mode and browser language', () => {
   assert.equal(DEFAULT_PREFERENCES.defaultMode, 'work');
-  assert.deepEqual(resolvePreferences(null, 'en'), { language: 'en', defaultMode: 'work' });
+  assert.deepEqual(resolvePreferences(null, 'en'), emptyPreferences('en'));
+});
+
+test('mergePreferences deep-merges career and notifications', () => {
+  const next = mergePreferences(
+    { language: 'zh', defaultMode: 'work' },
+    { career: { status: 'open', strengths: ['frontend'] }, notifications: { emailJobs: true } },
+  );
+  assert.equal(next.career.status, 'open');
+  assert.deepEqual(next.career.strengths, ['frontend']);
+  assert.deepEqual(next.career.families, ['intern', 'campus']);
+  assert.equal(next.notifications.emailJobs, true);
+  assert.equal(next.notifications.smsJobs, false);
 });
 
 test('initialsFromName uses two letters when possible', () => {
@@ -55,6 +67,17 @@ test('otp login creates a session and search history is per user', () => {
   const renamed = updateUser(user.id, { displayName: 'Alex Kim', preferences: { language: 'en' } });
   assert.equal(renamed?.displayName, 'Alex Kim');
   assert.equal(renamed?.preferences.language, 'en');
+  assert.equal(renamed?.preferences.career.status, 'casually');
+  assert.equal(renamed?.preferences.notifications.emailJobs, false);
+
+  const career = updateUser(user.id, {
+    preferences: { career: { status: 'open', strengths: ['algorithm'] }, notifications: { smsJobs: true } },
+  });
+  assert.equal(career?.preferences.career.status, 'open');
+  assert.deepEqual(career?.preferences.career.strengths, ['algorithm']);
+  assert.equal(career?.preferences.language, 'en');
+  assert.equal(career?.preferences.notifications.smsJobs, true);
+  assert.equal(career?.preferences.notifications.emailJobs, false);
 
   destroySession(token);
   assert.equal(getSessionUser(token), null);

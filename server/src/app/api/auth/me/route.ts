@@ -19,7 +19,10 @@ export async function PATCH(request: Request) {
   let body: {
     displayName?: string;
     avatarUrl?: string;
-    preferences?: { language?: Language; defaultMode?: MapMode };
+    preferences?: Partial<import('@/lib/account').UserPreferences> & {
+      language?: Language;
+      defaultMode?: MapMode;
+    };
   };
   try {
     body = (await request.json()) as typeof body;
@@ -33,6 +36,8 @@ export async function PATCH(request: Request) {
         defaultMode: body.preferences.defaultMode
           ? canonicalMode(body.preferences.defaultMode)
           : undefined,
+        notifications: body.preferences.notifications,
+        career: body.preferences.career,
       }
     : undefined;
 

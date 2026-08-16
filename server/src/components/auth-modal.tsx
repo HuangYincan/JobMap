@@ -12,7 +12,15 @@ export interface AuthModalProps {
   onSignedIn: () => void;
 }
 
-type AuthTab = "phone" | "email" | "github";
+type AuthTab = "phone" | "email" | "other";
+type SocialProvider = Extract<AuthProvider, "github" | "google" | "x" | "wechat">;
+
+const SOCIAL: { id: SocialProvider; labelKey: "authGithub" | "authGoogle" | "authX" | "authWechat" }[] = [
+  { id: "github", labelKey: "authGithub" },
+  { id: "google", labelKey: "authGoogle" },
+  { id: "x", labelKey: "authX" },
+  { id: "wechat", labelKey: "authWechat" },
+];
 
 export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
   const titleId = useId();
@@ -45,8 +53,6 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
 
   if (!open) return null;
 
-  const provider: AuthProvider = tab === "github" ? "github" : tab;
-
   const sendCode = async () => {
     setBusy(true);
     setError(null);
@@ -54,7 +60,7 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
       const res = await fetch("/api/auth/otp/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, target }),
+        body: JSON.stringify({ provider: tab, target }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.message || "send failed");
@@ -66,14 +72,14 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
     }
   };
 
-  const verify = async () => {
+  const signIn = async () => {
     setBusy(true);
     setError(null);
     try {
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, target, code }),
+        body: JSON.stringify({ provider: tab, target, code }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.message || "verify failed");
@@ -86,17 +92,21 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
     }
   };
 
-  const github = async () => {
+  const social = async (provider: SocialProvider) => {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/github", { method: "POST" });
+      const res = await fetch("/api/auth/oauth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
+      });
       const body = await res.json();
-      if (!res.ok) throw new Error(body.message || "github failed");
+      if (!res.ok) throw new Error(body.message || "oauth failed");
       onSignedIn();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "github failed");
+      setError(err instanceof Error ? err.message : "oauth failed");
     } finally {
       setBusy(false);
     }
@@ -104,6 +114,9 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
 
   return (
     <div className={styles.overlay} onClick={onClose} role="presentation">
+      <div className={styles.orbA} aria-hidden="true" />
+      <div className={styles.orbB} aria-hidden="true" />
+      <div className={styles.orbC} aria-hidden="true" />
       <div
         className={styles.card}
         role="dialog"
@@ -116,46 +129,70 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
             <path d="M6 6l12 12M18 6L6 18" />
           </svg>
         </button>
-        <h2 id={titleId} className={styles.title}>{t("signInTitle", lang)}</h2>
-        <p className={styles.lead}>{t("signInLead", lang)}</p>
 
-        <div className={styles.tabs} role="tablist">
-          {(["phone", "email", "github"] as const).map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={tab === id}
-              className={`${styles.tab} ${tab === id ? styles.tabActive : ""}`}
-              onClick={() => {
-                setTab(id);
-                setError(null);
-                setSent(false);
-                setCode("");
-              }}
-            >
-              {id === "phone" ? t("authPhone", lang) : id === "email" ? t("authEmail", lang) : t("authGithub", lang)}
-            </button>
-          ))}
-        </div>
+        <aside className={styles.promo} aria-hidden="true">
+          <div className={styles.promoGlass}>
+            <div className={styles.mark}>DM</div>
+            <p className={styles.promoName}>Domain Map</p>
+          </div>
+        </aside>
 
-        {tab === "github" ? (
-          <button type="button" className={styles.primary} disabled={busy} onClick={github}>
-            {t("continueGithub", lang)}
-          </button>
-        ) : (
-          <>
-            <label className={styles.field}>
-              <span>{tab === "phone" ? t("phoneNumber", lang) : t("emailAddress", lang)}</span>
-              <input
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                inputMode={tab === "phone" ? "tel" : "email"}
-                autoComplete={tab === "phone" ? "tel" : "email"}
-                placeholder={tab === "phone" ? "+86 13800000000" : "you@example.com"}
-              />
-            </label>
-            {sent && (
+        <div className={styles.form}>
+          <nav className={styles.methods} aria-label={t("authMethods", lang)}>
+            {(["phone", "email", "other"] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={`${styles.method} ${tab === id ? styles.methodActive : ""}`}
+                onClick={() => {
+                  setTab(id);
+                  setError(null);
+                  setSent(false);
+                  setCode("");
+                }}
+              >
+                {id === "phone" ? t("authPhone", lang) : id === "email" ? t("authEmail", lang) : t("authOther", lang)}
+              </button>
+            ))}
+          </nav>
+          <h2 id={titleId} className={styles.srOnly}>{t("signIn", lang)}</h2>
+
+          {tab === "other" ? (
+            <div className={styles.socialGrid}>
+              {SOCIAL.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={styles.social}
+                  disabled={busy}
+                  onClick={() => social(item.id)}
+                >
+                  {t(item.labelKey, lang)}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <>
+              <label className={styles.field}>
+                <span>{tab === "phone" ? t("phoneNumber", lang) : t("emailAddress", lang)}</span>
+                <div className={styles.inputShell}>
+                  <input
+                    value={target}
+                    onChange={(e) => setTarget(e.target.value)}
+                    inputMode={tab === "phone" ? "tel" : "email"}
+                    autoComplete={tab === "phone" ? "tel" : "email"}
+                    placeholder={tab === "phone" ? "+86 13800000000" : "you@example.com"}
+                  />
+                  <button
+                    type="button"
+                    className={styles.inlineSend}
+                    disabled={busy || !target.trim()}
+                    onClick={sendCode}
+                  >
+                    {sent ? t("resendCode", lang) : t("sendCode", lang)}
+                  </button>
+                </div>
+              </label>
               <label className={styles.field}>
                 <span>{t("otpCode", lang)}</span>
                 <input
@@ -166,21 +203,19 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
                   placeholder="000000"
                 />
               </label>
-            )}
-            {!sent ? (
-              <button type="button" className={styles.primary} disabled={busy || !target.trim()} onClick={sendCode}>
-                {t("sendCode", lang)}
+              <button
+                type="button"
+                className={styles.login}
+                disabled={busy || !target.trim() || !code.trim()}
+                onClick={signIn}
+              >
+                {t("signIn", lang)}
               </button>
-            ) : (
-              <button type="button" className={styles.primary} disabled={busy || !code.trim()} onClick={verify}>
-                {t("verifyCode", lang)}
-              </button>
-            )}
-            <p className={styles.hint}>{t("otpDemoHint", lang)}</p>
-          </>
-        )}
+            </>
+          )}
 
-        {error && <p className={styles.error}>{error}</p>}
+          {error && <p className={styles.error}>{error}</p>}
+        </div>
       </div>
     </div>
   );

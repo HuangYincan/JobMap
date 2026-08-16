@@ -8,7 +8,7 @@
 
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import type { AccountUser, AuthProvider, SearchHistoryEntry, UserPreferences } from './account.ts';
-import { DEFAULT_PREFERENCES } from './account.ts';
+import { emptyPreferences, mergePreferences } from './account.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const OTP_TTL_MS = 10 * 60 * 1000;
@@ -90,7 +90,7 @@ export function upsertIdentity(input: {
     phone,
     email,
     provider: input.provider,
-    preferences: { ...DEFAULT_PREFERENCES },
+    preferences: emptyPreferences(),
     createdAt: Date.now(),
   };
   users.set(id, user);
@@ -104,7 +104,7 @@ function publicUser(user: StoredUser): AccountUser {
   return {
     ...rest,
     accountLabel: accountLabel(rest),
-    preferences: { ...user.preferences },
+    preferences: mergePreferences(user.preferences),
   };
 }
 
@@ -143,7 +143,7 @@ export function updateUser(
   }
   if (patch.avatarUrl !== undefined) user.avatarUrl = patch.avatarUrl;
   if (patch.preferences) {
-    user.preferences = { ...user.preferences, ...patch.preferences };
+    user.preferences = mergePreferences(user.preferences, patch.preferences);
   }
   users.set(userId, user);
   return publicUser(user);
