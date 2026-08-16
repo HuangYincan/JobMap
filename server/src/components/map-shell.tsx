@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./map-shell.module.css";
 import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
 import type { FilterState, MapMode, POI } from "@/lib/types";
-import { getMode } from "@/lib/modes";
+import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
@@ -956,7 +956,8 @@ export function MapShell() {
 
   // 模式切换：当前模式写入会话缓存；目标模式有缓存则还原，不重搜
   const handleModeChange = useCallback((nextMode: MapMode) => {
-    if (nextMode === mode) return;
+    const target = canonicalMode(nextMode);
+    if (target === mode) return;
     writeModeCache({
       mode,
       catalog: catalogRef.current,
@@ -967,7 +968,7 @@ export function MapShell() {
       sort,
     });
 
-    setMode(nextMode);
+    setMode(target);
     setSelectedId(null);
     setHighlightedId(null);
     setSuggestions([]);
@@ -975,7 +976,7 @@ export function MapShell() {
     setMobileJd(null);
     setMobileFiltersOpen(false);
 
-    const cached = readModeCache(nextMode);
+    const cached = readModeCache(target);
     if (cached) {
       skipFetchRef.current = true;
       catalogRef.current = cached.catalog;
@@ -984,7 +985,7 @@ export function MapShell() {
       setSearchOrigin(cached.searchOrigin ?? userLocation);
       setQuery(cached.query);
       setFilters(cached.filters);
-      setSort(cached.sort || getMode(nextMode).defaultSort);
+      setSort(cached.sort || getMode(target).defaultSort);
       setLoading(false);
       return;
     }
@@ -994,7 +995,7 @@ export function MapShell() {
     setPageOffset(0);
     setQuery("");
     setFilters({});
-    setSort(getMode(nextMode).defaultSort);
+    setSort(getMode(target).defaultSort);
     setSearchOrigin(userLocation);
   }, [mode, pageOffset, searchOrigin, query, filters, sort, userLocation]);
 
@@ -1202,11 +1203,20 @@ export function MapShell() {
     }
   };
 
-  const handlePickRecent = (entry: SearchHistoryEntry) => {
-    setQuery(entry.query);
-    setMode(entry.mode);
+  const openExploreSearch = useCallback((nextQuery: string) => {
+    setQuery(nextQuery);
     setRailPanel("explore");
-  };
+    setMobileSheet("explore");
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      setDrawer((current) => (current === "mini" ? "half" : current));
+    }
+  }, []);
+
+  const handlePickRecent = useCallback((entry: SearchHistoryEntry) => {
+    const replay = replayRecentSearch(mode, entry);
+    if (replay.modeChanged) handleModeChange(replay.mode);
+    openExploreSearch(replay.query);
+  }, [mode, handleModeChange, openExploreSearch]);
 
   const cycleDrawer = () => setDrawer((current) => current === "mini" ? "half" : current === "half" ? "full" : "mini");
 
@@ -1428,10 +1438,7 @@ export function MapShell() {
           shifted={sidebarOpen}
           onClose={() => setRailPanel(null)}
           onPick={handlePickRecent}
-          onPickTrending={(item) => {
-            setQuery(item.query);
-            setRailPanel("explore");
-          }}
+          onPickTrending={(item) => openExploreSearch(item.query)}
           onClear={user ? () => {
             void fetch("/api/me/search-history", { method: "DELETE" }).then(refreshHistory);
           } : undefined}

@@ -290,6 +290,19 @@ export function canonicalMode(mode: MapMode): MapMode {
   return mode === 'internship' ? 'work' : mode;
 }
 
+/** Recent 回放：切到记录当时的模式（internship → work），再带上那次关键词。 */
+export function replayRecentSearch(
+  currentMode: MapMode,
+  entry: { query: string; mode: MapMode },
+): { mode: MapMode; query: string; modeChanged: boolean } {
+  const mode = canonicalMode(entry.mode);
+  return {
+    mode,
+    query: entry.query,
+    modeChanged: mode !== canonicalMode(currentMode),
+  };
+}
+
 /** 按 id 取模式配置 */
 export function getMode(mode: MapMode): ModeConfig {
   return MODES[canonicalMode(mode)] ?? MODES.domain;

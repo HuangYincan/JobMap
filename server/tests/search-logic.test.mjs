@@ -18,7 +18,7 @@ import {
 } from '../src/lib/search.ts';
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
 import { resolveApplyLink, withDistance } from '../src/lib/types.ts';
-import { ACTIVE_MODES, getMode } from '../src/lib/modes.ts';
+import { ACTIVE_MODES, getMode, replayRecentSearch } from '../src/lib/modes.ts';
 import { positionMatchesTaxonomy } from '../src/lib/job-taxonomy.ts';
 import { trendingForMode } from '../src/lib/trending-search.ts';
 
@@ -170,6 +170,19 @@ test('active modes are map + work, internship aliases to work', () => {
   assert.equal(getMode('internship').id, 'work');
   assert.equal(getMode('work').name, '工作');
   assert.ok(getMode('work').filters.some((f) => f.type === 'taxonomy' && f.key === 'jobTaxonomy'));
+});
+
+test('replayRecentSearch canonicalizes internship and flags a mode hop', () => {
+  assert.deepEqual(replayRecentSearch('work', { query: 'Java #大厂', mode: 'internship' }), {
+    mode: 'work',
+    query: 'Java #大厂',
+    modeChanged: false,
+  });
+  assert.deepEqual(replayRecentSearch('domain', { query: '西湖', mode: 'work' }), {
+    mode: 'work',
+    query: '西湖',
+    modeChanged: true,
+  });
 });
 
 test('applyFilters: jobTaxonomy plugin keeps companies with matching positions', () => {
