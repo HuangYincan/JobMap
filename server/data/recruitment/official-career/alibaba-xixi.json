@@ -1,7 +1,11 @@
 {
   "slug": "alibaba-xixi",
   "name": "阿里巴巴",
-  "industries": ["internet", "ecommerce", "ai"],
+  "industries": [
+    "internet",
+    "ecommerce",
+    "ai"
+  ],
   "scale": "bigtech",
   "careerUrl": "https://talent.alibaba.com/",
   "sites": [
@@ -9,8 +13,8 @@
       "id": "alibaba-xixi-site",
       "name": "阿里巴巴",
       "location": {
-        "lng": 120.023,
-        "lat": 30.279,
+        "lng": 120.024,
+        "lat": 30.275,
         "address": "余杭区文一西路969号"
       }
     }
@@ -21,11 +25,20 @@
       "title": "前端开发工程师（2026 秋招）",
       "siteId": "alibaba-xixi-site",
       "family": "campus",
-      "taxonomy": { "family": "campus", "campusSeason": "autumn" },
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
       "department": "淘天集团",
-      "salary": { "min": 18, "max": 28 },
+      "salary": {
+        "min": 18,
+        "max": 28
+      },
       "education": "本科",
-      "skills": ["React", "TypeScript"],
+      "skills": [
+        "React",
+        "TypeScript"
+      ],
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://talent.alibaba.com/"

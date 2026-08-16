@@ -11,7 +11,8 @@
     "test:coverage": "node --experimental-strip-types --experimental-test-coverage --test tests/*.test.mjs",
     "import:seed": "node scripts/plan-seed-import.mjs",
     "import:seed:apply": "node scripts/plan-seed-import.mjs --apply",
-    "geocode:sites": "node scripts/plan-site-geocode.mjs"
+    "geocode:sites": "node scripts/plan-site-geocode.mjs",
+    "audit:pins": "node --experimental-strip-types --no-warnings scripts/audit-pin-locations.mjs"
   },
   "dependencies": {
     "next": "15.5.23",

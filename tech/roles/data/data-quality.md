@@ -24,6 +24,16 @@
 - Robots: only checked per-fetch; 404 sites return no robots (allowed by fallback).
 - Robustness fixes found by the real sweep: transient SSL/network errors and a misspelled charset (`uft-8`) no longer abort the run; `javascript:` / nav-CTA / over-long links are filtered.
 
+## Pin location audit (2026-08-17, AMap Web services)
+
+- **14/14 pins PASS** (`npm run audit:pins`: geocode 门牌地址 + regeo 存储坐标，全部偏移 < 0.4km、区划匹配)。
+- 修正 **11 家**坐标/地址（此前多数坐标与地址不符，最严重偏差 24km）：
+  - 地址+坐标修正：蚂蚁（西溪路556号蚂蚁Z空间）、滴滴（景兴路896号EFC）、深度求索（拱墅区环城北路169号汇金国际大厦）、贝达（临平区兴中路355号）、泰格医药（滨江区聚工路19号盛大科技园A座18层）、群核科技（西湖区余杭塘路515号莱茵·矩阵国际）
+  - 仅坐标修正：字节跳动、旷视、同花顺、新华三、之江实验室、阿里巴巴（微调）
+  - 网易、零跑原数据正确，未动
+- 核查方式：高德 Web 服务（geocoding / regeocoding / POI 搜索）+ 工商公开地址（启信宝/工商记录）。岗位→地址第三层核查通过（所有投递链接为公司官网或官方 ATS 域名）。
+- 数据已同步：seed-data.ts、official-career drops、PostGIS（`import:seed:apply` 重导）。
+
 ## Remediation
 
 - **2026-08-17 产品决策：工作模式只展示真实数据。** 示例岗位（seed / official-career 策展标题）从所有读路径过滤（`isAuthenticPositionId`），DB 中 110 条示例行标记 `closed`（可逆）。地图从 51 pin 收敛到 **14 pin，全部携带真实在招信号**（11 锚点雷达岗位 + deepseek/megvii/betta/tigermed 官网入口）。

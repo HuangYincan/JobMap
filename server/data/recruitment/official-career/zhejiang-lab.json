@@ -1,7 +1,10 @@
 {
   "slug": "zhejiang-lab",
   "name": "之江实验室",
-  "industries": ["ai", "hardware"],
+  "industries": [
+    "ai",
+    "hardware"
+  ],
   "scale": "enterprise",
   "careerUrl": "https://www.zhejianglab.com/",
   "logoEmoji": "🔬",
@@ -11,8 +14,8 @@
       "id": "zhejiang-lab-site",
       "name": "之江实验室",
       "location": {
-        "lng": 120.007,
-        "lat": 30.282,
+        "lng": 119.896,
+        "lat": 30.262,
         "address": "余杭区中泰街道科创大道之江实验室"
       }
     }
@@ -23,10 +26,16 @@
       "title": "智能计算科研助理",
       "siteId": "zhejiang-lab-site",
       "family": "intern",
-      "taxonomy": { "family": "intern", "internKind": "daily" },
+      "taxonomy": {
+        "family": "intern",
+        "internKind": "daily"
+      },
       "department": "智能计算",
       "education": "硕士",
-      "skills": ["Python", "PyTorch"],
+      "skills": [
+        "Python",
+        "PyTorch"
+      ],
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.zhejianglab.com/"

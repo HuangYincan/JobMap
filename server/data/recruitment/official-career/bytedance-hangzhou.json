@@ -1,7 +1,11 @@
 {
   "slug": "bytedance-hangzhou",
   "name": "字节跳动",
-  "industries": ["internet", "ai", "ecommerce"],
+  "industries": [
+    "internet",
+    "ai",
+    "ecommerce"
+  ],
   "scale": "bigtech",
   "careerUrl": "https://jobs.bytedance.com/",
   "sites": [
@@ -9,8 +13,8 @@
       "id": "bytedance-hangzhou-site",
       "name": "字节跳动",
       "location": {
-        "lng": 120.117,
-        "lat": 30.289,
+        "lng": 120.003,
+        "lat": 30.281,
         "address": "余杭区向往街1118号"
       }
     }
@@ -21,11 +25,20 @@
       "title": "前端开发工程师（2026 秋招）",
       "siteId": "bytedance-hangzhou-site",
       "family": "campus",
-      "taxonomy": { "family": "campus", "campusSeason": "autumn" },
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
       "department": "抖音",
-      "salary": { "min": 18, "max": 30 },
+      "salary": {
+        "min": 18,
+        "max": 30
+      },
       "education": "本科",
-      "skills": ["React", "TypeScript"],
+      "skills": [
+        "React",
+        "TypeScript"
+      ],
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://jobs.bytedance.com/"

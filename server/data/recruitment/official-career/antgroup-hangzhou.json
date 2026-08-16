@@ -1,7 +1,10 @@
 {
   "slug": "antgroup-hangzhou",
   "name": "蚂蚁集团",
-  "industries": ["finance", "internet"],
+  "industries": [
+    "finance",
+    "internet"
+  ],
   "scale": "bigtech",
   "careerUrl": "https://talent.antgroup.com/",
   "sites": [
@@ -9,9 +12,9 @@
       "id": "antgroup-hangzhou-site",
       "name": "蚂蚁集团",
       "location": {
-        "lng": 120.028,
-        "lat": 30.273,
-        "address": "西湖区天目山路398号"
+        "lng": 120.108,
+        "lat": 30.267,
+        "address": "西湖区西溪路556号蚂蚁Z空间"
       }
     }
   ],
@@ -21,11 +24,20 @@
       "title": "前端开发工程师（2026 秋招）",
       "siteId": "antgroup-hangzhou-site",
       "family": "campus",
-      "taxonomy": { "family": "campus", "campusSeason": "autumn" },
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
       "department": "支付宝",
-      "salary": { "min": 18, "max": 30 },
+      "salary": {
+        "min": 18,
+        "max": 30
+      },
       "education": "本科",
-      "skills": ["React", "TypeScript"],
+      "skills": [
+        "React",
+        "TypeScript"
+      ],
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://talent.antgroup.com/"

@@ -145,7 +145,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '阿里巴巴',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.023, lat: 30.279, address: '余杭区文一西路969号' },
+    location: { lng: 120.024, lat: 30.275, address: '余杭区文一西路969号' },
     company: {
       name: '阿里巴巴',
       industries: ['internet', 'ecommerce', 'ai'],
@@ -300,7 +300,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '字节跳动',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.117, lat: 30.289, address: '余杭区向往街1118号' },
+    location: { lng: 120.003, lat: 30.281, address: '余杭区向往街1118号' },
     company: {
       name: '字节跳动',
       industries: ['internet', 'ai', 'ecommerce'],
@@ -394,7 +394,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '蚂蚁集团',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.028, lat: 30.273, address: '西湖区天目山路398号' },
+    location: { lng: 120.108, lat: 30.267, address: '西湖区西溪路556号蚂蚁Z空间' },
     company: {
       name: '蚂蚁集团',
       industries: ['finance', 'internet'],
@@ -436,7 +436,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '滴滴',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.088, lat: 30.313, address: '余杭区欧美金融城' },
+    location: { lng: 120.003, lat: 30.281, address: '余杭区景兴路896号欧美金融城(EFC)' },
     company: {
       name: '滴滴',
       industries: ['internet', 'transport'],
@@ -532,7 +532,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '深度求索',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.088, lat: 30.298, address: '滨江区西兴街道物联网街' },
+    location: { lng: 120.173, lat: 30.274, address: '拱墅区环城北路169号汇金国际大厦' },
     company: {
       name: '深度求索',
       industries: ['ai'],
@@ -667,7 +667,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '旷视科技',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.097, lat: 30.258, address: '西湖区文一西路98号数娱大厦' },
+    location: { lng: 120.112, lat: 30.288, address: '西湖区文一西路98号数娱大厦' },
     company: {
       name: '旷视科技',
       industries: ['ai', 'hardware'],
@@ -791,7 +791,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '同花顺',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.131, lat: 30.274, address: '余杭区同顺街18号' },
+    location: { lng: 120.046, lat: 30.293, address: '余杭区同顺街18号' },
     company: {
       name: '同花顺',
       industries: ['finance', 'internet'],
@@ -884,7 +884,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '新华三',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.211, lat: 30.191, address: '滨江区长河路466号' },
+    location: { lng: 120.198, lat: 30.185, address: '滨江区长河路466号' },
     company: {
       name: '新华三',
       industries: ['hardware', 'internet'],
@@ -1072,7 +1072,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '贝达药业',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.305, lat: 30.418, address: '余杭区文一西路291号' },
+    location: { lng: 120.258, lat: 30.438, address: '临平区兴中路355号' },
     company: {
       name: '贝达药业',
       industries: ['biotech'],
@@ -1103,7 +1103,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '泰格医药',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.162, lat: 30.262, address: '西湖区西溪路698号' },
+    location: { lng: 120.213, lat: 30.182, address: '滨江区聚工路19号盛大科技园A座18层' },
     company: {
       name: '泰格医药',
       industries: ['biotech'],
@@ -1720,7 +1720,7 @@ const WORK_SEED_RAW: RecruitmentPOI[] = [
     name: '群核科技',
     mode: 'internship',
     source: 'seed',
-    location: { lng: 120.102, lat: 30.281, address: '西湖区西溪谷国际商务中心' },
+    location: { lng: 120.109, lat: 30.293, address: '西湖区余杭塘路515号莱茵·矩阵国际' },
     company: {
       name: '群核科技',
       industries: ['internet', 'ai'],
