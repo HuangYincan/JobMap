@@ -1745,6 +1745,7 @@ export function MapShell() {
               </button>
             </div>
             {mobileSheet === "explore" && (
+            <div className={styles.mobileSearchStack}>
             <div className={styles.mobileSearchRow}>
               <div className={styles.mobileSearch}>
                 <Icon name="search" />
@@ -1755,7 +1756,7 @@ export function MapShell() {
                   role="combobox"
                   aria-autocomplete="list"
                   aria-controls="mobile-suggest"
-                  aria-expanded={suggestions.length > 0}
+                  aria-expanded={drawer !== "mini" && suggestions.length > 0}
                   aria-activedescendant={mobileSuggestIndex >= 0 ? `mobile-suggest-${mobileSuggestIndex}` : undefined}
                   onChange={(e) => {
                     setQuery(e.target.value);
@@ -1801,8 +1802,7 @@ export function MapShell() {
                 )}
               </button>
             </div>
-            )}
-            {mobileSheet === "explore" && suggestions.length > 0 && (
+            {drawer !== "mini" && suggestions.length > 0 && (
               <ul id="mobile-suggest" className={styles.mobileSuggestions} role="listbox" aria-label="Search suggestions">
                 {suggestions.map((s, i) => (
                   <li key={`${s.id || s.name}-${i}`} id={`mobile-suggest-${i}`} role="option" aria-selected={i === mobileSuggestIndex}>
@@ -1822,6 +1822,8 @@ export function MapShell() {
                   </li>
                 ))}
               </ul>
+            )}
+            </div>
             )}
             <div className={styles.drawerContent}>
               {mobileSheet === "account" ? (

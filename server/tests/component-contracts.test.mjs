@@ -88,6 +88,8 @@ test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   assert.match(shell, /mobileSheet === "account"/);
   assert.match(shell, /openMobileAccount/);
   assert.match(shell, /mobileSearchRow/);
+  assert.match(shell, /mobileSearchStack/);
+  assert.match(shell, /drawer !== "mini" && suggestions\.length > 0/);
   assert.match(shell, /mobileJd && isRecruitmentPOI/);
   assert.match(css, /\.mobileChips/);
   assert.match(css, /\.mobileSearchRow/);

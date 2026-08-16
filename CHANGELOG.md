@@ -37,7 +37,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Work `deadline` date filter: keep companies whose jobs close on or after the picked day (or have no date). Same key as the existing deadline sort.
 - Official-career drops for Tencent / NetEase / Huawei / Ant Hangzhou offices: 2026 autumn frontend unions onto the existing seed pin (`${slug}-site`). No second map marker.
 - Avatar crop dialog portals to `document.body` so Profile’s `pointer-events: none` cluster cannot swallow drag / zoom / save.
-- Mobile drawer: search suggestions sit under the field; chips have wrap + gap; toolbar/search avatar opens an in-drawer account sheet (Profile + Saved / Layers / Recent). Job tap replaces the company page with `JdPanel` (no longer `display: none` at 767px).
+- Mobile search suggestions appear only in half/full as a liquid-glass overlay over the list (`mobileSearchStack`), not an in-flow block.
 
 ### Changed
 
