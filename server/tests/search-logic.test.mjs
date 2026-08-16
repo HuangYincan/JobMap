@@ -130,6 +130,21 @@ test('applyFilters: roleFamily keeps companies with a matching function', () => 
   assert.deepEqual(ops.filters.roleFamily, ['ops']);
 });
 
+test('applyFilters: deadline date keeps jobs still open on that day', () => {
+  const soon = {
+    ...INTERNSHIP_SEED[0],
+    id: 'closes-sept',
+    positions: INTERNSHIP_SEED[0].positions.map((pos) => ({ ...pos, deadline: '2026-09-01' })),
+  };
+  const later = {
+    ...INTERNSHIP_SEED[1],
+    id: 'closes-dec',
+    positions: INTERNSHIP_SEED[1].positions.map((pos) => ({ ...pos, deadline: '2026-12-01' })),
+  };
+  const kept = applyFilters([soon, later], { deadline: '2026-10-01' });
+  assert.deepEqual(kept.map((p) => p.id), ['closes-dec']);
+});
+
 test('sortPOIs: deadline ranks the soonest close date first', () => {
   const soon = {
     ...INTERNSHIP_SEED[0],

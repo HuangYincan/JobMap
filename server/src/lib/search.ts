@@ -574,6 +574,16 @@ export function matchFilter(poi: POI, key: string, value: any): boolean {
       if (!isRecruitmentPOI(poi)) return true;
       return poi.positions.some((pos) => pos.status === 'open');
     }
+    case 'deadline': {
+      if (!isRecruitmentPOI(poi)) return true;
+      const cutoff = Date.parse(String(value));
+      if (!Number.isFinite(cutoff)) return true;
+      return poi.positions.some((pos) => {
+        if (!pos.deadline) return true;
+        const stamp = Date.parse(pos.deadline);
+        return Number.isFinite(stamp) && stamp >= cutoff;
+      });
+    }
     case 'district': {
       const sel = Array.isArray(value)
         ? value.filter((item): item is string => typeof item === 'string')
@@ -595,6 +605,15 @@ export function applyFilters(pois: POI[], filters: FilterState): POI[] {
 }
 
 // ---- 排序 ----
+
+function soonestDeadline(poi: POI): number {
+  if (!isRecruitmentPOI(poi)) return Number.MAX_SAFE_INTEGER;
+  return poi.positions.reduce((soonest, pos) => {
+    if (!pos.deadline) return soonest;
+    const stamp = Date.parse(pos.deadline);
+    return Number.isFinite(stamp) ? Math.min(soonest, stamp) : soonest;
+  }, Number.MAX_SAFE_INTEGER);
+}
 
 function priceSortValue(poi: POI): number {
   if (isRecruitmentPOI(poi)) return Number.MAX_SAFE_INTEGER;
@@ -645,11 +664,7 @@ function sortValue(poi: POI, key: string, query?: string): number {
       return isRecruitmentPOI(poi) ? poi.positions.length : 0;
     case 'deadline': {
       if (!isRecruitmentPOI(poi)) return Number.MAX_SAFE_INTEGER;
-      return poi.positions.reduce((soonest, pos) => {
-        if (!pos.deadline) return soonest;
-        const stamp = Date.parse(pos.deadline);
-        return Number.isFinite(stamp) ? Math.min(soonest, stamp) : soonest;
-      }, Number.MAX_SAFE_INTEGER);
+      return soonestDeadline(poi);
     }
     case 'popularity': {
       if (isRecruitmentPOI(poi)) {

@@ -67,6 +67,7 @@ test('GET /api/filter-options contract: unknown mode 400, work has taxonomy + di
   assert.ok(keys.includes('onlyOpen'));
   assert.ok(keys.includes('education'));
   assert.ok(keys.includes('roleFamily'));
+  assert.ok(keys.includes('deadline'));
   assert.equal(getMode('internship').filters, MODES.work.filters);
   assert.ok(MODES.work.sortOptions.some((option) => option.key === 'deadline'));
   assert.ok(MODES.work.sortOptions.length >= 3);

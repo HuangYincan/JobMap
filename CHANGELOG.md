@@ -34,6 +34,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Work 职能 plugin (`roleFamily`): `#技术` / `#产品` / `#运营` / `#设计` match title/department/skills. intern/campus/social stay on `jobTaxonomy`. Deadline sort ranks the soonest `position.deadline` first (seed rows without a date sink).
 - Domain 人均消费 range (`price` from `priceLevel`) plus `priceAsc` / `priceDesc`. Both modes gain a `relevance` sort (exact / prefix name, then rating and distance).
 - Client suggest LRU (max 100, 5 minutes) in `lib/public-cache.ts`; `fetchSearchSuggest` hits it before `/api/suggest`. Public API cache stays a separate 30s store.
+- Work `deadline` date filter: keep companies whose jobs close on or after the picked day (or have no date). Same key as the existing deadline sort.
 
 ### Changed
 

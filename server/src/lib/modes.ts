@@ -143,6 +143,11 @@ const WORK_FILTERS: FilterConfig[] = [
     label: '提供班车',
     type: 'toggle',
   },
+  {
+    key: 'deadline',
+    label: '申请截止日期',
+    type: 'date',
+  },
 ];
 
 // ---- 模式定义 ----
