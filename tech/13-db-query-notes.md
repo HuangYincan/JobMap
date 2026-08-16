@@ -43,7 +43,7 @@ Live PostGIS apply is verified (`001`–`010`, 51 companies / 51 sites). This pa
 - `positions_title_trgm` / `entities_name_trgm` / `items_title_trgm` — `pg_trgm` GIN
 - `positions_company_id_idx` / `positions_site_id_idx` / `company_sites_company_id_idx`
 
-`loadWorkCatalogFromDb(clip?)` 在有 `DATABASE_URL` 时读开岗。`/api/pois` 和 `/api/search` 把 `bounds` / `filters.distance` 编成 `SpatialClip`（`lib/spatial-query.ts`）再下推：站点先 `s.geom && ST_MakeEnvelope(...)`（gist），有距离再 `ST_DWithin(s.geom::geography, point, meters)`。命中站点后再 `companies.id = ANY(...)` / `positions.site_id = ANY(...)`，不要把整表公司和岗位拉进 Node。无库或导入失败仍走 seed，内存 `inBounds` 二次裁。`/api/suggest` 和 job-alert 不传 clip，仍是全量目录。单站点 POI id = `companies.slug`（对齐 WORK_SEED）；多站点 = `slug:site.id`。
+`loadWorkCatalogFromDb(clip?)` 在有 `DATABASE_URL` 时读开岗。`/api/pois` 和 `/api/search` 把 `bounds` / `filters.distance` / `filters.district` 编成 `SpatialClip`（`lib/spatial-query.ts`）再下推：站点先 `s.geom && ST_MakeEnvelope(...)`（gist），有距离再 `ST_DWithin(s.geom::geography, point, meters)`。行政区是超集：地址 `ILIKE` 区名/简称，或点落在粗框。命中站点后再 `companies.id = ANY(...)` / `positions.site_id = ANY(...)`，不要把整表公司和岗位拉进 Node。无库或导入失败仍走 seed，内存 `inBounds` + `poiMatchesDistrict` 二次裁（地址优先于粗框）。`/api/suggest` 和 job-alert 不传 clip，仍是全量目录。单站点 POI id = `companies.slug`（对齐 WORK_SEED）；多站点 = `slug:site.id`。
 
 ```sql
 SELECT s.id, s.company_id, s.name, s.address, s.lng, s.lat, s.career_url, s.logo_url
@@ -57,7 +57,7 @@ WHERE s.geom IS NOT NULL
   );
 ```
 
-`status + family` 走 btree；视野用 `&&` 再 `ST_DWithin`，不要先 `ST_Distance` 排序全表。行政区插件今天匹配地址文本（`DISTRICT_PLUGIN`）；换成多边形后再加 `gist` 到 district 边界表，不要在 `company_sites.address` 上指望 btree。
+`status + family` 走 btree；视野用 `&&` 再 `ST_DWithin`，不要先 `ST_Distance` 排序全表。行政区 SQL 是地址 `ILIKE` + 粗框超集；精确规则仍在 `poiMatchesDistrict`。换成多边形后再加 `gist` 到 district 边界表，不要在 `company_sites.address` 上指望 btree。
 
 ## 刻意不做
 

@@ -1,0 +1,45 @@
+{
+  "slug": "geely-hangzhou",
+  "name": "吉利汽车",
+  "industries": [
+    "automotive"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.geely.com/",
+  "sites": [
+    {
+      "id": "geely-hangzhou-site",
+      "name": "吉利汽车",
+      "location": {
+        "lng": 120.075,
+        "lat": 30.296,
+        "address": "滨江区江陵路1760号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "geely-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "geely-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "极氪智能",
+      "salary": {
+        "min": 14,
+        "max": 24
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "C++"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.geely.com/"
+    }
+  ]
+}

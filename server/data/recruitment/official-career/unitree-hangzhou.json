@@ -1,0 +1,46 @@
+{
+  "slug": "unitree-hangzhou",
+  "name": "宇树科技",
+  "industries": [
+    "hardware",
+    "ai"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.unitree.com/cn/career",
+  "sites": [
+    {
+      "id": "unitree-hangzhou-site",
+      "name": "宇树科技",
+      "location": {
+        "lng": 120.221,
+        "lat": 30.208,
+        "address": "滨江区物联网街"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "unitree-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "unitree-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "机器人",
+      "salary": {
+        "min": 16,
+        "max": 26
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "Three.js"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/career"
+    }
+  ]
+}

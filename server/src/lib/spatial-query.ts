@@ -2,6 +2,11 @@
 // SQL uses gist && then optional ST_DWithin. No DATABASE_URL → caller
 // keeps the in-memory inBounds / pipeline clip.
 
+import {
+  DISTRICT_BOXES,
+  HANGZHOU_DISTRICTS,
+  type HangzhouDistrict,
+} from './spatial-filters.ts';
 import type { ViewportBounds } from './viewport-search.ts';
 
 export interface SpatialClip {
@@ -10,11 +15,23 @@ export interface SpatialClip {
   origin?: { lng: number; lat: number } | null;
   /** Radius in meters. Ignored unless origin is set and radius > 0. */
   radiusMeters?: number | null;
+  /**
+   * Hangzhou districts. SQL is a superset (address ILIKE or coarse box).
+   * Memory `poiMatchesDistrict` still does the exact address-over-box rule.
+   */
+  districts?: string[] | null;
+}
+
+export function knownHangzhouDistricts(values: unknown): HangzhouDistrict[] {
+  if (!Array.isArray(values)) return [];
+  const allowed = new Set<string>(HANGZHOU_DISTRICTS.map((d) => d.value));
+  return values.filter((value): value is HangzhouDistrict => typeof value === 'string' && allowed.has(value));
 }
 
 export function hasSpatialClip(clip?: SpatialClip | null): boolean {
   if (!clip) return false;
   if (clip.bounds) return true;
+  if (clip.districts && clip.districts.length > 0) return true;
   return Boolean(clip.origin && clip.radiusMeters && clip.radiusMeters > 0);
 }
 
@@ -49,6 +66,30 @@ export function companySitesSpatialSql(
       `ST_DWithin(s.geom::geography, ST_SetSRID(ST_MakePoint($${i}, $${i + 1}), 4326)::geography, $${i + 2})`,
     );
     params.push(clip.origin.lng, clip.origin.lat, clip.radiusMeters);
+    i += 3;
+  }
+
+  const districts = knownHangzhouDistricts(clip?.districts);
+  if (districts.length) {
+    const parts: string[] = [];
+    for (const district of districts) {
+      const short = district.replace(/区$/, '');
+      parts.push(`COALESCE(s.address, '') ILIKE $${i}`);
+      params.push(`%${district}%`);
+      i += 1;
+      if (short !== district) {
+        parts.push(`COALESCE(s.address, '') ILIKE $${i}`);
+        params.push(`%${short}%`);
+        i += 1;
+      }
+      const box = DISTRICT_BOXES[district];
+      if (box) {
+        parts.push(`s.geom && ST_MakeEnvelope($${i}, $${i + 1}, $${i + 2}, $${i + 3}, 4326)`);
+        params.push(box.west, box.south, box.east, box.north);
+        i += 4;
+      }
+    }
+    clauses.push(`(${parts.join(' OR ')})`);
   }
 
   return { sql: clauses.length ? ` AND ${clauses.join(' AND ')}` : '', params };

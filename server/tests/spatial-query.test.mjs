@@ -4,9 +4,11 @@ import assert from 'node:assert/strict';
 import { searchPublicCatalog, spatialClipFromSearch } from '../src/lib/public-search.ts';
 import { loadWorkCatalogFromDb } from '../src/lib/recruitment-store.ts';
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { DISTRICT_BOXES } from '../src/lib/spatial-filters.ts';
 import {
   companySitesSpatialSql,
   hasSpatialClip,
+  knownHangzhouDistricts,
   parseDistanceKm,
 } from '../src/lib/spatial-query.ts';
 
@@ -34,16 +36,32 @@ test('companySitesSpatialSql uses gist && then geography ST_DWithin', () => {
   assert.equal(both.params.at(-1), 2500);
 });
 
-test('spatialClipFromSearch maps bounds and distance km onto the SQL clip', () => {
+test('spatialClipFromSearch maps bounds, distance, and district onto the SQL clip', () => {
   const clip = spatialClipFromSearch({
     bounds: '120.0,30.2,120.2,30.3',
-    filters: { distance: 3 },
+    filters: { distance: 3, district: ['余杭区', '火星区'] },
   });
   assert.ok(clip?.bounds);
   assert.equal(clip.bounds.west, 120);
   assert.equal(clip.origin?.lng, 120.1);
   assert.equal(clip.radiusMeters, 3000);
+  assert.deepEqual(clip.districts, ['余杭区']);
   assert.equal(spatialClipFromSearch({}), undefined);
+  assert.deepEqual(knownHangzhouDistricts(['西湖区', 'nope']), ['西湖区']);
+});
+
+test('companySitesSpatialSql unions district address and coarse box', () => {
+  const sql = companySitesSpatialSql({ districts: ['余杭区'] });
+  assert.match(sql.sql, /ILIKE \$1/);
+  assert.match(sql.sql, /ILIKE \$2/);
+  assert.match(sql.sql, /s\.geom && ST_MakeEnvelope\(\$3, \$4, \$5, \$6, 4326\)/);
+  assert.deepEqual(sql.params.slice(0, 2), ['%余杭区%', '%余杭%']);
+  assert.deepEqual(sql.params.slice(2), [
+    DISTRICT_BOXES.余杭区.west,
+    DISTRICT_BOXES.余杭区.south,
+    DISTRICT_BOXES.余杭区.east,
+    DISTRICT_BOXES.余杭区.north,
+  ]);
 });
 
 test('in-memory public search still clips when there is no database', () => {
@@ -77,4 +95,8 @@ test('loadWorkCatalogFromDb clips Hangzhou west-lake when DATABASE_URL is set', 
   });
   assert.ok(empty);
   assert.equal(empty.length, 0);
+
+  const yuhang = await loadWorkCatalogFromDb({ districts: ['余杭区'] });
+  assert.ok(yuhang);
+  assert.ok(yuhang.some((p) => p.id === 'alibaba-xixi'));
 });

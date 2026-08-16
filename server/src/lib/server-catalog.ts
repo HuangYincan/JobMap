@@ -3,7 +3,11 @@
 // keep /api/pois, /api/pois/[id], /api/search, and /api/suggest aligned
 // when there is no DATABASE_URL.
 
-import { listOfficialCareerFiles } from './recruitment-adapters/official-career.ts';
+import { listSourceCompanyFiles } from './recruitment-adapters/file-drop.ts';
+import { BOSS_DIR } from './recruitment-adapters/boss.ts';
+import { NOWCODER_DIR } from './recruitment-adapters/nowcoder.ts';
+import { OFFICIAL_CAREER_DIR, listOfficialCareerFiles } from './recruitment-adapters/official-career.ts';
+import { SHIXISENG_DIR } from './recruitment-adapters/shixiseng.ts';
 import { mergeOfficialCareerIntoSeed } from './recruitment-source.ts';
 import { loadWorkCatalogFromDb } from './recruitment-store.ts';
 import { DOMAIN_SEED, INTERNSHIP_SEED } from './seed-data.ts';
@@ -14,8 +18,13 @@ let offlineWorkCatalog: Promise<POI[]> | null = null;
 
 export async function loadOfflineWorkCatalog(): Promise<POI[]> {
   if (!offlineWorkCatalog) {
-    offlineWorkCatalog = listOfficialCareerFiles().then((official) =>
-      mergeOfficialCareerIntoSeed(INTERNSHIP_SEED, official),
+    offlineWorkCatalog = Promise.all([
+      listOfficialCareerFiles(OFFICIAL_CAREER_DIR),
+      listSourceCompanyFiles(BOSS_DIR),
+      listSourceCompanyFiles(NOWCODER_DIR),
+      listSourceCompanyFiles(SHIXISENG_DIR),
+    ]).then(([official, boss, nowcoder, shixiseng]) =>
+      mergeOfficialCareerIntoSeed(INTERNSHIP_SEED, [...official, ...boss, ...nowcoder, ...shixiseng]),
     );
   }
   return offlineWorkCatalog;

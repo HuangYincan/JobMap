@@ -4,8 +4,11 @@
 
 import { getPool } from './db.ts';
 import type { SourceCompany, SourcePosition } from './recruitment-source.ts';
+import { bossAdapter } from './recruitment-adapters/boss.ts';
+import { nowcoderAdapter } from './recruitment-adapters/nowcoder.ts';
 import { officialCareerAdapter } from './recruitment-adapters/official-career.ts';
 import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
+import { shixisengAdapter } from './recruitment-adapters/shixiseng.ts';
 
 export interface ImportIssue {
   slug: string;
@@ -136,11 +139,14 @@ export function planRecruitmentImport(input: SourceCompany[]): ImportPlan {
 }
 
 export async function planSeedImport(): Promise<ImportPlan> {
-  const [seed, official] = await Promise.all([
+  const [seed, official, boss, nowcoder, shixiseng] = await Promise.all([
     seedRecruitmentAdapter.list(),
     officialCareerAdapter().list(),
+    bossAdapter().list(),
+    nowcoderAdapter().list(),
+    shixisengAdapter().list(),
   ]);
-  return planRecruitmentImport([...seed, ...official]);
+  return planRecruitmentImport([...seed, ...official, ...boss, ...nowcoder, ...shixiseng]);
 }
 
 export async function planOfficialCareerImport(dir?: string): Promise<ImportPlan> {

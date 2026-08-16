@@ -1,0 +1,46 @@
+{
+  "slug": "dahua-hangzhou",
+  "name": "大华股份",
+  "industries": [
+    "hardware",
+    "ai"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.dahuatech.com/careers.html",
+  "sites": [
+    {
+      "id": "dahua-hangzhou-site",
+      "name": "大华股份",
+      "location": {
+        "lng": 120.219,
+        "lat": 30.189,
+        "address": "滨江区滨安路1187号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "dahua-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "dahua-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "软件平台",
+      "salary": {
+        "min": 13,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "Web"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dahuatech.com/careers.html"
+    }
+  ]
+}

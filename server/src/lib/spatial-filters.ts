@@ -1,7 +1,8 @@
 // 空间筛选插件
 //
 // 行政区先按地址文本匹配（杭州主城区）。地址里没有区名时，
-// 回落到粗框（点在框内）。PostGIS 多边形接上后同一 key 替换实现。
+// 回落到粗框（点在框内）。公开读 SQL 用同一套区名 ILIKE + 粗框做超集；
+// 多边形边界表接上后同一 key 替换实现。
 
 import type { FilterPlugin } from './job-taxonomy.ts';
 import type { FilterConfig, POI } from './types.ts';

@@ -1,0 +1,46 @@
+{
+  "slug": "hikvision-hangzhou",
+  "name": "海康威视",
+  "industries": [
+    "hardware",
+    "ai"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.hikvision.com/",
+  "sites": [
+    {
+      "id": "hikvision-hangzhou-site",
+      "name": "海康威视",
+      "location": {
+        "lng": 120.208,
+        "lat": 30.185,
+        "address": "滨江区阡陌路555号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "hikvision-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "hikvision-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "物联网软件",
+      "salary": {
+        "min": 14,
+        "max": 24
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "WebGL"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.hikvision.com/"
+    }
+  ]
+}

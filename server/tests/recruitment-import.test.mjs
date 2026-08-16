@@ -9,7 +9,10 @@ import {
   planSeedImport,
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
+import { bossAdapter } from '../src/lib/recruitment-adapters/boss.ts';
 import { officialCareerAdapter, parseOfficialCareerPayload } from '../src/lib/recruitment-adapters/official-career.ts';
+import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
+import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
 import { mergeOfficialCareerIntoSeed, poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
 import { dirname, join } from 'node:path';
@@ -191,6 +194,18 @@ test('planSeedImport merges official-career drops onto seed slugs', async () => 
   const ant = plan.companies.find((c) => c.slug === 'antgroup-hangzhou');
   assert.ok(ant);
   assert.ok(ant.positions.some((p) => p.externalId === 'antgroup-campus-frontend-2026'));
+
+  const xiaomi = plan.companies.find((c) => c.slug === 'xiaomi-hangzhou');
+  assert.ok(xiaomi);
+  assert.ok(xiaomi.positions.some((p) => p.externalId === 'xiaomi-campus-frontend-2026'));
+  assert.ok(xiaomi.positions.some((p) => p.externalId === 'mi-android'));
+  assert.equal(xiaomi.sites.filter((s) => s.id === 'xiaomi-hangzhou-site').length, 1);
+
+  const didi = plan.companies.find((c) => c.slug === 'didi-hangzhou');
+  assert.ok(didi?.positions.some((p) => p.externalId === 'didi-campus-frontend-2026'));
+
+  const deepseek = plan.companies.find((c) => c.slug === 'deepseek');
+  assert.ok(deepseek?.positions.some((p) => p.externalId === 'deepseek-campus-frontend-2026'));
 });
 
 test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {
@@ -215,4 +230,15 @@ test('official-career adapter reads JSON drops and skips a missing dir', async (
   assert.equal(plan.dropped, 0);
   assert.ok(plan.companies.some((c) => c.slug === 'fixture-hz'));
   assert.equal(plan.companies.find((c) => c.slug === 'fixture-hz')?.positions[0].siteId, 'hq');
+});
+
+test('boss / nowcoder / shixiseng adapters read file drops and skip missing dirs', async () => {
+  assert.deepEqual(await nowcoderAdapter('/tmp/domain-map-no-such-nowcoder').list(), []);
+  assert.deepEqual(await shixisengAdapter('/tmp/domain-map-no-such-shixiseng').list(), []);
+  assert.deepEqual(await bossAdapter('/tmp/domain-map-no-such-boss').list(), []);
+
+  const dir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'boss');
+  const rows = await bossAdapter(dir).list();
+  assert.equal(rows[0]?.slug, 'fixture-boss');
+  assert.equal(rows[0]?.positions[0]?.applySource, 'boss');
 });

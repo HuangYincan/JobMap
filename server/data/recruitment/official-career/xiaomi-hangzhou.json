@@ -1,0 +1,47 @@
+{
+  "slug": "xiaomi-hangzhou",
+  "name": "小米",
+  "industries": [
+    "hardware",
+    "internet",
+    "ai"
+  ],
+  "scale": "bigtech",
+  "careerUrl": "https://hr.xiaomi.com/",
+  "sites": [
+    {
+      "id": "xiaomi-hangzhou-site",
+      "name": "小米",
+      "location": {
+        "lng": 120.102,
+        "lat": 30.281,
+        "address": "西湖区西溪谷G座"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "xiaomi-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "手机部",
+      "salary": {
+        "min": 16,
+        "max": 28
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "Android"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.xiaomi.com/"
+    }
+  ]
+}

@@ -47,6 +47,9 @@ test('async catalog merges official-career drops when there is no DATABASE_URL',
   assert.ok(huawei?.kind === 'recruitment' && huawei.positions.some((p) => p.id === 'huawei-campus-frontend-2026'));
   const ant = await loadServerCatalogById('work', 'antgroup-hangzhou');
   assert.ok(ant?.kind === 'recruitment' && ant.positions.some((p) => p.id === 'antgroup-campus-frontend-2026'));
+  const xiaomi = await loadServerCatalogById('work', 'xiaomi-hangzhou');
+  assert.ok(xiaomi?.kind === 'recruitment' && xiaomi.positions.some((p) => p.id === 'xiaomi-campus-frontend-2026'));
+  assert.ok(xiaomi?.positions.some((p) => p.id === 'mi-android'));
   assert.ok(await loadServerCatalogById('work', 'zhejiang-lab'));
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');
@@ -64,7 +67,7 @@ test('loadWorkCatalogFromDb joins companies + sites + open positions', () => {
   assert.match(store, /id = ANY\(\$1::bigint\[\]\)/);
 });
 
-test('loadServerCatalog prefers imported work rows, then seed + official-career', () => {
+test('loadServerCatalog prefers imported work rows, then seed + file drops', () => {
   const catalog = src('lib/server-catalog.ts');
   assert.match(catalog, /loadWorkCatalogFromDb/);
   assert.match(catalog, /if \(imported && \(imported\.length > 0 \|\| clip\)\) return imported/);
@@ -72,4 +75,7 @@ test('loadServerCatalog prefers imported work rows, then seed + official-career'
   assert.match(catalog, /mergeOfficialCareerIntoSeed/);
   assert.match(catalog, /clip\?: SpatialClip/);
   assert.match(catalog, /loadWorkCatalogFromDb\(clip\)/);
+  assert.match(catalog, /BOSS_DIR/);
+  assert.match(catalog, /NOWCODER_DIR/);
+  assert.match(catalog, /SHIXISENG_DIR/);
 });
