@@ -151,7 +151,7 @@ export function SecondarySidebar({
   const config = getMode(mode);
   const detailPoi = detailPoiProp ?? localDetail;
   const suggestionItems = suggestions ?? [];
-  const chips = activeFilterChips(filters);
+  const chips = activeFilterChips(filters, config.filters);
 
   useEffect(() => {
     setActiveSuggestion(-1);

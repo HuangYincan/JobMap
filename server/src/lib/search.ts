@@ -6,7 +6,7 @@
 // - 组合搜索：关键词 + 标签 + 筛选器 + 空间范围
 // ============================================================
 
-import type { FilterConfig, FilterState, MapMode, POI, SortOption } from './types.ts';
+import type { FilterConfig, FilterOption, FilterState, MapMode, POI, SortOption } from './types.ts';
 import { isRecruitmentPOI } from './types.ts';
 import { getMode } from './modes.ts';
 import { positionMatchesTaxonomySelection, selectedTaxonomyPaths } from './job-taxonomy.ts';
@@ -86,17 +86,89 @@ export function suggestSearchTags(query: string, limit = 5): SearchTagSuggestion
     .slice(0, limit);
 }
 
-/** Chips for applied FilterPlugins so a picked `#大厂` stays visible after the query clears. */
-export function activeFilterChips(filters: FilterState): SearchTagSuggestion[] {
+function optionLabel(options: FilterOption[] | undefined, value: string): string | undefined {
+  if (!options) return undefined;
+  for (const option of options) {
+    if (option.value === value) return option.label;
+    const nested = optionLabel(option.children, value);
+    if (nested) return nested;
+  }
+  return undefined;
+}
+
+function chipTitle(config: FilterConfig, value: string): string {
+  const hashed = listSearchTags().find((tag) => tag.key === config.key && tag.value === value);
+  if (hashed) return hashed.title;
+  const named = optionLabel(config.options, value);
+  if (named) return named;
+  return `${config.label} ${value}${config.unit ? config.unit : ''}`;
+}
+
+/** Chips for every applied filter. Pass mode configs so district / salary / distance show too. */
+export function activeFilterChips(filters: FilterState, configs?: FilterConfig[]): SearchTagSuggestion[] {
+  if (!configs?.length) {
+    const chips: SearchTagSuggestion[] = [];
+    for (const tag of listSearchTags()) {
+      const raw = filters[tag.key];
+      const values = Array.isArray(raw)
+        ? raw.filter((item): item is string => typeof item === 'string')
+        : typeof raw === 'string' && raw
+          ? [raw]
+          : [];
+      if (values.includes(tag.value)) chips.push(tag);
+    }
+    return chips;
+  }
+
   const chips: SearchTagSuggestion[] = [];
-  for (const tag of listSearchTags()) {
-    const raw = filters[tag.key];
-    const values = Array.isArray(raw)
-      ? raw.filter((item): item is string => typeof item === 'string')
-      : typeof raw === 'string' && raw
-        ? [raw]
-        : [];
-    if (values.includes(tag.value)) chips.push(tag);
+  for (const config of configs) {
+    const raw = filters[config.key];
+    if (raw === undefined || raw === null || raw === '' || raw === false) continue;
+    if (Array.isArray(raw) && raw.length === 2 && typeof raw[0] === 'number' && typeof raw[1] === 'number') {
+      const value = `${raw[0]}-${raw[1]}`;
+      chips.push({
+        id: `chip-${config.key}-${value}`,
+        label: config.label,
+        title: `${config.label} ${raw[0]}–${raw[1]}${config.unit ?? ''}`,
+        key: config.key,
+        value,
+      });
+      continue;
+    }
+    if (Array.isArray(raw)) {
+      for (const item of raw) {
+        if (typeof item !== 'string' || !item) continue;
+        chips.push({
+          id: `chip-${config.key}-${item}`,
+          label: config.label,
+          title: chipTitle(config, item),
+          key: config.key,
+          value: item,
+        });
+      }
+      continue;
+    }
+    if (typeof raw === 'number') {
+      if (raw === 0 && (config.key === 'distance' || config.key === 'minRating')) continue;
+      const value = String(raw);
+      chips.push({
+        id: `chip-${config.key}-${value}`,
+        label: config.label,
+        title: `${config.label} ${value}${config.unit ?? ''}`,
+        key: config.key,
+        value,
+      });
+      continue;
+    }
+    if (typeof raw === 'string') {
+      chips.push({
+        id: `chip-${config.key}-${raw}`,
+        label: config.label,
+        title: chipTitle(config, raw),
+        key: config.key,
+        value: raw,
+      });
+    }
   }
   return chips;
 }
@@ -105,13 +177,21 @@ export function activeFilterChips(filters: FilterState): SearchTagSuggestion[] {
 export function removeFilterChip(filters: FilterState, chip: Pick<SearchTagSuggestion, 'key' | 'value'>): FilterState {
   const next: FilterState = { ...filters };
   const raw = next[chip.key];
+  if (Array.isArray(raw) && raw.length === 2 && typeof raw[0] === 'number' && typeof raw[1] === 'number') {
+    if (`${raw[0]}-${raw[1]}` === chip.value) delete next[chip.key];
+    return next;
+  }
   if (Array.isArray(raw)) {
     const kept = raw.filter((item): item is string => typeof item === 'string' && item !== chip.value);
     if (kept.length) next[chip.key] = kept;
     else delete next[chip.key];
     return next;
   }
-  if (raw === chip.value) delete next[chip.key];
+  if (typeof raw === 'number' && String(raw) === chip.value) {
+    delete next[chip.key];
+    return next;
+  }
+  if (raw === chip.value || raw === true) delete next[chip.key];
   return next;
 }
 

@@ -1834,9 +1834,9 @@ export function MapShell() {
                   />
                 </div>
               )}
-              {activeFilterChips(filters).length > 0 && (
+              {activeFilterChips(filters, modeConfig.filters).length > 0 && (
                 <div className={styles.mobileChips} aria-label={t("activeFilters", lang)}>
-                  {activeFilterChips(filters).map((chip) => (
+                  {activeFilterChips(filters, modeConfig.filters).map((chip) => (
                     <button
                       key={chip.id}
                       type="button"

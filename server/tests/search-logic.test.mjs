@@ -253,6 +253,19 @@ test('activeFilterChips lists applied plugins and removeFilterChip drops one', (
   assert.equal(empty.scale, undefined);
 });
 
+test('activeFilterChips uses mode configs for district, salary, and distance', () => {
+  const chips = activeFilterChips(
+    { district: ['西湖区'], salary: [15, 30], distance: 3 },
+    getMode('work').filters,
+  );
+  assert.ok(chips.some((chip) => chip.title.includes('西湖')));
+  assert.ok(chips.some((chip) => chip.title.includes('15') && chip.title.includes('30')));
+  assert.ok(chips.some((chip) => chip.key === 'distance' && chip.value === '3'));
+  const cleared = removeFilterChip({ salary: [15, 30], distance: 3 }, { key: 'salary', value: '15-30' });
+  assert.equal(cleared.salary, undefined);
+  assert.equal(cleared.distance, 3);
+});
+
 test('runPOIPipeline: #大厂 keeps bigtech and still matches leftover keywords', () => {
   const tagged = runPOIPipeline(INTERNSHIP_SEED, { query: '#大厂' });
   assert.ok(tagged.length > 0);
