@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
 import { listSaved, removeSaved, savePlace } from "@/lib/account-store";
 import { canonicalMode } from "@/lib/modes";
+import { isPersistableSavedSnapshot } from "@/lib/persistable";
 import type { MapMode } from "@/lib/types";
 
 export async function GET() {
@@ -34,11 +35,19 @@ export async function POST(request: Request) {
   if (!poiId || !name) {
     return NextResponse.json({ code: "BAD_REQUEST", message: "poiId and name required" }, { status: 400 });
   }
+  const mode = canonicalMode(body.mode || "work");
+  const kind = body.kind === "recruitment" ? "recruitment" : "domain";
+  if (!isPersistableSavedSnapshot({ mode, kind })) {
+    return NextResponse.json(
+      { code: "NOT_PERSISTABLE", message: "only catalog recruitment places can be saved" },
+      { status: 400 },
+    );
+  }
   const item = await savePlace(user.id, {
     poiId,
     name,
-    mode: canonicalMode(body.mode || "work"),
-    kind: body.kind === "recruitment" ? "recruitment" : "domain",
+    mode,
+    kind,
     address: body.address,
     lng: body.lng,
     lat: body.lat,

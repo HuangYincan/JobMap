@@ -391,6 +391,30 @@ useEffect(() => {
 
 ---
 
+## 2026-08-17: 移动端提手间距 + 游客 Recent
+
+### 问题1：地图模式 / 工作模式抽屉提手与上下组件间距不一致
+
+**症状**：同一抽屉 snap 下，工作模式（更多 chips / 结果头）看起来比地图模式更挤或更松。
+
+**根本原因**：提手 CSS 按 snap 而不是按模式区分；half/full 另有 `margin-top: 6px`，`.drawerContent` 顶部 25px 只在列表态出现，工作模式额外 chrome 叠在这个缝上。
+
+**解决方案**：`.mobileDrawer` 增加 `--drawer-handle-gap: 8px`，提手统一 `padding-bottom`；去掉 half/full-only `margin-top`；把 `.drawerContent` 顶距收到 10px。芯片仍在 content 内，不再改 handle↔toolbar / handle↔search。
+
+**修改文件**：`server/src/components/map-shell.module.css`
+
+### 问题2：游客搜索后 Recent 仍为空
+
+**症状**：未登录搜索并点选结果后，“最近”二级卡片仍是登录提示。
+
+**根本原因**：`recordSearch` 在 `!user` 时直接 return；`refreshHistory` 只打 `/api/me/search-history`（游客 200 + `[]`）；`RecentPanel` 用 `!signedIn` 挡住列表。
+
+**解决方案**：`lib/guest-search-history.ts`（`dm.guest-search-history.v1`，上限 30）只写 persistable 模式。游客读写本地；登录上传后清空；登出再读本地。Recent 有条目就展示。
+
+**修改文件**：`guest-search-history.ts`、`persistable.ts`、`map-shell.tsx`、`recent-panel.tsx`
+
+---
+
 ## 相关文档
 
 - 设计系统：`tech/07-frontend-design-system.md`

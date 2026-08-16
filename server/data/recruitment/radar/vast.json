@@ -1,0 +1,33 @@
+{
+  "slug": "vast",
+  "name": "VAST",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://tripo3d.com/vstar",
+  "sites": [
+    {
+      "id": "vast-site",
+      "name": "VAST",
+      "location": {
+        "address": "北京/上海/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-249826ae82ff",
+      "title": "V .STAR顶尖计划",
+      "siteId": "vast-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://tripo3d.com/vstar"
+    }
+  ]
+}

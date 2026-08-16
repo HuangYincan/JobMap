@@ -1,0 +1,33 @@
+{
+  "slug": "阿里淘天",
+  "name": "阿里淘天",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RkkKMdkYKyPCBLaf%2FvFV9n%2FfloPH23tIbi0otjZqINP9&batchId=100000760001",
+  "sites": [
+    {
+      "id": "阿里淘天-site",
+      "name": "阿里淘天",
+      "location": {
+        "address": "北京/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0c7ef03b0e67",
+      "title": "技术、设计、数据、运营、产品等七大类",
+      "siteId": "阿里淘天-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RkkKMdkYKyPCBLaf%2FvFV9n%2FfloPH23tIbi0otjZqINP9&batchId=100000760001"
+    }
+  ]
+}

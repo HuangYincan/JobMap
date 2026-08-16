@@ -1,0 +1,33 @@
+{
+  "slug": "台达",
+  "name": "台达",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://v.wjx.cn/vm/tKW356q.aspx",
+  "sites": [
+    {
+      "id": "台达-site",
+      "name": "台达—研发暑期营",
+      "location": {
+        "address": "上海/杭州/武汉/重庆"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-da2edd85a210",
+      "title": "台达电力电子研发暑期体验营  硬件设计工程师  控制算法工程师  嵌入式软件工程师",
+      "siteId": "台达-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://v.wjx.cn/vm/tKW356q.aspx"
+    }
+  ]
+}

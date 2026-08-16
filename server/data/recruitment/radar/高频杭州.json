@@ -1,0 +1,33 @@
+{
+  "slug": "高频杭州",
+  "name": "高频杭州",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://mba.jinshuju.com/f/I6XNMU",
+  "sites": [
+    {
+      "id": "高频杭州-site",
+      "name": "高频杭州",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-627a9c1b5874",
+      "title": "市场运营",
+      "siteId": "高频杭州-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mba.jinshuju.com/f/I6XNMU"
+    }
+  ]
+}

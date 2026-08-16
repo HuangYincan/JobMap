@@ -1,0 +1,33 @@
+{
+  "slug": "基准方中",
+  "name": "基准方中",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jzfz.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "基准方中-site",
+      "name": "基准方中",
+      "location": {
+        "address": "北京/深圳/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4d2bf7eec62d",
+      "title": "建设设计 城乡规划设计 景观设计 室内设计 结构设计 给排水设计 电气设计 暖通设计",
+      "siteId": "基准方中-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jzfz.zhiye.com/intern/jobs"
+    }
+  ]
+}

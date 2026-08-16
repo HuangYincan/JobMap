@@ -1,0 +1,33 @@
+{
+  "slug": "星宸科技",
+  "name": "星宸科技",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://sigmastar.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "星宸科技-site",
+      "name": "星宸科技",
+      "location": {
+        "address": "上海/深圳/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-77c94d2e337f",
+      "title": "模拟IC设计 数字IC设计 数字IC验证 数字IC中端 数字IC后端 硬件系统 3D感知系统研发 图像算法 信号处理算法AI算法 AI-ISP算法 IPU编译工",
+      "siteId": "星宸科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sigmastar.zhiye.com/campus/jobs"
+    }
+  ]
+}

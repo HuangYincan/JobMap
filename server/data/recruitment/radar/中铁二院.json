@@ -1,0 +1,33 @@
+{
+  "slug": "中铁二院",
+  "name": "中铁二院",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://xz.creegc.com/Home/service.html",
+  "sites": [
+    {
+      "id": "中铁二院-site",
+      "name": "中铁二院",
+      "location": {
+        "address": "广州/成都/杭州/重庆"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cbdc87e9522e",
+      "title": "交运类  勘察类  土建类  电器类 信息类 建筑类  其它",
+      "siteId": "中铁二院-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xz.creegc.com/Home/service.html"
+    }
+  ]
+}

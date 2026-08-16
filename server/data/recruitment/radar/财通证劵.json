@@ -1,0 +1,33 @@
+{
+  "slug": "财通证劵",
+  "name": "财通证劵",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.hotjob.cn/wt/CT/web/index/campus",
+  "sites": [
+    {
+      "id": "财通证劵-site",
+      "name": "财通证劵",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cb4bea3f919e",
+      "title": "总部  参股公司 分公司岗位  具体见投递方式链接",
+      "siteId": "财通证劵-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hotjob.cn/wt/CT/web/index/campus"
+    }
+  ]
+}

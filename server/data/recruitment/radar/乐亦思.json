@@ -1,0 +1,33 @@
+{
+  "slug": "乐亦思",
+  "name": "乐亦思",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.wjx.top/vm/tFMrhjw.aspx",
+  "sites": [
+    {
+      "id": "乐亦思-site",
+      "name": "乐亦思",
+      "location": {
+        "address": "上海/杭州/宁波"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-58f213bd2ffe",
+      "title": "SAT/雅思拓福教师 国际学科理科赦师国际高申备考核师 青少权师 督导班主任学管师",
+      "siteId": "乐亦思-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026  11 30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.wjx.top/vm/tFMrhjw.aspx"
+    }
+  ]
+}

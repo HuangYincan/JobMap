@@ -214,24 +214,11 @@ const debouncedSearch = useDebouncedCallback(
 
 #### 搜索历史
 
-```typescript
-// 存储最近 20 次搜索
-const MAX_HISTORY = 20;
-
-function addSearchHistory(query: string) {
-  const history = getSearchHistory();
-  const updated = [
-    query,
-    ...history.filter(q => q !== query)  // 去重
-  ].slice(0, MAX_HISTORY);
-  
-  localStorage.setItem('search_history', JSON.stringify(updated));
-}
-
-function clearSearchHistory() {
-  localStorage.removeItem('search_history');
-}
-```
+- Recent 只记 **persistable** 已提交查询（`lib/persistable.ts`：`work` / `internship`）。地图模式 / AMap 关键词不落库。
+- 已登录：`POST /api/me/search-history`。
+- 游客：`lib/guest-search-history.ts`，键 `dm.guest-search-history.v1`，上限 30。不要再用 `search_history` / `MAX_HISTORY 20`。
+- 登录时上传游客 persistable 行后清空本地；登出再读本地列表。
+- 空搜索框不展示 `trendingForMode`；Recent L2 仍展示热门芯片。
 
 ---
 

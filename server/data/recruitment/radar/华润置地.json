@@ -1,0 +1,33 @@
+{
+  "slug": "华润置地",
+  "name": "华润置地",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/crland/166206?locale=zh-CN&sessionid=#/home",
+  "sites": [
+    {
+      "id": "华润置地-site",
+      "name": "华润置地",
+      "location": {
+        "address": "上海/深圳/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9c8bbe382e7c",
+      "title": "招商运营类  物业管理类  场馆运营类 人力资源类  财务管理类",
+      "siteId": "华润置地-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/crland/166206?locale=zh-CN&sessionid=#/home"
+    }
+  ]
+}

@@ -16,12 +16,6 @@ const OAUTH: Record<string, { subject: string; email: string; displayName: strin
     email: 'demo@gmail.com',
     displayName: 'Google Demo',
   },
-  x: {
-    provider: 'x',
-    subject: 'x:demo',
-    email: 'demo@x.com',
-    displayName: 'X Demo',
-  },
   wechat: {
     provider: 'wechat',
     subject: 'wechat:demo',

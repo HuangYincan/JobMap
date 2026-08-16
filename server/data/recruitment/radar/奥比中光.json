@@ -1,0 +1,33 @@
+{
+  "slug": "奥比中光",
+  "name": "奥比中光",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://job.orbbec.com.cn/campus",
+  "sites": [
+    {
+      "id": "奥比中光-site",
+      "name": "奥比中光",
+      "location": {
+        "address": "上海/深圳/杭州/西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1e1598be0b27",
+      "title": "算法类 软件类 硬件类 结构类 产品类  技术支持类  销售类 芯片类",
+      "siteId": "奥比中光-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.orbbec.com.cn/campus"
+    }
+  ]
+}

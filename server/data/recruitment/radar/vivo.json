@@ -1,0 +1,33 @@
+{
+  "slug": "vivo",
+  "name": "ViVO",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr-campus.vivo.com/jobs?1=%5B%7B%22id%22%3A%228%22%2C%22label%22%3A%22%E6%9A%91%E6%9C%9F%E5%AE%9E%E4%B9%A0%E7%94%9F%22%7D%5D",
+  "sites": [
+    {
+      "id": "vivo-site",
+      "name": "ViVO",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2357a407c4d1",
+      "title": "研发类，算法，硬件，软件，测试，产品运营类，营销，市场，设计，供应类",
+      "siteId": "vivo-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr-campus.vivo.com/jobs?1=%5B%7B%22id%22%3A%228%22%2C%22label%22%3A%22%E6%9A%91%E6%9C%9F%E5%AE%9E%E4%B9%A0%E7%94%9F%22%7D%5D"
+    }
+  ]
+}

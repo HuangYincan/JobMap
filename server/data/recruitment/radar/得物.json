@@ -1,0 +1,33 @@
+{
+  "slug": "得物",
+  "name": "得物",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://poizon.jobs.feishu.cn/s/f4Izn_GufWs",
+  "sites": [
+    {
+      "id": "得物-site",
+      "name": "得物",
+      "location": {
+        "address": "北京/上海/广州/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-fcf6f06e0f04",
+      "title": "设计类 研发类 算法类 供应链类",
+      "siteId": "得物-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://poizon.jobs.feishu.cn/s/f4Izn_GufWs"
+    }
+  ]
+}

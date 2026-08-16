@@ -1,0 +1,33 @@
+{
+  "slug": "云鲸智能",
+  "name": "云鲸智能",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careers.narwal.com/intern/jobs",
+  "sites": [
+    {
+      "id": "云鲸智能-site",
+      "name": "云鲸智能",
+      "location": {
+        "address": "深圳/杭州/东莞"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9c9b475ca34a",
+      "title": "研发/供应链类 市场/营销类",
+      "siteId": "云鲸智能-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.narwal.com/intern/jobs"
+    }
+  ]
+}

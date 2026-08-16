@@ -1,0 +1,33 @@
+{
+  "slug": "奇安信",
+  "name": "奇安信",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.qianxin.com/campus/jobSearch?type=shixishen",
+  "sites": [
+    {
+      "id": "奇安信-site",
+      "name": "奇安信",
+      "location": {
+        "address": "北京/广州/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e49ce7364a1a",
+      "title": "安全漏洞 攻防渗透",
+      "siteId": "奇安信-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.qianxin.com/campus/jobSearch?type=shixishen"
+    }
+  ]
+}

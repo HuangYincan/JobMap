@@ -1,0 +1,33 @@
+{
+  "slug": "商汤科技-无限原力",
+  "name": "商汤科技「无限原力」",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.sensetime.com/top/?keywords=&category=&location=&project=7654524986392824115&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+  "sites": [
+    {
+      "id": "商汤科技-无限原力-site",
+      "name": "商汤科技「无限原力」人才计划",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-095896b7edfa",
+      "title": "招聘方向：模型研究  AI  Infra   模型应用开发  FDE",
+      "siteId": "商汤科技-无限原力-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.sensetime.com/top/?keywords=&category=&location=&project=7654524986392824115&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag="
+    }
+  ]
+}

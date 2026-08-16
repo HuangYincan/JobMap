@@ -1,0 +1,46 @@
+{
+  "slug": "快手",
+  "name": "快手",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum=1&positionLabel=kstar&positionNatureCode=fulltime&recruitSubProjectCodes=20271779425607",
+  "sites": [
+    {
+      "id": "快手-site",
+      "name": "快手—快Star顶尖技术人才计划",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7e905cdc1c59",
+      "title": "算法类岗位  工程类岗位",
+      "siteId": "快手-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum=1&positionLabel=kstar&positionNatureCode=fulltime&recruitSubProjectCodes=20271779425607"
+    },
+    {
+      "externalId": "radar-2e61c4299e2d",
+      "title": "计算机视觉 推荐 广告 搜索 搜广推系统架构 机器学习 音视频 自然语言处理",
+      "siteId": "快手-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/h5/#/campus/jobs?code=campusdLaScKyRd"
+    }
+  ]
+}

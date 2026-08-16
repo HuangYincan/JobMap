@@ -1,0 +1,33 @@
+{
+  "slug": "知存科技",
+  "name": "知存科技",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://iucylxooqp.jobs.feishu.cn/200839?sessionid=",
+  "sites": [
+    {
+      "id": "知存科技-site",
+      "name": "知存科技",
+      "location": {
+        "address": "北京/上海/杭州/西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e7a2429e0547",
+      "title": "微电子  集成电路  半导体  计算机  计算机体系结构   电子信息  通信 自动化  物理  材料  光电  机械 热流体 等专业",
+      "siteId": "知存科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839?sessionid="
+    }
+  ]
+}

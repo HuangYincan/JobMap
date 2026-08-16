@@ -1,0 +1,33 @@
+{
+  "slug": "昆仑芯",
+  "name": "昆仑芯",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kunlunxin1.zhiye.com/custom/shixisheng?hideAll=true",
+  "sites": [
+    {
+      "id": "昆仑芯-site",
+      "name": "昆仑芯",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-08cedca75355",
+      "title": "软件研发类   芯片研发类",
+      "siteId": "昆仑芯-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kunlunxin1.zhiye.com/custom/shixisheng?hideAll=true"
+    }
+  ]
+}

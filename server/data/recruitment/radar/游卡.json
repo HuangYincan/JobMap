@@ -1,0 +1,33 @@
+{
+  "slug": "游卡",
+  "name": "游卡",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus_apply/yokagames/41940?recommendCode=DSe5XBPT&hash=%23%2Fjobs#/jobs",
+  "sites": [
+    {
+      "id": "游卡-site",
+      "name": "游卡",
+      "location": {
+        "address": "上海/广州/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6dbc859016e5",
+      "title": "程序技术员  产品策划员  美术表现类 发行运营类  职能综合类",
+      "siteId": "游卡-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/yokagames/41940?recommendCode=DSe5XBPT&hash=%23%2Fjobs#/jobs"
+    }
+  ]
+}

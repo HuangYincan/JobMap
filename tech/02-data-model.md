@@ -92,3 +92,7 @@ CREATE INDEX entities_geom_gist ON entities USING gist (geom);
 - User/map data is never exposed merely because an entity is geographically near it.
 
 Implementation begins with a tested migration; this document must not claim a future filename is already present.
+
+## Persistability (client + API gate, no new table)
+
+Account `search_history` and `saved_places` only accept catalog recruitment rows. `lib/persistable.ts` (`PERSISTABLE_MODES` = work / internship) is the extension seam — add `college` when that catalog lands. Domain AMap POIs stay session-only. Guest Recent is browser `dm.guest-search-history.v1`, not a table. `POST /api/me/saved` returns 400 `NOT_PERSISTABLE` for domain snapshots.

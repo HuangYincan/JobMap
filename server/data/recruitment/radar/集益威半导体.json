@@ -1,0 +1,33 @@
+{
+  "slug": "集益威半导体",
+  "name": "集益威半导体",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/joywellsemi/166372?locale=zh-CN#/jobs",
+  "sites": [
+    {
+      "id": "集益威半导体-site",
+      "name": "集益威半导体",
+      "location": {
+        "address": "上海/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-987bf2e8503e",
+      "title": "软件测试工程师 数字芯片验证工程师Serdes模拟设计工程师 soc数字设计工程师 PLL模拟设计工程师 数字IP设计工程师 车规数字设计工程师 ADC模拟设计",
+      "siteId": "集益威半导体-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/joywellsemi/166372?locale=zh-CN#/jobs"
+    }
+  ]
+}

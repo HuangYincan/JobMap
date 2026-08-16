@@ -1,0 +1,33 @@
+{
+  "slug": "tigermed-hangzhou",
+  "name": "泰格医药",
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://tigermed.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "tigermed-hangzhou-site",
+      "name": "泰格医药",
+      "location": {
+        "address": "上海/杭州/重庆/济南"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cc28c37c40e1",
+      "title": "临床实验助理实习生  CRA  Intern",
+      "siteId": "tigermed-hangzhou-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://tigermed.zhiye.com/campus/jobs"
+    }
+  ]
+}

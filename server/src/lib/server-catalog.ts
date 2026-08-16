@@ -7,14 +7,20 @@ import { listSourceCompanyFiles } from './recruitment-adapters/file-drop.ts';
 import { BOSS_DIR } from './recruitment-adapters/boss.ts';
 import { NOWCODER_DIR } from './recruitment-adapters/nowcoder.ts';
 import { OFFICIAL_CAREER_DIR, listOfficialCareerFiles } from './recruitment-adapters/official-career.ts';
+import { RADAR_DIR } from './recruitment-adapters/radar.ts';
 import { SHIXISENG_DIR } from './recruitment-adapters/shixiseng.ts';
-import { mergeOfficialCareerIntoSeed } from './recruitment-source.ts';
+import { mergeCompaniesIntoPois } from './recruitment-source.ts';
 import { loadWorkCatalogFromDb } from './recruitment-store.ts';
 import { DOMAIN_SEED, INTERNSHIP_SEED } from './seed-data.ts';
 import type { SpatialClip } from './spatial-query.ts';
 import { isRecruitmentMode, type MapMode, type POI } from './types.ts';
 
 let offlineWorkCatalog: Promise<POI[]> | null = null;
+
+function hasPlausibleCoord(poi: POI): boolean {
+  const { lng, lat } = poi.location ?? {};
+  return Number.isFinite(lng) && Number.isFinite(lat) && !(lng === 0 && lat === 0);
+}
 
 export async function loadOfflineWorkCatalog(): Promise<POI[]> {
   if (!offlineWorkCatalog) {
@@ -23,9 +29,16 @@ export async function loadOfflineWorkCatalog(): Promise<POI[]> {
       listSourceCompanyFiles(BOSS_DIR),
       listSourceCompanyFiles(NOWCODER_DIR),
       listSourceCompanyFiles(SHIXISENG_DIR),
-    ]).then(([official, boss, nowcoder, shixiseng]) =>
-      mergeOfficialCareerIntoSeed(INTERNSHIP_SEED, [...official, ...boss, ...nowcoder, ...shixiseng]),
-    );
+      listSourceCompanyFiles(RADAR_DIR),
+    ]).then(([official, boss, nowcoder, shixiseng, radar]) => {
+      const merged = mergeCompaniesIntoPois(
+        INTERNSHIP_SEED,
+        [...official, ...boss, ...nowcoder, ...shixiseng],
+      );
+      // Radar-only companies carry city text, not coordinates — keep them out of the
+      // map until geocoded/imported. Matched slugs already merged onto real pins above.
+      return mergeCompaniesIntoPois(merged, radar).filter(hasPlausibleCoord);
+    });
   }
   return offlineWorkCatalog;
 }

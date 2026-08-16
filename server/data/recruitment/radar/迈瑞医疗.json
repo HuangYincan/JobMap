@@ -1,0 +1,33 @@
+{
+  "slug": "迈瑞医疗",
+  "name": "迈瑞医疗",
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jnrc.mindray.com/5/jobs?activityGuid=3a7a67e7-ad1b-4823-89eb-d96a9bea24f6&ActivityJumpPage=PortalPage",
+  "sites": [
+    {
+      "id": "迈瑞医疗-site",
+      "name": "迈瑞医疗—技能人才",
+      "location": {
+        "address": "深圳/杭州/武汉/南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3db0222b3e2d",
+      "title": "装配调试技术员  数控科技员  调剂技术员  自动化设备操作员",
+      "siteId": "迈瑞医疗-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jnrc.mindray.com/5/jobs?activityGuid=3a7a67e7-ad1b-4823-89eb-d96a9bea24f6&ActivityJumpPage=PortalPage"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "新浪-微博",
+  "name": "新浪&微博",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/sina/43536#/jobs?keyword=%E5%AE%9E%E4%B9%A0%E7%94%9F&page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "新浪-微博-site",
+      "name": "新浪&微博",
+      "location": {
+        "address": "北京/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2fa1e1fa2a7e",
+      "title": "Agent架构实习生 推荐算法实习生 应用算法实习生广告算法实习生大模型算法实习生;",
+      "siteId": "新浪-微博-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/sina/43536#/jobs?keyword=%E5%AE%9E%E4%B9%A0%E7%94%9F&page=1&anchorName=jobsList"
+    }
+  ]
+}

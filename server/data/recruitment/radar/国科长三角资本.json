@@ -1,0 +1,33 @@
+{
+  "slug": "国科长三角资本",
+  "name": "国科长三角资本",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://n0kwkp76gi.jobs.feishu.cn/campus/position/list?spread=R17V84A",
+  "sites": [
+    {
+      "id": "国科长三角资本-site",
+      "name": "国科长三角资本",
+      "location": {
+        "address": "北京/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-59cee43f4be2",
+      "title": "投资分析类 职能管理类文化创意类;",
+      "siteId": "国科长三角资本-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://n0kwkp76gi.jobs.feishu.cn/campus/position/list?spread=R17V84A"
+    }
+  ]
+}

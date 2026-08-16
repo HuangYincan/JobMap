@@ -1,0 +1,33 @@
+{
+  "slug": "长川科技",
+  "name": "长川科技",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "http://hrm-out.hzcctech.com:8083/RedseaPlatform/zhaopin/zpChannelQrCode/b1751a17-ed8f-4379-9143-48c804f5c50b/officeWebsite.mob",
+  "sites": [
+    {
+      "id": "长川科技-site",
+      "name": "长川科技",
+      "location": {
+        "address": "北京/成都/杭州/哈尔滨"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-40d6d4f1bc18",
+      "title": "软件工程师 驱动工程师 机械技术员 硬件测试工程师 电气技术员 自动化软件工程师 项目管经理 调试助理工程师",
+      "siteId": "长川科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://hrm-out.hzcctech.com:8083/RedseaPlatform/zhaopin/zpChannelQrCode/b1751a17-ed8f-4379-9143-48c804f5c50b/officeWebsite.mob"
+    }
+  ]
+}

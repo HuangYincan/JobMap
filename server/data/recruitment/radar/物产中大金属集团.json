@@ -1,0 +1,33 @@
+{
+  "slug": "物产中大金属集团",
+  "name": "物产中大金属集团",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.zmmc.com.cn:1688/recruit.aspx?category_id=55",
+  "sites": [
+    {
+      "id": "物产中大金属集团-site",
+      "name": "物产中大金属集团",
+      "location": {
+        "address": "上海/广州/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-513e297beee8",
+      "title": "大宗商品贸易  财务审计类",
+      "siteId": "物产中大金属集团-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zmmc.com.cn:1688/recruit.aspx?category_id=55"
+    }
+  ]
+}

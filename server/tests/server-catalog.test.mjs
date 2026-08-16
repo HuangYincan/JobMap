@@ -28,7 +28,7 @@ test('sync catalog is still the seed (tests and dry helpers)', () => {
   assert.equal(serverCatalog('college').length, 0);
 });
 
-test('async catalog merges official-career drops when there is no DATABASE_URL', async () => {
+test('async catalog merges official-career and radar drops when there is no DATABASE_URL', async () => {
   const work = await loadServerCatalog('work');
   assert.ok(work.length > INTERNSHIP_SEED.length);
   const ali = await loadServerCatalogById('work', 'alibaba-xixi');
@@ -43,6 +43,9 @@ test('async catalog merges official-career drops when there is no DATABASE_URL',
   assert.equal(await loadServerCatalogById('work', 'tencent-hangzhou:tencent-hangzhou-site'), undefined);
   const netease = await loadServerCatalogById('work', 'netease-hangzhou');
   assert.ok(netease?.kind === 'recruitment' && netease.positions.some((p) => p.id === 'netease-campus-frontend-2026'));
+  // Radar freshness signal merged onto the matched pin (city text becomes no coords,
+  // but the pin already has real coordinates).
+  assert.ok(netease?.positions.some((p) => p.id.startsWith('radar-')));
   const huawei = await loadServerCatalogById('work', 'huawei-hangzhou');
   assert.ok(huawei?.kind === 'recruitment' && huawei.positions.some((p) => p.id === 'huawei-campus-frontend-2026'));
   const ant = await loadServerCatalogById('work', 'antgroup-hangzhou');
@@ -53,6 +56,14 @@ test('async catalog merges official-career drops when there is no DATABASE_URL',
   assert.ok(await loadServerCatalogById('work', 'zhejiang-lab'));
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');
+});
+
+test('radar-only companies without coordinates stay off the offline map', async () => {
+  const work = await loadServerCatalog('work');
+  // 招商银行 is radar-only (city text, no coords) → must not pin at (0,0).
+  assert.equal(work.some((p) => p.location?.lng === 0 && p.location?.lat === 0), false);
+  assert.equal(await loadServerCatalogById('work', '招商银行'), undefined);
+  assert.equal(await loadServerCatalogById('work', '理想汽车'), undefined);
 });
 
 test('loadWorkCatalogFromDb joins companies + sites + open positions', () => {
@@ -72,10 +83,12 @@ test('loadServerCatalog prefers imported work rows, then seed + file drops', () 
   assert.match(catalog, /loadWorkCatalogFromDb/);
   assert.match(catalog, /if \(imported && \(imported\.length > 0 \|\| clip\)\) return imported/);
   assert.match(catalog, /loadOfflineWorkCatalog/);
-  assert.match(catalog, /mergeOfficialCareerIntoSeed/);
+  assert.match(catalog, /mergeCompaniesIntoPois/);
+  assert.match(catalog, /hasPlausibleCoord/);
   assert.match(catalog, /clip\?: SpatialClip/);
   assert.match(catalog, /loadWorkCatalogFromDb\(clip\)/);
   assert.match(catalog, /BOSS_DIR/);
   assert.match(catalog, /NOWCODER_DIR/);
   assert.match(catalog, /SHIXISENG_DIR/);
+  assert.match(catalog, /RADAR_DIR/);
 });

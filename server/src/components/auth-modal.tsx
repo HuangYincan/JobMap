@@ -13,14 +13,44 @@ export interface AuthModalProps {
 }
 
 type AuthTab = "phone" | "email" | "other";
-type SocialProvider = Extract<AuthProvider, "github" | "google" | "x" | "wechat">;
+type SocialProvider = Extract<AuthProvider, "github" | "google" | "wechat">;
 
-const SOCIAL: { id: SocialProvider; labelKey: "authGithub" | "authGoogle" | "authX" | "authWechat" }[] = [
+const SOCIAL: { id: SocialProvider; labelKey: "authGithub" | "authGoogle" | "authWechat" }[] = [
   { id: "github", labelKey: "authGithub" },
   { id: "google", labelKey: "authGoogle" },
-  { id: "x", labelKey: "authX" },
   { id: "wechat", labelKey: "authWechat" },
 ];
+
+function SocialIcon({ id }: { id: SocialProvider }) {
+  if (id === "github") {
+    return (
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.04 1.53 1.04.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.95 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03a9.56 9.56 0 0 1 5 0c1.91-1.3 2.75-1.03 2.75-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.6 1.03 2.69 0 3.85-2.34 4.7-4.57 4.95.36.31.68.92.68 1.86v2.76c0 .26.18.58.69.48A10 10 0 0 0 12 2Z"
+        />
+      </svg>
+    );
+  }
+  if (id === "google") {
+    return (
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path fill="#4285F4" d="M21.6 12.23c0-.74-.07-1.45-.19-2.13H12v4.04h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.24c1.9-1.75 2.98-4.33 2.98-7.43Z" />
+        <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.34l-3.24-2.5c-.9.6-2.05.96-3.38.96-2.6 0-4.8-1.76-5.59-4.12H3.07v2.58A10 10 0 0 0 12 22Z" />
+        <path fill="#FBBC05" d="M6.41 13.99A6 6 0 0 1 6.1 12c0-.69.12-1.36.31-1.99V7.43H3.07A10 10 0 0 0 2 12c0 1.62.39 3.15 1.07 4.57l3.34-2.58Z" />
+        <path fill="#EA4335" d="M12 5.88c1.47 0 2.79.5 3.82 1.5l2.87-2.87C16.95 2.9 14.7 2 12 2A10 10 0 0 0 3.07 7.43l3.34 2.58C7.2 7.64 9.4 5.88 12 5.88Z" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path
+        fill="#07C160"
+        d="M9.5 4.2c-4.4 0-8 2.9-8 6.5 0 2.1 1.2 4 3.1 5.2l-.8 2.4 2.7-1.4c.8.2 1.6.4 2.5.4.3 0 .6 0 .9-.1-.2-.6-.3-1.2-.3-1.8 0-3.5 3.3-6.4 7.4-6.4.3 0 .7 0 1 .1C16.9 6.3 13.5 4.2 9.5 4.2Zm-2 4.1a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8Zm4.2 0a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8Zm10.3 5.1c0-2.9-3-5.3-6.6-5.3s-6.6 2.4-6.6 5.3 3 5.3 6.6 5.3c.7 0 1.3-.1 1.9-.2l2.2 1.1-.6-1.9c1.9-1 3.1-2.6 3.1-4.3Zm-8.6-.8a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Zm4 0a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
+      />
+    </svg>
+  );
+}
 
 export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
   const titleId = useId();
@@ -167,7 +197,8 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
                   disabled={busy}
                   onClick={() => social(item.id)}
                 >
-                  {t(item.labelKey, lang)}
+                  <SocialIcon id={item.id} />
+                  <span>{t(item.labelKey, lang)}</span>
                 </button>
               ))}
             </div>

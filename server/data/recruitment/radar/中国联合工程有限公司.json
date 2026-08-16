@@ -1,0 +1,33 @@
+{
+  "slug": "中国联合工程有限公司",
+  "name": "中国联合工程有限公司",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://chinacuc.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "中国联合工程有限公司-site",
+      "name": "中国联合工程有限公司",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bd0cba7fb7c0",
+      "title": "策划咨询   产业规划计划  城乡规划设计工艺设计  建筑设计  结构设计 给排水设计 电气设计  幕墙设计  室内设计 园林设计 园林景观设计数据治理  信息",
+      "siteId": "中国联合工程有限公司-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://chinacuc.zhiye.com/intern/jobs"
+    }
+  ]
+}

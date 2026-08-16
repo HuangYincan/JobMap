@@ -1,0 +1,33 @@
+{
+  "slug": "禾迈股份",
+  "name": "禾迈股份",
+  "industries": [
+    "energy"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/hoymiles/70377?locale=zh-CN#/jobs?page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "禾迈股份-site",
+      "name": "禾迈股份",
+      "location": {
+        "address": "杭州/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f99f3b832697",
+      "title": "功率硬件工程师  控制硬件工程师  电力电子软件工程师 嵌入式软件工程师  算法数据工程师  算法工程师   AI工程师  后端软件工程师",
+      "siteId": "禾迈股份-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/hoymiles/70377?locale=zh-CN#/jobs?page=1&anchorName=jobsList"
+    }
+  ]
+}

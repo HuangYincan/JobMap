@@ -1,0 +1,33 @@
+{
+  "slug": "国科微电子",
+  "name": "国科微电子",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://goke1.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "国科微电子-site",
+      "name": "国科微电子",
+      "location": {
+        "address": "上海/深圳/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a596255735d5",
+      "title": "芯片类 软件类  算法类 模拟类 测试类  质量类   销售类  职能类",
+      "siteId": "国科微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://goke1.zhiye.com/campus/jobs"
+    }
+  ]
+}

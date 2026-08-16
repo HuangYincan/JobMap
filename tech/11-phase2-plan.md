@@ -46,7 +46,7 @@
 
 **1.4 认证集成（可选）**
 - [x] 认证提供商：自研 demo OTP + OAuth stub（**不**引入 NextAuth / Clerk，等 ADR）
-- [x] 用户注册登录流程（手机 / 邮箱 OTP + GitHub / Google / X / 微信 stub）
+- [x] 用户注册登录流程（手机 / 邮箱 OTP + GitHub / Google / 微信 stub）
 - [x] Session 管理（cookie + `auth_sessions`；过期行在查找失败时清掉）
 - [x] API 权限中间件（`/api/me/*` 无会话 → 401；游客不写云端）
 
@@ -79,8 +79,8 @@
 
 **2.3 搜索功能（基础版）**
 - [x] 搜索框组件 `<SearchBox />`
-- [x] 搜索建议（Autocomplete；工作模式 `fetchSearchSuggest` → `/api/suggest`，岗位带 `poiId`；失败回落 `suggestRecruitment`；空框 `trendingForMode`）
-- [x] 搜索历史本地存储（登录后 `/api/me/search-history`；游客不假装云端）
+- [x] 搜索建议（Autocomplete；工作模式 `fetchSearchSuggest` → `/api/suggest`，岗位带 `poiId`；失败回落 `suggestRecruitment`；空框不展示 tag，`/api/suggest` 空 q 仍返回 `trendingForMode` 给 Recent）
+- [x] 搜索历史本地存储（登录后 `/api/me/search-history`；游客 persistable 查询写 `dm.guest-search-history.v1`）
 - [x] 搜索 API 实现（客户端全文 + `POST /api/search`；pg_trgm 等导入后）
 
 **2.4 二级侧控栏（列表视图）**
@@ -214,6 +214,27 @@
 
 ---
 
+### Sprint 3.6: 真实校招数据 — 雷达快照 + 官网礼貌抓取 (2026-08-17)
+
+**目标:** 用合规来源给工作模式注入真实校招数据：已发布雷达快照（Apache-2.0）+ 官网招聘页礼貌 GET；Boss / 牛客 / 小红书 / 实习僧直抓仍禁止。
+
+#### 任务清单
+
+- [x] `crawler/app/domain_map_importer/acquire.py`：礼貌 GET（UA + ≥2s 间隔 + robots 优先）；商业聚合 host 请求前拒绝
+- [x] `html_jobs.py`：JSON-LD `JobPosting` 优先，回落岗位链接抽取
+- [x] `radar_jobs.py`：映射已发布 `jobs.json` → `SourceCompany`；杭州优先；名称归一化 + 锚点别名对齐现有 slug；被禁 host 丢弃；parser v1.1.0
+- [x] `official_refresh.py` + `cli.py`：官网 HTML 抽取合并回落盘；`make crawl-official` 干跑
+- [x] 服务端 `radar` adapter（`lib/recruitment-adapters/radar.ts`）+ 导入计划 + 离线 catalog 接入
+- [x] `mergeCompaniesIntoPois` 泛化：雷达/官网 drops 按 slug 并入现有 catalog，保留真实坐标
+- [x] 离线 catalog 过滤无坐标站点（雷达新公司不画 (0,0) 针）
+- [x] 校验器允许「仅地址」站点（待地理编码）
+- [x] 数据落盘：`server/data/recruitment/radar/`（98 公司 / 125 职位，SHA-256 记录）
+- [x] source review：`tech/roles/data/etl/xiaozhao-radar.md`、`etl/official-career.md`
+
+**交付物:** 真实校招投递链接/岗位进入工作模式 catalog；雷达新公司留待 `npm run geocode:sites`。
+
+---
+
 ### Sprint 4: 详情页 + 高级功能 (Week 4-5)
 
 **目标:** 完善详情页，实现高级搜索和排序
@@ -250,7 +271,7 @@
 - [x] 标签搜索（`#大厂` `#互联网` `#秋招` `#西湖区` → 筛选插件；裸 `#西湖` 仍是关键词）
 - [x] 组合搜索（关键词 + 标签，`parseSearchQuery`）
 - [x] 搜索历史管理（登录后 `/api/me/search-history`）
-- [x] 热门搜索推荐（`trendingForMode` 插件；空搜索框 + Recent 空态；`#` 热门走 `applyTagSuggestion`）
+- [x] 热门搜索推荐（`trendingForMode` 插件；仅 Recent L2；空搜索框不展示；`#` 热门走 `applyTagSuggestion`）
 
 **4.5 空间筛选**
 - [x] 距离缓冲圈可视化（有距离滑块时，以用户定位为圆心画蓝圈）

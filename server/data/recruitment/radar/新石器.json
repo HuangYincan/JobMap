@@ -1,0 +1,33 @@
+{
+  "slug": "新石器",
+  "name": "新石器",
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://r3c0qt6yjw.jobs.feishu.cn/campus/position/list?keywords=&category=&location=&project=7647438600203880747&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+  "sites": [
+    {
+      "id": "新石器-site",
+      "name": "新石器",
+      "location": {
+        "address": "北京/上海/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ed0ac472c500",
+      "title": "研发类  产品/策划/项目类  销售类 市场类 运营类",
+      "siteId": "新石器-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://r3c0qt6yjw.jobs.feishu.cn/campus/position/list?keywords=&category=&location=&project=7647438600203880747&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag="
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "淘宝闪购",
+  "name": "淘宝闪购",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RhvXxm8EZbskUhpKeG1HelQM8ttxYSAFC9fFHkWlN0Rw&batchId=100000760001",
+  "sites": [
+    {
+      "id": "淘宝闪购-site",
+      "name": "淘宝闪购",
+      "location": {
+        "address": "北京/上海/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a97aef3be071",
+      "title": "技术、设计、数据、运营、产品等七大类",
+      "siteId": "淘宝闪购-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RhvXxm8EZbskUhpKeG1HelQM8ttxYSAFC9fFHkWlN0Rw&batchId=100000760001"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "吉利科技集团",
+  "name": "吉利科技集团",
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.geely.com/campus-recruitment/geely/98148#/jobs",
+  "sites": [
+    {
+      "id": "吉利科技集团-site",
+      "name": "吉利科技集团",
+      "location": {
+        "address": "成都/杭州/宁波"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-62b0db0a5589",
+      "title": "职能类  科技类  运营类  研发类  制造类  经营管理类  项目管理类",
+      "siteId": "吉利科技集团-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.geely.com/campus-recruitment/geely/98148#/jobs"
+    }
+  ]
+}

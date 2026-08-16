@@ -1,0 +1,33 @@
+{
+  "slug": "中海地产",
+  "name": "中海地产",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://coli688.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "中海地产-site",
+      "name": "中海地产",
+      "location": {
+        "address": "北京/上海/广州/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-db4db0c8b837",
+      "title": "运营管理岗  财务自金岗  设计管理岗  营销策划岗  合约造价岗  土建工程岗  机电工程岗  客户服务岗  人力资源岗  投资管理岗  科技研发岗  数字化",
+      "siteId": "中海地产-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://coli688.zhiye.com/intern/jobs"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "万兴科技",
+  "name": "万兴科技",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1Rv8l5WaIjTCIFgepGQjCYow%3D&batchId=100000540002",
+  "sites": [
+    {
+      "id": "万兴科技-site",
+      "name": "万兴科技",
+      "location": {
+        "address": "深圳/杭州/长沙"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-95b8a7c940c6",
+      "title": "产品类 研发类 营销类 设计类 职能类",
+      "siteId": "万兴科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1Rv8l5WaIjTCIFgepGQjCYow%3D&batchId=100000540002"
+    }
+  ]
+}

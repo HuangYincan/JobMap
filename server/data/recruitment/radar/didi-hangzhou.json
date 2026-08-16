@@ -1,0 +1,33 @@
+{
+  "slug": "didi-hangzhou",
+  "name": "滴滴",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus_apply/didiglobal/96064?recommendCode=DS6KUPnd&hash=%23%2Fjobs#/jobs?project%5B0%5D=100107161",
+  "sites": [
+    {
+      "id": "didi-hangzhou-site",
+      "name": "滴滴",
+      "location": {
+        "address": "北京/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e95bf4b7278c",
+      "title": "开发，算法，运营等",
+      "siteId": "didi-hangzhou-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/didiglobal/96064?recommendCode=DS6KUPnd&hash=%23%2Fjobs#/jobs?project%5B0%5D=100107161"
+    }
+  ]
+}

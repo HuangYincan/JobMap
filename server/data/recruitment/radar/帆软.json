@@ -1,0 +1,33 @@
+{
+  "slug": "帆软",
+  "name": "帆软",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://join.fanruan.com/trainee",
+  "sites": [
+    {
+      "id": "帆软-site",
+      "name": "帆软—千帆计划",
+      "location": {
+        "address": "成都/杭州/南京/无锡"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7ed1b257b1c8",
+      "title": "产品经理  产品运营 后台开发工程师",
+      "siteId": "帆软-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.fanruan.com/trainee"
+    }
+  ]
+}

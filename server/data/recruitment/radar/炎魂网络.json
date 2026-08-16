@@ -1,0 +1,33 @@
+{
+  "slug": "炎魂网络",
+  "name": "炎魂网络",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus_apply/yanhun/24017#/jobs?zhineng=&page=1",
+  "sites": [
+    {
+      "id": "炎魂网络-site",
+      "name": "炎魂网络",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c79bdd7990f2",
+      "title": "技术类 策划类 市场类 设计类 综合类",
+      "siteId": "炎魂网络-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/yanhun/24017#/jobs?zhineng=&page=1"
+    }
+  ]
+}

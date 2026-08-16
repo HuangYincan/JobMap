@@ -1,0 +1,46 @@
+{
+  "slug": "antgroup-hangzhou",
+  "name": "蚂蚁集团",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hrrecommend.antgroup.com/job-list.html?source=campus_external_recommend&amp;code=r35_SVQjkTdrLP%2F0Pp%2FXfvja6wogkpyn8hDasxoGeFA%3D",
+  "sites": [
+    {
+      "id": "antgroup-hangzhou-site",
+      "name": "蚂蚁集团",
+      "location": {
+        "address": "北京/深圳/杭州/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e6594126d175",
+      "title": "大模型算法实习生、大模型测评科研实习生、大模型Agent和Web3创新孵化研发工程师、医疗人工智能应用实习生、底层引擎研发实习生、数据库前沿技术研究实习生、SQ",
+      "siteId": "antgroup-hangzhou-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hrrecommend.antgroup.com/job-list.html?source=campus_external_recommend&amp;code=r35_SVQjkTdrLP%2F0Pp%2FXfvja6wogkpyn8hDasxoGeFA%3D"
+    },
+    {
+      "externalId": "radar-f9c3feca48ec",
+      "title": "大语言模型  多模态  基础设施  强化学习  扩散模型  稀疏注意力  合成数据  具身智能  向量检索  机密计算  形式化方法 操作系统 数据库  FPG",
+      "siteId": "antgroup-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hrrecommend.antgroup.com/job-list.html?code=RI2D8Qo_53mjwttzQKtL6z1ZIgy8ysp5ZdhFF3N6Hoo%3D"
+    }
+  ]
+}

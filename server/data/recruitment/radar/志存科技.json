@@ -1,0 +1,33 @@
+{
+  "slug": "志存科技",
+  "name": "志存科技",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://iucylxooqp.jobs.feishu.cn/876677/?spread=GDA4WMK&sessionid=",
+  "sites": [
+    {
+      "id": "志存科技-site",
+      "name": "志存科技",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b02b36855e74",
+      "title": "芯片研发核心岗  软件与系统研发岗  工艺与工程技术岗  职能支持岗",
+      "siteId": "志存科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/876677/?spread=GDA4WMK&sessionid="
+    }
+  ]
+}

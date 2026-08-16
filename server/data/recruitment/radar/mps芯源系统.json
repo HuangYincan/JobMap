@@ -1,0 +1,33 @@
+{
+  "slug": "mps芯源系统",
+  "name": "MPS芯源系统",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.bilibili.com/campus/positions?practiceTypes=2&type=0&channel=bilibiliaccounts",
+  "sites": [
+    {
+      "id": "mps芯源系统-site",
+      "name": "MPS芯源系统",
+      "location": {
+        "address": "上海/深圳/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-eae617dc82e1",
+      "title": "技术销售 现场应用 技术方案 硬件技术支持工程师 数字营销市场学习生Corporate DeveIopment Venture CapitaI Intern",
+      "siteId": "mps芯源系统-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.bilibili.com/campus/positions?practiceTypes=2&type=0&channel=bilibiliaccounts"
+    }
+  ]
+}

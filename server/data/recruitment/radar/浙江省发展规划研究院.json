@@ -1,0 +1,33 @@
+{
+  "slug": "浙江省发展规划研究院",
+  "name": "浙江省发展规划研究院",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "http://47.96.146.209:8111/zhaopin_sx.php",
+  "sites": [
+    {
+      "id": "浙江省发展规划研究院-site",
+      "name": "浙江省发展规划研究院",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bace887980f2",
+      "title": "战略所经济所 区域所城镇所 基础所产业所 能环所 社会所 铁路所 智库部机关党委岗位",
+      "siteId": "浙江省发展规划研究院-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://47.96.146.209:8111/zhaopin_sx.php"
+    }
+  ]
+}

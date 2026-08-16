@@ -1,0 +1,33 @@
+{
+  "slug": "bytedance-hangzhou",
+  "name": "字节跳动Seed大模型",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.bytedance.com/campus/position?keywords=&category=&location=&project=7621018151002507573%2C7621018569480046853&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&spread=B33JDGU&sessionid=",
+  "sites": [
+    {
+      "id": "bytedance-hangzhou-site",
+      "name": "字节跳动Seed大模型人才校招",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-666ffe25afc5",
+      "title": "技术研究方向 基础大模型 视觉智能 语音智能 机器学习系统 大模型应用 具身智能",
+      "siteId": "bytedance-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.bytedance.com/campus/position?keywords=&category=&location=&project=7621018151002507573%2C7621018569480046853&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&spread=B33JDGU&sessionid="
+    }
+  ]
+}

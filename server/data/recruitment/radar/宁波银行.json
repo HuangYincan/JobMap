@@ -1,0 +1,33 @@
+{
+  "slug": "宁波银行",
+  "name": "宁波银行",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhaopin.nbcb.com.cn/#/internship-recruitment",
+  "sites": [
+    {
+      "id": "宁波银行-site",
+      "name": "宁波银行",
+      "location": {
+        "address": "上海/深圳/杭州/南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f55922d1f4c8",
+      "title": "各分行岗位持续更新中",
+      "siteId": "宁波银行-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.nbcb.com.cn/#/internship-recruitment"
+    }
+  ]
+}

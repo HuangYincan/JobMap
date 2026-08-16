@@ -261,17 +261,12 @@
 }
 ```
 
-**拖动把手**:
-```css
-.drawer-handle {
-  width: 40px;
-  height: 4px;
-  background: rgba(128, 128, 128, 0.4);
-  border-radius: 2px;
-  margin: 8px auto;
-  cursor: grab;
-}
-```
+**拖动把手（live）**:
+
+- Sheet: mini `96px` / half `42svh` / full `86svh`, frost `--soft-strong`.
+- Grabber pill: mini `42×4`, half/full `64×6`.
+- Shared gap token `--drawer-handle-gap: 8px` on `.mobileDrawer` — handle `padding-bottom` is the same in domain and work. Do not let work chips or `.drawerContent` top padding change handle↔toolbar / handle↔search.
+- Swipe ignore `|dy| < 36`. `touch-action: none` on the grabber, not the list.
 
 ---
 

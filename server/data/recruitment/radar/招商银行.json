@@ -1,0 +1,46 @@
+{
+  "slug": "招商银行",
+  "name": "招商银行",
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://cmbntjob.cmbchina.com/pages/bindInvited.html?qrCode=A4B9365AED1048E4BBDECF9593FF3608&rand=1754015829984&blNtCode=OJYUOY",
+  "sites": [
+    {
+      "id": "招商银行-site",
+      "name": "招商银行·招银网络科技",
+      "location": {
+        "address": "深圳/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6b03e7729580",
+      "title": "后端开发工程师、前端开发工程师、算法工程师、运维研发工程师、测试开发工程师",
+      "siteId": "招商银行-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cmbntjob.cmbchina.com/pages/bindInvited.html?qrCode=A4B9365AED1048E4BBDECF9593FF3608&rand=1754015829984&blNtCode=OJYUOY"
+    },
+    {
+      "externalId": "radar-63c6e9d6f916",
+      "title": "后端开发工程师  前端开发工程师  算法工程师  测试工程师  运维研发工程师",
+      "siteId": "招商银行-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026  09 20",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cmbntjob.cmbchina.com/pages/bindInvited.html?qrCode=A4B9365AED1048E4BBDECF9593FF3608&rand=1754015829984&blNtCode=OJYUOY"
+    }
+  ]
+}

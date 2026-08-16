@@ -1,0 +1,33 @@
+{
+  "slug": "乐学培优",
+  "name": "乐学培优",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://lexue.com/join?referralCode=A01-XY-whx",
+  "sites": [
+    {
+      "id": "乐学培优-site",
+      "name": "乐学培优",
+      "location": {
+        "address": "北京/广州/杭州/西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6bdd9316152f",
+      "title": "小学主讲教师  理科竞赛教练  初中主讲教师  英语管培生  高中主讲教师   奥数管培生",
+      "siteId": "乐学培优-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lexue.com/join?referralCode=A01-XY-whx"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "slug": "伏达半导体",
+  "name": "伏达半导体",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.nuvoltatech.com.cn/join/campus/",
+  "sites": [
+    {
+      "id": "伏达半导体-site",
+      "name": "伏达半导体",
+      "location": {
+        "address": "上海/杭州/合肥"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9c9a8d4e3791",
+      "title": "模拟设计实习生 硬件应用实习生(系统方向) 硬件应用实习生 芯片测试开发实习生 数字设计实习生 数字验证实习生 固件应用实习 生 现场应用实习生 (硬件）现场应",
+      "siteId": "伏达半导体-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.nuvoltatech.com.cn/join/campus/"
+    },
+    {
+      "externalId": "radar-887fb6275257",
+      "title": "模拟设计  固件应用  硬件应用实习生   硬件应用实习生—系统方向",
+      "siteId": "伏达半导体-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/nuvoltatech/29077?sessionid=#/jobs?page=1&anchorName=jobsList"
+    }
+  ]
+}

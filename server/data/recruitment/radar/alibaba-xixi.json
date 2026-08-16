@@ -1,0 +1,33 @@
+{
+  "slug": "alibaba-xixi",
+  "name": "阿里巴巴",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus-talent.alibaba.com/campus/position?batchId=100000700001&filterParams=%7B%22aliStar%22%3A%5B%22Y%22%5D%7D",
+  "sites": [
+    {
+      "id": "alibaba-xixi-site",
+      "name": "阿里巴巴—阿里顶尖人才疾患",
+      "location": {
+        "address": "北京/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6f065e8e4db9",
+      "title": "基础模型、大模型应用、AI  infra、芯片与计算等领域，具体岗位见投递方式链接",
+      "siteId": "alibaba-xixi-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?batchId=100000700001&filterParams=%7B%22aliStar%22%3A%5B%22Y%22%5D%7D"
+    }
+  ]
+}

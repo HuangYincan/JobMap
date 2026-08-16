@@ -1,0 +1,33 @@
+{
+  "slug": "tp",
+  "name": "TP",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.tp-link.com.cn/internship?sessionid=",
+  "sites": [
+    {
+      "id": "tp-site",
+      "name": "TP—LINK",
+      "location": {
+        "address": "深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6e185378fda2",
+      "title": "软件实习工程师 （杭州）大前端实习工程师 （杭州）机器人算法实习工程师（杭州）语音算法实习工程师（杭州）软件实习工程师（深圳）大模型算法实习工程师（深圳）网络安",
+      "siteId": "tp-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.tp-link.com.cn/internship?sessionid="
+    }
+  ]
+}

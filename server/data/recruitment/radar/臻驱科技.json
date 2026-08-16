@@ -1,0 +1,33 @@
+{
+  "slug": "臻驱科技",
+  "name": "臻驱科技",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://leadrive.jobs.feishu.cn/391532/?spread=AMJWGFQ",
+  "sites": [
+    {
+      "id": "臻驱科技-site",
+      "name": "臻驱科技",
+      "location": {
+        "address": "上海/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e41f5a792824",
+      "title": "LEDP-ETR卓越工程师",
+      "siteId": "臻驱科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://leadrive.jobs.feishu.cn/391532/?spread=AMJWGFQ"
+    }
+  ]
+}

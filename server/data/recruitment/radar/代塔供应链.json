@@ -1,0 +1,33 @@
+{
+  "slug": "代塔供应链",
+  "name": "代塔供应链",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jsj.top/f/bvFj5O",
+  "sites": [
+    {
+      "id": "代塔供应链-site",
+      "name": "代塔供应链",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f7d24acdbf6a",
+      "title": "管培生岗位  技术/AI方向  经营管理方向   职能方向  客服方向 关务方向  仓储物流方向",
+      "siteId": "代塔供应链-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jsj.top/f/bvFj5O"
+    }
+  ]
+}

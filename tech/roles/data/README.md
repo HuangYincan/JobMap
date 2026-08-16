@@ -8,7 +8,9 @@
 
 ## Source Registry Policy
 
-No importer or crawler is implemented yet. Every source must receive a review record before acquisition code is written or scheduled. The record must state: purpose, fields, access method, authorization/license/ToS basis, robots status, rate limit, PII classification, retention and deletion rule, attribution, refresh target, quality checks, owner, review date, and kill-switch condition.
+Every source must receive a review record before acquisition code is written or scheduled. The record must state: purpose, fields, access method, authorization/license/ToS basis, robots status, rate limit, PII classification, retention and deletion rule, attribution, refresh target, quality checks, owner, review date, and kill-switch condition.
+
+Implemented (reviewed 2026-08-17): published `xiaozhao-radar` `jobs.json` mapping, and polite GET of curated official `careerUrl` HTML. See `etl/xiaozhao-radar.md` and `etl/official-career.md`.
 
 | Source | MVP status | Permitted action | Conditions |
 |---|---|---|---|

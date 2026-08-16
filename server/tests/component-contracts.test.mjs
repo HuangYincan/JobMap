@@ -122,6 +122,40 @@ test('work autocomplete prefers GET /api/suggest and falls back locally', () => 
   assert.match(api, /poiId\?: string/);
 });
 
+test('empty search does not feed trending chips into suggestions', () => {
+  const shell = src('components/map-shell.tsx');
+  assert.match(shell, /if \(!query\.trim\(\)\) \{\s*setSuggestions\(\[\]\);/);
+  assert.doesNotMatch(shell, /trendingForMode\(mode\)\.map/);
+});
+
+test('auth Other is icon rows without X', () => {
+  const modal = src('components/auth-modal.tsx');
+  const css = src('components/auth-modal.module.css');
+  assert.match(modal, /id: "github"/);
+  assert.match(modal, /id: "wechat"/);
+  assert.doesNotMatch(modal, /id: "x"/);
+  assert.doesNotMatch(modal, /authX/);
+  assert.match(modal, /function SocialIcon/);
+  assert.match(css, /grid-template-columns:\s*1fr;/);
+  assert.match(css, /@media \(max-width: 720px\)[\s\S]*\.promo \{\s*display:\s*none/);
+});
+
+test('persistable guest history and catalog-only save are wired', () => {
+  const persist = src('lib/persistable.ts');
+  const guest = src('lib/guest-search-history.ts');
+  const shell = src('components/map-shell.tsx');
+  const recent = src('components/recent-panel.tsx');
+  const saved = src('app/api/me/saved/route.ts');
+  assert.match(persist, /PERSISTABLE_MODES/);
+  assert.match(persist, /isPersistablePoi/);
+  assert.match(guest, /dm\.guest-search-history\.v1/);
+  assert.match(shell, /addGuestHistory/);
+  assert.match(shell, /suggestionToDomainPoi/);
+  assert.match(recent, /recentEmptyGuest/);
+  assert.doesNotMatch(recent, /recentNeedSignIn/);
+  assert.match(saved, /NOT_PERSISTABLE/);
+});
+
 test('map shell has skip links and a live result count', () => {
   const shell = src('components/map-shell.tsx');
   const css = src('components/map-shell.module.css');

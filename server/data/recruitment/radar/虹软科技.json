@@ -1,0 +1,46 @@
+{
+  "slug": "虹软科技",
+  "name": "虹软科技",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.arcsoft.com.cn/job/JobList.html",
+  "sites": [
+    {
+      "id": "虹软科技-site",
+      "name": "虹软科技",
+      "location": {
+        "address": "上海/深圳/杭州/南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-27a7a5287cc0",
+      "title": "算法类  开发类 产品市场类",
+      "siteId": "虹软科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.arcsoft.com.cn/job/JobList.html"
+    },
+    {
+      "externalId": "radar-f7d5f9796cb5",
+      "title": "计算机视觉算法 AIGC算法 图像处理算法工程师，3D感知算法工程师 ，智能驾驶感知算法工程师，4D车载数据工程师，C/C++开发工程师，算法优化工程师，智能驾",
+      "siteId": "虹软科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.arcsoft.com.cn/job/CadetIntroduce.html"
+    }
+  ]
+}

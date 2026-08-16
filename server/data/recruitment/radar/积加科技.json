@@ -1,0 +1,33 @@
+{
+  "slug": "积加科技",
+  "name": "积加科技",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://a4x-paas.jobs.feishu.cn/500117/position/list?keywords=&category=&location=&project=7620724248252762374&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+  "sites": [
+    {
+      "id": "积加科技-site",
+      "name": "积加科技",
+      "location": {
+        "address": "北京/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3dbd3acb1428",
+      "title": "3D视觉算法工程师  具身智能工程师  多模态大模型工程师  Bsp 开发工程师",
+      "siteId": "积加科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://a4x-paas.jobs.feishu.cn/500117/position/list?keywords=&category=&location=&project=7620724248252762374&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag="
+    }
+  ]
+}

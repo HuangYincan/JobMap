@@ -1,0 +1,33 @@
+{
+  "slug": "兴业银行",
+  "name": "兴业银行",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://job.cib.com.cn/portal/#/recruit/814456803227381761?recruitType=TR",
+  "sites": [
+    {
+      "id": "兴业银行-site",
+      "name": "兴业银行",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9be5b9f4e269",
+      "title": "总行岗位 各分支行岗位 子公司岗位  具体见投递方式链接",
+      "siteId": "兴业银行-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.cib.com.cn/portal/#/recruit/814456803227381761?recruitType=TR"
+    }
+  ]
+}

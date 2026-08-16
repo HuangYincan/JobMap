@@ -1,0 +1,46 @@
+{
+  "slug": "理想汽车",
+  "name": "理想汽车",
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.lixiang.com/employ/campus/list.html?job_mode=1&project_id=15&employchannelcode=7B8MZAZ&fromJob=1&sessionid=",
+  "sites": [
+    {
+      "id": "理想汽车-site",
+      "name": "理想汽车“理想+”计划",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-43a516c993d2",
+      "title": "算法与软件 芯片研发 芯片架构 操作系统与嵌入式开发  \n芯片前端设计 信息安全  电子电气架构",
+      "siteId": "理想汽车-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lixiang.com/employ/campus/list.html?job_mode=1&project_id=15&employchannelcode=7B8MZAZ&fromJob=1&sessionid="
+    },
+    {
+      "externalId": "radar-3be67347f5a3",
+      "title": "整车研发 芯片研发设计 供应链与智能制造 销售与服务 算法与软件 产品 项目管理 职能与综合管理 充电网络",
+      "siteId": "理想汽车-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lixiang.com/employ/campus/list.html?fromJob=1"
+    }
+  ]
+}

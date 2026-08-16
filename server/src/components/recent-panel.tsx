@@ -39,7 +39,7 @@ export function RecentPanel({
         <header className={styles.header}>
           <h2 className={styles.title}>{t("recentSearches", lang)}</h2>
           <div className={styles.headerActions}>
-            {signedIn && items.length > 0 && onClear && (
+            {items.length > 0 && onClear && (
               <button type="button" className={styles.textBtn} onClick={onClear}>
                 {t("clearHistory", lang)}
               </button>
@@ -68,10 +68,8 @@ export function RecentPanel({
             </div>
           </section>
         )}
-        {!signedIn ? (
-          <p className={styles.empty}>{t("recentNeedSignIn", lang)}</p>
-        ) : items.length === 0 ? (
-          <p className={styles.empty}>{t("recentEmpty", lang)}</p>
+        {items.length === 0 ? (
+          <p className={styles.empty}>{signedIn ? t("recentEmpty", lang) : t("recentEmptyGuest", lang)}</p>
         ) : (
           <ul className={styles.list}>
             {items.map((item) => (

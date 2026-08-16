@@ -1,0 +1,46 @@
+{
+  "slug": "麦米电气",
+  "name": "麦米电气",
+  "industries": [
+    "energy"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU6282075e0dcad413c09efe26/pb/school.html?projectCode=201301&showProjectBanner=true",
+  "sites": [
+    {
+      "id": "麦米电气-site",
+      "name": "麦米电气—高潜人才计划",
+      "location": {
+        "address": "深圳/杭州/武汉/南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3d935033696c",
+      "title": "新型电力电子拓扑与控制、健能变流器并网技术、电力电子数字化伤真、AIDC数据中心供电技术、电力电子磁件设计老光与电弧物理研究、涡旋压缩机  流体仿真 热设计等相",
+      "siteId": "麦米电气-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6282075e0dcad413c09efe26/pb/school.html?projectCode=201301&showProjectBanner=true"
+    },
+    {
+      "externalId": "radar-cd018660924a",
+      "title": "新型电力电子拓扑与控制、储能变流器网技术、电力电子数字化仿真、AID0数据中心供电技术、电力电子磁件设计微光与电弧物理研究、锅旋压缩机、流体仿真  热设设计等相",
+      "siteId": "麦米电气-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6282075e0dcad413c09efe26/pb/school.html?projectCode=201301&showProjectBanner=true"
+    }
+  ]
+}

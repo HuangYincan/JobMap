@@ -404,6 +404,35 @@ export interface AmapSuggestion {
 }
 
 /**
+ * Turn an AutoComplete tip into a session DomainPOI so a list card exists.
+ * AMap tips are not PlaceSearch records; they stay source:'amap' (not persistable).
+ */
+export function suggestionToDomainPoi(tip: {
+  id?: string;
+  name: string;
+  subtitle?: string;
+  location?: { lng: number; lat: number };
+  type?: string;
+  address?: string;
+  district?: string;
+}): DomainPOI | null {
+  const name = tip.name?.trim();
+  const loc = tip.location;
+  if (!name || !loc || typeof loc.lng !== 'number' || typeof loc.lat !== 'number') return null;
+  const category = (tip.type || tip.subtitle || '地点').split(/[;·]/)[0]?.trim() || '地点';
+  const address = tip.address || tip.district || tip.subtitle;
+  return {
+    id: tip.id || `amap-${loc.lng}-${loc.lat}-${name}`,
+    kind: 'domain',
+    name,
+    mode: 'domain',
+    source: 'amap',
+    location: { lng: loc.lng, lat: loc.lat, address },
+    category,
+  };
+}
+
+/**
  * 搜索建议（AutoComplete）。
  * 返回匹配的 POI 建议列表；无结果或失败返回空数组。
  */

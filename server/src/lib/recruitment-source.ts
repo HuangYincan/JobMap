@@ -9,7 +9,7 @@
 import { resolveCompanyLogo, type ResolvedLogo } from './company-logo.ts';
 import type { ApplySource, CompanySite, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
 
-export type RecruitmentSourceKind = 'seed' | 'official-career' | 'catalog' | 'boss' | 'nowcoder' | 'shixiseng';
+export type RecruitmentSourceKind = 'seed' | 'official-career' | 'catalog' | 'boss' | 'nowcoder' | 'shixiseng' | 'radar';
 
 export interface SourcePosition {
   externalId: string;
@@ -214,8 +214,21 @@ export function mergeOfficialCareerIntoSeed(
   seed: RecruitmentPOI[],
   official: SourceCompany[],
 ): RecruitmentPOI[] {
+  return mergeCompaniesIntoPois(seed, official);
+}
+
+/**
+ * Merge source companies onto an existing catalog (POIs keyed by slug).
+ * Matched slugs gain positions/sites in place (keeping base coordinates);
+ * unknown slugs become catalog extras. Extras with no coordinates are kept
+ * as-is — the offline read path filters them until they are geocoded.
+ */
+export function mergeCompaniesIntoPois(
+  base: RecruitmentPOI[],
+  companies: SourceCompany[],
+): RecruitmentPOI[] {
   const bySlug = new Map<string, RecruitmentPOI[]>();
-  for (const poi of seed) {
+  for (const poi of base) {
     const slug = catalogSlug(poi);
     const list = bySlug.get(slug) ?? [];
     list.push({
@@ -227,7 +240,7 @@ export function mergeOfficialCareerIntoSeed(
   }
 
   const extras: RecruitmentPOI[] = [];
-  for (const company of official) {
+  for (const company of companies) {
     const existing = bySlug.get(company.slug);
     if (existing) mergeCompanyOntoSeedPois(existing, company);
     else extras.push(...sourceCompanyToCatalogPois(company, 'api'));

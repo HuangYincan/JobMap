@@ -1,0 +1,33 @@
+{
+  "slug": "中国电建华东院",
+  "name": "中国电建华东院",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hdec.zhiye.com/intern",
+  "sites": [
+    {
+      "id": "中国电建华东院-site",
+      "name": "中国电建华东院",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f3fa766b2cdc",
+      "title": "电气工程及其自动化 水利水电工程水文与水资源工程  水力学及河流动力学  港口海岸及近海工程 水工结构工程  船舶与海洋工程 给排水科学与工程 新能源科学与工程",
+      "siteId": "中国电建华东院-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hdec.zhiye.com/intern"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "银泰百货",
+  "name": "银泰百货",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://talent.intime.com.cn/campus/jobs?3=%5B%7B%22id%22%3A%226%22%2C%22label%22%3A%2227%E5%B1%8A%E6%8A%80%E6%9C%AF%E5%AE%9E%E4%B9%A0%E7%94%9F%22%7D%5D",
+  "sites": [
+    {
+      "id": "银泰百货-site",
+      "name": "银泰百货",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-950f9ba82026",
+      "title": "视觉算法实习生 机器学习实习生",
+      "siteId": "银泰百货-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.intime.com.cn/campus/jobs?3=%5B%7B%22id%22%3A%226%22%2C%22label%22%3A%2227%E5%B1%8A%E6%8A%80%E6%9C%AF%E5%AE%9E%E4%B9%A0%E7%94%9F%22%7D%5D"
+    }
+  ]
+}

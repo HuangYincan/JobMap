@@ -1,0 +1,33 @@
+{
+  "slug": "海天集团",
+  "name": "海天集团",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=v%2FKCt9aGj8_gyg9KDwSutRIvGiJa8AaCcZoSeeTecsg%3D&batchId=100000540002&filterParams=%7B%22customDept%22%3A%5B%22LWEPZA%22%5D%7D",
+  "sites": [
+    {
+      "id": "海天集团-site",
+      "name": "海天集团—组内直招）",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e95b2dce02d7",
+      "title": "AI Agent优化工程师—训练/数据/评测，AI应用研发工程师",
+      "siteId": "海天集团-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=v%2FKCt9aGj8_gyg9KDwSutRIvGiJa8AaCcZoSeeTecsg%3D&batchId=100000540002&filterParams=%7B%22customDept%22%3A%5B%22LWEPZA%22%5D%7D"
+    }
+  ]
+}

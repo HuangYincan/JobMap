@@ -1,0 +1,46 @@
+{
+  "slug": "泰隆银行",
+  "name": "泰隆银行",
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zjtlcb.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "泰隆银行-site",
+      "name": "泰隆银行",
+      "location": {
+        "address": "上海/杭州/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-63510e88e804",
+      "title": "投资策略研发方向 营销方向柜员方向A应用开发方向 后端开发方向 数据科学方向;",
+      "siteId": "泰隆银行-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zjtlcb.zhiye.com/intern/jobs"
+    },
+    {
+      "externalId": "radar-93a7a197e625",
+      "title": "2027 届暑期超级实习生 （IT方向）",
+      "siteId": "泰隆银行-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zjtlcb.zhiye.com/intern/detail?jobAdId=b0be306c-d50e-4eda-a281-529d3bfde564"
+    }
+  ]
+}

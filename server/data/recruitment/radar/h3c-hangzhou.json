@@ -1,0 +1,33 @@
+{
+  "slug": "h3c-hangzhou",
+  "name": "新华三集团",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.h3c.com/intern/jobs",
+  "sites": [
+    {
+      "id": "h3c-hangzhou-site",
+      "name": "新华三集团",
+      "location": {
+        "address": "北京/成都/杭州/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bd06bbf679a7",
+      "title": "AI算法实习生  软件开发实习生  软件测试实习生  硬件实习  售前产品经理实习生",
+      "siteId": "h3c-hangzhou-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.h3c.com/intern/jobs"
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import {
 import { bossAdapter } from '../src/lib/recruitment-adapters/boss.ts';
 import { officialCareerAdapter, parseOfficialCareerPayload } from '../src/lib/recruitment-adapters/official-career.ts';
 import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
+import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
 import { mergeOfficialCareerIntoSeed, poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
@@ -24,6 +25,21 @@ function sample() {
 
 test('validateSourceCompany accepts the first work seed company', () => {
   assert.deepEqual(validateSourceCompany(sample()), []);
+});
+
+test('validateSourceCompany accepts an address-only site (pending geocode)', () => {
+  const company = sample();
+  company.sites = [{ id: 'demo-site', name: company.name, location: { address: '杭州' } }];
+  company.positions = [{ ...company.positions[0], siteId: 'demo-site' }];
+  assert.deepEqual(validateSourceCompany(company), []);
+});
+
+test('radar adapter reads the mapped drop directory', async () => {
+  const companies = await radarAdapter().list();
+  assert.ok(companies.length >= 90, `expected >= 90 radar companies, got ${companies.length}`);
+  const netease = companies.find((c) => c.slug === 'netease-hangzhou');
+  assert.ok(netease);
+  assert.ok(netease.positions.some((p) => p.externalId.startsWith('radar-')));
 });
 
 test('validateSourceCompany flags a position that points at a missing site', () => {

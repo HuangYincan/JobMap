@@ -1,0 +1,46 @@
+{
+  "slug": "安克创新",
+  "name": "安克创新",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://anker-in.jobs.feishu.cn/s/ME9gNKDOVd0",
+  "sites": [
+    {
+      "id": "安克创新-site",
+      "name": "安克创新",
+      "location": {
+        "address": "北京/深圳/杭州/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5eeba8e09b8b",
+      "title": "研发技术类  数据开发类 产品一体验类  设计类  市场营销类  采购与供应链类  品质类  职能类 制造类",
+      "siteId": "安克创新-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://anker-in.jobs.feishu.cn/s/ME9gNKDOVd0"
+    },
+    {
+      "externalId": "radar-1fc73145c63a",
+      "title": "技术组 产品组族 设计族  供应链族 项目管理族 营销族 质量族 服务族 人力资源族",
+      "siteId": "安克创新-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.anker.com.cn/universities/recruitment/new/?channel=internship"
+    }
+  ]
+}

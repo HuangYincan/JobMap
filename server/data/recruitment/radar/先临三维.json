@@ -1,0 +1,33 @@
+{
+  "slug": "先临三维",
+  "name": "先临三维",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://shining3d.zhiye.com/jobs?activityGuid=d81ab3d6-6d49-41aa-9343-16cacb965941",
+  "sites": [
+    {
+      "id": "先临三维-site",
+      "name": "先临三维",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bfe3fe1ec2fa",
+      "title": "SLAM算法工程师  三维重建算法实习生 深度学习算法实习生  几何/网络算法实习生 c++开发实习生",
+      "siteId": "先临三维-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://shining3d.zhiye.com/jobs?activityGuid=d81ab3d6-6d49-41aa-9343-16cacb965941"
+    }
+  ]
+}

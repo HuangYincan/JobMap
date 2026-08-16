@@ -2,7 +2,8 @@
 // 账户 / 偏好 / 会话契约
 //
 // 默认地图模式是 work。语言：已登录读偏好，未登录跟浏览器。
-// Recent 只记已提交的搜索，按用户落库。
+// Recent 只记已提交的 persistable 搜索（work / internship）。
+// 已登录走 /api/me/search-history；游客走浏览器 dm.guest-search-history.v1。
 // ============================================================
 
 import type { Language } from './i18n.ts';

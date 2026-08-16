@@ -7,6 +7,7 @@ help: ## Show currently supported commands
 	@printf '%s\n' '  make db-up            Start the local PostGIS database'
 	@printf '%s\n' '  make db-migrate       Apply pending SQL migrations (requires DATABASE_URL)'
 	@printf '%s\n' '  make test-unit        Run importer unit tests (no database required)'
+	@printf '%s\n' '  make crawl-official   Dry-run polite GET of official careerUrl pages (no write)'
 	@printf '%s\n' '  make test-integration Run database integration tests (SKIP/BLOCKED if unavailable)'
 	@printf '%s\n' '  make docs-check       Reject stale canonical documentation references'
 	@printf '%s\n' '  make scaffold-status  Show implementation prerequisites present/planned'
@@ -28,6 +29,9 @@ db-migrate: ## Apply pending SQL migrations (requires DATABASE_URL)
 
 test-unit: ## Run importer unit tests (no database required)
 	cd crawler && PYTHONPATH=app python3 -m unittest discover -s tests -v
+
+crawl-official: ## Dry-run polite GET of curated official career pages (no file write)
+	cd crawler && PYTHONPATH=app python3 -m domain_map_importer.cli official --dir ../server/data/recruitment/official-career --limit 5 --interval 2
 
 test-integration: ## Run database integration tests (SKIP/BLOCKED if unavailable)
 	tests/integration/db/test_migrations.sh

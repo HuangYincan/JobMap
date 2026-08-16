@@ -1,0 +1,33 @@
+{
+  "slug": "积海半导体",
+  "name": "积海半导体",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ghsmc.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "积海半导体-site",
+      "name": "积海半导体",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b0edbab0a9d1",
+      "title": "芯片技术类  技术研发类  工程技术类  质量管理类  信息技术类  市场营销类",
+      "siteId": "积海半导体-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ghsmc.zhiye.com/campus/jobs"
+    }
+  ]
+}

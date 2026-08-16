@@ -1,0 +1,33 @@
+{
+  "slug": "浙江省城乡规划设计研究院",
+  "name": "浙江省城乡规划设计研究院",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://oa.zjplan.com/edc/formview/mk11gx",
+  "sites": [
+    {
+      "id": "浙江省城乡规划设计研究院-site",
+      "name": "浙江省城乡规划设计研究院",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-84268073c01c",
+      "title": "规划类 市政类  建筑类 园林类   信息类",
+      "siteId": "浙江省城乡规划设计研究院-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://oa.zjplan.com/edc/formview/mk11gx"
+    }
+  ]
+}

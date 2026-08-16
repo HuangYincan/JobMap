@@ -1,14 +1,15 @@
 # 03 - Plugin System Contract
 
-> **Status:** manifest and import validation implemented; acquisition and frontend presentation deferred
-> **Last reviewed:** 2026-08-15
+> **Status:** manifest, local-fixture import, and reviewed polite acquisition seams implemented; frontend presentation deferred
+> **Last reviewed:** 2026-08-17
 
 ## Implementation Evidence
 
 - `crawler/app/domain_map_importer/manifest.py`: `validate_manifest()` accepts a declarative manifest and rejects unsupported keys, unknown capabilities, invalid semantic versions, and malformed `dataPolicy`.
 - `crawler/app/domain_map_importer/imports.py`: `validate_local_fixture()` / `normalize_import()` validate a local fixture shape, require provenance metadata, detect duplicate and malformed records, and produce a deterministic report with a content hash.
 - `crawler/app/domain_map_importer/access.py`: `map_access()` / `can_access_map()` enforce public-read-only and owner/editor/viewer permissions.
-- Unit tests for these seams pass (`make test-unit`, 11 tests).
+- `crawler/app/domain_map_importer/acquire.py`: polite GET + robots + blocked commercial hosts. `html_jobs.py` / `radar_jobs.py` / `official_refresh.py` map HTML or a published jobs.json snapshot onto `SourceCompany`.
+- Unit tests for these seams pass (`make test-unit`).
 
 ## Principle
 
@@ -22,7 +23,7 @@ The MVP will implement only the recruitment domain and one approved import path.
 |---|---|---|---|
 | Domain schema | Declares entity/item fields and UI-safe metadata | Planned | Platform-reviewed declarative data |
 | Import adapter | Reads approved seed, CSV, or API input | Planned | Validated input, provenance required |
-| Acquisition adapter | Retrieves a source automatically | Deferred | Requires source-specific approval and kill switch |
+| Acquisition adapter | Retrieves a source automatically | Polite official HTML + published radar JSON only | Requires source-specific approval and kill switch |
 | Presentation extension | Provides reviewed UI rendering | Deferred after map shell approval | First-party, versioned code only |
 | Executable third-party plugin | Runs supplied code | Explicitly out of scope | Requires a separate sandbox/security ADR |
 

@@ -1,0 +1,33 @@
+{
+  "slug": "昆仑芯科技",
+  "name": "昆仑芯科技",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kunlunxin1.zhiye.com/custom/xiaoyuan?hideAll=true",
+  "sites": [
+    {
+      "id": "昆仑芯科技-site",
+      "name": "昆仑芯科技",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1e76d49730ba",
+      "title": "芯片硬件类  芯片软件类",
+      "siteId": "昆仑芯科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kunlunxin1.zhiye.com/custom/xiaoyuan?hideAll=true"
+    }
+  ]
+}

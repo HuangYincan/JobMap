@@ -1,0 +1,33 @@
+{
+  "slug": "点众科技",
+  "name": "点众科技",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/apply/dianzhong/29071?sessionid=#/jobs",
+  "sites": [
+    {
+      "id": "点众科技-site",
+      "name": "点众科技",
+      "location": {
+        "address": "北京/广州/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-44800993f11d",
+      "title": "AI类 研发类 运营类 小语种类  剪辑/编导类",
+      "siteId": "点众科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/dianzhong/29071?sessionid=#/jobs"
+    }
+  ]
+}

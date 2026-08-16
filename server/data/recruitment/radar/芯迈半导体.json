@@ -1,0 +1,33 @@
+{
+  "slug": "芯迈半导体",
+  "name": "芯迈半导体",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://young.yingjiesheng.com/xyzlogin?ctmid=3e160048-a22b-446f-899d-7bc0a9a6b8db&ehirejobid=&jumpurl=https%3A%2F%2Fxyz.51job.com%2FExternal%2FOthers%2FLogin51.aspx%3FCtmID%3D3e160048-a22b-446f-899d-7bc0a9a6b8db%26prd%3Dyddzy%26prp%3D%26cd%3D%26cp%3D%26r",
+  "sites": [
+    {
+      "id": "芯迈半导体-site",
+      "name": "芯迈半导体",
+      "location": {
+        "address": "上海/深圳/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d64963c8cb5b",
+      "title": "研发类  技术类  管理类 销售类",
+      "siteId": "芯迈半导体-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://young.yingjiesheng.com/xyzlogin?ctmid=3e160048-a22b-446f-899d-7bc0a9a6b8db&ehirejobid=&jumpurl=https%3A%2F%2Fxyz.51job.com%2FExternal%2FOthers%2FLogin51.aspx%3FCtmID%3D3e160048-a22b-446f-899d-7bc0a9a6b8db%26prd%3Dyddzy%26prp%3D%26cd%3D%26cp%3D%26r"
+    }
+  ]
+}

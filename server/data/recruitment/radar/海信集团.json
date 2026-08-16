@@ -1,0 +1,33 @@
+{
+  "slug": "海信集团",
+  "name": "海信集团",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.hisense.com/intern/jobs",
+  "sites": [
+    {
+      "id": "海信集团-site",
+      "name": "海信集团",
+      "location": {
+        "address": "上海/深圳/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-589b7c8000fb",
+      "title": "软件算法类 硬件研发类 技术类 暖通制冷类 光学与显示类   芯片类 结构类 技术与工艺类 营销类 供应链 管理类 生产制造类 质量类 职能类 其他类",
+      "siteId": "海信集团-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.hisense.com/intern/jobs"
+    }
+  ]
+}

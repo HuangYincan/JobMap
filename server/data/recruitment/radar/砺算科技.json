@@ -1,0 +1,33 @@
+{
+  "slug": "砺算科技",
+  "name": "砺算科技",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.lisuantech.com/join/campus-recruitment",
+  "sites": [
+    {
+      "id": "砺算科技-site",
+      "name": "砺算科技",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-983b6b4631d2",
+      "title": "架构岗位  硬件岗位  软件岗位   其他",
+      "siteId": "砺算科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lisuantech.com/join/campus-recruitment"
+    }
+  ]
+}

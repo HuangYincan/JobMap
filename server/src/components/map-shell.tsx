@@ -7,17 +7,18 @@ import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
 import type { FilterState, MapMode, POI } from "@/lib/types";
 import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
-import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
+import { getCurrentPosition, fetchSuggestions, loadAMap, suggestionToDomainPoi } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { applyTagSuggestion, activeFilterChips, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, removeFilterChip, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchSearchSuggest } from "@/lib/api";
-import { trendingForMode } from "@/lib/trending-search";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
-import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
+import { mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, type ViewportBounds } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from "@/lib/account";
 import { initialsFromName } from "@/lib/account";
+import { isPersistableMode, isPersistablePoi } from "@/lib/persistable";
+import { addGuestHistory, clearGuestHistory, listGuestHistory } from "@/lib/guest-search-history";
 import {
   amapStyleUrl,
   MAP_STYLE_KEY,
@@ -216,7 +217,11 @@ export function MapShell() {
     }
   }, []);
 
-  const refreshHistory = useCallback(async () => {
+  const refreshHistory = useCallback(async (signedIn: boolean) => {
+    if (!signedIn) {
+      setSearchHistory(listGuestHistory());
+      return;
+    }
     try {
       const res = await fetch("/api/me/search-history");
       const body = await res.json();
@@ -268,8 +273,8 @@ export function MapShell() {
   useEffect(() => {
     refreshAccount().then((next) => {
       if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
+      void refreshHistory(Boolean(next));
     });
-    refreshHistory();
     refreshSaved();
     refreshApplications();
     refreshInbox();
@@ -281,18 +286,39 @@ export function MapShell() {
     void scanJobAlerts();
   }, [user, scanJobAlerts]);
 
+  const mergeGuestHistoryOnSignIn = useCallback(async () => {
+    const local = listGuestHistory().filter((item) => isPersistableMode(item.mode));
+    for (const item of local) {
+      try {
+        await fetch("/api/me/search-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: item.query, mode: item.mode }),
+        });
+      } catch {
+        // keep going; leftover local rows stay until a later login
+      }
+    }
+    clearGuestHistory();
+    await refreshHistory(true);
+  }, [refreshHistory]);
+
   const recordSearch = useCallback(async (raw: string, searchMode: MapMode) => {
     const q = raw.trim();
-    if (!q || !user) return;
+    if (!q || !isPersistableMode(searchMode)) return;
+    if (!user) {
+      setSearchHistory(addGuestHistory(q, searchMode));
+      return;
+    }
     try {
       await fetch("/api/me/search-history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q, mode: searchMode }),
       });
-      refreshHistory();
+      await refreshHistory(true);
     } catch {
-      // 未登录或网络失败时忽略
+      // 网络失败时忽略
     }
   }, [refreshHistory, user]);
 
@@ -874,6 +900,7 @@ export function MapShell() {
       setAuthOpen(true);
       return;
     }
+    if (!isPersistablePoi(poi)) return;
     const already = savedPlaces.some((item) => item.poiId === poi.id);
     try {
       if (already) {
@@ -1063,14 +1090,7 @@ export function MapShell() {
   // Domain：高德地点 AutoComplete；实习/招聘：公司 + 岗位，不走 POI
   useEffect(() => {
     if (!query.trim()) {
-      setSuggestions(
-        trendingForMode(mode).map((item) => ({
-          id: `trend:${item.query}`,
-          name: item.query,
-          subtitle: item.label && item.label !== item.query ? item.label : undefined,
-          kind: "place" as const,
-        })),
-      );
+      setSuggestions([]);
       return;
     }
 
@@ -1187,6 +1207,20 @@ export function MapShell() {
           setOpenPositionId(null);
           setMobileJd(null);
         }
+      }
+    } else if (!isRecruitmentMode(mode) && s.kind === "place") {
+      const tipPoi = suggestionToDomainPoi(s);
+      if (tipPoi) {
+        const next = mergePoisById(catalogRef.current, [tipPoi], POI_SOFT_CAP);
+        catalogRef.current = next;
+        setCatalog(next);
+        setSelectedId(tipPoi.id);
+        setDetailPoi(tipPoi);
+        setDrawer("full");
+        setOpenPositionId(null);
+        setMobileJd(null);
+      } else {
+        setOpenPositionId(null);
       }
     } else {
       setOpenPositionId(null);
@@ -1309,7 +1343,7 @@ export function MapShell() {
     if (user) {
       void fetch("/api/auth/me", { method: "DELETE" }).then(() => {
         setUser(null);
-        setSearchHistory([]);
+        setSearchHistory(listGuestHistory());
         setSavedPlaces([]);
         setApplications([]);
         setInbox([]);
@@ -1568,7 +1602,7 @@ export function MapShell() {
         onNeedMore={handleNeedMore}
         onWidenSearch={handleWidenSearch}
         saved={Boolean(detailPoi && savedPlaces.some((item) => item.poiId === detailPoi.id))}
-        onToggleSave={handleToggleSave}
+        onToggleSave={detailPoi && isPersistablePoi(detailPoi) ? handleToggleSave : undefined}
         onApply={handleApply}
         totalCount={pois.length}
         lang={lang}
@@ -1612,9 +1646,14 @@ export function MapShell() {
           onClose={() => setRailPanel(null)}
           onPick={handlePickRecent}
           onPickTrending={(item) => openExploreSearch(item.query)}
-          onClear={user ? () => {
-            void fetch("/api/me/search-history", { method: "DELETE" }).then(refreshHistory);
-          } : undefined}
+          onClear={() => {
+            if (user) {
+              void fetch("/api/me/search-history", { method: "DELETE" }).then(() => refreshHistory(true));
+              return;
+            }
+            clearGuestHistory();
+            setSearchHistory([]);
+          }}
         />
       )}
 
@@ -1666,8 +1705,8 @@ export function MapShell() {
         onSignedIn={() => {
           void refreshAccount().then((next) => {
             if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
+            void mergeGuestHistoryOnSignIn();
           });
-          void refreshHistory();
           void refreshSaved();
           void refreshApplications();
           void refreshInbox();
@@ -1752,9 +1791,9 @@ export function MapShell() {
                 setDrawer("full");
               }}
               saved={savedPlaces.some((item) => item.poiId === detailPoi.id)}
-              onToggleSave={() => {
+              onToggleSave={isPersistablePoi(detailPoi) ? () => {
                 void handleToggleSave(detailPoi);
-              }}
+              } : undefined}
               onBack={() => {
                 setDetailPoi(null);
                 setMobileJd(null);
@@ -1940,9 +1979,14 @@ export function MapShell() {
                     openExploreSearch(item.query);
                     setMobileSheet("explore");
                   }}
-                  onClear={user ? () => {
-                    void fetch("/api/me/search-history", { method: "DELETE" }).then(refreshHistory);
-                  } : undefined}
+                  onClear={() => {
+                    if (user) {
+                      void fetch("/api/me/search-history", { method: "DELETE" }).then(() => refreshHistory(true));
+                      return;
+                    }
+                    clearGuestHistory();
+                    setSearchHistory([]);
+                  }}
                 />
               ) : mobileSheet === "saved" ? (
                 <div className={styles.mobileAccount}>

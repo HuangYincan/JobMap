@@ -997,6 +997,7 @@
   }
 
   .mobileDrawer {
+    --drawer-handle-gap: 8px;
     background: var(--soft-strong);
     backdrop-filter: blur(28px) saturate(170%);
     border: 1px solid rgba(255, 255, 255, 0.72);
@@ -1037,6 +1038,7 @@
     height: 30px;
     justify-content: center;
     margin: 0 auto;
+    padding-bottom: var(--drawer-handle-gap);
     touch-action: none;
     width: 100%;
   }
@@ -1044,7 +1046,6 @@
   .drawerHalf .drawerHandle,
   .drawerFull .drawerHandle {
     height: 44px;
-    margin-top: 6px;
   }
 
   .drawerHandle span {
@@ -1118,7 +1119,7 @@
     opacity: 1;
     overflow: auto;
     overflow-x: hidden;
-    padding: 25px 1px 12px;
+    padding: 10px 1px 12px;
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -1161,6 +1162,10 @@
     flex-wrap: wrap;
     gap: 8px;
     padding: 0 0 8px;
+  }
+
+  .drawerMini .mobileSearchStack {
+    margin-top: 0;
   }
 
   .mobileStyleRow {

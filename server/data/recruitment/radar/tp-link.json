@@ -1,0 +1,33 @@
+{
+  "slug": "tp-link",
+  "name": "TP-LINK",
+  "industries": [
+    "telecom"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.tp-link.com.cn/",
+  "sites": [
+    {
+      "id": "tp-link-site",
+      "name": "TP-LINK",
+      "location": {
+        "address": "北京/深圳/杭州/南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a4cb1ea531a1",
+      "title": "软件类  算法类  硬件类  测试类",
+      "siteId": "tp-link-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.tp-link.com.cn/"
+    }
+  ]
+}

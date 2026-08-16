@@ -1,0 +1,33 @@
+{
+  "slug": "淘天集团",
+  "name": "淘天集团",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://talent.taotian.com/campus/home",
+  "sites": [
+    {
+      "id": "淘天集团-site",
+      "name": "淘天集团",
+      "location": {
+        "address": "北京/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-de24bf216ccc",
+      "title": "技术类 设计类  产品类岗位",
+      "siteId": "淘天集团-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026   11 30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.taotian.com/campus/home"
+    }
+  ]
+}

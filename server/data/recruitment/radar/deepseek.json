@@ -1,0 +1,33 @@
+{
+  "slug": "deepseek",
+  "name": "DeepSeek",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/social-recruitment/high-flyer/140576#/jobs",
+  "sites": [
+    {
+      "id": "deepseek-site",
+      "name": "DeepSeek",
+      "location": {
+        "address": "北京/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-eca0f71b4f45",
+      "title": "全栈开发/算法  AI核心系统研发  运维产品部门  模型数据策略产品经理 /工程师  深度学习研究员  职能部门",
+      "siteId": "deepseek-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/high-flyer/140576#/jobs"
+    }
+  ]
+}

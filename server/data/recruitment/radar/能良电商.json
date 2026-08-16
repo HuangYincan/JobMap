@@ -1,0 +1,33 @@
+{
+  "slug": "能良电商",
+  "name": "能良电商",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jsj.top/f/dCI3kj",
+  "sites": [
+    {
+      "id": "能良电商-site",
+      "name": "能良电商",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9c65d621c959",
+      "title": "电商运营方向 店长/城市经理方向人力资源招聘方向 财务方向 产品/研发/测试方向",
+      "siteId": "能良电商-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jsj.top/f/dCI3kj"
+    }
+  ]
+}

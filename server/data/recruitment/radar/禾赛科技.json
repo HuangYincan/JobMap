@@ -1,0 +1,46 @@
+{
+  "slug": "禾赛科技",
+  "name": "禾赛科技",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kwh0jtf778.jobs.feishu.cn/229043/?spread=KHWW5AC",
+  "sites": [
+    {
+      "id": "禾赛科技-site",
+      "name": "禾赛科技",
+      "location": {
+        "address": "上海/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-fd48a0cca2f6",
+      "title": "空间智能方向 机器人动力模组方向  雷达研究方向  智能制造&质量方向",
+      "siteId": "禾赛科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026  08 31",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kwh0jtf778.jobs.feishu.cn/229043/?spread=KHWW5AC"
+    },
+    {
+      "externalId": "radar-20bda7f34732",
+      "title": "空间智能方向 机器人动力模组方向 雷达研发方向 智能制造&质量方向;",
+      "siteId": "禾赛科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026  08  31",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kwh0jtf778.jobs.feishu.cn/229043/?spread=KHWW5AC"
+    }
+  ]
+}

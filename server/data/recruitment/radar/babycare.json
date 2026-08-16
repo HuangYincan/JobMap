@@ -1,0 +1,46 @@
+{
+  "slug": "babycare",
+  "name": "Babycare",
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://babycare.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "babycare-site",
+      "name": "Babycare",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-29b3c1b4d459",
+      "title": "产品研发  销售运营  市场营销 供应链物流  职能",
+      "siteId": "babycare-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://babycare.zhiye.com/campus/jobs"
+    },
+    {
+      "externalId": "radar-dcc31e097491",
+      "title": "产品类 营销类  销售类  设计类 职能类",
+      "siteId": "babycare-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://babycare.zhiye.com/intern/jobs"
+    }
+  ]
+}

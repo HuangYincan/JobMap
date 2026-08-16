@@ -1,0 +1,33 @@
+{
+  "slug": "三一集团",
+  "name": "三一集团",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://sany.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "三一集团-site",
+      "name": "三一集团",
+      "location": {
+        "address": "北京/上海/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4c84225e7f3f",
+      "title": "机械与结构设计 电气与控制  动力与能源  质量与工艺  软件与算法 项目管理与综合",
+      "siteId": "三一集团-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sany.zhiye.com/campus/jobs"
+    }
+  ]
+}

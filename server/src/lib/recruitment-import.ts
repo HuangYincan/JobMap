@@ -7,6 +7,7 @@ import type { SourceCompany, SourcePosition } from './recruitment-source.ts';
 import { bossAdapter } from './recruitment-adapters/boss.ts';
 import { nowcoderAdapter } from './recruitment-adapters/nowcoder.ts';
 import { officialCareerAdapter } from './recruitment-adapters/official-career.ts';
+import { radarAdapter } from './recruitment-adapters/radar.ts';
 import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
 import { shixisengAdapter } from './recruitment-adapters/shixiseng.ts';
 
@@ -50,10 +51,11 @@ export function validateSourceCompany(company: SourceCompany): ImportIssue[] {
     else siteIds.add(site.id);
     const loc = site.location;
     if (loc) {
-      if (!Number.isFinite(loc.lng) || loc.lng < -180 || loc.lng > 180) {
+      // Address-only sites are valid (pending geocode); validate only present coords.
+      if (loc.lng !== undefined && (!Number.isFinite(loc.lng) || loc.lng < -180 || loc.lng > 180)) {
         issues.push(issue(slug, 'sites.lng', `invalid ${loc.lng}`));
       }
-      if (!Number.isFinite(loc.lat) || loc.lat < -90 || loc.lat > 90) {
+      if (loc.lat !== undefined && (!Number.isFinite(loc.lat) || loc.lat < -90 || loc.lat > 90)) {
         issues.push(issue(slug, 'sites.lat', `invalid ${loc.lat}`));
       }
     }
@@ -139,14 +141,15 @@ export function planRecruitmentImport(input: SourceCompany[]): ImportPlan {
 }
 
 export async function planSeedImport(): Promise<ImportPlan> {
-  const [seed, official, boss, nowcoder, shixiseng] = await Promise.all([
+  const [seed, official, boss, nowcoder, shixiseng, radar] = await Promise.all([
     seedRecruitmentAdapter.list(),
     officialCareerAdapter().list(),
     bossAdapter().list(),
     nowcoderAdapter().list(),
     shixisengAdapter().list(),
+    radarAdapter().list(),
   ]);
-  return planRecruitmentImport([...seed, ...official, ...boss, ...nowcoder, ...shixiseng]);
+  return planRecruitmentImport([...seed, ...official, ...boss, ...nowcoder, ...shixiseng, ...radar]);
 }
 
 export async function planOfficialCareerImport(dir?: string): Promise<ImportPlan> {

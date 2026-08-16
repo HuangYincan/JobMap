@@ -1,0 +1,33 @@
+{
+  "slug": "多益网络",
+  "name": "多益网络",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://xz.duoyi.com/v40/#/",
+  "sites": [
+    {
+      "id": "多益网络-site",
+      "name": "多益网络",
+      "location": {
+        "address": "广州/杭州/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e348b59a9286",
+      "title": "程序类  策划类  艺术类  市场类  职能类",
+      "siteId": "多益网络-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xz.duoyi.com/v40/#/"
+    }
+  ]
+}

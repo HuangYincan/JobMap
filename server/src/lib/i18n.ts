@@ -627,6 +627,10 @@ export const translations = {
     zh: '登录后，搜索记录会按账户保存在云端。',
     en: 'Sign in to keep search history on your account.',
   },
+  recentEmptyGuest: {
+    zh: '此设备暂无搜索记录。工作模式的搜索会保存在本机；登录后会合并到账户。',
+    en: 'No searches on this device. Work-mode searches stay in the browser and merge into your account when you sign in.',
+  },
   clearHistory: {
     zh: '清空',
     en: 'Clear',

@@ -1,0 +1,85 @@
+{
+  "slug": "hithink-hangzhou",
+  "name": "同花顺",
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.10jqka.com.cn/mobile/job/list?recommendCode=OS9215",
+  "sites": [
+    {
+      "id": "hithink-hangzhou-site",
+      "name": "同花顺",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-548573867673",
+      "title": "开发/算法/产品/运营",
+      "siteId": "hithink-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.10jqka.com.cn/mobile/job/list?recommendCode=OS9215"
+    },
+    {
+      "externalId": "radar-8ed0c46aa8e2",
+      "title": "多模态算法工程师 数据算法工程师 大模型算法工程师 Ai Infra算法工程师agent算法工程师 代码生成算法工程师图像生成算法工程师 语音智法工程师视频生成",
+      "siteId": "hithink-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school"
+    },
+    {
+      "externalId": "radar-6a819efaed40",
+      "title": "算法类  产品运营类  研发技术力  设计类  金融研究类  后台支持类",
+      "siteId": "hithink-hangzhou-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school"
+    },
+    {
+      "externalId": "radar-fd22f5bc8686",
+      "title": "多模态算法工程师 大模型算法工程师agent算法工程师 图像生成算法工程师视频生成算法工程师 数据算法工程师  AI Infra算法工程师  代码生成算法工程师",
+      "siteId": "hithink-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school&sid=1"
+    },
+    {
+      "externalId": "radar-0500b7f14a2e",
+      "title": "金融产品运营实习生   AI金融产品实习生  AI工程开发实习生",
+      "siteId": "hithink-hangzhou-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school"
+    }
+  ]
+}

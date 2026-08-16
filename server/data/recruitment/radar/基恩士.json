@@ -1,0 +1,46 @@
+{
+  "slug": "基恩士",
+  "name": "基恩士",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://keyence.zhiye.com/campus/detail?jobAdId=85237bb7-cccc-40a8-beeb-cbcb6e97ea86&shareId=277120bd-b426-467f-a825-f8abbbc4a163&shareSource=2",
+  "sites": [
+    {
+      "id": "基恩士-site",
+      "name": "基恩士",
+      "location": {
+        "address": "北京/上海/成都/杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-402f179afa90",
+      "title": "销售工程师/销售 营业支持",
+      "siteId": "基恩士-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://keyence.zhiye.com/campus/detail?jobAdId=85237bb7-cccc-40a8-beeb-cbcb6e97ea86&shareId=277120bd-b426-467f-a825-f8abbbc4a163&shareSource=2"
+    },
+    {
+      "externalId": "radar-df4ffebe01ab",
+      "title": "销售工程师  /销售",
+      "siteId": "基恩士-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://keyence.zhiye.com/campus/detail?jobAdId=85237bb7-cccc-40a8-beeb-cbcb6e97ea86&shareId=277120bd-b426-467f-a825-f8abbbc4a163&shareSource=2"
+    }
+  ]
+}

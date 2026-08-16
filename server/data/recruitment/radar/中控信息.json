@@ -1,0 +1,33 @@
+{
+  "slug": "中控信息",
+  "name": "中控信息",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/zkxx/72098?sessionid=#/",
+  "sites": [
+    {
+      "id": "中控信息-site",
+      "name": "中控信息",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2f97990d9dbc",
+      "title": "AI算法实习生  AI产品实习生  机器人算法实习生  机器人结构实习生机器人硬件实习 生  机器人语音算法实习生 机器人测试实习生  水厂工艺算法实习生 项目",
+      "siteId": "中控信息-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/zkxx/72098?sessionid=#/"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "doiphindb智臾科技",
+  "name": "DoIPhinDB智臾科技",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/dolphindb/101962#/",
+  "sites": [
+    {
+      "id": "doiphindb智臾科技-site",
+      "name": "DoIPhinDB智臾科技",
+      "location": {
+        "address": "杭州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e14c1f252b73",
+      "title": "c++后端开发实习生  数据库内核开发实习生  测试开发实习生  前端开发实习生  数据分析实习生  项目开发实习生  金融工程实习生  商务实习生  技术文档",
+      "siteId": "doiphindb智臾科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": "招满即止",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/dolphindb/101962#/"
+    }
+  ]
+}
