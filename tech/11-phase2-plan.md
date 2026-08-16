@@ -283,7 +283,7 @@
 - [x] 虚拟滚动优化（大量卡片：`content-visibility` + 固定 intrinsic size，不引入 virtuoso）
 - [x] 图片懒加载（卡片 logo / 详情轮播后续帧 `loading="lazy"`）
 - [x] API 响应缓存（`lib/public-cache.ts` 30s TTL；公开读接口带 `Cache-Control`；账号路由不进缓存。Redis 后只换 store）
-- [x] 数据库查询优化（笔记：`tech/13-db-query-notes.md`；account 路径已按 user_id + created_at 建索引。Live EXPLAIN 仍等 Docker/PostGIS）
+- [x] 数据库查询优化（笔记：`tech/13-db-query-notes.md`；account 路径已按 user_id + created_at 建索引。2026-08-16 gist `EXPLAIN`：`&&` + `ST_DWithin` 走 `company_sites_geom_gist`）
 - [x] Bundle 分析和优化（`tech/12-bundle-notes.md`：首页 dynamic 加载 MapShell；不引入 virtuoso / framer / zustand）
 
 **5.3 用户体验优化**
@@ -329,7 +329,7 @@
 
 ### 后端
 - **框架:** Next.js API Routes
-- **数据库:** PostgreSQL 16 + PostGIS 3.4（live Docker 仍 blocked）
+- **数据库:** PostgreSQL 16 + PostGIS 3.4（Docker live apply 已验证；公开读可下推空间 clip）
 - **ORM:** 未定（等 ADR）；现在 Raw SQL
 - **缓存:** 进程内 30s（`lib/public-cache.ts`）；Redis 后换 store
 - **认证:** 自研 demo OTP + OAuth stub（**不**引入 NextAuth / Clerk，等 ADR）
@@ -337,7 +337,7 @@
 ### 开发工具
 - **测试:** Node 内置 `node --test` + 源码契约；未引 Jest / RTL / Playwright
 - **Lint:** ESLint（随 Next）
-- **CI/CD:** GitHub Actions 已有版本文件；live PostGIS 仍 blocked
+- **CI/CD:** GitHub Actions 已有版本文件；live PostGIS 本机已 apply，CI 仍可不连库
 - **部署:** 本地 `npm run dev`（`tech/15-deploy.md`）；无生产主机
 
 ---

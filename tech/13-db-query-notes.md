@@ -1,6 +1,6 @@
 # 数据库查询笔记（2026-08-16）
 
-Live PostGIS apply is verified (`001`–`010`). This page records **indexes already in migrations** and **real `account-store` SQL**. Without `DATABASE_URL` those statements do not run and callers use memory / seed. Live `EXPLAIN` of the gist plan is still a follow-up.
+Live PostGIS apply is verified (`001`–`010`, 51 companies / 51 sites). This page records **indexes already in migrations**, **real `account-store` SQL**, and a 2026-08-16 gist `EXPLAIN`. Without `DATABASE_URL` those statements do not run and callers use memory / seed.
 
 **不要**在没有库的情况下把「查询优化」标成已用 `EXPLAIN ANALYZE` 验证。下面的索引是契约，不是实测计划。
 
@@ -67,11 +67,20 @@ WHERE s.geom IS NOT NULL
 - **不引入 ORM。** 等 ADR。
 - **邮件/短信不改 `notifications.status`。** 本阶段只 `queued`。
 
+## Live EXPLAIN（2026-08-16，51 行 `company_sites`）
+
+西湖西溪小框 `ST_MakeEnvelope(120.01, 30.26, 120.04, 30.29, 4326)`：
+
+- 只有 `geom && envelope`：planner 走 **Seq Scan**（表太小，gist 启动成本更高）。实际 3 行 / 48 行被 Filter 丢掉。
+- `&&` + `ST_DWithin(geom::geography, point, 3000)`：走 **Bitmap Index Scan on `company_sites_geom_gist`**，再 Heap Recheck + `st_dwithin` Filter。实际仍是 3 行。
+
+gist 已接上。行数涨到几百以后，单独的 bbox 也应切到 Index Scan；现在不要为 51 行强行 `SET enable_seqscan = off`。
+
 ## Docker 通了以后的验收
 
-1. `make db-migrate` 对空库跑完 `001`–`010`。
+1. `make db-migrate` 对空库跑完 `001`–`010`。**Done.**
 2. 对上面每条 `account-store` SELECT 跑 `EXPLAIN (ANALYZE, BUFFERS)`：Index Scan / Index Only Scan，不要 Seq Scan。
-3. 招聘 `bbox` 查询确认走 `company_sites_geom_gist`。
+3. 招聘 `bbox` 查询确认走 `company_sites_geom_gist`。**Done for `&&` + `ST_DWithin`.** 单独 `&&` 在 51 行时仍 Seq Scan。
 4. `getSessionUser` already `DELETE`s expired sessions (and the missed token) on a cache miss; `consumeOtp` deletes expired challenges for that target. A periodic sweeper can still use `auth_sessions_expires_at_idx` later.
 
 在那之前，优化面是：保持 `Pool max=5`、账号路由不进 `public-cache`、公开读 30s TTL。
