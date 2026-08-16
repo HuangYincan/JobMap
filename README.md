@@ -8,12 +8,13 @@
 
 ## Project Status
 
-**Status: Phase 1 in progress on `feature/phase-1-platform-baseline`.**
+**Status: Phase 2 client slice + Phase 3/4 account/overlay work on `feature/phase-2-multi-mode`.** Phase 1 baseline remains on `feature/phase-1-platform-baseline`.
 
 Implemented and verified:
 - Importer project `crawler/` (Python 3.12, uv): declarative plugin-manifest validation, deterministic local-fixture normalization with provenance, and map access policy. 11 unit tests pass.
-- Database `db/`: ordered PostGIS migrations `001-004` (users/maps/memberships, plugin/source/provenance, canonical entities/items, overlays/audit), a single-transaction migration runner with a checksum ledger and advisory lock, and a preflight script.
-- Frontend shell `server/` (Next.js 15.5.23, React 19, TypeScript): Apple Maps-inspired liquid-glass shell with desktop persistent collapsed sidebar and a mobile three-state bottom drawer (mini/half/full). Typechecks, smoke tests, and production build pass; verified in a browser at 1440px and 390px viewports.
+- Database `db/`: ordered PostGIS migrations `001`–`010` (identity through notifications). Live apply is still blocked until Docker/PostGIS (`make db-up`).
+- Frontend `server/` (Next.js 15.5.23, React 19): Domain + Work map, Explore / detail / JD, mobile drawer, Profile / Recent / Saved / Layers. Home lazy-loads `MapShell`. `cd server && ./node_modules/.bin/tsc --noEmit && node --test tests/*.test.mjs` is the test command.
+- Changelog: [CHANGELOG.md](CHANGELOG.md). API: [tech/14-api-contract.md](tech/14-api-contract.md). Roadmap: [tech/05-milestones.md](tech/05-milestones.md).
 
 Not yet verified:
 - Live PostGIS migration and database integration tests are **blocked** until Docker/PostGIS is running (`make db-up`, then `make preflight` + `make db-migrate` + `make test-integration`).

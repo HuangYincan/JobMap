@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { DEFAULT_PREFERENCES, emptyPreferences, initialsFromName, mergePreferences, resolvePreferences } from '../src/lib/account.ts';
 import {
@@ -246,4 +249,13 @@ test('seed adapter round-trips work companies through the plugin contract', asyn
     assert.equal(back.length, company.sites.length);
     assert.equal(poiToSourceCompany(back[0]).slug, company.slug);
   }
+});
+
+test('account-store sweeps expired sessions and OTP rows on miss', () => {
+  const store = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'lib', 'account-store.ts'),
+    'utf8',
+  );
+  assert.match(store, /DELETE FROM auth_sessions WHERE expires_at <= now\(\) OR token_hash = \$1/);
+  assert.match(store, /DELETE FROM auth_otp_challenges WHERE provider = \$1 AND target = \$2 AND expires_at <= now\(\)/);
 });

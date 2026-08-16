@@ -45,10 +45,10 @@
 - [x] `POST /api/search` - 搜索 API
 
 **1.4 认证集成（可选）**
-- [ ] 选择认证提供商（NextAuth / Clerk）
-- [ ] 用户注册登录流程
-- [ ] Session 管理
-- [ ] API 权限中间件
+- [x] 认证提供商：自研 demo OTP + OAuth stub（**不**引入 NextAuth / Clerk，等 ADR）
+- [x] 用户注册登录流程（手机 / 邮箱 OTP + GitHub / Google / X / 微信 stub）
+- [x] Session 管理（cookie + `auth_sessions`；过期行在查找失败时清掉）
+- [x] API 权限中间件（`/api/me/*` 无会话 → 401；游客不写云端）
 
 **交付物:**
 - [x] 数据库连接成功
@@ -488,10 +488,10 @@
 - [ ] 移动端 Chrome
 
 ### 文档
-- [ ] API 文档完整
-- [ ] 组件文档完整
-- [ ] README 更新
-- [ ] CHANGELOG 记录
+- [x] API 文档完整（`tech/14-api-contract.md`）
+- [x] 组件文档完整（`tech/09-secondary-sidebar.md` + frontend skill）
+- [x] README 更新
+- [x] CHANGELOG 记录（`CHANGELOG.md`）
 - [ ] 部署文档
 
 ---

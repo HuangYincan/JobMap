@@ -69,6 +69,6 @@ WHERE p.status = 'open'
 1. `make db-migrate` 对空库跑完 `001`–`010`。
 2. 对上面每条 `account-store` SELECT 跑 `EXPLAIN (ANALYZE, BUFFERS)`：Index Scan / Index Only Scan，不要 Seq Scan。
 3. 招聘 `bbox` 查询确认走 `company_sites_geom_gist`。
-4. `auth_sessions_expires_at_idx` 接上定期 `DELETE WHERE expires_at < now()`（现在还没写清理任务）。
+4. `getSessionUser` already `DELETE`s expired sessions (and the missed token) on a cache miss; `consumeOtp` deletes expired challenges for that target. A periodic sweeper can still use `auth_sessions_expires_at_idx` later.
 
 在那之前，优化面是：保持 `Pool max=5`、账号路由不进 `public-cache`、公开读 30s TTL。

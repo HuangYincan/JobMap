@@ -183,6 +183,9 @@ export async function getSessionUser(token: string | undefined | null): Promise<
       [hashToken(token)],
     );
     if (result.rows[0]) return asUser(result.rows[0]);
+    await db.query(`DELETE FROM auth_sessions WHERE expires_at <= now() OR token_hash = $1`, [
+      hashToken(token),
+    ]);
     return memGetSessionUser(token);
   }, () => memGetSessionUser(token));
 }
@@ -264,7 +267,13 @@ export async function consumeOtp(provider: 'phone' | 'email', target: string, co
       [provider, target.trim().toLowerCase(), hashOtp(code)],
     );
     const row = result.rows[0];
-    if (!row) return false;
+    if (!row) {
+      await db.query(
+        `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
+        [provider, target.trim().toLowerCase()],
+      );
+      return false;
+    }
     await db.query(`UPDATE auth_otp_challenges SET consumed_at = now() WHERE id = $1`, [row.id]);
     return true;
   }, () => memConsumeOtp(provider, target, code));

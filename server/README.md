@@ -1,8 +1,8 @@
 # Domain Map Frontend
 
-**Status:** Phase 1 shell complete, ready for Phase 2 API integration  
+**Status:** Phase 2–4 client slice on `feature/phase-2-multi-mode`  
 **Framework:** Next.js 15.5 (App Router) + React 19 + TypeScript 5.9  
-**Map Engine:** AMap JavaScript API v2.0
+**Map Engine:** AMap JavaScript API v2.0 (`loadAMap`, not an npm package)
 
 ## Quick Start
 
@@ -49,34 +49,36 @@ If AMap credentials are missing, the app displays a CSS-only fallback map placeh
 ```
 server/
 ├── src/
-│   ├── app/
-│   │   ├── layout.tsx       # Root layout with metadata
-│   │   ├── page.tsx         # Home page (renders MapShell)
-│   │   └── globals.css      # CSS custom properties (colors, shadows)
-│   ├── components/
-│   │   ├── map-shell.tsx    # Main map component (580 lines)
-│   │   └── map-shell.module.css  # Component styles (926 lines)
-│   └── lib/
-│       ├── i18n.ts          # Internationalization (en/zh)
-│       └── map-adapter.ts   # Map engine abstraction
-├── docs/
-│   └── i18n.md              # I18n documentation
+│   ├── app/                 # App Router + /api/*
+│   ├── components/          # MapShell, Explore, detail, JD, Profile, Layers
+│   └── lib/                 # search, modes, account-store, server-catalog
+├── tests/                   # node:test — cd server && npm test
 ├── package.json
 └── README.md
 ```
 
+Never print or commit `.env` / `.env.local`.
+
+## Test
+
+```bash
+./node_modules/.bin/tsc --noEmit
+node --test tests/*.test.mjs
+```
+
+Do not run `npx tsc` from the repo root.
+
 ## Features
 
 ### Desktop UI
-- **Collapsible Sidebar:** Smooth expand/collapse (58px ↔ 276px)
-- **Search Box:** Full-width when expanded, icon-only when collapsed
-- **Navigation Items:** Layers, Saved, Explore, Recent, Settings with tooltips
-- **Profile Section:** Avatar with user info
-- **Glassmorphism:** Apple-style backdrop blur + translucent background
+- Collapsed-first rail (58px). Search is a ghost 42px icon; typing opens Explore.
+- Modes: Map + Work. Intern / campus / social are work filters.
+- L2 frost cards: Explore, Profile, Recent, Saved, Layers. L3 JD docks in the same flex cluster.
+- Liquid glass on POI / job cards only. Panel chrome stays `--soft-strong`.
+- UI chrome is always `#007AFF`. Green is salary / hours / Sign in / Update Profile.
 
 ### Mobile UI
-- **Bottom Drawer:** Three states (mini/half/full) with swipe handle
-- **Responsive Controls:** Repositioned for mobile viewport
+- ≤767px hides the rail and desktop L2/L3. The frost drawer owns search, list, detail, and JD.
 - **Touch Optimized:** Larger tap targets, mobile-first layout
 
 ### Map Controls

@@ -1,0 +1,37 @@
+# Changelog
+
+Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
+
+## 2026-08-16
+
+### Added
+
+- Multi-mode map: Domain + Work. Intern / campus / social are work FilterPlugins, not extra map modes.
+- Viewport Domain search (single-center AMap queue, soft cap 300, sessionStorage per mode).
+- Secondary sidebar: glass POI cards, in-panel detail, sibling JD panel.
+- Account slice: demo OTP / OAuth stubs, Profile L2 prefs, Recent = search history only.
+- Saved places, applications, queued job-alert inbox (`008`–`010`).
+- Layers L2 frost card: saved overlay + persisted basemap style.
+- Public read API 30s process cache (`lib/public-cache.ts`).
+- Shared `lib/server-catalog.ts` for `/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`.
+- Home lazy-loads `MapShell` (`next/dynamic`, `ssr: false`). See `tech/12-bundle-notes.md`.
+- Account SQL / index inventory: `tech/13-db-query-notes.md`.
+- Search/filter integration tests: `server/tests/search-integration.test.mjs`.
+
+### Changed
+
+- Default map mode is **work**.
+- Settings rail item moved into Profile L2.
+- Contrast tokens: `--muted` / `--blue-ink` / `--green` meet WCAG AA on frost/white. Brand `#007AFF` stays chrome-only.
+- Suggest empty-q hot list is `trendingForMode` (not a second hardcoded array).
+- Failed session / OTP lookups delete expired rows when `DATABASE_URL` is set.
+
+### Security
+
+- Never print or commit `.env` secrets.
+- Guests do not get a fake cloud Saved / Recent list.
+- Notifications stay `queued`; nothing is emailed or SMSed.
+
+## Earlier
+
+Phase 0 docs scaffold and Phase 1 platform baseline (importer, migrations `001`–`004`, Apple Maps shell) landed on `feature/phase-1-platform-baseline`. See `tech/05-milestones.md`.
