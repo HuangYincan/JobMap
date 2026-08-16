@@ -34,30 +34,38 @@ def cmd_official(args: argparse.Namespace) -> int:
         files = files[: args.limit]
     fetcher = PoliteFetcher(min_interval_s=args.interval)
     summary = []
-    for path in files:
+    progress = Path(args.progress) if args.progress else None
+    for index, path in enumerate(files):
         company = json.loads(path.read_text(encoding="utf-8"))
         url = company.get("careerUrl")
         if not url:
             summary.append({"slug": company.get("slug"), "skipped": "no-careerUrl"})
-            continue
-        try:
-            result = fetcher.fetch(url)
-        except AcquisitionError as exc:
-            summary.append({"slug": company.get("slug"), "skipped": str(exc)})
-            continue
-        if result.blocked_by:
-            summary.append({"slug": company.get("slug"), "skipped": result.blocked_by})
-            continue
-        if result.status >= 400:
-            summary.append({"slug": company.get("slug"), "status": result.status})
-            continue
-        refreshed = refresh_company_from_html(company, result.body, url, retrieved_at=result.fetched_at)
-        added = len(refreshed.get("positions", [])) - len(company.get("positions", []))
-        if args.write and added > 0:
-            write_company(path, refreshed)
-        summary.append({"slug": company.get("slug"), "status": result.status, "added": max(added, 0), "wrote": bool(args.write and added > 0)})
+        else:
+            try:
+                result = fetcher.fetch(url)
+            except AcquisitionError as exc:
+                summary.append({"slug": company.get("slug"), "skipped": str(exc)})
+            else:
+                if result.blocked_by:
+                    summary.append({"slug": company.get("slug"), "skipped": result.blocked_by})
+                elif result.status >= 400:
+                    summary.append({"slug": company.get("slug"), "status": result.status})
+                else:
+                    refreshed = refresh_company_from_html(company, result.body, url, retrieved_at=result.fetched_at)
+                    added = len(refreshed.get("positions", [])) - len(company.get("positions", []))
+                    if args.write and added > 0:
+                        write_company(path, refreshed)
+                    summary.append({"slug": company.get("slug"), "status": result.status, "added": max(added, 0), "wrote": bool(args.write and added > 0)})
+        if progress is not None and (index + 1) % 5 == 0:
+            _write_progress(progress, files, summary)
+    if progress is not None:
+        _write_progress(progress, files, summary)
     print(json.dumps({"pages": len(summary), "results": summary}, ensure_ascii=False))
     return 0
+
+
+def _write_progress(progress: Path, files: list[Path], summary: list[dict]) -> None:
+    progress.write_text(json.dumps({"done": len(summary), "total": len(files), "results": summary}, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -75,6 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     official.add_argument("--limit", type=int, default=0, help="Max companies (0 = all)")
     official.add_argument("--interval", type=float, default=2.0, help="Seconds between requests")
     official.add_argument("--write", action="store_true", help="Write extra positions back into the JSON files")
+    official.add_argument("--progress", default="", help="Incremental JSON progress path (resilient to interruption)")
     official.set_defaults(func=cmd_official)
 
     args = parser.parse_args(argv)

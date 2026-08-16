@@ -271,24 +271,31 @@ export function MapShell() {
   }, [refreshInbox]);
 
   useEffect(() => {
-    refreshAccount().then((next) => {
-      if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
-      void refreshHistory(Boolean(next));
-    });
-    refreshSaved();
-    refreshApplications();
-    refreshInbox();
-  }, [refreshAccount, refreshHistory, refreshSaved, refreshApplications, refreshInbox]);
-
-  useEffect(() => {
     if (!user) return;
     if (!user.preferences.notifications.emailJobs && !user.preferences.notifications.smsJobs) return;
     void scanJobAlerts();
   }, [user, scanJobAlerts]);
 
+  /**
+   * Upload persistable guest rows that are not already in the account, then keep
+   * the local copy as a browser mirror (sign-out restores it; a later upload
+   * only sends rows the account does not have, so no duplicates).
+   */
   const mergeGuestHistoryOnSignIn = useCallback(async () => {
     const local = listGuestHistory().filter((item) => isPersistableMode(item.mode));
+    if (!local.length) return;
+    let cloud: SearchHistoryEntry[] = [];
+    try {
+      const res = await fetch("/api/me/search-history");
+      const body = await res.json();
+      cloud = Array.isArray(body.items) ? body.items : [];
+    } catch {
+      // Offline — keep local rows for a later merge.
+      return;
+    }
+    const inCloud = new Set(cloud.map((item) => `${item.mode}:${item.query}`));
     for (const item of local) {
+      if (inCloud.has(`${item.mode}:${item.query}`)) continue;
       try {
         await fetch("/api/me/search-history", {
           method: "POST",
@@ -296,12 +303,22 @@ export function MapShell() {
           body: JSON.stringify({ query: item.query, mode: item.mode }),
         });
       } catch {
-        // keep going; leftover local rows stay until a later login
+        // keep going; failed rows stay local for a later merge
       }
     }
-    clearGuestHistory();
     await refreshHistory(true);
   }, [refreshHistory]);
+
+  useEffect(() => {
+    refreshAccount().then((next) => {
+      if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
+      void refreshHistory(Boolean(next));
+      if (next) void mergeGuestHistoryOnSignIn();
+    });
+    refreshSaved();
+    refreshApplications();
+    refreshInbox();
+  }, [refreshAccount, refreshHistory, refreshSaved, refreshApplications, refreshInbox, mergeGuestHistoryOnSignIn]);
 
   const recordSearch = useCallback(async (raw: string, searchMode: MapMode) => {
     const q = raw.trim();
@@ -321,6 +338,15 @@ export function MapShell() {
       // 网络失败时忽略
     }
   }, [refreshHistory, user]);
+
+  const handleClearRecent = useCallback(() => {
+    if (user) {
+      void fetch("/api/me/search-history", { method: "DELETE" }).then(() => refreshHistory(true));
+      return;
+    }
+    clearGuestHistory();
+    setSearchHistory([]);
+  }, [user, refreshHistory]);
 
   const openRail = useCallback((panel: RailPanel) => {
     setRailPanel((current) => (current === panel ? null : panel));
@@ -1646,14 +1672,7 @@ export function MapShell() {
           onClose={() => setRailPanel(null)}
           onPick={handlePickRecent}
           onPickTrending={(item) => openExploreSearch(item.query)}
-          onClear={() => {
-            if (user) {
-              void fetch("/api/me/search-history", { method: "DELETE" }).then(() => refreshHistory(true));
-              return;
-            }
-            clearGuestHistory();
-            setSearchHistory([]);
-          }}
+          onClear={handleClearRecent}
         />
       )}
 
@@ -1979,14 +1998,7 @@ export function MapShell() {
                     openExploreSearch(item.query);
                     setMobileSheet("explore");
                   }}
-                  onClear={() => {
-                    if (user) {
-                      void fetch("/api/me/search-history", { method: "DELETE" }).then(() => refreshHistory(true));
-                      return;
-                    }
-                    clearGuestHistory();
-                    setSearchHistory([]);
-                  }}
+                  onClear={handleClearRecent}
                 />
               ) : mobileSheet === "saved" ? (
                 <div className={styles.mobileAccount}>

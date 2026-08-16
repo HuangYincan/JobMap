@@ -27,7 +27,7 @@ Do not design or run login automation, CAPTCHA solving, rate-limit evasion, brow
 When real work starts, add evidence-based records beneath this directory:
 
 - `data-sources.md`: reviewed sources and their authorization status.
-- `etl/<source>.md`: actual import transformation and idempotency behavior.
 - `data-quality.md`: measured completeness, geocode success, freshness, duplicates, and remediation.
+- `etl/<source>.md`: actual import transformation and idempotency behavior.
 
 Do not prefill pass/fail results or authorization conclusions without evidence.

@@ -209,14 +209,6 @@ export function sourceCompanyToPois(
   return sites.map((site) => poiFromSourceSite(company, site, `${company.slug}:${site.id}`, source));
 }
 
-/** Union official-career drops onto seed POIs. Keep seed ids; add new slugs as catalog POIs. */
-export function mergeOfficialCareerIntoSeed(
-  seed: RecruitmentPOI[],
-  official: SourceCompany[],
-): RecruitmentPOI[] {
-  return mergeCompaniesIntoPois(seed, official);
-}
-
 /**
  * Merge source companies onto an existing catalog (POIs keyed by slug).
  * Matched slugs gain positions/sites in place (keeping base coordinates);
@@ -255,7 +247,11 @@ function mergeCompanyOntoSeedPois(pois: RecruitmentPOI[], company: SourceCompany
   for (const site of company.sites) {
     if (knownSites.has(site.id)) continue;
     knownSites.add(site.id);
-    pois.push(poiFromSourceSite(company, site, `${company.slug}:${site.id}`, 'api', { openOnly: true }));
+    const pin = poiFromSourceSite(company, site, `${company.slug}:${site.id}`, 'api', { openOnly: true });
+    pois.push(pin);
+    // The pin was created carrying its open positions; register them so the
+    // position loop below does not append them a second time.
+    for (const pos of pin.positions) knownJobs.add(pos.id);
   }
 
   for (const pos of company.positions) {

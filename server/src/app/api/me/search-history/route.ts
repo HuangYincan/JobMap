@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { readSessionUser } from '@/lib/http-session';
 import { addHistory, clearHistory, listHistory } from '@/lib/account-store';
 import { canonicalMode } from '@/lib/modes';
+import { isPersistableMode } from '@/lib/persistable';
 import type { MapMode } from '@/lib/types';
 
 export async function GET() {
@@ -25,7 +26,14 @@ export async function POST(request: Request) {
   if (!query) {
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'query required' }, { status: 400 });
   }
-  const entry = await addHistory(user.id, query, canonicalMode(body.mode || 'work'));
+  const mode = canonicalMode(body.mode || 'work');
+  if (!isPersistableMode(mode)) {
+    return NextResponse.json(
+      { code: 'NOT_PERSISTABLE', message: 'only persistable modes can record search history' },
+      { status: 400 },
+    );
+  }
+  const entry = await addHistory(user.id, query, mode);
   return NextResponse.json({ item: entry });
 }
 

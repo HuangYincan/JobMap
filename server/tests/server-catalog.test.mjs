@@ -54,6 +54,10 @@ test('async catalog merges official-career and radar drops when there is no DATA
   assert.ok(xiaomi?.kind === 'recruitment' && xiaomi.positions.some((p) => p.id === 'xiaomi-campus-frontend-2026'));
   assert.ok(xiaomi?.positions.some((p) => p.id === 'mi-android'));
   assert.ok(await loadServerCatalogById('work', 'zhejiang-lab'));
+  // zhejiang-lab must not pin a second site or duplicate its position (site id rule + merge fix).
+  assert.equal(await loadServerCatalogById('work', 'zhejiang-lab:zhejiang-lab-site'), undefined);
+  const lab = await loadServerCatalogById('work', 'zhejiang-lab');
+  assert.equal(lab?.positions.filter((p) => p.id === 'zhejiang-lab-ml').length, 1);
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');
 });

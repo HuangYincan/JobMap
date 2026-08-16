@@ -27,7 +27,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://www.arcsoft.com.cn/job/JobList.html"
+      "applyUrl": "https://www.arcsoft.com.cn/job/JobList.html",
+      "retrievedAt": "2026-08-11"
     },
     {
       "externalId": "radar-f7d5f9796cb5",
@@ -40,7 +41,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://www.arcsoft.com.cn/job/CadetIntroduce.html"
+      "applyUrl": "https://www.arcsoft.com.cn/job/CadetIntroduce.html",
+      "retrievedAt": "2026-08-11"
     }
   ]
 }

@@ -146,6 +146,7 @@ test('persistable guest history and catalog-only save are wired', () => {
   const shell = src('components/map-shell.tsx');
   const recent = src('components/recent-panel.tsx');
   const saved = src('app/api/me/saved/route.ts');
+  const history = src('app/api/me/search-history/route.ts');
   assert.match(persist, /PERSISTABLE_MODES/);
   assert.match(persist, /isPersistablePoi/);
   assert.match(guest, /dm\.guest-search-history\.v1/);
@@ -154,6 +155,8 @@ test('persistable guest history and catalog-only save are wired', () => {
   assert.match(recent, /recentEmptyGuest/);
   assert.doesNotMatch(recent, /recentNeedSignIn/);
   assert.match(saved, /NOT_PERSISTABLE/);
+  assert.match(history, /isPersistableMode/);
+  assert.match(history, /NOT_PERSISTABLE/);
 });
 
 test('map shell has skip links and a live result count', () => {

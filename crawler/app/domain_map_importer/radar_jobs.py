@@ -16,7 +16,7 @@ from typing import Any
 
 from .acquire import is_blocked_host
 
-PARSER_VERSION = "1.1.0"
+PARSER_VERSION = "1.2.0"
 ATTRIBUTION = "xiaozhao-radar contributors (Apache-2.0); Domain Map field mapping"
 
 _HANGZHOU = ("杭州", "余杭", "西湖", "滨江", "萧山", "拱墅", "上城", "临平")
@@ -121,7 +121,7 @@ def load_radar_jobs(payload: Mapping[str, Any] | str | Path) -> dict[str, Any]:
     return data
 
 
-def map_radar_job(row: Mapping[str, Any]) -> dict[str, Any] | None:
+def map_radar_job(row: Mapping[str, Any], *, retrieved_at: str | None = None) -> dict[str, Any] | None:
     company = str(row.get("c") or "").strip()
     title = str(row.get("p") or "").strip()
     url = str(row.get("u") or "").strip()
@@ -162,16 +162,17 @@ def map_radar_job(row: Mapping[str, Any]) -> dict[str, Any] | None:
                 "status": "open",
                 "applySource": "official",
                 "applyUrl": url,
+                "retrievedAt": retrieved_at or None,
             }
         ],
         "_hangzhou": mentions_hangzhou(location),
     }
 
 
-def merge_radar_companies(rows: list[Mapping[str, Any]], *, hangzhou_only: bool = True) -> list[dict[str, Any]]:
+def merge_radar_companies(rows: list[Mapping[str, Any]], *, hangzhou_only: bool = True, retrieved_at: str | None = None) -> list[dict[str, Any]]:
     by_slug: dict[str, dict[str, Any]] = {}
     for row in rows:
-        mapped = map_radar_job(row)
+        mapped = map_radar_job(row, retrieved_at=retrieved_at)
         if not mapped:
             continue
         if hangzhou_only and not mapped["_hangzhou"]:
@@ -192,7 +193,8 @@ def merge_radar_companies(rows: list[Mapping[str, Any]], *, hangzhou_only: bool 
 
 
 def radar_fixture(payload: Mapping[str, Any], *, hangzhou_only: bool = True) -> dict[str, Any]:
-    companies = merge_radar_companies(payload.get("jobs") or [], hangzhou_only=hangzhou_only)
+    snapshot = str(payload.get("updated") or "")
+    companies = merge_radar_companies(payload.get("jobs") or [], hangzhou_only=hangzhou_only, retrieved_at=snapshot)
     records = []
     for company in companies:
         for pos in company["positions"]:

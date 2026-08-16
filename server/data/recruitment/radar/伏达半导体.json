@@ -27,7 +27,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://www.nuvoltatech.com.cn/join/campus/"
+      "applyUrl": "https://www.nuvoltatech.com.cn/join/campus/",
+      "retrievedAt": "2026-08-11"
     },
     {
       "externalId": "radar-887fb6275257",
@@ -40,7 +41,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://app.mokahr.com/campus_apply/nuvoltatech/29077?sessionid=#/jobs?page=1&anchorName=jobsList"
+      "applyUrl": "https://app.mokahr.com/campus_apply/nuvoltatech/29077?sessionid=#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11"
     }
   ]
 }

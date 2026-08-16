@@ -27,7 +27,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://anker-in.jobs.feishu.cn/s/ME9gNKDOVd0"
+      "applyUrl": "https://anker-in.jobs.feishu.cn/s/ME9gNKDOVd0",
+      "retrievedAt": "2026-08-11"
     },
     {
       "externalId": "radar-1fc73145c63a",
@@ -40,7 +41,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://career.anker.com.cn/universities/recruitment/new/?channel=internship"
+      "applyUrl": "https://career.anker.com.cn/universities/recruitment/new/?channel=internship",
+      "retrievedAt": "2026-08-11"
     }
   ]
 }

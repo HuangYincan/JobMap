@@ -8,6 +8,7 @@ help: ## Show currently supported commands
 	@printf '%s\n' '  make db-migrate       Apply pending SQL migrations (requires DATABASE_URL)'
 	@printf '%s\n' '  make test-unit        Run importer unit tests (no database required)'
 	@printf '%s\n' '  make crawl-official   Dry-run polite GET of official careerUrl pages (no write)'
+	@printf '%s\n' '  make refresh-radar     Download reviewed radar snapshot and remap drops'
 	@printf '%s\n' '  make test-integration Run database integration tests (SKIP/BLOCKED if unavailable)'
 	@printf '%s\n' '  make docs-check       Reject stale canonical documentation references'
 	@printf '%s\n' '  make scaffold-status  Show implementation prerequisites present/planned'
@@ -32,6 +33,16 @@ test-unit: ## Run importer unit tests (no database required)
 
 crawl-official: ## Dry-run polite GET of curated official career pages (no file write)
 	cd crawler && PYTHONPATH=app python3 -m domain_map_importer.cli official --dir ../server/data/recruitment/official-career --limit 5 --interval 2
+
+refresh-radar: ## Download the reviewed radar snapshot and remap drops into server/data/recruitment/radar
+	@mkdir -p /tmp/domain-map-radar
+	@curl -sL --max-time 90 -o /tmp/domain-map-radar/jobs.json "https://raw.githubusercontent.com/jiabaobei/xiaozhao-radar/main/jobs.json"
+	@shasum -a 256 /tmp/domain-map-radar/jobs.json
+	@cd crawler && PYTHONPATH=app python3 -m domain_map_importer.cli radar \
+		--input /tmp/domain-map-radar/jobs.json \
+		--out-dir ../server/data/recruitment/radar
+	@rm -f server/data/recruitment/radar/_radar-fixture.json
+	@echo "Refresh done. Record the SHA-256 in tech/roles/data/data-quality.md."
 
 test-integration: ## Run database integration tests (SKIP/BLOCKED if unavailable)
 	tests/integration/db/test_migrations.sh

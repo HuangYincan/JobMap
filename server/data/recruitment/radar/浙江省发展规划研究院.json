@@ -27,7 +27,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "http://47.96.146.209:8111/zhaopin_sx.php"
+      "applyUrl": "http://47.96.146.209:8111/zhaopin_sx.php",
+      "retrievedAt": "2026-08-11"
     }
   ]
 }

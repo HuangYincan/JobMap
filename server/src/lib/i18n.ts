@@ -439,10 +439,6 @@ export const translations = {
     zh: 'Google',
     en: 'Google',
   },
-  authX: {
-    zh: 'X',
-    en: 'X',
-  },
   authWechat: {
     zh: '微信',
     en: 'WeChat',
@@ -622,10 +618,6 @@ export const translations = {
   recentEmpty: {
     zh: '还没有搜索记录',
     en: 'No searches yet',
-  },
-  recentNeedSignIn: {
-    zh: '登录后，搜索记录会按账户保存在云端。',
-    en: 'Sign in to keep search history on your account.',
   },
   recentEmptyGuest: {
     zh: '此设备暂无搜索记录。工作模式的搜索会保存在本机；登录后会合并到账户。',

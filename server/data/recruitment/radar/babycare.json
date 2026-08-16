@@ -27,7 +27,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://babycare.zhiye.com/campus/jobs"
+      "applyUrl": "https://babycare.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11"
     },
     {
       "externalId": "radar-dcc31e097491",
@@ -40,7 +41,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://babycare.zhiye.com/intern/jobs"
+      "applyUrl": "https://babycare.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11"
     }
   ]
 }

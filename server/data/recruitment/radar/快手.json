@@ -27,7 +27,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum=1&positionLabel=kstar&positionNatureCode=fulltime&recruitSubProjectCodes=20271779425607"
+      "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum=1&positionLabel=kstar&positionNatureCode=fulltime&recruitSubProjectCodes=20271779425607",
+      "retrievedAt": "2026-08-11"
     },
     {
       "externalId": "radar-2e61c4299e2d",
@@ -40,7 +41,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/h5/#/campus/jobs?code=campusdLaScKyRd"
+      "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/h5/#/campus/jobs?code=campusdLaScKyRd",
+      "retrievedAt": "2026-08-11"
     }
   ]
 }

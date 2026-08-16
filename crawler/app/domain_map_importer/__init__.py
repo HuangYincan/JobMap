@@ -1,7 +1,6 @@
 """Public Phase 1 importer seams."""
 
 from .access import AccessDecision, can_access_map, map_access
-from .access import AccessDecision, can_access_map, map_access
 from .acquire import AcquisitionError, PoliteFetcher, is_blocked_host, parse_robots
 from .html_jobs import extract_jobs
 from .imports import (

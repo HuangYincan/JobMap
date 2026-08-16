@@ -8,7 +8,7 @@
   "summary": "杭州智能计算与前沿交叉研究机构",
   "sites": [
     {
-      "id": "hq",
+      "id": "zhejiang-lab-site",
       "name": "之江实验室",
       "location": {
         "lng": 120.007,
@@ -21,7 +21,7 @@
     {
       "externalId": "zhejiang-lab-ml",
       "title": "智能计算科研助理",
-      "siteId": "hq",
+      "siteId": "zhejiang-lab-site",
       "family": "intern",
       "taxonomy": { "family": "intern", "internKind": "daily" },
       "department": "智能计算",

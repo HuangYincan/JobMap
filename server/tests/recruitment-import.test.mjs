@@ -14,7 +14,7 @@ import { officialCareerAdapter, parseOfficialCareerPayload } from '../src/lib/re
 import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
 import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
-import { mergeOfficialCareerIntoSeed, poiToSourceCompany } from '../src/lib/recruitment-source.ts';
+import { mergeCompaniesIntoPois, poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -83,8 +83,8 @@ test('planSeedImport accepts every current WORK_SEED company', async () => {
   assert.ok(plan.companies.every((c) => c.positions.every((p) => c.sites.some((s) => s.id === p.siteId))));
 });
 
-test('mergeOfficialCareerIntoSeed keeps seed ids and unions new jobs', () => {
-  const merged = mergeOfficialCareerIntoSeed(WORK_SEED, [
+test('mergeCompaniesIntoPois keeps seed ids, unions new jobs, and does not duplicate new-site positions', () => {
+  const merged = mergeCompaniesIntoPois(WORK_SEED, [
     {
       slug: 'alibaba-xixi',
       name: '阿里巴巴',
@@ -125,10 +125,12 @@ test('mergeOfficialCareerIntoSeed keeps seed ids and unions new jobs', () => {
   const lab = merged.find((p) => p.id === 'brand-new-lab');
   assert.ok(lab);
   assert.equal(lab.source, 'api');
+  // The new site pin already carries its open positions — the loop must not append twice.
+  assert.equal(lab.positions.filter((p) => p.id === 'lab-job').length, 1);
 });
 
-test('mergeOfficialCareerIntoSeed hides closed jobs on the read path', () => {
-  const merged = mergeOfficialCareerIntoSeed(WORK_SEED, [
+test('mergeCompaniesIntoPois hides closed jobs on the read path', () => {
+  const merged = mergeCompaniesIntoPois(WORK_SEED, [
     {
       slug: 'alibaba-xixi',
       name: '阿里巴巴',
@@ -186,7 +188,7 @@ test('planSeedImport merges official-career drops onto seed slugs', async () => 
 
   const lab = plan.companies.find((c) => c.slug === 'zhejiang-lab');
   assert.ok(lab);
-  assert.equal(lab.positions[0].siteId, 'hq');
+  assert.equal(lab.positions[0].siteId, 'zhejiang-lab-site');
 
   const bytedance = plan.companies.find((c) => c.slug === 'bytedance-hangzhou');
   assert.ok(bytedance);

@@ -27,7 +27,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://hr-campus.vivo.com/jobs?1=%5B%7B%22id%22%3A%228%22%2C%22label%22%3A%22%E6%9A%91%E6%9C%9F%E5%AE%9E%E4%B9%A0%E7%94%9F%22%7D%5D"
+      "applyUrl": "https://hr-campus.vivo.com/jobs?1=%5B%7B%22id%22%3A%228%22%2C%22label%22%3A%22%E6%9A%91%E6%9C%9F%E5%AE%9E%E4%B9%A0%E7%94%9F%22%7D%5D",
+      "retrievedAt": "2026-08-11"
     }
   ]
 }

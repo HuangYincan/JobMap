@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import codecs
 import re
 import time
 from dataclasses import dataclass
@@ -106,11 +107,19 @@ def _http_get(url: str, timeout: int = DEFAULT_TIMEOUT_S) -> tuple[int, str]:
     try:
         with urlopen(request, timeout=timeout) as response:
             raw = response.read()
-            charset = response.headers.get_content_charset() or "utf-8"
-            return response.status, raw.decode(charset, errors="replace")
+            charset = response.headers.get_content_charset()
+            try:
+                if charset:
+                    codecs.lookup(charset)
+            except (LookupError, TypeError):
+                charset = None  # some sites ship a misspelled charset (e.g. "uft-8")
+            return response.status, raw.decode(charset or "utf-8", errors="replace")
     except HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
         return exc.code, body
+    except (OSError, URLError, TimeoutError):
+        # Transient network / SSL errors are a soft skip, not a fatal crash.
+        return 0, ""
 
 
 def robots_allows(url: str, fetch_robots) -> bool:
@@ -151,7 +160,10 @@ class PoliteFetcher:
                 blocked_by="robots.txt",
             )
         self._pace()
-        status, body = self._get(url)
+        try:
+            status, body = self._get(url)
+        except (OSError, URLError, TimeoutError):
+            status, body = 0, ""
         self._last = time.monotonic()
         return FetchResult(
             url=url,

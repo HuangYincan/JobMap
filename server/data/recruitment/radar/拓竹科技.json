@@ -27,7 +27,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://bambulab.jobs.feishu.cn/s/gezHtYuCXKw"
+      "applyUrl": "https://bambulab.jobs.feishu.cn/s/gezHtYuCXKw",
+      "retrievedAt": "2026-08-11"
     },
     {
       "externalId": "radar-d7dcf54118fd",
@@ -40,7 +41,8 @@
       "deadline": "招满即止",
       "status": "open",
       "applySource": "official",
-      "applyUrl": "https://bambulab.jobs.feishu.cn/campus/?keywords=&category=&location=&project=7597705346824833307&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid="
+      "applyUrl": "https://bambulab.jobs.feishu.cn/campus/?keywords=&category=&location=&project=7597705346824833307&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+      "retrievedAt": "2026-08-11"
     }
   ]
 }

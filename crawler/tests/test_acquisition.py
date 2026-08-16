@@ -44,6 +44,44 @@ class RobotsAndHostTests(unittest.TestCase):
         self.assertEqual(result.blocked_by, "robots.txt")
         self.assertEqual(result.body, "")
 
+    def test_fetcher_survives_transient_network_errors(self):
+        def fake(url):
+            raise ConnectionError("SSL: UNEXPECTED_EOF_WHILE_READING")
+        fetcher = PoliteFetcher(min_interval_s=0, sleep=lambda _s: None, get=fake)
+        result = fetcher.fetch("https://jobs.example.com/flaky")
+        self.assertEqual(result.status, 0)
+        self.assertEqual(result.body, "")
+        self.assertIsNone(result.blocked_by)
+
+    def test_fetcher_tolerates_misspelled_charset(self):
+        from email.message import Message
+        import domain_map_importer.acquire as acquire_mod
+
+        hdr = Message()
+        hdr["Content-Type"] = "text/html; charset=uft-8"
+
+        class FakeResp:
+            status = 200
+            headers = hdr
+            def read(self):
+                return "<html><body>hi</body></html>".encode("utf-8")
+            def __enter__(self):
+                return self
+            def __exit__(self, *exc):
+                return False
+
+        def fake_open(_req, timeout=0):
+            return FakeResp()
+
+        original = acquire_mod.urlopen
+        acquire_mod.urlopen = fake_open
+        try:
+            status, body = acquire_mod._http_get("https://jobs.example.com/")
+            self.assertEqual(status, 200)
+            self.assertIn("hi", body)
+        finally:
+            acquire_mod.urlopen = original
+
 
 class HtmlExtractTests(unittest.TestCase):
     def test_prefers_jsonld_jobposting(self):
@@ -63,15 +101,27 @@ class HtmlExtractTests(unittest.TestCase):
         self.assertEqual(len(jobs), 1)
         self.assertIn("前端", jobs[0]["title"])
 
+    def test_rejects_nav_and_javascript_links(self):
+        html = (
+            '<a href="/en/careers/join-tigermed">Join Tigermed</a>'
+            '<a href="javascript:void(0)">校招</a>'
+            '<a href="/join_us/campus">校园招聘</a>'
+            '<a href="/partners">合作伙伴</a>'
+        )
+        jobs = extract_jobs(html, "https://jobs.example.com/")
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0]["url"], "https://jobs.example.com/join_us/campus")
+
 
 class RadarMapTests(unittest.TestCase):
     def test_maps_hangzhou_row_and_skips_boss(self):
         hangzhou = map_radar_job({
             "c": "网易", "p": "前端开发实习生", "l": "杭州/广州",
             "ind": "互联网科技", "u": "https://hr.163.com/job/1", "w": "批次:暑期实习", "d": "招满即止",
-        })
+        }, retrieved_at="2026-08-11")
         self.assertIsNotNone(hangzhou)
         self.assertEqual(hangzhou["positions"][0]["family"], "intern")
+        self.assertEqual(hangzhou["positions"][0]["retrievedAt"], "2026-08-11")
         self.assertTrue(hangzhou["_hangzhou"])
         self.assertIsNone(map_radar_job({
             "c": "某司", "p": "Java", "l": "杭州", "u": "https://www.zhipin.com/job/1",
