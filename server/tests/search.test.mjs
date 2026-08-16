@@ -25,6 +25,8 @@ test('seed data: work companies have required fields and taxonomy', () => {
     assert.ok(Array.isArray(company.positions), 'company has positions');
     assert.ok(company.positions.length > 0, 'company has at least one position');
     assert.ok(company.positions.every((p) => p.taxonomy?.family === p.type));
+    assert.ok(company.sites && company.sites.length >= 1, 'company has a site');
+    assert.ok(company.positions.every((p) => p.siteId === company.sites?.[0]?.id));
     if (company.company.careerUrl) {
       assert.ok(company.company.logoUrl, 'career site should resolve a logo url');
     }

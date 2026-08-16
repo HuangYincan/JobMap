@@ -20,7 +20,8 @@ import {
   upsertIdentity,
 } from '../src/lib/session-store.ts';
 import { faviconFromUrl, resolveCompanyLogo } from '../src/lib/company-logo.ts';
-import { sourceCompanyToPois } from '../src/lib/recruitment-source.ts';
+import { poiToSourceCompany, sourceCompanyToPois } from '../src/lib/recruitment-source.ts';
+import { seedRecruitmentAdapter } from '../src/lib/recruitment-adapters/seed.ts';
 
 test('guest preferences default to work mode and browser language', () => {
   assert.equal(DEFAULT_PREFERENCES.defaultMode, 'work');
@@ -138,4 +139,16 @@ test('sourceCompanyToPois splits one company into one POI per office site', () =
   assert.equal(pois[0].source, 'seed');
   assert.ok(pois[0].company.logoUrl?.includes('talent.alibaba.com'));
   assert.equal(pois[1].positions[0].title, 'Frontend');
+});
+
+test('seed adapter round-trips work companies through the plugin contract', async () => {
+  const companies = await seedRecruitmentAdapter.list();
+  assert.ok(companies.length >= 10);
+  for (const company of companies) {
+    assert.ok(company.sites.length >= 1);
+    assert.ok(company.positions.every((p) => company.sites.some((s) => s.id === p.siteId)));
+    const back = sourceCompanyToPois(company, 'seed');
+    assert.equal(back.length, company.sites.length);
+    assert.equal(poiToSourceCompany(back[0]).slug, company.slug);
+  }
 });

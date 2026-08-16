@@ -730,6 +730,16 @@ function withWorkDefaults(poi: RecruitmentPOI): RecruitmentPOI {
     companyLogoUrl: poi.company.logoUrl,
     fallbackEmoji: poi.company.logo,
   });
+  const siteId = poi.sites?.[0]?.id ?? `${poi.id}-site`;
+  const sites = poi.sites ?? [
+    {
+      id: siteId,
+      name: poi.name,
+      location: poi.location,
+      careerUrl: poi.company.careerUrl,
+      logoUrl: logo.url ?? poi.company.logoUrl,
+    },
+  ];
   return {
     ...poi,
     mode: 'work',
@@ -738,8 +748,10 @@ function withWorkDefaults(poi: RecruitmentPOI): RecruitmentPOI {
       logo: logo.emoji,
       logoUrl: logo.url ?? poi.company.logoUrl,
     },
+    sites,
     positions: poi.positions.map((position) => ({
       ...position,
+      siteId: position.siteId ?? siteId,
       taxonomy: position.taxonomy ?? defaultTaxonomyForType(position.type),
     })),
   };

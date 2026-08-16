@@ -50,6 +50,55 @@ export interface RecruitmentAdapter {
   list(): Promise<SourceCompany[]>;
 }
 
+/** 现有 RecruitmentPOI → 源记录（seed / 回写库表）。一 POI 一职场。 */
+export function poiToSourceCompany(poi: RecruitmentPOI): SourceCompany {
+  const siteId = poi.sites?.[0]?.id ?? `${poi.id}-site`;
+  const site: CompanySite = poi.sites?.[0] ?? {
+    id: siteId,
+    name: poi.name,
+    location: poi.location,
+    careerUrl: poi.company.careerUrl,
+    logoUrl: poi.company.logoUrl,
+  };
+  return {
+    slug: poi.id.includes(':') ? poi.id.slice(0, poi.id.indexOf(':')) : poi.id,
+    name: poi.company.name,
+    industries: poi.company.industries,
+    scale: poi.company.scale,
+    rating: poi.company.rating,
+    summary: poi.company.summary,
+    careerUrl: poi.company.careerUrl,
+    logoUrl: poi.company.logoUrl,
+    logoEmoji: poi.company.logo,
+    sites: [site],
+    positions: poi.positions.map((p) => ({
+      externalId: p.id,
+      title: p.title,
+      siteId: p.siteId ?? site.id,
+      family: p.type,
+      taxonomy: p.taxonomy,
+      department: p.department,
+      salary: p.salary,
+      education: p.education,
+      majors: p.majors,
+      skills: p.skills,
+      description: p.description,
+      deadline: p.deadline,
+      applySource: p.apply?.source,
+      applyUrl: p.apply?.url,
+      status: p.status,
+    })),
+  };
+}
+
+export async function collectRecruitmentPois(
+  adapters: RecruitmentAdapter[],
+  source: RecruitmentPOI['source'] = 'api',
+): Promise<RecruitmentPOI[]> {
+  const batches = await Promise.all(adapters.map((adapter) => adapter.list()));
+  return batches.flatMap((companies) => companies.flatMap((company) => sourceCompanyToPois(company, source)));
+}
+
 export function logoForSite(company: SourceCompany, site?: CompanySite): ResolvedLogo {
   return resolveCompanyLogo({
     siteCareerUrl: site?.careerUrl,

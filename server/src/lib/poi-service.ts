@@ -12,6 +12,8 @@ import {
   searchViewportPOIsIncremental,
 } from './amap-api.ts';
 import { INTERNSHIP_SEED } from './seed-data.ts';
+import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
+import { collectRecruitmentPois } from './recruitment-source.ts';
 import type { QueryPipeline } from './search.ts';
 import { mergePoisById, isCommonPoi, POI_HARD_CAP, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
 import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
@@ -133,19 +135,26 @@ export async function resolveInternshipLocations(
   return resolved;
 }
 
+async function workSeedFromAdapters(): Promise<RecruitmentPOI[]> {
+  const fromAdapter = await collectRecruitmentPois([seedRecruitmentAdapter], 'seed');
+  return fromAdapter.length ? fromAdapter : INTERNSHIP_SEED;
+}
+
 async function internshipSeedResolved(): Promise<RecruitmentPOI[]> {
   if (!geocodePromise) {
-    geocodePromise = resolveInternshipLocations(INTERNSHIP_SEED).catch((err) => {
-      console.warn('[poi-service] geocode work seed failed:', err);
-      geocodePromise = null;
-      return INTERNSHIP_SEED;
-    });
+    geocodePromise = workSeedFromAdapters()
+      .then((seed) => resolveInternshipLocations(seed))
+      .catch((err) => {
+        console.warn('[poi-service] geocode work seed failed:', err);
+        geocodePromise = null;
+        return INTERNSHIP_SEED;
+      });
   }
   return geocodePromise;
 }
 
 async function fetchWorkPOIs(options: FetchPOIOptions): Promise<POI[]> {
-  const immediate = INTERNSHIP_SEED as POI[];
+  const immediate = (await workSeedFromAdapters()) as POI[];
   options.onBatch?.(immediate);
 
   const seeded = (await internshipSeedResolved()) as POI[];

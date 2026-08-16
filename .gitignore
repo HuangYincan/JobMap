@@ -77,3 +77,14 @@ docker-compose.override.yml
 # Misc
 .claude/jobs/
 *.egg-info/
+.playwright-mcp/
+
+# Local UI captures (not product assets)
+/jd-panel-alibaba.png
+/poi-detail-alibaba.png
+/poi-detail-domain.png
+/search-icon-centered.png
+/sidebar-collapsed-aligned.png
+/sidebar-collapsed.png
+/sidebar-expanded-now.png
+/sidebar-expanded-search.png
