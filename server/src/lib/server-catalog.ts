@@ -9,6 +9,7 @@ import { NOWCODER_DIR } from './recruitment-adapters/nowcoder.ts';
 import { OFFICIAL_CAREER_DIR, listOfficialCareerFiles } from './recruitment-adapters/official-career.ts';
 import { RADAR_DIR } from './recruitment-adapters/radar.ts';
 import { SHIXISENG_DIR } from './recruitment-adapters/shixiseng.ts';
+import { isAuthenticPositionId } from './freshness.ts';
 import { mergeCompaniesIntoPois } from './recruitment-source.ts';
 import { loadWorkCatalogFromDb } from './recruitment-store.ts';
 import { DOMAIN_SEED, INTERNSHIP_SEED } from './seed-data.ts';
@@ -31,13 +32,21 @@ export async function loadOfflineWorkCatalog(): Promise<POI[]> {
       listSourceCompanyFiles(SHIXISENG_DIR),
       listSourceCompanyFiles(RADAR_DIR),
     ]).then(([official, boss, nowcoder, shixiseng, radar]) => {
+      // Coordinate skeleton comes from the seed; example positions are dropped.
+      // Only authentic positions (radar-* / portal-*) survive — seed /
+      // official-career example jobs are development scaffolding (2026-08-17).
+      const skeleton = INTERNSHIP_SEED.map((poi) => ({ ...poi, positions: [] }));
       const merged = mergeCompaniesIntoPois(
-        INTERNSHIP_SEED,
+        skeleton,
         [...official, ...boss, ...nowcoder, ...shixiseng],
       );
-      // Radar-only companies carry city text, not coordinates — keep them out of the
-      // map until geocoded/imported. Matched slugs already merged onto real pins above.
-      return mergeCompaniesIntoPois(merged, radar).filter(hasPlausibleCoord);
+      const withRadar = mergeCompaniesIntoPois(merged, radar);
+      return withRadar
+        .map((poi) => ({
+          ...poi,
+          positions: poi.positions.filter((pos) => isAuthenticPositionId(pos.id)),
+        }))
+        .filter((poi) => poi.positions.length > 0 && hasPlausibleCoord(poi));
     });
   }
   return offlineWorkCatalog;

@@ -15,6 +15,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
+- **Work mode shows real data only (2026-08-17 decision).** Example jobs (seed / official-career curated titles like "前端开发工程师（2026 秋招）") are development scaffolding: `isAuthenticPositionId` keeps only `radar-*` / `portal-*` positions on every read path (offline catalog, DB read, client fallback). The seed still supplies the coordinate skeleton; DB example rows were marked `closed` (reversible). Map surface: 51 → 14 pins, all with real recruiting signals.
 - Merge-on-sign-in wiped rows whose POST failed; now only rows absent from the account upload, and failed rows stay local. Merge logic extracted to `mergeGuestHistoryIntoAccount` (unit-tested).
 - Persisted signed-in sessions now merge leftover guest rows on mount, not only after the auth modal.
 - `mergeCompanyOntoSeedPois` no longer appends a new site's positions twice; `zhejiang-lab` site id corrected to `{slug}-site` per the merge rule.

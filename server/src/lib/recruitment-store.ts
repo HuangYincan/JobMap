@@ -175,7 +175,8 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
         });
       }
     }
-    return pois;
+    // A site with no open positions is not a map pin (matches the offline path).
+    return pois.filter((poi) => poi.positions.length > 0);
   } catch {
     return null;
   }

@@ -16,6 +16,16 @@ export function positionFreshness(id: string | undefined): FreshnessKind {
   return 'seed';
 }
 
+/**
+ * Authentic positions only: radar snapshot rows and curated verified portals.
+ * Seed / official-career example jobs are development scaffolding and are not
+ * shown on the map (decision 2026-08-17: work mode shows real data only).
+ */
+export function isAuthenticPositionId(id: string | undefined): boolean {
+  const kind = positionFreshness(id);
+  return kind === 'radar' || kind === 'portal';
+}
+
 export interface FreshnessSummary {
   recruiting: boolean;
   portal: boolean;

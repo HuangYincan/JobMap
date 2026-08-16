@@ -151,9 +151,11 @@ async function workSeedFromAdapters(): Promise<RecruitmentPOI[]> {
     const fromApi = await fetchWorkCatalogFromApi();
     if (fromApi.length) return fromApi;
   } catch {
-    // Relative /api/pois is browser-only; tests and SSR keep the seed.
+    // Relative /api/pois is browser-only; tests and SSR take the empty path.
   }
-  return INTERNSHIP_SEED;
+  // No scaffold fallback: example seed jobs are development scaffolding and must
+  // not appear on the map (2026-08-17). Offline work mode shows an empty list.
+  return [];
 }
 
 async function internshipSeedResolved(): Promise<RecruitmentPOI[]> {
@@ -163,7 +165,7 @@ async function internshipSeedResolved(): Promise<RecruitmentPOI[]> {
       .catch((err) => {
         console.warn('[poi-service] geocode work seed failed:', err);
         geocodePromise = null;
-        return INTERNSHIP_SEED;
+        return [];
       });
   }
   return geocodePromise;

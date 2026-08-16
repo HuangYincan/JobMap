@@ -28,36 +28,30 @@ test('sync catalog is still the seed (tests and dry helpers)', () => {
   assert.equal(serverCatalog('college').length, 0);
 });
 
-test('async catalog merges official-career and radar drops when there is no DATABASE_URL', async () => {
+test('async catalog keeps only authentic positions (radar/portal) when there is no DATABASE_URL', async () => {
   const work = await loadServerCatalog('work');
-  assert.ok(work.length > INTERNSHIP_SEED.length);
+  assert.ok(work.length > 0);
+  // No scaffold example jobs anywhere: every position is radar-* or portal-*.
+  for (const poi of work) {
+    for (const pos of poi.positions) {
+      assert.ok(pos.id.startsWith('radar-') || pos.id.startsWith('portal-'), `${poi.id} has ${pos.id}`);
+    }
+  }
   const ali = await loadServerCatalogById('work', 'alibaba-xixi');
-  assert.equal(ali?.id, 'alibaba-xixi');
-  assert.ok(ali?.kind === 'recruitment' && ali.positions.some((p) => p.id === 'alibaba-campus-frontend-2026'));
+  assert.ok(ali?.kind === 'recruitment' && ali.positions.some((p) => p.id.startsWith('radar-')));
   const byte = await loadServerCatalogById('work', 'bytedance-hangzhou');
-  assert.ok(byte?.kind === 'recruitment' && byte.positions.some((p) => p.id === 'bytedance-campus-frontend-2026'));
-  assert.ok(byte?.positions.some((p) => p.id === 'bytedance-algo'));
-  assert.equal(await loadServerCatalogById('work', 'bytedance-hangzhou:bytedance-hangzhou-site'), undefined);
-  const tencent = await loadServerCatalogById('work', 'tencent-hangzhou');
-  assert.ok(tencent?.kind === 'recruitment' && tencent.positions.some((p) => p.id === 'tencent-campus-frontend-2026'));
-  assert.equal(await loadServerCatalogById('work', 'tencent-hangzhou:tencent-hangzhou-site'), undefined);
+  assert.ok(byte?.kind === 'recruitment' && byte.positions.some((p) => p.id.startsWith('radar-')));
   const netease = await loadServerCatalogById('work', 'netease-hangzhou');
-  assert.ok(netease?.kind === 'recruitment' && netease.positions.some((p) => p.id === 'netease-campus-frontend-2026'));
-  // Radar freshness signal merged onto the matched pin (city text becomes no coords,
-  // but the pin already has real coordinates).
-  assert.ok(netease?.positions.some((p) => p.id.startsWith('radar-')));
-  const huawei = await loadServerCatalogById('work', 'huawei-hangzhou');
-  assert.ok(huawei?.kind === 'recruitment' && huawei.positions.some((p) => p.id === 'huawei-campus-frontend-2026'));
-  const ant = await loadServerCatalogById('work', 'antgroup-hangzhou');
-  assert.ok(ant?.kind === 'recruitment' && ant.positions.some((p) => p.id === 'antgroup-campus-frontend-2026'));
-  const xiaomi = await loadServerCatalogById('work', 'xiaomi-hangzhou');
-  assert.ok(xiaomi?.kind === 'recruitment' && xiaomi.positions.some((p) => p.id === 'xiaomi-campus-frontend-2026'));
-  assert.ok(xiaomi?.positions.some((p) => p.id === 'mi-android'));
-  assert.ok(await loadServerCatalogById('work', 'zhejiang-lab'));
-  // zhejiang-lab must not pin a second site or duplicate its position (site id rule + merge fix).
+  assert.ok(netease?.kind === 'recruitment' && netease.positions.some((p) => p.id.startsWith('radar-')));
+  const betta = await loadServerCatalogById('work', 'betta-hangzhou');
+  assert.ok(betta?.kind === 'recruitment' && betta.positions.some((p) => p.id.startsWith('portal-')));
+  // Companies with only example jobs (no radar/portal rows) are not shown.
+  assert.equal(await loadServerCatalogById('work', 'tencent-hangzhou'), undefined);
+  assert.equal(await loadServerCatalogById('work', 'huawei-hangzhou'), undefined);
+  assert.equal(await loadServerCatalogById('work', 'xiaomi-hangzhou'), undefined);
   assert.equal(await loadServerCatalogById('work', 'zhejiang-lab:zhejiang-lab-site'), undefined);
   const lab = await loadServerCatalogById('work', 'zhejiang-lab');
-  assert.equal(lab?.positions.filter((p) => p.id === 'zhejiang-lab-ml').length, 1);
+  assert.equal(lab?.positions.filter((p) => p.id === 'zhejiang-lab-ml').length, 0); // example job gone
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');
 });
