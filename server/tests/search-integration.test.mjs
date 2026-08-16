@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { parseSearchQuery } from '../src/lib/search.ts';
 import { searchPublicCatalog } from '../src/lib/public-search.ts';
 import { serverCatalog, serverCatalogById } from '../src/lib/server-catalog.ts';
-import { MODES } from '../src/lib/modes.ts';
+import { getMode, MODES } from '../src/lib/modes.ts';
 import { trendingForMode } from '../src/lib/trending-search.ts';
 import { poiMatchesDistrict } from '../src/lib/spatial-filters.ts';
 
@@ -65,6 +65,8 @@ test('GET /api/filter-options contract: unknown mode 400, work has taxonomy + di
   assert.ok(keys.includes('industry'));
   assert.ok(keys.includes('distance'));
   assert.ok(keys.includes('onlyOpen'));
+  assert.ok(keys.includes('education'));
+  assert.equal(getMode('internship').filters, MODES.work.filters);
   assert.ok(MODES.work.sortOptions.length >= 3);
 });
 

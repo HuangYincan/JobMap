@@ -58,6 +58,9 @@ export const TAG_FILTERS: Record<string, { key: string; value: string }> = {
   在招岗位: { key: 'onlyOpen', value: 'true' },
   住宿: { key: 'providesHousing', value: 'true' },
   班车: { key: 'providesShuttle', value: 'true' },
+  本科: { key: 'education', value: '本科' },
+  硕士: { key: 'education', value: '硕士' },
+  博士: { key: 'education', value: '博士' },
   ...districtTagFilters(),
 };
 
@@ -332,7 +335,7 @@ export function parseSearchQuery(raw?: string): ParsedSearchQuery {
       leftover.push(tag);
       continue;
     }
-    if (mapped.key === 'jobTaxonomy' || mapped.key === 'industry' || mapped.key === 'scale' || mapped.key === 'district') {
+    if (mapped.key === 'jobTaxonomy' || mapped.key === 'industry' || mapped.key === 'scale' || mapped.key === 'district' || mapped.key === 'education') {
       const prev = filters[mapped.key];
       const next = Array.isArray(prev) ? prev.filter((item): item is string => typeof item === 'string') : [];
       if (!next.includes(mapped.value)) next.push(mapped.value);
@@ -531,6 +534,12 @@ export function matchFilter(poi: POI, key: string, value: any): boolean {
       const paths = selectedTaxonomyPaths({ [key]: value });
       if (!paths.length) return true;
       return poi.positions.some((p) => positionMatchesTaxonomySelection(p, paths));
+    }
+    case 'education': {
+      if (!isRecruitmentPOI(poi)) return true;
+      const sel = value as string[];
+      if (!sel.length) return true;
+      return poi.positions.some((p) => !!p.education && sel.includes(p.education));
     }
     case 'salary': {
       if (!isRecruitmentPOI(poi)) return true;

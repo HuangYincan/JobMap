@@ -118,6 +118,16 @@ test('applyFilters: salary range keeps companies with matching position', () => 
   assert.ok(highSalary.some((p) => p.id === 'deepseek'));
 });
 
+test('applyFilters: education keeps companies with a matching position', () => {
+  const masters = applyFilters(INTERNSHIP_SEED, { education: ['硕士'] });
+  assert.ok(masters.length > 0);
+  assert.ok(masters.every((p) =>
+    p.kind === 'recruitment' && p.positions.some((pos) => pos.education === '硕士')
+  ));
+  const hashed = parseSearchQuery('#硕士');
+  assert.deepEqual(hashed.filters.education, ['硕士']);
+});
+
 test('applyFilters: benefits toggle for shuttle', () => {
   const withShuttle = applyFilters(INTERNSHIP_SEED, { providesShuttle: true });
   assert.ok(withShuttle.every((p) =>

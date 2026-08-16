@@ -80,6 +80,61 @@ const SCALE_OPTIONS = [
   { value: 'enterprise', label: '大型企业' },
 ];
 
+const EDUCATION_OPTIONS = [
+  { value: '本科', label: '本科' },
+  { value: '硕士', label: '硕士' },
+  { value: '博士', label: '博士' },
+];
+
+/** Shared work-mode filters. internship is a work alias, not a second list. */
+const WORK_FILTERS: FilterConfig[] = [
+  ...workFilterConfigs(),
+  {
+    key: 'industry',
+    label: '行业',
+    type: 'multi-select',
+    options: INDUSTRY_OPTIONS,
+  },
+  {
+    key: 'scale',
+    label: '公司规模',
+    type: 'multi-select',
+    options: SCALE_OPTIONS,
+  },
+  {
+    key: 'education',
+    label: '学历要求',
+    type: 'multi-select',
+    options: EDUCATION_OPTIONS,
+  },
+  {
+    key: 'salary',
+    label: '薪资范围',
+    type: 'range',
+    min: 0,
+    max: 50,
+    step: 1,
+    unit: 'K/月',
+  },
+  DISTANCE_FILTER,
+  districtFilterConfig(),
+  {
+    key: 'onlyOpen',
+    label: '仅看在招岗位',
+    type: 'toggle',
+  },
+  {
+    key: 'providesHousing',
+    label: '提供住宿',
+    type: 'toggle',
+  },
+  {
+    key: 'providesShuttle',
+    label: '提供班车',
+    type: 'toggle',
+  },
+];
+
 // ---- 模式定义 ----
 
 export const MODES: Record<MapMode, ModeConfig> = {
@@ -127,47 +182,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
     color: '#007AFF',
     kind: 'recruitment',
     searchPlaceholder: '搜索公司、岗位…',
-    filters: [
-      ...workFilterConfigs(),
-      {
-        key: 'industry',
-        label: '行业',
-        type: 'multi-select',
-        options: INDUSTRY_OPTIONS,
-      },
-      {
-        key: 'scale',
-        label: '公司规模',
-        type: 'multi-select',
-        options: SCALE_OPTIONS,
-      },
-      {
-        key: 'salary',
-        label: '薪资范围',
-        type: 'range',
-        min: 0,
-        max: 50,
-        step: 1,
-        unit: 'K/月',
-      },
-      DISTANCE_FILTER,
-      districtFilterConfig(),
-      {
-        key: 'onlyOpen',
-        label: '仅看在招岗位',
-        type: 'toggle',
-      },
-      {
-        key: 'providesHousing',
-        label: '提供住宿',
-        type: 'toggle',
-      },
-      {
-        key: 'providesShuttle',
-        label: '提供班车',
-        type: 'toggle',
-      },
-    ],
+    filters: WORK_FILTERS,
     sortOptions: [
       { key: 'distance', label: '距离最近' },
       { key: 'salaryDesc', label: '薪资最高' },
@@ -187,47 +202,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
     color: '#007AFF',
     kind: 'recruitment',
     searchPlaceholder: '搜索公司、岗位…',
-    filters: [
-      ...workFilterConfigs(),
-      {
-        key: 'industry',
-        label: '行业',
-        type: 'multi-select',
-        options: INDUSTRY_OPTIONS,
-      },
-      {
-        key: 'scale',
-        label: '公司规模',
-        type: 'multi-select',
-        options: SCALE_OPTIONS,
-      },
-      {
-        key: 'salary',
-        label: '薪资范围',
-        type: 'range',
-        min: 0,
-        max: 50,
-        step: 1,
-        unit: 'K/月',
-      },
-      DISTANCE_FILTER,
-      districtFilterConfig(),
-      {
-        key: 'onlyOpen',
-        label: '仅看在招岗位',
-        type: 'toggle',
-      },
-      {
-        key: 'providesHousing',
-        label: '提供住宿',
-        type: 'toggle',
-      },
-      {
-        key: 'providesShuttle',
-        label: '提供班车',
-        type: 'toggle',
-      },
-    ],
+    filters: WORK_FILTERS,
     sortOptions: [
       { key: 'distance', label: '距离最近' },
       { key: 'salaryDesc', label: '薪资最高' },
