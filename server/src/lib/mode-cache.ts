@@ -3,13 +3,16 @@
 //
 // 按模式记住累计池 / 页偏移 / 搜索原点。切模式回来直接还原，
 // 只有用户点刷新才清掉该模式缓存再打高德。
+//
+// 版本：数据修正（如 2026-08-17 坐标审计修正 11 个 pin）后 bump
+// MODE_CACHE_VERSION，旧会话缓存自动失效并重新拉取。
 // ============================================================
 
 import type { FilterState, MapMode, POI, POILocation } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 1;
+export const MODE_CACHE_VERSION = 2;
 
 export interface ModeCacheEntry {
   version: number;

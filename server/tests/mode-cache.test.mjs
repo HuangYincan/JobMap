@@ -120,7 +120,7 @@ test('legacy internship cache key is readable as work', () => {
   store.set(
     `${MODE_CACHE_PREFIX}internship`,
     JSON.stringify({
-      version: 1,
+      version: 2,
       mode: 'internship',
       catalog: [{ ...samplePoi, id: 'legacy', mode: 'internship' }],
       pageOffset: 1,
@@ -134,6 +134,25 @@ test('legacy internship cache key is readable as work', () => {
   const cached = readModeCache('work');
   assert.equal(cached?.catalog[0].id, 'legacy');
   assert.equal(cached?.mode, 'work');
+});
+
+test('stale cache version is rejected so refreshed data loads', () => {
+  const store = installMemoryStorage();
+  store.set(
+    `${MODE_CACHE_PREFIX}work`,
+    JSON.stringify({
+      version: 1,
+      mode: 'work',
+      catalog: [{ ...samplePoi, id: 'stale', mode: 'work' }],
+      pageOffset: 0,
+      searchOrigin: null,
+      query: '',
+      filters: {},
+      sort: 'distance',
+      savedAt: 1,
+    }),
+  );
+  assert.equal(readModeCache('work'), null);
 });
 
 test('writeModeCache ignores an empty catalog', () => {
