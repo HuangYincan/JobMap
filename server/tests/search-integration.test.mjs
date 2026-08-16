@@ -7,11 +7,12 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { parseSearchQuery, runPOIPipeline } from '../src/lib/search.ts';
+import { parseSearchQuery } from '../src/lib/search.ts';
+import { searchPublicCatalog } from '../src/lib/public-search.ts';
 import { serverCatalog, serverCatalogById } from '../src/lib/server-catalog.ts';
-import { isRecruitmentMode, withDistance } from '../src/lib/types.ts';
 import { MODES } from '../src/lib/modes.ts';
 import { trendingForMode } from '../src/lib/trending-search.ts';
+import { poiMatchesDistrict } from '../src/lib/spatial-filters.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -19,39 +20,18 @@ function src(rel) {
   return readFileSync(join(root, rel), 'utf8');
 }
 
-const HANGZHOU = { lng: 120.15, lat: 30.27 };
-
 function searchLikeRoute(body) {
-  const mode = body.mode || 'work';
-  const page = Math.max(1, Math.floor(body.page || 1));
-  const pageSize = Math.min(50, Math.max(1, Math.floor(body.pageSize || 20)));
   const parsed = parseSearchQuery(body.q || '');
   const filters = { ...parsed.filters, ...(body.filters || {}) };
-  const pois = serverCatalog(mode);
-  const processed = runPOIPipeline(pois, {
-    query: parsed.text || body.q,
+  return searchPublicCatalog(serverCatalog(body.mode || 'work'), {
+    mode: body.mode,
+    q: parsed.text || body.q,
     filters,
     sort: body.sort,
-    center: HANGZHOU,
+    bounds: body.bounds,
+    page: body.page,
+    pageSize: body.pageSize,
   });
-  const start = (page - 1) * pageSize;
-  const results = processed.slice(start, start + pageSize);
-  const industries = {};
-  if (isRecruitmentMode(mode)) {
-    for (const poi of processed) {
-      if (poi.kind !== 'recruitment') continue;
-      for (const ind of poi.company.industries) {
-        industries[ind] = (industries[ind] || 0) + 1;
-      }
-    }
-  }
-  return {
-    total: processed.length,
-    page,
-    pageSize,
-    results: withDistance(results, HANGZHOU),
-    aggregations: { industries },
-  };
 }
 
 test('POST /api/search contract: invalid JSON 400, work seed + cache + pipeline', () => {
@@ -59,18 +39,15 @@ test('POST /api/search contract: invalid JSON 400, work seed + cache + pipeline'
   assert.match(route, /status: 400/);
   assert.match(route, /invalid JSON body/);
   assert.match(route, /loadServerCatalog/);
-  assert.match(route, /inBounds/);
-  assert.match(route, /runPOIPipeline/);
+  assert.match(route, /searchPublicCatalog/);
   assert.match(route, /writePublicCache/);
-  assert.match(route, /aggregations: \{ industries \}/);
-  assert.match(route, /pageSize = Math\.min\(50/);
+  assert.doesNotMatch(route, /aggregations: \{ industries \}/);
 });
 
 test('GET /api/pois contract: shared server catalog + pipeline', () => {
   const route = src('app/api/pois/route.ts');
   assert.match(route, /loadServerCatalog/);
-  assert.match(route, /runPOIPipeline/);
-  assert.match(route, /inBounds/);
+  assert.match(route, /searchPublicCatalog/);
   assert.match(route, /parseFilters/);
   assert.ok(serverCatalog('work').length > 0);
   assert.ok(serverCatalog('domain').some((p) => p.id === 'hz-westlake'));
@@ -157,4 +134,30 @@ test('GET /api/pois/[id] contract: shared catalog, 404 when missing', () => {
 test('filter options for work expose at least five dimensions', () => {
   assert.ok(MODES.work.filters.length >= 5);
   assert.ok(MODES.domain.filters.some((f) => f.key === 'category'));
+});
+
+test('public search clips to a tight Hangzhou west-lake box', () => {
+  const out = searchLikeRoute({
+    mode: 'work',
+    bounds: '120.01,30.26,120.04,30.29',
+    pageSize: 50,
+  });
+  assert.ok(out.total > 0);
+  assert.ok(out.total < serverCatalog('work').length);
+  assert.ok(out.results.every((p) => p.location.lng >= 120.01 && p.location.lng <= 120.04));
+  assert.ok(out.results.some((p) => p.id === 'alibaba-xixi'));
+});
+
+test('district filter keeps address hits and falls back to the coarse box', () => {
+  const yuhang = searchLikeRoute({ mode: 'work', filters: { district: ['余杭区'] }, pageSize: 50 });
+  assert.ok(yuhang.total > 0);
+  assert.ok(yuhang.results.every((p) => poiMatchesDistrict(p, ['余杭区'])));
+  assert.ok(yuhang.results.some((p) => p.id === 'alibaba-xixi'));
+
+  const unnamed = {
+    ...serverCatalogById('work', 'alibaba-xixi'),
+    location: { lng: 120.023, lat: 30.279, address: '文一西路969号' },
+  };
+  assert.equal(poiMatchesDistrict(unnamed, ['余杭区']), true);
+  assert.equal(poiMatchesDistrict(unnamed, ['萧山区']), false);
 });

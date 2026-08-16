@@ -7,12 +7,10 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { runPOIPipeline } from '@/lib/search';
 import { loadServerCatalog } from '@/lib/server-catalog';
-import { isRecruitmentMode, withDistance } from '@/lib/types';
-import type { FilterState, MapMode } from '@/lib/types';
+import { searchPublicCatalog } from '@/lib/public-search';
+import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
-import { boundsCenter, inBounds, parseBoundsParam } from '@/lib/viewport-search';
 
 interface SearchBody {
   mode?: MapMode;
@@ -36,8 +34,6 @@ export async function POST(request: Request) {
   }
 
   const mode = body.mode || 'work';
-  const page = Math.max(1, Math.floor(body.page || 1));
-  const pageSize = Math.min(50, Math.max(1, Math.floor(body.pageSize || 20)));
   const cacheKey = publicCacheKey([
     'search',
     mode,
@@ -45,8 +41,8 @@ export async function POST(request: Request) {
     JSON.stringify(body.filters ?? {}),
     body.sort,
     body.bounds,
-    page,
-    pageSize,
+    body.page,
+    body.pageSize,
   ]);
   const cached = readPublicCache(cacheKey);
   if (cached) {
@@ -54,38 +50,15 @@ export async function POST(request: Request) {
   }
 
   const pois = await loadServerCatalog(mode);
-  const bounds = parseBoundsParam(body.bounds);
-  const scoped = bounds ? pois.filter((poi) => inBounds(poi.location, bounds)) : pois;
-  const center = bounds ? boundsCenter(bounds) : { lng: 120.15, lat: 30.27 };
-
-  const processed = runPOIPipeline(scoped, {
-    query: body.q,
-    filters: body.filters as FilterState | undefined,
+  const payload = searchPublicCatalog(pois, {
+    mode,
+    q: body.q,
+    filters: body.filters,
     sort: body.sort,
-    center,
+    bounds: body.bounds,
+    page: body.page,
+    pageSize: body.pageSize,
   });
-
-  const start = (page - 1) * pageSize;
-  const results = processed.slice(start, start + pageSize);
-
-  // 聚合：行业计数（筛选器动态选项）
-  const industries: Record<string, number> = {};
-  if (isRecruitmentMode(mode)) {
-    for (const poi of processed) {
-      if (poi.kind !== 'recruitment') continue;
-      for (const ind of poi.company.industries) {
-        industries[ind] = (industries[ind] || 0) + 1;
-      }
-    }
-  }
-
-  const payload = {
-    total: processed.length,
-    page,
-    pageSize,
-    results: withDistance(results, center),
-    aggregations: { industries },
-  };
   writePublicCache(cacheKey, payload);
   return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
 }
