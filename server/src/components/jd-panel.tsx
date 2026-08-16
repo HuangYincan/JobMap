@@ -17,6 +17,7 @@ export interface JdPanelProps {
   onClose: () => void;
   lang?: Language;
   accentColor?: string;
+  onApply?: (input: { position: Position; company: RecruitmentPOI; url?: string }) => void;
 }
 
 const APPLY_SOURCE_KEY = {
@@ -52,6 +53,7 @@ export function JdPanel({
   onClose,
   lang = "zh",
   accentColor = "#007AFF",
+  onApply,
 }: JdPanelProps) {
   const typeLabel = t(TYPE_KEY[position.type], lang);
   const description = position.description || fallbackDescription(company, position, lang);
@@ -124,6 +126,7 @@ export function JdPanel({
             href={apply.url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => onApply?.({ position, company, url: apply.url })}
           >
             {applyLabel}
           </a>

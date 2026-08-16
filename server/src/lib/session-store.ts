@@ -7,7 +7,7 @@
 // ============================================================
 
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
-import type { AccountUser, AuthProvider, SavedPlace, SearchHistoryEntry, UserPreferences } from './account.ts';
+import type { AccountUser, ApplicationRecord, AuthProvider, SavedPlace, SearchHistoryEntry, UserPreferences } from './account.ts';
 import { emptyPreferences, mergePreferences } from './account.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -39,6 +39,7 @@ const identities = new Map<string, string>();
 const otps = new Map<string, OtpChallenge>();
 const history = new Map<string, SearchHistoryEntry[]>();
 const saved = new Map<string, SavedPlace[]>();
+const applications = new Map<string, ApplicationRecord[]>();
 
 function identityKey(provider: AuthProvider, subject: string): string {
   return `${provider}:${subject.trim().toLowerCase()}`;
@@ -228,4 +229,25 @@ export function removeSaved(userId: string, poiId: string): boolean {
   const next = items.filter((item) => item.poiId !== poiId);
   saved.set(userId, next);
   return next.length !== items.length;
+}
+
+export function listApplications(userId: string): ApplicationRecord[] {
+  return [...(applications.get(userId) ?? [])];
+}
+
+export function recordApplication(
+  userId: string,
+  input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'status'> & { status?: ApplicationRecord['status'] },
+): ApplicationRecord {
+  const items = applications.get(userId) ?? [];
+  const existing = items.find((item) => item.positionId === input.positionId);
+  if (existing) return existing;
+  const entry: ApplicationRecord = {
+    ...input,
+    status: input.status ?? 'applied',
+    id: randomUUID(),
+    createdAt: new Date().toISOString(),
+  };
+  applications.set(userId, [entry, ...items]);
+  return entry;
 }

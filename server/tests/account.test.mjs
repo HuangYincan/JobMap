@@ -16,7 +16,9 @@ import {
   getSessionUser,
   issueOtp,
   listHistory,
+  listApplications,
   listSaved,
+  recordApplication,
   removeSaved,
   savePlace,
   updateUser,
@@ -107,6 +109,25 @@ test('saved places are per user and idempotent', () => {
   assert.equal(listSaved(user.id).length, 1);
   assert.equal(removeSaved(user.id, 'alibaba-xixi'), true);
   assert.equal(listSaved(user.id).length, 0);
+});
+
+test('recordApplication is idempotent per position', () => {
+  const user = upsertIdentity({ provider: 'email', subject: 'apply@example.com', email: 'apply@example.com' });
+  const first = recordApplication(user.id, {
+    positionId: 'alibaba-fe',
+    companyPoiId: 'alibaba-xixi',
+    title: '前端实习',
+    companyName: '阿里巴巴',
+    applyUrl: 'https://talent.alibaba.com/job/1',
+  });
+  const again = recordApplication(user.id, {
+    positionId: 'alibaba-fe',
+    companyPoiId: 'alibaba-xixi',
+    title: '前端实习',
+    companyName: '阿里巴巴',
+  });
+  assert.equal(first.id, again.id);
+  assert.equal(listApplications(user.id).length, 1);
 });
 
 test('resolveCompanyLogo prefers site career icon over company fallback', () => {

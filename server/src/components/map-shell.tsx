@@ -13,7 +13,7 @@ import { trendingForMode } from "@/lib/trending-search";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
 import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
-import type { AccountUser, SavedPlace, SearchHistoryEntry, UserPreferences } from "@/lib/account";
+import type { AccountUser, ApplicationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from "@/lib/account";
 import { initialsFromName } from "@/lib/account";
 import { SecondarySidebar, type SearchSuggestion } from "./secondary-sidebar";
 import { POIList } from "./poi-list";
@@ -117,6 +117,7 @@ export function MapShell() {
   const [authOpen, setAuthOpen] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
+  const [applications, setApplications] = useState<ApplicationRecord[]>([]);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [online, setOnline] = useState(true);
@@ -174,13 +175,24 @@ export function MapShell() {
     }
   }, []);
 
+  const refreshApplications = useCallback(async () => {
+    try {
+      const res = await fetch("/api/me/applications");
+      const body = await res.json();
+      setApplications(Array.isArray(body.items) ? body.items : []);
+    } catch {
+      setApplications([]);
+    }
+  }, []);
+
   useEffect(() => {
     refreshAccount().then((next) => {
       if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
     });
     refreshHistory();
     refreshSaved();
-  }, [refreshAccount, refreshHistory, refreshSaved]);
+    refreshApplications();
+  }, [refreshAccount, refreshHistory, refreshSaved, refreshApplications]);
 
   const recordSearch = useCallback(async (raw: string, searchMode: MapMode) => {
     const q = raw.trim();
@@ -748,6 +760,29 @@ export function MapShell() {
     }
   }, [user, savedPlaces, refreshSaved]);
 
+  const handleApply = useCallback(async (input: { position: { id: string; title: string }; company: { id: string; name: string }; url?: string }) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    try {
+      await fetch("/api/me/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          positionId: input.position.id,
+          companyPoiId: input.company.id,
+          title: input.position.title,
+          companyName: input.company.name,
+          applyUrl: input.url,
+        }),
+      });
+      await refreshApplications();
+    } catch {
+      // ignore
+    }
+  }, [user, refreshApplications]);
+
   // ---- 地图联动 ----
   usePOIMap(mapInstance.current, {
     pois,
@@ -1031,6 +1066,7 @@ export function MapShell() {
         setUser(null);
         setSearchHistory([]);
         setSavedPlaces([]);
+        setApplications([]);
         setRailPanel((current) => (current === "profile" || current === "saved" ? null : current));
       });
       return;
@@ -1238,6 +1274,7 @@ export function MapShell() {
         onWidenSearch={handleWidenSearch}
         saved={Boolean(detailPoi && savedPlaces.some((item) => item.poiId === detailPoi.id))}
         onToggleSave={handleToggleSave}
+        onApply={handleApply}
         totalCount={pois.length}
         lang={lang}
         onClose={() => {
@@ -1323,6 +1360,7 @@ export function MapShell() {
           shifted={sidebarOpen}
           onClose={() => setRailPanel(null)}
           onSave={handleSaveProfile}
+          applications={applications}
         />
       )}
 
@@ -1336,6 +1374,7 @@ export function MapShell() {
           });
           void refreshHistory();
           void refreshSaved();
+          void refreshApplications();
         }}
       />
 
@@ -1456,6 +1495,7 @@ export function MapShell() {
                 lang={lang}
                 accentColor={modeConfig.color}
                 onClose={() => setMobileJd(null)}
+                onApply={handleApply}
               />
             )}
           </div>

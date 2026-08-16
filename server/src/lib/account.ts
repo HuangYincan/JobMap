@@ -71,6 +71,19 @@ export interface SavedPlace {
   createdAt: string;
 }
 
+export type ApplicationStatus = 'applied' | 'viewed' | 'withdrawn';
+
+export interface ApplicationRecord {
+  id: string;
+  positionId: string;
+  companyPoiId: string;
+  title: string;
+  companyName: string;
+  applyUrl?: string;
+  status: ApplicationStatus;
+  createdAt: string;
+}
+
 export const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
   emailJobs: false,
   smsJobs: false,

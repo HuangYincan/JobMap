@@ -116,7 +116,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 - PII handling
 - Recommendation system
 
-**Phase 3 started (2026-08-16):** Saved places — migration `008_saved_places.sql`, `GET/POST/DELETE /api/me/saved`, rail Saved L2, detail bookmark. Guests are prompted to sign in.
+**Phase 3 started (2026-08-16):** Saved places — migration `008_saved_places.sql`, `GET/POST/DELETE /api/me/saved`, rail Saved L2, detail bookmark. Applications — `009_applications.sql`, `GET/POST /api/me/applications`, JD apply click writes a row, Profile lists them. Guests are prompted to sign in.
 
 ## Deferred Decisions
 

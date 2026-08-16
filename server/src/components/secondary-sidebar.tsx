@@ -23,7 +23,7 @@ import { FilterPanel } from "./filter-panel";
 import { SortSelector } from "./sort-selector";
 import { t, type Language } from "@/lib/i18n";
 import { getMode } from "@/lib/modes";
-import { isRecruitmentPOI, type FilterState, type MapMode, type POI, type Position } from "@/lib/types";
+import { isRecruitmentPOI, type FilterState, type MapMode, type POI, type Position, type RecruitmentPOI } from "@/lib/types";
 import styles from "./secondary-sidebar.module.css";
 
 /** 搜索建议（AutoComplete 结果的 UI 形态） */
@@ -99,6 +99,7 @@ export interface SecondarySidebarProps {
   onWidenSearch?: () => void;
   saved?: boolean;
   onToggleSave?: (poi: POI) => void;
+  onApply?: (input: { position: Position; company: RecruitmentPOI; url?: string }) => void;
 }
 
 export function SecondarySidebar({
@@ -133,6 +134,7 @@ export function SecondarySidebar({
   onWidenSearch,
   saved = false,
   onToggleSave,
+  onApply,
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -391,6 +393,7 @@ export function SecondarySidebar({
         onClose={() => setJdPosition(null)}
         lang={lang}
         accentColor={config.color}
+        onApply={onApply}
       />
     )}
     </div>

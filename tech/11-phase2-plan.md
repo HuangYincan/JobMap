@@ -526,7 +526,7 @@
 Phase 2 完成后，Phase 3 将实现：
 - 秋招 / 社招继续作为工作模式筛选插件（不是新地图模式）
 - 收藏功能（`008_saved_places` + `/api/me/saved` + Saved L2；游客不写云端）
-- 用户投递记录
+- 用户投递记录（`009_applications` + `/api/me/applications`；JD 点投递写入，列表在 Profile 底部）
 - 数据对比功能
 - 通知系统（偏好已在 Profile；发送通道后补）
 

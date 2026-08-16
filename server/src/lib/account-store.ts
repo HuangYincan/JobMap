@@ -12,6 +12,7 @@ import {
   mergePreferences,
   type AccountUser,
   type AuthProvider,
+  type ApplicationRecord,
   type SavedPlace,
   type SearchHistoryEntry,
   type UserPreferences,
@@ -28,7 +29,9 @@ import {
   getSessionUser as memGetSessionUser,
   issueOtp as memIssueOtp,
   listHistory as memListHistory,
+  listApplications as memListApplications,
   listSaved as memListSaved,
+  recordApplication as memRecordApplication,
   removeSaved as memRemoveSaved,
   savePlace as memSavePlace,
   updateUser as memUpdateUser,
@@ -425,4 +428,81 @@ export async function removeSaved(userId: string, poiId: string): Promise<boolea
     const result = await db.query(`DELETE FROM saved_places WHERE user_id = $1 AND poi_id = $2`, [userId, poiId]);
     return (result.rowCount ?? 0) > 0;
   }, () => memRemoveSaved(userId, poiId));
+}
+
+function asApplication(row: {
+  id: string;
+  position_id: string;
+  company_poi_id: string;
+  title: string;
+  company_name: string;
+  apply_url: string | null;
+  status: ApplicationRecord['status'];
+  created_at: Date;
+}): ApplicationRecord {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    companyPoiId: row.company_poi_id,
+    title: row.title,
+    companyName: row.company_name,
+    applyUrl: row.apply_url ?? undefined,
+    status: row.status,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+export async function listApplications(userId: string): Promise<ApplicationRecord[]> {
+  return withDb(async (db) => {
+    const result = await db.query<{
+      id: string;
+      position_id: string;
+      company_poi_id: string;
+      title: string;
+      company_name: string;
+      apply_url: string | null;
+      status: ApplicationRecord['status'];
+      created_at: Date;
+    }>(
+      `SELECT id::text, position_id, company_poi_id, title, company_name, apply_url, status, created_at
+       FROM applications
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId],
+    );
+    return result.rows.map(asApplication);
+  }, () => memListApplications(userId));
+}
+
+export async function recordApplication(
+  userId: string,
+  input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'status'> & { status?: ApplicationRecord['status'] },
+): Promise<ApplicationRecord> {
+  return withDb(async (db) => {
+    const result = await db.query<{
+      id: string;
+      position_id: string;
+      company_poi_id: string;
+      title: string;
+      company_name: string;
+      apply_url: string | null;
+      status: ApplicationRecord['status'];
+      created_at: Date;
+    }>(
+      `INSERT INTO applications (user_id, position_id, company_poi_id, title, company_name, apply_url, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (user_id, position_id) DO UPDATE SET title = EXCLUDED.title
+       RETURNING id::text, position_id, company_poi_id, title, company_name, apply_url, status, created_at`,
+      [
+        userId,
+        input.positionId,
+        input.companyPoiId,
+        input.title,
+        input.companyName,
+        input.applyUrl ?? null,
+        input.status ?? 'applied',
+      ],
+    );
+    return asApplication(result.rows[0]);
+  }, () => memRecordApplication(userId, input));
 }

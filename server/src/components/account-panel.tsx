@@ -5,6 +5,7 @@ import {
   initialsFromName,
   mergePreferences,
   type AccountUser,
+  type ApplicationRecord,
   type CareerStrength,
   type JobSeekingStatus,
   type UserPreferences,
@@ -26,6 +27,7 @@ export interface ProfilePanelProps {
     avatarUrl?: string;
     preferences?: Partial<UserPreferences>;
   }) => Promise<void>;
+  applications?: ApplicationRecord[];
   shifted?: boolean;
 }
 
@@ -54,7 +56,7 @@ function toggleValue<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
-export function ProfilePanel({ user, lang, onClose, onSave, shifted = false }: ProfilePanelProps) {
+export function ProfilePanel({ user, lang, onClose, onSave, applications = [], shifted = false }: ProfilePanelProps) {
   const [name, setName] = useState(user.displayName);
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? "");
   const [prefs, setPrefs] = useState<UserPreferences>(mergePreferences(user.preferences));
@@ -259,6 +261,22 @@ export function ProfilePanel({ user, lang, onClose, onSave, shifted = false }: P
               </label>
             ))}
           </div>
+        </section>
+
+        <section className={styles.prefs}>
+          <h3 className={styles.sectionLabel}>{t("applications", lang)}</h3>
+          {applications.length === 0 ? (
+            <p className={styles.emptyApps}>{t("applicationsEmpty", lang)}</p>
+          ) : (
+            <ul className={styles.appList}>
+              {applications.map((item) => (
+                <li key={item.id} className={styles.appRow}>
+                  <strong>{item.title}</strong>
+                  <small>{item.companyName}</small>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </aside>
 

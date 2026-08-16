@@ -67,6 +67,41 @@
   color: var(--ink);
 }
 
+.emptyApps {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.appList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.appRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.34);
+  border: 1px solid var(--line);
+}
+
+.appRow strong {
+  font-size: 14px;
+}
+
+.appRow small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .identity {
   display: flex;
   flex-direction: column;

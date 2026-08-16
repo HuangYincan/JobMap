@@ -623,6 +623,14 @@ export const translations = {
     zh: '取消收藏',
     en: 'Unsave',
   },
+  applications: {
+    zh: '投递记录',
+    en: 'Applications',
+  },
+  applicationsEmpty: {
+    zh: '还没有投递记录。从岗位详情点投递后会出现在这里。',
+    en: 'No applications yet. Apply from a job detail to see it here.',
+  },
 } as const;
 
 // 获取浏览器语言偏好
