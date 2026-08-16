@@ -90,17 +90,17 @@ def parse_robots(robots_txt: str, path: str, user_agent: str = USER_AGENT) -> bo
             current_rules.append((key, value))
     flush()
 
-    # Most specific UA group wins; the anonymous "*" group is the fallback.
+    # Most specific UA group wins; RFC 9309 §2.2.1: when several groups match the
+    # same UA, the last one in the file applies. The anonymous "*" group is only
+    # the fallback when no group names our UA.
     selected: list[tuple[str, str]] | None = None
     for agents, rules in groups:
         if ua in agents:
             selected = rules
-            break
     if selected is None:
         for agents, rules in groups:
             if "*" in agents:
                 selected = rules
-                break
     if selected is None:
         return True
 

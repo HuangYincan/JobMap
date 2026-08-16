@@ -41,6 +41,9 @@ test('validateSourceCompany flags a non-ISO deadline before the DB apply', () =>
   assert.ok(issues.some((row) => row.field === 'positions.deadline'));
   company.positions[0].deadline = '2026-10-15';
   assert.deepEqual(validateSourceCompany(company), []);
+  // Delimiter-optional formats align with the crawler's parse_deadline.
+  company.positions[0].deadline = '2026 10 15';
+  assert.deepEqual(validateSourceCompany(company), []);
 });
 
 test('radar adapter reads the mapped drop directory', async () => {

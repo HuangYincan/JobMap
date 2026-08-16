@@ -36,6 +36,16 @@ class RobotsAndHostTests(unittest.TestCase):
         self.assertTrue(parse_robots(robots, "/"))
         self.assertFalse(parse_robots(robots, "/private"))
 
+    def test_robots_last_duplicate_ua_group_wins(self):
+        robots = (
+            "User-agent: *\nDisallow: /\n"
+            "User-agent: DomainMapImporter\nAllow: /\n"
+            "User-agent: DomainMapImporter\nDisallow: /beta\n"
+        )
+        # RFC 9309 §2.2.1: the last group naming our UA applies.
+        self.assertTrue(parse_robots(robots, "/"))
+        self.assertFalse(parse_robots(robots, "/beta"))
+
     def test_robots_empty_disallow_allows(self):
         self.assertTrue(parse_robots("User-agent: *\nDisallow:\n", "/anything"))
         self.assertTrue(parse_robots("", "/anything"))

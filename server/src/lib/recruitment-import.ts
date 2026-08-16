@@ -166,10 +166,14 @@ export interface ImportApplyResult {
   positions: number;
 }
 
-/** Normalize a position deadline to an ISO date or null (positions.deadline is a date column). */
+/**
+ * Normalize a position deadline to an ISO date or null (positions.deadline is a
+ * date column). Mirrors crawler parse_deadline: YYYY[-/ .]MM[-/ .]DD, delimiters
+ * optional; calendar-invalid dates and human text ("招满即止") → null.
+ */
 function normalizeDeadline(raw: string | undefined): string | null {
   if (!raw) return null;
-  const m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(raw.trim());
+  const m = /^(\d{4})\s*[-/.]?\s*(\d{1,2})\s*[-/.]?\s*(\d{1,2})$/.exec(raw.trim());
   if (!m) return null;
   const [, y, mo, d] = m;
   const date = new Date(Number(y), Number(mo) - 1, Number(d));
