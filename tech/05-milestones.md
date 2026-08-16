@@ -10,7 +10,7 @@ P0 is complete as a **documentation and repository scaffold**. Phase 1 is **in p
 
 **Frontend status (2026-08-15):** The map shell is complete and browser-verified. All core interactions work (zoom, compass, locate, middle-button 3D control), sidebar animations are polished with Apple-style transitions, responsive layouts proven on desktop and mobile viewports, dark mode functional, i18n system operational. See `tech/00-phase1-frontend-completion.md` for full implementation evidence.
 
-**Backend status:** The importer unit tests pass (11). Live PostGIS apply is verified (2026-08-16) against Docker `postgis/postgis:16-3.4`: `make db-migrate` wrote `001`–`010`, `make test-integration` passed, seed import wrote 51 companies. Public `/api/pois` and `/api/search` push `bounds` / distance through `company_sites_geom_gist` (`&&` then `ST_DWithin`) when `DATABASE_URL` is set; no-DB stays on `inBounds`. Live `EXPLAIN` (51 sites): `&&` + `ST_DWithin` uses the gist; bbox-only is still a Seq Scan on this tiny table.
+**Backend status:** The importer unit tests pass (31, 2026-08-17). Live PostGIS apply is verified (2026-08-16) against Docker `postgis/postgis:16-3.4`: `make db-migrate` wrote `001`–`010`, `make test-integration` passed, seed import wrote 51 companies. **2026-08-17 re-import:** 137 companies / 137 sites / 240 open positions (official-career + radar + portals). Public `/api/pois` and `/api/search` push `bounds` / distance through `company_sites_geom_gist` (`&&` then `ST_DWithin`) when `DATABASE_URL` is set; no-DB stays on `inBounds`. Live `EXPLAIN` (51 sites): `&&` + `ST_DWithin` uses the gist; bbox-only is still a Seq Scan on this tiny table.
 
 ## Delivery Sequence
 
