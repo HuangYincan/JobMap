@@ -56,7 +56,12 @@ def is_blocked_host(url: str) -> bool:
 
 
 def parse_robots(robots_txt: str, path: str, user_agent: str = USER_AGENT) -> bool:
-    """Return True when the path is allowed for this UA. Missing file → allow."""
+    """Return True when the path is allowed for this UA. Missing file → allow.
+
+    RFC 9309: the most specific matching UA group wins (a group naming our UA
+    beats ``User-agent: *``); within that group the longest-matching path rule
+    wins, with ``Allow`` breaking ties over ``Disallow``.
+    """
     ua = user_agent.split("/")[0].lower()
     groups: list[tuple[list[str], list[tuple[str, str]]]] = []
     current_agents: list[str] = []
@@ -70,9 +75,7 @@ def parse_robots(robots_txt: str, path: str, user_agent: str = USER_AGENT) -> bo
 
     for raw in robots_txt.splitlines():
         line = raw.split("#", 1)[0].strip()
-        if not line:
-            continue
-        if ":" not in line:
+        if not line or ":" not in line:
             continue
         key, value = line.split(":", 1)
         key = key.strip().lower()
@@ -87,19 +90,27 @@ def parse_robots(robots_txt: str, path: str, user_agent: str = USER_AGENT) -> bo
             current_rules.append((key, value))
     flush()
 
-    matched: list[tuple[str, str]] = []
+    # Most specific UA group wins; the anonymous "*" group is the fallback.
+    selected: list[tuple[str, str]] | None = None
     for agents, rules in groups:
-        if ua in agents or "*" in agents:
-            matched.extend(rules)
-    if not matched:
+        if ua in agents:
+            selected = rules
+            break
+    if selected is None:
+        for agents, rules in groups:
+            if "*" in agents:
+                selected = rules
+                break
+    if selected is None:
         return True
 
-    applicable = [(kind, rule) for kind, rule in matched if rule and path.startswith(rule)]
+    applicable = [(kind, rule) for kind, rule in selected if rule and path.startswith(rule)]
     if not applicable:
-        # Bare Disallow: (empty) means allow all.
+        # No rule matched (including a bare "Disallow:") → allowed.
         return True
-    kind, _ = max(applicable, key=lambda item: len(item[1]))
-    return kind == "allow"
+    longest = max(len(rule) for _kind, rule in applicable)
+    tie = [kind for kind, rule in applicable if len(rule) == longest]
+    return "allow" in tie
 
 
 def _http_get(url: str, timeout: int = DEFAULT_TIMEOUT_S) -> tuple[int, str]:

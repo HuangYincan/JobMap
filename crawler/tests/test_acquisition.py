@@ -27,6 +27,19 @@ class RobotsAndHostTests(unittest.TestCase):
         self.assertTrue(parse_robots(robots, "/campus/position"))
         self.assertFalse(parse_robots(robots, "/referral"))
 
+    def test_robots_agent_specific_group_precedence(self):
+        robots = (
+            "User-agent: *\nDisallow: /\n"
+            "User-agent: DomainMapImporter\nDisallow: /private\nAllow: /\n"
+        )
+        # Our UA matches the specific group → /private blocked, root allowed.
+        self.assertTrue(parse_robots(robots, "/"))
+        self.assertFalse(parse_robots(robots, "/private"))
+
+    def test_robots_empty_disallow_allows(self):
+        self.assertTrue(parse_robots("User-agent: *\nDisallow:\n", "/anything"))
+        self.assertTrue(parse_robots("", "/anything"))
+
     def test_fetcher_refuses_blocked_hosts_before_http(self):
         def boom(_url):
             raise AssertionError("must not fetch")
@@ -126,6 +139,26 @@ class RadarMapTests(unittest.TestCase):
         self.assertIsNone(map_radar_job({
             "c": "某司", "p": "Java", "l": "杭州", "u": "https://www.zhipin.com/job/1",
         }))
+
+    def test_normalizes_company_names(self):
+        from domain_map_importer.radar_jobs import normalize_company_name
+        cases = {
+            "理想汽车“理想+”计划": "理想汽车",
+            "网易游戏雷火": "网易游戏雷火",
+            "阿里巴巴—阿里顶尖人才计划": "阿里巴巴",
+            "招商银行·招银网络科技": "招商银行",
+            "！网易": "网易",
+            "同花顺AIME顶尖人才计划": "同花顺AIME顶尖",
+        }
+        for raw, expected in cases.items():
+            self.assertEqual(normalize_company_name(raw), expected, raw)
+
+    def test_anchor_maps_netease_slugs(self):
+        from domain_map_importer.radar_jobs import anchor_slug
+        self.assertEqual(anchor_slug("网易游戏雷火"), "netease-hangzhou")
+        self.assertEqual(anchor_slug("字节跳动Seed大模型"), "bytedance-hangzhou")
+        self.assertEqual(anchor_slug("蚂蚁集团"), "antgroup-hangzhou")
+        self.assertIsNone(anchor_slug("拓竹科技"))
 
     def test_fixture_is_valid_local_import_and_hangzhou_only(self):
         payload = {
