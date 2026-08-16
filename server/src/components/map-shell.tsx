@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./map-shell.module.css";
 import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
@@ -17,18 +18,6 @@ import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from "@/lib/account";
 import { initialsFromName } from "@/lib/account";
-import { SecondarySidebar, type SearchSuggestion } from "./secondary-sidebar";
-import { POIList } from "./poi-list";
-import { POIDetailView } from "./poi-detail";
-import { JdPanel } from "./jd-panel";
-import { ModeSwitcher } from "./mode-switcher";
-import { FilterPanel } from "./filter-panel";
-import { SortSelector } from "./sort-selector";
-import { AuthModal } from "./auth-modal";
-import { ProfilePanel } from "./account-panel";
-import { RecentPanel } from "./recent-panel";
-import { SavedList, SavedPanel } from "./saved-panel";
-import { LayersPanel } from "./layers-panel";
 import {
   amapStyleUrl,
   MAP_STYLE_KEY,
@@ -44,6 +33,20 @@ import {
   type BasemapStyle,
 } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
+import { SecondarySidebar, type SearchSuggestion } from "./secondary-sidebar";
+import { POIList } from "./poi-list";
+import { ModeSwitcher } from "./mode-switcher";
+import { FilterPanel } from "./filter-panel";
+import { SortSelector } from "./sort-selector";
+
+const POIDetailView = dynamic(() => import("./poi-detail").then((mod) => mod.POIDetailView));
+const JdPanel = dynamic(() => import("./jd-panel").then((mod) => mod.JdPanel));
+const AuthModal = dynamic(() => import("./auth-modal").then((mod) => mod.AuthModal));
+const ProfilePanel = dynamic(() => import("./account-panel").then((mod) => mod.ProfilePanel));
+const RecentPanel = dynamic(() => import("./recent-panel").then((mod) => mod.RecentPanel));
+const SavedList = dynamic(() => import("./saved-panel").then((mod) => mod.SavedList));
+const SavedPanel = dynamic(() => import("./saved-panel").then((mod) => mod.SavedPanel));
+const LayersPanel = dynamic(() => import("./layers-panel").then((mod) => mod.LayersPanel));
 
 type DrawerState = "mini" | "half" | "full";
 type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;

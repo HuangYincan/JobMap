@@ -42,6 +42,19 @@ test('FilterPanel select is a labelled listbox', () => {
   assert.match(panel, /resultCount/);
 });
 
+test('map shell lazy-loads rail panels and detail chrome', () => {
+  const shell = src('components/map-shell.tsx');
+  assert.match(shell, /next\/dynamic/);
+  assert.match(shell, /import\("\.\/poi-detail"\)/);
+  assert.match(shell, /import\("\.\/jd-panel"\)/);
+  assert.match(shell, /import\("\.\/auth-modal"\)/);
+  assert.match(shell, /import\("\.\/account-panel"\)/);
+  assert.match(shell, /import\("\.\/recent-panel"\)/);
+  assert.match(shell, /import\("\.\/saved-panel"\)/);
+  assert.match(shell, /import\("\.\/layers-panel"\)/);
+  assert.doesNotMatch(shell, /import \{ AuthModal \} from "\.\/auth-modal"/);
+});
+
 test('home page lazy-loads MapShell on the client', () => {
   const page = src('app/page.tsx');
   assert.match(page, /next\/dynamic/);
