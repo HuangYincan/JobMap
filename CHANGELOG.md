@@ -2,6 +2,25 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-17
+
+### Added
+
+- Guest Recent in the browser: persistable (work/internship) queries write `dm.guest-search-history.v1` (cap 30). Sign-in merges rows the account does not have and keeps a local mirror; sign-out restores. `lib/persistable.ts` is the extension seam (`PERSISTABLE_MODES`; add `college` when that catalog lands).
+- Saved + Recent persist only recruitment catalog POIs. Domain AMap bookmarks are hidden; `POST /api/me/saved` and `POST /api/me/search-history` return 400 `NOT_PERSISTABLE` for non-persistable rows.
+- Map-mode suggestion pick upserts a session `DomainPOI` (`suggestionToDomainPoi` + `mergePoisById`) so a card exists. Empty search boxes no longer render trending tags (Recent L2 still does).
+- Login: Other = GitHub / Google / WeChat icon rows (X removed); mobile hides the promo and spaces method tabs with vertical dividers. Drawer handle gap unified via `--drawer-handle-gap`.
+- Real recruitment data: `crawler/app/domain_map_importer/` — polite acquisition (`acquire.py`: robots + blocked commercial hosts; `html_jobs.py`: JSON-LD then link fallback; `radar_jobs.py`: maps the published Apache-2.0 `jobs.json`; `official_refresh.py`; `cli.py`). Server `radar` adapter + `mergeCompaniesIntoPois`; offline catalog filters ungeocoded sites (no (0,0) pins). Drops: `server/data/recruitment/radar/` (98 companies / 125 jobs) + curated verified official portals (betta / megvii / deepseek). Import plan now 137 companies / 240 positions. Source reviews: `tech/roles/data/etl/`; evidence: `tech/roles/data/data-quality.md`. `make refresh-radar` / `make crawl-official`.
+- Freshness presentation proposal (awaiting approval): `tech/17-freshness-presentation-proposal.md`.
+
+### Fixed
+
+- Merge-on-sign-in wiped rows whose POST failed; now only rows absent from the account upload, and failed rows stay local.
+- Persisted signed-in sessions now merge leftover guest rows on mount, not only after the auth modal.
+- `mergeCompanyOntoSeedPois` no longer appends a new site's positions twice; `zhejiang-lab` site id corrected to `{slug}-site` per the merge rule.
+- Polite fetcher survives transient SSL/network errors and a misspelled page charset; `parse_robots` follows RFC 9309 (specific UA group wins, Allow tiebreak). Stale `betta-hangzhou` careerUrl fixed.
+- Dead i18n keys (`authX`, `recentNeedSignIn`) and the `mergeOfficialCareerIntoSeed` wrapper removed.
+
 ## 2026-08-16
 
 ### Added
