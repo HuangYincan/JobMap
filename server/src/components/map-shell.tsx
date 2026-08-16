@@ -1581,6 +1581,8 @@ export function MapShell() {
           setHighlightedId(null);
         }}
         onOpenDetail={(poi) => {
+          // 地图初始化期间不处理详情打开，避免触发重新加载
+          if (!mapReady || !geoSettled) return;
           setDetailPoi(poi);
           if (poi.location) flyToLocation(mapInstance.current, poi.location.lng, poi.location.lat);
         }}

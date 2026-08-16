@@ -154,37 +154,49 @@
 **根本原因**：
 - POI加载effect（`map-shell.tsx` 565-661行）依赖 `mapReady` 和 `geoSettled` 状态
 - 这两个状态在地图初始化过程中从 `false` 过渡到 `true`
-- 当用户点击卡片时，`handleSelect` 调用 `setSelectedId(poi.id)` 触发组件重新渲染
+- 当用户点击卡片时，会触发多个状态更新导致组件重新渲染
 - 重新渲染时，如果 `mapReady` 或 `geoSettled` 刚好完成过渡，React检测到依赖变化
 - 这导致POI加载effect重新执行，`load()` 函数重新运行，造成加载重启
 - 这是一个经典的React effect竞态条件（race condition）
 
 **问题核心**：
-- 卡片点击事件没有检查地图初始化状态
-- 在初始化未完成时更新 `selectedId` 会在关键时刻触发不必要的重新渲染
-- 虽然 `selectedId` 不在effect依赖数组中，但重新渲染本身会让effect重新评估依赖
+- 点击卡片会触发两个状态更新路径：
+  1. `POIList` → `onSelect` → `handleSelect` → `setSelectedId(poi.id)`
+  2. `POIList` → `onSelect` → `openDetail` → `onOpenDetail` → `setDetailPoi(poi)`
+- 即使 `handleSelect` 有守卫，`onOpenDetail` 中的 `setDetailPoi` 仍然会执行
+- 在初始化未完成时更新任何状态都会在关键时刻触发不必要的重新渲染
+- 虽然 `selectedId` 和 `detailPoi` 不在effect依赖数组中，但重新渲染本身会让effect重新评估依赖
 
 **解决方案**：
 
-在 `handleSelect` 回调中添加初始化状态守卫：
+在所有会触发状态更新的卡片点击回调中添加初始化状态守卫：
 
 ```typescript
-// map-shell.tsx 967-971行
+// map-shell.tsx 967-971行 - handleSelect
 const handleSelect = useCallback((poi: POI) => {
   // 地图初始化期间不处理选中，避免触发重新加载
   if (!mapReady || !geoSettled) return;
   setSelectedId(poi.id);
 }, [mapReady, geoSettled]);
+
+// map-shell.tsx 1583-1588行 - onOpenDetail
+onOpenDetail={(poi) => {
+  // 地图初始化期间不处理详情打开，避免触发重新加载
+  if (!mapReady || !geoSettled) return;
+  setDetailPoi(poi);
+  if (poi.location) flyToLocation(mapInstance.current, poi.location.lng, poi.location.lat);
+}}
 ```
 
 **关键点**：
-1. 在地图完全就绪之前（`mapReady && geoSettled`），忽略卡片点击
-2. 将 `mapReady` 和 `geoSettled` 加入 `useCallback` 依赖数组
-3. 这确保回调始终检查最新的初始化状态
-4. 用户在初始化期间点击卡片不会有任何副作用
+1. 在地图完全就绪之前（`mapReady && geoSettled`），忽略所有卡片交互
+2. 两个状态更新路径都需要守卫，缺一不可
+3. 将 `mapReady` 和 `geoSettled` 加入 `useCallback` 依赖数组
+4. 这确保回调始终检查最新的初始化状态
+5. 用户在初始化期间点击卡片不会有任何副作用
 
 **修改文件**：
-- `server/src/components/map-shell.tsx` (第967-971行)
+- `server/src/components/map-shell.tsx` (第967-971行，第1583-1588行)
 
 **技术细节**：
 
@@ -193,17 +205,27 @@ React effect依赖的竞态条件：
 - 当依赖变化时，effect会重新运行
 - 组件重新渲染时，React会重新评估所有effect的依赖
 - 如果在渲染的**同一时刻**依赖刚好变化（如 `mapReady` 从 `false` → `true`），effect会重新执行
-- 这就是为什么即使 `selectedId` 不在依赖数组中，点击卡片仍会触发重新加载
+- 这就是为什么即使 `selectedId` 和 `detailPoi` 不在依赖数组中，点击卡片仍会触发重新加载
+
+多路径状态更新：
+- `SecondarySidebar` 的 `openDetail` 函数内部调用了两个回调：
+  - `onSelect?.(poi)` → `handleSelect` → `setSelectedId`
+  - `onOpenDetail?.(poi)` → 内联箭头函数 → `setDetailPoi`
+- 第一次修复只在 `handleSelect` 中添加了守卫，但遗漏了 `onOpenDetail`
+- `onOpenDetail` 直接更新 `setDetailPoi`，仍然会在初始化期间触发重新渲染
+- 必须在两个路径都添加守卫才能完全阻止竞态条件
 
 防御性编程原则：
-- 异步状态转换期间，阻止可能触发重新渲染的用户交互
-- 在回调中添加状态守卫，而不是依赖React的渲染时机
+- 异步状态转换期间，阻止所有可能触发重新渲染的用户交互
+- 在所有回调中添加状态守卫，而不是依赖React的渲染时机
 - 对于涉及异步初始化的组件，始终在交互处理器中检查就绪状态
+- 跟踪所有状态更新路径，确保没有遗漏的入口
 
 **测试验证**：
 - ✅ 158个测试通过
 - ✅ TypeScript编译无错误
 - ✅ 生产构建成功
+- ⏳ 需要在浏览器中验证实际交互
 
 **用户体验改进**：
 - 地图初始化期间点击卡片不会中断加载
