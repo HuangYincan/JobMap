@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  applyRecruitmentImport,
   dedupeSourceCompanies,
   planRecruitmentImport,
   planSeedImport,
@@ -57,4 +58,13 @@ test('planSeedImport accepts every current WORK_SEED company', async () => {
   assert.ok(plan.companies.length >= 50);
   assert.ok(plan.companies.every((c) => c.sites.length >= 1));
   assert.ok(plan.companies.every((c) => c.positions.every((p) => c.sites.some((s) => s.id === p.siteId))));
+});
+
+test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {
+  delete process.env.DATABASE_URL;
+  const plan = await planSeedImport();
+  const result = await applyRecruitmentImport(plan);
+  assert.equal(result.wrote, false);
+  assert.equal(result.reason, 'no-database');
+  assert.equal(result.companies, plan.companies.length);
 });

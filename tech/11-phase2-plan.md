@@ -125,7 +125,7 @@
 - [x] 数据源选择（先 `seed` adapter；官方/Boss 后接）
 - [x] 数据清洗 / 验证（`lib/recruitment-import.ts`；坏行进 `issues` 不入库）
 - [ ] 公司地理位置匹配（高德 POI；seed 已带坐标）
-- [x] 导入计划脚本（`npm run import:seed` dry-run；live upsert 等 `DATABASE_URL`）
+- [x] 导入计划脚本（`npm run import:seed` dry-run；`import:seed:apply` 有库才写入 `006` 表）
 - [x] 数据验证和去重（同 slug 合并职场/岗位）
 
 **3.3 实习模式 UI**

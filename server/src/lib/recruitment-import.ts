@@ -2,6 +2,7 @@
 // Live insert waits on DATABASE_URL + migrations 002/006. Tests cover
 // the dry-run path only.
 
+import { getPool } from './db.ts';
 import type { SourceCompany, SourcePosition } from './recruitment-source.ts';
 import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
 
@@ -135,4 +136,188 @@ export function planRecruitmentImport(input: SourceCompany[]): ImportPlan {
 
 export async function planSeedImport(): Promise<ImportPlan> {
   return planRecruitmentImport(await seedRecruitmentAdapter.list());
+}
+
+export interface ImportApplyResult {
+  wrote: boolean;
+  reason?: 'no-database' | 'empty-plan';
+  companies: number;
+  sites: number;
+  positions: number;
+}
+
+/** Upsert a validated plan. No DATABASE_URL → no-op (tests / laptop without Docker). */
+export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportApplyResult> {
+  if (plan.companies.length === 0) {
+    return { wrote: false, reason: 'empty-plan', companies: 0, sites: 0, positions: 0 };
+  }
+  const pool = getPool();
+  if (!pool) {
+    return {
+      wrote: false,
+      reason: 'no-database',
+      companies: plan.companies.length,
+      sites: plan.companies.reduce((n, c) => n + c.sites.length, 0),
+      positions: plan.companies.reduce((n, c) => n + c.positions.length, 0),
+    };
+  }
+
+  const client = await pool.connect();
+  let companies = 0;
+  let sites = 0;
+  let positions = 0;
+  try {
+    await client.query('BEGIN');
+    const source = await client.query<{ id: string }>(
+      `INSERT INTO sources (
+         code, origin_uri, authorization_basis, allowed_access_method,
+         attribution_text, retention_policy, deletion_policy
+       ) VALUES (
+         'seed', 'local:WORK_SEED', 'curated-public', 'manual',
+         'Domain Map curated seed', 'until-replaced', 'delete-with-source'
+       )
+       ON CONFLICT (code) DO UPDATE SET origin_uri = EXCLUDED.origin_uri
+       RETURNING id::text`,
+    );
+    const sourceId = source.rows[0].id;
+
+    for (const company of plan.companies) {
+      const upserted = await client.query<{ id: string }>(
+        `INSERT INTO companies (slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (slug) DO UPDATE SET
+           name = EXCLUDED.name,
+           industries = EXCLUDED.industries,
+           scale = EXCLUDED.scale,
+           rating = EXCLUDED.rating,
+           summary = EXCLUDED.summary,
+           career_url = EXCLUDED.career_url,
+           logo_url = EXCLUDED.logo_url,
+           logo_emoji = EXCLUDED.logo_emoji,
+           updated_at = now()
+         RETURNING id::text`,
+        [
+          company.slug,
+          company.name,
+          company.industries,
+          company.scale ?? null,
+          company.rating ?? null,
+          company.summary ?? null,
+          company.careerUrl ?? null,
+          company.logoUrl ?? null,
+          company.logoEmoji ?? null,
+        ],
+      );
+      const companyId = upserted.rows[0].id;
+      companies += 1;
+
+      const siteIds = new Map<string, string>();
+      for (const site of company.sites) {
+        const existing = await client.query<{ id: string }>(
+          `SELECT id::text FROM company_sites WHERE company_id = $1 AND name = $2 LIMIT 1`,
+          [companyId, site.name],
+        );
+        let siteRowId = existing.rows[0]?.id;
+        if (!siteRowId) {
+          const inserted = await client.query<{ id: string }>(
+            `INSERT INTO company_sites (company_id, name, address, city, lng, lat, career_url, logo_url, source_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             RETURNING id::text`,
+            [
+              companyId,
+              site.name,
+              site.location?.address ?? null,
+              null,
+              site.location?.lng ?? null,
+              site.location?.lat ?? null,
+              site.careerUrl ?? null,
+              site.logoUrl ?? null,
+              sourceId,
+            ],
+          );
+          siteRowId = inserted.rows[0].id;
+        } else {
+          await client.query(
+            `UPDATE company_sites SET
+               address = $3, lng = $4, lat = $5, career_url = $6, logo_url = $7,
+               source_id = $8, updated_at = now()
+             WHERE id = $1 AND company_id = $2`,
+            [
+              siteRowId,
+              companyId,
+              site.location?.address ?? null,
+              site.location?.lng ?? null,
+              site.location?.lat ?? null,
+              site.careerUrl ?? null,
+              site.logoUrl ?? null,
+              sourceId,
+            ],
+          );
+        }
+        siteIds.set(site.id, siteRowId);
+        sites += 1;
+      }
+
+      for (const pos of company.positions) {
+        const siteRowId = siteIds.get(pos.siteId);
+        if (!siteRowId) continue;
+        await client.query(
+          `INSERT INTO positions (
+             company_id, site_id, external_id, title, department, family, taxonomy,
+             salary_min, salary_max, education, majors, skills, description, deadline,
+             apply_source, apply_url, status, source_id
+           ) VALUES (
+             $1, $2, $3, $4, $5, $6, $7::jsonb,
+             $8, $9, $10, $11, $12, $13, $14,
+             $15, $16, $17, $18
+           )
+           ON CONFLICT (source_id, external_id) DO UPDATE SET
+             title = EXCLUDED.title,
+             department = EXCLUDED.department,
+             family = EXCLUDED.family,
+             taxonomy = EXCLUDED.taxonomy,
+             salary_min = EXCLUDED.salary_min,
+             salary_max = EXCLUDED.salary_max,
+             education = EXCLUDED.education,
+             majors = EXCLUDED.majors,
+             skills = EXCLUDED.skills,
+             description = EXCLUDED.description,
+             deadline = EXCLUDED.deadline,
+             apply_source = EXCLUDED.apply_source,
+             apply_url = EXCLUDED.apply_url,
+             status = EXCLUDED.status,
+             site_id = EXCLUDED.site_id,
+             updated_at = now()`,
+          [
+            companyId,
+            siteRowId,
+            pos.externalId,
+            pos.title,
+            pos.department ?? null,
+            pos.family,
+            JSON.stringify(pos.taxonomy ?? { family: pos.family }),
+            pos.salary?.min ?? null,
+            pos.salary?.max ?? null,
+            pos.education ?? null,
+            pos.majors ?? [],
+            pos.skills ?? [],
+            pos.description ?? null,
+            pos.deadline ?? null,
+            pos.applySource ?? null,
+            pos.applyUrl ?? null,
+            pos.status,
+            sourceId,
+          ],
+        );
+        positions += 1;
+      }
+    }
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+  return { wrote: true, companies, sites, positions };
 }
