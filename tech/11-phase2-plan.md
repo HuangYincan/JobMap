@@ -141,7 +141,7 @@
   - [x] `<FilterSelect />` - 单选下拉（FilterPanel 内）
   - [x] `<FilterMultiSelect />` - 多选
   - [x] `<FilterRange />` - 范围滑块
-  - [x] `<FilterToggle />` - 开关
+  - [x] `<FilterToggle />` - 开关（在招 / 住宿 / 班车）
 - [x] 筛选器容器 `<FilterPanel />`
 - [x] 筛选逻辑实现（`applyFilters` / `runPOIPipeline`）
 - [x] 筛选 API 后端支持（`/api/search` + `/api/filter-options`）

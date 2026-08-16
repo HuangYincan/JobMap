@@ -77,6 +77,8 @@
 - 搜索岗位名："后端开发"、"算法工程师"
 - 支持职位别名（`lib/search.ts` `JOB_ALIAS_GROUPS`：`前端` = `FE` = `frontend`；`后端` = `backend`；`算法` = `ML`；`产品` = `PM`）
 - 支持公司别名（`COMPANY_ALIAS_GROUPS`：`alibaba` = 阿里巴巴；`bytedance` = 字节跳动；`tencent` / `netease` / `huawei` 同理）
+- `#在招` / 筛选开关 `onlyOpen` 只保留至少有一个 `status=open` 岗位的公司
+- `#住宿` / `#班车` 对应 `providesHousing` / `providesShuttle` 开关
 
 **高考模式:**
 - 搜索院校名："浙江大学"、"清华"

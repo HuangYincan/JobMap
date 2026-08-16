@@ -64,6 +64,7 @@ test('GET /api/filter-options contract: unknown mode 400, work has taxonomy + di
   assert.ok(keys.includes('district'));
   assert.ok(keys.includes('industry'));
   assert.ok(keys.includes('distance'));
+  assert.ok(keys.includes('onlyOpen'));
   assert.ok(MODES.work.sortOptions.length >= 3);
 });
 

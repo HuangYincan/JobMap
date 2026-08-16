@@ -54,6 +54,10 @@ export const TAG_FILTERS: Record<string, { key: string; value: string }> = {
   日常实习: { key: 'jobTaxonomy', value: 'intern/daily' },
   秋招: { key: 'jobTaxonomy', value: 'campus/autumn' },
   春招: { key: 'jobTaxonomy', value: 'campus/spring' },
+  在招: { key: 'onlyOpen', value: 'true' },
+  在招岗位: { key: 'onlyOpen', value: 'true' },
+  住宿: { key: 'providesHousing', value: 'true' },
+  班车: { key: 'providesShuttle', value: 'true' },
   ...districtTagFilters(),
 };
 
@@ -170,6 +174,18 @@ export function activeFilterChips(filters: FilterState, configs?: FilterConfig[]
         title: `${config.label} ${value}${config.unit ?? ''}`,
         key: config.key,
         value,
+      });
+      continue;
+    }
+    if (typeof raw === 'boolean') {
+      if (!raw) continue;
+      const hashed = listSearchTags().find((tag) => tag.key === config.key);
+      chips.push({
+        id: `chip-${config.key}-true`,
+        label: config.label,
+        title: hashed?.title ?? config.label,
+        key: config.key,
+        value: 'true',
       });
       continue;
     }
@@ -321,6 +337,8 @@ export function parseSearchQuery(raw?: string): ParsedSearchQuery {
       const next = Array.isArray(prev) ? prev.filter((item): item is string => typeof item === 'string') : [];
       if (!next.includes(mapped.value)) next.push(mapped.value);
       filters[mapped.key] = next;
+    } else if (mapped.key === 'onlyOpen' || mapped.key === 'providesHousing' || mapped.key === 'providesShuttle') {
+      filters[mapped.key] = true;
     } else {
       filters[mapped.key] = mapped.value;
     }
@@ -530,6 +548,11 @@ export function matchFilter(poi: POI, key: string, value: any): boolean {
       if (!value) return true;
       const keyword = key === 'providesHousing' ? '住宿' : '班车';
       return (poi.benefits || []).some((b) => b.includes(keyword));
+    }
+    case 'onlyOpen': {
+      if (!value || value === 'false') return true;
+      if (!isRecruitmentPOI(poi)) return true;
+      return poi.positions.some((pos) => pos.status === 'open');
     }
     case 'district': {
       const sel = Array.isArray(value)

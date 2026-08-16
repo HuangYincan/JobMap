@@ -152,6 +152,21 @@ export const MODES: Record<MapMode, ModeConfig> = {
       },
       DISTANCE_FILTER,
       districtFilterConfig(),
+      {
+        key: 'onlyOpen',
+        label: '仅看在招岗位',
+        type: 'toggle',
+      },
+      {
+        key: 'providesHousing',
+        label: '提供住宿',
+        type: 'toggle',
+      },
+      {
+        key: 'providesShuttle',
+        label: '提供班车',
+        type: 'toggle',
+      },
     ],
     sortOptions: [
       { key: 'distance', label: '距离最近' },
@@ -197,6 +212,21 @@ export const MODES: Record<MapMode, ModeConfig> = {
       },
       DISTANCE_FILTER,
       districtFilterConfig(),
+      {
+        key: 'onlyOpen',
+        label: '仅看在招岗位',
+        type: 'toggle',
+      },
+      {
+        key: 'providesHousing',
+        label: '提供住宿',
+        type: 'toggle',
+      },
+      {
+        key: 'providesShuttle',
+        label: '提供班车',
+        type: 'toggle',
+      },
     ],
     sortOptions: [
       { key: 'distance', label: '距离最近' },

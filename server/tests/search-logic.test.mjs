@@ -123,6 +123,9 @@ test('applyFilters: benefits toggle for shuttle', () => {
   assert.ok(withShuttle.every((p) =>
     p.kind === 'recruitment' && (p.benefits || []).some((b) => b.includes('班车'))
   ));
+  const housed = { ...INTERNSHIP_SEED[0], id: 'housed-office', benefits: ['提供住宿'] };
+  const withHousing = applyFilters([INTERNSHIP_SEED[0], housed], { providesHousing: true });
+  assert.deepEqual(withHousing.map((p) => p.id), ['housed-office']);
 });
 
 test('sortPOIs: salaryDesc ranks highest salary first', () => {
@@ -261,6 +264,14 @@ test('parseSearchQuery turns #tags into filter plugins', () => {
   const yuhang = parseSearchQuery('#余杭');
   assert.equal(yuhang.text, '');
   assert.deepEqual(yuhang.filters.district, ['余杭区']);
+
+  const hiring = parseSearchQuery('#在招');
+  assert.equal(hiring.text, '');
+  assert.equal(hiring.filters.onlyOpen, true);
+
+  const shuttle = parseSearchQuery('#班车');
+  assert.equal(shuttle.text, '');
+  assert.equal(shuttle.filters.providesShuttle, true);
 });
 
 test('applyTagSuggestion merges a known hash into filters and clears the query', () => {
@@ -375,6 +386,29 @@ test('applyFilters: district plugin matches Hangzhou office addresses', () => {
   const xihu = applyFilters(INTERNSHIP_SEED, { district: ['西湖区'] });
   assert.ok(xihu.length > 0);
   assert.ok(!xihu.some((p) => p.id === 'alibaba-xixi'));
+});
+
+test('applyFilters: onlyOpen drops companies with no open jobs', () => {
+  const closed = {
+    ...INTERNSHIP_SEED[0],
+    id: 'closed-office',
+    positions: INTERNSHIP_SEED[0].positions.map((pos) => ({ ...pos, status: 'closed' })),
+  };
+  const kept = applyFilters([INTERNSHIP_SEED[0], closed], { onlyOpen: true });
+  assert.deepEqual(kept.map((p) => p.id), [INTERNSHIP_SEED[0].id]);
+  assert.equal(applyFilters([closed], {}).length, 1);
+});
+
+test('activeFilterChips lists #在招 when onlyOpen is on', () => {
+  const chips = activeFilterChips(
+    { onlyOpen: true, providesShuttle: true },
+    getMode('work').filters,
+  );
+  assert.ok(chips.some((chip) => chip.key === 'onlyOpen' && chip.title === '#在招'));
+  assert.ok(chips.some((chip) => chip.key === 'providesShuttle' && chip.title === '#班车'));
+  const cleared = removeFilterChip({ onlyOpen: true, scale: ['bigtech'] }, { key: 'onlyOpen', value: 'true' });
+  assert.equal(cleared.onlyOpen, undefined);
+  assert.deepEqual(cleared.scale, ['bigtech']);
 });
 
 test('applyFilters: minRating keeps only highly rated domain POIs', () => {
