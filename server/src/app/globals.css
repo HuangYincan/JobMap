@@ -1,12 +1,14 @@
 :root {
   color-scheme: light dark;
   --ink: #18212c;
-  --muted: #6c7882;
+  --muted: #4f5b65;
   --soft: rgba(255, 255, 255, 0.68);
   --soft-strong: rgba(255, 255, 255, 0.84);
   --line: rgba(26, 45, 62, 0.12);
   --shadow: 0 18px 50px rgba(24, 45, 57, 0.15);
-  --blue: #2377f3;
+  --blue: #007AFF;
+  --blue-ink: #0062CC;
+  --green: #1B7F3A;
   --map: #dcebd8;
   --map-dark: #203b3a;
 }
@@ -61,6 +63,9 @@ input:focus-visible {
     --soft-strong: rgba(26, 34, 39, 0.9);
     --line: rgba(255, 255, 255, 0.13);
     --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    --blue: #007AFF;
+    --blue-ink: #7ab8ff;
+    --green: #3dce6a;
     --map: #1d3835;
   }
   body {

@@ -57,7 +57,7 @@
 .textBtn {
   border: 0;
   background: transparent;
-  color: var(--blue, #007AFF);
+  color: var(--blue-ink, #0062CC);
   font-size: 12px;
   font-weight: 600;
   padding: 6px 8px;
@@ -201,7 +201,7 @@
 }
 
 .salaryCell {
-  color: rgb(52, 199, 89);
+  color: var(--green, #1B7F3A);
   font-weight: 600;
 }
 
@@ -302,7 +302,7 @@
 
 .layerStyleOn {
   border-color: var(--blue, #007aff);
-  color: var(--blue, #007aff);
+  color: var(--blue-ink, #0062CC);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--blue, #007aff) 22%, transparent);
 }
 
