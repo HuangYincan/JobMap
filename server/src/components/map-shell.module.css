@@ -947,6 +947,7 @@
     display: flex;
     flex-direction: column;
     left: 0;
+    z-index: 5;
     max-height: 86svh;
     min-height: 90px;
     padding: 0 16px max(12px, env(safe-area-inset-bottom));
@@ -975,6 +976,7 @@
     height: 30px;
     justify-content: center;
     margin: 0 auto;
+    touch-action: none;
     width: 100%;
   }
 
@@ -1002,8 +1004,144 @@
     padding: 25px 1px 12px;
   }
 
-  .drawerMini .drawerContent {
+  .drawerMini .drawerContent,
+  .drawerMini .mobileToolbar,
+  .drawerMini .mobileActions,
+  .drawerMini .mobileFilters {
     display: none;
+  }
+
+  .mobileToolbar {
+    display: flex;
+    justify-content: center;
+    padding: 0 0 8px;
+  }
+
+  .mobileActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .mobileFilterBtn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    background: rgba(126, 150, 149, 0.1);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .mobileFilterBtnActive {
+    background: color-mix(in srgb, var(--blue, #007aff) 12%, transparent);
+    border-color: color-mix(in srgb, var(--blue, #007aff) 28%, var(--line));
+    color: var(--blue, #007aff);
+  }
+
+  .mobileFilterDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--blue, #007aff);
+  }
+
+  .mobileFilters {
+    margin-bottom: 10px;
+    max-height: 36svh;
+    overflow: auto;
+  }
+
+  .mobileMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .mobileMetaActions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .mobileIconBtn {
+    border: 0;
+    background: transparent;
+    color: var(--blue, #007aff);
+    font-size: 12px;
+    font-weight: 650;
+    padding: 4px 2px;
+  }
+
+  .mobileIconBtn:disabled {
+    opacity: 0.45;
+  }
+
+  .mobileSuggestions {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mobileSuggestions button {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.34);
+    color: inherit;
+    text-align: left;
+  }
+
+  .mobileSuggestions strong {
+    font-size: 13px;
+  }
+
+  .mobileSuggestions small {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .mobileDetail {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: auto;
+    padding-bottom: 8px;
+  }
+
+  .mobileSearch input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    outline: none;
+  }
+
+  .mobileSearch svg {
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    flex: 0 0 auto;
   }
 
   .drawerContent h1 {

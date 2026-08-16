@@ -31,6 +31,17 @@
   }
 }
 
+@media (max-width: 767px) {
+  .panel {
+    width: 100%;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 42svh;
+    margin-top: 8px;
+    border-radius: 16px;
+  }
+}
+
 .topBar {
   display: flex;
   align-items: center;

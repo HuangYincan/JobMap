@@ -10,12 +10,18 @@ import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment } from "@/lib/search";
 import { trendingForMode } from "@/lib/trending-search";
-import { haversineDistance, isRecruitmentMode } from "@/lib/types";
+import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
 import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, SearchHistoryEntry, UserPreferences } from "@/lib/account";
 import { initialsFromName } from "@/lib/account";
 import { SecondarySidebar, type SearchSuggestion } from "./secondary-sidebar";
+import { POIList } from "./poi-list";
+import { POIDetailView } from "./poi-detail";
+import { JdPanel } from "./jd-panel";
+import { ModeSwitcher } from "./mode-switcher";
+import { FilterPanel } from "./filter-panel";
+import { SortSelector } from "./sort-selector";
 import { AuthModal } from "./auth-modal";
 import { ProfilePanel } from "./account-panel";
 import { RecentPanel } from "./recent-panel";
@@ -109,6 +115,9 @@ export function MapShell() {
   const [user, setUser] = useState<AccountUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [mobileJd, setMobileJd] = useState<Position | null>(null);
+  const drawerSwipeRef = useRef<{ y: number } | null>(null);
 
   const modeConfig = getMode(mode);
 
@@ -690,6 +699,10 @@ export function MapShell() {
       if (poi) {
         setRailPanel("explore");
         setDetailPoi(poi);
+        setMobileJd(null);
+        if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+          setDrawer("full");
+        }
       }
     },
   });
@@ -722,6 +735,8 @@ export function MapShell() {
     setHighlightedId(null);
     setSuggestions([]);
     setDetailPoi(null);
+    setMobileJd(null);
+    setMobileFiltersOpen(false);
 
     const cached = readModeCache(nextMode);
     if (cached) {
@@ -980,6 +995,30 @@ export function MapShell() {
   };
 
   const cycleDrawer = () => setDrawer((current) => current === "mini" ? "half" : current === "half" ? "full" : "mini");
+
+  const handleDrawerSwipeStart = (event: { clientY: number }) => {
+    drawerSwipeRef.current = { y: event.clientY };
+  };
+
+  const handleDrawerSwipeEnd = (event: { clientY: number }) => {
+    const start = drawerSwipeRef.current;
+    drawerSwipeRef.current = null;
+    if (!start) return;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dy) < 36) return;
+    if (dy < 0) {
+      if (detailPoi) return;
+      setDrawer((current) => (current === "mini" ? "half" : "full"));
+      return;
+    }
+    if (detailPoi) {
+      setDetailPoi(null);
+      setMobileJd(null);
+      setDrawer("half");
+      return;
+    }
+    setDrawer((current) => (current === "full" ? "half" : "mini"));
+  };
 
   return (
     <main className={styles.shell}>
@@ -1249,15 +1288,172 @@ export function MapShell() {
         </button>
       </div>
 
-      <section className={`${styles.mobileDrawer} ${drawer === "mini" ? styles.drawerMini : drawer === "half" ? styles.drawerHalf : styles.drawerFull}`} aria-label="Places drawer">
-        <button className={styles.drawerHandle} onClick={cycleDrawer} aria-label={`Expand drawer from ${drawer} state`}><span /></button>
-        <div className={styles.mobileSearch}><Icon name="search" /><input type="search" placeholder={t('searchPlaceholder', lang)} /></div>
-        <div className={styles.drawerContent}>
-          <span className={styles.eyebrow}>Around you</span><h1>Make the map yours.</h1><p>Explore the people, places, and ideas shaping your city.</p>
-          <div className={styles.quickGrid}>{["People hiring", "Open studios", "Good coffee", "Quiet corners"].map((item) => <button key={item}>{item}<span>↗</span></button>)}</div>
-          <div className={styles.selectedPlace}><span className={styles.selectedIcon}>✦</span><div><small>Selected place</small><strong>{selectedId ? pois.find(p => p.id === selectedId)?.name ?? "" : "—"}</strong></div><button aria-label="Open selected place">→</button></div>
-        </div>
-        <div className={styles.snapControls} aria-label="Drawer states">{(["mini", "half", "full"] as DrawerState[]).map((state) => <button key={state} className={drawer === state ? styles.snapActive : ""} onClick={() => setDrawer(state)}>{state}</button>)}</div>
+      <section className={`${styles.mobileDrawer} ${detailPoi || drawer === "full" ? styles.drawerFull : drawer === "half" ? styles.drawerHalf : styles.drawerMini}`} aria-label={t("explore", lang)}>
+        <button
+          className={styles.drawerHandle}
+          onClick={() => {
+            if (detailPoi) {
+              setDetailPoi(null);
+              setMobileJd(null);
+              setDrawer("half");
+              return;
+            }
+            cycleDrawer();
+          }}
+          onPointerDown={(event) => handleDrawerSwipeStart(event)}
+          onPointerUp={(event) => handleDrawerSwipeEnd(event)}
+          onPointerCancel={() => {
+            drawerSwipeRef.current = null;
+          }}
+          aria-label={detailPoi ? t("backToList", lang) : `Expand drawer from ${drawer} state`}
+        >
+          <span />
+        </button>
+        {detailPoi ? (
+          <div className={styles.mobileDetail}>
+            <POIDetailView
+              poi={detailPoi}
+              lang={lang}
+              accentColor={modeConfig.color}
+              selectedPositionId={mobileJd?.id}
+              onSelectPosition={(position) => setMobileJd(position)}
+              onBack={() => {
+                setDetailPoi(null);
+                setMobileJd(null);
+                setDrawer("half");
+              }}
+            />
+            {mobileJd && isRecruitmentPOI(detailPoi) && (
+              <JdPanel
+                company={detailPoi}
+                position={mobileJd}
+                lang={lang}
+                accentColor={modeConfig.color}
+                onClose={() => setMobileJd(null)}
+              />
+            )}
+          </div>
+        ) : (
+          <>
+            <div className={styles.mobileToolbar}>
+              <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} />
+            </div>
+            <div className={styles.mobileSearch}>
+              <Icon name="search" />
+              <input
+                type="search"
+                placeholder={modeConfig.searchPlaceholder}
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  if (drawer === "mini") setDrawer("half");
+                }}
+                onFocus={() => {
+                  if (drawer === "mini") setDrawer("half");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void recordSearch(query, mode);
+                }}
+                aria-label={t("search", lang)}
+              />
+            </div>
+            <div className={styles.drawerContent}>
+              <div className={styles.mobileActions}>
+                <button
+                  type="button"
+                  className={`${styles.mobileFilterBtn} ${mobileFiltersOpen ? styles.mobileFilterBtnActive : ""}`}
+                  onClick={() => {
+                    setMobileFiltersOpen((open) => !open);
+                    if (drawer === "mini") setDrawer("half");
+                  }}
+                  aria-expanded={mobileFiltersOpen}
+                  aria-pressed={mobileFiltersOpen}
+                >
+                  {t("filter", lang)}
+                  {Object.keys(filters).length > 0 && <span className={styles.mobileFilterDot} />}
+                </button>
+                <SortSelector
+                  options={modeConfig.sortOptions}
+                  value={sort}
+                  onChange={setSort}
+                  lang={lang}
+                />
+              </div>
+              {mobileFiltersOpen && (
+                <div className={styles.mobileFilters}>
+                  <FilterPanel
+                    filters={modeConfig.filters}
+                    values={filters}
+                    onChange={(key, value) => setFilters({ ...filters, [key]: value })}
+                    onReset={() => setFilters({})}
+                    resultCount={pois.length}
+                    lang={lang}
+                  />
+                </div>
+              )}
+              <div className={styles.mobileMeta}>
+                <span>{loading ? t("loading", lang) : `${pois.length} ${t("resultsCount", lang)}`}</span>
+                <div className={styles.mobileMetaActions}>
+                  <button
+                    type="button"
+                    className={styles.mobileIconBtn}
+                    onClick={handleRefreshHere}
+                    disabled={loading}
+                    aria-label={t("refreshHere", lang)}
+                  >
+                    {t("refreshHere", lang)}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.mobileIconBtn}
+                    onClick={handleNeedMore}
+                    disabled={loading}
+                    aria-label={t("needMore", lang)}
+                  >
+                    {t("needMore", lang)}
+                  </button>
+                </div>
+              </div>
+              {suggestions.length > 0 && (
+                <ul className={styles.mobileSuggestions}>
+                  {suggestions.slice(0, 5).map((item) => (
+                    <li key={item.id ?? item.name}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleSelectSuggestion(item);
+                          setDrawer(item.poiId ? "full" : "half");
+                        }}
+                      >
+                        <strong>{item.name}</strong>
+                        {item.subtitle && <small>{item.subtitle}</small>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <POIList
+                pois={pois}
+                selectedId={selectedId}
+                highlightedId={highlightedId}
+                onSelect={(poi) => {
+                  handleSelect(poi);
+                  setDetailPoi(poi);
+                  setMobileJd(null);
+                  setDrawer("full");
+                  if (poi.location && mapInstance.current) {
+                    mapInstance.current.setZoom(16);
+                    mapInstance.current.setCenter([poi.location.lng, poi.location.lat]);
+                  }
+                }}
+                onHover={handleHover}
+                loading={loading}
+                lang={lang}
+                accentColor={modeConfig.color}
+              />
+            </div>
+          </>
+        )}
       </section>
     </main>
   );

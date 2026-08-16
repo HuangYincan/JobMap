@@ -13,6 +13,12 @@
   left: 294px;
 }
 
+@media (max-width: 767px) {
+  .cluster {
+    display: none;
+  }
+}
+
 .sidebar {
   width: 380px;
   height: 100%;
