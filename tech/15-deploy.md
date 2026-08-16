@@ -24,10 +24,12 @@ Home lazy-loads `MapShell`. Without AMap keys, Work seed + chrome still load; Do
 ```bash
 ./node_modules/.bin/tsc --noEmit
 node --test tests/*.test.mjs
-npm run import:seed             # 50 companies / 0 dropped today
+npm run import:seed             # 137 companies / 240 positions / 0 dropped today
 npm run import:seed:apply       # no-op without DATABASE_URL; upserts 006 tables when Docker is up
-npm run geocode:sites           # lists seed / imported sites still at (0,0); does not call AMap
+npm run geocode:sites           # lists drop / imported sites still at (0,0); does not call AMap
 # Optional: drop official-career JSON in server/data/recruitment/official-career/
+# Optional: refresh the reviewed radar snapshot → make refresh-radar (self-validates)
+# Optional: polite GET of official career pages → make crawl-official (dry-run, no write)
 ```
 
 Do not run `npx tsc` from the repo root.
@@ -48,6 +50,8 @@ cd server && npm run import:seed:apply
 
 Verified 2026-08-16 against `postgis/postgis:16-3.4`: ledger `001`–`010`, `make test-integration` passed twice (rerun is a no-op), seed apply wrote 51 / 51 / 67. Keep `DATABASE_URL` in `server/.env.local` so Next reads imported rows; do not commit that file.
 
+**2026-08-17 re-import:** `npm run import:seed:apply` live-wrote **137 companies / 137 sites / 240 open positions** (official-career + radar + portals). The DB read path keeps ungeocoded radar sites off the map (86 sites pending `AMAP_WEB_KEY` geocoding; `npm run geocode:sites` lists them).
+
 Account routes then write sessions / Recent / Saved / applications / queued notifications. After `npm run import:seed:apply`, public list APIs and the Work map read imported rows via `loadServerCatalog`. Without a database they stay on the seed. Live `EXPLAIN` notes are in `tech/13-db-query-notes.md`.
 
 `make db-down` stops the container. Volume `postgres_data` keeps data until you `docker compose down -v`.
@@ -57,7 +61,7 @@ Account routes then write sessions / Recent / Saved / applications / queued noti
 - No Vercel / Railway / CI publish.
 - No Redis (public cache is in-process, 30s).
 - No real SMS / email. Inbox rows stay `queued`.
-- No AMap → Postgres importer. `npm run geocode:sites` only plans missing points.
+- No AMap → Postgres importer for Domain POIs. `npm run geocode:sites` only plans missing points (radar/portal recruitment data imports via `import:seed:apply`).
 - Backup / restore is “the Docker volume + git”. Record a real runbook when there is a host.
 
 ## Rollback
