@@ -353,6 +353,16 @@ test('suggestSearchTags covers scale and campus hashes, not only industries', ()
   assert.equal(suggestSearchTags('').length, 0);
 });
 
+test('countPoisMatchingTag uses applyFilters for district and campus tags', async () => {
+  const { countPoisMatchingTag } = await import('../src/lib/search.ts');
+  const yuhang = countPoisMatchingTag(INTERNSHIP_SEED, { key: 'district', value: '余杭区' });
+  const autumn = countPoisMatchingTag(INTERNSHIP_SEED, { key: 'jobTaxonomy', value: 'campus/autumn' });
+  const open = countPoisMatchingTag(INTERNSHIP_SEED, { key: 'onlyOpen', value: 'true' });
+  assert.ok(yuhang > 0);
+  assert.ok(autumn > 0);
+  assert.equal(open, INTERNSHIP_SEED.length);
+});
+
 test('activeFilterChips lists applied plugins and removeFilterChip drops one', () => {
   const filters = { scale: ['bigtech'], industry: ['internet', 'ai'] };
   const chips = activeFilterChips(filters);

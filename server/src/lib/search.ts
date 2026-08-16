@@ -111,6 +111,15 @@ export function suggestSearchTags(query: string, limit = 5): SearchTagSuggestion
     .slice(0, limit);
 }
 
+/** How many catalog POIs a `#` plugin would keep. Uses applyFilters. */
+export function countPoisMatchingTag(pois: POI[], tag: Pick<SearchTagSuggestion, 'key' | 'value'>): number {
+  const filters: FilterState =
+    tag.key === 'onlyOpen' || tag.key === 'providesHousing' || tag.key === 'providesShuttle'
+      ? { [tag.key]: true }
+      : { [tag.key]: [tag.value] };
+  return applyFilters(pois, filters).length;
+}
+
 function optionLabel(options: FilterOption[] | undefined, value: string): string | undefined {
   if (!options) return undefined;
   for (const option of options) {

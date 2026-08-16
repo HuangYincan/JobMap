@@ -6,8 +6,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { matchKeyword, suggestSearchTags } from '@/lib/search';
-import { positionMatchesTaxonomySelection } from '@/lib/job-taxonomy';
+import { countPoisMatchingTag, matchKeyword, suggestSearchTags } from '@/lib/search';
 import { loadServerCatalog } from '@/lib/server-catalog';
 import { isRecruitmentMode } from '@/lib/types';
 import type { MapMode, RecruitmentPOI } from '@/lib/types';
@@ -56,14 +55,7 @@ export async function GET(request: Request) {
       }
     }
     for (const tag of suggestSearchTags(q, 6)) {
-      const count = work.filter((poi) => {
-        if (tag.key === 'industry') return poi.company.industries.includes(tag.value);
-        if (tag.key === 'scale') return poi.company.scale === tag.value;
-        if (tag.key === 'jobTaxonomy') {
-          return poi.positions.some((pos) => positionMatchesTaxonomySelection(pos, [tag.value]));
-        }
-        return false;
-      }).length;
+      const count = countPoisMatchingTag(work, tag);
       suggestions.push({
         type: 'tag',
         id: tag.id,
