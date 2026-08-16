@@ -1425,6 +1425,9 @@ export function MapShell() {
             }}
           />
         </div>
+        <div className={styles.modeSwitcherWrapper}>
+          <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} />
+        </div>
         <nav className={styles.navList}>
           <button
             className={`${styles.navItem} ${railPanel === "layers" ? styles.navItemActive : ""}`}

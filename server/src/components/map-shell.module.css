@@ -423,6 +423,17 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
+.modeSwitcherWrapper {
+  padding: 0 12px;
+  margin-bottom: 12px;
+}
+
+.sidebar:not(.sidebarOpen) .modeSwitcherWrapper {
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
 .navList {
   display: flex;
   flex-direction: column;
@@ -1058,6 +1069,12 @@
     overflow: visible;
   }
 
+  .drawerHalf .mobileSearchStack {
+    max-height: calc(42svh - 100px);
+    overflow: auto;
+    overflow-x: hidden;
+  }
+
   .mobileSearchRow {
     display: flex;
     align-items: center;
@@ -1246,6 +1263,10 @@
     box-shadow:
       0 0 0 0.5px rgba(255, 255, 255, 0.38) inset,
       0 12px 32px rgba(0, 0, 0, 0.14);
+  }
+
+  .drawerHalf .mobileSuggestions {
+    max-height: min(18svh, 160px);
   }
 
   .drawerMini .mobileSuggestions {
