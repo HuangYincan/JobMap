@@ -22,6 +22,7 @@
 - 12 already-pinned slugs skipped (no duplicate markers). **21 stayed off the map**: 3 with no AMap office POI (MPS芯源系统 / 志存科技 / 麦米电气) and 18 explicitly excluded in `data/recruitment/geocode-overrides.json` because AMap has no verifiable Hangzhou office (奥比中光 / MPS / 星宸 / 多益 / 昆仑芯×2 / 拓竹 / 恒瑞 / 海天集团…); wrong-entity traps were caught by name-match gating (海天集团 vs 杭州海天管业; VAST hair salon; 游卡快递柜).
 - Hand-curated overrides fixed wrong-entity auto-hits: Babycare → 白贝壳 (上峰电商产业园), 游卡 → 游卡滨江基地, 淘天集团/淘宝闪购/阿里淘天 → 阿里巴巴西溪园区, 兴业银行 → 杭州分行, 台达 → 台达电子杭州设计中心, 华润置地 → 浙江公司, vivo → 西溪首座研发中心, 海信 → 海信星海科技, 舜宇 → 舜宇光学(浙江)研究院, 迈瑞 → 杭州分公司, 禾赛 → 赫兹智能制造中心, 吉利科技集团 → 吉利科技大厦.
 - **Result: offline map 14 → 79 pins** (all with street address, 0 (0,0)); import plan still 137 / 137 / 241 with 0 issues. `MODE_CACHE_VERSION` bumped 2→3. Re-run `import:seed:apply` when Postgres is up to sync DB coords; re-run `audit:pins` after that for a full DB-side audit.
+- **DB-side audit (2026-08-17, after `import:seed:apply` sync): 79 pins, all verified.** `npm run audit:pins` → **72/79 PASS**; the 7 flagged are address-geocode artifacts of compound addresses, each **confirmed correct by regeo** (Layer 2): 得物（黄龙国际中心B座）、理想汽车（萧山奥体印象城）、禾赛（钱湾生物港）、淘天集团×4（西溪园区 A 区 —— geocode 落园区中心，2.98km 是园区跨度，非坐标错误）。Audit script now strips parenthetical walking notes ("(地铁站C口步行270米)") before geocoding. Work-mode `/api/pois` reads **Postgres first** — data in the JSON drops only reaches the map after `import:seed:apply` re-syncs the DB.
 
 ## Official career page refresh (50 pages, polite GET, 2026-08-17)
 

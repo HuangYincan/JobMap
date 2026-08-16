@@ -50,7 +50,11 @@ let fails = 0;
 for (const row of rows) {
   const entry = { slug: row.slug, stored: [row.lng, row.lat], address: row.address };
   try {
-    const geo = await amap('geocode/geo', { address: `杭州市${row.address}`, city: '杭州' });
+    const geo = await amap('geocode/geo', {
+      // Strip parenthetical notes ("(地铁站C口步行270米)") — they pollute the geocode query.
+      address: `杭州市${row.address.replace(/[（(【\[「].*?[）)】\]」]/g, '').trim()}`,
+      city: '杭州',
+    });
     const g = (geo.geocodes || [])[0];
     if (g?.location) {
       const [glng, glat] = g.location.split(',').map(Number);
