@@ -22,6 +22,18 @@ Develop Next.js 15 + React 19 components following Domain Map's architecture pri
 
 3. **Read Existing Patterns**
    - Study `src/components/map-shell.tsx` for conventions
+   - Primary rail is collapsed-first: no brand wordmark. Collapsed search is a ghost nav icon (same 42px hit as Layers), not a filled chip. The menu control uses a sidebar glyph when collapsed and a chevron when open, and slides to the right of the rail as it expands. Typing in search sets `query` and opens Explore.
+   - POI detail lives in `poi-detail.tsx` and covers the list inside the secondary sidebar. Domain photos use a carousel (arrows + dots), not a raw strip.
+   - Job detail is a third panel (`jd-panel.tsx`) in the same flex cluster as Explore, 6px to the right. Do not nest JD inside the secondary sidebar, and do not absolutely position it at a fixed left (that clips on narrower windows).
+   - Liquid glass (pale fill, blur + saturate, inset highlight, hover more transparent) applies to **POI cards and job rows only**. L2 Explore / L3 JD **panel chrome** stays `--soft-strong` frost (~0.84–0.90 light, ~0.84–0.88 dark). Do not re-transparentize the shells.
+   - UI chrome is always brand blue `#007AFF` across modes (hover, back, Apply, selected job, recruitment markers, chips). Keep green only for semantic values such as salary and opening hours.
+   - Domain POIs accumulate in a catalog (soft cap 300). Panning the map does not refetch. Each mode’s catalog lives in browser `sessionStorage` (`lib/mode-cache.ts`) — switching Domain ↔ Work restores the pool and does not re-hit AMap. Only the blue refresh icon clears that mode’s cache and researches. Result header: blue refresh icon next to the count; blue plus icon on the right adds ~300 more points. Distances always use the user location, falling back to the map center only if geolocation is missing. Search is one `searchNearBy` from the user location by default; refresh pins the origin to the current view center. Radius is map-scale × 30 (over 50km falls back to AMap default 3000m). Serialize at 3 req/s. Do not fan out a 16-cell grid.
+   - Map modes are Map + Work only. Intern / campus / social (and their leaves) live in `job-taxonomy.ts` as FilterPlugins on work.filters. New industries add a plugin; do not add a new map mode. Mode switcher is icon-only: no label, no selected-state dot. Names stay in `title` / `aria-label`.
+   - Default map mode is **work** (logged-in preference or guest). Language: logged-in preference, else browser.
+   - Primary rail has no Settings item. Profile opens an L2 frost panel (`--soft-strong`, same cluster as Explore): identity + in-panel Preference cards (language, default mode). Do not open a third panel for prefs. Guest copy is 未登录 / Not signed in + a person icon; signed-in `<strong>` is display name, `<small>` is phone or email (OAuth uses email). Expanded rail shows a login/logout control on the Profile row.
+   - Login is a centered top-layer card (close X + click outside). Default phone + OTP; also email and GitHub. Demo OTP is stubbed; keep `POST /api/auth/otp/send` for Aliyun SMS later. Never print or commit `.env` secrets.
+   - Recent is **search history only** (committed queries / picked suggestions), persisted per account in the database. Guest recents stay empty or session-only — do not fake a cloud history.
+   - Recruitment logos: prefer the career-site / subsidiary icon for that office; fall back to a curated company icon; then emoji. One company has many sites; one position has exactly one site.
    - Check `src/lib/` for utilities (i18n, constants)
    - Review CSS approach (CSS Modules + custom properties)
 

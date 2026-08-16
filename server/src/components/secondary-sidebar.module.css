@@ -3,13 +3,29 @@
    从左侧主导航栏展开（非右侧独立面板），380px 液态玻璃面板
    ============================================================ */
 
-.sidebar {
-  /* 定位：紧贴左侧主导航栏（58px + 12px 边距 + 6px 间隙） */
+/* 二级 + 三级 JD 成组停靠：随主栏展开一起右移，JD 永远贴在公司详情右侧 */
+.cluster {
   position: absolute;
   top: 12px;
   bottom: 12px;
   left: 76px;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  z-index: 4;
+  pointer-events: none;
+  transition: left 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.cluster.shifted {
+  left: 294px; /* 276 + 12 + 6 */
+}
+
+.sidebar {
+  position: relative;
   width: 380px;
+  height: 100%;
+  pointer-events: auto;
 
   /* 液态玻璃 */
   background: var(--soft-strong, rgba(255, 255, 255, 0.84));
@@ -24,16 +40,13 @@
   flex-direction: column;
   overflow: hidden;
 
-  /* 滑入动画 + 主导航展开时右移 */
   animation: slide-in 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-  transition: left 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: width 0.32s cubic-bezier(0.32, 0.72, 0, 1);
   transform-origin: left center;
-
-  z-index: 4;
 }
 
-.sidebar.shifted {
-  left: 294px; /* 276 + 12 + 6 */
+.sidebar.detailMode {
+  width: 420px;
 }
 
 @keyframes slide-in {
@@ -62,8 +75,8 @@
 
 .closeButton {
   flex-shrink: 0;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 1px solid var(--line, rgba(255, 255, 255, 0.72));
   background: var(--soft, rgba(255, 255, 255, 0.68));
@@ -93,6 +106,7 @@
 /* 搜索框 + 建议下拉的定位容器 */
 .searchWrap {
   flex: 1;
+  min-width: 0;
   position: relative;
 }
 
@@ -102,11 +116,25 @@
   gap: 8px;
   padding: 9px 12px;
   border-radius: 12px;
-  background: var(--soft, rgba(255, 255, 255, 0.68));
-  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.38) inset,
+    0 1px 2px rgba(255, 255, 255, 0.16) inset;
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
   transition:
-    border-color 0.2s ease,
-    background 0.2s ease;
+    border-color 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    backdrop-filter 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.searchBox:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.36);
+  backdrop-filter: blur(18px) saturate(170%);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
 }
 
 /* 建议下拉 */
@@ -117,17 +145,28 @@
   right: 0;
   max-height: 260px;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   margin: 0;
   padding: 6px;
   list-style: none;
-  background: var(--soft-strong, rgba(255, 255, 255, 0.96));
-  backdrop-filter: blur(24px) saturate(165%);
-  -webkit-backdrop-filter: blur(24px) saturate(165%);
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.72));
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.38) inset,
+    0 12px 32px rgba(0, 0, 0, 0.14);
   z-index: 20;
   animation: panel-in 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.suggestionList::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .suggestionItem {
@@ -136,18 +175,23 @@
   gap: 10px;
   width: 100%;
   padding: 8px 10px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   border-radius: 8px;
   color: var(--ink, #18212c);
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .suggestionItem:hover {
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.28) inset;
 }
 
 .suggestionIcon {
@@ -178,8 +222,11 @@
 }
 
 .searchBox:focus-within {
-  border-color: var(--blue, #2377f3);
-  background: var(--soft-strong, rgba(255, 255, 255, 0.9));
+  border-color: color-mix(in srgb, var(--blue, #2377f3) 42%, rgba(255, 255, 255, 0.2));
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.45) inset,
+    0 0 0 3px color-mix(in srgb, var(--blue, #2377f3) 16%, transparent);
 }
 
 .searchIcon {
@@ -189,12 +236,28 @@
 
 .searchInput {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
   color: var(--ink, #18212c);
   font-size: 14px;
   font-family: inherit;
+}
+
+.searchInput::-webkit-search-decoration,
+.searchInput::-webkit-search-cancel-button,
+.searchInput::-webkit-search-results-button,
+.searchInput::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.searchInput:focus,
+.searchInput:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .searchInput::placeholder {
@@ -228,11 +291,14 @@
 .actionButton {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   padding: 8px 11px;
   border-radius: 10px;
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.72));
-  background: var(--soft, rgba(255, 255, 255, 0.68));
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
   color: var(--ink, #18212c);
   font-size: 13px;
   font-weight: 500;
@@ -242,7 +308,15 @@
 }
 
 .actionButton:hover {
-  background: var(--soft-strong, rgba(255, 255, 255, 0.9));
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+.filterButton {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex: 0 0 36px;
 }
 
 .actionActive {
@@ -264,10 +338,8 @@
 /* 筛选面板（折叠动画） */
 .filterPanel {
   padding: 0 14px 8px;
-  flex-shrink: 0;
+  flex: 0 0 auto;
   animation: panel-in 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-  max-height: 40%;
-  overflow-y: auto;
 }
 
 @keyframes panel-in {
@@ -297,35 +369,67 @@
   letter-spacing: 0.02em;
 }
 
-/* 底部模式说明 */
-.footer {
-  padding: 10px 16px;
-  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.12));
-  display: flex;
+.resultMeta {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  gap: 6px;
+  min-width: 0;
 }
 
-.modeDot {
-  width: 8px;
-  height: 8px;
+.refreshIcon {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
-  flex-shrink: 0;
+  background: transparent;
+  color: var(--blue, #007aff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.modeDesc {
-  font-size: 12px;
-  color: var(--muted, #6c7882);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.refreshIcon:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--blue, #007aff) 12%, transparent);
+}
+
+.refreshIcon:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.moreIcon {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--blue, #007aff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.moreIcon:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--blue, #007aff) 12%, transparent);
+}
+
+.moreIcon:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 /* ============================================================
    响应式：移动端（<768px）隐藏（保留现有 bottom drawer）
    ============================================================ */
 @media (max-width: 767px) {
+  .cluster,
   .sidebar {
     display: none;
   }
@@ -335,22 +439,50 @@
 @media (prefers-color-scheme: dark) {
   .sidebar {
     background: rgba(28, 28, 30, 0.84);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 
   .searchBox,
-  .actionButton,
+  .actionButton {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.12) inset;
+  }
+
+  .searchBox:hover,
+  .actionButton:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .searchBox:focus-within {
+    border-color: color-mix(in srgb, var(--blue, #2377f3) 46%, rgba(255, 255, 255, 0.12));
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .suggestionList {
+    background: rgba(28, 28, 30, 0.42);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 0 0 0.5px rgba(255, 255, 255, 0.06) inset,
+      0 16px 36px rgba(0, 0, 0, 0.36);
+  }
+
+  .suggestionItem {
+    color: var(--ink, #f4f7f5);
+  }
+
+  .suggestionItem:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+  }
+
   .closeButton {
     background: rgba(28, 28, 30, 0.6);
     border-color: rgba(255, 255, 255, 0.12);
   }
 
-  .searchBox:focus-within {
-    border-color: var(--blue, #2377f3);
-    background: rgba(28, 28, 30, 0.8);
-  }
-
-  .actionButton:hover,
   .closeButton:hover {
     background: rgba(28, 28, 30, 0.85);
   }
@@ -358,14 +490,11 @@
   .filterBadge {
     border-color: rgba(28, 28, 30, 0.84);
   }
-
-  .footer {
-    border-top-color: rgba(255, 255, 255, 0.12);
-  }
 }
 
 /* 减少动效 */
 @media (prefers-reduced-motion: reduce) {
+  .cluster,
   .sidebar,
   .actionButton,
   .filterPanel {

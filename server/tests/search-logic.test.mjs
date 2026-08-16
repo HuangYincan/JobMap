@@ -9,9 +9,12 @@ import {
   poiMatchesQuery,
   runPOIPipeline,
   sortPOIs,
+  suggestRecruitment,
 } from '../src/lib/search.ts';
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
-import { withDistance } from '../src/lib/types.ts';
+import { resolveApplyLink, withDistance } from '../src/lib/types.ts';
+import { ACTIVE_MODES, getMode } from '../src/lib/modes.ts';
+import { positionMatchesTaxonomy } from '../src/lib/job-taxonomy.ts';
 
 test('matchKeyword: case-insensitive multi-keyword AND', () => {
   assert.equal(matchKeyword('阿里巴巴 杭州', '阿里'), true);
@@ -30,6 +33,19 @@ test('poiMatchesQuery: recruitment matches company, industry, or position', () =
   assert.equal(poiMatchesQuery(alibaba, 'Java'), true); // position skill
   assert.equal(poiMatchesQuery(alibaba, '前端'), true); // position title
   assert.equal(poiMatchesQuery(alibaba, '腾讯'), false);
+});
+
+test('suggestRecruitment: companies and jobs, never domain places', () => {
+  const byCompany = suggestRecruitment(INTERNSHIP_SEED, '阿里');
+  assert.ok(byCompany.some((s) => s.kind === 'company' && s.name.includes('阿里')));
+  assert.ok(byCompany.every((s) => s.kind === 'company' || s.kind === 'job'));
+
+  const byJob = suggestRecruitment(INTERNSHIP_SEED, 'Java');
+  assert.ok(byJob.some((s) => s.kind === 'job' && /java/i.test(s.name + s.subtitle)));
+  assert.ok(byJob.every((s) => s.poiId));
+
+  const empty = suggestRecruitment(INTERNSHIP_SEED, '西湖风景名胜区');
+  assert.equal(empty.length, 0);
 });
 
 test('applyFilters: industry multi-select filters companies', () => {
@@ -113,4 +129,68 @@ test('runPOIPipeline: maxDistance spatial filter', () => {
 
 test('runPOIPipeline: robust on empty input', () => {
   assert.deepEqual(runPOIPipeline([], {}), []);
+});
+
+test('resolveApplyLink: position apply wins over company career portal', () => {
+  const xixi = INTERNSHIP_SEED.find((c) => c.id === 'xixi-ai');
+  assert.ok(xixi);
+  const job = xixi.positions.find((p) => p.id === 'xixi-llm');
+  assert.ok(job);
+  const link = resolveApplyLink(xixi, job);
+  assert.equal(link?.source, 'boss');
+  assert.ok(link?.url.startsWith('https://www.zhipin.com/'));
+});
+
+test('resolveApplyLink: falls back to company careerUrl', () => {
+  const huawei = INTERNSHIP_SEED.find((c) => c.id === 'huawei-hangzhou');
+  assert.ok(huawei);
+  const embedded = huawei.positions.find((p) => p.id === 'huawei-embedded');
+  assert.ok(embedded);
+  const link = resolveApplyLink(huawei, embedded);
+  assert.equal(link?.source, 'official');
+  assert.equal(link?.url, 'https://career.huawei.com/');
+});
+
+test('resolveApplyLink: rejects non-http urls', () => {
+  const huawei = INTERNSHIP_SEED.find((c) => c.id === 'huawei-hangzhou');
+  assert.ok(huawei);
+  const fake = { ...huawei.positions[0], apply: { source: 'other', url: 'javascript:alert(1)' } };
+  const company = { ...huawei, company: { ...huawei.company, careerUrl: 'not-a-url' } };
+  assert.equal(resolveApplyLink(company, fake), null);
+});
+
+test('active modes are map + work, internship aliases to work', () => {
+  assert.deepEqual(ACTIVE_MODES, ['domain', 'work']);
+  assert.equal(getMode('internship').id, 'work');
+  assert.equal(getMode('work').name, '工作');
+  assert.ok(getMode('work').filters.some((f) => f.type === 'taxonomy' && f.key === 'jobTaxonomy'));
+});
+
+test('applyFilters: jobTaxonomy plugin keeps companies with matching positions', () => {
+  const campus = applyFilters(INTERNSHIP_SEED, { jobTaxonomy: ['campus'] });
+  assert.ok(campus.length > 0);
+  assert.ok(campus.every((p) =>
+    p.kind === 'recruitment' && p.positions.some((pos) => positionMatchesTaxonomy(pos, 'campus'))
+  ));
+
+  const autumn = applyFilters(INTERNSHIP_SEED, { jobTaxonomy: ['campus', 'campus/autumn'] });
+  assert.ok(autumn.some((p) => p.id === 'tencent-hangzhou'));
+  assert.ok(!autumn.some((p) => p.id === 'netease-hangzhou'), 'spring campus should not match autumn leaf');
+  assert.ok(autumn.every((p) =>
+    p.kind === 'recruitment' && p.positions.some((pos) => positionMatchesTaxonomy(pos, 'campus/autumn'))
+  ));
+
+  const social = applyFilters(INTERNSHIP_SEED, { jobTaxonomy: ['social/1-3'] });
+  assert.ok(social.some((p) => p.id === 'huawei-hangzhou'));
+});
+
+test('applyFilters: minRating keeps only highly rated domain POIs', () => {
+  const pois = [
+    { id: 'a', kind: 'domain', name: 'A', mode: 'domain', source: 'amap', location: { lng: 120, lat: 30 }, category: '餐饮服务', rating: 4.6 },
+    { id: 'b', kind: 'domain', name: 'B', mode: 'domain', source: 'amap', location: { lng: 120, lat: 30 }, category: '餐饮服务', rating: 3.1 },
+    { id: 'c', kind: 'domain', name: 'C', mode: 'domain', source: 'amap', location: { lng: 120, lat: 30 }, category: '餐饮服务' },
+  ];
+  const kept = applyFilters(pois, { minRating: 4 });
+  assert.deepEqual(kept.map((p) => p.id), ['a']);
+  assert.equal(applyFilters(pois, { minRating: 0 }).length, 3);
 });

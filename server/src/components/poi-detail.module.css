@@ -1,0 +1,332 @@
+.detail {
+  --accent: #007aff;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  animation: fade-in 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  padding: 0 6px 8px;
+  flex-shrink: 0;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 4px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.backButton:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.body {
+  overflow-y: auto;
+  padding: 0 16px 20px;
+  min-height: 0;
+}
+
+.companyHead {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.logo,
+.logoFallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.72));
+  background: rgba(255, 255, 255, 0.7);
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.logoFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 730;
+  letter-spacing: -0.02em;
+  color: var(--ink, #18212c);
+  line-height: 1.2;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--muted, #6c7882);
+  font-size: 13px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 12px 0 8px;
+  color: var(--muted, #6c7882);
+  font-size: 13px;
+}
+
+.rating {
+  color: #c48a1a;
+  font-weight: 650;
+}
+
+.photos {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin: 8px 0 4px;
+  padding-bottom: 4px;
+}
+
+.photo {
+  width: 148px;
+  height: 108px;
+  object-fit: cover;
+  border-radius: 12px;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.carousel {
+  margin: 12px 0 4px;
+}
+
+.carouselStage {
+  position: relative;
+  width: 100%;
+  height: 168px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.carouselPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carouselNav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: rgba(20, 24, 28, 0.42);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.carouselNav:hover {
+  background: rgba(20, 24, 28, 0.62);
+}
+
+.carouselPrev {
+  left: 8px;
+}
+
+.carouselNext {
+  right: 8px;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(24, 33, 44, 0.22);
+  cursor: pointer;
+}
+
+.dotActive {
+  width: 16px;
+  border-radius: 99px;
+  background: var(--accent);
+}
+
+.section {
+  margin-top: 16px;
+}
+
+.sectionTitle {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted, #6c7882);
+}
+
+.prose {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink, #18212c);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 12px;
+  color: var(--ink, #18212c);
+}
+
+.jobs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.job {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.72) inset,
+    0 8px 18px rgba(24, 45, 57, 0.08);
+  transition:
+    border-color 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    backdrop-filter 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.job:hover {
+  background: color-mix(in srgb, var(--accent) 8%, rgba(255, 255, 255, 0.16));
+  border-color: color-mix(in srgb, var(--accent) 28%, rgba(255, 255, 255, 0.5));
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.88) inset,
+    0 12px 24px rgba(24, 45, 57, 0.12);
+  transform: translateY(-1px);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+}
+
+.jobSelected,
+.jobSelected:hover {
+  background: color-mix(in srgb, var(--accent) 12%, rgba(255, 255, 255, 0.2));
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.jobTitle {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink, #18212c);
+}
+
+.jobMeta {
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--muted, #6c7882);
+}
+
+@media (prefers-color-scheme: dark) {
+  .job {
+    background: rgba(28, 28, 30, 0.36);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .job:hover {
+    background: color-mix(in srgb, var(--accent) 14%, rgba(28, 28, 30, 0.28));
+    border-color: color-mix(in srgb, var(--accent) 28%, rgba(255, 255, 255, 0.05));
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+  }
+
+  .jobSelected,
+  .jobSelected:hover {
+    background: color-mix(in srgb, var(--accent) 18%, rgba(28, 28, 30, 0.4));
+    border-color: color-mix(in srgb, var(--accent) 48%, transparent);
+  }
+
+  .chip {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .dot {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .carouselNav {
+    background: rgba(8, 10, 12, 0.48);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail {
+    animation: none;
+  }
+}

@@ -56,7 +56,18 @@ export interface POIMarkerControllerOptions {
 // ---------------------------------------------------------------------------
 
 /** 标记视觉状态。 */
-type MarkerState = 'normal' | 'highlighted' | 'selected';
+export type MarkerState = 'normal' | 'highlighted' | 'selected';
+
+/** 选中优先于高亮；同一时刻最多一个 selected、一个 highlighted。 */
+export function resolveMarkerState(
+  id: string,
+  selectedId: string | null,
+  highlightedId: string | null
+): MarkerState {
+  if (id === selectedId) return 'selected';
+  if (id === highlightedId) return 'highlighted';
+  return 'normal';
+}
 
 /** 默认强调色。 */
 const DEFAULT_COLOR = '#3478F6';
@@ -64,7 +75,7 @@ const DEFAULT_COLOR = '#3478F6';
 /** 图钉基准尺寸（viewBox 坐标，像素）。 */
 const PIN_BASE = { w: 32, h: 40 } as const;
 /** 公司徽章基准尺寸（正方形，像素）。 */
-const BADGE_BASE = 28;
+const BADGE_BASE = 40;
 
 /**
  * 根据状态返回缩放系数：
@@ -122,13 +133,19 @@ export function domainPinSVG(color: string, state: MarkerState): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">${parts.join('')}</svg>`;
 }
 
+function escapeAttr(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 /**
- * 生成 Recruitment 公司徽章 SVG：白色圆角方块 + 公司 logo。
- * - 优先渲染真实 logo 图片（logoUrl，用 <image> 嵌入）
- * - 图片加载失败（或缺失）时自动露出下层 emoji
- * - 非 normal 状态带外圈强调环，作为放大/高亮的视觉提示
+ * 公司徽章 HTML（AMap Marker content）。
+ * data-URI SVG 无法加载远程 favicon，必须用真 <img>。
  */
-export function recruitmentBadgeSVG(
+export function recruitmentBadgeHTML(
   logo: string | undefined,
   logoUrl: string | undefined,
   color: string,
@@ -136,37 +153,65 @@ export function recruitmentBadgeSVG(
 ): string {
   const c = normalizeColor(color);
   const emoji = toEmojiLogo(logo);
+  const size = Math.round(BADGE_BASE * stateScale(state));
+  const img = logoUrl
+    ? `<img src="${escapeAttr(logoUrl)}" width="${size - 12}" height="${size - 12}" alt="" ` +
+      `referrerpolicy="no-referrer" decoding="async" ` +
+      `onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='block')"/>`
+    : '';
+  const emojiDisplay = logoUrl ? 'none' : 'block';
+  return (
+    `<div class="dm-badge dm-badge-${state}" style="` +
+    `width:${size}px;height:${size}px;border-color:${c};opacity:${state === 'highlighted' ? 0.92 : 1}` +
+    `">${img}<span class="dm-badge-emoji" style="display:${emojiDisplay}">${emoji}</span></div>`
+  );
+}
+
+/** 无远程图时的 SVG 徽章（测试 / 无 logoUrl 回退）。 */
+export function recruitmentBadgeSVG(
+  logo: string | undefined,
+  _logoUrl: string | undefined,
+  color: string,
+  state: MarkerState
+): string {
+  const c = normalizeColor(color);
+  const emoji = toEmojiLogo(logo);
   const fillOpacity = state === 'highlighted' ? 0.9 : 1;
   const parts: string[] = [];
-
   if (state !== 'normal') {
     parts.push(
-      `<rect x="1" y="1" width="26" height="26" rx="8" fill="none" stroke="${c}" stroke-width="2.5" opacity="0.45"/>`
+      `<rect x="1" y="1" width="38" height="38" rx="11" fill="none" stroke="${c}" stroke-width="2.5" opacity="0.45"/>`
     );
   }
   parts.push(
-    `<rect x="1.5" y="1.5" width="25" height="25" rx="7" fill="#ffffff" fill-opacity="${fillOpacity}" ` +
+    `<rect x="2" y="2" width="36" height="36" rx="10" fill="#ffffff" fill-opacity="${fillOpacity}" ` +
       `stroke="${c}" stroke-width="2"/>`
   );
-  // 底层 emoji（fallback）：真实 logo 加载失败/缺失时可见
   parts.push(
-    `<text x="14" y="15" font-size="13" text-anchor="middle" dominant-baseline="central">${emoji}</text>`
+    `<text x="20" y="21" font-size="16" text-anchor="middle" dominant-baseline="central">${emoji}</text>`
   );
-  // 上层真实 logo 图片（加载成功覆盖 emoji，失败则透明露出 emoji）
-  if (logoUrl) {
-    parts.push(
-      `<defs><clipPath id="logo-clip"><rect x="4" y="4" width="20" height="20" rx="5"/></clipPath></defs>` +
-        `<image href="${logoUrl}" x="4" y="4" width="20" height="20" ` +
-        `preserveAspectRatio="xMidYMid meet" clip-path="url(#logo-clip)" opacity="${fillOpacity}"/>`
-    );
-  }
-  if (state === 'selected') {
-    parts.push(
-      `<circle cx="14" cy="14" r="11.5" fill="none" stroke="${c}" stroke-width="2" opacity="0.35"/>`
-    );
-  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">${parts.join('')}</svg>`;
+}
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">${parts.join('')}</svg>`;
+const BADGE_STYLE = `
+    .dm-badge{display:flex;align-items:center;justify-content:center;border-radius:12px;
+      background:#fff;border:2.5px solid #007AFF;box-shadow:0 6px 16px rgba(24,33,41,.22);
+      overflow:hidden;box-sizing:border-box}
+    .dm-badge img{width:70%;height:70%;object-fit:contain;display:block}
+    .dm-badge-emoji{font-size:18px;line-height:1}
+    .dm-badge-selected{box-shadow:0 0 0 3px rgba(0,122,255,.35),0 8px 18px rgba(24,33,41,.25)}
+    .dm-badge-highlighted{box-shadow:0 0 0 2px rgba(0,122,255,.28),0 6px 14px rgba(24,33,41,.2)}
+  `;
+
+function injectBadgeStyles(): void {
+  if (typeof document === 'undefined') return;
+  let style = document.getElementById('dm-badge-style') as HTMLStyleElement | null;
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'dm-badge-style';
+    document.head.appendChild(style);
+  }
+  style.textContent = BADGE_STYLE;
 }
 
 // ---------------------------------------------------------------------------
@@ -195,6 +240,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.map = map;
     this.opts = opts;
     this.color = normalizeColor(opts.color);
+    injectBadgeStyles();
 
     loadAMap()
       .then((amap) => {
@@ -225,23 +271,26 @@ class POIMarkerControllerImpl implements POIMarkerController {
   private addMarker(poi: POI): void {
     if (!this.isReady()) return;
 
-    const state: MarkerState =
-      poi.id === this.selectedId
-        ? 'selected'
-        : poi.id === this.highlightedId
-          ? 'highlighted'
-          : 'normal';
+    const state = resolveMarkerState(poi.id, this.selectedId, this.highlightedId);
 
-    const icon = this.buildIcon(poi, state);
     const offset = this.buildOffset(poi, state);
-
-    const marker = new this.amap.Marker({
+    const markerOpts: Record<string, unknown> = {
       position: [poi.location.lng, poi.location.lat],
-      icon,
       offset,
-      // 不设 label（避免所有 marker 名称堆积）；名称气泡由 applyStyle 按状态动态添加
       map: this.map,
-    });
+    };
+    if (isRecruitmentPOI(poi)) {
+      markerOpts.content = recruitmentBadgeHTML(
+        poi.company.logo,
+        poi.company.logoUrl,
+        this.color,
+        state
+      );
+    } else {
+      markerOpts.icon = this.buildIcon(poi, state);
+    }
+
+    const marker = new this.amap.Marker(markerOpts);
 
     marker.on('click', () => {
       if (this.destroyed) return;
@@ -252,10 +301,6 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.markers.set(poi.id, marker);
     this.poiById.set(poi.id, poi);
     this.markerStates.set(poi.id, state);
-    // 初始状态非 normal 时立即显示名称气泡
-    if (state !== 'normal') {
-      this.applyLabel(marker, poi, state);
-    }
   }
 
   /** 移除指定 id 的标记（从地图上摘除并清空内部记录）。 */
@@ -274,29 +319,16 @@ class POIMarkerControllerImpl implements POIMarkerController {
     if (!this.amap || !marker) return;
     if (this.markerStates.get(poi.id) === state) return;
     this.markerStates.set(poi.id, state);
-    marker.setIcon(this.buildIcon(poi, state));
+    if (isRecruitmentPOI(poi) && typeof marker.setContent === 'function') {
+      marker.setContent(
+        recruitmentBadgeHTML(poi.company.logo, poi.company.logoUrl, this.color, state)
+      );
+    } else {
+      marker.setIcon(this.buildIcon(poi, state));
+    }
     marker.setOffset(this.buildOffset(poi, state));
     marker.setzIndex(this.zIndexFor(state, poi));
-    // 名称 label 只在 selected / highlighted 显示（normal 移除）
-    this.applyLabel(marker, poi, state);
-  }
-
-  /**
-   * 管理 marker 名称气泡。
-   * - selected / highlighted：setLabel 显示名称（地图内元素，层级正确）
-   * - normal：移除 label，避免地图上名称过密
-   */
-  private applyLabel(marker: any, poi: POI, state: MarkerState): void {
-    if (typeof marker.setLabel !== 'function') return;
-    if (state === 'normal') {
-      marker.setLabel(null);
-      return;
-    }
-    marker.setLabel({
-      content: this.opts.getLabel?.(poi) || poi.name,
-      direction: 'top',
-      offset: new this.amap.Pixel(0, -8),
-    });
+    if (typeof marker.setLabel === 'function') marker.setLabel(null);
   }
 
   /** 计算指定状态下的 zIndex：选中 > 高亮 > 普通（招聘徽章略高于图钉）。 */
@@ -366,13 +398,11 @@ class POIMarkerControllerImpl implements POIMarkerController {
       if (existing) {
         existing.setPosition([poi.location.lng, poi.location.lat]);
         this.poiById.set(poi.id, poi);
-        const state: MarkerState =
-          poi.id === this.selectedId
-            ? 'selected'
-            : poi.id === this.highlightedId
-              ? 'highlighted'
-              : 'normal';
-        this.applyStyle(existing, poi, state);
+        this.applyStyle(
+          existing,
+          poi,
+          resolveMarkerState(poi.id, this.selectedId, this.highlightedId)
+        );
       } else {
         this.addMarker(poi);
       }
@@ -388,43 +418,40 @@ class POIMarkerControllerImpl implements POIMarkerController {
     }
   }
 
-  highlight(id: string): void {
-    this.highlightedId = id;
+  /** 按当前 selected / highlighted 重绘指定标记。 */
+  private refresh(id: string | null): void {
+    if (!id) return;
     const marker = this.markers.get(id);
     const poi = this.poiById.get(id);
-    if (marker && poi && id !== this.selectedId) {
-      this.applyStyle(marker, poi, 'highlighted');
-    }
+    if (!marker || !poi) return;
+    this.applyStyle(marker, poi, resolveMarkerState(id, this.selectedId, this.highlightedId));
+  }
+
+  highlight(id: string): void {
+    const prev = this.highlightedId;
+    this.highlightedId = id;
+    if (prev && prev !== id) this.refresh(prev);
+    this.refresh(id);
   }
 
   unhighlight(): void {
+    const prev = this.highlightedId;
     this.highlightedId = null;
-    for (const [id, marker] of this.markers) {
-      const poi = this.poiById.get(id);
-      if (!poi) continue;
-      const state: MarkerState = id === this.selectedId ? 'selected' : 'normal';
-      this.applyStyle(marker, poi, state);
-    }
+    this.refresh(prev);
   }
 
   select(id: string): void {
+    const prev = this.selectedId;
     this.selectedId = id;
     if (this.highlightedId === id) this.highlightedId = null;
-    const marker = this.markers.get(id);
-    const poi = this.poiById.get(id);
-    if (marker && poi) {
-      this.applyStyle(marker, poi, 'selected');
-    }
+    if (prev && prev !== id) this.refresh(prev);
+    this.refresh(id);
   }
 
   deselect(): void {
+    const prev = this.selectedId;
     this.selectedId = null;
-    for (const [id, marker] of this.markers) {
-      const poi = this.poiById.get(id);
-      if (!poi) continue;
-      const state: MarkerState = id === this.highlightedId ? 'highlighted' : 'normal';
-      this.applyStyle(marker, poi, state);
-    }
+    this.refresh(prev);
   }
 
   flyTo(id: string, zoom?: number): void {

@@ -1,28 +1,43 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./map-shell.module.css";
-import { t, type Language } from "@/lib/i18n";
+import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
 import type { FilterState, MapMode, POI } from "@/lib/types";
 import { getMode } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
+import { INTERNSHIP_SEED } from "@/lib/seed-data";
+import { runPOIPipeline, suggestRecruitment } from "@/lib/search";
+import { isRecruitmentMode } from "@/lib/types";
+import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
+import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
+import type { AccountUser, SearchHistoryEntry, UserPreferences } from "@/lib/account";
+import { initialsFromName } from "@/lib/account";
 import { SecondarySidebar, type SearchSuggestion } from "./secondary-sidebar";
+import { AuthModal } from "./auth-modal";
+import { ProfilePanel } from "./account-panel";
+import { RecentPanel } from "./recent-panel";
 import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
+type RailPanel = "explore" | "recent" | "profile" | null;
 
-function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "settings" | "menu" | "compass" | "locate" }) {
+function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "menu" | "sidebar" | "chevronLeft" | "compass" | "locate" | "person" | "login" | "logout" }) {
   const paths: Record<string, string> = {
     search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm6-2 4 4",
     layers: "m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5",
     bookmark: "M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4V4Z",
     grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
     history: "M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2",
-    settings: "M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0 0v5m0-17v5m7 3h-5m-9 0H0m15.36 8.36-3.54-3.54M8.18 8.18 4.64 4.64m10.72 0-3.54 3.54M8.18 15.82l-3.54 3.54",
     menu: "M3 6h18M3 12h18M3 18h18",
+    sidebar: "M5 4.5h14A2.5 2.5 0 0 1 21.5 7v10a2.5 2.5 0 0 1-2.5 2.5H5A2.5 2.5 0 0 1 2.5 17V7A2.5 2.5 0 0 1 5 4.5ZM9 5v14",
+    chevronLeft: "m14.5 5-7 7 7 7",
     compass: "m12 2 3 10-10 3-3-10 10-3Z",
     locate: "M12 2v4m0 12v4M2 12h4m12 0h4m-6 6a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z",
+    person: "M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.4 0-8 2.1-8 4.7V21h16v-2.3c0-2.6-3.6-4.7-8-4.7Z",
+    login: "M10 17l5-5-5-5M15 12H3m12-7h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4",
+    logout: "M14 17l5-5-5-5M19 12H9m0-7H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4",
   };
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -38,6 +53,12 @@ export function MapShell() {
   const userMarkerRef = useRef<any>(null);
   const accuracyCircleRef = useRef<any>(null);
   const satelliteLayerRef = useRef<any>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const pendingSearchFocus = useRef(false);
+  const catalogRef = useRef<POI[]>([]);
+  const poisRef = useRef<POI[]>([]);
+  const [geoSettled, setGeoSettled] = useState(false);
+  const ignoreNextMapClick = useRef(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
@@ -49,26 +70,106 @@ export function MapShell() {
   const [rotation, setRotation] = useState(0);
 
   // ---- Phase 2 多模式状态 ----
-  const [mode, setMode] = useState<MapMode>('domain');
+  const [mode, setMode] = useState<MapMode>('work');
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>({});
-  const [sort, setSort] = useState("distance");
-  const [pois, setPois] = useState<POI[]>([]);
+  const [sort, setSort] = useState(() => getMode("work").defaultSort);
+  const [catalog, setCatalog] = useState<POI[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lng: number; lat: number }>({ lng: 120.15, lat: 30.27 });
+  const [mapBounds, setMapBounds] = useState<ViewportBounds | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
+  const [searchOrigin, setSearchOrigin] = useState<{ lng: number; lat: number } | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [pageOffset, setPageOffset] = useState(0);
+  const skipFetchRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   // 左侧结果面板显隐（点击导航"探索"展开）
-  const [exploreOpen, setExploreOpen] = useState(false);
+  const [railPanel, setRailPanel] = useState<RailPanel>(null);
+  const exploreOpen = railPanel === "explore";
   // 搜索建议（AutoComplete）
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [detailPoi, setDetailPoi] = useState<POI | null>(null);
+  const [user, setUser] = useState<AccountUser | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
 
   const modeConfig = getMode(mode);
 
-  // 初始化语言设置 - 默认英文，未来可从用户偏好读取
   useEffect(() => {
-    setLang('en');  // 先按全英开发
+    setLang(getBrowserLanguage());
+  }, []);
+
+  const refreshAccount = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      const body = await res.json();
+      const next = (body.user ?? null) as AccountUser | null;
+      setUser(next);
+      if (next) setLang(next.preferences.language);
+      return next;
+    } catch {
+      setUser(null);
+      return null;
+    }
+  }, []);
+
+  const refreshHistory = useCallback(async () => {
+    try {
+      const res = await fetch("/api/me/search-history");
+      const body = await res.json();
+      setSearchHistory(Array.isArray(body.items) ? body.items : []);
+    } catch {
+      setSearchHistory([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshAccount().then((next) => {
+      if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
+    });
+    refreshHistory();
+  }, [refreshAccount, refreshHistory]);
+
+  const recordSearch = useCallback(async (raw: string, searchMode: MapMode) => {
+    const q = raw.trim();
+    if (!q || !user) return;
+    try {
+      await fetch("/api/me/search-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q, mode: searchMode }),
+      });
+      refreshHistory();
+    } catch {
+      // 未登录或网络失败时忽略
+    }
+  }, [refreshHistory, user]);
+
+  const openRail = useCallback((panel: RailPanel) => {
+    setRailPanel((current) => (current === panel ? null : panel));
+    if (panel !== "explore") {
+      setSelectedId(null);
+      setHighlightedId(null);
+      setDetailPoi(null);
+    }
+  }, []);
+
+  // 会话缓存：刷新页面后仍恢复本模式累计池，不重打高德
+  useEffect(() => {
+    const cached = readModeCache(mode);
+    if (!cached) return;
+    skipFetchRef.current = true;
+    catalogRef.current = cached.catalog;
+    setCatalog(cached.catalog);
+    setPageOffset(cached.pageOffset);
+    setSearchOrigin(cached.searchOrigin);
+    setQuery(cached.query);
+    setFilters(cached.filters);
+    if (cached.sort) setSort(cached.sort);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在首屏读一次
   }, []);
 
   // 地图初始化（保留原有全部逻辑）
@@ -117,14 +218,20 @@ export function MapShell() {
       // 初始定位：成功则移动地图中心 + 显示蓝点/精度圈（Geolocation 已 addControl 绑定 map）
       getCurrentPosition(map)
         .then((loc) => {
-          if (!loc) return;
+          if (!loc) {
+            setGeoSettled(true);
+            return;
+          }
           const { lng, lat } = loc.position;
           map.setCenter([lng, lat]);
           map.setZoom(15);
           setMapCenter({ lng, lat });
+          setUserLocation({ lng, lat });
+          setSearchOrigin((prev) => prev ?? { lng, lat });
+          setGeoSettled(true);
         })
         .catch(() => {
-          // 定位失败保持默认中心
+          setGeoSettled(true);
         });
 
       // 自定义中键旋转逻辑
@@ -230,12 +337,34 @@ export function MapShell() {
         setRotation(currentRotation);
       });
 
-      // 地图移动/缩放后更新中心点（用于 POI 距离计算）
-      map.on("moveend", () => {
+      const syncView = () => {
         const center = map.getCenter();
         if (center) {
           setMapCenter({ lng: center.getLng(), lat: center.getLat() });
         }
+        const b = typeof map.getBounds === "function" ? map.getBounds() : null;
+        if (b) {
+          const sw = b.getSouthWest?.() ?? b.southwest;
+          const ne = b.getNorthEast?.() ?? b.northeast;
+          const west = sw?.getLng?.() ?? sw?.lng;
+          const south = sw?.getLat?.() ?? sw?.lat;
+          const east = ne?.getLng?.() ?? ne?.lng;
+          const north = ne?.getLat?.() ?? ne?.lat;
+          if ([west, south, east, north].every((n) => typeof n === "number")) {
+            setMapBounds({ west, south, east, north });
+          }
+        }
+      };
+      map.on("moveend", syncView);
+      map.on("complete", syncView);
+      map.on("click", () => {
+        if (ignoreNextMapClick.current) {
+          ignoreNextMapClick.current = false;
+          return;
+        }
+        setSelectedId(null);
+        setHighlightedId(null);
+        setDetailPoi(null);
       });
 
       return cleanup;
@@ -256,50 +385,137 @@ export function MapShell() {
     };
   }, []);
 
-  // ---- Phase 2: POI 数据加载 ----
-  // mode/query/filters/sort/mapCenter 变化 → 重新获取
+  // ---- Phase 2: 累计池 + 钉死原点；移动地图不重搜 ----
   useEffect(() => {
-    let cancelled = false;
+    const signal = { cancelled: false };
+
+    function liveView() {
+      const map = mapInstance.current;
+      const centerObj = map?.getCenter?.();
+      const liveCenter =
+        centerObj && typeof centerObj.getLng === "function"
+          ? { lng: centerObj.getLng(), lat: centerObj.getLat() }
+          : mapCenter;
+      const liveZoom =
+        typeof map?.getZoom === "function" ? Math.round(map.getZoom()) : zoom;
+      let liveBounds = mapBounds;
+      const b = typeof map?.getBounds === "function" ? map.getBounds() : null;
+      if (b) {
+        const sw = b.getSouthWest?.() ?? b.southwest;
+        const ne = b.getNorthEast?.() ?? b.northeast;
+        const west = sw?.getLng?.() ?? sw?.lng;
+        const south = sw?.getLat?.() ?? sw?.lat;
+        const east = ne?.getLng?.() ?? ne?.lng;
+        const north = ne?.getLat?.() ?? ne?.lat;
+        if ([west, south, east, north].every((n) => typeof n === "number")) {
+          liveBounds = { west, south, east, north };
+        }
+      }
+      return { center: liveCenter, zoom: liveZoom, bounds: liveBounds };
+    }
 
     async function load() {
-      // AMap 未就绪（地图未初始化）时不发请求，避免首屏回退 seed
-      if (!mapReady) return;
+      if (!mapReady || !geoSettled) return;
+      if (skipFetchRef.current) {
+        skipFetchRef.current = false;
+        return;
+      }
+      const cached = catalogRef.current.length > 0 ? readModeCache(mode) : null;
+      if (cached && cached.catalog.length > 0 && pageOffset === cached.pageOffset && refreshToken === 0) {
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
+        const view = liveView();
+        const origin = searchOrigin ?? userLocation ?? view.center;
         const data = await fetchPOIsForMode({
           mode,
           query: query || undefined,
-          filters: Object.keys(filters).length ? filters : undefined,
-          sort: sort || undefined,
-          center: mapCenter,
-          zoom,
+          center: origin,
+          zoom: view.zoom,
+          bounds: view.bounds ?? undefined,
+          existing: mode === "domain" ? catalogRef.current : undefined,
+          addCap: MORE_PAGE_SIZE,
+          pageOffset,
+          signal,
+          onBatch: (batch) => {
+            if (signal.cancelled) return;
+            catalogRef.current = batch;
+            setCatalog(batch);
+            writeModeCache({
+              mode,
+              catalog: batch,
+              pageOffset,
+              searchOrigin: origin,
+              query,
+              filters,
+              sort,
+            });
+            if (batch.length > 0) setLoading(false);
+          },
         });
-        if (!cancelled) {
-          setPois(data);
-          setSelectedId(null);
-          setHighlightedId(null);
-        }
+        if (signal.cancelled) return;
+        catalogRef.current = data;
+        setCatalog(data);
+        writeModeCache({
+          mode,
+          catalog: data,
+          pageOffset,
+          searchOrigin: origin,
+          query,
+          filters,
+          sort,
+        });
       } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load POIs');
-          setPois([]);
+        if (!signal.cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load POIs");
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!signal.cancelled) setLoading(false);
       }
     }
 
-    // 搜索输入防抖 300ms（tech/10-search-filter.md）
-    const timer = setTimeout(load, query ? 300 : 0);
+    const timer = setTimeout(load, query ? 300 : 80);
     return () => {
-      cancelled = true;
+      signal.cancelled = true;
       clearTimeout(timer);
     };
-    // mapReady：地图初始化完成（= AMap 就绪）后重新拉取真实 POI，
-    // 避免首次加载时 AMap 未就绪而回退到 seed 数据。
-    // zoom：缩放级别变化 → 视口搜索半径自适应（制图学策略）。
-  }, [mode, query, filters, sort, mapCenter, zoom, mapReady]);
+    // 刻意不依赖 mapCenter / zoom / mapBounds / filters：平移、缩放、筛选都不重搜
+  }, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin, userLocation]);
+
+  const distanceOrigin = userLocation ?? mapCenter;
+  const pois = useMemo(
+    () =>
+      runPOIPipeline(catalog, {
+        query: query || undefined,
+        filters: Object.keys(filters).length ? filters : undefined,
+        sort: sort || undefined,
+        center: distanceOrigin,
+      }),
+    [catalog, query, filters, sort, distanceOrigin]
+  );
+  catalogRef.current = catalog;
+  poisRef.current = pois;
+
+  const handleRefreshHere = useCallback(() => {
+    const map = mapInstance.current;
+    const centerObj = map?.getCenter?.();
+    const next =
+      centerObj && typeof centerObj.getLng === "function"
+        ? { lng: centerObj.getLng(), lat: centerObj.getLat() }
+        : mapCenter;
+    setSearchOrigin(next);
+    catalogRef.current = [];
+    setCatalog([]);
+    setPageOffset(0);
+    clearModeCache(mode);
+    setRefreshToken((n) => n + 1);
+  }, [mapCenter, mode]);
+
+  const handleNeedMore = useCallback(() => {
+    setPageOffset((n) => n + 1);
+  }, []);
 
   // ---- 地图联动 ----
   usePOIMap(mapInstance.current, {
@@ -308,7 +524,17 @@ export function MapShell() {
     highlightedId,
     accentColor: modeConfig.color,
     onMarkerClick: (id) => {
+      // AMap 常在 marker click 后再打一次 map click；吞掉同一次手势，超时后恢复点空白取消。
+      ignoreNextMapClick.current = true;
+      window.setTimeout(() => {
+        ignoreNextMapClick.current = false;
+      }, 80);
+      const poi = poisRef.current.find((p) => p.id === id);
       setSelectedId(id);
+      if (poi) {
+        setRailPanel("explore");
+        setDetailPoi(poi);
+      }
     },
   });
 
@@ -322,35 +548,84 @@ export function MapShell() {
     setHighlightedId(id);
   }, []);
 
-  // 模式切换：清空查询与筛选，重置排序为默认
+  // 模式切换：当前模式写入会话缓存；目标模式有缓存则还原，不重搜
   const handleModeChange = useCallback((nextMode: MapMode) => {
+    if (nextMode === mode) return;
+    writeModeCache({
+      mode,
+      catalog: catalogRef.current,
+      pageOffset,
+      searchOrigin,
+      query,
+      filters,
+      sort,
+    });
+
     setMode(nextMode);
-    setQuery("");
-    setFilters({});
-    setSort(getMode(nextMode).defaultSort);
     setSelectedId(null);
     setHighlightedId(null);
     setSuggestions([]);
-  }, []);
+    setDetailPoi(null);
 
-  // ---- 搜索建议（AutoComplete）----
-  // 输入变化时拉取建议（防抖 200ms）
+    const cached = readModeCache(nextMode);
+    if (cached) {
+      skipFetchRef.current = true;
+      catalogRef.current = cached.catalog;
+      setCatalog(cached.catalog);
+      setPageOffset(cached.pageOffset);
+      setSearchOrigin(cached.searchOrigin ?? userLocation);
+      setQuery(cached.query);
+      setFilters(cached.filters);
+      setSort(cached.sort || getMode(nextMode).defaultSort);
+      setLoading(false);
+      return;
+    }
+
+    catalogRef.current = [];
+    setCatalog([]);
+    setPageOffset(0);
+    setQuery("");
+    setFilters({});
+    setSort(getMode(nextMode).defaultSort);
+    setSearchOrigin(userLocation);
+  }, [mode, pageOffset, searchOrigin, query, filters, sort, userLocation]);
+
+  // ---- 搜索建议 ----
+  // Domain：高德地点 AutoComplete；实习/招聘：公司 + 岗位，不走 POI
   useEffect(() => {
     if (!query.trim() || query.trim().length < 1) {
       setSuggestions([]);
       return;
     }
+
+    if (isRecruitmentMode(mode)) {
+      const tips = suggestRecruitment(INTERNSHIP_SEED, query, 8);
+      setSuggestions(
+        tips.map((tip) => ({
+          id: tip.id,
+          name: tip.name,
+          subtitle: tip.subtitle,
+          location: tip.location,
+          poiId: tip.poiId,
+          positionId: tip.positionId,
+          kind: tip.kind,
+        }))
+      );
+      return;
+    }
+
     let cancelled = false;
     const timer = setTimeout(async () => {
       try {
-        const tips = await fetchSuggestions(query.trim(), '杭州');
+        const tips = await fetchSuggestions(query.trim(), zoom <= 8 ? "全国" : "");
         if (!cancelled) {
           setSuggestions(
             tips.map((tip) => ({
               id: tip.id,
               name: tip.name,
-              subtitle: [tip.district, tip.address].filter(Boolean).join(' · ') || tip.type,
+              subtitle: [tip.district, tip.address].filter(Boolean).join(" · ") || tip.type,
               location: tip.location,
+              kind: "place",
             }))
           );
         }
@@ -362,18 +637,29 @@ export function MapShell() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, mode, zoom]);
 
-  // 选择建议 → 定位到该地点 + 设为搜索词
+  // 选择建议 → 定位；招聘建议打开对应公司
   const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
     if (s.location && mapInstance.current) {
       mapInstance.current.setCenter([s.location.lng, s.location.lat]);
       mapInstance.current.setZoom(16);
       setMapCenter({ lng: s.location.lng, lat: s.location.lat });
     }
+    if (s.poiId) {
+      const company =
+        INTERNSHIP_SEED.find((p) => p.id === s.poiId) ??
+        pois.find((p) => p.id === s.poiId);
+      if (company) {
+        setSelectedId(company.id);
+        setDetailPoi(company);
+      }
+    }
     setQuery(s.name);
     setSuggestions([]);
-  }, []);
+    setRailPanel("explore");
+    void recordSearch(s.name, mode);
+  }, [pois, mode, recordSearch]);
 
   const handleZoomIn = () => {
     if (mapInstance.current) {
@@ -458,7 +744,7 @@ export function MapShell() {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       // Check if click is outside basemap card and button
-      if (!target.closest(`.${styles.basemapCard}`) && !target.closest('[aria-label="Choose map style"]')) {
+      if (!target.closest(`.${styles.basemapCluster}`)) {
         setShowBasemap(false);
       }
     };
@@ -466,6 +752,68 @@ export function MapShell() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showBasemap]);
+
+  useEffect(() => {
+    if (!sidebarOpen || !pendingSearchFocus.current) return;
+    pendingSearchFocus.current = false;
+    const input = searchInputRef.current;
+    if (!input) return;
+    const focus = () => input.focus();
+    const id = window.setTimeout(focus, 220);
+    return () => window.clearTimeout(id);
+  }, [sidebarOpen]);
+
+  const openSidebarSearch = () => {
+    setRailPanel("explore");
+    if (sidebarOpen) {
+      searchInputRef.current?.focus();
+      return;
+    }
+    pendingSearchFocus.current = true;
+    setSidebarOpen(true);
+  };
+
+  const handleProfileClick = () => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    openRail("profile");
+  };
+
+  const handleAuthAction = () => {
+    if (user) {
+      void fetch("/api/auth/me", { method: "DELETE" }).then(() => {
+        setUser(null);
+        setSearchHistory([]);
+        setRailPanel((current) => (current === "profile" ? null : current));
+      });
+      return;
+    }
+    setAuthOpen(true);
+  };
+
+  const handleSaveProfile = async (patch: {
+    displayName?: string;
+    preferences?: Partial<UserPreferences>;
+  }) => {
+    const res = await fetch("/api/auth/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    const body = await res.json();
+    if (body.user) {
+      setUser(body.user as AccountUser);
+      if (body.user.preferences?.language) setLang(body.user.preferences.language);
+    }
+  };
+
+  const handlePickRecent = (entry: SearchHistoryEntry) => {
+    setQuery(entry.query);
+    setMode(entry.mode);
+    setRailPanel("explore");
+  };
 
   const cycleDrawer = () => setDrawer((current) => current === "mini" ? "half" : current === "half" ? "full" : "mini");
 
@@ -484,34 +832,103 @@ export function MapShell() {
 
       {/* 左侧主导航栏（保留） */}
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`} aria-label="Map navigation">
-        <button className={styles.menuButton} onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={sidebarOpen ? t('collapsSidebar', lang) : t('expandSidebar', lang)}>
-          <Icon name="menu" />
-        </button>
-        {sidebarOpen && <div className={styles.brand}><span className={styles.brandMark}>◉</span>Domain</div>}
-        <div className={styles.searchBox} data-tooltip={t('search', lang)}>
+        <div className={styles.menuWrap}>
+          <button
+            className={styles.menuButton}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? t('collapsSidebar', lang) : t('expandSidebar', lang)}
+            aria-expanded={sidebarOpen}
+          >
+            <span className={styles.menuGlyph} aria-hidden="true">
+              <span className={styles.menuIconExpand}><Icon name="sidebar" /></span>
+              <span className={styles.menuIconCollapse}><Icon name="chevronLeft" /></span>
+            </span>
+          </button>
+        </div>
+        <div className={styles.railDivider} aria-hidden="true" />
+        <div
+          className={styles.searchBox}
+          data-tooltip={t('search', lang)}
+          onClick={openSidebarSearch}
+        >
           <Icon name="search" />
-          <input type="search" placeholder={t('searchPlaceholder', lang)} />
+          <input
+            ref={searchInputRef}
+            type="search"
+            placeholder={t('searchPlaceholder', lang)}
+            value={query}
+            tabIndex={sidebarOpen ? 0 : -1}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setRailPanel("explore");
+            }}
+            onFocus={() => {
+              if (!sidebarOpen) openSidebarSearch();
+              else setRailPanel("explore");
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                void recordSearch(query, mode);
+              }
+            }}
+          />
         </div>
         <nav className={styles.navList}>
           <button className={styles.navItem} data-tooltip={t('layers', lang)}><Icon name="layers" /><span>{t('layers', lang)}</span></button>
           <button className={styles.navItem} data-tooltip={t('saved', lang)}><Icon name="bookmark" /><span>{t('saved', lang)}</span></button>
           <button
-            className={styles.navItem}
+            className={`${styles.navItem} ${exploreOpen ? styles.navItemActive : ""}`}
             data-tooltip={t('explore', lang)}
             aria-expanded={exploreOpen}
             aria-pressed={exploreOpen}
-            onClick={() => setExploreOpen((v) => !v)}
+            onClick={() => openRail("explore")}
           >
             <Icon name="grid" />
             <span>{t('explore', lang)}</span>
           </button>
-          <button className={styles.navItem} data-tooltip={t('recent', lang)}><Icon name="history" /><span>{t('recent', lang)}</span></button>
-          <button className={styles.navItem} data-tooltip={t('settings', lang)}><Icon name="settings" /><span>{t('settings', lang)}</span></button>
+          <button
+            className={`${styles.navItem} ${railPanel === "recent" ? styles.navItemActive : ""}`}
+            data-tooltip={t('recent', lang)}
+            aria-pressed={railPanel === "recent"}
+            onClick={() => openRail("recent")}
+          >
+            <Icon name="history" />
+            <span>{t('recent', lang)}</span>
+          </button>
         </nav>
-        <button className={styles.profile} aria-label="AK Alex Kim Personal map" data-tooltip={t('profile', lang)}>
-          <div className={styles.avatar}>AK</div>
-          {sidebarOpen && <div className={styles.profileCopy}><strong>Alex Kim</strong><small>Personal map</small></div>}
-        </button>
+        <div className={styles.profileRow}>
+          <button
+            className={`${styles.profile} ${railPanel === "profile" ? styles.profileActive : ""}`}
+            aria-label={user ? `${user.displayName} ${user.accountLabel}` : t("notSignedIn", lang)}
+            data-tooltip={t('profile', lang)}
+            onClick={handleProfileClick}
+          >
+            {user?.avatarUrl ? (
+              <img className={styles.avatar} src={user.avatarUrl} alt="" />
+            ) : user ? (
+              <div className={styles.avatar}>{initialsFromName(user.displayName)}</div>
+            ) : (
+              <div className={`${styles.avatar} ${styles.avatarGuest}`}><Icon name="person" /></div>
+            )}
+            {sidebarOpen && (
+              <div className={styles.profileCopy}>
+                <strong>{user ? user.displayName : t("notSignedIn", lang)}</strong>
+                <small>{user ? user.accountLabel : t("signInHint", lang)}</small>
+              </div>
+            )}
+          </button>
+          {sidebarOpen && (
+            <button
+              type="button"
+              className={styles.authGlyph}
+              onClick={handleAuthAction}
+              aria-label={user ? t("signOut", lang) : t("signIn", lang)}
+              title={user ? t("signOut", lang) : t("signIn", lang)}
+            >
+              <Icon name={user ? "logout" : "login"} />
+            </button>
+          )}
+        </div>
       </aside>
 
       {/* Phase 2: 二级侧控栏（从左侧导航展开） */}
@@ -532,48 +949,118 @@ export function MapShell() {
         highlightedId={highlightedId}
         onSelect={handleSelect}
         onHover={handleHover}
+        onRefreshHere={handleRefreshHere}
+        onNeedMore={handleNeedMore}
         totalCount={pois.length}
         lang={lang}
-        onClose={() => setExploreOpen(false)}
+        onClose={() => {
+          setRailPanel(null);
+          setSelectedId(null);
+          setHighlightedId(null);
+          setDetailPoi(null);
+        }}
         suggestions={suggestions}
         onSelectSuggestion={handleSelectSuggestion}
+        onCommitSearch={(q) => { void recordSearch(q, mode); }}
         shifted={sidebarOpen}
+        detailPoi={detailPoi}
+        onCloseDetail={() => {
+          setDetailPoi(null);
+          setSelectedId(null);
+          setHighlightedId(null);
+        }}
+        onOpenDetail={(poi) => {
+          setDetailPoi(poi);
+          if (poi.location && mapInstance.current) {
+            mapInstance.current.setZoom(16);
+            mapInstance.current.setCenter([poi.location.lng, poi.location.lat]);
+          }
+        }}
       />
       )}
 
+      {railPanel === "recent" && (
+        <RecentPanel
+          items={searchHistory}
+          signedIn={Boolean(user)}
+          lang={lang}
+          shifted={sidebarOpen}
+          onClose={() => setRailPanel(null)}
+          onPick={handlePickRecent}
+          onClear={user ? () => {
+            void fetch("/api/me/search-history", { method: "DELETE" }).then(refreshHistory);
+          } : undefined}
+        />
+      )}
+
+      {railPanel === "profile" && user && (
+        <ProfilePanel
+          user={user}
+          lang={lang}
+          shifted={sidebarOpen}
+          onClose={() => setRailPanel(null)}
+          onSave={handleSaveProfile}
+        />
+      )}
+
+      <AuthModal
+        open={authOpen}
+        lang={lang}
+        onClose={() => setAuthOpen(false)}
+        onSignedIn={() => {
+          void refreshAccount().then((next) => {
+            if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
+          });
+          void refreshHistory();
+        }}
+      />
+
       <div className={styles.topTools}>
-        {showBasemap && (
-          <div className={styles.basemapCard}>
-            <span className={styles.eyebrow}>{t('mapStyle', lang)}</span><strong>{t('chooseView', lang)}</strong>
-            <button
-              className={mapStyle === 'normal' ? styles.activeMap : ''}
-              onClick={() => handleMapStyleChange('normal')}
-            >
-              <div className={`${styles.mapThumb} ${styles.thumb1}`} />
-              {t('standard', lang)}
-              {mapStyle === 'normal' && <span className={styles.check}>✓</span>}
-            </button>
-            <button
-              className={mapStyle === 'satellite' ? styles.activeMap : ''}
-              onClick={() => handleMapStyleChange('satellite')}
-            >
-              <div className={`${styles.mapThumb} ${styles.thumb2}`} />
-              {t('satellite', lang)}
-              {mapStyle === 'satellite' && <span className={styles.check}>✓</span>}
-            </button>
-            <button
-              className={mapStyle === 'whitesmoke' ? styles.activeMap : ''}
-              onClick={() => handleMapStyleChange('whitesmoke')}
-            >
-              <div className={`${styles.mapThumb} ${styles.thumb3}`} />
-              {t('dark', lang)}
-              {mapStyle === 'whitesmoke' && <span className={styles.check}>✓</span>}
-            </button>
-          </div>
-        )}
-        <button className={styles.toolButton} onClick={() => setShowBasemap(!showBasemap)} aria-label="Choose map style" aria-pressed={showBasemap}>
-          <div className={styles.basemapLogo}>◌</div>
-        </button>
+        <div className={styles.basemapCluster}>
+          {showBasemap && (
+            <div className={styles.basemapRow} role="listbox" aria-label={t("mapStyle", lang)}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={mapStyle === "normal"}
+                className={`${styles.basemapOption} ${mapStyle === "normal" ? styles.basemapOptionActive : ""}`}
+                onClick={() => handleMapStyleChange("normal")}
+              >
+                <div className={`${styles.mapThumb} ${styles.thumb1}`} />
+                <span>{t("standard", lang)}</span>
+              </button>
+              <button
+                type="button"
+                role="option"
+                aria-selected={mapStyle === "satellite"}
+                className={`${styles.basemapOption} ${mapStyle === "satellite" ? styles.basemapOptionActive : ""}`}
+                onClick={() => handleMapStyleChange("satellite")}
+              >
+                <div className={`${styles.mapThumb} ${styles.thumb2}`} />
+                <span>{t("satellite", lang)}</span>
+              </button>
+              <button
+                type="button"
+                role="option"
+                aria-selected={mapStyle === "whitesmoke"}
+                className={`${styles.basemapOption} ${mapStyle === "whitesmoke" ? styles.basemapOptionActive : ""}`}
+                onClick={() => handleMapStyleChange("whitesmoke")}
+              >
+                <div className={`${styles.mapThumb} ${styles.thumb3}`} />
+                <span>{t("dark", lang)}</span>
+              </button>
+            </div>
+          )}
+          <button
+            className={`${styles.toolButton} ${showBasemap ? styles.toolButtonActive : ""}`}
+            onClick={() => setShowBasemap(!showBasemap)}
+            aria-label={t("mapStyle", lang)}
+            aria-expanded={showBasemap}
+            aria-pressed={showBasemap}
+          >
+            <div className={styles.basemapLogo}>◌</div>
+          </button>
+        </div>
         <button className={`${styles.toolButton} ${styles.compassButton}`} onClick={handleResetCompass} aria-label="Reset compass">
           <svg className={styles.compassNeedle} viewBox="0 0 20 20" width="28" height="28" style={{ transform: `rotate(${rotation}deg)` }}>
             <path d="M10 1 L12 10 L10 8.5 L8 10 Z" fill="#ff3b30" />

@@ -19,9 +19,9 @@ Domain Map 是一个多模式地图应用，用户可以在不同场景下切换
 
 ## 模式定义
 
-### 1. Domain 模式（默认模式）
+### 1. Domain 模式（地图）
 
-**用途:** 通用地图应用，日常生活场景
+**用途:** 通用地图应用，日常生活场景。默认打开的是 **工作模式**；Domain 由用户主动切换。
 
 **POI 类型:**
 - 餐饮美食
@@ -48,9 +48,9 @@ Domain Map 是一个多模式地图应用，用户可以在不同场景下切换
 - 图片预览（2-3张）
 - 评论摘要
 
-### 2. 实习模式
+### 2. 工作模式（默认）
 
-**用途:** 寻找实习机会
+**用途:** 找实习 / 校招 / 社招。实习、秋招、社招是工作模式上的筛选插件，不是独立地图模式。默认打开此模式。
 
 **POI 类型:**
 - 科技公司
@@ -436,10 +436,8 @@ interface OverseasPOI extends BasePOI {
 // lib/modes.ts
 export type MapMode = 
   | 'domain' 
-  | 'internship' 
-  | 'autumn-recruit' 
-  | 'spring-recruit' 
-  | 'social-recruit' 
+  | 'work'            // 工作：实习 / 校招 / 社招是 FilterPlugin，不是地图模式
+  | 'internship'      // work 的兼容别名
   | 'college' 
   | 'overseas';
 
@@ -471,16 +469,16 @@ export const MODES: Record<MapMode, ModeConfig> = {
       { key: 'popularity', label: '人气最高' },
     ],
   },
-  internship: {
-    id: 'internship',
-    name: '实习',
+  work: {
+    id: 'work',
+    name: '工作',
     icon: 'briefcase',
-    color: '#34C759',
+    color: '#007AFF',
     poiIcon: 'company',
     filters: [
+      { key: 'jobTaxonomy', type: 'taxonomy' }, // FilterPlugin：实习/校招/社招
       { key: 'industry', type: 'multi-select', options: ['互联网', '金融', ...] },
       { key: 'scale', type: 'select', options: ['大厂', '独角兽', '创业公司'] },
-      { key: 'position', type: 'search', placeholder: '搜索岗位' },
       { key: 'salary', type: 'range', min: 0, max: 10000 },
     ],
     sortOptions: [
@@ -496,10 +494,10 @@ export const MODES: Record<MapMode, ModeConfig> = {
 ### 后端 API 设计
 
 ```
-GET  /api/pois?mode=internship&filters={...}&bounds={...}
+GET  /api/pois?mode=work&filters={...}&bounds={...}
      - 获取指定模式和筛选条件的 POI 列表
      
-GET  /api/pois/:id?mode=internship
+GET  /api/pois/:id?mode=work
      - 获取单个 POI 详情
      
 GET  /api/modes
@@ -550,12 +548,8 @@ CREATE INDEX idx_poi_attributes_gin ON poi_attributes USING GIN(attributes);
 - 筛选器高亮色
 
 **色彩方案:**
-- Domain: 蓝色 `#007AFF` (Apple 经典蓝)
-- 实习: 绿色 `#34C759` (成长、机会)
-- 秋招: 橙色 `#FF9500` (收获、秋天)
-- 社招: 紫色 `#AF52DE` (专业、成熟)
-- 高考: 红色 `#FF3B30` (重要、激情)
-- 留学: 青色 `#5AC8FA` (国际、开放)
+- 全模式 UI 主题色统一为蓝色 `#007AFF`（hover、返回、Apply、选中、招聘 POI 点、标签）
+- 语义信息可保留绿色：营业时间、薪资数字等，不作为主题色
 
 ### 模式一致性
 
@@ -659,7 +653,7 @@ CREATE INDEX idx_poi_attributes_gin ON poi_attributes USING GIN(attributes);
 // 不同模式的访问权限
 const MODE_PERMISSIONS = {
   domain: 'public',        // 任何人可访问
-  internship: 'public',    // 公开，但详细薪资需登录
+  work: 'public',          // 公开，但详细薪资需登录
   college: 'public',       // 公开
   overseas: 'public',      // 公开
 };
@@ -679,12 +673,12 @@ const MODE_PERMISSIONS = {
 {
   "en": {
     "mode.domain": "Map",
-    "mode.internship": "Internship",
+    "mode.work": "Work",
     "mode.college": "College"
   },
   "zh": {
     "mode.domain": "地图",
-    "mode.internship": "实习",
+    "mode.work": "工作",
     "mode.college": "高考"
   }
 }

@@ -1,9 +1,9 @@
 // ============================================================
-// 实习模式精选 Seed 数据
+// 工作模式精选 Seed 数据
 //
 // 说明：Phase 2 采用"先精选数据、后接数据库"策略。
 // 这些是杭州地区知名科技公司的公开位置信息与示例岗位，
-// 用于验证实习模式的 UI/筛选/联动逻辑。
+// 用于验证工作模式的 UI/筛选/联动逻辑。
 //
 // 数据合规（tech/08-multi-mode-system.md + agent.md）：
 // - 公司位置为公开地理信息，岗位为代表性示例（非实时爬取）
@@ -11,6 +11,8 @@
 // - 生产环境将替换为经 source review 的数据库数据（sources/import_runs）
 // ============================================================
 
+import { resolveCompanyLogo } from './company-logo.ts';
+import { defaultTaxonomyForType } from './job-taxonomy.ts';
 import type { DomainPOI, RecruitmentPOI } from './types.ts';
 
 /**
@@ -136,7 +138,7 @@ export const DOMAIN_SEED: DomainPOI[] = [
   },
 ];
 
-export const INTERNSHIP_SEED: RecruitmentPOI[] = [
+const WORK_SEED_RAW: RecruitmentPOI[] = [
   {
     id: 'alibaba-xixi',
     kind: 'recruitment',
@@ -150,8 +152,9 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.4,
       logo: '🛰️',
-      logoUrl: 'https://favicon.im/alibaba.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=alibaba.com',
       summary: '全球领先的电子商务与云计算科技公司',
+      careerUrl: 'https://talent.alibaba.com/',
     },
     positions: [
       {
@@ -159,10 +162,13 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
         title: 'Java 后端开发工程师',
         department: '阿里云',
         type: 'intern',
+        taxonomy: { family: 'intern', internKind: 'summer', conversion: 'conversion' },
         salary: { min: 8, max: 15 },
         education: '本科',
         majors: ['计算机', '软件工程'],
         skills: ['Java', 'Spring', 'MySQL'],
+        description: '参与阿里云核心服务的后端开发，编写高质量 Java 服务，参与需求评审与线上问题排查。熟悉分布式系统优先。',
+        apply: { source: 'official', url: 'https://talent.alibaba.com/' },
         status: 'open',
       },
       {
@@ -170,10 +176,12 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
         title: '前端开发工程师',
         department: '淘天集团',
         type: 'intern',
+        taxonomy: { family: 'intern', internKind: 'daily', conversion: 'no-conversion' },
         salary: { min: 8, max: 14 },
         education: '本科',
         majors: ['计算机'],
         skills: ['React', 'TypeScript'],
+        description: '负责淘天 C 端页面与中后台的前端实现，与设计、后端协作完成需求交付，关注性能与体验。',
         status: 'open',
       },
       {
@@ -185,6 +193,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
         education: '硕士',
         majors: ['计算机', '数学'],
         skills: ['Python', 'PyTorch'],
+        description: '参与推荐 / 搜索相关模型训练与评测，阅读论文并落地实验，协助完成数据pipeline 与指标分析。',
         status: 'open',
       },
       {
@@ -194,6 +203,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
         type: 'intern',
         salary: { min: 6, max: 10 },
         education: '本科',
+        description: '协助完成竞品分析、需求文档与用户调研，跟进功能上线，与设计、研发协作推进迭代。',
         status: 'open',
       },
     ],
@@ -212,15 +222,17 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.5,
       logo: '🐧',
-      logoUrl: 'https://favicon.im/tencent.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=tencent.com',
       summary: '中国领先的互联网综合服务提供商',
+      careerUrl: 'https://careers.tencent.com/',
     },
     positions: [
       {
         id: 'tencent-backend',
         title: '后台开发工程师',
         department: '腾讯云',
-        type: 'intern',
+        type: 'campus',
+        taxonomy: { family: 'campus', campusSeason: 'autumn' },
         salary: { min: 9, max: 16 },
         education: '本科',
         majors: ['计算机'],
@@ -252,15 +264,17 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.3,
       logo: '🎮',
-      logoUrl: 'https://favicon.im/163.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=163.com',
       summary: '中国领先的互联网技术公司，游戏与音乐见长',
+      careerUrl: 'https://hr.163.com/',
     },
     positions: [
       {
         id: 'netease-frontend',
         title: '前端开发工程师',
         department: '网易云音乐',
-        type: 'intern',
+        type: 'campus',
+        taxonomy: { family: 'campus', campusSeason: 'spring' },
         salary: { min: 7, max: 12 },
         education: '本科',
         skills: ['React', 'TypeScript'],
@@ -293,8 +307,9 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.6,
       logo: '📱',
-      logoUrl: 'https://favicon.im/bytedance.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=bytedance.com',
       summary: '全球化互联网科技公司，抖音/TikTok 母公司',
+      careerUrl: 'https://jobs.bytedance.com/',
     },
     positions: [
       {
@@ -343,18 +358,21 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.2,
       logo: '🌍',
-      logoUrl: 'https://favicon.im/huawei.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=huawei.com',
       summary: '全球领先的 ICT 基础设施与智能终端提供商',
+      careerUrl: 'https://career.huawei.com/',
     },
     positions: [
       {
         id: 'huawei-chip',
         title: '芯片设计工程师',
         department: '海思',
-        type: 'intern',
+        type: 'social',
+        taxonomy: { family: 'social', experience: '1-3' },
         salary: { min: 9, max: 15 },
         education: '硕士',
         majors: ['微电子', '电子工程'],
+        apply: { source: 'official', url: 'https://career.huawei.com/' },
         status: 'open',
       },
       {
@@ -383,15 +401,17 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.3,
       logo: '🐜',
-      logoUrl: 'https://favicon.im/antgroup.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=antgroup.com',
       summary: '领先的数字支付与金融科技公司',
+      careerUrl: 'https://talent.antgroup.com/',
     },
     positions: [
       {
         id: 'ant-pay',
         title: '支付后端工程师',
         department: '支付宝',
-        type: 'intern',
+        type: 'social',
+        taxonomy: { family: 'social', experience: '3-5' },
         salary: { min: 9, max: 16 },
         education: '本科',
         skills: ['Java', '分布式'],
@@ -423,15 +443,17 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'unicorn',
       rating: 4.0,
       logo: '🚗',
-      logoUrl: 'https://favicon.im/didiglobal.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=didiglobal.com',
       summary: '一站式移动出行平台',
+      careerUrl: 'https://join.didiglobal.com/',
     },
     positions: [
       {
         id: 'didi-map',
         title: '地图算法实习生',
         department: '地图事业部',
-        type: 'intern',
+        type: 'social',
+        taxonomy: { family: 'social', experience: '0-1' },
         salary: { min: 7, max: 12 },
         education: '硕士',
         skills: ['C++', 'GIS'],
@@ -453,8 +475,9 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'unicorn',
       rating: 4.1,
       logo: '🧠',
-      logoUrl: 'https://favicon.im/zhihu.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=zhihu.com',
       summary: '中文互联网高质量问答社区',
+      careerUrl: 'https://www.zhihu.com/careers',
     },
     positions: [
       {
@@ -494,6 +517,10 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
         salary: { min: 8, max: 15 },
         education: '本科',
         skills: ['Python', 'LLM', 'RAG'],
+        apply: {
+          source: 'boss',
+          url: 'https://www.zhipin.com/web/geek/job?query=%E6%9B%A6%E6%9B%A6AI%20%E5%A4%A7%E6%A8%A1%E5%9E%8B',
+        },
         status: 'open',
       },
     ],
@@ -512,8 +539,9 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'unicorn',
       rating: 4.7,
       logo: '🧩',
-      logoUrl: 'https://favicon.im/deepseek.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=deepseek.com',
       summary: 'AI 大模型研发公司，DeepSeek 团队',
+      careerUrl: 'https://www.deepseek.com/',
     },
     positions: [
       {
@@ -521,6 +549,7 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
         title: '大模型训练实习生',
         department: '研发',
         type: 'intern',
+        taxonomy: { family: 'intern', internKind: 'summer', conversion: 'conversion' },
         salary: { min: 12, max: 25 },
         education: '硕士',
         majors: ['计算机', '数学'],
@@ -553,8 +582,9 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'bigtech',
       rating: 4.5,
       logo: '📺',
-      logoUrl: 'https://favicon.im/bilibili.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=bilibili.com',
       summary: '中国年轻世代高度聚集的文化社区和视频平台',
+      careerUrl: 'https://jobs.bilibili.com/',
     },
     positions: [
       {
@@ -582,8 +612,9 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'enterprise',
       rating: 4.1,
       logo: '📈',
-      logoUrl: 'https://favicon.im/futunn.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=futunn.com',
       summary: '一站式数字化金融服务平台',
+      careerUrl: 'https://careers.futunn.com/',
     },
     positions: [
       {
@@ -612,8 +643,9 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'enterprise',
       rating: 4.0,
       logo: '📹',
-      logoUrl: 'https://favicon.im/hikvision.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=hikvision.com',
       summary: '全球领先的智能物联解决方案提供商',
+      careerUrl: 'https://career.hikvision.com/',
     },
     positions: [
       {
@@ -642,8 +674,9 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'unicorn',
       rating: 4.0,
       logo: '👁️',
-      logoUrl: 'https://favicon.im/megvii.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=megvii.com',
       summary: '聚焦物联网场景的人工智能公司',
+      careerUrl: 'https://www.megvii.com/careers',
     },
     positions: [
       {
@@ -672,8 +705,9 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
       scale: 'enterprise',
       rating: 3.9,
       logo: '📚',
-      logoUrl: 'https://favicon.im/yuewen.com',
+      logoUrl: 'https://www.google.com/s2/favicons?sz=128&domain=yuewen.com',
       summary: '中国领先的网络文学平台',
+      careerUrl: 'https://join.yuewen.com/',
     },
     positions: [
       {
@@ -689,3 +723,28 @@ export const INTERNSHIP_SEED: RecruitmentPOI[] = [
     benefits: ['餐补'],
   },
 ];
+
+function withWorkDefaults(poi: RecruitmentPOI): RecruitmentPOI {
+  const logo = resolveCompanyLogo({
+    siteCareerUrl: poi.company.careerUrl,
+    companyLogoUrl: poi.company.logoUrl,
+    fallbackEmoji: poi.company.logo,
+  });
+  return {
+    ...poi,
+    mode: 'work',
+    company: {
+      ...poi.company,
+      logo: logo.emoji,
+      logoUrl: logo.url ?? poi.company.logoUrl,
+    },
+    positions: poi.positions.map((position) => ({
+      ...position,
+      taxonomy: position.taxonomy ?? defaultTaxonomyForType(position.type),
+    })),
+  };
+}
+
+/** 工作模式精选公司。INTERNSHIP_SEED 为兼容别名。 */
+export const WORK_SEED: RecruitmentPOI[] = WORK_SEED_RAW.map(withWorkDefaults);
+export const INTERNSHIP_SEED = WORK_SEED;

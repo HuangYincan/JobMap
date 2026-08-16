@@ -37,10 +37,9 @@
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
-  gap: 3px;
   justify-content: center;
-  min-width: 58px;
-  padding: 8px 13px 7px;
+  min-width: 40px;
+  padding: 8px 12px;
   transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -73,29 +72,6 @@
 
 .option[aria-checked="true"] .icon {
   transform: scale(1.08);
-}
-
-.label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-
-.indicator {
-  background: var(--mode-color, var(--blue));
-  border-radius: 50%;
-  height: 4px;
-  opacity: 0;
-  transform: scale(0.3);
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  width: 4px;
-}
-
-.option[aria-checked="true"] .indicator {
-  opacity: 1;
-  transform: scale(1);
 }
 
 /* ---- 深色模式 ---- */

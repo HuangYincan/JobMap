@@ -6,9 +6,11 @@
 // - 组合搜索：关键词 + 标签 + 筛选器 + 空间范围
 // ============================================================
 
-import type { FilterConfig, FilterState, POI, SortOption } from './types.ts';
+import type { FilterConfig, FilterState, MapMode, POI, SortOption } from './types.ts';
 import { isRecruitmentPOI } from './types.ts';
-import { MODES } from './modes.ts';
+import { getMode } from './modes.ts';
+import { positionMatchesTaxonomySelection, selectedTaxonomyPaths } from './job-taxonomy.ts';
+import { categoryMatches, popularityScore } from './viewport-search.ts';
 
 // ---- 关键词匹配 ----
 
@@ -77,14 +79,20 @@ export function poiMatchesQuery(poi: POI, query: string): boolean {
  * 未设置（undefined / 空串 / 空数组）视为不限制。
  */
 export function matchFilter(poi: POI, key: string, value: any): boolean {
-  if (value === undefined || value === null) return true;
+  if (value === undefined || value === null || value === '') return true;
 
   switch (key) {
     case 'category': {
       if (!isRecruitmentPOI(poi)) {
-        return value === 'all' || poi.category === value;
+        return categoryMatches(poi.category, String(value));
       }
       return true;
+    }
+    case 'minRating': {
+      if (isRecruitmentPOI(poi)) return true;
+      const min = Number(value);
+      if (!Number.isFinite(min) || min <= 0) return true;
+      return (poi.rating ?? 0) >= min;
     }
     case 'price': {
       if (isRecruitmentPOI(poi)) return true;
@@ -119,6 +127,12 @@ export function matchFilter(poi: POI, key: string, value: any): boolean {
       const sel = value as string[];
       if (!sel.length) return true;
       return poi.positions.some((p) => sel.includes(p.type));
+    }
+    case 'jobTaxonomy': {
+      if (!isRecruitmentPOI(poi)) return true;
+      const paths = selectedTaxonomyPaths({ [key]: value });
+      if (!paths.length) return true;
+      return poi.positions.some((p) => positionMatchesTaxonomySelection(p, paths));
     }
     case 'salary': {
       if (!isRecruitmentPOI(poi)) return true;
@@ -169,8 +183,10 @@ function sortValue(poi: POI, key: string): number {
     case 'positionCount':
       return isRecruitmentPOI(poi) ? poi.positions.length : 0;
     case 'popularity': {
-      if (isRecruitmentPOI(poi)) return 0;
-      return poi.reviewCount ?? 0;
+      if (isRecruitmentPOI(poi)) {
+        return (poi.positions.length * 30) + Math.round((poi.company.rating ?? 0) * 8);
+      }
+      return popularityScore(poi);
     }
     case 'qsRank':
       return 0;
@@ -199,6 +215,77 @@ export function sortPOIs(pois: POI[], sortKey: string): POI[] {
   return sorted;
 }
 
+// ---- 招聘模式搜索建议（公司 / 岗位，不走高德 POI） ----
+
+export interface RecruitmentSuggestion {
+  id: string;
+  name: string;
+  subtitle: string;
+  kind: 'company' | 'job';
+  poiId: string;
+  positionId?: string;
+  location: { lng: number; lat: number };
+}
+
+const SCALE_HINT: Record<string, string> = {
+  bigtech: '大厂',
+  unicorn: '独角兽',
+  startup: '创业公司',
+  enterprise: '大型企业',
+};
+
+/** 从招聘 POI 生成输入建议：公司优先，再补匹配岗位。 */
+export function suggestRecruitment(
+  pois: POI[],
+  query: string,
+  limit = 8
+): RecruitmentSuggestion[] {
+  const q = query.trim();
+  if (!q || limit <= 0) return [];
+
+  const companies: RecruitmentSuggestion[] = [];
+  const jobs: RecruitmentSuggestion[] = [];
+
+  for (const poi of pois) {
+    if (!isRecruitmentPOI(poi)) continue;
+
+    const companyText = [
+      poi.company.name,
+      industrySearchText(poi.company.industries),
+      poi.company.summary || '',
+    ].join(' ');
+    if (matchKeyword(companyText, q)) {
+      companies.push({
+        id: `company:${poi.id}`,
+        kind: 'company',
+        poiId: poi.id,
+        name: poi.company.name,
+        subtitle: [SCALE_HINT[poi.company.scale], industrySearchText(poi.company.industries).split(' ')[0]]
+          .filter(Boolean)
+          .join(' · ') || '公司',
+        location: { lng: poi.location.lng, lat: poi.location.lat },
+      });
+    }
+
+    for (const pos of poi.positions) {
+      if (pos.status !== 'open') continue;
+      const jobText = [pos.title, pos.department || '', ...(pos.skills || []), ...(pos.majors || [])].join(' ');
+      if (!matchKeyword(jobText, q)) continue;
+      jobs.push({
+        id: `job:${pos.id}`,
+        kind: 'job',
+        poiId: poi.id,
+        positionId: pos.id,
+        name: pos.title,
+        subtitle: [poi.company.name, pos.department].filter(Boolean).join(' · '),
+        location: { lng: poi.location.lng, lat: poi.location.lat },
+      });
+    }
+  }
+
+  return [...companies, ...jobs].slice(0, limit);
+}
+
 // ---- 组合管线 ----
 
 export interface QueryPipeline {
@@ -220,9 +307,15 @@ export function runPOIPipeline(pois: POI[], pipe: QueryPipeline): POI[] {
     result = result.filter((poi) => poiMatchesQuery(poi, pipe.query!));
   }
 
-  // 2. 筛选
-  if (pipe.filters) {
-    result = applyFilters(result, pipe.filters);
+  // 2. 筛选（距离滑块要等算出 distance 后再裁）
+  const filters = pipe.filters ? { ...pipe.filters } : undefined;
+  const distanceKm =
+    filters && typeof filters.distance === 'number' ? filters.distance : undefined;
+  if (filters && 'distance' in filters) {
+    delete filters.distance;
+  }
+  if (filters) {
+    result = applyFilters(result, filters);
   }
 
   // 3. 距离计算（附加 distance 字段）
@@ -233,10 +326,15 @@ export function runPOIPipeline(pois: POI[], pipe: QueryPipeline): POI[] {
     });
   }
 
-  // 4. 空间范围
-  if (pipe.maxDistance && pipe.maxDistance > 0) {
-    const maxDist = pipe.maxDistance;
-    result = result.filter((poi) => (poi.distance ?? Infinity) <= maxDist);
+  // 4. 空间范围（maxDistance 米 或 筛选器 km）
+  const maxDistM =
+    pipe.maxDistance && pipe.maxDistance > 0
+      ? pipe.maxDistance
+      : distanceKm !== undefined
+        ? distanceKm * 1000
+        : 0;
+  if (maxDistM > 0) {
+    result = result.filter((poi) => (poi.distance ?? Infinity) <= maxDistM);
   }
 
   // 5. 排序
@@ -264,10 +362,10 @@ function haversine(
 
 // ---- 模式特定的筛选/排序配置（便捷导出） ----
 
-export function getModeFilters(mode: keyof typeof MODES): FilterConfig[] {
-  return MODES[mode].filters;
+export function getModeFilters(mode: MapMode): FilterConfig[] {
+  return getMode(mode).filters;
 }
 
-export function getModeSortOptions(mode: keyof typeof MODES): SortOption[] {
-  return MODES[mode].sortOptions;
+export function getModeSortOptions(mode: MapMode): SortOption[] {
+  return getMode(mode).sortOptions;
 }

@@ -2,23 +2,24 @@
 // GET /api/pois/[id] — POI 详情
 //
 // 遵循 tech/08-multi-mode-system.md：
-//   ?mode=internship 指定模式，跨模式 id 冲突时避免歧义
+//   ?mode=work 指定模式，跨模式 id 冲突时避免歧义
 // ============================================================
 
 import { NextResponse } from 'next/server';
 import { INTERNSHIP_SEED } from '@/lib/seed-data';
+import { isRecruitmentMode } from '@/lib/types';
+import type { MapMode } from '@/lib/types';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const url = new URL(request.url);
-  const mode = url.searchParams.get('mode') || 'internship';
+  const mode = (url.searchParams.get('mode') || 'work') as MapMode;
   const { id: rawId } = await params;
   const id = decodeURIComponent(rawId);
 
-  // 实习模式：seed 数据
-  if (mode === 'internship') {
+  if (isRecruitmentMode(mode)) {
     const poi = INTERNSHIP_SEED.find((p) => p.id === id);
     if (!poi) {
       return NextResponse.json(

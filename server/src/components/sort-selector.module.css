@@ -5,8 +5,8 @@
 
 .trigger {
   align-items: center;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.26);
   border-radius: 10px;
   color: var(--ink);
   cursor: pointer;
@@ -15,16 +15,17 @@
   font-weight: 600;
   gap: 6px;
   justify-content: space-between;
-  min-width: 120px;
-  padding: 8px 11px;
+  min-width: 0;
+  max-width: 108px;
+  padding: 8px 9px;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1),
     border-color 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .trigger:hover {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(35, 119, 243, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.36);
 }
 
 .triggerLabel {
@@ -52,10 +53,12 @@
   box-shadow: var(--shadow);
   list-style: none;
   margin: 6px 0 0;
-  min-width: 160px;
+  min-width: 132px;
   padding: 5px;
   position: absolute;
   top: 100%;
+  right: 0;
+  left: auto;
   z-index: 50;
 }
 
@@ -78,7 +81,7 @@
 }
 
 .option:hover {
-  background: rgba(35, 119, 243, 0.08);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .optionActive {
@@ -98,7 +101,7 @@
   }
 
   .trigger:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .menu {
@@ -111,6 +114,6 @@
   }
 
   .option:hover {
-    background: rgba(35, 119, 243, 0.16);
+    background: rgba(255, 255, 255, 0.06);
   }
 }

@@ -7,15 +7,35 @@
 // - 数据源: amap（高德）/ seed（内置精选数据）/ api（后端）
 // ============================================================
 
-/** 地图模式标识。Phase 2 实现 domain + internship，其余预留。 */
+/** 地图模式标识。Phase 2：domain + work；internship 是 work 的兼容别名。 */
 export type MapMode =
   | 'domain'
+  | 'work'
   | 'internship'
-  | 'autumn-recruit'
-  | 'spring-recruit'
-  | 'social-recruit'
   | 'college'
   | 'overseas';
+
+/** 招聘一级分类：实习 / 校招 / 社招（插件可再挂行业维度） */
+export type JobFamily = 'intern' | 'campus' | 'social';
+
+/** 实习细分 */
+export type InternKind = 'summer' | 'daily';
+export type InternConversion = 'conversion' | 'no-conversion';
+
+/** 校招细分 */
+export type CampusSeason = 'autumn' | 'spring';
+
+/** 社招经验 */
+export type SocialExperience = '0-1' | '1-3' | '3-5' | '5+';
+
+/** 岗位上挂的招聘分类标签（筛选用，插件可扩展） */
+export interface JobTaxonomy {
+  family: JobFamily;
+  internKind?: InternKind;
+  conversion?: InternConversion;
+  campusSeason?: CampusSeason;
+  experience?: SocialExperience;
+}
 
 /** 模式 POI 形态：domain = 普通地点，recruitment = 公司+岗位 */
 export type POIKind = 'domain' | 'recruitment';
@@ -64,15 +84,28 @@ export interface DomainPOI extends BasePOI {
   reviewCount?: number;
 }
 
+/** 公司办公点。一家公司多个职场，一个岗位只挂一个 site。 */
+export interface CompanySite {
+  id: string;
+  name: string;
+  location?: POILocation;
+  careerUrl?: string;
+  logoUrl?: string;
+}
+
 /** 招聘岗位（实习/秋招/社招模式的 items） */
 export interface Position {
   id: string;
+  /** 所属办公点（006_recruitment_sites.site_id） */
+  siteId?: string;
   /** 岗位名称 */
   title: string;
   /** 部门 */
   department?: string;
   /** 岗位类型：实习/校招/社招 */
-  type: 'intern' | 'campus' | 'social';
+  type: JobFamily;
+  /** 招聘分类细分（插件筛选树） */
+  taxonomy?: JobTaxonomy;
   /** 薪资范围（元/月） */
   salary?: { min: number; max: number };
   /** 学历要求 */
@@ -81,10 +114,28 @@ export interface Position {
   majors?: string[];
   /** 技能要求 */
   skills?: string[];
+  /** 岗位职责 / JD 正文（可空，UI 会回退到摘要） */
+  description?: string;
   /** 投递截止日期 */
   deadline?: string;
+  /** 投递入口：官网 / Boss / 实习僧 / 牛客等 */
+  apply?: ApplyLink;
   /** 是否在招 */
   status: 'open' | 'closed' | 'paused';
+}
+
+/** 岗位投递渠道 */
+export type ApplySource =
+  | 'official'
+  | 'boss'
+  | 'shixiseng'
+  | 'nowcoder'
+  | 'liepin'
+  | 'other';
+
+export interface ApplyLink {
+  source: ApplySource;
+  url: string;
 }
 
 /** 公司/招聘 POI（实习模式） */
@@ -106,7 +157,11 @@ export interface RecruitmentPOI extends BasePOI {
     logoUrl?: string;
     /** 一句话简介 */
     summary?: string;
+    /** 公司招聘门户（岗位未单独给链接时回退） */
+    careerUrl?: string;
   };
+  /** 办公点（可选；未填时位置用 POI.location） */
+  sites?: CompanySite[];
   /** 在招岗位 */
   positions: Position[];
   /** 福利标签 */
@@ -123,11 +178,13 @@ export type FilterType =
   | 'range'
   | 'slider'
   | 'toggle'
-  | 'date';
+  | 'date'
+  | 'taxonomy';
 
 export interface FilterOption {
   value: string;
   label: string;
+  children?: FilterOption[];
 }
 
 export interface FilterConfig {
@@ -167,14 +224,9 @@ export function isRecruitmentPOI(poi: POI): poi is RecruitmentPOI {
   return poi.kind === 'recruitment';
 }
 
-/** 判断是否属于招聘类模式 */
+/** 判断是否属于招聘类模式（work；internship 为兼容别名） */
 export function isRecruitmentMode(mode: MapMode): boolean {
-  return (
-    mode === 'internship' ||
-    mode === 'autumn-recruit' ||
-    mode === 'spring-recruit' ||
-    mode === 'social-recruit'
-  );
+  return mode === 'work' || mode === 'internship';
 }
 
 /** 判断是否属于院校类模式 */
@@ -220,4 +272,29 @@ export function formatSalary(salary?: Position['salary']): string {
   if (!salary) return '面议';
   if (salary.min === salary.max) return `${salary.min}K`;
   return `${salary.min}-${salary.max}K`;
+}
+
+function isHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/** 岗位优先，其次公司招聘门户。非法 URL 视为没有入口。 */
+export function resolveApplyLink(
+  company: RecruitmentPOI,
+  position: Position
+): ApplyLink | null {
+  const direct = position.apply;
+  if (direct?.url && isHttpUrl(direct.url)) {
+    return { source: direct.source, url: direct.url };
+  }
+  const career = company.company.careerUrl;
+  if (career && isHttpUrl(career)) {
+    return { source: 'official', url: career };
+  }
+  return null;
 }

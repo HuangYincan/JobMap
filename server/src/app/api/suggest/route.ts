@@ -8,6 +8,8 @@
 import { NextResponse } from 'next/server';
 import { INTERNSHIP_SEED } from '@/lib/seed-data';
 import { matchKeyword } from '@/lib/search';
+import { isRecruitmentMode } from '@/lib/types';
+import type { MapMode } from '@/lib/types';
 
 /** 热门搜索（静态种子，Phase 3 改为统计） */
 const HOT_SEARCHES = ['算法', '前端', 'Java', '人工智能', '大厂', '产品'];
@@ -15,11 +17,11 @@ const HOT_SEARCHES = ['算法', '前端', 'Java', '人工智能', '大厂', '产
 export function GET(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get('q') || '').trim().toLowerCase();
-  const mode = url.searchParams.get('mode') || 'internship';
+  const mode = (url.searchParams.get('mode') || 'work') as MapMode;
 
   const suggestions = [];
 
-  if (q && mode === 'internship') {
+  if (q && isRecruitmentMode(mode)) {
     for (const poi of INTERNSHIP_SEED) {
       // 公司名匹配
       if (matchKeyword(poi.company.name, q)) {

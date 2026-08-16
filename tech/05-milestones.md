@@ -48,20 +48,23 @@ No calendar release date is committed. Each phase is estimated only after its en
 
 ## Phase 2: Multi-Mode System + POI Display + Search & Filter
 
-**Scope:** Core differentiation features - multi-mode map system with Domain and Internship modes
+**Scope:** Core differentiation features - multi-mode map system with Domain and Work modes
 
 **Duration:** 4-6 weeks (5 sprints)
 
-**Status (2026-08-15):** Sprint 1-2 core implemented and browser-verified on `feature/phase-2-multi-mode`:
-- Multi-mode architecture (7 modes configured, domain + internship active)
-- AMap POI integration with real search (20 POIs verified) + seed fallback
-- Secondary sidebar with glassmorphism POI cards (list view)
-- Search (debounced 300ms) + filter panel (7 recruitment filters) + sort
+**Status (2026-08-16):** Sprint 1-3 client slice is on `feature/phase-2-multi-mode`. Live POIs come from AMap JS API in the browser; MapShell does not call `/api/*` for the list.
+- Multi-mode architecture (domain + work active; college / overseas reserved). Internship is a work-mode filter plugin, not a map mode.
+- Domain viewport search: single-center incremental queue, soft cap 300, empty result stays empty (no DOMAIN_SEED)
+- Work seed shown immediately, then Geocoder-corrected; primary-nav search icon expands the rail and focuses the field
+- Secondary sidebar with glassmorphism POI cards (list + in-panel detail overlay)
+- Primary-rail search drives `query` and opens Explore; card/marker click opens `POIDetailView`; work job cards open a sibling `JdPanel` in the same flex cluster. Apply follows `apply` / `careerUrl`.
+- Search (debounced) + mode-specific filters + sort (rating ≠ popularity)
 - Card-map bidirectional linkage (click select, hover highlight)
-- API routes: `/api/modes`, `/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`, `/api/filter-options`
+- API routes exist for later persistence: `/api/modes`, `/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`, `/api/filter-options`
+- Account slice (2026-08-16): default map mode is **work**; Settings rail item removed into Profile L2; Recent is search-history only (signed-in POST/GET `/api/me/search-history`; guests stay empty). Login is a centered modal (phone OTP demo `000000` + email/GitHub). Migrations `005` identities/sessions/history and `006` companies/sites/positions/logo_assets are in `db/migrations`. Demo APIs are in-memory until `DATABASE_URL` is wired. Seed logos go through `resolveCompanyLogo` (career-site icon → company icon → emoji).
 
 **Key Features:**
-1. **Multi-Mode System** - Mode switching architecture, Domain + Internship modes
+1. **Multi-Mode System** - Mode switching architecture, Domain + Work modes; job family is a filter plugin
 2. **POI System** - AMap POI integration + recruitment data import
 3. **Secondary Sidebar** - Apple-style glassmorphism cards with list and detail views
 4. **Search & Filter** - Full-text search, multi-dimensional filters, spatial queries

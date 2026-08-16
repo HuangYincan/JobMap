@@ -17,4 +17,8 @@ test("map shell vertical slice is present", () => {
   // Map engine must degrade gracefully without an API key.
   assert.match(adapter, /fallback/);
   assert.match(adapter, /NEXT_PUBLIC_AMAP_KEY/);
+  assert.match(shell, /useState<MapMode>\('work'\)/);
+  assert.doesNotMatch(shell, /t\('settings'/);
+  assert.match(shell, /notSignedIn/);
+  assert.match(shell, /AuthModal/);
 });

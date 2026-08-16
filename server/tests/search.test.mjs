@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 // 但项目用 Node 22 LTS，稳妥起见这里仅做 smoke 断言 seed 数据形状。
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
 
-test('seed data: internship companies have required fields', () => {
+test('seed data: work companies have required fields and taxonomy', () => {
   assert.ok(INTERNSHIP_SEED.length >= 10, 'expect at least 10 companies');
   for (const company of INTERNSHIP_SEED) {
     assert.ok(company.id, 'company has id');
@@ -20,8 +20,13 @@ test('seed data: internship companies have required fields', () => {
     assert.ok(company.location.lng, 'company has lng');
     assert.ok(company.location.lat, 'company has lat');
     assert.equal(company.kind, 'recruitment');
+    assert.equal(company.mode, 'work');
     assert.ok(company.company.scale, 'company has scale');
     assert.ok(Array.isArray(company.positions), 'company has positions');
     assert.ok(company.positions.length > 0, 'company has at least one position');
+    assert.ok(company.positions.every((p) => p.taxonomy?.family === p.type));
+    if (company.company.careerUrl) {
+      assert.ok(company.company.logoUrl, 'career site should resolve a logo url');
+    }
   }
 });

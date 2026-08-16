@@ -11,7 +11,7 @@ export interface ModeSwitcherProps {
   activeMode: MapMode;
   /** Called with the newly selected mode */
   onModeChange: (mode: MapMode) => void;
-  /** Modes to show. Defaults to ACTIVE_MODES (domain + internship). */
+  /** Modes to show. Defaults to ACTIVE_MODES (domain + work). */
   modes?: MapMode[];
   /** Extra class name applied to the root pill */
   className?: string;
@@ -115,11 +115,10 @@ export function ModeSwitcher({
             style={{ "--mode-color": config.color } as CSSProperties}
             onClick={() => onModeChange(mode)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            title={config.nameEn}
+            title={config.name}
+            aria-label={config.name}
           >
             <ModeIcon iconId={config.icon} className={styles.icon} />
-            <span className={styles.label}>{config.name}</span>
-            <span className={styles.indicator} aria-hidden="true" />
           </button>
         );
       })}

@@ -1,35 +1,43 @@
 // ============================================================
 // POI 数据服务 — 按模式统一获取（插件化数据源）
 //
-// 设计遵循"一切皆插件"原则（agent.md + tech/03-plugin-system.md）：
-// 每种模式是一个插件，声明自己的数据源与展示方式。本服务是插件的
-// 调度入口：给定模式 + 查询参数 → 返回统一规范的 POI 列表。
-//
-// 数据源现状（Phase 2）：
-// - domain 插件：AMap JS API（实时周边搜索，按 zoom 自适应）→ seed 回退
-// - internship 插件：内置精选 seed → AMap 实时搜索回退
-// DB 就绪后，各插件可无缝切换到 sources/import_runs 的规范数据。
+// Domain：视口网格波次增量并入累计池，空结果不回退假数据。
+// Internship / 工作：seed 岗位 + 地理编码校正坐标。
+// 距离与列表裁剪由调用方用钉死的 origin 走 runPOIPipeline。
 // ============================================================
 
-import { searchPOI, searchViewportPOIs } from './amap-api.ts';
-import { DOMAIN_SEED, INTERNSHIP_SEED } from './seed-data.ts';
-import { runPOIPipeline, type QueryPipeline } from './search.ts';
-import type { MapMode, POI } from './types.ts';
+import {
+  geocodeAddress,
+  searchPOI,
+  searchViewportPOIsIncremental,
+} from './amap-api.ts';
+import { INTERNSHIP_SEED } from './seed-data.ts';
+import type { QueryPipeline } from './search.ts';
+import { mergePoisById, isCommonPoi, POI_HARD_CAP, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
+import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
+import { isRecruitmentMode } from './types.ts';
 
 export interface FetchPOIOptions extends QueryPipeline {
   mode: MapMode;
-  /** 是否只取已实现模式的 POI（domain/internship） */
   onlyActive?: boolean;
-  /** 当前地图缩放级别（Domain 模式用于自适应半径） */
   zoom?: number;
+  bounds?: ViewportBounds;
+  /** 已累计的 POI，本轮往里合并，不整表替换 */
+  existing?: POI[];
+  /** 本轮最多新加多少 */
+  addCap?: number;
+  /** PlaceSearch 页偏移，「需要更多」时递增 */
+  pageOffset?: number;
+  /** 增量回调：每波次合并后调用（完整累计池） */
+  onBatch?: (pois: POI[]) => void;
+  signal?: { cancelled: boolean };
 }
 
 /** 获取指定模式的 POI */
 export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<POI[]> {
   const { mode, onlyActive = true } = options;
 
-  // 未实现模式：返回空（Phase 3+ 实现）
-  if (onlyActive && mode !== 'domain' && mode !== 'internship') {
+  if (onlyActive && mode !== 'domain' && !isRecruitmentMode(mode)) {
     return [];
   }
 
@@ -37,58 +45,110 @@ export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<POI[]>
     return fetchDomainPOIs(options);
   }
 
-  // 实习：seed 数据（真实公开坐标）
-  let seeded = INTERNSHIP_SEED.filter((p) => p.mode === mode) as POI[];
-  let results = runPOIPipeline(seeded, options);
-
-  // 复用高德搜索 API：当 seed 无匹配时，回退到高德实时搜索该关键词，
-  // 返回真实地点（任意公司名/地点都可在地图定位，如"小红书"）。
-  if (results.length === 0 && options.query) {
-    const center = options.center ?? { lng: 120.15, lat: 30.27 };
-    try {
-      const { pois } = await searchPOI(
-        { keyword: options.query, center, radius: 10000, city: '杭州', pageSize: 10 },
-        1
-      );
-      results = runPOIPipeline(pois as POI[], { ...options, query: undefined });
-    } catch (err) {
-      console.warn('[poi-service] internship AMap fallback search failed:', err);
-    }
-  }
-
-  return results;
+  return fetchWorkPOIs(options);
 }
 
-/** Domain 插件：AMap 视口搜索（制图学：按 zoom 自适应半径，全分类均匀铺满） */
+
+/** Domain：往累计池里增量合并；找不到就不塞 seed */
 async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
   const center = options.center ?? { lng: 120.15, lat: 30.27 };
   const zoom = options.zoom ?? 13;
+  const existing = (options.existing ?? []) as DomainPOI[];
 
-  // 有明确查询词 → 精准搜索（用户想找特定地点）
   if (options.query) {
     try {
-      const result = await searchPOI(
-        { keyword: options.query, center, radius: Math.max(800, 50000 / Math.pow(2, zoom - 10)), pageSize: 25 },
-        zoom <= 13 ? 1 : 2
-      );
-      if (result.pois.length > 0) {
-        return runPOIPipeline(result.pois, { ...options, query: undefined });
-      }
+      const result = await searchPOI({
+        keyword: options.query,
+        center,
+        radius: searchRadiusMeters(zoom, center.lat),
+        pageSize: 25,
+        page: (options.pageOffset ?? 0) + 1,
+        city: zoom <= 8 ? '全国' : '',
+      });
+      const next = mergePoisById(existing, result.pois.filter((p) => isCommonPoi(p)), POI_HARD_CAP);
+      options.onBatch?.(next);
+      return next;
     } catch (err) {
       console.warn('[poi-service] domain keyword search failed:', err);
+      options.onBatch?.(existing);
+      return existing;
     }
   }
 
-  // 无查询词 → 视口搜索：按 zoom 铺满全分类、重要性优先
+  const category =
+    typeof options.filters?.category === 'string' && options.filters.category
+      ? options.filters.category
+      : undefined;
+
   try {
-    const pois = await searchViewportPOIs(center, zoom);
-    if (pois.length > 0) {
-      return runPOIPipeline(pois, { ...options, query: undefined });
-    }
+    const pois = await searchViewportPOIsIncremental({
+      center,
+      zoom,
+      bounds: options.bounds,
+      existing,
+      addCap: options.addCap,
+      pageOffset: options.pageOffset,
+      signal: options.signal,
+      categories: category ? [category] : undefined,
+      onBatch: (batch) => {
+        if (options.signal?.cancelled) return;
+        options.onBatch?.(batch);
+      },
+    });
+    return pois;
   } catch (err) {
-    console.warn('[poi-service] AMap viewport search failed, fallback to DOMAIN_SEED:', err);
+    console.warn('[poi-service] AMap viewport search failed:', err);
+    options.onBatch?.(existing);
+    return existing;
   }
+}
 
-  // AMap 不可用 → 回退内置杭州示例（保证首屏始终有数据）
-  return runPOIPipeline(DOMAIN_SEED, options);
+let geocodePromise: Promise<RecruitmentPOI[]> | null = null;
+
+/** 用 Geocoder 校正 seed 里可能不准的大厂坐标 */
+export async function resolveInternshipLocations(
+  seed: RecruitmentPOI[] = INTERNSHIP_SEED
+): Promise<RecruitmentPOI[]> {
+  const resolved = await Promise.all(
+    seed.map(async (poi) => {
+      const address = poi.location.address;
+      if (!address) return poi;
+      try {
+        const loc = await geocodeAddress(`${address} ${poi.name}`, '杭州');
+        if (!loc) return poi;
+        return {
+          ...poi,
+          location: {
+            ...poi.location,
+            lng: loc.lng,
+            lat: loc.lat,
+            address: poi.location.address,
+          },
+        };
+      } catch {
+        return poi;
+      }
+    })
+  );
+  return resolved;
+}
+
+async function internshipSeedResolved(): Promise<RecruitmentPOI[]> {
+  if (!geocodePromise) {
+    geocodePromise = resolveInternshipLocations(INTERNSHIP_SEED).catch((err) => {
+      console.warn('[poi-service] geocode work seed failed:', err);
+      geocodePromise = null;
+      return INTERNSHIP_SEED;
+    });
+  }
+  return geocodePromise;
+}
+
+async function fetchWorkPOIs(options: FetchPOIOptions): Promise<POI[]> {
+  const immediate = INTERNSHIP_SEED as POI[];
+  options.onBatch?.(immediate);
+
+  const seeded = (await internshipSeedResolved()) as POI[];
+  options.onBatch?.(seeded);
+  return seeded;
 }

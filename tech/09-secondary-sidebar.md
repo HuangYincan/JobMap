@@ -1,8 +1,8 @@
 # 二级侧控栏设计规范
 
-**文档版本:** 1.0  
+**文档版本:** 1.1  
 **创建日期:** 2026-08-15  
-**状态:** 设计阶段  
+**状态:** 当前实现（列表 + 详情覆盖）  
 **设计语言:** Apple Maps 风格
 
 ---
@@ -102,34 +102,23 @@
 
 ```css
 .poi-card {
-  /* 半透明背景 */
-  background: rgba(255, 255, 255, 0.72);
-  
-  /* 模糊效果 */
-  backdrop-filter: blur(24px) saturate(165%);
-  -webkit-backdrop-filter: blur(24px) saturate(165%);
-  
-  /* 边框 */
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  
-  /* 圆角 */
+  /* 液态玻璃：几乎不铺实色，靠模糊 / 饱和 / 内高光（参考 liquid-glass-react） */
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(16px) saturate(155%);
+  -webkit-backdrop-filter: blur(16px) saturate(155%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 16px;
-  
-  /* 阴影 */
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 1px 2px rgba(0, 0, 0, 0.06);
-  
-  /* 过渡动画 */
-  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.42) inset,
+    0 1px 3px rgba(255, 255, 255, 0.2) inset,
+    0 6px 18px rgba(24, 45, 57, 0.07);
+  transition: all 0.28s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* Hover 状态 */
+/* Hover：更透，提高模糊和饱和，加一层顶缘高光，不要刷白 */
 .poi-card:hover {
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.12),
-    0 2px 4px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(22px) saturate(180%);
   transform: translateY(-2px);
 }
 
@@ -211,10 +200,16 @@
 
 ### 展开方式
 
-**桌面端:**
-- 点击卡片 → 侧控栏宽度扩展到 640px
-- 动画: 300ms cubic-bezier ease-out
-- 详情页覆盖列表视图（可返回）
+**桌面端（当前）:**
+- 点击卡片或地图 marker → 侧控栏从 380px 扩到 420px，详情覆盖列表
+- 动画: 320ms cubic-bezier(0.32, 0.72, 0, 1)
+- 返回列表：顶栏「返回列表」；模式切换会清掉详情
+- 招聘详情里的岗位卡片可点：公司详情与 JD 同组 flex 停靠（`.cluster`），JD 永远贴在右侧 6px，随主栏一起右移
+- 岗位/POI **卡片**悬浮保持液态玻璃（提亮模糊/饱和 + 轻抬，不用实心白底）
+- 二级 Explore / 三级 JD **面板外壳**用 `--soft-strong` 实底霜面（浅色 ~0.84–0.90，深色 ~0.84–0.88），不要做成半透明主题
+- JD 底部「投递」按岗位 `apply` 或公司 `careerUrl` 新开页（官网 / Boss / 实习僧 / 牛客等）
+- 关 JD / 返回列表 / 切模式都会清掉三级面板
+- **Profile / Recent** 也走同一套二级霜面面板（`--soft-strong`），从左侧 rail 展开。Preference 卡片在 Profile 二级卡内部切换，不新开三级。Recent 只列搜索记录。
 
 **移动端:**
 - 点击卡片 → 全屏详情页从右侧滑入
@@ -706,7 +701,9 @@ function handleKeyDown(e: KeyboardEvent) {
 - [ ] 卡片 Hover → Marker 高亮
 - [ ] 卡片点击 → 地图飞行
 - [ ] Marker 点击 → 侧控栏滚动
-- [ ] 选中状态同步
+- [x] 选中状态同步
+- [x] 结果栏：数量右侧蓝色刷新图标；右侧蓝色加号图标扩池；已去掉底部脚注
+- [x] 模式切换走浏览器 sessionStorage 缓存，回来不重搜
 
 ### Phase 2.4 - 模式特化
 - [ ] Domain 模式卡片模板

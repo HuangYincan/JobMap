@@ -2,7 +2,7 @@
 // GET /api/pois — POI 列表（支持模式、搜索、筛选、排序）
 //
 // 遵循 tech/10-search-filter.md API 设计：
-//   ?mode=internship&q=算法&filters={"industry":["ai"]}&sort=salaryDesc
+//   ?mode=work&q=算法&filters={"industry":["ai"]}&sort=salaryDesc
 //
 // Phase 2 数据策略：
 // - 实习模式：内置精选 seed 数据（DB 就绪后切换 PostGIS 查询）
@@ -13,7 +13,7 @@
 import { NextResponse } from 'next/server';
 import { INTERNSHIP_SEED } from '@/lib/seed-data';
 import { runPOIPipeline } from '@/lib/search';
-import { withDistance } from '@/lib/types';
+import { isRecruitmentMode, withDistance } from '@/lib/types';
 import type { MapMode } from '@/lib/types';
 
 /** 解析筛选 JSON，非法时返回空对象（宽容处理） */
@@ -39,7 +39,7 @@ function parseBounds(raw: string | null): [number, number, number, number] | nul
 
 export function GET(request: Request) {
   const url = new URL(request.url);
-  const mode = (url.searchParams.get('mode') || 'internship') as MapMode;
+  const mode = (url.searchParams.get('mode') || 'work') as MapMode;
   const q = url.searchParams.get('q') || undefined;
   const sort = url.searchParams.get('sort') || undefined;
   const filters = parseFilters(url.searchParams.get('filters'));
@@ -49,7 +49,7 @@ export function GET(request: Request) {
 
   // ---- 数据源选择 ----
   let pois;
-  if (mode === 'internship') {
+  if (isRecruitmentMode(mode)) {
     pois = INTERNSHIP_SEED;
   } else if (mode === 'domain') {
     // Domain 模式服务端示例（浏览器端走 AMap JS API）

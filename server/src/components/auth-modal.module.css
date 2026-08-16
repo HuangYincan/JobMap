@@ -1,0 +1,138 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(18, 24, 28, 0.42);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+}
+
+.card {
+  position: relative;
+  width: min(440px, 100%);
+  background: var(--soft-strong, rgba(255, 255, 255, 0.92));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.72));
+  border-radius: 22px;
+  box-shadow: 0 24px 64px rgba(24, 45, 57, 0.22);
+  padding: 28px 24px 24px;
+  color: var(--ink);
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close:hover {
+  background: rgba(0, 122, 255, 0.1);
+  color: var(--blue, #007AFF);
+}
+
+.title {
+  margin: 0 28px 6px 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.tab {
+  flex: 1;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.4);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 34px;
+}
+
+.tabActive {
+  background: color-mix(in srgb, var(--blue, #007AFF) 16%, rgba(255, 255, 255, 0.7));
+  color: var(--blue, #007AFF);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.field input {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 11px 12px;
+}
+
+.primary {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: var(--blue, #007AFF);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 650;
+  min-height: 42px;
+}
+
+.primary:disabled {
+  opacity: 0.5;
+}
+
+.hint,
+.error {
+  margin: 10px 0 0;
+  font-size: 12px;
+}
+
+.hint {
+  color: var(--muted);
+}
+
+.error {
+  color: #ff3b30;
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: rgba(26, 34, 39, 0.92);
+  }
+
+  .field input {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}

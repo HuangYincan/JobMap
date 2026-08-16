@@ -9,7 +9,7 @@
 import { NextResponse } from 'next/server';
 import { INTERNSHIP_SEED } from '@/lib/seed-data';
 import { runPOIPipeline } from '@/lib/search';
-import { withDistance } from '@/lib/types';
+import { isRecruitmentMode, withDistance } from '@/lib/types';
 import type { FilterState, MapMode, POI } from '@/lib/types';
 
 interface SearchBody {
@@ -33,13 +33,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const mode = body.mode || 'internship';
+  const mode = body.mode || 'work';
   const page = Math.max(1, Math.floor(body.page || 1));
   const pageSize = Math.min(50, Math.max(1, Math.floor(body.pageSize || 20)));
 
   // 数据源
   let pois: POI[] = [];
-  if (mode === 'internship') {
+  if (isRecruitmentMode(mode)) {
     pois = INTERNSHIP_SEED;
   } else if (mode === 'domain') {
     // 浏览器端走 AMap JS API；服务端无 domain 数据时空结果
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
   // 聚合：行业计数（筛选器动态选项）
   const industries: Record<string, number> = {};
-  if (mode === 'internship') {
+  if (isRecruitmentMode(mode)) {
     for (const poi of processed) {
       if (poi.kind !== 'recruitment') continue;
       for (const ind of poi.company.industries) {

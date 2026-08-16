@@ -10,7 +10,7 @@
 ## Phase 2 目标
 
 实现 Domain Map 的核心差异化功能：
-1. **多模式系统** - Domain 模式 + 实习模式
+1. **多模式系统** - Domain 模式 + 工作模式（实习/校招/社招是筛选插件）
 2. **POI 系统** - 高德 POI 集成 + 招聘数据导入
 3. **二级侧控栏** - Apple 风格卡片列表 + 详情页
 4. **搜索筛选** - 全文搜索 + 多维筛选 + 空间查询
@@ -91,11 +91,14 @@
 - [ ] 加载状态和空状态
 
 **2.5 地图联动**
-- [ ] POI Marker 渲染
-- [ ] Marker 聚合（Cluster）
-- [ ] 卡片 Hover → Marker 高亮
-- [ ] 卡片点击 → 地图飞行
-- [ ] Marker 点击 → 侧控栏滚动
+- [x] POI Marker 渲染
+- [x] 卡片 Hover → Marker 高亮
+- [x] 卡片点击 → 地图飞行
+- [x] Marker 点击 → 打开详情
+- [x] 累计池增量搜索：平移/缩放不整表重搜；首屏堆到 300；结果栏加号每次再加约 300，可突破软上限
+- [x] 浏览器 sessionStorage 按模式缓存累计池；切模式还原，不重打高德；刷新图标才清缓存
+- [x] 距离始终用用户定位，没有定位才回退到视图中心
+- [x] 过滤无评分/评论/照片的小众店；从用户位置单点 searchNearBy（刷新才改视野中心），半径=比例尺×30，超 50km 回落 3000m；按 3 次/秒排队翻页
 
 **交付物:**
 - [x] Domain 模式展示真实高德 POI
@@ -128,7 +131,7 @@
 **3.3 实习模式 UI**
 - [ ] 实习模式配置
 - [ ] 招聘卡片模板 `<RecruitmentCard />`
-- [ ] 岗位列表展示
+- [x] 岗位列表展示（招聘模式）
 - [ ] 公司 Logo 展示
 
 **3.4 筛选器系统（基础版）**
@@ -149,11 +152,51 @@
 - [ ] 距离缓冲区筛选
 
 **交付物:**
-- [x] 实习模式可切换
+- [x] 工作模式可切换（实习/校招/社招是筛选插件）
 - [x] 展示真实招聘数据（至少 50 家公司）
 - [x] 筛选器功能正常
 - [x] 筛选后地图和列表同步更新
 - [x] 文档：招聘数据schema
+
+---
+
+### Sprint 3.5: 账户 / 偏好 / 搜索历史上云 + 招聘库表 (2026-08-16)
+
+**目标:** 把设置收进 Profile 二级卡；Recent 只记搜索并上云；默认工作模式；为真实招聘数据留库表。
+
+#### 产品规则
+
+1. **Recent** 只记录用户发起的搜索（提交 / 选建议），不是浏览历史。按账户持久化到数据库。未登录不写云端，本地也不假装成账户记录。
+2. **Profile** 打开二级卡（`--soft-strong` 霜面，与 Explore 同级，不是三级）：
+   - 已登录：头像、显示名、账号标识（手机 / 邮箱 / OAuth 邮箱）均可编辑；下方 Preference 卡片组（语言、默认地图模式）在**同一二级卡内**展开，不新开三级。
+   - 未登录：点 Profile 或右侧登录 icon → 屏幕中央登录大卡。
+3. **删掉主导航 Settings**。语言、默认模式等全部进 Profile。
+4. **Profile 行文案**
+   - 未登录：头像是通用人像 icon；**未登录** / **Not signed in**。
+   - 已登录：`<strong>` 显示名，`<small>` 账号名（手机号或邮箱；GitHub / Google 也展示邮箱）。
+   - 侧栏展开时，Profile 行右侧有登录 / 登出 icon（两种样式）。
+5. **登录弹层**（最顶层矩形大卡，右上角关闭，点遮罩关闭）
+   - 默认：手机号 + 验证码。
+   - 也可：邮箱、GitHub。
+   - Demo：验证码不真发短信；后端预留 `POST /api/auth/otp/send` 给阿里云号码认证 / 短信（[个人开发者短信验证](https://help.aliyun.com/zh/pnvs/use-cases/sms-verify-for-individual-developers)）。
+6. **默认地图模式是工作（work）**。已登录读 `users.preferences.defaultMode`；未登录也是 work。语言：已登录读偏好，未登录跟浏览器。
+7. **真实招聘数据（库表先于爬虫）**
+   - `companies` 1 — N `company_sites`（办公点，含正确坐标）。
+   - `positions` 必须挂一个 `site_id`（一个岗位一个办公点）。
+   - Logo：优先该职场/子公司招聘页 favicon 或官网 icon；失败回退集团保底 icon；再失败 emoji。
+   - 来源插件化：先 `seed`，再 `official-career` / `boss` 等 adapter；过期岗位淘汰，新岗增量。
+
+#### 任务清单
+
+- [x] `005_accounts_sessions_history.sql`：identities / sessions / search_history / user prefs 列
+- [x] `006_recruitment_sites.sql`：companies / company_sites / positions / logo_assets
+- [x] Demo session cookie + OTP/email/GitHub stub API
+- [x] Profile 二级卡 + 行内 Preference；去掉 Settings nav
+- [x] Recent 二级卡只列搜索；登录后 POST/GET `/api/me/search-history`
+- [x] 默认 mode = work
+- [x] Logo resolver（职场招聘页 icon > 公司保底 > emoji）
+
+**相关 SKILL:** `.claude/skills/frontend-component-dev/skill.md`
 
 ---
 
@@ -164,19 +207,22 @@
 #### 任务清单
 
 **4.1 详情页实现**
-- [ ] 详情页组件 `<POIDetailView />`
-- [ ] 详情页展开动画（侧控栏宽度变化）
-- [ ] Domain 详情页模板
-- [ ] 招聘详情页模板
-- [ ] 图片轮播组件
-- [ ] 返回按钮和导航
+- [x] 详情页组件 `<POIDetailView />`
+- [x] 详情页展开动画（侧控栏 380→420px）
+- [x] Domain 详情页模板
+- [x] 招聘详情页模板
+- [x] 岗位卡片可点，右侧三级 JD 面板（`jd-panel.tsx`，与公司详情 flex 成组）
+- [x] 投递按钮按来源跳转（岗位 `apply` > 公司 `careerUrl`）
+- [x] 横向图片条（Domain photos）
+- [x] 返回按钮和导航
+- [x] 完整轮播控件（左右箭头 / 指示点）
 
 **4.2 详情页内容**
-- [ ] 基础信息展示
-- [ ] 图片集展示
-- [ ] 联系方式（地址、电话）
+- [x] 基础信息展示
+- [x] 图片集展示（轮播 + 指示点）
+- [x] 联系方式（地址、电话）
 - [ ] 用户评价展示（Domain 模式）
-- [ ] 岗位列表展示（招聘模式）
+- [x] 岗位列表展示（招聘模式）
 - [ ] 交通方式展示
 
 **4.3 排序功能**

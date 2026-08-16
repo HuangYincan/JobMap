@@ -8,6 +8,22 @@
 // ============================================================
 
 import type { DomainPOI, POILocation } from './types.ts';
+import {
+  AMAP_DEFAULT_RADIUS,
+  AMAP_NEARBY_MAX_RADIUS,
+  AMAP_PAGE_SIZE,
+  AMAP_QPS,
+  buildSearchQueue,
+  keywordsFor,
+  mergePoisById,
+  isCommonPoi,
+  MORE_PAGE_SIZE,
+  POI_HARD_CAP,
+  POI_SOFT_CAP,
+  searchRadiusMeters,
+  zoomStrategy,
+  type ViewportBounds,
+} from './viewport-search.ts';
 
 /** 全局声明：AMap 挂载在 window 上 */
 declare global {
@@ -20,7 +36,7 @@ declare global {
 const AMAP_URL = 'https://webapi.amap.com/maps?v=2.0&key=';
 const SCRIPT_ID = 'amap-jsapi-script';
 /** 随主脚本预加载的插件（v2.0 支持 URL plugin 参数，避免 AMap.plugin 时序竞态） */
-const AMAP_PLUGINS = 'AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation';
+const AMAP_PLUGINS = 'AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation,AMap.Geocoder';
 
 /** 加载状态缓存，避免重复注入 */
 let loadPromise: Promise<any> | null = null;
@@ -117,6 +133,9 @@ interface AMapPOIRecord {
   photos?: { url: string }[];
   open_time?: string;
   business_area?: string;
+  comment?: string | number;
+  reviews?: string | number;
+  biz_ext?: { rating?: string; cost?: string; comment?: string | number };
 }
 
 /** 从高德 POI 记录解析坐标，返回 [lng, lat] 或 null */
@@ -155,7 +174,11 @@ export function normalizeAMapPOI(raw: AMapPOIRecord): DomainPOI | null {
   const category = typeParts[0] || '其他';
   const subcategory = typeParts[1] || undefined;
 
-  const cost = raw.cost ? parseFloat(raw.cost) : undefined;
+  const ratingRaw = raw.rating || raw.biz_ext?.rating;
+  const cost = raw.cost ? parseFloat(raw.cost) : raw.biz_ext?.cost ? parseFloat(raw.biz_ext.cost) : undefined;
+  const reviewRaw = raw.comment ?? raw.reviews ?? raw.biz_ext?.comment;
+  const reviewCount =
+    reviewRaw !== undefined && reviewRaw !== '' ? Number.parseInt(String(reviewRaw), 10) : undefined;
 
   // photos 可能缺失、为数组、或意外类型；仅接受数组
   const photoUrls = Array.isArray(raw.photos)
@@ -175,11 +198,12 @@ export function normalizeAMapPOI(raw: AMapPOIRecord): DomainPOI | null {
     },
     category,
     subcategory,
-    rating: raw.rating ? parseFloat(raw.rating) : undefined,
+    rating: ratingRaw ? parseFloat(String(ratingRaw)) : undefined,
     priceLevel: cost && cost > 0 ? Math.min(4, Math.ceil(cost / 100)) : undefined,
     openHours: raw.open_time || undefined,
     tel: raw.tel || undefined,
     photos: photoUrls,
+    reviewCount: Number.isFinite(reviewCount) && (reviewCount as number) > 0 ? reviewCount : undefined,
   };
 }
 
@@ -229,100 +253,101 @@ function waitForPlugin(AMap: any, pluginName: string, timeoutMs = 8000): Promise
   });
 }
 
+/** 个人开发者 JS API 约 3 次/秒；全局限速，禁止网格并发打爆配额 */
+const AMAP_MIN_INTERVAL_MS = Math.ceil(1000 / AMAP_QPS);
+let nextAmapSlot = 0;
+let amapGate: Promise<void> = Promise.resolve();
+
+function acquireAmapSlot(): Promise<void> {
+  const scheduled = amapGate.then(async () => {
+    const wait = Math.max(0, nextAmapSlot - Date.now());
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    nextAmapSlot = Date.now() + AMAP_MIN_INTERVAL_MS;
+  });
+  amapGate = scheduled.catch(() => undefined);
+  return scheduled;
+}
+
 /**
- * 搜索 POI（支持分页拉取）。
- * 有 center 时走周边搜索（around），否则走关键词搜索。
- *
- * 高德 PlaceSearch 每页最多 25 条；要获取更多，需并行拉取多页后合并去重。
- * 默认拉取 4 页（最多 100 条），每页独立 HTTP 请求，开销可控（符合免费配额）。
- * 若要全量导入（如城市级 10K+），应由数据导入管线（DB + crawler）实现。
- *
- * 返回值已规范化为 DomainPOI，并附上去重后的实际数量。
+ * 搜索 POI。有 center 时走周边搜索，否则走关键词搜索。
+ * 每次调用只打 1 页（pageSize ≤ 25）。翻页由调用方排队，遵守 3 次/秒。
  */
 export async function searchPOI(
-  params: POISearchParams,
-  maxPages = 4
+  params: POISearchParams
 ): Promise<{ pois: DomainPOI[]; total: number }> {
   const AMap = await loadAMap();
-
-  // 等待 PlaceSearch 插件就绪（带轮询兜底，避免 onload 竞态）
   await waitForPlugin(AMap, 'PlaceSearch');
+  await acquireAmapSlot();
 
-  const pageSize = Math.min(25, params.pageSize || 25);
-  const startPage = params.page || 1;
+  const pageSize = Math.min(AMAP_PAGE_SIZE, params.pageSize || AMAP_PAGE_SIZE);
+  const pageIndex = params.page || 1;
+  const requested = params.radius ?? AMAP_DEFAULT_RADIUS;
+  const radius =
+    requested > AMAP_NEARBY_MAX_RADIUS || requested <= 0
+      ? AMAP_DEFAULT_RADIUS
+      : requested;
 
-  /** 单页搜索，返回 {records, total}；失败返回空 */
-  function searchPage(pageIndex: number): Promise<{ records: AMapPOIRecord[]; total: number }> {
-    return new Promise((resolve) => {
-      let placeSearch: any;
-      try {
-        placeSearch = new AMap.PlaceSearch({
-          pageSize,
-          pageIndex,
-          city: params.city || '杭州',
-          extensions: 'all', // 返回详情（电话、评分、图片）
+  const { records, total } = await new Promise<{ records: AMapPOIRecord[]; total: number }>((resolve) => {
+    let placeSearch: any;
+    try {
+      placeSearch = new AMap.PlaceSearch({
+        pageSize,
+        pageIndex,
+        city: params.city && params.city.length > 0 ? params.city : '全国',
+        citylimit: false,
+        extensions: 'all',
+      });
+    } catch {
+      resolve({ records: [], total: 0 });
+      return;
+    }
+
+    let settled = false;
+    const done = (status: string, result: any) => {
+      if (settled) return;
+      settled = true;
+      if (status === 'complete' && result?.poiList) {
+        resolve({
+          records: result.poiList.pois || [],
+          total: result.poiList.count || 0,
         });
-      } catch {
-        resolve({ records: [], total: 0 });
-        return;
-      }
-
-      const done = (status: string, result: any) => {
-        if (status === 'complete' && result?.poiList) {
-          resolve({
-            records: result.poiList.pois || [],
-            total: result.poiList.count || 0,
-          });
-        } else {
-          resolve({ records: [], total: 0 });
-        }
-      };
-
-      if (params.center) {
-        placeSearch.searchNearBy(
-          params.keyword,
-          [params.center.lng, params.center.lat],
-          params.radius || 5000,
-          done
-        );
       } else {
-        placeSearch.search(params.keyword, done);
+        resolve({ records: [], total: 0 });
       }
-      placeSearch.on('complete', (e: any) => done('complete', e));
-      placeSearch.on('error', () => resolve({ records: [], total: 0 }));
-    });
-  }
+    };
 
-  // 并行拉取多页
-  const pages = await Promise.all(
-    Array.from({ length: maxPages }, (_, i) => searchPage(startPage + i))
-  );
+    if (params.center) {
+      placeSearch.searchNearBy(
+        params.keyword,
+        [params.center.lng, params.center.lat],
+        radius,
+        done
+      );
+    } else {
+      placeSearch.search(params.keyword, done);
+    }
+    placeSearch.on('complete', (e: any) => done('complete', e));
+    placeSearch.on('error', () => done('error', null));
+  });
 
-  // 合并去重（按 id 去重，多页可能有边界重复）
   const seen = new Set<string>();
   const pois: DomainPOI[] = [];
-  for (const page of pages) {
-    for (const raw of page.records) {
-      const poi = normalizeAMapPOI(raw);
-      if (!poi) continue;
-      if (seen.has(poi.id)) continue;
-      seen.add(poi.id);
-      pois.push(poi);
-    }
+  for (const raw of records) {
+    const poi = normalizeAMapPOI(raw);
+    if (!poi || seen.has(poi.id)) continue;
+    seen.add(poi.id);
+    pois.push(poi);
   }
-
-  const total = pages.find((p) => p.total > 0)?.total || pois.length;
-  return { pois, total };
+  return { pois, total: total || pois.length };
 }
 
 /** 根据分类关键词搜索周边 POI（Domain 模式默认加载） */
 export async function searchNearbyPOIs(
   center: POILocation,
   category: string,
-  radius = 5000,
-  maxPages = 4
+  radius = 5000
 ): Promise<{ pois: DomainPOI[]; total: number }> {
-  return searchPOI({ keyword: category, center, radius, pageSize: 25 }, maxPages);
+  return searchPOI({ keyword: category, center, radius, pageSize: AMAP_PAGE_SIZE });
 }
 
 // ============================================================
@@ -486,68 +511,144 @@ export async function getCurrentPosition(map: any): Promise<GeocodedPosition | n
 const geolocationByMap = new WeakMap<object, any>();
 
 // ============================================================
-// 视口 POI 搜索 — 按缩放层级 + 重要性均匀铺满
+// Geocoder — 地址转经纬度
 // ============================================================
 
-/** 高德 POI 分类编码（主分类） */
-export const POI_CATEGORIES = [
-  '餐饮服务',       // 050000
-  '购物服务',       // 060000
-  '风景名胜',       // 110000
-  '商务住宅',       // 120000
-  '科教文化服务',   // 140000
-  '交通设施服务',   // 150000
-  '金融保险服务',   // 160000
-  '体育休闲服务',   // 080000
-  '医疗保健服务',   // 090000
-  '住宿服务',       // 100000
-  '政府机构及社会团体', // 170000
-  '公司企业',       // 070000
-] as const;
+const geocodeCache = new Map<string, POILocation>();
 
 /**
- * 视口 POI 搜索（制图学策略）。
- * - 按当前 zoom 确定搜索半径：zoom 大 → 半径小、更密集；zoom 小 → 半径大、覆盖广
- * - 按重要性筛选：高德搜索按综合权重排序（越重要的越靠前），取每分类前 N
- * - 多分类并行搜索 → 合并去重 → 按评分降序
- *
- * @param center 视口中心
- * @param zoom 当前缩放级别（决定半径与数量）
- * @param categories 分类列表；缺省用全部主分类
- * @returns 均匀铺满视口的 POI（合并去重、重要性优先）
+ * 地址 → 经纬度（AMap.Geocoder）。
+ * 失败返回 null；同一地址会缓存，避免反复打接口。
+ */
+export async function geocodeAddress(
+  address: string,
+  city?: string
+): Promise<POILocation | null> {
+  const key = `${city || ''}::${address.trim()}`;
+  if (!address.trim()) return null;
+  const cached = geocodeCache.get(key);
+  if (cached) return cached;
+
+  const AMap = await loadAMap();
+  await waitForPlugin(AMap, 'Geocoder');
+
+  return new Promise((resolve) => {
+    let geocoder: any;
+    try {
+      geocoder = new AMap.Geocoder({
+        city: city && city.length > 0 ? city : '全国',
+      });
+    } catch {
+      resolve(null);
+      return;
+    }
+
+    geocoder.getLocation(address, (status: string, result: any) => {
+      const loc = result?.geocodes?.[0]?.location;
+      if (status !== 'complete' || !loc) {
+        resolve(null);
+        return;
+      }
+      const lng = typeof loc.getLng === 'function' ? loc.getLng() : loc.lng;
+      const lat = typeof loc.getLat === 'function' ? loc.getLat() : loc.lat;
+      if (typeof lng !== 'number' || typeof lat !== 'number') {
+        resolve(null);
+        return;
+      }
+      const parsed: POILocation = { lng, lat, address };
+      geocodeCache.set(key, parsed);
+      resolve(parsed);
+    });
+  });
+}
+
+// ============================================================
+// 视口 POI 搜索 — 网格采样 + 波次并行
+// ============================================================
+
+/** 高德 POI 分类（兼容旧调用） */
+export const POI_CATEGORIES = [
+  '餐饮服务',
+  '购物服务',
+  '风景名胜',
+  '商务住宅',
+  '科教文化服务',
+  '交通设施服务',
+  '金融保险服务',
+  '体育休闲服务',
+  '医疗保健服务',
+  '住宿服务',
+  '政府机构及社会团体',
+  '公司企业',
+] as const;
+
+export interface ViewportSearchOptions {
+  bounds?: ViewportBounds;
+  center?: POILocation;
+  zoom: number;
+  /** 已有累计池，本轮往里增量合并，不整表替换 */
+  existing?: DomainPOI[];
+  /** 本轮最多新加多少（默认 POI_SOFT_CAP） */
+  addCap?: number;
+  /** PlaceSearch 页偏移：0=首页，1=第二页…「需要更多」时递增 */
+  pageOffset?: number;
+  /** 每找到一批就回调，用于缓慢堆出 POI */
+  onBatch?: (pois: DomainPOI[]) => void;
+  signal?: { cancelled: boolean };
+}
+
+/**
+ * 视口 POI 搜索：从视野中心 searchNearBy，按分类轮询、限速翻页。
+ * 空结果不回退假数据。
  */
 export async function searchViewportPOIs(
   center: POILocation,
   zoom: number,
-  categories: readonly string[] = POI_CATEGORIES
+  categories?: readonly string[]
 ): Promise<DomainPOI[]> {
-  // 半径随 zoom 变化：13 级约 5km，15 级约 2km，17 级约 800m
-  const radius = Math.max(800, Math.round(50000 / Math.pow(2, zoom - 10)));
-  // 每分类取的数量随 zoom：看全城时每类少取（重要性前），放大时每类多取
-  const perCategoryPages = zoom <= 13 ? 1 : zoom <= 15 ? 2 : 3;
-  const pageSize = 25;
+  return searchViewportPOIsIncremental({ center, zoom, categories });
+}
 
-  // 用 allSettled：单个分类失败不影响整体（首次插件刚就绪时避免整体回退 seed）
-  const settled = await Promise.allSettled(
-    categories.slice(0, 12).map((category) =>
-      searchPOI({ keyword: category, center, radius, pageSize }, perCategoryPages)
-    )
-  );
+export async function searchViewportPOIsIncremental(
+  options: ViewportSearchOptions & { categories?: readonly string[] }
+): Promise<DomainPOI[]> {
+  const strategy = zoomStrategy(options.zoom);
+  const center = options.center ?? { lng: 120.15, lat: 30.27 };
+  const radius = searchRadiusMeters(options.zoom, center.lat);
+  const keywords = options.categories?.length
+    ? options.categories
+    : keywordsFor(strategy.categories);
+  const queue = buildSearchQueue(keywords, strategy.pages, options.pageOffset ?? 0);
 
-  // 合并去重（按 id），保留高德返回顺序（= 重要性排序）；忽略失败项
-  const seen = new Set<string>();
-  const merged: DomainPOI[] = [];
-  for (const r of settled) {
-    if (r.status !== 'fulfilled') continue;
-    for (const poi of r.value.pois) {
-      if (seen.has(poi.id)) continue;
-      seen.add(poi.id);
-      merged.push(poi);
-    }
+  const existing = options.existing ?? [];
+  const addCap = options.addCap ?? POI_SOFT_CAP;
+  const room = Math.max(0, POI_HARD_CAP - existing.length);
+  const thisRoundCap = existing.length + Math.min(addCap, room, MORE_PAGE_SIZE);
+  let merged: DomainPOI[] = existing.slice();
+
+  if (thisRoundCap <= existing.length) {
+    options.onBatch?.(merged);
+    return merged;
   }
 
-  // 按评分降序（评分越高越重要），无评分的放后面
-  return merged.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+  for (const task of queue) {
+    if (options.signal?.cancelled) break;
+    if (merged.length >= thisRoundCap) break;
+
+    const result = await searchPOI({
+      keyword: task.keyword,
+      center,
+      radius,
+      pageSize: strategy.pageSize,
+      page: task.page,
+      city: strategy.city,
+    });
+    merged = mergePoisById(merged, result.pois.filter(isCommonPoi), thisRoundCap);
+    options.onBatch?.(merged);
+    if (result.pois.length === 0 && result.total === 0) continue;
+  }
+
+  return merged;
 }
 
 /** 根据分类编码返回中文分类名（兼容旧调用） */

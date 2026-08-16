@@ -1,0 +1,152 @@
+// ============================================================
+// 招聘分类插件 — 工作模式的筛选树
+//
+// 模式只负责「工作」视角。实习 / 校招 / 社招是 FilterPlugin，
+// 挂在 work.filters 上。后续非互联网行业、新工种只需再注册
+// 一个 plugin，不要再开新的地图模式。
+// ============================================================
+
+import type { FilterConfig, FilterOption, FilterState, JobFamily, Position } from './types.ts';
+
+export interface FilterPlugin {
+  id: string;
+  label: string;
+  /** 产出可挂到 ModeConfig.filters 的配置 */
+  filter: FilterConfig;
+}
+
+/** 路径：family 或 family/leaf，例如 intern/summer、campus/autumn、social/1-3 */
+export type TaxonomyPath = string;
+
+export const JOB_FAMILY_PLUGIN: FilterPlugin = {
+  id: 'job-family',
+  label: '岗位类型',
+  filter: {
+    key: 'jobTaxonomy',
+    label: '岗位类型',
+    type: 'taxonomy',
+    options: [
+      {
+        value: 'intern',
+        label: '实习',
+        children: [
+          { value: 'intern/summer', label: '暑期实习' },
+          { value: 'intern/daily', label: '日常实习' },
+          { value: 'intern/conversion', label: '有转正' },
+          { value: 'intern/no-conversion', label: '无转正' },
+        ],
+      },
+      {
+        value: 'campus',
+        label: '校招',
+        children: [
+          { value: 'campus/autumn', label: '秋招' },
+          { value: 'campus/spring', label: '春招' },
+        ],
+      },
+      {
+        value: 'social',
+        label: '社招',
+        children: [
+          { value: 'social/0-1', label: '0–1 年' },
+          { value: 'social/1-3', label: '1–3 年' },
+          { value: 'social/3-5', label: '3–5 年' },
+          { value: 'social/5+', label: '5 年+' },
+        ],
+      },
+    ],
+  },
+};
+
+/** 工作模式默认挂上的筛选插件。新行业在此追加即可。 */
+export const WORK_FILTER_PLUGINS: FilterPlugin[] = [JOB_FAMILY_PLUGIN];
+
+export function workFilterConfigs(): FilterConfig[] {
+  return WORK_FILTER_PLUGINS.map((plugin) => plugin.filter);
+}
+
+export function parseTaxonomyPath(path: TaxonomyPath): {
+  family: JobFamily;
+  leaf?: string;
+} | null {
+  if (!path) return null;
+  const [family, leaf] = path.split('/');
+  if (family !== 'intern' && family !== 'campus' && family !== 'social') return null;
+  return { family, leaf };
+}
+
+/** 岗位是否命中一条 taxonomy 路径 */
+export function positionMatchesTaxonomy(position: Position, path: TaxonomyPath): boolean {
+  const parsed = parseTaxonomyPath(path);
+  if (!parsed) return true;
+  const tax = position.taxonomy ?? { family: position.type };
+  if (tax.family !== parsed.family) return false;
+  if (!parsed.leaf) return true;
+  if (parsed.family === 'intern') {
+    return tax.internKind === parsed.leaf || tax.conversion === parsed.leaf;
+  }
+  if (parsed.family === 'campus') {
+    return tax.campusSeason === parsed.leaf;
+  }
+  return tax.experience === parsed.leaf;
+}
+
+export function selectedTaxonomyPaths(filters: FilterState): TaxonomyPath[] {
+  const raw = filters.jobTaxonomy;
+  if (Array.isArray(raw)) return raw.filter((v): v is string => typeof v === 'string');
+  if (typeof raw === 'string' && raw) return [raw];
+  return [];
+}
+
+/**
+ * 公司是否命中当前筛选树。
+ * 家庭之间是 OR；同一家庭若勾了叶子，只看叶子（父级只负责展开 UI）。
+ */
+export function positionMatchesTaxonomySelection(
+  position: Position,
+  paths: TaxonomyPath[],
+): boolean {
+  if (!paths.length) return true;
+  const leavesByFamily = new Map<JobFamily, TaxonomyPath[]>();
+  const families = new Set<JobFamily>();
+  for (const path of paths) {
+    const parsed = parseTaxonomyPath(path);
+    if (!parsed) continue;
+    families.add(parsed.family);
+    if (parsed.leaf) {
+      const list = leavesByFamily.get(parsed.family) ?? [];
+      list.push(path);
+      leavesByFamily.set(parsed.family, list);
+    }
+  }
+  if (!families.size) return true;
+  for (const family of families) {
+    const leaves = leavesByFamily.get(family);
+    if (leaves?.length) {
+      if (leaves.some((path) => positionMatchesTaxonomy(position, path))) return true;
+    } else if (positionMatchesTaxonomy(position, family)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function flattenTaxonomyOptions(options: FilterOption[] = []): FilterOption[] {
+  const out: FilterOption[] = [];
+  for (const option of options) {
+    out.push(option);
+    if (option.children?.length) out.push(...flattenTaxonomyOptions(option.children));
+  }
+  return out;
+}
+
+/** 给旧 seed 补默认细分，避免筛选树全空 */
+export function defaultTaxonomyForType(type: JobFamily): Position['taxonomy'] {
+  if (type === 'intern') {
+    return { family: 'intern', internKind: 'daily', conversion: 'no-conversion' };
+  }
+  if (type === 'campus') {
+    return { family: 'campus', campusSeason: 'autumn' };
+  }
+  return { family: 'social', experience: '1-3' };
+}

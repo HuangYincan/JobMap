@@ -7,6 +7,7 @@
 // ============================================================
 
 import type { FilterConfig, MapMode, POIKind, SortOption } from './types.ts';
+import { workFilterConfigs } from './job-taxonomy.ts';
 
 export interface ModeConfig {
   id: MapMode;
@@ -47,16 +48,15 @@ const DISTANCE_FILTER: FilterConfig = {
 };
 
 const CATEGORY_OPTIONS = [
-  { value: 'food', label: '餐饮' },
-  { value: 'shopping', label: '购物' },
-  { value: 'entertainment', label: '娱乐' },
-  { value: 'transport', label: '交通' },
-  { value: 'public', label: '公共服务' },
-  { value: 'hotel', label: '酒店' },
-  { value: 'sport', label: '运动' },
-  { value: 'hospital', label: '医疗' },
-  { value: 'school', label: '教育' },
-  { value: 'company', label: '公司' },
+  { value: '餐饮服务', label: '餐饮' },
+  { value: '购物服务', label: '购物' },
+  { value: '风景名胜', label: '景点' },
+  { value: '体育休闲服务', label: '休闲娱乐' },
+  { value: '交通设施服务', label: '交通' },
+  { value: '住宿服务', label: '酒店' },
+  { value: '医疗保健服务', label: '医疗' },
+  { value: '科教文化服务', label: '教育' },
+  { value: '公司企业', label: '公司' },
 ];
 
 const INDUSTRY_OPTIONS = [
@@ -79,12 +79,6 @@ const SCALE_OPTIONS = [
   { value: 'enterprise', label: '大型企业' },
 ];
 
-const POSITION_TYPE_OPTIONS = [
-  { value: 'intern', label: '实习岗' },
-  { value: 'campus', label: '校招岗' },
-  { value: 'social', label: '社招岗' },
-];
-
 // ---- 模式定义 ----
 
 export const MODES: Record<MapMode, ModeConfig> = {
@@ -101,22 +95,16 @@ export const MODES: Record<MapMode, ModeConfig> = {
         key: 'category',
         label: '分类',
         type: 'select',
-        options: [{ value: 'all', label: '全部' }, ...CATEGORY_OPTIONS],
+        options: CATEGORY_OPTIONS,
       },
       {
-        key: 'price',
-        label: '人均消费',
-        type: 'range',
+        key: 'minRating',
+        label: '最低评分',
+        type: 'slider',
         min: 0,
-        max: 500,
-        step: 10,
-        unit: '元',
-      },
-      DISTANCE_FILTER,
-      {
-        key: 'openNow',
-        label: '仅看营业中',
-        type: 'toggle',
+        max: 5,
+        step: 0.5,
+        unit: '分',
       },
     ],
     sortOptions: [
@@ -131,13 +119,14 @@ export const MODES: Record<MapMode, ModeConfig> = {
 
   internship: {
     id: 'internship',
-    name: '实习',
-    nameEn: 'Internship',
+    name: '工作',
+    nameEn: 'Work',
     icon: 'briefcase',
-    color: '#34C759',
+    color: '#007AFF',
     kind: 'recruitment',
     searchPlaceholder: '搜索公司、岗位…',
     filters: [
+      ...workFilterConfigs(),
       {
         key: 'industry',
         label: '行业',
@@ -151,10 +140,48 @@ export const MODES: Record<MapMode, ModeConfig> = {
         options: SCALE_OPTIONS,
       },
       {
-        key: 'positionType',
-        label: '岗位类型',
+        key: 'salary',
+        label: '薪资范围',
+        type: 'range',
+        min: 0,
+        max: 50,
+        step: 1,
+        unit: 'K/月',
+      },
+      DISTANCE_FILTER,
+    ],
+    sortOptions: [
+      { key: 'distance', label: '距离最近' },
+      { key: 'salaryDesc', label: '薪资最高' },
+      { key: 'rating', label: '公司评分' },
+      { key: 'positionCount', label: '岗位数量' },
+    ],
+    defaultSort: 'distance',
+    description: '寻找身边的工作机会：实习、校招、社招',
+    actions: ['查看岗位', '投递', '收藏'],
+  },
+
+  work: {
+    id: 'work',
+    name: '工作',
+    nameEn: 'Work',
+    icon: 'briefcase',
+    color: '#007AFF',
+    kind: 'recruitment',
+    searchPlaceholder: '搜索公司、岗位…',
+    filters: [
+      ...workFilterConfigs(),
+      {
+        key: 'industry',
+        label: '行业',
         type: 'multi-select',
-        options: POSITION_TYPE_OPTIONS,
+        options: INDUSTRY_OPTIONS,
+      },
+      {
+        key: 'scale',
+        label: '公司规模',
+        type: 'multi-select',
+        options: SCALE_OPTIONS,
       },
       {
         key: 'salary',
@@ -166,16 +193,6 @@ export const MODES: Record<MapMode, ModeConfig> = {
         unit: 'K/月',
       },
       DISTANCE_FILTER,
-      {
-        key: 'providesHousing',
-        label: '提供住宿',
-        type: 'toggle',
-      },
-      {
-        key: 'providesShuttle',
-        label: '提供班车',
-        type: 'toggle',
-      },
     ],
     sortOptions: [
       { key: 'distance', label: '距离最近' },
@@ -184,105 +201,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
       { key: 'positionCount', label: '岗位数量' },
     ],
     defaultSort: 'distance',
-    description: '寻找身边的实习机会，一键查看在招岗位',
-    actions: ['查看岗位', '投递', '收藏'],
-  },
-
-  // ---- Phase 3+ 预留模式（数据与 UI 未实现，仅配置占位）----
-
-  'autumn-recruit': {
-    id: 'autumn-recruit',
-    name: '秋招',
-    nameEn: 'Autumn',
-    icon: 'leaf',
-    color: '#FF9500',
-    kind: 'recruitment',
-    searchPlaceholder: '搜索公司、岗位…',
-    filters: [
-      {
-        key: 'industry',
-        label: '行业',
-        type: 'multi-select',
-        options: INDUSTRY_OPTIONS,
-      },
-      {
-        key: 'positionType',
-        label: '岗位类型',
-        type: 'multi-select',
-        options: POSITION_TYPE_OPTIONS,
-      },
-      DISTANCE_FILTER,
-    ],
-    sortOptions: [
-      { key: 'distance', label: '距离最近' },
-      { key: 'salaryDesc', label: '薪资最高' },
-    ],
-    defaultSort: 'distance',
-    description: '秋季校园招聘，大厂宣讲会与校招岗位',
-    actions: ['查看岗位', '投递', '收藏'],
-  },
-
-  'spring-recruit': {
-    id: 'spring-recruit',
-    name: '春招',
-    nameEn: 'Spring',
-    icon: 'flower',
-    color: '#FF2D55',
-    kind: 'recruitment',
-    searchPlaceholder: '搜索公司、岗位…',
-    filters: [
-      {
-        key: 'industry',
-        label: '行业',
-        type: 'multi-select',
-        options: INDUSTRY_OPTIONS,
-      },
-      {
-        key: 'positionType',
-        label: '岗位类型',
-        type: 'multi-select',
-        options: POSITION_TYPE_OPTIONS,
-      },
-      DISTANCE_FILTER,
-    ],
-    sortOptions: [
-      { key: 'distance', label: '距离最近' },
-      { key: 'salaryDesc', label: '薪资最高' },
-    ],
-    defaultSort: 'distance',
-    description: '春季补招与实习转正机会',
-    actions: ['查看岗位', '投递', '收藏'],
-  },
-
-  'social-recruit': {
-    id: 'social-recruit',
-    name: '社招',
-    nameEn: 'Social',
-    icon: 'briefcase',
-    color: '#AF52DE',
-    kind: 'recruitment',
-    searchPlaceholder: '搜索公司、岗位…',
-    filters: [
-      {
-        key: 'industry',
-        label: '行业',
-        type: 'multi-select',
-        options: INDUSTRY_OPTIONS,
-      },
-      {
-        key: 'positionType',
-        label: '岗位类型',
-        type: 'multi-select',
-        options: POSITION_TYPE_OPTIONS,
-      },
-      DISTANCE_FILTER,
-    ],
-    sortOptions: [
-      { key: 'distance', label: '距离最近' },
-      { key: 'salaryDesc', label: '薪资最高' },
-    ],
-    defaultSort: 'distance',
-    description: '社会招聘，成熟岗位机会',
+    description: '寻找身边的工作机会：实习、校招、社招',
     actions: ['查看岗位', '投递', '收藏'],
   },
 
@@ -291,7 +210,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
     name: '高考',
     nameEn: 'College',
     icon: 'graduation',
-    color: '#FF3B30',
+    color: '#007AFF',
     kind: 'recruitment',
     searchPlaceholder: '搜索院校、专业…',
     filters: [
@@ -322,7 +241,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
     name: '留学',
     nameEn: 'Overseas',
     icon: 'globe',
-    color: '#5AC8FA',
+    color: '#007AFF',
     kind: 'recruitment',
     searchPlaceholder: '搜索院校、项目…',
     filters: [
@@ -351,21 +270,23 @@ export const MODES: Record<MapMode, ModeConfig> = {
   },
 };
 
-/** 当前已实现、可在 UI 中切换的模式（Phase 2: domain + internship） */
-export const ACTIVE_MODES: MapMode[] = ['domain', 'internship'];
+/** 当前可在 UI 中切换的模式：地图 + 工作 */
+export const ACTIVE_MODES: MapMode[] = ['domain', 'work'];
 
 /** 所有模式列表（含预留），用于完整模式选择器 */
 export const ALL_MODES: MapMode[] = [
   'domain',
-  'internship',
-  'autumn-recruit',
-  'spring-recruit',
-  'social-recruit',
+  'work',
   'college',
   'overseas',
 ];
 
+/** 兼容旧 id：internship → work */
+export function canonicalMode(mode: MapMode): MapMode {
+  return mode === 'internship' ? 'work' : mode;
+}
+
 /** 按 id 取模式配置 */
 export function getMode(mode: MapMode): ModeConfig {
-  return MODES[mode];
+  return MODES[canonicalMode(mode)] ?? MODES.domain;
 }

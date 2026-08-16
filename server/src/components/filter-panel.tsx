@@ -1,7 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import type { FilterConfig, FilterState } from "@/lib/types";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import type { FilterConfig, FilterOption, FilterState } from "@/lib/types";
 import { t, type Language } from "@/lib/i18n";
 import styles from "./filter-panel.module.css";
 
@@ -51,25 +51,71 @@ function SelectControl({
   lang: Language;
 }) {
   const current = typeof value === "string" ? value : "";
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const allLabel = lang === "zh" ? "全部" : "All";
+  const currentLabel =
+    config.options?.find((option) => option.value === current)?.label ?? allLabel;
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  const pick = (next: string) => {
+    onChange(config.key, next);
+    setOpen(false);
+  };
+
   return (
     <div className={styles.control}>
-      <label className={styles.label} htmlFor={`filter-${config.key}`}>
+      <span className={styles.label} id={`filter-${config.key}-label`}>
         {config.label}
-      </label>
-      <div className={styles.selectWrap}>
-        <select
+      </span>
+      <div className={styles.selectWrap} ref={wrapRef}>
+        <button
+          type="button"
           id={`filter-${config.key}`}
-          className={styles.select}
-          value={current}
-          onChange={(e) => onChange(config.key, e.target.value)}
+          className={`${styles.select} ${open ? styles.selectOpen : ""}`}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-labelledby={`filter-${config.key}-label`}
+          onClick={() => setOpen((v) => !v)}
         >
-          <option value="">{lang === "zh" ? "全部" : "All"}</option>
-          {config.options?.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          {currentLabel}
+        </button>
+        {open && (
+          <ul className={styles.selectMenu} role="listbox" aria-label={config.label}>
+            <li>
+              <button
+                type="button"
+                role="option"
+                aria-selected={current === ""}
+                className={`${styles.selectOption} ${current === "" ? styles.selectOptionActive : ""}`}
+                onClick={() => pick("")}
+              >
+                {allLabel}
+              </button>
+            </li>
+            {config.options?.map((option) => (
+              <li key={option.value}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={current === option.value}
+                  className={`${styles.selectOption} ${current === option.value ? styles.selectOptionActive : ""}`}
+                  onClick={() => pick(option.value)}
+                >
+                  {option.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
@@ -109,11 +155,6 @@ function MultiSelectControl({
               aria-pressed={active}
               onClick={() => toggleOption(option.value)}
             >
-              {active && (
-                <span className={styles.chipCheck} aria-hidden="true">
-                  ✓
-                </span>
-              )}
               {option.label}
             </button>
           );
@@ -257,6 +298,89 @@ function ToggleControl({
   );
 }
 
+function TaxonomyControl({
+  config,
+  value,
+  onChange,
+}: {
+  config: FilterConfig;
+  value: FilterValue | undefined;
+  onChange: (key: string, value: any) => void;
+}) {
+  const selected = Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === "string")
+    : typeof value === "string" && value
+      ? [value]
+      : [];
+  const families = config.options ?? [];
+
+  const isOn = (path: string) => selected.includes(path);
+
+  const familyExpanded = (family: FilterOption) =>
+    isOn(family.value) ||
+    (family.children ?? []).some((child) => isOn(child.value));
+
+  const toggle = (path: string, family?: FilterOption) => {
+    const next = new Set(selected);
+    if (next.has(path)) {
+      next.delete(path);
+      if (family && path === family.value) {
+        for (const child of family.children ?? []) next.delete(child.value);
+      }
+    } else {
+      next.add(path);
+      if (family && path !== family.value) next.add(family.value);
+    }
+    onChange(config.key, [...next]);
+  };
+
+  return (
+    <div className={styles.control}>
+      <span className={styles.label}>{config.label}</span>
+      <div className={styles.chips} role="group" aria-label={config.label}>
+        {families.map((family) => {
+          const active = familyExpanded(family);
+          return (
+            <button
+              key={family.value}
+              type="button"
+              className={`${styles.chip} ${active ? styles.chipActive : ""}`}
+              aria-pressed={active}
+              onClick={() => toggle(family.value, family)}
+            >
+              {family.label}
+            </button>
+          );
+        })}
+      </div>
+      {families.map((family) => {
+        if (!family.children?.length || !familyExpanded(family)) return null;
+        return (
+          <div key={`${family.value}-leaves`} className={styles.taxonomyLeaves}>
+            <span className={styles.taxonomyHint}>{family.label}</span>
+            <div className={styles.chips} role="group" aria-label={family.label}>
+              {family.children.map((child) => {
+                const active = isOn(child.value);
+                return (
+                  <button
+                    key={child.value}
+                    type="button"
+                    className={`${styles.chip} ${styles.chipLeaf} ${active ? styles.chipActive : ""}`}
+                    aria-pressed={active}
+                    onClick={() => toggle(child.value, family)}
+                  >
+                    {child.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DateControl({
   config,
   value,
@@ -313,6 +437,8 @@ function FilterControl({
       return <ToggleControl config={config} value={value} onChange={onChange} />;
     case "date":
       return <DateControl config={config} value={value} onChange={onChange} />;
+    case "taxonomy":
+      return <TaxonomyControl config={config} value={value} onChange={onChange} />;
     default:
       return null;
   }
