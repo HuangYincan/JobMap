@@ -966,8 +966,10 @@ export function MapShell() {
 
   // 卡片点击 → 选中（地图 marker 高亮由 usePOIMap 同步）
   const handleSelect = useCallback((poi: POI) => {
+    // 地图初始化期间不处理选中，避免触发重新加载
+    if (!mapReady || !geoSettled) return;
     setSelectedId(poi.id);
-  }, []);
+  }, [mapReady, geoSettled]);
 
   // 卡片 hover → 高亮 marker
   const handleHover = useCallback((id: string | null) => {

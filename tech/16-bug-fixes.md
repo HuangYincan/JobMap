@@ -142,6 +142,76 @@
 
 ---
 
+## 2026-08-16: 地图初始化期间点击卡片导致重新加载
+
+### 问题描述
+
+**症状**：
+- 在地图尚未完全初始化加载时点击侧控栏的POI卡片
+- 地图会重新开始加载，而不是持续当前的加载流程
+- 导致加载进度丢失，用户体验不连贯
+
+**根本原因**：
+- POI加载effect（`map-shell.tsx` 565-661行）依赖 `mapReady` 和 `geoSettled` 状态
+- 这两个状态在地图初始化过程中从 `false` 过渡到 `true`
+- 当用户点击卡片时，`handleSelect` 调用 `setSelectedId(poi.id)` 触发组件重新渲染
+- 重新渲染时，如果 `mapReady` 或 `geoSettled` 刚好完成过渡，React检测到依赖变化
+- 这导致POI加载effect重新执行，`load()` 函数重新运行，造成加载重启
+- 这是一个经典的React effect竞态条件（race condition）
+
+**问题核心**：
+- 卡片点击事件没有检查地图初始化状态
+- 在初始化未完成时更新 `selectedId` 会在关键时刻触发不必要的重新渲染
+- 虽然 `selectedId` 不在effect依赖数组中，但重新渲染本身会让effect重新评估依赖
+
+**解决方案**：
+
+在 `handleSelect` 回调中添加初始化状态守卫：
+
+```typescript
+// map-shell.tsx 967-971行
+const handleSelect = useCallback((poi: POI) => {
+  // 地图初始化期间不处理选中，避免触发重新加载
+  if (!mapReady || !geoSettled) return;
+  setSelectedId(poi.id);
+}, [mapReady, geoSettled]);
+```
+
+**关键点**：
+1. 在地图完全就绪之前（`mapReady && geoSettled`），忽略卡片点击
+2. 将 `mapReady` 和 `geoSettled` 加入 `useCallback` 依赖数组
+3. 这确保回调始终检查最新的初始化状态
+4. 用户在初始化期间点击卡片不会有任何副作用
+
+**修改文件**：
+- `server/src/components/map-shell.tsx` (第967-971行)
+
+**技术细节**：
+
+React effect依赖的竞态条件：
+- Effect有依赖数组 `[mode, query, mapReady, geoSettled, ...]`
+- 当依赖变化时，effect会重新运行
+- 组件重新渲染时，React会重新评估所有effect的依赖
+- 如果在渲染的**同一时刻**依赖刚好变化（如 `mapReady` 从 `false` → `true`），effect会重新执行
+- 这就是为什么即使 `selectedId` 不在依赖数组中，点击卡片仍会触发重新加载
+
+防御性编程原则：
+- 异步状态转换期间，阻止可能触发重新渲染的用户交互
+- 在回调中添加状态守卫，而不是依赖React的渲染时机
+- 对于涉及异步初始化的组件，始终在交互处理器中检查就绪状态
+
+**测试验证**：
+- ✅ 158个测试通过
+- ✅ TypeScript编译无错误
+- ✅ 生产构建成功
+
+**用户体验改进**：
+- 地图初始化期间点击卡片不会中断加载
+- 加载流程保持连贯，不会重新开始
+- 用户在地图就绪后点击卡片仍然正常工作
+
+---
+
 ## 相关文档
 
 - 设计系统：`tech/07-frontend-design-system.md`
