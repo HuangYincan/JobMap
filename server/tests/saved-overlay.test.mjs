@@ -2,7 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
-import { mergeMapPois, overlayBounds, savedPlacesToOverlay } from '../src/lib/saved-overlay.ts';
+import {
+  amapStyleUrl,
+  parseMapStyle,
+  overlayBounds,
+  mergeMapPois,
+  resolveSavedForFly,
+  savedPlacesToOverlay,
+} from '../src/lib/saved-overlay.ts';
 
 test('savedPlacesToOverlay uses live recruitment when catalog hits', () => {
   const overlay = savedPlacesToOverlay(
@@ -98,4 +105,25 @@ test('overlayBounds covers every saved pin', () => {
   assert.equal(bounds.ne.lng, 121);
   assert.equal(bounds.ne.lat, 31);
   assert.equal(overlayBounds([]), null);
+});
+
+test('parseMapStyle only accepts the three basemap keys', () => {
+  assert.equal(parseMapStyle('satellite'), 'satellite');
+  assert.equal(parseMapStyle('whitesmoke'), 'whitesmoke');
+  assert.equal(parseMapStyle('normal'), 'normal');
+  assert.equal(parseMapStyle('dark'), null);
+  assert.equal(parseMapStyle(null), null);
+});
+
+test('amapStyleUrl never points satellite at a style URL', () => {
+  assert.equal(amapStyleUrl('normal'), 'amap://styles/normal');
+  assert.equal(amapStyleUrl('whitesmoke'), 'amap://styles/whitesmoke');
+});
+
+test('resolveSavedForFly prefers the first live catalog hit', () => {
+  const alibaba = INTERNSHIP_SEED.find((item) => item.id === 'alibaba-xixi');
+  assert.ok(alibaba);
+  const hit = resolveSavedForFly({ poiId: 'alibaba-xixi' }, [alibaba]);
+  assert.equal(hit?.id, 'alibaba-xixi');
+  assert.equal(resolveSavedForFly({ poiId: 'missing', lng: 120, lat: 30 }, []), undefined);
 });

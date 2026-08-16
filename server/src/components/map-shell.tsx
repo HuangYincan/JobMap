@@ -27,7 +27,20 @@ import { ProfilePanel } from "./account-panel";
 import { RecentPanel } from "./recent-panel";
 import { SavedList, SavedPanel } from "./saved-panel";
 import { LayersPanel } from "./layers-panel";
-import { mergeMapPois, readSavedOverlayPref, savedPlacesToOverlay, writeSavedOverlayPref, overlayBounds } from "@/lib/saved-overlay";
+import {
+  amapStyleUrl,
+  MAP_STYLE_KEY,
+  mergeMapPois,
+  overlayBounds,
+  parseMapStyle,
+  readMapStylePref,
+  readSavedOverlayPref,
+  resolveSavedForFly,
+  savedPlacesToOverlay,
+  writeMapStylePref,
+  writeSavedOverlayPref,
+  type BasemapStyle,
+} from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
@@ -41,6 +54,20 @@ function readLngLat(
   const lat = typeof value.getLat === "function" ? value.getLat() : value.lat;
   if (typeof lng !== "number" || typeof lat !== "number") return null;
   return { lng, lat };
+}
+
+function flyToLocation(map: { setZoomAndCenter?: (zoom: number, center: [number, number], immediately?: boolean, duration?: number) => void; setZoom?: (zoom: number) => void; setCenter?: (center: [number, number]) => void } | null, lng: number, lat: number, zoom = 16) {
+  if (!map) return;
+  try {
+    if (typeof map.setZoomAndCenter === "function") {
+      map.setZoomAndCenter(zoom, [lng, lat], false, 600);
+      return;
+    }
+  } catch {
+    // fall through
+  }
+  map.setZoom?.(zoom);
+  map.setCenter?.([lng, lat]);
 }
 
 function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "menu" | "sidebar" | "chevronLeft" | "compass" | "locate" | "person" | "login" | "logout" }) {
@@ -86,7 +113,7 @@ export function MapShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
   const [lang, setLang] = useState<Language>('zh');
-  const [mapStyle, setMapStyle] = useState<'normal' | 'satellite' | 'whitesmoke'>('normal');
+  const [mapStyle, setMapStyle] = useState<BasemapStyle>('normal');
   const [zoom, setZoom] = useState(13);
   const [mapReady, setMapReady] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -124,6 +151,8 @@ export function MapShell() {
 
   useEffect(() => {
     setSavedOverlay(readSavedOverlayPref(true));
+    const system: BasemapStyle = window.matchMedia("(prefers-color-scheme: dark)").matches ? "whitesmoke" : "normal";
+    setMapStyle(readMapStylePref(system));
   }, []);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers">("explore");
@@ -293,9 +322,11 @@ export function MapShell() {
     }
 
     function createMap(center: [number, number], zoom: number) {
-      // Detect system dark mode preference
-      const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialMapStyle = isDarkMode ? 'amap://styles/whitesmoke' : 'amap://styles/normal';
+      const systemFallback: BasemapStyle = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "whitesmoke"
+        : "normal";
+      const initialStyle = readMapStylePref(systemFallback);
+      const initialMapStyle = amapStyleUrl(initialStyle === "satellite" ? "normal" : initialStyle);
 
       const map = new window.AMap.Map(mapContainer.current, {
         zoom: zoom,
@@ -396,18 +427,21 @@ export function MapShell() {
         darkModeQuery.removeEventListener('change', handleThemeChange);
       };
 
-      // Set initial mapStyle state based on dark mode
-      setMapStyle(isDarkMode ? 'whitesmoke' : 'normal');
+      setMapStyle(initialStyle);
+      if (initialStyle === "satellite" && window.AMap?.TileLayer?.Satellite) {
+        satelliteLayerRef.current = new window.AMap.TileLayer.Satellite({ map });
+      }
 
-      // Listen for system theme changes and update map style dynamically
-      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      // 用户没写过底图偏好时才跟系统主题；选过卫星/浅色后不再被系统覆盖
+      const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
       const handleThemeChange = (e: MediaQueryListEvent) => {
-        const newStyleName = e.matches ? 'whitesmoke' : 'normal';
-        const newMapStyle = e.matches ? 'amap://styles/whitesmoke' : 'amap://styles/normal';
-        setMapStyle(newStyleName);
-        map.setMapStyle(newMapStyle);
+        if (parseMapStyle(window.sessionStorage.getItem(MAP_STYLE_KEY))) return;
+        const next: BasemapStyle = e.matches ? "whitesmoke" : "normal";
+        setMapStyle(next);
+        map.setMapStyle(amapStyleUrl(next));
+        if (satelliteLayerRef.current) satelliteLayerRef.current.hide();
       };
-      darkModeQuery.addEventListener('change', handleThemeChange);
+      darkModeQuery.addEventListener("change", handleThemeChange);
 
       // Add AMap's built-in scale control (real, auto-updating)
       // 移动端放左上角（避开底部抽屉），桌面端放左下角
@@ -811,9 +845,8 @@ export function MapShell() {
   }, [user, savedPlaces, refreshSaved]);
 
   const handlePickSaved = useCallback((place: SavedPlace) => {
-    const match =
-      catalogRef.current.find((poi) => poi.id === place.poiId) ??
-      poisRef.current.find((poi) => poi.id === place.poiId);
+    const live = [...overlayPois, ...compareCatalog, ...catalogRef.current, ...poisRef.current];
+    const match = resolveSavedForFly(place, live);
     if (match) {
       setSelectedId(match.id);
       setDetailPoi(match);
@@ -821,20 +854,16 @@ export function MapShell() {
       setRailPanel("explore");
       setMobileSheet("explore");
       setDrawer("full");
-      if (match.location && mapInstance.current) {
-        mapInstance.current.setZoom(16);
-        mapInstance.current.setCenter([match.location.lng, match.location.lat]);
-      }
+      if (match.location) flyToLocation(mapInstance.current, match.location.lng, match.location.lat);
       return;
     }
-    if (typeof place.lng === "number" && typeof place.lat === "number" && mapInstance.current) {
-      mapInstance.current.setZoom(16);
-      mapInstance.current.setCenter([place.lng, place.lat]);
+    if (typeof place.lng === "number" && typeof place.lat === "number") {
+      flyToLocation(mapInstance.current, place.lng, place.lat);
     }
     setRailPanel("explore");
     setMobileSheet("explore");
     setDrawer("half");
-  }, []);
+  }, [overlayPois, compareCatalog]);
 
   const handleRemoveSaved = useCallback((poiId: string) => {
     void fetch(`/api/me/saved?poiId=${encodeURIComponent(poiId)}`, { method: "DELETE" }).then(refreshSaved);
@@ -1027,9 +1056,8 @@ export function MapShell() {
 
   // 选择建议 → 定位；招聘建议打开对应公司
   const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
-    if (s.location && mapInstance.current) {
-      mapInstance.current.setCenter([s.location.lng, s.location.lat]);
-      mapInstance.current.setZoom(16);
+    if (s.location) {
+      flyToLocation(mapInstance.current, s.location.lng, s.location.lat);
       setMapCenter({ lng: s.location.lng, lat: s.location.lat });
     }
     if (s.poiId) {
@@ -1090,36 +1118,25 @@ export function MapShell() {
       });
   };
 
-  const handleMapStyleChange = (style: 'normal' | 'satellite' | 'whitesmoke') => {
+  const handleMapStyleChange = (style: BasemapStyle) => {
+    writeMapStylePref(style);
+    setMapStyle(style);
     if (!mapInstance.current) return;
 
-    if (style === 'satellite') {
-      // 卫星图需要使用图层而不是 mapStyle
+    if (style === "satellite") {
       if (!satelliteLayerRef.current) {
-        // 创建卫星图层
         satelliteLayerRef.current = new window.AMap.TileLayer.Satellite({
           map: mapInstance.current,
         });
       } else {
         satelliteLayerRef.current.show();
       }
-      // 隐藏标准图层（设置透明）
-      mapInstance.current.setMapStyle('amap://styles/normal');
-    } else {
-      // Standard 和 Dark 使用 mapStyle
-      const styleMap = {
-        normal: 'amap://styles/normal',
-        whitesmoke: 'amap://styles/whitesmoke',
-      };
-      mapInstance.current.setMapStyle(styleMap[style]);
-
-      // 隐藏卫星图层
-      if (satelliteLayerRef.current) {
-        satelliteLayerRef.current.hide();
-      }
+      mapInstance.current.setMapStyle(amapStyleUrl("normal"));
+      return;
     }
 
-    setMapStyle(style);
+    mapInstance.current.setMapStyle(amapStyleUrl(style));
+    if (satelliteLayerRef.current) satelliteLayerRef.current.hide();
   };
 
   useEffect(() => {
@@ -1159,7 +1176,7 @@ export function MapShell() {
         setApplications([]);
         setInbox([]);
         setRailPanel((current) =>
-          current === "profile" || current === "saved" || current === "layers" ? null : current,
+          current === "profile" || current === "saved" ? null : current,
         );
       });
       return;
@@ -1397,10 +1414,7 @@ export function MapShell() {
         }}
         onOpenDetail={(poi) => {
           setDetailPoi(poi);
-          if (poi.location && mapInstance.current) {
-            mapInstance.current.setZoom(16);
-            mapInstance.current.setCenter([poi.location.lng, poi.location.lat]);
-          }
+          if (poi.location) flyToLocation(mapInstance.current, poi.location.lng, poi.location.lat);
         }}
       />
       )}
@@ -1736,10 +1750,7 @@ export function MapShell() {
                   setDetailPoi(poi);
                   setMobileJd(null);
                   setDrawer("full");
-                  if (poi.location && mapInstance.current) {
-                    mapInstance.current.setZoom(16);
-                    mapInstance.current.setCenter([poi.location.lng, poi.location.lat]);
-                  }
+                  if (poi.location) flyToLocation(mapInstance.current, poi.location.lng, poi.location.lat);
                 }}
                 onHover={handleHover}
                 loading={loading}

@@ -1,18 +1,17 @@
 "use client";
 
 import { t, type Language } from "@/lib/i18n";
+import type { BasemapStyle } from "@/lib/saved-overlay";
 import styles from "./recent-panel.module.css";
-
-type MapStyle = "normal" | "satellite" | "whitesmoke";
 
 export interface LayersPanelProps {
   lang: Language;
   savedOverlay: boolean;
   overlayCount: number;
   signedIn: boolean;
-  mapStyle: MapStyle;
+  mapStyle: BasemapStyle;
   onToggleOverlay: () => void;
-  onMapStyle: (style: MapStyle) => void;
+  onMapStyle: (style: BasemapStyle) => void;
   onClose: () => void;
   shifted?: boolean;
 }

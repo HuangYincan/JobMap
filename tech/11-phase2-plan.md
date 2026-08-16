@@ -523,8 +523,8 @@
 
 ## Phase 4 起步（2026-08-16）
 
-- 收藏叠加层：Layers 二级霜面卡（`layers-panel.tsx`）里的开关控制 `mergeMapPois`；底图样式也在这张卡，不再放右上角第二套选择器。Explore 列表仍只走 `runPOIPipeline`。开关写入 sessionStorage；打开时视野收到收藏点。
-- 受控 fly / highlight 继续走现有 `usePOIMap`（选中优先于高亮；Saved 行 hover 也会高亮图钉）。
+- 收藏叠加层：Layers 二级霜面卡（`layers-panel.tsx`）里的开关控制 `mergeMapPois`；底图样式也在这张卡，不再放右上角第二套选择器。Explore 列表仍只走 `runPOIPipeline`。叠加层开关和底图样式都写入 sessionStorage；打开叠加层时视野收到收藏点。用户选过的底图不被系统深浅色覆盖。
+- 受控 fly / highlight 继续走现有 `usePOIMap`（选中优先于高亮；Saved 行 hover 也会高亮图钉）。收藏行 / 列表卡 / 搜索建议点中走同一条 `setZoomAndCenter` 飞行动作；收藏优先 `resolveSavedForFly`（catalog / seed 活数据）。
 - 搜索已在 Phase 2 完成；本阶段不重做搜索框。
 
 ## Phase 3 预览

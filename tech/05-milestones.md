@@ -119,7 +119,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 
 **Phase 3 started (2026-08-16):** Saved places — `008_saved_places`. Applications — `009_applications`. Company compare — Saved L2 / mobile `SavedList`. Job alerts — `010_notifications` + `/api/me/notifications` enqueue matching seed jobs into Profile inbox when email/SMS is on; nothing is actually sent. Guests are prompted to sign in.
 
-**Phase 4 started (2026-08-16):** Saved overlay — Layers L2 frost card (`layers-panel.tsx`) toggles `lib/saved-overlay.ts` and owns basemap styles. Search list stays the pipeline; the map merges leftover saved pins (catalog/seed live, snapshot pin fallback). Fly/highlight still go through `usePOIMap`.
+**Phase 4 started (2026-08-16):** Saved overlay — Layers L2 frost card (`layers-panel.tsx`) toggles `lib/saved-overlay.ts` and owns basemap styles. Overlay + style persist in sessionStorage. Search list stays the pipeline; the map merges leftover saved pins (catalog/seed live, snapshot pin fallback). Fly/highlight still go through `usePOIMap`; Saved click uses `resolveSavedForFly`.
 
 
 ## Deferred Decisions

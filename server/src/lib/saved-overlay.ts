@@ -50,6 +50,36 @@ export function mergeMapPois(results: POI[], overlay: POI[], enabled: boolean): 
 }
 
 export const SAVED_OVERLAY_KEY = 'domain-map:saved-overlay';
+export const MAP_STYLE_KEY = 'domain-map:map-style';
+
+export type BasemapStyle = 'normal' | 'satellite' | 'whitesmoke';
+
+export function parseMapStyle(raw: string | null | undefined): BasemapStyle | null {
+  if (raw === 'normal' || raw === 'satellite' || raw === 'whitesmoke') return raw;
+  return null;
+}
+
+export function readMapStylePref(fallback: BasemapStyle = 'normal'): BasemapStyle {
+  if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') return fallback;
+  try {
+    return parseMapStyle(window.sessionStorage.getItem(MAP_STYLE_KEY)) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function writeMapStylePref(style: BasemapStyle): void {
+  if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(MAP_STYLE_KEY, style);
+  } catch {
+    // quota / private mode
+  }
+}
+
+export function amapStyleUrl(style: Exclude<BasemapStyle, 'satellite'>): string {
+  return style === 'whitesmoke' ? 'amap://styles/whitesmoke' : 'amap://styles/normal';
+}
 
 export function readSavedOverlayPref(fallback = true): boolean {
   if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') return fallback;
@@ -70,6 +100,11 @@ export function writeSavedOverlayPref(on: boolean): void {
   } catch {
     // quota / private mode
   }
+}
+
+/** 收藏行点中：catalog / seed 活数据优先，再叠加层图钉。 */
+export function resolveSavedForFly(place: { poiId: string; lng?: number; lat?: number }, live: POI[]): POI | undefined {
+  return live.find((poi) => poi.id === place.poiId);
 }
 
 export function overlayBounds(pois: POI[]): { sw: { lng: number; lat: number }; ne: { lng: number; lat: number } } | null {
