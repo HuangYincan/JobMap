@@ -1291,12 +1291,13 @@ export function MapShell() {
         <nav className={styles.navList}>
           <button
             className={`${styles.navItem} ${savedOverlay ? styles.navItemActive : ""}`}
-            data-tooltip={t("savedOverlay", lang)}
+            data-tooltip={`${t("savedOverlay", lang)}${overlayPois.length ? ` · ${overlayPois.length}` : ""}`}
             aria-pressed={savedOverlay}
+            aria-label={`${t("savedOverlay", lang)}${overlayPois.length ? ` ${overlayPois.length}` : ""}`}
             onClick={handleToggleSavedOverlay}
           >
             <Icon name="layers" />
-            <span>{t("savedOverlay", lang)}</span>
+            <span>{overlayPois.length ? `${t("savedOverlay", lang)} ${overlayPois.length}` : t("savedOverlay", lang)}</span>
           </button>
           <button
             className={`${styles.navItem} ${railPanel === "saved" ? styles.navItemActive : ""}`}
