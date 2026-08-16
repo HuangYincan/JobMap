@@ -108,6 +108,58 @@ test('mergeOfficialCareerIntoSeed keeps seed ids and unions new jobs', () => {
   assert.equal(lab.source, 'api');
 });
 
+test('mergeOfficialCareerIntoSeed hides closed jobs on the read path', () => {
+  const merged = mergeOfficialCareerIntoSeed(WORK_SEED, [
+    {
+      slug: 'alibaba-xixi',
+      name: '阿里巴巴',
+      industries: ['internet'],
+      scale: 'bigtech',
+      sites: [{ id: 'alibaba-xixi-site', name: '阿里巴巴' }],
+      positions: [
+        {
+          externalId: 'alibaba-java',
+          title: 'Java 后端开发工程师',
+          siteId: 'alibaba-xixi-site',
+          family: 'intern',
+          status: 'closed',
+        },
+        {
+          externalId: 'alibaba-paused-job',
+          title: '暂停岗',
+          siteId: 'alibaba-xixi-site',
+          family: 'intern',
+          status: 'paused',
+        },
+      ],
+    },
+    {
+      slug: 'closed-only-lab',
+      name: '已关实验室',
+      industries: ['ai'],
+      scale: 'startup',
+      sites: [{ id: 'hq', name: '杭州', location: { lng: 120.1, lat: 30.2 } }],
+      positions: [
+        {
+          externalId: 'closed-lab-job',
+          title: '已关',
+          siteId: 'hq',
+          family: 'intern',
+          status: 'closed',
+        },
+      ],
+    },
+  ]);
+  const ali = merged.find((p) => p.id === 'alibaba-xixi');
+  assert.ok(ali);
+  assert.ok(!ali.positions.some((p) => p.id === 'alibaba-java'));
+  assert.ok(!ali.positions.some((p) => p.id === 'alibaba-paused-job'));
+  assert.ok(ali.positions.some((p) => p.id === 'alibaba-frontend'));
+  const closedLab = merged.find((p) => p.id === 'closed-only-lab');
+  assert.ok(closedLab);
+  assert.equal(closedLab.positions.length, 0);
+});
+
 test('planSeedImport merges official-career drops onto seed slugs', async () => {
   const plan = await planSeedImport();
   const alibaba = plan.companies.find((c) => c.slug === 'alibaba-xixi');

@@ -140,11 +140,16 @@ function positionFromSource(pos: SourcePosition) {
   };
 }
 
+function isOpenPosition(pos: { status?: string }): boolean {
+  return pos.status === 'open';
+}
+
 function poiFromSourceSite(
   company: SourceCompany,
   site: CompanySite,
   id: string,
   source: RecruitmentPOI['source'],
+  opts: { openOnly?: boolean } = {},
 ): RecruitmentPOI {
   const logo = logoForSite(company, site);
   return {
@@ -165,7 +170,9 @@ function poiFromSourceSite(
       careerUrl: site.careerUrl || company.careerUrl,
     },
     sites: [site],
-    positions: company.positions.filter((p) => p.siteId === site.id).map(positionFromSource),
+    positions: company.positions
+      .filter((p) => p.siteId === site.id && (!opts.openOnly || isOpenPosition(p)))
+      .map(positionFromSource),
   };
 }
 
@@ -178,7 +185,13 @@ export function sourceCompanyToCatalogPois(
     ? company.sites
     : [{ id: `${company.slug}-hq`, name: company.name, careerUrl: company.careerUrl }];
   return sites.map((site) =>
-    poiFromSourceSite(company, site, catalogIdForSite(company.slug, site.id, sites.length), source),
+    poiFromSourceSite(
+      company,
+      site,
+      catalogIdForSite(company.slug, site.id, sites.length),
+      source,
+      { openOnly: true },
+    ),
   );
 }
 
@@ -227,10 +240,17 @@ function mergeCompanyOntoSeedPois(pois: RecruitmentPOI[], company: SourceCompany
   for (const site of company.sites) {
     if (knownSites.has(site.id)) continue;
     knownSites.add(site.id);
-    pois.push(poiFromSourceSite(company, site, `${company.slug}:${site.id}`, 'api'));
+    pois.push(poiFromSourceSite(company, site, `${company.slug}:${site.id}`, 'api', { openOnly: true }));
   }
 
   for (const pos of company.positions) {
+    if (!isOpenPosition(pos)) {
+      for (const poi of pois) {
+        poi.positions = poi.positions.filter((row) => row.id !== pos.externalId);
+      }
+      knownJobs.delete(pos.externalId);
+      continue;
+    }
     if (knownJobs.has(pos.externalId)) continue;
     const target = pois.find((poi) => (poi.sites ?? []).some((site) => site.id === pos.siteId)) ?? pois[0];
     if (!target) continue;
