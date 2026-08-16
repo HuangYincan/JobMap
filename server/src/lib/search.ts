@@ -348,15 +348,47 @@ function mergeFilters(base: FilterState | undefined, extra: FilterState): Filter
   return next;
 }
 
+/** 岗位别名：FE = 前端。Short codes stay token-aware so "be" ≠ Alibaba. */
+const JOB_ALIAS_GROUPS: string[][] = [
+  ['前端', 'fe', 'frontend', 'front-end'],
+  ['后端', 'be', 'backend', 'back-end'],
+  ['算法', 'algorithm', 'ml', '机器学习'],
+  ['产品', 'pm', 'product'],
+  ['设计', 'ui', 'ux', 'designer'],
+];
+
+function tokenizeSearch(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[\s/|+,_-]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function aliasGroupForToken(token: string): string[] | undefined {
+  return JOB_ALIAS_GROUPS.find((group) => group.some((alias) => alias.toLowerCase() === token));
+}
+
+function textHasAliasGroup(haystack: string, group: string[]): boolean {
+  const lower = haystack.toLowerCase();
+  const tokens = new Set(tokenizeSearch(haystack));
+  return group.some((alias) => {
+    const key = alias.toLowerCase();
+    if (/^[a-z0-9]{1,2}$/.test(key)) return tokens.has(key);
+    return lower.includes(key);
+  });
+}
+
 /** 判断文本是否包含关键词（大小写不敏感，支持多关键词 AND） */
 export function matchKeyword(text: string, query: string): boolean {
-  const t = text.toLowerCase();
-  return query
-    .toLowerCase()
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((kw) => t.includes(kw));
+  const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  if (!terms.length) return true;
+  const haystack = text.toLowerCase();
+  return terms.every((term) => {
+    const group = aliasGroupForToken(term);
+    if (group) return textHasAliasGroup(text, group);
+    return haystack.includes(term);
+  });
 }
 
 /** 把行业 code 扩展为可搜索文本（code + 中文标签） */

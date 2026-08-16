@@ -35,6 +35,17 @@ test('matchKeyword: case-insensitive multi-keyword AND', () => {
   assert.equal(matchKeyword('', ''), true);
 });
 
+test('matchKeyword: FE / frontend aliases match 前端 titles', () => {
+  assert.equal(matchKeyword('前端开发工程师', 'FE'), true);
+  assert.equal(matchKeyword('前端开发工程师', 'frontend'), true);
+  assert.equal(matchKeyword('Front-end Engineer', '前端'), true);
+  assert.equal(matchKeyword('Java 后端开发工程师', 'backend'), true);
+  assert.equal(matchKeyword('产品经理实习生', 'PM'), true);
+  assert.equal(matchKeyword('Java 后端开发工程师', 'FE'), false);
+  assert.equal(matchKeyword('阿里巴巴', 'be'), false);
+  assert.equal(matchKeyword('算法工程师', 'ml'), true);
+});
+
 test('poiMatchesQuery: recruitment matches company, industry, or position', () => {
   const alibaba = INTERNSHIP_SEED.find((c) => c.id === 'alibaba-xixi');
   assert.ok(alibaba, 'alibaba seed present');
