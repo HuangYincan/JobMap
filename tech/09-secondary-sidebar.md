@@ -209,7 +209,7 @@
 - 二级 Explore / 三级 JD **面板外壳**用 `--soft-strong` 实底霜面（浅色 ~0.84–0.90，深色 ~0.84–0.88），不要做成半透明主题
 - JD 底部「投递」按岗位 `apply` 或公司 `careerUrl` 新开页（官网 / Boss / 实习僧 / 牛客等）
 - 关 JD / 返回列表 / 切模式都会清掉三级面板
-- **Profile / Recent** 也走同一套二级霜面面板（`--soft-strong`），从左侧 rail 展开。Preference 卡片在 Profile 二级卡内部切换，不新开三级。Recent 只列搜索记录。
+- **Profile / Recent / Saved** 也走同一套二级霜面面板（`--soft-strong`），从左侧 rail 展开。Preference 卡片在 Profile 二级卡内部切换，不新开三级。Recent 只列搜索记录。Saved 勾选两家招聘点后，对比表就地出现在同一张卡里（`lib/compare-saved.ts`），不新开一层。
 
 **移动端:**
 - 点击卡片 → 全屏详情页从右侧滑入

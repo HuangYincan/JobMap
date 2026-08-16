@@ -1,14 +1,35 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import type { SavedPlace } from "@/lib/account";
+import {
+  buildCompareColumns,
+  COMPARE_ROWS,
+  toggleCompareSelection,
+} from "@/lib/compare-saved";
 import { getMode } from "@/lib/modes";
-import { t, type Language } from "@/lib/i18n";
+import { t, type Language, type TranslationKey } from "@/lib/i18n";
+import type { POI } from "@/lib/types";
 import styles from "./recent-panel.module.css";
+
+const ROW_LABEL: Record<(typeof COMPARE_ROWS)[number]["key"], TranslationKey> = {
+  scale: "compareScale",
+  industries: "compareIndustry",
+  rating: "compareRating",
+  openJobs: "compareOpenJobs",
+  families: "compareFamilies",
+  salary: "compareSalary",
+  distance: "compareDistance",
+  address: "compareAddress",
+  benefits: "compareBenefits",
+};
 
 export interface SavedPanelProps {
   items: SavedPlace[];
   signedIn: boolean;
   lang: Language;
+  catalog?: POI[];
+  origin?: { lng: number; lat: number } | null;
   onClose: () => void;
   onPick: (place: SavedPlace) => void;
   onRemove?: (poiId: string) => void;
@@ -19,11 +40,21 @@ export function SavedPanel({
   items,
   signedIn,
   lang,
+  catalog = [],
+  origin = null,
   onClose,
   onPick,
   onRemove,
   shifted = false,
 }: SavedPanelProps) {
+  const [picked, setPicked] = useState<string[]>([]);
+  const liveIds = useMemo(() => new Set(items.map((item) => item.poiId)), [items]);
+  const selected = useMemo(() => picked.filter((id) => liveIds.has(id)), [picked, liveIds]);
+  const columns = useMemo(
+    () => buildCompareColumns(selected, items, catalog, origin),
+    [selected, items, catalog, origin],
+  );
+
   return (
     <div className={`${styles.cluster} ${shifted ? styles.shifted : ""}`}>
       <aside className={styles.sidebar} aria-label={t("saved", lang)}>
@@ -40,28 +71,80 @@ export function SavedPanel({
         ) : items.length === 0 ? (
           <p className={styles.empty}>{t("savedEmpty", lang)}</p>
         ) : (
-          <ul className={styles.list}>
-            {items.map((item) => (
-              <li key={item.id} className={styles.savedRow}>
-                <button type="button" className={styles.row} onClick={() => onPick(item)}>
-                  <span className={styles.query}>{item.name}</span>
-                  <span className={styles.meta}>
-                    {[getMode(item.mode).name, item.address].filter(Boolean).join(" · ")}
-                  </span>
-                </button>
-                {onRemove && (
-                  <button
-                    type="button"
-                    className={styles.textBtn}
-                    onClick={() => onRemove(item.poiId)}
-                    aria-label={`${t("unsavePlace", lang)} ${item.name}`}
-                  >
-                    {t("unsavePlace", lang)}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
+          <>
+            <p className={styles.compareHint}>{t("compareHint", lang)}</p>
+            {columns.length === 2 && (
+              <table className={styles.compareTable}>
+                <caption className={styles.srOnly}>{t("compareTitle", lang)}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{t("compareField", lang)}</th>
+                    {columns.map((col) => (
+                      <th key={col.poiId} scope="col">
+                        {col.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARE_ROWS.map((row) => (
+                    <tr key={row.key}>
+                      <th scope="row">{t(ROW_LABEL[row.key], lang)}</th>
+                      {columns.map((col) => (
+                        <td
+                          key={col.poiId}
+                          className={row.key === "salary" ? styles.salaryCell : undefined}
+                        >
+                          {col[row.key]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {selected.length === 1 && <p className={styles.compareHint}>{t("compareNeedTwo", lang)}</p>}
+            {selected.length > 0 && (
+              <button type="button" className={styles.textBtn} onClick={() => setPicked([])}>
+                {t("compareClear", lang)}
+              </button>
+            )}
+            <ul className={styles.list}>
+              {items.map((item) => {
+                const checked = selected.includes(item.poiId);
+                return (
+                  <li key={item.id} className={styles.savedRow}>
+                    <button
+                      type="button"
+                      className={`${styles.compareToggle} ${checked ? styles.compareOn : ""}`}
+                      aria-pressed={checked}
+                      aria-label={`${t("compareSelect", lang)} ${item.name}`}
+                      onClick={() => setPicked((cur) => toggleCompareSelection(cur, item.poiId))}
+                    />
+                    <button type="button" className={styles.row} onClick={() => onPick(item)}>
+                      <span className={styles.query}>{item.name}</span>
+                      <span className={styles.meta}>
+                        {[getMode(item.mode).name, item.address].filter(Boolean).join(" · ")}
+                      </span>
+                    </button>
+                    {onRemove && (
+                      <button
+                        type="button"
+                        className={styles.textBtn}
+                        onClick={() => {
+                          setPicked((cur) => cur.filter((id) => id !== item.poiId));
+                          onRemove(item.poiId);
+                        }}
+                        aria-label={`${t("unsavePlace", lang)} ${item.name}`}
+                      >
+                        {t("unsavePlace", lang)}
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </aside>
     </div>

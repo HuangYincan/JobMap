@@ -631,7 +631,69 @@ export const translations = {
     zh: '还没有投递记录。从岗位详情点投递后会出现在这里。',
     en: 'No applications yet. Apply from a job detail to see it here.',
   },
+  compareHint: {
+    zh: '勾选两家已收藏的公司，在本卡并排对比。',
+    en: 'Select two saved companies to compare in this card.',
+  },
+  compareNeedTwo: {
+    zh: '再选一家即可对比。',
+    en: 'Pick one more to compare.',
+  },
+  compareTitle: {
+    zh: '公司对比',
+    en: 'Company compare',
+  },
+  compareField: {
+    zh: '项目',
+    en: 'Field',
+  },
+  compareSelect: {
+    zh: '加入对比',
+    en: 'Compare',
+  },
+  compareClear: {
+    zh: '清除对比',
+    en: 'Clear compare',
+  },
+  compareScale: {
+    zh: '规模',
+    en: 'Scale',
+  },
+  compareIndustry: {
+    zh: '行业',
+    en: 'Industry',
+  },
+  compareRating: {
+    zh: '评分',
+    en: 'Rating',
+  },
+  compareOpenJobs: {
+    zh: '在招',
+    en: 'Open jobs',
+  },
+  compareFamilies: {
+    zh: '岗位类型',
+    en: 'Job types',
+  },
+  compareSalary: {
+    zh: '薪资',
+    en: 'Salary',
+  },
+  compareDistance: {
+    zh: '距离',
+    en: 'Distance',
+  },
+  compareAddress: {
+    zh: '地址',
+    en: 'Address',
+  },
+  compareBenefits: {
+    zh: '福利',
+    en: 'Benefits',
+  },
 } as const;
+
+export type TranslationKey = keyof typeof translations;
 
 // 获取浏览器语言偏好
 export function getBrowserLanguage(): Language {

@@ -701,6 +701,13 @@ export function MapShell() {
   catalogRef.current = catalog;
   poisRef.current = pois;
 
+  const compareCatalog = useMemo(() => {
+    const byId = new Map<string, POI>();
+    for (const poi of INTERNSHIP_SEED) byId.set(poi.id, poi);
+    for (const poi of catalog) byId.set(poi.id, poi);
+    return Array.from(byId.values());
+  }, [catalog]);
+
   const handleRefreshHere = useCallback(() => {
     const map = mapInstance.current;
     const centerObj = map?.getCenter?.();
@@ -1327,6 +1334,8 @@ export function MapShell() {
           items={savedPlaces}
           signedIn={Boolean(user)}
           lang={lang}
+          catalog={compareCatalog}
+          origin={distanceOrigin}
           shifted={sidebarOpen}
           onClose={() => setRailPanel(null)}
           onPick={(place) => {
