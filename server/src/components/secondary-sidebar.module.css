@@ -199,7 +199,8 @@
     box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.suggestionItem:hover {
+.suggestionItem:hover,
+.suggestionActive {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.22);
   box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.28) inset;

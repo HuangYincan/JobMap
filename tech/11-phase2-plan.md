@@ -289,7 +289,7 @@
 - [x] 离线提示
 
 **5.4 可访问性**
-- [x] 键盘导航测试（卡片 Enter/Space；全局 `:focus-visible`）
+- [x] 键盘导航测试（卡片 Enter/Space；搜索建议方向键 / Enter / Escape；全局 `:focus-visible`）
 - [x] ARIA 属性完善（抽屉/筛选/收藏 `aria-pressed` / `aria-label`；结果栏 `aria-live`；跳到结果 / 跳到地图 skip link）
 - [ ] 屏幕阅读器测试（VoiceOver / NVDA）
 - [x] 颜色对比度检查（`lib/contrast.ts`：浅色 `--muted` / `--blue-ink` / 语义绿对白 ≥ 4.5；品牌蓝 `#007AFF` 只作图标/描边，按大号 3:1）

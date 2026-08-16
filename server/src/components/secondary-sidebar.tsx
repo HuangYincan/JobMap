@@ -14,7 +14,7 @@
 // - 所有数据获取在父级（map-shell）
 // ============================================================
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ModeSwitcher } from "./mode-switcher";
 import { POIList } from "./poi-list";
 import { POIDetailView } from "./poi-detail";
@@ -23,6 +23,7 @@ import { FilterPanel } from "./filter-panel";
 import { SortSelector } from "./sort-selector";
 import { t, type Language } from "@/lib/i18n";
 import { getMode } from "@/lib/modes";
+import { suggestKeyAction } from "@/lib/suggest-nav";
 import { isRecruitmentPOI, type FilterState, type MapMode, type POI, type Position, type RecruitmentPOI } from "@/lib/types";
 import styles from "./secondary-sidebar.module.css";
 
@@ -141,11 +142,18 @@ export function SecondarySidebar({
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const [localDetail, setLocalDetail] = useState<POI | null>(null);
   const [jdPosition, setJdPosition] = useState<Position | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const listId = useId();
   const config = getMode(mode);
   const detailPoi = detailPoiProp ?? localDetail;
+  const suggestionItems = suggestions ?? [];
+
+  useEffect(() => {
+    setActiveSuggestion(-1);
+  }, [query, suggestionItems.length]);
 
   useEffect(() => {
     setLocalDetail(null);
@@ -238,9 +246,41 @@ export function SecondarySidebar({
               className={styles.searchInput}
               placeholder={config.searchPlaceholder}
               value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls={listId}
+              aria-activedescendant={
+                showSuggestions && activeSuggestion >= 0 ? `${listId}-${activeSuggestion}` : undefined
+              }
+              onChange={(e) => {
+                onQueryChange(e.target.value);
+                setShowSuggestions(true);
+              }}
               onKeyDown={(e) => {
-                if (e.key === "Enter") onCommitSearch?.(query);
+                const action = suggestKeyAction(
+                  e.key,
+                  activeSuggestion,
+                  showSuggestions ? suggestionItems.length : 0,
+                );
+                if (action.type === "move") {
+                  e.preventDefault();
+                  setShowSuggestions(true);
+                  setActiveSuggestion(action.index);
+                  return;
+                }
+                if (action.type === "pick") {
+                  e.preventDefault();
+                  onSelectSuggestion?.(suggestionItems[action.index]);
+                  setShowSuggestions(false);
+                  setActiveSuggestion(-1);
+                  return;
+                }
+                if (action.type === "close") {
+                  setShowSuggestions(false);
+                  setActiveSuggestion(-1);
+                  return;
+                }
+                if (action.type === "commit") onCommitSearch?.(query);
               }}
               onFocus={() => {
                 setShowSuggestions(true);
@@ -251,7 +291,7 @@ export function SecondarySidebar({
                 setTimeout(() => setShowSuggestions(false), 150);
               }}
               aria-label={t("search", lang)}
-              aria-expanded={showSuggestions}
+              aria-expanded={showSuggestions && suggestionItems.length > 0}
             />
             {query && (
               <button
@@ -268,16 +308,18 @@ export function SecondarySidebar({
           </div>
 
           {/* 搜索建议下拉（AutoComplete） */}
-          {showSuggestions && suggestions && suggestions.length > 0 && (
-            <ul className={styles.suggestionList} role="listbox" aria-label="Search suggestions">
-              {suggestions.map((s, i) => (
-                <li key={`${s.id || s.name}-${i}`} role="option">
+          {showSuggestions && suggestionItems.length > 0 && (
+            <ul id={listId} className={styles.suggestionList} role="listbox" aria-label="Search suggestions">
+              {suggestionItems.map((s, i) => (
+                <li key={`${s.id || s.name}-${i}`} id={`${listId}-${i}`} role="option" aria-selected={i === activeSuggestion}>
                   <button
-                    className={styles.suggestionItem}
+                    className={`${styles.suggestionItem} ${i === activeSuggestion ? styles.suggestionActive : ""}`}
+                    onMouseEnter={() => setActiveSuggestion(i)}
                     onMouseDown={(e) => {
                       e.preventDefault();
                       onSelectSuggestion?.(s);
                       setShowSuggestions(false);
+                      setActiveSuggestion(-1);
                     }}
                   >
                     <span className={styles.suggestionIcon} aria-hidden="true">

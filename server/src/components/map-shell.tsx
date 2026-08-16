@@ -9,6 +9,7 @@ import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
+import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchSearchSuggest } from "@/lib/api";
 import { trendingForMode } from "@/lib/trending-search";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
@@ -159,6 +160,7 @@ export function MapShell() {
   const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers">("explore");
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
+  const [mobileSuggestIndex, setMobileSuggestIndex] = useState(-1);
   const [online, setOnline] = useState(true);
   const drawerSwipeRef = useRef<{ y: number } | null>(null);
 
@@ -1096,6 +1098,10 @@ export function MapShell() {
     };
   }, [query, mode, zoom, catalog]);
 
+  useEffect(() => {
+    setMobileSuggestIndex(-1);
+  }, [query, suggestions.length]);
+
   // 选择建议 → 定位；招聘建议打开对应公司；#标签写入筛选插件
   const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
     if (s.location) {
@@ -1688,6 +1694,11 @@ export function MapShell() {
                 type="search"
                 placeholder={modeConfig.searchPlaceholder}
                 value={query}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-controls="mobile-suggest"
+                aria-expanded={suggestions.length > 0}
+                aria-activedescendant={mobileSuggestIndex >= 0 ? `mobile-suggest-${mobileSuggestIndex}` : undefined}
                 onChange={(e) => {
                   setQuery(e.target.value);
                   if (drawer === "mini") setDrawer("half");
@@ -1696,10 +1707,47 @@ export function MapShell() {
                   if (drawer === "mini") setDrawer("half");
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") void recordSearch(query, mode);
+                  const action = suggestKeyAction(e.key, mobileSuggestIndex, suggestions.length);
+                  if (action.type === "move") {
+                    e.preventDefault();
+                    setMobileSuggestIndex(action.index);
+                    return;
+                  }
+                  if (action.type === "pick") {
+                    e.preventDefault();
+                    handleSelectSuggestion(suggestions[action.index]);
+                    setMobileSuggestIndex(-1);
+                    return;
+                  }
+                  if (action.type === "close") {
+                    setMobileSuggestIndex(-1);
+                    return;
+                  }
+                  if (action.type === "commit") void recordSearch(query, mode);
                 }}
                 aria-label={t("search", lang)}
               />
+              {suggestions.length > 0 && (
+                <ul id="mobile-suggest" className={styles.mobileSuggestions} role="listbox" aria-label="Search suggestions">
+                  {suggestions.map((s, i) => (
+                    <li key={`${s.id || s.name}-${i}`} id={`mobile-suggest-${i}`} role="option" aria-selected={i === mobileSuggestIndex}>
+                      <button
+                        type="button"
+                        className={i === mobileSuggestIndex ? styles.mobileSuggestActive : undefined}
+                        onMouseEnter={() => setMobileSuggestIndex(i)}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSelectSuggestion(s);
+                          setMobileSuggestIndex(-1);
+                        }}
+                      >
+                        <strong>{s.name}</strong>
+                        {s.subtitle && <small>{s.subtitle}</small>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             )}
             <div className={styles.drawerContent}>
