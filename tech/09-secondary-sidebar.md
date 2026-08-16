@@ -212,8 +212,10 @@
 - **Profile / Recent / Saved** 也走同一套二级霜面面板（`--soft-strong`），从左侧 rail 展开。Preference 卡片在 Profile 二级卡内部切换，不新开三级。Recent 只列搜索记录。Saved 勾选两家招聘点后，对比表就地出现在同一张卡里（`lib/compare-saved.ts`），不新开一层。
 
 **移动端:**
-- 点击卡片 → 全屏详情页从右侧滑入
-- 动画: iOS 风格右滑进入
+- ≤767px 抽屉拥有探索 / 详情 / JD / Profile。嵌入态 Profile / Recent 必须保留关闭按钮；Account / Saved / Layers 另有「返回」文字按钮。再点一次头像从 Profile 回到探索。
+- Preference 卡片宽度跟抽屉走（`max-width: 100%`），不要锁 380px。
+- 点击卡片 → 抽屉内覆盖详情，不新开桌面 L2
+- 抽屉把手下滑：先关 JD，再回列表，再退出 Account / Saved / Layers
 - 支持手势返回
 
 ### 详情页结构

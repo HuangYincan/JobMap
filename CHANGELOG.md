@@ -38,6 +38,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Official-career drops for Tencent / NetEase / Huawei / Ant Hangzhou offices: 2026 autumn frontend unions onto the existing seed pin (`${slug}-site`). No second map marker.
 - Avatar crop dialog portals to `document.body` so Profile’s `pointer-events: none` cluster cannot swallow drag / zoom / save.
 - Mobile search suggestions appear only in half/full as a liquid-glass overlay over the list (`mobileSearchStack`), not an in-flow block.
+- Mobile Profile / Recent keep a visible close on the embedded sheet. Account, Saved, and Layers also expose a `mobileBackBtn`. Tapping the drawer avatar again while already on Profile returns to Explore.
 
 ### Changed
 
@@ -48,6 +49,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Contrast tokens: `--muted` / `--blue-ink` / `--green` meet WCAG AA on frost/white. Brand `#007AFF` stays chrome-only.
 - Suggest empty-q hot list is `trendingForMode` (not a second hardcoded array).
 - Failed session / OTP lookups delete expired rows when `DATABASE_URL` is set.
+- Embedded Profile / Recent preference cards are fluid in the drawer (`max-width: 100%`); `.sheet` follows `.sidebar` so `width: 100%` wins over the desktop 380px lock.
 
 ### Security
 

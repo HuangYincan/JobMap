@@ -1256,6 +1256,10 @@ export function MapShell() {
       setAuthOpen(true);
       return;
     }
+    if (mobileSheet === "account") {
+      setMobileSheet("explore");
+      return;
+    }
     setMobileSheet("account");
     setDrawer("full");
     setDetailPoi(null);
@@ -1828,6 +1832,15 @@ export function MapShell() {
             <div className={styles.drawerContent}>
               {mobileSheet === "account" ? (
                 <div className={styles.mobileAccount}>
+                  <div className={styles.mobileSheetBar}>
+                    <button
+                      type="button"
+                      className={styles.mobileBackBtn}
+                      onClick={() => setMobileSheet("explore")}
+                    >
+                      {t("backToExplore", lang)}
+                    </button>
+                  </div>
                   <div className={styles.mobileAccountNav} role="navigation" aria-label={t("profile", lang)}>
                     <button
                       type="button"
@@ -1899,18 +1912,38 @@ export function MapShell() {
                   } : undefined}
                 />
               ) : mobileSheet === "saved" ? (
-                <SavedList
-                  items={savedPlaces}
-                  signedIn={Boolean(user)}
-                  lang={lang}
-                  catalog={compareCatalog}
-                  origin={distanceOrigin}
-                  onPick={handlePickSaved}
-                  onHover={handleHover}
-                  onRemove={user ? handleRemoveSaved : undefined}
-                />
+                <div className={styles.mobileAccount}>
+                  <div className={styles.mobileSheetBar}>
+                    <button
+                      type="button"
+                      className={styles.mobileBackBtn}
+                      onClick={() => setMobileSheet("account")}
+                    >
+                      {t("back", lang)}
+                    </button>
+                  </div>
+                  <SavedList
+                    items={savedPlaces}
+                    signedIn={Boolean(user)}
+                    lang={lang}
+                    catalog={compareCatalog}
+                    origin={distanceOrigin}
+                    onPick={handlePickSaved}
+                    onHover={handleHover}
+                    onRemove={user ? handleRemoveSaved : undefined}
+                  />
+                </div>
               ) : mobileSheet === "layers" ? (
                 <div className={styles.mobileLayers}>
+                  <div className={styles.mobileSheetBar}>
+                    <button
+                      type="button"
+                      className={styles.mobileBackBtn}
+                      onClick={() => setMobileSheet("account")}
+                    >
+                      {t("back", lang)}
+                    </button>
+                  </div>
                   <button
                     type="button"
                     className={`${styles.mobileFilterBtn} ${savedOverlay ? styles.mobileFilterBtnActive : ""}`}

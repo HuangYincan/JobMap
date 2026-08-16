@@ -215,6 +215,14 @@ export const translations = {
     zh: '返回列表',
     en: 'Back to list',
   },
+  back: {
+    zh: '返回',
+    en: 'Back',
+  },
+  backToExplore: {
+    zh: '返回探索',
+    en: 'Back to explore',
+  },
   address: {
     zh: '地址',
     en: 'Address',

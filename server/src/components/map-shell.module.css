@@ -1094,7 +1094,35 @@
   .drawerContent {
     opacity: 1;
     overflow: auto;
+    overflow-x: hidden;
     padding: 25px 1px 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .mobileAccount,
+  .mobileLayers {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .mobileSheetBar {
+    display: flex;
+    align-items: center;
+    margin: 0 0 10px;
+  }
+
+  .mobileBackBtn {
+    border: 0;
+    background: transparent;
+    color: var(--blue-ink, #0062cc);
+    font-size: 13px;
+    font-weight: 650;
+    padding: 4px 0;
   }
 
   .drawerMini .drawerContent,
@@ -1342,7 +1370,6 @@
     font-size: 13px;
     line-height: 1.45;
     margin: 0;
-    max-width: 300px;
   }
 
   .quickGrid {

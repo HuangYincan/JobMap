@@ -91,9 +91,24 @@ test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   assert.match(shell, /mobileSearchStack/);
   assert.match(shell, /drawer !== "mini" && suggestions\.length > 0/);
   assert.match(shell, /mobileJd && isRecruitmentPOI/);
+  assert.match(shell, /mobileBackBtn/);
+  assert.match(shell, /mobileSheet === "account"/);
   assert.match(css, /\.mobileChips/);
   assert.match(css, /\.mobileSearchRow/);
+  assert.match(css, /\.mobileBackBtn/);
   assert.match(css, /@media \(max-width: 767px\)/);
+});
+
+test('embedded Profile keeps a close control and fluid card width', () => {
+  const panel = src('components/account-panel.tsx');
+  const css = src('components/account-panel.module.css');
+  assert.match(panel, /embedded \? t\("backToExplore", lang\) : t\("closePanel", lang\)/);
+  assert.doesNotMatch(panel, /\{!embedded && \([\s\S]*styles\.close/);
+  assert.match(css, /\.sidebar[\s\S]*width:\s*380px[\s\S]*max-width:\s*100%/);
+  assert.match(css, /\.sheet[\s\S]*width:\s*100%[\s\S]*max-width:\s*100%/);
+  const sheetAt = css.indexOf('\n.sheet {');
+  const sidebarAt = css.indexOf('\n.sidebar {');
+  assert.ok(sheetAt > sidebarAt, 'sheet must follow sidebar so width:100% wins');
 });
 
 test('work autocomplete prefers GET /api/suggest and falls back locally', () => {
