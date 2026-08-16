@@ -1,6 +1,6 @@
 # Official-career drops
 
-Drop one JSON file per company (or an array of companies). `npm run import:seed` merges these with `WORK_SEED` (same slug → sites/positions union). Empty directory is a no-op.
+Drop one JSON file per company (or an array of companies). `npm run import:seed` and the no-DB work catalog (`loadOfflineWorkCatalog`) merge these with `WORK_SEED` (same slug → sites/positions union; new slugs become catalog POIs). Empty directory is a no-op.
 
 Shape matches `SourceCompany` in `lib/recruitment-source.ts`:
 

@@ -10,7 +10,7 @@ import {
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
 import { officialCareerAdapter, parseOfficialCareerPayload } from '../src/lib/recruitment-adapters/official-career.ts';
-import { poiToSourceCompany } from '../src/lib/recruitment-source.ts';
+import { mergeOfficialCareerIntoSeed, poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -62,6 +62,62 @@ test('planSeedImport accepts every current WORK_SEED company', async () => {
   assert.ok(plan.companies.length >= 50);
   assert.ok(plan.companies.every((c) => c.sites.length >= 1));
   assert.ok(plan.companies.every((c) => c.positions.every((p) => c.sites.some((s) => s.id === p.siteId))));
+});
+
+test('mergeOfficialCareerIntoSeed keeps seed ids and unions new jobs', () => {
+  const merged = mergeOfficialCareerIntoSeed(WORK_SEED, [
+    {
+      slug: 'alibaba-xixi',
+      name: '阿里巴巴',
+      industries: ['internet'],
+      scale: 'bigtech',
+      sites: [{ id: 'alibaba-xixi-site', name: '阿里巴巴' }],
+      positions: [
+        {
+          externalId: 'alibaba-new-job',
+          title: '新岗',
+          siteId: 'alibaba-xixi-site',
+          family: 'campus',
+          status: 'open',
+        },
+      ],
+    },
+    {
+      slug: 'brand-new-lab',
+      name: '新实验室',
+      industries: ['ai'],
+      scale: 'startup',
+      sites: [{ id: 'hq', name: '杭州', location: { lng: 120.1, lat: 30.2 } }],
+      positions: [
+        {
+          externalId: 'lab-job',
+          title: '科研',
+          siteId: 'hq',
+          family: 'intern',
+          status: 'open',
+        },
+      ],
+    },
+  ]);
+  const ali = merged.find((p) => p.id === 'alibaba-xixi');
+  assert.ok(ali);
+  assert.ok(ali.positions.some((p) => p.id === 'alibaba-new-job'));
+  assert.ok(ali.positions.some((p) => p.id === 'alibaba-java'));
+  const lab = merged.find((p) => p.id === 'brand-new-lab');
+  assert.ok(lab);
+  assert.equal(lab.source, 'api');
+});
+
+test('planSeedImport merges official-career drops onto seed slugs', async () => {
+  const plan = await planSeedImport();
+  const alibaba = plan.companies.find((c) => c.slug === 'alibaba-xixi');
+  assert.ok(alibaba);
+  assert.ok(alibaba.positions.some((p) => p.externalId === 'alibaba-campus-frontend-2026'));
+  assert.ok(alibaba.positions.some((p) => p.externalId === 'alibaba-java'));
+
+  const lab = plan.companies.find((c) => c.slug === 'zhejiang-lab');
+  assert.ok(lab);
+  assert.equal(lab.positions[0].siteId, 'hq');
 });
 
 test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {

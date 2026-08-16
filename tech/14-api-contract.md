@@ -10,7 +10,7 @@ All public GETs below send `Cache-Control: public, max-age=30, stale-while-reval
 |---|---|---|
 | GET | `/api/modes` | Active modes. `?all=1` includes reserved college/overseas. |
 | GET | `/api/filter-options?mode=` | Filters + sort options from `MODES`. Unknown mode → 400. |
-| GET | `/api/pois?mode=&q=&filters=&sort=&bounds=&page=&pageSize=` | `loadServerCatalog` → optional bbox clip (`inBounds`) → `runPOIPipeline`. Work prefers imported SQL rows, else `INTERNSHIP_SEED`. Domain = `DOMAIN_SEED`. College/overseas = empty. |
+| GET | `/api/pois?mode=&q=&filters=&sort=&bounds=&page=&pageSize=` | `loadServerCatalog` → optional bbox clip (`inBounds`) → `runPOIPipeline`. Work prefers imported SQL rows, else seed + `data/recruitment/official-career/` JSON. Domain = `DOMAIN_SEED`. College/overseas = empty. |
 | GET | `/api/pois/:id?mode=` | `loadServerCatalogById`. Missing → 404. |
 | POST | `/api/search` | JSON `{ mode, q, filters, sort, bounds, page, pageSize }`. Invalid JSON → 400. `bounds` clips results to the box, then distances from the box center. Returns `aggregations.industries`. Same catalog. |
 | GET | `/api/suggest?q=&mode=` | Same catalog. Work: company / job / tag. Domain: seed names. Job rows include `poiId` (company catalog id) so the client can open the office. Tag rows come from `suggestSearchTags` (`TAG_FILTERS`: scale / industry / jobTaxonomy), not a hardcoded industry list. Empty `q` → `trendingForMode` as `hotSearches`. `recentSearches` always `[]` (use `/api/me/search-history`). MapShell work autocomplete calls this (200ms debounce) and falls back to `suggestSearchTags` + `suggestRecruitment` if the request fails. |

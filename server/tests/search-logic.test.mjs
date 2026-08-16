@@ -223,6 +223,10 @@ test('parseSearchQuery turns #tags into filter plugins', () => {
   const district = parseSearchQuery('#西湖区');
   assert.equal(district.text, '');
   assert.deepEqual(district.filters.district, ['西湖区']);
+
+  const yuhang = parseSearchQuery('#余杭');
+  assert.equal(yuhang.text, '');
+  assert.deepEqual(yuhang.filters.district, ['余杭区']);
 });
 
 test('applyTagSuggestion merges a known hash into filters and clears the query', () => {

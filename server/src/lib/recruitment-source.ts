@@ -109,6 +109,79 @@ export function logoForSite(company: SourceCompany, site?: CompanySite): Resolve
   });
 }
 
+export function catalogSlug(poi: RecruitmentPOI): string {
+  const colon = poi.id.indexOf(':');
+  return colon === -1 ? poi.id : poi.id.slice(0, colon);
+}
+
+/** Single office keeps `slug`; extra offices become `slug:site.id`. */
+export function catalogIdForSite(slug: string, siteId: string, siteCount: number): string {
+  return siteCount === 1 ? slug : `${slug}:${siteId}`;
+}
+
+function positionFromSource(pos: SourcePosition) {
+  return {
+    id: pos.externalId,
+    siteId: pos.siteId,
+    title: pos.title,
+    department: pos.department,
+    type: pos.family,
+    taxonomy: pos.taxonomy ?? { family: pos.family },
+    salary: pos.salary,
+    education: pos.education,
+    majors: pos.majors,
+    skills: pos.skills,
+    description: pos.description,
+    deadline: pos.deadline,
+    apply: pos.applyUrl
+      ? { source: pos.applySource ?? 'official', url: pos.applyUrl }
+      : undefined,
+    status: pos.status,
+  };
+}
+
+function poiFromSourceSite(
+  company: SourceCompany,
+  site: CompanySite,
+  id: string,
+  source: RecruitmentPOI['source'],
+): RecruitmentPOI {
+  const logo = logoForSite(company, site);
+  return {
+    id,
+    kind: 'recruitment',
+    name: company.name,
+    mode: 'work',
+    source,
+    location: site.location ?? { lng: 0, lat: 0 },
+    company: {
+      name: company.name,
+      industries: company.industries,
+      scale: company.scale,
+      rating: company.rating,
+      logo: logo.emoji,
+      logoUrl: logo.url,
+      summary: company.summary,
+      careerUrl: site.careerUrl || company.careerUrl,
+    },
+    sites: [site],
+    positions: company.positions.filter((p) => p.siteId === site.id).map(positionFromSource),
+  };
+}
+
+/** Read-path ids: one site → slug, many sites → slug:site.id. */
+export function sourceCompanyToCatalogPois(
+  company: SourceCompany,
+  source: RecruitmentPOI['source'] = 'api',
+): RecruitmentPOI[] {
+  const sites = company.sites.length
+    ? company.sites
+    : [{ id: `${company.slug}-hq`, name: company.name, careerUrl: company.careerUrl }];
+  return sites.map((site) =>
+    poiFromSourceSite(company, site, catalogIdForSite(company.slug, site.id, sites.length), source),
+  );
+}
+
 /** 把源记录压成现有 RecruitmentPOI（一职场一张地图点）。 */
 export function sourceCompanyToPois(
   company: SourceCompany,
@@ -118,45 +191,50 @@ export function sourceCompanyToPois(
     ? company.sites
     : [{ id: `${company.slug}-hq`, name: company.name, careerUrl: company.careerUrl }];
 
-  return sites.map((site) => {
-    const logo = logoForSite(company, site);
-    const sitePositions = company.positions.filter((p) => p.siteId === site.id);
-    return {
-      id: `${company.slug}:${site.id}`,
-      kind: 'recruitment',
-      name: company.name,
-      mode: 'work',
-      source,
-      location: site.location ?? { lng: 0, lat: 0 },
-      company: {
-        name: company.name,
-        industries: company.industries,
-        scale: company.scale,
-        rating: company.rating,
-        logo: logo.emoji,
-        logoUrl: logo.url,
-        summary: company.summary,
-        careerUrl: site.careerUrl || company.careerUrl,
-      },
-      sites: [site],
-      positions: sitePositions.map((p) => ({
-        id: p.externalId,
-        siteId: p.siteId,
-        title: p.title,
-        department: p.department,
-        type: p.family,
-        taxonomy: p.taxonomy ?? { family: p.family },
-        salary: p.salary,
-        education: p.education,
-        majors: p.majors,
-        skills: p.skills,
-        description: p.description,
-        deadline: p.deadline,
-        apply: p.applyUrl
-          ? { source: p.applySource ?? 'official', url: p.applyUrl }
-          : undefined,
-        status: p.status,
-      })),
-    };
-  });
+  return sites.map((site) => poiFromSourceSite(company, site, `${company.slug}:${site.id}`, source));
+}
+
+/** Union official-career drops onto seed POIs. Keep seed ids; add new slugs as catalog POIs. */
+export function mergeOfficialCareerIntoSeed(
+  seed: RecruitmentPOI[],
+  official: SourceCompany[],
+): RecruitmentPOI[] {
+  const bySlug = new Map<string, RecruitmentPOI[]>();
+  for (const poi of seed) {
+    const slug = catalogSlug(poi);
+    const list = bySlug.get(slug) ?? [];
+    list.push({
+      ...poi,
+      sites: [...(poi.sites ?? [])],
+      positions: [...poi.positions],
+    });
+    bySlug.set(slug, list);
+  }
+
+  const extras: RecruitmentPOI[] = [];
+  for (const company of official) {
+    const existing = bySlug.get(company.slug);
+    if (existing) mergeCompanyOntoSeedPois(existing, company);
+    else extras.push(...sourceCompanyToCatalogPois(company, 'api'));
+  }
+  return [...[...bySlug.values()].flat(), ...extras];
+}
+
+function mergeCompanyOntoSeedPois(pois: RecruitmentPOI[], company: SourceCompany): void {
+  const knownSites = new Set(pois.flatMap((poi) => (poi.sites ?? []).map((site) => site.id)));
+  const knownJobs = new Set(pois.flatMap((poi) => poi.positions.map((pos) => pos.id)));
+
+  for (const site of company.sites) {
+    if (knownSites.has(site.id)) continue;
+    knownSites.add(site.id);
+    pois.push(poiFromSourceSite(company, site, `${company.slug}:${site.id}`, 'api'));
+  }
+
+  for (const pos of company.positions) {
+    if (knownJobs.has(pos.externalId)) continue;
+    const target = pois.find((poi) => (poi.sites ?? []).some((site) => site.id === pos.siteId)) ?? pois[0];
+    if (!target) continue;
+    target.positions.push(positionFromSource(pos));
+    knownJobs.add(pos.externalId);
+  }
 }

@@ -28,11 +28,13 @@ test('sync catalog is still the seed (tests and dry helpers)', () => {
   assert.equal(serverCatalog('college').length, 0);
 });
 
-test('async catalog falls back to the same seed without DATABASE_URL', async () => {
+test('async catalog merges official-career drops when there is no DATABASE_URL', async () => {
   const work = await loadServerCatalog('work');
-  assert.equal(work.length, INTERNSHIP_SEED.length);
+  assert.ok(work.length > INTERNSHIP_SEED.length);
   const ali = await loadServerCatalogById('work', 'alibaba-xixi');
   assert.equal(ali?.id, 'alibaba-xixi');
+  assert.ok(ali?.kind === 'recruitment' && ali.positions.some((p) => p.id === 'alibaba-campus-frontend-2026'));
+  assert.ok(await loadServerCatalogById('work', 'zhejiang-lab'));
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');
 });
@@ -46,9 +48,10 @@ test('loadWorkCatalogFromDb joins companies + sites + open positions', () => {
   assert.match(store, /return null/);
 });
 
-test('loadServerCatalog prefers imported work rows, then seed', () => {
+test('loadServerCatalog prefers imported work rows, then seed + official-career', () => {
   const catalog = src('lib/server-catalog.ts');
   assert.match(catalog, /loadWorkCatalogFromDb/);
   assert.match(catalog, /if \(imported && imported\.length > 0\) return imported/);
-  assert.match(catalog, /return INTERNSHIP_SEED/);
+  assert.match(catalog, /loadOfflineWorkCatalog/);
+  assert.match(catalog, /mergeOfficialCareerIntoSeed/);
 });

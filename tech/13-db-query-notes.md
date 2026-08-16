@@ -8,7 +8,7 @@ Live PostGIS / Docker 仍不可用。本页记录**已经写进迁移的索引**
 
 | 路径 | 何时打 Postgres | 不打 |
 |---|---|---|
-| MapShell 列表 / 搜索 / 筛选 | 从不。浏览器高德 + `runPOIPipeline` | 公开读走 `loadServerCatalog`（有导入行读库，否则 seed）+ 30s 进程缓存 |
+| MapShell 列表 / 搜索 / 筛选 | 从不。浏览器高德 + `runPOIPipeline` | 公开读走 `loadServerCatalog`（有导入行读库，否则 seed + official-career JSON）+ 30s 进程缓存 |
 | `loadWorkCatalogFromDb` | 有 `DATABASE_URL` 且 `companies` 有行 | 无池 / 查询失败 → `null`（调用方回落 seed）；空表 → `[]` |
 | `/api/me/*`、登录、Recent、Saved、投递、提醒 | 有 `DATABASE_URL` 时走 `account-store` | 没有库 → 内存 Map |
 

@@ -3,9 +3,22 @@
 // keep /api/pois, /api/pois/[id], /api/search, and /api/suggest aligned
 // when there is no DATABASE_URL.
 
+import { listOfficialCareerFiles } from './recruitment-adapters/official-career.ts';
+import { mergeOfficialCareerIntoSeed } from './recruitment-source.ts';
 import { loadWorkCatalogFromDb } from './recruitment-store.ts';
 import { DOMAIN_SEED, INTERNSHIP_SEED } from './seed-data.ts';
 import { isRecruitmentMode, type MapMode, type POI } from './types.ts';
+
+let offlineWorkCatalog: Promise<POI[]> | null = null;
+
+export async function loadOfflineWorkCatalog(): Promise<POI[]> {
+  if (!offlineWorkCatalog) {
+    offlineWorkCatalog = listOfficialCareerFiles().then((official) =>
+      mergeOfficialCareerIntoSeed(INTERNSHIP_SEED, official),
+    );
+  }
+  return offlineWorkCatalog;
+}
 
 /** Sync seed catalog. Tests and dry helpers use this. */
 export function serverCatalog(mode: MapMode): POI[] {
@@ -14,12 +27,12 @@ export function serverCatalog(mode: MapMode): POI[] {
   return [];
 }
 
-/** Prefer imported work rows when Postgres has them; otherwise seed. */
+/** Prefer imported work rows when Postgres has them; otherwise seed + official-career drops. */
 export async function loadServerCatalog(mode: MapMode): Promise<POI[]> {
   if (isRecruitmentMode(mode)) {
     const imported = await loadWorkCatalogFromDb();
     if (imported && imported.length > 0) return imported;
-    return INTERNSHIP_SEED;
+    return loadOfflineWorkCatalog();
   }
   if (mode === 'domain') return DOMAIN_SEED;
   return [];
