@@ -15,11 +15,19 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
-- Merge-on-sign-in wiped rows whose POST failed; now only rows absent from the account upload, and failed rows stay local.
+- Merge-on-sign-in wiped rows whose POST failed; now only rows absent from the account upload, and failed rows stay local. Merge logic extracted to `mergeGuestHistoryIntoAccount` (unit-tested).
 - Persisted signed-in sessions now merge leftover guest rows on mount, not only after the auth modal.
 - `mergeCompanyOntoSeedPois` no longer appends a new site's positions twice; `zhejiang-lab` site id corrected to `{slug}-site` per the merge rule.
+- DB read path pinned ungeocoded sites at (0,0); `loadWorkCatalogFromDb` now filters them (matches the offline path). Verified over HTTP: 51 coordinated pins, 0 (0,0).
+- `import:seed:apply` crashed on radar deadlines like "招满即止" (`positions.deadline` is a date column); `parse_deadline` (crawler) + `normalizeDeadline` (import) now emit ISO dates only. **Live DB import succeeded: 137 companies / 137 sites / 240 positions.**
 - Polite fetcher survives transient SSL/network errors and a misspelled page charset; `parse_robots` follows RFC 9309 (specific UA group wins, Allow tiebreak). Stale `betta-hangzhou` careerUrl fixed.
-- Dead i18n keys (`authX`, `recentNeedSignIn`) and the `mergeOfficialCareerIntoSeed` wrapper removed.
+- Desktop rail search used a static placeholder; now mode-specific (`modeConfig.searchPlaceholder`). 11 dead i18n keys removed.
+- Reserved `college` / `overseas` modes return empty trending instead of borrowing work queries.
+
+### Measured
+
+- `npm run test:coverage` (Node built-in): **78.75% lines / 77.42% branches / 75% functions** — plan target >70% met.
+- Warm local API (dev, DB imported): `/api/pois?mode=work` p95 **9.6ms**; `/api/pois/:id` p95 **8.2ms**; `/api/suggest` p95 **6.8ms** — all plan targets met.
 
 ## 2026-08-16
 
