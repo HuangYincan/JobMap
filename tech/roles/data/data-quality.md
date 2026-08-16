@@ -26,5 +26,5 @@
 ## Remediation
 
 - Re-run `radar` mapper weekly via `make refresh-radar`; record new SHA-256 here.
-- Curate extracted official-page candidates for betta / megvii / wasu / deepseek (real campus/social portals) before `--write`.
+- **Curated** verified official portal links as positions on 3 companies (2026-08-17): betta (campus `/Jobs/campus`, social `zhiye.com/Social`), megvii (campus `join_us/campus`, social `zhaopin.megvii.com`), deepseek (`talent.deepseek.com`). wasu's hotjob link was 404 — left uncurated.
 - When a per-ATS public JSON (e.g. Moka / hotjob API) is reviewed, wire it as another adapter instead of scraping SPA HTML.

@@ -40,6 +40,19 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.deepseek.com/"
+    },
+    {
+      "externalId": "portal-deepseek",
+      "title": "加入 DeepSeek（官方人才站）",
+      "siteId": "deepseek-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.deepseek.com/",
+      "retrievedAt": "2026-08-17"
     }
   ]
 }

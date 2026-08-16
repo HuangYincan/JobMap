@@ -40,6 +40,32 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.bettapharma.com/joinus"
+    },
+    {
+      "externalId": "portal-betta-campus",
+      "title": "校园招聘（官网投递）",
+      "siteId": "betta-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.bettapharma.com/Jobs/campus",
+      "retrievedAt": "2026-08-17"
+    },
+    {
+      "externalId": "portal-betta-social",
+      "title": "社会招聘（官网投递）",
+      "siteId": "betta-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bettapharma.zhiye.com/Social",
+      "retrievedAt": "2026-08-17"
     }
   ]
 }
