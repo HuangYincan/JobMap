@@ -6,8 +6,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { INTERNSHIP_SEED } from '@/lib/seed-data';
-import { isRecruitmentMode } from '@/lib/types';
+import { serverCatalogById } from '@/lib/server-catalog';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
@@ -25,21 +24,13 @@ export async function GET(
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  if (isRecruitmentMode(mode)) {
-    const poi = INTERNSHIP_SEED.find((p) => p.id === id);
-    if (!poi) {
-      return NextResponse.json(
-        { code: 'NOT_FOUND', message: `POI ${id} not found` },
-        { status: 404 }
-      );
-    }
-    writePublicCache(cacheKey, poi);
-    return NextResponse.json(poi, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  const poi = serverCatalogById(mode, id);
+  if (!poi) {
+    return NextResponse.json(
+      { code: 'NOT_FOUND', message: `POI ${id} not found` },
+      { status: 404 }
+    );
   }
-
-  // 其他模式：Phase 3+ 实现
-  return NextResponse.json(
-    { code: 'NOT_IMPLEMENTED', message: `mode ${mode} detail not implemented` },
-    { status: 501 }
-  );
+  writePublicCache(cacheKey, poi);
+  return NextResponse.json(poi, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
 }

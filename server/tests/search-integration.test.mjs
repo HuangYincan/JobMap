@@ -8,9 +8,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { parseSearchQuery, runPOIPipeline } from '../src/lib/search.ts';
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { serverCatalog, serverCatalogById } from '../src/lib/server-catalog.ts';
 import { isRecruitmentMode, withDistance } from '../src/lib/types.ts';
 import { MODES } from '../src/lib/modes.ts';
+import { trendingForMode } from '../src/lib/trending-search.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -26,7 +27,7 @@ function searchLikeRoute(body) {
   const pageSize = Math.min(50, Math.max(1, Math.floor(body.pageSize || 20)));
   const parsed = parseSearchQuery(body.q || '');
   const filters = { ...parsed.filters, ...(body.filters || {}) };
-  const pois = isRecruitmentMode(mode) ? INTERNSHIP_SEED : [];
+  const pois = serverCatalog(mode);
   const processed = runPOIPipeline(pois, {
     query: parsed.text || body.q,
     filters,
@@ -57,20 +58,21 @@ test('POST /api/search contract: invalid JSON 400, work seed + cache + pipeline'
   const route = src('app/api/search/route.ts');
   assert.match(route, /status: 400/);
   assert.match(route, /invalid JSON body/);
-  assert.match(route, /INTERNSHIP_SEED/);
+  assert.match(route, /serverCatalog/);
   assert.match(route, /runPOIPipeline/);
   assert.match(route, /writePublicCache/);
   assert.match(route, /aggregations: \{ industries \}/);
   assert.match(route, /pageSize = Math\.min\(50/);
 });
 
-test('GET /api/pois contract: work seed, domain examples, unknown mode empty', () => {
+test('GET /api/pois contract: shared server catalog + pipeline', () => {
   const route = src('app/api/pois/route.ts');
-  assert.match(route, /INTERNSHIP_SEED/);
-  assert.match(route, /hz-westlake/);
-  assert.match(route, /未实现模式：空结果/);
+  assert.match(route, /serverCatalog/);
   assert.match(route, /runPOIPipeline/);
   assert.match(route, /parseFilters/);
+  assert.ok(serverCatalog('work').length > 0);
+  assert.ok(serverCatalog('domain').some((p) => p.id === 'hz-westlake'));
+  assert.equal(serverCatalog('college').length, 0);
 });
 
 test('GET /api/filter-options contract: unknown mode 400, work has taxonomy + district', () => {
@@ -86,13 +88,16 @@ test('GET /api/filter-options contract: unknown mode 400, work has taxonomy + di
   assert.ok(MODES.work.sortOptions.length >= 3);
 });
 
-test('GET /api/suggest contract: work matches company/job/tag; empty q shows hot searches', () => {
+test('GET /api/suggest contract: work matches company/job/tag; empty q uses trendingForMode', () => {
   const route = src('app/api/suggest/route.ts');
-  assert.match(route, /HOT_SEARCHES/);
+  assert.match(route, /trendingForMode/);
+  assert.match(route, /DOMAIN_SEED/);
   assert.match(route, /type: 'poi'/);
   assert.match(route, /type: 'position'/);
   assert.match(route, /type: 'tag'/);
   assert.match(route, /slice\(0, 10\)/);
+  assert.ok(trendingForMode('work').some((item) => item.query === '#大厂'));
+  assert.ok(trendingForMode('domain').some((item) => item.query === '西湖'));
 });
 
 test('search flow: keyword + #大厂 returns only bigtech and paginates', () => {
@@ -130,12 +135,21 @@ test('search flow: industry filter + salary sort stays inside the seed', () => {
   assert.deepEqual(highs, sorted);
 });
 
-test('search flow: domain and unknown modes stay empty on the server', () => {
+test('search flow: domain seed matches 西湖; college stays empty', () => {
   const domain = searchLikeRoute({ mode: 'domain', q: '西湖' });
-  assert.equal(domain.total, 0);
-  assert.deepEqual(domain.results, []);
+  assert.ok(domain.total > 0);
+  assert.ok(domain.results.some((p) => p.id === 'hz-westlake'));
   const college = searchLikeRoute({ mode: 'college', q: '浙大' });
   assert.equal(college.total, 0);
+});
+
+test('GET /api/pois/[id] contract: shared catalog, 404 when missing', () => {
+  const route = src('app/api/pois/[id]/route.ts');
+  assert.match(route, /serverCatalogById/);
+  assert.match(route, /status: 404/);
+  assert.equal(serverCatalogById('domain', 'hz-westlake')?.name, '西湖');
+  assert.ok(serverCatalogById('work', 'alibaba-xixi'));
+  assert.equal(serverCatalogById('domain', 'no-such'), undefined);
 });
 
 test('filter options for work expose at least five dimensions', () => {

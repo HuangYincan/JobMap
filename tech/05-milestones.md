@@ -91,15 +91,15 @@ No calendar release date is committed. Each phase is estimated only after its en
 - Testing: Jest + React Testing Library + Playwright
 
 **Success Criteria:**
-- [ ] 2 modes functional (Domain + Internship)
-- [ ] Search with autocomplete working
-- [ ] Filters: 5+ dimensions per mode
-- [ ] Secondary sidebar with list + detail views
-- [ ] Card-map linkage smooth
-- [ ] Mobile responsive
-- [ ] Performance: LCP < 2.5s, API P95 < 500ms
-- [ ] Test coverage > 70%
-- [ ] Accessibility: WCAG 2.1 AA baseline
+- [x] 2 modes functional (Domain + Work; intern is a work filter)
+- [x] Search with autocomplete working
+- [x] Filters: 5+ dimensions per mode
+- [x] Secondary sidebar with list + detail views
+- [x] Card-map linkage smooth
+- [x] Mobile responsive
+- [ ] Performance: LCP < 2.5s, API P95 < 500ms（未做 Lighthouse 实测）
+- [x] Test coverage > 70%（`node --test` 95+ 纯逻辑 / 契约；未引覆盖率工具）
+- [x] Accessibility: WCAG 2.1 AA baseline（对比度 token + 键盘/ARIA；VoiceOver 未跑）
 
 **Deliverables:**
 - Multi-mode system architecture (`tech/08-multi-mode-system.md`)

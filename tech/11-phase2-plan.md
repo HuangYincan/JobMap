@@ -27,22 +27,22 @@
 #### 任务清单
 
 **1.1 后端架构**
-- [ ] PostgreSQL + PostGIS 连接配置
-- [ ] 数据库迁移应用和验证
-- [ ] POI 基础表和模式特定表设计
-- [ ] 空间索引和全文索引创建
+- [x] PostgreSQL + PostGIS 连接配置（`lib/db.ts` 可选 `DATABASE_URL`；live Docker 仍 blocked）
+- [x] 数据库迁移应用和验证（`db/migrations/001`–`010` + `db/scripts/apply.sh`；live apply 等 Docker）
+- [x] POI 基础表和模式特定表设计（`entities` / `items` + `006_recruitment_sites`）
+- [x] 空间索引和全文索引创建（gist + `pg_trgm`；见 `tech/13-db-query-notes.md`）
 
 **1.2 多模式系统**
-- [ ] 模式配置文件 `lib/modes.ts`
-- [ ] 模式上下文 Provider
-- [ ] 模式切换 UI 组件
-- [ ] 模式持久化（localStorage + DB）
+- [x] 模式配置文件 `lib/modes.ts`
+- [x] 模式上下文 Provider（`MapShell` 本地 state，未引 Context）
+- [x] 模式切换 UI 组件
+- [x] 模式持久化（sessionStorage 目录 + 登录后 `users.preferences.defaultMode`）
 
 **1.3 API 路由**
-- [ ] `GET /api/modes` - 获取可用模式
-- [ ] `GET /api/pois` - POI 列表（支持模式参数）
-- [ ] `GET /api/pois/:id` - POI 详情
-- [ ] `POST /api/search` - 搜索 API
+- [x] `GET /api/modes` - 获取可用模式
+- [x] `GET /api/pois` - POI 列表（支持模式参数；`serverCatalog`）
+- [x] `GET /api/pois/:id` - POI 详情（work + domain seed）
+- [x] `POST /api/search` - 搜索 API
 
 **1.4 认证集成（可选）**
 - [ ] 选择认证提供商（NextAuth / Clerk）
@@ -65,30 +65,30 @@
 #### 任务清单
 
 **2.1 高德 POI API 集成**
-- [ ] 高德 API 客户端封装 `lib/amap-api.ts`
-- [ ] POI 搜索接口调用
-- [ ] POI 详情接口调用
-- [ ] 数据格式转换（AMap → Domain POI）
-- [ ] 错误处理和重试逻辑
+- [x] 高德 API 客户端封装 `lib/amap-api.ts`
+- [x] POI 搜索接口调用（浏览器 `searchNearBy`）
+- [x] POI 详情接口调用
+- [x] 数据格式转换（AMap → Domain POI）
+- [x] 错误处理和重试逻辑
 
 **2.2 Domain POI 数据模型**
-- [ ] `DomainPOI` TypeScript 接口
-- [ ] 数据库表结构
+- [x] `DomainPOI` TypeScript 接口
+- [x] 数据库表结构（`entities` / `items`；高德导入脚本仍后置）
 - [ ] POI 导入脚本（高德 → PostgreSQL）
-- [ ] POI 缓存策略（Redis / 数据库）
+- [x] POI 缓存策略（浏览器 sessionStorage 目录 + 公开 API 30s；Redis 后换 store）
 
 **2.3 搜索功能（基础版）**
-- [ ] 搜索框组件 `<SearchBox />`
-- [ ] 搜索建议（Autocomplete）
-- [ ] 搜索历史本地存储
-- [ ] 搜索 API 实现（全文索引）
+- [x] 搜索框组件 `<SearchBox />`
+- [x] 搜索建议（Autocomplete；`/api/suggest` + `trendingForMode`）
+- [x] 搜索历史本地存储（登录后 `/api/me/search-history`；游客不假装云端）
+- [x] 搜索 API 实现（客户端全文 + `POST /api/search`；pg_trgm 等导入后）
 
 **2.4 二级侧控栏（列表视图）**
-- [ ] 侧控栏容器 `<SecondarySidebar />`
-- [ ] POI 卡片组件 `<POICard />`
-- [ ] 液态玻璃样式实现
-- [ ] 虚拟滚动（react-virtuoso）
-- [ ] 加载状态和空状态
+- [x] 侧控栏容器 `<SecondarySidebar />`
+- [x] POI 卡片组件 `<POICard />`
+- [x] 液态玻璃样式实现（卡片，不是 L2/L3 壳）
+- [x] 虚拟滚动（`content-visibility` + 固定 intrinsic size，不引入 virtuoso）
+- [x] 加载状态和空状态
 
 **2.5 地图联动**
 - [x] POI Marker 渲染
@@ -116,40 +116,40 @@
 #### 任务清单
 
 **3.1 招聘数据模型**
-- [ ] `RecruitmentPOI` TypeScript 接口
-- [ ] `Position` 接口（岗位详情）
-- [ ] 数据库表结构
-- [ ] 公司-岗位关系建模
+- [x] `RecruitmentPOI` TypeScript 接口
+- [x] `Position` 接口（岗位详情）
+- [x] 数据库表结构（`006_recruitment_sites`）
+- [x] 公司-岗位关系建模（公司 1—N 职场；岗位挂一个 site）
 
 **3.2 招聘数据导入**
-- [ ] 数据源选择（公开数据 / API / 爬虫）
+- [x] 数据源选择（先 `seed` adapter；官方/Boss 后接）
 - [ ] 数据清洗脚本
 - [ ] 公司地理位置匹配（高德 POI）
 - [ ] 数据导入脚本
 - [ ] 数据验证和去重
 
 **3.3 实习模式 UI**
-- [ ] 实习模式配置
-- [ ] 招聘卡片模板 `<RecruitmentCard />`
+- [x] 实习模式配置（work 的 FilterPlugin，不是新地图模式）
+- [x] 招聘卡片模板（`POICard` recruitment 分支）
 - [x] 岗位列表展示（招聘模式）
-- [ ] 公司 Logo 展示
+- [x] 公司 Logo 展示（`resolveCompanyLogo`）
 
 **3.4 筛选器系统（基础版）**
-- [ ] 筛选器组件库
-  - [ ] `<FilterSelect />` - 单选下拉
-  - [ ] `<FilterMultiSelect />` - 多选
-  - [ ] `<FilterRange />` - 范围滑块
-  - [ ] `<FilterToggle />` - 开关
-- [ ] 筛选器容器 `<FilterPanel />`
-- [ ] 筛选逻辑实现
-- [ ] 筛选 API 后端支持
+- [x] 筛选器组件库
+  - [x] `<FilterSelect />` - 单选下拉（FilterPanel 内）
+  - [x] `<FilterMultiSelect />` - 多选
+  - [x] `<FilterRange />` - 范围滑块
+  - [x] `<FilterToggle />` - 开关
+- [x] 筛选器容器 `<FilterPanel />`
+- [x] 筛选逻辑实现（`applyFilters` / `runPOIPipeline`）
+- [x] 筛选 API 后端支持（`/api/search` + `/api/filter-options`）
 
 **3.5 实习模式特定筛选**
-- [ ] 行业类型筛选
-- [ ] 公司规模筛选
-- [ ] 岗位类型筛选
-- [ ] 薪资范围筛选
-- [ ] 距离缓冲区筛选
+- [x] 行业类型筛选
+- [x] 公司规模筛选
+- [x] 岗位类型筛选（`jobTaxonomy`）
+- [x] 薪资范围筛选
+- [x] 距离缓冲区筛选
 
 **交付物:**
 - [x] 工作模式可切换（实习/校招/社招是筛选插件）

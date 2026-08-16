@@ -6,14 +6,12 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { INTERNSHIP_SEED } from '@/lib/seed-data';
+import { DOMAIN_SEED, INTERNSHIP_SEED } from '@/lib/seed-data';
 import { matchKeyword } from '@/lib/search';
 import { isRecruitmentMode } from '@/lib/types';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
-
-/** 热门搜索（静态种子，Phase 3 改为统计） */
-const HOT_SEARCHES = ['算法', '前端', 'Java', '人工智能', '大厂', '产品'];
+import { trendingForMode } from '@/lib/trending-search';
 
 export function GET(request: Request) {
   const url = new URL(request.url);
@@ -72,12 +70,25 @@ export function GET(request: Request) {
         });
       }
     }
+  } else if (q && mode === 'domain') {
+    for (const poi of DOMAIN_SEED) {
+      if (matchKeyword(poi.name, q) || matchKeyword(poi.category, q) || matchKeyword(poi.subcategory || '', q)) {
+        suggestions.push({
+          type: 'poi',
+          id: poi.id,
+          title: poi.name,
+          subtitle: poi.location.address || poi.category,
+          icon: '📍',
+        });
+      }
+    }
   }
 
   const payload = {
     suggestions: suggestions.slice(0, 10),
-    recentSearches: [], // Phase 3: localStorage/DB
-    hotSearches: q ? [] : HOT_SEARCHES,
+    // Recent is account-scoped (`/api/me/search-history`). Do not invent a guest cloud list here.
+    recentSearches: [],
+    hotSearches: q ? [] : trendingForMode(mode).map((item) => item.query),
   };
   writePublicCache(cacheKey, payload);
   return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });

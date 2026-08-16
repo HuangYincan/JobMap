@@ -11,9 +11,9 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { INTERNSHIP_SEED } from '@/lib/seed-data';
 import { runPOIPipeline } from '@/lib/search';
-import { isRecruitmentMode, withDistance } from '@/lib/types';
+import { serverCatalog } from '@/lib/server-catalog';
+import { withDistance } from '@/lib/types';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
@@ -53,67 +53,8 @@ export function GET(request: Request) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  // ---- 数据源选择 ----
-  let pois;
-  if (isRecruitmentMode(mode)) {
-    pois = INTERNSHIP_SEED;
-  } else if (mode === 'domain') {
-    // Domain 模式服务端示例（浏览器端走 AMap JS API）
-    pois = [
-      {
-        id: 'hz-westlake',
-        kind: 'domain',
-        name: '西湖',
-        mode: 'domain',
-        source: 'seed',
-        location: { lng: 120.15, lat: 30.242, address: '西湖区龙井路1号' },
-        category: '景点',
-        subcategory: '自然风光',
-        rating: 4.9,
-        photos: [],
-      },
-      {
-        id: 'hz-lakeside-gourmet',
-        kind: 'domain',
-        name: '湖滨银泰in77',
-        mode: 'domain',
-        source: 'seed',
-        location: { lng: 120.163, lat: 30.256, address: '上城区延安路' },
-        category: '购物',
-        subcategory: '购物中心',
-        rating: 4.6,
-        priceLevel: 3,
-        photos: [],
-      },
-      {
-        id: 'hz-louwlai',
-        kind: 'domain',
-        name: '楼外楼菜馆',
-        mode: 'domain',
-        source: 'seed',
-        location: { lng: 120.141, lat: 30.237, address: '西湖区孤山路30号' },
-        category: '餐饮',
-        subcategory: '杭帮菜',
-        rating: 4.3,
-        priceLevel: 3,
-        openHours: '10:30-21:00',
-        photos: [],
-      },
-      {
-        id: 'hz-lingyin',
-        kind: 'domain',
-        name: '灵隐寺',
-        mode: 'domain',
-        source: 'seed',
-        location: { lng: 120.105, lat: 30.24, address: '西湖区法云弄1号' },
-        category: '景点',
-        subcategory: '佛教文化',
-        rating: 4.8,
-        photos: [],
-      },
-    ];
-  } else {
-    // 未实现模式：空结果
+  const pois = serverCatalog(mode);
+  if (pois.length === 0) {
     const empty = { total: 0, page, pageSize, results: [] };
     writePublicCache(cacheKey, empty);
     return NextResponse.json(empty, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });

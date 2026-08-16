@@ -7,10 +7,10 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { INTERNSHIP_SEED } from '@/lib/seed-data';
 import { runPOIPipeline } from '@/lib/search';
+import { serverCatalog } from '@/lib/server-catalog';
 import { isRecruitmentMode, withDistance } from '@/lib/types';
-import type { FilterState, MapMode, POI } from '@/lib/types';
+import type { FilterState, MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 interface SearchBody {
@@ -52,16 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  // 数据源
-  let pois: POI[] = [];
-  if (isRecruitmentMode(mode)) {
-    pois = INTERNSHIP_SEED;
-  } else if (mode === 'domain') {
-    // 浏览器端走 AMap JS API；服务端无 domain 数据时空结果
-    pois = [];
-  } else {
-    pois = [];
-  }
+  const pois = serverCatalog(mode);
 
   // bounds 中心
   let center = { lng: 120.15, lat: 30.27 };
