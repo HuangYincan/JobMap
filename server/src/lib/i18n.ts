@@ -13,6 +13,10 @@ export const translations = {
     zh: '图层',
     en: 'Layers',
   },
+  savedOverlay: {
+    zh: '收藏图层',
+    en: 'Saved layer',
+  },
   saved: {
     zh: '已保存',
     en: 'Saved',

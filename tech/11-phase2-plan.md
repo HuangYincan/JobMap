@@ -521,7 +521,14 @@
 
 ---
 
+## Phase 4 起步（2026-08-16）
+
+- 收藏叠加层：Layers 开关控制 `mergeMapPois`；Explore 列表仍只走 `runPOIPipeline`。点叠加层标记打开详情 / 飞到坐标。
+- 受控 fly / highlight 继续走现有 `usePOIMap`（选中优先于高亮）。
+- 搜索已在 Phase 2 完成；本阶段不重做搜索框。
+
 ## Phase 3 预览
+
 
 Phase 2 完成后，Phase 3 将实现：
 - 秋招 / 社招继续作为工作模式筛选插件（不是新地图模式）

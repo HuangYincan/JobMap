@@ -26,6 +26,7 @@ import { AuthModal } from "./auth-modal";
 import { ProfilePanel } from "./account-panel";
 import { RecentPanel } from "./recent-panel";
 import { SavedList, SavedPanel } from "./saved-panel";
+import { mergeMapPois, savedPlacesToOverlay } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
@@ -119,6 +120,7 @@ export function MapShell() {
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
   const [inbox, setInbox] = useState<NotificationRecord[]>([]);
+  const [savedOverlay, setSavedOverlay] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileSheet, setMobileSheet] = useState<"explore" | "saved">("explore");
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
@@ -736,6 +738,15 @@ export function MapShell() {
     return Array.from(byId.values());
   }, [catalog]);
 
+  const overlayPois = useMemo(
+    () => savedPlacesToOverlay(savedPlaces, compareCatalog),
+    [savedPlaces, compareCatalog],
+  );
+  const mapPois = useMemo(
+    () => mergeMapPois(pois, overlayPois, savedOverlay && Boolean(user)),
+    [pois, overlayPois, savedOverlay, user],
+  );
+
   const handleRefreshHere = useCallback(() => {
     const map = mapInstance.current;
     const centerObj = map?.getCenter?.();
@@ -850,7 +861,7 @@ export function MapShell() {
 
   // ---- 地图联动 ----
   usePOIMap(mapInstance.current, {
-    pois,
+    pois: mapPois,
     selectedId,
     highlightedId,
     accentColor: modeConfig.color,
@@ -860,7 +871,10 @@ export function MapShell() {
       window.setTimeout(() => {
         ignoreNextMapClick.current = false;
       }, 80);
-      const poi = poisRef.current.find((p) => p.id === id);
+      const poi =
+        poisRef.current.find((p) => p.id === id) ??
+        overlayPois.find((p) => p.id === id) ??
+        compareCatalog.find((p) => p.id === id);
       setSelectedId(id);
       if (poi) {
         setRailPanel("explore");
@@ -1247,7 +1261,21 @@ export function MapShell() {
           />
         </div>
         <nav className={styles.navList}>
-          <button className={styles.navItem} data-tooltip={t('layers', lang)}><Icon name="layers" /><span>{t('layers', lang)}</span></button>
+          <button
+            className={`${styles.navItem} ${savedOverlay ? styles.navItemActive : ""}`}
+            data-tooltip={t("savedOverlay", lang)}
+            aria-pressed={savedOverlay}
+            onClick={() => {
+              if (!user) {
+                setAuthOpen(true);
+                return;
+              }
+              setSavedOverlay((on) => !on);
+            }}
+          >
+            <Icon name="layers" />
+            <span>{t("savedOverlay", lang)}</span>
+          </button>
           <button
             className={`${styles.navItem} ${railPanel === "saved" ? styles.navItemActive : ""}`}
             data-tooltip={t('saved', lang)}

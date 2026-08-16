@@ -20,7 +20,8 @@ P0 is complete as a **documentation and repository scaffold**. Phase 1 is **in p
 | P1 | Platform baseline | In progress | P0 contract accepted | Version-pinned app/importer manifests; migration runner; PostGIS extension check; tenant/map and source contracts; tests that run locally |
 | P2 | Recruitment import and map read vertical slice | Planned | P1 complete; approved data-source record | Idempotent approved-data import, provenance records, spatial query API, map-read contract, integration tests |
 | P3 | Recruitment map interface | Planned | P2 complete; explicit ASCII/text approval | Approved desktop/mobile layout record, implemented UI, agent-browser screenshots, accessibility and responsive checks |
-| P4 | Map productivity features | Deferred | P3 evidence | Search, saved map overlays, controlled fly/highlight interactions |
+| P4 | Map productivity features | In progress | P3 client slice on branch | Search, saved map overlays, controlled fly/highlight interactions |
+
 | P5 | Additional approved data and spatial analysis | Deferred | P4 evidence plus source review | Housing/commute or another approved domain; PostGIS correctness tests |
 | P6 | Sensitive and AI features | Deferred | Privacy/security design and evaluation plan | PII consent/retention controls, map-action validation, recommendation evaluation |
 | P7 | Public docs and production delivery | Deferred | Runnable product and operations design | Verified public docs, deploy/runbook, backup/restore and release evidence |
@@ -117,6 +118,9 @@ No calendar release date is committed. Each phase is estimated only after its en
 - Recommendation system
 
 **Phase 3 started (2026-08-16):** Saved places — `008_saved_places`. Applications — `009_applications`. Company compare — Saved L2 / mobile `SavedList`. Job alerts — `010_notifications` + `/api/me/notifications` enqueue matching seed jobs into Profile inbox when email/SMS is on; nothing is actually sent. Guests are prompted to sign in.
+
+**Phase 4 started (2026-08-16):** Saved overlay — Layers rail toggles `lib/saved-overlay.ts`. Search list stays the pipeline; the map merges leftover saved pins (catalog/seed live, snapshot pin fallback). Fly/highlight still go through `usePOIMap`.
+
 
 ## Deferred Decisions
 
