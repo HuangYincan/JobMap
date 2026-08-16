@@ -14,6 +14,7 @@
 
 - 198 companies across all drop sources; **100 sites already located**, **98 need a point**, 0 skipped (all have address text).
 - Live REST apply is blocked until `AMAP_WEB_KEY` is available (`npm run geocode:sites` lists them).
+- **After DB import**: 137 companies / 137 sites / 240 open positions verified in PostGIS (0 duplicate external_ids); `listImportedSitesNeedingGeocode` lists **86 sites** (radar-only companies) for geocoding.
 
 ## Official career page refresh (50 pages, polite GET, 2026-08-17)
 
