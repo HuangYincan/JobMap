@@ -184,15 +184,17 @@ export function sourceCompanyToCatalogPois(
   const sites = company.sites.length
     ? company.sites
     : [{ id: `${company.slug}-hq`, name: company.name, careerUrl: company.careerUrl }];
-  return sites.map((site) =>
-    poiFromSourceSite(
-      company,
-      site,
-      catalogIdForSite(company.slug, site.id, sites.length),
-      source,
-      { openOnly: true },
-    ),
-  );
+  return sites
+    .map((site) =>
+      poiFromSourceSite(
+        company,
+        site,
+        catalogIdForSite(company.slug, site.id, sites.length),
+        source,
+        { openOnly: true },
+      ),
+    )
+    .filter((poi) => poi.positions.length > 0);
 }
 
 /** 把源记录压成现有 RecruitmentPOI（一职场一张地图点）。 */
@@ -230,7 +232,7 @@ export function mergeOfficialCareerIntoSeed(
     if (existing) mergeCompanyOntoSeedPois(existing, company);
     else extras.push(...sourceCompanyToCatalogPois(company, 'api'));
   }
-  return [...[...bySlug.values()].flat(), ...extras];
+  return [...[...bySlug.values()].flat(), ...extras].filter((poi) => poi.positions.length > 0);
 }
 
 function mergeCompanyOntoSeedPois(pois: RecruitmentPOI[], company: SourceCompany): void {

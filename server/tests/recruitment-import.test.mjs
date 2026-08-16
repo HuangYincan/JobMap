@@ -155,9 +155,7 @@ test('mergeOfficialCareerIntoSeed hides closed jobs on the read path', () => {
   assert.ok(!ali.positions.some((p) => p.id === 'alibaba-java'));
   assert.ok(!ali.positions.some((p) => p.id === 'alibaba-paused-job'));
   assert.ok(ali.positions.some((p) => p.id === 'alibaba-frontend'));
-  const closedLab = merged.find((p) => p.id === 'closed-only-lab');
-  assert.ok(closedLab);
-  assert.equal(closedLab.positions.length, 0);
+  assert.equal(merged.find((p) => p.id === 'closed-only-lab'), undefined);
 });
 
 test('planSeedImport merges official-career drops onto seed slugs', async () => {
