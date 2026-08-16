@@ -12,12 +12,12 @@
 
 Implemented and verified:
 - Importer project `crawler/` (Python 3.12, uv): declarative plugin-manifest validation, deterministic local-fixture normalization with provenance, and map access policy. 11 unit tests pass.
-- Database `db/`: ordered PostGIS migrations `001`–`010` (identity through notifications). Live apply is still blocked until Docker/PostGIS (`make db-up`).
+- Database `db/`: ordered PostGIS migrations `001`–`010` (identity through notifications). Live apply: `make db-up`, then `export PATH="/opt/homebrew/opt/libpq/bin:$PATH"` if `psql` is keg-only, then `make preflight` + `make db-migrate`.
 - Frontend `server/` (Next.js 15.5.23, React 19): Domain + Work map, Explore / detail / JD, mobile drawer, Profile / Recent / Saved / Layers. Home lazy-loads `MapShell`. `cd server && ./node_modules/.bin/tsc --noEmit && node --test tests/*.test.mjs` is the test command.
 - Changelog: [CHANGELOG.md](CHANGELOG.md). API: [tech/14-api-contract.md](tech/14-api-contract.md). Local run: [tech/15-deploy.md](tech/15-deploy.md). Roadmap: [tech/05-milestones.md](tech/05-milestones.md).
 
 Not yet verified:
-- Live PostGIS migration and database integration tests are **blocked** until Docker/PostGIS is running (`make db-up`, then `make preflight` + `make db-migrate` + `make test-integration`).
+- Live PostGIS apply is verified locally (2026-08-16): `001`–`010` in the ledger, `make test-integration` passes, `npm run import:seed:apply` wrote 51 companies / 67 open positions. Spatial query API still uses in-process `inBounds` until PostGIS `ST_DWithin` is wired.
 - No external source acquisition has occurred and none is enabled. `xiaozhao-radar` remains an import candidate only.
 - Frontend UI full interface/accessibility evidence and screenshots belong to Phase 3; the Phase 1 shell is a working base.
 

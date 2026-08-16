@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS company_sites (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (name <> ''),
   CHECK ((lng IS NULL) = (lat IS NULL)),
-  CHECK (lng IS NULL OR (isfinite(lng) AND lng BETWEEN -180 AND 180)),
-  CHECK (lat IS NULL OR (isfinite(lat) AND lat BETWEEN -90 AND 90))
+  CHECK (lng IS NULL OR (lng = lng AND lng BETWEEN -180 AND 180)),
+  CHECK (lat IS NULL OR (lat = lat AND lat BETWEEN -90 AND 90))
 );
 CREATE INDEX IF NOT EXISTS company_sites_company_id_idx ON company_sites(company_id);
 CREATE INDEX IF NOT EXISTS company_sites_geom_gist ON company_sites USING gist(geom);

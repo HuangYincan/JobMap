@@ -28,7 +28,7 @@
 
 **1.1 后端架构**
 - [x] PostgreSQL + PostGIS 连接配置（`lib/db.ts` 可选 `DATABASE_URL`；live Docker 仍 blocked）
-- [x] 数据库迁移应用和验证（`db/migrations/001`–`010` + `db/scripts/apply.sh`；live apply 等 Docker）
+- [x] 数据库迁移应用和验证（`db/migrations/001`–`010` + `db/scripts/apply.sh`；2026-08-16 live apply + `make test-integration` 通过）
 - [x] POI 基础表和模式特定表设计（`entities` / `items` + `006_recruitment_sites`）
 - [x] 空间索引和全文索引创建（gist + `pg_trgm`；见 `tech/13-db-query-notes.md`）
 

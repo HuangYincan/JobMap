@@ -37,10 +37,16 @@ Do not run `npx tsc` from the repo root.
 ```bash
 # from repo root
 make db-up
+# Homebrew libpq is keg-only — put psql on PATH before make
+export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 # DATABASE_URL from .env.example — do not echo it
+export DATABASE_URL='postgresql://postgres:postgres@localhost:5432/domain_map'
 make preflight
 make db-migrate                 # 001–010
+cd server && npm run import:seed:apply
 ```
+
+Verified 2026-08-16 against `postgis/postgis:16-3.4`: ledger `001`–`010`, `make test-integration` passed twice (rerun is a no-op), seed apply wrote 51 / 51 / 67. Keep `DATABASE_URL` in `server/.env.local` so Next reads imported rows; do not commit that file.
 
 Account routes then write sessions / Recent / Saved / applications / queued notifications. After `npm run import:seed:apply`, public list APIs and the Work map read imported rows via `loadServerCatalog`. Without a database they stay on the seed. Live `EXPLAIN` notes are in `tech/13-db-query-notes.md`.
 

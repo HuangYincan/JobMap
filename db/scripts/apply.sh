@@ -15,12 +15,17 @@ for file in "$ROOT"/migrations/[0-9][0-9][0-9]_*.sql; do
   # One transaction per migration. The applied-check runs AFTER the
   # transaction-scoped advisory lock, so concurrent runners serialize: the
   # loser observes the winner's ledger row and skips instead of re-running.
+  # Compare checksums in SQL — psql 16+ \if is boolean-only and will not
+  # parse ":a = :b" after \gset.
   "${PSQL[@]}" -1 -v migration_file="$file" -v migration_version="$version" -v migration_filename="$filename" -v migration_checksum="$checksum" <<'SQL'
 SELECT pg_advisory_xact_lock(hashtextextended('domain-map:migrations', 0));
-SELECT CASE WHEN EXISTS (SELECT 1 FROM schema_migrations WHERE version = :'migration_version') THEN 't' ELSE 'f' END AS already_applied \gset
+SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = :'migration_version') AS already_applied \gset
 \if :already_applied
-  SELECT checksum FROM schema_migrations WHERE version = :'migration_version' \gset existing_checksum
-  \if :existing_checksum = :migration_checksum
+  SELECT EXISTS (
+    SELECT 1 FROM schema_migrations
+    WHERE version = :'migration_version' AND checksum = :'migration_checksum'
+  ) AS checksum_ok \gset
+  \if :checksum_ok
     -- Already applied and unchanged; nothing to do.
   \else
     DO $drift$ BEGIN RAISE EXCEPTION 'checksum drift for migration %', :'migration_version'; END $drift$;

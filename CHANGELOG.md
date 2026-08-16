@@ -39,6 +39,8 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Changed
 
+- Coordinate CHECKs in `003` / `006` use `lng = lng` (NaN-reject) instead of `isfinite()`, which PostgreSQL 16 does not have for `double precision`.
+- `db/scripts/apply.sh` compares ledger checksums in SQL so a second `make db-migrate` works with psql 18 (`\if` is boolean-only).
 - Default map mode is **work**.
 - Settings rail item moved into Profile L2.
 - Contrast tokens: `--muted` / `--blue-ink` / `--green` meet WCAG AA on frost/white. Brand `#007AFF` stays chrome-only.
