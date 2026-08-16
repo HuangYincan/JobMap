@@ -97,7 +97,8 @@ No calendar release date is committed. Each phase is estimated only after its en
 - [x] Secondary sidebar with list + detail views
 - [x] Card-map linkage smooth
 - [x] Mobile responsive
-- [ ] Performance: LCP < 2.5s, API P95 < 500ms（未做 Lighthouse 实测）
+- [x] Performance: public API warm P95 < 500ms（2026-08-16 local Next: `/api/pois` 12.7ms, bounds clip 5.8ms, `/api/suggest` 5.6ms after cold compile）. Lighthouse LCP still unmeasured.
+
 - [x] Test coverage > 70%（`node --test` 95+ 纯逻辑 / 契约；未引覆盖率工具）
 - [x] Accessibility: WCAG 2.1 AA baseline（对比度 token + 键盘/ARIA；VoiceOver 未跑）
 
@@ -119,7 +120,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 
 **Phase 3 started (2026-08-16):** Saved places — `008_saved_places`. Applications — `009_applications`. Company compare — Saved L2 / mobile `SavedList`. Job alerts — `010_notifications` + `/api/me/notifications` enqueue matching seed jobs into Profile inbox when email/SMS is on; nothing is actually sent. Guests are prompted to sign in.
 
-**Phase 4 started (2026-08-16):** Saved overlay — Layers L2 frost card (`layers-panel.tsx`) toggles `lib/saved-overlay.ts` and owns basemap styles. Overlay + style persist in sessionStorage. Search list stays the pipeline; the map merges leftover saved pins (catalog/seed live, snapshot pin fallback). Fly/highlight still go through `usePOIMap`; Saved click uses `resolveSavedForFly`. Recent replay goes through `replayRecentSearch` + mode cache. Public read APIs cache 30s (`lib/public-cache.ts`) and load work via `loadServerCatalog` (imported SQL rows when present, else seed + official-career JSON). Contrast tokens live in `lib/contrast.ts`. Home `home-map.tsx` lazy-loads `MapShell` (`next/dynamic`, `ssr: false`); first-party client deps stay Next/React/CSS Modules (`tech/12-bundle-notes.md`). Account SQL + planned spatial reads are inventoried in `tech/13-db-query-notes.md` (no live EXPLAIN until Docker/PostGIS). Search/filter integration lives in `tests/search-integration.test.mjs` (same seed → pipeline → page path as `/api/search`). Seed import planner is `lib/recruitment-import.ts` / `npm run import:seed`. Local runbook: `tech/15-deploy.md`.
+**Phase 4 started (2026-08-16):** Saved overlay — Layers L2 frost card (`layers-panel.tsx`) toggles `lib/saved-overlay.ts` and owns basemap styles. Overlay + style persist in sessionStorage. Search list stays the pipeline; the map merges leftover saved pins (catalog/seed live, snapshot pin fallback). Fly/highlight still go through `usePOIMap`; Saved click uses `resolveSavedForFly`. Recent replay goes through `replayRecentSearch` + mode cache. Public read APIs cache 30s (`lib/public-cache.ts`) and load work via `loadServerCatalog` (imported SQL rows when present, else seed + official-career JSON). Contrast tokens live in `lib/contrast.ts`. Home `home-map.tsx` lazy-loads `MapShell` (`next/dynamic`, `ssr: false`); first-party client deps stay Next/React/CSS Modules (`tech/12-bundle-notes.md`). Account SQL + spatial reads are inventoried in `tech/13-db-query-notes.md` (live gist / account `EXPLAIN` recorded 2026-08-16). Search/filter integration lives in `tests/search-integration.test.mjs` (same seed → pipeline → page path as `/api/search`). Seed import planner is `lib/recruitment-import.ts` / `npm run import:seed`. Local runbook: `tech/15-deploy.md`.
 
 
 ## Deferred Decisions

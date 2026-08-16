@@ -67,18 +67,28 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
          WHERE s.geom IS NOT NULL${spatial.sql}`
       : `SELECT id::text, company_id::text, name, address, lng, lat, career_url, logo_url
          FROM company_sites`;
-    const [companies, sites, positions] = await Promise.all([
-      pool.query<CompanyRow>(
-        `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji
-         FROM companies ORDER BY slug`,
-      ),
-      pool.query<SiteRow>(siteSql, spatial.params),
-      pool.query<PositionRow>(
-        `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
+    const sites = await pool.query<SiteRow>(siteSql, spatial.params);
+    if (hasSpatialClip(clip) && sites.rows.length === 0) return [];
+
+    const companyIds = [...new Set(sites.rows.map((site) => site.company_id))];
+    const siteIds = sites.rows.map((site) => site.id);
+    const companySql = hasSpatialClip(clip)
+      ? `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji
+         FROM companies WHERE id = ANY($1::bigint[]) ORDER BY slug`
+      : `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji
+         FROM companies ORDER BY slug`;
+    const positionSql = hasSpatialClip(clip)
+      ? `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
                 salary_min, salary_max, education, majors, skills, description, deadline,
                 apply_source, apply_url, status
-         FROM positions WHERE status = 'open'`,
-      ),
+         FROM positions WHERE status = 'open' AND site_id = ANY($1::bigint[])`
+      : `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
+                salary_min, salary_max, education, majors, skills, description, deadline,
+                apply_source, apply_url, status
+         FROM positions WHERE status = 'open'`;
+    const [companies, positions] = await Promise.all([
+      pool.query<CompanyRow>(companySql, hasSpatialClip(clip) ? [companyIds] : []),
+      pool.query<PositionRow>(positionSql, hasSpatialClip(clip) ? [siteIds] : []),
     ]);
     if (companies.rows.length === 0) return [];
 

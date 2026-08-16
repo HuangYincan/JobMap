@@ -60,7 +60,8 @@ test('loadWorkCatalogFromDb joins companies + sites + open positions', () => {
   assert.match(store, /companySites\.length === 1 \? company\.slug : `\$\{company\.slug\}:\$\{site\.id\}`/);
   assert.match(store, /companySitesSpatialSql/);
   assert.match(store, /s\.geom IS NOT NULL/);
-  assert.match(store, /return null/);
+  assert.match(store, /site_id = ANY\(\$1::bigint\[\]\)/);
+  assert.match(store, /id = ANY\(\$1::bigint\[\]\)/);
 });
 
 test('loadServerCatalog prefers imported work rows, then seed + official-career', () => {
