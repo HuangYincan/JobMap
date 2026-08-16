@@ -8,6 +8,7 @@ import {
   AMAP_QPS,
   buildSearchQueue,
   categoryMatches,
+  isCommonOrExactName,
   isCommonPoi,
   inBounds,
   mapScaleMetersPerCm,
@@ -91,6 +92,14 @@ test('isCommonPoi drops anonymous shops without rating or photos', () => {
   assert.equal(isCommonPoi({ category: '餐饮服务' }), false);
   assert.equal(isCommonPoi({ category: '餐饮服务', rating: 4.2 }), true);
   assert.equal(isCommonPoi({ category: '风景名胜' }), true);
+});
+
+test('isCommonOrExactName keeps an exact-name hit despite sparse data', () => {
+  assert.equal(isCommonOrExactName({ name: '西湖', category: '餐饮服务' }, '西湖'), true);
+  assert.equal(isCommonOrExactName({ name: '西 湖', category: '餐饮服务' }, '西湖'), true);
+  assert.equal(isCommonOrExactName({ name: '西湖风景区', category: '餐饮服务' }, '西湖'), false);
+  assert.equal(isCommonOrExactName({ name: '无名小店', category: '餐饮服务' }, '咖啡'), false);
+  assert.equal(isCommonOrExactName({ name: '西湖', rating: 4.2 }, '随便'), true);
 });
 
 test('buildSearchQueue pageOffset advances PlaceSearch page', () => {

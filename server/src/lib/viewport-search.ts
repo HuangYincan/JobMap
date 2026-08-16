@@ -325,3 +325,17 @@ export function isCommonPoi(poi: {
   if ((poi.photos?.length ?? 0) > 0) return true;
   return false;
 }
+
+/**
+ * Keyword-search gate: a sparse POI still makes the card when its name equals
+ * the query (whitespace-insensitive) — the user asked for that place by name,
+ * so "searched but no card" is worse than an uncommon card.
+ */
+export function isCommonOrExactName(
+  poi: { name?: string; rating?: number; reviewCount?: number; photos?: string[]; category?: string },
+  query: string,
+): boolean {
+  if (isCommonPoi(poi)) return true;
+  const exact = (query || '').trim().replace(/\s+/g, '');
+  return Boolean(exact && (poi.name || '').replace(/\s+/g, '') === exact);
+}

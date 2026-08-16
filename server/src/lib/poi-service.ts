@@ -14,7 +14,7 @@ import {
 import { INTERNSHIP_SEED } from './seed-data.ts';
 import { fetchWorkCatalogFromApi } from './recruitment-adapters/api.ts';
 import type { QueryPipeline } from './search.ts';
-import { mergePoisById, isCommonPoi, POI_HARD_CAP, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
+import { mergePoisById, isCommonOrExactName, POI_HARD_CAP, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
 import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
 import { isRecruitmentMode } from './types.ts';
 
@@ -66,7 +66,13 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
         page: (options.pageOffset ?? 0) + 1,
         city: zoom <= 8 ? '全国' : '',
       });
-      const next = mergePoisById(existing, result.pois.filter((p) => isCommonPoi(p)), POI_HARD_CAP);
+      // Exact-name hits survive isCommonPoi: the user asked for that place by
+      // name, so a sparse-but-matching card beats "searched but no card".
+      const next = mergePoisById(
+        existing,
+        result.pois.filter((p) => isCommonOrExactName(p, options.query || '')),
+        POI_HARD_CAP,
+      );
       options.onBatch?.(next);
       return next;
     } catch (err) {
