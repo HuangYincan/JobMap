@@ -2,14 +2,15 @@
 
 ## 🎨 核心设计理念
 
-> **Apple 风格 + 液态玻璃质感 + 现代化组件库 + 响应式移动端**
+> **Apple 风格 + 液态玻璃质感（卡片）+ 霜面面板 + 响应式移动端**
 
 本项目前端设计遵循 Apple 设计语言,强调:
-- **液态玻璃(Liquid Glass)**:半透明、毛玻璃、流动感
+- **液态玻璃(Liquid Glass)**:只用在岗位/POI 卡片
+- **霜面面板**: L2 Explore / L3 JD / Profile 用 `--soft-strong`
 - **极简主义**:去除冗余元素,留白充足
 - **响应式**:深色/浅色模式自动适应系统设置 + 移动端适配
 - **原生感**:接近 macOS/iOS 原生 App 体验
-- **复用优先**:使用现代化组件库,避免重复造轮子
+- **不引组件库**: CSS Modules，不装 shadcn / Tailwind / framer / virtuoso / zustand
 
 ---
 
@@ -17,30 +18,22 @@
 
 ### UI 组件库
 
-**优先使用现代化组件库,避免从零造轮子**:
+**Phase 2/4 已定：CSS Modules + 自写组件。不要引入下面这些库。**
 
-1. **[liquid-glass-react](https://github.com/rdev/liquid-glass-react)** - 液态玻璃视觉参考
-   - 配方：几乎不铺实色，靠 `blur + saturate`、内高光、顶缘径向高光；hover 更透而不是更白
+1. **液态玻璃** — CSS 复现：`blur + saturate`、内高光、顶缘径向高光；hover 更透而不是更白。
    - **只用在岗位/POI 卡片、搜索框和列表 item hover**。二级 Explore / 三级 JD 面板外壳保持 `--soft-strong` 实底霜面，不要做成 22% 透板
-   - Phase 2 用 CSS Modules 复现（不引入 displacement shader，避免地图上的额外 WebGL）
+   - 不引入 `liquid-glass-react` / displacement shader / 额外 WebGL
 
-2. **[shadcn/ui](https://ui.shadcn.com/)** - 可定制的 React 组件
-   - 输入框、下拉框、对话框、表单等
-   - 基于 Radix UI + Tailwind CSS
-   - 使用:`npx shadcn-ui@latest add <component>`
+2. **不要 shadcn / Tailwind / Radix** — 筛选、登录、抽屉都是自写 CSS Modules。清单见 `tech/12-bundle-notes.md`。
 
-3. **[Framer Motion](https://www.framer.com/motion/)** - 动画库
-   - 页面过渡、悬停效果、手势交互
-   - 使用:`npm install framer-motion`
+3. **不要 Framer Motion** — 动画用 CSS `cubic-bezier(0.32, 0.72, 0, 1)`。
 
-4. **[React Icons](https://react-icons.github.io/react-icons/)** - 图标库
-   - 集成 SF Symbols 风格图标
-   - 使用:`npm install react-icons`
+4. **不要 react-icons** — 图标是 `map-shell` 里的内联 SVG。
 
 ### 地图引擎
 
-- **高德地图 JS API 2.0**(国内):[https://lbs.amap.com/api/javascript-api-v2/summary](https://lbs.amap.com/api/javascript-api-v2/summary)
-- **Mapbox GL JS**(国外备选):[https://docs.mapbox.com/mapbox-gl-js/](https://docs.mapbox.com/mapbox-gl-js/)
+- **高德地图 JS API 2.0**（`loadAMap`，不进 npm）
+- Mapbox 等备选等 ADR，不要在本阶段加第二套引擎。
 
 ---
 

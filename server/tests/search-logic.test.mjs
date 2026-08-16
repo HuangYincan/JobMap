@@ -65,6 +65,9 @@ test('suggestRecruitment: companies and jobs, never domain places', () => {
   assert.ok(byJob.some((s) => s.kind === 'job' && /java/i.test(s.name + s.subtitle)));
   assert.ok(byJob.every((s) => s.poiId));
 
+  const byAlias = suggestRecruitment(INTERNSHIP_SEED, 'FE');
+  assert.ok(byAlias.some((s) => s.kind === 'job' && /前端|frontend/i.test(s.name + s.subtitle)));
+
   const empty = suggestRecruitment(INTERNSHIP_SEED, '西湖风景名胜区');
   assert.equal(empty.length, 0);
 });
