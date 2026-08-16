@@ -18,12 +18,24 @@ interface Entry<T> {
   expiresAt: number;
 }
 
-export function createTtlCache<T = unknown>(now: () => number = Date.now): CacheStore<T> {
+export function createTtlCache<T = unknown>(
+  now: () => number = Date.now,
+  opts: { max?: number } = {},
+): CacheStore<T> {
   const bag = new Map<string, Entry<T>>();
+  const max = opts.max && opts.max > 0 ? opts.max : Number.POSITIVE_INFINITY;
 
   function sweep(at: number) {
     for (const [key, entry] of bag) {
       if (entry.expiresAt <= at) bag.delete(key);
+    }
+  }
+
+  function evictOldest() {
+    while (bag.size > max) {
+      const oldest = bag.keys().next().value;
+      if (oldest === undefined) break;
+      bag.delete(oldest);
     }
   }
 
@@ -36,11 +48,15 @@ export function createTtlCache<T = unknown>(now: () => number = Date.now): Cache
         bag.delete(key);
         return undefined;
       }
+      bag.delete(key);
+      bag.set(key, hit);
       return hit.value;
     },
     set(key, value, ttlMs) {
       const ttl = Math.max(0, ttlMs);
+      bag.delete(key);
       bag.set(key, { value, expiresAt: now() + ttl });
+      evictOldest();
       if (bag.size % 64 === 0) sweep(now());
     },
     delete(key) {
@@ -80,4 +96,30 @@ export function publicCacheSize(): number {
 
 export function resetPublicCache(): void {
   publicStore.clear();
+}
+
+/** Browser suggest LRU (tech/10: max 100, 5 minutes). Not the public API store. */
+export const SUGGEST_CACHE_TTL_MS = 5 * 60 * 1000;
+export const SUGGEST_CACHE_MAX = 100;
+
+const suggestStore = createTtlCache(Date.now, { max: SUGGEST_CACHE_MAX });
+
+export function suggestCacheKey(mode: string, q: string): string {
+  return publicCacheKey(['suggest', mode, q.trim().toLowerCase()]);
+}
+
+export function readSuggestCache<T>(key: string): T | undefined {
+  return suggestStore.get(key) as T | undefined;
+}
+
+export function writeSuggestCache<T>(key: string, value: T, ttlMs = SUGGEST_CACHE_TTL_MS): void {
+  suggestStore.set(key, value, ttlMs);
+}
+
+export function resetSuggestCache(): void {
+  suggestStore.clear();
+}
+
+export function suggestCacheSize(): number {
+  return suggestStore.size();
 }

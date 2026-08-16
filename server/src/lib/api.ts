@@ -13,6 +13,7 @@
 // ============================================================
 
 import type { FilterState, MapMode, POI } from './types.ts';
+import { readSuggestCache, suggestCacheKey, writeSuggestCache } from './public-cache.ts';
 
 /** API 基础路径（Next 同源部署时为空） */
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
@@ -99,13 +100,18 @@ export function fetchPOIDetail(id: string, mode: MapMode): Promise<POI> {
   return request<POI>(`/api/pois/${encodeURIComponent(id)}?mode=${mode}`);
 }
 
-/** 搜索（含建议） */
-export function fetchSearchSuggest(
+/** 搜索（含建议）。同一 mode+q 五分钟内走客户端 LRU，最多 100 条。 */
+export async function fetchSearchSuggest(
   q: string,
   mode: MapMode
 ): Promise<SuggestResponse> {
+  const key = suggestCacheKey(mode, q);
+  const cached = readSuggestCache<SuggestResponse>(key);
+  if (cached) return cached;
   const params = new URLSearchParams({ q, mode });
-  return request<SuggestResponse>(`/api/suggest?${params.toString()}`);
+  const result = await request<SuggestResponse>(`/api/suggest?${params.toString()}`);
+  writeSuggestCache(key, result);
+  return result;
 }
 
 /** 获取模式配置列表（备用；前端 MODES 已是权威配置） */
