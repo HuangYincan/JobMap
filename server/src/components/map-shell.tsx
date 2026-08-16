@@ -18,7 +18,7 @@ import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache"
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from "@/lib/account";
 import { initialsFromName } from "@/lib/account";
 import { isPersistableMode, isPersistablePoi } from "@/lib/persistable";
-import { addGuestHistory, clearGuestHistory, listGuestHistory } from "@/lib/guest-search-history";
+import { addGuestHistory, clearGuestHistory, listGuestHistory, mergeGuestHistoryIntoAccount } from "@/lib/guest-search-history";
 import {
   amapStyleUrl,
   MAP_STYLE_KEY,
@@ -282,31 +282,14 @@ export function MapShell() {
    * only sends rows the account does not have, so no duplicates).
    */
   const mergeGuestHistoryOnSignIn = useCallback(async () => {
-    const local = listGuestHistory().filter((item) => isPersistableMode(item.mode));
-    if (!local.length) return;
-    let cloud: SearchHistoryEntry[] = [];
-    try {
-      const res = await fetch("/api/me/search-history");
-      const body = await res.json();
-      cloud = Array.isArray(body.items) ? body.items : [];
-    } catch {
-      // Offline — keep local rows for a later merge.
-      return;
-    }
-    const inCloud = new Set(cloud.map((item) => `${item.mode}:${item.query}`));
-    for (const item of local) {
-      if (inCloud.has(`${item.mode}:${item.query}`)) continue;
-      try {
-        await fetch("/api/me/search-history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: item.query, mode: item.mode }),
-        });
-      } catch {
-        // keep going; failed rows stay local for a later merge
-      }
-    }
-    await refreshHistory(true);
+    const uploaded = await mergeGuestHistoryIntoAccount({
+      loadCloud: async () => {
+        const res = await fetch('/api/me/search-history');
+        const body = await res.json();
+        return Array.isArray(body.items) ? body.items : [];
+      },
+    });
+    if (uploaded.length) await refreshHistory(true);
   }, [refreshHistory]);
 
   useEffect(() => {

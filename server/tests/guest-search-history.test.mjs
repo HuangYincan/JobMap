@@ -7,6 +7,7 @@ import {
   GUEST_HISTORY_CAP,
   GUEST_HISTORY_KEY,
   listGuestHistory,
+  mergeGuestHistoryIntoAccount,
 } from '../src/lib/guest-search-history.ts';
 
 function installMemoryStorage() {
@@ -62,4 +63,38 @@ test('guest history dedupes query+mode, caps, and clears', () => {
 
   clearGuestHistory();
   assert.equal(listGuestHistory().length, 0);
+});
+
+test('mergeGuestHistoryIntoAccount uploads only rows absent from cloud', async () => {
+  installMemoryStorage();
+  addGuestHistory('前端', 'work');
+  addGuestHistory('后端', 'work');
+  addGuestHistory('西湖', 'domain'); // non-persistable — never uploaded
+
+  const calls = [];
+  const uploaded = await mergeGuestHistoryIntoAccount({
+    fetchImpl: async (url, init) => {
+      calls.push(JSON.parse(String(init.body)));
+      return { ok: true };
+    },
+    cloud: [{ id: 'x', query: '前端', mode: 'work', createdAt: '2026-08-17' }],
+  });
+  assert.deepEqual(uploaded.map((i) => i.query), ['后端']);
+  assert.deepEqual(calls.map((c) => c.query), ['后端']);
+  // Local mirror is kept — sign-out still restores it.
+  assert.equal(listGuestHistory().length, 2);
+});
+
+test('mergeGuestHistoryIntoAccount keeps failed rows local and survives offline', async () => {
+  installMemoryStorage();
+  addGuestHistory('算法', 'work');
+
+  const uploaded = await mergeGuestHistoryIntoAccount({
+    fetchImpl: async () => {
+      throw new Error('offline');
+    },
+    loadCloud: async () => [],
+  });
+  assert.deepEqual(uploaded, []);
+  assert.equal(listGuestHistory().length, 1); // row survives for a later merge
 });

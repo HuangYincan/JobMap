@@ -69,3 +69,57 @@ export function clearGuestHistory(): void {
     // ignore
   }
 }
+
+export interface GuestMergeOptions {
+  /** Fetch implementation (browser fetch by default; injectable for tests). */
+  fetchImpl?: typeof fetch;
+  /** Cloud history rows already on the account; merge skips these. */
+  cloud?: SearchHistoryEntry[];
+  /** Load cloud rows when `cloud` is not supplied. */
+  loadCloud?: () => Promise<SearchHistoryEntry[]>;
+  /** Called once per successfully uploaded row. */
+  onUploaded?: (item: SearchHistoryEntry) => void;
+}
+
+/**
+ * Upload persistable guest rows the account does not already have.
+ * Keeps the local copy as a browser mirror: failed rows stay local for a later
+ * merge, and already-uploaded rows are skipped, so re-logins never duplicate.
+ * Returns the rows uploaded (empty when nothing was needed).
+ */
+export async function mergeGuestHistoryIntoAccount(
+  options: GuestMergeOptions = {},
+): Promise<SearchHistoryEntry[]> {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const local = listGuestHistory().filter((item) => isPersistableMode(item.mode));
+  if (!local.length) return [];
+
+  let cloud = options.cloud;
+  if (!cloud) {
+    if (!options.loadCloud) return [];
+    try {
+      cloud = await options.loadCloud();
+    } catch {
+      return []; // offline — keep local rows for a later merge
+    }
+  }
+
+  const inCloud = new Set(cloud.map((item) => `${item.mode}:${item.query}`));
+  const uploaded: SearchHistoryEntry[] = [];
+  for (const item of local) {
+    if (inCloud.has(`${item.mode}:${item.query}`)) continue;
+    try {
+      const res = await fetchImpl('/api/me/search-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: item.query, mode: item.mode }),
+      });
+      if (!res.ok) continue;
+      uploaded.push(item);
+      options.onUploaded?.(item);
+    } catch {
+      // keep going; failed rows stay local for a later merge
+    }
+  }
+  return uploaded;
+}
