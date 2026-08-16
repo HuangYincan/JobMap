@@ -30,6 +30,13 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - `npm run test:coverage` (Node built-in): **78.75% lines / 77.42% branches / 75% functions** — plan target >70% met.
 - Warm local API (dev, DB imported): `/api/pois?mode=work` p95 **9.6ms**; `/api/pois/:id` p95 **8.2ms**; `/api/suggest` p95 **6.8ms** — all plan targets met.
 
+### Pin location audit
+
+- Three-layer audit of all 14 map pins against AMap Web services (geocoding / regeocoding / POI search) + public business records: **14/14 PASS** (offsets < 0.4 km, district matches).
+- Corrected **11 pins** (address and/or coordinates): 蚂蚁 Z 空间（西溪路556号）、滴滴 EFC（景兴路896号）、深度求索（拱墅区环城北路169号汇金国际大厦）、贝达（临平区兴中路355号）、泰格医药（滨江区聚工路19号盛大科技园）、群核（余杭塘路515号莱茵·矩阵国际）、字节跳动、旷视、同花顺、新华三、之江实验室（+阿里微调）。网易/零跑原数据正确。
+- `npm run audit:pins` added (`scripts/audit-pin-locations.mjs`, `AMAP_WEB_KEY` + `DATABASE_URL` from env).
+- **Browser cache invalidation**: `MODE_CACHE_VERSION` bumped 1→2 — stale sessionStorage catalogs refetch the corrected coordinates. Data-fix workflow documented: seed/drops → `import:seed:apply` → bump cache version → `audit:pins`.
+
 ## 2026-08-16
 
 ### Added

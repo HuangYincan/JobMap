@@ -24,9 +24,10 @@ Home lazy-loads `MapShell`. Without AMap keys, Work seed + chrome still load; Do
 ```bash
 ./node_modules/.bin/tsc --noEmit
 node --test tests/*.test.mjs
-npm run import:seed             # 137 companies / 240 positions / 0 dropped today
+npm run import:seed             # 137 companies / 241 positions / 0 dropped today
 npm run import:seed:apply       # no-op without DATABASE_URL; upserts 006 tables when Docker is up
 npm run geocode:sites           # lists drop / imported sites still at (0,0); does not call AMap
+npm run audit:pins              # three-layer pin audit vs AMap Web services (needs AMAP_WEB_KEY + DATABASE_URL)
 # Optional: drop official-career JSON in server/data/recruitment/official-career/
 # Optional: refresh the reviewed radar snapshot → make refresh-radar (self-validates)
 # Optional: polite GET of official career pages → make crawl-official (dry-run, no write)

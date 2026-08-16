@@ -447,6 +447,30 @@ useEffect(() => {
 
 ---
 
+## 2026-08-17: 坐标审计修正 + 会话缓存数据陈旧
+
+### 问题6：11 个 pin 的坐标/地址与真实位置不符
+
+**症状**：地图上的公司 pin 与实际办公地不符（偏差最高 24km，如贝达在临平却标在文一西路291号）。
+
+**根本原因**：seed 与 official-career 的坐标是开发期人工策展填写的，从未经过地理编码验证。
+
+**解决方案**：三层核查（地址→坐标 geocoding、坐标→地址 regeocoding、岗位→公司域名匹配），基于高德 Web 服务 + 工商公开地址。修正 11 家坐标/地址（蚂蚁→西溪路556号Z空间、深度求索→拱墅汇金国际大厦、贝达→临平兴中路355号、泰格→滨江盛大科技园、群核→莱茵·矩阵国际等）。固化 `npm run audit:pins`（`scripts/audit-pin-locations.mjs`，14/14 PASS）。
+
+**修改文件**：`seed-data.ts`、`official-career/*.json`、`scripts/audit-pin-locations.mjs`、PostGIS（重导）
+
+### 问题7：坐标修正后浏览器仍显示旧位置
+
+**症状**：数据修正后用户刷新页面，地图 pin 仍在旧位置。
+
+**根本原因**：工作模式 catalog 存在 sessionStorage（`domain-map:mode-cache:v1:*`），切模式/重进恢复旧缓存、不重拉 API；缓存版本未随数据修正而失效。
+
+**解决方案**：bump `MODE_CACHE_VERSION`（1→2），版本校验拒绝旧缓存并重新拉取。数据修正流程固化：改 seed/drops → `import:seed:apply` → bump 缓存版本 → `audit:pins` 验证。
+
+**修改文件**：`lib/mode-cache.ts`、`tests/mode-cache.test.mjs`
+
+---
+
 ## 相关文档
 
 - 设计系统：`tech/07-frontend-design-system.md`

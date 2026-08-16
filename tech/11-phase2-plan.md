@@ -228,6 +228,7 @@
 - [x] `mergeCompaniesIntoPois` 泛化：雷达/官网 drops 按 slug 并入现有 catalog，保留真实坐标
 - [x] 离线 catalog 过滤无坐标站点（雷达新公司不画 (0,0) 针）
 - [x] 校验器允许「仅地址」站点（待地理编码）
+- [x] **坐标审计**（2026-08-17）：`npm run audit:pins` 三层核查（geocoding/regeocoding/POI），修正 11 个 pin（蚂蚁/深度求索/贝达/泰格/群核等），14/14 PASS；`AMAP_WEB_KEY` 已配置（`tech/roles/data/README.md` 登记用途）
 - [x] 数据落盘：`server/data/recruitment/radar/`（98 公司 / 125 职位，SHA-256 记录）
 - [x] source review：`tech/roles/data/etl/xiaozhao-radar.md`、`etl/official-career.md`
 

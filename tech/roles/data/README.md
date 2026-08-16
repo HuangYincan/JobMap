@@ -12,6 +12,12 @@ Every source must receive a review record before acquisition code is written or 
 
 Implemented (reviewed 2026-08-17): published `xiaozhao-radar` `jobs.json` mapping, and polite GET of curated official `careerUrl` HTML. See `etl/xiaozhao-radar.md` and `etl/official-career.md`.
 
+## AMap Web services key (`AMAP_WEB_KEY`)
+
+- **Purpose:** server-side geocoding only — the key must never be printed or committed, and is read from env (`server/.env.local`).
+- **Used by:** `geocodeAddressRest` (`server/src/lib/site-geocode.ts`, address→coordinate for `geocode:sites` apply path) and `npm run audit:pins` (`scripts/audit-pin-locations.mjs`, three-layer pin audit: geocoding + regeocoding + POI search).
+- **Not used for:** map rendering (that is the browser JS key `NEXT_PUBLIC_AMAP_KEY`), or any Domain-mode live search (browser AMap SDK).
+
 | Source | MVP status | Permitted action | Conditions |
 |---|---|---|---|
 | `xiaozhao-radar` `jobs.json` | Candidate approved for design | Build an import only after attribution and license evidence are recorded | Apache-2.0 attribution, source URL/hash, parser version, idempotency |
