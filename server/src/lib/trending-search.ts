@@ -37,5 +37,9 @@ const TRENDING: Record<'domain' | 'work', TrendingQuery[]> = {
 export function trendingForMode(mode: MapMode): TrendingQuery[] {
   const id = canonicalMode(mode);
   if (id === 'domain') return TRENDING.domain;
-  return TRENDING.work;
+  if (id === 'work') return TRENDING.work;
+  // college / overseas are reserved but inactive: no trending chips until the
+  // mode activates. Add a `college` / `overseas` entry to TRENDING then — never
+  // let an inactive mode borrow work's queries.
+  return [];
 }

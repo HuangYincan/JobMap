@@ -443,6 +443,9 @@ test('trendingForMode is a plugin per map mode', () => {
     trendingForMode('work').some((work) => work.query === item.query)
   ));
   assert.ok(trendingForMode('domain').every((item) => !item.query.startsWith('#')));
+  // Reserved modes must not borrow work's queries before they activate.
+  assert.deepEqual(trendingForMode('college'), []);
+  assert.deepEqual(trendingForMode('overseas'), []);
 });
 
 test('applyFilters: district plugin matches Hangzhou office addresses', () => {
