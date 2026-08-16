@@ -87,6 +87,8 @@ test('GET /api/suggest contract: work matches company/job/tag; empty q uses tren
   assert.match(route, /slice\(0, 10\)/);
   assert.ok(trendingForMode('work').some((item) => item.query === '#大厂'));
   assert.ok(trendingForMode('domain').some((item) => item.query === '西湖'));
+  // Reserved modes surface no hot searches until they activate.
+  assert.deepEqual(trendingForMode('college'), []);
 });
 
 test('search flow: keyword + #大厂 returns only bigtech and paginates', () => {
