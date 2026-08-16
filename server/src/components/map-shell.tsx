@@ -1273,13 +1273,19 @@ export function MapShell() {
   };
 
   const openExploreSearch = useCallback((nextQuery: string) => {
-    setQuery(nextQuery);
+    const tagged = applyTagSuggestion({ query, filters }, nextQuery);
+    if (tagged.applied) {
+      setQuery(tagged.query);
+      setFilters(tagged.filters);
+    } else {
+      setQuery(nextQuery);
+    }
     setRailPanel("explore");
     setMobileSheet("explore");
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
       setDrawer((current) => (current === "mini" ? "half" : current));
     }
-  }, []);
+  }, [query, filters]);
 
   const handlePickRecent = useCallback((entry: SearchHistoryEntry) => {
     const replay = replayRecentSearch(mode, entry);
