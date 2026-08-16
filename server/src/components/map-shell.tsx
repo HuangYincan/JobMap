@@ -1427,6 +1427,7 @@ export function MapShell() {
           shifted={sidebarOpen}
           onClose={() => setRailPanel(null)}
           onPick={handlePickSaved}
+          onHover={handleHover}
           onRemove={user ? handleRemoveSaved : undefined}
         />
       )}
@@ -1598,6 +1599,20 @@ export function MapShell() {
               >
                 {t("saved", lang)}
               </button>
+              <button
+                type="button"
+                className={`${styles.mobileFilterBtn} ${savedOverlay ? styles.mobileFilterBtnActive : ""}`}
+                onClick={() => {
+                  if (!user) {
+                    setAuthOpen(true);
+                    return;
+                  }
+                  setSavedOverlay((on) => !on);
+                }}
+                aria-pressed={savedOverlay}
+              >
+                {t("savedOverlay", lang)}
+              </button>
             </div>
             {mobileSheet !== "saved" && (
             <div className={styles.mobileSearch}>
@@ -1629,6 +1644,7 @@ export function MapShell() {
                   catalog={compareCatalog}
                   origin={distanceOrigin}
                   onPick={handlePickSaved}
+                  onHover={handleHover}
                   onRemove={user ? handleRemoveSaved : undefined}
                 />
               ) : (

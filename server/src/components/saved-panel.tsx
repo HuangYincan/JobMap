@@ -31,6 +31,7 @@ export interface SavedListProps {
   catalog?: POI[];
   origin?: { lng: number; lat: number } | null;
   onPick: (place: SavedPlace) => void;
+  onHover?: (poiId: string | null) => void;
   onRemove?: (poiId: string) => void;
 }
 
@@ -42,6 +43,7 @@ export function SavedList({
   catalog = [],
   origin = null,
   onPick,
+  onHover,
   onRemove,
 }: SavedListProps) {
   const [picked, setPicked] = useState<string[]>([]);
@@ -110,7 +112,13 @@ export function SavedList({
                 aria-label={`${t("compareSelect", lang)} ${item.name}`}
                 onClick={() => setPicked((cur) => toggleCompareSelection(cur, item.poiId))}
               />
-              <button type="button" className={styles.row} onClick={() => onPick(item)}>
+              <button
+                type="button"
+                className={styles.row}
+                onClick={() => onPick(item)}
+                onMouseEnter={() => onHover?.(item.poiId)}
+                onMouseLeave={() => onHover?.(null)}
+              >
                 <span className={styles.query}>{item.name}</span>
                 <span className={styles.meta}>
                   {[getMode(item.mode).name, item.address].filter(Boolean).join(" · ")}
