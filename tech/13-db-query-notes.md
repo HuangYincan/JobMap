@@ -2,7 +2,7 @@
 
 Live PostGIS apply is verified (`001`–`010`, 51 companies / 51 sites). This page records **indexes already in migrations**, **real `account-store` SQL**, and a 2026-08-16 gist `EXPLAIN`. Without `DATABASE_URL` those statements do not run and callers use memory / seed.
 
-**不要**在没有库的情况下把「查询优化」标成已用 `EXPLAIN ANALYZE` 验证。下面的索引是契约，不是实测计划。
+**不要**在没有库的情况下把「查询优化」标成已用 `EXPLAIN ANALYZE` 验证。空间 clip 和账户列表已在本机 51 家 / 1 个用户上跑过 `EXPLAIN`；新查询仍要自己量。
 
 ## 谁在查库
 
@@ -34,7 +34,7 @@ Live PostGIS apply is verified (`001`–`010`, 51 companies / 51 sites). This pa
 
 `ON CONFLICT` 写 Saved / 投递 / 提醒，靠表上的 UNIQUE，不要另开去重查询。
 
-## 招聘表（公开读已能 SELECT；视野查询仍等 PostGIS）
+## 招聘表（公开读已能 SELECT + 空间 clip）
 
 `006_recruitment_sites.sql` 给导入和以后的 PostGIS 读路径预留：
 
@@ -67,7 +67,7 @@ WHERE s.geom IS NOT NULL
 - **不引入 ORM。** 等 ADR。
 - **邮件/短信不改 `notifications.status`。** 本阶段只 `queued`。
 
-## Live EXPLAIN（2026-08-16，51 行 `company_sites`）
+## Live EXPLAIN（2026-08-16，51 行 `company_sites` + 1 个账户）
 
 西湖西溪小框 `ST_MakeEnvelope(120.01, 30.26, 120.04, 30.29, 4326)`：
 
@@ -76,10 +76,16 @@ WHERE s.geom IS NOT NULL
 
 gist 已接上。行数涨到几百以后，单独的 bbox 也应切到 Index Scan；现在不要为 51 行强行 `SET enable_seqscan = off`。
 
+账户列表（user_id = 1，history 3 行 / saved 0 / apps 0 / notes 0）：
+
+- `search_history` / `saved_places` / `applications`：`Bitmap Index Scan` on `*_user_created_idx`，Index Cond = `user_id`。行太少时 `ORDER BY created_at DESC` 会再套一层 Sort，不是 Seq Scan。
+- `notifications`：`Index Scan using notifications_user_created_idx`。
+- `auth_sessions` by `token_hash`：`Index Scan using auth_sessions_token_hash_key`，`expires_at > now()` 是 Filter。
+
 ## Docker 通了以后的验收
 
 1. `make db-migrate` 对空库跑完 `001`–`010`。**Done.**
-2. 对上面每条 `account-store` SELECT 跑 `EXPLAIN (ANALYZE, BUFFERS)`：Index Scan / Index Only Scan，不要 Seq Scan。
+2. 对上面每条 `account-store` SELECT 跑 `EXPLAIN (ANALYZE, BUFFERS)`：Index Scan / Index Only Scan，不要 Seq Scan。**Done for history / saved / applications / notifications / sessions.**
 3. 招聘 `bbox` 查询确认走 `company_sites_geom_gist`。**Done for `&&` + `ST_DWithin`.** 单独 `&&` 在 51 行时仍 Seq Scan。
 4. `getSessionUser` already `DELETE`s expired sessions (and the missed token) on a cache miss; `consumeOtp` deletes expired challenges for that target. A periodic sweeper can still use `auth_sessions_expires_at_idx` later.
 

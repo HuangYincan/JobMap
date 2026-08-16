@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { searchPublicCatalog, spatialClipFromSearch } from '../src/lib/public-search.ts';
+import { loadWorkCatalogFromDb } from '../src/lib/recruitment-store.ts';
+import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
 import {
   companySitesSpatialSql,
   hasSpatialClip,
@@ -51,4 +53,28 @@ test('in-memory public search still clips when there is no database', () => {
   ];
   const out = searchPublicCatalog(pois, { mode: 'domain', bounds: '120.0,30.2,120.2,30.3' });
   assert.deepEqual(out.results.map((p) => p.id), ['in']);
+});
+
+test('loadWorkCatalogFromDb clips Hangzhou west-lake when DATABASE_URL is set', async (t) => {
+  if (!process.env.DATABASE_URL) {
+    t.skip('DATABASE_URL is not set');
+    return;
+  }
+  const west = await loadWorkCatalogFromDb({
+    bounds: { west: 120.01, south: 30.26, east: 120.04, north: 30.29 },
+  });
+  if (!west) {
+    t.skip('Postgres pool unavailable');
+    return;
+  }
+  assert.ok(west.length > 0);
+  assert.ok(west.length < INTERNSHIP_SEED.length);
+  assert.ok(west.every((p) => p.location.lng >= 120.01 && p.location.lng <= 120.04));
+  assert.ok(west.some((p) => p.id === 'alibaba-xixi'));
+
+  const empty = await loadWorkCatalogFromDb({
+    bounds: { west: 10, south: 10, east: 11, north: 11 },
+  });
+  assert.ok(empty);
+  assert.equal(empty.length, 0);
 });
