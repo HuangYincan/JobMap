@@ -771,6 +771,7 @@ export function MapShell() {
 
   const compareCatalog = useMemo(() => {
     const byId = new Map<string, POI>();
+    // Live catalog first; seed only fills ids the current list has not loaded yet.
     for (const poi of INTERNSHIP_SEED) byId.set(poi.id, poi);
     for (const poi of catalog) byId.set(poi.id, poi);
     return Array.from(byId.values());
@@ -1015,7 +1016,8 @@ export function MapShell() {
     }
 
     if (isRecruitmentMode(mode)) {
-      const tips = suggestRecruitment(INTERNSHIP_SEED, query, 8);
+      const pool = catalog.length ? catalog : INTERNSHIP_SEED;
+      const tips = suggestRecruitment(pool, query, 8);
       setSuggestions(
         tips.map((tip) => ({
           id: tip.id,
@@ -1053,7 +1055,7 @@ export function MapShell() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, mode, zoom]);
+  }, [query, mode, zoom, catalog]);
 
   // 选择建议 → 定位；招聘建议打开对应公司
   const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
@@ -1063,8 +1065,9 @@ export function MapShell() {
     }
     if (s.poiId) {
       const company =
-        INTERNSHIP_SEED.find((p) => p.id === s.poiId) ??
-        pois.find((p) => p.id === s.poiId);
+        catalog.find((p) => p.id === s.poiId) ??
+        pois.find((p) => p.id === s.poiId) ??
+        INTERNSHIP_SEED.find((p) => p.id === s.poiId);
       if (company) {
         setSelectedId(company.id);
         setDetailPoi(company);
@@ -1074,7 +1077,7 @@ export function MapShell() {
     setSuggestions([]);
     setRailPanel("explore");
     void recordSearch(s.name, mode);
-  }, [pois, mode, recordSearch]);
+  }, [catalog, pois, mode, recordSearch]);
 
   const handleZoomIn = () => {
     if (mapInstance.current) {

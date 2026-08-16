@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
 import { enqueueNotification, listNotifications } from "@/lib/account-store";
 import { matchJobAlerts } from "@/lib/job-alerts";
-import { INTERNSHIP_SEED } from "@/lib/seed-data";
+import { loadServerCatalog } from "@/lib/server-catalog";
 
 export async function GET() {
   const user = await readSessionUser();
@@ -15,7 +15,8 @@ export async function POST() {
   if (!user) {
     return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
-  const matches = matchJobAlerts(INTERNSHIP_SEED, user.preferences.career, user.preferences.notifications);
+  const catalog = await loadServerCatalog("work");
+  const matches = matchJobAlerts(catalog, user.preferences.career, user.preferences.notifications);
   const items = [];
   for (const match of matches) {
     items.push(

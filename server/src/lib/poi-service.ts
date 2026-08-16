@@ -2,7 +2,7 @@
 // POI 数据服务 — 按模式统一获取（插件化数据源）
 //
 // Domain：视口网格波次增量并入累计池，空结果不回退假数据。
-// Internship / 工作：seed 岗位 + 地理编码校正坐标。
+// Internship / 工作：公开 catalog（导入行优先）+ 缺坐标时再地理编码。
 // 距离与列表裁剪由调用方用钉死的 origin 走 runPOIPipeline。
 // ============================================================
 
@@ -12,8 +12,7 @@ import {
   searchViewportPOIsIncremental,
 } from './amap-api.ts';
 import { INTERNSHIP_SEED } from './seed-data.ts';
-import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
-import { collectRecruitmentPois } from './recruitment-source.ts';
+import { fetchWorkCatalogFromApi } from './recruitment-adapters/api.ts';
 import type { QueryPipeline } from './search.ts';
 import { mergePoisById, isCommonPoi, POI_HARD_CAP, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
 import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
@@ -107,12 +106,18 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
 
 let geocodePromise: Promise<RecruitmentPOI[]> | null = null;
 
-/** 用 Geocoder 校正 seed 里可能不准的大厂坐标 */
+function hasPlausibleCoord(poi: RecruitmentPOI): boolean {
+  const { lng, lat } = poi.location;
+  return Number.isFinite(lng) && Number.isFinite(lat) && !(lng === 0 && lat === 0);
+}
+
+/** 用 Geocoder 校正缺坐标或 (0,0) 的办公点；已有坐标不打高德。 */
 export async function resolveInternshipLocations(
   seed: RecruitmentPOI[] = INTERNSHIP_SEED
 ): Promise<RecruitmentPOI[]> {
   const resolved = await Promise.all(
     seed.map(async (poi) => {
+      if (hasPlausibleCoord(poi)) return poi;
       const address = poi.location.address;
       if (!address) return poi;
       try {
@@ -136,8 +141,13 @@ export async function resolveInternshipLocations(
 }
 
 async function workSeedFromAdapters(): Promise<RecruitmentPOI[]> {
-  const fromAdapter = await collectRecruitmentPois([seedRecruitmentAdapter], 'seed');
-  return fromAdapter.length ? fromAdapter : INTERNSHIP_SEED;
+  try {
+    const fromApi = await fetchWorkCatalogFromApi();
+    if (fromApi.length) return fromApi;
+  } catch {
+    // Relative /api/pois is browser-only; tests and SSR keep the seed.
+  }
+  return INTERNSHIP_SEED;
 }
 
 async function internshipSeedResolved(): Promise<RecruitmentPOI[]> {

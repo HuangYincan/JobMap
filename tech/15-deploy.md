@@ -40,7 +40,7 @@ make preflight
 make db-migrate                 # 001–010
 ```
 
-Account routes then write sessions / Recent / Saved / applications / queued notifications. Public list APIs still read `serverCatalog` (seed), not SQL. Live `EXPLAIN` notes are in `tech/13-db-query-notes.md`.
+Account routes then write sessions / Recent / Saved / applications / queued notifications. After `npm run import:seed:apply`, public list APIs and the Work map read imported rows via `loadServerCatalog`. Without a database they stay on the seed. Live `EXPLAIN` notes are in `tech/13-db-query-notes.md`.
 
 `make db-down` stops the container. Volume `postgres_data` keeps data until you `docker compose down -v`.
 

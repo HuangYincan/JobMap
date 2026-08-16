@@ -127,6 +127,7 @@
 - [ ] 公司地理位置匹配（高德 POI；seed 已带坐标）
 - [x] 导入计划脚本（`npm run import:seed` dry-run；`import:seed:apply` 有库才写入 `006` 表）
 - [x] 公开读走导入行（`loadWorkCatalogFromDb` → `loadServerCatalog`；无库回落 seed）
+- [x] 工作模式地图读同一 catalog（`fetchWorkCatalogFromApi`；已有坐标不打 Geocoder）
 - [x] 数据验证和去重（同 slug 合并职场/岗位）
 
 **3.3 实习模式 UI**
