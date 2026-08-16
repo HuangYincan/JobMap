@@ -1,0 +1,46 @@
+{
+  "slug": "lianlian-hangzhou",
+  "name": "连连数字",
+  "industries": [
+    "finance",
+    "internet"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.lianlianpay.com/careers",
+  "sites": [
+    {
+      "id": "lianlian-hangzhou-site",
+      "name": "连连数字",
+      "location": {
+        "lng": 120.109,
+        "lat": 30.288,
+        "address": "西湖区西溪谷国际商务中心"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "lianlian-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "lianlian-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "金融科技",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lianlianpay.com/careers"
+    }
+  ]
+}

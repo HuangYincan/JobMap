@@ -1,0 +1,46 @@
+{
+  "slug": "yuewen-hangzhou",
+  "name": "阅文集团",
+  "industries": [
+    "internet",
+    "content"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://join.yuewen.com/",
+  "sites": [
+    {
+      "id": "yuewen-hangzhou-site",
+      "name": "阅文集团",
+      "location": {
+        "lng": 120.117,
+        "lat": 30.283,
+        "address": "余杭区文一西路998号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "yuewen-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "yuewen-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "工程",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.yuewen.com/"
+    }
+  ]
+}

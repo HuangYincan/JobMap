@@ -1,0 +1,46 @@
+{
+  "slug": "eastcom-hangzhou",
+  "name": "东方通信",
+  "industries": [
+    "hardware",
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.eastcom.com/hr",
+  "sites": [
+    {
+      "id": "eastcom-hangzhou-site",
+      "name": "东方通信",
+      "location": {
+        "lng": 120.164,
+        "lat": 30.274,
+        "address": "滨江区东信大道66号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "eastcom-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "eastcom-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "软件平台",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.eastcom.com/hr"
+    }
+  ]
+}

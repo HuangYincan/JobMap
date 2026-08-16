@@ -1,0 +1,45 @@
+{
+  "slug": "suporlife-hangzhou",
+  "name": "万事利",
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.wensli.com/join",
+  "sites": [
+    {
+      "id": "suporlife-hangzhou-site",
+      "name": "万事利",
+      "location": {
+        "lng": 120.211,
+        "lat": 30.274,
+        "address": "上城区万事利大厦"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "suporlife-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "suporlife-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "数字化",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.wensli.com/join"
+    }
+  ]
+}

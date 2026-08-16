@@ -206,6 +206,13 @@ test('planSeedImport merges official-career drops onto seed slugs', async () => 
 
   const deepseek = plan.companies.find((c) => c.slug === 'deepseek');
   assert.ok(deepseek?.positions.some((p) => p.externalId === 'deepseek-campus-frontend-2026'));
+
+  const bili = plan.companies.find((c) => c.slug === 'bilibili-hangzhou');
+  assert.ok(bili?.positions.some((p) => p.externalId === 'bilibili-campus-frontend-2026'));
+  assert.ok(bili?.positions.some((p) => p.externalId === 'bili-community'));
+
+  const megvii = plan.companies.find((c) => c.slug === 'megvii-hangzhou');
+  assert.ok(megvii?.positions.some((p) => p.externalId === 'megvii-campus-frontend-2026'));
 });
 
 test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {

@@ -1,0 +1,46 @@
+{
+  "slug": "futu-hangzhou",
+  "name": "富途",
+  "industries": [
+    "finance",
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careers.futunn.com/",
+  "sites": [
+    {
+      "id": "futu-hangzhou-site",
+      "name": "富途",
+      "location": {
+        "lng": 120.168,
+        "lat": 30.247,
+        "address": "西湖区古荡街道"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "futu-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "futu-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "金融科技",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.futunn.com/"
+    }
+  ]
+}

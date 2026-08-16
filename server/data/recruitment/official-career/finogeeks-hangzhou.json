@@ -1,0 +1,46 @@
+{
+  "slug": "finogeeks-hangzhou",
+  "name": "凡泰极客",
+  "industries": [
+    "finance",
+    "internet"
+  ],
+  "scale": "startup",
+  "careerUrl": "https://www.finogeeks.com/join",
+  "sites": [
+    {
+      "id": "finogeeks-hangzhou-site",
+      "name": "凡泰极客",
+      "location": {
+        "lng": 120.164,
+        "lat": 30.258,
+        "address": "西湖区文三路259号昌地火炬大厦"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "finogeeks-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "finogeeks-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "金融科技",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.finogeeks.com/join"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "slug": "insigma-hangzhou",
+  "name": "浙大网新",
+  "industries": [
+    "internet",
+    "hardware"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.insigma.com.cn/hr",
+  "sites": [
+    {
+      "id": "insigma-hangzhou-site",
+      "name": "浙大网新",
+      "location": {
+        "lng": 120.123,
+        "lat": 30.266,
+        "address": "西湖区华星路99号创欣大厦"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "insigma-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "insigma-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "工程",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.insigma.com.cn/hr"
+    }
+  ]
+}

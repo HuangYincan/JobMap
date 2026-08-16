@@ -1,0 +1,46 @@
+{
+  "slug": "wasu-hangzhou",
+  "name": "华数传媒",
+  "industries": [
+    "internet",
+    "content"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.wasu.com.cn/job",
+  "sites": [
+    {
+      "id": "wasu-hangzhou-site",
+      "name": "华数传媒",
+      "location": {
+        "lng": 120.164,
+        "lat": 30.274,
+        "address": "拱墅区华数大厦"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "wasu-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "wasu-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "工程",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.wasu.com.cn/job"
+    }
+  ]
+}

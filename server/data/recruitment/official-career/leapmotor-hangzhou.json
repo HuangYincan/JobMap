@@ -1,0 +1,46 @@
+{
+  "slug": "leapmotor-hangzhou",
+  "name": "零跑汽车",
+  "industries": [
+    "automotive",
+    "ai"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.leapmotor.com/career",
+  "sites": [
+    {
+      "id": "leapmotor-hangzhou-site",
+      "name": "零跑汽车",
+      "location": {
+        "lng": 120.221,
+        "lat": 30.208,
+        "address": "滨江区物联网街451号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "leapmotor-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "leapmotor-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "智能驾驶",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.leapmotor.com/career"
+    }
+  ]
+}

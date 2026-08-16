@@ -1,0 +1,46 @@
+{
+  "slug": "bilibili-hangzhou",
+  "name": "哔哩哔哩",
+  "industries": [
+    "internet",
+    "game"
+  ],
+  "scale": "bigtech",
+  "careerUrl": "https://jobs.bilibili.com/",
+  "sites": [
+    {
+      "id": "bilibili-hangzhou-site",
+      "name": "哔哩哔哩",
+      "location": {
+        "lng": 120.192,
+        "lat": 30.273,
+        "address": "西湖区转塘科技园区"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "bilibili-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "bilibili-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "工程",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.bilibili.com/"
+    }
+  ]
+}

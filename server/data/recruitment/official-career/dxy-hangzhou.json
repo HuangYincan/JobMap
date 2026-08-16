@@ -1,0 +1,46 @@
+{
+  "slug": "dxy-hangzhou",
+  "name": "丁香园",
+  "industries": [
+    "biotech",
+    "internet"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.dxy.cn/jobs",
+  "sites": [
+    {
+      "id": "dxy-hangzhou-site",
+      "name": "丁香园",
+      "location": {
+        "lng": 120.129,
+        "lat": 30.276,
+        "address": "西湖区西溪路778号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "dxy-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "dxy-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "研发",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dxy.cn/jobs"
+    }
+  ]
+}

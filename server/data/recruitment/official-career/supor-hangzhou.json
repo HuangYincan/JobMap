@@ -1,0 +1,45 @@
+{
+  "slug": "supor-hangzhou",
+  "name": "苏泊尔",
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.supor.com.cn/job",
+  "sites": [
+    {
+      "id": "supor-hangzhou-site",
+      "name": "苏泊尔",
+      "location": {
+        "lng": 120.211,
+        "lat": 30.226,
+        "address": "滨江区浦沿街道东冠路1782号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "supor-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "supor-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "数字化",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.supor.com.cn/job"
+    }
+  ]
+}

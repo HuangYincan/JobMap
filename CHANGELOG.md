@@ -40,7 +40,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Mobile search suggestions appear only in half/full as a liquid-glass overlay over the list (`mobileSearchStack`), not an in-flow block.
 - Mobile Profile / Recent keep a visible close on the embedded sheet. Account, Saved, and Layers also expose a `mobileBackBtn`. Tapping the drawer avatar again while already on Profile returns to Explore.
 - Public `/api/pois` and `/api/search` push `bounds` and `filters.distance` into PostGIS (`s.geom &&` then `ST_DWithin` on `company_sites`). Selected Hangzhou districts become address `ILIKE` + coarse-box SQL (a superset); `poiMatchesDistrict` still prefers named addresses. No database still clips in memory with `inBounds`. Suggest / job-alert stay unclipped. Live `EXPLAIN` on 51 sites: gist is used for `&&` + `ST_DWithin`; bbox-only stays a Seq Scan until the table grows. Warm local Next: `/api/pois` P95 12.7ms, bounds clip 5.8ms.
-- File-drop adapters for `boss` / `nowcoder` / `shixiseng` (empty dirs are a no-op). Official-career 2026 autumn frontend drops now also cover 滴滴 / 知乎 / 小米 / 菜鸟 / 有赞 / 海康 / 宇树 / 吉利 / DeepSeek / 恒生 / 大华 on existing seed slugs.
+- File-drop adapters for `boss` / `nowcoder` / `shixiseng` (empty dirs are a no-op). Official-career 2026 autumn frontend drops now cover every seed slug that already has a public career URL (曦曦AI stays seed-only). Live `import:seed:apply` wrote 51 companies / 110 open positions.
 
 
 ### Changed
