@@ -592,8 +592,12 @@ export function MapShell() {
     }
 
     async function load() {
-      if (!mapReady || !geoSettled) return;
-      if (loadingRef.current) return; // 防止初始化期间多次setState触发并发加载
+      if (!mapReady || !geoSettled) {
+        return;
+      }
+      if (loadingRef.current) {
+        return; // 防止初始化期间多次setState触发并发加载
+      }
       if (skipFetchRef.current) {
         skipFetchRef.current = false;
         return;
@@ -664,7 +668,8 @@ export function MapShell() {
       clearTimeout(timer);
     };
     // 刻意不依赖 mapCenter / zoom / mapBounds / filters：平移、缩放、筛选都不重搜
-  }, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin, userLocation]);
+    // 使用原始值而非对象引用，避免 React 误判依赖变化
+  }, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin?.lng, searchOrigin?.lat, userLocation?.lng, userLocation?.lat]);
 
   const distanceOrigin = userLocation ?? mapCenter;
   const distanceRadius = distanceFilterMeters(filters);
@@ -973,7 +978,9 @@ export function MapShell() {
   // 卡片点击 → 选中（地图 marker 高亮由 usePOIMap 同步）
   const handleSelect = useCallback((poi: POI) => {
     // 地图初始化期间不处理选中，避免触发重新加载
-    if (!mapReady || !geoSettled) return;
+    if (!mapReady || !geoSettled) {
+      return;
+    }
     setSelectedId(poi.id);
   }, [mapReady, geoSettled]);
 

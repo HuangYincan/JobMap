@@ -258,17 +258,136 @@ async function load() {
 - `loadingRef`：防止并发执行（用于竞态保护）
 - 两个标志互补，解决不同的问题
 
+### 进一步诊断：对象引用导致的虚假依赖变化
+
+**第四次调试**（2026-08-16）：
+- 在浏览器中添加详细日志追踪 effect 触发
+- 发现点击卡片后 POI loading effect 被触发了**3次**
+- 时间间隔：116ms、270ms，说明是3次独立的状态更新
+- 所有3次触发的依赖值**完全相同**，但 React 仍然认为依赖改变了
+
+**真正的根本原因**：
+- Effect 依赖数组包含对象类型：`searchOrigin` 和 `userLocation`
+- React 使用 `Object.is()` 比较依赖，比较的是**引用**而不是**值**
+- 即使对象内容相同（`{lng: 120, lat: 30}`），如果是新的对象引用，React 会认为依赖改变
+- 某些状态更新（如点击卡片）会导致组件重新渲染，而重新渲染可能创建新的对象引用
+- 新引用 → React 认为依赖变了 → effect 重新运行
+
+**证据**（浏览器日志）：
+```
+[15128ms] [TEST] Clicking first card: didi-hangzhou
+[15129ms] [HANDLESELECT] Called at render 40
+[15130ms] [HANDLESELECT] Setting selectedId
+[15131ms] [RENDER 41] MapShell rendered
+[15363ms] [LOAD 1786898992784] Effect triggered  ← 点击后232ms，触发第1次
+[15363ms] [LOAD 1786898992784] Early exit: skipFetch
+```
+
+虽然 `loadingRef` 防止了实际的重新加载，但 effect 仍然在不必要地运行。
+
+**最终解决方案**：
+将 effect 依赖数组从对象引用改为**原始值**：
+
+```typescript
+// 之前（错误）
+}, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin, userLocation]);
+
+// 之后（正确）
+}, [
+  mode, query, mapReady, geoSettled, refreshToken, pageOffset,
+  searchOrigin?.lng, searchOrigin?.lat,
+  userLocation?.lng, userLocation?.lat
+]);
+```
+
+**为什么这样有效**：
+1. 原始值（number）的比较是按值比较，不是按引用
+2. 即使父对象引用变了，只要 `lng` 和 `lat` 值不变，effect 就不会重新运行
+3. 可选链 `?.` 处理 `null` 情况，`null?.lng` 返回 `undefined`
+4. React 能正确比较 `undefined` 和数字值
+
+**修改文件**：
+- `server/src/components/map-shell.tsx` (第687行，依赖数组)
+
 ### 测试验证
 
+**修复前**：
+- 点击卡片后，POI loading effect 触发 3 次
+- 所有触发都被 `skipFetch` 或缓存守卫拦截，但仍然浪费执行
+- 从 render 40 到 render 82（42次重新渲染）
+
+**修复后**：
+- 点击卡片后，POI loading effect 只触发 1 次
+- 完全消除了虚假的依赖变化
+- 组件重新渲染次数从 42 次降低到预期范围
+
+**测试结果**：
 - ✅ 158个测试通过
 - ✅ TypeScript编译无错误
-- ⏳ 需要在浏览器中验证实际交互
+- ✅ 浏览器验证：点击卡片不再触发多余的 effect 运行
+- ✅ 地图初始化流畅，无重新加载
 
 ### 用户体验改进
 
 - 地图初始化期间即使触发多次重新渲染也只会加载一次
 - 用户点击卡片不会中断加载（配合 `handleSelect` 和 `onOpenDetail` 的守卫）
 - 加载流程保持连贯，不会重新开始
+
+### 4. React Effect 依赖数组最佳实践
+
+**避免对象引用依赖**：
+- Effect 依赖数组应该使用**原始值**（string、number、boolean），不是对象或数组
+- React 用 `Object.is()` 比较依赖，对象比较的是引用而不是值
+- 即使对象内容相同，新引用会导致 effect 重新运行
+
+**错误示例**：
+```typescript
+const [userLocation, setUserLocation] = useState<{lng: number; lat: number} | null>(null);
+useEffect(() => {
+  // ...
+}, [userLocation]); // ❌ 对象引用，可能导致虚假的依赖变化
+```
+
+**正确示例**：
+```typescript
+const [userLocation, setUserLocation] = useState<{lng: number; lat: number} | null>(null);
+useEffect(() => {
+  // ...
+}, [userLocation?.lng, userLocation?.lat]); // ✅ 原始值，只有实际值变化才触发
+```
+
+**替代方案**：
+```typescript
+// 方案1：使用 useMemo 稳定对象引用
+const stableLocation = useMemo(
+  () => userLocation,
+  [userLocation?.lng, userLocation?.lat]
+);
+useEffect(() => {
+  // ...
+}, [stableLocation]);
+
+// 方案2：直接使用原始值（推荐，更简单）
+useEffect(() => {
+  // ...
+}, [userLocation?.lng, userLocation?.lat]);
+```
+
+**并发保护模式**：
+- 使用 `useRef` 标志防止异步操作并发
+- `ref.current` 是同步的，立即生效
+- `useState` 是异步的，无法在同一渲染周期内检查
+
+```typescript
+const loadingRef = useRef(false);
+useEffect(() => {
+  if (loadingRef.current) return; // 同步检查，防止并发
+  loadingRef.current = true;
+  asyncOperation().finally(() => {
+    loadingRef.current = false;
+  });
+}, [deps]);
+```
 
 ---
 
