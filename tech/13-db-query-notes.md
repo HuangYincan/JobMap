@@ -43,7 +43,7 @@ Live PostGIS / Docker 仍不可用。本页记录**已经写进迁移的索引**
 - `positions_title_trgm` / `entities_name_trgm` / `items_title_trgm` — `pg_trgm` GIN
 - `positions_company_id_idx` / `positions_site_id_idx` / `company_sites_company_id_idx`
 
-`loadWorkCatalogFromDb` 现在读全量开岗（无 bbox）：`companies` + `company_sites` + `positions WHERE status = 'open'`。单站点 POI id = `companies.slug`（对齐 WORK_SEED）；多站点 = `slug:site.id`。视野查询落地后应是：
+`loadWorkCatalogFromDb` 现在读全量开岗；`/api/pois` 和 `/api/search` 在内存里用 `inBounds` 裁 `bounds`。单站点 POI id = `companies.slug`（对齐 WORK_SEED）；多站点 = `slug:site.id`。PostGIS 视野查询落地后应是：
 
 ```sql
 SELECT c.*, s.*, p.*

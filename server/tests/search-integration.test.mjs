@@ -59,6 +59,7 @@ test('POST /api/search contract: invalid JSON 400, work seed + cache + pipeline'
   assert.match(route, /status: 400/);
   assert.match(route, /invalid JSON body/);
   assert.match(route, /loadServerCatalog/);
+  assert.match(route, /inBounds/);
   assert.match(route, /runPOIPipeline/);
   assert.match(route, /writePublicCache/);
   assert.match(route, /aggregations: \{ industries \}/);
@@ -69,6 +70,7 @@ test('GET /api/pois contract: shared server catalog + pipeline', () => {
   const route = src('app/api/pois/route.ts');
   assert.match(route, /loadServerCatalog/);
   assert.match(route, /runPOIPipeline/);
+  assert.match(route, /inBounds/);
   assert.match(route, /parseFilters/);
   assert.ok(serverCatalog('work').length > 0);
   assert.ok(serverCatalog('domain').some((p) => p.id === 'hz-westlake'));

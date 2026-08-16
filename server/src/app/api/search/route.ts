@@ -12,6 +12,7 @@ import { loadServerCatalog } from '@/lib/server-catalog';
 import { isRecruitmentMode, withDistance } from '@/lib/types';
 import type { FilterState, MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
+import { boundsCenter, inBounds, parseBoundsParam } from '@/lib/viewport-search';
 
 interface SearchBody {
   mode?: MapMode;
@@ -53,20 +54,11 @@ export async function POST(request: Request) {
   }
 
   const pois = await loadServerCatalog(mode);
+  const bounds = parseBoundsParam(body.bounds);
+  const scoped = bounds ? pois.filter((poi) => inBounds(poi.location, bounds)) : pois;
+  const center = bounds ? boundsCenter(bounds) : { lng: 120.15, lat: 30.27 };
 
-  // bounds 中心
-  let center = { lng: 120.15, lat: 30.27 };
-  if (body.bounds) {
-    const parts = body.bounds.split(',').map(Number);
-    if (parts.length === 4 && !parts.some(isNaN)) {
-      center = {
-        lng: (parts[0] + parts[2]) / 2,
-        lat: (parts[1] + parts[3]) / 2,
-      };
-    }
-  }
-
-  const processed = runPOIPipeline(pois, {
+  const processed = runPOIPipeline(scoped, {
     query: body.q,
     filters: body.filters as FilterState | undefined,
     sort: body.sort,

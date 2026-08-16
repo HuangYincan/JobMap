@@ -16,6 +16,7 @@ import { loadServerCatalog } from '@/lib/server-catalog';
 import { withDistance } from '@/lib/types';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
+import { boundsCenter, inBounds, parseBoundsParam } from '@/lib/viewport-search';
 
 /** 解析筛选 JSON，非法时返回空对象（宽容处理） */
 function parseFilters(raw: string | null): Record<string, unknown> {
@@ -28,15 +29,6 @@ function parseFilters(raw: string | null): Record<string, unknown> {
   }
 }
 
-/** 解析 bounds "minLng,minLat,maxLng,maxLat"，非法返回 null */
-function parseBounds(raw: string | null): [number, number, number, number] | null {
-  if (!raw) return null;
-  const parts = raw.split(',').map(Number);
-  if (parts.length !== 4 || parts.some((n) => isNaN(n))) return null;
-  const [minLng, minLat, maxLng, maxLat] = parts;
-  if (minLng >= maxLng || minLat >= maxLat) return null;
-  return [minLng, minLat, maxLng, maxLat];
-}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -44,7 +36,7 @@ export async function GET(request: Request) {
   const q = url.searchParams.get('q') || undefined;
   const sort = url.searchParams.get('sort') || undefined;
   const filters = parseFilters(url.searchParams.get('filters'));
-  const bounds = parseBounds(url.searchParams.get('bounds'));
+  const bounds = parseBoundsParam(url.searchParams.get('bounds'));
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
   const pageSize = Math.min(50, Math.max(1, Number(url.searchParams.get('pageSize')) || 20));
   const cacheKey = publicCacheKey(['pois', mode, q, sort, url.searchParams.get('filters'), url.searchParams.get('bounds'), page, pageSize]);
@@ -60,17 +52,11 @@ export async function GET(request: Request) {
     return NextResponse.json(empty, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  // ---- 空间范围过滤（bounds 中心）----
-  let center;
-  if (bounds) {
-    const [minLng, minLat, maxLng, maxLat] = bounds;
-    center = { lng: (minLng + maxLng) / 2, lat: (minLat + maxLat) / 2 };
-  } else {
-    center = { lng: 120.15, lat: 30.27 }; // 杭州中心
-  }
+  const scoped = bounds ? pois.filter((poi) => inBounds(poi.location, bounds)) : pois;
+  const center = bounds ? boundsCenter(bounds) : { lng: 120.15, lat: 30.27 };
 
   // ---- 管线处理：搜索 → 筛选 → 距离 → 排序 ----
-  const processed = runPOIPipeline(pois as never, {
+  const processed = runPOIPipeline(scoped as never, {
     query: q,
     filters: filters as never,
     sort,

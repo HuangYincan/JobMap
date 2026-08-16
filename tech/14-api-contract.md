@@ -10,12 +10,12 @@ All public GETs below send `Cache-Control: public, max-age=30, stale-while-reval
 |---|---|---|
 | GET | `/api/modes` | Active modes. `?all=1` includes reserved college/overseas. |
 | GET | `/api/filter-options?mode=` | Filters + sort options from `MODES`. Unknown mode → 400. |
-| GET | `/api/pois?mode=&q=&filters=&sort=&bounds=&page=&pageSize=` | `loadServerCatalog` → `runPOIPipeline`. Work prefers imported SQL rows, else `INTERNSHIP_SEED`. Domain = `DOMAIN_SEED`. College/overseas = empty. |
+| GET | `/api/pois?mode=&q=&filters=&sort=&bounds=&page=&pageSize=` | `loadServerCatalog` → optional bbox clip (`inBounds`) → `runPOIPipeline`. Work prefers imported SQL rows, else `INTERNSHIP_SEED`. Domain = `DOMAIN_SEED`. College/overseas = empty. |
 | GET | `/api/pois/:id?mode=` | `loadServerCatalogById`. Missing → 404. |
-| POST | `/api/search` | JSON `{ mode, q, filters, sort, bounds, page, pageSize }`. Invalid JSON → 400. Returns `aggregations.industries`. Same catalog. |
+| POST | `/api/search` | JSON `{ mode, q, filters, sort, bounds, page, pageSize }`. Invalid JSON → 400. `bounds` clips results to the box, then distances from the box center. Returns `aggregations.industries`. Same catalog. |
 | GET | `/api/suggest?q=&mode=` | Same catalog. Work: company / job / tag. Domain: seed names. Empty `q` → `trendingForMode` as `hotSearches`. `recentSearches` always `[]` (use `/api/me/search-history`). |
 
-`pageSize` is clamped to 50. `filters` is JSON. `bounds` is `minLng,minLat,maxLng,maxLat`.
+`pageSize` is clamped to 50. `filters` is JSON. `bounds` is `minLng,minLat,maxLng,maxLat` and **filters** the list (it is not only a sort origin).
 
 ## Account (`/api/me/*`, `/api/auth/*`)
 

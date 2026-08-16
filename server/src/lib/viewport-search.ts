@@ -18,6 +18,32 @@ export interface ViewportBounds {
   north: number;
 }
 
+/** Inclusive bbox. Invalid / inverted boxes match nothing. */
+export function inBounds(
+  loc: { lng: number; lat: number } | undefined,
+  bounds: ViewportBounds | [number, number, number, number] | null | undefined,
+): boolean {
+  if (!loc || !bounds) return false;
+  const box = Array.isArray(bounds)
+    ? { west: bounds[0], south: bounds[1], east: bounds[2], north: bounds[3] }
+    : bounds;
+  if (box.west >= box.east || box.south >= box.north) return false;
+  return loc.lng >= box.west && loc.lng <= box.east && loc.lat >= box.south && loc.lat <= box.north;
+}
+
+export function parseBoundsParam(raw: string | null | undefined): ViewportBounds | null {
+  if (!raw) return null;
+  const parts = raw.split(',').map(Number);
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return null;
+  const [west, south, east, north] = parts;
+  if (west >= east || south >= north) return null;
+  return { west, south, east, north };
+}
+
+export function boundsCenter(bounds: ViewportBounds): LngLat {
+  return { lng: (bounds.west + bounds.east) / 2, lat: (bounds.south + bounds.north) / 2 };
+}
+
 /** 默认展示上限；「需要更多」可突破 */
 export const POI_SOFT_CAP = 300;
 /** 每次「需要更多」再扩这么多 */

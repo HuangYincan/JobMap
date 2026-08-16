@@ -9,9 +9,11 @@ import {
   buildSearchQueue,
   categoryMatches,
   isCommonPoi,
+  inBounds,
   mapScaleMetersPerCm,
   mergePoisById,
   MORE_PAGE_SIZE,
+  parseBoundsParam,
   POI_HARD_CAP,
   POI_SOFT_CAP,
   popularityScore,
@@ -134,4 +136,14 @@ test('popularityScore differs from rating so sorts can diverge', () => {
   assert.equal(byRating[0].id, 'a');
   assert.equal(byPop[0].id, 'b');
   assert.ok(popularityScore(midRateHighPop) > popularityScore(highRateLowPop));
+});
+
+test('parseBoundsParam and inBounds clip to the requested box', () => {
+  assert.equal(parseBoundsParam('bad'), null);
+  assert.equal(parseBoundsParam('121,30,120,31'), null);
+  const box = parseBoundsParam('120.0,30.2,120.2,30.3');
+  assert.ok(box);
+  assert.equal(inBounds({ lng: 120.1, lat: 30.25 }, box), true);
+  assert.equal(inBounds({ lng: 121, lat: 30.25 }, box), false);
+  assert.equal(inBounds({ lng: 120.1, lat: 30.25 }, [120, 30.2, 120.2, 30.3]), true);
 });
