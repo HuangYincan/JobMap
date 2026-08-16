@@ -123,10 +123,10 @@
 
 **3.2 招聘数据导入**
 - [x] 数据源选择（先 `seed` adapter；官方/Boss 后接）
-- [ ] 数据清洗脚本
-- [ ] 公司地理位置匹配（高德 POI）
-- [ ] 数据导入脚本
-- [ ] 数据验证和去重
+- [x] 数据清洗 / 验证（`lib/recruitment-import.ts`；坏行进 `issues` 不入库）
+- [ ] 公司地理位置匹配（高德 POI；seed 已带坐标）
+- [x] 导入计划脚本（`npm run import:seed` dry-run；live upsert 等 `DATABASE_URL`）
+- [x] 数据验证和去重（同 slug 合并职场/岗位）
 
 **3.3 实习模式 UI**
 - [x] 实习模式配置（work 的 FilterPlugin，不是新地图模式）
