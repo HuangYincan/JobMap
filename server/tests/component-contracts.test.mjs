@@ -59,9 +59,13 @@ test('map shell lazy-loads rail panels and detail chrome', () => {
 
 test('home page lazy-loads MapShell on the client', () => {
   const page = src('app/page.tsx');
-  assert.match(page, /next\/dynamic/);
-  assert.match(page, /ssr:\s*false/);
-  assert.match(page, /MapShell/);
+  const loader = src('components/home-map.tsx');
+  assert.match(page, /HomeMap/);
+  assert.doesNotMatch(page, /ssr:\s*false/);
+  assert.match(loader, /"use client"/);
+  assert.match(loader, /next\/dynamic/);
+  assert.match(loader, /ssr:\s*false/);
+  assert.match(loader, /MapShell/);
 });
 
 test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {

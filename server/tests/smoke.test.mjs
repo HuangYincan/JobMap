@@ -10,7 +10,7 @@ test("map shell vertical slice is present", () => {
   const shell = fs.readFileSync(path.join(root, "src/components/map-shell.tsx"), "utf8");
   const adapter = fs.readFileSync(path.join(root, "src/lib/map-adapter.ts"), "utf8");
 
-  assert.match(page, /MapShell/);
+  assert.match(page, /HomeMap/);
   // Three mobile drawer states must be present.
   assert.match(shell, /DrawerState = "mini" \| "half" \| "full"/);
   assert.match(shell, /drawerHalf|drawerFull|snapControls/);

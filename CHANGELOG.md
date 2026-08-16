@@ -14,7 +14,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Layers L2 frost card: saved overlay + persisted basemap style.
 - Public read API 30s process cache (`lib/public-cache.ts`).
 - Shared `lib/server-catalog.ts` for `/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`.
-- Home lazy-loads `MapShell` (`next/dynamic`, `ssr: false`). Rail panels (detail / JD / auth / Profile / Recent / Saved / Layers) are split the same way inside the shell; hover/focus on the rail prefetches the matching chunk. See `tech/12-bundle-notes.md`.
+- Home lazy-loads `MapShell` from a Client Component (`home-map.tsx` + `next/dynamic`, `ssr: false`). Next 15 rejects `ssr: false` on the Server Component `page.tsx`. Rail panels (detail / JD / auth / Profile / Recent / Saved / Layers) are split the same way inside the shell; hover/focus on the rail prefetches the matching chunk. See `tech/12-bundle-notes.md`.
 - Account SQL / index inventory: `tech/13-db-query-notes.md`.
 - Search/filter integration tests: `server/tests/search-integration.test.mjs`.
 - Recruitment import planner: validate / dedupe seed companies (`lib/recruitment-import.ts`, `npm run import:seed`). Live upsert still waits on Postgres.
