@@ -276,7 +276,7 @@
 - [x] 虚拟滚动优化（大量卡片：`content-visibility` + 固定 intrinsic size，不引入 virtuoso）
 - [x] 图片懒加载（卡片 logo / 详情轮播后续帧 `loading="lazy"`）
 - [x] API 响应缓存（`lib/public-cache.ts` 30s TTL；公开读接口带 `Cache-Control`；账号路由不进缓存。Redis 后只换 store）
-- [ ] 数据库查询优化
+- [x] 数据库查询优化（笔记：`tech/13-db-query-notes.md`；account 路径已按 user_id + created_at 建索引。Live EXPLAIN 仍等 Docker/PostGIS）
 - [x] Bundle 分析和优化（`tech/12-bundle-notes.md`：首页 dynamic 加载 MapShell；不引入 virtuoso / framer / zustand）
 
 **5.3 用户体验优化**
