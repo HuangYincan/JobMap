@@ -38,6 +38,15 @@ test('async catalog merges official-career drops when there is no DATABASE_URL',
   assert.ok(byte?.kind === 'recruitment' && byte.positions.some((p) => p.id === 'bytedance-campus-frontend-2026'));
   assert.ok(byte?.positions.some((p) => p.id === 'bytedance-algo'));
   assert.equal(await loadServerCatalogById('work', 'bytedance-hangzhou:bytedance-hangzhou-site'), undefined);
+  const tencent = await loadServerCatalogById('work', 'tencent-hangzhou');
+  assert.ok(tencent?.kind === 'recruitment' && tencent.positions.some((p) => p.id === 'tencent-campus-frontend-2026'));
+  assert.equal(await loadServerCatalogById('work', 'tencent-hangzhou:tencent-hangzhou-site'), undefined);
+  const netease = await loadServerCatalogById('work', 'netease-hangzhou');
+  assert.ok(netease?.kind === 'recruitment' && netease.positions.some((p) => p.id === 'netease-campus-frontend-2026'));
+  const huawei = await loadServerCatalogById('work', 'huawei-hangzhou');
+  assert.ok(huawei?.kind === 'recruitment' && huawei.positions.some((p) => p.id === 'huawei-campus-frontend-2026'));
+  const ant = await loadServerCatalogById('work', 'antgroup-hangzhou');
+  assert.ok(ant?.kind === 'recruitment' && ant.positions.some((p) => p.id === 'antgroup-campus-frontend-2026'));
   assert.ok(await loadServerCatalogById('work', 'zhejiang-lab'));
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');

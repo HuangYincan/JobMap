@@ -173,6 +173,24 @@ test('planSeedImport merges official-career drops onto seed slugs', async () => 
   assert.ok(bytedance);
   assert.ok(bytedance.positions.some((p) => p.externalId === 'bytedance-campus-frontend-2026'));
   assert.ok(bytedance.positions.some((p) => p.externalId === 'bytedance-algo'));
+
+  const tencent = plan.companies.find((c) => c.slug === 'tencent-hangzhou');
+  assert.ok(tencent);
+  assert.ok(tencent.positions.some((p) => p.externalId === 'tencent-campus-frontend-2026'));
+  assert.ok(tencent.positions.some((p) => p.externalId === 'tencent-backend'));
+  assert.equal(tencent.sites.filter((s) => s.id === 'tencent-hangzhou-site').length, 1);
+
+  const netease = plan.companies.find((c) => c.slug === 'netease-hangzhou');
+  assert.ok(netease);
+  assert.ok(netease.positions.some((p) => p.externalId === 'netease-campus-frontend-2026'));
+
+  const huawei = plan.companies.find((c) => c.slug === 'huawei-hangzhou');
+  assert.ok(huawei);
+  assert.ok(huawei.positions.some((p) => p.externalId === 'huawei-campus-frontend-2026'));
+
+  const ant = plan.companies.find((c) => c.slug === 'antgroup-hangzhou');
+  assert.ok(ant);
+  assert.ok(ant.positions.some((p) => p.externalId === 'antgroup-campus-frontend-2026'));
 });
 
 test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {

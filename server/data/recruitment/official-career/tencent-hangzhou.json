@@ -1,0 +1,34 @@
+{
+  "slug": "tencent-hangzhou",
+  "name": "腾讯",
+  "industries": ["internet", "game", "ai"],
+  "scale": "bigtech",
+  "careerUrl": "https://careers.tencent.com/",
+  "sites": [
+    {
+      "id": "tencent-hangzhou-site",
+      "name": "腾讯",
+      "location": {
+        "lng": 120.155,
+        "lat": 30.307,
+        "address": "滨江区网商路599号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "tencent-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "tencent-hangzhou-site",
+      "family": "campus",
+      "taxonomy": { "family": "campus", "campusSeason": "autumn" },
+      "department": "腾讯云",
+      "salary": { "min": 16, "max": 28 },
+      "education": "本科",
+      "skills": ["React", "TypeScript"],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.tencent.com/"
+    }
+  ]
+}

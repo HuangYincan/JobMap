@@ -1,6 +1,6 @@
 # Official-career drops
 
-Drop one JSON file per company (or an array of companies). `npm run import:seed` and the no-DB work catalog (`loadOfflineWorkCatalog`) merge these with `WORK_SEED` (same slug → sites/positions union; new slugs become catalog POIs). Samples: Alibaba / ByteDance 2026 autumn frontend on existing seed slugs, plus 之江实验室 as a new slug. Empty directory is a no-op. Same-slug `sites.id` must match the seed (`${slug}-site`) or the merge adds a second map pin.
+Drop one JSON file per company (or an array of companies). `npm run import:seed` and the no-DB work catalog (`loadOfflineWorkCatalog`) merge these with `WORK_SEED` (same slug → sites/positions union; new slugs become catalog POIs). Samples: Alibaba / ByteDance / Tencent / NetEase / Huawei / Ant 2026 autumn frontend on existing seed slugs, plus 之江实验室 as a new slug. Empty directory is a no-op. Same-slug `sites.id` must match the seed (`${slug}-site`) or the merge adds a second map pin.
 
 Shape matches `SourceCompany` in `lib/recruitment-source.ts`:
 
