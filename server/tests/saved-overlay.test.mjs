@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
-import { mergeMapPois, savedPlacesToOverlay } from '../src/lib/saved-overlay.ts';
+import { mergeMapPois, overlayBounds, savedPlacesToOverlay } from '../src/lib/saved-overlay.ts';
 
 test('savedPlacesToOverlay uses live recruitment when catalog hits', () => {
   const overlay = savedPlacesToOverlay(
@@ -85,4 +85,17 @@ test('mergeMapPois keeps search results first and only adds missing saved pins',
   assert.equal(merged[0].id, 'alibaba-xixi');
   assert.ok(merged.some((poi) => poi.id === 'extra'));
   assert.equal(mergeMapPois([alibaba], overlay, false).length, 1);
+});
+
+test('overlayBounds covers every saved pin', () => {
+  const bounds = overlayBounds([
+    { id: 'a', kind: 'domain', name: 'A', mode: 'domain', source: 'api', location: { lng: 120, lat: 30 }, category: '收藏' },
+    { id: 'b', kind: 'domain', name: 'B', mode: 'domain', source: 'api', location: { lng: 121, lat: 31 }, category: '收藏' },
+  ]);
+  assert.ok(bounds);
+  assert.equal(bounds.sw.lng, 120);
+  assert.equal(bounds.sw.lat, 30);
+  assert.equal(bounds.ne.lng, 121);
+  assert.equal(bounds.ne.lat, 31);
+  assert.equal(overlayBounds([]), null);
 });

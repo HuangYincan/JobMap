@@ -26,7 +26,7 @@ import { AuthModal } from "./auth-modal";
 import { ProfilePanel } from "./account-panel";
 import { RecentPanel } from "./recent-panel";
 import { SavedList, SavedPanel } from "./saved-panel";
-import { mergeMapPois, savedPlacesToOverlay } from "@/lib/saved-overlay";
+import { mergeMapPois, readSavedOverlayPref, savedPlacesToOverlay, writeSavedOverlayPref, overlayBounds } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
 
 type DrawerState = "mini" | "half" | "full";
@@ -121,6 +121,10 @@ export function MapShell() {
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
   const [inbox, setInbox] = useState<NotificationRecord[]>([]);
   const [savedOverlay, setSavedOverlay] = useState(true);
+
+  useEffect(() => {
+    setSavedOverlay(readSavedOverlayPref(true));
+  }, []);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileSheet, setMobileSheet] = useState<"explore" | "saved">("explore");
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
@@ -897,6 +901,30 @@ export function MapShell() {
     setHighlightedId(id);
   }, []);
 
+  const handleToggleSavedOverlay = useCallback(() => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    const next = !savedOverlay;
+    writeSavedOverlayPref(next);
+    setSavedOverlay(next);
+    if (!next) return;
+    const bounds = overlayBounds(overlayPois);
+    const map = mapInstance.current;
+    if (!bounds || !map || overlayPois.length === 0) return;
+    try {
+      const AMap = (window as unknown as { AMap?: { Bounds: new (sw: number[], ne: number[]) => unknown } }).AMap;
+      if (AMap?.Bounds) {
+        map.setBounds(new AMap.Bounds([bounds.sw.lng, bounds.sw.lat], [bounds.ne.lng, bounds.ne.lat]));
+        return;
+      }
+    } catch {
+      // fall through
+    }
+    map.setCenter?.([overlayPois[0].location.lng, overlayPois[0].location.lat]);
+  }, [user, savedOverlay, overlayPois]);
+
   // 模式切换：当前模式写入会话缓存；目标模式有缓存则还原，不重搜
   const handleModeChange = useCallback((nextMode: MapMode) => {
     if (nextMode === mode) return;
@@ -1265,13 +1293,7 @@ export function MapShell() {
             className={`${styles.navItem} ${savedOverlay ? styles.navItemActive : ""}`}
             data-tooltip={t("savedOverlay", lang)}
             aria-pressed={savedOverlay}
-            onClick={() => {
-              if (!user) {
-                setAuthOpen(true);
-                return;
-              }
-              setSavedOverlay((on) => !on);
-            }}
+            onClick={handleToggleSavedOverlay}
           >
             <Icon name="layers" />
             <span>{t("savedOverlay", lang)}</span>
@@ -1602,13 +1624,7 @@ export function MapShell() {
               <button
                 type="button"
                 className={`${styles.mobileFilterBtn} ${savedOverlay ? styles.mobileFilterBtnActive : ""}`}
-                onClick={() => {
-                  if (!user) {
-                    setAuthOpen(true);
-                    return;
-                  }
-                  setSavedOverlay((on) => !on);
-                }}
+                onClick={handleToggleSavedOverlay}
                 aria-pressed={savedOverlay}
               >
                 {t("savedOverlay", lang)}

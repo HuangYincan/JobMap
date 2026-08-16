@@ -48,3 +48,42 @@ export function mergeMapPois(results: POI[], overlay: POI[], enabled: boolean): 
   }
   return Array.from(byId.values());
 }
+
+export const SAVED_OVERLAY_KEY = 'domain-map:saved-overlay';
+
+export function readSavedOverlayPref(fallback = true): boolean {
+  if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') return fallback;
+  try {
+    const raw = window.sessionStorage.getItem(SAVED_OVERLAY_KEY);
+    if (raw === '0') return false;
+    if (raw === '1') return true;
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function writeSavedOverlayPref(on: boolean): void {
+  if (typeof window === 'undefined' || typeof window.sessionStorage === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(SAVED_OVERLAY_KEY, on ? '1' : '0');
+  } catch {
+    // quota / private mode
+  }
+}
+
+export function overlayBounds(pois: POI[]): { sw: { lng: number; lat: number }; ne: { lng: number; lat: number } } | null {
+  if (pois.length === 0) return null;
+  let minLng = Infinity;
+  let minLat = Infinity;
+  let maxLng = -Infinity;
+  let maxLat = -Infinity;
+  for (const poi of pois) {
+    minLng = Math.min(minLng, poi.location.lng);
+    minLat = Math.min(minLat, poi.location.lat);
+    maxLng = Math.max(maxLng, poi.location.lng);
+    maxLat = Math.max(maxLat, poi.location.lat);
+  }
+  if (!Number.isFinite(minLng)) return null;
+  return { sw: { lng: minLng, lat: minLat }, ne: { lng: maxLng, lat: maxLat } };
+}
