@@ -444,7 +444,7 @@
 ### 功能指标
 - [x] 支持 2 种模式（Domain + 工作）
 - [ ] Domain 模式 POI 数量 > 5000
-- [x] 实习模式公司数量 > 100 — **2026-08-17 数据**：导入计划 137 家（seed 50 + official-career 50 锚点 + radar 98 合并后去重）；离线地图展示 51 个有坐标 pin（radar-only 公司待 `npm run geocode:sites` 后上屏）
+- [x] 实习模式公司数量 > 100 — **2026-08-17 数据**：导入计划 137 家（seed 50 + official-career 51 + radar 98 合并后去重）；**地图只展示真实数据**（`radar-*`/`portal-*`，示例岗位下线）→ 当前 14 个有坐标 + 真实在招信号的 pin；86 家雷达-only 公司待 `npm run geocode:sites` 上屏
 - [ ] 搜索建议响应 < 300ms
 - [x] 筛选器支持 5+ 维度（jobTaxonomy / roleFamily / industry / scale / education / salary / district / deadline / onlyOpen / 住宿 / 班车）
 - [ ] 详情页加载 < 1s
