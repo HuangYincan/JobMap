@@ -140,6 +140,30 @@ export function ComponentName({ prop }: ComponentProps) {
 }
 ```
 
+### Scrollbar Styling Best Practices
+
+Apple-style scrollbars are implemented in `globals.css`. Key principles:
+
+**Track (the background rail):**
+- Should be **transparent** or extremely subtle
+- **Don't use `:hover` states on the track** — once triggered, they persist and create visual artifacts
+- Example bad pattern: `*:hover::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); }` causes the gray background to stick
+
+**Thumb (the draggable handle):**
+- This is the main interactive element
+- Recommended size: 12-16px width with 2-3px transparent border
+- `background-clip: padding-box` creates the inset look
+- **Do** provide hover feedback on the thumb: slightly darker/more opaque
+- Example: `background: rgba(0,0,0,0.22)` → `rgba(0,0,0,0.35)` on hover
+
+**Why this matters:**
+- CSS `:hover` pseudo-class doesn't automatically clear when mouse leaves
+- Adding hover state to the track creates a "sticky" background that only goes away on page refresh
+- Focus the hover feedback on the thumb for clean, predictable behavior
+
+**Reference implementation:**
+See `server/src/app/globals.css` lines 76-126 for the full scrollbar setup.
+
 ## Animation Standards
 
 Follow Apple design principles:
@@ -269,6 +293,27 @@ const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
   ssr: false,  // Client-only if needed
 });
 ```
+
+### CSS Performance Optimization Gotchas
+
+**⚠️ content-visibility pitfalls:**
+
+`content-visibility: auto` is a Chrome optimization that skips rendering off-screen content. However:
+
+- **Only use for uniform-height lists**: If list items have variable heights, the browser's estimated height (`contain-intrinsic-size`) will be wrong
+- **Symptom of misuse**: Scrollbar jumps/bounces during scroll because the container's total height keeps changing
+- **Example failure**: POI cards with 1-5 photos have heights from 120px to 300px. Using `contain-intrinsic-size: 148px` caused scrollbar position calculation errors
+- **Solution**: Remove `content-visibility` for variable-height content, or use a proper virtual scrolling library (react-window) instead
+
+**When NOT to use content-visibility:**
+- Cards/items with dynamic content (photos, job lists, descriptions)
+- Lists where item height depends on data
+- Grids with variable aspect ratios
+
+**When it's safe:**
+- Fixed-height skeleton loaders
+- Uniform table rows
+- Icon grids with consistent sizing
 
 ## Constants Over Magic Numbers
 
@@ -441,7 +486,41 @@ if (width < MOBILE_BREAKPOINT) { /* ... */ }
 - TypeScript: https://www.typescriptlang.org/docs
 - CSS Modules: https://github.com/css-modules/css-modules
 - WCAG Guidelines: https://www.w3.org/WAI/WCAG21/quickref/
+- Bug Fixes Log: `tech/16-bug-fixes.md` — documented CSS pitfalls and solutions
 
 ## Questions?
 
 Check existing components first (`map-shell.tsx`), then refer to architecture docs in `tech/`.
+
+## Bug Fix Protocol
+
+When fixing bugs:
+
+1. **Document the fix** in `tech/16-bug-fixes.md`:
+   - Clear symptom description
+   - Root cause analysis
+   - Solution with code references
+   - Files modified and line numbers
+   - Testing verification steps
+
+2. **Update this skill** if the fix reveals a general pattern:
+   - Add to "Common Pitfalls" section
+   - Update relevant best practices
+   - Include code examples
+
+3. **Update tests** to prevent regression:
+   - Modify test assertions to match new implementation
+   - Add new test cases for the bug scenario
+   - Verify all tests pass
+
+4. **Verify in browser**:
+   - Test the specific bug scenario
+   - Check related functionality
+   - Test in both light and dark modes
+   - Test responsive breakpoints if relevant
+
+5. **Run full verification**:
+   ```bash
+   npm test              # Unit tests
+   npm run build         # TypeScript compilation
+   ```

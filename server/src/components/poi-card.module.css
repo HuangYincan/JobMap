@@ -1,9 +1,9 @@
 /* POI 卡片 — Apple Maps 液态玻璃风格 */
 
 .card {
-  --card-bg: rgba(255, 255, 255, 0.34);
-  --card-bg-hover: rgba(255, 255, 255, 0.16);
-  --card-border: rgba(255, 255, 255, 0.55);
+  --card-bg: rgba(255, 255, 255, 0.48);
+  --card-bg-hover: rgba(255, 255, 255, 0.28);
+  --card-border: rgba(255, 255, 255, 0.68);
   --accent: var(--blue-ink, #0062cc);
   --accent-soft: rgba(0, 98, 204, 0.1);
 
@@ -16,13 +16,12 @@
   border: 1px solid var(--card-border);
   border-radius: 16px;
   background: var(--card-bg);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.82) inset,
-    0 -0.5px 0 rgba(24, 45, 57, 0.06) inset,
-    0 8px 20px rgba(24, 45, 57, 0.12),
-    0 1.5px 4px rgba(24, 45, 57, 0.06);
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 8px 20px rgba(24, 45, 57, 0.1),
+    0 1.5px 4px rgba(24, 45, 57, 0.05);
   color: var(--ink);
   text-align: left;
   cursor: pointer;
@@ -42,8 +41,8 @@
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.08) 28%, transparent 62%);
-  opacity: 0.7;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.05) 30%, transparent 65%);
+  opacity: 0.6;
   transition: opacity 0.28s cubic-bezier(0.32, 0.72, 0, 1);
   z-index: 0;
 }
@@ -56,20 +55,19 @@
 .card:hover,
 .card.highlighted {
   background: var(--card-bg-hover);
-  border-color: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(40px) saturate(220%);
-  -webkit-backdrop-filter: blur(40px) saturate(220%);
+  border-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.92) inset,
-    0 -0.5px 0 rgba(24, 45, 57, 0.05) inset,
-    0 14px 28px rgba(24, 45, 57, 0.16),
-    0 3px 8px rgba(24, 45, 57, 0.07);
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 14px 28px rgba(24, 45, 57, 0.14),
+    0 3px 8px rgba(24, 45, 57, 0.06);
   transform: translateY(-2px);
 }
 
 .card:hover::before,
 .card.highlighted::before {
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 .card:active {
@@ -340,24 +338,24 @@
 
 @media (prefers-color-scheme: dark) {
   .card {
-    --card-bg: rgba(28, 28, 30, 0.42);
-    --card-bg-hover: rgba(28, 28, 30, 0.28);
-    --card-border: rgba(255, 255, 255, 0.06);
+    --card-bg: rgba(28, 28, 30, 0.52);
+    --card-bg-hover: rgba(28, 28, 30, 0.38);
+    --card-border: rgba(255, 255, 255, 0.08);
     box-shadow:
-      0 0 0 0.5px rgba(255, 255, 255, 0.05) inset,
-      0 8px 22px rgba(0, 0, 0, 0.28);
+      0 0 0 0.5px rgba(255, 255, 255, 0.06) inset,
+      0 8px 22px rgba(0, 0, 0, 0.24);
   }
 
   .card::before {
-    background: radial-gradient(120% 90% at 18% 0%, rgba(255, 255, 255, 0.06), transparent 58%);
+    background: radial-gradient(120% 90% at 20% 0%, rgba(255, 255, 255, 0.05), transparent 60%);
   }
 
   .card:hover,
   .card.highlighted {
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
     box-shadow:
-      0 0 0 0.5px rgba(255, 255, 255, 0.07) inset,
-      0 12px 28px rgba(0, 0, 0, 0.34);
+      0 0 0 0.5px rgba(255, 255, 255, 0.08) inset,
+      0 12px 28px rgba(0, 0, 0, 0.3);
   }
 
   .logo {

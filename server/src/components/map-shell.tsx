@@ -448,6 +448,7 @@ export function MapShell() {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         darkModeQuery.removeEventListener('change', handleThemeChange);
+        window.removeEventListener('resize', handleResize);
       };
 
       setMapStyle(initialStyle);
@@ -468,14 +469,29 @@ export function MapShell() {
 
       // Add AMap's built-in scale control (real, auto-updating)
       // 移动端放左上角（避开底部抽屉），桌面端放左下角
+      let scaleControl: any = null;
       window.AMap.plugin(['AMap.Scale'], () => {
         const isMobile = window.innerWidth <= 767;
-        const scale = new window.AMap.Scale({
+        scaleControl = new window.AMap.Scale({
           position: isMobile ? 'LT' : 'LB', // 移动端左上角，桌面端左下角
           offset: isMobile ? [12, 22] : [90, 25], // 移动端避开顶部工具栏，桌面端避开侧边栏
         });
-        map.addControl(scale);
+        map.addControl(scaleControl);
       });
+
+      // 监听窗口大小变化，在桌面/移动端切换时更新比例尺位置
+      const handleResize = () => {
+        if (!scaleControl) return;
+        const isMobile = window.innerWidth <= 767;
+        // 移除旧控件并创建新位置的控件
+        map.removeControl(scaleControl);
+        scaleControl = new window.AMap.Scale({
+          position: isMobile ? 'LT' : 'LB',
+          offset: isMobile ? [12, 22] : [90, 25],
+        });
+        map.addControl(scaleControl);
+      };
+      window.addEventListener('resize', handleResize);
 
       // Sync zoom state
       map.on("zoomchange", () => {
@@ -1424,9 +1440,6 @@ export function MapShell() {
               }
             }}
           />
-        </div>
-        <div className={styles.modeSwitcherWrapper}>
-          <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} />
         </div>
         <nav className={styles.navList}>
           <button

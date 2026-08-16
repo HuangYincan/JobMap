@@ -394,7 +394,7 @@
 .sidebar:not(.sidebarOpen) .railDivider {
   display: block;
   height: 1px;
-  margin: 8px 8px 4px;
+  margin: 8px 0 4px;
   background: var(--line);
   border: 0;
   opacity: 0.9;
@@ -556,7 +556,7 @@
 .avatar {
   align-items: center;
   background: linear-gradient(135deg, #5ac8fa, #007aff);
-  border: 2px solid rgba(255, 255, 255, 0.85);
+  border: 0.5px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
   color: white;
   display: inline-flex;
@@ -571,7 +571,7 @@
 
 .avatarGuest {
   background: rgba(120, 134, 145, 0.28);
-  border-color: rgba(255, 255, 255, 0.45);
+  border-color: rgba(255, 255, 255, 0.25);
   color: var(--muted);
 }
 
@@ -1041,11 +1041,23 @@
     width: 100%;
   }
 
+  .drawerHalf .drawerHandle,
+  .drawerFull .drawerHandle {
+    height: 44px;
+    margin-top: 6px;
+  }
+
   .drawerHandle span {
     background: rgba(115, 130, 133, 0.42);
     border-radius: 99px;
     height: 4px;
     width: 42px;
+  }
+
+  .drawerHalf .drawerHandle span,
+  .drawerFull .drawerHandle span {
+    height: 6px;
+    width: 64px;
   }
 
   .mobileSearch {
@@ -1067,12 +1079,6 @@
     z-index: 8;
     flex: 0 0 auto;
     overflow: visible;
-  }
-
-  .drawerHalf .mobileSearchStack {
-    max-height: calc(42svh - 100px);
-    overflow: auto;
-    overflow-x: hidden;
   }
 
   .mobileSearchRow {
@@ -1267,6 +1273,14 @@
 
   .drawerHalf .mobileSuggestions {
     max-height: min(18svh, 160px);
+  }
+
+  .drawerHalf .mobileSuggestions li {
+    display: none;
+  }
+
+  .drawerHalf .mobileSuggestions li:nth-child(-n+3) {
+    display: block;
   }
 
   .drawerMini .mobileSuggestions {

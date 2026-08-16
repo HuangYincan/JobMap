@@ -29,8 +29,8 @@ test('POIList exposes a labelled list, skeleton, and empty widen action', () => 
   assert.match(list, /aria-busy=\{loading\}/);
   assert.match(list, /SKELETON_COUNT = 3/);
   assert.match(list, /onWidenSearch/);
-  assert.match(css, /content-visibility:\s*auto/);
-  assert.match(css, /contain-intrinsic-size:\s*auto 148px/);
+  assert.match(css, /\.cardSlot/);
+  assert.match(css, /card-enter/);
 });
 
 test('FilterPanel select is a labelled listbox', () => {
