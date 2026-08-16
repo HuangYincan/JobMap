@@ -203,6 +203,46 @@ export const translations = {
     zh: '评价',
     en: 'reviews',
   },
+  reviewSection: {
+    zh: '用户评价',
+    en: 'Reviews',
+  },
+  noReviews: {
+    zh: '暂无详细评价',
+    en: 'No written reviews yet',
+  },
+  commute: {
+    zh: '交通方式',
+    en: 'Getting there',
+  },
+  commuteEstimate: {
+    zh: '按直线距离估算',
+    en: 'Estimate from straight-line distance',
+  },
+  commuteWalk: {
+    zh: '步行',
+    en: 'Walk',
+  },
+  commuteBike: {
+    zh: '骑行',
+    en: 'Bike',
+  },
+  commuteTransit: {
+    zh: '公交',
+    en: 'Transit',
+  },
+  commuteDrive: {
+    zh: '驾车',
+    en: 'Drive',
+  },
+  commuteMinutes: {
+    zh: '分钟',
+    en: 'min',
+  },
+  openDirections: {
+    zh: '打开路线',
+    en: 'Open route',
+  },
   companySummary: {
     zh: '公司简介',
     en: 'About',

@@ -10,6 +10,7 @@ import {
   type Position,
   type RecruitmentPOI,
 } from "@/lib/types";
+import { estimateCommuteOptions, amapDirectionsUrl, type CommuteMode } from "@/lib/commute";
 import { t, type Language } from "@/lib/i18n";
 import styles from "./poi-detail.module.css";
 
@@ -105,6 +106,17 @@ function DomainDetail({ poi, lang }: { poi: Extract<POI, { kind: "domain" }>; la
       <InfoRow label={t("address", lang)} value={poi.location.address} />
       <InfoRow label={t("phone", lang)} value={poi.tel} />
       <InfoRow label={t("hours", lang)} value={poi.openHours} />
+      <ReviewSection
+        rating={poi.rating}
+        reviewCount={poi.reviewCount}
+        reviews={poi.reviews}
+        lang={lang}
+      />
+      <CommuteSection
+        meters={poi.distance}
+        destination={{ lng: poi.location.lng, lat: poi.location.lat, name: poi.name }}
+        lang={lang}
+      />
     </>
   );
 }
@@ -211,6 +223,91 @@ function RecruitmentDetail({
         </section>
       )}
     </>
+  );
+}
+
+function ReviewSection({
+  rating,
+  reviewCount,
+  reviews,
+  lang,
+}: {
+  rating?: number;
+  reviewCount?: number;
+  reviews?: { id: string; author: string; rating?: number; excerpt: string }[];
+  lang: Language;
+}) {
+  if (!rating && !reviewCount && !reviews?.length) return null;
+  return (
+    <section className={styles.section}>
+      <h3 className={styles.sectionTitle}>{t("reviewSection", lang)}</h3>
+      {(typeof rating === "number" || typeof reviewCount === "number") && (
+        <p className={styles.prose}>
+          {typeof rating === "number" ? `★ ${rating.toFixed(1)}` : ""}
+          {typeof rating === "number" && typeof reviewCount === "number" ? " · " : ""}
+          {typeof reviewCount === "number" ? `${reviewCount} ${t("reviews", lang)}` : ""}
+        </p>
+      )}
+      {reviews && reviews.length > 0 ? (
+        <ul className={styles.reviews}>
+          {reviews.map((review) => (
+            <li key={review.id} className={styles.review}>
+              <div className={styles.reviewHead}>
+                <strong>{review.author}</strong>
+                {typeof review.rating === "number" && (
+                  <span className={styles.rating}>★ {review.rating.toFixed(1)}</span>
+                )}
+              </div>
+              <p className={styles.reviewBody}>{review.excerpt}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className={styles.muted}>{t("noReviews", lang)}</p>
+      )}
+    </section>
+  );
+}
+
+function CommuteSection({
+  meters,
+  destination,
+  lang,
+}: {
+  meters?: number;
+  destination: { lng: number; lat: number; name?: string };
+  lang: Language;
+}) {
+  const options = estimateCommuteOptions(meters);
+  if (!options.length) return null;
+  const labels: Record<CommuteMode, "commuteWalk" | "commuteBike" | "commuteTransit" | "commuteDrive"> = {
+    walk: "commuteWalk",
+    bike: "commuteBike",
+    transit: "commuteTransit",
+    drive: "commuteDrive",
+  };
+  return (
+    <section className={styles.section}>
+      <h3 className={styles.sectionTitle}>{t("commute", lang)}</h3>
+      <p className={styles.muted}>{t("commuteEstimate", lang)}</p>
+      <ul className={styles.commuteList}>
+        {options.map((option) => (
+          <li key={option.mode}>
+            <a
+              className={styles.commute}
+              href={amapDirectionsUrl(destination, option.mode)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <strong>{t(labels[option.mode], lang)}</strong>
+              <span>
+                {option.minutes} {t("commuteMinutes", lang)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

@@ -82,6 +82,16 @@ export interface DomainPOI extends BasePOI {
   photos?: string[];
   /** 评论数 */
   reviewCount?: number;
+  /** 用户评价（高德详情有则用，没有就不编造） */
+  reviews?: PlaceReview[];
+}
+
+export interface PlaceReview {
+  id: string;
+  author: string;
+  rating?: number;
+  excerpt: string;
+  postedAt?: string;
 }
 
 /** 公司办公点。一家公司多个职场，一个岗位只挂一个 site。 */

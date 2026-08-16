@@ -7,7 +7,7 @@
 // - 返回规范化 DomainPOI
 // ============================================================
 
-import type { DomainPOI, POILocation } from './types.ts';
+import type { DomainPOI, PlaceReview, POILocation } from './types.ts';
 import {
   AMAP_DEFAULT_RADIUS,
   AMAP_NEARBY_MAX_RADIUS,
@@ -134,7 +134,15 @@ interface AMapPOIRecord {
   open_time?: string;
   business_area?: string;
   comment?: string | number;
-  reviews?: string | number;
+  reviews?: string | number | Array<{
+    id?: string;
+    username?: string;
+    author?: string;
+    rating?: string | number;
+    content?: string;
+    comment?: string;
+    time?: string;
+  }>;
   biz_ext?: { rating?: string; cost?: string; comment?: string | number };
 }
 
@@ -176,9 +184,12 @@ export function normalizeAMapPOI(raw: AMapPOIRecord): DomainPOI | null {
 
   const ratingRaw = raw.rating || raw.biz_ext?.rating;
   const cost = raw.cost ? parseFloat(raw.cost) : raw.biz_ext?.cost ? parseFloat(raw.biz_ext.cost) : undefined;
-  const reviewRaw = raw.comment ?? raw.reviews ?? raw.biz_ext?.comment;
+  const reviewRaw = Array.isArray(raw.reviews)
+    ? raw.reviews.length
+    : raw.comment ?? (typeof raw.reviews === 'number' || typeof raw.reviews === 'string' ? raw.reviews : undefined) ?? raw.biz_ext?.comment;
   const reviewCount =
     reviewRaw !== undefined && reviewRaw !== '' ? Number.parseInt(String(reviewRaw), 10) : undefined;
+  const reviews = parseAMapReviews(raw);
 
   // photos 可能缺失、为数组、或意外类型；仅接受数组
   const photoUrls = Array.isArray(raw.photos)
@@ -203,8 +214,28 @@ export function normalizeAMapPOI(raw: AMapPOIRecord): DomainPOI | null {
     openHours: raw.open_time || undefined,
     tel: raw.tel || undefined,
     photos: photoUrls,
-    reviewCount: Number.isFinite(reviewCount) && (reviewCount as number) > 0 ? reviewCount : undefined,
+    reviewCount: Number.isFinite(reviewCount) && (reviewCount as number) > 0 ? reviewCount : reviews?.length,
+    reviews,
   };
+}
+
+function parseAMapReviews(raw: AMapPOIRecord): PlaceReview[] | undefined {
+  if (!Array.isArray(raw.reviews)) return undefined;
+  const items = raw.reviews
+    .map((item, index): PlaceReview | null => {
+      const excerpt = String(item.content || item.comment || '').trim();
+      if (!excerpt) return null;
+      const rating = item.rating === undefined || item.rating === '' ? undefined : Number(item.rating);
+      return {
+        id: item.id || `${raw.id || raw.name}-review-${index}`,
+        author: item.username || item.author || '用户',
+        rating: Number.isFinite(rating) ? rating : undefined,
+        excerpt,
+        postedAt: item.time,
+      };
+    })
+    .filter((item): item is PlaceReview => item !== null);
+  return items.length ? items.slice(0, 5) : undefined;
 }
 
 /** 等待插件就绪（插件通过 URL plugin 参数随脚本预加载，此处只需轮询确认） */
