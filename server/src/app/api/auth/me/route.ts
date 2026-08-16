@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { clearSessionCookie, readSessionUser } from '@/lib/http-session';
-import { updateUser } from '@/lib/session-store';
+import { updateUser } from '@/lib/account-store';
 import type { Language } from '@/lib/i18n';
 import { canonicalMode } from '@/lib/modes';
 import type { MapMode } from '@/lib/types';
@@ -36,7 +36,7 @@ export async function PATCH(request: Request) {
       }
     : undefined;
 
-  const next = updateUser(user.id, {
+  const next = await updateUser(user.id, {
     displayName: body.displayName,
     avatarUrl: body.avatarUrl,
     preferences,

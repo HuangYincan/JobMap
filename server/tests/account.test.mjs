@@ -3,6 +3,11 @@ import assert from 'node:assert/strict';
 
 import { DEFAULT_PREFERENCES, initialsFromName, resolvePreferences } from '../src/lib/account.ts';
 import {
+  addHistory as storeAddHistory,
+  listHistory as storeListHistory,
+  upsertIdentity as storeUpsert,
+} from '../src/lib/account-store.ts';
+import {
   addHistory,
   consumeOtp,
   createSession,
@@ -73,6 +78,14 @@ test('resolveCompanyLogo prefers site career icon over company fallback', () => 
   const emoji = resolveCompanyLogo({ fallbackEmoji: '🛰️' });
   assert.equal(emoji.source, 'emoji');
   assert.equal(emoji.emoji, '🛰️');
+});
+
+test('account-store without DATABASE_URL stays in memory', async () => {
+  delete process.env.DATABASE_URL;
+  const user = await storeUpsert({ provider: 'email', subject: 'mem@example.com', email: 'mem@example.com' });
+  assert.ok(user.id);
+  assert.ok(await storeAddHistory(user.id, '西溪', 'work'));
+  assert.equal((await storeListHistory(user.id))[0].query, '西溪');
 });
 
 test('sourceCompanyToPois splits one company into one POI per office site', () => {

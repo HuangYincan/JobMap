@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { issueOtp } from '@/lib/session-store';
+import { issueOtp } from '@/lib/account-store';
 
 /**
  * Demo: does not send SMS. Always issues code 000000 in memory.
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid email' }, { status: 400 });
   }
 
-  const { expiresAt } = issueOtp(provider, target);
+  const { expiresAt } = await issueOtp(provider, target);
   return NextResponse.json({
     ok: true,
     provider,

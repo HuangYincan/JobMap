@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { SESSION_COOKIE, type AccountUser } from './account.ts';
-import { destroySession, getSessionUser } from './session-store.ts';
+import { destroySession, getSessionUser } from './account-store.ts';
 
 export async function readSessionToken(): Promise<string | null> {
   const jar = await cookies();
@@ -24,7 +24,7 @@ export async function writeSessionCookie(token: string, expiresAt: number): Prom
 
 export async function clearSessionCookie(): Promise<void> {
   const token = await readSessionToken();
-  destroySession(token);
+  await destroySession(token);
   const jar = await cookies();
   jar.delete(SESSION_COOKIE);
 }

@@ -42,17 +42,18 @@ DATABASE_URL=postgresql://user:password@localhost:5432/domain_map
 DATABASE_LOG_QUERIES=false
 ```
 
-### Authentication (TBD)
+### Authentication (demo + optional Postgres)
 ```bash
-# Authentication provider (decision pending)
-# Examples: NextAuth, Auth0, Clerk
-AUTH_PROVIDER=nextauth
+# Optional. When set, identities / sessions / OTP / search_history
+# write to the 005 tables. When unset, APIs stay in process memory.
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/domain_map
 
-# Provider-specific credentials (example)
-AUTH_SECRET=your_random_secret_here
-AUTH_CLIENT_ID=your_client_id
-AUTH_CLIENT_SECRET=your_client_secret
+# Signs the demo session token. Do not commit the real value.
+SESSION_SECRET=replace-me
 ```
+
+Phone OTP is demo-only (`000000`). Keep `POST /api/auth/otp/send` as the
+Aliyun SMS hook; do not log codes or secrets.
 
 ### API Configuration
 ```bash

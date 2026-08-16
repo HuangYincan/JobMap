@@ -195,6 +195,7 @@
 - [x] Recent 二级卡只列搜索；登录后 POST/GET `/api/me/search-history`
 - [x] 默认 mode = work
 - [x] Logo resolver（职场招聘页 icon > 公司保底 > emoji）
+- [x] `account-store`：有 `DATABASE_URL` 时 sessions / history 上云，否则内存回落
 
 **相关 SKILL:** `.claude/skills/frontend-component-dev/skill.md`
 
