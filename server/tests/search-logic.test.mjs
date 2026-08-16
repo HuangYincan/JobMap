@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {
   applyFilters,
   matchKeyword,
+  parseSearchQuery,
   poiMatchesQuery,
   runPOIPipeline,
   sortPOIs,
@@ -182,6 +183,30 @@ test('applyFilters: jobTaxonomy plugin keeps companies with matching positions',
 
   const social = applyFilters(INTERNSHIP_SEED, { jobTaxonomy: ['social/1-3'] });
   assert.ok(social.some((p) => p.id === 'huawei-hangzhou'));
+});
+
+test('parseSearchQuery turns #tags into filter plugins', () => {
+  const parsed = parseSearchQuery('Java #大厂 #互联网');
+  assert.equal(parsed.text, 'Java');
+  assert.deepEqual(parsed.filters.scale, ['bigtech']);
+  assert.deepEqual(parsed.filters.industry, ['internet']);
+
+  const campus = parseSearchQuery('#秋招');
+  assert.equal(campus.text, '');
+  assert.deepEqual(campus.filters.jobTaxonomy, ['campus/autumn']);
+
+  const unknown = parseSearchQuery('#西湖');
+  assert.equal(unknown.text, '西湖');
+});
+
+test('runPOIPipeline: #大厂 keeps bigtech and still matches leftover keywords', () => {
+  const tagged = runPOIPipeline(INTERNSHIP_SEED, { query: '#大厂' });
+  assert.ok(tagged.length > 0);
+  assert.ok(tagged.every((p) => p.kind === 'recruitment' && p.company.scale === 'bigtech'));
+
+  const javaBig = runPOIPipeline(INTERNSHIP_SEED, { query: 'Java #大厂' });
+  assert.ok(javaBig.some((p) => p.id === 'alibaba-xixi'));
+  assert.ok(javaBig.every((p) => p.kind === 'recruitment' && p.company.scale === 'bigtech'));
 });
 
 test('applyFilters: minRating keeps only highly rated domain POIs', () => {

@@ -30,6 +30,90 @@ const INDUSTRY_LABELS: Record<string, string> = {
   content: '内容 内容平台',
 };
 
+/** 搜索框里的 #标签 → 筛选键。 intern/campus/social 走 taxonomy 插件。 */
+const TAG_FILTERS: Record<string, { key: string; value: string }> = {
+  大厂: { key: 'scale', value: 'bigtech' },
+  独角兽: { key: 'scale', value: 'unicorn' },
+  创业: { key: 'scale', value: 'startup' },
+  创业公司: { key: 'scale', value: 'startup' },
+  大型企业: { key: 'scale', value: 'enterprise' },
+  互联网: { key: 'industry', value: 'internet' },
+  金融: { key: 'industry', value: 'finance' },
+  咨询: { key: 'industry', value: 'consulting' },
+  硬件: { key: 'industry', value: 'hardware' },
+  人工智能: { key: 'industry', value: 'ai' },
+  ai: { key: 'industry', value: 'ai' },
+  电商: { key: 'industry', value: 'ecommerce' },
+  游戏: { key: 'industry', value: 'game' },
+  汽车: { key: 'industry', value: 'automotive' },
+  实习: { key: 'jobTaxonomy', value: 'intern' },
+  校招: { key: 'jobTaxonomy', value: 'campus' },
+  社招: { key: 'jobTaxonomy', value: 'social' },
+  暑期实习: { key: 'jobTaxonomy', value: 'intern/summer' },
+  日常实习: { key: 'jobTaxonomy', value: 'intern/daily' },
+  秋招: { key: 'jobTaxonomy', value: 'campus/autumn' },
+  春招: { key: 'jobTaxonomy', value: 'campus/spring' },
+};
+
+export interface ParsedSearchQuery {
+  text: string;
+  tags: string[];
+  filters: FilterState;
+}
+
+/** 拆出 #标签，剩余当关键词。未知标签仍参与全文搜索。 */
+export function parseSearchQuery(raw?: string): ParsedSearchQuery {
+  const source = (raw ?? '').trim();
+  if (!source) return { text: '', tags: [], filters: {} };
+
+  const tags: string[] = [];
+  const filters: FilterState = {};
+  const leftover: string[] = [];
+
+  for (const token of source.split(/\s+/).filter(Boolean)) {
+    if (!token.startsWith('#') || token.length < 2) {
+      leftover.push(token);
+      continue;
+    }
+    const tag = token.slice(1);
+    tags.push(tag);
+    const mapped = TAG_FILTERS[tag.toLowerCase()] ?? TAG_FILTERS[tag];
+    if (!mapped) {
+      leftover.push(tag);
+      continue;
+    }
+    if (mapped.key === 'jobTaxonomy' || mapped.key === 'industry' || mapped.key === 'scale') {
+      const prev = filters[mapped.key];
+      const next = Array.isArray(prev) ? prev.filter((item): item is string => typeof item === 'string') : [];
+      if (!next.includes(mapped.value)) next.push(mapped.value);
+      filters[mapped.key] = next;
+    } else {
+      filters[mapped.key] = mapped.value;
+    }
+  }
+
+  return { text: leftover.join(' '), tags, filters };
+}
+
+function mergeFilters(base: FilterState | undefined, extra: FilterState): FilterState {
+  const next: FilterState = { ...(base ?? {}) };
+  for (const [key, value] of Object.entries(extra)) {
+    if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
+      const prev = next[key];
+      const merged = Array.isArray(prev)
+        ? prev.filter((item): item is string => typeof item === 'string')
+        : [];
+      for (const item of value) {
+        if (!merged.includes(item)) merged.push(item);
+      }
+      next[key] = merged;
+    } else {
+      next[key] = value;
+    }
+  }
+  return next;
+}
+
 /** 判断文本是否包含关键词（大小写不敏感，支持多关键词 AND） */
 export function matchKeyword(text: string, query: string): boolean {
   const t = text.toLowerCase();
@@ -301,21 +385,23 @@ export interface QueryPipeline {
 /** 完整管线：搜索 → 筛选 → 距离计算 → 排序 */
 export function runPOIPipeline(pois: POI[], pipe: QueryPipeline): POI[] {
   let result: POI[] = pois;
+  const parsed = parseSearchQuery(pipe.query);
 
-  // 1. 关键词
-  if (pipe.query) {
-    result = result.filter((poi) => poiMatchesQuery(poi, pipe.query!));
+  // 1. 关键词（去掉已识别的 #标签）
+  if (parsed.text) {
+    result = result.filter((poi) => poiMatchesQuery(poi, parsed.text));
   }
 
-  // 2. 筛选（距离滑块要等算出 distance 后再裁）
-  const filters = pipe.filters ? { ...pipe.filters } : undefined;
+  // 2. 筛选（距离滑块要等算出 distance 后再裁；#标签并入筛选）
+  const filters = mergeFilters(pipe.filters, parsed.filters);
+  const workingFilters = Object.keys(filters).length ? { ...filters } : undefined;
   const distanceKm =
-    filters && typeof filters.distance === 'number' ? filters.distance : undefined;
-  if (filters && 'distance' in filters) {
-    delete filters.distance;
+    workingFilters && typeof workingFilters.distance === 'number' ? workingFilters.distance : undefined;
+  if (workingFilters && 'distance' in workingFilters) {
+    delete workingFilters.distance;
   }
-  if (filters) {
-    result = applyFilters(result, filters);
+  if (workingFilters && Object.keys(workingFilters).length) {
+    result = applyFilters(result, workingFilters);
   }
 
   // 3. 距离计算（附加 distance 字段）
