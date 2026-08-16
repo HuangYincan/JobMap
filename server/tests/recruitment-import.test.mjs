@@ -34,6 +34,15 @@ test('validateSourceCompany accepts an address-only site (pending geocode)', () 
   assert.deepEqual(validateSourceCompany(company), []);
 });
 
+test('validateSourceCompany flags a non-ISO deadline before the DB apply', () => {
+  const company = sample();
+  company.positions[0].deadline = '招满即止';
+  const issues = validateSourceCompany(company);
+  assert.ok(issues.some((row) => row.field === 'positions.deadline'));
+  company.positions[0].deadline = '2026-10-15';
+  assert.deepEqual(validateSourceCompany(company), []);
+});
+
 test('radar adapter reads the mapped drop directory', async () => {
   const companies = await radarAdapter().list();
   assert.ok(companies.length >= 90, `expected >= 90 radar companies, got ${companies.length}`);

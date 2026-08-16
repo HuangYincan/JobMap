@@ -81,6 +81,8 @@ function validatePosition(pos: SourcePosition, siteIds: Set<string>): string[] {
   if (!FAMILIES.has(pos.family)) bad.push('positions.family');
   if (!STATUSES.has(pos.status)) bad.push('positions.status');
   if (!pos.siteId || !siteIds.has(pos.siteId)) bad.push('positions.siteId');
+  // positions.deadline is a date column; non-ISO deadlines crash the apply.
+  if (pos.deadline && normalizeDeadline(pos.deadline) === null) bad.push('positions.deadline');
   return bad;
 }
 
