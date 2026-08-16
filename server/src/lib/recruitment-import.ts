@@ -10,6 +10,7 @@ import { officialCareerAdapter } from './recruitment-adapters/official-career.ts
 import { radarAdapter } from './recruitment-adapters/radar.ts';
 import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
 import { shixisengAdapter } from './recruitment-adapters/shixiseng.ts';
+import { isAuthenticPositionId } from './freshness.ts';
 
 export interface ImportIssue {
   slug: string;
@@ -188,14 +189,20 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
   if (plan.companies.length === 0) {
     return { wrote: false, reason: 'empty-plan', companies: 0, sites: 0, positions: 0 };
   }
+  // Product rule (2026-08-17): only authentic positions (radar-* / portal-*) are
+  // imported/kept open — example jobs stay closed even if a drop re-offers them.
+  const authentic = plan.companies.map((company) => ({
+    ...company,
+    positions: company.positions.filter((pos) => isAuthenticPositionId(pos.externalId)),
+  }));
   const pool = getPool();
   if (!pool) {
     return {
       wrote: false,
       reason: 'no-database',
-      companies: plan.companies.length,
-      sites: plan.companies.reduce((n, c) => n + c.sites.length, 0),
-      positions: plan.companies.reduce((n, c) => n + c.positions.length, 0),
+      companies: authentic.length,
+      sites: authentic.reduce((n, c) => n + c.sites.length, 0),
+      positions: authentic.reduce((n, c) => n + c.positions.length, 0),
     };
   }
 
@@ -218,7 +225,7 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
     );
     const sourceId = source.rows[0].id;
 
-    for (const company of plan.companies) {
+    for (const company of authentic) {
       const upserted = await client.query<{ id: string }>(
         `INSERT INTO companies (slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)

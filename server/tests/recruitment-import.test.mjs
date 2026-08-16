@@ -46,6 +46,17 @@ test('validateSourceCompany flags a non-ISO deadline before the DB apply', () =>
   assert.deepEqual(validateSourceCompany(company), []);
 });
 
+test('applyRecruitmentImport only counts authentic positions (no re-opening example jobs)', async () => {
+  const plan = await planSeedImport();
+  const result = await applyRecruitmentImport(plan);
+  assert.equal(result.wrote, false);
+  assert.equal(result.reason, 'no-database');
+  assert.ok(result.positions > 0);
+  // Plan contains 241 positions; apply must count only radar-*/portal-*.
+  const planPositions = plan.companies.reduce((n, c) => n + c.positions.length, 0);
+  assert.ok(planPositions > result.positions, 'example jobs are filtered out at apply time');
+});
+
 test('radar adapter reads the mapped drop directory', async () => {
   const companies = await radarAdapter().list();
   assert.ok(companies.length >= 90, `expected >= 90 radar companies, got ${companies.length}`);
