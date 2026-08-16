@@ -6,7 +6,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { serverCatalogById } from '@/lib/server-catalog';
+import { loadServerCatalogById } from '@/lib/server-catalog';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
@@ -24,7 +24,7 @@ export async function GET(
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  const poi = serverCatalogById(mode, id);
+  const poi = await loadServerCatalogById(mode, id);
   if (!poi) {
     return NextResponse.json(
       { code: 'NOT_FOUND', message: `POI ${id} not found` },

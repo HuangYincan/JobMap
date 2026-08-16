@@ -19,6 +19,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Search/filter integration tests: `server/tests/search-integration.test.mjs`.
 - Recruitment import planner: validate / dedupe seed companies (`lib/recruitment-import.ts`, `npm run import:seed`). Live upsert still waits on Postgres.
 - Work seed expanded to 50 Hangzhou public-career companies (still representative examples, not a live crawl).
+- Public work APIs (`/api/pois`, `/api/pois/:id`, `/api/search`, `/api/suggest`) read imported Postgres rows via `loadServerCatalog` when present; otherwise the seed.
 
 ### Changed
 

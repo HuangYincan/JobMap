@@ -8,7 +8,8 @@ Live PostGIS / Docker 仍不可用。本页记录**已经写进迁移的索引**
 
 | 路径 | 何时打 Postgres | 不打 |
 |---|---|---|
-| MapShell 列表 / 搜索 / 筛选 | 从不。浏览器高德 + `runPOIPipeline` | 公开读 `/api/pois` `/api/search` 也是 seed + 30s 进程缓存 |
+| MapShell 列表 / 搜索 / 筛选 | 从不。浏览器高德 + `runPOIPipeline` | 公开读走 `loadServerCatalog`（有导入行读库，否则 seed）+ 30s 进程缓存 |
+| `loadWorkCatalogFromDb` | 有 `DATABASE_URL` 且 `companies` 有行 | 无池 / 查询失败 → `null`（调用方回落 seed）；空表 → `[]` |
 | `/api/me/*`、登录、Recent、Saved、投递、提醒 | 有 `DATABASE_URL` 时走 `account-store` | 没有库 → 内存 Map |
 
 连接：`lib/db.ts` 单例 `Pool({ max: 5 })`。不要打印连接串。
@@ -33,7 +34,7 @@ Live PostGIS / Docker 仍不可用。本页记录**已经写进迁移的索引**
 
 `ON CONFLICT` 写 Saved / 投递 / 提醒，靠表上的 UNIQUE，不要另开去重查询。
 
-## 招聘表（还没有运行时 SELECT）
+## 招聘表（公开读已能 SELECT；视野查询仍等 PostGIS）
 
 `006_recruitment_sites.sql` 给导入和以后的 PostGIS 读路径预留：
 
@@ -42,7 +43,7 @@ Live PostGIS / Docker 仍不可用。本页记录**已经写进迁移的索引**
 - `positions_title_trgm` / `entities_name_trgm` / `items_title_trgm` — `pg_trgm` GIN
 - `positions_company_id_idx` / `positions_site_id_idx` / `company_sites_company_id_idx`
 
-导入 adapter 落地后，工作模式列表应是：
+`loadWorkCatalogFromDb` 现在读全量开岗（无 bbox）：`companies` + `company_sites` + `positions WHERE status = 'open'`。单站点 POI id = `companies.slug`（对齐 WORK_SEED）；多站点 = `slug:site.id`。视野查询落地后应是：
 
 ```sql
 SELECT c.*, s.*, p.*
@@ -58,7 +59,7 @@ WHERE p.status = 'open'
 
 ## 刻意不做
 
-- **列表不进库。** Domain 累计池在浏览器 `sessionStorage`；工作模式先 seed。把 `/api/pois` 换成 SQL 是导入完成之后的事，不是现在把高德结果写进 `entities`。
+- **Domain 列表不进库。** 累计池在浏览器 `sessionStorage`；不要把高德结果写进 `entities`。工作模式公开读已可走导入行。
 - **不为 JSON 偏好建 GIN。** `users.preferences` 按 `id` 整行读写。
 - **不在应用里拼未绑定 SQL。** 全部 `$1` 参数。
 - **不引入 ORM。** 等 ADR。

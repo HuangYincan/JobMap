@@ -43,7 +43,7 @@ Develop Next.js 15 + React 19 components following Domain Map's architecture pri
    - Check `src/lib/` for utilities (i18n, constants)
   - Review CSS approach (CSS Modules + custom properties)
   - Home `page.tsx` lazy-loads `MapShell` with `next/dynamic` + `ssr: false`. Do not synchronously import the map shell on the server. Do not add react-virtuoso / framer-motion / zustand / Tailwind — inventory is `tech/12-bundle-notes.md`.
-  - Public read APIs (`/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`) share `lib/server-catalog.ts`. Domain list/detail on the server is `DOMAIN_SEED` (browser still uses AMap). Empty-q suggest hot list is `trendingForMode`, not a second hardcoded array. Recent stays on `/api/me/search-history`.
+  - Public read APIs (`/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`) share `loadServerCatalog`. Work prefers imported Postgres rows (`loadWorkCatalogFromDb`) and falls back to `INTERNSHIP_SEED`. Domain list/detail on the server is `DOMAIN_SEED` (browser still uses AMap). Empty-q suggest hot list is `trendingForMode`, not a second hardcoded array. Recent stays on `/api/me/search-history`.
 
 ## Component Structure
 

@@ -40,9 +40,9 @@
 
 **1.3 API 路由**
 - [x] `GET /api/modes` - 获取可用模式
-- [x] `GET /api/pois` - POI 列表（支持模式参数；`serverCatalog`）
-- [x] `GET /api/pois/:id` - POI 详情（work + domain seed）
-- [x] `POST /api/search` - 搜索 API
+- [x] `GET /api/pois` - POI 列表（`loadServerCatalog`：导入行优先，否则 seed）
+- [x] `GET /api/pois/:id` - POI 详情（`loadServerCatalogById`）
+- [x] `POST /api/search` - 搜索 API（同一 catalog）
 
 **1.4 认证集成（可选）**
 - [x] 认证提供商：自研 demo OTP + OAuth stub（**不**引入 NextAuth / Clerk，等 ADR）
@@ -126,6 +126,7 @@
 - [x] 数据清洗 / 验证（`lib/recruitment-import.ts`；坏行进 `issues` 不入库）
 - [ ] 公司地理位置匹配（高德 POI；seed 已带坐标）
 - [x] 导入计划脚本（`npm run import:seed` dry-run；`import:seed:apply` 有库才写入 `006` 表）
+- [x] 公开读走导入行（`loadWorkCatalogFromDb` → `loadServerCatalog`；无库回落 seed）
 - [x] 数据验证和去重（同 slug 合并职场/岗位）
 
 **3.3 实习模式 UI**

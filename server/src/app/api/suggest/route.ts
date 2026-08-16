@@ -6,14 +6,14 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { DOMAIN_SEED, INTERNSHIP_SEED } from '@/lib/seed-data';
 import { matchKeyword } from '@/lib/search';
+import { loadServerCatalog } from '@/lib/server-catalog';
 import { isRecruitmentMode } from '@/lib/types';
-import type { MapMode } from '@/lib/types';
+import type { MapMode, RecruitmentPOI } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 import { trendingForMode } from '@/lib/trending-search';
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get('q') || '').trim().toLowerCase();
   const mode = (url.searchParams.get('mode') || 'work') as MapMode;
@@ -23,10 +23,12 @@ export function GET(request: Request) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
+  const catalog = await loadServerCatalog(mode);
   const suggestions = [];
 
   if (q && isRecruitmentMode(mode)) {
-    for (const poi of INTERNSHIP_SEED) {
+    const work = catalog.filter((poi): poi is RecruitmentPOI => poi.kind === 'recruitment');
+    for (const poi of work) {
       // 公司名匹配
       if (matchKeyword(poi.company.name, q)) {
         suggestions.push({
@@ -65,13 +67,14 @@ export function GET(request: Request) {
           type: 'tag',
           id: `tag-${ind.code}`,
           title: `#${ind.label}`,
-          subtitle: `${INTERNSHIP_SEED.filter((p) => p.company.industries.includes(ind.code)).length} 个公司`,
+          subtitle: `${work.filter((p) => p.company.industries.includes(ind.code)).length} 个公司`,
           icon: '🏷️',
         });
       }
     }
   } else if (q && mode === 'domain') {
-    for (const poi of DOMAIN_SEED) {
+    for (const poi of catalog) {
+      if (poi.kind !== 'domain') continue;
       if (matchKeyword(poi.name, q) || matchKeyword(poi.category, q) || matchKeyword(poi.subcategory || '', q)) {
         suggestions.push({
           type: 'poi',

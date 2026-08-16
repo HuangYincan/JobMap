@@ -12,7 +12,7 @@
 
 import { NextResponse } from 'next/server';
 import { runPOIPipeline } from '@/lib/search';
-import { serverCatalog } from '@/lib/server-catalog';
+import { loadServerCatalog } from '@/lib/server-catalog';
 import { withDistance } from '@/lib/types';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
@@ -38,7 +38,7 @@ function parseBounds(raw: string | null): [number, number, number, number] | nul
   return [minLng, minLat, maxLng, maxLat];
 }
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const url = new URL(request.url);
   const mode = (url.searchParams.get('mode') || 'work') as MapMode;
   const q = url.searchParams.get('q') || undefined;
@@ -53,7 +53,7 @@ export function GET(request: Request) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  const pois = serverCatalog(mode);
+  const pois = await loadServerCatalog(mode);
   if (pois.length === 0) {
     const empty = { total: 0, page, pageSize, results: [] };
     writePublicCache(cacheKey, empty);

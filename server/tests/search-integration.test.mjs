@@ -58,7 +58,7 @@ test('POST /api/search contract: invalid JSON 400, work seed + cache + pipeline'
   const route = src('app/api/search/route.ts');
   assert.match(route, /status: 400/);
   assert.match(route, /invalid JSON body/);
-  assert.match(route, /serverCatalog/);
+  assert.match(route, /loadServerCatalog/);
   assert.match(route, /runPOIPipeline/);
   assert.match(route, /writePublicCache/);
   assert.match(route, /aggregations: \{ industries \}/);
@@ -67,7 +67,7 @@ test('POST /api/search contract: invalid JSON 400, work seed + cache + pipeline'
 
 test('GET /api/pois contract: shared server catalog + pipeline', () => {
   const route = src('app/api/pois/route.ts');
-  assert.match(route, /serverCatalog/);
+  assert.match(route, /loadServerCatalog/);
   assert.match(route, /runPOIPipeline/);
   assert.match(route, /parseFilters/);
   assert.ok(serverCatalog('work').length > 0);
@@ -91,7 +91,7 @@ test('GET /api/filter-options contract: unknown mode 400, work has taxonomy + di
 test('GET /api/suggest contract: work matches company/job/tag; empty q uses trendingForMode', () => {
   const route = src('app/api/suggest/route.ts');
   assert.match(route, /trendingForMode/);
-  assert.match(route, /DOMAIN_SEED/);
+  assert.match(route, /loadServerCatalog/);
   assert.match(route, /type: 'poi'/);
   assert.match(route, /type: 'position'/);
   assert.match(route, /type: 'tag'/);
@@ -145,7 +145,7 @@ test('search flow: domain seed matches 西湖; college stays empty', () => {
 
 test('GET /api/pois/[id] contract: shared catalog, 404 when missing', () => {
   const route = src('app/api/pois/[id]/route.ts');
-  assert.match(route, /serverCatalogById/);
+  assert.match(route, /loadServerCatalogById/);
   assert.match(route, /status: 404/);
   assert.equal(serverCatalogById('domain', 'hz-westlake')?.name, '西湖');
   assert.ok(serverCatalogById('work', 'alibaba-xixi'));
