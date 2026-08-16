@@ -61,6 +61,13 @@ export interface ParsedSearchQuery {
   filters: FilterState;
 }
 
+/** 距离筛选滑块（km）→ 米。未设或 ≤0 表示不画圈、不裁。 */
+export function distanceFilterMeters(filters?: FilterState): number {
+  const value = filters?.distance;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 0;
+  return Math.round(value * 1000);
+}
+
 /** 拆出 #标签，剩余当关键词。未知标签仍参与全文搜索。 */
 export function parseSearchQuery(raw?: string): ParsedSearchQuery {
   const source = (raw ?? '').trim();

@@ -8,7 +8,7 @@ import { getMode } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { runPOIPipeline, suggestRecruitment } from "@/lib/search";
+import { distanceFilterMeters, runPOIPipeline, suggestRecruitment } from "@/lib/search";
 import { trendingForMode } from "@/lib/trending-search";
 import { isRecruitmentMode } from "@/lib/types";
 import { MORE_PAGE_SIZE, type ViewportBounds } from "@/lib/viewport-search";
@@ -53,6 +53,7 @@ export function MapShell() {
   const markersRef = useRef<any[]>([]);
   const userMarkerRef = useRef<any>(null);
   const accuracyCircleRef = useRef<any>(null);
+  const distanceCircleRef = useRef<any>(null);
   const satelliteLayerRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pendingSearchFocus = useRef(false);
@@ -383,6 +384,10 @@ export function MapShell() {
       markersRef.current = [];
       userMarkerRef.current = null;
       accuracyCircleRef.current = null;
+      if (distanceCircleRef.current) {
+        distanceCircleRef.current.setMap?.(null);
+        distanceCircleRef.current = null;
+      }
     };
   }, []);
 
@@ -486,6 +491,41 @@ export function MapShell() {
   }, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin, userLocation]);
 
   const distanceOrigin = userLocation ?? mapCenter;
+  const distanceRadius = distanceFilterMeters(filters);
+
+  useEffect(() => {
+    const map = mapInstance.current;
+    const AMap = typeof window !== "undefined" ? window.AMap : undefined;
+    if (!map || !AMap?.Circle) return;
+
+    if (distanceRadius <= 0) {
+      if (distanceCircleRef.current) {
+        distanceCircleRef.current.setMap(null);
+        distanceCircleRef.current = null;
+      }
+      return;
+    }
+
+    if (!distanceCircleRef.current) {
+      distanceCircleRef.current = new AMap.Circle({
+        center: [distanceOrigin.lng, distanceOrigin.lat],
+        radius: distanceRadius,
+        strokeColor: "#007AFF",
+        strokeOpacity: 0.85,
+        strokeWeight: 2,
+        fillColor: "#007AFF",
+        fillOpacity: 0.08,
+        bubble: true,
+        zIndex: 20,
+      });
+      map.add(distanceCircleRef.current);
+    } else {
+      distanceCircleRef.current.setCenter([distanceOrigin.lng, distanceOrigin.lat]);
+      distanceCircleRef.current.setRadius(distanceRadius);
+      if (!distanceCircleRef.current.getMap()) map.add(distanceCircleRef.current);
+    }
+  }, [distanceOrigin, distanceRadius, mapReady]);
+
   const pois = useMemo(
     () =>
       runPOIPipeline(catalog, {

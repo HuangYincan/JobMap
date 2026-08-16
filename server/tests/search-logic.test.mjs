@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 
 import {
   applyFilters,
+  distanceFilterMeters,
   matchKeyword,
   parseSearchQuery,
   poiMatchesQuery,
@@ -208,6 +209,13 @@ test('runPOIPipeline: #大厂 keeps bigtech and still matches leftover keywords'
   const javaBig = runPOIPipeline(INTERNSHIP_SEED, { query: 'Java #大厂' });
   assert.ok(javaBig.some((p) => p.id === 'alibaba-xixi'));
   assert.ok(javaBig.every((p) => p.kind === 'recruitment' && p.company.scale === 'bigtech'));
+});
+
+test('distanceFilterMeters converts the km slider to meters', () => {
+  assert.equal(distanceFilterMeters(undefined), 0);
+  assert.equal(distanceFilterMeters({}), 0);
+  assert.equal(distanceFilterMeters({ distance: 0 }), 0);
+  assert.equal(distanceFilterMeters({ distance: 3 }), 3000);
 });
 
 test('trendingForMode is a plugin per map mode', () => {
