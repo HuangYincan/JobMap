@@ -88,6 +88,8 @@ test('verdictLevel: fail dominates, aggregate is warn, warn dims warn', () => {
   assert.equal(verdictLevel({ ...PASS_VERDICT, companyCityMatch: 'fail' }), 'fail');
   assert.equal(verdictLevel({ ...PASS_VERDICT, applyDomainMatch: 'fail' }), 'fail');
   assert.equal(verdictLevel({ ...PASS_VERDICT, isAggregateRow: true, suggestedSplit: ['算法工程师'] }), 'warn');
+  // 聚合标题天然 titleReal=false:聚合行优先 warn,不落 fail(2026-08-17 实测 86% 误 fail 修复)
+  assert.equal(verdictLevel({ ...PASS_VERDICT, titleReal: false, isAggregateRow: true, suggestedSplit: ['算法工程师'] }), 'warn');
   assert.equal(verdictLevel({ ...PASS_VERDICT, companyPositionMatch: 'warn' }), 'warn');
 });
 

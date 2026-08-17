@@ -180,15 +180,17 @@ export function parseLlmVerdict(content: string): LlmVerdict | null {
 }
 
 /**
- * Collapse a verdict to a single report level. Any fail wins; aggregate rows
- * are warn (real but needs splitting); warn dims are warn; else pass.
+ * Collapse a verdict to a single report level. Aggregate rows win as warn
+ * (real data that needs splitting — their titles are catalogs, so titleReal
+ * is expected to be false); other dims: any fail wins; warn dims are warn;
+ * else pass.
  */
 export function verdictLevel(v: LlmVerdict): ItemLevel {
+  if (v.isAggregateRow) return 'warn';
   if (v.titleReal === false) return 'fail';
   for (const key of DIMENSION_KEYS) {
     if (v[key] === 'fail') return 'fail';
   }
-  if (v.isAggregateRow) return 'warn';
   for (const key of DIMENSION_KEYS) {
     if (v[key] === 'warn') return 'warn';
   }
@@ -209,7 +211,7 @@ export function buildValidationPrompt(
   const system = [
     '你是「地图找工作」平台的数据质量核查员。你会收到一家公司的一条岗位信息,请判断真实性。',
     '判定口径:',
-    '- titleReal:标题是否为真实岗位标题(如「前端开发工程师」);虚构、口语化占位、或「欢迎加入」类门户入口算 false。',
+    '- titleReal:标题是否为真实岗位标题(如「前端开发工程师」);虚构、口语化占位、或「欢迎加入」类门户入口算 false。**若标题是聚合行(isAggregateRow 判定为 true),titleReal 一律返回 true**——聚合行是真实招聘信息,只是需要拆解,用 isAggregateRow 标注即可。',
     '- isAggregateRow:是否把多个岗位合到一条(如「技术、设计、数据、运营、产品等七大类」、招聘方向罗列多个方向);是则给出拆解建议。',
     '- companyPositionMatch:岗位标题/部门/技能与该公司行业是否相符(pass/warn/fail)。',
     '- companyCityMatch:公司是否真的可能在该城市/地址有办公点(pass/warn/fail);不确定给 warn 不要乱 fail。',
