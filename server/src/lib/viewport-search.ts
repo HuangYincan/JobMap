@@ -67,8 +67,6 @@ export const DOMAIN_POI_HARD_CAP = 1000;
 export const DOMAIN_BATCH_SIZE = 50;
 /** 杭州外回退高德:每次滚动仅 1 次 PlaceSearch(25 条) */
 export const AMAP_FALLBACK_INITIAL_CALLS = 1;
-/** 杭州外回退高德:每轮「加载更多」至多 4 次(≈100 条,去重) */
-export const AMAP_FALLBACK_MORE_CALLS = 4;
 /** 杭州 GCJ-02 数据范围框(含桐庐/建德/淳安等远郊),见 hz-poi-import.ts */
 export const HANGZHOU_BBOX = { west: 118.3, south: 29.1, east: 120.8, north: 30.7 };
 

@@ -101,7 +101,7 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
       ? options.filters.category
       : undefined;
 
-  // 杭州外 → 高德省调用回退:默认 1 次(25 条),加载更多每轮 +4 次(≈100 条)
+  // 杭州外 → 高德省调用回退:每次滚动 1 次 PlaceSearch(25 条),窗口耗尽即停
   try {
     const pois = await searchViewportPOIsFallback({
       center,

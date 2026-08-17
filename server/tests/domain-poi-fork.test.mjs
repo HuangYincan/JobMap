@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 
 import {
   AMAP_FALLBACK_INITIAL_CALLS,
-  AMAP_FALLBACK_MORE_CALLS,
   DOMAIN_BATCH_SIZE,
   DOMAIN_POI_HARD_CAP,
   fallbackTaskWindow,
@@ -15,7 +14,6 @@ test('常量:1000 上限 / 50 本地批 / 25 高德批', () => {
   assert.equal(DOMAIN_POI_HARD_CAP, 1000);
   assert.equal(DOMAIN_BATCH_SIZE, 50);
   assert.equal(AMAP_FALLBACK_INITIAL_CALLS, 1);
-  assert.equal(AMAP_FALLBACK_MORE_CALLS, 4);
 });
 
 test('inHangzhouBox: 框内/框外', () => {

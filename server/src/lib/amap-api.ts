@@ -10,7 +10,6 @@
 import type { DomainPOI, PlaceReview, POILocation } from './types.ts';
 import {
   AMAP_DEFAULT_RADIUS,
-  AMAP_FALLBACK_MORE_CALLS,
   AMAP_NEARBY_MAX_RADIUS,
   AMAP_PAGE_SIZE,
   AMAP_QPS,
