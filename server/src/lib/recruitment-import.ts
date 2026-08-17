@@ -66,7 +66,7 @@ export function validateSourceCompany(company: SourceCompany): ImportIssue[] {
   if (company.scale && !SCALES.has(company.scale)) {
     issues.push(issue(slug, 'scale', `unknown ${company.scale}`));
   }
-  if (company.tier !== undefined && ![1, 2, 3].includes(company.tier)) {
+  if (company.tier !== undefined && !(Number.isInteger(company.tier) && company.tier >= 0 && company.tier <= 21)) {
     issues.push(issue(slug, 'tier', `unknown ${company.tier}`));
   }
   if (!company.sites.length) issues.push(issue(slug, 'sites', 'need at least one site'));
@@ -253,8 +253,8 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
 
     for (const company of authentic) {
       const upserted = await client.query<{ id: string }>(
-        `INSERT INTO companies (slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `INSERT INTO companies (slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier, category)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          ON CONFLICT (slug) DO UPDATE SET
            name = EXCLUDED.name,
            industries = EXCLUDED.industries,
@@ -265,6 +265,7 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
            logo_url = EXCLUDED.logo_url,
            logo_emoji = EXCLUDED.logo_emoji,
            tier = EXCLUDED.tier,
+           category = EXCLUDED.category,
            updated_at = now()
          RETURNING id::text`,
         [
@@ -277,7 +278,8 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
           company.careerUrl ?? null,
           company.logoUrl ?? null,
           company.logoEmoji ?? null,
-          company.tier ?? 3,
+          company.tier ?? 12,
+          company.category ?? 'other',
         ],
       );
       const companyId = upserted.rows[0].id;

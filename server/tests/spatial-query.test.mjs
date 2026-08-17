@@ -94,11 +94,13 @@ test('hasSpatialClip counts city / maxTier / alive as clips', () => {
   assert.equal(hasSpatialClip({}), false);
 });
 
-test('parseMaxTier accepts 1-3 integers and rejects garbage', () => {
+test('parseMaxTier accepts 0-20 integers and rejects garbage', () => {
+  assert.equal(parseMaxTier(0), 0); // 0=只显示 tier 0(一直可见的国际化名企)
   assert.equal(parseMaxTier(1), 1);
   assert.equal(parseMaxTier('2'), 2);
-  assert.equal(parseMaxTier(3.7), 3);
-  assert.equal(parseMaxTier(0), null);
+  assert.equal(parseMaxTier(13.7), 13);
+  assert.equal(parseMaxTier(20), 20);
+  assert.equal(parseMaxTier(21), null); // 21 超可见范围 → 不过滤
   assert.equal(parseMaxTier(-1), null);
   assert.equal(parseMaxTier('abc'), null);
   assert.equal(parseMaxTier(undefined), null);

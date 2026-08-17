@@ -289,7 +289,8 @@ def map_radar_job(
     return {
         "slug": slug,
         "name": normalized,
-        "tier": 3,
+        "tier": 12,
+        "category": "other",
         "industries": [industry],
         "scale": "enterprise",
         "careerUrl": url,

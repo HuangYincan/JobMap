@@ -175,8 +175,10 @@ export interface RecruitmentPOI extends BasePOI {
     summary?: string;
     /** 公司招聘门户（岗位未单独给链接时回退） */
     careerUrl?: string;
-    /** 层级 1=名企 2=大厂 3=中厂/其他（LOD 按缩放过滤，缺省 3） */
+    /** 可见最小 zoom：0..21，zoom >= tier 时显示；0=永显，21=永隐，缺省 12（tech/19） */
     tier?: number;
+    /** 企业类型：国标 GB/T 4754-2017 大类 code（如 64=互联网，39=电子；'other'=未标） */
+    category?: string;
   };
   /** 办公点（可选；未填时位置用 POI.location） */
   sites?: CompanySite[];

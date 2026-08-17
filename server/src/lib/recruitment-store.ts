@@ -13,6 +13,7 @@ interface CompanyRow {
   industries: string[];
   scale: RecruitmentPOI['company']['scale'] | null;
   tier: number | string | null;
+  category: string | null;
   rating: string | number | null;
   summary: string | null;
   career_url: string | null;
@@ -101,9 +102,9 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
     const maxTier = parseMaxTier(clip?.maxTier);
     const tierClause = maxTier !== null ? ' AND tier <= $2' : '';
     const companySql = clipped
-      ? `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier
+      ? `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier, category
          FROM companies WHERE id = ANY($1::bigint[])${tierClause} ORDER BY slug`
-      : `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier
+      : `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier, category
          FROM companies ORDER BY slug`;
     // A1 (tech/18)：只读在招 —— status='open' 且 deadline 为空或 >= 今天。
     const positionSql = clipped
@@ -160,7 +161,8 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
             name: company.name,
             industries: company.industries ?? [],
             scale: company.scale ?? 'startup',
-            tier: num(company.tier) ?? 3,
+            tier: num(company.tier) ?? 12,
+            category: company.category ?? 'other',
             rating: num(company.rating),
             logo: company.logo_emoji ?? undefined,
             logoUrl: company.logo_url ?? undefined,

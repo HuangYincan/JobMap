@@ -44,26 +44,3 @@ export function summarizeFreshness(positions: Array<{ id?: string }>): Freshness
 }
 
 /** 服务端本地当天（YYYY-MM-DD），与 DB 的 CURRENT_DATE 对齐。 */
-export function todayDateString(now: Date = new Date()): string {
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-/**
- * A1（tech/18）：只在招 —— status='open' 且 deadline 为空或 >= 今天。
- * 无 deadline / 无法解析的 deadline 视为未设截止（保留）。
- * DB 读路径在 SQL 里恒开同一条规则；这里是内存路径（离线 catalog + 筛选）。
- */
-export function isAlivePosition(
-  pos: { status?: string; deadline?: string } | null | undefined,
-  now: Date = new Date(),
-): boolean {
-  if (!pos) return false;
-  if (pos.status !== 'open') return false;
-  if (!pos.deadline) return true;
-  const stamp = Date.parse(pos.deadline);
-  if (!Number.isFinite(stamp)) return true;
-  return stamp >= Date.parse(todayDateString(now));
-}

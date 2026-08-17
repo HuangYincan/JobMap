@@ -11,7 +11,7 @@ import { isRecruitmentPOI } from './types.ts';
 import { getMode } from './modes.ts';
 import { positionMatchesRole, positionMatchesTaxonomySelection, selectedRoleFamilies, selectedTaxonomyPaths } from './job-taxonomy.ts';
 import { HANGZHOU_DISTRICTS, poiMatchesDistrict } from './spatial-filters.ts';
-import { isAlivePosition } from './freshness.ts';
+import { isAlivePosition } from './position-alive.ts';
 import { categoryMatches, popularityScore } from './viewport-search.ts';
 
 // ---- 关键词匹配 ----
@@ -601,11 +601,12 @@ export function matchFilter(poi: POI, key: string, value: any): boolean {
       return poiMatchesDistrict(poi, sel);
     }
     case 'maxTier': {
-      // LOD：公司层级（1=名企 2=大厂 3=中厂/其他）<= maxTier 才展示。
+      // LOD：公司 tier = 可见最小 zoom，tier <= maxTier(当前 zoom) 才展示（tech/19）。
+      // 0..20 合法（0=只显示 tier 0 的公司）；越界视为不过滤。
       if (!isRecruitmentPOI(poi)) return true;
       const maxTier = Number(value);
-      if (!Number.isFinite(maxTier) || maxTier < 1) return true;
-      return (poi.company.tier ?? 3) <= Math.floor(maxTier);
+      if (value === '' || !Number.isFinite(maxTier) || maxTier < 0 || maxTier > 20) return true;
+      return (poi.company.tier ?? 12) <= Math.floor(maxTier);
     }
     case 'city': {
       // 城市名/行政区划码。SQL 是超集（city_code 精确 + city ILIKE）；内存走文本包含。

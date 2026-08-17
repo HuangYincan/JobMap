@@ -1,44 +1,29 @@
 // ============================================================
-// LOD — 工作模式缩放层级 → 公司档位过滤(tech/18 §2.2)
+// LOD — 工作模式缩放层级 → 公司档位过滤(tech/18 §2.2,tech/19)
 //
-// zoom 越大越靠近街区:只展示名企(tier<=1),避免街道被小店淹没;
-// zoom 越小(缩到全国):密度优先,展示全部档位(tier<=3)。
-// 阈值做成可配置常量,便于日后按数据规模调整。
+// 模型(2026-08-17 修订):公司 tier = 「可见最小 zoom」。
+//   zoom >= tier 时该公司显示,即过滤条件 `tier <= zoom`。
+//   tier 0  = 一直可见(国际化名企,如字节跳动);
+//   tier 21 = 永不显示(zoom 最大 20,作为隐藏标记);
+//   缺省 12 = 未打标公司按小厂可见性处理。
+// 缩放级别连续变化时公司逐步涌现/消退,无档位跳变。
 //
-// 客户端只把 maxTier 随 bounds 一起传给 /api/pois(filters.maxTier);
-// 服务端(WS1)merge 前该字段被忽略,前端按现有数据工作。
+// 客户端把当前 zoom 取整作为 filters.maxTier 传给 /api/pois;
+// 服务端 SQL 下推 `tier <= maxTier`(WS1 已实现,索引 companies_tier_idx)。
 // ============================================================
 
-/** 单个档位规则:zoom >= minZoom 时,允许 tier <= maxTier 的公司 */
-export interface LodRule {
-  /** 该档位的最低缩放级别(含) */
-  minZoom: number;
-  /** 允许的最大公司档位:1=名企 2=大厂 3=中厂/其他 */
-  maxTier: number;
-}
-
-/** 街道级(放大到街区):只名企 */
-export const LOD_STREET_MIN_ZOOM = 14;
-/** 城市级(中比例):中厂 + 大厂 */
-export const LOD_CITY_MIN_ZOOM = 9;
+/** zoom 上限:AMap JSAPI v2.0 最大缩放级别 */
+export const MAX_ZOOM = 20;
+/** 永不显示的档位(> MAX_ZOOM,等价隐藏标记) */
+export const TIER_HIDDEN = 21;
+/** 未打标公司缺省档位(小厂可见性,城市细视野出现) */
+export const TIER_DEFAULT = 12;
 
 /**
- * 档位规则表,按 minZoom 升序排列。重叠时取「最靠近街区」的一条
- * (minZoom 最大、maxTier 最小的规则),所以遍历时后匹配者覆盖前者。
- * 调整这些常量即可改变 LOD 行为。
+ * 当前缩放级别 → 允许的最大公司档位。
+ * 恒等映射:`tier <= floor(zoom)`。非法 zoom 回退最大可见(全部)。
  */
-export const LOD_RULES: readonly LodRule[] = [
-  { minZoom: 0, maxTier: 3 },                   // 全国:全部
-  { minZoom: LOD_CITY_MIN_ZOOM, maxTier: 2 },   // 中比例:中厂 + 大厂
-  { minZoom: LOD_STREET_MIN_ZOOM, maxTier: 1 }, // 街区:只名企
-];
-
-/** 缩放级别 → 允许的最大公司档位。非法 zoom 回退全量(tier=3)。 */
 export function maxTierForZoom(zoom: number): number {
-  if (!Number.isFinite(zoom)) return 3;
-  let tier = LOD_RULES[0].maxTier;
-  for (const rule of LOD_RULES) {
-    if (zoom >= rule.minZoom) tier = rule.maxTier;
-  }
-  return tier;
+  if (!Number.isFinite(zoom)) return MAX_ZOOM;
+  return Math.max(0, Math.min(MAX_ZOOM, Math.floor(zoom)));
 }

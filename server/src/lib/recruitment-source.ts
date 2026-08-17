@@ -36,8 +36,10 @@ export interface SourceCompany {
   name: string;
   industries: string[];
   scale: RecruitmentPOI['company']['scale'];
-  /** 层级 1=名企 2=大厂 3=中厂/其他（可选，读路径缺省 3） */
+  /** 可见最小 zoom：0..21，zoom >= tier 时显示；0=永显，21=永隐，缺省 12（tech/19） */
   tier?: number;
+  /** 企业类型：国标大类 code（GB/T 4754-2017，如 64=互联网；'other'=未标） */
+  category?: string;
   rating?: number;
   summary?: string;
   careerUrl?: string;
@@ -68,6 +70,7 @@ export function poiToSourceCompany(poi: RecruitmentPOI): SourceCompany {
     industries: poi.company.industries,
     scale: poi.company.scale,
     tier: poi.company.tier,
+    category: poi.company.category,
     rating: poi.company.rating,
     summary: poi.company.summary,
     careerUrl: poi.company.careerUrl,
@@ -166,7 +169,8 @@ function poiFromSourceSite(
       name: company.name,
       industries: company.industries,
       scale: company.scale,
-      tier: company.tier ?? 3,
+      tier: company.tier ?? 12,
+      category: company.category ?? 'other',
       rating: company.rating,
       logo: logo.emoji,
       logoUrl: logo.url,

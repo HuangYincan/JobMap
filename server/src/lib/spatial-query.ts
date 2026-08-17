@@ -33,10 +33,11 @@ export function bareCityName(value: string): string {
   return value.replace(/[省市区]$/, '');
 }
 
-/** maxTier 解析：1-3 的整数；缺失 / 非法 → null（不过滤）。 */
+/** maxTier 解析：0..20 的整数（0=只显示 tier 0，20=最大可见）；缺失 / 非法 → null（不过滤）。 */
 export function parseMaxTier(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
   const n = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(n) || n < 1) return null;
+  if (!Number.isFinite(n) || n < 0 || n > 20) return null;
   return Math.floor(n);
 }
 

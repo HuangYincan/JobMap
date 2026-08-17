@@ -306,22 +306,34 @@ test('siteCityOf prefers site.city then parses known cities from the address', (
   assert.equal(siteCityOf({ id: 'x', name: 'x', location: {} }), null);
 });
 
-test('validateSourceCompany accepts tier 1-3 and rejects others', () => {
+test('validateSourceCompany accepts tier 0-21 and rejects others', () => {
   const good = sample();
-  good.tier = 1;
+  good.tier = 0; // 0=一直可见(国际化名企)
   assert.deepEqual(validateSourceCompany(good), []);
+  const good21 = sample();
+  good21.tier = 21; // 21=永不显示
+  assert.deepEqual(validateSourceCompany(good21), []);
   const bad = sample();
-  bad.tier = 4;
+  bad.tier = 22; // 超出 0..21
   assert.ok(validateSourceCompany(bad).some((row) => row.field === 'tier'));
+  const badNeg = sample();
+  badNeg.tier = -1;
+  assert.ok(validateSourceCompany(badNeg).some((row) => row.field === 'tier'));
+  const badFloat = sample();
+  badFloat.tier = 4.5;
+  assert.ok(validateSourceCompany(badFloat).some((row) => row.field === 'tier'));
 });
 
-test('import maps tier / site city / province / city_code onto the DB upsert', () => {
+test('import maps tier / category / site city / province / city_code onto the DB upsert', () => {
   const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
   const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
   assert.match(store, /INSERT INTO companies \([^)]*\btier\b/);
+  assert.match(store, /INSERT INTO companies \([^)]*\bcategory\b/);
   assert.match(store, /tier = EXCLUDED\.tier/);
+  assert.match(store, /category = EXCLUDED\.category/);
   assert.match(store, /INSERT INTO company_sites \([^)]*\bcity\b/);
   assert.match(store, /province = \$5, city_code = \$6/);
   assert.match(store, /siteCityOf\(site\)/);
-  assert.match(store, /company\.tier \?\? 3/);
+  assert.match(store, /company\.tier \?\? 12/);
+  assert.match(store, /company\.category \?\? 'other'/);
 });

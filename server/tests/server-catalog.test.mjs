@@ -6,7 +6,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
-import { todayDateString } from '../src/lib/freshness.ts';
 import {
   loadOfflineWorkCatalog,
   loadServerCatalog,
@@ -105,7 +104,8 @@ test('loadServerCatalog prefers imported work rows, then seed + file drops', () 
 
 test('offline catalog keeps every position alive (A1: open + deadline future or none)', async () => {
   const work = await loadOfflineWorkCatalog();
-  const today = todayDateString();
+  const _now = new Date();
+  const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
   for (const poi of work) {
     for (const pos of poi.positions) {
       if (pos.deadline) {

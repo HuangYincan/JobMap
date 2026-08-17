@@ -509,21 +509,30 @@ test('applyFilters: minRating keeps only highly rated domain POIs', () => {
   assert.equal(applyFilters(pois, { minRating: 0 }).length, 3);
 });
 
-test('applyFilters: maxTier keeps only companies at or above the tier threshold (default 3)', () => {
+test('applyFilters: maxTier keeps only companies with tier <= maxTier (default 12)', () => {
   const base = INTERNSHIP_SEED[0];
   const position = base.positions[0] ?? { id: 'x', title: 'x', type: 'intern', status: 'open' };
+  const tier0 = { ...base, id: 't0', company: { ...base.company, tier: 0 }, positions: [position] };
   const tier1 = { ...base, id: 't1', company: { ...base.company, tier: 1 }, positions: [position] };
   const tier2 = { ...base, id: 't2', company: { ...base.company, tier: 2 }, positions: [position] };
   const tier3 = { ...base, id: 't3', company: { ...base.company, tier: 3 }, positions: [position] };
   const noTier = { ...base, id: 'nt', company: { ...base.company, tier: undefined }, positions: [position] };
-  assert.deepEqual(applyFilters([tier1, tier2, tier3, noTier], { maxTier: 1 }).map((p) => p.id), ['t1']);
+  assert.deepEqual(applyFilters([tier0, tier1, tier2, tier3, noTier], { maxTier: 0 }).map((p) => p.id), ['t0']);
+  assert.deepEqual(applyFilters([tier0, tier1, tier2, tier3, noTier], { maxTier: 1 }).map((p) => p.id), ['t0', 't1']);
   assert.deepEqual(
-    applyFilters([tier1, tier2, tier3, noTier], { maxTier: 2 }).map((p) => p.id).sort(),
-    ['t1', 't2'],
+    applyFilters([tier0, tier1, tier2, tier3, noTier], { maxTier: 2 }).map((p) => p.id).sort(),
+    ['t0', 't1', 't2'],
   );
-  assert.equal(applyFilters([tier1, tier2, tier3, noTier], { maxTier: 3 }).length, 4);
+  assert.deepEqual(
+    applyFilters([tier0, tier1, tier2, tier3, noTier], { maxTier: 3 }).map((p) => p.id).sort(),
+    ['t0', 't1', 't2', 't3'],
+  );
+  // 缺省 tier 12 的公司要 zoom >= 12 才可见
+  assert.equal(applyFilters([tier0, tier1, tier2, tier3, noTier], { maxTier: 11 }).length, 4);
+  assert.equal(applyFilters([tier0, tier1, tier2, tier3, noTier], { maxTier: 12 }).length, 5);
   // 非法值视为不过滤。
-  assert.equal(applyFilters([tier1, tier2, tier3, noTier], { maxTier: 0 }).length, 4);
+  assert.equal(applyFilters([tier0, tier1, tier2, tier3, noTier], { maxTier: 21 }).length, 5);
+  assert.equal(applyFilters([tier0, tier1, tier2, tier3, noTier], { maxTier: -1 }).length, 5);
 });
 
 test('applyFilters: city matches site city / province / address text (SQL is the superset)', () => {
