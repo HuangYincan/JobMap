@@ -7,13 +7,20 @@ import {
   DOMAIN_POI_HARD_CAP,
   fallbackTaskWindow,
   inHangzhouBox,
+  HANGZHOU_BBOX,
   mergePoisById,
 } from '../src/lib/viewport-search.ts';
+import { HANGZHOU_BBOX as IMPORT_BBOX } from '../src/lib/hz-poi-import.ts';
 
 test('常量:1000 上限 / 50 本地批 / 25 高德批', () => {
   assert.equal(DOMAIN_POI_HARD_CAP, 1000);
   assert.equal(DOMAIN_BATCH_SIZE, 50);
   assert.equal(AMAP_FALLBACK_INITIAL_CALLS, 1);
+});
+
+test('HANGZHOU_BBOX 双份定义一致(import 数据侧 vs 前端分叉侧)', () => {
+  // 两份常量漂移会静默改变「哪些 POI 走本地库」的边界,必须一致
+  assert.deepEqual(HANGZHOU_BBOX, IMPORT_BBOX);
 });
 
 test('inHangzhouBox: 框内/框外', () => {

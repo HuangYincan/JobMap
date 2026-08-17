@@ -33,8 +33,12 @@ export function inBounds(
 
 export function parseBoundsParam(raw: string | null | undefined): ViewportBounds | null {
   if (!raw) return null;
-  const parts = raw.split(',').map(Number);
-  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return null;
+  // 空段(如 "118.3,29.1,,30.7")会经 Number('')→0 溜过 NaN 检查,
+  // 生成 east=0 的非法 bbox 让 ST_MakeEnvelope 抛错。先拒空段再转数值。
+  const segs = raw.split(',');
+  if (segs.length !== 4 || segs.some((s) => s.trim() === '')) return null;
+  const parts = segs.map(Number);
+  if (parts.some((n) => !Number.isFinite(n))) return null;
   const [west, south, east, north] = parts;
   if (west >= east || south >= north) return null;
   return { west, south, east, north };

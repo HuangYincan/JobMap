@@ -8,7 +8,6 @@
 
 import { getPool } from './db.ts';
 import type { DomainPOI, POILocation } from './types.ts';
-import { hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
 import { parseBoundsParam, type ViewportBounds } from './viewport-search.ts';
 
 export interface HzPoiQueryOptions {
@@ -67,9 +66,10 @@ export function hzPoiSpatialSql(
     i += 4;
   }
 
-  if (typeof opts.zoom === 'number' && Number.isFinite(opts.zoom) && opts.zoom > 0) {
+  if (typeof opts.zoom === 'number' && Number.isFinite(opts.zoom)) {
+    // zoom 0 也生效(tier <= 0 = 仅地标);上限 20 防止 tier-21「永隐」类被放出
     clauses.push(`p.tier <= $${i}`);
-    params.push(Math.floor(opts.zoom));
+    params.push(Math.min(20, Math.max(0, Math.floor(opts.zoom))));
     i += 1;
   }
 
@@ -120,15 +120,27 @@ export function hzRowToDomainPoi(row: HzPoiRow): DomainPOI {
   };
 }
 
-/** 从 hz_pois 按 bbox+zoom+关键词 查询。无库/表缺失 → null(走回退)。 */
+/** 从 hz_pois 按 bbox+zoom+关键词 查询。无库/表缺失 → null(走回退)。
+ *  pool 参数供测试注入(默认取全局连接池)。 */
 export async function loadHangzhouPoisFromDb(
   opts: HzPoiQueryOptions,
+  pool: {
+    query: <T = HzPoiRow>(
+      sql: string,
+      params?: unknown[],
+    ) => Promise<{ rows: T[] }>;
+  } | null = getPool(),
 ): Promise<HzPoiResult | null> {
-  const pool = getPool();
   if (!pool) return null;
 
-  const limit = Math.min(300, Math.max(1, Math.floor(opts.limit ?? 300)));
-  const offset = Math.min(1000, Math.max(0, Math.floor(opts.offset ?? 0)));
+  // 非法数值(NaN/Infinity)落回默认值;pg 驱动会把 NaN 序列化成字面量
+  // "NaN" 让 Postgres 报错,而 catch 会把它伪装成「无数据」的 200。
+  const limit = Number.isFinite(opts.limit)
+    ? Math.min(300, Math.max(1, Math.floor(opts.limit as number)))
+    : 300;
+  const offset = Number.isFinite(opts.offset)
+    ? Math.min(1000, Math.max(0, Math.floor(opts.offset as number)))
+    : 0;
   const { where, params } = hzPoiSpatialSql(opts);
 
   // count(*) OVER() 一次拿总数 + 分页窗口
@@ -144,7 +156,14 @@ export async function loadHangzhouPoisFromDb(
   try {
     const result = await pool.query<HzPoiRow>(sql, [...params, limit, offset]);
     if (result.rows.length === 0) {
-      return { total: 0, offset, limit, results: [] };
+      // OFFSET 越过结果末尾时 count(*) OVER() 不产出行,total 会误报 0;
+      // 补一次独立 count 保持契约(调用方用 offset+rows 判「没有更多」)。
+      const countRes = await pool.query<{ n: string }>(
+        `SELECT count(*) AS n FROM hz_pois p ${where}`,
+        params,
+      );
+      const total = Number(countRes.rows[0]?.n ?? 0);
+      return { total, offset, limit, results: [] };
     }
     const total = Number(result.rows[0].total);
     const results = result.rows.map(hzRowToDomainPoi);
@@ -155,13 +174,5 @@ export async function loadHangzhouPoisFromDb(
   }
 }
 
-/** 杭州判定:中心点是否落在杭州数据范围框内(服务端侧) */
-export function isHangzhouCenter(loc: { lng: number; lat: number }): boolean {
-  // 杭州 GCJ-02 数据范围 + 边距(与 hz-poi-import.ts HANGZHOU_BBOX 同)
-  return (
-    loc.lng >= 118.3 && loc.lng <= 120.8 && loc.lat >= 29.1 && loc.lat <= 30.7
-  );
-}
-
 // 复用导出,便于 route 解析
-export { parseBoundsParam, parseMaxTier, hasSpatialClip };
+export { parseBoundsParam };

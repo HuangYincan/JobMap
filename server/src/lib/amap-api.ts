@@ -88,6 +88,10 @@ export function loadAMap(): Promise<any> {
     script.onload = () => resolve(window.AMap);
     script.onerror = () => {
       loadPromise = null;
+      // 移除失败标签:否则下次 loadAMap 走「复用 existing」分支,给一个
+      // 已死且不会再触发 load/error 的标签挂监听,Promise 永不落定,
+      // 后续所有 searchPOI/geocode 全部永久挂起(直到整页刷新)。
+      script.remove();
       reject(new Error('AMap script failed to load'));
     };
     document.head.appendChild(script);
@@ -707,7 +711,6 @@ export async function searchViewportPOIsIncremental(
     });
     merged = mergePoisById(merged, result.pois.filter(isCommonPoi), thisRoundCap);
     options.onBatch?.(merged);
-    if (result.pois.length === 0 && result.total === 0) continue;
   }
 
   return merged;
@@ -749,7 +752,6 @@ export async function searchViewportPOIsFallback(
     });
     merged = mergePoisById(merged, result.pois.filter(isCommonPoi), thisRoundCap);
     options.onBatch?.(merged);
-    if (result.pois.length === 0 && result.total === 0) continue;
   }
 
   return merged;

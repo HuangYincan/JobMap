@@ -34,6 +34,22 @@ test('parsePhotosUrlArray: 多条 url 全部提取', () => {
   ]);
 });
 
+test('parsePhotosUrlArray: JSON 双引号形态(实测 ~0.3% 行)', () => {
+  const input =
+    `[{"title": "Logo", "url": "https://store.is.autonavi.com/showpic/6b35f687", "provider": []}]`;
+  assert.deepEqual(parsePhotosUrlArray(input), [
+    'https://store.is.autonavi.com/showpic/6b35f687',
+  ]);
+});
+
+test('parsePhotosUrlArray: 混合形态 + 无引号键', () => {
+  const input = `[{"url":"http://a.com/x"},{url:'http://a.com/y'}]`;
+  assert.deepEqual(parsePhotosUrlArray(input), [
+    'http://a.com/x',
+    'http://a.com/y',
+  ]);
+});
+
 test('splitLocation: "lng,lat" → 坐标', () => {
   assert.deepEqual(splitLocation('120.135110,30.251243'), {
     lng: 120.13511,

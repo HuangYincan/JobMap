@@ -62,9 +62,10 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
   if (options.query) {
     if (inHz) {
       // 杭州内关键词搜索 → 先试本地库 name ILIKE;本地 0 命中(如搜外地词)
-      // 再回退高德 1 次,避免「北京天安门」在杭州库里查不到就空白。
+      // 或库不可用(null)再回退高德 searchPOI,避免「北京天安门」在杭州库
+      // 查不到就空白/返回无关分类 POI。
       const local = await fetchLocalPois(options, existing, zoom, options.query);
-      if (local.length > existing.length) return local;
+      if (local !== null && local.length > existing.length) return local;
     }
     try {
       const result = await searchPOI({
@@ -92,8 +93,10 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
   }
 
   if (inHz) {
-    // 杭州内浏览 → 本地库(全量分层,列表候选 300→+300→1000)
-    return fetchLocalPois(options, existing, zoom);
+    // 杭州内浏览 → 本地库(全量分层,列表候选 300→+300→1000);
+    // 库不可用时内部已回退高德 fallback,null 兜底为现有池
+    const local = await fetchLocalPois(options, existing, zoom);
+    return local ?? existing;
   }
 
   const category =
@@ -125,13 +128,15 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
   }
 }
 
-/** 杭州本地查询：GET /api/pois/domain-local。每批 DOMAIN_BATCH_SIZE(50)，cap 1000。 */
+/** 杭州本地查询：GET /api/pois/domain-local。每批 DOMAIN_BATCH_SIZE(50)，cap 1000。
+ *  带关键词时库不可用 → 返回 null(调用方改走高德 searchPOI 带词搜索);
+ *  浏览(无关键词)时库不可用 → 内部回退高德 fallback 兜底,不白屏。 */
 async function fetchLocalPois(
   options: FetchPOIOptions,
   existing: DomainPOI[],
   zoom: number,
   q?: string,
-): Promise<POI[]> {
+): Promise<POI[] | null> {
   const bounds = options.bounds;
   const offset = (options.pageOffset ?? 0) * DOMAIN_BATCH_SIZE;
   const params = new URLSearchParams();
@@ -153,7 +158,9 @@ async function fetchLocalPois(
     options.onBatch?.(next);
     return next;
   } catch (err) {
-    // 库未导入 / 网络错 → 回退高德 fallback（杭州内兜底），不白屏
+    // 库未导入 / 网络错 → 浏览路径回退高德 fallback(杭州内兜底),不白屏;
+    // 关键词路径返回 null 让调用方走 searchPOI(带词,而不是无关分类 POI)。
+    if (q) return null;
     console.warn('[poi-service] local domain POIs failed, fallback to AMap:', err);
     try {
       const pois = await searchViewportPOIsFallback({

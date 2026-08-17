@@ -43,14 +43,16 @@ export interface HzPoiRow {
 export const HANGZHOU_BBOX = { west: 118.3, south: 29.1, east: 120.8, north: 30.7 };
 
 /**
- * 解析 python-repr 单引号 photos 列表 → url 数组。
- * 容错:空串/'[]'/畸形 → []。仅提取 url 值。
+ * 解析 photos 列表 → url 数组。容错:空串/'[]'/畸形 → []。仅提取 url 值。
+ * 实测数据两种形态:
+ *   python-repr 单引号  [{'url':'http://...','url_mid':'...'}]
+ *   JSON 双引号         [{"title":"Logo","url":"https://..."}]
+ * 值可单引号也可双引号,键可带可不带引号 → 统一 ['"]([^'"]+)['"] 取值。
  */
 export function parsePhotosUrlArray(photos: string): string[] {
   if (!photos) return [];
   const urls: string[] = [];
-  // python-repr 的键也带单引号:'url':'http://...' → 键可带可不带引号
-  const re = /['"]?url['"]?\s*:\s*'([^']+)'/g;
+  const re = /['"]?url['"]?\s*:\s*['"]([^'"]+)['"]/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(photos)) !== null) {
     if (m[1]) urls.push(m[1]);

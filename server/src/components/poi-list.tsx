@@ -68,6 +68,8 @@ export function POIList({
   // rootMargin 提前量兼容嵌套滚动容器的高度差。
   // 依赖 pois.length：catalog 更新后 React 重建哨兵节点,需重新 observe
   // (否则 IO 盯着已脱离 DOM 的旧元素,无限滚动停在第一批之后)。
+  // 依赖 loadingMore:追加加载即使 0 条可见(筛选过滤),loadingMore 翻转也会
+  // 触发重新 observe → observe 的首次回调按当前交集状态补发,滚动链不断。
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el || !onNeedMoreRef.current) return;
@@ -85,7 +87,7 @@ export function POIList({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [pois.length]);
+  }, [pois.length, loadingMore]);
 
   return (
     <div

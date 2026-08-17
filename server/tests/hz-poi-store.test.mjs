@@ -24,15 +24,20 @@ test('hzPoiSpatialSql: 无 clip 时仍有 common 过滤', () => {
   assert.deepEqual(params, []);
 });
 
-test('hzPoiSpatialSql: zoom 非正数 / NaN 时跳过 LOD tier 子句', () => {
+test('hzPoiSpatialSql: zoom 钳位 0..20;NaN 跳过 LOD tier 子句', () => {
+  // zoom=0 → tier <= 0(仅地标),而不是丢弃 LOD 子句放出 tier-21「永隐」类
   const r1 = hzPoiSpatialSql({ zoom: 0 });
-  assert.ok(!r1.where.includes('p.tier <= $'), 'zoom=0 不应有 LOD 参数');
+  assert.ok(r1.where.includes('p.tier <= $1'), 'zoom=0 应有 tier <= 0');
+  assert.equal(r1.params[0], 0);
   const r2 = hzPoiSpatialSql({ zoom: Number.NaN });
   assert.ok(!r2.where.includes('p.tier <= $'), 'zoom=NaN 不应有 LOD 参数');
   const r3 = hzPoiSpatialSql({ zoom: -1 });
-  assert.ok(!r3.where.includes('p.tier <= $'), 'zoom=-1 不应有 LOD 参数');
-  const r4 = hzPoiSpatialSql({ zoom: 13 });
-  assert.ok(r4.where.includes('p.tier <= $'), 'zoom=13 应有 LOD 参数');
+  assert.ok(r3.where.includes('p.tier <= $'), 'zoom=-1 钳位到 0');
+  assert.equal(r3.params[0], 0);
+  const r4 = hzPoiSpatialSql({ zoom: 22 });
+  assert.equal(r4.params[0], 20, 'zoom=22 钳位到 20,tier-21 永隐类不放行');
+  const r5 = hzPoiSpatialSql({ zoom: 13 });
+  assert.ok(r5.where.includes('p.tier <= $'), 'zoom=13 应有 LOD 参数');
 });
 
 test('hzPoiSpatialSql: 全空 categories 不生成 ANY 参数;含有效值时保留', () => {
@@ -98,4 +103,50 @@ test('parseBoundsParam: 复用现有解析', () => {
   });
   assert.equal(parseBoundsParam('bad'), null);
   assert.equal(parseBoundsParam('120,30'), null);
+  assert.equal(parseBoundsParam('118.3,29.1,,30.7'), null); // 空段 → 0 的坑
+});
+
+// ---- loadHangzhouPoisFromDb: 钳位/总数/回退(池注入) ----
+import { loadHangzhouPoisFromDb } from '../src/lib/hz-poi-store.ts';
+
+test('loadHangzhouPoisFromDb: limit/offset 钳位 1..300 / 0..1000', async () => {
+  const queries = [];
+  const pool = {
+    query: async (sql) => {
+      queries.push(sql.slice(0, 40));
+      return { rows: [] };
+    },
+  };
+  const r = await loadHangzhouPoisFromDb({ limit: 500, offset: -3, zoom: 13 }, pool);
+  assert.equal(r?.limit, 300);
+  assert.equal(r?.offset, 0);
+  assert.ok(queries.some((q) => q.includes('count(*)'))); // rows 空 → 独立 count
+});
+
+test('loadHangzhouPoisFromDb: NaN limit/offset 落回默认,不把 NaN 传给 pg', async () => {
+  const calls = [];
+  const pool = {
+    query: async (sql, params) => {
+      calls.push(params ?? []);
+      return sql.includes('OVER()')
+        ? { rows: [{ total: '7' }] } // 窗口查询:带 total 的行
+        : { rows: [{ n: '7' }] }; // 独立 count
+    },
+  };
+  const r = await loadHangzhouPoisFromDb({ limit: Number.NaN, offset: Number.NaN }, pool);
+  assert.equal(r?.limit, 300);
+  assert.equal(r?.offset, 0);
+  assert.equal(r?.total, 7);
+  for (const c of calls) {
+    assert.ok(c.every((v) => typeof v !== 'number' || Number.isFinite(v)));
+  }
+});
+
+test('loadHangzhouPoisFromDb: 查库失败 → null(走回退),不伪装成空 200', async () => {
+  const pool = {
+    query: async () => {
+      throw new Error('connection refused');
+    },
+  };
+  assert.equal(await loadHangzhouPoisFromDb({ zoom: 13 }, pool), null);
 });

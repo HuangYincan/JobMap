@@ -51,7 +51,7 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
 - `geom`:`GENERATED ALWAYS AS ST_SetSRID(ST_MakePoint(lng_gcj, lat_gcj), 4326) STORED`
 - `photos jsonb`(提取的 URL 数组)、`tier smallint DEFAULT 12`
 - 7 索引:geom gist、adname、name trgm gin、big_type、tier、rating DESC、city_code
-- CHECK:`tier BETWEEN 0 AND 21`、`rating 0–5`、photos 格式约束
+- CHECK:坐标粗略域(100-130 / 25-35)、`rating 0–5`、`tier 0–21`(photos 无格式约束)
 
 ## Tier 映射(可见最小 zoom,tier ≤ floor(zoom) 显示)
 
@@ -90,7 +90,11 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
 - common 过滤下推:`(rating > 0 OR jsonb_array_length(photos) > 0 OR tier <= 3)`
   (与 AMap 的 `isCommonPoi` 语义对齐:有评分/有图/地标才值得上卡)
 - `ORDER BY rating DESC NULLS LAST, photos DESC, poi_id`(稳定性)
-- `LIMIT` 钳 1..300,`OFFSET` 钳 0..1000;public-cache 30s
+- `LIMIT` 钳 1..300,`OFFSET` 钳 0..1000;非法数值(NaN)落回默认;
+  `zoom` 钳 0..20(0 = 仅 tier-0 地标,20 封顶防止 tier-21 永隐类放出)
+- public-cache 30s;**仅真实查库成功时缓存**——DB 故障/表缺失的空兜底响应
+  带 `no-store`,避免把「走回退」伪装成成功 200 并缓存 30s
+- 无 bounds 参数 → 全表热门榜(ORDER BY rating 走索引,行为与 work 模式一致)
 - 返回 `{ total, offset, limit, source:'local', results }`;无库/空 → 空数组
 - 坐标 GCJ 零转换;photos 截 3;`category=big_type`、`subcategory=mid_type`
 
@@ -120,11 +124,15 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
   (与「已达加载上限」区分)。覆盖稀疏视野(<1000 匹配)、高德回退窗口耗尽、
   关键词无更多页——否则哨兵每轮发请求但 0 新增,无限空转;视口替换时重置;
   模式切换/会话缓存还原时同样复位(`e7323c7`)
+  - **权衡**:杭州外回退窗口(36 任务)在「某轮 0 新增」时也会触发 noMore,
+    剩余关键词页不再消费——预算只少花不超花(≤1 次/滚动),符合「开销极小」
+    的优先目标;数据完整度让位于配额安全
 - **价格档位**(`fd9608a`):`hz_pois.cost`(83,667 行,8.3%)此前入库未读出,
   本地卡 priceLevel 恒空。现 `SELECT p.cost` + 与 `normalizeAMapPOI` 同口径
   映射(`min(4, ceil(cost/100))`),休闲/健身/娱乐类目可显示 ¥ 档
 - **视口变化刷新**:平移/缩放 → 800ms 防抖 → 按 live bounds 替换 + 淡入
-  (`existing: []`,offset 归零)
+  (`existing: []`,offset 归零;`VIEWPORT_DEBOUNCE_MS` 为 work/domain 共享,
+  work 视口按需加载同样变为 800ms)
 - **删除「加载更多」按钮**;刷新按钮**只在卡片总数为零**时显示(桌面 + 移动)
 - 加载过渡:骨架屏 → 淡入 stagger(`--index: i % 8`),Apple 风格 18px spinner
   (`prefers-reduced-motion` 适配)

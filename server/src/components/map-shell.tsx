@@ -132,6 +132,8 @@ export function MapShell() {
   /** Domain 数据耗尽(稀疏视野/回退窗口空/无更多页):哨兵停止 + 「没有更多结果」 */
   const [noMoreData, setNoMoreData] = useState(false);
   const noMoreRef = useRef(false);
+  /** 视口替换世代:主加载在 onBatch/落库前校验,丢弃过期的追加批次 */
+  const viewportEpochRef = useRef(0);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
@@ -644,12 +646,15 @@ export function MapShell() {
       if (!mapReady || !geoSettled) {
         return;
       }
-      if (loadingRef.current) {
-        return; // 防止初始化期间多次setState触发并发加载
-      }
+      // skipFetch 先消费:它由缓存还原/模式切换/视口替换置位,即使上一轮
+      // 加载仍在飞也必须立即消费,否则会残留到下一轮合法加载被吞掉。
       if (skipFetchRef.current) {
         skipFetchRef.current = false;
+        setLoadingMore(false); // 被跳过的加载没有 finally,手动释放
         return;
+      }
+      if (loadingRef.current) {
+        return; // 防止初始化期间多次setState触发并发加载
       }
       const cached = catalogRef.current.length > 0 ? readModeCache(mode) : null;
       // 会话缓存只在参数完全一致时复用：换了关键词(query)或页偏移都须重搜。
@@ -663,8 +668,9 @@ export function MapShell() {
       ) {
         return;
       }
+      const epoch = viewportEpochRef.current; // 视口替换后过期批次将被丢弃
       loadingRef.current = true;
-      setLoading(true);
+      if (!loadingMore) setLoading(true); // 追加加载不闪骨架屏(保留滚动位置)
       setError(null);
       const beforeLen = catalogRef.current.length;
       try {
@@ -672,6 +678,7 @@ export function MapShell() {
         const origin = searchOrigin ?? userLocation ?? view.center;
         const onBatch = (batch: POI[]) => {
           if (signal.cancelled) return;
+          if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期批次
           catalogRef.current = batch;
           setCatalog(batch);
           writeModeCache({
@@ -714,6 +721,7 @@ export function MapShell() {
                 onBatch,
               });
         if (signal.cancelled) return;
+        if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期结果
         catalogRef.current = data;
         setCatalog(data);
         writeModeCache({
@@ -737,12 +745,12 @@ export function MapShell() {
           setError(err instanceof Error ? err.message : "Failed to load POIs");
         }
       } finally {
-        // loadingRef 属于本轮加载，即使被取消(用户输入/状态变更)也必须释放；
-        // 否则后续所有 load() 会因 loadingRef.current 卡死而永远不再发请求。
+        // loadingRef/loadingMore 属于本轮加载，即使被取消(用户输入/状态变更)
+        // 也必须释放；否则后续所有 load() 会卡死、哨兵被 loadingMore 永久门控。
         loadingRef.current = false;
+        setLoadingMore(false);
         if (!signal.cancelled) {
           setLoading(false);
-          setLoadingMore(false);
         }
       }
     }
@@ -824,6 +832,13 @@ export function MapShell() {
           // 新视野重新分页:清除上一视野的「没有更多结果」状态
           noMoreRef.current = false;
           setNoMoreData(false);
+          // 视口世代 +1:主加载在飞的对旧视野追加批次将被 epoch 校验丢弃
+          viewportEpochRef.current += 1;
+          // pageOffset 状态归零,并跳过其触发的重复主加载
+          // (skipFetch 由 load() 先消费;offset 已为 0 时 setPageOffset 是
+          // 同值 no-op,不 arm skipFetch,避免吞掉下一次合法的滚动加载)
+          if (v.pageOffset !== 0) skipFetchRef.current = true;
+          setPageOffset(0);
           try {
             await fetchPOIsForMode({
               mode,

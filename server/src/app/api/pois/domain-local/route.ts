@@ -30,7 +30,14 @@ export async function GET(request: Request) {
   const offsetRaw = url.searchParams.get('offset');
 
   const bounds = parseBoundsParam(boundsRaw);
-  const zoom = zoomRaw !== null ? Math.floor(Number(zoomRaw)) : undefined;
+  // NaN/Infinity 落回默认值(非法数值经 pg 序列化成 "NaN" 会让 Postgres 报错,
+  // 而 catch 会把它伪装成「无数据」的 200 并缓存 30s)
+  const zoomNum = zoomRaw !== null ? Number(zoomRaw) : NaN;
+  const zoom = Number.isFinite(zoomNum) ? Math.floor(zoomNum) : undefined;
+  const limitNum = limitRaw !== null ? Number(limitRaw) : NaN;
+  const offsetNum = offsetRaw !== null ? Number(offsetRaw) : NaN;
+  const limit = Number.isFinite(limitNum) ? limitNum : 300;
+  const offset = Number.isFinite(offsetNum) ? offsetNum : 0;
   const categories = categoriesRaw
     ? categoriesRaw.split(',').map((s) => s.trim()).filter(Boolean)
     : undefined;
@@ -54,8 +61,8 @@ export async function GET(request: Request) {
     zoom,
     q,
     categories,
-    limit: limitRaw !== null ? Number(limitRaw) : 300,
-    offset: offsetRaw !== null ? Number(offsetRaw) : 0,
+    limit,
+    offset,
   });
 
   const payload = {
@@ -65,6 +72,11 @@ export async function GET(request: Request) {
     source: 'local' as const,
     results: result?.results ?? [],
   };
-  writePublicCache(cacheKey, payload);
-  return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  // 只在真实查库成功时缓存:DB 故障/表缺失(null)的兜底空响应若被缓存,
+  // 30s 内即使库恢复也会继续返回空,把「走回退」的信号伪装成成功 200。
+  if (result) {
+    writePublicCache(cacheKey, payload);
+    return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  }
+  return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } });
 }

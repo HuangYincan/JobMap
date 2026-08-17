@@ -354,6 +354,11 @@ function PhotoStrip({ photos, lang }: { photos: string[]; lang: Language }) {
           alt=""
           className={styles.carouselPhoto}
           loading={safeIndex === 0 ? "eager" : "lazy"}
+          // 本地库照片来自高德图床 URL,可能过期/防盗链——与 poi-card 同款兜底
+          onError={(e) => {
+            e.currentTarget.src =
+              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Crect width='100%25' height='100%25' fill='%23e6e9ec'/%3E%3C/svg%3E";
+          }}
         />
         {total > 1 && (
           <>
