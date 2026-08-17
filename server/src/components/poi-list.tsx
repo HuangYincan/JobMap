@@ -26,6 +26,8 @@ export interface POIListProps {
   loadingMore?: boolean;
   /** 已达上限（显示「已达加载上限」并停止哨兵触发） */
   atCap?: boolean;
+  /** 数据已耗尽（稀疏视野/回退窗口空;显示「没有更多结果」并停止哨兵） */
+  noMore?: boolean;
 }
 
 type CSSVarStyle = CSSProperties & Record<`--${string}`, string | number>;
@@ -46,6 +48,7 @@ export function POIList({
   onNeedMore,
   loadingMore = false,
   atCap = false,
+  noMore = false,
 }: POIListProps) {
   const showEmpty = !loading && (empty || pois.length === 0);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -53,6 +56,8 @@ export function POIList({
   onNeedMoreRef.current = onNeedMore;
   const atCapRef = useRef(atCap);
   atCapRef.current = atCap;
+  const noMoreRef = useRef(noMore);
+  noMoreRef.current = noMore;
   const loadingRef = useRef(loading);
   loadingRef.current = loading;
   const loadingMoreRef = useRef(loadingMore);
@@ -71,6 +76,7 @@ export function POIList({
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           if (atCapRef.current) return; // 到顶停止触发
+          if (noMoreRef.current) return; // 数据耗尽停止触发
           if (loadingRef.current || loadingMoreRef.current) return; // 加载中不重复触发
           onNeedMoreRef.current?.();
         }
@@ -154,11 +160,15 @@ export function POIList({
               />
             </div>
           ))}
-          {/* 底部哨兵 + 加载/到底指示 */}
+          {/* 底部哨兵 + 加载/到底/耗尽指示 */}
           <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true">
             {atCap ? (
               <span className={styles.sentinelText}>
                 {lang === "zh" ? "── 已达加载上限 ──" : "── Reached load limit ──"}
+              </span>
+            ) : noMore ? (
+              <span className={styles.sentinelText}>
+                {lang === "zh" ? "── 没有更多结果 ──" : "── No more results ──"}
               </span>
             ) : loadingMore ? (
               <span className={styles.spinner} aria-label={t("loading", lang)} />

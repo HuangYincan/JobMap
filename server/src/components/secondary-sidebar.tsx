@@ -103,6 +103,8 @@ export interface SecondarySidebarProps {
   loadingMore?: boolean;
   /** 已达上限(显示「已达加载上限」并停止哨兵触发) */
   atCap?: boolean;
+  /** 数据已耗尽(稀疏视野/回退窗口空;显示「没有更多结果」并停止哨兵) */
+  noMore?: boolean;
   /** 空结果时扩大搜索范围 */
   onWidenSearch?: () => void;
   saved?: boolean;
@@ -142,6 +144,7 @@ export function SecondarySidebar({
   onNeedMore,
   loadingMore = false,
   atCap = false,
+  noMore = false,
   onWidenSearch,
   saved = false,
   onToggleSave,
@@ -447,6 +450,7 @@ export function SecondarySidebar({
         onNeedMore={onNeedMore}
         loadingMore={loadingMore}
         atCap={atCap}
+        noMore={noMore}
       />
       </>
       )}

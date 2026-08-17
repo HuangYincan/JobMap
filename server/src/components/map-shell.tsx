@@ -129,6 +129,9 @@ export function MapShell() {
   const poisRef = useRef<POI[]>([]);
   const [geoSettled, setGeoSettled] = useState(false);
   const ignoreNextMapClick = useRef(false);
+  /** Domain 数据耗尽(稀疏视野/回退窗口空/无更多页):哨兵停止 + 「没有更多结果」 */
+  const [noMoreData, setNoMoreData] = useState(false);
+  const noMoreRef = useRef(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
@@ -660,6 +663,7 @@ export function MapShell() {
       loadingRef.current = true;
       setLoading(true);
       setError(null);
+      const beforeLen = catalogRef.current.length;
       try {
         const view = liveView();
         const origin = searchOrigin ?? userLocation ?? view.center;
@@ -718,6 +722,13 @@ export function MapShell() {
           filters,
           sort,
         });
+        // 数据耗尽判定(仅 domain):本轮零新增且此前有数据 → 哨兵停止,
+        // 显示「没有更多结果」。覆盖:稀疏视野(<1000)、高德回退窗口耗尽、
+        // 关键词无更多页。否则哨兵会无限空转(每轮发请求但 0 新增)。
+        const noMore =
+          canonicalMode(mode) === "domain" && beforeLen > 0 && data.length <= beforeLen;
+        noMoreRef.current = noMore;
+        setNoMoreData(noMore);
       } catch (err) {
         if (!signal.cancelled) {
           setError(err instanceof Error ? err.message : "Failed to load POIs");
@@ -807,6 +818,9 @@ export function MapShell() {
         // Domain:随视角变化刷新(替换+淡入)——按 live bounds 重新取第一批,
         // existing=[] 清空旧列表,offset 归零(新视野 = 新一批)。
         if (mode === "domain") {
+          // 新视野重新分页:清除上一视野的「没有更多结果」状态
+          noMoreRef.current = false;
+          setNoMoreData(false);
           try {
             await fetchPOIsForMode({
               mode,
@@ -1036,8 +1050,9 @@ export function MapShell() {
   const handleNeedMore = useCallback(() => {
     // 无限滚动:杭州内/外 Domain 模式到 DOMAIN_POI_HARD_CAP 封顶;
     // work 模式保持 POI_HARD_CAP 上限(由 fetch 侧控制)。这里只短路 domain。
-    if (canonicalMode(mode) === "domain" && catalogRef.current.length >= DOMAIN_POI_HARD_CAP) {
-      return;
+    if (canonicalMode(mode) === "domain") {
+      if (catalogRef.current.length >= DOMAIN_POI_HARD_CAP) return;
+      if (noMoreRef.current) return; // 数据已耗尽,哨兵停止触发
     }
     if (loadingRef.current) return; // 防重入:上一批加载中不重复触发
     setLoadingMore(true);
@@ -1761,6 +1776,7 @@ export function MapShell() {
         onNeedMore={handleNeedMore}
         loadingMore={loadingMore}
         atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
+        noMore={canonicalMode(mode) === "domain" && noMoreData}
         onWidenSearch={handleWidenSearch}
         saved={Boolean(detailPoi && savedPlaces.some((item) => item.poiId === detailPoi.id))}
         onToggleSave={detailPoi && isPersistablePoi(detailPoi) ? handleToggleSave : undefined}
@@ -2282,6 +2298,7 @@ export function MapShell() {
                 onNeedMore={handleNeedMore}
                 loadingMore={loadingMore}
                 atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
+                noMore={canonicalMode(mode) === "domain" && noMoreData}
               />
               </>
               )}
