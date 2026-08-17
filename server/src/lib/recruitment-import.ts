@@ -4,6 +4,7 @@
 
 import { getPool } from './db.ts';
 import type { SourceCompany, SourcePosition } from './recruitment-source.ts';
+import { TIER_DEFAULT } from './lod.ts';
 import { bossAdapter } from './recruitment-adapters/boss.ts';
 import { nowcoderAdapter } from './recruitment-adapters/nowcoder.ts';
 import { officialCareerAdapter } from './recruitment-adapters/official-career.ts';
@@ -278,7 +279,7 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
           company.careerUrl ?? null,
           company.logoUrl ?? null,
           company.logoEmoji ?? null,
-          company.tier ?? 12,
+          company.tier ?? TIER_DEFAULT,
           company.category ?? 'other',
         ],
       );

@@ -22,7 +22,7 @@ export interface SpatialClip {
   districts?: string[] | null;
   /** 城市名（'北京'）或行政区划码（'110000'）。SQL: city_code 精确 OR city ILIKE。 */
   city?: string | null;
-  /** LOD：只保留 tier <= maxTier 的公司 site（1=名企 2=大厂 3=全部）。 */
+  /** LOD：只保留 tier <= maxTier 的公司 site（maxTier = 当前 zoom 取整，0..20；tier 语义见 tech/19）。 */
   maxTier?: number | null;
   /** 只在招：status='open' 且 deadline 为空或 >= 今天。DB 读路径恒开；内存路径按旗标。 */
   alive?: boolean | null;

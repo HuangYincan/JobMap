@@ -334,6 +334,6 @@ test('import maps tier / category / site city / province / city_code onto the DB
   assert.match(store, /INSERT INTO company_sites \([^)]*\bcity\b/);
   assert.match(store, /province = \$5, city_code = \$6/);
   assert.match(store, /siteCityOf\(site\)/);
-  assert.match(store, /company\.tier \?\? 12/);
+  assert.match(store, /company\.tier \?\? TIER_DEFAULT/);
   assert.match(store, /company\.category \?\? 'other'/);
 });

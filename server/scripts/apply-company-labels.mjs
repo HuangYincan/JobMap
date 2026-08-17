@@ -35,16 +35,11 @@ for (const f of labelFiles) {
 const slugs = Object.keys(labels);
 console.log(`打标映射: ${slugs.length} 家`);
 
-const VALID_TIERS = new Set(Array.from({ length: 22 }, (_, i) => i));
-const VALID_CATEGORIES = new Set([
-  '63', '64', '65', '66', '67', '68', '69', '27', '36', '38', '39', '34', '35', '44', '26', '52',
-  '54', '59', '73', '74', '85', '86', '87', '89', '82', '70', '72', '14', '15', '18', '25', '37',
-  '48', '56', '01', '03', 'other',
-]);
+const { LABEL_CATEGORIES, TIER_MIN, TIER_MAX } = await import('./label-categories.mjs');
 const errors = [];
 for (const [slug, label] of Object.entries(labels)) {
-  if (!Number.isInteger(label.tier) || !VALID_TIERS.has(label.tier)) errors.push(`${slug}: tier ${label.tier}`);
-  if (typeof label.category !== 'string' || !VALID_CATEGORIES.has(label.category)) errors.push(`${slug}: category ${label.category}`);
+  if (!Number.isInteger(label.tier) || label.tier < TIER_MIN || label.tier > TIER_MAX) errors.push(`${slug}: tier ${label.tier}`);
+  if (typeof label.category !== 'string' || !LABEL_CATEGORIES.has(label.category)) errors.push(`${slug}: category ${label.category}`);
 }
 if (errors.length) {
   console.error(`映射非法(${errors.length}):\n  ${errors.slice(0, 20).join('\n  ')}`);

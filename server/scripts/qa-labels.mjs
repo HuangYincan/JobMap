@@ -37,11 +37,12 @@ console.log(`drops ${allSlugs.size} 家,打标 ${Object.keys(labels).length} 家
 if (missing.length) process.exitCode = 1;
 
 // 2. 值域
-const CATS = new Set(['63','64','65','66','67','68','69','27','36','38','39','34','35','44','26','52','54','59','73','74','85','86','87','89','82','70','72','14','15','18','25','37','48','56','01','03','other']);
+const { LABEL_CATEGORIES, TIER_MIN, TIER_MAX } = await import('./label-categories.mjs');
 const bad = Object.entries(labels).filter(
-  ([, l]) => !Number.isInteger(l.tier) || l.tier < 0 || l.tier > 21 || typeof l.category !== 'string' || !CATS.has(l.category),
+  ([, l]) => !Number.isInteger(l.tier) || l.tier < TIER_MIN || l.tier > TIER_MAX || typeof l.category !== 'string' || !LABEL_CATEGORIES.has(l.category),
 );
 console.log(`值域非法: ${bad.length} ${bad.slice(0, 10).map(([s]) => s).join(',') || ''}`);
+if (bad.length) process.exitCode = 1;
 
 // 3. 已知锚点(期望 tier 区间;超出即警告)。匹配:slug 前缀命中(排除前缀防
 //    误配,如「京东」锚点排除「京东方」);中文名锚点只用于中文 slug,

@@ -21,7 +21,7 @@ export const TIER_DEFAULT = 12;
 
 /**
  * 当前缩放级别 → 允许的最大公司档位。
- * 恒等映射:`tier <= floor(zoom)`。非法 zoom 回退最大可见(全部)。
+ * 恒等映射:`tier <= floor(zoom)`。非法 zoom 回退 MAX_ZOOM(20)——tier 21(永隐)仍被排除。
  */
 export function maxTierForZoom(zoom: number): number {
   if (!Number.isFinite(zoom)) return MAX_ZOOM;

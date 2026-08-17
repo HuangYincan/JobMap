@@ -186,6 +186,9 @@ export function parseLlmVerdict(content: string): LlmVerdict | null {
  * else pass.
  */
 export function verdictLevel(v: LlmVerdict): ItemLevel {
+  // 聚合行优先 warn:聚合标题(如「技术、设计、数据、运营、产品等七大类」)是真实
+  // 招聘目录,titleReal 天然 false;其 companyCityMatch 等维度对「目录」无意义,
+  // 故不参与 fail 判定(2026-08-17 实测:不加此短路会误判 696/817 为 fail)。
   if (v.isAggregateRow) return 'warn';
   if (v.titleReal === false) return 'fail';
   for (const key of DIMENSION_KEYS) {
