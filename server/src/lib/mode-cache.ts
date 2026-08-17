@@ -8,13 +8,15 @@
 // MODE_CACHE_VERSION，旧会话缓存自动失效并重新拉取。
 // v4（2026-08-17 WS4）：work 累计池改为视口增量合并，岗位为在招过滤后的
 // 子集——旧缓存含过期岗位，bump 使其失效重拉。
+// v5（2026-08-17 WS5）：Domain 模式杭州内改走本地 /api/pois/domain-local，
+// catalog 可能含 source:'api' 行——旧缓存含高德行，bump 使其失效重拉。
 // ============================================================
 
 import type { FilterState, MapMode, POI, POILocation } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 4;
+export const MODE_CACHE_VERSION = 5;
 
 export interface ModeCacheEntry {
   version: number;

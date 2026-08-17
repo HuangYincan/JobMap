@@ -9,12 +9,12 @@
 import {
   geocodeAddress,
   searchPOI,
-  searchViewportPOIsIncremental,
+  searchViewportPOIsFallback,
 } from './amap-api.ts';
 import { INTERNSHIP_SEED } from './seed-data.ts';
 import { fetchWorkCatalogFromApi } from './recruitment-adapters/api.ts';
 import type { QueryPipeline } from './search.ts';
-import { mergePoisById, isCommonOrExactName, POI_HARD_CAP, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
+import { mergePoisById, isCommonOrExactName, inHangzhouBox, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
 import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
 import { isRecruitmentMode } from './types.ts';
 
@@ -50,13 +50,23 @@ export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<POI[]>
 }
 
 
-/** Domain：往累计池里增量合并；找不到就不塞 seed */
+/** Domain：往累计池里增量合并；找不到就不塞 seed。
+ *  tech/22：杭州内走本地 /api/pois/domain-local；杭州外回退高德（省调用，
+ *  默认 1 次 25 条，加载更多 +100 条去重）。 */
 async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
   const center = options.center ?? { lng: 120.15, lat: 30.27 };
   const zoom = options.zoom ?? 13;
   const existing = (options.existing ?? []) as DomainPOI[];
+  const inHz = inHangzhouBox(center);
 
   if (options.query) {
+    if (inHz) {
+      // 杭州内关键词搜索 → 先试本地库 name ILIKE;本地 0 命中(如搜外地词)
+      // 或库不可用(null)再回退高德 searchPOI,避免「北京天安门」在杭州库
+      // 查不到就空白/返回无关分类 POI。
+      const local = await fetchLocalPois(options, existing, zoom, options.query);
+      if (local !== null && local.length > existing.length) return local;
+    }
     try {
       const result = await searchPOI({
         keyword: options.query,
@@ -71,7 +81,7 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
       const next = mergePoisById(
         existing,
         result.pois.filter((p) => isCommonOrExactName(p, options.query || '')),
-        POI_HARD_CAP,
+        DOMAIN_POI_HARD_CAP,
       );
       options.onBatch?.(next);
       return next;
@@ -82,13 +92,21 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
     }
   }
 
+  if (inHz) {
+    // 杭州内浏览 → 本地库(全量分层,列表候选 300→+300→1000);
+    // 库不可用时内部已回退高德 fallback,null 兜底为现有池
+    const local = await fetchLocalPois(options, existing, zoom);
+    return local ?? existing;
+  }
+
   const category =
     typeof options.filters?.category === 'string' && options.filters.category
       ? options.filters.category
       : undefined;
 
+  // 杭州外 → 高德省调用回退:每次滚动 1 次 PlaceSearch(25 条),窗口耗尽即停
   try {
-    const pois = await searchViewportPOIsIncremental({
+    const pois = await searchViewportPOIsFallback({
       center,
       zoom,
       bounds: options.bounds,
@@ -104,9 +122,65 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
     });
     return pois;
   } catch (err) {
-    console.warn('[poi-service] AMap viewport search failed:', err);
+    console.warn('[poi-service] AMap fallback search failed:', err);
     options.onBatch?.(existing);
     return existing;
+  }
+}
+
+/** 杭州本地查询：GET /api/pois/domain-local。每批 DOMAIN_BATCH_SIZE(50)，cap 1000。
+ *  带关键词时库不可用 → 返回 null(调用方改走高德 searchPOI 带词搜索);
+ *  浏览(无关键词)时库不可用 → 内部回退高德 fallback 兜底,不白屏。 */
+async function fetchLocalPois(
+  options: FetchPOIOptions,
+  existing: DomainPOI[],
+  zoom: number,
+  q?: string,
+): Promise<POI[] | null> {
+  const bounds = options.bounds;
+  const offset = (options.pageOffset ?? 0) * DOMAIN_BATCH_SIZE;
+  const params = new URLSearchParams();
+  if (bounds) {
+    params.set('bounds', `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`);
+  }
+  params.set('zoom', String(Math.max(1, Math.floor(zoom))));
+  params.set('limit', String(DOMAIN_BATCH_SIZE));
+  params.set('offset', String(offset));
+  if (q) params.set('q', q);
+  const url = `/api/pois/domain-local?${params.toString()}`;
+
+  try {
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error(`domain-local ${res.status}`);
+    const data = await res.json();
+    const rows = (data.results ?? []) as DomainPOI[];
+    const next = mergePoisById(existing, rows, DOMAIN_POI_HARD_CAP);
+    options.onBatch?.(next);
+    return next;
+  } catch (err) {
+    // 库未导入 / 网络错 → 浏览路径回退高德 fallback(杭州内兜底),不白屏;
+    // 关键词路径返回 null 让调用方走 searchPOI(带词,而不是无关分类 POI)。
+    if (q) return null;
+    console.warn('[poi-service] local domain POIs failed, fallback to AMap:', err);
+    try {
+      const pois = await searchViewportPOIsFallback({
+        center: options.center,
+        zoom,
+        bounds: options.bounds,
+        existing,
+        addCap: options.addCap,
+        pageOffset: options.pageOffset,
+        signal: options.signal,
+        onBatch: (batch) => {
+          if (options.signal?.cancelled) return;
+          options.onBatch?.(batch);
+        },
+      });
+      return pois;
+    } catch (fallbackErr) {
+      options.onBatch?.(existing);
+      return existing;
+    }
   }
 }
 

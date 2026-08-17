@@ -14,6 +14,7 @@
 | A5 | 迁移 012 本地应用 + import:seed:apply | 🔄 **卡 AMap 配额(10044,2026-08-17 仍未重置)** | ⚠️ site upsert 会覆盖 lng/lat:必须先 geocode 再 apply,否则 DB 杭州坐标被清空 |
 | A6 | tech/19 命中统计 + tech/18 里程碑 | ✅ | 30 大类命中,other 仅 8 |
 | A7 | 全国验收:DB 读路径 + LOD 全档 | ⏳ 依赖 A5 | geocode 配额重置后:geocode:sites:apply → import:seed:apply → 验收 |
+| A8 | **杭州 POI 本地化(tech/22)** | ✅ 2026-08-17 | 100.6 万行入库(`hz_pois` 迁移 013),杭州内零 AMap 调用,杭州外 1 次/滚动回退;无限滚动 50/批 cap 1000;详 `tech/22-hangzhou-poi-local.md` |
 
 ## 队列 B:已知遗留
 

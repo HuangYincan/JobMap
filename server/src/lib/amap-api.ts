@@ -14,6 +14,8 @@ import {
   AMAP_PAGE_SIZE,
   AMAP_QPS,
   buildSearchQueue,
+  DOMAIN_POI_HARD_CAP,
+  fallbackTaskWindow,
   keywordsFor,
   mergePoisById,
   isCommonPoi,
@@ -86,6 +88,10 @@ export function loadAMap(): Promise<any> {
     script.onload = () => resolve(window.AMap);
     script.onerror = () => {
       loadPromise = null;
+      // 移除失败标签:否则下次 loadAMap 走「复用 existing」分支,给一个
+      // 已死且不会再触发 load/error 的标签挂监听,Promise 永不落定,
+      // 后续所有 searchPOI/geocode 全部永久挂起(直到整页刷新)。
+      script.remove();
       reject(new Error('AMap script failed to load'));
     };
     document.head.appendChild(script);
@@ -705,7 +711,47 @@ export async function searchViewportPOIsIncremental(
     });
     merged = mergePoisById(merged, result.pois.filter(isCommonPoi), thisRoundCap);
     options.onBatch?.(merged);
-    if (result.pois.length === 0 && result.total === 0) continue;
+  }
+
+  return merged;
+}
+
+/**
+ * 杭州外回退高德(tech/22):省调用版视口搜索。
+ * 默认只发 1 次 PlaceSearch(25 条);用户点「加载更多」每轮至多 +4 次
+ * (≈100 条,mergePoisById 按 id 去重)。预算由 fallbackTaskWindow 切窗,
+ * 窗口空(预算耗尽)→ 不再发请求。
+ */
+export async function searchViewportPOIsFallback(
+  options: ViewportSearchOptions & { categories?: readonly string[] }
+): Promise<DomainPOI[]> {
+  const strategy = zoomStrategy(options.zoom);
+  const center = options.center ?? { lng: 120.15, lat: 30.27 };
+  const radius = searchRadiusMeters(options.zoom, center.lat);
+  const keywords = options.categories?.length
+    ? options.categories
+    : keywordsFor(strategy.categories);
+  const tasks = fallbackTaskWindow(keywords, strategy.pages, options.pageOffset ?? 0);
+  if (tasks.length === 0) return options.existing ?? [];
+
+  const existing = options.existing ?? [];
+  const room = Math.max(0, DOMAIN_POI_HARD_CAP - existing.length);
+  const thisRoundCap = existing.length + Math.min(options.addCap ?? MORE_PAGE_SIZE, room, MORE_PAGE_SIZE);
+  let merged: DomainPOI[] = existing.slice();
+
+  for (const task of tasks) {
+    if (options.signal?.cancelled) break;
+    if (merged.length >= thisRoundCap) break;
+    const result = await searchPOI({
+      keyword: task.keyword,
+      center,
+      radius,
+      pageSize: strategy.pageSize,
+      page: task.page,
+      city: strategy.city,
+    });
+    merged = mergePoisById(merged, result.pois.filter(isCommonPoi), thisRoundCap);
+    options.onBatch?.(merged);
   }
 
   return merged;

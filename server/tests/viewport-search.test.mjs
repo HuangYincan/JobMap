@@ -354,6 +354,6 @@ test('createViewportLoader: dispose cancels pending and stops future loads', asy
   assert.equal(calls, 0);
 });
 
-test('VIEWPORT_DEBOUNCE_MS is 300ms (spec: ~300ms)', () => {
-  assert.equal(VIEWPORT_DEBOUNCE_MS, 300);
+test('VIEWPORT_DEBOUNCE_MS is 800ms (spec: UI 刷新防抖 800ms)', () => {
+  assert.equal(VIEWPORT_DEBOUNCE_MS, 800);
 });
