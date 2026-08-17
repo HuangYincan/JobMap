@@ -4,6 +4,7 @@
 // 遵循 tech/10-search-filter.md API 设计：
 //   body: { mode, q, filters, sort, bounds, page, pageSize }
 //   返回聚合信息（用于筛选器动态选项）
+// filters 透传同 /api/pois：maxTier（LOD 层级上限）/ city（城市名或行政区划码）/ alive（只在招）。
 // ============================================================
 
 import { NextResponse } from 'next/server';

@@ -20,6 +20,24 @@ export interface SpatialClip {
    * Memory `poiMatchesDistrict` still does the exact address-over-box rule.
    */
   districts?: string[] | null;
+  /** 城市名（'北京'）或行政区划码（'110000'）。SQL: city_code 精确 OR city ILIKE。 */
+  city?: string | null;
+  /** LOD：只保留 tier <= maxTier 的公司 site（1=名企 2=大厂 3=全部）。 */
+  maxTier?: number | null;
+  /** 只在招：status='open' 且 deadline 为空或 >= 今天。DB 读路径恒开；内存路径按旗标。 */
+  alive?: boolean | null;
+}
+
+/** 城市过滤值：'北京市' / '北京' 归一成 ILIKE 的裸名（去掉 省/市 后缀）。 */
+export function bareCityName(value: string): string {
+  return value.replace(/[省市区]$/, '');
+}
+
+/** maxTier 解析：1-3 的整数；缺失 / 非法 → null（不过滤）。 */
+export function parseMaxTier(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n) || n < 1) return null;
+  return Math.floor(n);
 }
 
 export function knownHangzhouDistricts(values: unknown): HangzhouDistrict[] {
@@ -32,6 +50,9 @@ export function hasSpatialClip(clip?: SpatialClip | null): boolean {
   if (!clip) return false;
   if (clip.bounds) return true;
   if (clip.districts && clip.districts.length > 0) return true;
+  if (clip.city && clip.city.trim()) return true;
+  if (clip.maxTier != null) return true;
+  if (clip.alive === true) return true;
   return Boolean(clip.origin && clip.radiusMeters && clip.radiusMeters > 0);
 }
 
@@ -90,6 +111,14 @@ export function companySitesSpatialSql(
       }
     }
     clauses.push(`(${parts.join(' OR ')})`);
+  }
+
+  const city = clip?.city?.trim();
+  if (city) {
+    // 行政区划码精确匹配（'110000'），城市名 ILIKE 超集（'北京' 命中 '北京市'）。
+    clauses.push(`(s.city_code = $${i} OR COALESCE(s.city, '') ILIKE $${i + 1})`);
+    params.push(city, `%${bareCityName(city)}%`);
+    i += 2;
   }
 
   return { sql: clauses.length ? ` AND ${clauses.join(' AND ')}` : '', params };

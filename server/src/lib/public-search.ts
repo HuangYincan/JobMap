@@ -2,7 +2,7 @@
 // Routes stay thin; tests call this without Next aliases.
 
 import { runPOIPipeline } from './search.ts';
-import { knownHangzhouDistricts, parseDistanceKm, type SpatialClip } from './spatial-query.ts';
+import { knownHangzhouDistricts, parseDistanceKm, parseMaxTier, type SpatialClip } from './spatial-query.ts';
 import { isRecruitmentMode, withDistance, type FilterState, type MapMode, type POI } from './types.ts';
 import { boundsCenter, inBounds, parseBoundsParam } from './viewport-search.ts';
 
@@ -39,13 +39,29 @@ export function spatialClipFromSearch(input: PublicSearchInput): SpatialClip | u
   const km = parseDistanceKm(input.filters && (input.filters as FilterState).distance);
   const origin = bounds ? boundsCenter(bounds) : null;
   const districts = knownHangzhouDistricts(input.filters && (input.filters as FilterState).district);
+  const filters = input.filters as FilterState | undefined;
+  const city = typeof filters?.city === 'string' && filters.city.trim() ? filters.city.trim() : null;
+  const maxTier = parseMaxTier(filters?.maxTier);
+  const alive = filters?.alive === true || filters?.alive === 'true';
   const clip: SpatialClip = {
     bounds,
     origin: km && origin ? origin : null,
     radiusMeters: km ? km * 1000 : null,
     districts: districts.length ? districts : null,
+    city,
+    maxTier,
+    alive: alive ? true : null,
   };
-  if (!clip.bounds && !clip.radiusMeters && !clip.districts?.length) return undefined;
+  if (
+    !clip.bounds &&
+    !clip.radiusMeters &&
+    !clip.districts?.length &&
+    !clip.city &&
+    clip.maxTier == null &&
+    !clip.alive
+  ) {
+    return undefined;
+  }
   return clip;
 }
 

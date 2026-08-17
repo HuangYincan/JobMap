@@ -10,6 +10,7 @@ import {
   hasSpatialClip,
   knownHangzhouDistricts,
   parseDistanceKm,
+  parseMaxTier,
 } from '../src/lib/spatial-query.ts';
 
 test('companySitesSpatialSql is empty without a clip', () => {
@@ -71,6 +72,45 @@ test('in-memory public search still clips when there is no database', () => {
   ];
   const out = searchPublicCatalog(pois, { mode: 'domain', bounds: '120.0,30.2,120.2,30.3' });
   assert.deepEqual(out.results.map((p) => p.id), ['in']);
+});
+
+test('companySitesSpatialSql matches city by city_code exact or city ILIKE', () => {
+  const city = companySitesSpatialSql({ city: '北京市' });
+  assert.match(city.sql, /s\.city_code = \$1 OR COALESCE\(s\.city, ''\) ILIKE \$2/);
+  assert.deepEqual(city.params, ['北京市', '%北京%']);
+  // 行政区划码走精确匹配；无尾缀城市名同样 ILIKE 命中 '北京市'。
+  const code = companySitesSpatialSql({ city: '110000' });
+  assert.deepEqual(code.params, ['110000', '%110000%']);
+  // 城市 + 视野合并成 AND。
+  const both = companySitesSpatialSql({ city: '北京', bounds: { west: 116, south: 39, east: 117, north: 40 } });
+  assert.match(both.sql, /s\.geom && ST_MakeEnvelope\(\$1, \$2, \$3, \$4, 4326\).*city_code = \$5/);
+});
+
+test('hasSpatialClip counts city / maxTier / alive as clips', () => {
+  assert.equal(hasSpatialClip({ city: '北京' }), true);
+  assert.equal(hasSpatialClip({ maxTier: 1 }), true);
+  assert.equal(hasSpatialClip({ alive: true }), true);
+  assert.equal(hasSpatialClip({ city: '  ' }), false);
+  assert.equal(hasSpatialClip({}), false);
+});
+
+test('parseMaxTier accepts 1-3 integers and rejects garbage', () => {
+  assert.equal(parseMaxTier(1), 1);
+  assert.equal(parseMaxTier('2'), 2);
+  assert.equal(parseMaxTier(3.7), 3);
+  assert.equal(parseMaxTier(0), null);
+  assert.equal(parseMaxTier(-1), null);
+  assert.equal(parseMaxTier('abc'), null);
+  assert.equal(parseMaxTier(undefined), null);
+  assert.equal(parseMaxTier(null), null);
+});
+
+test('spatialClipFromSearch maps maxTier / city / alive onto the clip', () => {
+  const clip = spatialClipFromSearch({ filters: { maxTier: 1, city: '北京', alive: true } });
+  assert.equal(clip?.maxTier, 1);
+  assert.equal(clip?.city, '北京');
+  assert.equal(clip?.alive, true);
+  assert.equal(spatialClipFromSearch({ filters: { maxTier: 'abc', city: '  ', alive: false } }), undefined);
 });
 
 test('loadWorkCatalogFromDb clips Hangzhou west-lake when DATABASE_URL is set', async (t) => {

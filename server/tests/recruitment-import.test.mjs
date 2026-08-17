@@ -7,6 +7,7 @@ import {
   planOfficialCareerImport,
   planRecruitmentImport,
   planSeedImport,
+  siteCityOf,
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
 import { bossAdapter } from '../src/lib/recruitment-adapters/boss.ts';
@@ -16,6 +17,7 @@ import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
 import { mergeCompaniesIntoPois, poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -289,4 +291,37 @@ test('boss / nowcoder / shixiseng adapters read file drops and skip missing dirs
   const rows = await bossAdapter(dir).list();
   assert.equal(rows[0]?.slug, 'fixture-boss');
   assert.equal(rows[0]?.positions[0]?.applySource, 'boss');
+});
+
+test('siteCityOf prefers site.city then parses known cities from the address', () => {
+  assert.equal(siteCityOf({ id: 'x', name: 'x', city: '北京' }), '北京');
+  assert.equal(siteCityOf({ id: 'x', name: 'x', location: { address: '北京市' } }), '北京');
+  assert.equal(siteCityOf({ id: 'x', name: 'x', location: { address: '北京市海淀区中关村' } }), '北京');
+  assert.equal(siteCityOf({ id: 'x', name: 'x', location: { address: '杭州市西湖区文一西路969号' } }), '杭州');
+  // 杭州区名开头视为杭州站点；多城市文本 / 无法识别地址保持 null。
+  assert.equal(siteCityOf({ id: 'x', name: 'x', location: { address: '西湖区龙井路1号' } }), '杭州');
+  assert.equal(siteCityOf({ id: 'x', name: 'x', location: { address: '北京/上海' } }), null);
+  assert.equal(siteCityOf({ id: 'x', name: 'x', location: { address: '海淀区中关村' } }), null);
+  assert.equal(siteCityOf({ id: 'x', name: 'x' }), null);
+  assert.equal(siteCityOf({ id: 'x', name: 'x', location: {} }), null);
+});
+
+test('validateSourceCompany accepts tier 1-3 and rejects others', () => {
+  const good = sample();
+  good.tier = 1;
+  assert.deepEqual(validateSourceCompany(good), []);
+  const bad = sample();
+  bad.tier = 4;
+  assert.ok(validateSourceCompany(bad).some((row) => row.field === 'tier'));
+});
+
+test('import maps tier / site city / province / city_code onto the DB upsert', () => {
+  const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+  const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
+  assert.match(store, /INSERT INTO companies \([^)]*\btier\b/);
+  assert.match(store, /tier = EXCLUDED\.tier/);
+  assert.match(store, /INSERT INTO company_sites \([^)]*\bcity\b/);
+  assert.match(store, /province = \$5, city_code = \$6/);
+  assert.match(store, /siteCityOf\(site\)/);
+  assert.match(store, /company\.tier \?\? 3/);
 });

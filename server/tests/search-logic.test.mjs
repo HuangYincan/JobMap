@@ -508,3 +508,55 @@ test('applyFilters: minRating keeps only highly rated domain POIs', () => {
   assert.deepEqual(kept.map((p) => p.id), ['a']);
   assert.equal(applyFilters(pois, { minRating: 0 }).length, 3);
 });
+
+test('applyFilters: maxTier keeps only companies at or above the tier threshold (default 3)', () => {
+  const base = INTERNSHIP_SEED[0];
+  const position = base.positions[0] ?? { id: 'x', title: 'x', type: 'intern', status: 'open' };
+  const tier1 = { ...base, id: 't1', company: { ...base.company, tier: 1 }, positions: [position] };
+  const tier2 = { ...base, id: 't2', company: { ...base.company, tier: 2 }, positions: [position] };
+  const tier3 = { ...base, id: 't3', company: { ...base.company, tier: 3 }, positions: [position] };
+  const noTier = { ...base, id: 'nt', company: { ...base.company, tier: undefined }, positions: [position] };
+  assert.deepEqual(applyFilters([tier1, tier2, tier3, noTier], { maxTier: 1 }).map((p) => p.id), ['t1']);
+  assert.deepEqual(
+    applyFilters([tier1, tier2, tier3, noTier], { maxTier: 2 }).map((p) => p.id).sort(),
+    ['t1', 't2'],
+  );
+  assert.equal(applyFilters([tier1, tier2, tier3, noTier], { maxTier: 3 }).length, 4);
+  // 非法值视为不过滤。
+  assert.equal(applyFilters([tier1, tier2, tier3, noTier], { maxTier: 0 }).length, 4);
+});
+
+test('applyFilters: city matches site city / province / address text (SQL is the superset)', () => {
+  const base = INTERNSHIP_SEED[0];
+  const position = base.positions[0] ?? { id: 'x', title: 'x', type: 'intern', status: 'open' };
+  const beijing = {
+    ...base,
+    id: 'bj',
+    company: { ...base.company },
+    sites: [{ id: 'bj-site', name: '北京办公点', city: '北京', province: '北京市' }],
+    location: { ...base.location, address: '北京市海淀区中关村' },
+    positions: [position],
+  };
+  const codeCity = {
+    ...base,
+    id: 'code',
+    company: { ...base.company },
+    sites: [{ id: 'code-site', name: '海淀', cityCode: '110108' }],
+    positions: [position],
+  };
+  const hangzhou = { ...base, id: 'hz', company: { ...base.company }, positions: [position] };
+  assert.deepEqual(applyFilters([beijing, codeCity, hangzhou], { city: '北京' }).map((p) => p.id), ['bj']);
+  assert.deepEqual(applyFilters([beijing, codeCity, hangzhou], { city: '北京市' }).map((p) => p.id), ['bj']);
+  assert.deepEqual(applyFilters([beijing, codeCity, hangzhou], { city: '110108' }).map((p) => p.id), ['code']);
+  assert.deepEqual(applyFilters([beijing, codeCity, hangzhou], { city: '上海' }), []);
+});
+
+test('applyFilters: alive keeps only open positions with future or no deadline', () => {
+  const base = INTERNSHIP_SEED[0];
+  const fresh = { ...base, id: 'fresh', company: { ...base.company }, positions: [{ id: 'p1', title: 't', type: 'intern', status: 'open', deadline: '2026-10-15' }] };
+  const expired = { ...base, id: 'expired', company: { ...base.company }, positions: [{ id: 'p2', title: 't', type: 'intern', status: 'open', deadline: '2026-01-01' }] };
+  const noDeadline = { ...base, id: 'nd', company: { ...base.company }, positions: [{ id: 'p3', title: 't', type: 'intern', status: 'open' }] };
+  const closed = { ...base, id: 'closed', company: { ...base.company }, positions: [{ id: 'p4', title: 't', type: 'intern', status: 'closed', deadline: '2026-10-15' }] };
+  const kept = applyFilters([fresh, expired, noDeadline, closed], { alive: true });
+  assert.deepEqual(kept.map((p) => p.id).sort(), ['fresh', 'nd']);
+});
