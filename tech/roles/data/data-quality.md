@@ -87,6 +87,7 @@
 - **用法**：`node scripts/validate-positions-llm.mjs [--only a,b] [--sample N] [--limit N] [--concurrency N] [--dry-run]`
   - 并发默认 512（Promise 池，上限 5000）；429/5xx/网络错误指数退避（1s×2ⁿ+抖动）重试 3 次；单条失败记 error，不中断。
   - 无 `LLM_API_KEY` / `LLM_MODEL` 时自动 dry-run：打印条数 + 示例输入，退出码 0。
+- **判定优先级**（`llm-validate.ts:verdictLevel`，2026-08-17 修订）：**聚合行 → warn 优先于一切 fail**（聚合标题如「策划、技术、美术、运营、职能」是真实目录数据、需要拆分,不是造假——实测 817 条首跑曾把 692 条聚合行误判 fail,已修）；其余按 titleReal / 维度 fail → fail,维度 warn → warn,否则 pass。prompt 同步要求聚合行的 titleReal 返回 true。
 - **输出**：`tech/roles/data/validation-report-<YYYYMMDD>.json`（每条 pass/warn/fail/error + 理由 + suggestedSplit 聚合拆解）+ 控制台汇总。
 - **隐私**：每次请求仅含单条岗位文本（公司名/行业/站点/标题/部门/技能/applyUrl）；LLM 返回只当 JSON 解析，不执行。
-- 计划：用户配好 key 后跑首批 181 条（2026-08-17 drops），聚合行按 `suggestedSplit` 拆解；后续每次 drops 刷新后重跑对比。
+- 计划：2026-08-17 全量 817 条（WS2 merge 后 radar 761 + official 56）已跑,聚合行按 `suggestedSplit` 拆解;后续每次 drops 刷新后重跑对比。
