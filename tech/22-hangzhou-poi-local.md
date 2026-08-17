@@ -1,0 +1,155 @@
+# 22 — 杭州 POI 本地化 + 高德省调用回退(Domain 模式)
+
+> **Status:** 已落地(2026-08-17,`feature/hz-poi-local`,Stage 1–4 完成,Stage 5 文档 + 回归)
+> **Owner:** product / data
+> 来源审查:`tech/roles/data/etl/hangzhou-poi.md`;计划:`tech/20-development-plan.md`
+
+## 背景与动机
+
+Domain 主地图模式原本由浏览器直连 `AMap.PlaceSearch`(`extensions:'all'`),
+一次视口刷新最多 9 分类 × 4 页 = **36 次**高德 API 调用(`viewport-search.ts` +
+`amap-api.ts`)。2026-08-17 高德基础搜索服务(关键字/周边/多边形/ID/输入提示)
+真实触发**日配额 10044**,方案必须把主要流量从高德 API 移走。
+
+用户持有**全国数亿条高德 POI 数据**(已授权可入库,含高德图床 photos URL),
+Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决于 zoom),
+**杭州外回退高德但开销极小**。
+
+## 数据源事实(实测)
+
+来源:`/Users/acccan/Downloads/杭州市/杭州市POI.csv`(2026-08 导出)。
+
+| 项 | 值 |
+|---|---|
+| 行数 | 1,006,185(入库唯一 1,006,158,27 个重复 poi_id 合并) |
+| 体积 | 603MB,58 列,UTF-8 |
+| id / name / address / 坐标 | 100%(GCJ-02 + WGS84 双套) |
+| 分类 | `bigType/midType/smallType/typecode` 100% |
+| `adname` | 13 区县全 |
+| photos | 460,527 行(46%)有图,高德图床 URL |
+| rating | 414,160 行(41%),0–5 |
+| cost | 8% |
+| **恒缺** | `reviewCount` / `reviews` / `website`;`biz_ext.open_time` 前 30 万行 0 命中 → `open_hours` 本数据源恒空 |
+
+**格式坑**(python-repr,非标准 JSON):
+
+- `photos`:`[{'url':'http://...','url_mid':'...'}]` — 键和值都是单引号
+- `location`:`"120.135,30.25"`(lng,lat 字符串)
+- `biz_ext`:`{'rating':'4.4','cost':'50'}` — 单引号 dict,值带引号
+
+解析正则必须容错 `['"]?` 前缀:`/['"]?url['"]?\s*:\s*'([^']+)'/g`。
+
+坐标范围(GCJ-02):经度 118.36–120.70,纬度 29.20–30.56。
+
+## 表设计(迁移 013)
+
+`db/migrations/013_hangzhou_pois.sql` — 单表 `hz_pois`:
+
+- 主键 `poi_id`(高德 poiid);`city_code` 默认 `'330100'` — 全国扩展分区预留
+- `lng_gcj/lat_gcj` 为展示坐标,**零转换**(高德底图 GCJ-02,浏览器 bbox 也是
+  GCJ-02,直接 `&&` 匹配;WGS84 会整体偏移 ~500m,仅留 `lon_wgs84/lat_wgs84` 参考列)
+- `geom`:`GENERATED ALWAYS AS ST_SetSRID(ST_MakePoint(lng_gcj, lat_gcj), 4326) STORED`
+- `photos jsonb`(提取的 URL 数组)、`tier smallint DEFAULT 12`
+- 7 索引:geom gist、adname、name trgm gin、big_type、tier、rating DESC、city_code
+- CHECK:`tier BETWEEN 0 AND 21`、`rating 0–5`、photos 格式约束
+
+## Tier 映射(可见最小 zoom,tier ≤ floor(zoom) 显示)
+
+| big_type | tier | 说明 |
+|---|---|---|
+| 风景名胜 / 科教文化 | 0 | 地标,任何 zoom 都显示 |
+| 政府机构 | 2 | |
+| 交通设施 | 3 | |
+| 购物 / 公司企业 | 5 | |
+| 住宿 / 体育 / 医疗 / 金融 | 8 | |
+| 生活服务 | 9 | |
+| 餐饮服务 | 10 | |
+| 商务住宅 / 汽车 / 公共设施 | 11 | |
+| 室内设施 | 12 | 默认 |
+| 地名地址 / 通行设施 / 虚拟数据 / 道路附属 / 事件活动 | 21 | **永隐** |
+
+`tierForCategory(bigType, midType, smallType)` 为纯函数(`lib/hz-poi-import.ts`)。
+
+## 导入管线
+
+`server/scripts/import-hz-pois.mjs`(npm script `import:hz:pois[:apply]`):
+
+- csv-parse 流式读(不整文件入内存);`cleanCsvRow` 缺必填弃行
+- 临时表 stage → 批量 multi-row `INSERT ... ON CONFLICT (poi_id) DO UPDATE`
+  (**幂等可重跑**,已二次验证:重跑后 count 保持 1,006,158)
+- 旗标:`--apply`(缺省 dry-run)、`--truncate`、`--limit N`
+- DATABASE_URL 从 `server/.env.local` 读,不打印任何 key
+- 实测:全量导入 ~数分钟;西湖区 bbox 查询 102ms
+
+## 读路径 API
+
+`GET /api/pois/domain-local?bounds=west,south,east,north&zoom=13&q=&categories=&limit=50&offset=0`
+
+- bbox:`p.geom && ST_MakeEnvelope(...)`;`p.tier <= floor(zoom)`
+- `q`:`name ILIKE`;`categories`:`big_type = ANY(...)`
+- common 过滤下推:`(rating > 0 OR jsonb_array_length(photos) > 0 OR tier <= 3)`
+  (与 AMap 的 `isCommonPoi` 语义对齐:有评分/有图/地标才值得上卡)
+- `ORDER BY rating DESC NULLS LAST, photos DESC, poi_id`(稳定性)
+- `LIMIT` 钳 1..300,`OFFSET` 钳 0..1000;public-cache 30s
+- 返回 `{ total, offset, limit, source:'local', results }`;无库/空 → 空数组
+- 坐标 GCJ 零转换;photos 截 3;`category=big_type`、`subcategory=mid_type`
+
+## 前端分叉(poi-service + map-shell)
+
+`fetchDomainPOIs` 按 `inHangzhouBox(center)`(`HANGZHOU_BBOX`:
+{west:118.3, south:29.1, east:120.8, north:30.7})分叉:
+
+- **杭州内 + 关键词**:先 `GET /api/pois/domain-local?q=...`(视口 bbox 内
+  `name ILIKE`);本地 0 命中(如搜「北京天安门」)才回退高德 1 次
+- **杭州内 + 浏览**:本地分页,每批 `DOMAIN_BATCH_SIZE=50`,累计
+  `DOMAIN_POI_HARD_CAP=1000`(`mergePoisById` 按 id 去重)
+- **杭州外**:`searchViewportPOIsFallback` — `fallbackTaskWindow` 每轮只
+  `full.slice(pageOffset, pageOffset + 1)` = **1 次 PlaceSearch(25 条)**;
+  AMap 请求失败 → 返回 0 条,**不卡死进程**
+- 本地库未导入 / 网络错 → 杭州内也自动回退高德,不白屏
+
+## UI(Stage 4,2026-08-17 用户定稿)
+
+- **无限滚动**:初始 50 条,IntersectionObserver 哨兵(viewport + 400px 提前量)
+  到底自动 +50;依赖 `[pois.length]` 重新 observe(React 重建哨兵节点);
+  loadingMore 期间不重复触发
+- **上限 1000**:`catalog.length >= DOMAIN_POI_HARD_CAP` 后哨兵停止触发,
+  显示「── 已达加载上限 ──」;顶部不显示计数(只有底部提示)
+- **视口变化刷新**:平移/缩放 → 800ms 防抖 → 按 live bounds 替换 + 淡入
+  (`existing: []`,offset 归零)
+- **删除「加载更多」按钮**;刷新按钮**只在卡片总数为零**时显示(桌面 + 移动)
+- 加载过渡:骨架屏 → 淡入 stagger(`--index: i % 8`),Apple 风格 18px spinner
+  (`prefers-reduced-motion` 适配)
+
+### 会话缓存交互(踩坑记录)
+
+`MODE_CACHE_VERSION 4→5`(旧高德行失效重拉)。缓存早退守卫必须同时比对
+`query`:原实现只比 `pageOffset` + `refreshToken`,换关键词时命中缓存早退,
+**永远不发请求**——UI 上表现为搜索任何新词都是 0 结果且无网络请求
+(已被 `query === cached.query` 修复,`d127ec2`)。
+
+`loadingRef` 释放坑:取消中的 load 其 `finally` 原本跳过 `loadingRef.current =
+false`,被取消后该 ref 永久卡 true → 后续所有 load() 直接短路、不再发任何
+请求。修复:`finally` 无条件释放 ref,状态更新仍以 `signal.cancelled` 守卫
+(同一提交)。
+
+## 验证记录
+
+| 项 | 结果 |
+|---|---|
+| 导入幂等 | ✅ 重跑 count 保持 1,006,158 |
+| 本地首屏 | ✅ 1 次 `/api/pois/domain-local`(替代 36 次 AMap),50 条 |
+| 无限滚动 | ✅ 50→100→…→1000(offset +50 链),到顶停止 + 已达上限提示 |
+| 视口刷新 | ✅ zoom out 1000→100,offset 归零,替换 + 淡入 |
+| 关键词链 | ✅ 杭州内先本地 q=(0 命中)→ 回退 AMap 1 次;失败返回 0 不卡死 |
+| 详情照片 | ✅ 本地库渲染(3 张,含地址/电话/评分) |
+| 测试 | ✅ 271 个(`node --test tests/*.test.mjs`)、typecheck、build |
+
+## 已知缺口与后续
+
+- **AMap 日配额**(10044,2026-08-17):杭州外 fallback 代码已就位,换新 key 即可用
+- `reviewCount/website` 本数据源恒缺;`open_hours` 空
+- 关键词搜索仍按当前视口 bbox 约束(与旧 AMap searchNearBy 半径语义一致);
+  点搜索建议(AutoComplete)会飞过去再刷视口
+- 全国扩展:表已带 `city_code` + 分区注释;后续城市导入同管线,前端把
+  `inHangzhouBox` 换成「该城市已导入」判定

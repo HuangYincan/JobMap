@@ -6,6 +6,8 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Added
 
+- **Hangzhou POI localization (`feature/hz-poi-local`, Stages 1–4).** AMap quota (10044) hit on 2026-08-17 made the browser 36-call PlaceSearch viewport refresh untenable. User's 1,006,185-row Hangzhou POI export (authorized, photos included) now lives in `hz_pois` (migration `013`): GCJ-02 geom (zero-conversion, matches AMap tiles), tier 0..21 visible-min-zoom mapping (noise classes hidden at 21), idempotent staged import (`server/scripts/import-hz-pois.mjs`, `npm run import:hz:pois:apply`, re-run keeps count 1,006,158). Read path `GET /api/pois/domain-local` (bbox + zoom tier + ILIKE + big_type, common-filter pushed down, rating/photos order, 30s cache). Frontend forks on `inHangzhouBox`: in-HZ browse = local 50/batch infinite scroll capped 1000 (IntersectionObserver sentinel, 「已达加载上限」); in-HZ keyword = local first, AMap 1-call fallback on 0 hits; out-of-HZ = AMap fallback 1 call (25) per scroll, failures return 0 without hanging. UI per user spec: viewport-change replace+fade refresh (800ms debounce), load-more button removed, refresh button only at 0 cards, top counter removed (bottom sentinel text only). Docs: `tech/22-hangzhou-poi-local.md`, `tech/roles/data/etl/hangzhou-poi.md`, `data-sources.md` register row.
+
 - Guest Recent in the browser: persistable (work/internship) queries write `dm.guest-search-history.v1` (cap 30). Sign-in merges rows the account does not have and keeps a local mirror; sign-out restores. `lib/persistable.ts` is the extension seam (`PERSISTABLE_MODES`; add `college` when that catalog lands).
 - Saved + Recent persist only recruitment catalog POIs. Domain AMap bookmarks are hidden; `POST /api/me/saved` and `POST /api/me/search-history` return 400 `NOT_PERSISTABLE` for non-persistable rows.
 - Map-mode suggestion pick upserts a session `DomainPOI` (`suggestionToDomainPoi` + `mergePoisById`) so a card exists. Empty search boxes no longer render trending tags (Recent L2 still does).
@@ -22,6 +24,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
+- **Hangzhou POI search/cache deadlocks (`d127ec2`):** mode-cache early-return guard ignored `query` — searching any new keyword while a cached catalog existed returned 0 results with **no request ever sent** (now `query === cached.query` required). Cancelled in-flight loads never released `loadingRef`, deadlocking all subsequent loads (now released unconditionally in `finally`; state updates still gated on the signal).
 - **Work mode shows real data only (2026-08-17 decision).** Example jobs (seed / official-career curated titles like "前端开发工程师（2026 秋招）") are development scaffolding: `isAuthenticPositionId` keeps only `radar-*` / `portal-*` positions on every read path (offline catalog, DB read, client fallback). The seed still supplies the coordinate skeleton; DB example rows were marked `closed` (reversible). Map surface: 51 → 14 pins, all with real recruiting signals.
 - Merge-on-sign-in wiped rows whose POST failed; now only rows absent from the account upload, and failed rows stay local. Merge logic extracted to `mergeGuestHistoryIntoAccount` (unit-tested).
 - Persisted signed-in sessions now merge leftover guest rows on mount, not only after the auth modal.
