@@ -43,20 +43,25 @@ const bad = Object.entries(labels).filter(
 );
 console.log(`值域非法: ${bad.length} ${bad.slice(0, 10).map(([s]) => s).join(',') || ''}`);
 
-// 3. 已知锚点(期望 tier 区间;超出即警告)。slug 前缀精确匹配,注意「京东」≠「京东方」。
+// 3. 已知锚点(期望 tier 区间;超出即警告)。匹配:slug 前缀命中(排除前缀防
+//    误配,如「京东」锚点排除「京东方」);中文名锚点只用于中文 slug,
+//    英文 slug 公司用英文前缀锚点(bytedance/tencent/...)。
 const ANCHORS = [
-  ['字节', 0, 1], ['tencent', 0, 1], ['alibaba', 0, 1], ['huawei', 0, 2], ['nvidia', 0, 2], ['英伟达', 0, 2],
-  ['deepseek', 0, 2], ['京东-tgt', 4, 5], ['京东tgt', 4, 5], ['京东', 4, 5], ['美团', 4, 5],
-  ['拼多多', 4, 5], ['xiaomi', 4, 6], ['小米', 4, 6], ['netease', 4, 6], ['网易', 4, 6],
-  ['antgroup', 4, 6], ['蚂蚁', 4, 6], ['didi', 4, 6], ['滴滴', 4, 6], ['比亚迪', 4, 6],
-  ['bilibili', 5, 7], ['哔哩', 5, 7], ['快手', 4, 6], ['zhihu', 5, 7], ['megvii', 5, 7],
-  ['unitree', 5, 8], ['leapmotor', 5, 8], ['dji', 1, 6], ['大疆', 1, 6], ['hikvision', 4, 7],
-  ['海康', 4, 7], ['中芯', 5, 8], ['寒武纪', 6, 9], ['摩尔线程', 6, 9], ['米哈游', 4, 7],
-  ['oppo', 4, 6], ['vivo', 4, 6], ['联想', 4, 7], ['京东方', 5, 8],
+  ['bytedance', 0, 1, ''], ['tencent', 0, 1, ''], ['alibaba', 0, 1, ''], ['huawei', 0, 2, ''], ['nvidia', 0, 2, ''],
+  ['deepseek', 0, 2, ''], ['京东', 4, 5, '京东方'], ['美团', 4, 5, ''], ['拼多多', 4, 5, ''],
+  ['百度', 4, 6, ''],
+  ['xiaomi', 4, 6, ''], ['小米', 4, 6, ''], ['netease', 4, 6, ''], ['antgroup', 4, 6, ''], ['didi', 4, 6, ''],
+  ['比亚迪', 4, 6, ''], ['bilibili', 5, 7, ''], ['哔哩', 5, 7, ''], ['快手', 4, 6, ''],
+  ['zhihu', 5, 7, ''], ['megvii', 5, 7, ''], ['unitree', 5, 8, ''], ['leapmotor', 5, 8, ''],
+  ['dji', 1, 6, ''], ['hikvision', 4, 7, ''], ['中芯', 5, 8, ''], ['寒武纪', 6, 9, ''],
+  ['摩尔线程', 6, 9, ''], ['米哈游', 4, 7, ''], ['oppo', 4, 6, ''], ['vivo', 4, 6, ''],
+  ['联想', 4, 7, ''], ['京东方', 5, 8, ''],
 ];
+const anchorMatches = (slug, name, exclude) =>
+  slug.startsWith(name) && !(exclude && slug.startsWith(exclude));
 const warn = [];
-for (const [name, lo, hi] of ANCHORS) {
-  const hit = Object.entries(labels).filter(([slug]) => slug.startsWith(name));
+for (const [name, lo, hi, exclude] of ANCHORS) {
+  const hit = Object.entries(labels).filter(([slug]) => anchorMatches(slug, name, exclude));
   if (!hit.length) { warn.push(`${name}: 未找到`); continue; }
   for (const [slug, l] of hit) {
     if (l.tier < lo || l.tier > hi) warn.push(`${name}(${slug}): tier ${l.tier} 超出期望 [${lo},${hi}]`);
