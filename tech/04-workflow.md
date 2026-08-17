@@ -69,11 +69,8 @@ database). To keep branches mergeable and the main working tree stable:
 Claude Code: `EnterWorktree` / `ExitWorktree` manage `.claude/worktrees/`.
 Operational detail lives in `.claude/skills/parallel-development/SKILL.md`.
 
-> **Branch state (2026-08-17):** `dev` lags `feature/phase-2-multi-mode` by 151
-> commits — all of Phase 1/2 lives on the feature branch; `dev` holds only early
-> doc commits. Before starting new parallel work from `dev`, sync once:
-> `git switch dev && git merge feature/phase-2-multi-mode`, then cut feature
-> branches from the refreshed `dev`.
+> **Branch state (2026-08-17):** `dev` was synced with `feature/phase-2-multi-mode`
+> — all of Phase 1/2 now lives on `dev`. Cut new `feature/` / `fix/` branches from `dev`.
 
 ## Review Checklist
 

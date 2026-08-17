@@ -49,7 +49,7 @@ domain-map/
 4. **冲突处理**:功能 worktree 里定期 `git merge dev` 让分叉保持小;冲突在各自 worktree 内解决,再合回 `dev`。每次冲突都是小而可审查的 diff。
 
 5. 详见 `tech/04-workflow.md` 与 `.claude/skills/parallel-development/`。
-   ⚠️ 当前 `dev` 落后 `feature/phase-2-multi-mode` 151 个提交——并行开发前先一次性同步 `dev`。
+   ✅ `dev` 已于 2026-08-17 同步 `feature/phase-2-multi-mode`(Phase 1/2 全部工作已并入 `dev`),新任务直接从此切。
 
 ### 1. 接到新任务时
 

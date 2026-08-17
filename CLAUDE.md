@@ -20,7 +20,7 @@ Next.js 15 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。
 3. **功能验证通过后 merge 回 `dev`**;`main` 只由用户发版。提交用 Conventional Commits。
 4. **冲突处理**:功能分支定期 `git merge dev` 保持分叉小;冲突在各自 worktree 内解决。
 
-> ⚠️ **当前分支状态(2026-08-17):** `dev` 落后 `feature/phase-2-multi-mode` 151 个提交(Phase 1/2 全部工作在 feature 分支上)。开始新并行任务前,先一次性同步:`git switch dev && git merge feature/phase-2-multi-mode`。
+> ✅ **分支状态(2026-08-17):** `dev` 已同步 `feature/phase-2-multi-mode`(Phase 1/2 全部工作已并入 `dev`)。新任务直接从 `dev` 切 worktree。
 
 ## 硬性规则(无例外)
 

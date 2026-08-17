@@ -58,11 +58,6 @@ git push origin dev
 
 ## Current repo state (2026-08-17)
 
-`dev` lags `feature/phase-2-multi-mode` by 151 commits. Before cutting parallel
-branches from `dev`, sync once:
-
-```bash
-git switch dev && git merge feature/phase-2-multi-mode
-```
-
-After that, new `feature/` / `fix/` branches carry the full current codebase.
+`dev` was synced with `feature/phase-2-multi-mode` (fast-forward merge) — all of
+Phase 1/2 lives on `dev`. Cut new `feature/` / `fix/` branches from `dev` and
+they carry the full current codebase.
