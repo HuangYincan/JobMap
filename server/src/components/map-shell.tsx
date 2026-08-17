@@ -363,6 +363,9 @@ export function MapShell() {
     setQuery(cached.query);
     setFilters(cached.filters);
     if (cached.sort) setSort(cached.sort);
+    // 恢复缓存不经主 load,这里复位 noMore,避免上一会话的「没有更多结果」粘住
+    noMoreRef.current = false;
+    setNoMoreData(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在首屏读一次
   }, []);
 
@@ -1236,6 +1239,9 @@ export function MapShell() {
     setOpenPositionId(null);
     setMobileJd(null);
     setMobileFiltersOpen(false);
+    // 切模式即换数据上下文:复位 noMore(缓存还原路径不经主 load)
+    noMoreRef.current = false;
+    setNoMoreData(false);
 
     const cached = readModeCache(target);
     if (cached) {
