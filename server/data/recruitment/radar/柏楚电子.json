@@ -1,0 +1,53 @@
+{
+  "slug": "柏楚电子",
+  "name": "柏楚电子",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://fscut.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "柏楚电子-site-shanghai",
+      "name": "柏楚电子",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a27af28469c6",
+      "title": "软件开发 数控系统 营销推广 传感器设计 运动控制研究员感知 测试A工算法 几何算法 图形学算法 前端开发技术支持 Java开发 产品经理 工艺 中心助理",
+      "siteId": "柏楚电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-fa66fc06d7fd",
+      "title": "软件研发、硬件研发、产品管理、专业智能",
+      "siteId": "柏楚电子-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://v.wjx.cn/vm/m8Rpjym.aspx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

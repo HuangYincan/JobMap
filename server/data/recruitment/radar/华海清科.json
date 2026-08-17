@@ -1,0 +1,65 @@
+{
+  "slug": "华海清科",
+  "name": "华海清科",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hwatsing1.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "华海清科-site-beijing",
+      "name": "华海清科",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    },
+    {
+      "id": "华海清科-site-shanghai",
+      "name": "华海清科",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    },
+    {
+      "id": "华海清科-site-guangzhou",
+      "name": "华海清科",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    },
+    {
+      "id": "华海清科-site-chengdu",
+      "name": "华海清科",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b08173e98a3f",
+      "title": "研发类  技术类 职能类",
+      "siteId": "华海清科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hwatsing1.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "slug": "曦望",
+  "name": "曦望",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.sunrise-ai.com/campus/?keywords=&category=&location=&project=7623002250404170027&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+  "sites": [
+    {
+      "id": "曦望-site-beijing",
+      "name": "曦望",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "曦望-site-shanghai",
+      "name": "曦望",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "曦望-site-shenzhen",
+      "name": "曦望",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "曦望-site-chengdu",
+      "name": "曦望",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1355a0646c16",
+      "title": "芯片类 AI  Infra类 运营类",
+      "siteId": "曦望-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.sunrise-ai.com/campus/?keywords=&category=&location=&project=7623002250404170027&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "slug": "光轮智能",
+  "name": "光轮智能",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://lightwheel.jobs.feishu.cn/referral/position/share/?token=MjsxNzc4MjIxNzcxMDU1Ozc1Mzk3OTI0MDM5NjQ4NTQyOTE7NzYzNzM5OTM3OTIzNDM0MzE3ODsx",
+  "sites": [
+    {
+      "id": "光轮智能-site-beijing",
+      "name": "光轮智能",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "光轮智能-site-shanghai",
+      "name": "光轮智能",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ce4761b7b352",
+      "title": "算法研究实习生 算法实习生 仿真引擎开发实习生 ，Egocentric  Data开发实习生  后端开发实习生  嵌入式开发实习生 产品实习生 AI 数据项目运",
+      "siteId": "光轮智能-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lightwheel.jobs.feishu.cn/referral/position/share/?token=MjsxNzc4MjIxNzcxMDU1Ozc1Mzk3OTI0MDM5NjQ4NTQyOTE7NzYzNzM5OTM3OTIzNDM0MzE3ODsx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

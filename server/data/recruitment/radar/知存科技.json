@@ -1,6 +1,7 @@
 {
   "slug": "知存科技",
   "name": "知存科技",
+  "tier": 3,
   "industries": [
     "manufacturing"
   ],
@@ -8,12 +9,30 @@
   "careerUrl": "https://iucylxooqp.jobs.feishu.cn/200839?sessionid=",
   "sites": [
     {
-      "id": "知存科技-site",
+      "id": "知存科技-site-beijing",
       "name": "知存科技",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "临平区科城街180号算力小镇知存科技C幢1楼",
-        "lng": 120.284625,
-        "lat": 30.328025
+        "address": "北京/上海/杭州/西安"
+      }
+    },
+    {
+      "id": "知存科技-site-shanghai",
+      "name": "知存科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/杭州/西安"
+      }
+    },
+    {
+      "id": "知存科技-site-hangzhou",
+      "name": "知存科技",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/上海/杭州/西安"
       }
     }
   ],
@@ -21,7 +40,7 @@
     {
       "externalId": "radar-e7a2429e0547",
       "title": "微电子  集成电路  半导体  计算机  计算机体系结构   电子信息  通信 自动化  物理  材料  光电  机械 热流体 等专业",
-      "siteId": "知存科技-site",
+      "siteId": "知存科技-site-beijing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +49,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839?sessionid=",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

@@ -1,0 +1,65 @@
+{
+  "slug": "东方财富",
+  "name": "东方财富",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/eastmoney/92400#/jobs?page=1&anchorName=jobsList&project%5B0%5D=100130008&keyword=",
+  "sites": [
+    {
+      "id": "东方财富-site-beijing",
+      "name": "东方财富",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "东方财富-site-shanghai",
+      "name": "东方财富",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "东方财富-site-shenzhen",
+      "name": "东方财富",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "东方财富-site-chengdu",
+      "name": "东方财富",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-55dacafe4750",
+      "title": "管培生AI应用工程师AI互联网产品AI金融研究 市场推广机构客户经理商务拓展证券投资交易方向证券研究方向证券商务方向服务端开发工程师Web前端开发工程师 测试开",
+      "siteId": "东方财富-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/eastmoney/92400#/jobs?page=1&anchorName=jobsList&project%5B0%5D=100130008&keyword=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

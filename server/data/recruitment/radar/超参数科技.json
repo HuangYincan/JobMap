@@ -1,0 +1,53 @@
+{
+  "slug": "超参数科技",
+  "name": "超参数科技",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/chaocanshu/45562#/jobs?location=&page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "超参数科技-site-shenzhen",
+      "name": "超参数科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9eea4965f10d",
+      "title": "后台开发工程师  强化学习研究员 算法工程师  机器学习研究员",
+      "siteId": "超参数科技-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/chaocanshu/45562#/jobs?location=&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-832499461ccf",
+      "title": "强化学习研究员  机器学习研究员  算法工程师  后台开发工程师",
+      "siteId": "超参数科技-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-09-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/chaocanshu/45562?sessionid=#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

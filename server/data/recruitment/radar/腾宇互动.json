@@ -1,0 +1,65 @@
+{
+  "slug": "腾宇互动",
+  "name": "腾宇互动",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhaotalent-tenyu.ihr.tencent-cloud.com/campus/jobs",
+  "sites": [
+    {
+      "id": "腾宇互动-site-beijing",
+      "name": "腾宇互动",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "腾宇互动-site-shanghai",
+      "name": "腾宇互动",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "腾宇互动-site-guangzhou",
+      "name": "腾宇互动",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "腾宇互动-site-shenzhen",
+      "name": "腾宇互动",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-25cbd4f9298d",
+      "title": "设计类  技术类  产品/项目类  专业类",
+      "siteId": "腾宇互动-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaotalent-tenyu.ihr.tencent-cloud.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

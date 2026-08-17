@@ -1,0 +1,56 @@
+{
+  "slug": "开立医院",
+  "name": "开立医院",
+  "tier": 3,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.sonoscape.com/campus-recruitment/sonoscape/94392/#/jobs?project=100120039",
+  "sites": [
+    {
+      "id": "开立医院-site-beijing",
+      "name": "开立医院",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳/武汉"
+      }
+    },
+    {
+      "id": "开立医院-site-shenzhen",
+      "name": "开立医院",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳/武汉"
+      }
+    },
+    {
+      "id": "开立医院-site-wuhan",
+      "name": "开立医院",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/深圳/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6d173e820f88",
+      "title": "图像处理算法工程师  信号处理算法工程师  AI算法工程师  应用软件工程师 光机结构工程师 电源工程师 嵌入式硬件工程师  产品验证工程师 机械工程师 全球技",
+      "siteId": "开立医院-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.sonoscape.com/campus-recruitment/sonoscape/94392/#/jobs?project=100120039",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

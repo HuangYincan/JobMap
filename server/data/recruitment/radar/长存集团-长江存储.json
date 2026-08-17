@@ -1,0 +1,56 @@
+{
+  "slug": "长存集团-长江存储",
+  "name": "长存集团/长江存储",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ymtc-campus.zhiye.com/campus/jobs?sessionid=",
+  "sites": [
+    {
+      "id": "长存集团-长江存储-site-beijing",
+      "name": "长存集团/长江存储",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/武汉"
+      }
+    },
+    {
+      "id": "长存集团-长江存储-site-shanghai",
+      "name": "长存集团/长江存储",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/武汉"
+      }
+    },
+    {
+      "id": "长存集团-长江存储-site-wuhan",
+      "name": "长存集团/长江存储",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6a8b7a00f1e7",
+      "title": "电路设计类  工艺技术类  工程技术类",
+      "siteId": "长存集团-长江存储-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ymtc-campus.zhiye.com/campus/jobs?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

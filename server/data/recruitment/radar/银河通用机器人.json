@@ -1,0 +1,62 @@
+{
+  "slug": "银河通用机器人",
+  "name": "银河通用机器人",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus-recruitment/yinhetongyong/165930?recommendCode=DSAAkVmW#/jobs",
+  "sites": [
+    {
+      "id": "银河通用机器人-site-beijing",
+      "name": "银河通用机器人",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳/苏州"
+      }
+    },
+    {
+      "id": "银河通用机器人-site-shenzhen",
+      "name": "银河通用机器人",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b5d31012c9f4",
+      "title": "模态大模型、操作算法、规划控制、大硬件、系统开发等不同需求方向",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/yinhetongyong/165930?recommendCode=DSAAkVmW#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-e8c3c459ae3c",
+      "title": "具身多模态大模型  机器人规划与控制  机器人硬件与量产 具身智能操作算法  人形强化学习控制 具身软件系统开发",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/yinhetongyong/165930?recommendCode=DSAAkVmW#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

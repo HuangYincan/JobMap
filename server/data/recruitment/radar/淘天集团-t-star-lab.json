@@ -1,6 +1,7 @@
 {
   "slug": "淘天集团-t-star-lab",
   "name": "淘天集团[T-Star  Lab )",
+  "tier": 3,
   "industries": [
     "internet"
   ],
@@ -8,12 +9,21 @@
   "careerUrl": "https://campus-talent.alibaba.com/campus/position?batchId=100000700001&filterParams=%7B%22aliStar%22%3A%5B%22Y%22%5D%7D&search=T-Star",
   "sites": [
     {
-      "id": "淘天集团-t-star-lab-site",
+      "id": "淘天集团-t-star-lab-site-beijing",
       "name": "淘天集团[T-Star  Lab )",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "余杭区文一西路969号阿里巴巴西溪园区",
-        "lng": 120.024993,
-        "lat": 30.280062
+        "address": "北京/杭州"
+      }
+    },
+    {
+      "id": "淘天集团-t-star-lab-site-hangzhou",
+      "name": "淘天集团[T-Star  Lab )",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/杭州"
       }
     }
   ],
@@ -21,7 +31,7 @@
     {
       "externalId": "radar-06ca61ecfa37",
       "title": "阿里星&T-Star顶尖人才计划:  具体岗位见投递方式链接",
-      "siteId": "淘天集团-t-star-lab-site",
+      "siteId": "淘天集团-t-star-lab-site-beijing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +40,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus-talent.alibaba.com/campus/position?batchId=100000700001&filterParams=%7B%22aliStar%22%3A%5B%22Y%22%5D%7D&search=T-Star",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

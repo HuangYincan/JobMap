@@ -1,6 +1,7 @@
 {
   "slug": "招商银行",
   "name": "招商银行",
+  "tier": 3,
   "industries": [
     "finance"
   ],
@@ -8,12 +9,30 @@
   "careerUrl": "https://cmbntjob.cmbchina.com/pages/bindInvited.html?qrCode=A4B9365AED1048E4BBDECF9593FF3608&rand=1754015829984&blNtCode=OJYUOY",
   "sites": [
     {
-      "id": "招商银行-site",
+      "id": "招商银行-site-shenzhen",
       "name": "招商银行·招银网络科技",
+      "city": "深圳市",
+      "province": "广东省",
       "location": {
-        "address": "上城区富春路300号(城星路98号)",
-        "lng": 120.207161,
-        "lat": 30.241226
+        "address": "深圳/成都/杭州"
+      }
+    },
+    {
+      "id": "招商银行-site-chengdu",
+      "name": "招商银行·招银网络科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "深圳/成都/杭州"
+      }
+    },
+    {
+      "id": "招商银行-site-hangzhou",
+      "name": "招商银行·招银网络科技",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "深圳/成都/杭州"
       }
     }
   ],
@@ -21,7 +40,7 @@
     {
       "externalId": "radar-6b03e7729580",
       "title": "后端开发工程师、前端开发工程师、算法工程师、运维研发工程师、测试开发工程师",
-      "siteId": "招商银行-site",
+      "siteId": "招商银行-site-shenzhen",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,12 +49,13 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://cmbntjob.cmbchina.com/pages/bindInvited.html?qrCode=A4B9365AED1048E4BBDECF9593FF3608&rand=1754015829984&blNtCode=OJYUOY",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     },
     {
       "externalId": "radar-63c6e9d6f916",
       "title": "后端开发工程师  前端开发工程师  算法工程师  测试工程师  运维研发工程师",
-      "siteId": "招商银行-site",
+      "siteId": "招商银行-site-shenzhen",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -44,7 +64,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://cmbntjob.cmbchina.com/pages/bindInvited.html?qrCode=A4B9365AED1048E4BBDECF9593FF3608&rand=1754015829984&blNtCode=OJYUOY",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

@@ -1,0 +1,56 @@
+{
+  "slug": "比亚迪",
+  "name": "比亚迪",
+  "tier": 3,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://job.byd.com/portal/pc/?sessionid=#/school/schoolPhQ?1wdfb1LbMwhz4TymXhCJbg==",
+  "sites": [
+    {
+      "id": "比亚迪-site-beijing",
+      "name": "比亚迪—博士校招",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/重庆"
+      }
+    },
+    {
+      "id": "比亚迪-site-shanghai",
+      "name": "比亚迪—博士校招",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/重庆"
+      }
+    },
+    {
+      "id": "比亚迪-site-shenzhen",
+      "name": "比亚迪—博士校招",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/重庆"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ce0f8396e59b",
+      "title": "电子信息类  材料类  机械类 电器类  物理学类  化学类  自动化类  能源动力类  力学类  计算机类  生物科学类等专业",
+      "siteId": "比亚迪-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.byd.com/portal/pc/?sessionid=#/school/schoolPhQ?1wdfb1LbMwhz4TymXhCJbg==",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

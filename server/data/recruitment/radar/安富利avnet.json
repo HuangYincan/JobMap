@@ -1,0 +1,56 @@
+{
+  "slug": "安富利avnet",
+  "name": "安富利AVNET",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://v.wjx.cn/vm/rXXVUrZ.aspx",
+  "sites": [
+    {
+      "id": "安富利avnet-site-beijing",
+      "name": "安富利AVNET",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "安富利avnet-site-shanghai",
+      "name": "安富利AVNET",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "安富利avnet-site-shenzhen",
+      "name": "安富利AVNET",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1c8f9dd744af",
+      "title": "市场与销售类  技术类  销售支持类",
+      "siteId": "安富利avnet-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://v.wjx.cn/vm/rXXVUrZ.aspx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "slug": "minmax",
+  "name": "MinMax",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://vrfi1sk8a0.jobs.feishu.cn/s/UmWyycpF8kQ",
+  "sites": [
+    {
+      "id": "minmax-site-beijing",
+      "name": "MinMax",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "minmax-site-shanghai",
+      "name": "MinMax",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-84669eb772f9",
+      "title": "自动驾驶软件实习生（模型部署/量化/前后处理）",
+      "siteId": "minmax-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://vrfi1sk8a0.jobs.feishu.cn/s/UmWyycpF8kQ",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

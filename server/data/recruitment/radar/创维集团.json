@@ -1,0 +1,38 @@
+{
+  "slug": "创维集团",
+  "name": "创维集团",
+  "tier": 3,
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://skyworth.hotjob.cn/",
+  "sites": [
+    {
+      "id": "创维集团-site-shenzhen",
+      "name": "创维集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳/佛山/海口"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-428f32c1e605",
+      "title": "技术研发类  智能制造类 管理类 供应链类  营销类",
+      "siteId": "创维集团-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://skyworth.hotjob.cn/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

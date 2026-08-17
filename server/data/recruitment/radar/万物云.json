@@ -1,0 +1,71 @@
+{
+  "slug": "万物云",
+  "name": "万物云",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/vanke/147055?locale=zh-CN#/jobs?&zhineng%5B0%5D=237497",
+  "sites": [
+    {
+      "id": "万物云-site-guangzhou",
+      "name": "万物云",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州/深圳/武汉/厦门"
+      }
+    },
+    {
+      "id": "万物云-site-shenzhen",
+      "name": "万物云",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广州/深圳/武汉/厦门"
+      }
+    },
+    {
+      "id": "万物云-site-wuhan",
+      "name": "万物云",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "广州/深圳/武汉/厦门"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c23d83a904e8",
+      "title": "人力资源岗  AI  应用研究员  项目管理岗  工程管理岗  社区运营岗  市场拓展岗",
+      "siteId": "万物云-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/vanke/147055?locale=zh-CN#/jobs?&zhineng%5B0%5D=237497",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-563788ed3902",
+      "title": "AI应用研究员 系统测试岗 工程管理岗 数据工程师 产品岗 市场拓展岗 环境管理岗 运营管理岗",
+      "siteId": "万物云-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://vt.onewo.com/campus-recruitment/vanke/147055/?sessionid=#/jobs?&zhineng%5B0%5D=237497",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

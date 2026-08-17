@@ -1,0 +1,37 @@
+{
+  "slug": "度小满",
+  "name": "度小满",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://duxiaoman.jobs.feishu.cn/051736/position/7649303782597691694/detail",
+  "sites": [
+    {
+      "id": "度小满-site-beijing",
+      "name": "度小满—AI顶尖人才",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ce7419500bcc",
+      "title": "小满摘星计划—度小满AI顶尖人才",
+      "siteId": "度小满-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://duxiaoman.jobs.feishu.cn/051736/position/7649303782597691694/detail",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "slug": "瞬原科技",
+  "name": "瞬原科技",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://veloalpha.feishu.cn/share/base/form/shrcneLRW3zFdonbOo0YLLi6CGb",
+  "sites": [
+    {
+      "id": "瞬原科技-site-beijing",
+      "name": "瞬原科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-27c78e4b98ba",
+      "title": "投研助理岗 研究员 信用销售交易助理产品运营岗 综合运营岗基金服务运营岗交易员估值核算岗交易支持岗",
+      "siteId": "瞬原科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://veloalpha.feishu.cn/share/base/form/shrcneLRW3zFdonbOo0YLLi6CGb",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

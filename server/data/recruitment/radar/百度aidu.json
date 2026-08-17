@@ -1,0 +1,56 @@
+{
+  "slug": "百度aidu",
+  "name": "百度AIDU",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://talent.baidu.com/jobs/list",
+  "sites": [
+    {
+      "id": "百度aidu-site-beijing",
+      "name": "百度AIDU计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "百度aidu-site-shanghai",
+      "name": "百度AIDU计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "百度aidu-site-shenzhen",
+      "name": "百度AIDU计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5a454cda2e5b",
+      "title": "大模型算法  多模态算法 智能体  自动驾驶  AI异构计算等研究方向",
+      "siteId": "百度aidu-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/list",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

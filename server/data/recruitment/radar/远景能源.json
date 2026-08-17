@@ -1,0 +1,56 @@
+{
+  "slug": "远景能源",
+  "name": "远景能源",
+  "tier": 3,
+  "industries": [
+    "energy"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/envisiongroup/43123?sourceToken=f94005510f6d0048b141105317c26419#/page/%E8%BF%9C%E6%99%AF%E8%83%BD%E6%BA%90",
+  "sites": [
+    {
+      "id": "远景能源-site-shanghai",
+      "name": "远景能源",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/成都/武汉/南京"
+      }
+    },
+    {
+      "id": "远景能源-site-chengdu",
+      "name": "远景能源",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "上海/成都/武汉/南京"
+      }
+    },
+    {
+      "id": "远景能源-site-wuhan",
+      "name": "远景能源",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "上海/成都/武汉/南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c9272764c0f9",
+      "title": "研发类 产品类  工艺开发类  智慧供应链类   质量管理类 深度制造类  项目管理类  工程管理类  市场类  设计类  职能综合类",
+      "siteId": "远景能源-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-10-31",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/envisiongroup/43123?sourceToken=f94005510f6d0048b141105317c26419#/page/%E8%BF%9C%E6%99%AF%E8%83%BD%E6%BA%90",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

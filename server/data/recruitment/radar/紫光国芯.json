@@ -1,0 +1,47 @@
+{
+  "slug": "紫光国芯",
+  "name": "紫光国芯",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://young.yingjiesheng.com/xyzlogin?ctmid=3301c7f1-2aac-41f6-a659-3d230ba7916e&ehirejobid=&jumpurl=https%3A%2F%2Fxyz.51job.com%2FExternal%2FOthers%2FLogin51.aspx%3FCtmID%3D3301c7f1-2aac-41f6-a659-3d230ba7916e%26prd%3Dyddzy%26prp%3D%26cd%3D%26cp%3D%26r",
+  "sites": [
+    {
+      "id": "紫光国芯-site-shanghai",
+      "name": "紫光国芯",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/成都/西安"
+      }
+    },
+    {
+      "id": "紫光国芯-site-chengdu",
+      "name": "紫光国芯",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "上海/成都/西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3829bf2be582",
+      "title": "ASTC后端工程师  产品测试工程师 存储器数字设计工程师  SOC数字设计工程师  器件工程师  ASIC  DFT工程师  ASIC前端工程师  存储器设计",
+      "siteId": "紫光国芯-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://young.yingjiesheng.com/xyzlogin?ctmid=3301c7f1-2aac-41f6-a659-3d230ba7916e&ehirejobid=&jumpurl=https%3A%2F%2Fxyz.51job.com%2FExternal%2FOthers%2FLogin51.aspx%3FCtmID%3D3301c7f1-2aac-41f6-a659-3d230ba7916e%26prd%3Dyddzy%26prp%3D%26cd%3D%26cp%3D%26r",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

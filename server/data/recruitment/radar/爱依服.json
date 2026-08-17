@@ -1,0 +1,37 @@
+{
+  "slug": "爱依服",
+  "name": "爱依服",
+  "tier": 3,
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU63d8e7312f9d2414bbead0cd/mc/detail?postId=225702&recruitType=intern&distance=undefined",
+  "sites": [
+    {
+      "id": "爱依服-site-guangzhou",
+      "name": "爱依服",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州/佛山"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-670f4a773b16",
+      "title": "服装设计实习生",
+      "siteId": "爱依服-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU63d8e7312f9d2414bbead0cd/mc/detail?postId=225702&recruitType=intern&distance=undefined",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

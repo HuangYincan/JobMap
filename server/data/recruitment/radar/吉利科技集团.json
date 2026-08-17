@@ -1,6 +1,7 @@
 {
   "slug": "吉利科技集团",
   "name": "吉利科技集团",
+  "tier": 3,
   "industries": [
     "auto"
   ],
@@ -8,12 +9,21 @@
   "careerUrl": "https://campus.geely.com/campus-recruitment/geely/98148#/jobs",
   "sites": [
     {
-      "id": "吉利科技集团-site",
+      "id": "吉利科技集团-site-chengdu",
       "name": "吉利科技集团",
+      "city": "成都市",
+      "province": "四川省",
       "location": {
-        "address": "滨江区东冠路868号吉利科技大厦",
-        "lng": 120.143182,
-        "lat": 30.155863
+        "address": "成都/杭州/宁波"
+      }
+    },
+    {
+      "id": "吉利科技集团-site-hangzhou",
+      "name": "吉利科技集团",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "成都/杭州/宁波"
       }
     }
   ],
@@ -21,7 +31,7 @@
     {
       "externalId": "radar-62b0db0a5589",
       "title": "职能类  科技类  运营类  研发类  制造类  经营管理类  项目管理类",
-      "siteId": "吉利科技集团-site",
+      "siteId": "吉利科技集团-site-chengdu",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -30,7 +40,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.geely.com/campus-recruitment/geely/98148#/jobs",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

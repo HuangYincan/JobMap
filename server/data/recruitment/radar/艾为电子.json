@@ -1,0 +1,65 @@
+{
+  "slug": "艾为电子",
+  "name": "艾为电子",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://awinic1.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "艾为电子-site-beijing",
+      "name": "艾为电子",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "艾为电子-site-shanghai",
+      "name": "艾为电子",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "艾为电子-site-shenzhen",
+      "name": "艾为电子",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "艾为电子-site-chengdu",
+      "name": "艾为电子",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5e5847779bd8",
+      "title": "研发类 营销类  企业智能&项目管理&职能  车规实验&测试中心",
+      "siteId": "艾为电子-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://awinic1.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

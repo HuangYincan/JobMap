@@ -1,0 +1,68 @@
+{
+  "slug": "深蓝互动",
+  "name": "深蓝互动",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus_apply/blueinteractive/38434?recommendCode=DSmv9SjQ#/jobs",
+  "sites": [
+    {
+      "id": "深蓝互动-site-guangzhou",
+      "name": "深蓝互动",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6e0bddd47c46",
+      "title": "美术支持类、研发技术类、游戏策划类、发行运营类、产品支持类、公共职能类",
+      "siteId": "深蓝互动-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/blueinteractive/38434?recommendCode=DSmv9SjQ#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-33a96f58128b",
+      "title": "美术设计类  游戏策划类  技术开发类  市场发行类  产品支持类",
+      "siteId": "深蓝互动-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.bluepoch.com/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-6e73771b9a73",
+      "title": "美术表现类 游戏策划类 研发技术类 发行运营类 产品支持类 公共职能类",
+      "siteId": "深蓝互动-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/blueinteractive/38434?recommendCode=DS36ZXU7#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

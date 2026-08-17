@@ -1,0 +1,65 @@
+{
+  "slug": "金证科技",
+  "name": "金证科技",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://szkingdom.zhiye.com/campus/jobs?sessionid=",
+  "sites": [
+    {
+      "id": "金证科技-site-beijing",
+      "name": "金证科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "金证科技-site-shanghai",
+      "name": "金证科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "金证科技-site-shenzhen",
+      "name": "金证科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "金证科技-site-chengdu",
+      "name": "金证科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6570c5e9eba4",
+      "title": "Java开发工程师 测试工程师 实施工程师 售前工程师 （软件方向）销售经理",
+      "siteId": "金证科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://szkingdom.zhiye.com/campus/jobs?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

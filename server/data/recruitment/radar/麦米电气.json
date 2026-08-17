@@ -1,6 +1,7 @@
 {
   "slug": "麦米电气",
   "name": "麦米电气",
+  "tier": 3,
   "industries": [
     "energy"
   ],
@@ -8,8 +9,28 @@
   "careerUrl": "https://wecruit.hotjob.cn/SU6282075e0dcad413c09efe26/pb/school.html?projectCode=201301&showProjectBanner=true",
   "sites": [
     {
-      "id": "麦米电气-site",
+      "id": "麦米电气-site-shenzhen",
       "name": "麦米电气—高潜人才计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳/杭州/武汉/南京"
+      }
+    },
+    {
+      "id": "麦米电气-site-hangzhou",
+      "name": "麦米电气—高潜人才计划",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "深圳/杭州/武汉/南京"
+      }
+    },
+    {
+      "id": "麦米电气-site-wuhan",
+      "name": "麦米电气—高潜人才计划",
+      "city": "武汉市",
+      "province": "湖北省",
       "location": {
         "address": "深圳/杭州/武汉/南京"
       }
@@ -19,7 +40,7 @@
     {
       "externalId": "radar-3d935033696c",
       "title": "新型电力电子拓扑与控制、健能变流器并网技术、电力电子数字化伤真、AIDC数据中心供电技术、电力电子磁件设计老光与电弧物理研究、涡旋压缩机  流体仿真 热设计等相",
-      "siteId": "麦米电气-site",
+      "siteId": "麦米电气-site-shenzhen",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -28,12 +49,13 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://wecruit.hotjob.cn/SU6282075e0dcad413c09efe26/pb/school.html?projectCode=201301&showProjectBanner=true",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     },
     {
       "externalId": "radar-cd018660924a",
       "title": "新型电力电子拓扑与控制、储能变流器网技术、电力电子数字化仿真、AID0数据中心供电技术、电力电子磁件设计微光与电弧物理研究、锅旋压缩机、流体仿真  热设设计等相",
-      "siteId": "麦米电气-site",
+      "siteId": "麦米电气-site-shenzhen",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -42,7 +64,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://wecruit.hotjob.cn/SU6282075e0dcad413c09efe26/pb/school.html?projectCode=201301&showProjectBanner=true",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

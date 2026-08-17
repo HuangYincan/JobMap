@@ -1,0 +1,65 @@
+{
+  "slug": "经纬恒润",
+  "name": "经纬恒润",
+  "tier": 3,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/jingweihengrun/168294?locale=zh-CN#/jobs/",
+  "sites": [
+    {
+      "id": "经纬恒润-site-beijing",
+      "name": "经纬恒润",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "经纬恒润-site-shanghai",
+      "name": "经纬恒润",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "经纬恒润-site-shenzhen",
+      "name": "经纬恒润",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "经纬恒润-site-wuhan",
+      "name": "经纬恒润",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-316eb00f798b",
+      "title": "公共职能   研发技术  研发管理  生产制造  销售服务  供应链",
+      "siteId": "经纬恒润-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/jingweihengrun/168294?locale=zh-CN#/jobs/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

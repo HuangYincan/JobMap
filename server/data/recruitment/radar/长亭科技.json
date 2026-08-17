@@ -1,0 +1,64 @@
+{
+  "slug": "长亭科技",
+  "name": "长亭科技",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://join.chaitin.cn/plugins/career_site/sites/default/jobs/636afb92-e779-422d-b5ca-68ba32793c62?tab=&job_category=%E5%AE%89%E5%85%A8%E6%9C%8D%E5%8A%A1%E7%B1%BB&job_id=636afb92-e779-422d-b5ca-68ba32793c62",
+  "sites": [
+    {
+      "id": "长亭科技-site-beijing",
+      "name": "长亭科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "长亭科技-site-shanghai",
+      "name": "长亭科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "长亭科技-site-shenzhen",
+      "name": "长亭科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "长亭科技-site-wuhan",
+      "name": "长亭科技",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-899d043eccc6",
+      "title": "安服校招提前批",
+      "siteId": "长亭科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.chaitin.cn/plugins/career_site/sites/default/jobs/636afb92-e779-422d-b5ca-68ba32793c62?tab=&job_category=%E5%AE%89%E5%85%A8%E6%9C%8D%E5%8A%A1%E7%B1%BB&job_id=636afb92-e779-422d-b5ca-68ba32793c62",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

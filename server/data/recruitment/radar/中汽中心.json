@@ -1,0 +1,65 @@
+{
+  "slug": "中汽中心",
+  "name": "中汽中心",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://dhr.catarc.ac.cn/RedseaPlatform/zhaopin/zpChannelQrCode/campus_recruit/officeWebsite.mob?jumpPageId=detail&detailRequestId=ae803084-a249-4f69-9591-08270a0ec82a&configId=campus_recruit&recruitWay=4",
+  "sites": [
+    {
+      "id": "中汽中心-site-beijing",
+      "name": "中汽中心",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中汽中心-site-shanghai",
+      "name": "中汽中心",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中汽中心-site-guangzhou",
+      "name": "中汽中心",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中汽中心-site-shenzhen",
+      "name": "中汽中心",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8ff7c7180a30",
+      "title": "车辆工程 机械设计 交通运输 人工智能 电气工程  电子信息 计算机类通信工程 控制工程 软件工程 能源动力 力学材料 环境工程 市场营销金融学 管理学 文学等",
+      "siteId": "中汽中心-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dhr.catarc.ac.cn/RedseaPlatform/zhaopin/zpChannelQrCode/campus_recruit/officeWebsite.mob?jumpPageId=detail&detailRequestId=ae803084-a249-4f69-9591-08270a0ec82a&configId=campus_recruit&recruitWay=4",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,27 +1,79 @@
 {
   "slug": "快手",
   "name": "快手",
+  "tier": 3,
   "industries": [
     "internet"
   ],
   "scale": "enterprise",
-  "careerUrl": "https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum=1&positionLabel=kstar&positionNatureCode=fulltime&recruitSubProjectCodes=20271779425607",
+  "careerUrl": "https://campus.kuaishou.cn/recruit/campus/e/h5/#/campus/jobs?code=campuseAHAeQmLm",
   "sites": [
     {
-      "id": "快手-site",
-      "name": "快手—快Star顶尖技术人才计划",
+      "id": "快手-site-beijing",
+      "name": "快手",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "滨江区西兴街道启智街515号星耀中心7号楼",
-        "lng": 120.221266,
-        "lat": 30.201767
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "快手-site-shanghai",
+      "name": "快手",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "快手-site-guangzhou",
+      "name": "快手",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "快手-site-shenzhen",
+      "name": "快手",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "快手-site-hangzhou",
+      "name": "快手—快Star顶尖技术人才计划",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
       }
     }
   ],
   "positions": [
     {
+      "externalId": "radar-a645d67e7cf2",
+      "title": "技术类，非技术类都有",
+      "siteId": "快手-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/h5/#/campus/jobs?code=campuseAHAeQmLm",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
       "externalId": "radar-7e905cdc1c59",
       "title": "算法类岗位  工程类岗位",
-      "siteId": "快手-site",
+      "siteId": "快手-site-beijing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,12 +82,13 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/#/campus/jobs?pageNum=1&positionLabel=kstar&positionNatureCode=fulltime&recruitSubProjectCodes=20271779425607",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     },
     {
       "externalId": "radar-2e61c4299e2d",
       "title": "计算机视觉 推荐 广告 搜索 搜广推系统架构 机器学习 音视频 自然语言处理",
-      "siteId": "快手-site",
+      "siteId": "快手-site-beijing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -44,7 +97,23 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/h5/#/campus/jobs?code=campusdLaScKyRd",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-8738c63f3226",
+      "title": "算法类 工程类 产品类 运营类 游戏类 设计类 市场类 销售类 职能类 战略分析类 项目管理类",
+      "siteId": "快手-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.kuaishou.cn/recruit/campus/e/h5/#/campus/jobs?code=campusdLaScKyRd",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

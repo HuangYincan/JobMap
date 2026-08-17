@@ -1,6 +1,7 @@
 {
   "slug": "志存科技",
   "name": "志存科技",
+  "tier": 3,
   "industries": [
     "manufacturing"
   ],
@@ -8,8 +9,37 @@
   "careerUrl": "https://iucylxooqp.jobs.feishu.cn/876677/?spread=GDA4WMK&sessionid=",
   "sites": [
     {
-      "id": "志存科技-site",
+      "id": "志存科技-site-beijing",
       "name": "志存科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    },
+    {
+      "id": "志存科技-site-shanghai",
+      "name": "志存科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    },
+    {
+      "id": "志存科技-site-shenzhen",
+      "name": "志存科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    },
+    {
+      "id": "志存科技-site-hangzhou",
+      "name": "志存科技",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
         "address": "北京/上海/深圳/杭州"
       }
@@ -19,7 +49,7 @@
     {
       "externalId": "radar-b02b36855e74",
       "title": "芯片研发核心岗  软件与系统研发岗  工艺与工程技术岗  职能支持岗",
-      "siteId": "志存科技-site",
+      "siteId": "志存科技-site-beijing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -28,7 +58,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://iucylxooqp.jobs.feishu.cn/876677/?spread=GDA4WMK&sessionid=",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

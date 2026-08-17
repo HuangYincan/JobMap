@@ -1,27 +1,79 @@
 {
   "slug": "三一集团",
   "name": "三一集团",
+  "tier": 3,
   "industries": [
     "manufacturing"
   ],
   "scale": "enterprise",
-  "careerUrl": "https://sany.zhiye.com/campus/jobs",
+  "careerUrl": "https://sany.zhiye.com/4/jobs",
   "sites": [
     {
-      "id": "三一集团-site",
-      "name": "三一集团",
+      "id": "三一集团-site-beijing",
+      "name": "三一集团—星辰计划",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "钱塘区江东大道与新世纪大道交叉口西300米",
-        "lng": 120.598954,
-        "lat": 30.30582
+        "address": "北京/广州/西安/苏州"
+      }
+    },
+    {
+      "id": "三一集团-site-guangzhou",
+      "name": "三一集团—星辰计划",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州/西安/苏州"
+      }
+    },
+    {
+      "id": "三一集团-site-shanghai",
+      "name": "三一集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/成都/杭州"
+      }
+    },
+    {
+      "id": "三一集团-site-chengdu",
+      "name": "三一集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/成都/杭州"
+      }
+    },
+    {
+      "id": "三一集团-site-hangzhou",
+      "name": "三一集团",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/上海/成都/杭州"
       }
     }
   ],
   "positions": [
     {
+      "externalId": "radar-bb7ace90e1fb",
+      "title": "智能感知与控制  先进仿真与数字栾生机电液系统工程  绿色动力与系能源",
+      "siteId": "三一集团-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sany.zhiye.com/4/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
       "externalId": "radar-4c84225e7f3f",
       "title": "机械与结构设计 电气与控制  动力与能源  质量与工艺  软件与算法 项目管理与综合",
-      "siteId": "三一集团-site",
+      "siteId": "三一集团-site-beijing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +82,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://sany.zhiye.com/campus/jobs",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

@@ -1,0 +1,55 @@
+{
+  "slug": "麦肯锡中国区",
+  "name": "麦肯锡中国区",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.mckinsey.com/careers/search-jobs/jobs/businessanalyst-15136",
+  "sites": [
+    {
+      "id": "麦肯锡中国区-site-beijing",
+      "name": "麦肯锡中国区",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "麦肯锡中国区-site-shanghai",
+      "name": "麦肯锡中国区",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "麦肯锡中国区-site-shenzhen",
+      "name": "麦肯锡中国区",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d8448ca2551b",
+      "title": "商业分析师",
+      "siteId": "麦肯锡中国区-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-23",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.mckinsey.com/careers/search-jobs/jobs/businessanalyst-15136",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "slug": "中建安装",
+  "name": "中建安装",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://recruit.cscec.com/recruit#/portal_job_list?job_class=campus&filter_dict=%7B%22select_depart%22:null%7D&company_id=1873&contract_unit=32048693",
+  "sites": [
+    {
+      "id": "中建安装-site-beijing",
+      "name": "中建安装",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "中建安装-site-shanghai",
+      "name": "中建安装",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "中建安装-site-shenzhen",
+      "name": "中建安装",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "中建安装-site-chengdu",
+      "name": "中建安装",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d7ff3b02898a",
+      "title": "技术管理岗 物资管理岗 安全管理岗 党群综合岗 人力资源岗 工程设计岗 设计研发岗 商务管理岗 合约法务岗 财务管理岗",
+      "siteId": "中建安装-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://recruit.cscec.com/recruit#/portal_job_list?job_class=campus&filter_dict=%7B%22select_depart%22:null%7D&company_id=1873&contract_unit=32048693",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

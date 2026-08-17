@@ -1,0 +1,80 @@
+{
+  "slug": "深信服",
+  "name": "深信服",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus_apply/sangfor/27944?recommendCode=DS1Sxxqb#/jobs",
+  "sites": [
+    {
+      "id": "深信服-site-beijing",
+      "name": "深信服",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳/成都/长沙"
+      }
+    },
+    {
+      "id": "深信服-site-shenzhen",
+      "name": "深信服",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳/成都/长沙"
+      }
+    },
+    {
+      "id": "深信服-site-chengdu",
+      "name": "深信服",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/深圳/成都/长沙"
+      }
+    },
+    {
+      "id": "深信服-site-shanghai",
+      "name": "深信服",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/长沙"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2754bd28c1d3",
+      "title": "AI 算法（NLP、计算机视觉、多模态、强化学习）、AI Infra、Agent 开发三大核心赛道",
+      "siteId": "深信服-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/sangfor/27944?recommendCode=DS1Sxxqb#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-92dfa0a5d050",
+      "title": "研发类职能类运营类岗位;",
+      "siteId": "深信服-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/sangfor/6146#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

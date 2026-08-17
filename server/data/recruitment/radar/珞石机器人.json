@@ -1,0 +1,65 @@
+{
+  "slug": "珞石机器人",
+  "name": "珞石机器人",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app135149.eapps.dingtalkcloud.com/campus-recruitment/luoshi/100004651?locale=zh-CN#/",
+  "sites": [
+    {
+      "id": "珞石机器人-site-beijing",
+      "name": "珞石机器人",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "珞石机器人-site-shanghai",
+      "name": "珞石机器人",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "珞石机器人-site-shenzhen",
+      "name": "珞石机器人",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "珞石机器人-site-wuhan",
+      "name": "珞石机器人",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ac6a9f8f28f8",
+      "title": "机器人工程  机械电子  自动化  计算机力学  航空航天  应用数学 电气工程  电机电控  控制理论与控制工程  人工智能  机器视觉  电子信息等专业",
+      "siteId": "珞石机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app135149.eapps.dingtalkcloud.com/campus-recruitment/luoshi/100004651?locale=zh-CN#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

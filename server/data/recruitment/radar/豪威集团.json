@@ -1,0 +1,65 @@
+{
+  "slug": "豪威集团",
+  "name": "豪威集团",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ovt-omnivision.zhiye.com/jobs",
+  "sites": [
+    {
+      "id": "豪威集团-site-beijing",
+      "name": "豪威集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "豪威集团-site-shanghai",
+      "name": "豪威集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "豪威集团-site-shenzhen",
+      "name": "豪威集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "豪威集团-site-chengdu",
+      "name": "豪威集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-42d47b4779db",
+      "title": "模拟IC设计 数字电路设计 图像算法 图像质量 模拟IC设计 数字芯片设计流程 实习生",
+      "siteId": "豪威集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ovt-omnivision.zhiye.com/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

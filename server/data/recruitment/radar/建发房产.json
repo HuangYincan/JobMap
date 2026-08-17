@@ -1,0 +1,65 @@
+{
+  "slug": "建发房产",
+  "name": "建发房产",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "http://chinacdc.zhiye.com/fcjxs2024",
+  "sites": [
+    {
+      "id": "建发房产-site-beijing",
+      "name": "建发房产",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    },
+    {
+      "id": "建发房产-site-shanghai",
+      "name": "建发房产",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    },
+    {
+      "id": "建发房产-site-guangzhou",
+      "name": "建发房产",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    },
+    {
+      "id": "建发房产-site-chengdu",
+      "name": "建发房产",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c42cb3d3e42b",
+      "title": "建筑设计岗 室内设计岗  规划设计岗  土建工程岗  数智  AI 岗  投资研究岗  财务资金岗",
+      "siteId": "建发房产-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://chinacdc.zhiye.com/fcjxs2024",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

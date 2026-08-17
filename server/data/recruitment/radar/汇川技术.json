@@ -1,0 +1,65 @@
+{
+  "slug": "汇川技术",
+  "name": "汇川技术",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://recruit.inovance.com/#/campus/jobs",
+  "sites": [
+    {
+      "id": "汇川技术-site-beijing",
+      "name": "汇川技术",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "汇川技术-site-shanghai",
+      "name": "汇川技术",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "汇川技术-site-shenzhen",
+      "name": "汇川技术",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "汇川技术-site-wuhan",
+      "name": "汇川技术",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1b979cc45444",
+      "title": "技术类  技能类  营销类  供应链管理类 质量类  其他职能类",
+      "siteId": "汇川技术-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://recruit.inovance.com/#/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

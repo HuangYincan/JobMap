@@ -1,0 +1,47 @@
+{
+  "slug": "北京四方继保自动化股份有限公司",
+  "name": "北京四方继保自动化股份有限公司",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://sf-auto1.zhiye.com/campus/jobs?shareId=a5534d6d-ae85-4d7f-a8a3-65d3138030a3&shareSource=2",
+  "sites": [
+    {
+      "id": "北京四方继保自动化股份有限公司-site-beijing",
+      "name": "北京四方继保自动化股份有限公司",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/武汉/南京"
+      }
+    },
+    {
+      "id": "北京四方继保自动化股份有限公司-site-wuhan",
+      "name": "北京四方继保自动化股份有限公司",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/武汉/南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a2cad8e723f0",
+      "title": "不限于电气类、自动化类、控制类、电子信息类、计算机类、管科类、汉语言文学",
+      "siteId": "北京四方继保自动化股份有限公司-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sf-auto1.zhiye.com/campus/jobs?shareId=a5534d6d-ae85-4d7f-a8a3-65d3138030a3&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

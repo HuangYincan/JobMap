@@ -1,0 +1,38 @@
+{
+  "slug": "清华建筑设计院",
+  "name": "清华建筑设计院",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://thad.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "清华建筑设计院-site-beijing",
+      "name": "清华建筑设计院",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d5d1fae80135",
+      "title": "人力资源部实习生 暖通专业实习生 电气专业实习生 给排水专业实习生 景观专业实习生 规划专业实习生 结构专业实习生 建筑专业实习生",
+      "siteId": "清华建筑设计院-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://thad.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 {
   "slug": "舜宇集团",
   "name": "舜宇集团",
+  "tier": 3,
   "industries": [
     "manufacturing"
   ],
@@ -8,12 +9,30 @@
   "careerUrl": "https://app.mokahr.com/campus-recruitment/sunnyoptical/45602?sessionid=&sourceToken=9166fe6b2361af02d089402345e9b05e#/jobs",
   "sites": [
     {
-      "id": "舜宇集团-site",
+      "id": "舜宇集团-site-shanghai",
       "name": "舜宇集团",
+      "city": "上海市",
+      "province": "上海市",
       "location": {
-        "address": "滨江区滨安路1190号智汇领地科技园A区A楼21层",
-        "lng": 120.174636,
-        "lat": 30.187104
+        "address": "上海/深圳/杭州/西安"
+      }
+    },
+    {
+      "id": "舜宇集团-site-shenzhen",
+      "name": "舜宇集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳/杭州/西安"
+      }
+    },
+    {
+      "id": "舜宇集团-site-hangzhou",
+      "name": "舜宇集团",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上海/深圳/杭州/西安"
       }
     }
   ],
@@ -21,7 +40,7 @@
     {
       "externalId": "radar-d1562d1a0915",
       "title": "产品开发  工程&量产  品质  市场  营销  人力资源",
-      "siteId": "舜宇集团-site",
+      "siteId": "舜宇集团-site-shanghai",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +49,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://app.mokahr.com/campus-recruitment/sunnyoptical/45602?sessionid=&sourceToken=9166fe6b2361af02d089402345e9b05e#/jobs",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

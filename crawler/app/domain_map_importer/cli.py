@@ -14,16 +14,19 @@ from .radar_jobs import load_radar_jobs, radar_fixture
 
 def cmd_radar(args: argparse.Namespace) -> int:
     payload = load_radar_jobs(args.input)
-    fixture = radar_fixture(payload, hangzhou_only=not args.all_cities)
+    cities = tuple(c.strip() for c in args.cities.split(",") if c.strip()) or None
+    fixture = radar_fixture(payload, target_cities=cities)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "_radar-fixture.json").write_text(json.dumps(fixture["source"], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     written = 0
+    aggregate = 0
     for company in fixture["companies"]:
         path = out_dir / f"{company['slug']}.json"
         path.write_text(json.dumps(company, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         written += 1
-    print(json.dumps({"companies": written, "records": len(fixture["records"]), "out": str(out_dir)}, ensure_ascii=False))
+        aggregate += sum(1 for pos in company["positions"] if pos.get("aggregate"))
+    print(json.dumps({"companies": written, "records": len(fixture["records"]), "aggregate": aggregate, "out": str(out_dir)}, ensure_ascii=False))
     return 0
 
 
@@ -75,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     radar = sub.add_parser("radar", help="Map a published xiaozhao-radar jobs.json onto SourceCompany files")
     radar.add_argument("--input", required=True, help="Path to jobs.json")
     radar.add_argument("--out-dir", required=True, help="Directory for mapped JSON")
-    radar.add_argument("--all-cities", action="store_true", help="Keep rows outside Hangzhou")
+    radar.add_argument("--cities", default="", help="Target cities, comma-separated (default: 北京,上海,广州,深圳,成都,武汉,杭州)")
     radar.set_defaults(func=cmd_radar)
 
     official = sub.add_parser("official", help="Politely GET official careerUrl HTML and extract jobs")

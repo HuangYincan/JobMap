@@ -1,0 +1,56 @@
+{
+  "slug": "深信服-x-star",
+  "name": "深信服[X-STAR]",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/sangfor/27944?locale=zh-CN#/jobs?commitment%5B0%5D=%E5%85%A8%E8%81%8C&zhineng%5B0%5D=192154",
+  "sites": [
+    {
+      "id": "深信服-x-star-site-beijing",
+      "name": "深信服[X-STAR]计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳/成都/长沙"
+      }
+    },
+    {
+      "id": "深信服-x-star-site-shenzhen",
+      "name": "深信服[X-STAR]计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳/成都/长沙"
+      }
+    },
+    {
+      "id": "深信服-x-star-site-chengdu",
+      "name": "深信服[X-STAR]计划",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/深圳/成都/长沙"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-51de8215fcda",
+      "title": "AI算法类、AI-infra类、Agent开发类",
+      "siteId": "深信服-x-star-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/sangfor/27944?locale=zh-CN#/jobs?commitment%5B0%5D=%E5%85%A8%E8%81%8C&zhineng%5B0%5D=192154",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

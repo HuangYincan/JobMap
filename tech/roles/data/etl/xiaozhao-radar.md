@@ -35,5 +35,9 @@ Do **not** call Tencent Docs `opendoc`, Firecrawl, AnySearch, BrowserAct stealth
 ## Quality
 
 - Drop rows whose apply URL host is a blocked aggregator (Boss / 牛客 / 小红书 / 实习僧 / 51job…).
-- Default `hangzhou_only=true` so the map catalog stays Hangzhou-first.
+- Default target city set is 北京/上海/广州/深圳/成都/武汉/杭州 (national scope); the
+  `radar --cities` flag narrows it. Sites split per city from the row's city text
+  (`${slug}-site-${cityKey}`) and carry `site.city` / `site.province`; titles that are
+  category aggregates ("技术、设计、数据、运营、产品等七大类") get `aggregate: true` so the
+  LLM validation pass and human curation treat them as bundles — never silently expanded.
 - Mapped fixture must pass `validate_local_fixture`.

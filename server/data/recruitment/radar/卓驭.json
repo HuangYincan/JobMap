@@ -1,0 +1,71 @@
+{
+  "slug": "卓驭",
+  "name": "卓驭",
+  "tier": 3,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://we.zyt.com/campus/jobs?sessionid=",
+  "sites": [
+    {
+      "id": "卓驭-site-beijing",
+      "name": "卓驭",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "卓驭-site-shanghai",
+      "name": "卓驭",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "卓驭-site-shenzhen",
+      "name": "卓驭",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4d5e6b188c6a",
+      "title": "算法类 软 件类  机械电器类  嵌入式类  测试类  安全类  系统工程类  非研发类",
+      "siteId": "卓驭-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://we.zyt.com/campus/jobs?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-533ccf8921d2",
+      "title": "大模型算法岗  端到端领航算法岗世界模型算法岗   重建仿真算法岗 大模型算法岗 大模型训练优化算法岗  大模型推理优化算法岗   实习生岗位",
+      "siteId": "卓驭-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://we.zyt.com/5/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

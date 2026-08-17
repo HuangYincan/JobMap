@@ -1,0 +1,56 @@
+{
+  "slug": "京东-tgt顶尖青年技术天才",
+  "name": "京东-TGT顶尖青年技术天才",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.jd.com/#/",
+  "sites": [
+    {
+      "id": "京东-tgt顶尖青年技术天才-site-beijing",
+      "name": "京东-TGT顶尖青年技术天才计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "京东-tgt顶尖青年技术天才-site-shanghai",
+      "name": "京东-TGT顶尖青年技术天才计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "京东-tgt顶尖青年技术天才-site-shenzhen",
+      "name": "京东-TGT顶尖青年技术天才计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2aaab12d3040",
+      "title": "多模态大模型与应用方向 空间与具身智能方向机器学习方向AIInfra方向搜索推荐广告方向高性能与云计算方向安全方向 大数据方向",
+      "siteId": "京东-tgt顶尖青年技术天才-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.jd.com/#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

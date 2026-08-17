@@ -1,0 +1,47 @@
+{
+  "slug": "星海图",
+  "name": "星海图",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://galaxea.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "星海图-site-beijing",
+      "name": "星海图",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳/苏州"
+      }
+    },
+    {
+      "id": "星海图-site-shenzhen",
+      "name": "星海图",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f7d6fc8e5a66",
+      "title": "具身智能算法工程师 强化学习算法工程师运控算法工程师 机械结构工程师嵌入式软件工程师 硬件开发工程师 具身智能应用开发工程师 整机集成工程师",
+      "siteId": "星海图-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://galaxea.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

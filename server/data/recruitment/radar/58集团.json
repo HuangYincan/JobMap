@@ -1,0 +1,65 @@
+{
+  "slug": "58集团",
+  "name": "58集团",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus-recruitment/58/150953?recommendCode=DSyukJhx&hash=%23%2Fjobs#/jobs",
+  "sites": [
+    {
+      "id": "58集团-site-beijing",
+      "name": "58集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "58集团-site-shanghai",
+      "name": "58集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "58集团-site-shenzhen",
+      "name": "58集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "58集团-site-chengdu",
+      "name": "58集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0f1e950d108d",
+      "title": "大语言模型/语音大模型工程师\n多模态大模型及应用工程师\n搜索推荐工程师\nAI Infra工程师\nAgent开发工程师\nAI产品经理",
+      "siteId": "58集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/58/150953?recommendCode=DSyukJhx&hash=%23%2Fjobs#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

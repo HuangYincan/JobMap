@@ -1,0 +1,38 @@
+{
+  "slug": "锐我科技",
+  "name": "锐我科技",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.ruiwoo.cn/Ruiwoo/Hr/index.html",
+  "sites": [
+    {
+      "id": "锐我科技-site-beijing",
+      "name": "锐我科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e4e47df3f1d6",
+      "title": "C++程序 AI程序设计师 游戏产品运营 游戏测试/评测 游戏系统策划 游戏数值策划 市场/自媒体 AI美术设计师",
+      "siteId": "锐我科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.ruiwoo.cn/Ruiwoo/Hr/index.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

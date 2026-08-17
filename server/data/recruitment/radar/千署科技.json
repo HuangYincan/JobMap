@@ -1,0 +1,46 @@
+{
+  "slug": "千署科技",
+  "name": "千署科技",
+  "tier": 3,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://tranxmart.jobs.feishu.cn/511078/position/7616253227473996042/detail?spread=DFF4R9N",
+  "sites": [
+    {
+      "id": "千署科技-site-beijing",
+      "name": "千署科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/广州"
+      }
+    },
+    {
+      "id": "千署科技-site-guangzhou",
+      "name": "千署科技",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6b4483cc72e4",
+      "title": "全栈开发实习生",
+      "siteId": "千署科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://tranxmart.jobs.feishu.cn/511078/position/7616253227473996042/detail?spread=DFF4R9N",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

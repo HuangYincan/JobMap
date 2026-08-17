@@ -1,0 +1,56 @@
+{
+  "slug": "红星关凯龙",
+  "name": "红星关凯龙",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://job.mmall.com/InternshipRecruitment",
+  "sites": [
+    {
+      "id": "红星关凯龙-site-beijing",
+      "name": "红星关凯龙",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/武汉/重庆"
+      }
+    },
+    {
+      "id": "红星关凯龙-site-shanghai",
+      "name": "红星关凯龙",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/武汉/重庆"
+      }
+    },
+    {
+      "id": "红星关凯龙-site-wuhan",
+      "name": "红星关凯龙",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/武汉/重庆"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5a851d736b05",
+      "title": "龙潮生计划 ：企划方向  运营方向  人资方向  招商方向",
+      "siteId": "红星关凯龙-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.mmall.com/InternshipRecruitment",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

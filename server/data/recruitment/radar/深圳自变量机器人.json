@@ -1,0 +1,38 @@
+{
+  "slug": "深圳自变量机器人",
+  "name": "深圳自变量机器人",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://x2-robot.jobs.feishu.cn/referral/campus/m/position/share/?token=NTsxNzgzMzM5Mjk1MjE5Ozc1NzE2NTYzNDY2NTU5OTc5NTU7NzY1OTM2MjE3NDU3NDM2NDk4MjsxLzE",
+  "sites": [
+    {
+      "id": "深圳自变量机器人-site-shenzhen",
+      "name": "深圳自变量机器人",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-90214c4a0b6c",
+      "title": "算法研发等",
+      "siteId": "深圳自变量机器人-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://x2-robot.jobs.feishu.cn/referral/campus/m/position/share/?token=NTsxNzgzMzM5Mjk1MjE5Ozc1NzE2NTYzNDY2NTU5OTc5NTU7NzY1OTM2MjE3NDU3NDM2NDk4MjsxLzE",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

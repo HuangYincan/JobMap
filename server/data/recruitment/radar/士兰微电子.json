@@ -1,0 +1,65 @@
+{
+  "slug": "士兰微电子",
+  "name": "士兰微电子",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.silan.com.cn/index.php/about/post.html",
+  "sites": [
+    {
+      "id": "士兰微电子-site-beijing",
+      "name": "士兰微电子",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "士兰微电子-site-shanghai",
+      "name": "士兰微电子",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "士兰微电子-site-shenzhen",
+      "name": "士兰微电子",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "士兰微电子-site-chengdu",
+      "name": "士兰微电子",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9706c1794971",
+      "title": "模拟IC研发类  数字IC研发类 MEMS传感器技术研发类 器件/模块及工艺研发类 封装设计研发类 系统应用测试开发类 AI芯片研发类销售市场类 职能管理类",
+      "siteId": "士兰微电子-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.silan.com.cn/index.php/about/post.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

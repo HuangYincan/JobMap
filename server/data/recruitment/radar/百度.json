@@ -1,0 +1,95 @@
+{
+  "slug": "百度",
+  "name": "百度",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://dwz.cn/uBmEsGqL",
+  "sites": [
+    {
+      "id": "百度-site-beijing",
+      "name": "百度",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "百度-site-shanghai",
+      "name": "百度",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "百度-site-guangzhou",
+      "name": "百度",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "百度-site-shenzhen",
+      "name": "百度",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2cd67fc6880f",
+      "title": "技术类、产品类、专业服务和管理支持类、政企行业解决方案和服务类",
+      "siteId": "百度-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dwz.cn/uBmEsGqL",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-eb16cb39c88a",
+      "title": "产品  运营  财务  战略HR",
+      "siteId": "百度-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-14",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/list",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-cb538f43adec",
+      "title": "管培实习生 专业不限 ，工科（计算机等相关专业），商科（经营，金融等相关专业）背景优先",
+      "siteId": "百度-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dwz.cn/0DO8N4tK",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

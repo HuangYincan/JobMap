@@ -1,0 +1,80 @@
+{
+  "slug": "中兴微电子",
+  "name": "中兴微电子",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/sanechips/102705?locale=zh-CN#/",
+  "sites": [
+    {
+      "id": "中兴微电子-site-beijing",
+      "name": "中兴微电子",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "中兴微电子-site-shanghai",
+      "name": "中兴微电子",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "中兴微电子-site-shenzhen",
+      "name": "中兴微电子",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "中兴微电子-site-chengdu",
+      "name": "中兴微电子",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-75b2b06de1c4",
+      "title": "IC设计  IC验证 IC后端  IC封测与可靠性  算法  软件  硬件  IC版图  IC技术支撑",
+      "siteId": "中兴微电子-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/sanechips/102705?locale=zh-CN#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-36d198f27b5c",
+      "title": "IC设计类 IC算法类  IC软件类 IC测试类 IC后端类 IC封装类",
+      "siteId": "中兴微电子-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/sanechips/102705?sessionid=#/jobs?project=100120087",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

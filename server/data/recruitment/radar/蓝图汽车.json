@@ -1,0 +1,56 @@
+{
+  "slug": "蓝图汽车",
+  "name": "蓝图汽车",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/voyah/146293#/job/389ff759-8786-406e-b4fe-691867c9315c?from=qrcode&isRecommendation=undefined",
+  "sites": [
+    {
+      "id": "蓝图汽车-site-beijing",
+      "name": "蓝图汽车—智能驾驶",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/武汉"
+      }
+    },
+    {
+      "id": "蓝图汽车-site-shanghai",
+      "name": "蓝图汽车—智能驾驶",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/武汉"
+      }
+    },
+    {
+      "id": "蓝图汽车-site-wuhan",
+      "name": "蓝图汽车—智能驾驶",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-48c0ef00bfce",
+      "title": "计算机科学与技术 电子信息工程 软件工程 车辆工程 自动化控制  通信工程 人工智能  数据分析  工业设计 市场分析等相关专业",
+      "siteId": "蓝图汽车-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/voyah/146293#/job/389ff759-8786-406e-b4fe-691867c9315c?from=qrcode&isRecommendation=undefined",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

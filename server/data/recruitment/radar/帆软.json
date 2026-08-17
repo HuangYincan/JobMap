@@ -1,27 +1,52 @@
 {
   "slug": "帆软",
   "name": "帆软",
+  "tier": 3,
   "industries": [
     "internet"
   ],
   "scale": "enterprise",
-  "careerUrl": "https://join.fanruan.com/trainee",
+  "careerUrl": "https://t6ixa9nyl6.jiandaoyun.com/f/65e1a1308ce7672fded0f0cf?ext=XDUXXY",
   "sites": [
     {
-      "id": "帆软-site",
-      "name": "帆软—千帆计划",
+      "id": "帆软-site-chengdu",
+      "name": "帆软",
+      "city": "成都市",
+      "province": "四川省",
       "location": {
-        "address": "上城区彭埠街道环站东路777号东站西子国际B座912室",
-        "lng": 120.217607,
-        "lat": 30.296897
+        "address": "成都/南京/无锡"
+      }
+    },
+    {
+      "id": "帆软-site-hangzhou",
+      "name": "帆软—千帆计划",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "成都/杭州/南京/无锡"
       }
     }
   ],
   "positions": [
     {
+      "externalId": "radar-ed707a6081a4",
+      "title": "产品经理、产品运营、后台开发工程师",
+      "siteId": "帆软-site-chengdu",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://t6ixa9nyl6.jiandaoyun.com/f/65e1a1308ce7672fded0f0cf?ext=XDUXXY",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
       "externalId": "radar-7ed1b257b1c8",
       "title": "产品经理  产品运营 后台开发工程师",
-      "siteId": "帆软-site",
+      "siteId": "帆软-site-chengdu",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -30,7 +55,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://join.fanruan.com/trainee",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

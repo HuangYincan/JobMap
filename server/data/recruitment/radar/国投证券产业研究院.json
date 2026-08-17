@@ -1,0 +1,56 @@
+{
+  "slug": "国投证券产业研究院",
+  "name": "国投证券产业研究院",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU625d4ccd2f9d24287db12878/mc/position/intern?sharePostKey=845b02768641484b812357ddef012d82",
+  "sites": [
+    {
+      "id": "国投证券产业研究院-site-beijing",
+      "name": "国投证券产业研究院",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "国投证券产业研究院-site-shanghai",
+      "name": "国投证券产业研究院",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "国投证券产业研究院-site-shenzhen",
+      "name": "国投证券产业研究院",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-04ce1b6cce52",
+      "title": "分析师助理 产业研究员助理",
+      "siteId": "国投证券产业研究院-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU625d4ccd2f9d24287db12878/mc/position/intern?sharePostKey=845b02768641484b812357ddef012d82",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

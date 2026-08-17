@@ -1,0 +1,47 @@
+{
+  "slug": "算秩未来",
+  "name": "算秩未来",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://acnizrso7ikb.jobs.feishu.cn/referral/campus/position?token=MzsxNzczNzU1MDIwMjU4Ozc1NDc2NTk0ODE0ODE3NzMwNTk7MDsx",
+  "sites": [
+    {
+      "id": "算秩未来-site-beijing",
+      "name": "算秩未来",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "算秩未来-site-shanghai",
+      "name": "算秩未来",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3dae2e8e635a",
+      "title": "云原生AI研发实习生 智能调度研发实习生 智能运维研发实习生 网络开发实习生 AI—Native平台工程实习生  AI—Native数据基础设施实习生 大模型算",
+      "siteId": "算秩未来-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://acnizrso7ikb.jobs.feishu.cn/referral/campus/position?token=MzsxNzczNzU1MDIwMjU4Ozc1NDc2NTk0ODE0ODE3NzMwNTk7MDsx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

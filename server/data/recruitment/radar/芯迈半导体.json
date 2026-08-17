@@ -1,6 +1,7 @@
 {
   "slug": "芯迈半导体",
   "name": "芯迈半导体",
+  "tier": 3,
   "industries": [
     "manufacturing"
   ],
@@ -8,12 +9,39 @@
   "careerUrl": "https://young.yingjiesheng.com/xyzlogin?ctmid=3e160048-a22b-446f-899d-7bc0a9a6b8db&ehirejobid=&jumpurl=https%3A%2F%2Fxyz.51job.com%2FExternal%2FOthers%2FLogin51.aspx%3FCtmID%3D3e160048-a22b-446f-899d-7bc0a9a6b8db%26prd%3Dyddzy%26prp%3D%26cd%3D%26cp%3D%26r",
   "sites": [
     {
-      "id": "芯迈半导体-site",
+      "id": "芯迈半导体-site-shanghai",
       "name": "芯迈半导体",
+      "city": "上海市",
+      "province": "上海市",
       "location": {
-        "address": "滨江区联慧街6号1号楼6楼",
-        "lng": 120.23348,
-        "lat": 30.209885
+        "address": "上海/深圳/成都/杭州"
+      }
+    },
+    {
+      "id": "芯迈半导体-site-shenzhen",
+      "name": "芯迈半导体",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳/成都/杭州"
+      }
+    },
+    {
+      "id": "芯迈半导体-site-chengdu",
+      "name": "芯迈半导体",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "上海/深圳/成都/杭州"
+      }
+    },
+    {
+      "id": "芯迈半导体-site-hangzhou",
+      "name": "芯迈半导体",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上海/深圳/成都/杭州"
       }
     }
   ],
@@ -21,7 +49,7 @@
     {
       "externalId": "radar-d64963c8cb5b",
       "title": "研发类  技术类  管理类 销售类",
-      "siteId": "芯迈半导体-site",
+      "siteId": "芯迈半导体-site-shanghai",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +58,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://young.yingjiesheng.com/xyzlogin?ctmid=3e160048-a22b-446f-899d-7bc0a9a6b8db&ehirejobid=&jumpurl=https%3A%2F%2Fxyz.51job.com%2FExternal%2FOthers%2FLogin51.aspx%3FCtmID%3D3e160048-a22b-446f-899d-7bc0a9a6b8db%26prd%3Dyddzy%26prp%3D%26cd%3D%26cp%3D%26r",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

@@ -1,0 +1,47 @@
+{
+  "slug": "作业帮",
+  "name": "作业帮",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/zuoyebang/150514?locale=zh-CN&sessionid=#/home",
+  "sites": [
+    {
+      "id": "作业帮-site-beijing",
+      "name": "作业帮",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/西安"
+      }
+    },
+    {
+      "id": "作业帮-site-shanghai",
+      "name": "作业帮",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6514ae1b2bd9",
+      "title": "AI算法工程师 数据仓库工程师 图像算法工程师 语音算法工程师 算法后端工程师 推荐算法工程师 营销算法工程师 AI应用算法工程师 产品教研 算法工程师 （大模",
+      "siteId": "作业帮-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/zuoyebang/150514?locale=zh-CN&sessionid=#/home",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

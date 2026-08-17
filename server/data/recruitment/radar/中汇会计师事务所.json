@@ -1,0 +1,65 @@
+{
+  "slug": "中汇会计师事务所",
+  "name": "中汇会计师事务所",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhcpa.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "中汇会计师事务所-site-beijing",
+      "name": "中汇会计师事务所",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中汇会计师事务所-site-shanghai",
+      "name": "中汇会计师事务所",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中汇会计师事务所-site-guangzhou",
+      "name": "中汇会计师事务所",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中汇会计师事务所-site-shenzhen",
+      "name": "中汇会计师事务所",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-268cc8abee5f",
+      "title": "审计岗，税务岗，金融咨询岗，风险咨询岗，（IT审计风险）数字化转型及运营咨询岗",
+      "siteId": "中汇会计师事务所-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhcpa.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

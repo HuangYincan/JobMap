@@ -1,6 +1,7 @@
 {
   "slug": "淘宝闪购",
   "name": "淘宝闪购",
+  "tier": 3,
   "industries": [
     "internet"
   ],
@@ -8,12 +9,30 @@
   "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RhvXxm8EZbskUhpKeG1HelQM8ttxYSAFC9fFHkWlN0Rw&batchId=100000760001",
   "sites": [
     {
-      "id": "淘宝闪购-site",
+      "id": "淘宝闪购-site-beijing",
       "name": "淘宝闪购",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "余杭区文一西路969号阿里巴巴西溪园区",
-        "lng": 120.024993,
-        "lat": 30.280062
+        "address": "北京/上海/杭州"
+      }
+    },
+    {
+      "id": "淘宝闪购-site-shanghai",
+      "name": "淘宝闪购",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/杭州"
+      }
+    },
+    {
+      "id": "淘宝闪购-site-hangzhou",
+      "name": "淘宝闪购",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/上海/杭州"
       }
     }
   ],
@@ -21,7 +40,7 @@
     {
       "externalId": "radar-a97aef3be071",
       "title": "技术、设计、数据、运营、产品等七大类",
-      "siteId": "淘宝闪购-site",
+      "siteId": "淘宝闪购-site-beijing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +49,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RhvXxm8EZbskUhpKeG1HelQM8ttxYSAFC9fFHkWlN0Rw&batchId=100000760001",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

@@ -1,0 +1,65 @@
+{
+  "slug": "华为ai",
+  "name": "华为AI",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.huawei.com/cn/campus-recruitment-job-list?recruitmentType=INTERN",
+  "sites": [
+    {
+      "id": "华为ai-site-beijing",
+      "name": "华为AI实习专项计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "华为ai-site-shanghai",
+      "name": "华为AI实习专项计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "华为ai-site-shenzhen",
+      "name": "华为AI实习专项计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "华为ai-site-chengdu",
+      "name": "华为AI实习专项计划",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f569fe7ab9e7",
+      "title": "AI Infra工程师  AI应用工程师  AI模型工程师 AI安全与隐私工程师 芯片与期间设计工程师",
+      "siteId": "华为ai-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.huawei.com/cn/campus-recruitment-job-list?recruitmentType=INTERN",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

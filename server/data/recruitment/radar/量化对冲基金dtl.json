@@ -1,0 +1,47 @@
+{
+  "slug": "量化对冲基金dtl",
+  "name": "量化对冲基金DTL",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.dytechlab.com/careers/",
+  "sites": [
+    {
+      "id": "量化对冲基金dtl-site-beijing",
+      "name": "量化对冲基金DTL",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "量化对冲基金dtl-site-shanghai",
+      "name": "量化对冲基金DTL",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-899e0f352a78",
+      "title": "量化研究员 量化研究员-机器学习 基本面量化研究员 交易算法研究员 交易分暑期实习析师 软件工程师 GPU工程师 人力资源专员",
+      "siteId": "量化对冲基金dtl-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dytechlab.com/careers/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "slug": "影石insta360",
+  "name": "影石Insta360",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://arashivision.jobs.feishu.cn/s/7gvYofWYSzQ",
+  "sites": [
+    {
+      "id": "影石insta360-site-shanghai",
+      "name": "影石Insta360",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/深圳"
+      }
+    },
+    {
+      "id": "影石insta360-site-shenzhen",
+      "name": "影石Insta360",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-49ad3a26920d",
+      "title": "技术类、产品类、业务类、综合类、艺术类、供应链类",
+      "siteId": "影石insta360-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://arashivision.jobs.feishu.cn/s/7gvYofWYSzQ",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-1ff0685438d7",
+      "title": "技术类  产品类  业务类 综合类 艺术类 岗位",
+      "siteId": "影石insta360-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-10-31",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://arashivision.jobs.feishu.cn/s/7gvYofWYSzQ",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

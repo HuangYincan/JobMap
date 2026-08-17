@@ -1,0 +1,65 @@
+{
+  "slug": "新凯来",
+  "name": "新凯来",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.sicarrier.com/#/campus",
+  "sites": [
+    {
+      "id": "新凯来-site-beijing",
+      "name": "新凯来",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "新凯来-site-shanghai",
+      "name": "新凯来",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "新凯来-site-shenzhen",
+      "name": "新凯来",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "新凯来-site-chengdu",
+      "name": "新凯来",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-301128d67eca",
+      "title": "机械类  光学类  材料类  软件类 应将类  系统类  测试类  服务类  制造类  职能类",
+      "siteId": "新凯来-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.sicarrier.com/#/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

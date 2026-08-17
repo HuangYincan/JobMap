@@ -14,6 +14,7 @@ import {
   placeTextSearchRest,
   planSiteGeocode,
   regeoCityRest,
+  regeoMatchesTarget,
   siteNeedsGeocode,
 } from '../src/lib/site-geocode.ts';
 
@@ -132,4 +133,92 @@ test('placeTextSearchRest and regeoCityRest are no-ops without AMAP_WEB_KEY', as
   } finally {
     if (prev != null) process.env.AMAP_WEB_KEY = prev;
   }
+});
+
+// --- multi-city (national scope) -------------------------------------------
+
+function radarCompany(sites) {
+  return {
+    slug: 'x-company',
+    name: '某司',
+    industries: ['internet'],
+    scale: 'enterprise',
+    sites,
+    positions: [],
+  };
+}
+
+test('planSiteGeocode scopes multi-city sites to their own city', () => {
+  const beijing = {
+    id: 'x-company-site-beijing',
+    name: '某司',
+    city: '北京市',
+    province: '北京市',
+    location: { lng: 0, lat: 0, address: '北京市朝阳区望京东路' },
+  };
+  const plan = planSiteGeocode([radarCompany([beijing])]);
+  assert.equal(plan.needs.length, 1);
+  assert.equal(plan.needs[0].city, '北京市');
+  assert.match(plan.needs[0].query, /望京东路/);
+});
+
+test('geocodeQueryForSite uses the site city (not the fallback) when the site has one', () => {
+  const beijing = {
+    id: 'x-company-site-beijing',
+    name: '某司',
+    city: '北京市',
+    province: '北京市',
+    location: { lng: 0, lat: 0 },
+  };
+  const query = geocodeQueryForSite('某司', beijing);
+  assert.match(query, /^北京市/);
+  const bare = { id: 'x-company-site', name: '某司', location: { lng: 0, lat: 0 } };
+  assert.match(geocodeQueryForSite('某司', bare), /^杭州/);
+});
+
+test('regeoMatchesTarget confirms the coordinate sits in the target city', () => {
+  const beijing = { city: '北京市', province: '北京市' };
+  // 直辖市: cityname 为空, province 兜底 (北京 regeo pname='北京市').
+  assert.equal(regeoMatchesTarget({ ok: true, province: '北京市', district: '海淀区' }, beijing).ok, true);
+  assert.equal(regeoMatchesTarget({ ok: true, cityname: '', province: '北京市', district: '朝阳区' }, beijing).ok, true);
+  // province 不匹配 → reject (坐标在广东但目标北京).
+  assert.equal(regeoMatchesTarget({ ok: true, province: '广东省', cityname: '广州市' }, beijing).ok, false);
+  // 普通市: province + cityname 都需匹配.
+  const guangzhou = { city: '广州市', province: '广东省' };
+  assert.equal(regeoMatchesTarget({ ok: true, province: '广东省', cityname: '广州市' }, guangzhou).ok, true);
+  assert.equal(regeoMatchesTarget({ ok: true, province: '广东省', cityname: '深圳市' }, guangzhou).ok, false);
+  // 全空 (未知区域) → ok (regeo 无足够信息时不拦截).
+  assert.equal(regeoMatchesTarget({ ok: true }, beijing).ok, true);
+});
+
+test('regeoCityRest parses province for the direct municipalities', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  process.env.AMAP_WEB_KEY = 'test-web-key';
+  try {
+    const re = await regeoCityRest(116.4, 39.9, async () => ({
+      ok: true,
+      json: async () => ({
+        status: '1',
+        regeocode: { addressComponent: { province: '北京市', district: '海淀区' } },
+      }),
+    }));
+    assert.equal(re.ok, true);
+    assert.equal(re.province, '北京市');
+    assert.equal(re.cityname, undefined);
+  } finally {
+    if (prev == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+test('gradeOfficePoi validates against the site province/city', () => {
+  const poi = { name: '某司北京有限公司', address: '望京东路6号', lng: 116.5, lat: 39.9, type: '公司企业', adname: '朝阳区', pname: '北京市', cityname: '北京市' };
+  assert.equal(gradeOfficePoi(poi, '某司', '北京市', '北京市').confidence, 'high');
+  const inHangzhou = { ...poi, cityname: '杭州市' };
+  assert.equal(gradeOfficePoi(inHangzhou, '某司', '北京市', '北京市').confidence, 'low');
+  const inShanghai = { ...poi, pname: '上海市', cityname: '上海市' };
+  assert.equal(gradeOfficePoi(inShanghai, '某司', '北京市', '北京市').confidence, 'low');
+  // Defaults keep the Hangzhou behavior for sites without city fields.
+  const hz = { ...poi, name: '商汤科技有限公司', address: '利一路188号天人大厦29楼', pname: '浙江省', cityname: '杭州市' };
+  assert.equal(gradeOfficePoi(hz, '商汤科技').confidence, 'high');
 });

@@ -1,0 +1,56 @@
+{
+  "slug": "华金证劵",
+  "name": "华金证劵",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU6407e1620dcad470d9ae9633/pb/school.html",
+  "sites": [
+    {
+      "id": "华金证劵-site-beijing",
+      "name": "华金证劵",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/苏州"
+      }
+    },
+    {
+      "id": "华金证劵-site-shanghai",
+      "name": "华金证劵",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/苏州"
+      }
+    },
+    {
+      "id": "华金证劵-site-shenzhen",
+      "name": "华金证劵",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5ab5f827c851",
+      "title": "投研交易方向  产融服务方向  财富管理方向  综合赋能方向  业务内控方向   金融数智方向",
+      "siteId": "华金证劵-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6407e1620dcad470d9ae9633/pb/school.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

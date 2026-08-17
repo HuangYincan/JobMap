@@ -1,0 +1,38 @@
+{
+  "slug": "韶音科技",
+  "name": "韶音科技",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/aftershokzhr/36940#/jobs?commitment=%E5%85%A8%E8%81%8C&page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "韶音科技-site-shenzhen",
+      "name": "韶音科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d5496424a393",
+      "title": "研究类  开发类  产品岗位",
+      "siteId": "韶音科技-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/aftershokzhr/36940#/jobs?commitment=%E5%85%A8%E8%81%8C&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

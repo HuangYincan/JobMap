@@ -1,0 +1,38 @@
+{
+  "slug": "泰康资产",
+  "name": "泰康资产",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobtaikang.zhiye.com/custom/campuslist?hideAll=true&jc=2&c1_text=%25E8%2581%258C%25E4%25BD%258D%25E7%25B1%25BB%25E5%259E%258B&c2=6&c2_text=%25E6%25B3%25B0%25E5%25BA%25B7%25E8%25B5%2584%25E4%25BA%25A7&c_text=%25E5%25B7%25A5%25E4%25BD%259C%25E5%259C",
+  "sites": [
+    {
+      "id": "泰康资产-site-beijing",
+      "name": "泰康资产",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c474a910a6e3",
+      "title": "股票研究 固定收益研究 资产配置研究 金融工程研究 基金研究 信用评估研究 风险管理 固收交易 权益交易 机构销售 数据科学 软件开发",
+      "siteId": "泰康资产-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobtaikang.zhiye.com/custom/campuslist?hideAll=true&jc=2&c1_text=%25E8%2581%258C%25E4%25BD%258D%25E7%25B1%25BB%25E5%259E%258B&c2=6&c2_text=%25E6%25B3%25B0%25E5%25BA%25B7%25E8%25B5%2584%25E4%25BA%25A7&c_text=%25E5%25B7%25A5%25E4%25BD%259C%25E5%259C",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

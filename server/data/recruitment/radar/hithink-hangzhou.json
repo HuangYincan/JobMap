@@ -1,6 +1,7 @@
 {
   "slug": "hithink-hangzhou",
   "name": "同花顺",
+  "tier": 3,
   "industries": [
     "finance"
   ],
@@ -8,8 +9,10 @@
   "careerUrl": "https://campus.10jqka.com.cn/mobile/job/list?recommendCode=OS9215",
   "sites": [
     {
-      "id": "hithink-hangzhou-site",
+      "id": "hithink-hangzhou-site-hangzhou",
       "name": "同花顺",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
         "address": "杭州"
       }
@@ -19,7 +22,7 @@
     {
       "externalId": "radar-548573867673",
       "title": "开发/算法/产品/运营",
-      "siteId": "hithink-hangzhou-site",
+      "siteId": "hithink-hangzhou-site-hangzhou",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -28,12 +31,13 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/mobile/job/list?recommendCode=OS9215",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     },
     {
       "externalId": "radar-8ed0c46aa8e2",
       "title": "多模态算法工程师 数据算法工程师 大模型算法工程师 Ai Infra算法工程师agent算法工程师 代码生成算法工程师图像生成算法工程师 语音智法工程师视频生成",
-      "siteId": "hithink-hangzhou-site",
+      "siteId": "hithink-hangzhou-site-hangzhou",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -42,12 +46,13 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     },
     {
       "externalId": "radar-6a819efaed40",
       "title": "算法类  产品运营类  研发技术力  设计类  金融研究类  后台支持类",
-      "siteId": "hithink-hangzhou-site",
+      "siteId": "hithink-hangzhou-site-hangzhou",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -56,12 +61,13 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     },
     {
       "externalId": "radar-fd22f5bc8686",
       "title": "多模态算法工程师 大模型算法工程师agent算法工程师 图像生成算法工程师视频生成算法工程师 数据算法工程师  AI Infra算法工程师  代码生成算法工程师",
-      "siteId": "hithink-hangzhou-site",
+      "siteId": "hithink-hangzhou-site-hangzhou",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -70,12 +76,13 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school&sid=1",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     },
     {
       "externalId": "radar-0500b7f14a2e",
       "title": "金融产品运营实习生   AI金融产品实习生  AI工程开发实习生",
-      "siteId": "hithink-hangzhou-site",
+      "siteId": "hithink-hangzhou-site-hangzhou",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -84,7 +91,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus.10jqka.com.cn/job/list?type=school",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

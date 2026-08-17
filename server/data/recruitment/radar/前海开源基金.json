@@ -1,0 +1,56 @@
+{
+  "slug": "前海开源基金",
+  "name": "前海开源基金",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://qhkyfund.zhiye.com/4/jobs",
+  "sites": [
+    {
+      "id": "前海开源基金-site-beijing",
+      "name": "前海开源基金",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "前海开源基金-site-shanghai",
+      "name": "前海开源基金",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "前海开源基金-site-shenzhen",
+      "name": "前海开源基金",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2ea15193aa86",
+      "title": "投资研究类   市场营销类",
+      "siteId": "前海开源基金-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://qhkyfund.zhiye.com/4/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

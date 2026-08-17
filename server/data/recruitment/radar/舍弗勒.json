@@ -1,0 +1,38 @@
+{
+  "slug": "舍弗勒",
+  "name": "舍弗勒",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://schaeffler.tupu360.com/position/list?type=TECHNOLOGYRUITMENT&lang=zh_CN&sessionid=",
+  "sites": [
+    {
+      "id": "舍弗勒-site-shanghai",
+      "name": "舍弗勒",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/南京/天津/长沙"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d1567becbaff",
+      "title": "AI  系统 机械  软件   测试  产品 采购供应链  质量  工艺  IE 生产",
+      "siteId": "舍弗勒-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://schaeffler.tupu360.com/position/list?type=TECHNOLOGYRUITMENT&lang=zh_CN&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

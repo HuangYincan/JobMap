@@ -1,0 +1,65 @@
+{
+  "slug": "中金公司",
+  "name": "中金公司",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://cicc.zhiye.com/custom/summer?hideMenu=1&sessionid=",
+  "sites": [
+    {
+      "id": "中金公司-site-beijing",
+      "name": "中金公司",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中金公司-site-shanghai",
+      "name": "中金公司",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中金公司-site-guangzhou",
+      "name": "中金公司",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中金公司-site-shenzhen",
+      "name": "中金公司",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5ecb73bbd845",
+      "title": "投资银行、私募股权、研究业、股票业务、资产管理、信息技术、固定收益、财富管理、管理支持、",
+      "siteId": "中金公司-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cicc.zhiye.com/custom/summer?hideMenu=1&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

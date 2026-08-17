@@ -1,6 +1,7 @@
 {
   "slug": "manycore-hangzhou",
   "name": "群核科技",
+  "tier": 3,
   "industries": [
     "internet"
   ],
@@ -8,8 +9,10 @@
   "careerUrl": "https://app.mokahr.com/campus_apply/qunhemail/2832#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
   "sites": [
     {
-      "id": "manycore-hangzhou-site",
+      "id": "manycore-hangzhou-site-hangzhou",
       "name": "群核科技",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
         "address": "杭州"
       }
@@ -19,7 +22,7 @@
     {
       "externalId": "radar-735415a42603",
       "title": "科研算法 AI  Infra 工程师  AI产品经理",
-      "siteId": "manycore-hangzhou-site",
+      "siteId": "manycore-hangzhou-site-hangzhou",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -28,12 +31,13 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://app.mokahr.com/campus_apply/qunhemail/2832#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     },
     {
       "externalId": "radar-21c6183e2b66",
       "title": "公共战略培训生",
-      "siteId": "manycore-hangzhou-site",
+      "siteId": "manycore-hangzhou-site-hangzhou",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

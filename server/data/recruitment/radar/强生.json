@@ -1,0 +1,47 @@
+{
+  "slug": "强生",
+  "name": "强生",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://chinacampus.jnj.com.cn/jnj/home/index/#/deliver?selected=",
+  "sites": [
+    {
+      "id": "强生-site-beijing",
+      "name": "强生",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "强生-site-shanghai",
+      "name": "强生",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3364cbb1c9d0",
+      "title": "医疗科技业务 创新制药研发团队， 供应链 职能部门",
+      "siteId": "强生-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://chinacampus.jnj.com.cn/jnj/home/index/#/deliver?selected=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

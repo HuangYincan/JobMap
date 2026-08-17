@@ -1,0 +1,53 @@
+{
+  "slug": "中邮消费金融",
+  "name": "中邮消费金融",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://is35svcbne.jobs.feishu.cn/youcash/position/list?keywords=&category=&location=&project=7354952949624342835%2C7641043112991262995&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+  "sites": [
+    {
+      "id": "中邮消费金融-site-guangzhou",
+      "name": "中邮消费金融",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2f783a04c044",
+      "title": "客户运营岗  司法诉讼岗  AIGC算法岗  招聘管理岗  数据挖掘算法岗",
+      "siteId": "中邮消费金融-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://is35svcbne.jobs.feishu.cn/youcash/position/list?keywords=&category=&location=&project=7354952949624342835%2C7641043112991262995&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-c4e176c99616",
+      "title": "法律事务实习生 AI算法实习生",
+      "siteId": "中邮消费金融-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://is35svcbne.jobs.feishu.cn/youcash/position/list?keywords=&category=&location=&project=7354952949624342835&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

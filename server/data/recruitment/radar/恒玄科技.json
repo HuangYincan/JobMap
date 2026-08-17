@@ -1,0 +1,65 @@
+{
+  "slug": "恒玄科技",
+  "name": "恒玄科技",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://bestechnic.zhiye.com/campus/jobs?memory=%7B%7D&silence=1",
+  "sites": [
+    {
+      "id": "恒玄科技-site-beijing",
+      "name": "恒玄科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "恒玄科技-site-shanghai",
+      "name": "恒玄科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "恒玄科技-site-shenzhen",
+      "name": "恒玄科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "恒玄科技-site-chengdu",
+      "name": "恒玄科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d1bf336d09d6",
+      "title": "芯片类  软件类 算法类  运营类",
+      "siteId": "恒玄科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bestechnic.zhiye.com/campus/jobs?memory=%7B%7D&silence=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

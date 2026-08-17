@@ -1,0 +1,56 @@
+{
+  "slug": "北汽产投",
+  "name": "北汽产投",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://baicgroup.zhiye.com/campus/jobs?queryId=bfc49d86-5dc2-47ba-b0ae-7d734d8319c0",
+  "sites": [
+    {
+      "id": "北汽产投-site-beijing",
+      "name": "北汽产投",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "北汽产投-site-shanghai",
+      "name": "北汽产投",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "北汽产投-site-shenzhen",
+      "name": "北汽产投",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f0421997bc5d",
+      "title": "投资助理实习生  研究助理实习生",
+      "siteId": "北汽产投-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://baicgroup.zhiye.com/campus/jobs?queryId=bfc49d86-5dc2-47ba-b0ae-7d734d8319c0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

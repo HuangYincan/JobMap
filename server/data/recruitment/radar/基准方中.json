@@ -1,6 +1,7 @@
 {
   "slug": "基准方中",
   "name": "基准方中",
+  "tier": 3,
   "industries": [
     "other"
   ],
@@ -8,12 +9,39 @@
   "careerUrl": "https://jzfz.zhiye.com/intern/jobs",
   "sites": [
     {
-      "id": "基准方中-site",
+      "id": "基准方中-site-beijing",
       "name": "基准方中",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "西湖区学院路28号德力西大厦1幢19楼1902室",
-        "lng": 120.130891,
-        "lat": 30.272856
+        "address": "北京/深圳/成都/杭州"
+      }
+    },
+    {
+      "id": "基准方中-site-shenzhen",
+      "name": "基准方中",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳/成都/杭州"
+      }
+    },
+    {
+      "id": "基准方中-site-chengdu",
+      "name": "基准方中",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/深圳/成都/杭州"
+      }
+    },
+    {
+      "id": "基准方中-site-hangzhou",
+      "name": "基准方中",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/深圳/成都/杭州"
       }
     }
   ],
@@ -21,7 +49,7 @@
     {
       "externalId": "radar-4d2bf7eec62d",
       "title": "建设设计 城乡规划设计 景观设计 室内设计 结构设计 给排水设计 电气设计 暖通设计",
-      "siteId": "基准方中-site",
+      "siteId": "基准方中-site-beijing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -30,7 +58,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://jzfz.zhiye.com/intern/jobs",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

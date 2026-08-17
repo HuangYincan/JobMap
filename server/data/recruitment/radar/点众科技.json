@@ -1,6 +1,7 @@
 {
   "slug": "点众科技",
   "name": "点众科技",
+  "tier": 3,
   "industries": [
     "internet"
   ],
@@ -8,12 +9,30 @@
   "careerUrl": "https://app.mokahr.com/apply/dianzhong/29071?sessionid=#/jobs",
   "sites": [
     {
-      "id": "点众科技-site",
+      "id": "点众科技-site-beijing",
       "name": "点众科技",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "滨江区中控信息大厦B座",
-        "lng": 120.194975,
-        "lat": 30.182575
+        "address": "北京/广州/杭州"
+      }
+    },
+    {
+      "id": "点众科技-site-guangzhou",
+      "name": "点众科技",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州/杭州"
+      }
+    },
+    {
+      "id": "点众科技-site-hangzhou",
+      "name": "点众科技",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/广州/杭州"
       }
     }
   ],
@@ -21,7 +40,7 @@
     {
       "externalId": "radar-44800993f11d",
       "title": "AI类 研发类 运营类 小语种类  剪辑/编导类",
-      "siteId": "点众科技-site",
+      "siteId": "点众科技-site-beijing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -30,7 +49,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://app.mokahr.com/apply/dianzhong/29071?sessionid=#/jobs",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

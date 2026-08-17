@@ -1,0 +1,65 @@
+{
+  "slug": "安永风险咨询团队与网络安全团队",
+  "name": "安永风险咨询团队与网络安全团队",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU640192b0bef57c71d90d025a/pb/posDetail.html?postId=6a197e30e791100f0a0baa0b&postType=intern",
+  "sites": [
+    {
+      "id": "安永风险咨询团队与网络安全团队-site-beijing",
+      "name": "安永风险咨询团队与网络安全团队",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "安永风险咨询团队与网络安全团队-site-shanghai",
+      "name": "安永风险咨询团队与网络安全团队",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "安永风险咨询团队与网络安全团队-site-guangzhou",
+      "name": "安永风险咨询团队与网络安全团队",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "安永风险咨询团队与网络安全团队-site-shenzhen",
+      "name": "安永风险咨询团队与网络安全团队",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c82459382ab1",
+      "title": "实习生岗位，理工科及相关专业优先(如数据科学 计算机、工程、金融工程等",
+      "siteId": "安永风险咨询团队与网络安全团队-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU640192b0bef57c71d90d025a/pb/posDetail.html?postId=6a197e30e791100f0a0baa0b&postType=intern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

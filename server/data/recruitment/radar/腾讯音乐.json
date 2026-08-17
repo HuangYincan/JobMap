@@ -1,0 +1,56 @@
+{
+  "slug": "腾讯音乐",
+  "name": "腾讯音乐",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://join.tencentmusic.com/campus/post?type=20",
+  "sites": [
+    {
+      "id": "腾讯音乐-site-beijing",
+      "name": "腾讯音乐",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/广州/深圳"
+      }
+    },
+    {
+      "id": "腾讯音乐-site-guangzhou",
+      "name": "腾讯音乐",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州/深圳"
+      }
+    },
+    {
+      "id": "腾讯音乐-site-shenzhen",
+      "name": "腾讯音乐",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-389478477bc8",
+      "title": "技术类 产品类 设计类 内容类 专业类",
+      "siteId": "腾讯音乐-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.tencentmusic.com/campus/post?type=20",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

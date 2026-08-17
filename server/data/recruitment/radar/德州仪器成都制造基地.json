@@ -1,0 +1,38 @@
+{
+  "slug": "德州仪器成都制造基地",
+  "name": "德州仪器成都制造基地",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/ti/142216?sourceToken=eefdb1eba1f0993c5d827fafc1a8e0e8#/jobs?department%5B0%5D=3770252",
+  "sites": [
+    {
+      "id": "德州仪器成都制造基地-site-chengdu",
+      "name": "德州仪器成都制造基地",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-71145cc49049",
+      "title": "设备技术员实习生  工艺技术员实习生",
+      "siteId": "德州仪器成都制造基地-site-chengdu",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/ti/142216?sourceToken=eefdb1eba1f0993c5d827fafc1a8e0e8#/jobs?department%5B0%5D=3770252",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

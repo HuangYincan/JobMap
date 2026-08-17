@@ -1,0 +1,80 @@
+{
+  "slug": "联发科技",
+  "name": "联发科技",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://mediatek.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "联发科技-site-beijing",
+      "name": "联发科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "联发科技-site-shanghai",
+      "name": "联发科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "联发科技-site-shenzhen",
+      "name": "联发科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "联发科技-site-chengdu",
+      "name": "联发科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-57ee4bf15f4d",
+      "title": "软件类  通信类 IC类",
+      "siteId": "联发科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mediatek.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-c66edb8f9f0a",
+      "title": "软件类  通信类  IC类",
+      "siteId": "联发科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mediatek.zhiye.com/custom/%E5%AE%9E%E4%B9%A0%E7%94%9F%E6%8B%9B%E8%81%98",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

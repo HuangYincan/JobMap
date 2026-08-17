@@ -1,0 +1,56 @@
+{
+  "slug": "卓驭原大疆车载",
+  "name": "卓驭原大疆车载",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://we.zyt.com/5/jobs?shareId=37dac631-7487-4b66-8075-29fa54e31472&shareSource=2",
+  "sites": [
+    {
+      "id": "卓驭原大疆车载-site-beijing",
+      "name": "卓驭原大疆车载",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "卓驭原大疆车载-site-shanghai",
+      "name": "卓驭原大疆车载",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "卓驭原大疆车载-site-shenzhen",
+      "name": "卓驭原大疆车载",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-875c8aa124bd",
+      "title": "多模态大模型预训练算法岗\n多模态大模型后训练算法岗\n多模态大模型数据与评测算法岗\n大模型算法岗(机器人移动后训练&应用)\n端到端领航算法岗",
+      "siteId": "卓驭原大疆车载-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://we.zyt.com/5/jobs?shareId=37dac631-7487-4b66-8075-29fa54e31472&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

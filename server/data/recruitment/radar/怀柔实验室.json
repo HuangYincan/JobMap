@@ -1,0 +1,38 @@
+{
+  "slug": "怀柔实验室",
+  "name": "怀柔实验室",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU6286556c2f9d246627874843/pb/posDetail.html?postId=6a696da6e05c792b8ed1b158&postType=campus",
+  "sites": [
+    {
+      "id": "怀柔实验室-site-beijing",
+      "name": "怀柔实验室—菁英选拔营专项项目",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-16dc8afc2e9a",
+      "title": "电气工程  计算机科学与技术  软件工程  数学  统计学等专业",
+      "siteId": "怀柔实验室-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-12",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6286556c2f9d246627874843/pb/posDetail.html?postId=6a696da6e05c792b8ed1b158&postType=campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

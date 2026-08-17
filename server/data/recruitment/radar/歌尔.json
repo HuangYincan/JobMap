@@ -1,0 +1,65 @@
+{
+  "slug": "歌尔",
+  "name": "歌尔",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://goertek.hotjob.cn/",
+  "sites": [
+    {
+      "id": "歌尔-site-beijing",
+      "name": "歌尔—精英计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "歌尔-site-shanghai",
+      "name": "歌尔—精英计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "歌尔-site-shenzhen",
+      "name": "歌尔—精英计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "歌尔-site-chengdu",
+      "name": "歌尔—精英计划",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-479738a9c3c2",
+      "title": "研发类  品质&技术类  职能类&其它",
+      "siteId": "歌尔-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://goertek.hotjob.cn/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}
