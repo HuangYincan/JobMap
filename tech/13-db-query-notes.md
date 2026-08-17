@@ -95,7 +95,7 @@ gist 已接上。行数涨到几百以后，单独的 bbox 也应切到 Index Sc
 
 工作模式全国化（北上广深、成都、武汉）的 DB 落地（`011_national_scope`，已实现 2026-08-17）：
 
-- `companies.tier smallint NOT NULL DEFAULT 3`（1名企/2大厂/3中厂/其他）：LOD 按缩放级别过滤。索引 `companies_tier_idx`。
+- `companies.tier smallint NOT NULL DEFAULT 12`（0..21 = 可见最小 zoom，zoom>=tier 显示；0=永显，21=永隐；迁移 012 替换 CHECK 为 0..21；语义表 tech/19）。索引 `companies_tier_idx`。
 - `company_sites.province text` / `city_code text`（行政区划码）：城市分片加载；`company_sites_city_code_idx` + `company_sites_city_company_idx (city_code, company_id)`（join 公司的复合索引）。
   - ⚠️ 计划草案里的复合 `(city_code, tier)` 无法建在单表上（tier 在 `companies`），改为上面的 join 复合索引 + `companies_tier_idx` 联合覆盖城市过滤 + 层级过滤。
 - `company_sites.geom_geog geography(Point,4326)` STORED（由 lng/lat 生成）+ `company_sites_geog_gist`：用户位置半径用 `ST_DWithin(geom_geog, point_geog, radius_m)`，避免 4326 度数误差。
@@ -103,5 +103,5 @@ gist 已接上。行数涨到几百以后，单独的 bbox 也应切到 Index Sc
 - `positions_open_site_idx (site_id) WHERE status='open'`：部分索引，alive 过滤只扫在招行。
 - A1 只在招：DB 读路径恒开 `status='open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)`；离线 catalog 在 `loadOfflineWorkCatalog` 里按 `isAlivePosition` 内存过滤；筛选器 `alive` 同规则。
 - 读路径透传（`/api/pois` + `/api/search` 的 `filters`）：`maxTier`（SQL 下推 `companies.tier <= n`，内存 `applyFilters` 兜底）、`city`（SQL：`city_code` 精确 OR `city` ILIKE；内存：site 城市/地址文本包含）、`alive`。
-- 导入映射（`recruitment-import.ts`）：`companies.tier` 缺省 3；site `city` 从 drop `site.city` 或地址解析（`siteCityOf`：目标城市名 / 杭州区名前缀），`province`/`city_code` 原样落库。
+- 导入映射（`recruitment-import.ts`）：`companies.tier` 缺省 12、`category` 缺省 `'other'`（国标大类 code，tech/19）；site `city` 从 drop `site.city` 或地址解析（`siteCityOf`：目标城市名 / 杭州区名前缀），`province`/`city_code` 原样落库。
 - 百万级预留：按 `province`/`city_code` 分区或聚合展示（缩到全国时按 tier 聚合计数）。
