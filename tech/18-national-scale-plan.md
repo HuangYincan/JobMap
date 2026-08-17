@@ -46,7 +46,7 @@
 ```sql
 -- 已实现。⚠️ 草案里的复合 (city_code, tier) 无法建在单表上（tier 在 companies），
 -- 改为 company_sites_city_company_idx (city_code, company_id) + companies_tier_idx 联合覆盖。
-ALTER TABLE companies ADD COLUMN tier smallint NOT NULL DEFAULT 3;   -- 1=名企 2=大厂 3=中厂/其他
+ALTER TABLE companies ADD COLUMN tier smallint NOT NULL DEFAULT 3;   -- 旧语义:1=名企 2=大厂 3=中厂/其他(2026-08-17 修订为 0..21 可见 zoom,见 tech/19;迁移 012 改缺省 12)
 ALTER TABLE company_sites ADD COLUMN province text;                  -- '浙江省'
 ALTER TABLE company_sites ADD COLUMN city_code text;                 -- '330100'
 ALTER TABLE company_sites ADD COLUMN geom_geog geography(Point,4326)
@@ -61,16 +61,22 @@ CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
 - `tier` 打标来源：名企（大厂/独角兽/500 强，已知清单 + LLM 校验辅助）。
 - 城市字段来源：雷达快照城市文本 + 官网 office 城市。
 
+> **2026-08-17 修订**:tier 从「1-3 档位分组」改为「0..21 可见最小 zoom」
+> (`tier <= zoom` 过滤,SQL 下推不变;`lod.ts` 恒等映射;缺省 12;语义表见
+> `tech/19` §1)。`companies.category`(国标大类 code)见 `tech/19` §2(迁移 012)。
+
 ### 2.2 Q1 — 按层级展示（LOD）
 
 - 用户按位置按需加载 DB 中的 POI：空间查询（`bounds` + `ST_DWithin`）+ **层级过滤**。
-- `tier` 随缩放级别过滤，阈值**可配置**（`lib/lod.ts` 常量）：
+- **模型（2026-08-17 修订）**：公司 `tier` = 可见最小 zoom，`tier <= 当前 zoom` 才展示。
+  缩放连续变化 → 公司逐步涌现/消退；zoom 取整传 `filters.maxTier`（`lib/lod.ts:maxTierForZoom`）。
 
 | 视角 | 展示 |
 |---|---|
-| 大比例尺（放大到街区） | 只展示名企（`tier <= 1`）——近距离质量优先，避免街道被小店淹没 |
-| 中比例尺 | 中厂 + 大厂（`tier <= 2`） |
-| 小比例尺（缩到全国） | 各种厂（`tier <= 3`，全部）——密度优先 |
+| 缩到全国（zoom < 4） | 只显示国际化名企（`tier <= 0`）——最顶层稀疏视野 |
+| 全国（zoom 4–5） | 国家级名企加入（`tier <= 5`） |
+| 省级（zoom 6–7） | 省级龙头 + 城市名企加入（`tier <= 7`） |
+| 城市及以下（zoom ≥ 8） | 中厂/小厂逐步加入（`tier <= zoom`）——密度随缩放提升 |
 
 - 客户端从 zoom 计算 `maxTier`，随 `bounds` 一起传给 `/api/pois`。
 - 语义按用户原话实现，阈值做成常量便于日后调。

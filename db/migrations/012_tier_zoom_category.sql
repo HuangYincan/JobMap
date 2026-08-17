@@ -8,6 +8,9 @@
 -- 幂等:可重复执行。
 
 ALTER TABLE companies ALTER COLUMN tier SET DEFAULT 12;
+-- 011 的内联 CHECK (tier BETWEEN 1 AND 3) 与 0..21 语义冲突:删除旧约束,换新范围。
+ALTER TABLE companies DROP CONSTRAINT IF EXISTS companies_tier_check;
+ALTER TABLE companies ADD CONSTRAINT companies_tier_check CHECK (tier BETWEEN 0 AND 21);
 COMMENT ON COLUMN companies.tier IS
   '0..21 可见最小 zoom:zoom >= tier 时显示;0=永显,21=永隐,缺省 12(tech/19)';
 

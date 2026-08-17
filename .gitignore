@@ -88,3 +88,4 @@ docker-compose.override.yml
 /sidebar-collapsed.png
 /sidebar-expanded-now.png
 /sidebar-expanded-search.png
+tech/roles/data/validation-report-*.json
