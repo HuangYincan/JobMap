@@ -9,12 +9,12 @@
 import {
   geocodeAddress,
   searchPOI,
-  searchViewportPOIsIncremental,
+  searchViewportPOIsFallback,
 } from './amap-api.ts';
 import { INTERNSHIP_SEED } from './seed-data.ts';
 import { fetchWorkCatalogFromApi } from './recruitment-adapters/api.ts';
 import type { QueryPipeline } from './search.ts';
-import { mergePoisById, isCommonOrExactName, POI_HARD_CAP, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
+import { mergePoisById, isCommonOrExactName, inHangzhouBox, DOMAIN_POI_HARD_CAP, MORE_PAGE_SIZE, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
 import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
 import { isRecruitmentMode } from './types.ts';
 
@@ -50,13 +50,20 @@ export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<POI[]>
 }
 
 
-/** Domain：往累计池里增量合并；找不到就不塞 seed */
+/** Domain：往累计池里增量合并；找不到就不塞 seed。
+ *  tech/22：杭州内走本地 /api/pois/domain-local；杭州外回退高德（省调用，
+ *  默认 1 次 25 条，加载更多 +100 条去重）。 */
 async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
   const center = options.center ?? { lng: 120.15, lat: 30.27 };
   const zoom = options.zoom ?? 13;
   const existing = (options.existing ?? []) as DomainPOI[];
+  const inHz = inHangzhouBox(center);
 
   if (options.query) {
+    if (inHz) {
+      // 杭州内关键词搜索 → 本地库 name ILIKE
+      return fetchLocalPois(options, existing, zoom, options.query);
+    }
     try {
       const result = await searchPOI({
         keyword: options.query,
@@ -71,7 +78,7 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
       const next = mergePoisById(
         existing,
         result.pois.filter((p) => isCommonOrExactName(p, options.query || '')),
-        POI_HARD_CAP,
+        DOMAIN_POI_HARD_CAP,
       );
       options.onBatch?.(next);
       return next;
@@ -82,13 +89,19 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
     }
   }
 
+  if (inHz) {
+    // 杭州内浏览 → 本地库(全量分层,列表候选 300→+300→1000)
+    return fetchLocalPois(options, existing, zoom);
+  }
+
   const category =
     typeof options.filters?.category === 'string' && options.filters.category
       ? options.filters.category
       : undefined;
 
+  // 杭州外 → 高德省调用回退:默认 1 次(25 条),加载更多每轮 +4 次(≈100 条)
   try {
-    const pois = await searchViewportPOIsIncremental({
+    const pois = await searchViewportPOIsFallback({
       center,
       zoom,
       bounds: options.bounds,
@@ -104,9 +117,61 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
     });
     return pois;
   } catch (err) {
-    console.warn('[poi-service] AMap viewport search failed:', err);
+    console.warn('[poi-service] AMap fallback search failed:', err);
     options.onBatch?.(existing);
     return existing;
+  }
+}
+
+/** 杭州本地查询：GET /api/pois/domain-local。offset=pageOffset*300，cap 1000。 */
+async function fetchLocalPois(
+  options: FetchPOIOptions,
+  existing: DomainPOI[],
+  zoom: number,
+  q?: string,
+): Promise<POI[]> {
+  const bounds = options.bounds;
+  const offset = (options.pageOffset ?? 0) * MORE_PAGE_SIZE;
+  const params = new URLSearchParams();
+  if (bounds) {
+    params.set('bounds', `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`);
+  }
+  params.set('zoom', String(Math.max(1, Math.floor(zoom))));
+  params.set('limit', String(MORE_PAGE_SIZE));
+  params.set('offset', String(offset));
+  if (q) params.set('q', q);
+  const url = `/api/pois/domain-local?${params.toString()}`;
+
+  try {
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error(`domain-local ${res.status}`);
+    const data = await res.json();
+    const rows = (data.results ?? []) as DomainPOI[];
+    const next = mergePoisById(existing, rows, DOMAIN_POI_HARD_CAP);
+    options.onBatch?.(next);
+    return next;
+  } catch (err) {
+    // 库未导入 / 网络错 → 回退高德 fallback（杭州内兜底），不白屏
+    console.warn('[poi-service] local domain POIs failed, fallback to AMap:', err);
+    try {
+      const pois = await searchViewportPOIsFallback({
+        center: options.center,
+        zoom,
+        bounds: options.bounds,
+        existing,
+        addCap: options.addCap,
+        pageOffset: options.pageOffset,
+        signal: options.signal,
+        onBatch: (batch) => {
+          if (options.signal?.cancelled) return;
+          options.onBatch?.(batch);
+        },
+      });
+      return pois;
+    } catch (fallbackErr) {
+      options.onBatch?.(existing);
+      return existing;
+    }
   }
 }
 

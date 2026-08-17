@@ -53,6 +53,25 @@ export const POI_HARD_CAP = 3000;
 /** 兼容旧名：一轮网格搜索的目标增量 */
 export const REFRESH_ADD_CAP = POI_SOFT_CAP;
 
+/**
+ * Domain 模式列表候选上限(tech/22):默认 300,点一次「加载更多」+300,
+ * 直到 1000 封顶。与 POI_HARD_CAP(work 模式 3000)分离——测试硬编码
+ * POI_SOFT_CAP/MORE_PAGE_SIZE/POI_HARD_CAP,这里只影响 domain 路径。
+ */
+export const DOMAIN_POI_HARD_CAP = 1000;
+/** 杭州外回退高德:首轮仅 1 次 PlaceSearch(25 条) */
+export const AMAP_FALLBACK_INITIAL_CALLS = 1;
+/** 杭州外回退高德:每轮「加载更多」至多 4 次(≈100 条,去重) */
+export const AMAP_FALLBACK_MORE_CALLS = 4;
+/** 杭州 GCJ-02 数据范围框(含桐庐/建德/淳安等远郊),见 hz-poi-import.ts */
+export const HANGZHOU_BBOX = { west: 118.3, south: 29.1, east: 120.8, north: 30.7 };
+
+/** 杭州判定:中心点是否落在杭州数据范围框内 */
+export function inHangzhouBox(loc: { lng: number; lat: number }): boolean {
+  const { west, south, east, north } = HANGZHOU_BBOX;
+  return loc.lng >= west && loc.lng <= east && loc.lat >= south && loc.lat <= north;
+}
+
 /** 低层级只搜地标，避免全国铺满杂店 */
 export const LANDMARK_KEYWORDS = [
   '风景名胜',
@@ -447,6 +466,24 @@ export function buildSearchQueue(
     }
   }
   return queue;
+}
+
+/**
+ * 杭州外回退高德的预算窗口(tech/22):默认只发 1 次 PlaceSearch(25 条),
+ * 用户点「加载更多」每轮至多 +4 次(≈100 条)。按 buildSearchQueue 的
+ * 展开顺序切窗口——首轮取前 AMAP_FALLBACK_INITIAL_CALLS 个任务,
+ * 后续每轮从 (pageOffset-1)*AMAP_FALLBACK_MORE_CALLS 续取固定窗口。
+ * 预算耗尽(窗口空)→ 返回 [] 表示无更多可拉。
+ */
+export function fallbackTaskWindow(
+  keywords: readonly string[],
+  pages = 4,
+  pageOffset = 0,
+): SearchTask[] {
+  const full = buildSearchQueue(keywords, pages, 0);
+  if (pageOffset <= 0) return full.slice(0, AMAP_FALLBACK_INITIAL_CALLS);
+  const start = 1 + (pageOffset - 1) * AMAP_FALLBACK_MORE_CALLS;
+  return full.slice(start, start + AMAP_FALLBACK_MORE_CALLS);
 }
 
 /** @deprecated 网格波次已废弃，转成单中心队列 */
