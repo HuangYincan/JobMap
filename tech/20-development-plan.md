@@ -20,7 +20,8 @@
 | # | 任务 | 说明 |
 |---|---|---|
 | B1 | `isAlivePosition` 双实现合并 | freshness.ts vs position-alive.ts(语义一致,早 00:30 时刻截止边缘分歧,SQL 路径为权威) |
-| B2 | LLM 校验跑首批 181 条 | 用户 key 已配;跑完按 suggestedSplit 拆聚合行 |
+| B2 | LLM 校验跑首批 181 条 | ✅ 2026-08-17 全量 817 条跑完(pass 82 / warn 724 / fail 10 / error 1);修复聚合行误判 fail(696 条归位 warn)。**剩余:10 条 fail 数据修正(见 B2.1)** |
+| B2.1 | 10 条 fail 数据修正(用户决策) | 门户入口类(megvii/tigermed)→ 建议移除;计划/项目名类(度小满/申万宏源/曼伦)→ 保留或拆解;描述性标题(l-e-k/中信南华/奇安信/学而思网校)→ 修正或移除;硬伤(博世智驾 applyUrl=wjx.cn 问卷星)→ 移除或修 applyUrl;科大讯飞 error=LLM 空响应,重跑覆盖 |
 | B3 | 全国级城市聚合展示(tech/18 预留) | zoom < 4 时按城市聚合计数,点击下钻 |
 | B4 | category 前端消费(筛选/标签) | 打标完成后,插件式筛选器 |
 | B5 | crawler 新城市 drops 校准 | WS2 之后新增公司入表 |
