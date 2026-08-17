@@ -220,6 +220,194 @@ function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
 
+// ============================================================
+// 工作模式视口按需加载(WS4,tech/18 §2.3)
+//
+// moveend/zoomend → 防抖 → GET /api/pois(当前 bounds + maxTier)
+// → 增量合并进现有 catalog(不清空已有 marker)→ 更新 marker。
+// 性能:同刻只有一个 in-flight;防抖窗口内事件合并为一次请求;
+// 请求期间的新事件只保留「最新一次」,完成后立即补跑。
+// Domain 模式保持刷新才更新,不走这里。
+// ============================================================
+
+import type { FilterState, POI, RecruitmentPOI } from './types.ts';
+import { withAlivePositions } from './position-alive.ts';
+
+/** moveend/zoomend 防抖时长 */
+export const VIEWPORT_DEBOUNCE_MS = 300;
+/** 视口请求每页大小(服务端 pageSize 上限) */
+export const WORK_VIEWPORT_PAGE_SIZE = 50;
+
+export interface WorkViewportQuery {
+  /** 当前视野;缺省时不带 bounds 参数(服务端返回整库首页,仅首屏兜底) */
+  bounds?: ViewportBounds;
+  /** 缩放级别 → 档位上限(见 lod.ts;服务端忽略前按现有数据工作) */
+  maxTier?: number;
+  /** 用户筛选(industry/scale/onlyOpen…;maxTier 由本模块并入) */
+  filters?: FilterState;
+  q?: string;
+  sort?: string;
+  page?: number;
+  pageSize?: number;
+  /**
+   * 从 page 起连取几页。首屏/刷新取前几页填满视野(默认 4 页=200),
+   * 视口增量加载只取 1 页(默认)。
+   */
+  maxPages?: number;
+}
+
+export interface LoadWorkViewportOptions extends WorkViewportQuery {
+  /** 已累计的 POI,本轮往里增量合并(不清空) */
+  existing: POI[];
+  signal?: { cancelled: boolean };
+  /** 每页合并后回调(完整累计池,可多次) */
+  onBatch?: (pois: POI[]) => void;
+  /** 注入 fetcher(测试用);缺省用全局 fetch */
+  fetcher?: typeof fetch;
+}
+
+/** 首屏/刷新最多连取几页,避免全库翻页轰服务端 */
+export const WORK_INITIAL_MAX_PAGES = 4;
+
+function isRecruitmentPoi(value: unknown): value is RecruitmentPOI {
+  if (!value || typeof value !== 'object') return false;
+  const row = value as Partial<RecruitmentPOI>;
+  return (
+    row.kind === 'recruitment' &&
+    typeof row.id === 'string' &&
+    !!row.company &&
+    Array.isArray(row.positions)
+  );
+}
+
+function boundsParam(bounds: ViewportBounds): string {
+  return [bounds.west, bounds.south, bounds.east, bounds.north].join(',');
+}
+
+/**
+ * 按当前视口拉取一页工作 catalog:GET /api/pois?mode=work&bounds=…&filters={…,maxTier}&page=…
+ * 返回 alive 过滤后的本页 POI(未合并;调用方用 mergePoisById 并入累计池)。
+ * fetcher 可注入,便于测试。
+ */
+export async function fetchWorkViewportPage(
+  query: WorkViewportQuery,
+  fetcher: typeof fetch = fetch
+): Promise<POI[]> {
+  const params = new URLSearchParams();
+  params.set('mode', 'work');
+  if (query.bounds) params.set('bounds', boundsParam(query.bounds));
+  params.set('page', String(query.page ?? 1));
+  params.set('pageSize', String(query.pageSize ?? WORK_VIEWPORT_PAGE_SIZE));
+  if (query.q) params.set('q', query.q);
+  if (query.sort) params.set('sort', query.sort);
+  const filters = query.maxTier
+    ? { ...query.filters, maxTier: query.maxTier }
+    : { ...(query.filters ?? {}) };
+  if (Object.keys(filters).length > 0) params.set('filters', JSON.stringify(filters));
+  const url = `/api/pois?${params.toString()}`;
+  const res = await fetcher(url);
+  if (!res.ok) return [];
+  const payload = (await res.json()) as { results?: unknown[] };
+  const alive: POI[] = [];
+  for (const row of payload.results ?? []) {
+    if (!isRecruitmentPoi(row)) continue;
+    const kept = withAlivePositions(row);
+    if (kept) alive.push(kept);
+  }
+  return alive;
+}
+
+/**
+ * 工作模式视口加载:从 page 起连取 maxPages 页(默认 1 页) → 每页 alive 过滤
+ * → 按 poi.id 增量合并进现有池(不清空已有 marker;重复 id 跳过;
+ * POI_HARD_CAP 防无限堆)。每页合并后回调 onBatch(完整累计池)。
+ * 页数取完或某页不满页即停。
+ */
+export async function loadWorkViewport(options: LoadWorkViewportOptions): Promise<POI[]> {
+  const { existing, onBatch, signal } = options;
+  const startPage = options.page ?? 1;
+  const maxPages = options.maxPages ?? 1;
+  let merged = existing;
+  for (let p = 0; p < maxPages; p += 1) {
+    if (signal?.cancelled) return merged;
+    const page = await fetchWorkViewportPage(
+      { ...options, page: startPage + p },
+      options.fetcher,
+    );
+    if (signal?.cancelled) return merged;
+    merged = mergePoisById(merged, page, POI_HARD_CAP);
+    onBatch?.(merged);
+    // 本页不满页 → 没有更多数据,提前停(避免白打请求)
+    if (page.length < (options.pageSize ?? WORK_VIEWPORT_PAGE_SIZE)) break;
+  }
+  return merged;
+}
+
+export interface ViewportLoader {
+  /** 视口事件入口:重置防抖计时器;in-flight 期间只记「最新一次」 */
+  schedule(): void;
+  /** 取消计时器与 pending,不再触发任何加载 */
+  dispose(): void;
+  /** 还有待触发的防抖 / pending / in-flight 吗(测试用) */
+  pending(): boolean;
+}
+
+export interface ViewportLoaderOptions {
+  delayMs: number;
+  load: () => Promise<void> | void;
+}
+
+/**
+ * 防抖 + 请求合并加载器(纯逻辑,不依赖 AMap/React):
+ * - schedule():每次事件重置防抖计时器,窗口内只发一次请求;
+ * - 请求进行中收到的新事件只替换 pending;当前请求完成后立即补跑
+ *   「最新一次」(中间态丢弃,不会堆积);
+ * - dispose():清空计时器与 pending,不再触发。
+ */
+export function createViewportLoader(options: ViewportLoaderOptions): ViewportLoader {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let inFlight = false;
+  let pending = false;
+  let disposed = false;
+
+  const runPending = () => {
+    if (disposed || inFlight || !pending) return;
+    pending = false;
+    inFlight = true;
+    Promise.resolve()
+      .then(() => options.load())
+      .catch(() => {
+        // load 的错误由调用方自己处理;这里兜底避免 inFlight 卡死
+      })
+      .finally(() => {
+        inFlight = false;
+        if (pending) runPending();
+      });
+  };
+
+  return {
+    schedule() {
+      if (disposed) return;
+      pending = true;
+      if (inFlight) return; // 当前请求完成后自动补跑最新一次
+      if (timer !== null) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        runPending();
+      }, options.delayMs);
+    },
+    dispose() {
+      disposed = true;
+      if (timer !== null) clearTimeout(timer);
+      timer = null;
+      pending = false;
+    },
+    pending() {
+      return timer !== null || pending || inFlight;
+    },
+  };
+}
+
 export function mergePoisById<T extends { id: string }>(
   existing: T[],
   incoming: T[],

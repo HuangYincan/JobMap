@@ -22,6 +22,12 @@ import {
   searchRadiusMeters,
   zoomStrategy,
 } from '../src/lib/viewport-search.ts';
+import {
+  createViewportLoader,
+  fetchWorkViewportPage,
+  loadWorkViewport,
+  VIEWPORT_DEBOUNCE_MS,
+} from '../src/lib/viewport-search.ts';
 import { sortPOIs } from '../src/lib/search.ts';
 
 test('sampleViewportGrid: 4x4 yields 16 interior centers', () => {
@@ -155,4 +161,199 @@ test('parseBoundsParam and inBounds clip to the requested box', () => {
   assert.equal(inBounds({ lng: 120.1, lat: 30.25 }, box), true);
   assert.equal(inBounds({ lng: 121, lat: 30.25 }, box), false);
   assert.equal(inBounds({ lng: 120.1, lat: 30.25 }, [120, 30.2, 120.2, 30.3]), true);
+});
+
+// ---- 工作模式视口按需加载(WS4)----
+
+const VIEWPORT_BOX = { west: 120, south: 30, east: 121, north: 31 };
+
+function recruitmentPoi(id, positions) {
+  return {
+    id,
+    kind: 'recruitment',
+    name: id,
+    mode: 'work',
+    source: 'api',
+    location: { lng: 120.1, lat: 30.2, address: 'X' },
+    company: { name: id, industries: [], scale: 'bigtech' },
+    positions,
+  };
+}
+
+function fmtDate(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+const daysFromNow = (n) => fmtDate(new Date(Date.now() + n * 86_400_000));
+
+test('fetchWorkViewportPage sends bounds + maxTier and keeps only alive positions', async () => {
+  let seenUrl = '';
+  const results = [
+    recruitmentPoi('a', [
+      { id: 'p1', title: '后端', type: 'social', status: 'open', deadline: daysFromNow(30) },
+      { id: 'p2', title: '算法', type: 'social', status: 'open', deadline: daysFromNow(-3) },
+    ]),
+    recruitmentPoi('b', [{ id: 'p3', title: '产品', type: 'social', status: 'closed' }]),
+    recruitmentPoi('c', [{ id: 'p4', title: '设计', type: 'social', status: 'open' }]),
+  ];
+  const fetcher = async (url) => {
+    seenUrl = String(url);
+    return { ok: true, json: async () => ({ results }) };
+  };
+  const pois = await fetchWorkViewportPage(
+    { bounds: VIEWPORT_BOX, maxTier: 1, page: 1, filters: { onlyOpen: 'true' } },
+    fetcher
+  );
+  const parsed = new URL(seenUrl, 'http://x');
+  assert.equal(parsed.searchParams.get('mode'), 'work');
+  assert.equal(parsed.searchParams.get('bounds'), '120,30,121,31');
+  assert.equal(parsed.searchParams.get('page'), '1');
+  assert.equal(
+    parsed.searchParams.get('filters'),
+    JSON.stringify({ onlyOpen: 'true', maxTier: 1 })
+  );
+  // b 全部岗位 closed、a 的过期岗位被剔除;只剩 a(1 个在招)+ c
+  assert.equal(pois.length, 2);
+  const a = pois.find((p) => p.id === 'a');
+  assert.equal(a.positions.length, 1);
+  assert.equal(a.positions[0].id, 'p1');
+});
+
+test('fetchWorkViewportPage: no maxTier → filters unchanged; non-ok response → empty', async () => {
+  let seenUrl = '';
+  const fetcher = async (url) => {
+    seenUrl = String(url);
+    return { ok: false };
+  };
+  assert.deepEqual(
+    await fetchWorkViewportPage({ bounds: VIEWPORT_BOX, filters: { onlyOpen: 'true' } }, fetcher),
+    []
+  );
+  assert.ok(!seenUrl.includes('maxTier'));
+});
+
+test('loadWorkViewport merges by id via injected fetcher', async () => {
+  const existing = [
+    recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }]),
+    recruitmentPoi('b', [{ id: 'p2', title: '算法', type: 'social', status: 'open' }]),
+  ];
+  const pagePois = [existing[1], recruitmentPoi('c', [{ id: 'p3', title: '产品', type: 'social', status: 'open' }])];
+  let seenOptions = null;
+  let lastBatch = null;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    seenOptions = String(url);
+    return { ok: true, json: async () => ({ results: pagePois }) };
+  };
+  try {
+    const merged = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      maxTier: 2,
+      existing,
+      onBatch: (batch) => {
+        lastBatch = batch;
+      },
+    });
+    assert.deepEqual(merged.map((p) => p.id), ['a', 'b', 'c']); // 去重,不丢已有
+    assert.deepEqual(lastBatch.map((p) => p.id), ['a', 'b', 'c']);
+    const parsed = new URL(seenOptions, 'http://x');
+    assert.equal(parsed.searchParams.get('bounds'), '120,30,121,31');
+    assert.equal(parsed.searchParams.get('filters'), JSON.stringify({ maxTier: 2 }));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport maxPages: loops pages, dedupes, stops on a short page', async () => {
+  const existing = [recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }])];
+  const pages = {
+    1: [
+      recruitmentPoi('b', [{ id: 'p2', title: '算法', type: 'social', status: 'open' }]),
+      recruitmentPoi('c', [{ id: 'p3', title: '产品', type: 'social', status: 'open' }]),
+    ],
+    2: [
+      recruitmentPoi('c', [{ id: 'p3', title: '产品', type: 'social', status: 'open' }]),
+      recruitmentPoi('d', [{ id: 'p4', title: '设计', type: 'social', status: 'open' }]),
+    ],
+  };
+  const seenPages = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const page = new URL(String(url), 'http://x').searchParams.get('page');
+    seenPages.push(page);
+    const results = pages[page] ?? [];
+    return { ok: true, json: async () => ({ results }) };
+  };
+  const batches = [];
+  try {
+    const merged = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 2, // 满页=2;第 1/2 页满 → 继续,第 3 页空 → 停
+      maxPages: 4,
+      existing,
+      onBatch: (batch) => {
+        batches.push(batch.map((p) => p.id));
+      },
+    });
+    assert.deepEqual(seenPages, ['1', '2', '3']); // 空页后提前停,不请求第 4 页
+    assert.deepEqual(merged.map((p) => p.id), ['a', 'b', 'c', 'd']); // 跨页去重
+    assert.deepEqual(batches, [['a', 'b', 'c'], ['a', 'b', 'c', 'd'], ['a', 'b', 'c', 'd']]); // 每页合并后回调
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+test('createViewportLoader: debounces rapid schedules into a single load', async () => {
+  let calls = 0;
+  const loader = createViewportLoader({ delayMs: 15, load: () => { calls += 1; } });
+  loader.schedule();
+  loader.schedule();
+  loader.schedule();
+  assert.equal(calls, 0); // 防抖窗口内不触发
+  await sleep(60);
+  assert.equal(calls, 1); // 窗口内的事件合并为一次
+  loader.dispose();
+});
+
+test('createViewportLoader: schedule during in-flight coalesces to one follow-up', async () => {
+  const calls = [];
+  let release = null;
+  const loader = createViewportLoader({
+    delayMs: 10,
+    load: () =>
+      new Promise((resolve) => {
+        calls.push('load');
+        release = resolve;
+      }),
+  });
+  loader.schedule();
+  await sleep(30); // 第一次已 in-flight
+  assert.equal(calls.length, 1);
+  loader.schedule(); // in-flight 期间的「最新一次」
+  loader.schedule(); // 合并掉中间态
+  await sleep(10);
+  assert.equal(calls.length, 1); // 仍只有一个 in-flight
+  release();
+  await sleep(30);
+  assert.equal(calls.length, 2); // 完成后补跑最新一次,不堆积
+  loader.dispose();
+});
+
+test('createViewportLoader: dispose cancels pending and stops future loads', async () => {
+  let calls = 0;
+  const loader = createViewportLoader({ delayMs: 10, load: () => { calls += 1; } });
+  loader.schedule();
+  loader.dispose();
+  await sleep(40);
+  assert.equal(calls, 0);
+  loader.schedule(); // dispose 后无效
+  await sleep(40);
+  assert.equal(calls, 0);
+});
+
+test('VIEWPORT_DEBOUNCE_MS is 300ms (spec: ~300ms)', () => {
+  assert.equal(VIEWPORT_DEBOUNCE_MS, 300);
 });

@@ -6,13 +6,15 @@
 //
 // 版本：数据修正（如 2026-08-17 坐标审计修正 11 个 pin）后 bump
 // MODE_CACHE_VERSION，旧会话缓存自动失效并重新拉取。
+// v4（2026-08-17 WS4）：work 累计池改为视口增量合并，岗位为在招过滤后的
+// 子集——旧缓存含过期岗位，bump 使其失效重拉。
 // ============================================================
 
 import type { FilterState, MapMode, POI, POILocation } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 3;
+export const MODE_CACHE_VERSION = 4;
 
 export interface ModeCacheEntry {
   version: number;
