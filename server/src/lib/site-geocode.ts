@@ -35,13 +35,37 @@ export function siteNeedsGeocode(site: CompanySite): boolean {
   return lng === 0 && lat === 0;
 }
 
+/**
+ * WS1's types.ts lands `city` / `province` on CompanySite (national scope).
+ * Read them defensively through a local intersection so this module is not
+ * blocked on that file; sites without the fields fall back to 杭州.
+ */
+type SiteWithCity = CompanySite & { city?: string; province?: string };
+
+export interface CityTarget {
+  /** Full city name, e.g. 北京市 / 杭州市 — matches AMap regeo cityname. */
+  city: string;
+  /** Province/municipality name, e.g. 广东省 / 北京市 — matches AMap pname. */
+  province: string;
+}
+
+export function siteCityTarget(site: CompanySite): CityTarget {
+  const withCity = site as SiteWithCity;
+  return {
+    city: withCity.city?.trim() || '杭州市',
+    province: withCity.province?.trim() || '浙江省',
+  };
+}
+
 export function geocodeQueryForSite(companyName: string, site: CompanySite, city = '杭州'): string {
   const address = site.location?.address?.trim();
   if (address) return `${address} ${companyName}`;
-  return `${city} ${companyName} ${site.name}`.trim();
+  const target = siteCityTarget(site);
+  const hasOwnCity = !!((site as SiteWithCity).city ?? '').trim();
+  return `${hasOwnCity ? target.city : city} ${companyName} ${site.name}`.trim();
 }
 
-export function planSiteGeocode(companies: SourceCompany[], city = '杭州'): GeocodePlan {
+export function planSiteGeocode(companies: SourceCompany[]): GeocodePlan {
   const needs: GeocodeNeed[] = [];
   let alreadyLocated = 0;
   let skippedNoAddress = 0;
@@ -56,13 +80,14 @@ export function planSiteGeocode(companies: SourceCompany[], city = '杭州'): Ge
         skippedNoAddress += 1;
         continue;
       }
+      const target = siteCityTarget(site);
       needs.push({
         slug: company.slug,
         companyName: company.name,
         siteId: site.id,
         siteName: site.name,
-        query: geocodeQueryForSite(company.name, site, city),
-        city,
+        query: geocodeQueryForSite(company.name, site, target.city),
+        city: target.city,
       });
     }
   }
@@ -262,13 +287,19 @@ export function parseOfficePoi(raw: Record<string, unknown>): OfficePoiCandidate
   };
 }
 
-/** Grade a candidate as a plausible Hangzhou office of `companyName`. */
+/**
+ * Grade a candidate as a plausible office of `companyName` in the target
+ * province/city. Defaults keep the Hangzhou behavior for sites without a
+ * city field; multi-city drops pass the site's own province/city.
+ */
 export function gradeOfficePoi(
   poi: OfficePoiCandidate,
   companyName: string,
+  province = '浙江省',
+  city = '杭州市',
 ): { confidence: GeocodeConfidence; reason: string } {
-  if (poi.pname && poi.pname !== '浙江省') return { confidence: 'low', reason: `outside-zhejiang:${poi.pname}` };
-  if (poi.cityname && poi.cityname !== '杭州市') return { confidence: 'low', reason: `outside-hangzhou:${poi.cityname}` };
+  if (poi.pname && poi.pname !== province) return { confidence: 'low', reason: `outside-province:${poi.pname}` };
+  if (poi.cityname && poi.cityname !== city) return { confidence: 'low', reason: `outside-city:${poi.cityname}` };
   const q = normalizeNameForMatch(companyName);
   const c = normalizeNameForMatch(poi.name);
   const match = q.length > 0 && c.length > 0 && (q.includes(c) || c.includes(q));
@@ -328,9 +359,20 @@ export interface RegeoResult {
   ok: boolean;
   cityname?: string;
   district?: string;
+  province?: string;
 }
 
-/** v3/geocode/regeo: confirm a coordinate actually sits in Hangzhou. */
+/**
+ * A regeo hit confirms a coordinate sits in `target` city. 直辖市 (北京/上海)
+ * regeo 的 cityname 为空 — province 兜底校验 (北京 POI 的 pname = '北京市').
+ */
+export function regeoMatchesTarget(re: RegeoResult, target: CityTarget): { ok: boolean; reason?: string } {
+  if (re.province && re.province !== target.province) return { ok: false, reason: `outside-province:${re.province}` };
+  if (re.cityname && re.cityname !== target.city) return { ok: false, reason: `outside-city:${re.cityname}` };
+  return { ok: true };
+}
+
+/** v3/geocode/regeo: confirm a coordinate actually sits in the target city. */
 export async function regeoCityRest(
   lng: number,
   lat: number,
@@ -347,11 +389,11 @@ export async function regeoCityRest(
     if (!res.ok) return { ok: false };
     const payload = (await res.json()) as {
       status?: string;
-      regeocode?: { addressComponent?: { cityname?: string; district?: string; adcode?: string } };
+      regeocode?: { addressComponent?: { cityname?: string; district?: string; province?: string; adcode?: string } };
     };
     const comp = payload.regeocode?.addressComponent;
     if (payload.status !== '1' || !comp) return { ok: false };
-    return { ok: true, cityname: comp.cityname, district: comp.district };
+    return { ok: true, cityname: comp.cityname, district: comp.district, province: comp.province };
   } catch {
     return { ok: false };
   }

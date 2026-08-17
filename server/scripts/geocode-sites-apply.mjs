@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// Resolve real Hangzhou offices for drop sites that only carry a city list
-// ("北京/杭州"), so radar-only companies can appear on the map at an address
-// that actually exists — never a city-center pin.
+// Resolve real offices for drop sites that only carry a city list
+// ("北京/上海/杭州"), so radar-only companies can appear on the map at an
+// address that actually exists — never a city-center pin. Each site is
+// searched within its own city (site.city, falling back to 杭州市) and regeo
+// confirms the hit sits inside that city.
 //
 //   node scripts/geocode-sites-apply.mjs [--dry-run] [--only slug1,slug2]
 //
@@ -12,7 +14,7 @@
 //                      match; low-confidence / unresolved stay off the map
 //
 // Writes back into the owning drop JSON (copy-on-write: only site.location is
-// replaced). Verified Hangzhou stays enforced via regeo. Reads AMAP_WEB_KEY from
+// replaced). The site's city is enforced via regeo. Reads AMAP_WEB_KEY from
 // server/.env.local. Never prints the key. Throttles at 3 req/s.
 //
 // Hand-curated resolutions can be dropped into data/recruitment/geocode-overrides.json
@@ -27,6 +29,8 @@ import {
   pickBestOfficePoi,
   placeTextSearchRest,
   regeoCityRest,
+  regeoMatchesTarget,
+  siteCityTarget,
   siteNeedsGeocode,
 } from '../src/lib/site-geocode.ts';
 import { loadOfflineWorkCatalog } from '../src/lib/server-catalog.ts';
@@ -138,6 +142,7 @@ for (const file of files) {
         continue;
       }
 
+      const target = siteCityTarget(site);
       const override = overrides[slug];
       const query = cleanCompanySearchName(company.name);
       let poi = null;
@@ -149,17 +154,17 @@ for (const file of files) {
         continue;
       }
       if (override) {
-        poi = { name: override.name, address: override.address, lng: override.lng, lat: override.lat, type: 'override', adname: '', pname: '浙江省', cityname: '杭州市' };
+        poi = { name: override.name, address: override.address, lng: override.lng, lat: override.lat, type: 'override', adname: '', pname: target.province, cityname: target.city };
         confidence = 'high';
         reason = 'manual-override';
       } else {
         if (DRY_RUN || env.AMAP_WEB_KEY) {
-          const hit = await placeTextSearchRest(query);
+          const hit = await placeTextSearchRest(query, target.city);
           await sleep(340);
           if (hit.ok && hit.pois.length) {
             poi = pickBestOfficePoi(hit.pois, company.name);
             if (poi) {
-              const grade = gradeOfficePoi(poi, company.name);
+              const grade = gradeOfficePoi(poi, company.name, target.province, target.city);
               confidence = grade.confidence;
               reason = grade.reason;
               if (grade.confidence === 'low') poi = null;
@@ -175,22 +180,24 @@ for (const file of files) {
         continue;
       }
 
-      // Regeo guard: a place-search hit must actually sit inside Hangzhou.
+      // Regeo guard: a place-search hit must actually sit in the site's city.
+      // 直辖市 (北京/上海) regeo 的 cityname 为空 — province 兜底 (regeoMatchesTarget).
       let verified = '';
       if (env.AMAP_WEB_KEY && !override) {
         const re = await regeoCityRest(poi.lng, poi.lat);
         await sleep(340);
-        if (re.ok && re.cityname && re.cityname !== '杭州市') {
-          unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${re.cityname}` });
+        const match = regeoMatchesTarget(re, target);
+        if (re.ok && !match.ok) {
+          unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match.reason}` });
           continue;
         }
-        verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() : 'unverified';
+        verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() || re.province || 'unverified' : 'unverified';
       }
 
       const district = poi.adname || verified.split(' ').pop() || '';
       const address = district && !poi.address.includes(district) ? `${district}${poi.address}` : poi.address;
 
-      resolutions.push({ slug, siteId: site.id, company: company.name, query, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified });
+      resolutions.push({ slug, siteId: site.id, company: company.name, query, city: target.city, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified });
       if (!DRY_RUN && (confidence === 'high' || override)) {
         if (setSiteLocation(file, slug, site.id, { address, lng: round(poi.lng), lat: round(poi.lat) })) {
           applied.push({ slug, siteId: site.id, address, lng: round(poi.lng), lat: round(poi.lat) });
@@ -207,7 +214,7 @@ console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`
 console.log('\n=== RESOLVED ===');
 for (const r of resolutions) {
   console.log(
-    `${String(r.confidence).padEnd(6)} ${r.slug.padEnd(26)} ${r.poi.name.padEnd(28)} ${r.poi.address.padEnd(34)} ${r.poi.lng},${r.poi.lat} [${r.reason}] regeo=${r.verified}`,
+    `${String(r.confidence).padEnd(6)} ${r.slug.padEnd(26)} ${String(r.city).padEnd(6)} ${r.poi.name.padEnd(26)} ${r.poi.address.padEnd(32)} ${r.poi.lng},${r.poi.lat} [${r.reason}] regeo=${r.verified}`,
   );
 }
 if (unresolved.length) {

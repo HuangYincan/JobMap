@@ -37,32 +37,38 @@ test('async catalog keeps only authentic positions (radar/portal) when there is 
       assert.ok(pos.id.startsWith('radar-') || pos.id.startsWith('portal-'), `${poi.id} has ${pos.id}`);
     }
   }
-  const ali = await loadServerCatalogById('work', 'alibaba-xixi');
-  assert.ok(ali?.kind === 'recruitment' && ali.positions.some((p) => p.id.startsWith('radar-')));
-  const byte = await loadServerCatalogById('work', 'bytedance-hangzhou');
-  assert.ok(byte?.kind === 'recruitment' && byte.positions.some((p) => p.id.startsWith('radar-')));
-  const netease = await loadServerCatalogById('work', 'netease-hangzhou');
-  assert.ok(netease?.kind === 'recruitment' && netease.positions.some((p) => p.id.startsWith('radar-')));
+  // Portal companies with curated coordinates still pin with portal-* jobs.
   const betta = await loadServerCatalogById('work', 'betta-hangzhou');
   assert.ok(betta?.kind === 'recruitment' && betta.positions.some((p) => p.id.startsWith('portal-')));
+  const deepseek = await loadServerCatalogById('work', 'deepseek');
+  assert.ok(deepseek?.kind === 'recruitment' && deepseek.positions.some((p) => p.id.startsWith('portal-')));
+  // Multi-city radar drops carry city text, not coordinates, until geocoded →
+  // they stay off the offline map; their authentic radar-* positions only
+  // appear after geocode-sites-apply + import.
+  assert.equal(await loadServerCatalogById('work', 'alibaba-xixi'), undefined);
+  assert.equal(await loadServerCatalogById('work', 'netease-hangzhou'), undefined);
   // Companies with only example jobs (no radar/portal rows) are not shown.
   assert.equal(await loadServerCatalogById('work', 'tencent-hangzhou'), undefined);
   assert.equal(await loadServerCatalogById('work', 'huawei-hangzhou'), undefined);
   assert.equal(await loadServerCatalogById('work', 'xiaomi-hangzhou'), undefined);
   assert.equal(await loadServerCatalogById('work', 'zhejiang-lab:zhejiang-lab-site'), undefined);
-  const lab = await loadServerCatalogById('work', 'zhejiang-lab');
-  assert.equal(lab?.positions.filter((p) => p.id === 'zhejiang-lab-ml').length, 0); // example job gone
+  // zhejiang-lab's radar positions live on an ungeocoded multi-city site → off.
+  assert.equal(await loadServerCatalogById('work', 'zhejiang-lab'), undefined);
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');
 });
 
 test('radar-only companies without coordinates stay off the offline map', async () => {
   const work = await loadServerCatalog('work');
-  // 招商银行 / 理想汽车 were geocoded to real Hangzhou offices (2026-08-17) and now pin.
+  // No (0,0) placeholder pins; only plausible coordinates reach the map.
   assert.equal(work.some((p) => p.location?.lng === 0 && p.location?.lat === 0), false);
-  assert.ok(await loadServerCatalogById('work', '招商银行'));
-  assert.ok(await loadServerCatalogById('work', '理想汽车'));
-  // Companies with no resolvable Hangzhou office in AMap POI (海天集团 / 恒瑞医药) stay off.
+  // Curated portal companies with coordinates still pin.
+  assert.ok(await loadServerCatalogById('work', 'betta-hangzhou'));
+  // Multi-city radar drops carry city text, not coordinates, until geocoded →
+  // they stay off the offline map. geocode-sites-apply resolves them per city.
+  assert.equal(await loadServerCatalogById('work', '招商银行'), undefined);
+  assert.equal(await loadServerCatalogById('work', '理想汽车'), undefined);
+  // Companies with no resolvable office in AMap POI stay off.
   assert.equal(await loadServerCatalogById('work', '海天集团'), undefined);
   assert.equal(await loadServerCatalogById('work', '恒瑞医药'), undefined);
 });
