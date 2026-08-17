@@ -145,10 +145,95 @@ class RadarMapTests(unittest.TestCase):
         self.assertIsNotNone(hangzhou)
         self.assertEqual(hangzhou["positions"][0]["family"], "intern")
         self.assertEqual(hangzhou["positions"][0]["retrievedAt"], "2026-08-11")
-        self.assertTrue(hangzhou["_hangzhou"])
         self.assertIsNone(map_radar_job({
             "c": "某司", "p": "Java", "l": "杭州", "u": "https://www.zhipin.com/job/1",
         }))
+
+    def test_splits_per_city_sites_from_city_text(self):
+        mapped = map_radar_job({
+            "c": "网易游戏雷火", "p": "前端开发实习生", "l": "上海/广州/杭州", "u": "https://leihuo.163.com/job/1",
+        })
+        self.assertEqual(
+            [site["id"] for site in mapped["sites"]],
+            ["netease-hangzhou-site-shanghai", "netease-hangzhou-site-guangzhou", "netease-hangzhou-site-hangzhou"],
+        )
+        beijing_site, guangzhou_site, hangzhou_site = mapped["sites"]
+        self.assertEqual(beijing_site["city"], "上海市")
+        self.assertEqual(beijing_site["province"], "上海市")
+        self.assertEqual(guangzhou_site["city"], "广州市")
+        self.assertEqual(guangzhou_site["province"], "广东省")
+        self.assertEqual(hangzhou_site["city"], "杭州市")
+        self.assertEqual(hangzhou_site["province"], "浙江省")
+        # location.address keeps the raw city text for geocode scoping.
+        self.assertEqual(hangzhou_site["location"]["address"], "上海/广州/杭州")
+        # No city parens in the title → the main site (first city) owns the position.
+        self.assertEqual(mapped["positions"][0]["siteId"], "netease-hangzhou-site-shanghai")
+
+    def test_drops_rows_without_a_target_city(self):
+        self.assertIsNone(map_radar_job({"c": "某司", "p": "Java", "l": "南京", "u": "https://jobs.example.com/a"}))
+        self.assertIsNone(map_radar_job({"c": "某司", "p": "Java", "l": "多地", "u": "https://jobs.example.com/a"}))
+        self.assertIsNone(map_radar_job({"c": "某司", "p": "Java", "l": "", "u": "https://jobs.example.com/a"}))
+
+    def test_title_city_paren_attaches_to_that_city_site(self):
+        mapped = map_radar_job({
+            "c": "蚂蚁集团", "p": "算法工程师（杭州）", "l": "北京/杭州", "u": "https://talent.antgroup.com/1",
+        })
+        self.assertEqual(mapped["positions"][0]["siteId"], "antgroup-hangzhou-site-hangzhou")
+
+    def test_title_city_paren_falls_back_to_main_site_when_city_absent(self):
+        mapped = map_radar_job({
+            "c": "蚂蚁集团", "p": "算法工程师（杭州）", "l": "北京", "u": "https://talent.antgroup.com/1",
+        })
+        self.assertEqual(mapped["positions"][0]["siteId"], "antgroup-hangzhou-site-beijing")
+
+    def test_title_with_multiple_city_parens_stays_on_main_site_and_is_aggregate(self):
+        mapped = map_radar_job({
+            "c": "网易游戏", "p": "软件实习工程师（杭州）大前端实习工程师（杭州）机器人算法实习工程师（杭州）语音算法实习工程师（杭州）软件实习工程师（深圳）大模型算法实习工程师（深圳）",
+            "l": "深圳/杭州", "u": "https://leihuo.163.com/1",
+        })
+        self.assertEqual(mapped["positions"][0]["siteId"], "netease-hangzhou-site-shenzhen")
+        self.assertTrue(mapped["positions"][0].get("aggregate"))
+
+    def test_aggregate_title_detection(self):
+        from domain_map_importer.radar_jobs import is_aggregate_title
+        aggregate = [
+            "技术、设计、数据、运营、产品等七大类",
+            "软件类 算法类 硬件类",
+            "市场类、策划类、美术类、程序类、AI技术类、运营/综合类",
+            "后端/前端/嵌入式/测试研发、产品经理、解决方案、市场营销、职能、视觉交互设计等岗位全覆盖",
+            "算法、软件、产品、运营、硬件等",
+            "客户端/服务端开发、引擎/图形渲染、AI算法、测试开发、数据、安全、工具开发",
+            "开发、测试、运营等",
+            "技术类，非技术类都有",
+            "算法类、软件类、",
+            "技术类：算法实习生、结构实习生、嵌入式实习生、软件测试实习生\n市场类：海外市场实习生、市场营销实习生",
+            "技术类 （材料 物理 化学 机械 自动化 等 ）业务/职能类 （销售/供应链/人力/行政 法务 财务等）",
+            "AI 算法（NLP、计算机视觉、多模态、强化学习）、AI Infra、Agent 开发三大核心赛道",
+        ]
+        specific = [
+            "前端开发实习生",
+            "算法工程师（杭州）",
+            "自动驾驶软件实习生（模型部署/量化/前后处理）",
+            "无线网络设备测试实习生",
+            "股权投资实习生",
+            "2027顶尖人才项目启动（提前批）",
+            "BEV Occupancy 算法实习生（纯视觉与多模态方向）",
+        ]
+        for title in aggregate:
+            self.assertTrue(is_aggregate_title(title), title)
+        for title in specific:
+            self.assertFalse(is_aggregate_title(title), title)
+
+    def test_aggregate_marker_and_tier_are_in_drops(self):
+        mapped = map_radar_job({
+            "c": "阿里淘天", "p": "技术、设计、数据、运营、产品等七大类", "l": "杭州/北京", "u": "https://talent.taotian.com/1",
+        })
+        self.assertEqual(mapped["tier"], 3)
+        self.assertTrue(mapped["positions"][0].get("aggregate"))
+        plain = map_radar_job({
+            "c": "阿里淘天", "p": "前端开发工程师", "l": "杭州/北京", "u": "https://talent.taotian.com/2",
+        })
+        self.assertNotIn("aggregate", plain["positions"][0])
 
     def test_normalizes_company_names(self):
         from domain_map_importer.radar_jobs import normalize_company_name
@@ -180,7 +265,7 @@ class RadarMapTests(unittest.TestCase):
         self.assertEqual(parse_deadline(""), None)
         self.assertEqual(parse_deadline(None), None)
 
-    def test_fixture_is_valid_local_import_and_hangzhou_only(self):
+    def test_fixture_is_valid_local_import_and_keeps_multiple_cities(self):
         payload = {
             "updated": "2026-08-11",
             "jobs": [
@@ -190,9 +275,35 @@ class RadarMapTests(unittest.TestCase):
         }
         fixture = radar_fixture(payload)
         self.assertTrue(validate_local_fixture(fixture).valid)
+        # Default target set = all seven cities → both rows map.
+        self.assertEqual(len(fixture["companies"]), 2)
+        self.assertEqual(len(merge_radar_companies(payload["jobs"])), 2)
+
+    def test_fixture_city_subset_filters_rows(self):
+        payload = {
+            "updated": "2026-08-11",
+            "jobs": [
+                {"c": "网易", "p": "前端", "l": "杭州", "ind": "互联网科技", "u": "https://hr.163.com/a"},
+                {"c": "点点互动", "p": "市场", "l": "北京", "ind": "互联网科技", "u": "https://example.com/a"},
+            ],
+        }
+        fixture = radar_fixture(payload, target_cities=("杭州",))
         self.assertEqual(len(fixture["companies"]), 1)
         self.assertEqual(fixture["companies"][0]["name"], "网易")
-        self.assertEqual(len(merge_radar_companies(payload["jobs"], hangzhou_only=False)), 2)
+
+    def test_merge_unions_sites_and_positions_keeping_external_ids_unique(self):
+        rows = [
+            {"c": "网易", "p": "前端", "l": "杭州", "u": "https://hr.163.com/a"},
+            {"c": "网易", "p": "后端", "l": "杭州", "u": "https://hr.163.com/b"},
+            {"c": "网易", "p": "前端", "l": "杭州", "u": "https://hr.163.com/a"},  # duplicate row
+        ]
+        companies = merge_radar_companies(rows)
+        self.assertEqual(len(companies), 1)
+        company = companies[0]
+        self.assertEqual(len(company["sites"]), 1)
+        externals = [pos["externalId"] for pos in company["positions"]]
+        self.assertEqual(len(externals), len(set(externals)))
+        self.assertEqual(len(externals), 2)
 
 
 class OfficialRefreshTests(unittest.TestCase):

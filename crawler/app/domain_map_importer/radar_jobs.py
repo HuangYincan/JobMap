@@ -2,7 +2,9 @@
 # Shape only — do not copy their fetch/stealth/Tencent-docs code.
 #
 # The snapshot is a freshness signal: which companies are running campus / intern
-# recruitment now, with a direct apply link. Titles are often category aggregates.
+# recruitment now, with a direct apply link. Titles are often category aggregates;
+# those rows are marked aggregate: true for LLM validation / curation, never
+# silently expanded into multiple positions.
 
 from __future__ import annotations
 
@@ -16,10 +18,39 @@ from typing import Any
 
 from .acquire import is_blocked_host
 
-PARSER_VERSION = "1.3.0"
+PARSER_VERSION = "2.0.0"
 ATTRIBUTION = "xiaozhao-radar contributors (Apache-2.0); Domain Map field mapping"
 
-_HANGZHOU = ("杭州", "余杭", "西湖", "滨江", "萧山", "拱墅", "上城", "临平")
+# Default target cities; the CLI --cities flag overrides. Canonical order is
+# only a fallback — per-row site order follows the company's own city text.
+CITY_TARGETS = ("北京", "上海", "广州", "深圳", "成都", "武汉", "杭州")
+CITY_KEY = {
+    "北京": "beijing",
+    "上海": "shanghai",
+    "广州": "guangzhou",
+    "深圳": "shenzhen",
+    "成都": "chengdu",
+    "武汉": "wuhan",
+    "杭州": "hangzhou",
+}
+CITY_FULL = {
+    "北京": "北京市",
+    "上海": "上海市",
+    "广州": "广州市",
+    "深圳": "深圳市",
+    "成都": "成都市",
+    "武汉": "武汉市",
+    "杭州": "杭州市",
+}
+CITY_PROVINCE = {
+    "北京": "北京市",
+    "上海": "上海市",
+    "广州": "广东省",
+    "深圳": "广东省",
+    "成都": "四川省",
+    "武汉": "湖北省",
+    "杭州": "浙江省",
+}
 
 # Anchors match normalized radar names onto our curated official-career slugs.
 # Longer anchors first so "网易游戏雷火" wins over "网易".
@@ -42,6 +73,52 @@ _TRAILING_WORDS = (
     "校招", "招聘", "计划", "人才", "专项", "提前批", "暑期实习", "内推",
     "秋招", "春招", "实习", "毕业生", "岗位", "招聘公告", "项目",
 )
+
+# --- aggregate-title detection ------------------------------------------------
+# Radar titles routinely bundle many roles into one row ("技术、设计、数据、运营、
+# 产品等七大类", "软件类 算法类 硬件类"). Such rows get aggregate: true so the
+# LLM validation pass and human curation treat them as bundles, never as a single
+# position. Heuristics calibrated against the 2026-08-11 snapshot (1404 rows):
+# ~87% of titles are aggregate by these rules; the rest are specific roles.
+
+_PAREN_RE = re.compile(r"[（(][^）)]*[)）]")
+_SEP_RE = re.compile(r"[/、，,；;｜|·\s]+")
+_AGG_STRONG_RE = re.compile(r"大类|多类|各类|多岗位|多方向|全覆盖|赛道")
+
+
+def paren_city_matches(title: str, cities: tuple[str, ...] = CITY_TARGETS) -> list[str]:
+    """Distinct target cities mentioned inside parentheticals, in title order."""
+    out: list[str] = []
+    for group in _PAREN_RE.findall(title or ""):
+        for city in cities:
+            if city in group and city not in out:
+                out.append(city)
+    return out
+
+
+def _cjk_tokens(title: str) -> list[str]:
+    stripped = _PAREN_RE.sub("", title)
+    return [tok for tok in _SEP_RE.split(stripped) if re.search(r"[一-鿿]", tok)]
+
+
+def is_aggregate_title(title: str) -> bool:
+    """True when a title bundles multiple roles / is not a specific job.
+
+    Signals: 等/大类/多类/各类/赛道/全覆盖/多岗位, 2+ 类-words, multi-line text,
+    2+ distinct city parens (concatenated mega-rows), or 2+ role tokens.
+    """
+    t = title or ""
+    if "等" in t:
+        return True
+    if _AGG_STRONG_RE.search(t):
+        return True
+    if t.count("类") >= 2:
+        return True
+    if "\n" in t:
+        return True
+    if len(set(paren_city_matches(t))) >= 2:
+        return True
+    return len(_cjk_tokens(t)) >= 2
 
 
 def slugify(name: str) -> str:
@@ -104,8 +181,12 @@ def guess_industry(label: str) -> str:
     return mapping.get(label, "other")
 
 
-def mentions_hangzhou(location: str) -> bool:
-    return any(token in (location or "") for token in _HANGZHOU)
+def target_cities_in(location: str, cities: tuple[str, ...] = CITY_TARGETS) -> list[str]:
+    """Target cities mentioned in a location text, in appearance order."""
+    loc = location or ""
+    found = [(loc.index(city), city) for city in cities if city in loc]
+    found.sort()
+    return [city for _, city in found]
 
 
 def parse_deadline(raw: str | None) -> str | None:
@@ -140,7 +221,22 @@ def load_radar_jobs(payload: Mapping[str, Any] | str | Path) -> dict[str, Any]:
     return data
 
 
-def map_radar_job(row: Mapping[str, Any], *, retrieved_at: str | None = None) -> dict[str, Any] | None:
+def map_radar_job(
+    row: Mapping[str, Any],
+    *,
+    target_cities: tuple[str, ...] | None = None,
+    retrieved_at: str | None = None,
+) -> dict[str, Any] | None:
+    """Map one radar row onto a SourceCompany-shaped dict with per-city sites.
+
+    Sites are split from the row's city text (e.g. "上海/广州/杭州") into
+    `${slug}-site-${cityKey}` sites carrying site.city / site.province and the
+    raw city text as location.address (geocode uses the city field, not the
+    text). A position whose title names exactly one target city in parens is
+    attached to that city's site; otherwise it lands on the main site (the
+    first city the company's text mentions).
+    """
+    cities = tuple(target_cities) if target_cities else CITY_TARGETS
     company = str(row.get("c") or "").strip()
     title = str(row.get("p") or "").strip()
     url = str(row.get("u") or "").strip()
@@ -149,58 +245,79 @@ def map_radar_job(row: Mapping[str, Any], *, retrieved_at: str | None = None) ->
     if is_blocked_host(url):
         return None
     location = str(row.get("l") or "").strip()
+    matched = target_cities_in(location, cities)
+    if not matched:
+        return None
     industry = guess_industry(str(row.get("ind") or row.get("t") or ""))
     family = guess_family(title, str(row.get("w") or ""))
     normalized = normalize_company_name(company)
     if not normalized:
         return None
     slug = anchor_slug(normalized) or slugify(normalized)
-    site_id = f"{slug}-site"
+    sites = [
+        {
+            "id": f"{slug}-site-{CITY_KEY[city]}",
+            "name": company,
+            "city": CITY_FULL[city],
+            "province": CITY_PROVINCE[city],
+            "location": {"address": location},
+        }
+        for city in matched
+    ]
+    main_site_id = sites[0]["id"]
+    paren_cities = paren_city_matches(title, cities)
+    site_id = (
+        f"{slug}-site-{CITY_KEY[paren_cities[0]]}"
+        if len(paren_cities) == 1 and paren_cities[0] in matched
+        else main_site_id
+    )
     digest = hashlib.sha1(f"{company}|{title}|{location}".encode("utf-8")).hexdigest()[:12]
+    position: dict[str, Any] = {
+        "externalId": f"radar-{digest}",
+        "title": title[:120],
+        "siteId": site_id,
+        "family": family,
+        "taxonomy": {"family": family},
+        "deadline": parse_deadline(str(row.get("d") or "")),
+        "status": "open",
+        "applySource": "official",
+        "applyUrl": url,
+        "retrievedAt": retrieved_at or None,
+    }
+    if is_aggregate_title(title):
+        position["aggregate"] = True
     return {
         "slug": slug,
         "name": normalized,
+        "tier": 3,
         "industries": [industry],
         "scale": "enterprise",
         "careerUrl": url,
-        "sites": [
-            {
-                "id": site_id,
-                "name": company,
-                **({"location": {"address": location}} if location else {}),
-            }
-        ],
-        "positions": [
-            {
-                "externalId": f"radar-{digest}",
-                "title": title[:120],
-                "siteId": site_id,
-                "family": family,
-                "taxonomy": {"family": family},
-                "deadline": parse_deadline(str(row.get("d") or "")),
-                "status": "open",
-                "applySource": "official",
-                "applyUrl": url,
-                "retrievedAt": retrieved_at or None,
-            }
-        ],
-        "_hangzhou": mentions_hangzhou(location),
+        "sites": sites,
+        "positions": [position],
     }
 
 
-def merge_radar_companies(rows: list[Mapping[str, Any]], *, hangzhou_only: bool = True, retrieved_at: str | None = None) -> list[dict[str, Any]]:
+def merge_radar_companies(
+    rows: list[Mapping[str, Any]],
+    *,
+    target_cities: tuple[str, ...] | None = None,
+    retrieved_at: str | None = None,
+) -> list[dict[str, Any]]:
     by_slug: dict[str, dict[str, Any]] = {}
     for row in rows:
-        mapped = map_radar_job(row, retrieved_at=retrieved_at)
+        mapped = map_radar_job(row, target_cities=target_cities, retrieved_at=retrieved_at)
         if not mapped:
             continue
-        if hangzhou_only and not mapped["_hangzhou"]:
-            continue
-        mapped.pop("_hangzhou", None)
         existing = by_slug.get(mapped["slug"])
         if not existing:
             by_slug[mapped["slug"]] = mapped
             continue
+        known_sites = {site["id"] for site in existing["sites"]}
+        for site in mapped["sites"]:
+            if site["id"] not in known_sites:
+                existing["sites"].append(site)
+                known_sites.add(site["id"])
         seen = {pos["externalId"] for pos in existing["positions"]}
         for pos in mapped["positions"]:
             if pos["externalId"] not in seen:
@@ -211,9 +328,9 @@ def merge_radar_companies(rows: list[Mapping[str, Any]], *, hangzhou_only: bool 
     return list(by_slug.values())
 
 
-def radar_fixture(payload: Mapping[str, Any], *, hangzhou_only: bool = True) -> dict[str, Any]:
+def radar_fixture(payload: Mapping[str, Any], *, target_cities: tuple[str, ...] | None = None) -> dict[str, Any]:
     snapshot = str(payload.get("updated") or "")
-    companies = merge_radar_companies(payload.get("jobs") or [], hangzhou_only=hangzhou_only, retrieved_at=snapshot)
+    companies = merge_radar_companies(payload.get("jobs") or [], target_cities=target_cities, retrieved_at=snapshot)
     records = []
     for company in companies:
         for pos in company["positions"]:
