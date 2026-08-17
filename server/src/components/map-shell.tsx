@@ -14,6 +14,8 @@ import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchSearchSuggest } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
 import { mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, type ViewportBounds } from "@/lib/viewport-search";
+import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES } from "@/lib/viewport-search";
+import { maxTierForZoom } from "@/lib/lod";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from "@/lib/account";
 import { initialsFromName } from "@/lib/account";
@@ -153,6 +155,11 @@ export function MapShell() {
   const [pageOffset, setPageOffset] = useState(0);
   const skipFetchRef = useRef(false);
   const loadingRef = useRef(false);
+  // 供一次性创建的地图监听/视口加载器读取最新状态(避免闭包过期)
+  const viewStateRef = useRef({
+    mode, query, filters, sort, searchOrigin, userLocation, pageOffset, geoSettled,
+  });
+  viewStateRef.current = { mode, query, filters, sort, searchOrigin, userLocation, pageOffset, geoSettled };
   const [error, setError] = useState<string | null>(null);
   // 左侧结果面板显隐（点击导航"探索"展开）
   const [railPanel, setRailPanel] = useState<RailPanel>(null);
@@ -647,32 +654,49 @@ export function MapShell() {
       try {
         const view = liveView();
         const origin = searchOrigin ?? userLocation ?? view.center;
-        const data = await fetchPOIsForMode({
-          mode,
-          query: query || undefined,
-          center: origin,
-          zoom: view.zoom,
-          bounds: view.bounds ?? undefined,
-          existing: mode === "domain" ? catalogRef.current : undefined,
-          addCap: MORE_PAGE_SIZE,
-          pageOffset,
-          signal,
-          onBatch: (batch) => {
-            if (signal.cancelled) return;
-            catalogRef.current = batch;
-            setCatalog(batch);
-            writeModeCache({
-              mode,
-              catalog: batch,
-              pageOffset,
-              searchOrigin: origin,
-              query,
-              filters,
-              sort,
-            });
-            if (batch.length > 0) setLoading(false);
-          },
-        });
+        const onBatch = (batch: POI[]) => {
+          if (signal.cancelled) return;
+          catalogRef.current = batch;
+          setCatalog(batch);
+          writeModeCache({
+            mode,
+            catalog: batch,
+            pageOffset,
+            searchOrigin: origin,
+            query,
+            filters,
+            sort,
+          });
+          if (batch.length > 0) setLoading(false);
+        };
+        // 工作模式:按当前视野 + 档位上限按需加载(增量合并,不清空已有 marker);
+        // Domain 模式:保持刷新才更新(高德 API 负载/余额),视野变化不重搜。
+        const data =
+          isRecruitmentMode(mode)
+            ? await loadWorkViewport({
+                bounds: view.bounds ?? undefined,
+                maxTier: maxTierForZoom(view.zoom),
+                filters,
+                q: query || undefined,
+                sort: sort || undefined,
+                page: pageOffset + 1,
+                maxPages: WORK_INITIAL_MAX_PAGES,
+                existing: catalogRef.current,
+                signal,
+                onBatch,
+              })
+            : await fetchPOIsForMode({
+                mode,
+                query: query || undefined,
+                center: origin,
+                zoom: view.zoom,
+                bounds: view.bounds ?? undefined,
+                existing: mode === "domain" ? catalogRef.current : undefined,
+                addCap: MORE_PAGE_SIZE,
+                pageOffset,
+                signal,
+                onBatch,
+              });
         if (signal.cancelled) return;
         catalogRef.current = data;
         setCatalog(data);
@@ -702,9 +726,81 @@ export function MapShell() {
       signal.cancelled = true;
       clearTimeout(timer);
     };
-    // 刻意不依赖 mapCenter / zoom / mapBounds / filters：平移、缩放、筛选都不重搜
+    // 刻意不依赖 mapCenter / zoom / mapBounds / filters：平移、缩放、筛选都不重搜。
+    // work 模式的首屏/刷新按当前视野(bounds+maxTier)取数;视野变化后的按需加载
+    // 由下方 moveend/zoomend 防抖 effect 负责。
     // 使用原始值而非对象引用，避免 React 误判依赖变化
   }, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin?.lng, searchOrigin?.lat, userLocation?.lng, userLocation?.lat]);
+
+  // ---- 工作模式视口按需加载(仅 work;Domain 保持刷新才更新)----
+  useEffect(() => {
+    if (!mapReady) return;
+    const map = mapInstance.current;
+    if (!map) return;
+
+    const loader = createViewportLoader({
+      delayMs: VIEWPORT_DEBOUNCE_MS,
+      load: async () => {
+        const v = viewStateRef.current;
+        if (canonicalMode(v.mode) !== "work") return;
+        if (!v.geoSettled) return;
+        if (loadingRef.current) return; // 首屏/刷新/加载更多进行中,交给主加载
+        const mapInst = mapInstance.current;
+        const zoom =
+          typeof mapInst?.getZoom === "function" ? Math.round(mapInst.getZoom()) : 0;
+        const b = typeof mapInst?.getBounds === "function" ? mapInst.getBounds() : null;
+        let bounds: ViewportBounds | null = null;
+        if (b) {
+          const sw = b.getSouthWest?.() ?? b.southwest;
+          const ne = b.getNorthEast?.() ?? b.northeast;
+          const west = sw?.getLng?.() ?? sw?.lng;
+          const south = sw?.getLat?.() ?? sw?.lat;
+          const east = ne?.getLng?.() ?? ne?.lng;
+          const north = ne?.getLat?.() ?? ne?.lat;
+          if ([west, south, east, north].every((n) => typeof n === "number")) {
+            bounds = { west, south, east, north };
+          }
+        }
+        if (!bounds) return;
+        try {
+          await loadWorkViewport({
+            bounds,
+            maxTier: maxTierForZoom(zoom),
+            filters: v.filters,
+            q: v.query || undefined,
+            sort: v.sort || undefined,
+            page: 1,
+            existing: catalogRef.current,
+            onBatch: (batch) => {
+              catalogRef.current = batch;
+              setCatalog(batch);
+              writeModeCache({
+                mode: canonicalMode(v.mode),
+                catalog: batch,
+                pageOffset: v.pageOffset,
+                searchOrigin: v.searchOrigin,
+                query: v.query,
+                filters: v.filters,
+                sort: v.sort,
+              });
+            },
+          });
+        } catch (err) {
+          // 视口加载失败不打断主流程:保留现有累计池,下次地图事件再试
+          console.warn("[map-shell] work viewport load failed:", err);
+        }
+      },
+    });
+
+    const onViewChange = () => loader.schedule();
+    map.on("moveend", onViewChange);
+    map.on("zoomend", onViewChange);
+    return () => {
+      loader.dispose();
+      map.off?.("moveend", onViewChange);
+      map.off?.("zoomend", onViewChange);
+    };
+  }, [mapReady]);
 
   const distanceOrigin = userLocation ?? mapCenter;
   const distanceRadius = distanceFilterMeters(filters);

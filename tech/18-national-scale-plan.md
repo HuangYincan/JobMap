@@ -145,5 +145,5 @@ CREATE INDEX positions_open_deadline_idx ON positions (site_id) WHERE status='op
 - [ ] WS1 落库：tier/city/alive 读路径 + maxTier API（迁移 + 测试）
 - [ ] WS2 多城市 mapper + 首批城市 drops（北上广深成都武汉）
 - [ ] WS3 LLM 验证脚本（报告 + 用户配 key 后跑批）
-- [ ] WS4 视口按需加载 + LOD + 在招呈现
+- [x] WS4 视口按需加载 + LOD + 在招呈现
 - [ ] 全国工作模式验收：非杭州城市按位置加载、LOD 正常、真实性校验通过

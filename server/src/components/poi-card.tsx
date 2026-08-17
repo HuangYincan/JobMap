@@ -11,6 +11,7 @@ import {
   type RecruitmentPOI,
 } from "@/lib/types";
 import { t, type Language } from "@/lib/i18n";
+import { isAlivePosition } from "@/lib/position-alive";
 import styles from "./poi-card.module.css";
 
 /** 公司 Logo：优先真实图片（logoUrl），加载失败回退 emoji */
@@ -243,7 +244,7 @@ function RecruitmentCardContent({
   poi: RecruitmentPOI;
   lang: Language;
 }) {
-  const openPositions = poi.positions.filter((p) => p.status === "open");
+  const openPositions = poi.positions.filter((p) => isAlivePosition(p));
   const openCount = openPositions.length;
   const scale = SCALE_LABELS[poi.company.scale];
   const scaleLabel = scale?.[lang] ?? poi.company.scale;

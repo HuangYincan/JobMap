@@ -12,6 +12,7 @@ import {
 } from "@/lib/types";
 import { estimateCommuteOptions, amapDirectionsUrl, type CommuteMode } from "@/lib/commute";
 import { t, type Language } from "@/lib/i18n";
+import { isAlivePosition } from "@/lib/position-alive";
 import styles from "./poi-detail.module.css";
 
 const INDUSTRY_LABELS: Record<string, { zh: string; en: string }> = {
@@ -150,7 +151,7 @@ function RecruitmentDetail({
   const [logoFailed, setLogoFailed] = useState(false);
   const industries = poi.company.industries.map((ind) => INDUSTRY_LABELS[ind]?.[lang] ?? ind);
   const scale = SCALE_LABELS[poi.company.scale]?.[lang] ?? poi.company.scale;
-  const open = useMemo(() => poi.positions.filter((p) => p.status === "open"), [poi.positions]);
+  const open = useMemo(() => poi.positions.filter((p) => isAlivePosition(p)), [poi.positions]);
 
   return (
     <>
