@@ -32,6 +32,7 @@ Next.js 15 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。
 - 📡 外部数据采集必须有来源审查记录(`tech/roles/data/etl/`);BOSS 直聘 / 牛客 / 小红书 / 实习僧不得直接抓取;不得绕过登录、验证码、限流。
 - 🔑 **不打印 / 不提交 `.env`、`.env.local`、`AMAP_WEB_KEY` 等密钥**;调用 AMap REST 必须先有 `AMAP_WEB_KEY`,且绝不打印该 key。
 - 📄 文档必须反映可验证事实;代码变更同步 `tech/` 与 `agent.md` 文档维护契约;`make docs-check` + `git diff --check` 通过后再提交。
+- 🖼️ **Playwright 截图与产物统一存 `.playwright-mcp/`**(已 gitignore):`browser_take_screenshot` 用**相对文件名**(自动落在输出目录内),绝不写到仓库根目录;只有用户显式要求时才指定其他路径。
 - ✅ 提交用 Conventional Commits(`feat` / `fix` / `docs` / `test` / `refactor` / `chore`);分支命名 `feature/` / `fix/`。
 
 ## 常用命令
