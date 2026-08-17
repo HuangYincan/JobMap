@@ -41,20 +41,21 @@
 
 现状（`006_recruitment_sites.sql`）：`companies` 1—N `company_sites`（`city`、`lng/lat`、`geom` + gist）1—N `positions`。杭州为中心。
 
-全国化新增（WS1 落库）：
+全国化新增（WS1 已落库 `011_national_scope.sql`，2026-08-17）：
 
 ```sql
--- 011_national_scope.sql（草案，WS1 细化）
+-- 已实现。⚠️ 草案里的复合 (city_code, tier) 无法建在单表上（tier 在 companies），
+-- 改为 company_sites_city_company_idx (city_code, company_id) + companies_tier_idx 联合覆盖。
 ALTER TABLE companies ADD COLUMN tier smallint NOT NULL DEFAULT 3;   -- 1=名企 2=大厂 3=中厂/其他
 ALTER TABLE company_sites ADD COLUMN province text;                  -- '浙江省'
 ALTER TABLE company_sites ADD COLUMN city_code text;                 -- '330100'
 ALTER TABLE company_sites ADD COLUMN geom_geog geography(Point,4326)
   GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(lng,lat),4326)::geography) STORED;
 CREATE INDEX company_sites_geog_gist ON company_sites USING gist (geom_geog);
-CREATE INDEX company_sites_city_idx ON company_sites (city_code);
-CREATE INDEX company_sites_tier_idx ON company_sites (tier);
+CREATE INDEX company_sites_city_code_idx ON company_sites (city_code);
+CREATE INDEX companies_tier_idx ON companies (tier);
 -- 在招岗位部分索引（alive 过滤加速）
-CREATE INDEX positions_open_deadline_idx ON positions (site_id) WHERE status='open';
+CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
 ```
 
 - `tier` 打标来源：名企（大厂/独角兽/500 强，已知清单 + LLM 校验辅助）。
@@ -141,7 +142,7 @@ CREATE INDEX positions_open_deadline_idx ON positions (site_id) WHERE status='op
 
 ## 5. 里程碑
 
-- [ ] WS1 落库：tier/city/alive 读路径 + maxTier API（迁移 + 测试）
+- [x] WS1 落库：tier/city/alive 读路径 + maxTier API（迁移 + 测试）—— **2026-08-17 完成**
 - [ ] WS2 多城市 mapper + 首批城市 drops（北上广深成都武汉）
 - [ ] WS3 LLM 验证脚本（报告 + 用户配 key 后跑批）
 - [ ] WS4 视口按需加载 + LOD + 在招呈现

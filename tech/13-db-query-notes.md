@@ -93,11 +93,15 @@ gist 已接上。行数涨到几百以后，单独的 bbox 也应切到 Index Sc
 
 ## 全国规模扩展（2026-08-17，计划见 tech/18）
 
-工作模式全国化（北上广深、成都、武汉）后的 DB 设计要点（`011_national_scope`，WS1 实现）：
+工作模式全国化（北上广深、成都、武汉）的 DB 落地（`011_national_scope`，已实现 2026-08-17）：
 
-- `companies.tier smallint`（1名企/2大厂/3其他）：LOD 按缩放级别过滤，`company_sites_tier_idx` + 复合 `(city_code, tier)`。
-- `company_sites.province` / `city_code`：按城市分片加载；`company_sites_city_idx`。
-- `geom_geog geography(Point,4326)` STORED + gist：用户位置半径距离用 `ST_DWithin(geom_geog, point_geog, radius_m)`，避免 4326 度数误差。
+- `companies.tier smallint NOT NULL DEFAULT 3`（1名企/2大厂/3中厂/其他）：LOD 按缩放级别过滤。索引 `companies_tier_idx`。
+- `company_sites.province text` / `city_code text`（行政区划码）：城市分片加载；`company_sites_city_code_idx` + `company_sites_city_company_idx (city_code, company_id)`（join 公司的复合索引）。
+  - ⚠️ 计划草案里的复合 `(city_code, tier)` 无法建在单表上（tier 在 `companies`），改为上面的 join 复合索引 + `companies_tier_idx` 联合覆盖城市过滤 + 层级过滤。
+- `company_sites.geom_geog geography(Point,4326)` STORED（由 lng/lat 生成）+ `company_sites_geog_gist`：用户位置半径用 `ST_DWithin(geom_geog, point_geog, radius_m)`，避免 4326 度数误差。
 - 视野裁剪仍 `geom && ST_MakeEnvelope` + `ST_DWithin`（已有）。
-- `positions` 部分索引 `WHERE status='open'`：alive 过滤只扫在招行。
+- `positions_open_site_idx (site_id) WHERE status='open'`：部分索引，alive 过滤只扫在招行。
+- A1 只在招：DB 读路径恒开 `status='open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)`；离线 catalog 在 `loadOfflineWorkCatalog` 里按 `isAlivePosition` 内存过滤；筛选器 `alive` 同规则。
+- 读路径透传（`/api/pois` + `/api/search` 的 `filters`）：`maxTier`（SQL 下推 `companies.tier <= n`，内存 `applyFilters` 兜底）、`city`（SQL：`city_code` 精确 OR `city` ILIKE；内存：site 城市/地址文本包含）、`alive`。
+- 导入映射（`recruitment-import.ts`）：`companies.tier` 缺省 3；site `city` 从 drop `site.city` 或地址解析（`siteCityOf`：目标城市名 / 杭州区名前缀），`province`/`city_code` 原样落库。
 - 百万级预留：按 `province`/`city_code` 分区或聚合展示（缩到全国时按 tier 聚合计数）。
