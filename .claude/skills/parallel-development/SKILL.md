@@ -1,6 +1,6 @@
 ---
 name: parallel-development
-description: Worktree-first parallel development for Domain Map — every concurrent task or branch (and every parallel subagent) develops in its own git worktree cut from `dev`, then merges back to `dev`. Use when starting a new feature/fix, spawning parallel subagents, or resolving branch conflicts.
+description: Worktree-first parallel development for Domain Map — every concurrent task or branch (and every parallel subagent) develops in its own git worktree cut from `dev`, then merges back to `dev`. Use when starting a new feature/fix, spawning parallel subagents, resolving branch conflicts, or running the sequential merge orchestration of finished workstreams.
 ---
 
 # Parallel Development (worktree-first)
@@ -51,6 +51,48 @@ git merge --no-ff feature/<scope>   # keep a merge commit per feature
 git worktree remove ../domain-map-wt-<scope>
 git push origin dev
 ```
+
+## Merge orchestration (sequential multi-branch merge)
+
+When several parallel workstreams (`feature/<ws1>`, …, `feature/<wsN>`) have
+finished and need to merge back to `dev` one after another, a single session
+can run the whole orchestration — a fresh session only needs this skill, no
+long prompt. Current batch (2026-08-17): **WS1 → WS2 → WS3 → WS4**, contract in
+`tech/18-national-scale-plan.md` §3.2.
+
+1. **Preflight** — main tree at repo root, on `dev`:
+   ```bash
+   git switch dev && git pull --ff-only origin dev
+   git worktree list          # every ws branch exists on its own worktree
+   git status --short         # main tree clean
+   ```
+2. **Order = dependency order** (foundation first, frontend last):
+   - hard: the schema / read-path workstream merges first (others consume its
+     drop shape / API); the frontend workstream merges last (it consumes the
+     finished API).
+   - current batch: WS1 (schema/read paths) → WS2 (data, consumes WS1's shape)
+     → WS3 (LLM validation — independent, soft order) → WS4 (frontend).
+3. **Per workstream — strictly sequential, stop on first red**:
+   ```bash
+   git merge --no-ff feature/<ws>          # one merge commit per feature
+   cd server && npm test && npm run typecheck   # trust-but-verify post-merge
+   make docs-check && git diff --check
+   ```
+   - If the merge fails or gates go red, stop there — never merge past a
+     broken branch; report which branch failed and why.
+   - Conflicts: file boundaries are mostly disjoint; real conflicts land in
+     shared docs (`tech/`, `CHANGELOG.md`, `Makefile`, `package.json`). Resolve
+     them on the dev working tree at merge time, then re-run the full gates.
+     Never force-push or clobber.
+4. **Finish each merged ws** (tolerate pieces the agent already cleaned up):
+   ```bash
+   git push origin dev
+   git worktree remove ../dm-wt-<ws> 2>/dev/null || true
+   git branch -d feature/<ws> 2>/dev/null || true
+   ```
+5. **Report** what merged and each merge's gate result. Env-only steps (apply
+   the new `db/` migration, `npm run import:seed:apply`) are the user's — do
+   not run them.
 
 ## Conflict handling
 

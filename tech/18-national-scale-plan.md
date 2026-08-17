@@ -124,6 +124,7 @@ CREATE INDEX positions_open_deadline_idx ON positions (site_id) WHERE status='op
   git push origin dev
   git branch -d feature/<ws> && git worktree remove ../domain-map-wt-<ws>
   ```
+- **编排执行**：上述顺序的完整执行流程（前置检查 → 按序逐个 merge + 门禁复跑 → 红则停 → 清理 → push）由 `parallel-development` skill 的「Merge orchestration」节承载；新会话加载该 skill 即可执行，无需长 prompt。本节是契约记录，skill 是执行指令。
 
 ---
 
