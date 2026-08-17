@@ -159,7 +159,8 @@ CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
 ## 5. 里程碑
 
 - [x] WS1 落库：tier/city/alive 读路径 + maxTier API（迁移 + 测试）—— **2026-08-17 完成**
-- [ ] WS2 多城市 mapper + 首批城市 drops（北上广深成都武汉）
-- [ ] WS3 LLM 验证脚本（报告 + 用户配 key 后跑批）
+- [x] WS2 多城市 mapper + 首批城市 drops（北上广深成都武汉）—— **2026-08-17 完成（630 公司 / 761 岗位，geocode 待配额）**
+- [x] WS3 LLM 验证脚本（报告 + 用户配 key 后跑批）—— **2026-08-17 完成（817 条全量：82 pass / 724 warn / 10 fail / 1 error；10 条 fail 待 B2.1 决策）**
 - [x] WS4 视口按需加载 + LOD + 在招呈现
-- [ ] 全国工作模式验收：非杭州城市按位置加载、LOD 正常、真实性校验通过
+- [x] 公司打标（tech/19）：tier 0..21 + category 国标大类，668 家全量 QA 通过—— **2026-08-17 完成**
+- [ ] 全国工作模式验收：非杭州城市按位置加载、LOD 正常、真实性校验通过（**等待 AMap geocode 配额重置 → geocode:sites:apply → import:seed:apply**）
