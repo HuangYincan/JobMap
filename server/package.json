@@ -13,7 +13,9 @@
     "import:seed:apply": "node scripts/plan-seed-import.mjs --apply",
     "geocode:sites": "node scripts/plan-site-geocode.mjs",
     "geocode:sites:apply": "node scripts/geocode-sites-apply.mjs",
-    "audit:pins": "node --experimental-strip-types --no-warnings scripts/audit-pin-locations.mjs"
+    "audit:pins": "node --experimental-strip-types --no-warnings scripts/audit-pin-locations.mjs",
+    "import:hz:pois": "node scripts/import-hz-pois.mjs",
+    "import:hz:pois:apply": "node scripts/import-hz-pois.mjs --apply"
   },
   "dependencies": {
     "next": "15.5.23",
@@ -26,6 +28,7 @@
     "@types/pg": "^8.21.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
+    "csv-parse": "^7.0.2",
     "typescript": "5.9.3"
   },
   "overrides": {
