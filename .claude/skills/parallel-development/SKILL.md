@@ -105,6 +105,26 @@ long prompt. Current batch (2026-08-17): **WS1 → WS2 → WS3 → WS4**, contra
 - The subagent works only in its worktree, runs its own tests, and returns: what changed, test results, evidence. It does not paste file contents back.
 - The main agent double-checks the returned diffs (trust-but-verify per `agent.md`), then merges to `dev`.
 
+## Bulk-labeling fan-out (proven 2026-08-17, 668 companies)
+
+For large mechanical+judgment data work (e.g. company tier/category labeling), fan
+out **data-shard** subagents instead of doing it inline (keeps the main context
+clean; 5 × ~130 rows in ~4–7 min each):
+
+1. **Anchor set first** — hand-label ~30 diverse cases yourself, get user sign-off.
+2. **Shard the input** — one TSV per batch (`slug\tname\thints\tcity`), no overlap.
+3. **One prompt per shard** — rules inline (scales → tier bands, industry → category
+   map), the anchor file path as reference, output = a strict JSON mapping written
+   to `/tmp/label_batch_N.json`. Require: full coverage, no extras, valid values.
+4. **Merge + normalize** — main agent merges shards, then applies the anchor bands
+   to fix cross-shard drift (expect some: e.g. 京东/美团 labeled 0 vs band 4-5).
+5. **QA gate (`server/scripts/qa-labels.mjs`)** — coverage 668/668, value ranges,
+   anchor-bands (prefix-match with exclusion, e.g. 京东 ≠ 京东方), same-entity
+   variant consistency. Fix drift, re-run, then write back.
+
+Write-back and QA scripts stay in the repo (`apply-company-labels.mjs`,
+`qa-labels.mjs`) so the next batch reuses them.
+
 ## Current repo state (2026-08-17)
 
 `dev` was synced with `feature/phase-2-multi-mode` (fast-forward merge) — all of
