@@ -36,6 +36,8 @@ export interface SourceCompany {
   name: string;
   industries: string[];
   scale: RecruitmentPOI['company']['scale'];
+  /** 层级 1=名企 2=大厂 3=中厂/其他（可选，读路径缺省 3） */
+  tier?: number;
   rating?: number;
   summary?: string;
   careerUrl?: string;
@@ -65,6 +67,7 @@ export function poiToSourceCompany(poi: RecruitmentPOI): SourceCompany {
     name: poi.company.name,
     industries: poi.company.industries,
     scale: poi.company.scale,
+    tier: poi.company.tier,
     rating: poi.company.rating,
     summary: poi.company.summary,
     careerUrl: poi.company.careerUrl,
@@ -163,6 +166,7 @@ function poiFromSourceSite(
       name: company.name,
       industries: company.industries,
       scale: company.scale,
+      tier: company.tier ?? 3,
       rating: company.rating,
       logo: logo.emoji,
       logoUrl: logo.url,
@@ -244,8 +248,24 @@ function mergeCompanyOntoSeedPois(pois: RecruitmentPOI[], company: SourceCompany
   const knownSites = new Set(pois.flatMap((poi) => (poi.sites ?? []).map((site) => site.id)));
   const knownJobs = new Set(pois.flatMap((poi) => poi.positions.map((pos) => pos.id)));
 
+  // 真实 drop 的层级 / 城市字段比 seed 骨架权威：合并时补到 seed POI 上
+  // （离线读路径的 maxTier / city 过滤靠它们）。
+  if (company.tier != null) {
+    for (const poi of pois) poi.company.tier = company.tier;
+  }
+
   for (const site of company.sites) {
-    if (knownSites.has(site.id)) continue;
+    if (knownSites.has(site.id)) {
+      for (const poi of pois) {
+        for (const row of poi.sites ?? []) {
+          if (row.id !== site.id) continue;
+          if (site.city) row.city = site.city;
+          if (site.province) row.province = site.province;
+          if (site.cityCode) row.cityCode = site.cityCode;
+        }
+      }
+      continue;
+    }
     knownSites.add(site.id);
     const pin = poiFromSourceSite(company, site, `${company.slug}:${site.id}`, 'api', { openOnly: true });
     pois.push(pin);

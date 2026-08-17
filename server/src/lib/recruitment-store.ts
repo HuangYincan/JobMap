@@ -3,7 +3,7 @@
 // No rows / no database → caller falls back to seed.
 
 import { getPool } from './db.ts';
-import { companySitesSpatialSql, hasSpatialClip, type SpatialClip } from './spatial-query.ts';
+import { companySitesSpatialSql, hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
 import type { ApplySource, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
 
 interface CompanyRow {
@@ -12,6 +12,7 @@ interface CompanyRow {
   name: string;
   industries: string[];
   scale: RecruitmentPOI['company']['scale'] | null;
+  tier: number | string | null;
   rating: string | number | null;
   summary: string | null;
   career_url: string | null;
@@ -24,6 +25,9 @@ interface SiteRow {
   company_id: string;
   name: string;
   address: string | null;
+  city: string | null;
+  province: string | null;
+  city_code: string | null;
   lng: number | null;
   lat: number | null;
   career_url: string | null;
@@ -60,19 +64,32 @@ function hasPlausibleCoord(lng: number | null, lat: number | null): boolean {
   return Number.isFinite(lng) && Number.isFinite(lat) && !(lng === 0 && lat === 0);
 }
 
+/** deadline 是 date 列：pg 返回 Date 对象（本地午夜）。按本地时区格式化回 YYYY-MM-DD。 */
+function isoDate(value: Date | string | null | undefined): string | undefined {
+  if (value == null) return undefined;
+  if (value instanceof Date) {
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, '0');
+    const d = String(value.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return String(value).slice(0, 10);
+}
+
 export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<RecruitmentPOI[] | null> {
   const pool = getPool();
   if (!pool) return null;
   try {
     const spatial = companySitesSpatialSql(clip);
-    const siteSql = hasSpatialClip(clip)
-      ? `SELECT s.id::text, s.company_id::text, s.name, s.address, s.lng, s.lat, s.career_url, s.logo_url
+    const clipped = hasSpatialClip(clip);
+    const siteSql = clipped
+      ? `SELECT s.id::text, s.company_id::text, s.name, s.address, s.city, s.province, s.city_code, s.lng, s.lat, s.career_url, s.logo_url
          FROM company_sites s
          WHERE s.geom IS NOT NULL${spatial.sql}`
-      : `SELECT id::text, company_id::text, name, address, lng, lat, career_url, logo_url
+      : `SELECT id::text, company_id::text, name, address, city, province, city_code, lng, lat, career_url, logo_url
          FROM company_sites`;
     const sites = await pool.query<SiteRow>(siteSql, spatial.params);
-    if (hasSpatialClip(clip) && sites.rows.length === 0) return [];
+    if (clipped && sites.rows.length === 0) return [];
 
     // Ungeocoded sites (address-only, lng/lat NULL) must not pin at (0,0).
     // A clip already restricts to geom-bearing sites; the unrestricted path filters here.
@@ -81,23 +98,30 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
 
     const companyIds = [...new Set(located.map((site) => site.company_id))];
     const siteIds = located.map((site) => site.id);
-    const companySql = hasSpatialClip(clip)
-      ? `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji
-         FROM companies WHERE id = ANY($1::bigint[]) ORDER BY slug`
-      : `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji
+    const maxTier = parseMaxTier(clip?.maxTier);
+    const tierClause = maxTier !== null ? ' AND tier <= $2' : '';
+    const companySql = clipped
+      ? `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier
+         FROM companies WHERE id = ANY($1::bigint[])${tierClause} ORDER BY slug`
+      : `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier
          FROM companies ORDER BY slug`;
-    const positionSql = hasSpatialClip(clip)
+    // A1 (tech/18)：只读在招 —— status='open' 且 deadline 为空或 >= 今天。
+    const positionSql = clipped
       ? `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
                 salary_min, salary_max, education, majors, skills, description, deadline,
                 apply_source, apply_url, status
-         FROM positions WHERE status = 'open' AND site_id = ANY($1::bigint[])`
+         FROM positions WHERE status = 'open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)
+           AND site_id = ANY($1::bigint[])`
       : `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
                 salary_min, salary_max, education, majors, skills, description, deadline,
                 apply_source, apply_url, status
-         FROM positions WHERE status = 'open'`;
+         FROM positions WHERE status = 'open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)`;
     const [companies, positions] = await Promise.all([
-      pool.query<CompanyRow>(companySql, hasSpatialClip(clip) ? [companyIds] : []),
-      pool.query<PositionRow>(positionSql, hasSpatialClip(clip) ? [siteIds] : []),
+      pool.query<CompanyRow>(
+        companySql,
+        clipped ? (maxTier !== null ? [companyIds, maxTier] : [companyIds]) : [],
+      ),
+      pool.query<PositionRow>(positionSql, clipped ? [siteIds] : []),
     ]);
     if (companies.rows.length === 0) return [];
 
@@ -136,6 +160,7 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
             name: company.name,
             industries: company.industries ?? [],
             scale: company.scale ?? 'startup',
+            tier: num(company.tier) ?? 3,
             rating: num(company.rating),
             logo: company.logo_emoji ?? undefined,
             logoUrl: company.logo_url ?? undefined,
@@ -147,6 +172,9 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
               id: site.id,
               name: site.name,
               location: loc,
+              city: site.city ?? undefined,
+              province: site.province ?? undefined,
+              cityCode: site.city_code ?? undefined,
               careerUrl: site.career_url ?? undefined,
               logoUrl: site.logo_url ?? undefined,
             },
@@ -166,7 +194,7 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
             majors: pos.majors ?? undefined,
             skills: pos.skills ?? undefined,
             description: pos.description ?? undefined,
-            deadline: pos.deadline ? String(pos.deadline).slice(0, 10) : undefined,
+            deadline: isoDate(pos.deadline),
             apply: pos.apply_url
               ? { source: pos.apply_source ?? 'official', url: pos.apply_url }
               : undefined,

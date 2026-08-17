@@ -6,12 +6,15 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { todayDateString } from '../src/lib/freshness.ts';
 import {
+  loadOfflineWorkCatalog,
   loadServerCatalog,
   loadServerCatalogById,
   serverCatalog,
   serverCatalogById,
 } from '../src/lib/server-catalog.ts';
+import { loadWorkCatalogFromDb } from '../src/lib/recruitment-store.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -92,4 +95,46 @@ test('loadServerCatalog prefers imported work rows, then seed + file drops', () 
   assert.match(catalog, /NOWCODER_DIR/);
   assert.match(catalog, /SHIXISENG_DIR/);
   assert.match(catalog, /RADAR_DIR/);
+});
+
+test('offline catalog keeps every position alive (A1: open + deadline future or none)', async () => {
+  const work = await loadOfflineWorkCatalog();
+  const today = todayDateString();
+  for (const poi of work) {
+    for (const pos of poi.positions) {
+      if (pos.deadline) {
+        assert.ok(Date.parse(pos.deadline) >= Date.parse(today), `${poi.id} expired ${pos.deadline}`);
+      }
+    }
+  }
+});
+
+test('loadWorkCatalogFromDb filters by city / maxTier / alive when DATABASE_URL is set', async (t) => {
+  if (!process.env.DATABASE_URL) {
+    t.skip('DATABASE_URL is not set');
+    return;
+  }
+  const full = await loadWorkCatalogFromDb();
+  if (!full) {
+    t.skip('Postgres pool unavailable');
+    return;
+  }
+  // maxTier=3 等价于不过滤（tier 缺省 3）。
+  assert.deepEqual(await loadWorkCatalogFromDb({ maxTier: 3 }), full);
+  // maxTier=1 → 所有返回公司 tier <= 1（当前全部缺省 3，应为空数组）。
+  const top = await loadWorkCatalogFromDb({ maxTier: 1 });
+  assert.ok(Array.isArray(top));
+  assert.ok(top.every((p) => (p.company.tier ?? 3) <= 1));
+  // city 过滤不炸库：返回数组，且每条 pin 都带 site 城市字段（可能是 undefined）。
+  const city = await loadWorkCatalogFromDb({ city: '杭州' });
+  assert.ok(Array.isArray(city));
+  for (const poi of city) {
+    for (const site of poi.sites ?? []) {
+      assert.ok('city' in site && 'province' in site && 'cityCode' in site);
+    }
+  }
+  // alive 显式旗标：positions 全部 open（DB 读路径本来就恒开）。
+  const alive = await loadWorkCatalogFromDb({ alive: true });
+  assert.ok(Array.isArray(alive));
+  assert.ok(alive.every((p) => p.positions.every((pos) => pos.status === 'open')));
 });

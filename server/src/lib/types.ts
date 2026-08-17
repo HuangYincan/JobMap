@@ -101,6 +101,12 @@ export interface CompanySite {
   location?: POILocation;
   careerUrl?: string;
   logoUrl?: string;
+  /** 城市名（'北京'），来自 drop site.city 或地址解析；城市过滤用 */
+  city?: string;
+  /** 省份（'北京市'） */
+  province?: string;
+  /** 行政区划码（'110000'） */
+  cityCode?: string;
 }
 
 /** 招聘岗位（实习/秋招/社招模式的 items） */
@@ -169,6 +175,8 @@ export interface RecruitmentPOI extends BasePOI {
     summary?: string;
     /** 公司招聘门户（岗位未单独给链接时回退） */
     careerUrl?: string;
+    /** 层级 1=名企 2=大厂 3=中厂/其他（LOD 按缩放过滤，缺省 3） */
+    tier?: number;
   };
   /** 办公点（可选；未填时位置用 POI.location） */
   sites?: CompanySite[];

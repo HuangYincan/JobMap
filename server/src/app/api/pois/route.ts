@@ -7,6 +7,11 @@
 // Phase 2 数据策略：
 // - 工作模式：导入行优先，否则 seed
 // - Domain 模式：服务端 DOMAIN_SEED；浏览器直连 AMap JS API
+//
+// filters 透传（national scope，2026-08-17）：
+// - maxTier: LOD 层级上限（1=名企 2=大厂 3=全部），随 bounds 下推 SQL
+// - city: 城市名或行政区划码（city_code 精确 OR city ILIKE）
+// - alive: 只在招（DB 读路径恒开；离线 catalog 按旗标内存过滤）
 // ============================================================
 
 import { NextResponse } from 'next/server';

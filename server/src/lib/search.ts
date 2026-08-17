@@ -11,6 +11,7 @@ import { isRecruitmentPOI } from './types.ts';
 import { getMode } from './modes.ts';
 import { positionMatchesRole, positionMatchesTaxonomySelection, selectedRoleFamilies, selectedTaxonomyPaths } from './job-taxonomy.ts';
 import { HANGZHOU_DISTRICTS, poiMatchesDistrict } from './spatial-filters.ts';
+import { isAlivePosition } from './freshness.ts';
 import { categoryMatches, popularityScore } from './viewport-search.ts';
 
 // ---- 关键词匹配 ----
@@ -598,6 +599,30 @@ export function matchFilter(poi: POI, key: string, value: any): boolean {
         ? value.filter((item): item is string => typeof item === 'string')
         : [];
       return poiMatchesDistrict(poi, sel);
+    }
+    case 'maxTier': {
+      // LOD：公司层级（1=名企 2=大厂 3=中厂/其他）<= maxTier 才展示。
+      if (!isRecruitmentPOI(poi)) return true;
+      const maxTier = Number(value);
+      if (!Number.isFinite(maxTier) || maxTier < 1) return true;
+      return (poi.company.tier ?? 3) <= Math.floor(maxTier);
+    }
+    case 'city': {
+      // 城市名/行政区划码。SQL 是超集（city_code 精确 + city ILIKE）；内存走文本包含。
+      if (!isRecruitmentPOI(poi)) return true;
+      const target = String(value).trim().replace(/[省市区]$/, '');
+      if (!target) return true;
+      const text = [
+        poi.location.address ?? '',
+        ...(poi.sites ?? []).flatMap((site) => [site.city ?? '', site.province ?? '', site.cityCode ?? '']),
+      ].join(' ');
+      return text.includes(target);
+    }
+    case 'alive': {
+      // A1（tech/18）：只在招 —— 至少一个 status='open' 且 deadline 未过期的岗位。
+      if (!value || value === 'false') return true;
+      if (!isRecruitmentPOI(poi)) return true;
+      return poi.positions.some((pos) => isAlivePosition(pos));
     }
     default:
       return true;

@@ -11,6 +11,8 @@ import { radarAdapter } from './recruitment-adapters/radar.ts';
 import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
 import { shixisengAdapter } from './recruitment-adapters/shixiseng.ts';
 import { isAuthenticPositionId } from './freshness.ts';
+import { HANGZHOU_DISTRICTS } from './spatial-filters.ts';
+import type { CompanySite } from './types.ts';
 
 export interface ImportIssue {
   slug: string;
@@ -32,6 +34,27 @@ function issue(slug: string, field: string, message: string): ImportIssue {
   return { slug, field, message };
 }
 
+/** 首批目标城市（tech/18 D2）。地址解析只认这些城市的名字。 */
+const TARGET_CITIES = ['北京', '上海', '广州', '深圳', '成都', '武汉', '杭州'] as const;
+
+/**
+ * site 城市名（写入 company_sites.city）：site.city 字段优先（WS2 drop 形状）；
+ * 否则从 location.address 解析 —— 地址等于目标城市名、以「城市名+市」开头，
+ * 或以杭州区名开头（'西湖区龙井路1号' → 杭州）。多城市文本（'北京/上海'）与
+ * 无法识别地址返回 null（保持现状，不猜）。
+ */
+export function siteCityOf(site: CompanySite): string | null {
+  const city = site.city?.trim();
+  if (city) return city;
+  const address = site.location?.address?.trim();
+  if (!address) return null;
+  for (const name of TARGET_CITIES) {
+    if (address === name || address.startsWith(`${name}市`)) return name;
+  }
+  if (HANGZHOU_DISTRICTS.some((district) => address.startsWith(district.value))) return '杭州';
+  return null;
+}
+
 export function validateSourceCompany(company: SourceCompany): ImportIssue[] {
   const slug = company.slug?.trim() || '(missing-slug)';
   const issues: ImportIssue[] = [];
@@ -42,6 +65,9 @@ export function validateSourceCompany(company: SourceCompany): ImportIssue[] {
   }
   if (company.scale && !SCALES.has(company.scale)) {
     issues.push(issue(slug, 'scale', `unknown ${company.scale}`));
+  }
+  if (company.tier !== undefined && ![1, 2, 3].includes(company.tier)) {
+    issues.push(issue(slug, 'tier', `unknown ${company.tier}`));
   }
   if (!company.sites.length) issues.push(issue(slug, 'sites', 'need at least one site'));
 
@@ -227,8 +253,8 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
 
     for (const company of authentic) {
       const upserted = await client.query<{ id: string }>(
-        `INSERT INTO companies (slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `INSERT INTO companies (slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          ON CONFLICT (slug) DO UPDATE SET
            name = EXCLUDED.name,
            industries = EXCLUDED.industries,
@@ -238,6 +264,7 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
            career_url = EXCLUDED.career_url,
            logo_url = EXCLUDED.logo_url,
            logo_emoji = EXCLUDED.logo_emoji,
+           tier = EXCLUDED.tier,
            updated_at = now()
          RETURNING id::text`,
         [
@@ -250,6 +277,7 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
           company.careerUrl ?? null,
           company.logoUrl ?? null,
           company.logoEmoji ?? null,
+          company.tier ?? 3,
         ],
       );
       const companyId = upserted.rows[0].id;
@@ -264,14 +292,16 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
         let siteRowId = existing.rows[0]?.id;
         if (!siteRowId) {
           const inserted = await client.query<{ id: string }>(
-            `INSERT INTO company_sites (company_id, name, address, city, lng, lat, career_url, logo_url, source_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            `INSERT INTO company_sites (company_id, name, address, city, province, city_code, lng, lat, career_url, logo_url, source_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
              RETURNING id::text`,
             [
               companyId,
               site.name,
               site.location?.address ?? null,
-              null,
+              siteCityOf(site),
+              site.province ?? null,
+              site.cityCode ?? null,
               site.location?.lng ?? null,
               site.location?.lat ?? null,
               site.careerUrl ?? null,
@@ -283,13 +313,16 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
         } else {
           await client.query(
             `UPDATE company_sites SET
-               address = $3, lng = $4, lat = $5, career_url = $6, logo_url = $7,
-               source_id = $8, updated_at = now()
+               address = $3, city = $4, province = $5, city_code = $6, lng = $7, lat = $8,
+               career_url = $9, logo_url = $10, source_id = $11, updated_at = now()
              WHERE id = $1 AND company_id = $2`,
             [
               siteRowId,
               companyId,
               site.location?.address ?? null,
+              siteCityOf(site),
+              site.province ?? null,
+              site.cityCode ?? null,
               site.location?.lng ?? null,
               site.location?.lat ?? null,
               site.careerUrl ?? null,

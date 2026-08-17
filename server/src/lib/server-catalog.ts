@@ -9,7 +9,7 @@ import { NOWCODER_DIR } from './recruitment-adapters/nowcoder.ts';
 import { OFFICIAL_CAREER_DIR, listOfficialCareerFiles } from './recruitment-adapters/official-career.ts';
 import { RADAR_DIR } from './recruitment-adapters/radar.ts';
 import { SHIXISENG_DIR } from './recruitment-adapters/shixiseng.ts';
-import { isAuthenticPositionId } from './freshness.ts';
+import { isAuthenticPositionId, isAlivePosition } from './freshness.ts';
 import { mergeCompaniesIntoPois } from './recruitment-source.ts';
 import { loadWorkCatalogFromDb } from './recruitment-store.ts';
 import { DOMAIN_SEED, INTERNSHIP_SEED } from './seed-data.ts';
@@ -44,7 +44,10 @@ export async function loadOfflineWorkCatalog(): Promise<POI[]> {
       return withRadar
         .map((poi) => ({
           ...poi,
-          positions: poi.positions.filter((pos) => isAuthenticPositionId(pos.id)),
+          // A1（tech/18）：只保留真实 + 在招岗位（DB 读路径在 SQL 里恒开同一条规则）。
+          positions: poi.positions.filter(
+            (pos) => isAuthenticPositionId(pos.id) && isAlivePosition(pos),
+          ),
         }))
         .filter((poi) => poi.positions.length > 0 && hasPlausibleCoord(poi));
     });
