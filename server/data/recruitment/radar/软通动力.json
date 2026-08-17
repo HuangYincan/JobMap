@@ -1,0 +1,98 @@
+{
+  "slug": "软通动力",
+  "name": "软通动力",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.itongxue.net/folder/promotion/isoftstone/",
+  "sites": [
+    {
+      "id": "软通动力-site-beijing",
+      "name": "软通动力",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "软通动力-site-shanghai",
+      "name": "软通动力",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "软通动力-site-shenzhen",
+      "name": "软通动力",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "软通动力-site-chengdu",
+      "name": "软通动力",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "软通动力-site-guangzhou",
+      "name": "软通动力",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州/深圳/武汉/西安"
+      }
+    },
+    {
+      "id": "软通动力-site-wuhan",
+      "name": "软通动力",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "广州/深圳/武汉/西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b97162a915b8",
+      "title": "技术类岗位  职能类岗位  销售咨询将诶岗位  数字化运营岗位",
+      "siteId": "软通动力-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.itongxue.net/folder/promotion/isoftstone/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-c844e0f7c85a",
+      "title": "智能体开发 项目助理 CoIang开发  项目助理 接听坐席客服",
+      "siteId": "软通动力-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.itongxue.net/folder/promotion/isoftstone/schoolhire?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

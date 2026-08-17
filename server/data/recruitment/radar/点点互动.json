@@ -1,0 +1,89 @@
+{
+  "slug": "点点互动",
+  "name": "点点互动",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ddhd.cn/4/jobs?shareId=d2850ce7-89e3-408d-aeca-ba69240bddd8&shareSource=1",
+  "sites": [
+    {
+      "id": "点点互动-site-beijing",
+      "name": "点点互动",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "点点互动-site-shanghai",
+      "name": "点点互动",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "点点互动-site-shenzhen",
+      "name": "点点互动",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "点点互动-site-chengdu",
+      "name": "点点互动",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "点点互动-site-guangzhou",
+      "name": "点点互动",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-197a45218aca",
+      "title": "市场类、策划类、美术类、程序类、AI技术类、运营/综合类",
+      "siteId": "点点互动-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ddhd.cn/4/jobs?shareId=d2850ce7-89e3-408d-aeca-ba69240bddd8&shareSource=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-f14bc49fe3d3",
+      "title": "系统策划  数值策划  AI算法工程师  AI  Agent工程师  全球广告投放  广告创意策划  客户端工程师  数据工程师",
+      "siteId": "点点互动-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ddhd.cn/4/jobs?shareId=d2850ce7-89e3-408d-aeca-ba69240bddd8&shareSource=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

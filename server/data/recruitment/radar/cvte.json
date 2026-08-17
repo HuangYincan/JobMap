@@ -1,0 +1,67 @@
+{
+  "slug": "cvte",
+  "name": "CVTE",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.cvte.com/project/7304f092b3cc11f083a91070fd64d1d0",
+  "sites": [
+    {
+      "id": "cvte-site-guangzhou",
+      "name": "CVTE",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2d5958650ee9",
+      "title": "开发、硬件、算法、嵌入式、销售等",
+      "siteId": "cvte-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/project/7304f092b3cc11f083a91070fd64d1d0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-8d276e042a2c",
+      "title": "人力资源岗位",
+      "siteId": "cvte-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/position/19ee6b5050414e898785dcd993499bab",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-e5bb84a1b94d",
+      "title": "硬件类，软件类，商务类，其他类，算法类",
+      "siteId": "cvte-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/project/7304f092b3cc11f083a91070fd64d1d0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "slug": "zf-lifetec",
+  "name": "ZF LIFETEC",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zf-lifetec.tupu360.com/pageQrCode?targetUrl=a7f4739eb94ec9efce511f93b6b40f8b78daa185c8896392b811dab3e5492e33a749322c5225610ab05cd532ea8df35213085f63a2c5462c07f8c164e9abdc332decd956bc38e404f98a5854fe58263a960501dacadeb1cabbc418096cd782b7905fd0fdeeb",
+  "sites": [
+    {
+      "id": "zf-lifetec-site-wuhan",
+      "name": "ZF LIFETEC",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-624aadcfb1d3",
+      "title": "应用工程师实习生 AI实习生  系统工程师实习生 测试工程师实习生",
+      "siteId": "zf-lifetec-site-wuhan",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zf-lifetec.tupu360.com/pageQrCode?targetUrl=a7f4739eb94ec9efce511f93b6b40f8b78daa185c8896392b811dab3e5492e33a749322c5225610ab05cd532ea8df35213085f63a2c5462c07f8c164e9abdc332decd956bc38e404f98a5854fe58263a960501dacadeb1cabbc418096cd782b7905fd0fdeeb",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

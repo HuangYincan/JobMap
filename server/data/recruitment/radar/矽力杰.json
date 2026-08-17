@@ -1,0 +1,65 @@
+{
+  "slug": "矽力杰",
+  "name": "矽力杰",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.silergy.com/recruitment",
+  "sites": [
+    {
+      "id": "矽力杰-site-beijing",
+      "name": "矽力杰",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "矽力杰-site-shanghai",
+      "name": "矽力杰",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "矽力杰-site-guangzhou",
+      "name": "矽力杰",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "矽力杰-site-shenzhen",
+      "name": "矽力杰",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-657c70fbf86e",
+      "title": "模拟IC设计工程师 数字IC设计工程师 验证工程师  数学后端设计工程师 产品工程师 应用工程师 器件工程师 嵌入式开发工程师 AI算法工程师 测试工程师 可靠",
+      "siteId": "矽力杰-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.silergy.com/recruitment",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

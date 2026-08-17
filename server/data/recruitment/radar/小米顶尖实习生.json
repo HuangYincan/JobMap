@@ -1,0 +1,65 @@
+{
+  "slug": "小米顶尖实习生",
+  "name": "小米顶尖实习生",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://xiaomi.jobs.f.mioffice.cn/topintern",
+  "sites": [
+    {
+      "id": "小米顶尖实习生-site-beijing",
+      "name": "小米顶尖实习生计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "小米顶尖实习生-site-shanghai",
+      "name": "小米顶尖实习生计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "小米顶尖实习生-site-shenzhen",
+      "name": "小米顶尖实习生计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "小米顶尖实习生-site-wuhan",
+      "name": "小米顶尖实习生计划",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-dd74aa5796aa",
+      "title": "AI,infra方向，多模态方向，vLA,自动驾驶，机器学习，大模型语音，大模型训练推理，操作系统方向",
+      "siteId": "小米顶尖实习生-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/topintern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

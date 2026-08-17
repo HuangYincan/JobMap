@@ -1,0 +1,65 @@
+{
+  "slug": "思瑞浦",
+  "name": "思瑞浦",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/3peakic/67894?locale=zh-CN#/jobs?page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "思瑞浦-site-beijing",
+      "name": "思瑞浦",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "思瑞浦-site-shanghai",
+      "name": "思瑞浦",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "思瑞浦-site-shenzhen",
+      "name": "思瑞浦",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "思瑞浦-site-chengdu",
+      "name": "思瑞浦",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2e166c542b2a",
+      "title": "研发类  销售类  运营与质量类 工艺与器件类",
+      "siteId": "思瑞浦-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/3peakic/67894?locale=zh-CN#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

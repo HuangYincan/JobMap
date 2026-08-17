@@ -1,6 +1,7 @@
 {
   "slug": "leapmotor-hangzhou",
   "name": "零跑汽车",
+  "tier": 3,
   "industries": [
     "auto"
   ],
@@ -8,8 +9,19 @@
   "careerUrl": "https://leapmotor1.zhiye.com/intern/jobs?memory=%7B%7D&silence=1",
   "sites": [
     {
-      "id": "leapmotor-hangzhou-site",
+      "id": "leapmotor-hangzhou-site-shanghai",
       "name": "零跑汽车",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/杭州"
+      }
+    },
+    {
+      "id": "leapmotor-hangzhou-site-hangzhou",
+      "name": "零跑汽车",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
         "address": "上海/杭州"
       }
@@ -19,7 +31,7 @@
     {
       "externalId": "radar-558574a1559d",
       "title": "电子产品线电池产品线电驱产品线",
-      "siteId": "leapmotor-hangzhou-site",
+      "siteId": "leapmotor-hangzhou-site-shanghai",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

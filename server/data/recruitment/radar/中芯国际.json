@@ -1,0 +1,56 @@
+{
+  "slug": "中芯国际",
+  "name": "中芯国际",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://smics.zhiye.com/campus",
+  "sites": [
+    {
+      "id": "中芯国际-site-beijing",
+      "name": "中芯国际",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/天津"
+      }
+    },
+    {
+      "id": "中芯国际-site-shanghai",
+      "name": "中芯国际",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/天津"
+      }
+    },
+    {
+      "id": "中芯国际-site-shenzhen",
+      "name": "中芯国际",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/天津"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e26798aad309",
+      "title": "技术研发类  电路设计类  工艺工程类   设备管理类 智能制造类软件算法类  质量管理类  职能支持类",
+      "siteId": "中芯国际-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://smics.zhiye.com/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

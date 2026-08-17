@@ -1,0 +1,92 @@
+{
+  "slug": "九坤投资",
+  "name": "九坤投资",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus_apply/ubiquantrecruit/37031?recommendCode=DSdYAXQR#/jobs",
+  "sites": [
+    {
+      "id": "九坤投资-site-beijing",
+      "name": "九坤投资",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "九坤投资-site-shanghai",
+      "name": "九坤投资",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3db4f354194c",
+      "title": "算法、量化交易、数据分析等",
+      "siteId": "九坤投资-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/ubiquantrecruit/37031?recommendCode=DSdYAXQR#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-d4f73000d340",
+      "title": "投资研究方向  工程开发方向   量化风控方向",
+      "siteId": "九坤投资-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/ubiquantrecruit/37031?recommendCode=DSdYAXQR#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-bb85f5a35914",
+      "title": "量化交易分析  HR管培生—招聘方向",
+      "siteId": "九坤投资-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/ubiquantrecruit/37031?recommendCode=DSdYAXQR#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-5ace208a2c88",
+      "title": "量化策略实习生 AI算法实习生 HR实习生 量化风险模型实习生 QD实习生 商业分析实习生 量化分析实习生 其他岗位",
+      "siteId": "九坤投资-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/ubiquantrecruit/37031?sourceToken=71e5a94e58c8c999c012323f37279c11#/jobs?zhineng=84349",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

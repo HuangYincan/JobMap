@@ -1,0 +1,65 @@
+{
+  "slug": "资光同创",
+  "name": "资光同创",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://young.yingjiesheng.com/xyzlogin?ctmid=d07b2450-a61b-4cfe-a05a-b5ea2d00a8f3&ehirejobid=&jumpurl=https%3A%2F%2Fxyz.51job.com%2FExternal%2FOthers%2FLogin51.aspx%3FCtmID%3Dd07b2450-a61b-4cfe-a05a-b5ea2d00a8f3%26prd%3Dxym.51job.com%26prp%3D%26cd%3Dxym.",
+  "sites": [
+    {
+      "id": "资光同创-site-beijing",
+      "name": "资光同创",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "资光同创-site-shanghai",
+      "name": "资光同创",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "资光同创-site-shenzhen",
+      "name": "资光同创",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "资光同创-site-chengdu",
+      "name": "资光同创",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-afdfd5696476",
+      "title": "软件开发工程师  软件测试工程师 混合信号设计工程师  数字电路设计工程师  FPGA开发工程师  嵌入式应用开发工程师  销售工程师  测试开发工程师  FP",
+      "siteId": "资光同创-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://young.yingjiesheng.com/xyzlogin?ctmid=d07b2450-a61b-4cfe-a05a-b5ea2d00a8f3&ehirejobid=&jumpurl=https%3A%2F%2Fxyz.51job.com%2FExternal%2FOthers%2FLogin51.aspx%3FCtmID%3Dd07b2450-a61b-4cfe-a05a-b5ea2d00a8f3%26prd%3Dxym.51job.com%26prp%3D%26cd%3Dxym.",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

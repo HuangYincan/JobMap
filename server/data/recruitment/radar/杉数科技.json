@@ -1,0 +1,56 @@
+{
+  "slug": "杉数科技",
+  "name": "杉数科技",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://join.shanshu.ai/campus-recruitment/shanshu/57987#/jobs?zhineng%5B0%5D=87475",
+  "sites": [
+    {
+      "id": "杉数科技-site-beijing",
+      "name": "杉数科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州"
+      }
+    },
+    {
+      "id": "杉数科技-site-shanghai",
+      "name": "杉数科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州"
+      }
+    },
+    {
+      "id": "杉数科技-site-guangzhou",
+      "name": "杉数科技",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f8742e1def17",
+      "title": "算法工程师—运筹优化方向 算法工程师—机器学习方向 高级求解器开发工程师 高性能计算研发工程师 硬件性能优化工程师 数据分析师 业务顾问",
+      "siteId": "杉数科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.shanshu.ai/campus-recruitment/shanshu/57987#/jobs?zhineng%5B0%5D=87475",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

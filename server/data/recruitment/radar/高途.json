@@ -1,0 +1,65 @@
+{
+  "slug": "高途",
+  "name": "高途",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/bjhl/102145?locale=zh-CN&sessionid=#/jobs?page=1&anchorName=jobsList&keyword=2027%E6%A0%A1%E6%8B%9B",
+  "sites": [
+    {
+      "id": "高途-site-beijing",
+      "name": "高途",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "高途-site-shanghai",
+      "name": "高途",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "高途-site-guangzhou",
+      "name": "高途",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "高途-site-shenzhen",
+      "name": "高途",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-613182655ee4",
+      "title": "主讲老师类 国际教育类  顾问类   二讲类 运营类  主播类  职能类",
+      "siteId": "高途-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/bjhl/102145?locale=zh-CN&sessionid=#/jobs?page=1&anchorName=jobsList&keyword=2027%E6%A0%A1%E6%8B%9B",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

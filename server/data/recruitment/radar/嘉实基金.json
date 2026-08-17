@@ -1,0 +1,47 @@
+{
+  "slug": "嘉实基金",
+  "name": "嘉实基金",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/jsfund/43906?locale=zh-CN&sessionid=#/jobs/",
+  "sites": [
+    {
+      "id": "嘉实基金-site-beijing",
+      "name": "嘉实基金",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "嘉实基金-site-shanghai",
+      "name": "嘉实基金",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-61ec38475085",
+      "title": "投研类 市场类 科技类 嘉实资本岗位",
+      "siteId": "嘉实基金-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/jsfund/43906?locale=zh-CN&sessionid=#/jobs/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

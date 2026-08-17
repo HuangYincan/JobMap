@@ -1,0 +1,65 @@
+{
+  "slug": "沐曦股份",
+  "name": "沐曦股份",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/metax-tech/58131?locale=zh-CN#/jobs/",
+  "sites": [
+    {
+      "id": "沐曦股份-site-beijing",
+      "name": "沐曦股份",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "沐曦股份-site-shanghai",
+      "name": "沐曦股份",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "沐曦股份-site-shenzhen",
+      "name": "沐曦股份",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "沐曦股份-site-chengdu",
+      "name": "沐曦股份",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-fee82f1922bb",
+      "title": "硬件类 软件类  商务类 滚利类",
+      "siteId": "沐曦股份-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/metax-tech/58131?locale=zh-CN#/jobs/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

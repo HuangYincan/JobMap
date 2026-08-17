@@ -1,0 +1,47 @@
+{
+  "slug": "金证股份",
+  "name": "金证股份",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://szkingdom1.zhiye.com/campus/jobs?memory=%7B%7D&silence=1&sessionid=",
+  "sites": [
+    {
+      "id": "金证股份-site-shanghai",
+      "name": "金证股份",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/深圳/长沙"
+      }
+    },
+    {
+      "id": "金证股份-site-shenzhen",
+      "name": "金证股份",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳/长沙"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8abe54de63b7",
+      "title": "Java开发工程师 测试工程师 实施工程师 售前工程师（软件方向）销售经理",
+      "siteId": "金证股份-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://szkingdom1.zhiye.com/campus/jobs?memory=%7B%7D&silence=1&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

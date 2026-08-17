@@ -1,0 +1,56 @@
+{
+  "slug": "长城证劵",
+  "name": "长城证劵",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://cgws1.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "长城证劵-site-beijing",
+      "name": "长城证劵",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "长城证劵-site-shanghai",
+      "name": "长城证劵",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "长城证劵-site-shenzhen",
+      "name": "长城证劵",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a9b0aa2f6153",
+      "title": "投研类 业务开发类  IT类  职能类 支持类  支持类—客服  交易类 其他",
+      "siteId": "长城证劵-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cgws1.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

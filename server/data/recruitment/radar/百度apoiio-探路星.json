@@ -1,0 +1,55 @@
+{
+  "slug": "百度apoiio-探路星",
+  "name": "百度ApoIIo_探路星",
+  "tier": 3,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://talent.baidu.com/jobs/detail/INTERN/c5529f5f-cf3a-4237-80fe-b9fcd6340921",
+  "sites": [
+    {
+      "id": "百度apoiio-探路星-site-beijing",
+      "name": "百度ApoIIo_探路星计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "百度apoiio-探路星-site-shanghai",
+      "name": "百度ApoIIo_探路星计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "百度apoiio-探路星-site-shenzhen",
+      "name": "百度ApoIIo_探路星计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3bc6d7a02c65",
+      "title": "自动驾驶顶尖技术人才计划",
+      "siteId": "百度apoiio-探路星-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/detail/INTERN/c5529f5f-cf3a-4237-80fe-b9fcd6340921",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

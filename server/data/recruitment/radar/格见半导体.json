@@ -1,0 +1,86 @@
+{
+  "slug": "格见半导体",
+  "name": "格见半导体",
+  "tier": 3,
+  "industries": [
+    "energy"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://gejian-semi.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "格见半导体-site-shanghai",
+      "name": "格见半导体",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/深圳/成都/西安"
+      }
+    },
+    {
+      "id": "格见半导体-site-shenzhen",
+      "name": "格见半导体",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳/成都/西安"
+      }
+    },
+    {
+      "id": "格见半导体-site-chengdu",
+      "name": "格见半导体",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "上海/深圳/成都/西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5482c18fbc17",
+      "title": "系统架构工程师  数字设计工程师  数字验证工程师  模拟设计工程师  模拟测试工程师  硬件开发工程师  嵌入式软件开发工程师  FAE工程师   管培生",
+      "siteId": "格见半导体-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gejian-semi.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-8e3badad64c5",
+      "title": "FAE实习生，数字实验实习生，模拟设计，软件开发，硬件开发实习生，",
+      "siteId": "格见半导体-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gejian-semi.zhiye.com/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-b7ed101c3dbc",
+      "title": "FAE实习生 数字验证实习生 模拟设计实习生 软件开发实习生 硬件开发实习生等",
+      "siteId": "格见半导体-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gejian-semi.zhiye.com/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

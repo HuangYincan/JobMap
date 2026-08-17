@@ -1,0 +1,65 @@
+{
+  "slug": "深德科",
+  "name": "深德科",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao",
+  "sites": [
+    {
+      "id": "深德科-site-beijing",
+      "name": "深德科",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "深德科-site-shanghai",
+      "name": "深德科",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "深德科-site-guangzhou",
+      "name": "深德科",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "深德科-site-shenzhen",
+      "name": "深德科",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-de039ce1f31a",
+      "title": "招聘管培生 交付管培生  HRBP 管培生  人事行政方向管培生  JAVA开发管培生   测试管培生  前端开发管培生",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

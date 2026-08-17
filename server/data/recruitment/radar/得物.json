@@ -1,6 +1,7 @@
 {
   "slug": "得物",
   "name": "得物",
+  "tier": 3,
   "industries": [
     "internet"
   ],
@@ -8,12 +9,48 @@
   "careerUrl": "https://poizon.jobs.feishu.cn/s/f4Izn_GufWs",
   "sites": [
     {
-      "id": "得物-site",
+      "id": "得物-site-beijing",
       "name": "得物",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "西湖区学院路77号黄龙万科国际中心B座12F",
-        "lng": 120.129249,
-        "lat": 30.275564
+        "address": "北京/上海/广州/杭州"
+      }
+    },
+    {
+      "id": "得物-site-shanghai",
+      "name": "得物",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/杭州"
+      }
+    },
+    {
+      "id": "得物-site-guangzhou",
+      "name": "得物",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/杭州"
+      }
+    },
+    {
+      "id": "得物-site-hangzhou",
+      "name": "得物",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/上海/广州/杭州"
+      }
+    },
+    {
+      "id": "得物-site-chengdu",
+      "name": "得物",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/广州/成都"
       }
     }
   ],
@@ -21,7 +58,7 @@
     {
       "externalId": "radar-fcf6f06e0f04",
       "title": "设计类 研发类 算法类 供应链类",
-      "siteId": "得物-site",
+      "siteId": "得物-site-beijing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +67,38 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://poizon.jobs.feishu.cn/s/f4Izn_GufWs",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-d6ed9ca5682e",
+      "title": "技术类  运营类 产品类  用户研究类  供应链类  商品研究类  职能类  设计类  数据分析类   风控类",
+      "siteId": "得物-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://poizon.jobs.feishu.cn/s/PtW6e7qm2Yw",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-4edab74afb0a",
+      "title": "用户研究员 视觉设计师 体验设计师 品牌设计师 招聘实习生（校招方向）",
+      "siteId": "得物-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://poizon.jobs.feishu.cn/s/PtW6e7qm2Yw",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

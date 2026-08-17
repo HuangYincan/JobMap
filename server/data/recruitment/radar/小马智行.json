@@ -1,0 +1,46 @@
+{
+  "slug": "小马智行",
+  "name": "小马智行",
+  "tier": 3,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ponyai.jobs.feishu.cn/s/LJKJM4oIZc4",
+  "sites": [
+    {
+      "id": "小马智行-site-beijing",
+      "name": "小马智行",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/广州"
+      }
+    },
+    {
+      "id": "小马智行-site-guangzhou",
+      "name": "小马智行",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4d1e850fcb83",
+      "title": "OD&GOD研究型实习生",
+      "siteId": "小马智行-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ponyai.jobs.feishu.cn/s/LJKJM4oIZc4",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

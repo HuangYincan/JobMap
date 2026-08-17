@@ -1,0 +1,53 @@
+{
+  "slug": "它石智航",
+  "name": "它石智航",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://tarsrobot.jobs.feishu.cn/021343/?keywords=&category=&location=&project=7654421147169179950&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+  "sites": [
+    {
+      "id": "它石智航-site-shanghai",
+      "name": "它石智航",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7e917a20dfd8",
+      "title": "AI/算法/模型方向  软件/嵌入式方向  机器人本体/机电硬件方向  灵巧手系统方向  产品方向  制造方向   销售/售前方向   智能方向",
+      "siteId": "它石智航-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-12-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://tarsrobot.jobs.feishu.cn/021343/?keywords=&category=&location=&project=7654421147169179950&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-bb315cd8f990",
+      "title": "机器人运控强化学习算法实习生， 具身VLA算法实习生， 机器人感知算法，机器人机械设计，机器人电子硬件，嵌入式开发，UX设计，工业设计实习生，招聘及雇主品牌实习",
+      "siteId": "它石智航-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://tarsrobot.jobs.feishu.cn/021343/?keywords=&category=&location=&project=7605452969719548223&functionCategory=&job_hot_flag=&tag=&store=&storeFrontListString=&type=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

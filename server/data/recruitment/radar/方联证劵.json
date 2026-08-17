@@ -1,0 +1,65 @@
+{
+  "slug": "方联证劵",
+  "name": "方联证劵",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wlzq.zhiye.com/5/jobs?sessionid=",
+  "sites": [
+    {
+      "id": "方联证劵-site-beijing",
+      "name": "方联证劵",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "方联证劵-site-shanghai",
+      "name": "方联证劵",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "方联证劵-site-guangzhou",
+      "name": "方联证劵",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "方联证劵-site-shenzhen",
+      "name": "方联证劵",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6a472924d952",
+      "title": "财富方向  资管反向 自营方向 投行方向 研究方向  信息技术方向  职能方向",
+      "siteId": "方联证劵-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wlzq.zhiye.com/5/jobs?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "slug": "盛趣游戏",
+  "name": "盛趣游戏",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/shengqu/96336#/jobs?page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "盛趣游戏-site-shanghai",
+      "name": "盛趣游戏",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1e1e80a8dfeb",
+      "title": "研发策划类  程序开发类  技术支持类  综合管理类",
+      "siteId": "盛趣游戏-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/shengqu/96336#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

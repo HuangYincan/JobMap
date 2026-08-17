@@ -1,0 +1,80 @@
+{
+  "slug": "聚宽投资",
+  "name": "聚宽投资",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus_apply/joinquant/92347?recommendCode=DSaQ3kwN&hash=%23%2Fjobs#/jobs",
+  "sites": [
+    {
+      "id": "聚宽投资-site-beijing",
+      "name": "聚宽投资",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    },
+    {
+      "id": "聚宽投资-site-shanghai",
+      "name": "聚宽投资",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "聚宽投资-site-guangzhou",
+      "name": "聚宽投资",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "聚宽投资-site-shenzhen",
+      "name": "聚宽投资",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b44b58be2ca7",
+      "title": "AI算法研究生 ，AI  Infra实习生，量化策略实习生，量化开发实习生，基金运营实习生，市场营销实习生，HRBP高阶招聘实习生",
+      "siteId": "聚宽投资-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/joinquant/92347?recommendCode=DSaQ3kwN&hash=%23%2Fjobs#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-00d58e89b695",
+      "title": "AI算法研究员  量化策略研究员 量化开发 AI Infra  数据开发  大模型应用开发  基金运营  HRBP  渠道经理  法务专员  行政专员",
+      "siteId": "聚宽投资-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/joinquant/92347?recommendCode=DSaQ3kwN&hash=%23%2Fjobs#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

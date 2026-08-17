@@ -1,0 +1,62 @@
+{
+  "slug": "必凡娱乐",
+  "name": "必凡娱乐",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://dwz.cn/zw3MpxNq",
+  "sites": [
+    {
+      "id": "必凡娱乐-site-beijing",
+      "name": "必凡娱乐",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳"
+      }
+    },
+    {
+      "id": "必凡娱乐-site-shenzhen",
+      "name": "必凡娱乐",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1267f30621a8",
+      "title": "客户端开发、服务端开发、系统策划、数值策划、文案策划、原画设计、UI设计、2D动画",
+      "siteId": "必凡娱乐-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dwz.cn/zw3MpxNq",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-f7fc63372b3c",
+      "title": "策划实习生  内容运营实习生  美术设计实习生",
+      "siteId": "必凡娱乐-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://s.xinrenxinshi.com/recruitGate/list#/ey=0ebdb004894877698f15cda9cd3a5b4480c864",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "slug": "微观博易",
+  "name": "微观博易",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/bjwgby/118127?sessionid=#/jobs?page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "微观博易-site-beijing",
+      "name": "微观博易",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "微观博易-site-shanghai",
+      "name": "微观博易",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a73cfcc78699",
+      "title": "量化策略研究员 量化交易员C++研发工程师",
+      "siteId": "微观博易-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/bjwgby/118127?sessionid=#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

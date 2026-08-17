@@ -1,0 +1,88 @@
+{
+  "slug": "中国电信天翼云",
+  "name": "中国电信天翼云",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU62b2ae672f9d24458d72f9cc/pb/school.html?projectCode=100802",
+  "sites": [
+    {
+      "id": "中国电信天翼云-site-beijing",
+      "name": "中国电信天翼云",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中国电信天翼云-site-shanghai",
+      "name": "中国电信天翼云",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中国电信天翼云-site-guangzhou",
+      "name": "中国电信天翼云",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中国电信天翼云-site-shenzhen",
+      "name": "中国电信天翼云",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "中国电信天翼云-site-chengdu",
+      "name": "中国电信天翼云—超级优才计划",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8dd121079844",
+      "title": "后端开发工程师 算法工程师 产品经理云计算研究员  大数据开发工程师  测试开发工程师  信息安全工程师  项目管理岗  客户端开发工程师 前端开发工程师 采购",
+      "siteId": "中国电信天翼云-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU62b2ae672f9d24458d72f9cc/pb/school.html?projectCode=100802",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-524cac5f9a45",
+      "title": "（超级优才专项）研发工程师",
+      "siteId": "中国电信天翼云-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU62b2ae672f9d24458d72f9cc/pb/index.html#/",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

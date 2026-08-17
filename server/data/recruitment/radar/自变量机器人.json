@@ -1,0 +1,47 @@
+{
+  "slug": "自变量机器人",
+  "name": "自变量机器人",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://x2-robot.jobs.feishu.cn/referral/campus/m/position/share/?token=NTsxNzgzMzM5Mjk1MjE5Ozc1NzE2NTYzNDY2NTU5OTc5NTU7NzY1OTM2MjE3NDU3NDM2NDk4MjsxLzE",
+  "sites": [
+    {
+      "id": "自变量机器人-site-beijing",
+      "name": "自变量机器人",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳"
+      }
+    },
+    {
+      "id": "自变量机器人-site-shenzhen",
+      "name": "自变量机器人",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2834630b3739",
+      "title": "VLA 算法工程师  世界模型算法工程师  灵巧手算法工程师  大模型Infra  工程师  强化学习算法工程师  运控算法工程师  嵌入师软件工程师  机械结",
+      "siteId": "自变量机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://x2-robot.jobs.feishu.cn/referral/campus/m/position/share/?token=NTsxNzgzMzM5Mjk1MjE5Ozc1NzE2NTYzNDY2NTU5OTc5NTU7NzY1OTM2MjE3NDU3NDM2NDk4MjsxLzE",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "slug": "岚图汽车",
+  "name": "岚图汽车",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/voyah/146293#/jobs?project=100128215",
+  "sites": [
+    {
+      "id": "岚图汽车-site-beijing",
+      "name": "岚图汽车",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "岚图汽车-site-shanghai",
+      "name": "岚图汽车",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "岚图汽车-site-guangzhou",
+      "name": "岚图汽车",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "岚图汽车-site-shenzhen",
+      "name": "岚图汽车",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "岚图汽车-site-wuhan",
+      "name": "岚图汽车—博士人才校招",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-13c732f40350",
+      "title": "产品领域  研发领域  营销领域   智能制造  服务支持",
+      "siteId": "岚图汽车-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/voyah/146293#/jobs?project=100128215",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-0a3419fb097c",
+      "title": "2027届追光计划:动力电池系统开发VLM/VLA大模型 世界模型 数据科学 车钱数字人大模型 智慧底盘系统架构:",
+      "siteId": "岚图汽车-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/voyah/146293#/jobs?project=100120298",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-215c1d86dd9b",
+      "title": "产研领域，营销领域，制造领域，服务支持",
+      "siteId": "岚图汽车-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/voyah/146293#/jobs?project=100098448",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

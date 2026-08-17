@@ -1,0 +1,65 @@
+{
+  "slug": "知乎",
+  "name": "知乎",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/zhihu/68321#/jobs",
+  "sites": [
+    {
+      "id": "知乎-site-beijing",
+      "name": "知乎",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/成都/武汉"
+      }
+    },
+    {
+      "id": "知乎-site-shanghai",
+      "name": "知乎",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/成都/武汉"
+      }
+    },
+    {
+      "id": "知乎-site-chengdu",
+      "name": "知乎",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/成都/武汉"
+      }
+    },
+    {
+      "id": "知乎-site-wuhan",
+      "name": "知乎",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/成都/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e6636aa83bd7",
+      "title": "算法类研发类产品类内容运营类策划类销售类;",
+      "siteId": "知乎-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/zhihu/68321#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

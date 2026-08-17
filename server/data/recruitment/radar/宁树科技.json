@@ -1,6 +1,7 @@
 {
   "slug": "宁树科技",
   "name": "宁树科技",
+  "tier": 3,
   "industries": [
     "manufacturing"
   ],
@@ -8,8 +9,10 @@
   "careerUrl": "https://unitree.zhiye.com/jobs",
   "sites": [
     {
-      "id": "宁树科技-site",
+      "id": "宁树科技-site-hangzhou",
       "name": "宁树科技",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
         "address": "杭州"
       }
@@ -19,7 +22,7 @@
     {
       "externalId": "radar-d3c9fb2c7db8",
       "title": "AI算法工程师  语音大模型算法工程师  AI  infra工程师  具身数据评估工程师  运动控制算法工程师  嵌入式硬件工程师  嵌入式LINUX工程师",
-      "siteId": "宁树科技-site",
+      "siteId": "宁树科技-site-hangzhou",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -28,7 +31,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://unitree.zhiye.com/jobs",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

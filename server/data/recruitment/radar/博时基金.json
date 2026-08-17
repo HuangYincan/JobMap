@@ -1,0 +1,56 @@
+{
+  "slug": "博时基金",
+  "name": "博时基金",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://bosera.hotjob.cn/",
+  "sites": [
+    {
+      "id": "博时基金-site-beijing",
+      "name": "博时基金",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "博时基金-site-shanghai",
+      "name": "博时基金",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "博时基金-site-shenzhen",
+      "name": "博时基金",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-618f58295f4d",
+      "title": "投资研究交易类 市场销售类 运营综合类 金融科技类",
+      "siteId": "博时基金-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bosera.hotjob.cn/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

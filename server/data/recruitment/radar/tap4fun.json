@@ -1,0 +1,38 @@
+{
+  "slug": "tap4fun",
+  "name": "tap4fun",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus_apply/tap4fun/291?sessionid=#/",
+  "sites": [
+    {
+      "id": "tap4fun-site-chengdu",
+      "name": "tap4fun",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-46b8d0956691",
+      "title": "策划运营类  用户体验类  美术类  程序开发类",
+      "siteId": "tap4fun-site-chengdu",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/tap4fun/291?sessionid=#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

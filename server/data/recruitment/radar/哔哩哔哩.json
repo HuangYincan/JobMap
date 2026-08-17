@@ -1,0 +1,71 @@
+{
+  "slug": "哔哩哔哩",
+  "name": "哔哩哔哩",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.bilibili.com/campus/positions?token=9e121fb8-95dc-4090-b8bd-bf081b2ad248&page=1",
+  "sites": [
+    {
+      "id": "哔哩哔哩-site-beijing",
+      "name": "哔哩哔哩",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "哔哩哔哩-site-shanghai",
+      "name": "哔哩哔哩",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "哔哩哔哩-site-shenzhen",
+      "name": "哔哩哔哩",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f16e15095ee8",
+      "title": "算法、开发、多媒体、安全、运维等",
+      "siteId": "哔哩哔哩-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.bilibili.com/campus/positions?token=9e121fb8-95dc-4090-b8bd-bf081b2ad248&page=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-9a32efdc8f39",
+      "title": "技术类  产品运营类  内容类 市场营销项目管理类  大职能类 游戏类",
+      "siteId": "哔哩哔哩-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.bilibili.com/campus/positions?token=c87dae17-3064-4b77-8256-0f036ff37e20&page=12",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

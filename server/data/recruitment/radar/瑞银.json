@@ -1,0 +1,46 @@
+{
+  "slug": "瑞银",
+  "name": "瑞银",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://mp.weixinbridge.com/mp/wapredirect?url=https%3A%2F%2Fjobs.ubs.com%2FTGnewUI%2FSearch%2Fhome%2FHomeWithPreLoad%3Fpartnerid%3D25008%26codes%3DIWECHAT%26siteid%3D5131%26PageType%3DsearchResults%26SearchType%3Dlinkquery%26LinkID%3D16893%23keyWordSearc",
+  "sites": [
+    {
+      "id": "瑞银-site-beijing",
+      "name": "瑞银—亚太区",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "瑞银-site-shanghai",
+      "name": "瑞银—亚太区",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e4ad1c7c3753",
+      "title": "管理培训生项目",
+      "siteId": "瑞银-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-09-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mp.weixinbridge.com/mp/wapredirect?url=https%3A%2F%2Fjobs.ubs.com%2FTGnewUI%2FSearch%2Fhome%2FHomeWithPreLoad%3Fpartnerid%3D25008%26codes%3DIWECHAT%26siteid%3D5131%26PageType%3DsearchResults%26SearchType%3Dlinkquery%26LinkID%3D16893%23keyWordSearc",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

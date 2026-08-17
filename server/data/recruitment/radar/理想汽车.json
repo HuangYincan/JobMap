@@ -1,6 +1,7 @@
 {
   "slug": "理想汽车",
   "name": "理想汽车",
+  "tier": 3,
   "industries": [
     "auto"
   ],
@@ -8,12 +9,39 @@
   "careerUrl": "https://www.lixiang.com/employ/campus/list.html?job_mode=1&project_id=15&employchannelcode=7B8MZAZ&fromJob=1&sessionid=",
   "sites": [
     {
-      "id": "理想汽车-site",
+      "id": "理想汽车-site-beijing",
       "name": "理想汽车“理想+”计划",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "萧山区1408号奥体印象城L1-135a理想汽车",
-        "lng": 120.253448,
-        "lat": 30.22387
+        "address": "北京/上海/深圳/杭州"
+      }
+    },
+    {
+      "id": "理想汽车-site-shanghai",
+      "name": "理想汽车“理想+”计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    },
+    {
+      "id": "理想汽车-site-shenzhen",
+      "name": "理想汽车“理想+”计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
+      }
+    },
+    {
+      "id": "理想汽车-site-hangzhou",
+      "name": "理想汽车“理想+”计划",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/上海/深圳/杭州"
       }
     }
   ],
@@ -21,7 +49,7 @@
     {
       "externalId": "radar-43a516c993d2",
       "title": "算法与软件 芯片研发 芯片架构 操作系统与嵌入式开发  \n芯片前端设计 信息安全  电子电气架构",
-      "siteId": "理想汽车-site",
+      "siteId": "理想汽车-site-beijing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,12 +58,13 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.lixiang.com/employ/campus/list.html?job_mode=1&project_id=15&employchannelcode=7B8MZAZ&fromJob=1&sessionid=",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     },
     {
       "externalId": "radar-3be67347f5a3",
       "title": "整车研发 芯片研发设计 供应链与智能制造 销售与服务 算法与软件 产品 项目管理 职能与综合管理 充电网络",
-      "siteId": "理想汽车-site",
+      "siteId": "理想汽车-site-beijing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -44,7 +73,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.lixiang.com/employ/campus/list.html?fromJob=1",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

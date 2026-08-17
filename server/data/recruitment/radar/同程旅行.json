@@ -1,0 +1,56 @@
+{
+  "slug": "同程旅行",
+  "name": "同程旅行",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://mhr.ly.com/recruit/schoolPortal/#/postDelivery?srt=0.7926961158555046",
+  "sites": [
+    {
+      "id": "同程旅行-site-beijing",
+      "name": "同程旅行",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/成都/南京"
+      }
+    },
+    {
+      "id": "同程旅行-site-shanghai",
+      "name": "同程旅行",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/成都/南京"
+      }
+    },
+    {
+      "id": "同程旅行-site-chengdu",
+      "name": "同程旅行",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/成都/南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c086ff381625",
+      "title": "技术岗 （大数据 前端 后端 大模型算法 ）产品岗 运营岗 商务港",
+      "siteId": "同程旅行-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mhr.ly.com/recruit/schoolPortal/#/postDelivery?srt=0.7926961158555046",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

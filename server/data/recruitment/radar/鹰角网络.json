@@ -1,0 +1,53 @@
+{
+  "slug": "鹰角网络",
+  "name": "鹰角网络",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/hypergryph/26326?sourceToken=47ad991dc0a50b45af4badc88c7cbe3e#/",
+  "sites": [
+    {
+      "id": "鹰角网络-site-shanghai",
+      "name": "鹰角网络",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4987679b7cc9",
+      "title": "程序技术类  产品策划类   美术表现类   发行市场类   质量管理类    职能综合类",
+      "siteId": "鹰角网络-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/hypergryph/26326?sourceToken=47ad991dc0a50b45af4badc88c7cbe3e#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-1a162dabfffd",
+      "title": "程序技术类 产品策划类 质量管理类 美术表现类 发行市场类 职能综合类",
+      "siteId": "鹰角网络-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/hypergryph/26326?sourceToken=8051e1d1d318e54d230b7e4db255a07f#/jobs?page=1&anchorName=jobsList&commitment%5B0%5D=%E5%AE%9E%E4%B9%A0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

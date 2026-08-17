@@ -1,0 +1,65 @@
+{
+  "slug": "阿里国际",
+  "name": "阿里国际",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RsABPXr6NyLkS3hoYQng6f55HkAm0Yn7Z8V3tXIZDgvw&batchId=100000760001",
+  "sites": [
+    {
+      "id": "阿里国际-site-beijing",
+      "name": "阿里国际",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "阿里国际-site-shanghai",
+      "name": "阿里国际",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "阿里国际-site-guangzhou",
+      "name": "阿里国际",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "阿里国际-site-shenzhen",
+      "name": "阿里国际",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-dbcb1333b38f",
+      "title": "算法 研发 芯片 产品 游戏 运营 商务 拓展 其它",
+      "siteId": "阿里国际-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RsABPXr6NyLkS3hoYQng6f55HkAm0Yn7Z8V3tXIZDgvw&batchId=100000760001",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "slug": "因诺资产",
+  "name": "因诺资产",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/innoam/142310?locale=zh-CN&sessionid=#/job/bfc79e78-9c11-4e67-a79e-d44b4e06e677",
+  "sites": [
+    {
+      "id": "因诺资产-site-beijing",
+      "name": "因诺资产",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "因诺资产-site-shanghai",
+      "name": "因诺资产",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d4192ee1abc0",
+      "title": "量化投资实习生",
+      "siteId": "因诺资产-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/innoam/142310?locale=zh-CN&sessionid=#/job/bfc79e78-9c11-4e67-a79e-d44b4e06e677",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

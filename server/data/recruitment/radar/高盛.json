@@ -1,0 +1,56 @@
+{
+  "slug": "高盛",
+  "name": "高盛",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.goldmansachs.com/careers/students/programs-and-internships?1=gscom%3Aprogram-region-careers%2Fasia-pacific&sessionid=",
+  "sites": [
+    {
+      "id": "高盛-site-beijing",
+      "name": "高盛",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "高盛-site-shanghai",
+      "name": "高盛",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "高盛-site-shenzhen",
+      "name": "高盛",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8f3f3e063058",
+      "title": "暑期分析员  全职分析员",
+      "siteId": "高盛-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-10-05",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.goldmansachs.com/careers/students/programs-and-internships?1=gscom%3Aprogram-region-careers%2Fasia-pacific&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

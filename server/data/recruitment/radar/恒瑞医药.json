@@ -1,6 +1,7 @@
 {
   "slug": "恒瑞医药",
   "name": "恒瑞医药",
+  "tier": 3,
   "industries": [
     "pharma"
   ],
@@ -8,8 +9,19 @@
   "careerUrl": "https://app.mokahr.com/campus-recruitment/hengrui/145997?locale=zh-CN#/jobs?page=1&anchorName=jobsList&keyword=2027%E5%B1%8A&commitment%5B0%5D=%E5%AE%9E%E4%B9%A0",
   "sites": [
     {
-      "id": "恒瑞医药-site",
+      "id": "恒瑞医药-site-chengdu",
       "name": "恒瑞医药",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都/杭州/宁波/合肥"
+      }
+    },
+    {
+      "id": "恒瑞医药-site-hangzhou",
+      "name": "恒瑞医药",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
         "address": "成都/杭州/宁波/合肥"
       }
@@ -19,7 +31,7 @@
     {
       "externalId": "radar-ada23820d70a",
       "title": "医药信息沟通专员",
-      "siteId": "恒瑞医药-site",
+      "siteId": "恒瑞医药-site-chengdu",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

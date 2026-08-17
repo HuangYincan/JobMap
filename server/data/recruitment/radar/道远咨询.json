@@ -1,0 +1,38 @@
+{
+  "slug": "道远咨询",
+  "name": "道远咨询",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/blackhills/76097?locale=zh-CN#/jobs?keyword=%E5%AE%9E%E4%B9%A0&page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "道远咨询-site-shenzhen",
+      "name": "道远咨询",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-eea319852053",
+      "title": "行政运营实习生 室内设计实习生 工程管理实习生",
+      "siteId": "道远咨询-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/blackhills/76097?locale=zh-CN#/jobs?keyword=%E5%AE%9E%E4%B9%A0&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

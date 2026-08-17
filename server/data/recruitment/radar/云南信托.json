@@ -1,0 +1,56 @@
+{
+  "slug": "云南信托",
+  "name": "云南信托",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://yntrust.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "云南信托-site-beijing",
+      "name": "云南信托—英才计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/昆明"
+      }
+    },
+    {
+      "id": "云南信托-site-shanghai",
+      "name": "云南信托—英才计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/昆明"
+      }
+    },
+    {
+      "id": "云南信托-site-shenzhen",
+      "name": "云南信托—英才计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/昆明"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ceb7e434aa25",
+      "title": "（英才计划)实习留用：上海区域业务部门，人力资源部人力岗  法律合规部合规岗  资本市场投资经理助理   固定收益部交易岗",
+      "siteId": "云南信托-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://yntrust.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

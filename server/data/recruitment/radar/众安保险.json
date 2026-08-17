@@ -1,0 +1,37 @@
+{
+  "slug": "众安保险",
+  "name": "众安保险",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/zhongan/71908?sessionid=#/job/79cdacb3-4f16-4d59-a4f4-4a39bdac31e7?from=qrcode",
+  "sites": [
+    {
+      "id": "众安保险-site-shanghai",
+      "name": "众安保险",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-79fcbd23e12f",
+      "title": "AI+HR实习生",
+      "siteId": "众安保险-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/zhongan/71908?sessionid=#/job/79cdacb3-4f16-4d59-a4f4-4a39bdac31e7?from=qrcode",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

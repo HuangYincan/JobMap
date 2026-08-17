@@ -1,0 +1,47 @@
+{
+  "slug": "中化商务",
+  "name": "中化商务",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://sinochem.hotjob.cn/SU611a641a0dcad4106f04950e/mc/position/intern?sharePostKey=e684ec264b8946c2ad508ef4871d699c",
+  "sites": [
+    {
+      "id": "中化商务-site-beijing",
+      "name": "中化商务",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "中化商务-site-shanghai",
+      "name": "中化商务",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5c03b830fbca",
+      "title": "招标采购项目助理  电商运营助理  人力资源助理  商务助理   财务运营助理",
+      "siteId": "中化商务-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sinochem.hotjob.cn/SU611a641a0dcad4106f04950e/mc/position/intern?sharePostKey=e684ec264b8946c2ad508ef4871d699c",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

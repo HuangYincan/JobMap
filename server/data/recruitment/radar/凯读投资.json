@@ -1,0 +1,38 @@
+{
+  "slug": "凯读投资",
+  "name": "凯读投资",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/social-recruitment/kendallsquarecap/144869#/job/3b7dc9b3-a688-4a28-82a7-48f4a32c0085?from=qrcode",
+  "sites": [
+    {
+      "id": "凯读投资-site-beijing",
+      "name": "凯读投资",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9c220fed8ee5",
+      "title": "管培生项目  金融/经济管理 类  法学  理工类等相关专业",
+      "siteId": "凯读投资-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/kendallsquarecap/144869#/job/3b7dc9b3-a688-4a28-82a7-48f4a32c0085?from=qrcode",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

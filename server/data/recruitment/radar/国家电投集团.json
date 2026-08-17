@@ -1,0 +1,56 @@
+{
+  "slug": "国家电投集团",
+  "name": "国家电投集团",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://spic2026sx.iguopin.com/job",
+  "sites": [
+    {
+      "id": "国家电投集团-site-beijing",
+      "name": "国家电投集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/重庆"
+      }
+    },
+    {
+      "id": "国家电投集团-site-shanghai",
+      "name": "国家电投集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/重庆"
+      }
+    },
+    {
+      "id": "国家电投集团-site-guangzhou",
+      "name": "国家电投集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/重庆"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-44bd24c16d02",
+      "title": "研发类  生成类 工程类  市场类  职能类",
+      "siteId": "国家电投集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://spic2026sx.iguopin.com/job",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

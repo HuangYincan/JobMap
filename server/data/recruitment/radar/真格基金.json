@@ -1,0 +1,56 @@
+{
+  "slug": "真格基金",
+  "name": "真格基金",
+  "tier": 3,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhenfund.jobs.feishu.cn/356542/position/list",
+  "sites": [
+    {
+      "id": "真格基金-site-beijing",
+      "name": "真格基金",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "真格基金-site-shanghai",
+      "name": "真格基金",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "真格基金-site-shenzhen",
+      "name": "真格基金",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b2dff2af1793",
+      "title": "投资 投资运营 投资者关系实习生  品牌内容实习生—文字方向 市场活动实习生 品牌内容实习生—音视频方向 全媒体运营实习生 财务实习生 政府关系实习生 人才管理",
+      "siteId": "真格基金-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhenfund.jobs.feishu.cn/356542/position/list",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

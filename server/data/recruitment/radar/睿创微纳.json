@@ -1,27 +1,88 @@
 {
   "slug": "睿创微纳",
   "name": "睿创微纳",
+  "tier": 3,
   "industries": [
     "manufacturing"
   ],
   "scale": "enterprise",
-  "careerUrl": "https://raytrontek.zhiye.com/intern/jobs",
+  "careerUrl": "https://raytrontek.zhiye.com/campus/jobs",
   "sites": [
     {
-      "id": "睿创微纳-site",
+      "id": "睿创微纳-site-beijing",
       "name": "睿创微纳",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "滨江区滨康路302号火炬创新中心5号楼",
-        "lng": 120.198606,
-        "lat": 30.180357
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "睿创微纳-site-shanghai",
+      "name": "睿创微纳",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "睿创微纳-site-shenzhen",
+      "name": "睿创微纳",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "睿创微纳-site-chengdu",
+      "name": "睿创微纳",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "睿创微纳-site-hangzhou",
+      "name": "睿创微纳",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上海/成都/杭州/武汉"
+      }
+    },
+    {
+      "id": "睿创微纳-site-wuhan",
+      "name": "睿创微纳",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "上海/成都/杭州/武汉"
       }
     }
   ],
   "positions": [
     {
+      "externalId": "radar-bdae568d8021",
+      "title": "职能类 研发类 半导体研发类 半导体工艺类 硬件类  软件类 FPGA类 测试类 工程类 市场营销类 工程与供应链类 项目管理类  微波射频类 MEMIS类 算",
+      "siteId": "睿创微纳-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://raytrontek.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
       "externalId": "radar-37b38d0ab992",
       "title": "半导体工艺  嵌入式软件 硬件 算法 光学 测试 品质 采购  E  财务  人力等",
-      "siteId": "睿创微纳-site",
+      "siteId": "睿创微纳-site-shanghai",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -30,7 +91,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://raytrontek.zhiye.com/intern/jobs",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 {
   "slug": "vivo蓝极星",
   "name": "vivo蓝极星",
+  "tier": 3,
   "industries": [
     "manufacturing"
   ],
@@ -8,12 +9,30 @@
   "careerUrl": "https://hr-campus.vivo.com/jobs?1=%5B%7B%22id%22%3A%221%22%2C%22label%22%3A%22%E8%93%9D%E6%9E%81%E6%98%9F%E8%AE%A1%E5%88%92%22%7D%5D",
   "sites": [
     {
-      "id": "vivo蓝极星-site",
+      "id": "vivo蓝极星-site-shanghai",
       "name": "vivo蓝极星计划",
+      "city": "上海市",
+      "province": "上海市",
       "location": {
-        "address": "余杭区创明路118号",
-        "lng": 120.002474,
-        "lat": 30.270049
+        "address": "上海/深圳/杭州/东莞"
+      }
+    },
+    {
+      "id": "vivo蓝极星-site-shenzhen",
+      "name": "vivo蓝极星计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳/杭州/东莞"
+      }
+    },
+    {
+      "id": "vivo蓝极星-site-hangzhou",
+      "name": "vivo蓝极星计划",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上海/深圳/杭州/东莞"
       }
     }
   ],
@@ -21,7 +40,7 @@
     {
       "externalId": "radar-d901efc45bed",
       "title": "影像与计算机视觉  人工智能与大模型 具身智能  系统软件与嵌入式 运动健康与核心器件等方向",
-      "siteId": "vivo蓝极星-site",
+      "siteId": "vivo蓝极星-site-shanghai",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +49,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://hr-campus.vivo.com/jobs?1=%5B%7B%22id%22%3A%221%22%2C%22label%22%3A%22%E8%93%9D%E6%9E%81%E6%98%9F%E8%AE%A1%E5%88%92%22%7D%5D",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

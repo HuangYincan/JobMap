@@ -1,0 +1,53 @@
+{
+  "slug": "散爆网络",
+  "name": "散爆网络",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.sunborngame.com/campus-recruitment/micateam/146166#/job/2420226c-d0b0-4a55-87f9-3419be66beb7",
+  "sites": [
+    {
+      "id": "散爆网络-site-shanghai",
+      "name": "散爆网络—锋芒训练营实习计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bb789c5d957f",
+      "title": "3D角色训练营 —锋芒训练营专项 美术设计先关专业",
+      "siteId": "散爆网络-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.sunborngame.com/campus-recruitment/micateam/146166#/job/2420226c-d0b0-4a55-87f9-3419be66beb7",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-c062b9eabbb4",
+      "title": "技术类 美术类 策划类 本地化&发行类 质量管理类 公共支持类 音频类",
+      "siteId": "散爆网络-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.sunborngame.com/campus-recruitment/micateam/146166#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "slug": "腾讯",
+  "name": "腾讯",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://join.qq.com/post.html?query=p_2&activity=1266793486296563712",
+  "sites": [
+    {
+      "id": "腾讯-site-beijing",
+      "name": "腾讯—剩余岗位",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "腾讯-site-shanghai",
+      "name": "腾讯—剩余岗位",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "腾讯-site-guangzhou",
+      "name": "腾讯—剩余岗位",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "腾讯-site-shenzhen",
+      "name": "腾讯—剩余岗位",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0cf2ec957bcb",
+      "title": "技术类 产品类 市场类  设计类 职能类",
+      "siteId": "腾讯-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.qq.com/post.html?query=p_2&activity=1266793486296563712",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-302c5ea36a84",
+      "title": "腾讯2027 清运计划 校招  具体见投递方式链接",
+      "siteId": "腾讯-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.qq.com/post.html?query=p_14",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-36b48d97e74c",
+      "title": "技术类 产品类 设计类 市场类 职能类",
+      "siteId": "腾讯-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.qq.com/post.html?query=p_2&activity=1224151482307448832&activityLink=1225898326897201152",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "slug": "安永",
+  "name": "安永",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careers.ey.com.cn/campus-recruitment/ey/166374?locale=zh-CN/#/job/3f07f2cc-f41e-4a61-9203-7ff249953423",
+  "sites": [
+    {
+      "id": "安永-site-beijing",
+      "name": "安永",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "安永-site-shanghai",
+      "name": "安永",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "安永-site-guangzhou",
+      "name": "安永",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "安永-site-shenzhen",
+      "name": "安永",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-530f76a0d6c7",
+      "title": "不限专业  大量岗位欢迎理工科  商科  人文社等专业的学生加入  包括不限于计算机类 大数据类  工程类 财务   金融类  管理类 语言类 法律类 等",
+      "siteId": "安永-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-10-16",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.ey.com.cn/campus-recruitment/ey/166374?locale=zh-CN/#/job/3f07f2cc-f41e-4a61-9203-7ff249953423",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "slug": "安某科技",
+  "name": "安某科技",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/armchina/68023?locale=zh-CN&sessionid=#/jobs",
+  "sites": [
+    {
+      "id": "安某科技-site-beijing",
+      "name": "安某科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "安某科技-site-shanghai",
+      "name": "安某科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "安某科技-site-shenzhen",
+      "name": "安某科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-86dd5e22d2dc",
+      "title": "设计 验证软件等岗位，具体见投递方式链接;",
+      "siteId": "安某科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/armchina/68023?locale=zh-CN&sessionid=#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "slug": "美团战略与投投资平台",
+  "name": "美团战略与投投资平台",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhaopin.meituan.com/web/campus?bg=BG016&sessionid=",
+  "sites": [
+    {
+      "id": "美团战略与投投资平台-site-beijing",
+      "name": "美团战略与投投资平台",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b6b8d0909875",
+      "title": "战略与投资分析师",
+      "siteId": "美团战略与投投资平台-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.meituan.com/web/campus?bg=BG016&sessionid=",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

@@ -3,6 +3,31 @@
 > **Status:** evidence recorded 2026-08-17 for the radar snapshot + official-page refresh work.
 > **Owner:** product / data
 
+## Radar multi-city mapper (national scope, 2026-08-17)
+
+- Snapshot **2026-08-11 (1404 rows)** remapped with `radar --cities` default set
+  北京/上海/广州/深圳/成都/武汉/杭州 (replaces `hangzhou_only`). Parser `2.0.0`.
+- Sites split per city from the row's city text → `${slug}-site-${cityKey}` with
+  `site.city` / `site.province`; `location.address` keeps the raw city text for geocode.
+- **Aggregate-title flag**: category-aggregate titles ("技术、设计、数据、运营、产品等七大类")
+  get `aggregate: true` for LLM validation + human curation. Heuristic calibrated on this
+  snapshot: `等` / `大类|多类|各类|赛道|全覆盖|多岗位` / `类`×2+ / multi-line / 2+ paren
+  cities / 2+ role tokens. **92% of titles are aggregate** — the rest are specific roles.
+- Drops: **630 companies / 761 positions** (all `radar-*` externalIds unique), **700 marked
+  aggregate**. Sites by city: 上海市 397 · 北京市 336 · 深圳市 253 · 成都市 127 · 广州市 117 ·
+  杭州市 98 · 武汉市 61.
+- Import plan (all sources): **669 companies / 1440 sites / 877 positions, 0 issues, 0 dropped**.
+- Geocode is now **city-scoped** (`geocode-sites-apply.mjs` + `site-geocode.ts`): per-site
+  place-text search with `citylimit`, and grade + regeo validate against the site's own
+  province/city. **Live apply not yet run** on the national drops — the 2026-08-17 snapshot
+  run hit AMap **place-text daily quota (`USER_DAILY_QUERY_OVER_LIMIT`, infocode 10044)**,
+  so radar sites still carry city text only until `geocode:sites:apply` runs (3 QPS, needs
+  `AMAP_WEB_KEY`, quota resets next day). Verified live: regeo on a Beijing coordinate returns
+  **empty `cityname` for the direct municipalities** (北京/上海) — the regeo guard now falls
+  back to `province` (`regeoMatchesTarget`). Until apply runs, the offline work catalog shows
+  only the curated portal pins; re-run geocode + `import:seed:apply` restores and extends
+  nationwide. Apply pass/fail stats will be recorded here.
+
 ## Radar snapshot (xiaozhao-radar jobs.json, 2026-08-11, 1404 rows)
 
 - Mapped to `SourceCompany`: **98 companies / 125 jobs**, `hangzhou_only=true`.

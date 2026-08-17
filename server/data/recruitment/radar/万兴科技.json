@@ -1,15 +1,36 @@
 {
   "slug": "万兴科技",
   "name": "万兴科技",
+  "tier": 3,
   "industries": [
     "internet"
   ],
   "scale": "enterprise",
-  "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1Rv8l5WaIjTCIFgepGQjCYow%3D&batchId=100000540002",
+  "careerUrl": "https://wondersharecampus.zhiye.com/Intern/jobs?activityGuid=ac63a11e-41a3-4f10-8a8e-660300036edf&ActivityJumpPage=PortalPage",
   "sites": [
     {
-      "id": "万兴科技-site",
+      "id": "万兴科技-site-beijing",
       "name": "万兴科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳/长沙"
+      }
+    },
+    {
+      "id": "万兴科技-site-shenzhen",
+      "name": "万兴科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳/长沙"
+      }
+    },
+    {
+      "id": "万兴科技-site-hangzhou",
+      "name": "万兴科技",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
         "address": "深圳/杭州/长沙"
       }
@@ -17,9 +38,24 @@
   ],
   "positions": [
     {
+      "externalId": "radar-8777be2ff642",
+      "title": "产品序列  研发序列  营销序列  设计序列  职能序列",
+      "siteId": "万兴科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wondersharecampus.zhiye.com/Intern/jobs?activityGuid=ac63a11e-41a3-4f10-8a8e-660300036edf&ActivityJumpPage=PortalPage",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
       "externalId": "radar-95b8a7c940c6",
       "title": "产品类 研发类 营销类 设计类 职能类",
-      "siteId": "万兴科技-site",
+      "siteId": "万兴科技-site-shenzhen",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -28,7 +64,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1Rv8l5WaIjTCIFgepGQjCYow%3D&batchId=100000540002",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

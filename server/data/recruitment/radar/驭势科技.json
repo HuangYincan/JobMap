@@ -1,0 +1,65 @@
+{
+  "slug": "驭势科技",
+  "name": "驭势科技",
+  "tier": 3,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus_apply/yushi/3773#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
+  "sites": [
+    {
+      "id": "驭势科技-site-beijing",
+      "name": "驭势科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "驭势科技-site-shanghai",
+      "name": "驭势科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "驭势科技-site-shenzhen",
+      "name": "驭势科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    },
+    {
+      "id": "驭势科技-site-wuhan",
+      "name": "驭势科技",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2da82180927b",
+      "title": "算法类 开发类  商务类 交付类",
+      "siteId": "驭势科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/yushi/3773#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

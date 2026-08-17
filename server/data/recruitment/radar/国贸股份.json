@@ -1,0 +1,65 @@
+{
+  "slug": "国贸股份",
+  "name": "国贸股份",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://itg.zhiye.com/gmkgsxslb?k=&c=&p=1^14,3^24&d=&PageIndex=1&key=gmgf&job=intern",
+  "sites": [
+    {
+      "id": "国贸股份-site-shanghai",
+      "name": "国贸股份",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/广州/深圳/成都"
+      }
+    },
+    {
+      "id": "国贸股份-site-guangzhou",
+      "name": "国贸股份",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/广州/深圳/成都"
+      }
+    },
+    {
+      "id": "国贸股份-site-shenzhen",
+      "name": "国贸股份",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/广州/深圳/成都"
+      }
+    },
+    {
+      "id": "国贸股份-site-chengdu",
+      "name": "国贸股份",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "上海/广州/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4a0aebb28561",
+      "title": "海外业务岗  海外风 控岗  国内业务岗 贸易运营岗 核算会计岗  行业研究岗",
+      "siteId": "国贸股份-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://itg.zhiye.com/gmkgsxslb?k=&c=&p=1^14,3^24&d=&PageIndex=1&key=gmgf&job=intern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

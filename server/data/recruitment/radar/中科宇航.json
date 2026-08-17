@@ -1,0 +1,47 @@
+{
+  "slug": "中科宇航",
+  "name": "中科宇航",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://cas-space.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "中科宇航-site-beijing",
+      "name": "中科宇航",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/广州"
+      }
+    },
+    {
+      "id": "中科宇航-site-guangzhou",
+      "name": "中科宇航",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8a5f486619d2",
+      "title": "航空航天类 力学类 控制类 电子信息类自动化类 机械类等航天相关专业;",
+      "siteId": "中科宇航-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cas-space.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

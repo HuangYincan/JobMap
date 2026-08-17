@@ -1,0 +1,68 @@
+{
+  "slug": "搜狐畅游",
+  "name": "搜狐畅游",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/cyou-inc/42233?sessionid=#/jobs?page=1&anchorName=jobsList&project%5B0%5D=100120066",
+  "sites": [
+    {
+      "id": "搜狐畅游-site-beijing",
+      "name": "搜狐畅游",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/福州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c7c26312ec63",
+      "title": "游戏UI设计 技术美术实习生，美术项目助理APM 视频策划实习生 游戏视频设计师 3D角色设计实习生 美术产品经理实习生 HR培训生 动作导演 2D角色设计实习",
+      "siteId": "搜狐畅游-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/cyou-inc/42233?sessionid=#/jobs?page=1&anchorName=jobsList&project%5B0%5D=100120066",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-d1524156f041",
+      "title": "游戏美术类  平台设计类  程序开发类  平台业务类 游戏运营类 平台职能类 游戏策划类  游戏测试类",
+      "siteId": "搜狐畅游-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-11",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/cyou-inc/42233?recommendCode=DSDTYSGt#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-6048f794bef6",
+      "title": "游戏程序开发  游戏美术 游戏运营 平台业务  平台职能  平台技术",
+      "siteId": "搜狐畅游-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/cyou-inc/42233?recommendCode=DSydyJ4v&hash=%23%2Fjobs#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

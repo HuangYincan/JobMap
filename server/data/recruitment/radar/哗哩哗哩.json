@@ -1,0 +1,62 @@
+{
+  "slug": "哗哩哗哩",
+  "name": "哗哩哗哩",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.bilibili.com/campus/positions?token=c87dae17-3064-4b77-8256-0f036ff37e20&page=12",
+  "sites": [
+    {
+      "id": "哗哩哗哩-site-beijing",
+      "name": "哗哩哗哩",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海"
+      }
+    },
+    {
+      "id": "哗哩哗哩-site-shanghai",
+      "name": "哗哩哗哩",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d6d85c11039f",
+      "title": "技术类 产品运营类   内容类 市场营销  项目管理类  大职能类 游戏类",
+      "siteId": "哗哩哗哩-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.bilibili.com/campus/positions?token=c87dae17-3064-4b77-8256-0f036ff37e20&page=12",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-403b8300762b",
+      "title": "艺人内容策划执行实习生 分区内容策划知行实习生 招商助理实习生 制作执行实习生 产品实行 平面设计实习生",
+      "siteId": "哗哩哗哩-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.bilibili.com/campus/positions?name=BW&practiceTypes=1&type=0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

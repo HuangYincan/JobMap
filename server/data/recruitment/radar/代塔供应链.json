@@ -1,6 +1,7 @@
 {
   "slug": "代塔供应链",
   "name": "代塔供应链",
+  "tier": 3,
   "industries": [
     "other"
   ],
@@ -8,12 +9,12 @@
   "careerUrl": "https://jsj.top/f/bvFj5O",
   "sites": [
     {
-      "id": "代塔供应链-site",
+      "id": "代塔供应链-site-hangzhou",
       "name": "代塔供应链",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
-        "address": "上城区九盛路与茧宝街交叉口西南80米",
-        "lng": 120.259634,
-        "lat": 30.309798
+        "address": "杭州"
       }
     }
   ],
@@ -21,7 +22,7 @@
     {
       "externalId": "radar-f7d24acdbf6a",
       "title": "管培生岗位  技术/AI方向  经营管理方向   职能方向  客服方向 关务方向  仓储物流方向",
-      "siteId": "代塔供应链-site",
+      "siteId": "代塔供应链-site-hangzhou",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +31,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://jsj.top/f/bvFj5O",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

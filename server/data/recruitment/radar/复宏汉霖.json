@@ -1,0 +1,38 @@
+{
+  "slug": "复宏汉霖",
+  "name": "复宏汉霖",
+  "tier": 3,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://henlius.zhiye.com/campus/jobs?queryId=5892d5d6-06b3-4662-bf2a-2165653c2996",
+  "sites": [
+    {
+      "id": "复宏汉霖-site-shanghai",
+      "name": "复宏汉霖",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-63cdb93ea68a",
+      "title": "AI实习生  早起研发  大模型应用 与AI工程师  工艺开发与分析",
+      "siteId": "复宏汉霖-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://henlius.zhiye.com/campus/jobs?queryId=5892d5d6-06b3-4662-bf2a-2165653c2996",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

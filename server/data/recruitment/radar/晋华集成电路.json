@@ -1,0 +1,47 @@
+{
+  "slug": "晋华集成电路",
+  "name": "晋华集成电路",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.jhicc.com/Recruiting/Campus/Index",
+  "sites": [
+    {
+      "id": "晋华集成电路-site-shanghai",
+      "name": "晋华集成电路",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/深圳"
+      }
+    },
+    {
+      "id": "晋华集成电路-site-shenzhen",
+      "name": "晋华集成电路",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2433ac99a25a",
+      "title": "研发公益类  IC设计类  工程技术类 生产运营类 技术支持类",
+      "siteId": "晋华集成电路-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jhicc.com/Recruiting/Campus/Index",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

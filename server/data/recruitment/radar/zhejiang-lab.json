@@ -1,6 +1,7 @@
 {
   "slug": "zhejiang-lab",
   "name": "之江实验室",
+  "tier": 3,
   "industries": [
     "other"
   ],
@@ -8,8 +9,10 @@
   "careerUrl": "https://talents.zhejianglab.com/SU6456170be84cd420e37a68c4/pb/school.html?postTypeCode=0%2F1227%2F37850532",
   "sites": [
     {
-      "id": "zhejiang-lab-site",
+      "id": "zhejiang-lab-site-hangzhou",
       "name": "之江实验室",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
         "address": "杭州"
       }
@@ -19,7 +22,7 @@
     {
       "externalId": "radar-097aadea2c73",
       "title": "聚焦算力 数据 模型三大研究领域 重点围绕模型训练 模型架构 强化学习 深度学习 多模态融合 语料生产 TOKen设计 质量评价 云计算 高性能计算 分析式系统",
-      "siteId": "zhejiang-lab-site",
+      "siteId": "zhejiang-lab-site-hangzhou",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -28,7 +31,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://talents.zhejianglab.com/SU6456170be84cd420e37a68c4/pb/school.html?postTypeCode=0%2F1227%2F37850532",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

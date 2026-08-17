@@ -1,6 +1,7 @@
 {
   "slug": "vast",
   "name": "VAST",
+  "tier": 3,
   "industries": [
     "internet"
   ],
@@ -8,8 +9,28 @@
   "careerUrl": "https://tripo3d.com/vstar",
   "sites": [
     {
-      "id": "vast-site",
+      "id": "vast-site-beijing",
       "name": "VAST",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/杭州"
+      }
+    },
+    {
+      "id": "vast-site-shanghai",
+      "name": "VAST",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/杭州"
+      }
+    },
+    {
+      "id": "vast-site-hangzhou",
+      "name": "VAST",
+      "city": "杭州市",
+      "province": "浙江省",
       "location": {
         "address": "北京/上海/杭州"
       }
@@ -19,7 +40,7 @@
     {
       "externalId": "radar-249826ae82ff",
       "title": "V .STAR顶尖计划",
-      "siteId": "vast-site",
+      "siteId": "vast-site-beijing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

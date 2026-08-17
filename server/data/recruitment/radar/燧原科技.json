@@ -1,0 +1,65 @@
+{
+  "slug": "燧原科技",
+  "name": "燧原科技",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/enflame/168420?locale=zh-CN#/",
+  "sites": [
+    {
+      "id": "燧原科技-site-beijing",
+      "name": "燧原科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "燧原科技-site-shanghai",
+      "name": "燧原科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "燧原科技-site-shenzhen",
+      "name": "燧原科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    },
+    {
+      "id": "燧原科技-site-chengdu",
+      "name": "燧原科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-857a168bb067",
+      "title": "软件研发  芯片硬件类  客户成功与解决方案  产品系统类",
+      "siteId": "燧原科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/enflame/168420?locale=zh-CN#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

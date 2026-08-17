@@ -1,0 +1,56 @@
+{
+  "slug": "科大讯飞研究院",
+  "name": "科大讯飞研究院",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://iflytek.zhiye.com/4/jobs?sessionid=",
+  "sites": [
+    {
+      "id": "科大讯飞研究院-site-beijing",
+      "name": "科大讯飞研究院—研究算法人才专项",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/西安"
+      }
+    },
+    {
+      "id": "科大讯飞研究院-site-shanghai",
+      "name": "科大讯飞研究院—研究算法人才专项",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/西安"
+      }
+    },
+    {
+      "id": "科大讯飞研究院-site-guangzhou",
+      "name": "科大讯飞研究院—研究算法人才专项",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ba0f0d467696",
+      "title": "AI研究算法工程师（多方向）",
+      "siteId": "科大讯飞研究院-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/4/jobs?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

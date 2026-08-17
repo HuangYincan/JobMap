@@ -1,0 +1,38 @@
+{
+  "slug": "北京国望光学",
+  "name": "北京国望光学",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU68392ea2ed91a2307e2a97a1/mc/position/campus",
+  "sites": [
+    {
+      "id": "北京国望光学-site-beijing",
+      "name": "北京国望光学",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5a1958d7b0d6",
+      "title": "机械机电类 光学光电类 制造类 机械环境控制类  电子电气类 软件算法类 集成工艺类",
+      "siteId": "北京国望光学-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU68392ea2ed91a2307e2a97a1/mc/position/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "slug": "普华永道",
+  "name": "普华永道",
+  "tier": 3,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.pwccn.com/en/careers/students.html",
+  "sites": [
+    {
+      "id": "普华永道-site-beijing",
+      "name": "普华永道",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "普华永道-site-shanghai",
+      "name": "普华永道",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "普华永道-site-guangzhou",
+      "name": "普华永道",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    },
+    {
+      "id": "普华永道-site-shenzhen",
+      "name": "普华永道",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e24c4c06bc15",
+      "title": "审计及签证服务  税务服务  咨询服务  交易服务",
+      "siteId": "普华永道-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.pwccn.com/en/careers/students.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-f5760eb4d270",
+      "title": "审计及签证服务 税务服务 咨询服务",
+      "siteId": "普华永道-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/pwc/148260?sourceToken=618116131bf57b0c9ff491838b0c93f1&locale=zh-CN#/jobs?271962%5B0%5D=Graduate%20programme&271962%5B1%5D=Edge-Deals&271962%5B2%5D=China%20Sourcing%20Initiative&271962%5B3%5D=Assurance%20Remote%2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

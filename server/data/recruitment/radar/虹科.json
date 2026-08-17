@@ -1,0 +1,65 @@
+{
+  "slug": "虹科",
+  "name": "虹科",
+  "tier": 3,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hkaco.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "虹科-site-beijing",
+      "name": "虹科",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    },
+    {
+      "id": "虹科-site-shanghai",
+      "name": "虹科",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    },
+    {
+      "id": "虹科-site-guangzhou",
+      "name": "虹科",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    },
+    {
+      "id": "虹科-site-chengdu",
+      "name": "虹科",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/广州/成都"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8c035c1e49bd",
+      "title": "技术岗，市场岗，销售岗，职能岗，博士顶尖人才计划",
+      "siteId": "虹科-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hkaco.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

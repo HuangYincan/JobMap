@@ -1,6 +1,7 @@
 {
   "slug": "台达",
   "name": "台达",
+  "tier": 3,
   "industries": [
     "other"
   ],
@@ -8,12 +9,30 @@
   "careerUrl": "https://v.wjx.cn/vm/tKW356q.aspx",
   "sites": [
     {
-      "id": "台达-site",
+      "id": "台达-site-shanghai",
       "name": "台达—研发暑期营",
+      "city": "上海市",
+      "province": "上海市",
       "location": {
-        "address": "滨江区江汉路1785号双城国际3幢9楼",
-        "lng": 120.201279,
-        "lat": 30.207736
+        "address": "上海/杭州/武汉/重庆"
+      }
+    },
+    {
+      "id": "台达-site-hangzhou",
+      "name": "台达—研发暑期营",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上海/杭州/武汉/重庆"
+      }
+    },
+    {
+      "id": "台达-site-wuhan",
+      "name": "台达—研发暑期营",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "上海/杭州/武汉/重庆"
       }
     }
   ],
@@ -21,7 +40,7 @@
     {
       "externalId": "radar-da2edd85a210",
       "title": "台达电力电子研发暑期体验营  硬件设计工程师  控制算法工程师  嵌入式软件工程师",
-      "siteId": "台达-site",
+      "siteId": "台达-site-shanghai",
       "family": "campus",
       "taxonomy": {
         "family": "campus"
@@ -30,7 +49,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://v.wjx.cn/vm/tKW356q.aspx",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }

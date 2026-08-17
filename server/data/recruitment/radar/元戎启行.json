@@ -1,0 +1,56 @@
+{
+  "slug": "元戎启行",
+  "name": "元戎启行",
+  "tier": 3,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/deeproute/145894?locale=zh-CN&sessionid=#/",
+  "sites": [
+    {
+      "id": "元戎启行-site-beijing",
+      "name": "元戎启行",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "元戎启行-site-shanghai",
+      "name": "元戎启行",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    },
+    {
+      "id": "元戎启行-site-shenzhen",
+      "name": "元戎启行",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5baefc5f4008",
+      "title": "算法类  工程类  职能类",
+      "siteId": "元戎启行-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/deeproute/145894?locale=zh-CN&sessionid=#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

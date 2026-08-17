@@ -1,6 +1,7 @@
 {
   "slug": "中海地产",
   "name": "中海地产",
+  "tier": 3,
   "industries": [
     "other"
   ],
@@ -8,12 +9,39 @@
   "careerUrl": "https://coli688.zhiye.com/intern/jobs",
   "sites": [
     {
-      "id": "中海地产-site",
+      "id": "中海地产-site-beijing",
       "name": "中海地产",
+      "city": "北京市",
+      "province": "北京市",
       "location": {
-        "address": "滨江区科技馆街626号中海寰宇商务中心A座24楼",
-        "lng": 120.21617,
-        "lat": 30.220297
+        "address": "北京/上海/广州/杭州"
+      }
+    },
+    {
+      "id": "中海地产-site-shanghai",
+      "name": "中海地产",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/杭州"
+      }
+    },
+    {
+      "id": "中海地产-site-guangzhou",
+      "name": "中海地产",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/杭州"
+      }
+    },
+    {
+      "id": "中海地产-site-hangzhou",
+      "name": "中海地产",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/上海/广州/杭州"
       }
     }
   ],
@@ -21,7 +49,7 @@
     {
       "externalId": "radar-db4db0c8b837",
       "title": "运营管理岗  财务自金岗  设计管理岗  营销策划岗  合约造价岗  土建工程岗  机电工程岗  客户服务岗  人力资源岗  投资管理岗  科技研发岗  数字化",
-      "siteId": "中海地产-site",
+      "siteId": "中海地产-site-beijing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
@@ -30,7 +58,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://coli688.zhiye.com/intern/jobs",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ]
 }
