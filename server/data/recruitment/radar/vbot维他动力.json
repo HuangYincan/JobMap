@@ -1,7 +1,7 @@
 {
   "slug": "vbot维他动力",
   "name": "Vbot维他动力",
-  "tier": 3,
+  "tier": 12,
   "industries": [
     "manufacturing"
   ],
@@ -43,5 +43,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "39"
 }

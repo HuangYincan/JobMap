@@ -1,7 +1,7 @@
 {
   "slug": "洋葱学园",
   "name": "洋葱学园",
-  "tier": 3,
+  "tier": 10,
   "industries": [
     "internet"
   ],
@@ -34,5 +34,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "82"
 }

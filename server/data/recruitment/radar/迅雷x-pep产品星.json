@@ -1,7 +1,7 @@
 {
   "slug": "迅雷x-pep产品星",
   "name": "迅雷X-PEP产品星",
-  "tier": 3,
+  "tier": 7,
   "industries": [
     "internet"
   ],
@@ -43,5 +43,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "64"
 }

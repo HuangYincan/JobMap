@@ -1,7 +1,7 @@
 {
   "slug": "华勒技术",
   "name": "华勒技术",
-  "tier": 3,
+  "tier": 13,
   "industries": [
     "manufacturing"
   ],
@@ -34,5 +34,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "other"
 }

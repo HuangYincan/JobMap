@@ -42,5 +42,7 @@
       "applySource": "official",
       "applyUrl": "https://career.hikvision.com/"
     }
-  ]
+  ],
+  "tier": 5,
+  "category": "39"
 }

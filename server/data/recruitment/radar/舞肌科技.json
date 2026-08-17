@@ -1,7 +1,7 @@
 {
   "slug": "舞肌科技",
   "name": "舞肌科技",
-  "tier": 3,
+  "tier": 12,
   "industries": [
     "manufacturing"
   ],
@@ -58,5 +58,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "39"
 }

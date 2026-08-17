@@ -54,5 +54,7 @@
       "applyUrl": "https://talent.deepseek.com/",
       "retrievedAt": "2026-08-17"
     }
-  ]
+  ],
+  "tier": 1,
+  "category": "65"
 }

@@ -1,7 +1,7 @@
 {
   "slug": "鹰角网络-暑期训练营",
   "name": "鹰角网络-暑期训练营",
-  "tier": 3,
+  "tier": 6,
   "industries": [
     "internet"
   ],
@@ -34,5 +34,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "64"
 }

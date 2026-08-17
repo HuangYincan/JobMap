@@ -1,7 +1,7 @@
 {
   "slug": "第一曼哈顿-第一北京",
   "name": "第一曼哈顿  第一北京",
-  "tier": 3,
+  "tier": 10,
   "industries": [
     "finance"
   ],
@@ -42,5 +42,6 @@
       "applyUrl": "https://fbwecruit.hotjob.cn/SU67ae91bb1eb80555b79f6730/pb/posDetail.html?postId=699eabfbbe908548be1dd49e&postType=campus",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "67"
 }

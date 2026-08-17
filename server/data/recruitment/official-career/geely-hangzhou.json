@@ -41,5 +41,7 @@
       "applySource": "official",
       "applyUrl": "https://campus.geely.com/"
     }
-  ]
+  ],
+  "tier": 5,
+  "category": "36"
 }

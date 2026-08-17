@@ -1,7 +1,7 @@
 {
   "slug": "乾象投资-metasummer",
   "name": "乾象投资 MetaSummer",
-  "tier": 3,
+  "tier": 7,
   "industries": [
     "finance"
   ],
@@ -43,5 +43,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "67"
 }

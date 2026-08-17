@@ -1,7 +1,7 @@
 {
   "slug": "leapmotor-hangzhou",
   "name": "零跑汽车",
-  "tier": 3,
+  "tier": 6,
   "industries": [
     "auto"
   ],
@@ -42,5 +42,6 @@
       "applyUrl": "https://leapmotor1.zhiye.com/intern/jobs?memory=%7B%7D&silence=1",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "36"
 }

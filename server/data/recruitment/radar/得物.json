@@ -1,7 +1,7 @@
 {
   "slug": "得物",
   "name": "得物",
-  "tier": 3,
+  "tier": 7,
   "industries": [
     "internet"
   ],
@@ -100,5 +100,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "64"
 }

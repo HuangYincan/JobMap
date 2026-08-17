@@ -1,7 +1,7 @@
 {
   "slug": "散爆网络",
   "name": "散爆网络",
-  "tier": 3,
+  "tier": 9,
   "industries": [
     "internet"
   ],
@@ -49,5 +49,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "64"
 }

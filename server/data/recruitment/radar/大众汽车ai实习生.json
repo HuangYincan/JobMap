@@ -1,7 +1,7 @@
 {
   "slug": "大众汽车ai实习生",
   "name": "大众汽车AI实习生",
-  "tier": 3,
+  "tier": 6,
   "industries": [
     "other"
   ],
@@ -34,5 +34,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "36"
 }

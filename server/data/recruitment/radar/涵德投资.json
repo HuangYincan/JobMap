@@ -1,7 +1,7 @@
 {
   "slug": "涵德投资",
   "name": "涵德投资",
-  "tier": 3,
+  "tier": 12,
   "industries": [
     "finance"
   ],
@@ -43,5 +43,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "67"
 }

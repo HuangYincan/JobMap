@@ -1,7 +1,7 @@
 {
   "slug": "ge航空航天",
   "name": "GE航空航天",
-  "tier": 3,
+  "tier": 7,
   "industries": [
     "other"
   ],
@@ -34,5 +34,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "37"
 }

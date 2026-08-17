@@ -1,7 +1,7 @@
 {
   "slug": "壳牌中国",
   "name": "壳牌中国",
-  "tier": 3,
+  "tier": 6,
   "industries": [
     "other"
   ],
@@ -42,5 +42,6 @@
       "applyUrl": "https://shell.wd3.myworkdayjobs.com/zh-CN/shellcareers/job/Beijing/Shell-Assessed-Internship-Program-2026---China_R182099?locationCountry=6cb77610a8a543aea2d6bc10457e35d4",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "25"
 }

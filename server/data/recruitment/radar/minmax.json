@@ -1,7 +1,7 @@
 {
   "slug": "minmax",
   "name": "MinMax",
-  "tier": 3,
+  "tier": 5,
   "industries": [
     "internet"
   ],
@@ -42,5 +42,6 @@
       "applyUrl": "https://vrfi1sk8a0.jobs.feishu.cn/s/UmWyycpF8kQ",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "65"
 }

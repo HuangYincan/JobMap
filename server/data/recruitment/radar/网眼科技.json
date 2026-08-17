@@ -1,7 +1,7 @@
 {
   "slug": "网眼科技",
   "name": "网眼科技",
-  "tier": 3,
+  "tier": 12,
   "industries": [
     "internet"
   ],
@@ -34,5 +34,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "64"
 }

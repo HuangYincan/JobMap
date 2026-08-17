@@ -1,7 +1,7 @@
 {
   "slug": "为旌科技",
   "name": "为旌科技",
-  "tier": 3,
+  "tier": 10,
   "industries": [
     "manufacturing"
   ],
@@ -52,5 +52,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "39"
 }

@@ -1,7 +1,7 @@
 {
   "slug": "manycore-hangzhou",
   "name": "群核科技",
-  "tier": 3,
+  "tier": 7,
   "industries": [
     "internet"
   ],
@@ -48,5 +48,6 @@
       "applyUrl": "https://app.mokahr.com/apply/qunhemail/2833#/job/b4405f43-bbcf-477e-905a-23a3c63633b5",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "65"
 }

@@ -1,7 +1,7 @@
 {
   "slug": "强生全视",
   "name": "强生全视",
-  "tier": 3,
+  "tier": 6,
   "industries": [
     "other"
   ],
@@ -33,5 +33,6 @@
       "applyUrl": "https://chinacampus.jnj.com.cn/position/detail/6981752ca40898725b0b2d57?type=INTERNSHIPRECRUITMENT&id=6981752ca40898725b0b2d57&state=a70fc57075d4489cb62037f0d4751105&code=051JzqFa1TrofL0FH5Ga1S9i780JzqF5&_t=1771924446669",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "27"
 }

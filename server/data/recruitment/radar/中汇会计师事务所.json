@@ -1,7 +1,7 @@
 {
   "slug": "中汇会计师事务所",
   "name": "中汇会计师事务所",
-  "tier": 3,
+  "tier": 9,
   "industries": [
     "other"
   ],
@@ -61,5 +61,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "72"
 }

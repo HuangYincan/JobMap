@@ -1,7 +1,7 @@
 {
   "slug": "金升阳",
   "name": "金升阳",
-  "tier": 3,
+  "tier": 9,
   "industries": [
     "energy"
   ],
@@ -43,5 +43,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "38"
 }

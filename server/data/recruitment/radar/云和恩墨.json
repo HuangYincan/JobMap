@@ -1,7 +1,7 @@
 {
   "slug": "云和恩墨",
   "name": "云和恩墨",
-  "tier": 3,
+  "tier": 10,
   "industries": [
     "internet"
   ],
@@ -60,5 +60,6 @@
       "applyUrl": "https://app.mokahr.com/campus-recruitment/enmotech/47098#/",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "65"
 }

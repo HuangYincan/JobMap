@@ -1,7 +1,7 @@
 {
   "slug": "道远咨询",
   "name": "道远咨询",
-  "tier": 3,
+  "tier": 12,
   "industries": [
     "other"
   ],
@@ -34,5 +34,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "72"
 }

@@ -1,7 +1,7 @@
 {
   "slug": "舜宇集团",
   "name": "舜宇集团",
-  "tier": 3,
+  "tier": 6,
   "industries": [
     "manufacturing"
   ],
@@ -52,5 +52,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "39"
 }

@@ -1,7 +1,7 @@
 {
   "slug": "卓越教育集团",
   "name": "卓越教育集团",
-  "tier": 3,
+  "tier": 9,
   "industries": [
     "other"
   ],
@@ -43,5 +43,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "82"
 }

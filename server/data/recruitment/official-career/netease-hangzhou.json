@@ -1,7 +1,10 @@
 {
   "slug": "netease-hangzhou",
   "name": "网易",
-  "industries": ["internet", "game"],
+  "industries": [
+    "internet",
+    "game"
+  ],
   "scale": "bigtech",
   "careerUrl": "https://hr.163.com/",
   "sites": [
@@ -21,14 +24,25 @@
       "title": "前端开发工程师（2026 秋招）",
       "siteId": "netease-hangzhou-site",
       "family": "campus",
-      "taxonomy": { "family": "campus", "campusSeason": "autumn" },
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
       "department": "网易云音乐",
-      "salary": { "min": 14, "max": 24 },
+      "salary": {
+        "min": 14,
+        "max": 24
+      },
       "education": "本科",
-      "skills": ["React", "TypeScript"],
+      "skills": [
+        "React",
+        "TypeScript"
+      ],
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://hr.163.com/"
     }
-  ]
+  ],
+  "tier": 5,
+  "category": "64"
 }

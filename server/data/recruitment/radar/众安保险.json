@@ -1,7 +1,7 @@
 {
   "slug": "众安保险",
   "name": "众安保险",
-  "tier": 3,
+  "tier": 7,
   "industries": [
     "finance"
   ],
@@ -33,5 +33,6 @@
       "applyUrl": "https://app.mokahr.com/campus-recruitment/zhongan/71908?sessionid=#/job/79cdacb3-4f16-4d59-a4f4-4a39bdac31e7?from=qrcode",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "68"
 }

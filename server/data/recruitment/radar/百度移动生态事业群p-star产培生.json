@@ -1,7 +1,7 @@
 {
   "slug": "百度移动生态事业群p-star产培生",
   "name": "百度移动生态事业群P-STAR产培生",
-  "tier": 3,
+  "tier": 0,
   "industries": [
     "internet"
   ],
@@ -33,5 +33,6 @@
       "applyUrl": "https://talent.baidu.com/jobs/detail/GRADUATE/79e85217-8204-4a5f-9b05-03b2bb2597bd",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "64"
 }

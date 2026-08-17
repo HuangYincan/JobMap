@@ -43,5 +43,7 @@
       "applySource": "official",
       "applyUrl": "https://talent.alibaba.com/"
     }
-  ]
+  ],
+  "tier": 0,
+  "category": "64"
 }

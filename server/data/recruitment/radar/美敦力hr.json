@@ -1,7 +1,7 @@
 {
   "slug": "美敦力hr",
   "name": "美敦力HR",
-  "tier": 3,
+  "tier": 6,
   "industries": [
     "other"
   ],
@@ -33,5 +33,6 @@
       "applyUrl": "https://medtronic.wd1.myworkdayjobs.com/zh-CN/MedtronicCareers/job/Shanghai-Shanghai-China/HR-Summer-Intern_R63111-1",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "27"
 }

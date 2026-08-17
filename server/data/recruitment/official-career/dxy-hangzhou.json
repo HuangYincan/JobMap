@@ -42,5 +42,7 @@
       "applySource": "official",
       "applyUrl": "https://www.dxy.cn/jobs"
     }
-  ]
+  ],
+  "tier": 7,
+  "category": "64"
 }

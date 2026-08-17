@@ -1,7 +1,7 @@
 {
   "slug": "京东-tgt顶尖青年技术天才",
   "name": "京东-TGT顶尖青年技术天才",
-  "tier": 3,
+  "tier": 4,
   "industries": [
     "internet"
   ],
@@ -52,5 +52,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "64"
 }

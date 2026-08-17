@@ -1,7 +1,7 @@
 {
   "slug": "点点互动",
   "name": "点点互动",
-  "tier": 3,
+  "tier": 9,
   "industries": [
     "internet"
   ],
@@ -85,5 +85,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "64"
 }

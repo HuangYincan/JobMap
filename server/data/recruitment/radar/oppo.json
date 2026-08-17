@@ -1,7 +1,7 @@
 {
   "slug": "oppo",
   "name": "OPPO",
-  "tier": 3,
+  "tier": 5,
   "industries": [
     "manufacturing"
   ],
@@ -76,5 +76,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "39"
 }

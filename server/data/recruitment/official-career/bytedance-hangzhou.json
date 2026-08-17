@@ -43,5 +43,7 @@
       "applySource": "official",
       "applyUrl": "https://jobs.bytedance.com/"
     }
-  ]
+  ],
+  "tier": 0,
+  "category": "64"
 }

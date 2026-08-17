@@ -1,7 +1,7 @@
 {
   "slug": "cic灼识咨询",
   "name": "CIC灼识咨询",
-  "tier": 3,
+  "tier": 10,
   "industries": [
     "other"
   ],
@@ -42,5 +42,6 @@
       "applyUrl": "https://www.cninsights.com/job-cn",
       "retrievedAt": "2026-08-11"
     }
-  ]
+  ],
+  "category": "72"
 }

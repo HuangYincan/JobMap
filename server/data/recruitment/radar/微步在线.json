@@ -1,7 +1,7 @@
 {
   "slug": "微步在线",
   "name": "微步在线",
-  "tier": 3,
+  "tier": 8,
   "industries": [
     "internet"
   ],
@@ -85,5 +85,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "65"
 }

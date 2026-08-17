@@ -1,7 +1,7 @@
 {
   "slug": "拓竹科技",
   "name": "拓竹科技",
-  "tier": 3,
+  "tier": 8,
   "industries": [
     "manufacturing"
   ],
@@ -76,5 +76,6 @@
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }
-  ]
+  ],
+  "category": "39"
 }

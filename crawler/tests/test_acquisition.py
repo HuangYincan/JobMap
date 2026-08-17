@@ -228,7 +228,9 @@ class RadarMapTests(unittest.TestCase):
         mapped = map_radar_job({
             "c": "阿里淘天", "p": "技术、设计、数据、运营、产品等七大类", "l": "杭州/北京", "u": "https://talent.taotian.com/1",
         })
-        self.assertEqual(mapped["tier"], 3)
+        # tier 缺省 12(0..21 可见最小 zoom,tech/19);category 缺省 other,后续打标覆盖
+        self.assertEqual(mapped["tier"], 12)
+        self.assertEqual(mapped["category"], "other")
         self.assertTrue(mapped["positions"][0].get("aggregate"))
         plain = map_radar_job({
             "c": "阿里淘天", "p": "前端开发工程师", "l": "杭州/北京", "u": "https://talent.taotian.com/2",
