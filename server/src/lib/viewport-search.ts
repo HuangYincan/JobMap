@@ -54,12 +54,18 @@ export const POI_HARD_CAP = 3000;
 export const REFRESH_ADD_CAP = POI_SOFT_CAP;
 
 /**
- * Domain 模式列表候选上限(tech/22):默认 300,点一次「加载更多」+300,
- * 直到 1000 封顶。与 POI_HARD_CAP(work 模式 3000)分离——测试硬编码
+ * Domain 模式列表候选上限(tech/22):杭州内无限滚动每次 +50,直到 1000 封顶。
+ * 与 POI_HARD_CAP(work 模式 3000)分离——测试硬编码
  * POI_SOFT_CAP/MORE_PAGE_SIZE/POI_HARD_CAP,这里只影响 domain 路径。
  */
 export const DOMAIN_POI_HARD_CAP = 1000;
-/** 杭州外回退高德:首轮仅 1 次 PlaceSearch(25 条) */
+/**
+ * Domain 模式本地库每批加载条数(tech/22):杭州内无限滚动每次 +50;
+ * 杭州外回退高德每次 25 条(1 次 PlaceSearch)。与 MORE_PAGE_SIZE(work 300)
+ * 分离——测试硬编码 MORE_PAGE_SIZE=300,这里只影响 domain 路径。
+ */
+export const DOMAIN_BATCH_SIZE = 50;
+/** 杭州外回退高德:每次滚动仅 1 次 PlaceSearch(25 条) */
 export const AMAP_FALLBACK_INITIAL_CALLS = 1;
 /** 杭州外回退高德:每轮「加载更多」至多 4 次(≈100 条,去重) */
 export const AMAP_FALLBACK_MORE_CALLS = 4;
@@ -253,7 +259,7 @@ import type { FilterState, POI, RecruitmentPOI } from './types.ts';
 import { withAlivePositions } from './position-alive.ts';
 
 /** moveend/zoomend 防抖时长 */
-export const VIEWPORT_DEBOUNCE_MS = 300;
+export const VIEWPORT_DEBOUNCE_MS = 800;
 /** 视口请求每页大小(服务端 pageSize 上限) */
 export const WORK_VIEWPORT_PAGE_SIZE = 50;
 
@@ -469,11 +475,9 @@ export function buildSearchQueue(
 }
 
 /**
- * 杭州外回退高德的预算窗口(tech/22):默认只发 1 次 PlaceSearch(25 条),
- * 用户点「加载更多」每轮至多 +4 次(≈100 条)。按 buildSearchQueue 的
- * 展开顺序切窗口——首轮取前 AMAP_FALLBACK_INITIAL_CALLS 个任务,
- * 后续每轮从 (pageOffset-1)*AMAP_FALLBACK_MORE_CALLS 续取固定窗口。
- * 预算耗尽(窗口空)→ 返回 [] 表示无更多可拉。
+ * 杭州外回退高德的预算窗口(tech/22):无限滚动每次只发 1 次 PlaceSearch(25 条)。
+ * 按 buildSearchQueue 的展开顺序消费:pageOffset=0 → 第 1 个任务,
+ * pageOffset=N → 第 N+1 个任务。预算耗尽(窗口空)→ 返回 [] 表示无更多。
  */
 export function fallbackTaskWindow(
   keywords: readonly string[],
@@ -481,9 +485,7 @@ export function fallbackTaskWindow(
   pageOffset = 0,
 ): SearchTask[] {
   const full = buildSearchQueue(keywords, pages, 0);
-  if (pageOffset <= 0) return full.slice(0, AMAP_FALLBACK_INITIAL_CALLS);
-  const start = 1 + (pageOffset - 1) * AMAP_FALLBACK_MORE_CALLS;
-  return full.slice(start, start + AMAP_FALLBACK_MORE_CALLS);
+  return full.slice(pageOffset, pageOffset + AMAP_FALLBACK_INITIAL_CALLS);
 }
 
 /** @deprecated 网格波次已废弃，转成单中心队列 */

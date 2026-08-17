@@ -99,6 +99,10 @@ export interface SecondarySidebarProps {
   onRefreshHere?: () => void;
   /** 在累计池上再扩一页常见 POI */
   onNeedMore?: () => void;
+  /** 正在无限滚动追加加载(显示底部 spinner) */
+  loadingMore?: boolean;
+  /** 已达上限(显示「已达加载上限」并停止哨兵触发) */
+  atCap?: boolean;
   /** 空结果时扩大搜索范围 */
   onWidenSearch?: () => void;
   saved?: boolean;
@@ -136,6 +140,8 @@ export function SecondarySidebar({
   onCloseDetail,
   onRefreshHere,
   onNeedMore,
+  loadingMore = false,
+  atCap = false,
   onWidenSearch,
   saved = false,
   onToggleSave,
@@ -410,7 +416,7 @@ export function SecondarySidebar({
           <span className={styles.resultCount}>
             {loading ? t("loading", lang) : `${totalCount ?? pois.length} ${t("resultsCount", lang)}`}
           </span>
-          {onRefreshHere && (
+          {onRefreshHere && pois.length === 0 && !loading && (
             <button
               type="button"
               className={styles.refreshIcon}
@@ -425,20 +431,6 @@ export function SecondarySidebar({
             </button>
           )}
         </div>
-        {onNeedMore && (
-          <button
-            type="button"
-            className={styles.moreIcon}
-            onClick={onNeedMore}
-            disabled={loading}
-            aria-label={t("needMore", lang)}
-          >
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 8v8M8 12h8" />
-            </svg>
-          </button>
-        )}
       </div>
 
       {/* POI 列表 */}
@@ -452,6 +444,9 @@ export function SecondarySidebar({
         lang={lang}
         accentColor={config.color}
         onWidenSearch={onWidenSearch}
+        onNeedMore={onNeedMore}
+        loadingMore={loadingMore}
+        atCap={atCap}
       />
       </>
       )}

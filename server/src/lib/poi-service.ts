@@ -14,7 +14,7 @@ import {
 import { INTERNSHIP_SEED } from './seed-data.ts';
 import { fetchWorkCatalogFromApi } from './recruitment-adapters/api.ts';
 import type { QueryPipeline } from './search.ts';
-import { mergePoisById, isCommonOrExactName, inHangzhouBox, DOMAIN_POI_HARD_CAP, MORE_PAGE_SIZE, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
+import { mergePoisById, isCommonOrExactName, inHangzhouBox, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
 import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
 import { isRecruitmentMode } from './types.ts';
 
@@ -61,8 +61,10 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
 
   if (options.query) {
     if (inHz) {
-      // 杭州内关键词搜索 → 本地库 name ILIKE
-      return fetchLocalPois(options, existing, zoom, options.query);
+      // 杭州内关键词搜索 → 先试本地库 name ILIKE;本地 0 命中(如搜外地词)
+      // 再回退高德 1 次,避免「北京天安门」在杭州库里查不到就空白。
+      const local = await fetchLocalPois(options, existing, zoom, options.query);
+      if (local.length > existing.length) return local;
     }
     try {
       const result = await searchPOI({
@@ -123,7 +125,7 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
   }
 }
 
-/** 杭州本地查询：GET /api/pois/domain-local。offset=pageOffset*300，cap 1000。 */
+/** 杭州本地查询：GET /api/pois/domain-local。每批 DOMAIN_BATCH_SIZE(50)，cap 1000。 */
 async function fetchLocalPois(
   options: FetchPOIOptions,
   existing: DomainPOI[],
@@ -131,13 +133,13 @@ async function fetchLocalPois(
   q?: string,
 ): Promise<POI[]> {
   const bounds = options.bounds;
-  const offset = (options.pageOffset ?? 0) * MORE_PAGE_SIZE;
+  const offset = (options.pageOffset ?? 0) * DOMAIN_BATCH_SIZE;
   const params = new URLSearchParams();
   if (bounds) {
     params.set('bounds', `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`);
   }
   params.set('zoom', String(Math.max(1, Math.floor(zoom))));
-  params.set('limit', String(MORE_PAGE_SIZE));
+  params.set('limit', String(DOMAIN_BATCH_SIZE));
   params.set('offset', String(offset));
   if (q) params.set('q', q);
   const url = `/api/pois/domain-local?${params.toString()}`;

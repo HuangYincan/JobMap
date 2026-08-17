@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useEffect, useRef } from "react";
 import { POICard } from "./poi-card";
 import { t, type Language } from "@/lib/i18n";
 import type { POI } from "@/lib/types";
@@ -19,6 +20,12 @@ export interface POIListProps {
   lang?: Language;
   accentColor?: string;
   onWidenSearch?: () => void;
+  /** 无限滚动：滚动到底时触发加载下一批 */
+  onNeedMore?: () => void;
+  /** 正在追加加载（显示底部 spinner） */
+  loadingMore?: boolean;
+  /** 已达上限（显示「已达加载上限」并停止哨兵触发） */
+  atCap?: boolean;
 }
 
 type CSSVarStyle = CSSProperties & Record<`--${string}`, string | number>;
@@ -36,8 +43,43 @@ export function POIList({
   lang = "zh",
   accentColor,
   onWidenSearch,
+  onNeedMore,
+  loadingMore = false,
+  atCap = false,
 }: POIListProps) {
   const showEmpty = !loading && (empty || pois.length === 0);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const onNeedMoreRef = useRef(onNeedMore);
+  onNeedMoreRef.current = onNeedMore;
+  const atCapRef = useRef(atCap);
+  atCapRef.current = atCap;
+  const loadingRef = useRef(loading);
+  loadingRef.current = loading;
+  const loadingMoreRef = useRef(loadingMore);
+  loadingMoreRef.current = loadingMore;
+
+  // 无限滚动：底部哨兵进入视口(提前 400px)触发 onNeedMore。
+  // root:null(viewport)对桌面 sidebar 与移动 drawer 都基于浏览器视口,
+  // rootMargin 提前量兼容嵌套滚动容器的高度差。
+  // 依赖 pois.length：catalog 更新后 React 重建哨兵节点,需重新 observe
+  // (否则 IO 盯着已脱离 DOM 的旧元素,无限滚动停在第一批之后)。
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !onNeedMoreRef.current) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          if (atCapRef.current) return; // 到顶停止触发
+          if (loadingRef.current || loadingMoreRef.current) return; // 加载中不重复触发
+          onNeedMoreRef.current?.();
+        }
+      },
+      { root: null, rootMargin: "0px 0px 400px 0px", threshold: 0.01 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [pois.length]);
 
   return (
     <div
@@ -92,25 +134,37 @@ export function POIList({
           )}
         </div>
       ) : (
-        pois.map((poi, i) => (
-          <div
-            key={poi.id}
-            role="listitem"
-            className={styles.cardSlot}
-            style={{ "--index": i } as CSSVarStyle}
-            onMouseEnter={() => onHover?.(poi.id)}
-            onMouseLeave={() => onHover?.(null)}
-          >
-            <POICard
-              poi={poi}
-              selected={poi.id === selectedId}
-              highlighted={poi.id === highlightedId}
-              onClick={onSelect}
-              lang={lang}
-              accentColor={accentColor}
-            />
+        <>
+          {pois.map((poi, i) => (
+            <div
+              key={poi.id}
+              role="listitem"
+              className={styles.cardSlot}
+              style={{ "--index": i % 8 } as CSSVarStyle}
+              onMouseEnter={() => onHover?.(poi.id)}
+              onMouseLeave={() => onHover?.(null)}
+            >
+              <POICard
+                poi={poi}
+                selected={poi.id === selectedId}
+                highlighted={poi.id === highlightedId}
+                onClick={onSelect}
+                lang={lang}
+                accentColor={accentColor}
+              />
+            </div>
+          ))}
+          {/* 底部哨兵 + 加载/到底指示 */}
+          <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true">
+            {atCap ? (
+              <span className={styles.sentinelText}>
+                {lang === "zh" ? "── 已达加载上限 ──" : "── Reached load limit ──"}
+              </span>
+            ) : loadingMore ? (
+              <span className={styles.spinner} aria-label={t("loading", lang)} />
+            ) : null}
           </div>
-        ))
+        </>
       )}
     </div>
   );

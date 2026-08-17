@@ -129,6 +129,39 @@
   }
 }
 
+/* ---------- 无限滚动哨兵 + 加载/到底指示 ---------- */
+
+.sentinel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 8px 0 16px;
+}
+
+.sentinelText {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Apple 风格 spinner:细环 + 慢速旋转 */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(120, 120, 128, 0.22);
+  border-top-color: var(--blue, #007aff);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ---------- 暗色模式 ---------- */
 
 @media (prefers-color-scheme: dark) {
@@ -162,6 +195,10 @@
   }
 
   .skeleton::after {
+    animation: none;
+  }
+
+  .spinner {
     animation: none;
   }
 }

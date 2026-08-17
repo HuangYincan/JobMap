@@ -13,7 +13,7 @@ import { applyTagSuggestion, activeFilterChips, distanceFilterMeters, metersToDi
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchSearchSuggest } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
-import { mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, type ViewportBounds } from "@/lib/viewport-search";
+import { mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES } from "@/lib/viewport-search";
 import { maxTierForZoom } from "@/lib/lod";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
@@ -145,6 +145,7 @@ export function MapShell() {
   const [sort, setSort] = useState(() => getMode("work").defaultSort);
   const [catalog, setCatalog] = useState<POI[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lng: number; lat: number }>({ lng: 120.15, lat: 30.27 });
@@ -645,7 +646,15 @@ export function MapShell() {
         return;
       }
       const cached = catalogRef.current.length > 0 ? readModeCache(mode) : null;
-      if (cached && cached.catalog.length > 0 && pageOffset === cached.pageOffset && refreshToken === 0) {
+      // 会话缓存只在参数完全一致时复用：换了关键词(query)或页偏移都须重搜。
+      // 之前漏了 query——杭州库里搜外地词/新词会因缓存早退而永远不发请求。
+      if (
+        cached &&
+        cached.catalog.length > 0 &&
+        pageOffset === cached.pageOffset &&
+        query === cached.query &&
+        refreshToken === 0
+      ) {
         return;
       }
       loadingRef.current = true;
@@ -692,7 +701,7 @@ export function MapShell() {
                 zoom: view.zoom,
                 bounds: view.bounds ?? undefined,
                 existing: mode === "domain" ? catalogRef.current : undefined,
-                addCap: MORE_PAGE_SIZE,
+                addCap: mode === "domain" ? DOMAIN_BATCH_SIZE : MORE_PAGE_SIZE,
                 pageOffset,
                 signal,
                 onBatch,
@@ -714,9 +723,12 @@ export function MapShell() {
           setError(err instanceof Error ? err.message : "Failed to load POIs");
         }
       } finally {
+        // loadingRef 属于本轮加载，即使被取消(用户输入/状态变更)也必须释放；
+        // 否则后续所有 load() 会因 loadingRef.current 卡死而永远不再发请求。
+        loadingRef.current = false;
         if (!signal.cancelled) {
           setLoading(false);
-          loadingRef.current = false;
+          setLoadingMore(false);
         }
       }
     }
@@ -742,7 +754,6 @@ export function MapShell() {
       delayMs: VIEWPORT_DEBOUNCE_MS,
       load: async () => {
         const v = viewStateRef.current;
-        if (canonicalMode(v.mode) !== "work") return;
         if (!v.geoSettled) return;
         if (loadingRef.current) return; // 首屏/刷新/加载更多进行中,交给主加载
         const mapInst = mapInstance.current;
@@ -762,32 +773,68 @@ export function MapShell() {
           }
         }
         if (!bounds) return;
-        try {
-          await loadWorkViewport({
-            bounds,
-            maxTier: maxTierForZoom(zoom),
-            filters: v.filters,
-            q: v.query || undefined,
-            sort: v.sort || undefined,
-            page: 1,
-            existing: catalogRef.current,
-            onBatch: (batch) => {
-              catalogRef.current = batch;
-              setCatalog(batch);
-              writeModeCache({
-                mode: canonicalMode(v.mode),
-                catalog: batch,
-                pageOffset: v.pageOffset,
-                searchOrigin: v.searchOrigin,
-                query: v.query,
-                filters: v.filters,
-                sort: v.sort,
-              });
-            },
-          });
-        } catch (err) {
-          // 视口加载失败不打断主流程:保留现有累计池,下次地图事件再试
-          console.warn("[map-shell] work viewport load failed:", err);
+        const mode = canonicalMode(v.mode);
+        if (mode === "work") {
+          try {
+            await loadWorkViewport({
+              bounds,
+              maxTier: maxTierForZoom(zoom),
+              filters: v.filters,
+              q: v.query || undefined,
+              sort: v.sort || undefined,
+              page: 1,
+              existing: catalogRef.current,
+              onBatch: (batch) => {
+                catalogRef.current = batch;
+                setCatalog(batch);
+                writeModeCache({
+                  mode,
+                  catalog: batch,
+                  pageOffset: v.pageOffset,
+                  searchOrigin: v.searchOrigin,
+                  query: v.query,
+                  filters: v.filters,
+                  sort: v.sort,
+                });
+              },
+            });
+          } catch (err) {
+            // 视口加载失败不打断主流程:保留现有累计池,下次地图事件再试
+            console.warn("[map-shell] work viewport load failed:", err);
+          }
+          return;
+        }
+        // Domain:随视角变化刷新(替换+淡入)——按 live bounds 重新取第一批,
+        // existing=[] 清空旧列表,offset 归零(新视野 = 新一批)。
+        if (mode === "domain") {
+          try {
+            await fetchPOIsForMode({
+              mode,
+              query: v.query || undefined,
+              center: v.searchOrigin ?? undefined,
+              zoom,
+              bounds,
+              existing: [], // 替换:新视野清空旧卡片
+              addCap: DOMAIN_BATCH_SIZE,
+              pageOffset: 0,
+              onBatch: (batch) => {
+                catalogRef.current = batch;
+                setCatalog(batch);
+                writeModeCache({
+                  mode,
+                  catalog: batch,
+                  pageOffset: 0,
+                  searchOrigin: v.searchOrigin,
+                  query: v.query,
+                  filters: v.filters,
+                  sort: v.sort,
+                });
+              },
+            });
+          } catch (err) {
+            console.warn("[map-shell] domain viewport load failed:", err);
+          }
+          return;
         }
       },
     });
@@ -987,8 +1034,15 @@ export function MapShell() {
   }, [mapCenter, mode]);
 
   const handleNeedMore = useCallback(() => {
+    // 无限滚动:杭州内/外 Domain 模式到 DOMAIN_POI_HARD_CAP 封顶;
+    // work 模式保持 POI_HARD_CAP 上限(由 fetch 侧控制)。这里只短路 domain。
+    if (canonicalMode(mode) === "domain" && catalogRef.current.length >= DOMAIN_POI_HARD_CAP) {
+      return;
+    }
+    if (loadingRef.current) return; // 防重入:上一批加载中不重复触发
+    setLoadingMore(true);
     setPageOffset((n) => n + 1);
-  }, []);
+  }, [mode]);
 
   const handleWidenSearch = useCallback(() => {
     const next = widenSearchScope({ query, filters });
@@ -1705,6 +1759,8 @@ export function MapShell() {
         onHover={handleHover}
         onRefreshHere={handleRefreshHere}
         onNeedMore={handleNeedMore}
+        loadingMore={loadingMore}
+        atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
         onWidenSearch={handleWidenSearch}
         saved={Boolean(detailPoi && savedPlaces.some((item) => item.poiId === detailPoi.id))}
         onToggleSave={detailPoi && isPersistablePoi(detailPoi) ? handleToggleSave : undefined}
@@ -2195,24 +2251,16 @@ export function MapShell() {
               <div className={styles.mobileMeta}>
                 <span>{loading ? t("loading", lang) : `${pois.length} ${t("resultsCount", lang)}`}</span>
                 <div className={styles.mobileMetaActions}>
-                  <button
-                    type="button"
-                    className={styles.mobileIconBtn}
-                    onClick={handleRefreshHere}
-                    disabled={loading}
-                    aria-label={t("refreshHere", lang)}
-                  >
-                    {t("refreshHere", lang)}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.mobileIconBtn}
-                    onClick={handleNeedMore}
-                    disabled={loading}
-                    aria-label={t("needMore", lang)}
-                  >
-                    {t("needMore", lang)}
-                  </button>
+                  {pois.length === 0 && !loading && (
+                    <button
+                      type="button"
+                      className={styles.mobileIconBtn}
+                      onClick={handleRefreshHere}
+                      aria-label={t("refreshHere", lang)}
+                    >
+                      {t("refreshHere", lang)}
+                    </button>
+                  )}
                 </div>
               </div>
               <POIList
@@ -2231,6 +2279,9 @@ export function MapShell() {
                 lang={lang}
                 accentColor={modeConfig.color}
                 onWidenSearch={handleWidenSearch}
+                onNeedMore={handleNeedMore}
+                loadingMore={loadingMore}
+                atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
               />
               </>
               )}

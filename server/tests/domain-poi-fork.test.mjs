@@ -4,14 +4,16 @@ import assert from 'node:assert/strict';
 import {
   AMAP_FALLBACK_INITIAL_CALLS,
   AMAP_FALLBACK_MORE_CALLS,
+  DOMAIN_BATCH_SIZE,
   DOMAIN_POI_HARD_CAP,
   fallbackTaskWindow,
   inHangzhouBox,
   mergePoisById,
 } from '../src/lib/viewport-search.ts';
 
-test('DOMAIN_POI_HARD_CAP = 1000,不覆盖 work 常量', () => {
+test('常量:1000 上限 / 50 本地批 / 25 高德批', () => {
   assert.equal(DOMAIN_POI_HARD_CAP, 1000);
+  assert.equal(DOMAIN_BATCH_SIZE, 50);
   assert.equal(AMAP_FALLBACK_INITIAL_CALLS, 1);
   assert.equal(AMAP_FALLBACK_MORE_CALLS, 4);
 });
@@ -23,31 +25,23 @@ test('inHangzhouBox: 框内/框外', () => {
   assert.equal(inHangzhouBox({ lng: 116.4, lat: 39.9 }), false); // 北京
 });
 
-test('fallbackTaskWindow: 首轮仅 1 次(25 条)', () => {
+test('fallbackTaskWindow: 每次滚动 1 次(25 条)', () => {
   const keywords = ['餐饮服务', '购物服务', '风景名胜'];
   const w0 = fallbackTaskWindow(keywords, 4, 0);
   assert.equal(w0.length, AMAP_FALLBACK_INITIAL_CALLS);
   assert.deepEqual(w0[0], { keyword: '餐饮服务', page: 1 });
-});
-
-test('fallbackTaskWindow: 每轮加载更多 +4 次,窗口续接', () => {
-  const keywords = ['餐饮服务', '购物服务', '风景名胜'];
   const w1 = fallbackTaskWindow(keywords, 4, 1);
-  assert.equal(w1.length, AMAP_FALLBACK_MORE_CALLS);
-  // buildSearchQueue 展开顺序:page1×全部关键词,page2×全部…所以
-  // 首轮取 {餐饮,page1};窗口1 = 索引1..4 = {购物,page1},{风景,page1},{餐饮,page2},{购物,page2}
-  assert.deepEqual(w1[0], { keyword: '购物服务', page: 1 });
-  assert.deepEqual(w1[3], { keyword: '购物服务', page: 2 });
+  assert.deepEqual(w1[0], { keyword: '购物服务', page: 1 }); // 续取下一任务
   const w2 = fallbackTaskWindow(keywords, 4, 2);
-  assert.equal(w2.length, AMAP_FALLBACK_MORE_CALLS);
-  assert.deepEqual(w2[0], { keyword: '风景名胜', page: 2 });
+  assert.deepEqual(w2[0], { keyword: '风景名胜', page: 1 });
 });
 
 test('fallbackTaskWindow: 预算耗尽 → 空窗口', () => {
   const keywords = ['餐饮服务']; // 1 关键词 × 4 页 = 4 任务
   assert.equal(fallbackTaskWindow(keywords, 4, 0).length, 1);
-  assert.equal(fallbackTaskWindow(keywords, 4, 1).length, 3); // 剩 3
-  assert.equal(fallbackTaskWindow(keywords, 4, 2).length, 0); // 耗尽
+  assert.equal(fallbackTaskWindow(keywords, 4, 1).length, 1);
+  assert.equal(fallbackTaskWindow(keywords, 4, 3).length, 1);
+  assert.equal(fallbackTaskWindow(keywords, 4, 4).length, 0); // 耗尽
 });
 
 test('mergePoisById: 到 DOMAIN_POI_HARD_CAP 停,不增长', () => {
