@@ -48,3 +48,20 @@
 - Re-run `radar` mapper weekly via `make refresh-radar`; record new SHA-256 here.
 - **Curated** verified official portal links as positions on 4 companies (2026-08-17): betta (campus `/Jobs/campus`, social `zhiye.com/Social`), megvii (campus `join_us/campus`, social `zhaopin.megvii.com`), deepseek (`talent.deepseek.com`), tigermed (Moka ATS `hire-r1.mokahr.com/...`). wasu's hotjob link was 404 — left uncurated.
 - When a per-ATS public JSON (e.g. Moka / hotjob API) is reviewed, wire it as another adapter instead of scraping SPA HTML.
+
+## LLM 并发岗位真实性验证（WS3，2026-08-17）
+
+脚本校验对确定性规则（坐标、字段、外部 ID）有效，但对「多个岗位合到一条」的聚合行（如「技术、设计、数据、运营、产品等七大类」「招聘方向：模型研究 / AI Infra / …」）效果有限。因此开发 LLM 并发验证脚本，用户自配 API，一次验证整批岗位；地址/位置校验同思路（LLM 判断公司 ↔ 城市/地址是否一致）。
+
+- **脚本**：`server/scripts/validate-positions-llm.mjs`（逻辑库 `src/lib/llm-validate.ts`，mock 测试 `tests/llm-validate.test.mjs`）。读 `server/data/recruitment/{radar,official-career}` 全部 drop，每条公司/岗位一次 OpenAI 兼容 chat completions。
+- **维度**：title 真实性 / 聚合行检测（附拆解建议）/ 公司↔岗位一致性 / 公司↔站点↔城市一致性 / applyUrl 域名↔公司（官网或可信 ATS，已知 ATS 域名 mokahr.com / zhiye.com 作提示，LLM 终判）。
+- **env 配置**（从 process.env 与 `server/.env.local` 读取，key 绝不打印、不写报告）：
+  - `LLM_API_KEY` —— 必填，否则 dry-run
+  - `LLM_BASE_URL` —— OpenAI 兼容 base，默认 `https://api.openai.com/v1`
+  - `LLM_MODEL` —— 必填，否则 dry-run
+- **用法**：`node scripts/validate-positions-llm.mjs [--only a,b] [--sample N] [--limit N] [--concurrency N] [--dry-run]`
+  - 并发默认 512（Promise 池，上限 5000）；429/5xx/网络错误指数退避（1s×2ⁿ+抖动）重试 3 次；单条失败记 error，不中断。
+  - 无 `LLM_API_KEY` / `LLM_MODEL` 时自动 dry-run：打印条数 + 示例输入，退出码 0。
+- **输出**：`tech/roles/data/validation-report-<YYYYMMDD>.json`（每条 pass/warn/fail/error + 理由 + suggestedSplit 聚合拆解）+ 控制台汇总。
+- **隐私**：每次请求仅含单条岗位文本（公司名/行业/站点/标题/部门/技能/applyUrl）；LLM 返回只当 JSON 解析，不执行。
+- 计划：用户配好 key 后跑首批 181 条（2026-08-17 drops），聚合行按 `suggestedSplit` 拆解；后续每次 drops 刷新后重跑对比。

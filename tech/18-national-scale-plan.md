@@ -94,6 +94,15 @@ CREATE INDEX positions_open_deadline_idx ON positions (site_id) WHERE status='op
 - **空间算法**：视野裁剪用 `geom && ST_MakeEnvelope(...)` + `ST_DWithin`；用户位置半径用 `ST_DWithin(geom_geog, ST_SetSRID(ST_MakePoint(:lng,:lat),4326)::geography, :radius_m)`。区域聚合/计数预留（LOD 缩到全国时按 tier 聚合展示）。
 - 说明：距离用 geography（米），避免 4326 度数误差；百万级时考虑按 province/city 表分区或预留分区策略。
 
+### 2.6 LLM 并发真实性验证（WS3，2026-08-17）
+
+- 脚本 `server/scripts/validate-positions-llm.mjs`（逻辑库 `src/lib/llm-validate.ts`）。批量读 `server/data/recruitment/{radar,official-career}` 全部 drop，每条公司/岗位调用一次 OpenAI 兼容 chat completions，按确定性 JSON schema 返回判定。
+- **维度**：title 真实性 / 聚合行检测（附拆解建议）/ 公司↔岗位一致性 / 公司↔站点↔城市一致性 / applyUrl 域名↔公司（官网或可信 ATS）。
+- **env**：`LLM_API_KEY`、`LLM_BASE_URL`（默认 OpenAI v1）、`LLM_MODEL`（从 process.env 与 `server/.env.local` 读取，**绝不打印 key**）。无 key/model 时自动 dry-run：打印条数与示例输入，不 crash。
+- **并发**：Promise 池 `--concurrency`（默认 512，上限 5000）；429/5xx/网络错误按指数退避（1s×2ⁿ+抖动）重试 3 次；单条失败记为 error，不中断整体。
+- **CLI**：`--only slug1,slug2`、`--sample N`（随机）、`--limit N`、`--concurrency N`、`--dry-run`。每次请求只含单条岗位文本，LLM 返回只当 JSON 解析。
+- **输出**：`tech/roles/data/validation-report-<YYYYMMDD>.json`（每条 pass/warn/fail/error + 理由 + 聚合拆解建议）+ 控制台汇总。用途与 env 配置见 `tech/roles/data/data-quality.md`。
+
 ---
 
 ## 3. 并行开发工作流
