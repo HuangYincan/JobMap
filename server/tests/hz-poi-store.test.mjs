@@ -72,7 +72,7 @@ test('hzRowToDomainPoi: GCJ 坐标零转换 + photos 截 3 + category/subcategor
 
 test('hzRowToDomainPoi: rating null → undefined;无 photos → undefined', () => {
   const poi = hzRowToDomainPoi({
-    poi_id: 'X', name: '测试', address: null, tel: null, rating: null,
+    poi_id: 'X', name: '测试', address: null, tel: null, rating: null, cost: null,
     lng_gcj: 120.1, lat_gcj: 30.2, big_type: '餐饮服务', mid_type: null,
     photos: null, open_hours: null, total: '1',
   });
@@ -80,6 +80,16 @@ test('hzRowToDomainPoi: rating null → undefined;无 photos → undefined', () 
   assert.equal(poi.photos, undefined);
   assert.equal(poi.subcategory, undefined);
   assert.equal(poi.priceLevel, undefined);
+});
+
+test('hzRowToDomainPoi: cost → priceLevel(与 normalizeAMapPOI 同口径)', () => {
+  const poi = hzRowToDomainPoi({
+    poi_id: 'Y', name: '测试', address: null, tel: null, rating: '4.2', cost: '260',
+    lng_gcj: 120.1, lat_gcj: 30.2, big_type: '住宿服务', mid_type: null,
+    photos: ['http://a.com/1'], open_hours: null, total: '1',
+  });
+  assert.equal(poi.priceLevel, 3); // ceil(260/100)=3,cap 4
+  assert.equal(poi.rating, 4.2);
 });
 
 test('parseBoundsParam: 复用现有解析', () => {

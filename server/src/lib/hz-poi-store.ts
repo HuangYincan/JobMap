@@ -39,6 +39,7 @@ interface HzPoiRow {
   address: string | null;
   tel: string | null;
   rating: string | null; // pg numeric → string
+  cost: string | null; // pg numeric → string
   lng_gcj: number;
   lat_gcj: number;
   big_type: string;
@@ -94,7 +95,8 @@ export function hzPoiSpatialSql(
 
 /** 行 → DomainPOI(GCJ 坐标零转换、photos 截 3、priceLevel 对齐 normalizeAMapPOI) */
 export function hzRowToDomainPoi(row: HzPoiRow): DomainPOI {
-  const cost = undefined; // 导入时未存 cost 展示值;后续需要再加
+  const costRaw = row.cost !== null && row.cost !== '' ? Number.parseFloat(row.cost) : undefined;
+  const cost = costRaw && Number.isFinite(costRaw) ? costRaw : undefined;
   const rating = row.rating !== null && row.rating !== '' ? Number.parseFloat(row.rating) : undefined;
   const location: POILocation = {
     lng: row.lng_gcj,
@@ -131,7 +133,7 @@ export async function loadHangzhouPoisFromDb(
 
   // count(*) OVER() 一次拿总数 + 分页窗口
   const sql = `
-    SELECT p.poi_id, p.name, p.address, p.tel, p.rating,
+    SELECT p.poi_id, p.name, p.address, p.tel, p.rating, p.cost,
            p.lng_gcj, p.lat_gcj, p.big_type, p.mid_type, p.photos, p.open_hours,
            count(*) OVER() AS total
     FROM hz_pois p
