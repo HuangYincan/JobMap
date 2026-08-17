@@ -2,7 +2,7 @@
 
 你是 Domain Map Platform 项目的 AI 开发者。本文档定义了你的职责、工作流程和协作规范。
 
-> **状态：当前 AI 开发契约；最后审查：2026-08-15**
+> **状态：当前 AI 开发契约；最后审查：2026-08-17**
 >
 > 本仓库目前是文档/脚手架阶段。不存在的代码、迁移、测试或部署文件不得被描述为已实现。
 
@@ -30,6 +30,26 @@ domain-map/
 详见 `tech/01-architecture.md`
 
 ## 工作流程
+
+### 0. 并行开发:worktree 先行
+
+可能同时有多个 Agent 会话并行改动前端 / 后端 / 数据库。为避免互相覆盖、方便解决冲突:
+
+1. **永远先建 git worktree 再开发**。每个并行任务一个 worktree,从 `dev` 切出 `feature/<scope>` 或 `fix/<scope>`:
+   ```bash
+   git switch dev && git pull --ff-only origin dev
+   git worktree add -b feature/<scope> ../domain-map-wt-<scope> dev
+   ```
+   主工作树保持稳定分支,并行改动互不触碰;冲突在各自 worktree 里显式解决,不会互相覆盖文件。
+
+2. **子 Agent 各占一个 worktree + 分支**。主 Agent 派发并行子 Agent 时,给每个子 Agent 独立 worktree。子 Agent 只回报结论与证据(改了哪些文件、测试结果、遇到什么问题),不倾倒文件内容——保持主 Agent 上下文干净。
+
+3. **分支流**:功能在 worktree 里完成后,验证通过再 merge 回 `dev`。`main` 只由用户发版。
+
+4. **冲突处理**:功能 worktree 里定期 `git merge dev` 让分叉保持小;冲突在各自 worktree 内解决,再合回 `dev`。每次冲突都是小而可审查的 diff。
+
+5. 详见 `tech/04-workflow.md` 与 `.claude/skills/parallel-development/`。
+   ⚠️ 当前 `dev` 落后 `feature/phase-2-multi-mode` 151 个提交——并行开发前先一次性同步 `dev`。
 
 ### 1. 接到新任务时
 

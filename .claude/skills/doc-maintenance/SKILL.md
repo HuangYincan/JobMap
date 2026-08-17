@@ -7,7 +7,7 @@ description: Keep Domain Map technical, role, and public-documentation claims sy
 
 Use this skill for every material change.
 
-- `README.md`, `agent.md`, and `tech/01-07` are current contracts.
+- `CLAUDE.md`, `README.md`, `agent.md`, and `tech/01-07` are current contracts.
 - `tech/roles/` contains evidence records; create them only when evidence exists.
 - `tech/zh-cn/` is planned public documentation until implemented.
 - `tech/00-*` documents are historical context and cannot override current contracts.

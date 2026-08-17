@@ -1,7 +1,7 @@
 # 04 - Contribution and Release Workflow
 
 > **Status:** current process contract
-> **Last reviewed:** 2026-08-15
+> **Last reviewed:** 2026-08-17
 
 ## Branch Policy
 
@@ -35,6 +35,45 @@ git switch -c feature/<scope>
 6. Open a PR targeting `dev` with test evidence, source-review evidence for third-party packages, and UI evidence where applicable.
 
 Use Conventional Commits: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`.
+
+## Parallel Development (worktrees)
+
+Multiple agent sessions may develop this repo concurrently (frontend, backend,
+database). To keep branches mergeable and the main working tree stable:
+
+1. **Always develop inside a worktree** — one per concurrent task, cut from `dev`:
+   ```bash
+   git switch dev && git pull --ff-only origin dev
+   git worktree add -b feature/<scope> ../domain-map-wt-<scope> dev
+   ```
+   The main working tree stays on a stable branch; parallel work never touches
+   it. Conflicts surface per-branch and are resolved by explicit merges, not by
+   clobbering a shared checkout.
+
+2. **Subagents each own a worktree + branch.** When the main agent fans out
+   parallel subagents, give each its own worktree. Subagents return conclusions
+   and evidence, not file dumps — the main agent's context stays clean.
+
+3. **Branch flow:** every task is `feature/<scope>` / `fix/<scope>` cut from
+   `dev`, developed in its worktree, merged back to `dev` when green. `main`
+   stays user-only release promotion.
+
+4. **Conflict resolution:** merge `dev` into the feature worktree frequently
+   (`git merge dev`) so divergences stay small; resolve conflicts locally in the
+   worktree, then merge back. Each conflict is a small, reviewable diff instead
+   of a monolithic integration crisis.
+
+5. **Cleanup:** `git worktree remove ../domain-map-wt-<scope>` after the branch
+   lands in `dev`.
+
+Claude Code: `EnterWorktree` / `ExitWorktree` manage `.claude/worktrees/`.
+Operational detail lives in `.claude/skills/parallel-development/SKILL.md`.
+
+> **Branch state (2026-08-17):** `dev` lags `feature/phase-2-multi-mode` by 151
+> commits — all of Phase 1/2 lives on the feature branch; `dev` holds only early
+> doc commits. Before starting new parallel work from `dev`, sync once:
+> `git switch dev && git merge feature/phase-2-multi-mode`, then cut feature
+> branches from the refreshed `dev`.
 
 ## Review Checklist
 
