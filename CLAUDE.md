@@ -6,6 +6,8 @@
 
 Next.js 15 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。多模式地图:Domain(高德 AMap)+ 工作(真实招聘 catalog)。**一切皆插件,一切数据皆可换源。**
 
+> 📋 **当前计划(2026-08-17):** 全国规模工作模式 —— [`tech/18-national-scale-plan.md`](./tech/18-national-scale-plan.md);并行 workstream 与 Agent prompt 见 `tech/roles/development/parallel-sessions/`。
+
 ## 并行开发铁律:worktree 先行
 
 **可能同时有多个 Agent 会话并行改前端 / 后端 / 数据库。规则:**

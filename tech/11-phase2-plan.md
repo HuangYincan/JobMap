@@ -579,3 +579,4 @@ Phase 2 完成后，Phase 3 将实现：
 - `tech/09-secondary-sidebar.md` - 二级侧控栏设计
 - `tech/10-search-filter.md` - 搜索筛选系统
 - `tech/05-milestones.md` - 里程碑追踪
+- `tech/18-national-scale-plan.md` - **全国规模工作模式 + 并行开发计划（2026-08-17）**。决策 D1（Domain 不落库直接调 API）/ A1（只展示在招真实岗位）/ B1（真实数据扩展优先）/ D2（全国预爬入库，先北上广深成都武汉）。并行 workstreams：national-db-schema / multi-city-data / llm-validation / work-viewport-lod。

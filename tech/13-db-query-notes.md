@@ -90,3 +90,14 @@ gist 已接上。行数涨到几百以后，单独的 bbox 也应切到 Index Sc
 4. `getSessionUser` already `DELETE`s expired sessions (and the missed token) on a cache miss; `consumeOtp` deletes expired challenges for that target. A periodic sweeper can still use `auth_sessions_expires_at_idx` later.
 
 在那之前，优化面是：保持 `Pool max=5`、账号路由不进 `public-cache`、公开读 30s TTL。
+
+## 全国规模扩展（2026-08-17，计划见 tech/18）
+
+工作模式全国化（北上广深、成都、武汉）后的 DB 设计要点（`011_national_scope`，WS1 实现）：
+
+- `companies.tier smallint`（1名企/2大厂/3其他）：LOD 按缩放级别过滤，`company_sites_tier_idx` + 复合 `(city_code, tier)`。
+- `company_sites.province` / `city_code`：按城市分片加载；`company_sites_city_idx`。
+- `geom_geog geography(Point,4326)` STORED + gist：用户位置半径距离用 `ST_DWithin(geom_geog, point_geog, radius_m)`，避免 4326 度数误差。
+- 视野裁剪仍 `geom && ST_MakeEnvelope` + `ST_DWithin`（已有）。
+- `positions` 部分索引 `WHERE status='open'`：alive 过滤只扫在招行。
+- 百万级预留：按 `province`/`city_code` 分区或聚合展示（缩到全国时按 tier 聚合计数）。

@@ -12,6 +12,8 @@ Every source must receive a review record before acquisition code is written or 
 
 Implemented (reviewed 2026-08-17): published `xiaozhao-radar` `jobs.json` mapping, and polite GET of curated official `careerUrl` HTML. See `etl/xiaozhao-radar.md` and `etl/official-career.md`.
 
+**National scope (2026-08-17, plan `tech/18`):** work mode extends from Hangzhou to 北京/上海/广州/深圳/成都/武汉. Pre-crawled source data is imported into Postgres (not real-time). Domain mode deliberately does **not** import AMap POIs (high volume, no raw POI source, quality variance) — it calls the AMap API directly and refreshes on user refresh only. Position authenticity (company ↔ site ↔ city ↔ applyUrl) is validated by a concurrent LLM script (`scripts/validate-positions-llm.mjs`, user-provided `LLM_API_KEY`); aggregate rows ("技术/设计/数据/运营…七大类") are flagged `aggregate` for splitting. New city/country sources still require a review record before acquisition.
+
 ## AMap Web services key (`AMAP_WEB_KEY`)
 
 - **Purpose:** server-side geocoding only — the key must never be printed or committed, and is read from env (`server/.env.local`).

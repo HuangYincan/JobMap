@@ -14,6 +14,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Freshness presentation proposal (awaiting approval): `tech/17-freshness-presentation-proposal.md`.
 - Parallel-development principle (worktree-first, user-stated): always develop in a git worktree cut from `dev` (`feature/` / `fix/`), merge back to `dev`; subagents each own a worktree. Persisted in `CLAUDE.md` (new always-on instruction), `agent.md`, `tech/04-workflow.md`, `.claude/skills/parallel-development/SKILL.md`, and project memory.
 - **dev sync (2026-08-17):** `feature/phase-2-multi-mode` merged into `dev` (fast-forward, no conflicts) — all of Phase 1/2 now lives on `dev`; new work cuts `feature/` / `fix/` branches from `dev`.
+- **National-scale plan + parallel workstreams (2026-08-17):** `tech/18-national-scale-plan.md` records the architecture decisions — D1 (Domain mode calls AMap API directly, no POI import; work mode is nationwide, pre-crawled into Postgres), A1 (only live real positions show), B1 (company↔site↔position authenticity, LLM concurrent validation), D2 (pre-crawl 北上广深成都武汉 first). Four parallel agent sessions defined with file boundaries + merge order: `tech/roles/development/parallel-sessions/` (ws1 national-db-schema / ws2 multi-city-data / ws3 llm-validation / ws4 work-viewport-lod).
 
 ### Fixed
 
