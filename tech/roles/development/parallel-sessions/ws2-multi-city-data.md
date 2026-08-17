@@ -1,6 +1,14 @@
 # Session Prompt — WS2: 多城市真实数据管线
 
 > 这是 Domain Map 并行开发的一个独立 Agent 会话。先读 `CLAUDE.md`、`agent.md`、`tech/18-national-scale-plan.md`、`tech/roles/data/etl/xiaozhao-radar.md`、`tech/04-workflow.md`,再开工。
+>
+> **第一步(必做):自己创建 worktree。** 主工作树在 `dev`,你是全新会话。开工前先:
+> ```bash
+> git switch dev && git pull --ff-only origin dev
+> git worktree add -b feature/multi-city-data ../dm-wt-ws2 dev
+> cd ../dm-wt-ws2
+> ```
+> 之后所有开发/提交都在该 worktree 内完成;**不要在主工作树(dev)上直接改文件**。worktree 是本会话的独立工作区,其他并行会话(WS1/WS3/WS4)各有各的,互不干扰。完成后由你负责移除。
 
 ## 背景
 

@@ -1,6 +1,14 @@
 # Session Prompt — WS4: 工作模式视口按需加载 + LOD + 在招呈现
 
 > 这是 Domain Map 并行开发的一个独立 Agent 会话。先读 `CLAUDE.md`、`agent.md`、`tech/18-national-scale-plan.md`、`tech/07-frontend-design-system.md`、`.claude/skills/frontend-component-dev/`,再开工。
+>
+> **第一步(必做):自己创建 worktree。** 主工作树在 `dev`,你是全新会话。开工前先:
+> ```bash
+> git switch dev && git pull --ff-only origin dev
+> git worktree add -b feature/work-viewport-lod ../dm-wt-ws4 dev
+> cd ../dm-wt-ws4
+> ```
+> 之后所有开发/提交都在该 worktree 内完成;**不要在主工作树(dev)上直接改文件**。worktree 是本会话的独立工作区,其他并行会话(WS1/WS2/WS3)各有各的,互不干扰。完成后由你负责移除。
 
 ## 背景
 

@@ -19,15 +19,22 @@ inside a git worktree; branch flow is `dev` → `feature/…`/`fix/…` → back
 
 ## Create a worktree
 
+A fresh agent session **creates its own worktree** as its first step — do not
+ask the user to pre-create it. From the repo root:
+
 ```bash
-# from repo root
+# from repo root, with dev current
 git switch dev && git pull --ff-only origin dev
 git worktree add -b feature/<scope> ../domain-map-wt-<scope> dev
 cd ../domain-map-wt-<scope>
 ```
 
-Claude Code: `EnterWorktree` creates a worktree under `.claude/worktrees/` on a
-fresh branch; `ExitWorktree` leaves or removes it.
+> ⚠️ Cut from `dev`, not the default branch. Claude Code's `EnterWorktree` tool
+> branches from `origin/<default-branch>` (here `main`) by default, which would
+> miss all Phase 1/2 work — prefer the explicit `git worktree add … dev`
+> command above, or configure a `dev` `baseRef` before using `EnterWorktree`.
+> All development and commits for this task happen inside the worktree; never
+> edit the main working tree directly.
 
 ## During development
 
