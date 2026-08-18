@@ -57,12 +57,13 @@ export function siteCityTarget(site: CompanySite): CityTarget {
   };
 }
 
-export function geocodeQueryForSite(companyName: string, site: CompanySite, city = '杭州'): string {
+export function geocodeQueryForSite(companyName: string, site: CompanySite): string {
   const address = site.location?.address?.trim();
   if (address) return `${address} ${companyName}`;
   const target = siteCityTarget(site);
   const hasOwnCity = !!((site as SiteWithCity).city ?? '').trim();
-  return `${hasOwnCity ? target.city : city} ${companyName} ${site.name}`.trim();
+  // No city field → legacy Hangzhou drops → 杭州市 fallback (siteCityTarget default).
+  return `${hasOwnCity ? target.city : '杭州市'} ${companyName} ${site.name}`.trim();
 }
 
 export function planSiteGeocode(companies: SourceCompany[]): GeocodePlan {
@@ -86,7 +87,7 @@ export function planSiteGeocode(companies: SourceCompany[]): GeocodePlan {
         companyName: company.name,
         siteId: site.id,
         siteName: site.name,
-        query: geocodeQueryForSite(company.name, site, target.city),
+        query: geocodeQueryForSite(company.name, site),
         city: target.city,
       });
     }
@@ -125,6 +126,22 @@ export interface ImportedSiteNeed {
   query: string;
 }
 
+/**
+ * AMap geocode query for an imported site row (DB fallback path). Street
+ * address wins; otherwise scope the company search to the row's own city
+ * (site city from the drop, last-resort 杭州 for legacy city-less rows).
+ */
+export function importedSiteQuery(
+  address: string | null,
+  city: string | null,
+  companyName: string,
+  siteName: string,
+): string {
+  const trimmed = address?.trim();
+  if (trimmed) return `${trimmed} ${companyName}`;
+  return `${city?.trim() || '杭州'} ${companyName} ${siteName}`;
+}
+
 /** Rows already in Postgres with no usable point. No pool → []. */
 export async function listImportedSitesNeedingGeocode(): Promise<ImportedSiteNeed[] | null> {
   const pool = getPool();
@@ -136,9 +153,11 @@ export async function listImportedSitesNeedingGeocode(): Promise<ImportedSiteNee
       company_name: string;
       site_name: string;
       address: string | null;
+      city: string | null;
+      province: string | null;
     }>(
       `SELECT s.id::text, c.slug AS company_slug, c.name AS company_name,
-              s.name AS site_name, s.address
+              s.name AS site_name, s.address, s.city, s.province
          FROM company_sites s
          JOIN companies c ON c.id = s.company_id
         WHERE s.lng IS NULL OR s.lat IS NULL
@@ -150,9 +169,7 @@ export async function listImportedSitesNeedingGeocode(): Promise<ImportedSiteNee
       companyName: row.company_name,
       siteName: row.site_name,
       address: row.address,
-      query: row.address?.trim()
-        ? `${row.address.trim()} ${row.company_name}`
-        : `杭州 ${row.company_name} ${row.site_name}`,
+      query: importedSiteQuery(row.address, row.city, row.company_name, row.site_name),
     }));
   } catch {
     return null;
