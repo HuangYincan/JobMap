@@ -202,7 +202,7 @@ test('fetchWorkViewportPage sends bounds + maxTier and keeps only alive position
     seenUrl = String(url);
     return { ok: true, json: async () => ({ results }) };
   };
-  const pois = await fetchWorkViewportPage(
+  const { pois } = await fetchWorkViewportPage(
     { bounds: VIEWPORT_BOX, maxTier: 1, page: 1, filters: { onlyOpen: 'true' } },
     fetcher
   );
@@ -221,17 +221,65 @@ test('fetchWorkViewportPage sends bounds + maxTier and keeps only alive position
   assert.equal(a.positions[0].id, 'p1');
 });
 
-test('fetchWorkViewportPage: no maxTier → filters unchanged; non-ok response → empty', async () => {
-  let seenUrl = '';
-  const fetcher = async (url) => {
-    seenUrl = String(url);
-    return { ok: false };
-  };
-  assert.deepEqual(
-    await fetchWorkViewportPage({ bounds: VIEWPORT_BOX, filters: { onlyOpen: 'true' } }, fetcher),
-    []
+test('fetchWorkViewportPage: 透出服务端 total(poi-loading D noMore 判定用)', async () => {
+  const fetcher = async () => ({
+    ok: true,
+    json: async () => ({ total: 137, results: [recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }])] }),
+  });
+  const page = await fetchWorkViewportPage({ bounds: VIEWPORT_BOX }, fetcher);
+  assert.equal(page.total, 137);
+});
+
+test('fetchWorkViewportPage: non-ok 响应抛错(错误 ≠ 没有更多,可重试,poi-loading A)', async () => {
+  const fetcher = async () => ({ ok: false });
+  await assert.rejects(
+    fetchWorkViewportPage({ bounds: VIEWPORT_BOX, filters: { onlyOpen: 'true' } }, fetcher),
+    /api\/pois failed/
   );
-  assert.ok(!seenUrl.includes('maxTier'));
+});
+
+test('loadWorkViewport: 用服务端 total 判 noMore(满页但已取完 → 到底)', async () => {
+  const seenPages = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const p = new URL(String(url), 'http://x').searchParams.get('page');
+    seenPages.push(p);
+    return {
+      ok: true,
+      json: async () => ({
+        total: 2, // 整查询只有 2 条:第 1 页满页但已取完
+        results: [
+          recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }]),
+          recruitmentPoi('b', [{ id: 'p2', title: '算法', type: 'social', status: 'open' }]),
+        ],
+      }),
+    };
+  };
+  try {
+    const { noMore } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 2,
+      maxPages: 4,
+      existing: [],
+    });
+    assert.deepEqual(seenPages, ['1']); // total 判到底,不白打后续页
+    assert.equal(noMore, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport: 失败抛错上抛,不置 noMore(可重试,poi-loading A)', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: false });
+  try {
+    await assert.rejects(
+      loadWorkViewport({ bounds: VIEWPORT_BOX, pageSize: 2, existing: [] }),
+      /api\/pois failed/
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('loadWorkViewport merges by id via injected fetcher', async () => {
