@@ -219,11 +219,22 @@ export function normalizeAMapPOI(raw: AMapPOIRecord): DomainPOI | null {
     cost,
     priceLevel: cost && cost > 0 ? Math.min(4, Math.ceil(cost / 100)) : undefined,
     openHours: raw.open_time || undefined,
-    tel: raw.tel || undefined,
+    tel: cleanTelCell(raw.tel),
     photos: photoUrls,
     reviewCount: Number.isFinite(reviewCount) && (reviewCount as number) > 0 ? reviewCount : reviews?.length,
     reviews,
   };
+}
+
+/** tel 清洗:空数组/空串/'[]' → undefined(AMap 空电话可能返回 [],truthy 会透传) */
+function cleanTelCell(tel: string | undefined): string | undefined {
+  if (Array.isArray(tel)) {
+    const first = tel[0];
+    const s = typeof first === 'string' ? first.trim() : '';
+    return s || undefined;
+  }
+  const s = (tel ?? '').trim();
+  return s && s !== '[]' && s !== '{}' ? s : undefined;
 }
 
 function parseAMapReviews(raw: AMapPOIRecord): PlaceReview[] | undefined {

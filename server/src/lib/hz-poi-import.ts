@@ -108,6 +108,14 @@ function parseNumericCell(value: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/** tel 列清洗:真实电话才取,'[]'/空串 → undefined(源 CSV 空电话是字面量 '[]',实测 69.3% 行) */
+export function parseTelCell(value: string | undefined): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === '[]' || trimmed === '{}') return undefined;
+  return trimmed;
+}
+
 /**
  * 分类 → tier(可见最小 zoom)。语义:zoom >= tier 时显示;0=永显,21=永隐。
  * 与 work 模式 tier(tech/19)同构。
@@ -177,7 +185,7 @@ export function cleanCsvRow(raw: Record<string, string>): HzPoiRow | null {
     poi_id: poiId,
     name,
     address: (raw.address || '').trim() || undefined,
-    tel: (raw.tel || '').trim() || undefined,
+    tel: parseTelCell(raw.tel),
     rating,
     cost,
     lngGcj: gcj.lng,
