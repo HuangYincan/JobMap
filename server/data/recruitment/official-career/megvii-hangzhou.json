@@ -41,19 +41,6 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.megvii.com/careers"
-    },
-    {
-      "externalId": "portal-megvii-campus",
-      "title": "校园招聘（官网投递）",
-      "siteId": "megvii-hangzhou-site",
-      "family": "campus",
-      "taxonomy": {
-        "family": "campus"
-      },
-      "status": "open",
-      "applySource": "official",
-      "applyUrl": "https://www.megvii.com/join_us/campus",
-      "retrievedAt": "2026-08-17"
     }
   ],
   "tier": 6,

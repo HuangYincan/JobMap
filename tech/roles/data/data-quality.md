@@ -99,6 +99,7 @@
 - **修正标题 3 条**(仅 title):`radar-52e776ddb58f`→「暑期实习(咨询顾问方向)」、`radar-a6a104980035`→「实习生(研究/投行方向)」、`radar-e49ce7364a1a`→「攻防渗透工程师」。
 - **标注聚合 3 条**(补 `aggregate: true`):`radar-ce7419500bcc`(度小满)、`radar-cf5a954e8f78`(曼伦)、`radar-a72738f8085f`(申万宏源研究)。
 - **DB 清理**：`positions` 表删除 2 行(博世/学而思不在 DB)——`portal-megvii-social`、`portal-tigermed-moka`,删除前已 SELECT 确认。
+- **2026-08-19 追加**:同型入口 `portal-megvii-campus`(megvii 校园招聘(官网投递),warn)经用户拍板一并移除——drop 对象删除 + DB 行删除(SELECT 确认);`megvii-hangzhou` 只剩真实岗位「前端开发工程师(2026 秋招)」。全量统计由 813 → **812 条**(下次全量校验落数)。
 - **全量重跑(2026-08-18)**:813 条 = **86 pass / 718 warn / 8 fail / 1 error**。
   - 修正的 3 条标题 titleReal 全部翻 true;讯飞 `radar-b871edcdf925`(原 error)被覆盖为 warn。
   - 剩余 8 fail 为同类「招聘计划/专项/入口名」标题(度小满/曼伦在 C 组已标注聚合——标注即交付物,不改标题不修校验器;其余 netease-hangzhou/vast/聂果基金/长亭/betta/deepseek 属同性质,留待后续拆解/决策)。
