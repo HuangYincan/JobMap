@@ -328,9 +328,13 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
         } else {
           await client.query(
             `UPDATE company_sites SET
-               address = $3, city = $4, province = $5, city_code = $6, lng = $7, lat = $8,
+               address = $3, city = $4, province = $5, city_code = $6,
+               lng = COALESCE($7, lng), lat = COALESCE($8, lat),
                career_url = $9, logo_url = $10, source_id = $11, updated_at = now()
              WHERE id = $1 AND company_id = $2`,
+            // COALESCE: 绝不因 drop 缺坐标而清空已 geocoded 的既有坐标
+            // (2026-08-19 事故:refresh-radar 重生成 drops 丢坐标后,import:apply
+            //  曾把 DB 里唯一的坐标覆盖成 NULL,地图 79 pins → 2)。
             [
               siteRowId,
               companyId,

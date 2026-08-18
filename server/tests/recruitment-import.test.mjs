@@ -383,3 +383,11 @@ test('import maps tier / category / site city / province / city_code onto the DB
   assert.match(store, /company\.tier \?\? TIER_DEFAULT/);
   assert.match(store, /company\.category \?\? 'other'/);
 });
+
+test('site upsert never nulls existing geocoded coords when the drop lacks them', () => {
+  // 2026-08-19 事故回归契约:import:apply 曾把 lng/lat 覆盖成 NULL,
+  // 地图 79 pins → 2。UPDATE 必须 COALESCE 保既有坐标。
+  const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+  const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
+  assert.match(store, /lng = COALESCE\(\$7, lng\), lat = COALESCE\(\$8, lat\)/);
+});

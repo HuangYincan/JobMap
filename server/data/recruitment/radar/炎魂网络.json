@@ -14,7 +14,9 @@
       "city": "杭州市",
       "province": "浙江省",
       "location": {
-        "address": "杭州"
+        "address": "滨江区伟业路3号德信AI产业园F座",
+        "lng": 120.157464,
+        "lat": 30.181077
       }
     }
   ],
