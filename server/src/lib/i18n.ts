@@ -167,6 +167,10 @@ export const translations = {
     zh: '尝试调整关键词或筛选条件',
     en: 'Try adjusting keywords or filters',
   },
+  pickCategory: {
+    zh: '选择类别开始浏览',
+    en: 'Pick a category to explore',
+  },
   widenSearch: {
     zh: '扩大搜索范围',
     en: 'Widen the search',
