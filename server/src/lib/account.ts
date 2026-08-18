@@ -10,7 +10,7 @@ import type { Language } from './i18n.ts';
 import type { MapMode } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
-export type AuthProvider = 'phone' | 'email' | 'github' | 'google' | 'x' | 'wechat';
+export type AuthProvider = 'phone' | 'email' | 'github' | 'google' | 'x' | 'wechat' | 'password';
 
 export type JobSeekingStatus = 'open' | 'casually' | 'not-looking';
 
@@ -40,11 +40,13 @@ export interface UserPreferences {
 export interface AccountUser {
   id: string;
   displayName: string;
-  /** 侧栏 <small>：手机或邮箱 */
+  /** 侧栏 <small>：手机、邮箱或用户名 */
   accountLabel: string;
   avatarUrl?: string;
   phone?: string;
   email?: string;
+  /** 密码登录账号(provider='password')的用户名 */
+  username?: string;
   provider: AuthProvider;
   preferences: UserPreferences;
 }

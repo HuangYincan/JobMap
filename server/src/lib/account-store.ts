@@ -20,6 +20,7 @@ import {
 } from './account.ts';
 import { getPool } from './db.ts';
 import { canonicalMode } from './modes.ts';
+import { hashPassword, verifyPassword } from './password.ts';
 import type { MapMode } from './types.ts';
 import {
   addHistory as memAddHistory,
@@ -39,8 +40,13 @@ import {
   savePlace as memSavePlace,
   updateUser as memUpdateUser,
   upsertIdentity as memUpsertIdentity,
+  registerWithPassword as memRegisterWithPassword,
+  loginWithPassword as memLoginWithPassword,
+  UsernameTakenError,
   DEMO_OTP_CODE,
 } from './session-store.ts';
+
+export { UsernameTakenError };
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -60,6 +66,7 @@ function asUser(row: {
   avatar_url: string | null;
   phone: string | null;
   email: string | null;
+  username?: string | null;
   preferences: UserPreferences | null;
   provider: AuthProvider | null;
 }): AccountUser {
@@ -69,10 +76,11 @@ function asUser(row: {
   return {
     id: String(row.id),
     displayName: row.display_name || defaultName(row.provider, phone, email),
-    accountLabel: phone || email || '',
+    accountLabel: phone || email || (row.username ?? ''),
     avatarUrl: row.avatar_url ?? undefined,
     phone,
     email,
+    username: row.username ?? undefined,
     provider: row.provider ?? 'email',
     preferences: mergePreferences(prefs),
   };
@@ -93,6 +101,8 @@ async function withDb<T>(fn: (pool: Pool) => Promise<T>, fallback: () => T | Pro
   try {
     return await fn(db);
   } catch (err) {
+    // 用户名冲突不是「库不可用」,必须原样抛出(409),不能回落内存。
+    if (err instanceof UsernameTakenError) throw err;
     console.warn('[account-store] postgres unavailable, using memory:', (err as Error).message);
     return fallback();
   }
@@ -144,6 +154,89 @@ export async function upsertIdentity(input: {
     );
     return asUser({ ...user, provider: input.provider });
   }, () => memUpsertIdentity(input));
+}
+
+/** 注册密码账号:subject = password:<username>;用户名冲突抛 UsernameTakenError(→409)。 */
+export async function registerWithPassword(
+  username: string,
+  password: string,
+  displayName?: string,
+): Promise<AccountUser> {
+  const name = username.trim();
+  const subject = `password:${name.toLowerCase()}`;
+  const prefs = JSON.stringify(DEFAULT_PREFERENCES);
+  return withDb(
+    async (db) => {
+      const existing = await db.query<{ id: string }>(
+        `SELECT id::text FROM users WHERE lower(username) = $1`,
+        [name.toLowerCase()],
+      );
+      if (existing.rows[0]) throw new UsernameTakenError(name);
+      const inserted = await db.query<{
+        id: string;
+        display_name: string | null;
+        avatar_url: string | null;
+        phone: string | null;
+        email: string | null;
+        username: string | null;
+        preferences: UserPreferences;
+      }>(
+        `INSERT INTO users (subject, display_name, username, password_hash, preferences)
+         VALUES ($1, $2, $3, $4, $5::jsonb)
+         RETURNING id::text, display_name, avatar_url, phone, email, username, preferences`,
+        [subject, displayName?.trim() || name, name, hashPassword(password), prefs],
+      ).catch((err: unknown) => {
+        if ((err as { code?: string }).code === '23505') throw new UsernameTakenError(name);
+        throw err;
+      });
+      const user = inserted.rows[0];
+      await db.query(
+        `INSERT INTO auth_identities (user_id, provider, subject)
+         VALUES ($1, 'password', $2)
+         ON CONFLICT (provider, subject) DO NOTHING`,
+        [user.id, name.toLowerCase()],
+      );
+      return asUser({ ...user, provider: 'password' });
+    },
+    () => memRegisterWithPassword(username, password, displayName),
+  );
+}
+
+/** 密码登录:失败统一返回 null(调用方 401,不泄露账号是否存在)。 */
+export async function loginWithPassword(username: string, password: string): Promise<AccountUser | null> {
+  const name = username.trim();
+  return withDb(
+    async (db) => {
+      const result = await db.query<{
+        id: string;
+        display_name: string | null;
+        avatar_url: string | null;
+        phone: string | null;
+        email: string | null;
+        username: string | null;
+        password_hash: string | null;
+        preferences: UserPreferences;
+        provider: AuthProvider | null;
+      }>(
+        `SELECT u.id::text, u.display_name, u.avatar_url, u.phone, u.email, u.username, u.password_hash, u.preferences, i.provider
+         FROM users u
+         LEFT JOIN LATERAL (
+           SELECT provider FROM auth_identities
+           WHERE user_id = u.id
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) i ON true
+         WHERE lower(u.username) = $1 AND u.password_hash IS NOT NULL`,
+        [name.toLowerCase()],
+      );
+      const row = result.rows[0];
+      if (!row || !row.password_hash) return null;
+      if (!verifyPassword(password, row.password_hash)) return null;
+      const { password_hash: _hash, ...rest } = row;
+      return asUser({ ...rest, provider: row.provider ?? 'password' });
+    },
+    () => memLoginWithPassword(username, password),
+  );
 }
 
 export async function createSession(userId: string): Promise<{ token: string; expiresAt: number }> {

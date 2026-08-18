@@ -12,7 +12,8 @@ export interface AuthModalProps {
   onSignedIn: () => void;
 }
 
-type AuthTab = "phone" | "email" | "other";
+type AuthTab = "phone" | "email" | "password" | "other";
+type PasswordMode = "login" | "register";
 type SocialProvider = Extract<AuthProvider, "github" | "google" | "wechat">;
 
 const SOCIAL: { id: SocialProvider; labelKey: "authGithub" | "authGoogle" | "authWechat" }[] = [
@@ -60,6 +61,17 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwdMode, setPwdMode] = useState<PasswordMode>("login");
+
+  const resetPasswordForm = () => {
+    setUsername("");
+    setPassword("");
+    setConfirmPassword("");
+    setPwdMode("login");
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -78,6 +90,7 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
       setSent(false);
       setBusy(false);
       setError(null);
+      resetPasswordForm();
     }
   }, [open]);
 
@@ -142,6 +155,71 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
     }
   };
 
+  const describeError = (code: string | undefined, fallback: string): string => {
+    switch (code) {
+      case "USERNAME_TAKEN":
+        return t("usernameTaken", lang);
+      case "INVALID_CREDENTIALS":
+        return t("invalidCredentials", lang);
+      case "PASSWORD_TOO_SHORT":
+        return t("passwordTooShort", lang);
+      case "PASSWORD_MISMATCH":
+        return t("passwordMismatch", lang);
+      case "INVALID_USERNAME":
+        return t("usernameInvalid", lang);
+      default:
+        return fallback;
+    }
+  };
+
+  const passwordSignIn = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/password/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), password }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(describeError(body?.code, body?.message || "login failed"));
+      onSignedIn();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "login failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const passwordRegister = async () => {
+    if (password.length < 8) {
+      setError(t("passwordTooShort", lang));
+      return;
+    }
+    if (confirmPassword !== password) {
+      setError(t("passwordMismatch", lang));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/password/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), password, confirmPassword }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(describeError(body?.code, body?.message || "register failed"));
+      onSignedIn();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "register failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className={styles.overlay} onClick={onClose} role="presentation">
       <div className={styles.orbA} aria-hidden="true" />
@@ -169,7 +247,7 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
 
         <div className={styles.form}>
           <nav className={styles.methods} aria-label={t("authMethods", lang)}>
-            {(["phone", "email", "other"] as const).map((id) => (
+            {(["phone", "email", "password", "other"] as const).map((id) => (
               <button
                 key={id}
                 type="button"
@@ -179,15 +257,83 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
                   setError(null);
                   setSent(false);
                   setCode("");
+                  resetPasswordForm();
                 }}
               >
-                {id === "phone" ? t("authPhone", lang) : id === "email" ? t("authEmail", lang) : t("authOther", lang)}
+                {id === "phone"
+                  ? t("authPhone", lang)
+                  : id === "email"
+                    ? t("authEmail", lang)
+                    : id === "password"
+                      ? t("authPassword", lang)
+                      : t("authOther", lang)}
               </button>
             ))}
           </nav>
           <h2 id={titleId} className={styles.srOnly}>{t("signIn", lang)}</h2>
 
-          {tab === "other" ? (
+          {tab === "password" ? (
+            <>
+              <label className={styles.field}>
+                <span>{t("usernameLabel", lang)}</span>
+                <input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  placeholder={t("usernamePlaceholder", lang)}
+                />
+              </label>
+              <label className={styles.field}>
+                <span>{t("passwordLabel", lang)}</span>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={pwdMode === "login" ? "current-password" : "new-password"}
+                  placeholder="••••••••"
+                />
+              </label>
+              {pwdMode === "register" && (
+                <label className={styles.field}>
+                  <span>{t("confirmPassword", lang)}</span>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </label>
+              )}
+              <button
+                type="button"
+                className={styles.login}
+                disabled={
+                  busy ||
+                  !username.trim() ||
+                  !password ||
+                  (pwdMode === "register" && !confirmPassword)
+                }
+                onClick={pwdMode === "login" ? passwordSignIn : passwordRegister}
+              >
+                {pwdMode === "login" ? t("signIn", lang) : t("register", lang)}
+              </button>
+              <div className={styles.authSwitchRow}>
+                <span>
+                  {pwdMode === "login" ? t("noAccountRegister", lang) : t("hasAccountLogin", lang)}
+                </span>
+                <button
+                  type="button"
+                  className={styles.authSwitchLink}
+                  onClick={() => {
+                    setPwdMode(pwdMode === "login" ? "register" : "login");
+                    setError(null);
+                  }}
+                >
+                  {pwdMode === "login" ? t("registerLink", lang) : t("loginLink", lang)}
+                </button>
+              </div>
+            </>
+          ) : tab === "other" ? (
             <div className={styles.socialGrid}>
               {SOCIAL.map((item) => (
                 <button

@@ -24,6 +24,7 @@ Cookie session. Guests get 401, never a fabricated list.
 - Search history and saved places are persistable catalog rows only (`lib/persistable.ts`). `POST /api/me/saved` with a domain snapshot → 400 `NOT_PERSISTABLE`. Guest Recent is browser-only.
 - Demo OTP is stubbed (`000000`). Keep `POST /api/auth/otp/send` for Aliyun later.
 - OAuth UI / demo map: GitHub / Google / WeChat via `POST /api/auth/oauth`. Do not add X. Existing `'x'` account rows stay valid.
+- Password accounts (2026-08-19): `POST /api/auth/password/register` `{ username, password, confirmPassword? }` → 201-less 200 `{ ok: true, user }` + session cookie; 400 `INVALID_USERNAME` / `PASSWORD_TOO_SHORT` / `PASSWORD_MISMATCH`, 409 `USERNAME_TAKEN`. `POST /api/auth/password/login` `{ username, password }` → `{ ok: true, user }` + cookie; 401 `INVALID_CREDENTIALS` (same message for unknown user vs wrong password). Username: 2-32 letters/digits/underscore/Chinese, unique case-insensitively (`users.username` + `lower()` partial unique index, migration 014). Hash: `scrypt` via `node:crypto` (`lib/password.ts`, format `scrypt$N$r$p$salt$hash`), never returned by `/api/auth/me`. Registration also writes an `auth_identities` row `(password, <username-lower>)`.
 - Do not introduce NextAuth / Clerk until an ADR. Demo identities already cover the Profile flow.
 
 ## Errors

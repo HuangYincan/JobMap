@@ -419,6 +419,66 @@ export const translations = {
     zh: '登录方式',
     en: 'Sign-in methods',
   },
+  authPassword: {
+    zh: '密码',
+    en: 'Password',
+  },
+  usernameLabel: {
+    zh: '账号',
+    en: 'Username',
+  },
+  usernamePlaceholder: {
+    zh: '用户名',
+    en: 'Username',
+  },
+  passwordLabel: {
+    zh: '密码',
+    en: 'Password',
+  },
+  confirmPassword: {
+    zh: '确认密码',
+    en: 'Confirm password',
+  },
+  register: {
+    zh: '注册',
+    en: 'Sign up',
+  },
+  noAccountRegister: {
+    zh: '没有账号?',
+    en: "Don't have an account?",
+  },
+  registerLink: {
+    zh: '立即注册',
+    en: 'Sign up now',
+  },
+  hasAccountLogin: {
+    zh: '已有账号?',
+    en: 'Already have an account?',
+  },
+  loginLink: {
+    zh: '去登录',
+    en: 'Sign in',
+  },
+  passwordTooShort: {
+    zh: '密码至少 8 位',
+    en: 'Password must be at least 8 characters',
+  },
+  passwordMismatch: {
+    zh: '两次密码不一致',
+    en: 'Passwords do not match',
+  },
+  usernameTaken: {
+    zh: '账号已存在',
+    en: 'Username already taken',
+  },
+  invalidCredentials: {
+    zh: '账号或密码错误',
+    en: 'Invalid username or password',
+  },
+  usernameInvalid: {
+    zh: '账号需为 2-32 位字母、数字、下划线或中文',
+    en: 'Username: 2-32 letters, digits, underscore or Chinese',
+  },
   resendCode: {
     zh: '重新发送',
     en: 'Resend',

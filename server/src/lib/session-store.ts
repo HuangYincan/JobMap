@@ -9,6 +9,7 @@
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import type { AccountUser, ApplicationRecord, AuthProvider, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from './account.ts';
 import { emptyPreferences, mergePreferences } from './account.ts';
+import { hashPassword, verifyPassword } from './password.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const OTP_TTL_MS = 10 * 60 * 1000;
@@ -18,6 +19,8 @@ export const DEMO_OTP_CODE = DEMO_OTP;
 
 interface StoredUser extends AccountUser {
   createdAt: number;
+  /** 仅 password provider 用户有,绝不随 publicUser 返回 */
+  passwordHash?: string;
 }
 
 interface StoredSession {
@@ -53,8 +56,8 @@ function signToken(): string {
   return `${raw}.${mac}`;
 }
 
-function accountLabel(input: { phone?: string; email?: string }): string {
-  return input.phone || input.email || '';
+function accountLabel(input: { phone?: string; email?: string; username?: string }): string {
+  return input.phone || input.email || input.username || '';
 }
 
 function defaultDisplayName(provider: AuthProvider, subject: string): string {
@@ -103,12 +106,51 @@ export function upsertIdentity(input: {
 }
 
 function publicUser(user: StoredUser): AccountUser {
-  const { createdAt: _createdAt, ...rest } = user;
+  const { createdAt: _createdAt, passwordHash: _passwordHash, ...rest } = user;
   return {
     ...rest,
     accountLabel: accountLabel(rest),
     preferences: mergePreferences(user.preferences),
   };
+}
+
+/** 用户名已被占用(内存路径)。account-store 对 Postgres 路径抛同一类型。 */
+export class UsernameTakenError extends Error {
+  constructor(username: string) {
+    super(`username taken: ${username}`);
+    this.name = 'UsernameTakenError';
+  }
+}
+
+/** 注册密码账号:subject = password:<username>,密码只存 scrypt 哈希。 */
+export function registerWithPassword(username: string, password: string, displayName?: string): AccountUser {
+  const name = username.trim();
+  const key = identityKey('password', name);
+  if (identities.has(key)) throw new UsernameTakenError(name);
+  const id = randomUUID();
+  const user: StoredUser = {
+    id,
+    displayName: displayName?.trim() || name,
+    accountLabel: name,
+    username: name,
+    passwordHash: hashPassword(password),
+    provider: 'password',
+    preferences: emptyPreferences(),
+    createdAt: Date.now(),
+  };
+  users.set(id, user);
+  identities.set(key, id);
+  history.set(id, []);
+  return publicUser(user);
+}
+
+/** 密码登录:失败统一返回 null(调用方 401「账号或密码错误」,不泄露哪个错)。 */
+export function loginWithPassword(username: string, password: string): AccountUser | null {
+  const key = identityKey('password', username);
+  const id = identities.get(key);
+  const user = id ? users.get(id) : undefined;
+  if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) return null;
+  return publicUser(user);
 }
 
 export function createSession(userId: string): { token: string; expiresAt: number } {
