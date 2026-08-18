@@ -400,6 +400,12 @@
   opacity: 1;
 }
 
+/* 展开态 + 已有查询文本:失焦后输入框也常显(query 非空时 placeholder 不占位、label 不渲染,
+   折叠态不挂 .sidebarOpen,仍只显示图标) */
+.sidebarOpen .searchBox input:not(:placeholder-shown) {
+  opacity: 1;
+}
+
 .searchBox:focus-within .searchLabel {
   opacity: 0;
   pointer-events: none;
