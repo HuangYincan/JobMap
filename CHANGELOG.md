@@ -21,6 +21,14 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
   行为不变。Docs:`tech/22-hangzhou-poi-local.md` §视口变化刷新。
 - **`portal-megvii-campus` 官网入口移除（用户拍板，B2.1 同型追加）。** megvii-hangzhou 的「校园招聘(官网投递)」入口与已删的 `portal-megvii-social` 同型（warn 非 fail）,drop 对象删除 + DB 行删除（SELECT 确认）;该文件只剩真实岗位「前端开发工程师(2026 秋招)」。全量统计 813 → 812 条（下次全量校验落数）。记录:`fix-plan-20260817.md` / `data-quality.md`。
 
+### Changed
+
+- **移动端抽屉 chrome(`fix/mobile-drawer-chrome`).**
+  - 全开抽屉高度从 `86svh` 拔高到**顶边=指南针中心**:CSS `.drawerFull`/`.mobileDrawer max-height` 同步为 `calc(100svh - max(12px, env(safe-area-inset-top)) - 20px)`;拖拽全开阈值从 `vh*0.86` 改为同口径 `vh - (max(12, safeAreaTop) + 20)`(safeAreaTop 在 pointerdown 用探测元素实测 `env(safe-area-inset-top)`),松手 snap 不再回弹错档;`.drawerHalf`/`.drawerMini` 不变。
+  - **全开隐藏指南针+比例尺**:`.topTools`(指南针 + 移动端定位按钮)在 `drawer==="full" || !!detailPoi` 时挂 `topToolsHidden`(opacity/visibility 过渡 200ms);`AMap.Scale` 提升到 `scaleControlRef` 由 effect 显隐,插件异步/resize 重建时同步初始态。
+  - **移动端新增「显示用户当前位置」按钮**:`.topTools` 指南针正下方,同款 `.toolButton` 40×40 + `box-shadow:var(--shadow)`,复用 `handleLocate`/`Icon name="locate"`/`t("locateMe")`;桌面端 `@media (min-width:768px)` 隐藏(右下角已有 `.mapControls` 定位按钮)。
+  - Docs:`tech/07` 抽屉/工具组/比例尺节、`tech/16` 本批问题与方案。
+
 ## 2026-08-18
 
 ### Added

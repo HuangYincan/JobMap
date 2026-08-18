@@ -702,6 +702,17 @@
   align-items: flex-end;
   gap: 8px;
   z-index: 5;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* 抽屉全开/详情打开时隐藏整组(指南针+定位);过渡 ~200ms。仅移动端:桌面端抽屉不可见,
+   detailPoi 在左侧栏打开,不能隐藏 top-right compass / locate */
+@media (max-width: 767px) {
+  .topToolsHidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 .toolButton {
@@ -915,6 +926,13 @@
   width: 18px;
 }
 
+/* 桌面端已有 .mapControls 的定位按钮,topTools 内定位按钮仅在移动端展示 */
+@media (min-width: 768px) {
+  .topTools .locateButton {
+    display: none;
+  }
+}
+
 .scale {
   align-items: center;
   color: rgba(31, 70, 63, 0.68);
@@ -1105,7 +1123,7 @@
     flex-direction: column;
     left: 0;
     z-index: 5;
-    max-height: 86svh;
+    max-height: calc(100svh - max(12px, env(safe-area-inset-top)) - 20px); /* 顶边=指南针中心 */
     min-height: 90px;
     padding: 0 16px max(12px, env(safe-area-inset-bottom));
     position: absolute;
@@ -1123,7 +1141,7 @@
   }
 
   .drawerFull {
-    height: 86svh;
+    height: calc(100svh - max(12px, env(safe-area-inset-top)) - 20px); /* 顶边=指南针中心 */
   }
 
   /* 拖拽态:跟手期间禁用缓动,避免手指延迟;结束后移除 */

@@ -67,17 +67,40 @@ function prefetchRail(panel: "layers" | "saved" | "recent" | "profile" | "auth" 
 type DrawerState = "mini" | "half" | "full";
 type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;
 
-/** 移动抽屉手势(跟手拖动):三态高度(mini px / half·full 比例 vh) */
+/** 移动抽屉手势(跟手拖动):三态高度(mini px / half·full 按 vh 计算) */
 const DRAWER_MINI_H = 96;
 const DRAWER_HALF_RATIO = 0.42;
-const DRAWER_FULL_RATIO = 0.86;
 /** 快滑判定阈值(px/s):超过则直接吸附到 full(上)/mini(下) */
 const DRAWER_FLING_V = 900;
 
+/** 移动端 topTools 工具按钮(指南针/定位)尺寸与顶部偏移 */
+const DRAWER_TOOL_BUTTON_H = 40;
+const DRAWER_TOP_MIN = 12;
+
+/** 运行时读取 env(safe-area-inset-top)(探测元素实测 padding-top);无安全区返回 0 */
+function readSafeAreaTop(): number {
+  if (typeof window === "undefined" || typeof document === "undefined") return 0;
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:fixed;top:0;left:-9999px;width:0;height:0;padding-top:env(safe-area-inset-top);pointer-events:none;visibility:hidden;";
+  document.documentElement.appendChild(probe);
+  const px = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+  probe.remove();
+  return px > 0 ? px : 0;
+}
+
+/** 指南针中心 Y(移动端 topTools 组):top 偏移 + 按钮高度一半 */
+function compassCenterY(safeTop: number): number {
+  return Math.max(DRAWER_TOP_MIN, safeTop) + DRAWER_TOOL_BUTTON_H / 2;
+}
+
+/** 全开抽屉高度:顶边 = 指南针中心 Y(对齐 CSS calc(100svh - max(12px, env(safe-area-inset-top)) - 20px)) */
+function drawerFullHeight(vh: number, safeTop: number): number {
+  return vh - compassCenterY(safeTop);
+}
+
 /** 慢拖松手:按当前位置取最近的三态 */
-function nearestDrawerState(h: number, vh: number): DrawerState {
-  const half = vh * DRAWER_HALF_RATIO;
-  const full = vh * DRAWER_FULL_RATIO;
+function nearestDrawerState(h: number, half: number, full: number): DrawerState {
   const d = (a: number) => Math.abs(h - a);
   return d(DRAWER_MINI_H) <= d(half) && d(DRAWER_MINI_H) <= d(full)
     ? "mini"
@@ -166,6 +189,7 @@ export function MapShell() {
   const distanceHandleRef = useRef<any>(null);
   const draggingDistanceRef = useRef(false);
   const satelliteLayerRef = useRef<any>(null);
+  const scaleControlRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pendingSearchFocus = useRef(false);
   const catalogRef = useRef<POI[]>([]);
@@ -248,12 +272,14 @@ export function MapShell() {
   const drawerDraggingRef = useRef(false);
   const drawerSuppressClickRef = useRef(false);
   const drawerStateRef = useRef<DrawerState>(drawer);
+  const drawerFullishRef = useRef(false);
   const drawerGestureRef = useRef<{
     startY: number;
     baseH: number;
     lastY: number;
     lastTime: number;
     vel: number;
+    safeTop: number;
   } | null>(null);
 
   const modeConfig = getMode(mode);
@@ -563,6 +589,7 @@ export function MapShell() {
         document.removeEventListener('mouseup', handleMouseUp);
         darkModeQuery.removeEventListener('change', handleThemeChange);
         window.removeEventListener('resize', handleResize);
+        scaleControlRef.current = null;
       };
 
       setMapStyle(initialStyle);
@@ -591,6 +618,9 @@ export function MapShell() {
           offset: isMobile ? [12, 22] : [90, 25], // 移动端避开顶部工具栏，桌面端避开侧边栏
         });
         map.addControl(scaleControl);
+        scaleControlRef.current = scaleControl;
+        // 同步初始显隐:抽屉全开/详情打开时比例尺隐藏(仅移动端)
+        if (drawerFullishRef.current && window.innerWidth <= 767) scaleControl.hide();
       });
 
       // 监听窗口大小变化，在桌面/移动端切换时更新比例尺位置
@@ -604,6 +634,8 @@ export function MapShell() {
           offset: isMobile ? [12, 22] : [90, 25],
         });
         map.addControl(scaleControl);
+        scaleControlRef.current = scaleControl;
+        if (drawerFullishRef.current && window.innerWidth <= 767) scaleControl.hide();
       };
       window.addEventListener('resize', handleResize);
 
@@ -1724,6 +1756,19 @@ export function MapShell() {
     drawerStateRef.current = drawer;
   }, [drawer]);
 
+  /** 抽屉全开或详情打开:隐藏 topTools(指南针+定位)与比例尺;half/mini 恢复 */
+  const drawerFullish = drawer === "full" || !!detailPoi;
+
+  useEffect(() => {
+    drawerFullishRef.current = drawerFullish;
+    const ctl = scaleControlRef.current;
+    if (!ctl) return;
+    // 仅移动端隐藏比例尺:桌面端抽屉不可见、detail 在左侧栏打开,不隐藏
+    if (window.innerWidth > 767) return;
+    if (drawerFullish) ctl.hide();
+    else ctl.show();
+  }, [drawerFullish]);
+
   /** 手势状态机 —— 跟手拖动:pointerdown 记录起点,pointermove 直接写 height(px),pointerup 按位置+速度决定三态 */
   const handleDrawerPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -1735,6 +1780,7 @@ export function MapShell() {
       lastY: event.clientY,
       lastTime: performance.now(),
       vel: 0,
+      safeTop: readSafeAreaTop(),
     };
     drawerDraggingRef.current = true;
     setDrawerDragging(true);
@@ -1761,9 +1807,11 @@ export function MapShell() {
     if (el) el.style.height = `${h}px`;
 
     // 内容可见性随手指所在档位切换(mini 只露搜索,越过档位即显示内容)
+    // 全开阈值 = 抽屉顶边到指南针中心(vh - max(12px, safe-area-top) - 20px),与 CSS drawerFull 对齐
     const vh = window.innerHeight;
-    const eff: DrawerState =
-      h >= vh * DRAWER_FULL_RATIO ? "full" : h >= vh * DRAWER_HALF_RATIO ? "half" : "mini";
+    const fullH = drawerFullHeight(vh, g.safeTop);
+    const halfH = vh * DRAWER_HALF_RATIO;
+    const eff: DrawerState = h >= fullH ? "full" : h >= halfH ? "half" : "mini";
     if (eff !== drawerStateRef.current) setDrawer(eff);
   };
 
@@ -1787,12 +1835,14 @@ export function MapShell() {
 
     const currentH = drawerRef.current?.getBoundingClientRect().height ?? g.baseH;
     const vh = window.innerHeight;
+    const fullH = drawerFullHeight(vh, g.safeTop);
+    const halfH = vh * DRAWER_HALF_RATIO;
     const vel = g.vel;
 
     // 内容栈优先:详情/JD 被下拉到过半(或快滑)→ 收到各自上一层;否则回弹 full
     if (detailPoi || mobileJd) {
       const popContent =
-        vel > DRAWER_FLING_V || currentH < (vh * (DRAWER_FULL_RATIO + DRAWER_HALF_RATIO)) / 2;
+        vel > DRAWER_FLING_V || currentH < (fullH + halfH) / 2;
       if (popContent) {
         if (mobileJd) {
           setMobileJd(null);
@@ -1809,13 +1859,13 @@ export function MapShell() {
     }
     if (mobileSheet !== "explore") {
       if (vel > DRAWER_FLING_V) setMobileSheet("explore");
-      else setDrawer(nearestDrawerState(currentH, vh));
+      else setDrawer(nearestDrawerState(currentH, halfH, fullH));
       return;
     }
     // 三态判定:向上快滑→full,向下快滑→mini,慢拖→就近档位
     if (vel < -DRAWER_FLING_V) setDrawer("full");
     else if (vel > DRAWER_FLING_V) setDrawer("mini");
-    else setDrawer(nearestDrawerState(currentH, vh));
+    else setDrawer(nearestDrawerState(currentH, halfH, fullH));
   };
 
   return (
@@ -2119,12 +2169,15 @@ export function MapShell() {
         </div>
       )}
 
-      <div className={styles.topTools}>
+      <div className={`${styles.topTools} ${drawerFullish ? styles.topToolsHidden : ""}`}>
         <button className={`${styles.toolButton} ${styles.compassButton}`} onClick={handleResetCompass} aria-label="Reset compass">
           <svg className={styles.compassNeedle} viewBox="0 0 20 20" width="28" height="28" style={{ transform: `rotate(${rotation}deg)` }}>
             <path d="M10 1 L12 10 L10 8.5 L8 10 Z" fill="#ff3b30" />
             <path d="M10 19 L8 10 L10 11.5 L12 10 Z" fill="#e5e5ea" />
           </svg>
+        </button>
+        <button className={`${styles.toolButton} ${styles.locateButton}`} onClick={handleLocate} aria-label={t("locateMe", lang)}>
+          <Icon name="locate" />
         </button>
       </div>
 

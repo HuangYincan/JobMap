@@ -471,6 +471,24 @@ useEffect(() => {
 
 ---
 
+## 2026-08-19: 移动端抽屉 chrome(全开高度→指南针中心 + 全开隐藏指南针/比例尺 + 移动端定位按钮)
+
+### 问题：抽屉全开与顶部控件重叠 / 移动端缺定位按钮
+
+**症状**：移动端抽屉全开(86svh)仍与右上角指南针、左上角比例尺区域重叠;移动端指南针下方没有「显示我的位置」按钮(桌面才有)。
+
+**方案**：
+- **全开高度**改为顶边=指南针中心:`calc(100svh - max(12px, env(safe-area-inset-top)) - 20px)`(40px 按钮一半=20px)。`.mobileDrawer` 的 `max-height` 必须同步为同一 calc,否则 max-height 会截断更高的全开抽屉。`.drawerHalf`/`.drawerMini` 不变。
+- **拖拽一致性**:JS 侧原 `DRAWER_FULL_RATIO=0.86` 的比率阈值无法表达「顶边到指南针中心」,改为 `drawerFullHeight(vh, safeTop) = vh - (max(12, safeTop) + 20)`。`safeTop` 在 pointerdown 时用探测元素实测 `env(safe-area-inset-top)`(读 `getComputedStyle(paddingTop)`),存在手势 ref 里,pointermove/松手共用;取不到返回 0。拖拽阈值与 CSS 高度对齐后,松手 snap 不回弹到错误档位。
+- **全开隐藏指南针+比例尺**:`.topTools` 是 `.mobileDrawer` 的兄弟,不能靠兄弟选择器 → 在 map-shell.tsx 条件化 className(`topToolsHidden`,opacity/visibility ~200ms 过渡);比例尺是命令式 `AMap.Scale`,需把局部变量提升到 `scaleControlRef`,新增 effect 在 `drawer==="full" || !!detailPoi` 时 `hide()`/否则 `show()`,空指针守卫;插件异步加载与 resize 重建控件时用 `drawerFullishRef` 同步一次初始显隐。**⚠ 必须限移动端**:`detailPoi` 在桌面端也成立(左侧栏打开详情),若不限视口会把桌面 top-right compass / bottom-left scale 一并隐藏 → `.topToolsHidden` 包 `@media (max-width:767px)`,scale 显隐 effect 与插件/resize 同步均加 `window.innerWidth <= 767` 守卫。
+- **移动端定位按钮**:`.topTools` 内 compass 后加同款 `.toolButton .locateButton`,移动端 40×40(继承 `.topTools>.toolButton`)+ `box-shadow:var(--shadow)`;桌面端 `@media (min-width:768px){ .topTools .locateButton{ display:none } }`(避免与右下角 `.mapControls` 定位按钮重复)。
+
+**修改文件**:`server/src/components/map-shell.tsx`、`server/src/components/map-shell.module.css`
+
+**测试验证**：typecheck 通过;`npm test` 全绿;文档 `tech/07` 抽屉/工具组/比例尺节同步。
+
+---
+
 ## 相关文档
 
 - 设计系统：`tech/07-frontend-design-system.md`

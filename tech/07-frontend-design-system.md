@@ -193,9 +193,9 @@
 
 **状态 3: 全展开**
 - 位置:`bottom: 0`
-- 高度:`~85vh` (留出顶部空隙显示地图)
+- 高度:**顶边 = 指南针中心 Y**(`calc(100svh - max(12px, env(safe-area-inset-top)) - 20px)`),即全开时抽屉顶边对齐指南针中心,指南针/比例尺随之隐藏(见「右上角工具组」)
 - 内容:搜索框 + 完整列表(大厂/收藏/插件/历史/设置)+ 用户头像(底部)
-- 与顶部边距:`~8vh` (约等于状态栏高度 + 安全区域)
+- 与顶部边距:指南针中心高度(`max(12px, env(safe-area-inset-top)) + 20px`)
 - 滚动:内容区域可滚动,搜索框和用户头像固定
 
 ```
@@ -225,7 +225,7 @@
 
 2. **松手判定(位置 + 速度)**:
    - 速度 EMA 由 pointermove 采样(px/s),阈值 `DRAWER_FLING_V = 900px/s`。
-   - 向上快滑(vel < −900)→ `full`;向下快滑(vel > +900)→ `mini`;慢拖 → 按当前位置就近三态(中点分段)。
+   - 向上快滑(vel < −900)→ `full`;向下快滑(vel > +900)→ `mini`;慢拖 → 按当前位置就近三态(中点分段)。全开阈值 = 抽屉顶边到指南针中心(`vh − (max(12px, safe-area-top) + 20px)`,safe-area-top 由手势起点探测 `env(safe-area-inset-top)` 解析值),与 CSS `drawerFull` 高度对齐,松手 snap 不回弹。
    - 内容栈优先:详情/JD 打开时,下拉过半(或快滑)→ 收内容(关 JD→`full` / 关详情→`half`),否则回弹 `full`;非 explore 子页快下拉 → 回 explore。
    - 点按(位移 ≤ 8px)保留 onClick 的 cycle/内容弹出逻辑,拖动后抑制 click。
 
@@ -253,7 +253,7 @@
 
 **拖动把手（live）**:
 
-- Sheet: mini `96px` / half `42svh` / full `86svh`, frost `--soft-strong`.
+- Sheet: mini `96px` / half `42svh` / full 顶边=指南针中心 (`calc(100svh - max(12px, env(safe-area-inset-top)) - 20px)`), frost `--soft-strong`.
 - Grabber pill: mini `42×4`, half/full `64×6`.
 - Shared gap token `--drawer-handle-gap: 8px` on `.mobileDrawer` — handle `padding-bottom` is the same in domain and work. Do not let `.drawerContent` top padding change handle↔toolbar / handle↔search. (The filter-chip row was removed 2026-08-18; work mode no longer renders chips above the list.)
 - Swipe: 位移 ≤ 8px 视为点按(cycle),超过即拖拽并抑制 click。`touch-action: none` on the grabber, not the list.
@@ -267,6 +267,8 @@
 - 尺寸:`48×48px`
 - 样式:液态玻璃圆形
 - 功能:点击恢复正北方向
+
+**移动端 topTools(≤767px)**:指南针缩小为 `40×40px`,其正下方新增「显示用户当前位置」定位按钮(同尺寸、gap 8px、复用桌面 `handleLocate` / `Icon name="locate"` / `t("locateMe")`);桌面端该定位按钮隐藏(右下角 `.mapControls` 已有同功能按钮)。**抽屉全开或详情打开时整组 topTools 隐藏**(opacity/visibility 过渡 ~200ms),返回 half/mini 恢复。
 
 **底图选择器**:
 - 初始状态:小 Logo(高德/Mapbox),位置:`top: 12px; right: 72px`
@@ -290,12 +292,13 @@
 
 #### 5. 比例尺(展示性,桌面端 + 移动端)
 
-**位置**:`bottom: 24px; left: 侧边栏宽度 + 24px`
+**位置**:`bottom: 24px; left: 侧边栏宽度 + 24px`(移动端 `LT` offset [12,22])
 **样式**:
 - 不显眼,半透明
 - 文字:`12px, rgba(0,0,0,0.4)` / `rgba(255,255,255,0.4)`
 - 无背景(或极淡背景)
 - 高度:`20px`
+**显隐(live)**:命令式 `AMap.Scale` 控件;移动端抽屉全开/详情打开时 `hide()`,返回 half/mini `show()`(effect + ref 持柄,缩放/模式切换不覆盖)。
 
 ---
 
