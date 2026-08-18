@@ -1101,7 +1101,7 @@
     position: absolute;
     right: 0;
     overflow: visible;
-    transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: height 0.32s cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   .drawerMini {
@@ -1114,6 +1114,12 @@
 
   .drawerFull {
     height: 86svh;
+  }
+
+  /* 拖拽态:跟手期间禁用缓动,避免手指延迟;结束后移除 */
+  .drawerDragging {
+    transition: none !important;
+    will-change: height;
   }
 
   .drawerHandle {
@@ -1625,5 +1631,12 @@
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.1);
     box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+  }
+}
+
+/* 无障碍:减少动态效果时抽屉吸附瞬时完成,不做过渡动画 */
+@media (prefers-reduced-motion: reduce) {
+  .mobileDrawer {
+    transition: none !important;
   }
 }
