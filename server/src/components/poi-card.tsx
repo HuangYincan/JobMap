@@ -163,7 +163,11 @@ export function POICard({
       aria-selected={selected}
       aria-label={buildAriaLabel(poi, lang)}
       style={styleVars}
-      onClick={() => onClick?.(poi)}
+      onClick={(e) => {
+        // 卡片自身点击不冒泡到 cardSlot/list,避免触发 onDeselect 取消选中(交互 2)
+        e.stopPropagation();
+        onClick?.(poi);
+      }}
       onKeyDown={handleKeyDown}
     >
       {isDomainPOI(poi) ? (

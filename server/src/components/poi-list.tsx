@@ -15,6 +15,8 @@ export interface POIListProps {
   highlightedId?: string | null;
   onSelect?: (poi: POI) => void;
   onHover?: (id: string | null) => void;
+  /** 仅移动端：点卡片边缘空隙/列表空白处取消选中（桌面不传，行为不变） */
+  onDeselect?: () => void;
   loading?: boolean;
   empty?: boolean;
   lang?: Language;
@@ -40,6 +42,7 @@ export function POIList({
   highlightedId,
   onSelect,
   onHover,
+  onDeselect,
   loading = false,
   empty = false,
   lang = "zh",
@@ -97,6 +100,7 @@ export function POIList({
       tabIndex={-1}
       aria-label={lang === "zh" ? "POI 搜索结果" : "POI search results"}
       aria-busy={loading}
+      onClick={onDeselect ? () => onDeselect() : undefined}
     >
       {loading ? (
         <>
@@ -151,6 +155,14 @@ export function POIList({
               style={{ "--index": i % 8 } as CSSVarStyle}
               onMouseEnter={() => onHover?.(poi.id)}
               onMouseLeave={() => onHover?.(null)}
+              onClick={
+                onDeselect
+                  ? (e) => {
+                      onDeselect();
+                      e.stopPropagation();
+                    }
+                  : undefined
+              }
             >
               <POICard
                 poi={poi}
