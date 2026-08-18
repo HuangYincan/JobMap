@@ -37,7 +37,7 @@ export const MAP_CONTROLS = {
  */
 export const SIDEBAR = {
   COLLAPSED_WIDTH: 58,   // px, icon-only view
-  EXPANDED_WIDTH: 276,   // px, full sidebar with text
+  EXPANDED_WIDTH: 215,   // px, full sidebar with text
 
   // Animation timing
   WIDTH_TRANSITION_MS: 350,

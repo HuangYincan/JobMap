@@ -18,7 +18,7 @@
 }
 
 .cluster.shifted {
-  left: 294px; /* 276 + 12 + 6 */
+  left: 233px; /* 215 + 12 + 6 */
 }
 
 @media (max-width: 767px) {
@@ -51,9 +51,7 @@
   transform-origin: left center;
 }
 
-.sidebar.detailMode {
-  width: 420px;
-}
+/* 详情与列表同宽 380px：detailMode 类在 TSX 中保留，不再扩展宽度 */
 
 @keyframes slide-in {
   from {
@@ -276,30 +274,6 @@
   color: var(--muted, #6c7882);
 }
 
-.chipRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 14px 8px;
-}
-
-.filterChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid color-mix(in srgb, var(--blue, #007aff) 28%, transparent);
-  background: color-mix(in srgb, var(--blue, #007aff) 10%, transparent);
-  color: var(--blue-ink, #0062cc);
-  border-radius: 999px;
-  padding: 4px 9px;
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.filterChip:hover {
-  background: color-mix(in srgb, var(--blue, #007aff) 16%, transparent);
-}
-
 .clearButton {
   border: none;
   background: transparent;
@@ -371,10 +345,17 @@
   border: 2px solid var(--soft-strong, rgba(255, 255, 255, 0.84));
 }
 
+/* 筛选 + 结果 + 列表共享滚动容器：headerBar/searchRow 固定在外 */
+.scrollRegion {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 /* 筛选面板（折叠动画） */
 .filterPanel {
   padding: 0 14px 8px;
-  flex: 0 0 auto;
   animation: panel-in 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -392,7 +373,6 @@
 /* 结果标题 */
 .resultHeader {
   padding: 4px 16px 8px;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;

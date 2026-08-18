@@ -9,7 +9,7 @@ import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap, suggestionToDomainPoi } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { applyTagSuggestion, activeFilterChips, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, removeFilterChip, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
+import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchSearchSuggest } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
@@ -1026,10 +1026,6 @@ export function MapShell() {
       }),
     [catalog, query, filters, sort, distanceOrigin]
   );
-  const filterChips = useMemo(
-    () => activeFilterChips(filters, modeConfig.filters),
-    [filters, modeConfig.filters],
-  );
   catalogRef.current = catalog;
   poisRef.current = pois;
 
@@ -1645,6 +1641,19 @@ export function MapShell() {
       {/* 左侧主导航栏（保留） */}
       <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ""}`} aria-label="Map navigation">
         <div className={styles.menuWrap}>
+          <div className={styles.brandRow}>
+            <span className={styles.brandLogo} aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 21s-6-5.1-6-10a6 6 0 1 1 12 0c0 4.9-6 10-6 10Z" />
+                <circle cx="12" cy="11" r="2.2" />
+              </svg>
+            </span>
+            <span className={styles.brandName}>{t("mapLabel", lang)}</span>
+            <svg className={styles.betaPill} viewBox="0 0 42 19" aria-hidden="true">
+              <rect width="42" height="19" rx="9.5" />
+              <text x="21" y="13" textAnchor="middle" fontSize="9.5" fontWeight="800" letterSpacing="0.6">BETA</text>
+            </svg>
+          </div>
           <button
             className={styles.menuButton}
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -1664,6 +1673,7 @@ export function MapShell() {
           onClick={openSidebarSearch}
         >
           <Icon name="search" />
+          {!query && <span className={styles.searchLabel}>{t('search', lang)}</span>}
           <input
             ref={searchInputRef}
             type="search"
@@ -2267,22 +2277,6 @@ export function MapShell() {
                     resultCount={pois.length}
                     lang={lang}
                   />
-                </div>
-              )}
-              {filterChips.length > 0 && (
-                <div className={styles.mobileChips} aria-label={t("activeFilters", lang)}>
-                  {filterChips.map((chip) => (
-                    <button
-                      key={chip.id}
-                      type="button"
-                      className={styles.mobileChip}
-                      onClick={() => setFilters(removeFilterChip(filters, chip))}
-                      aria-label={`${t("removeFilter", lang)} ${chip.title}`}
-                    >
-                      {chip.title}
-                      <span aria-hidden="true">×</span>
-                    </button>
-                  ))}
                 </div>
               )}
               <div className={styles.mobileMeta}>
