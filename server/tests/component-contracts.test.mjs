@@ -245,6 +245,31 @@ test('map shell scale control: cleanup 接线 + 销毁保护 + 无双 addControl
   assert.match(shell, /addScaleControl/); // 统一创建函数
 });
 
+test('domain category gating (poi-category-loading): 门控/驱动加载/空态提示/空批次保护', () => {
+  const shell = src('components/map-shell.tsx');
+  const list = src('components/poi-list.tsx');
+  const sidebar = src('components/secondary-sidebar.tsx');
+  const i18n = src('lib/i18n.ts');
+  // 主加载门控:domain 无分类选择 → 默认不加载(搜索豁免)
+  assert.match(shell, /if \(!query && !filters\.category\)/);
+  // 视口 loader 门控:无分类 → 移动/缩放不拉取
+  assert.match(shell, /if \(!v\.query && !v\.filters\?\.category\)/);
+  // load effect 依赖分类(选类/换类触发重拉;minRating/price 仍纯客户端)
+  assert.match(shell, /filters\.category\]\);/);
+  // filters 下行到数据源(分类驱动加载:主加载 + 视口加载两处)
+  assert.match(shell, /filters, \/\/ 分类驱动加载/);
+  assert.match(shell, /filters: v\.filters, \/\/ 分类驱动加载/);
+  // 空批次保护(work + domain 视口替换各一处;已有非空目录时空批次保留旧目录)
+  const guards = shell.match(/batch\.length === 0 && catalogRef\.current\.length > 0/g);
+  assert.ok(guards && guards.length >= 2, 'work + domain 两处空批次保护');
+  // 空态提示:新 i18n 键 + POIList emptyTitle 接线
+  assert.match(i18n, /pickCategory: \{[\s\S]*选择类别开始浏览[\s\S]*Pick a category to explore/);
+  assert.match(list, /emptyTitle\?: string/);
+  assert.match(list, /emptyTitle \?\? t\("noResults", lang\)/);
+  assert.match(sidebar, /emptyTitle=\{domainNoCategory \? t\("pickCategory", lang\) : undefined\}/);
+  assert.match(sidebar, /config\.kind === "domain" && !filters\.category && !query\.trim\(\)/);
+});
+
 test('SecondarySidebar resultHeader: 加载更多按钮 + 错误重试接线(poi-loading)', () => {
   const sidebar = src('components/secondary-sidebar.tsx');
   assert.match(sidebar, /onLoadMore\?: \(\) => void/);

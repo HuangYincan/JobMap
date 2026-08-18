@@ -724,6 +724,24 @@ export function MapShell() {
   }, []);
 
   // ---- Phase 2: 累计池 + 钉死原点；移动地图不重搜 ----
+
+  /** 分类门控(poi-category-loading):domain 上次已加载的分类(浏览态)。 */
+  const prevDomainCategoryRef = useRef<string | undefined>(undefined);
+  // 分类从「过滤已加载目录」变为「驱动加载」:domain 浏览(无关键词)时
+  // 切分类 → 立即清空目录 + 清缓存 + offset 归零(不等防抖);load effect
+  // 依赖 filters.category,下一步按新分类全量重拉当前视图。minRating/price
+  // 仍纯客户端过滤,不触发重拉。搜索(query)豁免,不受分类门控。
+  useEffect(() => {
+    if (canonicalMode(mode) !== 'domain' || query) return;
+    const category = typeof filters.category === 'string' ? filters.category : undefined;
+    if (prevDomainCategoryRef.current === category) return;
+    prevDomainCategoryRef.current = category;
+    catalogRef.current = [];
+    setCatalog([]);
+    clearModeCache(mode);
+    setPageOffset(0); // 分类全量循环忽略 offset;归零避免旧 offset 触发多余加载
+  }, [mode, query, filters.category, pageOffset]);
+
   useEffect(() => {
     const signal = { cancelled: false };
 
@@ -831,27 +849,35 @@ export function MapShell() {
           // 与 domain 的 cap 语义分离——「没有更多」= 数据源到底,不是 3000 封顶。
           noMore = result.noMore;
         } else {
-          const result = await fetchPOIsForMode({
-            mode,
-            query: query || undefined,
-            center: origin,
-            zoom: view.zoom,
-            bounds: view.bounds ?? undefined,
-            existing: mode === "domain" ? catalogRef.current : undefined,
-            addCap: mode === "domain" ? DOMAIN_BATCH_SIZE : MORE_PAGE_SIZE,
-            pageOffset,
-            signal,
-            onBatch,
-          });
-          data = result.pois;
-          // 数据耗尽判定(仅 domain):优先用服务端 total(domain-local 带 total,
-          // 「过滤导致可见列表不变」不再误判 noMore,poi-loading D);
-          // 无 total 的降级路径(高德回退/关键词)回退本地长度比较:本轮零新增
-          // 且此前有数据 → 哨兵停止。覆盖:稀疏视野(<1000)、高德回退窗口耗尽、
-          // 关键词无更多页。否则哨兵会无限空转(每轮发请求但 0 新增)。
-          noMore =
-            result.noMore ??
-            (canonicalMode(mode) === "domain" && beforeLen > 0 && data.length <= beforeLen);
+          // 分类门控(poi-category-loading):domain 无分类选择 → 默认不加载,
+          // 目录保持空(地图无 domain marker、列表空态);搜索(query)豁免。
+          if (!query && !filters.category) {
+            data = [];
+            noMore = true;
+          } else {
+            const result = await fetchPOIsForMode({
+              mode,
+              query: query || undefined,
+              filters, // 分类驱动加载(poi-category-loading):filters 下行到数据源
+              center: origin,
+              zoom: view.zoom,
+              bounds: view.bounds ?? undefined,
+              existing: mode === "domain" ? catalogRef.current : undefined,
+              addCap: mode === "domain" ? DOMAIN_BATCH_SIZE : MORE_PAGE_SIZE,
+              pageOffset,
+              signal,
+              onBatch,
+            });
+            data = result.pois;
+            // 数据耗尽判定(仅 domain):优先用服务端 total(domain-local 带 total,
+            // 「过滤导致可见列表不变」不再误判 noMore,poi-loading D);
+            // 无 total 的降级路径(高德回退/关键词)回退本地长度比较:本轮零新增
+            // 且此前有数据 → 哨兵停止。覆盖:稀疏视野(<1000)、高德回退窗口耗尽、
+            // 关键词无更多页。否则哨兵会无限空转(每轮发请求但 0 新增)。
+            noMore =
+              result.noMore ??
+              (canonicalMode(mode) === "domain" && beforeLen > 0 && data.length <= beforeLen);
+          }
         }
         if (signal.cancelled) return;
         if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期结果
@@ -895,11 +921,13 @@ export function MapShell() {
       signal.cancelled = true;
       clearTimeout(timer);
     };
-    // 刻意不依赖 mapCenter / zoom / mapBounds / filters：平移、缩放、筛选都不重搜。
+    // 刻意不依赖 mapCenter / zoom / mapBounds / filters：平移、缩放、minRating/price
+    // 筛选都不重搜。唯一例外 filters.category(分类门控,poi-category-loading):
+    // domain 选类/换类必须触发按类全量加载;minRating/price 仍纯客户端过滤。
     // work 模式的首屏/刷新按当前视野(bounds+maxTier)取数;视野变化后的按需加载
     // 由下方 moveend/zoomend 防抖 effect 负责。
     // 使用原始值而非对象引用，避免 React 误判依赖变化
-  }, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin?.lng, searchOrigin?.lat, userLocation?.lng, userLocation?.lat]);
+  }, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin?.lng, searchOrigin?.lat, userLocation?.lng, userLocation?.lat, filters.category]);
 
   // ---- 工作模式视口按需加载(仅 work;Domain 保持刷新才更新)----
   useEffect(() => {
@@ -963,6 +991,9 @@ export function MapShell() {
                 // 模式守卫:切换模式后,旧模式在飞的批次(公司/地图 POI)不得
                 // 落进新模式的 catalog,否则工作公司会混入地图列表与 marker
                 if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
+                // 空批次保护(2026-08-19,w5 纵深防御):已有非空目录时,新批次
+                // 为空 → 保留旧目录(防 setBounds/flyTo 程序化相机移动把目录冲空)
+                if (batch.length === 0 && catalogRef.current.length > 0) return;
                 catalogRef.current = batch;
                 setCatalog(batch);
                 writeModeCache({
@@ -988,6 +1019,12 @@ export function MapShell() {
         // Domain:随视角变化刷新(替换+淡入)——按 live bounds 重新取第一批,
         // existing=[] 清空旧列表,offset 归零(新视野 = 新一批)。
         if (mode === "domain") {
+          // 分类门控(poi-category-loading):无分类选择 → 视口移动不拉取
+          // (目录保持空、无 domain marker);搜索(query)豁免。已选分类 →
+          // 按当前选中分类重拉新视图(filters 下行,数据源按类过滤)。
+          if (!v.query && !v.filters?.category) {
+            return;
+          }
           // 新视野重新分页:清除上一视野的「没有更多结果」状态
           noMoreRef.current = false;
           setNoMoreData(false);
@@ -999,9 +1036,10 @@ export function MapShell() {
           if (v.pageOffset !== 0) skipFetchRef.current = true;
           setPageOffset(0);
           try {
-            await fetchPOIsForMode({
+            const result = await fetchPOIsForMode({
               mode,
               query: v.query || undefined,
+              filters: v.filters, // 分类驱动加载(poi-category-loading)
               center: v.searchOrigin ?? undefined,
               zoom,
               bounds,
@@ -1011,6 +1049,9 @@ export function MapShell() {
               onBatch: (batch) => {
                 // 模式守卫:同上——域名刷新批次不得落进切换后的工作模式
                 if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
+                // 空批次保护(2026-08-19,w5 纵深防御):已有非空目录时,新批次
+                // 为空 → 保留旧目录(防 setBounds/flyTo 程序化相机移动把目录冲空)
+                if (batch.length === 0 && catalogRef.current.length > 0) return;
                 catalogRef.current = batch;
                 setCatalog(batch);
                 writeModeCache({
@@ -1024,6 +1065,12 @@ export function MapShell() {
                 });
               },
             });
+            // 分类全量加载带 total:新视野是否已到底由循环结果决定
+            // (短页/total 取尽;硬顶 1000 时 noMore=false,由 atCap 停止哨兵)
+            if (result.noMore !== undefined) {
+              noMoreRef.current = result.noMore;
+              setNoMoreData(result.noMore);
+            }
           } catch (err) {
             console.warn("[map-shell] domain viewport load failed:", err);
           }

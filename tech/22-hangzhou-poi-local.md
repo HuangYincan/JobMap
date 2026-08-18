@@ -107,6 +107,10 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
   `name ILIKE`);本地 0 命中(如搜「北京天安门」)才回退高德 1 次
 - **杭州内 + 浏览**:本地分页,每批 `DOMAIN_BATCH_SIZE=50`,累计
   `DOMAIN_POI_HARD_CAP=1000`(`mergePoisById` 按 id 去重)
+- **杭州内 + 浏览 + 已选分类**(2026-08-19 分类门控):`categories=big_type`
+  下推 + **全量循环**——每页 `limit=300`(API 上限),offset 0→300→600→900,
+  短页 / 服务端 total 取尽即停;offset 到 API 上限(1000)或累计
+  `DOMAIN_POI_HARD_CAP`(1000)为止(尽力全量,受容量保护)
 - **杭州外**:`searchViewportPOIsFallback` — `fallbackTaskWindow` 每轮只
   `full.slice(pageOffset, pageOffset + 1)` = **1 次 PlaceSearch(25 条)**;
   AMap 请求失败 → 返回 0 条,**不卡死进程**

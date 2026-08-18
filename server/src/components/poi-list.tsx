@@ -19,6 +19,8 @@ export interface POIListProps {
   onDeselect?: () => void;
   loading?: boolean;
   empty?: boolean;
+  /** 空态标题覆写(分类门控:domain 无分类时提示「选择类别开始浏览」) */
+  emptyTitle?: string;
   lang?: Language;
   accentColor?: string;
   onWidenSearch?: () => void;
@@ -49,6 +51,7 @@ export function POIList({
   onDeselect,
   loading = false,
   empty = false,
+  emptyTitle,
   lang = "zh",
   accentColor,
   onWidenSearch,
@@ -146,7 +149,7 @@ export function POIList({
               <path d="m20 20-3.5-3.5" />
             </svg>
           </span>
-          <p className={styles.emptyTitle}>{t("noResults", lang)}</p>
+          <p className={styles.emptyTitle}>{emptyTitle ?? t("noResults", lang)}</p>
           <p className={styles.emptyHint}>{t("noResultsHint", lang)}</p>
           {onWidenSearch && (
             <button type="button" className={styles.widen} onClick={onWidenSearch}>

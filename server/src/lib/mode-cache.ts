@@ -12,13 +12,15 @@
 // catalog 可能含 source:'api' 行——旧缓存含高德行，bump 使其失效重拉。
 // v6（2026-08-18 poi-mixing 修复）：视口 onBatch 缺模式守卫时，模式切换的
 // 在飞批次会把工作公司写进 domain 缓存——bump 使被污染的缓存失效重拉。
+// v7（2026-08-19 分类门控）：domain 浏览改为「无分类不加载、选类按类全量」，
+// 旧缓存是无分类的全量浏览目录——按新语义不应还原，bump 使其失效。
 // ============================================================
 
 import type { FilterState, MapMode, POI, POILocation } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 7;
+export const MODE_CACHE_VERSION = 8;
 
 export interface ModeCacheEntry {
   version: number;

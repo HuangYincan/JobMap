@@ -178,6 +178,9 @@ export function SecondarySidebar({
   const searchRef = useRef<HTMLInputElement>(null);
   const listId = useId();
   const config = getMode(mode);
+  // 分类门控(poi-category-loading):domain 浏览态且未选分类 → 空态提示选类
+  const domainNoCategory =
+    config.kind === "domain" && !filters.category && !query.trim();
   const detailPoi = detailPoiProp ?? localDetail;
   const suggestionItems = suggestions ?? [];
 
@@ -464,6 +467,7 @@ export function SecondarySidebar({
           onSelect={openDetail}
           onHover={onHover}
           loading={loading}
+          emptyTitle={domainNoCategory ? t("pickCategory", lang) : undefined}
           lang={lang}
           accentColor={config.color}
           onWidenSearch={onWidenSearch}
