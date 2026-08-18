@@ -2,6 +2,17 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-18
+
+### Added
+
+- **Profile 二级卡片大改 (`feature/profile-redesign`, WS-U4).** `ProfilePanel` 重构为 L4 inset grouped 分组圆角卡(同一组件同一样式,桌面 380px 卡 + 移动端 sheet 嵌入):
+  - 身份卡:头像(点击仍走 `AvatarCropper` 裁剪)+ 名字 + 账号「· 已登录」;头像缩小为 64px 居中英雄区。
+  - 「账户」组:编辑资料(展开内联编辑:显示名 + 更换/移除头像 + 蓝色保存,复用 `PATCH /api/auth/me`;`avatarUrl` 传原值含空串,清空即保存)、密码与安全 / 手机与邮箱(demo 占位,点击弹「演示模式」toast,2.6s 自动消失)、退出登录(复用 `DELETE /api/auth/me` 与 `handleAuthAction`,桌面 + 移动都接线)。
+  - 「偏好 / 求职偏好 / 通知 / 收件箱 / 我的投递」按 L4 分组保留原功能;偏好与通知改动即时后台 PATCH 持久化(不再依赖手动保存)。
+  - 行高 46px、右侧 ›、inset 分隔线(14px 内缩)、SF Symbols 风格描边图标(与 map-shell `Icon` 同一套 viewBox 24 / stroke 2 / round 风格,本地化到 `account-panel.tsx`)。
+  - 主题对齐:保存按钮由绿改蓝(`--blue`);深色/浅色 + `prefers-reduced-motion` 适配。桌面侧控栏 `authGlyph` 保留(签名状态快速入口,卡片内退出登录为新增)。
+
 ## 2026-08-17
 
 ### Added

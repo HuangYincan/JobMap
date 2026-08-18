@@ -1884,6 +1884,7 @@ export function MapShell() {
           shifted={sidebarOpen}
           onClose={() => setRailPanel(null)}
           onSave={handleSaveProfile}
+          onSignOut={handleAuthAction}
           applications={applications}
           notifications={inbox}
         />
@@ -2149,6 +2150,7 @@ export function MapShell() {
                       notifications={inbox}
                       onClose={() => setMobileSheet("explore")}
                       onSave={handleSaveProfile}
+                      onSignOut={handleAuthAction}
                     />
                   ) : (
                     <p className={styles.mobileAccountHint}>{t("signInHint", lang)}</p>
