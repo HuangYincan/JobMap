@@ -2,6 +2,22 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-18
+
+### Changed
+
+- **工作/地图模式筛选精简 + 距离/价格范围放宽 (`feature/filter-refine`).**
+  - 工作模式移除 `industry` / `district` / `providesShuttle` 三个筛选卡（`modes.ts` `WORK_FILTERS`）；后端匹配器保留，供 API / 历史筛选回放。对应 `#互联网` / `#西湖区` / `#班车` 标签退化为普通关键词（不再产生隐形筛选）。
+  - 距离上限 10→50km、步长 0.5→1：`modes.ts` `DISTANCE_FILTER` 与 `search.ts` `DISTANCE_SLIDER` 两处同步（后者供距离环拖动吸附，map-shell 消费）。
+  - 地图模式移除 `district`；`minRating` 由单头 slider 改为双向「评分区间」range `[lo, hi]`（旧数值仍兼容作下限，`filter-panel` RangeControl 渲染）。
+  - 人均消费 max 500→5000、step 50→100；匹配映射从 `priceLevel*50`（封顶 200，上限拉高后高档位被误滤）改为档位中点 `priceLevel→[50,200,800,3000]`，且 hz 本地 / AMap 读路径带真实 `cost` 时优先用真实值（`DomainPOI.cost` 新增，`amap-api` / `hz-poi-store` 两条转换同步填充）。
+  - 地图模式默认按距离排序：`defaultSort='distance'` 端到端生效，`sortOptions` 把 `distance` 排到第一位。
+- **双头滑块端点错位修复 (`filter-panel.tsx` `RangeControl`).** 根因：两个原生 range input 原先动态钳制边界（min input `max={hi}`、max input `min={lo}`），拇指几何按各自 [min,max] 定位而 fill 按全局 [min,max]，区间收窄时错位。修复：两个 input 均用完整 `min`/`max`，互不越界在 onChange 钳制（原 clamp 逻辑不变）。
+
+### Fixed
+
+- **筛选相关测试同步新范围/新筛选（`search-logic` / `search-integration`）.** `metersToDistanceKm` 吸附断言按 step 1 / max 50 更新；price 档位中点映射与真实 cost 优先各有新断言；`minRating` range 与旧数值兼容覆盖；work filter-options 契约断言移除 industry/district/providesShuttle 并锁定新范围。
+
 ## 2026-08-17
 
 ### Added
