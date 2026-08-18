@@ -313,3 +313,17 @@ test('saved overlay toggle: programmatic camera move suppresses viewport refresh
   assert.ok(setAt < boundsAt, 'suppress marker must be set before map.setBounds');
   assert.ok(setAt < centerAt, 'suppress marker must be set before map.setCenter fallback');
 });
+
+test('geocode apply: manual overrides are city-gated (override poisons multi-city sites)', () => {
+  // 2026-08-19 事故:8/17 的杭州 override 被原样套到 -shanghai 站点(禾赛 →
+  // 萧山赫兹智造中心)。override 必须按站点城市过滤;legacy 无 city 字段默认杭州市。
+  const script = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'scripts', 'geocode-sites-apply.mjs'),
+    'utf8',
+  );
+  assert.match(script, /overrideCity = override\?\.city \?\? '杭州市'/);
+  assert.match(script, /overrideCity !== target\.city/);
+  assert.match(script, /override-city-mismatch/);
+  // 站点级跳过替代公司级 already-pinned(多城市时代:杭州 pin 不挡上海解析)
+  assert.doesNotMatch(script, /pinned\.has\(slug\)/);
+});
