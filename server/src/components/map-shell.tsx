@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import styles from "./map-shell.module.css";
 import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
 import type { FilterState, MapMode, POI } from "@/lib/types";
@@ -255,6 +255,9 @@ export function MapShell() {
     lastTime: number;
     vel: number;
   } | null>(null);
+  /** 移动端抽屉列表滚动容器（.drawerContent）与滚动位置保存（交互 1） */
+  const drawerContentRef = useRef<HTMLDivElement>(null);
+  const drawerScrollRef = useRef(0);
 
   const modeConfig = getMode(mode);
 
@@ -1163,6 +1166,8 @@ export function MapShell() {
     setCatalog([]);
     setPageOffset(0);
     clearModeCache(mode);
+    // 刷新即换列表:旧列表滚动位置不再有意义
+    drawerScrollRef.current = 0;
     setRefreshToken((n) => n + 1);
   }, [mapCenter, mode]);
 
@@ -1357,6 +1362,8 @@ export function MapShell() {
     setOpenPositionId(null);
     setMobileJd(null);
     setMobileFiltersOpen(false);
+    // 切模式即换数据上下文:旧列表的滚动位置不再有意义
+    drawerScrollRef.current = 0;
     // 切模式即换数据上下文:复位 noMore(缓存还原路径不经主 load)
     noMoreRef.current = false;
     setNoMoreData(false);
@@ -1707,6 +1714,8 @@ export function MapShell() {
     }
     setRailPanel("explore");
     setMobileSheet("explore");
+    // 新搜索 → 新列表,旧列表滚动位置不再有意义
+    drawerScrollRef.current = 0;
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
       setDrawer((current) => (current === "mini" ? "half" : current));
     }
@@ -1723,6 +1732,17 @@ export function MapShell() {
   useEffect(() => {
     drawerStateRef.current = drawer;
   }, [drawer]);
+
+  // 交互 1:详情返回后恢复抽屉列表滚动位置。
+  // 进详情时 .drawerContent + POIList 整体卸载,返回时重挂载 scrollTop=0;
+  // layout effect 在重挂载 DOM 更新后、绘制前执行,保证 .drawerContent 已存在。
+  // key 为 detailPoi:任意 detailPoi→null 的返回路径(把手 2159 / onBack 2204 /
+  // 手势 1801)都会触发恢复。
+  useLayoutEffect(() => {
+    if (detailPoi === null && drawerContentRef.current) {
+      drawerContentRef.current.scrollTop = drawerScrollRef.current;
+    }
+  }, [detailPoi]);
 
   /** 手势状态机 —— 跟手拖动:pointerdown 记录起点,pointermove 直接写 height(px),pointerup 按位置+速度决定三态 */
   const handleDrawerPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
@@ -2036,6 +2056,8 @@ export function MapShell() {
         onOpenDetail={(poi) => {
           // 地图初始化期间不处理详情打开，避免触发重新加载
           if (!mapReady || !geoSettled) return;
+          // 桌面详情不保存移动抽屉滚动(保存只发生在移动卡片点击链),清零避免把旧值带回移动端
+          drawerScrollRef.current = 0;
           setDetailPoi(poi);
           if (poi.location) flyToLocation(mapInstance.current, poi.location.lng, poi.location.lat);
         }}
@@ -2316,7 +2338,7 @@ export function MapShell() {
             )}
             </div>
             )}
-            <div className={styles.drawerContent}>
+            <div ref={drawerContentRef} className={styles.drawerContent}>
               {mobileSheet === "account" ? (
                 <div className={styles.mobileAccount}>
                   <div className={styles.mobileSheetBar}>
@@ -2515,10 +2537,17 @@ export function MapShell() {
                 highlightedId={highlightedId}
                 onSelect={(poi) => {
                   handleSelect(poi);
+                  // 交互 1:进详情前保存抽屉列表滚动位置,返回时恢复
+                  drawerScrollRef.current = drawerContentRef.current?.scrollTop ?? 0;
                   setDetailPoi(poi);
                   setMobileJd(null);
                   setDrawer("full");
                   if (poi.location) flyToLocation(mapInstance.current, poi.location.lng, poi.location.lat);
+                }}
+                onDeselect={() => {
+                  // 交互 2:点卡片边缘空隙取消选中(与桌面点地图取消口径一致)
+                  setSelectedId(null);
+                  setHighlightedId(null);
                 }}
                 onHover={handleHover}
                 loading={loading}
