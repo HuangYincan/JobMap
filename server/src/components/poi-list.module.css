@@ -143,6 +143,22 @@
   white-space: nowrap;
 }
 
+/* 加载失败重试(poi-loading A):玻璃按钮 + 品牌蓝小字 */
+.retryBtn {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: color-mix(in srgb, var(--blue, #007aff) 10%, transparent);
+  color: var(--blue-ink, #0062cc);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.retryBtn:hover {
+  background: color-mix(in srgb, var(--blue, #007aff) 16%, transparent);
+}
+
 /* Apple 风格 spinner:细环 + 慢速旋转 */
 .spinner {
   width: 18px;

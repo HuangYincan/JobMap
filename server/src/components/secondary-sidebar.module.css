@@ -430,6 +430,29 @@
   cursor: default;
 }
 
+/* 桌面「加载更多」文字按钮(12px 小字用 --blue-ink;加载中禁用) */
+.loadMore {
+  flex: 0 0 auto;
+  margin-left: 12px;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--blue, #007aff) 8%, transparent);
+  color: var(--blue-ink, #0062cc);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.loadMore:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--blue, #007aff) 14%, transparent);
+}
+
+.loadMore:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .moreIcon {
   flex: 0 0 auto;
   margin-left: auto;

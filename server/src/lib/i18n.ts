@@ -367,6 +367,22 @@ export const translations = {
     zh: '刷新',
     en: 'Refresh',
   },
+  loadMore: {
+    zh: '加载更多',
+    en: 'Load more',
+  },
+  loadingMore: {
+    zh: '加载中…',
+    en: 'Loading…',
+  },
+  retry: {
+    zh: '重试',
+    en: 'Retry',
+  },
+  loadFailedRetry: {
+    zh: '加载失败，点击重试',
+    en: 'Load failed, tap to retry',
+  },
   needMore: {
     zh: '加载更多',
     en: 'Load more',
