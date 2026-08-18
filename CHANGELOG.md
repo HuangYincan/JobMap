@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-18
+
+### Added
+
+- **Mobile drawer follow-finger physics (`feature/mobile-drawer-physics`).** The bottom drawer (mini `96px` / half `42svh` / full `86svh`) now follows the finger on the grabber: `pointerdown/move/up` with pointer capture writes inline `height` (px) every move under a `.drawerDragging` class that disables `transition`, so the panel tracks the gesture with zero easing lag; CSS `min/max-height` acts as the bounds. On release a position + velocity state machine decides the detent — upward fling (>900 px/s) → `full`, downward fling → `mini`, slow drag → nearest detent by height midpoints — and content visibility follows the finger across detent boundaries (mini shows search only). Content-stack pops are preserved and velocity-aware: detail/JD pulled past the half-way point (or flung) closes to its previous level, non-explore sheets fling back to explore. The snap animates with `cubic-bezier(0.32, 0.72, 0, 1)` over `0.32s` via a rAF hand-off that releases the inline height to the CSS `svh` classes; `prefers-reduced-motion: reduce` snaps instantly. Taps (≤8px) keep the original cycle/back `onClick`; real drags suppress the click. Desktop (≥768px) unaffected — the drawer is hidden there. Docs: `tech/07` drawer interaction section updated to the live gesture contract.
+
 ## 2026-08-17
 
 ### Added

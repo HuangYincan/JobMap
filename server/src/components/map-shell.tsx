@@ -66,6 +66,25 @@ function prefetchRail(panel: "layers" | "saved" | "recent" | "profile" | "auth" 
 type DrawerState = "mini" | "half" | "full";
 type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;
 
+/** 移动抽屉手势(跟手拖动):三态高度(mini px / half·full 比例 vh) */
+const DRAWER_MINI_H = 96;
+const DRAWER_HALF_RATIO = 0.42;
+const DRAWER_FULL_RATIO = 0.86;
+/** 快滑判定阈值(px/s):超过则直接吸附到 full(上)/mini(下) */
+const DRAWER_FLING_V = 900;
+
+/** 慢拖松手:按当前位置取最近的三态 */
+function nearestDrawerState(h: number, vh: number): DrawerState {
+  const half = vh * DRAWER_HALF_RATIO;
+  const full = vh * DRAWER_FULL_RATIO;
+  const d = (a: number) => Math.abs(h - a);
+  return d(DRAWER_MINI_H) <= d(half) && d(DRAWER_MINI_H) <= d(full)
+    ? "mini"
+    : d(half) <= d(full)
+      ? "half"
+      : "full";
+}
+
 function readLngLat(
   value?: { lng?: number; lat?: number; getLng?: () => number; getLat?: () => number } | null,
 ): { lng: number; lat: number } | null {
@@ -192,7 +211,19 @@ export function MapShell() {
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
   const [mobileSuggestIndex, setMobileSuggestIndex] = useState(-1);
   const [online, setOnline] = useState(true);
-  const drawerSwipeRef = useRef<{ y: number } | null>(null);
+  /** 移动抽屉跟手手势状态 */
+  const [drawerDragging, setDrawerDragging] = useState(false);
+  const drawerRef = useRef<HTMLElement | null>(null);
+  const drawerDraggingRef = useRef(false);
+  const drawerSuppressClickRef = useRef(false);
+  const drawerStateRef = useRef<DrawerState>(drawer);
+  const drawerGestureRef = useRef<{
+    startY: number;
+    baseH: number;
+    lastY: number;
+    lastTime: number;
+    vel: number;
+  } | null>(null);
 
   const modeConfig = getMode(mode);
 
@@ -1592,36 +1623,102 @@ export function MapShell() {
 
   const cycleDrawer = () => setDrawer((current) => current === "mini" ? "half" : current === "half" ? "full" : "mini");
 
-  const handleDrawerSwipeStart = (event: { clientY: number }) => {
-    drawerSwipeRef.current = { y: event.clientY };
+  useEffect(() => {
+    drawerStateRef.current = drawer;
+  }, [drawer]);
+
+  /** 手势状态机 —— 跟手拖动:pointerdown 记录起点,pointermove 直接写 height(px),pointerup 按位置+速度决定三态 */
+  const handleDrawerPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    const el = drawerRef.current;
+    if (!el) return;
+    drawerGestureRef.current = {
+      startY: event.clientY,
+      baseH: el.getBoundingClientRect().height,
+      lastY: event.clientY,
+      lastTime: performance.now(),
+      vel: 0,
+    };
+    drawerDraggingRef.current = true;
+    setDrawerDragging(true);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* 指针捕获失败时退化为按下事件上的位移判定 */
+    }
   };
 
-  const handleDrawerSwipeEnd = (event: { clientY: number }) => {
-    const start = drawerSwipeRef.current;
-    drawerSwipeRef.current = null;
-    if (!start) return;
-    const dy = event.clientY - start.y;
-    if (Math.abs(dy) < 36) return;
-    if (dy < 0) {
-      if (detailPoi || mobileJd) return;
-      setDrawer((current) => (current === "mini" ? "half" : "full"));
-      return;
-    }
-    if (mobileJd) {
-      setMobileJd(null);
-      setDrawer("full");
-      return;
-    }
-    if (detailPoi) {
-      setDetailPoi(null);
-      setDrawer("half");
+  const handleDrawerPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const g = drawerGestureRef.current;
+    if (!g || !drawerDraggingRef.current) return;
+    const now = performance.now();
+    const dt = now - g.lastTime;
+    const instant = dt > 0 ? ((event.clientY - g.lastY) / dt) * 1000 : 0;
+    g.vel = Number.isFinite(instant) ? g.vel * 0.4 + instant * 0.6 : g.vel;
+    g.lastY = event.clientY;
+    g.lastTime = now;
+
+    // 跟手核心:拖拽中直接用 transform 系的 height 写 px,拖拽态 CSS 为 transition:none,不做缓动
+    const h = g.baseH - (event.clientY - g.startY);
+    const el = drawerRef.current;
+    if (el) el.style.height = `${h}px`;
+
+    // 内容可见性随手指所在档位切换(mini 只露搜索,越过档位即显示内容)
+    const vh = window.innerHeight;
+    const eff: DrawerState =
+      h >= vh * DRAWER_FULL_RATIO ? "full" : h >= vh * DRAWER_HALF_RATIO ? "half" : "mini";
+    if (eff !== drawerStateRef.current) setDrawer(eff);
+  };
+
+  const finishDrawerGesture = (clientY: number) => {
+    const g = drawerGestureRef.current;
+    drawerGestureRef.current = null;
+    if (!g || !drawerDraggingRef.current) return;
+    drawerDraggingRef.current = false;
+    setDrawerDragging(false);
+
+    // 手势已提交:清空拖拽期 inline height,交给 CSS class(svh)过渡从当前位置吸附到档位。
+    // rAF 在 React 离散事件同步提交之后、绘制之前执行,确保 transition 从手指位置平滑收尾。
+    requestAnimationFrame(() => {
+      if (drawerDraggingRef.current) return; // 新手势已开始,不打断
+      const el = drawerRef.current;
+      if (el) el.style.height = "";
+    });
+
+    // 真拖动(超过 8px)抑制随后的 onClick 循环切换;点按保留原有 cycle 逻辑
+    if (Math.abs(clientY - g.startY) > 8) drawerSuppressClickRef.current = true;
+
+    const currentH = drawerRef.current?.getBoundingClientRect().height ?? g.baseH;
+    const vh = window.innerHeight;
+    const vel = g.vel;
+
+    // 内容栈优先:详情/JD 被下拉到过半(或快滑)→ 收到各自上一层;否则回弹 full
+    if (detailPoi || mobileJd) {
+      const popContent =
+        vel > DRAWER_FLING_V || currentH < (vh * (DRAWER_FULL_RATIO + DRAWER_HALF_RATIO)) / 2;
+      if (popContent) {
+        if (mobileJd) {
+          setMobileJd(null);
+          setDrawer("full");
+        } else {
+          setDetailPoi(null);
+          setMobileJd(null);
+          setDrawer("half");
+        }
+      } else {
+        setDrawer("full");
+      }
       return;
     }
     if (mobileSheet !== "explore") {
-      setMobileSheet("explore");
+      if (vel > DRAWER_FLING_V) setMobileSheet("explore");
+      else setDrawer(nearestDrawerState(currentH, vh));
       return;
     }
-    setDrawer((current) => (current === "full" ? "half" : "mini"));
+    // 三态判定:向上快滑→full,向下快滑→mini,慢拖→就近档位
+    if (vel < -DRAWER_FLING_V) setDrawer("full");
+    else if (vel > DRAWER_FLING_V) setDrawer("mini");
+    else setDrawer(nearestDrawerState(currentH, vh));
   };
 
   return (
@@ -1930,10 +2027,18 @@ export function MapShell() {
         </button>
       </div>
 
-      <section className={`${styles.mobileDrawer} ${detailPoi || drawer === "full" ? styles.drawerFull : drawer === "half" ? styles.drawerHalf : styles.drawerMini}`} aria-label={t("explore", lang)}>
+      <section
+        ref={drawerRef}
+        className={`${styles.mobileDrawer} ${drawerDragging ? styles.drawerDragging : ""} ${detailPoi || drawer === "full" ? styles.drawerFull : drawer === "half" ? styles.drawerHalf : styles.drawerMini}`}
+        aria-label={t("explore", lang)}
+      >
         <button
           className={styles.drawerHandle}
           onClick={() => {
+            if (drawerSuppressClickRef.current) {
+              drawerSuppressClickRef.current = false;
+              return;
+            }
             if (mobileJd) {
               setMobileJd(null);
               setDrawer("full");
@@ -1950,11 +2055,10 @@ export function MapShell() {
             }
             cycleDrawer();
           }}
-          onPointerDown={(event) => handleDrawerSwipeStart(event)}
-          onPointerUp={(event) => handleDrawerSwipeEnd(event)}
-          onPointerCancel={() => {
-            drawerSwipeRef.current = null;
-          }}
+          onPointerDown={(event) => handleDrawerPointerDown(event)}
+          onPointerMove={(event) => handleDrawerPointerMove(event)}
+          onPointerUp={(event) => finishDrawerGesture(event.clientY)}
+          onPointerCancel={(event) => finishDrawerGesture(event.clientY)}
           aria-label={mobileJd ? t("closeJd", lang) : detailPoi ? t("backToList", lang) : t("expandDrawer", lang)}
         >
           <span />
