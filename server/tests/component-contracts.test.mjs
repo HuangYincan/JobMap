@@ -19,6 +19,9 @@ test('POICard is a keyboard button with selected/highlight states', () => {
   assert.match(card, /aria-label=\{buildAriaLabel/);
   assert.match(card, /loading="lazy"/);
   assert.match(card, /DEFAULT_ACCENT = "#007AFF"/);
+  // 交互 2：卡片自身点击 stopPropagation，避免冒泡到 cardSlot/list 触发 onDeselect
+  assert.match(card, /stopPropagation\(\)/);
+  assert.match(card, /onClick=\{\s*\(e\) => \{[\s\S]*onClick\?\.\(poi\)/);
 });
 
 test('POIList exposes a labelled list, skeleton, and empty widen action', () => {
@@ -31,6 +34,21 @@ test('POIList exposes a labelled list, skeleton, and empty widen action', () => 
   assert.match(list, /onWidenSearch/);
   assert.match(css, /\.cardSlot/);
   assert.match(css, /card-enter/);
+  // 交互 2：onDeselect prop 接线到 cardSlot 与 list 容器（仅移动端传入）
+  assert.match(list, /onDeselect\?: \(\) => void/);
+  assert.match(list, /onClick=\{\s*onDeselect\s*\?[\s\S]*onDeselect\(\)[\s\S]*: undefined\s*\}/);
+});
+
+test('map shell saves and restores the mobile drawer scroll across detail', () => {
+  const shell = src('components/map-shell.tsx');
+  // 交互 1：.drawerContent 挂 ref，进详情前保存 scrollTop，返回后 layout effect 恢复
+  assert.match(shell, /drawerContentRef = useRef<HTMLDivElement>\(null\)/);
+  assert.match(shell, /drawerScrollRef = useRef\(0\)/);
+  assert.match(shell, /ref=\{drawerContentRef\} className=\{styles\.drawerContent\}/);
+  assert.match(shell, /drawerScrollRef\.current = drawerContentRef\.current\?\.scrollTop \?\? 0/);
+  assert.match(shell, /useLayoutEffect\([\s\S]*detailPoi === null[\s\S]*scrollTop = drawerScrollRef\.current/);
+  // 交互 2：移动端 POIList 传 onDeselect 清空选中/高亮（桌面 secondary-sidebar 不传）
+  assert.match(shell, /onDeselect=\{\(\) => \{[\s\S]*setSelectedId\(null\)[\s\S]*setHighlightedId\(null\)/);
 });
 
 test('FilterPanel select is a labelled listbox', () => {

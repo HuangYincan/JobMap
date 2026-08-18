@@ -10,6 +10,13 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
+- **移动端二级卡片交互(`fix/mobile-card-interactions`)。** ① 详情返回后滚动位置保留:`.drawerContent`
+  挂 ref 存 `scrollTop`,移动端卡片打开详情前保存,返回时 `useLayoutEffect`(key=`detailPoi`)
+  在重挂载后恢复;模式切换/新搜索/刷新/桌面详情路径清零保存值。② 点卡片边缘空隙取消选中:
+  `POIList` 新增 `onDeselect` prop(仅移动端传,桌面 secondary-sidebar 不传),
+  `.cardSlot` + `.list` 容器接 onClick,`poi-card` 卡片 `<article>` onClick 加 `stopPropagation`
+  不冒泡触发取消;取消时清 `selectedId` + `highlightedId`。测试:+3(297 通过/0 失败)。
+  Docs:`tech/16-bug-fixes.md`。
 - **工作模式 poi 列表不随视角刷新(Bug 7,`fix/viewport-refresh`).** 工作视口刷新原为
   **增量合并**(`loadWorkViewport` 传 `existing: catalogRef.current`):工作目录仅 ~79 家公司,
   首屏+加载更多几乎全捕获 → 刷新返回 0–11 家全部被 `mergePoisById` 去重,`setCatalog` 不变,
