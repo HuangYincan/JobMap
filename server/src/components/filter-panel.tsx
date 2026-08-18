@@ -202,11 +202,13 @@ function RangeControl({
           className={styles.rangeFill}
           style={{ left: `${loPct}%`, width: `${hiPct - loPct}%` }}
         />
+        {/* 双头都用全局 [min,max] 几何，onChange 里钳制互不越界。动态 max/min 会让
+            拇指按各自 [min,max] 定位而 fill 按全局 [min,max]，区间收窄时错位。 */}
         <input
           type="range"
           className={`${styles.rangeInput} ${styles.rangeInputMin}`}
           min={min}
-          max={hi}
+          max={max}
           step={step}
           value={lo}
           aria-label={`${config.label} min`}
@@ -215,7 +217,7 @@ function RangeControl({
         <input
           type="range"
           className={`${styles.rangeInput} ${styles.rangeInputMax}`}
-          min={lo}
+          min={min}
           max={max}
           step={step}
           value={hi}
