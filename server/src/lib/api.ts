@@ -73,6 +73,10 @@ export interface SearchSuggestion {
   icon: string;
   /** Company / catalog id. Positions need this so a job pick still opens the office. */
   poiId?: string;
+  /** 建议 POI 坐标(domain-hz 行来自 hz_pois,公司行来自 site)。选中后可直接飞行。 */
+  location?: { lng: number; lat: number };
+  /** 到参考点的距离(米)。服务端在带 center 时算好;客户端无 center 时按自身位置算。 */
+  distance?: number;
 }
 
 export interface SuggestResponse {
@@ -100,17 +104,20 @@ export function fetchPOIDetail(id: string, mode: MapMode): Promise<POI> {
   return request<POI>(`/api/pois/${encodeURIComponent(id)}?mode=${mode}`);
 }
 
-/** 搜索（含建议）。同一 mode+q 五分钟内走客户端 LRU，最多 100 条。 */
+/** 搜索（含建议）。同一 mode+q 五分钟内走客户端 LRU,最多 100 条。
+ *  空结果不写缓存——首次空「死」5 分钟会挡住 domain 本地优先→高德回退。 */
 export async function fetchSearchSuggest(
   q: string,
-  mode: MapMode
+  mode: MapMode,
+  center?: { lng: number; lat: number } | null
 ): Promise<SuggestResponse> {
   const key = suggestCacheKey(mode, q);
   const cached = readSuggestCache<SuggestResponse>(key);
   if (cached) return cached;
   const params = new URLSearchParams({ q, mode });
+  if (center) params.set('center', `${center.lng},${center.lat}`);
   const result = await request<SuggestResponse>(`/api/suggest?${params.toString()}`);
-  writeSuggestCache(key, result);
+  if (result.suggestions.length > 0) writeSuggestCache(key, result);
   return result;
 }
 

@@ -149,6 +149,23 @@ false`,被取消后该 ref 永久卡 true → 后续所有 load() 直接短路�
 请求。修复:`finally` 无条件释放 ref,状态更新仍以 `signal.cancelled` 守卫
 (同一提交)。
 
+## 搜索建议(Stage 5,2026-08-18 WS-U3)
+
+`GET /api/suggest?mode=domain&q=...&center=lng,lat` 本地优先:
+
+- **domain 分支查 `hz_pois`**:`name ILIKE 'q%'` 前缀匹配(带 common 过滤下推、
+  rating 排序),`adname` 作 subtitle,返回 `location`(GCJ 零转换)+ 可选
+  `distance`(米,`center` 提供时服务端用 haversine 算好;公司行用 site 坐标)。
+  本地 0 命中 / 无库 → 空列表(客户端回退高德 AutoComplete 一次,回退失败
+  返回空不卡死)。
+- **空结果不缓存**:客户端 suggest LRU 与 `/api/suggest` 公共缓存都只写入
+  非空响应——首次空结果不再「死」5 分钟挡回退信号。
+- **suggest effect 依赖收窄为 `[query, mode]`**:`zoom`/`catalog` 改经 ref
+  读取,平移/分页不再重置 200ms 防抖(旧 `[query, mode, zoom, catalog]` 在
+  hz-poi 批量加载时候选永远不落地)。
+- 点击建议:work 公司未加载时经 `/api/pois/[id]?mode=work` 拉详情打开;
+  domain 行优先打开已加载富卡,否则用 `location` upsert 会话卡。
+
 ## 验证记录
 
 | 项 | 结果 |
@@ -166,6 +183,6 @@ false`,被取消后该 ref 永久卡 true → 后续所有 load() 直接短路�
 - **AMap 日配额**(10044,2026-08-17):杭州外 fallback 代码已就位,换新 key 即可用
 - `reviewCount/website` 本数据源恒缺;`open_hours` 空
 - 关键词搜索仍按当前视口 bbox 约束(与旧 AMap searchNearBy 半径语义一致);
-  点搜索建议(AutoComplete)会飞过去再刷视口
+  点搜索建议(本地 hz 前缀 / AMap AutoComplete 回退)会飞过去再刷视口
 - 全国扩展:表已带 `city_code` + 分区注释;后续城市导入同管线,前端把
   `inHangzhouBox` 换成「该城市已导入」判定

@@ -174,5 +174,49 @@ export async function loadHangzhouPoisFromDb(
   }
 }
 
+/** 搜索建议行(name 前缀匹配,供 /api/suggest domain 分支用)。 */
+export interface HzPoiSuggestionRow {
+  poi_id: string;
+  name: string;
+  adname: string;
+  lng_gcj: number;
+  lat_gcj: number;
+}
+
+/**
+ * 从 hz_pois 按 name 前缀匹配取搜索建议(不裁剪 bbox/LOD——用户输入候选应
+ * 任何 zoom 都可选)。adname 作 subtitle。common 过滤下推(与读路径一致)。
+ * 无库/表缺失 → null(调用方走高德回退)。
+ */
+export async function loadHzPoiSuggestions(
+  q: string,
+  limit = 10,
+  pool: {
+    query: <T = HzPoiSuggestionRow>(
+      sql: string,
+      params?: unknown[],
+    ) => Promise<{ rows: T[] }>;
+  } | null = getPool(),
+): Promise<HzPoiSuggestionRow[] | null> {
+  if (!pool) return null;
+  const kw = q.trim();
+  if (!kw) return [];
+  const n = Math.min(20, Math.max(1, Math.floor(limit)));
+  const sql = `
+    SELECT p.poi_id, p.name, p.adname, p.lng_gcj, p.lat_gcj
+    FROM hz_pois p
+    WHERE p.name ILIKE $1
+      AND (p.rating > 0 OR jsonb_array_length(p.photos) > 0 OR p.tier <= 3)
+    ORDER BY p.rating DESC NULLS LAST, jsonb_array_length(p.photos) DESC, p.poi_id
+    LIMIT $2`;
+  try {
+    const result = await pool.query<HzPoiSuggestionRow>(sql, [`${kw}%`, n]);
+    return result.rows;
+  } catch {
+    // 表缺失 / 连接错误 → 走回退
+    return null;
+  }
+}
+
 // 复用导出,便于 route 解析
 export { parseBoundsParam };

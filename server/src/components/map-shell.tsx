@@ -11,8 +11,9 @@ import { getCurrentPosition, fetchSuggestions, loadAMap, suggestionToDomainPoi }
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { applyTagSuggestion, activeFilterChips, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, removeFilterChip, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
 import { suggestKeyAction } from "@/lib/suggest-nav";
-import { fetchSearchSuggest } from "@/lib/api";
-import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
+import { fetchPOIDetail, fetchSearchSuggest } from "@/lib/api";
+import type { SearchSuggestion as ApiSearchSuggestion } from "@/lib/api";
+import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
 import { mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES } from "@/lib/viewport-search";
 import { maxTierForZoom } from "@/lib/lod";
@@ -36,7 +37,7 @@ import {
   type BasemapStyle,
 } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
-import { SecondarySidebar, type SearchSuggestion } from "./secondary-sidebar";
+import { SecondarySidebar, suggestionDisplayIcon, type SearchSuggestion } from "./secondary-sidebar";
 import { POIList } from "./poi-list";
 import { ModeSwitcher } from "./mode-switcher";
 import { FilterPanel } from "./filter-panel";
@@ -88,6 +89,29 @@ function flyToLocation(map: { setZoomAndCenter?: (zoom: number, center: [number,
   }
   map.setZoom?.(zoom);
   map.setCenter?.([lng, lat]);
+}
+
+/** /api/suggest 服务端建议 → 客户端 UI 形态。
+ *  距离优先用客户端实时 origin 重算（地图平移/定位后仍新鲜），服务端 center
+ *  算好的 distance 兜底；无 location 不显示距离。domain 行 kind 一律 place。 */
+function mapApiSuggestion(
+  tip: ApiSearchSuggestion,
+  mode: MapMode,
+  origin: { lng: number; lat: number } | null
+): SearchSuggestion {
+  const kind: SearchSuggestion["kind"] =
+    tip.type === "position" ? "job" : tip.type === "tag" ? "place" : isRecruitmentMode(mode) ? "company" : "place";
+  return {
+    id: tip.id,
+    name: tip.title,
+    subtitle: tip.subtitle,
+    location: tip.location,
+    poiId: tip.poiId ?? (tip.type === "position" || tip.type === "tag" ? undefined : tip.id),
+    positionId: tip.type === "position" ? tip.id : undefined,
+    kind,
+    icon: tip.icon,
+    distance: tip.location && origin ? haversineDistance(tip.location, origin) : tip.distance,
+  };
 }
 
 function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "menu" | "sidebar" | "chevronLeft" | "compass" | "locate" | "person" | "login" | "logout" }) {
@@ -166,6 +190,9 @@ export function MapShell() {
     mode, query, filters, sort, searchOrigin, userLocation, pageOffset, geoSettled,
   });
   viewStateRef.current = { mode, query, filters, sort, searchOrigin, userLocation, pageOffset, geoSettled };
+  // suggest effect 只依赖 [query, mode]：zoom/catalog 经 ref 读取，避免平移/分页重置防抖
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
   const [error, setError] = useState<string | null>(null);
   // 左侧结果面板显隐（点击导航"探索"展开）
   const [railPanel, setRailPanel] = useState<RailPanel>(null);
@@ -1282,18 +1309,25 @@ export function MapShell() {
   }, [mode, pageOffset, searchOrigin, query, filters, sort, userLocation]);
 
   // ---- 搜索建议 ----
-  // Domain：高德地点 AutoComplete；实习/招聘：公司 + 岗位，不走 POI
+  // work：/api/suggest 服务端目录（公司 + 岗位 + 标签），0 命中/报错回退本地池；
+  // domain：本地优先（/api/suggest → hz_pois 前缀匹配），0 命中/报错回退高德
+  //   AutoComplete 一次，回退失败返回空列表不卡死。
+  // 依赖只留 [query, mode]：之前 [query, mode, zoom, catalog] 里 catalog 每批替换、
+  // zoom 每次平移都取消 200ms 定时器——hz-poi Stage 4 后 catalog 高频变化，
+  // 候选列表永远不落地。zoom/catalog 改经 ref 读取。
   useEffect(() => {
     if (!query.trim()) {
       setSuggestions([]);
       return;
     }
 
-    if (isRecruitmentMode(mode)) {
-      let cancelled = false;
-      const timer = setTimeout(async () => {
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const origin = distanceOriginRef.current;
+
+      if (isRecruitmentMode(mode)) {
         const fallback = () => {
-          const pool = catalog.length ? catalog : INTERNSHIP_SEED;
+          const pool = catalogRef.current.length ? catalogRef.current : INTERNSHIP_SEED;
           const tags = suggestSearchTags(query, 3).map((tag) => ({
             id: tag.id,
             name: tag.title,
@@ -1312,47 +1346,44 @@ export function MapShell() {
           return [...tags, ...tips].slice(0, 8);
         };
         try {
-          const res = await fetchSearchSuggest(query.trim(), mode);
+          const res = await fetchSearchSuggest(query.trim(), mode, origin);
           if (cancelled) return;
           if (!res.suggestions.length) {
             setSuggestions(fallback());
             return;
           }
-          setSuggestions(
-            res.suggestions.map((tip) => ({
-              id: tip.id,
-              name: tip.title,
-              subtitle: tip.subtitle,
-              poiId: tip.poiId ?? (tip.type === "position" || tip.type === "tag" ? undefined : tip.id),
-              positionId: tip.type === "position" ? tip.id : undefined,
-              kind: tip.type === "position" ? "job" : tip.type === "tag" ? "place" : "company",
-            })),
-          );
+          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, origin)));
         } catch {
           if (!cancelled) setSuggestions(fallback());
         }
-      }, 200);
-      return () => {
-        cancelled = true;
-        clearTimeout(timer);
-      };
-    }
+        return;
+      }
 
-    let cancelled = false;
-    const timer = setTimeout(async () => {
+      // domain：本地优先
       try {
-        const tips = await fetchSuggestions(query.trim(), zoom <= 8 ? "全国" : "");
-        if (!cancelled) {
-          setSuggestions(
-            tips.map((tip) => ({
-              id: tip.id,
-              name: tip.name,
-              subtitle: [tip.district, tip.address].filter(Boolean).join(" · ") || tip.type,
-              location: tip.location,
-              kind: "place",
-            }))
-          );
+        const res = await fetchSearchSuggest(query.trim(), mode, origin);
+        if (cancelled) return;
+        if (res.suggestions.length) {
+          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, origin)));
+          return;
         }
+      } catch {
+        if (cancelled) return;
+      }
+      // 本地 0 命中 / 请求失败 → 回退高德 AutoComplete 一次
+      try {
+        const tips = await fetchSuggestions(query.trim(), zoomRef.current <= 8 ? "全国" : "");
+        if (cancelled) return;
+        setSuggestions(
+          tips.map((tip) => ({
+            id: tip.id,
+            name: tip.name,
+            subtitle: [tip.district, tip.address].filter(Boolean).join(" · ") || tip.type,
+            location: tip.location,
+            kind: "place",
+            icon: "📍",
+          }))
+        );
       } catch {
         if (!cancelled) setSuggestions([]);
       }
@@ -1361,13 +1392,16 @@ export function MapShell() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, mode, zoom, catalog]);
+  }, [query, mode]);
 
   useEffect(() => {
     setMobileSuggestIndex(-1);
   }, [query, suggestions.length]);
 
-  // 选择建议 → 定位；招聘建议打开对应公司；#标签写入筛选插件
+  // 选择建议 → 定位；招聘建议打开对应公司（服务端目录未加载的公司经
+  // /api/pois/[id] 拉详情）；domain 建议本地已加载打开富卡，否则用 location
+  // upsert 会话卡（不再依赖客户端 catalog 里有没有——之前 /api/suggest 匹配
+  // 全量服务端目录，指向未加载公司时点击无任何反应）；#标签写入筛选插件。
   const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
     if (s.location) {
       flyToLocation(mapInstance.current, s.location.lng, s.location.lat);
@@ -1385,35 +1419,53 @@ export function MapShell() {
         return;
       }
     }
-    if (s.poiId) {
+    const openCompany = (company: POI, positionId?: string) => {
+      setSelectedId(company.id);
+      setDetailPoi(company);
+      setDrawer("full");
+      if (positionId && isRecruitmentPOI(company)) {
+        const pos = company.positions.find((item) => item.id === positionId);
+        setOpenPositionId(positionId);
+        setMobileJd(pos ?? null);
+      } else {
+        setOpenPositionId(null);
+        setMobileJd(null);
+      }
+    };
+    if (!isRecruitmentMode(mode) && s.kind === "place") {
+      // domain：优先打开已加载的本地 POI（保留评分/照片富数据）
+      const known = s.poiId
+        ? catalog.find((p) => p.id === s.poiId) ?? pois.find((p) => p.id === s.poiId)
+        : undefined;
+      if (known) {
+        openCompany(known);
+      } else {
+        const tipPoi = suggestionToDomainPoi(s);
+        if (tipPoi) {
+          const next = mergePoisById(catalogRef.current, [tipPoi], POI_SOFT_CAP);
+          catalogRef.current = next;
+          setCatalog(next);
+          setSelectedId(tipPoi.id);
+          setDetailPoi(tipPoi);
+          setDrawer("full");
+        }
+        setOpenPositionId(null);
+        setMobileJd(null);
+      }
+    } else if (s.poiId) {
       const company =
         catalog.find((p) => p.id === s.poiId) ??
         pois.find((p) => p.id === s.poiId) ??
         INTERNSHIP_SEED.find((p) => p.id === s.poiId);
       if (company) {
-        setSelectedId(company.id);
-        setDetailPoi(company);
-        setDrawer("full");
-        if (s.positionId && isRecruitmentPOI(company)) {
-          const pos = company.positions.find((item) => item.id === s.positionId);
-          setOpenPositionId(s.positionId);
-          setMobileJd(pos ?? null);
-        } else {
-          setOpenPositionId(null);
-          setMobileJd(null);
-        }
-      }
-    } else if (!isRecruitmentMode(mode) && s.kind === "place") {
-      const tipPoi = suggestionToDomainPoi(s);
-      if (tipPoi) {
-        const next = mergePoisById(catalogRef.current, [tipPoi], POI_SOFT_CAP);
-        catalogRef.current = next;
-        setCatalog(next);
-        setSelectedId(tipPoi.id);
-        setDetailPoi(tipPoi);
-        setDrawer("full");
-        setOpenPositionId(null);
-        setMobileJd(null);
+        openCompany(company, s.positionId);
+      } else if (isRecruitmentMode(mode)) {
+        // 服务端目录命中但客户端尚未加载（视口分页外的公司）→ 拉详情再打开
+        void fetchPOIDetail(s.poiId, mode)
+          .then((detail) => {
+            if (detail) openCompany(detail, s.positionId);
+          })
+          .catch(() => {});
       } else {
         setOpenPositionId(null);
       }
@@ -2083,7 +2135,15 @@ export function MapShell() {
                         setMobileSuggestIndex(-1);
                       }}
                     >
-                      <strong>{s.name}</strong>
+                      <span className={styles.mobileSuggestRow}>
+                        <span className={styles.mobileSuggestIcon} aria-hidden="true">
+                          {suggestionDisplayIcon(s)}
+                        </span>
+                        <strong>{s.name}</strong>
+                        {s.distance != null && (
+                          <span className={styles.mobileSuggestDist}>{formatDistance(s.distance)}</span>
+                        )}
+                      </span>
                       {s.subtitle && <small>{s.subtitle}</small>}
                     </button>
                   </li>

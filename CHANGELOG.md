@@ -2,6 +2,22 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-18
+
+### Fixed
+
+- **Search suggestions (autocomplete) — candidate list never landed / clicks did nothing (`feature/suggest-fix`).** Four verified causes, all fixed:
+  1. Suggest effect deps `[query, mode, zoom, catalog]` — `catalog` replaces on every batch (hz-poi Stage 4) and `zoom` on every pan, so the 200 ms debounce timer was reset before firing; candidates never rendered. Deps narrowed to `[query, mode]`; `zoom`/`catalog` read via refs.
+  2. Empty suggest results were cached (client LRU 5 min + server 30 s) — a first empty result went "dead", blocking the domain local→AMap fallback. Only non-empty responses are cached now.
+  3. Clicking a suggestion whose company was in the server catalog but not yet loaded client-side did nothing (`handleSelectSuggestion` searched only the local catalog). Work mode now fetches `/api/pois/[id]?mode=work` and opens the detail; domain rows open the loaded rich card when present, else upsert a session card from `location`.
+  4. Domain suggestions went straight to AMap AutoComplete; the route's domain branch iterated the tiny `DOMAIN_SEED` (dead code). `/api/suggest?mode=domain` now queries `hz_pois` first (name ILIKE prefix, `adname` subtitle, GCJ location, optional `distance` from `center=lng,lat`); 0 hits / no DB → empty list → client falls back to AMap AutoComplete once, failures return empty without hanging.
+
+### Added
+
+- `SearchSuggestion.distance` (meters) + optional `center` param on `GET /api/suggest`; company rows use site coordinates. Client recomputes against the live origin (user location / map center) for freshness.
+- Suggestion rows render kind-based icons (place 📍 / company 🏢 or logo emoji / job 💼) and right-aligned grey 12 px distance on desktop (`secondary-sidebar.tsx`) and mobile (`map-shell.tsx`); the API's previously unused `icon` field is wired through. Layout L3 approved 2026-08-18.
+- Tests: domain suggest route contract, `loadHzPoiSuggestions` (prefix SQL + clamp + DB-error fallback), client LRU empty-result behavior, updated component contracts. 283 pass / 0 fail; docs `tech/22-hangzhou-poi-local.md` §搜索建议.
+
 ## 2026-08-17
 
 ### Added

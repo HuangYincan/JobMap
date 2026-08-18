@@ -25,7 +25,7 @@ import { t, type Language } from "@/lib/i18n";
 import { getMode } from "@/lib/modes";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { activeFilterChips, removeFilterChip } from "@/lib/search";
-import { isRecruitmentPOI, type FilterState, type MapMode, type POI, type Position, type RecruitmentPOI } from "@/lib/types";
+import { isRecruitmentPOI, formatDistance, type FilterState, type MapMode, type POI, type Position, type RecruitmentPOI } from "@/lib/types";
 import styles from "./secondary-sidebar.module.css";
 
 /** 搜索建议（AutoComplete 结果的 UI 形态） */
@@ -38,6 +38,18 @@ export interface SearchSuggestion {
   poiId?: string;
   positionId?: string;
   kind?: "place" | "company" | "job";
+  /** 行首图标（emoji；服务端下发，缺省按 kind 回退） */
+  icon?: string;
+  /** 到参考点的距离（米）；无位置信息时缺省 */
+  distance?: number;
+}
+
+/** 行首图标：优先用服务端下发的 icon（公司为 logo emoji），否则按 kind 回退。 */
+export function suggestionDisplayIcon(s: { kind?: SearchSuggestion["kind"]; icon?: string }): string {
+  if (s.icon) return s.icon;
+  if (s.kind === "job") return "💼";
+  if (s.kind === "company") return "🏢";
+  return "📍";
 }
 
 export interface SecondarySidebarProps {
@@ -334,15 +346,15 @@ export function SecondarySidebar({
                     }}
                   >
                     <span className={styles.suggestionIcon} aria-hidden="true">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                        <path d="M12 21s-7-5.6-7-11a7 7 0 1 1 14 0c0 5.4-7 11-7 11Z" />
-                        <circle cx="12" cy="10" r="2.5" />
-                      </svg>
+                      {suggestionDisplayIcon(s)}
                     </span>
                     <span className={styles.suggestionText}>
                       <span className={styles.suggestionName}>{s.name}</span>
                       {s.subtitle && <span className={styles.suggestionSub}>{s.subtitle}</span>}
                     </span>
+                    {s.distance != null && (
+                      <span className={styles.suggestionDistance}>{formatDistance(s.distance)}</span>
+                    )}
                   </button>
                 </li>
               ))}

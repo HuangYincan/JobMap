@@ -1318,7 +1318,38 @@
   }
 
   .mobileSuggestions strong {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 13px;
+  }
+
+  .mobileSuggestRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .mobileSuggestIcon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .mobileSuggestDist {
+    flex-shrink: 0;
+    margin-left: auto;
+    padding-left: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
   }
 
   .mobileSuggestions small {
