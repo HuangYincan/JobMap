@@ -471,6 +471,69 @@ useEffect(() => {
 
 ---
 
+## 2026-08-19: 移动端二级卡片交互(返回滚动保留 + 边缘点选取消)
+
+### 问题1：详情返回后列表滚动位置重置
+
+**症状**：移动端(≤767px frost 抽屉)选中一张二级卡片 → 进详情 → 返回列表后,列表滚回顶部,
+刚选中的卡片滚出视野(蓝色选中态仍在,只是看不见)。
+
+**根本原因**：`.drawerContent`(`map-shell.tsx`)是滚动容器(`overflow:auto`),但无 ref、无
+scrollTop 保存/恢复。打开详情时 `detailPoi` 三元组让 `.drawerContent` + `POIList` 整体卸载,
+返回时重挂载,`scrollTop` 归零。
+
+**解决方案**：
+- `.drawerContent` 挂 `ref={drawerContentRef}`(`useRef<HTMLDivElement>`),配 `drawerScrollRef`
+  (`useRef(0)`)。
+- 移动端卡片 onClick 链(`onSelect`)在 `setDetailPoi(poi)` 之前
+  `drawerScrollRef.current = drawerContentRef.current?.scrollTop ?? 0`。
+- 返回恢复用 `useLayoutEffect`(key 为 `detailPoi`):当其变为 `null` 且 ref 存在时
+  `drawerContentRef.current.scrollTop = drawerScrollRef.current`。layout effect 在重挂载
+  DOM 更新后、绘制前执行,保证容器已存在;任意 `detailPoi→null` 路径(抽屉把手 / `onBack` /
+  手势下推)都覆盖。
+- 清理时机:模式切换(`handleModeChange`)、新搜索(`openExploreSearch`)、刷新本处
+  (`handleRefreshHere`)、桌面 `onOpenDetail` 都清零 `drawerScrollRef`,避免把旧视野的滚动
+  带到新列表/移动端。
+
+**修改文件**：
+- `server/src/components/map-shell.tsx`
+
+### 问题2：点卡片边缘空隙无法取消选中
+
+**症状**：卡片显示蓝色已选态时,点卡片周围的空隙(卡片间 12px margin/列表空白)不会取消选中;
+只有点地图才能取消(移动端抽屉盖住地图下半,点地图罕见)。
+
+**解决方案**：
+- `poi-list.tsx`:`POIList` 新增可选 prop `onDeselect?: () => void`;`.cardSlot` 与 `.list`
+  容器都接 `onClick`(仅 `onDeselect` 传入时)。`.cardSlot` 的 onClick 带 `stopPropagation`
+  避免与 `.list` 双重触发。`.list` 容器级 onClick 是为了兜住卡片间的 12px flex gap(该 gap
+  实际属于 `.list`,不属于 `.cardSlot`)。
+- `poi-card.tsx`:`<article>` onClick 加 `e.stopPropagation()`,点卡片自身不冒泡到 cardSlot/list
+  触发取消,仍走原 select + 进详情逻辑。
+- `map-shell.tsx`:移动端 `POIList` 传 `onDeselect={() => { setSelectedId(null);
+  setHighlightedId(null); }}`(与桌面点地图取消口径 647-652 一致);桌面 `secondary-sidebar`
+  不传,行为不变。
+
+**修改文件**：
+- `server/src/components/poi-list.tsx`
+- `server/src/components/poi-card.tsx`
+- `server/src/components/map-shell.tsx`
+- `server/tests/component-contracts.test.mjs`
+
+**测试验证**：
+- ✅ 组件契约测试新增:POICard stopPropagation、POIList onDeselect 接线、map-shell
+  drawerScroll 保存/恢复。
+- ✅ 全量 `npm test` 297 通过 / 0 失败(2 跳过)。
+- ✅ `npm run typecheck` 无错误。
+
+### 注意：桌面 secondary-sidebar 行为不变
+
+桌面 L2 复用同一个 `POIList`,但不传 `onDeselect`,`.list` / `.cardSlot` 的 onClick 均为
+`undefined`,无取消选中交互;`stopPropagation` 只阻断卡片点击继续冒泡到容器,桌面无依赖
+该冒泡的 handler,行为保持不变。
+
+---
+
 ## 相关文档
 
 - 设计系统：`tech/07-frontend-design-system.md`
