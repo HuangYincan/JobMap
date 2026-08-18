@@ -761,3 +761,15 @@ amap-api.ts`(withTimeout ~309-334)、`server/src/lib/i18n.ts`、`server/tests/po
 
 **验证**：重导后 `GET /api/pois?mode=work&bounds=中国` total = 75(事故前 ~79,差额为无 open
 岗位/从未 geocoded 的公司);群核科技 4 拆分岗位 + 公共战略培训生均正常。
+
+## 2026-08-19: 视口空批次保护(程序化相机移动冲空目录)
+
+**症状**：`setBounds` / `flyTo` 等程序化相机移动触发视口 loader,替换语义的
+onBatch 若返回空批次,会把已有非空目录整体清空(收藏图层同类 bug 的纵深防御)。
+
+**修复**：
+- `map-shell.tsx` work 分支与 domain 视口分支的 onBatch 各加防御:
+  `batch.length === 0 && catalogRef.current.length > 0 → 保留旧目录`(不整体替换为空)。
+
+**修改文件**：
+- `server/src/components/map-shell.tsx`(两处 onBatch 空批次保护)
