@@ -5,7 +5,8 @@
 // Do not reuse the stale tech/10 key `search_history`.
 // ============================================================
 
-import type { SearchHistoryEntry } from './account.ts';
+import type { SearchHistoryEntry, SearchHistoryEntityRef } from './account.ts';
+import { sanitizeEntityRef } from './account.ts';
 import type { MapMode } from './types.ts';
 import { isPersistableMode } from './persistable.ts';
 
@@ -32,7 +33,17 @@ function parse(raw: string | null): SearchHistoryEntry[] {
         const row = item as SearchHistoryEntry;
         return Boolean(row.id && row.query && row.mode && row.createdAt);
       })
-      .filter((item) => isPersistableMode(item.mode));
+      .filter((item) => isPersistableMode(item.mode))
+      // 旧数据无 entity 字段 → 原样保留（纯搜索回放）；有但结构损坏 → 剥离
+      .map((item) => {
+        const entity = sanitizeEntityRef(item.entity);
+        if (entity) return { ...item, entity };
+        if (item.entity) {
+          const { entity: _dropped, ...rest } = item;
+          return rest;
+        }
+        return item;
+      });
   } catch {
     return [];
   }
@@ -42,15 +53,21 @@ export function listGuestHistory(): SearchHistoryEntry[] {
   return parse(storage()?.getItem(GUEST_HISTORY_KEY) ?? null);
 }
 
-export function addGuestHistory(query: string, mode: MapMode): SearchHistoryEntry[] {
+export function addGuestHistory(
+  query: string,
+  mode: MapMode,
+  entity?: SearchHistoryEntityRef,
+): SearchHistoryEntry[] {
   const q = query.trim();
   const current = listGuestHistory();
   if (!q || !isPersistableMode(mode)) return current;
+  const sanitized = sanitizeEntityRef(entity);
   const next: SearchHistoryEntry = {
     id: `guest-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     query: q,
     mode,
     createdAt: new Date().toISOString(),
+    ...(sanitized ? { entity: sanitized } : {}),
   };
   const rest = current.filter((item) => !(item.query === q && item.mode === mode));
   const items = [next, ...rest].slice(0, GUEST_HISTORY_CAP);
@@ -112,7 +129,11 @@ export async function mergeGuestHistoryIntoAccount(
       const res = await fetchImpl('/api/me/search-history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: item.query, mode: item.mode }),
+        body: JSON.stringify({
+          query: item.query,
+          mode: item.mode,
+          ...(item.entity ? { entity: item.entity } : {}),
+        }),
       });
       if (!res.ok) continue;
       uploaded.push(item);

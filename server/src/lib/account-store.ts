@@ -10,12 +10,14 @@ import type { Pool } from 'pg';
 import {
   DEFAULT_PREFERENCES,
   mergePreferences,
+  sanitizeEntityRef,
   type AccountUser,
   type AuthProvider,
   type ApplicationRecord,
   type NotificationRecord,
   type SavedPlace,
   type SearchHistoryEntry,
+  type SearchHistoryEntityRef,
   type UserPreferences,
 } from './account.ts';
 import { getPool } from './db.ts';
@@ -374,27 +376,61 @@ export async function consumeOtp(provider: 'phone' | 'email', target: string, co
   return memConsumeOtp(provider, target, code);
 }
 
+// ---- search_history 实体引用列（db/migrations/014_recent_entity.sql）----
+// 迁移 apply 是 Env-only，未 apply 时 entity 列不存在：SELECT/INSERT/UPDATE
+// 遇到 42703(undefined_column) 自动退回不含 entity 列的语句，系统不崩。
+
+type HistoryRow = {
+  id: string;
+  query: string;
+  mode: MapMode;
+  created_at: Date;
+  entity?: unknown;
+};
+
+function toHistoryEntry(row: HistoryRow): SearchHistoryEntry {
+  const base = {
+    id: row.id,
+    query: row.query,
+    mode: canonicalMode(row.mode),
+    createdAt: row.created_at.toISOString(),
+  };
+  const entity = sanitizeEntityRef(row.entity);
+  return entity ? { ...base, entity } : base;
+}
+
+async function withEntityColumnFallback<T>(
+  withEntity: () => Promise<T>,
+  withoutEntity: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await withEntity();
+  } catch (err) {
+    if ((err as { code?: string })?.code !== '42703') throw err;
+    return withoutEntity();
+  }
+}
+
+const HISTORY_SELECT = `
+  SELECT id::text, query, mode, created_at
+  FROM search_history
+  WHERE user_id = $1
+  ORDER BY created_at DESC
+  LIMIT $2`;
+const HISTORY_SELECT_WITH_ENTITY = `
+  SELECT id::text, query, mode, entity, created_at
+  FROM search_history
+  WHERE user_id = $1
+  ORDER BY created_at DESC
+  LIMIT $2`;
+
 export async function listHistory(userId: string, limit = 30): Promise<SearchHistoryEntry[]> {
   return withDb(async (db) => {
-    const result = await db.query<{
-      id: string;
-      query: string;
-      mode: MapMode;
-      created_at: Date;
-    }>(
-      `SELECT id::text, query, mode, created_at
-       FROM search_history
-       WHERE user_id = $1
-       ORDER BY created_at DESC
-       LIMIT $2`,
-      [userId, limit],
+    const result = await withEntityColumnFallback(
+      () => db.query<HistoryRow>(HISTORY_SELECT_WITH_ENTITY, [userId, limit]),
+      () => db.query<HistoryRow>(HISTORY_SELECT, [userId, limit]),
     );
-    return result.rows.map((row) => ({
-      id: row.id,
-      query: row.query,
-      mode: canonicalMode(row.mode),
-      createdAt: row.created_at.toISOString(),
-    }));
+    return result.rows.map(toHistoryEntry);
   }, () => memListHistory(userId, limit));
 }
 
@@ -402,48 +438,65 @@ export async function addHistory(
   userId: string,
   query: string,
   mode: SearchHistoryEntry['mode'],
+  entity?: SearchHistoryEntityRef,
 ): Promise<SearchHistoryEntry | null> {
   const q = query.trim();
   if (!q) return null;
   const canon = canonicalMode(mode);
+  const ent = sanitizeEntityRef(entity) ?? null;
   return withDb(async (db) => {
-    const last = await db.query<{ id: string; query: string; mode: MapMode; created_at: Date }>(
-      `SELECT id::text, query, mode, created_at
-       FROM search_history
-       WHERE user_id = $1
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      [userId],
+    const last = await withEntityColumnFallback(
+      () => db.query<HistoryRow>(
+        `SELECT id::text, query, mode, entity, created_at
+         FROM search_history
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [userId],
+      ),
+      () => db.query<HistoryRow>(
+        `SELECT id::text, query, mode, created_at
+         FROM search_history
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [userId],
+      ),
     );
     const prev = last.rows[0];
     if (prev && prev.query === q && canonicalMode(prev.mode) === canon) {
-      const updated = await db.query<{ id: string; query: string; mode: MapMode; created_at: Date }>(
-        `UPDATE search_history SET created_at = now() WHERE id = $1
-         RETURNING id::text, query, mode, created_at`,
-        [prev.id],
+      const updated = await withEntityColumnFallback(
+        () => db.query<HistoryRow>(
+          `UPDATE search_history
+           SET created_at = now(), entity = COALESCE($2::jsonb, entity)
+           WHERE id = $1
+           RETURNING id::text, query, mode, entity, created_at`,
+          [prev.id, ent],
+        ),
+        () => db.query<HistoryRow>(
+          `UPDATE search_history SET created_at = now() WHERE id = $1
+           RETURNING id::text, query, mode, created_at`,
+          [prev.id],
+        ),
       );
-      const row = updated.rows[0];
-      return {
-        id: row.id,
-        query: row.query,
-        mode: canonicalMode(row.mode),
-        createdAt: row.created_at.toISOString(),
-      };
+      return toHistoryEntry(updated.rows[0]);
     }
-    const inserted = await db.query<{ id: string; query: string; mode: MapMode; created_at: Date }>(
-      `INSERT INTO search_history (user_id, query, mode)
-       VALUES ($1, $2, $3)
-       RETURNING id::text, query, mode, created_at`,
-      [userId, q, canon],
+    const inserted = await withEntityColumnFallback(
+      () => db.query<HistoryRow>(
+        `INSERT INTO search_history (user_id, query, mode, entity)
+         VALUES ($1, $2, $3, $4::jsonb)
+         RETURNING id::text, query, mode, entity, created_at`,
+        [userId, q, canon, ent],
+      ),
+      () => db.query<HistoryRow>(
+        `INSERT INTO search_history (user_id, query, mode)
+         VALUES ($1, $2, $3)
+         RETURNING id::text, query, mode, created_at`,
+        [userId, q, canon],
+      ),
     );
-    const row = inserted.rows[0];
-    return {
-      id: row.id,
-      query: row.query,
-      mode: canonicalMode(row.mode),
-      createdAt: row.created_at.toISOString(),
-    };
-  }, () => memAddHistory(userId, q, canon));
+    return toHistoryEntry(inserted.rows[0]);
+  }, () => memAddHistory(userId, q, canon, entity));
 }
 
 export async function clearHistory(userId: string): Promise<void> {

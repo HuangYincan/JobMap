@@ -55,11 +55,64 @@ export interface SessionState {
   user: AccountUser | null;
 }
 
+/** 搜索历史条目可选的实体引用：记录时查询确定落在一个实体（建议选中）时
+ *  一并存下，点击「最近」直接回到该实体（飞行 + 详情），而非仅回放查询串。
+ *  旧条目（localStorage / DB 迁移前）无此字段 → 保持纯搜索回放。 */
+export interface SearchHistoryEntityRef {
+  kind: 'company' | 'poi';
+  id: string;
+  name: string;
+  lng?: number;
+  lat?: number;
+  address?: string;
+}
+
 export interface SearchHistoryEntry {
   id: string;
   query: string;
   mode: MapMode;
   createdAt: string;
+  entity?: SearchHistoryEntityRef;
+}
+
+/** 校验/规范化实体引用：结构不符（旧数据、脏数据、恶意 body）一律返回
+ *  undefined，调用方据此省略字段而不是写坏行。 */
+export function sanitizeEntityRef(raw: unknown): SearchHistoryEntityRef | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const ref = raw as Record<string, unknown>;
+  if (typeof ref.id !== 'string' || !ref.id) return undefined;
+  if (typeof ref.name !== 'string' || !ref.name) return undefined;
+  const out: SearchHistoryEntityRef = {
+    kind: ref.kind === 'poi' ? 'poi' : 'company',
+    id: ref.id,
+    name: ref.name,
+  };
+  if (typeof ref.lng === 'number' && Number.isFinite(ref.lng)) out.lng = ref.lng;
+  if (typeof ref.lat === 'number' && Number.isFinite(ref.lat)) out.lat = ref.lat;
+  if (typeof ref.address === 'string' && ref.address) out.address = ref.address;
+  return out;
+}
+
+/** 建议选中 → 实体引用（结构化入参，避免 account.ts 依赖 suggestion 类型）。
+ *  poiId 缺失（纯关键词 / 标签 / 区域）时不记实体。 */
+export function entityRefFromSelection(
+  input: {
+    poiId?: string;
+    name: string;
+    location?: { lng?: number; lat?: number; address?: string } | null;
+  },
+  mode: MapMode,
+): SearchHistoryEntityRef | undefined {
+  if (!input.poiId || !input.name) return undefined;
+  const loc = input.location;
+  return {
+    kind: canonicalMode(mode) === 'domain' ? 'poi' : 'company',
+    id: input.poiId,
+    name: input.name,
+    ...(typeof loc?.lng === 'number' ? { lng: loc.lng } : {}),
+    ...(typeof loc?.lat === 'number' ? { lat: loc.lat } : {}),
+    ...(loc?.address ? { address: loc.address } : {}),
+  };
 }
 
 export interface SavedPlace {

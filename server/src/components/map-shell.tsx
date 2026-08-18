@@ -18,8 +18,8 @@ import { batchMatchesCurrentMode, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, D
 import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES, type ViewportLoader } from "@/lib/viewport-search";
 import { maxTierForZoom } from "@/lib/lod";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
-import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from "@/lib/account";
-import { initialsFromName } from "@/lib/account";
+import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
+import { entityRefFromSelection, initialsFromName } from "@/lib/account";
 import { isPersistableMode, isPersistablePoi } from "@/lib/persistable";
 import { addGuestHistory, clearGuestHistory, listGuestHistory, mergeGuestHistoryIntoAccount } from "@/lib/guest-search-history";
 import {
@@ -407,18 +407,18 @@ export function MapShell() {
     refreshInbox();
   }, [refreshAccount, refreshHistory, refreshSaved, refreshApplications, refreshInbox, mergeGuestHistoryOnSignIn]);
 
-  const recordSearch = useCallback(async (raw: string, searchMode: MapMode) => {
+  const recordSearch = useCallback(async (raw: string, searchMode: MapMode, entity?: SearchHistoryEntityRef) => {
     const q = raw.trim();
     if (!q || !isPersistableMode(searchMode)) return;
     if (!user) {
-      setSearchHistory(addGuestHistory(q, searchMode));
+      setSearchHistory(addGuestHistory(q, searchMode, entity));
       return;
     }
     try {
       await fetch("/api/me/search-history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q, mode: searchMode }),
+        body: JSON.stringify({ query: q, mode: searchMode, ...(entity ? { entity } : {}) }),
       });
       await refreshHistory(true);
     } catch {
@@ -1591,7 +1591,10 @@ export function MapShell() {
     setSuggestions([]);
     setRailPanel("explore");
     setMobileSheet("explore");
-    void recordSearch(s.name, mode);
+    // 确定落在实体（公司/岗位）的建议才记实体引用；标签/区域/纯关键词不记
+    const entity =
+      (s.kind === "company" || s.kind === "job") ? entityRefFromSelection(s, mode) : undefined;
+    void recordSearch(s.name, mode, entity);
   }, [catalog, pois, mode, recordSearch, query, filters]);
 
   const handleZoomIn = () => {
@@ -1755,11 +1758,45 @@ export function MapShell() {
     }
   }, [query, filters]);
 
+  // 最近点击：有条目实体引用 → 回到那个实体（飞行 + 详情，跨城市可用，不依赖当前视口）；
+  // 无实体引用（旧数据/纯关键词）→ 维持搜索回放；实体拉取失败 → 优雅降级回回放。
   const handlePickRecent = useCallback((entry: SearchHistoryEntry) => {
     const replay = replayRecentSearch(mode, entry);
     if (replay.modeChanged) handleModeChange(replay.mode);
     openExploreSearch(replay.query);
-  }, [mode, handleModeChange, openExploreSearch]);
+    const ent = entry.entity;
+    if (!ent?.id) return;
+    const targetMode = replay.modeChanged ? replay.mode : mode;
+    const local =
+      catalog.find((p) => p.id === ent.id) ??
+      pois.find((p) => p.id === ent.id) ??
+      INTERNSHIP_SEED.find((p) => p.id === ent.id);
+    const openDetail = (poi: POI) => {
+      setSelectedId(poi.id);
+      setDetailPoi(poi);
+      setOpenPositionId(null);
+      setMobileJd(null);
+      setDrawer("full");
+      const loc = poi.location;
+      if (loc && typeof loc.lng === "number" && typeof loc.lat === "number") {
+        flyToLocation(mapInstance.current, loc.lng, loc.lat);
+      } else if (typeof ent.lng === "number" && typeof ent.lat === "number") {
+        flyToLocation(mapInstance.current, ent.lng, ent.lat);
+      }
+    };
+    if (local) {
+      openDetail(local);
+    } else {
+      // 服务端目录命中但客户端尚未加载（视口分页外 / 跨城市）→ 拉详情再打开
+      void fetchPOIDetail(ent.id, targetMode)
+        .then((detail) => {
+          if (detail) openDetail(detail);
+        })
+        .catch(() => {
+          // 拉取失败 → 已回放搜索，不白屏
+        });
+    }
+  }, [mode, handleModeChange, openExploreSearch, catalog, pois]);
 
   const cycleDrawer = () => setDrawer((current) => current === "mini" ? "half" : current === "half" ? "full" : "mini");
 

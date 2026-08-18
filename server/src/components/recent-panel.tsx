@@ -76,7 +76,10 @@ export function RecentPanel({
               <li key={item.id}>
                 <button type="button" className={styles.row} onClick={() => onPick(item)}>
                   <span className={styles.query}>{item.query}</span>
-                  <span className={styles.meta}>{getMode(item.mode).name}</span>
+                  <span className={styles.meta}>
+                    {getMode(item.mode).name}
+                    {item.entity ? ` · ${t(item.entity.kind === "company" ? "entityCompany" : "entityPoi", lang)}` : ""}
+                  </span>
                 </button>
               </li>
             ))}
