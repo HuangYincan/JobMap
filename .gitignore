@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+# worktree node_modules symlink (git treats a symlink as a file, so `node_modules/` doesn't cover it)
+server/node_modules
 .pnp
 .pnp.js
 

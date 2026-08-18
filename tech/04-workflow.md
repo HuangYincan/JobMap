@@ -82,9 +82,20 @@ For a batch of parallel workstreams, fresh sessions pick their role by triggerin
   writes a report file; never merges back to `dev`.
 - **`merge-agent`** (closer) — after all workstreams finish, reads the batch manifest +
   reports and runs the sequential merge orchestration (above), then writes a merge report.
+- **`boss-agent`** (super-boss / orchestrator, 2026-08-19) — explicitly invoked by the user;
+  runs the whole loop unattended: plan → pre-build worktrees → dispatch headless workers
+  (`.claude/agents/boss-worker.md`) in parallel → collect reports / adjudicate → dispatch a
+  headless merger (`.claude/agents/boss-merger.md`) to merge + push `dev` → decide next step
+  (fix batch or next milestone). Never interrupts the user: pushes to `dev` on green gates
+  automatically, only raises a `dev → main` PR (never pushes main, never waits for its merge),
+  develops new UI per the Apple/liquid-glass design system, and records "modify existing UI
+  design" / Env-only steps into `deferred-notes.md` for a single end-of-run report. Details:
+  `.claude/skills/boss-agent/SKILL.md`.
 
 Batch directory convention: `tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`
-(`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md`).
+(`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md` +
+`logs/` (headless worker/merger output) + `boss-state.md` (boss state machine) +
+`deferred-notes.md` (user-decision items recorded by boss)).
 
 ## Review Checklist
 

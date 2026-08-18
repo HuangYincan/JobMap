@@ -57,6 +57,11 @@ make db-up                # 启动本地 PostGIS
   开发,写汇报文件,不 merge 回 dev。
 - **`/merge-agent`** — 收尾 Agent(合并者):本批全部完成后,读批次 manifest + 各汇报,
   按序 merge 回 dev、处理冲突、写合并报告。
+- **`/boss-agent`** — 超级 Boss(总控/编排者,2026-08-19):用户显式调用后自动跑完 规划→
+  派发 headless worker(`.claude/agents/boss-worker.md`)→ 裁决 → merger
+  (`.claude/agents/boss-merger.md`)合并+push dev → 决定下一步。无人值守;main 只提 PR 不等待;
+  新 UI 按 Apple/liquid glass 自主开发,改现有 UI 设计/Env-only 记入 deferred-notes.md。
 
 批次目录约定:`tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`
-(`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md`)。
+(`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md` +
+`logs/` + `boss-state.md` + `deferred-notes.md`)。

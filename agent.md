@@ -74,11 +74,20 @@ domain-map/
   写汇报文件,不 merge 回 dev。
 - **`/merge-agent`**(合并者):本批全部完成后,读批次 manifest + 各开发汇报,按
   `parallel-development` 的 merge orchestration 逐个 merge 回 dev、处理冲突、写合并报告。
+- **`/boss-agent`**(超级 Boss,总控/编排者,2026-08-19):由用户显式调用,自动跑完
+  规划 → 预建 worktree → 并行派发 headless worker(`.claude/agents/boss-worker.md`)→
+  收汇报/自主裁决 → 派 headless merger(`.claude/agents/boss-merger.md`)合并+push dev →
+  按门禁结果自动决定 fix 批次或推进下一里程碑。全程无人值守、不打断用户;push dev
+  自动、main 只提 PR 不等待;新 UI 按 Apple/liquid glass 设计系统自主开发,改现有 UI
+  设计/Env-only 步骤跳过并记入 `deferred-notes.md`,结束时一次性总汇报。细则见
+  `.claude/skills/boss-agent/SKILL.md`。
 
 批次目录约定:`tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`,内含
 `README.md`(manifest:分支表/合并顺序)、`prompts/<ws>.md`(主 Agent 写,开发读)、
-`reports/<ws>.md`(开发写,收尾读)、`merge-report.md`(收尾写)。skill 细则见
-`.claude/skills/{main,workstream,merge}-agent/SKILL.md`。
+`reports/<ws>.md`(开发写,收尾读)、`merge-report.md`(收尾写)、`logs/`(boss 派发的
+headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-notes.md`
+(boss 记录的需用户决策项)。skill 细则见
+`.claude/skills/{main,workstream,merge,boss}-agent/SKILL.md`。
 
 ### 1. 接到新任务时
 
