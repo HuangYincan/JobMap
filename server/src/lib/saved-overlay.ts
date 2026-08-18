@@ -7,12 +7,28 @@
 
 import type { SavedPlace } from './account.ts';
 import { resolveSavedPoi } from './compare-saved.ts';
-import type { DomainPOI, POI } from './types.ts';
+import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
+import { canonicalMode } from './modes.ts';
 
 export function savedPlaceToOverlayPoi(place: SavedPlace, catalog: POI[]): POI | undefined {
   const live = resolveSavedPoi(place, catalog);
   if (live) return live;
   if (typeof place.lng !== 'number' || typeof place.lat !== 'number') return undefined;
+  if (place.kind === 'recruitment') {
+    // 工作收藏兜底必须是 recruitment 形态，否则无岗位图钉会以 domain 样式
+    // 混进工作地图(点击打开无 JD 的域详情卡)。岗位列表留空,靠 live catalog 补。
+    const fallback: RecruitmentPOI = {
+      id: place.poiId,
+      kind: 'recruitment',
+      name: place.name,
+      mode: canonicalMode(place.mode),
+      source: 'api',
+      location: { lng: place.lng, lat: place.lat, address: place.address },
+      company: { name: place.name, industries: [], scale: 'startup' },
+      positions: [],
+    };
+    return fallback;
+  }
   const fallback: DomainPOI = {
     id: place.poiId,
     kind: 'domain',
@@ -20,15 +36,24 @@ export function savedPlaceToOverlayPoi(place: SavedPlace, catalog: POI[]): POI |
     mode: place.mode === 'work' || place.mode === 'internship' ? 'work' : 'domain',
     source: 'api',
     location: { lng: place.lng, lat: place.lat, address: place.address },
-    category: place.kind === 'recruitment' ? '公司企业' : '收藏',
+    category: '收藏',
   };
   return fallback;
 }
 
-export function savedPlacesToOverlay(places: SavedPlace[], catalog: POI[]): POI[] {
+/**
+ * 收藏叠加层按当前模式过滤(2026-08-19, 工作/地点收藏区分):
+ * - work(含 internship)只显示 place.mode ∈ {work, internship} 的工作收藏;
+ * - domain 只显示 place.mode === 'domain' 的地点收藏;
+ * - mode 缺省时不过滤(向后兼容,测试/旧调用语义)。
+ */
+export function savedPlacesToOverlay(places: SavedPlace[], catalog: POI[], mode?: MapMode): POI[] {
+  const target = mode ? canonicalMode(mode) : null;
   const seen = new Set<string>();
   const out: POI[] = [];
   for (const place of places) {
+    if (target === 'work' && canonicalMode(place.mode) !== 'work') continue;
+    if (target === 'domain' && canonicalMode(place.mode) !== 'domain') continue;
     if (seen.has(place.poiId)) continue;
     const poi = savedPlaceToOverlayPoi(place, catalog);
     if (!poi) continue;

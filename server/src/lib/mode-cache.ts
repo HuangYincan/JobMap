@@ -52,6 +52,18 @@ function isPoi(value: unknown): value is POI {
   return typeof poi.id === 'string' && typeof poi.name === 'string' && isLocation(poi.location);
 }
 
+/**
+ * 缓存 kind 守卫(2026-08-19):recruitment 模式缓存只接受 kind:'recruitment',
+ * domain 只接受 kind:'domain'。work 缓存里混入 domain 行(高德 POI 污染)时
+ * 整条作废,避免被污染缓存跨会话还原。
+ */
+function kindMatchesMode(mode: MapMode, poi: POI): boolean {
+  const canonical = canonicalMode(mode);
+  if (canonical === 'work') return poi.kind === 'recruitment';
+  if (canonical === 'domain') return poi.kind === 'domain';
+  return true;
+}
+
 export function readModeCache(mode: MapMode): ModeCacheEntry | null {
   if (!canUseStorage()) return null;
   try {
@@ -66,6 +78,7 @@ export function readModeCache(mode: MapMode): ModeCacheEntry | null {
     if (canonicalMode(parsed.mode) !== canonicalMode(mode) || !Array.isArray(parsed.catalog)) return null;
     const catalog = parsed.catalog.filter(isPoi);
     if (catalog.length === 0) return null;
+    if (catalog.some((poi) => !kindMatchesMode(mode, poi))) return null;
     return {
       version: MODE_CACHE_VERSION,
       mode: canonicalMode(mode),
