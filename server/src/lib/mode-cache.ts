@@ -18,7 +18,7 @@ import type { FilterState, MapMode, POI, POILocation } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 6;
+export const MODE_CACHE_VERSION = 7;
 
 export interface ModeCacheEntry {
   version: number;
