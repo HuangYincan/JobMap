@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import {
   initialsFromName,
   mergePreferences,
@@ -62,6 +63,9 @@ function toggleValue<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
+/** 求职偏好下拉字段(单选 status + 三个多选)。 */
+type PrefField = "status" | "families" | "industries" | "strengths";
+
 // ---- 图标:与 map-shell 的 Icon 同一套描边风格(viewBox 24 / stroke 2 / round) ----
 type IconName = "pencil" | "lock" | "phone" | "logout" | "chevronRight" | "person";
 
@@ -86,6 +90,109 @@ function Icon({ name }: { name: IconName }) {
   );
 }
 
+// ---- 求职偏好下拉浮层(liquid-glass;portal 到 body,逃逸 .sidebar overflow:auto 裁剪) ----
+
+interface PrefMenuProps {
+  /** 触发钮 getBoundingClientRect() 快照,用于浮层定位。 */
+  anchorRect: DOMRect;
+  /** 浮层根节点 ref(供外部点外关闭判断 + 内部测量高度)。 */
+  menuRef: RefObject<HTMLDivElement | null>;
+  /** listbox 可访问名。 */
+  label: string;
+  multi: boolean;
+  options: { id: string; label: string }[];
+  /** 单选为当前 id 字符串;多选为已选 id 数组。 */
+  selected: string | string[];
+  onToggle?: (id: string) => void;
+  onSelect?: (id: string) => void;
+}
+
+function PrefMenu({
+  anchorRect,
+  menuRef,
+  label,
+  multi,
+  options,
+  selected,
+  onToggle,
+  onSelect,
+}: PrefMenuProps) {
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  const selectedSet = multi ? new Set(selected as string[]) : null;
+
+  // 测量后定位:优先向下;底部放不下且上方够高则向上翻转(贴边 gap 6px)。
+  useLayoutEffect(() => {
+    const el = menuRef.current;
+    if (!el) return;
+    const height = el.offsetHeight;
+    const gap = 6;
+    const flipUp = anchorRect.bottom + height + gap > window.innerHeight && anchorRect.top - height - gap > 0;
+    setPos({
+      top: flipUp ? anchorRect.top - height - gap : anchorRect.bottom + gap,
+      right: Math.max(8, window.innerWidth - anchorRect.right),
+    });
+  }, [anchorRect, menuRef]);
+
+  // 浮层内 ↑/↓ 移动焦点(可选键盘导航,suggest-nav 模式同款)。
+  useEffect(() => {
+    if (!pos) return;
+    const menu = menuRef.current;
+    if (!menu) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+      event.preventDefault();
+      const buttons = Array.from(menu.querySelectorAll<HTMLButtonElement>('button[role="option"]'));
+      if (!buttons.length) return;
+      const activeIndex = buttons.findIndex((b) => b === document.activeElement);
+      const nextIndex =
+        event.key === "ArrowDown"
+          ? (activeIndex + 1) % buttons.length
+          : (activeIndex - 1 + buttons.length) % buttons.length;
+      buttons[nextIndex]?.focus();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [pos, menuRef]);
+
+  return createPortal(
+    <div
+      ref={menuRef}
+      className={styles.prefMenuLayer}
+      style={pos ? { top: pos.top, right: pos.right } : { visibility: "hidden" }}
+    >
+      <div
+        className={styles.prefMenu}
+        role="listbox"
+        aria-label={label}
+        aria-multiselectable={multi || undefined}
+      >
+        {options.map((option) => {
+          const active = multi ? selectedSet!.has(option.id) : selected === option.id;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              role="option"
+              aria-selected={active}
+              className={`${styles.prefOption} ${active ? styles.prefOptionActive : ""}`}
+              onClick={() => {
+                if (multi) onToggle?.(option.id);
+                else onSelect?.(option.id);
+              }}
+            >
+              <span className={styles.prefOptionLabel}>{option.label}</span>
+              {active && (
+                <span className={styles.prefCheck} aria-hidden="true">✓</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function ProfilePanel({
   user,
   lang,
@@ -105,6 +212,45 @@ export function ProfilePanel({
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [demoNote, setDemoNote] = useState<string | null>(null);
+
+  // 求职偏好下拉:openField + 触发钮锚点矩形 + 触发钮/浮层 refs。
+  const [openField, setOpenField] = useState<PrefField | null>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const triggerRefs = useRef<Partial<Record<PrefField, HTMLButtonElement | null>>>({});
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const openMenu = useCallback((field: PrefField, anchor: HTMLElement) => {
+    setAnchorRect(anchor.getBoundingClientRect());
+    setOpenField(field);
+  }, []);
+
+  const closeMenu = useCallback(() => {
+    setOpenField(null);
+    setAnchorRect(null);
+  }, []);
+
+  // 点外关闭 / Escape 关闭(参照 sort-selector 31-52):点击浮层或任意触发钮不关。
+  useEffect(() => {
+    if (!openField) return;
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (menuRef.current && menuRef.current.contains(target)) return;
+      const fields = Object.keys(triggerRefs.current) as PrefField[];
+      if (fields.some((field) => triggerRefs.current[field]?.contains(target))) return;
+      closeMenu();
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeMenu();
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openField, closeMenu]);
 
   useEffect(() => {
     setName(user.displayName);
@@ -163,6 +309,124 @@ export function ProfilePanel({
   };
 
   const showDemo = () => setDemoNote(t("demoNotice", lang));
+
+  // ---- 求职偏好触发钮显示文本 ----
+  const emptyText = lang === "zh" ? "未选择" : "Not selected";
+  const countText = (n: number) => (lang === "zh" ? `${n} 项已选` : `${n} selected`);
+  const statusOption = STATUSES.find((s) => s.id === prefs.career.status);
+  const statusText = statusOption ? t(statusOption.labelKey, lang) : emptyText;
+  const familiesText = (() => {
+    const labels: string[] = [];
+    for (const id of prefs.career.families) {
+      const item = FAMILIES.find((f) => f.id === id);
+      if (item) labels.push(t(item.labelKey, lang));
+    }
+    return labels.length ? labels.join(" + ") : emptyText;
+  })();
+  const industriesText = (() => {
+    const n = prefs.career.industries.length;
+    if (n === 0) return emptyText;
+    if (n === 1) {
+      const item = INDUSTRY_OPTIONS.find((i) => i.value === prefs.career.industries[0]);
+      return item ? item.label : prefs.career.industries[0];
+    }
+    return countText(n);
+  })();
+  const strengthsText = (() => {
+    const n = prefs.career.strengths.length;
+    return n === 0 ? emptyText : countText(n);
+  })();
+
+  const renderPrefTrigger = (field: PrefField, label: string, valueText: string) => (
+    <div className={styles.row}>
+      <span className={styles.rowLabel}>{label}</span>
+      <button
+        ref={(el) => {
+          triggerRefs.current[field] = el;
+        }}
+        type="button"
+        className={styles.prefTrigger}
+        aria-haspopup="listbox"
+        aria-expanded={openField === field}
+        onClick={(event) => {
+          if (openField === field) {
+            closeMenu();
+          } else {
+            openMenu(field, event.currentTarget);
+          }
+        }}
+      >
+        <span className={styles.prefValue}>{valueText}</span>
+        <svg
+          className={`${styles.prefChevron} ${openField === field ? styles.prefChevronOpen : ""}`}
+          viewBox="0 0 16 16"
+          width="14"
+          height="14"
+          aria-hidden="true"
+        >
+          <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+    </div>
+  );
+
+  const togglePref = (field: PrefField, id: string) => {
+    if (field === "families") {
+      updateCareer({ families: toggleValue(prefs.career.families, id as "intern" | "campus" | "social") });
+    } else if (field === "industries") {
+      updateCareer({ industries: toggleValue(prefs.career.industries, id) });
+    } else if (field === "strengths") {
+      updateCareer({ strengths: toggleValue(prefs.career.strengths, id as CareerStrength) });
+    }
+  };
+
+  const renderPrefMenu = () => {
+    if (!openField || !anchorRect) return null;
+    let label = "";
+    let multi = false;
+    let options: { id: string; label: string }[] = [];
+    let selected: string | string[] = [];
+    if (openField === "status") {
+      label = t("seekingStatus", lang);
+      multi = false;
+      options = STATUSES.map((s) => ({ id: s.id, label: t(s.labelKey, lang) }));
+      selected = prefs.career.status;
+    } else if (openField === "families") {
+      label = t("careerFamilies", lang);
+      multi = true;
+      options = FAMILIES.map((f) => ({ id: f.id, label: t(f.labelKey, lang) }));
+      selected = prefs.career.families;
+    } else if (openField === "industries") {
+      label = t("careerIndustries", lang);
+      multi = true;
+      options = INDUSTRY_OPTIONS.map((i) => ({ id: i.value, label: i.label }));
+      selected = prefs.career.industries;
+    } else {
+      label = t("careerStrengths", lang);
+      multi = true;
+      options = STRENGTHS.map((s) => ({ id: s.id, label: t(s.labelKey, lang) }));
+      selected = prefs.career.strengths;
+    }
+    return (
+      <PrefMenu
+        anchorRect={anchorRect}
+        menuRef={menuRef}
+        label={label}
+        multi={multi}
+        options={options}
+        selected={selected}
+        onToggle={multi ? (id) => togglePref(openField, id) : undefined}
+        onSelect={
+          multi
+            ? undefined
+            : (id) => {
+                updateCareer({ status: id as JobSeekingStatus });
+                closeMenu();
+              }
+        }
+      />
+    );
+  };
 
   const initials = initialsFromName(name || user.displayName).slice(0, 1);
 
@@ -308,70 +572,14 @@ export function ProfilePanel({
         </div>
       </section>
 
-      {/* 求职偏好 */}
+      {/* 求职偏好(每行一个下拉触发钮 + glass 浮层,勾选即存) */}
       <section className={styles.group} aria-label={t("careerPrefs", lang)}>
         <h3 className={styles.groupLabel}>{t("careerPrefs", lang)}</h3>
         <div className={styles.card}>
-          <div className={styles.row}>
-            <span className={styles.rowLabel}>{t("seekingStatus", lang)}</span>
-            <div className={styles.pillRow} role="group" aria-label={t("seekingStatus", lang)}>
-              {STATUSES.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`${styles.choice} ${prefs.career.status === item.id ? styles.choiceActive : ""}`}
-                  onClick={() => updateCareer({ status: item.id })}
-                >
-                  {t(item.labelKey, lang)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.row}>
-            <span className={styles.rowLabel}>{t("careerFamilies", lang)}</span>
-            <div className={styles.pillRow} role="group" aria-label={t("careerFamilies", lang)}>
-              {FAMILIES.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`${styles.choice} ${prefs.career.families.includes(item.id) ? styles.choiceActive : ""}`}
-                  onClick={() => updateCareer({ families: toggleValue(prefs.career.families, item.id) })}
-                >
-                  {t(item.labelKey, lang)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.row}>
-            <span className={styles.rowLabel}>{t("careerIndustries", lang)}</span>
-            <div className={styles.pillRow} role="group" aria-label={t("careerIndustries", lang)}>
-              {INDUSTRY_OPTIONS.map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  className={`${styles.choice} ${prefs.career.industries.includes(item.value) ? styles.choiceActive : ""}`}
-                  onClick={() => updateCareer({ industries: toggleValue(prefs.career.industries, item.value) })}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.row}>
-            <span className={styles.rowLabel}>{t("careerStrengths", lang)}</span>
-            <div className={styles.pillRow} role="group" aria-label={t("careerStrengths", lang)}>
-              {STRENGTHS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`${styles.choice} ${prefs.career.strengths.includes(item.id) ? styles.choiceActive : ""}`}
-                  onClick={() => updateCareer({ strengths: toggleValue(prefs.career.strengths, item.id) })}
-                >
-                  {t(item.labelKey, lang)}
-                </button>
-              ))}
-            </div>
-          </div>
+          {renderPrefTrigger("status", t("seekingStatus", lang), statusText)}
+          {renderPrefTrigger("families", t("careerFamilies", lang), familiesText)}
+          {renderPrefTrigger("industries", t("careerIndustries", lang), industriesText)}
+          {renderPrefTrigger("strengths", t("careerStrengths", lang), strengthsText)}
         </div>
       </section>
 
@@ -446,6 +654,7 @@ export function ProfilePanel({
   return (
     <div className={embedded ? styles.embed : `${styles.cluster} ${shifted ? styles.shifted : ""}`}>
       {body}
+      {renderPrefMenu()}
       <AvatarCropper
         open={cropOpen}
         lang={lang}
