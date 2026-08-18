@@ -56,20 +56,38 @@ test('GET /api/pois contract: shared server catalog + pipeline', () => {
   assert.equal(serverCatalog('college').length, 0);
 });
 
-test('GET /api/filter-options contract: unknown mode 400, work has taxonomy + district', () => {
+test('GET /api/filter-options contract: unknown mode 400, work has taxonomy + kept filters', () => {
   const route = src('app/api/filter-options/route.ts');
   assert.match(route, /INVALID_MODE/);
   assert.match(route, /status: 400/);
   assert.ok(MODES.work);
   const keys = MODES.work.filters.map((f) => f.key);
   assert.ok(keys.includes('jobTaxonomy'));
-  assert.ok(keys.includes('district'));
-  assert.ok(keys.includes('industry'));
+  assert.ok(keys.includes('scale'));
+  assert.ok(keys.includes('salary'));
   assert.ok(keys.includes('distance'));
   assert.ok(keys.includes('onlyOpen'));
   assert.ok(keys.includes('education'));
   assert.ok(keys.includes('roleFamily'));
   assert.ok(keys.includes('deadline'));
+  // 已移除：行业/行政区/班车
+  assert.ok(!keys.includes('industry'));
+  assert.ok(!keys.includes('district'));
+  assert.ok(!keys.includes('providesShuttle'));
+  // 距离上限 10→50km、步长 0.5→1（modes.ts 与 search.ts 两处同步）
+  const distance = MODES.work.filters.find((f) => f.key === 'distance');
+  assert.equal(distance.max, 50);
+  assert.equal(distance.step, 1);
+  // 人均消费 500→5000、step 50→100；minRating 改双向 range
+  const price = MODES.domain.filters.find((f) => f.key === 'price');
+  assert.equal(price.max, 5000);
+  assert.equal(price.step, 100);
+  const minRating = MODES.domain.filters.find((f) => f.key === 'minRating');
+  assert.equal(minRating.type, 'range');
+  assert.equal(minRating.max, 5);
+  assert.ok(!MODES.domain.filters.some((f) => f.key === 'district'));
+  // 距离排序默认第一位（defaultSort='distance' 端到端）
+  assert.equal(MODES.domain.sortOptions[0].key, 'distance');
   assert.equal(getMode('internship').filters, MODES.work.filters);
   assert.ok(MODES.work.sortOptions.some((option) => option.key === 'deadline'));
   assert.ok(MODES.work.sortOptions.length >= 3);

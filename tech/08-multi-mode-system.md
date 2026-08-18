@@ -65,12 +65,12 @@ Domain Map 是一个多模式地图应用，用户可以在不同场景下切换
 - 公司评价（看准网、脉脉）
 
 **筛选维度:**
-- 行业类型（互联网、金融、咨询...）
+- 岗位类型（实习/校招/社招、技术/产品/运营/设计...）
 - 公司规模（大厂、独角兽、创业公司）
-- 岗位类型（技术、产品、运营、设计...）
+- 学历要求（本科、硕士、博士）
 - 薪资范围
 - 距离学校/住址的缓冲区
-- 是否提供住宿/班车
+- 是否提供住宿
 
 **二级侧控栏展示:**
 - 公司名称、Logo
@@ -460,8 +460,9 @@ export const MODES: Record<MapMode, ModeConfig> = {
     poiIcon: 'marker',
     filters: [
       { key: 'category', type: 'select', options: ['餐饮', '购物', ...] },
-      { key: 'price', type: 'range', min: 0, max: 500 },
-      { key: 'distance', type: 'slider', max: 5000 },
+      { key: 'minRating', type: 'range', min: 0, max: 5, step: 0.5 },
+      { key: 'price', type: 'range', min: 0, max: 5000, step: 100 },
+      { key: 'distance', type: 'slider', min: 0, max: 50, step: 1 },
     ],
     sortOptions: [
       { key: 'distance', label: '距离最近' },
@@ -477,9 +478,10 @@ export const MODES: Record<MapMode, ModeConfig> = {
     poiIcon: 'company',
     filters: [
       { key: 'jobTaxonomy', type: 'taxonomy' }, // FilterPlugin：实习/校招/社招
-      { key: 'industry', type: 'multi-select', options: ['互联网', '金融', ...] },
+      { key: 'roleFamily', type: 'multi-select', options: ['技术', '产品', '运营', '设计'] },
       { key: 'scale', type: 'select', options: ['大厂', '独角兽', '创业公司'] },
-      { key: 'salary', type: 'range', min: 0, max: 10000 },
+      { key: 'salary', type: 'range', min: 0, max: 50, unit: 'K/月' },
+      { key: 'distance', type: 'slider', min: 0, max: 50, step: 1 },
     ],
     sortOptions: [
       { key: 'distance', label: '距离最近' },

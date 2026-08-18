@@ -74,6 +74,8 @@ export interface DomainPOI extends BasePOI {
   rating?: number;
   /** 价格等级 1-4 */
   priceLevel?: number;
+  /** 人均消费（元）。hz 本地 / AMap 有真实值时带上，价格筛选优先用它 */
+  cost?: number;
   /** 营业时间 */
   openHours?: string;
   /** 电话 */

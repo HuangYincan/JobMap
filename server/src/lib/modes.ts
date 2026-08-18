@@ -8,7 +8,6 @@
 
 import type { FilterConfig, MapMode, POIKind, SortOption } from './types.ts';
 import { workFilterConfigs } from './job-taxonomy.ts';
-import { districtFilterConfig } from './spatial-filters.ts';
 
 export interface ModeConfig {
   id: MapMode;
@@ -43,8 +42,8 @@ const DISTANCE_FILTER: FilterConfig = {
   label: '距离',
   type: 'slider',
   min: 0,
-  max: 10,
-  step: 0.5,
+  max: 50,
+  step: 1,
   unit: 'km',
 };
 
@@ -100,12 +99,6 @@ const WORK_SORT_OPTIONS: SortOption[] = [
 const WORK_FILTERS: FilterConfig[] = [
   ...workFilterConfigs(),
   {
-    key: 'industry',
-    label: '行业',
-    type: 'multi-select',
-    options: INDUSTRY_OPTIONS,
-  },
-  {
     key: 'scale',
     label: '公司规模',
     type: 'multi-select',
@@ -127,7 +120,6 @@ const WORK_FILTERS: FilterConfig[] = [
     unit: 'K/月',
   },
   DISTANCE_FILTER,
-  districtFilterConfig(),
   {
     key: 'onlyOpen',
     label: '仅看在招岗位',
@@ -136,11 +128,6 @@ const WORK_FILTERS: FilterConfig[] = [
   {
     key: 'providesHousing',
     label: '提供住宿',
-    type: 'toggle',
-  },
-  {
-    key: 'providesShuttle',
-    label: '提供班车',
     type: 'toggle',
   },
   {
@@ -170,8 +157,8 @@ export const MODES: Record<MapMode, ModeConfig> = {
       },
       {
         key: 'minRating',
-        label: '最低评分',
-        type: 'slider',
+        label: '评分区间',
+        type: 'range',
         min: 0,
         max: 5,
         step: 0.5,
@@ -182,15 +169,14 @@ export const MODES: Record<MapMode, ModeConfig> = {
         label: '人均消费',
         type: 'range',
         min: 0,
-        max: 500,
-        step: 50,
+        max: 5000,
+        step: 100,
         unit: '元',
       },
-      districtFilterConfig(),
     ],
     sortOptions: [
-      { key: 'relevance', label: '相关性' },
       { key: 'distance', label: '距离最近' },
+      { key: 'relevance', label: '相关性' },
       { key: 'rating', label: '评分最高' },
       { key: 'popularity', label: '人气最高' },
       { key: 'priceAsc', label: '价格从低到高' },

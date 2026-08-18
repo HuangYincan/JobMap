@@ -10,7 +10,7 @@ import type { FilterConfig, FilterOption, FilterState, MapMode, POI, SortOption 
 import { isRecruitmentPOI } from './types.ts';
 import { getMode } from './modes.ts';
 import { positionMatchesRole, positionMatchesTaxonomySelection, selectedRoleFamilies, selectedTaxonomyPaths } from './job-taxonomy.ts';
-import { HANGZHOU_DISTRICTS, poiMatchesDistrict } from './spatial-filters.ts';
+import { poiMatchesDistrict } from './spatial-filters.ts';
 import { isAlivePosition } from './position-alive.ts';
 import { TIER_DEFAULT, MAX_ZOOM } from './lod.ts';
 import { categoryMatches, popularityScore } from './viewport-search.ts';
@@ -40,15 +40,6 @@ export const TAG_FILTERS: Record<string, { key: string; value: string }> = {
   创业: { key: 'scale', value: 'startup' },
   创业公司: { key: 'scale', value: 'startup' },
   大型企业: { key: 'scale', value: 'enterprise' },
-  互联网: { key: 'industry', value: 'internet' },
-  金融: { key: 'industry', value: 'finance' },
-  咨询: { key: 'industry', value: 'consulting' },
-  硬件: { key: 'industry', value: 'hardware' },
-  人工智能: { key: 'industry', value: 'ai' },
-  ai: { key: 'industry', value: 'ai' },
-  电商: { key: 'industry', value: 'ecommerce' },
-  游戏: { key: 'industry', value: 'game' },
-  汽车: { key: 'industry', value: 'automotive' },
   实习: { key: 'jobTaxonomy', value: 'intern' },
   校招: { key: 'jobTaxonomy', value: 'campus' },
   社招: { key: 'jobTaxonomy', value: 'social' },
@@ -59,7 +50,6 @@ export const TAG_FILTERS: Record<string, { key: string; value: string }> = {
   在招: { key: 'onlyOpen', value: 'true' },
   在招岗位: { key: 'onlyOpen', value: 'true' },
   住宿: { key: 'providesHousing', value: 'true' },
-  班车: { key: 'providesShuttle', value: 'true' },
   本科: { key: 'education', value: '本科' },
   硕士: { key: 'education', value: '硕士' },
   博士: { key: 'education', value: '博士' },
@@ -68,20 +58,7 @@ export const TAG_FILTERS: Record<string, { key: string; value: string }> = {
   产品: { key: 'roleFamily', value: 'product' },
   运营: { key: 'roleFamily', value: 'ops' },
   设计: { key: 'roleFamily', value: 'design' },
-  ...districtTagFilters(),
 };
-
-/** Full 西湖区 is a plugin; bare 西湖 stays a Domain keyword for the lake. */
-function districtTagFilters(): Record<string, { key: string; value: string }> {
-  const out: Record<string, { key: string; value: string }> = {};
-  for (const district of HANGZHOU_DISTRICTS) {
-    out[district.value] = { key: 'district', value: district.value };
-    if (district.value !== '西湖区') {
-      out[district.label] = { key: 'district', value: district.value };
-    }
-  }
-  return out;
-}
 
 export interface SearchTagSuggestion {
   id: string;
@@ -251,8 +228,8 @@ export interface ParsedSearchQuery {
 
 export const DISTANCE_SLIDER = {
   min: 0,
-  max: 10,
-  step: 0.5,
+  max: 50,
+  step: 1,
 } as const;
 
 /** 距离筛选滑块（km）→ 米。未设或 ≤0 表示不画圈、不裁。 */
@@ -491,6 +468,9 @@ export function poiMatchesQuery(poi: POI, query: string): boolean {
 
 // ---- 筛选 ----
 
+/** 价格档位中点映射（元）：priceLevel 1..4 → 估算人均。与 hz 本地 / AMap 档位同源（tech/22）。 */
+const PRICE_LEVEL_MID: Record<number, number> = { 1: 50, 2: 200, 3: 800, 4: 3000 };
+
 /**
  * 判断单个筛选值是否匹配。
  * 未设置（undefined / 空串 / 空数组）视为不限制。
@@ -506,16 +486,29 @@ export function matchFilter(poi: POI, key: string, value: any): boolean {
       return true;
     }
     case 'minRating': {
+      // 双向「评分区间」range([lo,hi])；旧 slider 数值仍兼容作下限。
       if (isRecruitmentPOI(poi)) return true;
+      const rating = poi.rating ?? 0;
+      if (Array.isArray(value)) {
+        const [a, b] = value as [number, number];
+        const lo = Math.min(a, b);
+        const hi = Math.max(a, b);
+        if (!Number.isFinite(lo) || !Number.isFinite(hi)) return true;
+        return rating >= lo && rating <= hi;
+      }
       const min = Number(value);
       if (!Number.isFinite(min) || min <= 0) return true;
-      return (poi.rating ?? 0) >= min;
+      return rating >= min;
     }
     case 'price': {
       if (isRecruitmentPOI(poi)) return true;
-      if (poi.priceLevel === undefined) return true;
       const range = value as [number, number];
-      const mid = poi.priceLevel * 50; // 价格等级 → 估算人均
+      // 真实人均消费优先；否则退回 priceLevel 档位中点（tech/22 价格档位）。
+      const mid =
+        typeof poi.cost === 'number' && Number.isFinite(poi.cost)
+          ? poi.cost
+          : PRICE_LEVEL_MID[poi.priceLevel ?? 0];
+      if (mid === undefined) return true;
       return mid >= range[0] && mid <= range[1];
     }
     case 'distance': {
