@@ -1,0 +1,31 @@
+{
+  "code": 0,
+  "data": {
+    "job_list": [
+      {
+        "id": "759213000000000001",
+        "title": "高级前端开发工程师",
+        "description": "<p>负责地图应用前端架构与性能优化，参与组件库建设。</p><p>要求：5年以上前端经验，熟悉 TypeScript。</p>",
+        "apply_url": "https://nio.jobs.feishu.cn/759213000000000001",
+        "recruit_type": "social",
+        "location": ["上海"],
+        "job_category": {"zh_cn": "技术"},
+        "job_code": "NIO-SH-FE-001",
+        "create_time": 1724000000
+      },
+      {
+        "id": "759213000000000002",
+        "title": "2026届校园招聘-算法工程师",
+        "description": "<p>面向2026届毕业生，负责推荐算法研发。</p>",
+        "apply_url": "https://nio.jobs.feishu.cn/759213000000000002",
+        "recruit_type": "campus",
+        "location": ["北京", "上海"],
+        "job_category": {"zh_cn": "技术"},
+        "job_code": "NIO-CAMPUS-ALGO-01",
+        "create_time": 1724000000
+      }
+    ],
+    "page_token": "next-page-token",
+    "has_more": true
+  }
+}
