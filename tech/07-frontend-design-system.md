@@ -255,7 +255,7 @@
 
 - Sheet: mini `96px` / half `42svh` / full `86svh`, frost `--soft-strong`.
 - Grabber pill: mini `42×4`, half/full `64×6`.
-- Shared gap token `--drawer-handle-gap: 8px` on `.mobileDrawer` — handle `padding-bottom` is the same in domain and work. Do not let work chips or `.drawerContent` top padding change handle↔toolbar / handle↔search.
+- Shared gap token `--drawer-handle-gap: 8px` on `.mobileDrawer` — handle `padding-bottom` is the same in domain and work. Do not let `.drawerContent` top padding change handle↔toolbar / handle↔search. (The filter-chip row was removed 2026-08-18; work mode no longer renders chips above the list.)
 - Swipe: 位移 ≤ 8px 视为点按(cycle),超过即拖拽并抑制 click。`touch-action: none` on the grabber, not the list.
 
 ---
