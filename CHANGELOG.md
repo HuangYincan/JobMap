@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-18
+
+### Added
+
+- **Parallel role skills** (`.claude/skills/main-agent|workstream-agent|merge-agent`): a fresh Claude session picks its role in a parallel batch by triggering a skill. `main-agent` decomposes goals into workstreams and writes per-workstream prompt files; `workstream-agent` develops in its own worktree and writes a report (never merges); `merge-agent` reads the batch manifest + reports and runs the parallel-development merge orchestration. Batch directory convention: `tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/` (`README.md` manifest, `prompts/<ws>.md`, `reports/<ws>.md`, `merge-report.md`). Docs: `agent.md` §0.5, `tech/04-workflow.md` "Parallel role skills", `CLAUDE.md`.
+
 ## 2026-08-17
 
 ### Added

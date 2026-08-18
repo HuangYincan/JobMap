@@ -64,6 +64,22 @@ domain-map/
 
 5. 详见 `tech/04-workflow.md` 与 `.claude/skills/parallel-development/`。
 
+### 0.5 并行角色 Skills(2026-08-18)
+
+开启一批并行开发时,新会话通过触发 skill 得知自己的角色:
+
+- **`/main-agent`**(派发者):接收一组目标,拆解为并行 workstream,生成每个开发会话的
+  prompt 文件(含已批布局图/文件边界/门禁),写入批次目录并回报路径;只计划不开发。
+- **`/workstream-agent`**(执行者):读主 Agent 的 prompt 文件,在独立 worktree 开发,
+  写汇报文件,不 merge 回 dev。
+- **`/merge-agent`**(合并者):本批全部完成后,读批次 manifest + 各开发汇报,按
+  `parallel-development` 的 merge orchestration 逐个 merge 回 dev、处理冲突、写合并报告。
+
+批次目录约定:`tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`,内含
+`README.md`(manifest:分支表/合并顺序)、`prompts/<ws>.md`(主 Agent 写,开发读)、
+`reports/<ws>.md`(开发写,收尾读)、`merge-report.md`(收尾写)。skill 细则见
+`.claude/skills/{main,workstream,merge}-agent/SKILL.md`。
+
 ### 1. 接到新任务时
 
 1. **理解需求**:

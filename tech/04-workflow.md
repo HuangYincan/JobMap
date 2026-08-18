@@ -72,6 +72,20 @@ Operational detail lives in `.claude/skills/parallel-development/SKILL.md`.
 > **Branch state (2026-08-17):** `dev` was synced with `feature/phase-2-multi-mode`
 > — all of Phase 1/2 now lives on `dev`. Cut new `feature/` / `fix/` branches from `dev`.
 
+### Parallel role skills (2026-08-18)
+
+For a batch of parallel workstreams, fresh sessions pick their role by triggering a skill:
+
+- **`main-agent`** (dispatcher) — decomposes a goal into workstreams, writes each dev
+  session's prompt file into the batch directory, returns the paths. Plans only; does not code.
+- **`workstream-agent`** (executor) — reads its prompt file, develops in its own worktree,
+  writes a report file; never merges back to `dev`.
+- **`merge-agent`** (closer) — after all workstreams finish, reads the batch manifest +
+  reports and runs the sequential merge orchestration (above), then writes a merge report.
+
+Batch directory convention: `tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`
+(`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md`).
+
 ## Review Checklist
 
 - [ ] Scope and data-source gates satisfied.

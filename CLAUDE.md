@@ -46,3 +46,17 @@ npm run import:seed:apply  # 同步 Postgres(需 DATABASE_URL,读 server/.env.lo
 npm run geocode:sites:apply --dry-run  # 雷达公司落真实办公点(需 AMAP_WEB_KEY)
 make db-up                # 启动本地 PostGIS
 ```
+
+## 并行角色 Skills(2026-08-18)
+
+开启一批并行开发时,新会话通过触发对应 skill 得知自己的角色:
+
+- **`/main-agent`** — 主 Agent(派发者):拆解目标为并行 workstream,生成每个开发会话的
+  prompt 文件,写入批次目录并回报路径。只计划不开发。
+- **`/workstream-agent`** — 开发 Agent(执行者):读主 Agent 的 prompt 文件,在独立 worktree
+  开发,写汇报文件,不 merge 回 dev。
+- **`/merge-agent`** — 收尾 Agent(合并者):本批全部完成后,读批次 manifest + 各汇报,
+  按序 merge 回 dev、处理冲突、写合并报告。
+
+批次目录约定:`tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`
+(`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md`)。
