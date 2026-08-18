@@ -37,6 +37,17 @@ const samplePoi = {
   category: '风景名胜',
 };
 
+const sampleRecruitmentPoi = {
+  id: 'c1',
+  kind: 'recruitment',
+  name: '阿里巴巴',
+  mode: 'work',
+  source: 'seed',
+  location: { lng: 120.02, lat: 30.28 },
+  company: { name: '阿里巴巴', industries: [], scale: 'bigtech' },
+  positions: [],
+};
+
 test('writeModeCache / readModeCache round-trips a catalog in sessionStorage', () => {
   installMemoryStorage();
   writeModeCache({
@@ -69,16 +80,7 @@ test('switching modes keeps isolated caches', () => {
   });
   writeModeCache({
     mode: 'work',
-    catalog: [{
-      id: 'c1',
-      kind: 'recruitment',
-      name: '阿里巴巴',
-      mode: 'work',
-      source: 'seed',
-      location: { lng: 120.02, lat: 30.28 },
-      industry: '互联网',
-      positions: [],
-    }],
+    catalog: [sampleRecruitmentPoi],
     pageOffset: 0,
     searchOrigin: null,
     query: '',
@@ -104,7 +106,7 @@ test('clearModeCache only drops that mode', () => {
   });
   writeModeCache({
     mode: 'work',
-    catalog: [{ ...samplePoi, id: 'c1', mode: 'work' }],
+    catalog: [sampleRecruitmentPoi],
     pageOffset: 0,
     searchOrigin: null,
     query: '',
@@ -123,7 +125,7 @@ test('legacy internship cache key is readable as work', () => {
     JSON.stringify({
       version: MODE_CACHE_VERSION,
       mode: 'internship',
-      catalog: [{ ...samplePoi, id: 'legacy', mode: 'internship' }],
+      catalog: [{ ...sampleRecruitmentPoi, id: 'legacy', mode: 'internship' }],
       pageOffset: 1,
       searchOrigin: null,
       query: '',
@@ -144,7 +146,7 @@ test('stale cache version is rejected so refreshed data loads', () => {
     JSON.stringify({
       version: 1,
       mode: 'work',
-      catalog: [{ ...samplePoi, id: 'stale', mode: 'work' }],
+      catalog: [{ ...sampleRecruitmentPoi, id: 'stale', mode: 'work' }],
       pageOffset: 0,
       searchOrigin: null,
       query: '',
@@ -154,6 +156,58 @@ test('stale cache version is rejected so refreshed data loads', () => {
     }),
   );
   assert.equal(readModeCache('work'), null);
+});
+
+test('work cache containing a domain-kind row is rejected as polluted (kind guard)', () => {
+  const store = installMemoryStorage();
+  store.set(
+    `${MODE_CACHE_PREFIX}work`,
+    JSON.stringify({
+      version: MODE_CACHE_VERSION,
+      mode: 'work',
+      catalog: [sampleRecruitmentPoi, { ...samplePoi, id: 'hz-poison', mode: 'domain' }],
+      pageOffset: 0,
+      searchOrigin: null,
+      query: '',
+      filters: {},
+      sort: 'distance',
+      savedAt: 1,
+    }),
+  );
+  assert.equal(readModeCache('work'), null);
+});
+
+test('domain cache containing a recruitment-kind row is rejected as polluted (kind guard)', () => {
+  const store = installMemoryStorage();
+  store.set(
+    `${MODE_CACHE_PREFIX}domain`,
+    JSON.stringify({
+      version: MODE_CACHE_VERSION,
+      mode: 'domain',
+      catalog: [samplePoi, { ...sampleRecruitmentPoi, id: 'job-poison', mode: 'work' }],
+      pageOffset: 0,
+      searchOrigin: null,
+      query: '',
+      filters: {},
+      sort: 'distance',
+      savedAt: 1,
+    }),
+  );
+  assert.equal(readModeCache('domain'), null);
+});
+
+test('work cache of only recruitment rows survives the kind guard', () => {
+  installMemoryStorage();
+  writeModeCache({
+    mode: 'work',
+    catalog: [sampleRecruitmentPoi],
+    pageOffset: 0,
+    searchOrigin: null,
+    query: '',
+    filters: {},
+    sort: 'distance',
+  });
+  assert.equal(readModeCache('work')?.catalog[0].id, 'c1');
 });
 
 test('writeModeCache ignores an empty catalog', () => {
