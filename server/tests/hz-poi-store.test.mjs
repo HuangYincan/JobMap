@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { hzPoiSpatialSql, hzRowToDomainPoi, parseBoundsParam } from '../src/lib/hz-poi-store.ts';
+import { hzPoiSpatialSql, hzRowToDomainPoi, parseBoundsParam, loadHzPoiSuggestions } from '../src/lib/hz-poi-store.ts';
 
 test('hzPoiSpatialSql: bbox + zoom + q + categories + common 过滤', () => {
   const { where, params } = hzPoiSpatialSql({
@@ -149,4 +149,44 @@ test('loadHangzhouPoisFromDb: 查库失败 → null(走回退),不伪装成空 2
     },
   };
   assert.equal(await loadHangzhouPoisFromDb({ zoom: 13 }, pool), null);
+});
+
+// ---- loadHzPoiSuggestions: /api/suggest domain 本地优先 ----
+test('loadHzPoiSuggestions: name 前缀匹配 + limit 钳位 + adname 返回', async () => {
+  const calls = [];
+  const pool = {
+    query: async (sql, params) => {
+      calls.push({ sql, params });
+      return {
+        rows: [
+          { poi_id: 'B0FFF', name: '肯德基(西湖店)', adname: '西湖区', lng_gcj: 120.15, lat_gcj: 30.25 },
+          { poi_id: 'B0FFG', name: '肯德基(湖滨店)', adname: '上城区', lng_gcj: 120.16, lat_gcj: 30.26 },
+        ],
+      };
+    },
+  };
+  const rows = await loadHzPoiSuggestions('肯德基', 5, pool);
+  assert.equal(rows?.length, 2);
+  assert.equal(rows?.[0].adname, '西湖区');
+  assert.ok(calls[0].sql.includes('p.name ILIKE $1'));
+  assert.ok(calls[0].sql.includes('LIMIT $2'));
+  assert.ok(calls[0].sql.includes('(p.rating > 0 OR jsonb_array_length(p.photos) > 0 OR p.tier <= 3)'));
+  assert.deepEqual(calls[0].params, ['肯德基%', 5]); // 前缀匹配
+});
+
+test('loadHzPoiSuggestions: limit 钳位 1..20;空词直接空数组;查库失败 → null', async () => {
+  const pool1 = {
+    query: async (sql, params) => {
+      assert.equal(params[1], 20);
+      return { rows: [] };
+    },
+  };
+  await loadHzPoiSuggestions('星', 99, pool1);
+  assert.deepEqual(await loadHzPoiSuggestions('  ', 5, pool1), []);
+  const pool2 = {
+    query: async () => {
+      throw new Error('connection refused');
+    },
+  };
+  assert.equal(await loadHzPoiSuggestions('星', 5, pool2), null);
 });

@@ -1,22 +1,37 @@
 // ============================================================
 // GET /api/suggest — 搜索建议（Autocomplete）
 //
-// 遵循 tech/10-search-filter.md：
-//   匹配公司名、岗位标题、行业标签；返回建议 + 热门搜索
+// 遵循 tech/10-search-filter.md + tech/22-hangzhou-poi-local.md：
+//   - work：匹配公司名、岗位标题、行业标签；返回建议 + 热门搜索
+//   - domain：本地优先（hz_pois name 前缀匹配，adname 作 subtitle）；
+//     本地 0 命中 / 无库 → 空列表，客户端回退高德 AutoComplete 一次
+//   - center=lng,lat 可选：服务端算好每行 distance（米）
 // ============================================================
 
 import { NextResponse } from 'next/server';
 import { countPoisMatchingTag, matchKeyword, suggestSearchTags } from '@/lib/search';
 import { loadServerCatalog } from '@/lib/server-catalog';
-import { isRecruitmentMode } from '@/lib/types';
+import { isRecruitmentMode, haversineDistance } from '@/lib/types';
 import type { MapMode, RecruitmentPOI } from '@/lib/types';
+import { loadHzPoiSuggestions } from '@/lib/hz-poi-store';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 import { trendingForMode } from '@/lib/trending-search';
+
+/** 解析可选 center=lng,lat。非法值返回 null(客户端自行按位置算距离)。 */
+function parseCenter(raw: string | null): { lng: number; lat: number } | null {
+  if (!raw) return null;
+  const [lngStr, latStr] = raw.split(',');
+  const lng = Number.parseFloat(lngStr ?? '');
+  const lat = Number.parseFloat(latStr ?? '');
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  return { lng, lat };
+}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get('q') || '').trim().toLowerCase();
   const mode = (url.searchParams.get('mode') || 'work') as MapMode;
+  const center = parseCenter(url.searchParams.get('center'));
   const cacheKey = publicCacheKey(['suggest', mode, q]);
   const cached = readPublicCache(cacheKey);
   if (cached) {
@@ -37,6 +52,8 @@ export async function GET(request: Request) {
           title: poi.company.name,
           subtitle: poi.company.summary || poi.company.industries.join(' · '),
           icon: poi.company.logo || '🏢',
+          location: poi.location,
+          distance: center && poi.location ? haversineDistance(poi.location, center) : undefined,
         });
         continue; // 公司已匹配，避免重复推岗位
       }
@@ -50,6 +67,8 @@ export async function GET(request: Request) {
             subtitle: pos.department ? `${pos.department} · ${pos.education || ''}` : undefined,
             icon: '💼',
             poiId: poi.id,
+            location: poi.location,
+            distance: center && poi.location ? haversineDistance(poi.location, center) : undefined,
           });
         }
       }
@@ -65,15 +84,20 @@ export async function GET(request: Request) {
       });
     }
   } else if (q && mode === 'domain') {
-    for (const poi of catalog) {
-      if (poi.kind !== 'domain') continue;
-      if (matchKeyword(poi.name, q) || matchKeyword(poi.category, q) || matchKeyword(poi.subcategory || '', q)) {
+    // 本地优先：hz_pois name 前缀匹配。无库/表缺失(null)或 0 命中 → 空列表，
+    // 客户端回退高德 AutoComplete 一次（见 map-shell suggest effect）。
+    const rows = await loadHzPoiSuggestions(q, 10);
+    if (rows) {
+      for (const row of rows) {
+        const location = { lng: row.lng_gcj, lat: row.lat_gcj };
         suggestions.push({
           type: 'poi',
-          id: poi.id,
-          title: poi.name,
-          subtitle: poi.location.address || poi.category,
+          id: row.poi_id,
+          title: row.name,
+          subtitle: row.adname,
           icon: '📍',
+          location,
+          distance: center ? haversineDistance(location, center) : undefined,
         });
       }
     }
@@ -85,6 +109,10 @@ export async function GET(request: Request) {
     recentSearches: [],
     hotSearches: q ? [] : trendingForMode(mode).map((item) => item.query),
   };
-  writePublicCache(cacheKey, payload);
+  // 只在有建议时缓存：空结果被缓存会掩盖「0 命中→高德回退」信号，也符合
+  // tech/22「回退不可伪装成成功 200」的约定。
+  if (suggestions.length > 0) {
+    writePublicCache(cacheKey, payload);
+  }
   return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
 }

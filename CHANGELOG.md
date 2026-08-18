@@ -7,6 +7,9 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 ### Added
 
 - **Parallel role skills** (`.claude/skills/main-agent|workstream-agent|merge-agent`): a fresh Claude session picks its role in a parallel batch by triggering a skill. `main-agent` decomposes goals into workstreams and writes per-workstream prompt files; `workstream-agent` develops in its own worktree and writes a report (never merges); `merge-agent` reads the batch manifest + reports and runs the parallel-development merge orchestration. Batch directory convention: `tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/` (`README.md` manifest, `prompts/<ws>.md`, `reports/<ws>.md`, `merge-report.md`). Docs: `agent.md` §0.5, `tech/04-workflow.md` "Parallel role skills", `CLAUDE.md`.
+- `SearchSuggestion.distance` (meters) + optional `center` param on `GET /api/suggest`; company rows use site coordinates. Client recomputes against the live origin (user location / map center) for freshness.
+- Suggestion rows render kind-based icons (place 📍 / company 🏢 or logo emoji / job 💼) and right-aligned grey 12 px distance on desktop (`secondary-sidebar.tsx`) and mobile (`map-shell.tsx`); the API's previously unused `icon` field is wired through. Layout L3 approved 2026-08-18.
+- Tests: domain suggest route contract, `loadHzPoiSuggestions` (prefix SQL + clamp + DB-error fallback), client LRU empty-result behavior, updated component contracts. 283 pass / 0 fail; docs `tech/22-hangzhou-poi-local.md` §搜索建议.
 
 ### Changed
 
@@ -28,6 +31,11 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
   - **全量重跑（2026-08-18）:813 条 = 86 pass / 718 warn / 8 fail / 1 error**。修正的 3 条 titleReal 全部翻 true;讯飞 `radar-b871edcdf925`（原 error）被覆盖为 warn;C 组标注聚合行按预期仍可能 fail/warn（标注即交付物,不改标题不修校验器）。剩余 8 fail 为同类「招聘计划/专项/入口名」标题,留待后续拆解/决策;剩余 1 error 为腾讯 `radar-302c5ea36a84`（LLM 空响应,与本次数据修正无关,下次全量自动覆盖）。
   - 报告 `tech/roles/data/validation-report-20260818.json`（gitignored）;统计同步 `data-quality.md`。
 - **筛选相关测试同步新范围/新筛选（`search-logic` / `search-integration`）.** `metersToDistanceKm` 吸附断言按 step 1 / max 50 更新；price 档位中点映射与真实 cost 优先各有新断言；`minRating` range 与旧数值兼容覆盖；work filter-options 契约断言移除 industry/district/providesShuttle 并锁定新范围。
+- **Search suggestions (autocomplete) — candidate list never landed / clicks did nothing (`feature/suggest-fix`).** Four verified causes, all fixed:
+  1. Suggest effect deps `[query, mode, zoom, catalog]` — `catalog` replaces on every batch (hz-poi Stage 4) and `zoom` on every pan, so the 200 ms debounce timer was reset before firing; candidates never rendered. Deps narrowed to `[query, mode]`; `zoom`/`catalog` read via refs.
+  2. Empty suggest results were cached (client LRU 5 min + server 30 s) — a first empty result went "dead", blocking the domain local→AMap fallback. Only non-empty responses are cached now.
+  3. Clicking a suggestion whose company was in the server catalog but not yet loaded client-side did nothing (`handleSelectSuggestion` searched only the local catalog). Work mode now fetches `/api/pois/[id]?mode=work` and opens the detail; domain rows open the loaded rich card when present, else upsert a session card from `location`.
+  4. Domain suggestions went straight to AMap AutoComplete; the route's domain branch iterated the tiny `DOMAIN_SEED` (dead code). `/api/suggest?mode=domain` now queries `hz_pois` first (name ILIKE prefix, `adname` subtitle, GCJ location, optional `distance` from `center=lng,lat`); 0 hits / no DB → empty list → client falls back to AMap AutoComplete once, failures return empty without hanging.
 
 ## 2026-08-17
 

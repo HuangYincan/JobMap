@@ -117,10 +117,25 @@ test('work autocomplete prefers GET /api/suggest and falls back locally', () => 
   assert.match(shell, /fetchSearchSuggest/);
   assert.match(shell, /suggestRecruitment/);
   assert.match(shell, /tip\.poiId/);
-  assert.match(shell, /kind: tip\.type === "position" \? "job"/);
+  assert.match(shell, /tip\.type === "position" \? "job"/);
+  assert.match(shell, /isRecruitmentMode\(mode\) \? "company" : "place"/);
+  assert.match(shell, /mapApiSuggestion/);
   const api = src('lib/api.ts');
   assert.match(api, /\/api\/suggest/);
   assert.match(api, /poiId\?: string/);
+});
+
+test('domain autocomplete is local-first via /api/suggest and falls back to AMap once', () => {
+  const shell = src('components/map-shell.tsx');
+  // 依赖只留 [query, mode]——zoom/catalog 高频变化不再重置防抖定时器
+  assert.match(shell, /\}, \[query, mode\]\);/);
+  assert.doesNotMatch(shell, /\}, \[query, mode, zoom, catalog\]\);/);
+  // domain 本地 0 命中/报错 → 高德 AutoComplete 一次
+  assert.match(shell, /fetchSuggestions\(query\.trim\(\), zoomRef\.current <= 8/);
+  assert.match(shell, /kind: "place"/);
+  assert.match(shell, /icon: "📍"/);
+  // 点击未加载公司 → 拉详情再打开(服务端目录命中但客户端分页未加载)
+  assert.match(shell, /fetchPOIDetail\(s\.poiId, mode\)/);
 });
 
 test('empty search does not feed trending chips into suggestions', () => {

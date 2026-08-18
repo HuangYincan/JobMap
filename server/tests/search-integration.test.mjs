@@ -109,6 +109,20 @@ test('GET /api/suggest contract: work matches company/job/tag; empty q uses tren
   assert.deepEqual(trendingForMode('college'), []);
 });
 
+test('GET /api/suggest domain: 本地优先 hz_pois 前缀 + center 距离 + 空结果不缓存', () => {
+  const route = src('app/api/suggest/route.ts');
+  assert.match(route, /loadHzPoiSuggestions/);
+  assert.match(route, /mode === 'domain'/);
+  assert.match(route, /parseCenter/);
+  assert.match(route, /haversineDistance\(location, center\)/);
+  // 只缓存有建议的响应——空结果被缓存会掩盖「0 命中→高德回退」信号
+  assert.match(route, /if \(suggestions\.length > 0\) \{\s*writePublicCache/);
+  const store = src('lib/hz-poi-store.ts');
+  assert.match(store, /loadHzPoiSuggestions/);
+  assert.match(store, /p\.name ILIKE \$1/);
+  assert.match(store, /ORDER BY p\.rating DESC NULLS LAST/);
+});
+
 test('search flow: keyword + #大厂 returns only bigtech and paginates', () => {
   const first = searchLikeRoute({ mode: 'work', q: '#大厂 前端', page: 1, pageSize: 2 });
   assert.ok(first.total > 0);

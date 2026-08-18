@@ -207,13 +207,27 @@
 .suggestionIcon {
   flex-shrink: 0;
   display: inline-flex;
-  color: var(--muted, #6c7882);
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  font-size: 15px;
+  line-height: 1;
 }
 
 .suggestionText {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-width: 0;
+}
+
+.suggestionDistance {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 10px;
+  font-size: 12px;
+  color: var(--muted, #6c7882);
+  font-variant-numeric: tabular-nums;
 }
 
 .suggestionName {
