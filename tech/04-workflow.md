@@ -95,6 +95,11 @@ For a batch of parallel workstreams, fresh sessions pick their role by triggerin
   scanner writes `scan-report.md` to `tech/roles/development/quality-scans/<YYYYMMDD>-<scope>/`,
   and the boss approves technical findings into fix batches while deferring UI-design / Env-only /
   data-scope items. Details: `.claude/skills/boss-agent/SKILL.md`.
+  **Fault recovery**: every agent shares one API account, so one outage / empty balance stops all
+  sessions at once — durable state (`boss-state.md`, worktrees/branches, logs) survives. Resume
+  with `bash .claude/skills/boss-agent/bin/resume-boss.sh <batchDir> [--headless]` (probes the API,
+  then idempotently resumes via the `--resume` reconciliation protocol) or manually
+  `/boss-agent --resume <batchDir>`.
 
 Batch directory convention: `tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`
 (`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md` +

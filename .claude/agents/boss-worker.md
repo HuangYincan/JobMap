@@ -17,10 +17,14 @@ tools: Read, Edit, Write, Grep, Glob, Search, Bash
 5. **不越边界**:prompt 的「不碰」清单是硬约束,即使顺手也绝不改不归你的文件。
 6. **不打印、不提交** `.env`、`.env.local`、`AMAP_WEB_KEY` 等密钥。
 7. 用了子工具/子代理必须二次验证其结果。
+8. **幂等恢复**:开工前先 `git log --oneline -5` 与 `git status --short`。若分支 tip 已有本 WS 的
+   commit(上次中断留下的成果)→ **不要重做**,验证现有改动、补跑门禁、写报告即可;有未提交
+   半成品 → 用 `git checkout -- <文件>` 丢弃后重做,或判断可用的直接提交。重复派发同一 WS 安全。
 
 ## 流程
 
 1. 读你的 prompt:`<batchDir>/prompts/<ws>.md`(含背景/任务/文件边界/门禁/回报)。先读 worktree 内 `CLAUDE.md`、`agent.md` 及 prompt 列的相关 `tech/` 文档。
+2. **开工前对账**(幂等):`git log --oneline -5` + `git status --short`——按铁律 8 判断是全新开发还是续作,不重做已提交成果。
 2. 在 worktree 内逐项实现;每完成一项跑对应测试。
 3. 跑完整门禁(相对路径,cwd 已是 worktree 根):
    ```bash

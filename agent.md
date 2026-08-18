@@ -86,6 +86,10 @@ domain-map/
   `scan-report.md`;boss 审批后把技术项拆成 fix 批次派 worker,需用户决策项(改现有 UI
   设计/Env-only/数据口径)记 `deferred-notes.md`。扫描报告存
   `tech/roles/development/quality-scans/<YYYYMMDD>-<scope>/`。
+  **故障恢复**:所有 Agent 共用同一 API,一次欠费/故障会同时打掉所有会话;磁盘状态
+  (`boss-state.md` + worktree/分支 + logs)不丢。恢复入口:
+  `bash .claude/skills/boss-agent/bin/resume-boss.sh <批次目录> [--headless]`(探测 API
+  就绪后自动按 --resume 对账协议幂等续跑),或手动 `/boss-agent --resume <批次目录>`。
 
 批次目录约定:`tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`,内含
 `README.md`(manifest:分支表/合并顺序)、`prompts/<ws>.md`(主 Agent 写,开发读)、

@@ -63,6 +63,8 @@ make db-up                # 启动本地 PostGIS
   新 UI 按 Apple/liquid glass 自主开发,改现有 UI 设计/Env-only 记入 deferred-notes.md。
   可派**只读质量扫描**(`.claude/agents/boss-scanner.md`,scope=文档/前端/后端/数据库/数据)
   生成 scan-report,审批后拆 fix 批次派 worker;报告存 `tech/roles/development/quality-scans/`。
+  **故障恢复**:API 欠费/故障会同时停掉所有会话;`bash .claude/skills/boss-agent/bin/resume-boss.sh
+  <批次目录>`(或 `/boss-agent --resume`)按 boss-state.md 幂等续跑。
 
 批次目录约定:`tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`
 (`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md` +

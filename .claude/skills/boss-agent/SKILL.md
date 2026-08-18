@@ -125,8 +125,8 @@ worker(进程外,主通道;cwd 必须是 worktree):
 ```bash
 cd /Users/acccan/dm-wt-<ws> && claude -p \
   --agent boss-worker --name "boss-w-<ws>" --output-format text \
-  --allowedTools "Read, Edit, Write, Grep, Glob, Search, Bash(cd*), Bash(git status*), Bash(git log*), Bash(git diff*), Bash(git show*), Bash(git branch*), Bash(git add*), Bash(git commit*), Bash(git merge dev), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(find*), Bash(ls*), Bash(pwd)" \
-  --disallowedTools "Bash(git push*), Bash(git worktree*), Bash(git switch*), Bash(git checkout*), Bash(git reset --hard*), Bash(git rebase*), Bash(git clean*), Bash(git stash*), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \
+  --allowedTools "Read, Edit, Write, Grep, Glob, Search, Bash(cd*), Bash(git status*), Bash(git log*), Bash(git diff*), Bash(git show*), Bash(git branch*), Bash(git add*), Bash(git commit*), Bash(git merge dev), Bash(git checkout --*), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(find*), Bash(ls*), Bash(pwd)" \
+  --disallowedTools "Bash(git push*), Bash(git worktree*), Bash(git switch*), Bash(git checkout dev), Bash(git checkout main), Bash(git checkout master), Bash(git checkout -b*), Bash(git reset --hard*), Bash(git rebase*), Bash(git clean*), Bash(git stash*), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \
   --add-dir <batchDir> --max-budget-usd 3.0 \
   < <batchDir>/prompts/<ws>.md > <batchDir>/logs/<ws>.log 2>&1
 ```
@@ -134,15 +134,17 @@ merge worker(全部绿后,cwd=主仓库):
 ```bash
 cd /Users/acccan/domain-map && claude -p \
   --agent boss-merger --name "boss-merger" --output-format text \
-  --allowedTools "Read, Grep, Glob, Edit, Write, Bash(cd*), Bash(git switch dev), Bash(git pull --ff-only origin dev), Bash(git status*), Bash(git log*), Bash(git worktree list), Bash(git worktree remove*), Bash(git branch -d*), Bash(git merge --no-ff*), Bash(git push origin dev), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(ls*), Bash(pwd)" \
-  --disallowedTools "Bash(git push origin main), Bash(git push --force*), Bash(git reset --hard*), Bash(git rebase*), Bash(git worktree add*), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \
+  --allowedTools "Read, Grep, Glob, Edit, Write, Bash(cd*), Bash(git switch dev), Bash(git pull --ff-only origin dev), Bash(git status*), Bash(git log*), Bash(git branch --merged*), Bash(git worktree list), Bash(git worktree remove*), Bash(git branch -d*), Bash(git merge --no-ff*), Bash(git push origin dev), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git checkout --*), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(ls*), Bash(pwd)" \
+  --disallowedTools "Bash(git push origin main), Bash(git push --force*), Bash(git reset --hard*), Bash(git rebase*), Bash(git worktree add*), Bash(git checkout dev), Bash(git checkout main), Bash(git checkout master), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \
   --add-dir <batchDir> --max-budget-usd 4.0 \
   < <batchDir>/merge-instructions.md > <batchDir>/logs/merge.log 2>&1
 ```
 要点:worker cwd=worktree(门禁命令相对路径);权限用**宽 allow + 精确 deny**——
 `Bash(cd*)`+`Bash(npm*)` 覆盖模型可能拆分的复合门禁命令(`cd server && npm test` 或
 分开的 `cd server`+`npm test` 都命中),`Bash(npx*)`/`npm install`/`import:*`/`geocode:*`
-等危险项一律 deny;prompt 走 stdin;`--add-dir <batchDir>` 授权跨主树读写汇报。
+等危险项一律 deny;`Bash(git checkout --*)` 只放行「丢弃/还原特定文件」,绝不放开切分支
+(`git switch`/`checkout dev|main` 仍 deny);prompt 走 stdin;`--add-dir <batchDir>` 授权
+跨主树读写汇报。
 
 **进程内辅通道**(轻活/快速裁决):Agent 工具 spawn `boss-worker` / `boss-merger` 类型,如「读 <file> 给 5 行结论」。
 
@@ -165,14 +167,59 @@ boss 解析:`tail -n 2 <report>`;绿 = PASSED+OK(不信自报,抽验 logs 尾);�
 ```
 # Boss State — <slug>
 ## meta        slug / date / batch_dir / goal / owner / milestone_link
-## stage       current: PLAN|LAYOUT|DISPATCH|COLLECT|ADJUDICATE|MERGE|VERIFY|NEXT + updated_at
-## workstreams | ws | branch | worktree | prompt | report | status | dispatched_at | finished_at | verdict |
+## stage       current: PLAN|LAYOUT|DISPATCH|COLLECT|ADJUDICATE|SCAN|MERGE|VERIFY|NEXT + updated_at
+## workstreams | ws | branch | worktree | prompt | report | status | last_tip | dispatched_at | finished_at | verdict |
               status: PENDING→RUNNING→DONE|BLOCKED→FOLLOWUP→MERGED|FAILED
+              last_tip: 该分支当前 tip commit(对账用;每次 dispatch/完成后更新)
 ## merge_order 1. ws-b → 2. ws-u1 → …(依赖序,红则停)
 ## adjudication_log  <ts> | <ws> | <问题> | <裁决> | <结果>
 ## deferred_notes    <ts> | <类型: UI设计/Env-only/其他> | <内容>
 ## next_plan     当前 milestone / 剩余步骤 / 下一步(下一批 slug 或 fix 批次)
+## recovery      last_stage_written / resume_history(<ts> | <对账结果>)
 ```
+
+## 故障恢复(API 欠费 / API 故障)
+
+所有 Agent(含 boss/worker/merger/scanner)共用同一 API。一次欠费或故障会**同时**打掉
+所有会话:boss 会话停、在飞 `claude -p` worker 非零退出、正在写的文件可能半截。但
+**磁盘状态不丢**——批次目录 + worktree/分支 + logs 是持久事实。恢复 = 读状态 → 对账 → 幂等续跑。
+
+### 故障中幸存什么
+- `boss-state.md`:阶段 / workstream 状态 / 裁决 / next_plan(每阶段转换前已写)。
+- worktree + 分支:worker 已 commit 的成果原样保留。
+- `logs/<ws>.log`、`reports/<ws>.md`(可能半截)、`merge-report.md`(可能部分)。
+
+### 恢复入口
+```bash
+bash .claude/skills/boss-agent/bin/resume-boss.sh <批次目录> [--headless]
+# 默认(交互):探测 API → 就绪后启动交互会话,自动按 --resume 协议恢复(需终端)。
+# --headless:cron/launchd 用,无 TTY 的脚本化恢复(串行续派 + 合并 + 写恢复摘要)。
+```
+也可手动:API 恢复后,在会话里 `/boss-agent --resume <批次目录>`。
+
+### --resume 对账协议(幂等,可重复执行)
+1. 读 `boss-state.md`(唯一事实源)。
+2. **环境核对**:主仓库 / dev 分支存在;批次目录完整;`git worktree list` 看各 worktree 是否还在。
+3. **逐 WS 对账**(声明状态 vs 现实):
+   - 现实:`worktree 是否存在` → 分支 tip(`git log` / boss-state 的 `last_tip`)→ `reports/<ws>.md` 是否存在。
+   - `PENDING` → 全新派发。
+   - `RUNNING` / `DONE` 但无 report:
+     - 分支 tip 已有本 WS 的 commit → **续作重派**(同一 worktree+分支;worker 先查 `git log`,不重做,验证 + 补门禁 + 写报告)。
+     - 分支无 commit → 全新重派。
+   - `DONE` 且 report 在 → 读 token,进 COLLECT / ADJUDICATE。
+   - `BLOCKED` → 按裁决规则(技术→续作;UI 设计/Env-only→记 deferred)。
+4. **合并对账**:
+   - `merge-report.md` 存在 且 dev HEAD 已含全部应合分支 → 视为已合并,进 VERIFY。
+   - 部分合并 / 未合并 → 派 merger 续作(merger 幂等:跳过已并入 dev 的分支)。
+5. 从第一个未完成阶段继续。重复 resume 安全(所有动作幂等)。
+
+### headless 恢复注意事项
+- 交互会话派发用 Bash `run_in_background`;headless 恢复改用**串行** `bash spawn-worker.sh <ws> …`(阻塞至完成),逐个收集 token,再派 `spawn-merger.sh`。更稳,牺牲并行。
+- 每步幂等:已完成的 WS 跳过不重派;worker 开工先查 `git log` 避免重做已提交成果。
+
+### 状态写入纪律(故障可恢复的前提)
+- 每个阶段转换**之前**先写 `boss-state.md`(派发前、合并前、push 前);workstream 表记 `last_tip`。
+- 恢复报告写 `<批次>/logs/resume-report.md`(headless)或由 boss 在最终总汇报里带出。
 
 ## 上下文卫生规则(各司其职)
 

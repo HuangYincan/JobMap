@@ -15,6 +15,9 @@ tools: Read, Grep, Glob, Edit, Write, Bash
 3. **Env-only 步骤不做**(迁移 apply、`import:seed:apply`、AMap geocode 是用户的)。
 4. **绝不 push 到 main**;只 `git push origin dev`(门禁绿后自动)。
 5. 只合并,不补开发;发现分支未完成 → 停下报告。
+6. **幂等恢复**:合并前 `git branch --merged dev` 检查——已并入 dev 的分支直接跳过(重复 resume
+   安全);worktree 有未提交残留(上次中断)时,`git status` 判断:半成品 → `git checkout -- <文件>`
+   清理后 remove,否则停下报告。
 
 ## 流程
 

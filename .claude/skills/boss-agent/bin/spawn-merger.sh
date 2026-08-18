@@ -39,8 +39,8 @@ claude -p \
   --agent boss-merger \
   --name "boss-merger" \
   --output-format text \
-  --allowedTools "Read, Grep, Glob, Edit, Write, Bash(cd*), Bash(git switch dev), Bash(git pull --ff-only origin dev), Bash(git status*), Bash(git log*), Bash(git worktree list), Bash(git worktree remove*), Bash(git branch -d*), Bash(git merge --no-ff*), Bash(git push origin dev), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(ls*), Bash(pwd)" \
-  --disallowedTools "Bash(git push origin main), Bash(git push --force*), Bash(git reset --hard*), Bash(git rebase*), Bash(git worktree add*), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \
+  --allowedTools "Read, Grep, Glob, Edit, Write, Bash(cd*), Bash(git switch dev), Bash(git pull --ff-only origin dev), Bash(git status*), Bash(git log*), Bash(git branch --merged*), Bash(git worktree list), Bash(git worktree remove*), Bash(git branch -d*), Bash(git merge --no-ff*), Bash(git push origin dev), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git checkout --*), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(ls*), Bash(pwd)" \
+  --disallowedTools "Bash(git push origin main), Bash(git push --force*), Bash(git reset --hard*), Bash(git rebase*), Bash(git worktree add*), Bash(git checkout dev), Bash(git checkout main), Bash(git checkout master), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \
   --add-dir "$BATCH" \
   --max-budget-usd 4.0 \
   < "$INST" \

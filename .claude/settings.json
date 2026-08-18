@@ -15,6 +15,7 @@
       "Bash(npm*)",
       "Bash(make docs-check*)",
       "Bash(claude:*)",
+      "Bash(nohup:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr list:*)",
