@@ -736,3 +736,28 @@ amap-api.ts`(withTimeout ~309-334)、`server/src/lib/i18n.ts`、`server/tests/po
 - 设计系统：`tech/07-frontend-design-system.md`
 - 组件开发指南：`.claude/skills/frontend-component-dev/skill.md`
 - 测试规范：`server/tests/component-contracts.test.mjs`
+
+---
+
+## 2026-08-19:import:apply 清空站点坐标(事故,79 pins → 2)
+
+**症状**：`npm run import:seed:apply` 后工作模式地图从 ~79 个公司 pin 骤降到 2 个。
+
+**根因**：
+1. 8/17 的 `geocode:sites:apply`(commit 7d19271)把 65+ 家 radar 公司的真实杭州办公室坐标
+   copy-on-write 进 radar drops；其后 `refresh-radar` 重生成 drops(fbc4448,per-city 布局)时
+   **坐标随重生成丢失**——DB 成了唯一持有坐标的地方。
+2. `applyRecruitmentImport` 的 `UPDATE company_sites SET lng = $7, lat = $8` 用
+   `drop 坐标 ?? NULL` **覆盖**既有列——drop 缺坐标 → 既有 geocoded 坐标被清成 NULL。
+3. `loadWorkCatalogFromDb` 只保留 `hasPlausibleCoord` 的站点 → 地图只剩 official-career
+   幸存公司(贝达药业、深度求索)。
+
+**修复**：
+- `server/src/lib/recruitment-import.ts`：site UPDATE 改 `lng = COALESCE($7, lng),
+  lat = COALESCE($8, lat)`——drop 缺坐标时保留既有坐标,永不破坏已 geocoded 数据。
+- 数据恢复：从 7d19271 把已验证坐标合回当前 drops(65 文件 / 181 站点)+ manycore 补 curated
+  seed 坐标(西湖区余杭塘路 515 号莱茵·矩阵国际)。
+- 回归契约测试：`tests/recruitment-import.test.mjs` 静态断言 COALESCE 存在。
+
+**验证**：重导后 `GET /api/pois?mode=work&bounds=中国` total = 75(事故前 ~79,差额为无 open
+岗位/从未 geocoded 的公司);群核科技 4 拆分岗位 + 公共战略培训生均正常。
