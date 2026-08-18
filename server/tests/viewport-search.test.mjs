@@ -266,6 +266,39 @@ test('loadWorkViewport merges by id via injected fetcher', async () => {
   }
 });
 
+test('loadWorkViewport: polluted existing pool with domain rows is purged to recruitment only', async () => {
+  const existing = [
+    recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }]),
+    {
+      id: 'hz-leak',
+      kind: 'domain',
+      name: '某高德POI',
+      mode: 'domain',
+      source: 'api',
+      location: { lng: 120.3, lat: 30.3 },
+      category: '公司企业',
+    },
+  ];
+  const pagePois = [recruitmentPoi('c', [{ id: 'p3', title: '产品', type: 'social', status: 'open' }])];
+  let lastBatch = null;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ results: pagePois }) });
+  try {
+    const merged = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      existing,
+      onBatch: (batch) => {
+        lastBatch = batch;
+      },
+    });
+    assert.deepEqual(merged.map((p) => p.id), ['a', 'c']); // domain 行被剔除,不进列表
+    assert.deepEqual(lastBatch.map((p) => p.id), ['a', 'c']);
+    assert.ok(merged.every((p) => p.kind === 'recruitment'));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('loadWorkViewport maxPages: loops pages, dedupes, stops on a short page', async () => {
   const existing = [recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }])];
   const pages = {

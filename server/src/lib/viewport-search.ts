@@ -374,7 +374,10 @@ export async function loadWorkViewport(options: LoadWorkViewportOptions): Promis
   const { existing, onBatch, signal } = options;
   const startPage = options.page ?? 1;
   const maxPages = options.maxPages ?? 1;
-  let merged = existing;
+  // 客户端 kind 守卫(2026-08-19):work 累计池只允许 recruitment 行。
+  // 服务端已过滤,这里兜底清掉被污染缓存/历史残留的 domain 行,
+  // 避免「高德 POI 混进工作列表」跨会话粘住。
+  let merged: POI[] = existing.filter(isRecruitmentPoi);
   for (let p = 0; p < maxPages; p += 1) {
     if (signal?.cancelled) return merged;
     const page = await fetchWorkViewportPage(
