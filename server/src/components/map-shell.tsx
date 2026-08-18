@@ -13,7 +13,7 @@ import { applyTagSuggestion, activeFilterChips, distanceFilterMeters, metersToDi
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchSearchSuggest } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
-import { mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
+import { batchMatchesCurrentMode, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES } from "@/lib/viewport-search";
 import { maxTierForZoom } from "@/lib/lod";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
@@ -679,6 +679,7 @@ export function MapShell() {
         const onBatch = (batch: POI[]) => {
           if (signal.cancelled) return;
           if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期批次
+          if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return; // 模式已切换,丢弃过期批次
           catalogRef.current = batch;
           setCatalog(batch);
           writeModeCache({
@@ -722,6 +723,7 @@ export function MapShell() {
               });
         if (signal.cancelled) return;
         if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期结果
+        if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return; // 模式已切换,丢弃过期结果
         catalogRef.current = data;
         setCatalog(data);
         writeModeCache({
@@ -807,6 +809,9 @@ export function MapShell() {
               page: 1,
               existing: catalogRef.current,
               onBatch: (batch) => {
+                // 模式守卫:切换模式后,旧模式在飞的批次(公司/地图 POI)不得
+                // 落进新模式的 catalog,否则工作公司会混入地图列表与 marker
+                if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
                 catalogRef.current = batch;
                 setCatalog(batch);
                 writeModeCache({
@@ -850,6 +855,8 @@ export function MapShell() {
               addCap: DOMAIN_BATCH_SIZE,
               pageOffset: 0,
               onBatch: (batch) => {
+                // 模式守卫:同上——域名刷新批次不得落进切换后的工作模式
+                if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
                 catalogRef.current = batch;
                 setCatalog(batch);
                 writeModeCache({

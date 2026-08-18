@@ -257,8 +257,28 @@ function clamp(n: number, min: number, max: number): number {
 // Domain 模式保持刷新才更新,不走这里。
 // ============================================================
 
-import type { FilterState, POI, RecruitmentPOI } from './types.ts';
+import type { FilterState, MapMode, POI, RecruitmentPOI } from './types.ts';
 import { withAlivePositions } from './position-alive.ts';
+
+/**
+ * 批次模式守卫(2026-08-18, poi-mixing 修复):
+ * 视口/主加载的 onBatch 在写入 catalog 前必须确认模式未切换。
+ * 否则旧模式在飞的批次(工作公司 / 地图 POI)会在切换后落进新模式,
+ * 表现为「公司 POI 混入地图 POI」——marker 与列表双双被污染,
+ * 且 handleModeChange 会把被污染的 catalog 写进新模式缓存,跨会话粘住。
+ * 口径与 modes.canonicalMode 一致(internship → work);本地实现避免
+ * modes → spatial-filters → viewport-search 的循环导入。
+ */
+function canonicalForGuard(mode: MapMode | null | undefined): MapMode | null {
+  return mode === 'internship' ? 'work' : (mode ?? null);
+}
+
+export function batchMatchesCurrentMode(
+  currentMode: MapMode | null | undefined,
+  batchMode: MapMode,
+): boolean {
+  return canonicalForGuard(currentMode) === canonicalForGuard(batchMode);
+}
 
 /** moveend/zoomend 防抖时长 */
 export const VIEWPORT_DEBOUNCE_MS = 800;
