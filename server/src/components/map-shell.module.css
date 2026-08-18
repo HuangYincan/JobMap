@@ -190,6 +190,8 @@
 
 .menuWrap {
   position: relative;
+  align-items: center;
+  display: flex;
   flex: 0 0 42px;
   height: 42px;
   width: 100%;
@@ -671,16 +673,24 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .profileCopy strong {
   font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profileCopy small {
   color: var(--muted);
   font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .topTools {
