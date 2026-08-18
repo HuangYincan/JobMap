@@ -93,7 +93,8 @@ test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   assert.match(shell, /mobileJd && isRecruitmentPOI/);
   assert.match(shell, /mobileBackBtn/);
   assert.match(shell, /mobileSheet === "account"/);
-  assert.match(css, /\.mobileChips/);
+  assert.match(css, /\.mobileFilterBtn/);
+  assert.doesNotMatch(css, /\.mobileChips/); // chips 行已整体移除
   assert.match(css, /\.mobileSearchRow/);
   assert.match(css, /\.mobileBackBtn/);
   assert.match(css, /@media \(max-width: 767px\)/);
@@ -159,7 +160,7 @@ test('persistable guest history and catalog-only save are wired', () => {
   assert.match(history, /NOT_PERSISTABLE/);
 });
 
-test('map shell has skip links and a live result count', () => {
+test('map shell has skip links, a live result count, brand row and navItem search', () => {
   const shell = src('components/map-shell.tsx');
   const css = src('components/map-shell.module.css');
   assert.match(shell, /skipToResults/);
@@ -167,12 +168,15 @@ test('map shell has skip links and a live result count', () => {
   assert.match(shell, /aria-live="polite"/);
   assert.match(shell, /applyTagSuggestion/);
   assert.match(shell, /openExploreSearch/);
-  assert.match(shell, /activeFilterChips/);
   assert.match(shell, /document\.documentElement\.lang/);
   assert.match(css, /\.skipLink/);
+  assert.match(shell, /brandLogo/); // 品牌行 Logo
+  assert.match(shell, /searchLabel/); // 搜索行 navItem 化标签
   const layout = src('app/layout.tsx');
   assert.match(layout, /lang="zh-CN"/);
   const sidebar = src('components/secondary-sidebar.tsx');
-  assert.match(sidebar, /activeFilterChips/);
-  assert.match(sidebar, /filterChip/);
+  assert.match(sidebar, /scrollRegion/); // 筛选+结果+列表共享滚动容器
+  assert.doesNotMatch(sidebar, /activeFilterChips/); // chips 已移除
+  assert.doesNotMatch(sidebar, /filterChip/);
+  assert.doesNotMatch(shell, /activeFilterChips/); // 移动端 chips 已移除
 });

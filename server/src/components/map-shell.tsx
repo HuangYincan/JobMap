@@ -9,7 +9,7 @@ import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, fetchSuggestions, loadAMap, suggestionToDomainPoi } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { applyTagSuggestion, activeFilterChips, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, removeFilterChip, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
+import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchSearchSuggest } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, type Position } from "@/lib/types";
@@ -1025,10 +1025,6 @@ export function MapShell() {
         center: distanceOrigin,
       }),
     [catalog, query, filters, sort, distanceOrigin]
-  );
-  const filterChips = useMemo(
-    () => activeFilterChips(filters, modeConfig.filters),
-    [filters, modeConfig.filters],
   );
   catalogRef.current = catalog;
   poisRef.current = pois;
@@ -2281,22 +2277,6 @@ export function MapShell() {
                     resultCount={pois.length}
                     lang={lang}
                   />
-                </div>
-              )}
-              {filterChips.length > 0 && (
-                <div className={styles.mobileChips} aria-label={t("activeFilters", lang)}>
-                  {filterChips.map((chip) => (
-                    <button
-                      key={chip.id}
-                      type="button"
-                      className={styles.mobileChip}
-                      onClick={() => setFilters(removeFilterChip(filters, chip))}
-                      aria-label={`${t("removeFilter", lang)} ${chip.title}`}
-                    >
-                      {chip.title}
-                      <span aria-hidden="true">×</span>
-                    </button>
-                  ))}
                 </div>
               )}
               <div className={styles.mobileMeta}>

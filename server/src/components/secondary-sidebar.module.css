@@ -274,30 +274,6 @@
   color: var(--muted, #6c7882);
 }
 
-.chipRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 14px 8px;
-}
-
-.filterChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid color-mix(in srgb, var(--blue, #007aff) 28%, transparent);
-  background: color-mix(in srgb, var(--blue, #007aff) 10%, transparent);
-  color: var(--blue-ink, #0062cc);
-  border-radius: 999px;
-  padding: 4px 9px;
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.filterChip:hover {
-  background: color-mix(in srgb, var(--blue, #007aff) 16%, transparent);
-}
-
 .clearButton {
   border: none;
   background: transparent;

@@ -24,7 +24,6 @@ import { SortSelector } from "./sort-selector";
 import { t, type Language } from "@/lib/i18n";
 import { getMode } from "@/lib/modes";
 import { suggestKeyAction } from "@/lib/suggest-nav";
-import { activeFilterChips, removeFilterChip } from "@/lib/search";
 import { isRecruitmentPOI, type FilterState, type MapMode, type POI, type Position, type RecruitmentPOI } from "@/lib/types";
 import styles from "./secondary-sidebar.module.css";
 
@@ -160,7 +159,6 @@ export function SecondarySidebar({
   const config = getMode(mode);
   const detailPoi = detailPoiProp ?? localDetail;
   const suggestionItems = suggestions ?? [];
-  const chips = activeFilterChips(filters, config.filters);
 
   useEffect(() => {
     setActiveSuggestion(-1);
@@ -381,23 +379,6 @@ export function SecondarySidebar({
           />
         </div>
       </div>
-
-      {chips.length > 0 && (
-        <div className={styles.chipRow} aria-label={t("activeFilters", lang)}>
-          {chips.map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              className={styles.filterChip}
-              onClick={() => onFiltersChange(removeFilterChip(filters, chip))}
-              aria-label={`${t("removeFilter", lang)} ${chip.title}`}
-            >
-              {chip.title}
-              <span aria-hidden="true">×</span>
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* 筛选面板（可折叠）+ 结果标题 + POI 列表：共享滚动容器，顶部内容随滚走 */}
       <div className={styles.scrollRegion}>
