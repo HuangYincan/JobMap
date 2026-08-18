@@ -364,30 +364,47 @@ export async function fetchWorkViewportPage(
   return alive;
 }
 
+export interface LoadWorkViewportResult {
+  /** 合并后的累计池 */
+  pois: POI[];
+  /** 数据源是否到底(本页不满页即停):true = 已加载全部 */
+  noMore: boolean;
+}
+
 /**
  * 工作模式视口加载:从 page 起连取 maxPages 页(默认 1 页) → 每页 alive 过滤
  * → 按 poi.id 增量合并进现有池(不清空已有 marker;重复 id 跳过;
  * POI_HARD_CAP 防无限堆)。每页合并后回调 onBatch(完整累计池)。
  * 页数取完或某页不满页即停。
+ *
+ * 返回值改为 { pois, noMore }:noMore 表示数据源到底(短页/空页 break),
+ * 供调用方停止哨兵并显示「没有更多结果」。取消时不置位 noMore(状态未知)。
  */
-export async function loadWorkViewport(options: LoadWorkViewportOptions): Promise<POI[]> {
+export async function loadWorkViewport(
+  options: LoadWorkViewportOptions,
+): Promise<LoadWorkViewportResult> {
   const { existing, onBatch, signal } = options;
   const startPage = options.page ?? 1;
   const maxPages = options.maxPages ?? 1;
+  const pageSize = options.pageSize ?? WORK_VIEWPORT_PAGE_SIZE;
   let merged = existing;
+  let noMore = false;
   for (let p = 0; p < maxPages; p += 1) {
-    if (signal?.cancelled) return merged;
+    if (signal?.cancelled) return { pois: merged, noMore: false };
     const page = await fetchWorkViewportPage(
       { ...options, page: startPage + p },
       options.fetcher,
     );
-    if (signal?.cancelled) return merged;
+    if (signal?.cancelled) return { pois: merged, noMore: false };
     merged = mergePoisById(merged, page, POI_HARD_CAP);
     onBatch?.(merged);
-    // 本页不满页 → 没有更多数据,提前停(避免白打请求)
-    if (page.length < (options.pageSize ?? WORK_VIEWPORT_PAGE_SIZE)) break;
+    // 本页不满页 → 没有更多数据,提前停(避免白打请求);同时上报 noMore
+    if (page.length < pageSize) {
+      noMore = true;
+      break;
+    }
   }
-  return merged;
+  return { pois: merged, noMore };
 }
 
 export interface ViewportLoader {

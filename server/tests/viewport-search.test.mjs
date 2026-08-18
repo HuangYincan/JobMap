@@ -248,7 +248,7 @@ test('loadWorkViewport merges by id via injected fetcher', async () => {
     return { ok: true, json: async () => ({ results: pagePois }) };
   };
   try {
-    const merged = await loadWorkViewport({
+    const { pois: merged, noMore } = await loadWorkViewport({
       bounds: VIEWPORT_BOX,
       maxTier: 2,
       existing,
@@ -257,6 +257,7 @@ test('loadWorkViewport merges by id via injected fetcher', async () => {
       },
     });
     assert.deepEqual(merged.map((p) => p.id), ['a', 'b', 'c']); // 去重,不丢已有
+    assert.equal(noMore, true); // 本页(2 条)< pageSize → 数据到底
     assert.deepEqual(lastBatch.map((p) => p.id), ['a', 'b', 'c']);
     const parsed = new URL(seenOptions, 'http://x');
     assert.equal(parsed.searchParams.get('bounds'), '120,30,121,31');
@@ -288,7 +289,7 @@ test('loadWorkViewport maxPages: loops pages, dedupes, stops on a short page', a
   };
   const batches = [];
   try {
-    const merged = await loadWorkViewport({
+    const { pois: merged, noMore } = await loadWorkViewport({
       bounds: VIEWPORT_BOX,
       pageSize: 2, // 满页=2;第 1/2 页满 → 继续,第 3 页空 → 停
       maxPages: 4,
@@ -299,7 +300,36 @@ test('loadWorkViewport maxPages: loops pages, dedupes, stops on a short page', a
     });
     assert.deepEqual(seenPages, ['1', '2', '3']); // 空页后提前停,不请求第 4 页
     assert.deepEqual(merged.map((p) => p.id), ['a', 'b', 'c', 'd']); // 跨页去重
+    assert.equal(noMore, true); // 第 3 页空 → 数据到底
     assert.deepEqual(batches, [['a', 'b', 'c'], ['a', 'b', 'c', 'd'], ['a', 'b', 'c', 'd']]); // 每页合并后回调
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport: 全部页面满页时 noMore=false(未到底,哨兵继续)', async () => {
+  const existing = [];
+  const seenPages = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const p = Number(new URL(String(url), 'http://x').searchParams.get('page'));
+    seenPages.push(String(p));
+    const results = [
+      recruitmentPoi(`r-${p}-1`, [{ id: `p-${p}-1`, title: '岗位', type: 'social', status: 'open' }]),
+      recruitmentPoi(`r-${p}-2`, [{ id: `p-${p}-2`, title: '岗位', type: 'social', status: 'open' }]),
+    ];
+    return { ok: true, json: async () => ({ results }) };
+  };
+  try {
+    const { pois: merged, noMore } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 2, // 每页恰好满页 → 不 break
+      maxPages: 3,
+      existing,
+    });
+    assert.deepEqual(seenPages, ['1', '2', '3']); // 全部满页 → 取满 maxPages
+    assert.equal(merged.length, 6);
+    assert.equal(noMore, false); // 满页连续 → 可能还有下一页,不算到底
   } finally {
     globalThis.fetch = originalFetch;
   }

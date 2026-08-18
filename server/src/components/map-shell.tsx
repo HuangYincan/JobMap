@@ -753,32 +753,44 @@ export function MapShell() {
         };
         // 工作模式:按当前视野 + 档位上限按需加载(增量合并,不清空已有 marker);
         // Domain 模式:保持刷新才更新(高德 API 负载/余额),视野变化不重搜。
-        const data =
-          isRecruitmentMode(mode)
-            ? await loadWorkViewport({
-                bounds: view.bounds ?? undefined,
-                maxTier: maxTierForZoom(view.zoom),
-                filters,
-                q: query || undefined,
-                sort: sort || undefined,
-                page: pageOffset + 1,
-                maxPages: WORK_INITIAL_MAX_PAGES,
-                existing: catalogRef.current,
-                signal,
-                onBatch,
-              })
-            : await fetchPOIsForMode({
-                mode,
-                query: query || undefined,
-                center: origin,
-                zoom: view.zoom,
-                bounds: view.bounds ?? undefined,
-                existing: mode === "domain" ? catalogRef.current : undefined,
-                addCap: mode === "domain" ? DOMAIN_BATCH_SIZE : MORE_PAGE_SIZE,
-                pageOffset,
-                signal,
-                onBatch,
-              });
+        let noMore = false;
+        let data: POI[];
+        if (isRecruitmentMode(mode)) {
+          const result = await loadWorkViewport({
+            bounds: view.bounds ?? undefined,
+            maxTier: maxTierForZoom(view.zoom),
+            filters,
+            q: query || undefined,
+            sort: sort || undefined,
+            page: pageOffset + 1,
+            maxPages: WORK_INITIAL_MAX_PAGES,
+            existing: catalogRef.current,
+            signal,
+            onBatch,
+          });
+          data = result.pois;
+          // work 数据到底由 loadWorkViewport 上报(短页/空页 break),
+          // 与 domain 的 cap 语义分离——「没有更多」= 数据源到底,不是 3000 封顶。
+          noMore = result.noMore;
+        } else {
+          data = await fetchPOIsForMode({
+            mode,
+            query: query || undefined,
+            center: origin,
+            zoom: view.zoom,
+            bounds: view.bounds ?? undefined,
+            existing: mode === "domain" ? catalogRef.current : undefined,
+            addCap: mode === "domain" ? DOMAIN_BATCH_SIZE : MORE_PAGE_SIZE,
+            pageOffset,
+            signal,
+            onBatch,
+          });
+          // 数据耗尽判定(仅 domain):本轮零新增且此前有数据 → 哨兵停止,
+          // 显示「没有更多结果」。覆盖:稀疏视野(<1000)、高德回退窗口耗尽、
+          // 关键词无更多页。否则哨兵会无限空转(每轮发请求但 0 新增)。
+          noMore =
+            canonicalMode(mode) === "domain" && beforeLen > 0 && data.length <= beforeLen;
+        }
         if (signal.cancelled) return;
         if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期结果
         if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return; // 模式已切换,丢弃过期结果
@@ -793,11 +805,6 @@ export function MapShell() {
           filters,
           sort,
         });
-        // 数据耗尽判定(仅 domain):本轮零新增且此前有数据 → 哨兵停止,
-        // 显示「没有更多结果」。覆盖:稀疏视野(<1000)、高德回退窗口耗尽、
-        // 关键词无更多页。否则哨兵会无限空转(每轮发请求但 0 新增)。
-        const noMore =
-          canonicalMode(mode) === "domain" && beforeLen > 0 && data.length <= beforeLen;
         noMoreRef.current = noMore;
         setNoMoreData(noMore);
       } catch (err) {
@@ -857,8 +864,12 @@ export function MapShell() {
         if (!bounds) return;
         const mode = canonicalMode(v.mode);
         if (mode === "work") {
+          // 新视野 = 新数据上下文:与 domain 分支一致,视口替换时复位 noMore,
+          // 避免上一视野的「没有更多结果」粘住新视野的滚动加载。
+          noMoreRef.current = false;
+          setNoMoreData(false);
           try {
-            await loadWorkViewport({
+            const result = await loadWorkViewport({
               bounds,
               maxTier: maxTierForZoom(zoom),
               filters: v.filters,
@@ -883,6 +894,9 @@ export function MapShell() {
                 });
               },
             });
+            // 视口页(短页 break)决定新视野是否已到底;未到底保持可继续滚动
+            noMoreRef.current = result.noMore;
+            setNoMoreData(result.noMore);
           } catch (err) {
             // 视口加载失败不打断主流程:保留现有累计池,下次地图事件再试
             console.warn("[map-shell] work viewport load failed:", err);
@@ -1127,11 +1141,13 @@ export function MapShell() {
   }, [mapCenter, mode]);
 
   const handleNeedMore = useCallback(() => {
-    // 无限滚动:杭州内/外 Domain 模式到 DOMAIN_POI_HARD_CAP 封顶;
-    // work 模式保持 POI_HARD_CAP 上限(由 fetch 侧控制)。这里只短路 domain。
+    // 无限滚动:Domain 模式到 DOMAIN_POI_HARD_CAP(1000)封顶;
+    // work 模式保持 POI_HARD_CAP(3000,由 fetch 侧控制)。两种模式共用
+    // noMore 短路:数据已耗尽(work 短页到底 / domain 稀疏视野无更多页),
+    // 哨兵停止触发,不再递增 pageOffset。
+    if (noMoreRef.current) return; // 数据已耗尽,哨兵停止触发
     if (canonicalMode(mode) === "domain") {
       if (catalogRef.current.length >= DOMAIN_POI_HARD_CAP) return;
-      if (noMoreRef.current) return; // 数据已耗尽,哨兵停止触发
     }
     if (loadingRef.current) return; // 防重入:上一批加载中不重复触发
     setLoadingMore(true);
@@ -1963,7 +1979,7 @@ export function MapShell() {
         onNeedMore={handleNeedMore}
         loadingMore={loadingMore}
         atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
-        noMore={canonicalMode(mode) === "domain" && noMoreData}
+        noMore={noMoreData}
         onWidenSearch={handleWidenSearch}
         saved={Boolean(detailPoi && savedPlaces.some((item) => item.poiId === detailPoi.id))}
         onToggleSave={detailPoi && isPersistablePoi(detailPoi) ? handleToggleSave : undefined}
@@ -2486,7 +2502,7 @@ export function MapShell() {
                 onNeedMore={handleNeedMore}
                 loadingMore={loadingMore}
                 atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
-                noMore={canonicalMode(mode) === "domain" && noMoreData}
+                noMore={noMoreData}
               />
               </>
               )}
