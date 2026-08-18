@@ -98,3 +98,145 @@ test('fetchPOIsForMode(domain 杭州内): 本地库失败 → 抛错(错误信�
     globalThis.fetch = originalFetch;
   }
 });
+
+test('fetchPOIsForMode(domain 杭州内 + 分类): categories 参数构造 + 全量分页循环(短页到底)', async () => {
+  const originalFetch = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (url) => {
+    urls.push(String(url));
+    const u = new URL(String(url), 'http://x');
+    const offset = Number(u.searchParams.get('offset'));
+    const rows =
+      offset === 0
+        ? 300
+        : offset === 300
+          ? 300
+          : 100;
+    return {
+      ok: true,
+      json: async () => ({
+        total: 700,
+        results: Array.from({ length: rows }, (_, i) => domainPoi(`${offset}-${i}`)),
+      }),
+    };
+  };
+  try {
+    const { pois, noMore } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 13,
+      pageOffset: 0,
+      existing: [],
+      filters: { category: '餐饮服务' },
+    });
+    assert.equal(urls.length, 3); // offset 0/300/600,短页(100<300)停
+    for (const raw of urls) {
+      const u = new URL(raw, 'http://x');
+      assert.equal(u.searchParams.get('categories'), '餐饮服务');
+      assert.equal(u.searchParams.get('limit'), '300'); // API 上限满页
+    }
+    assert.match(urls[0], /offset=0/);
+    assert.match(urls[1], /offset=300/);
+    assert.match(urls[2], /offset=600/);
+    assert.equal(pois.length, 700);
+    assert.equal(noMore, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('fetchPOIsForMode(domain 杭州内 + 分类): offset 到 API 上限(1000)即止,受容量保护', async () => {
+  const originalFetch = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (url) => {
+    urls.push(String(url));
+    const u = new URL(String(url), 'http://x');
+    const offset = Number(u.searchParams.get('offset'));
+    return {
+      ok: true,
+      json: async () => ({
+        total: 1500, // 服务端还有更多,但 offset 已到上限
+        results: Array.from({ length: 300 }, (_, i) => domainPoi(`o${offset}-${i}`)),
+      }),
+    };
+  };
+  try {
+    const { pois, noMore } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 13,
+      pageOffset: 0,
+      existing: [],
+      filters: { category: '购物服务' },
+    });
+    assert.equal(urls.length, 4); // offset 0/300/600/900;1200 越过上限 → 停
+    assert.match(urls[3], /offset=900/);
+    assert.equal(pois.length, 1000); // DOMAIN_POI_HARD_CAP 钳制
+    assert.equal(noMore, false); // 1500 > 已取 → 未穷尽(尽力全量,受容量保护)
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('fetchPOIsForMode(domain 杭州内 + 分类): 取消信号中断分页循环', async () => {
+  const originalFetch = globalThis.fetch;
+  const signal = { cancelled: false };
+  let call = 0;
+  globalThis.fetch = async () => {
+    call += 1;
+    if (call >= 2) signal.cancelled = true; // 第二页后取消
+    return {
+      ok: true,
+      json: async () => ({
+        total: 5000,
+        results: Array.from({ length: 300 }, (_, i) => domainPoi(`s${call}-${i}`)),
+      }),
+    };
+  };
+  try {
+    const { pois, noMore } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 13,
+      pageOffset: 0,
+      existing: [],
+      filters: { category: '餐饮服务' },
+      signal,
+    });
+    assert.equal(call, 2); // 第三轮循环入口发现 cancelled → 不再发请求
+    assert.equal(pois.length, 600);
+    assert.equal(noMore, false); // 被取消不算到底
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('fetchPOIsForMode(domain 杭州内 + 分类 + 关键词): 搜索豁免,不发 categories', async () => {
+  const originalFetch = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (url) => {
+    urls.push(String(url));
+    return {
+      ok: true,
+      json: async () => ({ total: 1, results: [domainPoi('kfc')] }),
+    };
+  };
+  try {
+    const { pois } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 13,
+      pageOffset: 0,
+      existing: [],
+      query: '肯德基',
+      filters: { category: '餐饮服务' },
+    });
+    assert.equal(urls.length, 1);
+    const u = new URL(urls[0], 'http://x');
+    assert.equal(u.searchParams.get('q'), '肯德基');
+    assert.equal(u.searchParams.get('categories'), null); // 搜索不受分类门控
+    assert.equal(pois.length, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
