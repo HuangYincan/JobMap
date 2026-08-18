@@ -81,6 +81,11 @@ domain-map/
   自动、main 只提 PR 不等待;新 UI 按 Apple/liquid glass 设计系统自主开发,改现有 UI
   设计/Env-only 步骤跳过并记入 `deferred-notes.md`,结束时一次性总汇报。细则见
   `.claude/skills/boss-agent/SKILL.md`。
+  boss 可派**只读质量扫描**(`boss-scanner`,干净上下文、严格只读、不修改任何文件)按 scope
+  检查 文档过时/矛盾/缺失、代码冗余/死代码/可优化/健壮性/安全性、数据源正确性,写
+  `scan-report.md`;boss 审批后把技术项拆成 fix 批次派 worker,需用户决策项(改现有 UI
+  设计/Env-only/数据口径)记 `deferred-notes.md`。扫描报告存
+  `tech/roles/development/quality-scans/<YYYYMMDD>-<scope>/`。
 
 批次目录约定:`tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`,内含
 `README.md`(manifest:分支表/合并顺序)、`prompts/<ws>.md`(主 Agent 写,开发读)、

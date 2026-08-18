@@ -61,6 +61,8 @@ make db-up                # 启动本地 PostGIS
   派发 headless worker(`.claude/agents/boss-worker.md`)→ 裁决 → merger
   (`.claude/agents/boss-merger.md`)合并+push dev → 决定下一步。无人值守;main 只提 PR 不等待;
   新 UI 按 Apple/liquid glass 自主开发,改现有 UI 设计/Env-only 记入 deferred-notes.md。
+  可派**只读质量扫描**(`.claude/agents/boss-scanner.md`,scope=文档/前端/后端/数据库/数据)
+  生成 scan-report,审批后拆 fix 批次派 worker;报告存 `tech/roles/development/quality-scans/`。
 
 批次目录约定:`tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`
 (`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md` +

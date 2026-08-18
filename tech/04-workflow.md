@@ -89,8 +89,12 @@ For a batch of parallel workstreams, fresh sessions pick their role by triggerin
   (fix batch or next milestone). Never interrupts the user: pushes to `dev` on green gates
   automatically, only raises a `dev → main` PR (never pushes main, never waits for its merge),
   develops new UI per the Apple/liquid-glass design system, and records "modify existing UI
-  design" / Env-only steps into `deferred-notes.md` for a single end-of-run report. Details:
-  `.claude/skills/boss-agent/SKILL.md`.
+  design" / Env-only steps into `deferred-notes.md` for a single end-of-run report. Boss can
+  also dispatch a strictly read-only **quality scan** (`.claude/agents/boss-scanner.md`) with a
+  scope (`docs` / `frontend` / `backend` / `db` / `data` / `all`) from a clean context; the
+  scanner writes `scan-report.md` to `tech/roles/development/quality-scans/<YYYYMMDD>-<scope>/`,
+  and the boss approves technical findings into fix batches while deferring UI-design / Env-only /
+  data-scope items. Details: `.claude/skills/boss-agent/SKILL.md`.
 
 Batch directory convention: `tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`
 (`README.md` manifest + `prompts/<ws>.md` + `reports/<ws>.md` + `merge-report.md` +

@@ -1,6 +1,6 @@
 ---
 name: boss-agent
-description: 超级 Boss Agent(总控/编排者)。接收一个开发目标后自动跑完：规划(拆 workstream、新 UI 按 Apple/liquid glass 设计系统出 ASCII 布局图)→ 预建 worktree → 并行派发 headless worker(boss-worker)→ 收集汇报/自主裁决 → 派 headless merger(boss-merger)合并+push dev → 按门禁结果自动决定 fix 批次或推进下一里程碑 → 完成后一次性总汇报。全程无人值守、不打断用户；main 只提 PR 不等待。当你说「开始一批并行开发 / 用 boss 跑这个目标 / 超级boss 执行 <目标>」时触发。可 --resume <批次目录>。
+description: 超级 Boss Agent(总控/编排者)。接收一个开发目标后自动跑完：规划(拆 workstream、新 UI 按 Apple/liquid glass 设计系统出 ASCII 布局图)→ 预建 worktree → 并行派发 headless worker(boss-worker)→ 收集汇报/自主裁决 → 派 headless merger(boss-merger)合并+push dev → 按门禁结果自动决定 fix 批次或推进下一里程碑；无任务/用户要求时派只读扫描(boss-scanner)生成质量扫描报告、审批后派 worker 修复 → 完成后一次性总汇报。全程无人值守、不打断用户；main 只提 PR 不等待。当你说「开始一批并行开发 / 用 boss 跑这个目标 / 超级boss 执行 <目标> / 扫描全库 / 扫描<文档|前端|后端|数据库|数据>质量」时触发。可 --resume <批次目录>。
 ---
 
 # 超级 Boss Agent(总控/编排者)
@@ -21,6 +21,7 @@ description: 超级 Boss Agent(总控/编排者)。接收一个开发目标后�
 6. **Env-only 步骤**(迁移 apply、`import:seed:apply`、AMap geocode)不自动跑,记入 `deferred-notes.md`。
 7. **子 Agent 结果二次验证**:读汇报「门禁」行 + logs 尾,不轻信 `结论: OK`。
 8. 每阶段转换后写 `boss-state.md`;可 `--resume <批次目录>` 恢复。
+9. **质量扫描**:无任务/用户要求时,派 `boss-scanner` 做严格只读扫描(scope 由目标指定:`docs`/`frontend`/`backend`/`db`/`data`/`all`)。读扫描报告后**审批**(技术类自动批,组成 fix 批次派 worker;改现有 UI 设计 / Env-only / 数据口径 → 记 `deferred-notes.md`),再进入 DISPATCH。扫描报告存 `tech/roles/development/quality-scans/<YYYYMMDD>-<scope>/`。
 
 ## 状态机总览
 
@@ -33,7 +34,8 @@ description: 超级 Boss Agent(总控/编排者)。接收一个开发目标后�
 | ADJUDICATE | BLOCKED/FAILED | 技术自裁→re-dispatch;改现有 UI/Env-only→defer | adjudication_log、deferred-notes.md | boss |
 | MERGE | 全部绿 | spawn merger→读 merge-report | merge-report.md、dev 合并+push | merger |
 | VERIFY | merge-report | 抽验门禁/测试数/git log | 验证结论 | boss |
-| NEXT | 验证结论 | 红→fix 批次;绿→下一里程碑 | boss-state next_plan | boss |
+| SCAN | scan 目标/scope(或 NEXT 无任务时) | spawn 只读 scanner→读 scan-report→审批 findings | scan-report.md、approved findings | scanner→boss |
+| NEXT | 验证结论 | 红→fix 批次;绿→下一里程碑;无里程碑→可选 SCAN | boss-state next_plan | boss |
 
 NEXT 全自动回环,直到整个目标完成(含 fix 迭代),然后一次性总汇报。
 
@@ -103,7 +105,21 @@ merger 读 manifest+reports,按序 `--no-ff` 合并、红则停、门禁绿自�
 - **绿** → 取 next_plan 下一里程碑(新批次),回 PLAN。
 - 里程碑全部完成 → 结束,写终态 boss-state.md,输出**最终总汇报**(见下)。
 
-## 派发命令模板(供参考;优先用 spawn-worker.sh / spawn-merger.sh)
+### SCAN(质量扫描,可选)
+触发:用户显式要求(如「扫描全库 / 只扫描文档 / 只扫描后端」),或 NEXT 无剩余里程碑时按需发起。
+1. **定 scope**:从目标解析 `docs`/`frontend`/`backend`/`db`/`data`/`all`(默认 all);可组合。
+2. **派 scanner**(进程外,干净上下文,严格只读;Bash `run_in_background=true`):
+   ```bash
+   bash .claude/skills/boss-agent/bin/spawn-scanner.sh <scope> /Users/acccan/domain-map/tech/roles/development/quality-scans/<YYYYMMDD>-<scope>
+   ```
+   scanner 只读扫描,把报告写入 `<scanDir>/scan-report.md`,末行 token `结论: SCAN_DONE: <H>/<M>/<L>`。
+3. **读报告 + 审批**:逐项判定——
+   - **技术类**(死代码/冗余/复杂度/健壮性/文档过时)→ 自动批,归入 fix 批次。
+   - **改现有 UI 设计 / Env-only / 数据口径** → 不派,记 `deferred-notes.md`(引用报告 # 号)。
+   - 每个 fix 批次写入并行批次目录(正常 DISPATCH→…→MERGE 流程)。
+4. 报告中严重度 High 但当前无把握的 → 先派小范围 Explore 复验再批。
+
+### 派发命令模板(供参考;优先用 spawn-worker.sh / spawn-merger.sh)
 
 worker(进程外,主通道;cwd 必须是 worktree):
 ```bash
@@ -162,9 +178,10 @@ boss 解析:`tail -n 2 <report>`;绿 = PASSED+OK(不信自报,抽验 logs 尾);�
 
 | Agent | 读 | 写 | 明确不做 |
 |---|---|---|---|
-| boss | goal、tech 摘要、boss-state.md、汇报「门禁+结论」行、「遇到的问题」段、merge-report 总览 | boss-state.md、prompts/*.md、deferred-notes.md、merge-instructions.md | 不 dump 代码、不替 worker 改码 |
+| boss | goal、tech 摘要、boss-state.md、汇报「门禁+结论」行、「遇到的问题」段、merge-report 总览、scan-report.md(审批用) | boss-state.md、prompts/*.md、deferred-notes.md、merge-instructions.md | 不 dump 代码、不替 worker 改码 |
 | boss-worker | 自己 prompt + CLAUDE.md + 相关 tech + worktree 内代码 | worktree 内代码 + `reports/<ws>.md`(末两行 token) | 不 dump、不 merge、不 push、不碰主树、不改现有 UI 设计 |
 | boss-merger | manifest + 各汇报(仅完成性检查) | merge commits + `merge-report.md` | 不补开发缺口、不 dump、不 push main |
+| boss-scanner | 全项目(按 scope) | `scan-report.md` | 严格只读、不改任何文件、不 merge/push |
 | Explore(规划期) | 结构/技术文档 | 结论 + file:line | 不写码 |
 
 ## 完成清单
@@ -173,4 +190,5 @@ boss 解析:`tail -n 2 <report>`;绿 = PASSED+OK(不信自报,抽验 logs 尾);�
 - [ ] 每处新 UI 符合 Apple/liquid glass 设计系统;`deferred-notes.md` 记录了所有「改现有 UI 设计」与 Env-only 项
 - [ ] merge-report.md 已写;dev 门禁绿且已 push(全部 ws 时)
 - [ ] 若涉及 main:已 `gh pr create` 并记录 PR 链接(不等待)
+- [ ] 若执行了扫描:scan-report.md 已生成、技术项已批派成 fix 批次、需用户决策项已记 deferred-notes
 - [ ] boss-state.md 已到终态;输出**最终总汇报**:各批次结果、门禁计数、merge 摘要、deferred-notes.md 清单、PR 链接、Env-only 待办
