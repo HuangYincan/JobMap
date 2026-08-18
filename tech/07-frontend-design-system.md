@@ -216,33 +216,23 @@
 └─────────────────────────────────┘
 ```
 
-**抽屉交互细节**:
+**抽屉交互细节（live,WS-U5 跟手动画）**:
 
-1. **拖动手势**:
-   - 监听 `touchstart`/`touchmove`/`touchend` 事件
-   - 计算滑动距离与速度(velocity)
-   - 阈值公式:`moved_distance > 48px || velocity > 500px/s`
+1. **拖动手势（跟手）**:
+   - 监听 grabber 的 `pointerdown/move/up`(pointer capture 全程跟踪),`touch-action: none` 只加在 grabber,不加在列表。
+   - 拖拽中直接写 `.mobileDrawer` 的 inline `height`(px),并挂 `.drawerDragging` class 禁用 `transition`——不做缓动,手指到哪抽屉到哪;越界由 CSS `min/max-height` 钳制。
+   - 内容可见性随手指越过档位切换(越过 mini↔half 即显示 toolbar/content)。
 
-2. **自动吸附逻辑**:
-   ```javascript
-   if (向上滑动 && (距离 > 阈值 || 速度快)) {
-     → 吸附到下一个更高状态
-   } else if (向下滑动 && (距离 > 阈值 || 速度快)) {
-     → 吸附到下一个更低状态
-   } else {
-     → 回弹到当前状态
-   }
-   ```
+2. **松手判定(位置 + 速度)**:
+   - 速度 EMA 由 pointermove 采样(px/s),阈值 `DRAWER_FLING_V = 900px/s`。
+   - 向上快滑(vel < −900)→ `full`;向下快滑(vel > +900)→ `mini`;慢拖 → 按当前位置就近三态(中点分段)。
+   - 内容栈优先:详情/JD 打开时,下拉过半(或快滑)→ 收内容(关 JD→`full` / 关详情→`half`),否则回弹 `full`;非 explore 子页快下拉 → 回 explore。
+   - 点按(位移 ≤ 8px)保留 onClick 的 cycle/内容弹出逻辑,拖动后抑制 click。
 
-3. **动画参数**:
-   - 缓动函数:`cubic-bezier(0.4, 0, 0.2, 1)` (iOS 原生感)
-   - 时长:`350ms`
-   - 仅在拖动期间临时设置 `will-change: transform`，结束后移除。
-
-4. **边界处理**:
-   - 最小化状态向下拖动 → 无效(已到底)
-   - 全展开状态向上拖动 → 无效(已到顶)
-   - 内容区域滚动到顶部时,继续向下拖动 → 触发抽屉下拉
+3. **吸附动画参数**:
+   - 缓动:`cubic-bezier(0.32, 0.72, 0, 1)`,时长 `0.32s`,作用于 `height`。
+   - 手势结束后 rAF 清空 inline height,交给 CSS class(svh)过渡从手指位置平滑收尾。
+   - `prefers-reduced-motion: reduce` → `transition: none`,瞬时吸附。
 
 **样式**(液态玻璃):
 ```css
@@ -266,7 +256,7 @@
 - Sheet: mini `96px` / half `42svh` / full `86svh`, frost `--soft-strong`.
 - Grabber pill: mini `42×4`, half/full `64×6`.
 - Shared gap token `--drawer-handle-gap: 8px` on `.mobileDrawer` — handle `padding-bottom` is the same in domain and work. Do not let work chips or `.drawerContent` top padding change handle↔toolbar / handle↔search.
-- Swipe ignore `|dy| < 36`. `touch-action: none` on the grabber, not the list.
+- Swipe: 位移 ≤ 8px 视为点按(cycle),超过即拖拽并抑制 click。`touch-action: none` on the grabber, not the list.
 
 ---
 
