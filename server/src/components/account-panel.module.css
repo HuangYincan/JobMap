@@ -97,8 +97,319 @@
   color: var(--ink);
 }
 
+/* ============ inset grouped 卡片 ============ */
+
+.card {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-bottom: 18px;
+}
+
+.groupLabel {
+  margin: 0 0 6px 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ============ 行(基础布局;同时用于 div / button / label) ============ */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 14px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: transparent;
+  border: 0;
+  margin: 0;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: default;
+}
+
+.rowBtn {
+  cursor: pointer;
+  transition: background 0.18s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.rowBtn:hover {
+  background: rgba(0, 0, 0, 0.045);
+}
+
+.rowBtn:active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* inset 分隔线:仅非首行,从 14px 处内缩 */
+.row + .row,
+.appRow + .appRow {
+  position: relative;
+}
+
+.row + .row::after,
+.appRow + .appRow::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 14px;
+  right: 0;
+  border-top: 1px solid var(--line);
+  pointer-events: none;
+}
+
+.rowOpen .rowChevron {
+  transform: rotate(90deg);
+}
+
+.rowChevron {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--muted);
+  opacity: 0.6;
+  transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.rowIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--blue, #007aff);
+}
+
+.rowLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowDanger,
+.rowDanger .rowLabel {
+  color: var(--danger, #ff3b30);
+}
+
+.rowDanger .rowIcon {
+  color: var(--danger, #ff3b30);
+}
+
+.rowIcon svg,
+.rowChevron svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ============ 身份卡 ============ */
+
+.identityCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 14px 18px;
+  margin-bottom: 20px;
+}
+
+.avatarBtn {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.avatar,
+.avatarFallback {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarFallback {
+  background: linear-gradient(135deg, #5ac8fa, #007aff);
+  color: #fff;
+  font-weight: 800;
+  font-size: 24px;
+}
+
+.avatarFallback svg {
+  width: 28px;
+  height: 28px;
+}
+
+.identityName {
+  margin-top: 4px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============ 编辑资料展开区 ============ */
+
+.editPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.nameField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.nameField input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 9px 12px;
+}
+
+.nameField input:focus {
+  border-color: var(--blue, #007aff);
+  outline: none;
+}
+
+.editActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.editAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--blue, #007aff);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.editAction svg {
+  width: 16px;
+  height: 16px;
+}
+
+.editActionDanger {
+  color: var(--danger, #ff3b30);
+}
+
+.saveBtn {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--blue, #007aff);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.18s ease;
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ============ 偏好 pills / 通知开关 ============ */
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.choice {
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.choiceActive {
+  background: var(--blue, #007aff);
+  border-color: var(--blue, #007aff);
+  color: #fff;
+}
+
+.toggleRow input {
+  accent-color: var(--blue, #007aff);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* ============ 收件箱 / 我的投递 ============ */
+
 .emptyApps {
   margin: 0;
+  padding: 12px 14px;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
@@ -108,206 +419,87 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .appRow {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.34);
-  border: 1px solid var(--line);
+  padding: 10px 14px;
+  min-width: 0;
 }
 
 .appRow strong {
   font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .appRow small {
   color: var(--muted);
   font-size: 12px;
-}
-
-.identity {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 2px 16px;
-  width: 100%;
-  max-width: 100%;
   min-width: 0;
-  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.avatarBtn {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  border-radius: 50%;
-}
+/* ============ demo 提示 ============ */
 
-.avatar,
-.avatarFallback {
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.avatarFallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #5ac8fa, #007aff);
-  color: #fff;
-  font-weight: 800;
-  font-size: 28px;
-}
-
-.nameField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--muted);
-}
-
-.nameField input {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.55);
-  color: var(--ink);
-  font-size: 16px;
-  font-weight: 650;
-  padding: 10px 12px;
-}
-
-.accountLabel {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.update {
-  width: 100%;
-  min-height: 42px;
-  border: 0;
-  border-radius: 12px;
-  background: #34c759;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.update:disabled {
-  opacity: 0.45;
-}
-
-.divider {
-  border: 0;
-  border-top: 1px solid var(--line);
-  margin: 4px 0 14px;
-}
-
-.prefs {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  margin-bottom: 16px;
-}
-
-.sectionLabel {
-  margin: 0 0 2px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.box {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.4);
-  padding: 12px 14px;
-}
-
-.boxLabel {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.prefBody {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.choice {
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.5);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-}
-
-.choiceActive {
-  background: var(--blue, #007AFF);
-  border-color: var(--blue, #007AFF);
-  color: #fff;
-}
-
-.toggleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
+.toast {
+  margin: -6px 0 18px 2px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(0, 122, 255, 0.1);
+  border: 1px solid rgba(0, 122, 255, 0.28);
+  color: var(--blue-ink, #0062cc);
   font-size: 13px;
   font-weight: 600;
+  animation: toastIn 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.toggleRow span {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.nameField input,
-.appRow {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.toggleRow input {
-  accent-color: var(--blue, #007AFF);
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
-  .nameField input,
-  .box,
-  .choice {
+  .card,
+  .choice,
+  .editAction,
+  .nameField input {
     background: rgba(255, 255, 255, 0.06);
+  }
+
+  .rowBtn:hover {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .rowBtn:active {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .rowDanger,
+  .rowDanger .rowLabel {
+    color: #ff453a;
+  }
+
+  .rowDanger .rowIcon {
+    color: #ff453a;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
   }
 }

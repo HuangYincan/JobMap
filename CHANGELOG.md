@@ -20,6 +20,12 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
   - 人均消费 max 500→5000、step 50→100；匹配映射从 `priceLevel*50`（封顶 200，上限拉高后高档位被误滤）改为档位中点 `priceLevel→[50,200,800,3000]`，且 hz 本地 / AMap 读路径带真实 `cost` 时优先用真实值（`DomainPOI.cost` 新增，`amap-api` / `hz-poi-store` 两条转换同步填充）。
   - 地图模式默认按距离排序：`defaultSort='distance'` 端到端生效，`sortOptions` 把 `distance` 排到第一位。
 - **双头滑块端点错位修复 (`filter-panel.tsx` `RangeControl`).** 根因：两个原生 range input 原先动态钳制边界（min input `max={hi}`、max input `min={lo}`），拇指几何按各自 [min,max] 定位而 fill 按全局 [min,max]，区间收窄时错位。修复：两个 input 均用完整 `min`/`max`，互不越界在 onChange 钳制（原 clamp 逻辑不变）。
+- **Profile 二级卡片大改 (`feature/profile-redesign`, WS-U4).** `ProfilePanel` 重构为 L4 inset grouped 分组圆角卡(同一组件同一样式,桌面 380px 卡 + 移动端 sheet 嵌入):
+  - 身份卡:头像(点击仍走 `AvatarCropper` 裁剪)+ 名字 + 账号「· 已登录」;头像缩小为 64px 居中英雄区。
+  - 「账户」组:编辑资料(展开内联编辑:显示名 + 更换/移除头像 + 蓝色保存,复用 `PATCH /api/auth/me`;`avatarUrl` 传原值含空串,清空即保存)、密码与安全 / 手机与邮箱(demo 占位,点击弹「演示模式」toast,2.6s 自动消失)、退出登录(复用 `DELETE /api/auth/me` 与 `handleAuthAction`,桌面 + 移动都接线)。
+  - 「偏好 / 求职偏好 / 通知 / 收件箱 / 我的投递」按 L4 分组保留原功能;偏好与通知改动即时后台 PATCH 持久化(不再依赖手动保存)。
+  - 行高 46px、右侧 ›、inset 分隔线(14px 内缩)、SF Symbols 风格描边图标(与 map-shell `Icon` 同一套 viewBox 24 / stroke 2 / round 风格,本地化到 `account-panel.tsx`)。
+  - 主题对齐:保存按钮由绿改蓝(`--blue`);深色/浅色 + `prefers-reduced-motion` 适配。桌面侧控栏 `authGlyph` 保留(签名状态快速入口,卡片内退出登录为新增)。
 
 ### Fixed
 

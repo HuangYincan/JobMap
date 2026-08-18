@@ -691,6 +691,54 @@ export const translations = {
     zh: '仅收件箱',
     en: 'Inbox only',
   },
+  account: {
+    zh: '账户',
+    en: 'Account',
+  },
+  editProfile: {
+    zh: '编辑资料',
+    en: 'Edit profile',
+  },
+  passwordSecurity: {
+    zh: '密码与安全',
+    en: 'Password & security',
+  },
+  phoneEmail: {
+    zh: '手机与邮箱',
+    en: 'Phone & email',
+  },
+  signOutLabel: {
+    zh: '退出登录',
+    en: 'Sign out',
+  },
+  signedIn: {
+    zh: '已登录',
+    en: 'Signed in',
+  },
+  demoNotice: {
+    zh: '演示模式：该入口暂未开放真实流程',
+    en: "Demo mode — this flow isn't wired yet",
+  },
+  removeAvatar: {
+    zh: '移除头像',
+    en: 'Remove photo',
+  },
+  save: {
+    zh: '保存',
+    en: 'Save',
+  },
+  preferencesSection: {
+    zh: '偏好',
+    en: 'Preferences',
+  },
+  inboxSection: {
+    zh: '收件箱',
+    en: 'Inbox',
+  },
+  myApplications: {
+    zh: '我的投递',
+    en: 'My applications',
+  },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
