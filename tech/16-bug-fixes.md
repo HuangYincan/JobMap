@@ -550,6 +550,46 @@ scrollTop 保存/恢复。打开详情时 `detailPoi` 三元组让 `.drawerConte
 
 ---
 
+## 2026-08-19: 移动端微修(打开 profile 滚动重置 + 侧控栏搜索框失焦丢文本)
+
+### 问题1:移动端打开 profile 继承列表滚动位置
+
+**症状**:移动端滚过 POI 列表后点头像打开 account 面板,面板不是从顶部开始,而是停留在列表的滚动位置。
+
+**根本原因**:抽屉滚动容器 `.drawerContent`(`map-shell.tsx:2394`)常驻挂载(`overflow:auto`),
+`mobileSheet` 切换只换内容不卸载容器,`scrollTop` 被带到 account 面板;`openMobileAccount`
+(`map-shell.tsx:1681-1694`)只设 `mobileSheet="account"` / `drawer="full"` / 清 detailPoi、
+mobileJd,无滚动重置;全库无 `scrollTo(0)`。
+
+**方案**:`openMobileAccount` 打开 account 分支末尾重置
+`if (drawerContentRef.current) drawerContentRef.current.scrollTop = 0`。头像按钮只在
+`!detailPoi` 分支渲染,不会与详情返回的 `useLayoutEffect` 滚动恢复(detailPoi→null)打架。
+
+**修改文件**:`server/src/components/map-shell.tsx`(openMobileAccount,~1694)
+
+### 问题2:展开侧控栏,搜索框有文本失焦后文本不可见
+
+**症状**:侧控栏展开、搜索框有查询文本时点击别处(失焦),文本消失;重新聚焦又出现,状态并未丢失。
+
+**根本原因**:CSS 可见性问题——`.searchBox input`(`map-shell.module.css:391-397`)
+`opacity:0` + `position:absolute`,仅 `.searchBox:focus-within input`(:399-401)显示;fallback
+标签「搜索」只在 `!query` 时渲染(`map-shell.tsx:1944`)。于是 有文本+失焦 → input 透明 且
+label 不渲染 → 看起来文本消失。
+
+**方案**:CSS-only 最小 diff——`.sidebarOpen .searchBox input:not(:placeholder-shown) {
+opacity: 1 }`。`query` 非空时 placeholder 不占位(`:not(:placeholder-shown)` 命中),展开态
+失焦也常显;折叠态不挂 `.sidebarOpen`,仍只显示图标;空查询仍走 label,行为不变。与既有
+`.sidebarOpen .searchLabel` 规则同构。
+
+**修改文件**:`server/src/components/map-shell.module.css`(`.searchBox` 区,~403)
+
+**测试验证**:
+- ✅ 组件契约测试新增:「mobile account open resets drawer scroll; expanded search keeps
+  query text visible」(map-shell.tsx 重置断言 + CSS `:not(:placeholder-shown)` 断言)。
+- ✅ 全量 `npm test` / `npm run typecheck` 通过。
+
+---
+
 ## 相关文档
 
 - 设计系统：`tech/07-frontend-design-system.md`

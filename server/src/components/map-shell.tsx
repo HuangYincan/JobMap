@@ -1691,6 +1691,8 @@ export function MapShell() {
     setDrawer("full");
     setDetailPoi(null);
     setMobileJd(null);
+    // 移动端:抽屉滚动容器常驻挂载,切到 account 面板前重置滚动,避免继承列表滚动位置
+    if (drawerContentRef.current) drawerContentRef.current.scrollTop = 0;
   };
 
   const handleProfileClick = () => {
