@@ -91,3 +91,16 @@
 - **输出**：`tech/roles/data/validation-report-<YYYYMMDD>.json`（每条 pass/warn/fail/error + 理由 + suggestedSplit 聚合拆解）+ 控制台汇总。
 - **隐私**：每次请求仅含单条岗位文本（公司名/行业/站点/标题/部门/技能/applyUrl）；LLM 返回只当 JSON 解析，不执行。
 - 计划：2026-08-17 全量 817 条（WS2 merge 后 radar 761 + official 56）已跑,聚合行按 `suggestedSplit` 拆解;后续每次 drops 刷新后重跑对比。
+
+## LLM 校验 fail 修正 + 重跑（B2.1，2026-08-18）
+
+- 用户已批准 `fix-plan-20260817.md` 方案(2026-08-17 全量 817 条:82 pass / 724 warn / 10 fail / 1 error)。
+- **移除 4 条**（删除整个 position 对象）:`radar-c08140d30e81`(博世智能驾控,问卷星硬伤)、`radar-732fce657587`(学而思网校,标题=城市列表)、`portal-megvii-social`(megvii 官网入口)、`portal-tigermed-moka`(tigermed 官网入口)。
+- **修正标题 3 条**(仅 title):`radar-52e776ddb58f`→「暑期实习(咨询顾问方向)」、`radar-a6a104980035`→「实习生(研究/投行方向)」、`radar-e49ce7364a1a`→「攻防渗透工程师」。
+- **标注聚合 3 条**(补 `aggregate: true`):`radar-ce7419500bcc`(度小满)、`radar-cf5a954e8f78`(曼伦)、`radar-a72738f8085f`(申万宏源研究)。
+- **DB 清理**：`positions` 表删除 2 行(博世/学而思不在 DB)——`portal-megvii-social`、`portal-tigermed-moka`,删除前已 SELECT 确认。
+- **全量重跑(2026-08-18)**:813 条 = **86 pass / 718 warn / 8 fail / 1 error**。
+  - 修正的 3 条标题 titleReal 全部翻 true;讯飞 `radar-b871edcdf925`(原 error)被覆盖为 warn。
+  - 剩余 8 fail 为同类「招聘计划/专项/入口名」标题(度小满/曼伦在 C 组已标注聚合——标注即交付物,不改标题不修校验器;其余 netease-hangzhou/vast/聂果基金/长亭/betta/deepseek 属同性质,留待后续拆解/决策)。
+  - 剩余 1 error 为腾讯 `radar-302c5ea36a84`(LLM 空响应,非数据问题,下次全量自动覆盖)。
+- 报告:`tech/roles/data/validation-report-20260818.json`(gitignored)。

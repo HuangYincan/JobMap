@@ -2,6 +2,18 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-18
+
+### Fixed
+
+- **LLM 校验 10 条 fail 数据修正（B2.1，`fix/b2-1-validation-fails`）.** 用户已批准 `tech/roles/data/fix-plan-20260817.md` 方案并全量执行（2026-08-17 首跑 817 条:82 pass / 724 warn / 10 fail / 1 error）:
+  - **移除 4 条**（整个 position 对象删除）:`radar-c08140d30e81`（博世智能驾控，问卷星投递硬伤）、`radar-732fce657587`（学而思网校，标题=城市列表）、`portal-megvii-social`（megvii 官网入口）、`portal-tigermed-moka`（tigermed 官网入口）。
+  - **修正标题 3 条**（仅 title）:`radar-52e776ddb58f` →「暑期实习(咨询顾问方向)」、`radar-a6a104980035` →「实习生(研究/投行方向)」、`radar-e49ce7364a1a` →「攻防渗透工程师」。
+  - **标注聚合 3 条**（补 `aggregate: true`）:`radar-ce7419500bcc`（度小满）、`radar-cf5a954e8f78`（曼伦）、`radar-a72738f8085f`（申万宏源研究）。
+  - **DB 清理**:`positions` 表删除 2 行（博世/学而思不在 DB）,删除前已 SELECT 确认。
+  - **全量重跑（2026-08-18）:813 条 = 86 pass / 718 warn / 8 fail / 1 error**。修正的 3 条 titleReal 全部翻 true;讯飞 `radar-b871edcdf925`（原 error）被覆盖为 warn;C 组标注聚合行按预期仍可能 fail/warn（标注即交付物,不改标题不修校验器）。剩余 8 fail 为同类「招聘计划/专项/入口名」标题,留待后续拆解/决策;剩余 1 error 为腾讯 `radar-302c5ea36a84`（LLM 空响应,与本次数据修正无关,下次全量自动覆盖）。
+  - 报告 `tech/roles/data/validation-report-20260818.json`（gitignored）;统计同步 `data-quality.md`。
+
 ## 2026-08-17
 
 ### Added
