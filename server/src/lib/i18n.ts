@@ -227,6 +227,10 @@ export const translations = {
     zh: '暂无详细评价',
     en: 'No written reviews yet',
   },
+  viewReviews: {
+    zh: '查看评价',
+    en: 'View reviews',
+  },
   commute: {
     zh: '交通方式',
     en: 'Getting there',

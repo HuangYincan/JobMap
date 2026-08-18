@@ -243,6 +243,28 @@
   font-size: 12px;
 }
 
+.noReviews {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  color: var(--muted, #6c7882);
+  font-size: 12px;
+}
+
+.reviewLink {
+  color: var(--accent, #007aff);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.reviewLink:hover {
+  text-decoration: underline;
+}
+
 .reviews,
 .commuteList {
   list-style: none;
