@@ -133,6 +133,15 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
 - **视口变化刷新**:平移/缩放 → 800ms 防抖 → 按 live bounds 替换 + 淡入
   (`existing: []`,offset 归零;`VIEWPORT_DEBOUNCE_MS` 为 work/domain 共享,
   work 视口按需加载同样变为 800ms)
+  - **work 分支同样为「替换」**(`fix/viewport-refresh`,2026-08-19):早期 work 视口
+    刷新是**增量合并**(`loadWorkViewport` 传 `existing: catalogRef.current`),工作目录仅
+    ~79 家公司,首屏+加载更多几乎全捕获 → 刷新返回 0–11 家全部被去重,列表冻结。
+    现镜像 domain:`existing: []` 按 live bounds 替换、`viewportEpochRef += 1` 丢弃在飞
+    主加载的旧视野追加批次、`setPageOffset(0)` + skipFetch 武装、视口替换时复位 noMore
+    (与 w3 noMore 对接)。
+  - **主加载在飞不吞视口刷新**:视口 loader 遇 `loadingRef.current` 不再静默 return,而是
+    置 `viewportRefreshPendingRef` 标记;主加载 `finally` 释放 loadingRef 后补跑
+    `viewportLoaderRef.schedule()`(防抖内合并,不重复加载)。
 - **删除「加载更多」按钮**;刷新按钮**只在卡片总数为零**时显示(桌面 + 移动)
 - 加载过渡:骨架屏 → 淡入 stagger(`--index: i % 8`),Apple 风格 18px spinner
   (`prefers-reduced-motion` 适配)

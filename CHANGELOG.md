@@ -10,6 +10,15 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
+- **工作模式 poi 列表不随视角刷新(Bug 7,`fix/viewport-refresh`).** 工作视口刷新原为
+  **增量合并**(`loadWorkViewport` 传 `existing: catalogRef.current`):工作目录仅 ~79 家公司,
+  首屏+加载更多几乎全捕获 → 刷新返回 0–11 家全部被 `mergePoisById` 去重,`setCatalog` 不变,
+  列表冻结。现镜像 domain 分支改为**替换**:`existing: []` 按 live bounds 取新一批、
+  `viewportEpochRef += 1` 丢弃在飞主加载的旧视野追加批次、`setPageOffset(0)` + skipFetch 武装、
+  视口替换时复位 noMore(与 w3 noMore 判定对接)。另修复主加载在飞时视口刷新被静默丢弃:
+  `loadingRef.current` 在飞时置 `viewportRefreshPendingRef` 标记,主加载 `finally` 释放后补跑
+  `viewportLoaderRef.schedule()`(防抖合并,不引入重复加载竞态)。domain 视口刷新(替换+淡入)
+  行为不变。Docs:`tech/22-hangzhou-poi-local.md` §视口变化刷新。
 - **`portal-megvii-campus` 官网入口移除（用户拍板，B2.1 同型追加）。** megvii-hangzhou 的「校园招聘(官网投递)」入口与已删的 `portal-megvii-social` 同型（warn 非 fail）,drop 对象删除 + DB 行删除（SELECT 确认）;该文件只剩真实岗位「前端开发工程师(2026 秋招)」。全量统计 813 → 812 条（下次全量校验落数）。记录:`fix-plan-20260817.md` / `data-quality.md`。
 
 ## 2026-08-18
