@@ -7,6 +7,7 @@ import {
   planOfficialCareerImport,
   planRecruitmentImport,
   planSeedImport,
+  positionTaxonomy,
   siteCityOf,
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
@@ -65,6 +66,51 @@ test('radar adapter reads the mapped drop directory', async () => {
   const netease = companies.find((c) => c.slug === 'netease-hangzhou');
   assert.ok(netease);
   assert.ok(netease.positions.some((p) => p.externalId.startsWith('radar-')));
+});
+
+test('manycore drop keeps a closed aggregate tombstone and 4 split positions with real JDs', async () => {
+  const companies = await radarAdapter().list();
+  const manycore = companies.find((c) => c.slug === 'manycore-hangzhou');
+  assert.ok(manycore, 'manycore-hangzhou drop is present');
+
+  const tombstone = manycore.positions.find((p) => p.externalId === 'radar-735415a42603');
+  assert.ok(tombstone);
+  assert.equal(tombstone.status, 'closed', 'aggregate tombstone is closed so alive filters hide it');
+  assert.equal(tombstone.aggregate, true);
+
+  const split = manycore.positions.filter((p) => p.externalId.startsWith('radar-735415a42603-'));
+  assert.equal(split.length, 4, 'aggregate row split into 4 real jobs');
+  assert.equal(new Set(split.map((p) => p.externalId)).size, 4, 'split externalIds are unique');
+  assert.ok(split.every((p) => p.status === 'open'));
+  assert.ok(split.every((p) => p.family === 'campus'));
+  assert.ok(split.every((p) => p.applySource === 'official'));
+  assert.ok(split.every((p) => p.siteId === 'manycore-hangzhou-site-hangzhou'));
+  assert.ok(split.every((p) => p.description?.length > 0), 'every split job carries a real JD');
+});
+
+test('positionTaxonomy keeps family and carries the aggregate flag for the DB upsert', () => {
+  const plain = {
+    externalId: 'x-1',
+    title: '普通岗',
+    siteId: 's',
+    family: 'campus',
+    status: 'open',
+  };
+  assert.deepEqual(positionTaxonomy(plain), { family: 'campus' });
+  // Drop taxonomy fields (e.g. campusSeason) survive; aggregate is added.
+  const withTaxonomy = {
+    ...plain,
+    taxonomy: { family: 'campus', campusSeason: 'autumn' },
+    aggregate: true,
+  };
+  assert.deepEqual(positionTaxonomy(withTaxonomy), {
+    family: 'campus',
+    campusSeason: 'autumn',
+    aggregate: true,
+  });
+  // A false / missing aggregate never leaks into the jsonb payload.
+  const without = { ...plain, aggregate: false };
+  assert.deepEqual(positionTaxonomy(without), { family: 'campus' });
 });
 
 test('validateSourceCompany flags a position that points at a missing site', () => {
