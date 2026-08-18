@@ -44,6 +44,18 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
   3. Clicking a suggestion whose company was in the server catalog but not yet loaded client-side did nothing (`handleSelectSuggestion` searched only the local catalog). Work mode now fetches `/api/pois/[id]?mode=work` and opens the detail; domain rows open the loaded rich card when present, else upsert a session card from `location`.
   4. Domain suggestions went straight to AMap AutoComplete; the route's domain branch iterated the tiny `DOMAIN_SEED` (dead code). `/api/suggest?mode=domain` now queries `hz_pois` first (name ILIKE prefix, `adname` subtitle, GCJ location, optional `distance` from `center=lng,lat`); 0 hits / no DB → empty list → client falls back to AMap AutoComplete once, failures return empty without hanging.
 
+### Fixed
+
+- **公司 POI 与地图 POI 混合展示(视口批次跨模式污染,`fix/poi-mixing`).** 视口加载器(moveend/zoomend 防抖)的 `onBatch` 缺模式守卫:工作模式的在飞批次在切换模式后落进 Domain 的 catalog,列表出现公司卡、地图出现公司徽章;被污染的 catalog 又经模式切换写入 sessionStorage 缓存,跨会话粘住(「经常」的根因).修复:新增 `batchMatchesCurrentMode` 模式守卫,主加载 + 视口加载的工作/Domain 四处落库点统一校验;`MODE_CACHE_VERSION` 5→6 使已污染缓存失效.复现/根因/修复详 `tech/roles/testing/test-reports/bug-reports.md`.
+
+### 产品口径确认(2026-08-18,未改数据语义)
+
+- **无岗位信息的公司只作为地图 POI;有岗位信息的公司才作为公司 POI。** Domain 模式
+  杭州内 zoom ≥ 5 浏览时,本地 `hz_pois` 返回的 `big_type='公司企业'` 类 POI(如「恒彩
+  家装集团(总部旗舰店)」)是「地点」,按地图 POI 展示,不过滤、不升级——两条闸门
+  (`withAlivePositions` 只保留有活岗公司)当前均已满足。带岗位的公司(工作目录)在公司
+  POI 语境(工作模式)展示;其同名 hz_pois 地点在 domain 语境仍是地图 POI。
+
 ## 2026-08-17
 
 ### Added

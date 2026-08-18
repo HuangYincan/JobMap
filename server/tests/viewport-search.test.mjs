@@ -6,6 +6,7 @@ import {
   AMAP_NEARBY_MAX_RADIUS,
   AMAP_PAGE_SIZE,
   AMAP_QPS,
+  batchMatchesCurrentMode,
   buildSearchQueue,
   categoryMatches,
   isCommonOrExactName,
@@ -356,4 +357,43 @@ test('createViewportLoader: dispose cancels pending and stops future loads', asy
 
 test('VIEWPORT_DEBOUNCE_MS is 800ms (spec: UI 刷新防抖 800ms)', () => {
   assert.equal(VIEWPORT_DEBOUNCE_MS, 800);
+});
+
+test('batchMatchesCurrentMode: 同模式批次放行,跨模式批次丢弃(poi-mixing 回归)', () => {
+  assert.equal(batchMatchesCurrentMode('work', 'work'), true);
+  assert.equal(batchMatchesCurrentMode('domain', 'domain'), true);
+  // 工作公司在飞时切到地图 → 工作批次必须被丢弃(「公司 POI 混入地图 POI」)
+  assert.equal(batchMatchesCurrentMode('domain', 'work'), false);
+  // 地图批次在飞时切到工作 → 同样丢弃
+  assert.equal(batchMatchesCurrentMode('work', 'domain'), false);
+  // internship 是 work 的兼容别名,同口径放行
+  assert.equal(batchMatchesCurrentMode('internship', 'work'), true);
+  assert.equal(batchMatchesCurrentMode('work', 'internship'), true);
+  // 模式未就绪(首屏 geoSettled 前)不写任何批次
+  assert.equal(batchMatchesCurrentMode(null, 'work'), false);
+  assert.equal(batchMatchesCurrentMode(undefined, 'domain'), false);
+});
+
+test('loadWorkViewport: 信号取消后不再触发 onBatch(在飞批次模式切换时被抑制)', async () => {
+  const existing = [];
+  let onBatchCalls = 0;
+  let release = null;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = () => new Promise((r) => { release = r; });
+  try {
+    const signal = { cancelled: false };
+    const promise = loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      existing,
+      signal,
+      onBatch: () => { onBatchCalls += 1; },
+    });
+    // 在飞期间模拟模式切换:取消信号(主加载的 effect cleanup 行为)
+    signal.cancelled = true;
+    release({ ok: true, json: async () => ({ results: [] }) });
+    await promise;
+    assert.equal(onBatchCalls, 0); // 取消后不落库、不回调
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
