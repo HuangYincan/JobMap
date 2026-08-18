@@ -18,7 +18,7 @@
 }
 
 .cluster.shifted {
-  left: 294px; /* 276 + 12 + 6 */
+  left: 233px; /* 215 + 12 + 6 */
 }
 
 @media (max-width: 767px) {

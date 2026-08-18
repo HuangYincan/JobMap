@@ -29,6 +29,10 @@ export const translations = {
     zh: '个人资料',
     en: 'Profile',
   },
+  mapLabel: {
+    zh: '地图',
+    en: 'Map',
+  },
   mapStyle: {
     zh: '地图样式',
     en: 'Map style',
