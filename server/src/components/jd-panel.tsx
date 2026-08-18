@@ -37,14 +37,17 @@ const TYPE_KEY = {
 
 function fallbackDescription(company: RecruitmentPOI, position: Position, lang: Language): string {
   const typeLabel = t(TYPE_KEY[position.type], lang);
+  // 诚实兜底：不编造职责内容。聚合行明示聚合语义，普通行指引到招聘官网。
   if (lang === "zh") {
-    return `${company.name} · ${position.department || typeLabel}招聘「${position.title}」。${
+    const facts = `${company.name} · ${position.department || typeLabel}招聘「${position.title}」。${
       position.education ? `学历要求${position.education}。` : ""
-    }${position.skills?.length ? `关注 ${position.skills.join("、")}。` : ""}参与日常研发/业务协作，具体职责以部门安排为准。`;
+    }${position.skills?.length ? `关注 ${position.skills.join("、")}。` : ""}`;
+    return position.aggregate ? facts + t("aggregateJdNotice", lang) : facts + t("jdFallbackNotice", lang);
   }
-  return `${company.name} is hiring a ${position.title} on the ${position.department || typeLabel} team.${
+  const facts = `${company.name} is hiring a ${position.title} on the ${position.department || typeLabel} team.${
     position.education ? ` ${position.education} preferred.` : ""
   }${position.skills?.length ? ` Skills: ${position.skills.join(", ")}.` : ""}`;
+  return position.aggregate ? facts + " " + t("aggregateJdNotice", lang) : facts + " " + t("jdFallbackNotice", lang);
 }
 
 export function JdPanel({
