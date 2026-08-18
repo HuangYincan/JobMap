@@ -147,7 +147,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
     icon: 'map',
     color: '#007AFF',
     kind: 'domain',
-    searchPlaceholder: '搜索地点、美食、商场…',
+    searchPlaceholder: '搜索地点或地址',
     filters: [
       {
         key: 'category',
@@ -194,7 +194,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
     icon: 'briefcase',
     color: '#007AFF',
     kind: 'recruitment',
-    searchPlaceholder: '搜索公司、岗位…',
+    searchPlaceholder: '搜索公司或岗位',
     filters: WORK_FILTERS,
     sortOptions: WORK_SORT_OPTIONS,
     defaultSort: 'distance',
@@ -209,7 +209,7 @@ export const MODES: Record<MapMode, ModeConfig> = {
     icon: 'briefcase',
     color: '#007AFF',
     kind: 'recruitment',
-    searchPlaceholder: '搜索公司、岗位…',
+    searchPlaceholder: '搜索公司或岗位',
     filters: WORK_FILTERS,
     sortOptions: WORK_SORT_OPTIONS,
     defaultSort: 'distance',
