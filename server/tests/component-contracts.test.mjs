@@ -51,6 +51,15 @@ test('map shell saves and restores the mobile drawer scroll across detail', () =
   assert.match(shell, /onDeselect=\{\(\) => \{[\s\S]*setSelectedId\(null\)[\s\S]*setHighlightedId\(null\)/);
 });
 
+test('mobile account open resets drawer scroll; expanded search keeps query text visible', () => {
+  const shell = src('components/map-shell.tsx');
+  const css = src('components/map-shell.module.css');
+  // 打开 account 面板前重置常驻滚动容器,避免继承列表滚动位置
+  assert.match(shell, /setMobileSheet\("account"\);[\s\S]{0,200}drawerContentRef\.current\.scrollTop = 0/);
+  // 展开态已有查询文本时,输入框不依赖 focus-within 也常显(失焦不丢可见文本)
+  assert.match(css, /\.sidebarOpen \.searchBox input:not\(:placeholder-shown\)\s*\{\s*opacity: 1;\s*\}/);
+});
+
 test('FilterPanel select is a labelled listbox', () => {
   const panel = src('components/filter-panel.tsx');
   assert.match(panel, /aria-haspopup="listbox"/);
