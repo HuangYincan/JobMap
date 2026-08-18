@@ -218,7 +218,12 @@ function RecruitmentDetail({
                   className={`${styles.job} ${selectedPositionId === pos.id ? styles.jobSelected : ""}`}
                   onClick={() => onSelectPosition?.(pos)}
                 >
-                  <div className={styles.jobTitle}>{pos.title}</div>
+                  <div className={styles.jobTitle}>
+                    {pos.title}
+                    {pos.aggregate && (
+                      <span className={styles.jobBadge}>{t("aggregateBadge", lang)}</span>
+                    )}
+                  </div>
                   <div className={styles.jobMeta}>
                     {[pos.department, formatSalary(pos.salary), pos.education]
                       .filter(Boolean)

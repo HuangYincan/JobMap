@@ -355,6 +355,18 @@ export const translations = {
     zh: '社招',
     en: 'Full-time',
   },
+  aggregateBadge: {
+    zh: '汇总岗位',
+    en: 'Aggregate',
+  },
+  aggregateJdNotice: {
+    zh: '该岗位为聚合招聘信息，包含多个相似方向，具体岗位与 JD 以招聘官网为准。',
+    en: 'This aggregate posting covers several similar roles — see the careers site for full details.',
+  },
+  jdFallbackNotice: {
+    zh: '具体职责以招聘官网为准。',
+    en: 'See the careers site for the full job description.',
+  },
   prevPhoto: {
     zh: '上一张照片',
     en: 'Previous photo',

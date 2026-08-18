@@ -201,6 +201,8 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
               ? { source: pos.apply_source ?? 'official', url: pos.apply_url }
               : undefined,
             status: pos.status,
+            // Aggregate flag is persisted inside taxonomy jsonb (recruitment-import).
+            aggregate: pos.taxonomy?.aggregate === true ? true : undefined,
           })),
         });
       }

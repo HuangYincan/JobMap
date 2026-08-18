@@ -29,6 +29,8 @@ export interface SourcePosition {
   status: 'open' | 'closed' | 'paused';
   retrievedAt?: string;
   expiresAt?: string;
+  /** 聚合行：上游快照把多个岗位压成一行，仅标记、不静默展开（radar_jobs.py 约定） */
+  aggregate?: boolean;
 }
 
 export interface SourceCompany {
@@ -143,6 +145,7 @@ function positionFromSource(pos: SourcePosition) {
       ? { source: pos.applySource ?? 'official', url: pos.applyUrl }
       : undefined,
     status: pos.status,
+    aggregate: pos.aggregate || undefined,
   };
 }
 

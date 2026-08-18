@@ -35,6 +35,8 @@ export interface JobTaxonomy {
   conversion?: InternConversion;
   campusSeason?: CampusSeason;
   experience?: SocialExperience;
+  /** 聚合行标记：多岗位压成一行的快照数据（导入时写入 taxonomy jsonb） */
+  aggregate?: boolean;
 }
 
 /** 模式 POI 形态：domain = 普通地点，recruitment = 公司+岗位 */
@@ -140,6 +142,8 @@ export interface Position {
   apply?: ApplyLink;
   /** 是否在招 */
   status: 'open' | 'closed' | 'paused';
+  /** 聚合行：多个相似岗位压成一行的快照数据（UI 诚实展示用） */
+  aggregate?: boolean;
 }
 
 /** 岗位投递渠道 */
