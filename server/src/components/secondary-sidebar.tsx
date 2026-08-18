@@ -110,6 +110,12 @@ export interface SecondarySidebarProps {
   onRefreshHere?: () => void;
   /** 在累计池上再扩一页常见 POI */
   onNeedMore?: () => void;
+  /** 桌面「加载更多」按钮(与滚动哨兵同一路径;移动抽屉不传) */
+  onLoadMore?: () => void;
+  /** 加载错误(失败 ≠ 没有更多;显示「重试」) */
+  loadError?: string | null;
+  /** 重试当前批次(不递增偏移,避免跳过失败批次) */
+  onRetry?: () => void;
   /** 正在无限滚动追加加载(显示底部 spinner) */
   loadingMore?: boolean;
   /** 已达上限(显示「已达加载上限」并停止哨兵触发) */
@@ -153,6 +159,9 @@ export function SecondarySidebar({
   onCloseDetail,
   onRefreshHere,
   onNeedMore,
+  onLoadMore,
+  loadError,
+  onRetry,
   loadingMore = false,
   atCap = false,
   noMore = false,
@@ -428,6 +437,23 @@ export function SecondarySidebar({
               </button>
             )}
           </div>
+          {/* 桌面「加载更多」:noMore/atCap 隐藏;loadingMore 显示「加载中…」;
+              错误态显示「重试」(复用 loadError 态,poi-loading A) */}
+          {pois.length > 0 && onLoadMore && !atCap && !noMore && !loading && (
+            <button
+              type="button"
+              className={styles.loadMore}
+              onClick={() => (loadError ? onRetry?.() : onLoadMore())}
+              disabled={loadingMore}
+              aria-label={loadError ? t("retry", lang) : t("loadMore", lang)}
+            >
+              {loadError
+                ? t("retry", lang)
+                : loadingMore
+                  ? t("loadingMore", lang)
+                  : t("loadMore", lang)}
+            </button>
+          )}
         </div>
 
         {/* POI 列表 */}
@@ -443,6 +469,8 @@ export function SecondarySidebar({
           onWidenSearch={onWidenSearch}
           onNeedMore={onNeedMore}
           loadingMore={loadingMore}
+          error={loadError}
+          onRetry={onRetry}
           atCap={atCap}
           noMore={noMore}
         />

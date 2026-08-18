@@ -34,12 +34,23 @@ export interface FetchPOIOptions extends QueryPipeline {
   signal?: { cancelled: boolean };
 }
 
-/** 获取指定模式的 POI */
-export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<POI[]> {
+export interface FetchPOIResult {
+  pois: POI[];
+  /**
+   * 服务端 total 判定的「数据到底」(domain-local 带 total 时)。
+   * undefined → 调用方回退本地长度比较(高德回退/关键词路径)。
+   * 注意:失败一律 throw,绝不静默 return existing(poi-loading A)——
+   * 「错误 ≠ 没有更多」,失败可重试,不污染 noMore。
+   */
+  noMore?: boolean;
+}
+
+/** 获取指定模式的 POI。失败抛错(错误信号),成功返回 { pois, noMore? }。 */
+export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<FetchPOIResult> {
   const { mode, onlyActive = true } = options;
 
   if (onlyActive && mode !== 'domain' && !isRecruitmentMode(mode)) {
-    return [];
+    return { pois: [] };
   }
 
   if (mode === 'domain') {
@@ -53,7 +64,7 @@ export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<POI[]>
 /** Domain：往累计池里增量合并；找不到就不塞 seed。
  *  tech/22：杭州内走本地 /api/pois/domain-local；杭州外回退高德（省调用，
  *  默认 1 次 25 条，加载更多 +100 条去重）。 */
-async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
+async function fetchDomainPOIs(options: FetchPOIOptions): Promise<FetchPOIResult> {
   const center = options.center ?? { lng: 120.15, lat: 30.27 };
   const zoom = options.zoom ?? 13;
   const existing = (options.existing ?? []) as DomainPOI[];
@@ -65,7 +76,7 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
       // 或库不可用(null)再回退高德 searchPOI,避免「北京天安门」在杭州库
       // 查不到就空白/返回无关分类 POI。
       const local = await fetchLocalPois(options, existing, zoom, options.query);
-      if (local !== null && local.length > existing.length) return local;
+      if (local !== null && local.pois.length > existing.length) return local;
     }
     try {
       const result = await searchPOI({
@@ -84,11 +95,10 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
         DOMAIN_POI_HARD_CAP,
       );
       options.onBatch?.(next);
-      return next;
+      return { pois: next };
     } catch (err) {
-      console.warn('[poi-service] domain keyword search failed:', err);
-      options.onBatch?.(existing);
-      return existing;
+      // 失败 = 错误信号(可重试),不是「没有更多」;绝不静默 return existing
+      throw new Error(`domain keyword search failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
@@ -96,7 +106,7 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
     // 杭州内浏览 → 本地库(全量分层,列表候选 300→+300→1000);
     // 库不可用时内部已回退高德 fallback,null 兜底为现有池
     const local = await fetchLocalPois(options, existing, zoom);
-    return local ?? existing;
+    return local ?? { pois: existing };
   }
 
   const category =
@@ -120,23 +130,23 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<POI[]> {
         options.onBatch?.(batch);
       },
     });
-    return pois;
+    return { pois };
   } catch (err) {
-    console.warn('[poi-service] AMap fallback search failed:', err);
-    options.onBatch?.(existing);
-    return existing;
+    // 失败 = 错误信号,不置 noMore(poi-loading A)
+    throw new Error(`AMap fallback search failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
 /** 杭州本地查询：GET /api/pois/domain-local。每批 DOMAIN_BATCH_SIZE(50)，cap 1000。
  *  带关键词时库不可用 → 返回 null(调用方改走高德 searchPOI 带词搜索);
- *  浏览(无关键词)时库不可用 → 内部回退高德 fallback 兜底,不白屏。 */
+ *  浏览(无关键词)时库不可用 → 内部回退高德 fallback 兜底,不白屏。
+ *  成功返回 { pois, noMore }——noMore 用服务端 total 判定(poi-loading D)。 */
 async function fetchLocalPois(
   options: FetchPOIOptions,
   existing: DomainPOI[],
   zoom: number,
   q?: string,
-): Promise<POI[] | null> {
+): Promise<FetchPOIResult | null> {
   const bounds = options.bounds;
   const offset = (options.pageOffset ?? 0) * DOMAIN_BATCH_SIZE;
   const params = new URLSearchParams();
@@ -155,8 +165,12 @@ async function fetchLocalPois(
     const data = await res.json();
     const rows = (data.results ?? []) as DomainPOI[];
     const next = mergePoisById(existing, rows, DOMAIN_POI_HARD_CAP);
+    const total = typeof data.total === 'number' ? data.total : -1;
+    // 服务端 total 判定到底:已取到 total 之后,或本轮 0 行(越过 offset 上限);
+    // 过滤(common/筛选)导致可见列表不变不再误判「没有更多」
+    const noMore = total >= 0 ? offset + rows.length >= total : rows.length === 0;
     options.onBatch?.(next);
-    return next;
+    return { pois: next, noMore };
   } catch (err) {
     // 库未导入 / 网络错 → 浏览路径回退高德 fallback(杭州内兜底),不白屏;
     // 关键词路径返回 null 让调用方走 searchPOI(带词,而不是无关分类 POI)。
@@ -176,10 +190,13 @@ async function fetchLocalPois(
           options.onBatch?.(batch);
         },
       });
-      return pois;
+      return { pois };
     } catch (fallbackErr) {
-      options.onBatch?.(existing);
-      return existing;
+      // 本地库 + 高德兜底都失败 = 错误信号,不静默 return existing(poi-loading A)
+      throw new Error(
+        `local domain POIs failed: ${err instanceof Error ? err.message : String(err)}; ` +
+          `fallback also failed: ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`,
+      );
     }
   }
 }
@@ -245,11 +262,11 @@ async function internshipSeedResolved(): Promise<RecruitmentPOI[]> {
   return geocodePromise;
 }
 
-async function fetchWorkPOIs(options: FetchPOIOptions): Promise<POI[]> {
+async function fetchWorkPOIs(options: FetchPOIOptions): Promise<FetchPOIResult> {
   const immediate = (await workSeedFromAdapters()) as POI[];
   options.onBatch?.(immediate);
 
   const seeded = (await internshipSeedResolved()) as POI[];
   options.onBatch?.(seeded);
-  return seeded;
+  return { pois: seeded };
 }

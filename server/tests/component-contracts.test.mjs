@@ -222,3 +222,35 @@ test('map shell has skip links, a live result count, brand row and navItem searc
   assert.doesNotMatch(sidebar, /filterChip/);
   assert.doesNotMatch(shell, /activeFilterChips/); // 移动端 chips 已移除
 });
+
+test('map shell scale control: cleanup 接线 + 销毁保护 + 无双 addControl(poi-loading scale)', () => {
+  const shell = src('components/map-shell.tsx');
+  assert.match(shell, /mapCleanup = createMap\(/); // initMap 持有 createMap 返回的 cleanup
+  assert.match(shell, /mapCleanup\?\.\(\)/); // effect cleanup 执行 cleanup(移除 resize 监听)
+  assert.match(shell, /isDestroyed\?\.\(\)/); // handleResize 对已销毁实例直接 return
+  assert.match(shell, /scaleControlRef\.current\) return/); // 插件回调已存在则不再 add
+  assert.match(shell, /addScaleControl/); // 统一创建函数
+});
+
+test('SecondarySidebar resultHeader: 加载更多按钮 + 错误重试接线(poi-loading)', () => {
+  const sidebar = src('components/secondary-sidebar.tsx');
+  assert.match(sidebar, /onLoadMore\?: \(\) => void/);
+  assert.match(sidebar, /loadError\?: string \| null/);
+  assert.match(sidebar, /onRetry\?: \(\) => void/);
+  assert.match(sidebar, /styles\.loadMore/);
+  assert.match(sidebar, /t\("loadMore", lang\)/);
+  assert.match(sidebar, /t\("retry", lang\)/);
+  assert.match(sidebar, /t\("loadingMore", lang\)/);
+  const shell = src('components/map-shell.tsx');
+  assert.match(shell, /onLoadMore=\{handleNeedMore\}/); // 与滚动哨兵同一路径
+  assert.match(shell, /loadError=\{error\}/);
+  assert.match(shell, /handleRetry/); // 重试同一 offset,不跳过失败批次
+  const list = src('components/poi-list.tsx');
+  assert.match(list, /loadFailedRetry/); // footer 错误重试按钮
+  assert.match(list, /errorRef\.current\) return/); // 错误态哨兵不自动重发
+  const i18n = src('lib/i18n.ts');
+  assert.match(i18n, /loadMore: \{/);
+  assert.match(i18n, /loadingMore: \{/);
+  assert.match(i18n, /retry: \{/);
+  assert.match(i18n, /loadFailedRetry: \{/);
+});

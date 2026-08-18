@@ -317,9 +317,35 @@ function acquireAmapSlot(): Promise<void> {
   return scheduled;
 }
 
+/** PlaceSearch 超时(ms):配额异常/脚本异常时绝不永久 await(poi-loading B) */
+export const SEARCH_TIMEOUT_MS = 15_000;
+
+/**
+ * 给 AMap 回调型 promise 加超时兜底:超时以 error 形态 settle,
+ * 走调用方的重试路径,绝不永久 await(poi-loading B)。
+ * 注:底层 promise 即使超时后才回调也无人 await,settled 守卫防双 settle。
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 /**
  * 搜索 POI。有 center 时走周边搜索，否则走关键词搜索。
  * 每次调用只打 1 页（pageSize ≤ 25）。翻页由调用方排队，遵守 3 次/秒。
+ * 失败(AMap error 事件/超时/构造异常)一律 reject——「错误 ≠ 没有结果」,
+ * 调用方据此可重试,而不是把空结果当 noMore 永久停哨兵(poi-loading A/B)。
  */
 export async function searchPOI(
   params: POISearchParams
@@ -336,48 +362,54 @@ export async function searchPOI(
       ? AMAP_DEFAULT_RADIUS
       : requested;
 
-  const { records, total } = await new Promise<{ records: AMapPOIRecord[]; total: number }>((resolve) => {
-    let placeSearch: any;
-    try {
-      placeSearch = new AMap.PlaceSearch({
-        pageSize,
-        pageIndex,
-        city: params.city && params.city.length > 0 ? params.city : '全国',
-        citylimit: false,
-        extensions: 'all',
-      });
-    } catch {
-      resolve({ records: [], total: 0 });
-      return;
-    }
-
-    let settled = false;
-    const done = (status: string, result: any) => {
-      if (settled) return;
-      settled = true;
-      if (status === 'complete' && result?.poiList) {
-        resolve({
-          records: result.poiList.pois || [],
-          total: result.poiList.count || 0,
+  const { records, total } = await withTimeout(
+    new Promise<{ records: AMapPOIRecord[]; total: number }>((resolve, reject) => {
+      let placeSearch: any;
+      try {
+        placeSearch = new AMap.PlaceSearch({
+          pageSize,
+          pageIndex,
+          city: params.city && params.city.length > 0 ? params.city : '全国',
+          citylimit: false,
+          extensions: 'all',
         });
-      } else {
-        resolve({ records: [], total: 0 });
+      } catch {
+        reject(new Error('AMap PlaceSearch constructor failed'));
+        return;
       }
-    };
 
-    if (params.center) {
-      placeSearch.searchNearBy(
-        params.keyword,
-        [params.center.lng, params.center.lat],
-        radius,
-        done
-      );
-    } else {
-      placeSearch.search(params.keyword, done);
-    }
-    placeSearch.on('complete', (e: any) => done('complete', e));
-    placeSearch.on('error', () => done('error', null));
-  });
+      let settled = false;
+      const done = (status: string, result: any) => {
+        if (settled) return;
+        settled = true;
+        if (status === 'complete' && result?.poiList) {
+          resolve({
+            records: result.poiList.pois || [],
+            total: result.poiList.count || 0,
+          });
+        } else {
+          // error 事件/异常回调 ≠ 「没有结果」(complete+空 poiList 才是);
+          // 失败以 error 形态 settle,让调用方走重试而非 noMore(poi-loading A)
+          reject(new Error(status === 'error' ? 'AMap PlaceSearch failed' : 'AMap PlaceSearch incomplete'));
+        }
+      };
+
+      if (params.center) {
+        placeSearch.searchNearBy(
+          params.keyword,
+          [params.center.lng, params.center.lat],
+          radius,
+          done
+        );
+      } else {
+        placeSearch.search(params.keyword, done);
+      }
+      placeSearch.on('complete', (e: any) => done('complete', e));
+      placeSearch.on('error', () => done('error', null));
+    }),
+    SEARCH_TIMEOUT_MS,
+    'AMap PlaceSearch',
+  );
 
   const seen = new Set<string>();
   const pois: DomainPOI[] = [];

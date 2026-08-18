@@ -26,6 +26,10 @@ export interface POIListProps {
   onNeedMore?: () => void;
   /** 正在追加加载（显示底部 spinner） */
   loadingMore?: boolean;
+  /** 加载错误:失败 ≠ 没有更多,footer 显示「加载失败,点击重试」(poi-loading A) */
+  error?: string | null;
+  /** 重试当前批次(不递增偏移) */
+  onRetry?: () => void;
   /** 已达上限（显示「已达加载上限」并停止哨兵触发） */
   atCap?: boolean;
   /** 数据已耗尽（稀疏视野/回退窗口空;显示「没有更多结果」并停止哨兵） */
@@ -50,6 +54,8 @@ export function POIList({
   onWidenSearch,
   onNeedMore,
   loadingMore = false,
+  error = null,
+  onRetry,
   atCap = false,
   noMore = false,
 }: POIListProps) {
@@ -61,6 +67,8 @@ export function POIList({
   atCapRef.current = atCap;
   const noMoreRef = useRef(noMore);
   noMoreRef.current = noMore;
+  const errorRef = useRef(error);
+  errorRef.current = error;
   const loadingRef = useRef(loading);
   loadingRef.current = loading;
   const loadingMoreRef = useRef(loadingMore);
@@ -82,6 +90,7 @@ export function POIList({
           if (!entry.isIntersecting) continue;
           if (atCapRef.current) return; // 到顶停止触发
           if (noMoreRef.current) return; // 数据耗尽停止触发
+          if (errorRef.current) return; // 失败态:不自动重发,等显式重试
           if (loadingRef.current || loadingMoreRef.current) return; // 加载中不重复触发
           onNeedMoreRef.current?.();
         }
@@ -174,14 +183,23 @@ export function POIList({
               />
             </div>
           ))}
-          {/* 底部哨兵 + 加载/到底/耗尽指示 */}
-          <div ref={sentinelRef} className={styles.sentinel} aria-hidden="true">
-            {atCap ? (
-              <span className={styles.sentinelText}>
+          {/* 底部哨兵 + 加载/错误重试/到底/耗尽指示 */}
+          <div ref={sentinelRef} className={styles.sentinel}>
+            {error ? (
+              <button
+                type="button"
+                className={styles.retryBtn}
+                onClick={onRetry}
+                aria-label={t("loadFailedRetry", lang)}
+              >
+                {t("loadFailedRetry", lang)}
+              </button>
+            ) : atCap ? (
+              <span aria-hidden="true" className={styles.sentinelText}>
                 {lang === "zh" ? "── 已达加载上限 ──" : "── Reached load limit ──"}
               </span>
             ) : noMore ? (
-              <span className={styles.sentinelText}>
+              <span aria-hidden="true" className={styles.sentinelText}>
                 {lang === "zh" ? "── 没有更多结果 ──" : "── No more results ──"}
               </span>
             ) : loadingMore ? (

@@ -637,6 +637,98 @@ opacity: 1 }`。`query` 非空时 placeholder 不占位(`:not(:placeholder-shown
   query text visible」(map-shell.tsx 重置断言 + CSS `:not(:placeholder-shown)` 断言)。
 - ✅ 全量 `npm test` / `npm run typecheck` 通过。
 
+## 2026-08-19: 比例尺控件崩溃(地图销毁后 resize 摸已销毁实例)
+
+### 问题：控制台 `Cannot read properties of undefined (reading 'removeChild')` / `appendChild`
+
+**症状**：组件卸载 / Next dev Fast Refresh 重挂载 / 路由重挂后,窗口 resize 偶发抛
+`removeChild`/`appendChild` 错误,或地图区域出现**两个比例尺**。
+
+**根本原因**：
+- `handleResize`(map-shell.tsx ~630)在 resize 时 `map.removeControl(scaleControl)` +
+  `map.addControl(...)`。window resize 监听在 `createMap` 里注册,但 `initMap` 调用
+  `createMap(...)` **没有接收返回值**——cleanup(含 `removeEventListener('resize')`)成了
+  孤儿永不执行。
+- 地图销毁后,泄漏的 `handleResize` 仍引用已销毁的 map/容器 → 下一次 resize 摸到销毁
+  实例 → removeChild/appendChild 崩溃。
+- 附带竞态:`AMap.Scale` 插件回调若在 resize 之后完成,会**第二次 addControl**,产生两个
+  比例尺。
+
+**方案**：
+- `initMap` 持有 `createMap` 返回的 cleanup(`mapCleanup = createMap(...)`);effect cleanup
+  先 `mapCleanup?.()`(移除 resize/主题/鼠标监听)再 `map.destroy()`——顺序反了会在销毁
+  实例上 removeEventListener。
+- `handleResize` 加保护:`mapInstance.current` 为 null / `map.isDestroyed?.()` → 直接 return;
+  `scaleControlRef.current` 未就绪(插件未加载完)由插件回调创建,不抢建。
+- 双 addControl 竞态:统一 `addScaleControl()` 创建函数,插件回调里
+  `if (scaleControlRef.current) return`;resize 先 remove 再置 null 再重建。
+
+**修改文件**：`server/src/components/map-shell.tsx`(initMap ~485、Scale 区域 ~616-660、
+effect cleanup ~692)
+
+**测试验证**：组件契约测试新增 scale 静态断言(cleanup 接线 / 销毁保护 / 无双 addControl);
+`npm test` 全绿;typecheck 通过。
+
+---
+
+## 2026-08-19: POI 停止加载/不新增(A/B/C/D)+ 加载更多按钮
+
+### 症状
+
+滚动到底后列表停在「── 没有更多结果 ──」不再新增;或一次瞬时网络/AMap 错误后哨兵
+永久失效;或叠加模式切换缓存恢复后列表冻结;桌面探索侧栏无手动「加载更多」入口。
+
+### 根本原因(A-D)
+
+- **(A) 一次失败永久 noMore,无重试**:domain 路径错误静默 `return existing`、work 路径
+  失败返回 `[]` → 主 load 的 `noMore = beforeLen>0 && data.length<=beforeLen` 置 true →
+  `handleNeedMore` 在 `noMoreRef` 为 true 时硬返回。一次瞬时错误 = 哨兵永久失效。
+- **(B) `loadingRef` 无限卡死,AMap 无超时**:`searchPOI` 只等 `complete`/`error` 事件,
+  PlaceSearch 永远不回调(配额/脚本异常)时 `load()` 永久 await,后续一切加载被堵死。
+- **(C) `skipFetch` 提前 return 吞掉待重放的视口刷新**:skipFetch 分支在 try/finally 之前
+  return,视口刷新 pending 的重放逻辑被跳过 → 列表冻结到下一次地图移动。
+- **(D) domain noMore 误判**:noMore 用**原始 catalog** 长度比较,可见列表是**过滤后**的
+  memo;且 domain-local 带 common 过滤与 offset 上限 1000,DB 返回 0 新行时误判 noMore,
+  即使视口内还有合法 POI。
+
+### 方案
+
+- **(A) 错误 ≠ 没有更多**:`poi-service.ts` 三条失败路径(domain 关键词/AMap 回退/本地库
+  高德兜底)一律 `throw`,不再静默 `return existing`;`viewport-search.ts` non-ok 抛错
+  (不再返回 `[]`);map-shell `load()` catch 置 `error` 态(不碰 `noMoreRef`),成功清 error;
+  POIList footer 错误态显示「加载失败,点击重试」玻璃按钮(`onRetry` 清缓存 + refreshToken+1,
+  同一 pageOffset 重拉,不跳过失败批次);哨兵在错误态不自动重发(等显式重试)。
+- **(B) AMap 超时**:`amap-api.ts` 新增 `withTimeout` + `SEARCH_TIMEOUT_MS=15_000`,`searchPOI`
+  的 promise 包超时,超时以 error 形态 settle → 走任务 A 的重试路径,绝不永久 await。
+- **(C) skipFetch 不吞视口刷新**:skipFetch 提前 return 前,`viewportRefreshPendingRef` 已
+  置位则直接 `viewportLoaderRef.current?.schedule()` 补跑。
+- **(D) noMore 用服务端 total**:`fetchPOIsForMode` 返回 `{ pois, noMore? }`;domain-local
+  用响应 `total` 判 `offset + rows.length >= total`(过滤导致可见列表不变不再误判);
+  work 的 `/api/pois` 同样透出 `total`(`loadWorkViewport` 满页但已取完 → noMore,不白打
+  后续页);无 total 的降级路径(高德回退/关键词)保持本地长度判断。
+- **加载更多按钮**(桌面 secondary-sidebar resultHeader 右端,移动抽屉不加):蓝色文字按钮
+  (12px 小字 `--blue-ink` `#0062CC`,玻璃底),`onLoadMore` → `handleNeedMore`(与滚动哨兵
+  同一路径 pageOffset+1);noMore/atCap/空列表隐藏;loadingMore 禁用显示「加载中…」;
+  错误态变「重试」(`onRetry`)。i18n 新键 `loadMore`/`loadingMore`/`retry`/`loadFailedRetry`。
+
+**修改文件**：`server/src/components/map-shell.tsx`(load/skipFetch ~748-883、handleNeedMore
+~1222、handleRetry ~1238、POIList/SecondarySidebar props 接线)、`server/src/components/
+secondary-sidebar.tsx`(resultHeader ~437-457 + props)、`secondary-sidebar.module.css`、
+`poi-list.tsx`(footer 错误重试 + 哨兵错误门控)、`poi-list.module.css`(`.retryBtn`)、
+`server/src/lib/poi-service.ts`、`server/src/lib/viewport-search.ts`、`server/src/lib/
+amap-api.ts`(withTimeout ~309-334)、`server/src/lib/i18n.ts`、`server/tests/poi-service
+.test.mjs`(新)、`server/tests/viewport-search.test.mjs`、`server/tests/component-contracts
+.test.mjs`。
+
+**测试验证**：
+- ✅ `poi-service.test.mjs`(新):withTimeout 超时 error settle、total 判 noMore(未到/到底)、
+  本地库失败抛错。
+- ✅ `viewport-search.test.mjs`:透出服务端 total、non-ok 抛错、total 判 noMore 不白打后续页、
+  失败上抛不置 noMore。
+- ✅ `component-contracts.test.mjs`:scale cleanup 静态断言 + resultHeader 加载更多按钮/
+  错误重试/i18n 键断言。
+- ✅ 全量 `npm test` 307 通过 / 0 失败(2 跳过);`npm run typecheck` 无错误。
+
 ---
 
 ## 相关文档
