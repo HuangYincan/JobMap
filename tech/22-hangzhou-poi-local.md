@@ -29,7 +29,7 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
 | photos | 460,527 行(46%)有图,高德图床 URL |
 | rating | 414,160 行(41%),0–5 |
 | cost | 8% |
-| **恒缺** | `reviewCount` / `reviews` / `website`;`biz_ext.open_time` 前 30 万行 0 命中 → `open_hours` 本数据源恒空 |
+| **恒缺** | `reviewCount` / `reviews` / `website`;`biz_ext.open_time` 前 30 万行 0 命中 → `open_hours` 本数据源恒空(前端已对真 poiid 提供「查看评价」高德外链,见 2026-08-19 bug-fix 记录) |
 
 **格式坑**(python-repr,非标准 JSON):
 
@@ -190,7 +190,7 @@ false`,被取消后该 ref 永久卡 true → 后续所有 load() 直接短路�
 ## 已知缺口与后续
 
 - **AMap 日配额**(10044,2026-08-17):杭州外 fallback 代码已就位,换新 key 即可用
-- `reviewCount/website` 本数据源恒缺;`open_hours` 空
+- `reviewCount/website` 本数据源恒缺(前端已对真 poiid 提供「查看评价」高德外链);`open_hours` 空
 - 关键词搜索仍按当前视口 bbox 约束(与旧 AMap searchNearBy 半径语义一致);
   点搜索建议(本地 hz 前缀 / AMap AutoComplete 回退)会飞过去再刷视口
 - 全国扩展:表已带 `city_code` + 分区注释;后续城市导入同管线,前端把

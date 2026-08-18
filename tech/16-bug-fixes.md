@@ -2,6 +2,55 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-19: POI 电话 `[]` 显示 + 本地 POI 查看评价链接
+
+### 问题1:用户看到「电话 []」
+
+**症状**：
+- POI 详情里电话行渲染成「电话 []」
+
+**根本原因**：
+- `hz_pois.tel` 是 text 列,源 CSV 空电话写成字面量 `'[]'`(实测 1,006,158 行中
+  697,546 行(69.3%));导入器 `cleanCsvRow` 只做 `(raw.tel || '').trim()` 不清 `'[]'`,
+  原样入库;API 侧 `hzRowToDomainPoi` / `normalizeAMapPOI` 也直接透传。
+  前端 `InfoRow` 只跳过 falsy,`'[]'` 是真值 → 显示「电话 []」。
+
+**解决方案**：
+- 导入器新增 `parseTelCell`(`hz-poi-import.ts`):空串/`'[]'`/`'{}'` → `undefined`
+- 防御清洗(旧数据未重导也正确):`hz-poi-store.ts` 的 `hzRowToDomainPoi` 与
+  `amap-api.ts` 的 `normalizeAMapPOI`(含空数组)均清成 `undefined`
+- `poi-detail.tsx` 的 `InfoRow` 把 `'[]'`/`'{}'`/纯空白当空值,不渲染该行
+- DB 脏数据清理(re-import / SQL UPDATE)是 Env-only,未执行,记 deferred
+
+### 问题2:本地 POI 没有任何评价,也无入口查看
+
+**根本原因**：
+- `hz_pois` 无 reviews 表/reviewCount 列;本地 POI 恒显示「暂无详细评价」,
+  用户无法跳到高德看真实评价。
+
+**解决方案**：
+- `poi-detail.tsx` ReviewSection:无 review 文本且 `poi.id` 是真 poiid
+  (不以 `amap-` 合成前缀开头)时,「暂无详细评价」旁展示蓝色「查看评价」外链
+  `https://www.amap.com/place/<poiid>`(`target="_blank" rel="noreferrer"`)
+- 新增 i18n 键 `viewReviews`(zh: 查看评价 / en: View reviews);样式 `.reviewLink`
+  沿用品牌蓝 `--accent`
+
+**修改文件**：
+- `server/src/lib/hz-poi-import.ts`(parseTelCell + cleanCsvRow tel 段)
+- `server/src/lib/hz-poi-store.ts`(hzRowToDomainPoi tel 清洗)
+- `server/src/lib/amap-api.ts`(normalizeAMapPOI tel 清洗)
+- `server/src/components/poi-detail.tsx`(InfoRow 空值 + ReviewSection 外链)
+- `server/src/components/poi-detail.module.css`(.noReviews/.reviewLink)
+- `server/src/lib/i18n.ts`(viewReviews)
+- 测试:`hz-poi-import.test.mjs` / `hz-poi-store.test.mjs` / 新增 `amap-api.test.mjs`
+
+**测试验证**：
+- ✅ tel `'[]'`/空串/空数组 → undefined(import 解析、store 映射、AMap 规范化三层)
+- ✅ 真实电话保留(trim 后)
+- ✅ 全量 305 测试通过(typecheck / docs-check / git diff --check 均绿)
+
+---
+
 ## 2026-08-16: 滚动条体验优化
 
 ### 问题1：滚动条轨道背景持续显示
