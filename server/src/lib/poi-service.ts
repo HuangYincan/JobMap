@@ -14,7 +14,7 @@ import {
 import { INTERNSHIP_SEED } from './seed-data.ts';
 import { fetchWorkCatalogFromApi } from './recruitment-adapters/api.ts';
 import type { QueryPipeline } from './search.ts';
-import { mergePoisById, isCommonOrExactName, inHangzhouBox, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
+import { mergePoisById, isCommonOrExactName, inHangzhouBox, DOMAIN_POI_HARD_CAP, DOMAIN_POI_FULL_PAGE_SIZE, DOMAIN_POI_OFFSET_CAP, DOMAIN_BATCH_SIZE, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
 import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
 import { isRecruitmentMode } from './types.ts';
 
@@ -102,17 +102,26 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<FetchPOIResult
     }
   }
 
-  if (inHz) {
-    // 杭州内浏览 → 本地库(全量分层,列表候选 300→+300→1000);
-    // 库不可用时内部已回退高德 fallback,null 兜底为现有池
-    const local = await fetchLocalPois(options, existing, zoom);
-    return local ?? { pois: existing };
-  }
-
+  // 分类驱动加载(poi-category-loading):filters.category 从「过滤已加载目录」
+  // 变为「驱动加载」——浏览(无关键词)时按类拉取;搜索路径豁免,不发 categories。
   const category =
     typeof options.filters?.category === 'string' && options.filters.category
       ? options.filters.category
       : undefined;
+
+  if (inHz) {
+    // 杭州内浏览 → 本地库(全量分层,列表候选 300→+300→1000);
+    // 分类已选(poi-category-loading)时按类全量循环拉取;
+    // 库不可用时内部已回退高德 fallback,null 兜底为现有池
+    const local = await fetchLocalPois(
+      options,
+      existing,
+      zoom,
+      undefined,
+      category ? [category] : undefined,
+    );
+    return local ?? { pois: existing };
+  }
 
   // 杭州外 → 高德省调用回退:每次滚动 1 次 PlaceSearch(25 条),窗口耗尽即停
   try {
@@ -140,13 +149,19 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<FetchPOIResult
 /** 杭州本地查询：GET /api/pois/domain-local。每批 DOMAIN_BATCH_SIZE(50)，cap 1000。
  *  带关键词时库不可用 → 返回 null(调用方改走高德 searchPOI 带词搜索);
  *  浏览(无关键词)时库不可用 → 内部回退高德 fallback 兜底,不白屏。
+ *  分类已选(poi-category-loading)且无关键词 → 全量循环(见 fetchLocalPoisAll)。
  *  成功返回 { pois, noMore }——noMore 用服务端 total 判定(poi-loading D)。 */
 async function fetchLocalPois(
   options: FetchPOIOptions,
   existing: DomainPOI[],
   zoom: number,
   q?: string,
+  categories?: string[],
 ): Promise<FetchPOIResult | null> {
+  // 分类门控下的「全量」加载:循环 offset 拉完当前视图该类别的所有 POI
+  if (categories?.length && !q) {
+    return fetchLocalPoisAll(options, existing, zoom, categories);
+  }
   const bounds = options.bounds;
   const offset = (options.pageOffset ?? 0) * DOMAIN_BATCH_SIZE;
   const params = new URLSearchParams();
@@ -195,6 +210,89 @@ async function fetchLocalPois(
       // 本地库 + 高德兜底都失败 = 错误信号,不静默 return existing(poi-loading A)
       throw new Error(
         `local domain POIs failed: ${err instanceof Error ? err.message : String(err)}; ` +
+          `fallback also failed: ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`,
+      );
+    }
+  }
+}
+
+/**
+ * 分类全量加载(poi-category-loading):循环 offset 拉完当前视图该类别所有 POI。
+ * - 每页 limit=DOMAIN_POI_FULL_PAGE_SIZE(300,API 上限),offset 0→300→600→900;
+ * - 停止:服务端 total 已取到 / 短页(rows < limit)→ noMore=true;
+ *   累计到 DOMAIN_POI_HARD_CAP(1000)→ 停;offset 越过 API 上限
+ *   DOMAIN_POI_OFFSET_CAP(1000)→ 停——「全量」= 尽力全量,受容量保护
+ *   (汇报/tech/16 记录该取舍);
+ * - 每页回调 onBatch(累计池,视口 replace 语义下逐页填充);
+ * - 库不可用/网络错 → 回退高德 fallback(带 categories,已支持),不白屏。
+ */
+async function fetchLocalPoisAll(
+  options: FetchPOIOptions,
+  existing: DomainPOI[],
+  zoom: number,
+  categories: string[],
+): Promise<FetchPOIResult | null> {
+  const bounds = options.bounds;
+  const baseParams = () => {
+    const params = new URLSearchParams();
+    if (bounds) {
+      params.set('bounds', `${bounds.west},${bounds.south},${bounds.east},${bounds.north}`);
+    }
+    params.set('zoom', String(Math.max(1, Math.floor(zoom))));
+    params.set('limit', String(DOMAIN_POI_FULL_PAGE_SIZE));
+    params.set('categories', categories.join(','));
+    return params;
+  };
+  let merged = existing.slice();
+  let noMore = false;
+  try {
+    for (
+      let offset = 0;
+      offset <= DOMAIN_POI_OFFSET_CAP;
+      offset += DOMAIN_POI_FULL_PAGE_SIZE
+    ) {
+      if (options.signal?.cancelled) break;
+      if (merged.length >= DOMAIN_POI_HARD_CAP) break; // 硬顶保护,不再发请求
+      const params = baseParams();
+      params.set('offset', String(offset));
+      const res = await fetch(`/api/pois/domain-local?${params.toString()}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`domain-local ${res.status}`);
+      const data = await res.json();
+      const rows = (data.results ?? []) as DomainPOI[];
+      const total = typeof data.total === 'number' ? data.total : -1;
+      merged = mergePoisById(merged, rows, DOMAIN_POI_HARD_CAP);
+      options.onBatch?.(merged);
+      noMore =
+        total >= 0 ? offset + rows.length >= total : rows.length < DOMAIN_POI_FULL_PAGE_SIZE;
+      if (rows.length < DOMAIN_POI_FULL_PAGE_SIZE) break; // 短页 → 到底
+      if (noMore) break; // 服务端 total 已取到 → 到底
+    }
+    return { pois: merged, noMore };
+  } catch (err) {
+    // 库未导入 / 网络错 → 回退高德 fallback(带 categories),不白屏
+    console.warn('[poi-service] local category POIs failed, fallback to AMap:', err);
+    try {
+      const pois = await searchViewportPOIsFallback({
+        center: options.center,
+        zoom,
+        bounds: options.bounds,
+        existing,
+        addCap: options.addCap,
+        pageOffset: options.pageOffset,
+        signal: options.signal,
+        categories,
+        onBatch: (batch) => {
+          if (options.signal?.cancelled) return;
+          options.onBatch?.(batch);
+        },
+      });
+      return { pois };
+    } catch (fallbackErr) {
+      // 本地库 + 高德兜底都失败 = 错误信号,不静默 return existing(poi-loading A)
+      throw new Error(
+        `local category POIs failed: ${err instanceof Error ? err.message : String(err)}; ` +
           `fallback also failed: ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`,
       );
     }

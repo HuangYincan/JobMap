@@ -69,6 +69,14 @@ export const DOMAIN_POI_HARD_CAP = 1000;
  * 分离——测试硬编码 MORE_PAGE_SIZE=300,这里只影响 domain 路径。
  */
 export const DOMAIN_BATCH_SIZE = 50;
+/**
+ * 分类全量加载(poi-category-loading):domain-local 单页上限。
+ * API limit 最大 300(hz-poi-store 钳制),分类全量用满页减少请求数
+ * (1000 条最多 4 次请求:offset 0/300/600/900)。
+ */
+export const DOMAIN_POI_FULL_PAGE_SIZE = 300;
+/** 分类全量加载:domain-local offset 上限(API 约束,offset > 1000 报错前钳制)。 */
+export const DOMAIN_POI_OFFSET_CAP = 1000;
 /** 杭州外回退高德:每次滚动仅 1 次 PlaceSearch(25 条) */
 export const AMAP_FALLBACK_INITIAL_CALLS = 1;
 /** 杭州 GCJ-02 数据范围框(含桐庐/建德/淳安等远郊),见 hz-poi-import.ts */
