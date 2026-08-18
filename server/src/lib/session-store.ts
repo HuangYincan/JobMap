@@ -184,6 +184,7 @@ export function addHistory(
   userId: string,
   query: string,
   mode: SearchHistoryEntry['mode'],
+  entity?: SearchHistoryEntry['entity'],
 ): SearchHistoryEntry | null {
   const q = query.trim();
   if (!q) return null;
@@ -191,6 +192,7 @@ export function addHistory(
   const last = items[0];
   if (last && last.query === q && last.mode === mode) {
     last.createdAt = new Date().toISOString();
+    if (entity) last.entity = entity;
     history.set(userId, items);
     return last;
   }
@@ -199,6 +201,7 @@ export function addHistory(
     query: q,
     mode,
     createdAt: new Date().toISOString(),
+    ...(entity ? { entity } : {}),
   };
   history.set(userId, [entry, ...items].slice(0, 50));
   return entry;

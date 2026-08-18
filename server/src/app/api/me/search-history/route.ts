@@ -3,6 +3,7 @@ import { readSessionUser } from '@/lib/http-session';
 import { addHistory, clearHistory, listHistory } from '@/lib/account-store';
 import { canonicalMode } from '@/lib/modes';
 import { isPersistableMode } from '@/lib/persistable';
+import { sanitizeEntityRef, type SearchHistoryEntityRef } from '@/lib/account';
 import type { MapMode } from '@/lib/types';
 
 export async function GET() {
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ code: 'UNAUTHORIZED', message: 'not signed in' }, { status: 401 });
   }
-  let body: { query?: string; mode?: MapMode };
+  let body: { query?: string; mode?: MapMode; entity?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const entry = await addHistory(user.id, query, mode);
+  const entity: SearchHistoryEntityRef | undefined = sanitizeEntityRef(body.entity);
+  const entry = await addHistory(user.id, query, mode, entity);
   return NextResponse.json({ item: entry });
 }
 
