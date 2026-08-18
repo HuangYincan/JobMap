@@ -7,6 +7,7 @@ import {
   inHangzhouBox,
   parseBizExt,
   parsePhotosUrlArray,
+  parseTelCell,
   splitLocation,
   tierForCategory,
 } from '../src/lib/hz-poi-import.ts';
@@ -82,6 +83,16 @@ test('parseBizExt: 空/畸形 → {}', () => {
   assert.deepEqual(parseBizExt('{'), {});
 });
 
+test('parseTelCell: 真实电话保留,空串/"[]"/"{}" → undefined', () => {
+  assert.equal(parseTelCell('0571-85791266'), '0571-85791266');
+  assert.equal(parseTelCell(' 0571-85791266 '), '0571-85791266'); // trim
+  assert.equal(parseTelCell(''), undefined);
+  assert.equal(parseTelCell('   '), undefined);
+  assert.equal(parseTelCell('[]'), undefined); // 源 CSV 空电话字面量(实测 69.3% 行)
+  assert.equal(parseTelCell('{}'), undefined);
+  assert.equal(parseTelCell(undefined), undefined);
+});
+
 test('cleanCsvRow: 真实杭州行全字段', () => {
   const raw = {
     id: 'B0FFHF120D',
@@ -110,6 +121,7 @@ test('cleanCsvRow: 真实杭州行全字段', () => {
   assert.equal(row.name, '杭州印象西湖山水实景演出');
   assert.equal(row.rating, 4.4);
   assert.equal(row.cost, undefined); // '[]' → 弃
+  assert.equal(row.tel, '0571-85791266');
   assert.equal(row.lngGcj, 120.135687);
   assert.equal(row.latGcj, 30.251276);
   assert.equal(row.lonWgs84, 120.1291153);
@@ -134,6 +146,27 @@ test('cleanCsvRow: rating "[]" → undefined,biz_ext rating 兜底', () => {
   const row = cleanCsvRow(raw);
   assert.ok(row);
   assert.equal(row.rating, 3.1);
+});
+
+test('cleanCsvRow: tel "[]"/空 → undefined,真实电话保留', () => {
+  const base = {
+    id: 'X2',
+    name: '测试',
+    location: '120.1,30.2',
+    lon_wgs84: '120.1',
+    lat_wgs84: '30.2',
+    bigType: '餐饮服务',
+    adname: '上城区',
+  };
+  const r1 = cleanCsvRow({ ...base, tel: '[]' });
+  assert.ok(r1);
+  assert.equal(r1.tel, undefined); // 源 CSV 空电话字面量 → 不入库
+  const r2 = cleanCsvRow({ ...base, tel: '' });
+  assert.ok(r2);
+  assert.equal(r2.tel, undefined);
+  const r3 = cleanCsvRow({ ...base, tel: '0571-85791266' });
+  assert.ok(r3);
+  assert.equal(r3.tel, '0571-85791266');
 });
 
 test('cleanCsvRow: 必填缺失 → null', () => {

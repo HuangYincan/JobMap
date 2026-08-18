@@ -98,6 +98,7 @@ export function hzRowToDomainPoi(row: HzPoiRow): DomainPOI {
   const costRaw = row.cost !== null && row.cost !== '' ? Number.parseFloat(row.cost) : undefined;
   const cost = costRaw && Number.isFinite(costRaw) ? costRaw : undefined;
   const rating = row.rating !== null && row.rating !== '' ? Number.parseFloat(row.rating) : undefined;
+  const tel = row.tel?.trim();
   const location: POILocation = {
     lng: row.lng_gcj,
     lat: row.lat_gcj,
@@ -116,7 +117,8 @@ export function hzRowToDomainPoi(row: HzPoiRow): DomainPOI {
     cost,
     priceLevel: cost !== undefined && cost > 0 ? Math.min(4, Math.ceil(cost / 100)) : undefined,
     openHours: row.open_hours ?? undefined,
-    tel: row.tel ?? undefined,
+    // 防御清洗:旧数据未重导时 DB 里 tel 可能是字面量 '[]'(源 CSV 空电话)
+    tel: tel && tel !== '[]' && tel !== '{}' ? tel : undefined,
     photos: Array.isArray(row.photos) ? row.photos.slice(0, 3) : undefined,
   };
 }

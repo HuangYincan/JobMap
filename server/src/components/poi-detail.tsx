@@ -126,6 +126,7 @@ function DomainDetail({ poi, lang }: { poi: Extract<POI, { kind: "domain" }>; la
         rating={poi.rating}
         reviewCount={poi.reviewCount}
         reviews={poi.reviews}
+        reviewUrl={amapReviewUrl(poi)}
         lang={lang}
       />
       <CommuteSection
@@ -242,15 +243,28 @@ function RecruitmentDetail({
   );
 }
 
+/**
+ * 高德评价页 URL:仅当 poi.id 是真 poiid(本地库 / AMap 搜索返回的真实 id)才可拼;
+ * 合成 id(`amap-${lng}-${lat}-${name}`)不是真 poiid,不能拿来拼链接。
+ * 已有 review 文本时无需外链。
+ */
+function amapReviewUrl(poi: { id: string; reviews?: unknown[] }): string | undefined {
+  if (poi.reviews?.length) return undefined;
+  if (!poi.id || poi.id.startsWith("amap-")) return undefined;
+  return `https://www.amap.com/place/${encodeURIComponent(poi.id)}`;
+}
+
 function ReviewSection({
   rating,
   reviewCount,
   reviews,
+  reviewUrl,
   lang,
 }: {
   rating?: number;
   reviewCount?: number;
   reviews?: { id: string; author: string; rating?: number; excerpt: string }[];
+  reviewUrl?: string;
   lang: Language;
 }) {
   if (!rating && !reviewCount && !reviews?.length) return null;
@@ -279,7 +293,19 @@ function ReviewSection({
           ))}
         </ul>
       ) : (
-        <p className={styles.muted}>{t("noReviews", lang)}</p>
+        <p className={styles.noReviews}>
+          <span>{t("noReviews", lang)}</span>
+          {reviewUrl && (
+            <a
+              className={styles.reviewLink}
+              href={reviewUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t("viewReviews", lang)} →
+            </a>
+          )}
+        </p>
       )}
     </section>
   );
@@ -328,11 +354,13 @@ function CommuteSection({
 }
 
 function InfoRow({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
+  // 脏数据防御:源 CSV 空电话是字面量 '[]'(truthy),空数组也当空值 → 不渲染行
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text || text === "[]" || text === "{}") return null;
   return (
     <section className={styles.section}>
       <h3 className={styles.sectionTitle}>{label}</h3>
-      <p className={styles.prose}>{value}</p>
+      <p className={styles.prose}>{text}</p>
     </section>
   );
 }
