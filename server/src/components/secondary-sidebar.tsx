@@ -399,59 +399,61 @@ export function SecondarySidebar({
         </div>
       )}
 
-      {/* 筛选面板（可折叠） */}
-      {showFilters && (
-        <div className={styles.filterPanel}>
-          <FilterPanel
-            filters={config.filters}
-            values={filters}
-            onChange={(key, value) => onFiltersChange({ ...filters, [key]: value })}
-            onReset={onFiltersReset}
-            resultCount={totalCount}
-            lang={lang}
-          />
-        </div>
-      )}
+      {/* 筛选面板（可折叠）+ 结果标题 + POI 列表：共享滚动容器，顶部内容随滚走 */}
+      <div className={styles.scrollRegion}>
+        {showFilters && (
+          <div className={styles.filterPanel}>
+            <FilterPanel
+              filters={config.filters}
+              values={filters}
+              onChange={(key, value) => onFiltersChange({ ...filters, [key]: value })}
+              onReset={onFiltersReset}
+              resultCount={totalCount}
+              lang={lang}
+            />
+          </div>
+        )}
 
-      {/* 结果标题 */}
-      <div className={styles.resultHeader}>
-        <div className={styles.resultMeta}>
-          <span className={styles.resultCount}>
-            {loading ? t("loading", lang) : `${totalCount ?? pois.length} ${t("resultsCount", lang)}`}
-          </span>
-          {onRefreshHere && pois.length === 0 && !loading && (
-            <button
-              type="button"
-              className={styles.refreshIcon}
-              onClick={onRefreshHere}
-              disabled={loading}
-              aria-label={t("refreshHere", lang)}
-            >
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 12a9 9 0 1 1-2.6-6.3" />
-                <path d="M21 4v6h-6" />
-              </svg>
-            </button>
-          )}
+        {/* 结果标题 */}
+        <div className={styles.resultHeader}>
+          <div className={styles.resultMeta}>
+            <span className={styles.resultCount}>
+              {loading ? t("loading", lang) : `${totalCount ?? pois.length} ${t("resultsCount", lang)}`}
+            </span>
+            {onRefreshHere && pois.length === 0 && !loading && (
+              <button
+                type="button"
+                className={styles.refreshIcon}
+                onClick={onRefreshHere}
+                disabled={loading}
+                aria-label={t("refreshHere", lang)}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 12a9 9 0 1 1-2.6-6.3" />
+                  <path d="M21 4v6h-6" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* POI 列表 */}
+        <POIList
+          pois={pois}
+          selectedId={selectedId}
+          highlightedId={highlightedId}
+          onSelect={openDetail}
+          onHover={onHover}
+          loading={loading}
+          lang={lang}
+          accentColor={config.color}
+          onWidenSearch={onWidenSearch}
+          onNeedMore={onNeedMore}
+          loadingMore={loadingMore}
+          atCap={atCap}
+          noMore={noMore}
+        />
       </div>
-
-      {/* POI 列表 */}
-      <POIList
-        pois={pois}
-        selectedId={selectedId}
-        highlightedId={highlightedId}
-        onSelect={openDetail}
-        onHover={onHover}
-        loading={loading}
-        lang={lang}
-        accentColor={config.color}
-        onWidenSearch={onWidenSearch}
-        onNeedMore={onNeedMore}
-        loadingMore={loadingMore}
-        atCap={atCap}
-        noMore={noMore}
-      />
       </>
       )}
     </aside>

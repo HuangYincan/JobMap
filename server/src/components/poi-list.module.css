@@ -1,12 +1,9 @@
-/* POI 列表 — 二级侧控栏滚动列表 */
-
+/* POI 列表 — 在父级滚动容器内展开（桌面 L2 的 .scrollRegion / 移动端 .drawerContent） */
 .list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
+  flex: none;
   padding: 4px 12px 12px;
 }
 

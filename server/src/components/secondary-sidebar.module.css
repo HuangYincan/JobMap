@@ -51,9 +51,7 @@
   transform-origin: left center;
 }
 
-.sidebar.detailMode {
-  width: 420px;
-}
+/* 详情与列表同宽 380px：detailMode 类在 TSX 中保留，不再扩展宽度 */
 
 @keyframes slide-in {
   from {
@@ -371,10 +369,17 @@
   border: 2px solid var(--soft-strong, rgba(255, 255, 255, 0.84));
 }
 
+/* 筛选 + 结果 + 列表共享滚动容器：headerBar/searchRow 固定在外 */
+.scrollRegion {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 /* 筛选面板（折叠动画） */
 .filterPanel {
   padding: 0 14px 8px;
-  flex: 0 0 auto;
   animation: panel-in 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -392,7 +397,6 @@
 /* 结果标题 */
 .resultHeader {
   padding: 4px 16px 8px;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
