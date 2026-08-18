@@ -272,6 +272,13 @@
   opacity: 0.45;
 }
 
+.autoRegisterHint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
 .authSwitchRow {
   margin-top: 12px;
   display: flex;

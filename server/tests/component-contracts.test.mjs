@@ -171,6 +171,19 @@ test('empty search does not feed trending chips into suggestions', () => {
   assert.doesNotMatch(shell, /trendingForMode\(mode\)\.map/);
 });
 
+test('phone/email login shows auto-register hint under the button', () => {
+  const modal = src('components/auth-modal.tsx');
+  const i18n = src('lib/i18n.ts');
+  // 提示行只渲染在手机/邮箱 OTP 分支(登录按钮之后)
+  assert.match(modal, /onClick=\{signIn\}[^]*autoRegisterHint/);
+  assert.match(modal, /t\("autoRegisterHint", lang\)/);
+  assert.match(modal, /styles\.autoRegisterHint/);
+  // 密码 tab 分支不含该提示
+  assert.doesNotMatch(modal, /tab === "password"[\s\S]{0,800}autoRegisterHint/);
+  // i18n 双语文案存在
+  assert.match(i18n, /autoRegisterHint: \{\s*zh: '新用户将自动注册',\s*en: 'New users are registered automatically',\s*\},/);
+});
+
 test('auth Other is icon rows without X', () => {
   const modal = src('components/auth-modal.tsx');
   const css = src('components/auth-modal.module.css');
