@@ -475,6 +475,8 @@ export function MapShell() {
     }
 
     // 单一 AMap 加载入口（复用 lib/amap-api.ts 的 loadAMap，避免双脚本冲突）
+    // createMap 在分支早退时返回 undefined,故用 | undefined 收窄
+    let mapCleanup: (() => void) | null | undefined = null;
     loadAMap()
       .then(() => initMap())
       .catch((err) => {
@@ -484,7 +486,9 @@ export function MapShell() {
     function initMap() {
       if (!mapContainer.current || mapInstance.current) return;
       // 先创建地图（Geolocation 蓝点需绑定到已存在的 map），创建后立即定位移动中心
-      createMap([120.15, 30.27], 13);
+      // 必须持有 createMap 返回的 cleanup:否则 resize 监听泄漏,
+      // 地图销毁后 handleResize 仍摸已销毁实例(比例尺 removeChild/appendChild 崩溃)
+      mapCleanup = createMap([120.15, 30.27], 13);
     }
 
     function createMap(center: [number, number], zoom: number) {
@@ -613,32 +617,31 @@ export function MapShell() {
 
       // Add AMap's built-in scale control (real, auto-updating)
       // 移动端放左上角（避开底部抽屉），桌面端放左下角
-      let scaleControl: any = null;
-      window.AMap.plugin(['AMap.Scale'], () => {
+      // 统一创建函数:插件回调与 resize 都走这里,避免双 addControl 竞态
+      const addScaleControl = () => {
         const isMobile = window.innerWidth <= 767;
-        scaleControl = new window.AMap.Scale({
+        const control = new window.AMap.Scale({
           position: isMobile ? 'LT' : 'LB', // 移动端左上角，桌面端左下角
           offset: isMobile ? [12, 22] : [90, 25], // 移动端避开顶部工具栏，桌面端避开侧边栏
         });
-        map.addControl(scaleControl);
-        scaleControlRef.current = scaleControl;
+        map.addControl(control);
+        scaleControlRef.current = control;
         // 同步初始显隐:抽屉全开/详情打开时比例尺隐藏(仅移动端)
-        if (drawerFullishRef.current && window.innerWidth <= 767) scaleControl.hide();
+        if (drawerFullishRef.current && window.innerWidth <= 767) control.hide();
+      };
+      window.AMap.plugin(['AMap.Scale'], () => {
+        if (scaleControlRef.current) return; // resize 已创建,避免重复 addControl
+        addScaleControl();
       });
 
       // 监听窗口大小变化，在桌面/移动端切换时更新比例尺位置
       const handleResize = () => {
-        if (!scaleControl) return;
-        const isMobile = window.innerWidth <= 767;
+        if (!mapInstance.current || map.isDestroyed?.()) return; // 地图已销毁,不操作
+        if (!scaleControlRef.current) return; // 插件未就绪,由插件回调创建
         // 移除旧控件并创建新位置的控件
-        map.removeControl(scaleControl);
-        scaleControl = new window.AMap.Scale({
-          position: isMobile ? 'LT' : 'LB',
-          offset: isMobile ? [12, 22] : [90, 25],
-        });
-        map.addControl(scaleControl);
-        scaleControlRef.current = scaleControl;
-        if (drawerFullishRef.current && window.innerWidth <= 767) scaleControl.hide();
+        map.removeControl(scaleControlRef.current);
+        scaleControlRef.current = null;
+        addScaleControl();
       };
       window.addEventListener('resize', handleResize);
 
@@ -688,6 +691,10 @@ export function MapShell() {
     }
 
     return () => {
+      // 先执行 createMap 返回的 cleanup(移除 resize/主题/鼠标监听),
+      // 再销毁地图——顺序反了会在销毁实例上 removeEventListener 抛错
+      mapCleanup?.();
+      mapCleanup = null;
       if (mapInstance.current) {
         mapInstance.current.destroy();
         mapInstance.current = null;
@@ -748,6 +755,12 @@ export function MapShell() {
       if (skipFetchRef.current) {
         skipFetchRef.current = false;
         setLoadingMore(false); // 被跳过的加载没有 finally,手动释放
+        // 视口刷新 pending 在 skipFetch 提前返回时同样补跑(skipFetch 不经过
+        // finally,否则叠加模式切换缓存恢复会吞掉待重放的视口刷新,poi-loading C)
+        if (viewportRefreshPendingRef.current) {
+          viewportRefreshPendingRef.current = false;
+          viewportLoaderRef.current?.schedule();
+        }
         return;
       }
       if (loadingRef.current) {
@@ -812,7 +825,7 @@ export function MapShell() {
           // 与 domain 的 cap 语义分离——「没有更多」= 数据源到底,不是 3000 封顶。
           noMore = result.noMore;
         } else {
-          data = await fetchPOIsForMode({
+          const result = await fetchPOIsForMode({
             mode,
             query: query || undefined,
             center: origin,
@@ -824,11 +837,15 @@ export function MapShell() {
             signal,
             onBatch,
           });
-          // 数据耗尽判定(仅 domain):本轮零新增且此前有数据 → 哨兵停止,
-          // 显示「没有更多结果」。覆盖:稀疏视野(<1000)、高德回退窗口耗尽、
+          data = result.pois;
+          // 数据耗尽判定(仅 domain):优先用服务端 total(domain-local 带 total,
+          // 「过滤导致可见列表不变」不再误判 noMore,poi-loading D);
+          // 无 total 的降级路径(高德回退/关键词)回退本地长度比较:本轮零新增
+          // 且此前有数据 → 哨兵停止。覆盖:稀疏视野(<1000)、高德回退窗口耗尽、
           // 关键词无更多页。否则哨兵会无限空转(每轮发请求但 0 新增)。
           noMore =
-            canonicalMode(mode) === "domain" && beforeLen > 0 && data.length <= beforeLen;
+            result.noMore ??
+            (canonicalMode(mode) === "domain" && beforeLen > 0 && data.length <= beforeLen);
         }
         if (signal.cancelled) return;
         if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期结果
@@ -1215,6 +1232,14 @@ export function MapShell() {
     if (loadingRef.current) return; // 防重入:上一批加载中不重复触发
     setLoadingMore(true);
     setPageOffset((n) => n + 1);
+  }, [mode]);
+
+  // 重试失败批次:清缓存(防缓存早退吞掉重试)+ 重新加载同一 pageOffset
+  // (失败不递增偏移,避免跳过失败的那一批数据,poi-loading A)
+  const handleRetry = useCallback(() => {
+    clearModeCache(mode);
+    setLoadingMore(true);
+    setRefreshToken((n) => n + 1);
   }, [mode]);
 
   const handleWidenSearch = useCallback(() => {
@@ -2073,6 +2098,9 @@ export function MapShell() {
         onHover={handleHover}
         onRefreshHere={handleRefreshHere}
         onNeedMore={handleNeedMore}
+        onLoadMore={handleNeedMore}
+        loadError={error}
+        onRetry={handleRetry}
         loadingMore={loadingMore}
         atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
         noMore={noMoreData}
@@ -2609,6 +2637,8 @@ export function MapShell() {
                 onWidenSearch={handleWidenSearch}
                 onNeedMore={handleNeedMore}
                 loadingMore={loadingMore}
+                error={error}
+                onRetry={handleRetry}
                 atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
                 noMore={noMoreData}
               />
