@@ -87,6 +87,21 @@ test('hzRowToDomainPoi: rating null → undefined;无 photos → undefined', () 
   assert.equal(poi.priceLevel, undefined);
 });
 
+test('hzRowToDomainPoi: tel 脏数据防御 — "[]"/空串 → undefined,真实电话保留', () => {
+  const base = {
+    poi_id: 'B0FF', name: '测试', address: null, rating: null, cost: null,
+    lng_gcj: 120.1, lat_gcj: 30.2, big_type: '餐饮服务', mid_type: null,
+    photos: null, open_hours: null, total: '1',
+  };
+  // 旧数据未重导时 DB tel 列是字面量 '[]'(源 CSV 空电话)
+  const r1 = hzRowToDomainPoi({ ...base, tel: '[]' });
+  assert.equal(r1.tel, undefined);
+  const r2 = hzRowToDomainPoi({ ...base, tel: '' });
+  assert.equal(r2.tel, undefined);
+  const r3 = hzRowToDomainPoi({ ...base, tel: ' 0571-85791266 ' });
+  assert.equal(r3.tel, '0571-85791266'); // trim 后保留
+});
+
 test('hzRowToDomainPoi: cost → priceLevel(与 normalizeAMapPOI 同口径)', () => {
   const poi = hzRowToDomainPoi({
     poi_id: 'Y', name: '测试', address: null, tel: null, rating: '4.2', cost: '260',
