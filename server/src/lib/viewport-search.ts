@@ -331,15 +331,24 @@ function boundsParam(bounds: ViewportBounds): string {
   return [bounds.west, bounds.south, bounds.east, bounds.north].join(',');
 }
 
+export interface WorkViewportPage {
+  /** alive 过滤后的本页 POI(未合并) */
+  pois: POI[];
+  /** 服务端 total(整查询命中数;缺省 -1 → 调用方用短页/本地长度判定) */
+  total: number;
+}
+
 /**
  * 按当前视口拉取一页工作 catalog:GET /api/pois?mode=work&bounds=…&filters={…,maxTier}&page=…
  * 返回 alive 过滤后的本页 POI(未合并;调用方用 mergePoisById 并入累计池)。
  * fetcher 可注入,便于测试。
+ * 失败(!ok)一律抛错——「错误 ≠ 没有更多」,调用方据此可重试,
+ * 而不是把失败当短页置 noMore 永久停哨兵(poi-loading A/D)。
  */
 export async function fetchWorkViewportPage(
   query: WorkViewportQuery,
   fetcher: typeof fetch = fetch
-): Promise<POI[]> {
+): Promise<WorkViewportPage> {
   const params = new URLSearchParams();
   params.set('mode', 'work');
   if (query.bounds) params.set('bounds', boundsParam(query.bounds));
@@ -353,15 +362,18 @@ export async function fetchWorkViewportPage(
   if (Object.keys(filters).length > 0) params.set('filters', JSON.stringify(filters));
   const url = `/api/pois?${params.toString()}`;
   const res = await fetcher(url);
-  if (!res.ok) return [];
-  const payload = (await res.json()) as { results?: unknown[] };
+  if (!res.ok) throw new Error(`/api/pois failed: ${res.status}`);
+  const payload = (await res.json()) as { results?: unknown[]; total?: unknown };
   const alive: POI[] = [];
   for (const row of payload.results ?? []) {
     if (!isRecruitmentPoi(row)) continue;
     const kept = withAlivePositions(row);
     if (kept) alive.push(kept);
   }
-  return alive;
+  return {
+    pois: alive,
+    total: typeof payload.total === 'number' ? payload.total : -1,
+  };
 }
 
 export interface LoadWorkViewportResult {
@@ -399,10 +411,17 @@ export async function loadWorkViewport(
       options.fetcher,
     );
     if (signal?.cancelled) return { pois: merged, noMore: false };
-    merged = mergePoisById(merged, page, POI_HARD_CAP);
+    const offset = (startPage + p - 1) * pageSize;
+    merged = mergePoisById(merged, page.pois, POI_HARD_CAP);
     onBatch?.(merged);
     // 本页不满页 → 没有更多数据,提前停(避免白打请求);同时上报 noMore
-    if (page.length < pageSize) {
+    if (page.pois.length < pageSize) {
+      noMore = true;
+      break;
+    }
+    // 服务端 total 判定:已取到 total 之后 → 数据到底(poi-loading D)。
+    // 「过滤导致可见列表不变」不再误判;无 total(-1)时保持短页判定。
+    if (page.total >= 0 && offset + page.pois.length >= page.total) {
       noMore = true;
       break;
     }
