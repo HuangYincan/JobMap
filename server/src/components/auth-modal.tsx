@@ -388,6 +388,7 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
               >
                 {t("signIn", lang)}
               </button>
+              <p className={styles.autoRegisterHint}>{t("autoRegisterHint", lang)}</p>
             </>
           )}
 

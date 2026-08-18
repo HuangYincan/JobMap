@@ -531,6 +531,10 @@ export const translations = {
     zh: '发送验证码',
     en: 'Send code',
   },
+  autoRegisterHint: {
+    zh: '新用户将自动注册',
+    en: 'New users are registered automatically',
+  },
   continueGithub: {
     zh: '使用 GitHub 继续',
     en: 'Continue with GitHub',
