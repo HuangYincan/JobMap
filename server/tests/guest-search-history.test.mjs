@@ -65,6 +65,77 @@ test('guest history dedupes query+mode, caps, and clears', () => {
   assert.equal(listGuestHistory().length, 0);
 });
 
+test('guest history persists entity refs and keeps plain rows plain', () => {
+  installMemoryStorage();
+  addGuestHistory('字节跳动', 'work', {
+    kind: 'company',
+    id: 'bytedance-hz',
+    name: '字节跳动',
+    lng: 120.1,
+    lat: 30.2,
+    address: '余杭区',
+  });
+  addGuestHistory('纯关键词', 'work');
+  const items = listGuestHistory();
+  assert.equal(items.length, 2);
+  // 后加的在最前
+  const entityRow = items.find((i) => i.query === '字节跳动');
+  const plainRow = items.find((i) => i.query === '纯关键词');
+  assert.deepEqual(entityRow.entity, {
+    kind: 'company',
+    id: 'bytedance-hz',
+    name: '字节跳动',
+    lng: 120.1,
+    lat: 30.2,
+    address: '余杭区',
+  });
+  assert.equal(plainRow.entity, undefined);
+  assert.equal('entity' in plainRow, false);
+});
+
+test('guest history tolerates legacy rows without entity and strips corrupt entity', () => {
+  const store = installMemoryStorage();
+  store.set(
+    GUEST_HISTORY_KEY,
+    JSON.stringify([
+      { id: 'legacy-1', query: '旧记录', mode: 'work', createdAt: '2026-08-01T00:00:00Z' },
+      { id: 'broken-1', query: '损坏', mode: 'work', createdAt: '2026-08-02T00:00:00Z', entity: { nope: true } },
+      { id: 'good-1', query: '完好', mode: 'work', createdAt: '2026-08-03T00:00:00Z', entity: { kind: 'company', id: 'c1', name: '完好' } },
+    ]),
+  );
+  const items = listGuestHistory();
+  assert.equal(items.length, 3);
+  const good = items.find((i) => i.id === 'good-1');
+  assert.deepEqual(good.entity, { kind: 'company', id: 'c1', name: '完好' });
+  // 旧数据无 entity 字段 → 原样保留（纯搜索回放），不新增空 entity 键
+  const legacy = items.find((i) => i.id === 'legacy-1');
+  assert.equal(legacy.entity, undefined);
+  assert.equal('entity' in legacy, false);
+  // 结构损坏的 entity 被剥离
+  const broken = items.find((i) => i.id === 'broken-1');
+  assert.equal(broken.entity, undefined);
+  assert.equal('entity' in broken, false);
+});
+
+test('guest merge upload carries entity refs for entity rows', async () => {
+  installMemoryStorage();
+  addGuestHistory('字节跳动', 'work', { kind: 'company', id: 'bytedance-hz', name: '字节跳动' });
+  addGuestHistory('纯关键词', 'work');
+
+  const calls = [];
+  await mergeGuestHistoryIntoAccount({
+    fetchImpl: async (url, init) => {
+      calls.push(JSON.parse(String(init.body)));
+      return { ok: true };
+    },
+    cloud: [],
+  });
+  const byEntity = calls.find((c) => c.query === '字节跳动');
+  const plain = calls.find((c) => c.query === '纯关键词');
+  assert.deepEqual(byEntity.entity, { kind: 'company', id: 'bytedance-hz', name: '字节跳动' });
+  assert.equal('entity' in plain, false);
+});
+
 test('mergeGuestHistoryIntoAccount uploads only rows absent from cloud', async () => {
   installMemoryStorage();
   addGuestHistory('前端', 'work');

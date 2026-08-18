@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { DEFAULT_PREFERENCES, emptyPreferences, initialsFromName, mergePreferences, resolvePreferences } from '../src/lib/account.ts';
+import { DEFAULT_PREFERENCES, emptyPreferences, entityRefFromSelection, initialsFromName, mergePreferences, resolvePreferences, sanitizeEntityRef } from '../src/lib/account.ts';
 import {
   addHistory as storeAddHistory,
   listHistory as storeListHistory,
@@ -55,6 +55,45 @@ test('initialsFromName uses two letters when possible', () => {
   assert.equal(initialsFromName('李雷'), '李雷');
 });
 
+test('entityRefFromSelection records company refs only when a poiId exists', () => {
+  assert.deepEqual(
+    entityRefFromSelection({ poiId: 'bytedance-hz', name: '字节跳动', location: { lng: 120.1, lat: 30.2 } }, 'work'),
+    { kind: 'company', id: 'bytedance-hz', name: '字节跳动', lng: 120.1, lat: 30.2 },
+  );
+  assert.deepEqual(
+    entityRefFromSelection({ poiId: 'area-hz', name: '杭州' }, 'work'),
+    { kind: 'company', id: 'area-hz', name: '杭州' },
+  );
+  // 无 poiId（纯关键词/标签）→ 不记实体
+  assert.equal(entityRefFromSelection({ name: '前端工程师' }, 'work'), undefined);
+  assert.equal(entityRefFromSelection({ name: '#五险一金' }, 'work'), undefined);
+  // domain 模式（虽不落库）kind 为 poi
+  assert.deepEqual(
+    entityRefFromSelection({ poiId: 'hz-poi-1', name: '西湖', location: { lng: 120.15, lat: 30.27 } }, 'domain'),
+    { kind: 'poi', id: 'hz-poi-1', name: '西湖', lng: 120.15, lat: 30.27 },
+  );
+});
+
+test('sanitizeEntityRef rejects corrupt refs and normalizes valid ones', () => {
+  assert.equal(sanitizeEntityRef(undefined), undefined);
+  assert.equal(sanitizeEntityRef(null), undefined);
+  assert.equal(sanitizeEntityRef('string'), undefined);
+  assert.equal(sanitizeEntityRef({ nope: true }), undefined);
+  assert.equal(sanitizeEntityRef({ id: '', name: 'x' }), undefined);
+  assert.equal(sanitizeEntityRef({ id: 'c1', name: 42 }), undefined);
+  assert.deepEqual(sanitizeEntityRef({ kind: 'company', id: 'c1', name: '公司' }), {
+    kind: 'company',
+    id: 'c1',
+    name: '公司',
+  });
+  // 未知 kind 归一为 company；坏坐标丢弃
+  assert.deepEqual(sanitizeEntityRef({ kind: 'weird', id: 'c2', name: 'x', lng: 'bad', lat: NaN }), {
+    kind: 'company',
+    id: 'c2',
+    name: 'x',
+  });
+});
+
 test('otp login creates a session and search history is per user', () => {
   issueOtp('phone', '13800138000');
   assert.equal(consumeOtp('phone', '13800138000', '999999'), false);
@@ -91,6 +130,46 @@ test('otp login creates a session and search history is per user', () => {
 
   destroySession(token);
   assert.equal(getSessionUser(token), null);
+});
+
+test('search history entries carry optional entity refs through the store', async () => {
+  // 强制走内存实现（确定性断言；DB 有/无 entity 列的路径已在 account-store
+  // 以 42703 回落设计覆盖，无库不可测）
+  delete process.env.DATABASE_URL;
+  const user = upsertIdentity({ provider: 'email', subject: 'entity@example.com', email: 'entity@example.com' });
+
+  const withEntity = await storeAddHistory(user.id, '字节跳动', 'work', {
+    kind: 'company',
+    id: 'bytedance-hz',
+    name: '字节跳动',
+    lng: 120.1,
+    lat: 30.2,
+  });
+  assert.ok(withEntity);
+  assert.deepEqual(withEntity.entity, {
+    kind: 'company',
+    id: 'bytedance-hz',
+    name: '字节跳动',
+    lng: 120.1,
+    lat: 30.2,
+  });
+
+  // 同 query+mode 连续提交 → 折叠（dedupe 只对最近一条）；带实体则刷新实体
+  const again = await storeAddHistory(user.id, '字节跳动', 'work', { kind: 'company', id: 'bytedance-new', name: '字节跳动' });
+  assert.equal(again.id, withEntity.id);
+  assert.equal(again.entity.id, 'bytedance-new');
+
+  // 无实体的同 query 折叠不清掉已存实体
+  await storeAddHistory(user.id, '字节跳动', 'work');
+  assert.equal(listHistory(user.id)[0].entity.id, 'bytedance-new');
+  assert.equal((await storeListHistory(user.id))[0].entity.id, 'bytedance-new');
+  assert.equal(listHistory(user.id).length, 1);
+
+  // 纯关键词条目不携带 entity 键
+  const plain = await storeAddHistory(user.id, '纯关键词', 'work');
+  assert.ok(plain);
+  assert.equal('entity' in plain, false);
+  assert.equal(listHistory(user.id).length, 2);
 });
 
 test('saved places are per user and idempotent', () => {
