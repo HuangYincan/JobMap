@@ -62,6 +62,134 @@ test('savedPlacesToOverlay falls back to a pin from the snapshot', () => {
   assert.equal(overlay[0].location.lng, 120.16);
 });
 
+test('savedPlacesToOverlay work mode keeps only work/internship saves, drops domain places', () => {
+  const overlay = savedPlacesToOverlay(
+    [
+      {
+        id: 's1',
+        poiId: 'alibaba-xixi',
+        name: '阿里巴巴西溪',
+        mode: 'work',
+        kind: 'recruitment',
+        lng: 120.02,
+        lat: 30.28,
+        createdAt: '2026-08-16T00:00:00.000Z',
+      },
+      {
+        id: 's2',
+        poiId: 'intern-save',
+        name: '实习公司',
+        mode: 'internship',
+        kind: 'recruitment',
+        lng: 120.1,
+        lat: 30.2,
+        createdAt: '2026-08-16T00:00:00.000Z',
+      },
+      {
+        id: 's3',
+        poiId: 'hz-cafe',
+        name: '某咖啡',
+        mode: 'domain',
+        kind: 'domain',
+        lng: 120.16,
+        lat: 30.25,
+        createdAt: '2026-08-16T00:00:00.000Z',
+      },
+    ],
+    [],
+    'work',
+  );
+  assert.equal(overlay.length, 2);
+  assert.ok(overlay.every((poi) => poi.id !== 'hz-cafe'));
+  assert.ok(overlay.some((poi) => poi.id === 'alibaba-xixi'));
+  assert.ok(overlay.some((poi) => poi.id === 'intern-save'));
+});
+
+test('savedPlacesToOverlay internship mode aliases work filter', () => {
+  const overlay = savedPlacesToOverlay(
+    [
+      {
+        id: 's1',
+        poiId: 'alibaba-xixi',
+        name: '阿里巴巴西溪',
+        mode: 'work',
+        kind: 'recruitment',
+        lng: 120.02,
+        lat: 30.28,
+        createdAt: '2026-08-16T00:00:00.000Z',
+      },
+      {
+        id: 's2',
+        poiId: 'hz-cafe',
+        name: '某咖啡',
+        mode: 'domain',
+        kind: 'domain',
+        lng: 120.16,
+        lat: 30.25,
+        createdAt: '2026-08-16T00:00:00.000Z',
+      },
+    ],
+    [],
+    'internship',
+  );
+  assert.deepEqual(overlay.map((poi) => poi.id), ['alibaba-xixi']);
+});
+
+test('savedPlacesToOverlay domain mode keeps only domain places, drops work saves', () => {
+  const overlay = savedPlacesToOverlay(
+    [
+      {
+        id: 's1',
+        poiId: 'alibaba-xixi',
+        name: '阿里巴巴西溪',
+        mode: 'work',
+        kind: 'recruitment',
+        lng: 120.02,
+        lat: 30.28,
+        createdAt: '2026-08-16T00:00:00.000Z',
+      },
+      {
+        id: 's2',
+        poiId: 'hz-cafe',
+        name: '某咖啡',
+        mode: 'domain',
+        kind: 'domain',
+        lng: 120.16,
+        lat: 30.25,
+        createdAt: '2026-08-16T00:00:00.000Z',
+      },
+    ],
+    [],
+    'domain',
+  );
+  assert.equal(overlay.length, 1);
+  assert.equal(overlay[0].kind, 'domain');
+  assert.equal(overlay[0].id, 'hz-cafe');
+});
+
+test('work saved company missing from catalog falls back to a recruitment pin, not a domain pin', () => {
+  const overlay = savedPlacesToOverlay(
+    [
+      {
+        id: 's1',
+        poiId: 'no-live-company',
+        name: '冷门公司',
+        mode: 'work',
+        kind: 'recruitment',
+        lng: 120.02,
+        lat: 30.28,
+        createdAt: '2026-08-16T00:00:00.000Z',
+      },
+    ],
+    [],
+    'work',
+  );
+  assert.equal(overlay.length, 1);
+  assert.equal(overlay[0].kind, 'recruitment');
+  assert.equal(overlay[0].mode, 'work');
+  assert.equal(overlay[0].positions.length, 0);
+});
+
 test('mergeMapPois keeps search results first and only adds missing saved pins', () => {
   const alibaba = INTERNSHIP_SEED.find((item) => item.id === 'alibaba-xixi');
   assert.ok(alibaba);

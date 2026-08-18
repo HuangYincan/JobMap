@@ -1103,8 +1103,8 @@ export function MapShell() {
   }, [catalog]);
 
   const overlayPois = useMemo(
-    () => savedPlacesToOverlay(savedPlaces, compareCatalog),
-    [savedPlaces, compareCatalog],
+    () => savedPlacesToOverlay(savedPlaces, compareCatalog, mode),
+    [savedPlaces, compareCatalog, mode],
   );
   const mapPois = useMemo(
     () => mergeMapPois(pois, overlayPois, savedOverlay && Boolean(user)),
