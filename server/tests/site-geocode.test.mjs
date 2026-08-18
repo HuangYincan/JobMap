@@ -9,6 +9,7 @@ import {
   geocodeAddressRest,
   geocodeQueryForSite,
   gradeOfficePoi,
+  importedSiteQuery,
   normalizeNameForMatch,
   pickBestOfficePoi,
   placeTextSearchRest,
@@ -174,6 +175,33 @@ test('geocodeQueryForSite uses the site city (not the fallback) when the site ha
   assert.match(query, /^北京市/);
   const bare = { id: 'x-company-site', name: '某司', location: { lng: 0, lat: 0 } };
   assert.match(geocodeQueryForSite('某司', bare), /^杭州/);
+});
+
+test('geocodeQueryForSite routes 北京/上海/杭州 sites to their own city', () => {
+  const mk = (city, province) => ({
+    id: `x-site-${city}`,
+    name: '某司',
+    city,
+    province,
+    location: { lng: 0, lat: 0 },
+  });
+  assert.match(geocodeQueryForSite('某司', mk('北京市', '北京市')), /^北京市/);
+  assert.match(geocodeQueryForSite('某司', mk('上海市', '上海市')), /^上海市/);
+  assert.match(geocodeQueryForSite('某司', mk('杭州市', '浙江省')), /^杭州市/);
+  // Street address wins over city scope.
+  const withAddr = { ...mk('上海市', '上海市'), location: { lng: 0, lat: 0, address: '杨浦区黄兴路221号' } };
+  assert.match(geocodeQueryForSite('某司', withAddr), /^杨浦区黄兴路221号/);
+});
+
+test('importedSiteQuery scopes the DB fallback to the site city', () => {
+  // 上海站点无街道地址 → 城市级查询（上海,不是杭州）。
+  assert.equal(importedSiteQuery(null, '上海市', '某司', '某司'), '上海市 某司 某司');
+  assert.equal(importedSiteQuery(null, '北京市', '某司', '某司'), '北京市 某司 某司');
+  assert.equal(importedSiteQuery(null, '杭州市', '某司', '某司'), '杭州市 某司 某司');
+  // 无城市字段的存量行 → 杭州兜底（保持历史行为）。
+  assert.equal(importedSiteQuery(null, null, '某司', '某司'), '杭州 某司 某司');
+  // 街道地址优先于城市。
+  assert.equal(importedSiteQuery('浦东新区张江路100号', '上海市', '某司', '某司'), '浦东新区张江路100号 某司');
 });
 
 test('regeoMatchesTarget confirms the coordinate sits in the target city', () => {
