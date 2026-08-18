@@ -335,6 +335,33 @@ test('loadWorkViewport: 全部页面满页时 noMore=false(未到底,哨兵继�
   }
 });
 
+test('loadWorkViewport with existing:[] replaces the catalog (viewport refresh replace semantics)', async () => {
+  // Bug 7:工作模式视口刷新改为「替换」——existing=[] 时只保留本视野取回的一页,
+  // 不再并入旧累计池;否则 79 家全捕获后去重无变化、列表冻结。
+  const pagePois = [
+    recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }]),
+    recruitmentPoi('b', [{ id: 'p2', title: '算法', type: 'social', status: 'open' }]),
+  ];
+  let lastBatch = null;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ results: pagePois }) });
+  try {
+    const { pois: merged } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      maxTier: 2,
+      existing: [], // 视口替换:新视野清空旧卡片
+      onBatch: (batch) => {
+        lastBatch = batch;
+      },
+    });
+    assert.deepEqual(merged.map((p) => p.id), ['a', 'b']);
+    assert.deepEqual(lastBatch.map((p) => p.id), ['a', 'b']);
+    assert.ok(!merged.some((p) => p.id === 'old-x')); // 旧视野公司不残留
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 test('createViewportLoader: debounces rapid schedules into a single load', async () => {

@@ -15,7 +15,7 @@ import { fetchPOIDetail, fetchSearchSuggest } from "@/lib/api";
 import type { SearchSuggestion as ApiSearchSuggestion } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
 import { batchMatchesCurrentMode, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
-import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES } from "@/lib/viewport-search";
+import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES, type ViewportLoader } from "@/lib/viewport-search";
 import { maxTierForZoom } from "@/lib/lod";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from "@/lib/account";
@@ -204,6 +204,10 @@ export function MapShell() {
   const [pageOffset, setPageOffset] = useState(0);
   const skipFetchRef = useRef(false);
   const loadingRef = useRef(false);
+  /** 主加载在飞期间到达的视口刷新:置位后由主加载 finally 补跑,避免被吞(Bug 7) */
+  const viewportRefreshPendingRef = useRef(false);
+  /** 视口加载器实例(主加载 finally 需要触发补跑) */
+  const viewportLoaderRef = useRef<ViewportLoader | null>(null);
   // 供一次性创建的地图监听/视口加载器读取最新状态(避免闭包过期)
   const viewStateRef = useRef({
     mode, query, filters, sort, searchOrigin, userLocation, pageOffset, geoSettled,
@@ -816,6 +820,12 @@ export function MapShell() {
         // 也必须释放；否则后续所有 load() 会卡死、哨兵被 loadingMore 永久门控。
         loadingRef.current = false;
         setLoadingMore(false);
+        // 主加载在飞期间的视口刷新(pending 标记)在主加载结束后补跑,
+        // 避免平移/缩放的刷新请求被静默丢弃(Bug 7 次要问题)。
+        if (viewportRefreshPendingRef.current) {
+          viewportRefreshPendingRef.current = false;
+          viewportLoaderRef.current?.schedule();
+        }
         if (!signal.cancelled) {
           setLoading(false);
         }
@@ -844,7 +854,12 @@ export function MapShell() {
       load: async () => {
         const v = viewStateRef.current;
         if (!v.geoSettled) return;
-        if (loadingRef.current) return; // 首屏/刷新/加载更多进行中,交给主加载
+        if (loadingRef.current) {
+          // 主加载(首屏/刷新/加载更多)在飞时,不静默丢弃视口刷新:
+          // 置 pending 标记,主加载 finally 会补跑本次刷新(Bug 7 次要问题)。
+          viewportRefreshPendingRef.current = true;
+          return;
+        }
         const mapInst = mapInstance.current;
         const zoom =
           typeof mapInst?.getZoom === "function" ? Math.round(mapInst.getZoom()) : 0;
@@ -864,10 +879,19 @@ export function MapShell() {
         if (!bounds) return;
         const mode = canonicalMode(v.mode);
         if (mode === "work") {
-          // 新视野 = 新数据上下文:与 domain 分支一致,视口替换时复位 noMore,
-          // 避免上一视野的「没有更多结果」粘住新视野的滚动加载。
+          // 视口替换:新视野 = 新一批(镜像 domain 分支,tech/22「替换+淡入」)。
+          // 不再用 existing 增量合并——工作目录公司少,首屏+加载更多几乎全捕获,
+          // merge 后去重无变化,列表冻结(用户 Bug 7)。
+          // 新视野重新分页:清除上一视野的「没有更多结果」状态(w3 noMore 对接)
           noMoreRef.current = false;
           setNoMoreData(false);
+          // 视口世代 +1:主加载在飞的对旧视野追加批次将被 epoch 校验丢弃
+          viewportEpochRef.current += 1;
+          // pageOffset 状态归零,并跳过其触发的重复主加载
+          // (skipFetch 由 load() 先消费;offset 已为 0 时 setPageOffset 是
+          // 同值 no-op,不 arm skipFetch,避免吞掉下一次合法的滚动加载)
+          if (v.pageOffset !== 0) skipFetchRef.current = true;
+          setPageOffset(0);
           try {
             const result = await loadWorkViewport({
               bounds,
@@ -876,7 +900,7 @@ export function MapShell() {
               q: v.query || undefined,
               sort: v.sort || undefined,
               page: 1,
-              existing: catalogRef.current,
+              existing: [], // 替换:新视野清空旧卡片
               onBatch: (batch) => {
                 // 模式守卫:切换模式后,旧模式在飞的批次(公司/地图 POI)不得
                 // 落进新模式的 catalog,否则工作公司会混入地图列表与 marker
@@ -886,7 +910,7 @@ export function MapShell() {
                 writeModeCache({
                   mode,
                   catalog: batch,
-                  pageOffset: v.pageOffset,
+                  pageOffset: 0,
                   searchOrigin: v.searchOrigin,
                   query: v.query,
                   filters: v.filters,
@@ -951,10 +975,12 @@ export function MapShell() {
     });
 
     const onViewChange = () => loader.schedule();
+    viewportLoaderRef.current = loader;
     map.on("moveend", onViewChange);
     map.on("zoomend", onViewChange);
     return () => {
       loader.dispose();
+      viewportLoaderRef.current = null;
       map.off?.("moveend", onViewChange);
       map.off?.("zoomend", onViewChange);
     };
