@@ -216,6 +216,7 @@ export function normalizeAMapPOI(raw: AMapPOIRecord): DomainPOI | null {
     category,
     subcategory,
     rating: ratingRaw ? parseFloat(String(ratingRaw)) : undefined,
+    cost,
     priceLevel: cost && cost > 0 ? Math.min(4, Math.ceil(cost / 100)) : undefined,
     openHours: raw.open_time || undefined,
     tel: raw.tel || undefined,

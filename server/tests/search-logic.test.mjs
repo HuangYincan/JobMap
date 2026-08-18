@@ -303,9 +303,8 @@ test('applyFilters: jobTaxonomy plugin keeps companies with matching positions',
 
 test('parseSearchQuery turns #tags into filter plugins', () => {
   const parsed = parseSearchQuery('Java #大厂 #互联网');
-  assert.equal(parsed.text, 'Java');
+  assert.equal(parsed.text, 'Java 互联网');
   assert.deepEqual(parsed.filters.scale, ['bigtech']);
-  assert.deepEqual(parsed.filters.industry, ['internet']);
 
   const campus = parseSearchQuery('#秋招');
   assert.equal(campus.text, '');
@@ -314,21 +313,22 @@ test('parseSearchQuery turns #tags into filter plugins', () => {
   const unknown = parseSearchQuery('#西湖');
   assert.equal(unknown.text, '西湖');
 
+  // 被移除的筛选项（行业/行政区/班车）不再映射为隐形筛选，退化为关键词
   const district = parseSearchQuery('#西湖区');
-  assert.equal(district.text, '');
-  assert.deepEqual(district.filters.district, ['西湖区']);
+  assert.equal(district.text, '西湖区');
+  assert.deepEqual(district.filters, {});
 
   const yuhang = parseSearchQuery('#余杭');
-  assert.equal(yuhang.text, '');
-  assert.deepEqual(yuhang.filters.district, ['余杭区']);
+  assert.equal(yuhang.text, '余杭');
+  assert.deepEqual(yuhang.filters, {});
 
   const hiring = parseSearchQuery('#在招');
   assert.equal(hiring.text, '');
   assert.equal(hiring.filters.onlyOpen, true);
 
   const shuttle = parseSearchQuery('#班车');
-  assert.equal(shuttle.text, '');
-  assert.equal(shuttle.filters.providesShuttle, true);
+  assert.equal(shuttle.text, '班车');
+  assert.deepEqual(shuttle.filters, {});
 });
 
 test('applyTagSuggestion merges a known hash into filters and clears the query', () => {
@@ -348,8 +348,9 @@ test('suggestSearchTags covers scale and campus hashes, not only industries', ()
   assert.ok(autumn.some((tag) => tag.title === '#秋招' && tag.value === 'campus/autumn'));
   const big = suggestSearchTags('#大');
   assert.ok(big.some((tag) => tag.title === '#大厂' && tag.value === 'bigtech'));
-  const xihu = suggestSearchTags('西湖区');
-  assert.ok(xihu.some((tag) => tag.value === '西湖区' && tag.key === 'district'));
+  // 行业/行政区标签已随筛选移除，不再被建议
+  assert.equal(suggestSearchTags('西湖区').length, 0);
+  assert.equal(suggestSearchTags('互联网').some((tag) => tag.key === 'industry'), false);
   assert.equal(suggestSearchTags('').length, 0);
 });
 
@@ -364,23 +365,23 @@ test('countPoisMatchingTag uses applyFilters for district and campus tags', asyn
 });
 
 test('activeFilterChips lists applied plugins and removeFilterChip drops one', () => {
-  const filters = { scale: ['bigtech'], industry: ['internet', 'ai'] };
+  const filters = { scale: ['bigtech'], education: ['本科', '硕士'] };
   const chips = activeFilterChips(filters);
   assert.ok(chips.some((chip) => chip.title === '#大厂'));
-  assert.ok(chips.some((chip) => chip.title === '#互联网'));
-  const dropped = removeFilterChip(filters, { key: 'industry', value: 'internet' });
-  assert.deepEqual(dropped.industry, ['ai']);
+  assert.ok(chips.some((chip) => chip.title === '#本科'));
+  const dropped = removeFilterChip(filters, { key: 'education', value: '本科' });
+  assert.deepEqual(dropped.education, ['硕士']);
   assert.deepEqual(dropped.scale, ['bigtech']);
   const empty = removeFilterChip({ scale: ['bigtech'] }, { key: 'scale', value: 'bigtech' });
   assert.equal(empty.scale, undefined);
 });
 
-test('activeFilterChips uses mode configs for district, salary, and distance', () => {
+test('activeFilterChips uses mode configs for scale, salary, and distance', () => {
   const chips = activeFilterChips(
-    { district: ['西湖区'], salary: [15, 30], distance: 3 },
+    { scale: ['bigtech'], salary: [15, 30], distance: 3 },
     getMode('work').filters,
   );
-  assert.ok(chips.some((chip) => chip.title.includes('西湖')));
+  assert.ok(chips.some((chip) => chip.title === '#大厂'));
   assert.ok(chips.some((chip) => chip.title.includes('15') && chip.title.includes('30')));
   assert.ok(chips.some((chip) => chip.key === 'distance' && chip.value === '3'));
   const cleared = removeFilterChip({ salary: [15, 30], distance: 3 }, { key: 'salary', value: '15-30' });
@@ -409,8 +410,10 @@ test('metersToDistanceKm snaps a dragged radius back onto the slider', () => {
   assert.equal(metersToDistanceKm(0), 0);
   assert.equal(metersToDistanceKm(200), 0);
   assert.equal(metersToDistanceKm(3200), 3);
-  assert.equal(metersToDistanceKm(3400), 3.5);
-  assert.equal(metersToDistanceKm(50_000), 10);
+  assert.equal(metersToDistanceKm(3400), 3); // step 1 四舍五入到整公里
+  assert.equal(metersToDistanceKm(1500), 2);
+  assert.equal(metersToDistanceKm(50_000), 50);
+  assert.equal(metersToDistanceKm(60_000), 50); // clamp at max
 });
 
 test('pointAtDistanceEast stays on the same latitude', () => {
@@ -471,20 +474,24 @@ test('applyFilters: onlyOpen drops companies with no open jobs', () => {
 
 test('activeFilterChips lists #在招 when onlyOpen is on', () => {
   const chips = activeFilterChips(
-    { onlyOpen: true, providesShuttle: true },
+    { onlyOpen: true, providesHousing: true },
     getMode('work').filters,
   );
   assert.ok(chips.some((chip) => chip.key === 'onlyOpen' && chip.title === '#在招'));
-  assert.ok(chips.some((chip) => chip.key === 'providesShuttle' && chip.title === '#班车'));
+  assert.ok(chips.some((chip) => chip.key === 'providesHousing' && chip.title === '#住宿'));
   const cleared = removeFilterChip({ onlyOpen: true, scale: ['bigtech'] }, { key: 'onlyOpen', value: 'true' });
   assert.equal(cleared.onlyOpen, undefined);
   assert.deepEqual(cleared.scale, ['bigtech']);
 });
 
-test('applyFilters: price range uses Domain priceLevel', () => {
-  const cheap = applyFilters(DOMAIN_SEED, { price: [0, 150] });
-  assert.ok(cheap.length > 0);
-  assert.ok(cheap.every((p) => p.kind === 'domain' && (p.priceLevel === undefined || p.priceLevel * 50 <= 150)));
+test('applyFilters: price range maps priceLevel to tier midpoints', () => {
+  // priceLevel 1..4 → 档位中点 50/200/800/3000（tech/22）
+  const cheap = applyFilters(DOMAIN_SEED, { price: [0, 200] });
+  assert.ok(cheap.some((p) => p.priceLevel === 2));
+  assert.ok(cheap.every((p) => p.kind === 'domain' && (p.priceLevel === undefined || p.priceLevel <= 2)));
+  const mid = applyFilters(DOMAIN_SEED, { price: [0, 800] });
+  assert.ok(mid.some((p) => p.priceLevel === 3));
+  assert.ok(mid.every((p) => p.kind === 'domain' && (p.priceLevel === undefined || p.priceLevel <= 3)));
   const priced = DOMAIN_SEED.filter((p) => typeof p.priceLevel === 'number');
   const byPrice = sortPOIs(priced, 'priceAsc');
   const levels = byPrice.map((p) => p.kind === 'domain' ? (p.priceLevel ?? 99) : 99);
@@ -493,20 +500,36 @@ test('applyFilters: price range uses Domain priceLevel', () => {
   }
 });
 
+test('applyFilters: price prefers real cost over priceLevel tier', () => {
+  const poi = {
+    id: 'x', kind: 'domain', name: 'X', mode: 'domain', source: 'amap',
+    location: { lng: 120, lat: 30 }, category: '餐饮服务',
+    priceLevel: 4, cost: 60, // 真实人均 60，不是档位中点 3000
+  };
+  assert.equal(applyFilters([poi], { price: [0, 100] }).length, 1);
+  assert.equal(applyFilters([poi], { price: [0, 50] }).length, 0);
+  assert.equal(applyFilters([poi], { price: [3000, 3000] }).length, 0);
+});
+
 test('sortPOIs: relevance ranks an exact name match first', () => {
   const ranked = sortPOIs(DOMAIN_SEED, 'relevance', '西湖');
   assert.equal(ranked[0].id, 'hz-westlake');
 });
 
-test('applyFilters: minRating keeps only highly rated domain POIs', () => {
+test('applyFilters: rating range keeps only POIs inside the band', () => {
   const pois = [
     { id: 'a', kind: 'domain', name: 'A', mode: 'domain', source: 'amap', location: { lng: 120, lat: 30 }, category: '餐饮服务', rating: 4.6 },
     { id: 'b', kind: 'domain', name: 'B', mode: 'domain', source: 'amap', location: { lng: 120, lat: 30 }, category: '餐饮服务', rating: 3.1 },
     { id: 'c', kind: 'domain', name: 'C', mode: 'domain', source: 'amap', location: { lng: 120, lat: 30 }, category: '餐饮服务' },
   ];
-  const kept = applyFilters(pois, { minRating: 4 });
-  assert.deepEqual(kept.map((p) => p.id), ['a']);
-  assert.equal(applyFilters(pois, { minRating: 0 }).length, 3);
+  const high = applyFilters(pois, { minRating: [4, 5] });
+  assert.deepEqual(high.map((p) => p.id), ['a']);
+  const full = applyFilters(pois, { minRating: [0, 5] });
+  assert.equal(full.length, 3);
+  const band = applyFilters(pois, { minRating: [2, 3.5] });
+  assert.deepEqual(band.map((p) => p.id), ['b']);
+  // 旧 slider 数值（下限）仍兼容
+  assert.equal(applyFilters(pois, { minRating: 4 }).length, 1);
 });
 
 test('applyFilters: maxTier keeps only companies with tier <= maxTier (default 12)', () => {

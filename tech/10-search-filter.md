@@ -78,7 +78,7 @@
 - 支持职位别名（`lib/search.ts` `JOB_ALIAS_GROUPS`：`前端` = `FE` = `frontend`；`后端` = `backend`；`算法` = `ML`；`产品` = `PM`）
 - 支持公司别名（`COMPANY_ALIAS_GROUPS`：`alibaba` = 阿里巴巴；`bytedance` = 字节跳动；`tencent` / `netease` / `huawei` 同理）
 - `#在招` / 筛选开关 `onlyOpen` 只保留至少有一个 `status=open` 岗位的公司
-- `#住宿` / `#班车` 对应 `providesHousing` / `providesShuttle` 开关
+- `#住宿` 对应 `providesHousing` 开关（`#班车` 已随 `providesShuttle` 筛选移除，退化为关键词）
 - `#本科` / `#硕士` / `#博士` 对应学历多选 `education`
 - `#技术` / `#产品` / `#运营` / `#设计` 对应职能多选 `roleFamily`（与 intern/campus/social 的 `jobTaxonomy` 分开）
 - 申请截止日期筛选 `deadline`：保留该日仍未截止（或无日期）的岗位
@@ -91,9 +91,11 @@
 #### 按标签搜索
 
 **招聘模式标签:**
-- 行业：`#互联网` `#金融` `#咨询`
 - 公司规模：`#大厂` `#独角兽` `#创业公司`
-- 岗位类型：`#技术` `#产品` `#运营`
+- 岗位类型：`#实习` `#校招` `#社招`（taxonomy 路径）
+- 职能：`#技术` `#产品` `#运营` `#设计`
+- 学历：`#本科` `#硕士` `#博士`
+- 说明：行业 / 行政区 / 班车标签已随对应筛选移除（`industry` / `district` / `providesShuttle`），`#互联网`、`#西湖区` 等退化为普通关键词，仍按公司行业文本 / 地址文本匹配。
 
 **高考模式标签:**
 - 院校层级：`#C9` `#985` `#211` `#双一流`
@@ -103,8 +105,8 @@
 #### 组合搜索
 
 ```
-"阿里 #互联网 #技术岗"
-→ 筛选: 公司名包含"阿里" AND 行业=互联网 AND 岗位类型=技术
+"阿里 #技术岗"
+→ 筛选: 公司名包含"阿里" AND 职能=技术
 
 "985 #浙江"
 → 筛选: 院校层级=985 AND 省份=浙江
@@ -280,11 +282,11 @@ const debouncedSearch = useDebouncedCallback(
 <FilterRange
   label="薪资范围"
   min={0}
-  max={1000}
-  step={50}
-  unit="元/天"
-  values={filters.salaryRange}
-  onChange={(values) => updateFilter('salaryRange', values)}
+  max={50}
+  step={1}
+  unit="K/月"
+  values={filters.salary}
+  onChange={(values) => updateFilter('salary', values)}
 />
 ```
 
@@ -292,7 +294,7 @@ const debouncedSearch = useDebouncedCallback(
 ```
 薪资范围:
 [━━━━●━━━━━━━━━●━━━━] 
-100元/天 - 500元/天
+15K/月 - 30K/月
 ```
 
 #### 滑块筛选器 (Slider)
@@ -301,8 +303,8 @@ const debouncedSearch = useDebouncedCallback(
 <FilterSlider
   label="距离"
   min={0}
-  max={10}
-  step={0.5}
+  max={50}
+  step={1}
   unit="km"
   value={filters.distance}
   onChange={(value) => updateFilter('distance', value)}
@@ -408,27 +410,31 @@ const debouncedSearch = useDebouncedCallback(
 ```typescript
 const domainFilters: Filter[] = [
   { type: 'select', key: 'category', label: '分类', options: CATEGORIES },
-  { type: 'range', key: 'price', label: '人均消费', min: 0, max: 500, unit: '元' },
-  { type: 'slider', key: 'distance', label: '距离', min: 0, max: 10, unit: 'km' },
-  { type: 'select', key: 'rating', label: '评分', options: ['不限', '4.0+', '4.5+'] },
-  { type: 'toggle', key: 'openNow', label: '仅看营业中' },
+  { type: 'range', key: 'minRating', label: '评分区间', min: 0, max: 5, step: 0.5, unit: '分' },
+  { type: 'range', key: 'price', label: '人均消费', min: 0, max: 5000, step: 100, unit: '元' },
+  { type: 'slider', key: 'distance', label: '距离', min: 0, max: 50, step: 1, unit: 'km' },
 ];
 ```
+
+> 价格匹配：有真实 `cost`（元）的 POI 按真实值过滤；否则按 `priceLevel` 档位中点 `[50, 200, 800, 3000]`（tech/22 价格档位）。评分区间为双向 `[lo, hi]`（旧 slider 数值仍兼容作下限）。
 
 #### 招聘模式（实习/秋招/社招）
 
 ```typescript
 const recruitmentFilters: Filter[] = [
-  { type: 'multi-select', key: 'industry', label: '行业类型', options: INDUSTRIES },
-  { type: 'select', key: 'scale', label: '公司规模', options: ['大厂', '独角兽', '创业公司'] },
-  { type: 'multi-select', key: 'positionType', label: '岗位类型', options: POSITION_TYPES },
-  { type: 'range', key: 'salary', label: '薪资范围', min: 0, max: 1000, unit: '元/天' },
-  { type: 'slider', key: 'distance', label: '距离', min: 0, max: 20, unit: 'km' },
+  { type: 'taxonomy', key: 'jobTaxonomy', label: '岗位类型', options: JOB_FAMILY_PLUGIN },
+  { type: 'multi-select', key: 'roleFamily', label: '职能', options: ['技术', '产品', '运营', '设计'] },
+  { type: 'multi-select', key: 'scale', label: '公司规模', options: ['大厂', '独角兽', '创业公司'] },
+  { type: 'multi-select', key: 'education', label: '学历要求', options: ['本科', '硕士', '博士'] },
+  { type: 'range', key: 'salary', label: '薪资范围', min: 0, max: 50, step: 1, unit: 'K/月' },
+  { type: 'slider', key: 'distance', label: '距离', min: 0, max: 50, step: 1, unit: 'km' },
+  { type: 'toggle', key: 'onlyOpen', label: '仅看在招岗位' },
   { type: 'toggle', key: 'providesHousing', label: '提供住宿' },
-  { type: 'toggle', key: 'providesShuttle', label: '提供班车' },
-  { type: 'select', key: 'education', label: '学历要求', options: ['不限', '本科', '硕士', '博士'] },
+  { type: 'date', key: 'deadline', label: '申请截止日期' },
 ];
 ```
+
+> 行业（`industry`）、行政区（`district`）、班车（`providesShuttle`）筛选已移除；后端匹配器保留，供 API / 历史筛选回放。
 
 #### 高考模式
 
@@ -557,14 +563,16 @@ map.drawPolygon({
 
 ```typescript
 const domainSortOptions = [
-  { key: 'relevance', label: '相关性', icon: '🎯' },
   { key: 'distance', label: '距离最近', icon: '📍' },
+  { key: 'relevance', label: '相关性', icon: '🎯' },
   { key: 'rating', label: '评分最高', icon: '⭐' },
   { key: 'popularity', label: '人气最高', icon: '🔥' },
   { key: 'priceAsc', label: '价格从低到高', icon: '💰' },
   { key: 'priceDesc', label: '价格从高到低', icon: '💎' },
 ];
 ```
+
+> Domain 模式 `defaultSort='distance'`，`distance` 排在选项第一位（下拉默认即距离）。
 
 #### 招聘模式
 
@@ -762,7 +770,7 @@ Response:
   results: POI[],
   aggregations: {        // 聚合信息（用于筛选器）
     industries: { "互联网": 45, "金融": 23, ... },
-    priceRange: { min: 50, max: 500 },
+    priceRange: { min: 50, max: 5000 },
   }
 }
 ```
@@ -925,8 +933,8 @@ try {
 {filters.distance < 5 && pois.length < 10 && (
   <SmartTip>
     📍 扩大搜索范围可能有更多选择
-    <Button onClick={() => updateFilter('distance', 10)}>
-      扩大到 10km
+    <Button onClick={() => updateFilter('distance', 50)}>
+      扩大到 50km
     </Button>
   </SmartTip>
 )}

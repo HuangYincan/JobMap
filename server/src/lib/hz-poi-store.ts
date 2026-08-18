@@ -113,6 +113,7 @@ export function hzRowToDomainPoi(row: HzPoiRow): DomainPOI {
     category: row.big_type,
     subcategory: row.mid_type ?? undefined,
     rating,
+    cost,
     priceLevel: cost !== undefined && cost > 0 ? Math.min(4, Math.ceil(cost / 100)) : undefined,
     openHours: row.open_hours ?? undefined,
     tel: row.tel ?? undefined,
