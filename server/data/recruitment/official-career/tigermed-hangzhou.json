@@ -40,19 +40,6 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.tigermed.net/careers"
-    },
-    {
-      "externalId": "portal-tigermed-moka",
-      "title": "招聘官网（Moka 投递）",
-      "siteId": "tigermed-hangzhou-site",
-      "family": "social",
-      "taxonomy": {
-        "family": "social"
-      },
-      "status": "open",
-      "applySource": "official",
-      "applyUrl": "https://hire-r1.mokahr.com/social-recruitment/tigermed/100004122?locale=en-US",
-      "retrievedAt": "2026-08-17"
     }
   ],
   "tier": 6,

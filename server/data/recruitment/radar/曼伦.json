@@ -31,7 +31,8 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://app.mokahr.com/campus-recruitment/manon/94861?sessionid=&sourceToken=e5e68a70a1dc9dca8c0011e86699568c#/job/7d846946-b885-479d-8ed4-8d7126a47576?from=qrcode",
-      "retrievedAt": "2026-08-11"
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ],
   "category": "other"
