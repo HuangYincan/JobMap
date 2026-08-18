@@ -13,7 +13,7 @@ import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
 import { shixisengAdapter } from './recruitment-adapters/shixiseng.ts';
 import { isAuthenticPositionId } from './freshness.ts';
 import { HANGZHOU_DISTRICTS } from './spatial-filters.ts';
-import type { CompanySite } from './types.ts';
+import type { CompanySite, JobTaxonomy } from './types.ts';
 
 export interface ImportIssue {
   slug: string;
@@ -211,6 +211,18 @@ function normalizeDeadline(raw: string | undefined): string | null {
   return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
 }
 
+/**
+ * Position taxonomy jsonb payload: keep the drop's family (and any other
+ * taxonomy fields) and carry the aggregate flag so the DB read path can
+ * show aggregate rows honestly. Family must never be dropped.
+ */
+export function positionTaxonomy(pos: SourcePosition): JobTaxonomy {
+  return {
+    ...(pos.taxonomy ?? { family: pos.family }),
+    ...(pos.aggregate ? { aggregate: true } : {}),
+  };
+}
+
 /** Upsert a validated plan. No DATABASE_URL → no-op (tests / laptop without Docker). */
 export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportApplyResult> {
   if (plan.companies.length === 0) {
@@ -375,7 +387,7 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
             pos.title,
             pos.department ?? null,
             pos.family,
-            JSON.stringify(pos.taxonomy ?? { family: pos.family }),
+            JSON.stringify(positionTaxonomy(pos)),
             pos.salary?.min ?? null,
             pos.salary?.max ?? null,
             pos.education ?? null,
