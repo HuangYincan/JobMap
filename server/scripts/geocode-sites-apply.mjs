@@ -114,7 +114,18 @@ function dropFiles() {
 
 // --- main -------------------------------------------------------------------
 const onMap = await loadOfflineWorkCatalog();
-const pinned = new Set(onMap.map((p) => p.id.split(':')[0]));
+// 2026-08-19:公司级 already-pinned 跳过已废弃——多城市时代一家公司可有多个
+// 城市办公点(上海试点:得物/禾赛/商汤有杭州 pin 仍需解析上海 office)。
+// 防重复由站点级 siteNeedsGeocode(有坐标即跳过)承担;此处仅保留城市级去重
+// 视图信息供日志输出。
+const pinnedCities = new Map();
+for (const p of onMap) {
+  const slug = p.id.split(':')[0];
+  const city = p.sites?.[0]?.city ?? p.location?.address ?? '';
+  const list = pinnedCities.get(slug) ?? new Set();
+  list.add(city);
+  pinnedCities.set(slug, list);
+}
 const overrides = loadOverrides();
 
 const files = dropFiles();
@@ -133,10 +144,6 @@ for (const file of files) {
     for (const site of company.sites ?? []) {
       if (!siteNeedsGeocode(site)) continue;
       planCount += 1;
-      if (pinned.has(slug)) {
-        skipped.push({ slug, siteId: site.id, reason: 'already-pinned' });
-        continue;
-      }
       if (ONLY && !ONLY.includes(slug)) {
         skipped.push({ slug, siteId: site.id, reason: 'not-in-only-list' });
         continue;
@@ -209,7 +216,7 @@ for (const file of files) {
 
 // --- report -----------------------------------------------------------------
 console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
-console.log(`Sites needing a point: ${planCount} | already on map (skip): ${skipped.filter((s) => s.reason === 'already-pinned').length}`);
+console.log(`Sites needing a point: ${planCount} | skipped (not-in-only-list): ${skipped.filter((s) => s.reason === 'not-in-only-list').length}`);
 console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`);
 console.log('\n=== RESOLVED ===');
 for (const r of resolutions) {
