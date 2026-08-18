@@ -2,6 +2,47 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-19: 收藏图层启停导致所有 POI 消失(saved-overlay-wipe)
+
+**症状**：
+- 开启收藏图层后,地图上所有 POI marker 全部消失,列表同步清空;关闭收藏图层也无法恢复。
+  单 pin 收藏时必现,多 pin 且落在 DB 覆盖区外时同样复现。
+
+**根本原因**(链条)：
+1. `handleToggleSavedOverlay`(`map-shell.tsx`)在 **ON** 时执行程序化相机移动:
+   `overlayBounds(overlayPois)` + `map.setBounds(...)`(bbf1e91「fit its pins」引入;
+   无 AMap.Bounds 时 fallback `setCenter`)。OFF 分支是纯状态切换,本身无害。
+2. `map.setBounds` 触发 AMap `moveend`/`zoomend` → `onViewChange` 调度 debounce 800ms
+   的**视口 replace loader**;loader 以 `existing: []` 整体替换目录。
+3. 收藏 pin 的视口往往是退化/稀疏视野:单 pin → `overlayBounds` sw==ne → 拉满 zoom → 0 行;
+   或 pin 在 DB 覆盖区外 → 新批次 = `[]` → `setCatalog([])`/`setPOIs([])` 按 id diff
+   **删光所有 marker**。OFF 时看到的「全消失」是 ON 清空后的残局。
+
+**解决方案**(方案 A,保留 fit-to-pins UX)：
+- 新增模块常量 `VIEWPORT_SUPPRESS_MS = 500` 与 ref
+  `suppressViewportRefreshUntilRef`(`map-shell.tsx`):程序化相机移动前
+  `suppressViewportRefreshUntilRef.current = Date.now() + VIEWPORT_SUPPRESS_MS`。
+- `onViewChange` 加抑制检查:当前时间在抑制窗口内则跳过本次调度(不 schedule)。
+  窗口自动过期,不影响后续用户操作触发的视口刷新。
+- 用时间窗口而非一次性标记:setBounds 会连续触发 moveend + zoomend 双事件,
+  一次性清除会被第二个事件重新调度。
+- 纵深防御(同型问题:handlePickSaved 单 pin flyTo 空视野清空):视口 loader onBatch
+  的「空批次保留旧目录」保护由同批 w1(poi-category-loading)承担(w1 prompt 任务 6),
+  此处不重复实现以免区域冲突。
+
+**修改文件**：
+- `server/src/components/map-shell.tsx`(VIEWPORT_SUPPRESS_MS、suppress ref、
+  onViewChange 抑制检查、handleToggleSavedOverlay 相机移动前置抑制窗口)
+- `server/tests/component-contracts.test.mjs`(静态契约:抑制标记先于 setBounds/setCenter)
+
+**测试验证**：
+- ✅ 契约测试:抑制窗口 ref/常量存在;onViewChange 窗口内跳过 schedule;toggle 函数体内
+  抑制标记在 setBounds 与 setCenter fallback 之前置位
+- ✅ 全量 332 测试通过(330 pass / 0 fail / 2 skip),typecheck / docs-check /
+  git diff --check 均绿
+
+---
+
 ## 2026-08-19: POI 电话 `[]` 显示 + 本地 POI 查看评价链接
 
 ### 问题1:用户看到「电话 []」

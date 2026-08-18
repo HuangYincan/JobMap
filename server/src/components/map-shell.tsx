@@ -67,6 +67,10 @@ function prefetchRail(panel: "layers" | "saved" | "recent" | "profile" | "auth" 
 type DrawerState = "mini" | "half" | "full";
 type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;
 
+/** 程序化相机移动(toggle 收藏图层 setBounds/setCenter)后抑制视口刷新的窗口(ms)。
+ *  setBounds 会连续触发 moveend + zoomend,两事件都落在该窗口内被吞掉(w5 saved-overlay-wipe)。 */
+const VIEWPORT_SUPPRESS_MS = 500;
+
 /** 移动抽屉手势(跟手拖动):三态高度(mini px / half·full 按 vh 计算) */
 const DRAWER_MINI_H = 96;
 const DRAWER_HALF_RATIO = 0.42;
@@ -230,6 +234,8 @@ export function MapShell() {
   const loadingRef = useRef(false);
   /** 主加载在飞期间到达的视口刷新:置位后由主加载 finally 补跑,避免被吞(Bug 7) */
   const viewportRefreshPendingRef = useRef(false);
+  /** 程序化相机移动(toggle 收藏图层)触发的视口刷新抑制截止时间戳(ms);过期自动失效 */
+  const suppressViewportRefreshUntilRef = useRef(0);
   /** 视口加载器实例(主加载 finally 需要触发补跑) */
   const viewportLoaderRef = useRef<ViewportLoader | null>(null);
   // 供一次性创建的地图监听/视口加载器读取最新状态(避免闭包过期)
@@ -1026,7 +1032,12 @@ export function MapShell() {
       },
     });
 
-    const onViewChange = () => loader.schedule();
+    const onViewChange = () => {
+      // w5:程序化相机移动(toggle 收藏图层 setBounds)触发 moveend/zoomend 时,
+      // 在抑制窗口内跳过视口刷新,防止空批次整体替换清空目录(收藏图层启停 bug)。
+      if (suppressViewportRefreshUntilRef.current > Date.now()) return;
+      loader.schedule();
+    };
     viewportLoaderRef.current = loader;
     map.on("moveend", onViewChange);
     map.on("zoomend", onViewChange);
@@ -1382,6 +1393,10 @@ export function MapShell() {
     writeSavedOverlayPref(next);
     setSavedOverlay(next);
     if (!next) return;
+    // w5:setBounds 触发 moveend/zoomend → 视口 replace loader 会以空批次(单 pin 退化视野/覆盖区外)
+    // 整体替换目录,清空全部 marker(收藏图层启停 bug)。相机移动前开抑制窗口吞掉本次移动事件,
+    // 窗口自动过期,不影响后续用户操作触发的视口刷新。
+    suppressViewportRefreshUntilRef.current = Date.now() + VIEWPORT_SUPPRESS_MS;
     const bounds = overlayBounds(overlayPois);
     const map = mapInstance.current;
     if (!bounds || !map || overlayPois.length === 0) return;

@@ -267,3 +267,24 @@ test('SecondarySidebar resultHeader: 加载更多按钮 + 错误重试接线(poi
   assert.match(i18n, /retry: \{/);
   assert.match(i18n, /loadFailedRetry: \{/);
 });
+
+test('saved overlay toggle: programmatic camera move suppresses viewport refresh (saved-overlay-wipe)', () => {
+  const shell = src('components/map-shell.tsx');
+  // 方案 A:保留 fit-to-pins 相机移动,但在移动前打开抑制窗口,吞掉 setBounds 触发的
+  // moveend/zoomend 视口刷新(空批次会整体替换清空目录 → 所有 poi 消失)。
+  assert.match(shell, /VIEWPORT_SUPPRESS_MS = 500/);
+  assert.match(shell, /suppressViewportRefreshUntilRef = useRef\(0\)/);
+  // onViewChange:抑制窗口内直接 return,不 schedule
+  assert.match(shell, /const onViewChange = \(\) => \{[\s\S]{0,200}suppressViewportRefreshUntilRef\.current > Date\.now\(\)[\s\S]{0,80}return;[\s\S]{0,80}loader\.schedule\(\);/);
+  // 抑制标记必须在相机移动(setBounds / setCenter fallback)之前置位——限定在 toggle 函数体内比较
+  const toggleAt = shell.indexOf('const handleToggleSavedOverlay = useCallback');
+  const modeSwitchAt = shell.indexOf('const handleModeChange = useCallback');
+  assert.ok(toggleAt !== -1 && modeSwitchAt > toggleAt, 'toggle/mode-switch anchors must exist in order');
+  const toggleBody = shell.slice(toggleAt, modeSwitchAt);
+  const setAt = toggleBody.indexOf('suppressViewportRefreshUntilRef.current = Date.now() + VIEWPORT_SUPPRESS_MS');
+  const boundsAt = toggleBody.indexOf('map.setBounds(new AMap.Bounds');
+  const centerAt = toggleBody.indexOf('map.setCenter?.(');
+  assert.ok(setAt !== -1 && boundsAt !== -1 && centerAt !== -1, 'suppress marker / setBounds / setCenter must all exist in toggle');
+  assert.ok(setAt < boundsAt, 'suppress marker must be set before map.setBounds');
+  assert.ok(setAt < centerAt, 'suppress marker must be set before map.setCenter fallback');
+});
