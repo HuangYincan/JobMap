@@ -272,6 +272,34 @@
   opacity: 0.45;
 }
 
+.authSwitchRow {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.authSwitchLink {
+  border: 0;
+  background: transparent;
+  color: var(--blue, #007AFF);
+  font-size: 12px;
+  font-weight: 650;
+  min-height: 32px;
+  padding: 0 4px;
+}
+
+.authSwitchLink:hover {
+  color: #64b5ff;
+}
+
+.authSwitchLink:disabled {
+  opacity: 0.4;
+}
+
 .socialGrid {
   display: grid;
   grid-template-columns: 1fr;
