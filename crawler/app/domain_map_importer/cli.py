@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .acquire import AcquisitionError, PoliteFetcher
-from .official_refresh import refresh_company_from_html, write_company
+from .official_refresh import refresh_company_from_source, write_company
 from .radar_jobs import load_radar_jobs, radar_fixture
 
 
@@ -54,11 +54,14 @@ def cmd_official(args: argparse.Namespace) -> int:
                 elif result.status >= 400:
                     summary.append({"slug": company.get("slug"), "status": result.status})
                 else:
-                    refreshed = refresh_company_from_html(company, result.body, url, retrieved_at=result.fetched_at)
+                    refreshed, meta = refresh_company_from_source(company, fetcher, result.body, url, retrieved_at=result.fetched_at)
                     added = len(refreshed.get("positions", [])) - len(company.get("positions", []))
                     if args.write and added > 0:
                         write_company(path, refreshed)
-                    summary.append({"slug": company.get("slug"), "status": result.status, "added": max(added, 0), "wrote": bool(args.write and added > 0)})
+                    entry = {"slug": company.get("slug"), "status": result.status, "added": max(added, 0), "wrote": bool(args.write and added > 0), "source": meta.get("source")}
+                    if meta.get("api_errors"):
+                        entry["api_errors"] = meta["api_errors"]
+                    summary.append(entry)
         if progress is not None and (index + 1) % 5 == 0:
             _write_progress(progress, files, summary)
     if progress is not None:
