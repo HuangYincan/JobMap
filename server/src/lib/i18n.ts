@@ -371,6 +371,26 @@ export const translations = {
     zh: '具体职责以招聘官网为准。',
     en: 'See the careers site for the full job description.',
   },
+  searchPositions: {
+    zh: '搜索岗位 / 部门',
+    en: 'Search positions / departments',
+  },
+  positionRole: {
+    zh: '职能',
+    en: 'Role',
+  },
+  positionType: {
+    zh: '类型',
+    en: 'Type',
+  },
+  clearFilters: {
+    zh: '清除',
+    en: 'Clear',
+  },
+  noMatchingPositions: {
+    zh: '没有匹配的岗位',
+    en: 'No matching positions',
+  },
   prevPhoto: {
     zh: '上一张照片',
     en: 'Previous photo',

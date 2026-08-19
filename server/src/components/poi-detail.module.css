@@ -327,6 +327,136 @@
   color: var(--ink, #18212c);
 }
 
+/* ---- 岗位筛选条(公司详情内局部视图过滤,glass) ---- */
+
+.jobFilter {
+  position: sticky;
+  top: 8px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--soft-strong, rgba(255, 255, 255, 0.84));
+  border: 1px solid var(--line, rgba(26, 45, 62, 0.12));
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.72) inset,
+    0 8px 18px rgba(24, 45, 57, 0.08);
+}
+
+.jobFilterSearchWrap {
+  position: relative;
+}
+
+.jobFilterSearchIcon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted, #6c7882);
+  pointer-events: none;
+}
+
+.jobFilterSearch {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px 8px 30px;
+  border-radius: 10px;
+  border: 1px solid var(--line, rgba(26, 45, 62, 0.12));
+  background: rgba(255, 255, 255, 0.62);
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink, #18212c);
+  outline: none;
+  transition:
+    border-color 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.jobFilterSearch::placeholder {
+  color: var(--muted, #6c7882);
+}
+
+.jobFilterSearch:focus {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line, rgba(26, 45, 62, 0.12)));
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.jobFilterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.jobFilterLabel {
+  margin-right: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted, #6c7882);
+}
+
+.jobFilterChip {
+  padding: 4px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--line, rgba(26, 45, 62, 0.12));
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--blue-ink, #0062cc);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.jobFilterChip:hover {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line, rgba(26, 45, 62, 0.12)));
+}
+
+.jobFilterChipActive,
+.jobFilterChipActive:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.jobFilterClear {
+  margin-left: auto;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--blue-ink, #0062cc);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.jobFilterClear:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.jobFilterEmpty {
+  margin: 2px 0 0;
+  padding: 18px 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--line, rgba(26, 45, 62, 0.12));
+  background: rgba(255, 255, 255, 0.34);
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted, #6c7882);
+}
+
 .jobs {
   list-style: none;
   margin: 0;
@@ -428,6 +558,27 @@
   .commute {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .jobFilterSearch {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .jobFilterSearch:focus {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .jobFilterChip {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .jobFilterChip:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .jobFilterEmpty {
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .dot {
