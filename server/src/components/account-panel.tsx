@@ -31,6 +31,8 @@ export interface ProfilePanelProps {
   }) => Promise<void>;
   /** 退出登录(复用 /api/auth/me DELETE 与 handleAuthAction 逻辑)。 */
   onSignOut: () => void;
+  /** 已投递/通知行点击 → 打开对应岗位(载荷为跳转所需最小字段;通知行缺字段时行禁用)。 */
+  onOpenApplication?: (record: { positionId: string; companyPoiId: string }) => void;
   applications?: ApplicationRecord[];
   notifications?: NotificationRecord[];
   shifted?: boolean;
@@ -199,6 +201,7 @@ export function ProfilePanel({
   onClose,
   onSave,
   onSignOut,
+  onOpenApplication,
   applications = [],
   notifications = [],
   shifted = false,
@@ -616,13 +619,24 @@ export function ProfilePanel({
           ) : (
             <ul className={styles.appList}>
               {notifications.map((item) => (
-                <li key={item.id} className={styles.appRow}>
-                  <strong>{item.title}</strong>
-                  <small>
-                    {[item.companyName, item.channels.filter((ch) => ch !== "inbox").join(" / ") || t("inboxOnly", lang)]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </small>
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className={styles.appRow}
+                    disabled={!item.positionId || !item.companyPoiId}
+                    onClick={() => {
+                      if (item.positionId && item.companyPoiId) {
+                        onOpenApplication?.({ positionId: item.positionId, companyPoiId: item.companyPoiId });
+                      }
+                    }}
+                  >
+                    <strong>{item.title}</strong>
+                    <small>
+                      {[item.companyName, item.channels.filter((ch) => ch !== "inbox").join(" / ") || t("inboxOnly", lang)]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </small>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -639,9 +653,15 @@ export function ProfilePanel({
           ) : (
             <ul className={styles.appList}>
               {applications.map((item) => (
-                <li key={item.id} className={styles.appRow}>
-                  <strong>{item.title}</strong>
-                  <small>{item.companyName}</small>
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className={styles.appRow}
+                    onClick={() => onOpenApplication?.({ positionId: item.positionId, companyPoiId: item.companyPoiId })}
+                  >
+                    <strong>{item.title}</strong>
+                    <small>{item.companyName}</small>
+                  </button>
                 </li>
               ))}
             </ul>

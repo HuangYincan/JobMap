@@ -1454,6 +1454,46 @@ export function MapShell() {
     setDrawer("half");
   }, [overlayPois, compareCatalog]);
 
+  /** 已投递/通知行点击 → 打开对应岗位:本地命中直接开,否则按 companyPoiId
+   *  拉 work 详情(mode=work),positions 匹配 positionId → 桌面详情高亮 +
+   *  移动 JD。岗位已下线 / 拉取失败 → 不崩溃,console.warn + 保持面板原样。 */
+  const handleOpenApplication = useCallback((ref: { positionId: string; companyPoiId: string }) => {
+    const openCompany = (company: POI) => {
+      setSelectedId(company.id);
+      setDetailPoi(company);
+      setRailPanel("explore");
+      setMobileSheet("explore");
+      setDrawer("full");
+      drawerScrollRef.current = 0;
+      if (ref.positionId && isRecruitmentPOI(company)) {
+        const pos = company.positions.find((item) => item.id === ref.positionId);
+        setOpenPositionId(ref.positionId);
+        setMobileJd(pos ?? null);
+      } else {
+        setOpenPositionId(null);
+        setMobileJd(null);
+      }
+      const loc = company.location;
+      if (loc && typeof loc.lng === "number" && typeof loc.lat === "number") {
+        flyToLocation(mapInstance.current, loc.lng, loc.lat);
+      }
+    };
+    const local =
+      catalog.find((p) => p.id === ref.companyPoiId) ??
+      pois.find((p) => p.id === ref.companyPoiId) ??
+      INTERNSHIP_SEED.find((p) => p.id === ref.companyPoiId);
+    if (local) {
+      openCompany(local);
+      return;
+    }
+    void fetchPOIDetail(ref.companyPoiId, "work")
+      .then((detail) => openCompany(detail))
+      .catch(() => {
+        // 岗位已下线 / 网络失败 → 不崩溃,保持面板原样
+        console.warn("[profile] failed to open application", ref.companyPoiId, ref.positionId);
+      });
+  }, [catalog, pois]);
+
   const handleRemoveSaved = useCallback((poiId: string) => {
     void fetch(`/api/me/saved?poiId=${encodeURIComponent(poiId)}`, { method: "DELETE" }).then(refreshSaved);
   }, [refreshSaved]);
@@ -2389,6 +2429,7 @@ export function MapShell() {
           onSignOut={handleAuthAction}
           applications={applications}
           notifications={inbox}
+          onOpenApplication={handleOpenApplication}
         />
       )}
 
@@ -2671,6 +2712,7 @@ export function MapShell() {
                       onClose={() => setMobileSheet("explore")}
                       onSave={handleSaveProfile}
                       onSignOut={handleAuthAction}
+                      onOpenApplication={handleOpenApplication}
                     />
                   ) : (
                     <p className={styles.mobileAccountHint}>{t("signInHint", lang)}</p>

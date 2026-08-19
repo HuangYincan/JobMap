@@ -139,6 +139,33 @@ test('embedded Profile keeps a close control and fluid card width', () => {
   assert.ok(sheetAt > sidebarAt, 'sheet must follow sidebar so width:100% wins');
 });
 
+test('profile applied/notification rows are clickable buttons wired to the job jump', () => {
+  const panel = src('components/account-panel.tsx');
+  // 行 button 化:已投递 + 收件箱两处整行 button(键盘可达)
+  const rowButtons = panel.match(/className=\{styles\.appRow\}/g) ?? [];
+  assert.ok(rowButtons.length >= 2, 'applied + notification rows are buttons');
+  // 回调 prop + 已投递行触发回调(携 positionId/companyPoiId 载荷)
+  assert.match(panel, /onOpenApplication\?: \(record: \{ positionId: string; companyPoiId: string \}\) => void/);
+  assert.match(panel, /onClick=\{\(\) => onOpenApplication\?\.\(\{ positionId: item\.positionId, companyPoiId: item\.companyPoiId \}\)/);
+  // 通知行:缺 positionId/companyPoiId 禁用 + 回调内守卫
+  assert.match(panel, /disabled=\{!item\.positionId \|\| !item\.companyPoiId\}/);
+  assert.match(panel, /if \(item\.positionId && item\.companyPoiId\)/);
+  // 按钮态样式:pointer + hover 高亮(与 .rowBtn 同语义)
+  const css = src('components/account-panel.module.css');
+  assert.match(css, /\.appRow \{\s*display: flex;[\s\S]*cursor: pointer/);
+  assert.match(css, /\.appRow:hover:not\(:disabled\)/);
+  assert.match(css, /\.appRow:disabled \{\s*cursor: default/);
+  // map-shell 接线:拉 work 详情 → 匹配岗位 → 桌面详情 + 移动 JD + 失败兜底
+  const shell = src('components/map-shell.tsx');
+  assert.match(shell, /const handleOpenApplication = useCallback\(\(ref: \{ positionId: string; companyPoiId: string \}\)/);
+  assert.match(shell, /fetchPOIDetail\(ref\.companyPoiId, "work"\)/);
+  assert.match(shell, /setOpenPositionId\(ref\.positionId\)/);
+  assert.match(shell, /setMobileJd\(pos \?\? null\)/);
+  assert.match(shell, /console\.warn\("\[profile\] failed to open application"/);
+  const wired = shell.match(/onOpenApplication=\{handleOpenApplication\}/g) ?? [];
+  assert.ok(wired.length >= 2, 'desktop + mobile embedded ProfilePanel both wired');
+});
+
 test('work autocomplete prefers GET /api/suggest and falls back locally', () => {
   const shell = src('components/map-shell.tsx');
   assert.match(shell, /fetchSearchSuggest/);
