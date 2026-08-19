@@ -6,21 +6,21 @@
 
 ## Current Baseline
 
-P0 is complete as a **documentation and repository scaffold**. Phase 1 is **in progress**: the importer project, PostGIS migration runner, SQL migrations, declarative plugin/import validation, and an Apple-Maps-inspired frontend shell now exist on `feature/phase-1-platform-baseline`. 
+P0–P4 are **complete and merged to `dev`** (2026-08-17): a runnable Next.js application (Domain + Work modes, account / saved / applications / job-alert queue), real recruitment catalog (Postgres first, offline drops fallback), reviewed polite acquisition (radar `jobs.json` + official career pages + reviewed ATS endpoints), PostGIS migrations `001`–`016`, and nationwide work mode (LOD tiers / city superset / viewport loading, migrations `011`–`013`). Historical Phase 1 records remain on `feature/phase-1-platform-baseline`.
 
-**Frontend status (2026-08-15):** The map shell is complete and browser-verified. All core interactions work (zoom, compass, locate, middle-button 3D control), sidebar animations are polished with Apple-style transitions, responsive layouts proven on desktop and mobile viewports, dark mode functional, i18n system operational. See `tech/00-phase1-frontend-completion.md` for full implementation evidence.
+**Frontend status (2026-08-19):** map shell, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter, sort, autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle — all browser-verified. Server suite: **423 tests / 421 pass / 2 skip** (`cd server && npm test`, 2026-08-19).
 
-**Backend status:** The importer unit tests pass (31, 2026-08-17). Live PostGIS apply is verified (2026-08-16) against Docker `postgis/postgis:16-3.4`: `make db-migrate` wrote `001`–`010`, `make test-integration` passed, seed import wrote 51 companies. **2026-08-17 re-import:** 137 companies / 137 sites / 240 open positions (official-career + radar + portals). Public `/api/pois` and `/api/search` push `bounds` / distance through `company_sites_geom_gist` (`&&` then `ST_DWithin`) when `DATABASE_URL` is set; no-DB stays on `inBounds`. Live `EXPLAIN` (51 sites): `&&` + `ST_DWithin` uses the gist; bbox-only is still a Seq Scan on this tiny table.
+**Backend status:** importer unit tests pass (`make test-unit`). Live PostGIS apply is verified: `make db-migrate` wrote `001`–`016`, `make test-integration` passed. Seed import (2026-08-17 Hangzhou pilot): 137 companies / 137 sites / 240 open positions (official-career + radar + portals); national import plan: **669 companies / 1440 sites / 877 positions, 0 issues, 0 dropped**. Public `/api/pois` and `/api/search` push `bounds` / distance through `company_sites_geom_gist` (`&&` then `ST_DWithin`) when `DATABASE_URL` is set; no-DB stays on `inBounds`. Live `EXPLAIN` (51 sites): `&&` + `ST_DWithin` uses the gist; bbox-only is still a Seq Scan on this tiny table.
 
 ## Delivery Sequence
 
 | Phase | Scope | Status | Entry gate | Exit evidence |
 |---|---|---|---|---|
 | P0 | Documentation, constraints, GitHub initialization | Complete | None | Current technical/role docs and final audit record |
-| P1 | Platform baseline | In progress | P0 contract accepted | Version-pinned app/importer manifests; migration runner; PostGIS extension check; tenant/map and source contracts; tests that run locally |
-| P2 | Recruitment import and map read vertical slice | Planned | P1 complete; approved data-source record | Idempotent approved-data import, provenance records, spatial query API, map-read contract, integration tests |
-| P3 | Recruitment map interface | Planned | P2 complete; explicit ASCII/text approval | Approved desktop/mobile layout record, implemented UI, agent-browser screenshots, accessibility and responsive checks |
-| P4 | Map productivity features | In progress | P3 client slice on branch | Search, saved map overlays, controlled fly/highlight interactions |
+| P1 | Platform baseline | Complete (dev) | P0 contract accepted | Version-pinned app/importer manifests; migration runner; PostGIS extension check; tenant/map and source contracts; tests that run locally |
+| P2 | Recruitment import and map read vertical slice | Complete (dev) | P1 complete; approved data-source record | Idempotent approved-data import, provenance records, spatial query API, map-read contract, integration tests |
+| P3 | Recruitment map interface | Complete (dev) | P2 complete; explicit ASCII/text approval | Approved desktop/mobile layout record, implemented UI, agent-browser screenshots, accessibility and responsive checks |
+| P4 | Map productivity features | Complete (dev) | P3 client slice on branch | Search, saved map overlays, controlled fly/highlight interactions |
 
 | P5 | Additional approved data and spatial analysis | Deferred | P4 evidence plus source review | Housing/commute or another approved domain; PostGIS correctness tests |
 | P6 | Sensitive and AI features | Deferred | Privacy/security design and evaluation plan | PII consent/retention controls, map-action validation, recommendation evaluation |
@@ -48,6 +48,8 @@ No calendar release date is committed. Each phase is estimated only after its en
 - Frontend shell exists and is verified in-browser (user authorized ASCII gate relaxation for this phase). **Complete (2026-08-15)** — Apple Maps-inspired responsive shell with polished animations, all map controls functional, dark mode working, i18n operational. Full evidence in `tech/00-phase1-frontend-completion.md`.
 
 ## Phase 2: Multi-Mode System + POI Display + Search & Filter
+
+> **状态(2026-08-19):已完成并并入 `dev`。以下为实施期记录。**
 
 **Scope:** Core differentiation features - multi-mode map system with Domain and Work modes
 

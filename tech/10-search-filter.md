@@ -230,28 +230,28 @@ const debouncedSearch = useDebouncedCallback(
 
 #### 单选筛选器 (Select)
 
+> 招聘模式的行业（`industry`）/ 行政区（`district`）/ 班车（`providesShuttle`）筛选已移除（见 §移除清单），示例以高考模式省份单选为准。
+
 ```tsx
 <FilterSelect
-  label="行业类型"
+  label="省份"
   options={[
-    { value: 'tech', label: '互联网' },
-    { value: 'finance', label: '金融' },
-    { value: 'consulting', label: '咨询' },
+    { value: 'zhejiang', label: '浙江' },
+    { value: 'jiangsu', label: '江苏' },
+    { value: 'guangdong', label: '广东' },
   ]}
-  value={filters.industry}
-  onChange={(value) => updateFilter('industry', value)}
+  value={filters.province}
+  onChange={(value) => updateFilter('province', value)}
 />
 ```
 
 **UI 展示:**
 ```
-行业类型: [互联网 ▼]
-         ↓
-         互联网 ✓
-         金融
-         咨询
-         制造业
-         零售
+省份: [浙江 ▼]
+      ↓
+      浙江 ✓
+      江苏
+      广东
 ```
 
 #### 多选筛选器 (Multi-select)

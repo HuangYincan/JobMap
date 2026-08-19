@@ -16,7 +16,7 @@
 
 ## Code Review
 
-`code-review/review-checklist.md` 包含 Code Review 检查清单。
+`phase1-code-review.md` 记录 Phase 1 的 Code Review 结论与检查清单(通用 review-checklist 尚未单独建立)。
 
 每个 PR 需要通过检查:
 - [ ] 代码规范(ESLint/Black)
