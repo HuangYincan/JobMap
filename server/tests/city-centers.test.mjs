@@ -28,7 +28,7 @@ test('bareCityName: 去「省/市/区」后缀成裸名', () => {
   assert.equal(bareCityName('哈尔滨'), '哈尔滨'); // 无后缀原样
 });
 
-test('cityCenter: '北京'/'北京市' 命中同一键', () => {
+test('cityCenter: 北京/北京市 命中同一键', () => {
   assert.deepEqual(cityCenter('北京'), { lng: 116.4, lat: 39.9 });
   assert.deepEqual(cityCenter('北京市'), { lng: 116.4, lat: 39.9 });
 });
