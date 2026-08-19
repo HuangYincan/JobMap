@@ -171,6 +171,10 @@ export function useWorkViewport(
               q: v.query || undefined,
               sort: v.sort || undefined,
               page: 1,
+              // 视口取尽(wsv):循环取当前视野 page 直到 noMore(短页/空页 break),
+              // 不设客户端页数上限(large maxPages 只是防呆;实际由短页/空页 break
+              // 提前停,不白打请求)。去上限:视口内所有工作 POI 都展示。
+              maxPages: 10_000,
               existing: catalogRef.current, // 增量:以现有池为底,新视野点往里并
               onBatch: (batch) => {
                 // 模式守卫:切换模式后,旧模式在飞的批次(公司/地图 POI)不得
