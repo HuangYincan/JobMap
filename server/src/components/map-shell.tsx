@@ -228,6 +228,9 @@ export function MapShell() {
   const poisRef = useRef<POI[]>([]);
   const [geoSettled, setGeoSettled] = useState(false);
   const ignoreNextMapClick = useRef(false);
+  /** 用户是否已主动与地图交互过(拖动/缩放/点击/点 marker)。挂载 geolocation
+   * 回调晚落地时不再用 setCenter 抢占相机(Bug3:第一次点公司 pin 被拽回用户位置)。 */
+  const hasInteractedRef = useRef(false);
   /** Domain 数据耗尽(稀疏视野/回退窗口空/无更多页):哨兵停止 + 「没有更多结果」 */
   const [noMoreData, setNoMoreData] = useState(false);
   const noMoreRef = useRef(false);
@@ -545,7 +548,10 @@ export function MapShell() {
       mapInstance.current = map;
       setMapReady(true);
 
-      // 初始定位：成功则移动地图中心 + 显示蓝点/精度圈（Geolocation 已 addControl 绑定 map）
+      // 初始定位(Bug3):定位只作为数据原点(userLocation/searchOrigin/蓝点),
+      // 相机移动只在用户尚未与地图交互过时执行——geolocation 真异步可能数秒才
+      // resolve,期间用户已点过公司 pin(hasInteractedRef=true)→ 不再 setCenter
+      // 抢占/拽走相机;用户自己点「定位」按钮(handleLocate)仍会移过去(原义)。
       getCurrentPosition(map)
         .then((loc) => {
           if (!loc) {
@@ -553,11 +559,13 @@ export function MapShell() {
             return;
           }
           const { lng, lat } = loc.position;
-          map.setCenter([lng, lat]);
-          map.setZoom(15);
-          setMapCenter({ lng, lat });
           setUserLocation({ lng, lat });
           setSearchOrigin((prev) => prev ?? { lng, lat });
+          if (!hasInteractedRef.current) {
+            map.setCenter([lng, lat]);
+            map.setZoom(15);
+          }
+          setMapCenter({ lng, lat });
           setGeoSettled(true);
         })
         .catch(() => {
@@ -711,7 +719,16 @@ export function MapShell() {
       };
       map.on("moveend", syncView);
       map.on("complete", syncView);
+      // Bug3 交互标记:任何主动手势(拖/缩/点)都视为「用户已接管相机」,
+      // 挂载 geolocation 晚落地后不再抢回用户位置
+      map.on("dragstart", () => {
+        hasInteractedRef.current = true;
+      });
+      map.on("zoomstart", () => {
+        hasInteractedRef.current = true;
+      });
       map.on("click", () => {
+        hasInteractedRef.current = true;
         if (ignoreNextMapClick.current) {
           ignoreNextMapClick.current = false;
           return;
@@ -1597,6 +1614,8 @@ export function MapShell() {
     highlightedId,
     accentColor: modeConfig.color,
     onMarkerClick: (id) => {
+      // Bug3:点 marker 也视为「用户已接管相机」(AMap marker click 不触发 map click)
+      hasInteractedRef.current = true;
       // AMap 常在 marker click 后再打一次 map click；吞掉同一次手势，超时后恢复点空白取消。
       ignoreNextMapClick.current = true;
       window.setTimeout(() => {
