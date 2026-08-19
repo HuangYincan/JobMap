@@ -6,7 +6,12 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Changed
 
-- **Next.js 15.5.23 → 16.3.1、React/ReactDOM 19.0.8 → 19.2.8(清 version-staleness 警告,`chore/next-16`).** 依赖升级由 boss 预置(`server/package.json`/`package-lock.json`),本批仅修破坏点:实际**零代码改动**——`npm run typecheck` 0 错误、`npm test` 477(475 pass / 2 skip)、`npm run build`(Next 16.3.1 + Turbopack)21 路由全部产出。Next 16 自动迁移两项:tsconfig `jsx: preserve → react-jsx`(强制)与 include 增 `.next/dev/types/**/*.ts`;`next-env.d.ts` 按新 typed-routes 格式重生成(`import` 替代 `/// <reference path>`,新增 `root-params.d.ts`)。项目无 middleware / 无 ESLint 配置 / next.config.ts 仅 `reactStrictMode`,均无需迁移。报告:`tech/roles/development/parallel-sessions/20260820-boss-bugfix/reports/b3.md`。
+- **Next.js 15.5.23 → 16.3.1、React/ReactDOM 19.0.8 → 19.2.8(清 version-staleness 警告,`chore/next-16`).** 依赖升级由 boss 预置(`server/package.json`/`package-lock.json`),本批仅修破坏点:实际**零代码改动**——`npm run typecheck` 0 错误、`npm test` 488(486 pass / 2 skip)、`npm run build`(Next 16.3.1 + Turbopack)21 路由全部产出。Next 16 自动迁移两项:tsconfig `jsx: preserve → react-jsx`(强制)与 include 增 `.next/dev/types/**/*.ts`;`next-env.d.ts` 按新 typed-routes 格式重生成(`import` 替代 `/// <reference path>`,新增 `root-params.d.ts`)。项目无 middleware / 无 ESLint 配置 / next.config.ts 仅 `reactStrictMode`,均无需迁移。报告:`tech/roles/development/parallel-sessions/20260820-boss-bugfix/reports/b3.md`。
+
+### Fixed
+
+- **work 全量加载(首点刷新 / 聚合计数漂移 / 死代码清理,`933f972`,`fix/poi-zoom-full-load`).** work 视口加载原以 geolocation settle 为门:首点触发定位完成 → 依赖变化取消在飞加载并重载,首帧 `syncView()` 又被视口对齐拉回杭州。现改**全量加载**(`WORK_FULL_LOAD_MAX_PAGES=10_000`,不传 bounds/maxTier,page 恒 1;侧栏列表客户端按 `mapBounds` 裁剪,浏览器实测平移 0 视口请求),`load()` 门控仅 `mapReady`——首点详情立即打开、视角保持。聚合计数取消 LOD(tier)过滤(徽章 N 与 zoom 无关),「杭州市」/「杭州」归入同一徽章。死代码清理净删 566 行(视口增量加载 / 首点 flyTo 队列 / 视口搜索堆栈 / marker 同步注册表等)。`MODE_CACHE_VERSION` 14→15。14 文件(server/src 9 + tests 5);全量 488 通过(486 pass / 0 fail / 2 skip)。Docs:`tech/16-bug-fixes.md` §2026-08-20、`tech/21` 计数口径。
+- **positions import 自愈去重(先删重后迁移,`788e9c6`,`fix/positions-dedup-order`,b1f).** 同 `external_id` 在旧 source(seed)与新真实 source 下各存一行(upsert 唯一键 `(source_id, external_id)`,source 变了就插新行、旧行不删)→ poi-card 同 key 警告上百条。修复:apply 事务内先按 `external_id` 保 `MIN(id)` 删重(applications.`position_id` 多指向旧行,保留最早 id 避免悬空),再迁移旧 source 行到本次 source,后照常 `ON CONFLICT` upsert;顺序不可颠倒——先迁移会让同 `external_id` 的旧/新行共享唯一键,UPDATE 内即触发 `positions_source_id_external_id_key`(`_bt_check_unique`)导致整个事务回滚(boss 实测:重跑 `import:seed:apply` 报唯一键冲突,DB 未变)。契约测试断言 dedup-before-migration 顺序(`server/tests/recruitment-import.test.mjs`)。
 
 ## 2026-08-19
 
