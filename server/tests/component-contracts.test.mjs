@@ -24,6 +24,24 @@ test('POICard is a keyboard button with selected/highlight states', () => {
   assert.match(card, /onClick=\{\s*\(e\) => \{[\s\S]*onClick\?\.\(poi\)/);
 });
 
+test('POICard positionsPreview dedups by pos.id before render (duplicate-key defense)', () => {
+  const card = src('components/poi-card.tsx');
+  // 2026-08-20: 同 external_id 双行 (旧 seed source + 新真实 source) 曾同时进入
+  // positionsPreview → <span key={pos.id}> 重复 key 警告上百条。渲染前按 pos.id
+  // 去重 (保序保首个): import 自愈落库前的过渡期也不报警。
+  assert.match(card, /const seenPositionIds = new Set<string>\(\)/);
+  assert.match(card, /seenPositionIds\.has\(pos\.id\)/);
+  assert.match(card, /seenPositionIds\.add\(pos\.id\)/);
+  const previewAt = card.indexOf('const positionsPreview = openPositions');
+  assert.ok(previewAt !== -1, 'positionsPreview anchor exists');
+  const previewBlock = card.slice(previewAt, card.indexOf('const benefits ='));
+  const filterAt = previewBlock.indexOf('.filter');
+  const sliceAt = previewBlock.indexOf('.slice(0, 3)');
+  assert.ok(filterAt !== -1 && sliceAt !== -1 && filterAt < sliceAt, 'dedup filter must run before the 3-item slice');
+  // 回归守卫: 不再直接对 openPositions 裸 slice (去重必须插在切片之前)。
+  assert.doesNotMatch(card, /positionsPreview = openPositions\.slice\(0, 3\)/);
+});
+
 test('POIList exposes a labelled list, skeleton, and empty widen action', () => {
   const list = src('components/poi-list.tsx');
   const css = src('components/poi-list.module.css');

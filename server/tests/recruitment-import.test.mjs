@@ -445,6 +445,54 @@ test('site merge keys on site_key, not name (multi-city sites must not collapse)
   assert.doesNotMatch(store, /WHERE company_id = \$1 AND name = \$2 LIMIT 1/);
 });
 
+test('positions dedup: apply migrates old-source rows then keeps MIN(id) before the upsert', () => {
+  // 2026-08-20: 同 external_id 曾在旧 source(seed) 与新真实 source 下各存一行,
+  // upsert 唯一键 (source_id, external_id) 不冲突 → 旧行不删 → 双行并存 →
+  // poi-card 同 key 警告上百条。apply 事务内自愈, 顺序不可颠倒:
+  // 先迁移旧行 source → 再去重保 MIN(id) → 最后 ON CONFLICT upsert。
+  const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+  const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
+
+  // 1) 迁移: 同 external_id 的旧 source 行改挂本次 source (幂等, 已同源不迁)
+  assert.match(store, /UPDATE positions SET source_id = \$2/);
+  assert.match(store, /WHERE external_id = ANY\(\$1::text\[\]\) AND source_id IS DISTINCT FROM \$2/);
+
+  // 2) 去重: 每 external_id 保 MIN(id) 一行 (USING 子查询按组取最小行)
+  assert.match(store, /DELETE FROM positions p/);
+  assert.match(store, /MIN\(id\) AS keep_id/);
+  assert.match(store, /GROUP BY external_id\) keep/);
+  assert.match(store, /p\.id <> keep\.keep_id/);
+
+  // 3) 顺序: 迁移 → 去重 → ON CONFLICT (source_id, external_id) upsert。
+  // 注释里也可能出现这段 SQL 字样, 真实 upsert 恒为最后一次出现 → lastIndexOf。
+  const migrateAt = store.indexOf('UPDATE positions SET source_id');
+  const dedupAt = store.indexOf('DELETE FROM positions p');
+  const upsertAt = store.lastIndexOf('ON CONFLICT (source_id, external_id) DO UPDATE');
+  assert.ok(migrateAt !== -1 && dedupAt !== -1 && upsertAt !== -1, 'migrate/dedup/upsert anchors exist');
+  assert.ok(migrateAt < dedupAt, 'source migration must run before dedup');
+  assert.ok(dedupAt < upsertAt, 'dedup must run before the upsert (unique key must be free)');
+
+  // 自愈只作用于 authentic 岗位 (radar-*/portal-*): 代码位于 authentic 过滤之后,
+  // seed 示例岗位 (seed-* 等外部 id) 不迁移、不去重、不删除。
+  const authenticAt = store.indexOf('isAuthenticPositionId(pos.externalId)');
+  assert.ok(authenticAt !== -1 && authenticAt < migrateAt, 'self-heal must only run inside the authentic filter');
+});
+
+test('positions dedup plan scope: migrate/dedup use the plan external ids, not the whole table', () => {
+  const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+  const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
+  // 迁移/去重都按 `external_id = ANY($1::text[])` 限定在本次 plan 的 external_id
+  // 集合内 — 绝不整表扫描式清理, 其他公司/其他来源的岗位不受影响。
+  const anyPattern = /external_id = ANY\(\$1::text\[\]\)/g;
+  const matches = store.match(anyPattern) ?? [];
+  assert.ok(matches.length >= 2, `migrate + dedup must both be scoped by plan external ids (got ${matches.length})`);
+  // 迁移批量按公司聚合: 参数 $1 = 本公司的 external_id 数组, $2 = 该公司 source。
+  assert.match(store, /const planExtIds = company\.positions/);
+  assert.match(store, /\.filter\(\(pos\) => siteIds\.has\(pos\.siteId\)\)/);
+  assert.match(store, /\.map\(\(pos\) => pos\.externalId\)/);
+  assert.match(store, /if \(planExtIds\.length > 0\)/);
+});
+
 test('planSeedImport orders real drops before the seed scaffold', () => {
   // dedupeSourceCompanies 保留每个 slug 的第一个公司 — seed 排前面会让示例副本
   // (过期坐标/tier/示例岗位) 压过官方 drops 的当前数据 (2026-08-19: tencent
