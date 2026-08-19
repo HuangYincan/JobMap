@@ -224,6 +224,12 @@ class POIMarkerControllerImpl implements POIMarkerController {
   private color: string;
   /** poiId → AMap Marker 实例。 */
   private markers = new Map<string, any>();
+  /**
+   * 本控制器登记到地图上的全部 Marker（含簿记丢失的）。
+   * 与 markers 的差异：addMarker 一成功构造就入账，任何后续异常都不会
+   * 造成「marker 在地图上、但 destroy/差分无法摘除」的永久泄漏（Bug1 伴生）。
+   */
+  private placed = new Set<any>();
   /** poiId → POI 数据（生成图标 / 还原样式时需要）。 */
   private poiById = new Map<string, POI>();
   /** poiId → 当前视觉状态，用于避免重复 setIcon 造成闪烁。 */
@@ -254,9 +260,29 @@ class POIMarkerControllerImpl implements POIMarkerController {
       });
   }
 
-  /** 是否具备创建标记的全部前提。 */
+  /** 是否具备创建标记的全部前提（含地图未被销毁）。 */
   private isReady(): boolean {
-    return !this.destroyed && !!this.map && !!this.amap;
+    if (this.destroyed || !this.map || !this.amap) return false;
+    // 地图已被销毁时不再创建 marker：已销毁实例的 overlay 注册表无人清理，
+    // 会造成 getAllOverlays 计数 > catalog 的永久残留（Bug1 伴生）。
+    if (typeof this.map.isDestroyed === 'function' && this.map.isDestroyed()) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * 从地图摘除一个 marker（若仍挂在地图上）。异常不影响内部状态清理：
+   * 地图已销毁等场景下 setMap(null) 可能抛错，绝不能因单个 marker 中断
+   * clear/destroy 的清扫循环。
+   */
+  private detachFromMap(marker: any): void {
+    if (!marker) return;
+    try {
+      if (typeof marker.setMap === 'function') marker.setMap(null);
+    } catch {
+      // 忽略：内部簿记照常删除，避免 cleanup 中途抛错留下半清状态
+    }
   }
 
   /** AMap 异步就绪后回放最近一次 POI 列表。 */
@@ -290,14 +316,31 @@ class POIMarkerControllerImpl implements POIMarkerController {
       markerOpts.icon = this.buildIcon(poi, state);
     }
 
-    const marker = new this.amap.Marker(markerOpts);
+    let marker: any;
+    try {
+      marker = new this.amap.Marker(markerOpts);
+    } catch {
+      // 构造即失败（如地图销毁竞态）→ 不登记任何簿记，不留残留
+      return;
+    }
 
-    marker.on('click', () => {
-      if (this.destroyed) return;
-      this.opts.onMarkerClick?.(poi.id);
-    });
+    // 先入 placed 账：map: 选项在构造时已把 marker 注册到地图上，
+    // 若后续步骤（绑定事件/设 zIndex）抛错，destroy/clear 仍能凭 placed 摘除
+    this.placed.add(marker);
+    try {
+      marker.on('click', () => {
+        if (this.destroyed) return;
+        this.opts.onMarkerClick?.(poi.id);
+      });
 
-    marker.setzIndex(this.zIndexFor(state, poi));
+      marker.setzIndex(this.zIndexFor(state, poi));
+    } catch {
+      // 绑定/样式失败 → 摘除刚注册的 marker，避免无主残留
+      this.detachFromMap(marker);
+      this.placed.delete(marker);
+      return;
+    }
+
     this.markers.set(poi.id, marker);
     this.poiById.set(poi.id, poi);
     this.markerStates.set(poi.id, state);
@@ -306,12 +349,11 @@ class POIMarkerControllerImpl implements POIMarkerController {
   /** 移除指定 id 的标记（从地图上摘除并清空内部记录）。 */
   private removeMarker(id: string): void {
     const marker = this.markers.get(id);
-    if (marker && typeof marker.setMap === 'function') {
-      marker.setMap(null);
-    }
+    this.detachFromMap(marker);
     this.markers.delete(id);
     this.poiById.delete(id);
     this.markerStates.delete(id);
+    if (marker) this.placed.delete(marker);
   }
 
   /** 更新已有标记的视觉样式（图标 / 锚点偏移 / zIndex / label 可见性）。 */
@@ -418,6 +460,17 @@ class POIMarkerControllerImpl implements POIMarkerController {
     }
   }
 
+  /**
+   * 兜底清扫：无论内部簿记是否丢失，凡本控制器登记到地图上的 overlay
+   * 一律摘除。保证不变式「销毁后地图上无该控制器管理过的 marker」。
+   */
+  private sweepPlaced(): void {
+    for (const marker of Array.from(this.placed)) {
+      this.detachFromMap(marker);
+    }
+    this.placed.clear();
+  }
+
   /** 按当前 selected / highlighted 重绘指定标记。 */
   private refresh(id: string | null): void {
     if (!id) return;
@@ -480,6 +533,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
   destroy(): void {
     this.destroyed = true;
     this.clear();
+    this.sweepPlaced();
     this.map = null;
     this.amap = null;
     this.opts = {};
