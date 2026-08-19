@@ -182,6 +182,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   /** 用户是否已主动与地图交互过(拖动/缩放/点击/点 marker)。挂载 geolocation
    * 回调晚落地时不再用 setCenter 抢占相机(Bug3:第一次点公司 pin 被拽回用户位置)。 */
   const hasInteractedRef = useRef(false);
+  /** 首点补放(w2):geoSettled 门控命中(handleSelect/onOpenDetail)时暂存目标 poi,
+   * geolocation settle 后补执行一次 flyToLocation——首次点击的相机意图不静默丢弃
+   * (否则首点视角停在杭州默认中心,第二次点击 geoSettled=true 才正常)。 */
+  const pendingFlyToRef = useRef<POI | null>(null);
   /** Domain 数据耗尽(稀疏视野/回退窗口空/无更多页):哨兵停止 + 「没有更多结果」 */
   const [noMoreData, setNoMoreData] = useState(false);
   const noMoreRef = useRef(false);
@@ -505,10 +509,25 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       // 真异步可能数秒才 resolve,期间用户已点过公司 pin(hasInteractedRef=true)
       // → 不再 setCenter/userPosition 抢占、不把距离圆心甩去用户位置;
       // 用户自己点「定位」按钮(handleLocate)仍会移过去(原义)。
+      // 首点补放(w2):geoSettled 门控命中(handleSelect/onOpenDetail)暂存的目标
+      // poi 在此补执行一次 flyToLocation,执行后清空 ref。必须在 setGeoSettled(true)
+      // 之后:视口 loader 的 load() 以 geoSettled 自守卫,提前飞会被吞且数据不刷新;
+      // settle 后飞 → 视口刷新正常补拉目标公司视野(与第二次点击行为一致)。
+      const settleGeolocation = () => {
+        setGeoSettled(true);
+        const pending = pendingFlyToRef.current;
+        if (pending) {
+          pendingFlyToRef.current = null;
+          if (pending.location) {
+            flyToLocation(mapInstance.current, pending.location.lng, pending.location.lat);
+          }
+        }
+      };
+
       getCurrentPosition(map)
         .then((loc) => {
           if (!loc) {
-            setGeoSettled(true);
+            settleGeolocation();
             return;
           }
           const { lng, lat } = loc.position;
@@ -521,10 +540,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
             map.setZoom(15);
             setMapCenter({ lng, lat });
           }
-          setGeoSettled(true);
+          settleGeolocation();
         })
         .catch(() => {
-          setGeoSettled(true);
+          settleGeolocation();
         });
 
       // 自定义中键旋转逻辑
@@ -1439,8 +1458,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     // 点卡片/列表选中即「用户已接管相机」:与地图 pin 同口径,
     // 否则 geolocation 晚 resolve 会把相机从被点公司拽回用户位置(Bug1 竞态盲区)
     hasInteractedRef.current = true;
-    // 地图初始化期间不处理选中，避免触发重新加载
+    // 地图初始化期间不处理选中，避免触发重新加载;首点不吞意图(w2):
+    // 门控命中暂存目标 poi,geolocation settle 后补执行一次 flyToLocation
     if (!mapReady || !geoSettled) {
+      pendingFlyToRef.current = poi;
       return;
     }
     setSelectedId(poi.id);
@@ -2194,8 +2215,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         onOpenDetail={(poi) => {
           // 用户主动打开详情即「已接管相机」(会 flyTo)(Bug1)
           hasInteractedRef.current = true;
-          // 地图初始化期间不处理详情打开，避免触发重新加载
-          if (!mapReady || !geoSettled) return;
+          // 地图初始化期间不处理详情打开，避免触发重新加载;首点不吞意图(w2):
+          // 门控命中暂存目标 poi,geolocation settle 后补执行一次 flyToLocation
+          if (!mapReady || !geoSettled) {
+            pendingFlyToRef.current = poi;
+            return;
+          }
           // 桌面详情不保存移动抽屉滚动(保存只发生在移动卡片点击链),清零避免把旧值带回移动端
           drawerScrollRef.current = 0;
           setDetailPoi(poi);
