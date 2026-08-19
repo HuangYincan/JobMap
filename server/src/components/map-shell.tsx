@@ -7,15 +7,14 @@ import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
 import type { FilterState, MapMode, POI } from "@/lib/types";
 import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
-import { getCurrentPosition, fetchSuggestions, loadAMap, suggestionToDomainPoi } from "@/lib/amap-api";
+import { getCurrentPosition, loadAMap, suggestionToDomainPoi } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
+import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, widenSearchScope } from "@/lib/search";
 import { suggestKeyAction } from "@/lib/suggest-nav";
-import { fetchPOIDetail, fetchSearchSuggest } from "@/lib/api";
-import type { SearchSuggestion as ApiSearchSuggestion } from "@/lib/api";
+import { fetchPOIDetail } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
-import { batchMatchesCurrentMode, catalogCoversView, mergePoisById, MORE_PAGE_SIZE, needsViewportAlign, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds, type ViewportSnapshot } from "@/lib/viewport-search";
-import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES, type ViewportLoader } from "@/lib/viewport-search";
+import { batchMatchesCurrentMode, catalogCoversView, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
+import { loadWorkViewport, WORK_INITIAL_MAX_PAGES } from "@/lib/viewport-search";
 import { maxTierForZoom } from "@/lib/lod";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
@@ -37,6 +36,9 @@ import {
   type BasemapStyle,
 } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
+import { useModeCacheRestore } from "@/hooks/use-mode-cache-restore";
+import { useSearchState } from "@/hooks/use-search-state";
+import { useWorkViewport, readMapViewSnapshot, VIEWPORT_SUPPRESS_MS, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { createCityClusterMarker } from "@/lib/map-markers";
 import { SecondarySidebar, suggestionDisplayIcon, type SearchSuggestion } from "./secondary-sidebar";
@@ -68,10 +70,6 @@ function prefetchRail(panel: "layers" | "saved" | "recent" | "profile" | "auth" 
 
 type DrawerState = "mini" | "half" | "full";
 type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;
-
-/** 程序化相机移动(toggle 收藏图层 setBounds/setCenter)后抑制视口刷新的窗口(ms)。
- *  setBounds 会连续触发 moveend + zoomend,两事件都落在该窗口内被吞掉(w5 saved-overlay-wipe)。 */
-const VIEWPORT_SUPPRESS_MS = 500;
 
 /** 移动抽屉手势(跟手拖动):三态高度(mini px / half·full 按 vh 计算) */
 const DRAWER_MINI_H = 96;
@@ -139,29 +137,6 @@ function flyToLocation(map: { setZoomAndCenter?: (zoom: number, center: [number,
   map.setCenter?.([lng, lat]);
 }
 
-/** /api/suggest 服务端建议 → 客户端 UI 形态。
- *  距离优先用客户端实时 origin 重算（地图平移/定位后仍新鲜），服务端 center
- *  算好的 distance 兜底；无 location 不显示距离。domain 行 kind 一律 place。 */
-function mapApiSuggestion(
-  tip: ApiSearchSuggestion,
-  mode: MapMode,
-  origin: { lng: number; lat: number } | null
-): SearchSuggestion {
-  const kind: SearchSuggestion["kind"] =
-    tip.type === "position" ? "job" : tip.type === "tag" ? "place" : isRecruitmentMode(mode) ? "company" : "place";
-  return {
-    id: tip.id,
-    name: tip.title,
-    subtitle: tip.subtitle,
-    location: tip.location,
-    poiId: tip.poiId ?? (tip.type === "position" || tip.type === "tag" ? undefined : tip.id),
-    positionId: tip.type === "position" ? tip.id : undefined,
-    kind,
-    icon: tip.icon,
-    distance: tip.location && origin ? haversineDistance(tip.location, origin) : tip.distance,
-  };
-}
-
 function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "menu" | "sidebar" | "chevronLeft" | "compass" | "locate" | "person" | "login" | "logout" }) {
   const paths: Record<string, string> = {
     search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm6-2 4 4",
@@ -185,34 +160,7 @@ function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "his
   );
 }
 
-/** 当前地图视野快照(center+zoom+bounds);地图未就绪返回 null。写缓存/对齐判定共用 */
-function readMapViewSnapshot(map: any): ViewportSnapshot | null {
-  if (!map) return null;
-  const centerObj = typeof map.getCenter === "function" ? map.getCenter() : null;
-  const center =
-    centerObj && typeof centerObj.getLng === "function"
-      ? { lng: centerObj.getLng(), lat: centerObj.getLat() }
-      : null;
-  if (!center) return null;
-  const zoom = typeof map.getZoom === "function" ? Math.round(map.getZoom()) : 0;
-  let bounds: ViewportBounds | null = null;
-  const b = typeof map.getBounds === "function" ? map.getBounds() : null;
-  if (b) {
-    const sw = b.getSouthWest?.() ?? b.southwest;
-    const ne = b.getNorthEast?.() ?? b.northeast;
-    const west = sw?.getLng?.() ?? sw?.lng;
-    const south = sw?.getLat?.() ?? sw?.lat;
-    const east = ne?.getLng?.() ?? ne?.lng;
-    const north = ne?.getLat?.() ?? ne?.lat;
-    if ([west, south, east, north].every((n) => typeof n === "number")) {
-      bounds = { west, south, east, north };
-    }
-  }
-  return { center, zoom, bounds };
-}
-
-export function MapShell() {
-  const mapContainer = useRef<HTMLDivElement>(null);
+export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const userMarkerRef = useRef<any>(null);
@@ -267,10 +215,9 @@ export function MapShell() {
   const viewportRefreshPendingRef = useRef(false);
   /** 程序化相机移动(toggle 收藏图层)触发的视口刷新抑制截止时间戳(ms);过期自动失效 */
   const suppressViewportRefreshUntilRef = useRef(0);
-  /** 视口加载器实例(主加载 finally 需要触发补跑) */
-  const viewportLoaderRef = useRef<ViewportLoader | null>(null);
+  /** 视口加载器实例由 useWorkViewport 创建并返回(主加载 finally 用它补跑) */
   // 供一次性创建的地图监听/视口加载器读取最新状态(避免闭包过期)
-  const viewStateRef = useRef({
+  const viewStateRef = useRef<WorkViewportState>({
     mode, query, filters, sort, searchOrigin, userLocation, pageOffset, geoSettled,
   });
   viewStateRef.current = { mode, query, filters, sort, searchOrigin, userLocation, pageOffset, geoSettled };
@@ -281,8 +228,7 @@ export function MapShell() {
   // 左侧结果面板显隐（点击导航"探索"展开）
   const [railPanel, setRailPanel] = useState<RailPanel>(null);
   const exploreOpen = railPanel === "explore";
-  // 搜索建议（AutoComplete）
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  // 搜索建议（AutoComplete）——状态与获取/清理逻辑在 useSearchState hook 内
   const [detailPoi, setDetailPoi] = useState<POI | null>(null);
   const [user, setUser] = useState<AccountUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
@@ -481,23 +427,20 @@ export function MapShell() {
     }
   }, []);
 
-  // 会话缓存：刷新页面后仍恢复本模式累计池，不重打高德
-  useEffect(() => {
-    const cached = readModeCache(mode);
-    if (!cached) return;
-    skipFetchRef.current = true;
-    catalogRef.current = cached.catalog;
-    setCatalog(cached.catalog);
-    setPageOffset(cached.pageOffset);
-    setSearchOrigin(cached.searchOrigin);
-    setQuery(cached.query);
-    setFilters(cached.filters);
-    if (cached.sort) setSort(cached.sort);
-    // 恢复缓存不经主 load,这里复位 noMore,避免上一会话的「没有更多结果」粘住
-    noMoreRef.current = false;
-    setNoMoreData(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在首屏读一次
-  }, []);
+  // 会话缓存：刷新页面后仍恢复本模式累计池，不重打高德（抽到 hook 保持原语义）
+  useModeCacheRestore({
+    mode,
+    skipFetchRef,
+    catalogRef,
+    noMoreRef,
+    setCatalog,
+    setPageOffset,
+    setSearchOrigin,
+    setQuery,
+    setFilters,
+    setSort,
+    setNoMoreData,
+  });
 
   // 地图初始化（保留原有全部逻辑）
   useEffect(() => {
@@ -1004,211 +947,28 @@ export function MapShell() {
     // 使用原始值而非对象引用，避免 React 误判依赖变化
   }, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin?.lng, searchOrigin?.lat, userLocation?.lng, userLocation?.lat, filters.category]);
 
-  // ---- 工作模式视口按需加载(仅 work;Domain 保持刷新才更新)----
-  useEffect(() => {
-    if (!mapReady) return;
-    const map = mapInstance.current;
-    if (!map) return;
-
-    const loader = createViewportLoader({
-      delayMs: VIEWPORT_DEBOUNCE_MS,
-      load: async () => {
-        const v = viewStateRef.current;
-        if (!v.geoSettled) return;
-        if (loadingRef.current) {
-          // 主加载(首屏/刷新/加载更多)在飞时,不静默丢弃视口刷新:
-          // 置 pending 标记,主加载 finally 会补跑本次刷新(Bug 7 次要问题)。
-          viewportRefreshPendingRef.current = true;
-          return;
-        }
-        const mapInst = mapInstance.current;
-        const centerObj = typeof mapInst?.getCenter === "function" ? mapInst.getCenter() : null;
-        const center =
-          centerObj && typeof centerObj.getLng === "function"
-            ? { lng: centerObj.getLng(), lat: centerObj.getLat() }
-            : null;
-        const zoom =
-          typeof mapInst?.getZoom === "function" ? Math.round(mapInst.getZoom()) : 0;
-        const b = typeof mapInst?.getBounds === "function" ? mapInst.getBounds() : null;
-        let bounds: ViewportBounds | null = null;
-        if (b) {
-          const sw = b.getSouthWest?.() ?? b.southwest;
-          const ne = b.getNorthEast?.() ?? b.northeast;
-          const west = sw?.getLng?.() ?? sw?.lng;
-          const south = sw?.getLat?.() ?? sw?.lat;
-          const east = ne?.getLng?.() ?? ne?.lng;
-          const north = ne?.getLat?.() ?? ne?.lat;
-          if ([west, south, east, north].every((n) => typeof n === "number")) {
-            bounds = { west, south, east, north };
-          }
-        }
-        if (!bounds) return;
-        // 本批次数据覆盖的视野快照(与 bounds 同一时刻捕获;写缓存用)
-        const snapshot: ViewportSnapshot | null = center ? { center, zoom, bounds } : null;
-        const mode = canonicalMode(v.mode);
-        if (mode === "work") {
-          // 视口替换:新视野 = 新一批(镜像 domain 分支,tech/22「替换+淡入」)。
-          // 不再用 existing 增量合并——工作目录公司少,首屏+加载更多几乎全捕获,
-          // merge 后去重无变化,列表冻结(用户 Bug 7)。
-          // 新视野重新分页:清除上一视野的「没有更多结果」状态(w3 noMore 对接)
-          noMoreRef.current = false;
-          setNoMoreData(false);
-          // 视口世代 +1:主加载在飞的对旧视野追加批次将被 epoch 校验丢弃
-          viewportEpochRef.current += 1;
-          // pageOffset 状态归零,并跳过其触发的重复主加载
-          // (skipFetch 由 load() 先消费;offset 已为 0 时 setPageOffset 是
-          // 同值 no-op,不 arm skipFetch,避免吞掉下一次合法的滚动加载)
-          if (v.pageOffset !== 0) skipFetchRef.current = true;
-          setPageOffset(0);
-          try {
-            const result = await loadWorkViewport({
-              bounds,
-              maxTier: maxTierForZoom(zoom),
-              filters: v.filters,
-              q: v.query || undefined,
-              sort: v.sort || undefined,
-              page: 1,
-              existing: [], // 替换:新视野清空旧卡片
-              onBatch: (batch) => {
-                // 模式守卫:切换模式后,旧模式在飞的批次(公司/地图 POI)不得
-                // 落进新模式的 catalog,否则工作公司会混入地图列表与 marker
-                if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
-                // 空批次三态(ws1 Bug1):请求成功但 0 条时——旧目录若有任何 POI
-                // 落在当前视野 bounds 内 → 保留旧目录(收藏 fitToPins 退化视野,
-                // 由 VIEWPORT_SUPPRESS_MS 兜底);否则视为真空 → 清空走空态
-                // (整城空白不再被旧城市 pin 占住,列表显示现有空态文案)。
-                if (batch.length === 0 && catalogRef.current.length > 0) {
-                  if (!catalogCoversView(catalogRef.current, bounds)) {
-                    catalogRef.current = [];
-                    setCatalog([]);
-                  }
-                  return;
-                }
-                catalogRef.current = batch;
-                setCatalog(batch);
-                writeModeCache({
-                  mode,
-                  catalog: batch,
-                  pageOffset: 0,
-                  searchOrigin: v.searchOrigin,
-                  query: v.query,
-                  filters: v.filters,
-                  sort: v.sort,
-                  viewport: snapshot ?? undefined,
-                });
-              },
-            });
-            // 视口页(短页 break)决定新视野是否已到底;未到底保持可继续滚动
-            noMoreRef.current = result.noMore;
-            setNoMoreData(result.noMore);
-          } catch (err) {
-            // 视口加载失败不打断主流程:保留现有累计池,下次地图事件再试
-            console.warn("[map-shell] work viewport load failed:", err);
-          }
-          return;
-        }
-        // Domain:随视角变化刷新(替换+淡入)——按 live bounds 重新取第一批,
-        // existing=[] 清空旧列表,offset 归零(新视野 = 新一批)。
-        if (mode === "domain") {
-          // 分类门控(poi-category-loading):无分类选择 → 视口移动不拉取
-          // (目录保持空、无 domain marker);搜索(query)豁免。已选分类 →
-          // 按当前选中分类重拉新视图(filters 下行,数据源按类过滤)。
-          if (!v.query && !v.filters?.category) {
-            return;
-          }
-          // 新视野重新分页:清除上一视野的「没有更多结果」状态
-          noMoreRef.current = false;
-          setNoMoreData(false);
-          // 视口世代 +1:主加载在飞的对旧视野追加批次将被 epoch 校验丢弃
-          viewportEpochRef.current += 1;
-          // pageOffset 状态归零,并跳过其触发的重复主加载
-          // (skipFetch 由 load() 先消费;offset 已为 0 时 setPageOffset 是
-          // 同值 no-op,不 arm skipFetch,避免吞掉下一次合法的滚动加载)
-          if (v.pageOffset !== 0) skipFetchRef.current = true;
-          setPageOffset(0);
-          try {
-            const result = await fetchPOIsForMode({
-              mode,
-              query: v.query || undefined,
-              filters: v.filters, // 分类驱动加载(poi-category-loading)
-              center: v.searchOrigin ?? undefined,
-              zoom,
-              bounds,
-              existing: [], // 替换:新视野清空旧卡片
-              addCap: DOMAIN_BATCH_SIZE,
-              pageOffset: 0,
-              onBatch: (batch) => {
-                // 模式守卫:同上——域名刷新批次不得落进切换后的工作模式
-                if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
-                // 空批次三态(ws1 Bug1):同 work 分支——真空清空,否则保留旧目录
-                if (batch.length === 0 && catalogRef.current.length > 0) {
-                  if (!catalogCoversView(catalogRef.current, bounds)) {
-                    catalogRef.current = [];
-                    setCatalog([]);
-                  }
-                  return;
-                }
-                catalogRef.current = batch;
-                setCatalog(batch);
-                writeModeCache({
-                  mode,
-                  catalog: batch,
-                  pageOffset: 0,
-                  searchOrigin: v.searchOrigin,
-                  query: v.query,
-                  filters: v.filters,
-                  sort: v.sort,
-                  viewport: snapshot ?? undefined,
-                });
-              },
-            });
-            // 分类全量加载带 total:新视野是否已到底由循环结果决定
-            // (短页/total 取尽;硬顶 1000 时 noMore=false,由 atCap 停止哨兵)
-            if (result.noMore !== undefined) {
-              noMoreRef.current = result.noMore;
-              setNoMoreData(result.noMore);
-            }
-          } catch (err) {
-            console.warn("[map-shell] domain viewport load failed:", err);
-          }
-          return;
-        }
-      },
-    });
-
-    const onViewChange = () => {
-      // w5:程序化相机移动(toggle 收藏图层 setBounds)触发 moveend/zoomend 时,
-      // 在抑制窗口内跳过视口刷新,防止空批次整体替换清空目录(收藏图层启停 bug)。
-      if (suppressViewportRefreshUntilRef.current > Date.now()) return;
-      loader.schedule();
-    };
-    viewportLoaderRef.current = loader;
-    map.on("moveend", onViewChange);
-    map.on("zoomend", onViewChange);
-    return () => {
-      loader.dispose();
-      viewportLoaderRef.current = null;
-      map.off?.("moveend", onViewChange);
-      map.off?.("zoomend", onViewChange);
-    };
-  }, [mapReady]);
-
-  // ---- 挂载对齐加载(ws1 Bug1 视口)----
-  // mode 级会话缓存还原的是「上次会话视野」的目录(可能停在别的城市)。刷新后地图
-  // 初始化固定在杭州 zoom 13,geolocation 被拒时不产生任何 moveend——若缓存视野
-  // 快照与当前地图视野显著不符(旧缓存无快照一律视为不符),主动调度一次当前视野
-  // 的视口加载,不再等用户手动拖动(否则当前视野整城空白直到 moveend)。
-  useEffect(() => {
-    if (!mapReady || !geoSettled) return;
-    if (!viewportLoaderRef.current) return;
-    const cached = readModeCache(mode);
-    if (!cached || cached.catalog.length === 0) return;
-    const snap = readMapViewSnapshot(mapInstance.current);
-    if (!snap) return;
-    if (!needsViewportAlign(cached.viewport, snap.center, snap.zoom)) return;
-    viewportLoaderRef.current.schedule();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在挂载/定位就绪/切模式时检查
-  }, [mapReady, geoSettled, mode]);
+  // ---- 工作模式视口按需加载 + 挂载对齐加载(ws1 Bug1)----
+  // 视口加载器创建/调度(moveend/zoomend 防抖 + 抑制窗口)与挂载对齐判定抽到
+  // useWorkViewport;共享 ref 全部传入,与主加载 effect 的读写顺序保持一致。
+  // loader 实例经返回的 viewportLoaderRef 暴露,主加载 finally 用它补跑 pending
+  // 视口刷新(skipFetch 消费与 Bug 7 补跑路径不变)。
+  const { viewportLoaderRef } = useWorkViewport({
+    mapInstance,
+    mapReady,
+    geoSettled,
+    mode,
+    loadingRef,
+    viewportRefreshPendingRef,
+    noMoreRef,
+    viewportEpochRef,
+    skipFetchRef,
+    suppressViewportRefreshUntilRef,
+    catalogRef,
+    viewStateRef,
+    setCatalog,
+    setNoMoreData,
+    setPageOffset,
+  });
 
   // 距离圆心实时化(ws-b 工作 POI 不随视角改变):圆心跟随地图当前中心 mapCenter
   // (moveend 实时更新),而非挂载时一次性的 userLocation——否则 distance filter
@@ -1735,90 +1495,16 @@ export function MapShell() {
   }, [mode, pageOffset, searchOrigin, query, filters, sort, userLocation]);
 
   // ---- 搜索建议 ----
-  // work：/api/suggest 服务端目录（公司 + 岗位 + 标签），0 命中/报错回退本地池；
-  // domain：本地优先（/api/suggest → hz_pois 前缀匹配），0 命中/报错回退高德
-  //   AutoComplete 一次，回退失败返回空列表不卡死。
-  // 依赖只留 [query, mode]：之前 [query, mode, zoom, catalog] 里 catalog 每批替换、
-  // zoom 每次平移都取消 200ms 定时器——hz-poi Stage 4 后 catalog 高频变化，
-  // 候选列表永远不落地。zoom/catalog 改经 ref 读取。
-  useEffect(() => {
-    if (!query.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      const origin = distanceOriginRef.current;
-
-      if (isRecruitmentMode(mode)) {
-        const fallback = () => {
-          const pool = catalogRef.current.length ? catalogRef.current : INTERNSHIP_SEED;
-          const tags = suggestSearchTags(query, 3).map((tag) => ({
-            id: tag.id,
-            name: tag.title,
-            subtitle: tag.key,
-            kind: "place" as const,
-          }));
-          const tips = suggestRecruitment(pool, query, 8).map((tip) => ({
-            id: tip.id,
-            name: tip.name,
-            subtitle: tip.subtitle,
-            location: tip.location,
-            poiId: tip.poiId,
-            positionId: tip.positionId,
-            kind: tip.kind,
-          }));
-          return [...tags, ...tips].slice(0, 8);
-        };
-        try {
-          const res = await fetchSearchSuggest(query.trim(), mode, origin);
-          if (cancelled) return;
-          if (!res.suggestions.length) {
-            setSuggestions(fallback());
-            return;
-          }
-          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, origin)));
-        } catch {
-          if (!cancelled) setSuggestions(fallback());
-        }
-        return;
-      }
-
-      // domain：本地优先
-      try {
-        const res = await fetchSearchSuggest(query.trim(), mode, origin);
-        if (cancelled) return;
-        if (res.suggestions.length) {
-          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, origin)));
-          return;
-        }
-      } catch {
-        if (cancelled) return;
-      }
-      // 本地 0 命中 / 请求失败 → 回退高德 AutoComplete 一次
-      try {
-        const tips = await fetchSuggestions(query.trim(), zoomRef.current <= 8 ? "全国" : "");
-        if (cancelled) return;
-        setSuggestions(
-          tips.map((tip) => ({
-            id: tip.id,
-            name: tip.name,
-            subtitle: [tip.district, tip.address].filter(Boolean).join(" · ") || tip.type,
-            location: tip.location,
-            kind: "place",
-            icon: "📍",
-          }))
-        );
-      } catch {
-        if (!cancelled) setSuggestions([]);
-      }
-    }, 200);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [query, mode]);
+  // 建议获取/清理逻辑抽到 useSearchState(work:/api/suggest 服务端目录 + 本地回退;
+  // domain:本地优先 + 高德 AutoComplete 兜底;依赖只留 [query, mode])。
+  // 选择建议后的落地逻辑在 handleSelectSuggestion(下方)。
+  const { suggestions, setSuggestions } = useSearchState({
+    query,
+    mode,
+    distanceOriginRef,
+    zoomRef,
+    catalogRef,
+  });
 
   useEffect(() => {
     setMobileSuggestIndex(-1);
