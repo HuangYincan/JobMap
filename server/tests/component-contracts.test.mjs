@@ -463,3 +463,13 @@ test('map shell Bug1 卡片/建议选中置位:hasInteractedRef 与地图 pin �
     /onOpenDetail=\{\(poi\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/
   );
 });
+
+test('logout resets saved overlay state and pref alongside saved places', () => {
+  const shell = src('components/map-shell.tsx');
+  const logoutBlock = shell.slice(shell.indexOf("const handleAuthAction"), shell.indexOf("const handleSaveProfile"));
+  // 登出分支清空 savedPlaces 的同时重置 savedOverlay 状态 + 持久化 pref,避免收藏图层静默消失
+  assert.match(logoutBlock, /setUser\(null\)/);
+  assert.match(logoutBlock, /setSavedPlaces\(\[\]\)/);
+  assert.match(logoutBlock, /setSavedOverlay\(false\)/);
+  assert.match(logoutBlock, /writeSavedOverlayPref\(false\)/);
+});

@@ -1719,6 +1719,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         setUser(null);
         setSearchHistory(listGuestHistory());
         setSavedPlaces([]);
+        setSavedOverlay(false);
+        writeSavedOverlayPref(false);
         setApplications([]);
         setInbox([]);
         setRailPanel((current) =>
