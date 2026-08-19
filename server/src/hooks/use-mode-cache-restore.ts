@@ -15,8 +15,11 @@ export interface ModeCacheRestoreDeps {
   mode: MapMode;
   skipFetchRef: MutableRefObject<boolean>;
   catalogRef: MutableRefObject<POI[]>;
+  /** 列表池(wsv):还原时与 catalog 同源(全量池),挂载对齐的视口加载随后只换列表 */
+  listCatalogRef: MutableRefObject<POI[]>;
   noMoreRef: MutableRefObject<boolean>;
   setCatalog: (catalog: POI[]) => void;
+  setListCatalog: (catalog: POI[]) => void;
   setPageOffset: (offset: number) => void;
   setSearchOrigin: (origin: { lng: number; lat: number } | null) => void;
   setQuery: (query: string) => void;
@@ -30,8 +33,10 @@ export function useModeCacheRestore(deps: ModeCacheRestoreDeps) {
     mode,
     skipFetchRef,
     catalogRef,
+    listCatalogRef,
     noMoreRef,
     setCatalog,
+    setListCatalog,
     setPageOffset,
     setSearchOrigin,
     setQuery,
@@ -47,6 +52,10 @@ export function useModeCacheRestore(deps: ModeCacheRestoreDeps) {
     skipFetchRef.current = true;
     catalogRef.current = cached.catalog;
     setCatalog(cached.catalog);
+    // 还原即列表池 = 全量 marker 池(还原后 marker 不少于还原前);
+    // 挂载对齐的视口加载随后把列表换成当前视野内容
+    listCatalogRef.current = cached.catalog;
+    setListCatalog(cached.catalog);
     setPageOffset(cached.pageOffset);
     setSearchOrigin(cached.searchOrigin);
     setQuery(cached.query);

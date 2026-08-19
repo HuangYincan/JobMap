@@ -4,8 +4,9 @@
 // useWorkViewport — 视口按需加载 Hook(仅 work/domain 两个模式)
 //
 // 抽取自 map-shell(QA scan #6):视口加载器创建/调度 + 挂载对齐加载。
-// - work:随视角增量合并加载(不清空已加载 marker;zoom 变化只把新视口 poi
-//   并进现有池,不整池替换);
+// - work:随视角增量合并加载,列表 vs 地图池分离——
+//   marker 池(catalog)只增不减保持全量(zoom 变化不清空已加载 poi);
+//   listCatalog 随视口换(侧栏二级卡片展示当前视角,「只换列表」);
 // - domain:随视角变化刷新(替换+淡入),无分类选择 → 视口移动不拉取;
 // - moveend/zoomend 防抖调度,主加载在飞时置 pending 由主加载 finally 补跑;
 // - 程序化相机移动(toggle 收藏图层)在抑制窗口内跳过刷新。
@@ -23,6 +24,7 @@ import {
   createViewportLoader,
   DOMAIN_BATCH_SIZE,
   loadWorkViewport,
+  mergePoisById,
   needsViewportAlign,
   VIEWPORT_DEBOUNCE_MS,
   type ViewportBounds,
@@ -86,8 +88,11 @@ export interface WorkViewportDeps {
   skipFetchRef: MutableRefObject<boolean>;
   suppressViewportRefreshUntilRef: MutableRefObject<number>;
   catalogRef: MutableRefObject<POI[]>;
+  /** 列表池(wsv):随视口换——侧栏二级卡片展示当前视角;marker 池(catalogRef)只增不减 */
+  listCatalogRef: MutableRefObject<POI[]>;
   viewStateRef: MutableRefObject<WorkViewportState>;
   setCatalog: (catalog: POI[]) => void;
+  setListCatalog: (catalog: POI[]) => void;
   setNoMoreData: (noMore: boolean) => void;
   setPageOffset: (offset: number) => void;
 }
@@ -107,8 +112,10 @@ export function useWorkViewport(
     skipFetchRef,
     suppressViewportRefreshUntilRef,
     catalogRef,
+    listCatalogRef,
     viewStateRef,
     setCatalog,
+    setListCatalog,
     setNoMoreData,
     setPageOffset,
   } = deps;
@@ -158,9 +165,9 @@ export function useWorkViewport(
         const snapshot: ViewportSnapshot | null = center ? { center, zoom, bounds } : null;
         const mode = canonicalMode(v.mode);
         if (mode === "work") {
-          // 视口增量合并(wsv):新视野的 POI 并进现有池,不清空已加载 marker。
-          // 语义从「替换式」(existing:[] 清空旧卡片)改为「增量合并」——zoom 变化
-          // 只把新视口 POI 并进现有池,不整池替换。增量语义下不再需要:
+          // 列表 vs 地图池分离(wsv):marker 池(catalog)增量合并、只增不减,
+          // 不清空已加载 poi;listCatalog 随视口换——zoom 变化只换侧栏二级
+          // 卡片,地图 poi 保持全量。增量语义下不再需要:
           //   - epoch +1/归零 pageOffset:主加载在飞批次无需被视口作废(见 viewport-search 注释);
           //   - 空批次清空分支:整池保留(所有已加载 marker 的地图全量),列表/空态由 listCatalog 决定。
           try {
@@ -178,19 +185,29 @@ export function useWorkViewport(
               // 去 3000 硬顶(wsv):work 视口累计池不设结果数上限,
               // mergePoisById 的 cap 放开(缺省 POI_HARD_CAP=3000 仅主加载/加载更多用)
               cap: Infinity,
-              existing: catalogRef.current, // 增量:以现有池为底,新视野点往里并
+              // 列表 vs 地图池分离(wsv):existing 是「本轮视口的列表累积」——
+              // 从空开始按视口换(侧栏二级卡片展示当前视角);marker 池(catalog)
+              // 只增不减,由下方 mergePoisById 单独并入,保持全量。
+              existing: [],
               onBatch: (batch) => {
                 // 模式守卫:切换模式后,旧模式在飞的批次(公司/地图 POI)不得
                 // 落进新模式的 catalog,否则工作公司会混入地图列表与 marker
                 if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
-                // 增量语义:空批次不清空整池(catalog 保留所有已加载 marker);
-                // 列表/空态由 map-shell 的 listCatalog 决定。
+                // 增量语义:空批次不清空任何池(catalog 保留所有已加载 marker,
+                // listCatalog 保留上一视角卡片)——列表/空态由 map-shell 决定。
                 if (batch.length === 0) return;
-                catalogRef.current = batch;
-                setCatalog(batch);
+                // 列表池:当前视口的累积结果 → 侧栏二级卡片随视角换
+                listCatalogRef.current = batch;
+                setListCatalog(batch);
+                // marker 池:全量累计,只增不减(去上限,cap=Infinity 不裁剪)
+                const marker = mergePoisById(catalogRef.current, batch, Infinity);
+                catalogRef.current = marker;
+                setCatalog(marker);
+                // 缓存语义:写全量 marker 池(供 marker 渲染与下次会话还原;
+                // 还原后挂载对齐逻辑决定列表,marker 不少于还原前)
                 writeModeCache({
                   mode,
-                  catalog: batch,
+                  catalog: marker,
                   pageOffset: 0,
                   searchOrigin: v.searchOrigin,
                   query: v.query,
