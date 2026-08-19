@@ -6,11 +6,13 @@ import { loadWorkCatalogFromDb } from '../src/lib/recruitment-store.ts';
 import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
 import { DISTRICT_BOXES } from '../src/lib/spatial-filters.ts';
 import {
+  cityBoundsConsistencySql,
   companySitesSpatialSql,
   hasSpatialClip,
   knownHangzhouDistricts,
   parseDistanceKm,
   parseMaxTier,
+  singleCityReference,
 } from '../src/lib/spatial-query.ts';
 
 test('companySitesSpatialSql is empty without a clip', () => {
@@ -113,6 +115,55 @@ test('spatialClipFromSearch maps maxTier / city / alive onto the clip', () => {
   assert.equal(clip?.city, '北京');
   assert.equal(clip?.alive, true);
   assert.equal(spatialClipFromSearch({ filters: { maxTier: 'abc', city: '  ', alive: false } }), undefined);
+});
+
+test('cityBoundsConsistencySql: 杭州 bbox 时剔除 city=深圳 行(跨城串味防御)', () => {
+  // 杭州西溪视野(单一城市区域,面积远低于阈值)。
+  const bounds = { west: 120.0, south: 30.2, east: 120.2, north: 30.3 };
+  const ref = singleCityReference(bounds);
+  assert.equal(ref?.city, '杭州');
+  const { sql, params } = cityBoundsConsistencySql(bounds);
+  assert.match(sql, /s\.city IS NULL/);
+  assert.match(sql, /COALESCE\(s\.province, ''\) ILIKE \$1/);
+  assert.match(sql, /COALESCE\(s\.city, ''\) ILIKE \$2/);
+  assert.deepEqual(params, ['%浙江%', '%杭州%']);
+  // 深圳标签的行在此 WHERE 下被剔除(不命中 浙江/杭州 ILIKE)。
+  assert.equal('深圳市'.includes('杭州'), false);
+  assert.equal('广东省'.includes('浙江'), false);
+  assert.equal('杭州市'.includes('杭州'), true);
+  assert.equal('浙江省'.includes('浙江'), true);
+});
+
+test('cityBoundsConsistencySql: 全国 bbox 不做一致性裁剪(保留真实跨城)', () => {
+  const nationwide = { west: 73, south: 18, east: 135, north: 54 };
+  assert.equal(singleCityReference(nationwide), null);
+  assert.deepEqual(cityBoundsConsistencySql(nationwide), { sql: '', params: [] });
+  // 面积超阈值 → 不裁剪。
+  const big = { west: 100, south: 20, east: 130, north: 50 }; // 30×30 = 900 sq.deg
+  assert.deepEqual(cityBoundsConsistencySql(big), { sql: '', params: [] });
+});
+
+test('cityBoundsConsistencySql: 多参考框/未收录/坐标轴异常 → null(不裁剪)', () => {
+  // 边界上(许昌)同时命中 北京/上海 框边界 → 保守 null。
+  assert.equal(singleCityReference(null), null);
+  assert.equal(singleCityReference(undefined), null);
+  assert.deepEqual(cityBoundsConsistencySql({ west: 118.9, south: 30.7, east: 119.1, north: 30.9 }), {
+    sql: '',
+    params: [],
+  });
+  // 零宽/负宽 bbox。
+  assert.deepEqual(cityBoundsConsistencySql({ west: 120, south: 30, east: 120, north: 30.2 }), {
+    sql: '',
+    params: [],
+  });
+  // 占位符编号从 start 继续(与 companySitesSpatialSql 参数合并场景)。
+  const merged = companySitesSpatialSql({ bounds: { west: 120, south: 30.2, east: 120.2, north: 30.3 } });
+  const cons = cityBoundsConsistencySql(
+    { west: 120, south: 30.2, east: 120.2, north: 30.3 },
+    merged.params.length + 1,
+  );
+  assert.match(cons.sql, /ILIKE \$5/);
+  assert.match(cons.sql, /ILIKE \$6/);
 });
 
 test('loadWorkCatalogFromDb clips Hangzhou west-lake when DATABASE_URL is set', async (t) => {

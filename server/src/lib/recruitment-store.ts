@@ -4,7 +4,7 @@
 
 import { getPool } from './db.ts';
 import { resolveCompanyLogo, type ResolvedLogo } from './company-logo.ts';
-import { companySitesSpatialSql, hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
+import { cityBoundsConsistencySql, companySitesSpatialSql, hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
 import type { ApplySource, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
 
 interface CompanyRow {
@@ -110,14 +110,18 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
   if (!pool) return null;
   try {
     const spatial = companySitesSpatialSql(clip);
-    const clipped = hasSpatialClip(clip);
+    // Bug1 跨城串味防御（2026-08-19）：单一城市视野下剔除「city 与坐标矛盾」的行
+    // （如 city=深圳 但坐标在杭州）。cityBoundsConsistencySql 在非单一城市视野返回
+    // 空片段，全国/省际视野不受影响。占位符编号从 spatial.params 之后继续。
+    const consistency = cityBoundsConsistencySql(clip?.bounds, spatial.params.length + 1);
+    const clipped = hasSpatialClip(clip) || consistency.sql !== '';
     const siteSql = clipped
       ? `SELECT s.id::text, s.company_id::text, s.name, s.address, s.city, s.province, s.city_code, s.lng, s.lat, s.career_url, s.logo_url
          FROM company_sites s
-         WHERE s.geom IS NOT NULL${spatial.sql}`
+         WHERE s.geom IS NOT NULL${spatial.sql}${consistency.sql}`
       : `SELECT id::text, company_id::text, name, address, city, province, city_code, lng, lat, career_url, logo_url
          FROM company_sites`;
-    const sites = await pool.query<SiteRow>(siteSql, spatial.params);
+    const sites = await pool.query<SiteRow>(siteSql, [...spatial.params, ...consistency.params]);
     if (clipped && sites.rows.length === 0) return [];
 
     // Ungeocoded sites (address-only, lng/lat NULL) must not pin at (0,0).
