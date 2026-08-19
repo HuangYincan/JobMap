@@ -102,10 +102,11 @@
     "lat": 30.2422
   },
   "禾赛科技": {
-    "name": "禾赛赫兹全球智能制造中心",
-    "address": "萧山区奔竞大道3300号19号楼",
-    "lng": 120.33505,
-    "lat": 30.238072
+    "name": "上海禾赛科技有限公司",
+    "address": "嘉定区新徕路468号园区二号楼",
+    "lng": 121.213711,
+    "lat": 31.408064,
+    "city": "上海市"
   },
   "智能精准学": {
     "name": "浙江精准学科技有限公司",
@@ -125,23 +126,89 @@
     "lng": 120.143182,
     "lat": 30.155863
   },
-  "vast": { "exclude": true },
-  "tp": { "exclude": true },
-  "拓竹科技": { "exclude": true },
-  "万兴科技": { "exclude": true },
-  "奥比中光": { "exclude": true },
-  "MPS芯源系统": { "exclude": true },
-  "星宸科技": { "exclude": true },
-  "多益网络": { "exclude": true },
-  "集益威半导体": { "exclude": true },
-  "砺算科技": { "exclude": true },
-  "积加科技": { "exclude": true },
-  "伏达半导体": { "exclude": true },
-  "国科长三角资本": { "exclude": true },
-  "昆仑芯": { "exclude": true },
-  "昆仑芯科技": { "exclude": true },
-  "高频杭州": { "exclude": true },
-  "宁树科技": { "exclude": true },
-  "恒瑞医药": { "exclude": true },
-  "海天集团": { "exclude": true }
+  "vast": {
+    "exclude": true
+  },
+  "tp": {
+    "exclude": true
+  },
+  "拓竹科技": {
+    "exclude": true
+  },
+  "万兴科技": {
+    "exclude": true
+  },
+  "奥比中光": {
+    "exclude": true
+  },
+  "MPS芯源系统": {
+    "exclude": true
+  },
+  "星宸科技": {
+    "exclude": true
+  },
+  "多益网络": {
+    "exclude": true
+  },
+  "集益威半导体": {
+    "exclude": true
+  },
+  "砺算科技": {
+    "exclude": true
+  },
+  "积加科技": {
+    "exclude": true
+  },
+  "伏达半导体": {
+    "exclude": true
+  },
+  "国科长三角资本": {
+    "exclude": true
+  },
+  "昆仑芯": {
+    "exclude": true
+  },
+  "昆仑芯科技": {
+    "exclude": true
+  },
+  "高频杭州": {
+    "exclude": true
+  },
+  "宁树科技": {
+    "exclude": true
+  },
+  "恒瑞医药": {
+    "exclude": true
+  },
+  "海天集团": {
+    "exclude": true
+  },
+  "上汽集团": {
+    "name": "上汽大厦",
+    "address": "静安区威海路489号",
+    "lng": 121.462242,
+    "lat": 31.226809,
+    "city": "上海市"
+  },
+  "中微公司": {
+    "name": "中微半导体设备(上海)股份有限公司",
+    "address": "浦东新区金桥出口加工区(南区)泰华路188号",
+    "lng": 121.678978,
+    "lat": 31.229258,
+    "city": "上海市"
+  },
+  "乐鑫科技": {
+    "name": "乐鑫信息科技(上海)股份有限公司",
+    "address": "浦东新区碧波路235弄3号楼",
+    "lng": 121.582851,
+    "lat": 31.203651,
+    "city": "上海市"
+  },
+  "智元机器人": {
+    "name": "智元创新(上海)科技股份有限公司",
+    "address": "浦东新区秀浦路2555号29幢",
+    "lng": 121.60761,
+    "lat": 31.13053,
+    "city": "上海市"
+  }
 }

@@ -13,7 +13,9 @@
       "id": "tencent-hangzhou-site",
       "name": "腾讯",
       "location": {
-        "address": "西湖区文二西路712号西溪乐谷2号楼"
+        "address": "西湖区文二西路712号西溪乐谷2号楼",
+        "lng": 120.079649,
+        "lat": 30.281382
       }
     }
   ],

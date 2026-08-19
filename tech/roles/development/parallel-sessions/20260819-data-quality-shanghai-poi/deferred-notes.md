@@ -6,8 +6,8 @@
 
 1. **试点爬取** ✅ 已执行(boss 直接跑 pilot crawl,礼貌限速):拼多多/中微/燧原经 HTML 启发式各获 +1 聚合职位(仅作证据,未合入 drops——与 radar 聚合行同质量问题);3 家飞书 ATS 公司(得物/智元/禾赛)报 `non-JSON response body`。
 2. **LLM 全量质检** ✅ 已执行(2026-08-19,deepseek-v4-flash):816 岗位 通过 90 / 警告 719 / 失败 7 / 错误 0;报告 `tech/roles/data/validation-report-20260819.json`。失败 7 条:6 条为门户入口式标题(人才计划/训练营,已知聚合语义);1 条为真实坐标 bug(**tencent-hangzhou 钉在网易地址**)——已修复并推送 `e3e1934`。
-3. **上海 geocode** ⏳ 延后:AMap 日配额耗尽(infocode 10044,8/17 与 8/19 两日均确认)。配额重置后执行 `npm run geocode:sites:apply --only <15 pilot slugs>`(站点级 skip + override 城市门控已就位,f6cdc0b + 006a3e4)。
-4. **`import:seed:apply`** ⏳ 待用户授权:DB 当前与 drops 有差异——pilot 公司 -shanghai 等站点坐标清除、tencent-hangzhou 坐标修正均未同步到 DB;授权后执行并验证上海公司上地图。
+3. **上海 geocode** ✅ 已执行(2026-08-19,用户提供 BAIDU_MAP_AK):15/15 家 -shanghai 站点全部落真实上海办公点。路径:AMap place-text(10044)→ 百度地点检索(免费 100 次/天耗尽)→ 官方地址核实(上市公告/工商注册/年报)+ 百度正逆地理编码 v3(配额 0%)→ 城市门控 override。**经验:百度地点检索免费配额极小(100 次/天),主路径应优先地址 geocode v3。**
+4. **`import:seed:apply`** ⏳ 待用户授权:DB 当前与 drops 有差异——pilot 公司 -shanghai 等站点坐标、tencent-hangzhou 坐标修正均未同步到 DB;授权后执行并验证上海公司上地图。
 
 ## 口径/决策
 
