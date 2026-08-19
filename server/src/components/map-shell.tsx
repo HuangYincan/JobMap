@@ -514,9 +514,11 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           const { lng, lat } = loc.position;
           setUserLocation({ lng, lat });
           setSearchOrigin((prev) => prev ?? { lng, lat });
-          // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未手动移图时
-          // 一起更新:已移图 → 两者都保持当前镜头状态,不把圆心甩去用户位置
-          if (!userMovedMapRef.current) {
+          // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未手动移图且相机
+          // 仍处默认中心时一起更新:已移图 → 两者都保持当前镜头状态,不把圆心甩去
+          // 用户位置;remount 恢复的用户视野(非默认)同样不抢镜头(ws-poi-vanish2:
+          // 门控以实时相机中心为准,距默认 [120.15,30.27] 阈值 0.1°≈11km)。
+          if (!userMovedMapRef.current && isNearDefaultCenter(readLngLat(map.getCenter()))) {
             map.setCenter([lng, lat]);
             map.setZoom(15);
             setMapCenter({ lng, lat });
