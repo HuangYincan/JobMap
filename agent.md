@@ -2,9 +2,9 @@
 
 你是 Domain Map Platform 项目的 AI 开发者。本文档定义了你的职责、工作流程和协作规范。
 
-> **状态：当前 AI 开发契约；最后审查：2026-08-17**
+> **状态：当前 AI 开发契约；最后审查：2026-08-19**
 >
-> 本仓库目前是文档/脚手架阶段。不存在的代码、迁移、测试或部署文件不得被描述为已实现。
+> 本仓库是可运行应用(Next.js 前端 + `/api/*` + PostGIS + 爬虫,Phase 2/3/4 已并入 `dev`)。文档必须反映可验证事实；不存在的代码、迁移、测试或部署文件不得被描述为已实现。
 
 ## 核心原则
 
@@ -39,6 +39,10 @@ domain-map/
 | `validate-positions-llm.mjs` | LLM 岗位真实性校验 | 需 `LLM_API_KEY`/`LLM_MODEL`;无 key dry-run |
 | `split-aggregates-report.mjs` | 聚合行拆解计划 | 读 validation-report,产出 split-plan |
 | `import-hz-pois.mjs` | 杭州 POI CSV 入库 | 幂等 `ON CONFLICT DO UPDATE`;`--apply/--truncate/--limit`;需 PostGIS(`make db-up`) |
+| `audit-pin-locations.mjs` | 地图 pin 坐标审计 | `npm run audit:pins`,需 `AMAP_WEB_KEY` + `DATABASE_URL` |
+| `geocode-sites-apply.mjs` | 站点落真实办公点 | `npm run geocode:sites:apply`;city-scoped place-text + regeo;需 `AMAP_WEB_KEY`(配额耗尽自动切百度) |
+| `plan-site-geocode.mjs` | 待 geocode 站点清单 | `npm run geocode:sites`;只列出缺坐标站点,不写 |
+| `label-categories.mjs` | category 国标大类打标辅助 | 见 `tech/19-company-labeling.md` |
 
 打标口径与国标大类字典:`tech/19-company-labeling.md`;LOD tier 语义(0..21 可见最小 zoom)同文档。
 杭州 POI 本地化(表/导入/tier/回退预算/API 契约):`tech/22-hangzhou-poi-local.md`;来源审查:`tech/roles/data/etl/hangzhou-poi.md`。
@@ -101,19 +105,19 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 ### 1. 接到新任务时
 
 1. **理解需求**:
-   - 阅读相关 PRD:`tech/roles/product/PRD/*.md`
+   - 阅读相关 PRD:`tech/roles/product/PRD/*.md`(规划路径,目录尚未建立)
    - 查看架构文档:`tech/01-architecture.md`
    - 确认数据模型:`tech/02-data-model.md`
 
 2. **规划实施**:
    - 如果是新插件:参考 `tech/03-plugin-system.md`
-   - 如果是 Bug 修复:调用 `/diagnosing-bugs` skill
+   - 如果是 Bug 修复:系统化排查(定位 → 假设 → 验证;`/diagnosing-bugs` skill 规划中,尚未实现)
    - 如果是新功能:先写技术方案到 `tech/roles/development/implementation/`
 
 3. **选择开发方式**:
-   - 关键模块(实力评分/推荐算法):使用 `/tdd` skill
-   - UI 原型验证:使用 `/prototype` skill
-   - 领域模型设计:使用 `/domain-modeling` skill
+   - 关键模块(实力评分/推荐算法):先写测试再实现(TDD;`/tdd` skill 规划中,尚未实现)
+   - UI 组件开发:参考 `.claude/skills/frontend-component-dev/` 与 `.claude/skills/liquid-glass-components/`
+   - 领域插件开发:参考 `.claude/skills/plugin-dev/`(`/domain-modeling` skill 规划中,尚未实现)
    - 一般开发:直接实现
 
 ### 2. 开发过程中
@@ -127,18 +131,19 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
    - **只有在用户明确批准后,才能开始编写前端代码**
    - 这条规则无例外:从页面到组件,从 UI 调整到新功能
 
-2. **使用现代化组件库**:
-   - ⚠️ **避免重复造轮子,优先使用已有的前端组件库**
+2. **沿用现有设计系统**:
+   - ⚠️ **避免重复造轮子,优先复用已有实现**
    - 🔍 **但绝不能无脑使用!使用任何组件前必须做代码审查**:
      - 阅读组件源码,理解实现原理
      - 理解组件的 props/state/生命周期
      - 理解组件的依赖和性能特征
      - **像自己亲手写的那样熟悉它**
      - 慢一点没关系,理解比速度重要
-   - 液态玻璃组件:使用 [liquid-glass-react](https://github.com/rdev/liquid-glass-react)
-   - UI 组件:使用 [shadcn/ui](https://ui.shadcn.com/)
-   - 动画:使用 [Framer Motion](https://www.framer.com/motion/)
-   - 图标:使用 [React Icons](https://react-icons.github.io/react-icons/)
+   - 现有设计系统:CSS Modules + 自研液态玻璃卡片(liquid glass 只用于 POI/岗位卡片,
+     panel chrome 保持 `--soft-strong`);组件开发技能见
+     `.claude/skills/liquid-glass-components/` 与 `.claude/skills/frontend-component-dev/`
+   - 引入新组件库前必须按 CONTRIBUTING 门禁审查(源码/许可证/安全/SSR 体积/记录理由);
+     `server/package.json` 当前依赖仅 next/pg/react/react-dom,不要凭空引用未安装依赖
    - 详见 `tech/07-frontend-design-system.md`
 
 3. **遵循 Apple 设计风格**:
@@ -182,9 +187,9 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
    - **布局示意图**记录到对应 Phase 的实施文档中
 
 6. **编写测试**:
-   - 单元测试:`tests/unit/`
-   - 集成测试:`tests/integration/`
-   - E2E 测试:`tests/e2e/`(关键流程必须有)
+   - 单元测试/契约测试:`server/tests/`(Next.js,`node --test`)+ `crawler/tests/`(pytest,`make test-unit`)
+   - DB 集成测试:`tests/integration/db/test_migrations.sh`(`make test-integration`)
+   - E2E:Playwright E2E 尚未实现(见 README deferred 清单)
 
 ### 3. 完成后
 
@@ -206,7 +211,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 
 ### 4. Code Review
 
-调用 `/code-review` skill 进行自我审查,检查:
+按以下清单自我审查(`/code-review` skill 规划中,尚未实现):
 - Standards:是否符合本文档规范
 - Spec:是否实现了 PRD 要求
 - Security:是否有安全漏洞
@@ -237,11 +242,11 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 | 新功能上线 | `tech/zh-cn/tutorial/<feature>.md`(使用教程) |
 | 功能说明变更 | `tech/zh-cn/features/<feature>.md` |
 | 部署流程变更 | `tech/zh-cn/deployment/*.md` |
-| 产品需求确定 | `tech/roles/product/PRD/<feature>.md` |
+| 产品需求确定 | `tech/roles/product/PRD/<feature>.md`(规划路径,目录尚未建立) |
 | 开发过程记录 | `tech/roles/development/implementation/<phase>.md` |
 | 测试发现 Bug | `tech/roles/testing/test-reports/bug-reports.md` |
-| 部署/运维操作 | `tech/roles/operations/monitoring/incident-log.md` |
-| 安全漏洞发现 | `tech/roles/security/<red/blue>-team/*.md` |
+| 部署/运维操作 | `tech/roles/operations/monitoring/incident-log.md`(规划路径,目录尚未建立) |
+| 安全漏洞发现 | `tech/roles/security/<red/blue>-team/*.md`(规划路径,目录尚未建立) |
 
 ### 文档同步检查清单
 
@@ -317,8 +322,8 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 # 检查 PostgreSQL 是否运行
 docker compose ps db
 
-# 检查连接配置
-cat server/.env.local | grep DATABASE_URL
+# 检查连接配置(只确认是否存在,不打印值)
+grep -q '^DATABASE_URL=' server/.env.local && echo "DATABASE_URL: configured" || echo "DATABASE_URL: missing"
 ```
 
 ### 地图不显示
@@ -327,7 +332,7 @@ cat server/.env.local | grep DATABASE_URL
 3. 检查 entities 表是否有数据:`psql -c "SELECT COUNT(*) FROM entities;"`
 
 ### 推荐列表为空
-使用 `/diagnosing-bugs` skill,系统化排查:
+按以下步骤系统化排查(`/diagnosing-bugs` skill 规划中,尚未实现):
 1. 用户画像是否保存成功?
 2. 实力评分是否计算?
 3. 推荐算法是否被触发?
@@ -335,17 +340,28 @@ cat server/.env.local | grep DATABASE_URL
 
 ## 当前工具与命令
 
-当前只允许使用已存在的脚手架命令；完整应用命令会随 Phase 1 的 manifests、迁移和测试一同加入，不能提前声称可用。
+以下命令均已实现并验证；清单与 `Makefile` / `server/package.json` 对齐。声称运行过某命令前，必须先确认对应文件存在且已通过验证。
 
 ```bash
-make help             # 显示当前支持的命令
-make docs-check       # 检查文档规范引用
+make help             # 列出全部 make target
+make docs-check       # 文档规范检查
 make scaffold-status  # 显示尚未创建的实现前置项
-make db-up            # 仅启动本地 PostGIS 服务
-make db-status         # 查看数据库服务状态
+make db-up            # 启动本地 PostGIS 服务
+make db-status        # 查看数据库服务状态
+make db-migrate       # 应用待执行 SQL migrations(需 DATABASE_URL)
+make preflight        # 校验 DATABASE_URL 与 PostGIS 可用性
+make test-unit        # crawler importer 单测(无需数据库)
+make test-integration # DB 集成测试(tests/integration/db/test_migrations.sh)
+make crawl-official   # 官方招聘页礼貌 GET dry-run(不写)
+make refresh-radar    # 下载已审查 radar 快照、重映射 drops、校验 import plan
+make geocode-sites    # 城市文本站点解析为真实办公点(需 AMAP_WEB_KEY;--dry-run 只列计划)
 ```
 
-未来迁移、导入、测试和 E2E 命令的唯一前提是对应文件已经实现并通过验证。
+Server 侧(`cd server`):`npm test`(423 测试,2026-08-19)、`npm run typecheck`、
+`npm run dev` / `build` / `start`。写 Postgres 的数据命令
+(`npm run import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)
+需要 `server/.env.local` 的 `DATABASE_URL`(绝不打印、不提交)，个别还需 `AMAP_WEB_KEY`。
+Env-only 步骤(迁移 apply / 导入 apply / geocode apply)属用户操作，Agent 不得擅自执行。
 
 ## 外部数据采集门禁
 
@@ -360,7 +376,7 @@ make db-status         # 查看数据库服务状态
 - **不要跳过,要完整**:测试和文档是交付物的一部分,不是可选项
 - **不要孤立,要复用**:新代码前先搜索是否已有类似实现
 - **🎨 前端代码必须先过布局示意图审查**:这是硬性规则,无任何例外
-- **🧩 使用现代化组件库,避免重复造轮子**:liquid-glass-react + shadcn/ui
+- **🧩 沿用现有设计系统,避免重复造轮子**:CSS Modules + 自研液态玻璃卡片;新组件库须审查后引入
 - **🍎 遵循 Apple 设计风格**:参考 Apple Maps 布局,液态玻璃质感
 - **🔍 组件代码必须审查**:不无脑用,要像自己写的那样理解
 - **📸 善用视觉能力**:前端设计时多用截图,视觉验证比文字准确
