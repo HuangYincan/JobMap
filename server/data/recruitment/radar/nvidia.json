@@ -1,5 +1,6 @@
 {
   "slug": "nvidia",
+  "source": "xiaozhao-radar",
   "name": "NVIDIA",
   "tier": 0,
   "industries": [
