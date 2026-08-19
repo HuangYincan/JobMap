@@ -170,9 +170,24 @@ class RadarMapTests(unittest.TestCase):
         self.assertEqual(mapped["positions"][0]["siteId"], "netease-hangzhou-site-shanghai")
 
     def test_drops_rows_without_a_target_city(self):
-        self.assertIsNone(map_radar_job({"c": "某司", "p": "Java", "l": "南京", "u": "https://jobs.example.com/a"}))
+        self.assertIsNone(map_radar_job({"c": "某司", "p": "Java", "l": "郑州", "u": "https://jobs.example.com/a"}))
         self.assertIsNone(map_radar_job({"c": "某司", "p": "Java", "l": "多地", "u": "https://jobs.example.com/a"}))
         self.assertIsNone(map_radar_job({"c": "某司", "p": "Java", "l": "", "u": "https://jobs.example.com/a"}))
+
+    def test_maps_new_target_cities_nanjing_suzhou_xian(self):
+        # 2026-08-20 ws-w5: CITY_TARGETS 扩到十城(北京/上海/广州/深圳/成都/武汉/
+        # 杭州/南京/苏州/西安), site id 拼音段与 ats_feishu.CITY_PINYIN 一致。
+        mapped = map_radar_job({
+            "c": "某司", "p": "Java 实习生", "l": "南京/苏州/西安", "u": "https://jobs.example.com/a",
+        })
+        self.assertIsNotNone(mapped)
+        self.assertEqual(
+            [site["id"] for site in mapped["sites"]],
+            ["某司-site-nanjing", "某司-site-suzhou", "某司-site-xian"],
+        )
+        self.assertEqual(mapped["sites"][0]["city"], "南京市")
+        self.assertEqual(mapped["sites"][1]["province"], "江苏省")
+        self.assertEqual(mapped["sites"][2]["province"], "陕西省")
 
     def test_title_city_paren_attaches_to_that_city_site(self):
         mapped = map_radar_job({
@@ -277,7 +292,7 @@ class RadarMapTests(unittest.TestCase):
         }
         fixture = radar_fixture(payload)
         self.assertTrue(validate_local_fixture(fixture).valid)
-        # Default target set = all seven cities → both rows map.
+        # Default target set = all ten cities (2026-08-20 ws-w5) → both rows map.
         self.assertEqual(len(fixture["companies"]), 2)
         self.assertEqual(len(merge_radar_companies(payload["jobs"])), 2)
 

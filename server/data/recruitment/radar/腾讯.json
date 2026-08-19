@@ -1,5 +1,6 @@
 {
   "slug": "腾讯",
+  "source": "xiaozhao-radar",
   "name": "腾讯",
   "tier": 0,
   "industries": [
@@ -10,7 +11,7 @@
   "sites": [
     {
       "id": "腾讯-site-beijing",
-      "name": "腾讯—剩余岗位",
+      "name": "腾讯·北京",
       "city": "北京市",
       "province": "北京市",
       "location": {
@@ -19,7 +20,7 @@
     },
     {
       "id": "腾讯-site-shanghai",
-      "name": "腾讯—剩余岗位",
+      "name": "腾讯·上海",
       "city": "上海市",
       "province": "上海市",
       "location": {
@@ -28,7 +29,7 @@
     },
     {
       "id": "腾讯-site-guangzhou",
-      "name": "腾讯—剩余岗位",
+      "name": "腾讯·广州",
       "city": "广州市",
       "province": "广东省",
       "location": {
@@ -37,7 +38,7 @@
     },
     {
       "id": "腾讯-site-shenzhen",
-      "name": "腾讯—剩余岗位",
+      "name": "腾讯·深圳",
       "city": "深圳市",
       "province": "广东省",
       "location": {

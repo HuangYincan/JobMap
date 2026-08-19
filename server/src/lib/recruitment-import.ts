@@ -39,6 +39,46 @@ function issue(slug: string, field: string, message: string): ImportIssue {
 const TARGET_CITIES = ['北京', '上海', '广州', '深圳', '成都', '武汉', '杭州'] as const;
 
 /**
+ * drop 自带 source code → sources 表元数据（sources.code 约束 ^[a-z][a-z0-9-]*$）。
+ * 缺失 source 的 drop 回退 'seed' code；未收录的 code 保留其 code、元数据用
+ * seed 默认值 —— 不臆造 attribution（取值与 tech/roles/data/etl/ 各源评审一致）。
+ */
+const SOURCE_META: Record<string, { originUri: string; authorizationBasis: string; accessMethod: string; attribution: string; retention: string; deletion: string }> = {
+  seed: {
+    originUri: 'local:WORK_SEED',
+    authorizationBasis: 'curated-public',
+    accessMethod: 'manual',
+    attribution: 'Domain Map curated seed',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+  },
+  'official-career': {
+    originUri: 'local:WORK_SEED',
+    authorizationBasis: 'curated-public',
+    accessMethod: 'manual',
+    attribution: 'Domain Map curated official career pages',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+  },
+  'feishu-ats': {
+    originUri: 'https://*.jobs.feishu.cn',
+    authorizationBasis: 'public-api',
+    accessMethod: 'polite-json-api',
+    attribution: 'Feishu ATS public job search API (tech/roles/data/etl/feishu-ats.md)',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+  },
+  'xiaozhao-radar': {
+    originUri: 'https://raw.githubusercontent.com/jiabaobei/xiaozhao-radar/main/jobs.json',
+    authorizationBasis: 'apache-2.0',
+    accessMethod: 'public-file',
+    attribution: 'xiaozhao-radar contributors (Apache-2.0); Domain Map field mapping',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+  },
+};
+
+/**
  * site 城市名（写入 company_sites.city）：site.city 字段优先（WS2 drop 形状）；
  * 否则从 location.address 解析 —— 地址等于目标城市名、以「城市名+市」开头，
  * 或以杭州区名开头（'西湖区龙井路1号' → 杭州）。多城市文本（'北京/上海'）与
@@ -278,20 +318,29 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
   let positions = 0;
   try {
     await client.query('BEGIN');
-    const source = await client.query<{ id: string }>(
-      `INSERT INTO sources (
-         code, origin_uri, authorization_basis, allowed_access_method,
-         attribution_text, retention_policy, deletion_policy
-       ) VALUES (
-         'seed', 'local:WORK_SEED', 'curated-public', 'manual',
-         'Domain Map curated seed', 'until-replaced', 'delete-with-source'
-       )
-       ON CONFLICT (code) DO UPDATE SET origin_uri = EXCLUDED.origin_uri
-       RETURNING id::text`,
-    );
-    const sourceId = source.rows[0].id;
+    // 落库 provenance: 尊重 drop 自带 source(2026-08-20 w5),缺失回退 'seed'。
+    // 按 code 幂等 upsert 并缓存,同一次 apply 内同 code 只写一行 sources。
+    const sourceIds = new Map<string, string>();
+    const sourceIdFor = async (code: string): Promise<string> => {
+      const cached = sourceIds.get(code);
+      if (cached) return cached;
+      const meta = SOURCE_META[code] ?? SOURCE_META.seed;
+      const source = await client.query<{ id: string }>(
+        `INSERT INTO sources (
+           code, origin_uri, authorization_basis, allowed_access_method,
+           attribution_text, retention_policy, deletion_policy
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (code) DO UPDATE SET origin_uri = EXCLUDED.origin_uri
+         RETURNING id::text`,
+        [code, meta.originUri, meta.authorizationBasis, meta.accessMethod, meta.attribution, meta.retention, meta.deletion],
+      );
+      const id = source.rows[0].id;
+      sourceIds.set(code, id);
+      return id;
+    };
 
     for (const company of authentic) {
+      const sourceId = await sourceIdFor(company.source ?? 'seed');
       const upserted = await client.query<{ id: string }>(
         `INSERT INTO companies (slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier, category)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
