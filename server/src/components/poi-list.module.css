@@ -79,6 +79,24 @@
   cursor: pointer;
 }
 
+/* F2 候选类别(work 未选类别空态):玻璃容器,内嵌 filter-panel 的 chips/chip */
+.candidateCard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+  backdrop-filter: blur(20px) saturate(165%);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
 /* ---------- 加载骨架 ---------- */
 
 .skeleton {
@@ -181,6 +199,11 @@
   .skeleton {
     background: rgba(28, 28, 30, 0.72);
     border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .candidateCard {
+    background: rgba(28, 28, 30, 0.72);
+    border-color: rgba(255, 255, 255, 0.14);
   }
 
   .skeleton::after {

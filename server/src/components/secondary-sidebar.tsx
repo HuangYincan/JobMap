@@ -22,7 +22,8 @@ import { JdPanel } from "./jd-panel";
 import { FilterPanel } from "./filter-panel";
 import { SortSelector } from "./sort-selector";
 import { t, type Language } from "@/lib/i18n";
-import { getMode } from "@/lib/modes";
+import { canonicalMode, getMode } from "@/lib/modes";
+import { selectedRoleFamilies, selectedTaxonomyPaths } from "@/lib/job-taxonomy";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { isRecruitmentPOI, formatDistance, type FilterState, type MapMode, type POI, type Position, type RecruitmentPOI } from "@/lib/types";
 import styles from "./secondary-sidebar.module.css";
@@ -49,6 +50,31 @@ export function suggestionDisplayIcon(s: { kind?: SearchSuggestion["kind"]; icon
   if (s.kind === "job") return "💼";
   if (s.kind === "company") return "🏢";
   return "📍";
+}
+
+/**
+ * F2 候选类别：work 模式未选类别（无 query / jobTaxonomy / roleFamily）时，
+ * 从 getMode(mode).filters 取 job-family（intern/campus/social）+ 职能
+ * （tech/product/ops/design）chips，供 POIList 空态槽位渲染；点击直接写 filters。
+ * 判定基于 filters 而非 catalog 是否为空（与 ws-v 的 listCatalog 解耦）。
+ */
+export function workCandidateCategories(
+  mode: MapMode,
+  query: string,
+  filters: FilterState,
+): { key: string; value: string; label: string }[] {
+  if (canonicalMode(mode) !== "work") return [];
+  if (query.trim()) return [];
+  if (selectedTaxonomyPaths(filters).length > 0) return [];
+  if (selectedRoleFamilies(filters).length > 0) return [];
+  const chips: { key: string; value: string; label: string }[] = [];
+  for (const config of getMode(mode).filters) {
+    if (config.key !== "jobTaxonomy" && config.key !== "roleFamily") continue;
+    for (const option of config.options ?? []) {
+      chips.push({ key: config.key, value: option.value, label: option.label });
+    }
+  }
+  return chips;
 }
 
 export interface SecondarySidebarProps {
@@ -181,6 +207,8 @@ export function SecondarySidebar({
   // 分类门控(poi-category-loading):domain 浏览态且未选分类 → 空态提示选类
   const domainNoCategory =
     config.kind === "domain" && !filters.category && !query.trim();
+  // F2 候选类别(work 未选类别):空态槽位渲染 job-family/职能 chips,点击写 filters
+  const candidateChips = workCandidateCategories(mode, query, filters);
   const detailPoi = detailPoiProp ?? localDetail;
   const suggestionItems = suggestions ?? [];
 
@@ -467,7 +495,11 @@ export function SecondarySidebar({
           onSelect={openDetail}
           onHover={onHover}
           loading={loading}
-          emptyTitle={domainNoCategory ? t("pickCategory", lang) : undefined}
+          emptyTitle={
+            domainNoCategory || candidateChips.length > 0 ? t("pickCategory", lang) : undefined
+          }
+          candidateCategories={candidateChips.length > 0 ? candidateChips : undefined}
+          onPickCategory={(key, value) => onFiltersChange({ ...filters, [key]: [value] })}
           lang={lang}
           accentColor={config.color}
           onWidenSearch={onWidenSearch}
