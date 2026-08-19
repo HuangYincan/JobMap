@@ -139,6 +139,11 @@ function cloneCompany(company: SourceCompany): SourceCompany {
 }
 
 function mergeCompany(target: SourceCompany, extra: SourceCompany): void {
+  // logo 合并 (2026-08-19 Bug2): 非空不覆盖 — dedupe 保留第一个公司
+  // (真实 drops 先行、seed 垫底), seed 的 logoUrl/logoEmoji 补上 drops 的
+  // 空缺, 但不覆盖 drop 自带值 (drop 与 seed 均可提供)。
+  if (!target.logoUrl && extra.logoUrl) target.logoUrl = extra.logoUrl;
+  if (!target.logoEmoji && extra.logoEmoji) target.logoEmoji = extra.logoEmoji;
   for (const site of extra.sites) {
     if (!target.sites.some((row) => row.id === site.id)) target.sites.push({ ...site });
   }
@@ -297,8 +302,8 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
            rating = EXCLUDED.rating,
            summary = EXCLUDED.summary,
            career_url = EXCLUDED.career_url,
-           logo_url = EXCLUDED.logo_url,
-           logo_emoji = EXCLUDED.logo_emoji,
+           logo_url = COALESCE(EXCLUDED.logo_url, logo_url),
+           logo_emoji = COALESCE(EXCLUDED.logo_emoji, logo_emoji),
            tier = EXCLUDED.tier,
            category = EXCLUDED.category,
            updated_at = now()
