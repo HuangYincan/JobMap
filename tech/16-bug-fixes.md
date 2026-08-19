@@ -842,3 +842,97 @@ city 字段与坐标错配(米哈游 city=北京市、坐标却在上海徐汇;�
 
 **教训**:import 的合并键必须映射 drop 的稳定标识(site.id),不能依赖展示名;
 「同名不同城市」是合法数据形态,不是重复。
+
+## 2026-08-19: 工作视口刷新三件套——noMore 闩锁 / 挂载对齐加载 / 空批次三态(boss 批次 ws1)
+
+**症状**:视角拖动后工作 POI 不更新;杭州↔上海切换后常出现整城无 POI;低 zoom 或
+残留城市标签下空视野被旧城市 pin 占住且无限滚动失效,恢复只能等下一次 moveend。
+
+**根因**(Explore 复现 + 代码链):
+1. `viewport-search.ts` 空页/短页 → `noMore=true` 闩锁;空批次(0 条)常由滤波/层级
+   maxTier 裁剪导致,并非「到底」,闩锁后无限滚动失效、粘滞空白。
+2. mode 级缓存(非城市级)恢复后主加载早退;地图初始化固定在杭州;geolocation 被拒时
+   不产生 moveend → 刷新页面后当前视野整城空白,直到用户手动拖动。
+3. 空批次保护 `batch.length === 0 && catalogRef.current.length > 0 → return` 无差别
+   保留旧目录:新视野请求返回空时,旧城市 pin 全在屏幕外 → 新城市视觉空白。
+
+**修复**(`78383f1` / `3a5430e` / `544e514`):
+- noMore 闩锁:空批次(0 条)→ `noMore=false`;短页(< pageSize)仍闩锁。
+- 挂载对齐加载:mode 缓存新增 `viewport` 视野快照(center/zoom/bounds),恢复时与当前
+  地图视野不符(无快照 / 中心距 / zoom 差超阈值)→ 主动调度一次当前视野加载,不等 moveend。
+- 空批次三态:请求成功且 0 条——旧目录有 POI 落在当前视野 bounds 内 → 保留
+  (收藏 fitToPins 退化视野,VIEWPORT_SUPPRESS_MS 兜底);否则真空 → `setCatalog([])` 走空态;
+  请求失败 → 保留旧目录 + console.warn。
+
+**修改文件**:
+- `server/src/lib/viewport-search.ts`(noMore 空批次不闩锁)
+- `server/src/components/map-shell.tsx`(挂载对齐调度 + 空批次三态,work/domain 两分支)
+- `server/src/lib/mode-cache.ts`(视野快照字段,key 结构不变,旧缓存兼容)
+- 测试:`viewport-search.test.mjs`(0 条不闩锁)、`mode-cache.test.mjs`(快照 round-trip)、
+  `component-contracts.test.mjs`(三态 + 对齐加载契约)
+
+**验证**:376 pass / 0 fail;实机(dev :3000 + Playwright)刷新页面后缓存视野自动对齐回
+当前视野 ✓;单次拖动后 marker 数 == catalog 数 ✓。
+
+## 2026-08-19: marker 控制器与地图 overlay 失同步(残留 pin,boss 批次 ws2)
+
+**症状**:杭州↔上海往返多次后,旧城市 marker 永久残留在地图上(`getAllOverlays('marker')`
+> catalog 数),且残留 marker 不在控制器内部 markers Map 中(setPOIs 差分无法移除)。
+
+**根因**:控制器创建/销毁与 AMap 异步就绪、地图实例销毁的竞态——地图已销毁后
+overlay 注册表无人清理,`isReady()` 未拦截已销毁地图,marker 挂到已死实例上永久残留;
+部分异常路径构造的 marker 未入 placed 账,cleanup 时摘不掉。
+
+**修复**(`783f8d8` + 测试 `8a07cf0`):
+- `isReady()` 增加 `map.isDestroyed()` 守卫:已销毁地图不再创建/操作 marker。
+- placed 兜底账:构造即入账,任何后续异常都能凭 placed 摘除;`destroy()` 后
+  `sweepPlaced()` 强制清扫全部登记 overlay,保证不变式「销毁后地图上无该控制器管理的 marker」。
+- pendingPOIs 回放路径保留,amap 异步就绪后统一 flush。
+
+**修改文件**:`server/src/lib/map-markers.ts`、`server/tests/marker-leak.test.mjs`
+(mock 契约,9 用例)+ fixtures。
+
+**验证**:375 pass / 0 fail;实机往返后 marker 计数与 catalog 一致 ✓。
+
+## 2026-08-19: 公司无 icon——DB 读路径绕过 logo 解析链 + import 丢 logo + favicon 不可达(boss 批次 ws3)
+
+**症状**:工作模式地图公司 marker 全为默认 🏢 徽章(DB 实测 672 家 `logo_url` 100% 空、
+`logo_emoji` 99.7% 空)。
+
+**根因**:
+1. `recruitment-store.ts` DB 读路径直接读列(`logo_emoji ?? undefined`),不调
+   `resolveCompanyLogo` 解析链(careerUrl → favicon);离线路径(recruitment-source.ts)才走。
+2. `recruitment-import.ts` `mergeCompany` 只合并 sites+positions,丢弃 seed/drop 的
+   logoUrl/logoEmoji → DB 全空。
+3. `faviconFromUrl` 用 `google.com/s2/favicons` 国内被墙 → 即使有 URL 也加载失败。
+
+**修复**(`d78e6f3` / `c09e706` / `f50cb20` + ADR-007 `a33bd24`):
+- import:`mergeCompany` 合并 logoUrl/logoEmoji(非空不覆盖);site upsert COALESCE 保既有值。
+- DB 读路径:解析链抽成可复用函数,`loadWorkCatalogFromDb` 对 logo 空的公司按链解析
+  (careerUrl → favicon 兜底),离线/DB 两路径共用;无 logo → 🏢 emoji 兜底语义不变。
+- favicon 服务:google s2 → **favicon.im**(国内可达,curl HEAD + content-type 实测,
+  对 IP 域名返回 404 → emoji 兜底),选型与可达性结论记 ADR-007(tech/06-decisions.md)。
+
+**修改文件**:`server/src/lib/recruitment-import.ts`、`recruitment-store.ts`、
+`company-logo.ts`、`tech/06-decisions.md`(ADR-007)+ 测试。
+
+**验证**:门禁全绿(397 pass / 0 fail);实机 marker 渲染 `favicon.im` `<img>`
+(careerUrl→favicon 请求发出),加载失败回退 🏢 ✓。
+
+## 2026-08-19: Profile 已投递/收件箱行不可点击(boss 批次 ws4)
+
+**症状**:「我的投递」与「收件箱」行是纯文本,无点击跳转;数据已有
+`companyPoiId`/`positionId`(`/api/me/applications`),岗位详情链路(poi-detail / JdPanel)
+已存在但未接线。
+
+**修复**(`c50462d` / `d3061ab` / `63b0aa5`):
+- `account-panel.tsx`:两处行 `li.appRow` → `li > button.appRow`(视觉不变,hover 沿用
+  rowBtn 语义,`positionId`/`companyPoiId` 缺失禁用)。
+- `map-shell.tsx` 新增 `handleOpenApplication`:`GET /api/pois/[id]?mode=work` →
+  按 positionId 匹配岗位 → 桌面 `setDetailPoi`+`setOpenPositionId` / 移动 `setMobileJd`;
+  岗位下线/拉取失败 → console.warn + 面板原样,不崩溃。桌面与移动 embedded 两处接线。
+
+**修改文件**:`server/src/components/account-panel.tsx`、`account-panel.module.css`、
+`server/src/components/map-shell.tsx`、`server/tests/component-contracts.test.mjs`。
+
+**验证**:369 pass / 0 fail;契约测试覆盖 button 化、回调载荷、禁用态、接线函数。
