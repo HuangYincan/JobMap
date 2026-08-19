@@ -1,18 +1,19 @@
 // ============================================================
-// 前端 API 客户端 — Phase 2 后端契约
+// 前端 API 客户端 — 当前后端契约
 //
 // 路由遵循 tech/11-phase2-plan.md + tech/10-search-filter.md：
-// - GET /api/modes         模式列表
-// - GET /api/pois          POI 列表（mode + filters + bounds）
-// - GET /api/pois/[id]     POI 详情
-// - GET /api/search        搜索
-// - GET /api/suggest       搜索建议
-// - GET /api/filter-options 筛选器选项
+// - GET /api/suggest        搜索建议（客户端直连，带 LRU）
+// - GET /api/pois/[id]      POI 详情（客户端直连）
+// - GET /api/modes          模式列表（备用；前端 MODES 注册表是权威）
+// - GET /api/pois           POI 列表（服务端 poi-service 查询用，客户端不直连）
+// - POST /api/search        搜索（服务端用，客户端不直连）
+// - GET /api/filter-options 筛选器选项（服务端用）
 //
-// 现状：Phase 2 使用 seed/AMap 数据，DB 就绪后无缝切换到 API。
+// 现状：work/domain 读路径走 Postgres 查询；POI 列表改由 poi-service 服务端聚合，
+// 客户端不再直连 GET /api/pois（原列表拉取函数已删，测试断言其不再导出）。
 // ============================================================
 
-import type { FilterState, MapMode, POI } from './types.ts';
+import type { MapMode, POI } from './types.ts';
 import { readSuggestCache, suggestCacheKey, writeSuggestCache } from './public-cache.ts';
 
 /** API 基础路径（Next 同源部署时为空） */
@@ -48,23 +49,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 // ---- 类型化的查询参数 ----
 
-export interface POIQuery {
-  mode: MapMode;
-  filters?: FilterState;
-  sort?: string;
-  bounds?: string; // "minLng,minLat,maxLng,maxLat"
-  q?: string;
-  page?: number;
-  pageSize?: number;
-}
-
-export interface POIListResponse {
-  total: number;
-  page: number;
-  pageSize: number;
-  results: POI[];
-}
-
 export interface SearchSuggestion {
   type: 'poi' | 'position' | 'tag' | 'area';
   id: string;
@@ -86,19 +70,6 @@ export interface SuggestResponse {
 
 // ---- 公开 API ----
 
-/** 获取 POI 列表 */
-export function fetchPOIs(query: POIQuery): Promise<POIListResponse> {
-  const params = new URLSearchParams();
-  params.set('mode', query.mode);
-  if (query.q) params.set('q', query.q);
-  if (query.sort) params.set('sort', query.sort);
-  if (query.bounds) params.set('bounds', query.bounds);
-  if (query.filters) params.set('filters', JSON.stringify(query.filters));
-  params.set('page', String(query.page || 1));
-  params.set('pageSize', String(query.pageSize || 20));
-  return request<POIListResponse>(`/api/pois?${params.toString()}`);
-}
-
 /** 获取 POI 详情 */
 export function fetchPOIDetail(id: string, mode: MapMode): Promise<POI> {
   return request<POI>(`/api/pois/${encodeURIComponent(id)}?mode=${mode}`);
@@ -119,9 +90,4 @@ export async function fetchSearchSuggest(
   const result = await request<SuggestResponse>(`/api/suggest?${params.toString()}`);
   if (result.suggestions.length > 0) writeSuggestCache(key, result);
   return result;
-}
-
-/** 获取模式配置列表（备用；前端 MODES 已是权威配置） */
-export function fetchModes(): Promise<{ modes: { id: MapMode; name: string }[] }> {
-  return request('/api/modes');
 }
