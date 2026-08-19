@@ -17,7 +17,7 @@
   aggregate**. Sites by city: 上海市 397 · 北京市 336 · 深圳市 253 · 成都市 127 · 广州市 117 ·
   杭州市 98 · 武汉市 61.
 - Import plan (all sources): **669 companies / 1440 sites / 877 positions, 0 issues, 0 dropped**.
-- Geocode is now **city-scoped** (`geocode-sites-apply.mjs` + `site-geocode.ts`): per-site
+- **范围:全国 drops(2026-08-17)。** Geocode 已改为 **city-scoped**(`geocode-sites-apply.mjs` + `site-geocode.ts`):per-site
   place-text search with `citylimit`, and grade + regeo validate against the site's own
   province/city. **Live apply not yet run** on the national drops — the 2026-08-17 snapshot
   run hit AMap **place-text daily quota (`USER_DAILY_QUERY_OVER_LIMIT`, infocode 10044)**,
@@ -35,13 +35,13 @@
 - Dropped by blocked-host policy: 10 rows (Boss / 小红书 / 无链接 hosts). Confirmed 0 blocked hosts in the final drops.
 - Coverage limitation (known): radar titles are **category aggregates** ("开发/算法/产品/运营"), not specific jobs; site location is **city text** ("北京/上海/杭州"), not a point. Matched slugs inherit real seed/curated coordinates; radar-only companies stay off the map until geocoded.
 
-## Geocode plan (all drops, 2026-08-17)
+## Geocode plan (范围:杭州 pilot 的 drops,2026-08-17;全国 drops 见上「Radar multi-city mapper」)
 
 - 198 companies across all drop sources; **100 sites already located**, **98 need a point**, 0 skipped (all have address text).
 - Live REST apply is blocked until `AMAP_WEB_KEY` is available (`npm run geocode:sites` lists them).
 - **After DB import**: 137 companies / 137 sites / 240 open positions verified in PostGIS (0 duplicate external_ids); `listImportedSitesNeedingGeocode` lists **86 sites** (radar-only companies) for geocoding.
 
-## Geocode apply (2026-08-17, AMap Web services + `AMAP_WEB_KEY`)
+## Geocode apply (范围:杭州 pilot,2026-08-17,AMap Web services + `AMAP_WEB_KEY`;全国 drops 的 apply 尚未运行,见上)
 
 - `npm run geocode:sites:apply` resolved **65 / 86** radar-only city-text sites to **real Hangzhou offices** — place-text search (`v3/place/text`, city-scoped) picks the office POI, regeo confirms it sits inside 杭州市, and copy-on-write replaces `site.location` in the radar drop. Never a city-center pin.
 - 12 already-pinned slugs skipped (no duplicate markers). **21 stayed off the map**: 3 with no AMap office POI (MPS芯源系统 / 志存科技 / 麦米电气) and 18 explicitly excluded in `data/recruitment/geocode-overrides.json` because AMap has no verifiable Hangzhou office (奥比中光 / MPS / 星宸 / 多益 / 昆仑芯×2 / 拓竹 / 恒瑞 / 海天集团…); wrong-entity traps were caught by name-match gating (海天集团 vs 杭州海天管业; VAST hair salon; 游卡快递柜).
