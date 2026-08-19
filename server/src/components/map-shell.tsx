@@ -54,16 +54,38 @@ const SavedList = dynamic(() => import("./saved-panel").then((mod) => mod.SavedL
 const SavedPanel = dynamic(() => import("./saved-panel").then((mod) => mod.SavedPanel));
 const LayersPanel = dynamic(() => import("./layers-panel").then((mod) => mod.LayersPanel));
 
+/**
+ * Rail 面板懒加载模块清单:与上方 dynamic() 声明同源路径(SavedList/SavedPanel 同文件去重)。
+ * MapShell 挂载时用 prefetchAllRail() 一次性预载全部,把 dev 冷启动的「首点按需编译」
+ * 提前到页面加载时,消除 Turbopack dev 下首点触发的整页刷新(next dev 客户端
+ * performFullReload)。生产构建预编译不受影响;重复预载幂等。
+ */
+const RAIL_PANEL_MODULES = {
+  "poi-detail": () => import("./poi-detail"),
+  "jd-panel": () => import("./jd-panel"),
+  "auth-modal": () => import("./auth-modal"),
+  "account-panel": () => import("./account-panel"),
+  "recent-panel": () => import("./recent-panel"),
+  "saved-panel": () => import("./saved-panel"),
+  "layers-panel": () => import("./layers-panel"),
+} as const satisfies Record<string, () => Promise<unknown>>;
+
+/** 悬停/聚焦兜底:按面板名预载对应模块子集 */
 function prefetchRail(panel: "layers" | "saved" | "recent" | "profile" | "auth" | "detail") {
-  if (panel === "layers") void import("./layers-panel");
-  else if (panel === "saved") void import("./saved-panel");
-  else if (panel === "recent") void import("./recent-panel");
-  else if (panel === "profile") void import("./account-panel");
-  else if (panel === "auth") void import("./auth-modal");
+  if (panel === "layers") void RAIL_PANEL_MODULES["layers-panel"]();
+  else if (panel === "saved") void RAIL_PANEL_MODULES["saved-panel"]();
+  else if (panel === "recent") void RAIL_PANEL_MODULES["recent-panel"]();
+  else if (panel === "profile") void RAIL_PANEL_MODULES["account-panel"]();
+  else if (panel === "auth") void RAIL_PANEL_MODULES["auth-modal"]();
   else {
-    void import("./poi-detail");
-    void import("./jd-panel");
+    void RAIL_PANEL_MODULES["poi-detail"]();
+    void RAIL_PANEL_MODULES["jd-panel"]();
   }
+}
+
+/** 挂载时预载全部 rail 面板 chunk(消除 dev 冷启动首点整页刷新) */
+function prefetchAllRail() {
+  for (const load of Object.values(RAIL_PANEL_MODULES)) void load();
 }
 
 type DrawerState = "mini" | "half" | "full";
@@ -379,6 +401,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [refreshHistory]);
 
   useEffect(() => {
+    prefetchAllRail();
     refreshAccount().then((next) => {
       if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
       void refreshHistory(Boolean(next));
