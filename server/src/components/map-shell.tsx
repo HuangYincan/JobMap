@@ -7,12 +7,11 @@ import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
 import type { FilterState, MapMode, POI } from "@/lib/types";
 import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
-import { getCurrentPosition, fetchSuggestions, loadAMap, suggestionToDomainPoi } from "@/lib/amap-api";
+import { getCurrentPosition, loadAMap, suggestionToDomainPoi } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, suggestRecruitment, suggestSearchTags, widenSearchScope } from "@/lib/search";
+import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, widenSearchScope } from "@/lib/search";
 import { suggestKeyAction } from "@/lib/suggest-nav";
-import { fetchPOIDetail, fetchSearchSuggest } from "@/lib/api";
-import type { SearchSuggestion as ApiSearchSuggestion } from "@/lib/api";
+import { fetchPOIDetail } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
 import { batchMatchesCurrentMode, catalogCoversView, mergePoisById, MORE_PAGE_SIZE, needsViewportAlign, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds, type ViewportSnapshot } from "@/lib/viewport-search";
 import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES, type ViewportLoader } from "@/lib/viewport-search";
@@ -38,6 +37,7 @@ import {
 } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
 import { useModeCacheRestore } from "@/hooks/use-mode-cache-restore";
+import { useSearchState } from "@/hooks/use-search-state";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { createCityClusterMarker } from "@/lib/map-markers";
 import { SecondarySidebar, suggestionDisplayIcon, type SearchSuggestion } from "./secondary-sidebar";
@@ -138,29 +138,6 @@ function flyToLocation(map: { setZoomAndCenter?: (zoom: number, center: [number,
   }
   map.setZoom?.(zoom);
   map.setCenter?.([lng, lat]);
-}
-
-/** /api/suggest 服务端建议 → 客户端 UI 形态。
- *  距离优先用客户端实时 origin 重算（地图平移/定位后仍新鲜），服务端 center
- *  算好的 distance 兜底；无 location 不显示距离。domain 行 kind 一律 place。 */
-function mapApiSuggestion(
-  tip: ApiSearchSuggestion,
-  mode: MapMode,
-  origin: { lng: number; lat: number } | null
-): SearchSuggestion {
-  const kind: SearchSuggestion["kind"] =
-    tip.type === "position" ? "job" : tip.type === "tag" ? "place" : isRecruitmentMode(mode) ? "company" : "place";
-  return {
-    id: tip.id,
-    name: tip.title,
-    subtitle: tip.subtitle,
-    location: tip.location,
-    poiId: tip.poiId ?? (tip.type === "position" || tip.type === "tag" ? undefined : tip.id),
-    positionId: tip.type === "position" ? tip.id : undefined,
-    kind,
-    icon: tip.icon,
-    distance: tip.location && origin ? haversineDistance(tip.location, origin) : tip.distance,
-  };
 }
 
 function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "menu" | "sidebar" | "chevronLeft" | "compass" | "locate" | "person" | "login" | "logout" }) {
@@ -282,8 +259,7 @@ export function MapShell() {
   // 左侧结果面板显隐（点击导航"探索"展开）
   const [railPanel, setRailPanel] = useState<RailPanel>(null);
   const exploreOpen = railPanel === "explore";
-  // 搜索建议（AutoComplete）
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  // 搜索建议（AutoComplete）——状态与获取/清理逻辑在 useSearchState hook 内
   const [detailPoi, setDetailPoi] = useState<POI | null>(null);
   const [user, setUser] = useState<AccountUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
@@ -1733,90 +1709,16 @@ export function MapShell() {
   }, [mode, pageOffset, searchOrigin, query, filters, sort, userLocation]);
 
   // ---- 搜索建议 ----
-  // work：/api/suggest 服务端目录（公司 + 岗位 + 标签），0 命中/报错回退本地池；
-  // domain：本地优先（/api/suggest → hz_pois 前缀匹配），0 命中/报错回退高德
-  //   AutoComplete 一次，回退失败返回空列表不卡死。
-  // 依赖只留 [query, mode]：之前 [query, mode, zoom, catalog] 里 catalog 每批替换、
-  // zoom 每次平移都取消 200ms 定时器——hz-poi Stage 4 后 catalog 高频变化，
-  // 候选列表永远不落地。zoom/catalog 改经 ref 读取。
-  useEffect(() => {
-    if (!query.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      const origin = distanceOriginRef.current;
-
-      if (isRecruitmentMode(mode)) {
-        const fallback = () => {
-          const pool = catalogRef.current.length ? catalogRef.current : INTERNSHIP_SEED;
-          const tags = suggestSearchTags(query, 3).map((tag) => ({
-            id: tag.id,
-            name: tag.title,
-            subtitle: tag.key,
-            kind: "place" as const,
-          }));
-          const tips = suggestRecruitment(pool, query, 8).map((tip) => ({
-            id: tip.id,
-            name: tip.name,
-            subtitle: tip.subtitle,
-            location: tip.location,
-            poiId: tip.poiId,
-            positionId: tip.positionId,
-            kind: tip.kind,
-          }));
-          return [...tags, ...tips].slice(0, 8);
-        };
-        try {
-          const res = await fetchSearchSuggest(query.trim(), mode, origin);
-          if (cancelled) return;
-          if (!res.suggestions.length) {
-            setSuggestions(fallback());
-            return;
-          }
-          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, origin)));
-        } catch {
-          if (!cancelled) setSuggestions(fallback());
-        }
-        return;
-      }
-
-      // domain：本地优先
-      try {
-        const res = await fetchSearchSuggest(query.trim(), mode, origin);
-        if (cancelled) return;
-        if (res.suggestions.length) {
-          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, origin)));
-          return;
-        }
-      } catch {
-        if (cancelled) return;
-      }
-      // 本地 0 命中 / 请求失败 → 回退高德 AutoComplete 一次
-      try {
-        const tips = await fetchSuggestions(query.trim(), zoomRef.current <= 8 ? "全国" : "");
-        if (cancelled) return;
-        setSuggestions(
-          tips.map((tip) => ({
-            id: tip.id,
-            name: tip.name,
-            subtitle: [tip.district, tip.address].filter(Boolean).join(" · ") || tip.type,
-            location: tip.location,
-            kind: "place",
-            icon: "📍",
-          }))
-        );
-      } catch {
-        if (!cancelled) setSuggestions([]);
-      }
-    }, 200);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [query, mode]);
+  // 建议获取/清理逻辑抽到 useSearchState(work:/api/suggest 服务端目录 + 本地回退;
+  // domain:本地优先 + 高德 AutoComplete 兜底;依赖只留 [query, mode])。
+  // 选择建议后的落地逻辑在 handleSelectSuggestion(下方)。
+  const { suggestions, setSuggestions } = useSearchState({
+    query,
+    mode,
+    distanceOriginRef,
+    zoomRef,
+    catalogRef,
+  });
 
   useEffect(() => {
     setMobileSuggestIndex(-1);

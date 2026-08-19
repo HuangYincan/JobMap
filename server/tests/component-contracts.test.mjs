@@ -167,13 +167,14 @@ test('profile applied/notification rows are clickable buttons wired to the job j
 });
 
 test('work autocomplete prefers GET /api/suggest and falls back locally', () => {
-  const shell = src('components/map-shell.tsx');
-  assert.match(shell, /fetchSearchSuggest/);
-  assert.match(shell, /suggestRecruitment/);
-  assert.match(shell, /tip\.poiId/);
-  assert.match(shell, /tip\.type === "position" \? "job"/);
-  assert.match(shell, /isRecruitmentMode\(mode\) \? "company" : "place"/);
-  assert.match(shell, /mapApiSuggestion/);
+  // 建议获取逻辑随 useSearchState 抽到 hook(位置移动,断言不变)
+  const hook = src('hooks/use-search-state.ts');
+  assert.match(hook, /fetchSearchSuggest/);
+  assert.match(hook, /suggestRecruitment/);
+  assert.match(hook, /tip\.poiId/);
+  assert.match(hook, /tip\.type === "position" \? "job"/);
+  assert.match(hook, /isRecruitmentMode\(mode\) \? "company" : "place"/);
+  assert.match(hook, /mapApiSuggestion/);
   const api = src('lib/api.ts');
   assert.match(api, /\/api\/suggest/);
   assert.match(api, /poiId\?: string/);
@@ -181,21 +182,23 @@ test('work autocomplete prefers GET /api/suggest and falls back locally', () => 
 
 test('domain autocomplete is local-first via /api/suggest and falls back to AMap once', () => {
   const shell = src('components/map-shell.tsx');
-  // 依赖只留 [query, mode]——zoom/catalog 高频变化不再重置防抖定时器
-  assert.match(shell, /\}, \[query, mode\]\);/);
-  assert.doesNotMatch(shell, /\}, \[query, mode, zoom, catalog\]\);/);
-  // domain 本地 0 命中/报错 → 高德 AutoComplete 一次
-  assert.match(shell, /fetchSuggestions\(query\.trim\(\), zoomRef\.current <= 8/);
-  assert.match(shell, /kind: "place"/);
-  assert.match(shell, /icon: "📍"/);
-  // 点击未加载公司 → 拉详情再打开(服务端目录命中但客户端分页未加载)
+  const hook = src('hooks/use-search-state.ts');
+  // 依赖只留 [query, mode]——zoom/catalog 高频变化不再重置防抖定时器(位置随 hook 移动)
+  assert.match(hook, /\}, \[query, mode\]\);/);
+  assert.doesNotMatch(hook, /\}, \[query, mode, zoom, catalog\]\);/);
+  // domain 本地 0 命中/报错 → 高德 AutoComplete 一次(位置随 hook 移动)
+  assert.match(hook, /fetchSuggestions\(query\.trim\(\), zoomRef\.current <= 8/);
+  assert.match(hook, /kind: "place"/);
+  assert.match(hook, /icon: "📍"/);
+  // 点击未加载公司 → 拉详情再打开(服务端目录命中但客户端分页未加载,留在 map-shell)
   assert.match(shell, /fetchPOIDetail\(s\.poiId, mode\)/);
 });
 
 test('empty search does not feed trending chips into suggestions', () => {
-  const shell = src('components/map-shell.tsx');
-  assert.match(shell, /if \(!query\.trim\(\)\) \{\s*setSuggestions\(\[\]\);/);
-  assert.doesNotMatch(shell, /trendingForMode\(mode\)\.map/);
+  // 空查询清空建议:逻辑随 useSearchState 抽到 hook(位置移动,断言不变)
+  const hook = src('hooks/use-search-state.ts');
+  assert.match(hook, /if \(!query\.trim\(\)\) \{\s*setSuggestions\(\[\]\);/);
+  assert.doesNotMatch(hook, /trendingForMode\(mode\)\.map/);
 });
 
 test('phone/email login shows auto-register hint under the button', () => {
