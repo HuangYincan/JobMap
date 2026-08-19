@@ -7,6 +7,7 @@ import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
 import { DISTRICT_BOXES } from '../src/lib/spatial-filters.ts';
 import {
   cityBoundsConsistencySql,
+  cityLabelMatchesCoordinates,
   companySitesSpatialSql,
   hasSpatialClip,
   knownHangzhouDistricts,
@@ -195,4 +196,30 @@ test('loadWorkCatalogFromDb clips Hangzhou west-lake when DATABASE_URL is set', 
   const yuhang = await loadWorkCatalogFromDb({ districts: ['余杭区'] });
   assert.ok(yuhang);
   assert.ok(yuhang.some((p) => p.id === 'alibaba-xixi'));
+});
+
+// ---- 前端聚合用的标签↔坐标一致性判定(w1,2026-08-20)----
+
+test('cityLabelMatchesCoordinates: 标签命中参考框但坐标在框外 → false(串味防御)', () => {
+  // 串味:标签成都,坐标在杭州(杭州参考框 118.3-120.8/29.05-30.75 内)。
+  assert.equal(cityLabelMatchesCoordinates('成都', 120.1, 30.25), false);
+  assert.equal(cityLabelMatchesCoordinates('成都', 104.07, 30.67), true);
+  // 带「市」后缀同样归一(bareCityName)。
+  assert.equal(cityLabelMatchesCoordinates('成都市', 120.1, 30.25), false);
+  assert.equal(cityLabelMatchesCoordinates('深圳市', 120.1, 30.25), false);
+  assert.equal(cityLabelMatchesCoordinates('深圳', 114.05, 22.55), true);
+  assert.equal(cityLabelMatchesCoordinates('北京市', 120.1, 30.25), false);
+  assert.equal(cityLabelMatchesCoordinates('上海', 121.47, 31.23), true);
+  assert.equal(cityLabelMatchesCoordinates('广州', 113.26, 23.13), true);
+  assert.equal(cityLabelMatchesCoordinates('武汉', 114.31, 30.59), true);
+});
+
+test('cityLabelMatchesCoordinates: 参考框未收录 / 坐标缺失非法 → 放行(无可判断)', () => {
+  assert.equal(cityLabelMatchesCoordinates('哈尔滨', 120.1, 30.25), true);
+  assert.equal(cityLabelMatchesCoordinates('北京', null, null), true);
+  assert.equal(cityLabelMatchesCoordinates('北京', NaN, NaN), true);
+  assert.equal(cityLabelMatchesCoordinates('北京', 116.4, NaN), true);
+  assert.equal(cityLabelMatchesCoordinates('', 120.1, 30.25), true);
+  assert.equal(cityLabelMatchesCoordinates(null, 120.1, 30.25), true);
+  assert.equal(cityLabelMatchesCoordinates(undefined, undefined, undefined), true);
 });

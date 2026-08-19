@@ -37,6 +37,18 @@ zoom ≤ 8(全国 / 省级视野)               zoom ≥ 9(城市级,自动展�
    所有 pin 坐标取均值(或 DB city_code 中心,先均值)。
 4. 徽章 hover 显示城市 + 数量;点击仅下钻,不弹卡片(卡片由个体 pin 负责)。
 5. 与现有交互零冲突:视口增量加载、选中高亮、LOD 过滤全部在聚合层之上工作。
+6. **坐标↔标签防御(2026-08-20 w1)**:city 标签命中已知参考框
+   (`spatial-query.ts` `CITY_REFERENCE_BOXES`)但坐标落在框外(跨城串味行,
+   DB 147 行/76 家,2026-08-19 数据修正记 deferred)→ 剔除,防「成都明明
+   没岗位却有聚合徽章」类假聚合。参考框未收录城市 / 坐标缺失 → 放行。
+   服务端 `cityBoundsConsistencySql` 只覆盖单城视野(bbox ≤ 6 sq.deg),
+   全国/省际视野由聚合层补此缺口。
+7. **计数口径(2026-08-20 w1)**:徽章 N = 当前 zoom 下「该城市将被渲染为
+   个体 pin 的数量」——只计 `tier <= floor(zoom)` 的公司(未打标按缺省
+   12 不可见),与同 zoom 服务端取数口径一致。视口池只增不减,残留的
+   tier>zoom 行不再计入,同 zoom 不同导航历史计数稳定。下钻 zoom 11 后
+   按 LOD 显示 tier ≤ 11 的公司,数量多于徽章是 LOD 设计(放大涌现),不是
+   计数不一致。
 
 ## 3. 实现(一切皆插件)
 
@@ -73,3 +85,21 @@ zoom ≤ 8(全国 / 省级视野)               zoom ≥ 9(城市级,自动展�
   视口加载/选中高亮/LOD 逻辑未动(渲染层第二种模式)。
 - `server/tests/city-cluster.test.mjs`(新):12 项单测(分组/计数/中心点/
   阈值/无 city 个体/非 work 上下文/输出顺序/徽章 HTML 与构造契约)。
+
+### 5.1 聚合防御与计数口径(w1,2026-08-20)
+
+- `server/src/lib/spatial-query.ts`:新增 `cityLabelMatchesCoordinates(city, lng, lat)`
+  纯函数(bare 归一标签 ↔ `CITY_REFERENCE_BOXES` 参考框判定;未收录/坐标缺失
+  → 放行),与 `cityBoundsConsistencySql` 同源复用参考框,不动其查询语义。
+- `server/src/lib/city-cluster.ts`:`clusterCities` 分组前两道防御——① 串味行
+  剔除(规则 6);② LOD 可见性过滤 `tier <= maxTierForZoom(zoom)`(未打标按
+  `TIER_DEFAULT=12` 不计,规则 7)。两处均为纯函数内实现,map-shell 调用面
+  不变。
+- `server/tests/city-cluster.test.mjs` + `server/tests/spatial-query.test.mjs`:
+  新增 9 项契约(串味剔除 6 城、未收录/坐标缺失放行、LOD 阈值边界、计数
+  稳定性——同 zoom 池残留 tier 不同计数不变、未打标不计、贝达 zoom 6-8
+  杭州徽章、`cityLabelMatchesCoordinates` 正反例)。
+- 验收映射:① 成都徽章消失(串味行被剔除);② 徽章 N 与同 zoom 个体 pin
+  LOD 口径一致、导航历史无关;③ 贝达药业(tier 6,杭州临平 120.258/30.438)
+  zoom ∈ [6,8] 出现于「杭州」徽章。DB 行过期与否由 boss 合并后验证:
+  `SELECT c.name, s.city, s.lng, s.lat, c.tier FROM company_sites s JOIN companies c ON c.id=s.company_id WHERE c.slug='betta-hangzhou'`。
