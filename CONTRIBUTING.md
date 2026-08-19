@@ -1,11 +1,11 @@
 # Contributing to Domain Map Platform
 
-> **Status:** contribution contract for the documentation/scaffold stage
-> **Last reviewed:** 2026-08-15
+> **Status:** contribution contract for the active application
+> **Last reviewed:** 2026-08-19
 
 ## Before You Start
 
-This repository does not yet contain a runnable application. Read [README.md](README.md), [agent.md](agent.md), [tech/04-workflow.md](tech/04-workflow.md), and the relevant technical contract before proposing implementation. Do not rely on planned commands, paths, or examples as executable behavior.
+This repository contains a runnable application: a Next.js frontend + `/api/*` server, a Python importer, and PostGIS migrations, all shipped on `dev` (Phase 2/3/4 complete). Read [README.md](README.md), [agent.md](agent.md), [tech/04-workflow.md](tech/04-workflow.md), and the relevant technical contract before proposing implementation. Commands listed below exist and are verified; anything else must be verified before it is claimed or run.
 
 ## Branch and Review Process
 
@@ -29,17 +29,26 @@ git switch -c feature/<scope>
 
 ## Current Supported Commands
 
-Only the documentation-scaffold commands are supported today:
+The full command surface is live; the following are the documented entry points:
 
 ```bash
-make help
-make docs-check
-make scaffold-status
-make db-up
-make db-status
+make help               # list all supported make targets
+make docs-check         # documentation policy check
+make scaffold-status    # show implementation prerequisites present/planned
+make db-up              # start the local PostGIS database
+make db-status          # show database service status
+make db-migrate         # apply pending SQL migrations (requires DATABASE_URL)
+make preflight          # verify DATABASE_URL and PostGIS availability
+make test-unit          # crawler importer unit tests (no database required)
+make test-integration   # DB integration tests (tests/integration/db/test_migrations.sh)
+make crawl-official     # dry-run polite GET of curated official career pages (no write)
+make refresh-radar      # download the reviewed radar snapshot, remap drops, validate import plan
+make geocode-sites      # resolve city-text sites to real offices (needs AMAP_WEB_KEY; --dry-run prints the plan)
 ```
 
-`make db-up` starts only the local PostGIS database service. It does not create schema, migrations, application, importer, or test environment. Do not add setup/run commands until the referenced files exist and are verified.
+Server commands (`cd server`): `npm test` (423 tests, 2026-08-19), `npm run typecheck`, `npm run dev` / `build` / `start`. Data commands that touch Postgres (`npm run import:seed:apply`, `geocode:sites:apply`, `audit:pins`, `import:hz:pois:apply`) need `DATABASE_URL` from `server/.env.local` (never print or commit it) and, where noted, `AMAP_WEB_KEY`.
+
+`make db-up` starts only the local PostGIS database service; schema/migrations are applied separately with `make db-migrate`. Never claim a command exists or ran unless the referenced files exist and are verified.
 
 ## Documentation Rules
 
@@ -50,7 +59,7 @@ make db-status
 
 ## Data and Security
 
-`xiaozhao-radar` is the sole approved MVP import candidate, subject to recorded attribution and provenance. BOSS and Xiaohongshu are not approved sources and must not be directly acquired. Do not bypass authentication, CAPTCHA, rate limits, source restrictions, or robots rules.
+Approved acquisition is limited to reviewed sources recorded in `tech/roles/data/etl/` (xiaozhao-radar `jobs.json`, official career-page GET, reviewed ATS endpoints). BOSS / 牛客 / 小红书 / 实习僧 are not approved sources and must not be directly acquired. Do not bypass authentication, CAPTCHA, rate limits, source restrictions, or robots rules.
 
 Report security-sensitive issues through the repository's private channel rather than public issue details. Do not include secrets, personal data, or raw restricted-source content in commits.
 
