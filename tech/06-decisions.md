@@ -157,6 +157,47 @@ Python 3.12 + uv 是目标导入运行时；具体库和采集方式须逐来源
 
 ---
 
+## ADR-007:公司 favicon 服务采用 favicon.im(替代被墙的 Google s2)
+
+**日期**:2026-08-19
+**状态**:已接受
+**决策者**:ws3(20260819-boss-fix-polish)
+
+**背景**:
+用户报「公司无对应 icon」。DB 实测 672 家公司 `logo_url` 100% 空、`logo_emoji`
+99.7% 空;且此前 `faviconFromUrl` 生成的 `https://www.google.com/s2/favicons`
+URL 在国内被墙,浏览器端即使有 URL 也加载失败 → 全部回退 🏢。
+
+**决策**:
+`faviconFromUrl` 改用 favicon.im:`https://favicon.im/{host}?size={size}`。
+favicon.im 是国内运营的免费 favicon API(中文文档,CDN `a.favicon.im`),
+面向国内用户设计,替代国内不可达的 Google s2。
+
+**可达性验证(2026-08-19 本机 node fetch 实测,记录于批量日志
+`20260819-boss-fix-polish/logs/ws3-favicon-probe.test.mjs`)**:
+
+| 候选 | 状态 | Content-Type | 大小 | 耗时 | 结论 |
+|---|---|---|---|---|---|
+| google s2 (`/s2/favicons?sz=128`) | 200 | image/png | 1465B | 2672ms | 本机 egress 可达,但 boss/Explore 已实测国内浏览器被墙 → 弃 |
+| **favicon.im** (`/alibaba.com?size=128`) | **200** | **image/x-icon** | **1406B** | **1288–2888ms** | **选定**(重复两轮稳定) |
+| favicon.im 子域名 (`/talent.alibaba.com?size=128`) | 200 | image/x-icon | 1150B | 2965ms | 子域名可用(链的站点级输入) |
+| favicon.im (`/careers.tencent.com?size=128`) | 200 | image/svg+xml | 257B | 3114ms | 返回站点自身图标(svg 浏览器可显示) |
+| icon.horse (`/icon/alibaba.com`) | 200 | image/x-icon | 1406B | 246–1293ms | 可用但为国际 CDN,国内可达性未验证 → 备选 |
+| faviconkit (`/alibaba.com/128`) | 200 | image/png | 70B | 2272ms | 返回 1×1 占位像素,图标缺失 → 弃 |
+| api.iowen.cn | 404 | text/html | 479B | 131ms | 弃 |
+
+**理由**:
+- 国内可达:中文运营 + 国内 CDN,是国内社区常用免费图标服务;Google s2 已实测被墙
+- URL 形态与旧实现同构(`{host}` + `?size=`),`faviconFromUrl` 签名不变
+- 子域名直接可用(链上 `siteCareerUrl`/`companyCareerUrl` 多为招聘子域名)
+
+**代价/风险**:
+- 免费服务有速率限制/可用性风险;已留备选 icon.horse(实测 200),
+  如 favicon.im 故障可一行切换
+- 本机 egress 与真实国内浏览器网络不完全等价,上线后需在浏览器端抽查
+
+---
+
 ## 未来待决策
 
 - **数据库 ORM 选型**:Drizzle vs Prisma
