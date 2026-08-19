@@ -26,7 +26,6 @@ claude -p \
   --allowedTools "Read, Edit, Write, Grep, Glob, Search, Bash(cd*), Bash(git status*), Bash(git log*), Bash(git diff*), Bash(git show*), Bash(git branch*), Bash(git add*), Bash(git commit*), Bash(git merge dev), Bash(git checkout --*), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(find*), Bash(ls*), Bash(pwd)" \
   --disallowedTools "Bash(git push*), Bash(git worktree*), Bash(git switch*), Bash(git checkout dev), Bash(git checkout main), Bash(git checkout master), Bash(git checkout -b*), Bash(git reset --hard*), Bash(git rebase*), Bash(git clean*), Bash(git stash*), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \
   --add-dir "$BATCH" \
-  --max-budget-usd 3.0 \
   < "$BATCH/prompts/$WS.md" \
   > "$LOG" 2>&1
 

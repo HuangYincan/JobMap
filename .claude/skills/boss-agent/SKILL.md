@@ -127,7 +127,7 @@ cd /Users/acccan/dm-wt-<ws> && claude -p \
   --agent boss-worker --name "boss-w-<ws>" --output-format text \
   --allowedTools "Read, Edit, Write, Grep, Glob, Search, Bash(cd*), Bash(git status*), Bash(git log*), Bash(git diff*), Bash(git show*), Bash(git branch*), Bash(git add*), Bash(git commit*), Bash(git merge dev), Bash(git checkout --*), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(find*), Bash(ls*), Bash(pwd)" \
   --disallowedTools "Bash(git push*), Bash(git worktree*), Bash(git switch*), Bash(git checkout dev), Bash(git checkout main), Bash(git checkout master), Bash(git checkout -b*), Bash(git reset --hard*), Bash(git rebase*), Bash(git clean*), Bash(git stash*), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \
-  --add-dir <batchDir> --max-budget-usd 3.0 \
+  --add-dir <batchDir> \
   < <batchDir>/prompts/<ws>.md > <batchDir>/logs/<ws>.log 2>&1
 ```
 merge worker(全部绿后,cwd=主仓库):
@@ -136,7 +136,7 @@ cd /Users/acccan/domain-map && claude -p \
   --agent boss-merger --name "boss-merger" --output-format text \
   --allowedTools "Read, Grep, Glob, Edit, Write, Bash(cd*), Bash(git switch dev), Bash(git pull --ff-only origin dev), Bash(git status*), Bash(git log*), Bash(git branch --merged*), Bash(git worktree list), Bash(git worktree remove*), Bash(git branch -d*), Bash(git merge --no-ff*), Bash(git push origin dev), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git checkout --*), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(ls*), Bash(pwd)" \
   --disallowedTools "Bash(git push origin main), Bash(git push --force*), Bash(git reset --hard*), Bash(git rebase*), Bash(git worktree add*), Bash(git checkout dev), Bash(git checkout main), Bash(git checkout master), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \
-  --add-dir <batchDir> --max-budget-usd 4.0 \
+  --add-dir <batchDir> \
   < <batchDir>/merge-instructions.md > <batchDir>/logs/merge.log 2>&1
 ```
 要点:worker cwd=worktree(门禁命令相对路径);权限用**宽 allow + 精确 deny**——
@@ -144,7 +144,8 @@ cd /Users/acccan/domain-map && claude -p \
 分开的 `cd server`+`npm test` 都命中),`Bash(npx*)`/`npm install`/`import:*`/`geocode:*`
 等危险项一律 deny;`Bash(git checkout --*)` 只放行「丢弃/还原特定文件」,绝不放开切分支
 (`git switch`/`checkout dev|main` 仍 deny);prompt 走 stdin;`--add-dir <batchDir>` 授权
-跨主树读写汇报。
+跨主树读写汇报。**不设 `--max-budget-usd`**:预算上限常因任务规模而设小,导致 worker 中途
+超预算失败;失控由 logs 轮询与 COLLECT 超时处理兜底。
 
 **进程内辅通道**(轻活/快速裁决):Agent 工具 spawn `boss-worker` / `boss-merger` 类型,如「读 <file> 给 5 行结论」。
 

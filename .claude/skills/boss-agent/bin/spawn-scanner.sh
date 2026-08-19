@@ -29,7 +29,6 @@ printf '请对仓库 %s 执行一次范围 [%s] 的只读质量扫描。完整�
   --output-format text \
   --allowedTools "Read, Grep, Glob, Search, Write:$REPORT, Bash(git log*), Bash(git status*), Bash(git diff*), Bash(git show*), Bash(git branch*), Bash(git grep*), Bash(git rev-parse*), Bash(grep*), Bash(find*), Bash(rg*), Bash(cat*), Bash(head*), Bash(tail*), Bash(wc*), Bash(ls*), Bash(pwd), Bash(sed -n*), Bash(awk*), Bash(du*), Bash(file*), Bash(dirname*), Bash(basename*), Bash(which*)" \
   --disallowedTools "Bash(git push*), Bash(git add*), Bash(git commit*), Bash(git merge*), Bash(git worktree*), Bash(git checkout*), Bash(git switch*), Bash(git reset*), Bash(git rebase*), Bash(git clean*), Bash(git stash*), Bash(git rm*), Bash(git mv*), Bash(npm*), Bash(make*), Bash(rm*), Bash(mv*), Bash(cp*), Bash(mkdir*), Bash(touch*), Bash(chmod*), Bash(chown*), Bash(export*), Bash(echo*), Bash(sudo*), Bash(npx*), Bash(install*)" \
-  --max-budget-usd 5.0 \
   > "$SCANDIR/scan-stdout.log" 2>&1
 
 exit $?
