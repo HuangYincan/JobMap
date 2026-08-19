@@ -327,3 +327,37 @@ test('geocode apply: manual overrides are city-gated (override poisons multi-cit
   // 站点级跳过替代公司级 already-pinned(多城市时代:杭州 pin 不挡上海解析)
   assert.doesNotMatch(script, /pinned\.has\(slug\)/);
 });
+
+test('work viewport empty batch three-state (ws1 Bug1): 真空清空 / 保留 / 失败保留', () => {
+  const shell = src('components/map-shell.tsx');
+  const vp = src('lib/viewport-search.ts');
+  // 纯函数:旧目录是否仍有 POI 落在当前视野 bounds 内(三态判定核心)
+  assert.match(vp, /export function catalogCoversView\(/);
+  // 视口替换路径(视口加载,existing=[]):空批次 + 旧目录无 POI 在视野内 →
+  // 真空清空走空态(整城空白不再被旧城市 pin 占住)
+  assert.match(shell, /空批次三态\(ws1 Bug1 视口\)/);
+  assert.match(shell, /catalogCoversView\(catalogRef\.current, bounds\)/);
+  assert.match(shell, /catalogRef\.current = \[\];[\s\S]*?setCatalog\(\[\]\);/);
+  // 主加载路径(existing=旧目录):保留时跳过缓存写入(旧目录顶着「当前视野」
+  // 快照会污染挂载对齐判定,下次刷新不再触发对齐加载)
+  assert.match(shell, /catalogCoversView\(catalogRef\.current, view\.bounds\)/);
+  // 请求失败(网络/非 2xx):保留旧目录 + console.warn(现状行为保持)
+  assert.match(shell, /console\.warn\("\[map-shell\] work viewport load failed:/);
+  assert.match(shell, /console\.warn\("\[map-shell\] domain viewport load failed:/);
+  // VIEWPORT_SUPPRESS_MS 抑制机制保留(tech/16 方案 A,收藏 fitToPins 兜底)
+  assert.match(shell, /suppressViewportRefreshUntilRef\.current > Date\.now\(\)/);
+});
+
+test('map shell mount-align load (ws1 Bug1): 缓存快照不符 → 主动调度一次视口加载', () => {
+  const shell = src('components/map-shell.tsx');
+  // 挂载对齐 effect:mapReady + geoSettled 后读缓存视野快照,与当前视野显著
+  // 不符(或无快照字段)→ viewportLoader.schedule() 主动调度当前视野的视口
+  // 加载,不再等用户 moveend(geolocation 被拒时不产生 moveend)
+  assert.match(shell, /挂载对齐加载\(ws1 Bug1 视口\)/);
+  assert.match(shell, /readModeCache\(mode\)/);
+  assert.match(shell, /needsViewportAlign\(cached\.viewport, snap\.center, snap\.zoom\)/);
+  assert.match(shell, /viewportLoaderRef\.current\.schedule\(\)/);
+  // 缓存快照写入:视口加载批次与主加载都带 viewport(center+zoom+bounds)
+  assert.match(shell, /readMapViewSnapshot\(/);
+  assert.match(shell, /viewport: snapshot \?\? undefined/);
+});

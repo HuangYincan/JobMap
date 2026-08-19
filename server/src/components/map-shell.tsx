@@ -14,7 +14,7 @@ import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchPOIDetail, fetchSearchSuggest } from "@/lib/api";
 import type { SearchSuggestion as ApiSearchSuggestion } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
-import { batchMatchesCurrentMode, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
+import { batchMatchesCurrentMode, catalogCoversView, mergePoisById, MORE_PAGE_SIZE, needsViewportAlign, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds, type ViewportSnapshot } from "@/lib/viewport-search";
 import { createViewportLoader, loadWorkViewport, VIEWPORT_DEBOUNCE_MS, WORK_INITIAL_MAX_PAGES, type ViewportLoader } from "@/lib/viewport-search";
 import { maxTierForZoom } from "@/lib/lod";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
@@ -181,6 +181,32 @@ function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "his
       <path d={paths[name]} />
     </svg>
   );
+}
+
+/** 当前地图视野快照(center+zoom+bounds);地图未就绪返回 null。写缓存/对齐判定共用 */
+function readMapViewSnapshot(map: any): ViewportSnapshot | null {
+  if (!map) return null;
+  const centerObj = typeof map.getCenter === "function" ? map.getCenter() : null;
+  const center =
+    centerObj && typeof centerObj.getLng === "function"
+      ? { lng: centerObj.getLng(), lat: centerObj.getLat() }
+      : null;
+  if (!center) return null;
+  const zoom = typeof map.getZoom === "function" ? Math.round(map.getZoom()) : 0;
+  let bounds: ViewportBounds | null = null;
+  const b = typeof map.getBounds === "function" ? map.getBounds() : null;
+  if (b) {
+    const sw = b.getSouthWest?.() ?? b.southwest;
+    const ne = b.getNorthEast?.() ?? b.northeast;
+    const west = sw?.getLng?.() ?? sw?.lng;
+    const south = sw?.getLat?.() ?? sw?.lat;
+    const east = ne?.getLng?.() ?? ne?.lng;
+    const north = ne?.getLat?.() ?? ne?.lat;
+    if ([west, south, east, north].every((n) => typeof n === "number")) {
+      bounds = { west, south, east, north };
+    }
+  }
+  return { center, zoom, bounds };
 }
 
 export function MapShell() {
@@ -807,6 +833,10 @@ export function MapShell() {
       if (!loadingMore) setLoading(true); // 追加加载不闪骨架屏(保留滚动位置)
       setError(null);
       const beforeLen = catalogRef.current.length;
+      // 空批次三态信号(ws1 Bug1 视口):vacant = 本次请求成功但 0 条(未并入
+      // 新行);lastBatchLen 供 domain 分支推断(合并池末长度 ≤ 加载前即 0 新增)。
+      let vacant = false;
+      let lastBatchLen = -1;
       try {
         const view = liveView();
         const origin = searchOrigin ?? userLocation ?? view.center;
@@ -814,6 +844,7 @@ export function MapShell() {
           if (signal.cancelled) return;
           if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期批次
           if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return; // 模式已切换,丢弃过期批次
+          lastBatchLen = batch.length;
           catalogRef.current = batch;
           setCatalog(batch);
           writeModeCache({
@@ -824,6 +855,7 @@ export function MapShell() {
             query,
             filters,
             sort,
+            viewport: view,
           });
           if (batch.length > 0) setLoading(false);
         };
@@ -848,6 +880,7 @@ export function MapShell() {
           // work 数据到底由 loadWorkViewport 上报(短页/空页 break),
           // 与 domain 的 cap 语义分离——「没有更多」= 数据源到底,不是 3000 封顶。
           noMore = result.noMore;
+          vacant = result.vacant;
         } else {
           // 分类门控(poi-category-loading):domain 无分类选择 → 默认不加载,
           // 目录保持空(地图无 domain marker、列表空态);搜索(query)豁免。
@@ -869,6 +902,9 @@ export function MapShell() {
               onBatch,
             });
             data = result.pois;
+            // domain 无 vacant 信号,用合并池推断:onBatch 末池 ≤ 加载前目录
+            // 长度即「本轮 0 新增」(请求成功但 0 条并入,ws1 Bug1 三态)。
+            vacant = beforeLen > 0 && lastBatchLen <= beforeLen;
             // 数据耗尽判定(仅 domain):优先用服务端 total(domain-local 带 total,
             // 「过滤导致可见列表不变」不再误判 noMore,poi-loading D);
             // 无 total 的降级路径(高德回退/关键词)回退本地长度比较:本轮零新增
@@ -878,6 +914,22 @@ export function MapShell() {
               result.noMore ??
               (canonicalMode(mode) === "domain" && beforeLen > 0 && data.length <= beforeLen);
           }
+        }
+        // ---- 空批次三态(ws1 Bug1 视口)----
+        // 请求成功但 0 条(未并入新行):旧目录若仍有 POI 落在当前视野 bounds
+        // 内 → 保留旧目录(收藏 fitToPins 退化视野,由 VIEWPORT_SUPPRESS_MS
+        // 兜底,tech/16 方案 A);否则视为真空 → 清空走空态(整城空白不再被
+        // 旧城市 pin 占住,列表显示现有空态文案)。请求失败不走到这里(上方
+        // catch 保留旧目录)。保留时跳过缓存写入:旧目录顶着「当前视野」快照
+        // 会污染挂载对齐判定(下次刷新不再触发对齐加载)。
+        if (vacant && beforeLen > 0) {
+          if (catalogCoversView(catalogRef.current, view.bounds)) {
+            noMoreRef.current = noMore;
+            setNoMoreData(noMore);
+            return;
+          }
+          data = [];
+          noMore = false; // 真空 ≠ 到底:当前视野仍可能有数据,不闩锁
         }
         if (signal.cancelled) return;
         if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期结果
@@ -892,6 +944,7 @@ export function MapShell() {
           query,
           filters,
           sort,
+          viewport: view,
         });
         noMoreRef.current = noMore;
         setNoMoreData(noMore);
@@ -947,6 +1000,11 @@ export function MapShell() {
           return;
         }
         const mapInst = mapInstance.current;
+        const centerObj = typeof mapInst?.getCenter === "function" ? mapInst.getCenter() : null;
+        const center =
+          centerObj && typeof centerObj.getLng === "function"
+            ? { lng: centerObj.getLng(), lat: centerObj.getLat() }
+            : null;
         const zoom =
           typeof mapInst?.getZoom === "function" ? Math.round(mapInst.getZoom()) : 0;
         const b = typeof mapInst?.getBounds === "function" ? mapInst.getBounds() : null;
@@ -963,6 +1021,8 @@ export function MapShell() {
           }
         }
         if (!bounds) return;
+        // 本批次数据覆盖的视野快照(与 bounds 同一时刻捕获;写缓存用)
+        const snapshot: ViewportSnapshot | null = center ? { center, zoom, bounds } : null;
         const mode = canonicalMode(v.mode);
         if (mode === "work") {
           // 视口替换:新视野 = 新一批(镜像 domain 分支,tech/22「替换+淡入」)。
@@ -991,9 +1051,17 @@ export function MapShell() {
                 // 模式守卫:切换模式后,旧模式在飞的批次(公司/地图 POI)不得
                 // 落进新模式的 catalog,否则工作公司会混入地图列表与 marker
                 if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
-                // 空批次保护(2026-08-19,w5 纵深防御):已有非空目录时,新批次
-                // 为空 → 保留旧目录(防 setBounds/flyTo 程序化相机移动把目录冲空)
-                if (batch.length === 0 && catalogRef.current.length > 0) return;
+                // 空批次三态(ws1 Bug1):请求成功但 0 条时——旧目录若有任何 POI
+                // 落在当前视野 bounds 内 → 保留旧目录(收藏 fitToPins 退化视野,
+                // 由 VIEWPORT_SUPPRESS_MS 兜底);否则视为真空 → 清空走空态
+                // (整城空白不再被旧城市 pin 占住,列表显示现有空态文案)。
+                if (batch.length === 0 && catalogRef.current.length > 0) {
+                  if (!catalogCoversView(catalogRef.current, bounds)) {
+                    catalogRef.current = [];
+                    setCatalog([]);
+                  }
+                  return;
+                }
                 catalogRef.current = batch;
                 setCatalog(batch);
                 writeModeCache({
@@ -1004,6 +1072,7 @@ export function MapShell() {
                   query: v.query,
                   filters: v.filters,
                   sort: v.sort,
+                  viewport: snapshot ?? undefined,
                 });
               },
             });
@@ -1049,9 +1118,14 @@ export function MapShell() {
               onBatch: (batch) => {
                 // 模式守卫:同上——域名刷新批次不得落进切换后的工作模式
                 if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
-                // 空批次保护(2026-08-19,w5 纵深防御):已有非空目录时,新批次
-                // 为空 → 保留旧目录(防 setBounds/flyTo 程序化相机移动把目录冲空)
-                if (batch.length === 0 && catalogRef.current.length > 0) return;
+                // 空批次三态(ws1 Bug1):同 work 分支——真空清空,否则保留旧目录
+                if (batch.length === 0 && catalogRef.current.length > 0) {
+                  if (!catalogCoversView(catalogRef.current, bounds)) {
+                    catalogRef.current = [];
+                    setCatalog([]);
+                  }
+                  return;
+                }
                 catalogRef.current = batch;
                 setCatalog(batch);
                 writeModeCache({
@@ -1062,6 +1136,7 @@ export function MapShell() {
                   query: v.query,
                   filters: v.filters,
                   sort: v.sort,
+                  viewport: snapshot ?? undefined,
                 });
               },
             });
@@ -1095,6 +1170,23 @@ export function MapShell() {
       map.off?.("zoomend", onViewChange);
     };
   }, [mapReady]);
+
+  // ---- 挂载对齐加载(ws1 Bug1 视口)----
+  // mode 级会话缓存还原的是「上次会话视野」的目录(可能停在别的城市)。刷新后地图
+  // 初始化固定在杭州 zoom 13,geolocation 被拒时不产生任何 moveend——若缓存视野
+  // 快照与当前地图视野显著不符(旧缓存无快照一律视为不符),主动调度一次当前视野
+  // 的视口加载,不再等用户手动拖动(否则当前视野整城空白直到 moveend)。
+  useEffect(() => {
+    if (!mapReady || !geoSettled) return;
+    if (!viewportLoaderRef.current) return;
+    const cached = readModeCache(mode);
+    if (!cached || cached.catalog.length === 0) return;
+    const snap = readMapViewSnapshot(mapInstance.current);
+    if (!snap) return;
+    if (!needsViewportAlign(cached.viewport, snap.center, snap.zoom)) return;
+    viewportLoaderRef.current.schedule();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在挂载/定位就绪/切模式时检查
+  }, [mapReady, geoSettled, mode]);
 
   const distanceOrigin = userLocation ?? mapCenter;
   const distanceRadius = distanceFilterMeters(filters);
@@ -1471,6 +1563,7 @@ export function MapShell() {
       query,
       filters,
       sort,
+      viewport: readMapViewSnapshot(mapInstance.current) ?? undefined,
     });
 
     setMode(target);

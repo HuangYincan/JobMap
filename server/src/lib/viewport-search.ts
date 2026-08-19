@@ -265,7 +265,7 @@ function clamp(n: number, min: number, max: number): number {
 // Domain 模式保持刷新才更新,不走这里。
 // ============================================================
 
-import type { FilterState, MapMode, POI, RecruitmentPOI } from './types.ts';
+import { haversineDistance, type FilterState, type MapMode, type POI, type RecruitmentPOI } from './types.ts';
 import { withAlivePositions } from './position-alive.ts';
 
 /**
@@ -323,6 +323,45 @@ export interface LoadWorkViewportOptions extends WorkViewportQuery {
 
 /** 首屏/刷新最多连取几页,避免全库翻页轰服务端 */
 export const WORK_INITIAL_MAX_PAGES = 4;
+
+// ============================================================
+// 挂载对齐加载(ws1 Bug1 视口)
+//
+// mode 级会话缓存还原的是「上次会话视野」的目录(可能是别的城市)。刷新页面后
+// 地图初始化固定在杭州 zoom 13,geolocation 被拒时不产生任何 moveend——若缓存
+// 视野快照与当前地图视野显著不符,调用方(组件契约)应主动调度一次当前视野的
+// 视口加载,不再等用户手动拖动。旧缓存没有快照字段 → 一律按「不符」处理。
+// ============================================================
+
+/** 缓存视野快照与当前视野「显著不符」的中心距离阈值(km) */
+export const VIEWPORT_ALIGN_CENTER_KM = 25;
+/** 缓存视野快照与当前视野「显著不符」的 zoom 差阈值 */
+export const VIEWPORT_ALIGN_ZOOM_DELTA = 2;
+
+/** 缓存写入时的地图视野快照(center+zoom,bounds 可选;与 ModeCacheEntry.viewport 对应) */
+export interface ViewportSnapshot {
+  center: LngLat;
+  zoom: number;
+  bounds?: ViewportBounds | null;
+}
+
+/**
+ * 缓存视野快照与当前地图视野是否「显著不符」:
+ * - 无快照(旧缓存 / 字段非法)→ 视为不符,触发一次对齐加载;
+ * - 中心距离 > centerKm 或 zoom 差 > zoomDelta → 不符。
+ */
+export function needsViewportAlign(
+  snapshot: ViewportSnapshot | null | undefined,
+  liveCenter: LngLat,
+  liveZoom: number,
+  centerKm = VIEWPORT_ALIGN_CENTER_KM,
+  zoomDelta = VIEWPORT_ALIGN_ZOOM_DELTA,
+): boolean {
+  if (!snapshot || !snapshot.center || !Number.isFinite(snapshot.zoom)) return true;
+  if (haversineDistance(snapshot.center, liveCenter) / 1000 > centerKm) return true;
+  if (Math.abs(snapshot.zoom - liveZoom) > zoomDelta) return true;
+  return false;
+}
 
 function isRecruitmentPoi(value: unknown): value is RecruitmentPOI {
   if (!value || typeof value !== 'object') return false;
@@ -389,6 +428,24 @@ export interface LoadWorkViewportResult {
   pois: POI[];
   /** 数据源是否到底(本页不满页即停):true = 已加载全部 */
   noMore: boolean;
+  /**
+   * 本次请求是否取回 0 条(首取页即空,未并入任何新行)。空批次≠到底
+   * (noMore 仍为 false)——滤波/层级 maxTier 裁剪可致整页为空,不代表
+   * 数据源已取尽。仅供调用方做空批次三态(真空清空 vs 保留旧目录,ws1 Bug1)。
+   */
+  vacant: boolean;
+}
+
+/**
+ * 旧目录是否仍有 POI 落在给定视野 bounds 内(ws1 Bug1 空批次三态):
+ * 请求成功但 0 条时——true → 保留旧目录(收藏 fitToPins 退化视野/部分覆盖,
+ * 清空会闪没,由 VIEWPORT_SUPPRESS_MS 兜底);false → 视为真空,可清空走空态。
+ */
+export function catalogCoversView(
+  catalog: readonly POI[],
+  bounds: ViewportBounds | null | undefined,
+): boolean {
+  return catalog.some((poi) => inBounds(poi.location, bounds));
 }
 
 /**
@@ -397,8 +454,10 @@ export interface LoadWorkViewportResult {
  * POI_HARD_CAP 防无限堆)。每页合并后回调 onBatch(完整累计池)。
  * 页数取完或某页不满页即停。
  *
- * 返回值改为 { pois, noMore }:noMore 表示数据源到底(短页/空页 break),
- * 供调用方停止哨兵并显示「没有更多结果」。取消时不置位 noMore(状态未知)。
+ * 返回值 { pois, noMore, vacant }:noMore 表示数据源到底(短页 break / total
+ * 取尽),供调用方停止哨兵并显示「没有更多结果」;空页不置 noMore(空批次≠
+ * 到底,ws1 Bug1),vacant 标记「整个请求 0 条」供空批次三态判定。
+ * 取消时不置位 noMore(状态未知)。
  */
 export async function loadWorkViewport(
   options: LoadWorkViewportOptions,
@@ -412,16 +471,27 @@ export async function loadWorkViewport(
   // 避免「高德 POI 混进工作列表」跨会话粘住。
   let merged: POI[] = existing.filter(isRecruitmentPoi);
   let noMore = false;
+  let vacant = false;
   for (let p = 0; p < maxPages; p += 1) {
-    if (signal?.cancelled) return { pois: merged, noMore: false };
+    if (signal?.cancelled) return { pois: merged, noMore: false, vacant };
     const page = await fetchWorkViewportPage(
       { ...options, page: startPage + p },
       options.fetcher,
     );
-    if (signal?.cancelled) return { pois: merged, noMore: false };
+    if (signal?.cancelled) return { pois: merged, noMore: false, vacant };
     const offset = (startPage + p - 1) * pageSize;
     merged = mergePoisById(merged, page.pois, POI_HARD_CAP);
     onBatch?.(merged);
+    // 空批次(0 条)≠ 到底(ws1 Bug1 视口):滤波/层级 maxTier 裁剪可致整页为空,
+    // 不代表数据源已取尽——不闩锁 noMore,保留无限滚动重试与下一次视口刷新的
+    // 恢复能力,避免「整城无 POI」时粘滞「没有更多结果」(恢复只能等 moveend)。
+    if (page.pois.length === 0) {
+      // 真空标记仅对「整个请求 0 条」(首取页即空)成立;若前面页已并入行,
+      // 只是本轮追加无新增(加载更多越过上限),不算真空。
+      vacant = p === 0;
+      noMore = false;
+      break;
+    }
     // 本页不满页 → 没有更多数据,提前停(避免白打请求);同时上报 noMore
     if (page.pois.length < pageSize) {
       noMore = true;
@@ -434,7 +504,7 @@ export async function loadWorkViewport(
       break;
     }
   }
-  return { pois: merged, noMore };
+  return { pois: merged, noMore, vacant };
 }
 
 export interface ViewportLoader {

@@ -25,8 +25,12 @@ import {
 } from '../src/lib/viewport-search.ts';
 import {
   createViewportLoader,
+  catalogCoversView,
   fetchWorkViewportPage,
   loadWorkViewport,
+  needsViewportAlign,
+  VIEWPORT_ALIGN_CENTER_KM,
+  VIEWPORT_ALIGN_ZOOM_DELTA,
   VIEWPORT_DEBOUNCE_MS,
 } from '../src/lib/viewport-search.ts';
 import { sortPOIs } from '../src/lib/search.ts';
@@ -381,7 +385,7 @@ test('loadWorkViewport maxPages: loops pages, dedupes, stops on a short page', a
     });
     assert.deepEqual(seenPages, ['1', '2', '3']); // 空页后提前停,不请求第 4 页
     assert.deepEqual(merged.map((p) => p.id), ['a', 'b', 'c', 'd']); // 跨页去重
-    assert.equal(noMore, true); // 第 3 页空 → 数据到底
+    assert.equal(noMore, false); // 第 3 页空 → 空批次不闩锁(ws1 Bug1,0 条 ≠ 到底)
     assert.deepEqual(batches, [['a', 'b', 'c'], ['a', 'b', 'c', 'd'], ['a', 'b', 'c', 'd']]); // 每页合并后回调
   } finally {
     globalThis.fetch = originalFetch;
@@ -534,4 +538,118 @@ test('loadWorkViewport: 信号取消后不再触发 onBatch(在飞批次模式�
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('loadWorkViewport: 0 条 → noMore=false(空批次不闩锁,ws1 Bug1)', async () => {
+  // 空批次可能由滤波/层级 maxTier 裁剪导致,不代表数据源到底。闩锁会让
+  // 「整城无 POI」粘住「没有更多结果」,无限滚动失效,恢复只能等下一次
+  // moveend——即使 total=0 也一律不闩锁(宁可滚动时多发一次空请求)。
+  const seenPages = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const page = new URL(String(url), 'http://x').searchParams.get('page');
+    seenPages.push(page);
+    return { ok: true, json: async () => ({ results: [], total: 0 }) };
+  };
+  try {
+    const { pois, noMore, vacant } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 2,
+      maxPages: 4,
+      existing: [],
+    });
+    assert.equal(pois.length, 0);
+    assert.equal(noMore, false); // 空批次不闩锁
+    assert.equal(vacant, true); // 整个请求 0 条 → 真空标记(三态判定用)
+    assert.deepEqual(seenPages, ['1']); // 空页提前停,不白打后续页
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport: 短页(< pageSize,1..size-1 条)仍闩锁 noMore=true', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      results: [recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }])],
+      total: -1,
+    }),
+  });
+  try {
+    const { noMore, vacant } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 2, // 1 条 < 2 → 短页
+      existing: [],
+    });
+    assert.equal(noMore, true); // 短页仍按「到底」闩锁
+    assert.equal(vacant, false); // 请求有数据 → 非真空
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport: 首页满页 + 次页空 → vacant=false(请求有数据,非真空)', async () => {
+  // 真空仅对「整个请求 0 条」(首取页即空)成立;首页已并入行,次页空只是
+  // 本轮追加无新增(加载更多越过上限),不能清空目录。
+  const originalFetch = globalThis.fetch;
+  let pageNo = 0;
+  globalThis.fetch = async () => {
+    pageNo += 1;
+    return {
+      ok: true,
+      json: async () =>
+        pageNo === 1
+          ? {
+              results: [recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }])],
+              total: -1,
+            }
+          : { results: [], total: 0 },
+    };
+  };
+  try {
+    const { pois, noMore, vacant } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 1, // 首页 1 条 = 满页 → 继续第 2 页
+      maxPages: 3,
+      existing: [],
+    });
+    assert.deepEqual(pois.map((p) => p.id), ['a']);
+    assert.equal(noMore, false); // 次页空 → 空批次不闩锁
+    assert.equal(vacant, false); // 首页有数据 → 非真空
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('catalogCoversView: 旧目录是否仍有 POI 落在视野内(空批次三态判定)', () => {
+  const inView = recruitmentPoi('in', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }]);
+  inView.location = { lng: 120.2, lat: 30.25 }; // VIEWPORT_BOX 内
+  const outView = recruitmentPoi('out', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }]);
+  outView.location = { lng: 130.0, lat: 35.0 }; // 视野外(旧城市 pin)
+  // 有 POI 在视野内 → 保留旧目录(收藏 fitToPins 退化视野)
+  assert.equal(catalogCoversView([inView], VIEWPORT_BOX), true);
+  assert.equal(catalogCoversView([inView, outView], VIEWPORT_BOX), true);
+  // 无任何 POI 在视野内 → 真空,可清空
+  assert.equal(catalogCoversView([outView], VIEWPORT_BOX), false);
+  // 空目录 / 无 bounds → 一律按真空处理
+  assert.equal(catalogCoversView([], VIEWPORT_BOX), false);
+  assert.equal(catalogCoversView([inView], null), false);
+  assert.equal(catalogCoversView([inView], undefined), false);
+});
+
+test('needsViewportAlign: 无快照/远中心/zoom 差超阈值 → 不符(触发对齐加载)', () => {
+  assert.equal(VIEWPORT_ALIGN_CENTER_KM, 25);
+  assert.equal(VIEWPORT_ALIGN_ZOOM_DELTA, 2);
+  const hz = { center: { lng: 120.15, lat: 30.27 }, zoom: 13 };
+  // 旧缓存无快照字段 → 一律按不符处理
+  assert.equal(needsViewportAlign(undefined, { lng: 120.15, lat: 30.27 }, 13), true);
+  assert.equal(needsViewportAlign(null, { lng: 120.15, lat: 30.27 }, 13), true);
+  // 杭州 ↔ 上海 ~168km > 25km → 不符
+  assert.equal(needsViewportAlign(hz, { lng: 121.47, lat: 31.23 }, 13), true);
+  // zoom 差 3 > 2 → 不符
+  assert.equal(needsViewportAlign(hz, { lng: 120.16, lat: 30.28 }, 16), true);
+  // 同城 ~5km 且 zoom 差 ≤ 2 → 相符,不触发
+  assert.equal(needsViewportAlign(hz, { lng: 120.2, lat: 30.25 }, 13), false);
+  assert.equal(needsViewportAlign(hz, { lng: 120.15, lat: 30.27 }, 15), false);
 });
