@@ -35,6 +35,17 @@ function issue(slug: string, field: string, message: string): ImportIssue {
   return { slug, field, message };
 }
 
+/**
+ * URL scheme 归一断言 (2026-08-20 scan #4): URL 字段必须以 http(s):// 开头,
+ * 且不含重复 scheme (https://https://… 直接失败 — radar 2 文件 4 处双前缀
+ * 事故, JD 面板「投递」链接不可用)。undefined/null/空串 (可选字段缺省) 视为
+ * 合法, 只校验实际存在的值。
+ */
+export function hasValidUrlScheme(raw: string | undefined): boolean {
+  if (!raw) return true;
+  return /^https?:\/\//.test(raw) && !/^https?:\/\/https?:\/\//.test(raw);
+}
+
 /** 首批目标城市（tech/18 D2）。地址解析只认这些城市的名字。 */
 const TARGET_CITIES = ['北京', '上海', '广州', '深圳', '成都', '武汉', '杭州'] as const;
 
@@ -110,6 +121,12 @@ export function validateSourceCompany(company: SourceCompany): ImportIssue[] {
   if (company.tier !== undefined && !(Number.isInteger(company.tier) && company.tier >= 0 && company.tier <= 21)) {
     issues.push(issue(slug, 'tier', `unknown ${company.tier}`));
   }
+  if (!hasValidUrlScheme(company.careerUrl)) {
+    issues.push(issue(slug, 'careerUrl', 'must start with http(s):// and have no repeated scheme'));
+  }
+  if (!hasValidUrlScheme(company.logoUrl)) {
+    issues.push(issue(slug, 'logoUrl', 'must start with http(s):// and have no repeated scheme'));
+  }
   if (!company.sites.length) issues.push(issue(slug, 'sites', 'need at least one site'));
 
   const siteIds = new Set<string>();
@@ -127,6 +144,8 @@ export function validateSourceCompany(company: SourceCompany): ImportIssue[] {
         issues.push(issue(slug, 'sites.lat', `invalid ${loc.lat}`));
       }
     }
+    if (!hasValidUrlScheme(site.careerUrl)) issues.push(issue(slug, 'sites.careerUrl', 'invalid url scheme'));
+    if (!hasValidUrlScheme(site.logoUrl)) issues.push(issue(slug, 'sites.logoUrl', 'invalid url scheme'));
   }
 
   const externals = new Set<string>();
@@ -149,6 +168,7 @@ function validatePosition(pos: SourcePosition, siteIds: Set<string>): string[] {
   if (!FAMILIES.has(pos.family)) bad.push('positions.family');
   if (!STATUSES.has(pos.status)) bad.push('positions.status');
   if (!pos.siteId || !siteIds.has(pos.siteId)) bad.push('positions.siteId');
+  if (!hasValidUrlScheme(pos.applyUrl)) bad.push('positions.applyUrl');
   // positions.deadline is a date column; non-ISO deadlines crash the apply.
   if (pos.deadline && normalizeDeadline(pos.deadline) === null) bad.push('positions.deadline');
   return bad;
