@@ -25,20 +25,17 @@ import {
   amapStyleUrl,
   MAP_STYLE_KEY,
   mergeMapPois,
-  overlayBounds,
   parseMapStyle,
   readMapStylePref,
-  readSavedOverlayPref,
   resolveSavedForFly,
-  savedPlacesToOverlay,
   writeMapStylePref,
-  writeSavedOverlayPref,
   type BasemapStyle,
 } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
 import { useModeCacheRestore } from "@/hooks/use-mode-cache-restore";
+import { useSavedLayer } from "@/hooks/use-saved-layer";
 import { useSearchState } from "@/hooks/use-search-state";
-import { useWorkViewport, readMapViewSnapshot, VIEWPORT_SUPPRESS_MS, type WorkViewportState } from "@/hooks/use-work-viewport";
+import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
 import { SecondarySidebar, suggestionDisplayIcon, candidateCategoriesFor, pickCategoryFilter, type SearchSuggestion } from "./secondary-sidebar";
@@ -235,10 +232,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
   const [inbox, setInbox] = useState<NotificationRecord[]>([]);
-  const [savedOverlay, setSavedOverlay] = useState(true);
 
   useEffect(() => {
-    setSavedOverlay(readSavedOverlayPref(true));
     const system: BasemapStyle = window.matchMedia("(prefers-color-scheme: dark)").matches ? "whitesmoke" : "normal";
     setMapStyle(readMapStylePref(system));
   }, []);
@@ -891,7 +886,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         }
         // ---- 空批次三态(ws1 Bug1 视口)----
         // 请求成功但 0 条(未并入新行):旧目录若仍有 POI 落在当前视野 bounds
-        // 内 → 保留旧目录(收藏 fitToPins 退化视野,由 VIEWPORT_SUPPRESS_MS
+        // 内 → 保留旧目录(收藏 fitToPins 退化视野,由视口刷新抑制窗口
         // 兜底,tech/16 方案 A);否则视为真空 → 清空走空态(整城空白不再被
         // 旧城市 pin 占住,列表显示现有空态文案)。请求失败不走到这里(上方
         // catch 保留旧目录)。保留时跳过缓存写入:旧目录顶着「当前视野」快照
@@ -1152,10 +1147,21 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     return Array.from(byId.values());
   }, [catalog]);
 
-  const overlayPois = useMemo(
-    () => savedPlacesToOverlay(savedPlaces, compareCatalog, mode),
-    [savedPlaces, compareCatalog, mode],
-  );
+  // ---- 收藏图层(useSavedLayer,QA scan #6 抽取):开关状态 + overlay POI 派生 + toggle ----
+  const {
+    savedOverlay,
+    overlayPois,
+    toggle: handleToggleSavedOverlay,
+    hide: hideSavedOverlay,
+  } = useSavedLayer({
+    user,
+    savedPlaces,
+    compareCatalog,
+    mode,
+    mapInstance,
+    suppressViewportRefreshUntilRef,
+    onRequireAuth: () => setAuthOpen(true),
+  });
   // ---- marker 池(b2):marker 源与列表分离 ----
   // work 的 marker 源 = catalog(全量池,2026-08-20 起一次取尽,跨视口/跨 zoom
   // 保留实例)+ 同一客户端管线(查询/筛选/排序,与列表同口径)。
@@ -1499,34 +1505,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     setHighlightedId(id);
   }, []);
 
-  const handleToggleSavedOverlay = useCallback(() => {
-    if (!user) {
-      setAuthOpen(true);
-      return;
-    }
-    const next = !savedOverlay;
-    writeSavedOverlayPref(next);
-    setSavedOverlay(next);
-    if (!next) return;
-    // w5:setBounds 触发 moveend/zoomend → 视口 replace loader 会以空批次(单 pin 退化视野/覆盖区外)
-    // 整体替换目录,清空全部 marker(收藏图层启停 bug)。相机移动前开抑制窗口吞掉本次移动事件,
-    // 窗口自动过期,不影响后续用户操作触发的视口刷新。
-    suppressViewportRefreshUntilRef.current = Date.now() + VIEWPORT_SUPPRESS_MS;
-    const bounds = overlayBounds(overlayPois);
-    const map = mapInstance.current;
-    if (!bounds || !map || overlayPois.length === 0) return;
-    try {
-      const AMap = (window as unknown as { AMap?: { Bounds: new (sw: number[], ne: number[]) => unknown } }).AMap;
-      if (AMap?.Bounds) {
-        map.setBounds(new AMap.Bounds([bounds.sw.lng, bounds.sw.lat], [bounds.ne.lng, bounds.ne.lat]));
-        return;
-      }
-    } catch {
-      // fall through
-    }
-    map.setCenter?.([overlayPois[0].location.lng, overlayPois[0].location.lat]);
-  }, [user, savedOverlay, overlayPois]);
-
   // 模式切换：当前模式写入会话缓存；目标模式有缓存则还原，不重搜
   const handleModeChange = useCallback((nextMode: MapMode) => {
     const target = canonicalMode(nextMode);
@@ -1803,8 +1781,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         setUser(null);
         setSearchHistory(listGuestHistory());
         setSavedPlaces([]);
-        setSavedOverlay(false);
-        writeSavedOverlayPref(false);
+        hideSavedOverlay();
         setApplications([]);
         setInbox([]);
         setRailPanel((current) =>
