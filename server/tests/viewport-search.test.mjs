@@ -25,6 +25,7 @@ import {
 } from '../src/lib/viewport-search.ts';
 import {
   createViewportLoader,
+  catalogCoversView,
   fetchWorkViewportPage,
   loadWorkViewport,
   needsViewportAlign,
@@ -551,7 +552,7 @@ test('loadWorkViewport: 0 条 → noMore=false(空批次不闩锁,ws1 Bug1)', as
     return { ok: true, json: async () => ({ results: [], total: 0 }) };
   };
   try {
-    const { pois, noMore } = await loadWorkViewport({
+    const { pois, noMore, vacant } = await loadWorkViewport({
       bounds: VIEWPORT_BOX,
       pageSize: 2,
       maxPages: 4,
@@ -559,6 +560,7 @@ test('loadWorkViewport: 0 条 → noMore=false(空批次不闩锁,ws1 Bug1)', as
     });
     assert.equal(pois.length, 0);
     assert.equal(noMore, false); // 空批次不闩锁
+    assert.equal(vacant, true); // 整个请求 0 条 → 真空标记(三态判定用)
     assert.deepEqual(seenPages, ['1']); // 空页提前停,不白打后续页
   } finally {
     globalThis.fetch = originalFetch;
@@ -575,15 +577,65 @@ test('loadWorkViewport: 短页(< pageSize,1..size-1 条)仍闩锁 noMore=true', 
     }),
   });
   try {
-    const { noMore } = await loadWorkViewport({
+    const { noMore, vacant } = await loadWorkViewport({
       bounds: VIEWPORT_BOX,
       pageSize: 2, // 1 条 < 2 → 短页
       existing: [],
     });
     assert.equal(noMore, true); // 短页仍按「到底」闩锁
+    assert.equal(vacant, false); // 请求有数据 → 非真空
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('loadWorkViewport: 首页满页 + 次页空 → vacant=false(请求有数据,非真空)', async () => {
+  // 真空仅对「整个请求 0 条」(首取页即空)成立;首页已并入行,次页空只是
+  // 本轮追加无新增(加载更多越过上限),不能清空目录。
+  const originalFetch = globalThis.fetch;
+  let pageNo = 0;
+  globalThis.fetch = async () => {
+    pageNo += 1;
+    return {
+      ok: true,
+      json: async () =>
+        pageNo === 1
+          ? {
+              results: [recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }])],
+              total: -1,
+            }
+          : { results: [], total: 0 },
+    };
+  };
+  try {
+    const { pois, noMore, vacant } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 1, // 首页 1 条 = 满页 → 继续第 2 页
+      maxPages: 3,
+      existing: [],
+    });
+    assert.deepEqual(pois.map((p) => p.id), ['a']);
+    assert.equal(noMore, false); // 次页空 → 空批次不闩锁
+    assert.equal(vacant, false); // 首页有数据 → 非真空
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('catalogCoversView: 旧目录是否仍有 POI 落在视野内(空批次三态判定)', () => {
+  const inView = recruitmentPoi('in', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }]);
+  inView.location = { lng: 120.2, lat: 30.25 }; // VIEWPORT_BOX 内
+  const outView = recruitmentPoi('out', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }]);
+  outView.location = { lng: 130.0, lat: 35.0 }; // 视野外(旧城市 pin)
+  // 有 POI 在视野内 → 保留旧目录(收藏 fitToPins 退化视野)
+  assert.equal(catalogCoversView([inView], VIEWPORT_BOX), true);
+  assert.equal(catalogCoversView([inView, outView], VIEWPORT_BOX), true);
+  // 无任何 POI 在视野内 → 真空,可清空
+  assert.equal(catalogCoversView([outView], VIEWPORT_BOX), false);
+  // 空目录 / 无 bounds → 一律按真空处理
+  assert.equal(catalogCoversView([], VIEWPORT_BOX), false);
+  assert.equal(catalogCoversView([inView], null), false);
+  assert.equal(catalogCoversView([inView], undefined), false);
 });
 
 test('needsViewportAlign: 无快照/远中心/zoom 差超阈值 → 不符(触发对齐加载)', () => {
