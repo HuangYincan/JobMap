@@ -40,7 +40,7 @@ import { canonicalMode } from './modes.ts';
 import type { ViewportBounds, ViewportSnapshot } from './viewport-search.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 13;
+export const MODE_CACHE_VERSION = 14;
 
 export interface ModeCacheEntry {
   version: number;
