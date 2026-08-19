@@ -430,3 +430,36 @@ test('map shell Bug3 locate: 挂载定位不抢占已交互相机(首次点 pin 
   assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
   assert.doesNotMatch(locateBlock, /hasInteractedRef/);
 });
+
+test('map shell Bug1 卡片/建议选中置位:hasInteractedRef 与地图 pin 同口径', () => {
+  const shell = src('components/map-shell.tsx');
+  // 桌面列表 handleSelect(移动抽屉 onSelect 也走它)先置位:点卡片也是「首次交互」,
+  // 否则 geolocation 晚 resolve 会把相机从被点公司拽回用户位置
+  assert.match(
+    shell,
+    /const handleSelect = useCallback\(\(poi: POI\) => \{[\s\S]{0,200}hasInteractedRef\.current = true/
+  );
+  // 搜索建议选中 handleSelectSuggestion(会 flyTo)同样置位
+  assert.match(
+    shell,
+    /const handleSelectSuggestion = useCallback\(\(s: SearchSuggestion\) => \{[\s\S]{0,200}hasInteractedRef\.current = true/
+  );
+  // 其余 flyTo 入口与 pin 同口径:已保存落地 / 岗位打开 / 附近条目 / 卡片详情,
+  // 凡用户主动选择会动相机的都在点前置位
+  assert.match(
+    shell,
+    /const handlePickSaved = useCallback\(\(place: SavedPlace\) => \{[\s\S]{0,160}hasInteractedRef\.current = true/
+  );
+  assert.match(
+    shell,
+    /const handleOpenApplication = useCallback\(\(ref: \{ positionId: string; companyPoiId: string \}\) => \{[\s\S]{0,200}const openCompany = \(company: POI\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/
+  );
+  assert.match(
+    shell,
+    /const openDetail = \(poi: POI\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/
+  );
+  assert.match(
+    shell,
+    /onOpenDetail=\{\(poi\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/
+  );
+});
