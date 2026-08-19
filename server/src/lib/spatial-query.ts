@@ -157,7 +157,8 @@ export function envelopeArgs(bounds: ViewportBounds): [number, number, number, n
 
 /**
  * company_sites WHERE fragment. Placeholders start at `start`.
- * Bounding box uses && (gist). Distance uses geography ST_DWithin.
+ * Bounding box uses && on s.geom (gist). Distance uses ST_DWithin on the
+ * STORED s.geom_geog geography column (company_sites_geog_gist, 免 cast 走索引)。
  */
 export function companySitesSpatialSql(
   clip: SpatialClip | undefined,
@@ -177,8 +178,10 @@ export function companySitesSpatialSql(
   }
 
   if (clip?.origin && clip.radiusMeters && clip.radiusMeters > 0) {
+    // geom_geog 是 migration 011 的 STORED geography 列（lng/lat 齐全的行生成），
+    // 命中 company_sites_geog_gist gist 索引；不用 s.geom::geography（cast 表达式无法走索引）。
     clauses.push(
-      `ST_DWithin(s.geom::geography, ST_SetSRID(ST_MakePoint($${i}, $${i + 1}), 4326)::geography, $${i + 2})`,
+      `ST_DWithin(s.geom_geog, ST_SetSRID(ST_MakePoint($${i}, $${i + 1}), 4326)::geography, $${i + 2})`,
     );
     params.push(clip.origin.lng, clip.origin.lat, clip.radiusMeters);
     i += 3;
