@@ -48,11 +48,7 @@ export interface POIMarkerController {
   select(id: string): void;
   /** 取消选中，恢复为默认/高亮样式。 */
   deselect(): void;
-  /** 平滑移动地图视野到指定标记（默认缩放级别 16）。 */
-  flyTo(id: string, zoom?: number): void;
-  /** 根据所有标记的分布自动调整视野，让全部标记可见。 */
-  fitPOIs(): void;
-  /** 按 POI id 获取底层 AMap Marker 实例（不存在返回 undefined）。 */
+  /** 按 POI id 获取底层 AMap Marker 实例（不存在返回 undefined；测试探针）。 */
   getMarkerByPOIId(id: string): any;
   /** 销毁控制器：移除全部标记、清空引用，之后所有方法变为 no-op。 */
   destroy(): void;
@@ -690,25 +686,6 @@ class POIMarkerControllerImpl implements POIMarkerController {
     const prev = this.selectedId;
     this.selectedId = null;
     this.refresh(prev);
-  }
-
-  flyTo(id: string, zoom?: number): void {
-    if (!this.map) return;
-    const marker = this.markers.get(id);
-    if (!marker) return;
-    const pos = marker.getPosition();
-    if (!pos) return;
-    // AMap LngLat 实例或 [lng, lat] 数组，两种都兼容
-    const center =
-      typeof pos.getLng === 'function' ? [pos.getLng(), pos.getLat()] : pos;
-    this.map.setZoomAndCenter(zoom || 16, center, false, 600);
-  }
-
-  fitPOIs(): void {
-    if (!this.map) return;
-    const markers = Array.from(this.markers.values());
-    if (markers.length === 0) return;
-    this.map.setFitView(markers, false, [40, 40, 40, 40]);
   }
 
   getMarkerByPOIId(id: string): any {

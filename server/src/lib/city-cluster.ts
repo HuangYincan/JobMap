@@ -2,27 +2,27 @@
 // 城市聚合 — 全国/省级视野(zoom ≤ 8)密度管理(tech/21)
 //
 // tier 模型落地后,全国/省级视野同城 10–50 家 pin 重叠无法点选。
-// 聚合是渲染层第二种模式(与视口增量加载/选中高亮/LOD 过滤零冲突):
+// 聚合是渲染层第二种模式(与个体 pin 模式互斥):
 // zoom ≤ 8 时按 site.city 分组,每个城市一个圆形徽章「城市名 N」,
 // 点击平滑缩放到该城(zoom 11)展开个体 pin。
 //
-// 2026-08-20(w1)两道防御,保证徽章「城市名 N」与个体 pin 语义一致:
-// 1. 坐标↔标签防御:city 标签命中已知参考框但坐标落在框外(跨城串味行,
-//    DB 147 行/76 家,2026-08-19 数据修正已记 deferred)→ 剔除,防
-//    「成都明明没岗位却有聚合徽章」类假聚合;
-// 2. LOD 计数口径:徽章 N = 当前 zoom 下「该城市将被渲染为个体 pin 的
-//    数量」——只计 tier <= floor(zoom) 的公司(与同 zoom 服务端取数一致,
-//    未打标按缺省 12 不可见)。视口池只增不减,残留的 tier>zoom 行
-//    不再计入,同 zoom 不同导航历史计数一致。
+// 2026-08-20 修订(修复:聚合区间取消 LOD 计数):
+// 徽章 N = 该城市全部公司数(不再按 tier 过滤)——聚合区间内计数必须
+// 与 zoom 无关,否则 zoom<8 缩放时徽章计数随 tier 阈值漂移(用户报告
+// 的「缩放时聚合点数量变化」)。LOD(tier <= zoom)只作用于 zoom > 8
+// 的个体 pin 显示密度(map-shell visiblePOIIds),聚合区间不参与。
+//
+// 坐标↔标签防御(w1,2026-08-20):city 标签命中已知参考框但坐标落在框外
+// (跨城串味行,DB 147 行/76 家,2026-08-19 数据修正已记 deferred)→
+// 剔除,防「成都明明没岗位却有聚合徽章」类假聚合。
 //
 // 纯函数,无 AMap/React 依赖,node 下可单测。
 // ============================================================
 
-import type { POI, RecruitmentPOI } from './types.ts';
+import type { POI } from './types.ts';
 import { isRecruitmentPOI } from './types.ts';
 import { cityCenter } from './city-centers.ts';
-import { maxTierForZoom, TIER_DEFAULT } from './lod.ts';
-import { cityLabelMatchesCoordinates } from './spatial-query.ts';
+import { bareCityName, cityLabelMatchesCoordinates } from './spatial-query.ts';
 
 /** 聚合触发上限:zoom <= 8 启用聚合,zoom > 8 切回个体 pin(用户批准阈值,tech/21)。 */
 export const CLUSTER_MAX_ZOOM = 8;
@@ -52,27 +52,16 @@ export function poiCity(poi: POI): string | undefined {
 }
 
 /**
- * LOD 可见性(lod.ts 语义):公司 tier = 可见最小 zoom,`tier <= floor(zoom)`
- * 时该 zoom 下会渲染为个体 pin;未打标公司按缺省 TIER_DEFAULT(12,小厂
- * 城市细视野出现)——zoom ≤ 8 聚合区间内一律不可见。
- * 徽章计数口径:只计当前 zoom LOD 可见的公司,与同 zoom 服务端取数
- * (maxTier = floor(zoom))一致,导航历史无关。
- */
-function lodVisibleAtZoom(poi: RecruitmentPOI, zoom: number): boolean {
-  const tier = poi.company?.tier ?? TIER_DEFAULT;
-  return tier <= maxTierForZoom(zoom);
-}
-
-/**
  * 将 POI 列表按城市分组聚合。
  *
- * 规则(tech/21 + 2026-08-20 w1):
+ * 规则(tech/21 + 2026-08-20 修订):
  * - zoom > CLUSTER_MAX_ZOOM(8)→ 返回 null,调用方用个体 pin;
  * - 非 work 上下文(列表里一个 recruitment POI 都没有,含空列表)→ 返回 null;
- * - 按 site.city 分组计数(经 poiCity,一 POI 一职场语义);
- * - LOD 计数口径:只计当前 zoom 可见的公司(tier <= floor(zoom),未打标按
- *   缺省 12 不计)——视口池只增不减残留的 tier>zoom 行不进徽章,同 zoom
- *   不同导航历史计数一致;
+ * - 按 site.city 分组计数(经 poiCity,一 POI 一职场语义);分组键与徽章标签
+ *   用裸城名(bareCityName,去省/市/区后缀)——DB 里「杭州市」/「杭州」并存
+ *   (102+50 站点),不归一会出现同一城市两个徽章;
+ * - 计数不按 tier 过滤(2026-08-20 修订):聚合区间内徽章 N 与该 zoom 无关,
+ *   只有跨聚合↔个体边界(8.0→8.1)才切换计数口径——LOD 只属个体 pin;
  * - 坐标↔标签防御:city 标签命中已知参考框但坐标落在框外(串味行)→ 剔除;
  *   参考框未收录城市 / 坐标缺失 → 放行(无可判断);
  * - 无 city 的 POI 不聚合(保持个体,由调用方另行渲染或省略);
@@ -95,12 +84,12 @@ export function clusterCities(pois: POI[], zoom: number): CityCluster[] | null {
     recruitmentSeen = true;
     // 坐标↔标签防御:已知城市标签但坐标落在参考框外 → 串味行,剔除
     if (!cityLabelMatchesCoordinates(city, poi.location?.lng, poi.location?.lat)) continue;
-    // LOD 计数口径:该 zoom 下不可见(tier > floor(zoom))→ 不计入徽章
-    if (!lodVisibleAtZoom(poi as RecruitmentPOI, zoom)) continue;
-    let group = groups.get(city);
+    // 裸城名分组/标签:『杭州市』与『杭州』并存的站点归入同一徽章
+    const key = bareCityName(city);
+    let group = groups.get(key);
     if (!group) {
       group = { count: 0, lngs: [], lats: [] };
-      groups.set(city, group);
+      groups.set(key, group);
     }
     group.count += 1;
     const { lng, lat } = poi.location;

@@ -13,8 +13,8 @@ import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDi
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchPOIDetail } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
-import { batchMatchesCurrentMode, catalogCoversView, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
-import { loadWorkViewport, WORK_INITIAL_MAX_PAGES } from "@/lib/viewport-search";
+import { batchMatchesCurrentMode, catalogCoversView, inBounds, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
+import { loadWorkViewport, WORK_FULL_LOAD_MAX_PAGES } from "@/lib/viewport-search";
 import { maxTierForZoom, TIER_DEFAULT } from "@/lib/lod";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
@@ -162,7 +162,6 @@ function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "his
 
 export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
   const userMarkerRef = useRef<any>(null);
   const accuracyCircleRef = useRef<any>(null);
   const distanceCircleRef = useRef<any>(null);
@@ -173,19 +172,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pendingSearchFocus = useRef(false);
   const catalogRef = useRef<POI[]>([]);
-  /** 列表池(wsv):work 模式侧栏二级卡片的独立数据源。catalog(marker 源)只增
-   * 不减保持全量;listCatalog 随视口换——zoom 变化只换侧栏卡片,地图 poi 全量保留。 */
-  const listCatalogRef = useRef<POI[]>([]);
   const poisRef = useRef<POI[]>([]);
   const [geoSettled, setGeoSettled] = useState(false);
   const ignoreNextMapClick = useRef(false);
   /** 用户是否已主动与地图交互过(拖动/缩放/点击/点 marker)。挂载 geolocation
    * 回调晚落地时不再用 setCenter 抢占相机(Bug3:第一次点公司 pin 被拽回用户位置)。 */
   const hasInteractedRef = useRef(false);
-  /** 首点补放(w2):geoSettled 门控命中(handleSelect/onOpenDetail)时暂存目标 poi,
-   * geolocation settle 后补执行一次 flyToLocation——首次点击的相机意图不静默丢弃
-   * (否则首点视角停在杭州默认中心,第二次点击 geoSettled=true 才正常)。 */
-  const pendingFlyToRef = useRef<POI | null>(null);
   /** Domain 数据耗尽(稀疏视野/回退窗口空/无更多页):哨兵停止 + 「没有更多结果」 */
   const [noMoreData, setNoMoreData] = useState(false);
   const noMoreRef = useRef(false);
@@ -206,8 +198,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState<FilterState>({});
   const [sort, setSort] = useState(() => getMode("work").defaultSort);
   const [catalog, setCatalog] = useState<POI[]>([]);
-  /** 列表池状态(wsv):与 catalogRef/catalog 分离,work 视口刷新只换列表池 */
-  const [listCatalog, setListCatalog] = useState<POI[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -443,10 +433,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     mode,
     skipFetchRef,
     catalogRef,
-    listCatalogRef,
     noMoreRef,
     setCatalog,
-    setListCatalog,
     setPageOffset,
     setSearchOrigin,
     setQuery,
@@ -504,24 +492,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       mapInstance.current = map;
       setMapReady(true);
 
-      // 初始定位(Bug3):定位只作为数据原点(userLocation/searchOrigin/蓝点),
+      // 首点不再被 geolocation 门控(2026-08-20 修复):初始加载以 mapReady 为门
+      // (下方 load() 同步去掉 geoSettled 依赖),geolocation 只提供用户位置
+      // 数据原点(userLocation/searchOrigin/蓝点)与未交互时的相机定位;
       // 相机与距离圆心(mapCenter)只在用户尚未与地图交互过时更新——geolocation
       // 真异步可能数秒才 resolve,期间用户已点过公司 pin(hasInteractedRef=true)
       // → 不再 setCenter/userPosition 抢占、不把距离圆心甩去用户位置;
       // 用户自己点「定位」按钮(handleLocate)仍会移过去(原义)。
-      // 首点补放(w2):geoSettled 门控命中(handleSelect/onOpenDetail)暂存的目标
-      // poi 在此补执行一次 flyToLocation,执行后清空 ref。必须在 setGeoSettled(true)
-      // 之后:视口 loader 的 load() 以 geoSettled 自守卫,提前飞会被吞且数据不刷新;
-      // settle 后飞 → 视口刷新正常补拉目标公司视野(与第二次点击行为一致)。
       const settleGeolocation = () => {
         setGeoSettled(true);
-        const pending = pendingFlyToRef.current;
-        if (pending) {
-          pendingFlyToRef.current = null;
-          if (pending.location) {
-            flyToLocation(mapInstance.current, pending.location.lng, pending.location.lat);
-          }
-        }
       };
 
       getCurrentPosition(map)
@@ -693,6 +672,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       };
       map.on("moveend", syncView);
       map.on("complete", syncView);
+      // 首帧立即同步一次视野:mapBounds 在第一批数据到达前就绪,
+      // work 列表客户端裁剪(全量池按视野过滤)从第一次渲染起就有 bounds 可用
+      syncView();
       // Bug3 交互标记:任何主动手势(拖/缩/点)都视为「用户已接管相机」,
       // 挂载 geolocation 晚落地后不再抢回用户位置
       map.on("dragstart", () => {
@@ -728,7 +710,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         satelliteLayerRef.current.destroy();
         satelliteLayerRef.current = null;
       }
-      markersRef.current = [];
       userMarkerRef.current = null;
       accuracyCircleRef.current = null;
       if (distanceHandleRef.current) {
@@ -765,32 +746,22 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     const signal = { cancelled: false };
 
     function liveView() {
-      const map = mapInstance.current;
-      const centerObj = map?.getCenter?.();
-      const liveCenter =
-        centerObj && typeof centerObj.getLng === "function"
-          ? { lng: centerObj.getLng(), lat: centerObj.getLat() }
-          : mapCenter;
-      const liveZoom =
-        typeof map?.getZoom === "function" ? Math.round(map.getZoom()) : zoom;
-      let liveBounds = mapBounds;
-      const b = typeof map?.getBounds === "function" ? map.getBounds() : null;
-      if (b) {
-        const sw = b.getSouthWest?.() ?? b.southwest;
-        const ne = b.getNorthEast?.() ?? b.northeast;
-        const west = sw?.getLng?.() ?? sw?.lng;
-        const south = sw?.getLat?.() ?? sw?.lat;
-        const east = ne?.getLng?.() ?? ne?.lng;
-        const north = ne?.getLat?.() ?? ne?.lat;
-        if ([west, south, east, north].every((n) => typeof n === "number")) {
-          liveBounds = { west, south, east, north };
+      // 与 use-work-viewport.readMapViewSnapshot 同源:live 相机快照,
+      // 地图未就绪回退 React 状态(首帧 mapBounds 由 createMap 内 syncView() 同步)
+      return (
+        readMapViewSnapshot(mapInstance.current) ?? {
+          center: mapCenter,
+          zoom,
+          bounds: mapBounds,
         }
-      }
-      return { center: liveCenter, zoom: liveZoom, bounds: liveBounds };
+      );
     }
 
     async function load() {
-      if (!mapReady || !geoSettled) {
+      // 初始加载以 mapReady 为唯一门(2026-08-20 修复):不再等 geolocation
+      // settle——首点门控/首帧空白/定位竞态的根因。geolocation 只提供数据
+      // 原点,不决定数据何时可用。
+      if (!mapReady) {
         return;
       }
       // skipFetch 先消费:它由缓存还原/模式切换/视口替换置位,即使上一轮
@@ -840,12 +811,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           lastBatchLen = batch.length;
           catalogRef.current = batch;
           setCatalog(batch);
-          // 主加载(首屏/刷新/加载更多)同时喂列表池:work 列表 = 累计池
-          // (与视口刷新的「只换列表池」互补,见 use-work-viewport)
-          if (isRecruitmentMode(mode)) {
-            listCatalogRef.current = batch;
-            setListCatalog(batch);
-          }
           writeModeCache({
             mode,
             catalog: batch,
@@ -858,28 +823,38 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           });
           if (batch.length > 0) setLoading(false);
         };
-        // 工作模式:按当前视野 + 档位上限按需加载(增量合并,不清空已有 marker);
+        // 工作模式:全量加载(2026-08-20 修复)——不传 bounds/maxTier,服务端
+        // 无 clip 返回整库(672 公司 / ~1843 站点 POI,ORDER BY slug 稳定分页),
+        // 一次取尽。此后 pool 与 zoom 无关:聚合徽章计数稳定(bug 1)、缩放/
+        // 平移不再触发任何重拉(首点刷新 bug 的根因之一)。列表按视野的裁剪
+        // 移到客户端(pois memo 按 mapBounds 过滤,不再发视口请求)。
+        // distance 筛选不下行服务端:无 bounds 时服务端以杭州为中心裁剪,
+        // 与客户端 distanceOrigin(当前视野中心)口径不一致——全量池 + 客户端
+        // 按 distanceOrigin 过滤,结果等价且中心正确。
         // Domain 模式:保持刷新才更新(高德 API 负载/余额),视野变化不重搜。
         let noMore = false;
         let data: POI[];
         if (isRecruitmentMode(mode)) {
+          const serverFilters = { ...filters };
+          delete serverFilters.distance;
           const result = await loadWorkViewport({
-            bounds: view.bounds ?? undefined,
-            maxTier: maxTierForZoom(view.zoom),
-            filters,
+            page: 1,
+            maxPages: WORK_FULL_LOAD_MAX_PAGES,
+            filters: serverFilters,
             q: query || undefined,
             sort: sort || undefined,
-            page: pageOffset + 1,
-            maxPages: WORK_INITIAL_MAX_PAGES,
             existing: catalogRef.current,
             signal,
             onBatch,
           });
           data = result.pois;
-          // work 数据到底由 loadWorkViewport 上报(短页/空页 break),
-          // 与 domain 的 cap 语义分离——「没有更多」= 数据源到底,不是 3000 封顶。
+          // work 数据到底由 loadWorkViewport 上报(短页 break):
+          // 「没有更多」= 数据源到底,不是 3000 封顶。
           noMore = result.noMore;
           vacant = result.vacant;
+          // 全量加载后 work 无「加载更多」分页;pageOffset 归零(旧会话缓存
+          // 可能残留 >0,否则下一次 load 会从第 N 页起取、漏掉前 N 页)。
+          if (pageOffset !== 0) setPageOffset(0);
         } else {
           // 分类门控(poi-category-loading):domain 无分类选择 → 默认不加载,
           // 目录保持空(地图无 domain marker、列表空态);搜索(query)豁免。
@@ -935,10 +910,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return; // 模式已切换,丢弃过期结果
         catalogRef.current = data;
         setCatalog(data);
-        if (isRecruitmentMode(mode)) {
-          listCatalogRef.current = data;
-          setListCatalog(data);
-        }
         writeModeCache({
           mode,
           catalog: data,
@@ -980,10 +951,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     // 刻意不依赖 mapCenter / zoom / mapBounds / filters：平移、缩放、minRating/price
     // 筛选都不重搜。唯一例外 filters.category(分类门控,poi-category-loading):
     // domain 选类/换类必须触发按类全量加载;minRating/price 仍纯客户端过滤。
-    // work 模式的首屏/刷新按当前视野(bounds+maxTier)取数;视野变化后的按需加载
-    // 由下方 moveend/zoomend 防抖 effect 负责。
+    // 2026-08-20 修复:geoSettled / userLocation / searchOrigin 也不在依赖内——
+    // 初始加载以 mapReady 为门(work 全量加载一次取尽),geolocation settle 触发
+    // 的依赖变化不再取消在飞加载(否则全量循环在第 1 页后即被 signal.cancelled
+    // 中止,pool 只剩首页 50 条)。定位落地后的数据刷新由相机 moveend → 视口
+    // loader(domain)承担。
     // 使用原始值而非对象引用，避免 React 误判依赖变化
-  }, [mode, query, mapReady, geoSettled, refreshToken, pageOffset, searchOrigin?.lng, searchOrigin?.lat, userLocation?.lng, userLocation?.lat, filters.category]);
+  }, [mode, query, mapReady, refreshToken, pageOffset, filters.category]);
 
   // ---- 工作模式视口按需加载 + 挂载对齐加载(ws1 Bug1)----
   // 视口加载器创建/调度(moveend/zoomend 防抖 + 抑制窗口)与挂载对齐判定抽到
@@ -1002,10 +976,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     skipFetchRef,
     suppressViewportRefreshUntilRef,
     catalogRef,
-    listCatalogRef,
     viewStateRef,
     setCatalog,
-    setListCatalog,
     setNoMoreData,
     setPageOffset,
   });
@@ -1153,10 +1125,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const pois = useMemo(
     () =>
       runPOIPipeline(
-        // 列表 vs 地图池分离(wsv):work 列表用 listCatalog(随视口换,侧栏二级
-        // 卡片展示当前视角);catalog 是 marker 源,只增不减保持全量。listCatalog
-        // 为空(首屏/刷新后尚未加载)时回退 catalog;domain 无列表池概念,恒用 catalog。
-        canonicalMode(mode) === "work" && listCatalog.length > 0 ? listCatalog : catalog,
+        // work 列表 = 全量池按当前视野 bounds 客户端裁剪(2026-08-20 修复:
+        // 全量加载后无增量可取,「侧栏二级卡片展示当前视角」改为本地过滤,
+        // 不再发视口请求;mapBounds 由 syncView(moveend)驱动);bounds 未就绪
+        // (首帧前)回退全量;domain 无列表池概念,恒用 catalog。
+        canonicalMode(mode) === "work" && mapBounds
+          ? catalog.filter((p) => inBounds(p.location, mapBounds))
+          : catalog,
         {
           query: query || undefined,
           filters: Object.keys(filters).length ? filters : undefined,
@@ -1164,10 +1139,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           center: distanceOrigin,
         },
       ),
-    [mode, listCatalog, catalog, query, filters, sort, distanceOrigin]
+    [mode, mapBounds, catalog, query, filters, sort, distanceOrigin]
   );
   catalogRef.current = catalog;
-  listCatalogRef.current = listCatalog;
   poisRef.current = pois;
 
   const compareCatalog = useMemo(() => {
@@ -1182,10 +1156,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     () => savedPlacesToOverlay(savedPlaces, compareCatalog, mode),
     [savedPlaces, compareCatalog, mode],
   );
-  // ---- marker 池(b2):列表源与 marker 源分离 ----
-  // work 的 marker 源 = catalog(只增池:视口批次经 mergePoisById 并入,跨视口/
-  // 跨 zoom 保留实例)+ 同一客户端管线(查询/筛选/排序,与列表同口径)。
-  // workMarkerPois 不依赖 listCatalog/pois:视口批次只换列表,marker 池引用不变
+  // ---- marker 池(b2):marker 源与列表分离 ----
+  // work 的 marker 源 = catalog(全量池,2026-08-20 起一次取尽,跨视口/跨 zoom
+  // 保留实例)+ 同一客户端管线(查询/筛选/排序,与列表同口径)。
+  // workMarkerPois 不依赖 pois(列表按视野裁剪):列表变化不触碰 marker 池引用
   // → usePOIMap 不触发 setPOIs(零 marker 触碰)。
   const workMarkerPois = useMemo(
     () =>
@@ -1214,8 +1188,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     ],
   );
   // domain 无列表池概念,pois(=pipeline(catalog))即 marker 源。
-  // 注意:工作分支返回 workMarkerPois 同引用——即使 listCatalog 变化经 pois
-  // 进入 deps 触发本 memo 重算,下游拿到的仍是同一引用,零 setPOIs。
+  // 注意:工作分支返回 workMarkerPois 同引用——即使列表(pois)按视野裁剪变化,
+  // 下游 marker 源引用不变,零 setPOIs。
   const markerPois = useMemo(
     () =>
       canonicalMode(mode) === "work"
@@ -1318,8 +1292,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     setSearchOrigin(next);
     catalogRef.current = [];
     setCatalog([]);
-    listCatalogRef.current = [];
-    setListCatalog([]);
     setPageOffset(0);
     clearModeCache(mode);
     // 刷新即换列表:旧列表滚动位置不再有意义
@@ -1328,14 +1300,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [mapCenter, mode]);
 
   const handleNeedMore = useCallback(() => {
-    // 无限滚动:Domain 模式到 DOMAIN_POI_HARD_CAP(1000)封顶;
-    // work 模式保持 POI_HARD_CAP(3000,由 fetch 侧控制)。两种模式共用
-    // noMore 短路:数据已耗尽(work 短页到底 / domain 稀疏视野无更多页),
-    // 哨兵停止触发,不再递增 pageOffset。
+    // work 模式全量加载后无「更多」可分页:哨兵直接停止,不再递增 pageOffset
+    // (递增会让下一次 load 从第 N 页起取,漏掉前 N 页)。
+    if (isRecruitmentMode(mode)) return;
+    // 无限滚动:Domain 模式到 DOMAIN_POI_HARD_CAP(1000)封顶。
+    // noMore 短路:数据已耗尽(稀疏视野无更多页),哨兵停止触发。
     if (noMoreRef.current) return; // 数据已耗尽,哨兵停止触发
-    if (canonicalMode(mode) === "domain") {
-      if (catalogRef.current.length >= DOMAIN_POI_HARD_CAP) return;
-    }
+    if (catalogRef.current.length >= DOMAIN_POI_HARD_CAP) return;
     if (loadingRef.current) return; // 防重入:上一批加载中不重复触发
     setLoadingMore(true);
     setPageOffset((n) => n + 1);
@@ -1518,14 +1489,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     // 点卡片/列表选中即「用户已接管相机」:与地图 pin 同口径,
     // 否则 geolocation 晚 resolve 会把相机从被点公司拽回用户位置(Bug1 竞态盲区)
     hasInteractedRef.current = true;
-    // 地图初始化期间不处理选中，避免触发重新加载;首点不吞意图(w2):
-    // 门控命中暂存目标 poi,geolocation settle 后补执行一次 flyToLocation
-    if (!mapReady || !geoSettled) {
-      pendingFlyToRef.current = poi;
-      return;
-    }
+    // 2026-08-20 修复:不再被 geolocation 门控——初始加载以 mapReady 为门,
+    // 数据在 geolocation 落地前就绪,首点选中直接落地(与后续点击一致)。
     setSelectedId(poi.id);
-  }, [mapReady, geoSettled]);
+  }, []);
 
   // 卡片 hover → 高亮 marker
   const handleHover = useCallback((id: string | null) => {
@@ -1594,22 +1561,23 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       skipFetchRef.current = true;
       catalogRef.current = cached.catalog;
       setCatalog(cached.catalog);
-      // 还原即列表池 = 全量 marker 池;挂载对齐的视口加载随后把列表换成当前视野
-      listCatalogRef.current = cached.catalog;
-      setListCatalog(cached.catalog);
       setPageOffset(cached.pageOffset);
       setSearchOrigin(cached.searchOrigin ?? userLocation);
       setQuery(cached.query);
       setFilters(cached.filters);
       setSort(cached.sort || getMode(target).defaultSort);
+      // work 全量池恢复即取尽(2026-08-20):缓存 = 上次全量加载结果,
+      // 无「更多」可分页(与 useModeCacheRestore 同口径);domain 保持复位
+      if (canonicalMode(target) === "work") {
+        noMoreRef.current = true;
+        setNoMoreData(true);
+      }
       setLoading(false);
       return;
     }
 
     catalogRef.current = [];
     setCatalog([]);
-    listCatalogRef.current = [];
-    setListCatalog([]);
     setPageOffset(0);
     setQuery("");
     setFilters({});
@@ -2275,12 +2243,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         onOpenDetail={(poi) => {
           // 用户主动打开详情即「已接管相机」(会 flyTo)(Bug1)
           hasInteractedRef.current = true;
-          // 地图初始化期间不处理详情打开，避免触发重新加载;首点不吞意图(w2):
-          // 门控命中暂存目标 poi,geolocation settle 后补执行一次 flyToLocation
-          if (!mapReady || !geoSettled) {
-            pendingFlyToRef.current = poi;
-            return;
-          }
+          // 2026-08-20 修复:不再被 geolocation 门控——首点打开详情立即飞,
+          // 与后续点击行为一致。
           // 桌面详情不保存移动抽屉滚动(保存只发生在移动卡片点击链),清零避免把旧值带回移动端
           drawerScrollRef.current = 0;
           setDetailPoi(poi);

@@ -2,6 +2,59 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-20: 首点刷新+视角回杭州 + 聚合计数漂移 + 死代码清理(work 全量加载重构)
+
+**症状**：
+- 第一次点击 POI:地图重新刷新,视角回到杭州(用户报告,长期存在的严重 bug)。
+- zoom < 8(聚合区间)继续缩小时聚合点数量变化。
+- 历史功能叠加遗留大量前后逻辑矛盾、冗余低效代码。
+
+**根本原因**：
+1. 首点刷新:work 视口加载以 geolocation settle 为门(`load()` 等
+   `geoSettled`)。首点触发定位完成 → `geoSettled`/`userLocation`/
+   `searchOrigin` 依赖变化 → load effect cleanup 置 `signal.cancelled` 取消
+   在飞加载循环并重载;首帧 `syncView()` 又被视口对齐拉回杭州。
+2. 计数漂移:聚合分支按 `tier <= floor(zoom)` 过滤计数,zoom 变化 → 徽章 N
+   漂移;且「杭州市」/「杭州」并存产生双徽章。
+3. 冗余:视口增量加载(`listCatalog` state/ref)、首点 flyTo 队列
+   (`pendingFlyToRef`)、视口搜索堆栈(`searchNearbyPOIs` /
+   `searchViewportPOIs` / `searchViewportPOIsIncremental` / `POI_CATEGORIES`)、
+   marker 同步注册表(`syncPOIsToMap`)、`fitPOIs`/`flyTo` 等与全量加载/聚合
+   语义矛盾的死代码。
+
+**解决方案**(work 全量加载 + 去门控 + 清理,`fix/poi-zoom-full-load`):
+- work 模式改**全量加载**(`WORK_FULL_LOAD_MAX_PAGES=10_000`,不传
+  bounds/maxTier,page 恒 1):当前规模 107 POI 一次取尽;侧栏列表客户端按
+  `mapBounds` 裁剪(`pois` memo `inBounds`),不再有 work 视口请求(浏览器
+  实测平移 0 请求)。
+- `load()` 门控从 `mapReady && geoSettled` 改为仅 `mapReady`;load effect deps
+  移除 `geoSettled`/`userLocation`/`searchOrigin`——geolocation settle 不再
+  取消在飞加载循环(修复缓存只有 50 条的问题)。
+- `handleSelect`/`onOpenDetail` 去 geolocation 门控;`pendingFlyToRef` 整体
+  删除。`syncView()` 在 createMap 末尾首帧立即调用一次(mapBounds 提前就绪)。
+- 缓存恢复/`handleModeChange` 恢复分支:work 置 `noMore=true`(全量池即取尽,
+  防「加载更多」死按钮)。`MODE_CACHE_VERSION` 14→15(work 旧视口分页池
+  失效)。
+- 聚合计数取消 LOD 过滤(徽章 N 与 zoom 无关);裸城名分组(「杭州市」/
+  「杭州」归入同一徽章)——详见 tech/21 规则 7。
+- 死代码清理:净删 566 行(`loadWorkViewport`/`maxTierForZoom`/
+  `lodVisibleAtZoom`/`sampleViewportGrid`/`normalizeBounds`/`buildSearchWaves`/
+  `REFRESH_ADD_CAP`/`WORK_INITIAL_MAX_PAGES` 等)。
+
+**修改文件**：14 个(`server/src` 9 + `server/tests` 5;tech/21 计数口径同步修订)
+
+**测试验证**：
+- ✅ 契约测试更新:计数与 tier 无关(zoom 0/4/5/6/8 全同)、未打标计入徽章、
+  杭州市/杭州归一、首点无门控、work 分支 no-op + 客户端裁剪、restore
+  work noMore=true
+- ✅ 全量 488 测试通过(486 pass / 0 fail / 2 skip),typecheck 0 错误,
+  docs-check / git diff --check 均绿
+- ✅ 浏览器验证:首点公司卡详情立即打开、zoom 保持(未回杭州);zoom 6/4/2
+  徽章一致(上海26/北京3/杭州27);zoom 10 聚合关、107 个体 pin;平移 0
+  视口请求
+
+---
+
 ## 2026-08-19: 收藏图层启停导致所有 POI 消失(saved-overlay-wipe)
 
 **症状**：

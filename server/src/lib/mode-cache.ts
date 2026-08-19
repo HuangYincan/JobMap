@@ -28,6 +28,9 @@
 // radar 聚合行与示例岗位，bump 使其失效重拉。
 // v13（2026-08-19 沪杭落点）：24 家 feishu 租户 10533 真实岗位 + 21 个沪杭真实
 // 办公点（ATS address_list 精确打点，regeo 验证）——旧缓存缺坐标行，bump 重拉。
+// v14（2026-08-20 全量加载修复）：work 改为首载全量取尽（672 公司 / ~1843 站点
+// POI，无 bounds/maxTier），pageOffset 恒 0——旧缓存是视口部分池（跨会话还原
+// 后 marker 不全且聚合计数漂移），bump 使其失效重拉一次全量。
 //
 // 视野快照（v13 兼容字段，2026-08-19 ws1）：ModeCacheEntry.viewport 记录写入时的
 // 地图视野（center+zoom+bounds），供刷新页面后的「挂载对齐加载」判断缓存目录是否
@@ -40,7 +43,7 @@ import { canonicalMode } from './modes.ts';
 import type { ViewportBounds, ViewportSnapshot } from './viewport-search.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 14;
+export const MODE_CACHE_VERSION = 15;
 
 export interface ModeCacheEntry {
   version: number;

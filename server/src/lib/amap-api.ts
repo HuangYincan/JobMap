@@ -13,15 +13,12 @@ import {
   AMAP_NEARBY_MAX_RADIUS,
   AMAP_PAGE_SIZE,
   AMAP_QPS,
-  buildSearchQueue,
   DOMAIN_POI_HARD_CAP,
   fallbackTaskWindow,
   keywordsFor,
   mergePoisById,
   isCommonPoi,
   MORE_PAGE_SIZE,
-  POI_HARD_CAP,
-  POI_SOFT_CAP,
   searchRadiusMeters,
   zoomStrategy,
   type ViewportBounds,
@@ -422,15 +419,6 @@ export async function searchPOI(
   return { pois, total: total || pois.length };
 }
 
-/** 根据分类关键词搜索周边 POI（Domain 模式默认加载） */
-export async function searchNearbyPOIs(
-  center: POILocation,
-  category: string,
-  radius = 5000
-): Promise<{ pois: DomainPOI[]; total: number }> {
-  return searchPOI({ keyword: category, center, radius, pageSize: AMAP_PAGE_SIZE });
-}
-
 // ============================================================
 // AutoComplete — 搜索建议（tech/10-search-filter.md + 高德 autocomplete）
 // ============================================================
@@ -672,26 +660,6 @@ export async function geocodeAddress(
   });
 }
 
-// ============================================================
-// 视口 POI 搜索 — 网格采样 + 波次并行
-// ============================================================
-
-/** 高德 POI 分类（兼容旧调用） */
-export const POI_CATEGORIES = [
-  '餐饮服务',
-  '购物服务',
-  '风景名胜',
-  '商务住宅',
-  '科教文化服务',
-  '交通设施服务',
-  '金融保险服务',
-  '体育休闲服务',
-  '医疗保健服务',
-  '住宿服务',
-  '政府机构及社会团体',
-  '公司企业',
-] as const;
-
 export interface ViewportSearchOptions {
   bounds?: ViewportBounds;
   center?: POILocation;
@@ -705,59 +673,6 @@ export interface ViewportSearchOptions {
   /** 每找到一批就回调，用于缓慢堆出 POI */
   onBatch?: (pois: DomainPOI[]) => void;
   signal?: { cancelled: boolean };
-}
-
-/**
- * 视口 POI 搜索：从视野中心 searchNearBy，按分类轮询、限速翻页。
- * 空结果不回退假数据。
- */
-export async function searchViewportPOIs(
-  center: POILocation,
-  zoom: number,
-  categories?: readonly string[]
-): Promise<DomainPOI[]> {
-  return searchViewportPOIsIncremental({ center, zoom, categories });
-}
-
-export async function searchViewportPOIsIncremental(
-  options: ViewportSearchOptions & { categories?: readonly string[] }
-): Promise<DomainPOI[]> {
-  const strategy = zoomStrategy(options.zoom);
-  const center = options.center ?? { lng: 120.15, lat: 30.27 };
-  const radius = searchRadiusMeters(options.zoom, center.lat);
-  const keywords = options.categories?.length
-    ? options.categories
-    : keywordsFor(strategy.categories);
-  const queue = buildSearchQueue(keywords, strategy.pages, options.pageOffset ?? 0);
-
-  const existing = options.existing ?? [];
-  const addCap = options.addCap ?? POI_SOFT_CAP;
-  const room = Math.max(0, POI_HARD_CAP - existing.length);
-  const thisRoundCap = existing.length + Math.min(addCap, room, MORE_PAGE_SIZE);
-  let merged: DomainPOI[] = existing.slice();
-
-  if (thisRoundCap <= existing.length) {
-    options.onBatch?.(merged);
-    return merged;
-  }
-
-  for (const task of queue) {
-    if (options.signal?.cancelled) break;
-    if (merged.length >= thisRoundCap) break;
-
-    const result = await searchPOI({
-      keyword: task.keyword,
-      center,
-      radius,
-      pageSize: strategy.pageSize,
-      page: task.page,
-      city: strategy.city,
-    });
-    merged = mergePoisById(merged, result.pois.filter(isCommonPoi), thisRoundCap);
-    options.onBatch?.(merged);
-  }
-
-  return merged;
 }
 
 /**
@@ -799,9 +714,4 @@ export async function searchViewportPOIsFallback(
   }
 
   return merged;
-}
-
-/** 根据分类编码返回中文分类名（兼容旧调用） */
-export function categoryName(category: string): string {
-  return category;
 }
