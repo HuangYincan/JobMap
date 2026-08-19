@@ -936,3 +936,92 @@ overlay 注册表无人清理,`isReady()` 未拦截已销毁地图,marker 挂到
 `server/src/components/map-shell.tsx`、`server/tests/component-contracts.test.mjs`。
 
 **验证**:369 pass / 0 fail;契约测试覆盖 button 化、回调载荷、禁用态、接线函数。
+
+## 2026-08-20: 城市徽章串味剔除 + LOD 计数口径(boss 批次 w1)
+
+**症状**:成都徽章混入坐标在杭州的串味行(假聚合);徽章数量不正确/不稳定,导航历史不同
+徽章数不同;贝达药业(seed 无 sites/tier)归属与徽章表现异常。
+
+**根因**:`clusterCities` 按 city 标签分组,不校验坐标是否落在该城市参考框内(串味行
+city=成都 但坐标=杭州 被并入成都组);徽章 N 按池内残留行计数,与同 zoom 服务端
+取数口径不一致。
+
+**修复**(`0b247a5` / `7d3e91e`):
+- `cityLabelMatchesCoordinates`(spatial-query.ts:118-141):标签 bare 归一后命中
+  `CITY_REFERENCE_BOXES` 已知框但坐标不在框内 → 串味行剔除;参考框未收录/坐标缺失 → 放行。
+- `clusterCities` 两道防御(city-cluster.ts:82-87):①串味剔除;②LOD 计数口径
+  (`tier <= maxTierForZoom(zoom)` 才进徽章,未打标按 `TIER_DEFAULT=12` 不计),与同 zoom
+  服务端 `/api/pois?filters.maxTier` 取数口径一致。徽章样式/触发阈值未动。
+
+**修改文件**:`server/src/lib/spatial-query.ts`、`server/src/lib/city-cluster.ts`、
+`server/tests/city-cluster.test.mjs`(+7)、`server/tests/spatial-query.test.mjs`(+2)、
+`tech/21-city-clustering.md`(规则 6/7 记录新语义)。
+
+**验证**:462 pass / 0 fail(净增 9);DB 串味行是否残留留给 boss 合并后 SQL 复核
+(w1 报告附 `betta-hangzhou` 验证 SQL)。
+
+## 2026-08-20: 首点 POI 视角 geoSettled 门控补放(boss 批次 w2)
+
+**症状**:地图初始化 geolocation 挂起期间(`geoSettled=false`,1-5s 窗口)首次点击公司
+详情卡/列表卡,相机不飞过去;settle 后需再点一次才正常。
+
+**根因**:`handleSelect` / `onOpenDetail` 的 `!mapReady || !geoSettled` 门控命中时
+直接 `return`,首点选中意图被静默丢弃。
+
+**修复**(`0b3bb6b` / `2547977`):
+- `pendingFlyToRef` 暂存门控命中的 poi(两处门控命中 `pendingFlyToRef.current = poi; return`)。
+- geolocation settle 链抽 `settleGeolocation()`:三条出口(`!loc`/成功/失败)统一,先
+  `setGeoSettled(true)`,再对暂存 poi 补飞 `flyToLocation`(zoom 16 / 600ms,与二次点击同口径)
+  并清空 ref → moveend 后视口 loader 正常补拉目标视野,与第二次点击行为一致。
+- `hasInteractedRef` 语义零改动;门控本身保留(仅「直接 return」→「暂存 + return」)。
+
+**修改文件**:`server/src/components/map-shell.tsx`(pendingFlyToRef、settleGeolocation、
+两处门控)+ 新测试 `server/tests/pending-fly-to.test.mjs`(6 契约)。
+
+**验证**:459 pass / 0 fail(+6);typecheck / docs-check / git diff --check 绿。
+
+## 2026-08-20: favicon IP 覆盖——裸 IPv4 careerUrl 不再全 🏢(boss 批次 w3)
+
+**症状**:careerUrl 为裸 IPv4 host 的公司(浙江省发展规划研究院
+`47.96.146.209:8111`)favicon 恒失败,marker 全 🏢 徽章。
+
+**根因**:`faviconCandidatesFromUrl` 未识别裸 IP host,仍对 IP 请求 favicon 服务
+(favicon.im 对 IP 域名 404,ADR-007 已实测)→ 解析链断在 favicon 层。
+
+**修复**(`65ad2a6` / `4c17000` / `28c688d`):
+- `IPV4_RE` 识别 + `DOMAIN_LOGO_MAP` 映射表(全库 grep 裸 IP 仅此 1 条:
+  `47.96.146.209 → zdpi.org.cn`)+ 候选服务数组 `[favicon.im, icon.horse]`;
+  `faviconCandidatesFromUrl` 对未映射 IP 返回空列表(不请求服务)。
+- `resolveCompanyLogo` 链插入两层映射(site/company 层,在 favicon 层前,source='company')。
+- 三消费组件 onerror 候选链:poi-card `CompanyLogo`、poi-detail `RecruitmentDetail`、
+  map-markers 徽章(内联 `data-fb` JSON + onerror 依次切候选,全失败才 emoji)。
+- seed 49 处 google s2 死链 `logoUrl` → `https://favicon.im/{host}?size=128`(grep 复核 49/49)。
+
+**修改文件**:`server/src/lib/company-logo.ts`、`server/src/lib/seed-data.ts`、
+`server/src/components/poi-card.tsx`、`poi-detail.tsx`、`server/src/lib/map-markers.ts`、
+`server/tests/company-logo.test.mjs`(+7)。
+
+**验证**:462 pass / 0 fail(+7)。⚠ `zdpi.org.cn` 映射值未联网复核(沙箱无 egress),
+待 boss 复核;错误也只是多一次 404 → emoji 兜底,不破相。
+
+## 2026-08-20: import upsert EXCLUDED 列引用歧义——import:seed:apply 必败(boss 实测)
+
+**症状**:`npm run import:seed:apply` 必抛 PG 42702
+`column reference "logo_url" is ambiguous`。
+
+**根因**:`recruitment-import.ts` upsert SET 的 RHS
+`COALESCE(EXCLUDED.logo_url, logo_url)` / 同 logo_emoji——DO UPDATE SET 的 RHS 表达式
+对「目标表 + EXCLUDED」通用解析,未限定的 `logo_url`/`logo_emoji` 两边都有 → 歧义。
+引入点 `d78e6f3`(2026-08-19 ws3「COALESCE 保既有 logo」);此后 import 一直 deferred
+未跑,故未暴露。LHS 与 `EXCLUDED.xxx` 限定引用无问题;全库复核其余 EXCLUDED 引用
+(`SET col = EXCLUDED.col`)均已限定,无同类问题。
+
+**修复**(本 WS `3fe4377`):回退参数表限定为 `companies.logo_url` / `companies.logo_emoji`,
+逻辑不变(保既有 logo 语义);契约测试同步改限定形断言 + 未限定形负断言(PG 42702 回归)。
+
+**修改文件**:`server/src/lib/recruitment-import.ts`(:354-355)、
+`server/tests/recruitment-import.test.mjs`。
+
+**验证**:全量 npm test / typecheck / docs-check / git diff --check 绿;实跑 import 需
+DB(工具禁跑),boss 合并后统一跑 `import:seed:apply` + audit 验证。
+
