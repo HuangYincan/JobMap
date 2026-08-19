@@ -350,24 +350,32 @@ test('SecondarySidebar resultHeader: 加载更多按钮 + 错误重试接线(poi
 test('saved overlay toggle: programmatic camera move suppresses viewport refresh (saved-overlay-wipe)', () => {
   const shell = src('components/map-shell.tsx');
   const hook = src('hooks/use-work-viewport.ts');
+  const savedLayer = src('hooks/use-saved-layer.ts');
   // 方案 A:保留 fit-to-pins 相机移动,但在移动前打开抑制窗口,吞掉 setBounds 触发的
   // moveend/zoomend 视口刷新(空批次会整体替换清空目录 → 所有 poi 消失)。
-  // 抑制窗口常量随 useWorkViewport 抽取,ref 仍在 map-shell 创建并传入 hook
+  // 抑制窗口常量在 useWorkViewport,toggle 随 useSavedLayer 抽取,ref 仍在 map-shell 创建并传入 hook
   assert.match(hook, /export const VIEWPORT_SUPPRESS_MS = 500/);
   assert.match(shell, /suppressViewportRefreshUntilRef = useRef\(0\)/);
   // onViewChange 随 hook 移动:抑制窗口内直接 return,不 schedule
   assert.match(hook, /const onViewChange = \(\) => \{[\s\S]{0,200}suppressViewportRefreshUntilRef\.current > Date\.now\(\)[\s\S]{0,80}return;[\s\S]{0,80}loader\.schedule\(\);/);
   // 抑制标记必须在相机移动(setBounds / setCenter fallback)之前置位——限定在 toggle 函数体内比较
-  const toggleAt = shell.indexOf('const handleToggleSavedOverlay = useCallback');
-  const modeSwitchAt = shell.indexOf('const handleModeChange = useCallback');
-  assert.ok(toggleAt !== -1 && modeSwitchAt > toggleAt, 'toggle/mode-switch anchors must exist in order');
-  const toggleBody = shell.slice(toggleAt, modeSwitchAt);
+  const toggleAt = savedLayer.indexOf('const toggle = useCallback');
+  const hideAt = savedLayer.indexOf('const hide = useCallback');
+  assert.ok(toggleAt !== -1 && hideAt > toggleAt, 'toggle/hide anchors must exist in order');
+  const toggleBody = savedLayer.slice(toggleAt, hideAt);
   const setAt = toggleBody.indexOf('suppressViewportRefreshUntilRef.current = Date.now() + VIEWPORT_SUPPRESS_MS');
   const boundsAt = toggleBody.indexOf('map.setBounds(new AMap.Bounds');
   const centerAt = toggleBody.indexOf('map.setCenter?.(');
   assert.ok(setAt !== -1 && boundsAt !== -1 && centerAt !== -1, 'suppress marker / setBounds / setCenter must all exist in toggle');
   assert.ok(setAt < boundsAt, 'suppress marker must be set before map.setBounds');
   assert.ok(setAt < centerAt, 'suppress marker must be set before map.setCenter fallback');
+  // map-shell 接线:同名变量解构 + 共享 ref 传入 + LayersPanel onToggleOverlay 挂 toggle
+  assert.match(
+    shell,
+    /const \{\s*savedOverlay,\s*overlayPois,\s*toggle: handleToggleSavedOverlay,\s*hide: hideSavedOverlay,\s*\} = useSavedLayer\(\{/,
+  );
+  assert.match(shell, /suppressViewportRefreshUntilRef,\s*onRequireAuth: \(\) => setAuthOpen\(true\),\s*\}/);
+  assert.match(shell, /onToggleOverlay=\{handleToggleSavedOverlay\}/);
 });
 
 test('geocode apply: manual overrides are city-gated (override poisons multi-city sites)', () => {
@@ -387,6 +395,7 @@ test('geocode apply: manual overrides are city-gated (override poisons multi-cit
 test('work viewport empty batch three-state (ws1 Bug1): 真空清空 / 保留 / 失败保留', () => {
   const shell = src('components/map-shell.tsx');
   const hook = src('hooks/use-work-viewport.ts');
+  const savedLayer = src('hooks/use-saved-layer.ts');
   const vp = src('lib/viewport-search.ts');
   // 纯函数:旧目录是否仍有 POI 落在当前视野 bounds 内(三态判定核心)
   assert.match(vp, /export function catalogCoversView\(/);
@@ -404,9 +413,9 @@ test('work viewport empty batch three-state (ws1 Bug1): 真空清空 / 保留 / 
   assert.doesNotMatch(hook, /console\.warn\("\[map-shell\] work viewport load failed:/);
   assert.match(hook, /console\.warn\("\[map-shell\] domain viewport load failed:/);
   // VIEWPORT_SUPPRESS_MS 抑制机制保留(tech/16 方案 A,收藏 fitToPins 兜底):
-  // 事件侧窗口检查随 hook 移动,toggle 侧写入抑制标记仍在 map-shell
+  // 事件侧窗口检查随 useWorkViewport 移动,toggle 侧写入抑制标记随 useSavedLayer 移动
   assert.match(hook, /suppressViewportRefreshUntilRef\.current > Date\.now\(\)/);
-  assert.match(shell, /suppressViewportRefreshUntilRef\.current = Date\.now\(\) \+ VIEWPORT_SUPPRESS_MS/);
+  assert.match(savedLayer, /suppressViewportRefreshUntilRef\.current = Date\.now\(\) \+ VIEWPORT_SUPPRESS_MS/);
 });
 
 test('map shell mount-align load (ws1 Bug1): 缓存快照不符 → 主动调度一次视口加载', () => {
@@ -489,12 +498,30 @@ test('map shell Bug1 卡片/建议选中置位:hasInteractedRef 与地图 pin �
 
 test('logout resets saved overlay state and pref alongside saved places', () => {
   const shell = src('components/map-shell.tsx');
+  const savedLayer = src('hooks/use-saved-layer.ts');
   const logoutBlock = shell.slice(shell.indexOf("const handleAuthAction"), shell.indexOf("const handleSaveProfile"));
-  // 登出分支清空 savedPlaces 的同时重置 savedOverlay 状态 + 持久化 pref,避免收藏图层静默消失
+  // 登出分支清空 savedPlaces 的同时隐藏收藏图层(hide 重置状态 + 持久化 pref,避免收藏图层静默消失)
   assert.match(logoutBlock, /setUser\(null\)/);
   assert.match(logoutBlock, /setSavedPlaces\(\[\]\)/);
-  assert.match(logoutBlock, /setSavedOverlay\(false\)/);
-  assert.match(logoutBlock, /writeSavedOverlayPref\(false\)/);
+  assert.match(logoutBlock, /hideSavedOverlay\(\);/);
+  // hide 随 useSavedLayer 抽取:重置 savedOverlay 状态 + 持久化 pref
+  assert.match(savedLayer, /const hide = useCallback\(\(\) => \{\s*setSavedOverlay\(false\);\s*writeSavedOverlayPref\(false\);\s*\}, \[\]\);/);
+});
+
+test('useSavedLayer owns saved overlay state, derivation and guest gate (QA scan #6)', () => {
+  const shell = src('components/map-shell.tsx');
+  const hook = src('hooks/use-saved-layer.ts');
+  // 派生:overlay POI 由 savedPlaces + 目录 + 模式算出(与 marker 池合并共用同一 memo 依赖)
+  assert.match(hook, /savedPlacesToOverlay\(savedPlaces, compareCatalog, mode\)/);
+  // 挂载初始化:读回持久化偏好(原 map-shell 挂载 effect 的对应行)
+  assert.match(hook, /setSavedOverlay\(readSavedOverlayPref\(true\)\)/);
+  // toggle:未登录 → onRequireAuth(打开登录弹窗),不回写 pref;登录 → 写 pref + 翻转状态
+  assert.match(hook, /if \(!user\) \{\s*onRequireAuthRef\.current\(\);\s*return;\s*\}/);
+  assert.match(hook, /const next = !savedOverlay;\s*writeSavedOverlayPref\(next\);\s*setSavedOverlay\(next\);/);
+  assert.match(hook, /if \(!next\) return;/);
+  // map-shell 接线:overlayPois/savedOverlay 仍供 marker 池合并与 LOD 恒显示(行为不变)
+  assert.match(shell, /mergeMapPois\(pois, overlayPois, savedOverlay && Boolean\(user\)\)/);
+  assert.match(shell, /if \(overlayIds\.has\(p\.id\)\) return true; \/\/ 收藏 overlay 恒显示/);
 });
 
 test('work no-category empty state renders candidate category chips wired to filters', () => {
