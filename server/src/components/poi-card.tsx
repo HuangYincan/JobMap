@@ -273,7 +273,17 @@ function RecruitmentCardContent({
   const industries = poi.company.industries.map(
     (ind) => INDUSTRY_LABELS[ind]?.[lang] ?? ind
   );
-  const positionsPreview = openPositions.slice(0, 3);
+  // 2026-08-20 (positions 去重): import 自愈落库前的过渡期, 同 external_id 双行
+  // (旧 seed source + 新真实 source) 会同时进入预览 → <span key={pos.id}> 同 key
+  // 警告上百条。渲染前按 pos.id 去重 (保序保首个), 残余重复也绝不报警。
+  const seenPositionIds = new Set<string>();
+  const positionsPreview = openPositions
+    .filter((pos) => {
+      if (seenPositionIds.has(pos.id)) return false;
+      seenPositionIds.add(pos.id);
+      return true;
+    })
+    .slice(0, 3);
   const benefits = poi.benefits?.slice(0, 4) ?? [];
 
   const positionsLabel =
