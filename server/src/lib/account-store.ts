@@ -2,7 +2,11 @@
 // 账户仓储门面
 //
 // 有 DATABASE_URL 且 005 已应用：identities / sessions / OTP / history 上云。
-// 否则（或查询失败）回落到进程内 session-store，单测不依赖库。
+// 否则回落到进程内 session-store，单测不依赖库。
+//
+// 读路径：DB 查询失败允许回落到内存实现（降级合理）。
+// 写路径：DB 故障直接抛 DbUnavailableError（route 层转 503），
+//         绝不静默回落内存——否则数据在内存与 DB 间分裂，保存看似成功实则丢失。
 // ============================================================
 
 import { createHash } from 'node:crypto';
@@ -97,8 +101,105 @@ function defaultName(provider: AuthProvider | null, phone?: string, email?: stri
   return 'GitHub User';
 }
 
-async function withDb<T>(fn: (pool: Pool) => Promise<T>, fallback: () => T | Promise<T>): Promise<T> {
-  const db = getPool();
+// ---- 错误类型(route 层映射 HTTP 状态) ----
+
+/** 发送限流(60s 冷却 / 24h 上限):route 层转 429 RATE_LIMITED。 */
+export class OtpRateLimitedError extends Error {
+  readonly retryAfterMs: number;
+  constructor(retryAfterMs: number, message: string) {
+    super(message);
+    this.name = 'OtpRateLimitedError';
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+/** 验证尝试超限锁(15min 窗口 ≥5 错 → 锁 15min):route 层转 429 TOO_MANY_ATTEMPTS。 */
+export class OtpTooManyAttemptsError extends Error {
+  readonly retryAfterMs: number;
+  constructor(retryAfterMs: number, message: string) {
+    super(message);
+    this.name = 'OtpTooManyAttemptsError';
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+/** 写路径 DB 不可用:route 层转 503 DB_UNAVAILABLE,绝不静默回落内存。 */
+export class DbUnavailableError extends Error {
+  constructor(cause: unknown) {
+    super(`database unavailable: ${(cause as Error)?.message ?? String(cause)}`);
+    this.name = 'DbUnavailableError';
+  }
+}
+
+// ---- OTP 限流与尝试上限(进程内守卫;DB 行仍是权威的 code/过期) ----
+// 演示为单实例部署,进程内守卫足够;多实例需换 Redis 等共享状态(deferred)。
+// 选内存+DB 双写而非给 auth_otp_challenges 加列:迁移 apply 是 Env-only,
+// 守卫必须在无库测试与内存模式下同样生效。
+
+const OTP_COOLDOWN_MS = 60_000;
+const OTP_DAILY_LIMIT = 10;
+const OTP_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
+const OTP_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+const OTP_MAX_WRONG_ATTEMPTS = 5;
+const OTP_LOCK_MS = 15 * 60 * 1000;
+
+/** OTP 限流参数(生产用默认常量;测试可临时缩小窗口,用后还原)。 */
+export const otpRateConfig = {
+  cooldownMs: OTP_COOLDOWN_MS,
+  dailyLimit: OTP_DAILY_LIMIT,
+  dailyWindowMs: OTP_DAILY_WINDOW_MS,
+  attemptWindowMs: OTP_ATTEMPT_WINDOW_MS,
+  maxWrongAttempts: OTP_MAX_WRONG_ATTEMPTS,
+  lockMs: OTP_LOCK_MS,
+};
+
+interface OtpGuard {
+  lastSentAt: number;
+  sentAt: number[]; // 24h 窗口内的发送时间戳
+  wrongAt: number[]; // 15min 窗口内的错误尝试时间戳
+  lockedUntil: number; // 0 = 未锁
+}
+
+const otpGuards = new Map<string, OtpGuard>();
+
+function otpKey(provider: 'phone' | 'email', target: string): string {
+  return `${provider}:${target.trim().toLowerCase()}`;
+}
+
+function getOtpGuard(key: string): OtpGuard {
+  let guard = otpGuards.get(key);
+  if (!guard) {
+    guard = { lastSentAt: 0, sentAt: [], wrongAt: [], lockedUntil: 0 };
+    otpGuards.set(key, guard);
+  }
+  return guard;
+}
+
+function pruneOtpGuard(guard: OtpGuard, now: number): void {
+  const cfg = otpRateConfig;
+  guard.sentAt = guard.sentAt.filter((t) => t > now - cfg.dailyWindowMs);
+  guard.wrongAt = guard.wrongAt.filter((t) => t > now - cfg.attemptWindowMs);
+  if (guard.lockedUntil <= now) guard.lockedUntil = 0;
+}
+
+// ---- DB 连接与故障策略 ----
+
+/**
+ * 测试钩子(仅测试使用,生产调用方不碰):
+ * - poolOverride:注入 fake 池(可让 query 抛错模拟 DB 故障)或 null(强制内存模式),
+ *   绕过 getPool 的进程级缓存,让「写路径抛 / 读路径降级」可被确定性单测覆盖。
+ */
+export const __accountStoreTest = {
+  poolOverride: undefined as (() => Pool | null) | undefined,
+};
+
+function getPoolForCall(): Pool | null {
+  return __accountStoreTest.poolOverride ? __accountStoreTest.poolOverride() : getPool();
+}
+
+/** 读路径:DB 故障回落内存(降级合理,读不到不至于崩)。 */
+async function withDbRead<T>(fn: (pool: Pool) => Promise<T>, fallback: () => T | Promise<T>): Promise<T> {
+  const db = getPoolForCall();
   if (!db) return fallback();
   try {
     return await fn(db);
@@ -110,6 +211,18 @@ async function withDb<T>(fn: (pool: Pool) => Promise<T>, fallback: () => T | Pro
   }
 }
 
+/** 写路径:DB 故障直接抛 DbUnavailableError,绝不静默回落内存造成数据分裂。 */
+async function withDbWrite<T>(fn: (pool: Pool) => Promise<T>, memory: () => T | Promise<T>): Promise<T> {
+  const db = getPoolForCall();
+  if (!db) return memory(); // 未配置 DB:内存模式本身就是存储,写内存。
+  try {
+    return await fn(db);
+  } catch (err) {
+    if (err instanceof UsernameTakenError) throw err;
+    throw new DbUnavailableError(err);
+  }
+}
+
 export async function upsertIdentity(input: {
   provider: AuthProvider;
   subject: string;
@@ -118,7 +231,7 @@ export async function upsertIdentity(input: {
   displayName?: string;
   avatarUrl?: string;
 }): Promise<AccountUser> {
-  return withDb(async (db) => {
+  return withDbWrite(async (db) => {
     const subject = subjectKey(input.provider, input.subject);
     const prefs = JSON.stringify(DEFAULT_PREFERENCES);
     const inserted = await db.query<{
@@ -167,7 +280,7 @@ export async function registerWithPassword(
   const name = username.trim();
   const subject = `password:${name.toLowerCase()}`;
   const prefs = JSON.stringify(DEFAULT_PREFERENCES);
-  return withDb(
+  return withDbWrite(
     async (db) => {
       const existing = await db.query<{ id: string }>(
         `SELECT id::text FROM users WHERE lower(username) = $1`,
@@ -207,7 +320,7 @@ export async function registerWithPassword(
 /** 密码登录:失败统一返回 null(调用方 401,不泄露账号是否存在)。 */
 export async function loginWithPassword(username: string, password: string): Promise<AccountUser | null> {
   const name = username.trim();
-  return withDb(
+  return withDbRead(
     async (db) => {
       const result = await db.query<{
         id: string;
@@ -242,7 +355,7 @@ export async function loginWithPassword(username: string, password: string): Pro
 }
 
 export async function createSession(userId: string): Promise<{ token: string; expiresAt: number }> {
-  return withDb(async (db) => {
+  return withDbWrite(async (db) => {
     const memory = memCreateSession(userId);
     await db.query(
       `INSERT INTO auth_sessions (user_id, token_hash, expires_at)
@@ -255,7 +368,7 @@ export async function createSession(userId: string): Promise<{ token: string; ex
 
 export async function getSessionUser(token: string | undefined | null): Promise<AccountUser | null> {
   if (!token) return null;
-  return withDb(async (db) => {
+  return withDbRead(async (db) => {
     const result = await db.query<{
       id: string;
       display_name: string | null;
@@ -288,7 +401,7 @@ export async function getSessionUser(token: string | undefined | null): Promise<
 export async function destroySession(token: string | undefined | null): Promise<void> {
   memDestroySession(token);
   if (!token) return;
-  await withDb(async (db) => {
+  await withDbWrite(async (db) => {
     await db.query(`DELETE FROM auth_sessions WHERE token_hash = $1`, [hashToken(token)]);
     return undefined;
   }, () => undefined);
@@ -300,7 +413,7 @@ export async function updateUser(
     preferences?: Partial<UserPreferences>;
   },
 ): Promise<AccountUser | null> {
-  return withDb(async (db) => {
+  return withDbWrite(async (db) => {
     const current = await db.query<{ preferences: UserPreferences | null }>(
       `SELECT preferences FROM users WHERE id = $1`,
       [userId],
@@ -338,12 +451,37 @@ export async function updateUser(
 }
 
 export async function issueOtp(provider: 'phone' | 'email', target: string): Promise<{ expiresAt: number }> {
-  const memory = memIssueOtp(provider, target);
-  await withDb(async (db) => {
+  const normalized = target.trim().toLowerCase();
+  const now = Date.now();
+  const cfg = otpRateConfig;
+  const guard = getOtpGuard(otpKey(provider, normalized));
+  pruneOtpGuard(guard, now);
+  // 锁定期内不允许补发新码(防止绕过尝试上限)。
+  if (guard.lockedUntil > now) {
+    throw new OtpTooManyAttemptsError(guard.lockedUntil - now, 'too many failed attempts, try again later');
+  }
+  if (now - guard.lastSentAt < cfg.cooldownMs) {
+    const retryAfterMs = cfg.cooldownMs - (now - guard.lastSentAt);
+    throw new OtpRateLimitedError(retryAfterMs, 'resend too soon');
+  }
+  if (guard.sentAt.length >= cfg.dailyLimit) {
+    const retryAfterMs = Math.max(cfg.cooldownMs, guard.sentAt[0] + cfg.dailyWindowMs - now);
+    throw new OtpRateLimitedError(retryAfterMs, 'daily send limit reached');
+  }
+  guard.lastSentAt = now;
+  guard.sentAt.push(now);
+
+  const memory = memIssueOtp(provider, normalized);
+  await withDbWrite(async (db) => {
+    // 顺手清掉该 target 的过期挑战行,控制 auth_otp_challenges 膨胀。
+    await db.query(
+      `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
+      [provider, normalized],
+    );
     await db.query(
       `INSERT INTO auth_otp_challenges (provider, target, code_hash, expires_at)
        VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
-      [provider, target.trim().toLowerCase(), hashOtp(DEMO_OTP_CODE), memory.expiresAt],
+      [provider, normalized, hashOtp(DEMO_OTP_CODE), memory.expiresAt],
     );
     return undefined;
   }, () => undefined);
@@ -351,7 +489,16 @@ export async function issueOtp(provider: 'phone' | 'email', target: string): Pro
 }
 
 export async function consumeOtp(provider: 'phone' | 'email', target: string, code: string): Promise<boolean> {
-  const ok = await withDb(async (db) => {
+  const normalized = target.trim().toLowerCase();
+  const now = Date.now();
+  const cfg = otpRateConfig;
+  const guard = getOtpGuard(otpKey(provider, normalized));
+  pruneOtpGuard(guard, now);
+  if (guard.lockedUntil > now) {
+    throw new OtpTooManyAttemptsError(guard.lockedUntil - now, 'too many failed attempts, locked');
+  }
+
+  const ok = await withDbWrite(async (db) => {
     const result = await db.query<{ id: string }>(
       `SELECT id::text
        FROM auth_otp_challenges
@@ -359,21 +506,33 @@ export async function consumeOtp(provider: 'phone' | 'email', target: string, co
          AND code_hash = $3
        ORDER BY created_at DESC
        LIMIT 1`,
-      [provider, target.trim().toLowerCase(), hashOtp(code)],
+      [provider, normalized, hashOtp(code)],
     );
     const row = result.rows[0];
     if (!row) {
       await db.query(
         `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
-        [provider, target.trim().toLowerCase()],
+        [provider, normalized],
       );
       return false;
     }
     await db.query(`UPDATE auth_otp_challenges SET consumed_at = now() WHERE id = $1`, [row.id]);
     return true;
-  }, () => memConsumeOtp(provider, target, code));
-  if (ok) return true;
-  return memConsumeOtp(provider, target, code);
+  }, () => memConsumeOtp(provider, normalized, code));
+
+  const succeeded = ok || memConsumeOtp(provider, normalized, code);
+  if (succeeded) {
+    guard.wrongAt = [];
+    return true;
+  }
+  // 记录错误尝试;15min 窗口内 ≥5 次 → 锁 15min。
+  guard.wrongAt.push(now);
+  if (guard.wrongAt.length >= cfg.maxWrongAttempts) {
+    guard.lockedUntil = now + cfg.lockMs;
+    guard.wrongAt = [];
+    throw new OtpTooManyAttemptsError(cfg.lockMs, 'too many failed attempts, locked');
+  }
+  return false;
 }
 
 // ---- search_history 实体引用列（db/migrations/014_recent_entity.sql）----
@@ -425,7 +584,7 @@ const HISTORY_SELECT_WITH_ENTITY = `
   LIMIT $2`;
 
 export async function listHistory(userId: string, limit = 30): Promise<SearchHistoryEntry[]> {
-  return withDb(async (db) => {
+  return withDbRead(async (db) => {
     const result = await withEntityColumnFallback(
       () => db.query<HistoryRow>(HISTORY_SELECT_WITH_ENTITY, [userId, limit]),
       () => db.query<HistoryRow>(HISTORY_SELECT, [userId, limit]),
@@ -444,7 +603,7 @@ export async function addHistory(
   if (!q) return null;
   const canon = canonicalMode(mode);
   const ent = sanitizeEntityRef(entity) ?? null;
-  return withDb(async (db) => {
+  return withDbWrite(async (db) => {
     const last = await withEntityColumnFallback(
       () => db.query<HistoryRow>(
         `SELECT id::text, query, mode, entity, created_at
@@ -501,7 +660,7 @@ export async function addHistory(
 
 export async function clearHistory(userId: string): Promise<void> {
   memClearHistory(userId);
-  await withDb(async (db) => {
+  await withDbWrite(async (db) => {
     await db.query(`DELETE FROM search_history WHERE user_id = $1`, [userId]);
     return undefined;
   }, () => undefined);
@@ -532,7 +691,7 @@ function asSaved(row: {
 }
 
 export async function listSaved(userId: string): Promise<SavedPlace[]> {
-  return withDb(async (db) => {
+  return withDbRead(async (db) => {
     const result = await db.query<{
       id: string;
       poi_id: string;
@@ -559,7 +718,7 @@ export async function savePlace(
   place: Omit<SavedPlace, 'id' | 'createdAt'>,
 ): Promise<SavedPlace> {
   const canon = canonicalMode(place.mode);
-  return withDb(async (db) => {
+  return withDbWrite(async (db) => {
     const result = await db.query<{
       id: string;
       poi_id: string;
@@ -582,7 +741,7 @@ export async function savePlace(
 }
 
 export async function removeSaved(userId: string, poiId: string): Promise<boolean> {
-  return withDb(async (db) => {
+  return withDbWrite(async (db) => {
     const result = await db.query(`DELETE FROM saved_places WHERE user_id = $1 AND poi_id = $2`, [userId, poiId]);
     return (result.rowCount ?? 0) > 0;
   }, () => memRemoveSaved(userId, poiId));
@@ -611,7 +770,7 @@ function asApplication(row: {
 }
 
 export async function listApplications(userId: string): Promise<ApplicationRecord[]> {
-  return withDb(async (db) => {
+  return withDbRead(async (db) => {
     const result = await db.query<{
       id: string;
       position_id: string;
@@ -636,7 +795,7 @@ export async function recordApplication(
   userId: string,
   input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'status'> & { status?: ApplicationRecord['status'] },
 ): Promise<ApplicationRecord> {
-  return withDb(async (db) => {
+  return withDbWrite(async (db) => {
     const result = await db.query<{
       id: string;
       position_id: string;
@@ -692,7 +851,7 @@ function asNotification(row: {
 }
 
 export async function listNotifications(userId: string): Promise<NotificationRecord[]> {
-  return withDb(async (db) => {
+  return withDbRead(async (db) => {
     const result = await db.query<{
       id: string;
       kind: NotificationRecord['kind'];
@@ -719,7 +878,7 @@ export async function enqueueNotification(
   userId: string,
   input: Omit<NotificationRecord, 'id' | 'createdAt' | 'status'> & { status?: NotificationRecord['status'] },
 ): Promise<NotificationRecord> {
-  return withDb(async (db) => {
+  return withDbWrite(async (db) => {
     const result = await db.query<{
       id: string;
       kind: NotificationRecord['kind'];
