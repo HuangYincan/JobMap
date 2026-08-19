@@ -37,6 +37,8 @@ import {
   type BasemapStyle,
 } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
+import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
+import { createCityClusterMarker } from "@/lib/map-markers";
 import { SecondarySidebar, suggestionDisplayIcon, type SearchSuggestion } from "./secondary-sidebar";
 import { POIList } from "./poi-list";
 import { ModeSwitcher } from "./mode-switcher";
@@ -1358,6 +1360,68 @@ export function MapShell() {
     [pois, overlayPois, savedOverlay, user],
   );
 
+  // ---- 城市聚合(tech/21,zoom ≤ 8)----
+  // 渲染层第二种模式,与视口增量加载/选中高亮/LOD 过滤零冲突:
+  // work 模式 zoom ≤ 8 时按 site.city 分组渲染圆形徽章(点击下钻 zoom 11);
+  // zoom > 8 自动切回个体 pin。无 city 的 pin 保持个体(规则 2)。
+  const clusterState = useMemo(() => {
+    if (!isRecruitmentMode(mode)) return null; // 非 work 上下文 → 个体 pin
+    const groups = clusterCities(mapPois, zoom);
+    if (groups === null) return null; // zoom > 8 → 个体 pin
+    return {
+      groups,
+      individual: mapPois.filter((p) => !poiCity(p)), // 无 city 的 pin 保持个体
+    };
+  }, [mode, mapPois, zoom]);
+
+  // 聚合徽章渲染:每城一个 AMap.Marker(content 徽章),effect 清理时整批摘除。
+  // 与个体 marker 模式互斥——聚合激活时个体控制器只收到无 city 的 pin。
+  useEffect(() => {
+    const map = mapInstance.current;
+    const AMap = typeof window !== "undefined" ? window.AMap : undefined;
+    if (!map || !AMap?.Marker || !clusterState) return;
+
+    const created: any[] = [];
+    for (const group of clusterState.groups) {
+      const marker = createCityClusterMarker(AMap, map, group, {
+        color: modeConfig.color,
+        onClick: () => {
+          // AMap 常在 marker click 后再打一次 map click;吞掉同一次手势
+          ignoreNextMapClick.current = true;
+          window.setTimeout(() => {
+            ignoreNextMapClick.current = false;
+          }, 80);
+          // 徽章点击仅下钻、不弹卡片:平滑缩放到该城,
+          // zoom 11 > 8 自动切回个体 marker 模式,个体 pin 出现
+          try {
+            if (typeof map.setZoomAndCenter === "function") {
+              map.setZoomAndCenter(CLUSTER_DRILL_ZOOM, [group.lng, group.lat], false, 600);
+            }
+          } catch {
+            map.setZoom?.(CLUSTER_DRILL_ZOOM);
+            map.setCenter?.([group.lng, group.lat]);
+          }
+        },
+      });
+      if (marker) created.push(marker);
+    }
+    return () => {
+      for (const marker of created) {
+        try {
+          if (typeof marker.setMap === "function") marker.setMap(null);
+        } catch {
+          // 地图已销毁等场景:忽略,与 controller 的 detachFromMap 同语义
+        }
+      }
+    };
+  }, [clusterState, mapReady, modeConfig.color]);
+
+  // 聚合激活时个体控制器只同步无 city 的 pin;未激活时照常同步全部 mapPois
+  const markerPois = useMemo(
+    () => (clusterState ? clusterState.individual : mapPois),
+    [clusterState, mapPois],
+  );
+
   const handleRefreshHere = useCallback(() => {
     const map = mapInstance.current;
     const centerObj = map?.getCenter?.();
@@ -1528,7 +1592,7 @@ export function MapShell() {
 
   // ---- 地图联动 ----
   usePOIMap(mapInstance.current, {
-    pois: mapPois,
+    pois: markerPois,
     selectedId,
     highlightedId,
     accentColor: modeConfig.color,
