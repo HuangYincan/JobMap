@@ -77,6 +77,56 @@ export function workCandidateCategories(
   return chips;
 }
 
+/**
+ * F2 候选类别(domain 分支):domain 地图模式未选类别(无 query / filters.category)时,
+ * 从 getMode(mode).filters 的 category(select 单选)取 CATEGORY_OPTIONS 9 类 chips,
+ * 供 POIList 空态槽位渲染;点击写 filters.category(字符串,单选语义与 FilterPanel 一致)。
+ */
+export function domainCandidateCategories(
+  mode: MapMode,
+  query: string,
+  filters: FilterState,
+): { key: string; value: string; label: string }[] {
+  if (canonicalMode(mode) !== "domain") return [];
+  if (query.trim()) return [];
+  if (filters.category) return [];
+  const chips: { key: string; value: string; label: string }[] = [];
+  for (const config of getMode(mode).filters) {
+    if (config.key !== "category" || config.type !== "select") continue;
+    for (const option of config.options ?? []) {
+      chips.push({ key: config.key, value: option.value, label: option.label });
+    }
+  }
+  return chips;
+}
+
+/** F2 候选类别(work + domain 合并;两模式互斥,至多一方非空)。 */
+export function candidateCategoriesFor(
+  mode: MapMode,
+  query: string,
+  filters: FilterState,
+): { key: string; value: string; label: string }[] {
+  return [
+    ...workCandidateCategories(mode, query, filters),
+    ...domainCandidateCategories(mode, query, filters),
+  ];
+}
+
+/**
+ * F2 候选类别 chip 点击:写 filters[key]。
+ * 单选(select,如 domain category)写字符串;多选(multi-select,如 work jobTaxonomy/roleFamily)写数组。
+ */
+export function pickCategoryFilter(
+  filters: FilterState,
+  mode: MapMode,
+  key: string,
+  value: string,
+): FilterState {
+  const config = getMode(mode).filters.find((f) => f.key === key);
+  const isSingle = config?.type === "select";
+  return { ...filters, [key]: isSingle ? value : [value] };
+}
+
 export interface SecondarySidebarProps {
   /** 当前模式 */
   mode: MapMode;
@@ -207,8 +257,8 @@ export function SecondarySidebar({
   // 分类门控(poi-category-loading):domain 浏览态且未选分类 → 空态提示选类
   const domainNoCategory =
     config.kind === "domain" && !filters.category && !query.trim();
-  // F2 候选类别(work 未选类别):空态槽位渲染 job-family/职能 chips,点击写 filters
-  const candidateChips = workCandidateCategories(mode, query, filters);
+  // F2 候选类别(work/domain 未选类别):空态槽位渲染 chips,点击写 filters
+  const candidateChips = candidateCategoriesFor(mode, query, filters);
   const detailPoi = detailPoiProp ?? localDetail;
   const suggestionItems = suggestions ?? [];
 
@@ -499,7 +549,7 @@ export function SecondarySidebar({
             domainNoCategory || candidateChips.length > 0 ? t("pickCategory", lang) : undefined
           }
           candidateCategories={candidateChips.length > 0 ? candidateChips : undefined}
-          onPickCategory={(key, value) => onFiltersChange({ ...filters, [key]: [value] })}
+          onPickCategory={(key, value) => onFiltersChange(pickCategoryFilter(filters, mode, key, value))}
           lang={lang}
           accentColor={config.color}
           onWidenSearch={onWidenSearch}
