@@ -6,6 +6,7 @@
 //   - domain：本地优先（hz_pois name 前缀匹配，adname 作 subtitle）；
 //     本地 0 命中 / 无库 → 空列表，客户端回退高德 AutoComplete 一次
 //   - center=lng,lat 可选：服务端算好每行 distance（米）
+// 加固（quality-scan #10）：q 长度上限（超长 q 直接 400，防进全 catalog 匹配循环 + key 膨胀）。
 // ============================================================
 
 import { NextResponse } from 'next/server';
@@ -16,6 +17,9 @@ import type { MapMode, RecruitmentPOI } from '@/lib/types';
 import { loadHzPoiSuggestions } from '@/lib/hz-poi-store';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 import { trendingForMode } from '@/lib/trending-search';
+
+/** q 上限：与 /api/search 一致。超长 q 对 autocomplete 无意义，直接 400。 */
+const MAX_Q_LENGTH = 100;
 
 /** 解析可选 center=lng,lat。非法值返回 null(客户端自行按位置算距离)。 */
 function parseCenter(raw: string | null): { lng: number; lat: number } | null {
@@ -30,6 +34,12 @@ function parseCenter(raw: string | null): { lng: number; lat: number } | null {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get('q') || '').trim().toLowerCase();
+  if (q.length > MAX_Q_LENGTH) {
+    return NextResponse.json(
+      { code: 'Q_TOO_LONG', message: `q must be at most ${MAX_Q_LENGTH} chars` },
+      { status: 400 }
+    );
+  }
   const mode = (url.searchParams.get('mode') || 'work') as MapMode;
   const center = parseCenter(url.searchParams.get('center'));
   const cacheKey = publicCacheKey(['suggest', mode, q]);
