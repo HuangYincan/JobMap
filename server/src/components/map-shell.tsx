@@ -1188,7 +1188,12 @@ export function MapShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在挂载/定位就绪/切模式时检查
   }, [mapReady, geoSettled, mode]);
 
-  const distanceOrigin = userLocation ?? mapCenter;
+  // 距离圆心实时化(ws-b 工作 POI 不随视角改变):圆心跟随地图当前中心 mapCenter
+  // (moveend 实时更新),而非挂载时一次性的 userLocation——否则 distance filter
+  // 持久化跨会话还原后,pipeline 用陈旧圆心(挂载定位点)裁剪,把视口内公司整批裁空。
+  // 语义从「离我最近」→「离当前视野中心最近」(与服务端 boundsCenter 口径一致)。
+  // userLocation 保留用于初次定位/其他用途,distance 圆心不再钉在挂载点。
+  const distanceOrigin = mapCenter;
   const distanceRadius = distanceFilterMeters(filters);
   const distanceOriginRef = useRef(distanceOrigin);
   const distanceRadiusRef = useRef(distanceRadius);
