@@ -112,7 +112,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 2. **规划实施**:
    - 如果是新插件:参考 `tech/03-plugin-system.md`
    - 如果是 Bug 修复:系统化排查(定位 → 假设 → 验证;`/diagnosing-bugs` skill 规划中,尚未实现)
-   - 如果是新功能:先写技术方案到 `tech/roles/development/implementation/`
+   - 如果是新功能:先写技术方案到 `tech/roles/development/implementation/`(现有 phase-1.md / phase-2.md;新 phase 文件按需建立)
 
 3. **选择开发方式**:
    - 关键模块(实力评分/推荐算法):先写测试再实现(TDD;`/tdd` skill 规划中,尚未实现)
@@ -182,7 +182,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
    - 注释:复杂逻辑必须注释,简单代码不过度注释
 
 5. **及时记录**:
-   - 遇到问题记录到 `tech/roles/development/implementation/<phase>.md` 的"遇到的问题"章节
+   - 遇到问题记录到 `tech/16-bug-fixes.md`(问题描述/根因/解决方案/相关文件)
    - 技术决策记录到 `tech/06-decisions.md`(ADR 格式)
    - **布局示意图**记录到对应 Phase 的实施文档中
 
@@ -207,7 +207,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 3. **更新文档**:
    - 同步技术文档:`tech/` 相关章节
    - 如果是新功能,写教程:`tech/zh-cn/tutorial/<feature>.md`
-   - 更新角色文档:`tech/roles/development/implementation/<phase>.md`
+   - 更新角色文档:`tech/roles/development/implementation/`(phase-1.md / phase-2.md;新 phase 按需建立)
 
 ### 4. Code Review
 
@@ -243,7 +243,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 | 功能说明变更 | `tech/zh-cn/features/<feature>.md` |
 | 部署流程变更 | `tech/zh-cn/deployment/*.md` |
 | 产品需求确定 | `tech/roles/product/PRD/<feature>.md`(规划路径,目录尚未建立) |
-| 开发过程记录 | `tech/roles/development/implementation/<phase>.md` |
+| 开发过程记录 | `tech/roles/development/implementation/`(phase-1.md / phase-2.md;bug 记录另见 `tech/16-bug-fixes.md`) |
 | 测试发现 Bug | `tech/roles/testing/test-reports/bug-reports.md` |
 | 部署/运维操作 | `tech/roles/operations/monitoring/incident-log.md`(规划路径,目录尚未建立) |
 | 安全漏洞发现 | `tech/roles/security/<red/blue>-team/*.md`(规划路径,目录尚未建立) |
@@ -357,7 +357,7 @@ make refresh-radar    # 下载已审查 radar 快照、重映射 drops、校验 
 make geocode-sites    # 城市文本站点解析为真实办公点(需 AMAP_WEB_KEY;--dry-run 只列计划)
 ```
 
-Server 侧(`cd server`):`npm test`(423 测试,2026-08-19)、`npm run typecheck`、
+Server 侧(`cd server`):`npm test`(488 测试,2026-08-20)、`npm run typecheck`、
 `npm run dev` / `build` / `start`。写 Postgres 的数据命令
 (`npm run import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)
 需要 `server/.env.local` 的 `DATABASE_URL`(绝不打印、不提交)，个别还需 `AMAP_WEB_KEY`。

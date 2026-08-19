@@ -46,7 +46,7 @@ make refresh-radar      # download the reviewed radar snapshot, remap drops, val
 make geocode-sites      # resolve city-text sites to real offices (needs AMAP_WEB_KEY; --dry-run prints the plan)
 ```
 
-Server commands (`cd server`): `npm test` (423 tests, 2026-08-19), `npm run typecheck`, `npm run dev` / `build` / `start`. Data commands that touch Postgres (`npm run import:seed:apply`, `geocode:sites:apply`, `audit:pins`, `import:hz:pois:apply`) need `DATABASE_URL` from `server/.env.local` (never print or commit it) and, where noted, `AMAP_WEB_KEY`.
+Server commands (`cd server`): `npm test` (488 tests, 2026-08-20), `npm run typecheck`, `npm run dev` / `build` / `start`. Data commands that touch Postgres (`npm run import:seed:apply`, `geocode:sites:apply`, `audit:pins`, `import:hz:pois:apply`) need `DATABASE_URL` from `server/.env.local` (never print or commit it) and, where noted, `AMAP_WEB_KEY`.
 
 `make db-up` starts only the local PostGIS database service; schema/migrations are applied separately with `make db-migrate`. Never claim a command exists or ran unless the referenced files exist and are verified.
 

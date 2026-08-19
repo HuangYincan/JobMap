@@ -4,7 +4,7 @@
 
 ## 项目速览
 
-Next.js 15 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。多模式地图:Domain(高德 AMap)+ 工作(真实招聘 catalog)。**一切皆插件,一切数据皆可换源。**
+Next.js 16 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。多模式地图:Domain(高德 AMap)+ 工作(真实招聘 catalog)。**一切皆插件,一切数据皆可换源。**
 
 > 📋 **当前计划(2026-08-17):** 全国规模工作模式 —— [`tech/18-national-scale-plan.md`](./tech/18-national-scale-plan.md);并行 workstream 与 Agent prompt 见 `tech/roles/development/parallel-sessions/`。
 
@@ -40,7 +40,7 @@ Next.js 15 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。
 ```bash
 make help                 # 支持的 make 命令
 make docs-check           # 文档规范检查
-cd server && npm test     # 423 测试(421 pass / 2 skip,2026-08-19)
+cd server && npm test     # 488 测试(486 pass / 2 skip,2026-08-20)
 cd server && npm run typecheck
 npm run import:seed:apply  # 同步 Postgres(需 DATABASE_URL,读 server/.env.local)
 npm run geocode:sites:apply --dry-run  # 雷达公司落真实办公点(需 AMAP_WEB_KEY;配额耗尽自动用 BAIDU_MAP_AK)
