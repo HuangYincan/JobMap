@@ -65,8 +65,8 @@ function toggleValue<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
-/** 求职偏好下拉字段(单选 status + 三个多选)。 */
-type PrefField = "status" | "families" | "industries" | "strengths";
+/** 下拉字段:求职偏好(单选 status + 三个多选)+ 偏好(单选 language / defaultMode)。 */
+type PrefField = "status" | "families" | "industries" | "strengths" | "language" | "defaultMode";
 
 // ---- 图标:与 map-shell 的 Icon 同一套描边风格(viewBox 24 / stroke 2 / round) ----
 type IconName = "pencil" | "lock" | "phone" | "logout" | "chevronRight" | "person";
@@ -339,6 +339,9 @@ export function ProfilePanel({
     const n = prefs.career.strengths.length;
     return n === 0 ? emptyText : countText(n);
   })();
+  // F3 偏好:language / defaultMode 走 PrefField 下拉,触发钮显示当前值
+  const languageText = prefs.language === "zh" ? "中文" : "English";
+  const defaultModeText = getMode(prefs.defaultMode).name;
 
   const renderPrefTrigger = (field: PrefField, label: string, valueText: string) => (
     <div className={styles.row}>
@@ -404,6 +407,21 @@ export function ProfilePanel({
       multi = true;
       options = INDUSTRY_OPTIONS.map((i) => ({ id: i.value, label: i.label }));
       selected = prefs.career.industries;
+    } else if (openField === "language") {
+      // F3 偏好:language 单选下拉(与求职偏好同交互,勾选即存并关浮层)
+      label = t("prefLanguage", lang);
+      multi = false;
+      options = [
+        { id: "zh", label: "中文" },
+        { id: "en", label: "English" },
+      ];
+      selected = prefs.language;
+    } else if (openField === "defaultMode") {
+      // F3 偏好:defaultMode 单选下拉(选项 = ACTIVE_MODES 的显示名)
+      label = t("prefDefaultMode", lang);
+      multi = false;
+      options = ACTIVE_MODES.map((m) => ({ id: m, label: getMode(m).name }));
+      selected = prefs.defaultMode;
     } else {
       label = t("careerStrengths", lang);
       multi = true;
@@ -423,7 +441,13 @@ export function ProfilePanel({
           multi
             ? undefined
             : (id) => {
-                updateCareer({ status: id as JobSeekingStatus });
+                if (openField === "status") {
+                  updateCareer({ status: id as JobSeekingStatus });
+                } else if (openField === "language") {
+                  persistPrefs(mergePreferences(prefs, { language: id as Language }));
+                } else if (openField === "defaultMode") {
+                  persistPrefs(mergePreferences(prefs, { defaultMode: id as MapMode }));
+                }
                 closeMenu();
               }
         }
@@ -538,40 +562,12 @@ export function ProfilePanel({
         <div className={styles.toast} role="status">{demoNote}</div>
       )}
 
-      {/* 偏好 */}
+      {/* 偏好(F3):language / defaultMode 从 pill 改 PrefField 下拉,与求职偏好交互一致 */}
       <section className={styles.group} aria-label={t("preferencesSection", lang)}>
         <h3 className={styles.groupLabel}>{t("preferencesSection", lang)}</h3>
         <div className={styles.card}>
-          <div className={styles.row}>
-            <span className={styles.rowLabel}>{t("prefLanguage", lang)}</span>
-            <div className={styles.pillRow} role="group" aria-label={t("prefLanguage", lang)}>
-              {(["zh", "en"] as const).map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  className={`${styles.choice} ${prefs.language === code ? styles.choiceActive : ""}`}
-                  onClick={() => persistPrefs(mergePreferences(prefs, { language: code }))}
-                >
-                  {code === "zh" ? "中文" : "English"}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.row}>
-            <span className={styles.rowLabel}>{t("prefDefaultMode", lang)}</span>
-            <div className={styles.pillRow} role="group" aria-label={t("prefDefaultMode", lang)}>
-              {ACTIVE_MODES.map((mode: MapMode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  className={`${styles.choice} ${prefs.defaultMode === mode ? styles.choiceActive : ""}`}
-                  onClick={() => persistPrefs(mergePreferences(prefs, { defaultMode: mode }))}
-                >
-                  {getMode(mode).name}
-                </button>
-              ))}
-            </div>
-          </div>
+          {renderPrefTrigger("language", t("prefLanguage", lang), languageText)}
+          {renderPrefTrigger("defaultMode", t("prefDefaultMode", lang), defaultModeText)}
         </div>
       </section>
 

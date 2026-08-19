@@ -41,7 +41,7 @@ import { useSearchState } from "@/hooks/use-search-state";
 import { useWorkViewport, readMapViewSnapshot, VIEWPORT_SUPPRESS_MS, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { createCityClusterMarker } from "@/lib/map-markers";
-import { SecondarySidebar, suggestionDisplayIcon, type SearchSuggestion } from "./secondary-sidebar";
+import { SecondarySidebar, suggestionDisplayIcon, workCandidateCategories, type SearchSuggestion } from "./secondary-sidebar";
 import { POIList } from "./poi-list";
 import { ModeSwitcher } from "./mode-switcher";
 import { FilterPanel } from "./filter-panel";
@@ -274,6 +274,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const drawerScrollRef = useRef(0);
 
   const modeConfig = getMode(mode);
+  // F2 候选类别(work 未选类别):移动抽屉 POIList 空态槽位渲染 chips(桌面在 secondary-sidebar)
+  const mobileCandidateChips = workCandidateCategories(mode, query, filters);
 
   useEffect(() => {
     setLang(getBrowserLanguage());
@@ -2696,6 +2698,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 loading={loading}
                 lang={lang}
                 accentColor={modeConfig.color}
+                emptyTitle={mobileCandidateChips.length > 0 ? t("pickCategory", lang) : undefined}
+                candidateCategories={mobileCandidateChips.length > 0 ? mobileCandidateChips : undefined}
+                onPickCategory={(key, value) => setFilters({ ...filters, [key]: [value] })}
                 onWidenSearch={handleWidenSearch}
                 onNeedMore={handleNeedMore}
                 loadingMore={loadingMore}
