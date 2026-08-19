@@ -6,6 +6,7 @@ import {
   formatSalary,
   isDomainPOI,
   isRecruitmentPOI,
+  type JobFamily,
   type POI,
   type Position,
   type RecruitmentPOI,
@@ -13,6 +14,13 @@ import {
 import { estimateCommuteOptions, amapDirectionsUrl, type CommuteMode } from "@/lib/commute";
 import { t, type Language } from "@/lib/i18n";
 import { isAlivePosition } from "@/lib/position-alive";
+import { JOB_FAMILY_PLUGIN, ROLE_OPTIONS } from "@/lib/job-taxonomy";
+import {
+  EMPTY_POSITION_FILTERS,
+  filterPositions,
+  hasActivePositionFilters,
+  type PositionFilters,
+} from "@/lib/position-filters";
 import styles from "./poi-detail.module.css";
 
 const INDUSTRY_LABELS: Record<string, { zh: string; en: string }> = {
@@ -39,6 +47,16 @@ const SCALE_LABELS: Record<
   startup: { zh: "创业公司", en: "Startup" },
   enterprise: { zh: "大型企业", en: "Enterprise" },
 };
+
+/** 岗位类型 chips(实习/校招/社招)— 顶层选项取自 JOB_FAMILY_PLUGIN,标签单一来源 */
+const FAMILY_OPTIONS: { value: JobFamily; label: string }[] = (
+  JOB_FAMILY_PLUGIN.filter.options ?? []
+).map((option) => ({ value: option.value as JobFamily, label: option.label }));
+
+/** 多选 chip toggle:在组内加/减一个值 */
+function toggleValue<T extends string>(list: readonly T[], value: T): T[] {
+  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+}
 
 export interface POIDetailViewProps {
   poi: POI;
@@ -150,9 +168,13 @@ function RecruitmentDetail({
   selectedPositionId?: string | null;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
+  const [filters, setFilters] = useState<PositionFilters>(EMPTY_POSITION_FILTERS);
   const industries = poi.company.industries.map((ind) => INDUSTRY_LABELS[ind]?.[lang] ?? ind);
   const scale = SCALE_LABELS[poi.company.scale]?.[lang] ?? poi.company.scale;
   const open = useMemo(() => poi.positions.filter((p) => isAlivePosition(p)), [poi.positions]);
+  // 岗位筛选是纯本地视图过滤:切换公司 / 关闭详情即重置,不碰全局 FilterState
+  const visible = useMemo(() => filterPositions(open, filters), [open, filters]);
+  const filtersActive = hasActivePositionFilters(filters);
 
   return (
     <>
@@ -208,40 +230,115 @@ function RecruitmentDetail({
       {open.length > 0 && (
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>
-            {t("viewPositions", lang)} ({open.length})
+            {filtersActive
+              ? `${t("viewPositions", lang)} ${visible.length} / ${open.length}`
+              : `${t("viewPositions", lang)} (${open.length})`}
           </h3>
-          <ul className={styles.jobs}>
-            {open.map((pos) => (
-              <li key={pos.id}>
+          <div className={styles.jobFilter}>
+            <div className={styles.jobFilterSearchWrap}>
+              <svg
+                className={styles.jobFilterSearchIcon}
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input
+                type="search"
+                className={styles.jobFilterSearch}
+                placeholder={t("searchPositions", lang)}
+                value={filters.query}
+                onChange={(e) => setFilters((f) => ({ ...f, query: e.target.value }))}
+                aria-label={t("searchPositions", lang)}
+              />
+            </div>
+            <div className={styles.jobFilterRow}>
+              <span className={styles.jobFilterLabel}>{t("positionRole", lang)}</span>
+              {ROLE_OPTIONS.map((role) => {
+                const active = filters.roles.includes(role.value);
+                return (
+                  <button
+                    key={role.value}
+                    type="button"
+                    className={`${styles.jobFilterChip} ${active ? styles.jobFilterChipActive : ""}`}
+                    aria-pressed={active}
+                    onClick={() => setFilters((f) => ({ ...f, roles: toggleValue(f.roles, role.value) }))}
+                  >
+                    {role.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className={styles.jobFilterRow}>
+              <span className={styles.jobFilterLabel}>{t("positionType", lang)}</span>
+              {FAMILY_OPTIONS.map((family) => {
+                const active = filters.families.includes(family.value);
+                return (
+                  <button
+                    key={family.value}
+                    type="button"
+                    className={`${styles.jobFilterChip} ${active ? styles.jobFilterChipActive : ""}`}
+                    aria-pressed={active}
+                    onClick={() => setFilters((f) => ({ ...f, families: toggleValue(f.families, family.value) }))}
+                  >
+                    {family.label}
+                  </button>
+                );
+              })}
+              {filtersActive && (
                 <button
                   type="button"
-                  className={`${styles.job} ${selectedPositionId === pos.id ? styles.jobSelected : ""}`}
-                  onClick={() => onSelectPosition?.(pos)}
+                  className={styles.jobFilterClear}
+                  onClick={() => setFilters(EMPTY_POSITION_FILTERS)}
                 >
-                  <div className={styles.jobTitle}>
-                    {pos.title}
-                    {pos.aggregate && (
-                      <span className={styles.jobBadge}>{t("aggregateBadge", lang)}</span>
-                    )}
-                  </div>
-                  <div className={styles.jobMeta}>
-                    {[pos.department, formatSalary(pos.salary), pos.education]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </div>
-                  {pos.skills && pos.skills.length > 0 && (
-                    <div className={styles.chips}>
-                      {pos.skills.slice(0, 4).map((s) => (
-                        <span key={s} className={styles.chip}>
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  {t("clearFilters", lang)}
                 </button>
-              </li>
-            ))}
-          </ul>
+              )}
+            </div>
+          </div>
+          {visible.length > 0 ? (
+            <ul className={styles.jobs}>
+              {visible.map((pos) => (
+                <li key={pos.id}>
+                  <button
+                    type="button"
+                    className={`${styles.job} ${selectedPositionId === pos.id ? styles.jobSelected : ""}`}
+                    onClick={() => onSelectPosition?.(pos)}
+                  >
+                    <div className={styles.jobTitle}>
+                      {pos.title}
+                      {pos.aggregate && (
+                        <span className={styles.jobBadge}>{t("aggregateBadge", lang)}</span>
+                      )}
+                    </div>
+                    <div className={styles.jobMeta}>
+                      {[pos.department, formatSalary(pos.salary), pos.education]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </div>
+                    {pos.skills && pos.skills.length > 0 && (
+                      <div className={styles.chips}>
+                        {pos.skills.slice(0, 4).map((s) => (
+                          <span key={s} className={styles.chip}>
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.jobFilterEmpty}>{t("noMatchingPositions", lang)}</p>
+          )}
         </section>
       )}
     </>
