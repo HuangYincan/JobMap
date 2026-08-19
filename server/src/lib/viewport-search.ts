@@ -256,10 +256,14 @@ function clamp(n: number, min: number, max: number): number {
 }
 
 // ============================================================
-// 工作模式视口按需加载(WS4,tech/18 §2.3)
+// 工作模式视口按需加载(WS4,tech/18 §2.3;wsv 2026-08-19 扩展)
 //
 // moveend/zoomend → 防抖 → GET /api/pois(当前 bounds + maxTier)
 // → 增量合并进现有 catalog(不清空已有 marker)→ 更新 marker。
+// wsv:视口加载循环取尽(page 直到短页/空页 break,不设页数上限);
+// 列表 vs 地图池分离——marker 池(catalog)只增不减保持全量,
+// 列表池(listCatalog)随视口换,见 use-work-viewport。
+// 去 3000 硬顶:视口累计池 cap 传 Infinity(缺省 POI_HARD_CAP 仅主加载/加载更多)。
 // 性能:同刻只有一个 in-flight;防抖窗口内事件合并为一次请求;
 // 请求期间的新事件只保留「最新一次」,完成后立即补跑。
 // Domain 模式保持刷新才更新,不走这里。
@@ -305,8 +309,9 @@ export interface WorkViewportQuery {
   page?: number;
   pageSize?: number;
   /**
-   * 从 page 起连取几页。首屏/刷新取前几页填满视野(默认 4 页=200),
-   * 视口增量加载只取 1 页(默认)。
+   * 从 page 起连取几页。首屏/刷新取前几页填满视野(默认 4 页=200);
+   * 视口增量加载(wsv)传大 maxPages(如 10000)循环取尽,短页/空页 break 提前停
+   * (见 loadWorkViewport 短页语义),防呆上限不白打请求。
    */
   maxPages?: number;
 }
@@ -456,9 +461,8 @@ export function catalogCoversView(
 /**
  * 工作模式视口加载:从 page 起连取 maxPages 页(默认 1 页) → 每页 alive 过滤
  * → 按 poi.id 增量合并进现有池(不清空已有 marker;重复 id 跳过;
- * POI_HARD_CAP 防无限堆)。每页合并后回调 onBatch(完整累计池)。
- * 页数取完或某页不满页即停。
- *
+ * cap 缺省 POI_HARD_CAP 防无限堆,work 视口传 Infinity 去上限)。
+ * 每页合并后回调 onBatch(完整累计池)。页数取完或某页不满页即停。
  * 返回值 { pois, noMore, vacant }:noMore 表示数据源到底(短页 break / total
  * 取尽),供调用方停止哨兵并显示「没有更多结果」;空页不置 noMore(空批次≠
  * 到底,ws1 Bug1),vacant 标记「整个请求 0 条」供空批次三态判定。
