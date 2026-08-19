@@ -1,14 +1,14 @@
 # 05 - Milestones
 
 > **Status:** current execution roadmap
-> **Last reviewed:** 2026-08-16
+> **Last reviewed:** 2026-08-20
 > **Authority:** this file is the in-repository milestone source of truth. Historical `tech/00-*` reports are context only.
 
 ## Current Baseline
 
 P0–P4 are **complete and merged to `dev`** (2026-08-17): a runnable Next.js application (Domain + Work modes, account / saved / applications / job-alert queue), real recruitment catalog (Postgres first, offline drops fallback), reviewed polite acquisition (radar `jobs.json` + official career pages + reviewed ATS endpoints), PostGIS migrations `001`–`016`, and nationwide work mode (LOD tiers / city superset / viewport loading, migrations `011`–`013`). Historical Phase 1 records remain on `feature/phase-1-platform-baseline`.
 
-**Frontend status (2026-08-19):** map shell, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter, sort, autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle — all browser-verified. Server suite: **423 tests / 421 pass / 2 skip** (`cd server && npm test`, 2026-08-19).
+**Frontend status (2026-08-20):** map shell, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter, sort, autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle — all browser-verified. Server suite: **488 tests / 486 pass / 2 skip** (`cd server && npm test`, 2026-08-20).
 
 **Backend status:** importer unit tests pass (`make test-unit`). Live PostGIS apply is verified: `make db-migrate` wrote `001`–`016`, `make test-integration` passed. Seed import (2026-08-17 Hangzhou pilot): 137 companies / 137 sites / 240 open positions (official-career + radar + portals); national import plan: **669 companies / 1440 sites / 877 positions, 0 issues, 0 dropped**. Public `/api/pois` and `/api/search` push `bounds` / distance through `company_sites_geom_gist` (`&&` then `ST_DWithin`) when `DATABASE_URL` is set; no-DB stays on `inBounds`. Live `EXPLAIN` (51 sites): `&&` + `ST_DWithin` uses the gist; bbox-only is still a Seq Scan on this tiny table.
 
@@ -32,7 +32,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 
 ### Deliverables
 
-1. Create the first real server and importer manifests with one supported Node and Python version shared by CI. **Done:** `server/package.json` (Next 15.5.23, React 19.0.8, TS 5.9.3, `server/.nvmrc` = Node 22 LTS) and `crawler/pyproject.toml` (Python 3.12, `crawler/.python-version`). CI reads both version files (`node-version-file` / `python-version-file`).
+1. Create the first real server and importer manifests with one supported Node and Python version shared by CI. **Done:** `server/package.json` (Next 16.3.1, React 19.2.8, TS 5.9.3 — 2026-08-20 由 Next 15.5.23 / React 19.0.8 升级, `server/.nvmrc` = Node 22 LTS) and `crawler/pyproject.toml` (Python 3.12, `crawler/.python-version`). CI reads both version files (`node-version-file` / `python-version-file`).
 2. Create an executable migration ledger and runner. **Done:** `db/migrations/001-004` and `db/scripts/apply.sh` (single-transaction per migration, transaction-scoped advisory lock), `db/scripts/preflight.sh`.
 3. Implement the canonical tenant/map access model and source/provenance model. **Done:** `map_access`/`can_access_map` seams and SQL tables.
 4. Implement a declarative plugin manifest validation path. **Done:** `validate_manifest` and `normalize_import` in `crawler/app/domain_map_importer/`.
