@@ -179,7 +179,12 @@ export async function planSeedImport(): Promise<ImportPlan> {
     shixisengAdapter().list(),
     radarAdapter().list(),
   ]);
-  return planRecruitmentImport([...seed, ...official, ...boss, ...nowcoder, ...shixiseng, ...radar]);
+  // 真实 drops 优先于 seed 脚手架: dedupeSourceCompanies 保留每个 slug 的
+  // 第一个公司, seed 里的示例副本 (过期坐标/tier/示例岗位) 会压过官方 drops
+  // 的当前数据 (2026-08-19: tencent 被 seed 的 120.155 旧坐标盖掉, deepseek
+  // tier 被 seed 的 12 盖掉官方 drop 的 1, 高 zoom 才可见)。seed 只补
+  // 无 drops 的公司 (坐标骨架)。
+  return planRecruitmentImport([...official, ...radar, ...boss, ...nowcoder, ...shixiseng, ...seed]);
 }
 
 export async function planOfficialCareerImport(dir?: string): Promise<ImportPlan> {

@@ -404,3 +404,12 @@ test('site merge keys on site_key, not name (multi-city sites must not collapse)
   assert.match(store, /INSERT INTO company_sites \(company_id, name, site_key/);
   assert.doesNotMatch(store, /WHERE company_id = \$1 AND name = \$2 LIMIT 1/);
 });
+
+test('planSeedImport orders real drops before the seed scaffold', () => {
+  // dedupeSourceCompanies 保留每个 slug 的第一个公司 — seed 排前面会让示例副本
+  // (过期坐标/tier/示例岗位) 压过官方 drops 的当前数据 (2026-08-19: tencent
+  // 120.155 旧坐标、deepseek tier 12)。真实 drops (official/radar) 必须先于 seed。
+  const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+  const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
+  assert.match(store, /\.\.\.official, \.\.\.radar, \.\.\.boss, \.\.\.nowcoder, \.\.\.shixiseng, \.\.\.seed/);
+});

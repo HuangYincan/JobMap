@@ -20,13 +20,16 @@
 // v10（2026-08-19 上海试点）：15 家试点 -shanghai 站点全部落真实上海办公点
 // （geocode:apply AMap→Baidu 兜底 + 官方地址 override）+ 多城市站点坐标——
 // 旧缓存全是 city-text 站点的离线快照，bump 使其失效重拉。
+// v11（2026-08-19 数据源顺序修复）：import plan 真实 drops 优先于 seed 脚手架
+// （deepseek tier 12→1、tencent 坐标 120.155→西溪乐谷）——旧缓存按 seed 元数据
+// 渲染（高 zoom 才显示），bump 使其失效重拉。
 // ============================================================
 
 import type { FilterState, MapMode, POI, POILocation } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 10;
+export const MODE_CACHE_VERSION = 11;
 
 export interface ModeCacheEntry {
   version: number;
