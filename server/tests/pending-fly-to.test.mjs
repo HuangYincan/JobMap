@@ -24,8 +24,9 @@ test('handleSelect 无门控:始终 setSelectedId(首点 = 后续点击)', () =>
     shell.match(/const handleSelect = useCallback\(\(poi: POI\) => \{[\s\S]*?\}, \[\]\);/)
       ?.[0] ?? '';
   assert.ok(seg.length > 0, 'handleSelect block exists');
-  // 交互语义不变:选中即「用户已接管相机」
-  assert.match(seg, /hasInteractedRef\.current = true;/);
+  // 卡片/列表选中不动相机:不置 userMovedMapRef(ws-poi-vanish 首点修复,
+  // 选择公司 ≠ 放弃定位,geolocation settle 仍会飞用户位置)
+  assert.doesNotMatch(seg, /userMovedMapRef\.current = true/);
   // 无 geoSettled / mapReady 门控,无 pendingFlyToRef
   assert.doesNotMatch(seg, /if \(!mapReady \|\| !geoSettled\)|pendingFlyToRef/);
   assert.match(seg, /setSelectedId\(poi\.id\);/);
@@ -35,7 +36,8 @@ test('onOpenDetail 无门控:立即 setDetailPoi + flyToLocation', () => {
   const shell = src('components/map-shell.tsx');
   const seg = shell.match(/onOpenDetail=\{\(poi\) => \{[\s\S]*?\}\}/)?.[0] ?? '';
   assert.ok(seg.length > 0, 'onOpenDetail block exists');
-  assert.match(seg, /hasInteractedRef\.current = true;/);
+  // 会 flyTo 的入口置 userMovedMapRef(与地图手势同口径)
+  assert.match(seg, /userMovedMapRef\.current = true;/);
   assert.doesNotMatch(seg, /if \(!mapReady \|\| !geoSettled\)|pendingFlyToRef/);
   assert.match(seg, /setDetailPoi\(poi\);/);
   assert.match(seg, /if \(poi\.location\) flyToLocation\(mapInstance\.current, poi\.location\.lng, poi\.location\.lat\);/);
@@ -54,10 +56,10 @@ test('all three geolocation exits (!loc / success / error) settle via settleGeol
   const shell = src('components/map-shell.tsx');
   // !loc 分支
   assert.match(shell, /if \(!loc\) \{\s*settleGeolocation\(\);/);
-  // 成功分支:settle 在 hasInteractedRef 相机门控块之后(已交互 → 不 setCenter)
+  // 成功分支:settle 在 userMovedMapRef 相机门控块之后(已移图 → 不 setCenter)
   assert.match(
     shell,
-    /if \(!hasInteractedRef\.current\) \{[\s\S]*?setMapCenter\(\{ lng, lat \}\);\s*\}\s*settleGeolocation\(\);/
+    /if \(!userMovedMapRef\.current\) \{[\s\S]*?setMapCenter\(\{ lng, lat \}\);\s*\}\s*settleGeolocation\(\);/
   );
   // 失败分支
   assert.match(shell, /\.catch\(\(\) => \{\s*settleGeolocation\(\);/);
@@ -70,7 +72,7 @@ test('初始加载不被 geolocation 门控:load() 只以 mapReady 为门', () =
   assert.doesNotMatch(seg, /geoSettled/);
 });
 
-test('hasInteractedRef semantics untouched: set once, never reset (ws-a contract)', () => {
+test('userMovedMapRef semantics untouched: set once, never reset (ws-a contract)', () => {
   const shell = src('components/map-shell.tsx');
-  assert.doesNotMatch(shell, /hasInteractedRef\.current = false/);
+  assert.doesNotMatch(shell, /userMovedMapRef\.current = false/);
 });

@@ -172,9 +172,11 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const poisRef = useRef<POI[]>([]);
   const [geoSettled, setGeoSettled] = useState(false);
   const ignoreNextMapClick = useRef(false);
-  /** 用户是否已主动与地图交互过(拖动/缩放/点击/点 marker)。挂载 geolocation
-   * 回调晚落地时不再用 setCenter 抢占相机(Bug3:第一次点公司 pin 被拽回用户位置)。 */
-  const hasInteractedRef = useRef(false);
+  /** 用户是否已手动移动/缩放过相机(拖拽/滚轮/手势,或 flyTo 等明确相机操作)。
+   * 挂载 geolocation 回调晚落地时不再用 setCenter 抢占相机(Bug3)。
+   * 仅相机手势/相机操作路径置位:pin 点击/卡片选中/地图空白点击不置位
+   * (选择公司 ≠ 放弃定位——ws-poi-vanish 首点修复,settle 仍会飞用户位置)。 */
+  const userMovedMapRef = useRef(false);
   /** Domain 数据耗尽(稀疏视野/回退窗口空/无更多页):哨兵停止 + 「没有更多结果」 */
   const [noMoreData, setNoMoreData] = useState(false);
   const noMoreRef = useRef(false);
@@ -489,9 +491,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
       // 首点不再被 geolocation 门控(2026-08-20 修复):初始加载以 mapReady 为门
       // (下方 load() 同步去掉 geoSettled 依赖),geolocation 只提供用户位置
-      // 数据原点(userLocation/searchOrigin/蓝点)与未交互时的相机定位;
-      // 相机与距离圆心(mapCenter)只在用户尚未与地图交互过时更新——geolocation
-      // 真异步可能数秒才 resolve,期间用户已点过公司 pin(hasInteractedRef=true)
+      // 数据原点(userLocation/searchOrigin/蓝点)与未移图时的相机定位;
+      // 相机与距离圆心(mapCenter)只在用户未手动移动过相机时更新——geolocation
+      // 真异步可能数秒才 resolve,期间用户拖图/缩放(userMovedMapRef=true)
       // → 不再 setCenter/userPosition 抢占、不把距离圆心甩去用户位置;
       // 用户自己点「定位」按钮(handleLocate)仍会移过去(原义)。
       const settleGeolocation = () => {
@@ -507,9 +509,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           const { lng, lat } = loc.position;
           setUserLocation({ lng, lat });
           setSearchOrigin((prev) => prev ?? { lng, lat });
-          // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未接管镜头时
-          // 一起更新:已交互 → 两者都保持当前镜头状态,不把圆心甩去用户位置
-          if (!hasInteractedRef.current) {
+          // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未手动移图时
+          // 一起更新:已移图 → 两者都保持当前镜头状态,不把圆心甩去用户位置
+          if (!userMovedMapRef.current) {
             map.setCenter([lng, lat]);
             map.setZoom(15);
             setMapCenter({ lng, lat });
@@ -670,16 +672,16 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       // 首帧立即同步一次视野:mapBounds 在第一批数据到达前就绪,
       // work 列表客户端裁剪(全量池按视野过滤)从第一次渲染起就有 bounds 可用
       syncView();
-      // Bug3 交互标记:任何主动手势(拖/缩/点)都视为「用户已接管相机」,
-      // 挂载 geolocation 晚落地后不再抢回用户位置
+      // 相机接管标记:只有用户手动移动/缩放相机(拖/缩)才置位;
+      // pin/卡片/空白点击不置位——选择公司 ≠ 放弃定位,geolocation settle
+      // 仍会飞用户位置(ws-poi-vanish 首点修复)。
       map.on("dragstart", () => {
-        hasInteractedRef.current = true;
+        userMovedMapRef.current = true;
       });
       map.on("zoomstart", () => {
-        hasInteractedRef.current = true;
+        userMovedMapRef.current = true;
       });
       map.on("click", () => {
-        hasInteractedRef.current = true;
         if (ignoreNextMapClick.current) {
           ignoreNextMapClick.current = false;
           return;
@@ -982,8 +984,20 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // 持久化跨会话还原后,pipeline 用陈旧圆心(挂载定位点)裁剪,把视口内公司整批裁空。
   // 语义从「离我最近」→「离当前视野中心最近」(与服务端 boundsCenter 口径一致)。
   // userLocation 保留用于初次定位/其他用途,distance 圆心不再钉在挂载点。
+  //
+  // ws-poi-vanish 生效时机:定位成功(userLocation)前 mapCenter 仍是杭州默认值
+  // [120.15,30.27],带 distance 的缓存恢复若以杭州为圆心过滤,会把用户区域 POI
+  // 整池裁掉(visiblePOIIds 清空 → 全部 pin 消失)。→ 定位落地前 distance 筛选
+  // 不生效(视同无 distance,pool 全量可见);settle 后圆心跟随真实视野中心
+  // (未手动移图时 settle 已把 mapCenter 设成用户位置)。定位失败时 userLocation
+  // 恒 null → 筛选持续不生效,不打扰(与 handleLocate 失败保持视野同义)。
   const distanceOrigin = mapCenter;
-  const distanceRadius = distanceFilterMeters(filters);
+  const distanceRadius = userLocation ? distanceFilterMeters(filters) : 0;
+  // pipeline 入参:定位前剥离 distance 键,防止以杭州默认中心过滤导致 POI 池消失
+  const effectiveFilters: FilterState | undefined =
+    userLocation || !filters || !("distance" in filters)
+      ? filters
+      : Object.fromEntries(Object.entries(filters).filter(([key]) => key !== "distance"));
   const distanceOriginRef = useRef(distanceOrigin);
   const distanceRadiusRef = useRef(distanceRadius);
   distanceOriginRef.current = distanceOrigin;
@@ -1129,12 +1143,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           : catalog,
         {
           query: query || undefined,
-          filters: Object.keys(filters).length ? filters : undefined,
+          filters: effectiveFilters && Object.keys(effectiveFilters).length ? effectiveFilters : undefined,
           sort: sort || undefined,
           center: distanceOrigin,
         },
       ),
-    [mode, mapBounds, catalog, query, filters, sort, distanceOrigin]
+    [mode, mapBounds, catalog, query, effectiveFilters, sort, distanceOrigin]
   );
   catalogRef.current = catalog;
   poisRef.current = pois;
@@ -1173,7 +1187,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         ? mergeMapPois(
             runPOIPipeline(catalog, {
               query: query || undefined,
-              filters: Object.keys(filters).length ? filters : undefined,
+              filters: effectiveFilters && Object.keys(effectiveFilters).length ? effectiveFilters : undefined,
               sort: sort || undefined,
               center: distanceOrigin,
             }),
@@ -1188,7 +1202,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       savedOverlay,
       user,
       query,
-      filters,
+      effectiveFilters,
       sort,
       distanceOrigin,
     ],
@@ -1368,8 +1382,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [user, savedPlaces, refreshSaved]);
 
   const handlePickSaved = useCallback((place: SavedPlace) => {
-    // 落地已保存位置即「用户已接管相机」(会 flyTo):与地图 pin 同口径(Bug1)
-    hasInteractedRef.current = true;
+    // 落地已保存位置即「用户已接管相机」(会 flyTo):与地图手势同口径(Bug1)
+    userMovedMapRef.current = true;
     const live = [...overlayPois, ...compareCatalog, ...catalogRef.current, ...poisRef.current];
     const match = resolveSavedForFly(place, live);
     if (match) {
@@ -1396,7 +1410,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const handleOpenApplication = useCallback((ref: { positionId: string; companyPoiId: string }) => {
     const openCompany = (company: POI) => {
       // 用户主动打开岗位即「已接管相机」(会 flyTo)(Bug1)
-      hasInteractedRef.current = true;
+      userMovedMapRef.current = true;
       setSelectedId(company.id);
       setDetailPoi(company);
       setRailPanel("explore");
@@ -1467,8 +1481,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     highlightedId,
     accentColor: modeConfig.color,
     onMarkerClick: (id) => {
-      // Bug3:点 marker 也视为「用户已接管相机」(AMap marker click 不触发 map click)
-      hasInteractedRef.current = true;
+      // 点 marker 只选中不动相机:不置 userMovedMapRef(ws-poi-vanish 首点修复
+      // ——选择公司 ≠ 放弃定位,geolocation settle 仍会飞用户位置)。
       // AMap 常在 marker click 后再打一次 map click；吞掉同一次手势，超时后恢复点空白取消。
       ignoreNextMapClick.current = true;
       window.setTimeout(() => {
@@ -1492,9 +1506,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   // 卡片点击 → 选中（地图 marker 高亮由 usePOIMap 同步）
   const handleSelect = useCallback((poi: POI) => {
-    // 点卡片/列表选中即「用户已接管相机」:与地图 pin 同口径,
-    // 否则 geolocation 晚 resolve 会把相机从被点公司拽回用户位置(Bug1 竞态盲区)
-    hasInteractedRef.current = true;
+    // 点卡片/列表选中不动相机:不置 userMovedMapRef(ws-poi-vanish 首点修复
+    // ——选择公司 ≠ 放弃定位,geolocation 晚 settle 仍会飞用户位置)。
     // 2026-08-20 修复:不再被 geolocation 门控——初始加载以 mapReady 为门,
     // 数据在 geolocation 落地前就绪,首点选中直接落地(与后续点击一致)。
     setSelectedId(poi.id);
@@ -1584,9 +1597,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // upsert 会话卡（不再依赖客户端 catalog 里有没有——之前 /api/suggest 匹配
   // 全量服务端目录，指向未加载公司时点击无任何反应）；#标签写入筛选插件。
   const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
-    // 选择建议即「用户已接管相机」(会 flyTo):与地图 pin 同口径,
+    // 选择建议即「用户已接管相机」(会 flyTo):与地图手势同口径,
     // 否则 geolocation 晚 resolve 会抢占相机(Bug1 竞态盲区)
-    hasInteractedRef.current = true;
+    userMovedMapRef.current = true;
     if (s.location) {
       flyToLocation(mapInstance.current, s.location.lng, s.location.lat);
       setMapCenter({ lng: s.location.lng, lat: s.location.lat });
@@ -1692,9 +1705,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     getCurrentPosition(mapInstance.current)
       .then((loc) => {
         if (!loc) {
-          console.warn("Geolocation failed, returning to default center");
-          mapInstance.current.setCenter([120.15, 30.27]);
-          mapInstance.current.setZoom(13);
+          // 定位失败/被拒:保持当前视野,不跳回杭州默认中心(ws-poi-vanish)。
+          // 失败 = 不打扰;用户仍可手动拖图。后续可接 toast 提示(不新增 UI)。
+          console.warn("Geolocation failed, keeping current view");
           return;
         }
         const { lng, lat } = loc.position;
@@ -1703,9 +1716,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         setMapCenter({ lng, lat });
       })
       .catch((err) => {
-        console.warn("Geolocation error:", err);
-        mapInstance.current.setCenter([120.15, 30.27]);
-        mapInstance.current.setZoom(13);
+        // 定位异常同失败:保持当前视野(ws-poi-vanish),不跳回杭州默认中心
+        console.warn("Geolocation error, keeping current view:", err);
       });
   };
 
@@ -1843,7 +1855,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       INTERNSHIP_SEED.find((p) => p.id === ent.id);
     const openDetail = (poi: POI) => {
       // 用户主动选择最近条目即「已接管相机」(会 flyTo)(Bug1)
-      hasInteractedRef.current = true;
+      userMovedMapRef.current = true;
       setSelectedId(poi.id);
       setDetailPoi(poi);
       setOpenPositionId(null);
@@ -2219,7 +2231,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         }}
         onOpenDetail={(poi) => {
           // 用户主动打开详情即「已接管相机」(会 flyTo)(Bug1)
-          hasInteractedRef.current = true;
+          userMovedMapRef.current = true;
           // 2026-08-20 修复:不再被 geolocation 门控——首点打开详情立即飞,
           // 与后续点击行为一致。
           // 桌面详情不保存移动抽屉滚动(保存只发生在移动卡片点击链),清零避免把旧值带回移动端

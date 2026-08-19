@@ -436,64 +436,95 @@ test('map shell mount-align load (ws1 Bug1): 缓存快照不符 → 主动调度
   assert.match(shell, /readMapViewSnapshot\(/);
 });
 
-test('map shell Bug3 locate: 挂载定位不抢占已交互相机(首次点 pin 不再被拽回)', () => {
+test('map shell Bug3 locate: 挂载定位不抢占已移图相机(首点 pin 不再被拽回)', () => {
   const shell = src('components/map-shell.tsx');
-  // 交互标记 ref 已声明
-  assert.match(shell, /hasInteractedRef = useRef\(false\)/);
+  // 相机接管标记 ref 已声明(ws-poi-vanish:hasInteractedRef 改名 userMovedMapRef,
+  // 仅相机手势/相机操作置位)
+  assert.match(shell, /userMovedMapRef = useRef\(false\)/);
   // 挂载 geolocation 回调:定位数据照常(userLocation/searchOrigin),相机移动被
-  // hasInteractedRef 门控——未交互才 setCenter+setZoom+setMapCenter
+  // userMovedMapRef 门控——未手动移图才 setCenter+setZoom+setMapCenter
   assert.match(shell, /getCurrentPosition\(map\)/);
   assert.match(shell, /setUserLocation\(\{ lng, lat \}\)/);
   assert.match(shell, /setSearchOrigin\(\(prev\) => prev \?\? \{ lng, lat \}\)/);
   assert.match(
     shell,
-    /if \(!hasInteractedRef\.current\) \{[\s\S]{0,120}map\.setCenter\(\[\s*lng,\s*lat\s*\]\)[\s\S]{0,120}map\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
+    /if \(!userMovedMapRef\.current\) \{[\s\S]{0,120}map\.setCenter\(\[\s*lng,\s*lat\s*\]\)[\s\S]{0,120}map\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
   );
-  // 已交互 → 锁定 mapCenter 不更新(距离圆心/相机都不甩去用户位置)
-  assert.match(shell, /if \(!hasInteractedRef\.current\) \{[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/);
-  // 主动手势(drag/zoom/click)与 marker 点击都置交互标记
-  assert.match(shell, /map\.on\("dragstart", \(\) => \{\s*hasInteractedRef\.current = true/);
-  assert.match(shell, /map\.on\("zoomstart", \(\) => \{\s*hasInteractedRef\.current = true/);
-  assert.match(shell, /map\.on\("click", \(\) => \{\s*hasInteractedRef\.current = true/);
-  assert.match(shell, /onMarkerClick: \(id\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/);
-  // 定位按钮 handleLocate 原义保留:仍无条件 setCenter+setZoom(不受 hasInteractedRef 门控)
+  // 已移图 → 锁定 mapCenter 不更新(距离圆心/相机都不甩去用户位置)
+  assert.match(shell, /if \(!userMovedMapRef\.current\) \{[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/);
+  // 只有相机手势(drag/zoom)置位;空白点击与 marker 点击不置位
+  // (选择/取消选择公司 ≠ 放弃定位,settle 仍会飞用户位置——ws-poi-vanish)
+  assert.match(shell, /map\.on\("dragstart", \(\) => \{\s*userMovedMapRef\.current = true/);
+  assert.match(shell, /map\.on\("zoomstart", \(\) => \{\s*userMovedMapRef\.current = true/);
+  assert.doesNotMatch(shell, /map\.on\("click", \(\) => \{\s*userMovedMapRef\.current = true/);
+  assert.doesNotMatch(shell, /onMarkerClick: \(id\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/);
+  // 定位按钮 handleLocate 原义保留:成功仍无条件 setCenter+setZoom(不受门控);
+  // 失败分支保持当前视野,不再 setCenter([120.15,30.27])/setZoom(13) 回杭州
   const locateBlock = shell.slice(shell.indexOf("const handleLocate"), shell.indexOf("const handleMapStyleChange"));
   assert.match(locateBlock, /mapInstance\.current\.setCenter\(\[lng, lat\]\)/);
   assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
-  assert.doesNotMatch(locateBlock, /hasInteractedRef/);
+  assert.doesNotMatch(locateBlock, /userMovedMapRef/);
+  assert.doesNotMatch(locateBlock, /120\.15/);
+  assert.doesNotMatch(locateBlock, /setZoom\(13\)/);
 });
 
-test('map shell Bug1 卡片/建议选中置位:hasInteractedRef 与地图 pin 同口径', () => {
+test('map shell Bug1 flyTo 入口置位:userMovedMapRef 与相机手势同口径', () => {
   const shell = src('components/map-shell.tsx');
-  // 桌面列表 handleSelect(移动抽屉 onSelect 也走它)先置位:点卡片也是「首次交互」,
-  // 否则 geolocation 晚 resolve 会把相机从被点公司拽回用户位置
+  // 纯选中不动相机:handleSelect(卡片/列表)不置位(ws-poi-vanish 首点修复,
+  // 选择公司 ≠ 放弃定位;geolocation 晚 settle 仍会飞用户位置)
+  assert.doesNotMatch(
+    shell,
+    /const handleSelect = useCallback\(\(poi: POI\) => \{[\s\S]{0,200}userMovedMapRef\.current = true/
+  );
+  // 搜索建议选中 handleSelectSuggestion(会 flyTo)置位
   assert.match(
     shell,
-    /const handleSelect = useCallback\(\(poi: POI\) => \{[\s\S]{0,200}hasInteractedRef\.current = true/
+    /const handleSelectSuggestion = useCallback\(\(s: SearchSuggestion\) => \{[\s\S]{0,200}userMovedMapRef\.current = true/
   );
-  // 搜索建议选中 handleSelectSuggestion(会 flyTo)同样置位
-  assert.match(
-    shell,
-    /const handleSelectSuggestion = useCallback\(\(s: SearchSuggestion\) => \{[\s\S]{0,200}hasInteractedRef\.current = true/
-  );
-  // 其余 flyTo 入口与 pin 同口径:已保存落地 / 岗位打开 / 附近条目 / 卡片详情,
+  // 其余 flyTo 入口与相机手势同口径:已保存落地 / 岗位打开 / 附近条目 / 卡片详情,
   // 凡用户主动选择会动相机的都在点前置位
   assert.match(
     shell,
-    /const handlePickSaved = useCallback\(\(place: SavedPlace\) => \{[\s\S]{0,160}hasInteractedRef\.current = true/
+    /const handlePickSaved = useCallback\(\(place: SavedPlace\) => \{[\s\S]{0,160}userMovedMapRef\.current = true/
   );
   assert.match(
     shell,
-    /const handleOpenApplication = useCallback\(\(ref: \{ positionId: string; companyPoiId: string \}\) => \{[\s\S]{0,200}const openCompany = \(company: POI\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/
+    /const handleOpenApplication = useCallback\(\(ref: \{ positionId: string; companyPoiId: string \}\) => \{[\s\S]{0,200}const openCompany = \(company: POI\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/
   );
   assert.match(
     shell,
-    /const openDetail = \(poi: POI\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/
+    /const openDetail = \(poi: POI\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/
   );
   assert.match(
     shell,
-    /onOpenDetail=\{\(poi\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/
+    /onOpenDetail=\{\(poi\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/
   );
+});
+
+test('map shell ws-poi-vanish handleLocate 失败保持视野:不回杭州默认中心', () => {
+  const shell = src('components/map-shell.tsx');
+  const locateBlock = shell.slice(shell.indexOf("const handleLocate"), shell.indexOf("const handleMapStyleChange"));
+  // 成功分支仍飞用户位置(setCenter+setZoom 15)
+  assert.match(locateBlock, /mapInstance\.current\.setCenter\(\[lng, lat\]\)/);
+  assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
+  // !loc 与 catch 失败分支:保持当前视野,不再 setCenter([120.15,30.27])/setZoom(13)
+  assert.doesNotMatch(locateBlock, /setCenter\(\[120\.15, 30\.27\]\)/);
+  assert.doesNotMatch(locateBlock, /setZoom\(13\)/);
+});
+
+test('map shell ws-poi-vanish distance 圆心:定位落地前 distance 筛选不生效', () => {
+  const shell = src('components/map-shell.tsx');
+  // 半径 gating:定位成功(userLocation)前视同无 distance——mapCenter 还是杭州
+  // 默认值,带 distance 的缓存恢复若以杭州为圆心过滤会把用户区域 POI 整池裁掉
+  assert.match(shell, /const distanceRadius = userLocation \? distanceFilterMeters\(filters\) : 0;/);
+  // pipeline 入参:定位前剥离 distance 键(圆心未落地 → 不裁池)
+  assert.match(
+    shell,
+    /const effectiveFilters: FilterState \| undefined =[\s\S]{0,240}Object\.fromEntries\(Object\.entries\(filters\)\.filter\(\(\[key\]\) => key !== "distance"\)\);/
+  );
+  // 列表(pois)与 marker 池(workMarkerPois)两个 pipeline 调用点都吃 effectiveFilters
+  const matches = shell.match(/filters: effectiveFilters && Object\.keys\(effectiveFilters\)\.length \? effectiveFilters : undefined/g);
+  assert.ok(matches && matches.length >= 2, 'both pipeline call sites use effectiveFilters');
 });
 
 test('logout resets saved overlay state and pref alongside saved places', () => {
