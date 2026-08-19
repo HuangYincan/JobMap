@@ -277,20 +277,22 @@ test('map shell scale control: cleanup 接线 + 销毁保护 + 无双 addControl
 
 test('domain category gating (poi-category-loading): 门控/驱动加载/空态提示/空批次保护', () => {
   const shell = src('components/map-shell.tsx');
+  const hook = src('hooks/use-work-viewport.ts');
   const list = src('components/poi-list.tsx');
   const sidebar = src('components/secondary-sidebar.tsx');
   const i18n = src('lib/i18n.ts');
   // 主加载门控:domain 无分类选择 → 默认不加载(搜索豁免)
   assert.match(shell, /if \(!query && !filters\.category\)/);
-  // 视口 loader 门控:无分类 → 移动/缩放不拉取
-  assert.match(shell, /if \(!v\.query && !v\.filters\?\.category\)/);
+  // 视口 loader 门控:无分类 → 移动/缩放不拉取(随 useWorkViewport 抽取,断言同步移动)
+  assert.match(hook, /if \(!v\.query && !v\.filters\?\.category\)/);
   // load effect 依赖分类(选类/换类触发重拉;minRating/price 仍纯客户端)
   assert.match(shell, /filters\.category\]\);/);
-  // filters 下行到数据源(分类驱动加载:主加载 + 视口加载两处)
+  // filters 下行到数据源(分类驱动加载:主加载在 shell + 视口加载在 hook 各一处)
   assert.match(shell, /filters, \/\/ 分类驱动加载/);
-  assert.match(shell, /filters: v\.filters, \/\/ 分类驱动加载/);
-  // 空批次保护(work + domain 视口替换各一处;已有非空目录时空批次保留旧目录)
-  const guards = shell.match(/batch\.length === 0 && catalogRef\.current\.length > 0/g);
+  assert.match(hook, /filters: v\.filters, \/\/ 分类驱动加载/);
+  // 空批次保护(work + domain 视口替换各一处,随 useWorkViewport 抽取到 hook;
+  // 已有非空目录时空批次保留旧目录)
+  const guards = hook.match(/batch\.length === 0 && catalogRef\.current\.length > 0/g);
   assert.ok(guards && guards.length >= 2, 'work + domain 两处空批次保护');
   // 空态提示:新 i18n 键 + POIList emptyTitle 接线
   assert.match(i18n, /pickCategory: \{[\s\S]*选择类别开始浏览[\s\S]*Pick a category to explore/);
@@ -325,12 +327,14 @@ test('SecondarySidebar resultHeader: 加载更多按钮 + 错误重试接线(poi
 
 test('saved overlay toggle: programmatic camera move suppresses viewport refresh (saved-overlay-wipe)', () => {
   const shell = src('components/map-shell.tsx');
+  const hook = src('hooks/use-work-viewport.ts');
   // 方案 A:保留 fit-to-pins 相机移动,但在移动前打开抑制窗口,吞掉 setBounds 触发的
   // moveend/zoomend 视口刷新(空批次会整体替换清空目录 → 所有 poi 消失)。
-  assert.match(shell, /VIEWPORT_SUPPRESS_MS = 500/);
+  // 抑制窗口常量随 useWorkViewport 抽取,ref 仍在 map-shell 创建并传入 hook
+  assert.match(hook, /export const VIEWPORT_SUPPRESS_MS = 500/);
   assert.match(shell, /suppressViewportRefreshUntilRef = useRef\(0\)/);
-  // onViewChange:抑制窗口内直接 return,不 schedule
-  assert.match(shell, /const onViewChange = \(\) => \{[\s\S]{0,200}suppressViewportRefreshUntilRef\.current > Date\.now\(\)[\s\S]{0,80}return;[\s\S]{0,80}loader\.schedule\(\);/);
+  // onViewChange 随 hook 移动:抑制窗口内直接 return,不 schedule
+  assert.match(hook, /const onViewChange = \(\) => \{[\s\S]{0,200}suppressViewportRefreshUntilRef\.current > Date\.now\(\)[\s\S]{0,80}return;[\s\S]{0,80}loader\.schedule\(\);/);
   // 抑制标记必须在相机移动(setBounds / setCenter fallback)之前置位——限定在 toggle 函数体内比较
   const toggleAt = shell.indexOf('const handleToggleSavedOverlay = useCallback');
   const modeSwitchAt = shell.indexOf('const handleModeChange = useCallback');
@@ -360,36 +364,44 @@ test('geocode apply: manual overrides are city-gated (override poisons multi-cit
 
 test('work viewport empty batch three-state (ws1 Bug1): 真空清空 / 保留 / 失败保留', () => {
   const shell = src('components/map-shell.tsx');
+  const hook = src('hooks/use-work-viewport.ts');
   const vp = src('lib/viewport-search.ts');
   // 纯函数:旧目录是否仍有 POI 落在当前视野 bounds 内(三态判定核心)
   assert.match(vp, /export function catalogCoversView\(/);
-  // 视口替换路径(视口加载,existing=[]):空批次 + 旧目录无 POI 在视野内 →
-  // 真空清空走空态(整城空白不再被旧城市 pin 占住)
+  // 视口替换路径随 useWorkViewport 抽取到 hook(视口加载,existing=[]):
+  // 空批次 + 旧目录无 POI 在视野内 → 真空清空走空态(整城空白不再被旧城市 pin 占住)
+  assert.match(hook, /空批次三态\(ws1 Bug1\)/);
+  assert.match(hook, /catalogCoversView\(catalogRef\.current, bounds\)/);
+  assert.match(hook, /catalogRef\.current = \[\];[\s\S]*?setCatalog\(\[\]\);/);
+  // 主加载路径(existing=旧目录)留在 map-shell:保留时跳过缓存写入(旧目录顶着
+  // 「当前视野」快照会污染挂载对齐判定,下次刷新不再触发对齐加载)
   assert.match(shell, /空批次三态\(ws1 Bug1 视口\)/);
-  assert.match(shell, /catalogCoversView\(catalogRef\.current, bounds\)/);
-  assert.match(shell, /catalogRef\.current = \[\];[\s\S]*?setCatalog\(\[\]\);/);
-  // 主加载路径(existing=旧目录):保留时跳过缓存写入(旧目录顶着「当前视野」
-  // 快照会污染挂载对齐判定,下次刷新不再触发对齐加载)
   assert.match(shell, /catalogCoversView\(catalogRef\.current, view\.bounds\)/);
-  // 请求失败(网络/非 2xx):保留旧目录 + console.warn(现状行为保持)
-  assert.match(shell, /console\.warn\("\[map-shell\] work viewport load failed:/);
-  assert.match(shell, /console\.warn\("\[map-shell\] domain viewport load failed:/);
-  // VIEWPORT_SUPPRESS_MS 抑制机制保留(tech/16 方案 A,收藏 fitToPins 兜底)
-  assert.match(shell, /suppressViewportRefreshUntilRef\.current > Date\.now\(\)/);
+  // 请求失败(网络/非 2xx):保留旧目录 + console.warn(现状行为保持,随 hook 移动)
+  assert.match(hook, /console\.warn\("\[map-shell\] work viewport load failed:/);
+  assert.match(hook, /console\.warn\("\[map-shell\] domain viewport load failed:/);
+  // VIEWPORT_SUPPRESS_MS 抑制机制保留(tech/16 方案 A,收藏 fitToPins 兜底):
+  // 事件侧窗口检查随 hook 移动,toggle 侧写入抑制标记仍在 map-shell
+  assert.match(hook, /suppressViewportRefreshUntilRef\.current > Date\.now\(\)/);
+  assert.match(shell, /suppressViewportRefreshUntilRef\.current = Date\.now\(\) \+ VIEWPORT_SUPPRESS_MS/);
 });
 
 test('map shell mount-align load (ws1 Bug1): 缓存快照不符 → 主动调度一次视口加载', () => {
   const shell = src('components/map-shell.tsx');
-  // 挂载对齐 effect:mapReady + geoSettled 后读缓存视野快照,与当前视野显著
-  // 不符(或无快照字段)→ viewportLoader.schedule() 主动调度当前视野的视口
-  // 加载,不再等用户 moveend(geolocation 被拒时不产生 moveend)
-  assert.match(shell, /挂载对齐加载\(ws1 Bug1 视口\)/);
-  assert.match(shell, /readModeCache\(mode\)/);
-  assert.match(shell, /needsViewportAlign\(cached\.viewport, snap\.center, snap\.zoom\)/);
-  assert.match(shell, /viewportLoaderRef\.current\.schedule\(\)/);
+  const hook = src('hooks/use-work-viewport.ts');
+  // 挂载对齐 effect 随 useWorkViewport 抽取到 hook:mapReady + geoSettled 后读
+  // 缓存视野快照,与当前视野显著不符(或无快照字段)→ schedule() 主动调度当前
+  // 视野的视口加载,不再等用户 moveend(geolocation 被拒时不产生 moveend)
+  assert.match(hook, /挂载对齐加载\(ws1 Bug1 视口\)/);
+  assert.match(hook, /readModeCache\(mode\)/);
+  assert.match(hook, /needsViewportAlign\(cached\.viewport, snap\.center, snap\.zoom\)/);
+  assert.match(hook, /viewportLoaderRef\.current\.schedule\(\)/);
+  assert.match(hook, /readMapViewSnapshot\(/);
   // 缓存快照写入:视口加载批次与主加载都带 viewport(center+zoom+bounds)
+  assert.match(hook, /viewport: snapshot \?\? undefined/);
+  // map-shell 接线:loader 实例经返回的 ref 暴露,主加载 finally 用它补跑
+  assert.match(shell, /const \{ viewportLoaderRef \} = useWorkViewport\(\{/);
   assert.match(shell, /readMapViewSnapshot\(/);
-  assert.match(shell, /viewport: snapshot \?\? undefined/);
 });
 
 test('map shell Bug3 locate: 挂载定位不抢占已交互相机(首次点 pin 不再被拽回)', () => {
