@@ -68,7 +68,7 @@ class RobotsAndHostTests(unittest.TestCase):
         self.assertEqual(result.body, "")
 
     def test_fetcher_survives_transient_network_errors(self):
-        def fake(url):
+        def fake(url, method="GET", body=None, headers=None):
             raise ConnectionError("SSL: UNEXPECTED_EOF_WHILE_READING")
         fetcher = PoliteFetcher(min_interval_s=0, sleep=lambda _s: None, get=fake)
         result = fetcher.fetch("https://jobs.example.com/flaky")
@@ -99,7 +99,7 @@ class RobotsAndHostTests(unittest.TestCase):
         original = acquire_mod.urlopen
         acquire_mod.urlopen = fake_open
         try:
-            status, body = acquire_mod._http_get("https://jobs.example.com/")
+            status, body = acquire_mod._http_fetch("https://jobs.example.com/")
             self.assertEqual(status, 200)
             self.assertIn("hi", body)
         finally:

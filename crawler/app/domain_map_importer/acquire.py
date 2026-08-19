@@ -113,8 +113,15 @@ def parse_robots(robots_txt: str, path: str, user_agent: str = USER_AGENT) -> bo
     return "allow" in tie
 
 
-def _http_get(url: str, timeout: int = DEFAULT_TIMEOUT_S) -> tuple[int, str]:
-    request = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/json;q=0.9,*/*;q=0.8"})
+def _http_fetch(url: str, method: str = "GET", body: str | None = None, headers: dict[str, str] | None = None, timeout: int = DEFAULT_TIMEOUT_S) -> tuple[int, str]:
+    request_headers = {"User-Agent": USER_AGENT, "Accept": "text/html,application/json;q=0.9,*/*;q=0.8"}
+    data = None
+    if method == "POST":
+        request_headers["Content-Type"] = "application/json"
+        data = (body or "").encode("utf-8")
+    if headers:
+        request_headers.update(headers)
+    request = Request(url, data=data, method=method, headers=request_headers)
     try:
         with urlopen(request, timeout=timeout) as response:
             raw = response.read()
@@ -146,7 +153,7 @@ def robots_allows(url: str, fetch_robots) -> bool:
 
 
 class PoliteFetcher:
-    def __init__(self, *, min_interval_s: float = DEFAULT_MIN_INTERVAL_S, sleep=time.sleep, get=_http_get):
+    def __init__(self, *, min_interval_s: float = DEFAULT_MIN_INTERVAL_S, sleep=time.sleep, get=_http_fetch):
         self.min_interval_s = min_interval_s
         self._sleep = sleep
         self._get = get
@@ -157,7 +164,7 @@ class PoliteFetcher:
         if wait > 0:
             self._sleep(wait)
 
-    def fetch(self, url: str) -> FetchResult:
+    def fetch(self, url: str, method: str = "GET", body: str | None = None, headers: dict[str, str] | None = None) -> FetchResult:
         if not url.startswith(("https://", "http://")):
             raise AcquisitionError("only http(s) URLs are allowed")
         if is_blocked_host(url):
@@ -172,13 +179,13 @@ class PoliteFetcher:
             )
         self._pace()
         try:
-            status, body = self._get(url)
+            status, response_body = self._get(url, method=method, body=body, headers=headers)
         except (OSError, URLError, TimeoutError):
-            status, body = 0, ""
+            status, response_body = 0, ""
         self._last = time.monotonic()
         return FetchResult(
             url=url,
             status=status,
-            body=body,
+            body=response_body,
             fetched_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         )
