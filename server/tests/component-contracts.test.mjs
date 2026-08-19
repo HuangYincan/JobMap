@@ -308,10 +308,9 @@ test('domain category gating (poi-category-loading): 门控/驱动加载/空态�
   // filters 下行到数据源(分类驱动加载:主加载在 shell + 视口加载在 hook 各一处)
   assert.match(shell, /filters, \/\/ 分类驱动加载/);
   assert.match(hook, /filters: v\.filters, \/\/ 分类驱动加载/);
-  // 空批次保护(work + domain 各一处,随 useWorkViewport 抽取到 hook):
-  // work 增量语义(wsv)——空批次直接返回,不清空 marker/列表任何池;
-  // domain 替换式——已有非空目录时空批次保留旧目录(ws1 Bug1)
-  assert.match(hook, /if \(batch\.length === 0\) return;/);
+  // 空批次保护(2026-08-20 修订:work 分支已删——全量加载后无增量视口请求,
+  // 空批次保护只属 domain 替换式路径):已有非空目录时空批次保留旧目录(ws1 Bug1)
+  assert.doesNotMatch(hook, /if \(batch\.length === 0\) return;/);
   const guards = hook.match(/batch\.length === 0 && catalogRef\.current\.length > 0/g);
   assert.ok(guards && guards.length >= 1, 'domain 空批次保护');
   // 空态提示:新 i18n 键 + POIList emptyTitle 接线
@@ -400,8 +399,9 @@ test('work viewport empty batch three-state (ws1 Bug1): 真空清空 / 保留 / 
   // 「当前视野」快照会污染挂载对齐判定,下次刷新不再触发对齐加载)
   assert.match(shell, /空批次三态\(ws1 Bug1 视口\)/);
   assert.match(shell, /catalogCoversView\(catalogRef\.current, view\.bounds\)/);
-  // 请求失败(网络/非 2xx):保留旧目录 + console.warn(现状行为保持,随 hook 移动)
-  assert.match(hook, /console\.warn\("\[map-shell\] work viewport load failed:/);
+  // 请求失败(网络/非 2xx):保留旧目录 + console.warn(2026-08-20 修订:
+  // work 视口请求已删,只余 domain 分支保留该行为)
+  assert.doesNotMatch(hook, /console\.warn\("\[map-shell\] work viewport load failed:/);
   assert.match(hook, /console\.warn\("\[map-shell\] domain viewport load failed:/);
   // VIEWPORT_SUPPRESS_MS 抑制机制保留(tech/16 方案 A,收藏 fitToPins 兜底):
   // 事件侧窗口检查随 hook 移动,toggle 侧写入抑制标记仍在 map-shell

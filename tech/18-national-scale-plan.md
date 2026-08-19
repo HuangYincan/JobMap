@@ -98,7 +98,7 @@ CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
 
 - **表设计**：`companies(tier)`、`company_sites(province, city_code, lng, lat, geom, geom_geog)`、`positions(status, deadline)`。全国百万级公司 → 按城市/区域分片查询优先。
 - **索引**：gist(geom) 已有；新增 gist(geom_geog)、b-tree(city_code)、b-tree(tier)、部分索引 `positions WHERE status='open'`。
-- **空间算法**：视野裁剪用 `geom && ST_MakeEnvelope(...)` + `ST_DWithin`；用户位置半径用 `ST_DWithin(geom_geog, ST_SetSRID(ST_MakePoint(:lng,:lat),4326)::geography, :radius_m)`。区域聚合/计数预留（LOD 缩到全国时按 tier 聚合展示）。
+- **空间算法**：视野裁剪用 `geom && ST_MakeEnvelope(...)` + `ST_DWithin`；用户位置半径用 `ST_DWithin(geom_geog, ST_SetSRID(ST_MakePoint(:lng,:lat),4326)::geography, :radius_m)`。区域聚合/计数预留（**2026-08-20 修订**：聚合计数与 tier 无关——聚合区间计数须与 zoom 恒定，见 tech/21 规则 7；只有百万级才需要 DB 端计数）。
 - 说明：距离用 geography（米），避免 4326 度数误差；百万级时考虑按 province/city 表分区或预留分区策略。
 
 ### 2.6 LLM 并发真实性验证（WS3，2026-08-17）

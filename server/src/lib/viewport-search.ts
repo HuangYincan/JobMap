@@ -54,8 +54,6 @@ export const POI_SOFT_CAP = 300;
 export const MORE_PAGE_SIZE = 300;
 /** 浏览器累计硬顶，防止无限堆 */
 export const POI_HARD_CAP = 3000;
-/** 兼容旧名：一轮网格搜索的目标增量 */
-export const REFRESH_ADD_CAP = POI_SOFT_CAP;
 
 /**
  * Domain 模式列表候选上限(tech/22):杭州内无限滚动每次 +50,直到 1000 封顶。
@@ -174,38 +172,6 @@ export function keywordsFor(set: CategorySet): readonly string[] {
   return ALL_KEYWORDS;
 }
 
-/** 在视口内取 cols×rows 个单元格中心点（默认 16） */
-export function sampleViewportGrid(
-  bounds: ViewportBounds,
-  cols = 4,
-  rows = 4
-): LngLat[] {
-  const points: LngLat[] = [];
-  const { west, south, east, north } = normalizeBounds(bounds);
-  const lngSpan = east - west;
-  const latSpan = north - south;
-  if (lngSpan <= 0 || latSpan <= 0) return [];
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      points.push({
-        lng: west + ((c + 0.5) / cols) * lngSpan,
-        lat: south + ((r + 0.5) / rows) * latSpan,
-      });
-    }
-  }
-  return points;
-}
-
-export function normalizeBounds(bounds: ViewportBounds): ViewportBounds {
-  return {
-    west: Math.min(bounds.west, bounds.east),
-    east: Math.max(bounds.west, bounds.east),
-    south: Math.min(bounds.south, bounds.north),
-    north: Math.max(bounds.south, bounds.north),
-  };
-}
-
 /** 高德 searchNearBy 半径上限 50km；再大按默认值 */
 export const AMAP_NEARBY_MAX_RADIUS = 50_000;
 /** 高德 searchNearBy 默认半径（超上限时回落） */
@@ -234,21 +200,6 @@ export function searchRadiusMeters(zoom: number, latitude: number): number {
   if (!Number.isFinite(raw) || raw <= 0) return AMAP_DEFAULT_RADIUS;
   if (raw > AMAP_NEARBY_MAX_RADIUS) return AMAP_DEFAULT_RADIUS;
   return Math.round(raw);
-}
-
-/** @deprecated 改用 searchRadiusMeters(zoom, lat) */
-export function viewportRadiusMeters(bounds: ViewportBounds): number {
-  const b = normalizeBounds(bounds);
-  return searchRadiusMeters(13, (b.south + b.north) / 2);
-}
-
-/** @deprecated 网格已废弃 */
-export function cellRadiusMeters(
-  bounds: ViewportBounds,
-  _cols = 4,
-  _rows = 4
-): number {
-  return viewportRadiusMeters(bounds);
 }
 
 function clamp(n: number, min: number, max: number): number {
@@ -331,8 +282,12 @@ export interface LoadWorkViewportOptions extends WorkViewportQuery {
   fetcher?: typeof fetch;
 }
 
-/** 首屏/刷新最多连取几页,避免全库翻页轰服务端 */
-export const WORK_INITIAL_MAX_PAGES = 4;
+/**
+ * work 全量加载防呆上限(2026-08-20 修复):主加载一次取尽整库
+ * (672 公司 / ~1843 站点 POI,pageSize 50 → ~37 页),不传 bounds/maxTier
+ * 服务端返回全量;实际由短页/空页 break 提前停,此值只是防呆。
+ */
+export const WORK_FULL_LOAD_MAX_PAGES = 10_000;
 
 // ============================================================
 // 挂载对齐加载(ws1 Bug1 视口)
@@ -635,16 +590,6 @@ export function fallbackTaskWindow(
 ): SearchTask[] {
   const full = buildSearchQueue(keywords, pages, 0);
   return full.slice(pageOffset, pageOffset + AMAP_FALLBACK_INITIAL_CALLS);
-}
-
-/** @deprecated 网格波次已废弃，转成单中心队列 */
-export function buildSearchWaves(
-  _pointCount: number,
-  keywords: readonly string[],
-  pageOffset = 0
-): SearchTask[][] {
-  const queue = buildSearchQueue(keywords, 1, pageOffset);
-  return queue.length ? [queue] : [];
 }
 
 /** UI 分类值 → 高德 type 前缀（筛选匹配用） */

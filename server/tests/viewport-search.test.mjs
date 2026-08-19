@@ -19,7 +19,6 @@ import {
   POI_HARD_CAP,
   POI_SOFT_CAP,
   popularityScore,
-  sampleViewportGrid,
   searchRadiusMeters,
   zoomStrategy,
 } from '../src/lib/viewport-search.ts';
@@ -34,19 +33,6 @@ import {
   VIEWPORT_DEBOUNCE_MS,
 } from '../src/lib/viewport-search.ts';
 import { sortPOIs } from '../src/lib/search.ts';
-
-test('sampleViewportGrid: 4x4 yields 16 interior centers', () => {
-  const pts = sampleViewportGrid(
-    { west: 120, south: 30, east: 121, north: 31 },
-    4,
-    4
-  );
-  assert.equal(pts.length, 16);
-  assert.ok(pts.every((p) => p.lng > 120 && p.lng < 121));
-  assert.ok(pts.every((p) => p.lat > 30 && p.lat < 31));
-  const uniq = new Set(pts.map((p) => `${p.lng},${p.lat}`));
-  assert.equal(uniq.size, 16);
-});
 
 test('zoomStrategy: national view uses landmarks, city view uses all', () => {
   const s = zoomStrategy(4);

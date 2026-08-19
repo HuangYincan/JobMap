@@ -230,9 +230,9 @@ test('clusterCities: 参考框未收录城市 / 坐标缺失的 POI 放行(不�
   );
 });
 
-// ---- LOD 计数口径(w1,2026-08-20:徽章 N = 该 zoom 下个体 pin 数)----
+// ---- 聚合计数与 LOD 无关(2026-08-20 修订:取消 zoom<8 的 POI 消失规则)----
 
-test('clusterCities: 徽章只计当前 zoom LOD 可见公司(tier <= floor(zoom))', () => {
+test('clusterCities: 徽章计数不随 zoom 变化——tier 过滤只属个体 pin(zoom>8)', () => {
   const pois = [
     workPoi('t4', '杭州', 120.1, 30.25, 4),
     workPoi('t5', '杭州', 120.2, 30.3, 5),
@@ -241,24 +241,20 @@ test('clusterCities: 徽章只计当前 zoom LOD 可见公司(tier <= floor(zoom
     workPoi('t9', '杭州', 120.5, 30.45, 9),
     workPoi('t13', '杭州', 120.6, 30.5, 13),
   ];
-  const countHz = (zoom) => {
+  // 聚合区间(zoom <= 8)内计数与 tier 无关:任何 zoom 都是全量 6
+  for (const zoom of [0, 4, 5, 6, 8]) {
     const groups = clusterCities(pois, zoom);
-    return groups.find((g) => g.city === '杭州').count;
-  };
-  assert.equal(countHz(4), 1); // 只 t4
-  assert.equal(countHz(5), 2); // t4+t5
-  assert.equal(countHz(6), 3);
-  assert.equal(countHz(8), 4); // t4+t5+t6+t8(tier == zoom 边界计入)
+    assert.equal(groups.find((g) => g.city === '杭州').count, 6, `zoom=${zoom}`);
+  }
   assert.equal(clusterCities(pois, 9), null); // zoom > 8 聚合关闭
 });
 
-test('clusterCities: 计数稳定性——同 zoom 不同导航历史(池残留 tier 不同)徽章数不变', () => {
-  // 历史 A:仅全国视野拉取(池只含 tier <= 5 行)
+test('clusterCities: 计数 = 池内容——全量池(无 tier 裁剪)下与 zoom/导航历史无关', () => {
+  // 池 A:仅低 tier 行;池 B:全 tier 残留(全量加载后的真实形态)
   const poolA = [
     workPoi('hz-1', '杭州', 120.1, 30.25, 2),
     workPoi('hz-2', '杭州', 120.2, 30.3, 5),
   ];
-  // 历史 B:先访问杭州 zoom 13 再缩出(池残留 tier 6/9/13 行,use-work-viewport 只增不减)
   const poolB = [
     ...poolA,
     workPoi('hz-3', '杭州', 120.3, 30.35, 6),
@@ -267,23 +263,42 @@ test('clusterCities: 计数稳定性——同 zoom 不同导航历史(池残留 
     workPoi('cd-1', '成都', 104.07, 30.67, 7),
   ];
   const countHz = (groups) => groups.find((g) => g.city === '杭州').count;
-  const a5 = clusterCities(poolA, 5);
-  const b5 = clusterCities(poolB, 5);
-  assert.equal(countHz(a5), 2);
-  assert.equal(countHz(b5), countHz(a5)); // 残留 tier>5 行不计入,历史无关
-  // zoom 8:历史 B 中 tier 6 行在该 zoom 可见 → 计入;tier 9/13 仍不计
-  assert.equal(countHz(clusterCities(poolB, 8)), 3);
+  // 徽章数 = 该城在池中的行数,不再被 tier 阈值裁掉:
+  // 池 A 在 zoom 5/8 都是 2,池 B 都是 5——缩放不改变计数
+  assert.equal(countHz(clusterCities(poolA, 5)), 2);
+  assert.equal(countHz(clusterCities(poolB, 5)), 5);
+  assert.equal(countHz(clusterCities(poolB, 8)), 5);
 });
 
-test('clusterCities: 未打标公司(tier 缺省 12)在 zoom<=8 不可见,不计入徽章', () => {
+test('clusterCities: 未打标公司(tier 缺省 12)计入徽章', () => {
   const noTier = workPoi('no-tier', '杭州', 120.1, 30.25);
-  delete noTier.company.tier; // 未打标 → lod.ts 缺省 TIER_DEFAULT=12
-  assert.deepEqual(clusterCities([noTier], 8), []);
+  delete noTier.company.tier; // 未打标 → 缺省 TIER_DEFAULT=12
+  assert.deepEqual(
+    clusterCities([noTier], 8).map((g) => [g.city, g.count]),
+    [['杭州', 1]],
+  );
 });
 
-// ---- 贝达药业(w1,2026-08-20:seed/drop 路径杭州徽章契约)----
+test('clusterCities: 「杭州市」与「杭州」站点归入同一徽章(裸城名分组)', () => {
+  const pois = [
+    workPoi('hz-shang', '杭州市', 120.15, 30.27, 6),
+    workPoi('hz-bare', '杭州', 120.2, 30.3, 6),
+    workPoi('bj', '北京市', 116.4, 39.9, 6),
+  ];
+  const groups = clusterCities(pois, 8);
+  assert.deepEqual(
+    groups.map((g) => [g.city, g.count]),
+    [['杭州', 2], ['北京', 1]],
+  );
+  // 徽章标签用裸城名(与 cityCenter 锚点命中同口径)
+  const hz = groups.find((g) => g.city === '杭州');
+  assert.equal(hz.lng, 120.15); // 命中杭州静态行政中心
+  assert.equal(hz.lat, 30.27);
+});
 
-test('clusterCities: betta-hangzhou(杭州临平 120.258/30.438, tier 6)在 zoom 6-8 出现于「杭州」徽章', () => {
+// ---- 贝达药业(2026-08-20 修订:tier 6 在 zoom<=8 全区间计入)----
+
+test('clusterCities: betta-hangzhou(杭州临平 120.258/30.438, tier 6)在 zoom<=8 全区间出现于「杭州」徽章', () => {
   const betta = {
     id: 'betta-hangzhou',
     kind: 'recruitment',
@@ -307,7 +322,7 @@ test('clusterCities: betta-hangzhou(杭州临平 120.258/30.438, tier 6)在 zoom
     ],
     positions: [{ id: 'betta-ra', title: '临床研究助理实习生', type: 'intern', status: 'open' }],
   };
-  for (const zoom of [6, 7, 8]) {
+  for (const zoom of [0, 5, 6, 7, 8]) {
     const groups = clusterCities([betta], zoom);
     assert.equal(groups.length, 1, `zoom=${zoom}`);
     assert.equal(groups[0].city, '杭州');
@@ -315,8 +330,6 @@ test('clusterCities: betta-hangzhou(杭州临平 120.258/30.438, tier 6)在 zoom
     assert.equal(groups[0].lng, 120.15); // 命中杭州静态行政中心
     assert.equal(groups[0].lat, 30.27);
   }
-  // zoom 5:tier 6 > 5,LOD 不可见 → 不出现(该 zoom 下钻也无此 pin)
-  assert.deepEqual(clusterCities([betta], 5), []);
   // 串味混池:贝达坐标(杭州框内)+ 同坐标标签成都 → 只留杭州,成都徽章消失
   const mixed = clusterCities(
     [

@@ -37,12 +37,9 @@ export interface UsePOIMapOptions {
   onMarkerClick?: (id: string) => void;
 }
 
-/** syncPOIsToMap 的配置项（pois 单独传参，故移除）。 */
-export type SyncPOIsToMapOptions = Omit<UsePOIMapOptions, 'pois'>;
-
 /**
  * 将当前 POI 列表 + 可见集 + 选中/高亮状态同步到控制器。
- * 供 Hook 内部与 syncPOIsToMap 共用，保证两套入口行为一致。
+ * 供 usePOIMap 的创建 effect 与数据 effect 共用,保证两处行为一致。
  */
 function applySync(
   controller: POIMarkerController,
@@ -57,62 +54,6 @@ function applySync(
   else controller.deselect();
   if (highlightedId) controller.highlight(highlightedId);
   else controller.unhighlight();
-}
-
-// ---------------------------------------------------------------------------
-// syncPOIsToMap — 无生命周期的一次性同步入口
-// ---------------------------------------------------------------------------
-
-/** 每个 map 实例复用同一个控制器，避免重复同步产生重复标记。 */
-interface SyncEntry {
-  controller: POIMarkerController;
-  opts: Pick<POIMarkerControllerOptions, 'color' | 'onMarkerClick'>;
-}
-
-const syncRegistry = new WeakMap<object, SyncEntry>();
-
-/**
- * 将 POI 列表与选中/高亮状态一次性同步到地图。
- *
- * 适用于非 React / 无需生命周期管理的场景；对同一 map 重复调用会差分更新，
- * 不会产生重复标记。若需要随状态持续联动，请使用 usePOIMap。
- *
- * @param map AMap.Map 实例（为空时 no-op）。
- * @param pois 需要展示的 POI 列表。
- * @param opts 选中 / 高亮 / 配色 / 点击回调。
- */
-export function syncPOIsToMap(
-  map: any,
-  pois: POI[],
-  opts: SyncPOIsToMapOptions
-): void {
-  if (!map) return;
-
-  const key = map as object;
-  const nextOpts: SyncEntry['opts'] = {
-    color: opts.accentColor,
-    onMarkerClick: opts.onMarkerClick,
-  };
-
-  let entry = syncRegistry.get(key);
-  if (
-    !entry ||
-    entry.opts.color !== nextOpts.color ||
-    entry.opts.onMarkerClick !== nextOpts.onMarkerClick
-  ) {
-    if (entry) entry.controller.destroy();
-    const controller = createPOIMarkerController(map, nextOpts);
-    entry = { controller, opts: nextOpts };
-    syncRegistry.set(key, entry);
-  }
-
-  applySync(
-    entry.controller,
-    pois,
-    opts.selectedId,
-    opts.highlightedId,
-    opts.visiblePOIs
-  );
 }
 
 // ---------------------------------------------------------------------------
