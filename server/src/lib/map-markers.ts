@@ -7,11 +7,17 @@
 //   （logoUrl 图片优先，缺失/加载失败回退 emoji）
 // - 支持选中（放大 + 强调环）与高亮（轻微放大 + 透明度）
 // - 全部 AMap 调用都做了防御性守卫，无浏览器环境（node 测试）下静默降级
+//
+// marker 生命周期(b2 修订):「只添加一次、跨视口/跨 zoom 保留实例」。
+// - setPOIs 非空列表 = 只增不删(新增 + setPosition 存量),空列表 = 清空;
+// - setVisiblePOIs(ids) 只切换 show/hide,实例保留在 markers Map——
+//   zoom tier 过滤(LOD)与城市聚合(zoom ≤ 8)不再销毁重建 marker;
+// - removeMarker 只由 clear()/destroy() 调用。
 // ============================================================
 
 import { loadAMap } from './amap-api.ts';
 import { faviconCandidatesFromUrl } from './company-logo.ts';
-import type { CityCluster } from './city-cluster.ts';
+import { CLUSTER_MAX_ZOOM, type CityCluster } from './city-cluster.ts';
 import type { POI, RecruitmentPOI } from './types.ts';
 import { isDomainPOI, isRecruitmentPOI } from './types.ts';
 
@@ -21,8 +27,17 @@ import { isDomainPOI, isRecruitmentPOI } from './types.ts';
 
 /** POI 地图标记控制器的公共接口。 */
 export interface POIMarkerController {
-  /** 全量替换地图上的标记（内部做差分：移除不在新列表中的、新增缺失的）。 */
+  /**
+   * 全量同步标记(b2):非空列表 = 只增不删——新增缺失的标记、更新存量标记的
+   * 位置/样式,离开列表的 id 保留实例(可见性由 setVisiblePOIs 控制);
+   * 空列表 = 清空全部标记(刷新/重置路径)。
+   */
   setPOIs(pois: POI[]): void;
+  /**
+   * 可见性切换(b2):只显示给定 id 集的标记(其余 hide),实例保留在内部表,
+   * 跨调用差分,后续 setPOIs 新增的标记按同一可见集应用。null = 全部显示。
+   */
+  setVisiblePOIs(ids: string[] | null): void;
   /** 移除地图上所有标记并清空内部状态。 */
   clear(): void;
   /** 高亮指定标记：轻微放大 + 透明度变化。 */
@@ -242,6 +257,25 @@ export const CLUSTER_BADGE_SIZE = 54;
 /** 聚合徽章缺省强调色：品牌蓝(tech/21 布局图：#007AFF 描边、白底)。 */
 const CLUSTER_DEFAULT_COLOR = '#007AFF';
 
+/**
+ * 聚合/LOD 可见性分桶 zoom(b2)——「zoom≤8 分桶变化」的记忆化键。
+ *
+ * 城市聚合与 LOD 计数只依赖 floor(zoom)(maxTierForZoom 语义),分桶内的
+ * zoom 微调(8.1→8.4、5.2→5.9)不改变任何可见性结果:
+ * - zoom ≤ CLUSTER_MAX_ZOOM(8)→ 返回 floor(zoom)(聚合区间内的 LOD 分桶,
+ *   徽章计数/个体可见集在该桶内恒定,跨整数分桶 7→8 才变化);
+ * - zoom > 8 → 返回 CLUSTER_MAX_ZOOM + 1(恒个体 pin 模式,与
+ *   clusterCities 的 zoom > 8 → null 判定一致)——8.0→8.1 即聚合↔个体的
+ *   唯一一次切换,8.1→8.9 内零变化。
+ *
+ * map-shell 用它作为 clusterState/可见性 memo 的依赖键:跨分桶才重建徽章
+ * 或切换可见性,同一桶内的 zoom 变化零重建。
+ */
+export function clusterZoomForZoom(zoom: number): number {
+  if (!Number.isFinite(zoom)) return CLUSTER_MAX_ZOOM + 1;
+  return zoom <= CLUSTER_MAX_ZOOM ? Math.floor(zoom) : CLUSTER_MAX_ZOOM + 1;
+}
+
 /** 城市聚合徽章创建选项。 */
 export interface CityClusterMarkerOptions {
   /** 强调色(十六进制),缺省品牌蓝 #007AFF(描边 + 计数)。 */
@@ -355,6 +389,11 @@ class POIMarkerControllerImpl implements POIMarkerController {
   private markerStates = new Map<string, MarkerState>();
   /** 最近一次 setPOIs 的列表；AMap 就绪前缓存，就绪后回放。 */
   private pendingPOIs: POI[] = [];
+  /**
+   * 可见 id 集(b2)：null = 全部显示。跨 setPOIs 保留——marker 实例只增不删,
+   * zoom tier(LOD)/聚合边界只切换 show/hide,不销毁重建。
+   */
+  private visibleIds: Set<string> | null = null;
   private selectedId: string | null = null;
   private highlightedId: string | null = null;
   /** 加载到的 AMap 命名空间（异步）。 */
@@ -464,6 +503,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.markers.set(poi.id, marker);
     this.poiById.set(poi.id, poi);
     this.markerStates.set(poi.id, state);
+    // 新增标记按当前可见集应用 show/hide(b2:实例保留,zoom/聚合切换不重建)
+    this.applyVisibility(poi.id, marker);
   }
 
   /** 移除指定 id 的标记（从地图上摘除并清空内部记录）。 */
@@ -551,16 +592,15 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.pendingPOIs = pois;
     if (!this.isReady()) return;
 
-    const incoming = new Set(pois.map((p) => p.id));
-
-    // 移除不在新列表中的标记
-    for (const id of Array.from(this.markers.keys())) {
-      if (!incoming.has(id)) {
-        this.removeMarker(id);
-      }
+    // 空列表 = 清空(刷新/重置路径,等价 clear;b2 保留该语义以释放实例)
+    if (pois.length === 0) {
+      this.clear();
+      return;
     }
 
-    // 新增缺失标记 / 更新已有标记的位置与样式
+    // b2 只增不删:marker 实例跨视口/跨 zoom 保留,离开列表的 id 不销毁
+    // (可见性由 setVisiblePOIs 切换)——「只 add 新的 + setPosition 存量」,
+    // removeMarker 只留给 clear/destroy。
     for (const poi of pois) {
       const existing = this.markers.get(poi.id);
       if (existing) {
@@ -577,10 +617,29 @@ class POIMarkerControllerImpl implements POIMarkerController {
     }
   }
 
+  /** 只显示给定 id 集(b2)：实例保留,show/hide 切换;null = 全部显示。 */
+  setVisiblePOIs(ids: string[] | null): void {
+    this.visibleIds = ids ? new Set(ids) : null;
+    for (const [id, marker] of this.markers) {
+      this.applyVisibility(id, marker);
+    }
+  }
+
+  /** 按当前可见集对单个 marker 应用 show/hide(防御性守卫,无方法则跳过)。 */
+  private applyVisibility(id: string, marker: any): void {
+    const visible = this.visibleIds === null || this.visibleIds.has(id);
+    if (visible) {
+      if (typeof marker.show === "function") marker.show();
+    } else if (typeof marker.hide === "function") {
+      marker.hide();
+    }
+  }
+
   clear(): void {
     this.pendingPOIs = [];
     this.selectedId = null;
     this.highlightedId = null;
+    this.visibleIds = null;
     for (const id of Array.from(this.markers.keys())) {
       this.removeMarker(id);
     }

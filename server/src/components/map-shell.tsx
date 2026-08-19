@@ -15,7 +15,7 @@ import { fetchPOIDetail } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
 import { batchMatchesCurrentMode, catalogCoversView, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { loadWorkViewport, WORK_INITIAL_MAX_PAGES } from "@/lib/viewport-search";
-import { maxTierForZoom } from "@/lib/lod";
+import { maxTierForZoom, TIER_DEFAULT } from "@/lib/lod";
 import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
 import { entityRefFromSelection, initialsFromName } from "@/lib/account";
@@ -40,7 +40,7 @@ import { useModeCacheRestore } from "@/hooks/use-mode-cache-restore";
 import { useSearchState } from "@/hooks/use-search-state";
 import { useWorkViewport, readMapViewSnapshot, VIEWPORT_SUPPRESS_MS, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
-import { createCityClusterMarker } from "@/lib/map-markers";
+import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
 import { SecondarySidebar, suggestionDisplayIcon, candidateCategoriesFor, pickCategoryFilter, type SearchSuggestion } from "./secondary-sidebar";
 import { POIList } from "./poi-list";
 import { ModeSwitcher } from "./mode-switcher";
@@ -1182,27 +1182,70 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     () => savedPlacesToOverlay(savedPlaces, compareCatalog, mode),
     [savedPlaces, compareCatalog, mode],
   );
-  const mapPois = useMemo(
-    () => mergeMapPois(pois, overlayPois, savedOverlay && Boolean(user)),
-    [pois, overlayPois, savedOverlay, user],
+  // ---- marker 池(b2):列表源与 marker 源分离 ----
+  // work 的 marker 源 = catalog(只增池:视口批次经 mergePoisById 并入,跨视口/
+  // 跨 zoom 保留实例)+ 同一客户端管线(查询/筛选/排序,与列表同口径)。
+  // workMarkerPois 不依赖 listCatalog/pois:视口批次只换列表,marker 池引用不变
+  // → usePOIMap 不触发 setPOIs(零 marker 触碰)。
+  const workMarkerPois = useMemo(
+    () =>
+      canonicalMode(mode) === "work"
+        ? mergeMapPois(
+            runPOIPipeline(catalog, {
+              query: query || undefined,
+              filters: Object.keys(filters).length ? filters : undefined,
+              sort: sort || undefined,
+              center: distanceOrigin,
+            }),
+            overlayPois,
+            savedOverlay && Boolean(user),
+          )
+        : null,
+    [
+      mode,
+      catalog,
+      overlayPois,
+      savedOverlay,
+      user,
+      query,
+      filters,
+      sort,
+      distanceOrigin,
+    ],
+  );
+  // domain 无列表池概念,pois(=pipeline(catalog))即 marker 源。
+  // 注意:工作分支返回 workMarkerPois 同引用——即使 listCatalog 变化经 pois
+  // 进入 deps 触发本 memo 重算,下游拿到的仍是同一引用,零 setPOIs。
+  const markerPois = useMemo(
+    () =>
+      canonicalMode(mode) === "work"
+        ? (workMarkerPois ?? [])
+        : mergeMapPois(pois, overlayPois, savedOverlay && Boolean(user)),
+    [mode, workMarkerPois, pois, overlayPois, savedOverlay, user],
   );
 
   // ---- 城市聚合(tech/21,zoom ≤ 8)----
   // 渲染层第二种模式,与视口增量加载/选中高亮/LOD 过滤零冲突:
   // work 模式 zoom ≤ 8 时按 site.city 分组渲染圆形徽章(点击下钻 zoom 11);
   // zoom > 8 自动切回个体 pin。无 city 的 pin 保持个体(规则 2)。
+  // 分桶记忆化(b2):LOD 只依赖 floor(zoom),clusterZoom 在分桶内恒定(聚合区间
+  // 按整数 zoom 分桶,个体区间恒 9)→ zoom 微调(8.1→8.4、5.2→5.9)不重建徽章;
+  // 只有跨整数分桶(7→8,徽章计数变化)或聚合↔个体切换(8.0→8.1)才重建。
+  const clusterZoom = clusterZoomForZoom(zoom);
   const clusterState = useMemo(() => {
     if (!isRecruitmentMode(mode)) return null; // 非 work 上下文 → 个体 pin
-    const groups = clusterCities(mapPois, zoom);
+    const groups = clusterCities(markerPois, clusterZoom);
     if (groups === null) return null; // zoom > 8 → 个体 pin
     return {
       groups,
-      individual: mapPois.filter((p) => !poiCity(p)), // 无 city 的 pin 保持个体
+      individual: markerPois.filter((p) => !poiCity(p)), // 无 city 的 pin 保持个体
     };
-  }, [mode, mapPois, zoom]);
+  }, [mode, markerPois, clusterZoom]);
 
   // 聚合徽章渲染:每城一个 AMap.Marker(content 徽章),effect 清理时整批摘除。
-  // 与个体 marker 模式互斥——聚合激活时个体控制器只收到无 city 的 pin。
+  // 与个体 marker 模式互斥——聚合激活时个体 pin 实例保留(由 visiblePOIIds 隐藏),
+  // 出聚合直接 show,不重建。clusterState 已按 clusterZoom 分桶:zoom 微调不触发
+  // 本 effect(b2),只有跨整数分桶 / 池增长 / 模式切换才整批重建徽章。
   useEffect(() => {
     const map = mapInstance.current;
     const AMap = typeof window !== "undefined" ? window.AMap : undefined;
@@ -1243,11 +1286,27 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     };
   }, [clusterState, mapReady, modeConfig.color]);
 
-  // 聚合激活时个体控制器只同步无 city 的 pin;未激活时照常同步全部 mapPois
-  const markerPois = useMemo(
-    () => (clusterState ? clusterState.individual : mapPois),
-    [clusterState, mapPois],
-  );
+  // ---- marker 可见性(b2)----
+  // 控制器始终持有全量 markerPois 池,此处只算「当前该显示谁」,实例保留:
+  // - 聚合激活(zoom ≤ 8):城市公司由徽章代表,只显示无 city 的个体 pin;
+  // - 个体模式:按 LOD(maxTierForZoom)过滤,overlay 与 domain pin 恒显示;
+  // 离开 marker 池的 id(刷新/筛选变窄/domain 换视野)不在集合内 → 隐藏,不销毁。
+  // 依赖已分桶(clusterZoom / maxTier 均只随整数 zoom 变化):zoom 微调零重算。
+  const maxTier = maxTierForZoom(zoom);
+  const visiblePOIIds = useMemo(() => {
+    if (clusterState) {
+      const ids = new Set(clusterState.individual.map((p) => p.id));
+      return markerPois.filter((p) => ids.has(p.id)).map((p) => p.id);
+    }
+    const overlayIds = new Set(overlayPois.map((p) => p.id));
+    return markerPois
+      .filter((p) => {
+        if (overlayIds.has(p.id)) return true; // 收藏 overlay 恒显示(不随 LOD)
+        if (!isRecruitmentPOI(p)) return true; // domain pin 无 tier,恒显示
+        return (p.company?.tier ?? TIER_DEFAULT) <= maxTier;
+      })
+      .map((p) => p.id);
+  }, [clusterState, markerPois, overlayPois, maxTier]);
 
   const handleRefreshHere = useCallback(() => {
     const map = mapInstance.current;
@@ -1426,6 +1485,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // ---- 地图联动 ----
   usePOIMap(mapInstance.current, {
     pois: markerPois,
+    visiblePOIs: visiblePOIIds,
     selectedId,
     highlightedId,
     accentColor: modeConfig.color,
