@@ -34,8 +34,11 @@ test('companySitesSpatialSql uses gist && then geography ST_DWithin', () => {
     origin: { lng: 120.1, lat: 30.25 },
     radiusMeters: 2500,
   });
-  assert.match(both.sql, /ST_DWithin\(s\.geom::geography/);
-  assert.match(both.sql, /ST_SetSRID\(ST_MakePoint\(\$5, \$6\), 4326\)::geography, \$7\)/);
+  // radius 路径走 STORED geom_geog（命中 company_sites_geog_gist，免 cast）。
+  assert.match(both.sql, /ST_DWithin\(s\.geom_geog, ST_SetSRID\(ST_MakePoint\(\$5, \$6\), 4326\)::geography, \$7\)/);
+  assert.doesNotMatch(both.sql, /geom::geography/);
+  // bbox 路径仍走 s.geom &&（006 的 gist 覆盖，不动）。
+  assert.match(both.sql, /s\.geom && ST_MakeEnvelope/);
   assert.equal(both.params.at(-1), 2500);
 });
 
