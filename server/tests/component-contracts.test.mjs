@@ -409,6 +409,9 @@ test('map shell Bug3 locate: 挂载定位不抢占已交互相机(首次点 pin 
   assert.match(shell, /map\.on\("zoomstart", \(\) => \{\s*hasInteractedRef\.current = true/);
   assert.match(shell, /map\.on\("click", \(\) => \{\s*hasInteractedRef\.current = true/);
   assert.match(shell, /onMarkerClick: \(id\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/);
-  // 定位按钮 handleLocate 原义保留:仍无条件 setCenter+setZoom
-  assert.match(shell, /handleLocate = \(\) => \{[\s\S]{0,400}mapInstance\.current\.setCenter\(\[lng, lat\]\)[\s\S]{0,120}mapInstance\.current\.setZoom\(15\)/);
+  // 定位按钮 handleLocate 原义保留:仍无条件 setCenter+setZoom(不受 hasInteractedRef 门控)
+  const locateBlock = shell.slice(shell.indexOf("const handleLocate"), shell.indexOf("const handleMapStyleChange"));
+  assert.match(locateBlock, /mapInstance\.current\.setCenter\(\[lng, lat\]\)/);
+  assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
+  assert.doesNotMatch(locateBlock, /hasInteractedRef/);
 });
