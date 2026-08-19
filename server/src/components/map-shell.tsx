@@ -173,6 +173,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pendingSearchFocus = useRef(false);
   const catalogRef = useRef<POI[]>([]);
+  /** 列表池(wsv):work 模式侧栏二级卡片的独立数据源。catalog(marker 源)只增
+   * 不减保持全量;listCatalog 随视口换——zoom 变化只换侧栏卡片,地图 poi 全量保留。 */
+  const listCatalogRef = useRef<POI[]>([]);
   const poisRef = useRef<POI[]>([]);
   const [geoSettled, setGeoSettled] = useState(false);
   const ignoreNextMapClick = useRef(false);
@@ -199,6 +202,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [filters, setFilters] = useState<FilterState>({});
   const [sort, setSort] = useState(() => getMode("work").defaultSort);
   const [catalog, setCatalog] = useState<POI[]>([]);
+  /** 列表池状态(wsv):与 catalogRef/catalog 分离,work 视口刷新只换列表池 */
+  const [listCatalog, setListCatalog] = useState<POI[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -432,8 +437,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     mode,
     skipFetchRef,
     catalogRef,
+    listCatalogRef,
     noMoreRef,
     setCatalog,
+    setListCatalog,
     setPageOffset,
     setSearchOrigin,
     setQuery,
@@ -812,6 +819,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           lastBatchLen = batch.length;
           catalogRef.current = batch;
           setCatalog(batch);
+          // 主加载(首屏/刷新/加载更多)同时喂列表池:work 列表 = 累计池
+          // (与视口刷新的「只换列表池」互补,见 use-work-viewport)
+          if (isRecruitmentMode(mode)) {
+            listCatalogRef.current = batch;
+            setListCatalog(batch);
+          }
           writeModeCache({
             mode,
             catalog: batch,
@@ -901,6 +914,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return; // 模式已切换,丢弃过期结果
         catalogRef.current = data;
         setCatalog(data);
+        if (isRecruitmentMode(mode)) {
+          listCatalogRef.current = data;
+          setListCatalog(data);
+        }
         writeModeCache({
           mode,
           catalog: data,
@@ -964,8 +981,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     skipFetchRef,
     suppressViewportRefreshUntilRef,
     catalogRef,
+    listCatalogRef,
     viewStateRef,
     setCatalog,
+    setListCatalog,
     setNoMoreData,
     setPageOffset,
   });
@@ -1112,15 +1131,22 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   const pois = useMemo(
     () =>
-      runPOIPipeline(catalog, {
-        query: query || undefined,
-        filters: Object.keys(filters).length ? filters : undefined,
-        sort: sort || undefined,
-        center: distanceOrigin,
-      }),
-    [catalog, query, filters, sort, distanceOrigin]
+      runPOIPipeline(
+        // 列表 vs 地图池分离(wsv):work 列表用 listCatalog(随视口换,侧栏二级
+        // 卡片展示当前视角);catalog 是 marker 源,只增不减保持全量。listCatalog
+        // 为空(首屏/刷新后尚未加载)时回退 catalog;domain 无列表池概念,恒用 catalog。
+        canonicalMode(mode) === "work" && listCatalog.length > 0 ? listCatalog : catalog,
+        {
+          query: query || undefined,
+          filters: Object.keys(filters).length ? filters : undefined,
+          sort: sort || undefined,
+          center: distanceOrigin,
+        },
+      ),
+    [mode, listCatalog, catalog, query, filters, sort, distanceOrigin]
   );
   catalogRef.current = catalog;
+  listCatalogRef.current = listCatalog;
   poisRef.current = pois;
 
   const compareCatalog = useMemo(() => {
@@ -1212,6 +1238,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     setSearchOrigin(next);
     catalogRef.current = [];
     setCatalog([]);
+    listCatalogRef.current = [];
+    setListCatalog([]);
     setPageOffset(0);
     clearModeCache(mode);
     // 刷新即换列表:旧列表滚动位置不再有意义
@@ -1483,6 +1511,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       skipFetchRef.current = true;
       catalogRef.current = cached.catalog;
       setCatalog(cached.catalog);
+      // 还原即列表池 = 全量 marker 池;挂载对齐的视口加载随后把列表换成当前视野
+      listCatalogRef.current = cached.catalog;
+      setListCatalog(cached.catalog);
       setPageOffset(cached.pageOffset);
       setSearchOrigin(cached.searchOrigin ?? userLocation);
       setQuery(cached.query);
@@ -1494,6 +1525,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
     catalogRef.current = [];
     setCatalog([]);
+    listCatalogRef.current = [];
+    setListCatalog([]);
     setPageOffset(0);
     setQuery("");
     setFilters({});

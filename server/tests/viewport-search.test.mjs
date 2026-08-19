@@ -420,9 +420,9 @@ test('loadWorkViewport: 全部页面满页时 noMore=false(未到底,哨兵继�
   }
 });
 
-test('loadWorkViewport with existing:[] replaces the catalog (viewport refresh replace semantics)', async () => {
-  // Bug 7:工作模式视口刷新改为「替换」——existing=[] 时只保留本视野取回的一页,
-  // 不再并入旧累计池;否则 79 家全捕获后去重无变化、列表冻结。
+test('loadWorkViewport with existing:[] starts a fresh accumulation (list pool per-viewport wsv)', async () => {
+  // wsv 列表 vs 地图池分离:视口刷新从空累积当前视野(列表池按视口换,
+  // 侧栏二级卡片展示当前视角);marker 池由调用方 mergePoisById 单独并入。
   const pagePois = [
     recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }]),
     recruitmentPoi('b', [{ id: 'p2', title: '算法', type: 'social', status: 'open' }]),
@@ -434,7 +434,7 @@ test('loadWorkViewport with existing:[] replaces the catalog (viewport refresh r
     const { pois: merged } = await loadWorkViewport({
       bounds: VIEWPORT_BOX,
       maxTier: 2,
-      existing: [], // 视口替换:新视野清空旧卡片
+      existing: [], // 列表池:每视口一轮全新累积,旧视野卡片不残留
       onBatch: (batch) => {
         lastBatch = batch;
       },
@@ -442,6 +442,70 @@ test('loadWorkViewport with existing:[] replaces the catalog (viewport refresh r
     assert.deepEqual(merged.map((p) => p.id), ['a', 'b']);
     assert.deepEqual(lastBatch.map((p) => p.id), ['a', 'b']);
     assert.ok(!merged.some((p) => p.id === 'old-x')); // 旧视野公司不残留
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('mergePoisById cap: Infinity 去上限——超过 POI_HARD_CAP 不裁剪(wsv 视口取尽)', () => {
+  const existing = Array.from({ length: POI_HARD_CAP }, (_, i) => ({ id: `e${i}` }));
+  const incoming = Array.from({ length: 500 }, (_, i) => ({ id: `n${i}` }));
+  const capped = mergePoisById(existing, incoming, POI_HARD_CAP);
+  assert.equal(capped.length, POI_HARD_CAP); // 缺省硬顶仍生效(主加载/加载更多)
+  const uncapped = mergePoisById(existing, incoming, Infinity);
+  assert.equal(uncapped.length, POI_HARD_CAP + 500); // 去上限:全量并入,不截断
+  assert.ok(uncapped.every((p, i) => p.id === uncapped[i].id)); // 顺序稳定
+});
+
+test('loadWorkViewport cap: Infinity 视口取尽——页循环到短页 break,超过 3000 不裁剪', async () => {
+  // 70 满页 × 50 = 3500 > POI_HARD_CAP(3000):cap=Infinity 全部并入,
+  // 第 71 页短页(1 条)→ noMore=true 提前停(不白打请求)。
+  const seenPages = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const p = Number(new URL(String(url), 'http://x').searchParams.get('page'));
+    seenPages.push(p);
+    if (p > 71) return { ok: true, json: async () => ({ results: [] }) };
+    const count = p === 71 ? 1 : 50;
+    const results = Array.from({ length: count }, (_, i) =>
+      recruitmentPoi(`r${p}-${i}`, [{ id: `p${p}-${i}`, title: '岗位', type: 'social', status: 'open' }])
+    );
+    return { ok: true, json: async () => ({ results }) };
+  };
+  try {
+    const { pois: merged, noMore } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 50,
+      maxPages: 10_000,
+      cap: Infinity,
+      existing: [],
+    });
+    assert.equal(merged.length, 3501); // 去上限:3501 全入池
+    assert.ok(merged.length > POI_HARD_CAP);
+    assert.equal(noMore, true); // 短页(71 页 1 条)→ 到底
+    assert.equal(seenPages.length, 71); // 短页 break,不继续翻页
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport 缺省 cap=POI_HARD_CAP 仍生效(仅 work 视口传 Infinity)', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const p = Number(new URL(String(url), 'http://x').searchParams.get('page'));
+    const results = Array.from({ length: 50 }, (_, i) =>
+      recruitmentPoi(`r${p}-${i}`, [{ id: `p${p}-${i}`, title: '岗位', type: 'social', status: 'open' }])
+    );
+    return { ok: true, json: async () => ({ results }) };
+  };
+  try {
+    const { pois: merged } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 50,
+      maxPages: 100, // 61+ 页可超过 3000
+      existing: [],
+    });
+    assert.equal(merged.length, POI_HARD_CAP); // 缺省 cap=3000 封顶
   } finally {
     globalThis.fetch = originalFetch;
   }

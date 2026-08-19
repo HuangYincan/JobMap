@@ -256,10 +256,14 @@ function clamp(n: number, min: number, max: number): number {
 }
 
 // ============================================================
-// 工作模式视口按需加载(WS4,tech/18 §2.3)
+// 工作模式视口按需加载(WS4,tech/18 §2.3;wsv 2026-08-19 扩展)
 //
 // moveend/zoomend → 防抖 → GET /api/pois(当前 bounds + maxTier)
 // → 增量合并进现有 catalog(不清空已有 marker)→ 更新 marker。
+// wsv:视口加载循环取尽(page 直到短页/空页 break,不设页数上限);
+// 列表 vs 地图池分离——marker 池(catalog)只增不减保持全量,
+// 列表池(listCatalog)随视口换,见 use-work-viewport。
+// 去 3000 硬顶:视口累计池 cap 传 Infinity(缺省 POI_HARD_CAP 仅主加载/加载更多)。
 // 性能:同刻只有一个 in-flight;防抖窗口内事件合并为一次请求;
 // 请求期间的新事件只保留「最新一次」,完成后立即补跑。
 // Domain 模式保持刷新才更新,不走这里。
@@ -305,8 +309,9 @@ export interface WorkViewportQuery {
   page?: number;
   pageSize?: number;
   /**
-   * 从 page 起连取几页。首屏/刷新取前几页填满视野(默认 4 页=200),
-   * 视口增量加载只取 1 页(默认)。
+   * 从 page 起连取几页。首屏/刷新取前几页填满视野(默认 4 页=200);
+   * 视口增量加载(wsv)传大 maxPages(如 10000)循环取尽,短页/空页 break 提前停
+   * (见 loadWorkViewport 短页语义),防呆上限不白打请求。
    */
   maxPages?: number;
 }
@@ -314,6 +319,11 @@ export interface WorkViewportQuery {
 export interface LoadWorkViewportOptions extends WorkViewportQuery {
   /** 已累计的 POI,本轮往里增量合并(不清空) */
   existing: POI[];
+  /**
+   * 累计池硬顶(wsv):work 视口去上限传 Infinity/大值(视野内取尽);
+   * 缺省 POI_HARD_CAP(3000,主加载/加载更多默认)。
+   */
+  cap?: number;
   signal?: { cancelled: boolean };
   /** 每页合并后回调(完整累计池,可多次) */
   onBatch?: (pois: POI[]) => void;
@@ -451,9 +461,8 @@ export function catalogCoversView(
 /**
  * 工作模式视口加载:从 page 起连取 maxPages 页(默认 1 页) → 每页 alive 过滤
  * → 按 poi.id 增量合并进现有池(不清空已有 marker;重复 id 跳过;
- * POI_HARD_CAP 防无限堆)。每页合并后回调 onBatch(完整累计池)。
- * 页数取完或某页不满页即停。
- *
+ * cap 缺省 POI_HARD_CAP 防无限堆,work 视口传 Infinity 去上限)。
+ * 每页合并后回调 onBatch(完整累计池)。页数取完或某页不满页即停。
  * 返回值 { pois, noMore, vacant }:noMore 表示数据源到底(短页 break / total
  * 取尽),供调用方停止哨兵并显示「没有更多结果」;空页不置 noMore(空批次≠
  * 到底,ws1 Bug1),vacant 标记「整个请求 0 条」供空批次三态判定。
@@ -466,6 +475,7 @@ export async function loadWorkViewport(
   const startPage = options.page ?? 1;
   const maxPages = options.maxPages ?? 1;
   const pageSize = options.pageSize ?? WORK_VIEWPORT_PAGE_SIZE;
+  const cap = options.cap ?? POI_HARD_CAP;
   // 客户端 kind 守卫(2026-08-19):work 累计池只允许 recruitment 行。
   // 服务端已过滤,这里兜底清掉被污染缓存/历史残留的 domain 行,
   // 避免「高德 POI 混进工作列表」跨会话粘住。
@@ -480,7 +490,7 @@ export async function loadWorkViewport(
     );
     if (signal?.cancelled) return { pois: merged, noMore: false, vacant };
     const offset = (startPage + p - 1) * pageSize;
-    merged = mergePoisById(merged, page.pois, POI_HARD_CAP);
+    merged = mergePoisById(merged, page.pois, cap);
     onBatch?.(merged);
     // 空批次(0 条)≠ 到底(ws1 Bug1 视口):滤波/层级 maxTier 裁剪可致整页为空,
     // 不代表数据源已取尽——不闩锁 noMore,保留无限滚动重试与下一次视口刷新的
