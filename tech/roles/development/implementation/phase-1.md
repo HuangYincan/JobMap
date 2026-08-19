@@ -44,7 +44,7 @@ The user explicitly relaxed the ASCII/text layout approval gate for this develop
 
 - `NEXT_PUBLIC_AMAP_KEY` is a public browser key restricted by the Amap console; `.env.example` documents this. It is not set locally and the shell renders a CSS-map fallback without it.
 - `postcss` transitive advisories are resolved via an `overrides` pin (^8.5.12).
-- Residual advisory: `next@15.5.23` carries 2 high advisories inherited via its optional `sharp` dependency (libvips). The app does not use `next/image`, so `sharp` is not loaded at runtime. Upgrading to `next@16` is a breaking change and must be an explicit decision/ADR before adoption.
+- Residual advisory: `next@15.5.23` carries 2 high advisories inherited via its optional `sharp` dependency (libvips). The app does not use `next/image`, so `sharp` is not loaded at runtime. Upgrading to `next@16` is a breaking change and must be an explicit decision/ADR before adoption. **Resolved 2026-08-20:** upgraded to `next@16.3.1` / `react@19.2.8` (batch `20260820-boss-bugfix`, report `b3.md`); typecheck / tests / `next build` (Turbopack) all green, no code changes required.
 
 ## Remaining
 
