@@ -430,3 +430,13 @@ test('map shell Bug3 locate: 挂载定位不抢占已交互相机(首次点 pin 
   assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
   assert.doesNotMatch(locateBlock, /hasInteractedRef/);
 });
+
+test('logout resets saved overlay state and pref alongside saved places', () => {
+  const shell = src('components/map-shell.tsx');
+  const logoutBlock = shell.slice(shell.indexOf("const handleAuthAction"), shell.indexOf("const handleSaveProfile"));
+  // 登出分支清空 savedPlaces 的同时重置 savedOverlay 状态 + 持久化 pref,避免收藏图层静默消失
+  assert.match(logoutBlock, /setUser\(null\)/);
+  assert.match(logoutBlock, /setSavedPlaces\(\[\]\)/);
+  assert.match(logoutBlock, /setSavedOverlay\(false\)/);
+  assert.match(logoutBlock, /writeSavedOverlayPref\(false\)/);
+});
