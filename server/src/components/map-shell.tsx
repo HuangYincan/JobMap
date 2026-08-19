@@ -10,6 +10,7 @@ import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, loadAMap, suggestionToDomainPoi } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, widenSearchScope } from "@/lib/search";
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, isNearDefaultCenter } from "@/lib/camera-center";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchPOIDetail } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
@@ -187,7 +188,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
   const [lang, setLang] = useState<Language>('zh');
   const [mapStyle, setMapStyle] = useState<BasemapStyle>('normal');
-  const [zoom, setZoom] = useState(13);
+  const [zoom, setZoom] = useState(DEFAULT_MAP_ZOOM);
   const [mapReady, setMapReady] = useState(false);
   const [rotation, setRotation] = useState(0);
 
@@ -201,7 +202,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const [mapCenter, setMapCenter] = useState<{ lng: number; lat: number }>({ lng: 120.15, lat: 30.27 });
+  const [mapCenter, setMapCenter] = useState<{ lng: number; lat: number }>({ ...DEFAULT_MAP_CENTER });
   const [mapBounds, setMapBounds] = useState<ViewportBounds | null>(null);
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [searchOrigin, setSearchOrigin] = useState<{ lng: number; lat: number } | null>(null);
@@ -466,10 +467,14 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       // 先创建地图（Geolocation 蓝点需绑定到已存在的 map），创建后立即定位移动中心
       // 必须持有 createMap 返回的 cleanup:否则 resize 监听泄漏,
       // 地图销毁后 handleResize 仍摸已销毁实例(比例尺 removeChild/appendChild 崩溃)
-      mapCleanup = createMap([120.15, 30.27], 13);
+      // ws-poi-vanish2:初始相机用 mapCenter/zoom state 而非硬编码默认——首载
+      // state=默认(行为不变);fast refresh remount 保留 hook state,新地图以用户
+      // 上次视野初始化,不再回杭州默认。effect 闭包捕获的 mapCenter/zoom 即当次
+      // 渲染的 state 值(首载与 remount 均成立)。
+      mapCleanup = createMap(mapCenter, zoom);
     }
 
-    function createMap(center: [number, number], zoom: number) {
+    function createMap(center: { lng: number; lat: number }, zoom: number) {
       const systemFallback: BasemapStyle = window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "whitesmoke"
         : "normal";
@@ -478,7 +483,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
       const map = new window.AMap.Map(mapContainer.current, {
         zoom: zoom,
-        center: center,
+        center: [center.lng, center.lat],
         viewMode: "3D",
         pitch: 0,
         showLabel: true,
@@ -509,9 +514,11 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           const { lng, lat } = loc.position;
           setUserLocation({ lng, lat });
           setSearchOrigin((prev) => prev ?? { lng, lat });
-          // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未手动移图时
-          // 一起更新:已移图 → 两者都保持当前镜头状态,不把圆心甩去用户位置
-          if (!userMovedMapRef.current) {
+          // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未手动移图且相机
+          // 仍处默认中心时一起更新:已移图 → 两者都保持当前镜头状态,不把圆心甩去
+          // 用户位置;remount 恢复的用户视野(非默认)同样不抢镜头(ws-poi-vanish2:
+          // 门控以实时相机中心为准,距默认 [120.15,30.27] 阈值 0.1°≈11km)。
+          if (!userMovedMapRef.current && isNearDefaultCenter(readLngLat(map.getCenter()))) {
             map.setCenter([lng, lat]);
             map.setZoom(15);
             setMapCenter({ lng, lat });
