@@ -10,6 +10,8 @@
 //   --dry-run          print the plan and resolutions, write nothing (default
 //                      when neither AMAP_WEB_KEY nor BAIDU_MAP_AK is set)
 //   --only a,b         resolve only these slugs (bypasses the confidence gate)
+//   --cities 上海,杭州  resolve only sites whose site.city is in this list
+//                      (海外/非目标城市站点跳过,防止单公司 170 站拖垮全流程)
 //   (no flag)          resolve every non-pinned site that gets a high-confidence
 //                      match; low-confidence / unresolved stay off the map
 //
@@ -70,6 +72,14 @@ const ONLY = onlyArg
       .map((s) => s.trim())
       .filter(Boolean)
   : null;
+
+const citiesArg = process.argv.find((a) => a.startsWith('--cities=')) || process.argv.find((a, i) => process.argv[i - 1] === '--cities');
+const CITIES = citiesArg
+  ? String(citiesArg.split('=')[1] ?? process.argv[process.argv.indexOf('--cities') + 1] ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  : [];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const round = (x, d = 6) => Number(x.toFixed(d));
@@ -155,6 +165,13 @@ for (const file of files) {
       }
 
       const target = siteCityTarget(site);
+      // 2026-08-19: 城市过滤器。单公司 drop 可能带上百个海外/非目标城市站点
+      // (如 蔚来 170 站),逐站 place-search 会拖死全流程并烧光百度地点检索
+      // 配额(100 次/天)。--cities 只落目标城市站点,其余记 skipped。
+      if (CITIES.length && !CITIES.some((c) => target.city === c || target.city.startsWith(c) || c.startsWith(target.city))) {
+        skipped.push({ slug, siteId: site.id, reason: `city-not-in-list:${target.city}` });
+        continue;
+      }
       let override = overrides[slug];
       const query = cleanCompanySearchName(company.name);
       let poi = null;
