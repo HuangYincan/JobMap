@@ -56,10 +56,13 @@ test('work viewport scheduling conditions live in the hook, not map-shell', () =
   assert.doesNotMatch(shell, /needsViewportAlign/);
   assert.doesNotMatch(shell, /const VIEWPORT_SUPPRESS_MS/);
   assert.doesNotMatch(shell, /map\.on\("moveend", onViewChange\)/);
-  // 但主加载 finally 的补跑路径与 toggle 收藏抑制保留在 map-shell(行为不变)
+  // 但主加载 finally 的补跑路径保留在 map-shell(行为不变);toggle 收藏抑制
+  // 随 useSavedLayer 抽取(2026-08-20 QA scan #6):写入标记在 hook 内
   assert.match(shell, /useWorkViewport\(\{/);
   assert.match(shell, /viewportLoaderRef\.current\?\.schedule\(\);/);
-  assert.match(shell, /suppressViewportRefreshUntilRef\.current = Date\.now\(\) \+ VIEWPORT_SUPPRESS_MS;/);
+  const savedLayer = src('hooks/use-saved-layer.ts');
+  assert.match(savedLayer, /suppressViewportRefreshUntilRef\.current = Date\.now\(\) \+ VIEWPORT_SUPPRESS_MS;/);
+  assert.match(shell, /useSavedLayer\(\{/);
 });
 
 // ---- useSearchState(搜索/建议状态)----
@@ -75,6 +78,26 @@ test('useSearchState hook exists and owns suggest/cleanup logic', () => {
   assert.doesNotMatch(hook, /\}, \[query, mode, zoom, catalog\]\);/);
   const shell = src('components/map-shell.tsx');
   assert.match(shell, /useSearchState\(/);
+});
+
+// ---- useSavedLayer(收藏图层;2026-08-20 QA scan #6)----
+
+test('useSavedLayer hook exists with exported signature', () => {
+  const hook = src('hooks/use-saved-layer.ts');
+  assert.match(hook, /export function useSavedLayer\(\s*deps: UseSavedLayerDeps/);
+  assert.match(hook, /export interface UseSavedLayerDeps/);
+  assert.match(hook, /export interface UseSavedLayerResult/);
+  // 派生 + 初始化 + toggle + hide 四件事都在 hook 内
+  assert.match(hook, /savedPlacesToOverlay\(savedPlaces, compareCatalog, mode\)/);
+  assert.match(hook, /readSavedOverlayPref\(true\)/);
+  assert.match(hook, /writeSavedOverlayPref\(next\)/);
+  assert.match(hook, /writeSavedOverlayPref\(false\)/);
+  assert.match(hook, /return \{ savedOverlay, overlayPois, toggle, hide \};/);
+  const shell = src('components/map-shell.tsx');
+  assert.match(shell, /useSavedLayer\(\{/);
+  // map-shell 不再直接持有收藏图层状态/派生/toggle(纯接线)
+  assert.doesNotMatch(shell, /const \[savedOverlay, setSavedOverlay\] = useState/);
+  assert.doesNotMatch(shell, /const overlayPois = useMemo/);
 });
 
 // ---- useModeCacheRestore(会话缓存还原)----
