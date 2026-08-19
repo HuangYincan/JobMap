@@ -500,15 +500,39 @@ test('work no-category empty state renders candidate category chips wired to fil
   assert.match(sidebar, /config\.key !== "jobTaxonomy" && config\.key !== "roleFamily"/);
   assert.match(sidebar, /selectedTaxonomyPaths\(filters\)\.length > 0/);
   assert.match(sidebar, /selectedRoleFamilies\(filters\)\.length > 0/);
-  // 桌面 sidebar 接线:未选 → 空态标题 + chips;点击写 filters[key] = [value]
-  assert.match(sidebar, /candidateChips = workCandidateCategories\(mode, query, filters\)/);
+  // 桌面 sidebar 接线:未选 → 空态标题 + chips;点击写 filters[key](pickCategoryFilter 按类型选值)
+  assert.match(sidebar, /candidateChips = candidateCategoriesFor\(mode, query, filters\)/);
   assert.match(sidebar, /candidateCategories=\{candidateChips\.length > 0 \? candidateChips : undefined\}/);
-  assert.match(sidebar, /onPickCategory=\{\(key, value\) => onFiltersChange\(\{ \.\.\.filters, \[key\]: \[value\] \}\)\}/);
+  assert.match(sidebar, /onPickCategory=\{\(key, value\) => onFiltersChange\(pickCategoryFilter\(filters, mode, key, value\)\)\}/);
   // 移动抽屉 POIList(map-shell)同链路
   const shell = src('components/map-shell.tsx');
-  assert.match(shell, /mobileCandidateChips = workCandidateCategories\(mode, query, filters\)/);
+  assert.match(shell, /mobileCandidateChips = candidateCategoriesFor\(mode, query, filters\)/);
   assert.match(shell, /candidateCategories=\{mobileCandidateChips\.length > 0 \? mobileCandidateChips : undefined\}/);
-  assert.match(shell, /onPickCategory=\{\(key, value\) => setFilters\(\{ \.\.\.filters, \[key\]: \[value\] \}\)\}/);
+  assert.match(shell, /onPickCategory=\{\(key, value\) => setFilters\(pickCategoryFilter\(filters, mode, key, value\)\)\}/);
+});
+
+test('domain no-category empty state renders candidate category chips (single-select write)', () => {
+  const sidebar = src('components/secondary-sidebar.tsx');
+  const shell = src('components/map-shell.tsx');
+  // domain 分支:数据源 = getMode(mode).filters 的 category(select 单选);未选类(无 query/filters.category)→ 出 9 类 chips
+  assert.match(sidebar, /export function domainCandidateCategories/);
+  assert.match(sidebar, /if \(canonicalMode\(mode\) !== "domain"\) return \[\]/);
+  assert.match(sidebar, /if \(query\.trim\(\)\) return \[\]/);
+  assert.match(sidebar, /if \(filters\.category\) return \[\]/);
+  assert.match(sidebar, /config\.key !== "category" \|\| config\.type !== "select"/);
+  // 合并助手:work + domain 各取各的(模式互斥),桌面/移动共用
+  assert.match(sidebar, /export function candidateCategoriesFor/);
+  assert.match(sidebar, /\.\.\.workCandidateCategories\(mode, query, filters\),/);
+  assert.match(sidebar, /\.\.\.domainCandidateCategories\(mode, query, filters\),/);
+  // chip 点击:单选(select)写字符串(domain category),多选写数组(work)——与 FilterPanel 语义一致
+  assert.match(sidebar, /export function pickCategoryFilter/);
+  assert.match(sidebar, /isSingle \? value : \[value\]/);
+  // domain 空态标题由 domainNoCategory 驱动(poi-category-loading 契约),chips 非空时同槽位渲染
+  assert.match(sidebar, /config\.kind === "domain" && !filters\.category && !query\.trim\(\)/);
+  assert.match(sidebar, /emptyTitle=\{\s*domainNoCategory \|\| candidateChips\.length > 0 \? t\("pickCategory", lang\) : undefined\s*\}/);
+  // 移动抽屉同链路走同一合并助手(domain 未选类也出 chips)
+  assert.match(shell, /mobileCandidateChips = candidateCategoriesFor\(mode, query, filters\)/);
+  assert.match(shell, /emptyTitle=\{mobileCandidateChips\.length > 0 \? t\("pickCategory", lang\) : undefined\}/);
 });
 
 test('profile language/defaultMode prefs are PrefField dropdowns sharing the job-seeking chain', () => {
