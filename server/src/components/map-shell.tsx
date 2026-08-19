@@ -1402,6 +1402,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   // 卡片点击 → 选中（地图 marker 高亮由 usePOIMap 同步）
   const handleSelect = useCallback((poi: POI) => {
+    // 点卡片/列表选中即「用户已接管相机」:与地图 pin 同口径,
+    // 否则 geolocation 晚 resolve 会把相机从被点公司拽回用户位置(Bug1 竞态盲区)
+    hasInteractedRef.current = true;
     // 地图初始化期间不处理选中，避免触发重新加载
     if (!mapReady || !geoSettled) {
       return;
@@ -1515,6 +1518,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // upsert 会话卡（不再依赖客户端 catalog 里有没有——之前 /api/suggest 匹配
   // 全量服务端目录，指向未加载公司时点击无任何反应）；#标签写入筛选插件。
   const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
+    // 选择建议即「用户已接管相机」(会 flyTo):与地图 pin 同口径,
+    // 否则 geolocation 晚 resolve 会抢占相机(Bug1 竞态盲区)
+    hasInteractedRef.current = true;
     if (s.location) {
       flyToLocation(mapInstance.current, s.location.lng, s.location.lat);
       setMapCenter({ lng: s.location.lng, lat: s.location.lat });
