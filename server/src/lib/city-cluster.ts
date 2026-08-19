@@ -6,12 +6,23 @@
 // zoom ≤ 8 时按 site.city 分组,每个城市一个圆形徽章「城市名 N」,
 // 点击平滑缩放到该城(zoom 11)展开个体 pin。
 //
+// 2026-08-20(w1)两道防御,保证徽章「城市名 N」与个体 pin 语义一致:
+// 1. 坐标↔标签防御:city 标签命中已知参考框但坐标落在框外(跨城串味行,
+//    DB 147 行/76 家,2026-08-19 数据修正已记 deferred)→ 剔除,防
+//    「成都明明没岗位却有聚合徽章」类假聚合;
+// 2. LOD 计数口径:徽章 N = 当前 zoom 下「该城市将被渲染为个体 pin 的
+//    数量」——只计 tier <= floor(zoom) 的公司(与同 zoom 服务端取数一致,
+//    未打标按缺省 12 不可见)。视口池只增不减,残留的 tier>zoom 行
+//    不再计入,同 zoom 不同导航历史计数一致。
+//
 // 纯函数,无 AMap/React 依赖,node 下可单测。
 // ============================================================
 
-import type { POI } from './types.ts';
+import type { POI, RecruitmentPOI } from './types.ts';
 import { isRecruitmentPOI } from './types.ts';
 import { cityCenter } from './city-centers.ts';
+import { maxTierForZoom, TIER_DEFAULT } from './lod.ts';
+import { cityLabelMatchesCoordinates } from './spatial-query.ts';
 
 /** 聚合触发上限:zoom <= 8 启用聚合,zoom > 8 切回个体 pin(用户批准阈值,tech/21)。 */
 export const CLUSTER_MAX_ZOOM = 8;
@@ -41,12 +52,29 @@ export function poiCity(poi: POI): string | undefined {
 }
 
 /**
+ * LOD 可见性(lod.ts 语义):公司 tier = 可见最小 zoom,`tier <= floor(zoom)`
+ * 时该 zoom 下会渲染为个体 pin;未打标公司按缺省 TIER_DEFAULT(12,小厂
+ * 城市细视野出现)——zoom ≤ 8 聚合区间内一律不可见。
+ * 徽章计数口径:只计当前 zoom LOD 可见的公司,与同 zoom 服务端取数
+ * (maxTier = floor(zoom))一致,导航历史无关。
+ */
+function lodVisibleAtZoom(poi: RecruitmentPOI, zoom: number): boolean {
+  const tier = poi.company?.tier ?? TIER_DEFAULT;
+  return tier <= maxTierForZoom(zoom);
+}
+
+/**
  * 将 POI 列表按城市分组聚合。
  *
- * 规则(tech/21):
+ * 规则(tech/21 + 2026-08-20 w1):
  * - zoom > CLUSTER_MAX_ZOOM(8)→ 返回 null,调用方用个体 pin;
  * - 非 work 上下文(列表里一个 recruitment POI 都没有,含空列表)→ 返回 null;
  * - 按 site.city 分组计数(经 poiCity,一 POI 一职场语义);
+ * - LOD 计数口径:只计当前 zoom 可见的公司(tier <= floor(zoom),未打标按
+ *   缺省 12 不计)——视口池只增不减残留的 tier>zoom 行不进徽章,同 zoom
+ *   不同导航历史计数一致;
+ * - 坐标↔标签防御:city 标签命中已知参考框但坐标落在框外(串味行)→ 剔除;
+ *   参考框未收录城市 / 坐标缺失 → 放行(无可判断);
  * - 无 city 的 POI 不聚合(保持个体,由调用方另行渲染或省略);
  * - 中心点 = 静态城市中心(命中 CITY_CENTERS),未命中 → 组内 pin 坐标均值(有合法
  *   坐标的);组内无合法坐标 → 该组省略。命中静态中心时忽略均值(北京等散落城市
@@ -65,6 +93,10 @@ export function clusterCities(pois: POI[], zoom: number): CityCluster[] | null {
     const city = poiCity(poi);
     if (!city) continue; // domain POI / 无 city → 保持个体
     recruitmentSeen = true;
+    // 坐标↔标签防御:已知城市标签但坐标落在参考框外 → 串味行,剔除
+    if (!cityLabelMatchesCoordinates(city, poi.location?.lng, poi.location?.lat)) continue;
+    // LOD 计数口径:该 zoom 下不可见(tier > floor(zoom))→ 不计入徽章
+    if (!lodVisibleAtZoom(poi as RecruitmentPOI, zoom)) continue;
     let group = groups.get(city);
     if (!group) {
       group = { count: 0, lngs: [], lats: [] };

@@ -14,8 +14,9 @@ import {
   createCityClusterMarker,
 } from '../src/lib/map-markers.ts';
 
-/** 构造 recruitment POI(sites[0] 携带城市)。location 可传 null 模拟无坐标。 */
-function workPoi(id, city, lng, lat) {
+/** 构造 recruitment POI(sites[0] 携带城市)。location 可传 null 模拟无坐标。
+ *  tier 缺省 0(永显)——旧用例不显式传 tier 时保持「任意 zoom 可见」语义。 */
+function workPoi(id, city, lng, lat, tier = 0) {
   const location = lng === null || lat === null ? { lng: NaN, lat: NaN, address: '' } : { lng, lat, address: '' };
   return {
     id,
@@ -24,7 +25,7 @@ function workPoi(id, city, lng, lat) {
     source: 'api',
     name: id,
     location,
-    company: { name: id, industries: [], scale: 'startup' },
+    company: { name: id, industries: [], scale: 'startup', tier },
     sites: [{ id: `${id}-site`, name: id, city, location }],
     positions: [],
   };
@@ -170,6 +171,164 @@ test('poiCity: 一 POI 一职场,取 sites[0].city 并 trim;无则 undefined', (
 test('常量:CLUSTER_MAX_ZOOM=8 / CLUSTER_DRILL_ZOOM=11(用户批准阈值)', () => {
   assert.equal(CLUSTER_MAX_ZOOM, 8);
   assert.equal(CLUSTER_DRILL_ZOOM, 11);
+});
+
+// ---- 坐标↔标签防御(w1,2026-08-20:串味行剔除,成都假聚合根因)----
+
+test('clusterCities: 剔除「city 标签与坐标参考框不符」的串味行(成都假聚合)', () => {
+  const pois = [
+    // 串味行:标签成都,坐标在杭州(DB 147 行/76 家,2026-08-19 数据修正已记 deferred)
+    workPoi('fake-cd-1', '成都', 120.1, 30.25),
+    workPoi('fake-cd-2', '成都', 120.2, 30.3),
+    // 真实成都(坐标在成都参考框 103.7-104.6/30.3-31.1 内)
+    workPoi('real-cd-1', '成都', 104.07, 30.67),
+    workPoi('real-cd-2', '成都', 104.1, 30.65),
+    // 真实杭州(不被误伤)
+    workPoi('real-hz-1', '杭州', 120.15, 30.27),
+    workPoi('real-hz-2', '杭州', 120.25, 30.3),
+    // 串味行:标签深圳,坐标在杭州(同样被剔除)
+    workPoi('fake-sz', '深圳', 120.18, 30.28),
+  ];
+  const groups = clusterCities(pois, 5);
+  assert.deepEqual(
+    groups.map((g) => [g.city, g.count]),
+    [['成都', 2], ['杭州', 2]],
+  );
+});
+
+test('clusterCities: 串味防御覆盖深圳/北京/上海/广州/武汉(参考框收录城市)', () => {
+  const hangzhouCoords = [120.15, 30.25];
+  const cities = [
+    ['深圳', 114.05, 22.55],
+    ['北京', 116.4, 39.9],
+    ['上海', 121.47, 31.23],
+    ['广州', 113.26, 23.13],
+    ['武汉', 114.31, 30.59],
+    ['成都', 104.07, 30.67],
+  ];
+  const pois = cities.flatMap(([city, lng, lat]) => [
+    workPoi(`${city}-fake`, city, ...hangzhouCoords), // 串味:坐标在杭州 → 剔除
+    workPoi(`${city}-real`, city, lng, lat), // 真实坐标 → 保留
+  ]);
+  const groups = clusterCities(pois, 5);
+  assert.equal(groups.length, cities.length);
+  for (const group of groups) {
+    assert.equal(group.count, 1, `${group.city} 徽章只含真实坐标行`);
+  }
+});
+
+test('clusterCities: 参考框未收录城市 / 坐标缺失的 POI 放行(不误杀)', () => {
+  const pois = [
+    workPoi('a', '哈尔滨', 126.5, 45.7), // 参考框未收录 → 放行
+    workPoi('b', '北京', null, null), // 已知城市但无坐标 → 防御放行,仍计入
+    workPoi('b2', '北京', 116.4, 39.9), // 同组有合法坐标 → 徽章可定位
+  ];
+  const groups = clusterCities(pois, 5);
+  assert.deepEqual(
+    groups.map((g) => [g.city, g.count]),
+    [['北京', 2], ['哈尔滨', 1]],
+  );
+});
+
+// ---- LOD 计数口径(w1,2026-08-20:徽章 N = 该 zoom 下个体 pin 数)----
+
+test('clusterCities: 徽章只计当前 zoom LOD 可见公司(tier <= floor(zoom))', () => {
+  const pois = [
+    workPoi('t4', '杭州', 120.1, 30.25, 4),
+    workPoi('t5', '杭州', 120.2, 30.3, 5),
+    workPoi('t6', '杭州', 120.3, 30.35, 6),
+    workPoi('t8', '杭州', 120.4, 30.4, 8),
+    workPoi('t9', '杭州', 120.5, 30.45, 9),
+    workPoi('t13', '杭州', 120.6, 30.5, 13),
+  ];
+  const countHz = (zoom) => {
+    const groups = clusterCities(pois, zoom);
+    return groups.find((g) => g.city === '杭州').count;
+  };
+  assert.equal(countHz(4), 1); // 只 t4
+  assert.equal(countHz(5), 2); // t4+t5
+  assert.equal(countHz(6), 3);
+  assert.equal(countHz(8), 4); // t4+t5+t6+t8(tier == zoom 边界计入)
+  assert.equal(clusterCities(pois, 9), null); // zoom > 8 聚合关闭
+});
+
+test('clusterCities: 计数稳定性——同 zoom 不同导航历史(池残留 tier 不同)徽章数不变', () => {
+  // 历史 A:仅全国视野拉取(池只含 tier <= 5 行)
+  const poolA = [
+    workPoi('hz-1', '杭州', 120.1, 30.25, 2),
+    workPoi('hz-2', '杭州', 120.2, 30.3, 5),
+  ];
+  // 历史 B:先访问杭州 zoom 13 再缩出(池残留 tier 6/9/13 行,use-work-viewport 只增不减)
+  const poolB = [
+    ...poolA,
+    workPoi('hz-3', '杭州', 120.3, 30.35, 6),
+    workPoi('hz-4', '杭州', 120.4, 30.4, 9),
+    workPoi('hz-5', '杭州', 120.5, 30.45, 13),
+    workPoi('cd-1', '成都', 104.07, 30.67, 7),
+  ];
+  const countHz = (groups) => groups.find((g) => g.city === '杭州').count;
+  const a5 = clusterCities(poolA, 5);
+  const b5 = clusterCities(poolB, 5);
+  assert.equal(countHz(a5), 2);
+  assert.equal(countHz(b5), countHz(a5)); // 残留 tier>5 行不计入,历史无关
+  // zoom 8:历史 B 中 tier 6 行在该 zoom 可见 → 计入;tier 9/13 仍不计
+  assert.equal(countHz(clusterCities(poolB, 8)), 3);
+});
+
+test('clusterCities: 未打标公司(tier 缺省 12)在 zoom<=8 不可见,不计入徽章', () => {
+  const noTier = workPoi('no-tier', '杭州', 120.1, 30.25);
+  delete noTier.company.tier; // 未打标 → lod.ts 缺省 TIER_DEFAULT=12
+  assert.deepEqual(clusterCities([noTier], 8), []);
+});
+
+// ---- 贝达药业(w1,2026-08-20:seed/drop 路径杭州徽章契约)----
+
+test('clusterCities: betta-hangzhou(杭州临平 120.258/30.438, tier 6)在 zoom 6-8 出现于「杭州」徽章', () => {
+  const betta = {
+    id: 'betta-hangzhou',
+    kind: 'recruitment',
+    mode: 'work',
+    source: 'api',
+    name: '贝达药业',
+    location: { lng: 120.258, lat: 30.438, address: '临平区兴中路355号' },
+    company: {
+      name: '贝达药业',
+      industries: ['biotech'],
+      scale: 'enterprise',
+      tier: 6,
+    },
+    sites: [
+      {
+        id: 'betta-hangzhou-site',
+        name: '贝达药业',
+        city: '杭州',
+        location: { lng: 120.258, lat: 30.438, address: '临平区兴中路355号' },
+      },
+    ],
+    positions: [{ id: 'betta-ra', title: '临床研究助理实习生', type: 'intern', status: 'open' }],
+  };
+  for (const zoom of [6, 7, 8]) {
+    const groups = clusterCities([betta], zoom);
+    assert.equal(groups.length, 1, `zoom=${zoom}`);
+    assert.equal(groups[0].city, '杭州');
+    assert.equal(groups[0].count, 1);
+    assert.equal(groups[0].lng, 120.15); // 命中杭州静态行政中心
+    assert.equal(groups[0].lat, 30.27);
+  }
+  // zoom 5:tier 6 > 5,LOD 不可见 → 不出现(该 zoom 下钻也无此 pin)
+  assert.deepEqual(clusterCities([betta], 5), []);
+  // 串味混池:贝达坐标(杭州框内)+ 同坐标标签成都 → 只留杭州,成都徽章消失
+  const mixed = clusterCities(
+    [
+      betta,
+      workPoi('fake-cd', '成都', 120.258, 30.438, 6),
+    ],
+    7,
+  );
+  assert.deepEqual(
+    mixed.map((g) => [g.city, g.count]),
+    [['杭州', 1]],
+  );
 });
 
 // ---- 聚合徽章构造契约(map-markers 扩展,不侵入 controller)----
