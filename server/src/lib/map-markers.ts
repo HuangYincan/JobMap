@@ -10,8 +10,9 @@
 // ============================================================
 
 import { loadAMap } from './amap-api.ts';
+import { faviconCandidatesFromUrl } from './company-logo.ts';
 import type { CityCluster } from './city-cluster.ts';
-import type { POI } from './types.ts';
+import type { POI, RecruitmentPOI } from './types.ts';
 import { isDomainPOI, isRecruitmentPOI } from './types.ts';
 
 // ---------------------------------------------------------------------------
@@ -145,26 +146,38 @@ function escapeAttr(value: string): string {
 /**
  * 公司徽章 HTML（AMap Marker content）。
  * data-URI SVG 无法加载远程 favicon，必须用真 <img>。
+ * fallbackUrls：logoUrl 加载失败后依次尝试的候选（favicon.im → icon.horse，
+ * 由调用方从 company.careerUrl 派生）；全部失败才隐藏 img 显示 emoji。
  */
 export function recruitmentBadgeHTML(
   logo: string | undefined,
   logoUrl: string | undefined,
   color: string,
-  state: MarkerState
+  state: MarkerState,
+  fallbackUrls: string[] = []
 ): string {
   const c = normalizeColor(color);
   const emoji = toEmojiLogo(logo);
   const size = Math.round(BADGE_BASE * stateScale(state));
+  const fallbackJson = escapeAttr(JSON.stringify(fallbackUrls));
   const img = logoUrl
     ? `<img src="${escapeAttr(logoUrl)}" width="${size - 12}" height="${size - 12}" alt="" ` +
-      `referrerpolicy="no-referrer" decoding="async" ` +
-      `onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='block')"/>`
+      `referrerpolicy="no-referrer" decoding="async" data-fb="${fallbackJson}" ` +
+      `onerror="this._i=(this._i||0)+1;var f=JSON.parse(this.dataset.fb||'[]');if(this._i<=f.length){this.src=f[this._i-1]}else{this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='block')}"/>`
     : '';
   const emojiDisplay = logoUrl ? 'none' : 'block';
   return (
     `<div class="dm-badge dm-badge-${state}" style="` +
     `width:${size}px;height:${size}px;border-color:${c};opacity:${state === 'highlighted' ? 0.92 : 1}` +
     `">${img}<span class="dm-badge-emoji" style="display:${emojiDisplay}">${emoji}</span></div>`
+  );
+}
+
+/** 徽章 logo 失败后的候选：从公司 careerUrl 派生 favicon 链（含裸 IP 域名映射），去重。 */
+function logoFallbackUrls(poi: RecruitmentPOI): string[] {
+  if (!poi.company.logoUrl) return [];
+  return faviconCandidatesFromUrl(poi.company.careerUrl).filter(
+    (u) => u !== poi.company.logoUrl
   );
 }
 
@@ -416,7 +429,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
         poi.company.logo,
         poi.company.logoUrl,
         this.color,
-        state
+        state,
+        logoFallbackUrls(poi)
       );
     } else {
       markerOpts.icon = this.buildIcon(poi, state);
@@ -469,7 +483,13 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.markerStates.set(poi.id, state);
     if (isRecruitmentPOI(poi) && typeof marker.setContent === 'function') {
       marker.setContent(
-        recruitmentBadgeHTML(poi.company.logo, poi.company.logoUrl, this.color, state)
+        recruitmentBadgeHTML(
+          poi.company.logo,
+          poi.company.logoUrl,
+          this.color,
+          state,
+          logoFallbackUrls(poi)
+        )
       );
     } else {
       marker.setIcon(this.buildIcon(poi, state));

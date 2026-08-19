@@ -1,10 +1,18 @@
 // company-logo 解析链单测 (2026-08-19 Bug2: 公司无 icon)。
-// 链: 站点 logo → 站点 favicon → 公司 logo → 公司 favicon → emoji(兜底 🏢)。
+// 链: 站点 logo → 站点域名映射 → 站点 favicon → 公司 logo → 公司域名映射 →
+//     公司 favicon → emoji(兜底 🏢)。
+// 2026-08-20 (ws3): 裸 IP host 不直连 favicon 服务;DOMAIN_LOGO_MAP 映射
+// IP → 官方域名;favicon 候选链 [favicon.im, icon.horse]。
 // 离线 seed 路径 (logoForSite) 与 DB 读路径 (resolveDbCompanyLogo) 共用。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { faviconFromUrl, resolveCompanyLogo } from '../src/lib/company-logo.ts';
+import {
+  DOMAIN_LOGO_MAP,
+  faviconCandidatesFromUrl,
+  faviconFromUrl,
+  resolveCompanyLogo,
+} from '../src/lib/company-logo.ts';
 import { resolveDbCompanyLogo } from '../src/lib/recruitment-store.ts';
 
 test('faviconFromUrl builds a favicon.im URL from any http(s) url', () => {
@@ -18,6 +26,49 @@ test('faviconFromUrl builds a favicon.im URL from any http(s) url', () => {
   assert.equal(faviconFromUrl(undefined), undefined);
   assert.equal(faviconFromUrl('ftp://x.com'), undefined, 'non-http(s) scheme rejected');
   assert.equal(faviconFromUrl('https://talent.alibaba.com/', 64), 'https://favicon.im/talent.alibaba.com?size=64');
+});
+
+test('faviconCandidatesFromUrl returns the favicon.im → icon.horse chain (ADR-007 backup)', () => {
+  assert.deepEqual(faviconCandidatesFromUrl('https://alibaba.com/'), [
+    'https://favicon.im/alibaba.com?size=128',
+    'https://icon.horse/icon/alibaba.com',
+  ]);
+  assert.equal(faviconCandidatesFromUrl('https://alibaba.com/', 64)[0], 'https://favicon.im/alibaba.com?size=64');
+  assert.deepEqual(faviconCandidatesFromUrl(undefined), []);
+  assert.deepEqual(faviconCandidatesFromUrl('not-a-url'), []);
+});
+
+test('bare IPv4 hosts never hit favicon services (favicon.im 实测 404)', () => {
+  // 未映射的裸 IP → 空候选,不产生任何 favicon 服务请求
+  assert.equal(faviconFromUrl('http://192.168.1.1/'), undefined);
+  assert.equal(faviconFromUrl('http://203.0.113.5/zhaopin.php'), undefined);
+  assert.deepEqual(faviconCandidatesFromUrl('http://203.0.113.5/'), []);
+});
+
+test('DOMAIN_LOGO_MAP covers the bare IP hosts actually present in data (2026-08-20 grep)', () => {
+  // 全库 grep(crawler/ + server/data + seed)唯一的裸 IP:浙江省发展规划研究院 radar drop
+  assert.deepEqual(Object.keys(DOMAIN_LOGO_MAP), ['47.96.146.209']);
+});
+
+test('mapped bare IP resolves via the official domain (chain layer, source=company)', () => {
+  const r = resolveCompanyLogo({
+    siteCareerUrl: 'http://47.96.146.209:8111/zhaopin_sx.php',
+    fallbackEmoji: '🏢',
+  });
+  assert.equal(r.source, 'company');
+  assert.equal(r.url, 'https://favicon.im/zdpi.org.cn?size=128');
+  // 消费组件 onerror 的候选链同样走映射
+  assert.deepEqual(faviconCandidatesFromUrl('http://47.96.146.209:8111/zhaopin_sx.php'), [
+    'https://favicon.im/zdpi.org.cn?size=128',
+    'https://icon.horse/icon/zdpi.org.cn',
+  ]);
+});
+
+test('unmapped bare IP falls back to emoji (no favicon service request)', () => {
+  const r = resolveCompanyLogo({ siteCareerUrl: 'http://203.0.113.5/zhaopin.php' });
+  assert.equal(r.source, 'emoji');
+  assert.equal(r.url, undefined);
+  assert.equal(r.emoji, '🏢');
 });
 
 test('chain layer 1: site logo url wins over everything else', () => {
@@ -65,6 +116,25 @@ test('chain layer 5: no url candidates → emoji fallback (default 🏢)', () =>
   const custom = resolveCompanyLogo({ fallbackEmoji: '🐧' });
   assert.equal(custom.source, 'emoji');
   assert.equal(custom.emoji, '🐧');
+});
+
+test('company with no careerUrl/logoUrl keeps its emoji logo (曦曦AI pattern)', () => {
+  // seed 全量 50 家 seed 公司中仅曦曦AI 无 careerUrl/logoUrl(2026-08-20 核对) →
+  // 直接 emoji,不产生任何 favicon 请求
+  const r = resolveCompanyLogo({ fallbackEmoji: '✨' });
+  assert.equal(r.source, 'emoji');
+  assert.equal(r.emoji, '✨');
+  assert.equal(r.url, undefined);
+});
+
+test('resolveDbCompanyLogo maps a bare-IP career_url through DOMAIN_LOGO_MAP', () => {
+  // DB 读路径(导入 radar drop 后 career_url 即裸 IP)与离线链共用映射
+  const r = resolveDbCompanyLogo(
+    { logo_url: null, logo_emoji: null, career_url: 'http://47.96.146.209:8111/zhaopin_sx.php' },
+    { career_url: null, logo_url: null },
+  );
+  assert.equal(r.source, 'company');
+  assert.equal(r.url, 'https://favicon.im/zdpi.org.cn?size=128');
 });
 
 test('resolveDbCompanyLogo keeps stored logo_url/logo_emoji (no favicon override)', () => {

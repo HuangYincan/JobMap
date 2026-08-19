@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useMemo, useState, type CSSProperties, type KeyboardEvent } from "react";
 import {
   formatDistance,
   formatSalary,
@@ -12,21 +12,39 @@ import {
 } from "@/lib/types";
 import { t, type Language } from "@/lib/i18n";
 import { isAlivePosition } from "@/lib/position-alive";
+import { faviconCandidatesFromUrl } from "@/lib/company-logo";
 import styles from "./poi-card.module.css";
 
-/** 公司 Logo：优先真实图片（logoUrl），加载失败回退 emoji */
-function CompanyLogo({ logo, logoUrl }: { logo?: string; logoUrl?: string }) {
-  const [failed, setFailed] = useState(false);
+/**
+ * 公司 Logo：优先真实图片（logoUrl），加载失败沿 favicon 候选链切换
+ * （careerUrl 派生的 favicon.im → icon.horse，含裸 IP 域名映射），全部失败回退 emoji。
+ */
+function CompanyLogo({
+  logo,
+  logoUrl,
+  careerUrl,
+}: {
+  logo?: string;
+  logoUrl?: string;
+  careerUrl?: string;
+}) {
+  const [attempt, setAttempt] = useState(0);
+  // 候选：logoUrl 本身 → careerUrl 的 favicon 候选链（去重，防止同一 URL 重试）
+  const candidates = useMemo(() => {
+    if (!logoUrl) return [];
+    return [logoUrl, ...faviconCandidatesFromUrl(careerUrl).filter((u) => u !== logoUrl)];
+  }, [logoUrl, careerUrl]);
+  const src = attempt < candidates.length ? candidates[attempt] : undefined;
 
-  if (logoUrl && !failed) {
+  if (src) {
     return (
       <span className={styles.logoImgWrap} aria-hidden="true">
         <img
-          src={logoUrl}
+          src={src}
           alt=""
           className={styles.logoImg}
           loading="lazy"
-          onError={() => setFailed(true)}
+          onError={() => setAttempt((n) => n + 1)}
           referrerPolicy="no-referrer"
         />
       </span>
@@ -266,7 +284,11 @@ function RecruitmentCardContent({
   return (
     <>
       <header className={styles.recruitHeader}>
-        <CompanyLogo logo={poi.company.logo} logoUrl={poi.company.logoUrl} />
+        <CompanyLogo
+          logo={poi.company.logo}
+          logoUrl={poi.company.logoUrl}
+          careerUrl={poi.company.careerUrl}
+        />
         <div className={styles.titleBlock}>
           <h3 className={styles.name}>{poi.name}</h3>
           {industries.length > 0 && (

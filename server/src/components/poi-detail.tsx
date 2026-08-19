@@ -14,6 +14,7 @@ import {
 import { estimateCommuteOptions, amapDirectionsUrl, type CommuteMode } from "@/lib/commute";
 import { t, type Language } from "@/lib/i18n";
 import { isAlivePosition } from "@/lib/position-alive";
+import { faviconCandidatesFromUrl } from "@/lib/company-logo";
 import { JOB_FAMILY_PLUGIN, ROLE_OPTIONS } from "@/lib/job-taxonomy";
 import {
   EMPTY_POSITION_FILTERS,
@@ -167,8 +168,21 @@ function RecruitmentDetail({
   onSelectPosition?: (position: Position) => void;
   selectedPositionId?: string | null;
 }) {
-  const [logoFailed, setLogoFailed] = useState(false);
+  const [logoAttempt, setLogoAttempt] = useState(0);
   const [filters, setFilters] = useState<PositionFilters>(EMPTY_POSITION_FILTERS);
+  // 公司 logo 候选链：logoUrl → careerUrl 派生的 favicon（favicon.im → icon.horse，
+  // 含裸 IP 域名映射），全部失败回退 emoji
+  const logoCandidates = useMemo(() => {
+    if (!poi.company.logoUrl) return [];
+    return [
+      poi.company.logoUrl,
+      ...faviconCandidatesFromUrl(poi.company.careerUrl).filter(
+        (u) => u !== poi.company.logoUrl
+      ),
+    ];
+  }, [poi.company.logoUrl, poi.company.careerUrl]);
+  const logoSrc =
+    logoAttempt < logoCandidates.length ? logoCandidates[logoAttempt] : undefined;
   const industries = poi.company.industries.map((ind) => INDUSTRY_LABELS[ind]?.[lang] ?? ind);
   const scale = SCALE_LABELS[poi.company.scale]?.[lang] ?? poi.company.scale;
   const open = useMemo(() => poi.positions.filter((p) => isAlivePosition(p)), [poi.positions]);
@@ -179,13 +193,13 @@ function RecruitmentDetail({
   return (
     <>
       <div className={styles.companyHead}>
-        {poi.company.logoUrl && !logoFailed ? (
+        {logoSrc ? (
           <img
             className={styles.logo}
-            src={poi.company.logoUrl}
+            src={logoSrc}
             alt=""
             referrerPolicy="no-referrer"
-            onError={() => setLogoFailed(true)}
+            onError={() => setLogoAttempt((n) => n + 1)}
           />
         ) : (
           <span className={styles.logoFallback} aria-hidden="true">
