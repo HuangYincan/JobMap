@@ -458,20 +458,20 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
       // 2026-08-20 (positions 去重): 同 external_id 曾在旧 source(seed) 与新真实
       // source 下各存一行 (upsert 唯一键是 (source_id, external_id), source 变了就
       // 插新行、旧行不删) → poi-card 同 key 警告上百条。apply 事务内自愈, 顺序不可颠倒:
-      //   1) 迁移: 该 external_id 下旧 source 行 → 本次 source (幂等, 已同源不迁);
-      //   2) 去重: 每 external_id 保 MIN(id) 一行;
+      //   1) 去重: 每 external_id 保 MIN(id) 一行 (最早行 — applications 表的
+      //      position_id 引用多指向旧行, 保留旧 id 避免悬空);
+      //   2) 迁移: 该 external_id 下旧 source 行 → 本次 source (幂等, 已同源不迁);
       //   3) 照常 ON CONFLICT (source_id, external_id) DO UPDATE upsert 刷新内容。
+      // 必须先删重再迁移: 若先迁移, 同 external_id 的旧行与新增行会共享
+      // (source_id, external_id), UPDATE 语句内即触发唯一索引
+      // positions_source_id_external_id_key 冲突 (_bt_check_unique), 事务回滚 —
+      // 2026-08-20 boss 实测: 重跑 import:seed:apply 报唯一键冲突, DB 未变。
       // 按公司批量 (同公司同 source, 仅对本 plan 的 authentic 岗位) — 等价于逐岗位
       // 执行, 但把 2×N 次往返压成 2 次。seed 示例岗位不在 authentic 集合内, 不受影响。
       const planExtIds = company.positions
         .filter((pos) => siteIds.has(pos.siteId))
         .map((pos) => pos.externalId);
       if (planExtIds.length > 0) {
-        await client.query(
-          `UPDATE positions SET source_id = $2
-           WHERE external_id = ANY($1::text[]) AND source_id IS DISTINCT FROM $2`,
-          [planExtIds, sourceId],
-        );
         await client.query(
           `DELETE FROM positions p
            USING (SELECT external_id, MIN(id) AS keep_id
@@ -480,6 +480,11 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
                   GROUP BY external_id) keep
            WHERE p.external_id = keep.external_id AND p.id <> keep.keep_id`,
           [planExtIds],
+        );
+        await client.query(
+          `UPDATE positions SET source_id = $2
+           WHERE external_id = ANY($1::text[]) AND source_id IS DISTINCT FROM $2`,
+          [planExtIds, sourceId],
         );
       }
 
