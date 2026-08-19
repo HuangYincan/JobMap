@@ -18,10 +18,10 @@
     "import:hz:pois:apply": "node scripts/import-hz-pois.mjs --apply"
   },
   "dependencies": {
-    "next": "15.5.23",
+    "next": "^16.3.1",
     "pg": "^8.23.0",
-    "react": "19.0.8",
-    "react-dom": "19.0.8"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@types/node": "24.13.3",
