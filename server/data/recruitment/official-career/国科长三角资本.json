@@ -1,0 +1,32 @@
+{
+  "slug": "国科长三角资本",
+  "name": "国科长三角资本",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "tier": 9,
+  "category": "67",
+  "careerUrl": "https://n0kwkp76gi.jobs.feishu.cn/campus/position/list?spread=R17V84A",
+  "sites": [
+    {
+      "id": "国科长三角资本-site-beijing",
+      "name": "国科长三角资本",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/杭州"
+      }
+    },
+    {
+      "id": "国科长三角资本-site-hangzhou",
+      "name": "国科长三角资本",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/杭州"
+      }
+    }
+  ],
+  "positions": []
+}

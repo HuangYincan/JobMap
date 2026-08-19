@@ -315,7 +315,11 @@ def cmd_feishu(args: argparse.Namespace) -> int:
     fetcher = PoliteFetcher(min_interval_s=args.interval)
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     summary = []
-    for tenant in args.tenants:
+    tenants = args.tenants
+    if args.only:
+        only = set(args.only.split(","))
+        tenants = [t for t in tenants if t["slug"] in only or t["host"].split(".")[0] in only]
+    for tenant in tenants:
         host = tenant["host"]
         slug = tenant["slug"]
         base = None
@@ -461,6 +465,7 @@ def main(argv: list[str] | None = None) -> int:
     feishu.add_argument("--radar-dir", default="", help="radar JSON directory (inherits curated sites/addresses)")
     feishu.add_argument("--interval", type=float, default=2.0, help="Seconds between requests")
     feishu.add_argument("--max-jobs", type=int, default=2000, help="Safety cap per tenant per pool")
+    feishu.add_argument("--only", default="", help="Comma-separated slugs/hosts to crawl (default: all)")
     feishu.add_argument("--write", action="store_true", help="Write drops (dry-run default)")
     feishu.set_defaults(func=cmd_feishu, tenants=FEISHU_TENANTS)
 
