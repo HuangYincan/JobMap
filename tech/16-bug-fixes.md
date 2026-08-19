@@ -814,3 +814,31 @@ onBatch 若返回空批次,会把已有非空目录整体清空(收藏图层同�
 
 **修改文件**：
 - `server/src/components/map-shell.tsx`(两处 onBatch 空批次保护)
+
+## 2026-08-19: 站点合并键折叠——多城市公司同名站点 collapse(import site_key)
+
+**症状**:`import:seed:apply` 后得物/米哈游等 9 家试点公司每家只剩 1 个站点,且
+city 字段与坐标错配(米哈游 city=北京市、坐标却在上海徐汇;哔哩哔哩 city=深圳市、
+坐标是上海杨浦)。地图上多城市办公点全部消失。
+
+**根因**:`recruitment-import.ts` 的站点合并键是 `(company_id, name)`——
+多城市 drops 里 5 个站点同名(得物-site-beijing/-shanghai/... 的 `name` 都是
+「得物」),`LIMIT 1` 命中同一行,后写站点覆盖 city/坐标 → 折叠 + 错配。
+这是全国多城市数据模型落地后的**首次**带多站点 import,此前所有公司单站点,
+按 name 合并一直没暴露。
+
+**修复**(`738f1bc`):
+- `db/migrations/016_site_key.sql`:加 `company_sites.site_key` 列 +
+  `(company_id, site_key) WHERE site_key IS NOT NULL` 唯一索引;
+- import 合并键改为 `site_key`(= drop 的 `site.id`);存量行(site_key IS NULL)
+  按 `(name, city IS NOT DISTINCT FROM)` 一次性认领并回填,同名同城才可能
+  误配,多城市站点按城市区分,组合唯一;
+- INSERT/UPDATE 携带 site_key;COALESCE 坐标保护保留(参数号顺移 $7→$8 等)。
+
+**恢复**(Env-only,用户授权执行):清理全部 legacy 站点行(site_key IS NULL,
+687 行)+ 其 positions(876 行,按 external_id upsert 重链)→ 全量重导 →
+验证 15/15 -shanghai 站点坐标落在上海市 bbox、得物 5 站独立、DB 1440 站点
+与 drops 一致。positions 表 `ON DELETE RESTRICT` — 先删 positions 再删 sites。
+
+**教训**:import 的合并键必须映射 drop 的稳定标识(site.id),不能依赖展示名;
+「同名不同城市」是合法数据形态,不是重复。
