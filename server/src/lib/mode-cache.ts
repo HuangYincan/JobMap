@@ -28,10 +28,16 @@
 // radar 聚合行与示例岗位，bump 使其失效重拉。
 // v13（2026-08-19 沪杭落点）：24 家 feishu 租户 10533 真实岗位 + 21 个沪杭真实
 // 办公点（ATS address_list 精确打点，regeo 验证）——旧缓存缺坐标行，bump 重拉。
+//
+// 视野快照（v13 兼容字段，2026-08-19 ws1）：ModeCacheEntry.viewport 记录写入时的
+// 地图视野（center+zoom+bounds），供刷新页面后的「挂载对齐加载」判断缓存目录是否
+// 仍覆盖当前视野。旧缓存无此字段 → 调用方按「与当前视野不符」处理，触发一次对齐
+// 加载后写入新快照。不 bump 版本：字段可选，旧缓存无需失效。
 // ============================================================
 
 import type { FilterState, MapMode, POI, POILocation } from './types.ts';
 import { canonicalMode } from './modes.ts';
+import type { ViewportBounds, ViewportSnapshot } from './viewport-search.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
 export const MODE_CACHE_VERSION = 13;
@@ -46,6 +52,8 @@ export interface ModeCacheEntry {
   filters: FilterState;
   sort: string;
   savedAt: number;
+  /** 写入时的地图视野快照(ws1 Bug1 挂载对齐加载);旧缓存无此字段 → 按不符处理 */
+  viewport?: ViewportSnapshot;
 }
 
 export function modeCacheKey(mode: MapMode): string {
@@ -66,6 +74,27 @@ function isPoi(value: unknown): value is POI {
   if (!value || typeof value !== 'object') return false;
   const poi = value as POI;
   return typeof poi.id === 'string' && typeof poi.name === 'string' && isLocation(poi.location);
+}
+
+function isBox(value: unknown): value is ViewportBounds {
+  if (!value || typeof value !== 'object') return false;
+  const b = value as Partial<ViewportBounds>;
+  return [b.west, b.south, b.east, b.north].every((n) => typeof n === 'number');
+}
+
+/**
+ * 解析旧缓存里的视野快照(ws1 Bug1):center+zoom 非法或缺失 → undefined,
+ * 调用方按「与当前视野不符」处理触发一次对齐加载。
+ */
+function parseCachedViewport(raw: unknown): ViewportSnapshot | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const vp = raw as Partial<ViewportSnapshot>;
+  if (!isLocation(vp.center) || typeof vp.zoom !== 'number') return undefined;
+  return {
+    center: vp.center,
+    zoom: vp.zoom,
+    ...(isBox(vp.bounds) ? { bounds: vp.bounds } : {}),
+  };
 }
 
 /**
@@ -105,6 +134,7 @@ export function readModeCache(mode: MapMode): ModeCacheEntry | null {
       filters: parsed.filters && typeof parsed.filters === 'object' ? parsed.filters : {},
       sort: typeof parsed.sort === 'string' ? parsed.sort : '',
       savedAt: typeof parsed.savedAt === 'number' ? parsed.savedAt : 0,
+      viewport: parseCachedViewport(parsed.viewport),
     };
   } catch {
     return null;

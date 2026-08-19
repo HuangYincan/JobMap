@@ -223,3 +223,70 @@ test('writeModeCache ignores an empty catalog', () => {
   });
   assert.equal(store.size, 0);
 });
+
+test('viewport snapshot round-trips through the cache (ws1 Bug1 对齐加载)', () => {
+  installMemoryStorage();
+  writeModeCache({
+    mode: 'work',
+    catalog: [sampleRecruitmentPoi],
+    pageOffset: 0,
+    searchOrigin: null,
+    query: '',
+    filters: {},
+    sort: 'distance',
+    viewport: {
+      center: { lng: 121.47, lat: 31.23 },
+      zoom: 13,
+      bounds: { west: 121.3, south: 31.1, east: 121.6, north: 31.4 },
+    },
+  });
+  const cached = readModeCache('work');
+  assert.deepEqual(cached?.viewport, {
+    center: { lng: 121.47, lat: 31.23 },
+    zoom: 13,
+    bounds: { west: 121.3, south: 31.1, east: 121.6, north: 31.4 },
+  });
+});
+
+test('legacy cache without viewport snapshot reads viewport=undefined (触发对齐加载)', () => {
+  const store = installMemoryStorage();
+  store.set(
+    `${MODE_CACHE_PREFIX}work`,
+    JSON.stringify({
+      version: MODE_CACHE_VERSION,
+      mode: 'work',
+      catalog: [{ ...sampleRecruitmentPoi, id: 'legacy-nosnap', mode: 'work' }],
+      pageOffset: 0,
+      searchOrigin: null,
+      query: '',
+      filters: {},
+      sort: 'distance',
+      savedAt: 1,
+    }),
+  );
+  const cached = readModeCache('work');
+  assert.equal(cached?.catalog[0].id, 'legacy-nosnap');
+  assert.equal(cached?.viewport, undefined); // 无快照 → 视为与当前视野不符
+});
+
+test('corrupt viewport snapshot is dropped, cache still readable (按不符处理)', () => {
+  const store = installMemoryStorage();
+  store.set(
+    `${MODE_CACHE_PREFIX}work`,
+    JSON.stringify({
+      version: MODE_CACHE_VERSION,
+      mode: 'work',
+      catalog: [{ ...sampleRecruitmentPoi, id: 'corrupt-snap', mode: 'work' }],
+      pageOffset: 0,
+      searchOrigin: null,
+      query: '',
+      filters: {},
+      sort: 'distance',
+      savedAt: 1,
+      viewport: { center: { lng: 'x', lat: 31.23 }, zoom: 13 }, // 非法 center
+    }),
+  );
+  const cached = readModeCache('work');
+  assert.equal(cached?.catalog[0].id, 'corrupt-snap');
+  assert.equal(cached?.viewport, undefined);
+});
