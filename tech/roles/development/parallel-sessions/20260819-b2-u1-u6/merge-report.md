@@ -40,6 +40,12 @@
 4. **WS-B 报告提示**:剩余 8 fail(网易/聂果基金/长亭/betta/deepseek 等「计划/专项/入口名」标题)与 1 error(腾讯 `radar-302c5ea36a84` LLM 空响应,下次全量自动覆盖)留待后续拆解/决策。
 5. **测试计数口径**:CLAUDE.md 记「185 tests」是旧值;当前基线 278、合并后 288(均已含 DB 门 skip 2)。建议收尾时同步 CLAUDE.md 计数。
 6. **WS-U1 报告提示**:`tech/09` 57/537 行(420px 基准)与 `tech/07` 268 行(work chips)是本次改动**之前**就已过期的描述,未动 —— 建议另行清理。
+   - **(2026-08-20 补注 — 已核实关闭)** 本条目描述的是**批次当时**的过期状态,勿再按「420px」处置:
+     `tech/09-secondary-sidebar.md` 现行 57/204/537 行均为 **380px**,与代码
+     `server/src/components/secondary-sidebar.module.css:31`(`width: 380px`)一致;git 历史
+     `8aa5be2`(420→恒 380)与 `d161e03`(2026-08-19,commit 明写 "sidebar width (420→380)")佐证
+     **380px 才是正确基准**,tech/09 无需改动。tech/07 268 行 work-chips 部分亦已由 `d161e03`
+     一并处理(commit 明写 "drop work-chip constraint")。
 7. **WS-U5 worktree 清理**:丢弃了该 worktree 未提交的 `typescript 5.9.3→5.8.2` 降级(package.json/lockfile,env 噪音,不在分支提交内)。分支提交的 diff 不含 package 改动。
 8. 各 worktree 的 `server/node_modules` symlink(指向主树 node_modules)在清理时已移除,主树 node_modules 不受影响。
 

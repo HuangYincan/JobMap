@@ -22,7 +22,7 @@
 | [14-api-contract.md](14-api-contract.md) | Public / account API 契约 | 前后端开发者 |
 | [15-deploy.md](15-deploy.md) | 本地部署 / runbook | 开发者/运维 |
 | [16-bug-fixes.md](16-bug-fixes.md) | Bug 修复记录与回归口径 | 开发者 |
-| [17-freshness-presentation-proposal.md](17-freshness-presentation-proposal.md) | 工作模式新鲜度呈现提案 | 产品/前端 |
+| [17-freshness-presentation-proposal.md](17-freshness-presentation-proposal.md) | 工作模式新鲜度呈现提案（已取代：tech/18 §A1） | 产品/前端 |
 | [18-national-scale-plan.md](18-national-scale-plan.md) | 📌 全国规模工作模式 + 并行开发计划 | 架构师/开发者 |
 | [19-company-labeling.md](19-company-labeling.md) | 公司打标:tier 可见性 + category 国标大类 | 数据/后端 |
 | [20-development-plan.md](20-development-plan.md) | 持续开发计划(2026-08-17 起) | 开发者/项目经理 |
