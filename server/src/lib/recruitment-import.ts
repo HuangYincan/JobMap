@@ -300,21 +300,44 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
 
       const siteIds = new Map<string, string>();
       for (const site of company.sites) {
+        const siteCity = siteCityOf(site);
+        // 站点合并键 = drop 的 site.id (site_key)。按 (company_id, name) 合并会
+        // 把多城市公司同名站点全部折叠进一行,city/坐标互相覆盖 (2026-08-19 事故:
+        // 得物/米哈游等 9 家 import 后只剩 1 站,米哈游 city=北京市 坐标却在上海)。
         const existing = await client.query<{ id: string }>(
-          `SELECT id::text FROM company_sites WHERE company_id = $1 AND name = $2 LIMIT 1`,
-          [companyId, site.name],
+          `SELECT id::text FROM company_sites WHERE company_id = $1 AND site_key = $2 LIMIT 1`,
+          [companyId, site.id],
         );
         let siteRowId = existing.rows[0]?.id;
         if (!siteRowId) {
+          // site_key 迁移前的存量行: 按 (name, city) 一次性认领并回填 key。
+          // 多城市站点按城市区分, (name, city) 组合唯一, 不会误配。
+          const legacy = await client.query<{ id: string }>(
+            `SELECT id::text FROM company_sites
+              WHERE company_id = $1 AND name = $2 AND site_key IS NULL
+                AND city IS NOT DISTINCT FROM $3
+              LIMIT 1`,
+            [companyId, site.name, siteCity],
+          );
+          if (legacy.rows[0]) {
+            siteRowId = legacy.rows[0].id;
+            await client.query(
+              `UPDATE company_sites SET site_key = $3 WHERE id = $1 AND company_id = $2`,
+              [siteRowId, companyId, site.id],
+            );
+          }
+        }
+        if (!siteRowId) {
           const inserted = await client.query<{ id: string }>(
-            `INSERT INTO company_sites (company_id, name, address, city, province, city_code, lng, lat, career_url, logo_url, source_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            `INSERT INTO company_sites (company_id, name, site_key, address, city, province, city_code, lng, lat, career_url, logo_url, source_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
              RETURNING id::text`,
             [
               companyId,
               site.name,
+              site.id,
               site.location?.address ?? null,
-              siteCityOf(site),
+              siteCity,
               site.province ?? null,
               site.cityCode ?? null,
               site.location?.lng ?? null,
@@ -328,9 +351,10 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
         } else {
           await client.query(
             `UPDATE company_sites SET
-               address = $3, city = $4, province = $5, city_code = $6,
-               lng = COALESCE($7, lng), lat = COALESCE($8, lat),
-               career_url = $9, logo_url = $10, source_id = $11, updated_at = now()
+               site_key = $3,
+               address = $4, city = $5, province = $6, city_code = $7,
+               lng = COALESCE($8, lng), lat = COALESCE($9, lat),
+               career_url = $10, logo_url = $11, source_id = $12, updated_at = now()
              WHERE id = $1 AND company_id = $2`,
             // COALESCE: 绝不因 drop 缺坐标而清空已 geocoded 的既有坐标
             // (2026-08-19 事故:refresh-radar 重生成 drops 丢坐标后,import:apply
@@ -338,8 +362,9 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
             [
               siteRowId,
               companyId,
+              site.id,
               site.location?.address ?? null,
-              siteCityOf(site),
+              siteCity,
               site.province ?? null,
               site.cityCode ?? null,
               site.location?.lng ?? null,

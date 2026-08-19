@@ -378,7 +378,7 @@ test('import maps tier / category / site city / province / city_code onto the DB
   assert.match(store, /tier = EXCLUDED\.tier/);
   assert.match(store, /category = EXCLUDED\.category/);
   assert.match(store, /INSERT INTO company_sites \([^)]*\bcity\b/);
-  assert.match(store, /province = \$5, city_code = \$6/);
+  assert.match(store, /province = \$6, city_code = \$7/);
   assert.match(store, /siteCityOf\(site\)/);
   assert.match(store, /company\.tier \?\? TIER_DEFAULT/);
   assert.match(store, /company\.category \?\? 'other'/);
@@ -389,5 +389,18 @@ test('site upsert never nulls existing geocoded coords when the drop lacks them'
   // 地图 79 pins → 2。UPDATE 必须 COALESCE 保既有坐标。
   const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
   const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
-  assert.match(store, /lng = COALESCE\(\$7, lng\), lat = COALESCE\(\$8, lat\)/);
+  assert.match(store, /lng = COALESCE\(\$8, lng\), lat = COALESCE\(\$9, lat\)/);
+});
+
+test('site merge keys on site_key, not name (multi-city sites must not collapse)', () => {
+  // 2026-08-19 事故:按 (company_id, name) 合并 → 得物×5 个同名站点折叠成 1 行,
+  // city/坐标互相覆盖 (米哈游 city=北京市 坐标却在上海)。合并必须键 site_key
+  // (drop 的 site.id), 存量行按 (name, city) 一次性认领并回填。
+  const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+  const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
+  assert.match(store, /site_key = \$2 LIMIT 1/);
+  assert.match(store, /AND site_key IS NULL/);
+  assert.match(store, /city IS NOT DISTINCT FROM \$3/);
+  assert.match(store, /INSERT INTO company_sites \(company_id, name, site_key/);
+  assert.doesNotMatch(store, /WHERE company_id = \$1 AND name = \$2 LIMIT 1/);
 });
