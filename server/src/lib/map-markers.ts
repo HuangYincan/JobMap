@@ -10,6 +10,7 @@
 // ============================================================
 
 import { loadAMap } from './amap-api.ts';
+import type { CityCluster } from './city-cluster.ts';
 import type { POI } from './types.ts';
 import { isDomainPOI, isRecruitmentPOI } from './types.ts';
 
@@ -88,9 +89,9 @@ function stateScale(state: MarkerState): number {
 }
 
 /** 校验强调色：只接受合法十六进制，防止注入非法 CSS 到 SVG 内联样式。 */
-function normalizeColor(color?: string): string {
+function normalizeColor(color?: string, fallback: string = DEFAULT_COLOR): string {
   if (color && /^#[0-9a-fA-F]{3,8}$/.test(color)) return color;
-  return DEFAULT_COLOR;
+  return fallback;
 }
 
 /** 将 SVG 字符串编码为 data URI。 */
@@ -213,6 +214,111 @@ function injectBadgeStyles(): void {
   }
   style.textContent = BADGE_STYLE;
 }
+
+// ---------------------------------------------------------------------------
+// 城市聚合徽章(tech/21)— 全国/省级视野密度管理,渲染层第二种模式
+//
+// 不侵入 POIMarkerController 内部实现:调用方(map-shell)在 work 模式
+// zoom <= 8 时创建聚合徽章、zoom > 8 时摘除,与个体 marker 模式互斥切换。
+// 徽章样式复用品牌语言:白底 + 品牌蓝 #007AFF 描边 + 圆形 + 「城市名 N」。
+// ---------------------------------------------------------------------------
+
+/** 城市聚合徽章基准直径(px)。 */
+export const CLUSTER_BADGE_SIZE = 54;
+
+/** 聚合徽章缺省强调色：品牌蓝(tech/21 布局图：#007AFF 描边、白底)。 */
+const CLUSTER_DEFAULT_COLOR = '#007AFF';
+
+/** 城市聚合徽章创建选项。 */
+export interface CityClusterMarkerOptions {
+  /** 强调色(十六进制),缺省品牌蓝 #007AFF(描边 + 计数)。 */
+  color?: string;
+  /** 徽章直径(px),缺省 CLUSTER_BADGE_SIZE。 */
+  size?: number;
+  /** 点击回调(下钻到该城市)。 */
+  onClick?: () => void;
+}
+
+const CLUSTER_STYLE = `
+    .dm-cluster{display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border-radius:50%;background:#fff;border:2.5px solid #007AFF;
+      box-shadow:0 6px 16px rgba(24,33,41,.22);box-sizing:border-box;cursor:pointer;
+      user-select:none}
+    .dm-cluster:hover{box-shadow:0 0 0 3px rgba(0,122,255,.28),0 8px 18px rgba(24,33,41,.25)}
+    .dm-cluster-city{font-size:13px;font-weight:700;color:#111;line-height:1.1;
+      max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dm-cluster-count{font-size:11px;font-weight:800;color:#007AFF;line-height:1.2}
+  `;
+
+function injectClusterStyles(): void {
+  if (typeof document === 'undefined') return;
+  let style = document.getElementById('dm-cluster-style') as HTMLStyleElement | null;
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'dm-cluster-style';
+    document.head.appendChild(style);
+  }
+  style.textContent = CLUSTER_STYLE;
+}
+
+/**
+ * 城市聚合徽章 HTML(AMap Marker content)。
+ * 圆形、白底、强调色描边、「城市名 N」两行;城市名 HTML 转义防注入。
+ */
+export function cityClusterBadgeHTML(
+  group: Pick<CityCluster, 'city' | 'count'>,
+  color?: string,
+  size: number = CLUSTER_BADGE_SIZE
+): string {
+  const c = normalizeColor(color, CLUSTER_DEFAULT_COLOR);
+  const city = escapeAttr(group.city);
+  const citySize = Math.max(11, Math.round(size * 0.24));
+  const countSize = Math.max(10, Math.round(size * 0.21));
+  return (
+    `<div class="dm-cluster" style="width:${Math.round(size)}px;height:${Math.round(size)}px;border-color:${c}">` +
+    `<span class="dm-cluster-city" style="font-size:${citySize}px">${city}</span>` +
+    `<span class="dm-cluster-count" style="font-size:${countSize}px;color:${c}">${group.count}</span>` +
+    `</div>`
+  );
+}
+
+/**
+ * 创建城市聚合徽章 AMap.Marker(tech/21)。
+ * 中心锚定(offset 居中);`bubble: false` 阻止点击冒泡到地图(地图 click 会清选中);
+ * 防御性守卫:无 amap/map/构造失败 → 返回 null,node 测试下不抛错。
+ */
+export function createCityClusterMarker(
+  amap: any,
+  map: any,
+  group: CityCluster,
+  opts: CityClusterMarkerOptions = {}
+): any | null {
+  if (!amap || !map || !group) return null;
+  injectClusterStyles();
+  const size = opts.size ?? CLUSTER_BADGE_SIZE;
+
+  let marker: any;
+  try {
+    marker = new amap.Marker({
+      position: [group.lng, group.lat],
+      offset: new amap.Pixel(-size / 2, -size / 2),
+      content: cityClusterBadgeHTML(group, opts.color, size),
+      map,
+      zIndex: 50,
+      bubble: false,
+    });
+  } catch {
+    return null;
+  }
+
+  if (typeof opts.onClick === 'function' && typeof marker.on === 'function') {
+    marker.on('click', () => {
+      opts.onClick?.();
+    });
+  }
+  return marker;
+}
+
 
 // ---------------------------------------------------------------------------
 // 控制器实现
