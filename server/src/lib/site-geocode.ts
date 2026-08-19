@@ -181,15 +181,43 @@ export function amapWebKey(): string | undefined {
   return key || undefined;
 }
 
-export interface RestGeocodeResult {
-  ok: boolean;
-  location?: POILocation;
-  reason?: 'no-key' | 'http' | 'empty' | 'parse';
+/** Baidu Web 服务 key (server/.env.local BAIDU_MAP_AK). Never printed. */
+export function baiduWebKey(): string | undefined {
+  const key = process.env.BAIDU_MAP_AK?.trim();
+  return key || undefined;
 }
 
 /**
- * Optional Web 服务 geocode. Missing AMAP_WEB_KEY → no-op.
- * Caller must not log the key. QPS stays 3/s at the call site.
+ * AMap daily-quota / key-unusable detection. AMap reports these as
+ * status="0" + infocode 10044 (USER_DAILY_QUERY_OVER_LIMIT) or 10043.
+ * Callers use the flag to switch provider for the rest of a run.
+ */
+export function amapQuotaExhausted(payload: { status?: string; info?: string; infocode?: string }): boolean {
+  if (payload.status === '1') return false;
+  const info = payload.info ?? '';
+  const infocode = payload.infocode ?? '';
+  return info.includes('QUERY_OVER_LIMIT') || infocode.includes('10044') || infocode.includes('10043');
+}
+
+/** A site whose address names a real street/building — geocodable as-is. */
+export function siteHasStreetAddress(site: CompanySite): boolean {
+  const address = site.location?.address?.trim();
+  return !!address && STREET_RE.test(address);
+}
+
+export interface RestGeocodeResult {
+  ok: boolean;
+  location?: POILocation;
+  reason?: 'no-key' | 'http' | 'empty' | 'parse' | 'quota' | `baidu-status:${number}`;
+  /** AMap unusable (no key / daily quota exhausted) — result may come from Baidu. */
+  amapUnavailable?: boolean;
+  provider?: 'amap' | 'baidu';
+}
+
+/**
+ * Optional Web 服务 geocode. Missing AMAP_WEB_KEY → no-op (Baidu fallback when
+ * BAIDU_MAP_AK is present). Caller must not log the key. QPS stays ≤3/s for
+ * AMap and ~2/s for Baidu (sleep ≥600ms) at the call site.
  */
 export async function geocodeAddressRest(
   query: string,
@@ -197,29 +225,41 @@ export async function geocodeAddressRest(
   fetchImpl: typeof fetch = fetch,
 ): Promise<RestGeocodeResult> {
   const key = amapWebKey();
-  if (!key) return { ok: false, reason: 'no-key' };
+  if (!key) {
+    // No AMap key — Baidu becomes the provider (GCJ-02 via ret_coordtype).
+    if (baiduWebKey()) {
+      const b = await baiduGeocodeAddressRest(query, city, fetchImpl);
+      return { ...b, amapUnavailable: true };
+    }
+    return { ok: false, reason: 'no-key' };
+  }
   const url = new URL('https://restapi.amap.com/v3/geocode/geo');
   url.searchParams.set('address', query);
   url.searchParams.set('city', city);
   url.searchParams.set('output', 'JSON');
   url.searchParams.set('key', key);
-  let payload: { status?: string; geocodes?: Array<{ location?: string }> };
+  let payload: { status?: string; info?: string; infocode?: string; geocodes?: Array<{ location?: string }> };
   try {
     const res = await fetchImpl(url);
     if (!res.ok) return { ok: false, reason: 'http' };
-    payload = (await res.json()) as { status?: string; geocodes?: Array<{ location?: string }> };
+    payload = (await res.json()) as typeof payload;
   } catch {
     return { ok: false, reason: 'http' };
   }
+  const down = amapQuotaExhausted(payload);
+  if (down && baiduWebKey()) {
+    const b = await baiduGeocodeAddressRest(query, city, fetchImpl);
+    return { ...b, amapUnavailable: true };
+  }
   const raw = payload.geocodes?.[0]?.location;
   if (payload.status !== '1' || !raw || typeof raw !== 'string') {
-    return { ok: false, reason: 'empty' };
+    return { ok: false, reason: down ? 'quota' : 'empty', amapUnavailable: down };
   }
   const [lngRaw, latRaw] = raw.split(',');
   const lng = Number(lngRaw);
   const lat = Number(latRaw);
   if (!Number.isFinite(lng) || !Number.isFinite(lat)) return { ok: false, reason: 'parse' };
-  return { ok: true, location: { lng, lat, address: query } };
+  return { ok: true, provider: 'amap', location: { lng, lat, address: query } };
 }
 
 // ---------------------------------------------------------------------------
@@ -343,17 +383,30 @@ export function pickBestOfficePoi(pois: OfficePoiCandidate[], companyName: strin
 export interface PlaceTextResult {
   ok: boolean;
   pois: OfficePoiCandidate[];
-  reason?: 'no-key' | 'http' | 'parse';
+  reason?: 'no-key' | 'http' | 'parse' | 'quota' | `baidu-status:${number}`;
+  amapUnavailable?: boolean;
+  provider?: 'amap' | 'baidu';
 }
 
-/** v3/place/text scoped to one city. No key → no-op; callers throttle. */
+/**
+ * v3/place/text scoped to one city. No key → no-op; Baidu place search is the
+ * fallback when AMap is key-less or daily-quota exhausted (10044). All
+ * providers return GCJ-02 (AMap native / Baidu ret_coordtype=gcj02ll). Callers
+ * throttle — ≥600ms when amapUnavailable.
+ */
 export async function placeTextSearchRest(
   query: string,
   city = '杭州',
   fetchImpl: typeof fetch = fetch,
 ): Promise<PlaceTextResult> {
   const key = amapWebKey();
-  if (!key) return { ok: false, pois: [], reason: 'no-key' };
+  if (!key) {
+    if (baiduWebKey()) {
+      const b = await baiduPlaceSearchRest(query, city, fetchImpl);
+      return { ...b, amapUnavailable: true };
+    }
+    return { ok: false, pois: [], reason: 'no-key' };
+  }
   const url = new URL('https://restapi.amap.com/v3/place/text');
   url.searchParams.set('keywords', query);
   url.searchParams.set('city', city);
@@ -364,9 +417,25 @@ export async function placeTextSearchRest(
   try {
     const res = await fetchImpl(url);
     if (!res.ok) return { ok: false, pois: [], reason: 'http' };
-    const payload = (await res.json()) as { status?: string; pois?: Array<Record<string, unknown>> };
-    if (payload.status !== '1') return { ok: false, pois: [], reason: 'parse' };
-    return { ok: true, pois: (payload.pois ?? []).map(parseOfficePoi).filter((p): p is OfficePoiCandidate => !!p) };
+    const payload = (await res.json()) as {
+      status?: string;
+      info?: string;
+      infocode?: string;
+      pois?: Array<Record<string, unknown>>;
+    };
+    if (payload.status !== '1') {
+      const down = amapQuotaExhausted(payload);
+      if (down && baiduWebKey()) {
+        const b = await baiduPlaceSearchRest(query, city, fetchImpl);
+        return { ...b, amapUnavailable: true };
+      }
+      return { ok: false, pois: [], reason: down ? 'quota' : 'parse', amapUnavailable: down };
+    }
+    return {
+      ok: true,
+      provider: 'amap',
+      pois: (payload.pois ?? []).map(parseOfficePoi).filter((p): p is OfficePoiCandidate => !!p),
+    };
   } catch {
     return { ok: false, pois: [], reason: 'http' };
   }
@@ -377,11 +446,14 @@ export interface RegeoResult {
   cityname?: string;
   district?: string;
   province?: string;
+  amapUnavailable?: boolean;
+  provider?: 'amap' | 'baidu';
 }
 
 /**
  * A regeo hit confirms a coordinate sits in `target` city. 直辖市 (北京/上海)
  * regeo 的 cityname 为空 — province 兜底校验 (北京 POI 的 pname = '北京市').
+ * 百度 regeo 直辖市直接返回 city='上海市' (无此问题, 统一走同一条校验).
  */
 export function regeoMatchesTarget(re: RegeoResult, target: CityTarget): { ok: boolean; reason?: string } {
   if (re.province && re.province !== target.province) return { ok: false, reason: `outside-province:${re.province}` };
@@ -389,14 +461,23 @@ export function regeoMatchesTarget(re: RegeoResult, target: CityTarget): { ok: b
   return { ok: true };
 }
 
-/** v3/geocode/regeo: confirm a coordinate actually sits in the target city. */
+/**
+ * Confirm a coordinate sits in the target city: AMap v3/geocode/regeo, falling
+ * back to Baidu reverse_geocoding/v3 when AMap is key-less / quota-exhausted.
+ */
 export async function regeoCityRest(
   lng: number,
   lat: number,
   fetchImpl: typeof fetch = fetch,
 ): Promise<RegeoResult> {
   const key = amapWebKey();
-  if (!key) return { ok: false };
+  if (!key) {
+    if (baiduWebKey()) {
+      const b = await baiduRegeoCityRest(lng, lat, fetchImpl);
+      return { ...b, amapUnavailable: true };
+    }
+    return { ok: false };
+  }
   const url = new URL('https://restapi.amap.com/v3/geocode/regeo');
   url.searchParams.set('location', `${lng},${lat}`);
   url.searchParams.set('output', 'JSON');
@@ -406,12 +487,139 @@ export async function regeoCityRest(
     if (!res.ok) return { ok: false };
     const payload = (await res.json()) as {
       status?: string;
+      info?: string;
+      infocode?: string;
       regeocode?: { addressComponent?: { cityname?: string; district?: string; province?: string; adcode?: string } };
     };
     const comp = payload.regeocode?.addressComponent;
-    if (payload.status !== '1' || !comp) return { ok: false };
-    return { ok: true, cityname: comp.cityname, district: comp.district, province: comp.province };
+    if (payload.status !== '1' || !comp) {
+      const down = amapQuotaExhausted(payload);
+      if (down && baiduWebKey()) {
+        const b = await baiduRegeoCityRest(lng, lat, fetchImpl);
+        return { ...b, amapUnavailable: true };
+      }
+      return { ok: false, amapUnavailable: down };
+    }
+    return { ok: true, provider: 'amap', cityname: comp.cityname, district: comp.district, province: comp.province };
   } catch {
     return { ok: false };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Baidu fallback (Web 服务, BAIDU_MAP_AK). Same GCJ-02 output as AMap — every
+// endpoint requests ret_coordtype / coordtype=gcj02ll so pins stay in the
+// catalog's native coordinate system; no BD-09 conversion needed. Baidu free
+// tier throttles at ~2 QPS — callers sleep ≥600ms. Never prints the key.
+// ---------------------------------------------------------------------------
+
+/** Baidu place POI → the same GCJ-02 candidate shape AMap produces. */
+export function parseBaiduOfficePoi(raw: Record<string, unknown>): OfficePoiCandidate | null {
+  const loc = raw.location as { lng?: unknown; lat?: unknown } | null | undefined;
+  const lng = Number(loc?.lng);
+  const lat = Number(loc?.lat);
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  return {
+    name: String(raw.name ?? ''),
+    address: String(raw.address ?? raw.district ?? ''),
+    lng,
+    lat,
+    type: '',
+    adname: String(raw.district ?? ''),
+    pname: String(raw.province ?? ''),
+    cityname: String(raw.city ?? ''),
+  };
+}
+
+/** Baidu place/v2/search (行政区域检索) scoped to one city, GCJ-02 output. */
+export async function baiduPlaceSearchRest(
+  query: string,
+  city = '杭州',
+  fetchImpl: typeof fetch = fetch,
+): Promise<PlaceTextResult> {
+  const key = baiduWebKey();
+  if (!key) return { ok: false, pois: [], reason: 'no-key' };
+  const url = new URL('https://api.map.baidu.com/place/v2/search');
+  url.searchParams.set('query', query);
+  url.searchParams.set('region', city);
+  url.searchParams.set('output', 'json');
+  url.searchParams.set('ret_coordtype', 'gcj02ll');
+  url.searchParams.set('page_size', '10');
+  url.searchParams.set('scope', '1');
+  url.searchParams.set('ak', key);
+  try {
+    const res = await fetchImpl(url);
+    if (!res.ok) return { ok: false, pois: [], reason: 'http' };
+    const payload = (await res.json()) as { status?: number; results?: Array<Record<string, unknown>> };
+    if (payload.status !== 0) return { ok: false, pois: [], reason: `baidu-status:${payload.status ?? -1}` };
+    return {
+      ok: true,
+      provider: 'baidu',
+      pois: (payload.results ?? []).map(parseBaiduOfficePoi).filter((p): p is OfficePoiCandidate => !!p),
+    };
+  } catch {
+    return { ok: false, pois: [], reason: 'http' };
+  }
+}
+
+/** Baidu reverse_geocoding/v3 — city check for a GCJ-02 coordinate. */
+export async function baiduRegeoCityRest(
+  lng: number,
+  lat: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<RegeoResult> {
+  const key = baiduWebKey();
+  if (!key) return { ok: false };
+  const url = new URL('https://api.map.baidu.com/reverse_geocoding/v3');
+  // location = "lat,lng" (百度纬度在前); coordtype=gcj02ll 输入已是国测局坐标.
+  url.searchParams.set('location', `${lat},${lng}`);
+  url.searchParams.set('coordtype', 'gcj02ll');
+  url.searchParams.set('output', 'json');
+  url.searchParams.set('ak', key);
+  try {
+    const res = await fetchImpl(url);
+    if (!res.ok) return { ok: false };
+    const payload = (await res.json()) as {
+      status?: number;
+      result?: { addressComponent?: { province?: string; city?: string; district?: string } };
+    };
+    const comp = payload.result?.addressComponent;
+    if (payload.status !== 0 || !comp) return { ok: false };
+    return { ok: true, provider: 'baidu', cityname: comp.city, district: comp.district, province: comp.province };
+  } catch {
+    return { ok: false };
+  }
+}
+
+/** Baidu geocoding/v3 — full address → GCJ-02 point. */
+export async function baiduGeocodeAddressRest(
+  query: string,
+  city = '杭州',
+  fetchImpl: typeof fetch = fetch,
+): Promise<RestGeocodeResult> {
+  const key = baiduWebKey();
+  if (!key) return { ok: false, reason: 'no-key' };
+  const url = new URL('https://api.map.baidu.com/geocoding/v3');
+  url.searchParams.set('address', query);
+  url.searchParams.set('city', city);
+  url.searchParams.set('output', 'json');
+  url.searchParams.set('ret_coordtype', 'gcj02ll');
+  url.searchParams.set('ak', key);
+  try {
+    const res = await fetchImpl(url);
+    if (!res.ok) return { ok: false, reason: 'http' };
+    const payload = (await res.json()) as {
+      status?: number;
+      result?: { location?: { lng?: unknown; lat?: unknown }; precise?: number; confidence?: number };
+    };
+    const loc = payload.result?.location;
+    const lng = Number(loc?.lng);
+    const lat = Number(loc?.lat);
+    if (payload.status !== 0 || !Number.isFinite(lng) || !Number.isFinite(lat)) {
+      return { ok: false, reason: payload.status !== 0 ? `baidu-status:${payload.status ?? -1}` : 'empty' };
+    }
+    return { ok: true, provider: 'baidu', location: { lng, lat, address: query } };
+  } catch {
+    return { ok: false, reason: 'http' };
   }
 }

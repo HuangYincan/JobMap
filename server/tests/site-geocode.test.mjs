@@ -4,18 +4,24 @@ import assert from 'node:assert/strict';
 import { poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
 import {
+  amapQuotaExhausted,
   applyGeocodeHits,
+  baiduGeocodeAddressRest,
+  baiduPlaceSearchRest,
+  baiduRegeoCityRest,
   cleanCompanySearchName,
   geocodeAddressRest,
   geocodeQueryForSite,
   gradeOfficePoi,
   importedSiteQuery,
   normalizeNameForMatch,
+  parseBaiduOfficePoi,
   pickBestOfficePoi,
   placeTextSearchRest,
   planSiteGeocode,
   regeoCityRest,
   regeoMatchesTarget,
+  siteHasStreetAddress,
   siteNeedsGeocode,
 } from '../src/lib/site-geocode.ts';
 
@@ -249,4 +255,199 @@ test('gradeOfficePoi validates against the site province/city', () => {
   // Defaults keep the Hangzhou behavior for sites without city fields.
   const hz = { ...poi, name: '商汤科技有限公司', address: '利一路188号天人大厦29楼', pname: '浙江省', cityname: '杭州市' };
   assert.equal(gradeOfficePoi(hz, '商汤科技').confidence, 'high');
+});
+
+// --- Baidu fallback (BAIDU_MAP_AK) ------------------------------------------
+
+async function withBaiduKey(body) {
+  const prev = process.env.BAIDU_MAP_AK;
+  process.env.BAIDU_MAP_AK = 'test-baidu-ak';
+  try {
+    return await body();
+  } finally {
+    if (prev == null) delete process.env.BAIDU_MAP_AK;
+    else process.env.BAIDU_MAP_AK = prev;
+  }
+}
+
+const AMAP_EXHAUSTED = { status: '0', info: 'USER_DAILY_QUERY_OVER_LIMIT', infocode: '10044' };
+
+test('amapQuotaExhausted detects the daily-limit payload', () => {
+  assert.equal(amapQuotaExhausted({ status: '1' }), false);
+  assert.equal(amapQuotaExhausted({ status: '0', info: 'USER_DAILY_QUERY_OVER_LIMIT', infocode: '10044' }), true);
+  assert.equal(amapQuotaExhausted({ status: '0', info: 'INVALID_USER_KEY', infocode: '10001' }), false);
+});
+
+test('siteHasStreetAddress only accepts a real street/building address', () => {
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '西湖区文二西路712号西溪乐谷2号楼' } }), true);
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '北京/上海/杭州' } }), false);
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: {} }), false);
+});
+
+test('parseBaiduOfficePoi maps the Baidu place shape onto the GCJ-02 candidate', () => {
+  const poi = parseBaiduOfficePoi({
+    name: '得物App总部',
+    location: { lng: 121.512, lat: 31.272 },
+    address: '黄兴路221号',
+    province: '上海市',
+    city: '上海市',
+    district: '杨浦区',
+  });
+  assert.equal(poi?.name, '得物App总部');
+  assert.equal(poi?.lng, 121.512);
+  assert.equal(poi?.cityname, '上海市');
+  assert.equal(poi?.adname, '杨浦区');
+  // Missing location object → null (no crash on malformed rows).
+  assert.equal(parseBaiduOfficePoi({ name: 'x' }), null);
+});
+
+test('baiduPlaceSearchRest parses a gcj02ll place response', async () => {
+  await withBaiduKey(async () => {
+    let requested = '';
+    const hit = await baiduPlaceSearchRest('得物', '上海市', async (input) => {
+      requested = String(input);
+      return {
+        ok: true,
+        json: async () => ({
+          status: 0,
+          results: [{ name: '得物App总部', location: { lng: 121.512, lat: 31.272 }, province: '上海市', city: '上海市', district: '杨浦区' }],
+        }),
+      };
+    });
+    assert.equal(hit.ok, true);
+    assert.equal(hit.provider, 'baidu');
+    assert.equal(hit.pois.length, 1);
+    assert.equal(hit.pois[0].lng, 121.512);
+    assert.match(requested, /api\.map\.baidu\.com\/place\/v2\/search/);
+    assert.match(requested, /ret_coordtype=gcj02ll/);
+    assert.ok(requested.includes(`region=${encodeURIComponent('上海市')}`));
+  });
+});
+
+test('baiduRegeoCityRest sends lat,lng + coordtype=gcj02ll and parses the municipality', async () => {
+  await withBaiduKey(async () => {
+    let requested = '';
+    const re = await baiduRegeoCityRest(121.512, 31.272, async (input) => {
+      requested = String(input);
+      return {
+        ok: true,
+        json: async () => ({ status: 0, result: { addressComponent: { province: '上海市', city: '上海市', district: '杨浦区' } } }),
+      };
+    });
+    assert.equal(re.ok, true);
+    assert.equal(re.province, '上海市');
+    assert.equal(re.cityname, '上海市');
+    // 百度 location = "lat,lng" (纬度在前).
+    assert.match(requested, /location=31\.272%2C121\.512/);
+    assert.match(requested, /coordtype=gcj02ll/);
+  });
+});
+
+test('baiduGeocodeAddressRest parses geocoding v3', async () => {
+  await withBaiduKey(async () => {
+    let requested = '';
+    const g = await baiduGeocodeAddressRest('西湖区文二西路712号', '杭州市', async (input) => {
+      requested = String(input);
+      return {
+        ok: true,
+        json: async () => ({ status: 0, result: { location: { lng: 120.095, lat: 30.287 }, precise: 1, confidence: 100 } }),
+      };
+    });
+    assert.equal(g.ok, true);
+    assert.equal(g.provider, 'baidu');
+    assert.equal(g.location?.lng, 120.095);
+    assert.match(requested, /api\.map\.baidu\.com\/geocoding\/v3/);
+    assert.match(requested, /ret_coordtype=gcj02ll/);
+  });
+});
+
+test('placeTextSearchRest falls back to Baidu when AMap quota is exhausted (10044)', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  process.env.AMAP_WEB_KEY = 'test-web-key';
+  try {
+    await withBaiduKey(async () => {
+      const hit = await placeTextSearchRest('得物', '上海市', async (input) => {
+        const url = String(input);
+        if (url.includes('restapi.amap.com')) {
+          return { ok: true, json: async () => ({ ...AMAP_EXHAUSTED, pois: [] }) };
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            status: 0,
+            results: [{ name: '得物App总部', location: { lng: 121.512, lat: 31.272 }, province: '上海市', city: '上海市' }],
+          }),
+        };
+      });
+      assert.equal(hit.ok, true);
+      assert.equal(hit.amapUnavailable, true);
+      assert.equal(hit.provider, 'baidu');
+      assert.equal(hit.pois[0].lng, 121.512);
+    });
+  } finally {
+    if (prev == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+test('placeTextSearchRest works Baidu-only when AMap has no key', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  delete process.env.AMAP_WEB_KEY;
+  try {
+    await withBaiduKey(async () => {
+      const hit = await placeTextSearchRest('得物', '上海市', async (input) => {
+        assert.match(String(input), /api\.map\.baidu\.com/);
+        return { ok: true, json: async () => ({ status: 0, results: [] }) };
+      });
+      assert.equal(hit.ok, true);
+      assert.equal(hit.amapUnavailable, true);
+      assert.equal(hit.provider, 'baidu');
+    });
+  } finally {
+    if (prev != null) process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+test('regeoCityRest falls back to Baidu regeo on AMap quota exhaustion', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  process.env.AMAP_WEB_KEY = 'test-web-key';
+  try {
+    await withBaiduKey(async () => {
+      const re = await regeoCityRest(121.512, 31.272, async (input) => {
+        if (String(input).includes('restapi.amap.com')) {
+          return { ok: true, json: async () => ({ ...AMAP_EXHAUSTED }) };
+        }
+        return { ok: true, json: async () => ({ status: 0, result: { addressComponent: { province: '上海市', city: '上海市', district: '杨浦区' } } }) };
+      });
+      assert.equal(re.ok, true);
+      assert.equal(re.amapUnavailable, true);
+      assert.equal(re.provider, 'baidu');
+      assert.equal(re.cityname, '上海市');
+    });
+  } finally {
+    if (prev == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+test('geocodeAddressRest falls back to Baidu geocoding on AMap quota exhaustion', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  process.env.AMAP_WEB_KEY = 'test-web-key';
+  try {
+    await withBaiduKey(async () => {
+      const g = await geocodeAddressRest('西湖区文二西路712号', '杭州市', async (input) => {
+        if (String(input).includes('restapi.amap.com')) {
+          return { ok: true, json: async () => ({ ...AMAP_EXHAUSTED }) };
+        }
+        return { ok: true, json: async () => ({ status: 0, result: { location: { lng: 120.095, lat: 30.287 } } }) };
+      });
+      assert.equal(g.ok, true);
+      assert.equal(g.amapUnavailable, true);
+      assert.equal(g.provider, 'baidu');
+      assert.equal(g.location?.lng, 120.095);
+    });
+  } finally {
+    if (prev == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prev;
+  }
 });

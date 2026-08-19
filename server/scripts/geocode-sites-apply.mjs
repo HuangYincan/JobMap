@@ -8,14 +8,17 @@
 //   node scripts/geocode-sites-apply.mjs [--dry-run] [--only slug1,slug2]
 //
 //   --dry-run          print the plan and resolutions, write nothing (default
-//                      when AMAP_WEB_KEY is missing)
+//                      when neither AMAP_WEB_KEY nor BAIDU_MAP_AK is set)
 //   --only a,b         resolve only these slugs (bypasses the confidence gate)
 //   (no flag)          resolve every non-pinned site that gets a high-confidence
 //                      match; low-confidence / unresolved stay off the map
 //
 // Writes back into the owning drop JSON (copy-on-write: only site.location is
 // replaced). The site's city is enforced via regeo. Reads AMAP_WEB_KEY from
-// server/.env.local. Never prints the key. Throttles at 3 req/s.
+// server/.env.local; when AMap's daily quota is exhausted (infocode 10044) or
+// no AMap key is set, falls back to Baidu Web 服务 (BAIDU_MAP_AK, same GCJ-02
+// coordinates). Never prints either key. AMap throttles at 3 req/s, Baidu at
+// ~2 req/s (sleep ≥600ms after a fallback call).
 //
 // Hand-curated resolutions can be dropped into data/recruitment/geocode-overrides.json
 // as { "<slug>": { "name", "address", "lng", "lat" } } — they apply verbatim.
@@ -25,12 +28,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   cleanCompanySearchName,
+  geocodeAddressRest,
   gradeOfficePoi,
   pickBestOfficePoi,
   placeTextSearchRest,
   regeoCityRest,
   regeoMatchesTarget,
   siteCityTarget,
+  siteHasStreetAddress,
   siteNeedsGeocode,
 } from '../src/lib/site-geocode.ts';
 import { loadOfflineWorkCatalog } from '../src/lib/server-catalog.ts';
@@ -57,7 +62,7 @@ function loadEnv() {
 const env = { ...loadEnv(), ...process.env };
 if (env.AMAP_WEB_KEY && !process.env.AMAP_WEB_KEY) process.env.AMAP_WEB_KEY = env.AMAP_WEB_KEY;
 
-const DRY_RUN = process.argv.includes('--dry-run') || !env.AMAP_WEB_KEY;
+const DRY_RUN = process.argv.includes('--dry-run') || (!env.AMAP_WEB_KEY && !env.BAIDU_MAP_AK);
 const onlyArg = process.argv.find((a) => a.startsWith('--only=')) || process.argv.find((a, i) => process.argv[i - 1] === '--only');
 const ONLY = onlyArg
   ? String(onlyArg.split('=')[1] ?? process.argv[process.argv.indexOf('--only') + 1] ?? '')
@@ -155,6 +160,7 @@ for (const file of files) {
       let poi = null;
       let confidence = null;
       let reason = '';
+      let provider = 'amap';
 
       if (override?.exclude) {
         unresolved.push({ slug, siteId: site.id, query, reason: 'manual-exclude' });
@@ -173,10 +179,24 @@ for (const file of files) {
         poi = { name: override.name, address: override.address, lng: override.lng, lat: override.lat, type: 'override', adname: '', pname: target.province, cityname: target.city };
         confidence = 'high';
         reason = 'manual-override';
+      } else if (siteHasStreetAddress(site)) {
+        // 有真实街道地址(如 tencent-hangzhou 西溪乐谷)——地址级 geocode 优先于
+        // 公司名检索, 精确打点; 结果仍走 regeo 城市校验.
+        const addr = site.location?.address?.trim() ?? '';
+        const g = await geocodeAddressRest(addr, target.city);
+        await sleep(g.amapUnavailable ? 600 : 340);
+        if (g.ok && g.location) {
+          poi = { name: company.name, address: addr, lng: g.location.lng, lat: g.location.lat, type: 'geocode', adname: '', pname: target.province, cityname: target.city };
+          confidence = 'high';
+          reason = 'address-geocode';
+          provider = g.provider ?? 'amap';
+        } else {
+          reason = g.reason ?? 'geocode-failed';
+        }
       } else {
-        if (DRY_RUN || env.AMAP_WEB_KEY) {
+        if (DRY_RUN || env.AMAP_WEB_KEY || env.BAIDU_MAP_AK) {
           const hit = await placeTextSearchRest(query, target.city);
-          await sleep(340);
+          await sleep(hit.amapUnavailable ? 600 : 340);
           if (hit.ok && hit.pois.length) {
             poi = pickBestOfficePoi(hit.pois, company.name);
             if (poi) {
@@ -188,6 +208,7 @@ for (const file of files) {
           } else {
             reason = hit.reason ?? 'no-pois';
           }
+          if (hit.provider) provider = hit.provider;
         }
       }
 
@@ -198,10 +219,11 @@ for (const file of files) {
 
       // Regeo guard: a place-search hit must actually sit in the site's city.
       // 直辖市 (北京/上海) regeo 的 cityname 为空 — province 兜底 (regeoMatchesTarget).
+      // regeoCityRest 自带高德→百度兜底; 两者 key 都缺时 ok=false → 'unverified'.
       let verified = '';
-      if (env.AMAP_WEB_KEY && !override) {
+      if (!override) {
         const re = await regeoCityRest(poi.lng, poi.lat);
-        await sleep(340);
+        await sleep(re.amapUnavailable ? 600 : 340);
         const match = regeoMatchesTarget(re, target);
         if (re.ok && !match.ok) {
           unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match.reason}` });
@@ -213,7 +235,7 @@ for (const file of files) {
       const district = poi.adname || verified.split(' ').pop() || '';
       const address = district && !poi.address.includes(district) ? `${district}${poi.address}` : poi.address;
 
-      resolutions.push({ slug, siteId: site.id, company: company.name, query, city: target.city, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified });
+      resolutions.push({ slug, siteId: site.id, company: company.name, query, city: target.city, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified, provider });
       if (!DRY_RUN && (confidence === 'high' || override)) {
         if (setSiteLocation(file, slug, site.id, { address, lng: round(poi.lng), lat: round(poi.lat) })) {
           applied.push({ slug, siteId: site.id, address, lng: round(poi.lng), lat: round(poi.lat) });
@@ -224,13 +246,13 @@ for (const file of files) {
 }
 
 // --- report -----------------------------------------------------------------
-console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
+console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | BAIDU_MAP_AK: ${env.BAIDU_MAP_AK ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
 console.log(`Sites needing a point: ${planCount} | skipped (not-in-only-list): ${skipped.filter((s) => s.reason === 'not-in-only-list').length} | override-city-mismatch: ${skipped.filter((s) => s.reason === 'override-city-mismatch').length}`);
 console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`);
 console.log('\n=== RESOLVED ===');
 for (const r of resolutions) {
   console.log(
-    `${String(r.confidence).padEnd(6)} ${r.slug.padEnd(26)} ${String(r.city).padEnd(6)} ${r.poi.name.padEnd(26)} ${r.poi.address.padEnd(32)} ${r.poi.lng},${r.poi.lat} [${r.reason}] regeo=${r.verified}`,
+    `${String(r.confidence).padEnd(6)} ${r.slug.padEnd(26)} ${String(r.city).padEnd(6)} ${r.poi.name.padEnd(26)} ${r.poi.address.padEnd(32)} ${r.poi.lng},${r.poi.lat} [${r.reason}/${r.provider}] regeo=${r.verified}`,
   );
 }
 if (unresolved.length) {
