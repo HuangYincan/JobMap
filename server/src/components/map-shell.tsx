@@ -549,9 +549,10 @@ export function MapShell() {
       setMapReady(true);
 
       // 初始定位(Bug3):定位只作为数据原点(userLocation/searchOrigin/蓝点),
-      // 相机移动只在用户尚未与地图交互过时执行——geolocation 真异步可能数秒才
-      // resolve,期间用户已点过公司 pin(hasInteractedRef=true)→ 不再 setCenter
-      // 抢占/拽走相机;用户自己点「定位」按钮(handleLocate)仍会移过去(原义)。
+      // 相机与距离圆心(mapCenter)只在用户尚未与地图交互过时更新——geolocation
+      // 真异步可能数秒才 resolve,期间用户已点过公司 pin(hasInteractedRef=true)
+      // → 不再 setCenter/userPosition 抢占、不把距离圆心甩去用户位置;
+      // 用户自己点「定位」按钮(handleLocate)仍会移过去(原义)。
       getCurrentPosition(map)
         .then((loc) => {
           if (!loc) {
@@ -561,11 +562,13 @@ export function MapShell() {
           const { lng, lat } = loc.position;
           setUserLocation({ lng, lat });
           setSearchOrigin((prev) => prev ?? { lng, lat });
+          // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未接管镜头时
+          // 一起更新:已交互 → 两者都保持当前镜头状态,不把圆心甩去用户位置
           if (!hasInteractedRef.current) {
             map.setCenter([lng, lat]);
             map.setZoom(15);
+            setMapCenter({ lng, lat });
           }
-          setMapCenter({ lng, lat });
           setGeoSettled(true);
         })
         .catch(() => {

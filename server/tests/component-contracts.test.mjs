@@ -388,3 +388,27 @@ test('map shell mount-align load (ws1 Bug1): 缓存快照不符 → 主动调度
   assert.match(shell, /readMapViewSnapshot\(/);
   assert.match(shell, /viewport: snapshot \?\? undefined/);
 });
+
+test('map shell Bug3 locate: 挂载定位不抢占已交互相机(首次点 pin 不再被拽回)', () => {
+  const shell = src('components/map-shell.tsx');
+  // 交互标记 ref 已声明
+  assert.match(shell, /hasInteractedRef = useRef\(false\)/);
+  // 挂载 geolocation 回调:定位数据照常(userLocation/searchOrigin),相机移动被
+  // hasInteractedRef 门控——未交互才 setCenter+setZoom+setMapCenter
+  assert.match(shell, /getCurrentPosition\(map\)/);
+  assert.match(shell, /setUserLocation\(\{ lng, lat \}\)/);
+  assert.match(shell, /setSearchOrigin\(\(prev\) => prev \?\? \{ lng, lat \}\)/);
+  assert.match(
+    shell,
+    /if \(!hasInteractedRef\.current\) \{[\s\S]{0,120}map\.setCenter\(\[\s*lng,\s*lat\s*\]\)[\s\S]{0,120}map\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
+  );
+  // 已交互 → 锁定 mapCenter 不更新(距离圆心/相机都不甩去用户位置)
+  assert.match(shell, /if \(!hasInteractedRef\.current\) \{[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/);
+  // 主动手势(drag/zoom/click)与 marker 点击都置交互标记
+  assert.match(shell, /map\.on\("dragstart", \(\) => \{\s*hasInteractedRef\.current = true/);
+  assert.match(shell, /map\.on\("zoomstart", \(\) => \{\s*hasInteractedRef\.current = true/);
+  assert.match(shell, /map\.on\("click", \(\) => \{\s*hasInteractedRef\.current = true/);
+  assert.match(shell, /onMarkerClick: \(id\) => \{[\s\S]{0,120}hasInteractedRef\.current = true/);
+  // 定位按钮 handleLocate 原义保留:仍无条件 setCenter+setZoom
+  assert.match(shell, /handleLocate = \(\) => \{[\s\S]{0,400}mapInstance\.current\.setCenter\(\[lng, lat\]\)[\s\S]{0,120}mapInstance\.current\.setZoom\(15\)/);
+});
