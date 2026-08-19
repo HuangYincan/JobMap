@@ -40,9 +40,8 @@ const TARGET_CITIES = ['北京', '上海', '广州', '深圳', '成都', '武汉
 
 /**
  * drop 自带 source code → sources 表元数据（sources.code 约束 ^[a-z][a-z0-9-]*$）。
- * 未收录的 code（或 drop 缺 source）回退 'seed' —— 未知 code 不臆造 provenance。
- * 取值与 tech/roles/data/etl/ 各源评审一致（xiaozhao-radar.md / feishu-ats.md /
- * official-career.md），attribution 保留「Domain Map curated seed」语义。
+ * 缺失 source 的 drop 回退 'seed' code；未收录的 code 保留其 code、元数据用
+ * seed 默认值 —— 不臆造 attribution（取值与 tech/roles/data/etl/ 各源评审一致）。
  */
 const SOURCE_META: Record<string, { originUri: string; authorizationBasis: string; accessMethod: string; attribution: string; retention: string; deletion: string }> = {
   seed: {

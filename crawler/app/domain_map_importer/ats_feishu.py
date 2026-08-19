@@ -226,9 +226,21 @@ def job_addresses(job: dict[str, Any]) -> list[dict[str, str]]:
 
 
 def city_site_id(slug: str, city: str) -> str:
-    """按城市建 site id: {slug}-site-{pinyin}。无法拼音化的城市用原名。"""
+    """按城市建 site id: {slug}-site-{pinyin}(确定性派生)。
+
+    别名归一 → 去「省/市/区」后缀与空白 → CITY_PINYIN 查表;仍未收录的城市
+    保留中文原样(无第三方拼音库依赖,同城市永远同 id,与 radar 的 site id
+    约定同形,如 {slug}-site-郑州)。'unknown' 只在城市名为空时兜底,不作为掩码。
+    """
     city = CITY_ALIASES.get(city, city)
-    pinyin = CITY_PINYIN.get(city, re.sub(r"[^0-9A-Za-z一-鿿]+", "", city).lower() or "unknown")
+    bare = re.sub(r"\s+", "", city)
+    bare = re.sub(r"[省市区]$", "", bare)
+    pinyin = (
+        CITY_PINYIN.get(bare)
+        or CITY_PINYIN.get(city)
+        or re.sub(r"[^0-9A-Za-z一-鿿]+", "", bare).lower()
+        or "unknown"
+    )
     return f"{slug}-site-{pinyin}"
 
 

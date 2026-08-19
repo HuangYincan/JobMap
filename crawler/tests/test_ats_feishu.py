@@ -194,6 +194,15 @@ class PositionMappingTests(unittest.TestCase):
         self.assertEqual(ats_feishu.normalize_city("北揽"), "北京")
         self.assertEqual(ats_feishu.city_site_id("禾赛科技", "北揽"), "禾赛科技-site-beijing")
 
+    def test_city_site_id_deterministic_derivation(self):
+        # 2026-08-20 ws-w5: 非 CITY_PINYIN 城市给确定性 id 派生 —— 去「省/市/区」
+        # 后缀后查表,仍无拼音保留中文原样;同城市永远同 id,'unknown' 仅空城市。
+        self.assertEqual(ats_feishu.city_site_id("某司", "北京市"), "某司-site-beijing")
+        self.assertEqual(ats_feishu.city_site_id("某司", "北京市"), ats_feishu.city_site_id("某司", "北京"))
+        self.assertEqual(ats_feishu.city_site_id("某司", "郑州"), "某司-site-郑州")
+        self.assertEqual(ats_feishu.city_site_id("某司", "郑州市"), "某司-site-郑州")
+        self.assertEqual(ats_feishu.city_site_id("某司", ""), "某司-site-unknown")
+
 
 class PaginationTests(unittest.TestCase):
     def test_fetches_all_pages_with_offset(self):
