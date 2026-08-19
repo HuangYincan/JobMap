@@ -445,37 +445,42 @@ test('site merge keys on site_key, not name (multi-city sites must not collapse)
   assert.doesNotMatch(store, /WHERE company_id = \$1 AND name = \$2 LIMIT 1/);
 });
 
-test('positions dedup: apply migrates old-source rows then keeps MIN(id) before the upsert', () => {
+test('positions dedup: apply dedups first (keep MIN(id)) then migrates old-source rows, before the upsert', () => {
   // 2026-08-20: 同 external_id 曾在旧 source(seed) 与新真实 source 下各存一行,
   // upsert 唯一键 (source_id, external_id) 不冲突 → 旧行不删 → 双行并存 →
   // poi-card 同 key 警告上百条。apply 事务内自愈, 顺序不可颠倒:
-  // 先迁移旧行 source → 再去重保 MIN(id) → 最后 ON CONFLICT upsert。
+  // 先去重保 MIN(id) → 再迁移旧行 source → 最后 ON CONFLICT upsert。
+  // 若先迁移: 同 external_id 的旧行与新增行共享 (source_id, external_id),
+  // UPDATE 语句内即触发唯一索引冲突 (_bt_check_unique), 事务回滚
+  // (2026-08-20 boss 实测: 重跑 import:seed:apply 报唯一键冲突, DB 未变)。
   const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
   const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
 
-  // 1) 迁移: 同 external_id 的旧 source 行改挂本次 source (幂等, 已同源不迁)
-  assert.match(store, /UPDATE positions SET source_id = \$2/);
-  assert.match(store, /WHERE external_id = ANY\(\$1::text\[\]\) AND source_id IS DISTINCT FROM \$2/);
-
-  // 2) 去重: 每 external_id 保 MIN(id) 一行 (USING 子查询按组取最小行)
+  // 1) 去重: 每 external_id 保 MIN(id) 一行 (USING 子查询按组取最小行;
+  //    保最早行 → applications.position_id 引用不悬空)
   assert.match(store, /DELETE FROM positions p/);
   assert.match(store, /MIN\(id\) AS keep_id/);
   assert.match(store, /GROUP BY external_id\) keep/);
   assert.match(store, /p\.id <> keep\.keep_id/);
 
-  // 3) 顺序: 迁移 → 去重 → ON CONFLICT (source_id, external_id) upsert。
+  // 2) 迁移: 同 external_id 的旧 source 行改挂本次 source (幂等, 已同源不迁;
+  //    此时每 external_id 仅一行, 无唯一键冲突)
+  assert.match(store, /UPDATE positions SET source_id = \$2/);
+  assert.match(store, /WHERE external_id = ANY\(\$1::text\[\]\) AND source_id IS DISTINCT FROM \$2/);
+
+  // 3) 顺序: 去重 → 迁移 → ON CONFLICT (source_id, external_id) upsert。
   // 注释里也可能出现这段 SQL 字样, 真实 upsert 恒为最后一次出现 → lastIndexOf。
   const migrateAt = store.indexOf('UPDATE positions SET source_id');
   const dedupAt = store.indexOf('DELETE FROM positions p');
   const upsertAt = store.lastIndexOf('ON CONFLICT (source_id, external_id) DO UPDATE');
   assert.ok(migrateAt !== -1 && dedupAt !== -1 && upsertAt !== -1, 'migrate/dedup/upsert anchors exist');
-  assert.ok(migrateAt < dedupAt, 'source migration must run before dedup');
-  assert.ok(dedupAt < upsertAt, 'dedup must run before the upsert (unique key must be free)');
+  assert.ok(dedupAt < migrateAt, 'dedup must run before source migration (migration first would hit the unique key inside the UPDATE)');
+  assert.ok(migrateAt < upsertAt, 'migration must run before the upsert');
 
   // 自愈只作用于 authentic 岗位 (radar-*/portal-*): 代码位于 authentic 过滤之后,
   // seed 示例岗位 (seed-* 等外部 id) 不迁移、不去重、不删除。
   const authenticAt = store.indexOf('isAuthenticPositionId(pos.externalId)');
-  assert.ok(authenticAt !== -1 && authenticAt < migrateAt, 'self-heal must only run inside the authentic filter');
+  assert.ok(authenticAt !== -1 && authenticAt < dedupAt, 'self-heal must only run inside the authentic filter');
 });
 
 test('positions dedup plan scope: migrate/dedup use the plan external ids, not the whole table', () => {
