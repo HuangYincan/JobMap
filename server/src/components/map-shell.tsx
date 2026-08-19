@@ -37,6 +37,7 @@ import {
   type BasemapStyle,
 } from "@/lib/saved-overlay";
 import { usePOIMap } from "@/hooks/use-poi-map";
+import { useModeCacheRestore } from "@/hooks/use-mode-cache-restore";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { createCityClusterMarker } from "@/lib/map-markers";
 import { SecondarySidebar, suggestionDisplayIcon, type SearchSuggestion } from "./secondary-sidebar";
@@ -481,23 +482,20 @@ export function MapShell() {
     }
   }, []);
 
-  // 会话缓存：刷新页面后仍恢复本模式累计池，不重打高德
-  useEffect(() => {
-    const cached = readModeCache(mode);
-    if (!cached) return;
-    skipFetchRef.current = true;
-    catalogRef.current = cached.catalog;
-    setCatalog(cached.catalog);
-    setPageOffset(cached.pageOffset);
-    setSearchOrigin(cached.searchOrigin);
-    setQuery(cached.query);
-    setFilters(cached.filters);
-    if (cached.sort) setSort(cached.sort);
-    // 恢复缓存不经主 load,这里复位 noMore,避免上一会话的「没有更多结果」粘住
-    noMoreRef.current = false;
-    setNoMoreData(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在首屏读一次
-  }, []);
+  // 会话缓存：刷新页面后仍恢复本模式累计池，不重打高德（抽到 hook 保持原语义）
+  useModeCacheRestore({
+    mode,
+    skipFetchRef,
+    catalogRef,
+    noMoreRef,
+    setCatalog,
+    setPageOffset,
+    setSearchOrigin,
+    setQuery,
+    setFilters,
+    setSort,
+    setNoMoreData,
+  });
 
   // 地图初始化（保留原有全部逻辑）
   useEffect(() => {
