@@ -1693,9 +1693,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     getCurrentPosition(mapInstance.current)
       .then((loc) => {
         if (!loc) {
-          console.warn("Geolocation failed, returning to default center");
-          mapInstance.current.setCenter([120.15, 30.27]);
-          mapInstance.current.setZoom(13);
+          // 定位失败/被拒:保持当前视野,不跳回杭州默认中心(ws-poi-vanish)。
+          // 失败 = 不打扰;用户仍可手动拖图。后续可接 toast 提示(不新增 UI)。
+          console.warn("Geolocation failed, keeping current view");
           return;
         }
         const { lng, lat } = loc.position;
@@ -1704,9 +1704,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         setMapCenter({ lng, lat });
       })
       .catch((err) => {
-        console.warn("Geolocation error:", err);
-        mapInstance.current.setCenter([120.15, 30.27]);
-        mapInstance.current.setZoom(13);
+        // 定位异常同失败:保持当前视野(ws-poi-vanish),不跳回杭州默认中心
+        console.warn("Geolocation error, keeping current view:", err);
       });
   };
 

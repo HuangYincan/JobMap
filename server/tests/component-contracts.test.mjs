@@ -458,11 +458,14 @@ test('map shell Bug3 locate: 挂载定位不抢占已移图相机(首点 pin 不
   assert.match(shell, /map\.on\("zoomstart", \(\) => \{\s*userMovedMapRef\.current = true/);
   assert.doesNotMatch(shell, /map\.on\("click", \(\) => \{\s*userMovedMapRef\.current = true/);
   assert.doesNotMatch(shell, /onMarkerClick: \(id\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/);
-  // 定位按钮 handleLocate 原义保留:仍无条件 setCenter+setZoom(不受 userMovedMapRef 门控)
+  // 定位按钮 handleLocate 原义保留:成功仍无条件 setCenter+setZoom(不受门控);
+  // 失败分支保持当前视野,不再 setCenter([120.15,30.27])/setZoom(13) 回杭州
   const locateBlock = shell.slice(shell.indexOf("const handleLocate"), shell.indexOf("const handleMapStyleChange"));
   assert.match(locateBlock, /mapInstance\.current\.setCenter\(\[lng, lat\]\)/);
   assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
   assert.doesNotMatch(locateBlock, /userMovedMapRef/);
+  assert.doesNotMatch(locateBlock, /120\.15/);
+  assert.doesNotMatch(locateBlock, /setZoom\(13\)/);
 });
 
 test('map shell Bug1 flyTo 入口置位:userMovedMapRef 与相机手势同口径', () => {
@@ -496,6 +499,17 @@ test('map shell Bug1 flyTo 入口置位:userMovedMapRef 与相机手势同口径
     shell,
     /onOpenDetail=\{\(poi\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/
   );
+});
+
+test('map shell ws-poi-vanish handleLocate 失败保持视野:不回杭州默认中心', () => {
+  const shell = src('components/map-shell.tsx');
+  const locateBlock = shell.slice(shell.indexOf("const handleLocate"), shell.indexOf("const handleMapStyleChange"));
+  // 成功分支仍飞用户位置(setCenter+setZoom 15)
+  assert.match(locateBlock, /mapInstance\.current\.setCenter\(\[lng, lat\]\)/);
+  assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
+  // !loc 与 catch 失败分支:保持当前视野,不再 setCenter([120.15,30.27])/setZoom(13)
+  assert.doesNotMatch(locateBlock, /setCenter\(\[120\.15, 30\.27\]\)/);
+  assert.doesNotMatch(locateBlock, /setZoom\(13\)/);
 });
 
 test('logout resets saved overlay state and pref alongside saved places', () => {
