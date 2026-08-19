@@ -155,7 +155,7 @@ for (const file of files) {
       }
 
       const target = siteCityTarget(site);
-      const override = overrides[slug];
+      let override = overrides[slug];
       const query = cleanCompanySearchName(company.name);
       let poi = null;
       let confidence = null;
@@ -173,7 +173,9 @@ for (const file of files) {
       const overrideCity = override?.city ?? '杭州市';
       if (override && overrideCity !== target.city) {
         skipped.push({ slug, siteId: site.id, reason: 'override-city-mismatch' });
-        continue;
+        // 城市不匹配的 override 只对本站点失效(忽略), 回落地址/公司检索——
+        // 直接 continue 会把 -shanghai/-beijing 站点永久留在图外.
+        override = null;
       }
       if (override) {
         poi = { name: override.name, address: override.address, lng: override.lng, lat: override.lat, type: 'override', adname: '', pname: target.province, cityname: target.city };
@@ -198,9 +200,11 @@ for (const file of files) {
           const hit = await placeTextSearchRest(query, target.city);
           await sleep(hit.amapUnavailable ? 600 : 340);
           if (hit.ok && hit.pois.length) {
-            poi = pickBestOfficePoi(hit.pois, company.name);
+            // 用别名后的 query 评分: 中微公司 → 中微半导体设备, 否则查询命中但
+            // 原始快照名对不上 POI 名会被 grader 拒.
+            poi = pickBestOfficePoi(hit.pois, query, target.province, target.city);
             if (poi) {
-              const grade = gradeOfficePoi(poi, company.name, target.province, target.city);
+              const grade = gradeOfficePoi(poi, query, target.province, target.city);
               confidence = grade.confidence;
               reason = grade.reason;
               if (grade.confidence === 'low') poi = null;

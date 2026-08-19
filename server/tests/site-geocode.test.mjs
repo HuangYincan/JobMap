@@ -15,6 +15,7 @@ import {
   gradeOfficePoi,
   importedSiteQuery,
   normalizeNameForMatch,
+  officeNameMatchStrength,
   parseBaiduOfficePoi,
   pickBestOfficePoi,
   placeTextSearchRest,
@@ -126,6 +127,47 @@ test('pickBestOfficePoi prefers a real office over a retail store of the same br
   const store = { name: '快手(濮院店)', address: '新洲路与坊路交叉口', lng: 120.325, lat: 30.453, type: '购物服务', adname: '临平区', pname: '浙江省', cityname: '杭州市' };
   const best = pickBestOfficePoi([store, office], '快手');
   assert.equal(best?.name, '快手(星耀中心7号楼)');
+});
+
+test('pickBestOfficePoi grades against the site province/city (multi-city)', () => {
+  const shanghai = { name: '得物公司', address: '杨浦区淞沪路518号', lng: 121.511, lat: 31.307, type: '', adname: '杨浦区', pname: '上海市', cityname: '上海市' };
+  // 默认 浙江省/杭州市 (legacy) → 上海 POI 被拒; 传站点城市 → 接受.
+  assert.equal(pickBestOfficePoi([shanghai], '得物'), undefined);
+  assert.equal(pickBestOfficePoi([shanghai], '得物', '上海市', '上海市')?.lng, 121.511);
+});
+
+test('officeNameMatchStrength accepts qualifier-wrapped names and rejects same-brand traps', () => {
+  // 强匹配: 精确 / 城市前缀 / 品牌拼音 / 办公形态括号段.
+  for (const [candidate, company] of [
+    ['得物', '得物'],
+    ['得物公司', '得物'],
+    ['上海燧原科技有限公司', '燧原科技'],
+    ['深圳市商汤科技有限公司', '商汤科技'],
+    ['bilibili哔哩哔哩运营总部', '哔哩哔哩'],
+    ['快手(星耀中心7号楼)', '快手'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
+  }
+  // 同品牌陷阱: 同名工厂 / 零售店 / 驿站 / 包装实业 / 错误公司.
+  for (const [candidate, company] of [
+    ['广州得物包装实业有限公司', '得物'],
+    ['得物潮鞋AJ品牌集合店', '得物'],
+    ['得物(宝龙旭辉广场店)', '得物'],
+    ['拼多多驿站(川图路海中心站)', '拼多多'],
+    ['上汽大众汽车有限公司', '上汽集团'],
+    ['杭州海天管业有限公司', '海天集团'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'no', `${candidate} vs ${company}`);
+  }
+});
+
+test('gradeOfficePoi rejects same-brand store/warehouse traps from Baidu', () => {
+  const trap = { name: '拼多多驿站(川图路海中心站)', address: '浦东新区川图路海中心', lng: 121.7, lat: 31.15, type: '', adname: '浦东新区', pname: '上海市', cityname: '上海市' };
+  assert.equal(gradeOfficePoi(trap, '拼多多', '上海市', '上海市').confidence, 'low');
+  const factory = { name: '广州得物包装实业有限公司', address: '花都区东升路', lng: 113.23, lat: 23.34, type: '', adname: '花都区', pname: '广东省', cityname: '广州市' };
+  assert.equal(gradeOfficePoi(factory, '得物', '广东省', '广州市').confidence, 'low');
+  const hq = { name: 'bilibili哔哩哔哩运营总部', address: '杨浦区政立路499号国正中心', lng: 121.5, lat: 31.3, type: '', adname: '杨浦区', pname: '上海市', cityname: '上海市' };
+  assert.equal(gradeOfficePoi(hq, '哔哩哔哩', '上海市', '上海市').confidence, 'high');
 });
 
 test('placeTextSearchRest and regeoCityRest are no-ops without AMAP_WEB_KEY', async () => {

@@ -17,13 +17,16 @@
 // v9（2026-08-19 坐标修正）：tencent-hangzhou 曾钉在滨江区网商路599号（网易
 // 杭州地址，LLM 质检发现）；已改回西湖区文二西路712号西溪乐谷并清除坐标待重
 // 解析——旧缓存含错误 pin，bump 使其失效。
+// v10（2026-08-19 上海试点）：15 家试点 -shanghai 站点全部落真实上海办公点
+// （geocode:apply AMap→Baidu 兜底 + 官方地址 override）+ 多城市站点坐标——
+// 旧缓存全是 city-text 站点的离线快照，bump 使其失效重拉。
 // ============================================================
 
 import type { FilterState, MapMode, POI, POILocation } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 9;
+export const MODE_CACHE_VERSION = 10;
 
 export interface ModeCacheEntry {
   version: number;

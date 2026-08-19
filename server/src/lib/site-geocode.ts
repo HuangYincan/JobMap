@@ -268,7 +268,7 @@ export async function geocodeAddressRest(
 // address instead of pinning a company at a city center. Callers throttle QPS.
 // ---------------------------------------------------------------------------
 
-/** Known aliases: radar snapshot names → the name AMap actually knows. */
+/** Known aliases: radar snapshot names → the name AMap/Baidu actually knows. */
 export const COMPANY_QUERY_ALIASES: Record<string, string> = {
   认养: '认养一头牛',
   财通证劵: '财通证券',
@@ -276,7 +276,25 @@ export const COMPANY_QUERY_ALIASES: Record<string, string> = {
   淘天集团: '淘天集团',
   商汤科技: '商汤科技',
   阿里淘天: '淘天集团',
+  // 2026-08-19 上海试点: radar 快照名 ≠ POI 名 (法律实体/品牌形态), 需先过别名
+  // 才能命中; grader 按别名后的名字评分 (中微公司 → 中微半导体设备(上海)股份有限公司).
+  中微公司: '中微半导体设备',
+  联影集团: '联影医疗',
+  携程集团: '携程国际',
+  拼多多: '上海寻梦信息技术',
+  乐鑫科技: '乐鑫信息科技',
 };
+
+/** Baidu 间歇性限流 (302 日配额误报 / 401 并发) — 重试一次, 间隔 1.5s. */
+const BAIDU_TRANSIENT_STATUS = new Set(['302', '401']);
+const BAIDU_RETRY_SLEEP_MS = 1500;
+
+function isTransientBaiduStatus(reason: string | undefined): boolean {
+  if (!reason?.startsWith('baidu-status:')) return false;
+  return BAIDU_TRANSIENT_STATUS.has(reason.slice('baidu-status:'.length));
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const BRACKET_SEG_RE = /[（(【\[「][^）)】\]」]*[）)】\]」]/g;
 const RECRUIT_TAIL_RE = /(校园招聘|人才招聘|实习生招聘|校招|秋招|春招|社招|招聘|实习生)$/g;
@@ -298,6 +316,68 @@ export function normalizeNameForMatch(name: string): string {
     .replace(LEGAL_FORM_RE, '')
     .toLowerCase()
     .replace(/\s+/g, '');
+}
+
+// --- office-name match strength ---------------------------------------------
+// 2026-08-19: Baidu place search 返回大量同品牌陷阱(门店/驿站/同名工厂)。
+// 候选名只能以「限定词」认领公司名: 城市前缀 / 品牌拼音 / 总部·分公司·大厦·
+// 科技·公司 等。"得物" ⊂ "广州得物包装实业有限公司" 不是匹配; "上海燧原科技"
+// 匹配 "燧原科技"。括号段(门店指示)必须呈办公形态, 带 店/站/驿站 拒收。
+
+const QUALIFIER_SUFFIXES = new Set([
+  '总部', '运营总部', '分公司', '子公司', '研发', '研究院', '办公', '大楼', '大厦', '广场',
+  '园区', '基地', '公司', '集团', '科技', '学院', '学校', '大学',
+]);
+const CITY_PREFIXES = new Set([
+  '北京', '上海', '广州', '深圳', '杭州', '成都', '武汉', '苏州', '宁波', '南京', '天津', '重庆',
+  '西安', '长沙', '青岛', '济南', '厦门', '福州', '合肥', '郑州', '沈阳', '大连', '东莞', '佛山',
+  '珠海', '无锡', '常州', '嘉兴', '温州', '金华', '绍兴', '台州', '香港', '澳门',
+]);
+const ROMAN_PREFIX_RE = /^[a-z]{2,}$/;
+const GOOD_BRACKET_SEG_RE = /(号楼|大厦|中心|园区|广场|总部|办公|研究院|大学|学院|医院|产业园|科技园|软件园|创业园|世界城|金融城|天地)$/;
+
+function isQualifierPrefix(token: string): boolean {
+  if (CITY_PREFIXES.has(token.replace(/[省市]$/, ''))) return true;
+  return ROMAN_PREFIX_RE.test(token);
+}
+
+/** 公司名+城市 也是常见分支命名 (快手北京 / 某司上海) — 城市名算限定词后缀. */
+function isQualifierSuffix(token: string): boolean {
+  if (QUALIFIER_SUFFIXES.has(token)) return true;
+  return CITY_PREFIXES.has(token.replace(/[省市]$/, ''));
+}
+
+function candidateBracketSegments(name: string): string[] {
+  const segments: string[] = [];
+  for (const m of name.matchAll(/[（(【\[「][^）)】\]」]*[）)】\]」]/g)) {
+    segments.push(m[0].slice(1, -1));
+  }
+  return segments;
+}
+
+/** 'strong' iff the candidate name claims `companyName` with only qualifier tokens. */
+export function officeNameMatchStrength(candidateName: string, companyName: string): 'strong' | 'no' {
+  const q = normalizeNameForMatch(companyName);
+  const c = normalizeNameForMatch(candidateName);
+  if (!q || !c || !c.includes(q)) return 'no';
+  const matches = (prefix: string, suffix: string) =>
+    (prefix === '' && suffix === '') ||
+    (prefix === '' && isQualifierSuffix(suffix)) ||
+    (suffix === '' && isQualifierPrefix(prefix)) ||
+    (isQualifierPrefix(prefix) && isQualifierSuffix(suffix));
+  let strong = false;
+  for (let i = 0; i + q.length <= c.length; i++) {
+    if (c.slice(i, i + q.length) !== q) continue;
+    if (matches(c.slice(0, i), c.slice(i + q.length))) {
+      strong = true;
+      break;
+    }
+  }
+  if (!strong) return 'no';
+  for (const seg of candidateBracketSegments(candidateName)) {
+    if (!GOOD_BRACKET_SEG_RE.test(seg)) return 'no';
+  }
+  return 'strong';
 }
 
 export interface OfficePoiCandidate {
@@ -357,19 +437,28 @@ export function gradeOfficePoi(
 ): { confidence: GeocodeConfidence; reason: string } {
   if (poi.pname && poi.pname !== province) return { confidence: 'low', reason: `outside-province:${poi.pname}` };
   if (poi.cityname && poi.cityname !== city) return { confidence: 'low', reason: `outside-city:${poi.cityname}` };
-  const q = normalizeNameForMatch(companyName);
-  const c = normalizeNameForMatch(poi.name);
-  const match = q.length > 0 && c.length > 0 && (q.includes(c) || c.includes(q));
+  const match = officeNameMatchStrength(poi.name, companyName) === 'strong';
   const street = STREET_RE.test(poi.address);
   if (!match) return { confidence: 'low', reason: `name-mismatch:${poi.name}` };
   if (!street) return { confidence: 'medium', reason: 'name-match-no-street' };
   return { confidence: 'high', reason: `matched:${poi.name}` };
 }
 
-/** Best AMap hit for a company's Hangzhou office; office-type wins ties. */
-export function pickBestOfficePoi(pois: OfficePoiCandidate[], companyName: string): GeocodeResolution['poi'] {
+/**
+ * Best office hit for a company in the target province/city; office-type wins
+ * ties. Multi-city: grade against the site's own province/city (defaults keep
+ * the legacy Hangzhou behavior for single-city callers) — a Shanghai POI must
+ * pass 上海市, not the 浙江省/杭州市 defaults, or every non-Hangzhou site
+ * silently fails the confidence gate.
+ */
+export function pickBestOfficePoi(
+  pois: OfficePoiCandidate[],
+  companyName: string,
+  province = '浙江省',
+  city = '杭州市',
+): GeocodeResolution['poi'] {
   const scored = pois.map((poi) => {
-    const grade = gradeOfficePoi(poi, companyName);
+    const grade = gradeOfficePoi(poi, companyName, province, city);
     const office = OFFICE_TYPE_RE.test(poi.type) ? 1 : 0;
     const street = STREET_RE.test(poi.address) ? 1 : 0;
     const exact = normalizeNameForMatch(poi.name) === normalizeNameForMatch(companyName) ? 2 : 0;
@@ -531,7 +620,8 @@ export function parseBaiduOfficePoi(raw: Record<string, unknown>): OfficePoiCand
   };
 }
 
-/** Baidu place/v2/search (行政区域检索) scoped to one city, GCJ-02 output. */
+/** Baidu place/v2/search (行政区域检索) scoped to one city, GCJ-02 output.
+ * 302/401 是间歇性配额误报(实测同 key 同分钟有的查询通有的不通)——重试一次. */
 export async function baiduPlaceSearchRest(
   query: string,
   city = '杭州',
@@ -547,19 +637,30 @@ export async function baiduPlaceSearchRest(
   url.searchParams.set('page_size', '10');
   url.searchParams.set('scope', '1');
   url.searchParams.set('ak', key);
-  try {
-    const res = await fetchImpl(url);
-    if (!res.ok) return { ok: false, pois: [], reason: 'http' };
-    const payload = (await res.json()) as { status?: number; results?: Array<Record<string, unknown>> };
-    if (payload.status !== 0) return { ok: false, pois: [], reason: `baidu-status:${payload.status ?? -1}` };
+  let payload: { status?: number; results?: Array<Record<string, unknown>> };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchImpl(url);
+      if (!res.ok) return { ok: false, pois: [], reason: 'http' };
+      payload = (await res.json()) as typeof payload;
+    } catch {
+      return { ok: false, pois: [], reason: 'http' };
+    }
+    if (payload.status !== 0) {
+      const reason = `baidu-status:${payload.status ?? -1}` as PlaceTextResult['reason'];
+      if (attempt === 0 && isTransientBaiduStatus(reason)) {
+        await sleep(BAIDU_RETRY_SLEEP_MS);
+        continue;
+      }
+      return { ok: false, pois: [], reason };
+    }
     return {
       ok: true,
       provider: 'baidu',
       pois: (payload.results ?? []).map(parseBaiduOfficePoi).filter((p): p is OfficePoiCandidate => !!p),
     };
-  } catch {
-    return { ok: false, pois: [], reason: 'http' };
   }
+  return { ok: false, pois: [], reason: 'http' };
 }
 
 /** Baidu reverse_geocoding/v3 — city check for a GCJ-02 coordinate. */
@@ -576,19 +677,27 @@ export async function baiduRegeoCityRest(
   url.searchParams.set('coordtype', 'gcj02ll');
   url.searchParams.set('output', 'json');
   url.searchParams.set('ak', key);
-  try {
-    const res = await fetchImpl(url);
-    if (!res.ok) return { ok: false };
-    const payload = (await res.json()) as {
-      status?: number;
-      result?: { addressComponent?: { province?: string; city?: string; district?: string } };
-    };
+  let payload: { status?: number; result?: { addressComponent?: { province?: string; city?: string; district?: string } } };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchImpl(url);
+      if (!res.ok) return { ok: false };
+      payload = (await res.json()) as typeof payload;
+    } catch {
+      return { ok: false };
+    }
     const comp = payload.result?.addressComponent;
-    if (payload.status !== 0 || !comp) return { ok: false };
+    if (payload.status !== 0 || !comp) {
+      const reason = `baidu-status:${payload.status ?? -1}`;
+      if (attempt === 0 && isTransientBaiduStatus(reason)) {
+        await sleep(BAIDU_RETRY_SLEEP_MS);
+        continue;
+      }
+      return { ok: false };
+    }
     return { ok: true, provider: 'baidu', cityname: comp.city, district: comp.district, province: comp.province };
-  } catch {
-    return { ok: false };
   }
+  return { ok: false };
 }
 
 /** Baidu geocoding/v3 — full address → GCJ-02 point. */
@@ -605,21 +714,30 @@ export async function baiduGeocodeAddressRest(
   url.searchParams.set('output', 'json');
   url.searchParams.set('ret_coordtype', 'gcj02ll');
   url.searchParams.set('ak', key);
-  try {
-    const res = await fetchImpl(url);
-    if (!res.ok) return { ok: false, reason: 'http' };
-    const payload = (await res.json()) as {
-      status?: number;
-      result?: { location?: { lng?: unknown; lat?: unknown }; precise?: number; confidence?: number };
-    };
+  let payload: {
+    status?: number;
+    result?: { location?: { lng?: unknown; lat?: unknown }; precise?: number; confidence?: number };
+  };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchImpl(url);
+      if (!res.ok) return { ok: false, reason: 'http' };
+      payload = (await res.json()) as typeof payload;
+    } catch {
+      return { ok: false, reason: 'http' };
+    }
     const loc = payload.result?.location;
     const lng = Number(loc?.lng);
     const lat = Number(loc?.lat);
     if (payload.status !== 0 || !Number.isFinite(lng) || !Number.isFinite(lat)) {
-      return { ok: false, reason: payload.status !== 0 ? `baidu-status:${payload.status ?? -1}` : 'empty' };
+      const reason = (payload.status !== 0 ? `baidu-status:${payload.status ?? -1}` : 'empty') as RestGeocodeResult['reason'];
+      if (attempt === 0 && isTransientBaiduStatus(reason)) {
+        await sleep(BAIDU_RETRY_SLEEP_MS);
+        continue;
+      }
+      return { ok: false, reason };
     }
     return { ok: true, provider: 'baidu', location: { lng, lat, address: query } };
-  } catch {
-    return { ok: false, reason: 'http' };
   }
+  return { ok: false, reason: 'http' };
 }
