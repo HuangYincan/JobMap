@@ -175,6 +175,9 @@ export function useWorkViewport(
               // 不设客户端页数上限(large maxPages 只是防呆;实际由短页/空页 break
               // 提前停,不白打请求)。去上限:视口内所有工作 POI 都展示。
               maxPages: 10_000,
+              // 去 3000 硬顶(wsv):work 视口累计池不设结果数上限,
+              // mergePoisById 的 cap 放开(缺省 POI_HARD_CAP=3000 仅主加载/加载更多用)
+              cap: Infinity,
               existing: catalogRef.current, // 增量:以现有池为底,新视野点往里并
               onBatch: (batch) => {
                 // 模式守卫:切换模式后,旧模式在飞的批次(公司/地图 POI)不得
