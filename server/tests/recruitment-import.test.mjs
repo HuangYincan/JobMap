@@ -9,6 +9,7 @@ import {
   planSeedImport,
   positionTaxonomy,
   siteCityOf,
+  suppressRadarForPortalCompanies,
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
 import { bossAdapter } from '../src/lib/recruitment-adapters/boss.ts';
@@ -412,4 +413,26 @@ test('planSeedImport orders real drops before the seed scaffold', () => {
   const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
   const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
   assert.match(store, /\.\.\.official, \.\.\.radar, \.\.\.boss, \.\.\.nowcoder, \.\.\.shixiseng, \.\.\.seed/);
+});
+
+test('portal-* positions suppress radar-* aggregate rows on the same company', () => {
+  // 2026-08-19 数据策略: 官方 ATS 直爬 (portal-*) 是真实岗位, radar-* 是
+  // 快照聚合行 (合成岗位)。同 slug 并存时, portal 优先, radar 行被抑制 —
+  // 地图上不再同时出现真实岗位和「汇总岗位」。
+  const portal = sample();
+  portal.positions[0] = { ...portal.positions[0], externalId: 'portal-feishu-123' };
+  const radar = sample();
+  radar.positions[0] = { ...radar.positions[0], externalId: 'radar-abc123' };
+  const merged = planRecruitmentImport([portal, radar]);
+  assert.equal(merged.companies.length, 1); // 同 slug 合并
+  assert.ok(merged.companies[0].positions.some((p) => p.externalId.startsWith('radar-')), 'merge keeps both before suppress');
+  const suppressed = suppressRadarForPortalCompanies(merged);
+  assert.ok(suppressed.companies[0].positions.every((p) => !p.externalId.startsWith('radar-')), 'radar rows are gone');
+  assert.ok(suppressed.companies[0].positions.some((p) => p.externalId.startsWith('portal-')), 'portal rows survive');
+
+  // 无 portal 的公司保留 radar 行 (没有更好数据时不隐藏)。
+  const radarOnly = sample();
+  radarOnly.positions[0] = { ...radarOnly.positions[0], externalId: 'radar-abc123' };
+  const kept = suppressRadarForPortalCompanies(planRecruitmentImport([radarOnly]));
+  assert.ok(kept.companies[0].positions.some((p) => p.externalId.startsWith('radar-')));
 });

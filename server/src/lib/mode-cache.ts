@@ -23,13 +23,16 @@
 // v11（2026-08-19 数据源顺序修复）：import plan 真实 drops 优先于 seed 脚手架
 // （deepseek tier 12→1、tencent 坐标 120.155→西溪乐谷）——旧缓存按 seed 元数据
 // 渲染（高 zoom 才显示），bump 使其失效重拉。
+// v12（2026-08-19 官方 ATS 直爬）：得物/智元机器人/禾赛科技 官方 drops 全量真实
+// 岗位（portal-feishu-*，校招+社招 ~1900 条，radar 聚合行被抑制）——旧缓存含
+// radar 聚合行与示例岗位，bump 使其失效重拉。
 // ============================================================
 
 import type { FilterState, MapMode, POI, POILocation } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 11;
+export const MODE_CACHE_VERSION = 12;
 
 export interface ModeCacheEntry {
   version: number;

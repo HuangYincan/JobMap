@@ -184,7 +184,24 @@ export async function planSeedImport(): Promise<ImportPlan> {
   // 的当前数据 (2026-08-19: tencent 被 seed 的 120.155 旧坐标盖掉, deepseek
   // tier 被 seed 的 12 盖掉官方 drop 的 1, 高 zoom 才可见)。seed 只补
   // 无 drops 的公司 (坐标骨架)。
-  return planRecruitmentImport([...official, ...radar, ...boss, ...nowcoder, ...shixiseng, ...seed]);
+  const plan = planRecruitmentImport([...official, ...radar, ...boss, ...nowcoder, ...shixiseng, ...seed]);
+  // 数据策略 (2026-08-19): 公司有 portal-* 官方直爬岗位时, 抑制其 radar-*
+  // 聚合行。radar 是快照聚合 (合成岗位, 非真实 JD); 官方 ATS 直爬是雇主录入
+  // 的真实岗位 —— 同 slug 并存时后者优先 (dedupe 已保官方站点/坐标)。
+  return suppressRadarForPortalCompanies(plan);
+}
+
+/** 有 portal-* 真实岗位的公司 → 丢弃同公司的 radar-* 快照行 (2026-08-19)。 */
+export function suppressRadarForPortalCompanies(plan: ImportPlan): ImportPlan {
+  const companies = plan.companies.map((company) => {
+    const hasPortal = company.positions.some((pos) => pos.externalId.startsWith('portal-'));
+    if (!hasPortal) return company;
+    return {
+      ...company,
+      positions: company.positions.filter((pos) => !pos.externalId.startsWith('radar-')),
+    };
+  });
+  return { ...plan, companies };
 }
 
 export async function planOfficialCareerImport(dir?: string): Promise<ImportPlan> {

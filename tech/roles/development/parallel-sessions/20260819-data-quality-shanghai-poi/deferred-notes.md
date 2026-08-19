@@ -20,4 +20,4 @@
 
 9. POI 按类加载行为验收:默认无 POI → 选「餐饮服务」→ 当前视图全量加载 → 换类重载 → 平移按新视图重拉。
 10. 收藏图层启停不再清空 POI;上海试点公司(geocode 后)以真实上海办公室显示在地图上。
-11. **飞书 ATS 真实 JD 路径缺口**:w2 适配器的 `/api/v1/search_job` 端点经探测确认不存在(GET 返回猎头平台 catch-all HTML、POST 404)。`*.jobs.feishu.cn` 为重型 SPA,真实 endpoint 需 JS bundle 分析定位——已留 `crawler/app/domain_map_importer/ats_feishu.py` + `tech/roles/data/etl/feishu-ats.md`,后续 worker 跟进。得物/智元/禾赛三家的真实岗位数据待此缺口补齐后获取。
+11. **飞书 ATS 真实 JD 路径缺口** ✅ 已解锁(2026-08-19):旧 `/api/v1/search_job` 是猎头平台 catch-all(假端点)。JS bundle 分析(模块 60877)逆向出真实端点 `POST /api/v1/search/job/posts`(query+body,`website-path` 头选校招池,`_signature` 可省略,浏览器 UA 必需)。三家全量爬取完成:得物 155 校招+585 社招 / 智元 52+928 / 禾赛 54+137;`cli.py feishu --write` 产出 official-career drops(`portal-feishu-*` 真实 JD);详情见 `tech/roles/data/etl/feishu-ats.md`。数据策略:公司有 portal-* 岗位时抑制其 radar-* 聚合行(`suppressRadarForPortalCompanies`)。
