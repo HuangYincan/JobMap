@@ -116,6 +116,30 @@ function cityRefContains(ref: CityReferenceBox, lng: number, lat: number): boole
 }
 
 /**
+ * 城市标签 ↔ 坐标一致性判定(2026-08-20,聚合徽章防御,与
+ * cityBoundsConsistencySql 同源复用 CITY_REFERENCE_BOXES):
+ * - 标签(bare 归一,去 省/市/区 后缀)命中已知参考框,但坐标不在该框内
+ *   (跨城串味行,如 city='成都' 但坐标=杭州)→ false,调用方剔除;
+ * - 标签未收录于参考框 / 坐标缺失或非法 → true(无可判断,放行)。
+ * 服务端 SQL 一致性裁剪只覆盖「单城视野」(bbox ≤ 6 sq.deg),全国/省际
+ * 视野(zoom ≤ 8 聚合场景)由前端聚合层用本函数补缺口。
+ */
+export function cityLabelMatchesCoordinates(
+  city: string | null | undefined,
+  lng: number | null | undefined,
+  lat: number | null | undefined,
+): boolean {
+  const label = city?.trim();
+  if (!label) return true;
+  const bare = bareCityName(label);
+  const refs = CITY_REFERENCE_BOXES.filter((r) => bareCityName(r.city) === bare);
+  if (refs.length === 0) return true; // 参考框未收录 → 放行
+  if (typeof lng !== 'number' || typeof lat !== 'number') return true; // 坐标缺失 → 无法判定,放行
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return true; // 坐标非法 → 放行
+  return refs.some((ref) => cityRefContains(ref, lng, lat));
+}
+
+/**
  * bounds 中心点是否恰好落在某一个已知城市参考框内。
  * 落在 0 个(海上/未收录城市)→ null;落在 ≥2 个(相邻框重叠)→ null。
  */
