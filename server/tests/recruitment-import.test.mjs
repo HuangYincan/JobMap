@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   applyRecruitmentImport,
   dedupeSourceCompanies,
+  hasValidUrlScheme,
   planOfficialCareerImport,
   planRecruitmentImport,
   planSeedImport,
@@ -29,6 +30,53 @@ function sample() {
 
 test('validateSourceCompany accepts the first work seed company', () => {
   assert.deepEqual(validateSourceCompany(sample()), []);
+});
+
+test('hasValidUrlScheme rejects non-http schemes and repeated schemes (scan #4 regression)', () => {
+  // 2026-08-20 全库扫描: radar 2 个 drop 的 careerUrl/applyUrl 为
+  // https://https://… 双协议前缀 → JD 面板「投递」链接不可用。校验器防复发。
+  assert.equal(hasValidUrlScheme('https://zhaopin.aircas.ac.cn/'), true);
+  assert.equal(hasValidUrlScheme('http://bdochina.zhiye.com/intern/jobs'), true);
+  assert.equal(hasValidUrlScheme('https://https://zhaopin.aircas.ac.cn/'), false);
+  assert.equal(hasValidUrlScheme('http://http://example.com/'), false);
+  assert.equal(hasValidUrlScheme('https://http://example.com/'), false);
+  assert.equal(hasValidUrlScheme('zhaopin.aircas.ac.cn'), false);
+  assert.equal(hasValidUrlScheme('//cdn.example.com/logo.png'), false);
+  // 可选字段缺省 (undefined / null / 空串) 合法 — 不因缺 URL 拒收公司。
+  assert.equal(hasValidUrlScheme(undefined), true);
+  assert.equal(hasValidUrlScheme(null), true);
+  assert.equal(hasValidUrlScheme(''), true);
+});
+
+test('validateSourceCompany flags double-scheme and non-http URL fields', () => {
+  const company = sample();
+  company.careerUrl = 'https://https://zhaopin.aircas.ac.cn/';
+  company.logoUrl = '//cdn.example.com/logo.png';
+  company.sites[0].careerUrl = 'http://http://example.com/';
+  company.positions[0].applyUrl = 'https://https://bdochina.zhiye.com/intern/jobs';
+  const issues = validateSourceCompany(company);
+  assert.ok(issues.some((row) => row.field === 'careerUrl'), 'company careerUrl flagged');
+  assert.ok(issues.some((row) => row.field === 'logoUrl'), 'company logoUrl flagged');
+  assert.ok(issues.some((row) => row.field === 'sites.careerUrl'), 'site careerUrl flagged');
+  assert.ok(issues.some((row) => row.field === 'positions.applyUrl'), 'position applyUrl flagged');
+
+  // 修正后的合法值不再产生问题。
+  company.careerUrl = 'https://zhaopin.aircas.ac.cn/';
+  company.logoUrl = 'https://cdn.example.com/logo.png';
+  company.sites[0].careerUrl = 'https://example.com/';
+  company.positions[0].applyUrl = 'https://bdochina.zhiye.com/intern/jobs';
+  assert.deepEqual(validateSourceCompany(company), []);
+});
+
+test('radar drops with the scan #4 double-prefix fix stay clean (2 files, 4 URLs)', () => {
+  // 数据级回归: 修正过的 2 个 drop 不再含 https://https:// (careerUrl/applyUrl 各 2 处)。
+  const radarDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment', 'radar');
+  for (const name of ['中国科学院空天信息创新研究院.json', 'bdo立信.json']) {
+    const raw = readFileSync(join(radarDir, name), 'utf8');
+    assert.doesNotMatch(raw, /https:\/\/https:\/\//, `${name} has no repeated scheme`);
+    assert.match(raw, /"careerUrl": "https:\/\//, `${name} careerUrl is a single-scheme URL`);
+    assert.match(raw, /"applyUrl": "https:\/\//, `${name} applyUrl is a single-scheme URL`);
+  }
 });
 
 test('validateSourceCompany accepts an address-only site (pending geocode)', () => {
