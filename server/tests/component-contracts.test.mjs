@@ -468,6 +468,20 @@ test('map shell Bug3 locate: 挂载定位不抢占已移图相机(首点 pin 不
   assert.doesNotMatch(locateBlock, /setZoom\(13\)/);
 });
 
+test('map shell ws-poi-vanish2: createMap 初始相机用 state(remount 恢复视野不回默认)', () => {
+  const shell = src('components/map-shell.tsx');
+  // 调用处不再硬编码默认中心/zoom:改用 mapCenter/zoom state——首载 state=默认
+  // (行为不变),fast refresh remount 保留 state → 新地图以用户上次视野初始化
+  assert.match(shell, /mapCleanup = createMap\(mapCenter, zoom\);/);
+  assert.doesNotMatch(shell, /createMap\(\[120\.15, 30\.27\], 13\)/);
+  // state 默认值引用同一常量(与 settle 门控单源,lib/camera-center)
+  assert.match(shell, /const \[zoom, setZoom\] = useState\(DEFAULT_MAP_ZOOM\);/);
+  assert.match(shell, /useState<\{ lng: number; lat: number \}\>\(\{ \.\.\.DEFAULT_MAP_CENTER \}\)/);
+  // createMap 签名接受 { lng, lat } 状态对象,构造 AMap 时转 tuple
+  assert.match(shell, /function createMap\(center: \{ lng: number; lat: number \}, zoom: number\)/);
+  assert.match(shell, /center: \[center\.lng, center\.lat\],/);
+});
+
 test('map shell Bug1 flyTo 入口置位:userMovedMapRef 与相机手势同口径', () => {
   const shell = src('components/map-shell.tsx');
   // 纯选中不动相机:handleSelect(卡片/列表)不置位(ws-poi-vanish 首点修复,
