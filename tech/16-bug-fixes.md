@@ -629,7 +629,7 @@ scrollTop 保存/恢复。打开详情时 `detailPoi` 三元组让 `.drawerConte
 **测试验证**：
 - ✅ 组件契约测试新增:POICard stopPropagation、POIList onDeselect 接线、map-shell
   drawerScroll 保存/恢复。
-- ✅ 全量 `npm test` 297 通过 / 0 失败(2 跳过)。
+- ✅ 全量 `npm test` 423 通过 / 0 失败(2 跳过,2026-08-19)。
 - ✅ `npm run typecheck` 无错误。
 
 ### 注意：桌面 secondary-sidebar 行为不变
