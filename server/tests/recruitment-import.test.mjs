@@ -137,6 +137,39 @@ test('dedupeSourceCompanies merges sites and unique positions on the same slug',
   assert.ok(merged.positions.some((p) => p.externalId === b.positions[0].externalId));
 });
 
+test('dedupeSourceCompanies merges logoUrl/logoEmoji (seed logo fills a logo-less drop)', () => {
+  // 2026-08-19 Bug2: mergeCompany 曾只合并 sites+positions, seed 的
+  // logoUrl/logoEmoji 被丢弃 → 写库全空 → DB 读路径全 🏢。
+  // 真实 drops 先行、seed 垫底: drop 无 logo 时 seed 补上。
+  const drop = sample();
+  drop.logoUrl = undefined;
+  drop.logoEmoji = undefined;
+  const seed = sample(); // WORK_SEED[0] 自带 logoUrl + logoEmoji
+  assert.ok(seed.logoUrl && seed.logoEmoji, 'seed fixture carries logo fields');
+  const [merged] = dedupeSourceCompanies([drop, seed]);
+  assert.equal(merged.logoUrl, seed.logoUrl, 'seed logoUrl survives the merge');
+  assert.equal(merged.logoEmoji, seed.logoEmoji, 'seed logoEmoji survives the merge');
+});
+
+test('dedupeSourceCompanies never overwrites a drop-provided logo (non-empty wins)', () => {
+  const drop = sample();
+  drop.logoUrl = 'https://cdn.example.com/drop.png';
+  drop.logoEmoji = '🚀';
+  const seed = sample();
+  const [merged] = dedupeSourceCompanies([drop, seed]);
+  assert.equal(merged.logoUrl, 'https://cdn.example.com/drop.png');
+  assert.equal(merged.logoEmoji, '🚀');
+});
+
+test('company upsert never nulls existing logo columns when the plan lacks them', () => {
+  // 2026-08-19 Bug2 根因链第 2 环: 写库 logoUrl ?? null 曾把既有 logo 覆盖成 NULL。
+  // COALESCE 与坐标列同款策略: 缺数据不销毁好数据。
+  const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+  const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
+  assert.match(store, /logo_url = COALESCE\(EXCLUDED\.logo_url, logo_url\)/);
+  assert.match(store, /logo_emoji = COALESCE\(EXCLUDED\.logo_emoji, logo_emoji\)/);
+});
+
 test('planRecruitmentImport drops invalid companies and keeps the rest', () => {
   const good = sample();
   const bad = { ...sample(), slug: 'broken', name: '', sites: [], positions: [] };
