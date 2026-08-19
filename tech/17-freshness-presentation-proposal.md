@@ -1,8 +1,17 @@
 # 提案：工作模式「校招进行中 / 官网直投」新鲜度呈现
 
 > **状态:** PROPOSED — 等待用户批准（plugin-dev 门禁：前端呈现需 ASCII 布局 + 明确批准）。未实现。
+> **命运（2026-08-20 补记）：已取代。** 2026-08-17 用户决策 A1（见 `tech/18-national-scale-plan.md` §A1:19-22）：
+> 「不做复杂新鲜度徽标，呈现上只突出『在招中』信号，过期岗位自动隐藏」。本提案作历史存档保留，徽标 UI 不再排期；
+> `server/src/lib/freshness.ts` 的 radar/portal 判定仍用于「真实岗位」过滤（`isAuthenticPositionId`，A1 的读路径守卫）。
 
 ## 背景
+
+> **历史语境：** 下文两类信号描述与数字为 **2026-08-16/17 杭州 pilot** 时期的 catalog 状态，仅作历史参考。
+> **现状（2026-08-20，`server/data/recruitment/` 文件口径）：** `radar-*` **763 条**（628 个公司文件，
+> 2026-08-17 全国快照 + 后续策展/聚合标注）；`portal-*` **9803 条**（25 家公司，其中 9800 条为 Feishu-ATS
+> 逐岗位条目 `portal-feishu-*`；策展入口仅余 betta×2（`portal-betta-campus/social`）+ deepseek×1
+> （`portal-deepseek`）—— megvii/tigermed 入口已于 2026-08-18/19 移除）。
 
 工作模式离线 catalog 现在带两类「新鲜度」信号（`data-quality.md`）：
 - **radar-\* 岗位**：`xiaozhao-radar` 快照合并到已匹配公司 pin（12 个 pin / 27 条，真实投递链接）。
