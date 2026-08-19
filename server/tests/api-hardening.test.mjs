@@ -77,6 +77,28 @@ test('#10 suggest: q 超长 → 400（在缓存 key 之前拦截）', () => {
   assert.match(route, /if \(suggestions\.length > 0\) \{\s*writePublicCache/);
 });
 
+test('#7 pois/[id]: 不再二次解码（Next 动态段已解码），畸形 % 不 500', () => {
+  const route = src('app/api/pois/[id]/route.ts');
+  // 裸 %（如 /api/pois/100%25 → "100%"）二次解码会抛 URIError → 500；路由内不得再调用解码
+  assert.doesNotMatch(route, /decodeURIComponent\(/);
+  // 原契约保持：共享 catalog 查询 + 404 + 缓存
+  assert.match(route, /loadServerCatalogById/);
+  assert.match(route, /status: 404/);
+  assert.match(route, /writePublicCache/);
+  assert.match(route, /publicCacheKey/);
+});
+
+test('#7 pois/[id]: id 超长（>256）→ 400，且在缓存 key 之前拦截', () => {
+  const route = src('app/api/pois/[id]/route.ts');
+  assert.match(route, /const MAX_ID_LENGTH = 256/);
+  assert.match(route, /id\.length > MAX_ID_LENGTH/);
+  assert.match(route, /code: 'ID_TOO_LONG'/);
+  assert.match(route, /status: 400/);
+  const keyIdx = route.indexOf('const cacheKey =');
+  const guardIdx = route.indexOf("code: 'ID_TOO_LONG'");
+  assert.ok(guardIdx !== -1 && keyIdx !== -1 && guardIdx < keyIdx, 'id 长度校验先于缓存 key');
+});
+
 test('#11 notifications: 同用户 60s 冷却 → 429 + Retry-After', () => {
   const route = src('app/api/me/notifications/route.ts');
   assert.match(route, /const NOTIFY_COOLDOWN_MS = 60_000/);
