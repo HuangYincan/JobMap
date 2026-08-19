@@ -190,6 +190,27 @@ def job_city(job: dict[str, Any]) -> str:
     return ""
 
 
+def job_addresses(job: dict[str, Any]) -> list[dict[str, str]]:
+    """job_post_info.address_list → [{city, address, district}]。
+
+    ATS 录入的精确办公地址(区+路+门牌),如 得物「黄兴路221号互联宝地T7栋一楼」。
+    这是 geocoding v3(5000 次/天)落点的关键——城市名只有城市中心点,ATS 地址
+    可以落到具体办公楼 (2026-08-19 发现,list 响应即含 address_list)。
+    """
+    jpi = job.get("job_post_info") or {}
+    out: list[dict[str, str]] = []
+    for a in jpi.get("address_list") or []:
+        if not isinstance(a, dict):
+            continue
+        name = _string(a.get("name"))
+        if not name or name in ("上海", "北京", "广州", "深圳", "杭州", "成都", "武汉"):
+            continue  # 纯城市名地址(无门牌)跳过,别把城市中心当办公点
+        city = normalize_city(((a.get("city") or {}).get("name")))
+        district = _string((a.get("district") or {}).get("name"))
+        out.append({"city": city, "address": name, "district": district})
+    return out
+
+
 def city_site_id(slug: str, city: str) -> str:
     """按城市建 site id: {slug}-site-{pinyin}。无法拼音化的城市用原名。"""
     city = CITY_ALIASES.get(city, city)

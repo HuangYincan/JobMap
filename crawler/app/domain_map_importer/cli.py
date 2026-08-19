@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .acquire import AcquisitionError, PoliteFetcher
-from .ats_feishu import CITY_PINYIN, AdapterError, city_site_id, fetch_all_jobs, job_city, jobs_to_positions
+from .ats_feishu import CITY_PINYIN, AdapterError, city_site_id, fetch_all_jobs, job_addresses, job_city, jobs_to_positions
 from .official_refresh import refresh_company_from_source, write_company
 from .radar_jobs import load_radar_jobs, radar_fixture
 
@@ -350,7 +350,18 @@ def cmd_feishu(args: argparse.Namespace) -> int:
             pool_counts[label] = len(jobs)
             seen = {j["id"] for j in all_jobs}
             all_jobs.extend(j for j in jobs if j["id"] not in seen)
+        # 翻页漂移兜底: 爬取期间岗位池变化, offset 窗口滑动可能让同一岗位
+        # 出现在两页 → 按 id 去重(保留首个), 否则 plan 报 duplicate externalId
+        # (2026-08-19: 蔚来 2223 岗池实测出现)。
+        all_jobs = list({j["id"]: j for j in all_jobs}.values())
         # 为岗位城市补齐站点(保留 base 的 curated 站点)。
+        # ATS address_list 提供精确办公地址(区+路+门牌)→ 城市文本站点用它
+        # 填充 address,geocode 时走 geocoding v3(5000 次/天)落到具体办公楼。
+        address_by_city: dict[str, str] = {}
+        for job in all_jobs:
+            for entry in job_addresses(job):
+                if entry["city"]:
+                    address_by_city[entry["city"]] = entry["address"]
         known = {s["id"] for s in company["sites"]}
         for job in all_jobs:
             city = job_city(job)
@@ -361,13 +372,28 @@ def cmd_feishu(args: argparse.Namespace) -> int:
                 continue
             # 已知中国城市补「市」(与 radar 约定一致);海外/未知名城市用原名。
             city_name = f"{city}市" if city in CITY_PINYIN else city
+            ats_address = address_by_city.get(city, "")
             company["sites"].append({
                 "id": site_id,
                 "name": company["name"],
                 "city": city_name,
-                "location": {"address": city_name},
+                "location": {"address": ats_address or city_name},
             })
             known.add(site_id)
+        # 城市文本的既有站点(无坐标)也用 ATS 地址补精确办公地;多城市文本
+        # ("北京/上海/广州/杭州")与已有具体地址的站点不动。
+        for site in company["sites"]:
+            if site.get("location", {}).get("lng"):
+                continue  # curated 站点(已有坐标)不动
+            site_city = site.get("city", "").removesuffix("市")
+            current_addr = (site.get("location") or {}).get("address", "").strip()
+            if not site_city:
+                continue
+            ats_address = address_by_city.get(site_city, "")
+            if not ats_address:
+                continue
+            if current_addr in ("", site_city, f"{site_city}市"):
+                site.setdefault("location", {})["address"] = ats_address
         company["positions"] = jobs_to_positions(all_jobs, company, stamp, host=host, website_path=tenant.get("website_path", ""))
         entry = {"slug": slug, "jobs": len(all_jobs), "campus": pool_counts.get("campus", 0), "social": pool_counts.get("social", 0), "sites": len(company["sites"])}
         if api_errors:

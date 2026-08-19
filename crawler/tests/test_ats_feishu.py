@@ -159,6 +159,27 @@ class PositionMappingTests(unittest.TestCase):
         with self.assertRaises(ats_feishu.AdapterError):
             ats_feishu.job_to_position({"title": "无 id"}, "s", "t")
 
+    def test_job_addresses_extracts_ats_office(self):
+        # 2026-08-19: ATS address_list 提供精确办公地址(区+路+门牌),是
+        # geocoding v3(5000 次/天)落点的基础 —— 城市名只有城市中心点。
+        job = {
+            "id": "1",
+            "title": "t",
+            "city_list": [{"name": "上海"}],
+            "job_post_info": {
+                "address_list": [
+                    {"name": "黄兴路221号互联宝地T7栋一楼", "city": {"name": "上海"}, "district": {"name": "杨浦区"}},
+                    {"name": "上海", "city": {"name": "上海"}},  # 纯城市名 → 跳过
+                ]
+            },
+        }
+        addrs = ats_feishu.job_addresses(job)
+        self.assertEqual(addrs, [{"city": "上海", "address": "黄兴路221号互联宝地T7栋一楼", "district": "杨浦区"}])
+
+    def test_job_addresses_empty_when_missing(self):
+        self.assertEqual(ats_feishu.job_addresses({"id": "1", "title": "t"}), [])
+        self.assertEqual(ats_feishu.job_addresses({"id": "1", "title": "t", "job_post_info": {}}), [])
+
     def test_job_city_and_site_mapping(self):
         self.assertEqual(ats_feishu.job_city(CAMPUS_JOB), "上海")
         company = {**COMPANY, "sites": [{"id": "nio-site-shanghai", "name": "NIO"}, {"id": "nio-site-beijing", "name": "NIO"}]}

@@ -32,7 +32,7 @@
       "name": "小马智行",
       "city": "上海市",
       "location": {
-        "address": "上海市"
+        "address": "嘉定区安亭镇塔山路585号"
       }
     },
     {
@@ -40,7 +40,7 @@
       "name": "小马智行",
       "city": "深圳市",
       "location": {
-        "address": "深圳市"
+        "address": "前海深港合作区南山街道前海大道前海嘉里商务中心T1写字楼1403"
       }
     },
     {
@@ -48,7 +48,7 @@
       "name": "小马智行",
       "city": "费利蒙",
       "location": {
-        "address": "费利蒙"
+        "address": "3501 Gateway Blvd,"
       }
     }
   ],
@@ -64,7 +64,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7670433819375847731/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "团队负责根据道路、周围环境、其他车辆行人等实时交通情况，决定和控制自动驾驶车辆如何行驶，是自动驾驶中最核心的团队之一。 团队的软件或算法工程师负责以下工作中的一项或几项： 1. 高性能、高可靠性的Planning架构设计与系统开发； 2. 高精度、高性能的计算几何与数值计算算法开发与优化； 3. 在驾驶决策等方面通过机器学习或其他算法提升自动驾驶车辆的能力；\n\n岗位要求:\n1. 优秀的编程能力，熟悉C、C++、Python、Java等主流编程语言中的至少一种，熟悉常用的数据结构与算法； 2. 优秀的沟通与协作能力； 3. 优秀的问题转化与建模能力，需要创新性的思维解决全行业都没有解决过的有挑战的问题；"
     },
     {
@@ -78,7 +78,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7668268169526675739/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1.负责统筹公司安全工作的监督与管理，制定公司安全运营管理制度及规范，组织区域公司开展日常合规管理工作，包括安全会议、安全检查、安全培训、安全事件复盘等，配合管理团队及时排查并消除安全隐患，控制事故发生率； 2.负责公司智能网联汽车道路交通安全事件、事故的应急指挥，支撑乘客安全服务事件处置，主导所有安全事件、事故的复盘工作； 3.负责与政府相关部门沟通协调，保障公司安全工作符合国家法律法规及政策要求； 4.协助车队运营、政府关系等团队，协调、监管并指导相关方开展合规治理工作。\n\n岗位要求:\n1.本科及以上学历，8年以上工作经验，5年以上道路运输行业合规治理管理经验； 2.具备丰富的安全管理、应急事故处置一线实践经验与体系搭建经验； 3.拥有较强的组织协调能力、体系搭建能力、材料撰写能力及沟通协作能力； 责任心强，工作积极主动、务实可靠。 加分项： 1.有大型运输企业重大安全事故成功处置经验者优先； 2.持有注册安全工程师（道路运输安全）证书者优先； 3.具备全局化视角与大局观者优先。"
     },
     {
@@ -92,7 +92,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7666648656817719561/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "职位描述 负责自动驾驶时空信息的研发工作。包括但不限于以下功能的研发和工程化实现： 1. 时空信息的规模化化生产基础设施 2. 时空信息的质量保障与评估优化 3. 时空信息的车载应用及性能优化\n\n岗位要求:\n职位要求 1. 计算机或相关专业本科以上学历； 2. 优秀的编程能力，熟悉 C++ 和 Python； 3. 较好的数据结构和算法能力； 4. 工作积极主动，能发现问题并解决问题。 满足以下任意一点可以加分： 1. 有分布式系统或后端开发经验。 2. 有时空信息或量产地图工程实现相关开发经验。 3. 优秀的代码优化能力，包括但不限于：运行时间，数据读取时间，内存占用的优化； 4. 熟悉 GPU 架构；熟悉计算几何，或有图形学开发经验。"
     },
     {
@@ -106,7 +106,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7664483984764242222/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "工作职责 1、负责路线体验产品设计：设计路线选择、路线推荐、路线沟通等相关的产品，持续提升用户对 Robotaxi 路线的可控感和满意度，平衡用户偏好、行程效率、安全规则、自动驾驶能力边界等因素 2、负责设计路线方向对用户沟通和提醒：设计行程全流程多节点对用户路线沟通机制，包含内容、展示时机、展示位置和交互方式等，目标是让用户知道“车为什么这样走”，提升用户对路线信任感，提升体验 3、负责路线相关运营中后台：建设线路相关工具，协同路线运营、算法、地图团队，更快定位和处理路线问题，让问题能被持续追踪和闭环，路线体验得到持续优化 4、建立路线体验指标和业务闭环：负责定义和跟踪核心指标，并基于数据持续优化产品方案。 5、对路线整体端到端体验负责：跨团队独立推进复杂项目落地，并保证最终端到端的效果\n\n岗位要求:\n5 年以上产品经理经验：有复杂系统产品、出行产品、地图导航产品、自动驾驶产品、车载产品、运营工具产品经验者优先，能独立负责一个方向，从问题定义、方案设计、需求评审、项目推进到上线复盘 业务理解能力强：能快速理解 Robotaxi 的业务特点，能区分“真实体验问题”和“用户感知问题”，能把复杂技术问题转化成用户能理解的产品表达，能在安全、效率、体验、成本之间做取舍；有对最终端到端体验负责的闭环能力 逻辑和数据能力强：能拆解复杂问题，建立清晰的问题分类和判断标准；能设计指标体系，用数据判断问题大小和方案效果 沟通和推动能力强：能和算法、工程、运营、等不同团队高效沟通，能推动跨团队项目，不只是写需求文档 用户同理心强：对用户情绪和信任感敏感，能快速切换为小白用户身份， 加分项 做过 Robotaxi、自动驾驶、智能汽车、导航、地图、出行平台相关产品 熟悉导航路线规划、reroute、ETA、封路、轨迹分析等业务 做过客诉分析、运营后台、自动化归因工具 有从 0 到 1 搭建复杂产品模块的经验 有较强的数据分析能力，能自己写 SQL 更好"
     },
     {
@@ -120,7 +120,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7663058872151869738/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "职位描述 - 设计与实现高吞吐、低延时的分布式数据采集处理管道，保障PB级路测数据的高效处理与分析能力，支撑多算法团队并行研发需求 - 基于自动驾驶系统研发与运营需求，联合算法团队制定数据采集策略 - 构建智能化问题溯源系统，实现路测异常的自动化分析与全生命周期追踪管理 - 主导制定数据存储与计算资源的成本优化策略，持续提升资源利用效率 - 推行卓越工程实践，主导代码审查、设计评审等质量保障活动 - 制定团队技术路线图，平衡短期交付与长期技术积累，参与公司级自动驾驶技术战略规划\n\n岗位要求:\n- 5年以上软件开发经验，1年以上技术团队管理经验（Tech Lead及以上职级） - 深刻理解C++/Python或至少一门高级程序语言，具备复杂软件架构设计能力 - 强烈的结果导向与系统性思维，能根据实施效果动态优化技术方案 - 优秀的跨部门协作能力，能推动跨部门技术决策与工程落地 - 开放的技术视野与快速学习能力，能在高强度下解决前沿技术难题 加分项： - 有大数据系统研发经验或其他大型分布式系统研发经验"
     },
     {
@@ -134,7 +134,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7662323574086224170/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "核心工作职责 负责企业级出行产品：主导该业务线的从1到100产品建设，包括费用结算、财务对账、策略配置、反作弊等核心功能的设计与落地 负责构建用户管理体系：主导用户管理闭环从0到1的建设，包括：定规、宣规、预警、判责、处理、存证等的多个环节产品设计 负责客服系统能力建设：客服提效工具设计，以及与内外部产研团队协作，梳理和优化跨系统服务流程 规划并推动用户行为标签及信用体系的建设，为精细化运营和风险管理提供产品支持。 作为核心产品，有效协调技术、运营、商务、财务等多团队资源，确保复杂项目按时高质量交付。\n\n岗位要求:\n任职要求 本科及以上学历，7年以上互联网或科技公司产品经理经验，有B端或复杂交易/服务平台产品经验者优先。 具备至少一个完整的中大型项目从0到1建设经验，能独立负责复杂产品模块的全生命周期管理。 出色的逻辑思维与系统分析能力，能梳理并优化涉及多系统、多角色的复杂业务流程。 强大的跨部门沟通与项目推动能力，能与技术、运营、商务、财务等多团队高效协作。 具备优秀的数据分析能力，能通过数据驱动产品迭代和决策。 加分项与优先考虑 有出行、本地生活、电商、企业服务领域的产品经验优先 有平台治理体系、用户管理体系、企业级产品相关产品建设经验。 对自动驾驶或Robotaxi行业有浓厚兴趣和基本认知。 具备一定的技术理解能力，能与工程师进行深入的技术方案讨论。"
     },
     {
@@ -148,7 +148,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7659981706431154458/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "岗位职责 1. 卡车业务线项目全流程管理 负责L4级自动驾驶卡车业务线技术研发项目的端到端管理，涵盖感知、规划控制、系统集成、车端部署等关键技术模块 明确关键路径、交付节点与跨模块依赖关系，确保干线物流场景下的技术交付节奏 协调OEM合作对接中的技术交付节点，保障量产级合作项目按时推进 2. 跨团队协作与资源协调 作为卡车BU内部研发、产品、测试、运营团队以及外部OEM合作伙伴之间的核心枢纽，推动多方协作与信息对齐 协调自动驾驶算法、嵌入式系统、云端平台、车端部署等多条线资源分配，识别并解决资源瓶颈 与物流运营团队紧密配合，确保技术交付能够有效支撑干线物流商业化落地目标 3. 技术理解与深度参与 深入理解L4自动驾驶卡车技术栈 参与技术评审，评估技术方案的可行性、功能安全风险与工程工作量 跟踪自动驾驶行业技术趋势，为卡车BU技术路线图规划提供项目维度输入 4. 流程优化与体系建设 推动敏捷开发实践在卡车BU的落地与持续优化，建立适配自动驾驶软硬件协同研发的流程体系 建立项目度量体系，通过数据驱动方式评估团队效能与项目健康度 沉淀卡车业务线项目管理方法论与最佳实践，推动团队知识共享与能力提升 5. 风险与变更管理 建立项目风险识别与跟踪机制，针对路测安全、法规合规、技术验证等关键领域提前预警 管理需求变更与范围蔓延，评估变更对OEM交付、量产节点的影响并协调相关方达成一致 负责项目复盘，总结经验教训并推动改进落地\n\n岗位要求:\n高级技术项目经理-北京 岗位职责 1. 卡车业务线项目全流程管理 负责L4级自动驾驶卡车业务线技术研发项目的端到端管理，涵盖感知、规划控制、系统集成、车端部署等关键技术模块 明确关键路径、交付节点与跨模块依赖关系，确保干线物流场景下的技术交付节奏 协调OEM合作对接中的技术交付节点，保障量产级合作项目按时推进 2. 跨团队协作与资源协调 作为卡车BU内部研发、产品、测试、运营团队以及外部OEM合作伙伴之间的核心枢纽，推动多方协作与信息对齐 协调自动驾驶算法、嵌入式系统、云端平台、车端部署等多条线资源分配，识别并解决资源瓶颈 与物流运营团队紧密配合，确保技术交付能够有效支撑干线物流商业化落地目标 3. 技术理解与深度参与 深入理解L4自动驾驶卡车技术栈 参与技术评审，评估技术方案的可行性、功能安全风险与工程工作量 跟踪自动驾驶行业技术趋势，为卡车BU技术路线图规划提供项目维度输入 4. 流程优化与体系建设 推动敏捷开发实践在卡车BU的落地与持续优化，建立适配自动驾驶软硬件协同研发的流程体系 建立项目度量体系，通过数据驱动方式评估团队效能与项目健康度 沉淀卡车业务线项目管理方法论与最佳实践，推动团队知识共享与能力提升 5. 风险与变更管理 建立项目风险识别与跟踪机制，针对路测安全、法规合规、技术验证等关键领域提前预警 管理需求变更与范围蔓延，评估变更对OEM交付、量产节点的影响并协调相关方达成一致 负责项目复盘，总结经验教训并推动改进落地 任职要求 学历与经验 本科及以上学历，计算机、自动化、车辆工程、电子工程或相关专业优先 5年以上项目管理经验，其中至少2年技术/研发项目管理经验 具备自动驾驶 / 商用车 / 车联网 / 大规模嵌入式系统等相关行业经验者优先 专业技能 熟悉敏捷开发方法论（Scrum / Kanban / SAFe），具备PMP或CSM认证者优先 熟练使用项目管理工具（Jira / Confluence / MS Project / 飞书项目等） 具备一定的技术背景，熟练使用Python / Shell等脚本语言者优先 有OEM合作项目管理经验者优先 软性能力 极强的沟通协调能力：能在复杂组织结构与外部合作方之间推动多方协作，善于对齐预期与解决冲突 结构化思维：善于拆解复杂问题，逻辑清晰，能快速抓住关键矛盾 结果导向：以交付为目标，能在不确定性和压力下保持高效推进 主动性与Owner意识：不只是\"跟踪者\"，而是项目的真正Owner，主动发现问题并推动解决 加分项 有L4级自动驾驶或ADAS系统项目管理经验 有商用车 / 干线物流 / 港口自动驾驶行业经验 有OEM联合开发或量产项目交付经验 了解功能安全（ISO 26262）或网络安全相关标准 有技术背景，曾担任过开发工程师或系统架构师 有从0到1搭建项目管理体系或PMO团队的经验 我们提供 参与全球领先的L4级自动驾驶卡车技术从研发到商业化运营的全过程 深度参与干线物流自动驾驶落地，打造行业标杆 扁平的组织架构，高效的决策机制，与顶尖工程团队共事 完善的成长路径与培训体系 有竞争力的薪酬福利与期权激励"
     },
     {
@@ -162,7 +162,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7659669677271091466/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责打车端业务应用整体质量保障，包括测试分析，用例设计，测试执行 2. 负责打车端业务的整体性能测试，接口测试，自动化测试，以及测试效能提升 3. 负责协助研发团队进行生产问题跟踪，定位，推动解决，完成质量闭环 4. 负责配合项目其他团队保障版本按期迭代上线\n\n岗位要求:\n1. 全日制本科以上学历，大厂全职2年以上C端测试工作经历，或者5年以上全职C端测试经验 2. 有专项落地经验，包括前后端性能，自动化，稳定性，弱网，AI提效等2项以上，性能测试优先 3. 良好的沟通协调能力，有跨部门协作完成大型复杂项目经验 4. 抗压能力强，主动性好，owner意识强"
     },
     {
@@ -176,7 +176,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7658140353702693163/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "岗位职责 1. 媒体关系建立与维护：维护公司核心媒体关系网络，包括但不限于全国各地方媒体、科技、汽车、财经等领域头部媒体，建立长期信任关系。 2. 舆情监测与危机公关：实时监测公司及行业相关舆情，建立预警机制；协助处理突发舆情事件，输出应对策略与口径。 3. 行业活动与品牌曝光：策划并组织行业大会、媒体沟通会、专访、圆桌等活动，提升公司在产业与公众中的影响力。 4. 新闻传播策划：围绕公司战略节点（融资、发布、获奖、上市等）策划并执行新闻传播方案，撰写新闻稿、媒体口径、Q&A 等；与产品、技术、政府关系、HR 等团队紧密配合，挖掘可对外传播的故事点；为内部活动提供传播支持。 5. 主动选题与深度内容：挖掘公司技术亮点、团队故事、行业洞察，主动向媒体提供高质量选题与采访机会，培育深度报道。\n\n岗位要求:\n任职要求 必须项 - 本科及以上，新闻、传播、市场营销、中文等相关专业优先 - 5 年以上科技 / 汽车 / 互联网行业媒体公关或财经公关经验 - 拥有丰富的科技、汽车、财经等领域核心媒体资源 - 具备扎实的新闻稿写作功底与议题策划能力 加分项 - 有全国各地方媒体关系网络 - 有处理过重大舆情或危机公关的成功案例 个人素质 - 沟通表达能力强，对外对接有分寸感 - 信息敏感度高，能从细节中识别传播机会 - 抗压能力强，能在多任务、高强度下保持输出质量 - 主动性强，能独立推动项目从策划到落地"
     },
     {
@@ -190,7 +190,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7657839886745291049/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、建立和维护以深圳为主大湾区主要运营区域公安交通管理部门的良好沟通渠道与合作关系，提升公司在相关管理部门层面的认知度及品牌形象； 2、熟悉和配合以深圳为主大湾区运营区域交通管理执法相关工作，支持安全团队进行重点交通事务协调与沟通，协助处理疑难问题； 3、根据对人工智能、智慧交通领域法律责任趋势性的洞察，配合公安交通管理部门开展无人驾驶安全运营落实、执法流程优化、道路数据交互等课题的协调推动，形成可复制推广的案例成果； 4、代表公司参与政府事务活动，包括日常接待、会议参与、活动组织等，完成领导交办的其他事项。\n\n岗位要求:\n1、本科及以上学历，法律及交通相关专业，交警专业经验者优先； 2、5年以上相关岗位，如道路运输安全处置相关岗位； 3、具备良好的协作、沟通、表达、承压能力，善于协同解决问题； 4、具有良好的执行力和责任心； 5、具备谈判和培训能力，熟练使用办公软件。 6、吃苦耐劳，可以出差，服从公司统一安排和工作调派。"
     },
     {
@@ -204,7 +204,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7657741950398236979/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "团队负责根据道路、周围环境、其他车辆行人等实时交通情况，决定自动驾驶车辆如何行驶，是自动驾驶中最核心的团队之一。负责以下工作中的一项或几项： 1. 高性能、高可靠性的 L4 自动驾驶 Planning 算法架构设计、算法与系统开发； 2. 对端到端模型结果进行优化和兜底，通过后处理确保车辆行为安全可控，实现不依赖高精地图、满足L4能力与要求的自动驾驶系统； 3. 使用较低算力和部分传感器与端到端技术，实现满足L4能力与要求的冗余系统； 4. 路测大数据分析处理架构设计与系统开发； 5. 仿真平台开发，基于海量路测数据，使仿真平台更符合真实路测场景；\n\n岗位要求:\n1. 优秀的编程能力，熟悉C、C++、Python、Java等主流编程语言中的至少一种，熟悉常用的数据结构与算法； 2. 优秀的沟通与协作能力； 3. 优秀的问题转化与建模能力，需要创新性的思维解决全行业都没有解决过的有挑战的问题。"
     },
     {
@@ -218,7 +218,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7649890087241894154/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "Description Founded in 2016 in Silicon Valley, Pony.ai has quickly become a global leader in autonomous mobility and is a pioneer in extending autonomous mobility technologies and services at a rapidly expanding footprint of sites around the world. Operating Robotaxi, Robotruck and Personally Owned Vehicles (POV) business units, Pony.ai is an industry leader in the commercialization of autonomous driving and is committed to developing the safest autonomous driving capabilities on a global scale. Pony.ai’s leading position has been recognized, with CNBC ranking Pony.ai #10 on its CNBC Disruptor list of the 50 most innovative and disruptive tech companies of 2022. In June 2023, Pony.ai was recognized on the XPRIZE and Bessemer Venture Partners inaugural “XB100” 2023 list of the world’s top 100 private deep tech companies, ranking #12 globally. As of August 2023, Pony.ai has accumulated nearly 21 million miles of autonomous driving globally. Pony.ai went public at NASDAQ in November 2024. Responsibility Design and build end-to-end data processing pipelines and toolchains to support large-scale data collection, batch processing, curation, and multi-dimensional evaluation. Design and implement high-performance backend services and distributed architectures , capable of handling large-scale real-time event processing. Collaborate across complex business components to lead the design of targeted system-level evaluation metrics, testing frameworks, and advanced simulation environments. Leverage and improve industry-leading, open-source distributed technologies to continuously advance infrastructure capabilities and processing efficiency. Drive critical architectural decisions and technology selection, ensuring rigorous standards for security, stability, scalability, and high performance. Establish and maintain comprehensive system monitoring, fine-grained observability metrics, and automated alerting frameworks to ensure low latency and reliable production operations. Build and optimize downstream engineering workflows for Large Language Models (LLMs), programmatically steering model reasoning, establishing guardrails, and mitigating hallucinations to ensure reliable outputs.\n\n岗位要求:\nStrong programming skills in C/C++, Python, and software design Strong foundation in mathematics and theoretical computer science, such as linear algebra, calculus, graph theory, computational geometry, combinatorial optimization algorithms, stochastic processes, and complexity analysis. Possessing solid engineering discipline, or demonstrating strong interest and potential in building large-scale systems, with the ability to maximize performance while keeping complexity and cost to a minimum. Pursueing a BS/MS or Ph.D in Computer Science or a related field Experience in large data set processing and familiarity with real time systems Solid experience in a fast-paced and structured engineering environment Full stack experience including both front end and back end is preferred Statistics analysis experience is preferred Compensation and Benefits Base Salary Range: $120,000 - $250,000 Annually Compensation may vary outside of this range depending on many factors, including the candidate’s qualifications, skills, competencies, experience, and location. Base pay is one part of the Total Compensation and this role may be eligible for bonuses/incentives and restricted stock units. Also, we provide the following benefits to eligible employees: Health Care Plan (Medical, Dental & Vision) Retirement Plan (Traditional and Roth 401k) Life Insurance (Basic, Voluntary & AD&D) Paid Time Off (Vacation & Public Holidays) Family Leave (Maternity, Paternity) Short Term & Long Term Disability Free Food & Snacks"
     },
     {
@@ -232,7 +232,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7649315601816013110/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "岗位职责 1. 行为预测前沿算法研发： 参与研发下一代端到端或基于大语言模型（LLM）的社会车/行人意图与轨迹预测算法，应对极其复杂的博弈与交互场景； 2. 多模态大模型落地 (Issue Triage)： 探索并应用多模态大模型（如视频+点云+文本序列），针对海量路测接管 Case 进行智能分析与自动化诊断（Issue Triage），挖掘并提炼长尾场景（Corner Cases），加速数据闭环； 3. AI Agent 智能体构建： 开发基于大模型的 AI Agent 框架，用于自动化场景仿真、数据自动标注、多智能体交互演练及模型效果的自动化评估； 4. 模型优化与部署： 参与端到端模型或大模型在自动驾驶链路中的微调（SFT/RLHF）、推理加速与轻量化部署，确保算法在实际业务中的高效流转。\n\n岗位要求:\n1. 在顶级会议或期刊（如 CVPR, ICCV, ECCV, NeurIPS, ICLR, ICRA, IROS 等）有相关论文发表者优先； 2. 在知名轨迹预测公开数据集（如 Waymo Open Dataset, Argoverse, nuScenes 等）挑战赛中取得优异名次者优先； 3. 曾在 ACM-ICPC、NOI/NOIP 等编程竞赛中获奖，或有 Kaggle 比赛经验者优先； 4. 参与过知名开源大模型/多模态模型/Agent 相关的 GitHub 高星项目贡献者优先；"
     },
     {
@@ -246,7 +246,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7647868436400130323/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责道路交通场景中离线静态要素的感知与构建，包括但不限于车道线、拓扑关系、可行驶区域、路缘、交通标志等高精度地图要素的提取与表示； 2. 设计并实现高精度地图构建流程中的感知算法与数据处理管线，提升要素检测、拟合与匹配的准确性与稳定性； 3. 负责模型训练、评估与优化，构建鲁棒的数据标注、质量评估与自动化验证方案； 4. 与定位、建图、路径规划及软件工程团队紧密协作，将算法成果工程化并部署到离线/近线流水线中； 5. 跟踪前沿研究与工具链（如深度学习框架、视觉语言模型、Agent系统等），推动新技术在地图要素感知领域的落地；\n\n岗位要求:\n1. 计算机、人工智能、机器人、自动驾驶或相关专业本科及以上学历，具有相关方向工作经验； 2. 熟悉深度学习方法与主流框架（PyTorch / TensorFlow），具备图像/点云/多传感器融合感知算法的研究或工程实现经验； 3. 熟悉视觉语言模型（VLM）及基于Agent的系统设计、任务调度与仿真优先考虑； 4. 熟悉车道线检测、拓扑关系建模、高精度地图数据结构与坐标变换，具备工程化能力（代码质量、性能优化、实验复现）； 5. 良好的问题分析与沟通协作能力，有大规模数据处理、标注工具或地图构建经验者优先。 加分项： 1. 在自动驾驶或地图公司有相关项目经验，熟悉HD Map生产流程； 2. 熟练掌握C++/Python工程实践，有端到端部署或流水线搭建经验； 3. 有发表论文或开源贡献者优先。"
     },
     {
@@ -260,7 +260,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7647520918830450954/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "将前沿的端到端自动驾驶等模型训练，在国产GPU训练芯片上进行适配，并管理大规模训练集群。 在这个岗位上，你会负责： 1. 把基于Nvidia GPU的pytorch训练，迁移到阿里平头哥等国产训练GPU上； 2. 把基于CUDA实现的自定义算子，迁移到国产训练GPU上； 3. 把pytorch中的一些复杂算子，迁移到国产训练GPU上； 4. 深入分析国产GPU训练芯片的设计和软件接口，充分挖掘GPU性能； 5. 深入了解自动驾驶领域的各类前沿模型设计，深入分析模型训练瓶颈； 6. 管理大规模训练集群，提升GPU利用率。\n\n岗位要求:\n1. 有把pytorch训练任务，从Nvidia迁移到阿里平头哥等某一家国产训练GPU的经验； 2. 精通某一家国产训练GPU训练框架； 3. 熟悉GPU设计理念，熟悉CUDA编程； 4. 熟悉pytorch训练框架，能够分析训练性能瓶颈； 5. 优秀的python、GPU编程能力。 加分项： 1. 有过GPU自定义算子的开发经验。"
     },
     {
@@ -274,7 +274,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7647013452280498474/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. Robotaxi 座舱HMI硬件体验定义与设计： a.主导定义面向无人驾驶、共享出行场景的座舱人机交互硬件整体体验策略。 b.负责座椅、显示屏、麦克风阵列、扬声器系统、SOS紧急呼叫按键、氛围灯光、车门/车窗/电动门/后备箱控制等关键座舱硬件的产品需求与体验规格制定。 c.深度聚焦 “上下车便利性”、“乘坐舒适性”、“舱内安全性”、“乘客安全感”以及“清洁与卫生感” 等核心体验维度，进行硬件驱动的创新设计。 2. 全生命周期产品配置管理： a.负责在研车型的座舱配置降本方案评估，进行科学的配置取舍分析，平衡用户体验、成本与工程可行性。 b.主导下一代平台的座舱硬件正向定义，制定前瞻性的配置方案与体验蓝图。 c.建立并维护座舱硬件配置的体验标准与迭代路径。 3. 跨部门协同与项目推动： a.作为核心接口，与整车集成、硬件工程、结构设计、供应链、运营服务、客户支持等多个团队紧密协作。 b.清晰传递产品需求，推动技术方案落地，解决开发过程中的体验、成本与进度问题。 c.确保产品方案从设计、开发到量产、运营的全流程高质量交付。\n\n岗位要求:\n必备条件： 1. 本科及以上学历，工业设计、车辆工程、机械工程、人机交互、计算机等相关专业优先。 2. 3年以上汽车座舱硬件产品、整车配置管理、智能座舱产品或相关用户体验产品经验。 3. 具备出色的用户场景洞察与需求转化能力，能够从真实的出行场景（尤其是共享、无人驾驶场景）推导出具体的硬件配置需求。 4. 强大的商业与产品权衡能力，能够在用户体验、成本控制、技术可实现性及后期运维效率之间找到最佳平衡点。 5. 卓越的问题分析与解决能力，以及出色的跨部门沟通、协调与项目推进能力，能够驱动复杂项目达成目标。 优先条件： 1. 深刻理解 Robotaxi、共享出行、运营车辆（如网约车、分时租赁）或无人驾驶 的特殊场景、用户行为和运营挑战。 2. 有成功主导汽车座舱硬件或HMI项目从0到1量产的经验。 3. 熟悉汽车产品开发流程（如V模型），了解硬件开发、测试验证相关基础知识。"
     },
     {
@@ -288,7 +288,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7645244363153819940/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "岗位职责： 1. 负责自动驾驶项目基础设施能力的开发和落地，重点支持云资源使用和存储工具链建设。 2. 参与公有云资源的接入、管理和优化，包括存储、网络、权限、监控等组件。 3. 开发存储相关工具和平台能力，支持数据上传下载、迁移、清理、权限管理、容量统计和问题排查。 4. 参与对象存储、文件存储、分布式存储等系统的接入、优化和稳定性建设。 5. 维护相关技术文档、使用规范和自动化流程，支持项目持续交付。\n\n岗位要求:\n任职要求： 1. 计算机相关专业本科或以上学历。 2. 熟悉至少一家公有云厂商及其存储、网络、监控组件，如阿里云、腾讯云、Azure等。 3. 了解常见存储系统和使用场景，如对象存储、NAS、HDFS、Ceph、S3 等。 4. 熟练掌握 C++、Java、Python 中至少一门编程语言，具备良好的编码与调试能力。 5. 熟悉 Linux 环境，具备基本的问题排查和自动化脚本开发能力。 6. 有责任心，沟通积极，有良好的文档习惯；有使用 AI 辅助开发的经验。 加分项： 1. 具备存储相关运维或开发经验，有分布式存储或大数据存储项目经验者优先。 2. 有容器化（Docker、Kubernetes）和云原生实践经验。 3. 有云资源治理、成本优化、监控告警或内部工具链开发经验。"
     },
     {
@@ -302,7 +302,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7642656136692681006/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责协调各类型用车需求，监控车辆资源使用情况。 2. 负责无人驾驶出租车大规模运营体系落地，运营工作规划，运营策略制定。 3. 协助车队经理完成车队管理，车辆资源协调等关键制度的制定与定期更新； 4. 协助产品经理完成产品平台落地，反馈体验与问题，反哺产品设计； 5. 促进跨团队及地域协作与沟通，在技术团队与运营测试团队之间建立沟通桥梁； 6. 参与合作项目，协助外部项目组织并驱动项目进展。\n\n岗位要求:\n1. 本科以上学历，3年以上的项目管理经验； 2. 跨团队沟通能力突出； 3. 适应能力强 4. 对无人车运营工作有兴趣，并能够以开放的心态完成多样的运营任务 符合下列条件者优先 5. 两年以上人工智能、机器人、自动/智能驾驶系统的相关经验； 6. 有大规模车队运营，车辆/司机/订单配送调度相关管理经验； 7. 具有PMP证书，熟悉Jira等项目管理工具；"
     },
     {
@@ -316,7 +316,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7642354033001171226/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "Description Founded in 2016 in Silicon Valley, Pony.ai has quickly become a global leader in autonomous mobility and is a pioneer in extending autonomous mobility technologies and services at a rapidly expanding footprint of sites around the world. Operating Robotaxi, Robotruck and Personally Owned Vehicles (POV) business units, Pony.ai is an industry leader in the commercialization of autonomous driving and is committed to developing the safest autonomous driving capabilities on a global scale. Pony.ai’s leading position has been recognized, with CNBC ranking Pony.ai #10 on its CNBC Disruptor list of the 50 most innovative and disruptive tech companies of 2022. In June 2023, Pony.ai was recognized on the XPRIZE and Bessemer Venture Partners inaugural “XB100” 2023 list of the world’s top 100 private deep tech companies, ranking #12 globally. As of August 2023, Pony.ai has accumulated nearly 21 million miles of autonomous driving globally. Pony.ai went public at NASDAQ in November 2024. Responsibility - Work with experts in the field of self-driving vehicles on software architecture and design, system and module design, evaluation metrics, specification and implementation of test and regression frameworks. - Design and develop large-scale foundation models trained on vast of real world data - Frame the open-ended real-world problems into well-defined ML problems; develop and apply cutting-edge ML approaches (deep learning, reinforcement learning, imitation learning, etc) to these problems; scale them to data pipelines; and streamline them to run in real-time on the cars. - Develop and deploy deep learning models, including vision language models (VLMs) and Large Language Models (LLMs) - Optimize deep learning models to run robustly under tight run-time constraints.\n\n岗位要求:\nRequirements - Master in Computer Science, or at least 2 years of equivalent industry experience in similar technical fields. - Solid understanding of data structures, algorithms, parallel computing, code optimization and large scale data processing. - Experience in applied machine learning including data collection and analysis, evaluation and feature engineering. - Expertise in C++/Python. - Strong communication skills and team spirit. Preferred Experience - PhD in Deep Learning, Machine Learning, Robotics, Natural Language Processing, or similar technical field of study. - Publications on top-tier conferences like CVPR/ICCV/ECCV/ICLR/ICML/NeurIPS/ICLR/AAAI/IJCV/PAMI - Experience in applying ML/DL for behavior prediction, imitation learning, motion planning. - Experience in deploying deep learning algorithms for real time applications, with limited computing resources. - Experience in convex optimization, computational geometry or linear algebra. - Experience in GPU/CUDA/TensorRT Compensation and Benefits Base Salary Range: $140,000 - $280,000 Annually Compensation may vary outside of this range depending on many factors, including the candidate’s qualifications, skills, competencies, experience, and location. Base pay is one part of the Total Compensation and this role may be eligible for bonuses/incentives and restricted stock units. Also, we provide the following benefits to the eligible employees: - Health Care Plan (Medical, Dental & Vision) - Retirement Plan (Traditional and Roth 401k) - Life Insurance (Basic, Voluntary & AD&D) - Paid Time Off (Vacation & Public Holidays) - Family Leave (Maternity, Paternity) - Short Term & Long Term Disability - Free Food & Snacks"
     },
     {
@@ -330,7 +330,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7642350600131217674/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "Description Founded in 2016 in Silicon Valley, Pony.ai has quickly become a global leader in autonomous mobility and is a pioneer in extending autonomous mobility technologies and services at a rapidly expanding footprint of sites around the world. Operating Robotaxi, Robotruck and Personally Owned Vehicles (POV) business units, Pony.ai is an industry leader in the commercialization of autonomous driving and is committed to developing the safest autonomous driving capabilities on a global scale. Pony.ai’s leading position has been recognized, with CNBC ranking Pony.ai #10 on its CNBC Disruptor list of the 50 most innovative and disruptive tech companies of 2022. In June 2023, Pony.ai was recognized on the XPRIZE and Bessemer Venture Partners inaugural “XB100” 2023 list of the world’s top 100 private deep tech companies, ranking #12 globally. As of August 2023, Pony.ai has accumulated nearly 21 million miles of autonomous driving globally. Pony.ai went public at NASDAQ in November 2024. Responsibility As the Staff/Senior Staff Software Engineer - Perception, you will be responsible for developing and implementing the next-generation perception system that enables our autonomous systems to understand and navigate their environment with precision and reliability. You will work closely with the planner team to accomplish the final end-to-end AI-based autonomous driving system. - Push forward innovative AI techniques to solve extremely challenging real-world robotics problems that are deployed at large scale. - Manage the team with world-class deep learning engineers and software engineers, ensure each team member operates with excellence and achieves their objectives. - Drive both the short-term and long-term technical vision in a domain where long-term solutions are still evolving research challenges, continually advancing the state of the art of the autonomous driving system. - Develop and maintain strong collaborative relationships with peers across the entire company, foster a unified and synergistic environment that leverages cross-functional expertise to propel our autonomous systems forward.\n\n岗位要求:\nRequirements - Master’s or PhD Degree in Computer Science, Engineering, Mathematics, Statistics, or related fields - 5+ years of experience in deploying state-of-the-art computer vision or deep learning technologies to real-world applications. - Proficiency in programming languages such as C++ or Python. - Execution mindset and skills in a fast paced environment. - Excellent technical leadership abilities. - Passionate about AI technologies for real-world applications. Preferred Experience - Strong track record in designing org structures and growing people. - Extensive experience in the autonomous driving industry. - Strong understanding of real-time systems and optimization techniques. - Hands-on experience having deployed real products or platforms into the real world, and intimately understanding the challenges of working with complex systems Compensation and Benefits Base Salary Range: $245,000 - $350,000 Annually Compensation may vary outside of this range depending on many factors, including the candidate’s qualifications, skills, competencies, experience, and location. Base pay is one part of the Total Compensation and this role may be eligible for bonuses/incentives and restricted stock units. Also, we provide the following benefits to the eligible employees: - Health Care Plan (Medical, Dental & Vision) - Retirement Plan (Traditional and Roth 401k) - Life Insurance (Basic, Voluntary & AD&D) - Paid Time Off (Vacation & Public Holidays) - Family Leave (Maternity, Paternity) - Short Term & Long Term Disability - Free Food & Snacks Please click here for our privacy disclosure."
     },
     {
@@ -344,7 +344,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7641854875432847652/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "团队负责根据道路、周围环境、其他车辆行人等实时交通情况，决定和控制自动驾驶车辆如何行驶，是自动驾驶中最核心的团队之一。 团队的软件或算法工程师负责以下工作中的一项或几项： 1. 高性能、高可靠性的Planning架构设计与系统开发； 2. 高精度、高性能的计算几何与数值计算算法开发与优化； 3. 在驾驶决策等方面通过机器学习或其他算法提升自动驾驶车辆的能力；\n\n岗位要求:\n职位要求 1. 优秀的编程能力，熟悉C、C++、Python、Java等主流编程语言中的至少一种，熟悉常用的数据结构与算法； 2. 优秀的沟通与协作能力； 3. 优秀的问题转化与建模能力，需要创新性的思维解决全行业都没有解决过的有挑战的问题； 熟练掌握以下内容中的任何一项可适当加分： 1. 会开车 2. 数值优化 3. 计算几何"
     },
     {
@@ -358,7 +358,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7641087292325136666/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、负责公司IT/办公体系的建设，如资产管理，桌面支持（办公软件、工具及应用系统类软件），终端管理（Windows，Linux，macOS）等； 2、负责IT信息化策略及相关流程规范的制定和改进，提升公司IT管理水平及工作效率； 3、负责公司的IT资产管理，终端准入和安全策略； 4、负责IT类设备（如多媒体会议音视频设备、飞书和zoom会议系统、FujiFilm打印机、各类门禁与监控设备的安装维护调试上线）及企业办公套件的运维管理及故障处理；\n\n岗位要求:\n1、熟悉常见的IT资产管理系统，有IT资产管理经验； 2、熟悉桌面终端运维与支持，特别是linux系统下常用命令、工具和服务的配置，能熟练掌握Linux Windows Mac下的系统排障； 3、具备熟练的Ubuntu操作系统批量安装、运维管理和故障处理排查经验的优先，具有RHCSA或其他同等级Linux认证证书的优先； 4、对PXE，KMS等服务的搭建及维护有相关经验，对Ubuntu和Windows系统镜像有相关的定制及优化经验优先，有相关的脚本编写能力优先； 5、具备门禁系统、视频监控系统的日常运维、配置管理及故障排查能力，熟悉相关设备（如门禁控制器、读卡器、摄像头、NVR/DVR等）的安装调试与维护； 6、较强的沟通协调能力、执行力与自驱力，责任心强，有服务意识； 7、有中小型互联网公司IT工作经验者优先；"
     },
     {
@@ -372,7 +372,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7639984019749194026/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、负责公司IT/办公体系的建设，如资产管理，桌面支持（办公软件、工具及应用系统类软件），终端管理（Windows，Linux，macOS）等； 2、负责IT信息化策略及相关流程规范的制定和改进，提升公司IT管理水平及工作效率； 3、负责公司的IT资产管理，终端准入和安全策略； 4、负责IT类设备（如多媒体会议音视频设备、飞书和zoom会议系统、FujiFilm打印机、各类门禁与监控设备的安装维护调试上线）及企业办公套件的运维管理及故障处理；\n\n岗位要求:\n1、熟悉常见的IT资产管理系统，有IT资产管理经验； 2、熟悉桌面终端运维与支持，特别是linux系统下常用命令、工具和服务的配置，能熟练掌握Linux Windows Mac下的系统排障； 3、具备熟练的Ubuntu操作系统批量安装、运维管理和故障处理排查经验的优先，具有RHCSA或其他同等级Linux认证证书的优先； 4、对PXE，KMS等服务的搭建及维护有相关经验，对Ubuntu和Windows系统镜像有相关的定制及优化经验优先，有相关的脚本编写能力优先； 5、具备门禁系统、视频监控系统的日常运维、配置管理及故障排查能力，熟悉相关设备（如门禁控制器、读卡器、摄像头、NVR/DVR等）的安装调试与维护； 6、较强的沟通协调能力、执行力与自驱力，责任心强，有服务意识； 7、有中小型互联网公司IT工作经验者优先；"
     },
     {
@@ -386,7 +386,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7639962755461744934/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责驾驶重卡（手动或自动驾驶）进行道路测试、完成指定的运输任务，针对道路紧急情况应对突发状况，保证车辆及人员安全； 2. 协助完成公司车辆的保险、验车、保养、维修等相关工作。 3. 完成甲方人员要求和交待的临时性任务。\n\n岗位要求:\n1. 年龄22-45岁，中专及以上学历，普通话流利，具有良好的书面、口头表达能力； 2. 持有A2驾照满2年以上，道路运输从业资格证满1年以上； 3. 最近连续3个记分周期内没有被记满12分记录；最近1年内无超速20%以上、超员、超载、违反交通信号灯通行等严重交通违法行为记录；4. 无酒驾或者醉驾的记录，无服用国家管制的精神药品或者麻醉药品记录； 6. 无致人死亡或者重伤且负有责任的交通事故记录；无吸毒、赌博、盗窃、交通肇事、非法借贷、暴力犯罪或其他犯罪记录； 7. 驾驶技术熟练，具备良好的驾驶习惯和安全驾驶意识； 8. 熟悉车辆构造，具备一定的基本故障判断、维修能力； 9. 身体健康，踏实肯干，吃苦耐劳，诚信，无不良嗜好，如酗酒、赌博等； 10. 符合法律法规规定的关于自动驾驶测试人员及货运卡车司机的其他要求； 11. 有自动驾驶车辆安全员/测试员经验、熟悉干线物流港口/矿区/园区封闭场景者、退伍军人优先。"
     },
     {
@@ -400,7 +400,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7639962335217977636/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责驾驶重卡（手动或自动驾驶）进行道路测试、完成指定的运输任务，针对道路紧急情况应对突发状况，保证车辆及人员安全； 2. 协助完成公司车辆的保险、验车、保养、维修等相关工作。 3. 完成甲方人员要求和交待的临时性任务。\n\n岗位要求:\n1. 年龄22-45岁，中专及以上学历，普通话流利，具有良好的书面、口头表达能力； 2. 持有A2驾照满2年以上，道路运输从业资格证满1年以上； 3. 最近连续3个记分周期内没有被记满12分记录；最近1年内无超速20%以上、超员、超载、违反交通信号灯通行等严重交通违法行为记录； 4. 无酒驾或者醉驾的记录，无服用国家管制的精神药品或者麻醉药品记录； 6. 无致人死亡或者重伤且负有责任的交通事故记录；无吸毒、赌博、盗窃、交通肇事、非法借贷、暴力犯罪或其他犯罪记录； 7. 驾驶技术熟练，具备良好的驾驶习惯和安全驾驶意识； 8. 熟悉车辆构造，具备一定的基本故障判断、维修能力； 9. 身体健康，踏实肯干，吃苦耐劳，诚信，无不良嗜好，如酗酒、赌博等； 10. 符合法律法规规定的关于自动驾驶测试人员及货运卡车司机的其他要求； 11. 有自动驾驶车辆安全员/测试员经验、熟悉干线物流港口/矿区/园区封闭场景者、退伍军人优先。"
     },
     {
@@ -414,7 +414,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7639938343648643370/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责驾驶重卡（手动或自动驾驶）进行道路测试、完成指定的运输任务，针对道路紧急情况应对突发状况，保证车辆及人员安全； 2. 协助完成公司车辆的保险、验车、保养、维修等相关工作。 3. 完成甲方人员要求和交待的临时性任务。\n\n岗位要求:\n1. 年龄22-45岁，中专及以上学历，普通话流利，具有良好的书面、口头表达能力； 2. 持有A2驾照满2年以上，道路运输从业资格证满1年以上； 3. 最近连续3个记分周期内没有被记满12分记录；最近1年内无超速20%以上、超员、超载、违反交通信号灯通行等严重交通违法行为记录； 4. 无酒驾或者醉驾的记录，无服用国家管制的精神药品或者麻醉药品记录； 6. 无致人死亡或者重伤且负有责任的交通事故记录；无吸毒、赌博、盗窃、交通肇事、非法借贷、暴力犯罪或其他犯罪记录； 7. 驾驶技术熟练，具备良好的驾驶习惯和安全驾驶意识； 8. 熟悉车辆构造，具备一定的基本故障判断、维修能力； 9. 身体健康，踏实肯干，吃苦耐劳，诚信，无不良嗜好，如酗酒、赌博等； 10. 符合法律法规规定的关于自动驾驶测试人员及货运卡车司机的其他要求； 11. 有自动驾驶车辆安全员/测试员经验、熟悉干线物流港口/矿区/园区封闭场景者、退伍军人优先。"
     },
     {
@@ -428,7 +428,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7638582646125529390/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1.负责无人车整车产品全生命周期产品管理，构建完成整车产品定义、需求规划、Roadmap制定，主导整车产品从0到1全流程落地。 2.负责匹配无人运营的高阶自动驾驶车辆产品设计，统筹内外各系统，包括不限于车辆平台、车辆各专业系统、智能驾驶系统、整车级功能需求定义与落地。 3.对接主机厂市场、产品、研发/工程、测试、质量、制造等跨部门团队，管控项目全流程产品需求开发进度，保障整车产品高质量交付。 3.开展行业政策、竞品、用户/市场需求研究，输出产品竞争力分析，制定差异化产品策略，支撑产品规划与项目决策。 5.结合无人车商业化运营场景需求，优化整车产品适配性，提升产品运营安全、效率、可靠性与商业化落地能力。 6.跟踪自动驾驶前沿技术迭代，联动研发团队完成需求评审、功能验收与问题闭环，持续迭代优化整车产品方案。\n\n岗位要求:\n1.本科及以上学历，车辆工程、机械制造、自动化、计算机、电子信息等相关专业优先。 2.8年及以上整车产品工作经验，具备主机厂完整整车项目全流程经验，精通产品定义、产品设计、市场/用户需求研究全流程工作。 3.具备高阶自动驾驶/智能辅助驾驶整车产品量产项目经验，深度理解智能网联汽车开发逻辑、车规开发流程。 4.具备扎实的技术理解力，熟悉自动驾驶感知、决策、规划、控制核心原理，可高效对接产品及各研发团队。 5.了解无人车商业化运营模式、场景需求与运维逻辑，可基于运营需求优化整车产品方案。 6.具备优秀的市场研究、行业分析与产品规划能力，逻辑清晰，极强的跨部门协同、项目推进与风险管控能力。"
     },
     {
@@ -442,7 +442,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7638376833222674738/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "Founded in 2016 in Silicon Valley, Pony.ai has quickly become a global leader in autonomous mobility and is a pioneer in extending autonomous mobility technologies and services at a rapidly expanding footprint of sites around the world. Operating Robotaxi, Robotruck and Personally Owned Vehicles (POV) business units, Pony.ai is an industry leader in the commercialization of autonomous driving and is committed to developing the safest autonomous driving capabilities on a global scale. Pony.ai’s leading position has been recognized, with CNBC ranking Pony.ai #10 on its CNBC Disruptor list of the 50 most innovative and disruptive tech companies of 2022. In June 2023, Pony.ai was recognized on the XPRIZE and Bessemer Venture Partners inaugural “XB100” 2023 list of the world’s top 100 private deep tech companies, ranking #12 globally. As of August 2023, Pony.ai has accumulated nearly 21 million miles of autonomous driving globally. Pony.ai went public at NASDAQ in November 2024. - Build scalable systems for training and fine-tuning large generative models that produce realistic, informative driving behaviors for evaluation and scenario coverage. - Implement and iterate on RL-style methods: algorithms, reward / preference objectives, and training setups suited to high-fidelity, insightful behaviors in simulation-aligned workflows (closed-loop evaluation mindset). - Ship deep learning solutions (including LLM / VLM where appropriate) that improve human-led triaging, automate high-volume workflows, and support nuanced analysis of self-driving behavior to surface critical anomalies. - Own production-oriented ML for fleet-scale assessment: training, optimization, monitoring, and iteration of models used to judge performance across large real-world exposure. - Design and evolve data + evaluation systems inspired by RL from human preferences (RLHF) and related paradigms—turning preference/judgment signals into repeatable, scalable training and evaluation loops. - Partner broadly with teams such as Prediction, Planning, Research, and platform/engineering leads to land cross-cutting improvements with clear metrics.\n\n岗位要求:\n- M.S. or Ph.D. in Computer Science, Machine Learning, AI, or a related field—or equivalent practical experience. - 3+ years hands-on experience building and applying ML in production-grade settings, with a strong RL component (policy learning, preference/feedback optimization, or offline/online RL pipelines). - Depth in deep learning, sequence modeling, and generative models. - Demonstrated impact via strong publications or a clear history of shipping impactful ML systems end-to-end. - Experience with large-scale distributed training and large-scale data processing. - Ability to lead ambiguous technical work from problem framing through reliable delivery. Preferred - Background in autonomous vehicles, robotics, or complex simulation environments. - Strong grasp of modern RL and post-training techniques in LLM, dLLM, VLA and video generations. - Hands-on integration of simulation platforms with ML training and evaluation workflows. - Python fluency and frameworks such as PyTorch - Experience defining and operating metrics for complex, safety-critical AI systems. - Technical leadership: influencing stakeholders, aligning teams, and raising the bar for evaluation rigor. - Excellent communication—simple explanations of complex trade-offs. Compensation and Benefits Base Salary Range: $150,000 - $250,000 Annually Compensation may vary outside of this range depending on many factors, including the candidate’s qualifications, skills, competencies, experience, and location. Base pay is one part of the Total Compensation and this role may be eligible for bonuses/incentives and restricted stock units. Also, we provide the following benefits to the eligible employees: - Health Care Plan (Medical, Dental & Vision) - Retirement Plan (Traditional and Roth 401k) - Life Insurance (Basic, Voluntary & AD&D) - Paid Time Off (Vacation & Public Holidays) - Family Leave (Maternity, Paternity) - Short Term & Long Term Disability - Free Food & Snacks Please click here for our privacy disclosure."
     },
     {
@@ -456,7 +456,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7637026568820738310/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "团队负责根据道路、周围环境、其他车辆行人等实时交通情况，决定和控制自动驾驶车辆如何行驶，是自动驾驶中最核心的团队之一。 团队的软件或算法工程师负责以下工作中的一项或几项： 1. 高性能、高可靠性的Planning架构设计与系统开发； 2. 高精度、高性能的计算几何与数值计算算法开发与优化； 3. 在驾驶决策等方面通过机器学习或其他算法提升自动驾驶车辆的能力；\n\n岗位要求:\n职位要求 1. 优秀的编程能力，熟悉C、C++、Python、Java等主流编程语言中的至少一种，熟悉常用的数据结构与算法； 2. 优秀的沟通与协作能力； 3. 优秀的问题转化与建模能力，需要创新性的思维解决全行业都没有解决过的有挑战的问题； 熟练掌握以下内容中的任何一项可适当加分： 1. 会开车 2. 数值优化 3. 计算几何"
     },
     {
@@ -470,7 +470,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7634068841882585385/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1.负责自动驾驶系统线束设计开发，根据项目一级计划制定线束子计划，按时完成子计划的各项交付物 2.低压线束原理设计、2D和3D设计，导线规格选型、连接器选型、高速线缆选型及线束防护的设计 3.制定线束系统相关测试要求及计划，分析解决试制、实验及测试中的线束问题 4.负责项目各阶段装车设计校核及问题点分析与处理，现场线束相关问题解决 5.负责供应商管理、技术交流以及工作安排，跟踪线束交付进度，及时制定方案并解决影响线束交期的问题 6.与OEM合作共同完成自动驾驶系统线束前装方案设计工作\n\n岗位要求:\n1.自动化，机电一体化，电气工程等本科及以上学历； 2.熟悉线束系统开发流程及相应法规和标准，5年以上线束开发设计经验，能够独立完成线束原理，2D及3D设计； 3.熟练使用AutoCAD、CHS或VeSys等软件进行线束原理图、2D图纸设计； 熟练使用CATIA或SolidWorks等软件进行线束3D设计和校核工作 4.熟练使用万用表、示波器、CANoe和诊断仪等工具分析问题 5.良好的沟通能力和团队合作精神，英文文档阅读能力"
     },
     {
@@ -484,7 +484,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7632334172698593572/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 基础模型研发：负责视频生成基础模型（Text-to-Video, Image-to-Video, Video Inpainting 等）的核心算法研发、架构探索与生成效果迭代。 2. 全链路训练与优化：深入参与生成模型的全生命周期研发，包括大规模预训练、SFT、人类偏好对齐（RLHF/DPO 等强化学习方法）。追求生成内容的真实感（Photorealism），大幅提升模型对客观物理规律的理解、时空连贯性以及复杂真实物理世界的还原能力（打造 Physical World Simulator 级别效果）。 3. 数据闭环与清洗：搭建并完善高质量视频数据工程流水线，主导基于多模态大模型（VLM）的海量视频数据自动化清洗、多维度标注、过滤与质量评估，构建高质量的训练数据集。 4. 推理加速与落地：结合业务需求，开展模型轻量化、显存优化及推理加速工作，提升云端推理吞吐效率与生成速度，保障算法的高效工程落地。\n\n岗位要求:\n1. 计算机/人工智能/数学等相关专业，本科及以上学历；熟练掌握 Python 及常用数据结构，具备扎实的算法底子与优秀的工程实现能力。 2. 熟悉主流深度学习框架（PyTorch），具备大规模分布式训练（如 DeepSpeed, Megatron, FSDP）的实操、调参及系统性的踩坑经验。 3. 掌握主流生成式视觉算法与基础理论：深刻理解 Diffusion Models（扩散模型）、Transformer/DiT 架构原理，熟悉主流图像/视频生成算法及底座。 4. 具备极强的数据敏感度，熟悉多模态大模型（如 Qwen-VL, GPT-4o 等）的应用，对复杂真实场景数据的提纯、清洗规则设计和 Prompt 体系构建有实战经验。 5. 强烈的工程落地导向，关注生成内容的逼真程度、动态细节及物理合理性，熟悉相关质量指标（如 FVD, 运动平滑度评估），能独立解析和修改前沿开源代码。 6. 具备快速学习能力与良好的沟通协作能力，有技术极客精神。 加分项 - 具备从零到一主导或深度参与大规模视频生成/图像生成基础模型训练经验者优先。 - 在生成模型的强化学习（RLHF/DPO）与真实偏好对齐方向有深入研究或实际落地经验者优先。 - 有自动驾驶仿真、世界模型（World Models）或物理世界模拟视频生成相关研发经验者极大加分。 - 在开源社区活跃，对知名生成式项目有过核心代码贡献者优先。 - 在 CVPR, ICCV, ECCV, NeurIPS 等顶级会议发表过生成方向高质量论文者优先。"
     },
     {
@@ -498,7 +498,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7632197138911856950/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "核心职责：定义Robotaxi的“最优路径” 指标驱动与策略制定：深度分析海量运营数据（如客诉案例、绕路事件、分城市分时段指标），洞察问题根源与模式，制定并推动跨团队（研发、地图、测试、运营QA）的年度产品路线图与迭代策略，确保路线体验核心指标的达成。 核心技术领域的产品化：主导或深度参与以下核心模块的产品设计与优化，将用户问题和运营反馈转化为具体的技术需求与方案： 路线管理系统：优化路线策略和机制，解决多种路线权衡等复杂问题，在体验与效率间找到最佳平衡点。 路径规划算法：主导解决多种路线核心痛点，提升规划路线的合理性与用户接受度 施工区域识别与处理：建立高效的施工信息获取、地图更新与路径规避的闭环流程 变道策略：优化变道时机、成功率，处理复杂场景，显著降低因变道失败导致的绕路和客诉 协同地图团队：确保道路图的准确性与时效性，推动因环境变化（如新增护栏）或标注错误导致的问题快速修复 跨团队协作与流程建设：建立与研发、测试、运营QA、地图团队的高效协作与沟通机制，推动问题从发现、定位、方案制定到解决验证的标准化、数据化流程\n\n岗位要求:\n任职要求： 经验：8年以上互联网或科技公司产品经验，其中3年以上为高阶产品经理，有主导复杂技术产品从0到1或大规模优化迭代的成功经验。有地图、导航、路径规划或自动驾驶相关经验者优先。 技能：极强的数据驱动和逻辑分析能力，能熟练使用多种工具进行深度数据分析，善于从海量、多维的运营数据中抽象出核心问题与模式，并转化为可执行的产品策略。 技术理解：具备与技术团队（算法、研发）进行深度、高效对话的能力，理解路径规划、地图数据、成本函数等基本原理和技术约束，能准确评估技术方案的可行性与影响范围。 加分项： - 拥有自动驾驶Robotaxi或L4级别无人驾驶产品的实际工作经验。 - 熟悉主流地图SDK及路径规划服务的产品逻辑与能力边界。 - 具备一定的机器学习或运筹优化知识背景，能更深入地参与算法策略讨论。 - 在复杂的B端或to G项目中拥有成功的产品设计与落地经验。"
     },
     {
@@ -512,7 +512,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7626666739195365678/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 主导并深度参与对外合作项目的需求对接与落地执行，基于项目开发目标分解计划并持续跟进风险，推动合作项目从0到1上线。 2. 协调内外部资源（技术、产品、商务等），解决合作中的技术适配、需求测试落地等问题，保障合作项目高效推进。 3. 与软硬件研发、产品、测试等团队深度配合，建立跨团队沟通桥梁，推动技术方案与实际需求场景的双向反馈与落地。 4. 积极理解响应开发，路测及运营阶段问题，推进问题的快速定位与解决。 5. 持续发现问题，深入思考与组织复盘，支持完善各团队研发流程体系，提升协作效率与产出质量。\n\n岗位要求:\n1. 重点大学本科及以上学历，3年以上项目管理经验。 2. 跨团队沟通能力突出，能高效协调技术、产品、商务等多职能团队达成目标。 3. 具备较强的问题解决能力与抗压性，能接受灵活差旅安排。 优先条件 1. 两年以上人工智能，机器人，自动驾驶行业相关工作经验。 2. 熟练的英文书写与交流能力，能支持国际合作沟通。 3. 有外部合作项目（如TNC平台、主机厂）落地经验。 4. 对新生事物有探索热情，愿意参与从0到1的业务拓展与体系搭建。 5. 持有PMP证书，熟悉Jira等项目管理工具。"
     },
     {
@@ -526,7 +526,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7626660629990623551/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "职位概览 我们正在为数万辆智能汽车打造下一代“车载大脑”。该产品每日承载千万级的语音交互请求，运行于高性能的车规级芯片平台，并深度集成大语言模型（LLM）能力。 作为业务大脑的架构师，你将专注于构建高并发、低延迟的 AI 编排层，在公司成熟的网关与基础架构（Infra）之上，设计一套能够精准识别意图、灵活调度模型、并能通过“快慢路径”极速响应用户指令的业务中枢，实现 AI 能力在车载场景下的完美落地。 核心职责 (Core Responsibilities) 1. AI 编排与对话引擎设计 (AI Orchestration) - 业务中枢构建：主导 ASR-LLM-TTS 全链路的流式业务编排，确保端云协同下的整体交互延迟（TTFT）处于行业领先水平。 - 对话管理 (DM)：设计并维护支持高并发的多轮对话状态机，处理复杂的上下文记忆、意图切换、任务中断与恢复逻辑。 - Agent 架构：构建基于 Agent 的任务规划系统，将模糊的语义请求转化为严谨的结构化指令（JSON），实现对车控、导航、媒体等 API 的精准调度。 2. 混合意图引擎与“快慢路径”设计 (Hybrid Intent Engine) - 分流机制：设计“分类小模型（快路径）”与“LLM（慢路径）”的并行路由策略。针对高频车控指令实现毫秒级极速响应，无需等待大模型推理。 - 置信度仲裁：建立一套完善的指令仲裁与回滚策略，解决小模型误识别与 LLM 幻觉之间的冲突。 - 槽位提取优化：针对操作性指令设计轻量级的 NER（实体识别）与槽位填充能力，提升系统整体能效比。 3. 多模型路由与网关适配 (Model Gateway & Routing) - 模型路由：构建统一的模型网关适配层，支持在多个外部 LLM 供应商（如 OpenAI, 文心, 千问等）与私有化模型之间进行动态切换与负载均衡。 - 降级与容灾：设计业务层的服务降级预案，确保在云端模型故障或弱网环境下，基础车控功能依然 100% 可用。 4. 工程卓越性与数据闭环 (Engineering Excellence) - 协议定义：与 Infra 团队协作，定义高效的端云通信协议（基于 gRPC/Protobuf），优化中间文本与音频流的传输效率。 - 成本控制：通过语义缓存（Semantic Cache）、模型量化建议等手段，在大规模交互场景下显著降低 Token 消耗成本。\n\n岗位要求:\n必备条件 - 架构资历：8 年以上后端开发经验，3 年以上大型分布式系统架构经验。有处理过日均百万级交互或十万级并发连接业务逻辑的实战经验。 - 技术栈：精通 Go 或 Python，具备极强的高性能异步编程能力。 - AI 背景：深度理解 LLM 能力边界，熟悉 RAG 架构、Function Calling 以及 Prompt Engineering 的工程化落地。 - 协议理解：深刻理解 gRPC、HTTP/2 双向流通信，能够设计高性能的二进制传输契约。 核心素质 - 逻辑严谨：能够将复杂、模糊的用户对话场景拆解为清晰的状态转移图与逻辑流水线。 - 协作能力：能够作为业务方，向 Infra 团队精准提出对网关、存储、计算资源的定制化需求。 加分项 (Preferred Qualifications) - 有智能音箱、语音机器人或车载 TSP 平台核心架构经验。 - 在端侧（Android/高通平台）有模型部署与推理优化（ONNX/TFLite）的跨端协作经验。 - 参与过知名 AI Agent 框架或分布式调度系统的开源贡献。 我们提供的挑战 - 规模化：直接负责数万台车辆的真实 AI 场景。 - 前沿性：在车机受限算力与云端强大算力之间，寻找 AI 落地的最佳架构平衡点。 - 影响力：你的每一行架构代码，都将直接影响众多自动驾驶出行用户的语音体验。"
     },
     {
@@ -540,7 +540,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7626645730044070154/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "工作时间： 接受灵活调班，周一至周日以及法定节假日按排班表上班，做五休二，早班:07:00-15:15，晚班：15:15-23:30，通宵班：23:30-07:00，班次会根据业务需要灵活调整。 职位描述： 1.使用远程协助系统，根据运营需要处理车辆的远程协助请求。 2.收集、整理和归纳远程协助系统的使用问题以及建议，与相关负责团队及时反馈和沟通。 3.将无法立即解决的问题及时上报至支持团队，跟踪问题解决进度。 4.整理阶段性远程协助数据报告。 5.协助客服专员完成用户沟通，信息反馈等工作任务。 6.配合远程协助系统以及客服系统相关的测试反馈任务。\n\n岗位要求:\n1.全日制中专学历以上，专业不限； 2.计算机中文输入40字/分钟左右，熟练使用基本的办公电脑技能和App使用技能，如电子邮箱，EXCEL，WORD等办公软件； 3.普通话标准，善于沟通，具备良好的应变能力和抗压能力； 4.具有较强的学习适应能力，快速熟练地掌握系统以及新功能； 5.能适应轮班轮休工作制，8小时工作制； 6.有C1/C2驾照3年或以上; 7.最近连续3个记分周期内无记满12分记录; 8.最近1年内无超速50%以上、超员、超载、违反交通信号灯通行等严重交通违法行为记录，无饮酒后驾驶或者醉酒驾驶视机动车记录,无服用国家管制的精神药品或者麻醉药品记录； 9.无致人死亡或者重伤的交通事故责任记录。"
     },
     {
@@ -554,7 +554,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7624434615013345587/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "职位概述 全面负责业务线相关项目的全流程管理，聚焦业务目标达成、运营落地及跨部门协同推进，主导业务类项目规划、进度管控、资源协调与风险把控，推动项目高效落地并助力业务指标提升，保障业务持续稳定运转。 核心职责 1、负责业务线各类项目（含开城扩区、自动驾驶资格证获取、运营落地等）的项目规划，制定清晰的项目计划、里程碑与交付节点。 2、统筹跨部门资源，建立高效沟通机制，推动各方协同配合，保障项目按计划推进、按时落地。 3、全程把控项目进度，及时识别、组织分析并解决项目执行中的风险、问题与卡点，推动问题闭环，确保项目达成预期业务目标。 4、对接业务侧需求，深度理解业务逻辑与运营策略，将业务需求转化为可执行的项目任务，同步跟进项目落地后的效果复盘，输出复盘报告并提出优化方案。 5、梳理并优化业务项目管理流程，建立标准化项目管控机制，提升团队项目执行效率与协作效率。\n\n岗位要求:\n任职要求 1、本科及以上学历，3年及以上项目管理经验，持有PMP等项目管理证书；有业务PM、运营项目管理相关工作经验者优先。 2、具备优秀的跨部门沟通协调能力、资源整合能力与问题解决能力，能高效推动多方协作达成项目目标。 3、具备较强的业务思维，能快速对接并消化业务需求。 4、工作责任心强、抗压能力强，具备良好的目标感、执行力与细节把控能力，擅长多项目并行管理者优先。"
     },
     {
@@ -568,7 +568,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7623717059511666998/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责支持端到端招聘流程管理，支持北京研发中心招聘相关工作（含社招及校招）； 2. 流程与体验优化，持续优化招聘流程、面试体系与评估标准，提升招聘效率与候选人体验； 3. 渠道策略与主动寻访，维护并拓展各类招聘渠道，建立高效的主动寻访机制，有效提升招聘投入产出比； 4. 人才地图(Mapping)构建，持续跟踪关键岗位人才分布与流动趋势，为招聘策略与人才储备提供支撑；\n\n岗位要求:\n1. 本科及以上学历，5年及以上招聘相关工作经验，其中至少2年以上负责技术/研发岗位招聘，有互联网/科技公司研发中心招聘经验或猎头背景者优先； 2. 精通招聘全流程管理，具备较强的人才Mapping与定向挖猎能力； 3. 熟练使用招聘数据分析工具，能通过数据驱动决策，善于发现问题并系统性解决； 4. 具备敏锐的业务理解力与优秀的学习能力，有超强执行力和进取心，具备一定的抗压能力； 5. 乐于沟通，人际敏感性较高，具有较好的团队合作精神。 加分项： · 有团队带教或管理经验者优先。"
     },
     {
@@ -582,7 +582,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7622890775751969034/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责卡车新一代量产车型的软件质量保障工作，搭建量产卡车各阶段的标准化测试流程，确保新车型具备持续稳定批量交付能力； 2. 建立高效的跨团队协作机制，不断发现自动驾驶系统和当前新车型的适配性问题，并持续改进； 3. 多维度探索和建设自动驾驶度量方法，不断细化和丰富度量指标并追踪，促进自动驾驶系统能力不断提升； 4. 共建落地业内主流的测试技术和方法论，在流程方法工具等方面创新，提升系统交付质量。\n\n岗位要求:\n1. 5年以上软件测试测试工作经验、本科以上学历，计算机相关专业； 2. 熟悉软硬件集成测试方法，熟悉从需求到发布的全流程质量保障，能够独立设计复杂系统的测试策略，推动测试流程持续优化； 3. 至少了解一门编程语言，能够独立编写自动化脚本、测试工具提升测试效率； 4. 具备极强的产品意识和逻辑分析能力，将测试问题转化为需求，推动新车型软件能力持续进化; 5. 拥有快速适应及学习能力，强烈的工作责任心和团队合作精神。 加分项： 具备量产项目软件质量保障经验(量产车或者消费电子类)"
     },
     {
@@ -596,7 +596,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7622881140940343594/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "负责车端嵌入式 Linux 平台的安全设计、开发与落地，包括系统启动安全、运行时安全、访问控制、日志审计等能力建设。 负责车载 ECU / 域控制器 / 智驾计算平台等设备的安全需求分析，结合产品架构完成安全方案设计与技术实现。 负责嵌入式 Linux 系统安全加固，包括但不限于内核裁剪与配置、文件系统保护、权限隔离、最小化部署、进程与服务安全控制。。 负责车端通信链路安全设计与开发，包括车内网络、车云通信、远程诊断/升级相关的认证、加密、完整性保护机制。 参与整车网络安全开发流程建设，支撑产品满足 ISO/SAE 21434、UNECE R155/R156 等相关法规和标准要求。 与硬件、底软、测试、合规等团队协同，推动安全能力在项目中的工程化落地。\n\n岗位要求:\n本科及以上学历，计算机、信息安全、通信、自动化、电子工程、车辆工程等相关专业。 具备 3 年及以上嵌入式 Linux 或车载软件安全相关研发工作经验，优秀候选人可适当放宽。 熟悉EBPF相关开发，有EBPF工程落地经验 熟悉嵌入式 Linux 系统原理，理解 Bootloader、Kernel、RootFS、驱动、系统服务、进程/线程、IPC、文件系统、权限模型等。 熟悉 C/C++ 开发，具备扎实的系统级问题分析与定位能力，能够阅读和调试底层代码。 熟悉常见安全机制与技术，包括但不限于安全启动、代码签名、身份认证、访问控制、密钥管理、加解密、完整性校验、安全日志等。 熟悉 Linux 安全加固方法，了解 SELinux / AppArmor、seccomp、capabilities、dm-verity、IMA/EVM、TPM/HSM 等相关技术。 熟悉常见车载通信或嵌入式通信协议，如 CAN / SOME-IP / DoIP / UDS / Ethernet / TCP/IP / TLS 等。 熟悉漏洞原理与常见攻防技术，了解缓冲区溢出、权限提升、提权链、供应链风险、调试口滥用、固件提取与逆向分析等安全问题。 具备良好的问题抽象能力、跨团队协作能力和文档输出能力，能够推动复杂安全问题落地解决。"
     },
     {
@@ -610,7 +610,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7620317284989356294/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "- 全程紧跟车型项目的质量各方面，从源头准入、项目过程质量、产线质量、车厂售后质量各环节确保车型项目达到Robotaxi运营所需的车辆质量目标。 - 面向Robotaxi运营的质量要求，在车型项目的全生命周期，实施Robotaxi工况特有的质量管理，并驱动OEM进行硬件闭环改进： - 在项目初期设定车辆质量目标，与OEM合作伙伴共同搭建车型项目质量管理方法和实施路径； - 在项目过程中，对内组织内部质量评审，对外协同监督OEM负责的质量评审，灵活利用APQP/PPAP等质量管理工具，确保项目关键阀点前的质量问题有效关闭和闭环，特别是SOP前质量评估； - 在与OEM车辆项目问题的解决中，有机的和工程师、QA、测试、项目经理、生产团队合作，充分利用数据分析，定义归因规则，推动车辆质量提升和问题解决，确保各试制阶段的质量目标达成； - 量产后，推动质保和售后问题响应机制的落实，建立质量索赔与售后激励机制，从质量角度确保OEM及其售后团队及时解决车辆问题，并评估对Robotaxi运营的影响 - 对外代表项目组对接OEM质量，确保原车质量基线；对内确保自动驾驶方案与原车集成前装不引入新问题，建立可追溯的质量体系。\n\n岗位要求:\n- 本科及以上学历，专业为汽车专业，机械专业，电子电器专业。 - 8年以上主机厂质量工程经验，熟悉APQP / PPAP / IATF 16949，具备灵活应用FMEA、8-D问题分析等工具的经验。 - 具备极强的跨公司沟通和谈判能力，具备驱动OEM解决问题的能力。 - 有完整的车型SOP全过程和售后质量管控经验，具备跨部门协调能力，有推动内外部共同解决问题的经验。 - 具备数据分析、统计分析的能力和工程思维。 加分项： - 熟悉CAN/LIN总线诊断和UDS诊断协议，熟悉汽车电子电器架构（EEA）或底盘电控系统 - 具备项目管理素质，理解时间管理，问题管理，成本管理的核心，并能在矛盾时，基于现状做出利益最大化的权衡判断。 - 丰富的问题分析解决和数据统计分析的实践经验，具备创造性思维和独立思考能力，具备挑战OEM分析报告的能力。"
     },
     {
@@ -624,7 +624,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7616291539672975654/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "• 主要职责：与税务机关沟通协调涉税事项，处理好广州、深圳的主管税局的关系 • 审核各子公司的日常税务申报事项，确保日常申报的合规 • 设计集团内部关联交易的转移定价规则 • 参与重大商业决策的税务评估，包括海外项目等 • 建立税务内控体系，防范税务风险\n\n岗位要求:\n• 有好的税局关系，有丰富的对接税局的经验，特别是针对广深 • 本科及以上学历，财务、会计、税务等相关专业 • 8年以上税务工作经验，其中至少3年担任税务经理或以上职位 • 熟悉中国税法体系，了解增值税、企业所得税、个人所得税等主要税种 • 加分项：了解税局内部系统的情况、了解日常申报事项、了解香港税 • 具有较强的沟通协调能力，能够与多个部门和外部机构有效合作 • 持有注册税务师、注册会计师等专业资格证书优先"
     },
     {
@@ -638,7 +638,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7615440217272666406/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "岗位职责 架构设计与演进：负责 OMS 后台业务系统及数据中台的整体架构设计，攻克系统可靠性及海量视频数据链路稳定性的技术难题。 云端服务开发：设计并实现高性能、可扩展的微服务架构，支撑百万级车辆的并发接入，优化系统资源利用率。 模型工程化落地：负责 OMS 算法（如疲劳监测、遗留物检测、行为识别等）在车端的部署优化，提升推理效率。 性能调优：主导系统性能瓶颈排查，优化模型量化、算子实现及数据预处理流程，确保低延迟与高吞吐。 数据闭环构建：构建高可靠的消息队列与分布式存储系统，打通从车端触发采样到云端模型迭代的自动驾驶数据闭环。\n\n岗位要求:\n任职要求 学历与经验：计算机或相关专业本科及以上，5 年以上后端开发或 AI 工程化经验。 核心开发能力：精通 Python / C++ / Java等任一门开发语言，具备严谨的代码习惯及深厚的 Linux 系统底层开发功底。 分布式专家：深入理解分布式一致性、缓存、消息队列原理，具备大规模（百万级 QPS）或海量数据处理系统设计经验。 AI 框架熟悉度：熟悉 PyTorch 或 TensorFlow，能理解常见视觉模型（CNN/Transformer）结构及算子原理，配合算法同学优化训练到推理的衔接。"
     },
     {
@@ -652,7 +652,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7613220770421393674/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 全面支持人力资源运营工作，包括但不限于员工入职离职、人事档案管理、薪酬核算协助及招聘流程协调。 2. 协助处理人力资源相关合规事务、员工福利管理、员工关系维护及签证/工作许可办理等。 3. 策划、组织并协调公司内部活动、会议及员工关怀项目，提升员工凝聚力与企业文化氛围。 4. 妥善管理与保管各项机密信息，确保信息处理的准确性与保密性。 5. 完成上级交办的其他人力资源与行政支持工作。\n\n岗位要求:\n1. 本科及以上学历，人力资源管理、企业管理、行政管理或相关专业优先。 2. 中英文流利，具备阿拉伯语沟通能力者优先。 3. 具备优秀的组织协调与多任务处理能力，注重细节，能在快节奏环境中高效工作。 4. 具有高度的工作热情、主动性、责任心与团队协作精神。 5. 能够每周在迪拜办公室工作40小时，适应现场办公模式。"
     },
     {
@@ -666,7 +666,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7612585984207276297/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "负责将大模型部署到自动驾驶车端芯片平台（NVIDIA Orin / Thor 等），并进行极致的性能、内存与能效优化。你将在算力、内存、功耗与实时性严格受限、且对安全与稳定性要求极高的车载环境下，打通从推理引擎定制、核心算子优化到车端运行时管理的全栈链路，推动大模型在自动驾驶（端到端决策、场景理解等）场景的规模化落地。 岗位职责 1. 适配、移植与深度优化车端推理引擎/运行时（TensorRT-LLM、TensorRT Edge-LLM、vLLM、SGLang 等），通过计算图优化、算子融合、高性能 CUDA 算子开发及 KV Cache、投机采样等优化，充分发挥 Orin / Thor 平台算力，满足实时性要求； 2. 建立 Benchmark 与 Profiling 体系，跟踪首字延迟（TTFT）、吞吐、内存峰值、冷启动、模型切换、cache 命中率、长稳与抖动等车端核心指标。支持场景理解、Function Calling、结构化输出、流式输出、多模态推理等核心场景的低延迟落地；\n\n岗位要求:\n1. 计算机、电子工程、人工智能、自动化等相关专业，本科及以上学历； 2. 具备 2 年以上 AI 推理部署、端侧AI、系统性能优化或模型工程化相关经验； 3. 精通 C/C++ 与 Python，具备扎实的计算机体系结构知识，熟悉 Linux 下的开发与调试； 4. 深入理解 Transformer / LLM / VLM 推理机制，熟悉 prefill、decode、KV Cache、attention、batching、streaming 等关键概念； 5. 精通至少一种推理框架（TensorRT-LLM / vLLM / SGLang / ONNX Runtime 等），具备引擎定制、算子开发或 graph 优化经验； 6. 精通大模型核心算子（Attention、FFN/MoE、LayerNorm/RMSNorm）的底层实现与性能优化方法； 加分项 1. 有 Qwen 等主流开源大模型的部署经验； 2. 有在 NVIDIA Orin / Thor 等车端平台部署大模型的经验（熟悉 TensorRT Edge-LLM 等工具链，了解 Orin 支持 FP16/INT8/INT4、Thor 支持 FP8/NVFP4 等平台特性差异）； 3. 有自动驾驶大模型量产落地经验，有端到端自动驾驶大模型或多模态大模型部署优化经验。"
     },
     {
@@ -680,7 +680,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7611791477819820334/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责职场的日常工程维修管理，包括但不限于水电、墙面、地面、门窗、空调、办公家具等设施设备的日常巡检、故障排查及维修跟进，确保职场设施正常运行； 2. 统筹办公职场装修相关工作，包括装修方案初步对接、施工单位筛选与沟通、施工过程监督、装修质量验收、装修资料归档等，把控装修进度与成本，确保装修工作符合公司需求及安全标准； 3. 建立职场工程维修、装修台账，详细记录巡检情况、维修记录、装修流程、物料消耗、费用支出等信息，做到台账清晰、有据可查； 4. 对接外部维修、装修服务商（如物业、装修公司、设备维保单位等），洽谈合作事宜、签订服务协议，监督服务质量与效率，做好费用核算； 5. 负责职场安全隐患排查，重点关注装修施工安全、水电安全等，及时发现问题并协调整改，防范安全事故发生； 6. 与物业管理方保持密切沟通，处理报修、园区停车位、入驻/退租手续等事宜； 7. 配合完成其他日常工作，如职场环境维护、固定资产管理、员工办公需求响应等，完成上级交办的其他行政相关任务； 8. 配合完成职场消防安全检查、及各项行政合规性检查。\n\n岗位要求:\n- 本科及以上学历，行政管理、工程管理、建筑装修等相关专业优先； - 具备3年及以上行政装修相关工作经验； - 熟悉办公场所水电、装修施工流程及质量标准，能独立处理常见维修问题、对接装修相关事宜。 - 加分项：（满足任意一条优先录用） -有千平以上职场装修相关工作经验； -持有水电工证、装修相关从业资格证者优先； -有在1000人以上规模企业或甲级写字楼负责行政综合维修的经验； -熟练使用CAD、SketchUp或广联达等软件。"
     },
     {
@@ -694,7 +694,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7611472779975592233/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 基于信息安全需求与设计，编制功能级信息安全测试计划、测试用例、测试数据与测试报告，确保需求—用例—结果可追溯。 2. 面向车载ECU/域控制器/车云通信链路，开展信息安全相关的功能测试，包括但不限于： - 身份鉴别/鉴权、会话管理、权限控制（RBAC/ACL） - 安全通信（TLS/IPsec/MAC/加密通道）、证书/密钥生命周期、密钥注入与更新 - 安全诊断与访问控制（UDS SecurityAccess、DoIP 安全策略） - OTA 升级安全（包签名校验、回滚保护、版本策略、失败恢复） - 安全日志/审计/告警联动、时间同步与安全事件记录完整性\n\n岗位要求:\n1. 本科及以上，1年以上车载测试经验（信息安全方向加分） 2. 熟悉至少一种车载网络与诊断体系：CAN/CAN FD/LIN/Ethernet、SOME/IP、DoIP、UDS。 3. 熟练使用至少两类测试/分析工具：CANoe/CANalyzer、Wireshark、Postman、OpenSSL、tcpdump等。 4. 具备测试工程化能力：需求解析、用例设计、边界/异常路径覆盖。 5. 具备脚本能力：Python/Shell/Go任一（能写自动化脚本与数据处理）。 6. 良好的沟通协作与文档能力，可输出规范化测试报告与可追溯证据链。"
     },
     {
@@ -708,7 +708,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7611106686434429222/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "- 基于对运营成本、效率指标（如人均效能、货损率、准点率）的深刻理解，设计并推动与业务结果强挂钩的激励方案、绩效管理优化项目。 - 负责劳动用工管理、合规管理、员工关系案件合法合规处理，提升关键人群的劳动风险识别与处置能力。 - 负责公司员工关系体系的建立、维护与优化，制定和完善相关规章制度。 - 定期进行用工风险审计与排查，建立风险预警机制。确保全国性运营网络的人力资源政策与操作100%符合各地劳动法规。 - 在业务转型、组织整合、流程再造等变革中，设计并实施配套的人力资源变革管理方案，确保变革平稳落地。 - 通过数据分析（如离职分析、敬业度调研、人效数据）洞察组织问题，驱动管理改进。\n\n岗位要求:\n- 统招本科及以上学历，人力资源及劳动法相关法律专业优先。 - 至少8年以上人力资源全模块工作经验，其中至少5年深度专注于物流、快递、供应链、制造业等强运营属性行业的HR业务伙伴（HRBP）或综合HR管理岗位。 - 具备扎实和丰富的员工关系实战经验，精通中国劳动法律法规体系，有独立处理复杂劳动争议全流程的成功经验。 - 优秀的人际洞察力和问题解决能力，清晰的逻辑思维和表达能力，同时具备数据分析和报告撰写能力。 - 乐观，坚韧，善于自我调节，具备职业心态和敬业精神，拥有较强的承压能力。"
     },
     {
@@ -722,7 +722,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7611048495641987382/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 招聘与人才配置： · 主导全流程招聘工作，包括职位需求分析、渠道拓展、简历筛选、面试安排、背景调查及录用沟通。 · 根据现有编制及业务发展需求，协助上级确定招聘目标，汇总岗位需求数目和人员需求数目，制定并执行招聘计划。 2. 员工关系与文化建设： · 负责员工入转调离等流程优化与风险管控，处理劳动争议及突发事件。 · 确保人力资源政策符合劳动法规，及时修订制度并提供相关培训与咨询。 · 策划并组织员工活动，推动团队建设，提升员工归属感与敬业度。 3. 绩效考核与管理： · 协助设计与实施公司绩效考核体系，确保其公正、有效并与业务目标对齐。 · 指导并监督绩效考核周期的顺利运行，包括目标设定、过程跟踪、评估反馈与结果应用。 · 为管理者提供绩效管理相关的培训与咨询支持。 4. 人力资源供应商管理：负责成本管控，监督人才供给质量与交付时效，建立协同机制以防控用工风险，定期开展服务评估与汰换，保障业务稳定高效运行。 5. 完成上级交办的其他工作。\n\n岗位要求:\n1. 本科及以上学历，人力资源、法律、管理等相关专业优先； 2. 3年以上人力资源工作经验，具备招聘、员工关系、绩效管理多模块扎实的实操经验； 3. 熟悉劳动法律法规，具备风控意识和逻辑思维，具备复杂ER案例处理能力； 4. 具备较强的责任心和执行力，能够按时完成各项工作任务； 5. 具备一定的数据分析和处理能力，能够熟练运用办公软件； 6. 有制造业、交通运输业工作经验者优先。"
     },
     {
@@ -736,7 +736,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7606602328094804265/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 测试全流程管理：嵌入式软件需求分析、测试计划制定、用例设计、执行与报告输出。 2. 自动化测试开发：使用python编写自动化脚本、搭建测试环境、调试测试用例、代码更新与维护。 3. 缺陷跟踪与协作：发现问题定位问题、推动研发修复，与研发团队协作提升软件质量。 4. 合规性与文档：遵循行业标准（如ASPICE），编写测试文档，经验分享等。 5. 完成主管安排的其它工作。\n\n岗位要求:\n1. 本科及以上学历，电子、自动化、计算机、车辆工程相关专业优先； 2. 熟练使用Linux操作系统，包括基本的命令行操作和shell脚本编写能力 3. 有C++/Python开发经验优先，有git/pytest/allure相关工具链使用经验优先； 4. 有车载产品测试经验或是生产测试经验优先，例如中控/域控产品等； 5. 理解汽车电子电气架构，熟悉CAN、以太网，串口、网络七层架构等通信协议； 6. 熟悉新产品导入流程和产品制造流程，对电子产品工艺要求/流程有一定了解； 7. 有较强的沟通能力、判断能力及洞察力，较强的成本控制概念，能有效的进行成本控制；"
     },
     {
@@ -750,7 +750,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7605228659850856755/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "在小马智行，你将主导构建支撑自动驾驶系统研发的核心工具基建。面对 PB 级数据处理、超大规模仿真、跨地域研发协作和复杂系统调试的挑战，你的技术方案将直接影响成百上千位工程师的研发效率，并成为自动驾驶规模化落地的重要基础能力 你将负责 负责自动驾驶核心工具链的技术方向与架构演进，包括但不限于： 1. 架构研发： 构建高置信度的云原生仿真系统架构，为算法验证提供稳定底座，支撑大规模自动化评测与回归 2. 性能优化： 优化全链路计算资源调度与关键性能瓶颈，提升高并发场景下的稳定性、吞吐能力与资源利用率 3. 平台建设： 主导工具链平台架构设计与技术选型，推进仿真、数据与评测能力的体系化建设与持续演进 4. 技术规划： 协同团队制定技术路线，推动核心指标持续提升，平衡短期交付与长期平台能力沉淀 5. 工程质量： 推行高标准代码规范与工程实践，主导设计评审、代码审查等质量保障机制建设\n\n岗位要求:\n我们期待你 1. 5 年以上软件开发经验，拥有技术团队协作和核心技术负责人经历，能够独立把控技术方向 2. 熟练掌握至少一门主力语言（C++/Python），能够主导关键技术决策，并具备 hands-on 实战能力 3. 熟悉 k8s 及其生态系统，具备云原生架构设计、微服务治理或大型云平台性能优化经验 4. 具备强 owner 意识与优秀的跨部门协作能力，能够推动复杂技术决策落地 5. 拥有开放的技术视野与快速学习能力，能够在高强度环境下解决复杂系统问题 加分项 1. 有自动驾驶仿真工具开发、自动驾驶开发经验 2. 有大规模计算资源调度管理与性能调优实践经验 3. 有大型互联网平台或云基础设施建设经验 加入我们，你将获得 1. 参与构建自动驾驶核心研发基础设施，技术决策直接影响研发效率与系统质量 2. 与顶尖自动驾驶研发团队协作，共同推进前沿技术落地 3. 更大的技术空间与技术影响力，在基础设施方向持续成长"
     },
     {
@@ -764,7 +764,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7603574461015083305/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "核心定位 统筹高速干线物流全链条，融合自动驾驶重卡技术与运营，主导技术商业化与规模化落地；整合行业资源，匹配高价值客户，构建智能物流生态。 岗位职责 1. 制定物流全链条战略，统筹仓网及运力等资源，优化时效、成本、服务； 2. 设计标准化运营流程与高效协同机制，推动自动驾驶重卡规模化部署； 3. 挖掘高价值客户，定制一体化物流解决方案，拓展优质订单； 4. 搭建数据驱动的运营体系，监控核心KPI，主导异常问题闭环及优化全链路流程； 5. 保持行业洞察，制定前瞻性招商策略与运营打法，构建开放共赢的物流业务生态； 6. 搭建高绩效团队，培养战略、技术及资源整合的能力。\n\n岗位要求:\n1. 10年以上物流行业管理经验，其中6年以上大型物流企业/头部电商物流高级管理经历； 2. 深度认知自动驾驶技术，有高速干线项目规模化落地经验； 3. 拥有高端客户资源，具备出色的商业嗅觉，能设计高竞争力的物流解决方案； 4. 具备优秀的跨域协同能力、领导力及抗压能力； 5. 熟悉行业法规，有全产业链资源，保障可持续运营； 6. 拥抱技术创新，具备全球化视野，能精准预判市场趋势。"
     },
     {
@@ -778,7 +778,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7603248027456981294/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、参与自动驾驶卡车的全流程测试，包括测试计划制定、测试执行、缺陷跟踪和测试报告输出 2、协助完成自动驾驶系统核心模块的专项测试、性能测试，推动模块功能的持续改进 3、在指导下开展测试自动化脚本、测试工具的开发，提升测试效率 4、协同研发、产品、项目团队，推动问题解决和持续迭代\n\n岗位要求:\n1、全日制统招本科及以上学历，计算机、软件工程、电子信息等相关专业 2、掌握一门主流开发语言，熟悉 Linux 常用命令，掌握 SQL 数据库基本操作及网络协议 3、有一定的的逻辑分析能力和学习能力，具备强烈的责任心和团队精神 4、具备良好的文档撰写能力注重细节，善于发现和定位问题 5、有大型企业实习测试经验优先"
     },
     {
@@ -792,7 +792,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7602530221351684362/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 团队建设与管理体系搭建 -全面负责百人规模远程安全员团队的日常管理、排班调度及梯队建设。 -设计并优化团队组织架构，选拔及培养各级组长和主管。 -监控核心运营指标，制定团队绩效考核方案，通过数据化管理提升团队的人效比并降低整体团队Misop。 2. 安全运营与流程标准化 -制定并严格执行远程监控的标准作业程序（SOP），确保团队操作合规率。 -建立紧急预案体系，负责处理运营过程中的突发安全事故并进行复盘定责。 -搭建质检体系，定期抽查操作记录，降低人为失误带来的运营风险。 3. 培训与合规 -搭建并优化从“入职培训”到“定期复训”的完整培训体系。 -关注行业法律法规变化，确保运营流程符合当地交通法规及安全要求。\n\n岗位要求:\n1.本科及以上学历，交通运输、车辆工程、运营管理或相关专业优先。 2.5年以上 运营管理经验，其中至少3年以上管理 100人以上团队的经验。 3.有自动驾驶测试运营、大型呼叫中心、出行平台安全中心管理经验者优先。 4.精通排班管理与人员效能优化。极强的安全风险意识和流程制定能力。 5.抗压能力强，能接受或管理 7x24 小时轮班制的运营模式。"
     },
     {
@@ -806,7 +806,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7599582645954545983/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责大语言模型（LLM）的应用开发、性能优化与落地实施，根据具体业务场景设计并实施高效、可落地的 AI 解决方案； 2. 参与模型的微调（Fine-tuning）、提示工程（Prompt Engineering）、推理加速、评估监控及上线部署，提升模型在垂直领域中的表现力与稳定性； 3. 开发基于大语言模型的创新产品研发，如智能问答系统、企业知识库、智能检索系统等落地应用； 4. 跟进并研究模型技术前沿（如 LangChain、RAG、LoRA、MCP 等），与技术团队协同将原型技术转化为可规模化部署的应用。\n\n岗位要求:\n1. 学历与经验 - 计算机科学、人工智能、软件工程等相关专业本科及以上学历 - 至少 1 年以上大模型相关应用开发经验，有实际项目落地或开源贡献优先 2. 技术能力 - 熟练使用 Python，具备良好的代码风格与开发习惯； - 熟悉主流深度学习框架（如 PyTorch/TensorFlow），理解 Transformer 等基础模型结构； - 熟悉大模型的微调手段（如 SFT、LoRA）及部署流程，了解模型量化、压缩和性能优化方法； - 掌握常见大模型应用开发技术，包括知识增强生成（RAG）、向量数据库（如 Faiss、Milvus 等）、LangChain 或 LlamaIndex 工具链； - 了解智能体框架（如 AutoGen、LangGraph、CrewAI）和基础多智能体通信协议（如 MCP、A2A）； - 能进行 Prompt 工程优化，具备模型效果自动评估经验 3. 软性要求 - 热爱 AI 与自然语言处理，有持续学习和技术钻研的热情 - 具备较强的沟通协作能力，能与产品、业务和算法团队高效协同，将技术方案清晰传达转化为落地解决方案 加分项 - 有开源大模型（如 LLaMA、ChatGLM、Baichuan 等）调研或使用经验 - 有实际 AIGC 产品开发经验，如智能问答、代码生成、AI 辅助办公等 - 具备向量搜索系统、Prompt 评估、自动化测试落地经验者优先"
     },
     {
@@ -820,7 +820,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7599578675629639963/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责车载多核MCU系统的实时操作系统内核研究设计、系统应用设计等相关工作； 2. 负责车载嵌入式相关系统功能设计、开发工作； 3. 负责嵌入式软件相关测试方法、用例设计，系统问题定位和优化等相关工作。\n\n岗位要求:\n1. 精通C语言和Python； 2. 熟练使用Linux，能在Linux环境下开发与工作； 3. 要求有丰富的MCU RTOS开发经验，具备优化实时操作系统的能力，可以独立开发工作，具备系统设计能力； 4. 熟悉超过一种的CPU体系架构：Tricore/ARM/MIPS/PowerPC/RSICV等； 5. 了解常见的车载通讯协议，如CAN、车载以太网、Lin等； 6. 要求责任心强，具备较强的适应能力以及积极的团队合作精神； 7. 了解常见的嵌入式调试手段，如芯片调试器、万用表、示波器使用等； 加分项 1. 有实时系统性能分析和优化相关工作经验； 2. 车载功能安全开发经验。"
     },
     {
@@ -834,7 +834,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7598464676117301555/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、根据系统需求制定硬件架构，负责硬件选型，接口定义，原理图设计等硬件设计相关工作 2、负责域控制器的线路图，Layout评审，域控制器的各种仿真，测量报告评审； 3、基于成本、性能、可靠性多维度，完成硬件域控制器硬件开发。 4、负责整个硬件产品全生命周期维护，解决开发及量产阶段遇到的相关问题。\n\n岗位要求:\n1、本科及以上学历，电子/电气，自动化，仪器仪表，通信，计算机，车辆工程等相关专业 ； 2、5年汽车电子系统设计相关经验，3年以上智驾域控制器开发经验 ； 3、精通主流高端SOC的设计，包括TI，英伟达，高通，NXP等 ； 4、熟悉汽车电子系统开发框架相关知识，如Autosar/SOA/SOME IP结构应用； 5、熟悉汽车电子硬件架构、功能定义、功能安全、信号链路、核心模块架构设计； 6、有成功域控制器量产经验优先； 7、强有力的自驱力，责任心和团队合作精神。"
     },
     {
@@ -848,7 +848,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7592922585978669339/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "- 建立面向产业、公众、资本市场的多层级内容战略框架。围绕公司技术领先性、商业化进展、创始人愿景、行业判断等角度，输出有体系、有洞察、有立场的深度内容。 - 持续追踪自动驾驶、AI、机器人、新能源汽车等领域的产业动态与舆论热点，主动挖掘并策划选题，有节奏的内容输出。 - 输出高质量深度文章、署名文章、评论文章、行业报道、人物特稿等。需具备从\"挖掘\"到\"凝结\"的全链路能力——从约访关键人、梳理信息，到形成独立观点并写出可传播的成稿。 - 主动约访公司内部技术骨干、一线工作人员、核心管理层、产业合作伙伴，用故事化的方式让外界真正理解小马智行的技术与价值观。 - 与内部各团队紧密配合，把分散的\"信息资产\"转化为对外可传播的内容。\n\n岗位要求:\n- 5年以上内容创作 / 深度报道 / 行业研究 / 战略传播相关经验； - 拥有高质量代表作，如行业报道、人物特稿、评论文章、专栏等； - 具备独立的判断力和思考框架，能写出\"有立场的文字\"； - 强烈的内驱力与主动精神——能\"自己找事做\"而非等任务； 加分项 - 科技、汽车、自动驾驶、AI 行业经验——最好深扎过其中之一； - 有财经、产业研究、智库、深度科技媒体背景； - 具备英文媒体 / 海外内容输出经验； 个人素质（核心） - Thinker 而非 Task Taker：能从战略高度思考内容输出框架； - 敢于辩论内容优劣：对内容质量有自己的判断和坚持，能为观点据理力争； - 主动破局：习惯主动挖掘、主动约访、主动推动，而非被动响应； - 打破信息茧房：能持续吸收行业、技术、社会的多维信息，不闭门造车； - 好奇心 + 共情力：对\"为什么是这样\"有强烈兴趣，对人、对故事有天然敏感度。"
     },
     {
@@ -862,7 +862,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7592175913744992550/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责对接运营team，并能够系统化梳理并完善计算/车辆平台相关的各类正常/异常的运营需求及场景； 2. 负责基于运营需求及场景，设计计算及车辆平台相关的系统方案并拆解系统需求至软硬件team，包括：上下电（远程&本地）/低功耗/解闭锁/数据存储&上传/车辆平台/各类异常处理等； 3. 负责协调内部软硬件团队，牵头进行系统方案及系统需求的验证，确保需求及方案能够及时落地；\n\n岗位要求:\n1. 本科及以上学历，5年以上产品/系统工程师经验； 2. 熟悉自动驾驶整体系统架构/EE架构，对车辆平台具备较深的知识储备； 3. 具有优秀的沟通协调能力及主动性，推动产品方案落地； 4. 具备良好的运营产品思维，能够从运营角度设计方案及拆解需求； 5. 有系统架构设计以及系统需求拆解开发经验；"
     },
     {
@@ -876,7 +876,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7591379308733778227/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 交易转化与商业价值 • 负责App内核心交易路径的产品规划与设计。 • 深度分析交易漏斗各环节数据，通过产品化手段持续提升下单转化率、客单价及复购率。 2. 全旅程用户体验 • 负责出行关键体验设计，包括行前决策辅助、行程中服务触达、行后服务保障与互动。 • 深度理解用户痛点，建立并维护核心用户旅程的地图与体验标准，推动跨团队协同，通过产品方案的持续迭代，提升用户满意度 3. 产品规划与执行 • 基于用户研究、数据分析和竞争洞察，制定所负责模块的产品愿景、路线图和季度目标。 • 产出高质量的产品需求文档（PRD）、原型和交互说明，并主导评审，推动项目高效上线。 • 定义并监控核心数据指标，进行效果复盘，实现数据驱动的迭代闭环。 4. 跨职能领导力（Cross-functional Leadership） • 作为项目核心负责人，有效协调设计、研发、测试、运营、市场等团队资源，确保产品按期、高质量发布。 • 向上清晰传达产品价值与进展，向下和横向有效影响与协同，推动复杂项目落地。\n\n岗位要求:\n• 学历与经验： ◦ 本科及以上学历，经济学、心理学、工业设计等相关专业优先。 ◦ 5年以上互联网产品经理经验，拥有出行、OTA、电商、本地生活等复杂交易平台的核心模块（如交易、增长、用户体验）实战经验者优先。 • 技能和素质： ◦ 逻辑能力与系统性思考： 对交易业务有理解，同时具备较好的用户同理心，能平衡两者并在决策中找到最佳平衡点； 能够系统性思考问题，理解功能、体验、技术、商业之间的复杂关联。 ◦ 数据驱动： 有优秀的数据分析逻辑，能独立完成漏斗分析、产品验证实验设计与复盘，SQL熟练者优先。 ◦ 专业能力： 出色的需求分析、产品规划、PRD撰写和原型设计能力，熟练使用Axure、Figma、Sketch等工具。 ◦ 用户体验： 对交互设计、用户心理有深刻理解，能产出以用户为中心的产品解决方案。 ◦ 沟通与影响力： 出色的跨部门沟通和项目推动能力，能清晰表达复杂问题并赢得支持。 ◦ 抗压与责任心： 能在快节奏和不确定的环境中保持高效，对产品结果有极强的责任感。"
     },
     {
@@ -890,7 +890,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7588012751642937643/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 驱动自动驾驶卡车量产项目的全生命周期管理，包括需求分析、计划制定、资源协调、进度把控及风险预警，确保主机厂合作项目高质量交付； 2. 统筹跨部门（研发、工程、供应链等）及跨地域协作，推动软硬件开发、测试验证及量产落地全流程； 3. 独立主导与主机厂对接事项，确保双方沟通机制运行顺畅并维护良好的合作关系，驱动主机厂按计划推进项目交付； 4. 参与对外商务合作谈判及法规政策合规支持，协助制定合作方案并推动项目落地，挖掘潜在商业机会； 5. 兼顾部门内部其他业务需求，包括流程优化、文档沉淀、资源调配及临时性任务。\n\n岗位要求:\n1. 本科及以上学历，车辆工程、机械工程、自动化、物流工程等相关工科专业优先； 2. 5年以上项目管理经验，汽车行业背景优先（尤其主机厂新车型研发量产经验）； 3. 优秀的跨团队沟通与协调能力，能驱动多方协作达成目标； 4. 快速学习能力、抗压性及多任务处理能力。 加分项: 1. 有整车项目管理、车辆工程及属性管理、线控底盘或电子架构研发等经验； 2. 熟悉自动驾驶技术、ADAS系统、线控底盘； 3. 大型车企/供应商/科技公司背景。"
     },
     {
@@ -904,7 +904,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7582449235326601508/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、按需推广实施SAP Financials and Controlling模块，以增强业务功能和整体性能； 2、精通FI/CO模块配置，熟悉MM/PP/SD的配置，并能独立完成配置、测试； 3、主导用户需求沟通，协助业务梳理系统流程，输出系统方案(SAP系统&非SAP系统）； 4、根据业务反馈问题，进行问题分析及解决； 5、输出操作手册，给业务部门培训赋能； 6、能看懂简单代码，及有问题的程序或接口进行debug。\n\n岗位要求:\n1、本科及以上学历，计算机信息技术相关专业（财务专业最佳）； 2、8年以上SAP经验，至少8个0-1完整的SAP乙方实施项目经验； 3、丰富的SAP FICO模块知识，精通熟悉各模块的配置，能够独立完成项目实施； 4、熟悉SAP的应用层操作，能编写开发需求说明书、操作手册； 5、多个系统对接经验，MES/WMS/OA/SRM/LPM; 6、具备优秀的学习能力，良好的沟通表达及协作能力。 加分项： 1、做过合并报表； 2、能简单写一些代码； 3、独立实施过MM或PP模块； 4、有海外SAP实施或运维经验，如美国、日本等； 5、熟悉US GAPP、PRC GAAP的差异，精通SAP多个分类账的实施。"
     },
     {
@@ -918,7 +918,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7581305901622708543/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、负责所有智驾系统相关零部件、总成的布置及结构方案分析； 2、与OEM对接进行ADK布置需求前置（前装、半前装）的沟通、协调及方案落地； 3、负责智能驾驶相关传感器和控制器及其安装结构3D/2D数据搭建、分析及校核； 4、配合电子电器及散热相关工程师进行ADK设备的结构设计、验证等；\n\n岗位要求:\n1、统招本科及以上学历，5年以上主机厂（OEM）车身or内外饰专业工作经验，了解钣金冲压及注塑件成型性能； 2、机械设计、机械制造、机电一体化、车辆工程等专业，英语良好； 3、熟练使用Solidworks/Catia(须至少熟练使用其中一项); 4、工作认真负责，严谨细致，有良好的创新精神和团队精神，愿意从事新兴行业； 5、具备AI提效工作经验的，可优先考虑。"
     },
     {
@@ -932,7 +932,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7574327735808657710/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责L4无人驾驶研发类型项目全周期管理，把控软硬件开发进度，推动 V 模型细节实施，统筹开发进度、质量、风险及资源协调。 2. 为关键接口人和跨团队支持者，拉通各模块包括硬件/ 系统 / 算法 / 软件 / 云平台 / 标定等团队及相关部门，推动全链路需求落地及项目管控。 3. 基于项目开发目标和需求推动开发分解计划及持续监控风险，引导团队持续拆解细化并动态把控风险，综合确保进度，质量和资源达到目标预期。 4. 积极理解响应开发，路测及运营阶段问题，推动快速定位及相关方闭环解决。 5. 持续发现问题，深入思考及组织复盘，支持完善研发流程体系，有效推动形成项目组织过程资产，提升协作效率与产出质量。\n\n岗位要求:\n1. 3年以上的软硬件产品开发管理经验，熟悉V模型开发管理，汽车或者无人驾驶相关领域经验优先，有量产管理经验优先。 2. 毕业于重点大学，本科及以上学历，专业为计算机、软件工程、自动化、人工智能或相关专业。 3. 对无人驾驶产品和人工智能技术有热情，对相关领域有所了解。 4. 良好的沟通协调能力，快速解决问题的能力，优秀的逻辑分析能力和总结能力； 5. 有持续学习能力，出色的自驱力和自学能力，有较高的责任心及风险敏感力，较强的抗压能力。 6. 掌握相关项目管理工具，项目跟踪、项目执行力较强。 7. 具备英文工作交流能力，车辆驾驶能力；"
     },
     {
@@ -946,7 +946,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7565825244649294122/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 测试全流程管理：车载嵌入式软件需求分析、测试计划制定、用例设计、执行与报告输出。 2. 自动化测试开发：使用python编写自动化脚本、搭建测试环境、调试测试用例、代码更新与维护。 3. 缺陷跟踪与协作：发现问题定位问题、推动研发修复，与研发团队协作提升软件质量。 4. 合规性与文档：遵循行业标准（如ASPICE），编写测试文档，经验分享等。 5. 完成主管安排的其它工作\n\n岗位要求:\n1. 本科及以上学历，电子、自动化、计算机、车辆工程相关专业优先； 2. 熟练使用Linux操作系统，包括基本的命令行操作和shell脚本编写能力 3. 有C++/C/Python开发经验优先，有git/pytest相关工具链使用经验优先； 4. 有车载产品测试经验或是生产测试经验优先，例如中控/域控产品等； 5. 理解汽车电子电气架构，熟悉CAN、以太网，串口、网络七层架构等通信协议； 6. 熟悉新产品导入流程和产品制造流程，对电子产品工艺要求/流程有一定了解； 7. 有较强的沟通能力、判断能力及洞察力，较强的成本控制概念，能有效的进行成本控制；"
     },
     {
@@ -960,7 +960,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7565165006729726235/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "在小马智行，你将负责支撑自动驾驶出海项目运营研发的基础架构工作。面向多项目、多地域的规模化运营场景，你的技术方案将直接影响业务的成本效率、运营稳定性与合规安全 你将负责 1. 架构设计：主导跨地域业务的技术架构设计与演进，平衡运营稳定性、合规要求与成本可控性 2. 标准化建设：推动出海项目的标准化、流程化建设，提升多项目协同效率 3. 技术路线规划：协同团队制定技术路线，平衡短期交付与长期能力建设 4. 落地协同：与相关团队紧密协作，深度参与业务出海落地，推动技术方案与流程的持续改进\n\n岗位要求:\n1. 5 年以上软件开发/架构经验，具备独立主导系统架构设计的能力 2. 熟练掌握至少一门主力语言（C++/Python/Go），具备较强的 hands-on 能力 3. 熟悉云原生技术栈，有大规模平台架构设计相关经验 4. 强 owner 意识与跨部门协作能力 5. 良好的英文读写能力"
     },
     {
@@ -974,7 +974,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7564676481177045290/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1.自动驾驶硬件系统的研发与调试：参与自动驾驶硬件系统的调试工作，负责硬件的调试和性能优化，包括但不限于自动驾驶计算系统，传感器，散热，供电等部分的调试和问题分析，确保自动驾驶系统的稳定运行。 2.自动驾驶车辆及自动驾驶系统硬件问题的诊断与解决：熟悉车辆的电气特性和应用环境，具备较强的硬件问题 debug 能力，能够迅速定位并解决各类硬件故障和疑难问题，并对问题进行深入分析，提出有效的解决方案，并跟踪问题的解决进度，确保硬件系统的稳定运行。 3.文档撰写与维护：撰写详细的硬件问题分析报告及改善方案文档，包括硬件问题的详细分析，调试记录、测试报告，改善方案，操作指导手册等，为硬件的后续维护和升级提供有力支持。\n\n岗位要求:\n任职要求 1.学历与专业：本科及以上学历，电子信息、通信工程、自动化控制等相关专业。 2.工作经验：具有3年以上硬件工作经验，或者2年以上自动驾驶或汽车电子领域的工作经验，有量产项目的硬件开发和调试经验者优先。 专业技能： 1.深入了解自动驾驶系统架构，包括传感器（摄像头、雷达、激光雷达等）、计算系统、线控底盘（转向、制动、加速等控制系统）等硬件的组成与协同工作原理。 2.了解嵌入式操作系统，如 Linux、RTOS 等在自动驾驶电子系统中的应用，掌握 Python 等脚本语言，用于自动化测试、数据采集与分析，提高问题分析与解决效率。 3.深入理解汽车电子电气架构，熟悉汽车电子常用通信协议，如 CAN、LIN、FlexRay、Ethernet 等，能够进行网络协议分析、故障排查与优化，确保自动驾驶系统各电子控制单元之间的稳定通信。 4.熟练使用各种硬件测试设备，如示波器、频谱分析仪、CAN分析仪等，能够进行信号测量、时序分析、电磁兼容性的分析等。 5.精通模拟电路与数字电路，能深入分析电路原理、故障机制并进行优化设计。熟悉常用电子元器件特性、选型与应用，如各类传感器、微控制器、功率器件等在自动驾驶系统中的应用场景。 能力要求： 1.具备较强的逻辑思维能力和问题解决能力，能够迅速定位和解决硬件问题，对疑难问题有深入的分析和解决能力. 2.良好的沟通协调能力和团队合作精神，能够与跨部门团队紧密合作，共同完成项目开发任务. 3.较强的学习能力和自我驱动力，能够快速掌握新技术和新知识，适应自动驾驶领域快速发展的需求 4.具备良好的抗压能力，能够在项目周期内高效地完成各项工作任务"
     },
     {
@@ -988,7 +988,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7564262828492966163/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. QA工具链研发：针对QA日常工作场景（如运营闭环、Issue追踪闭环等），设计并开发自动化测试工具与平台，提升团队整体工作效率，解决业务进一步scale-up后带来的人力缺口问题； 2. QA AI Agent探索与落地：结合AI能力研发面向QA场景的智能Agent，赋能运营QA日常工作，提升问题处理的智能化水平与闭环效率； 3. 自动化Pipeline建设：搭建并持续优化QA自动化流水线，推动测试流程标准化与自动化，提高系统质量问题的发现与闭环能力，降低对QA人力规模扩张的依赖； 4. 内部自主提效：在产研资源有限的情况下，优先利用团队内部测开能力完成提效工作，快速响应业务需求；后续可根据情况与产研团队配合，推动解决方案产品化； 5. 目标对齐与持续改进：跨团队沟通协作，明确阶段性工作目标；主动识别QA工作中的痛点与瓶颈，推动问题闭环解决。\n\n岗位要求:\n1. 学历背景：本科及以上学历，计算机、信息技术等相关专业； 2. 技术能力：具备扎实的测试开发能力，具备tooling、AI Agent及vibe coding相关的开发经验者优先； 3. 业务理解能力：具备较强的业务理解能力，能够快速理解QA运营与Issue追踪等业务场景，并将其抽象为工具化、自动化的解决方案； 4. Owner意识：具备强烈的主人翁意识，能够主动发现问题、推动问题解决直至闭环，而非被动执行任务； 5. 学习能力：具备良好的学习意愿与学习能力，能够快速掌握新技术（如AI Agent、LLM等）并应用于QA提效场景。"
     },
     {
@@ -1002,7 +1002,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7563577013974747435/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "负责国内和海外自动驾驶商业化项目的基础架构和方案设计，持续交付和平台运维。\n\n岗位要求:\n1. 熟悉至少一个公有云平台的基础组件，如Azure，AWS, 阿里云等 2. 熟悉云原生容器服务，云网络架构及相关组件的服务 3. 有良好的沟通和呈现的能力，能独立承担相关技术议题和方案的研讨会 4. 能使用英语进行口头和书面沟通"
     },
     {
@@ -1016,7 +1016,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7560616796227733801/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "负责自动驾驶项目的存储功能开发以及持续交付\n\n岗位要求:\n1. 计算机相关专业本科或以上学历 2. 了解常见的开源存储（ceph，hdfs等等）以及日志监控系统（ELK, Prometheus, Grafana等） 3. 熟练掌握 C++、Java、Python 中至少一门编程语言，具备良好的编码与调试能力； 4. 有责任心，沟通积极，有良好的文档习惯，能使用英语进行书面的沟通 加分项： 1. 熟悉至少一家公有云厂商及其存储/监控组件（阿里云、腾讯云、Azure、AWS 等）； 2. 具备存储相关运维或开发经验，有分布式存储或大数据存储项目经验者优先； 3. 有容器化（Docker、Kubernetes）和云原生实践经验。"
     },
     {
@@ -1030,7 +1030,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7545784954778732841/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "负责车载TBOX（Telematics Box）的无线通信系统从技术开发到量产落地的全链路工作。工程师将深度参与5G/4G、Wi-Fi、蓝牙、V2X等前沿通信技术在汽车场景的应用，主导无线认证，并确保产品符合全球市场法规要求，是连接车辆、云端与路侧单元的关键技术桥梁。 职位职责： TBOX无线通信系统开发 负责车载TBOX无线通信子系统的架构设计、协议栈开发与性能优化，确保通信功能稳定可靠。 - 5G/4G LTE通信：主导通信模组（高通/联发科/华为海思等）的驱动开发、协议栈（NAS/EMM/ESM）调试及网络性能优化。 - Wi-Fi热点/客户端：负责Wi-Fi功能开发、射频性能调优，并完成与智能座舱系统的深度集成。 - 蓝牙协议栈：开发BLE（低功耗蓝牙）与Classic Bluetooth协议栈，实现设备配对、音视频流传输及近场控车等核心功能。 - V2X直连通信：负责C-V2X（包括Uu接口和PC5直连）协议栈开发，推动V2X预警、协同感知等场景的应用落地。 - 系统联调：协同座舱、智驾、车身等域控制器，完成整车级通信系统的联合调试与疑难问题攻关。 TBOX量产交付 主导TBOX产品从前沿方案到规模量产（SOP）的全生命周期开发，确保项目按时、按质交付。 - 全流程管理：主导从方案设计、需求分解、软硬件开发到DVP（设计验证计划）测试的全流程。 - 接口与评审：主导与整车厂（OEM）的技术接口定义、需求评审及方案确认。 - 生产支持：负责量产阶段的PPAP（生产件批准程序）支持、生产一致性保障及客户端技术问题分析。 - 文档编写：主导编写需求规格书、设计说明书、测试用例等全套技术文档。 无线通信认证 负责TBOX产品全球市场准入所需的各类无线通信认证，确保产品合规上市。 - 认证规划与执行：制定认证测试计划，主导以下关键认证项目的技术对接与问题整改： - CE/FCC：射频辐射、传导骚扰等测试整改。 - CCC/CTA：中国强制性产品认证及进网许可。 - E-Mark：欧盟车载电子产品认证。 - GCF/PTCRB：蜂窝通信一致性认证。 - Wi-Fi Alliance：Wi-Fi互操作性及性能认证。 - Bluetooth SIG：蓝牙资格认证（BQB测试）。 - 国内V2X认证：如CCSA、信通院相关测试。 - 实验室协作：与TÜV、SGS、CTTL等认证实验室保持密切技术沟通，推动测试进度。 - 合规库建设：建立并维护无线认证的技术检查清单（Checklist）与合规知识库。\n\n岗位要求:\n专业知识与技能 - 5G/LTE通信：熟悉3GPP R15/R16协议栈，了解NR空口基本原理，有高通、联发科、华为海思或紫光展锐等主流通信模组的实际开发经验。 - Wi-Fi技术：熟悉IEEE 802.11 a/b/g/n/ac/ax/be协议族，了解WPA3安全机制，有Wi-Fi双频并发、射频性能调试经验者优先。 - 蓝牙技术：熟悉蓝牙Core Spec 5.0/5.3及LE Audio协议栈，了解GAP/GATT/ATT层，熟练掌握A2DP、HFP、SPP等Profile开发。 - V2X技术：了解C-V2X双模通信架构，熟悉SAE J3063、3GPP R14/R15等相关标准，有V2X协议栈或应用层开发经验。 认证相关能力 - 了解ETSI EN 301 908、FCC Part 22/24/27、RSS-XXX等无线射频测试标准。 - 了解EMC（电磁兼容）与安规测试的基本要求及无线共存（Co-existence）问题。 - 具备认证测试失败后的独立问题分析、定位及推动整改方案落地的实战经验。 汽车行业背景 - 拥有汽车前装Telematics、IVI（车载信息娱乐系统）或T-BOX的开发经验，熟悉汽车电子V-Model开发流程。 - 了解ASPICE流程、ISO 26262功能安全基础概念者优先。 - 有OEM（整车厂）或国际Tier 1供应商工作经验者优先。"
     },
     {
@@ -1044,7 +1044,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7543160588097603890/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、协助部门mentor完成部分简单的设计及绘图工作； 2、负责运动机构的原型搭建与验证； 3、机械设计部门内部的图纸及文档整理工作； 4、负责部分硬件零部件的采购及流程跟进； 5、部门里其他需要辅助的工作。\n\n岗位要求:\n1、本科及以上学历，在校生，机械、车辆工程等工科类专业优先考虑； 2、对常见的加工工艺有所了解，熟悉运动机构原理； 3、熟悉Solidworks或Catia软件使用，电脑操作熟练； 4、工作细致认真，责任心强，有主动性； 5、思维敏捷，有良好的沟通协调能力和团队合作意识； 6、每周实习5天，实习周期6个月以上，表现优秀者有转正机会。"
     },
     {
@@ -1058,7 +1058,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7542761131757783306/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1.生产测试设备导入，例如 ICT，FCT，EOL，Burn in，飞针测试等; 2.跟进研发、工厂，关注首次量产问题点，协调分析解决关闭，确保产品顺利转量产； 3.日常产线跟踪，试产问题识别、分析、汇整、问题闭环及问题管理； 4.完成主管安排的其它工作；\n\n岗位要求:\n1.本科及以上学历，电子信息、通讯及自动化相关专业； 2.具有ICT、FCT、EOL 相关夹具方案设计或测试经验； 3.有C++/C/Python开发经验优先； 4.有车载产品测试经验优先，例如中控/域控产品等； 5.了解常见的硬件接口和通信协议，例如CAN、USB、PCIe、以太网等； 6.熟悉新产品导入流程和产品制造流程，对电子产品工艺要求/流程有了解； 7.有较强的沟通能力、判断能力及洞察力，较强的成本控制概念，能有效的进行成本控制；"
     },
     {
@@ -1072,7 +1072,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7538340680659470602/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责在线建图系统的研发与迭代，实现地图的实时构建与动态更新； 2. 主导环境变化检测技术落地，识别并处理场景中动态要素变化，保障地图时效性； 3. 负责多源地图融合方案设计，基于导航地图等先验数据优化在线建图精度与效率；\n\n岗位要求:\n1. 熟悉深度学习常用方法与框架，具备计算机视觉或机器学习相关项目经验； 2. 掌握动静态障碍物跟踪、状态估计算法，有相关技术落地经验； 3. 熟悉C++与Python开发，能够高效实现算法工程化部署； 4. 具备扎实的数学基础，熟悉多视图几何、非线性优化等算法原理； 加分项 1. 有自动驾驶或机器人领域在线建图经验； 2. 在CVPR、ICCV等顶会发表过相关论文。"
     },
     {
@@ -1086,7 +1086,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7537996098460453146/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 自动驾驶版本质量管理，对自动驾驶系统仿真和实车测试过程中出现的缺陷进行分析总结，追踪问题解决，持续提升版本质量。 2. 针对版本测试过程中的问题进行复盘总结，持续优化版本测试和发布流程，推动测试左移。 3. 跨团队，跨site沟通协作，根据自动驾驶系统当前面临的问题进行版本规划，并监控实施。 4. 保持不断进化的质量管理视野，追求研发体系的质量和效率的持续提升。 5. 产品思维，视野全面，不局限于问题本身，更能跳出问题来从整体想解决的办法，把问题转化为需求，推动自动驾驶进步。 6. 多维度探索和建设自动驾驶度量方法，不断细化和丰富度量指标并追踪，促进自动驾驶系统能力不断提升。 7. 不断抽象工作中的流程，推进工具开发同学开发工具平台。\n\n岗位要求:\n1. 本科及以上学历，计算机、信息技术等相关专业。具备丰富的质量保障或过程改进的经验。 2. 2年以上互联网、软件行业的测试经验。 3. 良好的沟通能力和团队协作能力。 4. 强烈的责任感和质量观念，逻辑缜密，细心。 5. 具备良好的文档总结能力和培训技巧，持续学习并沉淀测试技术和方法论。 具备以下经验或能力的候选人优先考虑 1. 有团队管理或项目管理经验，具备良好的沟通和团队协作能力 2. 有较好的质量意识和较强的问题推动能力 3. 了解自动驾驶系统，或具备自动驾驶能力评估、道路测试的经验"
     },
     {
@@ -1100,7 +1100,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7525447830049229095/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 负责自动驾驶车规级算力平台嵌入式软件系统的开发与优化，参与构建高性能、高可靠性的自动驾驶嵌入式系统平台。 2. 负责系统级集成、测试与深度性能优化工作，确保软件在车规级硬件平台上的高效稳定运行。 3. 定位和解决自动驾驶系统在车端的复杂工程稳定性问题，特别是在网络通信、多节点协同、资源调度等方面的挑战。\n\n岗位要求:\n1. 本科及以上学历，计算机、电子工程、软件工程、通信工程、自动化等相关专业； 2. 必需：3年以上嵌入式软件或系统软件开发经验； 3. 熟悉C/C++ 编程语言，具备扎实的工程实践能力、良好的开发习惯、文档规范及编码质量意识； 4. 熟悉 Linux 操作系统原理，深入理解进程调度、内存管理、文件系统、网络协议栈等核心机制； 5. 自我驱动，积极主动，责任心强，具备优秀的技术攻关能力和良好的团队合作精神； 6. 良好的英文阅读能力，能流畅阅读技术文档；较好的英文听说能力为加分项。 加分项 : 1. 熟悉常见处理器架构特性及其优化 (ARM, x86 等)； 2. 有 Nvidia AGX Xavier 或 Orin 平台的上层应用开发、系统集成或性能优化经验者优先； 3. 有自动驾驶、无人机、机器人或其他复杂实时嵌入式系统领域经验者优先； 4. 有车规级软件开发经验或功能安全 (ISO 26262) 相关意识者优先。"
     },
     {
@@ -1114,7 +1114,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7491867937714161946/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "我们的AI团队致力于推动自动驾驶技术的发展，涵盖多个前沿方向，如三维重建、世界模型、生成模型、多模态学习、大模型等。我们希望寻找在三维重建或生成模型方向有经验或浓厚兴趣的人才，共同探索这些技术在自动驾驶领域的创新应用。 在这个岗位上，你将能够： - 研究和开发三维重建技术（如NeRF、3D Gaussian Splatting等），推动其在自动驾驶数据生成、仿真、环境建模等方面的应用； - 与团队紧密合作，探索三维重建技术在自动驾驶场景下的创新应用，助力最终的自动驾驶目标。\n\n岗位要求:\n- 计算机、人工智能、数学等相关专业，本科及以上学历； - 熟练掌握 Python/C++，具备扎实的编程能力和良好的工程化实践； - 熟悉深度学习框架（如 PyTorch、TensorFlow），并有从零到一构建模型的经验； - 在三维重建领域（如NeRF、3DGS等）有研究经验或浓厚兴趣； - 具备较强的学习能力和独立钻研精神，能够快速掌握新技术并应用到实际问题中； - 具备良好的数学基础（如线性代数、计算几何、优化方法），对三维重建算法原理有深入理解。 加分项 - 有开放街景、城市级三维重建或大规模场景建模等研究或应用经验； - 有生成模型（扩散模型、GAN、VAE）、世界模型（Dreamer、PlaNet）等研究或应用经验； - 在 机器学习/计算机视觉/自动驾驶 领域的顶级会议（如 NeurIPS、ICLR、CVPR、ICCV、ICRA）发表过论文； - 具备高水平的算法竞赛背景（如 ACM/NOI/IOI）； - 参与过三维重建相关开源项目（如 COLMAP、Open3D、nerfstudio），并有实际落地成果。"
     },
     {
@@ -1128,7 +1128,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7477851729977133375/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、有编写测试脚本 能力，可以针对嵌入式应用软件进行功能、性能、可靠性、容错、压力测试验证，并收集和分析数据，发现并记录、回归测试完成问题修复； 2、自动驾驶相关部件的选型测试：对接厂商和需求，制定测试计划、测试方案，输出准确可靠的测试结论；对路测中的问题，与厂家商量issue修复方案、计划并跟踪验证； 3、L2++/L4/V2X相关系统产品集成后调试，及时总结复盘并推动问题解决； 4、可以协助量产和产线测试。\n\n岗位要求:\n1、优秀的嵌入式软件测试理论、方法和标准； 2、熟悉各类通信协议（I2C/CAN/ETH/UART等）； 3、熟练使用jira、wiki以及git或其他软件工具； 4、熟悉Linux，有能力修改和维护测试软件和脚本：Python、C\\C++； 5、具备良好的跨团队工程沟通、口头和书面表达能力。 加分项： 1、有良好的英语口语交流能力； 2、有自动驾驶、无人车、机器人等项目经验优先； 3、熟练使用测试设备或测试工具，能编写脚本实现自研软件模块测试自动化更佳；"
     },
     {
@@ -1142,7 +1142,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7471290453862648103/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "团队负责根据道路、周围环境、其他车辆行人等实时交通情况，决定和控制自动驾驶车辆如何行驶，是自动驾驶中最核心的团队之一。 具体工作内容为： 1. 开发和优化基于模型的运动规划算法，为自动驾驶提供安全、舒适和可预测的车辆运动轨迹。\n\n岗位要求:\n1. 熟悉某种深度学习框架，如pytorch等，对深度学习有深入的了解以及相关工作经验； 2. 有较强的问题分析能力，优秀的问题转化与建模能力，需要创新性的思维解决全行业都没有解决过的有挑战的问题； 3. 优秀的编程能力，熟悉C/C++和Python； 若能满足如下条件的其中一个，会适当加分： 1. 有较强的研究能力优先； 2. 在自动驾驶行业有工作经验； 3. 了解强化学习算法；"
     },
     {
@@ -1156,7 +1156,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7464435590458263818/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "职位描述 1. 负责AI端到端模型的性能分析与优化； 2. 负责CUDA算子开发与维护； 3. 负责C++日常开发与维护。\n\n岗位要求:\n职位要求 1. 计算机或相关专业本科及以上学历； 2. 扎实的软件工程能力，熟练掌握计算机基础知识； 3. 有CUDA编程经验，熟悉TensorRT或其它AI加速库； 4. 有C++开发经验； 5. 熟悉至少一种深度学习框架（Pytorch优先）。 加分项： 1. 熟练掌握CUDA编程，有CUDA优化经验； 2. 有C++相关的性能优化、内存优化经验； 3. 有算法竞赛经历； 3. 有基于TensorRT的模型优化经验； 4. 有模型量化、蒸馏、剪枝等工程经验。"
     },
     {
@@ -1170,7 +1170,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7461846147155495179/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "团队负责根据道路、周围环境、其他车辆行人等实时交通情况，决定自动驾驶车辆如何行驶，是自动驾驶中最核心的团队之一。负责以下工作中的一项或几项： 1. 高性能、高可靠性的 L4 自动驾驶 Planning 算法架构设计、算法与系统开发； 2. 对端到端模型结果进行优化和兜底，通过后处理确保车辆行为安全可控，实现不依赖高精地图、满足L4能力与要求的自动驾驶系统； 3. 使用较低算力和部分传感器与端到端技术，实现满足L4能力与要求的冗余系统； 4. 路测大数据分析处理架构设计与系统开发； 5. 仿真平台开发，基于海量路测数据，使仿真平台更符合真实路测场景；\n\n岗位要求:\n1. 优秀的编程能力，熟悉C、C++、Python、Java等主流编程语言中的至少一种，熟悉常用的数据结构与算法； 2. 优秀的沟通与协作能力； 3. 优秀的问题转化与建模能力，需要创新性的思维解决全行业都没有解决过的有挑战的问题。 加分项: 会开车"
     },
     {
@@ -1184,7 +1184,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7412600945391831315/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "负责无人驾驶车辆系统的稳定性和性能分析优化，保证整体系统的低延迟和可靠性。具体包括： 1.系统整体性能评估，建立指标和评估模型； 2.深入Linux内核的问题分析和资源调度优化； 3.C++程序性能瓶颈分析和工具开发；\n\n岗位要求:\n1.计算机相关专业； 2.拥有C++和底层系统相关编程经验，理解计算机体系结构，能编写高性能代码； 3.拥有Linux环境性能调优经验，理解性能指标和各种profile工具； 4.扎实的操作系统基础，熟悉Linux内核至少一个子系统（scheduler, memory, io等）； 5.良好的沟通能力和出色的学习能力。"
     },
     {
@@ -1198,7 +1198,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7404692982118631734/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1.负责智驾域控和传感器产品的硬件测试工作，包括产品规格理解，测试需求分析和可测试性分析，测试方案设计，测试方法的研究，测试框架及测试环境搭建，测试用例设计，测试报告编写。 2.负责智驾域控和传感器等硬件产品的交样和验收测试。 3.负责智驾域控和传感器的硬件单板测试，了解SPI、I2C、CAN、Ethernet、LVDS等总线和标准。 4.了解传感器(摄像头、毫米波雷达、激光雷达、超声波雷达、导航位置单元)和网络交换机等产品的工作原理。 5.对于智驾域控的常见或典型问题进行系统归纳、总结，追踪，并最终解决和形成文档输出。\n\n岗位要求:\n1.本科以上学历，汽车类、电子类、通信类等相关专业，具有3年以上汽车电子相关领域的硬件测试从业经验优先。 2.熟悉智驾域控和传感器的功能、性能、电气性能、EMC试验、可靠性的检测标准及方法。 3.熟练使用电子测量仪器仪表及相关测试工具(如CANOE工具, 串口调试工具, 管理型交换机)、测试治具。 4.能适应偶尔加班和高强度的工作压力，适应跨部门协作。 5.有较强的学习能力、沟通能力、责任感和优秀的团队合作意识。 6.熟悉相关标准规范，如ISO26262, ISO16949。"
     },
     {
@@ -1212,7 +1212,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7390237454852540723/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "AI团队致力于探索前沿的人工智能技术，打造通用、高效的端到端模型驱动的自动驾驶解决方案，并将其在跨平台的L4 Robotaxi与量产车上进行部署。我们欢迎对AI技术充满热情、敢于挑战自己，并能脚踏实地，将前沿技术付诸于实践、创造价值的同学。 在这个岗位上，你将能： 1. 学习行业前沿的深度学习技术； 2. 与技术大牛进行深入的思维碰撞； 3. 在深度模型与算法的结合上创造新的火花； 4. 让你的技术方案在行业顶尖的L4全无人车辆上进行部署；\n\n岗位要求:\n1. 计算机相关专业本科以上学历； 2. 熟练掌握Python/C++，具备良好的工程能力和严谨的编程习惯； 3. 熟悉PyTorch/NumPy等深度学习框架和张量运算库； 4. 对深度学习技术充满热情，有从零到一构建模型的经验； 5. 熟悉机器学习基础知识，能够对前沿技术建立自己的知识体系和深入理解； 6. 具备持续学习和自主钻研精神； 加分项 1. 在机器学习/计算机视觉相关的高水平学术会议上发表过论文； 2. 具备出色的算法能力，在ACM/NOI/IOI等算法赛事上取得过名次； 3. 有受到认可的大型开源项目开发经验； 5. 有CUDA/TensorRT等平台上的底层算子开发经验； 方向一：算法工程师 - AI团队 - 端到端感知/基础模型 背景要求：有计算机视觉、3D检测/分割、多传感器融合、目标跟踪、视频理解、多任务训练、基础模型结构设计、模型蒸馏等相关领域的工程或研究经历； 方向二：算法工程师 - AI团队 - 端到端决策规划 背景要求：有轨迹规划/预测、强化学习、模仿学习、生成模型、控制理论等相关领域的工程或研究经历； 方向三：算法工程师 - AI团队 - 世界模型 背景要求：有生成模型（Diffusion / Flow Matching / GAN）、交通流预测/生成、强化学习等相关领域的工程或研究经历。"
     },
     {
@@ -1226,7 +1226,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7373992247891478794/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1、为机器模型标注数据集，内容包括城市道路上的汽车、行人等，协助优化模型效果； 2、针对各类模型输出的数据进行评估，并撰写相关评估标准及结果文档； 3、与研发团队协作，完成需求沟通、标准制定、标注工具优化等工作。\n\n岗位要求:\n1、全日制本科及以上学历，测绘相关专业优先； 2、对特定内容、图像等数据敏感，可判别数据内容的分类特征； 3、能依据具体的标准，完成各模型的效果评定； 4、有数据标注经验者、对机器学习的相关基本原理有了解者优先，接触及学习过Linux系统相关命令者优先； 5、主动学习，沟通顺畅，能快速熟练掌握各类判别标准。"
     },
     {
@@ -1240,7 +1240,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7373621090172242227/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 参与自动驾驶算法评估系统、数据管理平台设计和开发，该系统通过大规模仿真来进行评估； 2. 与算法团队紧密合作，确保评估工具能够准确反映系统性能； 3. 参与需求分析、方案设计、系统测试和优化等工作；\n\n岗位要求:\n1. 大学本科或以上学历，计算机相关专业，有扎实的计算机基础知识； 2. 熟悉C++/Python，有良好的开发习惯、代码风格、文档规范； 3. 清晰的逻辑思维和高效的学习能力，有责任心和较强的时间观念，能合理安排优先级； 4. 良好的沟通能力和团队合作，并驱动问题解决； 5. 对自动驾驶技术有浓厚兴趣，愿意在这一领域深入学习和成长； 加分项 1. 前端开发经验； 2. 深入了解计算机体系结构。"
     },
     {
@@ -1254,7 +1254,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7299001508547545355/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1. 领导约10人规模的技术团队，全面负责自动驾驶车载系统架构设计与核心工具链研发，包括但不限于： 1. 开发高性能、高可靠性、可扩展的车载系统中间件，满足车载算法模块集成及L4级自动驾驶系统需求； 2. 构建高置信度仿真系统架构，与算法团队配合实现复杂路测场景的离线复现，支持大规模自动化评测； 3. 设计系统级性能监控与分析工具，优化计算资源调度及全链路性能瓶颈； 4. 开发全生命周期日志管理体系，打造从实时记录到场景回放的完整调试工具链； 2. 作为技术负责人主导自动驾驶系统优化，确保时延、稳定性等核心指标达到车规级量产标准； 3. 推行卓越工程实践，主导代码审查、设计评审等质量保障活动； 4. 制定团队技术路线图，平衡短期交付与长期技术积累，参与公司级自动驾驶技术战略规划；\n\n岗位要求:\n必备条件： 1. 5年以上软件开发经验，1年以上技术团队管理经验（Tech Lead及以上职级）； 2. 深刻理解C++等系统级语言，具备复杂软件架构设计能力； 3. 强烈的结果导向与系统性思维，能根据实施效果动态优化技术方案； 4. 优秀的跨部门协作能力，能推动跨部门技术决策与工程落地； 5. 开放的技术视野与快速学习能力，能在高强度下解决前沿技术难题； 加分项： 6. 熟悉操作系统原理、计算机体系结构及底层优化技术； 7. 有高性能计算系统（如科学仿真引擎/游戏引擎/分布式系统）开发经验。"
     },
     {
@@ -1268,7 +1268,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7256607028298205459/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "1.使用远程协助系统，根据运营需要处理车辆的远程协助请求。 2.收集、整理和归纳远程协助系统的使用问题以及建议，与相关负责团队及时反馈和沟通。 3.将无法立即解决的问题及时上报至支持团队，跟踪问题解决进度。 4.整理阶段性远程协助数据报告。 5.协助客服专员完成用户沟通，信息反馈等工作任务。 6.配合远程协助系统以及客服系统相关的测试反馈任务。\n\n岗位要求:\n1.全日制本科学历优先，专业不限，大学英语四级；有自动驾驶行业经验者优先； 2.计算机中文输入40字/分钟左右，熟练使用基本的办公电脑技能和App使用技能，如电子邮箱，EXCEL，WORD等办公软件； 3.普通话标准，善于沟通，具备良好的应变能力和抗压能力； 4.具有较强的学习适应能力，快速熟练地掌握系统以及新功能； 5.能适应轮班轮休工作制，8小时工作制； 6.有C1/C2驾照和3年或以上的驾驶经验; 7.最近连续3个记分周期内无记满12分记录; 8.最近1年内无超速50%以上、超员、超载、违反交通信号灯通行等严重交通违法行为记录，无饮酒后驾驶或者醉酒驾驶视机动车记录,无服用国家管制的精神药品或者麻醉药品记录； 9.无致人死亡或者重伤的交通事故责任记录。 工作时间： 接受灵活调班，周一至周日以及法定节假日按排班表上班，做五休二，早班:07:00-15:15，晚班：15:15-23:30，通宵班：23:30-07:00，班次会根据业务需要灵活调整。"
     },
     {
@@ -1282,7 +1282,7 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://ponyai.jobs.feishu.cn/position/7208840316215200058/detail",
-      "retrievedAt": "2026-08-19T01:44:56Z",
+      "retrievedAt": "2026-08-19T02:43:50Z",
       "description": "团队负责根据道路、周围环境、其他车辆行人等实时交通情况，决定和控制自动驾驶车辆如何行驶，是自动驾驶中最核心的团队之一。 团队的软件或算法工程师负责以下工作中的一项或几项： 1. 高性能、高可靠性的Planning架构设计与系统开发； 2. 高精度、高性能的计算几何与数值计算算法开发与优化； 3. 在驾驶决策等方面通过机器学习或其他算法提升自动驾驶车辆的能力； 4. 路测大数据分析处理架构设计与系统开发； 5. 仿真平台开发，基于海量路测数据，使仿真平台更符合真实路测场景； 6. 内部工具开发，提高研发效率。\n\n岗位要求:\n1. 优秀的编程能力，熟悉C、C++、Python、Java等主流编程语言中的至少一种，熟悉常用的数据结构与算法； 2. 优秀的沟通与协作能力； 3. 优秀的问题转化与建模能力，需要创新性的思维解决全行业都没有解决过的有挑战的问题； 4. 对于机器学习方向的算法工程师，除编程能力外也需要掌握常见的机器学习算法 熟练掌握以下内容中的任何一项可适当加分： 1. 会开车 2. 数值优化 3. 计算几何"
     }
   ]
