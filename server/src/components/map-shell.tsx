@@ -984,8 +984,20 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // 持久化跨会话还原后,pipeline 用陈旧圆心(挂载定位点)裁剪,把视口内公司整批裁空。
   // 语义从「离我最近」→「离当前视野中心最近」(与服务端 boundsCenter 口径一致)。
   // userLocation 保留用于初次定位/其他用途,distance 圆心不再钉在挂载点。
+  //
+  // ws-poi-vanish 生效时机:定位成功(userLocation)前 mapCenter 仍是杭州默认值
+  // [120.15,30.27],带 distance 的缓存恢复若以杭州为圆心过滤,会把用户区域 POI
+  // 整池裁掉(visiblePOIIds 清空 → 全部 pin 消失)。→ 定位落地前 distance 筛选
+  // 不生效(视同无 distance,pool 全量可见);settle 后圆心跟随真实视野中心
+  // (未手动移图时 settle 已把 mapCenter 设成用户位置)。定位失败时 userLocation
+  // 恒 null → 筛选持续不生效,不打扰(与 handleLocate 失败保持视野同义)。
   const distanceOrigin = mapCenter;
-  const distanceRadius = distanceFilterMeters(filters);
+  const distanceRadius = userLocation ? distanceFilterMeters(filters) : 0;
+  // pipeline 入参:定位前剥离 distance 键,防止以杭州默认中心过滤导致 POI 池消失
+  const effectiveFilters: FilterState | undefined =
+    userLocation || !filters || !("distance" in filters)
+      ? filters
+      : Object.fromEntries(Object.entries(filters).filter(([key]) => key !== "distance"));
   const distanceOriginRef = useRef(distanceOrigin);
   const distanceRadiusRef = useRef(distanceRadius);
   distanceOriginRef.current = distanceOrigin;
@@ -1131,12 +1143,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           : catalog,
         {
           query: query || undefined,
-          filters: Object.keys(filters).length ? filters : undefined,
+          filters: effectiveFilters && Object.keys(effectiveFilters).length ? effectiveFilters : undefined,
           sort: sort || undefined,
           center: distanceOrigin,
         },
       ),
-    [mode, mapBounds, catalog, query, filters, sort, distanceOrigin]
+    [mode, mapBounds, catalog, query, effectiveFilters, sort, distanceOrigin]
   );
   catalogRef.current = catalog;
   poisRef.current = pois;
@@ -1175,7 +1187,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         ? mergeMapPois(
             runPOIPipeline(catalog, {
               query: query || undefined,
-              filters: Object.keys(filters).length ? filters : undefined,
+              filters: effectiveFilters && Object.keys(effectiveFilters).length ? effectiveFilters : undefined,
               sort: sort || undefined,
               center: distanceOrigin,
             }),
@@ -1190,7 +1202,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       savedOverlay,
       user,
       query,
-      filters,
+      effectiveFilters,
       sort,
       distanceOrigin,
     ],

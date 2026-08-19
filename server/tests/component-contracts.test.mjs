@@ -512,6 +512,21 @@ test('map shell ws-poi-vanish handleLocate 失败保持视野:不回杭州默认
   assert.doesNotMatch(locateBlock, /setZoom\(13\)/);
 });
 
+test('map shell ws-poi-vanish distance 圆心:定位落地前 distance 筛选不生效', () => {
+  const shell = src('components/map-shell.tsx');
+  // 半径 gating:定位成功(userLocation)前视同无 distance——mapCenter 还是杭州
+  // 默认值,带 distance 的缓存恢复若以杭州为圆心过滤会把用户区域 POI 整池裁掉
+  assert.match(shell, /const distanceRadius = userLocation \? distanceFilterMeters\(filters\) : 0;/);
+  // pipeline 入参:定位前剥离 distance 键(圆心未落地 → 不裁池)
+  assert.match(
+    shell,
+    /const effectiveFilters: FilterState \| undefined =[\s\S]{0,240}Object\.fromEntries\(Object\.entries\(filters\)\.filter\(\(\[key\]\) => key !== "distance"\)\);/
+  );
+  // 列表(pois)与 marker 池(workMarkerPois)两个 pipeline 调用点都吃 effectiveFilters
+  const matches = shell.match(/filters: effectiveFilters && Object\.keys\(effectiveFilters\)\.length \? effectiveFilters : undefined/g);
+  assert.ok(matches && matches.length >= 2, 'both pipeline call sites use effectiveFilters');
+});
+
 test('logout resets saved overlay state and pref alongside saved places', () => {
   const shell = src('components/map-shell.tsx');
   const savedLayer = src('hooks/use-saved-layer.ts');
