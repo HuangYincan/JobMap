@@ -351,8 +351,8 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
            rating = EXCLUDED.rating,
            summary = EXCLUDED.summary,
            career_url = EXCLUDED.career_url,
-           logo_url = COALESCE(EXCLUDED.logo_url, logo_url),
-           logo_emoji = COALESCE(EXCLUDED.logo_emoji, logo_emoji),
+           logo_url = COALESCE(EXCLUDED.logo_url, companies.logo_url),
+           logo_emoji = COALESCE(EXCLUDED.logo_emoji, companies.logo_emoji),
            tier = EXCLUDED.tier,
            category = EXCLUDED.category,
            updated_at = now()

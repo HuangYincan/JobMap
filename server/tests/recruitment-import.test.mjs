@@ -161,13 +161,19 @@ test('dedupeSourceCompanies never overwrites a drop-provided logo (non-empty win
   assert.equal(merged.logoEmoji, '🚀');
 });
 
-test('company upsert never nulls existing logo columns when the plan lacks them', () => {
+test('company upsert never nulls existing logo columns and qualifies EXCLUDED refs (no PG 42702)', () => {
   // 2026-08-19 Bug2 根因链第 2 环: 写库 logoUrl ?? null 曾把既有 logo 覆盖成 NULL。
   // COALESCE 与坐标列同款策略: 缺数据不销毁好数据。
+  // 2026-08-20: DO UPDATE SET 的 RHS 对「目标表 + EXCLUDED」通用解析, 未限定的
+  // logo_url / logo_emoji 两边都有 → `column reference "logo_url" is ambiguous`
+  // (PG 42702, import:seed:apply 必败)。回退参数必须表限定为 companies.*。
   const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
   const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
-  assert.match(store, /logo_url = COALESCE\(EXCLUDED\.logo_url, logo_url\)/);
-  assert.match(store, /logo_emoji = COALESCE\(EXCLUDED\.logo_emoji, logo_emoji\)/);
+  assert.match(store, /logo_url = COALESCE\(EXCLUDED\.logo_url, companies\.logo_url\)/);
+  assert.match(store, /logo_emoji = COALESCE\(EXCLUDED\.logo_emoji, companies\.logo_emoji\)/);
+  // RHS 不得残留未限定列引用 (PG 42702 歧义回归断言)。
+  assert.doesNotMatch(store, /COALESCE\(EXCLUDED\.logo_url, logo_url\)/);
+  assert.doesNotMatch(store, /COALESCE\(EXCLUDED\.logo_emoji, logo_emoji\)/);
 });
 
 test('planRecruitmentImport drops invalid companies and keeps the rest', () => {
