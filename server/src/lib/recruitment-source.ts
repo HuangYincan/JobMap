@@ -36,6 +36,9 @@ export interface SourcePosition {
 export interface SourceCompany {
   slug: string;
   name: string;
+  /** 数据来源 code(对应 db sources.code,如 'xiaozhao-radar' / 'feishu-ats');
+   *  缺省时落库回退 'seed'(见 recruitment-import.ts SOURCE_META) */
+  source?: string;
   industries: string[];
   scale: RecruitmentPOI['company']['scale'];
   /** 可见最小 zoom：0..21，zoom >= tier 时显示；0=永显，21=永隐，缺省 12（tech/19） */
