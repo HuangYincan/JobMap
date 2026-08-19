@@ -1,6 +1,6 @@
 # Domain Map Frontend
 
-**Status:** Phase 2–4 client slice on `feature/phase-2-multi-mode`  
+**Status:** Phase 2–4 complete, merged to `dev` (2026-08-17). Real recruitment catalog + Postgres + auth.  
 **Framework:** Next.js 15.5 (App Router) + React 19 + TypeScript 5.9  
 **Map Engine:** AMap JavaScript API v2.0 (`loadAMap`, not an npm package)
 
@@ -164,19 +164,19 @@ export function getMapAdapter(): MapAdapter {
 
 Currently, only AMap is implemented. Future adapters (Mapbox, Leaflet, etc.) can be added as plugins.
 
-### Data Flow (Phase 2)
+### Data Flow
 
 ```
-API Routes (Phase 2)
+POST /api/search (work) / GET /api/pois (domain) / GET /api/pois/domain-local (hz_pois)
     ↓
-React Server Components
+lib (server-catalog / recruitment-store / hz-poi-store — Postgres first, offline drops fallback)
     ↓
 Client Components (map-shell.tsx)
     ↓
 Map Engine (AMap)
 ```
 
-Currently, the shell uses **mock data** (`places` array). Phase 2 will replace this with API calls.
+Work mode reads **Postgres first** (imported SQL rows via `loadServerCatalog`, 30s public cache), falling back to offline drops when the DB is absent. Domain mode: in-Hangzhou browse uses the local `hz_pois` table (`/api/pois/domain-local`); outside Hangzhou the browser calls the AMap API directly. The frontend no longer uses a hardcoded `places` array for live data.
 
 ### Plugin Readiness
 
@@ -221,10 +221,11 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 
 1. **No offline support:** Requires network for map tiles
 2. **Single map engine:** AMap only, no multi-engine switching yet
-3. **Mock data:** `places` array hardcoded, awaits Phase 2 API
-4. **No authentication:** User identity UI present but non-functional
+3. **OTP is demo-stubbed:** `000000` with the hint echoed in the response; real SMS/email send is deferred (rate limiting / attempt caps are a pre-launch hardening item)
+4. **Job alerts are queue-only:** email/SMS toggles enqueue inbox rows; nothing is actually sent
 5. **No error boundary:** Map initialization errors not caught at React boundary
-6. **Accessibility:** ARIA labels present, screen reader testing pending
+6. **Accessibility:** ARIA labels present, screen reader testing pending (VoiceOver/NVDA manual tests deferred)
+7. **DB write-path degradation:** `withDb` falls back to in-memory on DB errors (read fallback is intentional; write fallback is a known hardening item)
 
 ## Testing
 
@@ -242,13 +243,14 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 - [ ] Mobile drawer switches states
 - [ ] Dark mode switches automatically
 
-### Automated Tests (TODO for Phase 2)
+### Automated Tests
 
-- [ ] Unit tests for i18n functions
-- [ ] Unit tests for map adapter selection
-- [ ] Component tests for Icon rendering
-- [ ] Integration tests for map initialization
-- [ ] E2E tests for full user journey
+```bash
+npm test        # 423 tests / 421 pass / 0 fail / 2 skip (2026-08-19)
+npm run typecheck
+```
+
+Tests live in `server/tests/` (`node --test`, unit + component contracts + API integration with the same pipeline as `/api/search`). 2 skips are the DB-gated tests. Playwright E2E is not implemented yet (deferred).
 
 ## Troubleshooting
 
@@ -287,36 +289,14 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 2. Hard refresh browser (Cmd+Shift+R)
 3. Check console for errors in theme listener
 
-## Phase 2 Integration Points
+## Account & API Integration
 
-When Phase 2 begins, update these areas:
+Live account flows run against Postgres when `DATABASE_URL` is set (cookie session; guests get 401, never a fabricated list):
 
-1. **Replace Mock Data**
-   ```typescript
-   // Current
-   const places = [/* hardcoded */];
-   
-   // Phase 2
-   const { data: places } = await fetch('/api/maps/123/entities');
-   ```
-
-2. **Add Authentication**
-   ```typescript
-   // Wrap with auth provider
-   <AuthProvider>
-     <MapShell />
-   </AuthProvider>
-   ```
-
-3. **API Routes**
-   - `GET /api/maps` - List user's maps
-   - `GET /api/maps/[id]` - Map details
-   - `GET /api/maps/[id]/entities` - Spatial query
-
-4. **Loading States**
-   - Add Suspense boundaries
-   - Skeleton loaders for sidebar/drawer
-   - Error boundaries for API failures
+1. **Auth:** phone/email OTP (demo `000000` stub) + password accounts (`/api/auth/password/register|login`, scrypt-hashed, migration 014)
+2. **Persistence:** search history, saved places, applications, job-alert queue (`/api/me/*`); saved/compare are catalog-recruitment only (domain snapshots → 400 `NOT_PERSISTABLE`); guest Recent is browser-localStorage
+3. **Public reads:** `/api/pois`, `/api/search`, `/api/suggest` — Postgres first, offline drops fallback, 30s cache; spatial clip via `geom && ST_MakeEnvelope` + `ST_DWithin` (PostGIS)
+4. **Loading states:** map-shell lazy-loads (`next/dynamic`, `ssr: false`); viewport loader debounces 800ms with per-batch epoch guards
 
 ## Contributing
 
@@ -328,5 +308,5 @@ See `LICENSE` in the repository root.
 
 ---
 
-**Phase 1 Complete** - Shell ready for Phase 2 API integration  
-**Last Updated:** 2026-08-15
+**Phase 2–4 complete (merged to `dev`)** — real catalog, auth, saved, applications, alerts queue  
+**Last Updated:** 2026-08-19

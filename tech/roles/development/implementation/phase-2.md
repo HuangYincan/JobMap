@@ -1,8 +1,8 @@
 # Phase 2 实施记录
 
 **创建日期:** 2026-08-15  
-**分支:** `feature/phase-2-multi-mode`  
-**状态:** in-progress  
+**分支:** `feature/phase-2-multi-mode`(2026-08-17 已并入 `dev`)  
+**状态:** complete(并入 `dev` 后视为历史记录)  
 **目标:** 多模式系统 + POI 展示 + 搜索筛选（tech/08、09、10、11）
 
 ---
