@@ -24,7 +24,7 @@ Python unit tests cover manifest validation, local fixture validation, determini
 
 ## Security note
 
-`postcss` transitive advisories are pinned via `overrides` (^8.5.12). Residual: `next@15.5.23` reports 2 high advisories via its optional `sharp` dependency (libvips); the app does not use `next/image`, so `sharp` is not loaded at runtime. Upgrading to `next@16` is a breaking decision tracked in the implementation record.
+`postcss` transitive advisories are pinned via `overrides` (^8.5.12). Residual: `next@15.5.23` reports 2 high advisories via its optional `sharp` dependency (libvips); the app does not use `next/image`, so `sharp` is not loaded at runtime. Upgrading to `next@16` is a breaking decision tracked in the implementation record. **Resolved 2026-08-20:** `next@16.3.1` / `react@19.2.8` adopted (batch `20260820-boss-bugfix`, report `b3.md`).
 
 ## Blocker
 

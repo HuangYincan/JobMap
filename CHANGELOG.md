@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-20
+
+### Changed
+
+- **Next.js 15.5.23 → 16.3.1、React/ReactDOM 19.0.8 → 19.2.8(清 version-staleness 警告,`chore/next-16`).** 依赖升级由 boss 预置(`server/package.json`/`package-lock.json`),本批仅修破坏点:实际**零代码改动**——`npm run typecheck` 0 错误、`npm test` 477(475 pass / 2 skip)、`npm run build`(Next 16.3.1 + Turbopack)21 路由全部产出。Next 16 自动迁移两项:tsconfig `jsx: preserve → react-jsx`(强制)与 include 增 `.next/dev/types/**/*.ts`;`next-env.d.ts` 按新 typed-routes 格式重生成(`import` 替代 `/// <reference path>`,新增 `root-params.d.ts`)。项目无 middleware / 无 ESLint 配置 / next.config.ts 仅 `reactStrictMode`,均无需迁移。报告:`tech/roles/development/parallel-sessions/20260820-boss-bugfix/reports/b3.md`。
+
 ## 2026-08-19
 
 ### Added

@@ -6,7 +6,7 @@
 
 | 包 | 用途 | 客户端？ |
 |---|---|---|
-| next 15.5 / react 19 / react-dom 19 | App Router | 是 |
+| next 16.3 / react 19.2 / react-dom 19.2 | App Router | 是 |
 | pg | 有 `DATABASE_URL` 时的账户存储 | 否，只在 API / account-store |
 
 **刻意没装**
