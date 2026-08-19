@@ -1283,6 +1283,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [user, savedPlaces, refreshSaved]);
 
   const handlePickSaved = useCallback((place: SavedPlace) => {
+    // 落地已保存位置即「用户已接管相机」(会 flyTo):与地图 pin 同口径(Bug1)
+    hasInteractedRef.current = true;
     const live = [...overlayPois, ...compareCatalog, ...catalogRef.current, ...poisRef.current];
     const match = resolveSavedForFly(place, live);
     if (match) {
@@ -1308,6 +1310,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
    *  移动 JD。岗位已下线 / 拉取失败 → 不崩溃,console.warn + 保持面板原样。 */
   const handleOpenApplication = useCallback((ref: { positionId: string; companyPoiId: string }) => {
     const openCompany = (company: POI) => {
+      // 用户主动打开岗位即「已接管相机」(会 flyTo)(Bug1)
+      hasInteractedRef.current = true;
       setSelectedId(company.id);
       setDetailPoi(company);
       setRailPanel("explore");
@@ -1775,6 +1779,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       pois.find((p) => p.id === ent.id) ??
       INTERNSHIP_SEED.find((p) => p.id === ent.id);
     const openDetail = (poi: POI) => {
+      // 用户主动选择最近条目即「已接管相机」(会 flyTo)(Bug1)
+      hasInteractedRef.current = true;
       setSelectedId(poi.id);
       setDetailPoi(poi);
       setOpenPositionId(null);
@@ -2149,6 +2155,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           setHighlightedId(null);
         }}
         onOpenDetail={(poi) => {
+          // 用户主动打开详情即「已接管相机」(会 flyTo)(Bug1)
+          hasInteractedRef.current = true;
           // 地图初始化期间不处理详情打开，避免触发重新加载
           if (!mapReady || !geoSettled) return;
           // 桌面详情不保存移动抽屉滚动(保存只发生在移动卡片点击链),清零避免把旧值带回移动端
