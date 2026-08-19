@@ -139,7 +139,11 @@ const WORK_FILTERS: FilterConfig[] = [
 
 // ---- 模式定义 ----
 
-export const MODES: Record<MapMode, ModeConfig> = {
+// internship 是 work 的历史别名(canonicalMode 统一映射),不再登记独立条目。
+// 类型上保留 internship: never 守卫：允许 MapMode 索引编译(MODES[mode] 恒为
+// ModeConfig),而直接读取 MODES.internship 得到 never——类型层面同样禁止访问。
+// 对象字面量经双重断言省略该键,运行时无此条目(canonicalMode 保证永不读到)。
+export const MODES = {
   domain: {
     id: 'domain',
     name: '地图',
@@ -185,21 +189,6 @@ export const MODES: Record<MapMode, ModeConfig> = {
     defaultSort: 'distance',
     description: '探索身边的餐厅、商场、娱乐和公共服务',
     actions: ['导航', '收藏'],
-  },
-
-  internship: {
-    id: 'internship',
-    name: '工作',
-    nameEn: 'Work',
-    icon: 'briefcase',
-    color: '#007AFF',
-    kind: 'recruitment',
-    searchPlaceholder: '搜索公司或岗位',
-    filters: WORK_FILTERS,
-    sortOptions: WORK_SORT_OPTIONS,
-    defaultSort: 'distance',
-    description: '寻找身边的工作机会：实习、校招、社招',
-    actions: ['查看岗位', '投递', '收藏'],
   },
 
   work: {
@@ -280,6 +269,8 @@ export const MODES: Record<MapMode, ModeConfig> = {
     description: '海外留学项目与院校申请',
     actions: ['查看项目', '收藏'],
   },
+} as unknown as Record<Exclude<MapMode, 'internship'>, ModeConfig> & {
+  internship: never;
 };
 
 /** 当前可在 UI 中切换的模式：地图 + 工作 */
