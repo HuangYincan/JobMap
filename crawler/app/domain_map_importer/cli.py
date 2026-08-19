@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .acquire import AcquisitionError, PoliteFetcher
-from .ats_feishu import CITY_PINYIN, AdapterError, city_site_id, fetch_all_jobs, job_addresses, job_city, jobs_to_positions
+from .ats_feishu import CITY_PINYIN, CITY_PROVINCE, AdapterError, city_site_id, fetch_all_jobs, job_addresses, job_city, jobs_to_positions
 from .official_refresh import refresh_company_from_source, write_company
 from .radar_jobs import load_radar_jobs, radar_fixture
 
@@ -377,11 +377,15 @@ def cmd_feishu(args: argparse.Namespace) -> int:
                 "id": site_id,
                 "name": company["name"],
                 "city": city_name,
+                "province": CITY_PROVINCE.get(city, ""),
                 "location": {"address": ats_address or city_name},
             })
             known.add(site_id)
-        # 城市文本的既有站点(无坐标)也用 ATS 地址补精确办公地;多城市文本
-        # ("北京/上海/广州/杭州")与已有具体地址的站点不动。
+        # 城市文本/多城市文本的既有站点(无坐标)也用 ATS 地址补精确办公地。
+        # 多城市文本 ("北京/上海/广州/杭州") 是 radar 折叠表示的 legacy 产物,
+        # site.city 字段已指到单城市 → 用该城市的 ATS 地址填充 (2026-08-19:
+        # 蔚来/小鹏等 13 个沪杭基座站点因此无法走 address geocode 落点)。
+        # province 缺失时一并补齐(regeo 城市校验依赖它, 缺省浙江省会误拒上海站点)。
         for site in company["sites"]:
             if site.get("location", {}).get("lng"):
                 continue  # curated 站点(已有坐标)不动
@@ -389,10 +393,12 @@ def cmd_feishu(args: argparse.Namespace) -> int:
             current_addr = (site.get("location") or {}).get("address", "").strip()
             if not site_city:
                 continue
+            if not site.get("province") and site_city in CITY_PROVINCE:
+                site["province"] = CITY_PROVINCE[site_city]
             ats_address = address_by_city.get(site_city, "")
             if not ats_address:
                 continue
-            if current_addr in ("", site_city, f"{site_city}市"):
+            if current_addr in ("", site_city, f"{site_city}市") or "/" in current_addr:
                 site.setdefault("location", {})["address"] = ats_address
         company["positions"] = jobs_to_positions(all_jobs, company, stamp, host=host, website_path=tenant.get("website_path", ""))
         entry = {"slug": slug, "jobs": len(all_jobs), "campus": pool_counts.get("campus", 0), "social": pool_counts.get("social", 0), "sites": len(company["sites"])}
