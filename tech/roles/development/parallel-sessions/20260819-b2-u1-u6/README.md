@@ -8,7 +8,7 @@
 ## 目标
 
 - WS-B(B2.1):修复 LLM 校验 fail(移除 4 条 / 修正标题 3 条 / 标注聚合 3 条)
-- WS-U1:侧控栏 chrome 对齐 420px 基准
+- WS-U1:侧控栏 chrome 对齐(380px 基准;批次内「420px」为当时过期误记,2026-08-20 已核实修正,见 merge-report.md:42 补注)
 - WS-U2:筛选器细化(refine)
 - WS-U3:suggest 修复(距离显示等)
 - WS-U4:Profile 重构
