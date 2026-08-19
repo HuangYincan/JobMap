@@ -3,6 +3,7 @@
 // No rows / no database → caller falls back to seed.
 
 import { getPool } from './db.ts';
+import { resolveCompanyLogo, type ResolvedLogo } from './company-logo.ts';
 import { companySitesSpatialSql, hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
 import type { ApplySource, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
 
@@ -75,6 +76,33 @@ function isoDate(value: Date | string | null | undefined): string | undefined {
     return `${y}-${m}-${d}`;
   }
   return String(value).slice(0, 10);
+}
+
+/**
+ * DB 行 → 公司级 logo（2026-08-19 Bug2 修复：DB 读路径此前直接读列、绕过
+ * 解析链，672 家公司 logo_url/logo_emoji 全空 → 全 🏢）。
+ * 已落库的 logo_url / logo_emoji 优先；两者皆空才走 company-logo.ts 解析链
+ * （站点 logo → 站点 favicon → 公司 logo → 公司 favicon → 🏢 emoji），
+ * 与离线 seed 路径（recruitment-source.logoForSite）共用同一链条。
+ * 「无 logo → 🏢 emoji」的兜底语义不变。
+ */
+export function resolveDbCompanyLogo(
+  company: Pick<CompanyRow, 'logo_url' | 'logo_emoji' | 'career_url'>,
+  site: Pick<SiteRow, 'career_url' | 'logo_url'>,
+): ResolvedLogo {
+  if (company.logo_url || company.logo_emoji) {
+    return {
+      url: company.logo_url ?? undefined,
+      emoji: company.logo_emoji ?? '🏢',
+      source: 'company',
+    };
+  }
+  return resolveCompanyLogo({
+    siteCareerUrl: site.career_url ?? undefined,
+    siteLogoUrl: site.logo_url ?? undefined,
+    companyCareerUrl: company.career_url ?? undefined,
+    companyLogoUrl: company.logo_url ?? undefined,
+  });
 }
 
 export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<RecruitmentPOI[] | null> {
@@ -150,6 +178,7 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
           lat: site.lat ?? 0,
           address: site.address ?? undefined,
         };
+        const logo = resolveDbCompanyLogo(company, site);
         pois.push({
           id,
           kind: 'recruitment',
@@ -164,8 +193,8 @@ export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<Recruit
             tier: num(company.tier) ?? 12,
             category: company.category ?? 'other',
             rating: num(company.rating),
-            logo: company.logo_emoji ?? undefined,
-            logoUrl: company.logo_url ?? undefined,
+            logo: logo.emoji,
+            logoUrl: logo.url,
             summary: company.summary ?? undefined,
             careerUrl: site.career_url || company.career_url || undefined,
           },
