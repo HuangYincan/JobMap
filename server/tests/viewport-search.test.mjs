@@ -27,6 +27,9 @@ import {
   createViewportLoader,
   fetchWorkViewportPage,
   loadWorkViewport,
+  needsViewportAlign,
+  VIEWPORT_ALIGN_CENTER_KM,
+  VIEWPORT_ALIGN_ZOOM_DELTA,
   VIEWPORT_DEBOUNCE_MS,
 } from '../src/lib/viewport-search.ts';
 import { sortPOIs } from '../src/lib/search.ts';
@@ -381,7 +384,7 @@ test('loadWorkViewport maxPages: loops pages, dedupes, stops on a short page', a
     });
     assert.deepEqual(seenPages, ['1', '2', '3']); // 空页后提前停,不请求第 4 页
     assert.deepEqual(merged.map((p) => p.id), ['a', 'b', 'c', 'd']); // 跨页去重
-    assert.equal(noMore, true); // 第 3 页空 → 数据到底
+    assert.equal(noMore, false); // 第 3 页空 → 空批次不闩锁(ws1 Bug1,0 条 ≠ 到底)
     assert.deepEqual(batches, [['a', 'b', 'c'], ['a', 'b', 'c', 'd'], ['a', 'b', 'c', 'd']]); // 每页合并后回调
   } finally {
     globalThis.fetch = originalFetch;
@@ -534,4 +537,67 @@ test('loadWorkViewport: 信号取消后不再触发 onBatch(在飞批次模式�
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('loadWorkViewport: 0 条 → noMore=false(空批次不闩锁,ws1 Bug1)', async () => {
+  // 空批次可能由滤波/层级 maxTier 裁剪导致,不代表数据源到底。闩锁会让
+  // 「整城无 POI」粘住「没有更多结果」,无限滚动失效,恢复只能等下一次
+  // moveend——即使 total=0 也一律不闩锁(宁可滚动时多发一次空请求)。
+  const seenPages = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const page = new URL(String(url), 'http://x').searchParams.get('page');
+    seenPages.push(page);
+    return { ok: true, json: async () => ({ results: [], total: 0 }) };
+  };
+  try {
+    const { pois, noMore } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 2,
+      maxPages: 4,
+      existing: [],
+    });
+    assert.equal(pois.length, 0);
+    assert.equal(noMore, false); // 空批次不闩锁
+    assert.deepEqual(seenPages, ['1']); // 空页提前停,不白打后续页
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport: 短页(< pageSize,1..size-1 条)仍闩锁 noMore=true', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      results: [recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }])],
+      total: -1,
+    }),
+  });
+  try {
+    const { noMore } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 2, // 1 条 < 2 → 短页
+      existing: [],
+    });
+    assert.equal(noMore, true); // 短页仍按「到底」闩锁
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('needsViewportAlign: 无快照/远中心/zoom 差超阈值 → 不符(触发对齐加载)', () => {
+  assert.equal(VIEWPORT_ALIGN_CENTER_KM, 25);
+  assert.equal(VIEWPORT_ALIGN_ZOOM_DELTA, 2);
+  const hz = { center: { lng: 120.15, lat: 30.27 }, zoom: 13 };
+  // 旧缓存无快照字段 → 一律按不符处理
+  assert.equal(needsViewportAlign(undefined, { lng: 120.15, lat: 30.27 }, 13), true);
+  assert.equal(needsViewportAlign(null, { lng: 120.15, lat: 30.27 }, 13), true);
+  // 杭州 ↔ 上海 ~168km > 25km → 不符
+  assert.equal(needsViewportAlign(hz, { lng: 121.47, lat: 31.23 }, 13), true);
+  // zoom 差 3 > 2 → 不符
+  assert.equal(needsViewportAlign(hz, { lng: 120.16, lat: 30.28 }, 16), true);
+  // 同城 ~5km 且 zoom 差 ≤ 2 → 相符,不触发
+  assert.equal(needsViewportAlign(hz, { lng: 120.2, lat: 30.25 }, 13), false);
+  assert.equal(needsViewportAlign(hz, { lng: 120.15, lat: 30.27 }, 15), false);
 });

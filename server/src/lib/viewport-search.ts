@@ -265,7 +265,7 @@ function clamp(n: number, min: number, max: number): number {
 // Domain 模式保持刷新才更新,不走这里。
 // ============================================================
 
-import type { FilterState, MapMode, POI, RecruitmentPOI } from './types.ts';
+import { haversineDistance, type FilterState, type MapMode, type POI, type RecruitmentPOI } from './types.ts';
 import { withAlivePositions } from './position-alive.ts';
 
 /**
@@ -323,6 +323,45 @@ export interface LoadWorkViewportOptions extends WorkViewportQuery {
 
 /** 首屏/刷新最多连取几页,避免全库翻页轰服务端 */
 export const WORK_INITIAL_MAX_PAGES = 4;
+
+// ============================================================
+// 挂载对齐加载(ws1 Bug1 视口)
+//
+// mode 级会话缓存还原的是「上次会话视野」的目录(可能是别的城市)。刷新页面后
+// 地图初始化固定在杭州 zoom 13,geolocation 被拒时不产生任何 moveend——若缓存
+// 视野快照与当前地图视野显著不符,调用方(组件契约)应主动调度一次当前视野的
+// 视口加载,不再等用户手动拖动。旧缓存没有快照字段 → 一律按「不符」处理。
+// ============================================================
+
+/** 缓存视野快照与当前视野「显著不符」的中心距离阈值(km) */
+export const VIEWPORT_ALIGN_CENTER_KM = 25;
+/** 缓存视野快照与当前视野「显著不符」的 zoom 差阈值 */
+export const VIEWPORT_ALIGN_ZOOM_DELTA = 2;
+
+/** 缓存写入时的地图视野快照(center+zoom,bounds 可选;与 ModeCacheEntry.viewport 对应) */
+export interface ViewportSnapshot {
+  center: LngLat;
+  zoom: number;
+  bounds?: ViewportBounds | null;
+}
+
+/**
+ * 缓存视野快照与当前地图视野是否「显著不符」:
+ * - 无快照(旧缓存 / 字段非法)→ 视为不符,触发一次对齐加载;
+ * - 中心距离 > centerKm 或 zoom 差 > zoomDelta → 不符。
+ */
+export function needsViewportAlign(
+  snapshot: ViewportSnapshot | null | undefined,
+  liveCenter: LngLat,
+  liveZoom: number,
+  centerKm = VIEWPORT_ALIGN_CENTER_KM,
+  zoomDelta = VIEWPORT_ALIGN_ZOOM_DELTA,
+): boolean {
+  if (!snapshot || !snapshot.center || !Number.isFinite(snapshot.zoom)) return true;
+  if (haversineDistance(snapshot.center, liveCenter) / 1000 > centerKm) return true;
+  if (Math.abs(snapshot.zoom - liveZoom) > zoomDelta) return true;
+  return false;
+}
 
 function isRecruitmentPoi(value: unknown): value is RecruitmentPOI {
   if (!value || typeof value !== 'object') return false;
@@ -422,6 +461,13 @@ export async function loadWorkViewport(
     const offset = (startPage + p - 1) * pageSize;
     merged = mergePoisById(merged, page.pois, POI_HARD_CAP);
     onBatch?.(merged);
+    // 空批次(0 条)≠ 到底(ws1 Bug1 视口):滤波/层级 maxTier 裁剪可致整页为空,
+    // 不代表数据源已取尽——不闩锁 noMore,保留无限滚动重试与下一次视口刷新的
+    // 恢复能力,避免「整城无 POI」时粘滞「没有更多结果」(恢复只能等 moveend)。
+    if (page.pois.length === 0) {
+      noMore = false;
+      break;
+    }
     // 本页不满页 → 没有更多数据,提前停(避免白打请求);同时上报 noMore
     if (page.pois.length < pageSize) {
       noMore = true;
