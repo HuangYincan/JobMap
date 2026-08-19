@@ -4,7 +4,9 @@
 // radar-*  → 「正在校招」: mapped xiaozhao-radar rows (real apply links)
 // portal-* → 「官网直投」: curated verified official career portals
 // These are NOT job JD — they are "this company is recruiting now" signals.
-// Frontend rendering awaits approval (tech/17-freshness-presentation-proposal.md).
+// 2026-08-17 决策 (tech/18 §A1): 不做复杂新鲜度徽标, 呈现上只突出「在招中」信号,
+// 过期岗位自动隐藏。tech/17 提案已存档; 本文件判断函数仍用于真实岗位过滤
+// (isAuthenticPositionId, 只留 radar-*/portal-* 在招行)。
 // ============================================================
 
 export type FreshnessKind = 'radar' | 'portal' | 'seed';
