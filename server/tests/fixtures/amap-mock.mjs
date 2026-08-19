@@ -18,6 +18,7 @@ export class MockMarker {
     this._map = null;
     this._listeners = {};
     this.position = this.opts.position || null;
+    this._visible = true; // b2:可见性状态(show/hide)
     if (this.opts.map) {
       this.setMap(this.opts.map);
     }
@@ -40,6 +41,18 @@ export class MockMarker {
 
   setPosition(pos) {
     this.position = pos;
+  }
+
+  show() {
+    this._visible = true;
+  }
+
+  hide() {
+    this._visible = false;
+  }
+
+  isVisible() {
+    return this._visible;
   }
 
   on(evt, fn) {

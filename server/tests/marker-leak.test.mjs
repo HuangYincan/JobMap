@@ -1,10 +1,11 @@
 // ============================================================
 // marker 泄漏契约测试 — 控制器与地图 overlay 表的失同步防护
 //
-// 目标不变式(Bug1 伴生,ws2):
+// 目标不变式(Bug1 伴生,ws2 + b2 修订):
 //   1. destroy() 后,地图上无该控制器管理过的 overlay(计数归零)
-//   2. setPOIs 差分后,map.getAllOverlays('marker') 计数恒等于
-//      最近一次传入的 POI 列表长度(允许 flush 前的短暂过渡)
+//   2. setPOIs 非空列表 = 只增不删(b2):地图计数单调不减——只新增缺失标记,
+//      离开列表的 id 保留实例(可见性由 setVisiblePOIs 控制);
+//      空列表 = 清空(刷新/重置路径)
 //   3. 异步 amap ready 竞态(loadAMap 挂起 / 挂起中销毁 / 重建)不产生泄漏
 //
 // 用 MockMap 直接观察 overlay 注册表(等价浏览器 map.getAllOverlays)。
@@ -49,7 +50,7 @@ test.afterEach(() => {
   uninstallAMapMock();
 });
 
-test('diff 往返:杭州→上海→杭州,计数恒等于 catalog 数', async () => {
+test('只增不删:杭州→上海→杭州往返,计数单调不减,离开的 id 保留实例', async () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
@@ -58,9 +59,11 @@ test('diff 往返:杭州→上海→杭州,计数恒等于 catalog 数', async (
   c.setPOIs(HZ);
   assert.equal(countOnMap(map), 2, '杭州 2 个 marker 上地图');
   c.setPOIs(SH);
-  assert.equal(countOnMap(map), 7, '上海 7 个 marker(杭州 2 个已差分移除)');
+  assert.equal(countOnMap(map), 9, '上海 7 个新增,杭州 2 个实例保留(只增不删)');
+  assert.ok(c.getMarkerByPOIId('hz-1'), '离开列表的 hz-1 实例仍在');
   c.setPOIs(HZ);
-  assert.equal(countOnMap(map), 2, '回到杭州 → 2 个,上海 7 个已移除');
+  assert.equal(countOnMap(map), 9, '回到杭州 → 上海 7 个实例同样保留,计数不减');
+  assert.ok(c.getMarkerByPOIId('sh-1'), '离开列表的 sh-1 实例仍在');
   c.destroy();
   assert.equal(countOnMap(map), 0, 'destroy 后地图清零');
 });
@@ -118,10 +121,10 @@ test('簿记丢失兜底:markers 内部表被破坏,destroy 仍摘除全部 plac
 
   // 模拟「marker 在地图上、但控制器内部 markers 表丢失」的泄漏场景
   // (TS private 仅编译期约束,运行时可直接访问):
-  // 破坏内部表后,setPOIs 差分已无能力移除这些 marker——只有 placed 兜底能清
+  // 破坏内部表后,setPOIs 已无能力定位这些 marker 更新——只有 placed 兜底能清
   c.markers.clear();
-  c.setPOIs(SH); // 差分看不到 hz-1/hz-2 → 地图上仍是 2+7=9(泄漏重现)
-  assert.equal(countOnMap(map), 9, '簿记丢失后差分无法摘除,泄漏在途');
+  c.setPOIs(SH); // 内部表为空 → 只增路径新建 7 个(地图上 2+7=9,泄漏在途)
+  assert.equal(countOnMap(map), 9, '簿记丢失后地图上 9 个(2 个失控 + 7 个新建)');
   c.destroy();
   assert.equal(countOnMap(map), 0, 'destroy 凭 placed 账兜底摘除全部 9 个');
 });
@@ -140,7 +143,7 @@ test('地图先销毁:已注册 marker 由控制器 destroy 摘除,不残留', a
   assert.equal(countOnMap(map), 0, 'destroy 后地图 overlay 清零');
 });
 
-test('多次往返 + 中途重建:计数保持 catalog 数,最终清零', async () => {
+test('多次往返 + 中途重建:计数只增不减(只增池语义),最终清零', async () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   let c = createPOIMarkerController(map, { color: '#007AFF' });
@@ -149,15 +152,17 @@ test('多次往返 + 中途重建:计数保持 catalog 数,最终清零', async 
     await tick();
     c.setPOIs(SH);
     await tick();
-    assert.equal(countOnMap(map), 7, `往返 ${i + 1} 后上海计数=7`);
+    assert.equal(countOnMap(map), 9, `往返 ${i + 1} 后计数=9(2+7 只增不删)`);
     if (i === 2) {
       c.destroy();
       assert.equal(countOnMap(map), 0, '重建前旧控制器清零');
       c = createPOIMarkerController(map, { color: '#FF6B35' });
       await tick();
+      c.setPOIs(HZ);
+      assert.equal(countOnMap(map), 2, '重建后从空开始只加 2 个');
     }
   }
-  assert.equal(countOnMap(map), 7, '往返×5 后计数仍=7');
+  assert.equal(countOnMap(map), 9, '往返×5 后计数=9');
   c.destroy();
   assert.equal(countOnMap(map), 0, '最终清零');
 });
@@ -173,7 +178,7 @@ test('已销毁的 map 上不创建 marker(控制器晚于地图销毁)', async 
   c.destroy();
 });
 
-test('setPOIs 空列表 → 地图清零(全量替换语义)', async () => {
+test('setPOIs 空列表 → 地图清零(空列表 = 清空,刷新/重置路径)', async () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
@@ -181,6 +186,6 @@ test('setPOIs 空列表 → 地图清零(全量替换语义)', async () => {
   c.setPOIs(HZ);
   assert.equal(countOnMap(map), 2);
   c.setPOIs([]);
-  assert.equal(countOnMap(map), 0, '空列表即移除全部');
+  assert.equal(countOnMap(map), 0, '空列表即移除全部(等价 clear)');
   c.destroy();
 });
