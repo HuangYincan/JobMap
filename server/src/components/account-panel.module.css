@@ -539,6 +539,30 @@
   gap: 2px;
   padding: 10px 14px;
   min-width: 0;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  margin: 0;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* 整行 button:与 .rowBtn 同一套 hover/active 语义 */
+.appRow:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.045);
+}
+
+.appRow:active:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* 缺 positionId/companyPoiId 的通知行:不可点,弱化显示 */
+.appRow:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 
 .appRow strong {
@@ -615,6 +639,14 @@
   }
 
   .rowBtn:active {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .appRow:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .appRow:active:not(:disabled) {
     background: rgba(255, 255, 255, 0.1);
   }
 
