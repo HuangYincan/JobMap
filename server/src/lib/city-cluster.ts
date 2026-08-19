@@ -11,6 +11,7 @@
 
 import type { POI } from './types.ts';
 import { isRecruitmentPOI } from './types.ts';
+import { cityCenter } from './city-centers.ts';
 
 /** 聚合触发上限:zoom <= 8 启用聚合,zoom > 8 切回个体 pin(用户批准阈值,tech/21)。 */
 export const CLUSTER_MAX_ZOOM = 8;
@@ -23,9 +24,9 @@ export interface CityCluster {
   city: string;
   /** 该城 POI 数量。 */
   count: number;
-  /** 聚合徽章锚点经度 = 组内 pin 坐标均值(有合法坐标的)。 */
+  /** 聚合徽章锚点经度:命中静态城市中心 → 行政中心经度,未命中 → 组内 pin 均值。 */
   lng: number;
-  /** 聚合徽章锚点纬度 = 组内 pin 坐标均值(有合法坐标的)。 */
+  /** 聚合徽章锚点纬度:命中静态城市中心 → 行政中心纬度,未命中 → 组内 pin 均值。 */
   lat: number;
 }
 
@@ -47,7 +48,9 @@ export function poiCity(poi: POI): string | undefined {
  * - 非 work 上下文(列表里一个 recruitment POI 都没有,含空列表)→ 返回 null;
  * - 按 site.city 分组计数(经 poiCity,一 POI 一职场语义);
  * - 无 city 的 POI 不聚合(保持个体,由调用方另行渲染或省略);
- * - 中心点 = 组内 pin 坐标均值(有合法坐标的);组内无合法坐标 → 该组省略。
+ * - 中心点 = 静态城市中心(命中 CITY_CENTERS),未命中 → 组内 pin 坐标均值(有合法
+ *   坐标的);组内无合法坐标 → 该组省略。命中静态中心时忽略均值(北京等散落城市
+ *   均值可能落在城郊,tech/21 + ws-b)。
  *
  * @returns 聚合组数组(按数量降序,数量相同按城市名升序,输出确定);
  *          不满足聚合条件时 null。
@@ -84,8 +87,9 @@ export function clusterCities(pois: POI[], zoom: number): CityCluster[] | null {
     .map(([city, g]) => ({
       city,
       count: g.count,
-      lng: mean(g.lngs),
-      lat: mean(g.lats),
+      // 锚点优先取静态行政中心(裸名城归一命中),未命中回退组内均值(确定性不变)
+      lng: cityCenter(city)?.lng ?? mean(g.lngs),
+      lat: cityCenter(city)?.lat ?? mean(g.lats),
     }))
     .sort(
       (a, b) =>
