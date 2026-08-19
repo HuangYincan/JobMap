@@ -298,7 +298,10 @@ test('domain category gating (poi-category-loading): 门控/驱动加载/空态�
   assert.match(i18n, /pickCategory: \{[\s\S]*选择类别开始浏览[\s\S]*Pick a category to explore/);
   assert.match(list, /emptyTitle\?: string/);
   assert.match(list, /emptyTitle \?\? t\("noResults", lang\)/);
-  assert.match(sidebar, /emptyTitle=\{domainNoCategory \? t\("pickCategory", lang\) : undefined\}/);
+  assert.match(
+    sidebar,
+    /emptyTitle=\{\s*domainNoCategory \|\| candidateChips\.length > 0 \? t\("pickCategory", lang\) : undefined\s*\}/,
+  );
   assert.match(sidebar, /config\.kind === "domain" && !filters\.category && !query\.trim\(\)/);
 });
 
@@ -429,4 +432,61 @@ test('map shell Bug3 locate: 挂载定位不抢占已交互相机(首次点 pin 
   assert.match(locateBlock, /mapInstance\.current\.setCenter\(\[lng, lat\]\)/);
   assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
   assert.doesNotMatch(locateBlock, /hasInteractedRef/);
+});
+
+test('work no-category empty state renders candidate category chips wired to filters', () => {
+  const list = src('components/poi-list.tsx');
+  const sidebar = src('components/secondary-sidebar.tsx');
+  const css = src('components/poi-list.module.css');
+  // POIList 空态槽位接受候选类别 chips + 点击回调
+  assert.match(list, /candidateCategories\?: \{ key: string; value: string; label: string \}\[\]/);
+  assert.match(list, /onPickCategory\?: \(key: string, value: string\) => void/);
+  assert.match(list, /candidateCategories && candidateCategories\.length > 0/);
+  assert.match(list, /onClick=\{\(\) => onPickCategory\?\.\(chip\.key, chip\.value\)\}/);
+  // chips 复用 filter-panel 的 chips/chip(与 TaxonomyControl 同一套)
+  assert.match(list, /import filterStyles from "\.\/filter-panel\.module\.css"/);
+  assert.match(list, /filterStyles\.chip/);
+  // 玻璃容器(候选类别卡片)
+  assert.match(css, /\.candidateCard \{[\s\S]*border-radius: 14px/);
+  assert.match(css, /\.candidateCard \{[\s\S]*backdrop-filter: blur\(20px\) saturate\(165%\)/);
+  // 数据源 getMode(mode).filters:未选类别(无 query/jobTaxonomy/roleFamily)→ 出 chips
+  assert.match(sidebar, /export function workCandidateCategories/);
+  assert.match(sidebar, /getMode\(mode\)\.filters/);
+  assert.match(sidebar, /config\.key !== "jobTaxonomy" && config\.key !== "roleFamily"/);
+  assert.match(sidebar, /selectedTaxonomyPaths\(filters\)\.length > 0/);
+  assert.match(sidebar, /selectedRoleFamilies\(filters\)\.length > 0/);
+  // 桌面 sidebar 接线:未选 → 空态标题 + chips;点击写 filters[key] = [value]
+  assert.match(sidebar, /candidateChips = workCandidateCategories\(mode, query, filters\)/);
+  assert.match(sidebar, /candidateCategories=\{candidateChips\.length > 0 \? candidateChips : undefined\}/);
+  assert.match(sidebar, /onPickCategory=\{\(key, value\) => onFiltersChange\(\{ \.\.\.filters, \[key\]: \[value\] \}\)\}/);
+  // 移动抽屉 POIList(map-shell)同链路
+  const shell = src('components/map-shell.tsx');
+  assert.match(shell, /mobileCandidateChips = workCandidateCategories\(mode, query, filters\)/);
+  assert.match(shell, /candidateCategories=\{mobileCandidateChips\.length > 0 \? mobileCandidateChips : undefined\}/);
+  assert.match(shell, /onPickCategory=\{\(key, value\) => setFilters\(\{ \.\.\.filters, \[key\]: \[value\] \}\)\}/);
+});
+
+test('profile language/defaultMode prefs are PrefField dropdowns sharing the job-seeking chain', () => {
+  const panel = src('components/account-panel.tsx');
+  // PrefField 类型扩两个单选字段
+  assert.match(
+    panel,
+    /type PrefField = "status" \| "families" \| "industries" \| "strengths" \| "language" \| "defaultMode"/,
+  );
+  // 偏好两行走 renderPrefTrigger(与求职偏好同一套触发钮/浮层)
+  assert.match(panel, /renderPrefTrigger\("language", t\("prefLanguage", lang\), languageText\)/);
+  assert.match(panel, /renderPrefTrigger\("defaultMode", t\("prefDefaultMode", lang\), defaultModeText\)/);
+  assert.match(panel, /const languageText = prefs\.language === "zh" \? "中文" : "English"/);
+  assert.match(panel, /const defaultModeText = getMode\(prefs\.defaultMode\)\.name/);
+  // 浮层选项:language=[中文, English];defaultMode=ACTIVE_MODES 显示名
+  assert.match(panel, /\{ id: "zh", label: "中文" \}/);
+  assert.match(panel, /\{ id: "en", label: "English" \}/);
+  assert.match(panel, /options = ACTIVE_MODES\.map\(\(m\) => \(\{ id: m, label: getMode\(m\)\.name \}\)/);
+  // 单选 onSelect 即存即关,持久化链路与求职偏好一致(persistPrefs→onSave→PATCH)
+  assert.match(panel, /persistPrefs\(mergePreferences\(prefs, \{ language: id as Language \}\)/);
+  assert.match(panel, /persistPrefs\(mergePreferences\(prefs, \{ defaultMode: id as MapMode \}\)/);
+  assert.match(panel, /closeMenu\(\);/);
+  // pill 切换已移除
+  assert.doesNotMatch(panel, /pillRow/);
+  assert.doesNotMatch(panel, /styles\.choice/);
 });
