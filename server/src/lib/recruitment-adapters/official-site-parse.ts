@@ -373,7 +373,10 @@ export function extractCityAndAddress(input: string): ExtractedAddress | null {
     const cityToken = m[2];
     const info = cityInfoOf(cityToken);
     if (!info) continue;
-    const rest = m[0].trim().slice(m[0].indexOf(cityToken) + cityToken.length);
+    // indexOf/slice 必须用同一个字符串: m[0] 可能带 \s* 前缀空格,
+    // 混用 trim 前后的下标会错位吃掉区名的首字 (北京市朝阳区 → 北京市阳区)。
+    const trimmed = m[0].trim();
+    const rest = trimmed.slice(trimmed.indexOf(cityToken) + cityToken.length);
     const hit: ExtractedAddress = {
       city: info.full,
       province: provinceText || info.province,

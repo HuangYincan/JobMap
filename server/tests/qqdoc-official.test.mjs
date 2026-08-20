@@ -171,6 +171,17 @@ test('extractCityAndAddress: unlabeled footer scan finds 省市区+路', () => {
   assert.ok(hit.address.includes('复兴门内大街55号'), `address ${hit.address}`);
 });
 
+test('extractCityAndAddress: leading whitespace before the city must not eat the district first char', () => {
+  // 回归: m[0] 的 \s* 前缀空格使 indexOf/slice 错位, 区名首字被吞
+  // (北京市朝阳区 → 北京市阳区; 西城区 → 城区; 河西区 → 西区)。
+  const a = extractCityAndAddress('页脚 联系我们 地址: 北京市朝阳区和平街13区煤炭大厦 电话 010-87986202');
+  assert.equal(a.address, '北京市朝阳区和平街13区煤炭大厦');
+  const b = extractCityAndAddress('首页 北京市西城区月坛南街1号院 邮编 100045');
+  assert.equal(b.address, '北京市西城区月坛南街1号院');
+  const c = extractCityAndAddress('主页 天津市河西区友谊路32号 电话 022-1234');
+  assert.equal(c.address, '天津市河西区友谊路32号');
+});
+
 test('extractCityAndAddress: district-only address still yields the city', () => {
   const hit = extractCityAndAddress('联系地址：杭州市西湖区文三路90号');
   assert.equal(hit.city, '杭州市');
@@ -225,4 +236,23 @@ test('qqdoc drops are idempotent input for the extraction script', () => {
   assert.equal(needs('中国远洋海运集团总部', '中国远洋海运集团'), true);
   assert.equal(needs('北京市', '中国移动'), false);
   assert.equal(needs('', '某公司'), true);
+});
+
+test('qqdoc drops data integrity: every city is a known full name, pending is explicit', async () => {
+  // 提取脚本更新后: 城市必须是已知城市全称 (市/自治区后缀, 可被 geocode 使用);
+  // 无法确定的公司必须带显式 city_pending 标记, 不得残留公司名占位城市。
+  const companies = await listQqdocOfficialFiles();
+  let checked = 0;
+  for (const company of companies) {
+    const raw = JSON.parse(readFileSync(join(QQDOC_DIR, `${company.slug}.json`), 'utf8'));
+    const site = raw.sites[0];
+    const city = site?.city?.trim() || '';
+    if (!city || city.includes(raw.name)) {
+      assert.equal(raw.city_pending, true, `${raw.name} must be marked city_pending`);
+      continue;
+    }
+    assert.equal(normalizeCityName(city), city, `${raw.name} city ${city} must be a known full name`);
+    checked += 1;
+  }
+  assert.ok(checked >= 56, `at least the 56 pre-filled cities must be known, got ${checked}`);
 });

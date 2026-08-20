@@ -14,7 +14,10 @@
 // 幂等: 已有真实城市 (市/省/自治区结尾且非公司名) 的公司跳过; 已标
 // city_pending 的公司默认跳过 (--retry-pending 可重试)。脚本可重复运行。
 //
-// 用法: node scripts/extract-qqdoc-addresses.mjs [--dry-run] [--limit N] [--retry-pending]
+// 用法: node scripts/extract-qqdoc-addresses.mjs [--dry-run] [--limit N]
+//        [--retry-pending] [--force] [--only=<slug>]
+//   --force: 已带真实城市的公司也重抓 (修复错提/损坏地址用)
+//   --only:  只处理指定 slug
 
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -268,9 +271,14 @@ function safeHost(rawUrl) {
 }
 
 function titleMatches(name, html) {
-  const keywords = TITLE_KEYWORDS[name] ?? [name];
   const title = /<title[^>]*>([^<]{1,120})<\/title>/i.exec(html)?.[1] ?? '';
-  return keywords.some((keyword) => title.includes(keyword));
+  const explicit = TITLE_KEYWORDS[name] ?? [name];
+  const explicitOk = explicit.some((keyword) => title.includes(keyword));
+  // 公司名含城市 (深圳农商行 → 深圳) 时, title 必须也含该城市 —
+  // 防候选域名属于同名行业其他公司 (szrcb.com 是苏州农商行, 也含「农商」)。
+  const nameCity = companyNameCity(name);
+  const cityOk = nameCity ? title.includes(nameCity.city.replace(/市$/, '')) : true;
+  return explicitOk && cityOk;
 }
 
 async function crawlCandidates(name, urls, stats) {
@@ -365,6 +373,12 @@ async function extractCompany(company, stats) {
 
 function applyExtraction(company, extracted, stats) {
   const site = company.sites[0];
+  // 清掉仅有 address 的残留 (坐标保留) — 上一轮错提/损坏的地址不留在 drop 里。
+  const clearAddressOnly = () => {
+    if (site.location && site.location.address && site.location.lng === undefined) {
+      site.location = {};
+    }
+  };
   if (extracted) {
     site.city = extracted.city;
     if (extracted.province) site.province = extracted.province;
@@ -378,9 +392,11 @@ function applyExtraction(company, extracted, stats) {
   if (nameCity) {
     site.city = nameCity.city;
     if (nameCity.province) site.province = nameCity.province;
+    clearAddressOnly();
     stats.nameCityFallback += 1;
     return;
   }
+  clearAddressOnly();
   company.city_pending = true;
   stats.pending += 1;
 }
@@ -388,8 +404,11 @@ function applyExtraction(company, extracted, stats) {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const retryPending = args.includes('--retry-pending');
+const force = args.includes('--force');
 const limitArg = args.find((a) => a.startsWith('--limit='));
 const limit = limitArg ? Number(limitArg.slice(8)) : Infinity;
+const onlyArg = args.find((a) => a.startsWith('--only='));
+const only = onlyArg ? onlyArg.slice(7) : null;
 
 const files = (await readdir(QQDOC_DIR)).filter((f) => f.endsWith('.json')).sort();
 const companies = [];
@@ -419,7 +438,8 @@ const touched = [];
 let stoppedByBudget = false;
 
 for (const { file, company } of companies) {
-  if (!needsExtraction(company)) {
+  if (only && company.slug !== only) continue;
+  if (!force && !needsExtraction(company)) {
     stats.skippedAlreadyCity += 1;
     continue;
   }
