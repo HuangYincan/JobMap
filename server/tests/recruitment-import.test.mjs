@@ -549,10 +549,13 @@ test('positions dedup plan scope: migrate/dedup use the plan external ids, not t
 test('planSeedImport orders real drops before the seed scaffold', () => {
   // dedupeSourceCompanies 保留每个 slug 的第一个公司 — seed 排前面会让示例副本
   // (过期坐标/tier/示例岗位) 压过官方 drops 的当前数据 (2026-08-19: tencent
-  // 120.155 旧坐标、deepseek tier 12)。真实 drops (official/radar) 必须先于 seed。
+  // 120.155 旧坐标、deepseek tier 12)。真实 drops (qqdoc/official/radar) 必须先于 seed。
   const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
   const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
-  assert.match(store, /\.\.\.official, \.\.\.radar, \.\.\.boss, \.\.\.nowcoder, \.\.\.shixiseng, \.\.\.seed/);
+  assert.match(
+    store,
+    /\.\.\.qqdocOfficial,\s*\.\.\.official,\s*\.\.\.radar,\s*\.\.\.boss,\s*\.\.\.nowcoder,\s*\.\.\.shixiseng,\s*\.\.\.seed/,
+  );
 });
 
 test('portal-* positions suppress radar-* aggregate rows on the same company', () => {
