@@ -297,7 +297,9 @@
       "city": "成都市",
       "province": "四川省",
       "location": {
-        "address": "凯德天府办公楼1栋4单元13层"
+        "address": "武侯区凯德天府办公楼1栋4单元13层",
+        "lng": 104.069232,
+        "lat": 30.602691
       }
     },
     {
@@ -352,6 +354,24 @@
       "province": "广东省",
       "location": {
         "address": "东莞"
+      }
+    },
+    {
+      "id": "安克创新-site-台北",
+      "name": "安克创新",
+      "city": "台北市",
+      "province": "",
+      "location": {
+        "address": "非中国大陆地区"
+      }
+    },
+    {
+      "id": "安克创新-site-胡志明",
+      "name": "安克创新",
+      "city": "胡志明市",
+      "province": "",
+      "location": {
+        "address": "越南"
       }
     }
   ],
@@ -12031,6 +12051,20 @@
       "applyUrl": "https://anker-in.jobs.feishu.cn/position/6982845194095151367/detail",
       "retrievedAt": "2026-08-19T03:26:44Z",
       "description": "工作职责： 1、结合产品特点负责在Google，Facebook，Twitter、Amazon DSP、TikTok等海外广告平台的广告投放管理工作，包括投放计划的规划，执行，推广预算管理与成本控制等，并对投放效果负责； 2、根据品牌定位和产品卖点、目标用户画像制定不同产品的投放策略； 3、定期对广告数据进行监测，整合和分析投放数据； 4、对目标人群，创意表现等进行数据分析和总结，并不断优化推广效果； 5、对投放方法与技巧不断创新，勇于尝试和探索新的广告平台和渠道； 6、跨部门沟通和团队合作，确保广告效果的达成；\n\n岗位要求:\n1、2年以上Google，Facebook、DSP等海外主流广告实际投放经验，具有SEM，Display及Social广告投放经验者为佳； 2、对Google、Facebook、DSP等广告运作机制有深刻的理解，对广告账户的搭建，广告优化有系统性的经验和思路； 3、优秀的解决问题能力及抗压能力，具有较强的数据敏感性和数据分析能力；； 4、执行能力强，能自我驱动地深入研究事实和数据，推动持续突破； 5、具备较强的沟通能力及抗压能力，同时具备多任务处理能力；"
+    },
+    {
+      "externalId": "portal-feishu-7455886540431706418",
+      "title": "线下销售经理（charging）",
+      "siteId": "安克创新-site-shenzhen",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://anker-in.jobs.feishu.cn/position/7455886540431706418/detail",
+      "retrievedAt": "2026-08-20T03:25:35Z",
+      "description": "岗位要求:"
     }
   ]
 }

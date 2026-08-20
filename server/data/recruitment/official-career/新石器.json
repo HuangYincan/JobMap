@@ -1807,6 +1807,20 @@
       "applyUrl": "https://r3c0qt6yjw.jobs.feishu.cn/position/7526833482572695817/detail",
       "retrievedAt": "2026-08-19T03:26:44Z",
       "description": "1. 设计和实现自动驾驶系统中的决策和规划算法，优化车辆行驶能力。 2. 利用机器学习和系统优化技术，优化算法性能，提升决策规划的准确性和响应速度。 3. 跟踪最新的自动驾驶技术和行业动态，持续优化决策规划系统。\n\n岗位要求:\n1. 计算机、自动化、数学等相关专业，硕士及以上学历。 2. 熟悉Linux下C++的开发和调试，具备优秀的编程能力和扎实的算法能力。 3. 熟悉决策算法，如有限状态机、决策树、MDP、POMDP、动态规划等。 4. 熟悉规划算法，如A*、D*、Dijkstra、曲线拟合、Lattice Planner、数值优化算法等。 5. 熟悉控制算法优先，如PID、MPC、LQR、模糊、最优控制等。 6. 具备良好的数学建模和分析问题、解决问题的能力。 7. 具备较强的学习能力和钻研精神，良好的沟通表达和团队协作意识。 8. 具有自动驾驶、机器人导航或相关领域的实际项目经验。"
+    },
+    {
+      "externalId": "portal-feishu-7675752926200514879",
+      "title": "Agent业务平台研发工程师",
+      "siteId": "新石器-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://r3c0qt6yjw.jobs.feishu.cn/position/7675752926200514879/detail",
+      "retrievedAt": "2026-08-20T03:25:35Z",
+      "description": "岗位要求:"
     }
   ]
 }
