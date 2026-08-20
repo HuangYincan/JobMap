@@ -64,8 +64,9 @@ PostgreSQL 16 + PostGIS 3.4 是 MVP 硬约束；pgvector 延后，须另行验�
 
 **决策**:
 Next.js 16 App Router + TypeScript + **CSS Modules** 是实际技术栈(2026-08-21 修订:
-初始计划曾写 Next.js 15 + Tailwind CSS v4,但实现全程采用 CSS Modules,Tailwind
-从未引入,本决策以实际落地为准)。见 [01-architecture.md](01-architecture.md)。
+初始计划版本为 15.x(2026-08-20 已升级至 16.3.1)并计划 Tailwind CSS v4,但实现全程
+采用 CSS Modules,Tailwind 从未引入,本决策以实际落地为准)。见
+[01-architecture.md](01-architecture.md)。
 
 **理由**:
 - App Router 简化 API 开发(不需要单独后端)
