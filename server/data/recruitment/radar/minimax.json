@@ -15,7 +15,9 @@
       "city": "北京市",
       "province": "北京市",
       "location": {
-        "address": "北京/上海"
+        "address": "北京市丰台区南四环西路188号minimax",
+        "lng": 116.287718,
+        "lat": 39.823714
       }
     },
     {
