@@ -36,6 +36,32 @@ export function siteNeedsGeocode(site: CompanySite): boolean {
 }
 
 /**
+ * 缺坐标站点全量收集 (2026-08-21, fix/geocode-plan-count)。
+ * geocode-sites-apply.mjs 主循环前预扫用 — 统计真实 planTotal (所有
+ * siteNeedsGeocode 的站点数, ONLY/CITIES 过滤前口径)。配额短路后 planCount
+ * 停在短路点 ("Sites needing a point: 5" 误导, 实际 1783 个), 输出改用
+ * planTotal 报真实全量; 真实剩余 = planTotal - resolutions - unresolved -
+ * skipped。返回 (company, site) 引用供主循环复用, 避免预扫 + 主循环两次
+ * JSON.parse。放在本模块 (而非脚本内) 是为了可单测 — 脚本顶层跑主循环 +
+ * 真实网络, 无法 import; 与 shouldShortCircuitQuota 同模式。
+ */
+export interface NeedingSite {
+  company: SourceCompany;
+  site: CompanySite;
+}
+
+export function sitesNeedingGeocode(companies: ReadonlyArray<SourceCompany>): NeedingSite[] {
+  const out: NeedingSite[] = [];
+  for (const company of companies) {
+    if (!company || typeof company.slug !== 'string') continue;
+    for (const site of company.sites ?? []) {
+      if (siteNeedsGeocode(site)) out.push({ company, site });
+    }
+  }
+  return out;
+}
+
+/**
  * WS1's types.ts lands `city` / `province` on CompanySite (national scope).
  * Read them defensively through a local intersection so this module is not
  * blocked on that file; sites without the fields fall back to 杭州.

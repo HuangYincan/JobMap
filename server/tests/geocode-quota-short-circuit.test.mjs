@@ -83,7 +83,7 @@ test('geocode-sites-apply.mjs 接线: 连续配额类失败 → 提前停止 + e
   assert.match(script, /const QUOTA_SHORT_CIRCUIT_N = 5/);
   assert.match(script, /shouldShortCircuitQuota\(quotaHistory, QUOTA_SHORT_CIRCUIT_N\)/);
   assert.match(script, /break mainLoop/);
-  assert.match(script, /mainLoop: for \(const file of files\)/);
+  assert.match(script, /mainLoop: for \(const \{ file, company, site \} of needing\)/);
   assert.match(script, /QUOTA_EXHAUSTED: AMap\+百度 双配额耗尽/);
   assert.match(script, /process\.exit\(2\)/);
   // 解析成功冲掉窗口 — 不误停的接线点
