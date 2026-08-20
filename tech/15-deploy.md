@@ -14,7 +14,7 @@ This is how to run Domain Map on a laptop. There is **no** production host, TLS,
 
 ```bash
 cd server
-cp ../.env.example .env.local   # then fill NEXT_PUBLIC_AMAP_*
+cp .env.example .env.local   # then fill NEXT_PUBLIC_AMAP_*
 npm install
 npm run dev                     # http://localhost:3000
 ```
