@@ -83,7 +83,7 @@ AMap place-text 日配额耗尽(10044)→ 自动降级百度地点检索(免费 
 - `site-geocode.ts`: AMap→Baidu 兜底(place/regeo/geocode 三入口,统一 GCJ-02);`officeNameMatchStrength` 限定词匹配(拒同名工厂/门店/驿站陷阱);`pickBestOfficePoi` 城市级评分;302/401 间歇配额重试;别名扩展(中微→中微半导体设备、联影→联影医疗、携程→携程国际、拼多多→上海寻梦信息技术、乐鑫→乐鑫信息科技)。
 - `geocode-sites-apply.mjs`: 地址级优先分支(siteHasStreetAddress)、override 城市不匹配改「忽略并回落检索」而非整站跳过、grader 按别名后的 query 评分。
 
-> **2026-08-21 (feature/geocode-tencent):** 兜底链升级三级 AMap→Baidu→Tencent。腾讯 WebService(`TENCENT_MAP_KEY`,个人开发者每接口 10000 次/天、5 QPS)在百度重试后仍失败时接管;status≠0 即错误,121/321/322 归每日配额类、120 每秒限流重试一次、110/112/190/199 配置永久失效归短路;腾讯地址 geocode 的 `address` 参数须含省市区(城市前缀拼接)。错误码分类按官方状态码页预设,待真实 key 探测校准后更新本段并落 `data-quality.md`。
+> **2026-08-21 (feature/geocode-tencent):** 兜底链升级三级 AMap→Baidu→Tencent。腾讯 WebService(`TENCENT_MAP_KEY`,个人开发者每接口 10000 次/天、5 QPS)在百度重试后仍失败时接管;status≠0 即错误,121/321/322 归每日配额类、120 每秒限流重试一次、110/112/190/199/311 配置永久失效归短路;腾讯地址 geocode 的 `address` 参数须含省市区(城市前缀拼接)。错误码分类经真实 key 探测校准(2026-08-21:缺 key→301、错 key 格式→311、缺参→404,均与预设无冲突;311 并入配额类短路),结论落 `data-quality.md`。
 
 **15 家 -shanghai 落点**(除得物=嘉定运营中心(真实得物设施)、商汤=宝山新业坊(宝山办公点)外,均与清单预期区级一致):
 

@@ -251,9 +251,9 @@ export function tencentQuotaExhausted(payload: { status?: unknown }): boolean {
 // 站点全部配额类失败」提前停止。判定口径:
 //   配额类  = quota (AMap 10044/10043 且无兜底) | baidu-status:302 (百度天配额
 //             超限, 内部已重试一次仍 302) | tencent-status:121/321/322 (腾讯每日
-//             调用量上限) | tencent-status:110/112/190/199 (key/IP/功能配置永久
-//             失效 — 等同无兜底, 否则腾讯-only 空跑 1783 站) | no-key (全部 key
-//             均缺)。
+//             调用量上限) | tencent-status:110/112/190/199/311 (key/IP/功能配置
+//             永久失效 — 等同无兜底, 否则腾讯-only 空跑 1783 站; 311=key 格式
+//             错误, 2026-08-21 真实探测校准) | no-key (全部 key 均缺)。
 //   非配额类 = http/empty/parse (间歇性) | regeo-outside:* (有 POI 但城市不符,
 //             证明配额不是卡点) | baidu-status:401 | tencent-status:120 (并发/
 //             每秒限流, 可重试) | name-mismatch:* 等 grader 拒收 (接口有返回但
@@ -270,6 +270,8 @@ const QUOTA_CLASS_REASONS = new Set([
   'tencent-status:112',
   'tencent-status:190',
   'tencent-status:199',
+  // 311 = key 格式错误 — 永久配置失效 (2026-08-21 真实探测校准).
+  'tencent-status:311',
   'no-key',
 ]);
 

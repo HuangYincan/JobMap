@@ -7,7 +7,7 @@ import { isQuotaClassReason, shouldShortCircuitQuota } from '../src/lib/site-geo
 // 2026-08-21 (fix/geocode-quota-short-circuit): AMap place-text 日配额 10044 +
 // 百度兜底 302 双耗尽后, geocode-sites-apply.mjs 逐站空跑 (~1800 站零产出)。
 // 短路判定: 连续 N 个已尝试站点全部配额类失败 (quota / baidu-status:302 /
-// tencent-status:121|321|322 (每日上限) / tencent-status:110|112|190|199
+// tencent-status:121|321|322 (每日上限) / tencent-status:110|112|190|199|311
 // (key/IP/功能配置永久失效) / no-key) → 提前停止; 非配额类失败或成功解析
 // 冲掉窗口, 不误停。2026-08-21 (feature/geocode-tencent): 腾讯族并入。
 
@@ -24,6 +24,8 @@ test('isQuotaClassReason: quota / baidu-status:302 / tencent 每日上限与配�
   assert.equal(isQuotaClassReason('tencent-status:112'), true);
   assert.equal(isQuotaClassReason('tencent-status:190'), true);
   assert.equal(isQuotaClassReason('tencent-status:199'), true);
+  // 311 = key 格式错误 — 永久配置失效 (2026-08-21 真实探测校准)
+  assert.equal(isQuotaClassReason('tencent-status:311'), true);
 });
 
 test('isQuotaClassReason: 401 / 120 限流 / 间歇性 / 其余失败不是配额类', () => {
