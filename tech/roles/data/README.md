@@ -20,6 +20,13 @@ Implemented (reviewed 2026-08-17): published `xiaozhao-radar` `jobs.json` mappin
 - **Used by:** `geocodeAddressRest` + `placeTextSearchRest` + `regeoCityRest` (`server/src/lib/site-geocode.ts`, address→coordinate and office discovery for `geocode:sites:apply`), and `npm run audit:pins` (`scripts/audit-pin-locations.mjs`, three-layer pin audit: geocoding + regeocoding + POI search).
 - **Not used for:** map rendering (that is the browser JS key `NEXT_PUBLIC_AMAP_KEY`), or any Domain-mode live search (browser AMap SDK).
 
+## Tencent WebService key (`TENCENT_MAP_KEY`)
+
+- **Purpose:** third-level geocode fallback (2026-08-21, `feature/geocode-tencent`) — after AMap daily quota (infocode 10044) and Baidu daily quota (status 302) are both exhausted, or both keys are absent. The key must never be printed or committed, and is read from env (`server/.env.local`).
+- **Used by:** `tencentGeocodeAddressRest` + `tencentPlaceSearchRest` + `tencentRegeoCityRest` (`server/src/lib/site-geocode.ts`, ws/geocoder/v1 + ws/place/v1/search, native GCJ-02).
+- **Quota:** individual developer 10,000 calls/day per API, 5 QPS (official FAQ, lbs.qq.com) — vs AMap place-text 100/day and Baidu place search 100/day.
+- **Not used for:** map rendering or any frontend code.
+
 | Source | MVP status | Permitted action | Conditions |
 |---|---|---|---|
 | `xiaozhao-radar` `jobs.json` | Candidate approved for design | Build an import only after attribution and license evidence are recorded | Apache-2.0 attribution, source URL/hash, parser version, idempotency |

@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-21
+
+### Added
+
+- **腾讯 WebService 第三级兜底(AMap→百度→腾讯,`feature/geocode-tencent`).** `site-geocode.ts` 三入口(地址 geocode / 地点搜索 / regeo)在高德日配额(10044/10043)或百度日配额(302)双耗尽后自动切腾讯(`TENCENT_MAP_KEY`):新增 `tencentGeocodeAddressRest` / `tencentPlaceSearchRest` / `tencentRegeoCityRest`(ws/geocoder/v1 + ws/place/v1/search,原生 GCJ-02)+ `fallbackChain` 链式 helper 收敛兜底分支;腾讯个人开发者每接口 10000 次/天、5 QPS。错误码分类:121/321/322 每日上限归配额类短路、120 每秒限流重试一次、110/112/190/199 配置永久失效归短路。`geocode-sites-apply.mjs` 接 env 注入/DRY_RUN 判定/节流 provider 感知(百度 600ms、其余 340ms)/REPORT 三 key 状态。测试 +12(全量 549:547 pass / 2 skip);错误码分类待真实 key 探测校准(结论落 `tech/roles/data/data-quality.md`)。
+
 ## 2026-08-20
 
 ### Changed
