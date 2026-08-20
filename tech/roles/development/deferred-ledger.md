@@ -1,0 +1,40 @@
+# Deferred Ledger — 遗留待办账本
+
+> 各并行批次 deferred-notes 的合并追踪(去重);批次内新增待办时同步登记。
+> 来源批次: `tech/roles/development/parallel-sessions/<batch>/`
+> 状态: **OPEN**(待处理)/ **PARTIAL**(部分完成)/ **DONE-记录**(已闭环,仅作记录)/ **备查**(无阻塞,观察/口径记录)。
+
+| ID | 类型 | 内容 | 来源批次 | 状态 | 执行条件/决策者 |
+|---|---|---|---|---|---|
+| D-01 | 数据 | **跨城串味数据修正**:DB 原 147 条「city=外地但坐标=杭州」company_sites 行(76 公司/914 岗位;2026-08-20 事故坐标清理后剩 105 条:沪29/京24/深22/蓉17/穗9/汉4)。查询层 SQL + 客户端双重防御已生效,真实外地 office 修正前不显示 | 20260819-boss-cluster-tune · 20260820-boss-optimize D-01/D-14 · 20260820-boss-national-data · 20260820-boss-scan-optimize #14 | **OPEN** | 修 import provenance + 重跑 `plan-site-geocode` / `geocode-sites:apply -- --cities 深圳,成都,北京,上海,广州,武汉`(有界小量,用户已授权合理使用);修正后重跑 `import:seed:apply` 落库。需用户确认执行窗口 |
+| D-02 | Env-only | **icon 存量导入**:`npm run import:seed:apply` + bump `MODE_CACHE_VERSION` + `audit:pins`(DB 存量 672 家 logo 合入) | 20260819-boss-cluster-tune · 20260819-boss-cluster-viewport · 20260819-boss-fix-polish · 20260820-boss-optimize D-02/D-15 | **OPEN**(部分已做:2026-08-20 import:seed:apply 成功 672/1843/10533、MODE_CACHE_VERSION 13→14;`audit:pins` 0/107 系配额假象未重跑) | 用户确认;audit:pins 待 AMap 配额恢复后重跑(建议给 audit-pin-locations.mjs 补百度兜底,见 D-13) |
+| D-03 | Env-only/数据 | **全国 geocode 配额**:radar 站点占位名(如「腾讯—剩余岗位」)+ 无坐标;8 城重跑(上海 379 未 geocode 站点、南京/西安 51/47) | 20260820-boss-national-data D-1 · 20260819-boss-cluster-tune #15 · 20260820-boss-optimize D-03 · 20260819-more-real-data-job-filters | **PARTIAL**(2026-08-21 geocode-quota 批部分完成:20 家坐标写入) | 配额重置后 `geocode:sites:apply -- --cities 上海市,北京市,深圳市,成都市,广州市,南京市,武汉市,西安市`(大额配额,待用户确认);脚本不读 .env.local,需先 source |
+| D-3 | 观察 | **zhiye 北森源 robots 不可用**:148 租户全量采集 0 可采(robots.txt 阻断 / 新版 portal 无 API 路径);适配器与合规约束正确工作,增量由飞书源承担 | 20260820-boss-national-data D-3 | **OPEN(观察)** | 关注 zhiye robots 策略变化后再启用 |
+| E-01 | 观察 | **/api/me/notifications 429**:冒烟时该接口返回 429(自身限流器);非 3 bug 范围 | 20260820-boss-bugfix E-01 | **OPEN(观察)** | 若用户频繁遇到,查限流阈值是否过紧 |
+| E-02 | 观察 | **Next 16 生成文件**:`server/AGENTS.md` + `server/CLAUDE.md`(Next 16 自动生成,内容指向 node_modules/next/dist/docs/);`next-env.d.ts` 会在 dev/build 运行间交替改写(.next/dev/types vs .next/types),属正常 | 20260820-boss-bugfix E-02 | **OPEN(观察)** | agent 写代码前查阅 AGENTS.md;已 commit 保持树干净 |
+| E-03 | 技术(教训) | **b1 契约测试盲区**:b1 原实现(迁移先于去重)契约测试全绿但真实 DB 失败(PG 唯一键瞬时冲突);b1f 已修正顺序并补顺序断言。教训:import 类逻辑最终以真实 DB 验证为准 | 20260820-boss-bugfix E-03 | **DONE-记录**(已闭环) | — |
+| E-04 | 技术 | **import 自愈边界**:自愈只处理 plan 内 authentic 岗位;DB 中 authentic 之外的同 external_id 历史重复不会清理。positions 唯一键仍为 (source_id, external_id) | 20260820-boss-bugfix E-04 | **OPEN** | 若未来同一 external_id 跨公司出现,需升级唯一键策略 |
+| D-04 | 产品决策 | **真实 OTP 发送**:限流/尝试上限/过期清理已加固;demo 固定码 000000 + hint 回显仍在 | 20260819-boss-cluster-tune · 20260820-boss-optimize D-04 · quality-scans/20260819-all #4 | **OPEN** | 上线前必须接入真实 SMS/邮件发送、删除 demo hint;何时接入由用户拍板 |
+| D-05 | 采集口径 | **robots 失败策略**:`fetch_robots` 网络异常/≥400 时当前返回允许(True,acquire.py:143-152);「404/无 robots 允许(惯例)vs 网络异常/5xx 拒绝(保守)」待选边 | 20260819-boss-cluster-tune · 20260820-boss-optimize D-05 · quality-scans/20260820-all #8 | **OPEN** | 采集口径需用户拍板后派 worker 改 acquire.py |
+| D-06 | 产品口径 | **移动端抽屉覆盖**:全开抽屉遮地图属设计,顶部已留 ~32px poi 地图条带缓解 | 20260819-boss-viewport-profile · 20260820-boss-optimize D-06 | **备查** | 若用户仍觉遮蔽,可单开视觉改善批次(动布局) |
+| D-07 | 数据/技术 | **favicon.im IP 域名覆盖率不足**:裸 IP 404 → emoji 兜底;代码侧已做 IP 识别 + DOMAIN_LOGO_MAP + icon.horse 兜底 + 清 49 处 Google s2 死链(20260820 w3) | 20260819-boss-fix-polish · 20260819-boss-cluster-tune · 20260819-boss-cluster-viewport · 20260820-boss-optimize D-11 | **OPEN**(部分) | 剩余口径记 ADR-007;浏览器端抽查列为风险项 |
+| D-08 | 数据 | **城市中心表覆盖面**:CITY_CENTERS 15 城,未知城市回退均值 | 20260819-boss-cluster-tune · 20260820-boss-optimize D-12 | **OPEN** | 扩表或用 AMap 行政区中心(Env) |
+| D-09 | 数据 | **全国数据规模**:更多城市真实公司/岗位(苏州/宁波/成都/武汉/广深;其余 feishu 租户 28 家 + mokahr 142/zhiye 138/hotjob 42) | 20260819-data-quality-shanghai-poi · 20260819-more-real-data-job-filters · 20260820-boss-optimize D-13 | **OPEN** | 全国抓取口径待定;mokahr 需先评估 WAF 风险 |
+| D-10 | 数据(大工程) | **全量聚合岗位拆解**:700 条 radar 聚合行拆具体岗位(LLM 报告已含 694 条 suggestedSplit);本批只做群核 4 岗 + 诚实展示 | 20260819-data-quality-shanghai-poi · 20260819-auth-explore-poi(tech/20 B2 里程碑) | **OPEN** | 需逐公司真实 JD 的大工程,建议单独规划 |
+| D-11 | 流程 | **make refresh-radar 会覆盖手工拆分 drops**(manycore-hangzhou.json 为派生产物) | 20260819-auth-explore-poi | **OPEN** | 拆分移到数据源侧/overlay 机制,或每次 refresh 后重新应用 |
+| D-12 | 观察 | **mokahr 站点 WAF 拦截非浏览器请求**(302 自环),per-job 数据无法自动抓取 | 20260819-auth-explore-poi · 20260819-more-real-data-job-filters | **OPEN(观察)** | 不绕过 WAF(项目规则);后续评估 |
+| D-13 | 技术 | **百度兜底未生效疑点 + audit-pin-locations.mjs 无百度兜底**:dry-run 中 Baidu 兜底未产出任何解析;audit 脚本仅 AMap key 路径,配额耗尽即全红 | 20260820-boss-optimize D-17 | **OPEN** | 探针区分「百度 key/配额不可用」vs「兜底逻辑缺陷」(勿打印 key);建议后续 fix 批次补兜底 |
+| D-14 | 技术 | **plan-seed-import.mjs 不加载 .env.local**:import 需 shell 显式 `DATABASE_URL`;CLAUDE.md 表述与此不符 | 20260820-boss-optimize D-18 | **OPEN** | 补 loadEnv(参照 geocode-sites-apply.mjs)或改文档表述 |
+| D-15 | 验收 | **B3 聚合浏览器验收**:zoom≤8 徽章/点击下钻 zoom 11;贝达 DB 行已验证(city=杭州,tier=6) | 20260819-boss-cluster-tune · 20260819-boss-cluster-viewport · 20260820-boss-optimize D-10/D-16 | **OPEN(验收)** | 应用可跑时浏览器验收(成都徽章应消失、杭州徽章含贝达) |
+| D-16 | 数据口径 | **distance 圆心语义备查**:圆心已实现「随当前视野中心」(cluster-viewport ws-b,与服务端 boundsCenter 一致);「以我的位置为中心」为可选语义 | 20260819-boss-cluster-viewport · 20260819-boss-fix-polish | **备查** | 用户想要「离我最近」语义时另行设计 |
+| D-17 | 观察 | **marker 失步生产复验**:dev Fast Refresh 下多次 zoom+拖动偶发 marker 与 catalog 失步;生产构建未复验 | 20260819-boss-cluster-tune · 20260819-boss-cluster-viewport · 20260819-boss-fix-polish · 20260820-boss-optimize D-09 | **OPEN(观察)** | 生产构建下复验;若复现另开 fix 批次 |
+| D-18 | 技术(重构) | **map-shell 巨型组件重构**:2769 行(2026-08-20)→ 2817 行(2026-08-21),已抽 useWorkViewport 等 hooks(qa6/20260819);仍为仓库最大组件,30+ state/20+ ref 跨引用一致性是历史 bug 温床 | quality-scans/20260820-all #6(承接 20260819-all #6 / qa6) | **OPEN** | 继续抽 hooks(搜索状态/缓存还原/收藏图层),配 component-contracts 门禁;可单列批次 |
+| D-19 | 数据口径 | **radar 同公司多 slug 合并**:4399/4399游戏、dexmai/dexmal-原力灵机、nvidia/nvidia英伟达、tp/tp-link、sharpa/sharpa-robotics、minimax/minmax、上海电气/上海电气集团、MiniMax/minimax(大小写)→ 地图同公司多 pin、聚合计数重复 | quality-scans/20260820-all #3 | **OPEN** | 用户拍板:同官网/同品牌是否合并、以哪个 slug 为准;批准后建 slug 别名表或按(名称归一,城市)合并 |
+| D-20 | 数据口径 | **slug/显示名拼写错误**:akuna-capitai(Akuna Capital)、doiphindb(DoIPhinDB 智臾科技 → DolphinDB)、hrnetgronp(HRNet Group)、中信证劵(→证券);slug 已作为 poiId/siteId 入库 | quality-scans/20260820-all #5 | **OPEN** | 用户拍板改名(是否影响已保存/投递引用);建议修正时保留旧 slug 别名(016 site_key 可作迁移锚点) |
+| D-21 | 数据 | **双重 https:// 前缀**:radar 中国科学院空天信息创新研究院 + bdo立信 4 处 `https://https://`(投递链接不可用);JSON 已修(20260820 ws-data)+ import 校验器 URL 断言 | quality-scans/20260820-all #4 · 20260820-boss-scan-optimize #4-apply | **PARTIAL**(JSON 已修,DB 待重新 import 生效) | import apply 执行窗口(Env-only,随 D-01/D-02 窗口) |
+| D-22 | 技术 | **/api/pois/[id] 双重解码 500 + id 无长度上限** | quality-scans/20260820-all #7 | **DONE-记录**(20260820 ws-api 已修:去二次解码 + MAX_ID_LENGTH 256;代码已验) | — |
+| D-23 | 文档 | **docs 扫描 #20(420px 口径)/ #23(regression-fix 状态)**:已确认解决(20260820 w4:代码 380px 佐证、批次 5/5 合入 dev) | 20260820-boss-optimize D-07/D-08 | **DONE-记录** | — |
+| D-24 | 验收 | **用户侧视觉/行为验收**:移动 UX(抽屉高度/指南针隐藏/定位按钮/滚动保留/边缘取消)、POI 按类加载、上海试点上地图、登录注册/最近回实体等(清单见各批 deferred-notes) | 20260819-mobile-ux · 20260819-data-quality-shanghai-poi · 20260819-auth-explore-poi | **OPEN(用户验收)** | 用户浏览器验收(dev server 本地跑) |
+| D-25 | 数据 | **上海试点 import 落库 + 非试点公司杭州复制坐标**:pilot 坐标/tencent-hangzhou 修正待同步 DB(原 deferred);非试点复制坐标已由 national-data w1 事故坐标清理处理 | 20260819-data-quality-shanghai-poi · 20260820-boss-national-data | **DONE-记录**(2026-08-20 import:seed:apply 已跑、事故坐标已清) | — |
+| D-26 | 文档 | **tech/16-bug-fixes.md 未同步 fix-polish 4 项修复**(视口 noMore/对齐/空批次、marker 控制器加固、icon 解析链、profile 投递行) | 20260819-boss-fix-polish | **DONE-记录**(tech/16 已有 2026-08-19 各专节:L950 公司无 icon / L975 Profile 投递行,视口/marker 并入 2026-08-20 work 全量加载节) | — |
+| D-27 | 文档 | **crawler 测试计数 64 vs 66**:README:14「64 unit tests pass」与 crawler/tests 66 个 `def test_` 不一致(20260820-all #11,无 skip 装饰器) | quality-scans/20260820-all #11 | **OPEN** | 跑一次 `make test-unit` 取权威值,同步 README(由文档批次执行) |
