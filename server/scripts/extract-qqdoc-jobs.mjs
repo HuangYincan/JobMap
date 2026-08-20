@@ -538,8 +538,10 @@ async function fetchWeixin(company, link) {
 }
 
 // ---------------------------------------------------------------------------
-// 平台路由 (含每平台连续失败跳过)
+// 平台路由 (每平台连续失败跳过 — 只作用于 ATS 平台; 'other' 是异质官网群,
+// 每公司独立礼貌尝试, 不整桶跳过, 由总请求预算兜底)
 // ---------------------------------------------------------------------------
+const SKIP_RULE_PLATFORMS = new Set(['feishu', 'zhiye', 'hotjob', 'mokahr', 'weixin']);
 const platformFails = new Map(); // platform -> 连续失败数
 const platformSkipped = new Set();
 
@@ -555,11 +557,13 @@ async function fetchByPlatform(company, link) {
   else if (platform === 'weixin') result = await fetchWeixin(company, link);
   else if (platform === 'mokahr') result = await fetchOther(company, link); // SPA, 走 HTML 解析兜底
   else result = await fetchOther(company, link);
-  const failed = result.status !== 'ok';
-  const count = (platformFails.get(platform) || 0) + (failed ? 1 : 0);
-  platformFails.set(platform, failed ? count : 0);
-  if (failed && count >= CONSECUTIVE_FAIL_LIMIT) {
-    platformSkipped.add(platform);
+  if (SKIP_RULE_PLATFORMS.has(platform)) {
+    const failed = result.status !== 'ok';
+    const count = (platformFails.get(platform) || 0) + (failed ? 1 : 0);
+    platformFails.set(platform, failed ? count : 0);
+    if (failed && count >= CONSECUTIVE_FAIL_LIMIT) {
+      platformSkipped.add(platform);
+    }
   }
   return result;
 }
