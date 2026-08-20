@@ -8,6 +8,7 @@ import { TIER_DEFAULT } from './lod.ts';
 import { bossAdapter } from './recruitment-adapters/boss.ts';
 import { nowcoderAdapter } from './recruitment-adapters/nowcoder.ts';
 import { officialCareerAdapter } from './recruitment-adapters/official-career.ts';
+import { qqdocJobsAdapter } from './recruitment-adapters/qqdoc-jobs.ts';
 import { qqdocOfficialAdapter } from './recruitment-adapters/qqdoc-official.ts';
 import { radarAdapter } from './recruitment-adapters/radar.ts';
 import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
@@ -93,6 +94,14 @@ const SOURCE_META: Record<string, { originUri: string; authorizationBasis: strin
     authorizationBasis: 'public-share',
     accessMethod: 'manual-curation',
     attribution: 'Tencent Docs public share curated by user + boss extraction',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+  },
+  'qqdoc-jobs': {
+    originUri: 'Tencent Docs public share (27届秋招信息汇总, docs.qq.com) + apply-link ATS/official pages',
+    authorizationBasis: 'public-share + public-api',
+    accessMethod: 'manual-curation + polite-etl',
+    attribution: 'Tencent Docs public share curated by user + boss extraction; jobs fetched politely from apply links',
     retention: 'until-replaced',
     deletion: 'delete-with-source',
   },
@@ -245,8 +254,9 @@ export function planRecruitmentImport(input: SourceCompany[]): ImportPlan {
 }
 
 export async function planSeedImport(): Promise<ImportPlan> {
-  const [qqdocOfficial, seed, official, boss, nowcoder, shixiseng, radar] = await Promise.all([
+  const [qqdocOfficial, qqdocJobs, seed, official, boss, nowcoder, shixiseng, radar] = await Promise.all([
     qqdocOfficialAdapter().list(),
+    qqdocJobsAdapter().list(),
     seedRecruitmentAdapter.list(),
     officialCareerAdapter().list(),
     bossAdapter().list(),
@@ -261,6 +271,7 @@ export async function planSeedImport(): Promise<ImportPlan> {
   // 无 drops 的公司 (坐标骨架)。
   const plan = planRecruitmentImport([
     ...qqdocOfficial,
+    ...qqdocJobs,
     ...official,
     ...radar,
     ...boss,

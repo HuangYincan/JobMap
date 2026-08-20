@@ -49,7 +49,9 @@ const INDUSTRY_BY_NAME: ReadonlyArray<[RegExp, string]> = [
   [/电信|移动|联通/, 'internet'],
 ];
 
-function industriesOf(name: string): string[] {
+/** 公司名 → 行业标签(银行→finance, 航空/海运/铁路→transport, …;未知 → other)。
+ *  qqdoc-jobs adapter 复用同一启发式。 */
+export function industriesOf(name: string): string[] {
   for (const [pattern, industry] of INDUSTRY_BY_NAME) {
     if (pattern.test(name)) return [industry];
   }
