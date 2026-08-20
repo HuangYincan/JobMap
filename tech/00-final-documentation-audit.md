@@ -3,6 +3,10 @@
 > **Status:** current audit record  
 > **Date:** 2026-08-15  
 > **Scope:** documentation, workflow, scaffold configuration; no product code
+>
+> **注（2026-08-21）：部分结论已过时——当前契约以 `tech/01`–`22` 与 `agent.md` 为准。** 该审计
+> 记录于开发前（scaffold 阶段），文中「尚未实现/延后」的条目（迁移、API、前端等）此后大多已
+> 落地并并入 `dev`；本文档保留为历史记录，正文未改。
 
 ## Outcome
 
