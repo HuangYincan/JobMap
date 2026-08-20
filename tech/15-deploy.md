@@ -24,7 +24,7 @@ Home lazy-loads `MapShell`. Without AMap keys, Work seed + chrome still load; Do
 ```bash
 ./node_modules/.bin/tsc --noEmit
 node --test tests/*.test.mjs
-npm run import:seed             # import plan (2026-08-21): 688 companies / 1959 sites / 11602 positions / 0 dropped
+npm run import:seed             # import plan (复测 2026-08-21): 830 companies / 2101 sites / 11602 positions / 0 dropped
 npm run import:seed:apply       # no-op without DATABASE_URL; upserts 006 tables when Docker is up
 npm run geocode:sites           # lists drop / imported sites still at (0,0); does not call AMap
 npm run geocode:sites:apply     # real office coords for city-list drops (needs AMAP_WEB_KEY; --dry-run prints the plan)
@@ -36,6 +36,8 @@ npm run audit:pins              # three-layer pin audit vs AMap Web services (ne
 ```
 
 Do not run `npx tsc` from the repo root.
+
+**import plan 测量说明(2026-08-21 复测):** `npm run import:seed` 为 plan 模式(无 DB 副作用)。本次实测在 dev 状态(已并入 qqdoc-official 142 家腾讯文档源)进行:830 companies / 2101 sites / 11602 positions / 0 dropped。此前 688 / 1959 / 11602 为 qqdoc 源并入前的旧基线(2026-08-21 上午);qqdoc-jobs 批未合入 dev,故其数据不计入本 plan。
 
 ## Optional PostGIS
 
