@@ -50,6 +50,7 @@ import {
   siteCityTarget,
   siteHasStreetAddress,
   siteNeedsGeocode,
+  sitesNeedingGeocode,
 } from '../src/lib/site-geocode.ts';
 import { loadOfflineWorkCatalog } from '../src/lib/server-catalog.ts';
 import { RADAR_DIR } from '../src/lib/recruitment-adapters/radar.ts';
@@ -219,6 +220,9 @@ const overrides = loadOverrides();
 // 醒目行 + 非零退出码。非配额类失败 (http/empty/parse/regeo-outside:*/401) 或
 // 成功解析都会冲掉窗口, 不会误停。skip 站 (not-in-only-list 等) 不是尝试,
 // 不进窗口, 也不冲窗口。
+// 2026-08-21 (fix/geocode-plan-count): 短路后 REPORT 的计数不再用停在短路点
+// 的 planCount, 而用主循环前预扫的真实全量 planTotal (见下) — 否则
+// "Sites needing a point: 5" 严重误导 (实际缺坐标站点 1783 个)。
 const QUOTA_SHORT_CIRCUIT_N = 5;
 let shortCircuited = false;
 /** 每站一条: unresolved 原因字符串 | null(已解析)。 */
@@ -238,148 +242,156 @@ const applied = [];
 const skipped = [];
 const unresolved = [];
 
-let planCount = 0;
-mainLoop: for (const file of files) {
+// --- 预扫: 真实全量 (2026-08-21, fix/geocode-plan-count) ----------------------
+// 2026-08-21 实测: 双配额耗尽短路后输出 "Sites needing a point: 5", 而实际
+// 缺坐标站点 1783 个 (radar 1363 + official-career 420) — planCount 是处理
+// 过程中的累计计数, 短路触发后停在短路点, 严重误导。主循环前只读预扫一遍,
+// 统计真实全量 planTotal (所有 siteNeedsGeocode 的站点数, ONLY/CITIES 过滤前
+// 口径): "待下次运行" 的真实剩余 = planTotal - resolutions - unresolved -
+// skipped, 被过滤跳过的站点在 skipped 单列。预扫结果 (company, site) 引用
+// 直接供主循环复用, 不重复 JSON.parse。预扫只读不写, 无网络调用。
+const needing = [];
+for (const file of files) {
   const raw = readJson(file);
   const companies = Array.isArray(raw) ? raw : raw ? [raw] : [];
-  for (const company of companies) {
-    if (!company || typeof company.slug !== 'string') continue;
-    const slug = company.slug;
-    for (const site of company.sites ?? []) {
-      if (!siteNeedsGeocode(site)) continue;
-      planCount += 1;
-      if (ONLY && !ONLY.includes(slug)) {
-        skipped.push({ slug, siteId: site.id, reason: 'not-in-only-list' });
+  for (const n of sitesNeedingGeocode(companies)) needing.push({ file, ...n });
+}
+const planTotal = needing.length;
+
+let planCount = 0;
+mainLoop: for (const { file, company, site } of needing) {
+  const slug = company.slug;
+  planCount += 1;
+  if (ONLY && !ONLY.includes(slug)) {
+    skipped.push({ slug, siteId: site.id, reason: 'not-in-only-list' });
+    continue;
+  }
+
+  const target = siteCityTarget(site);
+  // 2026-08-19: 城市过滤器。单公司 drop 可能带上百个海外/非目标城市站点
+  // (如 蔚来 170 站),逐站 place-search 会拖死全流程并烧光百度地点检索
+  // 配额(100 次/天)。--cities 只落目标城市站点,其余记 skipped。
+  if (CITIES.length && !CITIES.some((c) => target.city === c || target.city.startsWith(c) || c.startsWith(target.city))) {
+    skipped.push({ slug, siteId: site.id, reason: `city-not-in-list:${target.city}` });
+    continue;
+  }
+  let override = overrides[slug];
+  const query = cleanCompanySearchName(company.name);
+  const addr = site.location?.address?.trim() ?? '';
+  let poi = null;
+  let confidence = null;
+  let reason = '';
+  let provider = 'amap';
+  let addressGeocode = false;
+
+  if (override?.exclude) {
+    unresolved.push({ slug, siteId: site.id, query, reason: 'manual-exclude' });
+    if (recordOutcome('manual-exclude')) break mainLoop;
+    continue;
+  }
+  // 2026-08-19:override 城市门控。8/17 的 40 条 legacy override 全为杭州
+  // office(无 city 字段,默认 杭州市)——若不按城市过滤,会把杭州坐标
+  // 原样套到 -shanghai/-beijing 站点(实测:禾赛-site-shanghai 被写成
+  // 萧山赫兹智造中心)。override.city 显式时按城市精确匹配。
+  const overrideCity = override?.city ?? '杭州市';
+  if (override && overrideCity !== target.city) {
+    skipped.push({ slug, siteId: site.id, reason: 'override-city-mismatch' });
+    // 城市不匹配的 override 只对本站点失效(忽略), 回落地址/公司检索——
+    // 直接 continue 会把 -shanghai/-beijing 站点永久留在图外.
+    override = null;
+  }
+  if (override) {
+    poi = { name: override.name, address: override.address, lng: override.lng, lat: override.lat, type: 'override', adname: '', pname: target.province, cityname: target.city };
+    confidence = 'high';
+    reason = 'manual-override';
+  } else if (siteHasStreetAddress(site) && !addressConflictsWithCity(addr, target.city)) {
+    // 2026-08-20 (w4): 地址-城市一致性闸门。fecef85 城市拆分时代 drops 的
+    // 城市站点继承了杭州 office 地址("西湖区莲花街333号…"), 在目标城市
+    // 做地址检索会城市内错配(实测:广州 "花都区西湖" 113.20/23.38), 而
+    // regeo 省级校验拦不住(pname 同省即过)。地址含非目标城市的已知
+    // 区县/城市名 → 地址不可信, 跳过地址检索, 直接走公司名检索。
+    const g = await geocodeAddressRest(addr, target.city);
+    await sleep(g.amapUnavailable ? 600 : 340);
+    if (g.ok && g.location) {
+      poi = { name: company.name, address: addr, lng: g.location.lng, lat: g.location.lat, type: 'geocode', adname: '', pname: target.province, cityname: target.city };
+      confidence = 'high';
+      reason = 'address-geocode';
+      provider = g.provider ?? 'amap';
+      addressGeocode = true;
+    } else {
+      reason = g.reason ?? 'geocode-failed';
+    }
+  } else {
+    const res = await searchCompanyPoi(query, target);
+    poi = res.poi;
+    confidence = res.confidence;
+    reason = res.reason;
+    provider = res.provider;
+  }
+
+  if (!poi) {
+    unresolved.push({ slug, siteId: site.id, query, reason: reason || 'no-result' });
+    if (recordOutcome(reason || 'no-result')) break mainLoop;
+    continue;
+  }
+
+  // Regeo guard: a place-search hit must actually sit in the site's city.
+  // 直辖市 (北京/上海) regeo 的 cityname 为空 — province 兜底 (regeoMatchesTarget).
+  // regeoCityRest 自带高德→百度兜底; 两者 key 都缺时 ok=false → 'unverified'.
+  let verified = '';
+  if (!override) {
+    const re = await regeoCityRest(poi.lng, poi.lat);
+    await sleep(re.amapUnavailable ? 600 : 340);
+    const match = regeoMatchesTarget(re, target);
+    if (re.ok && !match.ok) {
+      unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match.reason}` });
+      if (recordOutcome(`regeo-outside:${match.reason}`)) break mainLoop;
+      continue;
+    }
+    // 2026-08-20 (w4): 区级校验 —— 地址检索命中但 geocoder 落点所在的区
+    // (regeo adname) 与地址文本区名不符 (未收录区名的地址在目标城市内错配,
+    // 如 杭州地址 → 广州 "花都区西湖"), 坐标不可信 → 回退公司名检索,
+    // 不写错坐标。
+    if (re.ok && addressGeocode && addressConflictsWithRegeoDistrict(addr, re.district ?? '')) {
+      const res = await searchCompanyPoi(query, target);
+      if (!res.poi) {
+        unresolved.push({ slug, siteId: site.id, query, reason: 'address-district-mismatch' });
+        if (recordOutcome('address-district-mismatch')) break mainLoop;
         continue;
       }
-
-      const target = siteCityTarget(site);
-      // 2026-08-19: 城市过滤器。单公司 drop 可能带上百个海外/非目标城市站点
-      // (如 蔚来 170 站),逐站 place-search 会拖死全流程并烧光百度地点检索
-      // 配额(100 次/天)。--cities 只落目标城市站点,其余记 skipped。
-      if (CITIES.length && !CITIES.some((c) => target.city === c || target.city.startsWith(c) || c.startsWith(target.city))) {
-        skipped.push({ slug, siteId: site.id, reason: `city-not-in-list:${target.city}` });
+      poi = res.poi;
+      confidence = res.confidence;
+      reason = res.reason;
+      provider = res.provider;
+      const re2 = await regeoCityRest(poi.lng, poi.lat);
+      await sleep(re2.amapUnavailable ? 600 : 340);
+      const match2 = regeoMatchesTarget(re2, target);
+      if (re2.ok && !match2.ok) {
+        unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match2.reason}` });
+        if (recordOutcome(`regeo-outside:${match2.reason}`)) break mainLoop;
         continue;
       }
-      let override = overrides[slug];
-      const query = cleanCompanySearchName(company.name);
-      const addr = site.location?.address?.trim() ?? '';
-      let poi = null;
-      let confidence = null;
-      let reason = '';
-      let provider = 'amap';
-      let addressGeocode = false;
+      verified = re2.ok ? `${re2.cityname ?? ''} ${re2.district ?? ''}`.trim() || re2.province || 'unverified' : 'unverified';
+    } else {
+      verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() || re.province || 'unverified' : 'unverified';
+    }
+  }
 
-      if (override?.exclude) {
-        unresolved.push({ slug, siteId: site.id, query, reason: 'manual-exclude' });
-        if (recordOutcome('manual-exclude')) break mainLoop;
-        continue;
-      }
-      // 2026-08-19:override 城市门控。8/17 的 40 条 legacy override 全为杭州
-      // office(无 city 字段,默认 杭州市)——若不按城市过滤,会把杭州坐标
-      // 原样套到 -shanghai/-beijing 站点(实测:禾赛-site-shanghai 被写成
-      // 萧山赫兹智造中心)。override.city 显式时按城市精确匹配。
-      const overrideCity = override?.city ?? '杭州市';
-      if (override && overrideCity !== target.city) {
-        skipped.push({ slug, siteId: site.id, reason: 'override-city-mismatch' });
-        // 城市不匹配的 override 只对本站点失效(忽略), 回落地址/公司检索——
-        // 直接 continue 会把 -shanghai/-beijing 站点永久留在图外.
-        override = null;
-      }
-      if (override) {
-        poi = { name: override.name, address: override.address, lng: override.lng, lat: override.lat, type: 'override', adname: '', pname: target.province, cityname: target.city };
-        confidence = 'high';
-        reason = 'manual-override';
-      } else if (siteHasStreetAddress(site) && !addressConflictsWithCity(addr, target.city)) {
-        // 2026-08-20 (w4): 地址-城市一致性闸门。fecef85 城市拆分时代 drops 的
-        // 城市站点继承了杭州 office 地址("西湖区莲花街333号…"), 在目标城市
-        // 做地址检索会城市内错配(实测:广州 "花都区西湖" 113.20/23.38), 而
-        // regeo 省级校验拦不住(pname 同省即过)。地址含非目标城市的已知
-        // 区县/城市名 → 地址不可信, 跳过地址检索, 直接走公司名检索。
-        const g = await geocodeAddressRest(addr, target.city);
-        await sleep(g.amapUnavailable ? 600 : 340);
-        if (g.ok && g.location) {
-          poi = { name: company.name, address: addr, lng: g.location.lng, lat: g.location.lat, type: 'geocode', adname: '', pname: target.province, cityname: target.city };
-          confidence = 'high';
-          reason = 'address-geocode';
-          provider = g.provider ?? 'amap';
-          addressGeocode = true;
-        } else {
-          reason = g.reason ?? 'geocode-failed';
-        }
-      } else {
-        const res = await searchCompanyPoi(query, target);
-        poi = res.poi;
-        confidence = res.confidence;
-        reason = res.reason;
-        provider = res.provider;
-      }
+  const district = poi.adname || verified.split(' ').pop() || '';
+  const address = district && !poi.address.includes(district) ? `${district}${poi.address}` : poi.address;
 
-      if (!poi) {
-        unresolved.push({ slug, siteId: site.id, query, reason: reason || 'no-result' });
-        if (recordOutcome(reason || 'no-result')) break mainLoop;
-        continue;
-      }
-
-      // Regeo guard: a place-search hit must actually sit in the site's city.
-      // 直辖市 (北京/上海) regeo 的 cityname 为空 — province 兜底 (regeoMatchesTarget).
-      // regeoCityRest 自带高德→百度兜底; 两者 key 都缺时 ok=false → 'unverified'.
-      let verified = '';
-      if (!override) {
-        const re = await regeoCityRest(poi.lng, poi.lat);
-        await sleep(re.amapUnavailable ? 600 : 340);
-        const match = regeoMatchesTarget(re, target);
-        if (re.ok && !match.ok) {
-          unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match.reason}` });
-          if (recordOutcome(`regeo-outside:${match.reason}`)) break mainLoop;
-          continue;
-        }
-        // 2026-08-20 (w4): 区级校验 —— 地址检索命中但 geocoder 落点所在的区
-        // (regeo adname) 与地址文本区名不符 (未收录区名的地址在目标城市内错配,
-        // 如 杭州地址 → 广州 "花都区西湖"), 坐标不可信 → 回退公司名检索,
-        // 不写错坐标。
-        if (re.ok && addressGeocode && addressConflictsWithRegeoDistrict(addr, re.district ?? '')) {
-          const res = await searchCompanyPoi(query, target);
-          if (!res.poi) {
-            unresolved.push({ slug, siteId: site.id, query, reason: 'address-district-mismatch' });
-            if (recordOutcome('address-district-mismatch')) break mainLoop;
-            continue;
-          }
-          poi = res.poi;
-          confidence = res.confidence;
-          reason = res.reason;
-          provider = res.provider;
-          const re2 = await regeoCityRest(poi.lng, poi.lat);
-          await sleep(re2.amapUnavailable ? 600 : 340);
-          const match2 = regeoMatchesTarget(re2, target);
-          if (re2.ok && !match2.ok) {
-            unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match2.reason}` });
-            if (recordOutcome(`regeo-outside:${match2.reason}`)) break mainLoop;
-            continue;
-          }
-          verified = re2.ok ? `${re2.cityname ?? ''} ${re2.district ?? ''}`.trim() || re2.province || 'unverified' : 'unverified';
-        } else {
-          verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() || re.province || 'unverified' : 'unverified';
-        }
-      }
-
-      const district = poi.adname || verified.split(' ').pop() || '';
-      const address = district && !poi.address.includes(district) ? `${district}${poi.address}` : poi.address;
-
-      resolutions.push({ slug, siteId: site.id, company: company.name, query, city: target.city, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified, provider });
-      recordOutcome(null); // 解析成功冲掉配额窗口 — 配额不是卡点, 不误停
-      if (!DRY_RUN && (confidence === 'high' || override)) {
-        if (setSiteLocation(file, slug, site.id, { address, lng: round(poi.lng), lat: round(poi.lat) })) {
-          applied.push({ slug, siteId: site.id, address, lng: round(poi.lng), lat: round(poi.lat) });
-        }
-      }
+  resolutions.push({ slug, siteId: site.id, company: company.name, query, city: target.city, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified, provider });
+  recordOutcome(null); // 解析成功冲掉配额窗口 — 配额不是卡点, 不误停
+  if (!DRY_RUN && (confidence === 'high' || override)) {
+    if (setSiteLocation(file, slug, site.id, { address, lng: round(poi.lng), lat: round(poi.lat) })) {
+      applied.push({ slug, siteId: site.id, address, lng: round(poi.lng), lat: round(poi.lat) });
     }
   }
 }
 
 // --- report -----------------------------------------------------------------
 console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | BAIDU_MAP_AK: ${env.BAIDU_MAP_AK ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
-console.log(`Sites needing a point: ${planCount} | skipped (not-in-only-list): ${skipped.filter((s) => s.reason === 'not-in-only-list').length} | override-city-mismatch: ${skipped.filter((s) => s.reason === 'override-city-mismatch').length}`);
+console.log(`Sites needing a point: ${planTotal} (attempted: ${planCount}) | skipped (not-in-only-list): ${skipped.filter((s) => s.reason === 'not-in-only-list').length} | city-not-in-list: ${skipped.filter((s) => s.reason.startsWith('city-not-in-list')).length} | override-city-mismatch: ${skipped.filter((s) => s.reason === 'override-city-mismatch').length}`);
 console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`);
 console.log('\n=== RESOLVED ===');
 for (const r of resolutions) {
@@ -400,9 +412,11 @@ if (!DRY_RUN) {
 
 // 双配额耗尽 → 提前停止 (REPORT 已按正常收尾同款打印): 醒目说明 + 剩余站数 +
 // 非零退出码 (exit 2)。已写入的站点保留 — 重跑时 siteNeedsGeocode 跳过有坐标
-// 站点, 幂等。
+// 站点, 幂等。剩余数用预扫的 planTotal 算真实全量 (2026-08-21,
+// fix/geocode-plan-count): planCount 停在短路点 (如 5) 会误导,
+// planTotal - resolutions - unresolved - skipped 才是「待下次运行」真实剩余。
 if (shortCircuited) {
-  const remaining = planCount - resolutions.length - unresolved.length - skipped.length;
+  const remaining = planTotal - resolutions.length - unresolved.length - skipped.length;
   console.log(`\nQUOTA_EXHAUSTED: AMap+百度 双配额耗尽(或无可用 key),已提前停止,剩余 ${remaining} 站待下次运行。`);
   process.exit(2);
 }
