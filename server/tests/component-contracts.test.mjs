@@ -442,16 +442,18 @@ test('map shell Bug3 locate: 挂载定位不抢占已移图相机(首点 pin 不
   // 仅相机手势/相机操作置位)
   assert.match(shell, /userMovedMapRef = useRef\(false\)/);
   // 挂载 geolocation 回调:定位数据照常(userLocation/searchOrigin),相机移动被
-  // userMovedMapRef + 默认中心距离 双门控——未移图且相机仍处默认才 setCenter+setZoom+setMapCenter
+  // userMovedMapRef + 用户已交互 + 默认中心距离 三门控——未移图/未交互且相机仍处
+  // 默认才 setCenter+setZoom+setMapCenter(已交互不抢镜头:geolocation resolve 可能
+  // 晚于首交互,此时跳变 = 「整页刷新」观感)
   assert.match(shell, /getCurrentPosition\(map\)/);
   assert.match(shell, /setUserLocation\(\{ lng, lat \}\)/);
   assert.match(shell, /setSearchOrigin\(\(prev\) => prev \?\? \{ lng, lat \}\)/);
   assert.match(
     shell,
-    /if \(!userMovedMapRef\.current && isNearDefaultCenter\(readLngLat\(map\.getCenter\(\)\)\)\) \{[\s\S]{0,120}map\.setCenter\(\[\s*lng,\s*lat\s*\]\)[\s\S]{0,120}map\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
+    /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(readLngLat\(map\.getCenter\(\)\)\)\) \{[\s\S]{0,120}map\.setCenter\(\[\s*lng,\s*lat\s*\]\)[\s\S]{0,120}map\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
   );
-  // 已移图/已恢复视野 → 锁定 mapCenter 不更新(距离圆心/相机都不甩去用户位置)
-  assert.match(shell, /if \(!userMovedMapRef\.current && isNearDefaultCenter\(readLngLat\(map\.getCenter\(\)\)\)\) \{[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/);
+  // 已移图/已交互/已恢复视野 → 锁定 mapCenter 不更新(距离圆心/相机都不甩去用户位置)
+  assert.match(shell, /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(readLngLat\(map\.getCenter\(\)\)\)\) \{[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/);
   // 只有相机手势(drag/zoom)置位;空白点击与 marker 点击不置位
   // (选择/取消选择公司 ≠ 放弃定位,settle 仍会飞用户位置——ws-poi-vanish)
   assert.match(shell, /map\.on\("dragstart", \(\) => \{\s*userMovedMapRef\.current = true/);
@@ -485,8 +487,9 @@ test('map shell ws-poi-vanish2: createMap 初始相机用 state(remount 恢复�
 test('map shell ws-poi-vanish2: settle 仅默认位置时飞用户位置,不抢 remount 恢复镜头', () => {
   const shell = src('components/map-shell.tsx');
   const lib = src('lib/camera-center.ts');
-  // settle 门控新增「相机距默认中心 < 阈值」条件:未移图且相机仍处默认才飞
-  assert.match(shell, /if \(!userMovedMapRef\.current && isNearDefaultCenter\(readLngLat\(map\.getCenter\(\)\)\)\) \{/);
+  // settle 门控新增「用户已交互」+「相机距默认中心 < 阈值」条件:未移图/未交互且
+  // 相机仍处默认才飞(已交互不抢镜头:geolocation resolve 可能晚于首交互)
+  assert.match(shell, /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(readLngLat\(map\.getCenter\(\)\)\)\) \{/);
   // 纯函数 + 常量在 lib/camera-center(可单测):默认中心/zoom/阈值/判定
   assert.match(lib, /export const DEFAULT_MAP_CENTER = \{ lng: 120\.15, lat: 30\.27 \} as const;/);
   assert.match(lib, /export const DEFAULT_MAP_ZOOM = 13;/);
