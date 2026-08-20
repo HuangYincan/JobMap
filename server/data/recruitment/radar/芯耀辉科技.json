@@ -61,6 +61,216 @@
       "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/list?keywords=&category=&location=&project=&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-feishu-7674912673033029929",
+      "title": "【2027/2028届】ESD设计工程师",
+      "siteId": "芯耀辉科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7674912673033029929/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与高速IP的ESD防护全流程研发工作，协助团队完成需求梳理、ESD指标评估、防护方案设计、电路仿真验证、版图优化及后端布局规范核查等工作，配合完成从设计到量产落地的全流程跟进；负责整理输出设计文档、技术规范，积累芯片ESD研发经验。 2、协助开展HBM、CDM、Latch-up、EOS等主流场景的芯片ESD防护设计与优化，配合解决高速接口低容约束、车规芯片高可靠性相关设计问题，保障芯片可靠性达标。 3、参与团队先进防护结构研发和测试工作，学习和应用智能化方法；跟进行业标准动态，协助整理技术成果、撰写专利、技术报告，积累前沿研发视野。 4、参与芯片ESD/EOS可靠性失效分析工作，依托TLP测试、形貌分析、电性测试等基础测试手段，协助定位芯片栅氧击穿、器件热损伤、寄生导通等常见失效问题，配合输出优化改进方案，助力量产芯片可靠性问题闭环整改。 5、参与定制部分IO Library的开发工作，包括不限于Digital GPIO/EMMC 等通用协议IO Library。\n\n岗位要求:\n1、2027届全日制硕士及以上学历，微电子、集成电路工程、半导体物理、微电子学与固体电子学等集成电路相关专业。 2、具备扎实的半导体器件物理基础，熟悉MOS、PN结、SCR、寄生器件、热击穿、栅氧击穿等基础机理，尤其是高级FinFET工艺相关。 3、了解HBM、CDM、Latch-up等主流ESD防护机制；熟悉Cadence Virtuoso、Spectre等设计仿真工具，具备基本的电路与版图设计能力。 4、具备良好的英文读写能力，可独立阅读行业相关技术文档与标准资料；逻辑清晰、善于思考总结，具备良好的技术复盘、文档撰写及专利挖掘能力。 5、学习能力强、责任心强，能接受研发项目节奏，具备良好的团队协作能力与抗压能力，愿意深耕芯片ESD可靠性研发方向。"
+    },
+    {
+      "externalId": "portal-feishu-7663436976313665802",
+      "title": "【2027/2028届】封装设计工程师",
+      "siteId": "芯耀辉科技-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7663436976313665802/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 协助资深工程师完成芯片封装选型调研、方案整理与输出，学习不同封装架构的适配场景与设计逻辑。 2. 配合SIPI团队跟进封装设计迭代，协助优化封装结构，保障芯片电性能指标满足设计要求。 3. 协同芯片前后端设计团队，学习并参与芯片、高速IP的bump pattern迭代优化，配合完成芯片适配相关设计工作。 4. 协助完成封装Layout设计、投片、投板、核图等基础流程工作，熟练掌握封装设计全流程规范。 5. 参与新产品NPI导入全过程，跟进封装试产、调试、问题复盘，积累量产封装设计落地经验。\n\n岗位要求:\n1. 硕士及以上学历，微电子、半导体封装、材料科学、集成电路、力学、电子工程等相关专业。 2. 熟悉FCCSP、FCBGA、WBBGA、WLCSP、SiP、POP、FanOut、2.5D/3D等主流封装类型的基本工艺流程、结构特点及核心设计要点，了解新产品NPI导入基本流程。 3. 掌握半导体封装常用材料BOM基础性能参数，了解封装应力、热仿真基本原理与基础方法，有相关课程设计、项目实践经验优先。 4. 了解主流封装Layout设计工具，熟悉封装设计基础检查、验证流程，具备基本的图纸核查、问题排查能力。 5. 具备良好的逻辑思维、学习能力和团队协作能力，工作细致严谨，愿意深耕半导体封装设计领域，能承受阶段性项目压力。"
+    },
+    {
+      "externalId": "portal-feishu-7660047530214541577",
+      "title": "【2027/2028届】DA工程师（AI方向）",
+      "siteId": "芯耀辉科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7660047530214541577/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与公司AI驱动的设计方法学探索与应用开发，创新AI赋能的研发设计流程。 2、参与开发具备专业领域知识的AI Agent平台，负责数据治理、模型选型、训练调优及工程化落地等。 3、构建开发高可靠的支持并行任务的AI Agent引擎，驱动设计全链路的智能化演进。 4、开发适配公司工程环境的AI Agent应用，融合现有的业务系统和研发流程，构建高效的人机协同与交付决策。\n\n岗位要求:\n1、硕士及以上计算机、软件工程、AI或相关专业。 2、深入理解大语言模型LLM的原理及应用，熟悉 LangChain、LlamaIndex 或类似 Agent 开发框架，有实际的 Prompt Engineering经验。 3、了解大模型微调（Fine-tuning）基本流程，有向量数据库（如 Milvus, Pinecone）或关系型数据库的应用开发经验。 4、熟悉 Linux 开发环境，精通 Python 编程，具备良好的代码规范和工程习惯。 5、具备较强的分析与解决问题能力、强烈的工程落地意识，喜欢有挑战性的工作。"
+    },
+    {
+      "externalId": "portal-feishu-7660046669945260339",
+      "title": "【2027/2028届】固件设计工程师",
+      "siteId": "芯耀辉科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7660046669945260339/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 基于IP子系统，参与项目需求分析，应用系统设计以及系统测试用例的开发。 2. 参与IP软件Linux系统下的驱动开发、调试。 3. 参与芯片Firmware的开发、验证与调试。 4. 参与IP软件子系统bringup调试及系统验证工作。 5. 撰写相关开发设计文档。\n\n岗位要求:\n1. 本科及以上电子电器类/计算机/自动化相关专业。 2. 芯片底层软件、Linux驱动等相关实习经验。 3. 至少熟悉DDR/PCIE/USB/MIPI/DP一种高速接口协议。 4. 熟练使用C/C++；具有良好的编程习惯。 5. 有半导体芯片固件开发背景尤佳。 6. 积极主动、学习能力强、善于沟通、具有团队合作精神。"
+    },
+    {
+      "externalId": "portal-feishu-7656760402982488347",
+      "title": "【2027/2028届】SRAM版图设计工程师",
+      "siteId": "芯耀辉科技-site-chengdu",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7656760402982488347/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.根据电路设计完成相关工艺下的版图设计。 2.根据电路设计要求完成版图优化。 3.根据版图特性提供版图解决方案。 4.完成版图物理Sign-off验证，例如：DRC/LVS/ERC/IREM等。 5.根据工艺特性完成版图可靠性检查，如匹配性、噪音敏感性、Latch up，LOD等。 6.完成版图设计及验证文档编写，支持项目交付。\n\n岗位要求:\n1.熟悉集成电路CMOS工艺流程以及电路基础知识。 2.熟悉版图基本知识，对于寄生，噪声，器件，高精度匹配等知识有清晰了解。 3.熟悉相关版图设计工具及验证方法。 4.熟悉ESD、Latch Up、LOD原理及相应的版图预防对策。 任职要求 1.电子类相关专业，本科及以上学历。 2.有SRAM/Stdcell/LDO/PLL等模拟版图设计经验者优先。 3.有FinFET工艺版图设计经验者优先。 4.具有良好的学习能力、沟通协调能力和团队合作精神。"
+    },
+    {
+      "externalId": "portal-feishu-7655630558080354598",
+      "title": "【2027/2028届】SRAM设计工程师",
+      "siteId": "芯耀辉科技-site-chengdu",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7655630558080354598/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责SRAM Compiler或者Instance的电路设计、仿真验证和优化。 2. 提供设计/验证相关文件及列表指导Layout/交付。 3. SRAM Complier设计验证报告及相关设计/验证分析数据。 4. 交付电路设计方案，电路优化列表及相关分析报告。 5. 交付验证list，验证问题列表及验证报告。 6. 开发并完善设计验证环境，设计验证工具及验证点覆盖率。 7. 设计验证算法及方法学，提供有效的设计验证方法，缩短验证效率。\n\n岗位要求:\n技能要求： 熟悉集成电路CMOS工艺流程以及电路基础知识；EDA电路设计工具；SRAM设计流程和方法学；SPICE等仿真验证工具；MonteCalo相关验证方法；Layout相关设计方法和验证流程；了解Bitcell相关的概念及验证方法，等相关经验者优先。 任职要求 ： 1. 微电子相关专业，硕士及以上学历。 2. 模拟电路或SRAM相关设计及验证经验者优先。 3. 有FinFET工艺设计验证经验者优先。 4. 具有良好的学习能力、沟通协调能力和团队合作精神。"
+    },
+    {
+      "externalId": "portal-feishu-7654795122060970294",
+      "title": "【2027/2028届】解决方案工程师",
+      "siteId": "芯耀辉科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7654795122060970294/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 在IP的安装、集成、仿真debug、实现和客户使用期间提供售后技术专业支持。 2. 与设计部门合作解决客户复杂的IP实现挑战，并提供反馈、建议、方案以提高IP的易用性和客户满意度。 3. 撰写应用说明、白皮书等技术推广材料。 4. 为客户提供所负责的IP产品相关培训。 5. 为IP客户提供实现相关的定制化设计服务。 6. 承担部分IP内部研发任务。 7. 与外部客户和内部跨职能团队定期紧密沟通。\n\n岗位要求:\n1. 微电子、集成电路、电子信息等相关专业硕士及以上学历，有相关实习经验者优先。 2. 有任一一种IP协议/规范知识者优先（PCIe、Ethernet、USB、DDR、MIPI、HDMI、SATA、SD、eMMC等）。 3. 有RTL设计、仿真/验证和综合等ASIC流程经验者优先，可以熟练运用相关的EDA工具。 4. 具备较强的学习能力和自我驱动力。 5. 具备优秀的组织能力、较强的沟通能力和团队精神。 6. 具备可适应紧急突发的事件和同时应对多个任务的能力。 7. 具备较强的抗压能力。"
+    },
+    {
+      "externalId": "portal-feishu-7654788426123069747",
+      "title": "【2027/2028届】 SERDES系统算法工程师",
+      "siteId": "芯耀辉科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7654788426123069747/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 针对高速SERDES系统中的各类信道损伤设计相对应的DSP算法进行补偿，包括算法调研、原型验证、定点化设计以及算法文档编写等。 2. 与RTL数字设计团队的同事合作，参与算法PPA优化的迭代，配合完成算法代码与RTL电路的bitmatch工作。 3. 通过追踪协议标准或者与产品部门讨论获取初步的系统性能指标，使用或者设计性能分析工具来确认指标的合理性并参与相关制定。 4. 参与系统仿真建模工作，对常见的各类信道损伤以及电路器件能进行建模并输出相对应的波形，与实际系统波形进行correlation验证。\n\n岗位要求:\n1. 通信工程，电子信息及应用数学等相关专业硕士及以上学历，博士优先。 2. 熟悉PAM4/NRZ等调制格式，包括格雷编码，眼图分析，BER计算等。了解CDR, FFE, DFE, MLSE等DSP算法的原理，并且编写过相关代码进行实现。 3. 熟悉各类信道损伤（高频损伤，低频损伤，时钟抖动等）并且能对其进行相关建模分析，包括获取信道的IPR，频谱响应，SNR计算等。 4. 有良好的编程基础，能熟练使用MATLAB/PYTHON进行相关仿真建模。 5. 对FEC编码有一定了解，例如RS(544,514),对纠后BER有一定概念。 6. 有坚实的数理基础，掌握通信原理和数字信号处理的相关知识。 7. 有丰富的文献或专利的阅读经验，懂得如何从中抽取有用信息来解决问题。"
+    },
+    {
+      "externalId": "portal-feishu-7654787347581749558",
+      "title": "【2027/2028届】SIPI工程师",
+      "siteId": "芯耀辉科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7654787347581749558/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 与芯片、封装和系统设计合作，共同确定芯片设计方案：包括Floorplan、Power domain、封装选型、Bump pattern定义、Pinmap定义等。 2. 负责封装及系统级SIPI建模与仿真分析，对SIPI的Sign-off负责，为产品提供有竞争力的电性能解决方案。 3. 给芯片、封装和PCB的高速电路系统的垂直整合提供SI/PI方向Guildline，指导芯片封装和PCB的Layout设计。 4. 发现SIPI全链路潜在的风险，并主导优化解决问题，保障产品性能的稳定性。 5. 具备一定调试测试能力，解决高速数字系统中出现的SIPI问题。 6. 完善和优化仿真流程和交付关系以及交付件，与外部合作Vendor建立高效、高质量交付关系。 7. 支持FAE关于SIPI方面的工作，协助资料开发完成SIPI设计指导等。\n\n岗位要求:\n1. 电磁场微波/电子通信/电子信息类相关专业本科及以上学历。 2. 具有较强的自驱力，能以结果交付为导向，主动解决问题，主动学习和钻研。 3. 具有较强的逻辑思维能力、问题分析能力。 4. 掌握信号/电源完整性理论并具备一定的理论分析能力，熟悉ISI、反射、串扰、数模干扰、SSN、IR-Drop等SIPI现象及其解决措施。 5. 掌握一到两种SIPI领域相关EDA工具，比如：2.5D/3D建模、电路仿真。 6. 掌握一到两种测试仪器的使用，比如：示波器、矢量网络分析仪、频谱分析仪、误码仪等。 7. 有DDR/GDDR/LPDDR/PCIE等高速接口的仿真经验优先。 8. 有大尺寸FCBGA、2.5D interposer等先进封装仿真设计经验者优先。 9. 能使用matlab进行各种算法验证者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7654785417812805897",
+      "title": "【2027/2028届】数字设计/验证工程师",
+      "siteId": "芯耀辉科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7654785417812805897/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、与模拟IP设计团队紧密合作，负责数字电路的前端设计。 2、负责RTL设计，包括：RTL coding，RTL signoff。 3、负责RTL to Netlist ，包括：Synthesis，DFT，Formal 等。 4、协助芯片测试团队完成测试方案的制定，并完成相关单元测试。 5、撰写详细的设计文档和用户集成手册。 1、电子类相关专业硕士及以上学历, 有数字电路设计或验证实习经验。 2、了解先进工艺节点的高速接口类IP协议优先，包括：PCIE，DDR，USB，Serdes等。 3、掌握ASIC设计流程及相关EDA工具。 4、掌握Verilog，熟悉SystemVerilog，对PPA（功耗/性能/面积）设计流程有了解优先。 5、熟练使用Perl/TCL/Python者优先；有数模混合实习经验者优先。 6、责任心强，注重细节和自驱力强，有良好的沟通与团队协作能力，有较强的英语读写能力。\n\n岗位要求:\n1、电子类相关专业硕士及以上学历, 有数字电路设计或验证实习经验。 2、了解先进工艺节点的高速接口类IP协议优先，包括：PCIE，DDR，USB，Serdes等。 3、掌握ASIC设计流程及相关EDA工具。 4、掌握Verilog，熟悉SystemVerilog，对PPA（功耗/性能/面积）设计流程有了解优先。 5、熟练使用Perl/TCL/Python者优先；有数模混合实习经验者优先。 6、责任心强，注重细节和自驱力强，有良好的沟通与团队协作能力，有较强的英语读写能力。"
+    },
+    {
+      "externalId": "portal-feishu-7654785104224667931",
+      "title": "【2027/2028届】模拟设计工程师",
+      "siteId": "芯耀辉科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7654785104224667931/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与模拟IP的电路设计、仿真、验证和调试工作，包括Serdes，MIPI，USB，DDR，PCIE，LVDS，HDMI PHY等。 2. 负责模拟IP的版图规划，和版图设计团队合作完成相关版图工作。 3. 协助芯片测试团队制定测试方案，完成模拟IP相关的测试与验证工作。 4. 协助完成模拟IP在SOC芯片中的集成、验证及后端物理设计。 5. 撰写详细的设计文档。\n\n岗位要求:\n1. 微电子及电子类相关专业，硕士及以上学历。 2. 熟悉模拟芯片设计流程及相关EDA工具使用，熟悉模拟芯片版图。 3. 具备使用实验室基本测试设备进行测试并Debug能力。 4. 责任心强，有良好的沟通协调能力。"
+    },
+    {
+      "externalId": "portal-feishu-7654784410366560566",
+      "title": "【2027/2028届】数模混合验证工程师",
+      "siteId": "芯耀辉科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7654784410366560566/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 基于DV仿真验证平台，根据验证计划，创建包含模拟电路晶体管级数模混仿的验证环境。 2. 基于标准协议要求，规划系统级仿真验证用例，创建数模混仿的testbench，验证PHY的功能、控制时序、电气性能指标和数模交互算法(包含各种电路校准、自适应均衡等)，撰写详细的仿真验证文档。 3. 验证PHY物理设计的可靠性，EMIR分析。 4. 抽取PHY的CPM model，用于IP仿真。\n\n岗位要求:\n1. 微电子及电子类相关专业硕士及以上学历。 2. 熟悉基本模拟电路如Bandgap、运算放大器、锁相环、发射器/接收器等，有PCIE、Ethernet、DDR、MIPI、USB等高速IO设计开发经验者优先考虑。 3. 熟悉芯片设计流程及相关 EDA 工具使用，熟悉spice仿真器，熟悉Verilog 和 SystemVerilog。 4. 具备较强的分析问题的能力和Debug能力。 5. 责任心强，有良好的沟通协调能力。 6. 对数模混合系统设计和验证有浓厚的兴趣。"
+    },
+    {
+      "externalId": "portal-feishu-7654783022131120438",
+      "title": "【2027/2028届】系统测试工程师",
+      "siteId": "芯耀辉科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7654783022131120438/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、负责各种模拟芯片的评估测试和应用支持工作，包括Serdes，MIPI，USB，DDR，PCIE，LVDS，HDMI PHY等。 2、和模拟设计团队紧密配合，根据设计目标和应用场景制定整体的测试方案与测试计划。 3、负责模拟IP的性能测试以及系统功能测试，并分析、定位、解决各种测试过程中出现的芯片和硬件相关的问题，支撑模拟IP的高质量交付和商用成功。 4、引入新设备、不断完善测试方法和测试用例，构建模拟IP评估测试的竞争力。 5、深入理解客户应用场景和软硬件环境，协助客户分析和解决芯片和IP应用过程中出现的各种软硬件和芯片问题。\n\n岗位要求:\n1、电子信息技术、测控技术与仪器、微波技术等相关专业，本科及以上学历。 2、熟悉实验室工作环境，熟练掌握各种常见测试仪器，如信号发生器、示波器、网络分析仪、逻辑分析仪等。 3、扎实的电子电路基础，对模拟IP模块的性能指标及可测性设计有深入理解。 4、有一定的编程能力，有自动化脚本开发经验者优先。 5、有强烈的质量意识，积极主动，具有团队精神与责任感。"
+    },
+    {
+      "externalId": "portal-feishu-7654782777544116523",
+      "title": "【2027/2028届】数字后端工程师",
+      "siteId": "芯耀辉科技-site-chengdu",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7654782777544116523/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责完成从Netlist到GDSII的全流程物理设计，涵盖布局布线、形式验证、静态时序分析与收敛、功耗分析、物理验证等关键环节。 2. 参与APR流程的开发与维护，持续优化物理实现流程，提升设计效率与质量。 3. 与前端设计、DFT、封装等团队紧密协作，共同完成代码质量与约束文件检查、数据流与布局规划讨论、PPA（性能、功耗、面积）迭代优化等工作。\n\n岗位要求:\n1. 具备Perl、Tcl、C-shell、Python等脚本语言开发能力，能够通过编写脚本高效解决实际工程问题。 2. 熟悉物理实现及Signoff相关工具，包括PV（物理验证）、APR（自动布局布线）、RC（寄生参数提取）、STA（静态时序分析）、IR/EM（电源完整性/电迁移分析）等。 3. 微电子、集成电路、电子信息等相关专业本科及以上学历，有相关实习经验者优先。 4. 具备版图Layout设计或FPGA开发经验，熟悉Verilog、SDC等设计语言或约束文件者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7654779576325130522",
+      "title": "【2027/2028届】版图设计工程师",
+      "siteId": "芯耀辉科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geg7eg8cyc.jobs.feishu.cn/615803/position/7654779576325130522/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.与模拟设计团队紧密合作，优化并高质量完成模拟的版图设计，验证与交付。 2.完成模拟版图的Floorplan、DRC、LVS等物理验证,及时发现并解决问题，保障版图质量。 3.收集整理版图设计过程中的数据与资料，参与相关文档撰写。\n\n岗位要求:\n1.微电子及电子类相关专业，本科及以上学历。 2.熟悉模拟版图设计相关EDA工具。 3.了解基本的DRC/LVS rule，熟悉版图设计的基本流程与概念。 4.良好的英语读写能力。 5.责任心强，有良好的沟通与团队协作能力"
     }
   ],
   "category": "39"

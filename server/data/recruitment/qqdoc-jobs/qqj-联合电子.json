@@ -15,5 +15,46 @@
       "province": "",
       "location": {}
     }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-01rj90do",
+      "title": "校招岗位",
+      "siteId": "qqj-联合电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/uaes2027/job.html/job.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00rt4bxw",
+      "title": "校招行程",
+      "siteId": "qqj-联合电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/uaes2027/job.html/recruit.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00ndm47l",
+      "title": "招聘流程",
+      "siteId": "qqj-联合电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/uaes2027/job.html/process.html",
+      "retrievedAt": "2026-08-20"
+    }
   ]
 }

@@ -15,5 +15,20 @@
       "province": "",
       "location": {}
     }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-00hq3vt9",
+      "title": "人力资源许可证 1101052003273号",
+      "siteId": "qqj-中船七二五所-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://img09.zhaopin.com/2012/other/mobile/msite/bottom/renliziyuan.html",
+      "retrievedAt": "2026-08-20"
+    }
   ]
 }

@@ -15,5 +15,1001 @@
       "province": "",
       "location": {}
     }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-feishu-7675596861859809563",
+      "title": "工艺开发类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675596861859809563/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责产品研发工艺设计、新材料及新工艺开发验证，推进工艺方案、封装方案及工艺路线落地 2. 负责新物料导入、工艺验证、风险评估及设备/工装治具验证，推动工艺持续优化 3. 负责生产工艺文件制定及审核，开展量产可行性分析、生产培训及工艺变更评审 4. 负责生产及研发过程中的工艺异常、材料异常及客退问题分析，推动良率和效率持续提升 5. 负责相关材料用量及需求管理，参与新材料导入及应用验证 6. 协同研发、生产、供应链等部门推进工艺开发及问题改善\n\n岗位要求:\n1. 2027届硕士及以上学历，光学工程类、光电类、电子类、机械类、材料类、化学类、化工类等相关专业 2. 211-双一流院校及以上优先 3. 具备工艺开发、材料应用或制造相关基础知识，具备新材料/新工艺验证及问题分析能力者优先 4. 具备良好的逻辑思维、数据分析及问题解决能力 5. 具备良好的沟通协调能力、执行力及团队合作精神 6. 有科研项目、工艺开发或相关实践经历者优先 7. 英语CET-6优先，具备良好的英文读写及沟通能力"
+    },
+    {
+      "externalId": "portal-feishu-7675290465822247211",
+      "title": "Electrical engineers",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675290465822247211/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "We are seeking young, talented and passionate electrical engineers to join our R&D team. In this role, you will be responsible for designing, developing, and optimizing hardware solutions for next-generation optical transceiver and optical circuit switch. You will work on the design and development of complex hardware systems, including circuit board layouts, integrated components, and custom hardware accelerators, working closely with cross-functional teams to integrate hardware with software and system architecture. Key Responsibilities: 1. Design and optimize electrical circuit for advanced optical module and optical circuit switch system, including component selection, schematic design, PCB layout for high performance applications. 2. Work with cross-functional teams (software, firmware, optical, signal processing) to define requirements and ensure system-level integration of hardware components. 3. Prepare design reviews, drive system/product design trade-offs and schedule. 4. Define and execute comprehensive test plans for hardware validation, including unit testing, integration testing, and system-level performance testing. 5. Troubleshoot hardware-related issues and support debugging of complex hardware systems to ensure product readiness. 6. Document hardware designs, specifications, test procedures, and results to ensure traceability and compliance with industry standards.\n\n岗位要求:\nQualification: 1. Bachelor’s or Master’s degree in Electrical Engineering, Computer Engineering, or a related field. 2. Fresh graduates are welcomed to apply. 3. Good understanding of analog and digital circuit fundamentals, high-speed signal transmission and PCB design principles. 4. Basic knowledge of communication systems, signal integrity or embedded systems is an advantage. 5. Familiarity with laboratory instruments such as oscilloscopes, power supplies and multimeters; experience with BERTs, VNAs or spectrum analyzers is a plus. 6. Strong analytical and problem-solving skills with a willingness to learn new technologies. 7. Good communication skills and ability to work effectively in a multidisciplinary team."
+    },
+    {
+      "externalId": "portal-feishu-7675288542093035785",
+      "title": "Software Engineers",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675288542093035785/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "We are looking for passionate Computer Science or Computer Engineering graduates to join our R&D team developing software for next-generation Optical Circuit Switch (OCS) systems used in AI, hyperscale data centers and high-performance computing (HPC) networks. This role provides an excellent opportunity for individuals interested in network system software development, Linux, SONiC, and Optical Circuit Switching products. Key Responsibilities: 1. Develop, test and maintain software for Optical Circuit Switch (OCS) products and related system applications. 2. Design and implement SONIC based network operating system, network communication and control interface (such as gNMI/gNOI), database, API, device drivers for the optical switch system control, device management, configuration, monitoring and diagnostics. 3. Support software integration, debugging, system verification and product validation. 4. Collaborate with hardware, FPGA, optical, electrical and test engineers to validate integrated product behaviour, troubleshoot and resolve system issues. 5. Develop automation tools and scripts to improve software testing, system validation and manufacturing efficiency. 6. Prepare software documentation, test reports and user guides. 7. Participate in continuous improvement of software quality, reliability and maintainability.\n\n岗位要求:\nQualification: 1. Bachelor's or Master's degree in Computer Science, Computer Engineering, Software Engineering or a related discipline. 2. Fresh graduates are encouraged to apply. 3. Proficiency in one or more programming languages such as C/C++, Python. 4. Good understanding of software engineering principles, data structures, algorithms and object-oriented programming. 5. Sound knowledge of Linux operating systems, networking fundamentals (TCP/IP, Ethernet) and software debugging. 6. Experience with scripting, automation or REST APIs. 7. Knowledge of SONiC, network operating systems, Redis, SAI, or network testbeds is a plus. 8. Strong analytical and problem-solving skills with a willingness to learn new technologies. 9. Good communication skills and ability to work effectively in a multidisciplinary team. 10. Familiarity with CI/CD tools such as Jenkins, GitLab CI, or Gitea. 11. Knowledge of AI/ML data center architectures and SDN paradigms."
+    },
+    {
+      "externalId": "portal-feishu-7675287511152740654",
+      "title": "职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675287511152740654/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "此岗位为通用职能岗位，包含企业文化、品牌运营、行政管理方向 1. 负责所在职能方向的日常工作，完成部门各项工作任务 2. 协助开展相关业务推进、活动组织及沟通协调工作\n\n岗位要求:\n1. 2027届本科及以上学历，文科类专业不限 2. 具备较好的文字表达、沟通协调及组织执行能力 3. 具备较强的学习能力、责任心及团队协作能力 4. 英语CET-4及以上，具备良好的英语、泰语沟通能力，能够满足日常工作沟通需求 5. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7675285155251357995",
+      "title": "职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675285155251357995/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "此岗位为通用职能岗位，包含财务管理、人力资源、法务、采购管理、计划管理、品牌策划、产品定制及部门运营等方向 1. 负责所在职能方向的日常工作，完成部门各项工作任务 2. 协助开展相关业务推进、数据分析、项目支持及跨部门沟通协调工作\n\n岗位要求:\n1. 2027届本科及以上学历，理工类、文科类、金融类专业不限 2. 211/双一流院校及以上优先 3. 具备较好的逻辑思维、沟通协调、数据分析及问题解决能力 4. 具备较强的学习能力、执行力、责任心及团队协作能力 5. 英语CET-6及以上，英语能力良好，能够满足日常工作沟通及英文资料阅读需求者优先"
+    },
+    {
+      "externalId": "portal-feishu-7675281453211027750",
+      "title": "制造职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675281453211027750/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与厂务设施、洁净厂房等基础设施的运行维护、新建及改造项目，协助开展施工管理与验收 2. 参与EHS体系建设、风险评估、安全检查及整改跟踪，推动厂区安全合规运营 3. 参与关务物流、仓储管理及供应链运营相关工作，推动物流效率及数字化管理提升 4. 参与行政后勤、园区运营及跨部门运营改善项目，推动业务流程优化和运营效率提升 5. 参与制造运营相关制度、流程及KPI指标建设，协同推进业务数字化转型\n\n岗位要求:\n1. 2027届本科及以上学历，土木类、结构类、暖通类、机械类、电气类、环境类、材料类、物流类、数字化信息化类等相关专业 2. 211-双一流院校及以上优先 3. 具备厂务设施、暖通空调、洁净厂房、EHS、供应链运营等相关基础知识，熟悉CAD、Office等工具者优先 4. 具备较强的学习、分析和问题解决能力，具备良好的沟通协调、团队协作及项目推动能力 5. 责任心强，执行力强，具备持续改善意识和较好的抗压能力，能够适应制造业工作环境 6. 英语CET-4及以上"
+    },
+    {
+      "externalId": "portal-feishu-7675279544819927322",
+      "title": "职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675279544819927322/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "此岗位为通用职能岗位，包含项目管理、采购管理、产品定制、企业文化方向 1. 负责所在职能方向的日常工作，完成部门各项工作任务 2. 协助开展相关业务推进、数据分析及跨部门沟通协调工作\n\n岗位要求:\n1. 2027届本科及以上学历，理工类、文科类不限专业 2. 211-双一流院校及以上优先 2. 具备较好的逻辑思维、沟通协调及问题分析能力 3. 具备较强的学习能力、执行力、责任心及团队协作能力 4. 英语CET-4及以上"
+    },
+    {
+      "externalId": "portal-feishu-7675279507423496498",
+      "title": "制造职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675279507423496498/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责生产现场管理，组织落实生产计划，保障生产任务顺利完成 2. 负责生产人员管理、团队建设、现场改善及质量管控，持续提升生产效率 3. 负责生产过程中的资源协调、异常问题分析及解决，推动生产目标达成 4. 参与相关项目管理，推动团队协作及持续改善\n\n岗位要求:\n1. 2027届本科及以上学历，理工类、机械类、电子类、工业工程类或管理类等相关专业 2. 不限院校 3. 具备良好的组织协调能力、沟通能力和团队管理能力 4. 具备较强的责任心、执行力、问题分析与解决能力及抗压能力 5. 英语CET-4，具备中文及泰语沟通能力，泰语熟练者优先"
+    },
+    {
+      "externalId": "portal-feishu-7675275404026317119",
+      "title": "制造职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675275404026317119/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责生产运营及工单管理，开展生产准备、资源协调、异常处理及生产数据管理 2. 负责厂务设施日常运转、维护及扩建相关工作 3. 参与制造现场管理及运营改善，保障生产运营稳定有序\n\n岗位要求:\n1. 2027届本科及以上学历，光学类、电气类、应用物理类、微电子类、暖通类、机械类等相关专业 2. 211-双一流院校及以上优先 3. 具备良好的沟通协调能力、数据分析能力和团队合作精神 4. 具备较强的责任心、执行力、问题分析能力及抗压能力 5. 英语CET-4"
+    },
+    {
+      "externalId": "portal-feishu-7675272254956063018",
+      "title": "质量工程师",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675272254956063018/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "该岗位包括PQE方向、可靠性方向、机构MQE方向、ESD方向 1. PQE方向：制定新产品导入制程管控、检验及抽样规范；维护制程质量通用标准；协同处理客诉、可靠性不良，主导重大制程质量异常，跟踪改善对策落地验证 2. 可靠性方向：编制新产品可靠性验证计划，开展 DPA、ORT 监控；管控器件、制程变更可靠性风险；评估产品可靠性风险，开展失效分析，协同研发工程落实改善验证，对接客户可靠性需求，评估召回风险 3. 机构MQE方向：负责量产物料质量管理，处理生产及客诉物料异常，组织跨部门根因分析；协同 SQE 推动供应商改善，跟踪改善闭环；沉淀物料质量案例，输出质量报告，参与物料及失效分析，驱动持续改进 4. ESD方向：开展 ESD 防护用品周期性抽测、现场巡检与异常闭环；维护 ESD 相关数据，监督静电防护体系落地；完成新厂房 ESD 设施验收及其他 ESD 相关支持工作\n\n岗位要求:\n1. 2027届本科及以上学历，理工类专业不限 2. 211-双一流院校及以上优先 3. PQE方向：具备质量管理基础知识，熟悉 ISO 9001/IATF 16949 体系，掌握 SPC、MSA、FMEA、8D、PDCA、DMAIC 等质量工具 4. 校准方向：了解基础计量知识、计量法规与校准流程，动手能力强，对计量校准行业有浓厚兴趣 5. 具备良好的问题分析与解决能力、学习能力、沟通能力和团队合作精神 6. 英语CET-4及以上优先 7. 该职位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7675271618859419923",
+      "title": "质量工程师",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675271618859419923/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责公司全流程质量管理工作，涵盖供应商准入评审、稽核绩效考核、物料标准搭建与来料质量管控，跟进新物料及二供验证导入与量产物料异常改善 2. 负责新产品可靠性验证、DPA风险识别、ORT监控、变更可靠性管控及失效问题分析闭环 3. 统筹ESD静电防护体系搭建、现场稽核管控、人员培训及客户稽核应对 4. 负责新产品制程质量标准制定、量产制程风险管控与品质改善推进 5. 承接客户稽核、客诉跟进、资料对接与PCN变更发行 6. 处理客户退货投诉、8D回复、问题分级升级、根因分析与横向改善，搭建故障数据库 7. 主导制程品质管控、QC团队日常管理、检验数据分析与制程风险预防，配合质量体系审核、文件维护与各类质量问题复盘及成本管控，持续推动全链路质量提升\n\n岗位要求:\n1. 2027届本科及以上学历，理工科专业优先 2. 211-双一流院校及以上优先 3. PQE方向：具备质量管理基础知识，熟悉 ISO 9001/IATF 16949 体系，掌握 SPC、MSA、FMEA、8D、PDCA、DMAIC 等质量工具 4. 具备良好的问题分析与解决能力、学习能力、沟通能力和团队合作精神 5. 英语CET-4及以上或泰语流利"
+    },
+    {
+      "externalId": "portal-feishu-7675258161066854706",
+      "title": "质量工程师",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675258161066854706/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "该岗位包括供应链质量方向、客户服务方向、认证试验方向、体系合规方向、项目管理方向 供应链质量方向 1. SQE:负责新供应商准入、体系审核与绩效考核，通过 QBR 推动质量提升；处理进料异常，闭环供应商质量问题；制定物料验收标准，主导 PCN 变更验证；开展供应商稽核辅导，参与新物料导入，推动公司质量要求在供应商落地 2. MQE: 负责新物料、二供物料的验证导入工作，推动不合格物料供应商改善；协助处理量产物料失效异常，保障生产顺畅 3. IQC: 编制来料检验标准文件，监督来料检验执行；处理来料异常并推动供应商改善；输出质量趋势报告，参与新项目转产检验，配合体系审核与文件整改 客户服务方向 1. CQE: 陪同客户稽核，闭环 QPA/QSA 遗留问题；跟进客户抱怨，重点处理客户 IQC 前端失效问题；收集整理客户所需质量资料；负责产品变更 PCN 审核及对外发行 2. RMA：处理客户投诉及退货，跟进问题闭环；输出 8D 报告回复客户，追踪整改落地；判定问题等级，重大问题及时升级上报；统计分析客诉根因，推动内部改善，防止问题复发；推动问题横向展开，协同各部门优化改善；搭建故障失效数据库，编制故障处理手册 认证试验方向 1. 可靠性：编制新产品可靠性验证计划，开展 DPA、ORT 监控；管控器件、制程变更可靠性风险；协同研发工程完成失效根因分析与改善验证；对接客户可靠性诉求，评估召回风险，杜绝风险品流出 2. 校准：负责计量仪表校准计划与全流程管理，协调内外部校准资源，处理校准技术异常 3. FA：负责各类样品失效分析与制样，操作各类表征设备，输出分析报告；对接外部资源，承担实验室日常管理 体系合规方向 1. 负责 ISO9001 体系搭建推行、体系文件编写与受控管理 2. 组织内审、管理评审，对接第三方认证审核，闭环不符合项 3. 开展有害物质合规管理，判定物料有害物质符合性，维护相关台账法规，整理客户 GP 资料 项目管理方向 1. DQM: 项目设计阶段开展质量风险评估，对研发样品执行DPA 分析；组建 DQM小组，NPI 阶段识别风险并推动改善 2. PQL: 统筹产品全生命周期质量活动，识别质量风险，主导重大问题复盘闭环，管控项目质量成本并推动改善\n\n岗位要求:\n1. 2027届本科及以上学历，电子类、通信类、光电类、材料类、化学类、高分子类、自动化类等相关专业 2. 211-双一流院校及以上优先 3. 认证试验方向：了解基础计量知识、计量法规与校准流程，动手能力强，对计量校准行业有浓厚兴趣 4. 认证试验方向：了解失效分析基本概念与常见分析流程，在校有半导体测试、材料表征相关课程实验或课题组项目经验优先 5. 具备良好的问题分析与解决能力、学习能力、沟通能力和团队合作精神 6. 英语CET-4及以上优先，口语流利者优先 7. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7675254062397425930",
+      "title": "质量工程师",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675254062397425930/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.供应商开发与审核，负责供应商的导入评估和质量监控 2.产品过程质量管控，跟进试产良率、客退品根因分析 3.产品可靠性试验的策划与实施，失效分析反馈、推进改善\n\n岗位要求:\n1. 2027届本科及以上学历，光学类、电子类等相关专业 2. 211-双一流学校及以上优先 3. 较强的数据分析处理能力、逻辑思维能力 4. 高效的沟通、组织协调能力； 5. 英语CET-4及以上优先，有优秀的英文读写能力"
+    },
+    {
+      "externalId": "portal-feishu-7675253990326012201",
+      "title": "光学封装类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675253990326012201/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的光学封装工艺开发与优化，参与光路耦合、胶合固化、测试验证等环节，保障产品光学性能与可靠性。 1. 负责光学元件的贴装、耦合与对准工艺，优化光路耦合效率及插损指标 2. 执行光学封装过程中的性能测试（如耦合功率、回波损耗、偏振消光比等），记录并分析测试数据 3. 分析封装环节出现的异常（如耦合偏移、胶体老化、光学污染等），参与失效原因排查与改善 4. 配合研发完成新型光器件（TX/RX/OB/IPR）的封装可制造性评估，推动新产品平稳导入量产 5. 编写封装工艺操作规范、点检表及控制计划，培训产线作业员 6. 参与光学封装自动化设备的调试与日常维护，提升封装一致性和效率\n\n岗位要求:\n1. 2027届本科及以上学历，光学工程类、光电类、物理类、电子科学类等相关专业 2. 211-双一流院校及以上优先 3. 了解光学或光通信基础知识，有实验室光学实验或封装项目经历者优先 4. 具备基本的数据处理能力，能使用Excel或其他工具进行数据整理 5. 动手能力强，善于观察细节，有分析和解决实际问题的兴趣 6. 工作认真负责，具备良好的沟通与团队协作意识 7. 英语CET-4及以上，能阅读英文技术资料和操作手册 8. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7675250275687827718",
+      "title": "光学封装类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675250275687827718/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的光学封装工艺开发与优化，参与光路耦合、胶合固化、测试验证等环节，保障产品光学性能与可靠性。 1. 负责光学元件的贴装、耦合与对准工艺，优化光路耦合效率及插损指标 2. 执行光学封装过程中的性能测试（如耦合功率、回波损耗、偏振消光比等），记录并分析测试数据 3. 分析封装环节出现的异常（如耦合偏移、胶体老化、光学污染等），参与失效原因排查与改善 4. 配合研发完成新型光器件（TX/RX/OB/IPR）的封装可制造性评估，推动新产品平稳导入量产 5. 编写封装工艺操作规范、点检表及控制计划，培训产线作业员 6. 参与光学封装自动化设备的调试与日常维护，提升封装一致性和效率\n\n岗位要求:\n1. 2027届本科及以上学历，光学工程类、光电类、物理类、电子科学类等相关专业 2. 211-双一流院校及以上优先 3. 了解光学或光通信基础知识，有实验室光学实验或封装项目经历者优先 4. 具备基本的数据处理能力，能使用Excel或其他工具进行数据整理 5. 动手能力强，善于观察细节，有分析和解决实际问题的兴趣 6. 工作认真负责，具备良好的沟通与团队协作意识 7. 英语CET-4及以上，能阅读英文技术资料和操作手册"
+    },
+    {
+      "externalId": "portal-feishu-7675229568420579638",
+      "title": "芯片设计类（留学生岗位）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675229568420579638/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 光芯片与器件设计与仿真（在导师/技术骨干指导下） - 参与III-V族（InP）及硅基（SiPh）光芯片的研究与开发，协助完成器件建模、多物理场仿真、结构设计与优化工作核心器件方向包括：高速电光调制器（MZM）、高速光电探测器（PD）、光无源器件（耦合器、波分复用器）及MEMS光芯片（微镜、光开关）等 - 使用专业软件进行光学、电学、热学及力学多维度仿真，协助输出器件可行性分析、设计文档及技术报告 2. 版图实现与流片对接（在指导下完成） - 参与光电收发芯片的物理版图（Layout）设计，使用KLayout、L-Edit或Virtuoso等工具完成从原理图到GDSII文件的生成 - 在导师指导下与流片厂商（Foundry）进行技术沟通，学习并遵循PDK（工艺设计套件）规则，熟悉流片全流程 3. 测试平台搭建与模型校准（在指导下参与） - 参与光芯片与器件测试平台的搭建与调试，协助开展性能测试（包括插损、带宽、眼图、光谱响应等关键指标） - 参与测试数据的处理与分析，辅助提取器件参数，支持“设计-仿真-测试”闭环的建立与优化 4. 系统协同与项目支持 - 与跨部门团队（如电芯片设计、封装、系统集成团队）协作，支持光电共封装（CPO）等前沿项目，在团队中承担具体研发任务 - 参与光通信系统级需求分析，理解芯片设计指标与系统应用之间的对应关系\n\n岗位要求:\n1. 2027届硕士及以上学历，光电类、光学工程类、电子工程类、微电子类、物理学类等相关专业 2. 211-双一流院校及以上优先 3. 在校期间有光芯片/光器件相关课题研究方向，具备扎实的理论基础 4. 专业技能 - 器件物理基础：深刻理解光通信系统中各类光器件的工作原理（如载流子色散效应、量子限制斯塔克效应、MEMS静电力驱动、波导光学等），能将物理原理与器件设计建立联系 - 仿真工具：熟练使用以下至少两类设计仿真工具（可在项目/课题中证明）： - 光学/光电子：Lumerical（FDTD/MODE/INTERCONNECT）、RSoft、Photon Design、Silvaco TCAD - 电磁/多物理场：Ansys HFSS、COMSOL Multiphysics - 电路/版图：Cadence Virtuoso、Mentor Graphics（L-Edit）、KLayout、ADS - 测试与调试（加分项） ：了解光通信器件测试流程，有网络分析仪、光谱仪、误码仪等测试仪器操作经验者优先 - 编程能力：熟练使用Python、MATLAB或类似工具，有数据处理、仿真自动化或科学计算经验 - 流片经验（加分项） ：具备硅光（SiPh）或III-V族（InP）芯片流片/MPW项目经历，或在校课题中有流片相关合作经验 5. 软技能 - 逻辑与学习能力：逻辑清晰，善于分析和解决技术问题，具备快速学习新工具、新工艺的能力 - 沟通与协作：具备良好的团队合作精神和跨部门沟通意识，乐于分享与交流技术见解 - 工程素养：具备规范的文档编写习惯，责任心强，能在多任务环境中高效交付 6.英语CET-6及以上，能够熟练阅读英文技术文献及Foundry PDK文档，具备英文技术报告撰写能力"
+    },
+    {
+      "externalId": "portal-feishu-7675218275328903478",
+      "title": "光学封装类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675218275328903478/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的光学封装工艺开发与优化，参与光路耦合、胶合固化、测试验证等环节，保障产品光学性能与可靠性。 1. 负责光学元件的贴装、耦合与对准工艺，优化光路耦合效率及插损指标 2. 执行光学封装过程中的性能测试（如耦合功率、回波损耗、偏振消光比等），记录并分析测试数据 3. 分析封装环节出现的异常（如耦合偏移、胶体老化、光学污染等），参与失效原因排查与改善 4. 配合研发完成新型光器件（TX/RX/OB/IPR）的封装可制造性评估，推动新产品平稳导入量产 5. 编写封装工艺操作规范、点检表及控制计划，培训产线作业员 6. 参与光学封装自动化设备的调试与日常维护，提升封装一致性和效率\n\n岗位要求:\n1. 2027届硕士及以上学历，光学工程类、光电类、物理类、电子科学类等相关专业 2. 211-双一流院校及以上优先 3. 了解光学或光通信基础知识，有实验室光学实验或封装项目经历者优先 4. 具备基本的数据处理能力，能使用Excel或其他工具进行数据整理 5. 动手能力强，善于观察细节，有分析和解决实际问题的兴趣。 6. 工作认真负责，具备良好的沟通与团队协作意识 7. 英语CET-4及以上，能阅读英文技术资料和操作手册 8. 该职位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7675204409420269834",
+      "title": "光学封装类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675204409420269834/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的光学封装工艺开发与优化，参与光路耦合、胶合固化、测试验证等环节，保障产品光学性能与可靠性。 1. 负责光学元件的贴装、耦合与对准工艺，优化光路耦合效率及插损指标 2. 执行光学封装过程中的性能测试（如耦合功率、回波损耗、偏振消光比等），记录并分析测试数据 3. 分析封装环节出现的异常（如耦合偏移、胶体老化、光学污染等），参与失效原因排查与改善 4. 配合研发完成新型光器件（TX/RX/OB/IPR）的封装可制造性评估，推动新产品平稳导入量产 5. 编写封装工艺操作规范、点检表及控制计划，培训产线作业员 6. 参与光学封装自动化设备的调试与日常维护，提升封装一致性和效率\n\n岗位要求:\n1. 2027届硕士及以上学历，光学工程类、光电类、物理类、电子科学类等相关专业 2. 211-双一流院校及以上优先 3. 了解光学或光通信基础知识，有实验室光学实验或封装项目经历者优先 4. 具备基本的数据处理能力，能使用Excel或其他工具进行数据整理 5. 动手能力强，善于观察细节，有分析和解决实际问题的兴趣 6. 工作认真负责，具备良好的沟通与团队协作意识 7. 英语CET-4及以上，能阅读英文技术资料和操作手册 8. 该职位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7675200753556130098",
+      "title": "光学封装类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675200753556130098/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的光学封装工艺开发与优化，参与光路耦合、胶合固化、测试验证等环节，保障产品光学性能与可靠性。 1. 负责光学元件的贴装、耦合与对准工艺，优化光路耦合效率及插损指标 2. 执行光学封装过程中的性能测试（如耦合功率、回波损耗、偏振消光比等），记录并分析测试数据 3. 分析封装环节出现的异常（如耦合偏移、胶体老化、光学污染等），参与失效原因排查与改善 4. 配合研发完成新型光器件（TX/RX/OB/IPR）的封装可制造性评估，推动新产品平稳导入量产 5. 编写封装工艺操作规范、点检表及控制计划，培训产线作业员 6. 参与光学封装自动化设备的调试与日常维护，提升封装一致性和效率\n\n岗位要求:\n1. 2027届本科及以上学历，光学工程类、光电类、物理类、电子科学类等相关专业 2. 211-双一流院校及以上优先 3. 了解光学或光通信基础知识，有实验室光学实验或封装项目经历者优先 4. 具备基本的数据处理能力，能使用Excel或其他工具进行数据整理 5. 动手能力强，善于观察细节，有分析和解决实际问题的兴趣。 6. 工作认真负责，具备良好的沟通与团队协作意识 7. 英语CET-4及以上，能阅读英文技术资料和操作手册"
+    },
+    {
+      "externalId": "portal-feishu-7675200717041748267",
+      "title": "设备工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675200717041748267/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块产线各类封装、测试设备的日常维护、故障处理与优化改善，保障设备稳定高效运行，为生产交付和产品质量提供设备保障。 1. 负责生产设备的日常点检、预防性维护及定期保养，确保设备处于良好运行状态 2. 快速响应设备突发故障（如贴片机、键合机、耦合台、测试系统等），排查电路、机械或软件异常并及时修复 3. 参与新设备的安装、调试与验收，配合工艺工程师完成设备参数设定与验证 4. 针对设备瓶颈提出优化方案（如参数调整、工装夹具改良），提升设备稼动率与产品良率 5. 管理备品备件库存，制定安全库存标准，降低因备件短缺导致的停机风险 6. 编写设备操作规范（SOP）与维护保养计划，并对产线操作人员进行基础培训与考核\n\n岗位要求:\n1. 2027届本科及以上学历，机械工程类、电气自动化类、机电一体化类、测控技术类、电子工程类等相关专业 2. 不限院校 3. 了解基础电路原理、机械制图或PLC逻辑控制，有设备维修、调试或装配类项目/实习经验者优先 4. 能看懂电气原理图和机械装配图，具备较强的现场动手能力和问题排查能力 5. 熟练使用Office办公软件，能进行简单的数据记录与异常统计 6. 工作积极主动，责任心强，能适应产线快节奏，具备良好的团队协作与沟通能力 7. 英语CET-4及以上，能阅读设备英文操作手册及报警代码信息 8. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7675197987932473619",
+      "title": "设备工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675197987932473619/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块产线各类封装、测试设备的日常维护、故障处理与优化改善，保障设备稳定高效运行，为生产交付和产品质量提供设备保障。 1. 负责生产设备的日常点检、预防性维护及定期保养，确保设备处于良好运行状态 2. 快速响应设备突发故障（如贴片机、键合机、耦合台、测试系统等），排查电路、机械或软件异常并及时修复 3. 参与新设备的安装、调试与验收，配合工艺工程师完成设备参数设定与验证 4. 针对设备瓶颈提出优化方案（如参数调整、工装夹具改良），提升设备稼动率与产品良率 5. 管理备品备件库存，制定安全库存标准，降低因备件短缺导致的停机风险 6. 编写设备操作规范（SOP）与维护保养计划，并对产线操作人员进行基础培训与考核\n\n岗位要求:\n1. 2027届本科及以上学历，机械工程类、电气自动化类、机电一体化类、测控技术类、电子工程类等相关专业 2. 不限院校 3. 了解基础电路原理、机械制图或PLC逻辑控制，有设备维修、调试或装配类项目/实习经验者优先 4. 能看懂电气原理图和机械装配图，具备较强的现场动手能力和问题排查能力 5. 熟练使用Office办公软件，能进行简单的数据记录与异常统计 6. 工作积极主动，责任心强，能适应产线快节奏，具备良好的团队协作与沟通能力 7. 英语CET-4及以上，能阅读设备英文操作手册及报警代码信息"
+    },
+    {
+      "externalId": "portal-feishu-7675124945339042057",
+      "title": "设备工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675124945339042057/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块产线各类封装、测试设备的日常维护、故障处理与优化改善，保障设备稳定高效运行，为生产交付和产品质量提供设备保障。 1. 负责生产设备的日常点检、预防性维护及定期保养，确保设备处于良好运行状态 2. 快速响应设备突发故障（如贴片机、键合机、耦合台、测试系统等），排查电路、机械或软件异常并及时修复 3. 参与新设备的安装、调试与验收，配合工艺工程师完成设备参数设定与验证 4. 针对设备瓶颈提出优化方案（如参数调整、工装夹具改良），提升设备稼动率与产品良率 5. 管理备品备件库存，制定安全库存标准，降低因备件短缺导致的停机风险 6. 编写设备操作规范（SOP）与维护保养计划，并对产线操作人员进行基础培训与考核\n\n岗位要求:\n1. 2027届本科及以上学历，机械工程类、电气自动化类、机电一体化类、测控技术类、电子工程类等相关专业 2. 211-双一流院校及以上优先 3. 了解基础电路原理、机械制图或PLC逻辑控制，有设备维修、调试或装配类项目/实习经验者优先 4. 能看懂电气原理图和机械装配图，具备较强的现场动手能力和问题排查能力 5. 熟练使用Office办公软件，能进行简单的数据记录与异常统计 6. 工作积极主动，责任心强，能适应产线快节奏，具备良好的团队协作与沟通能力 7. 英语CET-4及以上，能阅读设备英文操作手册及报警代码信息 8. 该职位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7675081454695221567",
+      "title": "设备工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7675081454695221567/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块产线各类封装、测试设备的日常维护、故障处理与优化改善，保障设备稳定高效运行，为生产交付和产品质量提供设备保障。 1. 负责生产设备的日常点检、预防性维护及定期保养，确保设备处于良好运行状态 2. 快速响应设备突发故障（如贴片机、键合机、耦合台、测试系统等），排查电路、机械或软件异常并及时修复 3. 参与新设备的安装、调试与验收，配合工艺工程师完成设备参数设定与验证 4. 针对设备瓶颈提出优化方案（如参数调整、工装夹具改良），提升设备稼动率与产品良率 5. 管理备品备件库存，制定安全库存标准，降低因备件短缺导致的停机风险 6. 编写设备操作规范（SOP）与维护保养计划，并对产线操作人员进行基础培训与考核\n\n岗位要求:\n1. 2027届本科及以上学历，机械工程类、电气自动化类、机电一体化类、测控技术类、电子工程类等相关专业 2. 不限院校 3. 了解基础电路原理、机械制图或PLC逻辑控制，有设备维修、调试或装配类项目/实习经验者优先 4. 能看懂电气原理图和机械装配图，具备较强的现场动手能力和问题排查能力 5. 熟练使用Office办公软件，能进行简单的数据记录与异常统计 6. 工作积极主动，责任心强，能适应产线快节奏，具备良好的团队协作与沟通能力 7. 英语CET-4及以上，能阅读设备英文操作手册及报警代码信息 8. 该职位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674892110818035977",
+      "title": "模块封测类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674892110818035977/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的封装工艺、产品测试及失效分析，参与从研发导入到量产的全过程，与团队一起保障产品质量和良率 1. 负责光模块封装工艺的日常维护与优化（贴片、键合、焊接等） 2. 执行光电性能测试（光功率、眼图、灵敏度等），整理测试数据 3. 分析封测过程中的异常问题，参与失效分析并提出改善建议 4. 配合研发完成新产品导入，评估工艺可制造性 5. 编写工艺文件和操作规范，培训产线人员 6. 参与自动化测试平台的建设与数据系统维护\n\n岗位要求:\n1. 2027届本科及以上学历，理工类专业不限 2. 不限院校 3. 了解光模块或半导体封装基本概念，有实验室动手经验者优先 4. 能使用常用办公软件处理数据，对数字敏感 5. 逻辑清晰，善于发现和解决问题，有团队合作精神 6. 英语CET-6及以上，精通中英双语，英语可以作为工作语言 7. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674886283693820210",
+      "title": "模块封测类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674886283693820210/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的封装工艺、产品测试及失效分析，参与从研发导入到量产的全过程，与团队一起保障产品质量和良率 1. 负责光模块封装工艺的日常维护与优化（贴片、键合、焊接等） 2. 执行光电性能测试（光功率、眼图、灵敏度等），整理测试数据 3. 分析封测过程中的异常问题，参与失效分析并提出改善建议 4. 配合研发完成新产品导入，评估工艺可制造性 5. 编写工艺文件和操作规范，培训产线人员 6. 参与自动化测试平台的建设与数据系统维护\n\n岗位要求:\n1. 2027届本科及以上学历，理工类专业不限 2. 不限院校 3. 了解光模块或半导体封装基本概念，有实验室动手经验者优先 4. 能使用常用办公软件处理数据，对数字敏感 5. 逻辑清晰，善于发现和解决问题，有团队合作精神 6. 英语CET-6及以上，精通中英双语，英语可以作为工作语言 7. 该岗位base地泰国，泰籍、泰语优先"
+    },
+    {
+      "externalId": "portal-feishu-7674878294906554633",
+      "title": "模块封测类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674878294906554633/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的封装工艺、产品测试及失效分析，参与从研发导入到量产的全过程，与团队一起保障产品质量和良率 1.负责光模块封装工艺的日常维护与优化（贴片、键合、焊接等） 2.执行光电性能测试（光功率、眼图、灵敏度等），整理测试数据 3.分析封测过程中的异常问题，参与失效分析并提出改善建议 4.配合研发完成新产品导入，评估工艺可制造性 5.编写工艺文件和操作规范，培训产线人员 6.参与自动化测试平台的建设与数据系统维护\n\n岗位要求:\n1.2027届硕士及以上学历，光电类、电子类、通信类、物理类等相关专业 2. 211-双一流院校及以上优先 3. 了解光模块或半导体封装基本概念，有实验室动手经验者优先 4. 能使用常用办公软件处理数据，对数字敏感 5. 逻辑清晰，善于发现和解决问题，有团队合作精神 6. 英语CET-4及以上，能阅读英文技术资料 7. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674876962759199018",
+      "title": "模块封测类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674876962759199018/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的封装工艺、产品测试及失效分析，参与从研发导入到量产的全过程，与团队一起保障产品质量和良率 1. 负责光模块封装工艺的日常维护与优化（贴片、键合、焊接等） 2. 执行光电性能测试（光功率、眼图、灵敏度等），整理测试数据 3. 分析封测过程中的异常问题，参与失效分析并提出改善建议 4. 配合研发完成新产品导入，评估工艺可制造性 5. 编写工艺文件和操作规范，培训产线人员 6. 参与自动化测试平台的建设与数据系统维护\n\n岗位要求:\n1. 2027届本科及以上学历，光电类、电子类、通信类、物理类等相关专业 2. 不限院校 3. 了解光模块或半导体封装基本概念，有实验室动手经验者优先 4. 能使用常用办公软件处理数据，对数字敏感 5. 逻辑清晰，善于发现和解决问题，有团队合作精神 6. 英语CET-4及以上，能阅读英文技术资料"
+    },
+    {
+      "externalId": "portal-feishu-7674876962758674730",
+      "title": "模块封测类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674876962758674730/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块的封装工艺、产品测试及失效分析，参与从研发导入到量产的全过程，与团队一起保障产品质量和良率 1.负责光模块封装工艺的日常维护与优化（贴片、键合、焊接等） 2.执行光电性能测试（光功率、眼图、灵敏度等），整理测试数据 3.分析封测过程中的异常问题，参与失效分析并提出改善建议 4.配合研发完成新产品导入，评估工艺可制造性 5.编写工艺文件和操作规范，培训产线人员 6.参与自动化测试平台的建设与数据系统维护\n\n岗位要求:\n1.2027届本科及以上学历，光电类、电子类、通信类、物理类等相关专业 2. 211-双一流院校及以上优先 3. 了解光模块或半导体封装基本概念，有实验室动手经验者优先 4. 能使用常用办公软件处理数据，对数字敏感 5. 逻辑清晰，善于发现和解决问题，有团队合作精神 6. 英语CET-4及以上，能阅读英文技术资料"
+    },
+    {
+      "externalId": "portal-feishu-7674872471959587078",
+      "title": "自动化工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674872471959587078/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 软件开发：负责自动化设备上位机/控制软件的需求分析、架构设计、编码实现及测试验证，确保设备整体功能完整和性能稳定，并输出相关技术文档 2. 电子开发：自动化硬件系统架构与电路设计，功率驱动与信号接口开发，调试测试与可靠性验证 3. 结构设计：自动化结构方案设计与三维建模，传动机构与标准件选型，仿真验证与结构优化，样机试制与现场调试 4. 电气设计：自动化电气系统方案设计，PLC程序开发与调试，现场装配指导与故障排除\n\n岗位要求:\n1. 2027届本科及以上学历，计算机类、通信类、机械类、自动化类、电气仪表类、光学工程类等相关专业 2. 211-双一流院校及以上优先 3. 具备出色的学习、分析和解决问题的能力，良好的沟通协调能力和团队合作精神，有持续改善意识，结果导向，追求卓越。 4. 积极主动，适应性强，能够承受压力，热爱自动化行业 5. 英语CET-4及以上 6. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674847652643522866",
+      "title": "自动化工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674847652643522866/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 软件开发：负责自动化设备上位机/控制软件的需求分析、架构设计、编码实现及测试验证，确保设备整体功能完整和性能稳定，并输出相关技术文档 2. 电子开发：自动化硬件系统架构与电路设计，功率驱动与信号接口开发，调试测试与可靠性验证 3. 结构设计：自动化结构方案设计与三维建模，传动机构与标准件选型，仿真验证与结构优化，样机试制与现场调试 4. 电气设计：自动化电气系统方案设计，PLC程序开发与调试，现场装配指导与故障排除\n\n岗位要求:\n1. 2027届本科及以上学历，计算机类、通信类、机械类、自动化类、电气仪表类、光学工程类等相关专业 2. 211-双一流院校及以上优先 3. 具备出色的学习、分析和解决问题的能力，良好的沟通协调能力和团队合作精神，有持续改善意识，结果导向，追求卓越。 4. 积极主动，适应性强，能够承受压力，热爱自动化行业 5. 英语CET-4及以上 6. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674846377038743854",
+      "title": "自动化工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674846377038743854/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 软件开发：负责自动化设备上位机/控制软件的需求分析、架构设计、编码实现及测试验证，确保设备整体功能完整和性能稳定，并输出相关技术文档 2. 电子开发：自动化硬件系统架构与电路设计，功率驱动与信号接口开发，调试测试与可靠性验证 3. 结构设计：自动化结构方案设计与三维建模，传动机构与标准件选型，仿真验证与结构优化，样机试制与现场调试 4. 电气设计：自动化电气系统方案设计，PLC程序开发与调试，现场装配指导与故障排除\n\n岗位要求:\n1. 2027届硕士及以上学历，计算机类、通信类、机械类、自动化类、电气仪表类、光学工程类等相关专业 2. 211-双一流院校及以上优先 3. 具备出色的学习、分析和解决问题的能力，良好的沟通协调能力和团队合作精神，有持续改善意识，结果导向，追求卓越。 4. 积极主动，适应性强，能够承受压力，热爱自动化行业 5. 英语CET-4及以上 6. 该职位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674846377038072110",
+      "title": "自动化工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674846377038072110/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 软件开发：负责自动化设备上位机/控制软件的需求分析、架构设计、编码实现及测试验证，确保设备整体功能完整和性能稳定，并输出相关技术文档 2. 电子开发：自动化硬件系统架构与电路设计，功率驱动与信号接口开发，调试测试与可靠性验证 3. 结构设计：自动化结构方案设计与三维建模，传动机构与标准件选型，仿真验证与结构优化，样机试制与现场调试 4. 电气设计：自动化电气系统方案设计，PLC程序开发与调试，现场装配指导与故障排除\n\n岗位要求:\n1. 2027届硕士及以上学历，计算机类、通信类、机械类、自动化类、电气仪表类、光学工程类等相关专业 2. 211-双一流院校及以上优先 3. 具备出色的学习、分析和解决问题的能力，良好的沟通协调能力和团队合作精神，有持续改善意识，结果导向，追求卓越。 4. 积极主动，适应性强，能够承受压力，热爱自动化行业 5. 英语CET-4及以上 6. 该职位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674826340176709939",
+      "title": "PMC（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674826340176709939/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块生产计划排程与物料需求管控，协同生产、采购、仓储等环节，保障订单按时交付，同时控制库存成本，提升供应链效率。 1. 根据销售预测和客户订单，制定月度/周生产计划，协调产线资源确保均衡生产 2. 跟进物料需求核算，下达采购申请并跟踪到货进度，保障生产不断料、不呆料 3. 监控生产进度和物料库存，及时处理异常（如缺料、设备故障、紧急插单），调整计划并通报相关部门 4. 定期盘点库存，分析物料周转率，推动呆滞物料消耗及库存结构优化 5. 维护ERP系统中的生产订单和物料数据，确保信息准确可追溯 6. 参与产销协调会议，反馈生产交付风险，推动问题闭环解决。\n\n岗位要求:\n1. 2027届本科及以上学历，物流管理类、工业工程类、供应链管理类、工商管理类、统计学类等相关专业 2. 211-双一流院校及以上优先 3. 熟悉基础生产计划与库存管理概念，有ERP系统操作经验或相关实习经历者优先 4. 熟练使用Excel（数据透视表、常用函数），对数据敏感，具备基础数据分析能力 5. 逻辑清晰，具备较强的沟通协调和应变能力，能在多任务环境下有序推进工作 6. 工作细致有责任心，具备团队合作精神，能承受一定的工作压力 7. 英语CET-4，能阅读基础英文商务邮件和物料清单 8. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674809734692145462",
+      "title": "芯片工程类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674809734692145462/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 在导师指导下，参与半导体工艺（光刻/刻蚀/镀膜等）的日常实验操作与数据记录，协助完成工艺参数的测试与整理 2. 按照SOP执行工艺设备的日常点检与基础维护，参与设备验收及备件整理等辅助工作 3. 协助收集并整理产线良率数据，制作统计图表，识别异常波动并向上反馈 4. 参与新产品试产阶段的数据跟线与记录，协助工程师完成量产导入的文档整理与流程确认 5. 协助撰写或更新工艺相关的操作规范、检查表等标准文件\n\n岗位要求:\n1. 2027届硕士及以上学历，微电子类、集成电路类、物理类、材料类、自动化类等相关专业 2. 211-双一流院校及以上优先 3. 了解半导体基本制造流程（如光刻、刻蚀、薄膜等概念），有校内实验/项目经历者优先 4. 熟练使用Office办公软件（Excel图表、PPT汇报），会Python/Origin/JMP等数据分析工具者加分 5. 工作细致、有责任心，能适应洁净室工作环境，愿意从基础操作学起 6. 英语CET-4及以上，能借助工具阅读英文设备手册或工艺文档"
+    },
+    {
+      "externalId": "portal-feishu-7674648901014423859",
+      "title": "IT数字化类（产品·研发·运维）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674648901014423859/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "该岗位包括数字化产品方向、软件开发方向、基础运维方向 数字化产品方向 1.深入理解光通信全业务场景，参与数字化产品的需求分析、原型设计与产品规划 2.协助推进相关业务系统的迭代优化 3.探索AI技术在业务场景中的产品化落地，如智能排产、质量预测、供应链优化等 软件开发方向 1.参与企业核心应用系统的需求开发、代码实现与技术方案设计，并有机会直接参与集团系统化能力的建设 2.关注AI编程工具与智能体（Agent）技术，提升开发效率与系统智能化水平 基础运维方向 1.参与企业IT基础设施（服务器、网络、虚拟化/云平台）的日常运维与优化 2.协助构建监控风控体系，推进运维自动化脚本与工具的开发 3.参与信息安全体系建设与合规管理\n\n岗位要求:\n1. 2027届本科及以上学历，计算机科学类、软件工程类、信息安全类、自动化类、电子信息类等相关专业 2. 211-双一流院校及以上优先 3. 技术基础：具备扎实的计算机基础，熟悉至少一门编程语言 4. 学习能力：对AI等新技术有好奇心和快速学习能力，愿意在IT数字化领域持续深耕 5. 业务敏感度：能够理解业务场景，具备将技术转化为业务价值的产品思维（产品方向重点考察） 6. 团队协作：良好的沟通能力和团队协作精神，能够在跨部门协作中推动项目落地 7. 英语CET-4及以上，具备基本的英文技术/需求文档阅读能力"
+    },
+    {
+      "externalId": "portal-feishu-7674648901013653811",
+      "title": "NPI类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674648901013653811/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责新产品开发阶段的试产支持、工艺验证及量产导入，完善产品生产工艺流程并推动执行 2. 负责新产品试产过程中的工艺方案评估、产品验证及试产报告输出，推动产品顺利完成试产及转产 3. 负责模块组装工艺方案设计与优化，识别关键工艺步骤及潜在风险，开展DOE实验并推动工艺参数固化与管控 4. 负责收集和分析产品良率、产能、生产效率及直通率等现场数据，推动生产关键指标达成 5. 负责组装工艺相关辅助工装、治具及设备方案的设计、评估、验收与优化，推动组装工艺自动化、无人化 6. 负责生产现场工艺异常及产品不良分析，制定预防和纠正措施，推动问题闭环及良率持续提升 7. 负责新组装工艺及相关技术预研，推动新技术应用及产品工艺持续优化 8. 负责产品日常问题闭环追踪，推动工艺改善方案验证与落地，并沉淀相关技术经验\n\n岗位要求:\n1. 2027届本科及以上学历，光学类、电气类、应用物理类、微电子类、机械类或自动化类等相关专业 2. 211-双一流院校及以上优先 具备工艺开发、试产导入或生产制造相关基础，具备良好的数据分析、问题分析及解决能力 3. 具备较强的组织协调能力、沟通能力、执行力及抗压能力 4. 能够适应短期国内或国外出差，配合多厂区项目转产需求 5. 英语CET-4及以上"
+    },
+    {
+      "externalId": "portal-feishu-7674618509422528810",
+      "title": "算法类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674618509422528810/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "该岗位包括：AI与图像算法方向、光学算法方向、信息化系统开发方向 AI与图像算法方向 1. 负责AOI模型开发与训练，开展图像处理、缺陷检测、尺寸量测及分类识别等算法开发 2. 负责图像处理算法及AI模型的工程化与落地，参与算法模型部署与性能优化 3. 负责AOI软件平台相关功能开发，包括图像采集、算法调用、数据报表及MES对接等 4. 配合硬件团队完成相机选型、光源调试及系统标定，优化算法在产线环境中的稳定性与实时性 5. 负责产品光学性能参数、图像处理质量及传感器性能测试，协助解决图像质量问题 光学算法方向 1. 负责相关实验的搭建与验证 2. 负责光学相关算法设计、开发与验证 3. 结合实验结果开展数据分析及算法优化 信息化系统开发方向 1. 负责全球化软件平台的架构设计、开发与维护，支持研发实验室及产品转产相关管理需求 2. 负责MES、WMS、VMI等信息化系统的开发及对接 3. 负责生产系统相关功能模块的后端开发与优化，保障平台服务稳定、高效运行 4. 参与生产工单、物料、设备、成本等业务系统的功能开发与数据对接\n\n岗位要求:\n1. 2027届硕士及以上学历，计算机类、人工智能类、电子信息类、通信类、自动化类或应用数学类等相关专业 2. 985院校及以上优先 3. 熟练掌握Python或C++，具备良好的编程习惯和软件工程意识 4. 熟悉图像处理、计算机视觉或深度学习相关基础，熟悉OpenCV、PyTorch、TensorFlow等工具或框架者优先 5. 具备算法模型训练、部署或工程化落地相关经验，熟悉ONNX、TensorRT、OpenVINO等推理框架者优先 6. 有AOI、工业视觉检测、图像处理、计算机视觉或相关项目经验者优先 7. 具备较强的数学基础、问题分析能力、技术文献阅读能力和算法实现能力 8. 具备良好的学习能力、自驱力、沟通能力和团队合作精神 9. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7674618509418219818",
+      "title": "PCB技术类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674618509418219818/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责光模块PCB布局布线设计，根据原理图及外形图完成PCB设计 2. 负责PCB、SMT相关工程资料输出及加工制程支持 3. 负责光模块PCB或SMT新材料、新工艺的开发与认证 4. 参与类载板、先进封装基板的结构设计及工艺开发 5. 负责电源完整性、信号完整性、热及结构应力等相关仿真分析 6. 负责实验设计、数据处理及分析，推动PCB相关技术持续优化\n\n岗位要求:\n1. 2027届本科及以上学历，电子类、射频类、集成电路类、材料类、先进封装类或PCB相关专业 2. 985院校及以上优先 3. 熟悉PCB设计软件，掌握Ansys、ADS等仿真软件者优先 4. 掌握热仿真或应力仿真，具备实验设计、数据处理及分析能力 5. 本科CET-4，硕士CET-6及以上，能够阅读英文数据手册 6. 具备良好的问题分析能力、学习能力和沟通协作能力 7. 该岗位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674599678360979758",
+      "title": "芯片测试类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674599678360979758/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 在导师指导下参与硅光芯片测试平台的搭建与调试，协助完成测试方案与SOP的制定 2. 学习并参与自动化测试脚本（Python/LabVIEW）的开发与优化，提升测试效率 3. 执行芯片功能与性能测试，完成数据整理与初步统计分析，输出测试报告 4. 参与NPI阶段的测试支持工作，与研发、工艺等团队协作推进项目\n\n岗位要求:\n1. 2027届硕士及以上学历，光电类、物理类、电子工程类、通信类等相关专业 2. 211-双一流院校及以上优先 3. 掌握硅光器件（调制器、探测器、耦合器等）基本原理及关键性能指标 4. 了解常用测试仪表（探针台、VNA、光谱仪、BERT等）及基本测试方法 5. 编程基础扎实，熟悉Python（Pandas/NumPy）或MATLAB/LabVIEW 6. 有相关实习、科研项目或竞赛经历者优先 7. 逻辑清晰，注重细节，具备良好的沟通能力和学习自驱力 8. 英语CET-6"
+    },
+    {
+      "externalId": "portal-feishu-7674599678347856179",
+      "title": "工艺开发类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674599678347856179/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "该岗位包括光模块工艺开发方向、先进制程开发方向、III-V族化合物半导体方向、胶水开发方向 光模块工艺开发方向 1. 负责高速光模块及光电器件相关工艺的开发、优化与新产品导入 2. 负责光学耦合、键合、贴装、检测等相关工艺的开发、验证与参数优化 3. 负责工艺异常分析、失效分析及良率改善，推动工艺持续优化 4. 参与新设备、新治具及工艺方案的评估、验证与导入 5. 负责工艺数据分析、实验验证及相关技术文档编制 6. 协同研发、生产、质量等部门推进产品工艺开发及问题改善 先进制程开发方向 1. 负责光学实验室及先进封装相关工艺的开发、优化与导入 2. 负责贴片、耦合、键合及先进封装等工艺的实验验证、设备调试与参数优化 3. 负责工艺异常分析、失效分析及良率改善，推动制程持续优化 4. 参与新产品封装方案评估、首件制作及产品导入，协同研发推进项目落地 5. 负责工艺数据分析、技术文档编制及相关经验沉淀 III-V族化合物半导体方向 1. 负责III-V族化合物半导体外延工艺开发、优化及技术验证 2. 参与MOCVD工艺调试、材料表征及数据分析，持续优化外延质量 3. 负责外延工艺异常分析及问题改善，推进工艺稳定性提升 4. 协同设计、工艺及研发团队开展技术验证和产品开发 胶水开发方向 1. 负责光模块封装胶黏材料的开发、选型及性能验证 2. 参与胶水工艺开发、可靠性测试及问题分析，持续优化材料性能 3. 参与新材料导入、实验验证及相关技术文档编制 4. 负责实验数据分析及材料性能评估，推动材料应用方案持续优化\n\n岗位要求:\n1. 2027届硕士及以上学历，光学工程类、光电类、电子类、通信类、材料类、微电子类、机械类、物理类、测控类等相关专业 2. 985院校及以上优先 3. 具备光学、电子、材料、半导体封装或光模块工艺相关基础知识，具备一定的实验验证、数据分析及问题解决能力 4. 光模块工艺、先进制程开发方向：了解光学耦合、贴片、键合、封装等相关工艺或设备者优先 5. III-V族化合物半导体方向：具备半导体物理、晶体生长等相关基础知识，了解MOCVD外延工艺及材料表征者优先 6. 胶水开发方向：具备材料基础知识，了解胶黏材料或封装材料相关理论，具备实验设计、材料性能验证及数据分析能力 7. 具备良好的工程思维、学习能力、执行力及沟通协作能力，责任心强 8. 英语CET-6及以上优先"
+    },
+    {
+      "externalId": "portal-feishu-7674575942409406783",
+      "title": "芯片设计类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674575942409406783/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 光芯片与器件设计与仿真（在导师/技术骨干指导下） - 参与III-V族（InP）及硅基（SiPh）光芯片的研究与开发，协助完成器件建模、多物理场仿真、结构设计与优化工作核心器件方向包括：高速电光调制器（MZM）、高速光电探测器（PD）、光无源器件（耦合器、波分复用器）及MEMS光芯片（微镜、光开关）等 - 使用专业软件进行光学、电学、热学及力学多维度仿真，协助输出器件可行性分析、设计文档及技术报告 2. 版图实现与流片对接（在指导下完成） - 参与光电收发芯片的物理版图（Layout）设计，使用KLayout、L-Edit或Virtuoso等工具完成从原理图到GDSII文件的生成 - 在导师指导下与流片厂商（Foundry）进行技术沟通，学习并遵循PDK（工艺设计套件）规则，熟悉流片全流程 3. 测试平台搭建与模型校准（在指导下参与） - 参与光芯片与器件测试平台的搭建与调试，协助开展性能测试（包括插损、带宽、眼图、光谱响应等关键指标） - 参与测试数据的处理与分析，辅助提取器件参数，支持“设计-仿真-测试”闭环的建立与优化 4. 系统协同与项目支持 - 与跨部门团队（如电芯片设计、封装、系统集成团队）协作，支持光电共封装（CPO）等前沿项目，在团队中承担具体研发任务 - 参与光通信系统级需求分析，理解芯片设计指标与系统应用之间的对应关系\n\n岗位要求:\n1. 2027届硕士及以上学历，光电类、光学工程类、电子工程类、微电子类、物理学类等相关专业 2. 211-双一流院校及以上优先 3. 在校期间有光芯片/光器件相关课题研究方向，具备扎实的理论基础 4. 专业技能 - 器件物理基础：深刻理解光通信系统中各类光器件的工作原理（如载流子色散效应、量子限制斯塔克效应、MEMS静电力驱动、波导光学等），能将物理原理与器件设计建立联系 - 仿真工具：熟练使用以下至少两类设计仿真工具（可在项目/课题中证明）： - 光学/光电子：Lumerical（FDTD/MODE/INTERCONNECT）、RSoft、Photon Design、Silvaco TCAD - 电磁/多物理场：Ansys HFSS、COMSOL Multiphysics - 电路/版图：Cadence Virtuoso、Mentor Graphics（L-Edit）、KLayout、ADS - 测试与调试（加分项） ：了解光通信器件测试流程，有网络分析仪、光谱仪、误码仪等测试仪器操作经验者优先 - 编程能力：熟练使用Python、MATLAB或类似工具，有数据处理、仿真自动化或科学计算经验 - 流片经验（加分项） ：具备硅光（SiPh）或III-V族（InP）芯片流片/MPW项目经历，或在校课题中有流片相关合作经验 5. 软技能 - 逻辑与学习能力：逻辑清晰，善于分析和解决技术问题，具备快速学习新工具、新工艺的能力 - 沟通与协作：具备良好的团队合作精神和跨部门沟通意识，乐于分享与交流技术见解 - 工程素养：具备规范的文档编写习惯，责任心强，能在多任务环境中高效交付 6. 英语CET-6及以上，能够熟练阅读英文技术文献及Foundry PDK文档，具备英文技术报告撰写能力"
+    },
+    {
+      "externalId": "portal-feishu-7674575942408816959",
+      "title": "结构设计类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674575942408816959/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责各类封装模块结构技术可行性，结构细节设计，解决交付和结构品质问题 2. 散热结构/ EMI/ESD电磁兼容设计，及其它辅材结构设计 3. 熟悉给类零件设计及制程要点，负责压铸、冲压、注塑零件设计开发，产品3D建模、2D出图，模型仿真，机械运动分析 4. 与供应商检讨开模，DFM确认，模流分析，开模样品确认，尺寸量测，完成样品验证，并导入量产 5. 协助处理各类结构不良问题，推进项目进度 & 优化生产良率 6. 发行零件及成品图纸，BOM、技术规格书等技术文件 7. 结构新技术预研 & 应用，以及结构技术降本事宜\n\n岗位要求:\n1. 2027届硕士及以上学历，机械类相关专业 2. 211-双一流院校及以上优先 3. 精通Solidworks等3D/2D设计建模工具 4. 熟悉GD&T几何公差标注及累计公差分析 5. 对散热、电磁屏蔽相关知识有一定理解 6. 优秀的动手能力及推理能力，善于通过问题表象推理底层原理 7. 理解能力强，工作态度积极主动，能配合紧急问题加班 8. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7674575942408374591",
+      "title": "测试类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674575942408374591/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "该岗位包括DVT测试方向、模块测试方向 DVT测试方向 1. 负责光模块DVT测试方案制定及光电性能、功能、可靠性等测试验证 2. 负责测试数据分析、异常问题定位及跨部门协同解决，推动问题闭环 3. 负责测试台架搭建及LabVIEW、Python等自动化测试工具开发，编写测试报告及相关技术文档 模块测试方向： 1. 负责光模块新产品开发验证、性能测试及新单元电路调试 2. 负责测试方案、测试架构及测试仪表的评估与导入，参与测试平台搭建及优化 3. 负责测试数据分析及测试问题跟踪，支持客户应用及研发样品问题解决\n\n岗位要求:\n1. 2027届本科及以上学历，电子类、通信类、光电类、材料类、化学类、高分子类、自动化类等相关专业 2. 211-双一流院校及以上优先 3. DVT测试方向：具备光模块或光通信产品测试基础，熟悉示波器、误码仪、光谱仪等测试仪器，掌握LabVIEW或Python者优先 4. 模块测试方向：具备电子、电路或光通信相关基础知识，了解光模块光电性能、兼容性或传输特性测试，具备产品调试及测试分析能力 5. 具备良好的问题分析与解决能力、学习能力、沟通能力和团队合作精神 6. 英语CET-6及以上优先 7. 该职位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674575942400674102",
+      "title": "软件开发类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674575942400674102/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "该职位包括：测试平台开发（研发）方向、测试平台开发（智能制造）方向 测试平台开发（研发）方向 1. 负责晶圆、光学、模块及其他相关测试和生产全制程段的软件系统设计、开发与维护 2. 负责测试及生产相关软件系统的功能开发、调试、优化与维护 3. 负责软件系统运行过程中相关问题的分析与解决，保障测试及生产业务稳定运行 测试平台开发（智能制造）方向 1. 负责自动化程序需求受理、需求梳理、可行性评估及落地跟踪，实现需求全流程闭环管理 2. 负责寄存器初始化自动化程序的开发、调试、功能优化与版本迭代，保障程序功能适配业务需求 3. 负责程序现场异常监控、故障定位、问题排查与处理闭环，快速响应生产异常 4. 建立异常跟踪与复盘机制，推动问题根因分析与改善，提升程序长期稳定性 5. 负责程序运维、文档更新及知识沉淀，协同现场生产保障多厂区业务稳定运行\n\n岗位要求:\n1. 2027届硕士及以上学历，软件类、自动化类、电子信息类、通信类、光电类、计算机类等相关专业 2. 211-双一流院校及以上 3. 测试平台开发（研发）方向：熟练掌握 C/C++, Labview 或 Python 中至少一种编程语言，具备良好的编程习惯；具备测试及生产软件系统开发、调试及维护能力，有相关课程设计、竞赛、开源项目或实习经历者优先 4. 测试平台开发（智能制造）方向：具备自动化程序问题分析、异常定位及解决能力，能够独立对接业务需求，熟悉生产制造流程者优先 5. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7674575942400231734",
+      "title": "硬件开发类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674575942400231734/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责高速光模块或相干模块的硬件方案设计、开发与实现，参与产品需求评审、设计评审及项目开发 2. 负责硬件电路设计、原理图设计及PCB Layout Review，开展高速电路、信号完整性等相关仿真与分析 3. 负责产品硬件调试、测试验证及相关技术问题分析，主导解决研发、试产及量产阶段的复杂技术问题 4. 负责非标控制板、高速测试板等硬件设计与测试，参与DSP、ARM等核心器件及电源、通信接口等电路设计 5. 负责产品故障分析、良率提升及量产支持，推动问题闭环解决 6. 编制和维护硬件设计规范、测试方案、BOM及相关技术文档，推动研发流程标准化 7. 参与客户送样及相关技术问题解决，协同相关团队完成产品开发与交付\n\n岗位要求:\n1. 2027届硕士及以上学历，电子类、通信类、光电类、自动化等相关专业 2. 985院校及以上优先 3. 具备扎实的模电、数电、高速电路及信号处理等基础知识，熟悉硬件电路设计及开发流程 4. 熟悉原理图设计、PCB Layout Review及高速电路仿真，掌握Cadence、HFSS等相关工具者优先 5. 熟悉示波器、电子负载、频谱仪等常用电子测试仪器的使用 6. 具备较好的问题分析与解决能力、逻辑思维能力和技术攻坚能力，责任心强，具备良好的沟通协作能力 7. 英语CET-6及以上 8. 该职位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7674523290455050534",
+      "title": "芯片设计类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674523290455050534/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 光芯片与器件设计与仿真（在导师/技术骨干指导下） - 参与III-V族（InP）及硅基（SiPh）光芯片的研究与开发，协助完成器件建模、多物理场仿真、结构设计与优化工作核心器件方向包括：高速电光调制器（MZM）、高速光电探测器（PD）、光无源器件（耦合器、波分复用器）及MEMS光芯片（微镜、光开关）等 - 使用专业软件进行光学、电学、热学及力学多维度仿真，协助输出器件可行性分析、设计文档及技术报告 2. 版图实现与流片对接（在指导下完成） - 参与光电收发芯片的物理版图（Layout）设计，使用KLayout、L-Edit或Virtuoso等工具完成从原理图到GDSII文件的生成 - 在导师指导下与流片厂商（Foundry）进行技术沟通，学习并遵循PDK（工艺设计套件）规则，熟悉流片全流程 3. 测试平台搭建与模型校准（在指导下参与） - 参与光芯片与器件测试平台的搭建与调试，协助开展性能测试（包括插损、带宽、眼图、光谱响应等关键指标） - 参与测试数据的处理与分析，辅助提取器件参数，支持“设计-仿真-测试”闭环的建立与优化 4. 系统协同与项目支持 - 与跨部门团队（如电芯片设计、封装、系统集成团队）协作，支持光电共封装（CPO）等前沿项目，在团队中承担具体研发任务 - 参与光通信系统级需求分析，理解芯片设计指标与系统应用之间的对应关系\n\n岗位要求:\n1. 2027届硕士及以上学历，光电类、光学工程类、电子工程类、微电子类、物理学类等相关专业 2. 211-双一流院校及以上优先 3. 在校期间有光芯片/光器件相关课题研究方向，具备扎实的理论基础 4. 专业技能 - 器件物理基础：深刻理解光通信系统中各类光器件的工作原理（如载流子色散效应、量子限制斯塔克效应、MEMS静电力驱动、波导光学等），能将物理原理与器件设计建立联系 - 仿真工具：熟练使用以下至少两类设计仿真工具（可在项目/课题中证明）： - 光学/光电子：Lumerical（FDTD/MODE/INTERCONNECT）、RSoft、Photon Design、Silvaco TCAD - 电磁/多物理场：Ansys HFSS、COMSOL Multiphysics - 电路/版图：Cadence Virtuoso、Mentor Graphics（L-Edit）、KLayout、ADS - 测试与调试（加分项） ：了解光通信器件测试流程，有网络分析仪、光谱仪、误码仪等测试仪器操作经验者优先 - 编程能力：熟练使用Python、MATLAB或类似工具，有数据处理、仿真自动化或科学计算经验 - 流片经验（加分项） ：具备硅光（SiPh）或III-V族（InP）芯片流片/MPW项目经历，或在校课题中有流片相关合作经验 5. 软技能 - 逻辑与学习能力：逻辑清晰，善于分析和解决技术问题，具备快速学习新工具、新工艺的能力 - 沟通与协作：具备良好的团队合作精神和跨部门沟通意识，乐于分享与交流技术见解 - 工程素养：具备规范的文档编写习惯，责任心强，能在多任务环境中高效交付 6.英语CET-6及以上，能够熟练阅读英文技术文献及Foundry PDK文档，具备英文技术报告撰写能力"
+    },
+    {
+      "externalId": "portal-feishu-7674482714603653412",
+      "title": "高频设计/测试类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674482714603653412/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责高速光电产品或高速链路相关的仿真、设计、测试与性能分析 2. 负责高速光电器件或光电芯片或高速光模块的性能测试、调试与优化 3. 负责高速链路或光电系统的仿真分析、指标定义与性能优化 4. 负责高频电子设计、元器件选型、设计验证、链路仿真与分析调试，参与封装方式开发 5. 参与高速光电器件设计或工艺制程相关工作，负责光电芯片性能指标定义及相关管控 6. 负责相关测试设备的使用及高速光电产品问题分析，推动产品性能持续优化\n\n岗位要求:\n1. 2027届硕士及以上学历，射频类、微波类、电子类、通信类、光电类或材料类等相关专业 2. 985院校及以上优先 3. 熟悉高速信号、射频微波或光电器件相关知识，具备高速光电产品设计、测试或仿真相关基础 4. 熟悉HFSS、ADS等仿真软件或高速示波器、光电网络分析仪等测试设备者优先 5. 熟悉光电器件、光电模块或光电系统工作原理，具备高速链路仿真、性能分析或调试经验者优先 6. 具备良好的问题分析能力、学习能力和沟通协作能力 7. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7674481191651428634",
+      "title": "芯片认证类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674481191651428634/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与芯片选型及性能评测，协助定版内外部芯片规格书 2. 参与芯片可靠性验证体系搭建及测试方案制定，维护和优化测试平台 3. 协助主导芯片测试良率提升、异常分析与根因定位 4. 协助项目进行芯片相关的失效分析，输出分析报告 5. 跟进芯片认证测试数据整理与分析，输出认证结论\n\n岗位要求:\n1. 2027届硕士及以上学历，光学工程类、通信类、光电类、微电子类相关专业 2. 211-双一流院校及以上优先 3. 英文读写熟练，通过CET-6.能熟练阅读英文芯片手册及技术文档 4. 熟悉模拟/数字电路、半导体器件物理、高速信号完整性等基础知识 5. 熟悉万用表、示波器、矢量网络分析仪等测试设备优先 6. 评估工艺变更（芯片工艺、封装工艺）对电芯片可靠性的影响，输出工艺变更可靠性验证报告 7. 工作积极主动，具备良好的沟通能力和团队协作精神 8. 具备较强的逻辑分析能力和问题解决能力 9. 英语CET-6及以上，能够熟练阅读英文芯片手册及技术文档"
+    },
+    {
+      "externalId": "portal-feishu-7674234322199267611",
+      "title": "软件开发类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7674234322199267611/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责高速光模块或相干产品测试平台、自动化测试系统及配套软件的设计、开发与维护 2. 负责产品上位机、调试工具及软件验证工具的开发与维护 3. 负责测试设备的验证与导入，支持产品研发及测试流程优化 负责产品软件开发、客户调试及相关问题跟踪与定位解决 4. 支持产品生产全流程软件开发与调试，推动研发成果向生产应用转化 5. 负责软件相关技术文档的编写与维护\n\n岗位要求:\n1. 2027届本科及以上学历，计算机类、软件类、自动化类、电子类、通信类等相关专业 2. 985院校及以上优先 3. 掌握软件开发基础，具备良好的代码编写、调试及维护能力，熟练使用Python或C语言等开发语言 4. 熟悉嵌入式软件开发、数据结构与算法，具备良好的代码习惯 熟悉GPIB、TCP/IP等常用设备通信协议者优先 5. 有光通信相关项目经验者优先 6. 具备良好的学习能力、问题分析能力和沟通协作能力 7. 本科CET-4，硕士CET-6及以上 8. 该岗位可能有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7672809882175424810",
+      "title": "总部管培生",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672809882175424810/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与总部各职能部门轮岗学习，深入了解公司业务及运营流程 2. 参与公司重点项目及专项工作，为业务发展提供支持 3. 根据培养计划完成岗位实践，成长为公司核心管理及专业人才\n\n岗位要求:\n1. 2027届本科及以上学历，专业不限 2. C9-QS50院校及以上优先 3. 具备良好的学习能力、逻辑思维能力和沟通协调能力 4. 具备较强的责任心、自驱力及团队合作精神 5. 能够适应轮岗培养及跨部门协作 6. 英语CET-6"
+    },
+    {
+      "externalId": "portal-feishu-7672808468856342825",
+      "title": "职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672808468856342825/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 跟踪分析与公司业务发展相关的国际国内重要动态和政策法规 2. 组织协调公共事务相关接待、活动、展会和会议 3. 与公司发展相关的部门、机构和协会沟通对接，参与日常会议 4. 撰写相关工作文稿 5. 配合上级统筹推进部门内或跨部门重要项目\n\n岗位要求:\n1. 2027届本科以上学历，文科类专业不限 2. 211-双一流院校及以上优先 3. 有亲和力，较强的人际交往、团队合作和沟通协调能力 4. 较强的口头和书面表达能力 5. 熟练使用常用办公软件和AI工具 6. 英语CET-4"
+    },
+    {
+      "externalId": "portal-feishu-7672691206342887721",
+      "title": "模块封测类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672691206342887721/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 光学COH组装制程异常处理：产品装配不良、尺寸偏差、点胶不良、模块功能不良等 2. 主导制程工艺改善、良率和效率提升 3. 参与新机种试产及转产，跟进机种试产问题的收集和闭环 4. 负责治工具、配件、耗材预算请购，新治具导入 5. 对产线生产异常可以有效对接生产、品质、材料等多部门推动问题解决 6. 自动化设备协助导入产线使用\n\n岗位要求:\n1. 2027届本科及以上学历，理工类专业不限 2. 不限院校 3. 抗压能力强，能配合项目问题解决加班安排 4. 责任心强、动手能力强、善于沟通协调 5. 细致严谨，数据记录准确，问题闭环意识强 6. 学习能力强，能快速上手光模块产品工艺流程管理 7. 熟练使用Soildworks、CAD以及办公自动化优先"
+    },
+    {
+      "externalId": "portal-feishu-7672675603103058230",
+      "title": "项目管理类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672675603103058230/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责制造运营项目的计划制定、进度跟踪及过程协调，推动项目按计划实施 2. 负责跨部门沟通协作，协调研发、生产、供应链等相关资源，保障项目顺利推进 3. 负责项目相关资料整理、数据分析及报告输出，持续优化项目管理流程 4. 协助识别项目风险，跟踪问题闭环，推动项目目标达成\n\n岗位要求:\n1. 2027届本科及以上学历，理工类专业不限 2. 211-双一流院校及以上优先 3. 具备扎实的光学、光电子学、物理及数学基础，了解光通信基本原理及器件 4. 具备良好的沟通协调能力、逻辑分析能力和团队协作意识，责任心强，执行力强，能够适应跨部门协同工作 5. 英语CER-4及以上，具备良好的英语听说读写能力，能够阅读英文技术资料并进行日常沟通 6. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7672654896600729883",
+      "title": "ESD工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672654896600729883/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块生产全流程的静电防护体系建立与管控，涵盖ESD防护设施验证、日常监测、异常分析及改进，保障光器件和芯片免受静电损伤，提升产品良率与可靠性。 1. 制定并维护ESD防护规范与操作标准，定期对生产区域、工位、物料进行静电防护合规性巡查。 2. 执行ESD防护设施的周期性检测（如离子风机、接地系统、防静电腕带/工作台等），确保各项指标达标。 3. 处理产线ESD相关异常（如器件失效、ESD超标事件），进行根因分析与改善措施落实。 4. 参与新物料、新工装、新设备的ESD兼容性评估，从源头杜绝静电风险。 5. 组织ESD防护培训与考核，提高全员的静电防护意识和操作规范性。 6. 记录并分析ESD监测数据，输出月度报告，推动防护水平的持续提升。\n\n岗位要求:\n1.2027届硕士及以上学历，电子信息类、物理类、材料类、可靠性材料类等相关专业 2. 211-双一流院校及以上优先 3. 了解ESD基本原理（如静电产生、放电模型、防护手段），有ESD测试或实验室相关经验者优先 4. 能使用常见办公软件记录和分析数据，具备基本的问题定位和报告撰写能力 5. 责任心强，细致严谨，善于发现现场细节问题，具有良好的沟通推动能力 6.具备团队合作意识，能协调生产、质量、工艺等多部门落实改进措施 7. 英语CET-4及以上，能阅读ESD国际标准（如ANSI/ESD S20.20）及器件手册中的敏感等级信息"
+    },
+    {
+      "externalId": "portal-feishu-7672646686628071686",
+      "title": "制造职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672646686628071686/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责生产现场管理，组织落实生产计划，保障生产任务顺利完成 2. 负责生产人员管理、现场改善及质量管控，持续提升生产效率 3. 协调生产过程中各项资源，推动现场持续改善及团队建设\n\n岗位要求:\n1. 2027届本科及以上学历，理工类、机械类、电子类、工业工程类或管理类等相关专业 2. 211-双一流院校及以上优先 3. 具备良好的组织协调能力、沟通能力和团队管理能力 4. 具备较强的责任心、执行力、问题分析与解决能力及抗压能力 5. 英语CET-4及以上优先 6. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7672646394251446534",
+      "title": "设备工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672646394251446534/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责模块测试及非标自动化设备（机械/电气/控制系统）的白夜班安装、调试、维修及日常维护 2. 排查设备故障，分析故障原因并提出改进方案，推动改善的落地 3. 参与设备升级改造，优化流程，提高生产效率 4. 编写设备操作、维护手册，并对操作人员进行技术培训 5. 配合设备开发团队解决设备设计中的技术问题\n\n岗位要求:\n1. 2027届本科及以上学历，机械工程类、电气自动化类、机电一体化类、测控技术类、电子工程类等相关专业 2. 不限院校 3. 了解基础电路原理、机械制图或PLC逻辑控制，有设备维修、调试或装配类项目/实习经验者优先 4. 能看懂电气原理图和机械装配图，具备较强的现场动手能力和问题排查能力 5. 熟练使用Office办公软件，能进行简单的数据记录与异常统计 6. 工作积极主动，责任心强，能适应产线快节奏，具备良好的团队协作与沟通能力 7. 英语CET-4及以上，能阅读设备英文操作手册及报警代码信息 8. 该职位有外派需求"
+    },
+    {
+      "externalId": "portal-feishu-7672605528242063654",
+      "title": "ESD工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672605528242063654/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责光模块生产全流程的静电防护体系建立与管控，涵盖ESD防护设施验证、日常监测、异常分析及改进，保障光器件和芯片免受静电损伤，提升产品良率与可靠性。 1. 制定并维护ESD防护规范与操作标准，定期对生产区域、工位、物料进行静电防护合规性巡查。 2. 执行ESD防护设施的周期性检测（如离子风机、接地系统、防静电腕带/工作台等），确保各项指标达标。 3. 处理产线ESD相关异常（如器件失效、ESD超标事件），进行根因分析与改善措施落实。 4. 参与新物料、新工装、新设备的ESD兼容性评估，从源头杜绝静电风险。 5. 组织ESD防护培训与考核，提高全员的静电防护意识和操作规范性。 6. 记录并分析ESD监测数据，输出月度报告，推动防护水平的持续提升。\n\n岗位要求:\n1. 2027届硕士及以上学历，电子信息类、物理类、材料类、可靠性材料类等相关专业 2. 211-双一流院校及以上优先 3. 了解ESD基本原理（如静电产生、放电模型、防护手段），有ESD测试或实验室相关经验者优先 4. 能使用常见办公软件记录和分析数据，具备基本的问题定位和报告撰写能力 5. 责任心强，细致严谨，善于发现现场细节问题，具有良好的沟通推动能力 6. 具备团队合作意识，能协调生产、质量、工艺等多部门落实改进措施 7. 英语CET-4及以上，能阅读ESD国际标准（如ANSI/ESD S20.20）及器件手册中的敏感等级信息"
+    },
+    {
+      "externalId": "portal-feishu-7672600486490671398",
+      "title": "项目管理类（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672600486490671398/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 瓶颈物料识别与预警 2. 安全库存设定与监控 3. 交期管理与瓶颈推动 4. 库存分析与呆滞处理\n\n岗位要求:\n1. 2027届硕士及以上学历， 物流管理类、供应链管理类、工程类、项目管理类、数据类等相关专业 2. 211-双一流院校及以上优先 3. 熟练掌握ERP/MRP系统，有较强的数据处理能力 4. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7672578036575996166",
+      "title": "自动化工程师（智能制造）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672578036575996166/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 自动化设备开发与导入：负责光模块组装、测试相关非标自动化设备的开发与设计 2. 根据生产工艺需求，设计自动化动线方案和设备作业运行逻辑，评估成本及收益比，完成新设备的开发及导入 3. 产线设备调试与维护：负责生产线所有自动化设备（涵盖机械、电气及控制系统）的安装、调试、维修及日常维护，排查设备故障，分析故障原因并提出改进方案，推动改善落地，保障设备高效稳定运行 4. 人效提升：参与设备升级改造与流程优化，提高设备稼动率与生产效率配合工艺团队解决设备设计中的技术问题，主导人力数量降低 5. 技术标准与团队管理：编写设备操作、维护手册及技术文档，对产线操作人员进行技术培训，提升整体设备操作与维护水平\n\n岗位要求:\n1. 2027届硕士及以上学历，计算机类、通信类、机械类、自动化类、电气仪表类、光学工程类等相关专业 2. 不限院校 3. 专业技术能力：熟悉自动化设计、控制系统、动力系统、辅助系统及人机交互等工作 4. 对机台制费成本有预估能力，并有降本能力 5. 综合素质：具备较强的沟通协作能力，能顺畅与生产部门、工艺团队对接，推动设备故障改善做事认真，吃苦耐劳，具备良好的团队合作精神 6. 英语CET-4及以上，具备良好的读写能力，可配合长期出差"
+    },
+    {
+      "externalId": "portal-feishu-7672332614237374739",
+      "title": "高频设计/测试类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672332614237374739/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责产品SI/PI设计及问题定位 - 根据产品速率及封装形态设计高频互连方案 - 根据产品方案芯片手册完成PDN设计优化 - 协同光学/工艺/结构/EDA完成产品级设计风险及可行性评估 2. 负责高频方案/平台/芯片导入流程 - 根据方案形态设计开发验证平台、设计测试夹具，确保验证方案可行 - 设计测试用例，独立搭建测试环境，完成测试报告及数据整理 - 产品SIPI问题测试及问题定位 3. 负责项目流程维护\n\n岗位要求:\n1. 2027届硕士及以上学历，光学工程类、通信类、光电类、电子信息类等相关专业 2. 211-双一流院校及以上优先 3. 熟悉光模块协议有光通信相关项目经验优先考虑 4. 能熟练使用软件进行SIPI仿真设计，能使用绘图软件进行简单设计及图纸输出 5. 能熟练使用信号发生器，网络分析仪，LCA，频谱仪，示波器进行测试及问题定位 6. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7672319481125439780",
+      "title": "硬件开发类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672319481125439780/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责光模块的电路设计 2. 负责光模块的调测试，异常问题解决\n\n岗位要求:\n1. 2027届硕士及以上学历，电子类、通信类、光电类、自动化等相关专业 2. 985院校及以上优先 3. 有扎实的电路相关知识基础，精通模数电，有电子设计大赛经验或产品电路设计相关实习经验者优先 4. 熟练使用电路测量仪表，会使用绘图软件进行原理图设计 5. 具备优秀的逻辑思维能力，工作严谨、认真负责 6. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7672318820867229998",
+      "title": "芯片认证类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672318820867229998/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责光芯片老化工序，包含光芯片老化条件认证，BI工序良率分析及改善 2. 负责光芯片可靠性认证，包含制定光芯片可靠性验证计划与实施 3. 光芯片相关的异常分析，平台性展开指导并推动供应商完成改善\n\n岗位要求:\n1. 2027届硕士及以上学历，光学类相关专业 2. 211-双一流院校及以上优先 3. 熟悉半导体激光器，PD等光芯片工作原理及芯片可靠性验证标准及方法 4. 熟悉芯片及芯片封装产品（COC/TO/OE等）测试及老化相关设备，熟练使用相关设备 5. 具备分析和解决芯片/老化设备相关问题的能力 6. 具备良好的沟通能力，工作积极主动，有团队精神 7. 英语CET-6及以上优先"
+    },
+    {
+      "externalId": "portal-feishu-7672318429269559579",
+      "title": "测试类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672318429269559579/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.了解测试背景与需求，与需求方对齐测试条件与目的 2. 按照既定的test plan对光模块进行设计验证（DVT），包括电性能验证，光性能验证，机构性能，交换机 网卡测试 3. 上报失效项，配合设计工程师debug，复现问题，完成问题闭环 4. 完成数据整理与报告输出 5. 解答客户的疑问，支持客户的特殊测试\n\n岗位要求:\n1. 2027届本科及以上学历，光学工程类、通信类、光电类、电子信息类等相关专业 2. 211-双一流院校及以上优先 3. 熟悉测试设备：DCA，码型发生器，光谱仪，网络分析仪等 4. 熟练使用AI工具，会写提示词，并用AI工具搭建过项目，了解基本的AI网络搭建 5. 踏实、严谨、勤奋，有进取精神能挑战困难项目 6. 本科CET-4，硕士CET-6及以上，能阅读英文协议和客户规格书"
+    },
+    {
+      "externalId": "portal-feishu-7672318413491161387",
+      "title": "PCB技术类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672318413491161387/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责高速光模PCB layout设计相关工作，并输出相关制板资料，SMT资料，资料归档等 2. 负责PCB/SMT相关材料导入，工艺的开发和认证，以及相应的失效分析\n\n岗位要求:\n1. 2027届硕士及以上学历，通信类、光电类、电子信息类等相关专业 2. 211-双一流院校及以上优先 3. 有电路设计、PCB设计、仿真、PCB制板和贴片等经验优先 4. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7672317428545866025",
+      "title": "光学设计类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672317428545866025/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责产品光学设计和光学器件开发， - 包括技术方案的设计与选用，光组件设计，元器件选型设计验证，DFMEA输出、模块DC相关光学指标 - 同时整合光学设计/结构设计/高频设计/工艺设计，进行光器件开发和验证，以及产品最终实现等 2. 光学组装工艺流程设计，flow chart输出（综合公差分析各工序spec输出、工艺路线建立，OE sample built report输出） 3. 配合工单创建和结单流程的签核\n\n岗位要求:\n1. 2027届硕士及以上学历， 光学工程类、通信类、光电类等相关专业 2. 985院校及以上优先 3. 熟练掌握ZEMAX及其他设计工具 4. 有光通信相关项目经验优先考虑 5. 光学专业，熟悉激光原理/硅光子学及其应用 6. 分析问题逻辑清晰 7. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7672309139649104155",
+      "title": "制造职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7672309139649104155/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 新建厂区EHS管理 2. 安全文化建设 3. 员工安全教育培训 4. 组织开展应急演练 5. ISO管理体系建设与维护\n\n岗位要求:\n1. 2027届硕士及以上学历，安全类相关专业 2. 211-双一流院校及以上优先 3. 有光通信相关项目经验优先 4. 英语CET-6"
+    },
+    {
+      "externalId": "portal-feishu-7670731738943801651",
+      "title": "芯片设计类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7670731738943801651/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 射频/模拟电路设计仿真 2. 配合layout工程师完成版图设计 3. 回片后支撑测试和问题分析定位\n\n岗位要求:\n1. 2027届博士及以上学历，电子信息类等相关专业 2. 985院校及以上优先 3. 射频/模拟电路理论基础扎实 4. 有高速RF电路流片及回测经验 5. 熟悉CMOS或者SiGe工艺 6. 熟悉Virtuoso/EMX/ADS/Matlab等基本软件工具 7. 具备光通信高速芯片设计经验优先"
+    },
+    {
+      "externalId": "portal-feishu-7670385900632082742",
+      "title": "算法类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7670385900632082742/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责计算机视觉领域前沿算法的研究、复现与工程化落地，推动算法在工业场景中的应用 2. 跟踪Transformer、多模态大模型、扩散模型等前沿技术，开展目标检测、图像分割、AIGC、视觉感知等方向的算法开发与优化 3. 参与算法模型部署、性能优化及技术验证，支持产品研发和技术创新\n\n岗位要求:\n1. 2027届硕士及以上学历，计算机类、人工智能类、自动化类、电子信息类等相关专业 2. 211-双一流院校及以上优先 3. 熟悉CNN、Transformer等主流网络架构，了解Vision Transformer、MAE、Diffusion Model、多模态大模型（VLM/VLA）等前沿算法 4. 具备良好的论文阅读与算法复现能力，熟悉PyTorch等深度学习框架，了解TensorRT、ONNX、OpenVINO等模型部署工具链 5. 具备良好的学习能力、逻辑分析能力和团队协作能力 6. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7669988327542589737",
+      "title": "光学设计类（研发）",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7669988327542589737/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与光器件光学方案设计、仿真与样品优化，确保产品性能达标 2.负责光学零部件选型验证，解决开发中的光学技术问题 3.协同跨部门推进产品量产，输出光学相关技术文档\n\n岗位要求:\n1. 2027届硕士及以上学历， 光学工程类、通信类、光电类等相关专业 2. 985院校及以上优先 3. 熟练掌握ZEMAX及其他设计工具 4. 有光通信相关项目经验优先考虑 5. 英语CET-6及以上"
+    },
+    {
+      "externalId": "portal-feishu-7669728592587262246",
+      "title": "职能类",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7669728592587262246/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 协助制定/修订部门相关制度(规章、激励、奖惩) 2. 加班统计与管控(周) 3. 部门离职率统计及原因分析(月) 4. 部门活动组织策划 5. 考勤统计、异常处理(周) 6. 报销、供应商付款、物品发放、会议预定安排、等日常事务安排 7. 各小组 周/月报跟催确认 8. 协助进行QC季度优秀员工考核 9. 内部投诉统计、处理,定期分析汇总反馈 10. 协助进行部门费用控制(辅耗材使用)\n\n岗位要求:\n1. 2027届本科及以上学历，专业不限 2. 不限院校 3. 英语CET-4 4. 办公软件熟悉，PPT熟练"
+    },
+    {
+      "externalId": "portal-feishu-7669721176331438372",
+      "title": "质量工程师",
+      "siteId": "qqj-中际旭创-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/7669721176331438372/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 新产品导入过程中制程质量管控方案的制订，包括：制程巡检、抽检规范；外观检查规范；检验MOI 2. 制程中与产品质量相关的通用标准制定与维护 3. QC检验抽样方案的制定与更新 4. 配合CQE、RQE，对客户投诉或可靠性发生的不良，与相关部门进行调查，制定改善对策，追踪落实情况 5. 重大质量异常时的改善主导，与相关部门制定改善对策并追踪其有效性和落实情况\n\n岗位要求:\n1. 2027届硕士及以上学历，理工科专业优先 2. 211-双一流院校及以上优先 3. 具备质量管理基础知识，熟悉 ISO 9001/IATF 16949 体系，掌握 SPC、MSA、FMEA、8D、PDCA、DMAIC 等质量工具 4. 熟练使用 Office（Excel 数据透视/函数、PPT、Word），具备数据分析与统计能力，能独立应用 QC 七工具解决质量问题 5. 具备良好的文档撰写能力，能独立完成制程规范、检验 MOI、改善报告等专业文档 6. 具备良好的学习能力、沟通协调能力与抗压能力，能适应多机种并行转产节奏 7. 责任心强，质量意识高，能与生产、研发、客户端高效协作 8. 有质量类实习经验、六西格玛绿带/黄带认证、JDM/CM 合作模式经验者优先"
+    }
   ]
 }

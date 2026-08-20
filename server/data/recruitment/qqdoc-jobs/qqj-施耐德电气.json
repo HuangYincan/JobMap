@@ -15,5 +15,20 @@
       "province": "",
       "location": {}
     }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-00cm1vlw",
+      "title": "AI星火实习生计划",
+      "siteId": "qqj-施耐德电气-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html/./ai_star_shixisheng.html",
+      "retrievedAt": "2026-08-20"
+    }
   ]
 }

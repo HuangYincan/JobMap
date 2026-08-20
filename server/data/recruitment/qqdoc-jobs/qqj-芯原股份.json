@@ -15,5 +15,20 @@
       "province": "",
       "location": {}
     }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-01lj3j8j",
+      "title": "直通校招",
+      "siteId": "qqj-芯原股份-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/VeriSilicon2027/post.html/#",
+      "retrievedAt": "2026-08-20"
+    }
   ]
 }

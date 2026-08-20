@@ -15,5 +15,46 @@
       "province": "",
       "location": {}
     }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-01cyw50a",
+      "title": "招聘职位",
+      "siteId": "qqj-兆芯-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/zhaoxin2027/job.html/job.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01ijr4xj",
+      "title": "校招Q&A",
+      "siteId": "qqj-兆芯-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/zhaoxin2027/job.html/qa.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00ndm47l",
+      "title": "招聘流程",
+      "siteId": "qqj-兆芯-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/zhaoxin2027/job.html/process.html",
+      "retrievedAt": "2026-08-20"
+    }
   ]
 }

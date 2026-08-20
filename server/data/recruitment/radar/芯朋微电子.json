@@ -58,6 +58,123 @@
       "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-00hbp33g",
+      "title": "Power Management产品线",
+      "siteId": "芯朋微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html/cn/pro/171.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01npmjxv",
+      "title": "Driver产品线",
+      "siteId": "芯朋微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html/cn/pro/318.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01cw0xu6",
+      "title": "Computing Power产品线",
+      "siteId": "芯朋微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html/cn/pro/350.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-011fn6lq",
+      "title": "Power Device产品线",
+      "siteId": "芯朋微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html/cn/pro/347.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-013jspvb",
+      "title": "Power Module产品线",
+      "siteId": "芯朋微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html/cn/pro/348.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01p8249k",
+      "title": "原创技术文章",
+      "siteId": "芯朋微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html/cn/jswz/182.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00f0g1lx",
+      "title": "技术咨询",
+      "siteId": "芯朋微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html/cn/tech/186.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00ujy3ni",
+      "title": "人力资源",
+      "siteId": "芯朋微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html/cn/job.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00t1ovhy",
+      "title": "校园招聘",
+      "siteId": "芯朋微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.chipown.com.cn/cn/jobxylist/213.html/cn/jobxylist/213.html",
+      "retrievedAt": "2026-08-20"
     }
   ],
   "category": "39"

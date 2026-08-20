@@ -34,6 +34,48 @@
       "applyUrl": "https://kafangtech.jobs.feishu.cn/966179/?spread=8MHSBXK",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-feishu-7672305672679262507",
+      "title": "【揽月计划】量化开发工程师",
+      "siteId": "卡方科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kafangtech.jobs.feishu.cn/437314/position/7672305672679262507/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 加入公司核心开发团队，负责公司高频交易系统的开发，优化和维护； 2. 负责公司高频交易系统的扩展，包括与不同的金融市场的连接，功能模块的开发等； 3. 负责交易系统，回测系统的深层次优化（软件，硬件和网络）； 4. 策略实现及给与策略团队技术支持；\n\n岗位要求:\n1. 2026年11月及2027届毕业，本科及以上学历CS相关专业，有计算机相关竞赛经历优先; 2. 了解协议设计，操作系统内核级优化，低延迟通讯，cache friendly，泛型编程等，良好的 coding 能力、算法能力，有低延迟相关经验优先； 3. 熟练掌握 python及 Linux shell脚本； 4. 积极上进，具备良好的逻辑思维、严谨的研究习惯、沟通和团队合作能力及和敬业精神。"
+    },
+    {
+      "externalId": "portal-feishu-7672304965079501097",
+      "title": "【揽月计划】AI算法工程师",
+      "siteId": "卡方科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kafangtech.jobs.feishu.cn/437314/position/7672304965079501097/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 设计面向量化投研的Agent智能体系统，将AI大模型能力深度嵌入因子挖掘、信号生成、模型训练与交易执行环节，通过非结构化数据理解与知识增强，系统性提升投研各阶段效率与产出质量； 2. 基于深度学习与时序建模技术，针对海量异构金融数据研发创新性AI算法，捕捉市场非线性规律并推动实盘交易落地。\n\n岗位要求:\n1.2026年11月及2027届毕业，计算机、人工智能、数理等相关专业硕士及以上学历； 2.具备扎实的机器学习、深度学习算法基础； 3.出色的研究能力和研究习惯，在机器学习/深度学习相关领域发表过高水平论文优先； 4.有互联网大厂算法岗（CV/NLP/搜广推/大模型）或量化投资领域（私募/自营）深度学习/AI Agent岗位经历优先； 5.有时间序列预测相关经验者优先； 6.严谨细致，有精益求精的技术追求和自驱力。"
+    },
+    {
+      "externalId": "portal-feishu-7672298978847541542",
+      "title": "【揽月计划】量化研究员",
+      "siteId": "卡方科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kafangtech.jobs.feishu.cn/437314/position/7672298978847541542/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "挖掘市场微观结构与预测信号，研发并优化交易策略，持续追踪前沿技术以驱动策略迭代。\n\n岗位要求:\n1.2026届11月及2027届毕业，本科及以上学历, 计算机、数学、物理、统计、金融工程等相关理工科专业; 2.数据高度敏感, 数学功底扎实, 具有探索精神和良好的动手能力; 3.熟悉Linux环境下的编程, 具备出色的编程能力和设计技巧, 熟练使用C++/Python; 4.有良好的数理统计基础, 严谨的研究习惯，拥有高频相关研究经验或交易经验者优先。 加分项: 顶会论文, 竞赛获奖, 相关项目经历"
     }
   ],
   "category": "69"

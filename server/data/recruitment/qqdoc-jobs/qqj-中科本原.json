@@ -15,5 +15,137 @@
       "province": "",
       "location": {}
     }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-00es2jmg",
+      "title": "产品中心",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/real-time.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01yrlikp",
+      "title": "RV335教育开发板",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html/products/176.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01tl1nqu",
+      "title": "CodeCanvas集成开发环境（IDE）",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html/software.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00rqzdrh",
+      "title": "开发者社区",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://www.dsp-expert.com/",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00rlrr6a",
+      "title": "开发者论坛",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://www.dsp-expert.com/",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01xanh12",
+      "title": "社会招聘",
+      "siteId": "qqj-中科本原-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html/social.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01v27aj8",
+      "title": "校园招聘",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html/campus.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01s549o2",
+      "title": "实习生招聘",
+      "siteId": "qqj-中科本原-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html/intern.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01bw4czq",
+      "title": "应届生招聘",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html/fresh-graduate.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-005hq6mt",
+      "title": "开发套件",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html/products/176.html",
+      "retrievedAt": "2026-08-20"
+    }
   ]
 }

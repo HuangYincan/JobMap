@@ -61,6 +61,175 @@
       "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-0055porb",
+      "title": "IT应用软件开发与维护",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/server/development",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00gh3rro",
+      "title": "行业测试能力与质量保障服务",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/server/testService",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00j3l4aa",
+      "title": "数字化运营服务",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/server/operation",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01mjsoy0",
+      "title": "数字化研发管理解决方案",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/server/research",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-001zslny",
+      "title": "AI大模型",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/server/ai",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-001w6fip",
+      "title": "React Native技术服务与解决方案",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/harmony//rnTechnology",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-003pea9m",
+      "title": "鸿蒙改造与定制开发",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/harmony//transformation",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-0188yy4h",
+      "title": "数字技术",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/zh-CN/pc/server",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00yn43p9",
+      "title": "数字技术服务",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/zh-CN/pc/server?index=2",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-0097v4td",
+      "title": "鸿蒙技术服务",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/zh-CN/pc/harmony",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00dpupm8",
+      "title": "AI智能体服务",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/zh-CN/pc/server?index=3",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00cqz6wg",
+      "title": "AI解决方案",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/zh-CN/pc/solution?index=2",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-004a2jgx",
+      "title": "人才招聘",
+      "siteId": "深德科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dekeinfo.com/zh-CN/pc/personRecruit?channel=gongzhonghao/zh-CN/pc/personRecruit",
+      "retrievedAt": "2026-08-20"
     }
   ],
   "category": "65"

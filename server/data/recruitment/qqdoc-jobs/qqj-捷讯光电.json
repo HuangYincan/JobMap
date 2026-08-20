@@ -15,5 +15,98 @@
       "province": "",
       "location": {}
     }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-01gofzxq",
+      "title": "产品中心",
+      "siteId": "qqj-捷讯光电-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hfjiexun.com/info.php?class_id=106103&page=1/info.php?class_id=101",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00opusqn",
+      "title": "AI通道式质选机",
+      "siteId": "qqj-捷讯光电-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hfjiexun.com/info.php?class_id=106103&page=1/info.php?class_id=101101",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-0171n4rs",
+      "title": "AI履带式质选机",
+      "siteId": "qqj-捷讯光电-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hfjiexun.com/info.php?class_id=106103&page=1/info.php?class_id=101102",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01w10gt6",
+      "title": "AI-X光机",
+      "siteId": "qqj-捷讯光电-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hfjiexun.com/info.php?class_id=106103&page=1/info.php?class_id=101103",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01tjgpdm",
+      "title": "校园招聘",
+      "siteId": "qqj-捷讯光电-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hfjiexun.com/info.php?class_id=106103&page=1/info.php?class_id=106103",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-018f9pv0",
+      "title": "社会招聘",
+      "siteId": "qqj-捷讯光电-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hfjiexun.com/info.php?class_id=106103&page=1/info.php?class_id=106105",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01v9zew6",
+      "title": "产品解决方案",
+      "siteId": "qqj-捷讯光电-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hfjiexun.com/info.php?class_id=106103&page=1/info.php?class_id=102",
+      "retrievedAt": "2026-08-20"
+    }
   ]
 }
