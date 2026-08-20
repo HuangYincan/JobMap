@@ -22,6 +22,12 @@
 // coordinates). Never prints either key. AMap throttles at 3 req/s, Baidu at
 // ~2 req/s (sleep ≥600ms after a fallback call).
 //
+// 2026-08-20 (w4): 地址-城市一致性闸门。城市拆分时代 drops 的城市站点继承了
+// 杭州 office 地址文本 ("西湖区莲花街333号…"), 在目标城市做地址检索会城市内
+// 错配 (实测: 广州 "花都区西湖"), 而省级 regeo 拦不住。地址含非目标城市的
+// 已知区县/城市名 → 跳过地址检索, 直接公司名检索; 地址检索命中后 regeo 区级
+// 校验 (落点区 ≠ 地址区名) → 回退公司名检索。两种路径都不写错坐标。
+//
 // Hand-curated resolutions can be dropped into data/recruitment/geocode-overrides.json
 // as { "<slug>": { "name", "address", "lng", "lat" } } — they apply verbatim.
 
@@ -29,6 +35,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  addressConflictsWithCity,
+  addressConflictsWithRegeoDistrict,
   cleanCompanySearchName,
   geocodeAddressRest,
   gradeOfficePoi,
@@ -139,6 +147,34 @@ function dropFiles() {
   return files;
 }
 
+/**
+ * 公司名城市级 place-search 解析 (无街道地址 / 地址不可信时的统一路径)。
+ * 2026-08-20 (w4): 从主循环抽出的公共 helper —— 地址-城市一致性闸门拒绝的
+ * 站点与 regeo 区级校验拒绝的地址检索命中都回退到这里, 而不是写错坐标。
+ */
+async function searchCompanyPoi(query, target) {
+  const out = { poi: null, confidence: null, reason: '', provider: 'amap' };
+  if (DRY_RUN || env.AMAP_WEB_KEY || env.BAIDU_MAP_AK) {
+    const hit = await placeTextSearchRest(query, target.city);
+    await sleep(hit.amapUnavailable ? 600 : 340);
+    if (hit.ok && hit.pois.length) {
+      // 用别名后的 query 评分: 中微公司 → 中微半导体设备, 否则查询命中但
+      // 原始快照名对不上 POI 名会被 grader 拒.
+      const picked = pickBestOfficePoi(hit.pois, query, target.province, target.city);
+      if (picked) {
+        const grade = gradeOfficePoi(picked, query, target.province, target.city);
+        out.poi = grade.confidence === 'low' ? null : picked;
+        out.confidence = grade.confidence;
+        out.reason = grade.reason;
+      }
+    } else {
+      out.reason = hit.reason ?? 'no-pois';
+    }
+    if (hit.provider) out.provider = hit.provider;
+  }
+  return out;
+}
+
 // --- main -------------------------------------------------------------------
 const onMap = await loadOfflineWorkCatalog();
 // 2026-08-19:公司级 already-pinned 跳过已废弃——多城市时代一家公司可有多个
@@ -186,10 +222,12 @@ for (const file of files) {
       }
       let override = overrides[slug];
       const query = cleanCompanySearchName(company.name);
+      const addr = site.location?.address?.trim() ?? '';
       let poi = null;
       let confidence = null;
       let reason = '';
       let provider = 'amap';
+      let addressGeocode = false;
 
       if (override?.exclude) {
         unresolved.push({ slug, siteId: site.id, query, reason: 'manual-exclude' });
@@ -210,10 +248,12 @@ for (const file of files) {
         poi = { name: override.name, address: override.address, lng: override.lng, lat: override.lat, type: 'override', adname: '', pname: target.province, cityname: target.city };
         confidence = 'high';
         reason = 'manual-override';
-      } else if (siteHasStreetAddress(site)) {
-        // 有真实街道地址(如 tencent-hangzhou 西溪乐谷)——地址级 geocode 优先于
-        // 公司名检索, 精确打点; 结果仍走 regeo 城市校验.
-        const addr = site.location?.address?.trim() ?? '';
+      } else if (siteHasStreetAddress(site) && !addressConflictsWithCity(addr, target.city)) {
+        // 2026-08-20 (w4): 地址-城市一致性闸门。fecef85 城市拆分时代 drops 的
+        // 城市站点继承了杭州 office 地址("西湖区莲花街333号…"), 在目标城市
+        // 做地址检索会城市内错配(实测:广州 "花都区西湖" 113.20/23.38), 而
+        // regeo 省级校验拦不住(pname 同省即过)。地址含非目标城市的已知
+        // 区县/城市名 → 地址不可信, 跳过地址检索, 直接走公司名检索。
         const g = await geocodeAddressRest(addr, target.city);
         await sleep(g.amapUnavailable ? 600 : 340);
         if (g.ok && g.location) {
@@ -221,28 +261,16 @@ for (const file of files) {
           confidence = 'high';
           reason = 'address-geocode';
           provider = g.provider ?? 'amap';
+          addressGeocode = true;
         } else {
           reason = g.reason ?? 'geocode-failed';
         }
       } else {
-        if (DRY_RUN || env.AMAP_WEB_KEY || env.BAIDU_MAP_AK) {
-          const hit = await placeTextSearchRest(query, target.city);
-          await sleep(hit.amapUnavailable ? 600 : 340);
-          if (hit.ok && hit.pois.length) {
-            // 用别名后的 query 评分: 中微公司 → 中微半导体设备, 否则查询命中但
-            // 原始快照名对不上 POI 名会被 grader 拒.
-            poi = pickBestOfficePoi(hit.pois, query, target.province, target.city);
-            if (poi) {
-              const grade = gradeOfficePoi(poi, query, target.province, target.city);
-              confidence = grade.confidence;
-              reason = grade.reason;
-              if (grade.confidence === 'low') poi = null;
-            }
-          } else {
-            reason = hit.reason ?? 'no-pois';
-          }
-          if (hit.provider) provider = hit.provider;
-        }
+        const res = await searchCompanyPoi(query, target);
+        poi = res.poi;
+        confidence = res.confidence;
+        reason = res.reason;
+        provider = res.provider;
       }
 
       if (!poi) {
@@ -262,7 +290,31 @@ for (const file of files) {
           unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match.reason}` });
           continue;
         }
-        verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() || re.province || 'unverified' : 'unverified';
+        // 2026-08-20 (w4): 区级校验 —— 地址检索命中但 geocoder 落点所在的区
+        // (regeo adname) 与地址文本区名不符 (未收录区名的地址在目标城市内错配,
+        // 如 杭州地址 → 广州 "花都区西湖"), 坐标不可信 → 回退公司名检索,
+        // 不写错坐标。
+        if (re.ok && addressGeocode && addressConflictsWithRegeoDistrict(addr, re.district ?? '')) {
+          const res = await searchCompanyPoi(query, target);
+          if (!res.poi) {
+            unresolved.push({ slug, siteId: site.id, query, reason: 'address-district-mismatch' });
+            continue;
+          }
+          poi = res.poi;
+          confidence = res.confidence;
+          reason = res.reason;
+          provider = res.provider;
+          const re2 = await regeoCityRest(poi.lng, poi.lat);
+          await sleep(re2.amapUnavailable ? 600 : 340);
+          const match2 = regeoMatchesTarget(re2, target);
+          if (re2.ok && !match2.ok) {
+            unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match2.reason}` });
+            continue;
+          }
+          verified = re2.ok ? `${re2.cityname ?? ''} ${re2.district ?? ''}`.trim() || re2.province || 'unverified' : 'unverified';
+        } else {
+          verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() || re.province || 'unverified' : 'unverified';
+        }
       }
 
       const district = poi.adname || verified.split(' ').pop() || '';
