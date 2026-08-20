@@ -1,0 +1,23 @@
+{
+  "code": 0,
+  "data": {
+    "list": [
+      {
+        "jobId": "JOB-2026-0001",
+        "title": "算法工程师(语音方向)",
+        "cityName": "上海",
+        "workType": "全职",
+        "description": "<p>负责语音大模型核心算法研发。</p>",
+        "requirement": "硕士及以上,3 年经验"
+      },
+      {
+        "jobId": "JOB-2026-0002",
+        "title": "研究算法类 研发类 AI研发类 大数据类 产品类 测试类 营销类  教育类 设计类 职能类 资源类 医学类 工程类 交付类",
+        "cityName": "北京",
+        "workType": "校招",
+        "description": "<p>多类别岗位打包行(聚合)。</p>"
+      }
+    ],
+    "total": 2
+  }
+}
