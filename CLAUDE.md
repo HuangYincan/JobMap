@@ -30,7 +30,7 @@ Next.js 16 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。
 - 🧩 使用组件库前必须审查其源码,像自己写的那样理解;不无脑用。
 - 🔬 **子 Agent 结果必须二次验证**:亲自跑测试 / 逐行读代码 / 截图看视觉效果,「信任但验证」。
 - 📡 外部数据采集必须有来源审查记录(`tech/roles/data/etl/`);BOSS 直聘 / 牛客 / 小红书 / 实习僧不得直接抓取;不得绕过登录、验证码、限流。
-- 🔑 **不打印 / 不提交 `.env`、`.env.local`、`AMAP_WEB_KEY`、`BAIDU_MAP_AK` 等密钥**;调用 AMap/Baidu REST 必须先有对应 key(`AMAP_WEB_KEY` / `BAIDU_MAP_AK`),且绝不打印;AMap 日配额耗尽(10044)时 geocode 工具链自动切百度兜底。
+- 🔑 **不打印 / 不提交 `.env`、`.env.local`、`AMAP_WEB_KEY`、`BAIDU_MAP_AK`、`TENCENT_MAP_KEY` 等密钥**;调用 AMap/Baidu/Tencent REST 必须先有对应 key(`AMAP_WEB_KEY` / `BAIDU_MAP_AK` / `TENCENT_MAP_KEY`),且绝不打印;AMap 日配额耗尽(10044)时 geocode 工具链自动切百度→腾讯兜底。
 - 📄 文档必须反映可验证事实;代码变更同步 `tech/` 与 `agent.md` 文档维护契约;`make docs-check` + `git diff --check` 通过后再提交。
 - 🖼️ **Playwright 截图与产物统一存 `.playwright-mcp/`**(已 gitignore):`browser_take_screenshot` 用**相对文件名**(自动落在输出目录内),绝不写到仓库根目录;只有用户显式要求时才指定其他路径。
 - ✅ 提交用 Conventional Commits(`feat` / `fix` / `docs` / `test` / `refactor` / `chore`);分支命名 `feature/` / `fix/`。
@@ -40,10 +40,10 @@ Next.js 16 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。
 ```bash
 make help                 # 支持的 make 命令
 make docs-check           # 文档规范检查
-cd server && npm test     # 488 测试(486 pass / 2 skip,2026-08-20)
+cd server && npm test     # 549 测试(547 pass / 2 skip,2026-08-21)
 cd server && npm run typecheck
 npm run import:seed:apply  # 同步 Postgres(需 DATABASE_URL,读 server/.env.local)
-npm run geocode:sites:apply --dry-run  # 雷达公司落真实办公点(需 AMAP_WEB_KEY;配额耗尽自动用 BAIDU_MAP_AK)
+npm run geocode:sites:apply --dry-run  # 雷达公司落真实办公点(需 AMAP_WEB_KEY;配额耗尽自动用 BAIDU_MAP_AK / TENCENT_MAP_KEY 兜底)
 make db-up                # 启动本地 PostGIS
 ```
 

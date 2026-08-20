@@ -106,3 +106,12 @@
   - 剩余 8 fail 为同类「招聘计划/专项/入口名」标题(度小满/曼伦在 C 组已标注聚合——标注即交付物,不改标题不修校验器;其余 netease-hangzhou/vast/聂果基金/长亭/betta/deepseek 属同性质,留待后续拆解/决策)。
   - 剩余 1 error 为腾讯 `radar-302c5ea36a84`(LLM 空响应,非数据问题,下次全量自动覆盖)。
 - 报告:`tech/roles/data/validation-report-20260818.json`(gitignored)。
+
+## Geocode 腾讯第三级兜底(2026-08-21,`feature/geocode-tencent`)
+
+兜底链升级为 AMap→Baidu→Tencent(第三级)。以下为真实 key 探测实测记录(Env-only 步骤由用户配置 `TENCENT_MAP_KEY`,Agent 不代写、不打印):
+
+- **三端点冒烟(status:0)**:geocoder `杭州市西湖区文二西路712号` → `120.079398,30.281334`(GCJ-02);place `keyword=得物&boundary=region(上海市,0)` → 18 条,首条 `得物|嘉定区马陆镇育绿路88号`(与 2026-08-19 上海试点记录的得物嘉定运营中心一致,grader 可直接命中);regeo `location=31.272,121.512` → `ad_info: 上海市/上海市/杨浦区`(直辖市 city 直接给市名,同百度)。
+- **错误码分类校准(非破坏性探测)**:缺 key → `301 必要字段key缺少或有多个`;错误 key 格式 → `311 key格式错误`;缺 address/location → `404 错误的请求路径`。与预设(`TENCENT_QUOTA_STATUSES={121,321,322}`、瞬态 `{120}`)无冲突;`311` 为永久配置失效 → 并入 `QUOTA_CLASS_REASONS` 短路集。
+- **腾讯-only 链路探测**(临时仅保留 TENCENT_MAP_KEY,`--dry-run --only=MiniMax --cities=重庆`):REPORT 正确显示 `AMAP_WEB_KEY: MISSING | BAIDU_MAP_AK: MISSING | TENCENT_MAP_KEY: set | mode: DRY-RUN`;链正确落到腾讯。
+- **实测发现:key 日配额在探测期间耗尽。** 探测开始时三端点均 status:0,约 7 次调用后全部返回 `121 此key每日调用量已达到上限`(与官方状态码页一致)。推测 key 日配额在探测前已接近耗尽(今日早前已有调用),或账号未完成个人认证导致配额小于官方文档的 10000 次/天。**待办**:用户在 lbs.qq.com 控制台核对账号认证状态与今日用量;日配额重置后重跑腾讯-only 探测(`--dry-run --only=MiniMax --cities=重庆`),观察 RESOLVED 出现 `[…/tencent]`;三 key 齐全时跑全量 `geocode:sites:apply`,记录 provider 分布。

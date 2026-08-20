@@ -40,7 +40,7 @@ domain-map/
 | `split-aggregates-report.mjs` | 聚合行拆解计划 | 读 validation-report,产出 split-plan |
 | `import-hz-pois.mjs` | 杭州 POI CSV 入库 | 幂等 `ON CONFLICT DO UPDATE`;`--apply/--truncate/--limit`;需 PostGIS(`make db-up`) |
 | `audit-pin-locations.mjs` | 地图 pin 坐标审计 | `npm run audit:pins`,需 `AMAP_WEB_KEY` + `DATABASE_URL` |
-| `geocode-sites-apply.mjs` | 站点落真实办公点 | `npm run geocode:sites:apply`;city-scoped place-text + regeo;需 `AMAP_WEB_KEY`(配额耗尽自动切百度) |
+| `geocode-sites-apply.mjs` | 站点落真实办公点 | `npm run geocode:sites:apply`;city-scoped place-text + regeo;需 `AMAP_WEB_KEY`(配额耗尽自动切百度→腾讯,`BAIDU_MAP_AK` / `TENCENT_MAP_KEY`) |
 | `plan-site-geocode.mjs` | 待 geocode 站点清单 | `npm run geocode:sites`;只列出缺坐标站点,不写 |
 | `label-categories.mjs` | category 国标大类打标辅助 | 见 `tech/19-company-labeling.md` |
 
@@ -354,13 +354,13 @@ make test-unit        # crawler importer 单测(无需数据库)
 make test-integration # DB 集成测试(tests/integration/db/test_migrations.sh)
 make crawl-official   # 官方招聘页礼貌 GET dry-run(不写)
 make refresh-radar    # 下载已审查 radar 快照、重映射 drops、校验 import plan
-make geocode-sites    # 城市文本站点解析为真实办公点(需 AMAP_WEB_KEY;--dry-run 只列计划)
+make geocode-sites    # 城市文本站点解析为真实办公点(需 AMAP_WEB_KEY + BAIDU/TENCENT 兜底 key;--dry-run 只列计划)
 ```
 
-Server 侧(`cd server`):`npm test`(488 测试,2026-08-20)、`npm run typecheck`、
+Server 侧(`cd server`):`npm test`(549 测试,2026-08-21)、`npm run typecheck`、
 `npm run dev` / `build` / `start`。写 Postgres 的数据命令
 (`npm run import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)
-需要 `server/.env.local` 的 `DATABASE_URL`(绝不打印、不提交)，个别还需 `AMAP_WEB_KEY`。
+需要 `server/.env.local` 的 `DATABASE_URL`(绝不打印、不提交)，个别还需 `AMAP_WEB_KEY`(geocode 另可配 `BAIDU_MAP_AK` / `TENCENT_MAP_KEY` 兜底)。
 Env-only 步骤(迁移 apply / 导入 apply / geocode apply)属用户操作，Agent 不得擅自执行。
 
 ## 外部数据采集门禁

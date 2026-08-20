@@ -1,7 +1,8 @@
 // Plan (and optionally apply) office-site geocodes.
 // Seed already ships Hangzhou coords. This is for imported rows / future
 // adapters that only have an address. Live AMap REST waits on AMAP_WEB_KEY
-// (Web 服务 key, not the JS key). Never print that key.
+// (Web 服务 key, not the JS key); Tencent WebService (TENCENT_MAP_KEY) is the
+// third-level fallback behind Baidu. Never print any of those keys.
 
 import { getPool } from './db.ts';
 import type { CompanySite, POILocation } from './types.ts';
@@ -213,6 +214,12 @@ export function baiduWebKey(): string | undefined {
   return key || undefined;
 }
 
+/** Tencent WebService key (server/.env.local TENCENT_MAP_KEY). Never printed. */
+export function tencentWebKey(): string | undefined {
+  const key = process.env.TENCENT_MAP_KEY?.trim();
+  return key || undefined;
+}
+
 /**
  * AMap daily-quota / key-unusable detection. AMap reports these as
  * status="0" + infocode 10044 (USER_DAILY_QUERY_OVER_LIMIT) or 10043.
@@ -225,19 +232,48 @@ export function amapQuotaExhausted(payload: { status?: string; info?: string; in
   return info.includes('QUERY_OVER_LIMIT') || infocode.includes('10044') || infocode.includes('10043');
 }
 
+/**
+ * Tencent daily-quota detection. Tencent reports errors as status≠0; the
+ * current official status page lists 121 = 每日调用量上限, with the legacy
+ * 321/322 family still seen in the wild — accept both. Final calibration
+ * against a live key is a post-merge verification step (see
+ * tech/roles/data/data-quality.md).
+ */
+const TENCENT_QUOTA_STATUSES = new Set(['121', '321', '322']);
+export function tencentQuotaExhausted(payload: { status?: unknown }): boolean {
+  return TENCENT_QUOTA_STATUSES.has(String(payload.status ?? ''));
+}
+
 // ---------------------------------------------------------------------------
 // Quota short-circuit (2026-08-21, fix/geocode-quota-short-circuit).
 // AMap place-text/geocode 日配额 (10044/10043) 与百度日配额 (status 302) 双耗尽
 // 后, geocode-sites-apply.mjs 逐站空跑只烧时间零产出。执行链按「连续 N 个已尝试
 // 站点全部配额类失败」提前停止。判定口径:
-//   配额类  = quota (AMap 10044/10043 且无百度兜底) | baidu-status:302 (百度天
-//             配额超限, 内部已重试一次仍 302) | no-key (AMap/百度 key 均缺)。
+//   配额类  = quota (AMap 10044/10043 且无兜底) | baidu-status:302 (百度天配额
+//             超限, 内部已重试一次仍 302) | tencent-status:121/321/322 (腾讯每日
+//             调用量上限) | tencent-status:110/112/190/199/311 (key/IP/功能配置
+//             永久失效 — 等同无兜底, 否则腾讯-only 空跑 1783 站; 311=key 格式
+//             错误, 2026-08-21 真实探测校准) | no-key (全部 key 均缺)。
 //   非配额类 = http/empty/parse (间歇性) | regeo-outside:* (有 POI 但城市不符,
-//             证明配额不是卡点) | baidu-status:401 (并发限流, 可重试) |
-//             name-mismatch:* 等 grader 拒收 (接口有返回但没命中)。
+//             证明配额不是卡点) | baidu-status:401 | tencent-status:120 (并发/
+//             每秒限流, 可重试) | name-mismatch:* 等 grader 拒收 (接口有返回但
+//             没命中)。
 // ---------------------------------------------------------------------------
 
-const QUOTA_CLASS_REASONS = new Set(['quota', 'baidu-status:302', 'no-key']);
+const QUOTA_CLASS_REASONS = new Set([
+  'quota',
+  'baidu-status:302',
+  'tencent-status:121',
+  'tencent-status:321',
+  'tencent-status:322',
+  'tencent-status:110',
+  'tencent-status:112',
+  'tencent-status:190',
+  'tencent-status:199',
+  // 311 = key 格式错误 — 永久配置失效 (2026-08-21 真实探测校准).
+  'tencent-status:311',
+  'no-key',
+]);
 
 /** 配额类失败判定。401 是并发限流不算;302 是百度天配额超限(重试后仍 302)算。 */
 export function isQuotaClassReason(reason: string | null | undefined): boolean {
@@ -441,16 +477,38 @@ export function addressConflictsWithRegeoDistrict(address: string, adname: strin
 export interface RestGeocodeResult {
   ok: boolean;
   location?: POILocation;
-  reason?: 'no-key' | 'http' | 'empty' | 'parse' | 'quota' | `baidu-status:${number}`;
-  /** AMap unusable (no key / daily quota exhausted) — result may come from Baidu. */
+  reason?: 'no-key' | 'http' | 'empty' | 'parse' | 'quota' | `baidu-status:${number}` | `tencent-status:${number}`;
+  /** AMap unusable (no key / daily quota exhausted) — result may come from Baidu or Tencent. */
   amapUnavailable?: boolean;
-  provider?: 'amap' | 'baidu';
+  provider?: 'amap' | 'baidu' | 'tencent';
 }
 
 /**
- * Optional Web 服务 geocode. Missing AMAP_WEB_KEY → no-op (Baidu fallback when
- * BAIDU_MAP_AK is present). Caller must not log the key. QPS stays ≤3/s for
- * AMap and ~2/s for Baidu (sleep ≥600ms) at the call site.
+ * 三级兜底链 (2026-08-21, feature/geocode-tencent)。
+ * 语义: 高德不可用 (无 key / 10044 配额耗尽) 时先试百度; 百度任何失败
+ * (no-key / baidu-status:* / http / empty / parse — 内部 302/401 已重试过的
+ * 终态) 再试腾讯。最终 reason 归属最后一次实际尝试的 provider; 两兜底 key
+ * 都缺时返回 noFallback 构造的失败 (调用方注入 'no-key' 或 'quota')。
+ */
+async function fallbackChain<T extends { ok: boolean }>(
+  makeBaidu: () => Promise<T>,
+  makeTencent: () => Promise<T>,
+  noFallback: () => T,
+): Promise<T & { amapUnavailable?: boolean }> {
+  if (baiduWebKey()) {
+    const b = await makeBaidu();
+    if (b.ok || !tencentWebKey()) return { ...b, amapUnavailable: true };
+  }
+  if (!tencentWebKey()) return noFallback();
+  const t = await makeTencent();
+  return { ...t, amapUnavailable: true };
+}
+
+/**
+ * Optional Web 服务 geocode. Missing AMAP_WEB_KEY → no-op (Baidu → Tencent
+ * fallback when those keys are present). Caller must not log the key. QPS
+ * stays ≤3/s for AMap and ~2/s for Baidu / ~5/s for Tencent (sleep ≥600ms for
+ * Baidu, ≥340ms otherwise) at the call site.
  */
 export async function geocodeAddressRest(
   query: string,
@@ -459,12 +517,12 @@ export async function geocodeAddressRest(
 ): Promise<RestGeocodeResult> {
   const key = amapWebKey();
   if (!key) {
-    // No AMap key — Baidu becomes the provider (GCJ-02 via ret_coordtype).
-    if (baiduWebKey()) {
-      const b = await baiduGeocodeAddressRest(query, city, fetchImpl);
-      return { ...b, amapUnavailable: true };
-    }
-    return { ok: false, reason: 'no-key' };
+    // No AMap key — Baidu → Tencent become the providers (all GCJ-02).
+    return fallbackChain(
+      () => baiduGeocodeAddressRest(query, city, fetchImpl),
+      () => tencentGeocodeAddressRest(query, city, fetchImpl),
+      () => ({ ok: false, reason: 'no-key' } as RestGeocodeResult),
+    );
   }
   const url = new URL('https://restapi.amap.com/v3/geocode/geo');
   url.searchParams.set('address', query);
@@ -480,9 +538,12 @@ export async function geocodeAddressRest(
     return { ok: false, reason: 'http' };
   }
   const down = amapQuotaExhausted(payload);
-  if (down && baiduWebKey()) {
-    const b = await baiduGeocodeAddressRest(query, city, fetchImpl);
-    return { ...b, amapUnavailable: true };
+  if (down) {
+    return fallbackChain(
+      () => baiduGeocodeAddressRest(query, city, fetchImpl),
+      () => tencentGeocodeAddressRest(query, city, fetchImpl),
+      () => ({ ok: false, reason: 'quota', amapUnavailable: true } as RestGeocodeResult),
+    );
   }
   const raw = payload.geocodes?.[0]?.location;
   if (payload.status !== '1' || !raw || typeof raw !== 'string') {
@@ -705,16 +766,17 @@ export function pickBestOfficePoi(
 export interface PlaceTextResult {
   ok: boolean;
   pois: OfficePoiCandidate[];
-  reason?: 'no-key' | 'http' | 'parse' | 'quota' | `baidu-status:${number}`;
+  reason?: 'no-key' | 'http' | 'parse' | 'quota' | `baidu-status:${number}` | `tencent-status:${number}`;
   amapUnavailable?: boolean;
-  provider?: 'amap' | 'baidu';
+  provider?: 'amap' | 'baidu' | 'tencent';
 }
 
 /**
  * v3/place/text scoped to one city. No key → no-op; Baidu place search is the
- * fallback when AMap is key-less or daily-quota exhausted (10044). All
- * providers return GCJ-02 (AMap native / Baidu ret_coordtype=gcj02ll). Callers
- * throttle — ≥600ms when amapUnavailable.
+ * fallback when AMap is key-less or daily-quota exhausted (10044), Tencent the
+ * last resort when Baidu also fails. All providers return GCJ-02 (AMap native /
+ * Baidu ret_coordtype=gcj02ll / Tencent native). Callers throttle — ≥600ms for
+ * Baidu, ≥340ms otherwise.
  */
 export async function placeTextSearchRest(
   query: string,
@@ -723,11 +785,11 @@ export async function placeTextSearchRest(
 ): Promise<PlaceTextResult> {
   const key = amapWebKey();
   if (!key) {
-    if (baiduWebKey()) {
-      const b = await baiduPlaceSearchRest(query, city, fetchImpl);
-      return { ...b, amapUnavailable: true };
-    }
-    return { ok: false, pois: [], reason: 'no-key' };
+    return fallbackChain(
+      () => baiduPlaceSearchRest(query, city, fetchImpl),
+      () => tencentPlaceSearchRest(query, city, fetchImpl),
+      () => ({ ok: false, pois: [], reason: 'no-key' } as PlaceTextResult),
+    );
   }
   const url = new URL('https://restapi.amap.com/v3/place/text');
   url.searchParams.set('keywords', query);
@@ -747,9 +809,12 @@ export async function placeTextSearchRest(
     };
     if (payload.status !== '1') {
       const down = amapQuotaExhausted(payload);
-      if (down && baiduWebKey()) {
-        const b = await baiduPlaceSearchRest(query, city, fetchImpl);
-        return { ...b, amapUnavailable: true };
+      if (down) {
+        return fallbackChain(
+          () => baiduPlaceSearchRest(query, city, fetchImpl),
+          () => tencentPlaceSearchRest(query, city, fetchImpl),
+          () => ({ ok: false, pois: [], reason: 'quota', amapUnavailable: true } as PlaceTextResult),
+        );
       }
       return { ok: false, pois: [], reason: down ? 'quota' : 'parse', amapUnavailable: down };
     }
@@ -769,13 +834,13 @@ export interface RegeoResult {
   district?: string;
   province?: string;
   amapUnavailable?: boolean;
-  provider?: 'amap' | 'baidu';
+  provider?: 'amap' | 'baidu' | 'tencent';
 }
 
 /**
  * A regeo hit confirms a coordinate sits in `target` city. 直辖市 (北京/上海)
  * regeo 的 cityname 为空 — province 兜底校验 (北京 POI 的 pname = '北京市').
- * 百度 regeo 直辖市直接返回 city='上海市' (无此问题, 统一走同一条校验).
+ * 百度/腾讯 regeo 直辖市直接返回 city='上海市' (无此问题, 统一走同一条校验).
  */
 export function regeoMatchesTarget(re: RegeoResult, target: CityTarget): { ok: boolean; reason?: string } {
   if (re.province && re.province !== target.province) return { ok: false, reason: `outside-province:${re.province}` };
@@ -785,7 +850,8 @@ export function regeoMatchesTarget(re: RegeoResult, target: CityTarget): { ok: b
 
 /**
  * Confirm a coordinate sits in the target city: AMap v3/geocode/regeo, falling
- * back to Baidu reverse_geocoding/v3 when AMap is key-less / quota-exhausted.
+ * back to Baidu reverse_geocoding/v3 (then Tencent ws/geocoder/v1) when AMap
+ * is key-less / quota-exhausted.
  */
 export async function regeoCityRest(
   lng: number,
@@ -794,11 +860,11 @@ export async function regeoCityRest(
 ): Promise<RegeoResult> {
   const key = amapWebKey();
   if (!key) {
-    if (baiduWebKey()) {
-      const b = await baiduRegeoCityRest(lng, lat, fetchImpl);
-      return { ...b, amapUnavailable: true };
-    }
-    return { ok: false };
+    return fallbackChain(
+      () => baiduRegeoCityRest(lng, lat, fetchImpl),
+      () => tencentRegeoCityRest(lng, lat, fetchImpl),
+      () => ({ ok: false } as RegeoResult),
+    );
   }
   const url = new URL('https://restapi.amap.com/v3/geocode/regeo');
   url.searchParams.set('location', `${lng},${lat}`);
@@ -816,9 +882,12 @@ export async function regeoCityRest(
     const comp = payload.regeocode?.addressComponent;
     if (payload.status !== '1' || !comp) {
       const down = amapQuotaExhausted(payload);
-      if (down && baiduWebKey()) {
-        const b = await baiduRegeoCityRest(lng, lat, fetchImpl);
-        return { ...b, amapUnavailable: true };
+      if (down) {
+        return fallbackChain(
+          () => baiduRegeoCityRest(lng, lat, fetchImpl),
+          () => tencentRegeoCityRest(lng, lat, fetchImpl),
+          () => ({ ok: false, amapUnavailable: true } as RegeoResult),
+        );
       }
       return { ok: false, amapUnavailable: down };
     }
@@ -971,6 +1040,168 @@ export async function baiduGeocodeAddressRest(
       return { ok: false, reason };
     }
     return { ok: true, provider: 'baidu', location: { lng, lat, address: query } };
+  }
+  return { ok: false, reason: 'http' };
+}
+
+// ---------------------------------------------------------------------------
+// Tencent fallback (WebService, TENCENT_MAP_KEY). 第三级兜底 (2026-08-21,
+// feature/geocode-tencent): 百度重试后仍失败时的最后一道。个人开发者每接口
+// 10000 次/天、5 QPS (官方 FAQ); 输出原生 GCJ-02, 无需转换。status≠0 即错误:
+// 121 = 每日调用量上限 (配额类)、120 = 每秒请求量上限 (重试一次)、
+// 110/112/190/199 = key/IP/功能配置问题 (永久失效, 归配额类短路)。
+// 字段形状与百度/高德不同: POI 名是 title (非 name)、坐标是 location:{lat,lng}
+// 命名对象 (键序与百度相反, 不能按序拆分)、行政区在 ad_info 嵌套 —
+// parseTencentOfficePoi 独立实现。Never prints the key.
+// ---------------------------------------------------------------------------
+
+/** 腾讯地理编码 address 必须含省市区 (官方文档) — 目标城市缺失时前缀拼接. */
+function cityQualifiedAddress(query: string, city: string): string {
+  const bare = bareCity(city);
+  if (query.includes(bare) || query.includes(city)) return query;
+  return `${city}${query}`;
+}
+
+/** 腾讯 place 检索 data[i] → 统一 GCJ-02 candidate (title/location 对象/ad_info). */
+export function parseTencentOfficePoi(raw: Record<string, unknown>): OfficePoiCandidate | null {
+  const loc = raw.location as { lat?: unknown; lng?: unknown } | null | undefined;
+  const lng = Number(loc?.lng);
+  const lat = Number(loc?.lat);
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  const ad = (raw.ad_info ?? {}) as Record<string, unknown>;
+  return {
+    name: String(raw.title ?? ''),
+    address: String(raw.address ?? ''),
+    lng,
+    lat,
+    type: String(raw.category ?? ''),
+    adname: String(ad.district ?? ''),
+    pname: String(ad.province ?? ''),
+    cityname: String(ad.city ?? ''),
+  };
+}
+
+/** 腾讯间歇性限流: 120 = 每秒请求量上限 — 重试一次, 间隔 1.5s. */
+const TENCENT_TRANSIENT_STATUS = new Set(['120']);
+const TENCENT_RETRY_SLEEP_MS = 1500;
+
+function isTransientTencentStatus(reason: string | undefined): boolean {
+  if (!reason?.startsWith('tencent-status:')) return false;
+  return TENCENT_TRANSIENT_STATUS.has(reason.slice('tencent-status:'.length));
+}
+
+/** Tencent place/v1/search (boundary=region 城市内检索), GCJ-02 原生输出. */
+export async function tencentPlaceSearchRest(
+  query: string,
+  city = '杭州',
+  fetchImpl: typeof fetch = fetch,
+): Promise<PlaceTextResult> {
+  const key = tencentWebKey();
+  if (!key) return { ok: false, pois: [], reason: 'no-key' };
+  const url = new URL('https://apis.map.qq.com/ws/place/v1/search');
+  url.searchParams.set('keyword', query);
+  url.searchParams.set('boundary', `region(${city},0)`);
+  url.searchParams.set('page_size', '10');
+  url.searchParams.set('page_index', '1');
+  url.searchParams.set('key', key);
+  let payload: { status?: number; data?: Array<Record<string, unknown>> };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchImpl(url);
+      if (!res.ok) return { ok: false, pois: [], reason: 'http' };
+      payload = (await res.json()) as typeof payload;
+    } catch {
+      return { ok: false, pois: [], reason: 'http' };
+    }
+    if (payload.status !== 0) {
+      const reason = `tencent-status:${payload.status ?? -1}` as PlaceTextResult['reason'];
+      if (attempt === 0 && isTransientTencentStatus(reason)) {
+        await sleep(TENCENT_RETRY_SLEEP_MS);
+        continue;
+      }
+      return { ok: false, pois: [], reason };
+    }
+    return {
+      ok: true,
+      provider: 'tencent',
+      pois: (payload.data ?? []).map(parseTencentOfficePoi).filter((p): p is OfficePoiCandidate => !!p),
+    };
+  }
+  return { ok: false, pois: [], reason: 'http' };
+}
+
+/** Tencent ws/geocoder/v1 reverse — city check for a GCJ-02 coordinate. */
+export async function tencentRegeoCityRest(
+  lng: number,
+  lat: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<RegeoResult> {
+  const key = tencentWebKey();
+  if (!key) return { ok: false };
+  const url = new URL('https://apis.map.qq.com/ws/geocoder/v1');
+  // location = "lat,lng" (腾讯纬度在前, 同百度); 输入已是 GCJ-02 国测局坐标.
+  url.searchParams.set('location', `${lat},${lng}`);
+  url.searchParams.set('key', key);
+  let payload: { status?: number; result?: { ad_info?: { province?: string; city?: string; district?: string } } };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchImpl(url);
+      if (!res.ok) return { ok: false };
+      payload = (await res.json()) as typeof payload;
+    } catch {
+      return { ok: false };
+    }
+    const ad = payload.result?.ad_info;
+    if (payload.status !== 0 || !ad) {
+      const reason = `tencent-status:${payload.status ?? -1}`;
+      if (attempt === 0 && isTransientTencentStatus(reason)) {
+        await sleep(TENCENT_RETRY_SLEEP_MS);
+        continue;
+      }
+      return { ok: false };
+    }
+    return { ok: true, provider: 'tencent', cityname: ad.city, district: ad.district, province: ad.province };
+  }
+  return { ok: false };
+}
+
+/** Tencent ws/geocoder/v1 forward — full address → GCJ-02 point. */
+export async function tencentGeocodeAddressRest(
+  query: string,
+  city = '杭州',
+  fetchImpl: typeof fetch = fetch,
+): Promise<RestGeocodeResult> {
+  const key = tencentWebKey();
+  if (!key) return { ok: false, reason: 'no-key' };
+  const url = new URL('https://apis.map.qq.com/ws/geocoder/v1');
+  // address 必须含省市区 (官方文档); region 参数消歧 (文档未列但历史接口支持).
+  url.searchParams.set('address', cityQualifiedAddress(query, city));
+  url.searchParams.set('region', city);
+  url.searchParams.set('key', key);
+  let payload: {
+    status?: number;
+    result?: { location?: { lng?: unknown; lat?: unknown } };
+  };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchImpl(url);
+      if (!res.ok) return { ok: false, reason: 'http' };
+      payload = (await res.json()) as typeof payload;
+    } catch {
+      return { ok: false, reason: 'http' };
+    }
+    const loc = payload.result?.location;
+    const lng = Number(loc?.lng);
+    const lat = Number(loc?.lat);
+    if (payload.status !== 0 || !Number.isFinite(lng) || !Number.isFinite(lat)) {
+      const reason = (payload.status !== 0 ? `tencent-status:${payload.status ?? -1}` : 'empty') as RestGeocodeResult['reason'];
+      if (attempt === 0 && isTransientTencentStatus(reason)) {
+        await sleep(TENCENT_RETRY_SLEEP_MS);
+        continue;
+      }
+      return { ok: false, reason };
+    }
+    return { ok: true, provider: 'tencent', location: { lng, lat, address: query } };
   }
   return { ok: false, reason: 'http' };
 }

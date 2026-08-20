@@ -8,7 +8,8 @@
 //   node scripts/geocode-sites-apply.mjs [--dry-run] [--only slug1,slug2]
 //
 //   --dry-run          print the plan and resolutions, write nothing (default
-//                      when neither AMAP_WEB_KEY nor BAIDU_MAP_AK is set)
+//                      when none of AMAP_WEB_KEY / BAIDU_MAP_AK / TENCENT_MAP_KEY
+//                      is set)
 //   --only a,b         resolve only these slugs (bypasses the confidence gate)
 //   --cities 上海,杭州  resolve only sites whose site.city is in this list
 //                      (海外/非目标城市站点跳过,防止单公司 170 站拖垮全流程)
@@ -18,9 +19,10 @@
 // Writes back into the owning drop JSON (copy-on-write: only site.location is
 // replaced). The site's city is enforced via regeo. Reads AMAP_WEB_KEY from
 // server/.env.local; when AMap's daily quota is exhausted (infocode 10044) or
-// no AMap key is set, falls back to Baidu Web 服务 (BAIDU_MAP_AK, same GCJ-02
-// coordinates). Never prints either key. AMap throttles at 3 req/s, Baidu at
-// ~2 req/s (sleep ≥600ms after a fallback call).
+// no AMap key is set, falls back to Baidu Web 服务 (BAIDU_MAP_AK), then Tencent
+// WebService (TENCENT_MAP_KEY) when Baidu also fails — all GCJ-02 coordinates.
+// Never prints any key. AMap throttles at 3 req/s, Baidu at ~2 req/s (sleep
+// ≥600ms), Tencent at ~5 req/s (sleep ≥340ms after a fallback call).
 //
 // 2026-08-20 (w4): 地址-城市一致性闸门。城市拆分时代 drops 的城市站点继承了
 // 杭州 office 地址文本 ("西湖区莲花街333号…"), 在目标城市做地址检索会城市内
@@ -87,8 +89,9 @@ function loadEnv() {
 const env = { ...loadEnv(), ...process.env };
 if (env.AMAP_WEB_KEY && !process.env.AMAP_WEB_KEY) process.env.AMAP_WEB_KEY = env.AMAP_WEB_KEY;
 if (env.BAIDU_MAP_AK && !process.env.BAIDU_MAP_AK) process.env.BAIDU_MAP_AK = env.BAIDU_MAP_AK;
+if (env.TENCENT_MAP_KEY && !process.env.TENCENT_MAP_KEY) process.env.TENCENT_MAP_KEY = env.TENCENT_MAP_KEY;
 
-const DRY_RUN = process.argv.includes('--dry-run') || (!env.AMAP_WEB_KEY && !env.BAIDU_MAP_AK);
+const DRY_RUN = process.argv.includes('--dry-run') || (!env.AMAP_WEB_KEY && !env.BAIDU_MAP_AK && !env.TENCENT_MAP_KEY);
 const onlyArg = process.argv.find((a) => a.startsWith('--only=')) || process.argv.find((a, i) => process.argv[i - 1] === '--only');
 const ONLY = onlyArg
   ? String(onlyArg.split('=')[1] ?? process.argv[process.argv.indexOf('--only') + 1] ?? '')
@@ -106,6 +109,9 @@ const CITIES = citiesArg
   : [];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// 节流: 百度 ~2 QPS → 600ms; 高德 ~3 QPS、腾讯 ~5 QPS(个人开发者) → 340ms。
+// provider 缺失(unverified 等)按 340ms 兜底。340ms ≥ 腾讯 5 QPS 的 200ms 间隔。
+const throttleMs = (provider) => (provider === 'baidu' ? 600 : 340);
 const round = (x, d = 6) => Number(x.toFixed(d));
 
 function readJson(file) {
@@ -170,12 +176,12 @@ const placeSearchMemo = new Map();
  */
 async function searchCompanyPoi(query, target) {
   const out = { poi: null, confidence: null, reason: '', provider: 'amap' };
-  if (DRY_RUN || env.AMAP_WEB_KEY || env.BAIDU_MAP_AK) {
+  if (DRY_RUN || env.AMAP_WEB_KEY || env.BAIDU_MAP_AK || env.TENCENT_MAP_KEY) {
     const memoKey = placeSearchMemoKey(query, target);
     const cached = placeSearchMemo.get(memoKey);
     if (cached) return cached;
     const hit = await placeTextSearchRest(query, target.city);
-    await sleep(hit.amapUnavailable ? 600 : 340);
+    await sleep(throttleMs(hit.provider));
     if (hit.ok && hit.pois.length) {
       // 用别名后的 query 评分: 中微公司 → 中微半导体设备, 否则查询命中但
       // 原始快照名对不上 POI 名会被 grader 拒.
@@ -216,10 +222,12 @@ const overrides = loadOverrides();
 // 2026-08-21 实测: AMap place-text 日配额 100% 耗尽 (infocode 10044) + 百度兜底
 // 返回 302 "天配额超限" 后, 脚本仍逐站空跑 (~1800 站, 数十分钟零产出)。判定:
 // 连续 QUOTA_SHORT_CIRCUIT_N 个已尝试站点全部配额类失败 (quota /
-// baidu-status:302 / no-key) → 提前停止: REPORT 照常打印 + QUOTA_EXHAUSTED
-// 醒目行 + 非零退出码。非配额类失败 (http/empty/parse/regeo-outside:*/401) 或
-// 成功解析都会冲掉窗口, 不会误停。skip 站 (not-in-only-list 等) 不是尝试,
-// 不进窗口, 也不冲窗口。
+// baidu-status:302 / tencent-status:121|321|322 (腾讯每日上限) /
+// tencent-status:110|112|190|199 (key/IP/功能配置永久失效) / no-key) →
+// 提前停止: REPORT 照常打印 + QUOTA_EXHAUSTED 醒目行 + 非零退出码。非配额类
+// 失败 (http/empty/parse/regeo-outside:*/baidu-status:401/tencent-status:120
+// (每秒限流, 可重试)) 或成功解析都会冲掉窗口, 不会误停。skip 站
+// (not-in-only-list 等) 不是尝试, 不进窗口, 也不冲窗口。
 // 2026-08-21 (fix/geocode-plan-count): 短路后 REPORT 的计数不再用停在短路点
 // 的 planCount, 而用主循环前预扫的真实全量 planTotal (见下) — 否则
 // "Sites needing a point: 5" 严重误导 (实际缺坐标站点 1783 个)。
@@ -311,7 +319,7 @@ mainLoop: for (const { file, company, site } of needing) {
     // regeo 省级校验拦不住(pname 同省即过)。地址含非目标城市的已知
     // 区县/城市名 → 地址不可信, 跳过地址检索, 直接走公司名检索。
     const g = await geocodeAddressRest(addr, target.city);
-    await sleep(g.amapUnavailable ? 600 : 340);
+    await sleep(throttleMs(g.provider));
     if (g.ok && g.location) {
       poi = { name: company.name, address: addr, lng: g.location.lng, lat: g.location.lat, type: 'geocode', adname: '', pname: target.province, cityname: target.city };
       confidence = 'high';
@@ -341,7 +349,7 @@ mainLoop: for (const { file, company, site } of needing) {
   let verified = '';
   if (!override) {
     const re = await regeoCityRest(poi.lng, poi.lat);
-    await sleep(re.amapUnavailable ? 600 : 340);
+    await sleep(throttleMs(re.provider));
     const match = regeoMatchesTarget(re, target);
     if (re.ok && !match.ok) {
       unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match.reason}` });
@@ -364,7 +372,7 @@ mainLoop: for (const { file, company, site } of needing) {
       reason = res.reason;
       provider = res.provider;
       const re2 = await regeoCityRest(poi.lng, poi.lat);
-      await sleep(re2.amapUnavailable ? 600 : 340);
+      await sleep(throttleMs(re2.provider));
       const match2 = regeoMatchesTarget(re2, target);
       if (re2.ok && !match2.ok) {
         unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match2.reason}` });
@@ -390,7 +398,7 @@ mainLoop: for (const { file, company, site } of needing) {
 }
 
 // --- report -----------------------------------------------------------------
-console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | BAIDU_MAP_AK: ${env.BAIDU_MAP_AK ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
+console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | BAIDU_MAP_AK: ${env.BAIDU_MAP_AK ? 'set' : 'MISSING'} | TENCENT_MAP_KEY: ${env.TENCENT_MAP_KEY ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
 console.log(`Sites needing a point: ${planTotal} (attempted: ${planCount}) | skipped (not-in-only-list): ${skipped.filter((s) => s.reason === 'not-in-only-list').length} | city-not-in-list: ${skipped.filter((s) => s.reason.startsWith('city-not-in-list')).length} | override-city-mismatch: ${skipped.filter((s) => s.reason === 'override-city-mismatch').length}`);
 console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`);
 console.log('\n=== RESOLVED ===');
@@ -410,13 +418,13 @@ if (!DRY_RUN) {
   }
 }
 
-// 双配额耗尽 → 提前停止 (REPORT 已按正常收尾同款打印): 醒目说明 + 剩余站数 +
+// 配额耗尽 → 提前停止 (REPORT 已按正常收尾同款打印): 醒目说明 + 剩余站数 +
 // 非零退出码 (exit 2)。已写入的站点保留 — 重跑时 siteNeedsGeocode 跳过有坐标
 // 站点, 幂等。剩余数用预扫的 planTotal 算真实全量 (2026-08-21,
 // fix/geocode-plan-count): planCount 停在短路点 (如 5) 会误导,
 // planTotal - resolutions - unresolved - skipped 才是「待下次运行」真实剩余。
 if (shortCircuited) {
   const remaining = planTotal - resolutions.length - unresolved.length - skipped.length;
-  console.log(`\nQUOTA_EXHAUSTED: AMap+百度 双配额耗尽(或无可用 key),已提前停止,剩余 ${remaining} 站待下次运行。`);
+  console.log(`\nQUOTA_EXHAUSTED: AMap+百度+腾讯 配额耗尽(或无可用 key),已提前停止,剩余 ${remaining} 站待下次运行。`);
   process.exit(2);
 }

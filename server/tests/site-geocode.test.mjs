@@ -19,6 +19,7 @@ import {
   normalizeNameForMatch,
   officeNameMatchStrength,
   parseBaiduOfficePoi,
+  parseTencentOfficePoi,
   pickBestOfficePoi,
   placeTextSearchRest,
   planSiteGeocode,
@@ -26,6 +27,10 @@ import {
   regeoMatchesTarget,
   siteHasStreetAddress,
   siteNeedsGeocode,
+  tencentGeocodeAddressRest,
+  tencentPlaceSearchRest,
+  tencentQuotaExhausted,
+  tencentRegeoCityRest,
 } from '../src/lib/site-geocode.ts';
 
 test('current WORK_SEED sites already have coordinates', () => {
@@ -571,5 +576,253 @@ test('geocodeAddressRest falls back to Baidu geocoding on AMap quota exhaustion'
   } finally {
     if (prev == null) delete process.env.AMAP_WEB_KEY;
     else process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+// --- Tencent fallback (TENCENT_MAP_KEY, 第三级兜底) --------------------------
+
+async function withTencentKey(body) {
+  const prev = process.env.TENCENT_MAP_KEY;
+  process.env.TENCENT_MAP_KEY = 'test-tencent-key';
+  try {
+    return await body();
+  } finally {
+    if (prev == null) delete process.env.TENCENT_MAP_KEY;
+    else process.env.TENCENT_MAP_KEY = prev;
+  }
+}
+
+const BAIDU_QUOTA_302 = { status: 302 };
+
+test('tencentQuotaExhausted detects the daily-limit status family', () => {
+  assert.equal(tencentQuotaExhausted({ status: 0 }), false);
+  assert.equal(tencentQuotaExhausted({ status: 121 }), true);
+  assert.equal(tencentQuotaExhausted({ status: 321 }), true);
+  assert.equal(tencentQuotaExhausted({ status: 322 }), true);
+  // 每秒限流 (120) 与来源未授权 (110) 不是每日配额类.
+  assert.equal(tencentQuotaExhausted({ status: 120 }), false);
+  assert.equal(tencentQuotaExhausted({ status: 110 }), false);
+});
+
+test('parseTencentOfficePoi maps the Tencent place shape (title/location/ad_info)', () => {
+  const poi = parseTencentOfficePoi({
+    title: '得物App总部',
+    location: { lat: 31.272, lng: 121.512 },
+    category: '公司企业;商务写字楼',
+    address: '黄兴路221号',
+    ad_info: { province: '上海市', city: '上海市', district: '杨浦区' },
+  });
+  assert.equal(poi?.name, '得物App总部');
+  assert.equal(poi?.lng, 121.512);
+  assert.equal(poi?.lat, 31.272);
+  assert.equal(poi?.type, '公司企业;商务写字楼');
+  assert.equal(poi?.cityname, '上海市');
+  assert.equal(poi?.pname, '上海市');
+  assert.equal(poi?.adname, '杨浦区');
+  // Missing location object → null (no crash on malformed rows).
+  assert.equal(parseTencentOfficePoi({ title: 'x' }), null);
+});
+
+test('tencentGeocodeAddressRest parses ws/geocoder/v1 and city-qualifies the address', async () => {
+  await withTencentKey(async () => {
+    let requested = '';
+    // 地址无城市前缀 → 拼上目标城市 (address 必须含省市区, 官方文档).
+    const g = await tencentGeocodeAddressRest('西湖区文二西路712号', '杭州市', async (input) => {
+      requested = String(input);
+      return { ok: true, json: async () => ({ status: 0, result: { location: { lng: 120.095, lat: 30.287 } } }) };
+    });
+    assert.equal(g.ok, true);
+    assert.equal(g.provider, 'tencent');
+    assert.equal(g.location?.lng, 120.095);
+    assert.match(requested, /apis\.map\.qq\.com\/ws\/geocoder\/v1/);
+    assert.ok(decodeURIComponent(requested).includes('address=杭州市西湖区文二西路712号'));
+    assert.ok(decodeURIComponent(requested).includes('region=杭州市'));
+  });
+  // 已含城市前缀的地址不重复拼.
+  await withTencentKey(async () => {
+    const g = await tencentGeocodeAddressRest('杭州市西湖区文二西路712号', '杭州市', async () => ({
+      ok: true,
+      json: async () => ({ status: 0, result: { location: { lng: 120.095, lat: 30.287 } } }),
+    }));
+    assert.equal(g.ok, true);
+  });
+});
+
+test('tencentPlaceSearchRest sends boundary=region and parses data[]', async () => {
+  await withTencentKey(async () => {
+    let requested = '';
+    const hit = await tencentPlaceSearchRest('得物', '上海市', async (input) => {
+      requested = String(input);
+      return {
+        ok: true,
+        json: async () => ({
+          status: 0,
+          count: 1,
+          data: [
+            { title: '得物App总部', location: { lat: 31.272, lng: 121.512 }, category: '公司企业', address: '黄兴路221号', ad_info: { province: '上海市', city: '上海市', district: '杨浦区' } },
+          ],
+        }),
+      };
+    });
+    assert.equal(hit.ok, true);
+    assert.equal(hit.provider, 'tencent');
+    assert.equal(hit.pois.length, 1);
+    assert.equal(hit.pois[0].lng, 121.512);
+    assert.equal(hit.pois[0].adname, '杨浦区');
+    assert.match(requested, /apis\.map\.qq\.com\/ws\/place\/v1\/search/);
+    assert.ok(decodeURIComponent(requested).includes('boundary=region(上海市,0)'));
+    assert.ok(requested.includes('page_size=10'));
+    assert.ok(requested.includes('page_index=1'));
+  });
+});
+
+test('tencentRegeoCityRest sends lat,lng (纬度在前) and parses ad_info', async () => {
+  await withTencentKey(async () => {
+    let requested = '';
+    const re = await tencentRegeoCityRest(121.512, 31.272, async (input) => {
+      requested = String(input);
+      return { ok: true, json: async () => ({ status: 0, result: { ad_info: { province: '上海市', city: '上海市', district: '杨浦区' } } }) };
+    });
+    assert.equal(re.ok, true);
+    assert.equal(re.provider, 'tencent');
+    assert.equal(re.province, '上海市');
+    assert.equal(re.cityname, '上海市');
+    assert.equal(re.district, '杨浦区');
+    assert.match(requested, /apis\.map\.qq\.com\/ws\/geocoder\/v1/);
+    assert.match(requested, /location=31\.272%2C121\.512/);
+  });
+});
+
+test('tencentPlaceSearchRest retries the per-second limit (status 120) once', async () => {
+  await withTencentKey(async () => {
+    let calls = 0;
+    const hit = await tencentPlaceSearchRest('得物', '上海市', async () => {
+      calls += 1;
+      return {
+        ok: true,
+        json: async () => (calls === 1 ? { status: 120, message: '请求被限制' } : { status: 0, data: [{ title: '得物App总部', location: { lat: 31.272, lng: 121.512 }, ad_info: { province: '上海市', city: '上海市' } }] }),
+      };
+    });
+    assert.equal(calls, 2);
+    assert.equal(hit.ok, true);
+    assert.equal(hit.provider, 'tencent');
+  });
+});
+
+test('placeTextSearchRest falls through AMap 10044 + Baidu 302 to Tencent', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  process.env.AMAP_WEB_KEY = 'test-web-key';
+  try {
+    await withBaiduKey(async () => {
+      await withTencentKey(async () => {
+        let tencentCalls = 0;
+        const hit = await placeTextSearchRest('得物', '上海市', async (input) => {
+          const url = String(input);
+          if (url.includes('restapi.amap.com')) return { ok: true, json: async () => ({ ...AMAP_EXHAUSTED, pois: [] }) };
+          if (url.includes('api.map.baidu.com')) return { ok: true, json: async () => ({ ...BAIDU_QUOTA_302 }) };
+          tencentCalls += 1;
+          return {
+            ok: true,
+            json: async () => ({
+              status: 0,
+              data: [{ title: '得物App总部', location: { lat: 31.272, lng: 121.512 }, category: '公司企业', address: '黄兴路221号', ad_info: { province: '上海市', city: '上海市', district: '杨浦区' } }],
+            }),
+          };
+        });
+        assert.equal(hit.ok, true);
+        assert.equal(hit.amapUnavailable, true);
+        assert.equal(hit.provider, 'tencent');
+        assert.equal(hit.pois[0].lng, 121.512);
+        assert.equal(tencentCalls, 1);
+      });
+    });
+  } finally {
+    if (prev == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+test('geocodeAddressRest serves Tencent-only when AMap and Baidu keys are absent', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  delete process.env.AMAP_WEB_KEY;
+  try {
+    const prevBaidu = process.env.BAIDU_MAP_AK;
+    delete process.env.BAIDU_MAP_AK;
+    try {
+      await withTencentKey(async () => {
+        const g = await geocodeAddressRest('西湖区文二西路712号', '杭州市', async (input) => {
+          assert.match(String(input), /apis\.map\.qq\.com/);
+          return { ok: true, json: async () => ({ status: 0, result: { location: { lng: 120.095, lat: 30.287 } } }) };
+        });
+        assert.equal(g.ok, true);
+        assert.equal(g.amapUnavailable, true);
+        assert.equal(g.provider, 'tencent');
+        assert.equal(g.location?.lng, 120.095);
+      });
+    } finally {
+      if (prevBaidu == null) delete process.env.BAIDU_MAP_AK;
+      else process.env.BAIDU_MAP_AK = prevBaidu;
+    }
+  } finally {
+    if (prev == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+test('chain reason attribution: Tencent daily limit (121) wins after AMap + Baidu fail', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  process.env.AMAP_WEB_KEY = 'test-web-key';
+  try {
+    await withBaiduKey(async () => {
+      await withTencentKey(async () => {
+        const hit = await placeTextSearchRest('得物', '上海市', async (input) => {
+          const url = String(input);
+          if (url.includes('restapi.amap.com')) return { ok: true, json: async () => ({ ...AMAP_EXHAUSTED, pois: [] }) };
+          if (url.includes('api.map.baidu.com')) return { ok: true, json: async () => ({ status: 403, message: 'not authorized' }) };
+          return { ok: true, json: async () => ({ status: 121, message: '此key每日调用量已达到上限' }) };
+        });
+        assert.equal(hit.ok, false);
+        assert.equal(hit.reason, 'tencent-status:121');
+        assert.equal(hit.amapUnavailable, true);
+      });
+    });
+  } finally {
+    if (prev == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+test('Tencent is never called while the Baidu fallback succeeds', async () => {
+  const prev = process.env.AMAP_WEB_KEY;
+  process.env.AMAP_WEB_KEY = 'test-web-key';
+  try {
+    await withBaiduKey(async () => {
+      await withTencentKey(async () => {
+        const hit = await placeTextSearchRest('得物', '上海市', async (input) => {
+          const url = String(input);
+          if (url.includes('restapi.amap.com')) return { ok: true, json: async () => ({ ...AMAP_EXHAUSTED, pois: [] }) };
+          assert.match(url, /api\.map\.baidu\.com/);
+          return { ok: true, json: async () => ({ status: 0, results: [{ name: '得物App总部', location: { lng: 121.512, lat: 31.272 }, province: '上海市', city: '上海市' }] }) };
+        });
+        assert.equal(hit.ok, true);
+        assert.equal(hit.provider, 'baidu');
+        assert.equal(hit.amapUnavailable, true);
+      });
+    });
+  } finally {
+    if (prev == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prev;
+  }
+});
+
+test('tencentGeocodeAddressRest is a no-op without TENCENT_MAP_KEY', async () => {
+  const prev = process.env.TENCENT_MAP_KEY;
+  delete process.env.TENCENT_MAP_KEY;
+  try {
+    const g = await tencentGeocodeAddressRest('西湖区文二西路712号', '杭州市');
+    assert.equal(g.ok, false);
+    assert.equal(g.reason, 'no-key');
+  } finally {
+    if (prev != null) process.env.TENCENT_MAP_KEY = prev;
   }
 });

@@ -28,7 +28,7 @@ npm run import:seed             # 137 companies / 241 positions / 0 dropped toda
 npm run import:seed:apply       # no-op without DATABASE_URL; upserts 006 tables when Docker is up
 npm run geocode:sites           # lists drop / imported sites still at (0,0); does not call AMap
 npm run geocode:sites:apply     # real office coords for city-list drops (needs AMAP_WEB_KEY; --dry-run prints the plan)
-                                # AMap daily quota exhausted → automatic Baidu fallback (BAIDU_MAP_AK, same GCJ-02)
+                                # AMap quota exhausted → Baidu → Tencent fallback (BAIDU_MAP_AK / TENCENT_MAP_KEY, all GCJ-02)
 npm run audit:pins              # three-layer pin audit vs AMap Web services (needs AMAP_WEB_KEY + DATABASE_URL)
 # Optional: drop official-career JSON in server/data/recruitment/official-career/
 # Optional: refresh the reviewed radar snapshot → make refresh-radar (self-validates)
