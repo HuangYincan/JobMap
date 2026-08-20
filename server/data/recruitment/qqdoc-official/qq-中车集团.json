@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中车集团",
+  "name": "中车集团",
+  "official_url": "https://www.crrcgc.cc/crrcgc/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中车集团-site-hq",
+      "name": "中车集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

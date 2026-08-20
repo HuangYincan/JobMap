@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国建筑科学研究院",
+  "name": "中国建筑科学研究院",
+  "official_url": "http://www.ciic.com.cn/ciic/rczp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国建筑科学研究院-site-hq",
+      "name": "中国建筑科学研究院",
+      "city": "中国建筑科学研究院总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

@@ -1,0 +1,19 @@
+{
+  "slug": "qq-中国融通资产管理集团",
+  "name": "中国融通资产管理集团",
+  "official_url": "https://www.crtamg.com.cn/rlzy/rczp/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国融通资产管理集团-site-hq",
+      "name": "中国融通资产管理集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区复兴路乙63号"
+      }
+    }
+  ]
+}

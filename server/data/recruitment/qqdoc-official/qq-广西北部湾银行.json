@@ -1,0 +1,18 @@
+{
+  "slug": "qq-广西北部湾银行",
+  "name": "广西北部湾银行",
+  "official_url": "https://www.bankofbbg.com/bbgow/gywx/xwzx/rczp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-广西北部湾银行-site-hq",
+      "name": "广西北部湾银行",
+      "city": "广西北部湾银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

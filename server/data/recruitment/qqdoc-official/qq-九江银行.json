@@ -1,0 +1,17 @@
+{
+  "slug": "qq-九江银行",
+  "name": "九江银行",
+  "official_url": "https://jjyh.hotjob.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-九江银行-site-hq",
+      "name": "九江银行",
+      "city": "九江市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

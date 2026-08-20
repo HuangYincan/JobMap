@@ -1,0 +1,17 @@
+{
+  "slug": "qq-北京银行",
+  "name": "北京银行",
+  "official_url": "https://bankofbeijing.zhiye.com/custom/index",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-北京银行-site-hq",
+      "name": "北京银行",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

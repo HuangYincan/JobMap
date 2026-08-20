@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国航空工业集团",
+  "name": "中国航空工业集团",
+  "official_url": "https://www.avic.com.cn/hdjl/jtgg/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国航空工业集团-site-hq",
+      "name": "中国航空工业集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

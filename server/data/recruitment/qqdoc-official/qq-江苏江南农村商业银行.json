@@ -1,0 +1,18 @@
+{
+  "slug": "qq-江苏江南农村商业银行",
+  "name": "江苏江南农村商业银行",
+  "official_url": "http://hr.jnbank.com.cn/social/jobs",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-江苏江南农村商业银行-site-hq",
+      "name": "江苏江南农村商业银行",
+      "city": "江苏江南农村商业银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

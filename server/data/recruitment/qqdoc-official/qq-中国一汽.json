@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国一汽",
+  "name": "中国一汽",
+  "official_url": "https://faw-zhaopin.hotjob.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国一汽-site-hq",
+      "name": "中国一汽",
+      "city": "中国一汽总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

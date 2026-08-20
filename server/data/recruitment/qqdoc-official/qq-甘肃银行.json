@@ -1,0 +1,19 @@
+{
+  "slug": "qq-甘肃银行",
+  "name": "甘肃银行",
+  "official_url": "https://www.gsbankchina.com/gsyh/gywm/rczp/xyzp/index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-甘肃银行-site-hq",
+      "name": "甘肃银行",
+      "city": "兰州市",
+      "province": "甘肃省",
+      "location": {
+        "address": "兰州市城关区东岗西路525-1号"
+      }
+    }
+  ]
+}

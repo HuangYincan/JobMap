@@ -1,0 +1,18 @@
+{
+  "slug": "qq-BOSS直聘",
+  "name": "BOSS直聘",
+  "official_url": "https://www.zhipin.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-BOSS直聘-site-hq",
+      "name": "BOSS直聘",
+      "city": "BOSS直聘总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "qq-桂林银行",
+  "name": "桂林银行",
+  "official_url": "https://app.mokahr.com/apply/guilinbank/37310#/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-桂林银行-site-hq",
+      "name": "桂林银行",
+      "city": "桂林市",
+      "province": "广西壮族自治区",
+      "location": {}
+    }
+  ]
+}

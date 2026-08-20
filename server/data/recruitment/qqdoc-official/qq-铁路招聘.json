@@ -1,0 +1,19 @@
+{
+  "slug": "qq-铁路招聘",
+  "name": "铁路招聘",
+  "official_url": "https://rczp.china-railway.com.cn/page/recruitment/rec_info.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-铁路招聘-site-hq",
+      "name": "铁路招聘",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区复兴路10号"
+      }
+    }
+  ]
+}

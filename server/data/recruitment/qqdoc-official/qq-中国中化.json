@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国中化",
+  "name": "中国中化",
+  "official_url": "https://sinochem.hotjob.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国中化-site-hq",
+      "name": "中国中化",
+      "city": "中国中化总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

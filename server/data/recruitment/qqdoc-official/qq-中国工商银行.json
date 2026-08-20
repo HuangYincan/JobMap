@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国工商银行",
+  "name": "中国工商银行",
+  "official_url": "https://job.icbc.com.cn/pc/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国工商银行-site-hq",
+      "name": "中国工商银行",
+      "city": "中国工商银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国邮储",
+  "name": "中国邮储",
+  "official_url": "https://www.psbc.com/cn/gyyc/rczp/xyzp/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国邮储-site-hq",
+      "name": "中国邮储",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "slug": "qq-中国钢研科技集团",
+  "name": "中国钢研科技集团",
+  "official_url": "https://www.cisri.com.cn/rlzy/rczm.htm",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国钢研科技集团-site-hq",
+      "name": "中国钢研科技集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区学院南路76号"
+      }
+    }
+  ]
+}

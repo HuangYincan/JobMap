@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国农业发展集团",
+  "name": "中国农业发展集团",
+  "official_url": "https://www.cnadc.com.cn/tzgg/index.jhtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国农业发展集团-site-hq",
+      "name": "中国农业发展集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

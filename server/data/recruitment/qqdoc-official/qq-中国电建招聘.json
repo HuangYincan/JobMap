@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国电建招聘",
+  "name": "中国电建招聘",
+  "official_url": "https://zhaopin.powerchina.cn/index",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国电建招聘-site-hq",
+      "name": "中国电建招聘",
+      "city": "中国电建招聘总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

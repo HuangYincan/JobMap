@@ -1,0 +1,17 @@
+{
+  "slug": "qq-青岛农商行",
+  "name": "青岛农商行",
+  "official_url": "https://www.qrcb.com.cn/qrcb/rczp/#/home",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-青岛农商行-site-hq",
+      "name": "青岛农商行",
+      "city": "青岛市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

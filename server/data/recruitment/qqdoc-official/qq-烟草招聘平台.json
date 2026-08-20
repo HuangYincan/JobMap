@@ -1,0 +1,18 @@
+{
+  "slug": "qq-烟草招聘平台",
+  "name": "烟草招聘平台",
+  "official_url": "http://www.tobacco.gov.cn/gjyc/zpxx/list.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-烟草招聘平台-site-hq",
+      "name": "烟草招聘平台",
+      "city": "烟草招聘平台总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

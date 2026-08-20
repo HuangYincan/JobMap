@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国电子",
+  "name": "中国电子",
+  "official_url": "https://cec.hotjob.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国电子-site-hq",
+      "name": "中国电子",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

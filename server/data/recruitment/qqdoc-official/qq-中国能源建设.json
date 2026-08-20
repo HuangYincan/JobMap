@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国能源建设",
+  "name": "中国能源建设",
+  "official_url": "https://www.ceec.net.cn/col/col11057/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国能源建设-site-hq",
+      "name": "中国能源建设",
+      "city": "中国能源建设总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

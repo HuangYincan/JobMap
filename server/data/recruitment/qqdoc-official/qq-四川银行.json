@@ -1,0 +1,17 @@
+{
+  "slug": "qq-四川银行",
+  "name": "四川银行",
+  "official_url": "https://www.scbank.cn/cn/col307/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-四川银行-site-hq",
+      "name": "四川银行",
+      "city": "成都市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国交建",
+  "name": "中国交建",
+  "official_url": "https://www.ccccltd.cn/rlzy/rczp/zpgg/zpgg_zgjjzp/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国交建-site-hq",
+      "name": "中国交建",
+      "city": "中国交建总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

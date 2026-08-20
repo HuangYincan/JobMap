@@ -4,6 +4,7 @@
 import { bossAdapter } from '../src/lib/recruitment-adapters/boss.ts';
 import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
 import { officialCareerAdapter } from '../src/lib/recruitment-adapters/official-career.ts';
+import { qqdocOfficialAdapter } from '../src/lib/recruitment-adapters/qqdoc-official.ts';
 import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
 import { seedRecruitmentAdapter } from '../src/lib/recruitment-adapters/seed.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
@@ -11,6 +12,7 @@ import { listImportedSitesNeedingGeocode, planSiteGeocode } from '../src/lib/sit
 
 const drops = await Promise.all([
   seedRecruitmentAdapter.list(),
+  qqdocOfficialAdapter().list(),
   officialCareerAdapter().list(),
   bossAdapter().list(),
   nowcoderAdapter().list(),

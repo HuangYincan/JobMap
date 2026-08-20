@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国建材集团",
+  "name": "中国建材集团",
+  "official_url": "https://www.cnbm.com.cn/CNBM/000000090005/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国建材集团-site-hq",
+      "name": "中国建材集团",
+      "city": "中国建材集团总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

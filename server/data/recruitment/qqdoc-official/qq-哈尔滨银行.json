@@ -1,0 +1,17 @@
+{
+  "slug": "qq-哈尔滨银行",
+  "name": "哈尔滨银行",
+  "official_url": "https://www.hrbb.com.cn/harBinBank/jrhx/hxzp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-哈尔滨银行-site-hq",
+      "name": "哈尔滨银行",
+      "city": "哈尔滨市",
+      "province": "黑龙江省",
+      "location": {}
+    }
+  ]
+}

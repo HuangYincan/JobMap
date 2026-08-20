@@ -1,0 +1,18 @@
+{
+  "slug": "qq-昆仑银行",
+  "name": "昆仑银行",
+  "official_url": "https://www.klb.cn/eportal/ui?pageId=488946",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-昆仑银行-site-hq",
+      "name": "昆仑银行",
+      "city": "昆仑银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

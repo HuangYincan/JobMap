@@ -1,0 +1,18 @@
+{
+  "slug": "qq-应届生求职网",
+  "name": "应届生求职网",
+  "official_url": "https://www.yingjiesheng.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-应届生求职网-site-hq",
+      "name": "应届生求职网",
+      "city": "应届生求职网总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

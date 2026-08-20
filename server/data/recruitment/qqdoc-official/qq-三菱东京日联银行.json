@@ -1,0 +1,18 @@
+{
+  "slug": "qq-三菱东京日联银行",
+  "name": "三菱东京日联银行",
+  "official_url": "https://www.bk.mufg.jp/global/careers/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-三菱东京日联银行-site-hq",
+      "name": "三菱东京日联银行",
+      "city": "三菱东京日联银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

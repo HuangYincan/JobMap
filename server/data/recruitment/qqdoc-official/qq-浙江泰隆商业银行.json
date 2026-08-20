@@ -1,0 +1,18 @@
+{
+  "slug": "qq-浙江泰隆商业银行",
+  "name": "浙江泰隆商业银行",
+  "official_url": "https://zjtlcb.zhiye.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-浙江泰隆商业银行-site-hq",
+      "name": "浙江泰隆商业银行",
+      "city": "浙江泰隆商业银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

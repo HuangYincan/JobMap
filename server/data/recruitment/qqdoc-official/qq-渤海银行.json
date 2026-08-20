@@ -1,0 +1,17 @@
+{
+  "slug": "qq-渤海银行",
+  "name": "渤海银行",
+  "official_url": "https://www.cbhb.com.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-渤海银行-site-hq",
+      "name": "渤海银行",
+      "city": "天津市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

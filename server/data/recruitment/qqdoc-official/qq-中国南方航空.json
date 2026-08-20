@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国南方航空",
+  "name": "中国南方航空",
+  "official_url": "https://job.csair.cn/#/home",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国南方航空-site-hq",
+      "name": "中国南方航空",
+      "city": "中国南方航空总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

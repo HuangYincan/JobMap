@@ -1,0 +1,17 @@
+{
+  "slug": "qq-大连银行",
+  "name": "大连银行",
+  "official_url": "https://www.bankofdl.com/home/pc/gywm/cpyc/rczp/index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-大连银行-site-hq",
+      "name": "大连银行",
+      "city": "大连市",
+      "province": "辽宁省",
+      "location": {}
+    }
+  ]
+}

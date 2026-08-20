@@ -1,0 +1,18 @@
+{
+  "slug": "qq-花旗银行",
+  "name": "花旗银行",
+  "official_url": "https://jobs.citi.com/search-jobs",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-花旗银行-site-hq",
+      "name": "花旗银行",
+      "city": "花旗银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

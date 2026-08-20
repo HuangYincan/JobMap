@@ -1,0 +1,18 @@
+{
+  "slug": "qq-中国远洋海运集团",
+  "name": "中国远洋海运集团",
+  "official_url": "https://www.coscoshipping.com/col9555/art/2022/art_9555_287771.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国远洋海运集团-site-hq",
+      "name": "中国远洋海运集团",
+      "city": "中国远洋海运集团总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

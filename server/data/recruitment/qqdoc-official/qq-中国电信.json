@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国电信",
+  "name": "中国电信",
+  "official_url": "http://www.chinatelecom.com.cn/zp/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国电信-site-hq",
+      "name": "中国电信",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

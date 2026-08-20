@@ -1,0 +1,18 @@
+{
+  "slug": "qq-恒丰银行",
+  "name": "恒丰银行",
+  "official_url": "https://career.hfbank.com.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-恒丰银行-site-hq",
+      "name": "恒丰银行",
+      "city": "恒丰银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

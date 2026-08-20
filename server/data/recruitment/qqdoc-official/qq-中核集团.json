@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中核集团",
+  "name": "中核集团",
+  "official_url": "https://cnnc.zhiye.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中核集团-site-hq",
+      "name": "中核集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

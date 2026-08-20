@@ -1,0 +1,17 @@
+{
+  "slug": "qq-交通银行",
+  "name": "交通银行",
+  "official_url": "https://job.bankcomm.com/#/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-交通银行-site-hq",
+      "name": "交通银行",
+      "city": "上海市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import { TIER_DEFAULT } from './lod.ts';
 import { bossAdapter } from './recruitment-adapters/boss.ts';
 import { nowcoderAdapter } from './recruitment-adapters/nowcoder.ts';
 import { officialCareerAdapter } from './recruitment-adapters/official-career.ts';
+import { qqdocOfficialAdapter } from './recruitment-adapters/qqdoc-official.ts';
 import { radarAdapter } from './recruitment-adapters/radar.ts';
 import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
 import { shixisengAdapter } from './recruitment-adapters/shixiseng.ts';
@@ -84,6 +85,14 @@ const SOURCE_META: Record<string, { originUri: string; authorizationBasis: strin
     authorizationBasis: 'apache-2.0',
     accessMethod: 'public-file',
     attribution: 'xiaozhao-radar contributors (Apache-2.0); Domain Map field mapping',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+  },
+  'qqdoc-official': {
+    originUri: 'Tencent Docs public share (27届秋招信息汇总, docs.qq.com)',
+    authorizationBasis: 'public-share',
+    accessMethod: 'manual-curation',
+    attribution: 'Tencent Docs public share curated by user + boss extraction',
     retention: 'until-replaced',
     deletion: 'delete-with-source',
   },
@@ -236,7 +245,8 @@ export function planRecruitmentImport(input: SourceCompany[]): ImportPlan {
 }
 
 export async function planSeedImport(): Promise<ImportPlan> {
-  const [seed, official, boss, nowcoder, shixiseng, radar] = await Promise.all([
+  const [qqdocOfficial, seed, official, boss, nowcoder, shixiseng, radar] = await Promise.all([
+    qqdocOfficialAdapter().list(),
     seedRecruitmentAdapter.list(),
     officialCareerAdapter().list(),
     bossAdapter().list(),
@@ -249,7 +259,15 @@ export async function planSeedImport(): Promise<ImportPlan> {
   // 的当前数据 (2026-08-19: tencent 被 seed 的 120.155 旧坐标盖掉, deepseek
   // tier 被 seed 的 12 盖掉官方 drop 的 1, 高 zoom 才可见)。seed 只补
   // 无 drops 的公司 (坐标骨架)。
-  const plan = planRecruitmentImport([...official, ...radar, ...boss, ...nowcoder, ...shixiseng, ...seed]);
+  const plan = planRecruitmentImport([
+    ...qqdocOfficial,
+    ...official,
+    ...radar,
+    ...boss,
+    ...nowcoder,
+    ...shixiseng,
+    ...seed,
+  ]);
   // 数据策略 (2026-08-19): 公司有 portal-* 官方直爬岗位时, 抑制其 radar-*
   // 聚合行。radar 是快照聚合 (合成岗位, 非真实 JD); 官方 ATS 直爬是雇主录入
   // 的真实岗位 —— 同 slug 并存时后者优先 (dedupe 已保官方站点/坐标)。

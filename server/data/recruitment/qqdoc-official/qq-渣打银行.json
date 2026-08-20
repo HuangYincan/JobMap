@@ -1,0 +1,18 @@
+{
+  "slug": "qq-渣打银行",
+  "name": "渣打银行",
+  "official_url": "https://www.sc.com/en/global-careers/early-careers/apply/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-渣打银行-site-hq",
+      "name": "渣打银行",
+      "city": "渣打银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}

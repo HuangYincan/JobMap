@@ -1,0 +1,17 @@
+{
+  "slug": "qq-顺德农商行",
+  "name": "顺德农商行",
+  "official_url": "https://www.sdebank.com/mainsite/rczp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-顺德农商行-site-hq",
+      "name": "顺德农商行",
+      "city": "佛山市",
+      "province": "广东省",
+      "location": {}
+    }
+  ]
+}

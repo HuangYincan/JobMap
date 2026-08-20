@@ -1,0 +1,18 @@
+{
+  "slug": "qq-齐鲁银行",
+  "name": "齐鲁银行",
+  "official_url": "https://www.qlbchina.com/qlbchina/rczp/shzp/zpgg/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-齐鲁银行-site-hq",
+      "name": "齐鲁银行",
+      "city": "齐鲁银行总部",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "city_pending": true
+}
