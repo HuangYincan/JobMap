@@ -1,6 +1,6 @@
 # 数据库查询笔记（2026-08-16）
 
-Live PostGIS apply is verified (`001`–`010`, 51 companies / 51 sites). This page records **indexes already in migrations**, **real `account-store` SQL**, and a 2026-08-16 gist `EXPLAIN`. Without `DATABASE_URL` those statements do not run and callers use memory / seed.
+Live PostGIS apply is verified (`001`–`016`, 51 companies / 51 sites at the 2026-08-16 baseline; national scope and Hangzhou POI tables since). This page records **indexes already in migrations**, **real `account-store` SQL**, and a 2026-08-16 gist `EXPLAIN`. Without `DATABASE_URL` those statements do not run and callers use memory / seed.
 
 **不要**在没有库的情况下把「查询优化」标成已用 `EXPLAIN ANALYZE` 验证。空间 clip 和账户列表已在本机 51 家 / 1 个用户上跑过 `EXPLAIN`；新查询仍要自己量。
 
@@ -84,7 +84,7 @@ gist 已接上。行数涨到几百以后，单独的 bbox 也应切到 Index Sc
 
 ## Docker 通了以后的验收
 
-1. `make db-migrate` 对空库跑完 `001`–`010`。**Done.**
+1. `make db-migrate` 对空库跑完 `001`–`016`。**Done.**
 2. 对上面每条 `account-store` SELECT 跑 `EXPLAIN (ANALYZE, BUFFERS)`：Index Scan / Index Only Scan，不要 Seq Scan。**Done for history / saved / applications / notifications / sessions.**
 3. 招聘 `bbox` 查询确认走 `company_sites_geom_gist`。**Done for `&&` + `ST_DWithin`.** 单独 `&&` 在 51 行时仍 Seq Scan。
 4. `getSessionUser` already `DELETE`s expired sessions (and the missed token) on a cache miss; `consumeOtp` deletes expired challenges for that target. A periodic sweeper can still use `auth_sessions_expires_at_idx` later.
