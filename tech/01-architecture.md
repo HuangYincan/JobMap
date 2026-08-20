@@ -1,19 +1,19 @@
 # 01 - Target Architecture
 
-> **Status:** architecture direction with Phase 1 baseline implemented
-> **Last reviewed:** 2026-08-15
+> **Status:** architecture contract; Phase 1–4 implemented and merged into `dev`
+> **Last reviewed:** 2026-08-21
 
 ## Current Repository Fact
 
-The Phase 1 baseline is implemented on `feature/phase-1-platform-baseline`: an importer Python package with declarative plugin/import validation, ordered PostGIS migrations and a migration runner, a map-access policy seam, and a Next.js frontend shell. Live PostGIS verification, the public documentation site, executable API routes, and production deployment do not yet exist. This document is a design contract for the target system.
+The platform is implemented and runs on `dev`: an importer Python package with declarative plugin/import validation, ordered PostGIS migrations (`001`–`016`, live-applied) with a migration runner, executable API routes, a map-access policy seam, and a Next.js 16 frontend. Live PostGIS verification, the API surface, and the local runbook all exist; the public documentation site and production deployment remain out of scope. This document is the design contract for the current system.
 
 ## MVP Direction
 
-- **Application:** Next.js 15.5 App Router, TypeScript 5.9, React 19. The map shell exists in `server/`; API routes and Tailwind integration are planned for Phase 2.
-- **Database:** PostgreSQL 16 with PostGIS 3.4 is mandatory. PostGIS is the spatial system of record; pgvector is deferred.
-- **Data import:** Python 3.12 with uv in `crawler/`. The manifest validator and local-fixture normalizer exist; scheduled crawling is a later, source-reviewed capability.
-- **Map:** Amap is the intended initial adapter. The current shell renders a CSS-map fallback and reads `NEXT_PUBLIC_AMAP_KEY` to switch adapter mode; runtime multi-engine support is deferred.
-- **Authentication:** the provider and library are undecided. The application-level `map_access`/`can_access_map` seam defines the authorization boundary before map writes exist.
+- **Application:** Next.js 16.3.1 App Router, TypeScript 5.9.3, React 19.2.8, Node 22. The map shell and API routes live in `server/`; styling is CSS Modules (Tailwind was never adopted — see [06-decisions.md](06-decisions.md) ADR-003).
+- **Database:** PostgreSQL 16 with PostGIS 3.4 is mandatory. PostGIS is the spatial system of record; pgvector is deferred. Migrations `001`–`016` are live-applied on the local Docker database.
+- **Data import:** Python 3.12 with uv in `crawler/`. The manifest validator and local-fixture normalizer exist; acquisition follows source-review records (`tech/roles/data/etl/`), and scheduled crawling is a later, source-reviewed capability.
+- **Map:** Amap is the initial adapter. Domain mode inside Hangzhou reads the local `hz_pois` table via `/api/pois/domain-local` (zero AMap calls); outside Hangzhou it falls back to the AMap browser API. Work mode reads the recruitment catalog from PostGIS (`loadServerCatalog`). Runtime multi-engine support is deferred.
+- **Authentication:** self-built demo OTP + OAuth stub (no NextAuth/Clerk — see [06-decisions.md](06-decisions.md)). The application-level `map_access`/`can_access_map` seam defines the authorization boundary.
 
 ## System Boundaries
 
@@ -47,9 +47,9 @@ The MVP starts with users, user-owned maps, and explicit `owner/editor/viewer` m
 
 An import pipeline is `fetch/receive -> validate -> normalize -> provenance -> idempotent upsert -> quality report`. It stores evidence according to the source retention policy and records failures without silently dropping data. Retrying, scheduling, dead-letter handling, and observability are later phases unless required by the first importer.
 
-## Proposed API Contract
+## API Contract
 
-Routes are a design draft until implemented and tested. The eventual API must provide:
+The API is implemented and tested. Current routes include `/api/pois` (list, with `bounds`/`filters` spatial clip), `/api/pois/[id]`, `/api/pois/domain-local` (Hangzhou `hz_pois` ILIKE + tier LOD), `/api/search`, `/api/suggest`, `/api/modes`, `/api/filter-options`, `/api/auth/*`, and `/api/me/*` (account-scoped: search history, saved places, applications, notifications). The typed contract is in [14-api-contract.md](14-api-contract.md). The contract guarantees:
 
 - identity and map authorization before data access;
 - schema validation, bounded pagination/cursors, strict bbox/radius parsing, and parameterized queries;
@@ -65,15 +65,15 @@ AI is deferred. When introduced, it may only return a discriminated allowlist su
 ## Target Directory Structure
 
 ```text
-server/                 # planned Next.js application
-crawler/                # planned approved-data importer
-db/migrations/          # planned ordered SQL migrations
-db/scripts/             # planned migration runner
-tests/                  # planned cross-service test suites
+server/                 # Next.js application (App Router + API routes)
+crawler/                # approved-data importer (Python + uv)
+db/migrations/          # ordered SQL migrations (001–016, live-applied)
+db/scripts/             # migration runner
+tests/                  # cross-service test suites
 tech/zh-cn/             # planned public documentation source
 tech/roles/             # internal evidence records
 ```
 
 ## Phase 1 Required Decisions
 
-Before persistent API implementation, record: supported Node/Python versions, auth strategy, application-vs-RLS enforcement, migration convention, manifest validator, source registry format, environment variables, and local development topology. ORM, cache, pgvector, LLM provider, production deployment, and multi-engine map support remain undecided.
+Resolved: supported Node/Python versions (Node 22, Python 3.12), auth strategy (self-built OTP + OAuth stub), application-vs-RLS enforcement (application-level), migration convention (ordered SQL + ledger), manifest validator, source registry format, environment variables, and local development topology. ORM, cache, pgvector, LLM provider, production deployment, and multi-engine map support remain undecided.
