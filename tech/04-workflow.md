@@ -69,8 +69,10 @@ database). To keep branches mergeable and the main working tree stable:
 Claude Code: `EnterWorktree` / `ExitWorktree` manage `.claude/worktrees/`.
 Operational detail lives in `.claude/skills/parallel-development/SKILL.md`.
 
-> **Branch state (2026-08-17):** `dev` was synced with `feature/phase-2-multi-mode`
-> — all of Phase 1/2 now lives on `dev`. Cut new `feature/` / `fix/` branches from `dev`.
+> **Branch state (2026-08-21):** `feature/phase-2-multi-mode` and
+> `feature/phase-1-platform-baseline` have been merged into `dev` and deleted.
+> `dev` is the current baseline for all Phase 1–4 work. Cut new `feature/` / `fix/`
+> branches from `dev`.
 
 ### Parallel role skills (2026-08-18)
 
