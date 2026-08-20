@@ -33,7 +33,7 @@ test('qqdoc-official adapter reads all 142 drops into SourceCompany', async () =
     assert.ok(company.industries.length >= 1, `${company.name} needs an industry tag`);
     assert.ok(/^https?:\/\//.test(company.careerUrl), `${company.name} careerUrl = official_url`);
     assert.ok(company.sites.length >= 1, `${company.name} needs a site`);
-    assert.equal(company.positions.length, 0);
+    assert.ok(Array.isArray(company.positions), `${company.name} positions array (may be appended by qqdoc-jobs)`);
   }
 });
 

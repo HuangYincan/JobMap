@@ -39,6 +39,8 @@ export interface QqdocOfficialDrop {
   /** 地址提取失败标记（extract-qqdoc-addresses.mjs 写入，adapter 忽略）。 */
   city_pending?: boolean;
   sites?: QqdocOfficialSite[];
+  /** 投递链接岗位（extract-qqdoc-jobs.mjs 按 name 匹配追加；缺省空数组）。 */
+  positions?: Array<Record<string, unknown>>;
 }
 
 const INDUSTRY_BY_NAME: ReadonlyArray<[RegExp, string]> = [
@@ -83,6 +85,11 @@ export function qqdocOfficialToSourceCompany(raw: unknown): SourceCompany | null
       province: site.province || undefined,
       location: dropLocation(site.location),
     }));
+  const positions: SourceCompany['positions'] = Array.isArray(drop.positions)
+    ? (drop.positions as unknown as SourceCompany['positions']).filter(
+        (pos) => pos && typeof pos.externalId === 'string' && pos.externalId.length > 0,
+      )
+    : [];
   return {
     slug: drop.slug,
     name: drop.name,
@@ -91,7 +98,7 @@ export function qqdocOfficialToSourceCompany(raw: unknown): SourceCompany | null
     scale: 'enterprise',
     careerUrl: drop.official_url,
     sites,
-    positions: [],
+    positions,
   };
 }
 
