@@ -458,7 +458,8 @@ for (const { file, company } of companies) {
 }
 
 let wrote = 0;
-if (!dryRun && !stoppedByBudget) {
+if (!dryRun) {
+  // 预算耗尽提前停止时也写回已处理的公司 (幂等, 重跑续采)。
   for (const { file, company } of companies) {
     if (!touched.includes(file)) continue;
     await writeFile(join(QQDOC_DIR, file), `${JSON.stringify(company, null, 2)}\n`, 'utf8');
