@@ -229,6 +229,41 @@ export function shouldShortCircuitQuota(history: ReadonlyArray<string | null | u
   return window.length === n && window.every((r) => isQuotaClassReason(r));
 }
 
+// ---------------------------------------------------------------------------
+// Place-search result memo (2026-08-21, fix/geocode-place-memo).
+// AMap place-text 免费配额 100 次/天 — 同一公司同一城市的多个 office 站点
+// (安克创新 38 站 / 元气森林 71 站 / 小鹏 52 站) 用相同 query+region 逐站重复
+// 调用是结构性浪费。memo 只缓存成功命中 (poi 非空); 失败/空结果/配额类失败
+// 绝不缓存 — 配额恢复后必须重新尝试, 缓存旧失败会永久卡死站点。key 精确到
+// (query, province, city): 公司名相同但城市不同 → 不同 key, 不串。
+// 该策略放在本模块 (而非 scripts/geocode-sites-apply.mjs 内) 是为了可单测 —
+// 脚本顶层跑主循环 + 真实网络, 无法 import; 与 shouldShortCircuitQuota 同模式。
+// ---------------------------------------------------------------------------
+
+export interface PlaceSearchMemoHit {
+  poi: OfficePoiCandidate;
+  confidence: GeocodeConfidence;
+  reason: string;
+  provider: string;
+}
+
+/** Memo key: query + target (province, city) 精确绑定 — 城市不同不串。 */
+export function placeSearchMemoKey(query: string, target: CityTarget): string {
+  return `${query} ${target.province} ${target.city}`;
+}
+
+/**
+ * 只缓存成功命中 (poi 非空)。失败/空结果/配额类失败 (poi: null) 绝不写入 —
+ * 配额恢复后调用方必须重新尝试, 缓存旧失败会永久卡死站点。
+ */
+export function placeSearchMemoSet(
+  memo: Map<string, PlaceSearchMemoHit>,
+  key: string,
+  hit: PlaceSearchMemoHit | null | undefined,
+): void {
+  if (hit?.poi) memo.set(key, hit);
+}
+
 /** A site whose address names a real street/building — geocodable as-is. */
 export function siteHasStreetAddress(site: CompanySite): boolean {
   const address = site.location?.address?.trim();

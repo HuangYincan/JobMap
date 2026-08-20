@@ -41,6 +41,8 @@ import {
   geocodeAddressRest,
   gradeOfficePoi,
   pickBestOfficePoi,
+  placeSearchMemoKey,
+  placeSearchMemoSet,
   placeTextSearchRest,
   regeoCityRest,
   regeoMatchesTarget,
@@ -148,14 +150,29 @@ function dropFiles() {
   return files;
 }
 
+// --- place-search memo (2026-08-21, fix/geocode-place-memo) ------------------
+// AMap place-text 免费配额 100 次/天, 而同一公司同一城市的多个 office 站点
+// (安克创新 38 站 / 元气森林 71 站 / 小鹏 52 站) 用相同 query+region 逐站独立
+// place-search 是结构性浪费。按 (query, province, city) 只缓存成功命中; 失败/
+// 空结果/配额类失败绝不缓存 (配额恢复后必须重试, 缓存旧失败会永久卡死站点)。
+// override 站点 (manual-override) 不走 place-text, 不参与 memo; w4 地址门控
+// 路径 (geocodeAddressRest) 不受影响。regeo 验证仍按站点独立执行 (5000 次/天,
+// 不是瓶颈)。
+const placeSearchMemo = new Map();
+
 /**
  * 公司名城市级 place-search 解析 (无街道地址 / 地址不可信时的统一路径)。
  * 2026-08-20 (w4): 从主循环抽出的公共 helper —— 地址-城市一致性闸门拒绝的
  * 站点与 regeo 区级校验拒绝的地址检索命中都回退到这里, 而不是写错坐标。
+ * 2026-08-21 (fix/geocode-place-memo): memo 成功命中 —— 同 query+region 的
+ * 后续站点直接复用第一个命中 POI, 不再逐站消耗 place-text 配额。
  */
 async function searchCompanyPoi(query, target) {
   const out = { poi: null, confidence: null, reason: '', provider: 'amap' };
   if (DRY_RUN || env.AMAP_WEB_KEY || env.BAIDU_MAP_AK) {
+    const memoKey = placeSearchMemoKey(query, target);
+    const cached = placeSearchMemo.get(memoKey);
+    if (cached) return cached;
     const hit = await placeTextSearchRest(query, target.city);
     await sleep(hit.amapUnavailable ? 600 : 340);
     if (hit.ok && hit.pois.length) {
@@ -172,6 +189,8 @@ async function searchCompanyPoi(query, target) {
       out.reason = hit.reason ?? 'no-pois';
     }
     if (hit.provider) out.provider = hit.provider;
+    // 只缓存成功命中 (poi 非空); 失败/空/配额类失败留在 memo 外, 下次重试。
+    placeSearchMemoSet(placeSearchMemo, memoKey, out);
   }
   return out;
 }
