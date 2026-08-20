@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国机械科学研究总院",
+  "name": "中国机械科学研究总院",
+  "official_url": "https://www.cam.com.cn/channels/175.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国机械科学研究总院-site-hq",
+      "name": "中国机械科学研究总院",
+      "city": "中国机械科学研究总院总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

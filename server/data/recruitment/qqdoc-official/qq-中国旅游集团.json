@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国旅游集团",
+  "name": "中国旅游集团",
+  "official_url": "https://www.ctg.cn/talent-concept",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国旅游集团-site-hq",
+      "name": "中国旅游集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

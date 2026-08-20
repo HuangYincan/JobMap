@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国航空器材集团",
+  "name": "中国航空器材集团",
+  "official_url": "http://www.casc.com.cn/cas/?cat=16",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国航空器材集团-site-hq",
+      "name": "中国航空器材集团",
+      "city": "中国航空器材集团总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

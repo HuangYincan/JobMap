@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国中铁股份",
+  "name": "中国中铁股份",
+  "official_url": "https://www.crecg.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国中铁股份-site-hq",
+      "name": "中国中铁股份",
+      "city": "中国中铁股份总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

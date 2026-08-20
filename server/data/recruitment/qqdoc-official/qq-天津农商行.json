@@ -1,0 +1,17 @@
+{
+  "slug": "qq-天津农商行",
+  "name": "天津农商行",
+  "official_url": "https://www.trcbank.com.cn/class/jobs/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-天津农商行-site-hq",
+      "name": "天津农商行",
+      "city": "天津农商行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

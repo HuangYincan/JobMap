@@ -1,0 +1,17 @@
+{
+  "slug": "qq-保利集团",
+  "name": "保利集团",
+  "official_url": "https://mp.weixin.qq.com/s/nu5IzsUUnAjqGeysh4mHtg",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-保利集团-site-hq",
+      "name": "保利集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

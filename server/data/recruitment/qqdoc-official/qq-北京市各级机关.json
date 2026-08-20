@@ -1,0 +1,17 @@
+{
+  "slug": "qq-北京市各级机关",
+  "name": "北京市各级机关",
+  "official_url": "https://rsj.beijing.gov.cn/bm/ztzl/gwy/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-北京市各级机关-site-hq",
+      "name": "北京市各级机关",
+      "city": "北京市各级机关总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

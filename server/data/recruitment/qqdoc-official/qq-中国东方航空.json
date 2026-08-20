@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国东方航空",
+  "name": "中国东方航空",
+  "official_url": "https://job.ceair.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国东方航空-site-hq",
+      "name": "中国东方航空",
+      "city": "中国东方航空总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

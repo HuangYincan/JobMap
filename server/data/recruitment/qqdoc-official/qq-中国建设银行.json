@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国建设银行",
+  "name": "中国建设银行",
+  "official_url": "https://job3.ccb.com/cn/job/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国建设银行-site-hq",
+      "name": "中国建设银行",
+      "city": "中国建设银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

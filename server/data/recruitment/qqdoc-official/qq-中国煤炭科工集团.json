@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国煤炭科工集团",
+  "name": "中国煤炭科工集团",
+  "official_url": "https://www.ccteg.cn/zh/article/textList/70",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国煤炭科工集团-site-hq",
+      "name": "中国煤炭科工集团",
+      "city": "中国煤炭科工集团总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

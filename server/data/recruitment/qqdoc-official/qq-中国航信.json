@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国航信",
+  "name": "中国航信",
+  "official_url": "http://www.travelsky.cn/publish/main/38/61/258/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国航信-site-hq",
+      "name": "中国航信",
+      "city": "中国航信总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

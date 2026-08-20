@@ -1,0 +1,17 @@
+{
+  "slug": "qq-杭州银行",
+  "name": "杭州银行",
+  "official_url": "https://myjob.hzbank.com.cn/hzzp-apply-web/static/index.html#/index",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-杭州银行-site-hq",
+      "name": "杭州银行",
+      "city": "杭州市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

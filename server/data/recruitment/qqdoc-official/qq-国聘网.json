@@ -1,0 +1,17 @@
+{
+  "slug": "qq-国聘网",
+  "name": "国聘网",
+  "official_url": "https://job.iguopin.com/company?id=c9675c1112d741480481894415200256",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国聘网-site-hq",
+      "name": "国聘网",
+      "city": "国聘网总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

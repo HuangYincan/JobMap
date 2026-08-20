@@ -1,0 +1,17 @@
+{
+  "slug": "qq-湖北银行",
+  "name": "湖北银行",
+  "official_url": "http://www.hubeibank.cn/cn/rczp/zhbbzp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-湖北银行-site-hq",
+      "name": "湖北银行",
+      "city": "湖北银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

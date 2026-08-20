@@ -1,0 +1,17 @@
+{
+  "slug": "qq-常熟农商行",
+  "name": "常熟农商行",
+  "official_url": "http://www.csrcbank.com/tb/rczp/zxzp_358/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-常熟农商行-site-hq",
+      "name": "常熟农商行",
+      "city": "常熟农商行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

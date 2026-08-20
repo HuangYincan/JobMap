@@ -1,0 +1,17 @@
+{
+  "slug": "qq-国药集团",
+  "name": "国药集团",
+  "official_url": "http://www.sinopharm.com/recruitment.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国药集团-site-hq",
+      "name": "国药集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

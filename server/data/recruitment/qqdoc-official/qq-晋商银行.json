@@ -1,0 +1,17 @@
+{
+  "slug": "qq-晋商银行",
+  "name": "晋商银行",
+  "official_url": "https://www.jshbank.com/jsyh/index/jssy/gsgg/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-晋商银行-site-hq",
+      "name": "晋商银行",
+      "city": "晋商银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中智集团",
+  "name": "中智集团",
+  "official_url": "http://www.ciic.com.cn/ciic/rczp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中智集团-site-hq",
+      "name": "中智集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

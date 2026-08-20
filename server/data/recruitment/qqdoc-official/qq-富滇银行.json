@@ -1,0 +1,17 @@
+{
+  "slug": "qq-富滇银行",
+  "name": "富滇银行",
+  "official_url": "https://www.fudian-bank.com/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-富滇银行-site-hq",
+      "name": "富滇银行",
+      "city": "富滇银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

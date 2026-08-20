@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国商飞",
+  "name": "中国商飞",
+  "official_url": "https://zhaopin.comac.cc/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国商飞-site-hq",
+      "name": "中国商飞",
+      "city": "上海市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

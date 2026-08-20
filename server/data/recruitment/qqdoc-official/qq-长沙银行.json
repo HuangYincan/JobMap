@@ -1,0 +1,17 @@
+{
+  "slug": "qq-长沙银行",
+  "name": "长沙银行",
+  "official_url": "https://wecruit.hotjob.cn/SU628ddf200dcad4099b64f468/pb/index.html#/notFound?prompt=500",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-长沙银行-site-hq",
+      "name": "长沙银行",
+      "city": "长沙市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

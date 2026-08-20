@@ -1,0 +1,17 @@
+{
+  "slug": "qq-新兴际华集团",
+  "name": "新兴际华集团",
+  "official_url": "http://www.xxcig.com/web/xwzx/jtgg/index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-新兴际华集团-site-hq",
+      "name": "新兴际华集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

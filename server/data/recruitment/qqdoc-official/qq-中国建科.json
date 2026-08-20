@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国建科",
+  "name": "中国建科",
+  "official_url": "https://www.cctc.cn/rczp/rlzy/xyzp/index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国建科-site-hq",
+      "name": "中国建科",
+      "city": "中国建科总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

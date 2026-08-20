@@ -1,0 +1,17 @@
+{
+  "slug": "qq-南海农商行",
+  "name": "南海农商行",
+  "official_url": "https://www.nanhaibank.com/zpgg/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-南海农商行-site-hq",
+      "name": "南海农商行",
+      "city": "南海农商行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "qq-杭州联合银行",
+  "name": "杭州联合银行",
+  "official_url": "https://www.urcb.com/urcb/gyyl1/rczp/zpgg/index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-杭州联合银行-site-hq",
+      "name": "杭州联合银行",
+      "city": "杭州联合银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

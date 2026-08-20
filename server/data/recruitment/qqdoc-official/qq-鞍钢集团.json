@@ -1,0 +1,17 @@
+{
+  "slug": "qq-鞍钢集团",
+  "name": "鞍钢集团",
+  "official_url": "http://www.ansteel.cn/kechixufazhan/renliziyuan/zhaopinxinxi/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-鞍钢集团-site-hq",
+      "name": "鞍钢集团",
+      "city": "鞍山市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

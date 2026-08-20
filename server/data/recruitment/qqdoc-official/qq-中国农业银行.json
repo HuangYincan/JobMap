@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国农业银行",
+  "name": "中国农业银行",
+  "official_url": "https://career.abchina.com.cn/build/index.html#/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国农业银行-site-hq",
+      "name": "中国农业银行",
+      "city": "中国农业银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

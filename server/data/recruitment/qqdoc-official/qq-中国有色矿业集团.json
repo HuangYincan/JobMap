@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国有色矿业集团",
+  "name": "中国有色矿业集团",
+  "official_url": "https://hrcnmc.iguopin.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国有色矿业集团-site-hq",
+      "name": "中国有色矿业集团",
+      "city": "中国有色矿业集团总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

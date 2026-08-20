@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国铁建股份",
+  "name": "中国铁建股份",
+  "official_url": "https://www.crcc.cn/col/col214/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国铁建股份-site-hq",
+      "name": "中国铁建股份",
+      "city": "中国铁建股份总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

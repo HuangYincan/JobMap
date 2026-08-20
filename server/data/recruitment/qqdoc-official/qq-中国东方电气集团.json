@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国东方电气集团",
+  "name": "中国东方电气集团",
+  "official_url": "https://www.dongfang.com/zxns/gdrc.htm",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国东方电气集团-site-hq",
+      "name": "中国东方电气集团",
+      "city": "中国东方电气集团总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

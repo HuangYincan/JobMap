@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中航集团",
+  "name": "中航集团",
+  "official_url": "http://zhaopin.airchina.com.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中航集团-site-hq",
+      "name": "中航集团",
+      "city": "中航集团总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

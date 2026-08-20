@@ -1,0 +1,17 @@
+{
+  "slug": "qq-东风汽车",
+  "name": "东风汽车",
+  "official_url": "https://dfmc.hotjob.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-东风汽车-site-hq",
+      "name": "东风汽车",
+      "city": "武汉市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

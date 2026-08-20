@@ -1,0 +1,17 @@
+{
+  "slug": "qq-重庆银行",
+  "name": "重庆银行",
+  "official_url": "https://www.cqcbank.com/cn/jrch/rczp/xyzp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-重庆银行-site-hq",
+      "name": "重庆银行",
+      "city": "重庆市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

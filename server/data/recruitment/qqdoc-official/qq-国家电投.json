@@ -1,0 +1,17 @@
+{
+  "slug": "qq-国家电投",
+  "name": "国家电投",
+  "official_url": "http://www.spic.com.cn/2021/jrwm/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国家电投-site-hq",
+      "name": "国家电投",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

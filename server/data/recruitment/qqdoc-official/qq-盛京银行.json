@@ -1,0 +1,17 @@
+{
+  "slug": "qq-盛京银行",
+  "name": "盛京银行",
+  "official_url": "https://zhaopin.shengjingbank.com.cn:8080/zp.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-盛京银行-site-hq",
+      "name": "盛京银行",
+      "city": "沈阳市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

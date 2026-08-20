@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国银行",
+  "name": "中国银行",
+  "official_url": "https://www.boc.cn/aboutboc/bi4/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国银行-site-hq",
+      "name": "中国银行",
+      "city": "中国银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "qq-河北银行",
+  "name": "河北银行",
+  "official_url": "https://hebbank.zhiye.com/home",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-河北银行-site-hq",
+      "name": "河北银行",
+      "city": "河北银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

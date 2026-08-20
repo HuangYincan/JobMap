@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国华电集团",
+  "name": "中国华电集团",
+  "official_url": "https://www.chd.com.cn/site/2/list/c802da7172754e8f8a3fc3bc02d7bfd7_1.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国华电集团-site-hq",
+      "name": "中国华电集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

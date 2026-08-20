@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国煤炭地质总局",
+  "name": "中国煤炭地质总局",
+  "official_url": "http://www.ccgc.cn/?mod=zhaopin&amp;tid=129",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国煤炭地质总局-site-hq",
+      "name": "中国煤炭地质总局",
+      "city": "中国煤炭地质总局总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

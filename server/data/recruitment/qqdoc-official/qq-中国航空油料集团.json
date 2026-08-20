@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国航空油料集团",
+  "name": "中国航空油料集团",
+  "official_url": "http://www.cnaf.com/PORTAL_LNG_RLS_XWGJ.getFormList.do?LM_CODE=CNAF_HR_RCZLHLN&amp;LM_CONTENT_TYPE=2",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国航空油料集团-site-hq",
+      "name": "中国航空油料集团",
+      "city": "中国航空油料集团总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

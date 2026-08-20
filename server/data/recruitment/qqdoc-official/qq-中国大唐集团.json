@@ -1,0 +1,17 @@
+{
+  "slug": "qq-中国大唐集团",
+  "name": "中国大唐集团",
+  "official_url": "https://zhaopin.china-cdt.com/zpgg_index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国大唐集团-site-hq",
+      "name": "中国大唐集团",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

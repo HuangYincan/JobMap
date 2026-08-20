@@ -1,0 +1,17 @@
+{
+  "slug": "qq-微众银行",
+  "name": "微众银行",
+  "official_url": "https://hr.webank.com/apply/webankhr/68/#/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-微众银行-site-hq",
+      "name": "微众银行",
+      "city": "深圳市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

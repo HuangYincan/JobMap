@@ -1,0 +1,17 @@
+{
+  "slug": "qq-甘肃银行",
+  "name": "甘肃银行",
+  "official_url": "https://www.gsbankchina.com/gsyh/gywm/rczp/xyzp/index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-甘肃银行-site-hq",
+      "name": "甘肃银行",
+      "city": "甘肃银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

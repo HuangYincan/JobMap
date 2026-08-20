@@ -1,0 +1,17 @@
+{
+  "slug": "qq-温州银行",
+  "name": "温州银行",
+  "official_url": "https://hr.wzbank.cn/apply/index.action",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-温州银行-site-hq",
+      "name": "温州银行",
+      "city": "温州银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

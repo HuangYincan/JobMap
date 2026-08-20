@@ -1,0 +1,17 @@
+{
+  "slug": "qq-珠海华润银行",
+  "name": "珠海华润银行",
+  "official_url": "https://crc.wintalent.cn/wt/crcbank/web/index?brandCode=1",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-珠海华润银行-site-hq",
+      "name": "珠海华润银行",
+      "city": "珠海华润银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

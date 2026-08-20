@@ -1,0 +1,17 @@
+{
+  "slug": "qq-湖南银行",
+  "name": "湖南银行",
+  "official_url": "https://www.hunan-bank.com/96599/gywx/rczp/index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-湖南银行-site-hq",
+      "name": "湖南银行",
+      "city": "湖南银行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

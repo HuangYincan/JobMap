@@ -1,0 +1,17 @@
+{
+  "slug": "qq-北京农商行",
+  "name": "北京农商行",
+  "official_url": "https://www.bjrcb.com/pc/cn/aboutus/rczp/xyzp/list.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-北京农商行-site-hq",
+      "name": "北京农商行",
+      "city": "北京农商行总部",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "qq-成都银行",
+  "name": "成都银行",
+  "official_url": "https://www.bocd.com.cn/rczp.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-成都银行-site-hq",
+      "name": "成都银行",
+      "city": "成都市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}
