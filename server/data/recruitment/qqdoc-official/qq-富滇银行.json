@@ -9,9 +9,11 @@
     {
       "id": "qq-富滇银行-site-hq",
       "name": "富滇银行",
-      "city": "富滇银行总部",
-      "province": "",
-      "location": {}
+      "city": "昆明市",
+      "province": "云南省",
+      "location": {
+        "address": "昆明市西山区西园路1912号"
+      }
     }
   ]
 }

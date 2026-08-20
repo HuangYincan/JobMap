@@ -9,9 +9,11 @@
     {
       "id": "qq-中国冶金地质总局-site-hq",
       "name": "中国冶金地质总局",
-      "city": "中国冶金地质总局总部",
-      "province": "",
-      "location": {}
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市朝阳区姚家园路105号2座"
+      }
     }
   ]
 }

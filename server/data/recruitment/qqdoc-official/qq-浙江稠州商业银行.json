@@ -9,9 +9,11 @@
     {
       "id": "qq-浙江稠州商业银行-site-hq",
       "name": "浙江稠州商业银行",
-      "city": "浙江稠州商业银行总部",
-      "province": "",
-      "location": {}
+      "city": "金华市",
+      "province": "浙江省",
+      "location": {
+        "address": "金华市义乌市福田街道商城大道188号稠银大厦"
+      }
     }
   ]
 }

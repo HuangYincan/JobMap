@@ -13,5 +13,6 @@
       "province": "",
       "location": {}
     }
-  ]
+  ],
+  "city_pending": true
 }

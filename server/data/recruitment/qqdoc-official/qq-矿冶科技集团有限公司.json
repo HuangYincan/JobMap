@@ -9,9 +9,11 @@
     {
       "id": "qq-矿冶科技集团有限公司-site-hq",
       "name": "矿冶科技集团有限公司",
-      "city": "矿冶科技集团有限公司总部",
-      "province": "",
-      "location": {}
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市南四环西路188号总部基地十八区23号楼"
+      }
     }
   ]
 }

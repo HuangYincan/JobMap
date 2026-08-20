@@ -9,9 +9,11 @@
     {
       "id": "qq-北京农商行-site-hq",
       "name": "北京农商行",
-      "city": "北京农商行总部",
-      "province": "",
-      "location": {}
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市西城区月坛南街"
+      }
     }
   ]
 }

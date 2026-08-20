@@ -9,9 +9,11 @@
     {
       "id": "qq-中国建科-site-hq",
       "name": "中国建科",
-      "city": "中国建科总部",
-      "province": "",
-      "location": {}
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市西城区德胜门外大街36号A座"
+      }
     }
   ]
 }

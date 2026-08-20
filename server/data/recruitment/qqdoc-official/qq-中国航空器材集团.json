@@ -9,9 +9,11 @@
     {
       "id": "qq-中国航空器材集团-site-hq",
       "name": "中国航空器材集团",
-      "city": "中国航空器材集团总部",
-      "province": "",
-      "location": {}
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市顺义区空港工业区A区天纬四街3号"
+      }
     }
   ]
 }

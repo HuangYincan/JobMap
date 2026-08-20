@@ -9,9 +9,11 @@
     {
       "id": "qq-河北银行-site-hq",
       "name": "河北银行",
-      "city": "河北银行总部",
-      "province": "",
-      "location": {}
+      "city": "石家庄市",
+      "province": "河北省",
+      "location": {
+        "address": "石家庄市建设南大街21号"
+      }
     }
   ]
 }

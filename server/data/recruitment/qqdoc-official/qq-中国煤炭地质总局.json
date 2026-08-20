@@ -9,9 +9,11 @@
     {
       "id": "qq-中国煤炭地质总局-site-hq",
       "name": "中国煤炭地质总局",
-      "city": "中国煤炭地质总局总部",
-      "province": "",
-      "location": {}
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区羊坊店东路21号中国煤地大厦100038"
+      }
     }
   ]
 }

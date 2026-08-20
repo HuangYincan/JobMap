@@ -9,9 +9,11 @@
     {
       "id": "qq-贵州银行-site-hq",
       "name": "贵州银行",
-      "city": "贵州银行总部",
-      "province": "",
-      "location": {}
+      "city": "贵阳市",
+      "province": "贵州省",
+      "location": {
+        "address": "贵阳市观山湖区金融城永昌路9号贵州银行总行"
+      }
     }
   ]
 }

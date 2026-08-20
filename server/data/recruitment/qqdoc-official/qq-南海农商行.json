@@ -9,9 +9,11 @@
     {
       "id": "qq-南海农商行-site-hq",
       "name": "南海农商行",
-      "city": "南海农商行总部",
-      "province": "",
-      "location": {}
+      "city": "佛山市",
+      "province": "广东省",
+      "location": {
+        "address": "佛山市南海区桂城南海大道北26号农商银行大厦"
+      }
     }
   ]
 }
