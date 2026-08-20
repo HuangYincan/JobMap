@@ -44,6 +44,7 @@ import {
   placeTextSearchRest,
   regeoCityRest,
   regeoMatchesTarget,
+  shouldShortCircuitQuota,
   siteCityTarget,
   siteHasStreetAddress,
   siteNeedsGeocode,
@@ -191,6 +192,27 @@ for (const p of onMap) {
 }
 const overrides = loadOverrides();
 
+// --- 配额短路 (2026-08-21, fix/geocode-quota-short-circuit) ------------------
+// 2026-08-21 实测: AMap place-text 日配额 100% 耗尽 (infocode 10044) + 百度兜底
+// 返回 302 "天配额超限" 后, 脚本仍逐站空跑 (~1800 站, 数十分钟零产出)。判定:
+// 连续 QUOTA_SHORT_CIRCUIT_N 个已尝试站点全部配额类失败 (quota /
+// baidu-status:302 / no-key) → 提前停止: REPORT 照常打印 + QUOTA_EXHAUSTED
+// 醒目行 + 非零退出码。非配额类失败 (http/empty/parse/regeo-outside:*/401) 或
+// 成功解析都会冲掉窗口, 不会误停。skip 站 (not-in-only-list 等) 不是尝试,
+// 不进窗口, 也不冲窗口。
+const QUOTA_SHORT_CIRCUIT_N = 5;
+let shortCircuited = false;
+/** 每站一条: unresolved 原因字符串 | null(已解析)。 */
+const quotaHistory = [];
+const recordOutcome = (reason) => {
+  quotaHistory.push(reason);
+  if (shouldShortCircuitQuota(quotaHistory, QUOTA_SHORT_CIRCUIT_N)) {
+    shortCircuited = true;
+    return true;
+  }
+  return false;
+};
+
 const files = dropFiles();
 const resolutions = [];
 const applied = [];
@@ -198,7 +220,7 @@ const skipped = [];
 const unresolved = [];
 
 let planCount = 0;
-for (const file of files) {
+mainLoop: for (const file of files) {
   const raw = readJson(file);
   const companies = Array.isArray(raw) ? raw : raw ? [raw] : [];
   for (const company of companies) {
@@ -231,6 +253,7 @@ for (const file of files) {
 
       if (override?.exclude) {
         unresolved.push({ slug, siteId: site.id, query, reason: 'manual-exclude' });
+        if (recordOutcome('manual-exclude')) break mainLoop;
         continue;
       }
       // 2026-08-19:override 城市门控。8/17 的 40 条 legacy override 全为杭州
@@ -275,6 +298,7 @@ for (const file of files) {
 
       if (!poi) {
         unresolved.push({ slug, siteId: site.id, query, reason: reason || 'no-result' });
+        if (recordOutcome(reason || 'no-result')) break mainLoop;
         continue;
       }
 
@@ -288,6 +312,7 @@ for (const file of files) {
         const match = regeoMatchesTarget(re, target);
         if (re.ok && !match.ok) {
           unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match.reason}` });
+          if (recordOutcome(`regeo-outside:${match.reason}`)) break mainLoop;
           continue;
         }
         // 2026-08-20 (w4): 区级校验 —— 地址检索命中但 geocoder 落点所在的区
@@ -298,6 +323,7 @@ for (const file of files) {
           const res = await searchCompanyPoi(query, target);
           if (!res.poi) {
             unresolved.push({ slug, siteId: site.id, query, reason: 'address-district-mismatch' });
+            if (recordOutcome('address-district-mismatch')) break mainLoop;
             continue;
           }
           poi = res.poi;
@@ -309,6 +335,7 @@ for (const file of files) {
           const match2 = regeoMatchesTarget(re2, target);
           if (re2.ok && !match2.ok) {
             unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match2.reason}` });
+            if (recordOutcome(`regeo-outside:${match2.reason}`)) break mainLoop;
             continue;
           }
           verified = re2.ok ? `${re2.cityname ?? ''} ${re2.district ?? ''}`.trim() || re2.province || 'unverified' : 'unverified';
@@ -321,6 +348,7 @@ for (const file of files) {
       const address = district && !poi.address.includes(district) ? `${district}${poi.address}` : poi.address;
 
       resolutions.push({ slug, siteId: site.id, company: company.name, query, city: target.city, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified, provider });
+      recordOutcome(null); // 解析成功冲掉配额窗口 — 配额不是卡点, 不误停
       if (!DRY_RUN && (confidence === 'high' || override)) {
         if (setSiteLocation(file, slug, site.id, { address, lng: round(poi.lng), lat: round(poi.lat) })) {
           applied.push({ slug, siteId: site.id, address, lng: round(poi.lng), lat: round(poi.lat) });
@@ -349,4 +377,13 @@ if (!DRY_RUN) {
   if (applied.length !== resolutions.length) {
     console.log(`Skipped ${resolutions.length - applied.length} low-confidence resolution(s) (use --only to force).`);
   }
+}
+
+// 双配额耗尽 → 提前停止 (REPORT 已按正常收尾同款打印): 醒目说明 + 剩余站数 +
+// 非零退出码 (exit 2)。已写入的站点保留 — 重跑时 siteNeedsGeocode 跳过有坐标
+// 站点, 幂等。
+if (shortCircuited) {
+  const remaining = planCount - resolutions.length - unresolved.length - skipped.length;
+  console.log(`\nQUOTA_EXHAUSTED: AMap+百度 双配额耗尽(或无可用 key),已提前停止,剩余 ${remaining} 站待下次运行。`);
+  process.exit(2);
 }
