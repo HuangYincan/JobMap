@@ -76,6 +76,58 @@ NEXT_PUBLIC_FEATURE_SEARCH=false
 NEXT_PUBLIC_FEATURE_AI_ASSISTANT=false
 ```
 
+## Geocode 兜底链(REST,服务端秘密)
+
+geocode 工具链(`server/src/lib/site-geocode.ts` + `server/scripts/geocode-sites-apply.mjs`)
+按**固定链顺序** `AMap → 百度 → 腾讯` 依次尝试三家 REST provider,脚本 REPORT
+会输出 `PROVIDERS …` 行(由 `getGeocodeProviders()` 注册表生成)展示当前配置。
+
+```bash
+# 高德 Web 服务 key —— 链首。
+# 申请:https://console.amap.com/dev/key/app(创建「Web服务」类型 key)
+AMAP_WEB_KEY=your_amap_web_key_here
+
+# 百度 Web 服务 key —— 第二级兜底(高德配额耗尽或缺 key 时启用)。
+# 申请:https://lbs.baidu.com/apiconsole/key(服务端 AK,无需 referer 白名单)
+BAIDU_MAP_AK=your_baidu_ak_here
+
+# 腾讯 WebService key —— 第三级兜底(百度也失败时启用)。
+# 申请:https://lbs.qq.com 控制台创建 WebService key(可选 IP 白名单;
+# status 110 时核对白名单)
+TENCENT_MAP_KEY=your_tencent_key_here
+```
+
+**语义:**
+
+- **无 key 自动跳过**:某家未配置时,链直接跳到下一家,不影响其他家。
+- **配额耗尽切换**:AMap 返回 `status="0"` + `infocode 10044`(日配额超限)/`10043`
+  视为耗尽 → 切百度;百度 `status 302`(日配额超限)视为耗尽 → 切腾讯;
+  腾讯 `status 121`(每日调用量上限)/`321`/`322` 视为耗尽。
+- 三家均不可用(全缺 key 或配额耗尽)时,脚本短路停止并打印 `QUOTA_EXHAUSTED`
+  报告,已写入结果保留,重跑幂等。
+- 以上三个 key 均为**服务端秘密**:永不打印、永不提交
+  (详见 `server/.env.example` 对应注释)。
+
+## 前端地图引擎 key(NEXT_PUBLIC_*,公开)
+
+前端可选用腾讯/百度地图 JS API 渲染地图(与高德并存)。`NEXT_PUBLIC_*` 变量
+会**内联进浏览器构建产物**,是公开 key:只用于前端加载地图,不能用于服务端
+REST 调用;生产环境切换 key 必须**重新构建**部署,仅改环境变量不生效。
+
+```bash
+# 腾讯位置服务 JS API GL key。
+# 申请:https://lbs.qq.com 控制台新建 key,产品勾选「JS API GL」。
+NEXT_PUBLIC_TENCENT_JSAPI_KEY=your_tencent_jsapi_key_here
+
+# 百度地图 JS API AK(与服务端 BAIDU_MAP_AK 同一控制台,AK 可复用于 JSAPI)。
+# 申请:https://lbs.baidu.com 控制台;JSAPI 需配置 referer 白名单
+# (开发 localhost:3000,生产填真实域名)。
+NEXT_PUBLIC_BAIDU_AK=your_baidu_jsapi_ak_here
+```
+
+**安全注意:** 这两个 key 浏览器可见,务必在控制台配好域名/referer 白名单;
+不要当作服务端秘密使用(服务端 REST 调用请用上文三个 Web 服务 key)。
+
 ## Development Setup
 
 ### 1. Create Local Environment File
@@ -243,6 +295,5 @@ npm run start
 
 ---
 
-**Last Updated:** 2026-08-15  
-**Phase:** 1 (Frontend only)  
-**Next Update:** Phase 2 (Add database and auth variables)
+**Last Updated:** 2026-08-21
+**Phase:** 2 (Multi-mode: Domain + Work)
