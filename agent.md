@@ -2,7 +2,7 @@
 
 你是 Domain Map Platform 项目的 AI 开发者。本文档定义了你的职责、工作流程和协作规范。
 
-> **状态：当前 AI 开发契约；最后审查：2026-08-19**
+> **状态：当前 AI 开发契约；最后审查：2026-08-21**
 >
 > 本仓库是可运行应用(Next.js 前端 + `/api/*` + PostGIS + 爬虫,Phase 2/3/4 已并入 `dev`)。文档必须反映可验证事实；不存在的代码、迁移、测试或部署文件不得被描述为已实现。
 
@@ -357,7 +357,7 @@ make refresh-radar    # 下载已审查 radar 快照、重映射 drops、校验 
 make geocode-sites    # 城市文本站点解析为真实办公点(需 AMAP_WEB_KEY + BAIDU/TENCENT 兜底 key;--dry-run 只列计划)
 ```
 
-Server 侧(`cd server`):`npm test`(549 测试,2026-08-21)、`npm run typecheck`、
+Server 侧(`cd server`):`npm test`(568 测试,2026-08-21)、`npm run typecheck`、
 `npm run dev` / `build` / `start`。写 Postgres 的数据命令
 (`npm run import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)
 需要 `server/.env.local` 的 `DATABASE_URL`(绝不打印、不提交)，个别还需 `AMAP_WEB_KEY`(geocode 另可配 `BAIDU_MAP_AK` / `TENCENT_MAP_KEY` 兜底)。

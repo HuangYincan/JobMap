@@ -1,7 +1,7 @@
 # Contributing to Domain Map Platform
 
 > **Status:** contribution contract for the active application
-> **Last reviewed:** 2026-08-19
+> **Last reviewed:** 2026-08-21
 
 ## Before You Start
 
@@ -46,7 +46,7 @@ make refresh-radar      # download the reviewed radar snapshot, remap drops, val
 make geocode-sites      # resolve city-text sites to real offices (needs AMAP_WEB_KEY; --dry-run prints the plan)
 ```
 
-Server commands (`cd server`): `npm test` (488 tests, 2026-08-20), `npm run typecheck`, `npm run dev` / `build` / `start`. Data commands that touch Postgres (`npm run import:seed:apply`, `geocode:sites:apply`, `audit:pins`, `import:hz:pois:apply`) need `DATABASE_URL` from `server/.env.local` (never print or commit it) and, where noted, `AMAP_WEB_KEY`.
+Server commands (`cd server`): `npm test` (568 tests, 2026-08-21), `npm run typecheck`, `npm run dev` / `build` / `start`. Data commands that touch Postgres (`npm run import:seed:apply`, `geocode:sites:apply`, `audit:pins`, `import:hz:pois:apply`) need `DATABASE_URL` from `server/.env.local` (never print or commit it) and, where noted, `AMAP_WEB_KEY` (geocode also accepts `BAIDU_MAP_AK` / `TENCENT_MAP_KEY` fallbacks).
 
 `make db-up` starts only the local PostGIS database service; schema/migrations are applied separately with `make db-migrate`. Never claim a command exists or ran unless the referenced files exist and are verified.
 

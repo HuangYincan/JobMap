@@ -7,8 +7,18 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 ### Added
 
 - **腾讯 WebService 第三级兜底(AMap→百度→腾讯,`feature/geocode-tencent`).** `site-geocode.ts` 三入口(地址 geocode / 地点搜索 / regeo)在高德日配额(10044/10043)或百度日配额(302)双耗尽后自动切腾讯(`TENCENT_MAP_KEY`):新增 `tencentGeocodeAddressRest` / `tencentPlaceSearchRest` / `tencentRegeoCityRest`(ws/geocoder/v1 + ws/place/v1/search,原生 GCJ-02)+ `fallbackChain` 链式 helper 收敛兜底分支;腾讯个人开发者每接口 10000 次/天、5 QPS。错误码分类(真实探测校准):121/321/322 每日上限归配额类短路、120 每秒限流重试一次、110/112/190/199/311 配置永久失效归短路(缺 key→301、错 key 格式→311、缺参→404,均与预设无冲突)。`geocode-sites-apply.mjs` 接 env 注入/DRY_RUN 判定/节流 provider 感知(百度 600ms、其余 340ms)/REPORT 三 key 状态。测试 +12(全量 549:547 pass / 2 skip)。
+- **geocode 双配额耗尽短路(`fix/geocode-quota-short-circuit`,`3d51d7a`+`808414a`+`89103b3`,merge `83fc6d0`).** 配额类失败(`quota` / `baidu-status:302` / `no-key`)连续 5 站 → 提前停止(`QUOTA_EXHAUSTED` 行 + exit(2));成功解析/非配额失败冲窗口防误停(401/http/间歇性可重试不误伤);7 新用例(全量 520:518 pass / 2 skip)。同日 `4b05e64` 写入 20 家公司站点坐标(2026-08-21,配额耗尽前完成)。报告 `tech/roles/development/parallel-sessions/20260821-boss-geocode-quota/`。
+- **place-text 结果缓存(`fix/geocode-place-memo`,`4ffebe6`+`a41e5e1`+`64e8be6`,merge `9d5ed19`).** 同 (query, province, city) 进程内复用,只缓存成功命中(失败/空结果/配额类/低置信度一律不写);10 新用例(全量 530:528 pass / 2 skip);同城多站点实例调用削减 97%+(安克创新 38→1 / 元气森林 71→1 / 小鹏 52→1)。报告 `tech/roles/development/parallel-sessions/20260821-boss-geocode-memo/`。
+- **全量计数输出修正(`fix/geocode-plan-count`,`e5cd04d`+`fa5f854`,merge `6737a6b`).** 只读预扫统计过滤前全量 `planTotal`;配额短路后剩余 = planTotal − resolutions − unresolved − skipped(旧口径短路后恒为 0,误导);8 新用例(全量 536:534 pass / 2 skip);实跑:1783 站待 geocode、attempted 5、剩余 1778 如实报告。报告 `tech/roles/development/parallel-sessions/20260821-boss-geocode-count/`。
+- **腾讯文档官方招聘源 142 家入库(`feat/qqdoc-official-source`,merge `1ec3fff`).** qqdoc-official 适配器 + 礼貌官网地址提取(壳 HTML → 官方招聘 URL + 城市/街道地址,`extract-qqdoc-addresses.mjs` / `official-site-parse.ts`),142 央企/银行/国企 drops(name + 官方招聘 URL),19 家城市+街道地址提取、50 家 `city_pending` 待后续;19 用例(全量 568:566 pass / 2 skip)。采集仅礼貌 GET + robots(RFC 9309 重定向跟随)。Docs:`tech/roles/data/etl/qqdoc-official.md`;报告 `tech/roles/development/parallel-sessions/20260821-boss-qqdoc-official/`。
 
 ## 2026-08-20
+
+### Added
+
+- **zhiye(北森 italent `*.zhiye.com`)ATS 适配器 + feishu 租户扩充(national w2,`feacd10`+`bf68d37`+`7d50d21`,merge `cebdc8e`).** 三步探针(壳 HTML → SPA bundle → API 端点探测)固化为运行时流程,`cli.py` 新增 `zhiye` 子命令,`FEISHU_TENANTS` 24→28(英科医疗/真格基金/原力灵机/算秩未来);37 个 fixture 驱动单测(server 全量 500 pass / 2 skip;crawler pytest 103 全绿,boss 复验)。采集未执行(Env E3 留给 boss/用户)。Docs:`tech/roles/data/etl/zhiye-ats.md` / `feishu-ats.md`;报告 `tech/roles/development/parallel-sessions/20260820-boss-national-data/reports/w2.md`。
+- **南京/西安 drops 增量并入(boss E1,`45bd9fa`).** 16 新公司 + 74 站点 + 83 岗位,externalId 跨城重写;dev@45bd9fa 门禁全绿。
+- **飞书 28 租户采集合入(`a8a9df7`).** 4 新租户 + 岗位刷新,import 计划 11602 岗位 0 dropped。
 
 ### Changed
 
@@ -18,6 +28,24 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 - **work 全量加载(首点刷新 / 聚合计数漂移 / 死代码清理,`933f972`,`fix/poi-zoom-full-load`).** work 视口加载原以 geolocation settle 为门:首点触发定位完成 → 依赖变化取消在飞加载并重载,首帧 `syncView()` 又被视口对齐拉回杭州。现改**全量加载**(`WORK_FULL_LOAD_MAX_PAGES=10_000`,不传 bounds/maxTier,page 恒 1;侧栏列表客户端按 `mapBounds` 裁剪,浏览器实测平移 0 视口请求),`load()` 门控仅 `mapReady`——首点详情立即打开、视角保持。聚合计数取消 LOD(tier)过滤(徽章 N 与 zoom 无关),「杭州市」/「杭州」归入同一徽章。死代码清理净删 566 行(视口增量加载 / 首点 flyTo 队列 / 视口搜索堆栈 / marker 同步注册表等)。`MODE_CACHE_VERSION` 14→15。14 文件(server/src 9 + tests 5);全量 488 通过(486 pass / 0 fail / 2 skip)。Docs:`tech/16-bug-fixes.md` §2026-08-20、`tech/21` 计数口径。
 - **positions import 自愈去重(先删重后迁移,`788e9c6`,`fix/positions-dedup-order`,b1f).** 同 `external_id` 在旧 source(seed)与新真实 source 下各存一行(upsert 唯一键 `(source_id, external_id)`,source 变了就插新行、旧行不删)→ poi-card 同 key 警告上百条。修复:apply 事务内先按 `external_id` 保 `MIN(id)` 删重(applications.`position_id` 多指向旧行,保留最早 id 避免悬空),再迁移旧 source 行到本次 source,后照常 `ON CONFLICT` upsert;顺序不可颠倒——先迁移会让同 `external_id` 的旧/新行共享唯一键,UPDATE 内即触发 `positions_source_id_external_id_key`(`_bt_check_unique`)导致整个事务回滚(boss 实测:重跑 `import:seed:apply` 报唯一键冲突,DB 未变)。契约测试断言 dedup-before-migration 顺序(`server/tests/recruitment-import.test.mjs`)。
+- **LOD 徽章计数一致性(optimize w1,`b178cb0`,`fix/cluster-consistency`).** `cityLabelMatchesCoordinates` + LOD 徽章计数口径统一(聚合徽章不再随 zoom 漂移)。
+- **首点 flyTo 延迟(optimize w2,`fe2aee9`,`fix/poi-first-locate`).** `pendingFlyToRef` 推迟首点飞行,消除定位/首点交互竞态。
+- **logo 覆盖(optimize w3,`3632fa3`,`feat/logo-coverage`).** IP host favicon 映射 + icon.horse 兜底,`s2` 失效链接清理。
+- **data 代码覆盖率(optimize w5,`da754ed`,`feat/data-code-coverage`).** 704 drops source 全覆盖 + `CITY_CENTERS` +15 + radar 十城 + `city_site_id`。
+- **import upsert 歧义(optimize f1,`f13fbb6`,`fix/import-upsert-ambiguity`).** `INSERT … ON CONFLICT` 加 `EXCLUDED` 限定 + `MODE_CACHE_VERSION` 13→14。
+- **公司 POI 屏闪(bugfix b2,`8837fe9`,`fix/marker-stability`).** marker 只增不删 + `setVisiblePOIs`,消除重渲染闪烁。
+- **`/api/pois/[id]` 双重解码 500(scan ws-api,`0efa878`,`fix/poi-id-route`).** 双重解码 500 修复 + id 长度上限 400。
+- **radar 双 https 前缀(scan ws-data,`32fadaf`,`fix/radar-double-https`).** drops 前缀修正 + import 校验器 URL scheme 断言。
+- **map-shell 收藏图层 hook 抽取(scan ws-frontend,`19139bd`,`refactor/map-shell-hooks`).** `useSavedLayer` 抽 hook 降复杂度。
+- **POI 首点点击相机消失(poi-vanish,`cd360dd`,`fix/poi-first-click-camera`).** 首点 pin/卡片点击不再抑制 geolocation settle 相机跟随(`hasInteractedRef`→`userMovedMapRef`,仅相机手势与 5 个 flyTo 入口置位);`handleLocate` 失败保持视野不回杭州默认中心;distance 圆心在定位前不落默认值(`effectiveFilters` 剥离 distance 键)。
+- **地图 remount 相机恢复(poi-vanish2,`5fd4c2f`,`fix/map-remount-camera`).** createMap 初始相机改用 state(`DEFAULT_MAP_CENTER`/`DEFAULT_MAP_ZOOM` 常量)+ settle 仅默认中心附近时飞用户位置(`isNearDefaultCenter` 0.1 度阈值);新增 camera-center 契约测试。
+- **dev 冷启动首点整页刷新(rail-prefetch,`51c0406`,merge `d61e720`).** 挂载时预载 rail 面板 chunk。
+- **settle 自动定位「用户已交互」门控(rail-settle,`863f7f2`,merge `870af90`).** 门控由「双门控」扩为「三门控」(`!userMovedMapRef.current && !userInteractedRef.current && isNearDefaultCenter(...)`),消除首点整幅跳变;浏览器实测留给 boss VERIFY。
+- **事故坐标清扫(national w1,`460867b`+`f389d1b`,merge `ecef347`).** 115 个非杭州事故站点坐标(49 文件:46 radar + 3 official)删除——任务字面「清为 null」与 importer 契约冲突(`lng: null` 判 invalid),改为删键(偏离字面,报备);防回归契约 4 用例;全量 504 pass / 2 skip。DB 侧坐标清扫留待 boss 裁决。
+- **zhiye job_city 归一 + 分页到 total(national w3,`f078359`,merge `3da1c8e`).** 城市文本归一(「上海市浦东新区」→「上海市」);已知 total 时翻页到 `len(jobs) ≥ total`(短页兜底不再提前停);crawler pytest 103 全绿。
+- **BAIDU_MAP_AK 注入(`0b7c1da`).** AMap 配额耗尽时百度兜底可触发(process.env 注入)。
+- **geocode fetch 20s 超时守卫(`ca54ce7`).** 防挂起代理连接。
+- **geocode 地址-城市一致性闸门(national w4,`2992fb4`+`e37cb7d`,merge `de7ab7e`).** 跨市地址(杭州地址落在广州/成都/北京站点)在地址检索前拦截 → 改公司名检索;regeo 区级校验兜底;7 新用例(奇安信回归);全量 511 pass / 2 skip。
 
 ## 2026-08-19
 
