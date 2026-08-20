@@ -17,13 +17,13 @@
 | `boss-state.md` | boss 无人值守批次的运行状态机(meta/根因/stage/workstreams/merge_order/adjudication) |
 | `deferred-notes.md` | 需用户决策 / Env-only / 数据口径 / 验收的遗留项(open 项统一登记进 deferred-ledger) |
 
-> **in-flight 批次**(未合并、未入库):`20260821-boss-qqdoc-official`(见下表)。
+> **in-flight 数据(未入库,2026-08-21 复验):** `feat/qqdoc-jobs-source` 分支含 qqdoc-jobs drops(163 家新增公司,腾讯文档投递链接,commit `29f8583`),未合并 dev、无会话目录/merge-report。
 
 ## 批次索引(按日期倒序)
 
 | 批次 | 主题(一句话) | 状态 | 关键内容指针 | 入库状态 |
 |---|---|---|---|---|
-| `20260821-boss-qqdoc-official`(**in-flight,未入库,仓库内暂不可见**) | 腾讯文档官方源(qqdoc-official)落地:144 家央企/银行/国企 adapter + 官网地址提取(92 家有真实城市、50 家 city-pending) | **in-flight**(w1 开发完成,无 merge-report,未合并) | prompts/w1.md · reports/w1.md(主树批次目录;门禁 PASSED,555 pass/2 skip) | 未入库(主树未跟踪) |
+| [20260821-boss-qqdoc-official](20260821-boss-qqdoc-official/README.md) | 腾讯文档官方源(qqdoc-official)落地:142 家央企/银行/国企 adapter + 官网地址提取(92 家有真实城市、50 家 city-pending) | **DONE**(w1 单分支,`1ec3fff` 合入,批次 `786fc99` 入库) | README.md · merge-report.md(门禁 PASSED,555 pass/2 skip) | 已入库(2026-08-21,merge-report 存在) |
 | [20260821-boss-geocode-count](20260821-boss-geocode-count/README.md) | geocode 配额短路计数修正:真实 planTotal 输出(`1783 (attempted: 5)`) | DONE | README.md(w1 单分支,536 pass/2 skip) | 已入库 |
 | [20260821-boss-geocode-memo](20260821-boss-geocode-memo/README.md) | AMap place-text 结果缓存:同 query+region 公司名检索复用,同城多站点一次查询 | DONE | README.md(w1 单分支,530 pass/2 skip) | 已入库 |
 | [20260821-boss-geocode-quota](20260821-boss-geocode-quota/README.md) | geocode 双配额(AMap 10044 + 百度 302)耗尽自动短路,不空跑 | DONE | README.md(w1 单分支,520 pass/2 skip) | 已入库 |
@@ -47,6 +47,3 @@
 | [20260819-regression-fix](20260819-regression-fix/README.md) | 7 bug:侧控栏 chrome/Profile 塌陷/偏好下拉/工作 noMore/收藏按模式区分/视口刷新 | DONE | README.md(根因表 + 合并执行提示) | 已入库 |
 | [20260819-auth-explore-poi](20260819-auth-explore-poi/README.md) | 加载更多 + 密码登录注册 + POI 电话/评价 + 群核岗位拆分 + 最近回实体 + 失焦丢文本 | DONE | [deferred-notes.md](20260819-auth-explore-poi/deferred-notes.md)(Env 全执行/聚合拆解/refresh-radar 覆盖风险/验收清单)→ deferred-ledger D-10/D-11/D-12/D-24 | 已入库 |
 | [20260819-b2-u1-u6](20260819-b2-u1-u6/README.md) | 补录 manifest 批:LLM 校验修正 + 侧控栏 chrome + 筛选细化 + suggest + Profile 重构 + 抽屉物理 + poi-mixing | DONE | README.md(7 分支 merge 表 + 冲突解决清单指针) | 已入库 |
-
-> **注**:`20260821-boss-qqdoc-official/` 为 in-flight 批次(w1 汇报已有、无 merge-report、
-> 未合并未入库,故上表该行不以链接形式指向其文件);其文件由 boss/后续批次管理,本文不编辑。
