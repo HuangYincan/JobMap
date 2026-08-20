@@ -258,6 +258,9 @@ class PositionMappingTests(unittest.TestCase):
     def test_job_city(self):
         self.assertEqual(ats_zhiye.job_city(SPECIFIC_JOB), "上海")
         self.assertEqual(ats_zhiye.job_city({"jobId": "1", "title": "t", "location": "上海市浦东新区"}), "上海市")
+        self.assertEqual(ats_zhiye.job_city({"jobId": "1", "title": "t", "location": "北京市朝阳区"}), "北京市")
+        # 裸城市名原样返回,带「市」的城市文本保留后缀
+        self.assertEqual(ats_zhiye.job_city({"jobId": "1", "title": "t", "location": "杭州市余杭区"}), "杭州市")
         # 英文地址行不当城市
         self.assertEqual(ats_zhiye.job_city({"jobId": "1", "title": "t", "location": "Building 5, Beijing"}), "")
         self.assertEqual(ats_zhiye.job_city({"jobId": "1", "title": "t"}), "")
@@ -278,7 +281,7 @@ class PositionMappingTests(unittest.TestCase):
         jobs = [SPECIFIC_JOB, CAMPUS_JOB, {"jobId": "x", "title": "t", "cityName": "合肥"}]
         ats_zhiye.ensure_city_sites(company, jobs)
         ids = {site["id"] for site in company["sites"]}
-        self.assertEqual(ids, {"科大讯飞-site-shanghai", "科大讯飞-site-beijing", "科大讯飞-site-hangzhou", "科大讯飞-site-合肥"})
+        self.assertEqual(ids, {"科大讯飞-site-shanghai", "科大讯飞-site-beijing", "科大讯飞-site-hangzhou", "科大讯飞-site-hefei"})
         hangzhou = next(s for s in company["sites"] if s["id"] == "科大讯飞-site-hangzhou")
         self.assertEqual(hangzhou["city"], "杭州市")
         self.assertEqual(hangzhou["province"], "浙江省")
