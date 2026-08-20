@@ -44,6 +44,17 @@ import { loadOfflineWorkCatalog } from '../src/lib/server-catalog.ts';
 import { RADAR_DIR } from '../src/lib/recruitment-adapters/radar.ts';
 import { OFFICIAL_CAREER_DIR } from '../src/lib/recruitment-adapters/official-career.ts';
 
+// 代理/网络挂起防御:所有 fetch 默认 20s 超时(不覆盖调用方显式 signal)。
+// 背景:Node 原生 fetch 无超时,请求卡死在代理(Clash 198.18.0.0/15,
+// ESTABLISHED 但无响应)时进程无限挂起。超时抛 AbortError,site-geocode.ts
+// 上层 catch 后按 reason 记 unresolved,不中断整体流程。
+const __origFetch = globalThis.fetch;
+globalThis.fetch = (input, init) => {
+  const opts = init ?? {};
+  const signal = opts.signal ?? AbortSignal.timeout(20_000);
+  return __origFetch(input, { ...opts, signal });
+};
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_DIR = path.resolve(__dirname, '..');
 const DATA_DIR = path.join(SERVER_DIR, 'data', 'recruitment');
