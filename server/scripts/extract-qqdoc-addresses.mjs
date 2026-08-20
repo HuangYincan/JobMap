@@ -93,6 +93,7 @@ function countRequest() {
 
 // ---------- robots.txt ----------
 const robotsCache = new Map(); // host -> { allow: boolean } | { rules: string[] }
+let robotsFetched = 0; // 实际 GET 过 robots.txt 的主机数 (每 host 一次)
 
 /** 按 UA 分组解析 robots.txt: 只采纳 `User-agent: *` 或 `domain-map-etl` 组的
  *  Disallow 规则 (RFC 9309 — 其他爬虫组的规则与我们无关, 不误伤)。 */
@@ -120,6 +121,7 @@ function parseRobotsRules(text) {
 async function loadRobots(host) {
   if (robotsCache.has(host)) return robotsCache.get(host);
   const entry = { rules: null, fetchFailed: false };
+  robotsFetched += 1;
   try {
     await throttle();
     countRequest();
@@ -471,6 +473,7 @@ console.log(
       stats: {
         ...stats,
         requests: requestCount,
+        robotsFetched,
         wrote,
         stoppedByBudget,
       },
