@@ -16,13 +16,13 @@
 | [08-multi-mode-system.md](08-multi-mode-system.md) | 多模式系统设计(Domain + Work) | 前端开发者/架构师 |
 | [09-secondary-sidebar.md](09-secondary-sidebar.md) | 二级侧控栏设计规范 | 前端开发者 |
 | [10-search-filter.md](10-search-filter.md) | 搜索筛选系统设计 | 前端开发者 |
-| [11-phase2-plan.md](11-phase2-plan.md) | Phase 2 详细实施计划 | 开发者 |
+| [11-phase2-plan.md](11-phase2-plan.md) | Phase 2 详细实施计划（已实施完成，历史计划记录） | 开发者 |
 | [12-bundle-notes.md](12-bundle-notes.md) | Bundle 盘点(体积/分包) | 前端开发者 |
 | [13-db-query-notes.md](13-db-query-notes.md) | 数据库查询笔记(索引/EXPLAIN) | DBA/后端 |
 | [14-api-contract.md](14-api-contract.md) | Public / account API 契约 | 前后端开发者 |
 | [15-deploy.md](15-deploy.md) | 本地部署 / runbook | 开发者/运维 |
 | [16-bug-fixes.md](16-bug-fixes.md) | Bug 修复记录与回归口径 | 开发者 |
-| [17-freshness-presentation-proposal.md](17-freshness-presentation-proposal.md) | 工作模式新鲜度呈现提案（已取代：tech/18 §A1） | 产品/前端 |
+| [17-freshness-presentation-proposal.md](17-freshness-presentation-proposal.md) | 工作模式新鲜度呈现提案（已取代：tech/18 §A1；提案已存档，其数据口径为当前 catalog 口径） | 产品/前端 |
 | [18-national-scale-plan.md](18-national-scale-plan.md) | 📌 全国规模工作模式 + 并行开发计划 | 架构师/开发者 |
 | [19-company-labeling.md](19-company-labeling.md) | 公司打标:tier 可见性 + category 国标大类 | 数据/后端 |
 | [20-development-plan.md](20-development-plan.md) | 持续开发计划(2026-08-17 起) | 开发者/项目经理 |
