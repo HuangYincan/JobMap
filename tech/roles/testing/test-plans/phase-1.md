@@ -1,6 +1,6 @@
 # Phase 1 Test Plan
 
-> **Status:** in-progress; no test results are claimed before execution.
+> **Status:** complete(2026-08-15 执行,`feature/phase-1-platform-baseline` 已并入 `dev`,本计划为历史记录;结果见 implementation/phase-1.md)
 
 ## Public seams
 
