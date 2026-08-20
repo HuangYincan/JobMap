@@ -32,7 +32,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from .acquire import AcquisitionError
-from .ats_feishu import AdapterError, clean_jd
+from .ats_feishu import CITY_ALIASES, CITY_PINYIN, CITY_PROVINCE, AdapterError, clean_jd
 from .radar_jobs import is_aggregate_title
 
 DEFAULT_PAGE_SIZE = 50
@@ -66,6 +66,17 @@ _LIST_KEYS = ("list", "jobs", "records")
 _ID_KEYS = ("jobId", "positionId", "id")
 _TITLE_KEYS = ("title", "name", "positionName")
 _TOTAL_KEYS = ("total", "count", "totalCount", "total_count")
+
+# 已知城市名(裸名,长名优先)— job_city 归一表:CITY_PINYIN ∪ CITY_PROVINCE ∪
+# CITY_ALIASES 值。文本含已知城市即归一到该城市,与 radar / feishu 的裸城市
+# 名语义一致(既有 drops 的 site.city 如「上海市」)。
+_KNOWN_CITIES = tuple(
+    sorted(
+        set(CITY_PINYIN) | set(CITY_PROVINCE) | set(CITY_ALIASES.values()),
+        key=len,
+        reverse=True,
+    )
+)
 
 
 def is_zhiye_host(host: str) -> bool:
@@ -313,8 +324,10 @@ def fetch_all_jobs(
             break
         if total is not None and len(jobs) >= total:
             break
-        if not page_jobs or len(page_jobs) < page_size:
+        if not page_jobs:
             break
+        if total is None and len(page_jobs) < page_size:
+            break  # 短页只在 total 未知时兜底,已知 total 必须翻到 total 为止
         page += 1
     return jobs, errors
 
@@ -344,14 +357,29 @@ def family_for(job: dict[str, Any], title: str) -> str:
 
 
 def job_city(job: dict[str, Any]) -> str:
-    """Primary city: cityName/city/workCity/location 中文文本,首个非空值。"""
+    """Primary city: cityName/city/workCity/location 中文文本,首个非空值。
+
+    归一:去空白与 CITY_ALIASES 笔误 → 文本含已知城市(裸名)时归一到该
+    城市;城市名后紧跟「市/省」则保留后缀(「上海市浦东新区」→「上海市」,
+    「北京市朝阳区」→「北京市」),裸城市名原样返回(「上海」→「上海」)。
+    未匹配已知城市时按原文返回(不丢信息,site 落点仍可用原文本兜底)。
+    """
     for key in ("cityName", "city", "workCity", "location"):
         value = job.get(key)
         if isinstance(value, dict):
             value = value.get("name")
         city = _string(value)
-        if city and not re.search(r"[A-Za-z]", city):  # 英文地址行不当作城市
-            return city
+        if not city or re.search(r"[A-Za-z]", city):  # 英文地址行不当作城市
+            continue
+        city = CITY_ALIASES.get(city, city)
+        city = re.sub(r"\s+", "", city)
+        for name in _KNOWN_CITIES:
+            index = city.find(name)
+            if index < 0:
+                continue
+            rest = city[index + len(name):]
+            return name + "市" if rest.startswith(("市", "省")) else name
+        return city
     return ""
 
 
@@ -458,13 +486,14 @@ def ensure_city_sites(company: dict[str, Any], jobs: list[dict[str, Any]]) -> No
         site_id = city_site_id(company["slug"], city)
         if site_id in known:
             continue
-        city_name = f"{city}市" if city in CITY_PINYIN else city
+        bare = re.sub(r"[省市区]$", "", city)  # job_city 已归一,兼容「上海市」带后缀形式
+        city_name = f"{bare}市" if bare in CITY_PINYIN else city
         company["sites"].append(
             {
                 "id": site_id,
                 "name": company["name"],
                 "city": city_name,
-                "province": CITY_PROVINCE.get(city, ""),
+                "province": CITY_PROVINCE.get(bare, ""),
                 "location": {"address": city_name},
             }
         )
