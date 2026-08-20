@@ -24,7 +24,7 @@ Home lazy-loads `MapShell`. Without AMap keys, Work seed + chrome still load; Do
 ```bash
 ./node_modules/.bin/tsc --noEmit
 node --test tests/*.test.mjs
-npm run import:seed             # 137 companies / 241 positions / 0 dropped today
+npm run import:seed             # import plan (2026-08-21): 688 companies / 1959 sites / 11602 positions / 0 dropped
 npm run import:seed:apply       # no-op without DATABASE_URL; upserts 006 tables when Docker is up
 npm run geocode:sites           # lists drop / imported sites still at (0,0); does not call AMap
 npm run geocode:sites:apply     # real office coords for city-list drops (needs AMAP_WEB_KEY; --dry-run prints the plan)
@@ -47,7 +47,7 @@ export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 # DATABASE_URL from .env.example — do not echo it
 export DATABASE_URL='postgresql://postgres:postgres@localhost:5432/domain_map'
 make preflight
-make db-migrate                 # 001–010
+make db-migrate                 # 001–016
 cd server && npm run import:seed:apply
 ```
 
