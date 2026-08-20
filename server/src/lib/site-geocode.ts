@@ -199,6 +199,36 @@ export function amapQuotaExhausted(payload: { status?: string; info?: string; in
   return info.includes('QUERY_OVER_LIMIT') || infocode.includes('10044') || infocode.includes('10043');
 }
 
+// ---------------------------------------------------------------------------
+// Quota short-circuit (2026-08-21, fix/geocode-quota-short-circuit).
+// AMap place-text/geocode 日配额 (10044/10043) 与百度日配额 (status 302) 双耗尽
+// 后, geocode-sites-apply.mjs 逐站空跑只烧时间零产出。执行链按「连续 N 个已尝试
+// 站点全部配额类失败」提前停止。判定口径:
+//   配额类  = quota (AMap 10044/10043 且无百度兜底) | baidu-status:302 (百度天
+//             配额超限, 内部已重试一次仍 302) | no-key (AMap/百度 key 均缺)。
+//   非配额类 = http/empty/parse (间歇性) | regeo-outside:* (有 POI 但城市不符,
+//             证明配额不是卡点) | baidu-status:401 (并发限流, 可重试) |
+//             name-mismatch:* 等 grader 拒收 (接口有返回但没命中)。
+// ---------------------------------------------------------------------------
+
+const QUOTA_CLASS_REASONS = new Set(['quota', 'baidu-status:302', 'no-key']);
+
+/** 配额类失败判定。401 是并发限流不算;302 是百度天配额超限(重试后仍 302)算。 */
+export function isQuotaClassReason(reason: string | null | undefined): boolean {
+  return !!reason && QUOTA_CLASS_REASONS.has(reason);
+}
+
+/**
+ * 双配额耗尽判定: 最近 n 个已尝试站点全部配额类失败 → true。
+ * history 每站一条: unresolved 原因字符串 | null/undefined (已解析)。只取末 n 个
+ * — 非配额类失败或成功解析都会冲掉窗口, 不会误停; 恢复后再次连续耗尽仍会触发。
+ */
+export function shouldShortCircuitQuota(history: ReadonlyArray<string | null | undefined>, n = 5): boolean {
+  if (n <= 0) return false;
+  const window = history.slice(-n);
+  return window.length === n && window.every((r) => isQuotaClassReason(r));
+}
+
 /** A site whose address names a real street/building — geocodable as-is. */
 export function siteHasStreetAddress(site: CompanySite): boolean {
   const address = site.location?.address?.trim();
