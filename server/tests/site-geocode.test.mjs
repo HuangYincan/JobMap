@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import { poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
 import {
+  addressConflictsWithCity,
+  addressConflictsWithRegeoDistrict,
   amapQuotaExhausted,
   applyGeocodeHits,
   baiduGeocodeAddressRest,
@@ -324,6 +326,84 @@ test('siteHasStreetAddress only accepts a real street/building address', () => {
   assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '西湖区文二西路712号西溪乐谷2号楼' } }), true);
   assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '北京/上海/杭州' } }), false);
   assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: {} }), false);
+});
+
+// --- address ↔ city consistency gate (2026-08-20, fix/geocode-address-strategy) ---
+// 回归场景: 奇安信 drops 的 site-guangzhou / site-chengdu / site-beijing 继承了
+// 杭州 office 地址 "西湖区莲花街333号…", 必须判定为不可信 → 走公司名检索。
+
+test('addressConflictsWithCity rejects the 奇安信 Hangzhou address on non-Hangzhou sites', () => {
+  const addr = '西湖区莲花街333号莲花商务中心b座9楼';
+  // 广州/成都/北京 站点拿到杭州地址 → 地址不可信 (实测错配: 广州 "花都区西湖").
+  assert.equal(addressConflictsWithCity(addr, '广州市'), true);
+  assert.equal(addressConflictsWithCity(addr, '成都市'), true);
+  assert.equal(addressConflictsWithCity(addr, '北京市'), true);
+  // 杭州站点本身 → 可信.
+  assert.equal(addressConflictsWithCity(addr, '杭州市'), false);
+});
+
+test('addressConflictsWithCity trusts addresses that name their own city/district', () => {
+  // 城市名 + 区名都在目标城市内 → 可信.
+  assert.equal(addressConflictsWithCity('北京市朝阳区望京东路6号', '北京市'), false);
+  assert.equal(addressConflictsWithCity('上海市杨浦区淞沪路518号', '上海市'), false);
+  // 省前缀不影响判定 (广东省深圳市…).
+  assert.equal(addressConflictsWithCity('广东省深圳市南山区高新南十道3区11栋11a', '深圳市'), false);
+  assert.equal(addressConflictsWithCity('浙江省杭州市上城区花园兜街道175号', '杭州市'), false);
+  // 地址区名先于城市名 ("南山区深圳市软件产业基地…").
+  assert.equal(addressConflictsWithCity('南山区深圳市软件产业基地5B座501号', '深圳市'), false);
+  // 无区县街道地址 → 无法判定, 放行 (由 regeo 区级校验兜底).
+  assert.equal(addressConflictsWithCity('文一西路969号', '广州市'), false);
+});
+
+test('addressConflictsWithCity rejects other known cities and foreign districts', () => {
+  // 地址含其他已知城市名 → 不可信.
+  assert.equal(addressConflictsWithCity('杭州市文一西路969号', '广州市'), true);
+  // 地址含非目标城市区名 → 不可信 (宁波银行 / 迈瑞医疗 的上城区地址污染).
+  assert.equal(addressConflictsWithCity('上城区市民街69号2幢306室', '上海市'), true);
+  assert.equal(addressConflictsWithCity('上城区市民街200号圣奥中央商务大厦F21层', '北京市'), true);
+  assert.equal(addressConflictsWithCity('上城区市民街200号圣奥中央商务大厦F21层', '杭州市'), false);
+  // 市区级联: 杭州市西湖区 → 广州 站点.
+  assert.equal(addressConflictsWithCity('杭州市西湖区文二西路712号', '广州市'), true);
+});
+
+test('addressConflictsWithCity handles district-name collisions and county-level cities', () => {
+  // 西湖区 同时属于 杭州 和 南昌 → 南昌 站点不误杀.
+  assert.equal(addressConflictsWithCity('西湖区站前西路121号', '南昌市'), false);
+  assert.equal(addressConflictsWithCity('西湖区站前西路121号', '南昌'), false);
+  // 县级市 (温岭市 ⊂ 台州市) → 不误杀.
+  assert.equal(addressConflictsWithCity('浙江省台州市温岭市中华路728号', '台州'), false);
+  // 功能区名 (高新区/工业园区) → 目标城市收录则不误杀.
+  assert.equal(addressConflictsWithCity('江苏省苏州市高新区狮山路28号', '苏州市'), false);
+  assert.equal(addressConflictsWithCity('四川省成都市高新区花样年香年广场T2', '成都市'), false);
+});
+
+test('addressConflictsWithCity passes unknown districts and overseas text', () => {
+  // 未收录区名 (城关区/内蒙古自治区…) → 放行, regeo 区级校验兜底.
+  assert.equal(addressConflictsWithCity('甘肃省兰州市城关区高新飞雁街128号', '兰州市'), false);
+  assert.equal(addressConflictsWithCity('内蒙古自治区鄂尔多斯市鄂托克旗棋盘井镇1号路', '鄂尔多斯'), false);
+  // 海外地址 → 放行 (geocode 城市内检索自然失败).
+  assert.equal(addressConflictsWithCity('韩国仁川广域市西区圆仓洞488', '仁川'), false);
+  assert.equal(addressConflictsWithCity('神奈川県横浜市西区浅間町1−6−10', '横滨市'), false);
+});
+
+test('addressConflictsWithRegeoDistrict rejects geocoded points in a different district', () => {
+  // 未知区名地址在城市内错配: 落点区 ≠ 地址区名 → 拒 (回退公司名检索).
+  assert.equal(addressConflictsWithRegeoDistrict('霞山区人民大道南42号', '赤坎区'), true);
+  // 落点区与地址区名一致 → 通过.
+  assert.equal(addressConflictsWithRegeoDistrict('霞山区人民大道南42号', '霞山区'), false);
+  // 无 regeo 区名 → 无法校验, 放行.
+  assert.equal(addressConflictsWithRegeoDistrict('霞山区人民大道南42号', ''), false);
+});
+
+test('addressConflictsWithRegeoDistrict skips known and functional districts', () => {
+  // 已收录区名由前置闸门把关, 不做区级比对 (行政区边界 adname 模糊).
+  assert.equal(addressConflictsWithRegeoDistrict('滨江区网商路', '西湖区'), false);
+  assert.equal(addressConflictsWithRegeoDistrict('西湖区文二西路712号', '花都区'), false);
+  // 功能区名 → 跳过 (regeo adname 是底层行政区).
+  assert.equal(addressConflictsWithRegeoDistrict('四川省成都市高新区花样年香年广场', '武侯区'), false);
+  assert.equal(addressConflictsWithRegeoDistrict('苏州工业园区星湖街328号', '虎丘区'), false);
+  // 超长 token (省名) → 跳过.
+  assert.equal(addressConflictsWithRegeoDistrict('内蒙古自治区鄂尔多斯市东胜区', '康巴什区'), false);
 });
 
 test('parseBaiduOfficePoi maps the Baidu place shape onto the GCJ-02 candidate', () => {
