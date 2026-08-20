@@ -1,8 +1,8 @@
 # Phase 1 Implementation Record
 
-> **Status:** in progress — live PostGIS verification pending
+> **Status:** complete(并入 `dev` 后视为历史记录)
 > **Started:** 2026-08-15
-> **Branch:** `feature/phase-1-platform-baseline`
+> **Branch:** `feature/phase-1-platform-baseline`(已并入 `dev`)
 
 ## Scope
 

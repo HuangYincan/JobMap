@@ -1,5 +1,7 @@
 # 质量扫描报告(2026-08-19 · scope: docs)
 
+> 状态追踪见 20260820-all 复核段(quality-scans/20260820-all/scan-report.md「上轮复核」+「修复状态回填」)。
+
 ## 摘要
 
 - 扫描对象与规模:仓库全部文档资产 —— `tech/**` 61 个 .md、根文档(agent/CLAUDE/README/CHANGELOG/CONTRIBUTING/Makefile)、`.claude/**` 16 个 md、`server/README.md` + `server/docs/*`、3 个批次目录(`parallel-sessions/20260819-*`)、`crawler/tests` 与 `server/tests` 计数核对。合计约 85 个文档/契约文件。

@@ -24,3 +24,18 @@
 - [ ] 文档已更新
 - [ ] 无安全漏洞
 - [ ] 性能可接受
+
+## 并行开发批次(Parallel Sessions)
+
+`parallel-sessions/` 存放全部并行开发批次(每批一个目录:manifest/prompts/reports/
+merge-report/boss-state/deferred-notes)。**批次索引见
+[parallel-sessions/README.md](parallel-sessions/README.md)**(24 批,按日期倒序);
+各批遗留待办的合并追踪见 [deferred-ledger.md](deferred-ledger.md)。
+
+## 质量扫描(Quality Scans)
+
+`quality-scans/` 存放 boss-scanner 产出的只读质量扫描报告(scope: 文档/前端/后端/数据库/
+数据),报告含发现清单 + 修复建议批次,供 boss 审批后派 fix 批次。最新报告:
+[20260820-all](quality-scans/20260820-all/scan-report.md)(15 发现 + 修复状态回填),
+历史:[20260819-all](quality-scans/20260819-all/scan-report.md)、
+[20260819-docs](quality-scans/20260819-docs/scan-report.md)。
