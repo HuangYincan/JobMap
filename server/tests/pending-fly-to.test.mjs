@@ -56,10 +56,11 @@ test('all three geolocation exits (!loc / success / error) settle via settleGeol
   const shell = src('components/map-shell.tsx');
   // !loc 分支
   assert.match(shell, /if \(!loc\) \{\s*settleGeolocation\(\);/);
-  // 成功分支:settle 在 userMovedMapRef+默认中心 双门控块之后(已移图/恢复视野 → 不 setCenter)
+  // 成功分支:settle 在 userMovedMapRef + 用户已交互 + 默认中心 三门控块之后
+  // (已移图/已交互/恢复视野 → 不 setCenter)
   assert.match(
     shell,
-    /if \(!userMovedMapRef\.current && isNearDefaultCenter\([\s\S]*?setMapCenter\(\{ lng, lat \}\);\s*\}\s*settleGeolocation\(\);/
+    /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\([\s\S]*?setMapCenter\(\{ lng, lat \}\);\s*\}\s*settleGeolocation\(\);/
   );
   // 失败分支
   assert.match(shell, /\.catch\(\(\) => \{\s*settleGeolocation\(\);/);

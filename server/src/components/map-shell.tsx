@@ -200,6 +200,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
    * 仅相机手势/相机操作路径置位:pin 点击/卡片选中/地图空白点击不置位
    * (选择公司 ≠ 放弃定位——ws-poi-vanish 首点修复,settle 仍会飞用户位置)。 */
   const userMovedMapRef = useRef(false);
+  /** 用户是否进行过任何交互(pointerdown/keydown/touchstart/wheel 首发置位)。
+   * geolocation resolve 可能晚于用户首交互(权限弹窗 / 8s 超时 / 30s maximumAge
+   * 缓存):resolve 时相机若仍在默认中心,settle 的 setCenter+setZoom 会瞬间整幅
+   * 跳变——首点 rail 的同一帧瓦片重载 + 距离圈重建 + 列表重裁,观感 = 「整页刷
+   * 新」。故已交互后不再抢镜头(用户可点「定位」按钮,handleLocate)。
+   * 与 userMovedMapRef 独立:首点 rail 不置位后者(刻意的相机语义),但已属交互。 */
+  const userInteractedRef = useRef(false);
+  /** userInteractedRef 一次性监听注册守卫:挂载 effect 依赖变化重跑时不重复注册 */
+  const userInteractListenersRegisteredRef = useRef(false);
   /** Domain 数据耗尽(稀疏视野/回退窗口空/无更多页):哨兵停止 + 「没有更多结果」 */
   const [noMoreData, setNoMoreData] = useState(false);
   const noMoreRef = useRef(false);
@@ -402,6 +411,24 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     prefetchAllRail();
+    // 一次性 document 级首交互监听(为何需要见 userInteractedRef 注释):pointerdown /
+    // keydown / touchstart / wheel 任一命中即置位并移除全部监听;wheel passive:true
+    // 不阻塞滚动。注册守卫 + { once: true } + 手动移除三保险,effect 依赖变化重跑
+    // (refreshAccount 等)也不会重复注册。
+    if (!userInteractListenersRegisteredRef.current) {
+      userInteractListenersRegisteredRef.current = true;
+      const markInteracted = () => {
+        userInteractedRef.current = true;
+        document.removeEventListener("pointerdown", markInteracted);
+        document.removeEventListener("keydown", markInteracted);
+        document.removeEventListener("touchstart", markInteracted);
+        document.removeEventListener("wheel", markInteracted);
+      };
+      document.addEventListener("pointerdown", markInteracted, { once: true });
+      document.addEventListener("keydown", markInteracted, { once: true });
+      document.addEventListener("touchstart", markInteracted, { once: true });
+      document.addEventListener("wheel", markInteracted, { once: true, passive: true });
+    }
     refreshAccount().then((next) => {
       if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
       void refreshHistory(Boolean(next));
@@ -541,7 +568,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           // 仍处默认中心时一起更新:已移图 → 两者都保持当前镜头状态,不把圆心甩去
           // 用户位置;remount 恢复的用户视野(非默认)同样不抢镜头(ws-poi-vanish2:
           // 门控以实时相机中心为准,距默认 [120.15,30.27] 阈值 0.1°≈11km)。
-          if (!userMovedMapRef.current && isNearDefaultCenter(readLngLat(map.getCenter()))) {
+          // 用户已交互(首点/按键/滚动,userInteractedRef)同样不再抢镜头:geolocation
+          // resolve 可能晚于首交互,此时 setCenter+setZoom 整幅跳变 = 「整页刷新」观感。
+          if (!userMovedMapRef.current && !userInteractedRef.current && isNearDefaultCenter(readLngLat(map.getCenter()))) {
             map.setCenter([lng, lat]);
             map.setZoom(15);
             setMapCenter({ lng, lat });
