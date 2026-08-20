@@ -128,11 +128,24 @@ async function loadRobots(host) {
   try {
     await throttle();
     countRequest();
-    const res = await fetch(`https://${host}/robots.txt`, {
-      headers: { 'user-agent': UA },
-      redirect: 'manual',
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+    // robots.txt 允许跟随重定向 (RFC 9309): 部分站点把 robots 302 到
+    // 其他路径/主机 (如 www.boc.cn)。逐跳跟随, ≤3 跳。
+    let url = `https://${host}/robots.txt`;
+    let res = null;
+    for (let hop = 0; hop < 3; hop += 1) {
+      res = await fetch(url, {
+        headers: { 'user-agent': UA },
+        redirect: 'manual',
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get('location');
+        if (!location) break;
+        url = new URL(location, url).toString();
+        continue;
+      }
+      break;
+    }
     if (res.status === 404 || (res.status >= 400 && res.status < 500)) {
       entry.rules = []; // 无 robots → 无限制
     } else if (res.ok) {
@@ -380,6 +393,7 @@ function applyExtraction(company, extracted, stats) {
     }
   };
   if (extracted) {
+    delete company.city_pending;
     site.city = extracted.city;
     if (extracted.province) site.province = extracted.province;
     if (extracted.address) {
@@ -390,6 +404,7 @@ function applyExtraction(company, extracted, stats) {
   }
   const nameCity = companyNameCity(company.name);
   if (nameCity) {
+    delete company.city_pending;
     site.city = nameCity.city;
     if (nameCity.province) site.province = nameCity.province;
     clearAddressOnly();

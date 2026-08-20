@@ -9,10 +9,11 @@
     {
       "id": "qq-铁路招聘-site-hq",
       "name": "铁路招聘",
-      "city": "铁路招聘总部",
-      "province": "",
-      "location": {}
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区复兴路10号"
+      }
     }
-  ],
-  "city_pending": true
+  ]
 }
