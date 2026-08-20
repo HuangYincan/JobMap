@@ -665,3 +665,35 @@ test('profile language/defaultMode prefs are PrefField dropdowns sharing the job
   assert.doesNotMatch(panel, /pillRow/);
   assert.doesNotMatch(panel, /styles\.choice/);
 });
+
+test('map-engine core contract: env keyVars + priority order + coordinate norm (ws-b)', () => {
+  const registry = src('lib/map-engine/engine-registry.ts');
+  const types = src('lib/map-engine/types.ts');
+  const preference = src('lib/map-engine/engine-preference.ts');
+  // 注册表引用的 env 名恰为三个 keyVar(契约:运行时读 process.env,Next 构建期内联)
+  assert.match(registry, /NEXT_PUBLIC_AMAP_KEY/);
+  assert.match(registry, /NEXT_PUBLIC_TENCENT_JSAPI_KEY/);
+  assert.match(registry, /NEXT_PUBLIC_BAIDU_AK/);
+  // 注册表不 import amap-api(AMap 完整实现由 ws-c 独立完成,内核不反向依赖厂商适配)
+  assert.doesNotMatch(registry, /from\s+['"].*amap-api['"]/);
+  // 优先级顺序断言
+  assert.match(registry, /ENGINE_PRIORITY: MapEngineId\[\] = \['amap', 'tencent', 'baidu'\]/);
+  // types.ts keyVar 闭合联合(与注册表三引擎一一对应)
+  assert.match(
+    types,
+    /'NEXT_PUBLIC_AMAP_KEY'\s*\|\s*'NEXT_PUBLIC_TENCENT_JSAPI_KEY'\s*\|\s*'NEXT_PUBLIC_BAIDU_AK'/,
+  );
+  // 坐标规范:规范坐标 = gcj02(注释契约)
+  assert.match(types, /规范坐标 = gcj02/);
+  // 偏好 key 契约
+  assert.match(preference, /domain-map:engine/);
+});
+
+test('map-engine core: registry skeleton never touches vendor SDK globals directly (ws-b)', () => {
+  const registry = src('lib/map-engine/engine-registry.ts');
+  // 骨架阶段:注册表只读环境变量与命名空间名,不得直接调用厂商对象
+  // (厂商调用点统一收口到 ws-c/d/e 的引擎实现,内核保持厂商无关)
+  assert.doesNotMatch(registry, /window\.AMap/);
+  assert.doesNotMatch(registry, /window\.TMap/);
+  assert.doesNotMatch(registry, /window\.BMapGL/);
+});
