@@ -341,9 +341,18 @@ function score(hit: ExtractedAddress): number {
 /**
  * 从页面文本提取总部城市 + 街道地址。找不到 → null（保持现状，不猜）。
  * 命中优先级：带标签的地址行 > 省市区+路街全文扫描；得分高者胜。
+ *
+ * 防伪: script/style 块必须能被完整剥离 (页面里残留 <script>/<style> 说明
+ * 存在嵌入字符串骗过剥离 — WAF 挑战页/蜜罐脚本常把地址藏在 JS 里, 内容可能
+ * 被转义损坏, 如 北京市阳区… 缺「朝」)。剥离不净 → 整页不采信, 返回 null。
  */
 export function extractCityAndAddress(input: string): ExtractedAddress | null {
-  const text = toPlainText(input);
+  // 防伪: script/style 块必须能被完整剥离。剥离后仍残留 <script>/<style>
+  // 说明页面有嵌入字符串骗过剥离 (WAF 挑战页 / 蜜罐脚本常把地址藏在 JS 里,
+  // 转义后内容可能损坏, 如 北京市阳区… 缺「朝」)—— 剥离不净 → 整页不采信。
+  const stripped = input.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ');
+  if (/<script|<style|<\/script|<\/style/i.test(stripped)) return null;
+  const text = toPlainText(stripped);
   if (!text) return null;
   let best: ExtractedAddress | null = null;
 

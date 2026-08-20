@@ -187,6 +187,18 @@ test('extractCityAndAddress: strips script/style/tags before scanning', () => {
   assert.ok(!hit.address.includes('<'));
 });
 
+test('extractCityAndAddress: distrusts pages whose scripts cannot be cleanly stripped', () => {
+  // 蜜罐/挑战页: JS 字符串里的假 </script> 骗过剥离, 残留地址文本 (可能被转义
+  // 损坏, 如 阳区 缺「朝」)。剥离不净 → 整页不采信, 返回 null。
+  const honeypot =
+    '<script>var s="</script>";var addr="北京市阳区太阳宫中路16号院";</script>' +
+    '<p>公司地址：北京市朝阳区建国路88号</p>';
+  assert.equal(extractCityAndAddress(honeypot), null);
+  // 未闭合的 <script> 同样不采信。
+  assert.equal(extractCityAndAddress('<script>try { var x = 1; } catch'), null);
+  assert.equal(extractCityAndAddress('总地址：北京市朝阳区建国路88号<script'), null);
+});
+
 test('extractCityAndAddress: phone/mail-only lines are rejected', () => {
   const hit = extractCityAndAddress('联系地址：电话 010-12345678，邮箱 hr@example.com');
   assert.equal(hit, null);
