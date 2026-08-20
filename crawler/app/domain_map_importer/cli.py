@@ -7,9 +7,11 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 from .acquire import AcquisitionError, PoliteFetcher
 from .ats_feishu import CITY_PINYIN, CITY_PROVINCE, AdapterError, city_site_id, fetch_all_jobs, job_addresses, job_city, jobs_to_positions
+from .ats_zhiye import crawl_company, is_zhiye_host
 from .official_refresh import refresh_company_from_source, write_company
 from .radar_jobs import load_radar_jobs, radar_fixture
 
@@ -298,6 +300,58 @@ FEISHU_TENANTS: list[dict] = [
         "careerUrl": "https://r3c0qt6yjw.jobs.feishu.cn/campus/position/list?keywords=&category=&location=&project=7647438600203880747&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
         "radarBase": "新石器",
     },
+    # ---- 2026-08-20 候选租户扩充(feishu-ats.md「后续」,radar drops 证据)----
+    # website_path 取 careerUrl 数字路径段(/840753/ → 840753);短链(/s/…)或
+    # referral token 链接解析不出数字段 → 留空(只爬默认/社招池,且不请求
+    # 带分享 token 的链接)。原力灵机自己的 drop 只有短链,数字段 285572 来自
+    # 同租户的 dexmal-原力灵机 / dexmai原力灵机 drops(同 host,2026-08-20 核对)。
+    {
+        "host": "global-intco.jobs.feishu.cn",
+        "website_path": "840753",
+        "slug": "英科医疗",
+        "name": "英科医疗",
+        "industries": ["pharma"],
+        "scale": "enterprise",
+        "tier": 8,
+        "category": "27",
+        "careerUrl": "https://global-intco.jobs.feishu.cn/840753/position/list?keywords=&category=&location=&project=7628790840907237641&functionCategory=&job_hot_flag=&tag=&store=&storeFrontListString=&type=&sessionid=",
+        "radarBase": "英科医疗",
+    },
+    {
+        "host": "zhenfund.jobs.feishu.cn",
+        "website_path": "356542",
+        "slug": "真格基金",
+        "name": "真格基金",
+        "industries": ["finance"],
+        "scale": "enterprise",
+        "tier": 7,
+        "category": "67",
+        "careerUrl": "https://zhenfund.jobs.feishu.cn/356542/position/list",
+        "radarBase": "真格基金",
+    },
+    {
+        "host": "dexmal-inc.jobs.feishu.cn",
+        "website_path": "285572",
+        "slug": "原力灵机",
+        "name": "原力灵机",
+        "industries": ["internet"],
+        "scale": "enterprise",
+        "tier": 9,
+        "category": "39",
+        "careerUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/list",
+        "radarBase": "原力灵机",
+    },
+    {
+        "host": "acnizrso7ikb.jobs.feishu.cn",
+        "slug": "算秩未来",
+        "name": "算秩未来",
+        "industries": ["internet"],
+        "scale": "enterprise",
+        "tier": 12,
+        "category": "65",
+        "careerUrl": "https://acnizrso7ikb.jobs.feishu.cn/referral/campus/position?token=MzsxNzczNzU1MDIwMjU4Ozc1NDc2NTk0ODE0ODE3NzMwNTk7MDsx",
+        "radarBase": "算秩未来",
+    },
 ]
 
 
@@ -412,6 +466,40 @@ def cmd_feishu(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_zhiye(args: argparse.Namespace) -> int:
+    """Crawl zhiye (Beisen italent `*.zhiye.com`) portals → official-career drops.
+
+    Tenants come from radar drops whose careerUrl host is *.zhiye.com (139 家,
+    全 drops 中最多)。每个门户按 zhiye-ats.md 三步探针读取(壳 HTML BSGlobal →
+    SPA bundle → API 候选 → 分页岗位列表),drop 携带 portal-zhiye-* 岗位并
+    继承 radar 的 curated sites。dry-run 默认不写。
+    """
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    dir_path = Path(args.dir)
+    files = sorted(p for p in dir_path.glob("*.json") if p.name != "_radar-fixture.json")
+    if args.only:
+        only = set(args.only.split(","))
+        files = [p for p in files if p.stem in only]
+    fetcher = PoliteFetcher(min_interval_s=args.interval)
+    summary = []
+    for path in files:
+        base = json.loads(path.read_text(encoding="utf-8"))
+        host = (urlparse(base.get("careerUrl") or "").hostname or "").lower()
+        if not is_zhiye_host(host):
+            continue
+        company, meta = crawl_company(fetcher, base, page_size=args.page_size, max_jobs=args.max_jobs)
+        entry = {"slug": base.get("slug"), "jobs": meta["api_jobs"], "sites": len(company["sites"])}
+        if meta["api_errors"]:
+            entry["api_errors"] = meta["api_errors"]
+        if args.write and company["positions"]:
+            (out_dir / f"{company['slug']}.json").write_text(json.dumps(company, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            entry["wrote"] = True
+        summary.append(entry)
+    print(json.dumps({"companies": len(summary), "results": summary}, ensure_ascii=False))
+    return 0
+
+
 def cmd_radar(args: argparse.Namespace) -> int:
     payload = load_radar_jobs(args.input)
     cities = tuple(c.strip() for c in args.cities.split(",") if c.strip()) or None
@@ -500,6 +588,16 @@ def main(argv: list[str] | None = None) -> int:
     feishu.add_argument("--only", default="", help="Comma-separated slugs/hosts to crawl (default: all)")
     feishu.add_argument("--write", action="store_true", help="Write drops (dry-run default)")
     feishu.set_defaults(func=cmd_feishu, tenants=FEISHU_TENANTS)
+
+    zhiye = sub.add_parser("zhiye", help="Crawl zhiye (Beisen *.zhiye.com) ATS portals into official-career drops")
+    zhiye.add_argument("--dir", required=True, help="radar drops JSON directory (tenants = drops with *.zhiye.com careerUrl)")
+    zhiye.add_argument("--out-dir", required=True, help="official-career JSON directory")
+    zhiye.add_argument("--interval", type=float, default=2.0, help="Seconds between requests")
+    zhiye.add_argument("--page-size", type=int, default=50, help="Job list page size (probe contract)")
+    zhiye.add_argument("--max-jobs", type=int, default=2000, help="Safety cap per company")
+    zhiye.add_argument("--only", default="", help="Comma-separated slugs to crawl (default: all zhiye drops)")
+    zhiye.add_argument("--write", action="store_true", help="Write drops with positions (dry-run default)")
+    zhiye.set_defaults(func=cmd_zhiye)
 
     args = parser.parse_args(argv)
     return args.func(args)

@@ -75,4 +75,14 @@ body: {"keyword":"","limit":50,"offset":0,"job_category_id_list":[],
 ## 后续
 
 1. 试点全量爬取已完成(得物/智元/禾赛);`import:seed:apply` 后地图显示真实岗位。
-2. 更多 feishu 租户(radar drops 中英科医疗/算秩未来/真格基金/原力灵机等)可复用同一适配器,补 `FEISHU_TENANTS` 配置即可。
+2. **租户扩充(2026-08-20,ws-w2)**:以下候选租户已加入 `cli.py FEISHU_TENANTS`(28 家),复用同一适配器,补配置即可;证据 = radar drops careerUrl,website_path 取数字路径段:
+
+   | 租户 | host | website_path | 证据(drop) |
+   |---|---|---|---|
+   | 英科医疗 | global-intco.jobs.feishu.cn | `840753` | `radar/英科医疗.json`(`/840753/position/list`) |
+   | 真格基金 | zhenfund.jobs.feishu.cn | `356542` | `radar/真格基金.json`(`/356542/position/list`) |
+   | 原力灵机 | dexmal-inc.jobs.feishu.cn | `285572` | 自身 drop 仅短链 `/s/-cbzfrbbx98`;数字段取自同租户 `radar/dexmal-原力灵机.json`、`radar/dexmai原力灵机.json`(`/285572/position/list`) |
+   | 算秩未来 | acnizrso7ikb.jobs.feishu.cn | (空) | `radar/算秩未来.json` 仅 referral token 链接 → 不留 website_path,只爬默认/社招池;token 链接不请求 |
+
+   路径模式一致性核对:带数字路径段的 careerUrl 形态(`/<id>/position/list`、`/<id>/?…`)与既有租户(波克/小鹏等)一致;短链与 referral token 链接按既有规则留空/不请求。
+3. 更多 feishu 租户可继续复用同一适配器,补 `FEISHU_TENANTS` 配置即可(radar drops 中仍有 ~40 个未配置的 `*.jobs.feishu.cn` host,后续可系统性扫描)。
