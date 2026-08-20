@@ -5,6 +5,8 @@
 **预计周期:** 4-6 周  
 **目标:** 多模式系统 + POI 展示 + 搜索筛选
 
+> **状态标注(2026-08-21):已实施完成(Phase 2 已并入 dev),本文档为历史计划记录;当前实现规范见 `tech/08-multi-mode-system.md` / `tech/09-secondary-sidebar.md` / `tech/10-search-filter.md`。**
+
 ---
 
 ## Phase 2 目标

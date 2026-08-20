@@ -45,7 +45,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 - Migrations run transactionally against an empty PostGIS database and are tested in CI. **Pending live DB**.
 - Cross-user/map access is denied by tested authorization rules. **Unit-tested**; DB enforcement pending.
 - No external source acquisition occurs during P1. **True.**
-- Frontend shell exists and is verified in-browser (user authorized ASCII gate relaxation for this phase). **Complete (2026-08-15)** — Apple Maps-inspired responsive shell with polished animations, all map controls functional, dark mode working, i18n operational. Full evidence in `tech/00-phase1-frontend-completion.md`.
+- Frontend shell exists and is verified in-browser (user authorized ASCII gate relaxation for this phase). **Complete (2026-08-15)** — Apple Maps-inspired responsive shell with polished animations, all map controls functional, dark mode working, i18n operational. Full evidence in `tech/00-phase1-closure-summary.md`（原 `00-phase1-frontend-completion.md` 已并入，2026-08-21）。
 
 ## Phase 2: Multi-Mode System + POI Display + Search & Filter
 

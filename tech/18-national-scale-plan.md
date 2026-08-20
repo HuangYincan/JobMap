@@ -2,12 +2,16 @@
 
 **文档版本:** 1.0
 **创建日期:** 2026-08-17
-**状态:** 当前开发计划（planned）
+**状态:** WS1–4 里程碑已全部完成并并入 `dev`,仅余「全国验收」待 AMap 配额(2026-08-21 geocode-quota 批已加配额短路 + 腾讯三级兜底);计划主体为历史记录,当前实现规范见 `tech/19`、`tech/21`、`tech/22`
 **相关:** `tech/11-phase2-plan.md`（Phase 2）、`tech/04-workflow.md`（worktree 并行）、`.claude/skills/parallel-development/`
 
 ---
 
 ## 1. 决策记录（用户定，2026-08-17）
+
+> **权威记录（2026-08-21 标注）：** 本节的 D1/A1/B1/D2 是用户拍板的决策，被
+> `tech/05-milestones.md` 与 `tech/17-freshness-presentation-proposal.md` 引用，
+> 修改须经用户确认。
 
 ### D1 — 不做高德 → PostgreSQL 导入；Domain 模式直接调 API
 

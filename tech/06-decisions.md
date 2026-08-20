@@ -56,18 +56,22 @@ PostgreSQL 16 + PostGIS 3.4 是 MVP 硬约束；pgvector 延后，须另行验�
 ## ADR-003:前端采用 Next.js 全栈框架
 
 **日期**:2026-08-15  
-**状态**:已接受
+**状态**:已接受(2026-08-21 修订为已定案事实:实际落地为 CSS Modules + Next.js 16,Tailwind 从未采用)  
+**决策者**:Yincan Huang
 
 **背景**:
 需要快速开发全栈应用(前端地图 + 后端 API + SSR)。
 
 **决策**:
-Next.js 15 App Router + TypeScript + Tailwind CSS v4 是目标技术栈，当前尚未落地。
+Next.js 16 App Router + TypeScript + **CSS Modules** 是实际技术栈(2026-08-21 修订:
+初始计划版本为 15.x(2026-08-20 已升级至 16.3.1)并计划 Tailwind CSS v4,但实现全程
+采用 CSS Modules,Tailwind 从未引入,本决策以实际落地为准)。见
+[01-architecture.md](01-architecture.md)。
 
 **理由**:
 - App Router 简化 API 开发(不需要单独后端)
 - SSR 优化 SEO(公开地图可被搜索引擎收录)
-- Tailwind v4 支持 CSS 变量(主题系统更灵活)
+- CSS Modules 作用域隔离 + 与组件同构,配合设计系统 token 变量(主题系统更灵活)
 - 与 React 生态完全兼容(大量地图组件可用)
 
 **代价**:
