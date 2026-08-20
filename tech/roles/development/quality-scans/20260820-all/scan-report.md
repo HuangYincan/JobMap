@@ -104,3 +104,26 @@
 - 批次 D(前端拆分,大工程):#6(map-shell 继续抽 hooks,component-contracts 门禁)。
 - 批次 E(仓库卫生):#13(清理根 Playwright 产物 + 批次目录入库)。
 - 需用户决策(暂不派):#3 的合并口径(同官网/同品牌是否合并、以哪个 slug 为准);#5 的改名是否影响已保存引用;#8 的 robots 失败策略;#14(串味行数据修正属数据批,需执行窗口)。
+
+## 修复状态回填(2026-08-21)
+
+> 依据:20260820-boss-scan-optimize 批(ws-docs/ws-api/ws-data + boss 主树 b8d5fc1)实际修复情况
+> 与代码复核;未修项统一追踪见 `tech/roles/development/deferred-ledger.md`。
+
+| # | 发现 | 状态(2026-08-21) | 说明 |
+|---|---|---|---|
+| 1 | 测试计数三处漂移 | 已修 | ws-docs 统一写回(488);后续批次继续维护计数 |
+| 2 | CHANGELOG 缺 2 条目 | 已修 | ws-docs 补 `788e9c6`(positions-dedup)与 `933f972`(work 全量加载) |
+| 3 | 同公司多 slug 重复 | **未修** | 数据口径待用户拍板 → 见 deferred-ledger **D-19** |
+| 4 | 双重 https 前缀 | 部分 | JSON 已修(ws-data)+ import 校验器 URL 断言;DB 待重新 import → 见 deferred-ledger **D-21** |
+| 5 | slug/显示名拼写错误 | **未修** | 数据口径待用户拍板(akuna-capitai/doiphindb/hrnetgronp/中信证劵仍在)→ 见 deferred-ledger **D-20** |
+| 6 | map-shell 巨型组件 | **未修** | 2817 行(2026-08-21);继续抽 hooks → 见 deferred-ledger **D-18** |
+| 7 | /api/pois/[id] 双重解码 500 | 已修 | ws-api(去二次解码 + MAX_ID_LENGTH 256;代码复核确认)→ 见 deferred-ledger D-22 |
+| 8 | robots 失败策略 | **未修** | acquire.py:143-152 仍默认允许;采集口径待用户拍板 → 见 deferred-ledger **D-05** |
+| 9 | Next.js 15 过时标注 | 已修 | ws-docs(CLAUDE.md/README 统一 16.3.1) |
+| 10 | tech/05 版本号过时 | 已修 | ws-docs(16.3.1 / 19.2.8 / 5.9.3 + Last reviewed 更新) |
+| 11 | crawler 测试计数 64 vs 66 | **未修** | README:14 仍「64 unit tests pass」;待 `make test-unit` 取权威值 → 见 deferred-ledger **D-27** |
+| 12 | agent.md 引用不存在的 implementation/ 路径 | 已修 | ws-docs(统一标注「规划,目录尚未建立」) |
+| 13 | 仓库卫生(根产物 + 批次目录未入库) | 已修 | boss 主树直接完成(dev b8d5fc1:9 批次目录 + 2 扫描报告入库、.gitignore 排除 logs、根 Playwright 产物已删);其余批次随后续合并陆续入库 |
+| 14 | 串味行仍存 DB | **未修** | 查询层+聚合层双防御;数据修正待执行窗口 → 见 deferred-ledger **D-01** |
+| 15 | tech/16 计数未同步(并入 #1) | 已修 | 随 #1 统一修正 |

@@ -1,5 +1,7 @@
 # 质量扫描报告(2026-08-19 · scope: all)
 
+> 状态追踪见 20260820-all 复核段(quality-scans/20260820-all/scan-report.md「上轮复核」+「修复状态回填」)。
+
 ## 摘要
 
 - 扫描对象与规模:全库 —— `tech/**` 171 个 md、根文档(README/CHANGELOG/CONTRIBUTING/agent/CLAUDE)、`.claude/skills/`、`server/src`(lib 33 文件 / components 18 文件 / app 17 路由 / hooks / 24 个测试)、`crawler/app`(10 文件 + 6 测试)、`db/migrations`(001–016)、`server/data/recruitment`(radar/official-career/boss/nowcoder/shixiseng drops)、`tech/roles/data/`(data-quality/etl/批次目录)。合计约 480 个源/文档/数据文件。
