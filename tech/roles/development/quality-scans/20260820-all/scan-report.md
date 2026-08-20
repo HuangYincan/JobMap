@@ -122,7 +122,7 @@
 | 8 | robots 失败策略 | **未修** | acquire.py:143-152 仍默认允许;采集口径待用户拍板 → 见 deferred-ledger **D-05** |
 | 9 | Next.js 15 过时标注 | 已修 | ws-docs(CLAUDE.md/README 统一 16.3.1) |
 | 10 | tech/05 版本号过时 | 已修 | ws-docs(16.3.1 / 19.2.8 / 5.9.3 + Last reviewed 更新) |
-| 11 | crawler 测试计数 64 vs 66 | **未修** | README:14 仍「64 unit tests pass」;待 `make test-unit` 取权威值 → 见 deferred-ledger **D-27** |
+| 11 | crawler 测试计数 64 vs 66 | 已修 | 本批 ws1:README:14「64 unit tests pass」→「103」(2026-08-21 `make test-unit` 实测) |
 | 12 | agent.md 引用不存在的 implementation/ 路径 | 已修 | ws-docs(统一标注「规划,目录尚未建立」) |
 | 13 | 仓库卫生(根产物 + 批次目录未入库) | 已修 | boss 主树直接完成(dev b8d5fc1:9 批次目录 + 2 扫描报告入库、.gitignore 排除 logs、根 Playwright 产物已删);其余批次随后续合并陆续入库 |
 | 14 | 串味行仍存 DB | **未修** | 查询层+聚合层双防御;数据修正待执行窗口 → 见 deferred-ledger **D-01** |

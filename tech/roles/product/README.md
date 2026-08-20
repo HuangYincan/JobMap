@@ -5,9 +5,9 @@
 
 ## 文档清单
 
-- [PRD/](PRD/) - 产品需求文档(**规划中,目录尚未建立**)
-- [roadmap.md](roadmap.md) - 产品路线图(**规划中,目录尚未建立**)
-- [user-research/](user-research/) - 用户研究(**规划中,目录尚未建立**)
+- `PRD/` - 产品需求文档(规划中,目录尚未建立)
+- `roadmap.md` - 产品路线图(规划中,目录尚未建立)
+- `user-research/` - 用户研究(规划中,目录尚未建立)
 
 ## PRD 模板
 
@@ -22,4 +22,4 @@
 7. **数据指标**:如何衡量成功
 8. **上线计划**:发布时间 + 灰度策略
 
-详见 [PRD/01-mvp-recruitment.md](PRD/01-mvp-recruitment.md)(示例;规划中,PRD 目录尚未建立)
+详见 `PRD/01-mvp-recruitment.md`(示例;规划中,PRD 目录尚未建立)
