@@ -26,6 +26,24 @@
       "location": {
         "address": "上海/深圳/南京/西安"
       }
+    },
+    {
+      "id": "阳光电源-site-nanjing",
+      "name": "阳光电源",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/深圳/南京/西安"
+      }
+    },
+    {
+      "id": "阳光电源-site-xian",
+      "name": "阳光电源",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "上海/深圳/南京/西安"
+      }
     }
   ],
   "positions": [
@@ -48,6 +66,36 @@
       "externalId": "radar-77e7102c9fe6",
       "title": "产品研发类  信息技术类  技术营销类",
       "siteId": "阳光电源-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/sungrow/94416#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-4afc08e8ece5-nanjing",
+      "title": "产品研发类  信息技术类  技术营销类  制造技术类  质量类  供应链类  职能类",
+      "siteId": "阳光电源-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/sungrow/94416?locale=zh-CN#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-77e7102c9fe6-nanjing",
+      "title": "产品研发类  信息技术类  技术营销类",
+      "siteId": "阳光电源-site-nanjing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

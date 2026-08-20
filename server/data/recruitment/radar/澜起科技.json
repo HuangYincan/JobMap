@@ -1,0 +1,48 @@
+{
+  "slug": "澜起科技",
+  "name": "澜起科技",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wxcc792e68420b3264.wx.moseeker.com/m/position/?wechat_signature=MTM4MTkwNTYzMzAyNDAyMDQ4MDg3MjEyMjfmvpzotbfnp5HmioA%3D",
+  "sites": [
+    {
+      "id": "澜起科技-site-nanjing",
+      "name": "澜起科技",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京/西安"
+      }
+    },
+    {
+      "id": "澜起科技-site-xian",
+      "name": "澜起科技",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "南京/西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-62752411e011",
+      "title": "模拟设计  数字设计  数字验证 产品工程师",
+      "siteId": "澜起科技-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wxcc792e68420b3264.wx.moseeker.com/m/position/?wechat_signature=MTM4MTkwNTYzMzAyNDAyMDQ4MDg3MjEyMjfmvpzotbfnp5HmioA%3D",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

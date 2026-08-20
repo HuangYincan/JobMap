@@ -1,0 +1,39 @@
+{
+  "slug": "西安微电子技术研究所",
+  "name": "西安微电子技术研究所",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://cascxianmti.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "西安微电子技术研究所-site-xian",
+      "name": "西安微电子技术研究所",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "西安"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7140495f8e4e",
+      "title": "科研设计岗:计算机科学与技术、电子科学与技术、集成电路工程、软件工程、信息与通信工程、电气工程、信息系统集成、人工智能、量子计算、控制科受与工程、机械工程、材料",
+      "siteId": "西安微电子技术研究所-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cascxianmti.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "slug": "博西家电",
+  "name": "博西家电",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/social-recruitment/bshg/171901?locale=zh-CN&sessionid=#/",
+  "sites": [
+    {
+      "id": "博西家电-site-nanjing",
+      "name": "博西家电—战略实习生项目",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c709c33c63c8",
+      "title": "数字战略方向 研发创新方向 战略规划方向 市场与品牌战略方向",
+      "siteId": "博西家电-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/bshg/171901?locale=zh-CN&sessionid=#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

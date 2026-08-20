@@ -35,6 +35,15 @@
       "location": {
         "address": "北京/上海/深圳/南京"
       }
+    },
+    {
+      "id": "为旌科技-site-nanjing",
+      "name": "为旌科技",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/深圳/南京"
+      }
     }
   ],
   "positions": [
@@ -42,6 +51,21 @@
       "externalId": "radar-eeac4f23dd28",
       "title": "图形算法类 AI算法类 软件类 芯片类",
       "siteId": "为旌科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/visinextek/41636#/jobs?page=1&anchorName=jobsList&keyword=%E5%AE%9E%E4%B9%A0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-eeac4f23dd28-nanjing",
+      "title": "图形算法类 AI算法类 软件类 芯片类",
+      "siteId": "为旌科技-site-nanjing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

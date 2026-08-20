@@ -1,0 +1,54 @@
+{
+  "slug": "浩鲸科技",
+  "name": "浩鲸科技",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://iwhalecloud1.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "浩鲸科技-site-nanjing",
+      "name": "浩鲸科技",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京/福州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-699f1a6e58f6",
+      "title": "售前方案实习生  运营管理实习生  产品经理实习生  交付实习生  测试实习生",
+      "siteId": "浩鲸科技-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iwhalecloud1.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-9e33bbccc953",
+      "title": "AI模型实习生 智能硬件实习生 Java开发实习生",
+      "siteId": "浩鲸科技-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iwhalecloud1.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -26,6 +26,15 @@
       "location": {
         "address": "北京/武汉/南京"
       }
+    },
+    {
+      "id": "北京四方继保自动化股份有限公司-site-nanjing",
+      "name": "北京四方继保自动化股份有限公司",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/武汉/南京"
+      }
     }
   ],
   "positions": [
@@ -33,6 +42,21 @@
       "externalId": "radar-a2cad8e723f0",
       "title": "不限于电气类、自动化类、控制类、电子信息类、计算机类、管科类、汉语言文学",
       "siteId": "北京四方继保自动化股份有限公司-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sf-auto1.zhiye.com/campus/jobs?shareId=a5534d6d-ae85-4d7f-a8a3-65d3138030a3&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-a2cad8e723f0-nanjing",
+      "title": "不限于电气类、自动化类、控制类、电子信息类、计算机类、管科类、汉语言文学",
+      "siteId": "北京四方继保自动化股份有限公司-site-nanjing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

@@ -1,0 +1,39 @@
+{
+  "slug": "江苏交控",
+  "name": "江苏交控",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jchctalent.jchc.cn/SU6a31225f1d4c30777aea4745/pb/interns.html",
+  "sites": [
+    {
+      "id": "江苏交控-site-nanjing",
+      "name": "江苏交控",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-dda4535bd243",
+      "title": "下属各单位岗位  具体见投递方式链接",
+      "siteId": "江苏交控-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jchctalent.jchc.cn/SU6a31225f1d4c30777aea4745/pb/interns.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

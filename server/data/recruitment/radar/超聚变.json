@@ -35,6 +35,15 @@
       "location": {
         "address": "北京/上海/深圳/西安"
       }
+    },
+    {
+      "id": "超聚变-site-xian",
+      "name": "超聚变",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/上海/深圳/西安"
+      }
     }
   ],
   "positions": [
@@ -42,6 +51,21 @@
       "externalId": "radar-47bee78da20f",
       "title": "研发类 销售类 财经类 采购类 供应链制造类  人力资源类  质量运营类",
       "siteId": "超聚变-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.xfusion.com/OfficialPortal/?sessionid=#/traineeList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-47bee78da20f-xian",
+      "title": "研发类 销售类 财经类 采购类 供应链制造类  人力资源类  质量运营类",
+      "siteId": "超聚变-site-xian",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

@@ -37,6 +37,15 @@
         "lng": 120.284625,
         "lat": 30.328025
       }
+    },
+    {
+      "id": "知存科技-site-xian",
+      "name": "知存科技",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/上海/杭州/西安"
+      }
     }
   ],
   "positions": [
@@ -44,6 +53,21 @@
       "externalId": "radar-e7a2429e0547",
       "title": "微电子  集成电路  半导体  计算机  计算机体系结构   电子信息  通信 自动化  物理  材料  光电  机械 热流体 等专业",
       "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-e7a2429e0547-xian",
+      "title": "微电子  集成电路  半导体  计算机  计算机体系结构   电子信息  通信 自动化  物理  材料  光电  机械 热流体 等专业",
+      "siteId": "知存科技-site-xian",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

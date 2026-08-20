@@ -26,6 +26,15 @@
       "location": {
         "address": "北京/成都/西安/郑州"
       }
+    },
+    {
+      "id": "清华同衡-site-xian",
+      "name": "清华同衡",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/成都/西安/郑州"
+      }
     }
   ],
   "positions": [
@@ -33,6 +42,21 @@
       "externalId": "radar-17e6d43ab01b",
       "title": "下属各单位岗位  具体见官方公告及投递方式",
       "siteId": "清华同衡-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://thupdi.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-17e6d43ab01b-xian",
+      "title": "下属各单位岗位  具体见官方公告及投递方式",
+      "siteId": "清华同衡-site-xian",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

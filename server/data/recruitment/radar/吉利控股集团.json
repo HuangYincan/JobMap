@@ -19,6 +19,15 @@
         "lng": 120.219227,
         "lat": 30.20858
       }
+    },
+    {
+      "id": "吉利控股集团-site-xian",
+      "name": "吉利控股集团",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "杭州/西安/宁波/无锡"
+      }
     }
   ],
   "positions": [
@@ -26,6 +35,21 @@
       "externalId": "radar-1f529e2f29cc",
       "title": "IT互联网类 整车研发类 新能源开发类 航空航天类 营销服务类 智能制造类 采购/供应链/质量类 设计类 职能类",
       "siteId": "吉利控股集团-site-hangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/geely/78436?locale=zh-CN#/jobs?commitment%5B0%5D=%E5%AE%9E%E4%B9%A0&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-1f529e2f29cc-xian",
+      "title": "IT互联网类 整车研发类 新能源开发类 航空航天类 营销服务类 智能制造类 采购/供应链/质量类 设计类 职能类",
+      "siteId": "吉利控股集团-site-xian",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

@@ -26,6 +26,15 @@
       "location": {
         "address": "上海/成都"
       }
+    },
+    {
+      "id": "天锐星通-site-nanjing",
+      "name": "天锐星通",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/成都/南京"
+      }
     }
   ],
   "positions": [
@@ -48,6 +57,21 @@
       "externalId": "radar-169d9bc5d27d",
       "title": "模拟IC设计工程师  射频 IC设计工程师 天线工程师  射频工程师  硬件工程师  结构工程师  逻辑工程师  嵌入式工程师  测试方法研究工程师  AI",
       "siteId": "天锐星通-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://t-ray.zhiye.com/campus/jobs?shareId=9bc65afa-42ac-4deb-be0d-676350c99df1&shareSource=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-169d9bc5d27d-nanjing",
+      "title": "模拟IC设计工程师  射频 IC设计工程师 天线工程师  射频工程师  硬件工程师  结构工程师  逻辑工程师  嵌入式工程师  测试方法研究工程师  AI",
+      "siteId": "天锐星通-site-nanjing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

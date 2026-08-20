@@ -35,6 +35,15 @@
       "location": {
         "address": "北京/上海/深圳/西安"
       }
+    },
+    {
+      "id": "普源精电-site-xian",
+      "name": "普源精电",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/上海/深圳/西安"
+      }
     }
   ],
   "positions": [
@@ -42,6 +51,21 @@
       "externalId": "radar-ac278761ff89",
       "title": "AI开发工程师 ATE测试工程师 财务会计 数据科学家 营销培训生 现场应用工程师 IT开发工程师 供应链管培生 射频IC工程师 机械结构工程师 模拟IC工程师",
       "siteId": "普源精电-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://rigolportal.jobs.feishu.cn/campus/position/list?spread=9HENZ3G",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-ac278761ff89-xian",
+      "title": "AI开发工程师 ATE测试工程师 财务会计 数据科学家 营销培训生 现场应用工程师 IT开发工程师 供应链管培生 射频IC工程师 机械结构工程师 模拟IC工程师",
+      "siteId": "普源精电-site-xian",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

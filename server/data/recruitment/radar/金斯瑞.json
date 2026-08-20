@@ -1,0 +1,39 @@
+{
+  "slug": "金斯瑞",
+  "name": "金斯瑞",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/genscript/141122?locale=zh-CN#/jobs",
+  "sites": [
+    {
+      "id": "金斯瑞-site-nanjing",
+      "name": "金斯瑞",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2a736047e505",
+      "title": "实验助理岗 ：生物  化学  药学  检验 等专业  ：后台职能岗   电气自动化  机械  人力资源等专业",
+      "siteId": "金斯瑞-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/genscript/141122?locale=zh-CN#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

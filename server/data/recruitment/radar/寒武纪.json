@@ -35,6 +35,15 @@
       "location": {
         "address": "北京/上海/深圳/南京"
       }
+    },
+    {
+      "id": "寒武纪-site-nanjing",
+      "name": "寒武纪",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/深圳/南京"
+      }
     }
   ],
   "positions": [
@@ -57,6 +66,36 @@
       "externalId": "radar-0a0c206d3a69",
       "title": "芯片类 软件类  职能与支持类",
       "siteId": "寒武纪-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/cambricon/44201?locale=zh-CN&sessionid=#/jobs?project=100104477",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-d6419dd3c406-nanjing",
+      "title": "芯片类 软件类  职能类与研发支持类",
+      "siteId": "寒武纪-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/cambricon/44201?locale=zh-CN&sessionid=#/jobs?project=100124265",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-0a0c206d3a69-nanjing",
+      "title": "芯片类 软件类  职能与支持类",
+      "siteId": "寒武纪-site-nanjing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

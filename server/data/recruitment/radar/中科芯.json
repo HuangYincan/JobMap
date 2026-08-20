@@ -26,6 +26,24 @@
       "location": {
         "address": "成都/武汉/南京/西安"
       }
+    },
+    {
+      "id": "中科芯-site-nanjing",
+      "name": "中科芯",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "成都/武汉/南京/西安"
+      }
+    },
+    {
+      "id": "中科芯-site-xian",
+      "name": "中科芯",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "成都/武汉/南京/西安"
+      }
     }
   ],
   "positions": [
@@ -33,6 +51,21 @@
       "externalId": "radar-457f9d59242d",
       "title": "软件与AI类  芯片设计类   晶圆制造类  封装测试类  芯片应用类",
       "siteId": "中科芯-site-chengdu",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cksic.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-457f9d59242d-nanjing",
+      "title": "软件与AI类  芯片设计类   晶圆制造类  封装测试类  芯片应用类",
+      "siteId": "中科芯-site-nanjing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

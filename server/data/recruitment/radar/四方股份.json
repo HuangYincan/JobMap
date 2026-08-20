@@ -35,6 +35,15 @@
       "location": {
         "address": "北京/深圳/武汉/南京"
       }
+    },
+    {
+      "id": "四方股份-site-nanjing",
+      "name": "四方股份",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/武汉/南京"
+      }
     }
   ],
   "positions": [
@@ -42,6 +51,21 @@
       "externalId": "radar-8fdd6346995c",
       "title": "软件算法类  硬件研发类  测试开发类",
       "siteId": "四方股份-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sf-auto.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-8fdd6346995c-nanjing",
+      "title": "软件算法类  硬件研发类  测试开发类",
+      "siteId": "四方股份-site-nanjing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

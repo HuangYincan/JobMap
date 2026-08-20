@@ -17,6 +17,15 @@
       "location": {
         "address": "北京/南京/无锡"
       }
+    },
+    {
+      "id": "润石科技-site-nanjing",
+      "name": "润石科技",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/南京/无锡"
+      }
     }
   ],
   "positions": [
@@ -24,6 +33,21 @@
       "externalId": "radar-06745e29652a",
       "title": "模拟设计工程师 （信号链方向） 模拟设计工程师（电源方向） 数字设计工程师  AE工程师",
       "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-06745e29652a-nanjing",
+      "title": "模拟设计工程师 （信号链方向） 模拟设计工程师（电源方向） 数字设计工程师  AE工程师",
+      "siteId": "润石科技-site-nanjing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

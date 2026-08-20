@@ -26,6 +26,15 @@
       "location": {
         "address": "北京/武汉/南京"
       }
+    },
+    {
+      "id": "小米集团-site-nanjing",
+      "name": "小米集团",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/武汉/南京"
+      }
     }
   ],
   "positions": [
@@ -33,6 +42,21 @@
       "externalId": "radar-32b6469887c1",
       "title": "软件研发类  硬件研发类  算法类  测试类  产品类  运营类 市场类  职能类  管理类  交付类等",
       "siteId": "小米集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/internship/?keywords=2027%E5%B1%8A&category=&location=&project=&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&spread=6AA3R7B",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-32b6469887c1-nanjing",
+      "title": "软件研发类  硬件研发类  算法类  测试类  产品类  运营类 市场类  职能类  管理类  交付类等",
+      "siteId": "小米集团-site-nanjing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

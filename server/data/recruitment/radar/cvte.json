@@ -17,6 +17,15 @@
       "location": {
         "address": "广州"
       }
+    },
+    {
+      "id": "cvte-site-xian",
+      "name": "CVTE—人力资源",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "广州/重庆/西安/苏州"
+      }
     }
   ],
   "positions": [
@@ -53,6 +62,35 @@
       "externalId": "radar-e5bb84a1b94d",
       "title": "硬件类，软件类，商务类，其他类，算法类",
       "siteId": "cvte-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/project/7304f092b3cc11f083a91070fd64d1d0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-8d276e042a2c-xian",
+      "title": "人力资源岗位",
+      "siteId": "cvte-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/position/19ee6b5050414e898785dcd993499bab",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-e5bb84a1b94d-xian",
+      "title": "硬件类，软件类，商务类，其他类，算法类",
+      "siteId": "cvte-site-xian",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

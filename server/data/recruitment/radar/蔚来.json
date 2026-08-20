@@ -44,6 +44,15 @@
       "location": {
         "address": "北京/上海/深圳/武汉"
       }
+    },
+    {
+      "id": "蔚来-site-nanjing",
+      "name": "蔚来—Super Sparks",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/南京"
+      }
     }
   ],
   "positions": [
@@ -74,6 +83,21 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://nio.jobs.feishu.cn/s/_mp8orD64q0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-34a48a2af577-nanjing",
+      "title": "智能辅助驾驶方向  数字系统及智能车控方向  智能座舱方向  智数化及AI安全业务方向",
+      "siteId": "蔚来-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://nio.jobs.feishu.cn/campus/?keywords=&category=&location=&project=7383991896182343963&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&spread=9W5KU9X",
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }

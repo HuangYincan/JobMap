@@ -53,6 +53,15 @@
       "location": {
         "address": "北京/上海/广州/成都"
       }
+    },
+    {
+      "id": "科大讯飞-site-xian",
+      "name": "科大讯飞",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "武汉/西安/合肥"
+      }
     }
   ],
   "positions": [
@@ -113,6 +122,51 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://iflytek.zhiye.com/5/jobs?shareId=0b5e40b5-8a44-45cc-aa33-d4bd87f3191b&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-1c3cb117acbe-xian",
+      "title": "后端/前端/嵌入式/测试研发、产品经理、解决方案、市场营销、职能、视觉交互设计等岗位全覆盖",
+      "siteId": "科大讯飞-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/jobs?shareId=03577689-c7d4-4fcb-8df4-b84cd83250cf&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-4a64e04415f3-xian",
+      "title": "研发管培、产品管培、营销管培",
+      "siteId": "科大讯飞-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/5/jobs?shareId=0b5e40b5-8a44-45cc-aa33-d4bd87f3191b&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-b871edcdf925-xian",
+      "title": "顶尖AI算法人才（27届硕博）\n面向算法研发核心人才，主攻前沿大模型、语音、视觉技术\n招聘岗位：AI研究算法工程师\n细分方向：语音大模型、NLP、多模态、计算机",
+      "siteId": "科大讯飞-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/4/jobs?shareId=9528e9e5-9be3-4112-ac29-e84ba5390857&shareSource=2",
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }

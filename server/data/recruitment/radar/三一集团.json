@@ -55,6 +55,15 @@
         "lng": 120.598954,
         "lat": 30.30582
       }
+    },
+    {
+      "id": "三一集团-site-xian",
+      "name": "三一集团—星辰计划",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/广州/西安/苏州"
+      }
     }
   ],
   "positions": [
@@ -85,6 +94,21 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://sany.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-bb7ace90e1fb-xian",
+      "title": "智能感知与控制  先进仿真与数字栾生机电液系统工程  绿色动力与系能源",
+      "siteId": "三一集团-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sany.zhiye.com/4/jobs",
       "retrievedAt": "2026-08-11",
       "aggregate": true
     }

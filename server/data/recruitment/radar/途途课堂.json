@@ -26,6 +26,15 @@
       "location": {
         "address": "成都/武汉/西安/郑州"
       }
+    },
+    {
+      "id": "途途课堂-site-xian",
+      "name": "途途课堂",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "成都/武汉/西安/郑州"
+      }
     }
   ],
   "positions": [
@@ -33,6 +42,21 @@
       "externalId": "radar-69948c04d4f1",
       "title": "二讲老师  学习顾问",
       "siteId": "途途课堂-site-chengdu",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jsj.top/f/Vj2AGC?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-69948c04d4f1-xian",
+      "title": "二讲老师  学习顾问",
+      "siteId": "途途课堂-site-xian",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

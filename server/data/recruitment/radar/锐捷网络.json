@@ -35,6 +35,15 @@
       "location": {
         "address": "北京/成都/武汉/南京"
       }
+    },
+    {
+      "id": "锐捷网络-site-nanjing",
+      "name": "锐捷网络",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/成都/武汉/南京"
+      }
     }
   ],
   "positions": [
@@ -42,6 +51,21 @@
       "externalId": "radar-5d1649477606",
       "title": "研发类 产品类  设计类 职能类",
       "siteId": "锐捷网络-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/ruijie/136206?recommendCode=DSPhHCtE&hash=%23%2Fjobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-5d1649477606-nanjing",
+      "title": "研发类 产品类  设计类 职能类",
+      "siteId": "锐捷网络-site-nanjing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

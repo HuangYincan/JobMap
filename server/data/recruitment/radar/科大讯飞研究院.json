@@ -35,6 +35,15 @@
       "location": {
         "address": "北京/上海/广州/西安"
       }
+    },
+    {
+      "id": "科大讯飞研究院-site-xian",
+      "name": "科大讯飞研究院—研究算法人才专项",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/上海/广州/西安"
+      }
     }
   ],
   "positions": [
@@ -42,6 +51,21 @@
       "externalId": "radar-ba0f0d467696",
       "title": "AI研究算法工程师（多方向）",
       "siteId": "科大讯飞研究院-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/4/jobs?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-ba0f0d467696-xian",
+      "title": "AI研究算法工程师（多方向）",
+      "siteId": "科大讯飞研究院-site-xian",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

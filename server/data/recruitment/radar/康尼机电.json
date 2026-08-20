@@ -1,0 +1,39 @@
+{
+  "slug": "康尼机电",
+  "name": "康尼机电",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kangni.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "康尼机电-site-nanjing",
+      "name": "康尼机电",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5ab9741e7247",
+      "title": "项目专员  系统设计师（AI/EB） 技术管理师   人力资源助理",
+      "siteId": "康尼机电-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kangni.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

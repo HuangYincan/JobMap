@@ -17,6 +17,15 @@
       "location": {
         "address": "上海/西安"
       }
+    },
+    {
+      "id": "ge航空航天-site-xian",
+      "name": "GE航空航天",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "上海/西安"
+      }
     }
   ],
   "positions": [
@@ -24,6 +33,21 @@
       "externalId": "radar-3b6a323141c5",
       "title": "技术商务领导力项目管培生暑期实习生，软件开发，大数据科学暑假实习生，深度学习方向，数据质量工程，系统集成工程暑假实习生",
       "siteId": "ge航空航天-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.geaerospace.com/global/en/china?s=1&rk=l-slp-beijing",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-3b6a323141c5-xian",
+      "title": "技术商务领导力项目管培生暑期实习生，软件开发，大数据科学暑假实习生，深度学习方向，数据质量工程，系统集成工程暑假实习生",
+      "siteId": "ge航空航天-site-xian",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

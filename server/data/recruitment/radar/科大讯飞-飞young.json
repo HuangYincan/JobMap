@@ -17,6 +17,15 @@
       "location": {
         "address": "武汉/西安/合肥"
       }
+    },
+    {
+      "id": "科大讯飞-飞young-site-xian",
+      "name": "科大讯飞-飞YOUNG计划",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "武汉/西安/合肥"
+      }
     }
   ],
   "positions": [
@@ -24,6 +33,21 @@
       "externalId": "radar-7f97d91feaee",
       "title": "AI研究算法工程师  Java开发工程师  C++开发工程师 AI研发工程师  产品经理",
       "siteId": "科大讯飞-飞young-site-wuhan",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/intern/jobs?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-7f97d91feaee-xian",
+      "title": "AI研究算法工程师  Java开发工程师  C++开发工程师 AI研发工程师  产品经理",
+      "siteId": "科大讯飞-飞young-site-xian",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

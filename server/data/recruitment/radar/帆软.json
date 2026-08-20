@@ -28,6 +28,15 @@
         "lng": 120.217607,
         "lat": 30.296897
       }
+    },
+    {
+      "id": "帆软-site-nanjing",
+      "name": "帆软",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "成都/南京/无锡"
+      }
     }
   ],
   "positions": [
@@ -50,6 +59,36 @@
       "externalId": "radar-7ed1b257b1c8",
       "title": "产品经理  产品运营 后台开发工程师",
       "siteId": "帆软-site-chengdu",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.fanruan.com/trainee",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-ed707a6081a4-nanjing",
+      "title": "产品经理、产品运营、后台开发工程师",
+      "siteId": "帆软-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://t6ixa9nyl6.jiandaoyun.com/f/65e1a1308ce7672fded0f0cf?ext=XDUXXY",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-7ed1b257b1c8-nanjing",
+      "title": "产品经理  产品运营 后台开发工程师",
+      "siteId": "帆软-site-nanjing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"

@@ -1,0 +1,38 @@
+{
+  "slug": "中信银行南京分行",
+  "name": "中信银行南京分行",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://job.citicbank.com/",
+  "sites": [
+    {
+      "id": "中信银行南京分行-site-nanjing",
+      "name": "中信银行南京分行",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f7277309c11e",
+      "title": "南京分行暑期实习生",
+      "siteId": "中信银行南京分行-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.citicbank.com/",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

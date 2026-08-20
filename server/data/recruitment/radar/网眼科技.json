@@ -17,6 +17,15 @@
       "location": {
         "address": "北京/南京"
       }
+    },
+    {
+      "id": "网眼科技-site-nanjing",
+      "name": "网眼科技",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/南京"
+      }
     }
   ],
   "positions": [
@@ -24,6 +33,21 @@
       "externalId": "radar-9047b1f09d45",
       "title": "算法类、产研类、销售类、运营类、设计类",
       "siteId": "网眼科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://webeye.jobs.feishu.cn/s/AVmDfNQjM9w",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-9047b1f09d45-nanjing",
+      "title": "算法类、产研类、销售类、运营类、设计类",
+      "siteId": "网眼科技-site-nanjing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

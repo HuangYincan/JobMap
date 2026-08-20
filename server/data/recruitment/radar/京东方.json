@@ -35,6 +35,15 @@
       "location": {
         "address": "北京/成都/武汉/南京"
       }
+    },
+    {
+      "id": "京东方-site-nanjing",
+      "name": "京东方—先锋京英计划",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/成都/武汉/南京"
+      }
     }
   ],
   "positions": [
@@ -42,6 +51,21 @@
       "externalId": "radar-8dceb3f20e5d",
       "title": "研发类 工程类 市场营销/产品类 \n应链类  品质类 信息技术类 医疗健康类 职能类 制程技术培训生类 管理培训生类",
       "siteId": "京东方-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-14",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.boe.com/custom/campus?hideMenu=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-8dceb3f20e5d-nanjing",
+      "title": "研发类 工程类 市场营销/产品类 \n应链类  品质类 信息技术类 医疗健康类 职能类 制程技术培训生类 管理培训生类",
+      "siteId": "京东方-site-nanjing",
       "family": "campus",
       "taxonomy": {
         "family": "campus"

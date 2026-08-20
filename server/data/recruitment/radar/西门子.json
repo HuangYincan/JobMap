@@ -17,6 +17,15 @@
       "location": {
         "address": "上海/南京"
       }
+    },
+    {
+      "id": "西门子-site-nanjing",
+      "name": "西门子",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/南京"
+      }
     }
   ],
   "positions": [
@@ -24,6 +33,21 @@
       "externalId": "radar-cd87a846e6ff",
       "title": "功率电子硬件开发实习生 结构设计实习生 AI应用实习生",
       "siteId": "西门子-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://siemens-china.tupu360.com/pageQrCode?targetUrl=a7f4739eb94ec9ef120576839eb4650abbcaa55c15715ff62393107d428a051b2d4cfa74c95209e2b84fb8d19dc7bd3a3b5a433059fdab64913dec3267c4d339d6dc9fb1bd90ba09c07bc7bfffa767e021280c2556307b8f306972d5ee7433c983042414",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-cd87a846e6ff-nanjing",
+      "title": "功率电子硬件开发实习生 结构设计实习生 AI应用实习生",
+      "siteId": "西门子-site-nanjing",
       "family": "intern",
       "taxonomy": {
         "family": "intern"
