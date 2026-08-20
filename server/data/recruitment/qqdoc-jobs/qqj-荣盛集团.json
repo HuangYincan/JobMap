@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-荣盛集团",
+  "name": "荣盛集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0",
+  "direction": "职能支持类  生产运行类  市场营销类  供应链物流类  研发技术类",
+  "deadline": "2026  11 30",
+  "sites": [
+    {
+      "id": "qqj-荣盛集团-site",
+      "name": "荣盛集团",
+      "city": "杭州 宁波  丹山 苏州  大连  海南洋浦",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

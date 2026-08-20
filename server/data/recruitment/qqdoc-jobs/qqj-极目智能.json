@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-极目智能",
+  "name": "极目智能",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://文末扫码投递简历",
+  "direction": "感知算法工程师 深度学习算法工程师  路径规划算法工程师 控制算法工程师 硬件开发工程师  嵌入式软件开发工程师 JAVA开发工程师 车载测试工程师 销售工程师  销售工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-极目智能-site",
+      "name": "极目智能",
+      "city": "武汉",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

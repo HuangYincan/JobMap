@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-易点云",
+  "name": "易点云",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "储备管理类  商业创新类  产品经理类  研发技术类  其他职能类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-易点云-site",
+      "name": "易点云",
+      "city": "北京  苏州 合肥 上海 武汉  杭州 成都  广州 深圳",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

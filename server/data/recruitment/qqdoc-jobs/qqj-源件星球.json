@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-源件星球",
+  "name": "源件星球",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "管理培训生岗位",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-源件星球-site",
+      "name": "源件星球",
+      "city": "北京 洛阳  海外",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

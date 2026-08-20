@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-格赛科技",
+  "name": "格赛科技",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "系统工程师 天线工程师 射频工程师 通信工程师 结构工程师 FPGA工程师  算法工程师 嵌入式工程师  测试工程师  销售工程师  质量工程师 采购工程师 财务专员 人力专员 项目管理 专员",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-格赛科技-site",
+      "name": "格赛科技",
+      "city": "成都",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

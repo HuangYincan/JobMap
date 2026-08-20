@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-高标科技",
+  "name": "高标科技",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://kjgb.zhiye.com/campus/jobs",
+  "direction": "研发类  销服类  供应类 职能类",
+  "deadline": "好满即止",
+  "sites": [
+    {
+      "id": "qqj-高标科技-site",
+      "name": "高标科技",
+      "city": "东莞  无锡 重庆   台州  徐州 天津  德国 印尼  越南",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

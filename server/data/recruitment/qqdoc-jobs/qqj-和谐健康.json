@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-和谐健康",
+  "name": "和谐健康",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "总部八大业务类  总部中后台类  总部资产管理类 总部科技赋能类  总部职能管理类  各地分支机构岗",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-和谐健康-site",
+      "name": "和谐健康",
+      "city": "北京上海 广州 深圳  黑龙江 辽宁  安徽  河北  湖北 陕西 山东 江苏  四川  浙江 福建",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

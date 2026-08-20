@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-联合电子",
+  "name": "联合电子",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://campus.51job.com/uaes2027/job.html",
+  "direction": "产品研发 智能制造  供应链管理  质量管理  管理培训生  项目管理",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-联合电子-site",
+      "name": "联合电子",
+      "city": "上海  无锡 西安 芜湖  柳州  太仓  重庆 苏州",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

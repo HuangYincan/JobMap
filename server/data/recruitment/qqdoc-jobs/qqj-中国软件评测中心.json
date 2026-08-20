@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-中国软件评测中心",
+  "name": "中国软件评测中心",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "支撑类  测评类  研究类  销售类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中国软件评测中心-site",
+      "name": "中国软件评测中心",
+      "city": "北京",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

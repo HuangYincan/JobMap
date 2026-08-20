@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-埃斯顿",
+  "name": "埃斯顿",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://estun1.zhiye.com/campus/jobs",
+  "direction": "研发类 技术类  供应链类  营销类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-埃斯顿-site",
+      "name": "埃斯顿",
+      "city": "南京 深圳",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

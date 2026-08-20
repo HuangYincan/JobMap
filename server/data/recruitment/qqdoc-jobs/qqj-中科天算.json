@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-中科天算",
+  "name": "中科天算",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "下属各部门岗位  具体见官方公告及投递方式链接",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中科天算-site",
+      "name": "中科天算",
+      "city": "上海 南京 北京  杭州",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

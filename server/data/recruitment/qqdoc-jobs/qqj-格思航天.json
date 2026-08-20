@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-格思航天",
+  "name": "格思航天",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递俩节课官方公告",
+  "direction": "文星研究 类  载荷研发类 软件设计类  运营管理类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-格思航天-site",
+      "name": "格思航天",
+      "city": "上海",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

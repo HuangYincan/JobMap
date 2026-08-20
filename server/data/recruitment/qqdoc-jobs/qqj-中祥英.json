@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-中祥英",
+  "name": "中祥英",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递简历看官方公告",
+  "direction": "算法研发岗 仿真算法岗(器件仿真方向）仿真算法岗(电路仿真方向)仿真算法岗 （ AI 模型方向）",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中祥英-site",
+      "name": "中祥英",
+      "city": "北京  成都  重庆",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

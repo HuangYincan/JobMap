@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-启元机器人",
+  "name": "启元机器人",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://primebot.jobs.feishu.cn/campusrecruitment/?spread=GK8XVD7",
+  "direction": "技术类  营销服类  供应链&制造类  职能类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-启元机器人-site",
+      "name": "启元机器人",
+      "city": "北京 上海",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

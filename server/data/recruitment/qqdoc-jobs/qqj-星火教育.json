@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-星火教育",
+  "name": "星火教育",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "精品课堂 教学管培生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-星火教育-site",
+      "name": "星火教育",
+      "city": "全国",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

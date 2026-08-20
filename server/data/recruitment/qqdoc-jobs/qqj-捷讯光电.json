@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-捷讯光电",
+  "name": "捷讯光电",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://www.hfjiexun.com/info.php?class_id=106103&page=1",
+  "direction": "市场类  研发类  生产制造类  职能类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-捷讯光电-site",
+      "name": "捷讯光电",
+      "city": "合肥",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

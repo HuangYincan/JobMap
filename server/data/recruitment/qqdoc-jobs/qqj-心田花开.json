@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-心田花开",
+  "name": "心田花开",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://xintianhuakai1.zhiye.com/campus/jobs?memory=%7B%7D&silence=1",
+  "direction": "教师类岗位  教研类岗位   市场类岗位",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-心田花开-site",
+      "name": "心田花开",
+      "city": "成都 重庆  郑州  西安 武汉  长沙 南京 杭州  广州  深圳  全国",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

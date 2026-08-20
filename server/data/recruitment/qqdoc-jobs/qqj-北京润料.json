@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-北京润料",
+  "name": "北京润料",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://app.mokahr.com/campus-recruitment/runketongyong/170057?locale=zh-CN#/",
+  "direction": "系统类 软件类 硬件类  FPGA类   算法类  仿真建模类  通信射频类 结构设计类  智能制造类 销售与管理类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-北京润料-site",
+      "name": "北京润料",
+      "city": "北京 上海 天津 西安成都  沈阳 南昌  合肥",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

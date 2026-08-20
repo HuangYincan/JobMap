@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-首形科技",
+  "name": "首形科技",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "机械工程师  嵌入式工程师  机器人运动控制工程师  3D建模师  工业设计  CMF设计  艺术设计  AI算法工程师  Agent算法工程师  多模态算法工程师  多模态数据工程师  数字人算法工程师  强化学习算法工程师 市场销售 业务运营 市场战略",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-首形科技-site",
+      "name": "首形科技",
+      "city": "北京 杭州 上海",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

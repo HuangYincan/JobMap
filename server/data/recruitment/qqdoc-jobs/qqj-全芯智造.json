@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-全芯智造",
+  "name": "全芯智造",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "人工智能类  技术研发类  现场应用类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-全芯智造-site",
+      "name": "全芯智造",
+      "city": "合肥 上海 北京 广州 济南 深圳  武汉  杭州  岘港",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

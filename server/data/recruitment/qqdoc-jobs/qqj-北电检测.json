@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-北电检测",
+  "name": "北电检测",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://文中扫码投递简历",
+  "direction": "技术研发类  技能类 经营管理类  市场营销类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-北电检测-site",
+      "name": "北电检测",
+      "city": "北京",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

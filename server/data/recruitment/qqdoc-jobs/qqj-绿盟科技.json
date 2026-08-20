@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-绿盟科技",
+  "name": "绿盟科技",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://app.mokahr.com/campus_apply/nsfocus/29118#/jobs",
+  "direction": "研究类 研发类 安全类 产品类  市场类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-绿盟科技-site",
+      "name": "绿盟科技",
+      "city": "北京 西安 武汉 成都 南京 全国其他",
+      "province": "",
+      "location": {}
+    }
+  ]
+}
