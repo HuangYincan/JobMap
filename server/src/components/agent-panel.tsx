@@ -562,7 +562,7 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
       setMemories([]);
       memoriesLoadedRef.current = false;
     }
-    const isFirst = memoriesRefresh === 0 && !memoriesLoadedRef.current;
+    const isFirst = (memoriesRefresh === 0 || memories.length === 0) && !memoriesLoadedRef.current;
     if (isFirst) {
       setMemoriesLoading(true);
       setMemoriesError(false);
