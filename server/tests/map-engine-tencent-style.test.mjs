@@ -233,17 +233,17 @@ afterEach(() => {
 // 样式:卫星 / 深色
 // ------------------------------------------------------------
 
-test('setStyle:satellite→raster、normal→vector、whitesmoke→mapStyleId DARK 暗色(ws-b SDK 核实)', async () => {
+test('setStyle:satellite→satellite、normal→vector、whitesmoke→mapStyleId DARK 暗色(ws-b+ws-d SDK 核实)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { container, restore } = installTMapStyleDouble();
   const warn = captureWarn();
   try {
     const view = await createView(container, { style: 'satellite' });
-    assert.deepEqual(view.raw.opts.baseMap, { type: 'raster' }, '构造期 satellite → 栅格底图');
+    assert.deepEqual(view.raw.opts.baseMap, { type: 'satellite' }, '构造期 satellite → 卫星底图');
 
     view.setStyle('satellite');
-    assert.deepEqual(view.raw.baseMap, { type: 'raster' });
+    assert.deepEqual(view.raw.baseMap, { type: 'satellite' });
     assert.equal(view.raw.mapStyleId, 'DEFAULT', '卫星不携带暗色(复位标识)');
 
     // UI「深色」按钮 / 系统深色偏好的 value 即 whitesmoke:不再回退 normal,
@@ -274,8 +274,65 @@ test('createView:初始样式 whitesmoke → 构造选项透传 mapStyleId DARK(
     assert.equal(normal.raw.opts.mapStyleId, undefined, 'normal 不透传 mapStyleId(SDK 默认)');
 
     const sat = await createView(container, { style: 'satellite' });
-    assert.equal(sat.raw.opts.mapStyleId, undefined, 'satellite 不透传 mapStyleId(栅格底图)');
+    assert.equal(sat.raw.opts.mapStyleId, undefined, 'satellite 不透传 mapStyleId(卫星底图)');
+    assert.deepEqual(sat.raw.opts.baseMap, { type: 'satellite' }, '构造期 baseMap 即卫星底图');
   } finally {
+    restore();
+  }
+});
+
+test('setStyle:卫星 setBaseMap 调用断言 —— SDK MAP_TYPE 合法值(ws-d:raster 非法 → 全白根因)', async () => {
+  // 回归钉死 ws-d 修复:引擎传给 setBaseMap 的必须是与 SDK 一致的 'satellite',
+  // 而非 ws-b 时代的 'raster'。mock 忠实复刻 SDK v1.8.0.2 的底图层解析
+  // (Vl:features 缺省回退 DEFAULT_BASEMAP[type];'raster' 不在
+  // DEFAULT_BASEMAP/MAP_TYPE → 零底图层 = 白图,瓦片请求不发):
+  // - 卫星判定 oc(t)=t.type===MAP_TYPE.satellite(hasSatellite 同判据);
+  // - DEFAULT_BASEMAP.satellite.features = [base, road](影像+道路注记)。
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { container, restore } = installTMapStyleDouble();
+  const MAP_TYPE = { vector: 'vector', satellite: 'satellite', traffic: 'traffic', handdraw: 'handdraw', oversea: 'oversea' };
+  const DEFAULT_BASEMAP = {
+    vector: { type: 'vector', features: ['base'] },
+    satellite: { type: 'satellite', features: ['base', 'road'] },
+  };
+  const resolveLayers = (baseMap) => {
+    const type = baseMap?.type;
+    const def = DEFAULT_BASEMAP[type];
+    return def ? def.features.slice() : [];
+  };
+  // 在 MockView 上装 SDK 语义层:setBaseMap 记录 + 按 DEFAULT_BASEMAP 解析底图层
+  const origSetBaseMap = MockView.prototype.setBaseMap;
+  MockView.prototype.setBaseMap = function setBaseMap(baseMap) {
+    this.baseMap = baseMap;
+    this.resolvedBaseLayers = resolveLayers(baseMap);
+  };
+  try {
+    const view = await createView(container, { style: 'satellite' });
+    assert.deepEqual(view.raw.opts.baseMap, { type: 'satellite' }, '构造期透传卫星底图(Mock Map 构造器存 opts,不模拟 resetBaseLayer)');
+
+    view.setStyle('satellite');
+    assert.equal(view.raw.baseMap.type, MAP_TYPE.satellite, 'setStyle(卫星) → setBaseMap 传 MAP_TYPE 合法值 satellite');
+    assert.equal(view.raw.resolvedBaseLayers.length, 2, '卫星底图 features=[base,road](缺省回退 DEFAULT_BASEMAP.satellite)');
+    assert.equal(view.raw.mapStyleId, 'DEFAULT', '卫星切回仍复位暗色标识');
+
+    // 对照:raster 在 SDK 中非法(全包零处字符串)→ 零底图层(白图),证明旧值必失败
+    view.setStyle('normal');
+    assert.deepEqual(view.raw.baseMap, { type: 'vector' });
+    assert.equal(view.raw.resolvedBaseLayers.length, 1, 'normal → vector 底图层');
+    assert.ok(!('raster' in MAP_TYPE), 'SDK MAP_TYPE 无 raster(旧实现白图根因)');
+
+    // 卫星 → 深色 → 标准 往返不残留卫星/暗色
+    view.setStyle('satellite');
+    assert.equal(view.raw.baseMap.type, 'satellite');
+    view.setStyle('whitesmoke');
+    assert.deepEqual(view.raw.baseMap, { type: 'vector' });
+    assert.equal(view.raw.mapStyleId, 'DARK');
+    view.setStyle('normal');
+    assert.deepEqual(view.raw.baseMap, { type: 'vector' });
+    assert.equal(view.raw.mapStyleId, 'DEFAULT');
+  } finally {
+    MockView.prototype.setBaseMap = origSetBaseMap;
     restore();
   }
 });
