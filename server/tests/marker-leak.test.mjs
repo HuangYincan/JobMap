@@ -170,3 +170,17 @@ test('setPOIs 空列表 → 地图清零(空列表 = 清空,刷新/重置路径)
   assert.equal(countOnMap(map), 0, '空列表即移除全部(等价 clear)');
   c.destroy();
 });
+
+test('destroy 摘除走 remove 契约:placed 内每实例 wrapper.remove() 调用(ws-2)', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const raws = HZ.map((p) => c.getMarkerByPOIId(p.id));
+  assert.ok(raws.every((m) => m && m.contractCalls), 'mock wrapper 带契约调用簿记');
+  c.destroy();
+  assert.equal(countOnMap(map), 0, 'destroy 后地图清零');
+  for (const m of raws) {
+    assert.ok(m.contractCalls.remove >= 1, 'destroy 经 wrapper.remove() 摘除(非 setMap 直调)');
+  }
+});

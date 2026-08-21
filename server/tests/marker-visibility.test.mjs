@@ -23,6 +23,7 @@ import {
   installAMapMock,
   uninstallAMapMock,
   MockMap,
+  makeDomainPoi,
   makePoi,
 } from './fixtures/amap-mock.mjs';
 import {
@@ -195,5 +196,105 @@ test('setPOIs([]) 清空后可见集重置:新批次全显', () => {
   for (const p of HZ) {
     assert.ok(c.getMarkerByPOIId(p.id).isVisible(), '清空后可见集重置 → 新批次全显');
   }
+  c.destroy();
+});
+
+// ---- (e) 契约化:控制器只调 MapMarker 契约方法(ws-2 引擎无关化)----
+// 三引擎适配层各自断言 setZIndex→setzIndex/setVisible→show·hide 等大小写映射;
+// 此处断言控制器侧只出现契约方法名(wrapper.setZIndex/setVisible/setContent/
+// setPosition/remove/on),绝不直调裸实例 AMap 专属方法(amap-mock 的
+// setIcon/setOffset 已改为抛错绊线)。
+
+test('select/deselect 走契约:setContent 重渲染 + setZIndex(100/20),创建经 opts.content', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const hz1 = c.getMarkerByPOIId('hz-1');
+  assert.equal(hz1.contractCalls.setZIndex, 1, '创建即经 wrapper.setZIndex(20)');
+  assert.equal(hz1.contractCalls.setContent, 0, '创建经 opts.content,不额外 setContent');
+  assert.match(hz1.opts.content, /dm-badge-normal/, '创建 content = normal 徽章');
+  assert.equal(hz1.zIndex, 20, '招聘徽章 normal zIndex = 20');
+
+  c.select('hz-1');
+  assert.equal(hz1.contractCalls.setZIndex, 2, '选中经 wrapper.setZIndex(100)');
+  assert.equal(hz1.contractCalls.setContent, 1, '选中经 wrapper.setContent 重渲染');
+  assert.equal(hz1.zIndex, 100, '选中 zIndex = 100');
+  assert.ok(hz1.content.includes('dm-badge-selected'), 'content 换 selected 徽章');
+
+  c.deselect();
+  assert.equal(hz1.contractCalls.setZIndex, 3, '取消选中回 setZIndex(20)');
+  assert.equal(hz1.contractCalls.setContent, 2, '取消选中回 setContent(normal)');
+  assert.ok(hz1.content.includes('dm-badge-normal'), 'content 回 normal 徽章');
+  c.destroy();
+});
+
+test('highlight 走契约:setContent 重渲染 + setZIndex(80);选中清高亮(既有语义)', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const hz1 = c.getMarkerByPOIId('hz-1');
+  c.highlight('hz-1');
+  assert.equal(hz1.zIndex, 80, '高亮 zIndex = 80');
+  assert.ok(hz1.content.includes('dm-badge-highlighted'), 'content 换 highlighted 徽章');
+  c.select('hz-1'); // 选中压过高亮,且清空同 id 的高亮(既有状态机语义)
+  assert.equal(hz1.zIndex, 100, '选中 zIndex = 100');
+  c.deselect(); // 高亮已被选中清空 → 回落 normal(不是高亮)
+  assert.equal(hz1.zIndex, 20, '取消选中回 normal zIndex = 20');
+  assert.ok(hz1.content.includes('dm-badge-normal'), 'content 回 normal 徽章');
+  c.destroy();
+});
+
+test('domain 图钉:创建即 content(data URI),选中重渲染,无 icon 直调', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs([makeDomainPoi('d-1', '西湖', 120.15, 30.27)]);
+  const raw = c.getMarkerByPOIId('d-1');
+  assert.ok(raw, 'domain pin 已建');
+  assert.equal(raw.opts.icon, undefined, '创建不传 icon 规格(统一 content 路径)');
+  assert.match(raw.opts.content, /data:image\/svg\+xml/, 'content = SVG data URI 图钉');
+  assert.match(raw.opts.content, /width="32"/, 'normal 状态 32px 基准');
+  assert.equal(raw.opts.offset[0], -16, '锚点 offset 恒定 [-16,-40](图钉底尖)');
+  assert.equal(raw.opts.offset[1], -40);
+  assert.equal(raw.zIndex, 10, 'domain pin normal zIndex = 10');
+
+  c.select('d-1');
+  assert.equal(raw.contractCalls.setContent, 1, '选中经 wrapper.setContent 重渲染');
+  assert.equal(raw.contractCalls.setZIndex, 2, 'zIndex 10 → 100');
+  assert.equal(raw.zIndex, 100, '选中 zIndex = 100');
+  assert.match(raw.content, /width="42"/, '选中 42px(1.3×)');
+  assert.match(raw.content, /margin-left:-5px/, '负 margin 补偿锚点(offset 恒定)');
+  c.destroy();
+});
+
+test('可见性契约:setVisiblePOIs 经 wrapper.setVisible,非裸 show/hide 直调', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  for (const p of HZ) {
+    assert.equal(c.getMarkerByPOIId(p.id).contractCalls.setVisible, 1, '创建即 applyVisibility → setVisible(true)');
+  }
+  c.setVisiblePOIs(['hz-1']);
+  const hz2 = c.getMarkerByPOIId('hz-2');
+  assert.ok(hz2.contractCalls.setVisible >= 2, '隐藏经 wrapper.setVisible(false)');
+  assert.ok(!hz2.isVisible(), '裸实例可见性已切换');
+  c.setVisiblePOIs(null);
+  assert.ok(hz2.contractCalls.setVisible >= 3, '恢复经 wrapper.setVisible(true)');
+  assert.ok(hz2.isVisible(), '裸实例恢复显示');
+  c.destroy();
+});
+
+test('setPOIs 存量更新走契约 setPosition 对象形态(非数组)', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const hz1 = c.getMarkerByPOIId('hz-1');
+  c.setPOIs(HZ); // 存量路径 → setPosition
+  assert.equal(hz1.contractCalls.setPosition, 1, '存量 marker 经 wrapper.setPosition');
+  assert.deepEqual(hz1.position, [120.099, 30.299], '适配层收对象形态转厂商数组');
   c.destroy();
 });

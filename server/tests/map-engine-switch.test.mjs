@@ -68,7 +68,18 @@ function makeMockView(engine, { id, events: log = events, style: viewStyle = nul
       };
       view.markers.push(marker);
       log.push(`marker:${view.id}`);
-      return { raw: marker };
+      // ws-2 控制器契约化:mock 必须返回 MapMarker 包装形态(方法转发到探针 marker,
+      // 控制器只经契约调 wrapper——setZIndex/setVisible/on/remove,不直调裸实例)
+      return {
+        raw: marker,
+        setPosition: (p) => marker.setPosition([p.lng, p.lat]),
+        setContent: (html) => marker.setContent(html),
+        setZIndex: (z) => marker.setzIndex(z),
+        setVisible: (v) => (v ? marker.show() : marker.hide()),
+        on: (event, cb) => marker.on(event, cb),
+        off: (event, cb) => marker.off(event, cb),
+        remove: () => marker.setMap(null),
+      };
     },
   };
   view.raw = view; // 逃生舱(=自身,与 engine-mock 同语义)
