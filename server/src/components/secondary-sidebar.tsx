@@ -305,7 +305,7 @@ export function SecondarySidebar({
       {/* 顶部：标题栏 + 模式切换 */}
       <div className={styles.headerBar}>
         <div className={styles.modeBar}>
-          <ModeSwitcher activeMode={mode} onModeChange={onModeChange} />
+          <ModeSwitcher activeMode={mode} onModeChange={onModeChange} lang={lang} />
         </div>
         {onClose && (
           <button
@@ -355,7 +355,7 @@ export function SecondarySidebar({
               ref={searchRef}
               type="search"
               className={styles.searchInput}
-              placeholder={config.searchPlaceholder}
+              placeholder={lang === "en" ? (config.searchPlaceholderEn ?? config.searchPlaceholder) : config.searchPlaceholder}
               value={query}
               role="combobox"
               aria-autocomplete="list"

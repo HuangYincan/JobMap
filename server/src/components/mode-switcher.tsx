@@ -4,6 +4,7 @@ import { useRef } from "react";
 import type { CSSProperties, KeyboardEvent } from "react";
 import type { MapMode } from "@/lib/types";
 import { ACTIVE_MODES, MODES } from "@/lib/modes";
+import type { Language } from "@/lib/i18n";
 import styles from "./mode-switcher.module.css";
 
 export interface ModeSwitcherProps {
@@ -15,6 +16,8 @@ export interface ModeSwitcherProps {
   modes?: MapMode[];
   /** Extra class name applied to the root pill */
   className?: string;
+  /** UI 语言(标题/无障碍名取 nameEn 或 name)。默认 zh,与 secondary-sidebar 默认一致。 */
+  lang?: Language;
 }
 
 /** Inline stroke icons keyed by ModeConfig.icon id */
@@ -70,6 +73,7 @@ export function ModeSwitcher({
   onModeChange,
   modes = ACTIVE_MODES,
   className,
+  lang = "zh",
 }: ModeSwitcherProps) {
   const groupRef = useRef<HTMLDivElement>(null);
 
@@ -115,8 +119,8 @@ export function ModeSwitcher({
             style={{ "--mode-color": config.color } as CSSProperties}
             onClick={() => onModeChange(mode)}
             onKeyDown={(event) => handleKeyDown(event, index)}
-            title={config.name}
-            aria-label={config.name}
+            title={lang === "en" ? config.nameEn : config.name}
+            aria-label={lang === "en" ? config.nameEn : config.name}
           >
             <ModeIcon iconId={config.icon} className={styles.icon} />
           </button>
