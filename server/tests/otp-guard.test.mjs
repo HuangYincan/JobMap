@@ -28,7 +28,6 @@ import {
   updateUser as storeUpdateUser,
   upsertIdentity as storeUpsert,
 } from '../src/lib/account-store.ts';
-import { DEMO_OTP_CODE } from '../src/lib/session-store.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -83,8 +82,8 @@ test('consumeOtp locks the target after 5 wrong attempts (15min)', async () => {
     assert.ok(err.retryAfterMs > 0);
     return true;
   });
-  // 锁定期内:正确码也被拒,连 send 也被拒
-  await assert.rejects(storeConsumeOtp('email', target, DEMO_OTP_CODE), OtpTooManyAttemptsError);
+  // 锁定期内:正确码也被拒,连 send 也被拒(码值无关,固定字面量即可)
+  await assert.rejects(storeConsumeOtp('email', target, '000000'), OtpTooManyAttemptsError);
   await assert.rejects(storeIssueOtp('email', target), OtpTooManyAttemptsError);
 });
 
@@ -135,7 +134,7 @@ test('write paths throw DbUnavailableError instead of silently degrading to memo
   try {
     const target = `w-${Date.now()}@test.local`;
     await assert.rejects(storeIssueOtp('email', target), DbUnavailableError);
-    await assert.rejects(storeConsumeOtp('email', target, DEMO_OTP_CODE), DbUnavailableError);
+    await assert.rejects(storeConsumeOtp('email', target, '000000'), DbUnavailableError);
     await assert.rejects(storeUpsert({ provider: 'email', subject: target, email: target }), DbUnavailableError);
     await assert.rejects(
       storeSavePlace('1', { poiId: 'p1', name: 'x', mode: 'work', kind: 'recruitment' }),
@@ -176,7 +175,7 @@ test('read paths still fall back to memory on DB failure', async () => {
   }
 });
 
-test('send/verify routes map rate-limit to 429, DB failure to 503, demo hint kept', () => {
+test('send/verify routes map rate-limit to 429, DB failure to 503, phone SMS errors to SMS_*', () => {
   const send = readFileSync(join(srcRoot, 'app/api/auth/otp/send/route.ts'), 'utf8');
   const verify = readFileSync(join(srcRoot, 'app/api/auth/otp/verify/route.ts'), 'utf8');
   assert.match(send, /RATE_LIMITED/);
@@ -184,12 +183,18 @@ test('send/verify routes map rate-limit to 429, DB failure to 503, demo hint kep
   assert.match(send, /status: 429/);
   assert.match(send, /DB_UNAVAILABLE/);
   assert.match(send, /status: 503/);
-  assert.match(send, /hint: '000000'/); // phone demo 码保留
+  assert.match(send, /requestId/); // phone 经阿里云短信真发,返回 requestId(不再有 demo/hint)
+  assert.doesNotMatch(send, /demo|hint/);
   assert.match(send, /messageId/); // email 真发返回 messageId
   assert.match(send, /EMAIL_NOT_CONFIGURED/);
   assert.match(send, /EMAIL_RATE_LIMITED/);
   assert.match(send, /EMAIL_PROVIDER_ERROR/);
   assert.match(send, /EMAIL_SEND_FAILED/);
+  assert.match(send, /SMS_NOT_CONFIGURED/);
+  assert.match(send, /SMS_RATE_LIMITED/);
+  assert.match(send, /SMS_DAY_LIMITED/);
+  assert.match(send, /SMS_PROVIDER_ERROR/);
+  assert.match(send, /SMS_SEND_FAILED/);
   assert.match(verify, /TOO_MANY_ATTEMPTS/);
   assert.match(verify, /status: 429/);
   assert.match(verify, /DB_UNAVAILABLE/);
