@@ -308,6 +308,10 @@ Content-Type: application/json
   (`agentOpen` state),本地 open state 移除;球点击 toggle 与面板 `onClose` 都走
   `onOpenChange`。**移动端(≤767px)球隐藏**(`agent-ball.module.css` media query
   `display:none`),入口改为移动工具栏 AI item(§9.4/§9.6);桌面端球照常。
+- **ws-ae 修订(2026-08-22)**:`agentOpen` **仅桌面悬浮球入口使用**(移动端球已隐藏,
+  不再被 item 驱动);移动端 AI 入口 = 工具栏 item → **drawer 内嵌 agent sheet**
+  (`mobileSheet === "agent"`,非独立浮层,§9.4/§9.6);球锚定的浮层面板 ≤767px
+  `display:none`(桌面开着面板缩窗到移动端也不漂浮)。
 
 ### 9.2 聊天面板(AgentPanel)
 
@@ -370,12 +374,16 @@ Content-Type: application/json
 
 ### 9.4 移动端适配
 
-≤767px:面板变全宽底部 sheet(参照 mobileDrawer 动效),**不受悬浮球位置影响**;面板层级
-在 ≤767px 块内提到 **z-index 13**(高于移动抽屉域内部最高 12,`mobileSuggestions`),工具栏
-打开的 AI sheet 盖在 drawer 之上;桌面端锚球卡片保持基础 z-index 12。
-**悬浮球本身 ≤767px 隐藏**(`display:none`,球与面板是 fragment 兄弟,隐藏球不影响面板),
-移动端入口改为 `mobileToolbar` 左簇的 **AI item**(✦ 图标钮,§9.6);桌面端球与吸附规则不变。
-极窄桌面视口(两侧都放不下)同样降级为全宽 sheet(2026-08-21 起,见 §9.10)。
+移动端 AI 与 已保存/图层/最近 同构:**drawer 内嵌 sheet**,非独立浮层——工具栏
+**AI item**(✦ 图标钮,§9.6)打开 `mobileSheet === "agent"` + full drawer + back 追踪
+(`mobileSheetBack`);`AgentPanel` 以 `embedded` 渲染在 `mobileAgent` 包装内
+(`agent-panel.module.css` 的 `.panel.embedded`:position static 随抽屉流、填满 sheet
+body,消息列表内部滚动、输入贴底;`map-shell.module.css` `.mobileAgent` flex column
+`height: 100%; min-height: 0` 撑满)。**悬浮球 ≤767px 隐藏**(`display:none`),其锚定的
+浮层面板同样 `display:none`(桌面开着面板缩窗到移动端也不漂浮;原「面板 ≤767px 全宽
+底部 sheet、z-index 13 盖在 drawer 之上」的独立浮层方案已撤销,ws-ae)。桌面端球与
+吸附规则不变;极窄桌面视口(两侧都放不下)仍降级为全宽 sheet(`panelSheet`,2026-08-21
+起,见 §9.10)。
 
 ### 9.5 i18n 键清单(`i18n.ts` 追加 `agent*` 组,zh/en,约 20 键)
 
@@ -391,6 +399,14 @@ Content-Type: application/json
 激活态 = `agentOpen`,onClick `setAgentOpen(v => !v)`),与图层/已保存/探索/最近 4 个 item 并列;
 另新增 `mobileSheetBack` state 供三个 sheet 的 back 按钮按来源回退(工具栏入口 → explore,
 account 内导航 → account)。
+
+**ws-ae 修订(2026-08-22)**:AI item 不再驱动 `agentOpen`(该 state 仅桌面悬浮球使用,移动端
+球隐藏后不被 item 驱动)——与图层/最近同构改走 **drawer 内嵌 agent sheet**:`mobileSheet`
+union 加 `"agent"`;onClick = 重复点激活项回 explore,否则 `setMobileSheetBack("explore")`
++ `setMobileSheet("agent")` + `setDrawer("full")`;激活态 = `mobileSheet === "agent"`。
+drawer body 新增 `mobileSheet === "agent"` 分支:`mobileAgent` 包装 + sheet bar + back
+(`setMobileSheet(mobileSheetBack)`)+ `<AgentPanel embedded onClose={() => setMobileSheet(mobileSheetBack)} />`
+(bridge/lang/user 用 MapShell 作用域既有值,零新增 state)。
 
 ### 9.7 地图操作适配层(`lib/agent-map-bridge.ts`)
 
