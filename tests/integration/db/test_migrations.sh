@@ -18,7 +18,7 @@ DATABASE_URL="$DATABASE_URL" "$ROOT/db/scripts/apply.sh"
 DATABASE_URL="$DATABASE_URL" "$ROOT/db/scripts/preflight.sh"
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -X <<'SQL'
 DO $$
-DECLARE required text[] := ARRAY['users','maps','map_memberships','plugin_manifests','plugin_schema_versions','sources','source_records','import_runs','entities','items','map_entity_overlays','map_annotations','map_favorites','audit_events'];
+DECLARE required text[] := ARRAY['users','maps','map_memberships','plugin_manifests','plugin_schema_versions','sources','source_records','import_runs','entities','items','map_entity_overlays','map_annotations','map_favorites','audit_events','user_memories'];
 BEGIN
   IF EXISTS (SELECT 1 FROM unnest(required) r(name) WHERE to_regclass('public.' || name) IS NULL) THEN RAISE EXCEPTION 'required table missing'; END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname='postgis') OR NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pg_trgm') THEN RAISE EXCEPTION 'required extension missing'; END IF;
