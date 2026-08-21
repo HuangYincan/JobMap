@@ -1535,7 +1535,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [user, refreshApplications]);
 
   // ---- 地图联动 ----
-  usePOIMap(mapInstance.current, {
+  // view 来自 useMapEngine 的 state(engineView)而非 mapInstance ref:引擎切换
+  // 时 setView(新视图)触发重渲染,usePOIMap 创建 effect deps [view] 随切换
+  // 自然**显式重建**控制器,在新视图上 applySync 回放 pois/visible/selected/
+  // highlighted——不依赖任何隐式 setState 链(mapInstance ref 仅供事件回调内
+  // 同步读,如 readMapViewSnapshot/locateForMap)。
+  usePOIMap(engineView, {
     pois: markerPois,
     visiblePOIs: visiblePOIIds,
     selectedId,
