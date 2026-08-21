@@ -403,8 +403,9 @@ export interface LoadWorkViewportResult {
 
 /**
  * 旧目录是否仍有 POI 落在给定视野 bounds 内(ws1 Bug1 空批次三态):
- * 请求成功但 0 条时——true → 保留旧目录(收藏 fitToPins 退化视野/部分覆盖,
- * 清空会闪没,由 VIEWPORT_SUPPRESS_MS 兜底);false → 视为真空,可清空走空态。
+ * 请求成功但 0 条时——true → 保留旧目录(空批次≠无数据:滤波/层级裁剪可致
+ * 整页为空,清空会闪没;收藏 toggle 已不移动相机,此兜底独立成立);
+ * false → 视为真空,可清空走空态。
  */
 export function catalogCoversView(
   catalog: readonly POI[],

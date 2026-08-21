@@ -413,8 +413,7 @@ sessionStorage 偏好 = 百度(故障引擎)→ 刷新页面 → 挂载切换失
     下次加载」,只需在 hook `.then` 内加一行 writeEnginePreference,语义
     与 switchEngine 成功路径一致——留给 boss 裁决。
 - **实现位置说明**:纯函数 `mountEngineView` 在 `lib/mount.ts`(无 @ 别名、
-  无 React 依赖,node 测试可直接 import,同 switch.ts / saved-camera-sync
-  先例);hook re-export 并接线。**边界说明**:任务书「只允许改」未列新文件,
+  无 React 依赖,node 测试可直接 import,同 switch.ts 先例);hook re-export 并接线。**边界说明**:任务书「只允许改」未列新文件,
   但既有契约测试(hooks-contracts)要求挂载路径的 cancelled 销毁逻辑仍在
   hook 内(hook 双保险保留),行为逻辑提取为 lib 是代码库既有可测性模式,
   已在汇报标注,供 boss 复核。

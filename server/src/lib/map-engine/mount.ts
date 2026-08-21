@@ -16,8 +16,7 @@
 // - 本模块不写偏好(挂载/回退均不覆盖 sessionStorage;偏好由手动切换专属,
 //   见 engine-preference.ts 与 use-map-engine 注释)。
 //
-// 纯函数、无 React 依赖、无 @ 别名(与 switch.ts / saved-camera-sync.ts 同款
-// 可测性):node 测试可直接 import。
+// 纯函数、无 React 依赖、无 @ 别名(与 switch.ts 同款可测性):node 测试可直接 import。
 // ============================================================
 
 import type { LngLat, MapEngine, MapStyleId, MapView } from './types.ts';

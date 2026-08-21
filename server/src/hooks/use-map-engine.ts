@@ -38,7 +38,7 @@ import {
 } from "@/lib/map-engine/engine-preference";
 // 挂载 + 失败回退(ws-8):偏好引擎 load/createView 失败 → 按 ENGINE_PRIORITY
 // 序回退其余已配置引擎。纯函数在 lib(无 @ 别名,node 测试可直接 import),
-// 本 hook 接线并 re-export(与 saved-camera-sync 同款可测性模式)。
+// 本 hook 接线并 re-export(与 switch.ts 同款可测性模式)。
 import { mountEngineView } from "@/lib/map-engine/mount";
 export { mountEngineView } from "@/lib/map-engine/mount";
 import { setActiveSearchProvider } from "@/lib/poi-service";
