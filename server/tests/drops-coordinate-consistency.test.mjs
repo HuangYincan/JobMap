@@ -8,7 +8,10 @@
 //
 // 与 src/lib/spatial-query.ts 同源 (bareCityName / CITY_REFERENCE_BOXES /
 // cityLabelMatchesCoordinates), 数据语义与前端防御一致:
-//   1. 任何非杭州 city 站点坐标不得落在杭州参考框内 (清扫规则本身);
+//   1. 任何非杭州 city 站点坐标不得落在杭州参考框内 (清扫规则本身;
+//      豁免: 坐标精确等于 cityCenter(city) 的静态行政中心 —— 金华中心
+//      119.65/29.08 地理上在杭州框内, 但不是事故坐标, 见 2026-08-21
+//      city-split 补点);
 //   2. 全量站点 city↔坐标必须通过 cityLabelMatchesCoordinates
 //      (聚合徽章防御同源函数, 覆盖全部已知参考框);
 //   3. 杭州站点真坐标存在性抽查 (快手 / 蚂蚁集团等);
@@ -24,6 +27,7 @@ import {
   CITY_REFERENCE_BOXES,
   cityLabelMatchesCoordinates,
 } from '../src/lib/spatial-query.ts';
+import { cityCenter } from '../src/lib/city-centers.ts';
 
 const dataRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment');
 const DROP_DIRS = ['radar', 'official-career'];
@@ -67,6 +71,13 @@ test('无任何非杭州 drop 站点坐标落在杭州参考框内 (fecef85 清�
     if (bareCityName(row.city) === '杭州') continue;
     nonHangzhouChecked += 1;
     if (row.lng >= west && row.lng <= east && row.lat >= south && row.lat <= north) {
+      // CITY_CENTERS 静态行政中心坐标豁免 (2026-08-21 city-split 补点): 金华
+      // 中心 119.65/29.08 地理上落在杭州框内 (框是 杭州+周边 的宽松裁切超集),
+      // 但它等于 cityCenter('金华') —— 是城市行政中心, 不是 7d19271 杭州
+      // office 坐标 (120.221266/30.201767) 的复制。精确等值判定与事故复制
+      // 坐标可区分; 无法区分/非静态中心 → 仍判为串味。
+      const center = cityCenter(row.city);
+      if (center && center.lng === row.lng && center.lat === row.lat) continue;
       offenders.push({
         file: `${row.dir}/${row.file}`,
         site: row.site.id ?? row.site.name ?? '?',
