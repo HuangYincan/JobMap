@@ -158,8 +158,11 @@ function flyToLocation(view: MapView | null, lng: number, lat: number, zoom = 16
  *  事件载荷是厂商形态,回调参数用 any(与 map-shell 既有事件回调同风格)。 */
 function onViewEvent(view: MapView | null, event: string, cb: (e: any) => void): () => void {
   if (!view) return () => {};
+  // 2026-08-21 热修:必须保留 this 绑定。view.on 是引擎方法(实现依赖 this.map);
+  // 解构后裸调在 ESM 严格模式下 this 为 undefined → TypeError,并连带上游
+  // next-code-frame 对 CJK 代码帧的截断 panic(vercel/next.js#92641)abort dev server。
   const on = view.on as unknown as (e: string, cb: (e: any) => void) => () => void;
-  return on(event, cb);
+  return on.call(view, event, cb);
 }
 
 /** 初始底图样式:系统深色偏好 + 用户显式 pref(与旧 createMap 内 readMapStylePref 同口径) */

@@ -867,3 +867,18 @@ test('map-adapter.ts 空壳已删除(ws-g 收尾):文件不存在且 src 零引�
     assert.doesNotMatch(src(rel), /map-adapter|getMapAdapter/, `${rel} 不得引用 map-adapter`);
   }
 });
+
+test('map-shell onViewEvent 保留 this 绑定(2026-08-21 热修:解构裸调 TypeError)', () => {
+  // 回归守卫:view.on 是引擎方法(实现依赖 this.map),取出后必须 call(view, ...) 调用。
+  // 裸调 on(event, cb) 在 ESM 严格模式下 this 为 undefined → 页面每次加载抛
+  // "Cannot read properties of undefined (reading 'map')"(amap-engine.ts:184);
+  // 其终端代码帧还触发上游 next-code-frame 对 CJK 长行截断 panic
+  // (vercel/next.js#92641)abort dev server——双层事故,同根同修。
+  const shell = src('components/map-shell.tsx');
+  const fnAt = shell.indexOf('function onViewEvent(');
+  assert.ok(fnAt !== -1, 'onViewEvent 锚点存在');
+  const fnBlock = shell.slice(fnAt, fnAt + 500);
+  assert.match(fnBlock, /const on = view\.on/, '先取出方法引用(契约扩展收口)');
+  assert.match(fnBlock, /\.call\(view, event, cb\)/, '必须以 call(view, ...) 调用保留 this');
+  assert.doesNotMatch(fnBlock, /return on\(event, cb\)\s*;/, '不得裸调(丢 this 即丢 map)');
+});
