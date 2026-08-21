@@ -8,7 +8,9 @@
       "name": "1X Technologies",
       "city": "San Carlos, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "150 Industrial Rd, San Carlos, CA 94070, USA"
+      }
     }
   ],
   "careerUrl": "https://1x.recruitee.com/o/research-engineer-scaling",

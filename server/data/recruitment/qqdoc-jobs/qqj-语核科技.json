@@ -11,9 +11,11 @@
     {
       "id": "qqj-语核科技-site",
       "name": "语核科技",
-      "city": "上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市徐汇区古美路1528号漕河泾现代服务业园区A6幢"
+      }
     }
   ]
 }

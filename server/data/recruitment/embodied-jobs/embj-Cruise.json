@@ -6,9 +6,11 @@
     {
       "id": "embj-Cruise-site",
       "name": "Cruise",
-      "city": "USA San Francisco, CA",
+      "city": "San Francisco, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "333 Brannan Street, San Francisco, CA 94107, USA"
+      }
     }
   ],
   "careerUrl": "https://getcruise.com/careers/",

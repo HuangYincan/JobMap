@@ -11,9 +11,11 @@
     {
       "id": "qqj-箭元科技-site",
       "name": "箭元科技",
-      "city": "北京  杭州",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市大兴区亦城科技中心2号楼(北京经济技术开发区)"
+      }
     }
   ]
 }

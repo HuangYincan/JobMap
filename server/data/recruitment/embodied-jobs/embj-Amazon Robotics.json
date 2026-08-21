@@ -6,9 +6,11 @@
     {
       "id": "embj-Amazon Robotics-site",
       "name": "Amazon Robotics",
-      "city": "North Reading, MA Bellevue, WA Westborough, MA USA",
+      "city": "North Reading, MA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "300 Riverpark Drive, North Reading, MA 01864, USA"
+      }
     }
   ],
   "careerUrl": "https://amazon.jobs/jobs/3207170",
