@@ -623,3 +623,64 @@ AMap 的 onerror 回退链在 icon 路径不可用);徽章 dataURL 图标阴影(
 - `map-engine-tencent.test.mjs` setStyle 用例同步更新(钉旧 'raster' 的断言
   是修复的必然结果,不改则门禁红);
 - 相关回归:map-engine-tencent-style + map-engine-tencent 61/61 通过。
+
+## ws-b 回填:滚轮平滑(SDK 核实)+ 切回高德 POI 消失(2026-08-22,fix/tmap-wheel-switch)
+
+> 背景:用户真机反馈 bug 2「鼠标中间滚动视角不丝滑」+ bug 4「从腾讯换回高德后
+> 原本有的 poi 都消失了」。SDK 证据同样来自 v1.8.0.2 实包(/tmp/tmap-gljs.js)。
+
+### bug 2:滚轮平滑 —— smoothWheelZoom 不存在,平滑是 SDK 内建
+
+- **`smoothWheelZoom` 构造选项不存在**(SDK v1.8.0.2 全包 2.2MB 0 处命中);
+  Leaflet 2D 适配层的 `scrollWheelZoom:!0 / wheelDebounceTime / wheelPxPerZoomLevel`
+  (`zy.mergeOptions`)是另一地图路径(tmap2d-adapter),与 GL 无关;
+- **滚轮平滑 = SDK 内建行为**:Map 选项 `scrollable`(MAP_3D/MAP_2D 默认均
+  `true`,运行期 `setScrollable(bool)` 切换)启用滚轮处理器(构造时仅注入
+  `mapZoomType`);输入分类:鼠标滚轮(`_type="wheel"`,deltaY 多档/快速滚动)
+  → `zoomTo({duration:200, smoothEasing:!0, delayEndEvents:100})` 平滑动画;
+  触控板/像素增量(`_type="trackpad"`)→ `duration:0` 即时应答(SDK 设计,
+  与 mapbox 同源);手势间隔 >400ms 起步有 40ms 合并窗口;
+- **修复**:Map 构造显式 `scrollable:true`(自文档化 + 防御 SDK 默认值漂移;
+  测试断言构造选项含此键且**不含**不存在的 smoothWheelZoom);
+- **遗留判断(留给 boss/真机)**:「不丝滑」剩余可能来源 —— ①触控板/像素增量
+  输入被分类 trackpad → duration 0 即时应答(设计使然,与高德「有动画」体验
+  有差);②bug 1 的 marker anchor 偏移在缩放中表现为 pin 漂移(ws-a 修复面);
+  两者均非构造选项可解。
+
+### bug 4:切回高德 POI 消失 —— 核查结论 + 修复 + 遗留
+
+核查回放链(switch.ts replayController + usePOIMap applySync + map-shell
+usePOIMap 接线):
+
+- **replay 双向对称性:成立**。switch.ts 的 replay 链引擎无关、双向同代码路径
+  (POI 集 → 可见集 → 选中 → 高亮,与 applySync 同口径);MapShell 主链路不传
+  replay,usePOIMap 随 view 变化**显式重建**控制器(create effect deps
+  [view, accentColor])——切换后新 view 上全量重放 pois/visible/selected/
+  highlighted,不依赖隐式 setState 链;
+- **可见性语义映射:不丢失**。AMap setVisible = show/hide(实例保留)、TMap
+  setVisible = MultiMarker add/remove 摘挂(隐藏即不在图层)——两者均经
+  MapMarker 契约 `setVisible` 收敛,回放层零感知;测试用摘挂语义 mock 断言
+  双向回放后可见/隐藏/选中/高亮状态完全一致(work LOD 风格部分可见集);
+- **work 视口加载器(use-work-viewport):原缺口,已修**。moveend/zoomend 监听
+  原只随 mapReady 绑定一次 → 引擎切换后新 view 永远拿不到视口监听(旧 view
+  已销毁、mapReady 恒 true 不重绑),domain 视口刷新与挂载对齐在切换后静默
+  失效。修复:经引擎总线(subscribeEngineBus)订阅活跃 view,监听 effect 与
+  挂载对齐判定按 view 实例重绑/重跑(无总线时退化为原一次性绑定);
+- **⚠ 遗留(需 boss 裁决,map-shell.tsx 不在 ws-b 边界)**:work 模式
+  zoom ≤ 8 的**城市聚合徽章**由 map-shell 的 cluster effect 创建,依赖
+  [clusterState, mapReady, modeConfig.color] —— 三者引擎切换时均不变 →
+  徽章随旧 view 销毁后**不重建**;同时聚合分支的 visiblePOIIds 只显示
+  「无 city 的个体 pin」→ 城市公司全部不可见 =「切回高德后 POI 都消失了」
+  (work 模式,全国视野)。domain 模式无聚合(clusterState=null → LOD 分支全
+  显示),与 boss「domain 复现未果(1574 蓝像素正常)」吻合。修复建议:
+  cluster effect 依赖加入 engineView(view 实例),切换后徽章在新 view 重建
+  (一行 deps 改动,map-shell.tsx)。
+
+### 测试
+
+- `map-engine-switch.test.mjs` 追加 4 项:①TMap 构造 scrollable:true 全量断言
+  (含不含 smoothWheelZoom);②A→T / T→A 双向回放对称性(相同回放 → 最终
+  marker 状态一致);③无可见集回放双向不误藏;④use-work-viewport 按引擎视图
+  重绑的源码契约断言(总线订阅 + effect 依赖);
+- 相关回归:switch 18/18、hooks-contracts + tencent + lifecycle + mount +
+  map-markers + marker-visibility 104/104。
