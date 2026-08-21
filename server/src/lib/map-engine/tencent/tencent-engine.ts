@@ -28,6 +28,9 @@
 // - MultiMarker(v=1.exp 全局形态):new TMap.MultiMarker({ map, geometries, styles?, zIndex })
 //   geometry:{ id, position: LatLng, styleId? }(styleId 缺省 "default");
 //   updateGeometries([...]) 按 id 更新、add/remove、setMap(null) 移除、click 载荷 e.geometry.id;
+//   **setZIndex/setVisible 经 GeometryOverlay 继承存在**(v=1.exp 源码核实:
+//   setZIndex → this.layer.setZIndex + 自身 zIndex 存储;setVisible → layer.setVisible;
+//   MultiMarker 自身重写 setVisible 处理进入/离开动画)→ 适配层直通,缺失才降级;
 //   MarkerStyle 仅图片 src,anchor 是唯一像素偏移(imageTopLeft = 屏幕位 - anchor),
 //   geometry.content 仅 GL 文本标签(非 HTML)→ HTML content 降级为默认点 + 一次性 warn
 // - Circle:{ center, radius, map, strokeColor, fillColor, fillOpacity }(glCircle)
@@ -226,6 +229,14 @@ class TencentView implements MapView {
   private multiMarkerSeq = 0;
   /** HTML content 降级告警一次性标记(多 marker 不刷屏) */
   private multiContentWarned = false;
+  /** MultiMarker setZIndex 降级告警一次性标记(老 SDK 无 setZIndex 时,防刷屏) */
+  private multiZIndexWarned = false;
+  /** MultiMarker setVisible 降级告警一次性标记(无 setVisible → setMap 切换兜底) */
+  private multiVisibleWarned = false;
+  /** 单点 Marker setIcon 降级告警一次性标记(npm SDK 老形态无 setIcon) */
+  private singleIconWarned = false;
+  /** MultiMarker click 解绑簿记:契约 cb → 带 geometry.id 过滤的厂商 handler */
+  private multiClickHandlers = new Map<() => void, (e: any) => void>();
 
   constructor(tmap: any, raw: any, engine: MapEngine) {
     this.tmap = tmap;
@@ -345,10 +356,50 @@ class TencentView implements MapView {
       throw err;
     }
     if (opts.onClick) raw.on('click', opts.onClick);
+    // icon 规格(契约)→ 单点 Marker setIcon(npm SDK 形态;无 setIcon → 一次性
+    // warn 降级不抛;有则按 src/width/height 形状传入,构造失败亦降级)
+    if (opts.icon) {
+      if (typeof raw.setIcon === 'function') {
+        const iconSpec: Record<string, unknown> = { src: opts.icon.src };
+        if (opts.icon.size) {
+          iconSpec.width = opts.icon.size[0];
+          iconSpec.height = opts.icon.size[1];
+        }
+        try {
+          raw.setIcon(iconSpec);
+        } catch (err) {
+          console.warn('[map-engine] TMap Marker setIcon 失败,图标降级', err);
+        }
+      } else {
+        this.warnSingleIconDegraded();
+      }
+    }
     return {
       raw,
       setPosition: (p: LngLat) => raw.setPosition(toTMapLatLng(this.tmap, p)),
       setContent: (html: string) => raw.setContent(html),
+      setZIndex: (z: number) => {
+        if (typeof raw.setZIndex === 'function') raw.setZIndex(z);
+        else console.warn('[map-engine] TMap Marker 无 setZIndex,忽略 zIndex');
+      },
+      setVisible: (v: boolean) => {
+        if (typeof raw.setVisible === 'function') raw.setVisible(v);
+        else console.warn('[map-engine] TMap Marker 无 setVisible,忽略可见性');
+      },
+      on: (event: 'click', cb: () => void) => {
+        if (event !== 'click') return;
+        if (typeof raw.on === 'function') raw.on('click', cb);
+        else console.warn('[map-engine] TMap Marker 无 on,忽略事件注册');
+      },
+      off: (event: 'click', cb?: () => void) => {
+        if (event !== 'click') return;
+        if (typeof raw.off !== 'function') {
+          console.warn('[map-engine] TMap Marker 无 off,忽略解绑');
+          return;
+        }
+        if (cb) raw.off('click', cb);
+        // cb 缺省:TMap 无「按事件清空」形态 → 保留(调用方应传 cb 精确解绑)
+      },
       // GL Marker 无 remove();官方移除方式为 setMap(null)
       remove: () => raw.setMap(null),
     };
@@ -380,15 +431,21 @@ class TencentView implements MapView {
     // 契约 offset [x,y](相对锚点屏幕位移)→ MarkerStyle.anchor:渲染公式
     // imageTopLeft = 屏幕位 - anchor,Δanchor = -(x,y) 即整图位移 (x,y);
     // style.offset 渲染器不消费,不可用。默认 pin 34x50、锚点 (17,50)。
-    if (opts.offset) {
-      mmOpts.styles = {
-        default: new tmap.MarkerStyle({
-          anchor: new tmap.Point(
-            TENCENT_DEFAULT_MARKER_ANCHOR.x - opts.offset[0],
-            TENCENT_DEFAULT_MARKER_ANCHOR.y - opts.offset[1],
-          ),
-        }),
+    // 契约 icon(规格)→ MarkerStyle 的 src/width/height(SDK v1.8.0.2 核实:
+    // MarkerStyle 仅图片 src 形态);自定义图标锚点沿用默认语义 (w/2, h),
+    // 即 width/height 缺省时等价默认 pin 锚点。
+    if (opts.offset || opts.icon) {
+      const iconW = opts.icon?.size?.[0] ?? TENCENT_DEFAULT_MARKER_ANCHOR.x * 2;
+      const iconH = opts.icon?.size?.[1] ?? TENCENT_DEFAULT_MARKER_ANCHOR.y;
+      const styleOpts: Record<string, unknown> = {
+        anchor: new tmap.Point(iconW / 2 - (opts.offset?.[0] ?? 0), iconH - (opts.offset?.[1] ?? 0)),
       };
+      if (opts.icon) {
+        styleOpts.src = opts.icon.src;
+        styleOpts.width = iconW;
+        styleOpts.height = iconH;
+      }
+      mmOpts.styles = { default: new tmap.MarkerStyle(styleOpts) };
     }
     // HTML content:MultiMarker 无 HTML 渲染(SDK 核实:geometry.content 是 GL
     // 文本标签,MarkerStyle 仅图片 src)→ 降级默认点 + 一次性 warn(boss 记 deferred)
@@ -401,12 +458,7 @@ class TencentView implements MapView {
       console.error('[map-engine] TMap MultiMarker 创建失败', err);
       throw err;
     }
-    if (opts.onClick) {
-      // SDK 核实:点击载荷 { ...mapEvent, geometry, type, target } → 按 geometry.id 过滤
-      raw.on('click', (e: any) => {
-        if (e?.geometry?.id === id) opts.onClick?.();
-      });
-    }
+    if (opts.onClick) this.bindMultiMarkerClick(raw, id, opts.onClick);
     return {
       raw,
       setPosition: (p: LngLat) => {
@@ -414,9 +466,83 @@ class TencentView implements MapView {
         raw.updateGeometries([geometry]);
       },
       setContent: (_html: string) => this.warnMultiMarkerContentDegraded(),
+      // SDK 源码核实(v=1.exp 实测):MultiMarker 经 GeometryOverlay 继承 setZIndex
+      // (→ this.layer.setZIndex + 自身 zIndex 存储,非「仅构造期」)→ 直通;
+      // 防御:老版本/异常形态缺失时一次性 warn 降级不抛(与 content 同款防刷屏)
+      setZIndex: (z: number) => {
+        if (typeof raw.setZIndex === 'function') {
+          raw.setZIndex(z);
+          return;
+        }
+        this.warnMultiMarkerZIndexDegraded();
+      },
+      // 可见性:SDK 源码核实(v=1.exp 实测)MultiMarker 有 setVisible(→
+      // layer.setVisible;有进入/离开动画时经 _visibleAction 兜底)→ 直通;
+      // 防御:缺失 → setMap(null/map) 切换兜底 + 一次性 warn
+      setVisible: (v: boolean) => {
+        if (typeof raw.setVisible === 'function') {
+          raw.setVisible(v);
+          return;
+        }
+        this.warnMultiMarkerVisibleDegraded();
+        if (typeof raw.setMap === 'function') raw.setMap(v ? this.raw : null);
+      },
+      on: (event: 'click', cb: () => void) => {
+        if (event !== 'click') return;
+        this.bindMultiMarkerClick(raw, id, cb);
+      },
+      off: (event: 'click', cb?: () => void) => {
+        if (event !== 'click') return;
+        if (cb) {
+          const handler = this.multiClickHandlers.get(cb);
+          if (handler) {
+            raw.off?.('click', handler);
+            this.multiClickHandlers.delete(cb);
+          }
+        } else {
+          // cb 缺省 = 解绑本 marker 全部 click(契约语义)
+          for (const handler of [...this.multiClickHandlers.values()]) raw.off?.('click', handler);
+          this.multiClickHandlers.clear();
+        }
+      },
       // SDK 核实:MultiMarker 官方移除方式 = setMap(null)(与单点 Marker 一致)
       remove: () => raw.setMap(null),
     };
+  }
+
+  /**
+   * MultiMarker click 绑定(SDK 核实:点击载荷 { ...mapEvent, geometry, type, target }
+   * → 按 geometry.id 过滤;每 marker 独立 MultiMarker 实例,过滤等价实例隔离)。
+   * handler 注册进 multiClickHandlers,供 off 精确解绑。
+   */
+  private bindMultiMarkerClick(raw: any, id: string, cb: () => void): void {
+    if (typeof raw.on !== 'function') return;
+    const handler = (e: any) => {
+      if (e?.geometry?.id === id) cb();
+    };
+    this.multiClickHandlers.set(cb, handler);
+    raw.on('click', handler);
+  }
+
+  /** MultiMarker setZIndex 降级告警(一次性;正常 SDK 经 GeometryOverlay 继承存在,仅老/异常形态缺失时触发) */
+  private warnMultiMarkerZIndexDegraded(): void {
+    if (this.multiZIndexWarned) return;
+    this.multiZIndexWarned = true;
+    console.warn('[map-engine] TMap MultiMarker 无 setZIndex,zIndex 变更降级忽略');
+  }
+
+  /** MultiMarker setVisible 降级告警(一次性;无 setVisible → setMap 切换兜底) */
+  private warnMultiMarkerVisibleDegraded(): void {
+    if (this.multiVisibleWarned) return;
+    this.multiVisibleWarned = true;
+    console.warn('[map-engine] TMap MultiMarker 无 setVisible,可见性经 setMap 切换降级');
+  }
+
+  /** 单点 Marker setIcon 降级告警(一次性;npm SDK 老形态无 setIcon) */
+  private warnSingleIconDegraded(): void {
+    if (this.singleIconWarned) return;
+    this.singleIconWarned = true;
+    console.warn('[map-engine] TMap Marker 无 setIcon,图标降级为默认');
   }
 
   /** HTML content 降级告警(一次性;MultiMarker 无 HTML 渲染) */
