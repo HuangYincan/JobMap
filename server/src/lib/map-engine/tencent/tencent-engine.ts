@@ -18,7 +18,8 @@
 //   构造后补防御用 getControl(id)/removeControl(ctrl)(控件 id:zoom/scale)
 // - 就绪事件:Map **无 ready 事件**;`idle` = 地图空闲事件(底层 moveend/zoomend
 //   后 300ms debounce 触发,首次渲染完成后会触发)。无同步就绪 API →
-//   createView 内监听 idle(预留 ready)等待就绪,3s 超时兜底不阻塞
+//   createView 内监听 idle(预留 ready)等待就绪,1.5s 超时兜底不阻塞
+//   (2026-08-21 ws-4:3s → 1.5s,idle 不触发时切换卡顿减半)
 // - LatLngBounds(sw: LatLng, ne: LatLng);getWest/getSouth/getEast/getNorth
 // - **createMarker 构造器多路径**(SDK v1.8.0.2 源码核实):`v=1.exp` 全局 TMap
 //   命名空间**无单点 Marker**(导出表只有 MultiMarker/MarkerStyle 等聚合类)→
@@ -77,8 +78,9 @@ const TENCENT_KEY_VAR = 'NEXT_PUBLIC_TENCENT_JSAPI_KEY';
 const TENCENT_DEFAULT_RADIUS = 5000;
 /** WebService 单页上限(官方文档 page_size 1-20) */
 const TENCENT_PAGE_SIZE_MAX = 20;
-/** 地图就绪等待超时(ms):TMap 异步初始化,无同步就绪 API;超时兜底不阻塞调用方 */
-const TENCENT_MAP_READY_TIMEOUT_MS = 3000;
+/** 地图就绪等待超时(ms):TMap 异步初始化,无同步就绪 API;超时兜底不阻塞调用方。
+ * 2026-08-21 ws-4:3s → 1.5s(idle 不触发/瓦片失败时切换冻结减半,仍保留兜底) */
+const TENCENT_MAP_READY_TIMEOUT_MS = 1500;
 /** Marker 默认 zIndex:未显式传入时的合理默认(底图之上可见;显式值优先) */
 const TENCENT_MARKER_DEFAULT_ZINDEX = 10;
 /** MultiMarker 默认 pin 样式锚点(SDK v1.8.0.2 核实:MarkerStyle 默认 src 图 34x50,
@@ -166,7 +168,13 @@ function waitForMapReady(raw: any): Promise<void> {
   });
 }
 
-/** DOM 兜底:隐藏 TMap 控件层(不动 canvas / marker overlay);版权标识保留可见 */
+/**
+ * DOM 兜底:隐藏 TMap 控件层 + 解除 canvas/覆盖物面板点击拦截;版权标识保留可见。
+ * 2026-08-21 ws-4 覆盖面补:canvas 与 marker/overlay 面板层。TMap GL 的事件/
+ * 命中检测绑定在 container 元素(pointer-events:none 不阻断 SDK 手势与 raycast),
+ * 但这些面板若带高 z-index 会拦截 app UI 点击 → 一律 pointer-events:none
+ * (不 display:none:canvas 仍需渲染底图,marker 面板留给 SDK 渲染)。
+ */
 function hideControlDom(raw: any): void {
   const container = raw?.getContainer?.();
   if (!container || typeof container.querySelectorAll !== 'function') return;
@@ -184,6 +192,12 @@ function hideControlDom(raw: any): void {
       '[class*="copyright"], [class*="logo"], [class*="attribution"]',
     );
     for (const el of attribution) el.style.pointerEvents = 'none';
+    // canvas 与 marker/overlay 面板层(TMap GL DOM 类名 tencent-map-*;宽泛选择器
+    // 防御,含裸 canvas 元素):解除点击拦截,防面板 z-index 挡 app UI
+    const panels = container.querySelectorAll(
+      'canvas, [class*="tencent-map-pane"], [class*="tencent-map-marker"], [class*="tencent-map-overlay"], [class*="tencent-map-canvas"]',
+    );
+    for (const el of panels) el.style.pointerEvents = 'none';
   } catch {
     // DOM 探测失败静默:不影响主流程
   }
@@ -191,6 +205,8 @@ function hideControlDom(raw: any): void {
 
 /**
  * 禁用 TMap 默认控件(缩放按钮等内部 DOM z-index 高于 map-shell UI,遮挡/拦截点击)。
+ * ⚠️ 必须在地图就绪(waitForMapReady)之后调用:TMap 异步初始化,控件 DOM 在
+ * ready 后才建立,提前调用 getControl/hideControlDom 扫空 DOM 全部空转(ws-4 时序修复)。
  * 多路径防御:
  * 1) 构造 options 传 showControl:false(官方核实:不再创建 zoom/scale,版权保留)
  * 2) 构造后 getControl('zoom'|'scale') + removeControl 摘除(老 SDK 忽略构造选项时)
@@ -800,10 +816,12 @@ export const TENCENT_ENGINE: MapEngine = {
       // 控件,版权标识保留):避免其内部 DOM z-index 高于 map-shell UI 遮挡点击
       showControl: false,
     });
-    // 构造后补防御(老 SDK 忽略 showControl 时摘除已建控件)+ 等待地图就绪
-    // (异步初始化;ready 前建 Marker 可能丢失/不可见)
-    disableDefaultControls(raw);
+    // 先等地图就绪,再禁用/隐藏默认控件(2026-08-21 ws-4 时序修复):TMap 异步
+    // 初始化,new TMap.Map() 立即返回、控件 DOM 异步才建立——ready 前执行
+    // disableDefaultControls,getControl/hideControlDom 扫空 DOM 全部空转
+    // (诊断坐实);ready 后控件 DOM 已建立,摘除/隐藏才真正生效。
     await waitForMapReady(raw);
+    disableDefaultControls(raw);
     return new TencentView(tmap, raw, TENCENT_ENGINE);
   },
   search: searchProvider,
