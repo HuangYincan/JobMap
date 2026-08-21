@@ -178,10 +178,14 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
           ...replay,
         });
         // 已让路给更新意图(aborted):不落地任何状态(旧 view 或已保留,或容器
-        // 由更新意图接管);若恰逢卸载,同样不落地
-        if (result.aborted || !aliveRef.current) return;
+        // 由更新意图接管;aborted 时 switch.ts 已自行销毁/从未创建新视图)
+        if (result.aborted) return;
         const next = result.view;
         if (!next) return;
+        if (!aliveRef.current) {
+          next.destroy(); // 组件已卸载:新 view 不留地
+          return;
+        }
         if (gen !== generationRef.current) {
           next.destroy(); // 更新意图已发起:丢弃本结果,不留已建视图
           return;
