@@ -32,15 +32,18 @@ test('handleSelect 无门控:始终 setSelectedId(首点 = 后续点击)', () =>
   assert.match(seg, /setSelectedId\(poi\.id\);/);
 });
 
-test('onOpenDetail 无门控:立即 setDetailPoi + flyToLocation', () => {
+test('onOpenDetail 无门控:立即 setDetailPoi(弹卡不动相机,2026-08-21)', () => {
   const shell = src('components/map-shell.tsx');
   const seg = shell.match(/onOpenDetail=\{\(poi\) => \{[\s\S]*?\}\}/)?.[0] ?? '';
   assert.ok(seg.length > 0, 'onOpenDetail block exists');
-  // 会 flyTo 的入口置 userMovedMapRef(与地图手势同口径)
-  assert.match(seg, /userMovedMapRef\.current = true;/);
+  // 2026-08-21 热修:二级卡片 = 侧控栏纯视图,弹卡不动相机、不接管相机——
+  // 不置 userMovedMapRef、不 flyTo(与 handleSelect 的 ws-poi-vanish 语义一致:
+  // geolocation 晚 settle 仍会飞用户位置;弹卡不再触发地图动画 / work 列表
+  // 视野重排)。无门控语义保留:setDetailPoi 直接执行,无 geoSettled 判断。
+  assert.doesNotMatch(seg, /userMovedMapRef\.current = true/);
+  assert.doesNotMatch(seg, /flyToLocation/);
   assert.doesNotMatch(seg, /if \(!mapReady \|\| !geoSettled\)|pendingFlyToRef/);
   assert.match(seg, /setDetailPoi\(poi\);/);
-  assert.match(seg, /if \(poi\.location\) flyToLocation\(mapInstance\.current, poi\.location\.lng, poi\.location\.lat\);/);
 });
 
 test('pendingFlyToRef 机制整体删除:settleGeolocation 只置 geoSettled', () => {
