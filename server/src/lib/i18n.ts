@@ -503,6 +503,18 @@ export const translations = {
     zh: '微信',
     en: 'WeChat',
   },
+  authOauthError: {
+    zh: '第三方登录失败,请重试',
+    en: 'Third-party sign-in failed, please try again',
+  },
+  authOauthStateInvalid: {
+    zh: '登录已过期,请重试',
+    en: 'Sign-in expired, please try again',
+  },
+  authOauthProviderError: {
+    zh: '第三方登录失败,请重试',
+    en: 'Third-party sign-in failed, please try again',
+  },
   authMethods: {
     zh: '登录方式',
     en: 'Sign-in methods',
