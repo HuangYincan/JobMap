@@ -573,7 +573,7 @@ test('searchPOI(vendor):归一化 DomainPOI,gcj02 直通零转换,无效记录�
       kind: 'domain',
       name: '西湖',
       mode: 'domain',
-      source: 'amap',
+      source: 'tencent',
       location: { lng: 120.15, lat: 30.27, address: '西湖区龙井路1号' },
       category: '旅游景点',
     });
@@ -802,7 +802,7 @@ test('normalizeTencentPOI:字段映射/兜底 id/分号分类/tel 清洗/缺省�
       kind: 'domain',
       name: '西湖',
       mode: 'domain',
-      source: 'amap',
+      source: 'tencent',
       location: { lng: 120.15, lat: 30.27, address: '西湖区龙井路1号' },
       category: '旅游景点',
       tel: '0571-123',

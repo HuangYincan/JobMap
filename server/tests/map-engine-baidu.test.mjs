@@ -781,7 +781,7 @@ test('searchPOI(核心):pageCapacity/location + POI bd09 → gcj02 归一化', a
   assert.equal(poi.kind, 'domain');
   assert.equal(poi.name, '西湖');
   assert.equal(poi.category, '风景名胜', 'tags 首段');
-  assert.equal(poi.source, 'amap', '会话非持久化语义(闭合联合无 baidu)');
+  assert.equal(poi.source, 'baidu', '归一化如实标注百度数据源');
   approx(poi.location, { lng: 120.153576, lat: 30.287459 }, 'POI 坐标回 gcj02');
   assert.equal(poi.location.address, '杭州市西湖区');
 });

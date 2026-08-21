@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -840,5 +840,30 @@ test('map-engine 契约:env 读取必须裸字面量,禁止 process.env[ 动态�
   const registry = src('lib/map-engine/engine-registry.ts');
   for (const key of ['NEXT_PUBLIC_AMAP_KEY', 'NEXT_PUBLIC_TENCENT_JSAPI_KEY', 'NEXT_PUBLIC_BAIDU_AK']) {
     assert.match(registry, new RegExp(`process\\.env\\.${key}`), `registry 应含裸字面量 ${key}`);
+  }
+});
+
+test('map-adapter.ts 空壳已删除(ws-g 收尾):文件不存在且 src 零引用', () => {
+  // 轮 2 map-shell 迁移完成后,lib/map-adapter.ts(6 行空壳)的 seam 已被
+  // map-engine(types/registry/switch)取代;ws-g 删除该文件。
+  assert.equal(
+    existsSync(join(root, 'lib/map-adapter.ts')),
+    false,
+    'lib/map-adapter.ts 必须已删除',
+  );
+  // 零引用契约:src 下不得再有 map-adapter / getMapAdapter 导入或调用
+  const srcFiles = [
+    'app/page.tsx',
+    'components/map-shell.tsx',
+    'components/layers-panel.tsx',
+    'hooks/use-map-engine.ts',
+    'lib/map-engine/engine-registry.ts',
+    'lib/map-engine/switch.ts',
+    'lib/map-engine/types.ts',
+    'lib/poi-service.ts',
+    'lib/map-markers.ts',
+  ];
+  for (const rel of srcFiles) {
+    assert.doesNotMatch(src(rel), /map-adapter|getMapAdapter/, `${rel} 不得引用 map-adapter`);
   }
 });

@@ -59,8 +59,9 @@ export interface BasePOI {
   location: POILocation;
   /** 所属模式 */
   mode: MapMode;
-  /** 数据源 */
-  source: 'amap' | 'seed' | 'api';
+  /** 数据源:seed=导入种子 / api=各模式 API 检索 / amap=高德引擎(会话) /
+   *  tencent=腾讯引擎归一化 / baidu=百度引擎归一化 */
+  source: 'amap' | 'seed' | 'api' | 'tencent' | 'baidu';
   /** 距当前中心点的距离（米），由客户端计算，可空 */
   distance?: number;
 }
