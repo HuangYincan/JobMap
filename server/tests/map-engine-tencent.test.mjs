@@ -1678,13 +1678,20 @@ test('getCurrentPosition(浏览器定位):WGS84 → gcj02 换算;失败/无 API 
   try {
     ns.search.getCurrentPosition = undefined; // 关闭 vendor 路径 → 浏览器定位
     const want = wgs84ToGcj02(120.15, 30.27);
+    let callOpts = null;
     globalThis.navigator = {
       geolocation: {
-        getCurrentPosition: (ok) => ok({ coords: { longitude: 120.15, latitude: 30.27 } }),
+        getCurrentPosition: (ok, _err, opts) => {
+          callOpts = opts;
+          ok({ coords: { longitude: 120.15, latitude: 30.27 } });
+        },
       },
     };
     const pos = await TENCENT_ENGINE.search.getCurrentPosition();
     assert.deepEqual(pos, want);
+    assert.equal(callOpts.enableHighAccuracy, true, '对齐 AMap:高精度定位(浏览器 GPS)');
+    assert.equal(callOpts.maximumAge, 0, 'maximumAge 0 → 禁用位置缓存,每次重新定位');
+    assert.equal(callOpts.timeout, 8000, 'timeout 8000 保留');
     assert.notDeepEqual(pos, { lng: 120.15, lat: 30.27 }, '境内点位必须经 gcj02 偏移(浏览器 GPS 是 WGS84)');
 
     globalThis.navigator.geolocation.getCurrentPosition = (_ok, err) => err(new Error('denied'));
