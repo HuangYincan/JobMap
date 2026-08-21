@@ -16,6 +16,12 @@
 //   不再创建 zoom/scale 默认控件(版权标识仍保留——ToS 署名要求);
 //   setShowControl/getShowControl 仅读写标志,构造后调用不摘除已建控件 →
 //   构造后补防御用 getControl(id)/removeControl(ctrl)(控件 id:zoom/scale)
+// - 滚轮缩放(SDK v1.8.0.2 实包核实,2026-08-22 ws-b):**无 smoothWheelZoom 选项**
+//   (全包 0 处命中;Leaflet 2D 适配层的 scrollWheelZoom 与 GL 无关);Map 选项
+//   `scrollable`(默认 true,运行期 setScrollable 切换)启用内建滚轮处理器:
+//   wheel(鼠标滚轮)→ zoomTo({duration:200, smoothEasing:true}) 平滑动画;
+//   trackpad(触控板/像素增量)→ duration:0 即时应答(SDK 设计)。滚轮平滑
+//   = SDK 内建,构造传 scrollable:true 显式启用(自文档化 + 防默认漂移)
 // - 就绪事件:Map **无 ready 事件**;`idle` = 地图空闲事件(底层 moveend/zoomend
 //   后 300ms debounce 触发,首次渲染完成后会触发)。无同步就绪 API →
 //   createView 内监听 idle(预留 ready)等待就绪,1.5s 超时兜底不阻塞
@@ -1134,6 +1140,17 @@ export const TENCENT_ENGINE: MapEngine = {
       // 禁用 TMap 默认控件(SDK v1.8.0.2 核实:false 时不创建 zoom/scale 默认
       // 控件,版权标识保留):避免其内部 DOM z-index 高于 map-shell UI 遮挡点击
       showControl: false,
+      // 滚轮缩放显式启用(2026-08-22 ws-b,bug 2「滚轮不丝滑」SDK 核实):
+      // - **smoothWheelZoom 选项不存在**(SDK v1.8.0.2 实包 2.2MB 全包 0 处命中;
+      //   Leaflet 2D 适配层的 scrollWheelZoom 是另一地图路径,与 GL 无关);
+      // - 滚轮平滑是 **SDK 内建行为**:Map 选项 `scrollable`(MAP_3D/MAP_2D
+      //   默认均为 true)启用滚轮处理器,输入分类 wheel(鼠标滚轮)→
+      //   zoomTo({duration:200, smoothEasing:true}) 平滑动画,trackpad(触控板/
+      //   像素增量)→ duration:0 即时应答(SDK 设计,与 mapbox 同源);
+      //   运行期可用 setScrollable(bool) 切换;
+      // - 显式传 scrollable:true 自文档化 + 防御未来 SDK 默认值漂移
+      //   (测试断言构造选项含此键)。
+      scrollable: true,
     });
     // 先等地图就绪,再禁用/隐藏默认控件(2026-08-21 ws-4 时序修复):TMap 异步
     // 初始化,new TMap.Map() 立即返回、控件 DOM 异步才建立——ready 前执行
