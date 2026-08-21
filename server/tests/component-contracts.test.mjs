@@ -1302,3 +1302,35 @@ test('mapCanvas 层级隔离契约(z-index:0 + isolation:isolate + 厂商版权�
   const ballCss = src('components/agent-ball.module.css');
   assert.match(ballCss, /z-index: 11;/);
 });
+
+test('agent panel dark mode: 深色覆盖块 + 关键类无硬编码白底 (ws-dark)', () => {
+  const css = src('components/agent-panel.module.css');
+  const darkAt = css.indexOf('@media (prefers-color-scheme: dark)');
+  assert.ok(darkAt !== -1, 'agent-panel.module.css 必须带 prefers-color-scheme: dark 覆盖块(与 agent-ball 同模式)');
+  const darkBlock = css.slice(darkAt);
+
+  // 深色覆盖块:弹层玻璃底 / 输入行 / 助手气泡底均改深底,块内不得出现高不透明白底
+  assert.match(darkBlock, /\.memoryPanel,[\s\S]{0,80}background: rgba\(28, 28, 30, 0\.92\)/);
+  assert.match(darkBlock, /\.input \{[\s\S]{0,80}background: rgba\(255, 255, 255, 0\.06\)/);
+  assert.match(darkBlock, /\.bubbleAssistant \{[\s\S]{0,80}background: rgba\(255, 255, 255, 0\.07\)/);
+  assert.doesNotMatch(darkBlock, /background: rgba\(255, 255, 255, 0\.[5-9]\)/);
+
+  // 面板容器 / 记忆卡:玻璃底必须走变量(--soft-strong 随系统翻转),不得硬编码白底
+  for (const selector of ['.panel {', '.memoryRow {']) {
+    const at = css.indexOf(selector);
+    assert.ok(at !== -1, `${selector} 块存在`);
+    const block = css.slice(at, css.indexOf('\n}', at) + 1);
+    assert.match(block, /background: var\(--soft-strong/);
+    assert.doesNotMatch(block, /background: rgba\(255, 255, 255, 0\.[5-9]\)/);
+  }
+
+  // agent-ball 深色覆盖完整(球体玻璃底 + hover 底)
+  const ball = src('components/agent-ball.module.css');
+  assert.match(ball, /@media \(prefers-color-scheme: dark\) \{[\s\S]*\.ball \{\s*background: rgba\(28, 28, 30, 0\.72\)/);
+  assert.match(ball, /\.ball:hover \{\s*background: rgba\(28, 28, 30, 0\.85\)/);
+
+  // markdown-text:无硬编码白底(代码块/表头均为半透明中性色,文本继承气泡 var(--ink))
+  const md = src('components/markdown-text.module.css');
+  assert.doesNotMatch(md, /background: rgba\(255, 255, 255, 0\.[1-9]/);
+  assert.doesNotMatch(md, /background: #fff\b/i);
+});
