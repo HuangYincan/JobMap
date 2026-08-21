@@ -88,6 +88,11 @@
   display: none !important;
 }
 
+/* 百度左下角 logo 水印隐藏(anchorBL,SDK 注入,与腾讯 logo_def 同款处理) */
+.mapCanvas :global(img[src*="logo_hd"]) {
+  display: none !important;
+}
+
 /* 确保比例尺文字在所有底图下可见 - 黑色文字带白色描边 */
 .mapCanvas :global(.amap-scale-text) {
   color: #000 !important;
