@@ -4,6 +4,7 @@ import {
   buildNaviWebUrl,
   createMarkdownParser,
   renderMarkdown,
+  preprocessNaviUrls,
   LINK_REL,
   LINK_TARGET,
 } from '../src/lib/markdown-pipeline.ts';
@@ -136,4 +137,69 @@ test('renderMarkdown: 解析失败的 amapuri 回落普通链接;普通 http 链
   assert.match(bad, /<a href="amapuri:\/\/navi\?lon=abc&amp;lat=30" target="_blank" rel="noopener noreferrer">x<\/a>/);
   const http = renderMarkdown('[官网](https://example.com)', (html) => html);
   assert.match(http, /<a href="https:\/\/example\.com" target="_blank" rel="noopener noreferrer">官网<\/a>/);
+});
+
+// ---------- 裸 amapuri://navi URL 预扫描(2026-08-22 ws-navi2) ----------
+// marked 裸 URL 自动链接规则只认 https?/ftp/www 前缀 → amapuri:// 纯文本不触发 link
+// renderer → renderMarkdown 在 parse 前经 preprocessNaviUrls 替换为同构按钮锚。
+
+test('preprocessNaviUrls: 裸 URL(LLM 真实形态,含 sourceApplication/dev/style 额外参数)→ 按钮锚', () => {
+  const out = preprocessNaviUrls('amapuri://navi?sourceApplication=amap_mcp&lon=113.934497&lat=22.540517&dev=1&style=2');
+  assert.match(out, /^<a class="dm-navi"/);
+  assert.ok(
+    out.includes('href="https://uri.amap.com/navigation?to=113.934497,22.540517,&amp;mode=car&amp;coordinate=gaode"'),
+    'href 为 https Web 导航 URL(属性内 & 实体转义)',
+  );
+  assert.ok(
+    out.includes('data-navi="amapuri://navi?sourceApplication=amap_mcp&amp;lon=113.934497&amp;lat=22.540517&amp;dev=1&amp;style=2"'),
+    'data-navi 保留裸 URL 原文(含额外参数)',
+  );
+  assert.match(out, />打开高德导航<\/a>$/);
+});
+
+test('renderMarkdown: 裸 URL 出现在句子中间(前后有中文)→ 按钮就位、其余文本原样', () => {
+  const out = renderMarkdown('从这里出发:amapuri://navi?lon=120.15&lat=30.25 大约需要15分钟', (html) => html);
+  assert.match(out, /从这里出发:/);
+  assert.ok(
+    out.includes('<a class="dm-navi" href="https://uri.amap.com/navigation?to=120.15,30.25,&amp;mode=car&amp;coordinate=gaode"'),
+    '按钮锚就位',
+  );
+  assert.ok(out.includes('data-navi="amapuri://navi?lon=120.15&amp;lat=30.25"'));
+  assert.match(out, />打开高德导航<\/a>/);
+  assert.match(out, /大约需要15分钟/);
+});
+
+test('renderMarkdown: 多个裸 URL → 全部替换', () => {
+  const out = renderMarkdown('甲:amapuri://navi?lon=120.15&lat=30.25 乙:amapuri://navi?lon=113.9491&lat=22.5458', (html) => html);
+  assert.equal(out.match(/class="dm-navi"/g).length, 2);
+  assert.ok(out.includes('to=120.15,30.25,'));
+  assert.ok(out.includes('to=113.9491,22.5458,'));
+});
+
+test('renderMarkdown: 尾部句号/右括号 → 正确剥离并替换(句号被剥离;括号保留为文本)', () => {
+  const period = renderMarkdown('导航到:amapuri://navi?lon=113.934497&lat=22.540517.', (html) => html);
+  assert.match(period, /<a class="dm-navi"/);
+  assert.ok(period.includes('data-navi="amapuri://navi?lon=113.934497&amp;lat=22.540517"'), '尾部句号被剥离,data-navi 干净');
+  assert.doesNotMatch(period, /22\.540517\./);
+  const paren = renderMarkdown('(导航:amapuri://navi?lon=113.934497&lat=22.540517)', (html) => html);
+  assert.match(paren, /\(导航:<a class="dm-navi"/);
+  assert.match(paren, />打开高德导航<\/a>\)/);
+});
+
+test('renderMarkdown: 坏裸 URL(lon=abc)→ 原样保留,不产出按钮', () => {
+  const out = renderMarkdown('地址:amapuri://navi?lon=abc&lat=30', (html) => html);
+  assert.doesNotMatch(out, /class="dm-navi"/);
+  assert.match(out, /amapuri:\/\/navi\?lon=abc&amp;lat=30/);
+});
+
+test('renderMarkdown: 链接语法形态不触发预扫描(renderer 路径保持,回归不破坏)', () => {
+  const out = renderMarkdown('[导航](amapuri://navi?lon=120.15&lat=30.25&name=%E6%9D%AD%E5%B7%9E)', (html) => html);
+  assert.match(out, /<a class="dm-navi"/);
+  assert.ok(out.includes('data-navi="amapuri://navi?lon=120.15&amp;lat=30.25&amp;name=%E6%9D%AD%E5%B7%9E"'));
+  assert.doesNotMatch(out, /\[导航\]\(/, '链接语法文本不应泄漏');
+});
+
+test('preprocessNaviUrls: naviLabel 注入 + 坏 URL 原样返回', () => {
+  assert.match(preprocessNaviUrls('amapuri://navi?lon=120&lat=30', 'Open in AMap'), />Open in AMap<\/a>/);
+  assert.equal(preprocessNaviUrls('amapuri://navi?lon=abc&lat=30'), 'amapuri://navi?lon=abc&lat=30');
 });
