@@ -11,9 +11,12 @@
     {
       "id": "qqj-东风柳汽-site",
       "name": "东风柳汽",
-      "city": "广西柳州",
+      "city": "柳州市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 109.41,
+        "lat": 24.32
+      }
     }
   ],
   "positions": [

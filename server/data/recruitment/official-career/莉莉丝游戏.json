@@ -24,10 +24,12 @@
     {
       "id": "莉莉丝游戏-site-新加坡",
       "name": "莉莉丝游戏",
-      "city": "新加坡",
+      "city": "新加坡市",
       "province": "",
       "location": {
-        "address": "6 RAFFLES QUAY, #14-02, SINGAPORE 048580"
+        "address": "6 RAFFLES QUAY, #14-02, SINGAPORE 048580",
+        "lng": 103.82,
+        "lat": 1.35
       }
     }
   ],

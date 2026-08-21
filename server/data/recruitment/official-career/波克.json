@@ -24,10 +24,12 @@
     {
       "id": "波克-site-新加坡",
       "name": "波克",
-      "city": "新加坡",
+      "city": "新加坡市",
       "province": "",
       "location": {
-        "address": "128 Beach Road,  #21-03 Guoco Midtown"
+        "address": "128 Beach Road,  #21-03 Guoco Midtown",
+        "lng": 103.82,
+        "lat": 1.35
       }
     },
     {

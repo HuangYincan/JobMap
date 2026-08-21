@@ -68,10 +68,12 @@
     {
       "id": "小鹏集团-site-慕尼黑",
       "name": "小鹏集团",
-      "city": "慕尼黑",
+      "city": "慕尼黑市",
       "province": "",
       "location": {
-        "address": "Weimarer Str.32 2nd Floor (1.OG) (near Amazon)"
+        "address": "Weimarer Str.32 2nd Floor (1.OG) (near Amazon)",
+        "lng": 11.58,
+        "lat": 48.14
       }
     },
     {
@@ -139,10 +141,12 @@
     {
       "id": "小鹏集团-site-伦敦",
       "name": "小鹏集团",
-      "city": "伦敦",
+      "city": "伦敦市",
       "province": "",
       "location": {
-        "address": "伦敦市区"
+        "address": "伦敦市区",
+        "lng": -0.13,
+        "lat": 51.51
       }
     },
     {
@@ -157,10 +161,12 @@
     {
       "id": "小鹏集团-site-曼谷",
       "name": "小鹏集团",
-      "city": "曼谷",
+      "city": "曼谷市",
       "province": "",
       "location": {
-        "address": "Bangkok,Thailand"
+        "address": "Bangkok,Thailand",
+        "lng": 100.5,
+        "lat": 13.76
       }
     },
     {
@@ -195,19 +201,23 @@
     {
       "id": "小鹏集团-site-巴黎",
       "name": "小鹏集团",
-      "city": "巴黎",
+      "city": "巴黎市",
       "province": "",
       "location": {
-        "address": "78 Boulevard de la République 92100 Boulogne-Billancourt"
+        "address": "78 Boulevard de la République 92100 Boulogne-Billancourt",
+        "lng": 2.35,
+        "lat": 48.86
       }
     },
     {
       "id": "小鹏集团-site-吉隆坡",
       "name": "小鹏集团",
-      "city": "吉隆坡",
+      "city": "吉隆坡市",
       "province": "",
       "location": {
-        "address": "Kuala Lumpur, Malaysia"
+        "address": "Kuala Lumpur, Malaysia",
+        "lng": 101.69,
+        "lat": 3.14
       }
     },
     {
@@ -289,10 +299,12 @@
     {
       "id": "小鹏集团-site-泉州",
       "name": "小鹏集团",
-      "city": "泉州",
+      "city": "泉州市",
       "province": "",
       "location": {
-        "address": "经济技术开发区清濛园区西片区F-06地块"
+        "address": "经济技术开发区清濛园区西片区F-06地块",
+        "lng": 118.68,
+        "lat": 24.88
       }
     },
     {
@@ -356,10 +368,12 @@
     {
       "id": "小鹏集团-site-昆明",
       "name": "小鹏集团",
-      "city": "昆明",
+      "city": "昆明市",
       "province": "云南省",
       "location": {
-        "address": "昆明"
+        "address": "昆明",
+        "lng": 102.83,
+        "lat": 24.88
       }
     },
     {
@@ -447,10 +461,12 @@
     {
       "id": "小鹏集团-site-海口",
       "name": "小鹏集团",
-      "city": "海口",
+      "city": "海口市",
       "province": "",
       "location": {
-        "address": "南海大道115号"
+        "address": "南海大道115号",
+        "lng": 110.2,
+        "lat": 20.04
       }
     },
     {
@@ -500,10 +516,12 @@
     {
       "id": "小鹏集团-site-济南",
       "name": "小鹏集团",
-      "city": "济南",
+      "city": "济南市",
       "province": "山东省",
       "location": {
-        "address": "济南"
+        "address": "济南",
+        "lng": 117,
+        "lat": 36.65
       }
     },
     {
@@ -531,10 +549,12 @@
     {
       "id": "小鹏集团-site-沈阳",
       "name": "小鹏集团",
-      "city": "沈阳",
+      "city": "沈阳市",
       "province": "辽宁省",
       "location": {
-        "address": "沈阳"
+        "address": "沈阳",
+        "lng": 123.43,
+        "lat": 41.8
       }
     }
   ],

@@ -92,15 +92,15 @@ test('clusterCities: 命中静态城市中心 → 锚点取行政中心(非 pin 
 
 test('clusterCities: 未命中静态城市中心 → 回退组内 pin 坐标均值(确定性不变)', () => {
   const pois = [
-    workPoi('a', '哈尔滨', 126.5, 45.7),
-    workPoi('b', '哈尔滨', 126.7, 45.9),
-    workPoi('c', '哈尔滨', 126.9, 46.1),
+    workPoi('a', '三亚', 109.5, 18.2),
+    workPoi('b', '三亚', 109.7, 18.4),
+    workPoi('c', '三亚', 109.9, 18.6),
   ];
   const groups = clusterCities(pois, 5);
   assert.equal(groups.length, 1);
-  assert.equal(groups[0].city, '哈尔滨');
-  assert.ok(Math.abs(groups[0].lng - (126.5 + 126.7 + 126.9) / 3) < 1e-9);
-  assert.ok(Math.abs(groups[0].lat - (45.7 + 45.9 + 46.1) / 3) < 1e-9);
+  assert.equal(groups[0].city, '三亚');
+  assert.ok(Math.abs(groups[0].lng - (109.5 + 109.7 + 109.9) / 3) < 1e-9);
+  assert.ok(Math.abs(groups[0].lat - (18.2 + 18.4 + 18.6) / 3) < 1e-9);
 });
 
 test('clusterCities: 带「市」后缀的城市名同样命中静态中心(裸名归一)', () => {

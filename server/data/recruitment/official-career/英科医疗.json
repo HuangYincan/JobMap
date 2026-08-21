@@ -23,10 +23,12 @@
     {
       "id": "英科医疗-site-潍坊",
       "name": "英科医疗",
-      "city": "潍坊",
+      "city": "潍坊市",
       "province": "",
       "location": {
-        "address": "峱山工业园齐王路9888号"
+        "address": "峱山工业园齐王路9888号",
+        "lng": 119.16,
+        "lat": 36.71
       }
     },
     {
@@ -79,19 +81,23 @@
     {
       "id": "英科医疗-site-淄博",
       "name": "英科医疗",
-      "city": "淄博",
+      "city": "淄博市",
       "province": "",
       "location": {
-        "address": "齐鲁化学工业园清田路18号"
+        "address": "齐鲁化学工业园清田路18号",
+        "lng": 118.05,
+        "lat": 36.81
       }
     },
     {
       "id": "英科医疗-site-济南",
       "name": "英科医疗",
-      "city": "济南",
+      "city": "济南市",
       "province": "山东省",
       "location": {
-        "address": "汉峪金谷远乔国际大厦"
+        "address": "汉峪金谷远乔国际大厦",
+        "lng": 117,
+        "lat": 36.65
       }
     },
     {
@@ -153,10 +159,12 @@
     {
       "id": "英科医疗-site-吉隆坡",
       "name": "英科医疗",
-      "city": "吉隆坡",
+      "city": "吉隆坡市",
       "province": "",
       "location": {
-        "address": "Lot 8988, Jalan Tengah, Telok Gong, 42000 Pelabuhan Klang, Selangor"
+        "address": "Lot 8988, Jalan Tengah, Telok Gong, 42000 Pelabuhan Klang, Selangor",
+        "lng": 101.69,
+        "lat": 3.14
       }
     },
     {

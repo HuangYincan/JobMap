@@ -77,10 +77,12 @@
     {
       "id": "MiniMax-site-旧金山",
       "name": "MiniMax",
-      "city": "旧金山",
+      "city": "旧金山市",
       "province": "",
       "location": {
-        "address": "美国"
+        "address": "美国",
+        "lng": -122.42,
+        "lat": 37.77
       }
     },
     {

@@ -11,9 +11,12 @@
     {
       "id": "qqj-中船七二五所-site",
       "name": "中船七二五所",
-      "city": "河南洛阳",
+      "city": "洛阳市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 112.45,
+        "lat": 34.62
+      }
     }
   ],
   "positions": [

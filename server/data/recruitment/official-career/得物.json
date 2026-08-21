@@ -109,10 +109,12 @@
     {
       "id": "得物-site-新加坡",
       "name": "得物",
-      "city": "新加坡",
+      "city": "新加坡市",
       "province": "",
       "location": {
-        "address": "新加坡"
+        "address": "新加坡",
+        "lng": 103.82,
+        "lat": 1.35
       }
     },
     {
@@ -145,37 +147,45 @@
     {
       "id": "得物-site-东京",
       "name": "得物",
-      "city": "东京",
+      "city": "东京市",
       "province": "",
       "location": {
-        "address": "渋谷区神宮前1-5-8神宮前タワービル13階"
+        "address": "渋谷区神宮前1-5-8神宮前タワービル13階",
+        "lng": 139.69,
+        "lat": 35.69
       }
     },
     {
       "id": "得物-site-柏林",
       "name": "得物",
-      "city": "柏林",
+      "city": "柏林市",
       "province": "",
       "location": {
-        "address": "柏林"
+        "address": "柏林",
+        "lng": 13.4,
+        "lat": 52.52
       }
     },
     {
       "id": "得物-site-伦敦",
       "name": "得物",
-      "city": "伦敦",
+      "city": "伦敦市",
       "province": "",
       "location": {
-        "address": "伦敦"
+        "address": "伦敦",
+        "lng": -0.13,
+        "lat": 51.51
       }
     },
     {
       "id": "得物-site-洛杉矶",
       "name": "得物",
-      "city": "洛杉矶",
+      "city": "洛杉矶市",
       "province": "",
       "location": {
-        "address": "333 Hacienda Blvd.City of Industry, CA, 91748"
+        "address": "333 Hacienda Blvd.City of Industry, CA, 91748",
+        "lng": -118.24,
+        "lat": 34.05
       }
     },
     {
