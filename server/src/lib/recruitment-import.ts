@@ -6,6 +6,7 @@ import { getPool } from './db.ts';
 import type { SourceCompany, SourcePosition } from './recruitment-source.ts';
 import { TIER_DEFAULT } from './lod.ts';
 import { bossAdapter } from './recruitment-adapters/boss.ts';
+import { embodiedJobsAdapter } from './recruitment-adapters/embodied-jobs.ts';
 import { nowcoderAdapter } from './recruitment-adapters/nowcoder.ts';
 import { officialCareerAdapter } from './recruitment-adapters/official-career.ts';
 import { qqdocJobsAdapter } from './recruitment-adapters/qqdoc-jobs.ts';
@@ -56,7 +57,7 @@ const TARGET_CITIES = ['北京', '上海', '广州', '深圳', '成都', '武汉
  * 缺失 source 的 drop 回退 'seed' code；未收录的 code 保留其 code、元数据用
  * seed 默认值 —— 不臆造 attribution（取值与 tech/roles/data/etl/ 各源评审一致）。
  */
-const SOURCE_META: Record<string, { originUri: string; authorizationBasis: string; accessMethod: string; attribution: string; retention: string; deletion: string }> = {
+export const SOURCE_META: Record<string, { originUri: string; authorizationBasis: string; accessMethod: string; attribution: string; retention: string; deletion: string }> = {
   seed: {
     originUri: 'local:WORK_SEED',
     authorizationBasis: 'curated-public',
@@ -102,6 +103,14 @@ const SOURCE_META: Record<string, { originUri: string; authorizationBasis: strin
     authorizationBasis: 'public-share + public-api',
     accessMethod: 'manual-curation + polite-etl',
     attribution: 'Tencent Docs public share curated by user + boss extraction; jobs fetched politely from apply links',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+  },
+  'embodied-jobs': {
+    originUri: 'https://raw.githubusercontent.com/Octoday-Hub/Embodied-AI/main/topics/02-jobs.md',
+    authorizationBasis: 'published-github-file',
+    accessMethod: 'public-file',
+    attribution: 'Octoday-Hub/Embodied-AI contributors (community-maintained list; no LICENSE file); Domain Map field mapping',
     retention: 'until-replaced',
     deletion: 'delete-with-source',
   },
@@ -254,7 +263,7 @@ export function planRecruitmentImport(input: SourceCompany[]): ImportPlan {
 }
 
 export async function planSeedImport(): Promise<ImportPlan> {
-  const [qqdocOfficial, qqdocJobs, seed, official, boss, nowcoder, shixiseng, radar] = await Promise.all([
+  const [qqdocOfficial, qqdocJobs, seed, official, boss, nowcoder, shixiseng, radar, embodiedJobs] = await Promise.all([
     qqdocOfficialAdapter().list(),
     qqdocJobsAdapter().list(),
     seedRecruitmentAdapter.list(),
@@ -263,6 +272,7 @@ export async function planSeedImport(): Promise<ImportPlan> {
     nowcoderAdapter().list(),
     shixisengAdapter().list(),
     radarAdapter().list(),
+    embodiedJobsAdapter().list(),
   ]);
   // 真实 drops 优先于 seed 脚手架: dedupeSourceCompanies 保留每个 slug 的
   // 第一个公司, seed 里的示例副本 (过期坐标/tier/示例岗位) 会压过官方 drops
@@ -270,6 +280,7 @@ export async function planSeedImport(): Promise<ImportPlan> {
   // tier 被 seed 的 12 盖掉官方 drop 的 1, 高 zoom 才可见)。seed 只补
   // 无 drops 的公司 (坐标骨架)。
   const plan = planRecruitmentImport([
+    ...embodiedJobs,
     ...qqdocOfficial,
     ...qqdocJobs,
     ...official,
