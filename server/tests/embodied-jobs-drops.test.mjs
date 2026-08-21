@@ -96,12 +96,16 @@ test('embodied-jobs 语料: 47 个新 drop, 537 个 embj-* 岗位, 结构逐项�
     assert.equal(site.name, drop.name, `${file} site.name`);
     assert.ok(site.city.length > 0, `${file} site.city 城市并集非空`);
     assert.deepEqual(site.province, '', `${file} province 留空`);
-    // 2026-08-22 地址回填 (e506c4d + r2 768adc4) 新契约: location 为空对象 (2 站海外无办公点可查)
-    // 或仅含 address 字段 (45 站已回填); 不得混入 lng/lat。
+    // 2026-08-22 地址回填 (e506c4d + r2 768adc4) + geocode:sites:apply 后契约: location 为空对象
+    // (2 站海外无办公点可查)、仅含 address (已回填未 geocode), 或 {address, lng, lat}
+    // (geocode 写回坐标形态); 禁止仅坐标无地址的畸形形态 (防丢地址)。
     assert.ok(site.location && typeof site.location === 'object', `${file} location 为对象`);
-    const locKeys = Object.keys(site.location);
-    const shapeOk = locKeys.length === 0 || (locKeys.length === 1 && locKeys[0] === 'address');
-    assert.ok(shapeOk, `${file} location 为空对象或仅含 address (got ${JSON.stringify(site.location)})`);
+    const locKeys = Object.keys(site.location).sort();
+    const shapeOk =
+      locKeys.length === 0 ||
+      (locKeys.length === 1 && locKeys[0] === 'address') ||
+      (locKeys.length === 3 && locKeys[0] === 'address' && locKeys[1] === 'lat' && locKeys[2] === 'lng');
+    assert.ok(shapeOk, `${file} location 为空对象、仅含 address 或 {address, lng, lat} (got ${JSON.stringify(site.location)})`);
     if (site.location.address) {
       assert.ok(site.location.address.length > 0, `${file} address 非空`);
       withAddrCount += 1;
