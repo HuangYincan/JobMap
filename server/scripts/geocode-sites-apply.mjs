@@ -39,14 +39,17 @@ import { fileURLToPath } from 'node:url';
 import {
   addressConflictsWithCity,
   addressConflictsWithRegeoDistrict,
+  addresslessQueryVariants,
+  backfillAddressFromRegeo,
   cleanCompanySearchName,
   formatGeocodeProviderReport,
   geocodeAddressRest,
-  gradeOfficePoi,
+  gradeVariantHit,
   pickBestOfficePoi,
   placeSearchMemoKey,
   placeSearchMemoSet,
   placeTextSearchRest,
+  poiAddressUsable,
   regeoCityRest,
   regeoMatchesTarget,
   shouldShortCircuitQuota,
@@ -174,8 +177,11 @@ const placeSearchMemo = new Map();
  * 站点与 regeo 区级校验拒绝的地址检索命中都回退到这里, 而不是写错坐标。
  * 2026-08-21 (fix/geocode-place-memo): memo 成功命中 —— 同 query+region 的
  * 后续站点直接复用第一个命中 POI, 不再逐站消耗 place-text 配额。
+ * 2026-08-21 (fix/geocode-address-first): gradeName 与检索串分离 —— 精确候选
+ * (公司名+站点名) 检索、按站点名完整串或裸公司名两级评分 (gradeVariantHit);
+ * 宽候选 gradeName 缺省 = query, 行为不变。
  */
-async function searchCompanyPoi(query, target) {
+async function searchCompanyPoi(query, target, gradeName = query) {
   const out = { poi: null, confidence: null, reason: '', provider: 'amap' };
   if (DRY_RUN || env.AMAP_WEB_KEY || env.BAIDU_MAP_AK || env.TENCENT_MAP_KEY) {
     const memoKey = placeSearchMemoKey(query, target);
@@ -185,10 +191,11 @@ async function searchCompanyPoi(query, target) {
     await sleep(throttleMs(hit.provider));
     if (hit.ok && hit.pois.length) {
       // 用别名后的 query 评分: 中微公司 → 中微半导体设备, 否则查询命中但
-      // 原始快照名对不上 POI 名会被 grader 拒.
-      const picked = pickBestOfficePoi(hit.pois, query, target.province, target.city);
+      // 原始快照名对不上 POI 名会被 grader 拒. 精确候选先按完整检索串评分
+      // (网易杭州研究院 整名命中), 被拒回落 gradeName (公司名) 评分.
+      const picked = pickBestOfficePoi(hit.pois, gradeName, target.province, target.city, query);
       if (picked) {
-        const grade = gradeOfficePoi(picked, query, target.province, target.city);
+        const grade = gradeVariantHit(picked, query, gradeName, target.province, target.city);
         out.poi = grade.confidence === 'low' ? null : picked;
         out.confidence = grade.confidence;
         out.reason = grade.reason;
@@ -201,6 +208,33 @@ async function searchCompanyPoi(query, target) {
     placeSearchMemoSet(placeSearchMemo, memoKey, out);
   }
   return out;
+}
+
+/**
+ * 无地址站点检索链 (2026-08-21, fix/geocode-address-first): 先精确候选
+ * 「公司名 站点名」, 命中且地址可用 (非空含街道) 即收; 否则回落宽候选
+ * (裸公司名, 既有行为)。每站点 place-text ≤ 2 次; memo 按变体 key 独立
+ * 缓存成功命中, 同 query+region 跨站点不重复消耗。精确命中但地址缺失/过短
+ * → 宽候选补查; 补查仍无可用地址 → 保留第一个命中 (置信度按既有闸门,
+ * medium 不写回)。配额类失败 (quota / baidu-status:302 / tencent-status:*)
+ * 原样传播 → 配额短路不受影响。
+ */
+async function searchCompanyPoiVariants(query, target, site) {
+  const variants = addresslessQueryVariants(query, site.name, target);
+  let firstHit = null;
+  let lastMiss = null;
+  for (const v of variants) {
+    const res = await searchCompanyPoi(v.searchQuery, target, v.gradeName);
+    const tagged = { ...res, variant: v.kind, searchQuery: v.searchQuery };
+    if (!res.poi) {
+      lastMiss = tagged;
+      continue;
+    }
+    if (poiAddressUsable(res.poi.address)) return tagged;
+    if (!firstHit) firstHit = tagged;
+  }
+  if (firstHit) return firstHit;
+  return lastMiss ?? { poi: null, confidence: null, reason: 'no-pois', provider: 'amap' };
 }
 
 // --- main -------------------------------------------------------------------
@@ -292,6 +326,9 @@ mainLoop: for (const { file, company, site } of needing) {
   let reason = '';
   let provider = 'amap';
   let addressGeocode = false;
+  /** 本次命中的检索变体 (precise/broad) 与对应检索串 — 仅无地址站点网络检索路径有值. */
+  let variant = null;
+  let variantQuery = null;
 
   if (override?.exclude) {
     unresolved.push({ slug, siteId: site.id, query, reason: 'manual-exclude' });
@@ -331,11 +368,16 @@ mainLoop: for (const { file, company, site } of needing) {
       reason = g.reason ?? 'geocode-failed';
     }
   } else {
-    const res = await searchCompanyPoi(query, target);
+    // 2026-08-21 (fix/geocode-address-first): 无地址站点网络检索优先通道 —
+    // 先精确候选 (公司名+站点名, 站点名存在时), 未命中/地址缺失回落宽候选
+    // (裸公司名, 既有行为); 每站点 place-text ≤ 2 次。
+    const res = await searchCompanyPoiVariants(query, target, site);
     poi = res.poi;
     confidence = res.confidence;
     reason = res.reason;
     provider = res.provider;
+    variant = res.variant;
+    variantQuery = res.searchQuery ?? null;
   }
 
   if (!poi) {
@@ -348,6 +390,8 @@ mainLoop: for (const { file, company, site } of needing) {
   // 直辖市 (北京/上海) regeo 的 cityname 为空 — province 兜底 (regeoMatchesTarget).
   // regeoCityRest 自带高德→百度兜底; 两者 key 都缺时 ok=false → 'unverified'.
   let verified = '';
+  /** 校验最终 poi 的那次 regeo 结果 — 地址兜底补查的来源 (格式化地址零额外配额). */
+  let finalRe = null;
   if (!override) {
     const re = await regeoCityRest(poi.lng, poi.lat);
     await sleep(throttleMs(re.provider));
@@ -380,16 +424,38 @@ mainLoop: for (const { file, company, site } of needing) {
         if (recordOutcome(`regeo-outside:${match2.reason}`)) break mainLoop;
         continue;
       }
+      finalRe = re2;
       verified = re2.ok ? `${re2.cityname ?? ''} ${re2.district ?? ''}`.trim() || re2.province || 'unverified' : 'unverified';
     } else {
+      finalRe = re;
       verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() || re.province || 'unverified' : 'unverified';
     }
   }
 
-  const district = poi.adname || verified.split(' ').pop() || '';
-  const address = district && !poi.address.includes(district) ? `${district}${poi.address}` : poi.address;
+  // 2026-08-21 (fix/geocode-address-first): 命中 POI 地址缺失/过短 (空串或仅
+  // 区名) 时, 用 regeo 格式化地址兜底补查 (零额外配额 — 复用城市校验的这次
+  // regeo; 坐标已过城市闸门 → 格式化地址必属目标城市)。补查成功 → 重评分
+  // (name-match-no-street 的 medium 升 high, 可写回; 与命中时同口径 —
+  // 精确候选整名 POI 传 variantQuery 两级评分, 不被裸公司名误拒); 补查失败
+  // → 保持原置信度 (medium 不写回)。backfillAddressFromRegeo 返回拷贝, 不
+  // 突变 memo 缓存里的 POI。override / 地址检索路径 (地址文本已真实) 不参与。
+  if (finalRe && !addressGeocode) {
+    const bf = backfillAddressFromRegeo(poi, finalRe.formattedAddress, query, target, variantQuery ?? undefined);
+    if (bf) {
+      poi = bf.poi;
+      confidence = bf.confidence;
+      reason = bf.reason;
+    }
+  }
 
-  resolutions.push({ slug, siteId: site.id, company: company.name, query, city: target.city, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified, provider });
+  const district = poi.adname || verified.split(' ').pop() || '';
+  let address = district && !poi.address.includes(district) ? `${district}${poi.address}` : poi.address;
+  // 回填保障 (2026-08-21): 无地址站点的 resolution 里 address 非空 — 极少数
+  // 情况下 POI 无地址、无格式化地址时, 最后用 verified 文本 (城市+区, 已过
+  // regeo 城市闸门) 兜底。
+  if (!address.trim()) address = verified === 'unverified' ? poi.address : verified;
+
+  resolutions.push({ slug, siteId: site.id, company: company.name, query, city: target.city, poi: { name: poi.name, address, lng: round(poi.lng), lat: round(poi.lat) }, confidence, reason, verified, provider, variant });
   recordOutcome(null); // 解析成功冲掉配额窗口 — 配额不是卡点, 不误停
   if (!DRY_RUN && (confidence === 'high' || override)) {
     if (setSiteLocation(file, slug, site.id, { address, lng: round(poi.lng), lat: round(poi.lat) })) {
@@ -406,7 +472,7 @@ console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`
 console.log('\n=== RESOLVED ===');
 for (const r of resolutions) {
   console.log(
-    `${String(r.confidence).padEnd(6)} ${r.slug.padEnd(26)} ${String(r.city).padEnd(6)} ${r.poi.name.padEnd(26)} ${r.poi.address.padEnd(32)} ${r.poi.lng},${r.poi.lat} [${r.reason}/${r.provider}] regeo=${r.verified}`,
+    `${String(r.confidence).padEnd(6)} ${r.slug.padEnd(26)} ${String(r.city).padEnd(6)} ${r.poi.name.padEnd(26)} ${r.poi.address.padEnd(32)} ${r.poi.lng},${r.poi.lat} [${r.reason}/${r.provider}${r.variant ? `/${r.variant}` : ''}] regeo=${r.verified}`,
   );
 }
 if (unresolved.length) {
