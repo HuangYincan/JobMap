@@ -61,7 +61,8 @@ const TENCENT_DEFAULT_RADIUS = 5000;
 const TENCENT_PAGE_SIZE_MAX = 20;
 
 function getKey(): string {
-  return (process.env[TENCENT_KEY_VAR] ?? '').trim();
+  // 裸字面量:Next 构建期只做静态替换,process.env 括号动态访问浏览器端恒 undefined
+  return (process.env.NEXT_PUBLIC_TENCENT_JSAPI_KEY ?? '').trim();
 }
 
 /** 当前 TMap 命名空间(window 未就绪 / 未加载 → null) */
