@@ -24,6 +24,8 @@
 | 3 | feature/engine-switch-lifecycle | /Users/acccan/dm-wt-rw3 | prompts/ws-3.md | reports/ws-3.md | MERGED | 390aebb→a787bc2 | 轮2 | | OK(1076/1074 pass 复核) |
 | 4 | feature/engine-zindex | /Users/acccan/dm-wt-rw4 | prompts/ws-4.md | reports/ws-4.md | MERGED | 8a223d6→8abb1f9 | 轮2 | | OK(1073/1071 pass 复核) |
 | 5 | feature/engine-search-cleanup | /Users/acccan/dm-wt-rw5 | prompts/ws-5.md | reports/ws-5.md | MERGED | fa9918f→95a102d | 轮3 | | OK(1096/0 fail 复核) |
+| 6 | feature/engine-fixes | /Users/acccan/dm-wt-rw6 | prompts/ws-6.md | reports/ws-6.md | MERGED | f78e10c→306c226 | 轮4 | | OK(1104/0 fail 复核;push 成功 origin=f89b87d) |
+| 7 | feature/engine-baidu-ready | /Users/acccan/dm-wt-rw7 | prompts/ws-7.md | reports/ws-7.md | RUNNING | f89b87d | 轮5(复验发现 AK 禁用空白图) | | 百度就绪超时回滚 |
 
 ## merge_order
 
