@@ -15,11 +15,12 @@
 //
 // 校验规则本地复刻(lib/agent/** 只 import types,不 import 其函数)。
 
-import type { AgentAction, AgentEvent } from "../lib/agent/types.ts";
+import type { AgentAction, AgentEvent, ToolKind } from "../lib/agent/types.ts";
 import type { MapBridge } from "../lib/agent-map-bridge.ts";
 
 export interface AgentToolInfo {
-  name: string;
+  /** 公开类别(sanitize 后 SSE name 即 ToolKind,此处同步收敛类型)。 */
+  name: ToolKind;
   status: "start" | "done" | "error";
   summary?: string;
 }
