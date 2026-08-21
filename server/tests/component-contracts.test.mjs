@@ -499,40 +499,29 @@ test('map shell ws-poi-vanish2: settle 仅默认位置时飞用户位置,不抢 
   assert.match(lib, /Math\.abs\(center\.lng - DEFAULT_MAP_CENTER\.lng\) < DEFAULT_CENTER_NEAR_DEG/);
 });
 
-test('map shell Bug1 flyTo 入口置位:userMovedMapRef 与相机手势同口径', () => {
+test('map shell 弹卡路径不置位 userMovedMapRef(2026-08-21:弹卡不动相机)', () => {
   const shell = src('components/map-shell.tsx');
-  // 纯选中不动相机:handleSelect(卡片/列表)不置位(ws-poi-vanish 首点修复,
-  // 选择公司 ≠ 放弃定位;geolocation 晚 settle 仍会飞用户位置)
-  assert.doesNotMatch(
-    shell,
-    /const handleSelect = useCallback\(\(poi: POI\) => \{[\s\S]{0,200}userMovedMapRef\.current = true/
-  );
-  // 搜索建议选中 handleSelectSuggestion(会 flyTo)置位
-  assert.match(
-    shell,
-    /const handleSelectSuggestion = useCallback\(\(s: SearchSuggestion\) => \{[\s\S]{0,200}userMovedMapRef\.current = true/
-  );
-  // 其余 flyTo 入口与相机手势同口径:已保存落地 / 岗位打开 / 附近条目 / 最近回放,
-  // 凡用户主动选择会动相机的都在点前置位(这些是「跳到所选地点」的搜索意图)
-  assert.match(
-    shell,
-    /const handlePickSaved = useCallback\(\(place: SavedPlace\) => \{[\s\S]{0,160}userMovedMapRef\.current = true/
-  );
-  assert.match(
-    shell,
-    /const handleOpenApplication = useCallback\(\(ref: \{ positionId: string; companyPoiId: string \}\) => \{[\s\S]{0,200}const openCompany = \(company: POI\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/
-  );
-  assert.match(
-    shell,
-    /const openDetail = \(poi: POI\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/
-  );
-  // 2026-08-21 热修:二级卡片 = 侧控栏纯视图,弹卡不动相机——桌面 onOpenDetail
-  // 不再 flyTo、不置位(与 handleSelect 同口径:选择 ≠ 放弃定位,geolocation 晚
-  // settle 仍会飞用户位置)。弹卡不再触发地图动画 / work 列表视野重排(刷新感)。
-  assert.doesNotMatch(
-    shell,
-    /onOpenDetail=\{\(poi\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/
-  );
+  // 2026-08-21 热修全景:所有「打开二级卡片」的路径(列表卡 / 建议 / 收藏 /
+  // 岗位 / 最近回放 / marker 点击)都是侧控栏纯视图——不 flyTo、不置位
+  // userMovedMapRef(选择 ≠ 放弃定位,geolocation 晚 settle 仍会飞用户位置;
+  // 实测 flyTo 叠加渲染尖峰杀渲染进程)。置位只属于地图手势(dragstart/zoomstart)。
+  const popupAnchors = [
+    /const handleSelect = useCallback\(\(poi: POI\) => \{[\s\S]{0,200}userMovedMapRef\.current = true/,
+    /const handleSelectSuggestion = useCallback\(\(s: SearchSuggestion\) => \{[\s\S]{0,200}userMovedMapRef\.current = true/,
+    /const handlePickSaved = useCallback\(\(place: SavedPlace\) => \{[\s\S]{0,160}userMovedMapRef\.current = true/,
+    /const handleOpenApplication = useCallback\(\(ref: \{ positionId: string; companyPoiId: string \}\) => \{[\s\S]{0,200}const openCompany = \(company: POI\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/,
+    /const openDetail = \(poi: POI\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/,
+    /onOpenDetail=\{\(poi\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/,
+    /onMarkerClick: \(id\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/,
+  ];
+  for (const re of popupAnchors) {
+    assert.doesNotMatch(shell, re, '弹卡路径不得置位接管相机标记');
+  }
+  // 置位只保留在地图手势(dragstart/zoomstart)
+  assert.match(shell, /onViewEvent\(view, "dragstart", \(\) => \{\s*userMovedMapRef\.current = true/);
+  assert.match(shell, /onViewEvent\(view, "zoomstart", \(\) => \{\s*userMovedMapRef\.current = true/);
+  // 全库不再有 flyToLocation 调用(弹卡飞行入口整体移除)
+  assert.doesNotMatch(shell, /flyToLocation/);
 });
 
 test('map shell ws-poi-vanish handleLocate 失败保持视野:不回杭州默认中心', () => {
@@ -967,10 +956,11 @@ test('agent panel renders thinking + tool activity for assistant messages (ws-c-
 });
 
 test('map-shell 弹卡不动相机(2026-08-21 热修:二级卡片 = 侧控栏纯视图)', () => {
-  // 回归守卫:桌面 onOpenDetail / 移动抽屉 POIList onSelect 是「浏览弹卡」路径,
-  // 只 setDetailPoi,不得 flyTo —— 弹卡动地图会触发地图动画 + work 列表按视野
-  // 重过滤重排(体感 = 刷新页面),且叠加渲染尖峰。搜索跳转路径(建议/收藏/应聘/
-  // 最近回放)保留 flyTo,那是「跳到所选地点」的意图本体,不是弹卡副作用。
+  // 回归守卫:所有弹卡路径(桌面 onOpenDetail / 移动抽屉 POIList onSelect /
+  // 建议 / 收藏 / 岗位 / 最近回放)都只做侧栏动作,不得 flyTo —— 弹卡动地图
+  // 会触发地图动画 + work 列表按视野重过滤重排(体感 = 刷新页面),且实测
+  // flyTo 叠加渲染尖峰杀渲染进程(建议/收藏全崩,唯独已移除 flyTo 的探索弹卡
+  // 不崩)。flyToLocation 辅助函数已整体删除。
   const shell = src('components/map-shell.tsx');
 
   // 桌面侧栏 onOpenDetail
@@ -989,9 +979,13 @@ test('map-shell 弹卡不动相机(2026-08-21 热修:二级卡片 = 侧控栏纯
   assert.match(mobileBlock, /setDetailPoi\(poi\)/, '移动弹卡打开详情');
   assert.doesNotMatch(mobileBlock, /flyToLocation/, '移动弹卡也不得 flyTo');
 
-  // 搜索跳转路径保留 flyTo(建议选择)
+  // 建议选择也不得 flyTo(2026-08-21 二轮热修:实测建议选择崩溃,与探索弹卡
+  // 唯一区别就是 flyTo)
   const suggestionAt = shell.indexOf('const handleSelectSuggestion = useCallback');
   assert.ok(suggestionAt !== -1, 'handleSelectSuggestion 锚点存在');
   const suggestionBlock = shell.slice(suggestionAt, suggestionAt + 400);
-  assert.match(suggestionBlock, /flyToLocation/, '建议选择保留跳转(搜索落地语义)');
+  assert.doesNotMatch(suggestionBlock, /flyToLocation|userMovedMapRef\.current = true/, '建议选择不得 flyTo/置位');
+
+  // 全文件零 flyToLocation 调用(辅助函数整体移除)
+  assert.doesNotMatch(shell, /flyToLocation/);
 });
