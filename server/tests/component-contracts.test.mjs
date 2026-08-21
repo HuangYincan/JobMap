@@ -947,6 +947,12 @@ test('agent panel renders thinking + tool activity for assistant messages (ws-c-
   assert.match(panel, /toolRowError/);
   assert.doesNotMatch(panel, /toolItem\.summary/, 'tool 行不再渲染 summary(公开事件不携带)');
   assert.match(css, /\.toolActivity \{/);
+  // 轮序 = 消息序:工具活动列表渲染在文本气泡下方(思考 → 气泡 → 工具 → 动作按钮)
+  const bubbleIdx = panel.indexOf('bubbleAssistant');
+  const toolsIdx = panel.indexOf('toolActivity');
+  assert.ok(bubbleIdx !== -1 && toolsIdx !== -1 && bubbleIdx < toolsIdx, '工具活动列表应在文本气泡下方');
+  // 消息状态机走纯函数 reducer(按轮拆分)
+  assert.match(panel, /reduceAgentEvent/);
   // 助手消息体走 MarkdownText(用户消息保持纯文本)
   assert.match(panel, /import \{ MarkdownText \} from "\.\/markdown-text"/);
   assert.match(panel, /m\.role === "assistant" \? <MarkdownText text=\{m\.content\} \/> : m\.content/);
