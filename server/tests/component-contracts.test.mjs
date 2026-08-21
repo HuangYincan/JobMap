@@ -818,6 +818,8 @@ test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
   assert.doesNotMatch(bridge, /window\.AMap/);
   assert.match(bridge, /view\.createMarker/);
   assert.match(bridge, /view\.createCircle/);
+});
+
 test('map-engine 契约:env 读取必须裸字面量,禁止 process.env[ 动态访问(ws-b 轮 3)', () => {
   // 2026-08-21 bugfix:图层面板三 chip 全部「未配置 key」,根因是 isConfigured / key 读取
   // 用了 process.env[常量] 括号动态访问——Node 下正常、浏览器端(Next 构建期只做静态
