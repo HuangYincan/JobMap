@@ -16,7 +16,6 @@ import {
   addHistory,
   consumeOtp,
   createSession,
-  DEMO_OTP_CODE,
   destroySession,
   getAvatarData,
   getSessionUser,
@@ -100,10 +99,11 @@ test('sanitizeEntityRef rejects corrupt refs and normalizes valid ones', () => {
 });
 
 test('otp login creates a session and search history is per user', () => {
+  // phone OTP 与 email 同为随机码(真发由 aliyun-sms-client 单测覆盖,这里只对齐存储契约)
   issueOtp('phone', '13800138000');
   assert.equal(consumeOtp('phone', '13800138000', '999999'), false);
-  issueOtp('phone', '13800138000');
-  assert.equal(consumeOtp('phone', '13800138000', DEMO_OTP_CODE), true);
+  const { code } = issueOtp('phone', '13800138000');
+  assert.equal(consumeOtp('phone', '13800138000', code), true);
 
   const user = upsertIdentity({ provider: 'phone', subject: '13800138000', phone: '13800138000' });
   assert.equal(user.accountLabel, '13800138000');

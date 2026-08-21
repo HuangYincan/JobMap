@@ -54,10 +54,21 @@ SESSION_SECRET=replace-me
 # Sends email OTP codes via Resend (tech/25). When unset, email OTP send
 # returns 503 EMAIL_NOT_CONFIGURED. Server secret: never commit or log.
 RESEND_API_KEY=replace-me
+
+# Sends phone OTP codes via Aliyun SMS Verification Service
+# (SendSmsVerifyCode, dypnsapi 2017-05-25). When any of the four is unset,
+# phone OTP send returns 503 SMS_NOT_CONFIGURED. Server secrets:
+# never commit or log; secret key only participates in HMAC signing.
+ALIYUN_ACCESS_KEY_ID=replace-me
+ALIYUN_ACCESS_KEY_SECRET=replace-me
+ALIYUN_SMS_SIGN_NAME=replace-me
+ALIYUN_SMS_TEMPLATE_CODE=replace-me
 ```
 
-Email OTP goes out for real via Resend (`RESEND_API_KEY`). Phone OTP is
-demo-only (`000000`) — keep the Aliyun SMS hook; do not log codes or secrets.
+Email OTP goes out for real via Resend (`RESEND_API_KEY`). Phone OTP goes
+out for real via Aliyun SMS Verification Service (`ALIYUN_*` four-set,
+template param `{"code": "..."}` direct-value mode) — both codes are
+random 6-digit; never log codes or secrets.
 
 ### API Configuration
 ```bash
@@ -301,5 +312,5 @@ npm run start
 
 ---
 
-**Last Updated:** 2026-08-21
+**Last Updated:** 2026-08-22
 **Phase:** 2 (Multi-mode: Domain + Work)
