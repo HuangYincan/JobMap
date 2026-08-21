@@ -1,8 +1,9 @@
 // ============================================================
-// switchMapEngine 编排测试(ws-f)— 引擎切换纯函数
+// switchMapEngine 编排测试(ws-f;ws-3 安全切换重构)
 //
 // 引擎由参数注入(DI),全 mock、不真发网络。断言:
-// - 编排顺序:from.destroy → to.load → to.createView(旧 view 先销毁)
+// - 编排顺序:to.load → from.destroy → to.createView(「先就绪、后销毁」,
+//   脚本加载最耗时阶段旧 view 全程存活;失败路径回滚重建旧引擎视图)
 // - state/style 回放:createView 收到捕获的相机状态与目标样式
 // - POI/可见/选中/高亮回放:控制器在**新 view** 上重建(createView 之后)
 // - style 降级:目标引擎对不支持样式回退 normal + console.warn(引擎语义,
@@ -10,6 +11,10 @@
 // - 同引擎守卫:created:false,不销毁不重建
 // - 未配置引擎:不销毁旧 view,直接抛错
 // - from=null(首次切换)/无回放数据:不创建控制器,新 view 零 marker
+// - 失败回滚:目标 createView 抛错 → 旧引擎视图重建(rolledBack + error);
+//   回滚也失败 → 抛错(容器无视图,调用方清 ref 暴露重试)
+// - 取消 signal:load 阶段置位 → 放弃且旧 view 零触碰;createView 阶段置位
+//   → 已建视图销毁;重入取代(两次切换,后发置前发 signal → 后发赢)
 // ============================================================
 
 import { test, afterEach } from 'node:test';
@@ -39,6 +44,10 @@ function makeMockView(engine, { id, events: log = events, style: viewStyle = nul
     destroyed: false,
     style: viewStyle,
     markers: [],
+    getState() {
+      // 与调用方快照同值:只保证契约路径可走(再捕获与兜底结果一致)
+      return STATE;
+    },
     destroy() {
       this.destroyed = true;
       log.push(`destroy:${this.id}`);
@@ -128,7 +137,7 @@ afterEach(() => {
   delete globalThis.window;
 });
 
-test('编排顺序:from.destroy 先于 to.load/createView;返回新 view + created:true', async () => {
+test('编排顺序:to.load 先于 from.destroy/createView(先就绪后销毁);返回新 view + created:true', async () => {
   globalThis.window = { NS };
   const from = makeMockView(makeMockEngine('amap'), { id: 'from' });
   const to = makeMockEngine('tencent');
@@ -145,8 +154,8 @@ test('编排顺序:from.destroy 先于 to.load/createView;返回新 view + creat
   assert.equal(result.view.engine, to);
   assert.notEqual(result.view, from);
   assert.equal(from.destroyed, true, '旧 view 必须已销毁');
-  // 顺序不可交换:destroy → load → createView
-  assert.deepEqual(events, ['destroy:from', 'load:tencent', 'createView:tencent']);
+  // 顺序不可交换:load(最耗时,旧 view 存活)→ destroy → createView
+  assert.deepEqual(events, ['load:tencent', 'destroy:from', 'createView:tencent']);
 });
 
 test('state/style 回放:createView 收到捕获的相机状态与目标样式', async () => {
@@ -200,8 +209,8 @@ test('控制器回放:POI 集/可见集/选中/高亮在 createView 之后于新
   const view = result.view;
   assert.equal(view.markers.length, 3, '3 个 POI → 3 个 marker(控制器已重建)');
 
-  // 控制器重建顺序:destroy → load → createView → marker 回放
-  assert.deepEqual(events.slice(0, 3), ['destroy:from', 'load:tencent', 'createView:tencent']);
+  // 控制器重建顺序:load → destroy → createView → marker 回放
+  assert.deepEqual(events.slice(0, 3), ['load:tencent', 'destroy:from', 'createView:tencent']);
   const createViewIdx = events.indexOf('createView:tencent');
   const firstMarkerIdx = events.findIndex((e) => e.startsWith('marker:'));
   assert.ok(firstMarkerIdx > createViewIdx, 'marker 回放必须发生在 createView 之后');
@@ -318,4 +327,191 @@ test('from=null(首次切换):直接 load/createView;无回放数据不创建控
   assert.equal(result.created, true);
   assert.deepEqual(events, ['load:amap', 'createView:amap']);
   assert.equal(result.view.markers.length, 0, '无回放数据 → 零 marker(交给 usePOIMap)');
+});
+
+// ---------------------------------------------------------------------------
+// ws-3:失败回滚 / 取消 signal / 重入取代
+// ---------------------------------------------------------------------------
+
+test('失败回滚:目标 createView 抛错 → 重建旧引擎视图(rolledBack:true + error + POI 回放)', async () => {
+  globalThis.window = { NS };
+  const amapEngine = makeMockEngine('amap');
+  const from = makeMockView(amapEngine, { id: 'from' });
+  const to = makeMockEngine('tencent', {
+    overrides: {
+      createView: async () => {
+        events.push('createView:tencent');
+        throw new Error('TMap init 失败(模拟)');
+      },
+    },
+  });
+
+  const result = await switchMapEngine({
+    from,
+    to,
+    container,
+    state: STATE,
+    style: 'normal',
+    pois: [makePOI('p1', 0)],
+  });
+
+  assert.equal(result.created, false);
+  assert.equal(result.rolledBack, true, '回滚成功标记');
+  assert.equal(result.view.engine, amapEngine, '回滚视图来自旧引擎');
+  assert.equal(result.view.destroyed, false);
+  assert.equal(result.view.markers.length, 1, '回滚视图同样回放 POI 控制器');
+  assert.match(result.error?.message ?? '', /TMap init 失败/);
+  // 顺序:load → destroy → createView(失败)→ 回滚 createView(旧引擎)→ 回放
+  assert.deepEqual(events.slice(0, 4), [
+    'load:tencent',
+    'destroy:from',
+    'createView:tencent',
+    'createView:amap',
+  ]);
+  assert.equal(events.length, 5, '回滚视图同样回放 POI 控制器');
+  assert.match(events[4], /^marker:/);
+});
+
+test('失败回滚:回滚也失败 → 抛错(容器无视图,调用方清 ref 暴露重试)', async () => {
+  globalThis.window = { NS };
+  const amapEngine = makeMockEngine('amap', {
+    overrides: {
+      createView: async () => {
+        events.push('createView:amap');
+        throw new Error('AMap 重建也失败(模拟)');
+      },
+    },
+  });
+  const from = makeMockView(amapEngine, { id: 'from' });
+  const to = makeMockEngine('tencent', {
+    overrides: {
+      createView: async () => {
+        events.push('createView:tencent');
+        throw new Error('TMap init 失败(模拟)');
+      },
+    },
+  });
+
+  await assert.rejects(
+    switchMapEngine({ from, to, container, state: STATE, style: 'normal' }),
+    /引擎切换失败:目标 tencent createView 失败,回滚 amap 视图也失败: TMap init 失败\(模拟\)/,
+  );
+  assert.deepEqual(events, ['load:tencent', 'destroy:from', 'createView:tencent', 'createView:amap']);
+});
+
+test('from=null 且目标 createView 失败:无旧视图可回滚 → 抛错', async () => {
+  globalThis.window = { NS };
+  const to = makeMockEngine('tencent', {
+    overrides: {
+      createView: async () => {
+        events.push('createView:tencent');
+        throw new Error('TMap init 失败(模拟)');
+      },
+    },
+  });
+
+  await assert.rejects(
+    switchMapEngine({ from: null, to, container, state: STATE, style: 'normal' }),
+    /无旧视图可回滚/,
+  );
+  assert.deepEqual(events, ['load:tencent', 'createView:tencent']);
+});
+
+test('取消 signal:load 阶段置位 → 放弃,旧 view 零触碰(aborted 返回)', async () => {
+  globalThis.window = { NS };
+  const from = makeMockView(makeMockEngine('amap'), { id: 'from' });
+  const to = makeMockEngine('tencent');
+  const signal = { aborted: false };
+  to.load = async () => {
+    events.push('load:tencent');
+    signal.aborted = true; // 更新意图在 load 期间到达
+  };
+
+  const result = await switchMapEngine({
+    from,
+    to,
+    container,
+    state: STATE,
+    style: 'normal',
+    signal,
+  });
+
+  assert.equal(result.aborted, true);
+  assert.equal(result.view, null);
+  assert.equal(from.destroyed, false, 'load 阶段取消:旧 view 保留');
+  assert.deepEqual(events, ['load:tencent']);
+});
+
+test('取消 signal:createView 在飞期间置位 → 已建视图销毁(aborted 返回)', async () => {
+  globalThis.window = { NS };
+  const from = makeMockView(makeMockEngine('amap'), { id: 'from' });
+  const to = makeMockEngine('tencent');
+  const signal = { aborted: false };
+  let createdView;
+  to.createView = async () => {
+    events.push('createView:tencent');
+    signal.aborted = true; // 更新意图在 createView 在飞期间到达
+    const v = makeMockView(to, { id: 'created' });
+    createdView = v;
+    return v;
+  };
+
+  const result = await switchMapEngine({
+    from,
+    to,
+    container,
+    state: STATE,
+    style: 'normal',
+    signal,
+  });
+
+  assert.equal(result.aborted, true);
+  assert.equal(result.view, null);
+  assert.equal(createdView.destroyed, true, '已建视图必须销毁(容器由更新意图接管)');
+  assert.equal(from.destroyed, true, '旧 view 已销毁');
+  assert.deepEqual(events, ['load:tencent', 'destroy:from', 'createView:tencent', 'destroy:created']);
+});
+
+test('重入取代:后发意图置前发 signal → 前发让路,后发赢(两次切换不丢第二击)', async () => {
+  globalThis.window = { NS };
+  const from = makeMockView(makeMockEngine('amap'), { id: 'from' });
+  const toA = makeMockEngine('tencent');
+  const toB = makeMockEngine('baidu');
+  // A 的 load 挂起(慢脚本加载):期间 B 发起(置 A 的 signal)
+  let releaseLoad;
+  toA.load = () => new Promise((resolve) => {
+    events.push('load:tencent');
+    releaseLoad = resolve;
+  });
+  const signalA = { aborted: false };
+
+  const pA = switchMapEngine({
+    from,
+    to: toA,
+    container,
+    state: STATE,
+    style: 'normal',
+    signal: signalA,
+  });
+  // 更新意图 B 到达:让路 A(「最新意图优先」的早期让路)
+  signalA.aborted = true;
+  releaseLoad();
+
+  const resultA = await pA;
+  assert.equal(resultA.aborted, true, '前发切换让路');
+  assert.equal(resultA.view, null);
+  assert.equal(from.destroyed, false, 'A 未触碰旧 view');
+
+  // B 正常落地
+  const resultB = await switchMapEngine({
+    from,
+    to: toB,
+    container,
+    state: STATE,
+    style: 'normal',
+  });
+  assert.equal(resultB.created, true, '后发切换赢');
+  assert.equal(resultB.view.engine, toB);
+  assert.equal(from.destroyed, true, 'B 才销毁旧 view');
+  assert.deepEqual(events, ['load:tencent', 'load:baidu', 'destroy:from', 'createView:baidu']);
 });
