@@ -12,6 +12,7 @@
 import { useMemo, useRef, useState } from "react";
 import styles from "./agent-ball.module.css";
 import { t, type Language } from "@/lib/i18n";
+import type { AccountUser } from "@/lib/account";
 import type { MapBridge } from "@/lib/agent-map-bridge";
 import { computeBallSnap, type BallRect, type BallSnapEdge } from "@/lib/agent-panel-placement";
 import { AgentPanel } from "./agent-panel";
@@ -36,6 +37,8 @@ interface InitialState {
 interface Props {
   bridge: MapBridge | null;
   lang: Language;
+  /** 登录态:原样透传给 AgentPanel(记忆入口只对登录用户渲染)。 */
+  user: AccountUser | null;
 }
 
 /** 初始位(含 localStorage 恢复):{edge, top, left?} 持久化格式;默认 right:12 / bottom:179。 */
@@ -69,7 +72,7 @@ function readInitialState(): InitialState {
   return { pos: { left: null, right: EDGE_MARGIN, top }, edge: "right" };
 }
 
-export default function AgentBall({ bridge, lang }: Props) {
+export default function AgentBall({ bridge, lang, user }: Props) {
   const [open, setOpen] = useState(false);
   const [initial] = useState(readInitialState);
   const [pos, setPos] = useState<BallPos>(initial.pos);
@@ -182,6 +185,7 @@ export default function AgentBall({ bridge, lang }: Props) {
         <AgentPanel
           bridge={bridge}
           lang={lang}
+          user={user}
           ballRect={ballRect}
           dragging={dragging}
           snapEdge={dragging ? null : snapEdge}

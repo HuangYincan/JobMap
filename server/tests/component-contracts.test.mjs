@@ -885,6 +885,60 @@ test('agent panel completion status + clear screen (ws-done)', () => {
   assert.match(executor, /undoStack\[i\]\.kind === "overlay"/);
 });
 
+test('agent panel memory: login-only entry + embedded overlay (ws-mem-b)', () => {
+  const panel = src('components/agent-panel.tsx');
+  const ball = src('components/agent-ball.tsx');
+  const shell = src('components/map-shell.tsx');
+  const css = src('components/agent-panel.module.css');
+  const i18n = src('lib/i18n.ts');
+  // user 透传链:map-shell(已有 user 状态)→ agent-ball → agent-panel
+  assert.match(ball, /user: AccountUser \| null/);
+  assert.match(ball, /user=\{user\}/);
+  assert.match(panel, /user: AccountUser \| null/);
+  assert.match(shell, /<AgentBall bridge=\{agentBridgeRef\.current\} lang=\{lang\} user=\{user\} \/>/);
+  // 记忆按钮:仅在 user 非空时渲染(guest 不渲染);位于 header 右侧(关闭钮旁)
+  assert.match(panel, /\{user && \([\s\S]{0,160}styles\.memoryBtn/);
+  assert.match(panel, /aria-label=\{t\("agentMemory", lang\)\}/);
+  assert.match(panel, /aria-expanded=\{memoriesOpen\}/);
+  assert.match(panel, /className=\{styles\.close\}/);
+  // 弹层:登录 + 打开才渲染;内容 = 加载中/空态/条目 + 逐条删除/一键清除(轻确认)
+  assert.match(panel, /\{user && memoriesOpen && \(/);
+  assert.match(panel, /t\("agentMemoryLoading", lang\)/);
+  assert.match(panel, /t\("agentMemoryEmpty", lang\)/);
+  assert.match(panel, /t\("agentMemoryError", lang\)/);
+  assert.match(panel, /t\("agentMemoryDelete", lang\)/);
+  assert.match(panel, /t\("agentMemoryClear", lang\)/);
+  assert.match(panel, /t\("agentMemoryClearConfirm", langRef\.current\)/);
+  assert.match(panel, /memoryViewState\(memoriesLoading, memoriesError, memories\.length\)/);
+  // 数据契约:GET 列表 / DELETE 逐条(id 查询参数,saved 范式)/ DELETE 清除全量
+  assert.match(panel, /fetch\("\/api\/me\/memories"\)/);
+  assert.match(panel, /\/api\/me\/memories\?id=\$\{encodeURIComponent\(String\(id\)\)\}/);
+  assert.match(panel, /method: "DELETE"/);
+  assert.match(panel, /window\.confirm\(t\("agentMemoryClearConfirm", langRef\.current\)\)/);
+  // 纯函数:响应解析(兼容 items/memories/裸数组)+ 视图状态机
+  assert.match(panel, /export function parseMemories\(json: unknown\)/);
+  assert.match(panel, /export function memoryViewState\(/);
+  assert.match(panel, /export type MemoryViewState = "loading" \| "error" \| "empty" \| "list"/);
+  // 清屏语义不变:clearScreen 只清对话/覆盖物,不触碰记忆状态(记忆跨会话)
+  const clearAt = panel.indexOf('const clearScreen = useCallback');
+  const clearEnd = panel.indexOf('const replayAction = useCallback', clearAt);
+  assert.ok(clearAt !== -1 && clearEnd > clearAt, 'clearScreen anchor exists');
+  const clearBlock = panel.slice(clearAt, clearEnd);
+  assert.doesNotMatch(clearBlock, /setMemories|memoriesOpen|agentMemory/);
+  // i18n 键齐全(双语文案)
+  assert.match(i18n, /agentMemory: \{\s*zh: '记忆',\s*en: 'Memory',\s*\},/);
+  assert.match(i18n, /agentMemoryEmpty: \{\s*zh: '暂无记忆',\s*en: 'No memories yet',\s*\},/);
+  assert.match(i18n, /agentMemoryClear: \{\s*zh: '清除全部记忆',\s*en: 'Clear all memories',\s*\},/);
+  assert.match(i18n, /agentMemoryDelete: \{\s*zh: '删除',\s*en: 'Delete',\s*\},/);
+  assert.match(i18n, /agentMemoryLoading: \{\s*zh: '加载中…',\s*en: 'Loading…',\s*\},/);
+  assert.match(i18n, /agentMemoryError: \{\s*zh: '记忆加载失败',\s*en: 'Failed to load memories',\s*\},/);
+  assert.match(i18n, /agentMemoryClearConfirm: \{\s*zh: '确认清除全部记忆\?',\s*en: 'Clear all memories\?',\s*\},/);
+  assert.match(i18n, /agentToolMemory: \{\s*zh: '记忆',\s*en: 'Memory',\s*\},/);
+  // CSS:内嵌弹层(liquid glass)+ 条目行样式
+  assert.match(css, /\.memoryPanel \{[\s\S]*backdrop-filter: blur\(24px\) saturate\(165%\)/);
+  assert.match(css, /\.memoryRow \{/);
+});
+
 test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
   const shell = src('components/map-shell.tsx');
   const bridge = src('lib/agent-map-bridge.ts');
@@ -892,7 +946,8 @@ test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
   assert.match(shell, /import AgentBall from "\.\/agent-ball";/);
   assert.match(shell, /agentBridgeRef = useRef<MapBridge \| null>\(null\)/);
   assert.match(shell, /createAgentBridge\(engineView/);
-  assert.match(shell, /<AgentBall bridge=\{agentBridgeRef\.current\} lang=\{lang\} \/>/);
+  // 接线(ws-mem-b):登录态 user 一并透传(记忆入口只对登录用户渲染)
+  assert.match(shell, /<AgentBall bridge=\{agentBridgeRef\.current\} lang=\{lang\} user=\{user\} \/>/);
   // bridge 实现只认 MapView 门面,不直连厂商全局
   assert.match(bridge, /import type \{ MapView \} from "\.\/map-engine\/types\.ts"/);
   assert.doesNotMatch(bridge, /window\.AMap/);

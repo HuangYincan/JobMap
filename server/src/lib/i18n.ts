@@ -984,6 +984,35 @@ export const translations = {
     zh: '清屏',
     en: 'Clear',
   },
+  // ---- 记忆管理(ws-mem-b:登录用户专属入口;清屏不清记忆,记忆跨会话)----
+  agentMemory: {
+    zh: '记忆',
+    en: 'Memory',
+  },
+  agentMemoryEmpty: {
+    zh: '暂无记忆',
+    en: 'No memories yet',
+  },
+  agentMemoryClear: {
+    zh: '清除全部记忆',
+    en: 'Clear all memories',
+  },
+  agentMemoryDelete: {
+    zh: '删除',
+    en: 'Delete',
+  },
+  agentMemoryLoading: {
+    zh: '加载中…',
+    en: 'Loading…',
+  },
+  agentMemoryError: {
+    zh: '记忆加载失败',
+    en: 'Failed to load memories',
+  },
+  agentMemoryClearConfirm: {
+    zh: '确认清除全部记忆?',
+    en: 'Clear all memories?',
+  },
   agentToolsSection: {
     zh: '工具调用',
     en: 'Tool calls',
@@ -1036,6 +1065,11 @@ export const translations = {
   agentToolProject: {
     zh: '项目数据',
     en: 'Project data',
+  },
+  // ws-mem-a 若把 memory_save 归入 'memory' 公开类别 → 类别显示名(未加则此分支不触发)
+  agentToolMemory: {
+    zh: '记忆',
+    en: 'Memory',
   },
   agentToolOther: {
     zh: '其他操作',

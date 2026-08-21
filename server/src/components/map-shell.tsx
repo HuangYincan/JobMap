@@ -2443,8 +2443,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         </button>
       </div>
 
-      {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点) */}
-      <AgentBall bridge={agentBridgeRef.current} lang={lang} />
+      {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点;user 透传 → 记忆入口登录才渲染) */}
+      <AgentBall bridge={agentBridgeRef.current} lang={lang} user={user} />
 
       <section
         ref={drawerRef}
