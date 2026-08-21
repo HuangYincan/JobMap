@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { SortOption } from "@/lib/types";
-import { t, type Language } from "@/lib/i18n";
+import { t, uiLabel, type Language } from "@/lib/i18n";
 import styles from "./sort-selector.module.css";
 
 export interface SortSelectorProps {
@@ -60,7 +60,7 @@ export function SortSelector({
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        <span className={styles.triggerLabel}>{current ? current.label : value}</span>
+        <span className={styles.triggerLabel}>{current ? uiLabel(current, lang) : value}</span>
         <svg
           className={`${styles.chevron} ${open ? styles.chevronOpen : ""}`}
           viewBox="0 0 16 16"
@@ -93,7 +93,7 @@ export function SortSelector({
                     setOpen(false);
                   }}
                 >
-                  {option.label}
+                  {uiLabel(option, lang)}
                   {active && (
                     <span className={styles.check} aria-hidden="true">
                       ✓
