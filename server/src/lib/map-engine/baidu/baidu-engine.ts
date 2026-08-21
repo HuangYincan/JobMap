@@ -400,10 +400,9 @@ function toDomainPoi(poi: unknown): DomainPOI | null {
     kind: 'domain',
     name,
     mode: 'domain',
-    // 客户端搜索非 'amap'/'seed' 数据源 → 沿用 amap-api 的会话非持久化语义
-    // source:'amap'(BasePOI.source 闭合联合无 'baidu' 值,文件边界禁改 types.ts;
-    // 对齐 ws-d 腾讯引擎先例;domain 模式下 source 仅 persistable 判定使用)
-    source: 'amap',
+    // source 如实标注百度引擎归一化(契约 BasePOI.source 已含 'baidu';
+    // 与 amap 区分,避免持久化/数据源判定误导)
+    source: 'baidu',
     location: { lng: g.lng, lat: g.lat, address },
     category: category || '地点',
   };

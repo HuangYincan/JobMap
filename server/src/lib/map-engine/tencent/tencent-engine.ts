@@ -277,9 +277,9 @@ export function normalizeTencentPOI(raw: TencentPOIRecord): DomainPOI | null {
     kind: 'domain',
     name,
     mode: 'domain',
-    // 契约 BasePOI.source 闭合联合无 'tencent',沿用 amap-api 的 'amap'
-    // (会话非持久化);待契约扩展(见汇报,需 boss 裁决)
-    source: 'amap',
+    // source 如实标注腾讯引擎归一化(契约 BasePOI.source 已含 'tencent';
+    // 与 amap 区分,避免持久化/数据源判定误导)
+    source: 'tencent',
     location: { lng: loc.lng, lat: loc.lat, ...(raw.address ? { address: raw.address } : {}) },
     category,
   };
