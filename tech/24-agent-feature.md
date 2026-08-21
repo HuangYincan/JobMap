@@ -70,6 +70,7 @@ LLM/Agent 配置全部走服务端环境变量(`AGENT_LLM_BASE_URL`/`AGENT_LLM_A
 │ components/markdown-text.tsx(+module.css) Markdown 渲染(marked→DOMPurify)│
 │ components/agent-chat-client.ts          SSE 客户端(fetch + getReader) │
 │ components/agent-map-executor.ts         动作执行器(校验/限流/undo 栈)  │
+│ lib/agent-session-store.ts               会话存储纯函数(多会话 localStorage)│
 │ lib/agent-panel-placement.ts             面板锚定纯函数(可单测)         │
 │ lib/markdown-pipeline.ts                 markdown→安全 HTML 纯管线     │
 │ lib/agent-map-bridge.ts                  地图操作适配层(唯一 AMap 依赖) │
@@ -312,7 +313,15 @@ Content-Type: application/json
 - **工具活动列表**:每条 `{type:'tool'}` 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary),渲染在助手消息上方;provider 前缀映射友好名(`amap__`→高德、`tencent__`→腾讯、`baidu__`→百度、`rest__`→兜底、`builtin__`→内置)。
 - **建议卡片**:执行器捕获 action 时,面板在消息底部渲染动作摘要按钮(「在地图上定位」等),点击 = 重放该 action。
 - **未配置提示**:503 `LLM_UNCONFIGURED` → 显示 `t('agentNotConfigured')`(「AI 助手未配置,请在服务器配置」)。
-- **历史**:sessionStorage `dm.agent-history.v1`,cap 30 条;新会话首条自动带视口快照。
+- **会话管理(2026-08-22 ws-panel2)**:localStorage `dm.agent-sessions.v1` 多会话
+  (`{sessions:[{id,title,messages,updatedAt}],activeId}`,cap 10 会话 × 30 条,
+  `lib/agent-session-store.ts` 纯函数,注入式存储 node 可测);header「💬 会话」入口
+  登录/guest 均可用(本地功能,与账号无关);弹层列表(标题 + 相对时间 + 删除 ×,
+  当前会话蓝底高亮 + ●)+ 新建会话 + 空态;新建/切换若 streaming 先 stop,切换即载入
+  该会话消息(替换 messages 状态),完成/停止状态行、工具活动均按当前会话;清屏 =
+  清当前会话消息(会话条目保留,标题重置「新会话」,记忆不动);消息变更统一走 store
+  (appendMessage/saveMessages),不再直写旧键——旧 sessionStorage `dm.agent-history.v1`
+  仅迁移读(无 v1 键时迁为第一个会话,迁移后旧键清除);新会话首条自动带视口快照。
 - 「停止」→ abort(链到 fetch);「撤销」→ `executor.undo()`。
 - **助手消息体用 MarkdownText 渲染**(marked → DOMPurify,见 §9.10);用户消息保持纯文本。
 
@@ -433,8 +442,10 @@ Content-Type: application/json
 | enh | `tests/markdown-pipeline.test.mjs` | marked 渲染(GFM 表格/删除线)、链接 target=_blank+rel=noopener、标题转义、sanitize 必须被调用(管线契约) |
 | enh | `tests/agent-panel-placement.test.mjs` | pickPanelSide 决策矩阵(首选/翻转/sheet)、左右缘锚定、垂直 clamp、极窄视口 sheet、移动端恒 sheet、常量契约;+ computeBallSnap 四向吸附(四边/四角/视口中央/平局顺序/clamp 边界)、垂直锚定 edge 矩阵(top/bottom 首选侧+翻转+sheet+水平居中 clamp,2026-08-21 ws-nfix) |
 | enh | `tests/component-contracts.test.mjs`(**追加**) | markdown-text 引用 marked+dompurify 且 sanitize 先于注入;面板 transform 锚定(--px/--py)+z-index 12;思考/工具活动类名;i18n 新键 |
+| panel2 | `tests/agent-session-store.test.mjs`(新) | create/switch/delete/list/append/saveMessages/标题派生(12 码点截断)/cap 裁剪(10 会话 × 30 条,平局丢最先生成)/旧历史迁移(含空旧键、坏 v1 回落、幂等)/activeId 语义/relativeTime 分段 |
+| panel2 | `tests/component-contracts.test.mjs`(**追加**) | header 双入口按钮(会话 → 记忆(徽章计数渲染条件)→ 关闭)、agentSessions* i18n 键、会话弹层结构(当前高亮/删除/新建/空态)、记忆弹层重设计(卡片/三点加载/失败+重试/清除 hover 红)、消息变更统一走 store 不再直写旧键 |
 
-合计:**9 个新测试文件(后端核心 7:ws-a 5 + ws-b 2;前端 2:ws-c)+ 2 处追加**(component-contracts,原批次)+ **ws-c-enhance:1 新测试文件 + 4 处追加**(2026-08-21)。
+合计:**9 个新测试文件(后端核心 7:ws-a 5 + ws-b 2;前端 2:ws-c)+ 2 处追加**(component-contracts,原批次)+ **ws-c-enhance:1 新测试文件 + 4 处追加**(2026-08-21)+ **ws-panel2:1 新测试文件 + 1 处追加**(2026-08-22)。
 
 ---
 
@@ -460,5 +471,5 @@ Content-Type: application/json
 | 3 | 其他 | **MCP 端点实测校准**:按公开文档实现,正式端点格式以官方文档为准 | boss VERIFY 阶段用真实 key 冒烟;若某 provider 端点/鉴权与文档不符,开 fix 轮 |
 | 4 | 其他 | **@modelcontextprotocol/sdk 替换手写客户端**:权限 deny 致手写 | 用户放开权限后可评估换官方 SDK(源码审查后) |
 | 5 | UI设计 | **Agent 设置 UI**:Profile L2 存 DB,key 加密存储 | v2 功能稳定后再议 |
-| 6 | 其他 | **会话历史持久化**:v1 只存前端 sessionStorage(cap 30),无服务端 | 多用户/服务端记忆留后续 |
+| 6 | 其他 | **会话服务端化**:v1 多会话已前端 localStorage 落地(2026-08-22 ws-panel2,`dm.agent-sessions.v1`),无服务端 | 多用户/服务端会话/记忆留后续 |
 | 7 | 其他 | **company-context 等高级工具**:v1 工具集 = 三平台 MCP + REST 兜底 + 项目数据 | 「按选中公司上下文建议」等场景 v2 迭代加工具 |
