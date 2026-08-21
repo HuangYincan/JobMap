@@ -374,3 +374,68 @@ getscript 开头即 `BMapGL={}` 占位,残缺命名空间由轮询兜住,超时�
 **遗留(边界外)**:BMapGL 真实 SDK 中 `setMapReadyCallback` 是否存在于
 getscript v=1.0(官方标注 BMapGL 2.0 API)未能离线核实——实现按「存在即优先、
 不存在走 tilesloaded」双通道防御,真机行为由 boss Playwright 冒烟坐实。
+
+---
+
+## ws-8:挂载失败回退(2026-08-22,feature/engine-mount-fallback)
+
+### 背景(boss 真实验证结论)
+
+交互式切换失败回滚已全部验证通过;**唯一剩余缺口在页面挂载时**:
+sessionStorage 偏好 = 百度(故障引擎)→ 刷新页面 → 挂载切换失败 →
+旧实现只 `console.warn`(use-map-engine.ts L316-318)、engine 状态停留在
+失败引擎、无视图、地图空白,UI 显示「百度 · 手动选择」但无图。挂载时
+无「from」旧引擎可回滚(from=null),需要独立的**回退策略**。
+
+### 修复(use-map-engine.ts 接线 + lib/mount.ts 纯函数)
+
+- **回退顺序依据**:尝试顺序 = 偏好引擎(resolveEngine 结果)优先,其后按
+  `ENGINE_PRIORITY` 序的其余已配置引擎(调用方传 `getConfiguredEngines()`,
+  天然优先级序)。preferred 已在 configured 中时去重——**不回试同一故障引擎**。
+- 每个候选完整重试 `load + createView`(脚本加载失败与初始化失败同口径回退);
+  首个成功即返回其 view;全部失败 → 抛错,调用方保持空视图 + warn(回退
+  CSS fallback 地图)。
+- **回退成功状态落地**:`setEngine(created.engine)` +
+  `setActiveSearchProvider(created.engine.search)`——engine/search 随实际
+  挂载引擎更新(首引擎成功时同引用,no-op)。
+- **取消/竞态防护**(与主路径同口径):每次 await 恢复后查 `cancelled`(卸载
+  竞态 → 不创建/销毁已建视图、不继续回退);createView 后查
+  `isViewTaken`(viewRef.current 已接管 → 销毁,同容器双实例防护)。hook
+  `.then` 内保留 `if (cancelled)` / `if (viewRef.current)` 双保险(hooks-contracts
+  既有契约锚点)。
+- **偏好写入取舍(决策:回退不写偏好)**:
+  - 沿用 L213 语义——交互式切换失败回滚不写偏好;挂载回退同样不覆盖
+    sessionStorage。
+  - 理由:偏好是用户显式选择,故障可能是瞬时的(AK 临时异常/CDN 抖动);
+    回退成功即静默改写偏好会让用户选择**永久丢失**(下次刷新不再尝试
+    其选中的引擎)。代价:偏好指向故障引擎时每次刷新都多一次失败尝试
+    (有 1.5s 就绪超时上限兜底)。若产品希望「回退成功即改写偏好以利
+    下次加载」,只需在 hook `.then` 内加一行 writeEnginePreference,语义
+    与 switchEngine 成功路径一致——留给 boss 裁决。
+- **实现位置说明**:纯函数 `mountEngineView` 在 `lib/mount.ts`(无 @ 别名、
+  无 React 依赖,node 测试可直接 import,同 switch.ts / saved-camera-sync
+  先例);hook re-export 并接线。**边界说明**:任务书「只允许改」未列新文件,
+  但既有契约测试(hooks-contracts)要求挂载路径的 cancelled 销毁逻辑仍在
+  hook 内(hook 双保险保留),行为逻辑提取为 lib 是代码库既有可测性模式,
+  已在汇报标注,供 boss 复核。
+
+### 验收(离线 mock)
+
+| 项 | 结果 |
+|---|---|
+| 首引擎 createView 失败 → 回退第二引擎,view 挂载 + engine 归属正确 | ✅ 13/13(map-engine-mount.test.mjs)|
+| 首引擎 load 失败同样回退(load+createView 全链路重试)| ✅ |
+| 偏好引擎健康 → 零回退(回退不预跑)| ✅ |
+| 去重:preferred 已在 configured → 不回试同一引擎 | ✅ |
+| preferred=null → 从优先级序第一个开始 | ✅ |
+| 全部候选失败 → 抛错(保持空视图 + warn),每候选仅一次 | ✅ |
+| 取消:load 恢复后 / createView resolve 后 → 零泄漏(已建视图销毁) | ✅ |
+| isViewTaken → 销毁已建视图(切换抢先落地双实例防护) | ✅ |
+| hook 接线契约:mountEngineView(resolved, getConfiguredEngines, ...)、setEngine(created.engine)、失败保持 warn + 空视图、挂载路径不写偏好 | ✅ |
+| 全量 npm test | ✅ 1126 pass / 2 skip / 0 fail |
+| typecheck / git diff --check | ✅ |
+| make docs-check | ✅ 通过 |
+| 真实验证(boss Playwright 冒烟:偏好=故障引擎刷新 → 自动回退高德渲染) | ⛔ 未做:headless worker 无浏览器、worktree 无 .env.local;由 boss 合并后冒烟回填(deferred)|
+
+**遗留(边界外)**:回退成功是否写偏好(见上「偏好写入取舍」)留 boss 裁决;
+真实浏览器挂载回退路径由 boss 冒烟坐实。
