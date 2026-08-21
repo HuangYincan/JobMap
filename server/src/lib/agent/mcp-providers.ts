@@ -1,13 +1,35 @@
-// 手写零依赖 MCP 客户端(核心,tech/24 §5)。
+// MCP 客户端 —— 官方 @modelcontextprotocol/sdk(tech/24 §5 实现层)。
 //
-// 会话权限 deny `npm install*`,不引 @modelcontextprotocol/sdk;协议是公开标准:
-//   - legacy SSE transport(2024-11-05):GET 事件流 + POST JSON-RPC,按 id 关联
-//   - Streamable HTTP transport(2025-06-18):单 POST 端点,JSON 或 SSE 响应
-// 全部 fetch 可注入(fetchImpl),纯逻辑可单测。进程级保活:请求结束不 dispose;
-// 连接失败 dispose 置空,下次请求重建重试。错误信息只含 host 与 status,绝不含 key。
+// 2026-08-21 批次:用户放行 npm install 后,由手写零依赖客户端替换为官方 SDK。
+// 对外接口零变化(getMcpProvider / McpProviderHandle / normalizeTool / resetMcpProvidersForTest),
+// 下游 run-agent / tools / route 不改。
 //
-// 注意:模块级单例 map + connect promise 缓存;测试用 resetMcpProvidersForTest()
-// 清空后重造(getMcpProvider 的 opts 只在创建新实例时生效)。
+// SDK 源码审查结论(dist/esm,SDK 1.30.0):
+// 1. Client.connect() 自动做 initialize + notifications/initialized;SUPPORTED_PROTOCOL_VERSIONS
+//    含 2025-11-25/2025-06-18/2025-03-26/2024-11-05/2024-10-07 —— 高德实测回 2025-03-26
+//    在支持列表内,「协议版本容忍」天然满足;列表外版本会抛错(手写版容忍任意版本)。
+// 2. Protocol.request() 的 options.timeout(默认 60s)是唯一请求级超时;transport 本身
+//    (StreamableHTTPClientTransport / SSEClientTransport)无超时、start() 不做网络 I/O
+//    (SSE 的 start() 挂在 `event: endpoint` 事件上,不发该事件的服务器会挂起)→ 本文件
+//    在 connect 外层再包一层超时兜底(Promise.race + 失败后 close 拆掉挂起的 EventSource)。
+// 3. SSE transport 基于 eventsource 包,POST 端点来自服务器 `event: endpoint`(旧手写版是
+//    同 URL POST);事件流意外断开时 eventsource 自动重连(不通知 onclose),挂起的请求只能
+//    等到请求超时 —— 原「stream closed → 本轮剔除」语义退化为超时剔除。
+// 4. 响应一律经 zod schema 校验(Initialize/ListTools/CallTool):工具缺 inputSchema / content
+//    非数组等非规范形态会整单失败(手写版宽松透传 + 兜底) —— 规范服务器不受影响。
+// 5. 错误分类:非 2xx → StreamableHTTPError(status)/SseError(code=status);JSON-RPC error →
+//    McpError(code,message);超时 → McpError(ErrorCode.RequestTimeout);close → McpError
+//    (ConnectionClosed);外部 abort → DOMException(AbortError)或 McpError(RequestTimeout)。
+//
+// 保留语义:connect 超时 ≤15s、单例缓存、失败 → 本轮剔除且 dispose、下次请求重建、
+// 请求结束不 dispose(进程级保活)、每 provider 3 并发信号量、错误信息只含 host 与
+// status 绝不含 key、工具列表缓存(重复 listTools 不再发请求)。
+
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
 import { MCP_ENDPOINTS } from './mcp-endpoints.ts';
 import type { McpEndpoint } from './mcp-endpoints.ts';
@@ -31,20 +53,15 @@ export interface McpProviderHandle {
   callTool(origName: string, args: unknown, signal?: AbortSignal): Promise<{ text: string; isError: boolean }>;
 }
 
-/** fetch 的窄接口(只依赖 ok/status/headers/body,便于 mock)。 */
-export interface FetchResponseLike {
-  ok: boolean;
-  status: number;
-  headers: { get(name: string): string | null };
-  body: ReadableStream<Uint8Array> | null;
-}
-
-export type FetchLike = (url: string | URL, init?: RequestInit) => Promise<FetchResponseLike>;
+/** fetch 的窄接口(转发给 SDK transport;SDK 内部只依赖标准 Response)。 */
+export type FetchLike = typeof fetch;
 
 export interface ProviderOptions {
   /** 测试注入点:默认全局 fetch。 */
   fetchImpl?: FetchLike;
   timeouts?: { connectMs?: number; callMs?: number };
+  /** 测试专用:注入 SDK Transport(如 InMemoryTransport 客户端侧)替代按端点构建。 */
+  transportFactory?: (kind: 'streamable' | 'sse', url: string) => Transport;
 }
 
 // ---------------------------------------------------------------------------
@@ -54,7 +71,6 @@ export interface ProviderOptions {
 const CONNECT_TIMEOUT_MS = 15_000;
 const CALL_TIMEOUT_MS = 30_000;
 const MAX_CONCURRENCY = 3;
-const PROTOCOL_VERSION = '2025-06-18';
 const CLIENT_INFO = { name: 'domain-map-agent', version: '1.0.0' };
 /** 初始化失败换备选 transport 重试的状态码(tech/24 §5.1)。 */
 const RETRY_STATUSES = new Set([404, 405, 400]);
@@ -82,22 +98,6 @@ class McpTimeoutError extends Error {
   }
 }
 
-/** 事件流意外关闭(连接层问题 → 触发重建)。 */
-class McpStreamClosedError extends Error {
-  constructor(providerId: ProviderId, host: string) {
-    super(`mcp(${providerId}) stream closed (${host})`);
-  }
-}
-
-/** JSON-RPC error 响应;message 截断防任意内容回显。 */
-class McpRpcError extends Error {
-  readonly code: number;
-  constructor(message: string, code: number) {
-    super(String(message ?? 'mcp rpc error').slice(0, 200));
-    this.code = code;
-  }
-}
-
 /** 外部 abort(用户停止)归一的错误,formatMcpError 按 name 识别。 */
 class McpAbortError extends Error {
   constructor() {
@@ -107,7 +107,7 @@ class McpAbortError extends Error {
 }
 
 // ---------------------------------------------------------------------------
-// 纯函数:工具名归一化(tech/24 §5.3)
+// 纯函数:工具名归一化(tech/24 §5.3,原样保留)
 // ---------------------------------------------------------------------------
 
 /**
@@ -135,7 +135,7 @@ export function normalizeTool(
 }
 
 // ---------------------------------------------------------------------------
-// 基础工具:信号量 / SSE 解析 / 超时包装
+// 基础工具:信号量 / 超时包装
 // ---------------------------------------------------------------------------
 
 /** 每 provider 3 并发信号量。 */
@@ -162,46 +162,11 @@ class Semaphore {
   }
 }
 
-interface SseEvent {
-  event: string;
-  data: string;
-}
-
-/** SSE 行解析:按空行分帧,data 多行以 '\n' 连接;支持 CRLF 与注释行。 */
-class SseParser {
-  private buffer = '';
-  private currentEvent: string | null = null;
-  private currentData: string[] | null = null;
-
-  push(text: string): SseEvent[] {
-    this.buffer += text;
-    const out: SseEvent[] = [];
-    let idx: number;
-    while ((idx = this.buffer.indexOf('\n')) !== -1) {
-      const line = this.buffer.slice(0, idx);
-      this.buffer = this.buffer.slice(idx + 1);
-      const clean = line.endsWith('\r') ? line.slice(0, -1) : line;
-      if (clean === '') {
-        if (this.currentData !== null) out.push({ event: this.currentEvent ?? 'message', data: this.currentData.join('\n') });
-        this.currentEvent = null;
-        this.currentData = null;
-        continue;
-      }
-      if (clean.startsWith(':')) continue; // 注释
-      const colon = clean.indexOf(':');
-      const field = colon === -1 ? clean : clean.slice(0, colon);
-      const value = colon === -1 ? '' : clean.slice(colon + 1).replace(/^ /, '');
-      if (field === 'event') this.currentEvent = value;
-      else if (field === 'data') {
-        if (this.currentData === null) this.currentData = [];
-        this.currentData.push(value);
-      }
-    }
-    return out;
-  }
-}
-
-/** 把 fetch 调用包上超时 + 外部信号;超时 → makeTimeoutError()。 */
+/**
+ * 超时包装:Promise.race 兜底 —— 即使 fn 不响应 abort(如 SDK SSE transport 的
+ * start() 挂在 `event: endpoint` 上、eventsource 不接外部 signal),超时也照常失败;
+ * 失败方由调用方负责 close 拆掉挂起的连接。外部信号先 aborted → 直接 McpAbortError。
+ */
 function withTimeout<T>(
   timeoutMs: number,
   external: AbortSignal | undefined,
@@ -210,369 +175,114 @@ function withTimeout<T>(
 ): Promise<T> {
   if (external?.aborted) return Promise.reject(new McpAbortError());
   const ctrl = new AbortController();
-  const timer: ReturnType<typeof setTimeout> = setTimeout(() => ctrl.abort(), timeoutMs);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      ctrl.abort();
+      reject(makeTimeoutError());
+    }, timeoutMs);
+  });
   const sig = external ? AbortSignal.any([ctrl.signal, external]) : ctrl.signal;
-  return fn(sig)
-    .finally(() => clearTimeout(timer))
-    .catch((err: unknown) => {
-      if (ctrl.signal.aborted) throw makeTimeoutError();
-      throw err;
-    });
-}
-
-async function readAll(res: FetchResponseLike): Promise<string> {
-  if (!res.body) return '';
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let out = '';
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    out += decoder.decode(value, { stream: true });
-  }
-  out += decoder.decode();
-  return out;
-}
-
-interface RpcResponse {
-  id?: unknown;
-  result?: unknown;
-  error?: { code?: number; message?: string };
-}
-
-function rpcResult(msg: RpcResponse, id: number): unknown {
-  if (msg.error) throw new McpRpcError(String(msg.error.message ?? 'mcp rpc error'), msg.error.code ?? -1);
-  return msg.result;
-}
-
-function parseRpcBody(text: string, id: number): unknown {
-  let msg: RpcResponse;
-  try {
-    msg = JSON.parse(text) as RpcResponse;
-  } catch {
-    throw new McpRpcError('invalid json-rpc response', -32700);
-  }
-  return rpcResult(msg, id);
-}
-
-// ---------------------------------------------------------------------------
-// Transport:legacy SSE(2024-11-05)与 Streamable HTTP(2025-06-18)
-// ---------------------------------------------------------------------------
-
-interface TransportContext {
-  timeoutMs: number;
-  signal?: AbortSignal;
-}
-
-interface Transport {
-  request(method: string, params: unknown, id: number, ctx: TransportContext): Promise<unknown>;
-  /** JSON-RPC notification(id 缺省),fire-and-forget,内部吞错。 */
-  notify(method: string, params: unknown): Promise<void>;
-  close(): void;
-}
-
-/**
- * legacy SSE transport:GET 同一 URL 打开事件流(Accept: text/event-stream),
- * 响应头可能带 Mcp-Session-Id(后续 POST 必须回传);JSON-RPC 消息 POST 到同一
- * URL,响应经事件流 `event: message` + `data: <json>` 到达,按 id 关联。
- * 防御:若 POST 直接返回 JSON-RPC 响应体(部分服务器实现),直接用。
- */
-class LegacySseTransport implements Transport {
-  private sessionId: string | null = null;
-  private openPromise: Promise<void> | null = null;
-  private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-  private pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: unknown) => void; timer: ReturnType<typeof setTimeout> }>();
-  private parser = new SseParser();
-  private readonly host: string;
-  private readonly url: string;
-  private readonly fetchImpl: FetchLike;
-  private readonly providerId: ProviderId;
-
-  constructor(url: string, fetchImpl: FetchLike, providerId: ProviderId) {
-    this.url = url;
-    this.fetchImpl = fetchImpl;
-    this.providerId = providerId;
-    this.host = hostOf(url);
-  }
-
-  request(method: string, params: unknown, id: number, ctx: TransportContext): Promise<unknown> {
-    return withTimeout(
-      ctx.timeoutMs,
-      ctx.signal,
-      async (sig) => {
-        await this.open(sig);
-        const body = JSON.stringify({ jsonrpc: '2.0', id, method, params });
-        // 先注册 pending 再发 POST:响应可能极快到达(先于 waitFor 注册即丢)
-        const waiter = this.waitFor(id, ctx.timeoutMs);
-        try {
-          const res = await this.post(body, sig);
-          const ct = res.headers.get('content-type') ?? '';
-          if (ct.includes('application/json')) {
-            // 防御:部分服务器直接返回 JSON-RPC 响应体
-            waiter.cancel();
-            return parseRpcBody(await readAll(res), id);
-          }
-        } catch (err) {
-          waiter.cancel();
-          throw err;
-        }
-        return waiter.promise;
-      },
-      () => new McpTimeoutError(this.providerId, this.host, ctx.timeoutMs),
-    );
-  }
-
-  async notify(method: string, params: unknown): Promise<void> {
-    try {
-      await this.open(new AbortController().signal);
-      const body = JSON.stringify({ jsonrpc: '2.0', method, params });
-      await this.post(body, new AbortController().signal);
-    } catch {
-      /* 通知失败不致命(部分服务器容忍缺省初始化通知) */
-    }
-  }
-
-  close(): void {
-    if (this.reader) {
-      const r = this.reader;
-      this.reader = null;
-      try {
-        void r.cancel().catch(() => {});
-      } catch {
-        /* 已关 */
-      }
-    }
-    this.failAll(new McpStreamClosedError(this.providerId, this.host));
-  }
-
-  // ---- 内部 ----
-
-  private open(sig: AbortSignal): Promise<void> {
-    if (this.openPromise) return this.openPromise;
-    this.openPromise = this.doOpen(sig);
-    return this.openPromise;
-  }
-
-  private async doOpen(sig: AbortSignal): Promise<void> {
-    let res: FetchResponseLike;
-    try {
-      res = await this.fetchImpl(this.url, { method: 'GET', headers: { Accept: 'text/event-stream' }, signal: sig });
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') throw err;
-      throw new ConnectFailure(this.providerId, this.host, null);
-    }
-    if (!res.ok) throw new ConnectFailure(this.providerId, this.host, res.status);
-    if (!res.body) throw new ConnectFailure(this.providerId, this.host, null);
-    this.sessionId = res.headers.get('mcp-session-id');
-    this.reader = res.body.getReader();
-    void this.readLoop().catch(() => {
-      /* failAll 已在 readLoop 内处理 */
-    });
-  }
-
-  private async readLoop(): Promise<void> {
-    const decoder = new TextDecoder();
-    const reader = this.reader;
-    if (!reader) return;
-    try {
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) {
-          this.failAll(new McpStreamClosedError(this.providerId, this.host));
-          return;
-        }
-        for (const ev of this.parser.push(decoder.decode(value, { stream: true }))) {
-          if (ev.event === 'message') this.dispatch(ev.data);
-        }
-      }
-    } catch {
-      this.failAll(new McpStreamClosedError(this.providerId, this.host));
-    }
-  }
-
-  private dispatch(raw: string): void {
-    let msg: RpcResponse;
-    try {
-      msg = JSON.parse(raw) as RpcResponse;
-    } catch {
-      return;
-    }
-    const id = msg.id;
-    if (typeof id !== 'number') return;
-    const p = this.pending.get(id);
-    if (!p) return;
-    this.pending.delete(id);
-    clearTimeout(p.timer);
-    if (msg.error) p.reject(new McpRpcError(String(msg.error.message ?? 'mcp rpc error'), msg.error.code ?? -1));
-    else p.resolve(msg.result);
-  }
-
-  private waitFor(id: number, timeoutMs: number): { promise: Promise<unknown>; cancel: () => void } {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const promise = new Promise<unknown>((resolve, reject) => {
-      timer = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new McpTimeoutError(this.providerId, this.host, timeoutMs));
-      }, timeoutMs);
-      this.pending.set(id, { resolve, reject, timer });
-    });
-    return {
-      promise,
-      cancel: () => {
-        if (timer) clearTimeout(timer);
-        this.pending.delete(id);
-      },
-    };
-  }
-
-  private async post(body: string, sig: AbortSignal): Promise<FetchResponseLike> {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' };
-    if (this.sessionId) headers['Mcp-Session-Id'] = this.sessionId;
-    let res: FetchResponseLike;
-    try {
-      res = await this.fetchImpl(this.url, { method: 'POST', headers, body, signal: sig });
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') throw err;
-      throw new ConnectFailure(this.providerId, this.host, null);
-    }
-    if (!res.ok) throw new ConnectFailure(this.providerId, this.host, res.status);
-    return res;
-  }
-
-  private failAll(err: Error): void {
-    const pend = [...this.pending.entries()];
-    this.pending.clear();
-    for (const [, p] of pend) {
-      clearTimeout(p.timer);
-      p.reject(err);
-    }
-  }
-}
-
-/**
- * Streamable HTTP transport:单 POST 端点;请求头 content-type/accept/
- * mcp-protocol-version/Mcp-Session-Id(若收到过);响应可能是 application/json
- * (直接 JSON-RPC 响应)或 text/event-stream(`event: message` 数据);initialize
- * 响应若带 Mcp-Session-Id 头,后续请求回传。
- */
-class StreamableTransport implements Transport {
-  private sessionId: string | null = null;
-  private readonly host: string;
-  private readonly url: string;
-  private readonly fetchImpl: FetchLike;
-  private readonly providerId: ProviderId;
-
-  constructor(url: string, fetchImpl: FetchLike, providerId: ProviderId) {
-    this.url = url;
-    this.fetchImpl = fetchImpl;
-    this.providerId = providerId;
-    this.host = hostOf(url);
-  }
-
-  request(method: string, params: unknown, id: number, ctx: TransportContext): Promise<unknown> {
-    return withTimeout(
-      ctx.timeoutMs,
-      ctx.signal,
-      async (sig) => {
-        const body = JSON.stringify({ jsonrpc: '2.0', id, method, params });
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-          Accept: 'application/json, text/event-stream',
-          'mcp-protocol-version': PROTOCOL_VERSION,
-        };
-        if (this.sessionId) headers['Mcp-Session-Id'] = this.sessionId;
-        let res: FetchResponseLike;
-        try {
-          res = await this.fetchImpl(this.url, { method: 'POST', headers, body, signal: sig });
-        } catch (err) {
-          if (err instanceof Error && err.name === 'AbortError') throw err;
-          throw new ConnectFailure(this.providerId, this.host, null);
-        }
-        if (!res.ok) throw new ConnectFailure(this.providerId, this.host, res.status);
-        const session = res.headers.get('mcp-session-id');
-        if (session) this.sessionId = session;
-        const ct = res.headers.get('content-type') ?? '';
-        if (ct.includes('text/event-stream')) return this.readSse(res, id);
-        return parseRpcBody(await readAll(res), id);
-      },
-      () => new McpTimeoutError(this.providerId, this.host, ctx.timeoutMs),
-    );
-  }
-
-  async notify(method: string, params: unknown): Promise<void> {
-    try {
-      const body = JSON.stringify({ jsonrpc: '2.0', method, params });
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Accept: 'application/json, text/event-stream',
-        'mcp-protocol-version': PROTOCOL_VERSION,
+  const fnPromise = Promise.resolve().then(() => fn(sig));
+  return new Promise<T>((resolve, reject) => {
+    let settled = false;
+    const settle =
+      (next: (v: unknown) => void) =>
+      (v: unknown): void => {
+        if (settled) return;
+        settled = true;
+        next(v);
       };
-      if (this.sessionId) headers['Mcp-Session-Id'] = this.sessionId;
-      const res = await this.fetchImpl(this.url, { method: 'POST', headers, body, signal: new AbortController().signal });
-      if (res.ok && res.body) {
-        try {
-          await readAll(res);
-        } catch {
-          /* 忽略 */
-        }
-      }
-    } catch {
-      /* 通知失败不致命 */
-    }
-  }
+    // 败者 promise 的 rejection 由 settle 消费,避免 unhandled rejection。
+    fnPromise.then(settle((v) => resolve(v as T)), settle((e: unknown) => reject(e)));
+    timeoutPromise.catch(settle((e: unknown) => reject(e)));
+  }).finally(() => clearTimeout(timer));
+}
 
-  close(): void {
-    /* 无长连接:每次请求独立 POST */
-  }
+// ---------------------------------------------------------------------------
+// SDK transport 构建与 connect 包装
+// ---------------------------------------------------------------------------
 
-  private async readSse(res: FetchResponseLike, id: number): Promise<unknown> {
-    if (!res.body) throw new McpStreamClosedError(this.providerId, this.host);
-    const parser = new SseParser();
-    const decoder = new TextDecoder();
-    const reader = res.body.getReader();
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      for (const ev of parser.push(decoder.decode(value, { stream: true }))) {
-        if (ev.event === 'message') return parseRpcBody(ev.data, id);
-      }
-    }
-    throw new McpStreamClosedError(this.providerId, this.host);
+function createSdkTransport(kind: 'streamable' | 'sse', url: string, fetchImpl?: FetchLike): Transport {
+  if (kind === 'sse') return new SSEClientTransport(new URL(url), { fetch: fetchImpl });
+  return new StreamableHTTPClientTransport(new URL(url), { fetch: fetchImpl });
+}
+
+/** client.connect() 整段(transport.start + initialize + initialized 通知)包上 connect 超时。 */
+function connectWithTimeout(
+  client: Client,
+  transport: Transport,
+  connectMs: number,
+  signal: AbortSignal | undefined,
+  providerId: ProviderId,
+  host: string,
+): Promise<void> {
+  return withTimeout(
+    connectMs,
+    signal,
+    (sig) => client.connect(transport, { timeout: connectMs, signal: sig }),
+    () => new McpTimeoutError(providerId, host, connectMs),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 错误分类
+// ---------------------------------------------------------------------------
+
+/** 把 SDK 错误归一到本模块的连接级错误(SDK 错误名含 URL/statusText 等,只取 host+status)。 */
+function classifyConnectError(err: unknown, providerId: ProviderId, host: string): Error {
+  if (err instanceof ConnectFailure || err instanceof McpTimeoutError || err instanceof McpError) return err;
+  if (err instanceof Error && err.name === 'AbortError') return err;
+  if (err instanceof Error && err.name === 'ZodError') return err;
+  if (err instanceof Error && typeof (err as unknown as { code?: unknown }).code === 'number') {
+    const code = (err as unknown as { code: number }).code;
+    // StreamableHTTPError / SseError 的 code 即 HTTP status(SDK 内部 -1 = 协议层错误)。
+    if (code > 0) return new ConnectFailure(providerId, host, code);
   }
+  return new ConnectFailure(providerId, host, null);
+}
+
+function isRetryableConnectError(err: unknown): boolean {
+  return err instanceof ConnectFailure && err.status !== null && RETRY_STATUSES.has(err.status);
+}
+
+/** 连接层错误(网络/HTTP/流关闭/连接被关)→ 置 not ready + dispose 重建;RPC/超时/abort 保留连接。 */
+function isConnectionError(err: unknown): boolean {
+  if (err instanceof ConnectFailure) return true;
+  if (err instanceof McpTimeoutError) return false;
+  if (err instanceof McpError) return err.code === ErrorCode.ConnectionClosed;
+  if (err instanceof Error) {
+    // 外部 abort / 响应 schema 校验失败(zod)→ 非连接层
+    if (err.name === 'AbortError' || err.name === 'ZodError') return false;
+    return true;
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------------------
 // Provider 门面:单例 map + connect 缓存 + 3 并发信号量 + 失败 dispose
 // ---------------------------------------------------------------------------
 
-const INIT_PARAMS = { protocolVersion: PROTOCOL_VERSION, capabilities: {}, clientInfo: CLIENT_INFO };
-let rpcSeq = 0;
-
-function rpc(t: Transport, method: string, params: unknown, timeoutMs: number, signal?: AbortSignal): Promise<unknown> {
-  const id = ++rpcSeq;
-  return t.request(method, params, id, { timeoutMs, signal });
-}
-
 class McpProviderInstance implements McpProviderHandle {
-  private transport: Transport | null = null;
-  private connectPromise: Promise<Transport> | null = null;
+  private client: Client | null = null;
+  private connectPromise: Promise<Client> | null = null;
   private toolsCache: McpToolMeta[] | null = null;
   private readyFlag = false;
   private readonly semaphore: Semaphore;
-  private readonly fetchImpl: FetchLike;
+  private readonly fetchImpl: FetchLike | undefined;
+  private readonly transportFactory: ProviderOptions['transportFactory'];
   private readonly connectMs: number;
   private readonly callMs: number;
   /** public:McpProviderHandle 契约要求(id: ProviderId)。 */
   readonly id: ProviderId;
   private readonly endpoint: McpEndpoint;
-  /** 协商出的服务器协议版本;容忍任意值,仅记录诊断用,绝不因不匹配失败。 */
-  private negotiatedProtocol: string | null = null;
   disposed = false;
 
   constructor(id: ProviderId, endpoint: McpEndpoint, opts?: ProviderOptions) {
     this.id = id;
     this.endpoint = endpoint;
-    this.fetchImpl = opts?.fetchImpl ?? fetch;
+    this.fetchImpl = opts?.fetchImpl;
+    this.transportFactory = opts?.transportFactory;
     this.connectMs = opts?.timeouts?.connectMs ?? CONNECT_TIMEOUT_MS;
     this.callMs = opts?.timeouts?.callMs ?? CALL_TIMEOUT_MS;
     this.semaphore = new Semaphore(MAX_CONCURRENCY);
@@ -586,19 +296,15 @@ class McpProviderInstance implements McpProviderHandle {
     await this.semaphore.acquire();
     try {
       if (this.toolsCache) return this.toolsCache;
-      const t = await this.connect();
-      const result = (await rpc(t, 'tools/list', {}, this.callMs)) as { tools?: unknown };
-      const raw = Array.isArray(result?.tools) ? result.tools : [];
-      this.toolsCache = raw
-        .filter((m): m is { name?: unknown; description?: unknown; inputSchema?: unknown } => !!m && typeof m === 'object')
-        .map((m) => ({
-          name: String(m.name ?? ''),
-          description: String(m.description ?? ''),
-          inputSchema:
-            m.inputSchema && typeof m.inputSchema === 'object' && !Array.isArray(m.inputSchema)
-              ? (m.inputSchema as Record<string, unknown>)
-              : { type: 'object', properties: {} },
-        }));
+      const client = await this.connect();
+      // 工具元信息已由 SDK 的 ListToolsResultSchema 校验(name/description/inputSchema 形状);
+      // normalizeTool 的兜底逻辑保留在 route 侧(本模块不归一化)。
+      const result = await client.listTools(undefined, { timeout: this.callMs });
+      this.toolsCache = result.tools.map((t) => ({
+        name: t.name,
+        description: t.description ?? '',
+        inputSchema: t.inputSchema as Record<string, unknown>,
+      }));
       this.readyFlag = true;
       return this.toolsCache;
     } catch (err) {
@@ -613,16 +319,19 @@ class McpProviderInstance implements McpProviderHandle {
   async callTool(origName: string, args: unknown, signal?: AbortSignal): Promise<{ text: string; isError: boolean }> {
     await this.semaphore.acquire();
     try {
-      const t = await this.connect(signal);
-      const result = (await rpc(t, 'tools/call', { name: origName, arguments: args ?? {} }, this.callMs, signal)) as {
-        content?: unknown;
-        isError?: unknown;
-      };
-      return { text: contentToText(result), isError: result?.isError === true };
+      const client = await this.connect(signal);
+      if (signal?.aborted) return { text: `mcp(${this.id}) request aborted`, isError: true };
+      const result = await client.callTool(
+        { name: origName, arguments: (args ?? {}) as Record<string, unknown> },
+        undefined,
+        { timeout: this.callMs, signal },
+      );
+      return { text: contentToText(result), isError: result.isError === true };
     } catch (err) {
       // 连接层失败 → 重建;RPC/超时/abort → 保留连接
-      if (err instanceof ConnectFailure || err instanceof McpStreamClosedError) this.dispose();
-      return { text: formatMcpError(this.id, err), isError: true };
+      if (isConnectionError(err)) this.dispose();
+      const classified = classifyConnectError(err, this.id, hostOf(this.endpoint.url));
+      return { text: formatMcpError(this.id, classified, signal, this.callMs), isError: true };
     } finally {
       this.semaphore.release();
     }
@@ -631,22 +340,18 @@ class McpProviderInstance implements McpProviderHandle {
   /** 进程级保活:请求结束不 dispose;仅失败时 dispose 置空以便重建。 */
   dispose(): void {
     this.disposed = true;
-    const t = this.transport;
-    this.transport = null;
+    const client = this.client;
+    this.client = null;
     this.connectPromise = null;
     this.toolsCache = null;
     this.readyFlag = false;
-    this.negotiatedProtocol = null;
-    if (t) {
-      try {
-        t.close();
-      } catch {
-        /* 忽略 */
-      }
+    if (client) {
+      // close() 终止 SDK 侧连接(abort fetch / 关 EventSource / 清重连定时器)。
+      void client.close().catch(() => {});
     }
   }
 
-  private connect(signal?: AbortSignal): Promise<Transport> {
+  private connect(signal?: AbortSignal): Promise<Client> {
     if (this.connectPromise) return this.connectPromise;
     this.connectPromise = this.doConnect(signal).catch((err: unknown) => {
       this.connectPromise = null;
@@ -655,7 +360,7 @@ class McpProviderInstance implements McpProviderHandle {
     return this.connectPromise;
   }
 
-  private async doConnect(signal?: AbortSignal): Promise<Transport> {
+  private async doConnect(signal?: AbortSignal): Promise<Client> {
     const attempts: Array<{ url: string; transport: 'streamable' | 'sse' }> = [
       { url: this.endpoint.url, transport: this.endpoint.transport },
     ];
@@ -667,30 +372,22 @@ class McpProviderInstance implements McpProviderHandle {
     }
     let lastErr: unknown;
     for (const a of attempts) {
+      const client = new Client(CLIENT_INFO, { capabilities: {} });
       try {
-        const transport: Transport =
-          a.transport === 'sse'
-            ? new LegacySseTransport(a.url, this.fetchImpl, this.id)
-            : new StreamableTransport(a.url, this.fetchImpl, this.id);
-        // 协议版本容忍(2026-08-21 实测校准):客户端发 2025-06-18,高德服务器
-        // 实测回 2025-03-26。服务器可回任意版本 —— 记录协商结果但绝不因版本
-        // 不匹配失败(仅 404/405/400 才换备选端点重试)。
-        const initResult = (await rpc(transport, 'initialize', INIT_PARAMS, this.connectMs, signal)) as {
-          protocolVersion?: unknown;
-        };
-        this.negotiatedProtocol = typeof initResult?.protocolVersion === 'string' ? initResult.protocolVersion : null;
-        if (this.negotiatedProtocol !== null && this.negotiatedProtocol !== PROTOCOL_VERSION) {
-          console.warn(
-            `[mcp-agent] ${this.id} negotiated protocol ${String(this.negotiatedProtocol).slice(0, 40)} (client ${PROTOCOL_VERSION}); accepting server version`,
-          );
-        }
-        void transport.notify('notifications/initialized', {}).catch(() => {});
-        this.transport = transport;
-        return transport;
+        const transport: Transport = this.transportFactory
+          ? this.transportFactory(a.transport, a.url)
+          : createSdkTransport(a.transport, a.url, this.fetchImpl);
+        // connect 超时由外层 withTimeout 兜底(见头注释第 2 条);协议版本容忍由 SDK 原生支持
+        // (SUPPORTED_PROTOCOL_VERSIONS 含 2025-03-26);仅 404/405/400 换备选端点重试一次。
+        await connectWithTimeout(client, transport, this.connectMs, signal, this.id, hostOf(a.url));
+        this.client = client;
+        return client;
       } catch (err) {
-        lastErr = err;
-        // 仅 404/405/400 换备选 transport 重试一次;其它错误直接失败(dispose 后下次重建)
-        if (!(err instanceof ConnectFailure) || err.status === null || !RETRY_STATUSES.has(err.status)) throw err;
+        const classified = classifyConnectError(err, this.id, hostOf(a.url));
+        lastErr = classified;
+        // close() 拆掉本次失败的 client/transport(含挂起的 SSE EventSource),再决定是否重试。
+        await client.close().catch(() => {});
+        if (!isRetryableConnectError(classified)) throw classified;
       }
     }
     throw lastErr instanceof Error ? lastErr : new ConnectFailure(this.id, hostOf(this.endpoint.url), null);
@@ -764,9 +461,18 @@ function contentToText(result: unknown): string {
 }
 
 /** 错误转述:只含 host/status/错误类别,绝不含 key 与 URL。 */
-function formatMcpError(providerId: ProviderId, err: unknown): string {
-  if (err instanceof ConnectFailure || err instanceof McpTimeoutError || err instanceof McpStreamClosedError) return err.message;
-  if (err instanceof McpRpcError) return `mcp(${providerId}) rpc error: ${err.message}`;
+function formatMcpError(providerId: ProviderId, err: unknown, signal?: AbortSignal, callMs?: number): string {
+  if (err instanceof ConnectFailure || err instanceof McpTimeoutError) return err.message;
+  if (err instanceof McpError) {
+    if (err.code === ErrorCode.RequestTimeout) {
+      // SDK 请求级超时;若同时外部 signal 已 aborted,归为「用户停止」而非超时。
+      return signal?.aborted
+        ? `mcp(${providerId}) request aborted`
+        : `mcp(${providerId}) call timeout after ${callMs ?? '?'}ms`;
+    }
+    if (err.code === ErrorCode.ConnectionClosed) return `mcp(${providerId}) connection closed`;
+    return `mcp(${providerId}) rpc error: ${String(err.message ?? 'mcp rpc error').slice(0, 200)}`;
+  }
   if (err instanceof Error && err.name === 'AbortError') return `mcp(${providerId}) request aborted`;
   return `mcp(${providerId}) error`;
 }
