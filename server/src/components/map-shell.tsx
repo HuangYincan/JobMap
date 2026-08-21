@@ -1928,13 +1928,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   const handleLocate = () => {
     if (!mapInstance.current) return;
-    const view = mapInstance.current;
 
     // 定位按引擎分派:AMap 用 Geolocation 控件(addControl 绑定到 map,蓝点 + 精度圈
     // 渲染在地图上);非 AMap 走引擎 search 纯定位 + 契约 createMarker 自绘蓝点
     // (syncUserBlueDot,ws-d 2026-08-22)。
     // 不直接 getCurrentPosition(raw)——amap 控件塞给非 amap raw map 会类型错误崩溃。
-    locateForMap(view)
+    locateForMap(mapInstance.current)
       .then((loc) => {
         if (!loc) {
           // 定位失败/被拒:保持当前视野,不跳回杭州默认中心(ws-poi-vanish)。
@@ -1943,8 +1942,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           return;
         }
         const { lng, lat } = loc;
-        // 非 AMap 引擎:蓝点创建或 setPosition 跟随最新定位(AMap 零改动)
-        syncUserBlueDot(view, lng, lat);
+        // 非 AMap 引擎:蓝点创建或 setPosition 跟随最新定位(AMap 零改动);
+        // 视图与相机同源取 mapInstance.current(切引擎竞态下跟随当前视图)
+        if (mapInstance.current) syncUserBlueDot(mapInstance.current, lng, lat);
         mapInstance.current?.setCenter({ lng, lat });
         mapInstance.current?.setZoom(15);
         setMapCenter({ lng, lat });

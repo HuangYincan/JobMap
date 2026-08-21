@@ -89,8 +89,8 @@ test('接线:挂载定位 settle 与定位按钮 handleLocate 都同步蓝点', 
   assert.match(mountBlock, /syncUserBlueDot\(view, lng, lat\);/);
   // 定位按钮路径:handleLocate 定位成功后同样同步(先蓝点后移相机)
   const locate = shell.slice(shell.indexOf('const handleLocate'), shell.indexOf('const handleLocate') + 1300);
-  assert.match(locate, /locateForMap\(view\)/);
-  const iSync = locate.indexOf('syncUserBlueDot(view, lng, lat)');
+  assert.match(locate, /locateForMap\(mapInstance\.current\)/);
+  const iSync = locate.indexOf('syncUserBlueDot(mapInstance.current, lng, lat)');
   const iCenter = locate.indexOf('setCenter');
   assert.ok(iSync >= 0 && iCenter > iSync, 'handleLocate 先同步蓝点再移相机');
 });
