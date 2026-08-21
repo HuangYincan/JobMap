@@ -15,7 +15,9 @@
       "city": "南京市",
       "province": "江苏省",
       "location": {
-        "address": "南京/福州"
+        "address": "南京/福州",
+        "lng": 118.78,
+        "lat": 32.06
       }
     }
   ],

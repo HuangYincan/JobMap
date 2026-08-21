@@ -15,7 +15,9 @@
       "city": "杭州市",
       "province": "浙江省",
       "location": {
-        "address": "杭州"
+        "address": "杭州",
+        "lng": 120.15,
+        "lat": 30.27
       }
     }
   ],

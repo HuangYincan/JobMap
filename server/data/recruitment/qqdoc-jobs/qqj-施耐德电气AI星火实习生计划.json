@@ -11,9 +11,30 @@
     {
       "id": "qqj-施耐德电气AI星火实习生计划-site",
       "name": "施耐德电气— AI星火实习生计划",
-      "city": "北京 上海 广州",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "qqj-施耐德电气AI星火实习生计划-site-上海",
+      "name": "施耐德电气— AI星火实习生计划",
+      "city": "上海市",
+      "location": {
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "qqj-施耐德电气AI星火实习生计划-site-广州",
+      "name": "施耐德电气— AI星火实习生计划",
+      "city": "广州市",
+      "location": {
+        "lng": 113.26,
+        "lat": 23.13
+      }
     }
   ],
   "positions": [

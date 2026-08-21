@@ -11,9 +11,102 @@
     {
       "id": "qqj-施耐德电气-site",
       "name": "施耐德电气",
-      "city": "北京 上海  广州  厦门  南京  杭州  武汉  沈阳 济南  苏州 重庆 西安  无锡 珠海 全国其他",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-上海",
+      "name": "施耐德电气",
+      "city": "上海市",
+      "location": {
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-广州",
+      "name": "施耐德电气",
+      "city": "广州市",
+      "location": {
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-厦门",
+      "name": "施耐德电气",
+      "city": "厦门市",
+      "location": {
+        "lng": 118.09,
+        "lat": 24.48
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-南京",
+      "name": "施耐德电气",
+      "city": "南京市",
+      "location": {
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-杭州",
+      "name": "施耐德电气",
+      "city": "杭州市",
+      "location": {
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-武汉",
+      "name": "施耐德电气",
+      "city": "武汉市",
+      "location": {
+        "lng": 114.3,
+        "lat": 30.59
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-苏州",
+      "name": "施耐德电气",
+      "city": "苏州市",
+      "location": {
+        "lng": 120.58,
+        "lat": 31.3
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-重庆",
+      "name": "施耐德电气",
+      "city": "重庆市",
+      "location": {
+        "lng": 106.55,
+        "lat": 29.56
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-西安",
+      "name": "施耐德电气",
+      "city": "西安市",
+      "location": {
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-珠海",
+      "name": "施耐德电气",
+      "city": "珠海市",
+      "location": {
+        "lng": 113.57,
+        "lat": 22.27
+      }
     }
   ],
   "positions": [

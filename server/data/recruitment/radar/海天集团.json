@@ -15,7 +15,9 @@
       "city": "广州市",
       "province": "广东省",
       "location": {
-        "address": "广州/佛山/宁波"
+        "address": "广州/佛山/宁波",
+        "lng": 113.26,
+        "lat": 23.13
       }
     },
     {
@@ -24,7 +26,9 @@
       "city": "杭州市",
       "province": "浙江省",
       "location": {
-        "address": "杭州"
+        "address": "杭州",
+        "lng": 120.15,
+        "lat": 30.27
       }
     }
   ],

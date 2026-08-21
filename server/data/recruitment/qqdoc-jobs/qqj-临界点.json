@@ -11,9 +11,30 @@
     {
       "id": "qqj-临界点-site",
       "name": "临界点",
-      "city": "上海  深圳 北京",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "qqj-临界点-site-深圳",
+      "name": "临界点",
+      "city": "深圳市",
+      "location": {
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "qqj-临界点-site-北京",
+      "name": "临界点",
+      "city": "北京市",
+      "location": {
+        "lng": 116.4,
+        "lat": 39.9
+      }
     }
   ],
   "positions": [

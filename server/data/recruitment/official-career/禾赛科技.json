@@ -39,7 +39,9 @@
       "city": "重庆市",
       "province": "重庆市",
       "location": {
-        "address": "长生桥镇江峡路1号新天泽国际总部城9栋4单元（1层-3层）"
+        "address": "长生桥镇江峡路1号新天泽国际总部城9栋4单元（1层-3层）",
+        "lng": 106.55,
+        "lat": 29.56
       }
     },
     {
@@ -48,7 +50,9 @@
       "city": "北京市",
       "province": "北京市",
       "location": {
-        "address": "Tambon Praeksa"
+        "address": "Tambon Praeksa",
+        "lng": 116.4,
+        "lat": 39.9
       }
     },
     {

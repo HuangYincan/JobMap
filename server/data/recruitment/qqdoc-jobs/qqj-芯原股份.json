@@ -11,9 +11,39 @@
     {
       "id": "qqj-芯原股份-site",
       "name": "芯原股份",
-      "city": "上海  南京 成都 广州 海口",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "qqj-芯原股份-site-南京",
+      "name": "芯原股份",
+      "city": "南京市",
+      "location": {
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    },
+    {
+      "id": "qqj-芯原股份-site-成都",
+      "name": "芯原股份",
+      "city": "成都市",
+      "location": {
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "qqj-芯原股份-site-广州",
+      "name": "芯原股份",
+      "city": "广州市",
+      "location": {
+        "lng": 113.26,
+        "lat": 23.13
+      }
     }
   ],
   "positions": [

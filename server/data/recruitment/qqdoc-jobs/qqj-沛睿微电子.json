@@ -11,9 +11,21 @@
     {
       "id": "qqj-沛睿微电子-site",
       "name": "沛睿微电子",
-      "city": "合肥 苏州",
+      "city": "合肥市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 117.28,
+        "lat": 31.86
+      }
+    },
+    {
+      "id": "qqj-沛睿微电子-site-苏州",
+      "name": "沛睿微电子",
+      "city": "苏州市",
+      "location": {
+        "lng": 120.58,
+        "lat": 31.3
+      }
     }
   ],
   "positions": [

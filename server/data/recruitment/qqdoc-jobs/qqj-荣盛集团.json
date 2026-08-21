@@ -11,9 +11,30 @@
     {
       "id": "qqj-荣盛集团-site",
       "name": "荣盛集团",
-      "city": "杭州 宁波  丹山 苏州  大连  海南洋浦",
+      "city": "杭州市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    },
+    {
+      "id": "qqj-荣盛集团-site-宁波",
+      "name": "荣盛集团",
+      "city": "宁波市",
+      "location": {
+        "lng": 121.55,
+        "lat": 29.87
+      }
+    },
+    {
+      "id": "qqj-荣盛集团-site-苏州",
+      "name": "荣盛集团",
+      "city": "苏州市",
+      "location": {
+        "lng": 120.58,
+        "lat": 31.3
+      }
     }
   ],
   "positions": [

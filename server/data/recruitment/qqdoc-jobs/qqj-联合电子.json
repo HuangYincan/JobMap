@@ -11,9 +11,48 @@
     {
       "id": "qqj-联合电子-site",
       "name": "联合电子",
-      "city": "上海  无锡 西安 芜湖  柳州  太仓  重庆 苏州",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "qqj-联合电子-site-西安",
+      "name": "联合电子",
+      "city": "西安市",
+      "location": {
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    },
+    {
+      "id": "qqj-联合电子-site-芜湖",
+      "name": "联合电子",
+      "city": "芜湖市",
+      "location": {
+        "lng": 118.43,
+        "lat": 31.35
+      }
+    },
+    {
+      "id": "qqj-联合电子-site-重庆",
+      "name": "联合电子",
+      "city": "重庆市",
+      "location": {
+        "lng": 106.55,
+        "lat": 29.56
+      }
+    },
+    {
+      "id": "qqj-联合电子-site-苏州",
+      "name": "联合电子",
+      "city": "苏州市",
+      "location": {
+        "lng": 120.58,
+        "lat": 31.3
+      }
     }
   ],
   "positions": [

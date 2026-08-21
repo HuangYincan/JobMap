@@ -17,7 +17,9 @@
       "city": "北京市",
       "province": "北京市",
       "location": {
-        "address": "北京/上海/广州/杭州"
+        "address": "北京/上海/广州/杭州",
+        "lng": 116.4,
+        "lat": 39.9
       }
     },
     {
@@ -37,7 +39,9 @@
       "city": "广州市",
       "province": "广东省",
       "location": {
-        "address": "北京/上海/广州/杭州"
+        "address": "北京/上海/广州/杭州",
+        "lng": 113.26,
+        "lat": 23.13
       }
     },
     {
@@ -57,7 +61,9 @@
       "city": "成都市",
       "province": "四川省",
       "location": {
-        "address": "北京/上海/广州/成都"
+        "address": "北京/上海/广州/成都",
+        "lng": 104.07,
+        "lat": 30.66
       }
     },
     {
@@ -75,7 +81,9 @@
       "city": "长沙市",
       "province": "湖南省",
       "location": {
-        "address": "开福区"
+        "address": "开福区",
+        "lng": 112.94,
+        "lat": 28.23
       }
     },
     {

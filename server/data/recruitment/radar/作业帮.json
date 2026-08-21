@@ -15,7 +15,9 @@
       "city": "北京市",
       "province": "北京市",
       "location": {
-        "address": "北京/上海/西安"
+        "address": "北京/上海/西安",
+        "lng": 116.4,
+        "lat": 39.9
       }
     },
     {
@@ -24,7 +26,9 @@
       "city": "上海市",
       "province": "上海市",
       "location": {
-        "address": "北京/上海/西安"
+        "address": "北京/上海/西安",
+        "lng": 121.47,
+        "lat": 31.23
       }
     },
     {
@@ -33,7 +37,9 @@
       "city": "西安市",
       "province": "陕西省",
       "location": {
-        "address": "北京/上海/西安"
+        "address": "北京/上海/西安",
+        "lng": 108.94,
+        "lat": 34.34
       }
     }
   ],

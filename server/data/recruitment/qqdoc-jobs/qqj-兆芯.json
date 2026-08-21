@@ -11,9 +11,30 @@
     {
       "id": "qqj-兆芯-site",
       "name": "兆芯",
-      "city": "上海 北京 西安",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "qqj-兆芯-site-北京",
+      "name": "兆芯",
+      "city": "北京市",
+      "location": {
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "qqj-兆芯-site-西安",
+      "name": "兆芯",
+      "city": "西安市",
+      "location": {
+        "lng": 108.94,
+        "lat": 34.34
+      }
     }
   ],
   "positions": [
