@@ -12,18 +12,18 @@
 
 ## stage
 
-- current: DISPATCH(轮2 ws-2/3/4 并行已派发,进程内通道)
-- updated_at: 2026-08-21
+- current: 终态(全部 5 WS MERGED 至 dev 95a102d;批次入库 066d3cd;push 待用户授权)
+- updated_at: 2026-08-22
 
 ## workstreams
 
 | ws | branch | worktree | prompt | report | status | last_tip | dispatched_at | finished_at | verdict |
 |---|---|---|---|---|---|---|---|---|---|
 | 1 | feature/poi-contract | /Users/acccan/dm-wt-rw1 | prompts/ws-1.md | reports/ws-1.md | MERGED | d7d4b90→527e631 | 轮1 17:20 | 18:4x | OK(1068 tests boss 复核;合并 527e631 已 push) |
-| 2 | feature/poi-controller | /Users/acccan/dm-wt-rw2 | prompts/ws-2.md | reports/ws-2.md | DONE | 29da66e | 轮2 | | OK(4 commits,boss 复核 1075/1073 pass;白名单外测试同步已裁决接受) |
-| 3 | feature/engine-switch-lifecycle | /Users/acccan/dm-wt-rw3 | prompts/ws-3.md | reports/ws-3.md | DONE | 390aebb | 轮2 | | OK(4 commits,boss 复核 1076/1074 pass;docs-check 基线红惯例) |
-| 4 | feature/engine-zindex | /Users/acccan/dm-wt-rw4 | prompts/ws-4.md | reports/ws-4.md | DONE | 8a223d6 | 轮2 | | OK(5 commits,boss 复核 1073/1071 pass) |
-| 5 | feature/engine-search-cleanup | /Users/acccan/dm-wt-rw5 | prompts/ws-5.md | reports/ws-5.md | PENDING | — | — | | |
+| 2 | feature/poi-controller | /Users/acccan/dm-wt-rw2 | prompts/ws-2.md | reports/ws-2.md | MERGED | 29da66e→a028d44 | 轮2 | | OK(1075/1073 pass 复核;白名单外测试同步已裁决) |
+| 3 | feature/engine-switch-lifecycle | /Users/acccan/dm-wt-rw3 | prompts/ws-3.md | reports/ws-3.md | MERGED | 390aebb→a787bc2 | 轮2 | | OK(1076/1074 pass 复核) |
+| 4 | feature/engine-zindex | /Users/acccan/dm-wt-rw4 | prompts/ws-4.md | reports/ws-4.md | MERGED | 8a223d6→8abb1f9 | 轮2 | | OK(1073/1071 pass 复核) |
+| 5 | feature/engine-search-cleanup | /Users/acccan/dm-wt-rw5 | prompts/ws-5.md | reports/ws-5.md | MERGED | fa9918f→95a102d | 轮3 | | OK(1096/0 fail 复核) |
 
 ## merge_order
 
@@ -34,11 +34,14 @@
 
 ## adjudication_log
 
-(空)
+- 08-22 | ws-2 | 白名单外改动 map-engine-switch.test.mjs(mock 契约化) | 接受:仅测试文件,switch.ts 源码零改动,ws-2 契约化的必然伴随;合并时与 ws-3 同文件自动合并保留双方 | 合入
+- 08-22 | 终裁(用户 goal「实现不了就删」) | **保留功能**:根因(适配层被绕过)已全部修复——控制器全程契约 wrapper、切换两阶段+回滚+latest-wins、z-index 隔离、搜索引擎化、徽章按能力分派。三引擎语义经 1096 测试收敛一致,非「厂商差异不可控」。**删除触发条件**:ws-5 真实验证(需用户浏览器+key)若暴露不可收敛的厂商差异 → 再按 deferred #2 删功能 | 保留,待用户真实验证
+- 08-22 | push origin/dev | 权限分类器两次拦截(Out of Place Publication / Create Public Surface) | 不绕过;等待用户显式授权一次 push(dev 本地 95a102d,origin 停 527e631) | 待授权
 
 ## deferred_notes
 
-(空;沿用 20260821-boss-map-engine 批次 deferred-notes 的 #1-#6)
+- 08-21 | Env-only | ws-5 真实验证需用户 key+浏览器(高德/百度/腾讯已配);离线验证已全部通过 | 待用户跑 npm run dev 冒烟(切换三家、POI 可点、来回切 3+ 次不卡死)
+- 08-21 | 裁决依据 | 若真实验证显示三引擎切换仍不可达 → 删 UI 切换入口、注册表收敛高德单引擎、tech/23 标注 | 视验证结果
 
 ## next_plan
 
