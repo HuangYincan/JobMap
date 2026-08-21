@@ -3,10 +3,10 @@
 //
 // 无 DATABASE_URL 时 API 走这里，满足开发。
 // 有库后同一契约切到 Postgres，不改前端。
-// 验证码固定 000000，GitHub 为演示账号。
+// 邮箱验证码为真实随机码;手机仍固定 000000(demo)。GitHub 为演示账号。
 // ============================================================
 
-import { createHmac, randomBytes, randomUUID } from 'node:crypto';
+import { createHmac, randomBytes, randomInt, randomUUID } from 'node:crypto';
 import type { AccountUser, ApplicationRecord, AuthProvider, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from './account.ts';
 import { emptyPreferences, mergePreferences } from './account.ts';
 import { hashPassword, verifyPassword } from './password.ts';
@@ -16,6 +16,11 @@ const OTP_TTL_MS = 10 * 60 * 1000;
 const DEMO_OTP = '000000';
 
 export const DEMO_OTP_CODE = DEMO_OTP;
+
+/** 6 位随机验证码(邮箱真发用):randomInt [0, 1_000_000) + padStart 保证前导零。 */
+export function randomOtpCode(): string {
+  return randomInt(0, 1_000_000).toString().padStart(6, '0');
+}
 
 interface StoredUser extends AccountUser {
   createdAt: number;
@@ -223,16 +228,17 @@ export function getAvatarData(userId: string): Uint8Array | null {
   return users.get(userId)?.avatarData ?? null;
 }
 
-export function issueOtp(provider: 'phone' | 'email', target: string): { expiresAt: number } {
+export function issueOtp(provider: 'phone' | 'email', target: string): { expiresAt: number; code: string } {
   const normalized = target.trim().toLowerCase();
   const expiresAt = Date.now() + OTP_TTL_MS;
+  const code = provider === 'email' ? randomOtpCode() : DEMO_OTP;
   otps.set(`${provider}:${normalized}`, {
     target: normalized,
     provider,
-    code: DEMO_OTP,
+    code,
     expiresAt,
   });
-  return { expiresAt };
+  return { expiresAt, code };
 }
 
 export function consumeOtp(provider: 'phone' | 'email', target: string, code: string): boolean {

@@ -51,7 +51,6 @@ import {
   registerWithPassword as memRegisterWithPassword,
   loginWithPassword as memLoginWithPassword,
   UsernameTakenError,
-  DEMO_OTP_CODE,
 } from './session-store.ts';
 
 export { UsernameTakenError };
@@ -500,7 +499,10 @@ export async function getAvatarData(userId: string): Promise<Uint8Array | null> 
   }, () => memGetAvatarData(userId));
 }
 
-export async function issueOtp(provider: 'phone' | 'email', target: string): Promise<{ expiresAt: number }> {
+export async function issueOtp(
+  provider: 'phone' | 'email',
+  target: string,
+): Promise<{ expiresAt: number; code: string }> {
   const normalized = target.trim().toLowerCase();
   const now = Date.now();
   const cfg = otpRateConfig;
@@ -531,7 +533,7 @@ export async function issueOtp(provider: 'phone' | 'email', target: string): Pro
     await db.query(
       `INSERT INTO auth_otp_challenges (provider, target, code_hash, expires_at)
        VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
-      [provider, normalized, hashOtp(DEMO_OTP_CODE), memory.expiresAt],
+      [provider, normalized, hashOtp(memory.code), memory.expiresAt],
     );
     return undefined;
   }, () => undefined);
