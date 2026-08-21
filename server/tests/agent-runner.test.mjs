@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractActions, runAgent, sanitizeToolText } from '../src/lib/agent/run-agent.ts';
+import { extractActions, publicToolEvent, runAgent, sanitizeToolText, toolKind } from '../src/lib/agent/run-agent.ts';
 import { providerError } from '../src/lib/agent/llm-provider.ts';
 
 const CFG = { baseUrl: 'https://llm.example.com/v1', apiKey: 'sk-test', model: 'm', maxTurns: 4, maxHistoryChars: 6000 };
@@ -81,9 +81,12 @@ test('runAgent: tool_calls → 工具执行 → 结果回流 → 二轮 → done
     events.map((e) => e.type),
     ['tool', 'tool', 'delta', 'delta', 'done'],
   );
+  // 公开 tool 事件:name 为公开类别(amap__place_search → search),summary 不携带
   assert.equal(events[0].type === 'tool' && events[0].status, 'start');
+  assert.equal(events[0].type === 'tool' && events[0].name, 'search');
   assert.equal(events[1].type === 'tool' && events[1].status, 'done');
-  assert.equal(events[1].type === 'tool' && events[1].summary, '结果:杭州');
+  assert.equal(events[1].type === 'tool' && events[1].name, 'search');
+  assert.equal(events[1].type === 'tool' && 'summary' in events[1], false, 'tool 事件不携带 summary');
   assert.deepEqual(events.slice(2, 4).map((e) => e.text), ['找到了', ' 前端岗位']);
 
   // 工具收到解析后的参数与上下文
@@ -117,8 +120,10 @@ test('runAgent: 工具不在白名单 → tool error 事件,不调用任何工�
     ['tool', 'tool', 'delta', 'done'],
   );
   assert.equal(events[0].type === 'tool' && events[0].status, 'start');
+  assert.equal(events[0].type === 'tool' && events[0].name, 'other', '未知工具名 → other');
   assert.equal(events[1].type === 'tool' && events[1].status, 'error');
-  assert.equal(events[1].type === 'tool' && events[1].summary, 'tool not in whitelist');
+  assert.equal(events[1].type === 'tool' && events[1].name, 'other');
+  assert.equal(events[1].type === 'tool' && 'summary' in events[1], false, 'tool error 事件不泄露内部细节');
   assert.equal(real.calls.length, 0);
   // 错误也回流为 tool 消息
   const toolMsg = mp.seen[1].messages.find((m) => m.role === 'tool');
@@ -141,8 +146,11 @@ test('runAgent: 工具抛错 → tool error 事件并继续;ok:false 结果也�
     events.map((e) => e.type),
     ['tool', 'tool', 'tool', 'tool', 'delta', 'done'],
   );
-  assert.equal(events[1].type === 'tool' && events[1].summary, 'tool error: boom');
-  assert.equal(events[3].type === 'tool' && events[3].summary, '查询失败');
+  // tool error 事件:name 为公开类别,不携带内部错误文本
+  assert.equal(events[1].type === 'tool' && events[1].name, 'search'); // amap__place_search
+  assert.equal(events[1].type === 'tool' && 'summary' in events[1], false);
+  assert.equal(events[3].type === 'tool' && events[3].name, 'other'); // builtin__viewport
+  assert.equal(events[3].type === 'tool' && 'summary' in events[3], false);
 });
 
 test('runAgent: 工具参数非法 JSON → tool error,不调用工具,继续下一轮', async () => {
@@ -155,7 +163,8 @@ test('runAgent: 工具参数非法 JSON → tool error,不调用工具,继续下
   assert.equal(tool.calls.length, 0);
   assert.equal(events[0].type === 'tool' && events[0].status, 'start');
   assert.equal(events[1].type === 'tool' && events[1].status, 'error');
-  assert.equal(events[1].type === 'tool' && events[1].summary, 'invalid tool arguments JSON');
+  assert.equal(events[1].type === 'tool' && events[1].name, 'search');
+  assert.equal(events[1].type === 'tool' && 'summary' in events[1], false);
   assert.deepEqual(
     events.map((e) => e.type),
     ['tool', 'tool', 'delta', 'done'],
@@ -411,10 +420,13 @@ test('runAgent: 工具结果 >3000 字符 → 入 history 前 sanitizeToolText �
   const events = await collectEvents(baseReq({ tools: [toolOk, toolErr], provider: mp }));
   const toolMsgs = mp.seen[1].messages.filter((m) => m.role === 'tool');
   assert.equal(toolMsgs.length, 2);
-  for (const tm of toolMsgs) assert.equal(tm.content.length, 3000, 'tool 消息内容被截断到 3000 字符');
-  const summaries = events.filter((e) => e.type === 'tool' && e.status !== 'start').map((e) => e.summary);
-  assert.equal(summaries.length, 2);
-  for (const s of summaries) assert.equal(s.length, 3000, 'tool 事件 summary 同步截断');
+  for (const tm of toolMsgs) assert.equal(tm.content.length, 3000, 'tool 消息内容被截断到 3000 字符(LLM 历史内部面)');
+  // 公开 tool 事件不携带 summary(截断只影响内部 LLM 历史;对外 name 收敛为类别)
+  const toolEvents = events.filter((e) => e.type === 'tool' && e.status !== 'start');
+  assert.equal(toolEvents.length, 2);
+  assert.equal(toolEvents[0].name, 'search');
+  assert.equal(toolEvents[1].name, 'other');
+  for (const e of toolEvents) assert.equal('summary' in e, false, 'tool 事件不携带 summary');
 });
 
 test('runAgent: 历史裁剪按轮删除 — 小预算多轮后无孤儿 tool 消息、system 永在、history 形状合法', async () => {
@@ -516,6 +528,59 @@ test('sanitizeToolText: 剔除 script、超长 URL、截断', () => {
   assert.equal(sanitizeToolText(long, 100).length, 100);
   assert.equal(sanitizeToolText('短文本'), '短文本');
   assert.equal(sanitizeToolText(undefined), '');
+});
+
+// ---------- 公开面脱敏(toolKind / publicToolEvent,2026-08-21 安全要求) ----------
+
+test('toolKind: 内部工具名 → 公开类别(剥供应商前缀 + 后缀关键词)', () => {
+  // search(含 text_search/place/poi/suggestion/search/query)
+  assert.equal(toolKind('amap__maps_text_search'), 'search');
+  assert.equal(toolKind('tencent__placesuggestion'), 'search');
+  assert.equal(toolKind('baidu__map_search_places'), 'search');
+  assert.equal(toolKind('rest__placeSearch'), 'search');
+  assert.equal(toolKind('amap__place_search'), 'search');
+  // geocode(含 geo/geocode/regeo/revers)
+  assert.equal(toolKind('amap__geocode'), 'geocode');
+  assert.equal(toolKind('rest__geocodeAddress'), 'geocode');
+  assert.equal(toolKind('baidu__reverse_geocoding'), 'geocode');
+  assert.equal(toolKind('rest__regeo'), 'geocode');
+  // directions(含 route/direction)
+  assert.equal(toolKind('baidu__direction'), 'directions');
+  assert.equal(toolKind('amap__driving_route'), 'directions');
+  // weather
+  assert.equal(toolKind('baidu__weather'), 'weather');
+  // project(含 jobs/position/company/recruit/岗位)
+  assert.equal(toolKind('amap__company'), 'project');
+  assert.equal(toolKind('builtin__jobs'), 'project');
+  assert.equal(toolKind('rest__recruit_list'), 'project');
+});
+
+test('toolKind: 未知前缀仍按关键词归类;未知后缀 → other', () => {
+  assert.equal(toolKind('custom__text_search'), 'search', '未知前缀不剥,关键词照常命中');
+  assert.equal(toolKind('evil__exec'), 'other');
+  assert.equal(toolKind('builtin__viewport'), 'other');
+  assert.equal(toolKind('builtin__listTools'), 'other');
+  assert.equal(toolKind('amap__anything_weird'), 'other');
+  assert.equal(toolKind(''), 'other');
+});
+
+test('publicToolEvent: name 收敛为公开类别,summary 一律不携带(内部名/错误码不外泄)', () => {
+  assert.deepEqual(publicToolEvent({ name: 'amap__maps_text_search', status: 'start' }), {
+    type: 'tool',
+    name: 'search',
+    status: 'start',
+  });
+  assert.deepEqual(publicToolEvent({ name: 'amap__place_search', status: 'done', summary: '结果:杭州' }), {
+    type: 'tool',
+    name: 'search',
+    status: 'done',
+  });
+  // error 路径:内部错误文本不随公开事件外泄
+  assert.deepEqual(publicToolEvent({ name: 'evil__exec', status: 'error', summary: 'tool not in whitelist' }), {
+    type: 'tool',
+    name: 'other',
+    status: 'error',
+  });
 });
 
 test('runAgent: lang 与视图上下文传给工具 ctx', async () => {

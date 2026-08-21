@@ -7,6 +7,8 @@
 //     (assistant 消息附回本轮 reasoning_content 累计——DeepSeek 思考模式必需,否则 400)
 //   - unsupported_tools → 无 tools 降级重跑一次(最多一次)
 //   - 超 maxTurns → done truncated;signal.abort → 静默停止,不再发事件
+//   - 公开面脱敏:tool 事件 name 收敛为公开类别(toolKind/search|geocode|…|other)、
+//     summary 一律不携带;错误细节由 route 侧在 SSE 边界收敛(本模块保留内部码)
 
 import { createLlmProvider } from './llm-provider.ts';
 import type { AgentProviderError, ChatMessage, LLMProvider, StreamChatOptions } from './llm-provider.ts';
@@ -14,7 +16,7 @@ import { HttpError } from '../llm-validate.ts';
 import { validateAction } from './action-schema.ts';
 import { buildSystemPrompt } from './prompts.ts';
 import type { AgentConfig } from './config.ts';
-import type { AgentAction, AgentContext, AgentEvent, AgentTool, ToolResult } from './types.ts';
+import type { AgentAction, AgentContext, AgentEvent, AgentTool, ToolKind, ToolResult } from './types.ts';
 
 export interface RunAgentRequest {
   config: AgentConfig;
@@ -133,7 +135,7 @@ function matchJsonEnd(text: string, start: number): number {
 
 /**
  * 纯函数:工具结果文本清洗。剔除 <script 及其内容、超长 URL 串,再截断。
- * 清洗后的文本才会进 LLM 上下文与 tool 事件。
+ * 清洗后的文本进 LLM 上下文(工具结果全文,内部面);公开 tool 事件不携带 summary。
  */
 export function sanitizeToolText(text: string, maxLen: number = TOOL_TEXT_MAX): string {
   let out = String(text ?? '');
@@ -152,6 +154,44 @@ function sanitizeErrorMessage(err: unknown, fallback: string): string {
     .replace(/Bearer\s+\S+/gi, 'Bearer ***')
     .replace(/sk-[A-Za-z0-9_-]{8,}/g, 'sk-***')
     .slice(0, 300);
+}
+
+// ---- 公开面脱敏(2026-08-21 安全要求):tool 事件 name → 公开类别,summary 不对外 ----
+
+/** 供应商前缀(先剥掉再按关键词归类);未知前缀不剥,关键词照常匹配。 */
+const TOOL_KIND_PREFIX_RE = /^(amap|tencent|baidu|rest|builtin)__/;
+/** 后缀关键词 → 类别(顺序即优先级:search 先于 geocode/directions/weather/project)。 */
+const TOOL_KIND_RULES: Array<[RegExp, ToolKind]> = [
+  [/text_search|place|poi|suggestion|search|query/, 'search'],
+  [/geo|geocode|regeo|revers/, 'geocode'],
+  [/route|direction/, 'directions'],
+  [/weather/, 'weather'],
+  [/jobs|position|company|recruit|岗位/, 'project'],
+];
+
+/**
+ * 纯函数:内部工具名 → 公开类别。先剥供应商前缀(amap__/tencent__/baidu__/rest__/builtin__),
+ * 再按后缀关键词归类;未知前缀/未知后缀 → other。
+ * 例:amap__maps_text_search → search、baidu__reverse_geocoding → geocode、builtin__viewport → other。
+ */
+export function toolKind(name: string): ToolKind {
+  const bare = name.replace(TOOL_KIND_PREFIX_RE, '');
+  for (const [re, kind] of TOOL_KIND_RULES) {
+    if (re.test(bare)) return kind;
+  }
+  return 'other';
+}
+
+/**
+ * 纯函数:内部工具事件 → 公开 tool 事件。name 收敛为公开类别 kind(不携带内部工具名);
+ * summary 一律不携带——工具结果全文只进 LLM 历史(sanitizeToolText 后),不下发公开面。
+ */
+export function publicToolEvent(internal: {
+  name: string;
+  status: 'start' | 'done' | 'error';
+  summary?: string;
+}): Extract<AgentEvent, { type: 'tool' }> {
+  return { type: 'tool', name: toolKind(internal.name), status: internal.status };
 }
 
 export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent> {
@@ -235,9 +275,10 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
         if (req.signal.aborted) return;
         const result = await runTool(call);
         const summary = sanitizeToolText(result.ok ? result.text : result.error);
+        // 公开 tool 事件:name 收敛为类别,summary 不携带(结果全文只进 toolMessages 回流 LLM)
         yield result.ok
-          ? { type: 'tool', name: call.name, status: 'done', summary }
-          : { type: 'tool', name: call.name, status: 'error', summary };
+          ? publicToolEvent({ name: call.name, status: 'done', summary })
+          : publicToolEvent({ name: call.name, status: 'error', summary });
         toolMessages.push({ role: 'tool', tool_call_id: call.id, content: summary });
       }
       if (req.signal.aborted) return;
@@ -302,7 +343,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
           if (!callsById.has(tc.id)) {
             callsById.set(tc.id, { id: tc.id, name: tc.name, arguments: tc.arguments });
             order.push(tc.id);
-            queue.push({ type: 'tool', name: tc.name, status: 'start' });
+            queue.push(publicToolEvent({ name: tc.name, status: 'start' }));
           } else {
             // 参数增量:保留最新累计
             callsById.set(tc.id, { id: tc.id, name: tc.name || callsById.get(tc.id)!.name, arguments: tc.arguments });

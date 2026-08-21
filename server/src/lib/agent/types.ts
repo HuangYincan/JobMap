@@ -38,10 +38,24 @@ export type AgentAction =
   | { type: 'openDetail'; payload: { id: string; mode?: string } }
   | { type: 'search'; payload: { query: string; mode?: string } };
 
+/**
+ * 公开 tool 事件类别(安全集合):内部工具名 → 通用类别,无供应商前缀、无内部工具名。
+ * 由 run-agent 的 toolKind() 纯函数映射(可单测)。
+ */
+export type ToolKind = 'search' | 'geocode' | 'directions' | 'weather' | 'project' | 'other';
+
 export type AgentEvent =
   | { type: 'delta'; text: string }
   | { type: 'reasoning'; text: string } // 推理模型流式思考内容(DeepSeek reasoning_content;run-agent 截断 4000 字符)
-  | { type: 'tool'; name: string; status: 'start' | 'done' | 'error'; summary?: string }
+  | {
+      // name 为**公开类别**(search/geocode/directions/weather/project/other),非内部工具名
+      // (不携带 MCP 标识/供应商前缀/工具原名);summary 不对外——公开事件不携带工具结果
+      // (工具结果全文只进 LLM 历史,类型保留该字段仅为兼容旧消费方读取)。
+      type: 'tool';
+      name: ToolKind;
+      status: 'start' | 'done' | 'error';
+      summary?: string;
+    }
   | { type: 'action'; action: AgentAction }
   | { type: 'done'; truncated?: boolean }
-  | { type: 'error'; code: string; message: string };
+  | { type: 'error'; code: string; message: string }; // code/message 均为安全值,不携带实现细节(route 侧收敛)

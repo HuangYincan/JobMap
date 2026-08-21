@@ -6,7 +6,8 @@
 // 位于全部校验之后,保证源码行序 = 执行序)。
 //
 // 事件 type 白名单即 run-agent 的 AgentEvent 5 种(delta/tool/action/done/
-// error);本端点只做逐事件 `data: <单行 JSON>\n\n` 转述,不下发其它 type。
+// error);本端点做逐事件 `data: <单行 JSON>\n\n` 转述,error 事件经公开面脱敏
+// (code/message 收敛到安全集合)后下发,不下发其它 type。
 
 import { NextResponse } from 'next/server';
 import { readAgentConfig, hasBaiduAgentPlan } from '@/lib/agent/config';
@@ -135,6 +136,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ code: 'LLM_UNCONFIGURED', message: cfgRes.reason }, { status: 503 });
   }
 
+  // ---- 公开 error 事件脱敏(2026-08-21 安全要求):code 收敛到安全集合,message 一律置空 ----
+  // 内部细节(provider 错误码 / HTTP 状态 / 内部异常)只进服务端日志(console.error),
+  // 不随 SSE 下发;前端按 code 分支展示。注意:本块位于全部前置校验之后(勿前移,
+  // 否则破坏「校验顺序契约」的源码行序断言)。
+  const PUBLIC_ERROR_CODES = new Set(['LLM_UNCONFIGURED', 'RATE_LIMITED']);
+
+  /** 内部 error 事件 → 公开 error 事件:LLM_UNCONFIGURED(503 前端专用)/RATE_LIMITED(429)
+   *  保留 code,其余一律 ERROR;message 一律置空(不携带内部文本)。 */
+  function publicErrorEvent(err: { code: string; message: string }): { type: 'error'; code: string; message: string } {
+    const code = PUBLIC_ERROR_CODES.has(err.code) ? err.code : 'ERROR';
+    return { type: 'error', code, message: '' };
+  }
+
   // ---- 前置校验全部通过,才开始构建工具集(连接 MCP/LLM)----
   const toolNamesState: { names: string[] } = { names: [] };
   const tools: AgentTool[] = [
@@ -203,14 +217,22 @@ export async function POST(request: Request) {
       try {
         for await (const event of runAgent({ config: cfgRes.cfg, messages, tools, viewport, lang, signal: request.signal })) {
           if (request.signal.aborted) break;
-          if (!send(event)) {
+          // 公开面脱敏:error 事件 code/message 收敛到安全集合;内部细节只进服务端日志
+          let out: unknown = event;
+          if (event.type === 'error') {
+            console.error(`[agent] 内部错误 code=${event.code} message=${event.message}`);
+            out = publicErrorEvent(event);
+          }
+          if (!send(out)) {
             // 输出超限 → done, truncated(tech/24 §6.5)
             send({ type: 'done', truncated: true }, true);
             return;
           }
         }
-      } catch {
-        send({ type: 'error', code: 'internal', message: 'agent 内部错误' });
+      } catch (err) {
+        // 内部异常细节只进服务端日志;公开 error 事件收敛到安全集合
+        console.error('[agent] SSE 流异常', err);
+        send({ type: 'error', code: 'ERROR', message: '' });
       } finally {
         try {
           controller.close();
