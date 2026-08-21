@@ -9,15 +9,15 @@
 - milestone_link: 无(dev 目标)
 
 ## stage
-current: MERGE(sanitize + uxfix 全绿,派 merger)
+current: DONE(终态)✅
 updated_at: 2026-08-21
-dev_head_note: dev = 0052ed0;sanitize 3 commit(db6eeff/6263c33/a932343)+ uxfix 4 commit(d8823f9/6c7e38c/a464211/b9e5d50)
+dev_head_note: dev = 4f49527+批次;脱敏冒烟:0 内部前缀/0 错误码/tool 类别化/action+done 全通
 
 ## workstreams
 | ws | branch | worktree | prompt | report | status | last_tip | dispatched_at | finished_at | verdict |
 |---|---|---|---|---|---|---|---|---|---|
-| sanitize | feature/agent-sanitize | /Users/acccan/dm-wt-agent-sanitize | prompts/ws-sanitize.md | reports/ws-sanitize.md | DONE | a932343 | 2026-08-21 | 2026-08-21 | 门禁 PASSED;3 commit;待合并 |
-| uxfix | feature/agent-ux-fix | /Users/acccan/dm-wt-agent-uxfix | prompts/ws-uxfix.md | reports/ws-uxfix.md | DONE | b9e5d50 | 2026-08-21 | 2026-08-21 | 门禁 PASSED(988 pass);4 commit;待合并 |
+| sanitize | feature/agent-sanitize | (已清理) | prompts/ws-sanitize.md | reports/ws-sanitize.md | MERGED | a932343 | 2026-08-21 | 2026-08-21 | 门禁 PASSED;已并入 dev(83cfea3) |
+| uxfix | feature/agent-ux-fix | (已清理) | prompts/ws-uxfix.md | reports/ws-uxfix.md | MERGED | b9e5d50 | 2026-08-21 | 2026-08-21 | 门禁 PASSED(988);已并入 dev(e8d0ea1)+ merger 收尾 4f49527 |
 
 ## merge_order
 1. feature/agent-sanitize(先,事件值语义先行)→ 2. feature/agent-ux-fix(消费新语义)。
