@@ -101,18 +101,21 @@ export function createAgentBridge(
       for (const p of points ?? []) {
         if (!isLng(p?.lng) || !isLat(p?.lat)) continue; // 单项非法 → 忽略该点
         const label = isLabel(p.label) ? p.label : undefined;
+        // 一律自定义 content:蓝点 + 白边 + 蓝影(与距离手柄同款,定位点显眼可辨);
+        // 有 label 时标签叠在圆点上方(蓝底白字,flex column 布局)
+        const dot =
+          '<div style="width:20px;height:20px;border-radius:50%;background:#007AFF;' +
+          'border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,122,255,0.45)"></div>';
+        const content = label
+          ? '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">' +
+            '<div style="background:#007AFF;color:#fff;border-radius:99px;padding:2px 10px;' +
+            'font-size:12px;box-shadow:0 2px 8px rgba(0,122,255,0.35);white-space:nowrap">' +
+            `${escapeHtml(label)}</div>${dot}</div>`
+          : dot;
         created.push(
           view?.createMarker({
             position: { lng: p.lng, lat: p.lat },
-            ...(label
-              ? {
-                  content:
-                    `<div style="background:#fff;border:1px solid rgba(26,45,62,0.16);` +
-                    `border-radius:99px;padding:2px 8px;font-size:11px;color:#0b2545;` +
-                    `box-shadow:0 2px 8px rgba(24,45,57,0.18);transform:translateY(-28px);` +
-                    `white-space:nowrap">${escapeHtml(label)}</div>`,
-                }
-              : {}),
+            content,
           }) ?? { remove() {} },
         );
       }
