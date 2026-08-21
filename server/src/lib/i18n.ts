@@ -37,6 +37,38 @@ export const translations = {
     zh: '地图样式',
     en: 'Map style',
   },
+  mapSource: {
+    zh: '地图源',
+    en: 'Map source',
+  },
+  engineAmap: {
+    zh: '高德',
+    en: 'AMap',
+  },
+  engineTencent: {
+    zh: '腾讯',
+    en: 'Tencent',
+  },
+  engineBaidu: {
+    zh: '百度',
+    en: 'Baidu',
+  },
+  engineAuto: {
+    zh: '自动选择',
+    en: 'Auto',
+  },
+  engineManual: {
+    zh: '手动选择',
+    en: 'Manual',
+  },
+  engineClickToSwitch: {
+    zh: '点击切换',
+    en: 'Click to switch',
+  },
+  engineNotConfigured: {
+    zh: '未配置',
+    en: 'Not configured',
+  },
   standard: {
     zh: '标准',
     en: 'Standard',

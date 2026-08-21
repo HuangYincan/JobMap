@@ -3,11 +3,11 @@
 //
 // 三引擎描述对象(AMap / Tencent / Baidu)统一入口:
 // - isConfigured:运行时读 process.env(Next 构建期内联,测试可控)
-// - load / isLoaded / createView / search:本 WS 只提供骨架,完整实现
-//   由 ws-c(AMap)/ ws-d(Tencent)/ ws-e(Baidu)各自落地;未实现前调用
-//   一律抛 not-implemented,调用方不得吞错。
-// - 本文件不 import amap-api(AMap 完整版由 ws-c 独立实现,内核层不
-//   反向依赖具体厂商适配)。
+// - load / isLoaded / createView / search:本文件只提供骨架,完整实现经
+//   registerEngine() 外部装配(ws-f 统一接线;use-map-engine 模块级调用,
+//   与 registerAmapEngine 同模式),未装配前调用一律抛 not-implemented,
+//   调用方不得吞错。
+// - 本文件不 import 厂商实现 / amap-api(内核不反向依赖具体厂商适配)。
 // ============================================================
 
 import type { MapEngine, MapEngineId, MapSearchProvider } from './types.ts';
@@ -92,6 +92,30 @@ const ENGINES: Record<string, MapEngine> = {
   tencent: TENCENT_ENGINE,
   baidu: BAIDU_ENGINE,
 };
+
+/**
+ * 引擎完整实现装配(ws-f 统一接线):把厂商实现(load/isLoaded/createView/search)
+ * Object.assign 到注册表骨架对象上——registerAmapEngine 同款装配模式,幂等。
+ *
+ * - 方法 bind 到 impl 自身:厂商实现可能依赖 this(如 baidu 类实例);
+ * - 骨架的 id/label/namespace/coordSystem/keyVar/isConfigured 保持不动
+ *   (描述字段与 env 契约不受影响);
+ * - 装配前骨架保持 not-implemented 语义(骨架门禁测试依赖:未 import 厂商
+ *   实现前调用即明确报错);装配由 use-map-engine 模块级接线触发。
+ */
+export function registerEngine(impl: MapEngine): MapEngine {
+  const target = ENGINES[impl.id];
+  if (!target) {
+    throw new Error(`[map-engine] registerEngine: unknown engine id: ${String(impl.id)}`);
+  }
+  Object.assign(target, {
+    load: impl.load.bind(impl),
+    isLoaded: impl.isLoaded.bind(impl),
+    createView: impl.createView.bind(impl),
+    search: impl.search,
+  });
+  return target;
+}
 
 /** 按优先级过滤已配置(key 存在)的引擎 */
 export function getConfiguredEngines(): MapEngine[] {

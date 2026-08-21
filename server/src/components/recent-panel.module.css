@@ -361,6 +361,89 @@
   outline-offset: 2px;
 }
 
+/* ---- 地图源(ws-f):引擎 chip / 状态行 / 未配置降级 / tooltip ---- */
+
+.engineGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.engineChip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  padding: 9px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+}
+
+.engineChipOn {
+  border-color: var(--blue, #007aff);
+  color: var(--blue-ink, #0062CC);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--blue, #007aff) 22%, transparent);
+}
+
+/* 未配置 key 的引擎:40% 透明 + 不可点(tooltip 提示缺失的 env 名) */
+.engineChipDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.engineDot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--muted);
+  background: transparent;
+}
+
+/* 当前引擎:实心品牌蓝圆点 */
+.engineChipOn .engineDot {
+  border-color: var(--blue, #007aff);
+  background: var(--blue, #007aff);
+}
+
+.engineChip:focus-visible {
+  outline: 2px solid var(--blue, #007aff);
+  outline-offset: 2px;
+}
+
+/* tooltip(map-shell data-tooltip 同模式;chip 上方居中) */
+.engineChip[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: rgba(60, 60, 67, 0.92);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.engineStatus {
+  margin: 8px 2px 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .srOnly {
   position: absolute;
   width: 1px;
