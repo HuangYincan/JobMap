@@ -13,6 +13,7 @@ import {
   TENCENT_ENGINE,
   normalizeTencentPOI,
   normalizeTencentSuggestion,
+  resolveTMapMarkerAnchor,
 } from '../src/lib/map-engine/tencent/tencent-engine.ts';
 import { createCityClusterMarker } from '../src/lib/map-markers.ts';
 import { wgs84ToGcj02 } from '../src/lib/map-engine/coord-utils.ts';
@@ -1931,6 +1932,173 @@ test('聚合徽章清理句柄:setMap(null)/remove 收敛为按 marker 摘单 ge
     assert.doesNotThrow(() => badge.remove());
     assert.equal(shared.geometries.length, 2, 'remove 兜底幂等(不误伤 pin)');
     assert.equal(shared.map, view.raw, 'remove 兜底不摘除共享实例');
+  } finally {
+    restore();
+  }
+});
+
+// ------------------------------------------------------------
+// ws-a(2026-08-22,bug 1):anchor 正确化 + 点击拾取 + LOD 摘挂状态
+// (SDK v1.8.0.2 实包源码核实:MarkerStyle 默认 anchor 常量 (17,50) 不随
+// width/height 归一化 → 自定义尺寸图标必须显式传 anchor;渲染公式
+// imageTopLeft = 屏幕位 - anchor 双路径(DOM 2d-adapter margin / GL
+// instanceInfos)同语义;relativeZoomScale 默认关闭 → 锚点像素偏移不随
+// zoom 缩放,锚点钉死地理点;remove(ids) 全量删 _idSet/_idGeoIndexSet +
+// DOM 拾取元素 → 摘挂后重 add 同 id 不冲突;updateGeometries 对不在
+// _idSet 的 id 会重新 add → 隐藏期 setPosition 必须跳过,否则可见性泄漏)
+// ------------------------------------------------------------
+
+test('resolveTMapMarkerAnchor:锚点按 icon 实际尺寸计算(底部中心 + offset 位移,AMap 语义对齐)', () => {
+  // 无 offset:锚点 = (w/2, h) 底部中心(与高德 content 锚点语义一致——
+  // 图钉底尖 / 徽章底边钉在地理点)
+  assert.deepEqual(resolveTMapMarkerAnchor(60, 60, undefined), { x: 30, y: 60 }, '60×60 徽章 → 底部中心 (30,60)');
+  assert.deepEqual(resolveTMapMarkerAnchor(40, 40, undefined), { x: 20, y: 40 });
+  assert.deepEqual(resolveTMapMarkerAnchor(32, 40, undefined), { x: 16, y: 40 }, '32×40 图钉 → 底部中心');
+  // 契约 offset [x,y] = 整图位移:Δanchor = -(x,y)(imageTopLeft = 屏幕位 - anchor)
+  assert.deepEqual(resolveTMapMarkerAnchor(40, 40, [-20, -20]), { x: 40, y: 60 }, '40 徽章 offset[-20,-20] → (40,60)(与 AMap 同位移)');
+  assert.deepEqual(resolveTMapMarkerAnchor(54, 54, [-27, -27]), { x: 54, y: 81 }, '54 徽章 offset[-27,-27] → (54,81)(既有归组断言同源)');
+  assert.deepEqual(resolveTMapMarkerAnchor(32, 40, [-16, -40]), { x: 32, y: 80 }, '32×40 图钉 offset[-16,-40] → 底尖钉在地理点');
+  // 默认 pin 规格(34×50)无 offset → 恰为 SDK 默认常量 (17,50)(34×50 底部中心)
+  assert.deepEqual(resolveTMapMarkerAnchor(34, 50, undefined), { x: 17, y: 50 }, '34×50 默认 pin → SDK 默认锚点 (17,50)');
+  // 回归(原 bug):60×60 徽章不得落回 SDK 默认常量 (17,50)(那是 34×50 pin 的
+  // 底部中心;60×60 用它会锚点错位 → 缩放漂移 + 点击命中区与视觉不一致)
+  assert.notDeepEqual(resolveTMapMarkerAnchor(60, 60, undefined), { x: 17, y: 50 }, '自定义尺寸图标必须按实际尺寸算锚点,不得用 SDK 常量');
+});
+
+test('resolveTMapMarkerAnchor:缩放无关——锚点恒定钉死地理点(2 级缩放前后不漂移)', () => {
+  // 渲染公式 imageTopLeft = 屏幕位 - anchor:锚点(图像局部坐标)恒与地理点的
+  // 屏幕位重合。anchor 是纯像素常量(与 zoom 无关,S 库 relativeZoomScale
+  // 默认关闭,像素偏移不随地图比例联动)→ 任意 zoom 下钉点不漂移。
+  // 模拟缩放前后同一地理点的屏幕位(zoom 变化 → 屏幕位平移,像素距离无关):
+  const screenZ10 = { x: 500, y: 400 };
+  const screenZ12 = { x: 620, y: 330 }; // 相机移动后的屏幕位
+  const cases = [
+    { w: 60, h: 60, offset: undefined },
+    { w: 40, h: 40, offset: [-20, -20] },
+    { w: 54, h: 54, offset: [-27, -27] },
+    { w: 32, h: 40, offset: [-16, -40] },
+  ];
+  for (const c of cases) {
+    const a = resolveTMapMarkerAnchor(c.w, c.h, c.offset);
+    for (const screen of [screenZ10, screenZ12]) {
+      const imageTopLeft = { x: screen.x - a.x, y: screen.y - a.y };
+      // 图像内锚点坐标 = topLeft + anchor,必须与地理点屏幕位重合(钉点不漂移)
+      assert.deepEqual({ x: imageTopLeft.x + a.x, y: imageTopLeft.y + a.y }, screen, `${c.w}×${c.h} 锚点恒钉地理点`);
+    }
+  }
+});
+
+test('createMarker(MultiMarker):LOD 摘挂后 click 分发不失效 + 隐藏期 setPosition 不重挂(可见性状态)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    let c1 = 0;
+    let c2 = 0;
+    const m1 = view.createMarker({ position: { lng: 120.16, lat: 30.28 }, onClick: () => c1++ });
+    const m2 = view.createMarker({ position: { lng: 120.17, lat: 30.29 }, onClick: () => c2++ });
+    const raw = m1.raw; // 共享实例
+    const g1 = raw.geometries[0];
+    const g2 = raw.geometries[1];
+    raw.trigger('click', { geometry: { id: g1.id } });
+    assert.equal(c1, 1, '摘挂前 click 分发正常');
+
+    // LOD 隐藏 → 摘除 geometry(不可见不可点)
+    m1.setVisible(false);
+    assert.equal(raw.geometries.length, 1, '隐藏 = 摘除');
+
+    // 隐藏期 setPosition(视口刷新/数据回放常见):不得把 geometry 重新挂回
+    // (SDK updateGeometries 对不在 _idSet 的 id 会重新 add → 旧实现可见性泄漏:
+    // 隐藏 marker 变可见 + 可点;ws-a 修复:隐藏期只改共享 geometry 对象)
+    m1.setPosition({ lng: 1, lat: 2 });
+    assert.equal(raw.geometries.length, 1, '隐藏期 setPosition 不得重挂(可见性状态保持)');
+    assert.deepEqual({ ...raw.geometries[0].position }, { lat: 30.29, lng: 120.17 }, '实例上仍是 m2 的 geometry');
+    // (物理点击隐藏 marker 由 SDK 侧杜绝:geometry 不在图层 + DOM 拾取元素已摘除,
+    // hit-test 不会产出该 id 的载荷;mock 无拾取层,无法模拟,故不断言 mock 伪造载荷)
+
+    // LOD 显示 → 重新挂载,同 id 同 geometry(带新位置),click 分发恢复
+    m1.setVisible(true);
+    assert.equal(raw.geometries.length, 2, '显示 = 重新挂载');
+    assert.equal(raw.geometries[1], g1, '同 id 同 geometry 引用(无 id 冲突残留)');
+    assert.deepEqual({ ...raw.geometries[1].position }, { lat: 2, lng: 1 }, '重新挂载带隐藏期更新的新位置');
+    raw.trigger('click', { geometry: { id: g1.id } });
+    assert.equal(c1, 2, '摘挂后同 id click 分发恢复(handler 跨 LOD 摘挂存活)');
+    raw.trigger('click', { geometry: { id: g2.id } });
+    assert.equal(c2, 1, '他 marker 不受影响');
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):同一 cb 注册到两个 marker → off/remove 按 id 精确解绑(不误伤)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const m1 = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+    const m2 = view.createMarker({ position: { lng: 120.17, lat: 30.29 } });
+    const raw = m1.raw;
+    const g1 = raw.geometries[0];
+    const g2 = raw.geometries[1];
+    // 同一 cb 注册到两个 marker(调用方复用回调的合法场景):
+    // 旧实现 multiClickHandlers 以 cb 为键 → 后注册覆盖先注册 → off 解绑错位
+    let clicks = 0;
+    const shared = () => clicks++;
+    m1.on('click', shared);
+    m2.on('click', shared);
+    raw.trigger('click', { geometry: { id: g1.id } });
+    raw.trigger('click', { geometry: { id: g2.id } });
+    assert.equal(clicks, 2, '两个 marker 各触发一次(共享 cb 双绑定)');
+
+    // off(cb) 只解本 marker 的绑定,他 marker 不受影响
+    m1.off('click', shared);
+    raw.trigger('click', { geometry: { id: g1.id } });
+    raw.trigger('click', { geometry: { id: g2.id } });
+    assert.equal(clicks, 3, 'm1 解绑后仅 m2 触发(按 id 精确解绑)');
+
+    // remove 同理:摘除 m2 的绑定,不残留
+    m2.remove();
+    raw.trigger('click', { geometry: { id: g2.id } });
+    assert.equal(clicks, 3, 'remove 后 m2 不再触发');
+    // 重复注册同 (cb, id) 去重(防 on 两次双触发)
+    const m3 = view.createMarker({ position: { lng: 3, lat: 4 } });
+    const g3 = raw.geometries[1];
+    m3.on('click', shared);
+    m3.on('click', shared);
+    raw.trigger('click', { geometry: { id: g3.id } });
+    assert.equal(clicks, 4, '同 (cb,id) 重复 on 只触发一次(去重)');
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):remove 后 setVisible 置空 no-op(防僵尸重挂)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const m1 = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+    const m2 = view.createMarker({ position: { lng: 120.17, lat: 30.29 } });
+    const raw = m1.raw;
+    m1.remove();
+    assert.equal(raw.geometries.length, 1, 'm1 已摘除');
+    // 已 remove 的 wrapper 再 setVisible(true):不得把已注销 geometry 重新挂回
+    m1.setVisible(true);
+    assert.equal(raw.geometries.length, 1, 'remove 后 setVisible no-op(不复活僵尸 marker)');
+    assert.equal(raw.geometries[0].id, 'dm-mk-2', '实例上仅剩 m2');
+    // 再创建新 marker 不受影响
+    const m3 = view.createMarker({ position: { lng: 3, lat: 4 } });
+    assert.equal(raw.geometries.length, 2, '新 marker 正常挂载');
+    assert.equal(raw.geometries[1].id, 'dm-mk-3', 'id 递增不冲突');
   } finally {
     restore();
   }
