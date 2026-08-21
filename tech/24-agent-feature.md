@@ -226,7 +226,7 @@ GET 请求,header `Authorization: Bearer $BAIDU_MAP_AUTH_TOKEN`。契约红线:�
 
 ### 6.4 历史截断
 
-每轮后按 `maxHistoryChars`(`AGENT_HISTORY_LIMIT`,默认 **6000**)从最旧 user 起裁剪,**保留 system + 最近一轮**;防止上下文爆炸与提示注入面扩大。
+每轮后按 `maxHistoryChars`(`AGENT_HISTORY_LIMIT`,默认 **6000**)从最旧 user 起裁剪,**保留 system + 最近一轮**;防止上下文爆炸与提示注入面扩大。**裁剪按整轮删除(user + assistant [+ 其 tool 结果组]),保持 tool_calls↔tool 配对**(ws-trimfix 实现已改,文档同步)。
 
 ### 6.5 限流(多层)
 
@@ -299,7 +299,7 @@ Content-Type: application/json
 - 44×44 圆形玻璃按钮,内容 ✦;`aria-label={t('agentBall', lang)}`;`z-index:11`。
 - 造型参照 `map-shell.module.css` 的 `.toolButton`/`.locateButton`:浅色 `rgba(255,255,255,0.72)` + `backdrop-filter: blur(24px) saturate(165%)` + 1px `--line` 边框 + `--shadow`;深色 `rgba(28,28,30,0.72)`。
 - **初始位**:`right:12px; bottom:179px`(mapControls 实测高 ~147 + 底距 20 + 间距 12),位于现有地图控件上方。
-- **拖拽吸附**:pointerdown/move/up,3px 阈值区分点击/拖动;松手吸附最近边缘(left/right),clamp 12px 边距与顶部;吸附动画 `cubic-bezier(0.32,0.72,0,1) 0.35s`;位置持久化 `localStorage 'dm.agent-ball-pos'`。
+- **拖拽吸附**:pointerdown/move/up,3px 阈值区分点击/拖动;松手按**球心到四边最近距离四向吸附**(左/右/上/下,平局 左→右→上→下),正交方向保留松手坐标,clamp 12px 边距;吸附动画 `cubic-bezier(0.32,0.72,0,1) 0.35s`;位置持久化 `localStorage 'dm.agent-ball-pos'`(`{edge, top, left?}`:top/bottom 新增 left 存水平位置;兼容旧 `{edge:'left'|'right', top}`)。
 - 点击(非拖动)→ toggle 聊天面板。
 
 ### 9.2 聊天面板(AgentPanel)
@@ -330,8 +330,8 @@ Content-Type: application/json
 │                          └──────┘          │
 └────────────────────────────────────────────┘
 初始:right:12px; bottom:179px(mapControls 实测高 ~147 + 底距 20 + 间距 12)
-拖拽:pointer 事件,3px 阈值区分点击/拖动;松手吸附最近边缘(left/right),
-clamp 12px 边距与顶部,动画 cubic-bezier(0.32,0.72,0,1) 0.35s
+拖拽:pointer 事件,3px 阈值区分点击/拖动;松手按球心最近边四向吸附(左/右/上/下),
+正交方向保留松手坐标,clamp 12px 边距,动画 cubic-bezier(0.32,0.72,0,1) 0.35s
 
 ┌─ 点击展开 ──────────────────────────────────┐
 │  ┌─ agent-panel(贴吸附侧)──────────────┐    │
@@ -383,11 +383,12 @@ clamp 12px 边距与顶部,动画 cubic-bezier(0.32,0.72,0,1) 0.35s
 
 ### 9.10 面板跟随悬浮球(2026-08-21,ws-c-enhance)
 
-面板**以悬浮球为锚、实时跟随**(替代「贴吸附侧固定」),纯函数 `computePanelPlacement(ballRect, panelSize, viewport)`(`lib/agent-panel-placement.ts`,零 DOM 可单测):
+面板**以悬浮球为锚、实时跟随**(替代「贴吸附侧固定」),纯函数 `computePanelPlacement(ballRect, panelSize, viewport, edge?)`(`lib/agent-panel-placement.ts`,零 DOM 可单测;**edge 为可选第 4 参**:球当前吸附边缘,缺省/拖拽中不传 → 旧行为):
 
-- **水平**:球在右半区 → 面板右缘贴球左缘(gap **8px**);球在左半区 → 面板左缘贴球右缘。
+- **水平**:球在右半区 → 面板右缘贴球左缘(gap **8px**);球在左半区 → 面板左缘贴球右缘。edge 显式 `'left'`/`'right'` 时强制分侧(`'left'` → 面板在球右,`'right'` → 面板在球左)。
 - **横向边界**:首选侧放不下(溢出视口,含 12px 边距)→ **翻转到球另一侧**;两侧都放不下(极窄视口)→ 全宽底部 sheet(复用移动端抽屉模式;`panelSheet` 类,与 ≤767px media query 同款规则)。
-- **垂直**:面板 top 与球 top 对齐,clamp 在 `[12, viewportH - panelH - 12]`。
+- **垂直**(edge 缺省时):面板 top 与球 top 对齐,clamp 在 `[12, viewportH - panelH - 12]`。
+- **垂直锚定**(2026-08-21,ws-nfix;edge=`'top'`|`'bottom'`,球贴上/下边缘):球贴**上缘** → 面板**优先在球下方**(gap 8px),放不下翻转到球上方,**上/下都放不下 → sheet**;球贴**下缘** → 对称(优先上方,溢出翻转到下方)。垂直锚定时面板**水平居中于球心**,clamp `[12, viewportW - panelW - 12]`;`flipped` 语义照旧(实际落在首选侧对侧)。吸附决策抽为纯函数 `computeBallSnap(drop, viewport, ballSize, margin) → {edge, left, top}`(球心到四边最近距离,平局 左→右→上→下)。
 - **拖动跟随**:拖动球时面板 transform 实时跟手(拖拽中 `transition: none`);松手吸附后平滑归位(既有 `cubic-bezier(0.32, 0.72, 0, 1)` 动效,面板 transform 与球 left/top 同步过渡)。
 - **实现**:面板 `position:fixed; transform: translate3d(var(--px), var(--py), 0)`;`--px/--py` 由组件按 placement 注入,入场动画 keyframes 与定位共用同一变量(动画结束无跳变)。z-index:球 **11**、面板 **12**。
 - **移动端**(≤767px):恒 sheet,不受球位置影响(media query 覆盖 `transform: none`)。
@@ -428,7 +429,7 @@ clamp 12px 边距与顶部,动画 cubic-bezier(0.32,0.72,0,1) 0.35s
 | enh | `tests/agent-llm-provider.test.mjs`(**追加**) | reasoning_content 逐 chunk 转发、同 chunk 与 content 并存、空串不回调、onReasoning 缺省兼容 |
 | enh | `tests/agent-runner.test.mjs`(**追加**) | reasoning 事件顺序转发(与 delta/tool 交错)、总量 4000 截断且不再转发、非推理模型零 reasoning |
 | enh | `tests/markdown-pipeline.test.mjs` | marked 渲染(GFM 表格/删除线)、链接 target=_blank+rel=noopener、标题转义、sanitize 必须被调用(管线契约) |
-| enh | `tests/agent-panel-placement.test.mjs` | pickPanelSide 决策矩阵(首选/翻转/sheet)、左右缘锚定、垂直 clamp、极窄视口 sheet、移动端恒 sheet、常量契约 |
+| enh | `tests/agent-panel-placement.test.mjs` | pickPanelSide 决策矩阵(首选/翻转/sheet)、左右缘锚定、垂直 clamp、极窄视口 sheet、移动端恒 sheet、常量契约;+ computeBallSnap 四向吸附(四边/四角/视口中央/平局顺序/clamp 边界)、垂直锚定 edge 矩阵(top/bottom 首选侧+翻转+sheet+水平居中 clamp,2026-08-21 ws-nfix) |
 | enh | `tests/component-contracts.test.mjs`(**追加**) | markdown-text 引用 marked+dompurify 且 sanitize 先于注入;面板 transform 锚定(--px/--py)+z-index 12;思考/工具活动类名;i18n 新键 |
 
 合计:**9 个新测试文件(后端核心 7:ws-a 5 + ws-b 2;前端 2:ws-c)+ 2 处追加**(component-contracts,原批次)+ **ws-c-enhance:1 新测试文件 + 4 处追加**(2026-08-21)。

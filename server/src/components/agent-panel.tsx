@@ -27,7 +27,7 @@ import {
   type AgentMapExecutorCallbacks,
   type AgentToolInfo,
 } from "./agent-map-executor";
-import { computePanelPlacement, type BallRect, type ViewportSize } from "@/lib/agent-panel-placement";
+import { computePanelPlacement, type BallRect, type BallSnapEdge, type ViewportSize } from "@/lib/agent-panel-placement";
 import { MarkdownText } from "./markdown-text";
 
 export interface ToolActivity {
@@ -56,6 +56,8 @@ interface Props {
   ballRect: BallRect;
   /** 球正在拖拽:面板关闭吸附过渡,transform 跟手。 */
   dragging: boolean;
+  /** 球当前吸附边缘(拖拽中/未吸附为 null → 面板按球心半区分侧,旧行为)。 */
+  snapEdge: BallSnapEdge | null;
   onClose: () => void;
 }
 
@@ -110,7 +112,7 @@ function actionLabel(action: AgentAction, lang: Language): string {
   }
 }
 
-export function AgentPanel({ bridge, lang, ballRect, dragging, onClose }: Props) {
+export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose }: Props) {
   const [messages, setMessages] = useState<AgentMessage[]>(readHistory);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -147,7 +149,10 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, onClose }: Props)
     setPanelSize({ width: el.offsetWidth, height: el.offsetHeight });
   }, [viewport]); // 视口变化(70vh 高度随之变)→ 重测
 
-  const placement = useMemo(() => computePanelPlacement(ballRect, panelSize, viewport), [ballRect, panelSize, viewport]);
+  const placement = useMemo(
+    () => computePanelPlacement(ballRect, panelSize, viewport, snapEdge ?? undefined),
+    [ballRect, panelSize, viewport, snapEdge],
+  );
   const isSheet = placement.mode === "sheet";
   // side 模式:transform 锚定(--px/--py 供 CSS translate3d 与入场动画共用)
   const panelStyle: CSSProperties | undefined = isSheet
