@@ -9,7 +9,7 @@ import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, suggestionToDomainPoi } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
-import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, widenSearchScope } from "@/lib/search";
+import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, planExploreSearch, pointAtDistanceEast, runPOIPipeline, widenSearchScope } from "@/lib/search";
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, isNearDefaultCenter } from "@/lib/camera-center";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchPOIDetail } from "@/lib/api";
@@ -17,7 +17,7 @@ import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance,
 import { batchMatchesCurrentMode, catalogCoversView, inBounds, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { loadWorkViewport, WORK_FULL_LOAD_MAX_PAGES } from "@/lib/viewport-search";
 import { maxTierForZoom, TIER_DEFAULT } from "@/lib/lod";
-import { clearModeCache, readModeCache, writeModeCache } from "@/lib/mode-cache";
+import { clearModeCache, readModeCache, syncModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
 import { entityRefFromSelection, initialsFromName } from "@/lib/account";
 import { isPersistableMode, isPersistablePoi } from "@/lib/persistable";
@@ -911,14 +911,19 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           lastBatchLen = batch.length;
           catalogRef.current = batch;
           setCatalog(batch);
+          // 2026-08-22 ws1 独角兽残留修复:写缓存用「写缓存时刻的最新 filters/sort」
+          // (viewStateRef,与 use-work-viewport 同款),不用 load 时刻闭包快照——
+          // 加载在飞期间用户改筛选(非 category 不重搜),闭包 filters 已过期,
+          // 写入会残留旧筛选,F5/重开复活。query 由 signal.cancelled 门控
+          // (query 变更即取消本轮写),闭包值即最新,无需换。
           writeModeCache({
             mode,
             catalog: batch,
             pageOffset,
             searchOrigin: origin,
             query,
-            filters,
-            sort,
+            filters: viewStateRef.current.filters,
+            sort: viewStateRef.current.sort,
             viewport: view,
           });
           if (batch.length > 0) setLoading(false);
@@ -1011,14 +1016,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return; // 模式已切换,丢弃过期结果
         catalogRef.current = data;
         setCatalog(data);
+        // 同 onBatch:写缓存时刻的最新 filters/sort(ws1 独角兽残留修复),非闭包快照
         writeModeCache({
           mode,
           catalog: data,
           pageOffset,
           searchOrigin: origin,
           query,
-          filters,
-          sort,
+          filters: viewStateRef.current.filters,
+          sort: viewStateRef.current.sort,
           viewport: view,
         });
         noMoreRef.current = noMore;
@@ -1059,6 +1065,29 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     // loader(domain)承担。
     // 使用原始值而非对象引用，避免 React 误判依赖变化
   }, [mode, query, mapReady, refreshToken, pageOffset, filters.category]);
+
+  // ---- 筛选变更 → 同步重写会话缓存(2026-08-22 ws1 独角兽残留修复)----
+  // 主加载刻意不依赖 filters(非 category 筛选变更不重搜):若缓存只在 load() 内写,
+  // 「load 时 filters 含 unicorn → 用户面板取消勾选 → 无重载 → 缓存残留」,
+  // F5/重开即「莫名勾选独角兽」。每次 filters 变更以「最新 filters + 当前池」重写
+  // (syncModeCache;地图未就绪无视野快照时跳过,不覆盖现有快照)。category 变更同时
+  // 触发主加载重写(更强:新目录),此 effect 只保证非 category 路径不残留。
+  // 不依赖 mode:切模式由 handleModeChange 自管写回,避免 profile defaultMode 的
+  // setMode 直改路径(不换 filters)把旧模式状态写进新模式缓存。
+  useEffect(() => {
+    syncModeCache({
+      mode,
+      catalog: catalogRef.current,
+      pageOffset,
+      searchOrigin,
+      query,
+      filters,
+      sort,
+      viewport: readMapViewSnapshot(mapInstance.current),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在 filters 变更时重写;
+    // query/sort 变更走各自加载/重排路径,map 未就绪由 syncModeCache 内部跳过
+  }, [filters]);
 
   // ---- 工作模式视口按需加载 + 挂载对齐加载(ws1 Bug1)----
   // 视口加载器创建/调度(moveend/zoomend 防抖)与挂载对齐判定抽到
@@ -1669,6 +1698,18 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       setQuery(cached.query);
       setFilters(cached.filters);
       setSort(cached.sort || getMode(target).defaultSort);
+      // 2026-08-22 ws1 切模式闭包修复:state 更新是异步的,同一调用栈内(如
+      // handlePickRecent → openExploreSearch)读闭包仍是旧模式快照——这里立即
+      // 把 viewStateRef 同步为目标模式将生效的状态,下游以 ref 为 merge 基准。
+      viewStateRef.current = {
+        ...viewStateRef.current,
+        mode: target,
+        query: cached.query,
+        filters: cached.filters,
+        sort: cached.sort || getMode(target).defaultSort,
+        pageOffset: cached.pageOffset,
+        searchOrigin: cached.searchOrigin ?? userLocation,
+      };
       // work 全量池恢复即取尽(2026-08-20):缓存 = 上次全量加载结果,
       // 无「更多」可分页(与 useModeCacheRestore 同口径);domain 保持复位
       if (canonicalMode(target) === "work") {
@@ -1686,6 +1727,16 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     setFilters({});
     setSort(getMode(target).defaultSort);
     setSearchOrigin(userLocation);
+    // 同上:无缓存分支的目标状态也立即同步到 ref(handlePickRecent 同栈读取)
+    viewStateRef.current = {
+      ...viewStateRef.current,
+      mode: target,
+      query: "",
+      filters: {},
+      sort: getMode(target).defaultSort,
+      pageOffset: 0,
+      searchOrigin: userLocation,
+    };
   }, [mode, pageOffset, searchOrigin, query, filters, sort, userLocation]);
 
   // ---- 搜索建议 ----
@@ -1934,13 +1985,14 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   };
 
   const openExploreSearch = useCallback((nextQuery: string) => {
-    const tagged = applyTagSuggestion({ query, filters }, nextQuery);
-    if (tagged.applied) {
-      setQuery(tagged.query);
-      setFilters(tagged.filters);
-    } else {
-      setQuery(nextQuery);
-    }
+    // 2026-08-22 ws1 切模式闭包修复:merge 基准用 viewStateRef(最新状态)而非闭包
+    // query/filters——handlePickRecent 里 handleModeChange 与 openExploreSearch
+    // 同栈调用时,闭包仍是旧模式快照(handleModeChange 已同步 ref 为目标模式状态),
+    // 否则标签合并会把旧模式筛选(如 work 的 scale:['unicorn'])带进新模式。
+    const live = viewStateRef.current;
+    const target = planExploreSearch({ query: live.query, filters: live.filters }, nextQuery);
+    setQuery(target.query);
+    setFilters(target.filters);
     setRailPanel("explore");
     setMobileSheet("explore");
     // 新搜索 → 新列表,旧列表滚动位置不再有意义
@@ -1948,7 +2000,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
       setDrawer((current) => (current === "mini" ? "half" : current));
     }
-  }, [query, filters]);
+  }, []);
 
   // 最近点击：有条目实体引用 → 回到那个实体（飞行 + 详情，跨城市可用，不依赖当前视口）；
   // 无实体引用（旧数据/纯关键词）→ 维持搜索回放；实体拉取失败 → 优雅降级回回放。
