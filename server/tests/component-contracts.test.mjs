@@ -263,6 +263,16 @@ test('persistable guest history and catalog-only save are wired', () => {
   assert.match(history, /NOT_PERSISTABLE/);
 });
 
+test('map shell zoom 按钮契约化:不再出现 raw.zoomIn/zoomOut 直连(ws-b bug 7)', () => {
+  const shell = src('components/map-shell.tsx');
+  // 直连逃生舱已移除(AMap 有 zoomIn/zoomOut,TMap raw 无 → 点击无效的根因)
+  assert.doesNotMatch(shell, /raw\.zoomIn|raw\.zoomOut|\.zoomIn\?\.|\.zoomOut\?\./);
+  // 契约化:handleZoomIn/handleZoomOut 经 view.setZoom(getState().zoom ± 1),
+  // 保留原有 guard 语义(无视图不操作)
+  assert.match(shell, /const handleZoomIn = \(\) => \{[\s\S]{0,280}view\.setZoom\(\(view\.getState\(\)\.zoom \?\? 15\) \+ 1\);/);
+  assert.match(shell, /const handleZoomOut = \(\) => \{[\s\S]{0,280}view\.setZoom\(\(view\.getState\(\)\.zoom \?\? 15\) - 1\);/);
+});
+
 test('map shell has skip links, a live result count, brand row and navItem search', () => {
   const shell = src('components/map-shell.tsx');
   const css = src('components/map-shell.module.css');

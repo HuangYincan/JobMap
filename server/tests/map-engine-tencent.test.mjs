@@ -126,6 +126,9 @@ function installTMapDouble() {
     setBaseMap(baseMap) {
       this.baseMap = baseMap;
     },
+    setMapStyleId(mapStyleId) {
+      this.mapStyleId = mapStyleId;
+    },
     off(event, cb) {
       const list = this.listeners.get(event) ?? [];
       const rest = list.filter((f) => f !== cb);
@@ -439,7 +442,7 @@ test('createView:老版本 SDK 忽略 showControl → getControl/removeControl �
   }
 });
 
-test('createView:控件 API 全缺失 → DOM 兜底隐藏控件层;canvas/marker 面板 pointer-events:none(版权保留可见)', async () => {
+test('createView:控件 API 全缺失 → DOM 兜底隐藏控件层 + 版权/水印隐藏;canvas/marker 面板 pointer-events:none', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { ns, restore } = installTMapDouble();
@@ -483,7 +486,9 @@ test('createView:控件 API 全缺失 → DOM 兜底隐藏控件层;canvas/marke
       await createView({ container });
       assert.equal(zoomEl.style.display, 'none', '交互控件必须隐藏(display:none)');
       assert.equal(zoomEl.style.pointerEvents, 'none', '交互控件同时解除点击');
-      assert.equal(copyrightEl.style.display, undefined, '版权标识保留可见(ToS 署名)');
+      // ws-b(2026-08-22):版权/logo 由「保留可见」改为隐藏(用户明确要求去掉腾讯
+      // 水印;ToS 权衡见 tech/23 ws-b 节)
+      assert.equal(copyrightEl.style.display, 'none', '版权标识隐藏(用户要求去水印)');
       assert.equal(copyrightEl.style.pointerEvents, 'none', '版权标识解除点击拦截');
       assert.equal(canvasEl.style.display, undefined, 'canvas 不得隐藏(底图渲染)');
       assert.equal(canvasEl.style.pointerEvents, 'none', 'canvas 面板解除点击拦截(命中检测经 container)');
@@ -684,7 +689,7 @@ test('setCenter/setZoom:animateMs>0 → flyTo(duration);否则直设;setPitch/se
   }
 });
 
-test('setStyle:satellite→raster、normal→vector、whitesmoke→回退 normal + console.warn', async () => {
+test('setStyle:satellite→raster、normal→vector、whitesmoke→暗色(mapStyleId DARK, ws-b 2026-08-22)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { restore } = installTMapDouble();
@@ -695,15 +700,21 @@ test('setStyle:satellite→raster、normal→vector、whitesmoke→回退 normal
 
     view.setStyle('satellite');
     assert.deepEqual(view.raw.baseMap, { type: 'raster' });
+    assert.equal(view.raw.mapStyleId, 'DEFAULT', '卫星复位暗色标识(无残留)');
     assert.equal(warn.calls.length, 0, '支持样式不告警');
 
     view.setStyle('normal');
     assert.deepEqual(view.raw.baseMap, { type: 'vector' });
 
+    // ws-b(2026-08-22):whitesmoke(UI「深色」/系统深色偏好)不再回退 normal——
+    // SDK v1.8.0.2 核实暗色 = Map 选项 mapStyleId 'DARK'(无 styleType 字段)
     view.setStyle('whitesmoke');
-    assert.deepEqual(view.raw.baseMap, { type: 'vector' }, '不支持 → 回退 normal');
-    assert.equal(warn.calls.length, 1, '不支持样式必须 console.warn');
-    assert.match(String(warn.calls[0][0]), /回退 normal/);
+    assert.deepEqual(view.raw.baseMap, { type: 'vector' }, '暗色 = vector 底图 + mapStyleId DARK');
+    assert.equal(view.raw.mapStyleId, 'DARK', 'whitesmoke → mapStyleId DARK(暗色底图层)');
+    assert.equal(warn.calls.length, 0, 'whitesmoke 已支持(暗色),不告警');
+
+    view.setStyle('normal');
+    assert.equal(view.raw.mapStyleId, 'DEFAULT', '切回标准复位暗色');
   } finally {
     warn.restore();
     restore();
@@ -1345,18 +1356,20 @@ test('addControl:scale → TMap.control.ScaleControl(bottomRight);未知 kind no
   }
 });
 
-test('addControl:control/Control 命名空间都缺失 → 不抛 + console.warn 降级(不向 raw map 加控件)', async () => {
+test('addControl:control/Control 命名空间都缺失 → 自绘比例尺降级路径(ws-b:不 warn,向 raw map 加控件为 null)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { ns, restore } = installTMapDouble();
   const warn = captureWarn();
   try {
-    delete ns.control; // 模拟 TMap GL 无 control 命名空间路径(运行时崩溃根因)
+    delete ns.control; // 模拟 TMap GL v1.exp 无 control 命名空间(ws-b 源码核实:Yd 装配表无控件类)
     const view = await createView();
-    assert.doesNotThrow(() => view.addControl('scale'), '命名空间缺失必须静默降级,不得抛');
-    assert.equal(view.raw.control, null, '降级:raw map 不接收任何控件');
-    assert.equal(warn.calls.length, 1, '降级必须 console.warn(可观测)');
-    assert.match(String(warn.calls[0][0]), /ScaleControl 不可用/);
+    // ws-b(2026-08-22):不再仅 warn 降级——返回自绘比例尺 Promise;Node 无 document
+    // 时 resolve null(真实浏览器挂 DOM,见 map-engine-tencent-style.test.mjs)
+    const pending = view.addControl('scale');
+    assert.doesNotThrow(() => pending, '命名空间缺失必须静默降级,不得抛');
+    assert.equal(view.raw.control, null, '降级路径不向 raw map 加控件');
+    assert.equal(warn.calls.length, 0, '不再 console.warn「不可用」(已由自绘比例尺取代)');
   } finally {
     warn.restore();
     restore();
