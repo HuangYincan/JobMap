@@ -14,6 +14,7 @@ import {
   normalizeTencentPOI,
   normalizeTencentSuggestion,
 } from '../src/lib/map-engine/tencent/tencent-engine.ts';
+import { createCityClusterMarker } from '../src/lib/map-markers.ts';
 import { wgs84ToGcj02 } from '../src/lib/map-engine/coord-utils.ts';
 import {
   installEngineMock,
@@ -1748,4 +1749,176 @@ test('normalizeTencentSuggestion:AmapSuggestion 形状(含 city/district);缺坐
   );
   assert.equal(normalizeTencentSuggestion({ title: 'x' }), null);
   assert.equal(normalizeTencentSuggestion(null), null);
+});
+
+// ------------------------------------------------------------
+// ws-a(2026-08-22,bug 1+6):icon 真图标 + 聚合徽章 TMap 渲染形态 + LOD 可见性
+// ------------------------------------------------------------
+
+test('createMarker(MultiMarker):icon 存在时 content 不降级告警(icon 优先);content-only 仍降级', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    // icon + content 并存:icon 是 TMap 渲染形态(公司 icon / 聚合徽章 dataURL
+    // 数据图均此形态)→ 不告警降级;content 不写入 geometry(GL 文本标签禁用)
+    const m1 = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      content: '<div class="dm-cluster">杭州 12</div>',
+      icon: { src: 'data:image/svg+xml,%3Csvg%3Ebadge', size: [54, 54] },
+    });
+    assert.equal(warn.calls.length, 0, 'icon 存在 → content 不告警(icon 优先渲染)');
+    assert.equal(m1.raw.geometries[0].content, undefined, 'content 不写入 geometry(GL 文本标签禁用)');
+    assert.equal(m1.raw.geometries[0].styleId, 'dm-st-1', 'icon → 归组样式(dm-st-N)');
+    m1.setContent('<i>Y</i>');
+    assert.equal(warn.calls.length, 0, 'icon marker setContent 不告警(视觉不受影响)');
+    // content-only(无 icon):仍降级默认点 + 一次性 warn(契约行为不变)
+    const m2 = view.createMarker({ position: { lng: 3, lat: 4 }, content: '<b>X</b>' });
+    assert.equal(warn.calls.length, 1, 'content-only 降级告警(与旧行为一致)');
+    assert.match(String(warn.calls[0][0]), /不支持 HTML content/);
+  } finally {
+    warn.restore();
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):聚合徽章形态——icon dataURL → MarkerStyle src/size/anchor 归组(同签名共享)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    // createCityClusterMarker 同款参数:size 54 → offset [-27,-27] + icon [54,54]
+    const badge1 = view.createMarker({
+      position: { lng: 120.15, lat: 30.27 },
+      content: '<div class="dm-cluster">杭州 12</div>',
+      offset: [-27, -27],
+      zIndex: 50,
+      icon: { src: 'data:image/svg+xml,%3Csvg%3Ebadge', size: [54, 54] },
+    });
+    const style = badge1.raw.styles['dm-st-1'];
+    assert.ok(style instanceof ns.MarkerStyle, 'icon → 归组 MarkerStyle(dm-st-N)');
+    assert.equal(style.opts.src, 'data:image/svg+xml,%3Csvg%3Ebadge', '徽章 icon → MarkerStyle.src 真图标');
+    assert.equal(style.opts.width, 54);
+    assert.equal(style.opts.height, 54);
+    assert.deepEqual(
+      { ...style.opts.anchor },
+      { x: 54, y: 81 },
+      '锚点 (w/2,h)=(27,54) 平移 offset (-27,-27) → (54,81)(与 AMap 同 offset 位移语义)',
+    );
+    // 同签名徽章共享 styleId(样式字典不膨胀)
+    const badge2 = view.createMarker({
+      position: { lng: 121.5, lat: 31.2 },
+      content: '<div class="dm-cluster">上海 8</div>',
+      offset: [-27, -27],
+      zIndex: 50,
+      icon: { src: 'data:image/svg+xml,%3Csvg%3Ebadge', size: [54, 54] },
+    });
+    assert.equal(badge2.raw.geometries[1].styleId, badge1.raw.geometries[0].styleId, '同签名 → 同 styleId');
+    assert.equal(Object.keys(badge1.raw.styles).length, 1, '样式字典不膨胀');
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):新签名在实例已存在时经 setStyles 全量替换上实例(调用断言)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  let setStylesCalls = 0;
+  let origSetStyles;
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const proto = MockMultiMarker.prototype;
+    origSetStyles = proto.setStyles;
+    proto.setStyles = function (styles) {
+      setStylesCalls++;
+      return origSetStyles.call(this, styles);
+    };
+    const view = await createView();
+    view.createMarker({ position: { lng: 1, lat: 2 } }); // 无 icon/offset → default,零样式注入
+    assert.equal(setStylesCalls, 0, 'default 样式不触发 setStyles');
+    const m2 = view.createMarker({
+      position: { lng: 3, lat: 4 },
+      icon: { src: 'pin.svg', size: [30, 40] },
+    });
+    assert.equal(setStylesCalls, 1, '新签名 → setStyles 上实例(先于 add geometry)');
+    assert.equal(m2.raw.geometries[1].styleId, 'dm-st-1');
+    const m3 = view.createMarker({
+      position: { lng: 5, lat: 6 },
+      icon: { src: 'badge.png' },
+      offset: [2, -3],
+    });
+    assert.equal(setStylesCalls, 2, '又一新签名 → 再次 setStyles(全量替换累积)');
+    assert.equal(m3.raw.geometries[2].styleId, 'dm-st-2');
+    assert.ok(m3.raw.styles['dm-st-1'] instanceof ns.MarkerStyle, '旧样式保留(setStyles 全量替换语义)');
+  } finally {
+    MockMultiMarker.prototype.setStyles = origSetStyles;
+    restore();
+  }
+});
+
+test('聚合徽章清理句柄:setMap(null)/remove 收敛为按 marker 摘单 geometry(共享实例挂图,跨 zoom 分桶不误伤个体 pin)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    // 个体 pin(控制器形态;zoom>8 个体模式时全部显示)
+    const pin1 = view.createMarker({ position: { lng: 120.16, lat: 30.28 }, zIndex: 10 });
+    const pin2 = view.createMarker({ position: { lng: 120.17, lat: 30.29 }, zIndex: 20 });
+    const shared = pin1.raw; // 共享 MultiMarker 实例(pin1/pin2 同层)
+    assert.equal(shared.geometries.length, 2);
+    const pinIds = shared.geometries.map((g) => g.id);
+
+    // 聚合模式(zoom ≤ 8):城市 pin 隐藏(摘除 geometry)+ 徽章挂到共享实例
+    pin1.setVisible(false);
+    pin2.setVisible(false);
+    assert.equal(shared.geometries.length, 0, '聚合模式下个体 pin 全部隐藏(摘除)');
+    let drill = 0;
+    const badge = createCityClusterMarker(view, { city: '杭州', count: 12, lng: 120.15, lat: 30.27 });
+    const badge2 = createCityClusterMarker(view, { city: '上海', count: 8, lng: 121.5, lat: 31.2 }, {
+      onClick: () => {
+        drill += 1;
+      },
+    });
+    assert.ok(badge && badge2, '徽章创建成功');
+    assert.equal(shared.geometries.length, 2, '两徽章 geometry 加入共享实例(同层,无数据层爆炸)');
+    const badge2GeoId = shared.geometries[1].id;
+    shared.trigger('click', { geometry: { id: pinIds[0] } });
+    assert.equal(drill, 0, 'pin geometry.id 不触发徽章回调');
+    shared.trigger('click', { geometry: { id: badge2GeoId } });
+    assert.equal(drill, 1, '徽章 onClick 接线(geometry.id 过滤)');
+
+    // 跨 zoom 分桶清理(zoom>8 个体模式):map-shell 分派走 setMap 分支
+    badge.setMap(null);
+    badge2.setMap(null);
+    assert.equal(shared.geometries.length, 0, '徽章 geometry 按 marker 摘除(pin 本就不在层上)');
+    assert.equal(shared.map, view.raw, '共享实例未被整层摘除(pin 可见性前提)');
+
+    // 个体模式恢复:pin 重新显示——实例仍挂图,立即可见(不依赖重建)
+    pin1.setVisible(true);
+    pin2.setVisible(true);
+    assert.deepEqual(
+      shared.geometries.map((g) => g.id),
+      pinIds,
+      'pin 重新挂载(同 id 同 geometry,跨分桶不泄漏不重建)',
+    );
+    assert.equal(shared.map, view.raw, '共享实例全程挂图');
+    // remove 分派兜底:幂等不抛、不误伤
+    assert.doesNotThrow(() => badge.remove());
+    assert.equal(shared.geometries.length, 2, 'remove 兜底幂等(不误伤 pin)');
+    assert.equal(shared.map, view.raw, 'remove 兜底不摘除共享实例');
+  } finally {
+    restore();
+  }
 });
