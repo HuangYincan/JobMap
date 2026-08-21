@@ -10,6 +10,8 @@ export interface AuthModalProps {
   lang: Language;
   onClose: () => void;
   onSignedIn: () => void;
+  /** OAuth 回调错误码(oauth_state_invalid / oauth_provider_error):打开时显示在现有 error 行 */
+  initialError?: string | null;
 }
 
 type AuthTab = "phone" | "email" | "password" | "other";
@@ -24,6 +26,15 @@ const SOCIAL: { id: SocialProvider; labelKey: "authGithub" | "authGoogle" | "aut
 
 // 发送冷却(秒):与后端 otpRateConfig.cooldownMs = 60s 对齐,客户端禁用防连点
 const RESEND_COOLDOWN_SECONDS = 60;
+
+// OAuth 回调错误码 → i18n key(未知码回退通用文案)
+function oauthErrorKey(
+  code: string,
+): "authOauthError" | "authOauthStateInvalid" | "authOauthProviderError" {
+  if (code === "oauth_state_invalid") return "authOauthStateInvalid";
+  if (code === "oauth_provider_error") return "authOauthProviderError";
+  return "authOauthError";
+}
 
 function SocialIcon({ id }: { id: SocialProvider }) {
   if (id === "github") {
@@ -56,7 +67,7 @@ function SocialIcon({ id }: { id: SocialProvider }) {
   );
 }
 
-export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
+export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: AuthModalProps) {
   const titleId = useId();
   const [tab, setTab] = useState<AuthTab>("phone");
   const [target, setTarget] = useState("");
@@ -70,6 +81,8 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwdMode, setPwdMode] = useState<PasswordMode>("login");
+  /** OAuth provider 配置探测结果(null = 未加载/失败) */
+  const [providers, setProviders] = useState<{ id: string; configured: boolean }[] | null>(null);
 
   const resetPasswordForm = () => {
     setUsername("");
@@ -107,6 +120,34 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
     const timer = setInterval(() => setResendIn((v) => (v > 1 ? v - 1 : 0)), 1000);
     return () => clearInterval(timer);
   }, [resendIn > 0]);
+
+  // OAuth provider 配置探测:modal 打开时拉一次(不重试),失败静默置 null,不影响 UI
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    fetch("/api/auth/oauth/providers")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (cancelled) return;
+        setProviders(
+          Array.isArray(body?.providers)
+            ? (body.providers as { id: string; configured: boolean }[])
+            : null,
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setProviders(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  // OAuth 回调错误:打开时若带 initialError,映射 i18n 后复用现有 error 行展示
+  useEffect(() => {
+    if (!open) return;
+    setError(initialError ? t(oauthErrorKey(initialError), lang) : null);
+  }, [open, initialError, lang]);
 
   // 顶部气泡:2.6s 后自动消失
   useEffect(() => {
@@ -159,6 +200,14 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
   };
 
   const social = async (provider: SocialProvider) => {
+    // 已配置(或探测尚未完成/失败——宁可走真实流程也不误登 demo 账号)→ 全页跳转真实 OAuth
+    const configured = providers?.find((p) => p.id === provider)?.configured;
+    if (configured !== false) {
+      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/api/auth/oauth/start?provider=${provider}&next=${next}`;
+      return;
+    }
+    // 未配置 → 保持原 demo POST /api/auth/oauth(零改动路径)
     setBusy(true);
     setError(null);
     try {
