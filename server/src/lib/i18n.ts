@@ -591,6 +591,10 @@ export const translations = {
     zh: '验证码',
     en: 'Code',
   },
+  otpCodePlaceholder: {
+    zh: '请输入验证码',
+    en: 'Enter code',
+  },
   sendCode: {
     zh: '发送验证码',
     en: 'Send code',
