@@ -110,11 +110,11 @@ export function createLlmProvider(fetchLike?: typeof fetch, options?: LlmProvide
           } catch (err) {
             if (isRetryableProviderError(err)) {
               const delay = retryDelays[attempt];
-              if (delay === undefined) throw err; // 重试次数耗尽,原样抛出
+              if (delay === undefined) throw classifyNonRetryable(err); // 重试耗尽:归类为终态错误
               await sleep(delay, opts.signal);
               continue;
             }
-            throw err;
+            throw classifyNonRetryable(err);
           }
         }
       } finally {
@@ -256,6 +256,18 @@ export function createLlmProvider(fetchLike?: typeof fetch, options?: LlmProvide
           return true; // 网络错
         }
         return false;
+      }
+
+      /** 终态错误分类:HttpError 原样(带 status);AbortError → timeout/aborted;网络错 → network。 */
+      function classifyNonRetryable(err: unknown): unknown {
+        if (err instanceof HttpError) return err;
+        if (err instanceof Error && err.name === 'AbortError') {
+          return opts.signal.aborted
+            ? providerError('aborted', 'request aborted by caller')
+            : providerError('timeout', 'LLM 响应超时');
+        }
+        if ((err as AgentProviderError).kind !== undefined) return err;
+        return providerError('network', String(err instanceof Error ? err.message : err));
       }
     },
   };

@@ -171,7 +171,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
   try {
     yield* runConversation();
   } catch (err) {
-    if (req.signal.aborted || (err instanceof Error && err.name === 'AbortError')) return; // 静默停止
+    if (req.signal.aborted) return; // 调用方取消:静默停止,不再发事件
     const providerErr = err as AgentProviderError;
     if (providerErr.kind === 'aborted') return;
     let code: string;
@@ -179,6 +179,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
     else if (providerErr.kind === 'timeout') code = 'timeout';
     else if (providerErr.kind === 'network') code = 'llm_network_error';
     else if (providerErr.kind === 'unsupported_tools') code = 'unsupported_tools';
+    else if (err instanceof Error && err.name === 'AbortError') code = 'timeout'; // 防御:非调用方 abort
     else code = 'llm_error';
     yield { type: 'error', code, message: sanitizeErrorMessage(err, 'agent 内部错误') };
     return;
