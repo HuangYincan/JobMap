@@ -246,6 +246,9 @@ type UpsertUserRow = {
   preferences: UserPreferences | null;
 };
 
+/** UPDATE...RETURNING + provider 子查询的写路径行(updateUser/updateAvatar/setPassword/bindPhone/bindEmail)。 */
+type UserRowWithProvider = UpsertUserRow & { provider: AuthProvider | null };
+
 /**
  * 23505 邮箱冲突分支(users_email_uidx):Google 邮箱撞已有 OTP 邮箱用户时
  * INSERT 抛 23505 → 按 lower(email) 查到已有用户 → 为其挂接 auth_identities
@@ -423,7 +426,7 @@ export async function verifyUserPassword(userId: string, password: string): Prom
 /** 设置/修改密码:hashPassword 落库,返回更新后的用户(hasPassword 翻 true)。 */
 export async function setPassword(userId: string, newPassword: string): Promise<AccountUser | null> {
   return withDbWrite(async (db) => {
-    const result = await db.query<UpsertUserRow>(
+    const result = await db.query<UserRowWithProvider>(
       `UPDATE users SET password_hash = $2, updated_at = now()
        WHERE id = $1
        RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
@@ -439,7 +442,7 @@ export async function setPassword(userId: string, newPassword: string): Promise<
 export async function bindPhone(userId: string, phone: string): Promise<AccountUser | null> {
   return withDbWrite(async (db) => {
     try {
-      const result = await db.query<UpsertUserRow>(
+      const result = await db.query<UserRowWithProvider>(
         `UPDATE users SET phone = $2, updated_at = now()
          WHERE id = $1
          RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
@@ -467,7 +470,7 @@ export async function bindPhone(userId: string, phone: string): Promise<AccountU
 export async function bindEmail(userId: string, email: string): Promise<AccountUser | null> {
   return withDbWrite(async (db) => {
     try {
-      const result = await db.query<UpsertUserRow>(
+      const result = await db.query<UserRowWithProvider>(
         `UPDATE users SET email = $2, updated_at = now()
          WHERE id = $1
          RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
