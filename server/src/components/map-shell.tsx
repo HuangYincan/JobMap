@@ -147,12 +147,6 @@ function readLngLat(
   return { lng, lat };
 }
 
-/** 飞行到位置(引擎契约 view.flyTo;AMap 内部 setZoomAndCenter 600ms 动画,与旧实现同语义) */
-function flyToLocation(view: MapView | null, lng: number, lat: number, zoom = 16) {
-  if (!view) return;
-  view.flyTo({ center: { lng, lat }, zoom });
-}
-
 /** MapViewEvent 闭合联合之外的事件(rotatechange/dragstart/zoomstart/mousemove/mouseup 等)
  *  经 view.on 运行时转发(契约扩展后收口类型,TODO 限期迁移)。返回解绑函数。
  *  事件载荷是厂商形态,回调参数用 any(与 map-shell 既有事件回调同风格)。 */
@@ -1418,8 +1412,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [user, savedPlaces, refreshSaved]);
 
   const handlePickSaved = useCallback((place: SavedPlace) => {
-    // 落地已保存位置即「用户已接管相机」(会 flyTo):与地图手势同口径(Bug1)
-    userMovedMapRef.current = true;
+    // 2026-08-21 热修:弹卡不动相机——收藏落地仅打开侧栏详情,不 flyTo、
+    // 不置位 userMovedMapRef(选择 ≠ 放弃定位;flyTo 叠加渲染尖峰会杀渲染
+    // 进程,见 onOpenDetail 同款注释)。
     const live = [...overlayPois, ...compareCatalog, ...catalogRef.current, ...poisRef.current];
     const match = resolveSavedForFly(place, live);
     if (match) {
@@ -1429,11 +1424,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       setRailPanel("explore");
       setMobileSheet("explore");
       setDrawer("full");
-      if (match.location) flyToLocation(mapInstance.current, match.location.lng, match.location.lat);
       return;
-    }
-    if (typeof place.lng === "number" && typeof place.lat === "number") {
-      flyToLocation(mapInstance.current, place.lng, place.lat);
     }
     setRailPanel("explore");
     setMobileSheet("explore");
@@ -1445,8 +1436,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
    *  移动 JD。岗位已下线 / 拉取失败 → 不崩溃,console.warn + 保持面板原样。 */
   const handleOpenApplication = useCallback((ref: { positionId: string; companyPoiId: string }) => {
     const openCompany = (company: POI) => {
-      // 用户主动打开岗位即「已接管相机」(会 flyTo)(Bug1)
-      userMovedMapRef.current = true;
+      // 2026-08-21 热修:弹卡不动相机——岗位打开仅侧栏详情,不 flyTo、
+      // 不置位 userMovedMapRef(同 handlePickSaved 注释)。
       setSelectedId(company.id);
       setDetailPoi(company);
       setRailPanel("explore");
@@ -1460,10 +1451,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       } else {
         setOpenPositionId(null);
         setMobileJd(null);
-      }
-      const loc = company.location;
-      if (loc && typeof loc.lng === "number" && typeof loc.lat === "number") {
-        flyToLocation(mapInstance.current, loc.lng, loc.lat);
       }
     };
     const local =
@@ -1630,18 +1617,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     setMobileSuggestIndex(-1);
   }, [query, suggestions.length]);
 
-  // 选择建议 → 定位；招聘建议打开对应公司（服务端目录未加载的公司经
-  // /api/pois/[id] 拉详情）；domain 建议本地已加载打开富卡，否则用 location
-  // upsert 会话卡（不再依赖客户端 catalog 里有没有——之前 /api/suggest 匹配
-  // 全量服务端目录，指向未加载公司时点击无任何反应）；#标签写入筛选插件。
+  // 选择建议 → 招聘建议打开对应公司(服务端目录未加载的公司经 /api/pois/[id]
+  // 拉详情);domain 建议本地已加载打开富卡,否则用 location upsert 会话卡
+  // (不再依赖客户端 catalog 里有没有——之前 /api/suggest 匹配全量服务端目录,
+  // 指向未加载公司时点击无任何反应);#标签写入筛选插件。
+  // 2026-08-21 热修:不再 flyTo、不置位 userMovedMapRef——弹卡 = 侧控栏纯视图,
+  // 不动相机(选择 ≠ 放弃定位;flyTo 叠加渲染尖峰杀渲染进程,实测同款崩溃)。
   const handleSelectSuggestion = useCallback((s: SearchSuggestion) => {
-    // 选择建议即「用户已接管相机」(会 flyTo):与地图手势同口径,
-    // 否则 geolocation 晚 resolve 会抢占相机(Bug1 竞态盲区)
-    userMovedMapRef.current = true;
-    if (s.location) {
-      flyToLocation(mapInstance.current, s.location.lng, s.location.lat);
-      setMapCenter({ lng: s.location.lng, lat: s.location.lat });
-    }
     if (s.kind === "place" && (s.name.startsWith("#") || s.id?.startsWith("tag-"))) {
       const tagged = applyTagSuggestion({ query, filters }, s.name);
       if (tagged.applied) {
@@ -1886,19 +1868,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       pois.find((p) => p.id === ent.id) ??
       INTERNSHIP_SEED.find((p) => p.id === ent.id);
     const openDetail = (poi: POI) => {
-      // 用户主动选择最近条目即「已接管相机」(会 flyTo)(Bug1)
-      userMovedMapRef.current = true;
+      // 2026-08-21 热修:弹卡不动相机——最近条目回放仅侧栏详情 + 搜索回放,
+      // 不 flyTo、不置位 userMovedMapRef(同 handlePickSaved 注释)。
       setSelectedId(poi.id);
       setDetailPoi(poi);
       setOpenPositionId(null);
       setMobileJd(null);
       setDrawer("full");
-      const loc = poi.location;
-      if (loc && typeof loc.lng === "number" && typeof loc.lat === "number") {
-        flyToLocation(mapInstance.current, loc.lng, loc.lat);
-      } else if (typeof ent.lng === "number" && typeof ent.lat === "number") {
-        flyToLocation(mapInstance.current, ent.lng, ent.lat);
-      }
     };
     if (local) {
       openDetail(local);
