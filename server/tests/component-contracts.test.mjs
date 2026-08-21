@@ -607,9 +607,10 @@ test('useSavedLayer owns saved overlay state, derivation and guest gate (QA scan
   assert.match(shell, /const savedLayerEnabled = savedOverlay && Boolean\(user\);/);
   assert.match(shell, /mutexVisibleIds\(markerPois, overlayIds, savedLayerEnabled\)/);
   assert.match(shell, /if \(overlayIds\.has\(p\.id\)\) return true; \/\/ 收藏 overlay 恒显示/);
-  // 列表互斥:桌面 Explore 与移动抽屉在互斥开时都切收藏列表(关时恢复搜索管线)
+  // 列表互斥(2026-08-22 卡片化):桌面 Explore 与移动抽屉在互斥开时都切收藏
+  // 卡片列表(POIList + POICard,与普通模式同组件/同样式;对比表保留账户页)
   assert.match(shell, /savedMode=\{savedLayerEnabled\}/);
-  assert.match(shell, /savedLayerEnabled \? \(\s*\/\* 收藏图层互斥开:移动 Explore 列表切为收藏列表/);
+  assert.match(shell, /savedLayerEnabled \? \(\s*\/\* 收藏图层互斥开:移动 Explore 列表切为收藏卡片列表/);
 });
 
 test('work no-category empty state renders candidate category rows wired to filters', () => {

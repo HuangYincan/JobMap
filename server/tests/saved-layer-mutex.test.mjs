@@ -145,18 +145,23 @@ test('map-shell:互斥接线(池不变 + 可见性互斥 + 聚合/列表互斥)'
   // 桌面 Explore 列表互斥:SecondarySidebar 收 savedMode 接线
   assert.match(shell, /savedMode=\{savedLayerEnabled\}/);
   assert.match(shell, /onPickSaved=\{handlePickSaved\}/);
-  // 移动抽屉列表互斥:互斥开时 Explore sheet 切 SavedList
-  assert.match(shell, /收藏图层互斥开:移动 Explore 列表切为收藏列表/);
-  assert.match(shell, /<SavedList\s+items=\{savedPlaces\}/);
+  // 移动抽屉列表互斥(2026-08-22 卡片化):互斥开时 Explore sheet 切 POIList 卡片
+  assert.match(shell, /收藏图层互斥开:移动 Explore 列表切为收藏卡片列表/);
+  assert.match(shell, /<POIList\s+pois=\{savedListPois\}/);
+  // 卡片右上「移除收藏」:POIList 收 onRemove(poiId 适配)
+  assert.match(shell, /onRemove=\{user \? \(poi\) => handleRemoveSaved\(poi\.id\) : undefined\}/);
 });
 
-test('secondary-sidebar:互斥开时列表区切收藏列表(SavedList),关时恢复 POIList', () => {
+test('secondary-sidebar:互斥开时列表区切收藏卡片列表(POIList),关时恢复 POIList', () => {
   const sidebar = src('components/secondary-sidebar.tsx');
   assert.match(sidebar, /savedMode\?: boolean/);
   assert.match(sidebar, /savedItems\?: SavedPlace\[\]/);
   assert.match(sidebar, /onPickSaved\?: \(place: SavedPlace\) => void/);
-  assert.match(sidebar, /savedMode \? \(\s*\/\* 收藏图层互斥开:列表区切换为收藏列表/);
-  assert.match(sidebar, /<SavedList\s+items=\{savedItems\}/);
+  assert.match(sidebar, /savedMode \? \(\s*\/\* 收藏图层互斥开:列表区切换为收藏卡片列表/);
+  assert.match(sidebar, /<POIList\s+pois=\{savedListPois\}/);
+  // 不再消费 SavedList(对比表保留在账户页):动态导入与 JSX 渲染已移除
+  assert.doesNotMatch(sidebar, /const SavedList = dynamic/);
+  assert.doesNotMatch(sidebar, /<SavedList/);
 });
 
 test('saved-overlay:契约注释更新为互斥语义 + mutexVisibleIds 导出', () => {
