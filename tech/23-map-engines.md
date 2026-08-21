@@ -1107,3 +1107,90 @@ TMap 下 favicon.im 加载失败 → console 零「Image加载失败」报错;�
 - 遗留:真机浏览器验证(dev server + Playwright)留待 boss 收尾复验;聚合级
   content+icon 双形态同传(BMapGL 上 GL 纹理 + msTarget DOM 同位双渲染,DOM 覆盖
   GL,视觉重合)为已知无害冗余,零改动。
+## ws-c 回填:腾讯 POI 锚点契约修正(anchor = -offset)+ TMap icon 候选链(2026-08-22,fix/tencent-poi-icon)
+
+> 来源:批次 `20260822-boss-engine-polish-2` ws-c(bug 3「腾讯的 poi 会坐标偏移」+
+> bug 4「腾讯的 poi 不带 icon」)。headless worker 无浏览器,核查为**读码 +
+> 纯函数级断言**(SDK 渲染公式沿用 ws-a/ws-c-baidu 的实包源码核实结论)。
+
+### 锚点公式修正(bug 3 根因实锤)
+
+**契约 offset 语义**(AMap content 路径,多引擎对齐的基准):内容元素左上角置于
+`屏幕位 + offset`。证据链:
+
+- map-markers 的 content 补偿公式(负 margin 跨状态收回锚点)只在上左角锚定
+  下成立;生产 AMap 图钉底尖/徽章中心钉点行为数月用户验证,与上左角语义吻合;
+- 百度引擎 ws-c 段 SDK 源码核实:`icon.anchor = -契约 offset`(GL 纹理 quad
+  imageTopLeft = 屏幕位 - anchor,DOM msTarget = 屏幕位 + offset - anchor,
+  双路径一致要求 anchor = -offset),锚点缺省 (0,0) 上左角;
+- TMap SDK(v1.8.0.2,ws-a 核实):imageTopLeft = 屏幕位 - anchor。
+
+联立得 **TMap anchor = -offset**,与图标尺寸无关。**旧公式 (w/2-ox, h-oy) 错误**
+(ws-a 曾按「底部中心 + 整图位移」推导,与 AMap 实际语义不符),三形态偏移量:
+
+| 形态 | offset | 旧 anchor(错) | 新 anchor(对) | 几何效果 |
+|---|---|---|---|---|
+| 图钉 32×40 | [-16,-40] | (32,80) | **(16,40)** | 旧:底尖相对地理点上移左上 16/40px |
+| 徽章 40×40 | [-20,-20] | (40,60) | **(20,20)** | 旧:中心上移左上 20/40px |
+| 聚合 54×54 | [-27,-27] | (54,81) | **(27,27)** | 旧:中心上移左上 27/54px |
+
+聚合徽章在 zoom≤8 城市视野下 27/54px 偏移肉眼可见 —— 即用户 bug 3 症状
+(高德/腾讯同地理点,腾讯 marker 漂向左上)。修正后与 AMap/Baidu 逐像素一致。
+
+**疑点逐项核查结论**:
+
+- **a(聚合徽章 size/offset)**:buildOffset 恒 [-s/2,-s/2] 与 icon [s,s] 匹配;
+  anchor = -offset 后恒 (s/2,s/2) 中心钉点,与尺寸无关(旧公式 s 越大偏越多);
+- **b(content+icon 并存)**:TMap 只渲染 icon(content 不写 geometry);
+  offset [-16,-40] + 32×40 图钉 icon → anchor (16,40) 底尖精确钉点;
+- **c(状态尺寸 40/46/52)**:map-markers 的 TMap icon.size 恒 [40,40](状态
+  视觉仅存在于 AMap content),且 anchor 与尺寸无关 → 选中/高亮态不生成新
+  styleId、锚点零漂移。已知取舍:TMap 下状态视觉(放大/强调环)仍只体现为
+  zIndex 层序,icon 尺寸不随状态变(ws-a 遗留,边界外)。
+
+**Domain 图钉补 icon**(同段):TMap 下 Domain POI 此前 content-only → SDK
+默认红色 pin(锚点错位 + 视觉与高德不一致);现补 dataURL 图钉 SVG icon
+(32×40,与 AMap 同视觉),底尖经 anchor (16,40) 精确钉点,本地数据零 CORS 风险。
+
+### icon 候选链(bug 4)
+
+favicon.im 无 CORS 头 → TMap 纹理恒失败 → ws-e 降级 emoji 徽章(用户看为
+「不带 icon」);icon.horse 实测 `access-control-allow-origin: *`(HTTP 200)
+→ 可作 TMap 纹理。TMap icon 路径补**候选链**(AMap HTML 徽章已有内联
+onerror fallbackUrls;TMap icon 路径此前只有单一 src,预检失败直接降级):
+
+- 纯函数 `resolveTMapIconSrc(logoUrl, careerUrl, fallbackSrc)`(map-markers):
+  logoUrl 本地/已 ok → 直通;失败 → 依次试 `faviconCandidatesFromUrl(careerUrl)`
+  候选(跳过与 logoUrl 相同者,复用 company-logo.ts 候选生成,零重复实现);
+  首个本地/已 ok 者作 icon.src;未预检候选返回 toPreflight 由调用方后台预检
+  (失败记忆化,下次重建自然升级);全败/无 logoUrl → fallback emoji 徽章;
+- 预检合并触发:logoUrl 与全部 unknown 候选一次预检(升级一次重建到位,
+  不逐层等待);无 careerUrl 保持 ws-e 行为(缺 logo 不试候选,零预检)。
+
+### 测试(map-engine-tencent.test.mjs,58→67)
+
+- 纯函数:anchor=-offset 契约三形态落点、状态尺寸 40/46/52 零漂移、缩放无关
+  (屏幕位+offset 恒等式,2 级缩放);resolveTMapIconSrc 本地直通/unknown 预检
+  清单/候选去重;
+- 候选链控制器级(假 tencent view + Image mock):fail→icon.horse 作 src、
+  unknown→徽章+双预检+重建升级真 logo、ok 直通不试候选、全败记忆化不重试、
+  无 careerUrl 保持 ws-e;
+- Domain POI 图钉 icon(32×40 + [-16,-40])零预检;
+- 控制器×引擎集成(真 TencentView + MockMultiMarker):徽章/图钉/聚合
+  MarkerStyle anchor 钉死 (20,20)/(16,40)/(27,27)。
+
+### 验收(离线)
+
+| 项 | 结果 |
+|---|---|
+| map-engine-tencent.test.mjs | ✅ 67/67(58 + 9)|
+| 全量 npm test | ✅ 1382 pass / 2 skip / 0 fail |
+| typecheck / git diff --check | ✅ |
+| make docs-check | 待跑 |
+
+真机冒烟(boss 合并后):TMap 下公司 POI 显示 icon.horse 真 logo(favicon.im
+公司)且 console 无 CORS 报错;缩放前后 marker 钉同一地理点(与高德对照)。
+
+**遗留(边界外)**:TMap 状态视觉(选中/高亮)仅 zIndex 层序;距离圈手柄
+(distanceHandle,map-shell,契约外 duck-type)在 TMap 下仍为 SDK 默认 pin
+(内容不渲染,map-shell 不在本 WS 边界)。
