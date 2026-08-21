@@ -146,9 +146,9 @@ export function preflightRemoteIcon(src: string): void {
     resultCache.set(src, 'fail');
     return;
   }
-  pending.set(src, null as unknown as HTMLImageElement);
+  let img: HTMLImageElement;
   try {
-    const img = new Image();
+    img = new Image();
     pending.set(src, img); // 防 GC:onload/onerror 触发前保持 Image 引用
     img.crossOrigin = 'anonymous';
     img.referrerPolicy = 'no-referrer';
