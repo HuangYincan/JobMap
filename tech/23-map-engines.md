@@ -1005,3 +1005,54 @@ TMap 下 favicon.im 加载失败 → console 零「Image加载失败」报错;�
 - `map-engine-baidu.test.mjs` 两项 ws-e 防御测试同步改 Image mock;
 - 注意:Node ≥22 暴露实验性全局 sessionStorage,测试 beforeEach 需
   removeItem(FAIL_KEY) 隔离,否则上一用例的防抖写入会污染下一用例。
+
+## ws-b 回填:百度 POI 单点级核查 + 定位真实化(2026-08-22,fix/baidu-poi-locate,bug 2 单点级 + bug 5)
+
+> 用户 bug 2「百度的 poi 无法正确加载」:boss 实测聚合级别(zoom≤8,dataURL 图标路径)
+> 渲染正常(30 蓝簇,无报错),**单点级别(zoom>8,公司徽章 content 路径)未验证**。
+> 本 WS 读码 + 既有 SDK 源码核实结论 + 离线测试钉住;bug 5 百度定位真实化(IP → 浏览器 GPS)。
+
+### POI 单点级(z>8)核查结论:content 路径三环节全部正确(无需代码改动)
+
+- **渲染/位置**:公司 POI 走 `createMarker` content 路径 —— `setContent(徽章 HTML)` 进
+  msTarget DOM + 透明 1×1 锚点图标(`icon.anchor = -契约 offset`,徽章 [-20,-20] →
+  anchor (20,20))→ 徽章中心对齐点位。公式(ws-c bug 7 SDK 源码核实):msTarget
+  `= 屏幕位 + marker.offset - icon.anchor`,marker 构造 offset 不参与渲染定位 →
+  anchor (20,20) 恰好把 40px 徽章左上角放到 屏幕位 + (-20,-20),中心 = 点位;
+- **点击**:marker 模块把 click 绑在 msTarget 上,徽章子元素(<img>/emoji span)事件
+  冒泡可达;离线测试 `raw.trigger('click')` 断言 onClick 命中;
+- **favicon.im 403 降级链**:BMapGL `setContent` 是 innerHTML(SDK 不覆写/不净化)→
+  内联 `onerror` 属性原样保留;候选链逻辑(favicon.im 403 → icon.horse → 隐藏 img
+  显示 emoji)逐字模拟执行验证正确(含空候选、多候选按序、候选耗尽三态)。
+  **结论:单点级无需引擎代码改动** —— 前一轮 ws-c(bug 7 锚点)已修复根因,本轮以
+  测试 + 文档钉住(此前零覆盖的 onerror 链语义)。
+
+### 定位真实化(bug 5):浏览器高精度 GPS 优先,SDK Geolocation 降级为 fallback
+
+- **根因**:`BMapGL.Geolocation.getCurrentPosition()` 默认走 **IP 定位**(城市级精度,
+  不是真实位置);AMap 用 `AMap.Geolocation({enableHighAccuracy:true})`(浏览器 GPS),
+  腾讯已改 browserPosition —— 百度对齐同一模式;
+- **改造**(仅 `getCurrentPosition` 段):浏览器 `navigator.geolocation` 优先,
+  `{ enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }`(GPS 高精度 +
+  禁止缓存旧位;腾讯此前 `maximumAge: 60000` 缓存旧位为同类问题,ws-d 对齐);
+- **坐标链(「蓝点落在真实位置」验收关键)**:浏览器输出 wgs84 → **wgs84→gcj02**
+  (引擎契约输出 gcj02;蓝点/相机经 createMarker / setCenter 的 gcj02→bd09 落 bd09
+  底图 = wgs84→gcj02→bd09,恰为百度官方 wgs84→bd09 两步式 → 蓝点落在真实位置)。
+  ⚠️ 若此处直接输出 bd09,契约层会当 gcj02 再转一次 → 引入 ~700m 二次偏移;
+- **SDK Geolocation 保留为 fallback**(浏览器定位失败/被拒/无 API 时;bd09→gcj02
+  路径不变);浏览器定位不依赖 BMapGL 命名空间,引擎未加载也可用;
+- **测试**(map-engine-baidu.test.mjs +5,64→69):浏览器优先 + 选项断言
+  (enableHighAccuracy/maximumAge:0)+ wgs84→gcj02 偏移断言 + SDK 不构造;浏览器
+  被拒/空结果/无 navigator → SDK fallback(bd09→gcj02);双通道失败 → null;
+  node 的 navigator 是 getter-only 自有属性 → mock 用 defineProperty 覆盖 +
+  描述符还原。
+
+### 测试与文档
+
+- `server/tests/map-engine-baidu.test.mjs` 新增第 8 节 5 项:单点级 content 徽章
+  契约形状(原样进 msTarget + 锚点 (20,20) + 点击可达 + data-fb/onerror 属性完好)、
+  onerror 链逐字模拟(favicon.im → icon.horse → emoji)、空候选/多候选三态、
+  定位浏览器优先、定位 SDK fallback 与双失败;
+- 遗留:真机浏览器验证(dev server + Playwright)留待 boss 收尾复验;聚合级
+  content+icon 双形态同传(BMapGL 上 GL 纹理 + msTarget DOM 同位双渲染,DOM 覆盖
+  GL,视觉重合)为已知无害冗余,零改动。
