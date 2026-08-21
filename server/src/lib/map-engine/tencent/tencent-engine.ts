@@ -11,10 +11,17 @@
 //   TMap.LatLng(lat, lng) —— **纬度在前**(glMap 地图展示)
 // - 视图方法:setCenter/getCenter、setZoom/getZoom、setPitch/getPitch、
 //   setRotation/getRotation、setBounds(LatLngBounds)、flyTo({center,zoom,duration})、
-//   setBaseMap、on/off、addControl(control)、destroy
+//   setBaseMap、on/off、addControl(control)、destroy、getContainer()
+// - 默认控件(SDK v1.8.0.2 源码核实):Map 构造 options `showControl: false` 时
+//   不再创建 zoom/scale 默认控件(版权标识仍保留——ToS 署名要求);
+//   setShowControl/getShowControl 仅读写标志,构造后调用不摘除已建控件 →
+//   构造后补防御用 getControl(id)/removeControl(ctrl)(控件 id:zoom/scale)
+// - 就绪事件:Map **无 ready 事件**;`idle` = 地图空闲事件(底层 moveend/zoomend
+//   后 300ms debounce 触发,首次渲染完成后会触发)。无同步就绪 API →
+//   createView 内监听 idle(预留 ready)等待就绪,3s 超时兜底不阻塞
 // - LatLngBounds(sw: LatLng, ne: LatLng);getWest/getSouth/getEast/getNorth
 // - Marker:{ position, map, content, offset:{x,y}, zIndex };移除 = setMap(null)
-//   (glMarker 标注点;无 remove 方法)
+//   (glMarker 标注点;无 remove 方法;zIndex → DOM overlay style.zIndex)
 // - Circle:{ center, radius, map, strokeColor, fillColor, fillOpacity }(glCircle)
 // - 底图样式:vector=标准、raster=栅格(卫星);暗色 styleType:'dark' 存在但契约
 //   MapStyleId 无此项 → 不暴露(glMap 底图)
@@ -59,6 +66,10 @@ const TENCENT_KEY_VAR = 'NEXT_PUBLIC_TENCENT_JSAPI_KEY';
 const TENCENT_DEFAULT_RADIUS = 5000;
 /** WebService 单页上限(官方文档 page_size 1-20) */
 const TENCENT_PAGE_SIZE_MAX = 20;
+/** 地图就绪等待超时(ms):TMap 异步初始化,无同步就绪 API;超时兜底不阻塞调用方 */
+const TENCENT_MAP_READY_TIMEOUT_MS = 3000;
+/** Marker 默认 zIndex:未显式传入时的合理默认(底图之上可见;显式值优先) */
+const TENCENT_MARKER_DEFAULT_ZINDEX = 10;
 
 function getKey(): string {
   // 裸字面量:Next 构建期只做静态替换,process.env 括号动态访问浏览器端恒 undefined
@@ -100,6 +111,95 @@ const EVENT_NAME_MAP: Record<MapViewEvent, string> = {
   moveend: 'idle',
   complete: 'idle',
 };
+
+// ------------------------------------------------------------
+// 就绪等待 / 默认控件禁用(TMap 异步初始化 + 默认控件遮挡防御)
+// ------------------------------------------------------------
+
+/**
+ * 等待 TMap 地图就绪再返回(TMap 异步初始化:ready 前创建 Marker 可能丢失/不可见)。
+ * SDK v1.8.0.2 核实:Map 无 ready 事件 → 监听 `idle`(首次渲染完成后触发,
+ * 底层 moveend/zoomend 后 300ms debounce);`ready` 一并预留(未来版本);
+ * 超时兜底 TENCENT_MAP_READY_TIMEOUT_MS 不阻塞调用方。事件系统不可用 → 立即放行。
+ */
+function waitForMapReady(raw: any): Promise<void> {
+  if (typeof raw?.on !== 'function') return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      if (timer !== undefined) clearTimeout(timer);
+      try {
+        raw.off?.('ready', done);
+        raw.off?.('idle', done);
+      } catch {
+        // 解绑失败不影响就绪语义
+      }
+      resolve();
+    };
+    try {
+      raw.on('ready', done);
+      raw.on('idle', done);
+    } catch {
+      // 事件系统异常:无法等待 → 直接放行(不阻塞 createView)
+      done();
+      return;
+    }
+    timer = setTimeout(done, TENCENT_MAP_READY_TIMEOUT_MS);
+  });
+}
+
+/** DOM 兜底:隐藏 TMap 控件层(不动 canvas / marker overlay);版权标识保留可见 */
+function hideControlDom(raw: any): void {
+  const container = raw?.getContainer?.();
+  if (!container || typeof container.querySelectorAll !== 'function') return;
+  try {
+    // 交互控件(缩放/比例尺/旋转等):整体隐藏
+    const interactive = container.querySelectorAll(
+      '[class*="control"], [class*="zoom"], [class*="scale"], [class*="rotate"]',
+    );
+    for (const el of interactive) {
+      el.style.display = 'none';
+      el.style.pointerEvents = 'none';
+    }
+    // 版权/logo:保留可见(ToS 署名),只解除点击拦截
+    const attribution = container.querySelectorAll(
+      '[class*="copyright"], [class*="logo"], [class*="attribution"]',
+    );
+    for (const el of attribution) el.style.pointerEvents = 'none';
+  } catch {
+    // DOM 探测失败静默:不影响主流程
+  }
+}
+
+/**
+ * 禁用 TMap 默认控件(缩放按钮等内部 DOM z-index 高于 map-shell UI,遮挡/拦截点击)。
+ * 多路径防御:
+ * 1) 构造 options 传 showControl:false(官方核实:不再创建 zoom/scale,版权保留)
+ * 2) 构造后 getControl('zoom'|'scale') + removeControl 摘除(老 SDK 忽略构造选项时)
+ * 3) setShowControl(false) 阻止后续默认控件重建
+ * 4) DOM 兜底隐藏控件层
+ */
+function disableDefaultControls(raw: any): void {
+  try {
+    if (typeof raw?.getControl === 'function' && typeof raw?.removeControl === 'function') {
+      for (const id of ['zoom', 'scale']) {
+        const ctrl = raw.getControl(id);
+        if (ctrl) raw.removeControl(ctrl);
+      }
+    }
+  } catch (err) {
+    console.warn('[map-engine] TMap 默认控件摘除失败(removeControl)', err);
+  }
+  try {
+    if (typeof raw?.setShowControl === 'function') raw.setShowControl(false);
+  } catch (err) {
+    console.warn('[map-engine] TMap setShowControl(false) 失败', err);
+  }
+  hideControlDom(raw);
+}
 
 // ------------------------------------------------------------
 // 视图门面:MapView 契约 → TMap.Map 实例
@@ -200,14 +300,24 @@ class TencentView implements MapView {
   }
 
   createMarker(opts: MapMarkerOptions): MapMarker {
-    const raw = new this.tmap.Marker({
-      position: toTMapLatLng(this.tmap, opts.position),
-      ...(opts.content !== undefined ? { content: opts.content } : {}),
-      // 契约 offset 为 [x, y] 元组 → TMap offset 对象 {x, y}(glMarker 标注偏移)
-      ...(opts.offset ? { offset: { x: opts.offset[0], y: opts.offset[1] } } : {}),
-      ...(opts.zIndex !== undefined ? { zIndex: opts.zIndex } : {}),
-      map: this.raw,
-    });
+    let raw: any;
+    try {
+      raw = new this.tmap.Marker({
+        position: toTMapLatLng(this.tmap, opts.position),
+        ...(opts.content !== undefined ? { content: opts.content } : {}),
+        // 契约 offset 为 [x, y] 元组 → TMap offset 对象 {x, y}(glMarker 标注偏移)
+        ...(opts.offset ? { offset: { x: opts.offset[0], y: opts.offset[1] } } : {}),
+        // zIndex 显式给合理默认(TMap DOM overlay marker 未传时层级不可控;
+        // 保证纯 position POI 在底图之上可见;显式 zIndex 仍优先)
+        zIndex: opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX,
+        map: this.raw,
+      });
+    } catch (err) {
+      // 构造失败必须可观测(map-markers 的 try/catch 会吞掉异常)→ 打日志后
+      // rethrow,保留 addMarker 的簿记语义(remove 记账仍由调用方处理)
+      console.error('[map-engine] TMap Marker 创建失败', err);
+      throw err;
+    }
     if (opts.onClick) raw.on('click', opts.onClick);
     return {
       raw,
@@ -462,7 +572,14 @@ export const TENCENT_ENGINE: MapEngine = {
       pitch: opts.pitch ?? 0,
       rotation: opts.rotation ?? 0,
       baseMap: styleToBaseMap(opts.style),
+      // 禁用 TMap 默认控件(SDK v1.8.0.2 核实:false 时不创建 zoom/scale 默认
+      // 控件,版权标识保留):避免其内部 DOM z-index 高于 map-shell UI 遮挡点击
+      showControl: false,
     });
+    // 构造后补防御(老 SDK 忽略 showControl 时摘除已建控件)+ 等待地图就绪
+    // (异步初始化;ready 前建 Marker 可能丢失/不可见)
+    disableDefaultControls(raw);
+    await waitForMapReady(raw);
     return new TencentView(tmap, raw, TENCENT_ENGINE);
   },
   search: searchProvider,
