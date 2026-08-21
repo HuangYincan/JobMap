@@ -26,11 +26,21 @@
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import type { LngLat, MapEngine, MapEngineId, MapStyleId, MapView } from "@/lib/map-engine/types";
-import { registerEngine, resolveEngine, getEngine } from "@/lib/map-engine/engine-registry";
+import {
+  registerEngine,
+  resolveEngine,
+  getEngine,
+  getConfiguredEngines,
+} from "@/lib/map-engine/engine-registry";
 import {
   readEnginePreference,
   writeEnginePreference,
 } from "@/lib/map-engine/engine-preference";
+// 挂载 + 失败回退(ws-8):偏好引擎 load/createView 失败 → 按 ENGINE_PRIORITY
+// 序回退其余已配置引擎。纯函数在 lib(无 @ 别名,node 测试可直接 import),
+// 本 hook 接线并 re-export(与 saved-camera-sync 同款可测性模式)。
+import { mountEngineView } from "@/lib/map-engine/mount";
+export { mountEngineView } from "@/lib/map-engine/mount";
 import { setActiveSearchProvider } from "@/lib/poi-service";
 import {
   switchMapEngine,
@@ -290,28 +300,39 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
     // 视口兜底搜索/建议回退随活跃引擎路由(引擎切换后不再硬绑 amap-api)
     setActiveSearchProvider(resolved.search);
 
-    resolved
-      .load()
-      .then(() => {
-        if (cancelled) return null;
-        return resolved.createView({ container, center, zoom, style });
-      })
+    // 挂载 + 失败回退(ws-8):偏好引擎 load/createView 失败 → 自动回退其余
+    // 已配置引擎(ENGINE_PRIORITY 序)重试,修复「偏好指向故障引擎时刷新即
+    // 空白、只 warn 无视图」的缺口。回退成功 → engine/search 状态随实际
+    // 挂载引擎更新;全部失败 → 保持空视图 + warn(调用方回退 CSS fallback)。
+    // 挂载/回退均不写偏好(偏好由手动切换专属,见 switchEngine 成功路径;
+    // 挂载回退不覆盖 sessionStorage——故障可能是瞬时的,静默改写用户选择
+    // 会让偏好永久丢失,取舍见 23-map-engines.md)。
+    mountEngineView(resolved, getConfiguredEngines(), {
+      container,
+      center,
+      zoom,
+      style,
+      isCancelled: () => cancelled,
+      isViewTaken: () => Boolean(viewRef.current),
+    })
       .then((created) => {
-        if (!created) return;
+        if (!created) return; // 取消/被接管:helper 已销毁或未创建,零落地
         if (cancelled) {
-          // teardown 恰在 createView resolve 后发生(挂载/切换竞态缺口):
-          // 已创建视图无人认领,直接销毁,不留双实例/泄漏
+          // teardown 竞态双保险(主路径同口径):已建视图销毁,不落地
           created.destroy();
           return;
         }
         if (viewRef.current) {
-          // 引擎切换已抢先落地(switchEngine 先行):挂载创建的同容器视图
-          // 不再需要,直接销毁,避免双地图实例
+          // 双保险(与主路径同口径):切换抢先落地 → 同容器视图销毁
           created.destroy();
           return;
         }
         viewRef.current = created;
         setView(created);
+        // 回退成功后 engine/search 状态落到实际挂载引擎(首引擎成功时
+        // 同引用,setEngine/setActiveSearchProvider 均为 no-op)
+        setEngine(created.engine);
+        setActiveSearchProvider(created.engine.search);
       })
       .catch((err) => {
         console.warn("[use-map-engine] map engine load/createView failed:", err);
