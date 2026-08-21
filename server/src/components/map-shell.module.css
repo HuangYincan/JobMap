@@ -71,6 +71,14 @@
   display: none !important;
 }
 
+/* 腾讯水印 DOM 隐藏(用户真机 2026-08-22:logo_def.png + ©2026 Tencent 文字;
+   SDK v1.8.0.2 源码核实类名:img[src*="logo_def.png"] + div.logo-text;与
+   .amap-copyright 同款模式,是引擎 hideControlDom 隐藏之外的双保险) */
+.mapCanvas :global(img[src*="logo_def.png"]),
+.mapCanvas :global(.logo-text) {
+  display: none !important;
+}
+
 /* 百度 BMapGL 版权/默认控件隐藏:.BMap_cpyCtrl 版权右下、.BMap_omView 3D 指北针
    左上(z-index 1000 量级,盖过 app UI 拦截点击)、.BMap_zoomCtrl 默认缩放左上;
    .BMap_scaleCtrl 为引擎 addControl 自建比例尺,保留 */

@@ -1763,12 +1763,18 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [catalog, pois, mode, recordSearch, query, filters]);
 
   const handleZoomIn = () => {
-    // zoomIn/zoomOut 不在 MapView 契约:经逃生舱 raw 直连(TODO 限期迁移)
-    (mapInstance.current?.raw as { zoomIn?: () => void } | null)?.zoomIn?.();
+    // zoomIn/zoomOut 不在 MapView 契约:TMap raw 无 zoomIn/zoomOut → 点击无效
+    // (bug 7)。契约化:view.setZoom(getState().zoom ± 1)(2026-08-22 ws-b;
+    // 按钮/交互不变,只改实现)
+    const view = mapInstance.current;
+    if (!view) return;
+    view.setZoom((view.getState().zoom ?? 15) + 1);
   };
 
   const handleZoomOut = () => {
-    (mapInstance.current?.raw as { zoomOut?: () => void } | null)?.zoomOut?.();
+    const view = mapInstance.current;
+    if (!view) return;
+    view.setZoom((view.getState().zoom ?? 15) - 1);
   };
 
   const handleResetCompass = () => {

@@ -497,3 +497,83 @@ sessionStorage 偏好 = 百度(故障引擎)→ 刷新页面 → 挂载切换失
 不可用;远程 logoUrl 经 GL 纹理加载的 CORS 表现待真机核实(失败时图标缺失,
 AMap 的 onerror 回退链在 icon 路径不可用);徽章 dataURL 图标阴影(SVG filter)
 未做,视觉与 HTML 版差阴影一层。
+
+## ws-b 回填:样式(卫星/深色)+ 水印 + 比例尺 + 右下角控制(2026-08-22,feature/tmap-style-controls)
+
+> SDK v1.8.0.2 **实包源码核实**(map.qq.com/api/gljs?v=1.exp,非文档猜测;此前
+> 「styleType:'dark' 存在」「TMap.control.ScaleControl」两条记录均与实际 SDK 不符,
+> 以本节为准)。
+
+### 样式:暗色(深色)的正确配置
+
+- **baseMap 无 styleType 字段**(上文样式矩阵「styleType:'dark' 存在」有误);
+  `baseMap.type` 合法值仅 `vector/satellite/traffic/handdraw/oversea`
+  (DEFAULT_BASEMAP 常量);
+- **暗色 = Map 构造选项 `mapStyleId`**,取值见 STYLE_ID 常量
+  `{DEFAULT:0, DARK:1, LIGHT:2, GAME:3}`;`'DARK'` → 矢量暗色底图层
+  `Tencent.Normal.Dark`(LITEMODE_LAYER_TYPE 常量,`_addLayerByBaseMapInfo`
+  `"DARK" === this._mapStyleId` 分派);运行期切换 `map.setMapStyleId(id)`
+  (清底图层 + 按新 styleId 重建);
+- 引擎映射(契约 MapStyleId 三值语义不变):`whitesmoke`(UI「深色」按钮与
+  系统深色偏好的 value,layers-panel 桌面 + 移动样式行均以 whitesmoke 承载
+  「深色」)→ 暗色矢量底图(mapStyleId 'DARK');`satellite` → `raster`;
+  `normal` → `vector`;createView 构造期按初始样式透传 mapStyleId
+  (初始 whitesmoke 即暗色,非空转);
+- 卫星核实:`raster` 实现正确(SDK satellite 底图层,审图号 GS(2025)5644号);
+  用户「卫星、深色没实现」中**深色**才是真缺口(旧实现 whitesmoke 回退
+  normal),本轮一并修复;老 SDK 无 `setMapStyleId` → 降级 normal + warn
+  (不假装实现)。
+
+### 水印隐藏与 ToS 权衡
+
+- 用户明确要求去掉腾讯水印。水印 DOM 经 SDK 源码核实:logo 控件 =
+  `img[src*="logo_def.png"]`(URL mapapi.qq.com/web/jsapi/logo/logo_def.png)
+  + `div.logo-text`(innerText = `©2026 Tencent - GS(2026)1190号`,审图号来自
+  loader `mapApprovalNumber.vector`);
+- **ToS 权衡(2026-08-22 决策)**:地图 SDK 通常要求保留版权署名(高德同样有
+  amap-logo/amap-copyright,本项目此前即按惯例隐藏)。用户真机反馈明确要求
+  去掉腾讯水印 → **用户决策优先**:engine `hideControlDom` 对
+  copyright/logo/attribution 类名 `display:none`(顺带解除点击拦截),
+  map-shell.module.css 追加 `img[src*="logo_def.png"]` / `.logo-text` 隐藏
+  (与 .amap-copyright 同款双保险)。如需恢复署名:删除 engine 隐藏段 +
+  CSS 追加块即可,行为不变;
+- 防御面:隐藏选择器只命中 copyright/logo/attribution 类名,自有样式
+  (.dm-cluster 等)不受影响(测试钉住)。
+
+### 比例尺(ScaleControl 真相与自绘降级)
+
+- **根因**:v1.exp(v1.8.0.2)公共命名空间装配表(Yd)只含 Map/LatLng/
+  MultiMarker/MarkerStyle/constants 等,**无 control/Control/ScaleControl**;
+  旧实现 `this.tmap.control ?? this.tmap.Control` 双路径恒失败 → 旧 warn
+  「TMap ScaleControl 不可用,比例尺降级」,比例尺缺失。SDK 内部比例尺类存在
+  但不公开(DOM 类名 `tmap-scale-control/line/text`;自动更新经
+  zoom_changed/scale_changed 事件,onAdd 时挂载);position 内部为数值枚举
+  CONTROL_POSITION(BOTTOM_RIGHT=8),文档字符串 'bottomRight' 是组件文档形态;
+- **修复**:`addControl('scale')` 保留双路径构造(未来 SDK 兼容,位置
+  'bottomRight');不可用时**自绘比例尺降级** —— SDK 同款类名 + 同款公式
+  (Oo/Mo 模块:m/px = 156543.04/scale·cos(lat·π/180)/2^zoom;Eo 档位
+  [2e6,2e6,2e6,2e6,1e6,…,5,2,1] 按 zoom 索引;条宽 = round(g/mpx)−10;
+  文案「N 米 / N 公里」,vo 常量 米/公里),监听 zoom_changed/scale_changed/
+  zoomend/idle 自动更新;位置/偏移与 AMap 引擎同语义('LT'/'LB'/'RT'/'RB' +
+  [x,y] 像素,map-shell duck-type 透传,移动端左上角/桌面左下角);
+  返回 `Promise<{hide,show}>` 与 AMap 引擎同 duck-type(移动端抽屉全开可隐藏);
+  destroy / resize 重建时摘除旧 DOM,无双比例尺(测试钉住);
+- 降级说明一次性 console.info(可观测不刷屏);不再出现「不可用」warn。
+
+### 右下角 zoom 控制契约化(bug 7)
+
+- 根因:`handleZoomIn/handleZoomOut` 经逃生舱 `raw.zoomIn?.()` 直连 —— AMap
+  有 zoomIn/zoomOut,TMap raw 无此方法 → 点击无效;
+- 修复:契约化 `view.setZoom(view.getState().zoom ± 1)`(无视图 guard 保留,
+  按钮视觉/交互不变);component-contracts 契约测试防回归(全库零
+  raw.zoomIn/zoomOut 直连)。
+
+### 测试
+
+- 新 `server/tests/map-engine-tencent-style.test.mjs`(7 用例):卫星/深色
+  setStyle 断言、createView 初始暗色透传、无 setMapStyleId 降级 warn、命名
+  空间双路径、自绘比例尺(类名/公式/事件自动更新/hide-show/destroy 清理/
+  resize 重建去重)、水印隐藏 DOM 类名断言(自有样式不受影响);
+- `component-contracts.test.mjs` 追加 zoom 契约化防回归;既有
+  map-engine-tencent.test.mjs 的 setStyle / addControl 降级 / 版权隐藏三个
+  用例按新语义更新(行为变更的必然结果)。

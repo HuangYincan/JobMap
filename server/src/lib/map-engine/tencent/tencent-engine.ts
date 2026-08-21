@@ -39,8 +39,12 @@
 //   MarkerStyle 仅图片 src,anchor 是唯一像素偏移(imageTopLeft = 屏幕位 - anchor),
 //   geometry.content 仅 GL 文本标签(非 HTML)→ HTML content 降级为默认点 + 一次性 warn
 // - Circle:{ center, radius, map, strokeColor, fillColor, fillOpacity }(glCircle)
-// - 底图样式:vector=标准、raster=栅格(卫星);暗色 styleType:'dark' 存在但契约
-//   MapStyleId 无此项 → 不暴露(glMap 底图)
+// - 底图样式:baseMap.type vector=标准 / raster=栅格(卫星);暗色 = Map 选项
+//   mapStyleId(SDK v1.8.0.2 源码核实:STYLE_ID 常量 {DEFAULT:0, DARK:1,
+//   LIGHT:2, GAME:3},'DARK' → 矢量暗色底图层 Tencent.Normal.Dark;
+//   **baseMap 无 styleType 字段**,旧注释「styleType:'dark' 存在」有误);
+//   运行期 setMapStyleId(id) 切底图层。契约 MapStyleId 语义不变:
+//   whitesmoke(UI「深色」/系统深色偏好的 value)在本引擎映射为暗色矢量底图
 // - 事件:click/zoom/dragend/idle 等;无原生 moveend/zoomchange/complete →
 //   就近映射(见 EVENT_NAME_MAP)
 // - 服务:JS API GL 无内置搜索类,POI 搜索/建议/地理编码走配套 WebService API
@@ -117,13 +121,34 @@ function fromTMapLatLng(ll: any): LngLat | null {
 }
 
 // ------------------------------------------------------------
-// 底图样式:MapStyleId → TMap baseMap(glMap 底图:vector 标准 / raster 卫星)
-// 契约无暗色项;styleType:'dark' 存在但暂不暴露(有需要时经 MapStyleId 扩展)
+// 底图样式:MapStyleId → TMap baseMap + mapStyleId(glMap 底图)
+// SDK v1.8.0.2 源码核实(2026-08-22 ws-b):
+// - baseMap.type 合法值仅 vector/satellite/traffic/handdraw/oversea
+//   (DEFAULT_BASEMAP 常量),**无 styleType 字段**(旧注释「styleType:'dark'
+//   存在」有误);
+// - 暗色 = 独立 Map 选项 mapStyleId(STYLE_ID 常量 {DEFAULT:0,DARK:1,LIGHT:2,
+//   GAME:3},'DARK' → 矢量暗色底图层 Tencent.Normal.Dark,见
+//   _addLayerByBaseMapInfo);运行期经 setMapStyleId(id) 切换底图层;
+// - 契约 MapStyleId 语义不变:whitesmoke(UI「深色」按钮 / 系统深色偏好的
+//   value,见 map-shell layers-panel 样式行)在本引擎映射为暗色矢量底图
 // ------------------------------------------------------------
 
 function styleToBaseMap(style: MapStyleId): { type: string } {
   return { type: style === 'satellite' ? 'raster' : 'vector' };
 }
+
+/** 暗色样式 → TMap mapStyleId 选项(见上注释;返回 undefined = 不传,SDK 默认) */
+function styleToMapStyleId(style: MapStyleId): string | undefined {
+  return style === 'whitesmoke' ? 'DARK' : undefined;
+}
+
+/** 比例尺档位(SDK v1.8.0.2 Eo 常量:按 zoom 取整索引的「米」档位,z>22 → 1) */
+const TENCENT_SCALE_NICE_METERS = [
+  2e6, 2e6, 2e6, 2e6, 1e6, 5e5, 2e5, 1e5, 5e4, 2e4, 1e4, 5e3, 2e3, 1e3,
+  500, 200, 100, 50, 20, 10, 5, 2, 1,
+] as const;
+/** 比例尺每像素米数基数(SDK v1.8.0.2 Oo 公式常量:156543.04 = 6378137·2π/256) */
+const TENCENT_SCALE_RESOLUTION_BASE = 156543.04;
 
 /** 契约事件 → TMap 事件名(glMap 事件;无 moveend/zoomchange/complete,就近映射) */
 const EVENT_NAME_MAP: Record<MapViewEvent, string> = {
@@ -191,11 +216,19 @@ function hideControlDom(raw: any): void {
       el.style.display = 'none';
       el.style.pointerEvents = 'none';
     }
-    // 版权/logo:保留可见(ToS 署名),只解除点击拦截
+    // 版权/logo:隐藏(用户 2026-08-22 明确要求去掉腾讯水印;ToS 署名权衡见
+    // tech/23 ws-b 节)。水印 DOM 经 SDK v1.8.0.2 源码核实:img[src*=
+    // "logo_def.png"](logo 控件首子元素)+ div.logo-text(©2026 Tencent -
+    // GS(2026)1190号 文字)。display:none 只摘控件自身,不影响 canvas 与
+    // 覆盖物渲染;自有样式(.dm-cluster 等)不在 copyright/logo/attribution
+    // 类名命中之列,不受影响。
     const attribution = container.querySelectorAll(
       '[class*="copyright"], [class*="logo"], [class*="attribution"]',
     );
-    for (const el of attribution) el.style.pointerEvents = 'none';
+    for (const el of attribution) {
+      el.style.display = 'none';
+      el.style.pointerEvents = 'none';
+    }
     // canvas 与 marker/overlay 面板层(TMap GL DOM 类名 tencent-map-*;宽泛选择器
     // 防御,含裸 canvas 元素):解除点击拦截,防面板 z-index 挡 app UI
     const panels = container.querySelectorAll(
@@ -272,6 +305,12 @@ class TencentView implements MapView {
   /** MultiMarker click 解绑簿记:契约 cb → { id, handler(带 geometry.id 过滤) }。
    * id 关联是共享实例下精确解绑的前提(off 缺省 cb 只解本 marker) */
   private multiClickHandlers = new Map<() => void, { id: string; handler: (e: any) => void }>();
+  /** 自绘比例尺 DOM(SDK 无公共 ScaleControl 的降级路径;见 addControl) */
+  private scaleEl: HTMLDivElement | null = null;
+  /** 自绘比例尺事件解绑簿记(zoom_changed/scale_changed/zoomend/idle) */
+  private scaleOffs: Array<() => void> = [];
+  /** 自绘比例尺降级说明一次性标记(防 resize 重建刷屏) */
+  private scaleFallbackWarned = false;
 
   constructor(tmap: any, raw: any, engine: MapEngine) {
     this.tmap = tmap;
@@ -347,10 +386,22 @@ class TencentView implements MapView {
   }
 
   setStyle(style: MapStyleId): void {
-    if (style !== 'normal' && style !== 'satellite') {
-      console.warn(`[map-engine] tencent 不支持底图样式 "${style}",回退 normal`);
-    }
+    // SDK v1.8.0.2 核实:baseMap.type 无暗色(styleType 字段不存在);暗色 = 独立
+    // Map 选项 mapStyleId('DARK' → 矢量暗色底图层 Tencent.Normal.Dark)。
+    // 顺序:先 setBaseMap(存底图),再 setMapStyleId(清底图层 + 按新 styleId 重建,
+    // 见 layerResource.setMapStyleId)。whitesmoke(UI「深色」)→ 暗色,不告警。
     this.raw.setBaseMap(styleToBaseMap(style));
+    const styleId = styleToMapStyleId(style);
+    if (styleId !== undefined) {
+      if (typeof this.raw.setMapStyleId === 'function') {
+        this.raw.setMapStyleId(styleId);
+      } else {
+        console.warn(`[map-engine] tencent 无 setMapStyleId,深色样式降级 normal`);
+      }
+    } else if (typeof this.raw.setMapStyleId === 'function') {
+      // 切回标准/卫星:复位暗色,防暗色底图层残留
+      this.raw.setMapStyleId('DEFAULT');
+    }
   }
 
   on(event: MapViewEvent, cb: () => void): () => void {
@@ -698,24 +749,142 @@ class TencentView implements MapView {
     return { raw, remove: () => raw.setMap(null) };
   }
 
-  addControl(kind: 'scale'): void {
-    if (kind !== 'scale') return;
-    // 控件命名空间双路径兜底(TMap GL 存在 control/Control 两种形态;缺失时降级
-    // 不抛——map-shell 的调用是 duck-type,返回 void 即跳过,比例尺缺失不炸地图)。
-    // 参考 baidu 引擎 L348-351 的防御风格:先存在性检查,再构造控件。
+  addControl(
+    kind: 'scale',
+    opts?: { position?: string; offset?: [number, number] },
+  ): Promise<{ hide: () => void; show: () => void } | null> | null {
+    if (kind !== 'scale' || this.destroyed) return null;
+    // 控件命名空间双路径兜底(TMap 未来版本/兼容形态存在 control/Control 时;
+    // 位置用官方文档字符串形态,SDK 内部枚举见 CONTROL_POSITION.BOTTOM_RIGHT=8)。
+    // 缺失时不再仅 warn 降级——v1.8.0.2 公共命名空间恒缺失(见下注释),走自绘
+    // 比例尺,让比例尺真实可用。
     const ctrlNs = (this.tmap.control ?? this.tmap.Control) as
       | { ScaleControl?: new (opts?: unknown) => unknown }
       | undefined;
-    if (!ctrlNs?.ScaleControl) {
-      console.warn('[map-engine] TMap ScaleControl 不可用,比例尺降级');
-      return;
+    if (ctrlNs?.ScaleControl) {
+      this.raw.addControl(new ctrlNs.ScaleControl({ position: 'bottomRight' }));
+      return null;
     }
-    this.raw.addControl(new ctrlNs.ScaleControl({ position: 'bottomRight' }));
+    // SDK v1.8.0.2 源码核实(2026-08-22 ws-b):公共命名空间装配表(Yd)只含
+    // Map/LatLng/MultiMarker/MarkerStyle/constants 等,**无 control/Control/
+    // ScaleControl**(v=1.exp 全局形态)→ 双路径必失败,旧实现比例尺恒缺失。
+    // 降级:自绘 SDK 内部比例尺同款 DOM(tmap-scale-control/line/text 类名),
+    // 按 SDK 官方公式与档位渲染,监听 zoom_changed/scale_changed/zoomend/idle
+    // 自动更新 —— 与高德一致(右下/左下角、随 zoom 更新)。
+    return Promise.resolve(this.ensureFallbackScale(opts));
+  }
+
+  /**
+   * 自绘比例尺(降级路径)。SDK 内部比例尺(Control 基类派生)类不公开,无法
+   * addControl 构造;按内部实现(Oo/Mo 模块)等价复刻:
+   * - 每像素米数 m/px = 156543.04 / scale · cos(lat·π/180) / 2^zoom(Oo 公式);
+   * - 档位 TENCENT_SCALE_NICE_METERS(Eo 常量,按 zoom 取整索引);
+   *   g < 1000 → "N 米",否则 "N 公里"(vo 常量 米/公里);
+   * - 条宽 = round(g / m/px) − 10(To 公式),下限 12px;
+   * - 自动更新:内部控件只挂 zoom_changed/scale_changed,补 zoomend/idle
+   *   防低版本事件漏发。
+   * opts 位置/偏移与 AMap 引擎同语义(map-shell duck-type 透传):
+   * 'LT' 左上 / 'LB' 左下(默认)/ 'RT' 右上 / 'RB' 右下。
+   */
+  private ensureFallbackScale(opts?: {
+    position?: string;
+    offset?: [number, number];
+  }): { hide: () => void; show: () => void } | null {
+    if (typeof document === 'undefined') return null;
+    const container = this.raw.getContainer?.();
+    if (!container || typeof container.appendChild !== 'function') return null;
+    this.removeFallbackScale();
+    const el = document.createElement('div');
+    el.className = 'tmap-scale-control';
+    el.style.cssText = 'position:absolute;width:100px;height:35px;pointer-events:none;z-index:1000;';
+    const pos = opts?.position ?? 'LB';
+    const offset = opts?.offset ?? [10, 10];
+    if (pos === 'LT') {
+      el.style.left = `${offset[0]}px`;
+      el.style.top = `${offset[1]}px`;
+    } else if (pos === 'RT') {
+      el.style.right = `${offset[0]}px`;
+      el.style.top = `${offset[1]}px`;
+    } else if (pos === 'RB') {
+      el.style.right = `${offset[0]}px`;
+      el.style.bottom = `${offset[1]}px`;
+    } else {
+      // 'LB'(默认,与 AMap 引擎默认一致)与未知取值
+      el.style.left = `${offset[0]}px`;
+      el.style.bottom = `${offset[1]}px`;
+    }
+    const line = document.createElement('div');
+    line.className = 'tmap-scale-line';
+    line.style.cssText = 'position:absolute;bottom:8px;left:0;height:7px;background:#333;';
+    const text = document.createElement('div');
+    text.className = 'tmap-scale-text';
+    text.style.cssText =
+      'position:absolute;bottom:16px;left:0;font-size:11px;color:#333;' +
+      'text-shadow:0 0 3px #fff,0 0 6px #fff;white-space:nowrap;';
+    el.appendChild(line);
+    el.appendChild(text);
+    container.appendChild(el);
+    this.scaleEl = el;
+    const update = () => this.updateFallbackScale(line, text);
+    for (const ev of ['zoom_changed', 'scale_changed', 'zoomend', 'idle']) {
+      const off = this.raw.on?.(ev, update);
+      this.scaleOffs.push(typeof off === 'function' ? off : () => this.raw.off?.(ev, update));
+    }
+    update();
+    if (!this.scaleFallbackWarned) {
+      this.scaleFallbackWarned = true;
+      console.info('[map-engine] TMap SDK 无公共 ScaleControl(v1.exp),使用自绘比例尺(SDK 同款公式/档位)');
+    }
+    return {
+      hide: () => {
+        el.style.display = 'none';
+      },
+      show: () => {
+        el.style.display = '';
+      },
+    };
+  }
+
+  /** 自绘比例尺刷新(SDK Oo/Mo 同款公式与 Eo 档位;中心/zoom 缺失时不刷新) */
+  private updateFallbackScale(line: HTMLDivElement, text: HTMLDivElement): void {
+    const c = this.raw.getCenter?.();
+    const z = this.raw.getZoom?.();
+    const s = this.raw.getScale?.();
+    if (!c || typeof c.lat !== 'number' || typeof z !== 'number') return;
+    const mpp =
+      Math.abs((TENCENT_SCALE_RESOLUTION_BASE / (s ?? 1)) * Math.cos((c.lat * Math.PI) / 180)) /
+      Math.pow(2, z);
+    const g = z > 22 ? 1 : (TENCENT_SCALE_NICE_METERS[Math.round(z)] ?? 1);
+    const px = Math.max(12, Math.round(g / mpp) - 10);
+    line.style.width = `${px}px`;
+    text.textContent = g < 1000 ? `${g} 米` : `${g / 1000} 公里`;
+  }
+
+  /** 摘除自绘比例尺 DOM 并解绑事件(resize 重建 / destroy 共用) */
+  private removeFallbackScale(): void {
+    if (this.scaleEl) {
+      try {
+        this.scaleEl.parentNode?.removeChild(this.scaleEl);
+      } catch {
+        // 已脱离 DOM:忽略
+      }
+      this.scaleEl = null;
+    }
+    for (const off of this.scaleOffs) {
+      try {
+        off();
+      } catch {
+        // 解绑失败不影响主流程
+      }
+    }
+    this.scaleOffs = [];
   }
 
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
+    // 自绘比例尺摘除(降级路径 DOM + 事件解绑)
+    this.removeFallbackScale();
     // 共享 MultiMarker 显式摘除(双保险:地图销毁时覆盖物随之销毁;清理簿记
     // 防 view 复用残留)
     if (this.multiMarker && typeof this.multiMarker.setMap === 'function') {
@@ -941,12 +1110,17 @@ export const TENCENT_ENGINE: MapEngine = {
     if (!tmap) {
       throw new Error('[map-engine] tencent 脚本加载后 TMap 命名空间不可用');
     }
+    // ws-b(2026-08-22):暗色 = 独立 Map 选项 mapStyleId(SDK v1.8.0.2 核实无
+    // styleType 字段);初始样式 whitesmoke(UI「深色」/系统深色偏好)→ 构造期
+    // 即暗色矢量底图(仅当初始样式为暗色时透传,normal/satellite 不传)
+    const initialStyleId = styleToMapStyleId(opts.style);
     const raw = new tmap.Map(opts.container, {
       center: toTMapLatLng(tmap, opts.center),
       zoom: opts.zoom,
       pitch: opts.pitch ?? 0,
       rotation: opts.rotation ?? 0,
       baseMap: styleToBaseMap(opts.style),
+      ...(initialStyleId ? { mapStyleId: initialStyleId } : {}),
       // 禁用 TMap 默认控件(SDK v1.8.0.2 核实:false 时不创建 zoom/scale 默认
       // 控件,版权标识保留):避免其内部 DOM z-index 高于 map-shell UI 遮挡点击
       showControl: false,
