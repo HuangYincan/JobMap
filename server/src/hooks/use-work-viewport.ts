@@ -34,9 +34,29 @@ import { readModeCache, writeModeCache } from "@/lib/mode-cache";
  *  setBounds 会连续触发 moveend + zoomend,两事件都落在该窗口内被吞掉(w5 saved-overlay-wipe)。 */
 export const VIEWPORT_SUPPRESS_MS = 500;
 
-/** 当前地图视野快照(center+zoom+bounds);地图未就绪返回 null。写缓存/对齐判定共用 */
+/**
+ * 当前地图视野快照(center+zoom+bounds);地图未就绪返回 null。写缓存/对齐判定共用。
+ * 兼容两种形态(ws-c):
+ * - MapView/厂商 map 对象:getCenter()/getZoom()/getBounds()(厂商 LngLat/Bounds 方法形态);
+ * - 已归一化的 plain object:{ center: {lng,lat}, zoom, bounds: {west,south,east,north} }。
+ */
 export function readMapViewSnapshot(map: any): ViewportSnapshot | null {
   if (!map) return null;
+  // plain-object 分支(MapView 归一化视图/测试 mock):center.lng 为 number 即命中
+  if (
+    map.center &&
+    typeof map.center.lng === 'number' &&
+    typeof map.center.lat === 'number' &&
+    typeof map.zoom === 'number'
+  ) {
+    let bounds: ViewportBounds | null = null;
+    const b = map.bounds;
+    if (b && [b.west, b.south, b.east, b.north].every((n) => typeof n === 'number')) {
+      bounds = { west: b.west, south: b.south, east: b.east, north: b.north };
+    }
+    return { center: { lng: map.center.lng, lat: map.center.lat }, zoom: map.zoom, bounds };
+  }
+  // 厂商对象形态(向后兼容):getCenter()/getZoom()/getBounds()
   const centerObj = typeof map.getCenter === "function" ? map.getCenter() : null;
   const center =
     centerObj && typeof centerObj.getLng === "function"
@@ -131,26 +151,11 @@ export function useWorkViewport(
           return;
         }
         const mapInst = mapInstance.current;
-        const centerObj = typeof mapInst?.getCenter === "function" ? mapInst.getCenter() : null;
-        const center =
-          centerObj && typeof centerObj.getLng === "function"
-            ? { lng: centerObj.getLng(), lat: centerObj.getLat() }
-            : null;
-        const zoom =
-          typeof mapInst?.getZoom === "function" ? Math.round(mapInst.getZoom()) : 0;
-        const b = typeof mapInst?.getBounds === "function" ? mapInst.getBounds() : null;
-        let bounds: ViewportBounds | null = null;
-        if (b) {
-          const sw = b.getSouthWest?.() ?? b.southwest;
-          const ne = b.getNorthEast?.() ?? b.northeast;
-          const west = sw?.getLng?.() ?? sw?.lng;
-          const south = sw?.getLat?.() ?? sw?.lat;
-          const east = ne?.getLng?.() ?? ne?.lng;
-          const north = ne?.getLat?.() ?? ne?.lat;
-          if ([west, south, east, north].every((n) => typeof n === "number")) {
-            bounds = { west, south, east, north };
-          }
-        }
+        // 与 readMapViewSnapshot 同源(兼容 MapView 归一化 / 厂商对象两种形态)
+        const snap = readMapViewSnapshot(mapInst);
+        const bounds = snap?.bounds ?? null;
+        const center = snap?.center ?? null;
+        const zoom = snap?.zoom ?? 0;
         if (!bounds) return;
         // 本批次数据覆盖的视野快照(与 bounds 同一时刻捕获;写缓存用)
         const snapshot: ViewportSnapshot | null = center ? { center, zoom, bounds } : null;
@@ -237,13 +242,14 @@ export function useWorkViewport(
       loader.schedule();
     };
     viewportLoaderRef.current = loader;
-    map.on("moveend", onViewChange);
-    map.on("zoomend", onViewChange);
+    // MapView.on 返回解绑函数(旧 AMap map.off 直调已不适用)
+    const offMoveEnd = map.on("moveend", onViewChange);
+    const offZoomEnd = map.on("zoomend", onViewChange);
     return () => {
       loader.dispose();
       viewportLoaderRef.current = null;
-      map.off?.("moveend", onViewChange);
-      map.off?.("zoomend", onViewChange);
+      offMoveEnd?.();
+      offZoomEnd?.();
     };
   }, [mapReady]);
 
