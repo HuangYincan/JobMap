@@ -431,6 +431,7 @@ export async function updateUser(
       avatar_url: string | null;
       phone: string | null;
       email: string | null;
+      username: string | null;
       preferences: UserPreferences;
       provider: AuthProvider | null;
     }>(
@@ -441,7 +442,7 @@ export async function updateUser(
          preferences = COALESCE($4::jsonb, preferences),
          updated_at = now()
        WHERE id = $1
-       RETURNING id::text, display_name, avatar_url, phone, email, preferences,
+       RETURNING id::text, display_name, avatar_url, phone, email, username, preferences,
          (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
       [
         userId,
@@ -466,6 +467,7 @@ export async function updateAvatar(
       avatar_url: string | null;
       phone: string | null;
       email: string | null;
+      username: string | null;
       preferences: UserPreferences;
       provider: AuthProvider | null;
     }>(
@@ -474,7 +476,7 @@ export async function updateAvatar(
          avatar_url = $3,
          updated_at = now()
        WHERE id = $1
-       RETURNING id::text, display_name, avatar_url, phone, email, preferences,
+       RETURNING id::text, display_name, avatar_url, phone, email, username, preferences,
          (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
       [
         userId,
