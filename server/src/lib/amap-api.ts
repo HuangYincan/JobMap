@@ -32,8 +32,10 @@ declare global {
   }
 }
 
-const AMAP_URL = 'https://webapi.amap.com/maps?v=2.0&key=';
-const SCRIPT_ID = 'amap-jsapi-script';
+/** 高德 JSAPI 入口 URL(含 key 占位)。导出供 amap-engine 复用(同一脚本流程,不双脚本)。 */
+export const AMAP_URL = 'https://webapi.amap.com/maps?v=2.0&key=';
+/** 主脚本标签 id。导出供 amap-engine 复用(同一 SCRIPT_ID 语义)。 */
+export const SCRIPT_ID = 'amap-jsapi-script';
 /** 随主脚本预加载的插件（v2.0 支持 URL plugin 参数，避免 AMap.plugin 时序竞态） */
 const AMAP_PLUGINS = 'AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation,AMap.Geocoder';
 
