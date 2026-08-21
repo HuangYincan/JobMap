@@ -12,7 +12,7 @@
 
 ## stage
 
-- current: 终态(全部 5 WS MERGED 至 dev 95a102d;批次入库 066d3cd;push 待用户授权)
+- current: 终态(8/8 WS MERGED 至 dev f6604e2,origin 同步;真实验证 6/7 通过;百度 AK 待用户修复)
 - updated_at: 2026-08-22
 
 ## workstreams
@@ -26,7 +26,19 @@
 | 5 | feature/engine-search-cleanup | /Users/acccan/dm-wt-rw5 | prompts/ws-5.md | reports/ws-5.md | MERGED | fa9918f→95a102d | 轮3 | | OK(1096/0 fail 复核) |
 | 6 | feature/engine-fixes | /Users/acccan/dm-wt-rw6 | prompts/ws-6.md | reports/ws-6.md | MERGED | f78e10c→306c226 | 轮4 | | OK(1104/0 fail 复核;push 成功 origin=f89b87d) |
 | 7 | feature/engine-baidu-ready | /Users/acccan/dm-wt-rw7 | prompts/ws-7.md | reports/ws-7.md | MERGED | 0ea2439→3dd1d13 | 轮5 | | OK(1107/0 fail 复核;push 成功) |
-| 8 | feature/engine-mount-fallback | /Users/acccan/dm-wt-rw8 | prompts/ws-8.md | reports/ws-8.md | RUNNING | 6bf2092 | 轮6(复验发现挂载缺口) | | 挂载失败回退默认引擎 |
+| 8 | feature/engine-mount-fallback | /Users/acccan/dm-wt-rw8 | prompts/ws-8.md | reports/ws-8.md | MERGED | 91724d1→f6604e2 | 轮6 | | OK(1126/0 fail 复核;挂载回退真实验证通过) |
+
+## verification(2026-08-22 boss 亲自 Playwright,dev server 真实浏览器)
+
+| # | 项 | 结果 |
+|---|---|---|
+| 1 | 默认高德(新会话回落) | ✅ 仅 AMap script 加载 |
+| 2 | 高德→腾讯:渲染/POI/可点/往返 | ✅ TMap 渲染、marker 创建、elementFromPoint 面板可点 |
+| 3 | TMap 批量化(ws-6) | ✅ 「数据层过多」145→0 条 |
+| 4 | 百度加载器(ws-6) | ✅ getscript 直连无 document.write 拦截 |
+| 5 | 交互式失败回滚(ws-7) | ✅ 1.5s 就绪超时→抛错→高德 1200×819 恢复 |
+| 6 | 挂载失败回退(ws-8) | ✅ 偏好=百度+刷新→尝试百度(弹窗为证)→回退高德完整渲染 |
+| 7 | 百度有效 AK 全链路 | ⏳ 阻塞于 key:当前 .env.local 新 key 百度全域不识别(APP不存在,REST 同判) |
 
 ## merge_order
 
@@ -43,8 +55,10 @@
 
 ## deferred_notes
 
-- 08-21 | Env-only | ws-5 真实验证需用户 key+浏览器(高德/百度/腾讯已配);离线验证已全部通过 | 待用户跑 npm run dev 冒烟(切换三家、POI 可点、来回切 3+ 次不卡死)
-- 08-21 | 裁决依据 | 若真实验证显示三引擎切换仍不可达 → 删 UI 切换入口、注册表收敛高德单引擎、tech/23 标注 | 视验证结果
+- 08-21 | Env-only | ws-5 真实验证需用户 key+浏览器(高德/百度/腾讯已配);离线验证已全部通过 | 已完成(2026-08-22 boss Playwright 冒烟 6/7 通过)
+- 08-21 | 裁决依据 | 若真实验证显示三引擎切换仍不可达 → 删 UI 切换入口、注册表收敛高德单引擎、tech/23 标注 | **裁决:保留**(验证 6/7 通过,两引擎全链路工作;百度仅阻塞于 key)
+- 08-22 | Env-only | **百度浏览器端 AK 待用户修复**:当前 .env.local 的 NEXT_PUBLIC_BAIDU_AK 百度全域不识别(JSAPI+REST 均「APP不存在」)—— 需用户从 lbsyun 控制台(浏览器端应用)重新复制有效 AK;key 修复后 boss 复验百度全链路(渲染/POI/往返) | 待用户操作
+- 08-22 | Env-only | 两个百度 key 分属不同账号(用户确认):BAIDU_MAP_AK(服务端,A 账号)与 NEXT_PUBLIC_BAIDU_AK(浏览器端,B 账号)各自独立,不影响前端加载逻辑 | 已澄清
 
 ## next_plan
 
