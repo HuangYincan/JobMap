@@ -66,9 +66,12 @@ LLM/Agent 配置全部走服务端环境变量(`AGENT_LLM_BASE_URL`/`AGENT_LLM_A
 ```
 ┌─ 前端(server/src)────────────────────────────────────────────────────┐
 │ components/agent-ball.tsx(+module.css)   44px 悬浮球,拖拽吸附          │
-│ components/agent-panel.tsx(+module.css)  聊天面板(360px×70vh)          │
+│ components/agent-panel.tsx(+module.css)  聊天面板(360px×70vh,锚球跟随) │
+│ components/markdown-text.tsx(+module.css) Markdown 渲染(marked→DOMPurify)│
 │ components/agent-chat-client.ts          SSE 客户端(fetch + getReader) │
 │ components/agent-map-executor.ts         动作执行器(校验/限流/undo 栈)  │
+│ lib/agent-panel-placement.ts             面板锚定纯函数(可单测)         │
+│ lib/markdown-pipeline.ts                 markdown→安全 HTML 纯管线     │
 │ lib/agent-map-bridge.ts                  地图操作适配层(唯一 AMap 依赖) │
 │ components/map-shell.tsx                 seam(~30 行:import+ref+JSX)   │
 └───────────────────────────────────────────────────────────────────────┘
@@ -108,13 +111,16 @@ LLM/Agent 配置全部走服务端环境变量(`AGENT_LLM_BASE_URL`/`AGENT_LLM_A
 ```ts
 export type AgentEvent =
   | { type: 'delta'; text: string }                                  // 流式文本增量
+  | { type: 'reasoning'; text: string }                              // 推理模型思考内容(DeepSeek reasoning_content;run-agent 截断 4000 字符)
   | { type: 'tool'; name: string; status: 'start' | 'done' | 'error'; summary?: string }
   | { type: 'action'; action: AgentAction }                          // 结构化地图动作
   | { type: 'done'; truncated?: boolean }                            // 结束(truncated=true 表示超轮/超输出)
   | { type: 'error'; code: string; message: string };                // message 绝不含 secret
 ```
 
-SSE 线上格式:每事件一行 `data: <单行 JSON>\n\n`(空行分隔);事件 type 白名单即上述 5 种。
+SSE 线上格式:每事件一行 `data: <单行 JSON>\n\n`(空行分隔);事件 type 白名单即上述 6 种。
+
+> **2026-08-21 增补(ws-c-enhance)**:`reasoning` 事件随流式顺序转发(与 delta 顺序保持),总量上限 **4000 字符**,超出截断且不再转发;`llm-provider` 解析 `choices[0].delta.reasoning_content`(缺省不回调,非推理模型零开销)。
 
 ### 4.2 `AgentAction` 白名单(6 种)
 
@@ -298,12 +304,15 @@ Content-Type: application/json
 
 ### 9.2 聊天面板(AgentPanel)
 
-- 360px × 70vh,**liquid glass 卡片浮层**(玻璃只用于卡片类浮层,符合设计系统);外壳霜面 `--soft-strong`;贴吸附侧(悬浮球所在侧);消息列表滚动 + 输入框 + 发送 / 停止 / 撤销 + tool 状态条 + 建议卡片。
-- **tool 状态条**:`{type:'tool'}` 事件驱动,显示「正在查询周边…」等(`agentToolRunning`)。
+- 360px × 70vh,**liquid glass 卡片浮层**(玻璃只用于卡片类浮层,符合设计系统);外壳霜面 `--soft-strong`;**以悬浮球为锚实时跟随**(见 §9.9,2026-08-21 起替代「贴吸附侧固定」);消息列表滚动 + 输入框 + 发送 / 停止 / 撤销 + tool 状态条 + 建议卡片。
+- **tool 状态条**:`{type:'tool'}` 事件驱动,显示「正在查询周边…」等(`agentToolRunning`,友好工具名)。
+- **思考过程**:`{type:'reasoning'}` 事件驱动,每条助手消息内渲染可折叠「💭 思考过程」(默认展开,点击折叠;muted 小字,滚动上限)。
+- **工具活动列表**:每条 `{type:'tool'}` 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary),渲染在助手消息上方;provider 前缀映射友好名(`amap__`→高德、`tencent__`→腾讯、`baidu__`→百度、`rest__`→兜底、`builtin__`→内置)。
 - **建议卡片**:执行器捕获 action 时,面板在消息底部渲染动作摘要按钮(「在地图上定位」等),点击 = 重放该 action。
 - **未配置提示**:503 `LLM_UNCONFIGURED` → 显示 `t('agentNotConfigured')`(「AI 助手未配置,请在服务器配置」)。
 - **历史**:sessionStorage `dm.agent-history.v1`,cap 30 条;新会话首条自动带视口快照。
 - 「停止」→ abort(链到 fetch);「撤销」→ `executor.undo()`。
+- **助手消息体用 MarkdownText 渲染**(marked → DOMPurify,见 §9.10);用户消息保持纯文本。
 
 ### 9.3 ASCII 布局图(设计定稿)
 
@@ -346,11 +355,11 @@ clamp 12px 边距与顶部,动画 cubic-bezier(0.32,0.72,0,1) 0.35s
 
 ### 9.4 移动端适配
 
-≤767px:面板变全宽 sheet(参照 mobileDrawer 动效);悬浮球吸附规则不变,panel 贴底。
+≤767px:面板变全宽 sheet(参照 mobileDrawer 动效),**不受悬浮球位置影响**;悬浮球吸附规则不变,panel 贴底。极窄桌面视口(两侧都放不下)同样降级为全宽 sheet(2026-08-21 起,见 §9.10)。
 
 ### 9.5 i18n 键清单(`i18n.ts` 追加 `agent*` 组,zh/en,约 20 键)
 
-`agentBall`(AI 助手)/ `agentTitle` / `agentInput`(输入问题…)/ `agentSend` / `agentStop` / `agentUndo` / `agentThinking` / `agentNotConfigured`(AI 助手未配置,请在服务器配置)/ `agentError` / `agentLocate`(在地图上定位)/ `agentSearch`(搜索)/ `agentToolRunning`({name} 正在执行…)等,文案简短,中文为主。
+`agentBall`(AI 助手)/ `agentTitle` / `agentInput`(输入问题…)/ `agentSend` / `agentStop` / `agentUndo` / `agentThinking` / `agentThinkingSection`(思考过程,2026-08-21 增)/ `agentToolsSection`(工具调用,2026-08-21 增)/ `agentNotConfigured`(AI 助手未配置,请在服务器配置)/ `agentError` / `agentLocate`(在地图上定位)/ `agentSearch`(搜索)/ `agentToolRunning`({name} 正在执行…)等,文案简短,中文为主。
 
 ### 9.6 map-shell seam(boss 裁决红线豁免,~30 行)
 
@@ -372,6 +381,32 @@ clamp 12px 边距与顶部,动画 cubic-bezier(0.32,0.72,0,1) 0.35s
 
 `streamAgentChat(req, signal): AsyncGenerator<AgentEvent>` — fetch POST `/api/agent/chat` → `response.body.getReader()` → 按 `\n\n` 切块 → `data: ` 行 JSON.parse(容错:跳过非 JSON/空行)→ yield;`signal.abort()` 即 abort fetch。`AgentEvent/AgentAction` 类型从 `lib/agent/types.ts` **import**(同构,前端可 import lib 类型);`parseSseChunk(chunk)` 纯函数导出供测试。
 
+### 9.10 面板跟随悬浮球(2026-08-21,ws-c-enhance)
+
+面板**以悬浮球为锚、实时跟随**(替代「贴吸附侧固定」),纯函数 `computePanelPlacement(ballRect, panelSize, viewport)`(`lib/agent-panel-placement.ts`,零 DOM 可单测):
+
+- **水平**:球在右半区 → 面板右缘贴球左缘(gap **8px**);球在左半区 → 面板左缘贴球右缘。
+- **横向边界**:首选侧放不下(溢出视口,含 12px 边距)→ **翻转到球另一侧**;两侧都放不下(极窄视口)→ 全宽底部 sheet(复用移动端抽屉模式;`panelSheet` 类,与 ≤767px media query 同款规则)。
+- **垂直**:面板 top 与球 top 对齐,clamp 在 `[12, viewportH - panelH - 12]`。
+- **拖动跟随**:拖动球时面板 transform 实时跟手(拖拽中 `transition: none`);松手吸附后平滑归位(既有 `cubic-bezier(0.32, 0.72, 0, 1)` 动效,面板 transform 与球 left/top 同步过渡)。
+- **实现**:面板 `position:fixed; transform: translate3d(var(--px), var(--py), 0)`;`--px/--py` 由组件按 placement 注入,入场动画 keyframes 与定位共用同一变量(动画结束无跳变)。z-index:球 **11**、面板 **12**。
+- **移动端**(≤767px):恒 sheet,不受球位置影响(media query 覆盖 `transform: none`)。
+- 设计决策(2026-08-21):翻转分支为规范要求的防御路径——固定面板宽 + 对称边距下「首选失败而对侧成功」在几何上不可达,边界场景统一降级 sheet(单测覆盖决策矩阵与降级行为)。
+
+### 9.11 Markdown 渲染(2026-08-21,ws-c-enhance)
+
+助手消息体用 `MarkdownText`(`components/markdown-text.tsx` + `lib/markdown-pipeline.ts`)渲染:
+
+- 管线:**marked.parse**(GFM,自定义 link renderer)→ **DOMPurify.sanitize** → `dangerouslySetInnerHTML`。**安全红线:不消毒绝不注入**——LLM 输出视为不可信数据。
+- 库审查(2026-08-21,marked@18.0.10 / dompurify@3.4.14):
+  - marked 是纯解析器**无内置消毒**,原始 HTML 会被透传 → 必须过 DOMPurify;
+  - DOMPurify 默认允许 html+svg+mathML → `USE_PROFILES: {html: true}` 收窄到 HTML;`target` 属性不在默认白名单(已核对源码)→ `ADD_ATTR: ['target']`(`rel` 默认在白名单);
+  - DOMPurify URI 过滤(IS_ALLOWED_URI)拒绝 `javascript:`/`data:` 等危险协议;KEEP_CONTENT 默认 true,被禁标签(如 script)内容转为文本;
+  - DOMPurify 配置对象每次调用克隆,不跨调用泄漏。
+- 链接统一 `target="_blank" rel="noopener noreferrer"`(marked renderer 钩子注入)。
+- **客户端-only 消毒**:`useEffect` 挂载后执行(SSR 首渲染输出纯文本)——避免 Node 无 DOM 环境执行 DOMPurify,也杜绝未消毒 HTML 进入首屏。
+- 纯管线 `renderMarkdown(text, sanitize)` 消毒器参数化注入(生产 DOMPurify,测试 spy),`tests/markdown-pipeline.test.mjs` 可单测。
+
 ---
 
 ## 10. 测试清单
@@ -390,8 +425,13 @@ clamp 12px 边距与顶部,动画 cubic-bezier(0.32,0.72,0,1) 0.35s
 | c | `tests/agent-chat-client.test.mjs` | parseSseChunk 矩阵(单/多事件、坏 JSON、空行、事件跨 chunk 按 `\n\n` 切分) |
 | c | `tests/agent-map-executor.test.mjs` | mock bridge:各动作分流、非法动作丢弃、限流、undo 栈逆操作顺序、canUndo、isReady 失败 |
 | c | `tests/component-contracts.test.mjs`(**追加**) | agent-ball 有 aria-label 且含 `t('agentBall')`;agent-panel 有输入框与停止/撤销按钮;map-shell 含 `<AgentBall` seam |
+| enh | `tests/agent-llm-provider.test.mjs`(**追加**) | reasoning_content 逐 chunk 转发、同 chunk 与 content 并存、空串不回调、onReasoning 缺省兼容 |
+| enh | `tests/agent-runner.test.mjs`(**追加**) | reasoning 事件顺序转发(与 delta/tool 交错)、总量 4000 截断且不再转发、非推理模型零 reasoning |
+| enh | `tests/markdown-pipeline.test.mjs` | marked 渲染(GFM 表格/删除线)、链接 target=_blank+rel=noopener、标题转义、sanitize 必须被调用(管线契约) |
+| enh | `tests/agent-panel-placement.test.mjs` | pickPanelSide 决策矩阵(首选/翻转/sheet)、左右缘锚定、垂直 clamp、极窄视口 sheet、移动端恒 sheet、常量契约 |
+| enh | `tests/component-contracts.test.mjs`(**追加**) | markdown-text 引用 marked+dompurify 且 sanitize 先于注入;面板 transform 锚定(--px/--py)+z-index 12;思考/工具活动类名;i18n 新键 |
 
-合计:**9 个新测试文件(后端核心 7:ws-a 5 + ws-b 2;前端 2:ws-c)+ 1 处追加**(component-contracts)。
+合计:**9 个新测试文件(后端核心 7:ws-a 5 + ws-b 2;前端 2:ws-c)+ 2 处追加**(component-contracts,原批次)+ **ws-c-enhance:1 新测试文件 + 4 处追加**(2026-08-21)。
 
 ---
 
