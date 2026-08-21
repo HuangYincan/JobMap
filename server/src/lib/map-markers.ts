@@ -8,9 +8,11 @@
 // - 支持选中（放大 + 强调环）与高亮（轻微放大 + 透明度）
 // - 全部能力经 MapMarker 契约包装（view.createMarker 返回）：setPosition /
 //   setContent / setZIndex / setVisible / on / off / remove——控制器不直碰
-//   厂商裸实例（raw 仅保留给 getMarkerByPOIId 探针与 createCityClusterMarker
-//   返回值，map-shell duck-type 依赖）；引擎差异（AMap 小写 z-index 命名、
+//   厂商裸实例（raw 仅保留给 getMarkerByPOIId 探针；createCityClusterMarker
+//   返回清理句柄，map-shell duck-type 依赖）；引擎差异（AMap 小写 z-index 命名、
 //   TMap·BMapGL 大写 setZIndex、BMapGL addEventListener 等）由适配层吸收
+// - 公司 POI 在 TMap 引擎下另传契约 icon(logoUrl → MarkerStyle 真图标)——
+//   MultiMarker 无 HTML 渲染,content 徽章降级默认点(ws-a,bug 6)
 // - 状态样式 = content 重渲染 + zIndex：offset 恒为基准锚点（图钉底尖 /
 //   徽章中心），状态尺寸经内容负 margin 补偿，锚点跨状态零漂移（契约无
 //   setOffset，删除 AMap.Pixel 依赖）；无浏览器环境（node 测试）下静默降级
@@ -360,10 +362,58 @@ export function cityClusterBadgeHTML(
 }
 
 /**
+ * 城市聚合徽章 SVG 数据图(引擎 icon 形态,2026-08-22 ws-a)。
+ * TMap MultiMarker 无 HTML 渲染(content 徽章会降级默认点)→ 徽章以
+ * dataURL 数据图经契约 icon 走 MarkerStyle(src) 真图标路径,视觉与
+ * cityClusterBadgeHTML 同语言:圆形白底 + 强调色描边 + 「城市名 N」两行。
+ * SVG 无 CSS ellipsis:城市名 >4 字确定性截断加省略号(与 HTML 版
+ * text-overflow:ellipsis 的等价近似;先截断再转义,防截断在实体中间)。
+ */
+export function cityClusterBadgeIcon(
+  group: Pick<CityCluster, 'city' | 'count'>,
+  color?: string,
+  size: number = CLUSTER_BADGE_SIZE
+): string {
+  const c = normalizeColor(color, CLUSTER_DEFAULT_COLOR);
+  const chars = Array.from(group.city);
+  const short = chars.length > 4 ? `${chars.slice(0, 4).join('')}…` : group.city;
+  const city = escapeAttr(short);
+  const half = Math.round(size / 2);
+  return svgToDataUri(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(size)}" height="${Math.round(size)}" viewBox="0 0 ${Math.round(size)} ${Math.round(size)}">` +
+      `<circle cx="${half}" cy="${half}" r="${half - 2}" fill="#ffffff" stroke="${c}" stroke-width="2.5"/>` +
+      `<text x="${half}" y="${Math.round(size * 0.42)}" font-size="${Math.max(11, Math.round(size * 0.24))}" font-weight="700" fill="#111111" text-anchor="middle" dominant-baseline="middle">${city}</text>` +
+      `<text x="${half}" y="${Math.round(size * 0.68)}" font-size="${Math.max(10, Math.round(size * 0.21))}" font-weight="800" fill="${c}" text-anchor="middle" dominant-baseline="middle">${group.count}</text>` +
+      `</svg>`
+  );
+}
+
+/**
+ * 徽章清理句柄(2026-08-22 ws-a,bug 1 根因修复)。
+ * map-shell 摘除徽章按 ws-5 分派:raw 有 setMap 则调用 setMap 摘除,否则 remove。
+ * TMap MultiMarker 批量化下 wrapper 的 raw 是**共享实例**(与个体 pin 同图层),
+ * 直接对共享实例 setMap 摘除(传 null)会整层清除 → 跨 zoom 分桶(聚合↔个体)
+ * 切换后 pin 重新挂载到已摘除的图层,全部不可见。句柄把 setMap/remove 收敛为
+ * 契约 wrapper.remove()(按 marker 摘单 geometry,共享实例保持挂图)。
+ * AMap/TMap 单点形态 raw 的 setMap 本就按 marker 摘除,收敛后行为不变;
+ * BMapGL raw 无 setMap → 原样返回。
+ */
+function badgeCleanupHandle(wrapper: MapMarker): any {
+  const raw = wrapper.raw;
+  const spreadable = raw as Record<string, unknown> | undefined;
+  if (typeof spreadable?.setMap === 'function' && typeof wrapper.remove === 'function') {
+    return { ...spreadable, setMap: () => wrapper.remove(), remove: () => wrapper.remove() };
+  }
+  return raw;
+}
+
+/**
  * 创建城市聚合徽章 Marker(tech/21)。
  * 中心锚定(offset 居中,元组 → 引擎内部转 Pixel);`bubble: false` 阻止点击冒泡
  * 到地图(地图 click 会清选中);防御性守卫:无 view/构造失败 → 返回 null,
- * node 测试下不抛错。返回原始 marker 实例(测试探针 + 调用方摘除)。
+ * node 测试下不抛错。content(HTML,AMap/BMapGL 渲染)+ icon(dataURL 数据图,
+ * TMap 渲染)双形态同传;返回清理句柄(见 badgeCleanupHandle,测试探针 +
+ * 调用方摘除,duck-type 兼容 map-shell ws-5 分派)。
  */
 export function createCityClusterMarker(
   view: MapView | null,
@@ -380,6 +430,9 @@ export function createCityClusterMarker(
       position: { lng: group.lng, lat: group.lat },
       offset: [-size / 2, -size / 2],
       content: cityClusterBadgeHTML(group, opts.color, size),
+      // 引擎 icon 形态(契约):TMap MultiMarker 无 HTML 渲染 → 徽章以数据图
+      // 渲染(同视觉);AMap/BMapGL 以 content 渲染,icon 为其图标形态
+      icon: { src: cityClusterBadgeIcon(group, opts.color, size), size: [size, size] },
       zIndex: 50,
       onClick: opts.onClick,
       // AMap 专属选项(契约未含):duck-type 透传,点击不冒泡到地图
@@ -388,7 +441,7 @@ export function createCityClusterMarker(
   } catch {
     return null;
   }
-  return wrapper.raw;
+  return badgeCleanupHandle(wrapper);
 }
 
 
@@ -477,6 +530,18 @@ class POIMarkerControllerImpl implements POIMarkerController {
       );
     } else {
       markerOpts.content = domainPinContent(this.color, state);
+    }
+    // 公司 POI icon 真图标（2026-08-22 ws-a，bug 6）：仅 TMap 引擎——
+    // MultiMarker 无 HTML 渲染，content 徽章降级默认点，公司 icon 走契约
+    // icon → MarkerStyle(src) 真图标路径；logoUrl 直接作图标，缺 logo 回退
+    // emoji 徽章数据图（与 AMap 徽章同视觉）。AMap/BMapGL content 可渲染，
+    // 保持 HTML 徽章形态，零影响（engine 门控，不触碰其他引擎行为）。
+    if (this.view.engine?.id === 'tencent' && isRecruitmentPOI(poi)) {
+      const logo = poi.company.logoUrl;
+      markerOpts.icon = {
+        src: logo ?? svgToDataUri(recruitmentBadgeSVG(poi.company.logo, undefined, this.color, state)),
+        size: [BADGE_BASE, BADGE_BASE],
+      };
     }
 
     let wrapper: MapMarker;

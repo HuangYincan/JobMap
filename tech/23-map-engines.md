@@ -438,3 +438,62 @@ sessionStorage 偏好 = 百度(故障引擎)→ 刷新页面 → 挂载切换失
 
 **遗留(边界外)**:回退成功是否写偏好(见上「偏好写入取舍」)留 boss 裁决;
 真实浏览器挂载回退路径由 boss 冒烟坐实。
+
+## ws-a TMap POI 缩放/聚合 + 公司 icon(2026-08-22,feature/tmap-poi:bug 1+6)
+
+### 诊断(boss 调查 + ws-a 核实)
+
+- **bug 1「poi 缩放与聚合没做好」两层**:
+  1. 聚合徽章是 HTML content(`map-markers.ts` `.dm-cluster` div)→ TMap MultiMarker
+     不支持 HTML → 降级默认点(console: 徽章降级为默认点);
+  2. **更深的缩放 bug**:`createCityClusterMarker` 返回 `wrapper.raw`,TMap MultiMarker
+     批量化(ws-6)下 raw = **共享实例**(与个体 pin 同图层);map-shell 徽章清理
+     按 ws-5 分派走 `raw.setMap(null)` → **整层摘除**(徽章+pin 同死)→ zoom 越
+     过 8 后 pin 重新挂载到已摘除图层,全部不可见(聚合↔个体切换 pin 消失)。
+- **bug 6「公司 icon」**:公司 POI 的徽章(logo img HTML)→ 同样降级默认点;契约
+  `icon: {src, size}`(ws-1)在 TMap MultiMarker 路径的 styleId 归组已存在,但
+  调用方(map-markers)只传 content 不传 icon → 真图标路径空转。
+
+### 修复
+
+- **tencent-engine.ts(MultiMarker 段)**:
+  - **SDK 类名核实**:GL API **无 `IconStyle` 类**,MultiMarker 图片样式类就是
+    `MarkerStyle`,内嵌 `{ src, width, height, anchor }`(src 可 dataURL/远程 URL);
+    现有归组实现正确,零改动;
+  - content 降级告警改为**仅无 icon 时**(icon 存在 → MarkerStyle(src) 真图标
+    渲染,content 只是 AMap 等引擎的 HTML 形态,不写入 geometry);setContent
+    同理(icon marker 变更不告警,纯 HTML 形态仍一次性告警)。
+- **map-markers.ts**:
+  - `cityClusterBadgeIcon`:徽章 SVG 数据图(白底圆 + #007AFF 描边 + 「城市名 N」
+    两行,与 HTML 徽章同视觉;SVG 无 ellipsis → >4 字城市名确定性截断)经契约
+    icon → TMap 真图标;content+icon 双形态同传(AMap/BMapGL 走 content,行为不变);
+  - **徽章清理句柄**(bug 1 根因):`createCityClusterMarker` 返回 setMap/remove
+    收敛为契约 `wrapper.remove()` 的句柄(按 marker 摘单 geometry,共享实例保持
+    挂图)——AMap/TMap 单点 raw 的 setMap 本就按 marker 摘除,收敛后行为不变;
+    BMapGL(raw 无 setMap)原样返回;
+  - **公司 icon(bug 6)**:`addMarker` 对 recruitment POI 在 **tencent 引擎**
+    (`view.engine.id === 'tencent'` 门控,AMap/BMapGL 零影响)另传契约 icon——
+    logoUrl 直接作图标,缺 logo 回退 emoji 徽章数据图(与 AMap 徽章同视觉);
+    状态样式(选中/高亮放大+环)TMap 上以实例 zIndex 层序近似(content 重渲染
+    在 MultiMarker 不可用,记 deferred)。
+- **LOD 可见性**:zoom tier 的 setVisible 在 TMap = add/remove 摘挂单 geometry
+  (ws-6 已有);本轮核实缩放边界(zoom≤8 聚合 / >8 个体)切换:徽章按 marker 摘除
+  + pin 重新挂载到始终挂图的共享实例,不销毁不重建。
+
+### 验收(离线)
+
+| 项 | 结果 |
+|---|---|
+| icon+content 并存不降级告警;content-only 仍降级(契约行为不变)| ✅ |
+| 徽章 dataURL → MarkerStyle src/size/anchor(同签名共享,样式字典不膨胀)| ✅ |
+| 新签名在实例已存在时经 setStyles 全量替换上实例(调用断言)| ✅ |
+| 徽章清理句柄:setMap(null)/remove → 按 marker 摘单 geometry,共享实例全程挂图,跨 zoom 分桶 pin 不误伤不泄漏| ✅ |
+| map-engine-tencent.test.mjs | ✅ 53/53(49 + 4)|
+| 相关回归(map-markers/marker-visibility/marker-leak/lifecycle/amap/baidu/switch/mount/selection/coord/loader/city-cluster/lod)| ✅ 182/182 |
+| typecheck / git diff --check | ✅ |
+| 真实验证(boss Playwright:全国视野徽章形态 + zoom 穿越 8 个体 pin 可见 + 公司 icon 显示)| ⛔ 未做:headless worker 无浏览器、worktree 无 .env.local;由 boss 合并后冒烟回填(deferred)|
+
+**遗留(边界外)**:TMap 状态样式(选中/高亮)仅 zIndex 层序近似,content 重渲染
+不可用;远程 logoUrl 经 GL 纹理加载的 CORS 表现待真机核实(失败时图标缺失,
+AMap 的 onerror 回退链在 icon 路径不可用);徽章 dataURL 图标阴影(SVG filter)
+未做,视觉与 HTML 版差阴影一层。

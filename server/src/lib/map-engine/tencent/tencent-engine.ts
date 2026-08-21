@@ -468,8 +468,11 @@ class TencentView implements MapView {
     this.multiGeometries.set(id, geometry);
     this.multiZIndexes.set(id, opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX);
     // HTML content:MultiMarker 无 HTML 渲染(SDK 核实:geometry.content 是 GL
-    // 文本标签,MarkerStyle 仅图片 src)→ 降级默认点 + 一次性 warn(boss 记 deferred)
-    if (opts.content !== undefined) this.warnMultiMarkerContentDegraded();
+    // 文本标签,MarkerStyle 仅图片 src)→ 降级默认点 + 一次性 warn。
+    // **icon 存在时不降级**(ws-a,bug 1/6):icon → MarkerStyle(src) 真图标路径
+    // 才是 TMap 渲染形态;content 只是 AMap 等引擎的 HTML 形态(公司 icon /
+    // 聚合徽章 dataURL 图标均同时传 content+icon,契约 icon 缺省才走默认点)
+    if (opts.content !== undefined && !opts.icon) this.warnMultiMarkerContentDegraded();
 
     let raw = this.multiMarker;
     if (!raw) {
@@ -504,7 +507,11 @@ class TencentView implements MapView {
         geometry.position = toTMapLatLng(tmap, p);
         raw.updateGeometries([geometry]);
       },
-      setContent: (_html: string) => this.warnMultiMarkerContentDegraded(),
+      setContent: (_html: string) => {
+        // content 变更对 MultiMarker 无效(无 HTML 渲染);有 icon 时视觉不受影响
+        // (icon 才是 TMap 渲染形态),仅无 icon 的纯 HTML 形态才告警降级
+        if (!opts.icon) this.warnMultiMarkerContentDegraded();
+      },
       // zIndex 实例级(overlay layer rank):批量化下取全部 marker 的 max——
       // 选中(100)/高亮(80)整体抬升图层、普通(10/20)回落;共享实例内单
       // marker 精确层级不可达(SDK 无 per-geometry zIndex),max 为近似。
@@ -579,9 +586,14 @@ class TencentView implements MapView {
    *   同签名后续 marker 复用同一 styleId(共享实例样式字典不膨胀);
    * - 新样式在共享实例已存在时经 setStyles 全量替换上实例(**必须先于
    *   add geometry**:geometry 引用的 styleId 在实例上不能缺失);
-   * - MarkerStyle 仅图片 src 形态(SDK v1.8.0.2 核实);契约 offset [x,y]
-   *   → anchor 平移(渲染公式 imageTopLeft = 屏幕位 - anchor,Δanchor =
-   *   -(x,y) 即整图位移 (x,y);style.offset 渲染器不消费)。
+   * - **SDK 类名核实(ws-a,2026-08-22)**:GL API **无 IconStyle 类**——MultiMarker
+   *   图片样式类就是 `MarkerStyle`,内嵌 `{ src, width, height, anchor }`(src 可
+   *   为 dataURL 数据图或远程 URL);公司 icon / 聚合徽章走本路径真图标渲染;
+   * - 契约 icon 缺省 → 默认 pin;icon 存在 → 真图标;content 与 icon 并存时
+   *   icon 优先(TMap 无 HTML 渲染,content 不写入 geometry);
+   * - MarkerStyle 仅图片 src 形态;契约 offset [x,y] → anchor 平移(渲染公式
+   *   imageTopLeft = 屏幕位 - anchor,Δanchor = -(x,y) 即整图位移 (x,y);
+   *   style.offset 渲染器不消费)。
    */
   private resolveMultiStyle(opts: MapMarkerOptions): string {
     if (!opts.offset && !opts.icon) return 'default';
