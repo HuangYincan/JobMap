@@ -480,6 +480,41 @@ test('addControl:scale → TMap.control.ScaleControl(bottomRight);未知 kind no
   }
 });
 
+test('addControl:control/Control 命名空间都缺失 → 不抛 + console.warn 降级(不向 raw map 加控件)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
+  try {
+    delete ns.control; // 模拟 TMap GL 无 control 命名空间路径(运行时崩溃根因)
+    const view = await createView();
+    assert.doesNotThrow(() => view.addControl('scale'), '命名空间缺失必须静默降级,不得抛');
+    assert.equal(view.raw.control, null, '降级:raw map 不接收任何控件');
+    assert.equal(warn.calls.length, 1, '降级必须 console.warn(可观测)');
+    assert.match(String(warn.calls[0][0]), /ScaleControl 不可用/);
+  } finally {
+    warn.restore();
+    restore();
+  }
+});
+
+test('addControl:control 缺失但 Control 存在 → 双路径兜底正常创建控件', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    const ScaleControl = ns.control.ScaleControl;
+    delete ns.control;
+    ns.Control = { ScaleControl };
+    const view = await createView();
+    view.addControl('scale');
+    assert.ok(view.raw.control instanceof ns.Control.ScaleControl, '走 Control 大写命名空间兜底');
+    assert.deepEqual(view.raw.control.opts, { position: 'bottomRight' });
+  } finally {
+    restore();
+  }
+});
+
 test('on:契约事件 → TMap 事件名映射(zoomchange→zoom、moveend/complete→idle、click→click)+ 解绑', async () => {
   setKey('test-key');
   globalThis.window = globalThis;

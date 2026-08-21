@@ -191,6 +191,25 @@ function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "his
   );
 }
 
+/**
+ * 定位按引擎分派(2026-08-21 fix-runtime):
+ * - AMap 走 amap-api(Geolocation 控件绑定原始实例,蓝点 + 精度圈渲染在地图上);
+ * - 非 AMap(腾讯/百度)走引擎 search 纯定位(浏览器 Geolocation / 厂商定位,
+ *   无蓝点渲染,deferred)。
+ * 统一返回 { lng, lat } | null:调用方不再接触 loc.position(amap-api 专属形状),
+ * 也不再把 amap 控件塞给非 amap 的 raw map(腾讯 addControl 类型错误崩溃根因)。
+ */
+function locateForMap(view: MapView): Promise<{ lng: number; lat: number } | null> {
+  if (view.engine.id === "amap") {
+    return getCurrentPosition(view.raw).then((p) =>
+      p ? { lng: p.position.lng, lat: p.position.lat } : null,
+    );
+  }
+  return view.engine.search.getCurrentPosition().then((p) =>
+    p ? { lng: p.lng, lat: p.lat } : null,
+  );
+}
+
 export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<MapView | null>(null);
   const distanceCircleRef = useRef<any>(null);
@@ -588,14 +607,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       setGeoSettled(true);
     };
 
-    // Geolocation 蓝点需绑定到原始 AMap 实例(amap-api 专属能力,经逃生舱 view.raw)
-    getCurrentPosition(view.raw)
+    // 挂载定位按引擎分派:AMap 走 amap-api(蓝点+精度圈绑定原始实例);非 AMap 走
+    // 引擎 search 纯定位(无蓝点渲染,deferred)——见模块级 locateForMap
+    locateForMap(view)
       .then((loc) => {
         if (!loc) {
           settleGeolocation();
           return;
         }
-        const { lng, lat } = loc.position;
+        const { lng, lat } = loc;
         setUserLocation({ lng, lat });
         setSearchOrigin((prev) => prev ?? { lng, lat });
         // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未手动移图且相机
@@ -1741,9 +1761,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const handleLocate = () => {
     if (!mapInstance.current) return;
 
-    // 用 AMap.Geolocation 定位(addControl 绑定到 map,蓝点 + 精度圈渲染在地图上);
-    // Geolocation 是 amap-api 专属能力,需原始 AMap 实例(逃生舱 view.raw)
-    getCurrentPosition(mapInstance.current.raw)
+    // 定位按引擎分派:AMap 用 Geolocation 控件(addControl 绑定到 map,蓝点 + 精度圈
+    // 渲染在地图上);非 AMap 走引擎 search 纯定位(无蓝点渲染,deferred)。
+    // 不直接 getCurrentPosition(raw)——amap 控件塞给非 amap raw map 会类型错误崩溃。
+    locateForMap(mapInstance.current)
       .then((loc) => {
         if (!loc) {
           // 定位失败/被拒:保持当前视野,不跳回杭州默认中心(ws-poi-vanish)。
@@ -1751,7 +1772,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           console.warn("Geolocation failed, keeping current view");
           return;
         }
-        const { lng, lat } = loc.position;
+        const { lng, lat } = loc;
         mapInstance.current?.setCenter({ lng, lat });
         mapInstance.current?.setZoom(15);
         setMapCenter({ lng, lat });

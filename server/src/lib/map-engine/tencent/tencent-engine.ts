@@ -231,7 +231,17 @@ class TencentView implements MapView {
 
   addControl(kind: 'scale'): void {
     if (kind !== 'scale') return;
-    this.raw.addControl(new this.tmap.control.ScaleControl({ position: 'bottomRight' }));
+    // 控件命名空间双路径兜底(TMap GL 存在 control/Control 两种形态;缺失时降级
+    // 不抛——map-shell 的调用是 duck-type,返回 void 即跳过,比例尺缺失不炸地图)。
+    // 参考 baidu 引擎 L348-351 的防御风格:先存在性检查,再构造控件。
+    const ctrlNs = (this.tmap.control ?? this.tmap.Control) as
+      | { ScaleControl?: new (opts?: unknown) => unknown }
+      | undefined;
+    if (!ctrlNs?.ScaleControl) {
+      console.warn('[map-engine] TMap ScaleControl 不可用,比例尺降级');
+      return;
+    }
+    this.raw.addControl(new ctrlNs.ScaleControl({ position: 'bottomRight' }));
   }
 
   destroy(): void {
