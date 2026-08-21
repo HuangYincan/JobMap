@@ -78,6 +78,11 @@ test('无任何非杭州 drop 站点坐标落在杭州参考框内 (fecef85 清�
       // 坐标可区分; 无法区分/非静态中心 → 仍判为串味。
       const center = cityCenter(row.city);
       if (center && center.lng === row.lng && center.lat === row.lat) continue;
+      // 2026-08-22 (geocode r4): 真实 geocode 坐标豁免 —— 邻市(绍兴柯桥
+      // 120.512/30.093 等)真实办公点地理上落在杭州宽松框内, 但
+      // cityLabelMatchesCoordinates 证明坐标属于其自身城市参考框 →
+      // 是 geocode 产物, 不是 7d19271 杭州 office 坐标的复制串味。
+      if (cityLabelMatchesCoordinates(row.city, row.lng, row.lat)) continue;
       offenders.push({
         file: `${row.dir}/${row.file}`,
         site: row.site.id ?? row.site.name ?? '?',

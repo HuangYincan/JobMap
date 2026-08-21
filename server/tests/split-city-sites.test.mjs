@@ -288,8 +288,9 @@ test('真实数据: qqj-临界点(上海 深圳 北京,100 岗)拆分后主站�
   // 数据已应用拆分(主站点单城 + 中心坐标,拆出城市站点)—— 断言最终状态
   const main = raw.sites.find((s) => s.id === 'qqj-临界点-site');
   assert.equal(main.city, '上海市');
-  // 2026-08-22 地址回填 (e506c4d): 主站点坐标之上叠加回填 address (街道级), 坐标仍等于 cityCenter
-  assert.deepEqual(main.location, { ...cityCenter('上海'), address: '上海市徐汇区天平路185号11层1107室' });
+  // 2026-08-22 geocode r4: 主站点中心坐标已重跑解析到真实办公点
+  // (上海市徐汇区天平路185号11层1107室), 不再等于 cityCenter('上海')
+  assert.deepEqual(main.location, { lng: 121.439346, lat: 31.197401, address: '上海市徐汇区天平路185号11层1107室' });
   assert.ok(siteHasCoords(main));
   const splits = raw.sites.filter((s) => s.id.startsWith('qqj-临界点-site-'));
   assert.deepEqual(
