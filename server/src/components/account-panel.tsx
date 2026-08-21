@@ -14,7 +14,7 @@ import {
   type UserPreferences,
 } from "@/lib/account";
 import { ACTIVE_MODES, INDUSTRY_OPTIONS, getMode } from "@/lib/modes";
-import { t, type Language } from "@/lib/i18n";
+import { t, uiLabel, type Language } from "@/lib/i18n";
 import type { MapMode } from "@/lib/types";
 import { AvatarCropper } from "./avatar-cropper";
 import styles from "./account-panel.module.css";
@@ -368,7 +368,7 @@ export function ProfilePanel({
     if (n === 0) return emptyText;
     if (n === 1) {
       const item = INDUSTRY_OPTIONS.find((i) => i.value === prefs.career.industries[0]);
-      return item ? item.label : prefs.career.industries[0];
+      return item ? uiLabel(item, lang) : prefs.career.industries[0];
     }
     return countText(n);
   })();
@@ -378,7 +378,7 @@ export function ProfilePanel({
   })();
   // F3 偏好:language / defaultMode 走 PrefField 下拉,触发钮显示当前值
   const languageText = prefs.language === "zh" ? "中文" : "English";
-  const defaultModeText = getMode(prefs.defaultMode).name;
+  const defaultModeText = lang === "en" ? getMode(prefs.defaultMode).nameEn : getMode(prefs.defaultMode).name;
 
   const renderPrefTrigger = (field: PrefField, label: string, valueText: string) => (
     <div className={styles.row}>
@@ -442,7 +442,7 @@ export function ProfilePanel({
     } else if (openField === "industries") {
       label = t("careerIndustries", lang);
       multi = true;
-      options = INDUSTRY_OPTIONS.map((i) => ({ id: i.value, label: i.label }));
+      options = INDUSTRY_OPTIONS.map((i) => ({ id: i.value, label: uiLabel(i, lang) }));
       selected = prefs.career.industries;
     } else if (openField === "language") {
       // F3 偏好:language 单选下拉(与求职偏好同交互,勾选即存并关浮层)
@@ -457,7 +457,7 @@ export function ProfilePanel({
       // F3 偏好:defaultMode 单选下拉(选项 = ACTIVE_MODES 的显示名)
       label = t("prefDefaultMode", lang);
       multi = false;
-      options = ACTIVE_MODES.map((m) => ({ id: m, label: getMode(m).name }));
+      options = ACTIVE_MODES.map((m) => ({ id: m, label: lang === "en" ? getMode(m).nameEn : getMode(m).name }));
       selected = prefs.defaultMode;
     } else {
       label = t("careerStrengths", lang);
