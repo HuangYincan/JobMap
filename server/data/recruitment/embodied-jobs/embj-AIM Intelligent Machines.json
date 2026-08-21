@@ -1,0 +1,43 @@
+{
+  "slug": "embj-AIM Intelligent Machines",
+  "source": "embodied-jobs",
+  "name": "AIM Intelligent Machines",
+  "sites": [
+    {
+      "id": "embj-AIM Intelligent Machines-site",
+      "name": "AIM Intelligent Machines",
+      "city": "Seattle, WA, USA",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://aim.vision/jobs/embodied-ai?gh_src=General+Catalyst+job+board",
+  "positions": [
+    {
+      "externalId": "embj-AIM Intelligent Machines-1",
+      "title": "Embodied AI Engineer - Controls",
+      "siteId": "embj-AIM Intelligent Machines-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://aim.vision/jobs/embodied-ai?gh_src=General+Catalyst+job+board",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-AIM Intelligent Machines-2",
+      "title": "Perception and SLAM ML Engineer",
+      "siteId": "embj-AIM Intelligent Machines-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://aim.vision/jobs/perception-ml",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

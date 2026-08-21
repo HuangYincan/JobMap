@@ -1,0 +1,82 @@
+{
+  "slug": "embj-Aurora",
+  "source": "embodied-jobs",
+  "name": "Aurora",
+  "sites": [
+    {
+      "id": "embj-Aurora-site",
+      "name": "Aurora",
+      "city": "Pittsburgh, PA Mountain View, CA USA",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://www.aurora.tech/careers",
+  "positions": [
+    {
+      "externalId": "embj-Aurora-1",
+      "title": "Software Engineer, Functional Architecture",
+      "siteId": "embj-Aurora-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.aurora.tech/careers",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Aurora-2",
+      "title": "Senior/Staff Software Engineer, Onboard Infrastructure",
+      "siteId": "embj-Aurora-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.aurora.tech/careers",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Aurora-3",
+      "title": "Machine Learning Research Scientist",
+      "siteId": "embj-Aurora-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.aurora.tech/careers",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Aurora-4",
+      "title": "Software Engineer, Behavior Planning",
+      "siteId": "embj-Aurora-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.aurora.tech/careers",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Aurora-5",
+      "title": "Staff Security Software Engineer",
+      "siteId": "embj-Aurora-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.aurora.tech/careers",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

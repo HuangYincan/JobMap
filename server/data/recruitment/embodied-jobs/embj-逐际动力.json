@@ -1,0 +1,121 @@
+{
+  "slug": "embj-逐际动力",
+  "source": "embodied-jobs",
+  "name": "逐际动力",
+  "sites": [
+    {
+      "id": "embj-逐际动力-site",
+      "name": "逐际动力",
+      "city": "深圳市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://career.limxdynamics.com/index/position/7512732459647027493/detail",
+  "positions": [
+    {
+      "externalId": "embj-逐际动力-1",
+      "title": "产品助理",
+      "siteId": "embj-逐际动力-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.limxdynamics.com/index/position/7512732459647027493/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-逐际动力-2",
+      "title": "机器人系统工程师",
+      "siteId": "embj-逐际动力-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.limxdynamics.com/index/position/7570913172300138798/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-逐际动力-3",
+      "title": "技术项目经理",
+      "siteId": "embj-逐际动力-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.limxdynamics.com/index/position/7538336493263620371/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-逐际动力-4",
+      "title": "Linux BSP工程师",
+      "siteId": "embj-逐际动力-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.limxdynamics.com/index/position/7639562069297793286/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-逐际动力-5",
+      "title": "产品预研结构实习生",
+      "siteId": "embj-逐际动力-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.limxdynamics.com/index/position/7637735429790681382/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-逐际动力-6",
+      "title": "具身智能售前解决方案经理",
+      "siteId": "embj-逐际动力-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.limxdynamics.com/index/position/7633702013930359083/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-逐际动力-7",
+      "title": "具身智能项目经理",
+      "siteId": "embj-逐际动力-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.limxdynamics.com/index/position/7630721644181686538/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-逐际动力-8",
+      "title": "硬件专家（机器人方向）",
+      "siteId": "embj-逐际动力-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.limxdynamics.com/index/position/7626232058113739051/detail",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

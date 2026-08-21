@@ -1,0 +1,43 @@
+{
+  "slug": "embj-Stanford Robotics Lab",
+  "source": "embodied-jobs",
+  "name": "Stanford Robotics Lab",
+  "sites": [
+    {
+      "id": "embj-Stanford Robotics Lab-site",
+      "name": "Stanford Robotics Lab",
+      "city": "Stanford, CA",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://ai.stanford.edu/postdoctoralfellows/",
+  "positions": [
+    {
+      "externalId": "embj-Stanford Robotics Lab-1",
+      "title": "Postdoctoral Fellow - SAIL",
+      "siteId": "embj-Stanford Robotics Lab-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ai.stanford.edu/postdoctoralfellows/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Stanford Robotics Lab-2",
+      "title": "Postdoctoral Researcher - Robotics",
+      "siteId": "embj-Stanford Robotics Lab-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://postdocs.stanford.edu/prospective/opportunities",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

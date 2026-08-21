@@ -1,0 +1,43 @@
+{
+  "slug": "embj-上海市交通大学",
+  "source": "embodied-jobs",
+  "name": "上海市交通大学",
+  "sites": [
+    {
+      "id": "embj-上海市交通大学-site",
+      "name": "上海市交通大学",
+      "city": "上海市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://postd.sjtu.edu.cn/",
+  "positions": [
+    {
+      "externalId": "embj-上海市交通大学-1",
+      "title": "致远博士后 - AI/机器人方向",
+      "siteId": "embj-上海市交通大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://postd.sjtu.edu.cn/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-上海市交通大学-2",
+      "title": "致远博士后 - 计算机方向",
+      "siteId": "embj-上海市交通大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://postd.sjtu.edu.cn/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "slug": "embj-柏楚",
+  "source": "embodied-jobs",
+  "name": "柏楚",
+  "sites": [
+    {
+      "id": "embj-柏楚-site",
+      "name": "柏楚",
+      "city": "上海市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://fscut.zhiye.com/social/detail?jobAdId=4afcfa92-a409-49b8-b298-510fd6e5ae08",
+  "positions": [
+    {
+      "externalId": "embj-柏楚-1",
+      "title": "软件开发工程师",
+      "siteId": "embj-柏楚-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/social/detail?jobAdId=4afcfa92-a409-49b8-b298-510fd6e5ae08",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-柏楚-2",
+      "title": "机器人开发工程师（数控平台方向",
+      "siteId": "embj-柏楚-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/social/detail?jobAdId=0735fdb1-7429-43de-8b98-309ec2ccdaf2",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-柏楚-3",
+      "title": "图形学算法高级工程师/架构师",
+      "siteId": "embj-柏楚-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/social/detail?jobAdId=ad7d566b-7364-4732-8989-8ee6216a6630",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-柏楚-4",
+      "title": "传感器开发工程师",
+      "siteId": "embj-柏楚-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/social/detail?jobAdId=45dc2ede-e681-483e-abc2-906ac87b0e76",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-柏楚-5",
+      "title": "3D感知算法工程师",
+      "siteId": "embj-柏楚-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/social/detail?jobAdId=06584377-f8f8-4832-bd2b-8909705b207d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-柏楚-6",
+      "title": "高级传动系统工程师",
+      "siteId": "embj-柏楚-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/social/detail?jobAdId=f042ef70-c364-41a3-8347-4648307da5f3",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-柏楚-7",
+      "title": "运动控制算法工程师（机械臂）",
+      "siteId": "embj-柏楚-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/campus/detail?jobAdId=9f2c24ff-dad5-466e-b44a-37ec5c04151b",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-柏楚-8",
+      "title": "运动控制工程师",
+      "siteId": "embj-柏楚-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/campus/detail?jobAdId=e5b1b539-61ad-494d-b7ce-34191d639096",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-柏楚-9",
+      "title": "驱控系统/驱动算法工程师",
+      "siteId": "embj-柏楚-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fscut.zhiye.com/campus/detail?jobAdId=5802b200-bb1e-42cb-9823-0a87e101f1ca",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

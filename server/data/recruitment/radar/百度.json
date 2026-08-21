@@ -112,6 +112,45 @@
       "applySource": "official",
       "applyUrl": "https://talent.baidu.com/jobs/list?recommendCode=IZH1K1&recruitType=GRADUATE/static/index.html#/recruitHelp",
       "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "embj-百度-1",
+      "title": "AIDU计划自动驾驶-深度学习决策规划算法工程师",
+      "siteId": "百度-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/detail/GRADUATE/795d6cd1-4b53-4733-a553-a5b96bef9111",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-百度-2",
+      "title": "AIDU计划 - 自动驾驶-感知算法工程师(VLM语义方向)",
+      "siteId": "百度-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/detail/GRADUATE/69b11b84-fe6c-4287-8502-b09b6d27faed",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-百度-3",
+      "title": "AIDU计划- 自动驾驶-感知算法工程师(多模态障碍物检测方向)",
+      "siteId": "百度-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/detail/GRADUATE/ef698f72-e6ad-480e-9438-446eaed91c76",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "category": "64"

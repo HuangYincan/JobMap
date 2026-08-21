@@ -43,6 +43,58 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://careers.tencent.com/"
+    },
+    {
+      "externalId": "embj-腾讯-1",
+      "title": "青云计划",
+      "siteId": "tencent-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.qq.com/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-腾讯-2",
+      "title": "腾讯技术大咖",
+      "siteId": "tencent-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.tencent.com/search.html",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-腾讯-3",
+      "title": "青云计划 - 机器人方向",
+      "siteId": "tencent-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.qq.com/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-腾讯-4",
+      "title": "青云计划 - AI研究方向",
+      "siteId": "tencent-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.qq.com/",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "tier": 0,

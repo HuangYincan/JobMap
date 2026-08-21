@@ -1,0 +1,251 @@
+{
+  "slug": "embj-节卡机器人",
+  "source": "embodied-jobs",
+  "name": "节卡机器人",
+  "sites": [
+    {
+      "id": "embj-节卡机器人-site",
+      "name": "节卡机器人",
+      "city": "上海市 常州市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://www.jaka.com/zh/position",
+  "positions": [
+    {
+      "externalId": "embj-节卡机器人-1",
+      "title": "机械系统研究员",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-2",
+      "title": "嵌入式系统研究员",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-3",
+      "title": "具身智能算法研究员（感知方向）",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-4",
+      "title": "具身智能算法研究员（控制方向）",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-5",
+      "title": "控制软件开发工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-6",
+      "title": "控制算法工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-7",
+      "title": "视觉算法工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-8",
+      "title": "固件工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-9",
+      "title": "硬件工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-10",
+      "title": "前端开发工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-11",
+      "title": "产品工程师（项目管理运营方向）",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-12",
+      "title": "产品工程师(产品运营方向)",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-13",
+      "title": "电气工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-14",
+      "title": "工业设计工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-15",
+      "title": "机械工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-16",
+      "title": "应用开发工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-17",
+      "title": "助理工程师",
+      "siteId": "embj-节卡机器人-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡机器人-18",
+      "title": "产品市场管培生",
+      "siteId": "embj-节卡机器人-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.jaka.com/zh/position",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

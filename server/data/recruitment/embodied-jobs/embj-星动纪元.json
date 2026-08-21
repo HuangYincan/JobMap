@@ -1,0 +1,147 @@
+{
+  "slug": "embj-星动纪元",
+  "source": "embodied-jobs",
+  "name": "星动纪元",
+  "sites": [
+    {
+      "id": "embj-星动纪元-site",
+      "name": "星动纪元",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7550252790111750427/detail",
+  "positions": [
+    {
+      "externalId": "embj-星动纪元-1",
+      "title": "具身智能大模型算法工程师",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7550252790111750427/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-星动纪元-2",
+      "title": "多模态强化学习算法工程师",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7550526797104957734/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-星动纪元-3",
+      "title": "多模态数据算法工程师",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7550529013535033643/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-星动纪元-4",
+      "title": "机器人强化学习（灵巧手方向）",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7595512286324787506/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-星动纪元-5",
+      "title": "遥操作系统工程师",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7595512081555212571/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-星动纪元-6",
+      "title": "机器人规控算法工程师",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7595511597217450259/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-星动纪元-7",
+      "title": "技术产品经理",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7573601627207141674/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-星动纪元-8",
+      "title": "Linux系统软件及BSP驱动工程师",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7571785644297521459/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-星动纪元-9",
+      "title": "MCU嵌入式软件工程师",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7571783296507824435/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-星动纪元-10",
+      "title": "高级云服务开发工程师",
+      "siteId": "embj-星动纪元-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7597643247405582619/detail",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

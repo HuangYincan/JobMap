@@ -1,0 +1,30 @@
+{
+  "slug": "embj-Microsoft",
+  "source": "embodied-jobs",
+  "name": "Microsoft",
+  "sites": [
+    {
+      "id": "embj-Microsoft-site",
+      "name": "Microsoft",
+      "city": "美国 全球",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://www.microsoft.com/en-us/research/academic-program/microsoft-research-fellowship/",
+  "positions": [
+    {
+      "externalId": "embj-Microsoft-1",
+      "title": "Microsoft Research PhD Fellowship",
+      "siteId": "embj-Microsoft-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.microsoft.com/en-us/research/academic-program/microsoft-research-fellowship/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

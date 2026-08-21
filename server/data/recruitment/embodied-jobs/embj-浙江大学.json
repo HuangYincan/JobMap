@@ -1,0 +1,43 @@
+{
+  "slug": "embj-浙江大学",
+  "source": "embodied-jobs",
+  "name": "浙江大学",
+  "sites": [
+    {
+      "id": "embj-浙江大学-site",
+      "name": "浙江大学",
+      "city": "杭州市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://hr.zju.edu.cn/postdoctor/",
+  "positions": [
+    {
+      "externalId": "embj-浙江大学-1",
+      "title": "求是博士后 - 控制/计算机方向",
+      "siteId": "embj-浙江大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.zju.edu.cn/postdoctor/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-浙江大学-2",
+      "title": "求是博士后 - AI方向",
+      "siteId": "embj-浙江大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.zju.edu.cn/postdoctor/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

@@ -84,6 +84,19 @@
       "applyUrl": "https://career.honor.com/SU61b9b9992f9d24431f5050a5/pb/interns.html",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "embj-荣耀-1",
+      "title": "全球百万雄鹰计划",
+      "siteId": "荣耀honor-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.honor.com/cn/career/",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "category": "39"

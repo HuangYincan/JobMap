@@ -1,0 +1,30 @@
+{
+  "slug": "embj-Grit Ventures",
+  "source": "embodied-jobs",
+  "name": "Grit Ventures",
+  "sites": [
+    {
+      "id": "embj-Grit Ventures-site",
+      "name": "Grit Ventures",
+      "city": "USA | Summer 2026",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://jobs.gritventures.com",
+  "positions": [
+    {
+      "externalId": "embj-Grit Ventures-1",
+      "title": "Reinforcement Learning Intern",
+      "siteId": "embj-Grit Ventures-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.gritventures.com",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

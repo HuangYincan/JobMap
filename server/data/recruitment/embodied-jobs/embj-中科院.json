@@ -1,0 +1,43 @@
+{
+  "slug": "embj-中科院",
+  "source": "embodied-jobs",
+  "name": "中科院",
+  "sites": [
+    {
+      "id": "embj-中科院-site",
+      "name": "中科院",
+      "city": "北京市 全国",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://www.cas.cn/rcjy/",
+  "positions": [
+    {
+      "externalId": "embj-中科院-1",
+      "title": "百人计划 - 计算机/机器人方向",
+      "siteId": "embj-中科院-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.cas.cn/rcjy/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-中科院-2",
+      "title": "海外优青项目",
+      "siteId": "embj-中科院-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cnic.cas.cn",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

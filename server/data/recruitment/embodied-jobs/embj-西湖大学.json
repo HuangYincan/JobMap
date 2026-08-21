@@ -1,0 +1,43 @@
+{
+  "slug": "embj-西湖大学",
+  "source": "embodied-jobs",
+  "name": "西湖大学",
+  "sites": [
+    {
+      "id": "embj-西湖大学-site",
+      "name": "西湖大学",
+      "city": "杭州市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://www.westlake.edu.cn/careers/",
+  "positions": [
+    {
+      "externalId": "embj-西湖大学-1",
+      "title": "博士后 - 人工智能方向",
+      "siteId": "embj-西湖大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.westlake.edu.cn/careers/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-西湖大学-2",
+      "title": "博士后 - 机器人方向",
+      "siteId": "embj-西湖大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.westlake.edu.cn/careers/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

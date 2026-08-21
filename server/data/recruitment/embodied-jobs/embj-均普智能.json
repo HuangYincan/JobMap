@@ -1,0 +1,251 @@
+{
+  "slug": "embj-均普智能",
+  "source": "embodied-jobs",
+  "name": "均普智能",
+  "sites": [
+    {
+      "id": "embj-均普智能-site",
+      "name": "均普智能",
+      "city": "宁波市 上海市 苏州市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/73456307-cad6-44f7-bba7-cd34f0ced49a",
+  "positions": [
+    {
+      "externalId": "embj-均普智能-1",
+      "title": "研发测试工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/73456307-cad6-44f7-bba7-cd34f0ced49a",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-2",
+      "title": "具身大模型算法工程师 （预训练方向）",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/f3aec7c1-91b8-439a-be6c-80e6f4e606c2",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-3",
+      "title": "具身仿真科学家/工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/a6c3abe0-4066-4423-902c-13b10181522b",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-4",
+      "title": "具身真机与仿真评测科学家/工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/ace89068-28a9-442a-9de0-f9762bd0685d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-5",
+      "title": "具身数据闭环科学家/工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/011aab19-6129-40a5-8083-1b0de24467ff",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-6",
+      "title": "具身模型推理与部署科学家/工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/3722cdef-0245-4b36-b189-3e9216a8c85e",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-7",
+      "title": "具身模型后训练科学家/工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/99d7e7c1-fa6c-4328-99de-440b3488105e",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-8",
+      "title": "研发机械设计工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/69d1e7d6-f34a-48f1-b5ab-07bc7d8472ad",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-9",
+      "title": "运控工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/040b9e5a-a1ff-4f0f-99c3-821e541d831f",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-10",
+      "title": "感知算法工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/5ec06a62-eb25-4ced-9b06-98439b31eacd",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-11",
+      "title": "算法验证工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/6d56815e-9af6-4b63-a051-c08ee1ca161d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-12",
+      "title": "数据标注开发工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/f797e1d2-f821-489a-8653-ac5231fa57c4",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-13",
+      "title": "软件工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/b3174cfa-f90d-48dc-aff1-9ded3d515cb1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-14",
+      "title": "强化学习专家",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/d1c6c266-1da0-4c48-b96b-6bffc6d0e791",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-15",
+      "title": "机械设计工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/58c5cf18-0fac-4307-8c36-ee3bfb72af70",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-16",
+      "title": "机械方案工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/e343b0e0-a98e-4091-aa95-018dc433f49c",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-17",
+      "title": "视觉工程师",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/427cb1e7-e54d-4ab2-9c1e-1a9df558f8ca",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-均普智能-18",
+      "title": "人形机器人产测主管",
+      "siteId": "embj-均普智能-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/a7983295-fc63-4d24-a727-fd3339f3ae7d",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

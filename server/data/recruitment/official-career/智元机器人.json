@@ -13825,6 +13825,136 @@
       "applyUrl": "https://agirobot.jobs.feishu.cn/946993/position/7675579003763853587/detail",
       "retrievedAt": "2026-08-20T03:25:35Z",
       "description": "一块真正的绿地，且架构决策权在你手上。选型论证已完成、预算已批，但所有技术细节——链路怎么串、埋点规范怎么定、采样策略、边缘拓扑——都由你来定义。你不会接手一个别人建了一半的烂摊子； 商业工具的预算是给足的。团队的原则是「商业优先、自研脱水采购平台」，Dynatrace 商业版、快猫星云商业支持、Flashduty 专业版均已列入预算盘点（Flashduty 专业版已定版）。你的精力会花在架构与治理上，而不是省钱造轮子和填开源坑； 三类差异极大的观测对象。标准的信息化业务与云原生微服务、机器人产品的端云一体链路、GPU 算力集群与大模型调用——后两类在业界都没有成熟方案，是能做出独特技术积累的地方； 建能力和用能力在同一个人手里。你不会只交付一个平台然后交给别人去用——SLO 怎么定、告警怎么治、故障怎么复盘，都由你基于自己建的能力来推动，闭环完整； 明确的职责边界与合理的预期。这个岗位覆盖面很宽，所以我们把节奏也讲在前面：首年的重心是链路/APM 与稳定性治理（Dynatrace 落地与主机分档台账、告警治理、OnCall 与复盘机制、1-2 个核心服务的 SLO），广度监控平台是第二阶段并会为它单独补 HC，GPU 与机器人两条线首年只做口径定义与试点。团队规划里对每条线的工作量都有量化估算，不承诺做不到的交付，也不会用「全都要」把人耗干； 具身智能赛道：公司业务处在机器人产业化的一线，可观测性会直接支撑机器人产品的规模化交付。\n\n岗位要求:\n计算机相关专业本科及以上，6 年以上后端 / SRE / 基础架构经验，其中至少 3 年专注可观测性方向； 有从 0 到 1 搭建企业级可观测平台的完整经验（不是「使用过」或「维护过」），能清晰讲出当时的架构选择、被否掉的方案以及踩过的坑； 精通分布式链路追踪：深入理解 OpenTelemetry 规范与生态，有 Jaeger / Tempo / SkyWalking / Zipkin 中至少一套的生产落地经验，能独立设计跨语言跨中间件的埋点与上下文传播方案； 精通 Prometheus 生态与指标体系设计，有 VictoriaMetrics / Thanos / Mimir 等大规模时序存储的生产调优经验； 熟练掌握 Go / Java / Python 中至少一门，能独立编写 exporter、OTel Collector processor、采集插件——本岗位需要动手写代码，不是纯方案岗； 理解 APM 探针的实现原理（字节码注入 / eBPF / 运行时 Hook），能判断商业产品的能力边界与适用场景； 有多云或混合云环境的监控落地经验； 有 SLI/SLO 体系与故障应急机制的落地经验：主导过 SLO 口径与研发团队的共识过程、建设过 OnCall 排班与升级策略、组织过 P1 故障复盘并推动改进项闭环。只有理论认知、没有真正推动过研发接受 SLO 目标的候选人不符合要求； 具备成本意识：能把技术方案换算成账单，并主动在方案里设计成本控制点。"
+    },
+    {
+      "externalId": "embj-智元机器人-1",
+      "title": "C++软件工程师（算法方向）",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7631934883878783278/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-智元机器人-2",
+      "title": "具身 Agent 算法工程师 / 专家",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7631851350171273478/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-智元机器人-3",
+      "title": "Agent算法工程师-灵犀",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7631848833064995115/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-智元机器人-4",
+      "title": "具身智能基础模型研发工程师/专家",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7611419025646684443/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-智元机器人-5",
+      "title": "多模态生成动作大模型研究员",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7610272353105266986/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-智元机器人-6",
+      "title": "灵巧手模型算法工程师",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7637132026886162714/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-智元机器人-7",
+      "title": "感知融合算法工程师",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7623723736328145203/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-智元机器人-8",
+      "title": "空间智能算法工程师",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7623719991930407178/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-智元机器人-9",
+      "title": "感知融合算法工程师",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7611826275519138054/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-智元机器人-10",
+      "title": "视觉SLAM实习生",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/campusrecruitment/position/7624485773874956607/detail",
+      "retrievedAt": "2026-08-21"
     }
   ]
 }

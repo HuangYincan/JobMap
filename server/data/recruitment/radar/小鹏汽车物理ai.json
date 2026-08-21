@@ -69,6 +69,32 @@
       "applyUrl": "https://xiaopeng.jobs.feishu.cn/958231",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "embj-小鹏汽车-1",
+      "title": "具身智能运控算法实习生",
+      "siteId": "小鹏汽车物理ai-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaopeng.jobs.feishu.cn/campus/m/position/detail/7619138376453114158",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小鹏汽车-2",
+      "title": "具身智能算法实习生(Manipulation)",
+      "siteId": "小鹏汽车物理ai-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaopeng.jobs.feishu.cn/campus/m/position/detail/7606269238881323315",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "category": "36"

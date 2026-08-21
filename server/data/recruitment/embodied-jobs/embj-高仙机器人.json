@@ -1,0 +1,134 @@
+{
+  "slug": "embj-高仙机器人",
+  "source": "embodied-jobs",
+  "name": "高仙机器人",
+  "sites": [
+    {
+      "id": "embj-高仙机器人-site",
+      "name": "高仙机器人",
+      "city": "上海市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=68ac2772b8fdf84cde4e83da&postType=society",
+  "positions": [
+    {
+      "externalId": "embj-高仙机器人-1",
+      "title": "算法架构师",
+      "siteId": "embj-高仙机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=68ac2772b8fdf84cde4e83da&postType=society",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-高仙机器人-2",
+      "title": "测试工程师",
+      "siteId": "embj-高仙机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=67612b836202cc219c3dfa22&postType=society",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-高仙机器人-3",
+      "title": "C++架构师",
+      "siteId": "embj-高仙机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=67453c311c240e01910782ac&postType=society",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-高仙机器人-4",
+      "title": "感知算法工程师",
+      "siteId": "embj-高仙机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=6724a3921c240e0191d27749&postType=society",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-高仙机器人-5",
+      "title": "软件项目经理",
+      "siteId": "embj-高仙机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=6732be356202cc05472e8f91&postType=society",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-高仙机器人-6",
+      "title": "云平台质量与效率工程师",
+      "siteId": "embj-高仙机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=66c86be21eb80543256cc9db&postType=society",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-高仙机器人-7",
+      "title": "硬件产品经理",
+      "siteId": "embj-高仙机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=66e552931eb8056010ca7c2d&postType=society",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-高仙机器人-8",
+      "title": "路径规划与控制算法工程师",
+      "siteId": "embj-高仙机器人-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=66585c2f1c240e071a6acdb1&postType=society",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-高仙机器人-9",
+      "title": "测试实习生",
+      "siteId": "embj-高仙机器人-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=673181a46202cc05472cb4d9&postType=society",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

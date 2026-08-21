@@ -1,0 +1,43 @@
+{
+  "slug": "embj-Google",
+  "source": "embodied-jobs",
+  "name": "Google",
+  "sites": [
+    {
+      "id": "embj-Google-site",
+      "name": "Google",
+      "city": "全球 美国",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://research.google/programs-and-events/phd-fellowship/",
+  "positions": [
+    {
+      "externalId": "embj-Google-1",
+      "title": "Google PhD Fellowship - Machine Learning",
+      "siteId": "embj-Google-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://research.google/programs-and-events/phd-fellowship/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Google-2",
+      "title": "Google PhD Fellowship - Robotics/Embodied AI",
+      "siteId": "embj-Google-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://research.google/programs-and-events/phd-fellowship/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

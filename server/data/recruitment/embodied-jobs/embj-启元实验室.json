@@ -1,0 +1,30 @@
+{
+  "slug": "embj-启元实验室",
+  "source": "embodied-jobs",
+  "name": "启元实验室",
+  "sites": [
+    {
+      "id": "embj-启元实验室-site",
+      "name": "启元实验室",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://yzb.hit.edu.cn/2026/0310/c19935a388130/pagem.htm",
+  "positions": [
+    {
+      "externalId": "embj-启元实验室-1",
+      "title": "博士联合培养项目",
+      "siteId": "embj-启元实验室-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://yzb.hit.edu.cn/2026/0310/c19935a388130/pagem.htm",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

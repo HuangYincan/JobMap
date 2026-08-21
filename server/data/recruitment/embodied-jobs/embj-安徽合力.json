@@ -1,0 +1,30 @@
+{
+  "slug": "embj-安徽合力",
+  "source": "embodied-jobs",
+  "name": "安徽合力",
+  "sites": [
+    {
+      "id": "embj-安徽合力-site",
+      "name": "安徽合力",
+      "city": "合肥市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "http://ahhl.zhiye.com/zpdetail/311123451?p=1%5E5",
+  "positions": [
+    {
+      "externalId": "embj-安徽合力-1",
+      "title": "产品设计",
+      "siteId": "embj-安徽合力-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://ahhl.zhiye.com/zpdetail/311123451?p=1%5E5",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

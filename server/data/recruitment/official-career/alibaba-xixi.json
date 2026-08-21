@@ -43,6 +43,32 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://talent.alibaba.com/"
+    },
+    {
+      "externalId": "embj-阿里巴巴-1",
+      "title": "阿里星-27届实习生",
+      "siteId": "alibaba-xixi-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?batchId=100000540002&filterParams=%7B%22aliStar%22%3A%5B%22Y%22%5D%7D",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-阿里巴巴-2",
+      "title": "阿里星计划 - 机器人方向",
+      "siteId": "alibaba-xixi-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/activity/ali-star?lang=zh",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "tier": 0,

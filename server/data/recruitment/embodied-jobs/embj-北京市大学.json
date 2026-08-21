@@ -1,0 +1,43 @@
+{
+  "slug": "embj-北京市大学",
+  "source": "embodied-jobs",
+  "name": "北京市大学",
+  "sites": [
+    {
+      "id": "embj-北京市大学-site",
+      "name": "北京市大学",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://postdocs.pku.edu.cn/tzgg/3bb64ae6881c498eb74a84c5267d5617.htm",
+  "positions": [
+    {
+      "externalId": "embj-北京市大学-1",
+      "title": "博雅博士后 - 智能科学方向",
+      "siteId": "embj-北京市大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://postdocs.pku.edu.cn/tzgg/3bb64ae6881c498eb74a84c5267d5617.htm",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-北京市大学-2",
+      "title": "博雅博士后 - 计算机方向",
+      "siteId": "embj-北京市大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://postdocs.pku.edu.cn/tzgg/3bb64ae6881c498eb74a84c5267d5617.htm",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

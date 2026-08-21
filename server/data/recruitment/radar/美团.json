@@ -69,6 +69,136 @@
       "applyUrl": "https://zhaopin.meituan.com/web/beidou",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "embj-美团-1",
+      "title": "具身智能系统工程师",
+      "siteId": "美团-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3370570061&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-2",
+      "title": "具身智能算法工程师",
+      "siteId": "美团-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3370509617&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-3",
+      "title": "基座大模型算法研究员（预训练/原生多模态/智能体系统）",
+      "siteId": "美团-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3375720050&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-4",
+      "title": "多模态基座大模型算法研究员（视觉/语音/全模态融合）",
+      "siteId": "美团-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3375700771&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-5",
+      "title": "具身智能技术研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3153985413&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-6",
+      "title": "具身智能前沿研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=4348855149&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-7",
+      "title": "具身智能前沿技术研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=4348824362&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-8",
+      "title": "具身智能系统与开放物理世界探索能力研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=4348797539&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-9",
+      "title": "视觉生成与世界模型技术研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=4348830639&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-10",
+      "title": "多模态智能体算法研究与自主规划",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3153873069&jobShareType=1",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "category": "64"
