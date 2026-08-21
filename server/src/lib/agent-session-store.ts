@@ -9,6 +9,8 @@
 // - cap:10 会话 × 每会话 30 条消息(超出丢最旧);
 // - 标题 deriveTitle:首条用户消息截断 12 字(按码点),无 → 「新会话」;
 // - 删除当前会话 → 切到最近(updatedAt 最大);全删 → 新建空会话;
+// - 清屏 archiveAndNew:当前会话消息落库为历史(有消息才归档,标题保留
+//   原样)+ 新建并激活空会话(「新会话」),cap 裁剪照旧(归档挤出最旧);
 // - 迁移:无 v1 键时读旧 sessionStorage `dm.agent-history.v1`(前端单会话
 //   历史)迁为第一个会话(保留原消息);迁移后旧键清除。
 // ============================================================
@@ -234,6 +236,37 @@ export function saveMessages(
   const normalized = messages.filter(isValidMessage).map(normalizeMessage).slice(-SESSION_MESSAGES_CAP);
   sessions[idx] = { ...cur, messages: normalized, title: deriveTitle(normalized), updatedAt: opts.now ?? Date.now() };
   return { ...state, sessions };
+}
+
+/**
+ * 清屏(ws-clearfix):归档当前会话 → 新建空会话并激活。
+ * - activeId 存在且 messages 非空 → 该会话消息落库为历史:替换为传入消息
+ *   (cap 30),**标题保留原样**(不清 title;无传入标题时派生兜底),updatedAt 刷新;
+ * - 空会话(无消息)不产生空历史:会话条目不动;
+ * - 未知/无 activeId → 无归档;
+ * - 随后新建空会话(「新会话」)并置为 active,cap 裁剪照旧(归档+新建可能
+ *   挤出最旧会话,但归档会话 updatedAt 已刷新,不会被丢)。
+ */
+export function archiveAndNew(
+  state: AgentSessionState,
+  opts: { activeId: string | null; messages: AgentMessage[]; title?: string; id?: string; now?: number },
+): AgentSessionState {
+  const now = opts.now ?? Date.now();
+  const sessions = [...state.sessions];
+  const idx = opts.activeId ? sessions.findIndex((s) => s.id === opts.activeId) : -1;
+  if (idx !== -1) {
+    const normalized = opts.messages.filter(isValidMessage).map(normalizeMessage).slice(-SESSION_MESSAGES_CAP);
+    if (normalized.length > 0) {
+      sessions[idx] = {
+        ...sessions[idx],
+        messages: normalized,
+        title: opts.title || deriveTitle(normalized),
+        updatedAt: now,
+      };
+    }
+    // 空消息 → 不归档(不产生空历史),会话条目保留原样
+  }
+  return createSession({ ...state, sessions }, { id: opts.id, now });
 }
 
 export function saveSessionState(storage: SessionStorageLike | null | undefined, state: AgentSessionState): void {
