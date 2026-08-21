@@ -170,9 +170,10 @@ function readInitialMapStyle(): BasemapStyle {
   return readMapStylePref(system);
 }
 
-function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "menu" | "sidebar" | "chevronLeft" | "compass" | "locate" | "person" | "login" | "logout" }) {
+function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "menu" | "sidebar" | "chevronLeft" | "compass" | "locate" | "person" | "login" | "logout" | "agent" }) {
   const paths: Record<string, string> = {
     search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm6-2 4 4",
+    agent: "M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z",
     layers: "m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5",
     bookmark: "M6 4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18l-6-4-6 4V4Z",
     grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
@@ -357,6 +358,11 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, []);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers" | "account" | "recent">("explore");
+  /** 移动 sheet 来源追踪(ws-mt):工具栏 item 打开 saved/layers/recent → "explore";
+   *  account 内导航打开 → "account";三个 sheet 的 back 按钮按此回退。 */
+  const [mobileSheetBack, setMobileSheetBack] = useState<"explore" | "account">("explore");
+  /** AI 助手开关(ws-mt 受控提升):悬浮球与移动工具栏 AI item 共用;移动端入口为工具栏 item。 */
+  const [agentOpen, setAgentOpen] = useState(false);
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
   const [mobileSuggestIndex, setMobileSuggestIndex] = useState(-1);
@@ -2576,8 +2582,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         </button>
       </div>
 
-      {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点;user 透传 → 记忆入口登录才渲染) */}
-      <AgentBall bridge={agentBridgeRef.current} lang={lang} user={user} />
+      {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点;user 透传 → 记忆入口登录才渲染;
+          ws-mt 受控:agentOpen/onOpenChange 提升至 MapShell,移动端球隐藏、入口为工具栏 AI item) */}
+      <AgentBall
+        bridge={agentBridgeRef.current}
+        lang={lang}
+        user={user}
+        open={agentOpen}
+        onOpenChange={setAgentOpen}
+      />
 
       <section
         ref={drawerRef}
@@ -2651,7 +2664,87 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         ) : (
           <>
             <div className={styles.mobileToolbar}>
-              <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} lang={lang} />
+              <div className={styles.mobileToolbarItems}>
+                <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} lang={lang} />
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${mobileSheet === "layers" ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("layers", lang)}
+                  title={t("layers", lang)}
+                  aria-pressed={mobileSheet === "layers"}
+                  onClick={() => {
+                    if (mobileSheet === "layers") {
+                      setMobileSheet("explore");
+                      return;
+                    }
+                    setMobileSheetBack("explore");
+                    setMobileSheet("layers");
+                    setDrawer("full");
+                  }}
+                >
+                  <Icon name="layers" />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${mobileSheet === "saved" ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("saved", lang)}
+                  title={t("saved", lang)}
+                  aria-pressed={mobileSheet === "saved"}
+                  onClick={() => {
+                    if (!user) {
+                      setAuthOpen(true);
+                      return;
+                    }
+                    if (mobileSheet === "saved") {
+                      setMobileSheet("explore");
+                      return;
+                    }
+                    setMobileSheetBack("explore");
+                    setMobileSheet("saved");
+                    setDrawer("full");
+                  }}
+                >
+                  <Icon name="bookmark" />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${mobileSheet === "explore" ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("explore", lang)}
+                  title={t("explore", lang)}
+                  aria-pressed={mobileSheet === "explore"}
+                  onClick={() => setMobileSheet("explore")}
+                >
+                  <Icon name="grid" />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${mobileSheet === "recent" ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("recent", lang)}
+                  title={t("recent", lang)}
+                  aria-pressed={mobileSheet === "recent"}
+                  onClick={() => {
+                    if (mobileSheet === "recent") {
+                      setMobileSheet("explore");
+                      return;
+                    }
+                    setMobileSheetBack("explore");
+                    setMobileSheet("recent");
+                    setDrawer("full");
+                  }}
+                >
+                  <Icon name="history" />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${agentOpen ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("agentBall", lang)}
+                  title={t("agentBall", lang)}
+                  aria-pressed={agentOpen}
+                  onClick={() => setAgentOpen((v) => !v)}
+                >
+                  <Icon name="agent" />
+                </button>
+              </div>
               <button
                 type="button"
                 className={styles.mobileAvatarBtn}
@@ -2777,6 +2870,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                           setAuthOpen(true);
                           return;
                         }
+                        setMobileSheetBack("account");
                         setMobileSheet("saved");
                       }}
                     >
@@ -2785,14 +2879,20 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     <button
                       type="button"
                       className={styles.mobileFilterBtn}
-                      onClick={() => setMobileSheet("layers")}
+                      onClick={() => {
+                        setMobileSheetBack("account");
+                        setMobileSheet("layers");
+                      }}
                     >
                       {t("layers", lang)}
                     </button>
                     <button
                       type="button"
                       className={styles.mobileFilterBtn}
-                      onClick={() => setMobileSheet("recent")}
+                      onClick={() => {
+                        setMobileSheetBack("account");
+                        setMobileSheet("recent");
+                      }}
                     >
                       {t("recent", lang)}
                     </button>
@@ -2829,7 +2929,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   lang={lang}
                   mode={mode}
                   embedded
-                  onClose={() => setMobileSheet("account")}
+                  onClose={() => setMobileSheet(mobileSheetBack)}
                   onPick={(entry) => {
                     handlePickRecent(entry);
                     setMobileSheet("explore");
@@ -2846,7 +2946,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     <button
                       type="button"
                       className={styles.mobileBackBtn}
-                      onClick={() => setMobileSheet("account")}
+                      onClick={() => setMobileSheet(mobileSheetBack)}
                     >
                       {t("back", lang)}
                     </button>
@@ -2868,7 +2968,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     <button
                       type="button"
                       className={styles.mobileBackBtn}
-                      onClick={() => setMobileSheet("account")}
+                      onClick={() => setMobileSheet(mobileSheetBack)}
                     >
                       {t("back", lang)}
                     </button>

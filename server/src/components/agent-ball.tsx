@@ -8,6 +8,8 @@
 // - 位置持久化 localStorage 'dm.agent-ball-pos'({edge, top, left?};兼容旧 {edge:'left'|'right', top});
 // - 面板以球为锚实时跟随(ballRect 由 pos 状态派生,面板经 computePanelPlacement 定位,
 //   吸附 edge 传入 → 垂直锚定;拖拽中不传 → 面板跟手)。
+// - 受控化(2026-08-22 ws-mt):open/onOpenChange 由 MapShell 提升提供(local state 移除);
+//   移动端(≤767px)球隐藏,入口改为移动工具栏 AI item(见 map-shell mobileToolbarItems)。
 
 import { useMemo, useRef, useState } from "react";
 import styles from "./agent-ball.module.css";
@@ -39,6 +41,9 @@ interface Props {
   lang: Language;
   /** 登录态:原样透传给 AgentPanel(记忆入口只对登录用户渲染)。 */
   user: AccountUser | null;
+  /** 受控开关(ws-mt):面板开合由 MapShell 提升提供;点击 toggle / 面板 onClose 都走 onOpenChange。 */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 /** 初始位(含 localStorage 恢复):{edge, top, left?} 持久化格式;默认 right:12 / bottom:179。 */
@@ -72,8 +77,7 @@ function readInitialState(): InitialState {
   return { pos: { left: null, right: EDGE_MARGIN, top }, edge: "right" };
 }
 
-export default function AgentBall({ bridge, lang, user }: Props) {
-  const [open, setOpen] = useState(false);
+export default function AgentBall({ bridge, lang, user, open, onOpenChange }: Props) {
   const [initial] = useState(readInitialState);
   const [pos, setPos] = useState<BallPos>(initial.pos);
   // 当前吸附边缘:松手吸附时更新,拖拽中保持旧值(面板拖拽中不消费)
@@ -131,7 +135,7 @@ export default function AgentBall({ bridge, lang, user }: Props) {
     dragRef.current = null;
     if (!g) return;
     if (!g.moved) {
-      setOpen((v) => !v); // 点击(非拖动)→ toggle 面板
+      onOpenChange(!open); // 点击(非拖动)→ toggle 面板(受控,走 MapShell agentOpen)
       return;
     }
     setDragging(false);
@@ -189,7 +193,7 @@ export default function AgentBall({ bridge, lang, user }: Props) {
           ballRect={ballRect}
           dragging={dragging}
           snapEdge={dragging ? null : snapEdge}
-          onClose={() => setOpen(false)}
+          onClose={() => onOpenChange(false)}
         />
       )}
     </>

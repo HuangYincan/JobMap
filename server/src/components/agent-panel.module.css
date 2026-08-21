@@ -745,6 +745,9 @@
     transform: none;
     transition: none;
     width: 100%;
+    /* ws-mt:高于移动抽屉域(抽屉内部最高 12,mobileSuggestions),工具栏打开的 AI sheet 盖在 drawer 之上;
+       桌面端锚球卡片保持基础 z-index 12 不变 */
+    z-index: 13;
   }
 }
 

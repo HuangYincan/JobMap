@@ -304,6 +304,10 @@ Content-Type: application/json
 - **初始位**:`right:12px; bottom:179px`(mapControls 实测高 ~147 + 底距 20 + 间距 12),位于现有地图控件上方。
 - **拖拽吸附**:pointerdown/move/up,3px 阈值区分点击/拖动;松手按**球心到四边最近距离四向吸附**(左/右/上/下,平局 左→右→上→下),正交方向保留松手坐标,clamp 12px 边距;吸附动画 `cubic-bezier(0.32,0.72,0,1) 0.35s`;位置持久化 `localStorage 'dm.agent-ball-pos'`(`{edge, top, left?}`:top/bottom 新增 left 存水平位置;兼容旧 `{edge:'left'|'right', top}`)。
 - 点击(非拖动)→ toggle 聊天面板。
+- **受控化(2026-08-22 ws-mt)**:`open`/`onOpenChange` props 由 `MapShell` 提升提供
+  (`agentOpen` state),本地 open state 移除;球点击 toggle 与面板 `onClose` 都走
+  `onOpenChange`。**移动端(≤767px)球隐藏**(`agent-ball.module.css` media query
+  `display:none`),入口改为移动工具栏 AI item(§9.4/§9.6);桌面端球照常。
 
 ### 9.2 聊天面板(AgentPanel)
 
@@ -366,7 +370,12 @@ Content-Type: application/json
 
 ### 9.4 移动端适配
 
-≤767px:面板变全宽 sheet(参照 mobileDrawer 动效),**不受悬浮球位置影响**;悬浮球吸附规则不变,panel 贴底。极窄桌面视口(两侧都放不下)同样降级为全宽 sheet(2026-08-21 起,见 §9.10)。
+≤767px:面板变全宽底部 sheet(参照 mobileDrawer 动效),**不受悬浮球位置影响**;面板层级
+在 ≤767px 块内提到 **z-index 13**(高于移动抽屉域内部最高 12,`mobileSuggestions`),工具栏
+打开的 AI sheet 盖在 drawer 之上;桌面端锚球卡片保持基础 z-index 12。
+**悬浮球本身 ≤767px 隐藏**(`display:none`,球与面板是 fragment 兄弟,隐藏球不影响面板),
+移动端入口改为 `mobileToolbar` 左簇的 **AI item**(✦ 图标钮,§9.6);桌面端球与吸附规则不变。
+极窄桌面视口(两侧都放不下)同样降级为全宽 sheet(2026-08-21 起,见 §9.10)。
 
 ### 9.5 i18n 键清单(`i18n.ts` 追加 `agent*` 组,zh/en,约 20 键)
 
@@ -375,6 +384,13 @@ Content-Type: application/json
 ### 9.6 map-shell seam(boss 裁决红线豁免,~30 行)
 
 `map-shell.tsx` 属 map-engine 批次红线,但 v2 地图操作需要挂载点。boss 授权豁免:**仅消费者式追加**(约 3 处):`import AgentBall` + `agentBridgeRef = useRef<MapBridge|null>(null)`(惰性初始化:包 `mapInstance.current`(AMap.Map)、`setSelectedId`、`setDetailPoi`、`flyToLocation`)+ `.mapControls` 之后一行 `<AgentBall bridge={...} />`。**不动任何现有逻辑/样式/控件**;与 dev 冲突时以 dev 为准重加 seam(seam 独立 commit)。
+
+**ws-mt 追加(2026-08-22,仍只追加)**:`agentOpen` state 提升至 MapShell(`useState(false)`),
+`<AgentBall ... open={agentOpen} onOpenChange={setAgentOpen} />` 受控透传;移动工具栏
+(`.mobileToolbarItems` 左簇)新增 **AI item**(✦ `Icon name="agent"`,`aria-label={t('agentBall', lang)}`,
+激活态 = `agentOpen`,onClick `setAgentOpen(v => !v)`),与图层/已保存/探索/最近 4 个 item 并列;
+另新增 `mobileSheetBack` state 供三个 sheet 的 back 按钮按来源回退(工具栏入口 → explore,
+account 内导航 → account)。
 
 ### 9.7 地图操作适配层(`lib/agent-map-bridge.ts`)
 
@@ -444,8 +460,9 @@ Content-Type: application/json
 | enh | `tests/component-contracts.test.mjs`(**追加**) | markdown-text 引用 marked+dompurify 且 sanitize 先于注入;面板 transform 锚定(--px/--py)+z-index 12;思考/工具活动类名;i18n 新键 |
 | panel2 | `tests/agent-session-store.test.mjs`(新) | create/switch/delete/list/append/saveMessages/标题派生(12 码点截断)/cap 裁剪(10 会话 × 30 条,平局丢最先生成)/旧历史迁移(含空旧键、坏 v1 回落、幂等)/activeId 语义/relativeTime 分段 |
 | panel2 | `tests/component-contracts.test.mjs`(**追加**) | header 双入口按钮(会话 → 记忆(徽章计数渲染条件)→ 关闭)、agentSessions* i18n 键、会话弹层结构(当前高亮/删除/新建/空态)、记忆弹层重设计(卡片/三点加载/失败+重试/清除 hover 红)、消息变更统一走 store 不再直写旧键 |
+| mt | `tests/component-contracts.test.mjs`(**追加**) | AgentBall 受控契约(`open`/`onOpenChange` props,onClose → `onOpenChange(false)`,无本地 `setOpen`;≤767px 球 `display:none`;面板 ≤767px 块 z-index 13、桌面 z-12 不变);移动工具栏契约(5 item 各有 `aria-label` layers/saved/explore/recent/agentBall + 图标;已保存未登录 → auth 流程;AI item toggle `agentOpen`;重复点激活项 → 回 explore;back 目标追踪 explore/account;CSS 40px 钮/gap 4px/激活 `var(--blue)`) |
 
-合计:**9 个新测试文件(后端核心 7:ws-a 5 + ws-b 2;前端 2:ws-c)+ 2 处追加**(component-contracts,原批次)+ **ws-c-enhance:1 新测试文件 + 4 处追加**(2026-08-21)+ **ws-panel2:1 新测试文件 + 1 处追加**(2026-08-22)。
+合计:**9 个新测试文件(后端核心 7:ws-a 5 + ws-b 2;前端 2:ws-c)+ 2 处追加**(component-contracts,原批次)+ **ws-c-enhance:1 新测试文件 + 4 处追加**(2026-08-21)+ **ws-panel2:1 新测试文件 + 1 处追加**(2026-08-22)+ **ws-mt:1 处追加**(2026-08-22)。
 
 ---
 
