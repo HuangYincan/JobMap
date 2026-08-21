@@ -1822,18 +1822,45 @@ test('createMarker 锚点:Icon 构造失败 → content 标记位置降级 warn 
 // BMapGL 同为 WebGL 渲染,`new Icon(远程URL)` 纹理必须 CORS-clean;远程
 // 未预检/已失败 → 回退 content 锚点路径(msTarget DOM 渲染 <img> 无需
 // CORS),后台预检成功后再升级。相对路径/dataURL 行为零变化(见既有 icon 测试)。
+// ws-f:预检从 fetch 改为 new Image()(console 噪音减半),mock 相应替换。
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
+
+/** Image mock:failUrls 命中 → onerror;否则 onload(加载异步触发,贴近真实)。 */
+function installImageMock({ failUrls = [] } = {}) {
+  const original = globalThis.Image;
+  const calls = [];
+  class MockImage {
+    constructor() {
+      this.crossOrigin = undefined;
+      this.referrerPolicy = undefined;
+      this.onload = null;
+      this.onerror = null;
+      this._src = null;
+      calls.push(this);
+    }
+    set src(url) {
+      this._src = url;
+      queueMicrotask(() => {
+        if (failUrls.includes(url)) {
+          if (typeof this.onerror === 'function') this.onerror(new Error('image load failed'));
+        } else if (typeof this.onload === 'function') {
+          this.onload();
+        }
+      });
+    }
+    get src() {
+      return this._src;
+    }
+  }
+  globalThis.Image = MockImage;
+  return { calls, restore: () => (globalThis.Image = original) };
+}
 
 test('createMarker icon 防御(ws-e):远程未验证 → 回退 content 锚点路径 + 后台预检', async () => {
   setup();
   const { view } = await makeView();
-  const originalFetch = globalThis.fetch;
-  const fetchCalls = [];
-  globalThis.fetch = (url, opts) => {
-    fetchCalls.push({ url, opts });
-    return Promise.resolve(new Response('', { status: 200 }));
-  };
+  const image = installImageMock();
   try {
     const marker = view.createMarker({
       position: GCJ,
@@ -1845,23 +1872,18 @@ test('createMarker icon 防御(ws-e):远程未验证 → 回退 content 锚点�
     assert.ok(String(raw.icon.url).startsWith('data:'), '锚点图标为本地 dataURL(透明 1×1)');
     assert.equal(raw.icon.size.width, 1, '锚点图标 1×1');
     assert.equal(raw.content, '<b>徽章</b>', 'content 已设(msTarget DOM 渲染,<img> 无需 CORS)');
-    assert.equal(fetchCalls.length, 1, '未验证 → 触发后台预检');
-    assert.equal(fetchCalls[0].url, 'https://favicon.im/example.com');
-    assert.deepEqual(fetchCalls[0].opts, { mode: 'cors' });
+    assert.equal(image.calls.length, 1, '未验证 → 触发后台预检');
+    assert.equal(image.calls[0].src, 'https://favicon.im/example.com');
+    assert.equal(image.calls[0].crossOrigin, 'anonymous', '匿名 CORS 预检(与 WebGL 纹理加载同源)');
   } finally {
-    globalThis.fetch = originalFetch;
+    image.restore();
   }
 });
 
 test('createMarker icon 防御(ws-e):预检 ok → 真 URL Icon;fail → 回退 content 路径不重试', async () => {
   setup();
   const { view } = await makeView();
-  const originalFetch = globalThis.fetch;
-  const fetchCalls = [];
-  globalThis.fetch = (url, opts) => {
-    fetchCalls.push({ url, opts });
-    return Promise.resolve(new Response('', { status: 200 }));
-  };
+  const image = installImageMock({ failUrls: ['https://favicon.im/fail.example'] });
   try {
     // 预检成功 → 真 logo 直通,缓存命中不重复预检
     preflightRemoteIcon('https://favicon.im/ok.example');
@@ -1873,15 +1895,10 @@ test('createMarker icon 防御(ws-e):预检 ok → 真 URL Icon;fail → 回退 
     });
     assert.ok(m1.raw.icon instanceof FakeIcon);
     assert.equal(m1.raw.icon.url, 'https://favicon.im/ok.example', 'ok → 真 logo 直通');
-    assert.equal(fetchCalls.length, 1, 'ok 缓存命中不重复预检');
+    assert.equal(image.calls.length, 1, 'ok 缓存命中不重复预检');
 
     // 预检失败 → 回退 content 锚点路径;失败记忆化同一 URL 不重试
     resetIconPreflightCache();
-    const failFetch = [];
-    globalThis.fetch = () => {
-      failFetch.push(1);
-      return Promise.reject(new TypeError('CORS blocked'));
-    };
     preflightRemoteIcon('https://favicon.im/fail.example');
     await settle();
     assert.equal(remoteIconStatus('https://favicon.im/fail.example'), 'fail');
@@ -1892,9 +1909,9 @@ test('createMarker icon 防御(ws-e):预检 ok → 真 URL Icon;fail → 回退 
     });
     assert.ok(String(m2.raw.icon.url).startsWith('data:'), 'fail → 回退 content 锚点(dataURL)');
     assert.equal(m2.raw.icon.size.width, 1);
-    assert.equal(failFetch.length, 1, 'fail 记忆化:同一 URL 不重试');
+    assert.equal(image.calls.length, 2, 'fail 记忆化:同一 URL 不重试(仅 ok.example 与 fail.example 各一次)');
     assert.equal(m2.raw.content, '<b>徽章2</b>', 'content 仍渲染');
   } finally {
-    globalThis.fetch = originalFetch;
+    image.restore();
   }
 });
