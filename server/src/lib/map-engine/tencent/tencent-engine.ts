@@ -20,8 +20,16 @@
 //   后 300ms debounce 触发,首次渲染完成后会触发)。无同步就绪 API →
 //   createView 内监听 idle(预留 ready)等待就绪,3s 超时兜底不阻塞
 // - LatLngBounds(sw: LatLng, ne: LatLng);getWest/getSouth/getEast/getNorth
-// - Marker:{ position, map, content, offset:{x,y}, zIndex };移除 = setMap(null)
-//   (glMarker 标注点;无 remove 方法;zIndex → DOM overlay style.zIndex)
+// - **createMarker 构造器多路径**(SDK v1.8.0.2 源码核实):`v=1.exp` 全局 TMap
+//   命名空间**无单点 Marker**(导出表只有 MultiMarker/MarkerStyle 等聚合类)→
+//   createMarker 按 typeof 分派:Marker 可用走单点路径,否则 MultiMarker 聚合路径
+// - 单点 Marker(仅 npm SDK 形态):{ position, map, content, offset:{x,y}, zIndex };
+//   移除 = setMap(null)(glMarker 标注点;无 remove 方法;zIndex → DOM overlay style.zIndex)
+// - MultiMarker(v=1.exp 全局形态):new TMap.MultiMarker({ map, geometries, styles?, zIndex })
+//   geometry:{ id, position: LatLng, styleId? }(styleId 缺省 "default");
+//   updateGeometries([...]) 按 id 更新、add/remove、setMap(null) 移除、click 载荷 e.geometry.id;
+//   MarkerStyle 仅图片 src,anchor 是唯一像素偏移(imageTopLeft = 屏幕位 - anchor),
+//   geometry.content 仅 GL 文本标签(非 HTML)→ HTML content 降级为默认点 + 一次性 warn
 // - Circle:{ center, radius, map, strokeColor, fillColor, fillOpacity }(glCircle)
 // - 底图样式:vector=标准、raster=栅格(卫星);暗色 styleType:'dark' 存在但契约
 //   MapStyleId 无此项 → 不暴露(glMap 底图)
@@ -70,6 +78,10 @@ const TENCENT_PAGE_SIZE_MAX = 20;
 const TENCENT_MAP_READY_TIMEOUT_MS = 3000;
 /** Marker 默认 zIndex:未显式传入时的合理默认(底图之上可见;显式值优先) */
 const TENCENT_MARKER_DEFAULT_ZINDEX = 10;
+/** MultiMarker 默认 pin 样式锚点(SDK v1.8.0.2 核实:MarkerStyle 默认 src 图 34x50,
+ * anchor 默认 (width/2, height)=(17,50);渲染公式 imageTopLeft = 屏幕位 - anchor,
+ * style.offset 渲染器不消费 → anchor 是唯一像素偏移机制) */
+const TENCENT_DEFAULT_MARKER_ANCHOR = { x: 17, y: 50 } as const;
 
 function getKey(): string {
   // 裸字面量:Next 构建期只做静态替换,process.env 括号动态访问浏览器端恒 undefined
@@ -210,6 +222,10 @@ class TencentView implements MapView {
   readonly engine: MapEngine;
   private readonly tmap: any;
   private destroyed = false;
+  /** MultiMarker 路径 marker id 递增序列(dm-mk-1...) */
+  private multiMarkerSeq = 0;
+  /** HTML content 降级告警一次性标记(多 marker 不刷屏) */
+  private multiContentWarned = false;
 
   constructor(tmap: any, raw: any, engine: MapEngine) {
     this.tmap = tmap;
@@ -300,6 +316,16 @@ class TencentView implements MapView {
   }
 
   createMarker(opts: MapMarkerOptions): MapMarker {
+    // 构造器多路径解析(v=1.exp 全局 TMap 无单点 Marker → MultiMarker 聚合标注;
+    // npm SDK 有 Marker → 单点路径;两者皆无 → 诊断 + throw,保留 addMarker 簿记语义)
+    if (typeof this.tmap.Marker === 'function') return this.createSingleMarker(opts);
+    if (typeof this.tmap.MultiMarker === 'function') return this.createMultiMarker(opts);
+    console.error('[map-engine] TMap 无 Marker/MultiMarker,命名空间:', Object.keys(this.tmap || {}));
+    throw new Error('[map-engine] TMap 无 Marker/MultiMarker,无法创建 marker');
+  }
+
+  /** 单点 Marker 路径(npm SDK / 全局版含 Marker 时;原实现原样保留) */
+  private createSingleMarker(opts: MapMarkerOptions): MapMarker {
     let raw: any;
     try {
       raw = new this.tmap.Marker({
@@ -326,6 +352,78 @@ class TencentView implements MapView {
       // GL Marker 无 remove();官方移除方式为 setMap(null)
       remove: () => raw.setMap(null),
     };
+  }
+
+  /**
+   * MultiMarker 聚合路径(v=1.exp 全局版;SDK v1.8.0.2 源码核实)。
+   * 每个 createMarker 独立一个 MultiMarker 实例(单 geometry;POI 数量百级,
+   * 简单正确优先,不做共享池)。
+   */
+  private createMultiMarker(opts: MapMarkerOptions): MapMarker {
+    const tmap = this.tmap;
+    // id 递增唯一(SDK 核实:geometry.id 缺失会自动生成,但显式传更可控;
+    // 单实例单 geometry,只需实例内唯一)
+    const id = `dm-mk-${++this.multiMarkerSeq}`;
+    // 活 geometry 引用:setPosition 原地改 position 后 updateGeometries(SDK 核实:
+    // updateGeometries 按 id 整体替换 raw geometry → 必须携带 styleId,故用同一对象)
+    const geometry: { id: string; position: unknown; styleId: string } = {
+      id,
+      position: toTMapLatLng(tmap, opts.position),
+      styleId: 'default',
+    };
+    const mmOpts: Record<string, unknown> = {
+      map: this.raw,
+      geometries: [geometry],
+      // SDK 核实:overlay zIndex → layer rank 排序(越大越靠上)
+      zIndex: opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX,
+    };
+    // 契约 offset [x,y](相对锚点屏幕位移)→ MarkerStyle.anchor:渲染公式
+    // imageTopLeft = 屏幕位 - anchor,Δanchor = -(x,y) 即整图位移 (x,y);
+    // style.offset 渲染器不消费,不可用。默认 pin 34x50、锚点 (17,50)。
+    if (opts.offset) {
+      mmOpts.styles = {
+        default: new tmap.MarkerStyle({
+          anchor: new tmap.Point(
+            TENCENT_DEFAULT_MARKER_ANCHOR.x - opts.offset[0],
+            TENCENT_DEFAULT_MARKER_ANCHOR.y - opts.offset[1],
+          ),
+        }),
+      };
+    }
+    // HTML content:MultiMarker 无 HTML 渲染(SDK 核实:geometry.content 是 GL
+    // 文本标签,MarkerStyle 仅图片 src)→ 降级默认点 + 一次性 warn(boss 记 deferred)
+    if (opts.content !== undefined) this.warnMultiMarkerContentDegraded();
+    let raw: any;
+    try {
+      raw = new tmap.MultiMarker(mmOpts);
+    } catch (err) {
+      // 与单点路径同语义:可观测 + rethrow(保留 addMarker 簿记语义)
+      console.error('[map-engine] TMap MultiMarker 创建失败', err);
+      throw err;
+    }
+    if (opts.onClick) {
+      // SDK 核实:点击载荷 { ...mapEvent, geometry, type, target } → 按 geometry.id 过滤
+      raw.on('click', (e: any) => {
+        if (e?.geometry?.id === id) opts.onClick?.();
+      });
+    }
+    return {
+      raw,
+      setPosition: (p: LngLat) => {
+        geometry.position = toTMapLatLng(tmap, p);
+        raw.updateGeometries([geometry]);
+      },
+      setContent: (_html: string) => this.warnMultiMarkerContentDegraded(),
+      // SDK 核实:MultiMarker 官方移除方式 = setMap(null)(与单点 Marker 一致)
+      remove: () => raw.setMap(null),
+    };
+  }
+
+  /** HTML content 降级告警(一次性;MultiMarker 无 HTML 渲染) */
+  private warnMultiMarkerContentDegraded(): void {
+    if (this.multiContentWarned) return;
+    this.multiContentWarned = true;
+    console.warn('[map-engine] TMap MultiMarker 不支持 HTML content,徽章降级为默认点');
   }
 
   createCircle(opts: MapCircleOptions): MapCircle {
