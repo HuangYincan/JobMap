@@ -66,9 +66,14 @@ export class MockMarker {
   }
 
   setzIndex() {}
-  setIcon() {}
   setContent() {}
-  setOffset() {}
+  // AMap 专属方法:控制器契约化后不应再直调裸实例——抛错作回归绊线
+  setIcon() {
+    throw new Error('AMap-only setIcon 不应被控制器直调(契约已禁用,见 map-markers.ts)');
+  }
+  setOffset() {
+    throw new Error('AMap-only setOffset 不应被控制器直调(契约已禁用,见 map-markers.ts)');
+  }
   setLabel() {}
 }
 MockMarker.seq = 0;
@@ -130,10 +135,45 @@ export class MockMap {
     return all.filter((o) => (type === 'marker' ? o instanceof MockMarker : o.constructor.name === type));
   }
 
-  /** MapView.createMarker(ws-c):构造即注册到本视图 overlay 表,返回 wrapper(raw = MockMarker) */
+  /** MapView.createMarker(ws-c):构造即注册到本视图 overlay 表,返回 MapMarker 契约包装
+   *  (raw = MockMarker;setZIndex/setVisible/on/off/remove 全契约方法,并记录调用次数
+   *  到 marker.contractCalls 供测试断言——三引擎适配层对同一契约语义一致) */
   createMarker(opts) {
     const marker = new MockMarker({ ...opts, map: this });
-    return { raw: marker, setPosition: (p) => marker.setPosition([p.lng, p.lat]), setContent: (html) => marker.setContent(html), remove: () => marker.setMap(null) };
+    const calls = { setPosition: 0, setContent: 0, setZIndex: 0, setVisible: 0, on: 0, off: 0, remove: 0 };
+    marker.contractCalls = calls;
+    return {
+      raw: marker,
+      setPosition: (p) => {
+        calls.setPosition += 1;
+        marker.setPosition([p.lng, p.lat]);
+      },
+      setContent: (html) => {
+        calls.setContent += 1;
+        marker.setContent(html);
+      },
+      setZIndex: (z) => {
+        calls.setZIndex += 1;
+        marker.setzIndex(z);
+      },
+      setVisible: (v) => {
+        calls.setVisible += 1;
+        if (v) marker.show();
+        else marker.hide();
+      },
+      on: (event, cb) => {
+        calls.on += 1;
+        marker.on(event, cb);
+      },
+      off: (event, cb) => {
+        calls.off += 1;
+        marker.off(event, cb);
+      },
+      remove: () => {
+        calls.remove += 1;
+        marker.setMap(null);
+      },
+    };
   }
 
   /** MapView.createCircle(ws-c):构造即注册到本视图 overlay 表 */
@@ -263,6 +303,19 @@ export function makePoi(id, name, lng, lat, extra = {}) {
     name,
     location: { lng, lat },
     company: { id: `c-${id}`, name, logo: '🏢' },
+    ...extra,
+  };
+}
+
+/** 构造 Domain POI(与 types.ts DomainPOI 形状一致)。 */
+export function makeDomainPoi(id, name, lng, lat, extra = {}) {
+  return {
+    id,
+    kind: 'domain',
+    mode: 'domain',
+    name,
+    location: { lng, lat },
+    category: '测试',
     ...extra,
   };
 }
