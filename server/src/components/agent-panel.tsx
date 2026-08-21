@@ -25,6 +25,8 @@ import { reduceAgentEvent, stripActionJsonBlocks, type AgentMessage, type ToolAc
 import { streamAgentChat, type AgentChatRequest } from "./agent-chat-client";
 import {
   createAgentMapExecutor,
+  resolveCompletion,
+  type AgentCompletionState,
   type AgentMapExecutor,
   type AgentMapExecutorCallbacks,
   type AgentToolInfo,
@@ -125,6 +127,12 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
   const [tool, setTool] = useState<AgentToolInfo | null>(null);
   const [notConfigured, setNotConfigured] = useState(false);
   const [fatalError, setFatalError] = useState<string | null>(null);
+  // 完成/停止显式状态:done 事件 → 'done';用户停止 → 'stopped';新消息/清屏清零。
+  // truncated 标记 done 事件携带的截断说明(「已达回答上限」弱提示)。
+  const [completion, setCompletion] = useState<AgentCompletionState>(null);
+  const [truncated, setTruncated] = useState(false);
+  // done 事件是否已到达(finally 判定用:setState 异步,ref 同步可靠)
+  const doneRef = useRef(false);
   // undo 可用性重渲染信号(执行器实例在 ref 中,栈变化不触发渲染)
   const [, setUndoVersion] = useState(0);
 
@@ -181,8 +189,11 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
     );
   }, []);
 
-  const handleDone = useCallback(() => {
+  const handleDone = useCallback((truncated?: boolean) => {
     setTool(null);
+    doneRef.current = true;
+    setTruncated(Boolean(truncated));
+    setCompletion("done");
     setMessages((prev) => {
       saveHistory(prev);
       return prev;
@@ -241,7 +252,7 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
           handleTool(ev);
           break;
         case "done":
-          handleDone();
+          handleDone(ev.truncated);
           break;
         case "error":
           handleError(ev.code);
@@ -257,6 +268,7 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
     async (req: AgentChatRequest) => {
       const controller = new AbortController();
       abortRef.current = controller;
+      doneRef.current = false;
       setStreaming(true);
       try {
         for await (const ev of streamAgentChat(req, controller.signal)) {
@@ -270,6 +282,8 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
         abortRef.current = null;
         setStreaming(false);
         setTool(null);
+        // 完成状态以 finally 为准(done 事件 → 'done';用户停止 → 'stopped';异常 → null)
+        setCompletion(resolveCompletion(doneRef.current, controller.signal.aborted));
         setMessages((prev) => {
           saveHistory(prev);
           return prev;
@@ -291,6 +305,10 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
       setNotConfigured(false);
       setFatalError(null);
       setTool(null);
+      // 新消息开始:清零完成状态(done/stopped 不再显示)
+      doneRef.current = false;
+      setCompletion(null);
+      setTruncated(false);
       saveHistory(nextMessages); // 刷新/中断时保留本条用户消息
       // 新会话首条自动带视口快照(bridge.getSnapshot() → viewport 参数)
       const snapshot = bridgeRef.current?.getSnapshot() ?? null;
@@ -310,6 +328,27 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
 
   const undo = useCallback(() => {
     if (executorRef.current?.undo()) setUndoVersion((v) => v + 1);
+  }, []);
+
+  // 清屏:清覆盖物(仅 overlay 类 undo 条目)+ 清消息 + 清历史 + 清状态;
+  // 相机/select 逆操作保留(可继续撤销)。流式期间禁用(不打断回答)。
+  const clearScreen = useCallback(() => {
+    executorRef.current?.clearOverlays();
+    setUndoVersion((v) => v + 1); // clearOverlays 可能改变 canUndo
+    setMessages([]);
+    doneRef.current = false;
+    setCompletion(null);
+    setTruncated(false);
+    setNotConfigured(false);
+    setFatalError(null);
+    setTool(null);
+    if (typeof window !== "undefined") {
+      try {
+        window.sessionStorage.removeItem(HISTORY_KEY);
+      } catch {
+        // 容量/隐私模式等:忽略
+      }
+    }
   }, []);
 
   const replayAction = useCallback((action: AgentAction) => {
@@ -403,6 +442,14 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
         )}
         {notConfigured && <p className={styles.notice}>{t("agentNotConfigured", lang)}</p>}
         {fatalError && <p className={styles.notice}>{fatalError}</p>}
+        {/* 完成/停止显式状态:流结束后渲染在消息列表尾部(弱化小字);流式期间不显示 */}
+        {completion && !streaming && (
+          <p className={styles.completion} role="status">
+            {completion === "done"
+              ? `✓ ${t("agentDone", lang)}${truncated ? ` · ${t("agentTruncated", lang)}` : ""}`
+              : `■ ${t("agentStopped", lang)}`}
+          </p>
+        )}
       </div>
 
       <footer className={styles.footer}>
@@ -434,6 +481,9 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
           </button>
           <button type="button" className={styles.controlBtn} onClick={undo} disabled={!canUndo} aria-label={t("agentUndo", lang)}>
             {t("agentUndo", lang)}
+          </button>
+          <button type="button" className={styles.controlBtn} onClick={clearScreen} disabled={streaming} aria-label={t("agentClear", lang)}>
+            {t("agentClear", lang)}
           </button>
         </div>
       </footer>

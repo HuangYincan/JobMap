@@ -960,6 +960,22 @@ export const translations = {
     zh: '撤销上一步',
     en: 'Undo',
   },
+  agentStopped: {
+    zh: '已停止',
+    en: 'Stopped',
+  },
+  agentDone: {
+    zh: '回答完成',
+    en: 'Done',
+  },
+  agentTruncated: {
+    zh: '已达回答上限,部分内容被截断',
+    en: 'Reached reply limit, truncated',
+  },
+  agentClear: {
+    zh: '清屏',
+    en: 'Clear',
+  },
   agentThinking: {
     zh: '思考中…',
     en: 'Thinking…',

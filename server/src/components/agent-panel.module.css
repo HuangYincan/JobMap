@@ -321,6 +321,16 @@
   padding: 8px 12px;
 }
 
+/* 完成/停止状态行(流结束后尾部弱化小字:✓ 回答完成 / ■ 已停止;流式期间不显示) */
+.completion {
+  align-self: center;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 2px 0 0;
+}
+
 .footer {
   border-top: 1px solid var(--line);
   display: flex;
