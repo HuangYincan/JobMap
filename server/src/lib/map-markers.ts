@@ -229,6 +229,54 @@ function logoFallbackUrls(poi: RecruitmentPOI): string[] {
   );
 }
 
+/**
+ * TMap icon 候选链解析（纯函数，ws-c bug 4，2026-08-22）。
+ *
+ * 背景：favicon.im 无 CORS 头（实测 403 + 无 ACAO）→ TMap GL 纹理强制 CORS →
+ * 恒加载失败 → ws-e 降级 emoji 徽章（用户看为「腾讯的 poi 不带 icon」）；
+ * icon.horse 实测 `access-control-allow-origin: *`（CORS 合规,HTTP 200）→
+ * 可作 TMap 纹理。AMap HTML 徽章路径已有内联 onerror fallbackUrls 候选链；
+ * 本函数给 **TMap icon 路径**补同款候选链（复用 company-logo.ts 的
+ * faviconCandidatesFromUrl 生成，不重复实现）。
+ *
+ * 选择规则（同步决策，预检状态读取经 icon-preflight 会话级记忆）：
+ * - 无 logoUrl → 直接 fallback（与 AMap 徽章路径一致：缺 logo 不试候选，
+ *   零预检）；
+ * - logoUrl 本地（data:/相对，同源 CORS-clean）或已预检 ok → 直接作 icon.src；
+ * - logoUrl 已失败（favicon.im 实测场景）→ 依次试
+ *   `faviconCandidatesFromUrl(careerUrl)` 候选（跳过与 logoUrl 相同的 URL）：
+ *   首个本地/已 ok 者作 icon.src；未预检（unknown）候选收入 toPreflight
+ *   （调用方后台触发预检，失败记忆化不重复；下次重建自然升级真 logo）；
+ * - 全部失败/无候选 → 降级 fallbackSrc（本地 dataURL emoji 徽章）。
+ *
+ * @returns src 最终 icon.src；toPreflight 需要调用方后台预检的 URL 清单
+ *   （保持纯函数可测，副作用在调用方）。
+ */
+export function resolveTMapIconSrc(
+  logoUrl: string | undefined,
+  careerUrl: string | undefined,
+  fallbackSrc: string
+): { src: string; toPreflight: string[] } {
+  const toPreflight: string[] = [];
+  const firstUsable = (url: string | undefined): boolean => {
+    if (!url) return false;
+    // 非 http(s)（data:/相对路径）：同源或本地，纹理加载恒 CORS-clean，直通
+    if (!isRemoteIconUrl(url)) return true;
+    const status = remoteIconStatus(url);
+    if (status === 'ok' || status === 'data') return true;
+    if (status === 'unknown') toPreflight.push(url);
+    return false; // fail（含会话记忆）→ 继续下一候选，不重复预检
+  };
+  // 缺 logoUrl：无候选链入口（AMap 徽章路径同语义：缺 logo → emoji，不试候选）
+  if (!logoUrl) return { src: fallbackSrc, toPreflight };
+  if (firstUsable(logoUrl)) return { src: logoUrl, toPreflight };
+  for (const candidate of faviconCandidatesFromUrl(careerUrl)) {
+    if (candidate === logoUrl) continue; // 去重：跳过与 logoUrl 相同的候选
+    if (firstUsable(candidate)) return { src: candidate, toPreflight };
+  }
+  return { src: fallbackSrc, toPreflight };
+}
+
 /** 无远程图时的 SVG 徽章（测试 / 无 logoUrl 回退）。 */
 export function recruitmentBadgeSVG(
   logo: string | undefined,
@@ -532,40 +580,41 @@ class POIMarkerControllerImpl implements POIMarkerController {
     } else {
       markerOpts.content = domainPinContent(this.color, state);
     }
-    // 公司 POI icon 真图标（2026-08-22 ws-a，bug 6）：仅 TMap 引擎——
-    // MultiMarker 无 HTML 渲染，content 徽章降级默认点，公司 icon 走契约
-    // icon → MarkerStyle(src) 真图标路径；logoUrl 直接作图标，缺 logo 回退
-    // emoji 徽章数据图（与 AMap 徽章同视觉）。AMap/BMapGL content 可渲染，
-    // 保持 HTML 徽章形态，零影响（engine 门控，不触碰其他引擎行为）。
-    // 2026-08-22 ws-e（bug 1/7 CORS 实锤）：TMap GL 把 icon 当 GPU 纹理加载，
-    // 纹理必须 CORS-clean——favicon.im 等远程候选无 CORS 头 → 恒加载失败 +
-    // SDK 疯狂报「Image加载失败」并降级默认 marker。故远程 src 必须经
-    // icon-preflight 预检：data URI / 已预检 ok → 真 src；未预检/已失败 →
-    // 降级本地 dataURL emoji 徽章（纯本地，加载必成功 → 零报错零默认样式），
-    // 未预检时后台触发预检，成功后下次重建/LOD 重渲染自然升级真 logo。
-    if (this.view.engine?.id === 'tencent' && isRecruitmentPOI(poi)) {
-      const logo = poi.company.logoUrl;
-      const badgeUri = svgToDataUri(
-        recruitmentBadgeSVG(poi.company.logo, undefined, this.color, state)
-      );
-      let iconSrc = badgeUri;
-      if (logo) {
-        // 仅 http(s) 远程 URL 需要 CORS 预检闸(data:/相对路径同源恒安全直通)
-        if (!isRemoteIconUrl(logo)) {
-          iconSrc = logo;
-        } else {
-          const status = remoteIconStatus(logo);
-          if (status === 'ok' || status === 'data') {
-            iconSrc = logo;
-          } else if (status === 'unknown') {
-            preflightRemoteIcon(logo);
-          }
-        }
+    // TMap icon 真图标（2026-08-22 ws-a bug 6 + ws-c bug 3/4）：仅 TMap 引擎——
+    // MultiMarker 无 HTML 渲染，content 一律降级默认点 → 全部 POI 改以契约
+    // icon 渲染（图钉 SVG / 公司 logo / emoji 徽章数据图），视觉与 AMap 同
+    // 语言；AMap/BMapGL content 可渲染，保持 HTML 徽章形态，零影响
+    // （engine 门控，不触碰其他引擎行为）。
+    // - 远程 src 必须经 icon-preflight CORS 预检（ws-e，bug 1/7）：TMap GL
+    //   把 icon 当 GPU 纹理加载，纹理必须 CORS-clean——favicon.im 无 CORS 头
+    //   恒失败 + SDK 刷「Image加载失败」；data URI / 已预检 ok → 真 src；
+    // - 候选链（ws-c，bug 4「腾讯 poi 不带 icon」）：logoUrl 预检失败 →
+    //   依次试 faviconCandidatesFromUrl(careerUrl) 候选（icon.horse 实测
+    //   CORS 合规），首个通过预检者作 src；全败/未定 → 本地 dataURL 徽章
+    //   （纯本地加载必成功 → 零报错零默认样式），未预检 URL 后台预检、失败
+    //   记忆化，成功后下次重建/LOD 重渲染自然升级真 logo。
+    // - 锚点（ws-c，bug 3）：契约 offset 经引擎侧 resolveTMapMarkerAnchor
+    //   转 MarkerStyle anchor = -offset——图钉底尖/徽章中心钉死地理点，
+    //   与 AMap/Baidu 逐像素一致（旧公式整图上移左上，即「坐标偏移」根因）。
+    if (this.view.engine?.id === 'tencent') {
+      if (isRecruitmentPOI(poi)) {
+        const badgeUri = svgToDataUri(
+          recruitmentBadgeSVG(poi.company.logo, undefined, this.color, state)
+        );
+        const { src, toPreflight } = resolveTMapIconSrc(
+          poi.company.logoUrl,
+          poi.company.careerUrl,
+          badgeUri
+        );
+        for (const url of toPreflight) preflightRemoteIcon(url);
+        markerOpts.icon = { src, size: [BADGE_BASE, BADGE_BASE] };
+      } else {
+        // Domain 图钉：dataURL SVG 与 AMap 同视觉（32×40 底尖），本地直通零预检
+        markerOpts.icon = {
+          src: svgToDataUri(domainPinSVG(this.color, state)),
+          size: [PIN_BASE.w, PIN_BASE.h],
+        };
       }
-      markerOpts.icon = {
-        src: iconSrc,
-        size: [BADGE_BASE, BADGE_BASE],
-      };
     }
 
     let wrapper: MapMarker;

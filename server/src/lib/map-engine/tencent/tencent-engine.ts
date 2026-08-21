@@ -109,30 +109,41 @@ const TENCENT_MARKER_DEFAULT_ZINDEX = 10;
  * 渲染公式(双路径同语义):DOM 2d-adapter `marginLeft/Top = -anchor`;
  * GL 实例 `instanceInfos.xy = (width/2 - anchor.x, height/2 - anchor.y)` →
  * imageTopLeft = 屏幕位 - anchor;style.offset 渲染器不消费 → anchor 是唯一
- * 像素偏移机制(契约 offset 经 Δanchor = -(x,y) 合并,见 resolveTMapMarkerAnchor) */
+ * 像素偏移机制(契约 offset 合并见 resolveTMapMarkerAnchor)。
+ * ⚠️ ws-c(2026-08-22)修正:该默认常量只作用于**未显式传 anchor 的样式**
+ * (styleId 'default' / 兜底路径);resolveMultiStyle 恒显式传 anchor,与默认
+ * 常量无关。 */
 const TENCENT_DEFAULT_MARKER_ANCHOR = { x: 17, y: 50 } as const;
 
 /**
- * 计算 MultiMarker MarkerStyle 锚点(SDK v1.8.0.2 源码核实,ws-a 2026-08-22)。
+ * 计算 MultiMarker MarkerStyle 锚点(契约偏移语义,ws-c 2026-08-22 修正)。
  * - 锚点 = 图片局部坐标(原点左上、y 向下)中与地理点屏幕位重合的点;
  *   SDK 渲染:imageTopLeft = 屏幕位 - anchor(GL 与 DOM 双路径同语义);
- * - **语义与高德 content 锚点(底部中心)对齐**:无 offset 时锚点 = (w/2, h)
- *   底部中心——图钉底尖 / 徽章底边钉在地理点;
- * - 契约 offset [x,y] = 整图位移 (x,y)(AMap offset 同语义):Δanchor = -(x,y),
- *   即 anchor = (w/2 - ox, h - oy);缩放级别变化不影响 anchor(纯像素常量,
- *   与地图比例无关,S库 relativeZoomScale 默认关闭)→ 锚点钉死地理点不漂移。
- * @param iconW 图标渲染宽度(px)
- * @param iconH 图标渲染高度(px)
- * @param offset 契约像素偏移 [x, y](相对锚点,元组形态)
+ * - **契约 offset 语义 = AMap content 路径**:内容元素左上角置于
+ *   `屏幕位 + offset`(imageTopLeft = 屏幕位 + offset;AMap content div /
+ *   百度 ws-c SDK 源码核实 `icon.anchor = -契约 offset` 同款)→ 两式联立:
+ *   `anchor = -offset = (-ox, -oy)`,**与图标尺寸无关**。
+ * - 三个生产形态的锚点落点(与高德逐像素一致):
+ *   图钉 32×40 + offset [-16,-40] → anchor (16,40) 底尖钉地理点;
+ *   徽章 40×40 + offset [-20,-20] → anchor (20,20) 中心钉地理点;
+ *   聚合徽章 54×54 + offset [-27,-27] → anchor (27,27) 中心钉地理点;
+ * - 无 offset → anchor (0,0)(左上角,AMap 无 offset 语义一致,百度同款);
+ * - 缩放级别变化不影响 anchor(纯像素常量,与地图比例无关,S库
+ *   relativeZoomScale 默认关闭)→ 锚点钉死地理点不漂移。
+ * @param iconW 图标渲染宽度(px;锚点计算不依赖尺寸,保留入参仅为与
+ *   MarkerStyle width/height 同源调用,防调用方尺寸与样式脱节)
+ * @param iconH 图标渲染高度(px;同上)
+ * @param offset 契约像素偏移 [x, y](元组形态;无 = 左上角锚点)
  */
 export function resolveTMapMarkerAnchor(
   iconW: number,
   iconH: number,
   offset: [number, number] | undefined,
 ): { x: number; y: number } {
+  // 0 - x 而非 -x:避免无 offset 时产出 -0(deepEqual 0 ≠ -0)
   return {
-    x: iconW / 2 - (offset?.[0] ?? 0),
-    y: iconH - (offset?.[1] ?? 0),
+    x: offset ? 0 - offset[0] : 0,
+    y: offset ? 0 - offset[1] : 0,
   };
 }
 
@@ -696,9 +707,10 @@ class TencentView implements MapView {
    *   为 dataURL 数据图或远程 URL);公司 icon / 聚合徽章走本路径真图标渲染;
    * - 契约 icon 缺省 → 默认 pin;icon 存在 → 真图标;content 与 icon 并存时
    *   icon 优先(TMap 无 HTML 渲染,content 不写入 geometry);
-   * - MarkerStyle 仅图片 src 形态;契约 offset [x,y] → anchor 平移(渲染公式
-   *   imageTopLeft = 屏幕位 - anchor,Δanchor = -(x,y) 即整图位移 (x,y);
-   *   style.offset 渲染器不消费)。
+   * - MarkerStyle 仅图片 src 形态;契约 offset [x,y] → anchor = -(x,y)
+   *   (渲染公式 imageTopLeft = 屏幕位 - anchor,契约 = AMap content 语义
+   *   屏幕位 + offset → 联立 anchor = -offset,ws-c 修正;style.offset
+   *   渲染器不消费)。
    */
   private resolveMultiStyle(opts: MapMarkerOptions): string {
     if (!opts.offset && !opts.icon) return 'default';
@@ -708,10 +720,12 @@ class TencentView implements MapView {
     const existing = this.multiStyleBySignature.get(signature);
     if (existing) return existing;
     const styleId = `dm-st-${++this.multiStyleSeq}`;
-    // anchor 按 icon 实际尺寸计算(ws-a 纯函数 resolveTMapMarkerAnchor):
-    // SDK 默认 anchor 是常量 (17,50),不随 width/height 归一化——自定义尺寸
-    // 图标必须显式传,否则锚点错位 → 缩放视觉漂移 + 点击命中区与视觉不一致。
-    // 语义 = AMap content 锚点(底部中心)+ 契约 offset 位移,与高德视觉对齐。
+    // anchor 按契约 offset 计算(ws-c 修正,纯函数 resolveTMapMarkerAnchor):
+    // 契约 offset = AMap content 语义(左上角置于 屏幕位+offset)→ SDK 锚点
+    // = -offset,与图标尺寸无关(旧公式 (w/2-ox, h-oy) 把徽章/图钉整图上移
+    // 左上,表现为「POI 坐标偏移」bug 3——见 tech/23 ws-c 回填)。三形态落点:
+    // 图钉 [-16,-40]→(16,40) 底尖、徽章 [-20,-20]→(20,20) 中心、
+    // 聚合 [-s/2,-s/2]→(s/2,s/2) 中心,与高德/百度逐像素一致。
     const anchor = resolveTMapMarkerAnchor(iconW, iconH, opts.offset);
     const styleOpts: Record<string, unknown> = {
       anchor: new this.tmap.Point(anchor.x, anchor.y),
