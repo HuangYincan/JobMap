@@ -8,6 +8,8 @@ import { DEFAULT_PREFERENCES, emptyPreferences, entityRefFromSelection, initials
 import {
   addHistory as storeAddHistory,
   listHistory as storeListHistory,
+  updateAvatar as storeUpdateAvatar,
+  getAvatarData as storeGetAvatarData,
   upsertIdentity as storeUpsert,
 } from '../src/lib/account-store.ts';
 import {
@@ -16,6 +18,7 @@ import {
   createSession,
   DEMO_OTP_CODE,
   destroySession,
+  getAvatarData,
   getSessionUser,
   issueOtp,
   listHistory,
@@ -26,6 +29,7 @@ import {
   recordApplication,
   removeSaved,
   savePlace,
+  updateAvatar,
   updateUser,
   upsertIdentity,
 } from '../src/lib/session-store.ts';
@@ -264,6 +268,48 @@ test('account-store without DATABASE_URL stays in memory', async () => {
   assert.ok(user.id);
   assert.ok(await storeAddHistory(user.id, '西溪', 'work'));
   assert.equal((await storeListHistory(user.id))[0].query, '西溪');
+});
+
+test('avatar upload persists bytes and clears them on remove (memory store)', () => {
+  delete process.env.DATABASE_URL;
+  const user = upsertIdentity({ provider: 'email', subject: 'avatar@example.com', email: 'avatar@example.com' });
+  assert.equal(getAvatarData(user.id), null);
+
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xd9]);
+  const updated = updateAvatar(user.id, { data: jpeg, url: '/api/me/avatar?v=1' });
+  assert.equal(updated?.avatarUrl, '/api/me/avatar?v=1');
+  const raw = getAvatarData(user.id);
+  assert.deepEqual(raw && Array.from(raw), Array.from(jpeg));
+  // avatarData 只服务 GET /api/me/avatar,绝不随 publicUser 出网
+  assert.ok(updated && !('avatarData' in updated));
+
+  // PATCH avatarUrl='' 清头像 → avatar_data 一并清空
+  const cleared = updateUser(user.id, { avatarUrl: '' });
+  assert.equal(cleared?.avatarUrl, '');
+  assert.equal(getAvatarData(user.id), null);
+
+  // updateAvatar(data:null) 整头像清空
+  updateAvatar(user.id, { data: jpeg, url: '/api/me/avatar?v=2' });
+  updateAvatar(user.id, { data: null });
+  assert.equal(getAvatarData(user.id), null);
+
+  // 改名不碰头像
+  const jpeg2 = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xd9]);
+  updateAvatar(user.id, { data: jpeg2, url: '/api/me/avatar?v=3' });
+  updateUser(user.id, { displayName: '小名' });
+  assert.equal(getAvatarData(user.id)?.length, jpeg2.length);
+});
+
+test('account-store avatar round-trips without DATABASE_URL (memory)', async () => {
+  delete process.env.DATABASE_URL;
+  const user = await storeUpsert({ provider: 'email', subject: 'mem-avatar@example.com', email: 'mem-avatar@example.com' });
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xd9]);
+  const updated = await storeUpdateAvatar(user.id, { data: jpeg, url: '/api/me/avatar?v=1' });
+  assert.equal(updated?.avatarUrl, '/api/me/avatar?v=1');
+  const raw = await storeGetAvatarData(user.id);
+  assert.deepEqual(raw && Array.from(raw), Array.from(jpeg));
+  await storeUpdateAvatar(user.id, { data: null });
+  assert.equal(await storeGetAvatarData(user.id), null);
 });
 
 test('sourceCompanyToPois splits one company into one POI per office site', () => {

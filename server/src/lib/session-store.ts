@@ -21,6 +21,8 @@ interface StoredUser extends AccountUser {
   createdAt: number;
   /** 仅 password provider 用户有,绝不随 publicUser 返回 */
   passwordHash?: string;
+  /** 上传头像的原始字节(JPEG/PNG),只服务 GET /api/me/avatar,绝不随 publicUser 返回 */
+  avatarData?: Uint8Array;
 }
 
 interface StoredSession {
@@ -106,7 +108,7 @@ export function upsertIdentity(input: {
 }
 
 function publicUser(user: StoredUser): AccountUser {
-  const { createdAt: _createdAt, passwordHash: _passwordHash, ...rest } = user;
+  const { createdAt: _createdAt, passwordHash: _passwordHash, avatarData: _avatarData, ...rest } = user;
   return {
     ...rest,
     accountLabel: accountLabel(rest),
@@ -186,12 +188,39 @@ export function updateUser(
   if (typeof patch.displayName === 'string' && patch.displayName.trim()) {
     user.displayName = patch.displayName.trim();
   }
-  if (patch.avatarUrl !== undefined) user.avatarUrl = patch.avatarUrl;
+  if (patch.avatarUrl !== undefined) {
+    user.avatarUrl = patch.avatarUrl;
+    // 清空头像(avatarUrl='')时同步清掉二进制,避免两列状态分裂。
+    if (patch.avatarUrl === '') user.avatarData = undefined;
+  }
   if (patch.preferences) {
     user.preferences = mergePreferences(user.preferences, patch.preferences);
   }
   users.set(userId, user);
   return publicUser(user);
+}
+
+/** 上传头像:data 非空 → 存二进制 + 写服务端头像路径;data=null → 整头像清空。 */
+export function updateAvatar(
+  userId: string,
+  input: { data: Uint8Array; url: string } | { data: null },
+): AccountUser | null {
+  const user = users.get(userId);
+  if (!user) return null;
+  if (input.data === null) {
+    user.avatarData = undefined;
+    user.avatarUrl = undefined;
+  } else {
+    user.avatarData = input.data;
+    user.avatarUrl = input.url;
+  }
+  users.set(userId, user);
+  return publicUser(user);
+}
+
+/** 取上传头像字节(无 → null)。只在 GET /api/me/avatar 内部使用。 */
+export function getAvatarData(userId: string): Uint8Array | null {
+  return users.get(userId)?.avatarData ?? null;
 }
 
 export function issueOtp(provider: 'phone' | 'email', target: string): { expiresAt: number } {

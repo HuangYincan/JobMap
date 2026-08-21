@@ -45,6 +45,8 @@ import {
   removeSaved as memRemoveSaved,
   savePlace as memSavePlace,
   updateUser as memUpdateUser,
+  updateAvatar as memUpdateAvatar,
+  getAvatarData as memGetAvatarData,
   upsertIdentity as memUpsertIdentity,
   registerWithPassword as memRegisterWithPassword,
   loginWithPassword as memLoginWithPassword,
@@ -375,10 +377,11 @@ export async function getSessionUser(token: string | undefined | null): Promise<
       avatar_url: string | null;
       phone: string | null;
       email: string | null;
+      username: string | null;
       preferences: UserPreferences;
       provider: AuthProvider | null;
     }>(
-      `SELECT u.id::text, u.display_name, u.avatar_url, u.phone, u.email, u.preferences, i.provider
+      `SELECT u.id::text, u.display_name, u.avatar_url, u.phone, u.email, u.username, u.preferences, i.provider
        FROM auth_sessions s
        JOIN users u ON u.id = s.user_id
        LEFT JOIN LATERAL (
@@ -434,6 +437,7 @@ export async function updateUser(
       `UPDATE users SET
          display_name = COALESCE($2, display_name),
          avatar_url = COALESCE($3, avatar_url),
+         avatar_data = CASE WHEN $3 = '' THEN NULL ELSE avatar_data END,
          preferences = COALESCE($4::jsonb, preferences),
          updated_at = now()
        WHERE id = $1
@@ -448,6 +452,50 @@ export async function updateUser(
     );
     return result.rows[0] ? asUser(result.rows[0]) : memUpdateUser(userId, patch);
   }, () => memUpdateUser(userId, patch));
+}
+
+/** 上传头像:data 非空 → avatar_data 存字节 + avatar_url 写服务端路径;data=null → 整头像清空。 */
+export async function updateAvatar(
+  userId: string,
+  input: { data: Uint8Array; url: string } | { data: null },
+): Promise<AccountUser | null> {
+  return withDbWrite(async (db) => {
+    const result = await db.query<{
+      id: string;
+      display_name: string | null;
+      avatar_url: string | null;
+      phone: string | null;
+      email: string | null;
+      preferences: UserPreferences;
+      provider: AuthProvider | null;
+    }>(
+      `UPDATE users SET
+         avatar_data = $2,
+         avatar_url = $3,
+         updated_at = now()
+       WHERE id = $1
+       RETURNING id::text, display_name, avatar_url, phone, email, preferences,
+         (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
+      [
+        userId,
+        input.data === null ? null : Buffer.from(input.data),
+        input.data === null ? null : input.url,
+      ],
+    );
+    return result.rows[0] ? asUser(result.rows[0]) : memUpdateAvatar(userId, input);
+  }, () => memUpdateAvatar(userId, input));
+}
+
+/** 取上传头像字节(无 → null)。只在 GET /api/me/avatar 内部使用,绝不进 user 对象。 */
+export async function getAvatarData(userId: string): Promise<Uint8Array | null> {
+  return withDbRead(async (db) => {
+    const result = await db.query<{ avatar_data: Buffer | null }>(
+      `SELECT avatar_data FROM users WHERE id = $1`,
+      [userId],
+    );
+    const buf = result.rows[0]?.avatar_data;
+    return buf ? new Uint8Array(buf) : null;
+  }, () => memGetAvatarData(userId));
 }
 
 export async function issueOtp(provider: 'phone' | 'email', target: string): Promise<{ expiresAt: number }> {
