@@ -1005,3 +1005,54 @@ TMap 下 favicon.im 加载失败 → console 零「Image加载失败」报错;�
 - `map-engine-baidu.test.mjs` 两项 ws-e 防御测试同步改 Image mock;
 - 注意:Node ≥22 暴露实验性全局 sessionStorage,测试 beforeEach 需
   removeItem(FAIL_KEY) 隔离,否则上一用例的防抖写入会污染下一用例。
+
+## ws-a 回填:BMapGL 底图常量核实 + 深色实现(2026-08-22,fix/baidu-style,bug 1「卫星/深色没实现」)
+
+### 1. 常量核实结论(SDK 源码证据,getscript?type=webgl&v=1.0 本体 1.2MB 抓取 grep)
+
+- 真实定义(逐字):
+  `window.BMAP_NORMAL_MAP="B_NORMAL_MAP"; window.BMAPGL_NORMAL_MAP="B_NORMAL_MAP";
+  window.BMAP_SATELLITE_MAP="B_SATELLITE_MAP"; window.BMAP_HYBRID_MAP="B_HYBRID_MAP"`
+- **`BMAPGL_SATELLITE_MAP` 不存在**(全 SDK 0 命中)→ 旧 STYLE_CONSTANT
+  `{ normal: 'BMAPGL_NORMAL_MAP', satellite: 'BMAPGL_SATELLITE_MAP' }` 卫星
+  常量解析 undefined → `setMapType` 被静默跳过 → 卫星切换无效果(用户 bug 1
+  「百度卫星没实现」根因);normal 靠 `BMAPGL_NORMAL_MAP` 别名侥幸可用。
+- 修正:统一用 SDK 主名 `BMAP_NORMAL_MAP` / `BMAP_SATELLITE_MAP`;`setMapType`
+  按常量字符串值解析 MapTypeId(ev()→kO 注册表,卫星注册
+  `kY("B_SATELLITE_MAP","卫星","显示卫星影像",{compatType:"BMAP_SATELLITE_MAP"})`)。
+- 验收:setStyle('satellite') 断言厂商收到 `"B_SATELLITE_MAP"`(测试 mock 只装
+  SDK 真实常量名,不再装虚构的 BMAPGL_SATELLITE_MAP)。
+
+### 2. 深色实现方式(SDK 核实)
+
+- API 形态:`map.setMapStyleV2({styleJson: [...]})` —— SDK:
+  `setMapStyleV2(e) → setOptions({style: e})`;`getStyleJson` 直接消费
+  `styleJson` 数组(每项 `{featureType, elementType, stylers}`,
+  `styleJson2styleStringV2` 映射 featureType→t/elementType→e/stylers 各键;
+  elementType 词表 SDK 核实:geometry(.fill/.stroke/.sidefill/.topfill)/
+  labels(.text/.text.fill/.text.stroke/.icon));`styleId`(服务端拉取)形态存在
+  但不采用(网络依赖 + 无自定义可控性)。
+- 深色 = `BAIDU_DARK_STYLE_JSON`(常量,15 条规则):基底深蓝黑(background/land),
+  水系/绿地低饱和,道路逐级提亮(highway>arterial>local),标注文字亮色 +
+  深色描边(暗底可读),行政边界中亮描边;featureType 词表按官方自定义样式
+  文档(background/water/land/green/building/highway/arterial/local/railway/
+  subway/boundary/label)。
+- **离开深色必须显式复位**:自定义样式存于 `config.style`(对象),`setMapType`
+  **不清理**(源码核实)→ 切回 normal/卫星先 `setMapStyleV2({styleJson: []})`
+  (空数组 = 默认渲染)再 setMapType —— 与腾讯「切回标准/卫星:复位暗色
+  setMapStyleId('DEFAULT')」同契约;WeakSet 状态追踪,无深色历史时不触发
+  自定义样式管线(零多余网络加载)。
+- 样式 id 语义:UI 图层面板「深色」= `whitesmoke`(`MapStyleId` 类型
+  `'normal' | 'satellite' | 'whitesmoke'`,map-shell `["whitesmoke","dark"]`)→
+  百度引擎 `setStyle('whitesmoke')` 即深色,不再 warn 回退 normal(与 AMap
+  whitesmoke URL / 腾讯 DARK 语义一致)。setMapStyleV2 API 缺失(旧 SDK)→
+  warn 降级 normal 不抛。
+
+### 3. 测试与文档
+
+- `map-engine-baidu.test.mjs`(+4 项):常量映射断言改真实常量值;whitesmoke →
+  setMapStyleV2({styleJson}) 形状断言(每项 featureType/elementType/stylers +
+  可读性 label 亮色);深色 → normal/卫星复位 + 状态追踪;setMapStyleV2 缺失
+  → warn 降级;createView({style:'whitesmoke'}) 就绪后即应用深色;类型外样式
+  回退 normal + warn。
+- 全量:server 1377 pass / 2 skip / 0 fail(typecheck 通过,基线 1364)。

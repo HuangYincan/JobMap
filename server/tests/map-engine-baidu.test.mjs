@@ -14,7 +14,9 @@
 // 测试基建:installEngineMock 装到 BMapGL namespace(coordSystem:'bd09'),
 // 再以测试内「忠实厂商双面」(BMapGL 形状的 Point/Size/Bounds/Map/Marker/
 // Circle/PlaceSearch/Geocoder/Geolocation/Autocomplete/ScaleControl + 全局
-// BMAPGL_* 常量)覆盖,让适配器走真实 vendor API 命名、断言厂商侧收到的
+// BMAP_* 常量(SDK 核实主名:BMAP_NORMAL_MAP/BMAP_SATELLITE_MAP;别名
+// BMAPGL_NORMAL_MAP 存在,BMAPGL_SATELLITE_MAP 不存在——mock 只装主名)覆盖,
+// 让适配器走真实 vendor API 命名、断言厂商侧收到的
 // 确切形状。未改动共享 fixture(engine-mock.mjs)。
 // ============================================================
 
@@ -100,6 +102,7 @@ class FakeMap {
     this.boundsArg = null;
     this.overlays = [];
     this.controls = [];
+    this.styleV2Calls = [];
     this.listeners = new Map();
     this.destroyed = false;
     this.panned = false;
@@ -140,6 +143,9 @@ class FakeMap {
   }
   setMapType(mapType) {
     this.mapType = mapType;
+  }
+  setMapStyleV2(opts) {
+    this.styleV2Calls.push(opts);
   }
   getCenter() {
     return this.center;
@@ -408,15 +414,17 @@ function setup() {
     Geolocation: FakeGeolocation,
     ScaleControl: FakeScaleControl,
   });
-  globalThis.BMAPGL_NORMAL_MAP = 'BMAPGL_NORMAL_MAP';
-  globalThis.BMAPGL_SATELLITE_MAP = 'BMAPGL_SATELLITE_MAP';
+  globalThis.BMAP_NORMAL_MAP = 'B_NORMAL_MAP';
+  globalThis.BMAP_SATELLITE_MAP = 'B_SATELLITE_MAP';
+  // 忠实 SDK(ws-a 核实):BMAPGL_NORMAL_MAP 是 normal 的别名,BMAPGL_SATELLITE_MAP
+  // 不存在 → mock 只定义 BMAP_* 主名,卫星必须经 BMAP_SATELLITE_MAP 生效
   return mockNs;
 }
 
 afterEach(() => {
   if (mockNs) mockNs.uninstall();
-  delete globalThis.BMAPGL_NORMAL_MAP;
-  delete globalThis.BMAPGL_SATELLITE_MAP;
+  delete globalThis.BMAP_NORMAL_MAP;
+  delete globalThis.BMAP_SATELLITE_MAP;
   mockNs = null;
   resetIconPreflightCache(); // ws-e icon 防御测试:清预检会话缓存
 });
@@ -727,7 +735,7 @@ test('createView:container 透传 + 初始中心 bd09 + zoom/pitch/rotation + �
   assert.equal(map.zoom, 15);
   assert.equal(map.tilt, 30);
   assert.equal(map.heading, 90);
-  assert.equal(map.mapType, 'BMAPGL_NORMAL_MAP');
+  assert.equal(map.mapType, 'B_NORMAL_MAP');
 });
 
 test('createView:BMapGL 未就绪 → 明确报错(提示先 load)', async () => {
@@ -765,7 +773,7 @@ test('createView:相机先行——centerAndZoom 触发底图图层/瓦片请求
   assert.equal(map.center.lng, bd.lng, '就绪后相机保持(SDK 无异步初始化重置)');
   assert.equal(map.center.lat, bd.lat);
   assert.equal(map.zoom, 14);
-  assert.equal(map.mapType, 'BMAPGL_NORMAL_MAP');
+  assert.equal(map.mapType, 'B_NORMAL_MAP');
   assert.equal(view.raw, map);
   assert.equal(map.listeners.size, 0, '就绪后全部监听必须解绑');
 });
@@ -964,30 +972,106 @@ test('flyTo:panTo 收到 bd09 + zoom 设置', async () => {
   assert.equal(view.raw.zoom, 14);
 });
 
-test('setStyle:normal/satellite 映射;whitesmoke 回退 normal + console.warn', async () => {
+test('createView:style 透传——createView({style:"whitesmoke"}) 就绪后即应用深色', async () => {
+  setup();
+  const { view } = await makeView({ style: 'whitesmoke' });
+  assert.equal(view.raw.styleV2Calls.length, 1, 'createView 就绪后应用 opts.style');
+  assert.ok(Array.isArray(view.raw.styleV2Calls[0].styleJson), '深色 styleJson 已应用');
+  assert.equal(view.raw.styleV2Calls[0].styleJson.length > 0, true);
+});
+
+test('setStyle:normal/satellite 映射(常量名已修正为 SDK 主名 BMAP_*,ws-a)', async () => {
   setup();
   const { view } = await makeView();
   view.setStyle('satellite');
-  assert.equal(view.raw.mapType, 'BMAPGL_SATELLITE_MAP');
+  assert.equal(view.raw.mapType, 'B_SATELLITE_MAP', 'BMAP_SATELLITE_MAP 常量值');
   view.setStyle('normal');
-  assert.equal(view.raw.mapType, 'BMAPGL_NORMAL_MAP');
+  assert.equal(view.raw.mapType, 'B_NORMAL_MAP', 'BMAP_NORMAL_MAP 常量值');
   const warns = [];
   const origWarn = console.warn;
   console.warn = (m) => warns.push(String(m));
   try {
-    view.setStyle('whitesmoke');
+    view.setStyle('bogus'); // 类型外样式(防御路径):回退 normal + warn
   } finally {
     console.warn = origWarn;
   }
-  assert.equal(view.raw.mapType, 'BMAPGL_NORMAL_MAP', '不支持样式回退 normal');
+  assert.equal(view.raw.mapType, 'B_NORMAL_MAP', '不支持样式回退 normal');
   assert.ok(warns.length >= 1, '应 console.warn');
-  assert.match(warns[0], /whitesmoke/);
+  assert.match(warns[0], /bogus/);
+});
+
+test('setStyle:whitesmoke(UI「深色」)→ setMapStyleV2({styleJson: 深色样式})', async () => {
+  setup();
+  const { view } = await makeView();
+  view.setStyle('whitesmoke');
+  assert.equal(view.raw.styleV2Calls.length, 1, '深色经 setMapStyleV2 应用');
+  const arg = view.raw.styleV2Calls[0];
+  assert.ok(Array.isArray(arg.styleJson), '对象形态 {styleJson:[...]}(SDK setMapStyleV2 核实)');
+  assert.ok(arg.styleJson.length >= 10, '深色样式分层足够(水系/道路/建筑/标注)');
+  // 格式自洽:每项 featureType/elementType/stylers;可读性:标注文字亮色、道路亮于基底
+  for (const item of arg.styleJson) {
+    assert.equal(typeof item.featureType, 'string', 'featureType 必填字符串');
+    assert.equal(typeof item.elementType, 'string', 'elementType 必填字符串');
+    assert.equal(typeof item.stylers, 'object', 'stylers 必填对象');
+    assert.ok(Object.keys(item.stylers).length >= 1, 'stylers 至少一条规则');
+  }
+  const labelFill = arg.styleJson.find(
+    (i) => i.featureType === 'label' && i.elementType === 'labels.text.fill',
+  );
+  assert.ok(labelFill, '标注文字规则存在(暗底可读)');
+  assert.match(labelFill.stylers.color, /^#[0-9a-fA-F]{6}$/, '文字亮色 hex');
+  const bg = arg.styleJson.find((i) => i.featureType === 'background');
+  assert.ok(bg, '背景规则存在');
+  assert.match(bg.stylers.color, /^#[0-9a-fA-F]{6}$/);
+});
+
+test('setStyle:深色 → normal/satellite 复位自定义样式(styleJson:[]) + setMapType', async () => {
+  setup();
+  const { view } = await makeView();
+  // 进入深色
+  view.setStyle('whitesmoke');
+  assert.equal(view.raw.styleV2Calls.length, 1);
+  // 切回 normal:先复位自定义样式(空 styleJson = 默认渲染,SDK:config.style 对象
+  // 持续生效,setMapType 不清理 → 必须显式复位),再 setMapType
+  view.setStyle('normal');
+  assert.deepEqual(view.raw.styleV2Calls[1], { styleJson: [] }, '离开深色必须复位自定义样式');
+  assert.equal(view.raw.mapType, 'B_NORMAL_MAP');
+  // 再进深色、切卫星:同样复位 + 卫星常量
+  view.setStyle('whitesmoke');
+  assert.equal(view.raw.styleV2Calls.length, 3, '再次应用深色(含复位共 3 次调用)');
+  view.setStyle('satellite');
+  assert.deepEqual(view.raw.styleV2Calls[3], { styleJson: [] }, '深色 → 卫星同样复位');
+  assert.equal(view.raw.mapType, 'B_SATELLITE_MAP');
+  // 状态追踪:从未进深色时 setStyle(normal) 不触发自定义样式管线(零多余网络加载)
+  const { view: v2 } = await makeView();
+  v2.setStyle('normal');
+  v2.setStyle('satellite');
+  assert.equal(v2.raw.styleV2Calls.length, 0, '无深色历史 → 不调用 setMapStyleV2');
+});
+
+test('setStyle:setMapStyleV2 缺失(旧 SDK)→ whitesmoke warn 降级 normal 不抛', async () => {
+  setup();
+  const proto = FakeMap.prototype;
+  const orig = proto.setMapStyleV2;
+  delete proto.setMapStyleV2;
+  const warns = [];
+  const origWarn = console.warn;
+  console.warn = (...args) => warns.push(String(args[0]));
+  try {
+    const { view } = await makeView();
+    assert.doesNotThrow(() => view.setStyle('whitesmoke'));
+    assert.equal(view.raw.mapType, 'B_NORMAL_MAP', 'setMapStyleV2 缺失 → 回退 normal');
+    assert.ok(warns.some((w) => w.includes('setMapStyleV2')), '必须 console.warn(可观测):' + warns.join('|'));
+  } finally {
+    proto.setMapStyleV2 = orig;
+    console.warn = origWarn;
+  }
 });
 
 test('setStyle:厂商常量缺失 → 静默跳过(不抛错)', async () => {
   setup();
-  delete globalThis.BMAPGL_NORMAL_MAP;
-  delete globalThis.BMAPGL_SATELLITE_MAP;
+  delete globalThis.BMAP_NORMAL_MAP;
+  delete globalThis.BMAP_SATELLITE_MAP;
   const { view } = await makeView();
   assert.equal(view.raw.mapType, null);
   view.setStyle('satellite');
