@@ -586,28 +586,37 @@ test('useSavedLayer owns saved overlay state, derivation and guest gate (QA scan
   assert.match(shell, /if \(overlayIds\.has\(p\.id\)\) return true; \/\/ 收藏 overlay 恒显示/);
 });
 
-test('work no-category empty state renders candidate category chips wired to filters', () => {
+test('work no-category empty state renders candidate category rows wired to filters', () => {
   const list = src('components/poi-list.tsx');
   const sidebar = src('components/secondary-sidebar.tsx');
   const css = src('components/poi-list.module.css');
-  // POIList 空态槽位接受候选类别 chips + 点击回调
+  // POIList 空态槽位接受候选类别列表行 + 点击回调
   assert.match(list, /candidateCategories\?: \{ key: string; value: string; label: string \}\[\]/);
   assert.match(list, /onPickCategory\?: \(key: string, value: string\) => void/);
   assert.match(list, /candidateCategories && candidateCategories\.length > 0/);
   assert.match(list, /onClick=\{\(\) => onPickCategory\?\.\(chip\.key, chip\.value\)\}/);
-  // chips 复用 filter-panel 的 chips/chip(与 TaxonomyControl 同一套)
-  assert.match(list, /import filterStyles from "\.\/filter-panel\.module\.css"/);
-  assert.match(list, /filterStyles\.chip/);
+  // Apple 列表行(一行一类):行按钮 + label + 行末 chevron;不再复用 filter-panel chips
+  assert.doesNotMatch(list, /filterStyles/);
+  assert.match(list, /className=\{styles\.candidateRow\}/);
+  assert.match(list, /<span className=\{styles\.candidateLabel\}>\{chip\.label\}<\/span>/);
+  assert.match(list, /className=\{styles\.candidateChevron\}/);
+  assert.match(list, /viewBox="0 0 12 20"/);
+  assert.match(list, /d="m4 2 8 8-8 8"/);
+  assert.match(list, /strokeWidth="2\.2"/);
   // 玻璃容器(候选类别卡片)
   assert.match(css, /\.candidateCard \{[\s\S]*border-radius: 14px/);
   assert.match(css, /\.candidateCard \{[\s\S]*backdrop-filter: blur\(20px\) saturate\(165%\)/);
-  // 数据源 getMode(mode).filters:未选类别(无 query/jobTaxonomy/roleFamily)→ 出 chips
+  // 列表布局:行满宽 + 细分隔线(末行无)+ 灰调 chevron
+  assert.match(css, /\.candidateRow \{[\s\S]*border-bottom: 1px solid var\(--line\)/);
+  assert.match(css, /\.candidateRow:last-child \{[\s\S]*border-bottom: 0/);
+  assert.match(css, /\.candidateChevron \{[\s\S]*width: 9px/);
+  // 数据源 getMode(mode).filters:未选类别(无 query/jobTaxonomy/roleFamily)→ 出候选行
   assert.match(sidebar, /export function workCandidateCategories/);
   assert.match(sidebar, /getMode\(mode\)\.filters/);
   assert.match(sidebar, /config\.key !== "jobTaxonomy" && config\.key !== "roleFamily"/);
   assert.match(sidebar, /selectedTaxonomyPaths\(filters\)\.length > 0/);
   assert.match(sidebar, /selectedRoleFamilies\(filters\)\.length > 0/);
-  // 桌面 sidebar 接线:未选 → 空态标题 + chips;点击写 filters[key](pickCategoryFilter 按类型选值)
+  // 桌面 sidebar 接线:未选 → 空态标题 + 候选列表;点击写 filters[key](pickCategoryFilter 按类型选值)
   assert.match(sidebar, /candidateChips = candidateCategoriesFor\(mode, query, filters\)/);
   assert.match(sidebar, /candidateCategories=\{candidateChips\.length > 0 \? candidateChips : undefined\}/);
   assert.match(sidebar, /onPickCategory=\{\(key, value\) => onFiltersChange\(pickCategoryFilter\(filters, mode, key, value\)\)\}/);
@@ -618,10 +627,10 @@ test('work no-category empty state renders candidate category chips wired to fil
   assert.match(shell, /onPickCategory=\{\(key, value\) => setFilters\(pickCategoryFilter\(filters, mode, key, value\)\)\}/);
 });
 
-test('domain no-category empty state renders candidate category chips (single-select write)', () => {
+test('domain no-category empty state renders candidate category rows (single-select write)', () => {
   const sidebar = src('components/secondary-sidebar.tsx');
   const shell = src('components/map-shell.tsx');
-  // domain 分支:数据源 = getMode(mode).filters 的 category(select 单选);未选类(无 query/filters.category)→ 出 9 类 chips
+  // domain 分支:数据源 = getMode(mode).filters 的 category(select 单选);未选类(无 query/filters.category)→ 出 9 类候选行
   assert.match(sidebar, /export function domainCandidateCategories/);
   assert.match(sidebar, /if \(canonicalMode\(mode\) !== "domain"\) return \[\]/);
   assert.match(sidebar, /if \(query\.trim\(\)\) return \[\]/);
@@ -631,13 +640,13 @@ test('domain no-category empty state renders candidate category chips (single-se
   assert.match(sidebar, /export function candidateCategoriesFor/);
   assert.match(sidebar, /\.\.\.workCandidateCategories\(mode, query, filters\),/);
   assert.match(sidebar, /\.\.\.domainCandidateCategories\(mode, query, filters\),/);
-  // chip 点击:单选(select)写字符串(domain category),多选写数组(work)——与 FilterPanel 语义一致
+  // 行点击:单选(select)写字符串(domain category),多选写数组(work)——与 FilterPanel 语义一致
   assert.match(sidebar, /export function pickCategoryFilter/);
   assert.match(sidebar, /isSingle \? value : \[value\]/);
-  // domain 空态标题由 domainNoCategory 驱动(poi-category-loading 契约),chips 非空时同槽位渲染
+  // domain 空态标题由 domainNoCategory 驱动(poi-category-loading 契约),候选行非空时同槽位渲染
   assert.match(sidebar, /config\.kind === "domain" && !filters\.category && !query\.trim\(\)/);
   assert.match(sidebar, /emptyTitle=\{\s*domainNoCategory \|\| candidateChips\.length > 0 \? t\("pickCategory", lang\) : undefined\s*\}/);
-  // 移动抽屉同链路走同一合并助手(domain 未选类也出 chips)
+  // 移动抽屉同链路走同一合并助手(domain 未选类也出候选行)
   assert.match(shell, /mobileCandidateChips = candidateCategoriesFor\(mode, query, filters\)/);
   assert.match(shell, /emptyTitle=\{mobileCandidateChips\.length > 0 \? t\("pickCategory", lang\) : undefined\}/);
 });
