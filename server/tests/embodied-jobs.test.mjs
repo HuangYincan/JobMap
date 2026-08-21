@@ -8,24 +8,30 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { embodiedJobsAdapter, fileEmbodiedJobsAdapter } from '../src/lib/recruitment-adapters/embodied-jobs.ts';
-import { SOURCE_META, validateSourceCompany } from '../src/lib/recruitment-import.ts';
+import { industriesOf } from '../src/lib/recruitment-adapters/qqdoc-official.ts';
+import {
+  dedupeSourceCompanies,
+  planRecruitmentImport,
+  SOURCE_META,
+  validateSourceCompany,
+} from '../src/lib/recruitment-import.ts';
 
-// Fixtures are self-contained (WS-1 drops are not in this worktree): a temp
-// dir with 2 valid drops + 1 broken file, shaped as SourceCompany:
-//   slug embj-* / source 'embodied-jobs' / sites 单站 id embj-<name>-site /
-//   positions externalId embj-*, family social|campus|intern, status open,
-//   applyUrl 每岗链接, retrievedAt.
+// Fixtures are self-contained (WS-1 drops are not in this worktree) and mirror
+// the REAL embj-* drop shape (2026-08-21): slug embj-* / name / source
+// 'embodied-jobs' / careerUrl / sites(单站 id embj-<name>-site, city/province,
+// location {}) / positions(externalId embj-*, family social|campus|intern,
+// taxonomy, status open, applySource official, applyUrl, retrievedAt) —
+// deliberately WITHOUT industries / scale (drops stay lean; the adapter fills
+// them). 2 valid drops + 1 broken file.
 
 const AGIBOT = {
   slug: 'embj-agibot',
   name: '智元机器人',
   source: 'embodied-jobs',
-  industries: ['robotics'],
-  scale: 'unicorn',
   careerUrl: 'https://www.agibot.com/',
   sites: [
-    { id: 'embj-agibot-site-shanghai', name: '智元机器人(上海)', city: '上海市', province: '上海市' },
-    { id: 'embj-agibot-site-shenzhen', name: '智元机器人(深圳)', city: '深圳市', province: '广东省' },
+    { id: 'embj-agibot-site-shanghai', name: '智元机器人(上海)', city: '上海市', province: '上海市', location: {} },
+    { id: 'embj-agibot-site-shenzhen', name: '智元机器人(深圳)', city: '深圳市', province: '广东省', location: {} },
   ],
   positions: [
     {
@@ -33,27 +39,33 @@ const AGIBOT = {
       title: '具身智能算法工程师',
       siteId: 'embj-agibot-site-shanghai',
       family: 'social',
+      taxonomy: { family: 'social' },
       status: 'open',
+      applySource: 'official',
       applyUrl: 'https://www.agibot.com/career/social/1',
-      retrievedAt: '2026-08-21T00:00:00Z',
+      retrievedAt: '2026-08-21',
     },
     {
       externalId: 'embj-agibot-002',
       title: '2027届校招-机器人控制算法',
       siteId: 'embj-agibot-site-shanghai',
       family: 'campus',
+      taxonomy: { family: 'campus' },
       status: 'open',
+      applySource: 'official',
       applyUrl: 'https://www.agibot.com/career/campus/2',
-      retrievedAt: '2026-08-21T00:00:00Z',
+      retrievedAt: '2026-08-21',
     },
     {
       externalId: 'embj-agibot-003',
       title: '具身智能实习生',
       siteId: 'embj-agibot-site-shenzhen',
       family: 'intern',
+      taxonomy: { family: 'intern' },
       status: 'open',
+      applySource: 'official',
       applyUrl: 'https://www.agibot.com/career/intern/3',
-      retrievedAt: '2026-08-21T00:00:00Z',
+      retrievedAt: '2026-08-21',
     },
   ],
 };
@@ -62,37 +74,45 @@ const UNITREE = {
   slug: 'embj-unitree',
   name: '宇树科技',
   source: 'embodied-jobs',
-  industries: ['robotics'],
-  scale: 'unicorn',
   careerUrl: 'https://www.unitree.com/',
-  sites: [{ id: 'embj-unitree-site-hangzhou', name: '宇树科技(杭州)', city: '杭州市', province: '浙江省' }],
+  sites: [{ id: 'embj-unitree-site-hangzhou', name: '宇树科技(杭州)', city: '杭州市', province: '浙江省', location: {} }],
   positions: [
     {
       externalId: 'embj-unitree-001',
       title: '机器人运动控制工程师',
       siteId: 'embj-unitree-site-hangzhou',
       family: 'campus',
+      taxonomy: { family: 'campus' },
       status: 'open',
+      applySource: 'official',
       applyUrl: 'https://www.unitree.com/jobs/1',
-      retrievedAt: '2026-08-21T00:00:00Z',
+      retrievedAt: '2026-08-21',
     },
     {
       externalId: 'embj-unitree-002',
       title: '具身智能算法工程师',
       siteId: 'embj-unitree-site-hangzhou',
       family: 'social',
+      taxonomy: { family: 'social' },
       status: 'open',
+      applySource: 'official',
       applyUrl: 'https://www.unitree.com/jobs/2',
-      retrievedAt: '2026-08-21T00:00:00Z',
+      retrievedAt: '2026-08-21',
     },
   ],
 };
+
+// 夹具本身不带 industries/scale —— 与真实 embj-* drops 完全一致。
+for (const drop of [AGIBOT, UNITREE]) {
+  assert.equal('industries' in drop, false, 'fixture must mirror real drops: no industries field');
+  assert.equal('scale' in drop, false, 'fixture must mirror real drops: no scale field');
+}
 
 async function fixtureDir() {
   const dir = await mkdtemp(join(tmpdir(), 'embodied-jobs-test-'));
   await writeFile(join(dir, 'embj-agibot.json'), JSON.stringify(AGIBOT), 'utf8');
   await writeFile(join(dir, 'embj-unitree.json'), JSON.stringify(UNITREE), 'utf8');
-  // 一个坏文件(非法 JSON)——file-drop 读取器应跳过,不影响其他文件。
+  // 一个坏文件(非法 JSON)——adapter 应跳过,不影响其他文件。
   await writeFile(join(dir, 'broken.json'), '{ not json', 'utf8');
   return dir;
 }
@@ -138,11 +158,39 @@ test('embodied-jobs adapter reads fixture drops into SourceCompany (source code 
   );
 });
 
-test('embodied-jobs fixture drops pass import validation (zero issues)', async () => {
+test('adapter normalizes real-shape drops: industries filled via industriesOf, scale defaulted', async () => {
   const dir = await fixtureDir();
   const companies = await embodiedJobsAdapter(dir).list();
   assert.equal(companies.length, 2, 'broken.json must be skipped');
-  const allIssues = companies.flatMap((company) => validateSourceCompany(company));
+  for (const company of companies) {
+    // drops 不带 industries/scale → 适配器补齐(industriesOf 有 'other' 兜底,永不空)。
+    assert.ok(Array.isArray(company.industries) && company.industries.length > 0, `industries filled for ${company.slug}`);
+    assert.deepEqual(company.industries, industriesOf(company.name), 'industries must come from the shared industriesOf heuristic');
+    assert.equal(company.scale, 'enterprise', 'scale defaults to the qqdoc-precedent value');
+  }
+});
+
+// 回归测试(2026-08-21 FOLLOWUP): 真实 drops 形状(无 industries)曾让
+// planSeedImport → dedupeSourceCompanies → cloneCompany 对 [...undefined]
+// spread 抛 TypeError。此测试在真实形状下必须红→绿,防止跨 WS 缺口再现。
+test('regression: real-shape drops survive dedupe/cloneCompany path with zero validation issues', async () => {
+  const dir = await fixtureDir();
+  const companies = await embodiedJobsAdapter(dir).list();
+  assert.equal(companies.length, 2, 'broken.json must be skipped');
+
+  // dedupeSourceCompanies → cloneCompany: industries 缺失时曾抛 TypeError。
+  const deduped = dedupeSourceCompanies(companies);
+  assert.equal(deduped.length, 2);
+  assert.deepEqual(new Set(deduped.map((c) => c.slug)), new Set(['embj-agibot', 'embj-unitree']));
+
+  // planRecruitmentImport(planSeedImport 的核心路径): 零 bad issues、零 dropped。
+  const plan = planRecruitmentImport(companies);
+  assert.deepEqual(plan.issues, []);
+  assert.equal(plan.dropped, 0);
+  assert.equal(plan.companies.length, 2);
+
+  // validateSourceCompany 直接断言: 全量零 bad issues。
+  const allIssues = deduped.flatMap((company) => validateSourceCompany(company));
   assert.deepEqual(allIssues, []);
 });
 
