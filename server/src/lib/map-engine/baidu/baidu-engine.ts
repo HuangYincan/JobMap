@@ -312,6 +312,13 @@ interface BMapInstance {
   setBounds(bounds: BBounds): unknown;
   setMapType(mapType: unknown): unknown;
   /**
+   * 自定义底图样式(2026-08-22 SDK v1.0 源码核实,ws-a):
+   * setMapStyleV2(opts) → setOptions({style: opts}) → getStyleJson 直接消费
+   * opts.styleJson 数组(styleId 为服务端拉取形态,不采用);**空数组 = 默认
+   * 渲染**(离开深色时的复位路径,与腾讯 setMapStyleId('DEFAULT') 同语义)。
+   */
+  setMapStyleV2?(opts: { styleJson: BMapStyleItem[] }): unknown;
+  /**
    * 滚轮缩放开关(2026-08-22 SDK 源码核实):Map config 默认
    * `enableWheelZoom: !H.apiVersionIsGL()` → GL 恒 false(经典 BMap 恒 true),
    * mouseWheel 处理器 `if(!mw.config.enableWheelZoom){return}` 静默忽略 →
@@ -387,11 +394,63 @@ const EVENT_MAP: Record<MapViewEvent, string> = {
   complete: 'tilesloaded',
 };
 
-/** 底图样式 → BMapGL MapType 常量名(官方:BMAPGL_NORMAL_MAP / BMAPGL_SATELLITE_MAP) */
+/**
+ * 底图样式 → BMapGL MapType 常量名(2026-08-22 SDK v1.0 源码核实,ws-a;
+ * getscript 本体 1.2MB 抓取 grep):
+ *   window.BMAP_NORMAL_MAP="B_NORMAL_MAP"; window.BMAPGL_NORMAL_MAP="B_NORMAL_MAP";
+ *   window.BMAP_SATELLITE_MAP="B_SATELLITE_MAP"; window.BMAP_HYBRID_MAP="B_HYBRID_MAP"
+ * - **`BMAPGL_SATELLITE_MAP` 不存在**(0 命中)——旧常量名解析 undefined →
+ *   setMapType 被静默跳过 → 卫星切换无效果(用户 bug 1「百度卫星没实现」根因);
+ * - BMAPGL_NORMAL_MAP 仅为 normal 的别名(同值),normal 用主名 BMAP_NORMAL_MAP;
+ * - setMapType 按常量字符串值解析 MapTypeId(ev()→kO 注册表,卫星
+ *   compatType:"BMAP_SATELLITE_MAP",源码见批次汇报 ws-a)。
+ */
 const STYLE_CONSTANT: Record<'normal' | 'satellite', string> = {
-  normal: 'BMAPGL_NORMAL_MAP',
-  satellite: 'BMAPGL_SATELLITE_MAP',
+  normal: 'BMAP_NORMAL_MAP',
+  satellite: 'BMAP_SATELLITE_MAP',
 };
+
+/** BMapGL 自定义样式项(官方 styleJson 格式;SDK styleJson2styleStringV2 映射
+ * featureType→t / elementType→e / stylers{color→c,visibility→v,opacity→o,...}) */
+interface BMapStyleItem {
+  featureType: string;
+  elementType: string;
+  stylers: Record<string, string>;
+}
+
+/**
+ * BMapGL 深色自定义样式(styleJson,ws-a 2026-08-22)。以官方暗色示例为基
+ * (BMapGL 自定义样式文档 featureType 词表:background/water/land/green/
+ * building/highway/arterial/local/railway/subway/boundary/label;elementType
+ * 词表 SDK 核实:geometry(.fill/.stroke)/labels(.text.fill/.text.stroke)等)。
+ * 分层保可读:基底深蓝黑,水系/绿地低饱和低亮,道路逐级提亮(高速>主干>次干),
+ * 标注文字高亮浅蓝 + 深色描边(暗底可读),行政边界中亮描边。
+ */
+const BAIDU_DARK_STYLE_JSON: BMapStyleItem[] = [
+  { featureType: 'background', elementType: 'all', stylers: { color: '#0b1524' } },
+  { featureType: 'land', elementType: 'all', stylers: { color: '#0b1524' } },
+  { featureType: 'water', elementType: 'all', stylers: { color: '#0d2236' } },
+  { featureType: 'green', elementType: 'all', stylers: { color: '#0c2b28' } },
+  { featureType: 'building', elementType: 'all', stylers: { color: '#13293e' } },
+  { featureType: 'building', elementType: 'geometry.stroke', stylers: { color: '#1d3d57' } },
+  { featureType: 'highway', elementType: 'geometry.fill', stylers: { color: '#20587e' } },
+  { featureType: 'highway', elementType: 'geometry.stroke', stylers: { color: '#0b1524' } },
+  { featureType: 'arterial', elementType: 'geometry.fill', stylers: { color: '#174568' } },
+  { featureType: 'local', elementType: 'geometry.fill', stylers: { color: '#12344f' } },
+  { featureType: 'railway', elementType: 'geometry.fill', stylers: { color: '#0e2c42' } },
+  { featureType: 'subway', elementType: 'geometry.fill', stylers: { color: '#1d5f8a' } },
+  { featureType: 'boundary', elementType: 'geometry.stroke', stylers: { color: '#2a5c7e' } },
+  { featureType: 'label', elementType: 'labels.text.fill', stylers: { color: '#9fc6e0' } },
+  { featureType: 'label', elementType: 'labels.text.stroke', stylers: { color: '#0b1524' } },
+];
+
+/**
+ * 已应用自定义 styleJson 的地图实例(WeakSet;ws-a)。SDK 核实:自定义样式存于
+ * config.style(对象),**setMapType 不清理**——离开深色必须显式
+ * setMapStyleV2({styleJson: []}) 复位,否则暗色样式残留到 normal/卫星底图
+ * (与腾讯「切回标准/卫星:复位暗色」同契约)。
+ */
+const styleJsonApplied = new WeakSet<BMapInstance>();
 
 /** Autocomplete headless 路径超时兜底(ms):厂商静默失败时避免 promise 挂起 */
 const AUTOCOMPLETE_TIMEOUT_MS = 5000;
@@ -439,9 +498,35 @@ function resolveGlobalConstant(name: string): unknown {
   return (globalThis as Record<string, unknown>)[name];
 }
 
-/** 样式 → setMapType;不支持的样式(whitesmoke 等)回退 normal + console.warn */
+/**
+ * 样式 → 厂商底图(ws-a 2026-08-22):
+ * - normal/satellite → setMapType(常量经 resolveGlobalConstant 解析,缺失静默
+ *   跳过不抛);离开深色时先 setMapStyleV2({styleJson: []}) 复位自定义样式
+ *   (SDK 核实:config.style 对象持续生效,setMapType 不清理 → 必须显式复位);
+ * - whitesmoke(UI 图层面板「深色」)→ 深色 styleJson(setMapStyleV2;API 缺失
+ *   时 warn 降级 normal,与腾讯无 setMapStyleId 降级同契约);
+ * - 其他不支持的样式回退 normal + console.warn。
+ */
 function applyMapStyle(map: BMapInstance, style: MapStyleId): void {
+  if (style === 'whitesmoke') {
+    if (typeof map.setMapStyleV2 !== 'function') {
+      console.warn('[map-engine] baidu 无 setMapStyleV2,深色样式降级 normal');
+      styleJsonApplied.delete(map);
+      const normalConstant = resolveGlobalConstant(STYLE_CONSTANT.normal);
+      if (normalConstant !== undefined) map.setMapType(normalConstant);
+      return;
+    }
+    map.setMapStyleV2({ styleJson: BAIDU_DARK_STYLE_JSON });
+    styleJsonApplied.add(map);
+    return;
+  }
   if (style === 'normal' || style === 'satellite') {
+    // 离开深色:显式复位自定义样式(空 styleJson = 默认渲染;仅在应用过时调用,
+    // 避免每次 setStyle 触发一次自定义样式管线加载)
+    if (styleJsonApplied.has(map)) {
+      if (typeof map.setMapStyleV2 === 'function') map.setMapStyleV2({ styleJson: [] });
+      styleJsonApplied.delete(map);
+    }
     const constant = resolveGlobalConstant(STYLE_CONSTANT[style]);
     if (constant !== undefined) map.setMapType(constant);
     return;
