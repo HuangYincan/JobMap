@@ -959,3 +959,49 @@ TMap 下 favicon.im 加载失败 → console 零「Image加载失败」报错;�
 - `map-engine-baidu.test.mjs` 追加 2 项:远程未验证 → content 锚点回退 +
   后台预检;ok → 真 URL Icon / fail → 回退不重试(afterEach 加
   resetIconPreflightCache 防串扰)。
+
+## ws-f 回填:预检噪音消除(fetch → Image + sessionStorage 失败记忆,2026-08-22,fix/icon-preflight-silent)
+
+> ws-e 已除核心刷屏(SDK「Image加载失败」→ 本地徽章);剩余噪音:预检用
+> `fetch(src, { mode: 'cors' })`,每个失败 favicon URL 在 console 报 2 行
+> (CORS policy + net::ERR_FAILED),首次进 TMap 实测 ~94 URL × 2 ≈ 189 条
+> 一次性报错(每次刷新/切引擎重复)。ws-f 两个小优化把噪音压到「首次会话一次」。
+
+### 1. 预检改 `new Image()`(console 报错减半)
+
+`preflightRemoteIcon` 不再 fetch,改为:
+
+- `new Image()` + `img.crossOrigin = 'anonymous'` + `referrerPolicy = 'no-referrer'`;
+- 语义与 WebGL 纹理加载**同源**:无 ACAO 头 / 网络失败 → onerror → fail;
+  onload 表示图像可解码(2xx + 有效图像数据,纹理可用——比 fetch 的
+  `res.ok` 更贴近「能否作纹理」的判定);
+- 收益:失败只报 1 行 `Failed to load resource: net::ERR_FAILED`(fetch 报 2 行);
+- **防 GC**:Image 对象持有在 `pending: Map<url, HTMLImageElement>` 中,直到
+  onload/onerror 回调触发才删除——避免 Image 被回收导致回调永不触发;
+- 无全局 `Image`(node / 异常环境)或构造异常 → no-op,保持 unknown 降级,不抛错。
+
+### 2. 失败清单 sessionStorage 持久化(噪音只在首次会话)
+
+- 预检失败的 URL 记入 sessionStorage(key `domain-map:icon-preflight-fail`,
+  JSON 字符串数组);
+- **防抖**:失败先入模块级缓冲,同一微任务批次合并为**一次** setItem
+  (读改写合并既有清单,不逐 URL 一写);
+- `remoteIconStatus` 内存未命中 → 回退 sessionStorage 失败清单(命中即
+  'fail',并回写内存缓存);`preflightRemoteIcon` 对已知失败 URL 直接记
+  fail 不再发起网络;
+- 收益:同一会话内刷新(F5)/切引擎不再预检已知失败 URL → 噪音只在
+  **首次会话**出现一次(新开标签页 = 新会话,会重新预检,符合预期);
+- sessionStorage 读写全部 try/catch:隐私模式禁用 / 内容损坏(JSON 解析
+  失败 / 非数组)→ 静默降级为「无记忆」,内存缓存照常,绝不抛错;
+- data: URI 不经过预检与持久化。
+
+### 测试与文档
+
+- `server/tests/icon-preflight.test.mjs`:fetch mock → **Image mock** 重写
+  (onload/onerror 异步触发,deferred 可控);断言 `crossOrigin='anonymous'` +
+  `referrerPolicy='no-referrer'`;新增 sessionStorage 用例:失败持久化 +
+  reset 后回退读回 fail、已知失败零新预检、多失败单次 setItem(防抖)、
+  跨批次合并不覆盖、隐私模式(get/set throw)不抛、损坏内容按无记忆处理;
+- `map-engine-baidu.test.mjs` 两项 ws-e 防御测试同步改 Image mock;
+- 注意:Node ≥22 暴露实验性全局 sessionStorage,测试 beforeEach 需
+  removeItem(FAIL_KEY) 隔离,否则上一用例的防抖写入会污染下一用例。
