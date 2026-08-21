@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { FilterConfig, FilterOption, FilterState } from "@/lib/types";
-import { t, type Language } from "@/lib/i18n";
+import { t, uiLabel, type Language } from "@/lib/i18n";
 import styles from "./filter-panel.module.css";
 
 export interface FilterPanelProps {
@@ -54,8 +54,8 @@ function SelectControl({
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const allLabel = lang === "zh" ? "全部" : "All";
-  const currentLabel =
-    config.options?.find((option) => option.value === current)?.label ?? allLabel;
+  const matchedOption = config.options?.find((option) => option.value === current);
+  const currentLabel = matchedOption ? uiLabel(matchedOption, lang) : allLabel;
 
   useEffect(() => {
     if (!open) return;
@@ -74,7 +74,7 @@ function SelectControl({
   return (
     <div className={styles.control}>
       <span className={styles.label} id={`filter-${config.key}-label`}>
-        {config.label}
+        {uiLabel(config, lang)}
       </span>
       <div className={styles.selectWrap} ref={wrapRef}>
         <button
@@ -89,7 +89,7 @@ function SelectControl({
           {currentLabel}
         </button>
         {open && (
-          <ul className={styles.selectMenu} role="listbox" aria-label={config.label}>
+          <ul className={styles.selectMenu} role="listbox" aria-label={uiLabel(config, lang)}>
             <li>
               <button
                 type="button"
@@ -110,7 +110,7 @@ function SelectControl({
                   className={`${styles.selectOption} ${current === option.value ? styles.selectOptionActive : ""}`}
                   onClick={() => pick(option.value)}
                 >
-                  {option.label}
+                  {uiLabel(option, lang)}
                 </button>
               </li>
             ))}
@@ -125,10 +125,12 @@ function MultiSelectControl({
   config,
   value,
   onChange,
+  lang,
 }: {
   config: FilterConfig;
   value: FilterValue | undefined;
   onChange: (key: string, value: any) => void;
+  lang: Language;
 }) {
   const selected = Array.isArray(value)
     ? value.filter((v): v is string => typeof v === "string")
@@ -143,8 +145,8 @@ function MultiSelectControl({
 
   return (
     <div className={styles.control}>
-      <span className={styles.label}>{config.label}</span>
-      <div className={styles.chips} role="group" aria-label={config.label}>
+      <span className={styles.label}>{uiLabel(config, lang)}</span>
+      <div className={styles.chips} role="group" aria-label={uiLabel(config, lang)}>
         {config.options?.map((option) => {
           const active = selected.includes(option.value);
           return (
@@ -155,7 +157,7 @@ function MultiSelectControl({
               aria-pressed={active}
               onClick={() => toggleOption(option.value)}
             >
-              {option.label}
+              {uiLabel(option, lang)}
             </button>
           );
         })}
@@ -168,10 +170,12 @@ function RangeControl({
   config,
   value,
   onChange,
+  lang,
 }: {
   config: FilterConfig;
   value: FilterValue | undefined;
   onChange: (key: string, value: any) => void;
+  lang: Language;
 }) {
   const min = config.min ?? 0;
   const max = config.max ?? 100;
@@ -191,10 +195,12 @@ function RangeControl({
   return (
     <div className={styles.control}>
       <div className={styles.labelRow}>
-        <span className={styles.label}>{config.label}</span>
+        <span className={styles.label}>{uiLabel(config, lang)}</span>
         <span className={styles.value}>
           {formatNum(lo)}–{formatNum(hi)}
-          {config.unit ? ` ${config.unit}` : ""}
+          {config.unit
+            ? ` ${lang === "zh" ? config.unit : config.unitEn ?? config.unit}`
+            : ""}
         </span>
       </div>
       <div className={styles.rangeTrack}>
@@ -211,7 +217,7 @@ function RangeControl({
           max={max}
           step={step}
           value={lo}
-          aria-label={`${config.label} min`}
+          aria-label={`${uiLabel(config, lang)} min`}
           onChange={(e) => onChange(config.key, [Math.min(Number(e.target.value), hi), hi])}
         />
         <input
@@ -221,7 +227,7 @@ function RangeControl({
           max={max}
           step={step}
           value={hi}
-          aria-label={`${config.label} max`}
+          aria-label={`${uiLabel(config, lang)} max`}
           onChange={(e) => onChange(config.key, [lo, Math.max(Number(e.target.value), lo)])}
         />
       </div>
@@ -233,10 +239,12 @@ function SliderControl({
   config,
   value,
   onChange,
+  lang,
 }: {
   config: FilterConfig;
   value: FilterValue | undefined;
   onChange: (key: string, value: any) => void;
+  lang: Language;
 }) {
   const min = config.min ?? 0;
   const max = config.max ?? 100;
@@ -252,10 +260,12 @@ function SliderControl({
   return (
     <div className={styles.control}>
       <div className={styles.labelRow}>
-        <span className={styles.label}>{config.label}</span>
+        <span className={styles.label}>{uiLabel(config, lang)}</span>
         <span className={styles.value}>
           {formatNum(v)}
-          {config.unit ? ` ${config.unit}` : ""}
+          {config.unit
+            ? ` ${lang === "zh" ? config.unit : config.unitEn ?? config.unit}`
+            : ""}
         </span>
       </div>
       <input
@@ -266,7 +276,7 @@ function SliderControl({
         max={max}
         step={step}
         value={v}
-        aria-label={config.label}
+        aria-label={uiLabel(config, lang)}
         onChange={(e) => onChange(config.key, Number(e.target.value))}
       />
     </div>
@@ -277,20 +287,22 @@ function ToggleControl({
   config,
   value,
   onChange,
+  lang,
 }: {
   config: FilterConfig;
   value: FilterValue | undefined;
   onChange: (key: string, value: any) => void;
+  lang: Language;
 }) {
   const isOn = typeof value === "boolean" ? value : false;
   return (
     <div className={`${styles.control} ${styles.toggleRow}`}>
-      <span className={styles.label}>{config.label}</span>
+      <span className={styles.label}>{uiLabel(config, lang)}</span>
       <button
         type="button"
         role="switch"
         aria-checked={isOn}
-        aria-label={config.label}
+        aria-label={uiLabel(config, lang)}
         className={`${styles.toggle} ${isOn ? styles.toggleOn : ""}`}
         onClick={() => onChange(config.key, !isOn)}
       >
@@ -304,10 +316,12 @@ function TaxonomyControl({
   config,
   value,
   onChange,
+  lang,
 }: {
   config: FilterConfig;
   value: FilterValue | undefined;
   onChange: (key: string, value: any) => void;
+  lang: Language;
 }) {
   const selected = Array.isArray(value)
     ? value.filter((v): v is string => typeof v === "string")
@@ -338,8 +352,8 @@ function TaxonomyControl({
 
   return (
     <div className={styles.control}>
-      <span className={styles.label}>{config.label}</span>
-      <div className={styles.chips} role="group" aria-label={config.label}>
+      <span className={styles.label}>{uiLabel(config, lang)}</span>
+      <div className={styles.chips} role="group" aria-label={uiLabel(config, lang)}>
         {families.map((family) => {
           const active = familyExpanded(family);
           return (
@@ -350,7 +364,7 @@ function TaxonomyControl({
               aria-pressed={active}
               onClick={() => toggle(family.value, family)}
             >
-              {family.label}
+              {uiLabel(family, lang)}
             </button>
           );
         })}
@@ -359,8 +373,8 @@ function TaxonomyControl({
         if (!family.children?.length || !familyExpanded(family)) return null;
         return (
           <div key={`${family.value}-leaves`} className={styles.taxonomyLeaves}>
-            <span className={styles.taxonomyHint}>{family.label}</span>
-            <div className={styles.chips} role="group" aria-label={family.label}>
+            <span className={styles.taxonomyHint}>{uiLabel(family, lang)}</span>
+            <div className={styles.chips} role="group" aria-label={uiLabel(family, lang)}>
               {family.children.map((child) => {
                 const active = isOn(child.value);
                 return (
@@ -371,7 +385,7 @@ function TaxonomyControl({
                     aria-pressed={active}
                     onClick={() => toggle(child.value, family)}
                   >
-                    {child.label}
+                    {uiLabel(child, lang)}
                   </button>
                 );
               })}
@@ -387,16 +401,18 @@ function DateControl({
   config,
   value,
   onChange,
+  lang,
 }: {
   config: FilterConfig;
   value: FilterValue | undefined;
   onChange: (key: string, value: any) => void;
+  lang: Language;
 }) {
   const current = typeof value === "string" ? value : "";
   return (
     <div className={styles.control}>
       <label className={styles.label} htmlFor={`filter-${config.key}`}>
-        {config.label}
+        {uiLabel(config, lang)}
       </label>
       <input
         id={`filter-${config.key}`}
@@ -430,17 +446,44 @@ function FilterControl({
         <SelectControl config={config} value={value} onChange={onChange} lang={lang} />
       );
     case "multi-select":
-      return <MultiSelectControl config={config} value={value} onChange={onChange} />;
+      return (
+        <MultiSelectControl
+          config={config}
+          value={value}
+          onChange={onChange}
+          lang={lang}
+        />
+      );
     case "range":
-      return <RangeControl config={config} value={value} onChange={onChange} />;
+      return (
+        <RangeControl config={config} value={value} onChange={onChange} lang={lang} />
+      );
     case "slider":
-      return <SliderControl config={config} value={value} onChange={onChange} />;
+      return (
+        <SliderControl
+          config={config}
+          value={value}
+          onChange={onChange}
+          lang={lang}
+        />
+      );
     case "toggle":
-      return <ToggleControl config={config} value={value} onChange={onChange} />;
+      return (
+        <ToggleControl config={config} value={value} onChange={onChange} lang={lang} />
+      );
     case "date":
-      return <DateControl config={config} value={value} onChange={onChange} />;
+      return (
+        <DateControl config={config} value={value} onChange={onChange} lang={lang} />
+      );
     case "taxonomy":
-      return <TaxonomyControl config={config} value={value} onChange={onChange} />;
+      return (
+        <TaxonomyControl
+          config={config}
+          value={value}
+          onChange={onChange}
+          lang={lang}
+        />
+      );
     default:
       return null;
   }
