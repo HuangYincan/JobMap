@@ -16,6 +16,7 @@
 //   agent-session-store 纯函数;旧 sessionStorage 'dm.agent-history.v1' 仅迁移读,
 //   不再直写);「💬 会话」入口登录/guest 均可用(本地功能,与账号无关);
 //   切换/新建会话若 streaming 先 stop;完成/停止状态行按当前会话;
+//   清屏 = 归档当前会话(有消息才归档,标题保留)+ 新建空会话并激活(ws-clearfix);
 // - 「停止」→ abort(链到 fetch);「撤销」→ executor.undo()。
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -37,6 +38,7 @@ import {
 import { computePanelPlacement, type BallRect, type BallSnapEdge, type ViewportSize } from "@/lib/agent-panel-placement";
 import {
   appendMessage,
+  archiveAndNew,
   createSession,
   createSessionId,
   deleteSession as storeDeleteSession,
@@ -461,19 +463,22 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     if (executorRef.current?.undo()) setUndoVersion((v) => v + 1);
   }, []);
 
-  // 清屏:清覆盖物(仅 overlay 类 undo 条目)+ 清当前会话消息(会话条目保留,
-  // 标题重置「新会话」,记忆不动)+ 清状态;相机/select 逆操作保留(可继续撤销)。
-  // 流式期间禁用(不打断回答)。
+  // 清屏:清覆盖物(仅 overlay 类 undo 条目)+ 归档当前会话(有消息才归档,
+  // 标题保留原样)+ 新建空会话并激活 + 清状态;记忆不动;相机/select 逆操作
+  // 保留(可继续撤销)。流式期间禁用(不打断回答)。
   const clearScreen = useCallback(() => {
     executorRef.current?.clearOverlays();
     setUndoVersion((v) => v + 1); // clearOverlays 可能改变 canUndo
     const cur = sessionStateRef.current;
-    if (cur.activeId) {
-      const next = saveMessages(cur, cur.activeId, []);
-      sessionStateRef.current = next;
-      setSessionState(next);
-      persist(next);
-    }
+    const curSession = cur.activeId ? cur.sessions.find((s) => s.id === cur.activeId) : null;
+    const next = archiveAndNew(cur, {
+      activeId: cur.activeId,
+      messages: messagesRef.current,
+      title: curSession?.title,
+    });
+    sessionStateRef.current = next;
+    setSessionState(next);
+    persist(next);
     setMessagesBoth([]);
     resetStreamUi();
   }, [persist, setMessagesBoth, resetStreamUi]);
