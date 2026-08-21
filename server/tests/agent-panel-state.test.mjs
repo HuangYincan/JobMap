@@ -82,18 +82,53 @@ test('reasoning 归属:先于本轮 delta,与文本同消息;工具轮之后开�
   let msgs = [];
   msgs = reduceAgentEvent(msgs, reasoning('第一轮思考'));
   msgs = reduceAgentEvent(msgs, reasoning('续'));
+  assert.equal(msgs.length, 1);
+  assert.equal(msgs[0].reasoning, 'thinking'); // 只标记状态,不累积内容
   msgs = reduceAgentEvent(msgs, delta('第一轮回答'));
   assert.equal(msgs.length, 1);
-  assert.equal(msgs[0].reasoning, '第一轮思考续');
+  assert.equal(msgs[0].reasoning, 'done'); // 内容产出 → 思考完成
   assert.equal(msgs[0].content, '第一轮回答');
   // 第二轮:工具后 reasoning → 开新消息(轮边界)
   msgs = reduceAgentEvent(msgs, tool('search', 'start'));
   msgs = reduceAgentEvent(msgs, tool('search', 'done'));
   msgs = reduceAgentEvent(msgs, reasoning('第二轮思考'));
+  assert.equal(msgs.length, 2);
+  assert.equal(msgs[1].reasoning, 'thinking');
   msgs = reduceAgentEvent(msgs, delta('第二轮回答'));
   assert.equal(msgs.length, 2);
-  assert.equal(msgs[1].reasoning, '第二轮思考');
+  assert.equal(msgs[1].reasoning, 'done');
   assert.equal(msgs[1].content, '第二轮回答');
+  // 多轮各自标记:前一轮不受影响
+  assert.equal(msgs[0].reasoning, 'done');
+  assert.equal(msgs[0].content, '第一轮回答');
+});
+
+test('思考状态流转:tool 事件结束思考(无 delta 的纯思考轮)', () => {
+  let msgs = [];
+  msgs = reduceAgentEvent(msgs, reasoning('思考'));
+  msgs = reduceAgentEvent(msgs, tool('search', 'start'));
+  assert.equal(msgs[0].reasoning, 'done', '进入工具阶段 → 思考完成');
+  assert.deepEqual(msgs[0].tools, [{ name: 'search', status: 'start' }]);
+  // done 原位更新不改变思考状态
+  msgs = reduceAgentEvent(msgs, tool('search', 'done'));
+  assert.equal(msgs[0].reasoning, 'done');
+  assert.deepEqual(msgs[0].tools, [{ name: 'search', status: 'done' }]);
+});
+
+test('思考状态流转:流结束(done)兜底翻转「思考中」', () => {
+  let msgs = [];
+  msgs = reduceAgentEvent(msgs, reasoning('思考'));
+  assert.equal(msgs[0].reasoning, 'thinking');
+  msgs = reduceAgentEvent(msgs, { type: 'done', truncated: false });
+  assert.equal(msgs[0].reasoning, 'done', '只有 reasoning 没有 delta/tool → 流结束翻转');
+});
+
+test('思考状态不污染:无 reasoning 标记的消息不受 done/error 影响(数组引用不变)', () => {
+  const base = [user('问'), { role: 'assistant', content: '答' }];
+  const out = reduceAgentEvent(base, { type: 'done', truncated: true });
+  const out2 = reduceAgentEvent(base, { type: 'error', code: 'ERROR', message: '' });
+  assert.equal(out, base);
+  assert.equal(out2, base);
 });
 
 test('用户消息不拆:用户消息由面板原样追加,事件流只开新的 assistant 消息', () => {

@@ -207,52 +207,34 @@
   }
 }
 
-/* 思考过程(可折叠;默认展开;muted 小字,滚动上限) */
+/* 思考状态行(只显示「思考中…/思考完成」状态,不渲染思考内容;muted 弱化) */
 .thinking {
   align-self: flex-start;
   background: rgba(120, 140, 160, 0.06);
   border: 1px solid var(--line);
   border-radius: 10px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
   margin-bottom: 6px;
   max-width: 86%;
   min-width: 120px;
-  overflow: hidden;
+  padding: 5px 10px;
 }
 
-.thinkingToggle {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  border-radius: 9px 9px 0 0;
-  color: var(--muted);
-  cursor: pointer;
-  display: flex;
-  font-size: 11px;
-  gap: 6px;
-  justify-content: space-between;
-  padding: 6px 10px;
-  width: 100%;
+/* 思考中:弱脉冲动画(提示进行中) */
+.thinkingActive {
+  animation: thinkingPulse 1.4s ease-in-out infinite;
 }
 
-.thinkingToggle:hover {
-  color: var(--ink);
-}
-
-.thinkingChevron {
-  font-size: 10px;
-  line-height: 1;
-}
-
-.thinkingBody {
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.55;
-  max-height: 140px;
-  overflow-y: auto;
-  padding: 7px 10px;
-  white-space: pre-wrap;
-  word-break: break-word;
+@keyframes thinkingPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* 工具活动列表(⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案;失败附「调用失败」弱提示;渲染在文本气泡下方) */
