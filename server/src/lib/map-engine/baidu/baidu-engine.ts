@@ -7,7 +7,8 @@
 //   - 入参(gcj02)→ bd09:createMarker / createCircle / setCenter /
 //     setBounds / flyTo / searchPOI(周边中心)
 //   - 出参(bd09)→ gcj02:getState / getBounds / searchPOI 结果 /
-//     fetchSuggestions / geocodeAddress / getCurrentPosition
+//     fetchSuggestions / geocodeAddress / getCurrentPosition(SDK fallback
+//     通道;主通道为浏览器 wgs84→gcj02,见 browserPosition 注释)
 // 漏转症状 ≈ 700m 偏移,测试 map-engine-baidu.test.mjs 必须钉住。
 //
 // vendor API 命名以官方文档核实为准(核实结论与文档链接见批次汇报
@@ -37,7 +38,7 @@ import type {
   MapViewEvent,
   MapViewState,
 } from '../types.ts';
-import { bd09ToGcj02, gcj02ToBd09 } from '../coord-utils.ts';
+import { bd09ToGcj02, gcj02ToBd09, wgs84ToGcj02 } from '../coord-utils.ts';
 import { loadScript, resetScriptLoader } from '../script-loader.ts';
 import { isRemoteIconUrl, preflightRemoteIcon, remoteIconStatus } from '../icon-preflight.ts';
 import type { ScriptConfig, ScriptInjection } from '../script-loader.ts';
@@ -1005,6 +1006,37 @@ function toSuggestionsFromAutocomplete(result: unknown): AmapSuggestion[] {
 // MapSearchProvider — BMapGL 官方服务适配
 // ------------------------------------------------------------
 
+/** 浏览器高精度定位(wgs84 → gcj02;2026-08-22 ws-b,bug 5 真实化)。
+ * 不经 BMapGL 命名空间:浏览器 Geolocation 与 SDK 无关,引擎未加载也可用
+ * (调用方在视图存在时才调用,语义等价)。失败/被拒/无 API → null(不抛),
+ * 由 getCurrentPosition 转 SDK Geolocation fallback。 */
+function browserPosition(): Promise<LngLat | null> {
+  return new Promise((resolve) => {
+    const nav = typeof navigator !== 'undefined' ? navigator : null;
+    if (!nav?.geolocation) {
+      resolve(null);
+      return;
+    }
+    try {
+      nav.geolocation.getCurrentPosition(
+        (pos) => {
+          const lng = pos?.coords?.longitude;
+          const lat = pos?.coords?.latitude;
+          if (typeof lng === 'number' && typeof lat === 'number') {
+            resolve(wgs84ToGcj02(lng, lat));
+          } else {
+            resolve(null);
+          }
+        },
+        () => resolve(null),
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+      );
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
 class BaiduSearchProvider implements MapSearchProvider {
   private readonly engine: BaiduEngine;
 
@@ -1093,7 +1125,27 @@ class BaiduSearchProvider implements MapSearchProvider {
     return this.searchPOI({ keyword: clean, city, limit: 10 }).then((pois) => pois.map(toSuggestion));
   }
 
+  /**
+   * 浏览器高精度定位(wgs84 → gcj02;2026-08-22 ws-b,bug 5 真实化):
+   * - BMapGL.Geolocation 默认走 **IP 定位**(城市级精度,不是真实位置)——用户
+   *   bug 5「定位不是真实位置」根因;对齐 AMap(`AMap.Geolocation` 高精度)与
+   *   腾讯(browserPosition)模式,改用浏览器 `navigator.geolocation` 高精度;
+   * - 坐标链:wgs84 → gcj02(引擎契约输出 gcj02;蓝点/相机经 createMarker /
+   *   setCenter 的 gcj02→bd09 落到 bd09 底图 = wgs84→gcj02→bd09,恰为百度
+   *   官方 wgs84→bd09 的两步式 → 蓝点落在真实位置;若这里直接输出 bd09 会被
+   *   契约当 gcj02 再转一次 → 引入 ~700m 二次偏移);
+   * - `enableHighAccuracy: true`(GPS)+ `maximumAge: 0`(禁止缓存旧位,腾讯
+   *   此前 60000ms 缓存旧位同类问题)+ `timeout: 8000`;
+   * - SDK Geolocation 保留为 fallback(浏览器定位失败/被拒时,见
+   *   sdkCurrentPosition)。
+   */
   getCurrentPosition(): Promise<LngLat | null> {
+    return browserPosition().then((pos) => (pos ? Promise.resolve(pos) : this.sdkCurrentPosition()));
+  }
+
+  /** SDK Geolocation fallback:IP 定位(城市级,bd09)→ gcj02;命名空间缺失/
+   * 构造失败/无结果 → null(绝不抛错,调用方回退安全值)。 */
+  private sdkCurrentPosition(): Promise<LngLat | null> {
     const ns = this.ns();
     if (!ns) return Promise.resolve(null);
     return new Promise((resolve) => {

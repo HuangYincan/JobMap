@@ -24,7 +24,8 @@ import { test, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { installEngineMock } from './fixtures/engine-mock.mjs';
 import { resetScriptLoader } from '../src/lib/map-engine/script-loader.ts';
-import { gcj02ToBd09, bd09ToGcj02 } from '../src/lib/map-engine/coord-utils.ts';
+import { gcj02ToBd09, bd09ToGcj02, wgs84ToGcj02 } from '../src/lib/map-engine/coord-utils.ts';
+import { recruitmentBadgeHTML } from '../src/lib/map-markers.ts';
 import {
   BAIDU_NAMESPACE,
   createBaiduEngine,
@@ -1997,5 +1998,197 @@ test('createMarker icon 防御(ws-e):预检 ok → 真 URL Icon;fail → 回退 
     assert.equal(m2.raw.content, '<b>徽章2</b>', 'content 仍渲染');
   } finally {
     image.restore();
+  }
+});
+
+// ------------------------------------------------------------
+// 8. 单点级(zoom>8)公司 POI content 徽章 + 定位真实化(2026-08-22 ws-b,
+// fix/baidu-poi-locate;bug 2「POI 无法正确加载」单点级 + bug 5「定位不是
+// 真实位置」)
+// ------------------------------------------------------------
+// bug 2 单点级核查结论(读码 + 既有 SDK 源码核实,ws-c bug 7):
+//   - 公司 POI(zoom>8)走 content 路径:setContent(徽章 HTML)→ msTarget DOM,
+//     透明 1×1 锚点图标(anchor = -契约 offset)→ 徽章中心对齐点位;
+//   - 点击:marker 模块把 click 绑在 msTarget 上,徽章子元素事件冒泡可达;
+//   - favicon.im 403 → 内联 onerror 候选链(favicon.im → icon.horse → emoji);
+//     BMapGL setContent 是 innerHTML,内联 onerror 属性不丢(SDK 不覆写)。
+// 以下测试把这三条全部钉住(onerror 链为逐字执行内联属性的 DOM-less 模拟)。
+
+/** 从徽章 HTML 提取 data-fb 属性并做 HTML 实体解码(浏览器 dataset 语义)。 */
+function decodeHtmlAttr(s) {
+  return s.replaceAll('&quot;', '"').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>');
+}
+
+test('单点级(zoom>8)公司 POI:content 徽章原样进 msTarget + 锚点(20,20) + 点击可达(ws-b)', async () => {
+  setup();
+  const { view } = await makeView();
+  const badgeHtml = recruitmentBadgeHTML(
+    'A',
+    'https://favicon.im/example.com',
+    '#007AFF',
+    'normal',
+    ['https://icon.horse/icon/example.com']
+  );
+  let clicks = 0;
+  const marker = view.createMarker({
+    position: GCJ,
+    offset: [-20, -20],
+    content: badgeHtml,
+    onClick: () => clicks++,
+  });
+  const raw = marker.raw;
+  assert.equal(raw.content, badgeHtml, '徽章 HTML 原样进 msTarget(DOM content 路径)');
+  assert.match(raw.content, /<img src="https:\/\/favicon\.im\/example\.com"/, '主 logo 源=favicon.im');
+  assert.match(raw.content, /data-fb=/, '内联候选链数据 data-fb 保留');
+  assert.match(raw.content, /onerror=/, '内联 onerror 属性保留(BMapGL innerHTML 不丢事件属性)');
+  assert.match(raw.content, /icon\.horse/, '候选链含 icon.horse(favicon.im 403 → 下一候选)');
+  assert.match(raw.content, /dm-badge-emoji/, 'emoji 兜底存在');
+  assert.ok(raw.icon instanceof FakeIcon, 'content 标记必须配透明锚点图标(GL 无内容纹理)');
+  assert.equal(raw.icon.size.width, 1);
+  assert.equal(raw.icon.size.height, 1);
+  assert.equal(raw.icon.anchor.width, 20, '徽章契约 offset [-20,-20] → anchor (20,20) 中心对齐点位');
+  assert.equal(raw.icon.anchor.height, 20);
+  raw.trigger('click');
+  assert.equal(clicks, 1, '徽章点击(msTarget 子元素冒泡)可达');
+});
+
+test('单点级徽章内联 onerror 链(favicon.im 403 → icon.horse → emoji)逐字模拟(ws-b)', async () => {
+  const badgeHtml = recruitmentBadgeHTML(
+    'A',
+    'https://favicon.im/example.com',
+    '#007AFF',
+    'normal',
+    ['https://icon.horse/icon/example.com']
+  );
+  const handler = badgeHtml.match(/onerror="([^"]*)"/)?.[1];
+  const fallbacks = JSON.parse(decodeHtmlAttr(badgeHtml.match(/data-fb="([^"]*)"/)?.[1] ?? '[]'));
+  assert.ok(handler, '徽章必须带内联 onerror 属性');
+  assert.deepEqual(fallbacks, ['https://icon.horse/icon/example.com'], '候选链数据正确');
+  // 元素形状 = 浏览器 img 暴露给内联 handler 的属性(dataset/src/style/nextElementSibling)
+  const el = {
+    dataset: { fb: JSON.stringify(fallbacks) },
+    style: {},
+    src: 'https://favicon.im/example.com',
+    nextElementSibling: { style: {} },
+  };
+  const fire = () => new Function(handler).call(el);
+  fire(); // favicon.im 403
+  assert.equal(
+    el.src,
+    'https://icon.horse/icon/example.com',
+    '第一次 onerror → 切 icon.horse(候选链生效)'
+  );
+  fire(); // icon.horse 也失败
+  assert.equal(el.style.display, 'none', '候选耗尽 → 隐藏 img');
+  assert.equal(el.nextElementSibling.style.display, 'block', '显示 emoji 兜底(不破相)');
+});
+
+test('单点级徽章 onerror 链:空候选 → 首错即 emoji;多候选按序切换(ws-b)', async () => {
+  // 空候选(如裸 IP 无域名映射):favicon.im 失败 → 直接 emoji
+  const noFb = recruitmentBadgeHTML('B', 'https://favicon.im/naked-ip.example', '#007AFF', 'normal', []);
+  const h1 = noFb.match(/onerror="([^"]*)"/)?.[1];
+  const el1 = { dataset: { fb: '[]' }, style: {}, src: 'https://favicon.im/naked-ip.example', nextElementSibling: { style: {} } };
+  new Function(h1).call(el1);
+  assert.equal(el1.style.display, 'none', '空候选 → 首错即隐藏 img');
+  assert.equal(el1.nextElementSibling.style.display, 'block', 'emoji 兜底');
+  // 多候选:按序切换(h1 → h2 → emoji)
+  const multi = recruitmentBadgeHTML('C', 'https://favicon.im/x.example', '#007AFF', 'normal', [
+    'https://icon.horse/icon/x.example',
+    'https://fallback2.example/x.png',
+  ]);
+  const h2 = multi.match(/onerror="([^"]*)"/)?.[1];
+  const fb2 = JSON.parse(decodeHtmlAttr(multi.match(/data-fb="([^"]*)"/)?.[1] ?? '[]'));
+  assert.equal(fb2.length, 2);
+  const el2 = { dataset: { fb: JSON.stringify(fb2) }, style: {}, src: 'https://favicon.im/x.example', nextElementSibling: { style: {} } };
+  const fire2 = () => new Function(h2).call(el2);
+  fire2();
+  assert.equal(el2.src, 'https://icon.horse/icon/x.example', '第一候选');
+  fire2();
+  assert.equal(el2.src, 'https://fallback2.example/x.png', '第二候选');
+  fire2();
+  assert.equal(el2.style.display, 'none', '候选耗尽 → emoji');
+});
+
+/** navigator.geolocation mock:成功/失败/选项捕获;restore 还原(node 的
+ * navigator 是 getter-only 自有属性 → defineProperty 覆盖 + 描述符还原)。 */
+function installNavigatorGeo({ fail = false, coords = null } = {}) {
+  const calls = [];
+  const desc = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const mock = {
+    geolocation: {
+      getCurrentPosition(ok, err, opts) {
+        calls.push(opts);
+        if (fail) err?.(new Error('denied'));
+        else if (coords) ok({ coords: { longitude: coords.lng, latitude: coords.lat, accuracy: 8 } });
+        else ok(null);
+      },
+    },
+  };
+  Object.defineProperty(globalThis, 'navigator', { value: mock, configurable: true, writable: true });
+  return {
+    calls,
+    restore: () => {
+      if (desc) Object.defineProperty(globalThis, 'navigator', desc);
+      else delete globalThis.navigator;
+    },
+  };
+}
+
+test('getCurrentPosition(ws-b):浏览器高精度优先(wgs84→gcj02;enableHighAccuracy/maximumAge:0),SDK 不构造', async () => {
+  setup();
+  const e = createBaiduEngine();
+  const nav = installNavigatorGeo({ coords: { lng: 120.15, lat: 30.27 } });
+  try {
+    const pos = await e.search.getCurrentPosition();
+    const want = wgs84ToGcj02(120.15, 30.27);
+    approx(pos, want, '浏览器 wgs84 → gcj02(契约输出)');
+    assert.notDeepEqual(pos, { lng: 120.15, lat: 30.27 }, '境内点位必须经 gcj02 偏移(浏览器 GPS 是 WGS84)');
+    assert.equal(captures.geolocations.length, 0, '浏览器通道成功 → SDK Geolocation 不构造');
+    assert.deepEqual(
+      nav.calls[0],
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+      '高精度 GPS + 不缓存旧位(IP 定位 → 真实定位的通道改造核心)'
+    );
+  } finally {
+    nav.restore();
+  }
+});
+
+test('getCurrentPosition(ws-b):浏览器被拒/空结果/无 navigator → SDK Geolocation fallback(bd09→gcj02)', async () => {
+  setup();
+  const e = createBaiduEngine();
+  const bd = gcj02ToBd09(120.153576, 30.287459);
+  FakeGeolocation.result = { point: { lng: bd.lng, lat: bd.lat } };
+  // 浏览器被拒(用户拒绝授权/超时)→ SDK fallback
+  const denied = installNavigatorGeo({ fail: true });
+  try {
+    const pos = await e.search.getCurrentPosition();
+    approx(pos, { lng: 120.153576, lat: 30.287459 }, 'SDK fallback bd09 → gcj02');
+    assert.equal(captures.geolocations.length, 1, '浏览器失败 → SDK Geolocation 兜底');
+  } finally {
+    denied.restore();
+  }
+  // 浏览器空结果(coords 缺失)→ SDK fallback
+  const empty = installNavigatorGeo({});
+  try {
+    const pos = await e.search.getCurrentPosition();
+    approx(pos, { lng: 120.153576, lat: 30.287459 }, '浏览器空结果 → SDK fallback');
+  } finally {
+    empty.restore();
+  }
+  // 无 navigator(node 默认,无 geolocation API)→ SDK fallback
+  const pos = await e.search.getCurrentPosition();
+  approx(pos, { lng: 120.153576, lat: 30.287459 }, '无浏览器定位 API → SDK fallback');
+});
+
+test('getCurrentPosition(ws-b):浏览器与 SDK 均失败 → null(不抛)', async () => {
+  setup();
+  const e = createBaiduEngine();
+  FakeGeolocation.result = null;
+  const nav = installNavigatorGeo({ fail: true });
+  try {
+    assert.equal(await e.search.getCurrentPosition(), null, '双通道失败 → null 安全值');
+  } finally {
+    nav.restore();
   }
 });
