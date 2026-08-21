@@ -13,6 +13,12 @@
 // 解析参数后改写为高德 Web 导航 URL(https,天然过 URI 白名单,无需改 DOMPurify 配置),
 // 输出带 data-navi(保留原生 URI,data-* 默认允许)的按钮型链接;移动端组件侧事件委托
 // 用 data-navi 唤起原生 App,桌面端放行 https href。解析失败 → 不强行渲染,回落普通链接。
+//
+// 裸 URL 预扫描(2026-08-22 ws-navi2):LLM 实测常以纯文本输出 amapuri://navi?... 裸露在
+// 句子里,而 marked 的裸 URL 自动链接规则只认 https?/ftp/www 前缀 → link renderer 不触发
+// → 按钮不渲染。renderMarkdown 在 marked 解析前先经 preprocessNaviUrls 把裸 URL 替换为
+// 与 renderer 同构的按钮锚;链接语法形态(含 <a>/autolink)由 lookbehind 排除,仍走 renderer,
+// 两条路径不重叠。
 
 import { Marked, type Tokens } from "marked";
 
@@ -77,6 +83,50 @@ export function buildNaviWebUrl(raw: string): string | null {
   return `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(name)}&mode=car&coordinate=gaode`;
 }
 
+/**
+ * 导航按钮锚(renderer 与裸 URL 预扫描共用,保证两路径输出同构):
+ * href 为 https Web 导航(过 DOMPurify URI 白名单),data-navi 保留原生 amapuri URI
+ * (data-* 默认允许,移动端事件委托据此唤起原生 App),label 经 escapeAttr。
+ */
+function naviAnchorHtml(webUrl: string, rawUri: string, label: string): string {
+  return `<a class="dm-navi" href="${escapeAttr(webUrl)}" data-navi="${escapeAttr(rawUri)}" target="${LINK_TARGET}" rel="${LINK_REL}">${escapeAttr(label)}</a>`;
+}
+
+/**
+ * 裸 amapuri://navi URL(marked 裸链接自动链接规则只认 https?/ftp/www 前缀,此类纯文本
+ * URL 不被识别 → link renderer 不触发 → 需在 parse 前预扫描)。
+ * lookbehind 排除(保守优先,不误伤 renderer 路径):
+ * - `\w`:URL 与词字符粘连(如英文文字直接紧贴);
+ * - `(`:链接语法 `](url)` / 括号紧贴;
+ * - `<` `"` `'`:autolink `<url>` / 已有 HTML 锚 href/data-navi 一部分;
+ * - `` ` ``:代码 span 起点。
+ * URL 主体终止于空白/引号/尖括号/括号/反引号。
+ */
+const BARE_NAVI_URL_RE = /(?<![\w(<"'`])amapuri:\/\/navi\?[^\s<>"'()`]+/gi;
+/** 尾部多余闭合括号/标点(句子标点紧贴 URL 时,剥离一次再尝试解析)。 */
+const TRAILING_NAVI_PUNCT_RE = /[),.;:!?。，；：！？、》〉」』】）…]+$/;
+
+/**
+ * 纯函数:裸 amapuri://navi URL 预扫描 → 按钮锚(renderMarkdown 在 marked 解析前调用)。
+ * 每处命中:先原文直解;失败则剔除尾部多余闭合括号/标点(如 `...style=2.` → `style=2`)
+ * 再试一次;仍失败 → 保持原文不替换(不做反复标点剥离猜断,保守优先)。
+ * @param text  原始 markdown(LLM 输出,视为不可信数据)
+ * @param label 按钮文案(缺省 NAVI_DEFAULT_LABEL)
+ */
+export function preprocessNaviUrls(text: string, label?: string): string {
+  const naviLabel = label ?? NAVI_DEFAULT_LABEL;
+  return text.replace(BARE_NAVI_URL_RE, (match) => {
+    const direct = buildNaviWebUrl(match);
+    if (direct !== null) return naviAnchorHtml(direct, match, naviLabel);
+    const stripped = match.replace(TRAILING_NAVI_PUNCT_RE, "");
+    if (stripped !== match) {
+      const webUrl = buildNaviWebUrl(stripped);
+      if (webUrl !== null) return naviAnchorHtml(webUrl, stripped, naviLabel);
+    }
+    return match;
+  });
+}
+
 /** renderMarkdown 可选参数。 */
 export interface MarkdownRenderOptions {
   /** 导航按钮文案(i18n);缺省 NAVI_DEFAULT_LABEL。 */
@@ -96,8 +146,8 @@ export function createMarkdownParser(opts: MarkdownRenderOptions = {}): Marked {
         if (href.toLowerCase().startsWith("amapuri://")) {
           const webUrl = buildNaviWebUrl(href);
           if (webUrl !== null) {
-            // 导航按钮:href 为 https Web 导航(过 URI 白名单),data-navi 保留原生 URI
-            return `<a class="dm-navi" href="${escapeAttr(webUrl)}" data-navi="${escapeAttr(href)}" target="${LINK_TARGET}" rel="${LINK_REL}">${escapeAttr(naviLabel)}</a>`;
+            // 导航按钮(与裸 URL 预扫描 naviAnchorHtml 同构)
+            return naviAnchorHtml(webUrl, href, naviLabel);
           }
         }
         const text = tokens ? this.parser.parseInline(tokens) : "";
@@ -120,7 +170,10 @@ export function renderMarkdown(
   opts: MarkdownRenderOptions = {},
 ): string {
   const parser = createMarkdownParser(opts);
+  // 裸 amapuri://navi URL 预扫描(marked 裸链接规则不认 amapuri: scheme → renderer 不触发;
+  // 链接语法形态由 lookbehind 排除,仍走 renderer,两路径不重叠)。
+  const preprocessed = preprocessNaviUrls(text, opts.naviLabel);
   // 同步解析(默认 async:false);marked 类型为 string | Promise<string>,此处按同步断言
-  const html = parser.parse(text) as string;
+  const html = parser.parse(preprocessed) as string;
   return sanitize(html);
 }
