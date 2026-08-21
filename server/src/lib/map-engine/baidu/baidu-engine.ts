@@ -50,10 +50,11 @@ const BAIDU_READY_POLL_MS = 50;
 /** BMapGL 就绪轮询上限(40 × 50ms = 2s):超时抛「命名空间未就绪」,
  * switch 回滚契约依赖该错误(2026-08-22 ws-6 与 TMap 就绪超时同量级) */
 const BAIDU_READY_MAX_POLLS = 40;
-/** 地图就绪等待超时(ms):BMapGL 异步渲染,AK 被禁用时 SDK 内部异步崩溃——
- * Map 创建成功但不渲染、就绪信号永不触发 → 超时抛「BMapGL 地图就绪超时」,
- * switch 回滚契约依赖 createView 抛错(绝不返回空图;2026-08-22 ws-7,
- * 与腾讯 TENCENT_MAP_READY_TIMEOUT_MS 1.5s 同量级) */
+/** 地图就绪等待超时(ms):BMapGL 异步渲染,AK 被禁用时 SDK 内部异步失败——
+ * Map 创建成功但不渲染、瓦片 403 走 4s×3 重试路径 → 就绪信号 1.5s 内不触发
+ * → 超时抛「BMapGL 地图就绪超时」,switch 回滚契约依赖 createView 抛错
+ * (绝不返回空图;2026-08-22 ws-7,与腾讯 TENCENT_MAP_READY_TIMEOUT_MS 1.5s
+ * 同量级) */
 const BAIDU_MAP_READY_TIMEOUT_MS = 1500;
 /**
  * 官方 GL 加载器 URL(2026-08-22 ws-6 实测坐实,见 tech/23 回填):
@@ -199,8 +200,9 @@ interface BMapInstance {
   panTo(center: BPoint): unknown;
   setBounds(bounds: BBounds): unknown;
   setMapType(mapType: unknown): unknown;
-  /** BMapGL 2.0 官方就绪回调注册(存在时优先于 tilesloaded 事件等待;
-   * getscript v=1.0 若提供同样生效;一次性回调,无需解绑) */
+  /** BMapGL 2.0 官方就绪回调注册(2026-08-22 SDK 源码核实:**v1.0 getscript
+   * 不存在此 API**,0 处命中——保留仅作升级兼容,真实就绪信号见
+   * BAIDU_READY_EVENTS;一次性回调,无需解绑) */
   setMapReadyCallback?(cb: () => void): unknown;
   getCenter(): BPoint;
   getZoom(): number;
@@ -332,20 +334,36 @@ function applyMapStyle(map: BMapInstance, style: MapStyleId): void {
 }
 
 // ------------------------------------------------------------
-// 地图就绪等待(BMapGL 异步渲染;AK 禁用时 SDK 异步崩溃不触发信号)
+// 地图就绪等待(BMapGL 异步渲染;AK 被禁用时 SDK 内部异步失败不触发信号)
 // ------------------------------------------------------------
 
 /**
+ * BMapGL v1.0 真实就绪事件(2026-08-22 SDK 源码核实,getscript?type=webgl&v=1.0
+ * 直连本体 1.2MB,见 tech/23-map-engines.md 回填):
+ *   - `onfirsttilesloaded` / `onfirsttileloaded`:首帧瓦片批加载完成(GL 路径
+ *     map 级 `_checkTilesLoaded` 派发;第一相机操作后才可能触发)
+ *   - `tilesloaded`:当前视野瓦片全部完成(80ms 稳定期后派发;SDK 派发名为
+ *     `ontilesloaded`,gd.BaseClass.addEventListener 注册名自动补 "on" 前缀,
+ *     注册 `tilesloaded` 与派发串归一后同键命中——注册原名以兼容无前缀
+ *     归一化的测试双面)
+ *   - `onstyle_loaded`:底图样式配置加载完成(样式层初始化早期派发,早于瓦片)
+ * setMapReadyCallback 是 BMapGL **2.0** API,v1.0 不存在(0 处命中),仅作
+ * 升级兼容保留。
+ */
+const BAIDU_READY_EVENTS = ['onfirsttilesloaded', 'tilesloaded', 'onstyle_loaded'] as const;
+
+/**
  * 等待 BMapGL 地图就绪再返回(BMapGL 异步渲染:`new Map()` 立即返回,首帧
- * 渲染完成才触发就绪信号)。就绪信号**双通道**,任一先到即就绪:
- *   1. setMapReadyCallback(BMapGL 2.0 官方就绪回调,存在时优先注册)
- *   2. tilesloaded 事件(官方事件集;EVENT_MAP.complete 同源)
- * 双通道防 SDK 单通道异常(回调注册了但永不触发)造成误判回滚。
- * **AK 被禁用/渲染失败时 SDK 内部异步崩溃——Map 创建成功但不渲染、就绪信号
- * 永不触发 → BAIDU_MAP_READY_TIMEOUT_MS 超时 reject(文案含「BMapGL 地图
- * 就绪超时」),switch.ts 回滚契约依赖 createView 抛错(绝不返回空图)。**
+ * 渲染完成才派发就绪事件)。就绪信号**多通道**,任一先到即就绪:
+ *   1. setMapReadyCallback(BMapGL 2.0 官方就绪回调;v1.0 不存在,保留兼容)
+ *   2. BAIDU_READY_EVENTS(v1.0 真实派发事件,见上)
+ * **AK 被禁用/渲染失败时 SDK 内部异步失败——瓦片请求走 4s×3 重试路径,1.5s
+ * 内无任何信号 → BAIDU_MAP_READY_TIMEOUT_MS 超时 reject(文案含「BMapGL 地图
+ * 就绪超时」),switch.ts 回滚契约依赖 createView 抛错(绝不返回空图)。
+ * ⚠️ 就绪事件只在**相机操作之后**才可能派发(GL 构造不设默认视图、底图图层
+ * 在 centerAndZoomIn 内才创建,见 createView 注释)→ 本函数必须晚于相机应用。
  * 事件系统/回调通道均不可用 → 立即放行(测试 mock/异常形态不阻塞);
- * 就绪/超时均解绑 tilesloaded 监听。
+ * 就绪/超时均解绑全部就绪监听。
  */
 function waitForMapReady(map: BMapInstance): Promise<void> {
   return new Promise<void>((resolve, reject) => {
@@ -354,10 +372,12 @@ function waitForMapReady(map: BMapInstance): Promise<void> {
     let channels = 0;
     const cleanup = () => {
       if (timer !== undefined) clearTimeout(timer);
-      try {
-        map.removeEventListener?.('tilesloaded', onReady);
-      } catch {
-        // 解绑失败不影响就绪/超时语义
+      for (const event of BAIDU_READY_EVENTS) {
+        try {
+          map.removeEventListener?.(event, onReady);
+        } catch {
+          // 解绑失败不影响就绪/超时语义
+        }
       }
     };
     const onReady = () => {
@@ -386,8 +406,10 @@ function waitForMapReady(map: BMapInstance): Promise<void> {
     }
     try {
       if (typeof map.addEventListener === 'function' && typeof map.removeEventListener === 'function') {
-        map.addEventListener('tilesloaded', onReady);
-        channels++;
+        for (const event of BAIDU_READY_EVENTS) {
+          map.addEventListener(event, onReady);
+          channels++;
+        }
       }
     } catch {
       // 注册异常静默:回调通道兜底(或直接超时)
@@ -925,8 +947,22 @@ class BaiduEngine implements MapEngine {
     // 默认控件 DOM 防御(BMapGL 同步建 DOM,构造后立即隐藏 zoom/指北针;
     // 版权由 map-shell CSS 隐藏;有/无控件 API 均不抛)
     hideBaiduDefaultControls(map);
-    // 就绪等待(BMapGL 异步渲染):AK 被禁用/渲染失败时 SDK 内部异步崩溃——
-    // Map 创建成功但不渲染、就绪信号永不触发 → 1.5s 超时抛错,switch.ts 回滚
+    // **先应用相机,再等就绪**(2026-08-22 SDK 源码核实的 v1.0 GL 时序):
+    // GL 构造器跳过默认视图初始化(仅非 GL 分支 centerAndZoomIn 默认中心),
+    // 底图图层在 centerAndZoomIn 内才创建(`if(!this.loaded){_addTileLayer}`
+    // + `this.loaded=true`)→ 构造后不操作相机 = 零瓦片请求 = 就绪事件永不
+    // 派发 = 必然 1.5s 超时回滚(旧实现的稳定失败,与 AK 有效与否无关)。
+    // 相机先行后:健康路径首帧瓦片数十 ms 内完成 → onfirsttilesloaded 就绪;
+    // 禁用 AK → 瓦片 403 走 4s×3 重试 → 1.5s 无信号 → 超时销毁并抛错(回滚
+    // 契约保持)。SDK 无任何异步初始化重置相机(已核实:GL 不应用
+    // _initViewport、注册插件不动相机)——「等就绪后再应用相机」的旧时序
+    // 与「相机先行」冲突的担忧无 SDK 依据。
+    const c = gcj02ToBd09(opts.center.lng, opts.center.lat);
+    map.centerAndZoom(new ns.Point(c.lng, c.lat), opts.zoom);
+    if (opts.pitch) map.setTilt(opts.pitch);
+    if (opts.rotation) map.setHeading(opts.rotation);
+    // 就绪等待(BMapGL 异步渲染):AK 被禁用/渲染失败时 SDK 内部异步失败——
+    // Map 创建成功但不渲染、1.5s 内无就绪信号 → 超时抛错,switch.ts 回滚
     // 契约依赖 createView 抛错(绝不返回空图;2026-08-22 ws-7)。超时先销毁
     // 未渲染的 Map(容器交还回滚视图),再抛「BMapGL 地图就绪超时」。
     try {
@@ -939,14 +975,6 @@ class BaiduEngine implements MapEngine {
       }
       throw err;
     }
-    // 就绪后应用相机:创建后立即 centerAndZoom 会被异步初始化重置(丢失相机),
-    // 一律等就绪信号后再设置中心/zoom/俯仰/朝向(2026-08-22 ws-7 时序修复;
-    // 正常 AK 下 tilesloaded 数十 ms 内触发,延迟不可感知)
-    // 初始中心点 bd09 转换(漏转 ≈700m 偏移)
-    const c = gcj02ToBd09(opts.center.lng, opts.center.lat);
-    map.centerAndZoom(new ns.Point(c.lng, c.lat), opts.zoom);
-    if (opts.pitch) map.setTilt(opts.pitch);
-    if (opts.rotation) map.setHeading(opts.rotation);
     const view = new BaiduMapView(map, ns, this);
     view.setStyle(opts.style);
     return view;
