@@ -35,7 +35,7 @@ import { qqdocJobsAdapter } from '../src/lib/recruitment-adapters/qqdoc-jobs.ts'
 import { embodiedJobsAdapter } from '../src/lib/recruitment-adapters/embodied-jobs.ts';
 import { CITY_CENTERS } from '../src/lib/city-centers.ts';
 import { getPool } from '../src/lib/db.ts';
-import { cityCenterBareNames, isCityNameAddress, matchesCityCenter, siteNeedsGeocode } from '../src/lib/site-geocode.ts';
+import { cityCenterBareNames, matchesCityCenter, siteNeedsGeocode } from '../src/lib/site-geocode.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_DIR = path.resolve(__dirname, '..');

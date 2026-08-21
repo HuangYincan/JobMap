@@ -35,6 +35,7 @@
 | [26-agent-memory.md](26-agent-memory.md) | 用户个性化记忆(Agent Memory:表结构/注入预算/工具契约/隐私边界) | 后端 |
 | [27-oauth-login.md](27-oauth-login.md) | 第三方登录(GitHub/Google/微信 OAuth:契约/手动配置/回退) | 后端 |
 | [28-account-security.md](28-account-security.md) | 账号安全:密码/手机/邮箱管理、邮箱+密码登录(2026-08-22) | 后端 |
+| [29-geocode-r5-status.md](29-geocode-r5-status.md) | geocode r5 状态与操作清单:城市中心假坐标修复链(基线/配额/import/UI 验证) | 数据/后端 |
 
 ## 快速导航
 
