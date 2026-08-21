@@ -33,6 +33,7 @@
 | [25-resend-email.md](25-resend-email.md) | Resend 验证码邮件(email OTP 真发:契约/重试/错误映射) | 后端 |
 | [26-aliyun-sms.md](26-aliyun-sms.md) | 阿里云短信认证服务(phone OTP 真发:签名/错误映射/开通步骤) | 后端 |
 | [26-agent-memory.md](26-agent-memory.md) | 用户个性化记忆(Agent Memory:表结构/注入预算/工具契约/隐私边界) | 后端 |
+| [27-oauth-login.md](27-oauth-login.md) | 第三方登录(GitHub/Google/微信 OAuth:契约/手动配置/回退) | 后端 |
 
 ## 快速导航
 
