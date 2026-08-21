@@ -9,7 +9,7 @@
 import { resolveCompanyLogo, type ResolvedLogo } from './company-logo.ts';
 import type { ApplySource, CompanySite, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
 
-export type RecruitmentSourceKind = 'seed' | 'official-career' | 'catalog' | 'boss' | 'nowcoder' | 'shixiseng' | 'radar' | 'qqdoc-official' | 'qqdoc-jobs';
+export type RecruitmentSourceKind = 'seed' | 'official-career' | 'catalog' | 'boss' | 'nowcoder' | 'shixiseng' | 'radar' | 'qqdoc-official' | 'qqdoc-jobs' | 'embodied-jobs';
 
 export interface SourcePosition {
   externalId: string;
