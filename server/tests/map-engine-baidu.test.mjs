@@ -98,6 +98,7 @@ class FakeMap {
     this.listeners = new Map();
     this.destroyed = false;
     this.panned = false;
+    this.scrollWheelZoom = false;
     this.raw = this; // 逃生舱:mock 自身即 raw 实例
     captures.maps.push(this);
     // 模拟 BMapGL v1.0 异步渲染:构造 + 相机操作后 ~10ms 触发首帧就绪事件
@@ -105,6 +106,9 @@ class FakeMap {
     // tilesloaded 注册名经 BaseClass "on" 前缀归一同样命中,改用派发原名);
     // 就绪超时测试用不自动触发的 Map 子类覆盖
     setTimeout(() => this.trigger('onfirsttilesloaded'), 10);
+  }
+  enableScrollWheelZoom() {
+    this.scrollWheelZoom = true;
   }
   centerAndZoom(center, zoom) {
     this.center = center;
@@ -227,9 +231,12 @@ class FakeMarker {
 }
 
 class FakeIcon {
-  constructor(url, size) {
+  constructor(url, size, opts = {}) {
     this.url = url;
     this.size = size;
+    // BMapGL Icon 第三参 opts.offset === anchor(锚点从图标左上角量起;
+    // 2026-08-22 SDK 源码核实:anchor===offset,默认 (w/2,h/2))
+    this.anchor = opts.offset ?? null;
   }
 }
 
@@ -261,8 +268,12 @@ class NeverReadyMap {
     this.destroyed = false;
     this.center = null;
     this.zoom = null;
+    this.scrollWheelZoom = false;
     this.listeners = new Map();
     captures.maps.push(this);
+  }
+  enableScrollWheelZoom() {
+    this.scrollWheelZoom = true;
   }
   centerAndZoom(center, zoom) {
     this.center = center;
@@ -977,7 +988,7 @@ test('setStyle:厂商常量缺失 → 静默跳过(不抛错)', async () => {
   assert.equal(view.raw.mapType, null);
 });
 
-test('createMarker(核心):厂商收到 gcj02ToBd09 结果;offset/content/zIndex/onClick', async () => {
+test('createMarker(核心):厂商收到 gcj02ToBd09 结果;content/zIndex/onClick + 锚点语义', async () => {
   setup();
   const { view } = await makeView();
   const bd = gcj02ToBd09(GCJ.lng, GCJ.lat);
@@ -992,11 +1003,18 @@ test('createMarker(核心):厂商收到 gcj02ToBd09 结果;offset/content/zIndex
   const raw = marker.raw;
   assert.equal(raw.point.lng, bd.lng, 'marker lng = 公式 bd09(精确)');
   assert.equal(raw.point.lat, bd.lat, 'marker lat = 公式 bd09(精确)');
-  assert.equal(raw.opts.offset.width, 4);
-  assert.equal(raw.opts.offset.height, -6);
+  assert.equal(raw.opts.offset, undefined, 'Marker 构造 offset 不参与渲染定位(SDK 源码核实)→ 不传');
   assert.equal(raw.opts.zIndex, 9);
   assert.equal(raw.content, '<b>x</b>');
   assert.equal(view.raw.overlays.length, 1, 'addOverlay 上地图');
+  // 锚点语义(bug 7,SDK 源码核实):GL 无内容纹理 → content 标记配透明 1×1
+  // 图标扛锚点;icon.anchor = -契约 offset → 双路径(纹理/DOM)imageTopLeft
+  // 均为 屏幕位 + offset,与 AMap 契约一致
+  assert.ok(raw.icon instanceof FakeIcon, 'content 标记必须配锚点图标(默认红图钉会双重渲染+偏置)');
+  assert.equal(raw.icon.size.width, 1, '锚点图标 1×1(透明)');
+  assert.equal(raw.icon.size.height, 1);
+  assert.equal(raw.icon.anchor.width, -4, 'icon.anchor = -offset[0]');
+  assert.equal(raw.icon.anchor.height, 6, 'icon.anchor = -offset[1]');
   raw.trigger('click');
   assert.equal(clicked.length, 1, 'onClick 注册到厂商 click 事件');
   // setPosition 同样转 bd09
@@ -1046,12 +1064,13 @@ test('createMarker 契约方法:setZIndex 大写直通 / setVisible→show·hide
   assert.equal(raw.listeners.get('click').length, 0);
 });
 
-test('createMarker 契约方法:icon 规格 → BMapGL.Icon(url, Size)(缺省 21x21)', async () => {
+test('createMarker 契约方法:icon 规格 → BMapGL.Icon(url, Size, {offset:anchor})(缺省 21x21)', async () => {
   setup();
   const { view } = await makeView();
   const marker = view.createMarker({
     position: GCJ,
     icon: { src: 'pin.svg', size: [24, 32] },
+    offset: [4, -6],
   });
   const raw = marker.raw;
   assert.ok(raw.icon instanceof FakeIcon, 'setIcon 收到 BMapGL.Icon 实例');
@@ -1059,13 +1078,19 @@ test('createMarker 契约方法:icon 规格 → BMapGL.Icon(url, Size)(缺省 21
   assert.ok(raw.icon.size instanceof FakeSize, 'size 转 BMapGL.Size');
   assert.equal(raw.icon.size.width, 24);
   assert.equal(raw.icon.size.height, 32);
+  // 锚点(bug 7,SDK 核实):icon.anchor = -契约 offset → imageTopLeft = 屏幕位 + offset
+  assert.ok(raw.icon.anchor instanceof FakeSize);
+  assert.equal(raw.icon.anchor.width, -4, 'icon.anchor = -offset[0]');
+  assert.equal(raw.icon.anchor.height, 6, 'icon.anchor = -offset[1]');
   assert.equal(view.raw.overlays.length, 1, 'icon 路径仍 addOverlay 上地图');
 
-  // size 缺省 → 兜底 BMapGL 默认 marker 尺寸 21x21
+  // size 缺省 → 兜底 BMapGL 默认 marker 尺寸 21x21;无 offset → anchor (0,0)(左上角,AMap 契约)
   const m2 = view.createMarker({ position: GCJ, icon: { src: 'x.png' } });
   assert.ok(m2.raw.icon instanceof FakeIcon);
   assert.equal(m2.raw.icon.size.width, 21);
   assert.equal(m2.raw.icon.size.height, 21);
+  assert.equal(m2.raw.icon.anchor.width, 0, '无 offset → anchor (0,0)(icon 左上角在点位)');
+  assert.equal(m2.raw.icon.anchor.height, 0);
 });
 
 test('createMarker 契约方法:厂商方法缺失 → warn 降级不抛(Icon 缺失同款)', async () => {
@@ -1429,5 +1454,360 @@ test('bd09 固定点位:gcj→bd→gcj 往返自洽 ±1e-5(不用网传对照点
     const out = gcj02ToBd09(gcj.lng, gcj.lat);
     approx(out, bd, `公式固定点位 ${gcj.lng},${gcj.lat}`, 1e-6);
     approx(bd09ToGcj02(out.lng, out.lat), gcj, '往返回自身');
+  }
+});
+
+// ------------------------------------------------------------
+// 6. 失败分类与可操作指引 + 加载幂等性(2026-08-22 ws-c,bug 3 诊断)
+// ------------------------------------------------------------
+
+test('失败分类:key 缺失 → not-configured + 指引(.env.local)', async () => {
+  const e = createBaiduEngine();
+  const restore = setEnv(KEY_VAR, undefined);
+  try {
+    const err = await e.load().then(() => null, (e) => e);
+    assert.ok(err instanceof Error);
+    assert.equal(err.code, 'not-configured');
+    assert.equal(err.stage, 'load');
+    assert.match(err.message, /NEXT_PUBLIC_BAIDU_AK/);
+    assert.match(err.guidance, /\.env\.local/, '指引必须给出可操作动作');
+  } finally {
+    restore();
+  }
+});
+
+test('失败分类:非浏览器 → script-load-failed(message 保留 loader 原文)', async () => {
+  const e = createBaiduEngine();
+  const restore = setEnv(KEY_VAR, 'test-key');
+  const savedPerf = globalThis.performance;
+  // node 无资源时序(entry 为空)→ 会误判拦截;装带 entry 的 fake 归网络失败
+  globalThis.performance = {
+    getEntriesByType: () => [
+      { name: 'https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=test-key' },
+    ],
+  };
+  try {
+    const err = await e.load().then(() => null, (e) => e);
+    assert.equal(err.code, 'script-load-failed');
+    assert.equal(err.stage, 'load');
+    assert.match(err.message, /only available in the browser/, '原始 loader 文案必须保留');
+    assert.match(err.guidance, /referer/);
+    assert.match(err.guidance, /localhost:3000/);
+  } finally {
+    globalThis.performance = savedPerf;
+    restore();
+  }
+});
+
+test('失败分类:script onerror → script-load-failed + 指引 + 失败清理仍生效', async () => {
+  resetScriptLoader();
+  const e = createBaiduEngine();
+  const restore = setEnv(KEY_VAR, 'test-key');
+  const savedWindow = globalThis.window;
+  const savedDocument = globalThis.document;
+  const savedPerf = globalThis.performance;
+  const { doc, scripts } = makeFakeDocument();
+  globalThis.window = globalThis;
+  globalThis.document = doc;
+  // Resource Timing 有该 URL 的 entry → 网络层失败(请求确实发出)→ 非客户端拦截
+  globalThis.performance = {
+    getEntriesByType: () => [
+      { name: 'https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=test-key' },
+    ],
+  };
+  try {
+    const p = e.load();
+    scripts()[0].onerror(new Error('boom'));
+    const err = await p.then(() => null, (e) => e);
+    assert.equal(err.code, 'script-load-failed');
+    assert.equal(err.stage, 'load');
+    assert.match(err.message, /failed to load/, '原始 loader 文案必须保留(既有断言依赖)');
+    assert.match(err.guidance, /referer/);
+    assert.match(err.guidance, /localhost:3000/);
+    assert.ok(scripts()[0].removed, 'onerror 失败清理(移除标签)仍生效');
+  } finally {
+    delete globalThis.BMapGL;
+    globalThis.window = savedWindow;
+    globalThis.document = savedDocument;
+    globalThis.performance = savedPerf;
+    restore();
+  }
+});
+
+test('失败分类:script onerror + Resource Timing 无该 URL(请求未发出)→ script-blocked-by-client(ERR_BLOCKED_BY_CLIENT)', async () => {
+  resetScriptLoader();
+  const e = createBaiduEngine();
+  const restore = setEnv(KEY_VAR, 'test-key');
+  const savedWindow = globalThis.window;
+  const savedDocument = globalThis.document;
+  const savedPerf = globalThis.performance;
+  const { doc, scripts } = makeFakeDocument();
+  globalThis.window = globalThis;
+  globalThis.document = doc;
+  // 被浏览器扩展/广告拦截器拦截:请求从未发出 → Resource Timing 无 entry
+  // (2026-08-22 boss 证据:用户 console `net::ERR_BLOCKED_BY_CLIENT`)
+  globalThis.performance = { getEntriesByType: () => [] };
+  try {
+    const p = e.load();
+    scripts()[0].onerror(new Error('boom'));
+    const err = await p.then(() => null, (e) => e);
+    assert.equal(err.code, 'script-blocked-by-client');
+    assert.equal(err.stage, 'load');
+    assert.match(err.guidance, /ERR_BLOCKED_BY_CLIENT/, '指引点名拦截错误码');
+    assert.match(err.guidance, /api\.map\.baidu\.com/, '指引给出白名单域名');
+    assert.ok(scripts()[0].removed, '失败清理仍生效');
+  } finally {
+    delete globalThis.BMapGL;
+    globalThis.window = savedWindow;
+    globalThis.document = savedDocument;
+    globalThis.performance = savedPerf;
+    restore();
+  }
+});
+
+test('失败分类:performance 不可用/抛错 → 保守归 script-load-failed(指引含拦截分支)', async () => {
+  resetScriptLoader();
+  const e = createBaiduEngine();
+  const restore = setEnv(KEY_VAR, 'test-key');
+  const savedWindow = globalThis.window;
+  const savedDocument = globalThis.document;
+  const savedPerf = globalThis.performance;
+  const { doc, scripts } = makeFakeDocument();
+  globalThis.window = globalThis;
+  globalThis.document = doc;
+  try {
+    // 无 performance(旧浏览器/被清空)→ 归网络失败(诚实保守,指引双分支)
+    delete globalThis.performance;
+    let p = e.load();
+    scripts()[0].onerror(new Error('boom'));
+    let err = await p.then(() => null, (e) => e);
+    assert.equal(err.code, 'script-load-failed');
+    assert.match(err.guidance, /ERR_BLOCKED_BY_CLIENT/, 'script-load-failed 指引也必须覆盖拦截分支');
+    // getEntriesByType 抛错 → 归网络失败(不炸)
+    globalThis.performance = {
+      getEntriesByType() {
+        throw new Error('perf boom');
+      },
+    };
+    p = e.load();
+    scripts()[1].onerror(new Error('boom'));
+    err = await p.then(() => null, (e) => e);
+    assert.equal(err.code, 'script-load-failed');
+  } finally {
+    delete globalThis.BMapGL;
+    globalThis.window = savedWindow;
+    globalThis.document = savedDocument;
+    globalThis.performance = savedPerf;
+    restore();
+  }
+});
+
+test('失败分类:命名空间永不就绪 → namespace-not-ready(2s 有界,不永久挂起)+ 重试重新注入', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    resetScriptLoader();
+    const e = createBaiduEngine();
+    const restore = setEnv(KEY_VAR, 'test-key');
+    const savedWindow = globalThis.window;
+    const savedDocument = globalThis.document;
+    const { doc, scripts } = makeFakeDocument();
+    globalThis.window = globalThis;
+    globalThis.document = doc;
+    try {
+      // 第一次:getscript 占位 BMapGL={} 永不补全 → 2s 轮询超时 → 分类抛错
+      const p = e.load();
+      scripts()[0].onload();
+      // 先排空微任务(onload 同步触发 loader 成功,load() 续体要等微任务才
+      // 进入轮询;漏掉此拍会让首个 tick 空转、末拍轮询永不触发 → 挂起)
+      await new Promise((r) => setImmediate(r));
+      for (let i = 0; i < 39; i++) {
+        mock.timers.tick(50);
+        await Promise.resolve();
+      }
+      mock.timers.tick(50);
+      await Promise.resolve();
+      const err1 = await p.then(() => null, (e) => e);
+      assert.equal(err1.code, 'namespace-not-ready');
+      assert.equal(err1.stage, 'load');
+      assert.match(err1.message, /命名空间未就绪/, '回滚契约文案保留');
+      assert.match(err1.guidance, /lbsyun/);
+      assert.match(err1.guidance, /referer/);
+      // 第二次:必须重新注入(幂等修复:失败后不被 URL 缓存/命名空间 truthy
+      // 短路),而不是白烧 2s 轮询——切走再切回/多次切换应可恢复
+      const p2 = e.load();
+      assert.equal(scripts().length, 2, '失败后重试必须重新注入 script(不再短路)');
+      globalThis.BMapGL = { Map: class {} };
+      scripts()[1].onload();
+      await p2; // 命名空间立即就绪(首轮检查命中,不依赖 timer 快进)
+      assert.equal(e.isLoaded(), true);
+      assert.equal(scripts().length, 2, '成功路径不重复注入');
+    } finally {
+      delete globalThis.BMapGL;
+      globalThis.window = savedWindow;
+      globalThis.document = savedDocument;
+      restore();
+    }
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('失败分类:createView 就绪超时 → map-ready-timeout + 指引(销毁语义不变)', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    setup();
+    mockNs.ns.Map = NeverReadyMap; // AK 被禁用形态:无任何就绪信号
+    const e = createBaiduEngine();
+    const p = e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
+    p.catch(() => {}); // 防未处理拒绝噪音(主链由下方 then 捕获)
+    const map = captures.maps[0];
+    mock.timers.tick(1500);
+    const err = await p.then(() => null, (e) => e);
+    assert.equal(err.code, 'map-ready-timeout');
+    assert.equal(err.stage, 'createView');
+    assert.match(err.message, /BMapGL 地图就绪超时/, '回滚契约文案保留');
+    assert.match(err.guidance, /referer/);
+    assert.match(err.guidance, /localhost:3000/);
+    assert.equal(map.destroyed, true, '超时先销毁未渲染的 Map(容器交还回滚视图)');
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('失败分类:createView 未 load → unclassified(message 保留「BMapGL 未就绪」)', async () => {
+  const e = createBaiduEngine();
+  const err = await e
+    .createView({ container: {}, center: GCJ, zoom: 10, style: 'normal' })
+    .then(() => null, (e) => e);
+  assert.equal(err.code, 'unclassified');
+  assert.equal(err.stage, 'createView');
+  assert.match(err.message, /BMapGL 未就绪/);
+  assert.ok(err.guidance.length > 0, '兜底分类也必须有指引');
+});
+
+test('幂等:并发 load 共享同一注入(单 script 标签)', async () => {
+  resetScriptLoader();
+  const e = createBaiduEngine();
+  const restore = setEnv(KEY_VAR, 'test-key');
+  const savedWindow = globalThis.window;
+  const savedDocument = globalThis.document;
+  const { doc, scripts } = makeFakeDocument();
+  globalThis.window = globalThis;
+  globalThis.document = doc;
+  try {
+    const p1 = e.load();
+    const p2 = e.load();
+    assert.equal(scripts().length, 1, '并发调用共享同一注入(URL 缓存)');
+    globalThis.BMapGL = { Map: class {} };
+    scripts()[0].onload();
+    await Promise.all([p1, p2]);
+    assert.equal(e.isLoaded(), true);
+    assert.equal(scripts().length, 1);
+  } finally {
+    delete globalThis.BMapGL;
+    globalThis.window = savedWindow;
+    globalThis.document = savedDocument;
+    restore();
+  }
+});
+
+test('幂等:load 成功后切走再切回 → 零注入短路(命名空间保持)', async () => {
+  resetScriptLoader();
+  const e = createBaiduEngine();
+  const restore = setEnv(KEY_VAR, 'test-key');
+  const savedWindow = globalThis.window;
+  const savedDocument = globalThis.document;
+  const { doc, scripts } = makeFakeDocument();
+  globalThis.window = globalThis;
+  globalThis.document = doc;
+  try {
+    const p = e.load();
+    globalThis.BMapGL = { Map: class {} };
+    scripts()[0].onload();
+    await p;
+    // 切走(卸载/切其他引擎)后再切回:脚本已加载,命名空间短路,零注入
+    await e.load();
+    assert.equal(scripts().length, 1, '命名空间已就绪 → 不重复注入');
+    assert.equal(e.isLoaded(), true);
+  } finally {
+    delete globalThis.BMapGL;
+    globalThis.window = savedWindow;
+    globalThis.document = savedDocument;
+    restore();
+  }
+});
+
+// ------------------------------------------------------------
+// 7. 滚轮缩放显式启用(bug 6)+ content 标记锚点(bug 7)(2026-08-22 ws-c)
+// ------------------------------------------------------------
+
+test('createView:BMapGL 默认禁用滚轮缩放 → 显式 enableScrollWheelZoom(bug 6)', async () => {
+  setup();
+  const e = createBaiduEngine();
+  await e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
+  // SDK 源码核实:Map config 默认 enableWheelZoom = !H.apiVersionIsGL() → GL 恒
+  // false,mouseWheel 处理器 if(!config.enableWheelZoom){return} 静默忽略
+  assert.equal(
+    captures.maps[0].scrollWheelZoom,
+    true,
+    '必须显式启用滚轮缩放(BMapGL GL 默认禁用,用户「百度无法中间滚动视角」根因)',
+  );
+});
+
+test('createView:enableScrollWheelZoom API 缺失 → 静默不抛(旧 SDK 兼容)', async () => {
+  setup();
+  const proto = FakeMap.prototype;
+  const orig = proto.enableScrollWheelZoom;
+  delete proto.enableScrollWheelZoom;
+  try {
+    const e = createBaiduEngine();
+    await assert.doesNotReject(
+      e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' }),
+      '滚轮缩放 API 缺失不得抛(降级为不可用)',
+    );
+  } finally {
+    proto.enableScrollWheelZoom = orig;
+  }
+});
+
+test('createMarker 锚点:content 标记(图钉/徽章)配透明 1×1 锚点图标(icon.anchor = -offset)', async () => {
+  setup();
+  const { view } = await makeView();
+  // 图钉契约形态:content + offset [-16,-40] → anchor (16,40) 底尖对齐点位
+  const pin = view.createMarker({ position: GCJ, content: '<img .../>', offset: [-16, -40] });
+  assert.ok(pin.raw.icon instanceof FakeIcon, 'content 标记必须配锚点图标(默认红图钉双重渲染)');
+  assert.equal(pin.raw.icon.size.width, 1, '锚点图标 1×1(透明)');
+  assert.equal(pin.raw.icon.size.height, 1);
+  assert.equal(pin.raw.icon.anchor.width, 16, '图钉底尖 anchor = -offset(SDK 双路径公式)');
+  assert.equal(pin.raw.icon.anchor.height, 40);
+  // 徽章契约形态:content + offset [-20,-20] → anchor (20,20) 中心对齐点位
+  const badge = view.createMarker({ position: GCJ, content: '<div class="dm-badge">', offset: [-20, -20] });
+  assert.equal(badge.raw.icon.anchor.width, 20);
+  assert.equal(badge.raw.icon.anchor.height, 20);
+  // 无 offset → anchor (0,0)(左上角在点位,AMap 契约)
+  const plain = view.createMarker({ position: GCJ, content: 'x' });
+  assert.equal(plain.raw.icon.anchor.width, 0);
+  assert.equal(plain.raw.icon.anchor.height, 0);
+});
+
+test('createMarker 锚点:Icon 构造失败 → content 标记位置降级 warn 不抛', async () => {
+  setup();
+  const origIcon = mockNs.ns.Icon;
+  mockNs.ns.Icon = class {
+    constructor() {
+      throw new Error('icon boom');
+    }
+  };
+  const warns = [];
+  const origWarn = console.warn;
+  console.warn = (...args) => warns.push(args);
+  try {
+    const { view } = await makeView();
+    assert.doesNotThrow(() => view.createMarker({ position: GCJ, content: 'x', offset: [-16, -40] }));
+    assert.ok(warns.length >= 1, '锚点图标降级必须 console.warn(可观测)');
+    assert.match(String(warns[0][0]), /锚点图标构造失败/);
+  } finally {
+    mockNs.ns.Icon = origIcon;
+    console.warn = origWarn;
   }
 });
