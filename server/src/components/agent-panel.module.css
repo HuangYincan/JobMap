@@ -86,7 +86,7 @@
   font-weight: 650;
 }
 
-/* header 右侧操作组(记忆按钮 + 关闭钮;登录用户才有记忆按钮) */
+/* header 右侧操作组(会话钮 + 记忆按钮(登录)+ 关闭钮) */
 .headerActions {
   align-items: center;
   display: inline-flex;
@@ -94,7 +94,9 @@
   margin-left: auto;
 }
 
-/* 记忆按钮:关闭钮旁的小蓝标入口,guest 不渲染 */
+/* 会话钮 / 记忆按钮:关闭钮旁的小蓝标入口;会话钮 guest 可用(本地功能),
+   记忆按钮仅登录(账号级数据) */
+.sessionsBtn,
 .memoryBtn {
   align-items: center;
   background: rgba(0, 122, 255, 0.08);
@@ -104,13 +106,31 @@
   cursor: pointer;
   display: inline-flex;
   font-size: 12px;
+  gap: 4px;
   height: 28px;
   justify-content: center;
   padding: 0 10px;
 }
 
+.sessionsBtn:hover,
 .memoryBtn:hover {
   background: rgba(0, 122, 255, 0.14);
+}
+
+/* 记忆计数徽章(蓝底白字圆角):header 记忆按钮上的条数;加载/失败/0 条不渲染 */
+.memoryBadge {
+  align-items: center;
+  background: #007aFF;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 600;
+  height: 16px;
+  justify-content: center;
+  line-height: 1;
+  min-width: 16px;
+  padding: 0 4px;
 }
 
 .close {
@@ -133,33 +153,63 @@
   color: var(--ink);
 }
 
-/* 记忆弹层(面板内嵌,工具活动/提示行同体系):header 下方内嵌区,liquid glass,
-   超长独立滚动;与聊天列表互不相干(清屏不清记忆) */
-.memoryPanel {
+/* 弹层(会话/记忆共用):面板内嵌 glass 卡,绝对定位浮于消息列表之上;
+   header 下方 10px 起,圆角 16px + 模糊 + 细描边;超长独立滚动;
+   与聊天列表互不相干(清屏不清记忆);会话/记忆互斥(不会同时渲染) */
+.memoryPanel,
+.sessionsPanel {
   backdrop-filter: blur(24px) saturate(165%);
-  background: rgba(255, 255, 255, 0.72);
-  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
   display: flex;
-  flex: 0 0 auto;
   flex-direction: column;
   gap: 6px;
-  max-height: 40%;
+  left: 10px;
+  max-height: 46%;
   overflow-y: auto;
-  padding: 10px 14px;
+  padding: 10px 12px;
+  position: absolute;
+  right: 10px;
+  top: 52px; /* header(12 + 28 + 12 + 1 border)下方 */
+  z-index: 6; /* 高于消息列表与工具状态条 */
 }
 
-.memoryHead {
+.memoryHead,
+.sessionsHead {
   align-items: center;
   display: flex;
   justify-content: space-between;
 }
 
-.memoryTitle {
+.memoryTitle,
+.sessionsTitle {
+  align-items: center;
   color: var(--ink);
+  display: inline-flex;
   font-size: 12px;
   font-weight: 600;
+  gap: 6px;
 }
 
+/* 计数徽章(蓝底白字圆角):弹层标题「记忆 · N」 */
+.memoryCountBadge {
+  align-items: center;
+  background: #007aFF;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 600;
+  height: 16px;
+  justify-content: center;
+  line-height: 1;
+  min-width: 16px;
+  padding: 0 4px;
+}
+
+/* 清除全部记忆:橙边 hover 红(语义保留) */
 .memoryClear {
   background: transparent;
   border: 1px solid rgba(255, 149, 0, 0.35);
@@ -171,7 +221,9 @@
 }
 
 .memoryClear:hover {
-  background: rgba(255, 149, 0, 0.08);
+  background: rgba(255, 59, 48, 0.08);
+  border-color: rgba(255, 59, 48, 0.4);
+  color: #ff3b30;
 }
 
 .memoryHint {
@@ -182,10 +234,69 @@
   padding: 2px 0;
 }
 
+/* 加载中:三点跳动(纯视觉;aria-label 承载语义文案) */
+.memoryDots {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.memoryDot {
+  animation: typingDot 1.2s ease-in-out infinite;
+  background: #007aFF;
+  border-radius: 50%;
+  height: 5px;
+  opacity: 0.35;
+  width: 5px;
+}
+
+.memoryDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.memoryDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* 失败:弱提示 + 重试 */
+.memoryError {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin: 0;
+}
+
+.memoryRetry {
+  background: rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(0, 122, 255, 0.25);
+  border-radius: 8px;
+  color: #007aFF;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-size: 11px;
+  padding: 2px 10px;
+}
+
+.memoryRetry:hover {
+  background: rgba(0, 122, 255, 0.14);
+}
+
+/* 空态:居中弱化 */
+.memoryEmpty,
+.sessionsEmpty {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 12px 0;
+  text-align: center;
+}
+
+/* 记忆条目卡:soft-strong 底、圆角 12px、12px 内边距、行距 8px */
 .memoryList {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -193,15 +304,15 @@
 
 .memoryRow {
   align-items: flex-start;
-  background: rgba(120, 140, 160, 0.06);
+  background: var(--soft-strong, rgba(255, 255, 255, 0.84));
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   display: flex;
-  font-size: 11px;
-  gap: 8px;
+  font-size: 12px;
+  gap: 10px;
   justify-content: space-between;
-  line-height: 1.45;
-  padding: 5px 8px;
+  line-height: 1.5;
+  padding: 12px;
 }
 
 .memoryContent {
@@ -211,6 +322,7 @@
   word-break: break-word;
 }
 
+/* 删除 ×:右侧,hover 红 */
 .memoryDelete {
   background: transparent;
   border: 0;
@@ -218,11 +330,109 @@
   color: var(--muted);
   cursor: pointer;
   flex: 0 0 auto;
-  font-size: 11px;
-  padding: 2px 6px;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 4px;
 }
 
 .memoryDelete:hover {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+}
+
+/* 新建会话按钮 */
+.sessionsNew {
+  background: rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(0, 122, 255, 0.25);
+  border-radius: 8px;
+  color: #007aFF;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 3px 9px;
+}
+
+.sessionsNew:hover {
+  background: rgba(0, 122, 255, 0.14);
+}
+
+/* 会话列表:行 = 主按钮(切换)+ 删除 ×;当前会话蓝底高亮 + ● */
+.sessionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sessionRow,
+.sessionRowActive {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  display: flex;
+  gap: 4px;
+}
+
+.sessionRowActive {
+  background: rgba(0, 122, 255, 0.1);
+  border-color: rgba(0, 122, 255, 0.25);
+}
+
+.sessionMain {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  flex: 1 1 auto;
+  gap: 6px;
+  min-width: 0;
+  padding: 7px 8px;
+  text-align: left;
+}
+
+.sessionMain:hover {
+  background: rgba(120, 140, 160, 0.08);
+}
+
+.sessionDot {
+  color: #007aFF;
+  flex: 0 0 auto;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.sessionTitle {
+  color: var(--ink);
+  flex: 1 1 auto;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionTime {
+  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: 10px;
+}
+
+.sessionDelete {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 6px;
+}
+
+.sessionDelete:hover {
   background: rgba(255, 59, 48, 0.1);
   color: #ff3b30;
 }

@@ -834,9 +834,13 @@ test('agent panel has input, send/stop/undo buttons and tool status bar (ws-c)',
   assert.match(panel, /agentToolRunning/);
   assert.match(panel, /LLM_UNCONFIGURED/);
   assert.match(panel, /replayAction/);
-  // 历史:sessionStorage cap 30
-  assert.match(panel, /dm\.agent-history\.v1/);
-  assert.match(panel, /HISTORY_CAP = 30/);
+  // 历史:多会话本地存储(ws-panel2;旧 dm.agent-history.v1 仅迁移读,见 agent-session-store)
+  const store = src('lib/agent-session-store.ts');
+  assert.match(panel, /loadSessionState\(window\.localStorage, window\.sessionStorage\)/);
+  assert.match(store, /SESSIONS_KEY = "dm\.agent-sessions\.v1"/);
+  assert.match(store, /LEGACY_HISTORY_KEY = "dm\.agent-history\.v1"/);
+  assert.match(store, /SESSIONS_CAP = 10/);
+  assert.match(store, /SESSION_MESSAGES_CAP = 30/);
   // 新会话首条自动带视口快照
   assert.match(panel, /viewport: \{ center: snapshot\.center, zoom: snapshot\.zoom \}/);
   // 360px × 70vh liquid glass 卡片
@@ -870,12 +874,13 @@ test('agent panel completion status + clear screen (ws-done)', () => {
   assert.match(executor, /export function resolveCompletion\(doneReceived: boolean, aborted: boolean\)/);
   // 新消息发送清零完成状态
   assert.match(panel, /doneRef\.current = false;/);
-  // 清屏按钮:clearOverlays + 清消息 + 清 sessionStorage 历史 + 清状态;流式期间禁用
+  // 清屏按钮:clearOverlays + 清当前会话消息(条目保留,标题重置「新会话」)+ 清状态;流式期间禁用
   assert.match(panel, /onClick=\{clearScreen\} disabled=\{streaming\}/);
   assert.match(panel, /t\("agentClear", lang\)/);
   assert.match(panel, /executorRef\.current\?\.clearOverlays\(\)/);
-  assert.match(panel, /sessionStorage\.removeItem\(HISTORY_KEY\)/);
-  assert.match(panel, /setMessages\(\[\]\)/);
+  assert.match(panel, /saveMessages\(cur, cur\.activeId, \[\]\)/); // 会话条目保留,消息清空
+  assert.match(panel, /setMessagesBoth\(\[\]\)/);
+  assert.doesNotMatch(panel, /sessionStorage\.removeItem/); // 不再直写旧键(迁移归 store)
   // 执行器:undo 栈条目带 kind 标记(overlay 类供清屏识别);clearOverlays 只清 overlay
   assert.match(executor, /kind: "camera"/);
   assert.match(executor, /kind: "overlay"/);
@@ -901,15 +906,24 @@ test('agent panel memory: login-only entry + embedded overlay (ws-mem-b)', () =>
   assert.match(panel, /aria-label=\{t\("agentMemory", lang\)\}/);
   assert.match(panel, /aria-expanded=\{memoriesOpen\}/);
   assert.match(panel, /className=\{styles\.close\}/);
-  // 弹层:登录 + 打开才渲染;内容 = 加载中/空态/条目 + 逐条删除/一键清除(轻确认)
+  // 记忆计数徽章渲染条件:登录 + 非加载/失败 + 有数据(蓝底白字圆角)
+  assert.match(panel, /const showMemoryBadge = Boolean\(user\) && !memoriesLoading && !memoriesError && memories\.length > 0/);
+  assert.match(panel, /\{showMemoryBadge && \([\s\S]{0,80}styles\.memoryBadge/);
+  assert.match(css, /\.memoryBadge \{[\s\S]*background: #007aFF[\s\S]*border-radius: 999px/);
+  // 弹层:登录 + 打开才渲染;内容 = 加载三点 / 空态 / 失败+重试 / 条目卡 + 逐条删除/一键清除(轻确认)
   assert.match(panel, /\{user && memoriesOpen && \(/);
   assert.match(panel, /t\("agentMemoryLoading", lang\)/);
   assert.match(panel, /t\("agentMemoryEmpty", lang\)/);
   assert.match(panel, /t\("agentMemoryError", lang\)/);
+  assert.match(panel, /t\("retry", lang\)/); // 失败弱提示 + 重试(ws-panel2)
+  assert.match(panel, /setMemoriesRefresh\(\(r\) => r \+ 1\)/);
   assert.match(panel, /t\("agentMemoryDelete", lang\)/);
   assert.match(panel, /t\("agentMemoryClear", lang\)/);
   assert.match(panel, /t\("agentMemoryClearConfirm", langRef\.current\)/);
   assert.match(panel, /memoryViewState\(memoriesLoading, memoriesError, memories\.length\)/);
+  // 标题计数徽章:「🧠 记忆 · N」(仅 list 视图)
+  assert.match(panel, /memoryView === "list" && <span className=\{styles\.memoryCountBadge\}>/);
+  assert.match(css, /\.memoryCountBadge \{/);
   // 数据契约:GET 列表 / DELETE 逐条(id 查询参数,saved 范式)/ DELETE 清除全量
   assert.match(panel, /fetch\("\/api\/me\/memories"\)/);
   assert.match(panel, /\/api\/me\/memories\?id=\$\{encodeURIComponent\(String\(id\)\)\}/);
@@ -934,9 +948,73 @@ test('agent panel memory: login-only entry + embedded overlay (ws-mem-b)', () =>
   assert.match(i18n, /agentMemoryError: \{\s*zh: '记忆加载失败',\s*en: 'Failed to load memories',\s*\},/);
   assert.match(i18n, /agentMemoryClearConfirm: \{\s*zh: '确认清除全部记忆\?',\s*en: 'Clear all memories\?',\s*\},/);
   assert.match(i18n, /agentToolMemory: \{\s*zh: '记忆',\s*en: 'Memory',\s*\},/);
-  // CSS:内嵌弹层(liquid glass)+ 条目行样式
-  assert.match(css, /\.memoryPanel \{[\s\S]*backdrop-filter: blur\(24px\) saturate\(165%\)/);
-  assert.match(css, /\.memoryRow \{/);
+  // CSS:弹层 glass 卡(圆角 16px + blur + 细描边,与面板同体系)+ 条目卡(soft-strong/圆角 12px/12px 内边距)
+  assert.match(css, /\.memoryPanel,[\s\S]*?\.sessionsPanel \{[\s\S]*backdrop-filter: blur\(24px\) saturate\(165%\)[\s\S]*border-radius: 16px/);
+  assert.match(css, /\.memoryRow \{\s*[\s\S]*background: var\(--soft-strong[\s\S]*border-radius: 12px[\s\S]*padding: 12px/);
+  // 清除按钮:橙边 hover 红(语义保留)
+  assert.match(css, /\.memoryClear:hover \{[\s\S]*color: #ff3b30/);
+});
+
+test('agent panel sessions: header entry + popover + local store (ws-panel2)', () => {
+  const panel = src('components/agent-panel.tsx');
+  const css = src('components/agent-panel.module.css');
+  const i18n = src('lib/i18n.ts');
+  const store = src('lib/agent-session-store.ts');
+  // header 双入口:会话钮(登录/guest 均可用,本地功能)+ 关闭钮;会话钮在记忆钮前
+  assert.match(panel, /styles\.sessionsBtn/);
+  assert.match(panel, /t\("agentSessions", lang\)/);
+  assert.match(panel, /aria-expanded=\{sessionsOpen\}/);
+  const sessionsBtnAt = panel.indexOf('styles.sessionsBtn');
+  const memoryBtnAt = panel.indexOf('styles.memoryBtn');
+  const closeAt = panel.indexOf('styles.close');
+  assert.ok(sessionsBtnAt !== -1 && memoryBtnAt !== -1 && closeAt !== -1);
+  assert.ok(sessionsBtnAt < memoryBtnAt && memoryBtnAt < closeAt, 'header 顺序:会话 → 记忆 → 关闭');
+  // 会话弹层:glass 卡(面板内嵌)+ 列表(标题+相对时间+删除 ×,当前高亮 ●)+ 新建 + 空态
+  assert.match(panel, /\{sessionsOpen && \(/);
+  assert.match(panel, /styles\.sessionsPanel/);
+  assert.match(panel, /t\("agentSessionNew", lang\)/);
+  assert.match(panel, /t\("agentSessionEmpty", lang\)/);
+  assert.match(panel, /t\("agentSessionDelete", lang\)/);
+  assert.match(panel, /switchToSession\(s\.id\)/);
+  assert.match(panel, /sessionTimeLabel\(relativeTime\(s\.updatedAt, Date\.now\(\)\), lang\)/);
+  assert.match(panel, /sessionRowActive/);
+  assert.match(panel, /isActive \? "●" : "○"/);
+  assert.match(panel, /aria-current=\{isActive \? "true" : undefined\}/);
+  // 新建/切换:streaming 先 stop;切换前工作副本落库旧会话
+  assert.match(panel, /if \(streaming\) stop\(\)/);
+  assert.match(panel, /saveMessages\(next, cur\.activeId, messagesRef\.current\)/);
+  // 清屏/会话语义:消息变更统一走 store;旧键仅迁移读(不再直写)
+  assert.match(panel, /saveMessages\(cur, cur\.activeId, \[\]\)/);
+  assert.doesNotMatch(panel, /HISTORY_KEY/); // 旧键常量已移除(注释提及不算直写)
+  assert.doesNotMatch(panel, /sessionStorage\.setItem/);
+  assert.match(panel, /loadSessionState\(window\.localStorage, window\.sessionStorage\)/);
+  // store 契约:key/cap/纯函数齐全
+  assert.match(store, /SESSIONS_KEY = "dm\.agent-sessions\.v1"/);
+  assert.match(store, /LEGACY_HISTORY_KEY = "dm\.agent-history\.v1"/);
+  assert.match(store, /SESSIONS_CAP = 10/);
+  assert.match(store, /SESSION_MESSAGES_CAP = 30/);
+  assert.match(store, /export function createSession\(/);
+  assert.match(store, /export function switchSession\(/);
+  assert.match(store, /export function deleteSession\(/);
+  assert.match(store, /export function listSessions\(/);
+  assert.match(store, /export function appendMessage\(/);
+  assert.match(store, /export function saveMessages\(/);
+  assert.match(store, /export function loadSessionState\(/);
+  assert.match(store, /export function saveSessionState\(/);
+  assert.match(store, /export function deriveTitle\(/);
+  assert.match(store, /\[\.\.\.text\]\.slice\(0, TITLE_MAX\)\.join\(""\)/); // 标题按码点截断 12 字
+  // i18n 新键(双语文案)
+  assert.match(i18n, /agentSessions: \{\s*zh: '会话',\s*en: 'Sessions',\s*\},/);
+  assert.match(i18n, /agentSessionNew: \{\s*zh: '新建会话',\s*en: 'New session',\s*\},/);
+  assert.match(i18n, /agentSessionEmpty: \{\s*zh: '暂无会话',\s*en: 'No sessions yet',\s*\},/);
+  assert.match(i18n, /agentSessionDelete: \{\s*zh: '删除会话',\s*en: 'Delete session',\s*\},/);
+  assert.match(i18n, /agentSessionJustNow: \{\s*zh: '刚刚',\s*en: 'Just now',\s*\},/);
+  assert.match(i18n, /agentSessionMinutesAgo: \{\s*zh: '\{n\} 分钟前',\s*en: '\{n\} min ago',\s*\},/);
+  assert.match(i18n, /agentSessionHoursAgo: \{\s*zh: '\{n\} 小时前',\s*en: '\{n\} hr ago',\s*\},/);
+  // CSS:会话弹层 + 当前会话蓝底高亮 + 删除 hover 红
+  assert.match(css, /\.sessionsPanel \{/);
+  assert.match(css, /\.sessionRowActive \{[\s\S]*rgba\(0, 122, 255, 0\.1\)/);
+  assert.match(css, /\.sessionDelete:hover \{[\s\S]*color: #ff3b30/);
 });
 
 test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {

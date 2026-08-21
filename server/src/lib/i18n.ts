@@ -1143,6 +1143,35 @@ export const translations = {
     zh: '确认清除全部记忆?',
     en: 'Clear all memories?',
   },
+  // ---- 会话管理(ws-panel2:多会话本地存储;登录/guest 均可用)----
+  agentSessions: {
+    zh: '会话',
+    en: 'Sessions',
+  },
+  agentSessionNew: {
+    zh: '新建会话',
+    en: 'New session',
+  },
+  agentSessionEmpty: {
+    zh: '暂无会话',
+    en: 'No sessions yet',
+  },
+  agentSessionDelete: {
+    zh: '删除会话',
+    en: 'Delete session',
+  },
+  agentSessionJustNow: {
+    zh: '刚刚',
+    en: 'Just now',
+  },
+  agentSessionMinutesAgo: {
+    zh: '{n} 分钟前',
+    en: '{n} min ago',
+  },
+  agentSessionHoursAgo: {
+    zh: '{n} 小时前',
+    en: '{n} hr ago',
+  },
   agentToolsSection: {
     zh: '工具调用',
     en: 'Tool calls',
