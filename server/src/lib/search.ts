@@ -307,6 +307,26 @@ export function applyTagSuggestion(
   };
 }
 
+/**
+ * 打开探索搜索的目标状态(2026-08-22 ws1 切模式闭包修复)。
+ *
+ * live = 「即将生效的最新状态」(切模式后 viewStateRef 已同步的 query/filters),
+ * 不能是组件闭包里的旧快照——handlePickRecent 里 handleModeChange 与
+ * openExploreSearch 同栈调用时,闭包仍是旧模式的 query/filters,标签合并会把
+ * 旧模式筛选(如 work 的 scale:['unicorn'])带进新模式。
+ *
+ * 语义与 openExploreSearch 原实现一致:命中 #标签 → 合并进 filters 并清空 query
+ * (applyTagSuggestion 既有语义,不做 strip);纯关键词 → 只换 query,filters 不动。
+ */
+export function planExploreSearch(
+  live: { query: string; filters: FilterState },
+  nextQuery: string,
+): { query: string; filters: FilterState } {
+  const tagged = applyTagSuggestion(live, nextQuery);
+  if (!tagged.applied) return { query: nextQuery, filters: live.filters };
+  return { query: tagged.query, filters: tagged.filters };
+}
+
 /** 拆出 #标签，剩余当关键词。未知标签仍参与全文搜索。 */
 export function parseSearchQuery(raw?: string): ParsedSearchQuery {
   const source = (raw ?? '').trim();

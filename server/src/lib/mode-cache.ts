@@ -163,6 +163,33 @@ export function writeModeCache(entry: Omit<ModeCacheEntry, 'version' | 'savedAt'
   }
 }
 
+/**
+ * 以「当前最新 filters + 当前池」同步重写会话缓存(2026-08-22 ws1 独角兽残留修复)。
+ *
+ * 背景:主加载只在 load() 内写缓存,而其 effect 依赖刻意不含 filters(非 category
+ * 筛选变更不重搜,minRating/price 纯客户端过滤)——某次 load 时 filters 含 unicorn
+ * (如点 #独角兽 建议)连目录写进缓存后,用户面板取消勾选 → setFilters 无重载 →
+ * 缓存仍残留 scale:['unicorn'],F5/重开经 useModeCacheRestore 全量还原即「莫名复活」。
+ *
+ * 本函数在每次 filters 变更时以「写缓存时刻的最新 filters + 当前池」重写,
+ * 保证缓存快照恒与面板状态一致。viewport 为 null(地图未就绪)时跳过:
+ * 写成 undefined 会破坏挂载对齐判定(旧缓存无快照一律按「与当前视野不符」处理,
+ * 触发一次多余对齐加载)。
+ */
+export function syncModeCache(input: {
+  mode: MapMode;
+  catalog: POI[];
+  pageOffset: number;
+  searchOrigin: POILocation | null;
+  query: string;
+  filters: FilterState;
+  sort: string;
+  viewport: ViewportSnapshot | null;
+}): void {
+  if (!input.viewport) return;
+  writeModeCache({ ...input, viewport: input.viewport });
+}
+
 export function clearModeCache(mode: MapMode): void {
   if (!canUseStorage()) return;
   try {
