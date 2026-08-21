@@ -349,43 +349,35 @@ test('SecondarySidebar resultHeader: 加载更多按钮 + 错误重试接线(poi
   assert.match(i18n, /loadFailedRetry: \{/);
 });
 
-test('saved overlay toggle: programmatic camera move suppressed by saved-camera sync state machine (saved-overlay-wipe)', () => {
+test('saved overlay toggle: camera does not move at all (ws1 saved-layer-nofly)', () => {
   const shell = src('components/map-shell.tsx');
   const hook = src('hooks/use-work-viewport.ts');
   const savedLayer = src('hooks/use-saved-layer.ts');
-  // ws1 saved-overlay-wipe 结构性修复(2026-08-22):500ms 时间窗补丁已删除,
-  // 改为「收藏相机同步」状态机——setBounds 前写入目标中心 ref,settle 事件
-  // (moveend/zoomend/idle)到达时以「相机是否位于目标中心」判定归属并跳过,
-  // 慢动画/迟到事件不逃逸;相机离开目标或消费满事件对后自动结束。
+  // ws1 saved-layer-nofly(2026-08-22 用户反馈):打开收藏图层不再跳视角。
+  // toggle 的相机动作(overlayBounds + map.setBounds)与「收藏相机同步」
+  // 状态机(ws1 saved-overlay-wipe 结构性抑制,替代 500ms 时间窗补丁)全部
+  // 移除——500ms 时间窗与状态机都不复存在,打开/关闭只切 pin 可见性。
   assert.doesNotMatch(hook, /VIEWPORT_SUPPRESS_MS/);
   assert.doesNotMatch(shell, /suppressViewportRefreshUntilRef/);
-  assert.match(shell, /savedCameraSyncRef = useRef<SavedCameraSync \| null>\(null\)/);
-  // onViewChange 随 hook 移动:同步期内直接 return,不 schedule;状态机纯函数可测
+  assert.doesNotMatch(shell, /savedCameraSyncRef|SavedCameraSync/);
+  assert.doesNotMatch(hook, /savedCameraSyncRef|consumeSavedCameraSync|cameraAtDestination/);
+  // onViewChange 直接调度(无同步消费)
   const onViewAt = hook.indexOf('const onViewChange = () => {');
-  const consumeAt = hook.indexOf('consumeSavedCameraSync(sync, snap?.center)');
-  const retAt = hook.indexOf('return;', consumeAt);
-  const scheduleAt = hook.indexOf('loader.schedule();', retAt);
-  assert.ok(
-    onViewAt !== -1 && consumeAt !== -1 && retAt !== -1 && scheduleAt !== -1,
-    'onViewChange: sync consume → return → schedule 顺序',
-  );
-  assert.ok(onViewAt < consumeAt && consumeAt < retAt && retAt < scheduleAt);
-  // 同步状态必须在相机移动(setBounds)之前置位——限定在 toggle 函数体内比较
+  const scheduleAt = hook.indexOf('loader.schedule();', onViewAt);
+  assert.ok(onViewAt !== -1 && scheduleAt !== -1, 'onViewChange → loader.schedule()');
+  // toggle 体内:无 setBounds、无状态机置位(相机完全不动)
   const toggleAt = savedLayer.indexOf('const toggle = useCallback');
   const hideAt = savedLayer.indexOf('const hide = useCallback');
   assert.ok(toggleAt !== -1 && hideAt > toggleAt, 'toggle/hide anchors must exist in order');
   const toggleBody = savedLayer.slice(toggleAt, hideAt);
-  const setAt = toggleBody.indexOf('savedCameraSyncRef.current = {');
-  // ws-c:视图归一化 setBounds(引擎内部构造厂商 Bounds),不再直引 new AMap.Bounds
-  const boundsAt = toggleBody.indexOf('map.setBounds({');
-  assert.ok(setAt !== -1 && boundsAt !== -1, 'sync state + view.setBounds must both exist in toggle');
-  assert.ok(setAt < boundsAt, 'sync state must be set before map.setBounds');
-  // map-shell 接线:同名变量解构 + 共享 ref 传入 + LayersPanel onToggleOverlay 挂 toggle
+  assert.doesNotMatch(toggleBody, /setBounds|savedCameraSyncRef|overlayBounds|mapInstance/);
+  assert.match(toggleBody, /writeSavedOverlayPref\(next\)/);
+  // map-shell 接线:useSavedLayer 不再传相机相关 deps;LayersPanel 仍挂 toggle
   assert.match(
     shell,
     /const \{\s*savedOverlay,\s*overlayPois,\s*toggle: handleToggleSavedOverlay,\s*hide: hideSavedOverlay,\s*\} = useSavedLayer\(\{/,
   );
-  assert.match(shell, /savedCameraSyncRef,\s*onRequireAuth: \(\) => setAuthOpen\(true\),\s*\}/);
+  assert.doesNotMatch(shell, /savedCameraSyncRef,\s*onRequireAuth/);
   assert.match(shell, /onToggleOverlay=\{handleToggleSavedOverlay\}/);
 });
 
@@ -425,13 +417,13 @@ test('work viewport empty batch three-state (ws1 Bug1): 空批次 ≠ 无数据,
   // work 视口请求已删,只余 domain 分支保留该行为)
   assert.doesNotMatch(hook, /console\.warn\("\[map-shell\] work viewport load failed:/);
   assert.match(hook, /console\.warn\("\[map-shell\] domain viewport load failed:/);
-  // 收藏相机同步状态机替代 VIEWPORT_SUPPRESS_MS 时间窗(ws1 saved-overlay-wipe):
-  // 事件侧消费(consumeSavedCameraSync)随 useWorkViewport,toggle 侧置位随 useSavedLayer,
-  // map-shell syncView 冻结 distance 圆心(根因 #2)共享同一 ref
+  // ws1 saved-layer-nofly(2026-08-22):toggle 不再移动相机,「收藏相机同步」
+  // 状态机随 setBounds 一起退役——时间窗补丁与状态机都不复存在
+  // (空批次保留加固独立于两者,不得随清理误删)
   assert.doesNotMatch(hook, /suppressViewportRefreshUntilRef\.current > Date\.now\(\)/);
   assert.doesNotMatch(savedLayer, /suppressViewportRefreshUntilRef\.current = Date\.now\(\)/);
-  assert.match(hook, /consumeSavedCameraSync\(sync, snap\?\.center\)/);
-  assert.match(shell, /cameraAtDestination\(center, sync\)/);
+  assert.doesNotMatch(hook, /consumeSavedCameraSync/);
+  assert.doesNotMatch(shell, /cameraAtDestination/);
 });
 
 test('map shell mount-align load (ws1 Bug1): 缓存快照不符 → 主动调度一次视口加载', () => {
@@ -605,7 +597,9 @@ test('useSavedLayer owns saved overlay state, derivation and guest gate (QA scan
   // toggle:未登录 → onRequireAuth(打开登录弹窗),不回写 pref;登录 → 写 pref + 翻转状态
   assert.match(hook, /if \(!user\) \{\s*onRequireAuthRef\.current\(\);\s*return;\s*\}/);
   assert.match(hook, /const next = !savedOverlay;\s*writeSavedOverlayPref\(next\);\s*setSavedOverlay\(next\);/);
-  assert.match(hook, /if \(!next\) return;/);
+  // no-fly(2026-08-22):toggle 到此结束——无相机动作(setBounds/状态机置位),
+  // 也无旧版关闭分支的早期返回
+  assert.doesNotMatch(hook, /if \(!next\) return;|savedCameraSyncRef|setBounds\(/);
   // map-shell 接线(2026-08-22 互斥语义):mergeMapPois 只建 marker「池」(catalog
   // 全量保留,池只增不删);「开 = 只显示收藏点」由 mutexVisibleIds 在可见性层
   // 落地,关时恢复 LOD/聚合可见性——关时秒恢复、不触发重查

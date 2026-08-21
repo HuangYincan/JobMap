@@ -8,7 +8,7 @@
 // - 不拥有数据:user/savedPlaces/compareCatalog/mode 由调用方传入;
 // - toggle 不触碰相机(2026-08-22 用户反馈):打开/关闭只翻转状态 + 写 pref,
 //   地图 pin 可见性切换由消费方派生(mergeMapPois/mutexVisibleIds,互斥语义),
-//   相机完全不动——不 setBounds / 不 fit / 不移视野;
+//   相机完全不动(不调用任何视图移动方法);
 // - 互斥语义(2026-08-22 用户决策)在消费方落地:map-shell 用
 //   savedOverlay && user 做地图可见性互斥(mutexVisibleIds)+ Explore
 //   列表切收藏列表,本 hook 只负责状态/派生/toggle 本身。
@@ -70,8 +70,8 @@ export function useSavedLayer(deps: UseSavedLayerDeps): UseSavedLayerResult {
     setSavedOverlay(next);
     // 不触碰相机(2026-08-22 用户反馈):打开/关闭只翻转状态 + 写 pref,
     // 地图 pin 可见性与 Explore 列表切换由消费方按互斥语义派生,相机完全
-    // 不动(不 setBounds / 不 fit / 不移视野);关闭时池保留 catalog 全量
-    // (marker 实例不销毁),恢复搜索管线 pin 与列表秒恢复、不重查。
+    // 不动(不调用任何视图移动方法);关闭时池保留 catalog 全量(marker
+    // 实例不销毁),恢复搜索管线 pin 与列表秒恢复、不重查。
   }, [user, savedOverlay]);
 
   const hide = useCallback(() => {
