@@ -1194,3 +1194,34 @@ onerror fallbackUrls;TMap icon 路径此前只有单一 src,预检失败直接�
 **遗留(边界外)**:TMap 状态视觉(选中/高亮)仅 zIndex 层序;距离圈手柄
 (distanceHandle,map-shell,契约外 duck-type)在 TMap 下仍为 SDK 默认 pin
 (内容不渲染,map-shell 不在本 WS 边界)。
+## ws-d 回填:腾讯定位高精度对齐(2026-08-22,fix/tencent-locate,bug 5)
+
+> 真机反馈 bug 5「用户定位不是真实位置」的腾讯侧根因:腾讯 `browserPosition()`
+> 走浏览器定位(WGS84→gcj02 转换正确),但定位参数缺 `enableHighAccuracy`
+> (部分浏览器回退 IP/基站级精度)+ `maximumAge: 60000`(60s 位置缓存——
+> 用户移动后 60s 内重复定位返回旧位置)。ws-d 把参数对齐 AMap。
+
+### 三引擎定位通道对照(2026-08-22 现状)
+
+| 引擎 | 定位通道 | 参数/转换 | 备注 |
+|---|---|---|---|
+| AMap | `AMap.Geolocation` 控件(融合浏览器定位 / IP / SDK 辅助) | `enableHighAccuracy: true` + `timeout: 8000` + `maximumAge: 30000` + `convert: true` | 自带蓝点+精度圈(需 addControl 到地图);`amap-api.ts` |
+| 腾讯 | 浏览器 `navigator.geolocation`(WGS84) | `enableHighAccuracy: true` + `timeout: 8000` + `maximumAge: 0` | 坐标经 `wgs84ToGcj02` 转 gcj02(境内偏移/境外零偏移);蓝点走 map-shell `syncUserBlueDot` 契约路径 |
+| 百度 | `BMapGL.Geolocation`(**SDK IP 定位**,城市级,非真实 GPS) | 无高精度参数;bd09→gcj02 转换 | 定位精度差是 bug 5 百度侧根因 —— **由 ws-b(fix/baidu-poi-locate)改浏览器高精度** |
+
+### 改动(仅 tencent-engine.ts `browserPosition` 段)
+
+- `getCurrentPosition` 第三参 `{ timeout: 8000, maximumAge: 60000 }` →
+  `{ enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }`:
+  - `enableHighAccuracy: true` 对齐 AMap —— 请求 GPS 高精度,避免浏览器
+    回退 IP/基站级粗定位;
+  - `maximumAge: 0` 禁用位置缓存 —— 每次定位都重新请求,「定位 = 真实
+    当前位置」;`timeout: 8000` 保留(与 AMap 一致);
+- wgs84→gcj02 转换保留(腾讯底图 gcj02)。
+
+### 测试
+
+- `server/tests/map-engine-tencent.test.mjs` `getCurrentPosition(浏览器定位)`
+  用例扩展:mock `navigator.geolocation.getCurrentPosition` 捕获第三参 opts,
+  断言 `enableHighAccuracy === true` / `maximumAge === 0` / `timeout === 8000`;
+  坐标转换断言保留(境内点位必须经 gcj02 偏移);失败/无 navigator → null 不变。
