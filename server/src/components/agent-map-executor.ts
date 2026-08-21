@@ -45,6 +45,28 @@ export interface AgentMapExecutor {
   undo(): boolean;
   canUndo(): boolean;
   reset(): void;
+  /**
+   * 清屏:只执行 overlay 类 undo 条目(addMarkers/drawCircle 清理)并移出栈;
+   * camera(flyTo 逆操作)/select/detail 条目保留,undo 语义不变。
+   */
+  clearOverlays(): void;
+}
+
+/** undo 栈条目类型:camera=相机逆操作(flyTo 回旧视角)、overlay=覆盖物清理、select/detail=历史回放。 */
+export type AgentUndoKind = "camera" | "overlay" | "select" | "detail";
+
+/** 面板完成状态:done 事件 / 用户停止 / 无。 */
+export type AgentCompletionState = "done" | "stopped" | null;
+
+/**
+ * 流结束(finally)时的完成状态判定(纯函数):
+ * - 已收到 done 事件 → 'done'(回答完成,不受后续 abort 影响);
+ * - 用户停止(signal.aborted)→ 'stopped';
+ * - 其他异常/静默结束 → null(错误由 onError 路径提示,不显示完成状态)。
+ */
+export function resolveCompletion(doneReceived: boolean, aborted: boolean): AgentCompletionState {
+  if (doneReceived) return "done";
+  return aborted ? "stopped" : null;
 }
 
 /** 同类型动作限流窗口(ms)。 */
@@ -158,7 +180,7 @@ export function createAgentMapExecutor(
   callbacks: AgentMapExecutorCallbacks = {},
 ): AgentMapExecutor {
   const now = callbacks.now ?? Date.now;
-  const undoStack: Array<() => void> = [];
+  const undoStack: Array<{ kind: AgentUndoKind; run: () => void }> = [];
   /** 同类型动作最近执行时间戳(500ms 限流) */
   const lastExecAt: Record<string, number> = {};
   /** select 历史(undo 回放上一条旧值) */
@@ -188,8 +210,11 @@ export function createAgentMapExecutor(
         const before = bridge.getSnapshot(); // 执行前捕获旧 camera(undo 用)
         bridge.flyTo(validated.payload.center.lng, validated.payload.center.lat, validated.payload.zoom);
         if (before) {
-          undoStack.push(() => {
-            bridge.flyTo(before.center.lng, before.center.lat, before.zoom);
+          undoStack.push({
+            kind: "camera",
+            run: () => {
+              bridge.flyTo(before.center.lng, before.center.lat, before.zoom);
+            },
           });
         }
         break;
@@ -197,30 +222,36 @@ export function createAgentMapExecutor(
       case "select": {
         selectStack.push(validated);
         bridge.select(validated.payload.id, validated.payload.mode);
-        undoStack.push(() => {
-          selectStack.pop();
-          const prev = selectStack[selectStack.length - 1];
-          if (prev && prev.type === "select") bridge.select(prev.payload.id, prev.payload.mode);
+        undoStack.push({
+          kind: "select",
+          run: () => {
+            selectStack.pop();
+            const prev = selectStack[selectStack.length - 1];
+            if (prev && prev.type === "select") bridge.select(prev.payload.id, prev.payload.mode);
+          },
         });
         break;
       }
       case "addMarkers": {
         const cleanup = bridge.addMarkers(validated.payload.points);
-        undoStack.push(() => cleanup());
+        undoStack.push({ kind: "overlay", run: () => cleanup() });
         break;
       }
       case "drawCircle": {
         const cleanup = bridge.drawCircle(validated.payload.center, validated.payload.radiusMeters);
-        undoStack.push(() => cleanup());
+        undoStack.push({ kind: "overlay", run: () => cleanup() });
         break;
       }
       case "openDetail": {
         detailStack.push(validated);
         bridge.openDetail(validated.payload.id, validated.payload.mode);
-        undoStack.push(() => {
-          detailStack.pop();
-          const prev = detailStack[detailStack.length - 1];
-          if (prev && prev.type === "openDetail") bridge.openDetail(prev.payload.id, prev.payload.mode);
+        undoStack.push({
+          kind: "detail",
+          run: () => {
+            detailStack.pop();
+            const prev = detailStack[detailStack.length - 1];
+            if (prev && prev.type === "openDetail") bridge.openDetail(prev.payload.id, prev.payload.mode);
+          },
         });
         break;
       }
@@ -261,11 +292,21 @@ export function createAgentMapExecutor(
     undo() {
       const entry = undoStack.pop();
       if (!entry) return false;
-      entry();
+      entry.run();
       return true;
     },
     canUndo() {
       return undoStack.length > 0;
+    },
+    clearOverlays() {
+      // 只执行 overlay 类条目(覆盖物清理),执行后移出栈;camera/select/detail
+      // 条目保留(undo 语义不变)。倒序遍历保证后进先出(与 undo 一致)。
+      for (let i = undoStack.length - 1; i >= 0; i--) {
+        if (undoStack[i].kind === "overlay") {
+          undoStack[i].run();
+          undoStack.splice(i, 1);
+        }
+      }
     },
     reset() {
       undoStack.length = 0;
