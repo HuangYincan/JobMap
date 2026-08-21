@@ -156,6 +156,22 @@ function installTMapDouble() {
       list.push(cb);
       this.listeners.set(event, list);
     },
+    off(event, cb) {
+      const list = this.listeners?.get(event) ?? [];
+      this.listeners?.set(
+        event,
+        list.filter((f) => f !== cb),
+      );
+    },
+    setZIndex(z) {
+      this.zIndex = z;
+    },
+    setVisible(v) {
+      this.visible = v;
+    },
+    setIcon(icon) {
+      this.icon = icon;
+    },
   };
   const circlePatches = {
     setMap(map) {
@@ -728,6 +744,207 @@ test('createMarker(MultiMarker):onClick 经 click 事件,按 e.geometry.id 过�
     assert.equal(clicked, 1, '本 marker id 触发');
     marker.raw.trigger('click', { geometry: { id: geo.id } });
     assert.equal(clicked, 2, '可重复触发');
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(单点):契约 setZIndex/setVisible/on/off 直通厂商 API', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { restore } = installTMapDouble();
+  try {
+    const view = await createView();
+    const marker = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+    const raw = marker.raw;
+
+    marker.setZIndex(66);
+    assert.equal(raw.zIndex, 66, '单点 setZIndex 直通 TMap');
+    marker.setVisible(false);
+    assert.equal(raw.visible, false, '单点 setVisible 直通');
+    marker.setVisible(true);
+    assert.equal(raw.visible, true);
+
+    let clicks = 0;
+    const cb = () => clicks++;
+    marker.on('click', cb);
+    assert.equal(raw.listeners.get('click').length, 1, 'on → raw.on');
+    raw.listeners.get('click')[0]();
+    assert.equal(clicks, 1);
+    marker.off('click', cb);
+    assert.equal(raw.listeners.get('click').length, 0, 'off(cb) → raw.off 精确解绑');
+    raw.listeners.get('click')?.[0]?.();
+    assert.equal(clicks, 1, '解绑后不再触发');
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(单点):icon 规格 → raw.setIcon({src,width,height})', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { restore } = installTMapDouble();
+  try {
+    const view = await createView();
+    const marker = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      icon: { src: 'pin.svg', size: [24, 32] },
+    });
+    assert.deepEqual(marker.raw.icon, { src: 'pin.svg', width: 24, height: 32 });
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(单点):icon 且无 setIcon → 一次性 warn 降级不抛', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { restore } = installTMapDouble();
+  const warn = captureWarn();
+  const hadIcon = Object.hasOwn(MockMarker.prototype, 'setIcon');
+  const iconFn = MockMarker.prototype.setIcon;
+  delete MockMarker.prototype.setIcon;
+  try {
+    const view = await createView();
+    const marker = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      icon: { src: 'pin.svg' },
+    });
+    assert.equal(marker.raw.icon, undefined, '无 setIcon → 不设图标');
+    assert.equal(warn.calls.length, 1, '降级必须 console.warn');
+    assert.match(String(warn.calls[0][0]), /无 setIcon/);
+    // 后续 marker 同缺省路径不再刷屏
+    view.createMarker({ position: { lng: 1, lat: 2 }, icon: { src: 'x.png' } });
+    assert.equal(warn.calls.length, 1, '一次性 warn(防刷屏)');
+  } finally {
+    if (hadIcon) MockMarker.prototype.setIcon = iconFn;
+    warn.restore();
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):契约 on/off 按 geometry.id 过滤注册/解绑', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const marker = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+    const geo = marker.raw.geometries[0];
+    let clicks = 0;
+    const cb = () => clicks++;
+    const cb2 = () => (clicks += 10);
+    marker.on('click', cb);
+    marker.on('click', cb2);
+    marker.raw.trigger('click', { geometry: { id: 'dm-mk-999' } });
+    assert.equal(clicks, 0, '其他 geometry.id 不得触发');
+    marker.raw.trigger('click', { geometry: { id: geo.id } });
+    assert.equal(clicks, 11, '本 marker 两个回调都触发');
+    marker.off('click', cb);
+    marker.raw.trigger('click', { geometry: { id: geo.id } });
+    assert.equal(clicks, 21, 'off(cb) 精确解绑单个回调');
+    marker.off('click'); // cb 缺省 → 解绑本 marker 全部 click
+    marker.raw.trigger('click', { geometry: { id: geo.id } });
+    assert.equal(clicks, 21, 'off 缺省 cb 解绑全部');
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):setZIndex/setVisible 直通(SDK 经 GeometryOverlay 继承)不告警', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const marker = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+
+    marker.setZIndex(99);
+    assert.equal(marker.raw.zIndex, 99, '直通 GeometryOverlay 继承的 setZIndex(→ layer.setZIndex + 存储)');
+    marker.setZIndex(120);
+    assert.equal(marker.raw.zIndex, 120);
+
+    marker.setVisible(false);
+    assert.equal(marker.raw.visible, false, '直通 setVisible(→ layer.setVisible)');
+    marker.setVisible(true);
+    assert.equal(marker.raw.visible, true);
+    assert.equal(marker.raw.map, view.raw, '直通路径不触发 setMap 兜底(实例保留挂图)');
+    assert.equal(warn.calls.length, 0, 'SDK 正常路径不告警');
+  } finally {
+    warn.restore();
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):setZIndex/setVisible 缺失(老 SDK)→ 一次性 warn 降级不抛', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
+  const proto = MockMultiMarker.prototype;
+  const origZIndex = proto.setZIndex;
+  const origVisible = proto.setVisible;
+  delete proto.setZIndex;
+  delete proto.setVisible;
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const marker = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+    assert.doesNotThrow(() => marker.setZIndex(99), 'setZIndex 缺失不得抛(降级而非异常)');
+    assert.doesNotThrow(() => marker.setZIndex(100));
+    assert.equal(marker.raw.zIndex, 10, 'zIndex 保持构造期默认,未变更');
+    assert.equal(warn.calls.length, 1, '多次调用只 warn 一次(防刷屏)');
+    assert.match(String(warn.calls[0][0]), /MultiMarker 无 setZIndex/);
+
+    warn.calls.length = 0;
+    marker.setVisible(false);
+    assert.equal(marker.raw.map, null, '隐藏 = setMap(null)(官方移除路径兜底)');
+    marker.setVisible(true);
+    assert.equal(marker.raw.map, view.raw, '显示 = setMap(map) 重新添加');
+    marker.setVisible(false);
+    assert.equal(warn.calls.length, 1, '多次切换只 warn 一次(防刷屏)');
+    assert.match(String(warn.calls[0][0]), /setMap 切换降级/);
+  } finally {
+    proto.setZIndex = origZIndex;
+    proto.setVisible = origVisible;
+    warn.restore();
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):icon 规格 → MarkerStyle src/width/height/anchor(含 offset 合并)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const marker = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      icon: { src: 'pin.svg', size: [30, 40] },
+      offset: [4, -6],
+    });
+    const style = marker.raw.styles.default;
+    assert.ok(style instanceof ns.MarkerStyle, 'icon 存在 → MarkerStyle 注入');
+    assert.equal(style.opts.src, 'pin.svg');
+    assert.equal(style.opts.width, 30);
+    assert.equal(style.opts.height, 40);
+    assert.deepEqual(
+      { ...style.opts.anchor },
+      { x: 11, y: 46 },
+      '锚点 (w/2,h)=(15,40) 平移 offset (4,-6) → (11,46)',
+    );
+
+    // icon 无 offset:锚点 = (w/2, h)(与默认 pin 语义一致)
+    const m2 = view.createMarker({ position: { lng: 1, lat: 2 }, icon: { src: 'a.png', size: [20, 20] } });
+    assert.deepEqual({ ...m2.raw.styles.default.opts.anchor }, { x: 10, y: 20 });
   } finally {
     restore();
   }

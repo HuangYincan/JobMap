@@ -174,6 +174,9 @@ class FakeMarker {
     this.content = null;
     this.listeners = new Map();
     this.removed = false;
+    this.zIndex = undefined;
+    this.visible = true;
+    this.icon = null;
   }
   getPosition() {
     return this.point;
@@ -189,11 +192,34 @@ class FakeMarker {
     list.push(cb);
     this.listeners.set(event, list);
   }
+  removeEventListener(event, cb) {
+    const list = this.listeners.get(event) ?? [];
+    this.listeners.set(event, list.filter((h) => h !== cb));
+  }
   trigger(event) {
     for (const cb of this.listeners.get(event) ?? []) cb();
   }
+  setZIndex(z) {
+    this.zIndex = z;
+  }
+  show() {
+    this.visible = true;
+  }
+  hide() {
+    this.visible = false;
+  }
+  setIcon(icon) {
+    this.icon = icon;
+  }
   remove() {
     this.removed = true;
+  }
+}
+
+class FakeIcon {
+  constructor(url, size) {
+    this.url = url;
+    this.size = size;
   }
 }
 
@@ -291,6 +317,7 @@ function setup() {
     Map: FakeMap,
     Marker: FakeMarker,
     Circle: FakeCircle,
+    Icon: FakeIcon,
     PlaceSearch: FakePlaceSearch,
     Geocoder: FakeGeocoder,
     Geolocation: FakeGeolocation,
@@ -684,6 +711,121 @@ test('createMarker(核心):厂商收到 gcj02ToBd09 结果;offset/content/zIndex
   marker.remove();
   assert.equal(view.raw.overlays.length, 0, 'removeOverlay');
   assert.equal(raw.removed, true, '厂商 remove()');
+});
+
+test('createMarker 契约方法:setZIndex 大写直通 / setVisible→show·hide / on·off→addEventListener', async () => {
+  setup();
+  const { view } = await makeView();
+  const marker = view.createMarker({ position: GCJ });
+  const raw = marker.raw;
+
+  marker.setZIndex(77);
+  assert.equal(raw.zIndex, 77, 'BMapGL 官方大写 setZIndex 直通');
+  marker.setZIndex(120);
+  assert.equal(raw.zIndex, 120);
+
+  marker.setVisible(false);
+  assert.equal(raw.visible, false, 'setVisible(false) → hide()');
+  marker.setVisible(true);
+  assert.equal(raw.visible, true, 'setVisible(true) → show()');
+
+  let clicks = 0;
+  const cb = () => clicks++;
+  marker.on('click', cb);
+  assert.equal(raw.listeners.get('click').length, 1, 'on → addEventListener');
+  raw.trigger('click');
+  assert.equal(clicks, 1);
+  marker.off('click', cb);
+  assert.equal(raw.listeners.get('click').length, 0, 'off(cb) → removeEventListener 精确解绑');
+  raw.trigger('click');
+  assert.equal(clicks, 1, '解绑后不再触发');
+  // cb 缺省:BMapGL 无「按事件清空」形态 → 保留(调用方应传 cb 精确解绑)
+  marker.on('click', cb);
+  marker.off('click');
+  assert.equal(raw.listeners.get('click').length, 1, 'off 缺省 cb 不误删(契约允许空操作)');
+  marker.off('click', cb);
+  assert.equal(raw.listeners.get('click').length, 0);
+});
+
+test('createMarker 契约方法:icon 规格 → BMapGL.Icon(url, Size)(缺省 21x21)', async () => {
+  setup();
+  const { view } = await makeView();
+  const marker = view.createMarker({
+    position: GCJ,
+    icon: { src: 'pin.svg', size: [24, 32] },
+  });
+  const raw = marker.raw;
+  assert.ok(raw.icon instanceof FakeIcon, 'setIcon 收到 BMapGL.Icon 实例');
+  assert.equal(raw.icon.url, 'pin.svg', 'url = icon.src');
+  assert.ok(raw.icon.size instanceof FakeSize, 'size 转 BMapGL.Size');
+  assert.equal(raw.icon.size.width, 24);
+  assert.equal(raw.icon.size.height, 32);
+  assert.equal(view.raw.overlays.length, 1, 'icon 路径仍 addOverlay 上地图');
+
+  // size 缺省 → 兜底 BMapGL 默认 marker 尺寸 21x21
+  const m2 = view.createMarker({ position: GCJ, icon: { src: 'x.png' } });
+  assert.ok(m2.raw.icon instanceof FakeIcon);
+  assert.equal(m2.raw.icon.size.width, 21);
+  assert.equal(m2.raw.icon.size.height, 21);
+});
+
+test('createMarker 契约方法:厂商方法缺失 → warn 降级不抛(Icon 缺失同款)', async () => {
+  setup();
+  const { view } = await makeView();
+  const warns = [];
+  const origWarn = console.warn;
+  console.warn = (...args) => warns.push(args);
+  // 方法在原型上:实例 delete 无效 → 从原型摘除(厂商缺失模拟),测后还原
+  const proto = FakeMarker.prototype;
+  const orig = {
+    setZIndex: proto.setZIndex,
+    show: proto.show,
+    hide: proto.hide,
+    addEventListener: proto.addEventListener,
+    removeEventListener: proto.removeEventListener,
+    setIcon: proto.setIcon,
+  };
+  try {
+    const marker = view.createMarker({ position: GCJ });
+    delete proto.setZIndex;
+    delete proto.show;
+    delete proto.hide;
+    assert.doesNotThrow(() => marker.setZIndex(10), 'setZIndex 缺失不得抛');
+    assert.doesNotThrow(() => marker.setVisible(false), 'hide 缺失不得抛');
+    assert.doesNotThrow(() => marker.setVisible(true), 'show 缺失不得抛');
+
+    // on/off 缺失 → warn 降级不抛
+    delete proto.addEventListener;
+    delete proto.removeEventListener;
+    assert.doesNotThrow(() => marker.on('click', () => {}), 'addEventListener 缺失不得抛');
+    assert.doesNotThrow(() => marker.off('click', () => {}), 'removeEventListener 缺失不得抛');
+
+    // ns.Icon 缺失 → 图标降级 warn 不抛
+    const origIcon = mockNs.ns.Icon;
+    delete mockNs.ns.Icon;
+    assert.doesNotThrow(
+      () => view.createMarker({ position: GCJ, icon: { src: 'x.png' } }),
+      'Icon 缺失不得抛(图标降级)',
+    );
+    mockNs.ns.Icon = origIcon;
+
+    // raw.setIcon 缺失 → 图标降级 warn 不抛
+    delete proto.setIcon;
+    assert.doesNotThrow(
+      () => view.createMarker({ position: GCJ, icon: { src: 'y.png' } }),
+      'setIcon 缺失不得抛(图标降级)',
+    );
+  } finally {
+    proto.setZIndex = orig.setZIndex;
+    proto.show = orig.show;
+    proto.hide = orig.hide;
+    proto.addEventListener = orig.addEventListener;
+    proto.removeEventListener = orig.removeEventListener;
+    proto.setIcon = orig.setIcon;
+    console.warn = origWarn;
+  }
+  assert.ok(warns.length >= 7, '每个缺失路径必须 console.warn(可观测):' + warns.map((w) => String(w[0])).join(' | '));
+  assert.ok(warns.every((w) => String(w[0]).includes('[map-engine]')), '告警带 [map-engine] 前缀');
 });
 
 test('createCircle:中心 bd09 + radius + 视觉样式 + remove', async () => {
