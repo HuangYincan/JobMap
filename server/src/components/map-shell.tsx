@@ -2524,6 +2524,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           onSave={handleSaveProfile}
           onAvatarUrlChange={handleAvatarUrlChange}
           onSignOut={handleAuthAction}
+          onUserChanged={() => void refreshAccount()}
           applications={applications}
           notifications={inbox}
           onOpenApplication={handleOpenApplication}
@@ -2814,6 +2815,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                       onSave={handleSaveProfile}
                       onAvatarUrlChange={handleAvatarUrlChange}
                       onSignOut={handleAuthAction}
+                      onUserChanged={() => void refreshAccount()}
                       onOpenApplication={handleOpenApplication}
                     />
                   ) : (

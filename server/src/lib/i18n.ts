@@ -627,6 +627,14 @@ export const translations = {
     zh: '新用户将自动注册',
     en: 'New users are registered automatically',
   },
+  loginIdOrEmail: {
+    zh: '邮箱或用户名',
+    en: 'Email or username',
+  },
+  pwdLoginHint: {
+    zh: '邮箱注册的账号，可在个人资料设置密码后登录',
+    en: 'Accounts registered with an email can sign in with it after you set a password in your profile',
+  },
   continueGithub: {
     zh: '使用 GitHub 继续',
     en: 'Continue with GitHub',
@@ -914,6 +922,116 @@ export const translations = {
   phoneEmail: {
     zh: '手机与邮箱',
     en: 'Phone & email',
+  },
+  // ---- Profile「密码与安全」子面板 ----
+  securityBack: {
+    zh: '返回',
+    en: 'Back',
+  },
+  loginPassword: {
+    zh: '登录密码',
+    en: 'Sign-in password',
+  },
+  passwordSet: {
+    zh: '已设置',
+    en: 'Set',
+  },
+  passwordNotSet: {
+    zh: '未设置',
+    en: 'Not set',
+  },
+  setPasswordHint: {
+    zh: '使用绑定的手机或邮箱验证码设置密码',
+    en: 'Set a password with a code sent to your bound phone or email',
+  },
+  noBoundContact: {
+    zh: '请先绑定手机或邮箱后设置密码',
+    en: 'Bind a phone or email before setting a password',
+  },
+  setPassword: {
+    zh: '设置密码',
+    en: 'Set password',
+  },
+  changePassword: {
+    zh: '修改密码',
+    en: 'Change password',
+  },
+  passwordSaved: {
+    zh: '密码已保存',
+    en: 'Password saved',
+  },
+  oldPassword: {
+    zh: '旧密码',
+    en: 'Current password',
+  },
+  newPassword: {
+    zh: '新密码',
+    en: 'New password',
+  },
+  confirmNewPassword: {
+    zh: '确认新密码',
+    en: 'Confirm new password',
+  },
+  verifyCode: {
+    zh: '验证码',
+    en: 'Verification code',
+  },
+  savePassword: {
+    zh: '保存密码',
+    en: 'Save password',
+  },
+  wrongPassword: {
+    zh: '旧密码不正确',
+    en: 'Current password is incorrect',
+  },
+  codeInvalid: {
+    zh: '验证码错误或已过期',
+    en: 'Code is incorrect or expired',
+  },
+  codeTargetMismatch: {
+    zh: '验证码发送目标与绑定凭证不一致',
+    en: 'The code was sent to a contact different from the one bound',
+  },
+  securityFailed: {
+    zh: '操作失败，请重试',
+    en: 'Operation failed, please retry',
+  },
+  // ---- Profile「手机与邮箱」子面板 ----
+  changePhone: {
+    zh: '更换手机',
+    en: 'Change phone',
+  },
+  changeEmail: {
+    zh: '更换邮箱',
+    en: 'Change email',
+  },
+  newPhone: {
+    zh: '新手机号',
+    en: 'New phone number',
+  },
+  newEmail: {
+    zh: '新邮箱',
+    en: 'New email',
+  },
+  confirmChange: {
+    zh: '确认更换',
+    en: 'Confirm change',
+  },
+  phoneEmailSaved: {
+    zh: '已保存',
+    en: 'Saved',
+  },
+  unbound: {
+    zh: '未绑定',
+    en: 'Not bound',
+  },
+  takenPhone: {
+    zh: '该手机号已被绑定',
+    en: 'This phone number is already bound',
+  },
+  takenEmail: {
+    zh: '该邮箱已被绑定',
+    en: 'This email is already bound',
   },
   signOutLabel: {
     zh: '退出登录',

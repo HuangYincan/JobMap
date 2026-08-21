@@ -386,6 +386,226 @@
   cursor: default;
 }
 
+/* ============ 密码与安全 / 手机与邮箱 子面板 ============ */
+
+/* 子面板头:返回钮(chevronLeft)+ 标题,复用 header 布局语义 */
+.subHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.backBtn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--blue, #007aff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.backBtn:hover {
+  color: var(--ink);
+}
+
+.backBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.subTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* 子面板表单容器(与 .editPanel 同语义:卡片内 inset 区块) */
+.secPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.secPanel .secPanel {
+  border-top: 0;
+  border-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* 状态行:● 圆点 + 已设置/未设置 */
+.secStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.secStatusDot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue, #007aff);
+}
+
+.secStatusText {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.secHint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* 表单字段(与 .nameField 同语义) */
+.secField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.secField input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 9px 12px;
+  min-width: 0;
+}
+
+.secField input:focus {
+  border-color: var(--blue, #007aff);
+  outline: none;
+}
+
+/* 验证码输入 + 发送按钮(inputShell,同 auth-modal 语义) */
+.secInputShell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 2px 8px 2px 2px;
+}
+
+.secInputShell input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 9px 12px;
+}
+
+.secInputShell input:focus {
+  border-color: transparent;
+  outline: none;
+}
+
+.secSend {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: var(--blue, #007aff);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  padding: 6px 4px;
+  cursor: pointer;
+}
+
+.secSend:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.secFieldHint {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.secError {
+  margin: 0;
+  font-size: 12px;
+  color: var(--danger, #ff3b30);
+}
+
+/* 手机/邮箱 凭证行 + 更换钮 */
+.secBlock {
+  padding: 10px 0 2px;
+}
+
+.contactRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 14px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.contactAction {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--blue, #007aff);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.contactAction:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: var(--blue, #007aff);
+}
+
+.contactAction:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* 手机/邮箱 区块间的分隔线(与 .row + .row::after 同一视觉) */
+.secDivider {
+  border-top: 1px solid var(--line);
+  margin: 4px 0 4px 14px;
+}
+
 /* ============ 偏好 pills / 通知开关 ============ */
 
 .pillRow {
@@ -629,8 +849,15 @@
   .choice,
   .prefTrigger,
   .editAction,
-  .nameField input {
+  .nameField input,
+  .contactAction,
+  .secField input,
+  .secInputShell {
     background: rgba(255, 255, 255, 0.06);
+  }
+
+  .secInputShell input {
+    background: transparent;
   }
 
   .prefTrigger:hover {
