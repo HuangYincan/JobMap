@@ -2115,7 +2115,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           <input
             ref={searchInputRef}
             type="search"
-            placeholder={modeConfig.searchPlaceholder}
+            placeholder={lang === "en" ? (modeConfig.searchPlaceholderEn ?? modeConfig.searchPlaceholder) : modeConfig.searchPlaceholder}
             value={query}
             tabIndex={sidebarOpen ? 0 : -1}
             onChange={(e) => {
@@ -2465,7 +2465,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         ) : (
           <>
             <div className={styles.mobileToolbar}>
-              <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} />
+              <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} lang={lang} />
               <button
                 type="button"
                 className={styles.mobileAvatarBtn}
@@ -2488,7 +2488,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 <Icon name="search" />
                 <input
                   type="search"
-                  placeholder={modeConfig.searchPlaceholder}
+                  placeholder={lang === "en" ? (modeConfig.searchPlaceholderEn ?? modeConfig.searchPlaceholder) : modeConfig.searchPlaceholder}
                   value={query}
                   role="combobox"
                   aria-autocomplete="list"

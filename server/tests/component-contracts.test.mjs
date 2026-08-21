@@ -670,11 +670,11 @@ test('profile language/defaultMode prefs are PrefField dropdowns sharing the job
   assert.match(panel, /renderPrefTrigger\("language", t\("prefLanguage", lang\), languageText\)/);
   assert.match(panel, /renderPrefTrigger\("defaultMode", t\("prefDefaultMode", lang\), defaultModeText\)/);
   assert.match(panel, /const languageText = prefs\.language === "zh" \? "中文" : "English"/);
-  assert.match(panel, /const defaultModeText = getMode\(prefs\.defaultMode\)\.name/);
-  // 浮层选项:language=[中文, English];defaultMode=ACTIVE_MODES 显示名
+  assert.match(panel, /const defaultModeText = lang === "en" \? getMode\(prefs\.defaultMode\)\.nameEn : getMode\(prefs\.defaultMode\)\.name/);
+  // 浮层选项:language=[中文, English];defaultMode=ACTIVE_MODES 显示名(en 用 nameEn)
   assert.match(panel, /\{ id: "zh", label: "中文" \}/);
   assert.match(panel, /\{ id: "en", label: "English" \}/);
-  assert.match(panel, /options = ACTIVE_MODES\.map\(\(m\) => \(\{ id: m, label: getMode\(m\)\.name \}\)/);
+  assert.match(panel, /options = ACTIVE_MODES\.map\(\(m\) => \(\{ id: m, label: lang === "en" \? getMode\(m\)\.nameEn : getMode\(m\)\.name \}\)/);
   // 单选 onSelect 即存即关,持久化链路与求职偏好一致(persistPrefs→onSave→PATCH)
   assert.match(panel, /persistPrefs\(mergePreferences\(prefs, \{ language: id as Language \}\)/);
   assert.match(panel, /persistPrefs\(mergePreferences\(prefs, \{ defaultMode: id as MapMode \}\)/);
