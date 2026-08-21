@@ -9,15 +9,15 @@
 - milestone_link: 无(dev 目标)
 
 ## stage
-current: MERGE(thinkfix + pinfix 全绿,派 merger)
+current: DONE(终态)✅
 updated_at: 2026-08-21
-dev_head_note: dev = 4f73104;thinkfix ee6b993 + pinfix 5c57f15 待合并
+dev_head_note: dev = 4ae084d+批次;thinkfix + pinfix 已合,3005 已重启新构建
 
 ## workstreams
 | ws | branch | worktree | prompt | report | status | last_tip | dispatched_at | finished_at | verdict |
 |---|---|---|---|---|---|---|---|---|---|
-| thinkfix | feature/agent-think-hide | /Users/acccan/dm-wt-agent-thinkfix | prompts/ws-thinkfix.md | reports/ws-thinkfix.md | DONE | ee6b993 | 2026-08-21 | 2026-08-21 | 门禁 PASSED(996 pass);2 commit;待合并 |
-| pinfix | feature/agent-pin-anchor | /Users/acccan/dm-wt-agent-pinfix | prompts/ws-pinfix.md | reports/ws-pinfix.md | DONE | 64fad9e | 2026-08-21 | 2026-08-21 | 门禁 PASSED(1001 pass);2 commit;待合并 |
+| thinkfix | feature/agent-think-hide | (已清理) | prompts/ws-thinkfix.md | reports/ws-thinkfix.md | MERGED | ee6b993 | 2026-08-21 | 2026-08-21 | 已并入 dev(0fa7b17) |
+| pinfix | feature/agent-pin-anchor | (已清理) | prompts/ws-pinfix.md | reports/ws-pinfix.md | MERGED | 64fad9e | 2026-08-21 | 2026-08-21 | 已并入 dev(4ae084d) |
 
 ## merge_order
 1. feature/agent-think-hide → 2. feature/agent-pin-anchor(文件不相交,顺序任意;按派发序合并)
