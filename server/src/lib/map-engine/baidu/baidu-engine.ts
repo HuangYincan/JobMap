@@ -700,8 +700,15 @@ class BaiduMapView implements MapView {
     const map = this.map;
     const offset = opts.offset;
     const clickHandlers: Array<() => void> = [];
+    if (opts.onClick) clickHandlers.push(opts.onClick);
     let point = new this.ns.Point(bd.lng, bd.lat);
     let el: HTMLElement | null = null;
+    // 点击不冒泡到地图(与 amap marker click 不触发 map click 同语义;
+    // 徽章/蓝点点击不得清选中);div click 冒泡自内容子元素可达
+    const onClick = (e: { stopPropagation?: () => void }) => {
+      e.stopPropagation?.();
+      for (const cb of clickHandlers) cb();
+    };
     const overlay = new (class extends (OverlayBase as unknown as new () => object) {
       _map: BMapInstance | null = null;
       /** SDK 生命周期:创建 content DOM 并返回(自动加入覆盖物容器) */
@@ -712,14 +719,9 @@ class BaiduMapView implements MapView {
         if (opts.zIndex !== undefined) div.style.zIndex = String(opts.zIndex);
         const extras = opts as unknown as { cursor?: string };
         if (extras.cursor) div.style.cursor = extras.cursor;
-        // content 原文注入(可信 HTML 契约;div click 冒泡自子元素可达)
+        // content 原文注入(可信 HTML 契约)
         div.innerHTML = opts.content ?? '';
-        // 点击不冒泡到地图(与 amap marker click 不触发 map click 同语义;
-        // 徽章/蓝点点击不得清选中)
-        div.addEventListener('click', (e: { stopPropagation?: () => void }) => {
-          e.stopPropagation?.();
-          for (const cb of clickHandlers) cb();
-        });
+        div.addEventListener('click', onClick);
         el = div;
         this.draw();
         return div;
@@ -739,13 +741,25 @@ class BaiduMapView implements MapView {
           console.warn('[map-engine] BMapGL 无 pointToOverlayPixel/pointToContainerPixel,content 标记无法定位');
         }
       }
-      /** 防御:SDK removeOverlay 可能调用本方法;幂等摘除 DOM */
+      /** 防御:SDK removeOverlay / map-shell setMap(null) 分派可能调用;幂等摘除 */
       remove(): void {
+        if (this._map && typeof this._map.removeOverlay === 'function') {
+          try {
+            this._map.removeOverlay(this);
+          } catch {
+            // removeOverlay 异常不阻断 DOM 摘除
+          }
+        }
         if (el) {
           try {
             el.parentNode?.removeChild(el);
           } catch {
             // 已脱离 DOM:忽略
+          }
+          try {
+            el.removeEventListener('click', onClick);
+          } catch {
+            // 解绑失败不影响摘除语义
           }
           el = null;
         }
