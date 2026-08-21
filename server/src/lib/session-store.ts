@@ -114,6 +114,7 @@ function publicUser(user: StoredUser): AccountUser {
   const { createdAt: _createdAt, passwordHash: _passwordHash, avatarData: _avatarData, ...rest } = user;
   return {
     ...rest,
+    hasPassword: !!user.passwordHash,
     accountLabel: accountLabel(rest),
     preferences: mergePreferences(user.preferences),
   };
@@ -149,11 +150,18 @@ export function registerWithPassword(username: string, password: string, display
   return publicUser(user);
 }
 
-/** 密码登录:失败统一返回 null(调用方 401「账号或密码错误」,不泄露哪个错)。 */
+/** 密码登录(username 或邮箱):失败统一返回 null(调用方 401「账号或密码错误」,不泄露哪个错)。 */
 export function loginWithPassword(username: string, password: string): AccountUser | null {
   const key = identityKey('password', username);
   const id = identities.get(key);
-  const user = id ? users.get(id) : undefined;
+  let user = id ? users.get(id) : undefined;
+  if (!user) {
+    // 与 DB 路径对齐:username 或已绑定邮箱均可登录(邮箱登录用户无 password identity)。
+    const name = username.trim().toLowerCase();
+    user = [...users.values()].find(
+      (u) => u.username?.toLowerCase() === name || u.email?.toLowerCase() === name,
+    );
+  }
   if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) return null;
   return publicUser(user);
 }

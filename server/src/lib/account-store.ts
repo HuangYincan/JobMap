@@ -74,6 +74,7 @@ function asUser(row: {
   phone: string | null;
   email: string | null;
   username?: string | null;
+  password_hash?: string | null;
   preferences: UserPreferences | null;
   provider: AuthProvider | null;
 }): AccountUser {
@@ -88,6 +89,7 @@ function asUser(row: {
     phone,
     email,
     username: row.username ?? undefined,
+    hasPassword: !!row.password_hash,
     provider: row.provider ?? 'email',
     preferences: mergePreferences(prefs),
   };
@@ -231,6 +233,7 @@ type UpsertUserRow = {
   phone: string | null;
   email: string | null;
   username: string | null;
+  password_hash: string | null;
   preferences: UserPreferences | null;
 };
 
@@ -247,7 +250,7 @@ async function attachIdentityToExistingEmailUser(
 ): Promise<AccountUser> {
   if (!input.email) throw originalError; // 理论上 23505 只可能来自 email 唯一键
   const existing = await db.query<UpsertUserRow>(
-    `SELECT id::text, display_name, avatar_url, phone, email, username, preferences
+    `SELECT id::text, display_name, avatar_url, phone, email, username, password_hash, preferences
      FROM users
      WHERE lower(email) = lower($1)`,
     [input.email],
@@ -285,7 +288,7 @@ export async function upsertIdentity(input: {
            email = COALESCE(EXCLUDED.email, users.email),
            avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
            updated_at = now()
-         RETURNING id::text, display_name, avatar_url, phone, email, username, preferences`,
+         RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences`,
         [
           subject,
           input.displayName ?? null,
@@ -335,11 +338,12 @@ export async function registerWithPassword(
         phone: string | null;
         email: string | null;
         username: string | null;
+        password_hash: string | null;
         preferences: UserPreferences;
       }>(
         `INSERT INTO users (subject, display_name, username, password_hash, preferences)
          VALUES ($1, $2, $3, $4, $5::jsonb)
-         RETURNING id::text, display_name, avatar_url, phone, email, username, preferences`,
+         RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences`,
         [subject, displayName?.trim() || name, name, hashPassword(password), prefs],
       ).catch((err: unknown) => {
         if ((err as { code?: string }).code === '23505') throw new UsernameTakenError(name);
@@ -358,7 +362,7 @@ export async function registerWithPassword(
   );
 }
 
-/** 密码登录:失败统一返回 null(调用方 401,不泄露账号是否存在)。 */
+/** 密码登录(username 或邮箱):失败统一返回 null(调用方 401,不泄露账号是否存在)。 */
 export async function loginWithPassword(username: string, password: string): Promise<AccountUser | null> {
   const name = username.trim();
   return withDbRead(
@@ -382,14 +386,13 @@ export async function loginWithPassword(username: string, password: string): Pro
            ORDER BY created_at DESC
            LIMIT 1
          ) i ON true
-         WHERE lower(u.username) = $1 AND u.password_hash IS NOT NULL`,
+         WHERE (lower(u.username) = $1 OR lower(u.email) = $1) AND u.password_hash IS NOT NULL`,
         [name.toLowerCase()],
       );
       const row = result.rows[0];
       if (!row || !row.password_hash) return null;
       if (!verifyPassword(password, row.password_hash)) return null;
-      const { password_hash: _hash, ...rest } = row;
-      return asUser({ ...rest, provider: row.provider ?? 'password' });
+      return asUser({ ...row, provider: row.provider ?? 'password' });
     },
     () => memLoginWithPassword(username, password),
   );
@@ -417,10 +420,11 @@ export async function getSessionUser(token: string | undefined | null): Promise<
       phone: string | null;
       email: string | null;
       username: string | null;
+      password_hash: string | null;
       preferences: UserPreferences;
       provider: AuthProvider | null;
     }>(
-      `SELECT u.id::text, u.display_name, u.avatar_url, u.phone, u.email, u.username, u.preferences, i.provider
+      `SELECT u.id::text, u.display_name, u.avatar_url, u.phone, u.email, u.username, u.password_hash, u.preferences, i.provider
        FROM auth_sessions s
        JOIN users u ON u.id = s.user_id
        LEFT JOIN LATERAL (
@@ -471,6 +475,7 @@ export async function updateUser(
       phone: string | null;
       email: string | null;
       username: string | null;
+      password_hash: string | null;
       preferences: UserPreferences;
       provider: AuthProvider | null;
     }>(
@@ -481,7 +486,7 @@ export async function updateUser(
          preferences = COALESCE($4::jsonb, preferences),
          updated_at = now()
        WHERE id = $1
-       RETURNING id::text, display_name, avatar_url, phone, email, username, preferences,
+       RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
          (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
       [
         userId,
@@ -507,6 +512,7 @@ export async function updateAvatar(
       phone: string | null;
       email: string | null;
       username: string | null;
+      password_hash: string | null;
       preferences: UserPreferences;
       provider: AuthProvider | null;
     }>(
@@ -515,7 +521,7 @@ export async function updateAvatar(
          avatar_url = $3,
          updated_at = now()
        WHERE id = $1
-       RETURNING id::text, display_name, avatar_url, phone, email, username, preferences,
+       RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
          (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
       [
         userId,

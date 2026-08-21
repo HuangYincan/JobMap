@@ -47,6 +47,8 @@ export interface AccountUser {
   email?: string;
   /** 密码登录账号(provider='password')的用户名 */
   username?: string;
+  /** password_hash 非空(前端据此区分「设置密码」/「修改密码」) */
+  hasPassword: boolean;
   provider: AuthProvider;
   preferences: UserPreferences;
 }
