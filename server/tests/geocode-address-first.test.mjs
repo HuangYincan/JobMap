@@ -107,19 +107,24 @@ test('gradeVariantHit: 精确候选按完整检索串评分, 通用形态回落�
   // 同品牌陷阱 → 两级都拒 → low (name-match 闸门不绕过)
   assert.equal(gradeVariantHit(trap, '网易 杭州研究院', '网易', '浙江省', '杭州市').confidence, 'low');
   // searchQuery === gradeName → 单一评分 (宽候选/既有调用行为不变): 通用形态
-  // POI 照常命中; 整名 POI 在裸公司名单级评分下仍 low — 这正是精确候选
-  // 两级评分的动机 (宽候选不因整名 POI 改变既有 grader 行为).
+  // POI 照常命中。2026-08-22 (fix/grader-seq-relax) 后整名 POI 的「杭州研究院」
+  // 后缀 (城市+限定词复合序列) 也被裸公司名单级评分接受 → high (放宽目标: 真实
+  // 办公室不再因复合限定词被拒); 两级评分的动机保留 — 含非限定词段的全名 POI
+  // (杭州网易严选贸易) 仍两级都拒 (name-match 闸门不绕过).
   assert.equal(gradeVariantHit(hq, '网易', '网易', '浙江省', '杭州市').confidence, 'high');
-  assert.equal(gradeVariantHit(institute, '网易', '网易', '浙江省', '杭州市').confidence, 'low');
+  assert.equal(gradeVariantHit(institute, '网易', '网易', '浙江省', '杭州市').confidence, 'high');
   assert.equal(gradeVariantHit(trap, '网易', '网易', '浙江省', '杭州市').confidence, 'low');
 });
 
 test('pickBestOfficePoi: 精确候选 searchQuery 参与内部评分 (完整名 POI 不被误拒)', () => {
-  // 旧签名 (searchQuery 缺省 = companyName): 完整名 POI 被 name-mismatch 拒 → undefined
-  assert.equal(pickBestOfficePoi([{ ...INSTITUTE }], '网易', '浙江省', '杭州市'), undefined);
-  // 新签名 (传入精确检索串): 完整名 POI 命中
-  const picked = pickBestOfficePoi([{ ...INSTITUTE }], '网易', '浙江省', '杭州市', '网易 杭州研究院');
+  // 旧签名 (searchQuery 缺省 = companyName): 2026-08-22 (fix/grader-seq-relax)
+  // 后「杭州研究院」后缀 (城市+限定词复合) 被裸公司名接受 → 完整名 POI 直接命中;
+  // 精确检索串两级评分路径仍在 (更完整名的 POI 见 gradeVariantHit 陷阱组).
+  const picked = pickBestOfficePoi([{ ...INSTITUTE }], '网易', '浙江省', '杭州市');
   assert.equal(picked?.name, '网易杭州研究院');
+  // 新签名 (传入精确检索串): 完整名 POI 同样命中
+  const pickedPrecise = pickBestOfficePoi([{ ...INSTITUTE }], '网易', '浙江省', '杭州市', '网易 杭州研究院');
+  assert.equal(pickedPrecise?.name, '网易杭州研究院');
 });
 
 // --- regeo 格式化地址兜底补查 ----------------------------------------------
