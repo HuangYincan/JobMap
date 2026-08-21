@@ -390,6 +390,20 @@ test('isLoaded:namespace 安装后 true / 摘除后 false', () => {
   assert.equal(e.isLoaded(), true);
 });
 
+test('isLoaded:残缺命名空间({} 占位无 Map)→ false(getscript 半载形态视为未就绪)', () => {
+  const e = createBaiduEngine();
+  const inst = installEngineMock(BAIDU_NAMESPACE, { coordSystem: 'bd09' });
+  try {
+    // getscript 脚本开头即 window.BMapGL={} 占位;无 Map 构造器 = 半载/异常
+    delete inst.ns.Map;
+    assert.equal(e.isLoaded(), false, '无 Map 构造器 → 未就绪(load 轮询会兜住)');
+    inst.ns.Map = class FakeMap {};
+    assert.equal(e.isLoaded(), true, 'Map 构造器可用 → 功能就绪');
+  } finally {
+    inst.uninstall();
+  }
+});
+
 // ------------------------------------------------------------
 // 2. load:脚本 URL / 幂等 / 失败清理
 // ------------------------------------------------------------
@@ -414,42 +428,100 @@ test('load:有 key 但非浏览器 → script-loader 拒绝', async () => {
   }
 });
 
-test('load:真实脚本 URL + onload 就绪 + 命名空间校验', async () => {
+/** 伪造 document:捕获注入的 script/link 元素(按 tag 过滤) */
+function makeFakeDocument() {
+  const injected = [];
+  const doc = {
+    head: {
+      appended: [],
+      appendChild(el) {
+        this.appended.push(el);
+        injected.push(el);
+      },
+    },
+    createElement(tag) {
+      const el = {
+        tag,
+        src: '',
+        async: false,
+        onload: null,
+        onerror: null,
+        removed: false,
+        remove() {
+          this.removed = true;
+        },
+      };
+      if (tag !== 'script') injected.push(el);
+      return el;
+    },
+    querySelector() {
+      return null; // CSS 幂等守卫:从未注入过
+    },
+  };
+  return { doc, scripts: () => injected.filter((el) => el.tag === 'script'), all: injected };
+}
+
+test('load:真实脚本 URL 直连 getscript(绕过 document.write 包装器)+ 同步注入(async=false)+ 就绪校验', async () => {
   resetScriptLoader(); // 清模块级 URL 缓存(同进程前例可能已缓存该 URL)
   const e = createBaiduEngine();
   const restore = setEnv(KEY_VAR, 'test-key');
   const savedWindow = globalThis.window;
   const savedDocument = globalThis.document;
-  const scripts = [];
+  const { doc, scripts } = makeFakeDocument();
   globalThis.window = globalThis;
-  globalThis.document = {
-    createElement: (tag) => ({
-      tag,
-      src: null,
-      async: false,
-      onload: null,
-      onerror: null,
-      removed: false,
-      remove() {
-        this.removed = true;
-      },
-    }),
-    head: {
-      appendChild(script) {
-        scripts.push(script);
-      },
-    },
-  };
+  globalThis.document = doc;
   try {
     const p = e.load();
-    assert.equal(scripts.length, 1);
+    const [script] = scripts();
+    assert.equal(scripts().length, 1, '首次加载注入一个 script');
     assert.equal(
-      scripts[0].src,
-      'https://api.map.baidu.com/api?v=1.0&type=webgl&ak=test-key',
+      script.src,
+      'https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=test-key',
+      '直连 getscript 本体(官方 /api 包装器 document.write 被浏览器拦截,ws-6 实测)',
     );
-    assert.equal(scripts[0].async, true);
+    assert.equal(script.async, false, '同步注入:async=false(AMap/TMap 默认 async=true,百度专用)');
+    assert.equal(script.defer, false, '同步注入:不使用 defer(同步执行保证 onload 即完整命名空间)');
     globalThis.BMapGL = { Map: class {} };
-    scripts[0].onload();
+    script.onload();
+    await p;
+    assert.equal(e.isLoaded(), true);
+    // 包装器第二支 document.write(注入 bmap.css)的等价物:幂等注入 link
+    const links = doc.head.appended.filter((el) => el.tag === 'link');
+    assert.equal(links.length, 1, 'load 成功后注入 bmap.css link(控件样式)');
+    assert.equal(links[0].href, 'https://api.map.baidu.com/res/webgl/10/bmap.css');
+    assert.equal(links[0].rel, 'stylesheet');
+  } finally {
+    delete globalThis.BMapGL;
+    globalThis.window = savedWindow;
+    globalThis.document = savedDocument;
+    restore();
+  }
+});
+
+test('load:命名空间残缺({} 占位无 Map)→ 就绪轮询等待,补全后放行(不抛错)', async () => {
+  resetScriptLoader();
+  const e = createBaiduEngine();
+  const restore = setEnv(KEY_VAR, 'test-key');
+  const savedWindow = globalThis.window;
+  const savedDocument = globalThis.document;
+  const { doc, scripts } = makeFakeDocument();
+  globalThis.window = globalThis;
+  globalThis.document = doc;
+  try {
+    const p = e.load();
+    const [script] = scripts();
+    globalThis.BMapGL = {}; // getscript 开头占位(半载/异常形态:有对象无构造器)
+    script.onload();
+    let settled = false;
+    p.then(() => {
+      settled = true;
+    }).catch(() => {}); // 派生 promise 必须 catch(同错未处理会被 node:test 判失败)
+    p.catch(() => {}); // 防未处理拒绝噪音
+    await new Promise((r) => setImmediate(r));
+    assert.equal(settled, false, 'onload 后命名空间残缺 → 必须轮询等待,不得立即判就绪');
+    assert.equal(e.isLoaded(), false, '残缺命名空间(isLoaded 功能判定)视为未就绪');
+    // 轮询窗口内命名空间补全(getscript 执行完毕的等价物)→ 放行
+    globalThis.BMapGL = { Map: class {} };
     await p;
     assert.equal(e.isLoaded(), true);
   } finally {
@@ -460,43 +532,71 @@ test('load:真实脚本 URL + onload 就绪 + 命名空间校验', async () => {
   }
 });
 
+test('load:onload 后命名空间永不就绪 → 2s 超时抛「命名空间未就绪」(switch 回滚契约)', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    resetScriptLoader();
+    const e = createBaiduEngine();
+    const restore = setEnv(KEY_VAR, 'test-key');
+    const savedWindow = globalThis.window;
+    const savedDocument = globalThis.document;
+    const { doc, scripts } = makeFakeDocument();
+    globalThis.window = globalThis;
+    globalThis.document = doc;
+    try {
+      const p = e.load();
+      const [script] = scripts();
+      globalThis.BMapGL = {}; // 永不补全
+      script.onload();
+      let settled = false;
+      // then 链派生 promise 必须带 catch:派生 promise 会随 p 以同错 reject,
+      // 裸 then 会留下未处理拒绝(node:test 判「async activity after test ended」)
+      p.then(() => {
+        settled = true;
+      }).catch(() => {});
+      p.catch(() => {}); // 防未处理拒绝噪音(真实错误由下方 await p 抛出)
+      await new Promise((r) => setImmediate(r));
+      // 轮询链是「timer → 微任务续 → 下一 timer」:tick 与微任务排空交替,
+      // 逐拍快进(mock.timers.tick 不同步执行 promise 续体)
+      for (let i = 0; i < 39; i++) {
+        mock.timers.tick(50);
+        await Promise.resolve();
+      }
+      assert.equal(settled, false, '未到轮询上限仍挂起(带超时,不永久挂起)');
+      mock.timers.tick(50);
+      await Promise.resolve();
+      await assert.rejects(p, /命名空间未就绪/, '超时必须抛「命名空间未就绪」(switch 回滚依赖该错误)');
+    } finally {
+      delete globalThis.BMapGL;
+      globalThis.window = savedWindow;
+      globalThis.document = savedDocument;
+      restore();
+    }
+  } finally {
+    mock.timers.reset();
+  }
+});
+
 test('load:onerror → 失败清理(标签移除)+ 可重试', async () => {
   resetScriptLoader(); // 清模块级 URL 缓存(同进程前例可能已缓存该 URL)
   const e = createBaiduEngine();
   const restore = setEnv(KEY_VAR, 'test-key');
   const savedWindow = globalThis.window;
   const savedDocument = globalThis.document;
-  const scripts = [];
+  const { doc, scripts } = makeFakeDocument();
   globalThis.window = globalThis;
-  globalThis.document = {
-    createElement: (tag) => ({
-      tag,
-      src: null,
-      async: false,
-      onload: null,
-      onerror: null,
-      removed: false,
-      remove() {
-        this.removed = true;
-      },
-    }),
-    head: {
-      appendChild(script) {
-        scripts.push(script);
-      },
-    },
-  };
+  globalThis.document = doc;
   try {
     const p = e.load();
-    assert.equal(scripts.length, 1);
-    scripts[0].onerror(new Error('boom'));
+    assert.equal(scripts().length, 1);
+    scripts()[0].onerror(new Error('boom'));
     await assert.rejects(p, /failed to load/);
-    assert.equal(scripts[0].removed, true);
+    assert.equal(scripts()[0].removed, true);
     // 失败清缓存后可重试:再次注入新标签
     const p2 = e.load();
-    assert.equal(scripts.length, 2);
+    assert.equal(scripts().length, 2);
     globalThis.BMapGL = { Map: class {} };
-    scripts[1].onload();
+    scripts()[1].onload();
     await p2;
     assert.equal(e.isLoaded(), true);
   } finally {

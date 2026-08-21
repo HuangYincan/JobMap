@@ -39,20 +39,104 @@ import type {
 } from '../types.ts';
 import { bd09ToGcj02, gcj02ToBd09 } from '../coord-utils.ts';
 import { loadScript } from '../script-loader.ts';
+import type { ScriptConfig, ScriptInjection } from '../script-loader.ts';
 
 /** 百度 GL 全局命名空间名(与 engine-registry 描述一致) */
 export const BAIDU_NAMESPACE = 'BMapGL';
 /** 百度 AK 环境变量名(与 engine-registry 描述一致) */
 export const BAIDU_KEY_VAR = 'NEXT_PUBLIC_BAIDU_AK';
+/** BMapGL 就绪轮询间隔(ms):getscript 同步定义命名空间,轮询为防御(半载/异常) */
+const BAIDU_READY_POLL_MS = 50;
+/** BMapGL 就绪轮询上限(40 × 50ms = 2s):超时抛「命名空间未就绪」,
+ * switch 回滚契约依赖该错误(2026-08-22 ws-6 与 TMap 就绪超时同量级) */
+const BAIDU_READY_MAX_POLLS = 40;
 /**
- * 官方脚本 URL(快速上手文档):
- * https://api.map.baidu.com/api?v=1.0&type=webgl&ak=<AK>
- * 注:官方亦支持 &callback=<fn> 异步回调参数;本实现用 script-loader 的
- * onload 模式(脚本同步定义 window.BMapGL,onload 即就绪,不依赖厂商回调,
- * 无挂起风险)。
+ * 官方 GL 加载器 URL(2026-08-22 ws-6 实测坐实,见 tech/23 回填):
+ * **直连 getscript 本体,绕过 /api 包装器**。
+ * 诊断:官方 /api 包装器(401B)内部 `document.write` 注入 getscript 子脚本
+ * + bmap.css —— 运行时异步注入(SPA)时浏览器拦截 document.write
+ * (Failed to execute 'write' on 'Document')→ 子脚本不加载 → BMapGL 永不
+ * 就绪 → switchEngine 失败回滚(boss 冒烟坐实)。getscript 本体(实测 1.2MB,
+ * 2026-08-22 抓取)grep 零 document.write,同步定义 window.BMapGL +
+ * BMAPGL_* 常量 → 直连即绕开拦截。
+ * 注 1:`v=3.0` 的 /api 包装器与 `v=1.0` 逐字节相同(实测)——升级版本号
+ * 不解决 document.write,故沿用 getscript v=1.0(当前 GL 唯一真实入口)。
+ * 注 2:官方文档 URL https://api.map.baidu.com/api?v=1.0&type=webgl&ak=<AK>
+ * 仅用于浏览器地址栏同步解析场景;本引擎的运行时注入一律直连 getscript。
  */
 export const BAIDU_SCRIPT_URL = (ak: string): string =>
-  `https://api.map.baidu.com/api?v=1.0&type=webgl&ak=${encodeURIComponent(ak)}`;
+  `https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=${encodeURIComponent(ak)}`;
+
+// ------------------------------------------------------------
+// BMapGL 脚本注入(Baidu 专用同步注入器 + 就绪轮询)
+// ------------------------------------------------------------
+
+/**
+ * BMapGL 同步注入器:script.async=false + 无 defer + 挂 document.head 最前。
+ * - script-loader 默认注入器是 async=true(AMap/TMap 场景);BMapGL 不走默认
+ *   路径 —— getscript 同步执行,onload 时 window.BMapGL 已完整定义。
+ * - 不再依赖厂商 callback 参数(官方 /api 包装器即便带 &callback= 也绕不开
+ *   内部 document.write 拦截),onload 即就绪。
+ */
+function injectBaiduScript(
+  conf: ScriptConfig,
+  hooks: { onload: () => void; onerror: (err?: unknown) => void },
+): ScriptInjection | null {
+  if (typeof document === 'undefined') {
+    hooks.onerror(new Error('[map-engine] document is not available for script injection'));
+    return null;
+  }
+  const script = document.createElement('script');
+  script.src = conf.url;
+  script.async = false;
+  script.defer = false;
+  script.onload = () => hooks.onload();
+  script.onerror = () => hooks.onerror(new Error(`${conf.globalVar} script failed to load`));
+  // head 最前:同步注入语义下尽可能先于页面其他脚本执行(防执行序竞态)
+  const head = document.head;
+  if (head?.firstChild) head.insertBefore(script, head.firstChild);
+  else head?.appendChild(script);
+  return { element: script };
+}
+
+/** 包装器第二支 document.write 的等价物:bmap.css 幂等注入(控件样式;
+ * 底图 canvas 渲染不依赖,失败静默降级) */
+function injectBaiduCss(): void {
+  if (typeof document === 'undefined') return;
+  const href = 'https://api.map.baidu.com/res/webgl/10/bmap.css';
+  try {
+    if (typeof document.querySelector === 'function' && document.querySelector(`link[href="${href}"]`)) {
+      return;
+    }
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head?.appendChild(link);
+  } catch {
+    // CSS 注入失败静默:控件样式降级,不影响地图渲染
+  }
+}
+
+/**
+ * BMapGL 命名空间是否**功能就绪**:getscript 在脚本开头即 `window.BMapGL={}`
+ * 占位,半载/异常时命名空间残缺(有对象但无 Map 构造器)——以核心构造器
+ * Map 可用为准(比「存在」严格;engine-mock 安装的 ns 同样含 Map,兼容)。
+ */
+function baiduNamespaceReady(): boolean {
+  const ns = baiduNamespace();
+  return !!ns && typeof ns.Map === 'function';
+}
+
+/**
+ * 轮询等待 BMapGL 功能就绪(带超时上限;静默返回,由调用方抛错)。
+ * 迭代计数而非墙钟:mock.timers 可确定性快进(不依赖 Date.now 被 mock)。
+ */
+async function waitForBaiduNamespace(): Promise<void> {
+  for (let i = 0; i < BAIDU_READY_MAX_POLLS; i++) {
+    if (baiduNamespaceReady()) return;
+    await new Promise((resolve) => setTimeout(resolve, BAIDU_READY_POLL_MS));
+  }
+}
 
 // ------------------------------------------------------------
 // 厂商 API 最小类型面(项目无 @types/bmapgl;按官方文档核实的命名声明,
@@ -727,7 +811,9 @@ class BaiduEngine implements MapEngine {
   }
 
   isLoaded(): boolean {
-    return baiduNamespace() !== undefined;
+    // 功能就绪判定(比「命名空间存在」严格):getscript 脚本开头即 BMapGL={}
+    // 占位,残缺命名空间(无 Map)视为未就绪(半载/异常可被 load 轮询捕获)
+    return baiduNamespaceReady();
   }
 
   async load(): Promise<void> {
@@ -736,10 +822,21 @@ class BaiduEngine implements MapEngine {
     if (!ak) {
       throw new Error(`[map-engine] baidu 未配置 ${BAIDU_KEY_VAR}`);
     }
-    await loadScript({ url: BAIDU_SCRIPT_URL(ak), globalVar: BAIDU_NAMESPACE });
-    if (!this.isLoaded()) {
+    // 同步注入(async=false + head 最前)直连 getscript 本体:getscript 零
+    // document.write(2026-08-22 实测),同步执行保证 onload 即完整命名空间;
+    // 不用默认 async 注入器(AMap/TMap 场景)与厂商 callback 参数。
+    await loadScript(
+      { url: BAIDU_SCRIPT_URL(ak), globalVar: BAIDU_NAMESPACE },
+      { inject: injectBaiduScript },
+    );
+    // 轮询就绪(带超时):onload 后命名空间可能残缺(脚本异常/半载)——
+    // 就绪轮询兜底,超时抛错(switch 回滚契约依赖该错误文案)
+    await waitForBaiduNamespace();
+    if (!baiduNamespaceReady()) {
       throw new Error('[map-engine] BMapGL 脚本加载完成但命名空间未就绪');
     }
+    // 包装器第二支 document.write 的等价物(控件样式;幂等,失败静默)
+    injectBaiduCss();
   }
 
   async createView(opts: MapViewCreateOptions): Promise<MapView> {
