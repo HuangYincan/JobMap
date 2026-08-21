@@ -414,7 +414,6 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
                   onChange={(e) => setCode(e.target.value)}
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  placeholder="000000"
                 />
               </label>
               <button
