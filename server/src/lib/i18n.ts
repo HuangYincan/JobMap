@@ -1048,3 +1048,11 @@ export function getBrowserLanguage(): Language {
 export function t(key: keyof typeof translations, lang: Language): string {
   return translations[key][lang];
 }
+
+/** 选项/筛选标签:英文 UI 用 labelEn,缺失回退中文 label。 */
+export function uiLabel(
+  o: { label: string; labelEn?: string },
+  lang: Language,
+): string {
+  return lang === 'en' ? (o.labelEn ?? o.label) : o.label;
+}

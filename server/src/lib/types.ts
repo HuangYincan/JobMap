@@ -211,12 +211,16 @@ export type FilterType =
 export interface FilterOption {
   value: string;
   label: string;
+  /** 英文标签：英文 UI 优先使用,缺失时回退中文 label(见 uiLabel) */
+  labelEn?: string;
   children?: FilterOption[];
 }
 
 export interface FilterConfig {
   key: string;
   label: string;
+  /** 英文标签：筛选标题,英文 UI 优先使用,缺失时回退中文 label(见 uiLabel) */
+  labelEn?: string;
   type: FilterType;
   options?: FilterOption[];
   /** range/slider 专用 */
@@ -224,12 +228,16 @@ export interface FilterConfig {
   max?: number;
   step?: number;
   unit?: string;
+  /** 英文单位后缀：range/slider 专用,英文 UI 优先使用,缺失时回退 unit */
+  unitEn?: string;
 }
 
 /** 排序选项 */
 export interface SortOption {
   key: string;
   label: string;
+  /** 英文标签：英文 UI 优先使用,缺失时回退中文 label(见 uiLabel) */
+  labelEn?: string;
 }
 
 /** 筛选状态（用户选中的值） */
