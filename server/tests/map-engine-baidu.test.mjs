@@ -27,6 +27,11 @@ import {
   BAIDU_NAMESPACE,
   createBaiduEngine,
 } from '../src/lib/map-engine/baidu/baidu-engine.ts';
+import {
+  preflightRemoteIcon,
+  remoteIconStatus,
+  resetIconPreflightCache,
+} from '../src/lib/map-engine/icon-preflight.ts';
 
 const KEY_VAR = 'NEXT_PUBLIC_BAIDU_AK';
 const EPS = 1e-5;
@@ -413,6 +418,7 @@ afterEach(() => {
   delete globalThis.BMAPGL_NORMAL_MAP;
   delete globalThis.BMAPGL_SATELLITE_MAP;
   mockNs = null;
+  resetIconPreflightCache(); // ws-e icon 防御测试:清预检会话缓存
 });
 
 async function makeView(extra = {}) {
@@ -1809,5 +1815,86 @@ test('createMarker 锚点:Icon 构造失败 → content 标记位置降级 warn 
   } finally {
     mockNs.ns.Icon = origIcon;
     console.warn = origWarn;
+  }
+});
+
+// ---- ws-e(2026-08-22,fix/icon-cors-preflight):icon 路径 CORS 防御 ----
+// BMapGL 同为 WebGL 渲染,`new Icon(远程URL)` 纹理必须 CORS-clean;远程
+// 未预检/已失败 → 回退 content 锚点路径(msTarget DOM 渲染 <img> 无需
+// CORS),后台预检成功后再升级。相对路径/dataURL 行为零变化(见既有 icon 测试)。
+
+const settle = () => new Promise((r) => setTimeout(r, 0));
+
+test('createMarker icon 防御(ws-e):远程未验证 → 回退 content 锚点路径 + 后台预检', async () => {
+  setup();
+  const { view } = await makeView();
+  const originalFetch = globalThis.fetch;
+  const fetchCalls = [];
+  globalThis.fetch = (url, opts) => {
+    fetchCalls.push({ url, opts });
+    return Promise.resolve(new Response('', { status: 200 }));
+  };
+  try {
+    const marker = view.createMarker({
+      position: GCJ,
+      content: '<b>徽章</b>',
+      icon: { src: 'https://favicon.im/example.com', size: [24, 24] },
+    });
+    const raw = marker.raw;
+    assert.ok(raw.icon instanceof FakeIcon, '远程未验证 → 不构造远程 Icon,回退 content 锚点图标');
+    assert.ok(String(raw.icon.url).startsWith('data:'), '锚点图标为本地 dataURL(透明 1×1)');
+    assert.equal(raw.icon.size.width, 1, '锚点图标 1×1');
+    assert.equal(raw.content, '<b>徽章</b>', 'content 已设(msTarget DOM 渲染,<img> 无需 CORS)');
+    assert.equal(fetchCalls.length, 1, '未验证 → 触发后台预检');
+    assert.equal(fetchCalls[0].url, 'https://favicon.im/example.com');
+    assert.deepEqual(fetchCalls[0].opts, { mode: 'cors' });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('createMarker icon 防御(ws-e):预检 ok → 真 URL Icon;fail → 回退 content 路径不重试', async () => {
+  setup();
+  const { view } = await makeView();
+  const originalFetch = globalThis.fetch;
+  const fetchCalls = [];
+  globalThis.fetch = (url, opts) => {
+    fetchCalls.push({ url, opts });
+    return Promise.resolve(new Response('', { status: 200 }));
+  };
+  try {
+    // 预检成功 → 真 logo 直通,缓存命中不重复预检
+    preflightRemoteIcon('https://favicon.im/ok.example');
+    await settle();
+    assert.equal(remoteIconStatus('https://favicon.im/ok.example'), 'ok');
+    const m1 = view.createMarker({
+      position: GCJ,
+      icon: { src: 'https://favicon.im/ok.example', size: [24, 24] },
+    });
+    assert.ok(m1.raw.icon instanceof FakeIcon);
+    assert.equal(m1.raw.icon.url, 'https://favicon.im/ok.example', 'ok → 真 logo 直通');
+    assert.equal(fetchCalls.length, 1, 'ok 缓存命中不重复预检');
+
+    // 预检失败 → 回退 content 锚点路径;失败记忆化同一 URL 不重试
+    resetIconPreflightCache();
+    const failFetch = [];
+    globalThis.fetch = () => {
+      failFetch.push(1);
+      return Promise.reject(new TypeError('CORS blocked'));
+    };
+    preflightRemoteIcon('https://favicon.im/fail.example');
+    await settle();
+    assert.equal(remoteIconStatus('https://favicon.im/fail.example'), 'fail');
+    const m2 = view.createMarker({
+      position: GCJ,
+      content: '<b>徽章2</b>',
+      icon: { src: 'https://favicon.im/fail.example', size: [24, 24] },
+    });
+    assert.ok(String(m2.raw.icon.url).startsWith('data:'), 'fail → 回退 content 锚点(dataURL)');
+    assert.equal(m2.raw.icon.size.width, 1);
+    assert.equal(failFetch.length, 1, 'fail 记忆化:同一 URL 不重试');
+    assert.equal(m2.raw.content, '<b>徽章2</b>', 'content 仍渲染');
+  } finally {
+    globalThis.fetch = originalFetch;
   }
 });

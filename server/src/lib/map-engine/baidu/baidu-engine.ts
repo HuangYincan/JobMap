@@ -39,6 +39,7 @@ import type {
 } from '../types.ts';
 import { bd09ToGcj02, gcj02ToBd09 } from '../coord-utils.ts';
 import { loadScript, resetScriptLoader } from '../script-loader.ts';
+import { isRemoteIconUrl, preflightRemoteIcon, remoteIconStatus } from '../icon-preflight.ts';
 import type { ScriptConfig, ScriptInjection } from '../script-loader.ts';
 
 /** 百度 GL 全局命名空间名(与 engine-registry 描述一致) */
@@ -667,7 +668,32 @@ class BaiduMapView implements MapView {
     // 量起;缺省 (0,0) = 左上角,与 AMap 无 offset 语义一致)
     const ax = opts.offset ? -opts.offset[0] : 0;
     const ay = opts.offset ? -opts.offset[1] : 0;
+    // icon 路径 CORS 防御(2026-08-22 ws-e,fix/icon-cors-preflight):
+    // BMapGL 同为 WebGL 渲染,`new Icon(url)` 的远程纹理必须 CORS-clean——
+    // favicon.im 等候选无 CORS 头时纹理恒加载失败(与 TMap 同病)。核查结论:
+    // baidu-engine 确有 icon 路径接收远程 URL(下方 Icon 构造),故同样接
+    // icon-preflight 预检防御:data URI / 已预检 ok → 真 src 原样;远程未
+    // 预检/已失败 → 回退 content 锚点路径(msTarget DOM 渲染,<img> 无需
+    // CORS;content 已在上面 setContent,此处只补透明 1×1 锚点图标)——仅
+    // 防御,现有 content 路径行为零改动;未预检时后台触发预检,成功后下次
+    // 重建自然升级。当前业务方无人给 BMapGL 传远程 icon(公司 POI 走 content,
+    // 蓝点/聚合徽章均为 dataURL),本分支纯防御性接入。
+    let iconUsable = false;
     if (opts.icon) {
+      // 仅 http(s) 远程 URL 需要 CORS 闸(data:/相对路径同源恒安全直通,
+      // 既有相对路径 icon 行为零变化)
+      if (!isRemoteIconUrl(opts.icon.src)) {
+        iconUsable = true;
+      } else {
+        const status = remoteIconStatus(opts.icon.src);
+        if (status === 'ok' || status === 'data') iconUsable = true;
+        else if (status === 'unknown') {
+          iconUsable = false;
+          preflightRemoteIcon(opts.icon.src);
+        }
+      }
+    }
+    if (iconUsable && opts.icon) {
       // icon 规格(契约)→ BMapGL.Icon(url, size, { offset: anchor });size 为
       // 必传第二参 → 缺省兜底 BMapGL 默认 marker 尺寸 21x21
       if (typeof raw.setIcon === 'function' && typeof this.ns.Icon === 'function') {
