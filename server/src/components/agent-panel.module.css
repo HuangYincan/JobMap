@@ -193,47 +193,40 @@
   word-break: break-word;
 }
 
+/* 流式输入指示(2026-08-22 ws-bubble:思考提示已删除)——三点跳动,纯视觉无文字 */
 .typing {
-  animation: typingPulse 1.4s ease-in-out infinite;
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+  padding: 10px 12px;
 }
 
-@keyframes typingPulse {
+.typingDot {
+  animation: typingDot 1.2s ease-in-out infinite;
+  background: #007aFF;
+  border-radius: 50%;
+  height: 5px;
+  opacity: 0.35;
+  width: 5px;
+}
+
+.typingDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typingDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingDot {
   0%,
   100% {
-    opacity: 0.55;
+    opacity: 0.35;
+    transform: translateY(0);
   }
   50% {
     opacity: 1;
-  }
-}
-
-/* 思考状态行(只显示「思考中…/思考完成」状态,不渲染思考内容;muted 弱化) */
-.thinking {
-  align-self: flex-start;
-  background: rgba(120, 140, 160, 0.06);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.5;
-  margin-bottom: 6px;
-  max-width: 86%;
-  min-width: 120px;
-  padding: 5px 10px;
-}
-
-/* 思考中:弱脉冲动画(提示进行中) */
-.thinkingActive {
-  animation: thinkingPulse 1.4s ease-in-out infinite;
-}
-
-@keyframes thinkingPulse {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
+    transform: translateY(-2px);
   }
 }
 

@@ -966,22 +966,26 @@ test('agent panel follows the ball via transform anchor (ws-c-enhance)', () => {
   assert.match(ball, /dragging=\{dragging\}/);
 });
 
-test('agent panel renders thinking status + tool activity for assistant messages (ws-thinkfix)', () => {
+test('agent panel: 思考提示与空白气泡已删除,工具活动保留 (ws-bubble)', () => {
   const panel = src('components/agent-panel.tsx');
   const css = src('components/agent-panel.module.css');
   const i18n = src('lib/i18n.ts');
-  // 思考只显示状态行(不渲染内容):「思考中…」/「思考完成」+ 思考中弱脉冲
-  assert.match(panel, /m\.reasoning === "thinking" \? t\("agentThinking", lang\) : t\("agentThinkingDone", lang\)/);
-  assert.match(panel, /thinkingActive/);
-  assert.match(css, /\.thinkingActive \{[\s\S]*animation: thinkingPulse/);
-  assert.match(css, /\.thinking \{/);
-  // 折叠思考块(内容渲染)已整体移除
-  assert.doesNotMatch(panel, /thinkingToggle/, '折叠按钮已移除');
-  assert.doesNotMatch(panel, /thinkingBody/, '思考正文已移除');
-  assert.doesNotMatch(panel, /thinkingChevron/, '折叠箭头已移除');
-  assert.doesNotMatch(panel, /collapsedThinking/, '折叠状态已移除');
-  assert.doesNotMatch(panel, /agentThinkingSection/, '思考过程标题已移除');
-  assert.doesNotMatch(panel, /\{m\.reasoning\}/, '思考内容一律不渲染');
+  // 思考提示整体删除:状态行 JSX / 思考回调 / 事件分支 / i18n 键全部清零
+  assert.doesNotMatch(panel, /thinking|thinkingActive|💭/, '思考状态行 JSX 已删除');
+  assert.doesNotMatch(panel, /handleReasoning/, '思考回调已删除');
+  assert.doesNotMatch(panel, /onReasoning/, '执行器回调链不再挂思考回调');
+  assert.doesNotMatch(panel, /case "reasoning":[\s\S]*handleReasoning/, '事件入口不再消费 reasoning');
+  assert.doesNotMatch(panel, /\{m\.reasoning\}|m\.reasoning ===/, '消息不再读取思考状态字段');
+  assert.doesNotMatch(panel, /agentThinking/, '面板不再引用思考 i18n 键');
+  assert.doesNotMatch(css, /thinking|thinkingPulse/, '思考相关 CSS 类/动画已删除');
+  assert.doesNotMatch(i18n, /agentThinking/, 'agentThinking / agentThinkingDone 键已删除');
+  // 空白气泡:assistant 内容为空(trim 后)→ 不渲染气泡 div(纯工具轮只显示工具活动)
+  assert.match(panel, /m\.content\.trim\(\)/, '气泡按 content.trim() 条件渲染');
+  assert.match(panel, /m\.role === "user" \|\| m\.content\.trim\(\)/, '用户消息恒渲染气泡');
+  // 流式输入指示:三点跳动(纯视觉无文字),替代原「思考中…」文本
+  assert.match(panel, /typingDot/, '打字指示点渲染');
+  assert.match(css, /\.typingDot \{[\s\S]*animation: typingDot/);
+  assert.match(i18n, /agentTyping: \{[\s\S]*正在输入…[\s\S]*Typing…/);
   // 工具活动列表:⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案(不再显示内部名/summary)
   assert.match(panel, /toolActivity/);
   assert.match(panel, /toolCategoryName\(toolItem\.name, lang\)/);
@@ -989,7 +993,7 @@ test('agent panel renders thinking status + tool activity for assistant messages
   assert.match(panel, /toolRowError/);
   assert.doesNotMatch(panel, /toolItem\.summary/, 'tool 行不再渲染 summary(公开事件不携带)');
   assert.match(css, /\.toolActivity \{/);
-  // 轮序 = 消息序:工具活动列表渲染在文本气泡下方(思考 → 气泡 → 工具 → 动作按钮)
+  // 轮序 = 消息序:工具活动列表渲染在文本气泡下方(气泡 → 工具 → 动作按钮)
   const bubbleIdx = panel.indexOf('bubbleAssistant');
   const toolsIdx = panel.indexOf('toolActivity');
   assert.ok(bubbleIdx !== -1 && toolsIdx !== -1 && bubbleIdx < toolsIdx, '工具活动列表应在文本气泡下方');
@@ -999,10 +1003,6 @@ test('agent panel renders thinking status + tool activity for assistant messages
   assert.match(panel, /import \{ MarkdownText \} from "\.\/markdown-text"/);
   assert.match(panel, /<MarkdownText text=\{stripActionJsonBlocks\(m\.content\)\} lang=\{lang\} \/>/);
   assert.match(panel, /stripActionJsonBlocks\(m\.content\)/);
-  // i18n 新键:思考状态(思考中… / 思考完成);思考过程键已删除
-  assert.match(i18n, /agentThinking: \{[\s\S]*思考中…[\s\S]*Thinking…/);
-  assert.match(i18n, /agentThinkingDone: \{[\s\S]*思考完成[\s\S]*Thinking done/);
-  assert.doesNotMatch(i18n, /agentThinkingSection/, '思考过程 i18n 键已删除');
   assert.match(i18n, /agentToolsSection: \{[\s\S]*工具调用[\s\S]*Tool calls/);
   // 既有能力保留
   assert.match(panel, /replayAction/);

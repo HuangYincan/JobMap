@@ -960,13 +960,9 @@ export const translations = {
     zh: '撤销上一步',
     en: 'Undo',
   },
-  agentThinking: {
-    zh: '思考中…',
-    en: 'Thinking…',
-  },
-  agentThinkingDone: {
-    zh: '思考完成',
-    en: 'Thinking done',
+  agentTyping: {
+    zh: '正在输入…',
+    en: 'Typing…',
   },
   agentToolsSection: {
     zh: '工具调用',
