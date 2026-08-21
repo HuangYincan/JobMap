@@ -705,6 +705,10 @@ test('map-engine core contract: env keyVars + priority order + coordinate norm (
   assert.match(types, /规范坐标 = gcj02/);
   // 偏好 key 契约
   assert.match(preference, /domain-map:engine/);
+  // 偏好会话级契约:sessionStorage(新会话/标签页默认回落优先级第一=高德),
+  // 不再使用 localStorage 跨会话持久化(用户要求默认高德)
+  assert.match(preference, /sessionStorage/);
+  assert.doesNotMatch(preference, /localStorage/);
 });
 
 test('map-engine core: registry skeleton never touches vendor SDK globals directly (ws-b)', () => {

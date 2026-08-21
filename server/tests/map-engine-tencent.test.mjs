@@ -78,15 +78,18 @@ function installTMapDouble() {
     },
   };
 
-  // 真实 TMap.Map(container, options) 双参签名
+  // 真实 TMap.Map(container, options) 双参签名;模拟异步初始化:构造后
+  // 延迟触发 idle 表示地图就绪(createView 等待它;无同步就绪 API)
   ns.Map = class TMapMapView extends MockView {
     constructor(container, opts = {}) {
       super({ ...opts, container });
       this.container = container;
+      setTimeout(() => this.trigger('idle'), 10);
     }
   };
 
-  // —— 在共享 mock 上补 vendor 方法面(getState 之外的取值器 / setBaseMap / off)——
+  // —— 在共享 mock 上补 vendor 方法面(getState 之外的取值器 / setBaseMap / off /
+  // 控件 API / getContainer)——
   const viewPatches = {
     getCenter() {
       const c = this.state.center;
@@ -106,7 +109,22 @@ function installTMapDouble() {
     },
     off(event, cb) {
       const list = this.listeners.get(event) ?? [];
-      this.listeners.set(event, list.filter((f) => f !== cb));
+      const rest = list.filter((f) => f !== cb);
+      // 空键删除:保持 listeners 只含有效监听(就绪等待的 ready/idle 解绑后即消失)
+      if (rest.length === 0) this.listeners.delete(event);
+      else this.listeners.set(event, rest);
+    },
+    getContainer() {
+      return this.container;
+    },
+    setShowControl(v) {
+      this.showControl = v;
+    },
+    getControl(id) {
+      return this.controls?.get(id) ?? null;
+    },
+    removeControl(ctrl) {
+      this.controls?.delete(ctrl.id);
     },
   };
   const markerPatches = {
@@ -293,6 +311,137 @@ test('createView:TMap.Map(container, opts) 参数传递,LatLng 纬度在前', as
     assert.equal(view.raw.opts.pitch, 30);
     assert.equal(view.raw.opts.rotation, 45);
     assert.deepEqual(view.raw.opts.baseMap, { type: 'vector' }, 'normal → 矢量底图');
+    assert.equal(view.raw.opts.showControl, false, '构造 options 必须传 showControl:false(禁用默认控件)');
+    assert.equal(view.raw.showControl, false, '构造后 setShowControl(false) 补防御');
+    assert.equal(view.raw.listeners.size, 0, '就绪等待的 ready/idle 监听必须解绑');
+  } finally {
+    restore();
+  }
+});
+
+test('createView:地图异步初始化——等 idle 事件就绪再返回;超时兜底不阻塞', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    // 非自动就绪 Map:模拟真实 TMap 异步初始化,由测试手动触发 idle
+    let lastMap = null;
+    ns.Map = class DeferredReadyMap extends MockView {
+      constructor(container, opts = {}) {
+        super({ ...opts, container });
+        this.container = container;
+        lastMap = this;
+      }
+    };
+    const p = TENCENT_ENGINE.createView({
+      container: { nodeType: 1 },
+      center: { lng: 120.15, lat: 30.27 },
+      zoom: 12,
+      style: 'normal',
+    });
+    let settled = false;
+    p.then(() => {
+      settled = true;
+    });
+    p.catch(() => {}); // 防未处理拒绝噪音(真实错误由下方 await p 抛出)
+    await new Promise((r) => setTimeout(r, 30));
+    assert.equal(settled, false, '地图未就绪时 createView 必须挂起等待,不得提前返回');
+
+    // 触发 idle(底层 moveend/zoomend → 300ms debounce 后的就绪信号)
+    lastMap.trigger('idle');
+    const t0 = Date.now();
+    const view = await p;
+    assert.ok(view.raw instanceof ns.Map, '就绪后返回视图');
+    assert.ok(Date.now() - t0 < 1000, '事件驱动就绪必须在超时(3s)前返回');
+    assert.equal(view.raw.listeners.size, 0, '就绪后 ready/idle 监听必须解绑(off 清理)');
+  } finally {
+    restore();
+  }
+});
+
+test('createView:老版本 SDK 忽略 showControl → getControl/removeControl 摘除默认控件', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    const removed = [];
+    // 忠实老版本:构造 options 的 showControl 被忽略(zoom/scale 仍被创建)
+    ns.Map = class IgnoreShowControlMap extends MockView {
+      constructor(container, opts = {}) {
+        super({ ...opts, container });
+        this.container = container;
+        this.controls = new Map([
+          ['zoom', { id: 'zoom' }],
+          ['scale', { id: 'scale' }],
+        ]);
+        setTimeout(() => this.trigger('idle'), 10);
+      }
+      getControl(id) {
+        return this.controls.get(id) ?? null;
+      }
+      removeControl(ctrl) {
+        removed.push(ctrl.id);
+        this.controls.delete(ctrl.id);
+      }
+      setShowControl() {
+        // 老版本无此方法(不应被调用路径依赖)
+      }
+    };
+    const view = await createView();
+    assert.deepEqual(removed.sort(), ['scale', 'zoom'], '构造后必须摘除默认 zoom/scale 控件');
+    assert.equal(view.raw.controls.size, 0, '默认控件全部摘除');
+  } finally {
+    restore();
+  }
+});
+
+test('createView:控件 API 全缺失 → DOM 兜底隐藏控件层(不碰 canvas,版权保留可见)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    const controlEl = { style: {}, className: 'tmap-zoom-control' };
+    const copyrightEl = { style: {}, className: 'tmap-copyright' };
+    const canvasEl = { style: {}, className: 'tmap-canvas' };
+    const container = {
+      nodeType: 1,
+      querySelectorAll(sel) {
+        // 忠实模拟 DOM 选择器:只返回 className 命中选择器子串的元素
+        const terms = [...sel.matchAll(/class\*="([^"]+)"/g)].map((m) => m[1]);
+        return [controlEl, copyrightEl, canvasEl].filter((el) =>
+          terms.some((t) => el.className.includes(t)),
+        );
+      },
+    };
+    // 关闭共享 mock 上补的控件 API(该路径真实场景为更老版本 SDK 无这些方法)
+    const hadControlApi = Object.hasOwn(MockView.prototype, 'getControl');
+    const hadRemove = Object.hasOwn(MockView.prototype, 'removeControl');
+    const hadSet = Object.hasOwn(MockView.prototype, 'setShowControl');
+    delete MockView.prototype.getControl;
+    delete MockView.prototype.removeControl;
+    delete MockView.prototype.setShowControl;
+    try {
+      ns.Map = class NoControlApiMap extends MockView {
+        constructor(c, opts = {}) {
+          super({ ...opts, container: c });
+          this.container = c;
+          setTimeout(() => this.trigger('idle'), 10);
+        }
+        getContainer() {
+          return container;
+        }
+      };
+      await createView({ container });
+      assert.equal(controlEl.style.display, 'none', '交互控件必须隐藏(display:none)');
+      assert.equal(controlEl.style.pointerEvents, 'none', '交互控件同时解除点击');
+      assert.equal(copyrightEl.style.display, undefined, '版权标识保留可见(ToS 署名)');
+      assert.equal(copyrightEl.style.pointerEvents, 'none', '版权标识解除点击拦截');
+      assert.equal(canvasEl.style.display, undefined, 'canvas 不得隐藏');
+    } finally {
+      if (hadControlApi) MockView.prototype.getControl = () => null;
+      if (hadRemove) MockView.prototype.removeControl = () => {};
+      if (hadSet) MockView.prototype.setShowControl = () => {};
+    }
   } finally {
     restore();
   }
@@ -435,6 +584,52 @@ test('createMarker:offset 元组 → {x,y} 对象、LatLng 纬度在前、onClic
     marker.remove();
     assert.equal(marker.raw.map, null, 'GL Marker 移除 = setMap(null)');
   } finally {
+    restore();
+  }
+});
+
+test('createMarker:无 content(纯 position POI)+ 默认 zIndex;显式 zIndex 仍优先', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { restore } = installTMapDouble();
+  try {
+    const view = await createView();
+    const marker = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      offset: [0, -14],
+    });
+    assert.ok(marker.raw instanceof MockMarker);
+    assert.deepEqual({ ...marker.raw.opts.position }, { lat: 30.28, lng: 120.16 }, 'Marker position LatLng 纬度在前');
+    assert.equal(marker.raw.opts.content, undefined, '无 content 场景不得注入 content(纯 position+offset POI)');
+    assert.equal(marker.raw.opts.zIndex, 10, '未显式 zIndex → 默认 10(POI 在底图之上可见)');
+    assert.deepEqual(marker.raw.opts.offset, { x: 0, y: -14 });
+    assert.equal(marker.raw.opts.map, view.raw);
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker:构造失败 → console.error 可见 + rethrow(保留 addMarker 簿记语义)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  const errors = [];
+  const origError = console.error;
+  console.error = (...args) => errors.push(args);
+  const OrigMarker = ns.Marker;
+  ns.Marker = class ThrowingMarker {
+    constructor() {
+      throw new Error('marker boom');
+    }
+  };
+  try {
+    const view = await createView();
+    assert.throws(() => view.createMarker({ position: { lng: 1, lat: 2 } }), /marker boom/, '必须 rethrow(调用方簿记依赖)');
+    assert.equal(errors.length, 1, '失败必须 console.error(可观测,addMarker 的 try/catch 会吞掉)');
+    assert.match(String(errors[0][0]), /TMap Marker 创建失败/);
+  } finally {
+    console.error = origError;
+    ns.Marker = OrigMarker;
     restore();
   }
 });
