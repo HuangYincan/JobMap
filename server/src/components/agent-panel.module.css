@@ -1,6 +1,7 @@
 /* AI Agent 聊天面板:360px × 70vh liquid glass 卡片浮层,以悬浮球为锚实时跟随
    (transform 锚定,--px/--py 由组件 inline 注入;入场动画与定位共用同一变量);
-   移动端(≤767px)与极窄视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。 */
+   移动端(≤767px):浮动实例 display:none,AI 内嵌进移动抽屉 agent sheet(见 .panel.embedded);
+   极窄桌面视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。 */
 
 .panel {
   animation: panelIn 0.25s cubic-bezier(0.32, 0.72, 0, 1);
@@ -732,22 +733,34 @@
   opacity: 0.4;
 }
 
-/* 移动端:全宽底部 sheet(参照 mobileDrawer);不受球位置影响(transform 覆盖为 none) */
+/* 移动端(≤767px):桌面浮动实例整体隐藏(悬浮球 ≤767px 已隐藏,浮动面板不再出现——
+   桌面开着面板缩窗到移动端也不得漂浮);移动端 AI 入口 = 工具栏 AI item →
+   drawer 内嵌 agent sheet(embedded 修饰类随抽屉流,由 map-shell .mobileAgent 包装) */
 @media (max-width: 767px) {
   .panel {
-    border-bottom: 0;
-    border-radius: 20px 20px 0 0;
-    bottom: 0;
-    height: min(72svh, 560px);
-    left: 0;
-    right: 0;
+    display: none;
+  }
+
+  /* 内嵌(drawer sheet body):回归文档流,填满 .mobileAgent 包装(flex column,
+     height: 100%; min-height: 0),面板 flex: 1 接管高度;圆角/边框/阴影跟随抽屉
+     sheet(不叠加第二层玻璃);消息列表内部滚动 + 输入贴底沿用 .list/.inputRow flex 结构 */
+  .panel.embedded {
+    animation: none;
+    backdrop-filter: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex: 1 1 auto;
+    height: 100%;
+    left: auto;
+    min-height: 0;
+    position: static;
+    right: auto;
     top: auto;
     transform: none;
     transition: none;
     width: 100%;
-    /* ws-mt:高于移动抽屉域(抽屉内部最高 12,mobileSuggestions),工具栏打开的 AI sheet 盖在 drawer 之上;
-       桌面端锚球卡片保持基础 z-index 12 不变 */
-    z-index: 13;
   }
 }
 
