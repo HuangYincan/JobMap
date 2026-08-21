@@ -1,0 +1,231 @@
+// POST /api/agent/chat — AI Agent SSE 端点(tech/24 §7)。
+//
+// 校验顺序契约:前置校验(body 大小 / messages 形状 / viewport / LLM 配置 /
+// 限流)**必须发生在任何 MCP/LLM 连接之前**——contract 测试以「校验函数调用
+// 行号 < getMcpProvider/runAgent 引用行号」断言(工具集构建内联在 POST 内、
+// 位于全部校验之后,保证源码行序 = 执行序)。
+//
+// 事件 type 白名单即 run-agent 的 AgentEvent 5 种(delta/tool/action/done/
+// error);本端点只做逐事件 `data: <单行 JSON>\n\n` 转述,不下发其它 type。
+
+import { NextResponse } from 'next/server';
+import { readAgentConfig, hasBaiduAgentPlan } from '@/lib/agent/config';
+import { runAgent } from '@/lib/agent/run-agent';
+import { getMcpProvider, normalizeTool } from '@/lib/agent/mcp-providers';
+import type { ProviderId } from '@/lib/agent/mcp-providers';
+import type { AgentTool, AgentContext } from '@/lib/agent/types';
+import { builtinTools } from '@/lib/agent/tools/builtin';
+import { restFallbackTools } from '@/lib/agent/tools/rest-fallback';
+import { baiduAgentPlanTools } from '@/lib/agent/tools/baidu-agent-plan';
+
+export const runtime = 'nodejs';
+
+// ---- 输入上限(tech/24 §6.5)----
+const MAX_BODY_CHARS = 32 * 1024;
+const MAX_MESSAGES = 20;
+const MAX_MESSAGE_CHARS = 4000;
+/** SSE 输出字节上限;超 → `done, truncated`(为终态事件保留余量)。 */
+const MAX_SSE_BYTES = 200 * 1024;
+const SSE_TAIL_RESERVE = 512;
+
+/** 事件 type 白名单(delta/tool/action/done/error 之外的 type 一律不下发)。 */
+const SSE_EVENT_TYPES = ['delta', 'tool', 'action', 'done', 'error'] as const;
+
+// ---- 限流:模块级内存令牌桶,每 IP 10 req/min(tech/24 §6.5)----
+const RATE_LIMIT_PER_MIN = 10;
+const RATE_REFILL_MS = 60_000 / RATE_LIMIT_PER_MIN;
+const buckets = new Map<string, { tokens: number; last: number }>();
+
+function rateLimit(ip: string): boolean {
+  const now = Date.now();
+  let b = buckets.get(ip);
+  if (!b) {
+    buckets.set(ip, { tokens: RATE_LIMIT_PER_MIN - 1, last: now });
+    return true;
+  }
+  b.tokens = Math.min(RATE_LIMIT_PER_MIN, b.tokens + (now - b.last) / RATE_REFILL_MS);
+  b.last = now;
+  if (b.tokens >= 1) {
+    b.tokens -= 1;
+    return true;
+  }
+  return false;
+}
+
+function clientIp(request: Request): string {
+  const fwd = request.headers.get('x-forwarded-for');
+  if (fwd) {
+    const first = fwd.split(',')[0].trim();
+    if (first) return first;
+  }
+  return request.headers.get('x-real-ip') ?? 'unknown';
+}
+
+function isFiniteNum(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v);
+}
+
+interface ChatBody {
+  messages?: Array<{ role?: string; content?: unknown }>;
+  viewport?: {
+    center?: { lng?: unknown; lat?: unknown };
+    zoom?: unknown;
+    bounds?: { minLng?: unknown; minLat?: unknown; maxLng?: unknown; maxLat?: unknown };
+  };
+  lang?: unknown;
+}
+
+function bad(code: string, message: string) {
+  return NextResponse.json({ code, message }, { status: 400 });
+}
+
+export async function POST(request: Request) {
+  // 1. 限流(最前置,读 body 之前;超限 → 429)
+  if (!rateLimit(clientIp(request))) {
+    return NextResponse.json({ code: 'RATE_LIMITED', message: 'too many requests, retry later' }, { status: 429 });
+  }
+
+  // 2. body 大小(先看 content-length 快速路径,再读全文;超限 → 400)
+  const contentLength = Number(request.headers.get('content-length') ?? 0);
+  if (contentLength > MAX_BODY_CHARS) {
+    return bad('BODY_TOO_LARGE', `request body must be ≤ ${MAX_BODY_CHARS} bytes`);
+  }
+  const raw = await request.text();
+  if (raw.length > MAX_BODY_CHARS) {
+    return bad('BODY_TOO_LARGE', `request body must be ≤ ${MAX_BODY_CHARS} bytes`);
+  }
+
+  // 3. JSON 解析 + messages 形状(空/首条非 user/条数 > 20/单条 > 4000 → 400)
+  let body: ChatBody;
+  try {
+    body = JSON.parse(raw) as ChatBody;
+  } catch {
+    return bad('BAD_MESSAGES', 'invalid JSON body');
+  }
+  const msgs = body.messages;
+  if (!Array.isArray(msgs) || msgs.length === 0 || msgs.length > MAX_MESSAGES) {
+    return bad('BAD_MESSAGES', `messages must be 1..${MAX_MESSAGES} items`);
+  }
+  if (msgs[0]?.role !== 'user') {
+    return bad('BAD_MESSAGES', 'first message must have role "user"');
+  }
+  for (const m of msgs) {
+    if (!m || (m.role !== 'user' && m.role !== 'assistant') || typeof m.content !== 'string' || m.content.length > MAX_MESSAGE_CHARS) {
+      return bad('BAD_MESSAGES', `each message must have role user|assistant and content ≤ ${MAX_MESSAGE_CHARS} chars`);
+    }
+  }
+
+  // 4. viewport 坐标非 finite → 400(tech/24 §4.3)
+  const vp = body.viewport;
+  if (vp != null) {
+    if (!isFiniteNum(vp.center?.lng) || !isFiniteNum(vp.center?.lat) || !isFiniteNum(vp.zoom)) {
+      return bad('BAD_VIEWPORT', 'viewport.center.lng/lat and viewport.zoom must be finite numbers');
+    }
+    if (
+      vp.bounds != null &&
+      (!isFiniteNum(vp.bounds.minLng) || !isFiniteNum(vp.bounds.minLat) || !isFiniteNum(vp.bounds.maxLng) || !isFiniteNum(vp.bounds.maxLat))
+    ) {
+      return bad('BAD_VIEWPORT', 'viewport.bounds must contain finite numbers');
+    }
+  }
+
+  // 5. LLM 配置缺失 → 503(tech/24 §5.4 #4)
+  const cfgRes = readAgentConfig();
+  if (!cfgRes.ok) {
+    return NextResponse.json({ code: 'LLM_UNCONFIGURED', message: cfgRes.reason }, { status: 503 });
+  }
+
+  // ---- 前置校验全部通过,才开始构建工具集(连接 MCP/LLM)----
+  const toolNamesState: { names: string[] } = { names: [] };
+  const tools: AgentTool[] = [
+    ...builtinTools(() => toolNamesState.names),
+    ...restFallbackTools(),
+    ...(hasBaiduAgentPlan() ? baiduAgentPlanTools() : []),
+  ];
+  // MCP 三平台:key 未配 → 不注册;单个 listTools 失败 → 跳过该 provider,不致命(tech/24 §5.4)
+  const mcpIds: ProviderId[] = ['amap', 'tencent', 'baidu'];
+  for (const id of mcpIds) {
+    const p = getMcpProvider(id);
+    if (!p) continue;
+    try {
+      for (const meta of await p.listTools()) {
+        const t = normalizeTool(id, meta);
+        tools.push({
+          name: t.name,
+          description: t.description,
+          inputSchema: t.inputSchema,
+          provider: id,
+          call: async (input, ctx) => {
+            const r = await p.callTool(meta.name, input ?? {}, ctx.signal);
+            return r.isError ? { ok: false, error: r.text } : { ok: true, text: r.text };
+          },
+        });
+      }
+    } catch {
+      /* 跳过该 provider */
+    }
+  }
+  toolNamesState.names = tools.map((t) => t.name);
+
+  const messages = msgs as Array<{ role: 'user' | 'assistant'; content: string }>;
+  const viewport: AgentContext['viewport'] = vp
+    ? {
+        center: { lng: (vp.center as { lng: number }).lng, lat: (vp.center as { lat: number }).lat },
+        zoom: vp.zoom as number,
+        bounds: vp.bounds
+          ? {
+              minLng: (vp.bounds as { minLng: number }).minLng,
+              minLat: (vp.bounds as { minLat: number }).minLat,
+              maxLng: (vp.bounds as { maxLng: number }).maxLng,
+              maxLat: (vp.bounds as { maxLat: number }).maxLat,
+            }
+          : undefined,
+      }
+    : undefined;
+  const lang: 'zh' | 'en' = body.lang === 'en' ? 'en' : 'zh';
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let bytes = 0;
+      // 单事件 `data: <单行 JSON>\n\n`;返回 false = 输出预算耗尽。
+      const send = (event: unknown, allowOverflow = false): boolean => {
+        const chunk = encoder.encode(`data: ${JSON.stringify(event)}\n\n`);
+        if (!allowOverflow && bytes + chunk.length > MAX_SSE_BYTES - SSE_TAIL_RESERVE) return false;
+        bytes += chunk.length;
+        try {
+          controller.enqueue(chunk);
+          return true;
+        } catch {
+          return false; // 客户端已断开
+        }
+      };
+      try {
+        for await (const event of runAgent({ config: cfgRes.cfg, messages, tools, viewport, lang, signal: request.signal })) {
+          if (request.signal.aborted) break;
+          if (!send(event)) {
+            // 输出超限 → done, truncated(tech/24 §6.5)
+            send({ type: 'done', truncated: true }, true);
+            return;
+          }
+        }
+      } catch {
+        send({ type: 'error', code: 'internal', message: 'agent 内部错误' });
+      } finally {
+        try {
+          controller.close();
+        } catch {
+          /* 已关闭 */
+        }
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Accel-Buffering': 'no',
+    },
+  });
+}
