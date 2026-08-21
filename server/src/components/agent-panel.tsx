@@ -5,10 +5,9 @@
 // 移动端(≤767px)与极窄视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。
 // - 消息列表(用户纯文本 / 助手 MarkdownText 渲染,助手侧可含建议卡片)+ 输入框 +
 //   发送/停止/撤销;
-// - 按轮交替:reduceAgentEvent 纯状态机把每轮(reasoning→delta→tool)拆成独立
-//   assistant 消息,视觉上「文本1、工具1、文本2、工具2…」;
-// - 思考状态:reasoning 事件只标记不渲染内容——有思考标记的助手消息顶部一行弱化状态
-//   (思考中… / 思考完成);
+// - 按轮交替:reduceAgentEvent 纯状态机把每轮(delta→tool)拆成独立 assistant 消息,
+//   视觉上「文本1、工具1、文本2、工具2…」;reasoning 事件前端不消费(no-op,
+//   2026-08-22 ws-bubble:思考提示与空白气泡已删除);
 // - 工具活动列表:每条 tool 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案;失败附
 //   「调用失败」弱提示),渲染在文本气泡下方;运行中工具另有顶部状态条;
 // - 未配置提示:503 LLM_UNCONFIGURED → agentNotConfigured;RATE_LIMITED → agentRateLimited;
@@ -169,10 +168,6 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
     setMessages((prev) => reduceAgentEvent(prev, { type: "delta", text }));
   }, []);
 
-  const handleReasoning = useCallback((text: string) => {
-    setMessages((prev) => reduceAgentEvent(prev, { type: "reasoning", text }));
-  }, []);
-
   const handleTool = useCallback((info: AgentToolInfo) => {
     // 顶部状态条:只反映运行中的工具
     setTool(info.status === "start" ? info : null);
@@ -212,7 +207,6 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
           bridge,
           {
             onDelta: handleDelta,
-            onReasoning: handleReasoning,
             onTool: handleTool,
             onDone: handleDone,
             onError: handleError,
@@ -234,9 +228,6 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
         case "delta":
           handleDelta(ev.text);
           break;
-        case "reasoning":
-          handleReasoning(ev.text);
-          break;
         case "tool":
           handleTool(ev);
           break;
@@ -248,9 +239,11 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
           break;
         case "action":
           break; // 无地图桥接:不执行动作
+        case "reasoning":
+          break; // 2026-08-22 ws-bubble:思考内容前端不消费(no-op)
       }
     },
-    [handleDelta, handleReasoning, handleTool, handleDone, handleError],
+    [handleDelta, handleTool, handleDone, handleError],
   );
 
   const runStream = useCallback(
@@ -354,22 +347,18 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
         {messages.length === 0 && !streaming && <p className={styles.welcome}>{t("agentWelcome", lang)}</p>}
         {messages.map((m, i) => (
           <div key={i} className={`${styles.msg} ${m.role === "user" ? styles.msgUser : styles.msgAssistant}`}>
-            {m.role === "assistant" && m.reasoning && (
-              <div
-                className={`${styles.thinking} ${m.reasoning === "thinking" ? styles.thinkingActive : ""}`}
-                role="status"
-              >
-                <span aria-hidden="true">💭</span>
-                {m.reasoning === "thinking" ? t("agentThinking", lang) : t("agentThinkingDone", lang)}
+            {/* 气泡条件渲染(2026-08-22 ws-bubble):assistant 内容为空(trim 后)→ 不渲染
+                气泡 div(纯工具轮只显示工具活动;避免空白气泡);动作按钮/工具列表在
+                气泡之外各自渲染,不受影响。 */}
+            {m.role === "user" || m.content.trim() ? (
+              <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
+                {m.role === "assistant" ? (
+                  <MarkdownText text={stripActionJsonBlocks(m.content)} lang={lang} />
+                ) : (
+                  m.content
+                )}
               </div>
-            )}
-            <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
-              {m.role === "assistant" ? (
-                <MarkdownText text={stripActionJsonBlocks(m.content)} lang={lang} />
-              ) : (
-                m.content
-              )}
-            </div>
+            ) : null}
             {m.role === "assistant" && m.tools && m.tools.length > 0 && (
               <ul className={styles.toolActivity} aria-label={t("agentToolsSection", lang)}>
                 {m.tools.map((toolItem, j) => (
@@ -398,7 +387,12 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
         ))}
         {streaming && !lastIsAssistant && (
           <div className={`${styles.msg} ${styles.msgAssistant}`}>
-            <div className={`${styles.bubbleAssistant} ${styles.typing}`}>{t("agentThinking", lang)}</div>
+            {/* 流式输入指示(2026-08-22 ws-bubble):三点跳动,纯视觉无文字,不再显示思考提示 */}
+            <div className={`${styles.bubbleAssistant} ${styles.typing}`} role="status" aria-label={t("agentTyping", lang)}>
+              <span className={styles.typingDot} aria-hidden="true" />
+              <span className={styles.typingDot} aria-hidden="true" />
+              <span className={styles.typingDot} aria-hidden="true" />
+            </div>
           </div>
         )}
         {notConfigured && <p className={styles.notice}>{t("agentNotConfigured", lang)}</p>}
