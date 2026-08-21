@@ -100,9 +100,11 @@ class FakeMap {
     this.panned = false;
     this.raw = this; // 逃生舱:mock 自身即 raw 实例
     captures.maps.push(this);
-    // 模拟 BMapGL 异步渲染:构造后 ~10ms 触发 tilesloaded(createView 就绪等待
-    // 依赖该事件;就绪超时测试用不自动触发的 Map 子类覆盖)
-    setTimeout(() => this.trigger('tilesloaded'), 10);
+    // 模拟 BMapGL v1.0 异步渲染:构造 + 相机操作后 ~10ms 触发首帧就绪事件
+    // onfirsttilesloaded(2026-08-22 SDK 源码核实的 v1.0 就绪信号;旧版
+    // tilesloaded 注册名经 BaseClass "on" 前缀归一同样命中,改用派发原名);
+    // 就绪超时测试用不自动触发的 Map 子类覆盖
+    setTimeout(() => this.trigger('onfirsttilesloaded'), 10);
   }
   centerAndZoom(center, zoom) {
     this.center = center;
@@ -249,9 +251,10 @@ class FakeScaleControl {
   }
 }
 
-/** 永不就绪的 Map(无 setMapReadyCallback、不触发 tilesloaded):AK 被禁用时
- * BMapGL 内部异步崩溃形态——Map 创建成功但不渲染,无任何就绪信号。
- * 注意:不能 extends FakeMap(其构造器会调度自动就绪定时器)。 */
+/** 永不就绪的 Map(无 setMapReadyCallback、不自动触发就绪事件):AK 被禁用时
+ * BMapGL 内部异步失败形态——Map 创建成功但不渲染,无任何就绪信号。
+ * 注意:不能 extends FakeMap(其构造器会调度自动就绪定时器)。trigger 供测试
+ * 手动派发任一事件(多通道就绪断言用)。 */
 class NeverReadyMap {
   constructor(container) {
     this.container = container;
@@ -280,6 +283,9 @@ class NeverReadyMap {
     const list = (this.listeners.get(event) ?? []).filter((h) => h !== handler);
     if (list.length === 0) this.listeners.delete(event);
     else this.listeners.set(event, list);
+  }
+  trigger(event) {
+    for (const h of this.listeners.get(event) ?? []) h();
   }
   destroy() {
     this.destroyed = true;
@@ -715,7 +721,7 @@ test('createView:BMapGL 未就绪 → 明确报错(提示先 load)', async () =>
   );
 });
 
-test('createView:就绪等待——tilesloaded 触发后才返回;相机就绪后应用(防异步初始化重置)', async () => {
+test('createView:相机先行——centerAndZoom 触发底图图层/瓦片请求,onfirsttilesloaded 就绪后才返回', async () => {
   setup();
   const e = createBaiduEngine();
   const p = e.createView({
@@ -727,24 +733,32 @@ test('createView:就绪等待——tilesloaded 触发后才返回;相机就绪�
     style: 'normal',
   });
   const map = captures.maps[0];
-  assert.equal(map.center, null, '就绪前不得应用相机(tilesloaded 未触发,异步初始化可能重置)');
-  const view = await p;
   const bd = gcj02ToBd09(GCJ.lng, GCJ.lat);
-  assert.equal(map.center.lng, bd.lng, '就绪后应用初始中心 bd09');
+  assert.equal(
+    map.center.lng,
+    bd.lng,
+    '相机必须先于就绪等待应用(v1.0 GL 底图图层在 centerAndZoomIn 内才创建;等就绪再设相机 = 零瓦片请求 = 必然超时)',
+  );
+  assert.equal(map.center.lat, bd.lat);
+  assert.equal(map.zoom, 14, 'zoom 先于就绪应用');
+  assert.equal(map.tilt, 20, 'pitch 先于就绪应用');
+  assert.equal(map.heading, 30, 'rotation 先于就绪应用');
+  assert.ok(map.listeners.has('onfirsttilesloaded'), '就绪等待注册 v1.0 首帧事件');
+  const view = await p;
+  assert.equal(map.center.lng, bd.lng, '就绪后相机保持(SDK 无异步初始化重置)');
   assert.equal(map.center.lat, bd.lat);
   assert.equal(map.zoom, 14);
-  assert.equal(map.tilt, 20);
-  assert.equal(map.heading, 30);
   assert.equal(map.mapType, 'BMAPGL_NORMAL_MAP');
   assert.equal(view.raw, map);
-  assert.equal(map.listeners.size, 0, '就绪后 tilesloaded 监听必须解绑');
+  assert.equal(map.listeners.size, 0, '就绪后全部监听必须解绑');
 });
 
-test('createView:tilesloaded 永不触发 → 1.5s 超时抛「BMapGL 地图就绪超时」(switch 回滚契约)', async () => {
+test('createView:就绪信号永不触发 → 1.5s 超时抛「BMapGL 地图就绪超时」(switch 回滚契约)', async () => {
   mock.timers.enable({ apis: ['setTimeout'] });
   try {
     setup();
-    // AK 被禁用形态:Map 创建成功但不渲染,tilesloaded/setMapReadyCallback 均无信号
+    // AK 被禁用形态:Map 创建成功但不渲染,onfirsttilesloaded/ontilesloaded/
+    // onstyle_loaded/setMapReadyCallback 均无信号
     mockNs.ns.Map = NeverReadyMap;
     const e = createBaiduEngine();
     const p = e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
@@ -756,6 +770,8 @@ test('createView:tilesloaded 永不触发 → 1.5s 超时抛「BMapGL 地图就�
       () => {}, // 拒绝分支吞掉(防派生 promise 未处理拒绝;assert.rejects 管主链)
     );
     const map = captures.maps[0];
+    const bd = gcj02ToBd09(GCJ.lng, GCJ.lat);
+    assert.equal(map.center.lng, bd.lng, '相机先行:超时等待期间相机已应用(与就绪信号无关)');
     mock.timers.tick(1400);
     assert.equal(settled, false, '1.4s 未到超时,仍挂起等待');
     mock.timers.tick(150);
@@ -765,7 +781,7 @@ test('createView:tilesloaded 永不触发 → 1.5s 超时抛「BMapGL 地图就�
       '超时必须抛「BMapGL 地图就绪超时」(switch 回滚依赖 createView 抛错)',
     );
     assert.equal(map.destroyed, true, '超时抛错前销毁未渲染的 Map(容器交还回滚视图)');
-    assert.equal(map.listeners.size, 0, '超时后 tilesloaded 监听必须解绑');
+    assert.equal(map.listeners.size, 0, '超时后全部监听必须解绑');
   } finally {
     mock.timers.reset();
   }
@@ -785,7 +801,7 @@ test('createView:setMapReadyCallback 存在(BMapGL 2.0 就绪回调)→ 注册�
     map.fireReady(); // SDK 就绪 → 回调触发
     const view = await p;
     const bd = gcj02ToBd09(GCJ.lng, GCJ.lat);
-    assert.equal(map.center.lng, bd.lng, '回调就绪后应用相机');
+    assert.equal(map.center.lng, bd.lng, '相机已先行应用(v1.0 时序),回调就绪后返回');
     assert.equal(map.zoom, 12);
     assert.equal(view.raw, map);
     assert.equal(map.destroyed, false, '正常就绪不销毁');
@@ -797,6 +813,39 @@ test('createView:setMapReadyCallback 存在(BMapGL 2.0 就绪回调)→ 注册�
     mock.timers.tick(1500);
     await assert.rejects(p2, /BMapGL 地图就绪超时/);
     assert.equal(map2.destroyed, true, '回调通道超时同样销毁未渲染的 Map');
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('createView:就绪多通道——onfirsttilesloaded/tilesloaded/onstyle_loaded 任一触发即就绪', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    setup();
+    mockNs.ns.Map = NeverReadyMap; // 无自动信号:由测试手动派发各通道
+    const e = createBaiduEngine();
+    // 通道 1:onstyle_loaded(样式层早期信号,先于瓦片)→ 即就绪
+    let p = e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
+    let map = captures.maps[0];
+    assert.ok(map.listeners.has('onfirsttilesloaded'), '注册首帧瓦片完成事件(v1.0 派发原名)');
+    assert.ok(map.listeners.has('tilesloaded'), '注册瓦片全部完成事件(SDK 派发 ontilesloaded,注册名归一命中)');
+    assert.ok(map.listeners.has('onstyle_loaded'), '注册样式加载事件');
+    assert.equal(map.listeners.get('onfirsttilesloaded').length, 1, '每事件恰一个监听(幂等)');
+    map.trigger('onstyle_loaded');
+    await p;
+    assert.equal(map.listeners.size, 0, 'onstyle_loaded 触发就绪 → 全部解绑');
+    // 通道 2:onfirsttilesloaded(首帧渲染完成)→ 即就绪
+    p = e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
+    map = captures.maps[1];
+    map.trigger('onfirsttilesloaded');
+    await p;
+    assert.equal(map.listeners.size, 0, 'onfirsttilesloaded 触发就绪 → 全部解绑');
+    // 通道 3:tilesloaded(全部瓦片完成,无前缀别名)→ 即就绪
+    p = e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
+    map = captures.maps[2];
+    map.trigger('tilesloaded');
+    await p;
+    assert.equal(map.listeners.size, 0, 'tilesloaded 触发就绪 → 全部解绑');
   } finally {
     mock.timers.reset();
   }
