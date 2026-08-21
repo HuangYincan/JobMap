@@ -2,9 +2,10 @@
 // regeo,输出 sanitize)/ baidu-ai-map skill 工具组(env 门控 + 契约)。
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { builtinTools } from '../src/lib/agent/tools/builtin.ts';
+import { builtinTools, memorySaveTool } from '../src/lib/agent/tools/builtin.ts';
 import { restFallbackTools } from '../src/lib/agent/tools/rest-fallback.ts';
 import { baiduAgentPlanTools } from '../src/lib/agent/tools/baidu-agent-plan.ts';
+import { __memoryStoreTest, clearMemories, listMemories } from '../src/lib/memory-store.ts';
 
 const MAP_KEYS = ['AMAP_WEB_KEY', 'BAIDU_MAP_AK', 'TENCENT_MAP_KEY', 'BAIDU_MAP_AUTH_TOKEN'];
 
@@ -168,6 +169,64 @@ test('rest__regeo: 非有限坐标 → error;成功 → 省/市/区', async () =
       assert.match(r.text, /西湖区/);
     }
   });
+});
+
+// ---------------------------------------------------------------------------
+// builtin__memory_save(2026-08-22 ws-mem-a;tech/26-agent-memory.md §4)
+// ---------------------------------------------------------------------------
+
+test('memory_save: guest(无 ctx.userId)→ 拒绝「请先登录后再保存记忆」', async () => {
+  const tool = memorySaveTool();
+  const r = await tool.call({ content: '我喜欢杭州' }, CTX);
+  assert.equal(r.ok, false);
+  if (!r.ok) assert.match(r.error, /请先登录/);
+});
+
+test('memory_save: 登录成功保存;超长截断 200;敏感词不做硬性拦截(只靠描述约束)', async () => {
+  __memoryStoreTest.poolOverride = () => null; // 内存模式
+  try {
+    await clearMemories('tool-mem');
+    const tool = memorySaveTool();
+    const ctx = { ...CTX, userId: 'tool-mem' };
+
+    const ok = await tool.call({ content: '  我常驻杭州  ' }, ctx);
+    assert.equal(ok.ok, true);
+    if (ok.ok) assert.match(ok.text, /已记住:我常驻杭州/);
+
+    // 超长 → 截断 200 后保存
+    const long = await tool.call({ content: '字'.repeat(250) }, ctx);
+    assert.equal(long.ok, true, '超长内容截断保存而非报错');
+    const items = await listMemories('tool-mem');
+    assert.equal(items.length, 2);
+    assert.equal(items[0].content.length, 200, '超长截断 200');
+
+    // 敏感词不做硬性拦截(禁止保存密码/密钥是描述级约束)→ 保存成功
+    const sensitive = await tool.call({ content: '我的密码是 123456' }, ctx);
+    assert.equal(sensitive.ok, true);
+    const after = await listMemories('tool-mem');
+    assert.equal(after[0].content, '我的密码是 123456');
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
+});
+
+test('memory_save: 空内容 → error;DB 写失败 → 可恢复 error(不抛)', async () => {
+  const tool = memorySaveTool();
+  const ctx = { ...CTX, userId: 'tool-mem' };
+
+  const empty = await tool.call({ content: '   ' }, ctx);
+  assert.equal(empty.ok, false);
+  if (!empty.ok) assert.match(empty.error, /不能为空/);
+
+  const down = { query: async () => { throw new Error('db down'); } };
+  __memoryStoreTest.poolOverride = () => down;
+  try {
+    const r = await tool.call({ content: '内容' }, ctx);
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.match(r.error, /暂不可用/);
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
 });
 
 // ---------------------------------------------------------------------------

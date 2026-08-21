@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractActions, publicToolEvent, runAgent, sanitizeToolText, toolKind } from '../src/lib/agent/run-agent.ts';
+import { extractActions, loadUserMemory, publicToolEvent, runAgent, sanitizeToolText, toolKind } from '../src/lib/agent/run-agent.ts';
 import { providerError } from '../src/lib/agent/llm-provider.ts';
+import { __memoryStoreTest, addMemory, clearMemories } from '../src/lib/memory-store.ts';
 
 const CFG = { baseUrl: 'https://llm.example.com/v1', apiKey: 'sk-test', model: 'm', maxTurns: 4, maxHistoryChars: 6000 };
 
@@ -603,4 +604,68 @@ test('runAgent: lang 与视图上下文传给工具 ctx', async () => {
     bounds: { minLng: 119, minLat: 29, maxLng: 121, maxLat: 31 },
   });
   assert.ok(tool.calls[0].ctx.requestId.length > 0);
+});
+
+// ---------- 用户记忆注入(2026-08-22 ws-mem-a) ----------
+
+test('runAgent: 带 userId 且有记忆 → system 首条含记忆段(最新在前)', async () => {
+  __memoryStoreTest.poolOverride = () => null; // 内存模式,确定性
+  try {
+    await clearMemories('mem-run-1');
+    await addMemory('mem-run-1', '我常驻杭州');
+    await addMemory('mem-run-1', '我在找前端岗位');
+    const mp = mockProvider([{ deltas: ['好的'] }]);
+    await collectEvents(baseReq({ userId: 'mem-run-1', provider: mp }));
+    const system = mp.seen[0].messages[0];
+    assert.equal(system.role, 'system');
+    assert.match(system.content, /## 用户记忆/);
+    assert.ok(system.content.includes('- 我在找前端岗位'), '最新记忆在前');
+    assert.ok(system.content.includes('- 我常驻杭州'));
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
+});
+
+test('runAgent: 无 userId / 空记忆 → system 不含记忆段', async () => {
+  __memoryStoreTest.poolOverride = () => null;
+  try {
+    await clearMemories('mem-run-2');
+    const mp1 = mockProvider([{ deltas: ['a'] }]);
+    await collectEvents(baseReq({ provider: mp1 }));
+    assert.ok(!mp1.seen[0].messages[0].content.includes('用户记忆'), '无 userId 不注入记忆段');
+
+    const mp2 = mockProvider([{ deltas: ['b'] }]);
+    await collectEvents(baseReq({ userId: 'mem-run-2', provider: mp2 }));
+    assert.ok(!mp2.seen[0].messages[0].content.includes('用户记忆'), '空记忆不注入记忆段');
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
+});
+
+test('runAgent: 记忆工具调用时 ctx.userId 透传', async () => {
+  const tool = mockTool('builtin__viewport');
+  const mp = mockProvider([{ toolCalls: [{ id: 'c1', name: 'builtin__viewport', arguments: '{}' }] }, { deltas: ['ok'] }]);
+  await collectEvents(baseReq({ userId: 'mem-run-3', tools: [tool], provider: mp }));
+  assert.equal(tool.calls[0].ctx.userId, 'mem-run-3');
+  assert.equal(mp.seen[0].messages[0].content.includes('用户记忆'), false, '该用户无记忆 → 不注入');
+});
+
+test('loadUserMemory: 格式化 + 预算(20 条 / 总长 4000)截断,最新在前', async () => {
+  __memoryStoreTest.poolOverride = () => null;
+  try {
+    await clearMemories('mem-budget');
+    for (let i = 0; i < 25; i += 1) await addMemory('mem-budget', `事实${String(i).padStart(2, '0')}` + 'x'.repeat(197));
+    const out = await loadUserMemory('mem-budget');
+    assert.ok(out, '非空');
+    const lines = out.split('\n');
+    assert.equal(lines.length, 20, '最多 20 条');
+    assert.ok(out.length <= 4000, `总长预算 4000,实际 ${out.length}`);
+    assert.ok(out.startsWith('- 事实24'), '最新记忆在最前(- 事实24)');
+    assert.ok(!out.includes('事实00'), '最旧 5 条被 20 条上限截掉');
+    // 无 userId / 空 userId → undefined(不注入)
+    assert.equal(await loadUserMemory(undefined), undefined);
+    assert.equal(await loadUserMemory(''), undefined);
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
 });

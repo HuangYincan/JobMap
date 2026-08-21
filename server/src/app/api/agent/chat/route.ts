@@ -10,12 +10,13 @@
 // (code/message 收敛到安全集合)后下发,不下发其它 type。
 
 import { NextResponse } from 'next/server';
+import { readSessionUser } from '@/lib/http-session';
 import { readAgentConfig, hasBaiduAgentPlan } from '@/lib/agent/config';
 import { runAgent } from '@/lib/agent/run-agent';
 import { getMcpProvider, normalizeTool } from '@/lib/agent/mcp-providers';
 import type { ProviderId } from '@/lib/agent/mcp-providers';
 import type { AgentTool, AgentContext } from '@/lib/agent/types';
-import { builtinTools } from '@/lib/agent/tools/builtin';
+import { builtinTools, memorySaveTool } from '@/lib/agent/tools/builtin';
 import { restFallbackTools } from '@/lib/agent/tools/rest-fallback';
 import { baiduAgentPlanTools } from '@/lib/agent/tools/baidu-agent-plan';
 
@@ -136,6 +137,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ code: 'LLM_UNCONFIGURED', message: cfgRes.reason }, { status: 503 });
   }
 
+  // 6. 身份读取(会话 cookie → userId;guest = null)。位于全部前置校验之后、
+  //    任何 MCP/LLM 连接之前(保持既有行序契约):登录 → 注入用户记忆段并追加
+  //    memory_save 工具;guest → userId 不传、不加工具(tech/26-agent-memory.md §5)。
+  const sessionUser = await readSessionUser();
+
   // ---- 公开 error 事件脱敏(2026-08-21 安全要求):code 收敛到安全集合,message 一律置空 ----
   // 内部细节(provider 错误码 / HTTP 状态 / 内部异常)只进服务端日志(console.error),
   // 不随 SSE 下发;前端按 code 分支展示。注意:本块位于全部前置校验之后(勿前移,
@@ -155,6 +161,7 @@ export async function POST(request: Request) {
     ...builtinTools(() => toolNamesState.names),
     ...restFallbackTools(),
     ...(hasBaiduAgentPlan() ? baiduAgentPlanTools() : []),
+    ...(sessionUser ? [memorySaveTool()] : []),
   ];
   // MCP 三平台:key 未配 → 不注册;单个 listTools 失败 → 跳过该 provider,不致命(tech/24 §5.4)
   const mcpIds: ProviderId[] = ['amap', 'tencent', 'baidu'];
@@ -215,7 +222,15 @@ export async function POST(request: Request) {
         }
       };
       try {
-        for await (const event of runAgent({ config: cfgRes.cfg, messages, tools, viewport, lang, signal: request.signal })) {
+        for await (const event of runAgent({
+          config: cfgRes.cfg,
+          messages,
+          tools,
+          viewport,
+          lang,
+          signal: request.signal,
+          userId: sessionUser?.id,
+        })) {
           if (request.signal.aborted) break;
           // 公开面脱敏:error 事件 code/message 收敛到安全集合;内部细节只进服务端日志
           let out: unknown = event;

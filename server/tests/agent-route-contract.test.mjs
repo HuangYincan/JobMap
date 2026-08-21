@@ -135,3 +135,26 @@ test('无 console.log / 无密钥明文(secret 纪律)', () => {
   assert.doesNotMatch(route, /console\.(log|warn|info|debug)/);
   assert.doesNotMatch(route, /AMAP_WEB_KEY|TENCENT_MAP_KEY|BAIDU_MAP_AK|BAIDU_MAP_AUTH_TOKEN/);
 });
+
+test('身份读取在 MCP/LLM 连接之前(记忆注入,2026-08-22 ws-mem-a)', () => {
+  const identIdx = route.indexOf('readSessionUser(');
+  assert.ok(identIdx !== -1, 'route 必须调用 readSessionUser()');
+  // 身份读取位于全部前置校验(最后一个标记 LLM_UNCONFIGURED)之后
+  const lastCheck = Math.max(
+    route.indexOf("'BODY_TOO_LARGE'"),
+    route.indexOf("'BAD_MESSAGES'"),
+    route.indexOf("'BAD_VIEWPORT'"),
+    route.indexOf("'RATE_LIMITED'"),
+    route.indexOf("'LLM_UNCONFIGURED'"),
+  );
+  assert.ok(lastCheck !== -1 && identIdx > lastCheck, `身份读取(行 ${lineOf(identIdx)})必须在全部前置校验(行 ${lineOf(lastCheck)})之后`);
+  // 身份读取先于任何 MCP/LLM 连接(不破坏既有行序契约)
+  for (const c of ['getMcpProvider(', 'runAgent(']) {
+    const j = route.indexOf(c);
+    assert.ok(j !== -1 && identIdx < j, `身份读取(行 ${lineOf(identIdx)})必须先于连接 ${c} (行 ${lineOf(j)})`);
+  }
+  // 登录后追加 memory_save 工具:经 builtin 模块导出追加,route 内无供应商前缀字面量
+  assert.match(route, /memorySaveTool\(\)/);
+  assert.match(route, /sessionUser \? \[memorySaveTool\(\)\] : \[\]/);
+  assert.match(route, /userId: sessionUser\?\.id/);
+});

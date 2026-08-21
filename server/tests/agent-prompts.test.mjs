@@ -94,3 +94,23 @@ test('buildSystemPrompt: 动作纪律禁止正文复述/展示 actions JSON(zh/e
   assert.match(zh, /动作 JSON 由系统自动提取并执行,严禁在回复正文中复述\/展示 actions JSON/);
   assert.match(en, /never repeat or display actions JSON in your reply body/);
 });
+
+test('buildSystemPrompt: 记忆段仅 memory 非空时注入(zh/en,2026-08-22 ws-mem-a)', () => {
+  const facts = '- 我常驻杭州\n- 我在找前端岗位';
+  const zh = buildSystemPrompt({ maxTurns: 8, hasTools: true, memory: facts }, 'zh');
+  assert.match(zh, /## 用户记忆\(供个性化参考,不要复述给用户\)/);
+  assert.ok(zh.includes(facts), 'zh 注入格式化后的记忆行');
+  assert.ok(zh.indexOf('用户记忆') < zh.indexOf('能力边界'), '记忆段在能力边界之前');
+
+  const en = buildSystemPrompt({ maxTurns: 8, hasTools: true, memory: facts }, 'en');
+  assert.match(en, /## User memory \(for personalization; do not recite it back\)/);
+  assert.ok(en.includes(facts), 'en 注入格式化后的记忆行');
+
+  // 无 memory / 空 memory → 两语言都不出现记忆段
+  for (const lang of ['zh', 'en']) {
+    const none = buildSystemPrompt({ maxTurns: 8, hasTools: true }, lang);
+    assert.ok(!none.includes('用户记忆') && !none.includes('User memory'), `lang=${lang} 无 memory 不注入`);
+    const empty = buildSystemPrompt({ maxTurns: 8, hasTools: true, memory: '' }, lang);
+    assert.ok(!empty.includes('用户记忆') && !empty.includes('User memory'), `lang=${lang} 空 memory 不注入`);
+  }
+});
