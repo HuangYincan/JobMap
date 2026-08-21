@@ -31,6 +31,7 @@
 | [23-map-engines.md](23-map-engines.md) | 多地图引擎(高德/腾讯/百度,切换与回退) | 前端/后端 |
 | [24-agent-feature.md](24-agent-feature.md) | AI Agent 功能(自建引擎/三平台 MCP/动作协议/悬浮球) | 前端/后端 |
 | [25-resend-email.md](25-resend-email.md) | Resend 验证码邮件(email OTP 真发:契约/重试/错误映射) | 后端 |
+| [27-oauth-login.md](27-oauth-login.md) | 第三方登录(GitHub/Google/微信 OAuth:契约/手动配置/回退) | 后端 |
 
 ## 快速导航
 
