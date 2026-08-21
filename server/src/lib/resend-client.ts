@@ -146,6 +146,11 @@ export async function sendVerificationEmail(
     console.log(`resend email sent, messageId=${messageId}`);
     return { messageId };
   }
+  if (res.status === 429) {
+    // 重试后仍 429 → 限流
+    console.log('resend rate limited, status=429');
+    throw new EmailRateLimitedError();
+  }
   if (res.status === 401 || res.status === 403) {
     console.warn('resend key invalid/expired, rotate RESEND_API_KEY');
     throw new EmailAuthError();
