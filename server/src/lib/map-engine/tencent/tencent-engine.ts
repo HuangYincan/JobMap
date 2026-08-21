@@ -1113,7 +1113,9 @@ function browserPosition(): Promise<LngLat | null> {
     nav.geolocation.getCurrentPosition(
       (pos) => resolve(wgs84ToGcj02(pos.coords.longitude, pos.coords.latitude)),
       () => resolve(null),
-      { timeout: 8000, maximumAge: 60000 },
+      // 参数对齐 AMap.Geolocation:高精度(GPS)定位;maximumAge 0 禁用位置缓存,
+      // 每次定位都重新请求 → 「定位 = 真实当前位置」(60s 缓存会让移动后重复定位返回旧位)
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
     );
   });
 }
