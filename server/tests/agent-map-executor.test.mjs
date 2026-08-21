@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ACTION_THROTTLE_MS,
   createAgentMapExecutor,
+  resolveCompletion,
   validateAction,
 } from '../src/components/agent-map-executor.ts';
 
@@ -333,4 +334,44 @@ test('undo 顺序:flyTo → select → markers 混合栈后进先出', () => {
   ]);
   assert.equal(bridge.calls.filter((c) => c[0] === 'select').length, 1); // select 只执行过一次
   assert.equal(executor.canUndo(), false);
+});
+
+test('resolveCompletion: done 优先,abort 判定 stopped,其余 null(纯函数)', () => {
+  assert.equal(resolveCompletion(false, false), null); // 异常/静默结束 → 不显示完成状态
+  assert.equal(resolveCompletion(false, true), 'stopped'); // 用户停止
+  assert.equal(resolveCompletion(true, false), 'done'); // done 事件
+  assert.equal(resolveCompletion(true, true), 'done'); // done 后 abort → 仍算完成(以 done 为准)
+});
+
+test('clearOverlays: 只清 overlay 类条目(相机/select 保留,可继续 undo)', () => {
+  const bridge = mockBridge();
+  const { executor } = makeExecutor(bridge);
+  // 混合栈:camera(flyTo)→ overlay(markers)→ select → overlay(circle)(四类互不相同,无限流)
+  executor.handleEvent({ type: 'action', action: action('flyTo', { center: { lng: 121, lat: 31 }, zoom: 14 }) });
+  executor.handleEvent({ type: 'action', action: action('addMarkers', { points: [{ lng: 120, lat: 30 }] }) });
+  executor.handleEvent({ type: 'action', action: action('select', { id: 'cmp_a' }) });
+  executor.handleEvent({ type: 'action', action: action('drawCircle', { center: { lng: 120.1, lat: 30.1 }, radiusMeters: 2000 }) });
+  assert.equal(executor.canUndo(), true);
+  executor.clearOverlays();
+  // 两个 overlay 清理都已执行(markers + circle),且已移出栈
+  const cleanups = bridge.calls.filter((c) => c[0] === 'cleanup-markers' || c[0] === 'cleanup-circle');
+  assert.deepEqual(new Set(cleanups.map((c) => c[0])), new Set(['cleanup-markers', 'cleanup-circle']));
+  // 相机/select 条目保留:仍可 undo(后进先出 → select 回放,再 flyTo 回旧 camera)
+  assert.equal(executor.canUndo(), true);
+  assert.equal(executor.undo(), true); // select 回放(无更旧值 → 不回调)
+  assert.equal(executor.undo(), true); // flyTo 回执行前 camera
+  assert.deepEqual(bridge.calls.at(-1), ['flyTo', 120.15, 30.27, 13]);
+  assert.equal(executor.canUndo(), false);
+});
+
+test('clearOverlays: 无 overlay 条目 → 栈不变,不执行任何逆操作', () => {
+  const bridge = mockBridge();
+  const { executor } = makeExecutor(bridge);
+  executor.handleEvent({ type: 'action', action: action('flyTo', { center: { lng: 121, lat: 31 } }) });
+  const before = bridge.calls.length;
+  executor.clearOverlays();
+  assert.equal(bridge.calls.length, before); // 相机逆操作未执行
+  assert.equal(executor.canUndo(), true); // 相机条目保留
+  assert.equal(executor.undo(), true); // 仍可撤销
+  assert.deepEqual(bridge.calls.at(-1), ['flyTo', 120.15, 30.27, 13]);
 });

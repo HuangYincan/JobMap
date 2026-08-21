@@ -964,6 +964,22 @@ export const translations = {
     zh: '正在输入…',
     en: 'Typing…',
   },
+  agentStopped: {
+    zh: '已停止',
+    en: 'Stopped',
+  },
+  agentDone: {
+    zh: '回答完成',
+    en: 'Done',
+  },
+  agentTruncated: {
+    zh: '已达回答上限,部分内容被截断',
+    en: 'Reached reply limit, truncated',
+  },
+  agentClear: {
+    zh: '清屏',
+    en: 'Clear',
+  },
   agentToolsSection: {
     zh: '工具调用',
     en: 'Tool calls',

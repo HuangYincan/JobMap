@@ -845,6 +845,45 @@ test('agent panel has input, send/stop/undo buttons and tool status bar (ws-c)',
   assert.match(css, /@media \(max-width: 767px\)/); // 移动端全宽 sheet
 });
 
+test('agent panel completion status + clear screen (ws-done)', () => {
+  const panel = src('components/agent-panel.tsx');
+  const css = src('components/agent-panel.module.css');
+  const executor = src('components/agent-map-executor.ts');
+  const i18n = src('lib/i18n.ts');
+  // i18n 新键:完成 / 停止 / 截断 / 清屏(双语文案)
+  assert.match(i18n, /agentDone: \{\s*zh: '回答完成',\s*en: 'Done',\s*\},/);
+  assert.match(i18n, /agentStopped: \{\s*zh: '已停止',\s*en: 'Stopped',\s*\},/);
+  assert.match(i18n, /agentTruncated: \{\s*zh: '已达回答上限,部分内容被截断',\s*en: 'Reached reply limit, truncated',\s*\},/);
+  assert.match(i18n, /agentClear: \{\s*zh: '清屏',\s*en: 'Clear',\s*\},/);
+  // 完成状态:'done'/'stopped' 双分支渲染在消息列表尾部(流式期间不显示,role=status)
+  assert.match(panel, /completion === "done"/);
+  assert.match(panel, /t\("agentDone", lang\)/);
+  assert.match(panel, /t\("agentStopped", lang\)/);
+  assert.match(panel, /t\("agentTruncated", lang\)/);
+  assert.match(panel, /completion && !streaming/);
+  assert.match(panel, /styles\.completion\}[^]*role="status"/);
+  assert.match(css, /\.completion \{\s*align-self: center;\s*color: var\(--muted\)/);
+  // done 事件 → 'done';停止 abort → finally 判定 'stopped'(纯函数 resolveCompletion)
+  assert.match(panel, /setCompletion\("done"\)/);
+  assert.match(panel, /setCompletion\(resolveCompletion\(doneRef\.current, controller\.signal\.aborted\)\)/);
+  assert.match(executor, /export function resolveCompletion\(doneReceived: boolean, aborted: boolean\)/);
+  // 新消息发送清零完成状态
+  assert.match(panel, /doneRef\.current = false;/);
+  // 清屏按钮:clearOverlays + 清消息 + 清 sessionStorage 历史 + 清状态;流式期间禁用
+  assert.match(panel, /onClick=\{clearScreen\} disabled=\{streaming\}/);
+  assert.match(panel, /t\("agentClear", lang\)/);
+  assert.match(panel, /executorRef\.current\?\.clearOverlays\(\)/);
+  assert.match(panel, /sessionStorage\.removeItem\(HISTORY_KEY\)/);
+  assert.match(panel, /setMessages\(\[\]\)/);
+  // 执行器:undo 栈条目带 kind 标记(overlay 类供清屏识别);clearOverlays 只清 overlay
+  assert.match(executor, /kind: "camera"/);
+  assert.match(executor, /kind: "overlay"/);
+  assert.match(executor, /kind: "select"/);
+  assert.match(executor, /kind: "detail"/);
+  assert.match(executor, /clearOverlays\(\): void;/);
+  assert.match(executor, /undoStack\[i\]\.kind === "overlay"/);
+});
+
 test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
   const shell = src('components/map-shell.tsx');
   const bridge = src('lib/agent-map-bridge.ts');
