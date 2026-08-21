@@ -3,7 +3,7 @@
 // 本文件是 agent 前端与地图引擎之间的唯一接触点:MapBridge 接口供动作执行器
 // (components/agent-map-executor.ts)与面板调用;实现只认 map-engine 的
 // MapView 门面(view.flyTo / view.createMarker / view.createCircle /
-// view.getState),不直连任何厂商全局(window.AMap 等)——后续引擎可平滑切换。
+// view.getState),不直连任何厂商全局命名空间——后续引擎可平滑切换。
 // 坐标/半径校验复用动作边界(lib/agent/action-schema.ts 同款规则),非法 → 忽略。
 // 覆盖物(addMarkers/drawCircle)创建后由返回的清理函数自维护,undo 时调用。
 
