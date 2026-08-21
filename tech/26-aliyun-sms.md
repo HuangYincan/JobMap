@@ -37,7 +37,7 @@
 |---|---|---|---|
 | 缺任一 `ALIYUN_*` 配置 | 503 | `SMS_NOT_CONFIGURED` | 验证码服务暂不可用,请稍后再试 |
 | 阿里云业务错误 `FREQUENCY_FAIL`(频控) | 429 | `SMS_RATE_LIMITED` | 发送太频繁,请稍后再试 |
-| 阿里云业务错误 `BUSINESS_LIMIT_CONTROL`(天级流控) | 429 | `SMS_DAY_LIMITED` | 今日发送次数已达上限,请明天再试 |
+| 阿里云业务错误 `BUSINESS_LIMIT_CONTROL`(天级流控) | 429 | `SMS_DAY_LIMITED` | 今日发送次数已达上限,请稍后再试 |
 | key 失效 / 签名错误(阿里云鉴权类错误) | 503 | `SMS_PROVIDER_ERROR` | 验证码服务暂不可用,请稍后再试 |
 | 网络 / 其他(重试后仍失败) | 500 | `SMS_SEND_FAILED` | 验证码发送失败,请稍后再试 |
 
