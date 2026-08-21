@@ -78,52 +78,37 @@ test('action 追加到最终轮:文本+动作同一条消息', () => {
   assert.equal(msgs[0].actions.length, 1);
 });
 
-test('reasoning 归属:先于本轮 delta,与文本同消息;工具轮之后开新消息', () => {
+test('reasoning 事件整体忽略(2026-08-22 ws-bubble):不产生消息、不存状态、不参与拆轮', () => {
   let msgs = [];
+  // 空列表:reasoning 不新建消息、不存状态
   msgs = reduceAgentEvent(msgs, reasoning('第一轮思考'));
   msgs = reduceAgentEvent(msgs, reasoning('续'));
-  assert.equal(msgs.length, 1);
-  assert.equal(msgs[0].reasoning, 'thinking'); // 只标记状态,不累积内容
+  assert.equal(msgs.length, 0);
+  // 与 delta 顺序无关:不影响文本消息、消息不含思考字段
   msgs = reduceAgentEvent(msgs, delta('第一轮回答'));
   assert.equal(msgs.length, 1);
-  assert.equal(msgs[0].reasoning, 'done'); // 内容产出 → 思考完成
   assert.equal(msgs[0].content, '第一轮回答');
-  // 第二轮:工具后 reasoning → 开新消息(轮边界)
+  assert.equal('reasoning' in msgs[0], false, '消息不携带思考状态字段');
+  // 工具轮穿插 reasoning:不触发拆轮,工具仍在同一条消息原位更新
   msgs = reduceAgentEvent(msgs, tool('search', 'start'));
-  msgs = reduceAgentEvent(msgs, tool('search', 'done'));
   msgs = reduceAgentEvent(msgs, reasoning('第二轮思考'));
-  assert.equal(msgs.length, 2);
-  assert.equal(msgs[1].reasoning, 'thinking');
-  msgs = reduceAgentEvent(msgs, delta('第二轮回答'));
-  assert.equal(msgs.length, 2);
-  assert.equal(msgs[1].reasoning, 'done');
-  assert.equal(msgs[1].content, '第二轮回答');
-  // 多轮各自标记:前一轮不受影响
-  assert.equal(msgs[0].reasoning, 'done');
-  assert.equal(msgs[0].content, '第一轮回答');
-});
-
-test('思考状态流转:tool 事件结束思考(无 delta 的纯思考轮)', () => {
-  let msgs = [];
-  msgs = reduceAgentEvent(msgs, reasoning('思考'));
-  msgs = reduceAgentEvent(msgs, tool('search', 'start'));
-  assert.equal(msgs[0].reasoning, 'done', '进入工具阶段 → 思考完成');
-  assert.deepEqual(msgs[0].tools, [{ name: 'search', status: 'start' }]);
-  // done 原位更新不改变思考状态
   msgs = reduceAgentEvent(msgs, tool('search', 'done'));
-  assert.equal(msgs[0].reasoning, 'done');
+  assert.equal(msgs.length, 1);
   assert.deepEqual(msgs[0].tools, [{ name: 'search', status: 'done' }]);
+  // 工具轮后 delta 拆轮:轮序不变(文本1→工具1→文本2)
+  msgs = reduceAgentEvent(msgs, delta('文本2'));
+  assert.equal(msgs.length, 2);
+  assert.equal(msgs[1].content, '文本2');
+  assert.equal('reasoning' in msgs[1], false);
 });
 
-test('思考状态流转:流结束(done)兜底翻转「思考中」', () => {
+test('reasoning 之后流结束:全程无消息;done/error 透传引用不变', () => {
   let msgs = [];
   msgs = reduceAgentEvent(msgs, reasoning('思考'));
-  assert.equal(msgs[0].reasoning, 'thinking');
+  assert.equal(msgs.length, 0, 'reasoning 不产生消息');
   msgs = reduceAgentEvent(msgs, { type: 'done', truncated: false });
-  assert.equal(msgs[0].reasoning, 'done', '只有 reasoning 没有 delta/tool → 流结束翻转');
-});
-
-test('思考状态不污染:无 reasoning 标记的消息不受 done/error 影响(数组引用不变)', () => {
+  assert.equal(msgs.length, 0, '流结束不因 reasoning 兜底新建/翻转任何消息');
+  // done/error 事件级:透传不拆消息、不改内容(数组引用不变)
   const base = [user('问'), { role: 'assistant', content: '答' }];
   const out = reduceAgentEvent(base, { type: 'done', truncated: true });
   const out2 = reduceAgentEvent(base, { type: 'error', code: 'ERROR', message: '' });
