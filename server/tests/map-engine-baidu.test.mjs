@@ -150,6 +150,9 @@ class FakeMap {
   addControl(control) {
     this.controls.push(control);
   }
+  getContainer() {
+    return this.container;
+  }
   addEventListener(event, handler) {
     const list = this.listeners.get(event) ?? [];
     list.push(handler);
@@ -855,6 +858,55 @@ test('addControl:scale → ScaleControl;未知 kind no-op', async () => {
   assert.equal(view.raw.controls[0].scale, true);
   view.addControl('legend');
   assert.equal(view.raw.controls.length, 1, '未知 kind 不添加');
+});
+
+test('createView:BMapGL 默认控件 DOM 防御——zoom/omView 隐藏,版权/比例尺不误伤', async () => {
+  setup();
+  // 忠实 BMapGL DOM 类名:默认 zoom 左上 / .BMap_omView 3D 指北针(z-index 1000
+  // 量级)/ .BMap_cpyCtrl 版权右下 / .BMap_scaleCtrl 引擎 addControl 自建比例尺
+  const zoomEl = { style: {}, className: 'BMap_zoomCtrl' };
+  const omEl = { style: {}, className: 'BMap_omView' };
+  const cpyEl = { style: {}, className: 'BMap_cpyCtrl' };
+  const scaleEl = { style: {}, className: 'BMap_scaleCtrl' };
+  const container = {
+    node: true,
+    querySelectorAll(sel) {
+      const terms = [...sel.matchAll(/class\*="([^"]+)"/g)].map((m) => m[1]);
+      return [zoomEl, omEl, cpyEl, scaleEl].filter((el) =>
+        terms.some((t) => el.className.includes(t)),
+      );
+    },
+  };
+  const e = createBaiduEngine();
+  await e.createView({ container, center: GCJ, zoom: 12, style: 'normal' });
+  assert.equal(zoomEl.style.display, 'none', '默认 zoom 控件必须隐藏(display:none)');
+  assert.equal(zoomEl.style.pointerEvents, 'none', '默认 zoom 控件解除点击');
+  assert.equal(omEl.style.display, 'none', '.BMap_omView 3D 指北针必须隐藏(z-index 1000 盖 UI)');
+  assert.equal(omEl.style.pointerEvents, 'none');
+  assert.equal(cpyEl.style.display, undefined, '版权保留可见(ToS,由 map-shell CSS 隐藏)');
+  assert.equal(scaleEl.style.display, undefined, '不误伤引擎 addControl 自建比例尺');
+  assert.equal(scaleEl.style.pointerEvents, undefined, '比例尺不解除点击');
+});
+
+test('createView:BMapGL 默认控件防御——无控件 DOM/querySelectorAll 抛错均不炸', async () => {
+  setup();
+  const e = createBaiduEngine();
+  // 容器无 querySelectorAll(FakeMap.getContainer 返回 {})→ 静默跳过
+  await assert.doesNotReject(
+    e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' }),
+    '无 DOM API 不得抛',
+  );
+  // querySelectorAll 抛错 → 防御式 try/catch 吞掉
+  const evil = {
+    node: true,
+    querySelectorAll() {
+      throw new Error('dom boom');
+    },
+  };
+  await assert.doesNotReject(
+    e.createView({ container: evil, center: GCJ, zoom: 12, style: 'normal' }),
+    'querySelectorAll 异常不得抛(防御式)',
+  );
 });
 
 test('on:事件名映射(click/zoomend/moveend/tilesloaded)+ 解绑', async () => {

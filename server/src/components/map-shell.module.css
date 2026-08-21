@@ -43,6 +43,13 @@
   inset: 0;
   overflow: hidden;
   position: absolute;
+  /* 层级隔离(2026-08-21 ws-4):mapCanvas 自身构成独立 stacking context
+     (z-index:0 + isolation:isolate),厂商内部高 z-index 层(TMap 控件/覆盖物
+     面板、BMapGL .BMap_omView z-index 1000 量级)被困在容器内,不再参与
+     shell 全局竞争——sidebar(5)/topTools(5)/mapControls(10)/AgentBall(11)
+     相对关系不变,「原组件点不了」根治 */
+  z-index: 0;
+  isolation: isolate;
 }
 
 /* 隐藏高德地图版权信息和 logo，但不影响比例尺 */
@@ -51,6 +58,25 @@
 }
 
 .mapCanvas :global(.amap-logo) {
+  display: none !important;
+}
+
+/* 腾讯 TMap 版权/默认控件隐藏(与 .amap-copyright 同款模式;构造 showControl:false
+   后仍可能残留的 DOM 兜底)。只兜 zoom/rotate/copyright——不碰引擎 addControl
+   自建的比例尺(tencent-map-ctrl-scale),防误伤 UI */
+.mapCanvas :global([class*="tencent-map-ctrl-zoom"]),
+.mapCanvas :global([class*="tencent-map-ctrl-rotate"]),
+.mapCanvas :global([class*="tencent-map-ctrl-copyright"]),
+.mapCanvas :global([class*="tencent-map-copyright"]) {
+  display: none !important;
+}
+
+/* 百度 BMapGL 版权/默认控件隐藏:.BMap_cpyCtrl 版权右下、.BMap_omView 3D 指北针
+   左上(z-index 1000 量级,盖过 app UI 拦截点击)、.BMap_zoomCtrl 默认缩放左上;
+   .BMap_scaleCtrl 为引擎 addControl 自建比例尺,保留 */
+.mapCanvas :global(.BMap_cpyCtrl),
+.mapCanvas :global(.BMap_omView),
+.mapCanvas :global(.BMap_zoomCtrl) {
   display: none !important;
 }
 
