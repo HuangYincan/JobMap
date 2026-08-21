@@ -15,10 +15,12 @@
 // 保证与主加载 effect 的读写顺序、行为完全一致。
 // ============================================================
 
-import { useEffect, useRef, type MutableRefObject } from "react";
+import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import type { FilterState, MapMode, POI } from "@/lib/types";
+import type { MapView } from "@/lib/map-engine/types";
 import { canonicalMode } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
+import { subscribeEngineBus } from "@/hooks/use-map-engine";
 import {
   batchMatchesCurrentMode,
   createViewportLoader,
@@ -127,6 +129,16 @@ export function useWorkViewport(
   } = deps;
 
   const viewportLoaderRef = useRef<ViewportLoader | null>(null);
+
+  // ---- 引擎视图订阅(2026-08-22 ws-b,bug 4「切回 POI 消失」修复)----
+  // 视口加载器的 moveend/zoomend 监听原本只随 mapReady 绑定一次 → 引擎切换后
+  // 新 view 永远拿不到视口监听(旧 view 已销毁,mapReady 恒 true 不触发重绑),
+  // domain 视口刷新 / 挂载对齐在切换后静默失效。经引擎总线(use-map-engine
+  // publishEngineBus)订阅活跃 view 实例,作为重绑的 effect 依赖:引擎切换
+  // setView → 总线重发 → 本 hook 重渲染 → 监听在**新 view** 上重建
+  // (mapInstance.current 在 map-shell 视图接线 effect 中已同步为同一实例)。
+  const [engineView, setEngineView] = useState<MapView | null>(null);
+  useEffect(() => subscribeEngineBus((value) => setEngineView(value?.view ?? null)), []);
 
   // ---- 工作模式视口按需加载(仅 work;Domain 保持刷新才更新)----
   useEffect(() => {
@@ -244,7 +256,10 @@ export function useWorkViewport(
       offMoveEnd?.();
       offZoomEnd?.();
     };
-  }, [mapReady]);
+    // engineView(引擎总线活跃视图):引擎切换后重绑视口监听(见上订阅注释);
+    // 无总线(useMapEngine 未挂载)时恒 null,退化为原 mapReady 一次性绑定
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 依赖见注释
+  }, [mapReady, engineView]);
 
   // ---- 挂载对齐加载(ws1 Bug1 视口)----
   // mode 级会话缓存还原的是「上次会话视野」的目录(可能停在别的城市)。刷新后地图
@@ -260,8 +275,11 @@ export function useWorkViewport(
     if (!snap) return;
     if (!needsViewportAlign(cached.viewport, snap.center, snap.zoom)) return;
     viewportLoaderRef.current.schedule();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在挂载/定位就绪/切模式时检查
-  }, [mapReady, geoSettled, mode]);
+    // engineView:引擎切换后重跑对齐判定(切换重建 view 后相机可能被 createView
+    // 吸附,缓存视野与当前视野的关系需重新评估;平时 mapReady/geoSettled/mode
+    // 不变 → 零重跑)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在挂载/定位就绪/切模式/切引擎时检查
+  }, [mapReady, geoSettled, mode, engineView]);
 
   return { viewportLoaderRef };
 }

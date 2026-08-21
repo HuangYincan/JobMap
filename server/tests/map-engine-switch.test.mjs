@@ -19,7 +19,9 @@
 
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { switchMapEngine } from '../src/lib/map-engine/switch.ts';
+import { TENCENT_ENGINE } from '../src/lib/map-engine/tencent/tencent-engine.ts';
 
 /** 控制器 Domain 图钉需要厂商命名空间(Icon/Size/Pixel 逃生舱) */
 const NS = {
@@ -36,8 +38,14 @@ let seq = 0;
 /**
  * mock MapView:记录 destroy/createMarker 事件;marker 带 show/hide/zIndex 探针
  * (POIMarkerController 观察点:可见集 → shown,选中/高亮 → zIndex)。
+ * @param {object} engine 所属引擎
+ * @param {{ id?: string, events?: string[], style?: string|null,
+ *   detachVisibility?: boolean }} opts
+ *   detachVisibility=true 模拟 TMap MultiMarker 摘挂语义:setVisible 隐藏 =
+ *   从图层摘除(attached=false),显示 = 重新挂载 —— 与 AMap show/hide 同契约
+ *   不同语义,用于回放双向对称性断言(ws-b bug 4)。
  */
-function makeMockView(engine, { id, events: log = events, style: viewStyle = null } = {}) {
+function makeMockView(engine, { id, events: log = events, style: viewStyle = null, detachVisibility = false } = {}) {
   const view = {
     id: id ?? `view-${++seq}`,
     engine,
@@ -56,6 +64,7 @@ function makeMockView(engine, { id, events: log = events, style: viewStyle = nul
       const marker = {
         opts: markerOpts,
         shown: true,
+        attached: true,
         zIndex: null,
         on() {},
         off() {},
@@ -84,10 +93,22 @@ function makeMockView(engine, { id, events: log = events, style: viewStyle = nul
         setPosition: (p) => marker.setPosition([p.lng, p.lat]),
         setContent: (html) => marker.setContent(html),
         setZIndex: (z) => marker.setzIndex(z),
-        setVisible: (v) => (v ? marker.show() : marker.hide()),
+        setVisible: (v) => {
+          if (detachVisibility) {
+            // TMap MultiMarker 摘挂语义:隐藏 = 从共享实例摘除(attached=false),
+            // 显示 = 重新挂载;shown 与 attached 同源
+            marker.shown = Boolean(v);
+            marker.attached = Boolean(v);
+            return;
+          }
+          (v ? marker.show() : marker.hide());
+        },
         on: (event, cb) => marker.on(event, cb),
         off: (event, cb) => marker.off(event, cb),
-        remove: () => marker.setMap(null),
+        remove: () => {
+          marker.attached = false;
+          marker.setMap(null);
+        },
       };
     },
   };
@@ -525,4 +546,235 @@ test('重入取代:后发意图置前发 signal → 前发让路,后发赢(两�
   assert.equal(resultB.view.engine, toB);
   assert.equal(from.destroyed, true, 'B 才销毁旧 view');
   assert.deepEqual(events, ['load:tencent', 'load:baidu', 'destroy:from', 'createView:baidu']);
+});
+
+// ---------------------------------------------------------------------------
+// ws-b(2026-08-22):bug 2 滚轮平滑 + bug 4 切回高德 POI 消失
+// ---------------------------------------------------------------------------
+
+// ------------------------------------------------------------
+// bug 2:TMap 滚轮平滑 —— 构造选项核实与显式启用
+// SDK v1.8.0.2 实包(/tmp/tmap-gljs.js,2.2MB)核实:
+// - **smoothWheelZoom 选项不存在**(全包 0 处命中;Leaflet 2D 适配层
+//   zy.mergeOptions({scrollWheelZoom:!0,...}) 是另一地图路径,与 GL 无关);
+// - 滚轮平滑是 **SDK 内建行为**:Map 选项 `scrollable`(MAP_3D/MAP_2D 默认均
+//   true,运行期 setScrollable(bool) 切换)启用滚轮处理器;输入分类 wheel
+//   (鼠标滚轮)→ zoomTo({duration:200, smoothEasing:!0, delayEndEvents:100})
+//   平滑动画;trackpad(触控板/像素增量)→ duration:0 即时应答(SDK 设计);
+// - 显式传 scrollable:true = 自文档化 + 防御未来 SDK 默认值漂移。
+// ------------------------------------------------------------
+
+/** 最小 TMap 命名空间 double:捕获 Map 构造 options(createView 路径足够) */
+function installTMapConstructorDouble() {
+  const captured = { opts: null };
+  const container = {
+    tagName: 'DIV',
+    style: {},
+    querySelectorAll: () => [],
+  };
+  class FakeMap {
+    constructor(containerEl, opts = {}) {
+      captured.opts = opts;
+      this.container = containerEl;
+      this.listeners = new Map();
+      // 模拟异步初始化:idle 就绪(createView 的 waitForMapReady 依赖)
+      setTimeout(() => this.trigger('idle'), 5);
+    }
+    on(event, cb) {
+      const list = this.listeners.get(event) ?? [];
+      list.push(cb);
+      this.listeners.set(event, list);
+      return () => this.off(event, cb);
+    }
+    off(event, cb) {
+      const list = this.listeners.get(event) ?? [];
+      this.listeners.set(event, list.filter((f) => f !== cb));
+    }
+    trigger(event, payload) {
+      for (const cb of this.listeners.get(event) ?? []) cb(payload);
+    }
+    getContainer() {
+      return this.container;
+    }
+    getControl() {
+      return null;
+    }
+    removeControl() {}
+    setShowControl() {}
+    destroy() {}
+  }
+  globalThis.TMap = {
+    Map: FakeMap,
+    LatLng: class TMapLatLng {
+      constructor(lat, lng) {
+        this.lat = lat;
+        this.lng = lng;
+      }
+    },
+    search: {
+      searchPOI: async () => [],
+      fetchSuggestions: async () => [],
+      getCurrentPosition: async () => null,
+      geocodeAddress: async () => null,
+    },
+  };
+  globalThis.window = globalThis;
+  return { captured, container };
+}
+
+const TENCENT_KEY = 'NEXT_PUBLIC_TENCENT_JSAPI_KEY';
+
+test('bug2 滚轮平滑:TMap 构造显式 scrollable:true(SDK 无 smoothWheelZoom 选项,内建 200ms 平滑)', async () => {
+  const { captured, container } = installTMapConstructorDouble();
+  process.env[TENCENT_KEY] = 'test-key';
+  try {
+    const view = await TENCENT_ENGINE.createView({
+      container,
+      center: { lng: 120.15, lat: 30.27 },
+      zoom: 12,
+      pitch: 30,
+      rotation: 45,
+      style: 'normal',
+    });
+    assert.equal(captured.opts.scrollable, true, '滚轮显式启用(自文档化 + 防默认漂移)');
+    assert.equal(captured.opts.showControl, false, '默认控件禁用语义不变');
+    assert.equal(captured.opts.zoom, 12);
+    assert.equal(captured.opts.pitch, 30);
+    assert.equal(captured.opts.rotation, 45);
+    assert.deepEqual(captured.opts.baseMap, { type: 'vector' });
+    // 断言构造选项里没有不存在的 smoothWheelZoom(文档化 SDK 核实:选项不存在,
+    // 不传幻觉键——平滑由内建滚轮处理器承担)
+    assert.equal('smoothWheelZoom' in captured.opts, false);
+    view.destroy();
+  } finally {
+    delete process.env[TENCENT_KEY];
+    delete globalThis.window;
+    delete globalThis.TMap;
+  }
+});
+
+// ------------------------------------------------------------
+// bug 4:切回高德 POI 消失 —— 回放双向对称性 + 可见性语义映射
+//
+// 核查结论(switch.ts replay 链):replayController 引擎无关、双向同代码路径
+// (POI 集 → 可见集 → 选中 → 高亮,与 usePOIMap.applySync 同口径);可见性
+// 语义映射(AMap show/hide vs TMap MultiMarker add/remove 摘挂)经 MapMarker
+// 契约 setVisible 收敛,回放不感知厂商差异。以下断言:
+// 1. A→T 与 T→A 两个方向以相同回放数据切换,最终 marker 状态完全一致
+//    (数量/可见/选中/高亮);
+// 2. TMap 摘挂语义:隐藏 marker attached=false(不在图层,天然不可点击),
+//    显示 marker 重新挂载 —— 与 AMap show/hide 同契约不同实现;
+// 3. work 风格 LOD 可见集(部分可见)在双向回放后精确恢复,零漂移。
+// ------------------------------------------------------------
+
+test('bug4 双向回放对称性:A→T 与 T→A 相同回放 → 最终 marker 状态一致(含 TMap 摘挂语义)', async () => {
+  globalThis.window = { NS };
+  const pois = [makePOI('p1', 0), makePOI('p2', 1), makePOI('p3', 2), makePOI('p4', 3)];
+  // work 风格 LOD 可见集:公司 pin 按 zoom tier 部分可见
+  const visibleIds = new Set(['p1', 'p3']);
+  const replay = { pois, visibleIds, selectedId: 'p2', highlightedId: 'p4' };
+
+  const amapEngine = makeMockEngine('amap');
+  const fromA = makeMockView(amapEngine, { id: 'from-amap' });
+  // 目标腾讯视图用摘挂语义(忠实 TMap MultiMarker setVisible = add/remove)
+  const tencentEngine = makeMockEngine('tencent', {
+    overrides: {
+      createView: async (opts) => {
+        events.push('createView:tencent');
+        return makeMockView(tencentEngine, { style: opts.style, detachVisibility: true });
+      },
+    },
+  });
+  const r1 = await switchMapEngine({
+    from: fromA,
+    to: tencentEngine,
+    container,
+    state: STATE,
+    style: 'normal',
+    ...replay,
+  });
+
+  // T→A 方向:旧视图 = 摘挂语义(带隐藏 marker),目标 = AMap(show/hide)
+  const fromT = makeMockView(tencentEngine, { id: 'from-tencent', detachVisibility: true });
+  const amapEngine2 = makeMockEngine('amap');
+  const r2 = await switchMapEngine({
+    from: fromT,
+    to: amapEngine2,
+    container,
+    state: STATE,
+    style: 'normal',
+    ...replay,
+  });
+
+  for (const [label, r] of [['A→T', r1], ['T→A', r2]]) {
+    const view = r.view;
+    assert.equal(r.created, true, `${label}:切换落地`);
+    assert.equal(view.markers.length, 4, `${label}:POI 集完整回放`);
+    // 可见集恢复(p1/p3 可见,p2/p4 隐藏)
+    assert.equal(view.markers[0].shown, true, `${label}:p1 可见`);
+    assert.equal(view.markers[1].shown, false, `${label}:p2 隐藏(LOD)`);
+    assert.equal(view.markers[2].shown, true, `${label}:p3 可见`);
+    assert.equal(view.markers[3].shown, false, `${label}:p4 隐藏(LOD)`);
+    // 选中 p2 → zIndex 100;高亮 p4 → zIndex 80;普通 → 10
+    assert.equal(view.markers[0].zIndex, 10, `${label}:p1 普通层级`);
+    assert.equal(view.markers[1].zIndex, 100, `${label}:p2 选中层级`);
+    assert.equal(view.markers[2].zIndex, 10, `${label}:p3 普通层级`);
+    assert.equal(view.markers[3].zIndex, 80, `${label}:p4 高亮层级`);
+  }
+
+  // TMap 摘挂语义落实:隐藏 marker 已从图层摘除(attached=false,不可点击),
+  // 显示 marker 挂载(attached=true)—— 可见性语义映射在回放后精确恢复
+  assert.equal(r1.view.markers[0].attached, true);
+  assert.equal(r1.view.markers[1].attached, false, 'TMap 隐藏 = 摘除(不在图层)');
+  assert.equal(r1.view.markers[2].attached, true);
+  assert.equal(r1.view.markers[3].attached, false);
+  // 切回高德:同一 visibleIds 经 show/hide 语义落地,结果一致(无语义丢失)
+  assert.equal(r2.view.markers[1].attached, true, 'AMap show/hide:实例保留仅隐藏');
+  assert.equal(r2.view.markers[1].shown, false);
+});
+
+test('bug4 无可见集回放:visibleIds 缺省 = 全部显示(双向一致,不误藏 marker)', async () => {
+  globalThis.window = { NS };
+  const pois = [makePOI('p1', 0), makePOI('p2', 1)];
+  const amapEngine = makeMockEngine('amap');
+  const tencentEngine = makeMockEngine('tencent', {
+    overrides: {
+      createView: async (opts) => {
+        events.push('createView:tencent');
+        return makeMockView(tencentEngine, { style: opts.style, detachVisibility: true });
+      },
+    },
+  });
+  const fromA = makeMockView(amapEngine, { id: 'from-amap' });
+  const r1 = await switchMapEngine({ from: fromA, to: tencentEngine, container, state: STATE, style: 'normal', pois });
+  assert.equal(r1.view.markers[0].shown, true);
+  assert.equal(r1.view.markers[0].attached, true);
+  assert.equal(r1.view.markers[1].shown, true);
+
+  const fromT = makeMockView(tencentEngine, { id: 'from-tencent', detachVisibility: true });
+  const amapEngine2 = makeMockEngine('amap');
+  const r2 = await switchMapEngine({ from: fromT, to: amapEngine2, container, state: STATE, style: 'normal', pois });
+  assert.equal(r2.view.markers[0].shown, true);
+  assert.equal(r2.view.markers[1].shown, true);
+});
+
+// ------------------------------------------------------------
+// bug 4:work 视口重建触发 —— 引擎切换后视口监听必须随新 view 重绑
+// (use-work-viewport 原只随 mapReady 绑定一次 → 切换后新 view 无
+// moveend/zoomend 监听,domain 视口刷新/挂载对齐静默失效;ws-b 修复为
+// 经引擎总线订阅活跃 view,监听按 view 实例重绑)
+// ------------------------------------------------------------
+
+test('bug4 work 视口重建触发:use-work-viewport 监听按引擎视图重绑(总线订阅 + effect 依赖)', () => {
+  const src = readFileSync(new URL('../src/hooks/use-work-viewport.ts', import.meta.url), 'utf8');
+  // 引擎总线订阅:活跃 view 变化 → 重渲染 → 重绑
+  assert.match(src, /subscribeEngineBus/);
+  assert.match(src, /setEngineView\(value\?\.view/);
+  // 视口监听 effect 依赖新 view(切换后重绑 moveend/zoomend)
+  assert.match(src, /map\.on\("moveend", onViewChange\)/);
+  assert.match(src, /\}, \[mapReady, engineView\]\);/);
+  // 挂载对齐判定同样随引擎视图重跑
+  assert.match(src, /\}, \[mapReady, geoSettled, mode, engineView\]\);/);
+  // 无总线(useMapEngine 未挂载)时退化为原 mapReady 一次性绑定,不硬依赖
+  assert.match(src, /无总线/);
 });
