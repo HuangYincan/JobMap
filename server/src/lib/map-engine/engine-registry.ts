@@ -40,6 +40,24 @@ function unsupportedSearch(desc: EngineDescriptor): MapSearchProvider {
   };
 }
 
+/**
+ * keyVar → isConfigured 静态分派:Next 构建期只替换静态字面量
+ * (process.env.NEXT_PUBLIC_XXX → 值),process.env 括号动态访问在
+ * 浏览器端恒为 undefined,故按 keyVar 逐字面量分派;未知 keyVar 视为未配置。
+ */
+function envConfigured(keyVar: string): () => boolean {
+  switch (keyVar) {
+    case 'NEXT_PUBLIC_AMAP_KEY':
+      return () => Boolean(process.env.NEXT_PUBLIC_AMAP_KEY?.trim());
+    case 'NEXT_PUBLIC_TENCENT_JSAPI_KEY':
+      return () => Boolean(process.env.NEXT_PUBLIC_TENCENT_JSAPI_KEY?.trim());
+    case 'NEXT_PUBLIC_BAIDU_AK':
+      return () => Boolean(process.env.NEXT_PUBLIC_BAIDU_AK?.trim());
+    default:
+      return () => false;
+  }
+}
+
 function makeEngine(desc: EngineDescriptor): MapEngine {
   return {
     id: desc.id,
@@ -47,7 +65,7 @@ function makeEngine(desc: EngineDescriptor): MapEngine {
     namespace: desc.namespace,
     coordSystem: desc.coordSystem,
     keyVar: desc.keyVar,
-    isConfigured: () => Boolean(process.env[desc.keyVar]),
+    isConfigured: envConfigured(desc.keyVar),
     isLoaded: () =>
       typeof window !== 'undefined' &&
       Boolean((window as unknown as Record<string, unknown>)[desc.namespace]),

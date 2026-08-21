@@ -637,7 +637,8 @@ class BaiduEngine implements MapEngine {
   }
 
   isConfigured(): boolean {
-    return Boolean(process.env[BAIDU_KEY_VAR]?.trim());
+    // 裸字面量:Next 构建期只做静态替换,process.env 括号动态访问浏览器端恒 undefined
+    return Boolean(process.env.NEXT_PUBLIC_BAIDU_AK?.trim());
   }
 
   isLoaded(): boolean {
@@ -646,7 +647,7 @@ class BaiduEngine implements MapEngine {
 
   async load(): Promise<void> {
     if (this.isLoaded()) return;
-    const ak = process.env[BAIDU_KEY_VAR]?.trim();
+    const ak = process.env.NEXT_PUBLIC_BAIDU_AK?.trim();
     if (!ak) {
       throw new Error(`[map-engine] baidu 未配置 ${BAIDU_KEY_VAR}`);
     }
