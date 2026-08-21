@@ -276,6 +276,9 @@
 }
 
 .accountLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   margin: 0;
   color: var(--muted);
   font-size: 13px;
@@ -283,6 +286,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.accountLabel svg {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  opacity: 0.75;
+}
+
+.accountLabel span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ============ 编辑资料展开区 ============ */

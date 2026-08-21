@@ -1882,6 +1882,11 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     }
   };
 
+  /** 头像上传成功(ProfilePanel 内即时完成)→ 只同步 user 状态,不再走 PATCH。 */
+  const handleAvatarUrlChange = (avatarUrl: string) => {
+    setUser((current) => (current ? { ...current, avatarUrl } : current));
+  };
+
   const openExploreSearch = useCallback((nextQuery: string) => {
     const tagged = applyTagSuggestion({ query, filters }, nextQuery);
     if (tagged.applied) {
@@ -2351,6 +2356,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           shifted={sidebarOpen}
           onClose={() => setRailPanel(null)}
           onSave={handleSaveProfile}
+          onAvatarUrlChange={handleAvatarUrlChange}
           onSignOut={handleAuthAction}
           applications={applications}
           notifications={inbox}
@@ -2636,6 +2642,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                       notifications={inbox}
                       onClose={() => setMobileSheet("explore")}
                       onSave={handleSaveProfile}
+                      onAvatarUrlChange={handleAvatarUrlChange}
                       onSignOut={handleAuthAction}
                       onOpenApplication={handleOpenApplication}
                     />
