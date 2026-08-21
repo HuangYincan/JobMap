@@ -826,3 +826,32 @@ test('tencentGeocodeAddressRest is a no-op without TENCENT_MAP_KEY', async () =>
     if (prev != null) process.env.TENCENT_MAP_KEY = prev;
   }
 });
+
+test('tencent endpoints surface http failures (res.ok / thrown fetch) as reason http', async () => {
+  await withTencentKey(async () => {
+    const httpFail = async () => ({ ok: false, status: 500 });
+    const throwFail = async () => {
+      throw new Error('network down');
+    };
+    // 正向 geocode: res.ok=false → http; fetch 抛错 → http.
+    const g1 = await tencentGeocodeAddressRest('西湖区文二西路712号', '杭州市', httpFail);
+    assert.equal(g1.ok, false);
+    assert.equal(g1.reason, 'http');
+    const g2 = await tencentGeocodeAddressRest('西湖区文二西路712号', '杭州市', throwFail);
+    assert.equal(g2.ok, false);
+    assert.equal(g2.reason, 'http');
+    // place 检索: res.ok=false → http.
+    const p1 = await tencentPlaceSearchRest('得物', '上海市', httpFail);
+    assert.equal(p1.ok, false);
+    assert.equal(p1.reason, 'http');
+    assert.deepEqual(p1.pois, []);
+    const p2 = await tencentPlaceSearchRest('得物', '上海市', throwFail);
+    assert.equal(p2.ok, false);
+    assert.equal(p2.reason, 'http');
+    // regeo: res.ok=false / 抛错 → ok:false.
+    const r1 = await tencentRegeoCityRest(121.512, 31.272, httpFail);
+    assert.equal(r1.ok, false);
+    const r2 = await tencentRegeoCityRest(121.512, 31.272, throwFail);
+    assert.equal(r2.ok, false);
+  });
+});
