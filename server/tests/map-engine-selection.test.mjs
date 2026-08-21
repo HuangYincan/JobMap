@@ -35,7 +35,7 @@ function setEngineEnv(mask) {
   }
 }
 
-/** 内存版 localStorage(引擎偏好测试用) */
+/** 内存版 sessionStorage(引擎偏好测试用;key 值不敏感,不打印) */
 function makeStorage(initial = {}) {
   const store = new Map(Object.entries(initial));
   return {
@@ -113,7 +113,7 @@ test('零配:返回 null(调用方回退 CSS fallback 地图)', () => {
 
 test('preference 优先:全配时偏好 tencent → resolveEngine() 取 tencent', () => {
   setEngineEnv({ amap: true, tencent: true, baidu: true });
-  globalThis.window = { localStorage: makeStorage({ 'domain-map:engine': 'tencent' }) };
+  globalThis.window = { sessionStorage: makeStorage({ 'domain-map:engine': 'tencent' }) };
   assert.equal(readEnginePreference(), 'tencent');
   assert.equal(resolveEngine()?.id, 'tencent');
   // 显式 preferred 覆盖偏好
@@ -122,13 +122,13 @@ test('preference 优先:全配时偏好 tencent → resolveEngine() 取 tencent'
 
 test('preference 未配置回落:偏好 tencent 但未配置 → 取优先级第一个已配置', () => {
   setEngineEnv({ amap: true });
-  globalThis.window = { localStorage: makeStorage({ 'domain-map:engine': 'tencent' }) };
+  globalThis.window = { sessionStorage: makeStorage({ 'domain-map:engine': 'tencent' }) };
   assert.equal(resolveEngine()?.id, 'amap');
 });
 
 test('preference 无效值:按未设置处理,回落优先级第一个', () => {
   setEngineEnv({ amap: true, tencent: true });
-  globalThis.window = { localStorage: makeStorage({ 'domain-map:engine': 'garbage' }) };
+  globalThis.window = { sessionStorage: makeStorage({ 'domain-map:engine': 'garbage' }) };
   assert.equal(readEnginePreference(), null);
   assert.equal(resolveEngine()?.id, 'amap');
 });
@@ -140,11 +140,34 @@ test('writeEnginePreference 写读往返;SSR 守卫(无 window)读 null、写 no
   assert.doesNotThrow(() => writeEnginePreference('amap'));
 
   // 浏览器环境:写读往返
-  globalThis.window = { localStorage: makeStorage() };
+  globalThis.window = { sessionStorage: makeStorage() };
   writeEnginePreference('baidu');
   assert.equal(readEnginePreference(), 'baidu');
   writeEnginePreference('tencent');
   assert.equal(readEnginePreference(), 'tencent');
+});
+
+test('preference 会话级:localStorage 旧偏好不生效;write 只写 sessionStorage', () => {
+  setEngineEnv({ amap: true, tencent: true });
+  // 用户历史遗留:localStorage 曾持久化 tencent(旧版行为)
+  const ls = makeStorage({ 'domain-map:engine': 'tencent' });
+  const ss = makeStorage();
+  globalThis.window = { localStorage: ls, sessionStorage: ss };
+
+  // 旧 localStorage 偏好不得再被读取 → 新会话默认回落高德(优先级第一)
+  assert.equal(readEnginePreference(), null, 'localStorage 旧偏好不得再被读取');
+  assert.equal(resolveEngine()?.id, 'amap', '无会话偏好 → 回落优先级第一(高德)');
+
+  // 会话内手动切换仍记住,且只写 sessionStorage
+  writeEnginePreference('tencent');
+  assert.equal(readEnginePreference(), 'tencent', '会话内手动切换仍记住');
+  assert.equal(ss.getItem('domain-map:engine'), 'tencent');
+  assert.equal(ls.getItem('domain-map:engine'), 'tencent', '旧 localStorage 遗留不动(不迁移不清除)');
+
+  // 新会话(sessionStorage 空)→ 回落高德,即便 localStorage 仍有旧值
+  globalThis.window = { localStorage: ls, sessionStorage: makeStorage() };
+  assert.equal(readEnginePreference(), null);
+  assert.equal(resolveEngine()?.id, 'amap', '新标签页默认高德');
 });
 
 test('getEngine 按 id 取引擎;未知 id 抛错', () => {
