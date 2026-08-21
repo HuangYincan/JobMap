@@ -48,7 +48,10 @@ DATABASE_LOG_QUERIES=false
 # write to the 005 tables. When unset, APIs stay in process memory.
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/domain_map
 
-# Signs the demo session token. Do not commit the real value.
+# Signs the demo session token, and (2026-08-22) the OAuth `oauth_state`
+# HMAC. When unset, oauth_state falls back to a boot-time random key
+# (works single-instance; multi-instance deployments should set it
+# explicitly so state verifies across instances).
 SESSION_SECRET=replace-me
 
 # Sends email OTP codes via Resend (tech/25). When unset, email OTP send
@@ -58,6 +61,36 @@ RESEND_API_KEY=replace-me
 
 Email OTP goes out for real via Resend (`RESEND_API_KEY`). Phone OTP is
 demo-only (`000000`) — keep the Aliyun SMS hook; do not log codes or secrets.
+
+### 第三方登录 (OAuth, tech/27)
+
+Real OAuth 2.0 authorization code flow for GitHub / Google / WeChat
+(`server/src/lib/oauth/`, routes under `/api/auth/oauth/*`). All three
+providers are optional — when unconfigured the frontend falls back to demo
+login (`POST /api/auth/oauth` stub, unchanged). Configured = both variables
+of the pair non-empty (trimmed).
+
+```bash
+# GitHub OAuth App (github.com → Settings → Developer settings → OAuth Apps)
+GITHUB_OAUTH_CLIENT_ID=replace-me
+GITHUB_OAUTH_CLIENT_SECRET=replace-me
+
+# Google Cloud OAuth Client — Application type: Web application
+# (console.cloud.google.com → Credentials → OAuth client ID; configure the
+# OAuth consent screen first, User type can be External)
+GOOGLE_OAUTH_CLIENT_ID=replace-me
+GOOGLE_OAUTH_CLIENT_SECRET=replace-me
+
+# WeChat Open Platform website app (open.weixin.qq.com) — requires an
+# ICP-registered domain (localhost does NOT work); approved apps only
+WECHAT_OAUTH_APP_ID=replace-me
+WECHAT_OAUTH_SECRET=replace-me
+```
+
+Callback URLs registered in each provider console must match
+`<origin>/api/auth/oauth/callback/<provider>` exactly. Manual config
+checklist with click-by-click steps: `tech/27-oauth-login.md` §3. All six
+variables are **server secrets: never commit or log**.
 
 ### API Configuration
 ```bash
@@ -301,5 +334,5 @@ npm run start
 
 ---
 
-**Last Updated:** 2026-08-21
+**Last Updated:** 2026-08-22
 **Phase:** 2 (Multi-mode: Domain + Work)
