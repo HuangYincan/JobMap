@@ -50,6 +50,11 @@ const BAIDU_READY_POLL_MS = 50;
 /** BMapGL 就绪轮询上限(40 × 50ms = 2s):超时抛「命名空间未就绪」,
  * switch 回滚契约依赖该错误(2026-08-22 ws-6 与 TMap 就绪超时同量级) */
 const BAIDU_READY_MAX_POLLS = 40;
+/** 地图就绪等待超时(ms):BMapGL 异步渲染,AK 被禁用时 SDK 内部异步崩溃——
+ * Map 创建成功但不渲染、就绪信号永不触发 → 超时抛「BMapGL 地图就绪超时」,
+ * switch 回滚契约依赖 createView 抛错(绝不返回空图;2026-08-22 ws-7,
+ * 与腾讯 TENCENT_MAP_READY_TIMEOUT_MS 1.5s 同量级) */
+const BAIDU_MAP_READY_TIMEOUT_MS = 1500;
 /**
  * 官方 GL 加载器 URL(2026-08-22 ws-6 实测坐实,见 tech/23 回填):
  * **直连 getscript 本体,绕过 /api 包装器**。
@@ -194,6 +199,9 @@ interface BMapInstance {
   panTo(center: BPoint): unknown;
   setBounds(bounds: BBounds): unknown;
   setMapType(mapType: unknown): unknown;
+  /** BMapGL 2.0 官方就绪回调注册(存在时优先于 tilesloaded 事件等待;
+   * getscript v=1.0 若提供同样生效;一次性回调,无需解绑) */
+  setMapReadyCallback?(cb: () => void): unknown;
   getCenter(): BPoint;
   getZoom(): number;
   getTilt?(): number;
@@ -321,6 +329,75 @@ function applyMapStyle(map: BMapInstance, style: MapStyleId): void {
   console.warn(`[map-engine] baidu 不支持底图样式 ${style},回退 normal`);
   const normalConstant = resolveGlobalConstant(STYLE_CONSTANT.normal);
   if (normalConstant !== undefined) map.setMapType(normalConstant);
+}
+
+// ------------------------------------------------------------
+// 地图就绪等待(BMapGL 异步渲染;AK 禁用时 SDK 异步崩溃不触发信号)
+// ------------------------------------------------------------
+
+/**
+ * 等待 BMapGL 地图就绪再返回(BMapGL 异步渲染:`new Map()` 立即返回,首帧
+ * 渲染完成才触发就绪信号)。就绪信号**双通道**,任一先到即就绪:
+ *   1. setMapReadyCallback(BMapGL 2.0 官方就绪回调,存在时优先注册)
+ *   2. tilesloaded 事件(官方事件集;EVENT_MAP.complete 同源)
+ * 双通道防 SDK 单通道异常(回调注册了但永不触发)造成误判回滚。
+ * **AK 被禁用/渲染失败时 SDK 内部异步崩溃——Map 创建成功但不渲染、就绪信号
+ * 永不触发 → BAIDU_MAP_READY_TIMEOUT_MS 超时 reject(文案含「BMapGL 地图
+ * 就绪超时」),switch.ts 回滚契约依赖 createView 抛错(绝不返回空图)。**
+ * 事件系统/回调通道均不可用 → 立即放行(测试 mock/异常形态不阻塞);
+ * 就绪/超时均解绑 tilesloaded 监听。
+ */
+function waitForMapReady(map: BMapInstance): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let channels = 0;
+    const cleanup = () => {
+      if (timer !== undefined) clearTimeout(timer);
+      try {
+        map.removeEventListener?.('tilesloaded', onReady);
+      } catch {
+        // 解绑失败不影响就绪/超时语义
+      }
+    };
+    const onReady = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve();
+    };
+    const onTimeout = () => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(
+        new Error(
+          `[map-engine] baidu BMapGL 地图就绪超时(${BAIDU_MAP_READY_TIMEOUT_MS}ms):AK 可能被禁用或渲染失败`,
+        ),
+      );
+    };
+    try {
+      if (typeof map.setMapReadyCallback === 'function') {
+        map.setMapReadyCallback(onReady);
+        channels++;
+      }
+    } catch {
+      // 注册异常静默:事件通道兜底
+    }
+    try {
+      if (typeof map.addEventListener === 'function' && typeof map.removeEventListener === 'function') {
+        map.addEventListener('tilesloaded', onReady);
+        channels++;
+      }
+    } catch {
+      // 注册异常静默:回调通道兜底(或直接超时)
+    }
+    if (channels === 0) {
+      onReady(); // 事件系统不可用 → 立即放行(不阻塞 createView)
+      return;
+    }
+    timer = setTimeout(onTimeout, BAIDU_MAP_READY_TIMEOUT_MS);
+  });
 }
 
 // ------------------------------------------------------------
@@ -848,6 +925,23 @@ class BaiduEngine implements MapEngine {
     // 默认控件 DOM 防御(BMapGL 同步建 DOM,构造后立即隐藏 zoom/指北针;
     // 版权由 map-shell CSS 隐藏;有/无控件 API 均不抛)
     hideBaiduDefaultControls(map);
+    // 就绪等待(BMapGL 异步渲染):AK 被禁用/渲染失败时 SDK 内部异步崩溃——
+    // Map 创建成功但不渲染、就绪信号永不触发 → 1.5s 超时抛错,switch.ts 回滚
+    // 契约依赖 createView 抛错(绝不返回空图;2026-08-22 ws-7)。超时先销毁
+    // 未渲染的 Map(容器交还回滚视图),再抛「BMapGL 地图就绪超时」。
+    try {
+      await waitForMapReady(map);
+    } catch (err) {
+      try {
+        map.destroy?.();
+      } catch {
+        // 销毁失败不阻断抛错语义(容器由回滚视图接管)
+      }
+      throw err;
+    }
+    // 就绪后应用相机:创建后立即 centerAndZoom 会被异步初始化重置(丢失相机),
+    // 一律等就绪信号后再设置中心/zoom/俯仰/朝向(2026-08-22 ws-7 时序修复;
+    // 正常 AK 下 tilesloaded 数十 ms 内触发,延迟不可感知)
     // 初始中心点 bd09 转换(漏转 ≈700m 偏移)
     const c = gcj02ToBd09(opts.center.lng, opts.center.lat);
     map.centerAndZoom(new ns.Point(c.lng, c.lat), opts.zoom);
