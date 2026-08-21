@@ -17,10 +17,12 @@ function mockProvider(script) {
       seen.push({ index: idx, messages: opts.messages, tools: opts.tools });
       calls++;
       if (behavior.throwErr) throw behavior.throwErr;
-      // 真实推理模型(DSS 等)流式顺序:reasoning_content 先于 content/tool_calls
+      // 真实推理模型(DSS 等)流式顺序:reasoning_content 先于 content/tool_calls;轮末回调累计全文
       for (const r of behavior.reasoning ?? []) opts.onReasoning?.(r);
       for (const d of behavior.deltas ?? []) opts.onDelta(d);
       for (const tc of behavior.toolCalls ?? []) opts.onToolCall(tc);
+      const joined = (behavior.reasoning ?? []).join('');
+      if (joined) opts.onTurnReasoning?.(joined);
       opts.onDone();
     },
   };
@@ -217,6 +219,64 @@ test('runAgent: 无 reasoning(非推理模型)→ 零 reasoning 事件', async (
     events.map((e) => e.type),
     ['delta', 'done'],
   );
+});
+
+// ---------- reasoning_content 回传(DeepSeek 思考模式) ----------
+
+test('runAgent: tool_calls 轮次追加的 assistant 消息回传本轮 reasoning_content(多 chunk 拼接)', async () => {
+  const tool = mockTool('amap__place_search');
+  const mp = mockProvider([
+    { reasoning: ['先想', '想再查'], toolCalls: [{ id: 'c1', name: 'amap__place_search', arguments: '{"query":"杭州"}' }] },
+    { deltas: ['找到 3 个岗位'] },
+  ]);
+  const events = await collectEvents(baseReq({ tools: [tool], provider: mp }));
+  assert.equal(events.at(-1).type, 'done');
+  // 二轮请求中的 assistant(tool_calls) 消息带本轮 reasoning_content 累计全文
+  const assistant = mp.seen[1].messages.find((m) => m.role === 'assistant' && m.tool_calls);
+  assert.ok(assistant, '二轮消息含 assistant(tool_calls)');
+  assert.equal(assistant.reasoning_content, '先想想再查');
+  assert.equal(assistant.tool_calls[0].id, 'c1');
+  // 无 tool_calls 的 assistant 消息不携带 reasoning_content
+  assert.ok(
+    !mp.seen[1].messages.some((m) => m.role === 'assistant' && !m.tool_calls && 'reasoning_content' in m),
+    '最终轮无 tool_calls 不附加 reasoning_content',
+  );
+});
+
+test('runAgent: 多轮各回传本轮 reasoning,最终轮不追加 assistant 消息', async () => {
+  const tool = mockTool('amap__place_search');
+  const mp = mockProvider([
+    { reasoning: ['第一轮思考'], toolCalls: [{ id: 'c1', name: 'amap__place_search', arguments: '{"query":"a"}' }] },
+    { reasoning: ['第二轮思考'], toolCalls: [{ id: 'c2', name: 'amap__place_search', arguments: '{"query":"b"}' }] },
+    { deltas: ['最终答复'] },
+  ]);
+  const events = await collectEvents(baseReq({ tools: [tool], provider: mp }));
+  assert.deepEqual(
+    events.map((e) => e.type),
+    ['reasoning', 'tool', 'tool', 'reasoning', 'tool', 'tool', 'delta', 'done'],
+  );
+  // 每轮 assistant(tool_calls) 只带本轮 reasoning(history 含前几轮消息,取最新一条)
+  assert.equal(mp.seen[1].messages.find((m) => m.role === 'assistant' && m.tool_calls).reasoning_content, '第一轮思考');
+  assert.equal(mp.seen[2].messages.findLast((m) => m.role === 'assistant' && m.tool_calls).reasoning_content, '第二轮思考');
+  // 最终轮无 tool_calls:runAgent 不追加 assistant 消息 → 请求中无多余 reasoning_content
+  assert.ok(
+    !mp.seen[2].messages.some((m) => m.role === 'assistant' && !m.tool_calls && 'reasoning_content' in m),
+    '最终轮不追加带 reasoning 的 assistant 消息',
+  );
+});
+
+test('runAgent: 无 reasoning 直接 tool_calls(非推理模型)→ assistant 消息不附加 reasoning_content 字段', async () => {
+  const tool = mockTool('amap__place_search');
+  const mp = mockProvider([
+    { toolCalls: [{ id: 'c1', name: 'amap__place_search', arguments: '{"query":"x"}' }] },
+    { deltas: ['ok'] },
+  ]);
+  await collectEvents(baseReq({ tools: [tool], provider: mp }));
+  const assistant = mp.seen[1].messages.find((m) => m.role === 'assistant' && m.tool_calls);
+  assert.ok(assistant);
+  // 选择说明:空 reasoning 不附加字段(不污染非推理模型请求);若实测某 provider(如 DeepSeek
+  // 思考模式)空 reasoning + tool_calls 仍 400,应改为总是附加空串 reasoning_content: ''。
+  assert.equal('reasoning_content' in assistant, false, '空 reasoning 不附加 reasoning_content 字段');
 });
 
 // ---------- 动作提取与下发 ----------
