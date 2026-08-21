@@ -187,6 +187,8 @@ deferred #5);非 AMap 引擎的 geolocation 蓝点行为未验证(`getCurrentPos
 | Autocomplete | 官方为**输入框 UI 组件**;headless 探测 `prototype.search` 存在才直用,现实大概率回退 PlaceSearch 顶部结果;headless 路径 5s 超时兜底防挂起 | class-autocomplete |
 | Geocoder | `new BMapGL.Geocoder()`;`getPoint(address, callback, city?)` 第三参形态(字符串 vs {city} 对象)[冒烟待验],失败仅丢城市提示 | class-geocoder |
 | Geolocation | `new BMapGL.Geolocation()`;`getCurrentPosition(callback)` → `{ point, accuracy }` | class-geolocation |
+| 就绪信号 | `setMapReadyCallback` 是 **BMapGL 2.0 API,v1.0 getscript 不存在**(SDK 源码 0 处命中);v1.0 真实就绪事件(派发原名):`onfirsttilesloaded`/`onfirsttileloaded`(首帧瓦片批完成)、`ontilesloaded`(全部瓦片完成,注册 `tilesloaded` 经 BaseClass 自动补 "on" 前缀归一命中)、`onstyle_loaded`(样式配置加载,早于瓦片);多通道任一即就绪,`setMapReadyCallback` 存在时仍优先(升级兼容) | 2026-08-22 SDK 源码核实(ws-c) |
+| 就绪时序 | GL 构造器**跳过默认视图初始化**(仅非 GL 分支 `centerAndZoomIn` 默认中心),底图图层在 `centerAndZoomIn` 内才创建(`if(!this.loaded){_addTileLayer}`)→ **必须先 `centerAndZoom` 再等就绪信号**(旧「等就绪后再设相机」时序 = 零瓦片请求 = 就绪事件永不派发 = 必然 1.5s 超时回滚,与 AK 有效与否无关);SDK 无任何异步初始化重置相机(GL 不应用 `_initViewport`、注册插件不动相机) | 2026-08-22 SDK 源码核实(ws-c) |
 | 坐标系 | **bd09**(百度原生);适配层边界 gcj02↔bd09(coord-utils 官方公式),漏转 ≈700m | — |
 
 引擎实现策略:官方服务四方法(PlaceSearch / Autocomplete headless + 超时兜底 /
@@ -200,6 +202,7 @@ Geocoder / Geolocation);`coordSystem: 'bd09'`;失败一律安全值([]/null + wa
 | ws-c(AMap,15 适配器测试) | 构造参数/样式映射/卫星/比例尺/事件/收藏 setBounds/搜索转发逐参数核对 | 真实浏览器冒烟未做(无浏览器/真实 key 环境) |
 | ws-d(腾讯,21 测试) | 脚本 URL 断言/callback 时序/双参构造/纬度在前/事件映射/WebService 端点/失败安全值 | **腾讯真实 key 冒烟缺口**(mock 代替,deferred #1);WebService CORS 依赖 |
 | ws-e(百度,35 测试) | 脚本 URL/onload/相机闭环(防 700m 偏移)/bd09 固定点位/事件映射/搜索四方法/5s 超时 | [冒烟待验] 项(Geocoder 第三参、setContent、onload 时序等,deferred #2);Autocomplete 现实降级 |
+| ws-c 就绪信号修正(2026-08-22,百度 47 测试) | 就绪信号选型:SDK 源码核实 v1.0 无 `setMapReadyCallback`、就绪事件 = `onfirsttilesloaded`/`ontilesloaded`/`onstyle_loaded`;GL 构造不设默认视图 → 相机先行修复(先 centerAndZoom 再等就绪);多通道任一即就绪;超时 1.5s + 销毁 + 抛错回滚契约不变;测试钉注册事件名/任一触发/超时路径/相机先行时序 | **真实浏览器冒烟未做**(无浏览器环境):就绪信号选型依据为 SDK 源码静态核实(getscript v1.0 直连本体 1.2MB 抓取);真实验证待 boss 合并后 Playwright(有效 AK 下 createView 应在数十 ms 内就绪、相机不丢、禁 AK 应 1.5s 超时回滚) |
 | ws-f(切换,8 测试) | 编排顺序深度断言/回放/降级/守卫 | 三引擎**同配**真实冒烟(deferred #4);移动端抽屉截图复核 |
 
 **所有「[冒烟待验]」项 = 待真实 key 冒烟回填(deferred #1/#2)**;三家同配真实冒烟
