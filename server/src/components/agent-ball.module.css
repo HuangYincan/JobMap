@@ -55,3 +55,11 @@
     background: rgba(28, 28, 30, 0.85);
   }
 }
+
+/* 移动端(≤767px):球隐藏,入口改为移动工具栏 AI item(面板与球是 fragment 兄弟,
+   隐藏球不影响面板渲染;桌面端球照常) */
+@media (max-width: 767px) {
+  .ball {
+    display: none;
+  }
+}

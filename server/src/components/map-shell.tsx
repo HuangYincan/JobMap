@@ -358,6 +358,11 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, []);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers" | "account" | "recent">("explore");
+  /** 移动 sheet 来源追踪(ws-mt):工具栏 item 打开 saved/layers/recent → "explore";
+   *  account 内导航打开 → "account";三个 sheet 的 back 按钮按此回退。 */
+  const [mobileSheetBack, setMobileSheetBack] = useState<"explore" | "account">("explore");
+  /** AI 助手开关(ws-mt 受控提升):悬浮球与移动工具栏 AI item 共用;移动端入口为工具栏 item。 */
+  const [agentOpen, setAgentOpen] = useState(false);
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
   const [mobileSuggestIndex, setMobileSuggestIndex] = useState(-1);
@@ -2577,8 +2582,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         </button>
       </div>
 
-      {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点;user 透传 → 记忆入口登录才渲染) */}
-      <AgentBall bridge={agentBridgeRef.current} lang={lang} user={user} />
+      {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点;user 透传 → 记忆入口登录才渲染;
+          ws-mt 受控:agentOpen/onOpenChange 提升至 MapShell,移动端球隐藏、入口为工具栏 AI item) */}
+      <AgentBall
+        bridge={agentBridgeRef.current}
+        lang={lang}
+        user={user}
+        open={agentOpen}
+        onOpenChange={setAgentOpen}
+      />
 
       <section
         ref={drawerRef}
