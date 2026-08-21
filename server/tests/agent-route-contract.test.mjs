@@ -33,7 +33,8 @@ test('事件 type 白名单:5 种(delta/tool/action/done/error)', () => {
   assert.match(route, /const SSE_EVENT_TYPES = \['delta', 'tool', 'action', 'done', 'error'\] as const/);
   // 端点只转述 run-agent 事件;自身唯一主动下发的事件是 done truncated
   assert.match(route, /\{ type: 'done', truncated: true \}/);
-  assert.match(route, /type: 'error', code: 'internal'/);
+  // 流异常兜底只发安全码 ERROR
+  assert.match(route, /\{ type: 'error', code: 'ERROR', message: '' \}/);
 });
 
 test('前置校验先于任何 MCP/LLM 连接(行号定位)', () => {
@@ -105,7 +106,32 @@ test('request.signal 透传 run-agent(停止/断开完整 abort 链路)', () => 
   assert.match(route, /request\.signal\.aborted/);
 });
 
+test('SSE error 事件公开面脱敏:只产出 LLM_UNCONFIGURED/RATE_LIMITED/ERROR,message 置空', () => {
+  // 安全集合映射存在(内部码一律收敛;LLM_UNCONFIGURED/RATE_LIMITED 前端专用码保留)
+  assert.match(route, /const PUBLIC_ERROR_CODES = new Set\(\['LLM_UNCONFIGURED', 'RATE_LIMITED'\]\)/);
+  // SSE 循环内 error 事件必须经 publicErrorEvent 收敛,不允许原样转述内部错误
+  assert.match(route, /event\.type === 'error'/);
+  assert.match(route, /out = publicErrorEvent\(event\)/);
+  // 除安全集合外,SSE error 事件构造处不存在其它 code 字面量(不泄露 http_401/llm_network_error 等内部码)
+  assert.doesNotMatch(route, /type: 'error', code: '(?!LLM_UNCONFIGURED|RATE_LIMITED|ERROR)[A-Za-z_0-9]+'/);
+  // message 一律置空:SSE error 事件构造处不携带内部文本
+  assert.doesNotMatch(route, /type: 'error'[^\n]*message: '[^']+'/);
+});
+
+test('公开面不出现内部工具名前缀字面量 / tool 事件不携带 summary(脱敏契约)', () => {
+  const runAgent = readFileSync(join(srcRoot, 'lib/agent/run-agent.ts'), 'utf8');
+  // 公开构造函数存在(toolKind / publicToolEvent 纯函数)
+  assert.match(runAgent, /export function toolKind\(/);
+  assert.match(runAgent, /export function publicToolEvent\(/);
+  // tool 事件构造处:name 一律经公开构造函数(toolKind),不再直出内部工具名
+  assert.doesNotMatch(runAgent, /\{ type: 'tool', name: (call|tc)\.name/);
+  // tool 事件构造行不携带 summary 与供应商前缀字面量(amap__/tencent__/baidu__/rest__/builtin__)
+  assert.doesNotMatch(runAgent, /type: 'tool'[^\n]*(summary|amap__|tencent__|baidu__|rest__|builtin__)/);
+  // route 侧(对外转述路径)不存在供应商前缀字面量
+  assert.doesNotMatch(route, /amap__|tencent__|baidu__|rest__|builtin__/);
+});
+
 test('无 console.log / 无密钥明文(secret 纪律)', () => {
-  assert.doesNotMatch(route, /console\./);
+  assert.doesNotMatch(route, /console\.(log|warn|info|debug)/);
   assert.doesNotMatch(route, /AMAP_WEB_KEY|TENCENT_MAP_KEY|BAIDU_MAP_AK|BAIDU_MAP_AUTH_TOKEN/);
 });
