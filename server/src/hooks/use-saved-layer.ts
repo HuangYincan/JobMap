@@ -1,14 +1,16 @@
 "use client";
 
 // ============================================================
-// useSavedLayer — 收藏图层 Hook(2026-08-20,QA scan #6)
+// useSavedLayer — 收藏图层 Hook(2026-08-22 修订)
 //
 // 抽取自 map-shell:收藏图层开关(savedOverlay)状态 + overlay POI
 // 派生(savedPlaces → overlayPois)+ toggle(登录门控 / 写 pref /
-// 程序化相机移动抑制视口刷新)+ 登出隐藏(hide)。
+// 程序化相机移动的「收藏相机同步」抑制)+ 登出隐藏(hide)。
 // - 不拥有数据:user/savedPlaces/compareCatalog/mode 由调用方传入;
-// - 相机移动的抑制窗口 ref 由调用方(map-shell)持有并传入——与
-//   useWorkViewport 事件侧检查共享,ref 必须是同一实例;
+// - 程序化相机移动的同步状态 ref 由调用方(map-shell)持有并传入——与
+//   useWorkViewport 事件侧消费、map-shell syncView 圆心冻结共享,ref 必须
+//   是同一实例;同步状态以「相机是否到达目标中心」判定事件归属(结构性
+//   抑制,替代 500ms 时间窗补丁,ws1 saved-overlay-wipe),无时间常数;
 // - overlayPois 派生(savedPlacesToOverlay)与 toggle 相机移动逻辑
 //   与原 map-shell 实现逐行对应,行为完全不变(纯重构)。
 // ============================================================
@@ -22,7 +24,7 @@ import {
   savedPlacesToOverlay,
   writeSavedOverlayPref,
 } from "@/lib/saved-overlay";
-import { VIEWPORT_SUPPRESS_MS } from "@/hooks/use-work-viewport";
+import type { SavedCameraSync } from "@/hooks/use-work-viewport";
 
 export interface UseSavedLayerDeps {
   user: AccountUser | null;
@@ -30,8 +32,8 @@ export interface UseSavedLayerDeps {
   compareCatalog: POI[];
   mode: MapMode;
   mapInstance: MutableRefObject<any>;
-  /** 程序化相机移动(toggle setBounds/setCenter)前打开的视口刷新抑制窗口 ref(与 useWorkViewport 共享) */
-  suppressViewportRefreshUntilRef: MutableRefObject<number>;
+  /** 程序化相机移动(toggle setBounds)的收藏相机同步状态 ref(与 useWorkViewport 共享同一实例) */
+  savedCameraSyncRef: MutableRefObject<SavedCameraSync | null>;
   /** 未登录点击开关时的处理(map-shell 打开登录弹窗) */
   onRequireAuth: () => void;
 }
@@ -51,7 +53,7 @@ export function useSavedLayer(deps: UseSavedLayerDeps): UseSavedLayerResult {
     compareCatalog,
     mode,
     mapInstance,
-    suppressViewportRefreshUntilRef,
+    savedCameraSyncRef,
     onRequireAuth,
   } = deps;
 
@@ -81,13 +83,22 @@ export function useSavedLayer(deps: UseSavedLayerDeps): UseSavedLayerResult {
     writeSavedOverlayPref(next);
     setSavedOverlay(next);
     if (!next) return;
-    // w5:setBounds 触发 moveend/zoomend → 视口 replace loader 会以空批次(单 pin 退化视野/覆盖区外)
-    // 整体替换目录,清空全部 marker(收藏图层启停 bug)。相机移动前开抑制窗口吞掉本次移动事件,
-    // 窗口自动过期,不影响后续用户操作触发的视口刷新。
-    suppressViewportRefreshUntilRef.current = Date.now() + VIEWPORT_SUPPRESS_MS;
     const bounds = overlayBounds(overlayPois);
     const map = mapInstance.current;
     if (!bounds || !map || overlayPois.length === 0) return;
+    // ws1 saved-overlay-wipe 结构性抑制(替代 500ms 时间窗补丁):setBounds 前
+    // 写入「收藏相机同步」状态——视口刷新(useWorkViewport 事件侧)与 distance
+    // 圆心冻结(map-shell syncView)在该次程序化相机移动的 settle 事件内跳过,
+    // 以事件到达时相机是否位于目标中心判定归属(慢动画/迟到事件不逃逸,无
+    // 时间常数);相机离开目标或消费满事件对后自动结束,不影响后续用户操作
+    // 触发的视口刷新。目标中心 = 收藏点外接框中点(fit 保持 bounds 居中)。
+    savedCameraSyncRef.current = {
+      destCenter: {
+        lng: (bounds.sw.lng + bounds.ne.lng) / 2,
+        lat: (bounds.sw.lat + bounds.ne.lat) / 2,
+      },
+      consumed: 0,
+    };
     // 视图归一化 setBounds(引擎内部构造厂商 Bounds,ws-c 迁移)
     map.setBounds({
       west: bounds.sw.lng,
@@ -95,7 +106,7 @@ export function useSavedLayer(deps: UseSavedLayerDeps): UseSavedLayerResult {
       east: bounds.ne.lng,
       north: bounds.ne.lat,
     });
-  }, [user, savedOverlay, overlayPois, mapInstance, suppressViewportRefreshUntilRef]);
+  }, [user, savedOverlay, overlayPois, mapInstance, savedCameraSyncRef]);
 
   const hide = useCallback(() => {
     setSavedOverlay(false);
