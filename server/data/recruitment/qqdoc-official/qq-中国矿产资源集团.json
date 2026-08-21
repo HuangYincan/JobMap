@@ -11,7 +11,9 @@
       "name": "中国矿产资源集团",
       "city": "中国矿产资源集团总部",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "河北省雄安新区启动区中谷甲1号"
+      }
     }
   ],
   "city_pending": true

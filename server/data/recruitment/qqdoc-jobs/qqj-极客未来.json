@@ -11,9 +11,11 @@
     {
       "id": "qqj-极客未来-site",
       "name": "极客未来",
-      "city": "重庆  四川 广东",
+      "city": "成都市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "成都市锦江区华润广场B座"
+      }
     }
   ]
 }

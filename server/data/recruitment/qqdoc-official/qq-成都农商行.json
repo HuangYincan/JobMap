@@ -11,7 +11,9 @@
       "name": "成都农商行",
       "city": "成都市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "四川省成都市武侯区科华中路88号"
+      }
     }
   ]
 }

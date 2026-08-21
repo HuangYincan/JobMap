@@ -9,9 +9,11 @@
     {
       "id": "qq-江苏江南农村商业银行-site-hq",
       "name": "江苏江南农村商业银行",
-      "city": "江苏江南农村商业银行总部",
+      "city": "常州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江苏省常州市武进区延政中路9号"
+      }
     }
   ],
   "city_pending": true

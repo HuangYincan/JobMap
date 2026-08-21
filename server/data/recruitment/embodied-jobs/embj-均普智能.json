@@ -6,9 +6,11 @@
     {
       "id": "embj-均普智能-site",
       "name": "均普智能",
-      "city": "宁波市 上海市 苏州市",
+      "city": "宁波市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省宁波市高新区清逸路98号"
+      }
     }
   ],
   "careerUrl": "https://app.mokahr.com/social-recruitment/joyson/98423#/job/73456307-cad6-44f7-bba7-cd34f0ced49a",

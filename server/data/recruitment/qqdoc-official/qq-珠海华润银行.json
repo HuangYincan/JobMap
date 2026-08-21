@@ -11,7 +11,9 @@
       "name": "珠海华润银行",
       "city": "珠海市",
       "province": "广东省",
-      "location": {}
+      "location": {
+        "address": "广东省珠海市香洲区唐家湾镇北城东三路88号1栋"
+      }
     }
   ]
 }

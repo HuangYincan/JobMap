@@ -11,9 +11,11 @@
     {
       "id": "qqj-双胞胎集团-site",
       "name": "双胞胎集团",
-      "city": "全国",
+      "city": "南昌市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江西省南昌市青山湖区昌东大道7003号"
+      }
     }
   ]
 }

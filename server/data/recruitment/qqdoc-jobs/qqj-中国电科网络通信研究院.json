@@ -11,9 +11,11 @@
     {
       "id": "qqj-中国电科网络通信研究院-site",
       "name": "“中国电科网络通信研究院”",
-      "city": "石家庄",
+      "city": "石家庄市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "河北省石家庄市中山西路589号"
+      }
     }
   ]
 }

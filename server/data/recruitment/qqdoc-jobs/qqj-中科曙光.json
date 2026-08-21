@@ -11,9 +11,11 @@
     {
       "id": "qqj-中科曙光-site",
       "name": "中科曙光",
-      "city": "郑州 天津 西安 昆山 北京 上海 深圳 南京 杭州",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区东北旺西路8号院36号楼"
+      }
     }
   ]
 }

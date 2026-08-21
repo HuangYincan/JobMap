@@ -11,7 +11,9 @@
       "name": "温州银行",
       "city": "温州市",
       "province": "浙江省",
-      "location": {}
+      "location": {
+        "address": "浙江省温州市鹿城区会展路1316号"
+      }
     }
   ]
 }

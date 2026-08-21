@@ -11,7 +11,9 @@
       "name": "青岛农商行",
       "city": "青岛市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "山东省青岛市崂山区秦岭路6号"
+      }
     }
   ]
 }

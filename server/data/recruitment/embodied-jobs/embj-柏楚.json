@@ -8,7 +8,9 @@
       "name": "柏楚",
       "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市闵行区兰香湖南路1000号"
+      }
     }
   ],
   "careerUrl": "https://fscut.zhiye.com/social/detail?jobAdId=4afcfa92-a409-49b8-b298-510fd6e5ae08",

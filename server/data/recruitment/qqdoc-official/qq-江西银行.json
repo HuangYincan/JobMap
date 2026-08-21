@@ -9,9 +9,11 @@
     {
       "id": "qq-江西银行-site-hq",
       "name": "江西银行",
-      "city": "江西银行总部",
+      "city": "南昌市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江西省南昌市红谷滩区金融大街699号"
+      }
     }
   ],
   "city_pending": true

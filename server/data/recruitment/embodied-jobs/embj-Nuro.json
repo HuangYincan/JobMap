@@ -8,7 +8,9 @@
       "name": "Nuro",
       "city": "Mountain View, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "1290 Terra Bella Ave, Mountain View, CA 94043"
+      }
     }
   ],
   "careerUrl": "https://job-boards.greenhouse.io/embed/job_app?for=nuro&t=Blind&token=5416913",

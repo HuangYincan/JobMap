@@ -11,9 +11,11 @@
     {
       "id": "qqj-北方矿业-site",
       "name": "北方矿业",
-      "city": "北京",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区新街口外大街28号C座6层618号"
+      }
     }
   ]
 }

@@ -11,7 +11,9 @@
       "name": "中原银行",
       "city": "郑州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "郑州市郑东新区CBD商务外环23号中科金座大厦"
+      }
     }
   ]
 }

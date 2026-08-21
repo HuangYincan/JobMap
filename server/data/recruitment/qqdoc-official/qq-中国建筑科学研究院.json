@@ -9,9 +9,11 @@
     {
       "id": "qq-中国建筑科学研究院-site-hq",
       "name": "中国建筑科学研究院",
-      "city": "中国建筑科学研究院总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市朝阳区北三环东路30号"
+      }
     }
   ],
   "city_pending": true

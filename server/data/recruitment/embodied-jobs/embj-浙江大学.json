@@ -8,7 +8,9 @@
       "name": "浙江大学",
       "city": "杭州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省杭州市西湖区余杭塘路866号(紫金港校区)"
+      }
     }
   ],
   "careerUrl": "https://hr.zju.edu.cn/postdoctor/",

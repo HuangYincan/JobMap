@@ -11,9 +11,11 @@
     {
       "id": "qqj-城堡证劵-site",
       "name": "城堡证劵",
-      "city": "香港   新加坡",
+      "city": "香港",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "香港中环金融街8号国际金融中心二期42层"
+      }
     }
   ]
 }

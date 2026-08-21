@@ -9,9 +9,11 @@
     {
       "id": "qq-浙江泰隆商业银行-site-hq",
       "name": "浙江泰隆商业银行",
-      "city": "浙江泰隆商业银行总部",
+      "city": "台州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省台州市路桥区南官大道188号"
+      }
     }
   ],
   "city_pending": true

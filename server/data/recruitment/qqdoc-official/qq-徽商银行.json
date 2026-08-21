@@ -11,7 +11,9 @@
       "name": "徽商银行",
       "city": "合肥市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "安徽省合肥市包河区云谷路1699号徽银大厦"
+      }
     }
   ]
 }

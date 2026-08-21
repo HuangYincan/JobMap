@@ -11,9 +11,11 @@
     {
       "id": "qqj-麦捷科技-site",
       "name": "麦捷科技",
-      "city": "深圳",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "深圳市龙华新区观澜街道广培社区裕新路65号南兴工业园"
+      }
     }
   ]
 }

@@ -11,7 +11,9 @@
       "name": "台州银行",
       "city": "台州市",
       "province": "浙江省",
-      "location": {}
+      "location": {
+        "address": "浙江省台州市椒江区市府大道699号"
+      }
     }
   ]
 }

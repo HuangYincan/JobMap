@@ -11,9 +11,11 @@
     {
       "id": "qqj-新易盛-site",
       "name": "新易盛",
-      "city": "成都",
+      "city": "成都市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "四川省成都市双流区物联大道510号"
+      }
     }
   ]
 }

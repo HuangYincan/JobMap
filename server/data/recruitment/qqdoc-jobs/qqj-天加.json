@@ -11,9 +11,11 @@
     {
       "id": "qqj-天加-site",
       "name": "天加",
-      "city": "南京 天津  广州 成都  海外",
+      "city": "南京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "南京经济技术开发区恒业路6号"
+      }
     }
   ]
 }

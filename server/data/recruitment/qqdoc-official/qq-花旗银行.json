@@ -9,9 +9,11 @@
     {
       "id": "qq-花旗银行-site-hq",
       "name": "花旗银行",
-      "city": "花旗银行总部",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市浦东新区花园石桥路33号花旗集团大厦"
+      }
     }
   ],
   "city_pending": true

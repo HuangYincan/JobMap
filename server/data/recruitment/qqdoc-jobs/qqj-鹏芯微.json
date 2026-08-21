@@ -11,9 +11,11 @@
     {
       "id": "qqj-鹏芯微-site",
       "name": "鹏芯微",
-      "city": "深圳",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "深圳市龙岗区平湖街道山厦社区中环大道中科谷产业园D栋"
+      }
     }
   ]
 }

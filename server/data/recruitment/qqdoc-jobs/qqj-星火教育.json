@@ -11,9 +11,11 @@
     {
       "id": "qqj-星火教育-site",
       "name": "星火教育",
-      "city": "全国",
+      "city": "广州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广州市天河区天河路383号太古汇(集团总部)"
+      }
     }
   ]
 }

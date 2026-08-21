@@ -11,7 +11,9 @@
       "name": "郑州银行",
       "city": "郑州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "河南省郑州市金水区商务外环路22号"
+      }
     }
   ]
 }

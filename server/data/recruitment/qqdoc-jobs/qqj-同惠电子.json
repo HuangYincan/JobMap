@@ -11,9 +11,11 @@
     {
       "id": "qqj-同惠电子-site",
       "name": "同惠电子",
-      "city": "江苏常州",
+      "city": "常州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江苏省常州市新北区新竹路1号"
+      }
     }
   ]
 }

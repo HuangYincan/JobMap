@@ -11,7 +11,9 @@
       "name": "中国华电集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区宣武门内大街2号中国华电大厦"
+      }
     }
   ]
 }

@@ -11,7 +11,9 @@
       "name": "江苏银行",
       "city": "南京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江苏省南京市中华路26号"
+      }
     }
   ]
 }

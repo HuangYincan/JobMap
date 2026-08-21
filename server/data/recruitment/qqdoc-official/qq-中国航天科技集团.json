@@ -9,9 +9,11 @@
     {
       "id": "qq-中国航天科技集团-site-hq",
       "name": "中国航天科技集团",
-      "city": "中国航天科技集团总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区阜成路16号"
+      }
     }
   ],
   "city_pending": true

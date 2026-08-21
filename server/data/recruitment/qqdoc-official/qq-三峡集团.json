@@ -11,7 +11,9 @@
       "name": "三峡集团",
       "city": "武汉市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "武汉市江岸区六合路1号"
+      }
     }
   ]
 }

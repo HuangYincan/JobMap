@@ -11,9 +11,11 @@
     {
       "id": "qqj-路威凯腾-site",
       "name": "路威凯腾",
-      "city": "上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市黄浦区黄陂南路838弄1号4幢28层(名义楼层,实际24层)"
+      }
     }
   ]
 }

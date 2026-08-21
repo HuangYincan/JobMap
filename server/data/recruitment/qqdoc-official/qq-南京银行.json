@@ -11,7 +11,9 @@
       "name": "南京银行",
       "city": "南京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "南京市建邺区江山大街88号"
+      }
     }
   ]
 }

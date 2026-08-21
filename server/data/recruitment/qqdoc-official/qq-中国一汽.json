@@ -9,9 +9,11 @@
     {
       "id": "qq-中国一汽-site-hq",
       "name": "中国一汽",
-      "city": "中国一汽总部",
+      "city": "长春市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "吉林省长春市汽车经济技术开发区东风大街8899号(新红旗大街1号一汽NBD总部)"
+      }
     }
   ],
   "city_pending": true

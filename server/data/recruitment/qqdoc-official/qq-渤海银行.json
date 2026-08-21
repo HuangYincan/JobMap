@@ -11,7 +11,9 @@
       "name": "渤海银行",
       "city": "天津市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "天津市河东区海河东路218号"
+      }
     }
   ]
 }

@@ -11,9 +11,11 @@
     {
       "id": "qqj-中国软件评测中心-site",
       "name": "中国软件评测中心",
-      "city": "北京",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区紫竹院路66号(赛迪大厦)"
+      }
     }
   ]
 }

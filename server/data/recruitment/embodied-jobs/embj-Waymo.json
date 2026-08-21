@@ -6,9 +6,11 @@
     {
       "id": "embj-Waymo-site",
       "name": "Waymo",
-      "city": "Mountain View, CA San Francisco, CA",
+      "city": "Mountain View, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA"
+      }
     }
   ],
   "careerUrl": "https://careers.withwaymo.com/jobs/software-engineer-embedded-mountain-view-california-united-states",

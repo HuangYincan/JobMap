@@ -8,7 +8,9 @@
       "name": "北京市大学",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区颐和园路5号"
+      }
     }
   ],
   "careerUrl": "https://postdocs.pku.edu.cn/tzgg/3bb64ae6881c498eb74a84c5267d5617.htm",

@@ -11,9 +11,11 @@
     {
       "id": "qqj-新现代教育-site",
       "name": "新现代教育",
-      "city": "深圳",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "深圳市宝安区西乡街道永丰社区金海路23号三层"
+      }
     }
   ]
 }

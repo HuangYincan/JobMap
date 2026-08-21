@@ -11,7 +11,9 @@
       "name": "重庆农村商业银行",
       "city": "重庆市",
       "province": "重庆市",
-      "location": {}
+      "location": {
+        "address": "重庆市江北区金沙门路36号"
+      }
     }
   ]
 }

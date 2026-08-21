@@ -11,9 +11,11 @@
     {
       "id": "qqj-极目智能-site",
       "name": "极目智能",
-      "city": "武汉",
+      "city": "武汉市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "武汉市东湖新技术开发区高新大道999号新能源研究院G6座"
+      }
     }
   ]
 }

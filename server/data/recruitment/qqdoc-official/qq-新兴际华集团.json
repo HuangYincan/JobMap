@@ -11,7 +11,9 @@
       "name": "新兴际华集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市朝阳区东三环中路5号财富金融中心"
+      }
     }
   ]
 }

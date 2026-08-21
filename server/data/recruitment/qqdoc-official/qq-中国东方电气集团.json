@@ -9,9 +9,11 @@
     {
       "id": "qq-中国东方电气集团-site-hq",
       "name": "中国东方电气集团",
-      "city": "中国东方电气集团总部",
+      "city": "成都市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "四川省成都市金牛区蜀汉路333号"
+      }
     }
   ],
   "city_pending": true

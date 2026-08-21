@@ -11,9 +11,11 @@
     {
       "id": "qqj-FMCConsulting-site",
       "name": "FMC Consulting",
-      "city": "上海 苏州 广州 深圳 北京  成都等",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市黄浦区马当路388号SOHO复兴广场A栋501室"
+      }
     }
   ]
 }

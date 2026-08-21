@@ -9,9 +9,11 @@
     {
       "id": "qq-国机招聘-site-hq",
       "name": "国机招聘",
-      "city": "国机招聘总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区丹棱街3号国机大厦"
+      }
     }
   ],
   "city_pending": true

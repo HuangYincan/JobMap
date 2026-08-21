@@ -11,9 +11,11 @@
     {
       "id": "qqj-佳驰科技-site",
       "name": "佳驰科技",
-      "city": "成都",
+      "city": "成都市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "四川省成都市郫都区成都现代工业港片区新经济产业园区望丛东路288号"
+      }
     }
   ]
 }

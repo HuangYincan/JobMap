@@ -11,9 +11,11 @@
     {
       "id": "qqj-中国人民保险集团-site",
       "name": "中国人民保险集团",
-      "city": "全国",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区西长安街88号中国人保大厦"
+      }
     }
   ]
 }

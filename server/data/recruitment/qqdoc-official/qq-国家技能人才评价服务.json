@@ -9,9 +9,11 @@
     {
       "id": "qq-国家技能人才评价服务-site-hq",
       "name": "国家技能人才评价服务",
-      "city": "国家技能人才评价服务总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市朝阳区育慧路3号"
+      }
     }
   ],
   "city_pending": true

@@ -11,7 +11,9 @@
       "name": "中国航空工业集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市朝阳区曙光西里甲5号院19号楼"
+      }
     }
   ]
 }

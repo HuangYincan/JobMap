@@ -6,9 +6,11 @@
     {
       "id": "embj-Tesla-site",
       "name": "Tesla",
-      "city": "Palo Alto, CA",
+      "city": "Austin, TX",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "1 Tesla Road, Austin, TX 78725"
+      }
     }
   ],
   "careerUrl": "https://www.tesla.com/careers/search/job/reinforcement-learning-engineer-whole-body-controls-optimus--244485",

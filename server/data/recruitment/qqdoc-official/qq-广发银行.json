@@ -11,7 +11,9 @@
       "name": "广发银行",
       "city": "广州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省广州市越秀区东风东路713号广发银行大厦"
+      }
     }
   ]
 }

@@ -11,9 +11,11 @@
     {
       "id": "qqj-豪迈集团职能实习生-site",
       "name": "豪迈集团—职能实习生",
-      "city": "上东 潍坊高密",
+      "city": "潍坊市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "山东省潍坊市高密市豪迈路1号"
+      }
     }
   ]
 }

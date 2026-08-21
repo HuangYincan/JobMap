@@ -11,7 +11,9 @@
       "name": "常熟农商行",
       "city": "常熟市",
       "province": "江苏省",
-      "location": {}
+      "location": {
+        "address": "江苏省常熟市新世纪大道58号"
+      }
     }
   ]
 }

@@ -11,7 +11,9 @@
       "name": "中国盐业集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市丰台区莲花池中盐大厦"
+      }
     }
   ]
 }

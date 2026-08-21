@@ -8,7 +8,9 @@
       "name": "优必选科技",
       "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "深圳市南山区学苑大道1001号南山智园C1栋"
+      }
     }
   ],
   "careerUrl": "https://ubtrobot.zhiye.com/social/jobs",

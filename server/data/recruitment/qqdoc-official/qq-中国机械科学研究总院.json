@@ -9,9 +9,11 @@
     {
       "id": "qq-中国机械科学研究总院-site-hq",
       "name": "中国机械科学研究总院",
-      "city": "中国机械科学研究总院总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区首体南路2号"
+      }
     }
   ],
   "city_pending": true

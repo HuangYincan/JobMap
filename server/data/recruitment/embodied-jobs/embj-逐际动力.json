@@ -8,7 +8,9 @@
       "name": "逐际动力",
       "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省深圳市南山区沙河西路3157号南山智谷产业园E栋15层"
+      }
     }
   ],
   "careerUrl": "https://career.limxdynamics.com/index/position/7512732459647027493/detail",

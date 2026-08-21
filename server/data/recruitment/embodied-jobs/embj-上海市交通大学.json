@@ -8,7 +8,9 @@
       "name": "上海市交通大学",
       "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市闵行区东川路800号(闵行校区)"
+      }
     }
   ],
   "careerUrl": "https://postd.sjtu.edu.cn/",

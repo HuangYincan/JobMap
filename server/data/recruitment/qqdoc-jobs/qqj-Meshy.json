@@ -11,9 +11,11 @@
     {
       "id": "qqj-Meshy-site",
       "name": "Meshy",
-      "city": "上海 北京 深圳",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区海淀大街34号6层601房间"
+      }
     }
   ]
 }

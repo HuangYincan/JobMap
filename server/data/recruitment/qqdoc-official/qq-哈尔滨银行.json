@@ -11,7 +11,9 @@
       "name": "哈尔滨银行",
       "city": "哈尔滨市",
       "province": "黑龙江省",
-      "location": {}
+      "location": {
+        "address": "哈尔滨市道里区上江街888号"
+      }
     }
   ]
 }

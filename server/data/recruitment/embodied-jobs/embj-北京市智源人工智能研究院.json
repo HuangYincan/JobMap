@@ -8,7 +8,9 @@
       "name": "北京市智源人工智能研究院",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区成府路150号智源大厦"
+      }
     }
   ],
   "careerUrl": "https://hub.baai.ac.cn/view/44950",

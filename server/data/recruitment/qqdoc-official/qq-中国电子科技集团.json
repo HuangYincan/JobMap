@@ -11,7 +11,9 @@
       "name": "中国电子科技集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区海淀北二街6号"
+      }
     }
   ]
 }

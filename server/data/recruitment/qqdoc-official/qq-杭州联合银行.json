@@ -11,7 +11,9 @@
       "name": "杭州联合银行",
       "city": "杭州市",
       "province": "浙江省",
-      "location": {}
+      "location": {
+        "address": "浙江省杭州市建国中路99号"
+      }
     }
   ]
 }

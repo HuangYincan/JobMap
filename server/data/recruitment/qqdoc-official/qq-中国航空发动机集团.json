@@ -11,7 +11,9 @@
       "name": "中国航空发动机集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区蓝靛厂南路5号"
+      }
     }
   ]
 }

@@ -11,9 +11,11 @@
     {
       "id": "qqj-北电检测-site",
       "name": "北电检测",
-      "city": "北京",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市北京经济技术开发区隆庆街9号1幢"
+      }
     }
   ]
 }

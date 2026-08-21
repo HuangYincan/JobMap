@@ -8,7 +8,9 @@
       "name": "上海市人工智能实验室",
       "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市徐汇区龙文路129号国际传媒港L1楼"
+      }
     }
   ],
   "careerUrl": "https://www.shlab.org.cn/joinus/detail/7587270254460455206?mode=social",

@@ -11,9 +11,11 @@
     {
       "id": "qqj-BrainCo强脑科技-site",
       "name": "BrainCo强脑科技",
-      "city": "深圳",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省深圳市南山区同方科兴科学园F栋28层"
+      }
     }
   ]
 }

@@ -11,9 +11,11 @@
     {
       "id": "qqj-南宁星火教育-site",
       "name": "南宁星火教育",
-      "city": "南宁",
+      "city": "南宁市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "南宁市青秀区英华路56号半岛旺角2号楼D201、D202、D203、D205号"
+      }
     }
   ]
 }

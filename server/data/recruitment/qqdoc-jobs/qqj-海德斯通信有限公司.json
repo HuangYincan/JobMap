@@ -11,9 +11,11 @@
     {
       "id": "qqj-海德斯通信有限公司-site",
       "name": "海德斯通信有限公司",
-      "city": "深圳 南京",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省深圳市南山区国际创新谷"
+      }
     }
   ]
 }

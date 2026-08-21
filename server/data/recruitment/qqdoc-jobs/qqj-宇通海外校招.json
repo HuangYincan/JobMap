@@ -11,9 +11,11 @@
     {
       "id": "qqj-宇通海外校招-site",
       "name": "宇通海外校招",
-      "city": "郑州",
+      "city": "郑州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "河南省郑州市管城回族区宇通路6号"
+      }
     }
   ]
 }

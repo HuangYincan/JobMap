@@ -9,9 +9,11 @@
     {
       "id": "qq-广东组织工作-site-hq",
       "name": "广东组织工作",
-      "city": "广东组织工作总部",
+      "city": "广州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广州市越秀区合群三马路省委大院1号楼"
+      }
     }
   ],
   "city_pending": true

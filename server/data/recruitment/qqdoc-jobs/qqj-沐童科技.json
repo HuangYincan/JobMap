@@ -11,9 +11,11 @@
     {
       "id": "qqj-沐童科技-site",
       "name": "沐童科技",
-      "city": "招满即止",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市闵行区浦江镇浦星路1769号"
+      }
     }
   ],
   "positions": [

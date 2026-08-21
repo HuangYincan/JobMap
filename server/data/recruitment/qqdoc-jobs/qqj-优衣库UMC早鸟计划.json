@@ -11,9 +11,11 @@
     {
       "id": "qqj-优衣库UMC早鸟计划-site",
       "name": "优衣库—“UMC早鸟计划",
-      "city": "北京 上海  广州  全国",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市徐汇区虹桥路183号徐家汇中心三期A座办公楼"
+      }
     }
   ]
 }

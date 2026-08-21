@@ -8,7 +8,9 @@
       "name": "西湖大学",
       "city": "杭州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省杭州市西湖区墩余路600号(云谷校区)"
+      }
     }
   ],
   "careerUrl": "https://www.westlake.edu.cn/careers/",

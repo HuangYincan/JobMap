@@ -9,9 +9,11 @@
     {
       "id": "qq-中国铁建股份-site-hq",
       "name": "中国铁建股份",
-      "city": "中国铁建股份总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区复兴路40号"
+      }
     }
   ],
   "city_pending": true

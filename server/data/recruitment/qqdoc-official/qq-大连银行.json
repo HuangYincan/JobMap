@@ -11,7 +11,9 @@
       "name": "大连银行",
       "city": "大连市",
       "province": "辽宁省",
-      "location": {}
+      "location": {
+        "address": "辽宁省大连市中山区中山路88号天安国际大厦"
+      }
     }
   ]
 }

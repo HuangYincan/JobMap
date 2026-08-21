@@ -11,9 +11,11 @@
     {
       "id": "qqj-爱凡哲投资-site",
       "name": "爱凡哲投资",
-      "city": "上海 成都",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市浦东新区崮山路538号中港汇大厦1201室"
+      }
     }
   ]
 }

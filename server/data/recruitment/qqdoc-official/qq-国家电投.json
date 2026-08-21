@@ -11,7 +11,9 @@
       "name": "国家电投",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区北三环中路29号院1号楼国家电投大厦"
+      }
     }
   ]
 }

@@ -11,9 +11,11 @@
     {
       "id": "qqj-中洲集团-site",
       "name": "中洲集团",
-      "city": "宁波",
+      "city": "宁波市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省宁波市北仑区甬江路18号"
+      }
     }
   ]
 }

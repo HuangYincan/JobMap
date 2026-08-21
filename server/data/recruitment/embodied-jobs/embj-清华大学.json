@@ -8,7 +8,9 @@
       "name": "清华大学",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区清华园"
+      }
     }
   ],
   "careerUrl": "https://postdoctor.tsinghua.edu.cn/",

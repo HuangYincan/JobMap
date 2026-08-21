@@ -11,9 +11,11 @@
     {
       "id": "qqj-易思维-site",
       "name": "易思维",
-      "city": "全国",
+      "city": "杭州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省杭州市滨江区长河街道江南大道1088号"
+      }
     }
   ]
 }

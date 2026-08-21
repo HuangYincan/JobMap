@@ -11,9 +11,11 @@
     {
       "id": "qqj-玫瑰岛集团-site",
       "name": "玫瑰岛集团",
-      "city": "广东中山",
+      "city": "中山市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "中山市港口镇新胜六街2号"
+      }
     }
   ]
 }

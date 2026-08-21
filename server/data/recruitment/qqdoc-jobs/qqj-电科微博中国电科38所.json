@@ -11,9 +11,11 @@
     {
       "id": "qqj-电科微博中国电科38所-site",
       "name": "电科微博/、中国电科38 所",
-      "city": "合肥",
+      "city": "合肥市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "合肥市高新区香樟大道199号"
+      }
     }
   ]
 }

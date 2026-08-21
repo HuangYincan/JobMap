@@ -9,9 +9,11 @@
     {
       "id": "qq-广西北部湾银行-site-hq",
       "name": "广西北部湾银行",
-      "city": "广西北部湾银行总部",
+      "city": "南宁市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广西南宁市良庆区云英路8号五象总部大厦A座"
+      }
     }
   ],
   "city_pending": true

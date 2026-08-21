@@ -9,9 +9,11 @@
     {
       "id": "qq-中国信科-site-hq",
       "name": "中国信科",
-      "city": "北京市",
+      "city": "武汉市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "湖北省武汉市东湖新技术开发区(中国光谷)"
+      }
     }
   ]
 }

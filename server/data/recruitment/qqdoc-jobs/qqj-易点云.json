@@ -11,9 +11,11 @@
     {
       "id": "qqj-易点云-site",
       "name": "易点云",
-      "city": "北京  苏州 合肥 上海 武汉  杭州 成都  广州 深圳",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区西三旗西小口41号易点云大厦"
+      }
     }
   ]
 }

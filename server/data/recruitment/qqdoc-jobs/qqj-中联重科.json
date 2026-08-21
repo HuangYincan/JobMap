@@ -11,9 +11,11 @@
     {
       "id": "qqj-中联重科-site",
       "name": "中联重科",
-      "city": "长沙",
+      "city": "长沙市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "湖南省长沙市岳麓区银盆南路361号"
+      }
     }
   ]
 }

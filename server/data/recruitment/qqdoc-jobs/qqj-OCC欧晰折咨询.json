@@ -11,9 +11,11 @@
     {
       "id": "qqj-OCC欧晰折咨询-site",
       "name": "OC&C欧晰折咨询",
-      "city": "上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市黄浦区淮海中路333号瑞安广场19楼1909室"
+      }
     }
   ]
 }

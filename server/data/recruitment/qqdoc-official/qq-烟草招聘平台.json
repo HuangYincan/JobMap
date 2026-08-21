@@ -9,9 +9,11 @@
     {
       "id": "qq-烟草招聘平台-site-hq",
       "name": "烟草招聘平台",
-      "city": "烟草招聘平台总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区月坛南街55号"
+      }
     }
   ],
   "city_pending": true

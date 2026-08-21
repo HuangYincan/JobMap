@@ -11,9 +11,11 @@
     {
       "id": "qqj-Sea-site",
       "name": "Sea",
-      "city": "上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市徐汇区桂平路391号3号楼19层"
+      }
     }
   ]
 }

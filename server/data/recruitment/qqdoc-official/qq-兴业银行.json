@@ -11,7 +11,9 @@
       "name": "兴业银行",
       "city": "福州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "福建省福州市台江区鳌峰街道江滨中大道398号"
+      }
     }
   ]
 }

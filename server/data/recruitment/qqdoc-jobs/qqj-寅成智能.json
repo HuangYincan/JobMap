@@ -11,9 +11,11 @@
     {
       "id": "qqj-寅成智能-site",
       "name": "寅成智能",
-      "city": "上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市青浦区华新镇纪鹤公路1301号3幢1层"
+      }
     }
   ]
 }

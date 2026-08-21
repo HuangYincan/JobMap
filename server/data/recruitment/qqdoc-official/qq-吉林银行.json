@@ -11,7 +11,9 @@
       "name": "吉林银行",
       "city": "长春市",
       "province": "吉林省",
-      "location": {}
+      "location": {
+        "address": "吉林省长春市南关区人民大街10666号"
+      }
     }
   ]
 }

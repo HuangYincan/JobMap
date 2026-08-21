@@ -6,9 +6,11 @@
     {
       "id": "embj-大疆创新-site",
       "name": "大疆创新",
-      "city": "上海市 深圳市",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省深圳市南山区西丽街道仙元路53号大疆天空之城T2"
+      }
     }
   ],
   "careerUrl": "https://we.dji.com/zh-CN/campus/position",

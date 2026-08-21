@@ -11,9 +11,11 @@
     {
       "id": "qqj-核力电科-site",
       "name": "核力电科",
-      "city": "无锡",
+      "city": "无锡市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "无锡市锡山区安镇街道东盛路789号"
+      }
     }
   ]
 }

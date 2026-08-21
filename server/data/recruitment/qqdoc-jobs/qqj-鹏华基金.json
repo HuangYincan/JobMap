@@ -11,9 +11,11 @@
     {
       "id": "qqj-鹏华基金-site",
       "name": "鹏华基金",
-      "city": "深圳  上海 北京 广州",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "深圳市福田区福华三路168号深圳国际商会中心43楼"
+      }
     }
   ]
 }

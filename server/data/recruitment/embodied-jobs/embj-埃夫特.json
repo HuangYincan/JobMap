@@ -6,9 +6,11 @@
     {
       "id": "embj-埃夫特-site",
       "name": "埃夫特",
-      "city": "上海市 芜湖市 北京市 杭州市",
+      "city": "芜湖市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "安徽省芜湖市鸠江经济开发区万春东路96号"
+      }
     }
   ],
   "careerUrl": "https://efort.zhiye.com/social/detail?jobAdId=c06f88b9-6225-426e-a755-4b53cda1ef25",

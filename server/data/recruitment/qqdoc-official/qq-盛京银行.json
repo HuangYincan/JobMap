@@ -11,7 +11,9 @@
       "name": "盛京银行",
       "city": "沈阳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "辽宁省沈阳市沈河区北站路109号"
+      }
     }
   ]
 }

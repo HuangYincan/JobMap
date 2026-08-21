@@ -6,9 +6,11 @@
     {
       "id": "embj-节卡机器人-site",
       "name": "节卡机器人",
-      "city": "上海市 常州市",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市闵行区剑川路610号33-35栋"
+      }
     }
   ],
   "careerUrl": "https://www.jaka.com/zh/position",

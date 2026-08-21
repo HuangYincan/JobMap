@@ -9,9 +9,11 @@
     {
       "id": "qq-中国工商银行-site-hq",
       "name": "中国工商银行",
-      "city": "中国工商银行总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区复兴门内大街55号"
+      }
     }
   ],
   "city_pending": true

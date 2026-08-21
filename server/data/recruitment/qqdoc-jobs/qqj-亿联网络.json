@@ -11,9 +11,11 @@
     {
       "id": "qqj-亿联网络-site",
       "name": "亿联网络",
-      "city": "厦门",
+      "city": "厦门市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "福建省厦门市湖里区岭下北路666号"
+      }
     }
   ]
 }

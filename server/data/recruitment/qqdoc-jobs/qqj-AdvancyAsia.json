@@ -11,9 +11,11 @@
     {
       "id": "qqj-AdvancyAsia-site",
       "name": "Advancy Asia",
-      "city": "上海 新加坡",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市黄浦区徐家汇路610号C栋31层(名义楼层)02、03、05室"
+      }
     }
   ]
 }

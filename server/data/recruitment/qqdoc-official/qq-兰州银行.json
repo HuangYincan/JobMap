@@ -11,7 +11,9 @@
       "name": "兰州银行",
       "city": "兰州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "甘肃省兰州市城关区酒泉路211号"
+      }
     }
   ]
 }
