@@ -1,5 +1,6 @@
 // ============================================================
 // marker 稳定性契约测试(b2)—「marker 只添加一次、跨视口保留实例」
+// (ws-c 同步语义:控制器拿到 view 即引擎就绪,异步门已删)
 //
 // 目标不变式(修复公司 POI 屏闪):
 //   (a) setPOIs 跨批次只增不删:离开视口的 id 不再被 remove,实例保留
@@ -11,16 +12,12 @@
 //       clusterState/可见性 memo 依赖键
 //   (d) marker 源 = catalog 只增池:新增 POI 进池只 add,已有实例不重建
 //
-// 用 MockMap + MockMarker 直接观察 overlay 注册表与 show/hide 状态。
+// 用 MockMap(duck-type MapView)+ MockMarker 直接观察 overlay 注册表
+// 与 show/hide 状态。
 // ============================================================
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-
-// amap-api 的 loadAMap 需要 key/securityCode 才会真正挂起等脚本;
-// 测试环境无真实 key,给假值仅让「脚本加载」路径可走通(不会发网络请求)。
-process.env.NEXT_PUBLIC_AMAP_KEY = 'test-key';
-process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE = 'test-code';
 
 import {
   installAMapMock,
@@ -42,9 +39,6 @@ const VIEWPORT_B = [
   makePoi('sh-1', '上海一', 121.47, 31.23), // 新进入视野
 ];
 
-/** 等 loadAMap 微任务(及任意 macrotask)落定。 */
-const tick = () => new Promise((r) => setTimeout(r, 0));
-
 const countOnMap = (map) => map.getAllOverlays('marker').length;
 
 test.afterEach(() => {
@@ -53,11 +47,10 @@ test.afterEach(() => {
 
 // ---- (a) setPOIs 跨批次只增不删 ----
 
-test('视口批次切换:离开视口的 id 不再被 remove,只 add 新 + 更新存量', async () => {
+test('视口批次切换:离开视口的 id 不再被 remove,只 add 新 + 更新存量', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
-  await tick();
 
   c.setPOIs(HZ); // 批次 1:杭州 2 家
   assert.equal(countOnMap(map), 2);
@@ -77,11 +70,10 @@ test('视口批次切换:离开视口的 id 不再被 remove,只 add 新 + 更�
   assert.equal(countOnMap(map), 0, 'destroy 才摘除全部');
 });
 
-test('池增长:新增 POI 进池只 add,已有实例不重建(marker 源 = catalog 语义)', async () => {
+test('池增长:新增 POI 进池只 add,已有实例不重建(marker 源 = catalog 语义)', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
-  await tick();
 
   c.setPOIs(HZ);
   const before = new Map(
@@ -100,11 +92,10 @@ test('池增长:新增 POI 进池只 add,已有实例不重建(marker 源 = cata
 
 // ---- (b) setVisiblePOIs show/hide 语义与实例保留 ----
 
-test('setVisiblePOIs:show/hide 切换,实例保留;null 恢复全显', async () => {
+test('setVisiblePOIs:show/hide 切换,实例保留;null 恢复全显', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
-  await tick();
   c.setPOIs(HZ);
   for (const p of HZ) assert.ok(c.getMarkerByPOIId(p.id).isVisible(), '初始全显');
 
@@ -122,11 +113,10 @@ test('setVisiblePOIs:show/hide 切换,实例保留;null 恢复全显', async () 
   c.destroy();
 });
 
-test('setVisiblePOIs 后新增的 marker 按同一可见集应用', async () => {
+test('setVisiblePOIs 后新增的 marker 按同一可见集应用', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
-  await tick();
 
   c.setPOIs(HZ);
   c.setVisiblePOIs(['hz-1']); // 可见集先于新 marker 存在
@@ -138,11 +128,10 @@ test('setVisiblePOIs 后新增的 marker 按同一可见集应用', async () => 
   c.destroy();
 });
 
-test('setVisiblePOIs 空集 = 全部隐藏(刷新后旧池不显示),实例不销毁', async () => {
+test('setVisiblePOIs 空集 = 全部隐藏(刷新后旧池不显示),实例不销毁', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
-  await tick();
   c.setPOIs(HZ);
   c.setVisiblePOIs([]);
   for (const p of HZ) {
@@ -153,15 +142,13 @@ test('setVisiblePOIs 空集 = 全部隐藏(刷新后旧池不显示),实例不�
   c.destroy();
 });
 
-test('setVisiblePOIs 在 amap 就绪前设置:flush 后新 marker 即按可见集应用', async () => {
-  const env = installAMapMock({ immediate: false });
+test('可见集先于 setPOIs:新建 marker 按可见集应用(同步语义,异步门已删)', () => {
+  installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
-  c.setPOIs(HZ); // 未就绪 → 只入 pending
-  c.setVisiblePOIs(['hz-2']); // 未就绪时记录可见集
-  env.amapReady();
-  await tick();
-  assert.equal(countOnMap(map), 2, 'flush 创建 2 个');
+  c.setVisiblePOIs(['hz-2']); // 先记录可见集
+  c.setPOIs(HZ); // 同步创建
+  assert.equal(countOnMap(map), 2, '同步创建 2 个');
   assert.ok(!c.getMarkerByPOIId('hz-1').isVisible(), 'hz-1 按可见集隐藏');
   assert.ok(c.getMarkerByPOIId('hz-2').isVisible(), 'hz-2 显示');
   c.destroy();
@@ -195,11 +182,10 @@ test('clusterZoomForZoom 分桶:zoom 微调不重建,聚合↔个体只切换一
 
 // ---- 空列表语义(与 marker-leak 互补)----
 
-test('setPOIs([]) 清空后可见集重置:新批次全显', async () => {
+test('setPOIs([]) 清空后可见集重置:新批次全显', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
-  await tick();
   c.setPOIs(HZ);
   c.setVisiblePOIs(['hz-1']);
   c.setPOIs([]); // 刷新:清空

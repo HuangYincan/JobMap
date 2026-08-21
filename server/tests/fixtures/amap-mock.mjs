@@ -3,10 +3,12 @@
 // - Marker({ map }) 构造函数即把自身注册进 map 的 overlay 表
 // - setMap(null) 从 overlay 表摘除(等价 AMap v2 removeOverlay)
 // - getAllOverlays('marker') 返回全部 marker overlay
+// - MockMap duck-type 成 MapView(ws-c):createMarker/createCircle
+//   构造即注册 + engine 命名空间 + 逃生舱 raw=自身——marker 控制器
+//   测试与适配器测试共用,不再需要 loadAMap 异步门
 // - loadAMap 两种就绪模式:
-//   immediate=true  → window.AMap 已存在,构造控制器后微任务即 flush
-//   immediate=false → AMap 脚本加载挂起,测试手动 amapReady() 触发 flush
-//   (模拟 map 创建与 AMap 脚本就绪的异步竞态)
+//   immediate=true  → window.AMap 已存在
+//   immediate=false → AMap 脚本加载挂起,测试手动 amapReady() 触发
 // ============================================================
 
 import { resetAMapLoader } from '../../src/lib/amap-api.ts';
@@ -71,11 +73,43 @@ export class MockMarker {
 }
 MockMarker.seq = 0;
 
+export class MockCircle {
+  constructor(opts) {
+    this.opts = opts || {};
+    this.id = this.opts.id || `mock-circle-${++MockCircle.seq}`;
+    this._map = null;
+    this._radius = this.opts.radius || 0;
+  }
+
+  setMap(map) {
+    if (this._map === map) return;
+    if (this._map) this._map._overlays.delete(this.id);
+    this._map = map;
+    if (map) map._overlays.set(this.id, this);
+  }
+
+  getMap() {
+    return this._map;
+  }
+
+  setCenter() {}
+  setRadius(r) {
+    this._radius = r;
+  }
+  getRadius() {
+    return this._radius;
+  }
+}
+MockCircle.seq = 0;
+
 export class MockMap {
   constructor() {
     this._overlays = new Map();
     this._controls = [];
     this.destroyed = false;
+    // duck-type 成 MapView(ws-c):engine 命名空间 + 逃生舱 raw = 自身
+    this.engine = { namespace: 'AMap', id: 'amap' };
+    this.raw = this;
   }
 
   destroy() {
@@ -94,6 +128,19 @@ export class MockMap {
     const all = Array.from(this._overlays.values());
     if (!type) return all;
     return all.filter((o) => (type === 'marker' ? o instanceof MockMarker : o.constructor.name === type));
+  }
+
+  /** MapView.createMarker(ws-c):构造即注册到本视图 overlay 表,返回 wrapper(raw = MockMarker) */
+  createMarker(opts) {
+    const marker = new MockMarker({ ...opts, map: this });
+    return { raw: marker, setPosition: (p) => marker.setPosition([p.lng, p.lat]), setContent: (html) => marker.setContent(html), remove: () => marker.setMap(null) };
+  }
+
+  /** MapView.createCircle(ws-c):构造即注册到本视图 overlay 表 */
+  createCircle(opts) {
+    const circle = new MockCircle(opts);
+    circle.setMap(this);
+    return { raw: circle, remove: () => circle.setMap(null) };
   }
 
   addControl() {}
