@@ -4,12 +4,14 @@
 // - 初始位 right:12px / bottom:179px(地图控件上方,mapControls 实测高 ~147 + 底距 20 + 间距 12);
 // - 拖拽:pointer 事件,3px 阈值区分点击/拖动;松手吸附最近边缘(left/right),
 //   clamp 12px 边距与顶部,吸附动画 cubic-bezier(0.32, 0.72, 0, 1) 0.35s;
-// - 位置持久化 localStorage 'dm.agent-ball-pos'。
+// - 位置持久化 localStorage 'dm.agent-ball-pos';
+// - 面板以球为锚实时跟随(ballRect 由 pos 状态派生,面板经 computePanelPlacement 定位)。
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import styles from "./agent-ball.module.css";
 import { t, type Language } from "@/lib/i18n";
 import type { MapBridge } from "@/lib/agent-map-bridge";
+import type { BallRect } from "@/lib/agent-panel-placement";
 import { AgentPanel } from "./agent-panel";
 
 const BALL_SIZE = 44;
@@ -65,7 +67,12 @@ export default function AgentBall({ bridge, lang }: Props) {
     baseTop: number;
   } | null>(null);
 
-  const side: "left" | "right" = pos.left !== null ? "left" : "right";
+  /** 球当前矩形(viewport 坐标):pos 状态派生;面板锚定用。 */
+  const ballRect: BallRect = useMemo(() => {
+    const viewportW = typeof window !== "undefined" ? window.innerWidth : 0;
+    const left = pos.left ?? (pos.right !== null ? viewportW - pos.right - BALL_SIZE : 0);
+    return { left, top: pos.top, width: BALL_SIZE, height: BALL_SIZE };
+  }, [pos]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -141,7 +148,9 @@ export default function AgentBall({ bridge, lang }: Props) {
           ✦
         </span>
       </button>
-      {open && <AgentPanel bridge={bridge} lang={lang} side={side} onClose={() => setOpen(false)} />}
+      {open && (
+        <AgentPanel bridge={bridge} lang={lang} ballRect={ballRect} dragging={dragging} onClose={() => setOpen(false)} />
+      )}
     </>
   );
 }

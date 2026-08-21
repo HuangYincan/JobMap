@@ -940,6 +940,14 @@ export const translations = {
     zh: '正在思考…',
     en: 'Thinking…',
   },
+  agentThinkingSection: {
+    zh: '思考过程',
+    en: 'Thinking',
+  },
+  agentToolsSection: {
+    zh: '工具调用',
+    en: 'Tool calls',
+  },
   agentNotConfigured: {
     zh: 'AI 助手未配置,请在服务器配置',
     en: 'AI assistant is not configured. Configure it on the server.',

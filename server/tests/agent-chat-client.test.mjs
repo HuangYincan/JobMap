@@ -70,6 +70,19 @@ test('parseSseChunk: 单行 data 事件含 JSON 转义换行(\\n 在 JSON 字符
   assert.deepEqual(evs[0], { type: 'delta', text: 'a\nb' });
 });
 
+test('parseSseChunk: reasoning 事件透传解析(思考内容含中文/换行转义)', () => {
+  const chunk = [
+    'data: {"type":"reasoning","text":"先想想"}\n\n',
+    'data: {"type":"reasoning","text":"再想想\\n补充"}\n\n',
+    'data: {"type":"delta","text":"回答"}\n\n',
+  ].join('');
+  const evs = parseSseChunk(chunk);
+  assert.equal(evs.length, 3);
+  assert.deepEqual(evs[0], { type: 'reasoning', text: '先想想' });
+  assert.deepEqual(evs[1], { type: 'reasoning', text: '再想想\n补充' });
+  assert.deepEqual(evs[2], { type: 'delta', text: '回答' });
+});
+
 test('parseSseChunk: 多 data 行拼接后非合法 JSON → 跳过(SSE data 行拼接语义)', () => {
   // 多 data 行按 \n 拼接是 SSE 规范语义;但 JSON 负载内不允许裸换行,
   // 拼接结果非法 → 容错跳过(事件必须是单行 data 完整 JSON)。
@@ -138,6 +151,27 @@ test('streamAgentChat: 事件跨 chunk 切分按 \n\n 正确重组', async () =>
     ]);
     // 请求体契约:POST 到 /api/agent/chat,messages 原样
     assert.deepEqual(sentBody.messages, [{ role: 'user', content: 'q' }]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('streamAgentChat: reasoning 事件跨 chunk 切分也正确重组', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    sseResponse([
+      'data: {"type":"reasoning","text":"先想', // reasoning 事件在 chunk 中间切断
+      '想"}\n\n',
+      'data: {"type":"reasoning","text":"继续"}\n\n',
+      'data: {"type":"done"}\n\n',
+    ]);
+  try {
+    const events = await collect({ messages: [{ role: 'user', content: 'q' }] }, new AbortController().signal);
+    assert.deepEqual(events, [
+      { type: 'reasoning', text: '先想想' },
+      { type: 'reasoning', text: '继续' },
+      { type: 'done' },
+    ]);
   } finally {
     globalThis.fetch = originalFetch;
   }
