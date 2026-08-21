@@ -207,6 +207,26 @@ class AmapView implements MapView {
     if (typeof opts.onClick === 'function') {
       marker.on('click', () => opts.onClick?.());
     }
+    // icon 规格(契约)→ AMap.Icon(官方:new AMap.Icon({ size, image, imageSize });
+    // size = 显示尺寸,imageSize = 图片实际尺寸;data URI SVG 两者一致,与旧 buildIcon 同款)
+    if (opts.icon && typeof marker.setIcon === 'function') {
+      if (typeof this.AMap.Icon === 'function') {
+        const iconOpts: Record<string, unknown> = { image: opts.icon.src };
+        if (opts.icon.size) {
+          const [w, h] = opts.icon.size;
+          const size = new this.AMap.Size(w, h);
+          iconOpts.size = size;
+          iconOpts.imageSize = size;
+        }
+        try {
+          marker.setIcon(new this.AMap.Icon(iconOpts));
+        } catch (err) {
+          console.warn('[map-engine] AMap Icon 构造失败,图标降级', err);
+        }
+      } else {
+        console.warn('[map-engine] AMap.Icon 不可用,图标降级');
+      }
+    }
     return {
       raw: marker,
       setPosition: (p: LngLat) => {
@@ -214,6 +234,39 @@ class AmapView implements MapView {
       },
       setContent: (html: string) => {
         marker.setContent(html);
+      },
+      // 统一大小写语义:AMap 官方小写 setzIndex(适配层兜住大写契约)
+      setZIndex: (z: number) => {
+        if (typeof marker.setzIndex === 'function') marker.setzIndex(z);
+        else console.warn('[map-engine] AMap Marker 无 setzIndex,忽略 zIndex');
+      },
+      // 统一可见性:AMap 官方 show()/hide();老 SDK 缺失时回退 setVisible
+      setVisible: (v: boolean) => {
+        if (v) {
+          if (typeof marker.show === 'function') {
+            marker.show();
+            return;
+          }
+        } else if (typeof marker.hide === 'function') {
+          marker.hide();
+          return;
+        }
+        if (typeof marker.setVisible === 'function') marker.setVisible(v);
+        else console.warn('[map-engine] AMap Marker 无 show/hide,忽略可见性');
+      },
+      on: (event: 'click', cb: () => void) => {
+        if (event !== 'click') return;
+        if (typeof marker.on === 'function') marker.on('click', cb);
+        else console.warn('[map-engine] AMap Marker 无 on,忽略事件注册');
+      },
+      off: (event: 'click', cb?: () => void) => {
+        if (event !== 'click') return;
+        if (typeof marker.off !== 'function') {
+          console.warn('[map-engine] AMap Marker 无 off,忽略解绑');
+          return;
+        }
+        if (cb) marker.off('click', cb);
+        // cb 缺省:AMap off 无「按事件清空」形态 → 保留(调用方应传 cb 精确解绑)
       },
       remove: () => {
         try {
