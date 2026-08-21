@@ -698,3 +698,60 @@ test('map-engine core: registry skeleton never touches vendor SDK globals direct
   assert.doesNotMatch(registry, /window\.TMap/);
   assert.doesNotMatch(registry, /window\.BMapGL/);
 });
+
+test('map-shell 迁移完成:不再出现 new window.AMap 直构造(ws-c 轮 2)', () => {
+  const shell = src('components/map-shell.tsx');
+  // 轮 2 收口断言:8 处 window.AMap 直引用全部迁移到 MapView 契约后,
+  // 组件内不得再出现直构造
+  assert.doesNotMatch(shell, /new\s+window\.AMap/);
+  assert.doesNotMatch(shell, /new\s+AMap\.Map/);
+});
+
+test('地图源 section + 引擎切换接线契约(ws-f)', () => {
+  const panel = src('components/layers-panel.tsx');
+  const hook = src('hooks/use-map-engine.ts');
+  const switcher = src('lib/map-engine/switch.ts');
+  const registry = src('lib/map-engine/engine-registry.ts');
+  const i18n = src('lib/i18n.ts');
+
+  // 图层面板「地图源」section:引擎列表/configured 来自注册表,点击调 switchEngine
+  assert.match(panel, /mapSource/);
+  assert.match(panel, /ENGINE_PRIORITY/);
+  assert.match(panel, /getEngine\(id\)/);
+  assert.match(panel, /\.isConfigured\(\)/);
+  assert.match(panel, /switchEngine\(id\)/);
+  assert.match(panel, /engineChip/);
+  assert.match(panel, /data-tooltip/); // 未配置 tooltip(现有 tooltip 模式)
+  assert.match(panel, /engineNotConfigured/);
+  assert.match(panel, /readEnginePreference/); // 自动/手动判定
+  assert.match(panel, /engineManual/);
+  // 移动端复用:section 作为独立组件导出
+  assert.match(panel, /export function MapSourceSection/);
+
+  // hook:切换编排 + 偏好写入 + isSwitching + 面板总线
+  assert.match(hook, /switchMapEngine/);
+  assert.match(hook, /writeEnginePreference/);
+  assert.match(hook, /isSwitching/);
+  assert.match(hook, /useMapEnginePanel/);
+
+  // switch.ts:纯编排 + 引擎注入(DI)——不 import 注册表/厂商实现
+  assert.doesNotMatch(switcher, /engine-registry/);
+  assert.doesNotMatch(switcher, /amap-engine|tencent-engine|baidu-engine/);
+
+  // 注册表:统一接线入口(ws-f 三引擎装配)
+  assert.match(registry, /registerEngine/);
+
+  // i18n 新 key:地图源/三家引擎名/自动·手动/未配置 tooltip
+  for (const key of [
+    'mapSource',
+    'engineAmap',
+    'engineTencent',
+    'engineBaidu',
+    'engineAuto',
+    'engineManual',
+    'engineClickToSwitch',
+    'engineNotConfigured',
+  ]) {
+    assert.match(i18n, new RegExp(`${key}:`));
+  }
+});
