@@ -17,7 +17,17 @@ test('useWorkViewport hook exists with exported signature', () => {
   assert.match(hook, /export function useWorkViewport\(\s*deps: WorkViewportDeps/);
   assert.match(hook, /export interface WorkViewportDeps/);
   assert.match(hook, /export interface WorkViewportState/);
-  assert.match(hook, /export const VIEWPORT_SUPPRESS_MS = 500/);
+  // ws1 saved-overlay-wipe:500ms 时间窗补丁已删除,改为「收藏相机同步」状态机
+  // (事件/状态语义:以相机是否到达目标中心判定事件归属,无时间常数)。
+  // 纯函数定义在 lib/saved-camera-sync.ts(无 @ 别名,node 测试可直接 import),
+  // 本 hook 再导出供 useSavedLayer/map-shell 共享。
+  assert.doesNotMatch(hook, /VIEWPORT_SUPPRESS_MS|Date\.now\(\) \+ 500/);
+  assert.match(hook, /export \{\s*cameraAtDestination,\s*consumeSavedCameraSync,?[\s\S]{0,80}type SavedCameraSync,\s*\} from "@\/lib\/saved-camera-sync"/);
+  const lib = src('lib/saved-camera-sync.ts');
+  assert.match(lib, /export interface SavedCameraSync/);
+  assert.match(lib, /export function cameraAtDestination/);
+  assert.match(lib, /export function consumeSavedCameraSync/);
+  assert.match(lib, /^import \{ haversineDistance \} from '\.\/types\.ts';/m);
   assert.match(hook, /export function readMapViewSnapshot/);
   assert.match(hook, /createViewportLoader\(/);
   // 返回 loader 实例供主加载 finally 补跑 pending 视口刷新
@@ -41,9 +51,14 @@ test('work viewport scheduling conditions live in the hook, not map-shell', () =
   // 挂载对齐加载(ws1 Bug1):缓存视野与当前视野不符 → 主动调度
   assert.match(hook, /needsViewportAlign\(cached\.viewport, snap\.center, snap\.zoom\)/);
   assert.match(hook, /viewportLoaderRef\.current\.schedule\(\);/);
-  // 抑制窗口事件监听(moveend/zoomend)在 hook 内
+  // 抑制事件监听(moveend/zoomend)在 hook 内;收藏同步状态机在 onViewChange 消费
   assert.match(hook, /map\.on\("moveend", onViewChange\)/);
   assert.match(hook, /map\.on\("zoomend", onViewChange\)/);
+  assert.match(hook, /const sync = savedCameraSyncRef\.current;/);
+  assert.match(hook, /consumeSavedCameraSync\(sync, snap\?\.center\)/);
+  // 空批次 ≠ 无数据(ws1 结构性修复):视口空批次不再把 catalog 置空销毁 marker 池
+  assert.match(hook, /空批次 ≠ 无数据/);
+  assert.doesNotMatch(hook, /catalogRef\.current = \[\];\s*setCatalog\(\[\]\);/);
   // 池分离接线(map-shell):listCatalog 状态已删;pois 派生 = 全量池按 mapBounds
   // 客户端裁剪(work 模式),marker 源 catalog 只增不减(全量加载后恒定)
   assert.doesNotMatch(shell, /listCatalog|setListCatalog|listCatalogRef/);
@@ -61,7 +76,9 @@ test('work viewport scheduling conditions live in the hook, not map-shell', () =
   assert.match(shell, /useWorkViewport\(\{/);
   assert.match(shell, /viewportLoaderRef\.current\?\.schedule\(\);/);
   const savedLayer = src('hooks/use-saved-layer.ts');
-  assert.match(savedLayer, /suppressViewportRefreshUntilRef\.current = Date\.now\(\) \+ VIEWPORT_SUPPRESS_MS;/);
+  // toggle 侧:setBounds 前置位「收藏相机同步」状态(结构性抑制,替代时间窗写入)
+  assert.match(savedLayer, /savedCameraSyncRef\.current = \{\s*destCenter:/);
+  assert.match(savedLayer, /consumed: 0,/);
   assert.match(shell, /useSavedLayer\(\{/);
 });
 
