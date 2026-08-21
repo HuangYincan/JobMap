@@ -301,6 +301,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [detailPoi, setDetailPoi] = useState<POI | null>(null);
   const [user, setUser] = useState<AccountUser | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  /** OAuth 回调带回的错误码(oauth_state_invalid / oauth_provider_error),由登录弹窗展示 */
+  const [authError, setAuthError] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
@@ -499,6 +501,19 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     refreshApplications();
     refreshInbox();
   }, [refreshAccount, refreshHistory, refreshSaved, refreshApplications, refreshInbox, mergeGuestHistoryOnSignIn]);
+
+  // OAuth 回调带回 auth_error:存 state 供登录弹窗展示,并从地址栏清除(保留其余参数)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("auth_error");
+    if (!code) return;
+    params.delete("auth_error");
+    const qs = params.toString();
+    const url = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", url);
+    setAuthError(code);
+    setAuthOpen(true);
+  }, []);
 
   const recordSearch = useCallback(async (raw: string, searchMode: MapMode, entity?: SearchHistoryEntityRef) => {
     const q = raw.trim();
@@ -2380,6 +2395,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       <AuthModal
         open={authOpen}
         lang={lang}
+        initialError={authError}
         onClose={() => setAuthOpen(false)}
         onSignedIn={() => {
           void refreshAccount().then((next) => {
