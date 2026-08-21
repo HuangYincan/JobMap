@@ -690,17 +690,17 @@ test('setCenter/setZoom:animateMs>0 → flyTo(duration);否则直设;setPitch/se
   }
 });
 
-test('setStyle:satellite→raster、normal→vector、whitesmoke→暗色(mapStyleId DARK, ws-b 2026-08-22)', async () => {
+test('setStyle:satellite→satellite、normal→vector、whitesmoke→暗色(mapStyleId DARK, ws-b+ws-d 2026-08-22)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { restore } = installTMapDouble();
   const warn = captureWarn();
   try {
     const view = await createView({ style: 'satellite' });
-    assert.deepEqual(view.raw.opts.baseMap, { type: 'raster' }, '构造期 satellite → 栅格底图');
+    assert.deepEqual(view.raw.opts.baseMap, { type: 'satellite' }, '构造期 satellite → 卫星底图(ws-d:raster 非法)');
 
     view.setStyle('satellite');
-    assert.deepEqual(view.raw.baseMap, { type: 'raster' });
+    assert.deepEqual(view.raw.baseMap, { type: 'satellite' });
     assert.equal(view.raw.mapStyleId, 'DEFAULT', '卫星复位暗色标识(无残留)');
     assert.equal(warn.calls.length, 0, '支持样式不告警');
 

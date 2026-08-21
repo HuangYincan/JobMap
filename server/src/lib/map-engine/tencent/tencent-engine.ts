@@ -39,7 +39,8 @@
 //   MarkerStyle 仅图片 src,anchor 是唯一像素偏移(imageTopLeft = 屏幕位 - anchor),
 //   geometry.content 仅 GL 文本标签(非 HTML)→ HTML content 降级为默认点 + 一次性 warn
 // - Circle:{ center, radius, map, strokeColor, fillColor, fillOpacity }(glCircle)
-// - 底图样式:baseMap.type vector=标准 / raster=栅格(卫星);暗色 = Map 选项
+// - 底图样式:baseMap.type vector=标准 / satellite=卫星(影像+道路注记,
+//   features 缺省回退 DEFAULT_BASEMAP.satellite = [base, road]);暗色 = Map 选项
 //   mapStyleId(SDK v1.8.0.2 源码核实:STYLE_ID 常量 {DEFAULT:0, DARK:1,
 //   LIGHT:2, GAME:3},'DARK' → 矢量暗色底图层 Tencent.Normal.Dark;
 //   **baseMap 无 styleType 字段**,旧注释「styleType:'dark' 存在」有误);
@@ -122,10 +123,19 @@ function fromTMapLatLng(ll: any): LngLat | null {
 
 // ------------------------------------------------------------
 // 底图样式:MapStyleId → TMap baseMap + mapStyleId(glMap 底图)
-// SDK v1.8.0.2 源码核实(2026-08-22 ws-b):
+// SDK v1.8.0.2 实包源码核实(2026-08-22 ws-b + ws-d):
 // - baseMap.type 合法值仅 vector/satellite/traffic/handdraw/oversea
-//   (DEFAULT_BASEMAP 常量),**无 styleType 字段**(旧注释「styleType:'dark'
-//   存在」有误);
+//   (MAP_TYPE 常量 o={vector,satellite,traffic,handdraw,oversea}),
+//   **无 styleType 字段**(旧注释「styleType:'dark' 存在」有误)、
+//   **无 'raster' 值**(v1.8.0.2 全包 2.2MB 零处 'raster' 字符串,ws-d 坐实);
+// - **卫星底图正确形态 = `{ type: 'satellite' }`**(ws-d,2026-08-22):
+//   卫星判定 oc(t) = t.type === MAP_TYPE.satellite(hasSatellite 用);
+//   features 缺省回退 DEFAULT_BASEMAP.satellite = [satellite_base, road]
+//   (影像 + 道路注记,审图号 GS(2025)5644号);旧实现传 'raster' 是非值 →
+//   Vl() 回退查 DEFAULT_BASEMAP['raster'] = undefined → features 空 →
+//   不建任何底图层 → 瓦片请求不发、地图全白(boss 真机坐实 2026-08-22);
+//   运行期 setBaseMap({type:'satellite'}) 与构造期 baseMap 同路径
+//   (layerResource.setBaseMap → _initBaseLayer);
 // - 暗色 = 独立 Map 选项 mapStyleId(STYLE_ID 常量 {DEFAULT:0,DARK:1,LIGHT:2,
 //   GAME:3},'DARK' → 矢量暗色底图层 Tencent.Normal.Dark,见
 //   _addLayerByBaseMapInfo);运行期经 setMapStyleId(id) 切换底图层;
@@ -134,7 +144,7 @@ function fromTMapLatLng(ll: any): LngLat | null {
 // ------------------------------------------------------------
 
 function styleToBaseMap(style: MapStyleId): { type: string } {
-  return { type: style === 'satellite' ? 'raster' : 'vector' };
+  return { type: style === 'satellite' ? 'satellite' : 'vector' };
 }
 
 /** 暗色样式 → TMap mapStyleId 选项(见上注释;返回 undefined = 不传,SDK 默认) */
