@@ -50,10 +50,16 @@ import {
   upsertIdentity as memUpsertIdentity,
   registerWithPassword as memRegisterWithPassword,
   loginWithPassword as memLoginWithPassword,
+  verifyUserPassword as memVerifyUserPassword,
+  setPassword as memSetPassword,
+  bindPhone as memBindPhone,
+  bindEmail as memBindEmail,
   UsernameTakenError,
+  PhoneTakenError,
+  EmailTakenError,
 } from './session-store.ts';
 
-export { UsernameTakenError };
+export { UsernameTakenError, PhoneTakenError, EmailTakenError };
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -221,7 +227,10 @@ async function withDbWrite<T>(fn: (pool: Pool) => Promise<T>, memory: () => T | 
   try {
     return await fn(db);
   } catch (err) {
-    if (err instanceof UsernameTakenError) throw err;
+    // 占用类冲突不是「库不可用」,必须原样抛出(409),不能回落内存。
+    if (err instanceof UsernameTakenError || err instanceof PhoneTakenError || err instanceof EmailTakenError) {
+      throw err;
+    }
     throw new DbUnavailableError(err);
   }
 }
@@ -396,6 +405,90 @@ export async function loginWithPassword(username: string, password: string): Pro
     },
     () => memLoginWithPassword(username, password),
   );
+}
+
+/** 校验当前密码(改密用):无密码或错 → false,不泄露。 */
+export async function verifyUserPassword(userId: string, password: string): Promise<boolean> {
+  return withDbRead(async (db) => {
+    const result = await db.query<{ password_hash: string | null }>(
+      `SELECT password_hash FROM users WHERE id = $1`,
+      [userId],
+    );
+    const hash = result.rows[0]?.password_hash;
+    if (!hash) return false;
+    return verifyPassword(password, hash);
+  }, () => memVerifyUserPassword(userId, password));
+}
+
+/** 设置/修改密码:hashPassword 落库,返回更新后的用户(hasPassword 翻 true)。 */
+export async function setPassword(userId: string, newPassword: string): Promise<AccountUser | null> {
+  return withDbWrite(async (db) => {
+    const result = await db.query<UpsertUserRow>(
+      `UPDATE users SET password_hash = $2, updated_at = now()
+       WHERE id = $1
+       RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
+         (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
+      [userId, hashPassword(newPassword)],
+    );
+    return result.rows[0] ? asUser(result.rows[0]) : memSetPassword(userId, newPassword);
+  }, () => memSetPassword(userId, newPassword));
+}
+
+/** 绑定/更换手机:users.phone 更新 + auth_identities 新 phone 行 upsert + 旧 phone 行删除;
+ *  手机已被他人绑定 → 23505 → PhoneTakenError(→409)。 */
+export async function bindPhone(userId: string, phone: string): Promise<AccountUser | null> {
+  return withDbWrite(async (db) => {
+    try {
+      const result = await db.query<UpsertUserRow>(
+        `UPDATE users SET phone = $2, updated_at = now()
+         WHERE id = $1
+         RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
+           (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
+        [userId, phone.trim()],
+      );
+      if (!result.rows[0]) return memBindPhone(userId, phone);
+      const user = result.rows[0];
+      await db.query(`DELETE FROM auth_identities WHERE user_id = $1 AND provider = 'phone'`, [userId]);
+      await db.query(
+        `INSERT INTO auth_identities (user_id, provider, subject)
+         VALUES ($1, 'phone', $2)
+         ON CONFLICT (provider, subject) DO NOTHING`,
+        [userId, phone.trim().toLowerCase()],
+      );
+      return asUser(user);
+    } catch (err) {
+      if ((err as { code?: string }).code === '23505') throw new PhoneTakenError(phone);
+      throw err;
+    }
+  }, () => memBindPhone(userId, phone));
+}
+
+/** 绑定/更换邮箱:与 bindPhone 对称(lower(email) 唯一 → 23505 → EmailTakenError)。 */
+export async function bindEmail(userId: string, email: string): Promise<AccountUser | null> {
+  return withDbWrite(async (db) => {
+    try {
+      const result = await db.query<UpsertUserRow>(
+        `UPDATE users SET email = $2, updated_at = now()
+         WHERE id = $1
+         RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
+           (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
+        [userId, email.trim()],
+      );
+      if (!result.rows[0]) return memBindEmail(userId, email);
+      const user = result.rows[0];
+      await db.query(`DELETE FROM auth_identities WHERE user_id = $1 AND provider = 'email'`, [userId]);
+      await db.query(
+        `INSERT INTO auth_identities (user_id, provider, subject)
+         VALUES ($1, 'email', $2)
+         ON CONFLICT (provider, subject) DO NOTHING`,
+        [userId, email.trim().toLowerCase()],
+      );
+      return asUser(user);
+    } catch (err) {
+      if ((err as { code?: string }).code === '23505') throw new EmailTakenError(email);
+      throw err;
+    }
+  }, () => memBindEmail(userId, email));
 }
 
 export async function createSession(userId: string): Promise<{ token: string; expiresAt: number }> {

@@ -166,6 +166,70 @@ export function loginWithPassword(username: string, password: string): AccountUs
   return publicUser(user);
 }
 
+/** 校验当前密码(mem 分支):无密码或错 → false,不泄露。 */
+export function verifyUserPassword(userId: string, password: string): boolean {
+  const user = users.get(userId);
+  if (!user?.passwordHash) return false;
+  return verifyPassword(password, user.passwordHash);
+}
+
+/** 设置/修改密码(mem 分支):hashPassword 落库,hasPassword 翻 true。 */
+export function setPassword(userId: string, newPassword: string): AccountUser | null {
+  const user = users.get(userId);
+  if (!user) return null;
+  user.passwordHash = hashPassword(newPassword);
+  users.set(userId, user);
+  return publicUser(user);
+}
+
+/** 手机已被他人绑定(内存路径)。account-store 对 Postgres 路径抛同一类型。 */
+export class PhoneTakenError extends Error {
+  constructor(phone: string) {
+    super(`phone taken: ${phone}`);
+    this.name = 'PhoneTakenError';
+  }
+}
+
+/** 邮箱已被他人绑定(内存路径)。account-store 对 Postgres 路径抛同一类型。 */
+export class EmailTakenError extends Error {
+  constructor(email: string) {
+    super(`email taken: ${email}`);
+    this.name = 'EmailTakenError';
+  }
+}
+
+/** 绑定/更换手机(mem 分支):users.phone 更新 + 身份 upsert 新行/删旧行;占用 → PhoneTakenError。 */
+export function bindPhone(userId: string, phone: string): AccountUser | null {
+  const user = users.get(userId);
+  if (!user) return null;
+  const norm = phone.trim().toLowerCase();
+  for (const u of users.values()) {
+    if (u.id !== userId && u.phone?.toLowerCase() === norm) throw new PhoneTakenError(phone);
+  }
+  const oldKey = user.phone ? `phone:${user.phone.trim().toLowerCase()}` : null;
+  user.phone = phone.trim();
+  users.set(userId, user);
+  if (oldKey && identities.get(oldKey) === userId) identities.delete(oldKey);
+  identities.set(`phone:${norm}`, userId);
+  return publicUser(user);
+}
+
+/** 绑定/更换邮箱(mem 分支):users.email 更新 + 身份 upsert 新行/删旧行;占用 → EmailTakenError。 */
+export function bindEmail(userId: string, email: string): AccountUser | null {
+  const user = users.get(userId);
+  if (!user) return null;
+  const norm = email.trim().toLowerCase();
+  for (const u of users.values()) {
+    if (u.id !== userId && u.email?.toLowerCase() === norm) throw new EmailTakenError(email);
+  }
+  const oldKey = user.email ? `email:${user.email.trim().toLowerCase()}` : null;
+  user.email = email.trim();
+  users.set(userId, user);
+  if (oldKey && identities.get(oldKey) === userId) identities.delete(oldKey);
+  identities.set(`email:${norm}`, userId);
+  return publicUser(user);
+}
+
 export function createSession(userId: string): { token: string; expiresAt: number } {
   const token = signToken();
   const expiresAt = Date.now() + SESSION_TTL_MS;
