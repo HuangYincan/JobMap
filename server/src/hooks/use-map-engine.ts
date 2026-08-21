@@ -8,9 +8,11 @@
 // 首渲染快照(初始值),后续相机/样式变更由调用方经 view 方法下发。
 //
 // ws-f 扩展:
-// - switchEngine(id):switch.ts 编排(旧 view 销毁 → 新引擎 load/createView
-//   → 回放)→ 成功后写 localStorage 偏好(writeEnginePreference,key
-//   `domain-map:engine`)→ isSwitching 状态(切换期间禁用 UI);
+// - switchEngine(id):switch.ts 编排(ws-3「先就绪、后销毁」:目标 load → 旧
+//   view destroy → createView,失败回滚重建旧引擎视图;最新意图优先,快速
+//   连点第二击不被丢弃)→ 成功后写偏好(writeEnginePreference,key
+//   `domain-map:engine`)→ isSwitching 状态(仅视觉指示,UI aria-disabled
+//   提示,不再拦截切换请求);
 // - 三引擎统一接线:AMap(自注册)+ Tencent/Baidu 经 registerEngine 装配进
 //   注册表骨架(与 registerAmapEngine 同模式;引擎实现模块在此求值,
 //   骨架保持厂商无关,见 engine-registry 注释);
@@ -30,7 +32,11 @@ import {
   writeEnginePreference,
 } from "@/lib/map-engine/engine-preference";
 import { setActiveSearchProvider } from "@/lib/poi-service";
-import { switchMapEngine, type EngineSwitchReplay } from "@/lib/map-engine/switch";
+import {
+  switchMapEngine,
+  type EngineSwitchReplay,
+  type EngineSwitchSignal,
+} from "@/lib/map-engine/switch";
 // 三引擎完整实现:模块求值即注册(AMap 自注册;Tencent/Baidu 经 registerEngine 装配)
 import { AMAP_ENGINE_IMPL } from "@/lib/map-engine/amap/amap-engine";
 import { TENCENT_ENGINE } from "@/lib/map-engine/tencent/tencent-engine";
@@ -130,13 +136,19 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
   const keepaliveRef = useRef<{ view: MapView; container: HTMLElement } | null>(null);
   /** 卸载后丢弃在飞切换结果(await 完成时组件已卸载 → 销毁新 view) */
   const aliveRef = useRef(true);
-  /** 切换重入守卫(UI 已禁用 chip,双保险) */
-  const switchingRef = useRef(false);
+  /**
+   * 切换代际(ws-3「最新意图优先」):每次 switchEngine 递增;在飞切换 resolve
+   * 后若代际不匹配(已有更新意图)→ 丢弃结果并销毁刚创建的 view。不再用
+   * switchingRef 硬丢弃第二次点击——isSwitching 仅作视觉指示,UI 可短暂连点。
+   */
+  const generationRef = useRef(0);
+  /** 在飞切换的取消 token:新意图发起时置旧 signal.aborted,让在飞切换早期让路 */
+  const activeSignalRef = useRef<EngineSwitchSignal | null>(null);
 
   const switchEngine = useCallback(
     async (id: MapEngineId, replay?: EngineSwitchReplay): Promise<void> => {
       const container = containerRef.current;
-      if (!container || switchingRef.current) return;
+      if (!container) return;
       const to = getEngine(id);
       // 未配置引擎:不销毁当前视图,直接忽略(UI 已禁用,双保险)
       if (!to.isConfigured()) {
@@ -147,22 +159,49 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
       if (from?.engine.id === id) return; // 已在该引擎(同引擎守卫)
       if (!aliveRef.current) return;
 
-      switchingRef.current = true;
+      // 最新意图优先:递增代际,让路给旧的在飞切换(load 阶段即放弃,旧 view 零触碰)
+      const gen = ++generationRef.current;
+      if (activeSignalRef.current) activeSignalRef.current.aborted = true;
+      const signal: EngineSwitchSignal = { aborted: false };
+      activeSignalRef.current = signal;
       setIsSwitching(true);
       try {
         // 状态捕获:旧 view 未就绪(首载竞态)→ 初始快照
         const state = from?.getState() ?? { center, zoom, pitch: 0, rotation: 0 };
-        const { view: next } = await switchMapEngine({
+        const result = await switchMapEngine({
           from,
           to,
           container,
           state,
           style,
+          signal,
           ...replay,
         });
-        if (!aliveRef.current) {
-          next.destroy(); // 组件已卸载:新 view 不留地
+        // 已让路给更新意图(aborted):不落地任何状态(旧 view 或已保留,或容器
+        // 由更新意图接管);若恰逢卸载,同样不落地
+        if (result.aborted || !aliveRef.current) return;
+        const next = result.view;
+        if (!next) return;
+        if (gen !== generationRef.current) {
+          next.destroy(); // 更新意图已发起:丢弃本结果,不留已建视图
           return;
+        }
+        if (result.rolledBack) {
+          // 目标 createView 失败,已回滚重建旧引擎视图:状态可用(保留旧引擎),
+          // 不写偏好,错误上报
+          viewRef.current = next;
+          setView(next);
+          console.error("[use-map-engine] switchEngine 目标创建失败,已回滚旧引擎视图", result.error);
+          return;
+        }
+        // 切换期间挂载 createView 落地(挂载与切换并发):最新意图(切换)赢,
+        // 销毁挂载视图,避免同容器双实例
+        if (viewRef.current && viewRef.current !== next && !viewRef.current.isDestroyed?.()) {
+          try {
+            viewRef.current.destroy();
+          } catch {
+            // 销毁失败不阻断切换落地
+          }
         }
         viewRef.current = next;
         setView(next);
@@ -172,10 +211,18 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
         // 视口兜底搜索/建议随活跃引擎路由(与挂载路径同口径)
         setActiveSearchProvider(to.search);
       } catch (err) {
-        console.warn("[use-map-engine] switchEngine failed:", err);
+        // 已被更新意图取代:预期失败,静默(新意图会正常落地)
+        if (gen !== generationRef.current) return;
+        // 错误路径:清空视图状态(旧 view 已在 switch.ts 销毁;回滚也失败 →
+        // 容器无图),暴露可重试——下次 switchEngine 从 viewRef=null 正常走
+        console.error("[use-map-engine] switchEngine failed:", err);
+        viewRef.current = null;
+        setView(null);
       } finally {
-        switchingRef.current = false;
-        setIsSwitching(false);
+        if (gen === generationRef.current) {
+          activeSignalRef.current = null;
+          setIsSwitching(false);
+        }
       }
     },
     [containerRef, center, zoom, style],
@@ -246,7 +293,13 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
         return resolved.createView({ container, center, zoom, style });
       })
       .then((created) => {
-        if (cancelled || !created) return;
+        if (!created) return;
+        if (cancelled) {
+          // teardown 恰在 createView resolve 后发生(挂载/切换竞态缺口):
+          // 已创建视图无人认领,直接销毁,不留双实例/泄漏
+          created.destroy();
+          return;
+        }
         if (viewRef.current) {
           // 引擎切换已抢先落地(switchEngine 先行):挂载创建的同容器视图
           // 不再需要,直接销毁,避免双地图实例
@@ -269,6 +322,9 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
     aliveRef.current = true;
     return () => {
       aliveRef.current = false;
+      // 让路在飞切换:load 阶段即放弃(旧 view 零触碰),createView 阶段已建
+      // 视图由 switch.ts 销毁——组件已卸载,不再需要落地任何视图
+      if (activeSignalRef.current) activeSignalRef.current.aborted = true;
     };
   }, []);
 

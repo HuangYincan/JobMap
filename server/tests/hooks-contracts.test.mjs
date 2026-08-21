@@ -128,3 +128,35 @@ test('useModeCacheRestore hook owns session cache restore branch', () => {
   // map-shell 不再整体拥有 restore effect(deps 恒空只在首屏读一次)
   assert.doesNotMatch(shell, /const cached = readModeCache\(mode\);\s*[\s\S]{0,200}skipFetchRef\.current = true;/);
 });
+
+// ---- useMapEngine(引擎切换生命周期;ws-3 安全切换重构)----
+
+test('useMapEngine:最新意图优先 + 错误态清理(ws-3 生命周期契约)', () => {
+  const hook = src('hooks/use-map-engine.ts');
+  // 代际:每次 switchEngine 递增;在飞切换 resolve 后代际不匹配 → 丢弃并销毁
+  assert.match(hook, /generationRef/);
+  assert.match(hook, /const gen = \+\+generationRef\.current;/);
+  assert.match(hook, /gen !== generationRef\.current/);
+  assert.match(hook, /next\.destroy\(\);\s*\/\/ 更新意图已发起:丢弃本结果/);
+  // 不再用 switchingRef 硬丢弃第二次点击
+  assert.doesNotMatch(hook, /switchingRef\.current/);
+  // 取消 token:新意图发起置旧 signal(load 阶段早期让路);卸载也让路在飞切换
+  assert.match(hook, /activeSignalRef/);
+  assert.match(hook, /activeSignalRef\.current\.aborted = true;/);
+  // 失败路径:清空视图状态暴露可重试
+  assert.match(hook, /console\.error\("\[use-map-engine\] switchEngine failed:", err\);/);
+  assert.match(hook, /viewRef\.current = null;/);
+  // 挂载/teardown 竞态:teardown 在 createView resolve 后发生 → 已建视图销毁
+  assert.match(hook, /if \(cancelled\) \{[\s\S]{0,160}created\.destroy\(\);/);
+  // 挂载与切换并发:切换落地时销毁期间落地的挂载视图(同容器双实例兜底)
+  assert.match(hook, /viewRef\.current !== next && !viewRef\.current\.isDestroyed\?\.\(\)/);
+});
+
+test('map-shell:usePOIMap 的 view 参数来自 state(engineView),非 mapInstance ref', () => {
+  const shell = src('components/map-shell.tsx');
+  // POI 重建随引擎切换显式触发(创建 effect deps [view]),不依赖隐式 setState 链
+  assert.match(shell, /usePOIMap\(engineView, \{/);
+  assert.doesNotMatch(shell, /usePOIMap\(mapInstance\.current/);
+  // mapInstance ref 仍保留给事件回调内同步读(locate/快照),不用于 POI 重建
+  assert.match(shell, /mapInstance\.current = engineView;/);
+});
