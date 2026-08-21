@@ -65,8 +65,12 @@ export class MockMarker {
     for (const fn of this._listeners[evt] || []) fn(payload);
   }
 
-  setzIndex() {}
-  setContent() {}
+  setzIndex(z) {
+    this.zIndex = z;
+  }
+  setContent(html) {
+    this.content = html;
+  }
   // AMap 专属方法:控制器契约化后不应再直调裸实例——抛错作回归绊线
   setIcon() {
     throw new Error('AMap-only setIcon 不应被控制器直调(契约已禁用,见 map-markers.ts)');
