@@ -2,7 +2,8 @@
 //
 // 复用 llm-validate.ts 的 HttpError / isRetryableStatus 语义(只 import 这两个,
 // 不 import 其函数)。SSE 解析按 `data: ` 行,兼容 choices[0].delta.content
-// 与 delta.tool_calls 两种 chunk;工具参数跨 chunk 增量拼接。
+// 与 delta.tool_calls 两种 chunk;工具参数跨 chunk 增量拼接;推理模型思考内容
+// (delta.reasoning_content)经 onReasoning 回调转发(可选,缺省不回调)。
 //
 // 超时与重试(参数可注入以便测试,默认值即 spec):
 //   - 30s 首包超时(每次尝试:收到首个 chunk 后取消定时器)
@@ -43,6 +44,8 @@ export interface StreamChatOptions {
   tools?: Array<{ type: 'function'; function: { name: string; description: string; parameters: unknown } }>;
   signal: AbortSignal;
   onDelta(text: string): void;
+  /** 推理模型思考内容(delta.reasoning_content,如 DeepSeek);非推理模型缺省不回调。 */
+  onReasoning?(text: string): void;
   onToolCall(tc: { id: string; name: string; arguments: string }): void;
   onDone(): void;
 }
@@ -228,6 +231,10 @@ export function createLlmProvider(fetchLike?: typeof fetch, options?: LlmProvide
           if (!delta || typeof delta !== 'object') return;
           const d = delta as Record<string, unknown>;
           if (typeof d.content === 'string' && d.content.length > 0) opts.onDelta(d.content);
+          // 推理内容(reasoning_content)与 content/tool_calls 并列;顺序 = chunk 内字段顺序
+          if (typeof d.reasoning_content === 'string' && d.reasoning_content.length > 0) {
+            opts.onReasoning?.(d.reasoning_content);
+          }
           const toolCalls = d.tool_calls;
           if (!Array.isArray(toolCalls)) return;
           for (const tc of toolCalls) {

@@ -18,13 +18,16 @@ function sseResponse(chunks, status = 200) {
 const BASE = { baseUrl: 'https://llm.example.com/v1', apiKey: 'sk-test', model: 'm' };
 
 function streamChat(provider, overrides = {}) {
-  const api = { deltas: [], toolCalls: [], doneCount: 0, calls: [] };
+  const api = { deltas: [], toolCalls: [], doneCount: 0, calls: [], reasoning: [] };
   const opts = {
     ...BASE,
     messages: [{ role: 'user', content: 'hi' }],
     signal: overrides.signal ?? new AbortController().signal,
     onDelta: (t) => {
       api.deltas.push(t);
+    },
+    onReasoning: (r) => {
+      api.reasoning.push(r);
     },
     onToolCall: (tc) => {
       api.toolCalls.push(tc);
@@ -116,6 +119,71 @@ test('streamChat: 多工具调用(index 0/1)分别累计', async () => {
   assert.equal(byId.get('a').arguments, '{}');
   assert.equal(byId.get('b').name, 't2');
   assert.equal(byId.get('b').arguments, '{"x":1}');
+});
+
+// ---------- reasoning(reasoning_content)解析 ----------
+
+test('streamChat: reasoning_content 逐 chunk 转发,与 content 互不干扰', async () => {
+  const provider = createLlmProvider(async () =>
+    sseResponse([
+      'data: {"choices":[{"delta":{"reasoning_content":"先"}}]}\n\n',
+      'data: {"choices":[{"delta":{"reasoning_content":"想想"}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"回答"}}]}\n\n',
+      'data: [DONE]\n\n',
+    ]),
+  );
+  const api = streamChat(provider);
+  await api.promise;
+  assert.deepEqual(api.reasoning, ['先', '想想']);
+  assert.deepEqual(api.deltas, ['回答']);
+  assert.equal(api.doneCount, 1);
+});
+
+test('streamChat: 同一 chunk 内 reasoning_content 与 content 都转发(字段顺序保持)', async () => {
+  const provider = createLlmProvider(async () =>
+    sseResponse([
+      'data: {"choices":[{"delta":{"reasoning_content":"思","content":"答"}}]}\n\n',
+      'data: [DONE]\n\n',
+    ]),
+  );
+  const api = streamChat(provider);
+  await api.promise;
+  assert.deepEqual(api.reasoning, ['思']);
+  assert.deepEqual(api.deltas, ['答']);
+});
+
+test('streamChat: reasoning_content 为空串/缺失 → 不回调', async () => {
+  const provider = createLlmProvider(async () =>
+    sseResponse([
+      'data: {"choices":[{"delta":{"reasoning_content":"","content":"a"}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"b"}}]}\n\n',
+      'data: [DONE]\n\n',
+    ]),
+  );
+  const api = streamChat(provider);
+  await api.promise;
+  assert.deepEqual(api.reasoning, []);
+  assert.deepEqual(api.deltas, ['a', 'b']);
+});
+
+test('streamChat: 未提供 onReasoning 回调(兼容缺省)→ 不抛错', async () => {
+  const provider = createLlmProvider(async () =>
+    sseResponse([
+      'data: {"choices":[{"delta":{"reasoning_content":"x"}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"ok"}}]}\n\n',
+      'data: [DONE]\n\n',
+    ]),
+  );
+  const opts = {
+    ...BASE,
+    messages: [{ role: 'user', content: 'hi' }],
+    signal: new AbortController().signal,
+    onDelta: () => {},
+    onToolCall: () => {},
+    onDone: () => {},
+  };
+  await provider.streamChat(opts); // 无 onReasoning 字段:?. 缺省不调用
+  assert.equal(opts.onReasoning, undefined);
 });
 
 test('streamChat: 注释行/事件行/坏 JSON 行被忽略,不中断流', async () => {

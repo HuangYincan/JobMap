@@ -17,6 +17,8 @@ function mockProvider(script) {
       seen.push({ index: idx, messages: opts.messages, tools: opts.tools });
       calls++;
       if (behavior.throwErr) throw behavior.throwErr;
+      // 真实推理模型(DSS 等)流式顺序:reasoning_content 先于 content/tool_calls
+      for (const r of behavior.reasoning ?? []) opts.onReasoning?.(r);
       for (const d of behavior.deltas ?? []) opts.onDelta(d);
       for (const tc of behavior.toolCalls ?? []) opts.onToolCall(tc);
       opts.onDone();
@@ -159,6 +161,62 @@ test('runAgent: 工具参数非法 JSON → tool error,不调用工具,继续下
   // 错误回流为 tool 消息
   const toolMsg = mp.seen[1].messages.find((m) => m.role === 'tool');
   assert.equal(toolMsg.content, 'invalid tool arguments JSON');
+});
+
+// ---------- reasoning 转发与截断 ----------
+
+test('runAgent: reasoning 事件按流式顺序转发(先思考后回答),与 delta 顺序保持', async () => {
+  const mp = mockProvider([
+    { reasoning: ['先想想', '再想想'], deltas: ['回答'] },
+  ]);
+  const events = await collectEvents(baseReq({ provider: mp }));
+  assert.deepEqual(
+    events.map((e) => e.type),
+    ['reasoning', 'reasoning', 'delta', 'done'],
+  );
+  assert.equal(events[0].type === 'reasoning' && events[0].text, '先想想');
+  assert.equal(events[1].type === 'reasoning' && events[1].text, '再想想');
+});
+
+test('runAgent: reasoning 与 tool 事件交错时保持回调顺序', async () => {
+  const mp = mockProvider([
+    { reasoning: ['规划中'], toolCalls: [{ id: 'c1', name: 'amap__place_search', arguments: '{"query":"x"}' }] },
+    { reasoning: ['继续'], deltas: ['结果'] },
+  ]);
+  const events = await collectEvents(baseReq({ provider: mp }));
+  assert.deepEqual(
+    events.map((e) => e.type),
+    ['reasoning', 'tool', 'tool', 'reasoning', 'delta', 'done'],
+  );
+  assert.equal(events[0].type === 'reasoning' && events[0].text, '规划中');
+  assert.equal(events[3].type === 'reasoning' && events[3].text, '继续');
+});
+
+test('runAgent: reasoning 总量超 4000 → 截断且不再转发(与 delta 顺序保持)', async () => {
+  const big = '思'.repeat(3000);
+  const mp = mockProvider([
+    { reasoning: [big, big, '尾巴'], deltas: ['最终回答'] },
+  ]);
+  const events = await collectEvents(baseReq({ provider: mp }));
+  const reasoning = events.filter((e) => e.type === 'reasoning');
+  // 前两段转发 3000 + 1000(第二段截断),第三段超限不再转发
+  const forwarded = reasoning.map((e) => (e.type === 'reasoning' ? e.text : '')).join('');
+  assert.equal(forwarded.length, 4000);
+  assert.equal(forwarded.endsWith('思'), true); // 第二段只转发前 1000 字符
+  assert.ok(!forwarded.includes('尾巴'), '超限后的 reasoning 不再转发');
+  assert.deepEqual(
+    events.map((e) => e.type),
+    ['reasoning', 'reasoning', 'delta', 'done'],
+  );
+});
+
+test('runAgent: 无 reasoning(非推理模型)→ 零 reasoning 事件', async () => {
+  const mp = mockProvider([{ deltas: ['直接回答'] }]);
+  const events = await collectEvents(baseReq({ provider: mp }));
+  assert.deepEqual(
+    events.map((e) => e.type),
+    ['delta', 'done'],
+  );
 });
 
 // ---------- 动作提取与下发 ----------

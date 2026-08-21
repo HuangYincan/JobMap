@@ -18,6 +18,9 @@
     "import:hz:pois:apply": "node scripts/import-hz-pois.mjs --apply"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "dompurify": "^3.4.14",
+    "marked": "^18.0.10",
     "next": "^16.3.1",
     "pg": "^8.23.0",
     "react": "^19.2.8",

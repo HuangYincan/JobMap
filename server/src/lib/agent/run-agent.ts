@@ -36,6 +36,8 @@ interface PendingToolCall {
 const TOOL_DESC_MAX = 500;
 const TOOL_TEXT_MAX = 3000;
 const URL_MAX_LEN = 150;
+/** 思考内容(reasoning 事件)总量上限:超出截断且不再转发(与 delta 顺序保持)。 */
+const REASONING_MAX = 4000;
 
 /** 事件队列:把 provider 的回调事件桥接为 async iterable,供生成器实时 yield。 */
 class EventQueue<T> implements AsyncIterable<T> {
@@ -168,6 +170,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
   };
 
   let noTools = false; // unsupported_tools 降级标志(最多一次)
+  let reasoningSent = 0; // 思考内容累计转发量(总量上限 REASONING_MAX,超限截断;streamRound 共用)
   try {
     yield* runConversation();
   } catch (err) {
@@ -269,6 +272,16 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
         onDelta: (d) => {
           text += d;
           queue.push({ type: 'delta', text: d });
+        },
+        onReasoning: (r) => {
+          // 总量上限:剩余额度为 0 → 不再转发;不足整段 → 截断只转剩余额度
+          const remaining = REASONING_MAX - reasoningSent;
+          if (remaining <= 0) return;
+          const slice = r.slice(0, remaining);
+          if (slice.length > 0) {
+            reasoningSent += slice.length;
+            queue.push({ type: 'reasoning', text: slice });
+          }
         },
         onToolCall: (tc) => {
           if (!callsById.has(tc.id)) {

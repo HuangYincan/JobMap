@@ -1,0 +1,96 @@
+/* Markdown 渲染(助手消息体):
+   - 首屏/未消毒阶段显示原文(raw),挂载消毒后切 .md;
+   - .md 内遵循既有气泡文字规格(13px/1.5,继承 .bubbleAssistant 配色)。 */
+
+.raw {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.md {
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.md > :first-child {
+  margin-top: 0;
+}
+
+.md > :last-child {
+  margin-bottom: 0;
+}
+
+.md p {
+  margin: 0.35em 0;
+}
+
+.md h1,
+.md h2,
+.md h3,
+.md h4 {
+  font-size: 14px;
+  font-weight: 650;
+  margin: 0.6em 0 0.3em;
+}
+
+.md ul,
+.md ol {
+  margin: 0.35em 0;
+  padding-left: 1.4em;
+}
+
+.md li {
+  margin: 0.15em 0;
+}
+
+.md pre {
+  background: rgba(120, 140, 160, 0.12);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0.4em 0;
+  overflow-x: auto;
+  padding: 8px 10px;
+}
+
+.md code {
+  background: rgba(120, 140, 160, 0.14);
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 1px 4px;
+}
+
+.md pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.md blockquote {
+  border-left: 3px solid rgba(0, 122, 255, 0.35);
+  color: var(--muted);
+  margin: 0.4em 0;
+  padding-left: 10px;
+}
+
+.md a {
+  color: #007aFF;
+  text-decoration: underline;
+}
+
+.md table {
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 0.4em 0;
+}
+
+.md th,
+.md td {
+  border: 1px solid var(--line);
+  padding: 3px 8px;
+}
+
+.md th {
+  background: rgba(120, 140, 160, 0.08);
+  font-weight: 650;
+}

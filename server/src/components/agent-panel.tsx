@@ -1,26 +1,49 @@
 "use client";
 
-// AI Agent 聊天面板:360px × 70vh liquid glass 卡片浮层,贴悬浮球吸附侧;
-// 移动端(≤767px)变全宽底部 sheet(参照 mobileDrawer 动效)。
-// - 消息列表(用户/助手气泡,助手侧可含建议卡片)+ 输入框 + 发送/停止/撤销;
-// - tool 状态条(「{name} 正在执行…」,tool 事件驱动);
+// AI Agent 聊天面板:360px × 70vh liquid glass 卡片浮层,**以悬浮球为锚实时跟随**
+// (transform 驱动,computePanelPlacement 纯函数;拖动球时同步移动,松手平滑归位)。
+// 移动端(≤767px)与极窄视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。
+// - 消息列表(用户纯文本 / 助手 MarkdownText 渲染,助手侧可含建议卡片)+ 输入框 +
+//   发送/停止/撤销;
+// - 思考过程:reasoning 事件累积,每条助手消息内可折叠「💭 思考过程」(默认展开,
+//   muted 小字,滚动上限);
+// - 工具活动列表:每条 tool 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary),
+//   渲染在助手消息上方;运行中工具另有顶部状态条;
 // - 未配置提示:503 LLM_UNCONFIGURED → agentNotConfigured;
 // - 建议卡片:执行器捕获 action 时渲染动作摘要按钮,点击 = 重放该 action;
 // - 历史:sessionStorage 'dm.agent-history.v1' cap 30 条;新会话首条自动带视口快照;
 // - 「停止」→ abort(链到 fetch);「撤销」→ executor.undo()。
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import styles from "./agent-panel.module.css";
 import { t, type Language } from "@/lib/i18n";
 import type { AgentAction, AgentEvent } from "@/lib/agent/types";
 import type { MapBridge } from "@/lib/agent-map-bridge";
 import { streamAgentChat, type AgentChatRequest } from "./agent-chat-client";
-import { createAgentMapExecutor, type AgentMapExecutor, type AgentMapExecutorCallbacks, type AgentToolInfo } from "./agent-map-executor";
+import {
+  createAgentMapExecutor,
+  friendlyToolName,
+  type AgentMapExecutor,
+  type AgentMapExecutorCallbacks,
+  type AgentToolInfo,
+} from "./agent-map-executor";
+import { computePanelPlacement, type BallRect, type ViewportSize } from "@/lib/agent-panel-placement";
+import { MarkdownText } from "./markdown-text";
+
+export interface ToolActivity {
+  name: string;
+  status: "start" | "done" | "error";
+  summary?: string;
+}
 
 export interface AgentMessage {
   role: "user" | "assistant";
   content: string;
   actions?: AgentAction[];
+  /** 思考过程(reasoning 事件流式累积;服务端已截断 4000 字符)。 */
+  reasoning?: string;
+  /** 工具活动列表(tool 事件;⟳ 开始 / ✓ 完成 / ✗ 失败)。 */
+  tools?: ToolActivity[];
 }
 
 const HISTORY_KEY = "dm.agent-history.v1";
@@ -29,7 +52,10 @@ const HISTORY_CAP = 30;
 interface Props {
   bridge: MapBridge | null;
   lang: Language;
-  side: "left" | "right";
+  /** 悬浮球当前矩形(viewport 坐标);面板以此为锚实时跟随。 */
+  ballRect: BallRect;
+  /** 球正在拖拽:面板关闭吸附过渡,transform 跟手。 */
+  dragging: boolean;
   onClose: () => void;
 }
 
@@ -84,7 +110,7 @@ function actionLabel(action: AgentAction, lang: Language): string {
   }
 }
 
-export function AgentPanel({ bridge, lang, side, onClose }: Props) {
+export function AgentPanel({ bridge, lang, ballRect, dragging, onClose }: Props) {
   const [messages, setMessages] = useState<AgentMessage[]>(readHistory);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -93,11 +119,40 @@ export function AgentPanel({ bridge, lang, side, onClose }: Props) {
   const [fatalError, setFatalError] = useState<string | null>(null);
   // undo 可用性重渲染信号(执行器实例在 ref 中,栈变化不触发渲染)
   const [, setUndoVersion] = useState(0);
+  // 折叠的思考过程(按消息下标;默认展开)
+  const [collapsedThinking, setCollapsedThinking] = useState<number[]>([]);
 
   const abortRef = useRef<AbortController | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   const langRef = useRef(lang);
   langRef.current = lang;
+
+  // ---- 面板跟随:视口 + 实测尺寸 → 锚定位置(transform)----
+  const [viewport, setViewport] = useState<ViewportSize>(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+  useEffect(() => {
+    const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  // 初始尺寸用 CSS 规格(360 × 70vh)估算,layout effect 实测后校正——避免
+  // 首帧 placement 用 (360, 0) 导致的高度回弹
+  const [panelSize, setPanelSize] = useState({ width: 360, height: Math.round((typeof window !== "undefined" ? window.innerHeight : 0) * 0.7) });
+  useLayoutEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    setPanelSize({ width: el.offsetWidth, height: el.offsetHeight });
+  }, [viewport]); // 视口变化(70vh 高度随之变)→ 重测
+
+  const placement = useMemo(() => computePanelPlacement(ballRect, panelSize, viewport), [ballRect, panelSize, viewport]);
+  const isSheet = placement.mode === "sheet";
+  // side 模式:transform 锚定(--px/--py 供 CSS translate3d 与入场动画共用)
+  const panelStyle: CSSProperties | undefined = isSheet
+    ? undefined
+    : ({ "--px": `${placement.left}px`, "--py": `${placement.top}px` } as CSSProperties);
 
   // ---- 渲染回调(供执行器分流;bridge 缺失时面板直接渲染无地图事件)----
   const handleDelta = useCallback((text: string) => {
@@ -112,8 +167,38 @@ export function AgentPanel({ bridge, lang, side, onClose }: Props) {
     });
   }, []);
 
+  const handleReasoning = useCallback((text: string) => {
+    setMessages((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.role === "assistant") {
+        const copy = [...prev];
+        copy[copy.length - 1] = { ...last, reasoning: (last.reasoning ?? "") + text };
+        return copy;
+      }
+      return [...prev, { role: "assistant", content: "", reasoning: text }];
+    });
+  }, []);
+
   const handleTool = useCallback((info: AgentToolInfo) => {
+    // 顶部状态条:只反映运行中的工具
     setTool(info.status === "start" ? info : null);
+    // 活动列表:累积到当前助手消息(无助手消息则新建)
+    setMessages((prev) => {
+      const last = prev[prev.length - 1];
+      if (!last || last.role !== "assistant") {
+        return [...prev, { role: "assistant", content: "", tools: [info] }];
+      }
+      const copy = [...prev];
+      const tools = last.tools ? [...last.tools] : [];
+      const idx = tools.findIndex((x) => x.name === info.name && x.status === "start");
+      if (idx !== -1) {
+        tools[idx] = { ...tools[idx], ...info }; // start → done/error 原位更新
+      } else {
+        tools.push(info);
+      }
+      copy[copy.length - 1] = { ...last, tools };
+      return copy;
+    });
   }, []);
 
   const handleDone = useCallback(() => {
@@ -154,6 +239,7 @@ export function AgentPanel({ bridge, lang, side, onClose }: Props) {
           bridge,
           {
             onDelta: handleDelta,
+            onReasoning: handleReasoning,
             onTool: handleTool,
             onDone: handleDone,
             onError: handleError,
@@ -175,6 +261,9 @@ export function AgentPanel({ bridge, lang, side, onClose }: Props) {
         case "delta":
           handleDelta(ev.text);
           break;
+        case "reasoning":
+          handleReasoning(ev.text);
+          break;
         case "tool":
           handleTool(ev);
           break;
@@ -188,7 +277,7 @@ export function AgentPanel({ bridge, lang, side, onClose }: Props) {
           break; // 无地图桥接:不执行动作
       }
     },
-    [handleDelta, handleTool, handleDone, handleError],
+    [handleDelta, handleReasoning, handleTool, handleDone, handleError],
   );
 
   const runStream = useCallback(
@@ -229,6 +318,7 @@ export function AgentPanel({ bridge, lang, side, onClose }: Props) {
       setNotConfigured(false);
       setFatalError(null);
       setTool(null);
+      setCollapsedThinking([]);
       saveHistory(nextMessages); // 刷新/中断时保留本条用户消息
       // 新会话首条自动带视口快照(bridge.getSnapshot() → viewport 参数)
       const snapshot = bridgeRef.current?.getSnapshot() ?? null;
@@ -254,6 +344,10 @@ export function AgentPanel({ bridge, lang, side, onClose }: Props) {
     executorRef.current?.handleEvent({ type: "action", action });
   }, []);
 
+  const toggleThinking = useCallback((idx: number) => {
+    setCollapsedThinking((prev) => (prev.includes(idx) ? prev.filter((x) => x !== idx) : [...prev, idx]));
+  }, []);
+
   // 消息/状态变化 → 滚动到底部
   useEffect(() => {
     const el = listRef.current;
@@ -265,7 +359,9 @@ export function AgentPanel({ bridge, lang, side, onClose }: Props) {
 
   return (
     <section
-      className={`${styles.panel} ${side === "left" ? styles.panelLeft : styles.panelRight}`}
+      ref={panelRef}
+      className={`${styles.panel} ${isSheet ? styles.panelSheet : ""} ${dragging ? styles.panelDragging : ""}`}
+      style={panelStyle}
       aria-label={t("agentTitle", lang)}
     >
       <header className={styles.header}>
@@ -281,26 +377,64 @@ export function AgentPanel({ bridge, lang, side, onClose }: Props) {
       {tool && (
         <div className={styles.toolBar} role="status">
           <span className={styles.toolDot} aria-hidden="true" />
-          {t("agentToolRunning", lang).replace("{name}", tool.name)}
+          {t("agentToolRunning", lang).replace("{name}", friendlyToolName(tool.name, lang))}
         </div>
       )}
 
       <div ref={listRef} className={styles.list}>
         {messages.length === 0 && !streaming && <p className={styles.welcome}>{t("agentWelcome", lang)}</p>}
-        {messages.map((m, i) => (
-          <div key={i} className={`${styles.msg} ${m.role === "user" ? styles.msgUser : styles.msgAssistant}`}>
-            <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>{m.content}</div>
-            {m.role === "assistant" && m.actions && m.actions.length > 0 && (
-              <div className={styles.actions}>
-                {m.actions.map((a, j) => (
-                  <button key={j} type="button" className={styles.actionBtn} onClick={() => replayAction(a)}>
-                    {actionLabel(a, lang)}
+        {messages.map((m, i) => {
+          const isCollapsed = collapsedThinking.includes(i);
+          return (
+            <div key={i} className={`${styles.msg} ${m.role === "user" ? styles.msgUser : styles.msgAssistant}`}>
+              {m.role === "assistant" && m.reasoning && (
+                <div className={styles.thinking}>
+                  <button
+                    type="button"
+                    className={styles.thinkingToggle}
+                    onClick={() => toggleThinking(i)}
+                    aria-expanded={!isCollapsed}
+                  >
+                    <span aria-hidden="true">
+                      💭 {t("agentThinkingSection", lang)}
+                    </span>
+                    <span className={styles.thinkingChevron} aria-hidden="true">
+                      {isCollapsed ? "▸" : "▾"}
+                    </span>
                   </button>
-                ))}
+                  {!isCollapsed && <div className={styles.thinkingBody}>{m.reasoning}</div>}
+                </div>
+              )}
+              {m.role === "assistant" && m.tools && m.tools.length > 0 && (
+                <ul className={styles.toolActivity} aria-label={t("agentToolsSection", lang)}>
+                  {m.tools.map((toolItem, j) => (
+                    <li key={j} className={`${styles.toolRow} ${toolItem.status === "error" ? styles.toolRowError : ""}`}>
+                      <span className={styles.toolStatus} aria-hidden="true">
+                        {toolItem.status === "start" ? "⟳" : toolItem.status === "done" ? "✓" : "✗"}
+                      </span>
+                      <span className={styles.toolName}>{friendlyToolName(toolItem.name, lang)}</span>
+                      {toolItem.status !== "start" && toolItem.summary && (
+                        <span className={styles.toolSummary}>{toolItem.summary}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
+                {m.role === "assistant" ? <MarkdownText text={m.content} /> : m.content}
               </div>
-            )}
-          </div>
-        ))}
+              {m.role === "assistant" && m.actions && m.actions.length > 0 && (
+                <div className={styles.actions}>
+                  {m.actions.map((a, j) => (
+                    <button key={j} type="button" className={styles.actionBtn} onClick={() => replayAction(a)}>
+                      {actionLabel(a, lang)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
         {streaming && !lastIsAssistant && (
           <div className={`${styles.msg} ${styles.msgAssistant}`}>
             <div className={`${styles.bubbleAssistant} ${styles.typing}`}>{t("agentThinking", lang)}</div>

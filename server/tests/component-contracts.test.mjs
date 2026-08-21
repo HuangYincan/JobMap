@@ -882,3 +882,83 @@ test('map-shell onViewEvent 保留 this 绑定(2026-08-21 热修:解构裸调 Ty
   assert.match(fnBlock, /\.call\(view, event, cb\)/, '必须以 call(view, ...) 调用保留 this');
   assert.doesNotMatch(fnBlock, /return on\(event, cb\)\s*;/, '不得裸调(丢 this 即丢 map)');
 });
+
+test('markdown-text: 组件引用 marked 与 dompurify,且消毒先于注入(ws-c-enhance)', () => {
+  // 管线 = components/markdown-text.tsx(组件侧)+ lib/markdown-pipeline.ts(纯逻辑);
+  // 组件必须引用两者(组件直接引用 dompurify,经 pipeline 引用 marked)
+  const text = src('components/markdown-text.tsx');
+  const pipeline = src('lib/markdown-pipeline.ts');
+  assert.match(text, /"use client"/);
+  assert.match(text, /import DOMPurify from "dompurify"/);
+  assert.match(pipeline, /import \{ Marked[^\n]*\} from "marked"/);
+  // 安全红线:renderMarkdown 调用(sanitize 在管线内)→ 先于 dangerouslySetInnerHTML
+  const sanitizeAt = text.indexOf('DOMPurify.sanitize');
+  const injectAt = text.indexOf('dangerouslySetInnerHTML');
+  assert.ok(sanitizeAt !== -1 && injectAt !== -1 && sanitizeAt < injectAt, 'sanitize 必须先于 dangerouslySetInnerHTML');
+  // DOMPurify 配置:USE_PROFILES html 收窄 + ADD_ATTR target(默认白名单无 target)
+  assert.match(text, /USE_PROFILES: \{ html: true \}/);
+  assert.match(text, /ADD_ATTR: \["target"\]/);
+  // 链接统一 target=_blank + rel=noopener(renderer 钩子)
+  assert.match(pipeline, /LINK_TARGET = "_blank"/);
+  assert.match(pipeline, /LINK_REL = "noopener noreferrer"/);
+  assert.match(pipeline, /target="\$\{LINK_TARGET\}"/);
+  assert.match(pipeline, /rel="\$\{LINK_REL\}"/);
+  // 消毒器注入参数化(管线可单测;生产注入 DOMPurify)
+  assert.match(pipeline, /sanitize: \(html: string\) => string/);
+});
+
+test('agent panel follows the ball via transform anchor (ws-c-enhance)', () => {
+  const panel = src('components/agent-panel.tsx');
+  const css = src('components/agent-panel.module.css');
+  // 纯函数定位:computePanelPlacement 输入 ballRect + 面板实测尺寸 + 视口
+  assert.match(panel, /import \{ computePanelPlacement[^\n]*\} from "@\/lib\/agent-panel-placement"/);
+  assert.match(panel, /computePanelPlacement\(ballRect, panelSize, viewport\)/);
+  // transform 锚定:--px/--py 注入 + translate3d(拖动实时跟随,松手平滑归位)
+  assert.match(panel, /"--px": `\$\{placement\.left\}px`/);
+  assert.match(panel, /"--py": `\$\{placement\.top\}px`/);
+  assert.match(css, /transform: translate3d\(var\(--px, 0px\), var\(--py, 12px\), 0\)/);
+  assert.match(css, /transition: transform 0\.35s cubic-bezier\(0\.32, 0\.72, 0, 1\)/);
+  assert.match(css, /\.panelDragging \{\s*animation: none;\s*transition: none;/);
+  // z-index:球 11、面板 12
+  assert.match(css, /z-index: 12/);
+  const ballCss = src('components/agent-ball.module.css');
+  assert.match(ballCss, /z-index: 11/);
+  // 极窄视口 sheet 复用移动端底部抽屉模式
+  assert.match(css, /\.panelSheet \{/);
+  assert.match(css, /border-radius: 20px 20px 0 0/);
+  assert.match(css, /height: min\(72svh, 560px\)/);
+  // 移动端(≤767px)恒 sheet,不受球位置影响(transform 覆盖为 none)
+  assert.match(css, /@media \(max-width: 767px\)[\s\S]*transform: none/);
+  // 球把 ballRect + dragging 传给面板
+  const ball = src('components/agent-ball.tsx');
+  assert.match(ball, /ballRect=\{ballRect\}/);
+  assert.match(ball, /dragging=\{dragging\}/);
+});
+
+test('agent panel renders thinking + tool activity for assistant messages (ws-c-enhance)', () => {
+  const panel = src('components/agent-panel.tsx');
+  const css = src('components/agent-panel.module.css');
+  const i18n = src('lib/i18n.ts');
+  // 思考过程:可折叠按钮 + muted 小字 + 滚动上限
+  assert.match(panel, /agentThinkingSection/);
+  assert.match(panel, /thinkingToggle/);
+  assert.match(panel, /aria-expanded=\{!isCollapsed\}/);
+  assert.match(panel, /thinkingBody/);
+  assert.match(css, /\.thinkingBody \{[\s\S]*max-height: 140px[\s\S]*overflow-y: auto/);
+  // 工具活动列表:⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary
+  assert.match(panel, /toolActivity/);
+  assert.match(panel, /friendlyToolName\(toolItem\.name, lang\)/);
+  assert.match(panel, /toolItem\.status === "start" \? "⟳" : toolItem\.status === "done" \? "✓" : "✗"/);
+  assert.match(panel, /toolRowError/);
+  assert.match(css, /\.toolActivity \{/);
+  // 助手消息体走 MarkdownText(用户消息保持纯文本)
+  assert.match(panel, /import \{ MarkdownText \} from "\.\/markdown-text"/);
+  assert.match(panel, /m\.role === "assistant" \? <MarkdownText text=\{m\.content\} \/> : m\.content/);
+  // i18n 新键
+  assert.match(i18n, /agentThinkingSection: \{[\s\S]*思考过程[\s\S]*Thinking/);
+  assert.match(i18n, /agentToolsSection: \{[\s\S]*工具调用[\s\S]*Tool calls/);
+  // 既有能力保留
+  assert.match(panel, /replayAction/);
+  assert.match(panel, /LLM_UNCONFIGURED/);
+  assert.match(panel, /dm\.agent-history\.v1/);
+});

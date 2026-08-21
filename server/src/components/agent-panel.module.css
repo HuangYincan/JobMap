@@ -1,5 +1,6 @@
-/* AI Agent 聊天面板:360px × 70vh liquid glass 卡片浮层,贴吸附侧;
-   移动端(≤767px)变全宽底部 sheet(参照 mobileDrawer 动效)。 */
+/* AI Agent 聊天面板:360px × 70vh liquid glass 卡片浮层,以悬浮球为锚实时跟随
+   (transform 锚定,--px/--py 由组件 inline 注入;入场动画与定位共用同一变量);
+   移动端(≤767px)与极窄视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。 */
 
 .panel {
   animation: panelIn 0.25s cubic-bezier(0.32, 0.72, 0, 1);
@@ -11,25 +12,52 @@
   display: flex;
   flex-direction: column;
   height: 70vh;
+  left: 0;
   overflow: hidden;
   position: fixed;
-  top: 12px;
+  top: 0;
+  transform: translate3d(var(--px, 0px), var(--py, 12px), 0);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); /* 松手吸附平滑归位 */
   width: 360px;
-  z-index: 11; /* 与悬浮球同层,高于地图控件 */
+  z-index: 12; /* 高于悬浮球(11)与地图控件 */
 }
 
-.panelLeft {
-  left: 12px;
+/* 拖拽中:关闭吸附过渡,transform 实时跟手 */
+.panelDragging {
+  animation: none;
+  transition: none;
 }
 
-.panelRight {
-  right: 12px;
+/* 极窄视口(桌面窗口过窄,两侧都放不下)→ 全宽底部 sheet(复用移动端抽屉模式) */
+.panelSheet {
+  animation: sheetIn 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  bottom: 0;
+  height: min(72svh, 560px);
+  left: 0;
+  right: 0;
+  top: auto;
+  transform: none;
+  transition: none;
+  width: 100%;
 }
 
 @keyframes panelIn {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translate3d(var(--px, 0px), calc(var(--py, 12px) + 8px), 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(var(--px, 0px), var(--py, 12px), 0);
+  }
+}
+
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -79,7 +107,7 @@
   color: var(--ink);
 }
 
-/* tool 状态条(「{name} 正在执行…」) */
+/* tool 状态条(「{name} 正在执行…」,只反映运行中的工具) */
 .toolBar {
   align-items: center;
   background: rgba(0, 122, 255, 0.06);
@@ -162,7 +190,6 @@
   line-height: 1.5;
   max-width: 86%;
   padding: 8px 12px;
-  white-space: pre-wrap;
   word-break: break-word;
 }
 
@@ -178,6 +205,106 @@
   50% {
     opacity: 1;
   }
+}
+
+/* 思考过程(可折叠;默认展开;muted 小字,滚动上限) */
+.thinking {
+  align-self: flex-start;
+  background: rgba(120, 140, 160, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  max-width: 86%;
+  min-width: 120px;
+  overflow: hidden;
+}
+
+.thinkingToggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 9px 9px 0 0;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  font-size: 11px;
+  gap: 6px;
+  justify-content: space-between;
+  padding: 6px 10px;
+  width: 100%;
+}
+
+.thinkingToggle:hover {
+  color: var(--ink);
+}
+
+.thinkingChevron {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.thinkingBody {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 7px 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 工具活动列表(⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary) */
+.toolActivity {
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  list-style: none;
+  margin: 0 0 6px;
+  max-width: 86%;
+  padding: 0;
+}
+
+.toolRow {
+  align-items: baseline;
+  background: rgba(120, 140, 160, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 11px;
+  gap: 5px;
+  line-height: 1.45;
+  padding: 4px 8px;
+}
+
+.toolRowError {
+  border-color: rgba(255, 149, 0, 0.35);
+  color: #b25e00;
+}
+
+.toolStatus {
+  color: #007aFF;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.toolRowError .toolStatus {
+  color: #ff9500;
+}
+
+.toolName {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.toolSummary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 建议卡片(动作摘要按钮,点击 = 重放该 action) */
@@ -290,7 +417,7 @@
   opacity: 0.4;
 }
 
-/* 移动端:全宽底部 sheet(参照 mobileDrawer) */
+/* 移动端:全宽底部 sheet(参照 mobileDrawer);不受球位置影响(transform 覆盖为 none) */
 @media (max-width: 767px) {
   .panel {
     border-bottom: 0;
@@ -300,6 +427,8 @@
     left: 0;
     right: 0;
     top: auto;
+    transform: none;
+    transition: none;
     width: 100%;
   }
 }

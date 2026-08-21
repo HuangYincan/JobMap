@@ -1,6 +1,6 @@
 // 动作执行器(纯逻辑,可单测)。
 //
-// 事件分流:delta/tool/done/error → 渲染回调(供面板);action → 客户端再校验
+// 事件分流:delta/reasoning/tool/done/error → 渲染回调(供面板);action → 客户端再校验
 // (与后端 lib/agent/action-schema.ts 同款规则,非法丢弃)→ 500ms 同类型限流 →
 // bridge.isReady() 检查(失败 → 错误回调)→ 执行 → 压 undo 栈。
 //
@@ -24,6 +24,8 @@ export interface AgentToolInfo {
 
 export interface AgentMapExecutorCallbacks {
   onDelta?: (text: string) => void;
+  /** 推理模型思考内容(reasoning 事件;面板渲染可折叠「思考过程」)。 */
+  onReasoning?: (text: string) => void;
   onTool?: (info: AgentToolInfo) => void;
   onDone?: (truncated?: boolean) => void;
   onError?: (code: string, message: string) => void;
@@ -42,6 +44,30 @@ export interface AgentMapExecutor {
 
 /** 同类型动作限流窗口(ms)。 */
 export const ACTION_THROTTLE_MS = 500;
+
+// ---- 工具名友好化(provider 前缀 → 显示名;活动列表用)----
+
+const PROVIDER_NAMES: Record<string, { zh: string; en: string }> = {
+  amap: { zh: '高德', en: 'AMap' },
+  tencent: { zh: '腾讯', en: 'Tencent' },
+  baidu: { zh: '百度', en: 'Baidu' },
+  rest: { zh: '兜底', en: 'fallback' },
+  builtin: { zh: '内置', en: 'built-in' },
+};
+
+/**
+ * `amap__place_search` → `高德 · place_search`(en: `AMap · place_search`);
+ * 未知前缀 → 原样返回。
+ */
+export function friendlyToolName(name: string, lang: 'zh' | 'en'): string {
+  const sep = name.indexOf('__');
+  if (sep <= 0) return name;
+  const prefix = name.slice(0, sep);
+  const label = PROVIDER_NAMES[prefix];
+  const rest = name.slice(sep + 2);
+  if (!label) return name;
+  return rest ? `${label[lang]} · ${rest}` : label[lang];
+}
 
 // ---- 客户端动作校验(action-schema.ts 同款规则,逐字段,非法 → null)----
 const MAX_LAT = 90;
@@ -229,6 +255,9 @@ export function createAgentMapExecutor(
       switch (ev.type) {
         case "delta":
           callbacks.onDelta?.(ev.text);
+          break;
+        case "reasoning":
+          callbacks.onReasoning?.(ev.text);
           break;
         case "tool":
           callbacks.onTool?.({ name: ev.name, status: ev.status, summary: ev.summary });
