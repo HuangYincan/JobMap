@@ -29,9 +29,18 @@
 // - LatLngBounds(sw: LatLng, ne: LatLng);getWest/getSouth/getEast/getNorth
 // - **createMarker 构造器多路径**(SDK v1.8.0.2 源码核实):`v=1.exp` 全局 TMap
 //   命名空间**无单点 Marker**(导出表只有 MultiMarker/MarkerStyle 等聚合类)→
-//   createMarker 按 typeof 分派:Marker 可用走单点路径,否则 MultiMarker 聚合路径
+//   createMarker 按 typeof 分派:content 存在 → **DOM overlay**(容器 div,
+//   见 createContentOverlay);无 content:Marker 可用走单点路径,否则
+//   MultiMarker 聚合路径(2026-08-22 ws-pinfix2:content 不再走 MultiMarker
+//   降级——浏览器端无单点 Marker,agent 的 content+offset 无 icon 样式被
+//   resolveMultiStyle 生成无 src/width/height 的 MarkerStyle → GL 校验
+//   「width 属性无效」拒绝渲染 + content 降级 = 目标点不可见根因)
 // - 单点 Marker(仅 npm SDK 形态):{ position, map, content, offset:{x,y}, zIndex };
 //   移除 = setMap(null)(glMarker 标注点;无 remove 方法;zIndex → DOM overlay style.zIndex)
+// - **content 语义(三引擎一致,2026-08-22 ws-pinfix2)**:content 存在 → 引擎层
+//   DOM 覆盖物渲染 HTML(div 注入地图容器,定位 = lngLatToContainerPoint -
+//   offset;与 amap content 原生渲染、baidu 自定义 Overlay 同语义);MultiMarker
+//   的 icon 化路径仅服务无 content marker(或 DOM 不可用的回退)。
 // - MultiMarker(v=1.exp 全局形态,2026-08-22 ws-6 批量化):
 //   **单共享实例承载全部 geometry**(消灭旧实现「每 marker 一实例」的
 //   「数据层过多」警告 + mousemove 监听泄漏;单实例内部方法面实测核实:
@@ -352,6 +361,14 @@ class TencentView implements MapView {
   private singleIconWarned = false;
   /** 共享 MultiMarker 实例(批量化核心:单实例承载全部 geometry;首次 createMarker 惰性创建) */
   private multiMarker: any = null;
+  /** content DOM 覆盖物注册表(全部活覆盖物;destroy/相机变化统一刷新/摘除) */
+  private contentOverlays: Array<{ el: HTMLDivElement; redraw: () => void }> = [];
+  /** content 覆盖物重定位的地图事件解绑(懒注册一次:zoom/drag/dragend/idle) */
+  private contentOverlayOffs: Array<() => void> = [];
+  /** 地图事件是否已注册(content 覆盖物重定位,幂等标记) */
+  private contentOverlayEventsBound = false;
+  /** lngLatToContainerPoint 缺失一次性告警标记(防御:老 SDK 无法定位) */
+  private contentOverlayProjectWarned = false;
   /** id → 活 geometry 引用(setPosition 原地改 position 后 updateGeometries,保留 styleId) */
   private multiGeometries = new Map<string, { id: string; position: unknown; styleId: string }>();
   /** id → 当前 zIndex(实例 zIndex = max;契约单 marker 层级语义的批量化近似) */
@@ -414,6 +431,7 @@ class TencentView implements MapView {
     } else {
       this.raw.setCenter(ll);
     }
+    this.redrawContentOverlays(); // 程序化相机变化 → content 覆盖物重定位
   }
 
   setZoom(zoom: number, animateMs?: number): void {
@@ -422,14 +440,17 @@ class TencentView implements MapView {
     } else {
       this.raw.setZoom(zoom);
     }
+    this.redrawContentOverlays();
   }
 
   setPitch(pitch: number): void {
     this.raw.setPitch(pitch);
+    this.redrawContentOverlays();
   }
 
   setRotation(rotation: number): void {
     this.raw.setRotation(rotation);
+    this.redrawContentOverlays();
   }
 
   setBounds(bounds: MapBounds): void {
@@ -437,6 +458,7 @@ class TencentView implements MapView {
     const sw = new this.tmap.LatLng(bounds.south, bounds.west);
     const ne = new this.tmap.LatLng(bounds.north, bounds.east);
     this.raw.setBounds(new this.tmap.LatLngBounds(sw, ne));
+    this.redrawContentOverlays();
   }
 
   flyTo(opts: { center: LngLat; zoom?: number }): void {
@@ -445,6 +467,7 @@ class TencentView implements MapView {
     };
     if (opts.zoom !== undefined) viewport.zoom = opts.zoom;
     this.raw.flyTo(viewport);
+    this.redrawContentOverlays();
   }
 
   setStyle(style: MapStyleId): void {
@@ -475,12 +498,168 @@ class TencentView implements MapView {
   }
 
   createMarker(opts: MapMarkerOptions): MapMarker {
-    // 构造器多路径解析(v=1.exp 全局 TMap 无单点 Marker → MultiMarker 聚合标注;
-    // npm SDK 有 Marker → 单点路径;两者皆无 → 诊断 + throw,保留 addMarker 簿记语义)
+    // content 存在 → **DOM overlay 渲染 HTML**(2026-08-22 ws-pinfix2):
+    // 三引擎 content 语义一致;不走 MultiMarker(无 HTML 渲染 + 无 icon 样式
+    // 被 GL 拒绝 = 目标点不可见根因)。无 content 走构造器多路径(单点 Marker /
+    // MultiMarker 聚合;v=1.exp 全局 TMap 无单点 Marker → MultiMarker)
+    if (opts.content !== undefined) return this.createContentOverlay(opts);
     if (typeof this.tmap.Marker === 'function') return this.createSingleMarker(opts);
     if (typeof this.tmap.MultiMarker === 'function') return this.createMultiMarker(opts);
     console.error('[map-engine] TMap 无 Marker/MultiMarker,命名空间:', Object.keys(this.tmap || {}));
     throw new Error('[map-engine] TMap 无 Marker/MultiMarker,无法创建 marker');
+  }
+
+  /**
+   * content → DOM 覆盖物渲染(TMap 容器内绝对定位 div;项目实证可用机制:
+   * 自绘比例尺 ensureFallbackScale 同路径——直接 appendChild 到
+   * getContainer(),生产坐实可用)。
+   * - 定位:`lngLatToContainerPoint(lngLat)` → 容器像素 - 契约 offset
+   *   (div 左上角 = 屏幕位 - offset;锚定一致性,与 amap content 语义对齐;
+   *   agent 蓝点 offset [-10,-10] → 圆心对准坐标);
+   * - 内容原样注入 innerHTML(转义边界:content 是引擎调用方可信的 HTML,与
+   *   amap 同语义,原样注入——既有契约);
+   * - click 绑 div(内容子元素冒泡可达)+ stopPropagation(不触发地图 click,
+   *   与 amap marker click 不冒泡同语义;徽章/蓝点点击不得清选中);
+   * - 相机变化重定位双通道:地图事件(zoom/drag/dragend/idle,兜底用户交互)
+   *   + 视图相机方法(setCenter 等,兜底程序化相机;idle 为 debounce 收敛);
+   * - 移除 = div 摘除 + 注册表清理;raw 带 setMap(null)/remove 供 map-shell
+   *   摘除分派(badgeCleanupHandle);
+   * - content 与 icon 并存 → content 为渲染主机制,icon 不参与(内容 HTML
+   *   自包含:徽章 HTML 内嵌 logo img + 失败回退链;避免 icon 双渲染)。
+   * 防御性守卫:无 DOM/容器 → createContentFallback(单点 Marker 原生 content /
+   * MultiMarker icon 化降级,不抛错)。
+   */
+  private createContentOverlay(opts: MapMarkerOptions): MapMarker {
+    if (typeof document === 'undefined' || typeof document.createElement !== 'function') {
+      return this.createContentFallback(opts);
+    }
+    const container = this.raw.getContainer?.();
+    if (!container || typeof container.appendChild !== 'function') {
+      return this.createContentFallback(opts);
+    }
+    const tmap = this.tmap;
+    const offset = opts.offset;
+    const clickHandlers: Array<() => void> = [];
+    if (opts.onClick) clickHandlers.push(opts.onClick);
+    let position = opts.position;
+    const el = document.createElement('div');
+    // 类名避开 hideControlDom 的 tencent-map-* 选择器(pointer-events 解除面)
+    el.className = 'dm-engine-content';
+    el.style.position = 'absolute';
+    el.style.zIndex = String(opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX);
+    const extras = opts as unknown as { cursor?: string };
+    if (extras.cursor) el.style.cursor = extras.cursor;
+    el.innerHTML = opts.content ?? ''; // 原样注入(可信 HTML 契约)
+    const onClick = (e: { stopPropagation?: () => void }) => {
+      e.stopPropagation?.();
+      for (const cb of clickHandlers) cb();
+    };
+    el.addEventListener('click', onClick);
+    container.appendChild(el);
+    const project = () => {
+      if (typeof this.raw.lngLatToContainerPoint !== 'function') {
+        if (!this.contentOverlayProjectWarned) {
+          this.contentOverlayProjectWarned = true;
+          console.warn('[map-engine] TMap 无 lngLatToContainerPoint,content 标记无法定位');
+        }
+        return null;
+      }
+      return this.raw.lngLatToContainerPoint(toTMapLatLng(tmap, position));
+    };
+    const redraw = () => {
+      const px = project();
+      if (!px || typeof px.x !== 'number' || typeof px.y !== 'number') return;
+      el.style.left = `${px.x - (offset?.[0] ?? 0)}px`;
+      el.style.top = `${px.y - (offset?.[1] ?? 0)}px`;
+    };
+    this.contentOverlays.push({ el, redraw });
+    this.ensureContentOverlayEvents();
+    redraw();
+    let attached = true;
+    const detach = () => {
+      if (!attached) return;
+      attached = false;
+      this.contentOverlays = this.contentOverlays.filter((o) => o.el !== el);
+      try {
+        if (el.parentNode && typeof el.parentNode.removeChild === 'function') {
+          el.parentNode.removeChild(el);
+        }
+      } catch {
+        // 已脱离 DOM:忽略
+      }
+      try {
+        el.removeEventListener('click', onClick);
+      } catch {
+        // 解绑失败不影响移除语义
+      }
+    };
+    const overlayObj = {
+      el,
+      map: this.raw,
+      getMap: () => (attached ? this.raw : null),
+      // map-shell 摘除分派(setMap(null) 形态;徽章清理句柄收敛为 wrapper.remove)
+      setMap: (next: unknown) => {
+        if (!next) detach();
+      },
+      remove: detach,
+    };
+    return {
+      raw: overlayObj,
+      setPosition: (p: LngLat) => {
+        position = p;
+        redraw();
+      },
+      setContent: (html: string) => {
+        el.innerHTML = html;
+        redraw();
+      },
+      setZIndex: (z: number) => {
+        el.style.zIndex = String(z);
+      },
+      setVisible: (v: boolean) => {
+        el.style.display = v ? '' : 'none';
+      },
+      on: (event: 'click', cb: () => void) => {
+        if (event !== 'click') return;
+        clickHandlers.push(cb);
+      },
+      off: (event: 'click', cb?: () => void) => {
+        if (event !== 'click') return;
+        if (cb) {
+          const i = clickHandlers.indexOf(cb);
+          if (i >= 0) clickHandlers.splice(i, 1);
+        }
+        // cb 缺省:保留(与既有引擎 off 语义一致,调用方应传 cb 精确解绑)
+      },
+      remove: detach,
+    };
+  }
+
+  /** content 回退路径(无 DOM/容器):既有行为不变——单点 Marker 原生 content
+   * (npm SDK 形态)或 MultiMarker icon 化降级(一次性 warn;SDK 无 HTML 渲染) */
+  private createContentFallback(opts: MapMarkerOptions): MapMarker {
+    if (typeof this.tmap.Marker === 'function') return this.createSingleMarker(opts);
+    if (typeof this.tmap.MultiMarker === 'function') return this.createMultiMarker(opts);
+    console.error('[map-engine] TMap 无 Marker/MultiMarker,命名空间:', Object.keys(this.tmap || {}));
+    throw new Error('[map-engine] TMap 无 Marker/MultiMarker,无法创建 marker');
+  }
+
+  /** 内容 DOM 覆盖物重定位(相机变化统一入口:地图事件 + 视图相机方法) */
+  private redrawContentOverlays(): void {
+    for (const o of this.contentOverlays) o.redraw();
+  }
+
+  /** 懒注册地图事件(content 覆盖物首次创建时):相机变化 → 重定位。
+   * TMap 事件集:zoom(缩放)/drag·dragend(拖拽)/idle(移动缩放后 debounce
+   * 收敛)——用户交互(不经视图方法)的重定位兜底。 */
+  private ensureContentOverlayEvents(): void {
+    if (this.contentOverlayEventsBound) return;
+    this.contentOverlayEventsBound = true;
+    const redraw = () => this.redrawContentOverlays();
+    for (const ev of ['zoom', 'drag', 'dragend', 'idle']) {
+      const off = this.raw.on?.(ev, redraw);
+      this.contentOverlayOffs.push(typeof off === 'function' ? off : () => this.raw.off?.(ev, redraw));
+    }
   }
 
   /** 单点 Marker 路径(npm SDK / 全局版含 Marker 时;原实现原样保留) */
@@ -580,8 +759,10 @@ class TencentView implements MapView {
     };
     this.multiGeometries.set(id, geometry);
     this.multiZIndexes.set(id, opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX);
-    // HTML content:MultiMarker 无 HTML 渲染(SDK 核实:geometry.content 是 GL
-    // 文本标签,MarkerStyle 仅图片 src)→ 降级默认点 + 一次性 warn。
+    // HTML content:主路径已由 createContentOverlay(DOM overlay)承载(ws-pinfix2);
+    // 本方法仅在 **无 DOM 回退** 时接收 content —— MultiMarker 无 HTML 渲染
+    // (SDK 核实:geometry.content 是 GL 文本标签,MarkerStyle 仅图片 src)→
+    // 降级默认点 + 一次性 warn。
     // **icon 存在时不降级**(ws-a,bug 1/6):icon → MarkerStyle(src) 真图标路径
     // 才是 TMap 渲染形态;content 只是 AMap 等引擎的 HTML 形态(公司 icon /
     // 聚合徽章 dataURL 图标均同时传 content+icon,契约 icon 缺省才走默认点)
@@ -704,13 +885,14 @@ class TencentView implements MapView {
    *   add geometry**:geometry 引用的 styleId 在实例上不能缺失);
    * - **SDK 类名核实(ws-a,2026-08-22)**:GL API **无 IconStyle 类**——MultiMarker
    *   图片样式类就是 `MarkerStyle`,内嵌 `{ src, width, height, anchor }`(src 可
-   *   为 dataURL 数据图或远程 URL);公司 icon / 聚合徽章走本路径真图标渲染;
-   * - 契约 icon 缺省 → 默认 pin;icon 存在 → 真图标;content 与 icon 并存时
-   *   icon 优先(TMap 无 HTML 渲染,content 不写入 geometry);
-   * - MarkerStyle 仅图片 src 形态;契约 offset [x,y] → anchor = -(x,y)
-   *   (渲染公式 imageTopLeft = 屏幕位 - anchor,契约 = AMap content 语义
-   *   屏幕位 + offset → 联立 anchor = -offset,ws-c 修正;style.offset
-   *   渲染器不消费)。
+   *   为 dataURL 数据图或远程 URL);公司 icon / 聚合徽章走本路径真图标渲染
+   *   (仅无 content 场景;content 由 createContentOverlay DOM overlay 承载,
+   *   ws-pinfix2——三引擎 content 语义一致);
+   * - 契约 icon 缺省 → 默认 pin;icon 存在 → 真图标;content 不写入 geometry
+   *   (主路径 content 不经本方法;回退路径 MultiMarker 无 HTML 渲染);
+   * - MarkerStyle 仅图片 src 形态;契约 offset [x,y] → anchor 平移(渲染公式
+   *   imageTopLeft = 屏幕位 - anchor,Δanchor = -(x,y) 即整图位移 (x,y);
+   *   style.offset 渲染器不消费)。
    */
   private resolveMultiStyle(opts: MapMarkerOptions): string {
     if (!opts.offset && !opts.icon) return 'default';
@@ -960,6 +1142,26 @@ class TencentView implements MapView {
     this.destroyed = true;
     // 自绘比例尺摘除(降级路径 DOM + 事件解绑)
     this.removeFallbackScale();
+    // content DOM 覆盖物摘除(div 直挂容器,销毁必须手动清理,防 DOM 泄漏)
+    for (const o of this.contentOverlays) {
+      try {
+        if (o.el.parentNode && typeof o.el.parentNode.removeChild === 'function') {
+          o.el.parentNode.removeChild(o.el);
+        }
+      } catch {
+        // 已脱离 DOM:忽略
+      }
+    }
+    this.contentOverlays = [];
+    for (const off of this.contentOverlayOffs) {
+      try {
+        off();
+      } catch {
+        // 解绑失败不影响销毁语义
+      }
+    }
+    this.contentOverlayOffs = [];
+    this.contentOverlayEventsBound = false;
     // 共享 MultiMarker 显式摘除(双保险:地图销毁时覆盖物随之销毁;清理簿记
     // 防 view 复用残留)
     if (this.multiMarker && typeof this.multiMarker.setMap === 'function') {
