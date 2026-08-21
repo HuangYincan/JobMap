@@ -67,6 +67,8 @@ export interface POICardProps {
   lang?: Language;
   /** 模式主题色（作为 CSS 变量 --accent 注入） */
   accentColor?: string;
+  /** 卡片右上「移除收藏」按钮(仅收藏模式传入;不传则完全不渲染,零影响普通模式) */
+  onRemove?: (poi: POI) => void;
 }
 
 /** CSS 自定义属性样式类型（React 19 移除了默认 index signature） */
@@ -87,6 +89,49 @@ const SCALE_LABELS: Record<
   startup: { zh: "创业公司", en: "Startup" },
   enterprise: { zh: "大型企业", en: "Enterprise" },
 };
+
+/**
+ * 移除收藏 icon 按钮(2026-08-22 收藏模式卡片化):liquid glass icon 按钮,
+ * 32px 命中区、透明底 → hover 变调(--accent,主交互色 #007AFF)。
+ * 点击/键盘不冒泡到卡片(article)与 cardSlot/list,避免触发选中/取消选中。
+ */
+function RemoveSavedButton({
+  poi,
+  onRemove,
+  lang,
+}: {
+  poi: POI;
+  onRemove: (poi: POI) => void;
+  lang: Language;
+}) {
+  return (
+    <button
+      type="button"
+      className={styles.removeBtn}
+      onClick={(e) => {
+        e.stopPropagation();
+        onRemove(poi);
+      }}
+      onKeyDown={(e) => e.stopPropagation()}
+      aria-label={t("removeSaved", lang)}
+      title={t("removeSaved", lang)}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M4 7h16M10 11v6M14 11v6M6 7l1.5 12a2 2 0 0 0 2 1.9h5a2 2 0 0 0 2-1.9L18 7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+      </svg>
+    </button>
+  );
+}
 
 /** 行业标签映射（seed / amap 返回行业 key → 显示文本） */
 const INDUSTRY_LABELS: Record<string, { zh: string; en: string }> = {
@@ -151,6 +196,7 @@ export function POICard({
   onClick,
   lang = "zh",
   accentColor,
+  onRemove,
 }: POICardProps) {
   const accent = accentColor || DEFAULT_ACCENT;
   const styleVars: CSSVarStyle = {
@@ -189,9 +235,9 @@ export function POICard({
       onKeyDown={handleKeyDown}
     >
       {isDomainPOI(poi) ? (
-        <DomainCardContent poi={poi} lang={lang} />
+        <DomainCardContent poi={poi} lang={lang} onRemove={onRemove} />
       ) : isRecruitmentPOI(poi) ? (
-        <RecruitmentCardContent poi={poi} lang={lang} />
+        <RecruitmentCardContent poi={poi} lang={lang} onRemove={onRemove} />
       ) : null}
     </article>
   );
@@ -200,9 +246,11 @@ export function POICard({
 function DomainCardContent({
   poi,
   lang,
+  onRemove,
 }: {
   poi: DomainPOI;
   lang: Language;
+  onRemove?: (poi: POI) => void;
 }) {
   const subtitle = [poi.category, poi.subcategory].filter(Boolean).join(" · ");
   const price = poi.priceLevel ? "¥".repeat(poi.priceLevel) : null;
@@ -215,6 +263,7 @@ function DomainCardContent({
           <h3 className={styles.name}>{poi.name}</h3>
           {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
         </div>
+        {onRemove && <RemoveSavedButton poi={poi} onRemove={onRemove} lang={lang} />}
       </header>
 
       <div className={styles.metaRow}>
@@ -262,9 +311,11 @@ function DomainCardContent({
 function RecruitmentCardContent({
   poi,
   lang,
+  onRemove,
 }: {
   poi: RecruitmentPOI;
   lang: Language;
+  onRemove?: (poi: POI) => void;
 }) {
   const openPositions = poi.positions.filter((p) => isAlivePosition(p));
   const openCount = openPositions.length;
@@ -312,6 +363,7 @@ function RecruitmentCardContent({
           )}
         </div>
         <span className={styles.scaleBadge}>{scaleLabel}</span>
+        {onRemove && <RemoveSavedButton poi={poi} onRemove={onRemove} lang={lang} />}
       </header>
 
       <div className={styles.metaRow}>

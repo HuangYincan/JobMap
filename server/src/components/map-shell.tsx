@@ -29,6 +29,7 @@ import {
   parseMapStyle,
   readMapStylePref,
   resolveSavedForFly,
+  savedPlacesToListPois,
   writeMapStylePref,
   type BasemapStyle,
 } from "@/lib/saved-overlay";
@@ -1242,6 +1243,16 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     return Array.from(byId.values());
   }, [catalog]);
 
+  // 收藏模式 Explore 列表数据桥接(2026-08-22 卡片化):savedItems.map(
+  // resolveSavedPoi ?? savedPlaceToOverlayPoi)——活数据优先,快照兜底;
+  // 带 origin 补全快照 distance(卡片字段完整,与 SavedList 对比表同口径)。
+  // 桌面 secondary-sidebar 同口径再算一份(收 savedItems/catalog/origin props),
+  // 移动抽屉用本 memo。
+  const savedListPois = useMemo(
+    () => savedPlacesToListPois(savedPlaces, compareCatalog, distanceOrigin),
+    [savedPlaces, compareCatalog, distanceOrigin],
+  );
+
   // ---- 收藏图层(useSavedLayer,QA scan #6 抽取):开关状态 + overlay POI 派生 + toggle ----
   const {
     savedOverlay,
@@ -1926,7 +1937,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   // 最近点击：有条目实体引用 → 回到那个实体（飞行 + 详情，跨城市可用，不依赖当前视口）；
   // 无实体引用（旧数据/纯关键词）→ 维持搜索回放；实体拉取失败 → 优雅降级回回放。
+  // 2026-08-22 冲突门控(方案 A,最小面):收藏模式(互斥)开启时点历史查询点 =
+  // 显式离开收藏视图开始新探索——先 hideSavedOverlay() 再走原链路(与 toggle
+  // 未登录弹窗门控同模式,use-saved-layer.ts hide 路径)。不选 B/C(不加 load
+  // effect 依赖、不拆 openDetail):避免副作用面扩大。
   const handlePickRecent = useCallback((entry: SearchHistoryEntry) => {
+    if (savedLayerEnabled) hideSavedOverlay();
     const replay = replayRecentSearch(mode, entry);
     if (replay.modeChanged) handleModeChange(replay.mode);
     openExploreSearch(replay.query);
@@ -1958,7 +1974,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           // 拉取失败 → 已回放搜索，不白屏
         });
     }
-  }, [mode, handleModeChange, openExploreSearch, catalog, pois]);
+  }, [mode, handleModeChange, openExploreSearch, catalog, pois, savedLayerEnabled, hideSavedOverlay]);
 
   const cycleDrawer = () => setDrawer((current) => current === "mini" ? "half" : current === "half" ? "full" : "mini");
 
@@ -2756,19 +2772,29 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
               ) : (
               <>
               {savedLayerEnabled ? (
-                /* 收藏图层互斥开:移动 Explore 列表切为收藏列表(关时恢复搜索管线) */
-                <SavedList
-                  items={savedPlaces}
-                  signedIn={Boolean(user)}
-                  lang={lang}
-                  catalog={compareCatalog}
-                  origin={distanceOrigin}
-                  onPick={(place) => {
-                    handlePickSaved(place);
+                /* 收藏图层互斥开:移动 Explore 列表切为收藏卡片列表(2026-08-22 卡片化,
+                   POIList + POICard,与普通模式同组件/同样式;卡片右上「移除收藏」;
+                   卡片点击沿用 handlePickSaved 打开详情),关时恢复搜索管线 */
+                <POIList
+                  pois={savedListPois}
+                  selectedId={selectedId}
+                  highlightedId={highlightedId}
+                  onSelect={(poi) => {
+                    const place = savedPlaces.find((p) => p.poiId === poi.id);
+                    if (place) handlePickSaved(place);
                     setMobileSheet("explore");
                   }}
+                  onDeselect={() => {
+                    // 交互 2:点卡片边缘空隙取消选中(与普通模式移动列表同口径)
+                    setSelectedId(null);
+                    setHighlightedId(null);
+                  }}
                   onHover={handleHover}
-                  onRemove={user ? handleRemoveSaved : undefined}
+                  loading={false}
+                  emptyTitle={savedPlaces.length === 0 || savedListPois.length === 0 ? t("savedEmpty", lang) : undefined}
+                  lang={lang}
+                  accentColor={modeConfig.color}
+                  onRemove={user ? (poi) => handleRemoveSaved(poi.id) : undefined}
                 />
               ) : (
               <>

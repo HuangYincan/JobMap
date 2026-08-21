@@ -40,6 +40,8 @@ export interface POIListProps {
   atCap?: boolean;
   /** 数据已耗尽（稀疏视野/回退窗口空;显示「没有更多结果」并停止哨兵） */
   noMore?: boolean;
+  /** 卡片右上「移除收藏」按钮(仅收藏模式传入;不传则 POICard 完全不渲染) */
+  onRemove?: (poi: POI) => void;
 }
 
 type CSSVarStyle = CSSProperties & Record<`--${string}`, string | number>;
@@ -67,6 +69,7 @@ export function POIList({
   onRetry,
   atCap = false,
   noMore = false,
+  onRemove,
 }: POIListProps) {
   const showEmpty = !loading && (empty || pois.length === 0);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -222,6 +225,7 @@ export function POIList({
                 onClick={onSelect}
                 lang={lang}
                 accentColor={accentColor}
+                onRemove={onRemove}
               />
             </div>
           ))}

@@ -1160,3 +1160,62 @@ pins」引入),相机被程序化移动 fit 到收藏点外接框。用户(2026-
 **验证**:1149 pass / 0 fail / 2 skip(+no-fly 回归 6 项);typecheck /
 docs-check / git diff --check 绿。历史文字保留(仅追加)。
 
+## 2026-08-22: 收藏模式列表卡片化 + 历史点击冲突门控(saved-layer-card)
+
+**症状**:① 收藏图层(互斥模式)下 Explore 列表 item 是 SavedList 简单行
+(透明、12px、无玻璃),与普通模式 POICard 玻璃卡片观感断裂;② 收藏模式
+(互斥)开启时,点击历史记录中的历史查询点与收藏模式功能冲突——互斥只落
+显示层(visiblePOIIds/savedMode),搜索管线 load effect 零门控,`handlePickRecent`
+无条件改 query/mode + 重拉 → 收藏开着时:搜索框=历史词 & 列表=收藏(a)、
+实体详情越狱(b)、catalog 被替换且 mode 缓存组合「未存在过」(c)、overlayPois
+按 mode 静默切换(d)。
+
+**用户指示(2026-08-22)**:① 收藏图层下 Explore 列表 item 用原先的卡片样式
+(普通模式 POICard);② 注意「收藏模式探索功能 vs 历史记录点击历史查询点」
+的冲突。
+
+**修复**(`fix/saved-layer-card`):
+- **① 收藏模式列表卡片化**:savedMode 分支(桌面 secondary-sidebar 列表区 +
+  移动抽屉)从 SavedList 换为 POIList + POICard(与普通模式完全相同组件与
+  样式,玻璃卡片)。数据桥接 `savedPlacesToListPois`(`lib/saved-overlay.ts`):
+  `savedItems.map(p => resolveSavedPoi(p, catalog) ?? savedPlaceToOverlayPoi(...))`
+  ——活数据优先(compare-saved.ts:83-85),快照兜底(saved-overlay.ts:21-50);
+  微调:带 origin 时按 haversine 补全快照 distance(卡片字段完整,与 SavedList
+  对比表同口径),无坐标且无活数据的行丢弃(卡片必须有点位)。卡片右上新增
+  「移除收藏」icon 按钮 = `POICard.onRemove` 可选 prop(不传则完全不渲染,
+  零影响普通模式;32px 命中区、透明底 → hover 变调 #007AFF,aria-label i18n
+  化「取消收藏 / Remove」),POIList 透传,桌面/移动都接 `handleRemoveSaved`。
+  卡片点击沿用 `onPickSaved` 语义(活数据命中开详情)。收藏模式关闭对比表与
+  无限滚动;对比表保留在账户页 SavedList(组件未删,仅不再被收藏模式消费)。
+- **② 历史点击冲突门控**(方案 A,最小面):`handlePickRecent`(map-shell,
+  桌面/移动共用唯一入口)开头加 `if (savedLayerEnabled) hideSavedOverlay()`
+  再走原链路——点历史查询点 = 显式离开收藏视图开始新探索(与 toggle 未登录
+  弹窗门控同模式,use-saved-layer.ts hide 路径)。不选 B/C(不加 load effect
+  依赖、不拆 openDetail):避免副作用面扩大。deps 补齐
+  `savedLayerEnabled`/`hideSavedOverlay`(hide 为 [] 依赖稳定回调)。
+
+**契约同步**:`saved-layer-mutex.test.mjs` 桌面/移动互斥断言由 SavedList 更新
+为 POIList + savedListPois(负断言:secondary-sidebar 不再动态导入/渲染
+SavedList);`component-contracts.test.mjs` 移动抽屉互斥注释同步。
+
+**新增回归测试**(`tests/saved-list-card.test.mjs`,10 项,jsdom 可测层:
+本仓库无 jsdom 运行时,沿用「源码契约 + 语义镜像」模式):
+- POICard `onRemove` 可选 prop + 条件渲染(不传零影响)、aria-label i18n、
+  点击 stopPropagation → onRemove(poi)(语义镜像);
+- 桥接纯函数实跑:活数据优先 / 快照兜底(recruitment 形态)/ 无坐标丢弃 /
+  origin 补全快照 distance(活数据 distance 不动);
+- `handlePickRecent` 门控:源码契约(门控位于原链路之前 + deps 含门控依赖)+
+  语义镜像(开 = 先 hide 再回放;关 = 零门控直走)。
+
+**修改文件**:`server/src/lib/saved-overlay.ts`(+`savedPlacesToListPois`)、
+`server/src/lib/i18n.ts`(+`removeSaved` 键)、`server/src/components/poi-card.tsx`
+(+`onRemove`/`RemoveSavedButton`)、`poi-card.module.css`(+`.removeBtn`)、
+`poi-list.tsx`(+`onRemove` 透传)、`secondary-sidebar.tsx`(savedMode 分支 →
+POIList,移除 SavedList 动态导入)、`map-shell.tsx`(桥接 memo + 移动抽屉 POIList
++ handlePickRecent 门控)、`tests/saved-list-card.test.mjs`(新)、
+`saved-layer-mutex.test.mjs`、`component-contracts.test.mjs`、`tech/16-bug-fixes.md`
+(本节)。
+
+**验证**:1159 pass / 0 fail / 2 skip(+saved-list-card 回归 10 项);typecheck /
+docs-check / git diff --check 绿。历史文字保留(仅追加)。
+

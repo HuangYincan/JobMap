@@ -795,6 +795,10 @@ export const translations = {
     zh: '取消收藏',
     en: 'Unsave',
   },
+  removeSaved: {
+    zh: '取消收藏',
+    en: 'Remove',
+  },
   applications: {
     zh: '投递记录',
     en: 'Applications',

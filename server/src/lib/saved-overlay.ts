@@ -16,6 +16,7 @@
 import type { SavedPlace } from './account.ts';
 import { resolveSavedPoi } from './compare-saved.ts';
 import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
+import { haversineDistance } from './types.ts';
 import { canonicalMode } from './modes.ts';
 
 export function savedPlaceToOverlayPoi(place: SavedPlace, catalog: POI[]): POI | undefined {
@@ -47,6 +48,31 @@ export function savedPlaceToOverlayPoi(place: SavedPlace, catalog: POI[]): POI |
     category: '收藏',
   };
   return fallback;
+}
+
+/**
+ * 收藏模式 Explore 列表数据桥接(2026-08-22 卡片化):
+ * savedItems.map(p => resolveSavedPoi(p, catalog) ?? savedPlaceToOverlayPoi(p, catalog))
+ * ——savedPlaceToOverlayPoi 第一步即 resolveSavedPoi(活数据优先,compare-saved.ts),
+ * 故直接复用它:活数据(live catalog/seed)命中返回完整卡片字段,未命中用
+ * 快照兜底(saved-overlay.ts:21-50 构造 recruitment/domain 形态卡片)。
+ * 微调:带 origin 时把快照 poi 的 distance 按 haversine 补全(卡片 distance
+ * 字段完整,与 SavedList 对比表同口径);无坐标且无活数据的行丢弃(卡片必须有点位)。
+ */
+export function savedPlacesToListPois(
+  places: SavedPlace[],
+  catalog: POI[],
+  origin?: { lng: number; lat: number } | null,
+): POI[] {
+  return places.flatMap((place) => {
+    const poi = savedPlaceToOverlayPoi(place, catalog);
+    if (!poi) return [];
+    if (origin && typeof poi.distance !== 'number') {
+      const meters = haversineDistance(poi.location, origin);
+      if (Number.isFinite(meters)) poi.distance = meters;
+    }
+    return [poi];
+  });
 }
 
 /**
