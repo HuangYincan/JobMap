@@ -565,6 +565,8 @@ class McpProviderInstance implements McpProviderHandle {
   /** public:McpProviderHandle 契约要求(id: ProviderId)。 */
   readonly id: ProviderId;
   private readonly endpoint: McpEndpoint;
+  /** 协商出的服务器协议版本;容忍任意值,仅记录诊断用,绝不因不匹配失败。 */
+  private negotiatedProtocol: string | null = null;
   disposed = false;
 
   constructor(id: ProviderId, endpoint: McpEndpoint, opts?: ProviderOptions) {
@@ -634,6 +636,7 @@ class McpProviderInstance implements McpProviderHandle {
     this.connectPromise = null;
     this.toolsCache = null;
     this.readyFlag = false;
+    this.negotiatedProtocol = null;
     if (t) {
       try {
         t.close();
@@ -669,7 +672,18 @@ class McpProviderInstance implements McpProviderHandle {
           a.transport === 'sse'
             ? new LegacySseTransport(a.url, this.fetchImpl, this.id)
             : new StreamableTransport(a.url, this.fetchImpl, this.id);
-        await rpc(transport, 'initialize', INIT_PARAMS, this.connectMs, signal);
+        // 协议版本容忍(2026-08-21 实测校准):客户端发 2025-06-18,高德服务器
+        // 实测回 2025-03-26。服务器可回任意版本 —— 记录协商结果但绝不因版本
+        // 不匹配失败(仅 404/405/400 才换备选端点重试)。
+        const initResult = (await rpc(transport, 'initialize', INIT_PARAMS, this.connectMs, signal)) as {
+          protocolVersion?: unknown;
+        };
+        this.negotiatedProtocol = typeof initResult?.protocolVersion === 'string' ? initResult.protocolVersion : null;
+        if (this.negotiatedProtocol !== null && this.negotiatedProtocol !== PROTOCOL_VERSION) {
+          console.warn(
+            `[mcp-agent] ${this.id} negotiated protocol ${String(this.negotiatedProtocol).slice(0, 40)} (client ${PROTOCOL_VERSION}); accepting server version`,
+          );
+        }
         void transport.notify('notifications/initialized', {}).catch(() => {});
         this.transport = transport;
         return transport;
