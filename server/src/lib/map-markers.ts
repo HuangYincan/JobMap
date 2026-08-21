@@ -6,9 +6,14 @@
 // - Domain 用彩色图钉，Recruitment 用圆角方块 + 真实公司 logo
 //   （logoUrl 图片优先，缺失/加载失败回退 emoji）
 // - 支持选中（放大 + 强调环）与高亮（轻微放大 + 透明度）
-// - Marker 构造经 view.createMarker（offset 元组 → 引擎内部转 Pixel）；
-//   Icon/Pixel/Size 等 AMap 专属能力经厂商命名空间逃生舱（TODO 限期迁移）；
-//   全部厂商调用都做了防御性守卫，无浏览器环境（node 测试）下静默降级
+// - 全部能力经 MapMarker 契约包装（view.createMarker 返回）：setPosition /
+//   setContent / setZIndex / setVisible / on / off / remove——控制器不直碰
+//   厂商裸实例（raw 仅保留给 getMarkerByPOIId 探针与 createCityClusterMarker
+//   返回值，map-shell duck-type 依赖）；引擎差异（AMap 小写 z-index 命名、
+//   TMap·BMapGL 大写 setZIndex、BMapGL addEventListener 等）由适配层吸收
+// - 状态样式 = content 重渲染 + zIndex：offset 恒为基准锚点（图钉底尖 /
+//   徽章中心），状态尺寸经内容负 margin 补偿，锚点跨状态零漂移（契约无
+//   setOffset，删除 AMap.Pixel 依赖）；无浏览器环境（node 测试）下静默降级
 //
 // marker 生命周期(b2 修订):「只添加一次、跨视口/跨 zoom 保留实例」。
 // - setPOIs 非空列表 = 只增不删(新增 + setPosition 存量),空列表 = 清空;
@@ -53,7 +58,7 @@ export interface POIMarkerController {
   select(id: string): void;
   /** 取消选中，恢复为默认/高亮样式。 */
   deselect(): void;
-  /** 按 POI id 获取底层 AMap Marker 实例（不存在返回 undefined；测试探针）。 */
+  /** 按 POI id 获取底层厂商 Marker 实例（不存在返回 undefined；测试探针，raw 逃生舱）。 */
   getMarkerByPOIId(id: string): any;
   /** 销毁控制器：移除全部标记、清空引用，之后所有方法变为 no-op。 */
   destroy(): void;
@@ -160,10 +165,31 @@ function escapeAttr(value: string): string {
 }
 
 /**
- * 公司徽章 HTML（AMap Marker content）。
+ * Domain 图钉 DOM 内容（引擎 Marker content）：data URI SVG 的 <img>。
+ * 状态尺寸 = 基准 × 缩放（32×40 → 42×52 等比，含强调环），offset 恒为
+ * [-16,-40]（图钉底尖），尺寸溢出经负 margin 收回底尖——跨状态锚点零漂移
+ * （契约无 setOffset/setIcon，不构造任何 AMap Icon/Size/Pixel）。
+ */
+function domainPinContent(color: string, state: MarkerState): string {
+  const scale = stateScale(state);
+  const w = Math.round(PIN_BASE.w * scale);
+  const h = Math.round(PIN_BASE.h * scale);
+  const ml = (PIN_BASE.w - w) / 2;
+  const mt = PIN_BASE.h - h;
+  return (
+    `<img src="${svgToDataUri(domainPinSVG(color, state))}" width="${w}" height="${h}" alt="" ` +
+    `style="display:block;margin-left:${ml}px;margin-top:${mt}px"/>`
+  );
+}
+
+/**
+ * 公司徽章 HTML（引擎 Marker content）。
  * data-URI SVG 无法加载远程 favicon，必须用真 <img>。
  * fallbackUrls：logoUrl 加载失败后依次尝试的候选（favicon.im → icon.horse，
  * 由调用方从 company.careerUrl 派生）；全部失败才隐藏 img 显示 emoji。
+ *
+ * 锚点约定（引擎无关，契约无 setOffset）：offset 恒为基准 [-20,-20]（40px
+ * 中心），状态尺寸（40/46/52）经负 margin 补偿回中心——跨状态锚点零漂移。
  */
 export function recruitmentBadgeHTML(
   logo: string | undefined,
@@ -175,6 +201,8 @@ export function recruitmentBadgeHTML(
   const c = normalizeColor(color);
   const emoji = toEmojiLogo(logo);
   const size = Math.round(BADGE_BASE * stateScale(state));
+  // 中心锚点补偿：offset 恒定 [-20,-20]，状态尺寸偏移经 margin 收回中心
+  const shift = (BADGE_BASE - size) / 2;
   const fallbackJson = escapeAttr(JSON.stringify(fallbackUrls));
   const img = logoUrl
     ? `<img src="${escapeAttr(logoUrl)}" width="${size - 12}" height="${size - 12}" alt="" ` +
@@ -184,7 +212,8 @@ export function recruitmentBadgeHTML(
   const emojiDisplay = logoUrl ? 'none' : 'block';
   return (
     `<div class="dm-badge dm-badge-${state}" style="` +
-    `width:${size}px;height:${size}px;border-color:${c};opacity:${state === 'highlighted' ? 0.92 : 1}` +
+    `width:${size}px;height:${size}px;border-color:${c};opacity:${state === 'highlighted' ? 0.92 : 1};` +
+    `margin-left:${shift}px;margin-top:${shift}px` +
     `">${img}<span class="dm-badge-emoji" style="display:${emojiDisplay}">${emoji}</span></div>`
   );
 }
@@ -330,13 +359,6 @@ export function cityClusterBadgeHTML(
   );
 }
 
-/** 从视图引擎解析厂商命名空间(engine.load() 完成后必已挂载;node 测试经 window mock 提供)。
- *  Icon/Pixel/Size 等 AMap 专属构造的逃生舱(TODO 限期迁移到引擎契约)。 */
-function resolveVendorNamespace(view: MapView | null): any {
-  if (!view?.engine?.namespace || typeof window === 'undefined') return null;
-  return (window as unknown as Record<string, unknown>)[view.engine.namespace] ?? null;
-}
-
 /**
  * 创建城市聚合徽章 Marker(tech/21)。
  * 中心锚定(offset 居中,元组 → 引擎内部转 Pixel);`bubble: false` 阻止点击冒泡
@@ -378,14 +400,14 @@ class POIMarkerControllerImpl implements POIMarkerController {
   private view: MapView | null;
   private opts: POIMarkerControllerOptions;
   private color: string;
-  /** poiId → 原始 Marker 实例。 */
-  private markers = new Map<string, any>();
+  /** poiId → MapMarker 契约包装。 */
+  private markers = new Map<string, MapMarker>();
   /**
    * 本控制器登记到地图上的全部 Marker（含簿记丢失的）。
    * 与 markers 的差异：addMarker 一成功构造就入账，任何后续异常都不会
    * 造成「marker 在地图上、但 destroy/差分无法摘除」的永久泄漏（Bug1 伴生）。
    */
-  private placed = new Set<any>();
+  private placed = new Set<MapMarker>();
   /** poiId → POI 数据（生成图标 / 还原样式时需要）。 */
   private poiById = new Map<string, POI>();
   /** poiId → 当前视觉状态，用于避免重复 setIcon 造成闪烁。 */
@@ -397,15 +419,12 @@ class POIMarkerControllerImpl implements POIMarkerController {
   private visibleIds: Set<string> | null = null;
   private selectedId: string | null = null;
   private highlightedId: string | null = null;
-  /** 厂商命名空间（Icon/Pixel/Size 等 AMap 专属构造的逃生舱）。 */
-  private amap: any = null;
   private destroyed = false;
 
   constructor(view: MapView | null, opts: POIMarkerControllerOptions = {}) {
     this.view = view;
     this.opts = opts;
     this.color = normalizeColor(opts.color);
-    this.amap = resolveVendorNamespace(view);
     injectBadgeStyles();
   }
 
@@ -414,8 +433,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     if (this.destroyed || !this.view) return false;
     // 地图已被销毁时不再创建 marker：已销毁实例的 overlay 注册表无人清理，
     // 会造成 getAllOverlays 计数 > catalog 的永久残留（Bug1 伴生）。
-    const raw = this.view.raw as { isDestroyed?: () => boolean } | null;
-    if (typeof raw?.isDestroyed === 'function' && raw.isDestroyed()) {
+    if (typeof this.view.isDestroyed === 'function' && this.view.isDestroyed()) {
       return false;
     }
     return true;
@@ -423,13 +441,13 @@ class POIMarkerControllerImpl implements POIMarkerController {
 
   /**
    * 从地图摘除一个 marker（若仍挂在地图上）。异常不影响内部状态清理：
-   * 地图已销毁等场景下 setMap(null) 可能抛错，绝不能因单个 marker 中断
+   * 地图已销毁等场景下 remove() 可能抛错，绝不能因单个 marker 中断
    * clear/destroy 的清扫循环。
    */
-  private detachFromMap(marker: any): void {
+  private detachFromMap(marker: MapMarker | undefined): void {
     if (!marker) return;
     try {
-      if (typeof marker.setMap === 'function') marker.setMap(null);
+      marker.remove();
     } catch {
       // 忽略：内部簿记照常删除，避免 cleanup 中途抛错留下半清状态
     }
@@ -437,7 +455,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
 
   // -- 标记创建 / 删除 ------------------------------------------------------
 
-  /** 为单个 POI 创建并添加 Marker（经 view.createMarker）。 */
+  /** 为单个 POI 创建并添加 Marker（经 view.createMarker，全程持契约包装）。 */
   private addMarker(poi: POI): void {
     if (!this.isReady() || !this.view) return;
 
@@ -445,8 +463,10 @@ class POIMarkerControllerImpl implements POIMarkerController {
 
     const markerOpts: MapMarkerOptions = {
       position: { lng: poi.location.lng, lat: poi.location.lat },
-      offset: this.buildOffset(poi, state), // [x, y] 元组,引擎内部转厂商 Pixel
+      offset: this.buildOffset(poi), // [x, y] 元组,引擎内部转厂商锚点
     };
+    // Domain 图钉与招聘徽章统一走 content（契约无 setIcon/setOffset）：
+    // 状态样式经 setContent 重渲染，尺寸变化由内容负 margin 补偿锚点
     if (isRecruitmentPOI(poi)) {
       markerOpts.content = recruitmentBadgeHTML(
         poi.company.logo,
@@ -455,12 +475,13 @@ class POIMarkerControllerImpl implements POIMarkerController {
         state,
         logoFallbackUrls(poi)
       );
+    } else {
+      markerOpts.content = domainPinContent(this.color, state);
     }
 
-    let marker: any;
+    let wrapper: MapMarker;
     try {
-      const wrapper = this.view.createMarker(markerOpts);
-      marker = wrapper.raw;
+      wrapper = this.view.createMarker(markerOpts);
     } catch {
       // 构造即失败（如地图销毁竞态）→ 不登记任何簿记，不留残留
       return;
@@ -468,28 +489,26 @@ class POIMarkerControllerImpl implements POIMarkerController {
 
     // 先入 placed 账：view.createMarker 已把 marker 注册到地图上，
     // 若后续步骤（绑定事件/设 zIndex）抛错，destroy/clear 仍能凭 placed 摘除
-    this.placed.add(marker);
+    this.placed.add(wrapper);
     try {
-      marker.on('click', () => {
+      wrapper.on?.('click', () => {
         if (this.destroyed) return;
         this.opts.onMarkerClick?.(poi.id);
       });
 
-      marker.setzIndex(this.zIndexFor(state, poi));
-      // domain 图钉:创建后应用 SVG 图标(契约 MapMarkerOptions 无 icon 选项)
-      if (isDomainPOI(poi)) marker.setIcon(this.buildIcon(poi, state));
+      wrapper.setZIndex?.(this.zIndexFor(state, poi));
     } catch {
       // 绑定/样式失败 → 摘除刚注册的 marker，避免无主残留
-      this.detachFromMap(marker);
-      this.placed.delete(marker);
+      this.detachFromMap(wrapper);
+      this.placed.delete(wrapper);
       return;
     }
 
-    this.markers.set(poi.id, marker);
+    this.markers.set(poi.id, wrapper);
     this.poiById.set(poi.id, poi);
     this.markerStates.set(poi.id, state);
     // 新增标记按当前可见集应用 show/hide(b2:实例保留,zoom/聚合切换不重建)
-    this.applyVisibility(poi.id, marker);
+    this.applyVisibility(poi.id, wrapper);
   }
 
   /** 移除指定 id 的标记（从地图上摘除并清空内部记录）。 */
@@ -502,13 +521,13 @@ class POIMarkerControllerImpl implements POIMarkerController {
     if (marker) this.placed.delete(marker);
   }
 
-  /** 更新已有标记的视觉样式（图标 / 锚点偏移 / zIndex / label 可见性）。 */
-  private applyStyle(marker: any, poi: POI, state: MarkerState): void {
-    if (!this.amap || !marker) return;
+  /** 更新已有标记的视觉样式（content 重渲染 + zIndex；offset 恒为基准锚点）。 */
+  private applyStyle(wrapper: MapMarker, poi: POI, state: MarkerState): void {
+    if (!wrapper) return;
     if (this.markerStates.get(poi.id) === state) return;
     this.markerStates.set(poi.id, state);
-    if (isRecruitmentPOI(poi) && typeof marker.setContent === 'function') {
-      marker.setContent(
+    if (isRecruitmentPOI(poi)) {
+      wrapper.setContent?.(
         recruitmentBadgeHTML(
           poi.company.logo,
           poi.company.logoUrl,
@@ -518,12 +537,9 @@ class POIMarkerControllerImpl implements POIMarkerController {
         )
       );
     } else {
-      marker.setIcon(this.buildIcon(poi, state));
+      wrapper.setContent?.(domainPinContent(this.color, state));
     }
-    const [ox, oy] = this.buildOffset(poi, state);
-    marker.setOffset(new this.amap.Pixel(ox, oy));
-    marker.setzIndex(this.zIndexFor(state, poi));
-    if (typeof marker.setLabel === 'function') marker.setLabel(null);
+    wrapper.setZIndex?.(this.zIndexFor(state, poi));
   }
 
   /** 计算指定状态下的 zIndex：选中 > 高亮 > 普通（招聘徽章略高于图钉）。 */
@@ -533,43 +549,11 @@ class POIMarkerControllerImpl implements POIMarkerController {
     return isRecruitmentPOI(poi) ? 20 : 10;
   }
 
-  /** 构建 AMap.Icon（data URI SVG）。 */
-  private buildIcon(poi: POI, state: MarkerState): any {
-    const scale = stateScale(state);
-    if (isDomainPOI(poi)) {
-      const w = Math.round(PIN_BASE.w * scale);
-      const h = Math.round(PIN_BASE.h * scale);
-      return new this.amap.Icon({
-        size: new this.amap.Size(w, h),
-        image: svgToDataUri(domainPinSVG(this.color, state)),
-        imageSize: new this.amap.Size(w, h),
-      });
-    }
-    const size = Math.round(BADGE_BASE * scale);
-    return new this.amap.Icon({
-      size: new this.amap.Size(size, size),
-      image: svgToDataUri(
-        recruitmentBadgeSVG(
-          isRecruitmentPOI(poi) ? poi.company.logo : undefined,
-          isRecruitmentPOI(poi) ? poi.company.logoUrl : undefined,
-          this.color,
-          state
-        )
-      ),
-      imageSize: new this.amap.Size(size, size),
-    });
-  }
-
-  /** 构建锚点偏移元组 [x, y]：图钉锚定底部尖端，徽章锚定中心。 */
-  private buildOffset(poi: POI, state: MarkerState): [number, number] {
-    const scale = stateScale(state);
-    if (isDomainPOI(poi)) {
-      const w = PIN_BASE.w * scale;
-      const h = PIN_BASE.h * scale;
-      return [-w / 2, -h];
-    }
-    const size = BADGE_BASE * scale;
-    return [-size / 2, -size / 2];
+  /** 构建锚点偏移元组 [x, y]：图钉锚定底部尖端，徽章锚定中心（基准尺寸；
+   *  状态缩放由内容负 margin 补偿，offset 跨状态恒定——契约无 setOffset）。 */
+  private buildOffset(poi: POI): [number, number] {
+    if (isDomainPOI(poi)) return [-PIN_BASE.w / 2, -PIN_BASE.h];
+    return [-BADGE_BASE / 2, -BADGE_BASE / 2];
   }
 
   // -- 公共接口实现 ---------------------------------------------------------
@@ -589,7 +573,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     for (const poi of pois) {
       const existing = this.markers.get(poi.id);
       if (existing) {
-        existing.setPosition([poi.location.lng, poi.location.lat]);
+        existing.setPosition({ lng: poi.location.lng, lat: poi.location.lat });
         this.poiById.set(poi.id, poi);
         this.applyStyle(
           existing,
@@ -610,14 +594,10 @@ class POIMarkerControllerImpl implements POIMarkerController {
     }
   }
 
-  /** 按当前可见集对单个 marker 应用 show/hide(防御性守卫,无方法则跳过)。 */
-  private applyVisibility(id: string, marker: any): void {
+  /** 按当前可见集对单个 marker 应用可见性（契约 setVisible；无方法则跳过）。 */
+  private applyVisibility(id: string, wrapper: MapMarker): void {
     const visible = this.visibleIds === null || this.visibleIds.has(id);
-    if (visible) {
-      if (typeof marker.show === "function") marker.show();
-    } else if (typeof marker.hide === "function") {
-      marker.hide();
-    }
+    wrapper.setVisible?.(visible);
   }
 
   clear(): void {
@@ -677,7 +657,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
   }
 
   getMarkerByPOIId(id: string): any {
-    return this.markers.get(id);
+    return this.markers.get(id)?.raw;
   }
 
   destroy(): void {
@@ -685,7 +665,6 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.clear();
     this.sweepPlaced();
     this.view = null;
-    this.amap = null;
     this.opts = {};
   }
 }
