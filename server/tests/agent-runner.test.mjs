@@ -544,9 +544,11 @@ test('toolKind: 内部工具名 → 公开类别(剥供应商前缀 + 后缀关�
   assert.equal(toolKind('rest__geocodeAddress'), 'geocode');
   assert.equal(toolKind('baidu__reverse_geocoding'), 'geocode');
   assert.equal(toolKind('rest__regeo'), 'geocode');
-  // directions(含 route/direction)
+  // directions(含 route/direction + navi/uri 导航链接生成类,2026-08-22 ws-navi)
   assert.equal(toolKind('baidu__direction'), 'directions');
   assert.equal(toolKind('amap__driving_route'), 'directions');
+  assert.equal(toolKind('amap__maps_navi_uri'), 'directions');
+  assert.equal(toolKind('tencent__navi_link'), 'directions');
   // weather
   assert.equal(toolKind('baidu__weather'), 'weather');
   // project(含 jobs/position/company/recruit/岗位)

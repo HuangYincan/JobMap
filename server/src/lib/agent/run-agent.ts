@@ -165,6 +165,8 @@ const TOOL_KIND_RULES: Array<[RegExp, ToolKind]> = [
   [/text_search|place|poi|suggestion|search|query/, 'search'],
   [/geo|geocode|regeo|revers/, 'geocode'],
   [/route|direction/, 'directions'],
+  // 导航链接生成类(amap MCP 输出 amapuri://navi 的 navi_uri 工具;2026-08-22 ws-navi)
+  [/navi|uri|url|link|scheme/, 'directions'],
   [/weather/, 'weather'],
   [/jobs|position|company|recruit|岗位/, 'project'],
 ];
