@@ -75,6 +75,6 @@ Every import must reference a source record. It must record the original URL/API
 | `university` | Deferred | Second-domain demonstration, not an MVP feature |
 | `user-profile` | Deferred | PII/security design required |
 | `recommendation` | Deferred | Evaluation and data-governance design required |
-| `ai-assistant` | Deferred | Controlled map-action protocol required |
+| `ai-assistant` | In progress | 受控地图动作协议已落地,见 tech/24-agent-feature |
 
 Do not use a copy-template command until a real generator and its tests exist.
