@@ -747,3 +747,24 @@
     width: 100%;
   }
 }
+
+/* 深色模式(与 agent-ball.module.css 同模式):--ink/--muted/--line/--soft-strong
+   已由 globals.css 随系统翻转(.panel/.memoryRow 玻璃底走变量即自适应),
+   此处仅覆盖本文件硬编码的浅色:
+   弹层玻璃底(白 0.86 → 深 0.92,比面板底略深以保持浮层层级)、
+   输入行(白 0.6 → 白 0.06)、助手气泡底(中性灰 0.1 → 白 0.07);
+   语义色(主蓝 #007aFF、错误红 #ff3b30、清除橙 #b25e00)深浅两态通用,不覆盖 */
+@media (prefers-color-scheme: dark) {
+  .memoryPanel,
+  .sessionsPanel {
+    background: rgba(28, 28, 30, 0.92);
+  }
+
+  .input {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .bubbleAssistant {
+    background: rgba(255, 255, 255, 0.07);
+  }
+}
