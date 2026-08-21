@@ -1141,20 +1141,21 @@ pins」引入),相机被程序化移动 fit 到收藏点外接框。用户(2026-
   toggle 的 setBounds——输入源删除后状态机成为死代码,全部消费者一并移除:
   `use-work-viewport.ts` onViewChange 的同步消费/再导出、`map-shell.tsx`
   syncView 的 distance 圆心冻结与 ref 接线。消费者排查结论:无引擎切换/其他
-  fit 调用等其余输入源,可整体移除。模块降级为零导出退役桩(物理删除被
-  worker 沙箱禁止,由 boss 合并时 git rm 收尾)。
+  fit 调用等其余输入源,可整体移除。模块由 boss 合并时物理删除
+  (`git rm`;worker 沙箱内曾降级为零导出退役桩)。
 - **保留项**:「空批次不置空 catalog」加固(`use-work-viewport.ts` domain
   onBatch 空批次直接 return,独立于状态机)不动——toggle 不再产生程序化
   相机移动后该加固仍为通用空批次防护(滤波/层级裁剪导致的空页不清空)。
 - **契约同步**:`tests/saved-layer-sync.test.mjs` 由状态机纯函数测试改造为
   no-fly 回归测试(语义镜像断言 setBounds/fit 零调用 + 源码契约 + src 全树
-  零引用退役模块 + 保留项断言);hooks-contracts / component-contracts 中
-  状态机断言按新语义更新(负断言)。
+  零引用退役模块 + 模块已物理删除 + 保留项断言);hooks-contracts /
+  component-contracts 中状态机断言按新语义更新(负断言)。
 
 **修改文件**:`server/src/hooks/use-saved-layer.ts`、`use-work-viewport.ts`、
 `server/src/components/map-shell.tsx`、`server/src/lib/saved-camera-sync.ts`
-(退役桩)、`server/tests/saved-layer-sync.test.mjs`、`hooks-contracts.test.mjs`、
-`component-contracts.test.mjs`、`tech/16-bug-fixes.md`(本节)。
+(由 boss 合并时 git rm 删除)、`server/tests/saved-layer-sync.test.mjs`、
+`hooks-contracts.test.mjs`、`component-contracts.test.mjs`、`tech/16-bug-fixes.md`
+(本节)。
 
 **验证**:1149 pass / 0 fail / 2 skip(+no-fly 回归 6 项);typecheck /
 docs-check / git diff --check 绿。历史文字保留(仅追加)。

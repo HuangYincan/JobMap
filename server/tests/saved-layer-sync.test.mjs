@@ -9,8 +9,8 @@
 //
 // 实现:use-saved-layer toggle 的相机动作(overlayBounds + map.setBounds)
 // 与「收藏相机同步」状态机置位全部移除;状态机消费者(use-work-viewport
-// onViewChange 抑制、map-shell syncView 圆心冻结)一并清理,模块降级为
-// 零导出退役桩(物理删除被沙箱禁止,由 boss 合并时收尾)。
+// onViewChange 抑制、map-shell syncView 圆心冻结)一并清理,模块由 boss
+// 合并时物理删除(git rm 收尾,worker 沙箱内曾降级为零导出退役桩)。
 //
 // 覆盖(jsdom 可测层:本仓库无 jsdom 运行时,沿用「源码契约 + 语义镜像」
 // 模式,与 saved-layer-mutex 同构):
@@ -23,7 +23,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -110,13 +110,13 @@ test('源码契约:map-shell 无状态机接线(syncView 圆心冻结移除)', (
   assert.match(callSite, /onRequireAuth: \(\) => setAuthOpen\(true\)/);
 });
 
-test('死代码:src 全树零引用退役模块,模块零导出', () => {
+test('死代码:src 全树零引用退役模块,模块已物理删除', () => {
   const dead = /saved-camera-sync|SavedCameraSync|cameraAtDestination|consumeSavedCameraSync|SAVED_CAMERA_MATCH_METERS/;
-  // 排除退役模块本身(纯注释桩,注释里会提到自己的名字)
+  // 排除退役模块本身(若残留,注释里会提到自己的名字)
   const offenders = allTsFiles().filter((f) => f !== 'lib/saved-camera-sync.ts' && dead.test(src(f)));
   assert.deepEqual(offenders, [], 'src 全树无文件引用已退役的收藏相机同步状态机');
-  const module = src('lib/saved-camera-sync.ts');
-  assert.doesNotMatch(module, /^export /m, '退役模块零导出');
+  // 退役模块已由 boss 合并时 git rm 收尾(worker 沙箱内曾为零导出退役桩)
+  assert.equal(existsSync(join(root, 'lib/saved-camera-sync.ts')), false, '退役模块已物理删除');
 });
 
 // ---- 保留项:空批次不置空 catalog(独立于状态机,不得随清理误删)----
