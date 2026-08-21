@@ -391,9 +391,11 @@ test('updateUser/updateAvatar RETURNING 必须带回 username(密码账号 PATCH
     join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'lib', 'account-store.ts'),
     'utf8',
   );
-  // 两处 UPDATE 的 RETURNING 都要带 username;注册/登录/getSessionUser 已各自覆盖。
-  const matches = store.match(/RETURNING id::text, display_name, avatar_url, phone, email, username, preferences,/g) ?? [];
-  assert.equal(matches.length, 2, `expected 2 RETURNING-with-username (updateUser + updateAvatar), got ${matches.length}`);
+  // 所有 UPDATE...RETURNING 都要带 username;注册/登录/getSessionUser 已各自覆盖。
+  // (hasPassword 上线后 RETURNING 列序为 username, password_hash, preferences;
+  //  setPassword / bindPhone / bindEmail 三个新写路径同样带回 username。)
+  const matches = store.match(/RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,/g) ?? [];
+  assert.equal(matches.length, 5, `expected 5 RETURNING-with-username (updateUser + updateAvatar + setPassword + bindPhone + bindEmail), got ${matches.length}`);
 });
 
 test('memory updateUser/updateAvatar 保留密码账号的 accountLabel(账户不消失)', () => {
