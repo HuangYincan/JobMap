@@ -28,6 +28,7 @@ import {
   listSaved,
   recordApplication,
   removeSaved,
+  registerWithPassword,
   savePlace,
   updateAvatar,
   updateUser,
@@ -383,4 +384,26 @@ test('account-store sweeps expired sessions and OTP rows on miss', () => {
   );
   assert.match(store, /DELETE FROM auth_sessions WHERE expires_at <= now\(\) OR token_hash = \$1/);
   assert.match(store, /DELETE FROM auth_otp_challenges WHERE provider = \$1 AND target = \$2 AND expires_at <= now\(\)/);
+});
+
+test('updateUser/updateAvatar RETURNING 必须带回 username(密码账号 PATCH 后 accountLabel 不丢)', () => {
+  const store = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'lib', 'account-store.ts'),
+    'utf8',
+  );
+  // 两处 UPDATE 的 RETURNING 都要带 username;注册/登录/getSessionUser 已各自覆盖。
+  const matches = store.match(/RETURNING id::text, display_name, avatar_url, phone, email, username, preferences,/g) ?? [];
+  assert.equal(matches.length, 2, `expected 2 RETURNING-with-username (updateUser + updateAvatar), got ${matches.length}`);
+});
+
+test('memory updateUser/updateAvatar 保留密码账号的 accountLabel(账户不消失)', () => {
+  delete process.env.DATABASE_URL;
+  const user = registerWithPassword('alice-fix', 'password123');
+  assert.equal(user.accountLabel, 'alice-fix');
+  const renamed = updateUser(user.id, { displayName: '爱丽丝' });
+  assert.equal(renamed?.displayName, '爱丽丝');
+  assert.equal(renamed?.accountLabel, 'alice-fix', '改用户名后账户仍应在');
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xd9]);
+  const withAvatar = updateAvatar(user.id, { data: jpeg, url: '/api/me/avatar?v=1' });
+  assert.equal(withAvatar?.accountLabel, 'alice-fix', '上传头像后账户仍应在');
 });
