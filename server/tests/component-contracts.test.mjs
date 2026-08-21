@@ -358,17 +358,16 @@ test('saved overlay toggle: programmatic camera move suppresses viewport refresh
   assert.match(shell, /suppressViewportRefreshUntilRef = useRef\(0\)/);
   // onViewChange 随 hook 移动:抑制窗口内直接 return,不 schedule
   assert.match(hook, /const onViewChange = \(\) => \{[\s\S]{0,200}suppressViewportRefreshUntilRef\.current > Date\.now\(\)[\s\S]{0,80}return;[\s\S]{0,80}loader\.schedule\(\);/);
-  // 抑制标记必须在相机移动(setBounds / setCenter fallback)之前置位——限定在 toggle 函数体内比较
+  // 抑制标记必须在相机移动(setBounds)之前置位——限定在 toggle 函数体内比较
   const toggleAt = savedLayer.indexOf('const toggle = useCallback');
   const hideAt = savedLayer.indexOf('const hide = useCallback');
   assert.ok(toggleAt !== -1 && hideAt > toggleAt, 'toggle/hide anchors must exist in order');
   const toggleBody = savedLayer.slice(toggleAt, hideAt);
   const setAt = toggleBody.indexOf('suppressViewportRefreshUntilRef.current = Date.now() + VIEWPORT_SUPPRESS_MS');
-  const boundsAt = toggleBody.indexOf('map.setBounds(new AMap.Bounds');
-  const centerAt = toggleBody.indexOf('map.setCenter?.(');
-  assert.ok(setAt !== -1 && boundsAt !== -1 && centerAt !== -1, 'suppress marker / setBounds / setCenter must all exist in toggle');
+  // ws-c:视图归一化 setBounds(引擎内部构造厂商 Bounds),不再直引 new AMap.Bounds
+  const boundsAt = toggleBody.indexOf('map.setBounds({');
+  assert.ok(setAt !== -1 && boundsAt !== -1, 'suppress marker + view.setBounds must both exist in toggle');
   assert.ok(setAt < boundsAt, 'suppress marker must be set before map.setBounds');
-  assert.ok(setAt < centerAt, 'suppress marker must be set before map.setCenter fallback');
   // map-shell 接线:同名变量解构 + 共享 ref 传入 + LayersPanel onToggleOverlay 挂 toggle
   assert.match(
     shell,
@@ -444,44 +443,46 @@ test('map shell Bug3 locate: 挂载定位不抢占已移图相机(首点 pin 不
   // 挂载 geolocation 回调:定位数据照常(userLocation/searchOrigin),相机移动被
   // userMovedMapRef + 用户已交互 + 默认中心距离 三门控——未移图/未交互且相机仍处
   // 默认才 setCenter+setZoom+setMapCenter(已交互不抢镜头:geolocation resolve 可能
-  // 晚于首交互,此时跳变 = 「整页刷新」观感)
-  assert.match(shell, /getCurrentPosition\(map\)/);
+  // 晚于首交互,此时跳变 = 「整页刷新」观感)。ws-c:视图方法经 view 契约。
+  assert.match(shell, /getCurrentPosition\(view\.raw\)/);
   assert.match(shell, /setUserLocation\(\{ lng, lat \}\)/);
   assert.match(shell, /setSearchOrigin\(\(prev\) => prev \?\? \{ lng, lat \}\)/);
   assert.match(
     shell,
-    /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(readLngLat\(map\.getCenter\(\)\)\)\) \{[\s\S]{0,120}map\.setCenter\(\[\s*lng,\s*lat\s*\]\)[\s\S]{0,120}map\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
+    /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(view\.getState\(\)\.center\)\) \{[\s\S]{0,120}view\.setCenter\(\{ lng, lat \}\)[\s\S]{0,120}view\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
   );
   // 已移图/已交互/已恢复视野 → 锁定 mapCenter 不更新(距离圆心/相机都不甩去用户位置)
-  assert.match(shell, /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(readLngLat\(map\.getCenter\(\)\)\)\) \{[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/);
+  assert.match(shell, /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(view\.getState\(\)\.center\)\) \{[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/);
   // 只有相机手势(drag/zoom)置位;空白点击与 marker 点击不置位
   // (选择/取消选择公司 ≠ 放弃定位,settle 仍会飞用户位置——ws-poi-vanish)
-  assert.match(shell, /map\.on\("dragstart", \(\) => \{\s*userMovedMapRef\.current = true/);
-  assert.match(shell, /map\.on\("zoomstart", \(\) => \{\s*userMovedMapRef\.current = true/);
+  assert.match(shell, /onViewEvent\(view, "dragstart", \(\) => \{\s*userMovedMapRef\.current = true/);
+  assert.match(shell, /onViewEvent\(view, "zoomstart", \(\) => \{\s*userMovedMapRef\.current = true/);
   assert.doesNotMatch(shell, /map\.on\("click", \(\) => \{\s*userMovedMapRef\.current = true/);
   assert.doesNotMatch(shell, /onMarkerClick: \(id\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/);
   // 定位按钮 handleLocate 原义保留:成功仍无条件 setCenter+setZoom(不受门控);
   // 失败分支保持当前视野,不再 setCenter([120.15,30.27])/setZoom(13) 回杭州
   const locateBlock = shell.slice(shell.indexOf("const handleLocate"), shell.indexOf("const handleMapStyleChange"));
-  assert.match(locateBlock, /mapInstance\.current\.setCenter\(\[lng, lat\]\)/);
-  assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
+  assert.match(locateBlock, /mapInstance\.current\?\.setCenter\(\{ lng, lat \}\)/);
+  assert.match(locateBlock, /mapInstance\.current\?\.setZoom\(15\)/);
   assert.doesNotMatch(locateBlock, /userMovedMapRef/);
   assert.doesNotMatch(locateBlock, /120\.15/);
   assert.doesNotMatch(locateBlock, /setZoom\(13\)/);
 });
 
-test('map shell ws-poi-vanish2: createMap 初始相机用 state(remount 恢复视野不回默认)', () => {
+test('map shell ws-poi-vanish2: 初始视野用 state 快照(remount 恢复视野不回默认)', () => {
   const shell = src('components/map-shell.tsx');
-  // 调用处不再硬编码默认中心/zoom:改用 mapCenter/zoom state——首载 state=默认
+  // useMapEngine 只吃初始值:首渲染捕获 mapCenter/zoom/style 快照——首载 state=默认
   // (行为不变),fast refresh remount 保留 state → 新地图以用户上次视野初始化
-  assert.match(shell, /mapCleanup = createMap\(mapCenter, zoom\);/);
+  assert.match(shell, /initialMapViewRef\.current = \{ center: \{ \.\.\.mapCenter \}, zoom, style: readInitialMapStyle\(\) \};/);
+  assert.match(shell, /useMapEngine\(\{/);
+  assert.match(shell, /containerRef: mapContainer,/);
   assert.doesNotMatch(shell, /createMap\(\[120\.15, 30\.27\], 13\)/);
   // state 默认值引用同一常量(与 settle 门控单源,lib/camera-center)
   assert.match(shell, /const \[zoom, setZoom\] = useState\(DEFAULT_MAP_ZOOM\);/);
   assert.match(shell, /useState<\{ lng: number; lat: number \}\>\(\{ \.\.\.DEFAULT_MAP_CENTER \}\)/);
-  // createMap 签名接受 { lng, lat } 状态对象,构造 AMap 时转 tuple
-  assert.match(shell, /function createMap\(center: \{ lng: number; lat: number \}, zoom: number\)/);
-  assert.match(shell, /center: \[center\.lng, center\.lat\],/);
+  // createMap 持有视图接线(构造已由引擎 createView 承载),返回 cleanup 由 initMap 持有
+  assert.match(shell, /mapCleanup = createMap\(engineView\);/);
+  assert.match(shell, /function createMap\(view: MapView\)/);
 });
 
 test('map shell ws-poi-vanish2: settle 仅默认位置时飞用户位置,不抢 remount 恢复镜头', () => {
@@ -489,7 +490,7 @@ test('map shell ws-poi-vanish2: settle 仅默认位置时飞用户位置,不抢 
   const lib = src('lib/camera-center.ts');
   // settle 门控新增「用户已交互」+「相机距默认中心 < 阈值」条件:未移图/未交互且
   // 相机仍处默认才飞(已交互不抢镜头:geolocation resolve 可能晚于首交互)
-  assert.match(shell, /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(readLngLat\(map\.getCenter\(\)\)\)\) \{/);
+  assert.match(shell, /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(view\.getState\(\)\.center\)\) \{/);
   // 纯函数 + 常量在 lib/camera-center(可单测):默认中心/zoom/阈值/判定
   assert.match(lib, /export const DEFAULT_MAP_CENTER = \{ lng: 120\.15, lat: 30\.27 \} as const;/);
   assert.match(lib, /export const DEFAULT_MAP_ZOOM = 13;/);
@@ -534,9 +535,9 @@ test('map shell Bug1 flyTo 入口置位:userMovedMapRef 与相机手势同口径
 test('map shell ws-poi-vanish handleLocate 失败保持视野:不回杭州默认中心', () => {
   const shell = src('components/map-shell.tsx');
   const locateBlock = shell.slice(shell.indexOf("const handleLocate"), shell.indexOf("const handleMapStyleChange"));
-  // 成功分支仍飞用户位置(setCenter+setZoom 15)
-  assert.match(locateBlock, /mapInstance\.current\.setCenter\(\[lng, lat\]\)/);
-  assert.match(locateBlock, /mapInstance\.current\.setZoom\(15\)/);
+  // 成功分支仍飞用户位置(setCenter+setZoom 15,经视图契约)
+  assert.match(locateBlock, /mapInstance\.current\?\.setCenter\(\{ lng, lat \}\)/);
+  assert.match(locateBlock, /mapInstance\.current\?\.setZoom\(15\)/);
   // !loc 与 catch 失败分支:保持当前视野,不再 setCenter([120.15,30.27])/setZoom(13)
   assert.doesNotMatch(locateBlock, /setCenter\(\[120\.15, 30\.27\]\)/);
   assert.doesNotMatch(locateBlock, /setZoom\(13\)/);

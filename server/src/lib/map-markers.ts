@@ -1,25 +1,30 @@
 // ============================================================
 // POI 地图标记控制器 — Phase 2 卡片↔地图联动
 //
-// 纯逻辑类（无 React），包装一个 AMap.Map 实例：
-// - 根据 POI 列表创建/差分管理 AMap.Marker
+// 纯逻辑类（无 React），包装一个 MapView 实例（引擎统一契约,ws-c 起）：
+// - 根据 POI 列表创建/差分管理地图 Marker
 // - Domain 用彩色图钉，Recruitment 用圆角方块 + 真实公司 logo
 //   （logoUrl 图片优先，缺失/加载失败回退 emoji）
 // - 支持选中（放大 + 强调环）与高亮（轻微放大 + 透明度）
-// - 全部 AMap 调用都做了防御性守卫，无浏览器环境（node 测试）下静默降级
+// - Marker 构造经 view.createMarker（offset 元组 → 引擎内部转 Pixel）；
+//   Icon/Pixel/Size 等 AMap 专属能力经厂商命名空间逃生舱（TODO 限期迁移）；
+//   全部厂商调用都做了防御性守卫，无浏览器环境（node 测试）下静默降级
 //
 // marker 生命周期(b2 修订):「只添加一次、跨视口/跨 zoom 保留实例」。
 // - setPOIs 非空列表 = 只增不删(新增 + setPosition 存量),空列表 = 清空;
 // - setVisiblePOIs(ids) 只切换 show/hide,实例保留在 markers Map——
 //   zoom tier 过滤(LOD)与城市聚合(zoom ≤ 8)不再销毁重建 marker;
 // - removeMarker 只由 clear()/destroy() 调用。
+//
+// 同步语义(ws-c):view 只会在 engine.load() 之后创建,控制器拿到 view 即引擎
+// 就绪——旧版 loadAMap().then(flush) 异步门已删除,pendingPOIs 回放简化为同步。
 // ============================================================
 
-import { loadAMap } from './amap-api.ts';
 import { faviconCandidatesFromUrl } from './company-logo.ts';
 import { CLUSTER_MAX_ZOOM, type CityCluster } from './city-cluster.ts';
 import type { POI, RecruitmentPOI } from './types.ts';
 import { isDomainPOI, isRecruitmentPOI } from './types.ts';
+import type { MapMarker, MapMarkerOptions, MapView } from './map-engine/types.ts';
 
 // ---------------------------------------------------------------------------
 // 对外接口
@@ -325,41 +330,43 @@ export function cityClusterBadgeHTML(
   );
 }
 
+/** 从视图引擎解析厂商命名空间(engine.load() 完成后必已挂载;node 测试经 window mock 提供)。
+ *  Icon/Pixel/Size 等 AMap 专属构造的逃生舱(TODO 限期迁移到引擎契约)。 */
+function resolveVendorNamespace(view: MapView | null): any {
+  if (!view?.engine?.namespace || typeof window === 'undefined') return null;
+  return (window as unknown as Record<string, unknown>)[view.engine.namespace] ?? null;
+}
+
 /**
- * 创建城市聚合徽章 AMap.Marker(tech/21)。
- * 中心锚定(offset 居中);`bubble: false` 阻止点击冒泡到地图(地图 click 会清选中);
- * 防御性守卫:无 amap/map/构造失败 → 返回 null,node 测试下不抛错。
+ * 创建城市聚合徽章 Marker(tech/21)。
+ * 中心锚定(offset 居中,元组 → 引擎内部转 Pixel);`bubble: false` 阻止点击冒泡
+ * 到地图(地图 click 会清选中);防御性守卫:无 view/构造失败 → 返回 null,
+ * node 测试下不抛错。返回原始 marker 实例(测试探针 + 调用方摘除)。
  */
 export function createCityClusterMarker(
-  amap: any,
-  map: any,
+  view: MapView | null,
   group: CityCluster,
   opts: CityClusterMarkerOptions = {}
 ): any | null {
-  if (!amap || !map || !group) return null;
+  if (!view || !group) return null;
   injectClusterStyles();
   const size = opts.size ?? CLUSTER_BADGE_SIZE;
 
-  let marker: any;
+  let wrapper: MapMarker;
   try {
-    marker = new amap.Marker({
-      position: [group.lng, group.lat],
-      offset: new amap.Pixel(-size / 2, -size / 2),
+    wrapper = view.createMarker({
+      position: { lng: group.lng, lat: group.lat },
+      offset: [-size / 2, -size / 2],
       content: cityClusterBadgeHTML(group, opts.color, size),
-      map,
       zIndex: 50,
+      onClick: opts.onClick,
+      // AMap 专属选项(契约未含):duck-type 透传,点击不冒泡到地图
       bubble: false,
-    });
+    } as MapMarkerOptions);
   } catch {
     return null;
   }
-
-  if (typeof opts.onClick === 'function' && typeof marker.on === 'function') {
-    marker.on('click', () => {
-      opts.onClick?.();
-    });
-  }
-  return marker;
+  return wrapper.raw;
 }
 
 
@@ -368,10 +375,10 @@ export function createCityClusterMarker(
 // ---------------------------------------------------------------------------
 
 class POIMarkerControllerImpl implements POIMarkerController {
-  private map: any;
+  private view: MapView | null;
   private opts: POIMarkerControllerOptions;
   private color: string;
-  /** poiId → AMap Marker 实例。 */
+  /** poiId → 原始 Marker 实例。 */
   private markers = new Map<string, any>();
   /**
    * 本控制器登记到地图上的全部 Marker（含簿记丢失的）。
@@ -383,8 +390,6 @@ class POIMarkerControllerImpl implements POIMarkerController {
   private poiById = new Map<string, POI>();
   /** poiId → 当前视觉状态，用于避免重复 setIcon 造成闪烁。 */
   private markerStates = new Map<string, MarkerState>();
-  /** 最近一次 setPOIs 的列表；AMap 就绪前缓存，就绪后回放。 */
-  private pendingPOIs: POI[] = [];
   /**
    * 可见 id 集(b2)：null = 全部显示。跨 setPOIs 保留——marker 实例只增不删,
    * zoom tier(LOD)/聚合边界只切换 show/hide,不销毁重建。
@@ -392,34 +397,25 @@ class POIMarkerControllerImpl implements POIMarkerController {
   private visibleIds: Set<string> | null = null;
   private selectedId: string | null = null;
   private highlightedId: string | null = null;
-  /** 加载到的 AMap 命名空间（异步）。 */
+  /** 厂商命名空间（Icon/Pixel/Size 等 AMap 专属构造的逃生舱）。 */
   private amap: any = null;
   private destroyed = false;
 
-  constructor(map: any, opts: POIMarkerControllerOptions = {}) {
-    this.map = map;
+  constructor(view: MapView | null, opts: POIMarkerControllerOptions = {}) {
+    this.view = view;
     this.opts = opts;
     this.color = normalizeColor(opts.color);
+    this.amap = resolveVendorNamespace(view);
     injectBadgeStyles();
-
-    loadAMap()
-      .then((amap) => {
-        if (this.destroyed) return;
-        this.amap = amap;
-        this.flush();
-      })
-      .catch(() => {
-        // 非浏览器环境 / 缺少 key / 脚本加载失败：静默降级，
-        // 只维护内部状态，不创建任何标记（保证 node 下可测且不抛错）。
-      });
   }
 
   /** 是否具备创建标记的全部前提（含地图未被销毁）。 */
   private isReady(): boolean {
-    if (this.destroyed || !this.map || !this.amap) return false;
+    if (this.destroyed || !this.view) return false;
     // 地图已被销毁时不再创建 marker：已销毁实例的 overlay 注册表无人清理，
     // 会造成 getAllOverlays 计数 > catalog 的永久残留（Bug1 伴生）。
-    if (typeof this.map.isDestroyed === 'function' && this.map.isDestroyed()) {
+    const raw = this.view.raw as { isDestroyed?: () => boolean } | null;
+    if (typeof raw?.isDestroyed === 'function' && raw.isDestroyed()) {
       return false;
     }
     return true;
@@ -439,25 +435,17 @@ class POIMarkerControllerImpl implements POIMarkerController {
     }
   }
 
-  /** AMap 异步就绪后回放最近一次 POI 列表。 */
-  private flush(): void {
-    if (!this.isReady()) return;
-    this.setPOIs(this.pendingPOIs);
-  }
-
   // -- 标记创建 / 删除 ------------------------------------------------------
 
-  /** 为单个 POI 创建并添加 AMap Marker。 */
+  /** 为单个 POI 创建并添加 Marker（经 view.createMarker）。 */
   private addMarker(poi: POI): void {
-    if (!this.isReady()) return;
+    if (!this.isReady() || !this.view) return;
 
     const state = resolveMarkerState(poi.id, this.selectedId, this.highlightedId);
 
-    const offset = this.buildOffset(poi, state);
-    const markerOpts: Record<string, unknown> = {
-      position: [poi.location.lng, poi.location.lat],
-      offset,
-      map: this.map,
+    const markerOpts: MapMarkerOptions = {
+      position: { lng: poi.location.lng, lat: poi.location.lat },
+      offset: this.buildOffset(poi, state), // [x, y] 元组,引擎内部转厂商 Pixel
     };
     if (isRecruitmentPOI(poi)) {
       markerOpts.content = recruitmentBadgeHTML(
@@ -467,19 +455,18 @@ class POIMarkerControllerImpl implements POIMarkerController {
         state,
         logoFallbackUrls(poi)
       );
-    } else {
-      markerOpts.icon = this.buildIcon(poi, state);
     }
 
     let marker: any;
     try {
-      marker = new this.amap.Marker(markerOpts);
+      const wrapper = this.view.createMarker(markerOpts);
+      marker = wrapper.raw;
     } catch {
       // 构造即失败（如地图销毁竞态）→ 不登记任何簿记，不留残留
       return;
     }
 
-    // 先入 placed 账：map: 选项在构造时已把 marker 注册到地图上，
+    // 先入 placed 账：view.createMarker 已把 marker 注册到地图上，
     // 若后续步骤（绑定事件/设 zIndex）抛错，destroy/clear 仍能凭 placed 摘除
     this.placed.add(marker);
     try {
@@ -489,6 +476,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
       });
 
       marker.setzIndex(this.zIndexFor(state, poi));
+      // domain 图钉:创建后应用 SVG 图标(契约 MapMarkerOptions 无 icon 选项)
+      if (isDomainPOI(poi)) marker.setIcon(this.buildIcon(poi, state));
     } catch {
       // 绑定/样式失败 → 摘除刚注册的 marker，避免无主残留
       this.detachFromMap(marker);
@@ -531,7 +520,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
     } else {
       marker.setIcon(this.buildIcon(poi, state));
     }
-    marker.setOffset(this.buildOffset(poi, state));
+    const [ox, oy] = this.buildOffset(poi, state);
+    marker.setOffset(new this.amap.Pixel(ox, oy));
     marker.setzIndex(this.zIndexFor(state, poi));
     if (typeof marker.setLabel === 'function') marker.setLabel(null);
   }
@@ -570,22 +560,21 @@ class POIMarkerControllerImpl implements POIMarkerController {
     });
   }
 
-  /** 构建锚点偏移：图钉锚定底部尖端，徽章锚定中心。 */
-  private buildOffset(poi: POI, state: MarkerState): any {
+  /** 构建锚点偏移元组 [x, y]：图钉锚定底部尖端，徽章锚定中心。 */
+  private buildOffset(poi: POI, state: MarkerState): [number, number] {
     const scale = stateScale(state);
     if (isDomainPOI(poi)) {
       const w = PIN_BASE.w * scale;
       const h = PIN_BASE.h * scale;
-      return new this.amap.Pixel(-w / 2, -h);
+      return [-w / 2, -h];
     }
     const size = BADGE_BASE * scale;
-    return new this.amap.Pixel(-size / 2, -size / 2);
+    return [-size / 2, -size / 2];
   }
 
   // -- 公共接口实现 ---------------------------------------------------------
 
   setPOIs(pois: POI[]): void {
-    this.pendingPOIs = pois;
     if (!this.isReady()) return;
 
     // 空列表 = 清空(刷新/重置路径,等价 clear;b2 保留该语义以释放实例)
@@ -632,7 +621,6 @@ class POIMarkerControllerImpl implements POIMarkerController {
   }
 
   clear(): void {
-    this.pendingPOIs = [];
     this.selectedId = null;
     this.highlightedId = null;
     this.visibleIds = null;
@@ -696,7 +684,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.destroyed = true;
     this.clear();
     this.sweepPlaced();
-    this.map = null;
+    this.view = null;
     this.amap = null;
     this.opts = {};
   }
@@ -705,13 +693,13 @@ class POIMarkerControllerImpl implements POIMarkerController {
 /**
  * 创建 POI 地图标记控制器。
  *
- * @param map AMap.Map 实例（可为空，为空时所有方法安全 no-op）。
+ * @param view MapView 实例（可为 null，为空时所有方法安全 no-op）。
  * @param opts 配置项（点击回调 / 强调色 / 标签生成函数）。
  * @returns 遵循 POIMarkerController 接口的控制器实例。
  */
 export function createPOIMarkerController(
-  map: any,
+  view: MapView | null,
   opts: POIMarkerControllerOptions = {}
 ): POIMarkerController {
-  return new POIMarkerControllerImpl(map, opts);
+  return new POIMarkerControllerImpl(view, opts);
 }

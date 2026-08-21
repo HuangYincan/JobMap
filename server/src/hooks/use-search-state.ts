@@ -12,12 +12,12 @@
 // 候选列表永远不落地。zoom/catalog 改经 ref 读取。
 // ============================================================
 
-import { useEffect, useState, type MutableRefObject } from "react";
+import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import type { MapMode, POI } from "@/lib/types";
 import { haversineDistance, isRecruitmentMode } from "@/lib/types";
+import type { MapEngine } from "@/lib/map-engine/types";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { suggestRecruitment, suggestSearchTags } from "@/lib/search";
-import { fetchSuggestions } from "@/lib/amap-api";
 import {
   fetchSearchSuggest,
   type SearchSuggestion as ApiSearchSuggestion,
@@ -53,11 +53,16 @@ export interface SearchStateOptions {
   distanceOriginRef: MutableRefObject<{ lng: number; lat: number }>;
   zoomRef: MutableRefObject<number>;
   catalogRef: MutableRefObject<POI[]>;
+  /** 活跃引擎(use-map-engine 注入;domain 建议兜底经 engine.search.fetchSuggestions) */
+  engine: MapEngine | null;
 }
 
 export function useSearchState(options: SearchStateOptions) {
-  const { query, mode, distanceOriginRef, zoomRef, catalogRef } = options;
+  const { query, mode, distanceOriginRef, zoomRef, catalogRef, engine } = options;
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  // 引擎经 ref 读取:依赖保持 [query, mode](引擎切换由 f 扩展统一处理)
+  const engineRef = useRef(engine);
+  engineRef.current = engine;
 
   useEffect(() => {
     if (!query.trim()) {
@@ -114,9 +119,11 @@ export function useSearchState(options: SearchStateOptions) {
       } catch {
         if (cancelled) return;
       }
-      // 本地 0 命中 / 请求失败 → 回退高德 AutoComplete 一次
+      // 本地 0 命中 / 请求失败 → 回退高德 AutoComplete 一次(经活跃引擎,
+      // use-map-engine 注入;引擎未就绪 → 无建议回退,与地图不可用同语义)
       try {
-        const tips = await fetchSuggestions(query.trim(), zoomRef.current <= 8 ? "全国" : "");
+        if (!engineRef.current) return;
+        const tips = await engineRef.current.search.fetchSuggestions(query.trim(), zoomRef.current <= 8 ? "全国" : "");
         if (cancelled) return;
         setSuggestions(
           tips.map((tip) => ({

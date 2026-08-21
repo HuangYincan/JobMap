@@ -7,7 +7,7 @@ import { getBrowserLanguage, t, type Language } from "@/lib/i18n";
 import type { FilterState, MapMode, POI } from "@/lib/types";
 import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
-import { getCurrentPosition, loadAMap, suggestionToDomainPoi } from "@/lib/amap-api";
+import { getCurrentPosition, suggestionToDomainPoi } from "@/lib/amap-api";
 import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, pointAtDistanceEast, runPOIPipeline, widenSearchScope } from "@/lib/search";
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, isNearDefaultCenter } from "@/lib/camera-center";
@@ -23,7 +23,6 @@ import { entityRefFromSelection, initialsFromName } from "@/lib/account";
 import { isPersistableMode, isPersistablePoi } from "@/lib/persistable";
 import { addGuestHistory, clearGuestHistory, listGuestHistory, mergeGuestHistoryIntoAccount } from "@/lib/guest-search-history";
 import {
-  amapStyleUrl,
   MAP_STYLE_KEY,
   mergeMapPois,
   parseMapStyle,
@@ -37,6 +36,8 @@ import { useModeCacheRestore } from "@/hooks/use-mode-cache-restore";
 import { useSavedLayer } from "@/hooks/use-saved-layer";
 import { useSearchState } from "@/hooks/use-search-state";
 import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
+import { useMapEngine } from "@/hooks/use-map-engine";
+import type { MapMarkerOptions, MapView } from "@/lib/map-engine/types";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
 import { SecondarySidebar, suggestionDisplayIcon, candidateCategoriesFor, pickCategoryFilter, type SearchSuggestion } from "./secondary-sidebar";
@@ -143,18 +144,28 @@ function readLngLat(
   return { lng, lat };
 }
 
-function flyToLocation(map: { setZoomAndCenter?: (zoom: number, center: [number, number], immediately?: boolean, duration?: number) => void; setZoom?: (zoom: number) => void; setCenter?: (center: [number, number]) => void } | null, lng: number, lat: number, zoom = 16) {
-  if (!map) return;
-  try {
-    if (typeof map.setZoomAndCenter === "function") {
-      map.setZoomAndCenter(zoom, [lng, lat], false, 600);
-      return;
-    }
-  } catch {
-    // fall through
-  }
-  map.setZoom?.(zoom);
-  map.setCenter?.([lng, lat]);
+/** 飞行到位置(引擎契约 view.flyTo;AMap 内部 setZoomAndCenter 600ms 动画,与旧实现同语义) */
+function flyToLocation(view: MapView | null, lng: number, lat: number, zoom = 16) {
+  if (!view) return;
+  view.flyTo({ center: { lng, lat }, zoom });
+}
+
+/** MapViewEvent 闭合联合之外的事件(rotatechange/dragstart/zoomstart/mousemove/mouseup 等)
+ *  经 view.on 运行时转发(契约扩展后收口类型,TODO 限期迁移)。返回解绑函数。
+ *  事件载荷是厂商形态,回调参数用 any(与 map-shell 既有事件回调同风格)。 */
+function onViewEvent(view: MapView | null, event: string, cb: (e: any) => void): () => void {
+  if (!view) return () => {};
+  const on = view.on as unknown as (e: string, cb: (e: any) => void) => () => void;
+  return on(event, cb);
+}
+
+/** 初始底图样式:系统深色偏好 + 用户显式 pref(与旧 createMap 内 readMapStylePref 同口径) */
+function readInitialMapStyle(): BasemapStyle {
+  const system: BasemapStyle =
+    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "whitesmoke"
+      : "normal";
+  return readMapStylePref(system);
 }
 
 function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "history" | "menu" | "sidebar" | "chevronLeft" | "compass" | "locate" | "person" | "login" | "logout" }) {
@@ -181,13 +192,10 @@ function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "his
 }
 
 export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
-  const userMarkerRef = useRef<any>(null);
-  const accuracyCircleRef = useRef<any>(null);
+  const mapInstance = useRef<MapView | null>(null);
   const distanceCircleRef = useRef<any>(null);
   const distanceHandleRef = useRef<any>(null);
   const draggingDistanceRef = useRef(false);
-  const satelliteLayerRef = useRef<any>(null);
   const scaleControlRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const pendingSearchFocus = useRef(false);
@@ -235,6 +243,19 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lng: number; lat: number }>({ ...DEFAULT_MAP_CENTER });
   const [mapBounds, setMapBounds] = useState<ViewportBounds | null>(null);
+  // ---- 地图引擎(useMapEngine 创建视图;center/zoom/style 只取首渲染快照)----
+  // ws-poi-vanish2:首载 state=默认(行为不变);fast refresh remount 保留 hook state,
+  // 新地图以用户上次视野初始化,不再回杭州默认。
+  const initialMapViewRef = useRef<{ center: { lng: number; lat: number }; zoom: number; style: BasemapStyle } | null>(null);
+  if (!initialMapViewRef.current) {
+    initialMapViewRef.current = { center: { ...mapCenter }, zoom, style: readInitialMapStyle() };
+  }
+  const { engine: mapEngine, view: engineView } = useMapEngine({
+    containerRef: mapContainer,
+    center: initialMapViewRef.current.center,
+    zoom: initialMapViewRef.current.zoom,
+    style: initialMapViewRef.current.style,
+  });
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [searchOrigin, setSearchOrigin] = useState<{ lng: number; lat: number } | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -491,293 +512,238 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     setNoMoreData,
   });
 
-  // 地图初始化（保留原有全部逻辑）
+  // ---- 地图视图接线(useMapEngine 负责引擎加载 + createView;本 effect 只做事件/控件/定位绑定)----
   useEffect(() => {
-    if (!mapContainer.current) return;
+    mapInstance.current = engineView;
+    if (!engineView) return;
 
-    const apiKey = process.env.NEXT_PUBLIC_AMAP_KEY;
-    const securityCode = process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE;
-
-    if (!apiKey || !securityCode) {
-      console.warn("NEXT_PUBLIC_AMAP_KEY and NEXT_PUBLIC_AMAP_SECURITY_CODE are required");
-      return;
-    }
-
-    // 单一 AMap 加载入口（复用 lib/amap-api.ts 的 loadAMap，避免双脚本冲突）
-    // createMap 在分支早退时返回 undefined,故用 | undefined 收窄
     let mapCleanup: (() => void) | null | undefined = null;
-    loadAMap()
-      .then(() => initMap())
-      .catch((err) => {
-        console.warn("[map-shell] AMap load failed:", err);
-      });
-
-    function initMap() {
-      if (!mapContainer.current || mapInstance.current) return;
-      // 先创建地图（Geolocation 蓝点需绑定到已存在的 map），创建后立即定位移动中心
-      // 必须持有 createMap 返回的 cleanup:否则 resize 监听泄漏,
-      // 地图销毁后 handleResize 仍摸已销毁实例(比例尺 removeChild/appendChild 崩溃)
-      // ws-poi-vanish2:初始相机用 mapCenter/zoom state 而非硬编码默认——首载
-      // state=默认(行为不变);fast refresh remount 保留 hook state,新地图以用户
-      // 上次视野初始化,不再回杭州默认。effect 闭包捕获的 mapCenter/zoom 即当次
-      // 渲染的 state 值(首载与 remount 均成立)。
-      mapCleanup = createMap(mapCenter, zoom);
-    }
-
-    function createMap(center: { lng: number; lat: number }, zoom: number) {
-      const systemFallback: BasemapStyle = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "whitesmoke"
-        : "normal";
-      const initialStyle = readMapStylePref(systemFallback);
-      const initialMapStyle = amapStyleUrl(initialStyle === "satellite" ? "normal" : initialStyle);
-
-      const map = new window.AMap.Map(mapContainer.current, {
-        zoom: zoom,
-        center: [center.lng, center.lat],
-        viewMode: "3D",
-        pitch: 0,
-        showLabel: true,
-        mapStyle: initialMapStyle,
-        rotateEnable: false,  // 禁用默认的右键旋转
-      });
-
-      mapInstance.current = map;
-      setMapReady(true);
-
-      // 首点不再被 geolocation 门控(2026-08-20 修复):初始加载以 mapReady 为门
-      // (下方 load() 同步去掉 geoSettled 依赖),geolocation 只提供用户位置
-      // 数据原点(userLocation/searchOrigin/蓝点)与未移图时的相机定位;
-      // 相机与距离圆心(mapCenter)只在用户未手动移动过相机时更新——geolocation
-      // 真异步可能数秒才 resolve,期间用户拖图/缩放(userMovedMapRef=true)
-      // → 不再 setCenter/userPosition 抢占、不把距离圆心甩去用户位置;
-      // 用户自己点「定位」按钮(handleLocate)仍会移过去(原义)。
-      const settleGeolocation = () => {
-        setGeoSettled(true);
-      };
-
-      getCurrentPosition(map)
-        .then((loc) => {
-          if (!loc) {
-            settleGeolocation();
-            return;
-          }
-          const { lng, lat } = loc.position;
-          setUserLocation({ lng, lat });
-          setSearchOrigin((prev) => prev ?? { lng, lat });
-          // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未手动移图且相机
-          // 仍处默认中心时一起更新:已移图 → 两者都保持当前镜头状态,不把圆心甩去
-          // 用户位置;remount 恢复的用户视野(非默认)同样不抢镜头(ws-poi-vanish2:
-          // 门控以实时相机中心为准,距默认 [120.15,30.27] 阈值 0.1°≈11km)。
-          // 用户已交互(首点/按键/滚动,userInteractedRef)同样不再抢镜头:geolocation
-          // resolve 可能晚于首交互,此时 setCenter+setZoom 整幅跳变 = 「整页刷新」观感。
-          if (!userMovedMapRef.current && !userInteractedRef.current && isNearDefaultCenter(readLngLat(map.getCenter()))) {
-            map.setCenter([lng, lat]);
-            map.setZoom(15);
-            setMapCenter({ lng, lat });
-          }
-          settleGeolocation();
-        })
-        .catch(() => {
-          settleGeolocation();
-        });
-
-      // 自定义中键旋转逻辑
-      let isMiddleButtonDown = false;
-      let startRotation = 0;
-      let startPitch = 0;
-      let startX = 0;
-      let startY = 0;
-
-      const handleMouseDown = (e: MouseEvent) => {
-        if (e.button === 1) {  // 中键
-          e.preventDefault();
-          isMiddleButtonDown = true;
-          startRotation = map.getRotation();
-          startPitch = map.getPitch();
-          startX = e.clientX;
-          startY = e.clientY;
-          document.body.style.cursor = 'grab';
-        }
-      };
-
-      const handleMouseMove = (e: MouseEvent) => {
-        if (isMiddleButtonDown) {
-          e.preventDefault();
-          // X 轴：旋转角度
-          const deltaX = e.clientX - startX;
-          const rotationChange = deltaX * 0.13;  // 降低旋转灵敏度
-          const newRotation = (startRotation + rotationChange) % 360;
-
-          // Y 轴：俯仰角度（向上拖动增加俯仰，向下拖动减少俯仰）
-          const deltaY = e.clientY - startY;
-          const pitchChange = -deltaY * 0.15;  // 降低俯仰灵敏度
-          const newPitch = Math.max(0, Math.min(83, startPitch + pitchChange));  // 限制在 0-83 度
-
-          map.setRotation(newRotation);
-          map.setPitch(newPitch);
-          document.body.style.cursor = 'grabbing';
-        }
-      };
-
-      const handleMouseUp = (e: MouseEvent) => {
-        if (e.button === 1) {
-          isMiddleButtonDown = false;
-          document.body.style.cursor = '';
-        }
-      };
-
-      const handleAuxClick = (e: MouseEvent) => {
-        if (e.button === 1) {
-          e.preventDefault();
-        }
-      };
-
-      const container = mapContainer.current;
-      if (!container) return;
-      container.addEventListener('mousedown', handleMouseDown);
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      container.addEventListener('auxclick', handleAuxClick);
-
-      // 清理函数
-      const cleanup = () => {
-        container.removeEventListener('mousedown', handleMouseDown);
-        container.removeEventListener('auxclick', handleAuxClick);
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        darkModeQuery.removeEventListener('change', handleThemeChange);
-        window.removeEventListener('resize', handleResize);
-        scaleControlRef.current = null;
-      };
-
-      setMapStyle(initialStyle);
-      if (initialStyle === "satellite" && window.AMap?.TileLayer?.Satellite) {
-        satelliteLayerRef.current = new window.AMap.TileLayer.Satellite({ map });
-      }
-
-      // 用户没写过底图偏好时才跟系统主题；选过卫星/浅色后不再被系统覆盖
-      const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handleThemeChange = (e: MediaQueryListEvent) => {
-        if (parseMapStyle(window.sessionStorage.getItem(MAP_STYLE_KEY))) return;
-        const next: BasemapStyle = e.matches ? "whitesmoke" : "normal";
-        setMapStyle(next);
-        map.setMapStyle(amapStyleUrl(next));
-        if (satelliteLayerRef.current) satelliteLayerRef.current.hide();
-      };
-      darkModeQuery.addEventListener("change", handleThemeChange);
-
-      // Add AMap's built-in scale control (real, auto-updating)
-      // 移动端放左上角（避开底部抽屉），桌面端放左下角
-      // 统一创建函数:插件回调与 resize 都走这里,避免双 addControl 竞态
-      const addScaleControl = () => {
-        const isMobile = window.innerWidth <= 767;
-        const control = new window.AMap.Scale({
-          position: isMobile ? 'LT' : 'LB', // 移动端左上角，桌面端左下角
-          offset: isMobile ? [12, 22] : [90, 25], // 移动端避开顶部工具栏，桌面端避开侧边栏
-        });
-        map.addControl(control);
-        scaleControlRef.current = control;
-        // 同步初始显隐:抽屉全开/详情打开时比例尺隐藏(仅移动端)
-        if (drawerFullishRef.current && window.innerWidth <= 767) control.hide();
-      };
-      window.AMap.plugin(['AMap.Scale'], () => {
-        if (scaleControlRef.current) return; // resize 已创建,避免重复 addControl
-        addScaleControl();
-      });
-
-      // 监听窗口大小变化，在桌面/移动端切换时更新比例尺位置
-      const handleResize = () => {
-        if (!mapInstance.current || map.isDestroyed?.()) return; // 地图已销毁,不操作
-        if (!scaleControlRef.current) return; // 插件未就绪,由插件回调创建
-        // 移除旧控件并创建新位置的控件
-        map.removeControl(scaleControlRef.current);
-        scaleControlRef.current = null;
-        addScaleControl();
-      };
-      window.addEventListener('resize', handleResize);
-
-      // Sync zoom state
-      map.on("zoomchange", () => {
-        const currentZoom = map.getZoom();
-        setZoom(Math.round(currentZoom));
-      });
-
-      // 监听地图旋转变化
-      map.on("rotatechange", () => {
-        const currentRotation = map.getRotation();
-        setRotation(currentRotation);
-      });
-
-      const syncView = () => {
-        const center = map.getCenter();
-        if (center) {
-          setMapCenter({ lng: center.getLng(), lat: center.getLat() });
-        }
-        const b = typeof map.getBounds === "function" ? map.getBounds() : null;
-        if (b) {
-          const sw = b.getSouthWest?.() ?? b.southwest;
-          const ne = b.getNorthEast?.() ?? b.northeast;
-          const west = sw?.getLng?.() ?? sw?.lng;
-          const south = sw?.getLat?.() ?? sw?.lat;
-          const east = ne?.getLng?.() ?? ne?.lng;
-          const north = ne?.getLat?.() ?? ne?.lat;
-          if ([west, south, east, north].every((n) => typeof n === "number")) {
-            setMapBounds({ west, south, east, north });
-          }
-        }
-      };
-      map.on("moveend", syncView);
-      map.on("complete", syncView);
-      // 首帧立即同步一次视野:mapBounds 在第一批数据到达前就绪,
-      // work 列表客户端裁剪(全量池按视野过滤)从第一次渲染起就有 bounds 可用
-      syncView();
-      // 相机接管标记:只有用户手动移动/缩放相机(拖/缩)才置位;
-      // pin/卡片/空白点击不置位——选择公司 ≠ 放弃定位,geolocation settle
-      // 仍会飞用户位置(ws-poi-vanish 首点修复)。
-      map.on("dragstart", () => {
-        userMovedMapRef.current = true;
-      });
-      map.on("zoomstart", () => {
-        userMovedMapRef.current = true;
-      });
-      map.on("click", () => {
-        if (ignoreNextMapClick.current) {
-          ignoreNextMapClick.current = false;
-          return;
-        }
-        setSelectedId(null);
-        setHighlightedId(null);
-        setDetailPoi(null);
-      });
-
-      return cleanup;
-    }
+    mapCleanup = createMap(engineView);
 
     return () => {
-      // 先执行 createMap 返回的 cleanup(移除 resize/主题/鼠标监听),
-      // 再销毁地图——顺序反了会在销毁实例上 removeEventListener 抛错
+      // 先执行 createMap 返回的 cleanup(移除 resize/主题/鼠标监听);
+      // 视图销毁由 useMapEngine 卸载时负责(本 effect 不销毁,避免双销毁)
       mapCleanup?.();
       mapCleanup = null;
-      if (mapInstance.current) {
-        mapInstance.current.destroy();
-        mapInstance.current = null;
+      if (mapInstance.current === engineView) mapInstance.current = null;
+      try {
+        distanceHandleRef.current?.setMap?.(null);
+      } catch {
+        // 视图已销毁等场景:忽略
       }
-      if (satelliteLayerRef.current) {
-        satelliteLayerRef.current.destroy();
-        satelliteLayerRef.current = null;
+      distanceHandleRef.current = null;
+      try {
+        distanceCircleRef.current?.setMap?.(null);
+      } catch {
+        // 视图已销毁等场景:忽略
       }
-      userMarkerRef.current = null;
-      accuracyCircleRef.current = null;
-      if (distanceHandleRef.current) {
-        distanceHandleRef.current.setMap?.(null);
-        distanceHandleRef.current = null;
-      }
-      if (distanceCircleRef.current) {
-        distanceCircleRef.current.setMap?.(null);
-        distanceCircleRef.current = null;
+      distanceCircleRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 视图接线只随 view 实例变化
+  }, [engineView]);
+
+  function createMap(view: MapView) {
+    setMapReady(true);
+
+    // 首点不再被 geolocation 门控(2026-08-20 修复):初始加载以 mapReady 为门
+    // (下方 load() 同步去掉 geoSettled 依赖),geolocation 只提供用户位置
+    // 数据原点(userLocation/searchOrigin/蓝点)与未移图时的相机定位;
+    // 相机与距离圆心(mapCenter)只在用户未手动移动过相机时更新——geolocation
+    // 真异步可能数秒才 resolve,期间用户拖图/缩放(userMovedMapRef=true)
+    // → 不再 setCenter/userPosition 抢占、不把距离圆心甩去用户位置;
+    // 用户自己点「定位」按钮(handleLocate)仍会移过去(原义)。
+    const settleGeolocation = () => {
+      setGeoSettled(true);
+    };
+
+    // Geolocation 蓝点需绑定到原始 AMap 实例(amap-api 专属能力,经逃生舱 view.raw)
+    getCurrentPosition(view.raw)
+      .then((loc) => {
+        if (!loc) {
+          settleGeolocation();
+          return;
+        }
+        const { lng, lat } = loc.position;
+        setUserLocation({ lng, lat });
+        setSearchOrigin((prev) => prev ?? { lng, lat });
+        // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未手动移图且相机
+        // 仍处默认中心时一起更新:已移图 → 两者都保持当前镜头状态,不把圆心甩去
+        // 用户位置;remount 恢复的用户视野(非默认)同样不抢镜头(ws-poi-vanish2:
+        // 门控以实时相机中心为准,距默认 [120.15,30.27] 阈值 0.1°≈11km)。
+        // 用户已交互(首点/按键/滚动,userInteractedRef)同样不再抢镜头:geolocation
+        // resolve 可能晚于首交互,此时 setCenter+setZoom 整幅跳变 = 「整页刷新」观感。
+        if (!userMovedMapRef.current && !userInteractedRef.current && isNearDefaultCenter(view.getState().center)) {
+          view.setCenter({ lng, lat });
+          view.setZoom(15);
+          setMapCenter({ lng, lat });
+        }
+        settleGeolocation();
+      })
+      .catch(() => {
+        settleGeolocation();
+      });
+
+    // 自定义中键旋转逻辑
+    let isMiddleButtonDown = false;
+    let startRotation = 0;
+    let startPitch = 0;
+    let startX = 0;
+    let startY = 0;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button === 1) {  // 中键
+        e.preventDefault();
+        isMiddleButtonDown = true;
+        const state = view.getState();
+        startRotation = state.rotation;
+        startPitch = state.pitch;
+        startX = e.clientX;
+        startY = e.clientY;
+        document.body.style.cursor = 'grab';
       }
     };
-  }, []);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isMiddleButtonDown) {
+        e.preventDefault();
+        // X 轴：旋转角度
+        const deltaX = e.clientX - startX;
+        const rotationChange = deltaX * 0.13;  // 降低旋转灵敏度
+        const newRotation = (startRotation + rotationChange) % 360;
+
+        // Y 轴：俯仰角度（向上拖动增加俯仰，向下拖动减少俯仰）
+        const deltaY = e.clientY - startY;
+        const pitchChange = -deltaY * 0.15;  // 降低俯仰灵敏度
+        const newPitch = Math.max(0, Math.min(83, startPitch + pitchChange));  // 限制在 0-83 度
+
+        view.setRotation(newRotation);
+        view.setPitch(newPitch);
+        document.body.style.cursor = 'grabbing';
+      }
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      if (e.button === 1) {
+        isMiddleButtonDown = false;
+        document.body.style.cursor = '';
+      }
+    };
+
+    const handleAuxClick = (e: MouseEvent) => {
+      if (e.button === 1) {
+        e.preventDefault();
+      }
+    };
+
+    const container = mapContainer.current;
+    if (!container) return;
+    container.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    container.addEventListener('auxclick', handleAuxClick);
+
+    // 清理函数
+    const cleanup = () => {
+      container.removeEventListener('mousedown', handleMouseDown);
+      container.removeEventListener('auxclick', handleAuxClick);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      darkModeQuery.removeEventListener('change', handleThemeChange);
+      window.removeEventListener('resize', handleResize);
+      scaleControlRef.current = null;
+    };
+
+    // 用户没写过底图偏好时才跟系统主题；选过卫星/浅色后不再被系统覆盖
+    const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleThemeChange = (e: MediaQueryListEvent) => {
+      if (parseMapStyle(window.sessionStorage.getItem(MAP_STYLE_KEY))) return;
+      const next: BasemapStyle = e.matches ? "whitesmoke" : "normal";
+      setMapStyle(next);
+      view.setStyle(next);
+    };
+    darkModeQuery.addEventListener("change", handleThemeChange);
+
+    // Add AMap's built-in scale control (real, auto-updating)
+    // 移动端放左上角（避开底部抽屉），桌面端放左下角
+    // 统一创建函数:resize 与就绪回调都走这里;位置/偏移是 AMap 专属选项,
+    // 经 duck-type 传给 view.addControl(契约只保证 kind 'scale')
+    const scaledView = view as MapView & {
+      addControl?: (
+        kind: 'scale',
+        opts?: { position?: string; offset?: [number, number] },
+      ) => Promise<{ hide: () => void; show: () => void } | null> | null;
+    };
+    const addScaleControl = () => {
+      const isMobile = window.innerWidth <= 767;
+      const pending = scaledView.addControl?.('scale', {
+        position: isMobile ? 'LT' : 'LB', // 移动端左上角，桌面端左下角
+        offset: isMobile ? [12, 22] : [90, 25], // 移动端避开顶部工具栏，桌面端避开侧边栏
+      });
+      if (!pending) return;
+      pending.then((control) => {
+        if (!control) return;
+        scaleControlRef.current = control;
+        // 同步初始显隐:抽屉全开/详情打开时比例尺隐藏(仅移动端)
+        if (drawerFullishRef.current && isMobile) control.hide();
+      });
+    };
+    // Scale 插件就绪由引擎 addControl 内部保证(AMap.plugin);重复创建防双控件
+    addScaleControl();
+
+    // 监听窗口大小变化，在桌面/移动端切换时更新比例尺位置
+    const handleResize = () => {
+      if (!mapInstance.current || view.isDestroyed?.()) return; // 地图已销毁,不操作
+      if (!scaleControlRef.current) return; // 插件未就绪,由就绪回调创建
+      scaleControlRef.current = null;
+      addScaleControl(); // 引擎适配器内部摘除旧控件并按新断点重建
+    };
+    window.addEventListener('resize', handleResize);
+
+    // Sync zoom state
+    view.on("zoomchange", () => {
+      const currentZoom = view.getState().zoom;
+      setZoom(Math.round(currentZoom));
+    });
+
+    // 监听地图旋转变化(rotatechange 不在 MapViewEvent 联合,经 onViewEvent 转发)
+    onViewEvent(view, "rotatechange", () => {
+      setRotation(view.getState().rotation);
+    });
+
+    const syncView = () => {
+      const state = view.getState();
+      setMapCenter({ lng: state.center.lng, lat: state.center.lat });
+      const b = view.getBounds();
+      if (b) {
+        setMapBounds({ west: b.west, south: b.south, east: b.east, north: b.north });
+      }
+    };
+    view.on("moveend", syncView);
+    view.on("complete", syncView);
+    // 首帧立即同步一次视野:mapBounds 在第一批数据到达前就绪,
+    // work 列表客户端裁剪(全量池按视野过滤)从第一次渲染起就有 bounds 可用
+    syncView();
+    // 相机接管标记:只有用户手动移动/缩放相机(拖/缩)才置位;
+    // pin/卡片/空白点击不置位——选择公司 ≠ 放弃定位,geolocation settle
+    // 仍会飞用户位置(ws-poi-vanish 首点修复)。
+    onViewEvent(view, "dragstart", () => {
+      userMovedMapRef.current = true;
+    });
+    onViewEvent(view, "zoomstart", () => {
+      userMovedMapRef.current = true;
+    });
+    view.on("click", () => {
+      if (ignoreNextMapClick.current) {
+        ignoreNextMapClick.current = false;
+        return;
+      }
+      setSelectedId(null);
+      setHighlightedId(null);
+      setDetailPoi(null);
+    });
+
+    return cleanup;
+  }
 
   // ---- Phase 2: 累计池 + 钉死原点；移动地图不重搜 ----
 
@@ -1063,9 +1029,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   distanceRadiusRef.current = distanceRadius;
 
   useEffect(() => {
-    const map = mapInstance.current;
-    const AMap = typeof window !== "undefined" ? window.AMap : undefined;
-    if (!map || !AMap?.Circle || !AMap?.Marker) return;
+    const view = mapInstance.current;
+    if (!view) return;
 
     const clearDistanceOverlay = () => {
       if (distanceHandleRef.current) {
@@ -1087,38 +1052,33 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     const handlePos = pointAtDistanceEast(origin, distanceRadius);
 
     if (!distanceCircleRef.current) {
-      distanceCircleRef.current = new AMap.Circle({
-        center: [origin.lng, origin.lat],
+      // 距离圈经引擎 createCircle(L1067 同款参数由适配器承载:stroke/fill/opacity/bubble/zIndex)
+      distanceCircleRef.current = view.createCircle({
+        center: origin,
         radius: distanceRadius,
-        strokeColor: "#007AFF",
-        strokeOpacity: 0.85,
-        strokeWeight: 2,
-        fillColor: "#007AFF",
-        fillOpacity: 0.08,
-        bubble: true,
-        zIndex: 20,
-      });
-      map.add(distanceCircleRef.current);
+        color: "#007AFF",
+      }).raw;
     } else if (!draggingDistanceRef.current) {
       distanceCircleRef.current.setCenter([origin.lng, origin.lat]);
       distanceCircleRef.current.setRadius(distanceRadius);
-      if (!distanceCircleRef.current.getMap()) map.add(distanceCircleRef.current);
+      if (!distanceCircleRef.current.getMap()) (view.raw as { add?: (o: unknown) => void }).add?.(distanceCircleRef.current);
     }
 
     if (!distanceHandleRef.current) {
-      distanceHandleRef.current = new AMap.Marker({
-        position: [handlePos.lng, handlePos.lat],
-        offset: new AMap.Pixel(-9, -9),
+      // 距离手柄 marker:cursor/bubble 是 AMap 专属选项(契约 MapMarkerOptions 未含),
+      // duck-type 透传;构造即绑定到地图(适配器 map: 选项,与旧 map.add 等价)
+      distanceHandleRef.current = view.createMarker({
+        position: handlePos,
+        offset: [-9, -9],
         zIndex: 130,
-        cursor: "ew-resize",
-        bubble: false,
         content:
           '<div style="width:18px;height:18px;border-radius:50%;background:#007AFF;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,122,255,0.35)"></div>',
-      });
-      map.add(distanceHandleRef.current);
+        cursor: "ew-resize",
+        bubble: false,
+      } as MapMarkerOptions).raw;
     } else if (!draggingDistanceRef.current) {
       distanceHandleRef.current.setPosition([handlePos.lng, handlePos.lat]);
-      if (!distanceHandleRef.current.getMap()) map.add(distanceHandleRef.current);
+      if (!distanceHandleRef.current.getMap()) (view.raw as { add?: (o: unknown) => void }).add?.(distanceHandleRef.current);
     }
 
     const applyRadius = (meters: number) => {
@@ -1140,7 +1100,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     const startDrag = () => {
       draggingDistanceRef.current = true;
       ignoreNextMapClick.current = true;
-      map.setStatus({ dragEnable: false });
+      (view.raw as { setStatus?: (s: { dragEnable: boolean }) => void }).setStatus?.({ dragEnable: false });
     };
     const moveTo = (lnglat: { lng: number; lat: number }) => {
       if (!draggingDistanceRef.current) return;
@@ -1152,7 +1112,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     const endDrag = (lnglat?: { lng: number; lat: number } | null) => {
       if (!draggingDistanceRef.current) return;
       draggingDistanceRef.current = false;
-      map.setStatus({ dragEnable: true });
+      (view.raw as { setStatus?: (s: { dragEnable: boolean }) => void }).setStatus?.({ dragEnable: true });
       const raw = lnglat
         ? haversineDistance(distanceOriginRef.current, lnglat)
         : Number(distanceCircleRef.current?.getRadius?.() ?? distanceRadiusRef.current);
@@ -1173,19 +1133,19 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     };
 
     handle.on("mousedown", onHandleDown);
-    map.on("mousemove", onMapMove);
-    map.on("mouseup", onMapUp);
+    const offMapMove = onViewEvent(view, "mousemove", onMapMove);
+    const offMapUp = onViewEvent(view, "mouseup", onMapUp);
     const onDocUp = () => endDrag(null);
     document.addEventListener("mouseup", onDocUp);
 
     return () => {
       handle.off("mousedown", onHandleDown);
-      map.off("mousemove", onMapMove);
-      map.off("mouseup", onMapUp);
+      offMapMove();
+      offMapUp();
       document.removeEventListener("mouseup", onDocUp);
       if (draggingDistanceRef.current) {
         draggingDistanceRef.current = false;
-        map.setStatus({ dragEnable: true });
+        (view.raw as { setStatus?: (s: { dragEnable: boolean }) => void }).setStatus?.({ dragEnable: true });
       }
     };
   }, [distanceOrigin, distanceRadius, mapReady]);
@@ -1295,18 +1255,17 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     };
   }, [mode, markerPois, clusterZoom]);
 
-  // 聚合徽章渲染:每城一个 AMap.Marker(content 徽章),effect 清理时整批摘除。
+  // 聚合徽章渲染:每城一个 Marker(content 徽章),effect 清理时整批摘除。
   // 与个体 marker 模式互斥——聚合激活时个体 pin 实例保留(由 visiblePOIIds 隐藏),
   // 出聚合直接 show,不重建。clusterState 已按 clusterZoom 分桶:zoom 微调不触发
   // 本 effect(b2),只有跨整数分桶 / 池增长 / 模式切换才整批重建徽章。
   useEffect(() => {
-    const map = mapInstance.current;
-    const AMap = typeof window !== "undefined" ? window.AMap : undefined;
-    if (!map || !AMap?.Marker || !clusterState) return;
+    const view = mapInstance.current;
+    if (!view || !clusterState) return;
 
     const created: any[] = [];
     for (const group of clusterState.groups) {
-      const marker = createCityClusterMarker(AMap, map, group, {
+      const marker = createCityClusterMarker(view, group, {
         color: modeConfig.color,
         onClick: () => {
           // AMap 常在 marker click 后再打一次 map click;吞掉同一次手势
@@ -1316,14 +1275,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           }, 80);
           // 徽章点击仅下钻、不弹卡片:平滑缩放到该城,
           // zoom 11 > 8 自动切回个体 marker 模式,个体 pin 出现
-          try {
-            if (typeof map.setZoomAndCenter === "function") {
-              map.setZoomAndCenter(CLUSTER_DRILL_ZOOM, [group.lng, group.lat], false, 600);
-            }
-          } catch {
-            map.setZoom?.(CLUSTER_DRILL_ZOOM);
-            map.setCenter?.([group.lng, group.lat]);
-          }
+          view.flyTo({ center: { lng: group.lng, lat: group.lat }, zoom: CLUSTER_DRILL_ZOOM });
         },
       });
       if (marker) created.push(marker);
@@ -1362,12 +1314,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [clusterState, markerPois, overlayPois, maxTier]);
 
   const handleRefreshHere = useCallback(() => {
-    const map = mapInstance.current;
-    const centerObj = map?.getCenter?.();
-    const next =
-      centerObj && typeof centerObj.getLng === "function"
-        ? { lng: centerObj.getLng(), lat: centerObj.getLat() }
-        : mapCenter;
+    const view = mapInstance.current;
+    const state = view?.getState?.();
+    const next = state ? { lng: state.center.lng, lat: state.center.lat } : mapCenter;
     setSearchOrigin(next);
     catalogRef.current = [];
     setCatalog([]);
@@ -1637,7 +1586,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   // ---- 搜索建议 ----
   // 建议获取/清理逻辑抽到 useSearchState(work:/api/suggest 服务端目录 + 本地回退;
-  // domain:本地优先 + 高德 AutoComplete 兜底;依赖只留 [query, mode])。
+  // domain:本地优先 + 高德 AutoComplete 兜底(经活跃引擎 use-map-engine 注入);
+  // 依赖只留 [query, mode])。
   // 选择建议后的落地逻辑在 handleSelectSuggestion(下方)。
   const { suggestions, setSuggestions } = useSearchState({
     query,
@@ -1645,6 +1595,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     distanceOriginRef,
     zoomRef,
     catalogRef,
+    engine: mapEngine,
   });
 
   useEffect(() => {
@@ -1739,29 +1690,32 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [catalog, pois, mode, recordSearch, query, filters]);
 
   const handleZoomIn = () => {
-    if (mapInstance.current) {
-      mapInstance.current.zoomIn();
-    }
+    // zoomIn/zoomOut 不在 MapView 契约:经逃生舱 raw 直连(TODO 限期迁移)
+    (mapInstance.current?.raw as { zoomIn?: () => void } | null)?.zoomIn?.();
   };
 
   const handleZoomOut = () => {
-    if (mapInstance.current) {
-      mapInstance.current.zoomOut();
-    }
+    (mapInstance.current?.raw as { zoomOut?: () => void } | null)?.zoomOut?.();
   };
 
   const handleResetCompass = () => {
     if (!mapInstance.current) return;
-    // 使用动画平滑过渡到正北，同时重置俯仰角
-    mapInstance.current.setRotation(0, true, 300);  // 300ms 动画
-    mapInstance.current.setPitch(0, true, 300);
+    // 使用动画平滑过渡到正北，同时重置俯仰角。
+    // AMap 专属参数(immediate/duration)不在契约:经逃生舱 raw 直连(TODO 限期迁移)
+    const raw = mapInstance.current.raw as {
+      setRotation?: (r: number, immediate?: boolean, duration?: number) => void;
+      setPitch?: (p: number, immediate?: boolean, duration?: number) => void;
+    };
+    raw.setRotation?.(0, true, 300);  // 300ms 动画
+    raw.setPitch?.(0, true, 300);
   };
 
   const handleLocate = () => {
     if (!mapInstance.current) return;
 
-    // 用 AMap.Geolocation 定位（addControl 绑定到 map，蓝点 + 精度圈渲染在地图上）
-    getCurrentPosition(mapInstance.current)
+    // 用 AMap.Geolocation 定位(addControl 绑定到 map,蓝点 + 精度圈渲染在地图上);
+    // Geolocation 是 amap-api 专属能力,需原始 AMap 实例(逃生舱 view.raw)
+    getCurrentPosition(mapInstance.current.raw)
       .then((loc) => {
         if (!loc) {
           // 定位失败/被拒:保持当前视野,不跳回杭州默认中心(ws-poi-vanish)。
@@ -1770,8 +1724,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           return;
         }
         const { lng, lat } = loc.position;
-        mapInstance.current.setCenter([lng, lat]);
-        mapInstance.current.setZoom(15);
+        mapInstance.current?.setCenter({ lng, lat });
+        mapInstance.current?.setZoom(15);
         setMapCenter({ lng, lat });
       })
       .catch((err) => {
@@ -1783,22 +1737,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const handleMapStyleChange = (style: BasemapStyle) => {
     writeMapStylePref(style);
     setMapStyle(style);
-    if (!mapInstance.current) return;
-
-    if (style === "satellite") {
-      if (!satelliteLayerRef.current) {
-        satelliteLayerRef.current = new window.AMap.TileLayer.Satellite({
-          map: mapInstance.current,
-        });
-      } else {
-        satelliteLayerRef.current.show();
-      }
-      mapInstance.current.setMapStyle(amapStyleUrl("normal"));
-      return;
-    }
-
-    mapInstance.current.setMapStyle(amapStyleUrl(style));
-    if (satelliteLayerRef.current) satelliteLayerRef.current.hide();
+    // 引擎视图承载底图样式 + 卫星瓦片层(engine.setStyle 内部处理 show/hide)
+    mapInstance.current?.setStyle(style);
   };
 
   useEffect(() => {

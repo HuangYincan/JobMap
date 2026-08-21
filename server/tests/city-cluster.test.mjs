@@ -365,31 +365,30 @@ test('cityClusterBadgeHTML: 自定义强调色 + 尺寸 + 城市名转义', () =
   assert.ok(!html.includes('北京<城>'));
 });
 
-test('createCityClusterMarker: 构造契约(位置/中心锚定/点击回调/防御守卫)', () => {
+test('createCityClusterMarker: 构造契约(位置/中心锚定/点击回调/防御守卫,ws-c view 形态)', () => {
   const created = [];
-  const amap = {
-    Marker: class {
-      constructor(opts) {
-        this.opts = opts;
-        this.handlers = {};
-        created.push(this);
-      }
-      on(event, fn) {
-        this.handlers[event] = fn;
-      }
-    },
-    Pixel: class {
-      constructor(x, y) {
-        this.x = x;
-        this.y = y;
-      }
+  // duck-type MapView:createMarker 构造即登记,返回 wrapper(raw = marker);
+  // onClick 经 marker 'click' 事件接线(与引擎适配器 createMarker 同语义)
+  const view = {
+    engine: { namespace: 'AMap', id: 'amap' },
+    createMarker(opts) {
+      const marker = {
+        opts,
+        handlers: {},
+        on(event, fn) {
+          this.handlers[event] = fn;
+        },
+        setMap() {},
+      };
+      if (typeof opts.onClick === 'function') marker.on('click', opts.onClick);
+      created.push(marker);
+      return { raw: marker, setPosition() {}, setContent() {}, remove() {} };
     },
   };
-  const map = {};
 
   let clicks = 0;
   const group = { city: '杭州', count: 15, lng: 120.15, lat: 30.27 };
-  const marker = createCityClusterMarker(amap, map, group, {
+  const marker = createCityClusterMarker(view, group, {
     color: '#007AFF',
     onClick: () => {
       clicks += 1;
@@ -398,20 +397,24 @@ test('createCityClusterMarker: 构造契约(位置/中心锚定/点击回调/防
 
   assert.ok(marker);
   assert.equal(created.length, 1);
-  assert.deepEqual(created[0].opts.position, [120.15, 30.27]);
-  assert.equal(created[0].opts.offset.x, -CLUSTER_BADGE_SIZE / 2); // 中心锚定
-  assert.equal(created[0].opts.offset.y, -CLUSTER_BADGE_SIZE / 2);
-  assert.equal(created[0].opts.map, map);
-  assert.equal(created[0].opts.bubble, false); // 点击不冒泡到地图
+  assert.deepEqual(created[0].opts.position, { lng: 120.15, lat: 30.27 });
+  // 中心锚定:offset 元组 → 引擎适配器内部转 AMap.Pixel
+  assert.deepEqual(created[0].opts.offset, [-CLUSTER_BADGE_SIZE / 2, -CLUSTER_BADGE_SIZE / 2]);
+  assert.equal(created[0].opts.zIndex, 50);
+  assert.equal(created[0].opts.bubble, false); // 点击不冒泡到地图(duck-type 透传)
   assert.ok(created[0].opts.content.includes('杭州'));
   assert.ok(created[0].opts.content.includes('15'));
 
   created[0].handlers.click();
   assert.equal(clicks, 1);
 
-  // 防御守卫:无 amap / 无 map / 构造抛错 → null 不抛
-  assert.equal(createCityClusterMarker(null, map, group), null);
-  assert.equal(createCityClusterMarker(amap, null, group), null);
-  const brokenAmap = { Marker: class { constructor() { throw new Error('boom'); } }, Pixel: class {} };
-  assert.equal(createCityClusterMarker(brokenAmap, map, group), null);
+  // 防御守卫:无 view / createMarker 构造抛错 → null 不抛
+  assert.equal(createCityClusterMarker(null, group), null);
+  const broken = {
+    engine: { namespace: 'AMap', id: 'amap' },
+    createMarker() {
+      throw new Error('boom');
+    },
+  };
+  assert.equal(createCityClusterMarker(broken, group), null);
 });

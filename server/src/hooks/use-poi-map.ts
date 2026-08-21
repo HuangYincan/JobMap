@@ -4,7 +4,7 @@
 // usePOIMap — 卡片↔地图联动 Hook
 //
 // 将 POIMarkerController 绑定到 React 生命周期：
-// - map 可用时创建控制器，卸载时销毁
+// - view 可用时创建控制器，卸载时销毁
 // - pois 变化 → setPOIs 差分更新标记
 // - selectedId / highlightedId 变化 → select / highlight
 // - accentColor 变化 → 重建控制器并应用新配色
@@ -12,6 +12,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { POI } from '../lib/types.ts';
+import type { MapView } from '../lib/map-engine/types.ts';
 import {
   createPOIMarkerController,
   type POIMarkerController,
@@ -61,14 +62,14 @@ function applySync(
 // ---------------------------------------------------------------------------
 
 /**
- * 将 AMap 实例与 POI 数据绑定：管理地图标记并处理卡片↔地图双向联动。
+ * 将 MapView 实例与 POI 数据绑定：管理地图标记并处理卡片↔地图双向联动。
  *
- * 内部持有持久控制器，随 map / accentColor 变化重建，随组件卸载销毁。
+ * 内部持有持久控制器，随 view / accentColor 变化重建，随组件卸载销毁。
  *
- * @param map AMap.Map 实例（可为 null，此时不创建任何标记）。
+ * @param view MapView 实例（可为 null，此时不创建任何标记）。
  * @param opts POI 列表、选中/高亮状态、强调色与点击回调。
  */
-export function usePOIMap(map: any | null, opts: UsePOIMapOptions): void {
+export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
   const { pois, visiblePOIs, selectedId, highlightedId, accentColor, onMarkerClick } = opts;
 
   // 缓存最新的回调与状态，避免 effect 依赖函数/对象导致频繁重建
@@ -77,15 +78,15 @@ export function usePOIMap(map: any | null, opts: UsePOIMapOptions): void {
 
   const controllerRef = useRef<POIMarkerController | null>(null);
 
-  // 创建 / 销毁控制器：map 实例或强调色变化时重建
+  // 创建 / 销毁控制器：view 实例或强调色变化时重建
   useEffect(() => {
-    if (!map) {
+    if (!view) {
       controllerRef.current?.destroy();
       controllerRef.current = null;
       return;
     }
 
-    const controller = createPOIMarkerController(map, {
+    const controller = createPOIMarkerController(view, {
       color: latest.current.accentColor,
       onMarkerClick: (id) => latest.current.onMarkerClick?.(id),
     });
@@ -103,7 +104,7 @@ export function usePOIMap(map: any | null, opts: UsePOIMapOptions): void {
       controllerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, accentColor]);
+  }, [view, accentColor]);
 
   // POI 列表变化 → 差分更新标记（只增不删），并重放当前可见集/选中/高亮
   useEffect(() => {

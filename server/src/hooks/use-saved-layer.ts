@@ -88,16 +88,13 @@ export function useSavedLayer(deps: UseSavedLayerDeps): UseSavedLayerResult {
     const bounds = overlayBounds(overlayPois);
     const map = mapInstance.current;
     if (!bounds || !map || overlayPois.length === 0) return;
-    try {
-      const AMap = (window as unknown as { AMap?: { Bounds: new (sw: number[], ne: number[]) => unknown } }).AMap;
-      if (AMap?.Bounds) {
-        map.setBounds(new AMap.Bounds([bounds.sw.lng, bounds.sw.lat], [bounds.ne.lng, bounds.ne.lat]));
-        return;
-      }
-    } catch {
-      // fall through
-    }
-    map.setCenter?.([overlayPois[0].location.lng, overlayPois[0].location.lat]);
+    // 视图归一化 setBounds(引擎内部构造厂商 Bounds,ws-c 迁移)
+    map.setBounds({
+      west: bounds.sw.lng,
+      south: bounds.sw.lat,
+      east: bounds.ne.lng,
+      north: bounds.ne.lat,
+    });
   }, [user, savedOverlay, overlayPois, mapInstance, suppressViewportRefreshUntilRef]);
 
   const hide = useCallback(() => {
