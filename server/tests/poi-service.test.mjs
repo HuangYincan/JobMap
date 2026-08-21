@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { fetchPOIsForMode } from '../src/lib/poi-service.ts';
+import { fetchPOIsForMode, setActiveSearchProvider } from '../src/lib/poi-service.ts';
 import { SEARCH_TIMEOUT_MS, withTimeout } from '../src/lib/amap-api.ts';
 
 const HZ_CENTER = { lng: 120.15, lat: 30.27 };
@@ -238,5 +238,117 @@ test('fetchPOIsForMode(domain 杭州内 + 分类 + 关键词): 搜索豁免,不�
     assert.equal(pois.length, 1);
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+// ---------------------------------------------------------------------------
+// ws-5:关键词回退搜索引擎化——活跃引擎 provider 优先(与视口兜底同口径),
+// 不再硬绑 amap-api.searchPOI;未注入(SSR/测试/零配置)回落 amap-api 直连。
+// ---------------------------------------------------------------------------
+
+function fakeProvider(calls) {
+  return {
+    searchPOI: async (opts) => {
+      calls.push(opts);
+      return [domainPoi('kfc'), domainPoi('kfc-2')];
+    },
+    fetchSuggestions: async () => [],
+    getCurrentPosition: async () => null,
+    geocodeAddress: async () => null,
+  };
+}
+
+test('fetchPOIsForMode(domain 杭州外 + 关键词): 走活跃引擎 provider.searchPOI(ws-5 搜索引擎化)', async () => {
+  const calls = [];
+  setActiveSearchProvider(fakeProvider(calls));
+  try {
+    const { pois, noMore } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: { lng: 121.47, lat: 31.23 }, // 上海 → 杭州外,跳过本地库直接走关键词搜索
+      zoom: 10,
+      pageOffset: 0,
+      existing: [],
+      query: '肯德基',
+    });
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].keyword, '肯德基');
+    assert.equal(calls[0].limit, 25);
+    assert.equal(calls[0].page, 1); // pageOffset 0 → 第 1 页
+    assert.equal(calls[0].city, ''); // zoom 10 > 8 → 非全国
+    assert.equal(pois.length, 2);
+    assert.equal(noMore, undefined); // 与 amap-api 路径同语义:本地长度比较,不置 noMore
+  } finally {
+    setActiveSearchProvider(null);
+  }
+});
+
+test('fetchPOIsForMode(domain 杭州外 + 关键词): provider 收到 zoom≤8 全国城市 + pageOffset 翻页(ws-5)', async () => {
+  const calls = [];
+  setActiveSearchProvider(fakeProvider(calls));
+  try {
+    const { pois } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: { lng: 121.47, lat: 31.23 },
+      zoom: 7,
+      pageOffset: 2,
+      existing: [],
+      query: '天安门',
+    });
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].city, '全国'); // zoom ≤ 8 → 全国(与 amap-api 路径同语义)
+    assert.equal(calls[0].page, 3); // pageOffset 2 → 第 3 页
+    assert.equal(pois.length, 2);
+  } finally {
+    setActiveSearchProvider(null);
+  }
+});
+
+test('fetchPOIsForMode(domain 杭州内 + 关键词): 本地库不可用 → 回退活跃引擎 provider(ws-5)', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new Error('local db down');
+  };
+  const calls = [];
+  setActiveSearchProvider(fakeProvider(calls));
+  try {
+    const { pois } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 13,
+      pageOffset: 0,
+      existing: [],
+      query: '肯德基',
+    });
+    assert.equal(calls.length, 1, '本地库失败后必须改走 provider,不空白');
+    assert.equal(pois.length, 2);
+  } finally {
+    globalThis.fetch = originalFetch;
+    setActiveSearchProvider(null);
+  }
+});
+
+test('fetchPOIsForMode(domain + 关键词): provider.searchPOI 抛错 → 错误信号(可重试,不静默 return existing)', async () => {
+  setActiveSearchProvider({
+    searchPOI: async () => {
+      throw new Error('engine quota exhausted');
+    },
+    fetchSuggestions: async () => [],
+    getCurrentPosition: async () => null,
+    geocodeAddress: async () => null,
+  });
+  try {
+    await assert.rejects(
+      fetchPOIsForMode({
+        mode: 'domain',
+        center: { lng: 121.47, lat: 31.23 },
+        zoom: 10,
+        pageOffset: 0,
+        existing: [],
+        query: '肯德基',
+      }),
+      /domain keyword search failed: engine quota exhausted/,
+    );
+  } finally {
+    setActiveSearchProvider(null);
   }
 });
