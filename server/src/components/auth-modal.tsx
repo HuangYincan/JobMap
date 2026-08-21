@@ -389,7 +389,9 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
                     onChange={(e) => setTarget(e.target.value)}
                     inputMode={tab === "phone" ? "tel" : "email"}
                     autoComplete={tab === "phone" ? "tel" : "email"}
-                    placeholder={tab === "phone" ? "+86 13800000000" : "you@example.com"}
+                    placeholder={
+                      tab === "phone" ? t("phonePlaceholder", lang) : t("emailPlaceholder", lang)
+                    }
                   />
                   <button
                     type="button"
