@@ -2,7 +2,8 @@
   "slug": "qqj-埃斯顿",
   "name": "埃斯顿",
   "sources": [
-    "qqdoc-jobs"
+    "qqdoc-jobs",
+    "embodied-jobs"
   ],
   "apply_url": "https://estun1.zhiye.com/campus/jobs",
   "direction": "研发类 技术类  供应链类  营销类",
@@ -14,6 +15,125 @@
       "city": "南京 深圳",
       "province": "",
       "location": {}
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "embj-埃斯顿-1",
+      "title": "自动化工程师",
+      "siteId": "qqj-埃斯顿-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://estun1.zhiye.com/social/detail?jobAdId=09516030-570f-4aca-8241-c285b6b78925",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃斯顿-2",
+      "title": "机器人应用软件开发工程师",
+      "siteId": "qqj-埃斯顿-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://estun1.zhiye.com/social/detail?jobAdId=ebf80d51-547b-418d-8ec9-aec37c525e2c",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃斯顿-3",
+      "title": "机器人网络通信开发工程师",
+      "siteId": "qqj-埃斯顿-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://estun1.zhiye.com/social/detail?jobAdId=c976f80d-fd0e-411e-90fa-0e61b63fbc5d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃斯顿-4",
+      "title": "控制器软件开发工程师",
+      "siteId": "qqj-埃斯顿-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://estun1.zhiye.com/social/detail?jobAdId=576feffa-f022-4632-8091-473ef1fd1caa",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃斯顿-5",
+      "title": "机器人离线仿真软件开发工程师",
+      "siteId": "qqj-埃斯顿-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://estun1.zhiye.com/social/detail?jobAdId=2aa6583c-de74-4a8b-85aa-8d9eedd5b5e8",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃斯顿-6",
+      "title": "机器人应用软件工程师",
+      "siteId": "qqj-埃斯顿-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://estun1.zhiye.com/campus/detail?jobAdId=017a32e3-4274-48c0-8d03-b6fc56750d1b",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃斯顿-7",
+      "title": "伺服算法工程师",
+      "siteId": "qqj-埃斯顿-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://estun1.zhiye.com/campus/detail?jobAdId=0118ea84-2ba2-40cf-acc4-3c432307b020",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃斯顿-8",
+      "title": "机器人软件工程师 （机器人控制器软件）",
+      "siteId": "qqj-埃斯顿-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://estun1.zhiye.com/campus/detail?jobAdId=e7b462f9-e9dc-4cb9-8016-3f2d24e8aab9",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃斯顿-9",
+      "title": "机械研发工程师",
+      "siteId": "qqj-埃斯顿-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://estun1.zhiye.com/campus/detail?jobAdId=b98be43f-4d9e-48a0-bfa9-37f01e07a92e",
+      "retrievedAt": "2026-08-21"
     }
   ]
 }

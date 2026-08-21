@@ -43,6 +43,45 @@
       "applyUrl": "https://app.mokahr.com/m/campus_apply/ninebot/45627?recommendCode=DShvJAgb&hash=%23%2Fjobs#/jobs",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "embj-九号-1",
+      "title": "高级嵌入式电控软件开发工程师",
+      "siteId": "九号公司-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/ninebot/45626#/job/1ddf11b6-9618-4903-aeeb-fbc4c1a0e0f7",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-九号-2",
+      "title": "AI应用专家",
+      "siteId": "九号公司-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/ninebot/45626#/job/edbe17b6-9c42-4c60-b70f-c1aec0700129",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-九号-3",
+      "title": "高级硬件工程师",
+      "siteId": "九号公司-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/ninebot/45626#/job/531185a3-8c81-499d-963f-b92ee9b1d970",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "category": "39"

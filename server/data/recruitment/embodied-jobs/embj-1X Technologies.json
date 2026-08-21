@@ -1,0 +1,95 @@
+{
+  "slug": "embj-1X Technologies",
+  "source": "embodied-jobs",
+  "name": "1X Technologies",
+  "sites": [
+    {
+      "id": "embj-1X Technologies-site",
+      "name": "1X Technologies",
+      "city": "San Carlos, CA",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://1x.recruitee.com/o/research-engineer-scaling",
+  "positions": [
+    {
+      "externalId": "embj-1X Technologies-1",
+      "title": "AI Research Engineer - Scaling",
+      "siteId": "embj-1X Technologies-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://1x.recruitee.com/o/research-engineer-scaling",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-1X Technologies-2",
+      "title": "AI Research Engineer - World Models",
+      "siteId": "embj-1X Technologies-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://1x.recruitee.com/o/ai-research-engineer-world-models",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-1X Technologies-3",
+      "title": "AI Research Engineer - Reinforcement Learning",
+      "siteId": "embj-1X Technologies-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://1x.recruitee.com/o/research-engineer-rl",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-1X Technologies-4",
+      "title": "Software Engineer - Simulation",
+      "siteId": "embj-1X Technologies-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://1x.recruitee.com/o/software-engineer-simulation",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-1X Technologies-5",
+      "title": "Software Engineer - Teleoperation",
+      "siteId": "embj-1X Technologies-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://1x.recruitee.com/o/software-engineer-teleoperation",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-1X Technologies-6",
+      "title": "Hardware Systems Research Engineer",
+      "siteId": "embj-1X Technologies-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://1x.recruitee.com/o/hardware-systems-research-engineer",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

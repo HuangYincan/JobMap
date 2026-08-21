@@ -42,6 +42,32 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.deeprobotics.cn/join"
+    },
+    {
+      "externalId": "embj-云深处科技-1",
+      "title": "算法工程师（具身导航）",
+      "siteId": "deepblue-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app135149.eapps.dingtalkcloud.com/campus-recruitment/yunshenchu/#/job/e3c336dc-2714-4185-99b2-aad2616ff10f",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-云深处科技-2",
+      "title": "算法工程师（模仿学习）",
+      "siteId": "deepblue-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app135149.eapps.dingtalkcloud.com/campus-recruitment/yunshenchu/#/job/5b223e0a-9d66-46c0-88fd-bc48e8d48d51",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "tier": 9,

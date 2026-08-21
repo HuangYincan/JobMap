@@ -1,0 +1,69 @@
+{
+  "slug": "embj-Google DeepMind",
+  "source": "embodied-jobs",
+  "name": "Google DeepMind",
+  "sites": [
+    {
+      "id": "embj-Google DeepMind-site",
+      "name": "Google DeepMind",
+      "city": "Mountain View, CA New York, NY London, UK",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://job-boards.greenhouse.io/deepmind/jobs/7102795",
+  "positions": [
+    {
+      "externalId": "embj-Google DeepMind-1",
+      "title": "Research Scientist, Robotics",
+      "siteId": "embj-Google DeepMind-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/deepmind/jobs/7102795",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Google DeepMind-2",
+      "title": "Research Scientist, Safety and Alignment for Humanoid Robotics",
+      "siteId": "embj-Google DeepMind-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/deepmind/jobs/7576917",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Google DeepMind-3",
+      "title": "Technical Program Manager, Robotics Operations - London",
+      "siteId": "embj-Google DeepMind-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/deepmind/jobs/7681751",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Google DeepMind-4",
+      "title": "Director of Product Management, Robotics",
+      "siteId": "embj-Google DeepMind-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/deepmind/jobs/7135001",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

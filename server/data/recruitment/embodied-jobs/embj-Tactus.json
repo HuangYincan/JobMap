@@ -1,0 +1,30 @@
+{
+  "slug": "embj-Tactus",
+  "source": "embodied-jobs",
+  "name": "Tactus",
+  "sites": [
+    {
+      "id": "embj-Tactus-site",
+      "name": "Tactus",
+      "city": "Irvine, CA, USA",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://career.calvin.edu/",
+  "positions": [
+    {
+      "externalId": "embj-Tactus-1",
+      "title": "Embodied AI Intern (Summer 2026)",
+      "siteId": "embj-Tactus-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.calvin.edu/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

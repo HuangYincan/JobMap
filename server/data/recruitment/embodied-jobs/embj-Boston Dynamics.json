@@ -1,0 +1,95 @@
+{
+  "slug": "embj-Boston Dynamics",
+  "source": "embodied-jobs",
+  "name": "Boston Dynamics",
+  "sites": [
+    {
+      "id": "embj-Boston Dynamics-site",
+      "name": "Boston Dynamics",
+      "city": "Waltham, MA Billerica, MA",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://bostondynamics.wd1.myworkdayjobs.com/en-US/Boston_Dynamics/job/Senior-Robotics-Engineer--Spot-Manipulation_R2500",
+  "positions": [
+    {
+      "externalId": "embj-Boston Dynamics-1",
+      "title": "Senior Robotics Engineer - Spot Manipulation",
+      "siteId": "embj-Boston Dynamics-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bostondynamics.wd1.myworkdayjobs.com/en-US/Boston_Dynamics/job/Senior-Robotics-Engineer--Spot-Manipulation_R2500",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Boston Dynamics-2",
+      "title": "Reinforcement Learning Engineer - Spot Behavior",
+      "siteId": "embj-Boston Dynamics-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bostondynamics.wd1.myworkdayjobs.com/en-US/Boston_Dynamics/job/Reinforcement-Learning-Engineer--Spot-Behavior_R1827",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Boston Dynamics-3",
+      "title": "Senior Staff Robotics Engineer - Spot Autonomy",
+      "siteId": "embj-Boston Dynamics-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bostondynamics.wd1.myworkdayjobs.com/boston_dynamics/job/Waltham-MA/Senior-Staff-Robotics-Engineer--Spot-Autonomy_R2764",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Boston Dynamics-4",
+      "title": "Research Engineer, Atlas Physics Simulation for RL",
+      "siteId": "embj-Boston Dynamics-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bostondynamics.wd1.myworkdayjobs.com/en-US/Boston_Dynamics/job/Research-Engineer--Atlas-Physics-Simulation-for-RL_R1971",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Boston Dynamics-5",
+      "title": "Staff Reinforcement Learning Research Engineer",
+      "siteId": "embj-Boston Dynamics-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bostondynamics.wd1.myworkdayjobs.com/en-US/Boston_Dynamics/job/Staff-Reinforcement-Learning-Research-Engineer_R2724",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Boston Dynamics-6",
+      "title": "Software Engineer in Test - Automation and Tooling",
+      "siteId": "embj-Boston Dynamics-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bostondynamics.wd1.myworkdayjobs.com/Boston_Dynamics/job/Billerica-MA/Software-Engineer-in-Test--Automation-and-Tooling_R2658",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

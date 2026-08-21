@@ -54,6 +54,97 @@
       "applyUrl": "https://app.mokahr.com/campus-recruitment/nvidia/47111?locale=zh-CN&sessionid=#/page/%E7%83%AD%E6%8B%9B%E5%B2%97%E4%BD%8D",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "embj-NVIDIA-1",
+      "title": "Software Engineer, Simulation - Robotics",
+      "siteId": "nvidia-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite/job/Software-Engineer--Simulation---Robotics_JR2015217",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-NVIDIA-2",
+      "title": "Senior Software Engineer, Robotics - Isaac Lab",
+      "siteId": "nvidia-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite/job/Senior-Software-Engineer--Robotics---Isaac-Lab_JR2013747",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-NVIDIA-3",
+      "title": "Senior Software Engineer - Robotics",
+      "siteId": "nvidia-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite/job/Senior-Software-Engineer---Robotics_JR2013413",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-NVIDIA-4",
+      "title": "Senior Research Scientist, Multimodal Foundation Models and Robotics",
+      "siteId": "nvidia-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite/job/Senior-Research-Scientist--Multimodal-Foundation-Models-and-Robotics_JR2017288",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-NVIDIA-5",
+      "title": "Software Engineering Intern, Robot Learning Platform - Fall 2026",
+      "siteId": "nvidia-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://nvidia.wd5.myworkdayjobs.com/en-US/NVIDIAExternalCareerSite/job/US-CA-Santa-Clara/Software-Engineering-Intern--Robot-Learning-Platform---Fall-2026_JR2015575",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-NVIDIA-6",
+      "title": "NVIDIA Graduate Fellowship - AI/Robotics",
+      "siteId": "nvidia-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://research.nvidia.com/graduate-fellowships",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-NVIDIA-7",
+      "title": "NVIDIA PhD Fellowship",
+      "siteId": "nvidia-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://research.nvidia.com/graduate-fellowships",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "category": "39"

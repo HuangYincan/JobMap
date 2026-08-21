@@ -1,0 +1,82 @@
+{
+  "slug": "embj-OpenAI",
+  "source": "embodied-jobs",
+  "name": "OpenAI",
+  "sites": [
+    {
+      "id": "embj-OpenAI-site",
+      "name": "OpenAI",
+      "city": "San Francisco, CA",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://openai.com/careers/robotics-software-engineer/",
+  "positions": [
+    {
+      "externalId": "embj-OpenAI-1",
+      "title": "Robotics Software Engineer",
+      "siteId": "embj-OpenAI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://openai.com/careers/robotics-software-engineer/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-OpenAI-2",
+      "title": "Simulation Realism Engineer",
+      "siteId": "embj-OpenAI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://openai.com/careers/simulation-realism-engineer-san-francisco/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-OpenAI-3",
+      "title": "Simulation Environments Engineer",
+      "siteId": "embj-OpenAI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://openai.com/careers/simulation-environments-engineer/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-OpenAI-4",
+      "title": "Research Engineer, 3D & Multi-View Geometry",
+      "siteId": "embj-OpenAI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://openai.com/careers/research-engineer-3d-and-multi-view-geometry-san-francisco/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-OpenAI-5",
+      "title": "Software Engineer, Distributed Data Systems - Robotics",
+      "siteId": "embj-OpenAI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://openai.com/careers/software-engineer-distributed-data-systems-robotics-san-francisco/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

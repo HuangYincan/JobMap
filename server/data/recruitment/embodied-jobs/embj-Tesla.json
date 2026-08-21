@@ -1,0 +1,95 @@
+{
+  "slug": "embj-Tesla",
+  "source": "embodied-jobs",
+  "name": "Tesla",
+  "sites": [
+    {
+      "id": "embj-Tesla-site",
+      "name": "Tesla",
+      "city": "Palo Alto, CA",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://www.tesla.com/careers/search/job/reinforcement-learning-engineer-whole-body-controls-optimus--244485",
+  "positions": [
+    {
+      "externalId": "embj-Tesla-1",
+      "title": "Reinforcement Learning Engineer, Whole Body Controls, Optimus",
+      "siteId": "embj-Tesla-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.tesla.com/careers/search/job/reinforcement-learning-engineer-whole-body-controls-optimus--244485",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Tesla-2",
+      "title": "AI Engineer, Manipulation, Optimus",
+      "siteId": "embj-Tesla-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.tesla.com/careers/search/job/deep-learning-manipulation-engineer-tesla-bot-224501",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Tesla-3",
+      "title": "Reinforcement Learning Engineer, Policy, Optimus",
+      "siteId": "embj-Tesla-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.tesla.com/careers/search/job/reinforcement-learning-engineer-policy-optimus-222416",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Tesla-4",
+      "title": "AI Engineer, Vision & Foundation Models, Optimus",
+      "siteId": "embj-Tesla-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.tesla.com/careers/search/job/ai-engineer-vision-foundation-models-optimus-233307",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Tesla-5",
+      "title": "Machine Learning Infrastructure Simulation Engineer, Optimus",
+      "siteId": "embj-Tesla-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.tesla.com/careers/search/job/machine-learning-infrastructure-simulation-engineer-optimus-252374",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Tesla-6",
+      "title": "Internship, Robotics Modeling & Simulation Engineer, Optimus (Summer 2026)",
+      "siteId": "embj-Tesla-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.tesla.com/careers/search/job/internship-robotics-modeling-simulation-engineer-optimus-summer-2026-255615",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

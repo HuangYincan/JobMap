@@ -61,6 +61,162 @@
       "applyUrl": "https://recruit.inovance.com/#/campus/jobs",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "embj-汇川技术-1",
+      "title": "机器人固本运维工程师",
+      "siteId": "汇川技术-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/social/detail?jobAdId=a35586a4-9960-41c8-88e0-9061fcb96856",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-2",
+      "title": "机器人机械设计工程师",
+      "siteId": "汇川技术-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/social/detail?jobAdId=aed88afa-214b-4239-89ba-02ed3f15f020",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-3",
+      "title": "机器人算法工程师",
+      "siteId": "汇川技术-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/social/detail?jobAdId=c24af21b-136a-44c0-b174-5d32f7ddc6da",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-4",
+      "title": "机器人机械设计高级工程师",
+      "siteId": "汇川技术-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/social/detail?jobAdId=9aa9f1c8-9780-4f43-8c15-c69fafb17ccb",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-5",
+      "title": "高级软件架构师（机器人应用软件/解决方案架构）",
+      "siteId": "汇川技术-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/social/detail?jobAdId=dce0bbe4-d8ab-48b3-ba88-779c0fcd40eb",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-6",
+      "title": "高级软件架构师（机器人系统）",
+      "siteId": "汇川技术-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/social/detail?jobAdId=aefc836d-9dd6-4c1e-a276-fb6b0a84f9cb",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-7",
+      "title": "机器人算法工程师",
+      "siteId": "汇川技术-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/campus/detail?jobAdId=c27a133e-7faa-4cf5-81d2-c23ad5ff5be4",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-8",
+      "title": "机器人算法工程师（博士-人形机器人-强化学习）",
+      "siteId": "汇川技术-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/campus/detail?jobAdId=162f46f5-449c-4726-8167-971b072e65bc",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-9",
+      "title": "机器人算法工程师（博士-人形机器人）",
+      "siteId": "汇川技术-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/campus/detail?jobAdId=65a28816-36a0-4e17-8c04-0f9e836831da",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-10",
+      "title": "机械设计工程师（机器人",
+      "siteId": "汇川技术-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/campus/detail?jobAdId=265a9eb6-5a2b-402b-8d00-ef3b1a0eb981",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-11",
+      "title": "机械测试工程师",
+      "siteId": "汇川技术-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/campus/detail?jobAdId=e81b0e4a-9b41-455a-9acd-825f731ad72e",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-汇川技术-12",
+      "title": "维修工程师",
+      "siteId": "汇川技术-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/campus/detail?jobAdId=5dbb23d9-285c-42ac-9aad-0babd9e9d757",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "category": "35"

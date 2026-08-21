@@ -1,0 +1,30 @@
+{
+  "slug": "embj-北京市智源人工智能研究院",
+  "source": "embodied-jobs",
+  "name": "北京市智源人工智能研究院",
+  "sites": [
+    {
+      "id": "embj-北京市智源人工智能研究院-site",
+      "name": "北京市智源人工智能研究院",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://hub.baai.ac.cn/view/44950",
+  "positions": [
+    {
+      "externalId": "embj-北京市智源人工智能研究院-1",
+      "title": "联合培养博士项目",
+      "siteId": "embj-北京市智源人工智能研究院-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hub.baai.ac.cn/view/44950",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

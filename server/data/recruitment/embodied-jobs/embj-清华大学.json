@@ -1,0 +1,43 @@
+{
+  "slug": "embj-清华大学",
+  "source": "embodied-jobs",
+  "name": "清华大学",
+  "sites": [
+    {
+      "id": "embj-清华大学-site",
+      "name": "清华大学",
+      "city": "北京市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://postdoctor.tsinghua.edu.cn/",
+  "positions": [
+    {
+      "externalId": "embj-清华大学-1",
+      "title": "水木学者 - 计算机系/自动化系",
+      "siteId": "embj-清华大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://postdoctor.tsinghua.edu.cn/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-清华大学-2",
+      "title": "水木学者 - AI/机器人方向",
+      "siteId": "embj-清华大学-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://postdoctor.tsinghua.edu.cn/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

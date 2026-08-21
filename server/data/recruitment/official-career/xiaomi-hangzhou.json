@@ -1443,6 +1443,448 @@
       "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/campus/position/7671290338011056435/detail",
       "retrievedAt": "2026-08-20",
       "description": "1. 数据仓库设计和开发：根据业务需求设计和实施数据仓库模型，包括事实表和维度表的设计； 2. ETL开发：使用ETL工具进行数据的提取、转换和加载，确保数据的准确性和一致性； 3. 数据集成和处理：处理和集成来自多个数据源的大数据集，确保数据的完整性和一致性； 4. 数据建模：设计和实施数据建模解决方案，确保数据结构合理、规范且易于分析； 5. 数据质量：监控数据仓库系统告警，诊断和解决数据质量问题，提升质量保障； 6. 数据可视化：使用BI工具进行数据可视化开发，支持业务决策； 7. 跨团队协作：与数据科学家、分析师和业务部门合作，确保数据仓库系统满足业务需求。\n\n岗位要求:\n1. 计算机科学、大数据或相关专业本科及以上学历； 2. 熟悉数据仓库技术和概念，具备数据存储方法、数据集成和检索机制的基础知识； 3. 熟练使用SQL，能够编写基本查询，熟悉大数据技术并执行数据操作； 4. 了解ETL工具和数据建模技术； 5. 具备Python、Java、SQL编程技能者优先； 6. 了解大数据技术（如Hadoop、Spark、Hive、Flink）者优先； 7. 良好的团队合作能力，能够解决冲突并促进团队动态； 8. 优秀的沟通能力，能够与技术和非技术团队成员有效沟通； 9. 强烈的学习热情和主动性，能够快速掌握新技术和工具。"
+    },
+    {
+      "externalId": "embj-小米-1",
+      "title": "顶尖应届-Diffusion-based端到端算法工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215912629813357/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-2",
+      "title": "顶尖应届-Diffusion-based端到端算法工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215618936094829/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-3",
+      "title": "顶尖应届-世界模型端到端算法工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215886202519661/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-4",
+      "title": "顶尖应届-世界模型端到端算法工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215358336467053/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-5",
+      "title": "顶尖应届-云端 VLM/VLA 多模态大模型大模型算法工程师-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215332196696172/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-6",
+      "title": "顶尖应届-云端数据基座大模型工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215748851581037/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-7",
+      "title": "顶尖应届-人形机器人仿真驱动算法工程师-机器人事业部",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215435179917421/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-8",
+      "title": "顶尖应届-仿真算法工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7578791466316368164/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-9",
+      "title": "顶尖应届-具身基座VLA大模型工程师-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520216202611753068/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-10",
+      "title": "顶尖应届-具身基座VLA大模型研究员-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7507237713168302188/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-11",
+      "title": "顶尖应届-具身大模型数据工程师-XiaomiRobotics",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7624353848895637823/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-12",
+      "title": "顶尖应届-具身大模型算法研究员-XiaomiRobotics",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7624353963583883574/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-13",
+      "title": "顶尖应届-具身大模型训练推理工程师-XiaomiRobotics",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7624353849524537654/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-14",
+      "title": "顶尖应届-时空联合规划模型工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215748218126444/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-15",
+      "title": "顶尖应届-机器人具身智能算法工程师-机器人事业部",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7518973498065551469/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-16",
+      "title": "顶尖应届-机器人具身智能算法研究员-机器人事业部",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520214992697786477/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-17",
+      "title": "顶尖应届-机器人物理角色动画算法工程师-机器人事业部",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520214614627434604/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-18",
+      "title": "顶尖应届-机器人运动控制算法工程师（强化学习）-机器人事业部",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215332196991084/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-19",
+      "title": "顶尖应届-灵巧手控制算法工程师-机器人事业部",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520214762254155884/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-20",
+      "title": "顶尖应届-空间智能端到端算法工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215566139113580/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-21",
+      "title": "顶尖应届-端云协同多模态大模型算法工程师-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215253780709484/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-22",
+      "title": "顶尖应届-端到端控制算法工程师-机器人事业部",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520214959303196780/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-23",
+      "title": "顶尖应届-端到端算法研究员-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520433254606061676/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-24",
+      "title": "顶尖应届-自动驾驶VLA大模型工程师-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520216228628168812/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-25",
+      "title": "顶尖应届-自动驾驶VLA大模型研究员-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7507236104706850925/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-26",
+      "title": "顶尖应届-自动驾驶后端研发工程师-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520214976168214637/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-27",
+      "title": "顶尖应届-自动驾驶垂域大模型算法工程师-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215383790403692/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-28",
+      "title": "顶尖应届-自动驾驶算法优化工程师-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520214536944058477/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-29",
+      "title": "顶尖应届-视觉基础模型算法工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520216040878686316/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-30",
+      "title": "顶尖应届-视觉基础模型算法工程师-自动驾驶",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7520215694740537452/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-31",
+      "title": "顶尖应届-预测大模型工程师-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7507235021537149037/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-32",
+      "title": "顶尖应届-预测大模型工程师-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7507238408659615852/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-33",
+      "title": "顶尖应届-预测大模型算法研究员-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7507238831680176236/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-小米-34",
+      "title": "顶尖应届-预测大模型算法研究员-汽车",
+      "siteId": "xiaomi-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent/position/7507238831679914092/detail",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "tier": 5,

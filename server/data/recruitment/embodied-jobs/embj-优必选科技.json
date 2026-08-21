@@ -1,0 +1,30 @@
+{
+  "slug": "embj-优必选科技",
+  "source": "embodied-jobs",
+  "name": "优必选科技",
+  "sites": [
+    {
+      "id": "embj-优必选科技-site",
+      "name": "优必选科技",
+      "city": "深圳市",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "careerUrl": "https://ubtrobot.zhiye.com/social/jobs",
+  "positions": [
+    {
+      "externalId": "embj-优必选科技-1",
+      "title": "具身智能首席科学家",
+      "siteId": "embj-优必选科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ubtrobot.zhiye.com/social/jobs",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

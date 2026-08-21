@@ -42,6 +42,201 @@
       "status": "open",
       "applySource": "official",
       "applyUrl": "https://www.unitree.com/cn/career"
+    },
+    {
+      "externalId": "embj-宇树科技-1",
+      "title": "具身智能软件工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/2047604504966201344/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-2",
+      "title": "数据管线工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/2046858311420084224/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-3",
+      "title": "AI Infra 工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/2046857577249112064/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-4",
+      "title": "具身数据评估工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/2046858623123980288/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-5",
+      "title": "机器人测试工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1968168294171017216/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-6",
+      "title": "嵌入式软件工程师（Linux）",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1569898663562444800/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-7",
+      "title": "嵌入式软件开发工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1692020901257674752/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-8",
+      "title": "深度强化学习算法工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1692018892890701824/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-9",
+      "title": "C++开发工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1704702421768339456/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-10",
+      "title": "机械工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1526097908544307200/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-11",
+      "title": "机器人运动控制算法工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1526050171207548928/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-12",
+      "title": "嵌入式硬件工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1570238458192986112/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-13",
+      "title": "AI算法工程师（大模型）",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1692021510983647232/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-14",
+      "title": "高级机电控制工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1570236064524664832/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-宇树科技-15",
+      "title": "激光SLAM算法工程师",
+      "siteId": "unitree-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.unitree.com/cn/position/1569900302872608768/",
+      "retrievedAt": "2026-08-21"
     }
   ],
   "tier": 6,
