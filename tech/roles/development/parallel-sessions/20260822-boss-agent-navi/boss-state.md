@@ -9,14 +9,14 @@
 - milestone_link: 无(dev 目标)
 
 ## stage
-current: DISPATCH(navi)
+current: DONE(终态)✅
 updated_at: 2026-08-22
-dev_head_note: dev = f6604e2;worktree 已切出
+dev_head_note: dev = 7a44e75;navi 已合(c7e5625),3005 已重启新构建
 
 ## workstreams
 | ws | branch | worktree | prompt | report | status | last_tip | dispatched_at | finished_at | verdict |
 |---|---|---|---|---|---|---|---|---|---|
-| navi | feature/agent-navi-links | /Users/acccan/dm-wt-agent-navi | prompts/ws-navi.md | reports/ws-navi.md | RUNNING | f6604e2 | 2026-08-22 | - | - |
+| navi | feature/agent-navi-links | (已清理) | prompts/ws-navi.md | reports/ws-navi.md | MERGED | e08bee1 | 2026-08-22 | 2026-08-22 | 门禁 PASSED(1141 pass);已并入 dev(c7e5625) |
 
 ## merge_order
 1. feature/agent-navi-links
