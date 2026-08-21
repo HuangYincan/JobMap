@@ -1344,6 +1344,7 @@ test('mapCanvas 层级隔离契约(z-index:0 + isolation:isolate + 厂商版权�
   assert.match(css, /\.mapCanvas :global\(\.BMap_cpyCtrl\)/);
   assert.match(css, /\.mapCanvas :global\(\.BMap_omView\)/);
   assert.match(css, /\.mapCanvas :global\(\.BMap_zoomCtrl\)/);
+  assert.match(css, /img\[src\*="logo_hd"\]/, '百度左下角 logo 水印必须由 map-shell CSS 隐藏');
   // UI 层叠审计(相对关系保持):sidebar(5)/topTools(5) 低于 mapControls(10),
   // mapControls(10) 低于 AgentBall(11)——所有 UI 层高于 mapCanvas(0)
   const sidebarAt = css.indexOf('.sidebar {');
