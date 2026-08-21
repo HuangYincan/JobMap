@@ -327,7 +327,10 @@ test('回退成功 → engine/search 状态随实际挂载引擎更新(首引擎
 test('回退也全部失败 → 保持空视图 + console.warn(不 setEngine/setView)', () => {
   const hook = src('hooks/use-map-engine.ts');
   // catch 只 warn:不落地任何视图/引擎状态,调用方回退 CSS fallback 地图
-  assert.match(hook, /\.catch\(\(err\) => \{\s*console\.warn\("\[use-map-engine\] map engine load\/createView failed:", err\);\s*\}\);/);
+  assert.match(hook, /\.catch\(\(err\) => \{\s*console\.warn\("\[use-map-engine\] map engine load\/createView failed:", err\);/);
+  // 失败分类可见化(2026-08-22 ws-c,bug 3):引擎错误携带 code/stage/guidance
+  // 时输出结构化诊断 + 可操作指引(挂载路径 mount.ts 原样上抛,分类属性可达)
+  assert.match(hook, /\[use-map-engine\] 引擎加载失败分类:/);
 });
 
 test('挂载/回退路径不写偏好(偏好由手动切换专属;失败不持久化)', () => {

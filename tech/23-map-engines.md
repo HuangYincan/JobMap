@@ -754,3 +754,99 @@ usePOIMap 接线):
   重绑的源码契约断言(总线订阅 + effect 依赖);
 - 相关回归:switch 18/18、hooks-contracts + tencent + lifecycle + mount +
   map-markers + marker-visibility 104/104。
+
+## ws-c 回填:百度加载失败诊断 + 滚轮缩放 + 标记锚点(2026-08-22,fix/baidu-diagnostics)
+
+> bug 3「百度为什么还是加载不了」:boss 环境 Playwright 实测百度正常(bmapPresent=true、
+> canvas 渲染、无错误)——排除代码回归,指向用户环境。2026-08-22 boss 补充证据:
+> 用户 console 抓到确切根因 `GET ...getscript... net::ERR_BLOCKED_BY_CLIENT`
+> —— 请求被**浏览器客户端拦截**(广告拦截/隐私扩展),非服务器拒绝、非 key 问题。
+> 本 ws 为引擎失败路径加分类诊断 + 可操作指引(console 结构化输出),核查/修复
+> 脚本加载幂等性,并追加 bug 6(滚轮缩放)+ bug 7(标记锚点/样式)修复。
+
+### 失败分类(baidu-engine.ts `failBaidu`,错误携带 code/stage/guidance)
+
+| code | 阶段 | 判定依据 | 可操作指引(文案要点) |
+|---|---|---|---|
+| `not-configured` | load | NEXT_PUBLIC_BAIDU_AK 缺失 | 配置 .env.local + 重启 dev server |
+| `script-load-failed` | load | script.onerror 且 Resource Timing **有**该 URL entry(网络/DNS/HTTP 4xx,含 referer 被拒) | 硬刷新(Cmd+Shift+R)清旧 bundle;确认访问地址为 localhost:3000;lbsyun referer 白名单;指引同时覆盖 ERR_BLOCKED_BY_CLIENT 分支 |
+| `script-blocked-by-client` | load | script.onerror 且 Resource Timing **无**该 URL entry(请求未发出 = 被扩展/拦截器拦,console 报 ERR_BLOCKED_BY_CLIENT) | 将 api.map.baidu.com 加入拦截器白名单或禁用扩展后刷新;无痕窗口快速验证 |
+| `namespace-not-ready` | load | 脚本已执行(HTTP 200)但 BMapGL.Map 2s 内未就绪(AK 无效/服务禁用/半载占位 BMapGL={} 永不补全) | 硬刷新;lbsyun 确认 AK 有效、JS 服务启用、referer 白名单 |
+| `map-ready-timeout` | createView | Map 创建成功但 1.5s 无渲染信号(AK 被禁用/瓦片被拒) | 确认 AK 服务状态与 referer 白名单;非 localhost:3000 会被拒;看 console 厂商错误 |
+| `unclassified` | 任一 | 兜底 | 看 console 厂商错误后重试,回报错误原文 |
+
+- **ERR_BLOCKED_BY_CLIENT 探测的诚实局限**:浏览器不向 JS 暴露网络错误码 → 用
+  Resource Timing 启发式(被拦请求从未发出 → 无 entry;网络失败有 entry 时长≈0);
+  performance 被清空/不可用 → 保守归 `script-load-failed`(指引文本含拦截分支);
+  同 URL 历史成功 entry 存在时可能误判为网络失败(保守方向);
+- **无 toast/alert 共享基建**(已核查:account-panel toast 为局部 demo note,map-shell
+  注明「后续可接 toast 提示、不新增 UI」)→ 按任务书「无则仅在 console 输出结构化
+  错误」:`console.error('[map-engine] baidu 加载失败分类', {code, stage, detail,
+  guidance, cause})` + use-map-engine 两个 catch(挂载/切换)补输出分类;不新增 UI 组件;
+- message 保留原始细节文本(「命名空间未就绪」「BMapGL 地图就绪超时」等)——switch
+  回滚契约与既有断言按子串匹配,不得改写。
+
+### 加载幂等性核查结论 + 缺陷修复(script-loader + baidu load 路径)
+
+- **URL 缓存幂等**:同 URL 并发/重复调用共享同一 promise,只注入一次;onerror 失败
+  移除标签 + 清缓存可重试(script-loader 既有语义,核查通过);
+- **命名空间短路**:`window.BMapGL` truthy → load 直接成功(切走再切回零注入,测试钉住);
+- **就绪轮询有界**:waitForBaiduNamespace 40×50ms=2s 封顶后静默返回,由调用方抛
+  「命名空间未就绪」——**不永久挂起**(既有测试钉住;「script 加载成功但 AK 拒绝」
+  场景 = 有界 2s 后分类抛错,不卡轮询);
+- **发现并修复的缺陷**:脚本加载成功(HTTP 200)但命名空间未就绪(AK 无效/半载)时
+  —— loadScript 的 URL 缓存留下**已 resolve 的 promise** + 残缺/占位命名空间
+  (`BMapGL={}` truthy)→ 下次 load 被「URL 缓存 + 命名空间 truthy」双重短路,
+  **不再注入脚本**,每次切换白烧 2s 轮询后失败且永不恢复(直到整页刷新)。
+  修复:模块级 `baiduScriptLoadBroken` 置位 → 下次 load 先恢复现场(删命名空间 +
+  `resetScriptLoader()` 清 URL 缓存)再重注入——重试即重新探测 AK 有效性;
+- 恢复路径复用 `resetScriptLoader()`(其注释标注「测试用」,本处为生产恢复场景的
+  刻意复用,代码注释已显式说明;会清三家缓存,但仅在百度上次加载失败后触发,且
+  各引擎 load 前有命名空间短路,重复注入窗口极小、无害);
+- **不修复的边界**:createView 就绪超时后重试(命名空间健康,AK 问题在服务端)
+  ——重试会再次 1.5s 超时并给出分类指引,属预期(有界、有指引,不挂起)。
+
+### 用户端排查清单(bug 3 回填,boss 假设 + 证据逐条落地)
+
+用户在「百度加载不了」时依次:
+
+1. **看 console 该 getscript 请求**:若显示 `net::ERR_BLOCKED_BY_CLIENT` → 广告拦截/
+   隐私扩展拦了脚本(boss 坐实的用户根因)→ api.map.baidu.com 加白名单或禁用扩展,
+   无痕窗口快速验证;
+2. **硬刷新**(Cmd+Shift+R):清旧 JS bundle(旧 bundle 无就绪修复);
+3. **核对访问地址**:必须是 `http://localhost:3000`——127.0.0.1/局域网 IP/其他端口
+   不在百度 referer 白名单内,瓦片/SDK 被拒;
+4. **重启 dev server**:`.env.local` 改过 NEXT_PUBLIC_BAIDU_AK 后旧进程未加载新 key;
+5. 仍失败 → console 应有 `[map-engine] baidu 加载失败分类 { code, stage, detail,
+   guidance }` 结构化输出,按 code 对照上表操作;厂商自身错误(APP Referer校验失败等)
+   一并回报。
+
+### bug 6:滚轮缩放显式启用(2026-08-22 SDK v1.0 源码核实)
+
+- Map config 默认 `enableWheelZoom: !H.apiVersionIsGL()` → **GL 恒 false**(经典 BMap
+  恒 true);mouseWheel 处理器 `if(!mw.config.enableWheelZoom){return}` 静默忽略 →
+  用户「百度无法中间滚动视角」根因;
+- 修复:createView 构造后调 `map.enableScrollWheelZoom()`(置 config.enableWheelZoom=true;
+  全景分支同名方法不影响 Map);API 缺失静默(旧 SDK 兼容,降级为不可用);
+- 测试:FakeMap 记录调用 + 缺失不抛。
+
+### bug 7:标记锚点/样式对齐(2026-08-22 SDK v1.0 源码核实:getscript 本体 +
+marker/mapgl 模块,均为实包抓取)
+
+- **Marker 构造 `offset` 选项不参与渲染定位**(仅 getPoint/infoWindow 数学用;
+  marker 模块 `_getPixPos` 与 mapgl 纹理 quad 均不含它)→ 适配层不再传入;
+- **定位公式**:GL 纹理 quad `imageTopLeft = 屏幕位 - icon.anchor`(lA 顶点
+  (-aw, ah-h),mapgl 模块按 icon.anchor 建 quad);DOM content(msTarget)
+  `= 屏幕位 + marker.offset - icon.anchor`(`_getPixPos`)→ 双路径一致要求
+  **icon.anchor = -契约 offset**(imageTopLeft = 屏幕位 + offset,AMap 同款契约);
+- **Icon 的 anchor === offset 构造选项**,默认 (w/2,h/2) = 图标中心(lA 构造源码);
+- **GL 无内容纹理**:setContent 渲染进 msTarget DOM(innerHTML,marker 模块);内容
+  标记必须配**透明 1×1 图标扛锚点**——否则默认红图钉纹理照渲 + anchor(10,25)
+  偏置 → 用户「样式不对 + 偏移」症状;点击经 msTarget 子元素冒泡可达;
+- 修复(仅 baidu-engine.ts createMarker):icon 路径 `new Icon(src, Size(w,h),
+  {offset: Size(-ox,-oy)})`;content 路径同款透明 1×1 图标 + setContent;锚点缺省
+  (0,0)(左上角,AMap 无 offset 语义一致)——图钉 [-16,-40]→anchor(16,40) 底尖、
+  徽章 [-20,-20]→anchor(20,20) 中心、聚合 [-s/2,-s/2]→anchor(s/2,s/2) 中心,均与
+  AMap/TMap 契约对齐;
+- 测试:icon.anchor = -offset(含缺省 (0,0))、content 透明锚点图标、Icon 构造失败
+  降级 warn 不抛;既有「Marker 构造 offset 透传」断言按 SDK 事实改为「不再传」。

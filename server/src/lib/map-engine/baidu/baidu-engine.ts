@@ -38,7 +38,7 @@ import type {
   MapViewState,
 } from '../types.ts';
 import { bd09ToGcj02, gcj02ToBd09 } from '../coord-utils.ts';
-import { loadScript } from '../script-loader.ts';
+import { loadScript, resetScriptLoader } from '../script-loader.ts';
 import type { ScriptConfig, ScriptInjection } from '../script-loader.ts';
 
 /** 百度 GL 全局命名空间名(与 engine-registry 描述一致) */
@@ -72,6 +72,116 @@ const BAIDU_MAP_READY_TIMEOUT_MS = 1500;
  */
 export const BAIDU_SCRIPT_URL = (ak: string): string =>
   `https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=${encodeURIComponent(ak)}`;
+
+/** 透明 1×1 GIF data URI:content 标记的锚点图标(GL 无内容纹理,marker 模块
+ * setContent 渲染进 msTarget DOM;锚点必须由图标扛,见 createMarker 注释) */
+const BAIDU_BLANK_ICON_DATA_URI =
+  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+// ------------------------------------------------------------
+// 失败分类与可操作指引(bug 3 用户端「百度加载不了」诊断,2026-08-22 ws-c)
+// 用户端加载不了 ≠ 代码回归(boss Playwright 实测正常):按失败阶段分类给出
+// 可操作指引(硬刷新 / localhost:3000 / referer 白名单 / dev server 重启)。
+// 分类依据诚实局限:离线沙箱无法核实 invalid-AK 的 getscript 响应形态,不做
+// SDK 内部错误标记探测(无源码依据),保守按「失败阶段 + 命名空间/渲染信号」
+// 分类;指引提示用户查看浏览器 console 的厂商原始错误作为补充通道。
+// ------------------------------------------------------------
+
+/** 百度引擎 load/createView 失败分类码(错误携带 + console 结构化输出) */
+export type BaiduLoadErrorCode =
+  | 'not-configured' // NEXT_PUBLIC_BAIDU_AK 缺失(env 问题)
+  | 'script-load-failed' // script.onerror:网络/DNS/HTTP 失败(含 referer 被拒的 4xx)
+  | 'script-blocked-by-client' // 请求被浏览器客户端拦截(广告拦截/隐私扩展,console 报 ERR_BLOCKED_BY_CLIENT)
+  | 'namespace-not-ready' // 脚本已执行(HTTP 200)但 BMapGL.Map 未就绪:AK 无效/服务禁用/半载
+  | 'map-ready-timeout' // Map 创建成功但渲染未就绪:AK 被禁用/瓦片被拒
+  | 'unclassified';
+
+/** 失败阶段 */
+export type BaiduFailureStage = 'load' | 'createView';
+
+/** 分类 → 可操作指引(用户可直接照做;覆盖 bug 3 排查清单四项假设 +
+ * 2026-08-22 boss 坐实的 ERR_BLOCKED_BY_CLIENT 拦截根因) */
+const BAIDU_FAILURE_GUIDANCE: Record<BaiduLoadErrorCode, string> = {
+  'not-configured':
+    '在 server/.env.local 配置 NEXT_PUBLIC_BAIDU_AK 后重启 dev server',
+  'script-load-failed':
+    '脚本拉取失败(网络/广告拦截/referer 被拒):若 console 该请求显示 net::ERR_BLOCKED_BY_CLIENT → 浏览器扩展/广告拦截器拦截,将 api.map.baidu.com 加入白名单或禁用拦截扩展;否则 1) 硬刷新(Cmd+Shift+R)清旧 bundle;2) 确认访问地址为 http://localhost:3000(非 localhost 会被百度 referer 白名单拒绝);3) lbsyun.console.baidu.com 的 referer 白名单加入当前访问地址;4) 确认改过 .env.local 后 dev server 已重启',
+  'script-blocked-by-client':
+    '浏览器扩展/广告拦截器拦截了百度脚本(console 该请求显示 net::ERR_BLOCKED_BY_CLIENT,2026-08-22 用户真机坐实):将 api.map.baidu.com 加入拦截器白名单/允许列表,或禁用拦截扩展后刷新;可用无痕窗口(默认无扩展)快速验证',
+  'namespace-not-ready':
+    '脚本已加载但 BMapGL 未就绪:多为 AK 无效/服务被禁用或脚本半载——1) 硬刷新(Cmd+Shift+R);2) lbsyun.console.baidu.com 确认 AK 有效、JS 服务已启用、referer 白名单含当前访问地址;3) 查看浏览器 console 的厂商错误信息',
+  'map-ready-timeout':
+    '地图创建成功但渲染未就绪:AK 被禁用或瓦片被拒(非 localhost:3000 访问时瓦片/SDK 会被拒)——确认 AK 服务状态与 referer 白名单;查看浏览器 console 厂商错误(如 APP Referer校验失败)',
+  unclassified:
+    '未知失败:查看浏览器 console 的厂商错误信息后重试;仍失败请回报错误原文',
+};
+
+/** 探测「客户端拦截」(广告拦截/隐私扩展,Chrome console 报 ERR_BLOCKED_BY_CLIENT):
+ * 被拦截的请求**从未发出** → Resource Timing 里没有该 URL 的 entry;网络层失败
+ * (断网/DNS/连接拒绝)会留下 entry(时长≈0)→ 用 entry 存在性区分。
+ * 诚实标注的局限:performance 被清空/不可用时无法区分(回退 script-load-failed,
+ * 其指引文本已同时覆盖拦截分支);同一 URL 历史成功 entry 存在时可能误判为
+ * 网络失败(保守方向:归网络类,指引含拦截分支)。
+ * 2026-08-22 boss 证据:用户 console `GET ...getscript... net::ERR_BLOCKED_BY_CLIENT`
+ * —— 浏览器扩展拦截,非服务器拒绝、非 key 问题;Playwright 干净浏览器加载正常。 */
+function isLikelyClientBlocked(url: string): boolean {
+  try {
+    const perf = globalThis.performance;
+    if (typeof perf?.getEntriesByType !== 'function') return false;
+    const entries = perf.getEntriesByType('resource') as Array<{ name?: string }>;
+    return !entries.some((entry) => entry.name?.includes(url));
+  } catch {
+    return false;
+  }
+}
+
+/** 结构化失败:Error + code/stage/guidance 属性(引擎层 failBaidu 抛出;mount
+ * 路径原样上抛、分类可达 hook;switch 路径被 switch.ts 重包装,分类仅留在
+ * 引擎层 console 输出) */
+export interface BaiduFailure extends Error {
+  code: BaiduLoadErrorCode;
+  stage: BaiduFailureStage;
+  guidance: string;
+}
+
+/** 构造并抛出带分类/指引的失败:console.error 结构化输出 + message 保留原始
+ * 细节文本(switch 回滚契约与既有测试按子串匹配,不得改写) */
+function failBaidu(
+  code: BaiduLoadErrorCode,
+  stage: BaiduFailureStage,
+  detail: string,
+  cause?: unknown,
+): never {
+  const err = new Error(`[map-engine] baidu ${stage} 失败(${code}):${detail}`) as BaiduFailure;
+  err.code = code;
+  err.stage = stage;
+  err.guidance = BAIDU_FAILURE_GUIDANCE[code];
+  if (cause !== undefined) (err as { cause?: unknown }).cause = cause;
+  console.error('[map-engine] baidu 加载失败分类', {
+    code,
+    stage,
+    detail,
+    guidance: err.guidance,
+    cause: cause instanceof Error ? cause.message : cause,
+  });
+  throw err;
+}
+
+/** 脚本加载失败标记(幂等恢复,2026-08-22 ws-c):load 中脚本加载成功(HTTP 200)
+ * 但命名空间未就绪时置位——loadScript 的 URL 缓存留下已 resolve 的 promise,
+ * 残缺/占位命名空间(BMapGL={} truthy)又命中 loadScript 全局短路 → 重试被
+ * 双重绕过、不再注入,每次切换白烧 2s 轮询后失败且永不恢复。置位后下次
+ * load 先恢复现场再重注入(重试即重新探测 AK 有效性)。 */
+let baiduScriptLoadBroken = false;
+
+/** 恢复脚本加载现场:删残缺/占位命名空间 + 清 loader URL 缓存 → 下次 load
+ * 重新注入。resetScriptLoader 清三家缓存,仅在本引擎上次加载失败后调用——
+ * 并发窗口极小,且各引擎 load 前有命名空间短路,重复注入无害(script-loader
+ * 注释标注「测试用」,本处为生产恢复场景的刻意复用,见 tech/23 ws-c 回填)。 */
+function recoverBaiduScriptLoad(): void {
+  delete (globalThis as Record<string, unknown>)[BAIDU_NAMESPACE];
+  resetScriptLoader();
+}
 
 // ------------------------------------------------------------
 // BMapGL 脚本注入(Baidu 专用同步注入器 + 就绪轮询)
@@ -200,6 +310,13 @@ interface BMapInstance {
   panTo(center: BPoint): unknown;
   setBounds(bounds: BBounds): unknown;
   setMapType(mapType: unknown): unknown;
+  /**
+   * 滚轮缩放开关(2026-08-22 SDK 源码核实):Map config 默认
+   * `enableWheelZoom: !H.apiVersionIsGL()` → GL 恒 false(经典 BMap 恒 true),
+   * mouseWheel 处理器 `if(!mw.config.enableWheelZoom){return}` 静默忽略 →
+   * **BMapGL 默认禁用滚轮缩放**,必须显式 enableScrollWheelZoom() 启用。
+   */
+  enableScrollWheelZoom?(): unknown;
   /** BMapGL 2.0 官方就绪回调注册(2026-08-22 SDK 源码核实:**v1.0 getscript
    * 不存在此 API**,0 处命中——保留仅作升级兼容,真实就绪信号见
    * BAIDU_READY_EVENTS;一次性回调,无需解绑) */
@@ -247,7 +364,7 @@ interface BMapGLNamespace {
   Point: new (lng: number, lat: number) => BPoint;
   Size: new (width: number, height: number) => BSize;
   Bounds: new (southWest: BPoint, northEast: BPoint) => BBounds;
-  Icon?: new (url: string, size: BSize) => unknown;
+  Icon?: new (url: string, size: BSize, opts?: Record<string, unknown>) => unknown;
   ScaleControl?: new () => unknown;
   PlaceSearch?: new (opts: Record<string, unknown>) => BPlaceSearch;
   Geocoder?: new () => BGeocoder;
@@ -528,24 +645,60 @@ class BaiduMapView implements MapView {
 
   createMarker(opts: MapMarkerOptions): MapMarker {
     const bd = gcj02ToBd09(opts.position.lng, opts.position.lat);
+    // 锚点语义(2026-08-22 SDK v1.0 源码核实:getscript 本体 + marker/mapgl 模块):
+    // - **Marker 构造 offset 选项不参与渲染定位**(仅 getPoint/infoWindow 数学
+    //   用;marker 模块 _getPixPos 与 mapgl 纹理 quad 均不含它)→ 不再传入;
+    // - 定位公式:GL 纹理 quad `imageTopLeft = 屏幕位 - icon.anchor`(lA 顶点
+    //   (-aw, ah-h);mapgl 模块按 icon.anchor 建 quad);DOM content(msTarget)
+    //   `= 屏幕位 + marker.offset - icon.anchor`(_getPixPos)→ 双路径一致
+    //   要求 **icon.anchor = -契约 offset**(imageTopLeft = 屏幕位 + offset,
+    //   AMap 同款契约:content/icon 左上角相对屏幕位的偏移);
+    // - Icon 的 anchor === offset 构造选项,默认 (w/2,h/2) = 图标中心(lA 源码);
+    // - GL 无内容纹理:setContent 渲染进 msTarget DOM(innerHTML,marker 模块),
+    //   内容标记必须配**透明 1×1 图标扛锚点**——否则默认红图钉纹理照渲 +
+    //   anchor(10,25) 偏置 → 「样式不对 + 偏移」(bug 7 用户症状);
+    // - 点击:marker 模块把 click 绑在 msTarget 上,内容子元素事件冒泡可达。
     const markerOpts: Record<string, unknown> = {};
-    if (opts.offset) markerOpts.offset = new this.ns.Size(opts.offset[0], opts.offset[1]);
     if (opts.zIndex !== undefined) markerOpts.zIndex = opts.zIndex;
     const raw = new this.ns.Marker(new this.ns.Point(bd.lng, bd.lat), markerOpts);
     if (opts.content !== undefined) raw.setContent?.(opts.content);
     if (opts.onClick) raw.addEventListener?.('click', opts.onClick);
-    // icon 规格(契约)→ BMapGL.Icon(官方构造:new BMapGL.Icon(url, size, opts?);
-    // size 为必传第二参 → 缺省兜底 BMapGL 默认 marker 尺寸 21x21)
+    // 契约 offset [x,y] → BMapGL Icon anchor = (-x, -y)(锚点从图标左上角
+    // 量起;缺省 (0,0) = 左上角,与 AMap 无 offset 语义一致)
+    const ax = opts.offset ? -opts.offset[0] : 0;
+    const ay = opts.offset ? -opts.offset[1] : 0;
     if (opts.icon) {
+      // icon 规格(契约)→ BMapGL.Icon(url, size, { offset: anchor });size 为
+      // 必传第二参 → 缺省兜底 BMapGL 默认 marker 尺寸 21x21
       if (typeof raw.setIcon === 'function' && typeof this.ns.Icon === 'function') {
         const [w, h] = opts.icon.size ?? [21, 21];
         try {
-          raw.setIcon(new this.ns.Icon(opts.icon.src, new this.ns.Size(w, h)));
+          raw.setIcon(
+            new this.ns.Icon(opts.icon.src, new this.ns.Size(w, h), {
+              offset: new this.ns.Size(ax, ay),
+            }),
+          );
         } catch (err) {
           console.warn('[map-engine] BMapGL Icon 构造失败,图标降级', err);
         }
       } else {
         console.warn('[map-engine] BMapGL Icon/setIcon 不可用,图标降级');
+      }
+    } else if (opts.content !== undefined) {
+      // content 标记(图钉/徽章):GL 无内容纹理 → 透明 1×1 图标扛锚点(见上
+      // 注释),内容经 msTarget DOM 渲染,位置 = 屏幕位 + 契约 offset
+      if (typeof raw.setIcon === 'function' && typeof this.ns.Icon === 'function') {
+        try {
+          raw.setIcon(
+            new this.ns.Icon(BAIDU_BLANK_ICON_DATA_URI, new this.ns.Size(1, 1), {
+              offset: new this.ns.Size(ax, ay),
+            }),
+          );
+        } catch (err) {
+          console.warn('[map-engine] BMapGL content 锚点图标构造失败,位置可能偏移', err);
+        }
+      } else {
+        console.warn('[map-engine] BMapGL Icon/setIcon 不可用,content 标记锚点无法对齐');
       }
     }
     this.map.addOverlay?.(raw); // BMapGL 覆盖物需 addOverlay 上地图
@@ -919,21 +1072,44 @@ class BaiduEngine implements MapEngine {
     if (this.isLoaded()) return;
     const ak = process.env.NEXT_PUBLIC_BAIDU_AK?.trim();
     if (!ak) {
-      throw new Error(`[map-engine] baidu 未配置 ${BAIDU_KEY_VAR}`);
+      failBaidu('not-configured', 'load', `未配置 ${BAIDU_KEY_VAR}`);
+    }
+    // 幂等恢复(2026-08-22 ws-c 核查结论):上次「脚本已加载但命名空间未就绪」
+    // 失败后,URL 缓存留有已 resolve 的 promise + 残缺/占位命名空间 truthy
+    // 短路 → 重试不注入、只白烧 2s 轮询 → 每次切换都失败且永不恢复。恢复
+    // 现场后重注入(重试即重新探测 AK 有效性)。
+    if (baiduScriptLoadBroken) {
+      baiduScriptLoadBroken = false;
+      recoverBaiduScriptLoad();
     }
     // 同步注入(async=false + head 最前)直连 getscript 本体:getscript 零
     // document.write(2026-08-22 实测),同步执行保证 onload 即完整命名空间;
     // 不用默认 async 注入器(AMap/TMap 场景)与厂商 callback 参数。
-    await loadScript(
-      { url: BAIDU_SCRIPT_URL(ak), globalVar: BAIDU_NAMESPACE },
-      { inject: injectBaiduScript },
-    );
+    try {
+      await loadScript(
+        { url: BAIDU_SCRIPT_URL(ak), globalVar: BAIDU_NAMESPACE },
+        { inject: injectBaiduScript },
+      );
+    } catch (err) {
+      // 客户端拦截判定(bug 3,boss 证据 2026-08-22):onerror 的底层错误码
+      // (ERR_BLOCKED_BY_CLIENT)浏览器不暴露给 JS → 用 Resource Timing 启发式
+      // 区分「请求未发出(被拦截)」与「网络层失败(有 entry)」;无 performance
+      // 时保守归 script-load-failed(其指引文本已含拦截分支)
+      if (isLikelyClientBlocked(BAIDU_SCRIPT_URL(ak))) {
+        failBaidu('script-blocked-by-client', 'load', String((err as Error)?.message ?? err), err);
+      }
+      failBaidu('script-load-failed', 'load', String((err as Error)?.message ?? err), err);
+    }
     // 轮询就绪(带超时):onload 后命名空间可能残缺(脚本异常/半载)——
     // 就绪轮询兜底,超时抛错(switch 回滚契约依赖该错误文案)
     await waitForBaiduNamespace();
     if (!baiduNamespaceReady()) {
-      throw new Error('[map-engine] BMapGL 脚本加载完成但命名空间未就绪');
+      // 置位:下次 load 必须重新注入(见 recoverBaiduScriptLoad),否则被
+      // 「URL 缓存 + 命名空间 truthy」双重短路,永不恢复
+      baiduScriptLoadBroken = true;
+      failBaidu('namespace-not-ready', 'load', 'BMapGL 脚本加载完成但命名空间未就绪');
     }
+    baiduScriptLoadBroken = false;
     // 包装器第二支 document.write 的等价物(控件样式;幂等,失败静默)
     injectBaiduCss();
   }
@@ -941,12 +1117,21 @@ class BaiduEngine implements MapEngine {
   async createView(opts: MapViewCreateOptions): Promise<MapView> {
     const ns = baiduNamespace();
     if (!ns) {
-      throw new Error('[map-engine] baidu BMapGL 未就绪:先调用 load()');
+      failBaidu('unclassified', 'createView', 'BMapGL 未就绪:先调用 load()');
     }
     const map = new ns.Map(opts.container);
     // 默认控件 DOM 防御(BMapGL 同步建 DOM,构造后立即隐藏 zoom/指北针;
     // 版权由 map-shell CSS 隐藏;有/无控件 API 均不抛)
     hideBaiduDefaultControls(map);
+    // 滚轮缩放显式启用(bug 6,2026-08-22 用户反馈「百度无法中间滚动视角」;
+    // SDK 源码核实:Map config 默认 enableWheelZoom = !H.apiVersionIsGL() →
+    // GL 恒 false,mouseWheel 处理器 if(!config.enableWheelZoom){return} 静默
+    // 忽略;enableScrollWheelZoom() 置 true;API 缺失静默(旧 SDK 兼容))
+    try {
+      (map as BMapInstance & { enableScrollWheelZoom?: () => unknown }).enableScrollWheelZoom?.();
+    } catch {
+      // 启用失败静默:滚轮缩放降级为不可用(不影响底图渲染)
+    }
     // **先应用相机,再等就绪**(2026-08-22 SDK 源码核实的 v1.0 GL 时序):
     // GL 构造器跳过默认视图初始化(仅非 GL 分支 centerAndZoomIn 默认中心),
     // 底图图层在 centerAndZoomIn 内才创建(`if(!this.loaded){_addTileLayer}`
@@ -973,7 +1158,9 @@ class BaiduEngine implements MapEngine {
       } catch {
         // 销毁失败不阻断抛错语义(容器由回滚视图接管)
       }
-      throw err;
+      // 分类输出(AK 被禁用/瓦片被拒):message 保留「BMapGL 地图就绪超时」
+      // 原文(switch 回滚契约 + 既有断言按子串匹配)
+      failBaidu('map-ready-timeout', 'createView', String((err as Error)?.message ?? err), err);
     }
     const view = new BaiduMapView(map, ns, this);
     view.setStyle(opts.style);
