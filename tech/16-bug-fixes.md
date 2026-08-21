@@ -1121,3 +1121,41 @@ city=成都 但坐标=杭州 被并入成都组);徽章 N 按池内残留行计�
 **验证**:全量 npm test / typecheck / docs-check / git diff --check 绿;实跑 import 需
 DB(工具禁跑),boss 合并后统一跑 `import:seed:apply` + audit 验证。
 
+## 2026-08-22: 收藏 toggle 不再跳视角——相机动作与状态机移除(saved-layer-nofly)
+
+**症状**:打开收藏图层时视角跳转——toggle 打开分支执行
+`overlayBounds(overlayPois)` + `map.setBounds(收藏外接框)`(bbf1e91「fit its
+pins」引入),相机被程序化移动 fit 到收藏点外接框。用户(2026-08-22)明确指示:
+**打开/关闭收藏图层相机完全不动**。
+
+**决策(用户指示,硬性)**:打开 = 只切换 pin 可见性(收藏点显示、普通 POI
+隐藏)+ Explore 列表切「我的收藏」(互斥语义,2026-08-22 已落地);关闭 =
+恢复搜索管线 pin 与列表,秒恢复(池只增不删,沿用可见性切换,不重查)。
+
+**修复**(`fix/saved-layer-nofly`):
+- **删相机动作**:`use-saved-layer.ts` toggle 打开分支的 `overlayBounds` +
+  `map.setBounds` 与状态机置位全部移除——toggle 现在只做登录门控 → 写 pref →
+  翻转状态;deps 移除 `mapInstance` / `savedCameraSyncRef`。
+- **状态机退役**:「收藏相机同步」状态机(`lib/saved-camera-sync.ts`,ws1
+  saved-overlay-wipe 结构性抑制,替代 500ms 时间窗补丁)的唯一输入源就是
+  toggle 的 setBounds——输入源删除后状态机成为死代码,全部消费者一并移除:
+  `use-work-viewport.ts` onViewChange 的同步消费/再导出、`map-shell.tsx`
+  syncView 的 distance 圆心冻结与 ref 接线。消费者排查结论:无引擎切换/其他
+  fit 调用等其余输入源,可整体移除。模块降级为零导出退役桩(物理删除被
+  worker 沙箱禁止,由 boss 合并时 git rm 收尾)。
+- **保留项**:「空批次不置空 catalog」加固(`use-work-viewport.ts` domain
+  onBatch 空批次直接 return,独立于状态机)不动——toggle 不再产生程序化
+  相机移动后该加固仍为通用空批次防护(滤波/层级裁剪导致的空页不清空)。
+- **契约同步**:`tests/saved-layer-sync.test.mjs` 由状态机纯函数测试改造为
+  no-fly 回归测试(语义镜像断言 setBounds/fit 零调用 + 源码契约 + src 全树
+  零引用退役模块 + 保留项断言);hooks-contracts / component-contracts 中
+  状态机断言按新语义更新(负断言)。
+
+**修改文件**:`server/src/hooks/use-saved-layer.ts`、`use-work-viewport.ts`、
+`server/src/components/map-shell.tsx`、`server/src/lib/saved-camera-sync.ts`
+(退役桩)、`server/tests/saved-layer-sync.test.mjs`、`hooks-contracts.test.mjs`、
+`component-contracts.test.mjs`、`tech/16-bug-fixes.md`(本节)。
+
+**验证**:1149 pass / 0 fail / 2 skip(+no-fly 回归 6 项);typecheck /
+docs-check / git diff --check 绿。历史文字保留(仅追加)。
+
