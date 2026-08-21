@@ -25,6 +25,7 @@ import { addGuestHistory, clearGuestHistory, listGuestHistory, mergeGuestHistory
 import {
   MAP_STYLE_KEY,
   mergeMapPois,
+  mutexVisibleIds,
   parseMapStyle,
   readMapStylePref,
   resolveSavedForFly,
@@ -1265,6 +1266,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     savedCameraSyncRef,
     onRequireAuth: () => setAuthOpen(true),
   });
+  // ---- 收藏图层互斥(2026-08-22 用户决策)----
+  // 开 = 地图只显示收藏点 pin + Explore 列表切为收藏列表;关 = 恢复搜索管线。
+  // 池(mergeMapPois)保留 catalog 全量(空批次不置空、池只增不删),互斥在
+  // 「可见性/排除」层落地:开时 visible 只含 overlay id,关时恢复 LOD/聚合
+  // 可见性——catalog marker 实例全程保留,关时秒恢复、不触发重查。
+  const savedLayerEnabled = savedOverlay && Boolean(user);
   // ---- marker 池(b2):marker 源与列表分离 ----
   // work 的 marker 源 = catalog(全量池,2026-08-20 起一次取尽,跨视口/跨 zoom
   // 保留实例)+ 同一客户端管线(查询/筛选/排序,与列表同口径)。
@@ -1317,13 +1324,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const clusterZoom = clusterZoomForZoom(zoom);
   const clusterState = useMemo(() => {
     if (!isRecruitmentMode(mode)) return null; // 非 work 上下文 → 个体 pin
-    const groups = clusterCities(markerPois, clusterZoom);
+    // 互斥开:聚合只计收藏点(徽章计数/个体 pin 不得混入普通 catalog 公司)
+    const source = savedLayerEnabled ? overlayPois : markerPois;
+    const groups = clusterCities(source, clusterZoom);
     if (groups === null) return null; // zoom > 8 → 个体 pin
     return {
       groups,
-      individual: markerPois.filter((p) => !poiCity(p)), // 无 city 的 pin 保持个体
+      individual: source.filter((p) => !poiCity(p)), // 无 city 的 pin 保持个体
     };
-  }, [mode, markerPois, clusterZoom]);
+  }, [mode, markerPois, overlayPois, clusterZoom, savedLayerEnabled]);
 
   // 聚合徽章渲染:每城一个 Marker(content 徽章),effect 清理时整批摘除。
   // 与个体 marker 模式互斥——聚合激活时个体 pin 实例保留(由 visiblePOIIds 隐藏),
@@ -1367,19 +1376,25 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     };
   }, [clusterState, mapReady, modeConfig.color]);
 
-  // ---- marker 可见性(b2)----
+  // ---- marker 可见性(b2 + 2026-08-22 互斥)----
   // 控制器始终持有全量 markerPois 池,此处只算「当前该显示谁」,实例保留:
-  // - 聚合激活(zoom ≤ 8):城市公司由徽章代表,只显示无 city 的个体 pin;
+  // - 互斥开(savedLayerEnabled):只显示收藏点 pin——mutexVisibleIds 按 id
+  //   排除普通 POI(空数组 = 空地图);关时恢复下面正常逻辑,秒恢复零重查;
+  // - 聚合激活(zoom ≤ 8):城市公司由徽章代表,只显示无 city 的个体 pin
+  //   (互斥开时 clusterState 已按收藏点聚合,此分支天然只含收藏 pin);
   // - 个体模式:按 LOD(maxTierForZoom)过滤,overlay 与 domain pin 恒显示;
   // 离开 marker 池的 id(刷新/筛选变窄/domain 换视野)不在集合内 → 隐藏,不销毁。
   // 依赖已分桶(clusterZoom / maxTier 均只随整数 zoom 变化):zoom 微调零重算。
   const maxTier = maxTierForZoom(zoom);
   const visiblePOIIds = useMemo(() => {
+    const overlayIds = new Set(overlayPois.map((p) => p.id));
     if (clusterState) {
       const ids = new Set(clusterState.individual.map((p) => p.id));
       return markerPois.filter((p) => ids.has(p.id)).map((p) => p.id);
     }
-    const overlayIds = new Set(overlayPois.map((p) => p.id));
+    // 互斥开:只留收藏点 id(普通 POI 全部排除,marker 实例保留不销毁)
+    const mutexIds = mutexVisibleIds(markerPois, overlayIds, savedLayerEnabled);
+    if (mutexIds) return mutexIds;
     return markerPois
       .filter((p) => {
         if (overlayIds.has(p.id)) return true; // 收藏 overlay 恒显示(不随 LOD)
@@ -1387,7 +1402,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         return (p.company?.tier ?? TIER_DEFAULT) <= maxTier;
       })
       .map((p) => p.id);
-  }, [clusterState, markerPois, overlayPois, maxTier]);
+  }, [clusterState, markerPois, overlayPois, maxTier, savedLayerEnabled]);
 
   const handleRefreshHere = useCallback(() => {
     const view = mapInstance.current;
@@ -2275,6 +2290,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         onToggleSave={detailPoi && isPersistablePoi(detailPoi) ? handleToggleSave : undefined}
         onApply={handleApply}
         totalCount={pois.length}
+        savedMode={savedLayerEnabled}
+        savedItems={savedPlaces}
+        onPickSaved={handlePickSaved}
+        onRemoveSaved={user ? handleRemoveSaved : undefined}
+        savedCatalog={compareCatalog}
+        savedOrigin={distanceOrigin}
         lang={lang}
         onClose={() => {
           setRailPanel(null);
@@ -2739,6 +2760,23 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 </div>
               ) : (
               <>
+              {savedLayerEnabled ? (
+                /* 收藏图层互斥开:移动 Explore 列表切为收藏列表(关时恢复搜索管线) */
+                <SavedList
+                  items={savedPlaces}
+                  signedIn={Boolean(user)}
+                  lang={lang}
+                  catalog={compareCatalog}
+                  origin={distanceOrigin}
+                  onPick={(place) => {
+                    handlePickSaved(place);
+                    setMobileSheet("explore");
+                  }}
+                  onHover={handleHover}
+                  onRemove={user ? handleRemoveSaved : undefined}
+                />
+              ) : (
+              <>
               <div className={styles.mobileActions}>
                 <button
                   type="button"
@@ -2821,6 +2859,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
                 noMore={noMoreData}
               />
+              </>
+              )}
               </>
               )}
             </div>

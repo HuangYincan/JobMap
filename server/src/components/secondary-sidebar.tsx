@@ -12,8 +12,12 @@
 // 组件纯展示 + 状态提升：
 // - 搜索/筛选/排序状态由父级持有，经 props 传入
 // - 所有数据获取在父级（map-shell）
+//
+// 收藏图层互斥（2026-08-22 用户决策）：savedMode 开时列表区切换为
+// 收藏列表（SavedList，「我的收藏」视图），搜索管线列表隐藏；关时恢复。
 // ============================================================
 
+import dynamic from "next/dynamic";
 import { useEffect, useId, useRef, useState } from "react";
 import { ModeSwitcher } from "./mode-switcher";
 import { POIList } from "./poi-list";
@@ -25,8 +29,11 @@ import { t, type Language } from "@/lib/i18n";
 import { canonicalMode, getMode } from "@/lib/modes";
 import { selectedRoleFamilies, selectedTaxonomyPaths } from "@/lib/job-taxonomy";
 import { suggestKeyAction } from "@/lib/suggest-nav";
+import type { SavedPlace } from "@/lib/account";
 import { isRecruitmentPOI, formatDistance, type FilterState, type MapMode, type POI, type Position, type RecruitmentPOI } from "@/lib/types";
 import styles from "./secondary-sidebar.module.css";
+
+const SavedList = dynamic(() => import("./saved-panel").then((mod) => mod.SavedList));
 
 /** 搜索建议（AutoComplete 结果的 UI 形态） */
 export interface SearchSuggestion {
@@ -203,6 +210,18 @@ export interface SecondarySidebarProps {
   saved?: boolean;
   onToggleSave?: (poi: POI) => void;
   onApply?: (input: { position: Position; company: RecruitmentPOI; url?: string }) => void;
+  /** 收藏图层互斥开:列表区切换为收藏列表(替换搜索管线列表;关时恢复) */
+  savedMode?: boolean;
+  /** 收藏列表数据(互斥开时渲染 SavedList) */
+  savedItems?: SavedPlace[];
+  /** 收藏行点击(沿用现有 saved pin 点击行为:打开详情) */
+  onPickSaved?: (place: SavedPlace) => void;
+  /** 收藏行移除(未登录不传) */
+  onRemoveSaved?: (poiId: string) => void;
+  /** 收藏对比表活数据目录(与 SavedPanel 同口径) */
+  savedCatalog?: POI[];
+  /** 收藏对比表距离参考点(与 SavedPanel 同口径) */
+  savedOrigin?: { lng: number; lat: number } | null;
 }
 
 export function SecondarySidebar({
@@ -245,6 +264,12 @@ export function SecondarySidebar({
   saved = false,
   onToggleSave,
   onApply,
+  savedMode = false,
+  savedItems = [],
+  onPickSaved,
+  onRemoveSaved,
+  savedCatalog = [],
+  savedOrigin = null,
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -484,6 +509,20 @@ export function SecondarySidebar({
 
       {/* 筛选面板（可折叠）+ 结果标题 + POI 列表：共享滚动容器，顶部内容随滚走 */}
       <div className={styles.scrollRegion}>
+        {savedMode ? (
+          /* 收藏图层互斥开:列表区切换为收藏列表(「我的收藏」视图,关时恢复搜索管线) */
+          <SavedList
+            items={savedItems}
+            signedIn={true}
+            lang={lang}
+            catalog={savedCatalog}
+            origin={savedOrigin}
+            onPick={(place) => onPickSaved?.(place)}
+            onHover={onHover}
+            onRemove={onRemoveSaved}
+          />
+        ) : (
+        <>
         {showFilters && (
           <div className={styles.filterPanel}>
             <FilterPanel
@@ -560,6 +599,8 @@ export function SecondarySidebar({
           atCap={atCap}
           noMore={noMore}
         />
+        </>
+        )}
       </div>
       </>
       )}
