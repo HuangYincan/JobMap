@@ -50,10 +50,14 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/domain_map
 
 # Signs the demo session token. Do not commit the real value.
 SESSION_SECRET=replace-me
+
+# Sends email OTP codes via Resend (tech/25). When unset, email OTP send
+# returns 503 EMAIL_NOT_CONFIGURED. Server secret: never commit or log.
+RESEND_API_KEY=replace-me
 ```
 
-Phone OTP is demo-only (`000000`). Keep `POST /api/auth/otp/send` as the
-Aliyun SMS hook; do not log codes or secrets.
+Email OTP goes out for real via Resend (`RESEND_API_KEY`). Phone OTP is
+demo-only (`000000`) — keep the Aliyun SMS hook; do not log codes or secrets.
 
 ### API Configuration
 ```bash

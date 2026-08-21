@@ -94,12 +94,12 @@ test('correct code resets the wrong-attempt counter', async () => {
   otpRateConfig.cooldownMs = 0;
   try {
     const target = `reset-${Date.now()}@test.local`;
-    await storeIssueOtp('email', target);
+    const { code } = await storeIssueOtp('email', target);
     for (let i = 0; i < 4; i++) {
       assert.equal(await storeConsumeOtp('email', target, '111111'), false);
     }
-    // 第 5 次用正确码 → 成功并清零计数
-    assert.equal(await storeConsumeOtp('email', target, DEMO_OTP_CODE), true);
+    // 第 5 次用正确码 → 成功并清零计数(email 为随机码,用 issueOtp 返回值)
+    assert.equal(await storeConsumeOtp('email', target, code), true);
     await storeIssueOtp('email', target);
     // 若未清零,再 1 次错误就到 5 直接抛;清零后前 4 次只是普通失败
     for (let i = 0; i < 4; i++) {
@@ -184,7 +184,12 @@ test('send/verify routes map rate-limit to 429, DB failure to 503, demo hint kep
   assert.match(send, /status: 429/);
   assert.match(send, /DB_UNAVAILABLE/);
   assert.match(send, /status: 503/);
-  assert.match(send, /hint: '000000'/); // demo 码保留
+  assert.match(send, /hint: '000000'/); // phone demo 码保留
+  assert.match(send, /messageId/); // email 真发返回 messageId
+  assert.match(send, /EMAIL_NOT_CONFIGURED/);
+  assert.match(send, /EMAIL_RATE_LIMITED/);
+  assert.match(send, /EMAIL_PROVIDER_ERROR/);
+  assert.match(send, /EMAIL_SEND_FAILED/);
   assert.match(verify, /TOO_MANY_ATTEMPTS/);
   assert.match(verify, /status: 429/);
   assert.match(verify, /DB_UNAVAILABLE/);
