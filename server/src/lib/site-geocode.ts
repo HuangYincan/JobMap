@@ -362,6 +362,84 @@ export function siteHasStreetAddress(site: CompanySite): boolean {
   return !!address && STREET_RE.test(address);
 }
 
+/**
+ * 命中 POI 的 address 是否「可用」— 非空且含街道/门牌 (空串或仅区名 → 视为
+ * 缺失, 触发补查)。与 gradeOfficePoi 的 street 判定共用 STREET_RE, 口径一致。
+ */
+export function poiAddressUsable(address: string): boolean {
+  const a = (address ?? '').trim();
+  return !!a && STREET_RE.test(a);
+}
+
+// ---------------------------------------------------------------------------
+// 无地址站点「上网找地址」优先通道 (2026-08-21, fix/geocode-address-first).
+// 只带城市无地址的站点 (siteNeedsGeocode && location.address 缺失) 把网络检索
+// 当首要通道: 站点名存在且不同于公司名/城市名时, 生成「公司名 站点名」精确
+// 候选 (网易 杭州研究院), 精确候选未命中/地址缺失再回落裸公司名宽候选 (既有
+// 行为, 同公司同城共享 memo)。每站点 place-text ≤ 2 次; memo 按变体 key
+// (query, province, city) 独立缓存成功命中, 跨站点不重复消耗。
+// ---------------------------------------------------------------------------
+
+export interface AddresslessQueryVariant {
+  /** 发送给 place-text 的检索串 (memo key 的一部分). */
+  searchQuery: string;
+  /** 评分用公司名 — 精确候选 query 含站点名, POI 名通常不含, 评分必须用裸公司名兜底. */
+  gradeName: string;
+  kind: 'precise' | 'broad';
+}
+
+/**
+ * 无地址站点的检索变体 (先精确后宽)。宽候选恒在; 精确候选被跳过 (站点名缺失 /
+ * 与公司名相同 / 只是城市名) 时返回 [宽] — 即既有单检索行为。站点名含公司名时
+ * (网易杭州研究院) 精确候选直接以站点名检索 (更精确), 否则拼「公司名 站点名」。
+ */
+export function addresslessQueryVariants(
+  companyQuery: string,
+  siteName: string | null | undefined,
+  target: CityTarget,
+): AddresslessQueryVariant[] {
+  const broad: AddresslessQueryVariant = { searchQuery: companyQuery, gradeName: companyQuery, kind: 'broad' };
+  const name = siteName?.trim();
+  if (!name) return [broad];
+  const normName = normalizeNameForMatch(name);
+  const normCompany = normalizeNameForMatch(companyQuery);
+  if (!normName || !normCompany || normName === normCompany) return [broad];
+  // 站点名只是城市名 (北京/北京市/杭州市 …) → 无定位信息, 跳过精确候选
+  const normCity = normName.replace(/[省市县]$/, '');
+  if (normCity === bareCity(target.city) || CITY_PREFIXES.has(normCity) || CITY_PREFIXES.has(normName)) return [broad];
+  const searchQuery = normName.includes(normCompany) ? name : `${companyQuery} ${name}`;
+  return [{ searchQuery, gradeName: companyQuery, kind: 'precise' }, broad];
+}
+
+export interface AddressBackfill {
+  poi: OfficePoiCandidate;
+  confidence: GeocodeConfidence;
+  reason: string;
+}
+
+/**
+ * 命中 POI 地址缺失/过短 (空串或仅区名) 时的 regeo 格式化地址兜底补查
+ * (2026-08-21, fix/geocode-address-first)。坐标已过 regeo 城市闸门, 格式化
+ * 地址出自坐标本身 → 必属目标城市, 无城市一致性风险; 零额外配额 (复用城市
+ * 校验的那次 regeo)。补查成功 (地址含街道) → 重评分: name-match-no-street
+ * 的 medium 升 high, 可写回; 补查失败 → 返回 null, 保持原 poi/置信度
+ * (medium 不写回)。重评分与命中时同口径 (gradeVariantHit, searchQuery 缺省
+ * = companyQuery 即单级公司名评分) — 精确候选命中 (整名 POI 如 网易杭州研究院)
+ * 不会被裸公司名评分误拒。返回拷贝, 不突变 memo 缓存里的 POI 对象。
+ */
+export function backfillAddressFromRegeo(
+  poi: OfficePoiCandidate,
+  formattedAddress: string | null | undefined,
+  companyQuery: string,
+  target: CityTarget,
+  searchQuery = companyQuery,
+): AddressBackfill | null {
+  if (poiAddressUsable(poi.address) || !formattedAddress?.trim()) return null;
+  const filled: OfficePoiCandidate = { ...poi, address: formattedAddress.trim() };
+  const grade = gradeVariantHit(filled, searchQuery, companyQuery, target.province, target.city);
+  return { poi: filled, confidence: grade.confidence, reason: grade.reason };
+}
+
 // ---------------------------------------------------------------------------
 // Address ↔ city consistency (2026-08-20, fix/geocode-address-strategy).
 // fecef85 城市拆分时代, drops 的城市站点 (site-guangzhou / site-chengdu …) 的
@@ -769,6 +847,28 @@ export function gradeOfficePoi(
 }
 
 /**
+ * 变体命中的两级评分 (2026-08-21, fix/geocode-address-first): 精确候选
+ * 「公司名 站点名」搜到的 POI 常以完整名命名 (网易杭州研究院) — 先按完整
+ * searchQuery 评分 (整名命中 → 精确可信), 被拒 (如 POI 是 网易大厦 通用形态)
+ * 再回落公司名评分。searchQuery === gradeName (宽候选/既有调用) 时单一评分,
+ * 行为与 gradeOfficePoi 完全一致。name-match 闸门不绕过 — 两级都过不了 low
+ * 判定就拒。
+ */
+export function gradeVariantHit(
+  poi: OfficePoiCandidate,
+  searchQuery: string,
+  gradeName: string,
+  province = '浙江省',
+  city = '杭州市',
+): { confidence: GeocodeConfidence; reason: string } {
+  if (searchQuery !== gradeName) {
+    const precise = gradeOfficePoi(poi, searchQuery, province, city);
+    if (precise.confidence !== 'low') return precise;
+  }
+  return gradeOfficePoi(poi, gradeName, province, city);
+}
+
+/**
  * Best office hit for a company in the target province/city; office-type wins
  * ties. Multi-city: grade against the site's own province/city (defaults keep
  * the legacy Hangzhou behavior for single-city callers) — a Shanghai POI must
@@ -780,9 +880,10 @@ export function pickBestOfficePoi(
   companyName: string,
   province = '浙江省',
   city = '杭州市',
+  searchQuery = companyName,
 ): GeocodeResolution['poi'] {
   const scored = pois.map((poi) => {
-    const grade = gradeOfficePoi(poi, companyName, province, city);
+    const grade = gradeVariantHit(poi, searchQuery, companyName, province, city);
     const office = OFFICE_TYPE_RE.test(poi.type) ? 1 : 0;
     const street = STREET_RE.test(poi.address) ? 1 : 0;
     const exact = normalizeNameForMatch(poi.name) === normalizeNameForMatch(companyName) ? 2 : 0;
@@ -863,6 +964,8 @@ export interface RegeoResult {
   cityname?: string;
   district?: string;
   province?: string;
+  /** 坐标的格式化地址 (AMap regeocode.formatted_address / Baidu result.formatted_address / Tencent result.address) — 无地址 POI 的地址兜底补查来源. */
+  formattedAddress?: string;
   amapUnavailable?: boolean;
   provider?: 'amap' | 'baidu' | 'tencent';
 }
@@ -907,7 +1010,7 @@ export async function regeoCityRest(
       status?: string;
       info?: string;
       infocode?: string;
-      regeocode?: { addressComponent?: { cityname?: string; district?: string; province?: string; adcode?: string } };
+      regeocode?: { addressComponent?: { cityname?: string; district?: string; province?: string; adcode?: string }; formatted_address?: string };
     };
     const comp = payload.regeocode?.addressComponent;
     if (payload.status !== '1' || !comp) {
@@ -921,7 +1024,7 @@ export async function regeoCityRest(
       }
       return { ok: false, amapUnavailable: down };
     }
-    return { ok: true, provider: 'amap', cityname: comp.cityname, district: comp.district, province: comp.province };
+    return { ok: true, provider: 'amap', cityname: comp.cityname, district: comp.district, province: comp.province, formattedAddress: payload.regeocode?.formatted_address || undefined };
   } catch {
     return { ok: false };
   }
@@ -1009,7 +1112,7 @@ export async function baiduRegeoCityRest(
   url.searchParams.set('coordtype', 'gcj02ll');
   url.searchParams.set('output', 'json');
   url.searchParams.set('ak', key);
-  let payload: { status?: number; result?: { addressComponent?: { province?: string; city?: string; district?: string } } };
+  let payload: { status?: number; result?: { addressComponent?: { province?: string; city?: string; district?: string }; formatted_address?: string } };
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await fetchImpl(url);
@@ -1027,7 +1130,7 @@ export async function baiduRegeoCityRest(
       }
       return { ok: false };
     }
-    return { ok: true, provider: 'baidu', cityname: comp.city, district: comp.district, province: comp.province };
+    return { ok: true, provider: 'baidu', cityname: comp.city, district: comp.district, province: comp.province, formattedAddress: payload.result?.formatted_address || undefined };
   }
   return { ok: false };
 }
@@ -1172,7 +1275,7 @@ export async function tencentRegeoCityRest(
   // location = "lat,lng" (腾讯纬度在前, 同百度); 输入已是 GCJ-02 国测局坐标.
   url.searchParams.set('location', `${lat},${lng}`);
   url.searchParams.set('key', key);
-  let payload: { status?: number; result?: { ad_info?: { province?: string; city?: string; district?: string } } };
+  let payload: { status?: number; result?: { ad_info?: { province?: string; city?: string; district?: string }; address?: string } };
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const res = await fetchImpl(url);
@@ -1190,7 +1293,7 @@ export async function tencentRegeoCityRest(
       }
       return { ok: false };
     }
-    return { ok: true, provider: 'tencent', cityname: ad.city, district: ad.district, province: ad.province };
+    return { ok: true, provider: 'tencent', cityname: ad.city, district: ad.district, province: ad.province, formattedAddress: payload.result?.address || undefined };
   }
   return { ok: false };
 }
