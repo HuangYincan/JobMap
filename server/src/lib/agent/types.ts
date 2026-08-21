@@ -40,6 +40,7 @@ export type AgentAction =
 
 export type AgentEvent =
   | { type: 'delta'; text: string }
+  | { type: 'reasoning'; text: string } // 推理模型流式思考内容(DeepSeek reasoning_content;run-agent 截断 4000 字符)
   | { type: 'tool'; name: string; status: 'start' | 'done' | 'error'; summary?: string }
   | { type: 'action'; action: AgentAction }
   | { type: 'done'; truncated?: boolean }
