@@ -54,6 +54,7 @@ const RecentPanel = dynamic(() => import("./recent-panel").then((mod) => mod.Rec
 const SavedList = dynamic(() => import("./saved-panel").then((mod) => mod.SavedList));
 const SavedPanel = dynamic(() => import("./saved-panel").then((mod) => mod.SavedPanel));
 const LayersPanel = dynamic(() => import("./layers-panel").then((mod) => mod.LayersPanel));
+const MapSourceSection = dynamic(() => import("./layers-panel").then((mod) => mod.MapSourceSection));
 
 /**
  * Rail 面板懒加载模块清单:与上方 dynamic() 声明同源路径(SavedList/SavedPanel 同文件去重)。
@@ -2669,6 +2670,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                       </button>
                     ))}
                   </div>
+                  <MapSourceSection lang={lang} />
                 </div>
               ) : (
               <>
