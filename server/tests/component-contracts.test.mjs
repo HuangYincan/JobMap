@@ -444,15 +444,16 @@ test('map shell Bug3 locate: 挂载定位不抢占已移图相机(首点 pin 不
   // userMovedMapRef + 用户已交互 + 默认中心距离 三门控——未移图/未交互且相机仍处
   // 默认才 setCenter+setZoom+setMapCenter(已交互不抢镜头:geolocation resolve 可能
   // 晚于首交互,此时跳变 = 「整页刷新」观感)。ws-c:视图方法经 view 契约。
+  // 2026-08-21 追加第四门控:视图已销毁(StrictMode 双调用弹卡窗口)不读相机。
   assert.match(shell, /getCurrentPosition\(view\.raw\)/);
   assert.match(shell, /setUserLocation\(\{ lng, lat \}\)/);
   assert.match(shell, /setSearchOrigin\(\(prev\) => prev \?\? \{ lng, lat \}\)/);
   assert.match(
     shell,
-    /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(view\.getState\(\)\.center\)\) \{[\s\S]{0,120}view\.setCenter\(\{ lng, lat \}\)[\s\S]{0,120}view\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
+    /isNearDefaultCenter\(view\.getState\(\)\.center\)\s*\)\s*\{[\s\S]{0,160}view\.setCenter\(\{ lng, lat \}\)[\s\S]{0,120}view\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
   );
   // 已移图/已交互/已恢复视野 → 锁定 mapCenter 不更新(距离圆心/相机都不甩去用户位置)
-  assert.match(shell, /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(view\.getState\(\)\.center\)\) \{[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/);
+  assert.match(shell, /isNearDefaultCenter\(view\.getState\(\)\.center\)\s*\)\s*\{[\s\S]{0,160}setMapCenter\(\{ lng, lat \}\)/);
   // 只有相机手势(drag/zoom)置位;空白点击与 marker 点击不置位
   // (选择/取消选择公司 ≠ 放弃定位,settle 仍会飞用户位置——ws-poi-vanish)
   assert.match(shell, /onViewEvent\(view, "dragstart", \(\) => \{\s*userMovedMapRef\.current = true/);
@@ -489,8 +490,9 @@ test('map shell ws-poi-vanish2: settle 仅默认位置时飞用户位置,不抢 
   const shell = src('components/map-shell.tsx');
   const lib = src('lib/camera-center.ts');
   // settle 门控新增「用户已交互」+「相机距默认中心 < 阈值」条件:未移图/未交互且
-  // 相机仍处默认才飞(已交互不抢镜头:geolocation resolve 可能晚于首交互)
-  assert.match(shell, /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\(view\.getState\(\)\.center\)\) \{/);
+  // 相机仍处默认才飞(已交互不抢镜头:geolocation resolve 可能晚于首交互)。
+  // 2026-08-21 追加「视图已销毁不读相机」门控(StrictMode 双调用弹卡窗口)。
+  assert.match(shell, /!view\.isDestroyed\?\.\(\)[\s\S]{0,130}isNearDefaultCenter\(view\.getState\(\)\.center\)\s*\)\s*\{/);
   // 纯函数 + 常量在 lib/camera-center(可单测):默认中心/zoom/阈值/判定
   assert.match(lib, /export const DEFAULT_MAP_CENTER = \{ lng: 120\.15, lat: 30\.27 \} as const;/);
   assert.match(lib, /export const DEFAULT_MAP_ZOOM = 13;/);
@@ -989,4 +991,48 @@ test('map-shell 弹卡不动相机(2026-08-21 热修:二级卡片 = 侧控栏纯
 
   // 全文件零 flyToLocation 调用(辅助函数整体移除)
   assert.doesNotMatch(shell, /flyToLocation/);
+});
+
+test('StrictMode 双调用不再杀活图(2026-08-21 热修:dynamic 面板挂载 → double-invoke 崩溃链路)', () => {
+  // 实测链路:挂载 Next dynamic 面板(最近/收藏/图层等)使 MapShell fiber 在 dev
+  // StrictMode 下被 double-invoke(disconnect→reconnect 同一 commit 内同步)。
+  // disconnect 跑 useMapEngine cleanup —— 若立即销毁活图,reconnect 里「接线 effect」
+  // 拿着已销毁的旧 view 重跑 createMap → 首帧 syncView → AMap getCenter 抛
+  // `getOptions` undefined → Fast Refresh 整页重载(用户看到的「点面板后页面挂了」)。
+  // 断言:cleanup 交棒 keepalive 不销毁;重连同容器接管;真卸载延迟销毁兜底;
+  // 接线 effect 对已销毁视图直接跳过;geolocation settle 对已销毁视图不读相机。
+  const hook = src('hooks/use-map-engine.ts');
+  const shell = src('components/map-shell.tsx');
+
+  // use-map-engine:cleanup 不再无条件销毁活图(交棒 keepalive + 延迟销毁兜底)
+  const cleanupAt = hook.indexOf('keepaliveRef.current = { view: doomed, container }');
+  assert.ok(cleanupAt !== -1, 'keepalive 交棒锚点存在');
+  const cleanupBlock = hook.slice(cleanupAt, cleanupAt + 420);
+  assert.match(cleanupBlock, /setTimeout/, '延迟销毁(真卸载兜底)');
+  assert.match(cleanupBlock, /if \(viewRef\.current !== doomed\)/, '已被接管则跳过销毁');
+  assert.doesNotMatch(hook, /viewRef\.current\?\.destroy\(\)/, 'cleanup 不得直接销毁活图');
+
+  // use-map-engine:重连接管(同容器、同引擎、未销毁、容器挂载)
+  const reuseAt = hook.indexOf('const keep = keepaliveRef.current;');
+  assert.ok(reuseAt !== -1, '重连接管锚点存在');
+  const reuseBlock = hook.slice(reuseAt, reuseAt + 760);
+  assert.match(reuseBlock, /keep\.container === container/, '仅同容器接管');
+  assert.match(reuseBlock, /keep\.view\.engine\.id/, '同引擎才接管');
+  assert.match(reuseBlock, /container\.isConnected/, '容器仍挂载才接管');
+  assert.match(reuseBlock, /setView\(keep\.view\)/, '接管后状态恢复');
+  // 接管后必须再次交棒(disconnect/reconnect 共用 relinquishView,链条不断)
+  assert.match(reuseBlock, /return relinquishView;/, '接管后 cleanup 仍交棒');
+
+  // map-shell 接线 effect:已销毁视图跳过 createMap(防 reconnect 崩溃)
+  const wiringAt = shell.indexOf('mapInstance.current = engineView;');
+  assert.ok(wiringAt !== -1, '接线 effect 锚点存在');
+  const wiringBlock = shell.slice(wiringAt, wiringAt + 300);
+  assert.match(wiringBlock, /engineView\.isDestroyed\?\.\(\)/, '已销毁视图门控');
+  assert.match(wiringBlock, /if \(!engineView \|\| engineView\.isDestroyed\?\.\(\)\) return;/, '已销毁视图直接跳过接线');
+
+  // geolocation settle:已销毁视图不读相机(异步竞态门控)
+  const settleAt = shell.indexOf('isNearDefaultCenter(view.getState().center)');
+  assert.ok(settleAt !== -1, 'settle 相机门控锚点存在');
+  const settleBlock = shell.slice(Math.max(0, settleAt - 120), settleAt + 40);
+  assert.match(settleBlock, /!view\.isDestroyed\?\.\(\)/, 'settle 对已销毁视图不读相机');
 });

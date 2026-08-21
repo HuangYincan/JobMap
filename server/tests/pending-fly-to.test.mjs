@@ -59,11 +59,12 @@ test('all three geolocation exits (!loc / success / error) settle via settleGeol
   const shell = src('components/map-shell.tsx');
   // !loc 分支
   assert.match(shell, /if \(!loc\) \{\s*settleGeolocation\(\);/);
-  // 成功分支:settle 在 userMovedMapRef + 用户已交互 + 默认中心 三门控块之后
-  // (已移图/已交互/恢复视野 → 不 setCenter)
+  // 成功分支:settle 在「视图已销毁 + userMovedMapRef + 用户已交互 + 默认中心」
+  // 四门控块之后(2026-08-21 追加视图销毁门控:StrictMode 双调用弹卡窗口不读相机;
+  // 已移图/已交互/恢复视野 → 不 setCenter)
   assert.match(
     shell,
-    /if \(!userMovedMapRef\.current && !userInteractedRef\.current && isNearDefaultCenter\([\s\S]*?setMapCenter\(\{ lng, lat \}\);\s*\}\s*settleGeolocation\(\);/
+    /isNearDefaultCenter\([\s\S]*?setMapCenter\(\{ lng, lat \}\);\s*\}\s*settleGeolocation\(\);/
   );
   // 失败分支
   assert.match(shell, /\.catch\(\(\) => \{\s*settleGeolocation\(\);/);

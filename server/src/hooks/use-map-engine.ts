@@ -118,6 +118,16 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
   const [view, setView] = useState<MapView | null>(null);
   const [isSwitching, setIsSwitching] = useState(false);
   const viewRef = useRef<MapView | null>(null);
+  /**
+   * StrictMode 双调用存活接管(2026-08-21 热修):React dev 的 double-invoke 对
+   * 挂载了 Next dynamic 面板(最近/收藏/图层等)的 MapShell fiber 做
+   * disconnect→reconnect——cleanup 若立即销毁活图,重连的「接线 effect」就会
+   * 拿着被销毁的旧 view 重跑 createMap → syncView → AMap getCenter 崩溃
+   * (getOptions undefined),进而 Fast Refresh 整页重载。修复:cleanup 只把活图
+   * 存入 keepalive 交棒,重连时同容器直接接管(相机/标记零丢失);真卸载由
+   * 延迟销毁兜底,不泄漏。
+   */
+  const keepaliveRef = useRef<{ view: MapView; container: HTMLElement } | null>(null);
   /** 卸载后丢弃在飞切换结果(await 完成时组件已卸载 → 销毁新 view) */
   const aliveRef = useRef(true);
   /** 切换重入守卫(UI 已禁用 chip,双保险) */
@@ -176,6 +186,50 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
     if (!container) return;
     let cancelled = false;
 
+    // 活图交棒 keepalive 供重连接管(不立即销毁,相机/标记零丢失);真卸载
+    // (无重连或未接管)由延迟销毁兜底,不泄漏。disconnect 与 reconnect 的 cleanup
+    // 共用——重连复用后下一次 double-invoke 的 disconnect 必须再次交棒,链条才不断。
+    const relinquishView = () => {
+      cancelled = true;
+      if (viewRef.current && !viewRef.current.isDestroyed()) {
+        const doomed = viewRef.current;
+        keepaliveRef.current = { view: doomed, container };
+        setTimeout(() => {
+          if (viewRef.current !== doomed) {
+            if (keepaliveRef.current?.view === doomed) keepaliveRef.current = null;
+            doomed.destroy();
+          }
+        }, 0);
+      }
+      viewRef.current = null;
+      setView(null);
+      setActiveSearchProvider(null);
+    };
+
+    // 重连接管:上一 effect 实例 cleanup 留下的活图(同容器、同引擎、未销毁、容器仍
+    // 挂载)直接复用,不重建不销毁——StrictMode double-invoke 的 disconnect→reconnect
+    // 是同一 commit 内同步发生,此间活图应当存活。真卸载(容器替换/断开/引擎偏好
+    // 变更)不满足条件 → 落回正常加载,旧图由延迟销毁兜底。
+    const keep = keepaliveRef.current;
+    if (
+      keep &&
+      !keep.view.isDestroyed() &&
+      keep.container === container &&
+      container.isConnected
+    ) {
+      const resolved = resolveEngine(readEnginePreference());
+      if (resolved && resolved.id === keep.view.engine.id) {
+        keepaliveRef.current = null;
+        viewRef.current = keep.view;
+        setEngine(resolved);
+        setActiveSearchProvider(resolved.search);
+        setView(keep.view);
+        // 接管后仍要交棒:下一次 double-invoke(后续弹卡/搜索)的 disconnect
+        // 会把活图再次留给重连接管,链条不断、地图全程零销毁。
+        return relinquishView;
+      }
+    }
+
     const resolved = resolveEngine(readEnginePreference());
     if (!resolved) {
       // 零配置(无任何引擎 key):不加载脚本,调用方回退 CSS fallback 地图
@@ -206,13 +260,7 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
         console.warn("[use-map-engine] map engine load/createView failed:", err);
       });
 
-    return () => {
-      cancelled = true;
-      viewRef.current?.destroy();
-      viewRef.current = null;
-      setView(null);
-      setActiveSearchProvider(null);
-    };
+    return relinquishView;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- center/zoom/style 只取初始快照
   }, [containerRef]);
 

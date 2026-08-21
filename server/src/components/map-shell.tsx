@@ -536,8 +536,18 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   // ---- 地图视图接线(useMapEngine 负责引擎加载 + createView;本 effect 只做事件/控件/定位绑定)----
   useEffect(() => {
-    mapInstance.current = engineView;
-    if (!engineView) return;
+    // 2026-08-21 热修:StrictMode double-invoke 的 reconnect 会用「已销毁的旧 view」
+    // 重跑本 effect(useMapEngine cleanup 先销毁了地图,setView(null) 尚未冲刷)——对
+    // 已销毁视图 createMap → 首帧 syncView → getState → AMap getCenter 抛 getOptions
+    // undefined,dev 下触发 Fast Refresh 整页重载(用户看到的「点 poi/面板后页面挂了」)。
+    // 门控:已销毁视图直接跳过接线,mapInstance 置空(读相机快照回退 React 状态);
+    // 新 view 由 useMapEngine 重连(keepalive 接管)或重建后经本 effect 正常接线。
+    if (engineView && !engineView.isDestroyed?.()) {
+      mapInstance.current = engineView;
+    } else {
+      mapInstance.current = null;
+    }
+    if (!engineView || engineView.isDestroyed?.()) return;
 
     let mapCleanup: (() => void) | null | undefined = null;
     mapCleanup = createMap(engineView);
@@ -594,7 +604,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         // 门控以实时相机中心为准,距默认 [120.15,30.27] 阈值 0.1°≈11km)。
         // 用户已交互(首点/按键/滚动,userInteractedRef)同样不再抢镜头:geolocation
         // resolve 可能晚于首交互,此时 setCenter+setZoom 整幅跳变 = 「整页刷新」观感。
-        if (!userMovedMapRef.current && !userInteractedRef.current && isNearDefaultCenter(view.getState().center)) {
+        // 2026-08-21 热修:geolocation 真异步,resolve 可能晚于 StrictMode
+        // double-invoke 销毁视图(弹卡窗口)——对已销毁视图读相机同样抛
+        // getOptions undefined。门控:视图已销毁则跳过相机/圆心抢占(仅 settle)。
+        if (
+          !view.isDestroyed?.() &&
+          !userMovedMapRef.current &&
+          !userInteractedRef.current &&
+          isNearDefaultCenter(view.getState().center)
+        ) {
           view.setCenter({ lng, lat });
           view.setZoom(15);
           setMapCenter({ lng, lat });
