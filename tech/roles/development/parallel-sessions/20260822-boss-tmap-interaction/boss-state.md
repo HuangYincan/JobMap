@@ -11,8 +11,21 @@
 
 ## stage
 
-- current: MERGE(4 ws 全部 DONE+验证,派 merger)
+- current: MERGE(done)→VERIFY(done, 6/7 bug 绿)→DISPATCH(轮2 ws-e favicon CORS)
 - updated_at: 2026-08-22
+
+## 验证矩阵结果(boss Playwright,2026-08-22)
+
+| bug | 结果 |
+|---|---|
+| 1 TMap POI 失效/偏移 | 根因=favicon CORS→SDK 换默认 marker;ws-e 修复 |
+| 2 滚轮平滑 | ✅ 15→17(SDK 200ms 内置动画,无更多选项) |
+| 3 百度 | ✅ boss 环境正常;用户端 ERR_BLOCKED_BY_CLIENT 需白名单 |
+| 4 切回 POI 消失 | ✅ 受控对比 blue 1065→1206(ws-b rebind 生效) |
+| 5 蓝点 | ✅ 腾讯 #007AFF 圆点居中(ws-d syncUserBlueDot) |
+| 6 百度滚轮 | ✅ 15→16(ws-c enableScrollWheelZoom) |
+| 7 POI 样式 | 根因=favicon CORS(与 1 同);ws-e 统一降级徽章 |
+| 新:疯狂报错 | 实锤:favicon.im 无 CORS 头+WebGL 纹理需 CORS → 单次 190 errors,累计 10192;ws-e 预检降级 |
 
 ## workstreams
 
@@ -22,6 +35,7 @@
 | b | fix/tmap-wheel-switch | /Users/acccan/dm-wt-ib | prompts/ws-b.md | reports/ws-b.md | DONE | 7478142 | 轮1 | 2026-08-22 | OK(4 commits, ~1260 pass, boss 已验证) |
 | c | fix/baidu-diagnostics | /Users/acccan/dm-wt-ic | prompts/ws-c.md | reports/ws-c.md | DONE | 8d5cee4 | 轮1 | 2026-08-22 | OK(4 commits, 1270/1268 pass, boss 已验证) |
 | d | fix/geolocation-blue-dot | /Users/acccan/dm-wt-id | prompts/ws-d.md | reports/ws-d.md | DONE | 7c8032a | 轮1(补) | 2026-08-22 | OK(3 commits, 1275/1273 pass, boss 已验证) |
+| e | fix/icon-cors-preflight | /Users/acccan/dm-wt-icon | prompts/ws-e.md | reports/ws-e.md | DONE | 3124474 | 轮2(新 bug) | 2026-08-22 | OK(4 commits, 1361/1359 pass, boss 已验证) |
 
 ## 关键证据(用户 console,2026-08-22)
 
@@ -30,7 +44,8 @@
 
 ## merge_order
 
-轮1: ws-a → ws-b → ws-c(并行开发,按序合并;tencent-engine.ts 段切分已隔离)。每轮 push origin/dev。
+轮1: ws-a → ws-b → ws-c → ws-d(已完成,MERGED_ALL,dev push 0fac2eb)。每轮 push origin/dev。
+轮2: ws-e(fix/icon-cors-preflight,tip 3124474)。
 
 ## verification 计划(boss 合并后 Playwright)
 

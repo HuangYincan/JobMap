@@ -38,3 +38,40 @@
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+---
+
+# 轮2 合并报告(2026-08-22)— ws-e(fix/icon-cors-preflight)
+
+## 结果总览
+
+- 成功合并: ws-e(fix/icon-cors-preflight,tip 3124474,4 commits)
+- 失败/遗留: 无
+- 合并方式: `git merge --no-ff`,干净 merge 零冲突(基座 6b260c0;dev 其后仅多一个无关 data commit 05a2a85,与分支文件零重叠)
+
+## 逐分支明细
+
+| WS | 分支 | merge | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| e | fix/icon-cors-preflight (3124474) | 干净 merge | 1361 tests / 1359 pass / 0 fail / 2 skip;typecheck 绿;docs 绿;diff 绿 | 无冲突 |
+
+## 门禁明细
+
+- npm test: **1361 tests / 1359 pass / 0 fail / 2 skip**(基线 1344 + ws-e 新增 15,零漂移,与 ws-e 汇报一致)
+- `npm run typecheck`: 通过
+- `make docs-check`: Documentation policy check passed
+- `git diff --check`: 干净(工作树 + merge commit HEAD^..HEAD)
+
+## 收尾
+
+- `git push origin dev` 完成
+- worktree `/Users/acccan/dm-wt-icon` 已 remove,分支 `fix/icon-cors-preflight` 已 -d 删除
+- 批次目录(merge-report 轮2 + reports/ws-e.md + boss-state/merge-instructions)随本轮 commit 入库
+
+## 遗留问题
+
+- 维持轮1 遗留:真机冒烟(Playwright)由 boss 合并后统一回填;TMap 远程 logoUrl CORS 真机核实 deferred。
+- ws-e 自身无遗留(汇报结论 PASSED / OK)。
+
+门禁: ALL_GREEN
+结论: MERGED_ALL
