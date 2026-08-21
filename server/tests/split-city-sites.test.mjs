@@ -48,10 +48,15 @@ test('splittableCities: 只保留 CITY_CENTERS 城市,去重保序,全称归一�
   assert.deepEqual(splittableCities('北京、杭州、上海'), ['北京', '杭州', '上海']);
   assert.deepEqual(splittableCities('上海市 深圳市'), ['上海', '深圳']);
   assert.deepEqual(splittableCities('北京 北京 上海'), ['北京', '上海']); // 去重
-  // 未收录城市(海外/三四线)不处理
-  assert.deepEqual(splittableCities('哈尔滨 北京 大连 香港 泰国 新加坡'), ['北京']);
-  assert.deepEqual(splittableCities('泰国 新加坡'), []);
+  // 未收录城市(三四线/海外未收录)不处理;已收录海外城市处理
+  assert.deepEqual(splittableCities('哈尔滨 北京 大连 香港 泰国 新加坡'), ['哈尔滨', '北京', '大连', '新加坡']);
+  assert.deepEqual(splittableCities('泰国 新加坡'), ['新加坡']);
   assert.deepEqual(splittableCities('全国其他'), []);
+});
+
+test('splittableCities: 「省+城市」连写归一后命中(广西柳州 / 河南洛阳)', () => {
+  assert.deepEqual(splittableCities('广西柳州'), ['柳州']);
+  assert.deepEqual(splittableCities('河南洛阳 郑州'), ['洛阳', '郑州']);
 });
 
 // —— 城市全称 ——
@@ -96,9 +101,9 @@ test('planSiteSplit: 首个原始 token 不可归一时,主站点取第一个可
   const site = { id: 's-site', name: 'S', city: '哈尔滨 北京 上海', location: {} };
   const plan = planSiteSplit(site, []);
   assert.ok(plan);
-  assert.equal(plan.main.city, '北京市');
-  assert.deepEqual(plan.main.location, cityCenter('北京'));
-  assert.deepEqual(plan.splits.map((s) => s.city), ['上海市']);
+  assert.equal(plan.main.city, '哈尔滨市');
+  assert.deepEqual(plan.main.location, cityCenter('哈尔滨'));
+  assert.deepEqual(plan.splits.map((s) => s.city), ['北京市', '上海市']);
 });
 
 test('planSiteSplit: 已有坐标的 site 不动(幂等 + 街道级坐标优先)', () => {
@@ -109,7 +114,7 @@ test('planSiteSplit: 已有坐标的 site 不动(幂等 + 街道级坐标优先)
 test('planSiteSplit: 单城市 / 无可归一城市 / 不足两个可归一城市 → null', () => {
   assert.equal(planSiteSplit({ id: 'a', name: 'A', city: '上海市', location: {} }, []), null);
   assert.equal(planSiteSplit({ id: 'b', name: 'B', city: '泰国 新加坡', location: {} }, []), null);
-  assert.equal(planSiteSplit({ id: 'c', name: 'C', city: '北京 哈尔滨 大连', location: {} }, []), null);
+  assert.equal(planSiteSplit({ id: 'c', name: 'C', city: '北京 三亚 韶关', location: {} }, []), null);
 });
 
 test('processCompany: 拆分城市 id 与公司现有 site id 撞车 → 跳过该拆分城市', () => {
@@ -173,13 +178,20 @@ test('patchCityCenterCoords: 单城市无坐标 → 补 cityCenter 坐标,city �
 });
 
 test('patchCityCenterCoords: 多城文本只剩一个可归一城市 → 归一城市并补点(不留多城标签)', () => {
-  const patched = patchCityCenterCoords({ id: 'd', name: 'D', city: '北京 哈尔滨 大连', location: {} });
+  const patched = patchCityCenterCoords({ id: 'd', name: 'D', city: '北京 三亚 韶关', location: {} });
   assert.equal(patched.city, '北京市');
   assert.deepEqual(patched.location, cityCenter('北京'));
 });
 
+test('patchCityCenterCoords: 「省+城市」连写单城 → 归一并补点(东风柳汽场景)', () => {
+  const patched = patchCityCenterCoords({ id: 'e', name: 'E', city: '广西柳州', location: {} });
+  assert.equal(patched.city, '柳州市');
+  assert.deepEqual(patched.location, cityCenter('柳州'));
+  assert.deepEqual(patched.location, { lng: 109.41, lat: 24.32 });
+});
+
 test('patchCityCenterCoords: 未收录城市 / 已有坐标 → 原样返回(同引用)', () => {
-  const unknown = { id: 'e', name: 'E', city: '兰州市', location: {} };
+  const unknown = { id: 'e', name: 'E', city: '三亚市', location: {} };
   assert.equal(patchCityCenterCoords(unknown), unknown);
   const located = { id: 'f', name: 'F', city: '上海市', location: { lng: 121.2, lat: 31.1 } };
   assert.equal(patchCityCenterCoords(located), located);
