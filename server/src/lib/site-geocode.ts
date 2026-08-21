@@ -5,6 +5,7 @@
 // third-level fallback behind Baidu. Never print any of those keys.
 
 import { getPool } from './db.ts';
+import { cityProvinceOf } from './recruitment-adapters/official-site-parse.ts';
 import type { CompanySite, POILocation } from './types.ts';
 import type { SourceCompany } from './recruitment-source.ts';
 
@@ -78,10 +79,17 @@ export interface CityTarget {
 
 export function siteCityTarget(site: CompanySite): CityTarget {
   const withCity = site as SiteWithCity;
-  return {
-    city: withCity.city?.trim() || '杭州市',
-    province: withCity.province?.trim() || '浙江省',
-  };
+  const city = withCity.city?.trim() || '杭州市';
+  const province =
+    withCity.province?.trim() ||
+    // 2026-08-22 (fix/geocode-province-infer): qqdoc-jobs/qqdoc-official/embodied
+    // 站 province 字段为空 → 旧默认「浙江省」, 上海/北京/广东/湖北等站 geocode
+    // 命中后 regeo 校验 (落点省 vs target 省) 必拒 — 全量跑 492 unresolved 中
+    // 332 个 outside-province。province 空时从 city 反查 CITY_TABLE 取真实省
+    // (城市全称去「市」后缀作 key); 查不到 (海外/脏值) 回退现行为。
+    cityProvinceOf(city) ||
+    '浙江省';
+  return { city, province };
 }
 
 export function geocodeQueryForSite(companyName: string, site: CompanySite): string {

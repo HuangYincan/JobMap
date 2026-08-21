@@ -25,6 +25,7 @@ import {
   planSiteGeocode,
   regeoCityRest,
   regeoMatchesTarget,
+  siteCityTarget,
   siteHasStreetAddress,
   siteNeedsGeocode,
   tencentGeocodeAddressRest,
@@ -246,6 +247,63 @@ test('geocodeQueryForSite routes 北京/上海/杭州 sites to their own city', 
   // Street address wins over city scope.
   const withAddr = { ...mk('上海市', '上海市'), location: { lng: 0, lat: 0, address: '杨浦区黄兴路221号' } };
   assert.match(geocodeQueryForSite('某司', withAddr), /^杨浦区黄兴路221号/);
+});
+
+// --- province 从 city 推断 (2026-08-22, fix/geocode-province-infer) ----------
+// 回归场景: qqdoc-jobs/qqdoc-official/embodied 站 province 字段为空 → 旧默认
+// 「浙江省」→ 上海/北京/广东等站 geocode 命中后 regeo 校验 (落点省 vs target
+// 省) 必拒 — 全量跑 492 unresolved 中 332 个 outside-province。
+
+test('siteCityTarget infers province from city when site.province is empty', () => {
+  const mk = (city, province) => ({
+    id: 'x-site',
+    name: '某司',
+    city,
+    province,
+    location: { lng: 0, lat: 0 },
+  });
+  // 直辖市 + 主要省份城市 (含 trim 后空) → CITY_TABLE 反查.
+  assert.equal(siteCityTarget(mk('上海市', '')).province, '上海市');
+  assert.equal(siteCityTarget(mk('上海市', '  ')).province, '上海市');
+  assert.equal(siteCityTarget(mk('北京市', undefined)).province, '北京市');
+  assert.equal(siteCityTarget(mk('杭州市', null)).province, '浙江省');
+  assert.equal(siteCityTarget(mk('深圳市', '')).province, '广东省');
+  assert.equal(siteCityTarget(mk('广州市', '')).province, '广东省');
+  assert.equal(siteCityTarget(mk('武汉市', '')).province, '湖北省');
+  assert.equal(siteCityTarget(mk('成都市', '')).province, '四川省');
+  // 裸城市名 (无「市」后缀) 同样可反查.
+  assert.equal(siteCityTarget(mk('杭州', '')).province, '浙江省');
+  // 显式 province 优先于推断.
+  assert.equal(siteCityTarget(mk('杭州市', '上海市')).province, '上海市');
+});
+
+test('siteCityTarget falls back to 浙江省 for overseas/dirty/empty cities', () => {
+  const mk = (city, province) => ({
+    id: 'x-site',
+    name: '某司',
+    city,
+    province,
+    location: { lng: 0, lat: 0 },
+  });
+  // 海外城市 → 查不到 → 回退 (海外站 geocode 自然 no-result, 不再误报省).
+  assert.equal(siteCityTarget(mk('San Carlos, CA', '')).province, '浙江省');
+  assert.equal(siteCityTarget(mk('Singapore', undefined)).province, '浙江省');
+  // 脏值 (区级拼接) → 回退现行为.
+  assert.equal(siteCityTarget(mk('北京市朝阳区', '')).province, '浙江省');
+  // city 空 → 回退 杭州市/浙江省 (历史行为不变).
+  const noCity = siteCityTarget(mk('', ''));
+  assert.equal(noCity.city, '杭州市');
+  assert.equal(noCity.province, '浙江省');
+});
+
+test('regeo gate accepts a Shanghai POI when the site only names the city', () => {
+  // 根因场景全链路: 上海站 province 空 → 旧 target.province='浙江省' →
+  // regeo pname='上海市' 必拒; 推断后通过.
+  const site = { id: 'x-site', name: '某司', city: '上海市', location: { lng: 0, lat: 0 } };
+  const target = siteCityTarget(site);
+  assert.equal(target.province, '上海市');
+  assert.equal(target.city, '上海市');
+  assert.equal(regeoMatchesTarget({ ok: true, province: '上海市', cityname: '上海市' }, target).ok, true);
 });
 
 test('importedSiteQuery scopes the DB fallback to the site city', () => {

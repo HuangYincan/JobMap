@@ -275,6 +275,13 @@ function cityInfoOf(token: string): CityInfo | null {
   return CITY_TABLE[bare] ?? null;
 }
 
+/** 城市全称/裸名 → 省份全称 (上海市 → 上海市, 深圳市 → 广东省); 不认识 → null。
+ * 2026-08-22 (fix/geocode-province-infer): site-geocode 的 siteCityTarget 在
+ * province 字段为空时用它从 city 反查真实省。 */
+export function cityProvinceOf(city: string): string | null {
+  return cityInfoOf(city)?.province ?? null;
+}
+
 /** 公司名以已知城市开头 → 事实性城市（城商行总行必在同名城市）。 */
 export function companyNameCity(companyName: string): ExtractedAddress | null {
   if (!companyName) return null;
