@@ -6,6 +6,7 @@
 
 import { getPool } from './db.ts';
 import { cityProvinceOf } from './recruitment-adapters/official-site-parse.ts';
+import { CITY_CENTERS, bareCityName } from './city-centers.ts';
 import type { CompanySite, POILocation } from './types.ts';
 import type { SourceCompany } from './recruitment-source.ts';
 
@@ -34,7 +35,15 @@ export function siteNeedsGeocode(site: CompanySite): boolean {
   if (!loc) return true;
   const { lng, lat } = loc;
   if (!Number.isFinite(lng) || !Number.isFinite(lat)) return true;
-  return lng === 0 && lat === 0;
+  if (lng === 0 && lat === 0) return true;
+  // 2026-08-22 (fix/geocode-citycenter-rerun): 坐标钉在城市中心 (city-centers
+  // 批次历史落点) 且地址已非城市名 (w2/w4 回填的街道地址 / 城市列表占位) →
+  // 需要重新 geocode; 地址仍是城市名 (占位) → 留在中心。
+  if (matchesCityCenter(lng, lat)) {
+    const address = loc.address?.trim();
+    if (address && !isCityNameAddress(address, (site as SiteWithCity).city, cityCenterBareNames(lng, lat))) return true;
+  }
+  return false;
 }
 
 /**
@@ -61,6 +70,78 @@ export function sitesNeedingGeocode(companies: ReadonlyArray<SourceCompany>): Ne
     }
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// 城市中心假坐标重跑 (2026-08-22, fix/geocode-citycenter-rerun)。
+// 背景: city-centers 批次把无坐标站点钉在城市中心 (上海 121.47/31.23 堆 376 站、
+// 北京 327 …), 后续 w2/w4 回填了街道地址, 但旧 siteNeedsGeocode「有坐标即跳过」
+// → apply 永不重跑 → 地图几百 POI 永久堆在同一中心点 (用户反馈)。扩展判定:
+// 中心坐标 (±CITY_CENTER_EPS) + 地址非空且不是城市名 → 需要重新 geocode。
+// 地址仍是城市名 (占位) 的站点留在中心。多城市串地址 (北京/上海/深圳/成都)
+// 是城市列表占位、不是城市名 → 需要重新 geocode。
+// ---------------------------------------------------------------------------
+
+const CITY_CENTER_EPS = 0.0005;
+
+/** 命中静态城市中心 (±CITY_CENTER_EPS) 的所有城市 bare 名 (同坐标多 key 去重). */
+export function cityCenterBareNames(lng: number, lat: number): string[] {
+  const names = new Set<string>();
+  for (const [key, center] of Object.entries(CITY_CENTERS)) {
+    if (Math.abs(lng - center.lng) <= CITY_CENTER_EPS && Math.abs(lat - center.lat) <= CITY_CENTER_EPS) {
+      names.add(bareCityName(key));
+    }
+  }
+  return [...names];
+}
+
+/** 坐标是否精确等于某个静态城市中心 (±CITY_CENTER_EPS)。 */
+export function matchesCityCenter(lng: number, lat: number): boolean {
+  return cityCenterBareNames(lng, lat).length > 0;
+}
+
+/** 省级名 (直辖市/自治区/特别行政区) — 「仅含城市名」地址剥掉城市后的残余判定。 */
+const PROVINCE_BARE_RE =
+  /^(?:北京|天津|上海|重庆|河北|山西|辽宁|吉林|黑龙江|江苏|浙江|安徽|福建|江西|山东|河南|湖北|湖南|广东|海南|四川|贵州|云南|陕西|甘肃|青海|台湾|内蒙古|广西|西藏|宁夏|新疆|香港|澳门)$/;
+
+/** 剥掉城市 bare 名后, 残余只有 省/市/县/区 前后缀或省级名 → 仅含城市名。 */
+function cityNameOnlyAddress(address: string, cityName: string): boolean {
+  const bare = bareCityName(cityName);
+  if (!bare || !address.includes(bare)) return false;
+  const rest = address.replace(bare, '');
+  const stripped = rest.replace(/^(?:省|市|县|区)+/, '').replace(/(?:省|市|县|区)+$/, '');
+  return stripped === '' || PROVINCE_BARE_RE.test(stripped);
+}
+
+/**
+ * 地址是否「城市名」形态 (留在城市中心的占位地址)。对照 site.city 与命中中心
+ * 的城市名 (双保险: site.city 缺失/脏值时中心名兜底), 四种形态:
+ *   1. address === site.city 原样 ('三亚市' === '三亚市')
+ *   2. address === 「去市的 city」+ 市 (site.city='上海' → '上海市')
+ *   3. address === 去「市」的 city (site.city='三亚市' → '三亚')
+ *   4. 仅含城市名 — 剥掉城市 bare 名后残余只有 省/市/县/区 前后缀或省级名
+ *      ('海南省三亚市' / '三亚市' / '三亚')。多城市串 (北京/上海/深圳/成都)
+ *      不算城市名 — 是城市列表占位, 需要重新 geocode。
+ */
+export function isCityNameAddress(
+  address: string | null | undefined,
+  siteCity: string | null | undefined,
+  centerNames: readonly string[] = [],
+): boolean {
+  const a = address?.trim() ?? '';
+  if (!a) return false;
+  const names = new Set<string>(centerNames);
+  if (siteCity?.trim()) {
+    names.add(siteCity.trim());
+    const bare = bareCityName(siteCity);
+    if (bare) names.add(bare);
+  }
+  if (!names.size) return false;
+  for (const name of names) {
+    if (a === name || a === `${name}市`) return true;
+    if (cityNameOnlyAddress(a, name)) return true;
+  }
+  return false;
 }
 
 /**
@@ -177,7 +258,25 @@ export function importedSiteQuery(
   return `${city?.trim() || '杭州'} ${companyName} ${siteName}`;
 }
 
-/** Rows already in Postgres with no usable point. No pool → []. */
+/** 城市中心 ±EPS 的 SQL 判定片段 (listImportedSitesNeedingGeocode 用, 与 JS 侧同口径). */
+function cityCenterSqlCondition(): string {
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const { lng, lat } of Object.values(CITY_CENTERS)) {
+    const key = `${lng},${lat}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    parts.push(`(ABS(s.lng - ${lng}) <= ${CITY_CENTER_EPS} AND ABS(s.lat - ${lat}) <= ${CITY_CENTER_EPS})`);
+  }
+  return parts.join(' OR ');
+}
+
+/**
+ * Rows already in Postgres with no usable point. No pool → [].
+ * 2026-08-22 (fix/geocode-citycenter-rerun): 中心假坐标行 (中心坐标 + 非空地址)
+ * 也纳入候选 — 与 siteNeedsGeocode 新语义对齐; 地址仍是城市名的行在 JS 侧剔除
+ * (留在中心合理)。纯静态常量拼 SQL, 无用户输入。
+ */
 export async function listImportedSitesNeedingGeocode(): Promise<ImportedSiteNeed[] | null> {
   const pool = getPool();
   if (!pool) return null;
@@ -190,22 +289,45 @@ export async function listImportedSitesNeedingGeocode(): Promise<ImportedSiteNee
       address: string | null;
       city: string | null;
       province: string | null;
+      lng: string | null;
+      lat: string | null;
     }>(
       `SELECT s.id::text, c.slug AS company_slug, c.name AS company_name,
-              s.name AS site_name, s.address, s.city, s.province
+              s.name AS site_name, s.address, s.city, s.province, s.lng, s.lat
          FROM company_sites s
          JOIN companies c ON c.id = s.company_id
         WHERE s.lng IS NULL OR s.lat IS NULL
-           OR (s.lng = 0 AND s.lat = 0)`,
+           OR (s.lng = 0 AND s.lat = 0)
+           OR (s.address IS NOT NULL AND btrim(s.address) <> ''
+               AND (${cityCenterSqlCondition()}))`,
     );
-    return rows.map((row) => ({
-      id: row.id,
-      companySlug: row.company_slug,
-      companyName: row.company_name,
-      siteName: row.site_name,
-      address: row.address,
-      query: importedSiteQuery(row.address, row.city, row.company_name, row.site_name),
-    }));
+    return rows
+      .map((row) => ({
+        id: row.id,
+        companySlug: row.company_slug,
+        companyName: row.company_name,
+        siteName: row.site_name,
+        address: row.address,
+        city: row.city,
+        province: row.province,
+        lng: row.lng == null ? null : Number(row.lng),
+        lat: row.lat == null ? null : Number(row.lat),
+      }))
+      .filter(
+        (row) =>
+          row.lng == null ||
+          row.lat == null ||
+          !matchesCityCenter(row.lng, row.lat) ||
+          !isCityNameAddress(row.address, row.city, cityCenterBareNames(row.lng, row.lat)),
+      )
+      .map((row) => ({
+        id: row.id,
+        companySlug: row.companySlug,
+        companyName: row.companyName,
+        siteName: row.siteName,
+        address: row.address,
+        query: importedSiteQuery(row.address, row.city, row.companyName, row.siteName),
+      }));
   } catch {
     return null;
   }

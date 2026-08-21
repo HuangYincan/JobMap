@@ -16,6 +16,8 @@ import {
   geocodeQueryForSite,
   gradeOfficePoi,
   importedSiteQuery,
+  isCityNameAddress,
+  matchesCityCenter,
   normalizeNameForMatch,
   officeNameMatchStrength,
   parseBaiduOfficePoi,
@@ -389,6 +391,79 @@ test('siteHasStreetAddress only accepts a real street/building address', () => {
   assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '西湖区文二西路712号西溪乐谷2号楼' } }), true);
   assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '北京/上海/杭州' } }), false);
   assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: {} }), false);
+});
+
+// --- 城市中心假坐标重跑 (2026-08-22, fix/geocode-citycenter-rerun) ----------
+// 背景: city-centers 批次把无坐标站点钉在城市中心 (上海 121.47/31.23 堆 376 站、
+// 北京 327 …), w2/w4 回填街道地址后 siteNeedsGeocode 仍「有坐标即跳过」→ apply
+// 永不重跑 → 地图几百 POI 永久堆在同一中心点 (用户反馈)。新语义: 中心坐标 +
+// 地址非空且非城市名 → 需要重新 geocode; 地址仍是城市名 (占位) → 留在中心。
+
+test('siteNeedsGeocode: 城市中心坐标 + 街道地址 → 需要重新 geocode', () => {
+  const site = { id: 's', name: 'x', city: '上海市', location: { lng: 121.47, lat: 31.23, address: '上海市黄浦区马当路388号' } };
+  assert.equal(siteNeedsGeocode(site), true);
+  // 多城市串地址 (city-centers 批次最大群体, 1060 站) 也是占位 → 重新 geocode
+  assert.equal(siteNeedsGeocode({ ...site, location: { lng: 121.47, lat: 31.23, address: '北京/上海/深圳/成都' } }), true);
+});
+
+test('siteNeedsGeocode: 城市中心坐标 + 城市名地址 → 留在中心 (不需要)', () => {
+  const center = { lng: 121.47, lat: 31.23 };
+  for (const [city, addr] of [
+    ['上海市', '上海'],
+    ['上海市', '上海市'],
+    ['上海', '上海'],
+    ['上海', '上海市'],
+    ['北京市', '北京'],
+    ['三亚市', '三亚市'],
+    ['三亚市', '三亚'],
+  ]) {
+    const site = { id: 's', name: 'x', city, location: { ...center, address: addr } };
+    assert.equal(siteNeedsGeocode(site), false, `${city} / ${addr} 应留在中心`);
+  }
+});
+
+test('siteNeedsGeocode: 城市中心坐标 + 无地址 → 留在中心 (规则要求地址非空)', () => {
+  assert.equal(siteNeedsGeocode({ id: 's', name: 'x', city: '上海市', location: { lng: 121.47, lat: 31.23 } }), false);
+});
+
+test('siteNeedsGeocode: 真实坐标 + 街道地址 → 不需要 (原判定不变)', () => {
+  assert.equal(siteNeedsGeocode({ id: 's', name: 'x', city: '上海市', location: { lng: 121.512, lat: 31.272, address: '杨浦区黄兴路221号' } }), false);
+});
+
+test('siteNeedsGeocode: 无坐标 → 需要 (原判定不变)', () => {
+  assert.equal(siteNeedsGeocode({ id: 's', name: 'x' }), true);
+  assert.equal(siteNeedsGeocode({ id: 's', name: 'x', location: { lng: 0, lat: 0 } }), true);
+  assert.equal(siteNeedsGeocode({ id: 's', name: 'x', location: { lng: NaN, lat: 31.23 } }), true);
+});
+
+test('siteNeedsGeocode: 中心匹配边界 ±0.0005', () => {
+  // 杭州中心 120.15/30.27; 距 0.0005 → 命中中心; 距 0.001 → 真实坐标
+  const base = { id: 's', name: 'x', city: '杭州市', location: { lng: 120.1505, lat: 30.27, address: '西湖区文一西路969号' } };
+  assert.equal(siteNeedsGeocode(base), true);
+  assert.equal(siteNeedsGeocode({ ...base, location: { lng: 120.151, lat: 30.27, address: '西湖区文一西路969号' } }), false);
+});
+
+test('matchesCityCenter / isCityNameAddress 助手', () => {
+  assert.equal(matchesCityCenter(121.47, 31.23), true);
+  assert.equal(matchesCityCenter(121.512, 31.272), false);
+  // 城市名四形态: site.city 原样 / 加「市」 / 去「市」 / 仅含城市名
+  assert.equal(isCityNameAddress('上海市', '上海市'), true);
+  assert.equal(isCityNameAddress('上海', '上海市'), true);
+  assert.equal(isCityNameAddress('上海市', '上海'), true);
+  assert.equal(isCityNameAddress('海南省三亚市', '三亚市'), true);
+  // 非城市名: 街道地址 / 多城市串 / 空地址
+  assert.equal(isCityNameAddress('上海市黄浦区马当路388号', '上海市'), false);
+  assert.equal(isCityNameAddress('北京/上海/深圳/成都', '上海市'), false);
+  assert.equal(isCityNameAddress('', '上海市'), false);
+  assert.equal(isCityNameAddress(null, '上海市'), false);
+  // site.city 缺失 → 中心名兜底
+  assert.equal(isCityNameAddress('上海', null), false);
+  assert.equal(isCityNameAddress('上海', null, ['上海']), true);
+});
+
+test('apply 主循环适配: 中心重跑站走地址 geocode 分支 (siteHasStreetAddress 原判定)', () => {
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '上海市黄浦区马当路388号' } }), true);
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '三亚市' } }), false);
 });
 
 // --- address ↔ city consistency gate (2026-08-20, fix/geocode-address-strategy) ---
