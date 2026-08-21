@@ -28,7 +28,9 @@
 | [20-development-plan.md](20-development-plan.md) | 持续开发计划(2026-08-17 起) | 开发者/项目经理 |
 | [21-city-clustering.md](21-city-clustering.md) | 城市聚合(全国/省级视野密度管理) | 前端/后端 |
 | [22-hangzhou-poi-local.md](22-hangzhou-poi-local.md) | 杭州 POI 本地化 + 高德省调用回退(Domain) | 前端/后端 |
+| [23-map-engines.md](23-map-engines.md) | 多地图引擎(高德/腾讯/百度,切换与回退) | 前端/后端 |
 | [24-agent-feature.md](24-agent-feature.md) | AI Agent 功能(自建引擎/三平台 MCP/动作协议/悬浮球) | 前端/后端 |
+| [25-resend-email.md](25-resend-email.md) | Resend 验证码邮件(email OTP 真发:契约/重试/错误映射) | 后端 |
 
 ## 快速导航
 
