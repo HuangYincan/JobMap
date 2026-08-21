@@ -2,8 +2,8 @@
 
 **文档版本:** 1.0
 **创建日期:** 2026-08-21
-**状态:** 已实现(批次 `20260821-resend-otp` 已合入 dev 候选,feature/resend-otp-email)
-**相关:** `tech/14-api-contract.md`(Account 段 OTP 行)、`tech/roles/development/deferred-ledger.md` D-04(部分落地)、批次目录 `tech/roles/development/parallel-sessions/20260821-resend-otp/`
+**状态:** 已实现(批次 `20260821-resend-otp` 已合入 dev 候选,feature/resend-otp-email;发送反馈 UI + 邮件模板润色批次 `20260821-resend-otp-feedback`)
+**相关:** `tech/14-api-contract.md`(Account 段 OTP 行)、`tech/roles/development/deferred-ledger.md` D-04(部分落地)、批次目录 `tech/roles/development/parallel-sessions/20260821-resend-otp/` 与 `20260821-resend-otp-feedback/`
 
 ---
 
@@ -15,7 +15,7 @@
 
 - `POST /api/auth/otp/send`:email 经 Resend 真发,phone 返回 `{ ok, provider, expiresAt, demo: true, hint: '000000' }`
 - 存储/校验不变:`auth_otp_challenges`(code_hash sha256、10 分钟 TTL)+ 内存 `otpGuards`(60s 冷却、24h 10 次上限、5 次错锁 15 分钟),测试已有
-- 客户端 `auth-modal.tsx` 只读 `res.ok`/`body.message`,不依赖 `demo`/`hint` → **零前端改动**
+- 客户端 `auth-modal.tsx` 只读 `res.ok`/`body.message`,不依赖 `demo`/`hint`;后续批次补发送反馈 UI(顶部气泡 + 60s 重发倒计时,见第 9 节)
 
 ## 2. 端点契约
 
@@ -51,8 +51,8 @@
 
 ## 4. 发送内容
 
-- 发件人:`contact@nvc.ac`;主题:`登录验证码`
-- `buildVerificationEmailHtml`(`server/src/lib/verification-email.ts`):浅色卡片,全部内联 CSS(邮件客户端剥 `<style>`),验证码大字(等宽 + 字距)独立卡片突出显示,含 10 分钟有效期(`new Date(expiresAt).toLocaleString('zh-CN')` 显示到期时间),中文文案(请勿泄露 / 非本人操作可忽略)
+- 发件人:`contact@nvc.ac`;主题:`JobMap登录验证码`
+- `buildVerificationEmailHtml`(`server/src/lib/verification-email.ts`):浅色卡片(蓝顶条 + JobMap 字标),全部内联 CSS + table 布局(邮件客户端剥 `<style>`),验证码大字(等宽 + 字距)独立高亮块突出显示,含 10 分钟有效期(`new Date(expiresAt).toLocaleString('zh-CN')` 显示到期时间,加粗),中文文案(请勿泄露 / 非本人操作可忽略 / 自动发送说明)
 - `buildVerificationEmailText`:纯文本 fallback,同一事实
 - 模板**只插值 code 与 expiresAt**,无任何用户输入插值(target 等用户数据不进模板,防邮件注入)
 
@@ -87,3 +87,9 @@ RESEND_API_KEY=re_xxx
 |---|---|---|
 | phone | demo 桩:`demo: true, hint: '000000'`,不发送 | 接入真实短信服务商后删除 demo hint(D-04 余项) |
 | email | Resend 真发,返回 `messageId` | 完成 |
+
+## 9. 前端发送反馈(批次 `20260821-resend-otp-feedback`)
+
+- 发送成功 → 页面顶部 fixed 气泡(`role="status"`,2.6s 自动消失),文案按 provider:email「验证码已发送,请查收邮件」/ phone「验证码已发送」
+- 发送按钮 60s 倒计时(`RESEND_COOLDOWN_SECONDS = 60`,与后端 `otpRateConfig.cooldownMs = 60s` **对齐**,客户端禁用防连点),归零后显示「重新发送」
+- 邮件主题改为 `JobMap登录验证码`;HTML 模板润色:蓝顶条 + JobMap 字标 + 高亮验证码块(`rgba(0,122,255,0.08)` 底 + 36px 700 `#007aff`),全内联样式 table 布局不变

@@ -142,7 +142,7 @@ test('邮件模板:html/text 均含验证码与 10 分钟提示,subject 常量',
   assert.ok(!html.includes('</style>'), 'must use inline styles only');
   assert.match(text, /042007/);
   assert.match(text, /10 分钟/);
-  assert.equal(EMAIL_SUBJECT, '登录验证码');
+  assert.equal(EMAIL_SUBJECT, 'JobMap登录验证码');
 });
 
 test('randomOtpCode: 6 位数字,含前导零,样本互异', () => {

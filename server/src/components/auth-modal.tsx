@@ -22,6 +22,9 @@ const SOCIAL: { id: SocialProvider; labelKey: "authGithub" | "authGoogle" | "aut
   { id: "wechat", labelKey: "authWechat" },
 ];
 
+// 发送冷却(秒):与后端 otpRateConfig.cooldownMs = 60s 对齐,客户端禁用防连点
+const RESEND_COOLDOWN_SECONDS = 60;
+
 function SocialIcon({ id }: { id: SocialProvider }) {
   if (id === "github") {
     return (
@@ -61,6 +64,8 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendIn, setResendIn] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -88,11 +93,27 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
       setTarget("");
       setCode("");
       setSent(false);
+      setResendIn(0);
+      setNotice(null);
       setBusy(false);
       setError(null);
       resetPasswordForm();
     }
   }, [open]);
+
+  // 发送倒计时:resendIn > 0 时每秒递减,归零自动停表
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = setInterval(() => setResendIn((v) => (v > 1 ? v - 1 : 0)), 1000);
+    return () => clearInterval(timer);
+  }, [resendIn > 0]);
+
+  // 顶部气泡:2.6s 后自动消失
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 2600);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   if (!open) return null;
 
@@ -108,6 +129,8 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
       const body = await res.json();
       if (!res.ok) throw new Error(body.message || "send failed");
       setSent(true);
+      setResendIn(RESEND_COOLDOWN_SECONDS);
+      setNotice(t(tab === "email" ? "sendCodeSuccessEmail" : "sendCodeSuccess", lang));
     } catch (err) {
       setError(err instanceof Error ? err.message : "send failed");
     } finally {
@@ -221,7 +244,13 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose} role="presentation">
+    <>
+      {notice && (
+        <div className={styles.topToast} role="status">
+          {notice}
+        </div>
+      )}
+      <div className={styles.overlay} onClick={onClose} role="presentation">
       <div className={styles.orbA} aria-hidden="true" />
       <div className={styles.orbB} aria-hidden="true" />
       <div className={styles.orbC} aria-hidden="true" />
@@ -256,6 +285,8 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
                   setTab(id);
                   setError(null);
                   setSent(false);
+                  setResendIn(0);
+                  setNotice(null);
                   setCode("");
                   resetPasswordForm();
                 }}
@@ -363,10 +394,14 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
                   <button
                     type="button"
                     className={styles.inlineSend}
-                    disabled={busy || !target.trim()}
+                    disabled={busy || !target.trim() || resendIn > 0}
                     onClick={sendCode}
                   >
-                    {sent ? t("resendCode", lang) : t("sendCode", lang)}
+                    {resendIn > 0
+                      ? t("resendInSeconds", lang).replace("{s}", String(resendIn))
+                      : sent
+                        ? t("resendCode", lang)
+                        : t("sendCode", lang)}
                   </button>
                 </div>
               </label>
@@ -396,5 +431,6 @@ export function AuthModal({ open, lang, onClose, onSignedIn }: AuthModalProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }
