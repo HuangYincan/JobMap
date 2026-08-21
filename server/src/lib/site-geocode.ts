@@ -855,6 +855,11 @@ export function normalizeNameForMatch(name: string): string {
 // 候选名只能以「限定词」认领公司名: 城市前缀 / 品牌拼音 / 总部·分公司·大厦·
 // 科技·公司 等。"得物" ⊂ "广州得物包装实业有限公司" 不是匹配; "上海燧原科技"
 // 匹配 "燧原科技"。括号段(门店指示)必须呈办公形态, 带 店/站/驿站 拒收。
+// 2026-08-22 (fix/grader-seq-relax): 单个限定词 token 放宽为「限定词 token 序列」—
+// 集合内 token 可拼接 (研发大厦 = 研发+大厦; 杭州研究院 = 杭州+研究院; 科技公司 =
+// 科技+公司)。旧规则只认整段在集合内, 「百度研发大厦」类真实办公室 POI 被误拒
+// (r4 apply 831 站 no-result 主因)。整段仍必须完全由集合 token 组成 — 非限定词
+// token (包装/实业/造型/鱼庄/驿站/店/站/旗舰店…) 混入 → 整段拒绝, 防线不变。
 
 const QUALIFIER_SUFFIXES = new Set([
   '总部', '运营总部', '分公司', '子公司', '研发', '研究院', '办公', '大楼', '大厦', '广场',
@@ -866,17 +871,62 @@ const CITY_PREFIXES = new Set([
   '珠海', '无锡', '常州', '嘉兴', '温州', '金华', '绍兴', '台州', '香港', '澳门',
 ]);
 const ROMAN_PREFIX_RE = /^[a-z]{2,}$/;
-const GOOD_BRACKET_SEG_RE = /(号楼|大厦|中心|园区|广场|总部|办公|研究院|大学|学院|医院|产业园|科技园|软件园|创业园|世界城|金融城|天地)$/;
+// 允许表语义: 不在表内即拒 — 分店/旗舰店/体验店/站/驿站 括号段无需显式排除.
+// 2026-08-22 (fix/grader-seq-relax): 增加 分公司/公司/科技/研发/基地/大楼/学校.
+const GOOD_BRACKET_SEG_RE = /(号楼|大厦|中心|园区|广场|总部|办公|研究院|大学|学院|医院|产业园|科技园|软件园|创业园|世界城|金融城|天地|分公司|公司|科技|研发|基地|大楼|学校)$/;
 
-function isQualifierPrefix(token: string): boolean {
-  if (CITY_PREFIXES.has(token.replace(/[省市]$/, ''))) return true;
-  return ROMAN_PREFIX_RE.test(token);
+/** 限定词 token 最长长度 (序列拆解用, 最长 token 优先). */
+const MAX_QUALIFIER_TOKEN_LEN = 4;
+
+/** 城市名 token 长度 (2 字城市名, 可带 省/市 后缀 → 最长 3); 0 = 非城市 token. */
+function cityTokenLen(text: string): number {
+  if (text.length >= 3 && CITY_PREFIXES.has(text.slice(0, 3).replace(/[省市]$/, ''))) return 3;
+  if (text.length >= 2 && CITY_PREFIXES.has(text.slice(0, 2))) return 2;
+  return 0;
 }
 
-/** 公司名+城市 也是常见分支命名 (快手北京 / 某司上海) — 城市名算限定词后缀. */
-function isQualifierSuffix(token: string): boolean {
-  if (QUALIFIER_SUFFIXES.has(token)) return true;
-  return CITY_PREFIXES.has(token.replace(/[省市]$/, ''));
+/**
+ * 限定词前缀 token 序列 (2026-08-22, fix/grader-seq-relax): 整段完全由城市名
+ * token (可带 省/市 后缀) + 品牌拼音 token (连续 ≥2 位小写字母, ROMAN_PREFIX_RE
+ * 语义) 拼接而成; 任一其他 token → false。线性贪心拼接, 超长串不递归不崩。
+ */
+function isQualifierPrefixSeq(text: string): boolean {
+  let rest = text;
+  while (rest.length > 0) {
+    const roman = /^[a-z]+/.exec(rest);
+    if (roman) {
+      if (!ROMAN_PREFIX_RE.test(roman[0])) return false;
+      rest = rest.slice(roman[0].length);
+      continue;
+    }
+    const len = cityTokenLen(rest);
+    if (!len) return false;
+    rest = rest.slice(len);
+  }
+  return true;
+}
+
+/**
+ * 限定词后缀 token 序列 (2026-08-22, fix/grader-seq-relax): 整段完全由
+ * QUALIFIER_SUFFIXES token + 城市名 token (快手北京 类分支命名) 拼接而成。
+ * 最长 token 优先 — 「研发大厦」拆 研发|大厦 而非 研发大|厦 (集合内无 研发大);
+ * 研究院/运营总部 等长 token 优先整段命中; 非限定词 token 混入 → false。
+ */
+function isQualifierSuffixSeq(text: string): boolean {
+  let rest = text;
+  while (rest.length > 0) {
+    let len = 0;
+    for (let n = Math.min(MAX_QUALIFIER_TOKEN_LEN, rest.length); n >= 1; n--) {
+      if (QUALIFIER_SUFFIXES.has(rest.slice(0, n))) {
+        len = n;
+        break;
+      }
+    }
+    if (!len) len = cityTokenLen(rest);
+    if (!len) return false;
+    rest = rest.slice(len);
+  }
+  return true;
 }
 
 function candidateBracketSegments(name: string): string[] {
@@ -892,11 +942,14 @@ export function officeNameMatchStrength(candidateName: string, companyName: stri
   const q = normalizeNameForMatch(companyName);
   const c = normalizeNameForMatch(candidateName);
   if (!q || !c || !c.includes(q)) return 'no';
+  // 每侧为空或「全限定词 token 序列」; 组合须至少一边非空且全限定词, 但
+  // 精确同名 (两侧皆空) 是最强认领, 保持既有行为 (得物=得物 / 快手(星耀中心
+  // 7号楼)=快手 自 2026-08-19 起均 strong; 收紧只增假阴性).
   const matches = (prefix: string, suffix: string) =>
     (prefix === '' && suffix === '') ||
-    (prefix === '' && isQualifierSuffix(suffix)) ||
-    (suffix === '' && isQualifierPrefix(prefix)) ||
-    (isQualifierPrefix(prefix) && isQualifierSuffix(suffix));
+    (prefix === '' && isQualifierSuffixSeq(suffix)) ||
+    (suffix === '' && isQualifierPrefixSeq(prefix)) ||
+    (isQualifierPrefixSeq(prefix) && isQualifierSuffixSeq(suffix));
   let strong = false;
   for (let i = 0; i + q.length <= c.length; i++) {
     if (c.slice(i, i + q.length) !== q) continue;
