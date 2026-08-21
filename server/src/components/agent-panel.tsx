@@ -7,8 +7,8 @@
 //   发送/停止/撤销;
 // - 按轮交替:reduceAgentEvent 纯状态机把每轮(reasoning→delta→tool)拆成独立
 //   assistant 消息,视觉上「文本1、工具1、文本2、工具2…」;
-// - 思考过程:reasoning 事件累积,每条助手消息内可折叠「💭 思考过程」(默认展开,
-//   muted 小字,滚动上限);
+// - 思考状态:reasoning 事件只标记不渲染内容——有思考标记的助手消息顶部一行弱化状态
+//   (思考中… / 思考完成);
 // - 工具活动列表:每条 tool 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案;失败附
 //   「调用失败」弱提示),渲染在文本气泡下方;运行中工具另有顶部状态条;
 // - 未配置提示:503 LLM_UNCONFIGURED → agentNotConfigured;RATE_LIMITED → agentRateLimited;
@@ -127,8 +127,6 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
   const [fatalError, setFatalError] = useState<string | null>(null);
   // undo 可用性重渲染信号(执行器实例在 ref 中,栈变化不触发渲染)
   const [, setUndoVersion] = useState(0);
-  // 折叠的思考过程(按消息下标;默认展开)
-  const [collapsedThinking, setCollapsedThinking] = useState<number[]>([]);
 
   const abortRef = useRef<AbortController | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -293,7 +291,6 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
       setNotConfigured(false);
       setFatalError(null);
       setTool(null);
-      setCollapsedThinking([]);
       saveHistory(nextMessages); // 刷新/中断时保留本条用户消息
       // 新会话首条自动带视口快照(bridge.getSnapshot() → viewport 参数)
       const snapshot = bridgeRef.current?.getSnapshot() ?? null;
@@ -318,10 +315,6 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
   const replayAction = useCallback((action: AgentAction) => {
     // 纯执行语义:只在地图上重放动作,不再回调 onAction(否则按钮翻倍 + 地图反复定位)
     executorRef.current?.execute(action);
-  }, []);
-
-  const toggleThinking = useCallback((idx: number) => {
-    setCollapsedThinking((prev) => (prev.includes(idx) ? prev.filter((x) => x !== idx) : [...prev, idx]));
   }, []);
 
   // 消息/状态变化 → 滚动到底部
@@ -359,58 +352,46 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
 
       <div ref={listRef} className={styles.list}>
         {messages.length === 0 && !streaming && <p className={styles.welcome}>{t("agentWelcome", lang)}</p>}
-        {messages.map((m, i) => {
-          const isCollapsed = collapsedThinking.includes(i);
-          return (
-            <div key={i} className={`${styles.msg} ${m.role === "user" ? styles.msgUser : styles.msgAssistant}`}>
-              {m.role === "assistant" && m.reasoning && (
-                <div className={styles.thinking}>
-                  <button
-                    type="button"
-                    className={styles.thinkingToggle}
-                    onClick={() => toggleThinking(i)}
-                    aria-expanded={!isCollapsed}
-                  >
-                    <span aria-hidden="true">
-                      💭 {t("agentThinkingSection", lang)}
-                    </span>
-                    <span className={styles.thinkingChevron} aria-hidden="true">
-                      {isCollapsed ? "▸" : "▾"}
-                    </span>
-                  </button>
-                  {!isCollapsed && <div className={styles.thinkingBody}>{m.reasoning}</div>}
-                </div>
-              )}
-              <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
-                {m.role === "assistant" ? <MarkdownText text={m.content} /> : m.content}
+        {messages.map((m, i) => (
+          <div key={i} className={`${styles.msg} ${m.role === "user" ? styles.msgUser : styles.msgAssistant}`}>
+            {m.role === "assistant" && m.reasoning && (
+              <div
+                className={`${styles.thinking} ${m.reasoning === "thinking" ? styles.thinkingActive : ""}`}
+                role="status"
+              >
+                <span aria-hidden="true">💭</span>
+                {m.reasoning === "thinking" ? t("agentThinking", lang) : t("agentThinkingDone", lang)}
               </div>
-              {m.role === "assistant" && m.tools && m.tools.length > 0 && (
-                <ul className={styles.toolActivity} aria-label={t("agentToolsSection", lang)}>
-                  {m.tools.map((toolItem, j) => (
-                    <li key={j} className={`${styles.toolRow} ${toolItem.status === "error" ? styles.toolRowError : ""}`}>
-                      <span className={styles.toolStatus} aria-hidden="true">
-                        {toolItem.status === "start" ? "⟳" : toolItem.status === "done" ? "✓" : "✗"}
-                      </span>
-                      <span className={styles.toolName}>{toolCategoryName(toolItem.name, lang)}</span>
-                      {toolItem.status === "error" && (
-                        <span className={styles.toolSummary}>{t("agentToolFailed", lang)}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {m.role === "assistant" && m.actions && m.actions.length > 0 && (
-                <div className={styles.actions}>
-                  {m.actions.map((a, j) => (
-                    <button key={j} type="button" className={styles.actionBtn} onClick={() => replayAction(a)}>
-                      {actionLabel(a, lang)}
-                    </button>
-                  ))}
-                </div>
-              )}
+            )}
+            <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
+              {m.role === "assistant" ? <MarkdownText text={m.content} /> : m.content}
             </div>
-          );
-        })}
+            {m.role === "assistant" && m.tools && m.tools.length > 0 && (
+              <ul className={styles.toolActivity} aria-label={t("agentToolsSection", lang)}>
+                {m.tools.map((toolItem, j) => (
+                  <li key={j} className={`${styles.toolRow} ${toolItem.status === "error" ? styles.toolRowError : ""}`}>
+                    <span className={styles.toolStatus} aria-hidden="true">
+                      {toolItem.status === "start" ? "⟳" : toolItem.status === "done" ? "✓" : "✗"}
+                    </span>
+                    <span className={styles.toolName}>{toolCategoryName(toolItem.name, lang)}</span>
+                    {toolItem.status === "error" && (
+                      <span className={styles.toolSummary}>{t("agentToolFailed", lang)}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {m.role === "assistant" && m.actions && m.actions.length > 0 && (
+              <div className={styles.actions}>
+                {m.actions.map((a, j) => (
+                  <button key={j} type="button" className={styles.actionBtn} onClick={() => replayAction(a)}>
+                    {actionLabel(a, lang)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
         {streaming && !lastIsAssistant && (
           <div className={`${styles.msg} ${styles.msgAssistant}`}>
             <div className={`${styles.bubbleAssistant} ${styles.typing}`}>{t("agentThinking", lang)}</div>

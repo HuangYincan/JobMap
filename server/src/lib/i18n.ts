@@ -937,12 +937,12 @@ export const translations = {
     en: 'Undo',
   },
   agentThinking: {
-    zh: '正在思考…',
+    zh: '思考中…',
     en: 'Thinking…',
   },
-  agentThinkingSection: {
-    zh: '思考过程',
-    en: 'Thinking',
+  agentThinkingDone: {
+    zh: '思考完成',
+    en: 'Thinking done',
   },
   agentToolsSection: {
     zh: '工具调用',

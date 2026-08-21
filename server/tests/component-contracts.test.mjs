@@ -944,16 +944,22 @@ test('agent panel follows the ball via transform anchor (ws-c-enhance)', () => {
   assert.match(ball, /dragging=\{dragging\}/);
 });
 
-test('agent panel renders thinking + tool activity for assistant messages (ws-c-enhance)', () => {
+test('agent panel renders thinking status + tool activity for assistant messages (ws-thinkfix)', () => {
   const panel = src('components/agent-panel.tsx');
   const css = src('components/agent-panel.module.css');
   const i18n = src('lib/i18n.ts');
-  // 思考过程:可折叠按钮 + muted 小字 + 滚动上限
-  assert.match(panel, /agentThinkingSection/);
-  assert.match(panel, /thinkingToggle/);
-  assert.match(panel, /aria-expanded=\{!isCollapsed\}/);
-  assert.match(panel, /thinkingBody/);
-  assert.match(css, /\.thinkingBody \{[\s\S]*max-height: 140px[\s\S]*overflow-y: auto/);
+  // 思考只显示状态行(不渲染内容):「思考中…」/「思考完成」+ 思考中弱脉冲
+  assert.match(panel, /m\.reasoning === "thinking" \? t\("agentThinking", lang\) : t\("agentThinkingDone", lang\)/);
+  assert.match(panel, /thinkingActive/);
+  assert.match(css, /\.thinkingActive \{[\s\S]*animation: thinkingPulse/);
+  assert.match(css, /\.thinking \{/);
+  // 折叠思考块(内容渲染)已整体移除
+  assert.doesNotMatch(panel, /thinkingToggle/, '折叠按钮已移除');
+  assert.doesNotMatch(panel, /thinkingBody/, '思考正文已移除');
+  assert.doesNotMatch(panel, /thinkingChevron/, '折叠箭头已移除');
+  assert.doesNotMatch(panel, /collapsedThinking/, '折叠状态已移除');
+  assert.doesNotMatch(panel, /agentThinkingSection/, '思考过程标题已移除');
+  assert.doesNotMatch(panel, /\{m\.reasoning\}/, '思考内容一律不渲染');
   // 工具活动列表:⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案(不再显示内部名/summary)
   assert.match(panel, /toolActivity/);
   assert.match(panel, /toolCategoryName\(toolItem\.name, lang\)/);
@@ -970,8 +976,10 @@ test('agent panel renders thinking + tool activity for assistant messages (ws-c-
   // 助手消息体走 MarkdownText(用户消息保持纯文本)
   assert.match(panel, /import \{ MarkdownText \} from "\.\/markdown-text"/);
   assert.match(panel, /m\.role === "assistant" \? <MarkdownText text=\{m\.content\} \/> : m\.content/);
-  // i18n 新键
-  assert.match(i18n, /agentThinkingSection: \{[\s\S]*思考过程[\s\S]*Thinking/);
+  // i18n 新键:思考状态(思考中… / 思考完成);思考过程键已删除
+  assert.match(i18n, /agentThinking: \{[\s\S]*思考中…[\s\S]*Thinking…/);
+  assert.match(i18n, /agentThinkingDone: \{[\s\S]*思考完成[\s\S]*Thinking done/);
+  assert.doesNotMatch(i18n, /agentThinkingSection/, '思考过程 i18n 键已删除');
   assert.match(i18n, /agentToolsSection: \{[\s\S]*工具调用[\s\S]*Tool calls/);
   // 既有能力保留
   assert.match(panel, /replayAction/);
