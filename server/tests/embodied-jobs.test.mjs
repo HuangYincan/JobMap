@@ -16,8 +16,8 @@ import {
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
 
-// Fixtures are self-contained (WS-1 drops are not in this worktree) and mirror
-// the REAL embj-* drop shape (2026-08-21): slug embj-* / name / source
+// Fixtures are self-contained (no dependency on the checked-in data dir) and
+// mirror the REAL embj-* drop shape (2026-08-21): slug embj-* / name / source
 // 'embodied-jobs' / careerUrl / sites(单站 id embj-<name>-site, city/province,
 // location {}) / positions(externalId embj-*, family social|campus|intern,
 // taxonomy, status open, applySource official, applyUrl, retrievedAt) —
