@@ -27,6 +27,8 @@ export interface AgentContext {
   lang: 'zh' | 'en';
   requestId: string;
   signal: AbortSignal;
+  /** 会话用户 id(guest = undefined);记忆工具与个性化依赖它。 */
+  userId?: string;
 }
 
 /** 动作白名单(SSE action 事件 payload)。 */
@@ -42,7 +44,7 @@ export type AgentAction =
  * 公开 tool 事件类别(安全集合):内部工具名 → 通用类别,无供应商前缀、无内部工具名。
  * 由 run-agent 的 toolKind() 纯函数映射(可单测)。
  */
-export type ToolKind = 'search' | 'geocode' | 'directions' | 'weather' | 'project' | 'other';
+export type ToolKind = 'search' | 'geocode' | 'directions' | 'weather' | 'project' | 'memory' | 'other';
 
 export type AgentEvent =
   | { type: 'delta'; text: string }

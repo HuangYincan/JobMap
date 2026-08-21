@@ -14,6 +14,7 @@ import { createLlmProvider } from './llm-provider.ts';
 import type { AgentProviderError, ChatMessage, LLMProvider, StreamChatOptions } from './llm-provider.ts';
 import { HttpError } from '../llm-validate.ts';
 import { validateAction } from './action-schema.ts';
+import { listMemories } from '../memory-store.ts';
 import { buildSystemPrompt } from './prompts.ts';
 import type { AgentConfig } from './config.ts';
 import type { AgentAction, AgentContext, AgentEvent, AgentTool, ToolKind, ToolResult } from './types.ts';
@@ -26,6 +27,8 @@ export interface RunAgentRequest {
   viewport?: AgentContext['viewport'];
   lang?: 'zh' | 'en';
   signal: AbortSignal;
+  /** 会话用户 id(guest = undefined):注入个性化记忆段 + 记忆工具的 userId。 */
+  userId?: string;
   /** 测试注入点:默认 createLlmProvider()。 */
   provider?: LLMProvider;
 }
@@ -41,6 +44,35 @@ const TOOL_TEXT_MAX = 3000;
 const URL_MAX_LEN = 150;
 /** 思考内容(reasoning 事件)总量上限:超出截断且不再转发(与 delta 顺序保持)。 */
 const REASONING_MAX = 4000;
+
+// ---- 用户记忆注入预算(tech/26-agent-memory.md §3)----
+const MEMORY_LINE_MAX = 20; // 最多 20 条
+const MEMORY_ITEM_MAX = 200; // 单条 200 字(与 sanitizeMemoryContent / 工具 schema 一致)
+const MEMORY_BUDGET = 4000; // 总长预算(含 "- " 前缀),超限截断
+
+/**
+ * 纯 async:把某用户的记忆列表格式化为注入段(`- 事实1\n- 事实2`)。
+ * 无 userId / 无记忆 → undefined(不注入该段);超预算(20 条 / 单条 200 / 总长 4000)截断。
+ * 预算按 join('\n') 后的最终字符串长度计(换行符计入),保证返回串 ≤ 4000。
+ */
+export async function loadUserMemory(userId?: string): Promise<string | undefined> {
+  if (!userId) return undefined;
+  const items = await listMemories(userId);
+  if (items.length === 0) return undefined;
+  const lines: string[] = [];
+  let used = 0;
+  for (const item of items) {
+    if (lines.length >= MEMORY_LINE_MAX) break;
+    const line = `- ${item.content.slice(0, MEMORY_ITEM_MAX)}`;
+    const newlineCost = lines.length > 0 ? 1 : 0; // join('\n') 分隔符计入总长预算
+    const remaining = MEMORY_BUDGET - used - newlineCost;
+    if (remaining < 2) break; // 不足 "- x" 则停
+    const slice = line.slice(0, remaining);
+    lines.push(slice);
+    used += slice.length + newlineCost;
+  }
+  return lines.join('\n');
+}
 
 /** 事件队列:把 provider 的回调事件桥接为 async iterable,供生成器实时 yield。 */
 class EventQueue<T> implements AsyncIterable<T> {
@@ -169,6 +201,8 @@ const TOOL_KIND_RULES: Array<[RegExp, ToolKind]> = [
   [/navi|uri|url|link|scheme/, 'directions'],
   [/weather/, 'weather'],
   [/jobs|position|company|recruit|岗位/, 'project'],
+  // 用户记忆工具(2026-08-22 ws-mem-a):builtin__memory_save → memory
+  [/memory/, 'memory'],
 ];
 
 /**
@@ -200,7 +234,11 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
   const provider = req.provider ?? createLlmProvider();
   const lang = req.lang ?? 'zh';
   const toolMap = new Map(req.tools.map((t) => [t.name, t]));
-  const systemPrompt = buildSystemPrompt({ maxTurns: req.config.maxTurns, hasTools: req.tools.length > 0 }, lang);
+  // 构建 system prompt 前注入记忆段:无 userId 或空记忆 → memory undefined → 模板不注入该段。
+  const systemPrompt = buildSystemPrompt(
+    { maxTurns: req.config.maxTurns, hasTools: req.tools.length > 0, memory: await loadUserMemory(req.userId) },
+    lang,
+  );
   const history: ChatMessage[] = [
     { role: 'system', content: systemPrompt },
     ...req.messages.map((m) => ({ role: m.role, content: m.content })),
@@ -210,6 +248,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
     lang,
     requestId: globalThis.crypto?.randomUUID?.() ?? String(Math.random()),
     signal: req.signal,
+    userId: req.userId,
   };
 
   let noTools = false; // unsupported_tools 降级标志(最多一次)

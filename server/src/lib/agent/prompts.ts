@@ -5,11 +5,16 @@
 interface PromptInput {
   maxTurns: number;
   hasTools: boolean;
+  /** 用户记忆注入段(loadUserMemory 格式化后的多行文本;undefined/空 → 不注入该段)。 */
+  memory?: string;
 }
 
 const ZH = (cfg: PromptInput): string => [
   '你是一名地图 AI 助手,运行在「Domain Map」地图平台中,帮助用户完成地点查询、位置探索与在地图上的定位。',
   '',
+  ...(cfg.memory
+    ? ['## 用户记忆(供个性化参考,不要复述给用户)', cfg.memory, '']
+    : []),
   '## 能力边界',
   '- 你只能使用下面列出的白名单工具;任何不在此清单中的工具、接口、网址一律不得调用。',
   '- 地图坐标一律使用 GCJ-02 坐标系。不得编造任何坐标或地点信息;只有工具返回或用户明确给出的坐标才可使用。',
@@ -49,6 +54,7 @@ const ZH = (cfg: PromptInput): string => [
 const EN = (cfg: PromptInput): string => [
   'You are a map AI assistant running in the "Domain Map" platform, helping users with place queries, location discovery, and on-map positioning.',
   '',
+  ...(cfg.memory ? ['## User memory (for personalization; do not recite it back)', cfg.memory, ''] : []),
   '## Capability boundary',
   '- You may only use the whitelisted tools listed below; never call any tool, API, or URL outside that list.',
   '- All map coordinates use the GCJ-02 system. Never fabricate coordinates or places; only use coordinates returned by tools or explicitly given by the user.',
