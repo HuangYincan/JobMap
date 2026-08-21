@@ -2,6 +2,67 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-22: 筛选「莫名勾选独角兽」(缓存残留 + 切模式闭包 stale filters)
+
+**症状**：用户报告筛选面板莫名勾选上「独角兽」(work 模式公司规模筛选
+scale=unicorn)。Explore 定位两处根因(2026-08-22),详见批次 README
+(`parallel-sessions/20260822-boss-filter-unicorn/`)。
+
+**根因**：
+1. **主因(缓存残留,F5 复现)**:`map-shell` 主加载 effect 刻意不依赖 filters
+   (minRating/price 不重搜),`writeModeCache` 只在 load() 内写,写的是 **load
+   启动时刻的闭包 filters 快照**。某次 load 时 filters 含 unicorn(如点
+   `#独角兽` 建议,query 清空触发 load)→ 连同过滤后 catalog 写进缓存;用户
+   随后面板取消勾选 → setFilters 无重载 → **缓存仍残留 scale:['unicorn']**;
+   F5/重开 → `useModeCacheRestore` 全量还原 → 独角兽「莫名」勾选。切模式方向
+   自愈(handleModeChange 会把当前正确 filters 写回),所以只有刷新路径坏。
+2. **次因(切模式闭包 stale filters)**:`handlePickRecent` →
+   `openExploreSearch(replay.query)`,同栈内先 `handleModeChange(replay.mode)`
+   ——state 更新异步,openExploreSearch 闭包 deps `[query, filters]` 拿的还是
+   **切换前旧模式**的 filters 做标签 merge → 旧模式筛选(如 work 的
+   scale:['unicorn'])被带进新模式。
+
+**方案**(`fix/filter-unicorn`,纯逻辑修复,零 UI 改动)：
+1. **主因根治(双保险)**:
+   - 写缓存时刻的最新状态:load 内两处 `writeModeCache`(onBatch + 最终)的
+     `filters`/`sort` 改用 `viewStateRef.current.*`(与 `use-work-viewport.ts:206`
+     同款 viewStateRef 模式),不再用闭包快照——加载在飞期间用户改筛选也不会
+     写入过期值;
+   - **非 category 筛选变更同步重写缓存**:新增 effect(deps `[filters]`)调
+     `syncModeCache`(mode-cache.ts 新导出)——每次 filters 变更以「最新 filters
+     + 当前池」重写缓存,viewport(地图未就绪)为 null 时跳过(不覆盖现有快照,
+     保护挂载对齐判定)。**取消勾选独角兽 → F5/重开 → 不复活**。不依赖 mode:
+     避免 profile defaultMode 的 setMode 直改路径把旧模式状态写进新模式缓存。
+2. **次因根治**:`handleModeChange` 两分支(缓存还原/清空)在 setState 同时**立即
+   同步 `viewStateRef.current` 为目标模式将生效的状态**;`openExploreSearch`
+   改以 `viewStateRef.current` 为 merge 基准(deps `[query, filters]` → `[]`,
+   经新纯函数 `planExploreSearch`),同栈调用读到的是切换后模式的 filters。
+   点历史 `#独角兽` 的应用语义保持(applyTagSuggestion 不 strip)。
+3. 排查确认:2026-08-22 收藏批次(互斥/门控)不触碰 filters 链路,非回归;
+   默认值/pickCategoryFilter/候选 chips 均不含 scale;历史记录不存 filters
+   (guest-search-history.ts:65-71 仅 query/mode/entity)。
+
+**新增回归测试**(`tests/filter-unicorn-regression.test.mjs`,12 项,jsdom 可测层:
+本仓库无 jsdom 运行时,沿用「源码契约 + 语义镜像」模式):
+- 主因:load 写入 unicorn → 取消勾选 syncModeCache → 缓存/还原不含 unicorn;
+  连续取消始终跟随最新 filters;viewport 为 null 跳过不覆盖;在飞改筛选不写旧值;
+- 次因:切新模式后点历史 `#独角兽` → 只应用独角兽(旧模式 industry 等不泄漏)、
+  合并进新模式已有筛选、纯关键词不碰 filters、同模式语义保持;
+- 契约:load 写缓存两处用 `viewStateRef.current.filters`、syncModeCache effect
+  deps `[filters]`、openExploreSearch 以 viewStateRef 为基准、handleModeChange
+  两分支同步 ref、handlePickRecent 先切模式再回放。
+
+**修改文件**：`server/src/lib/mode-cache.ts`(+`syncModeCache`)、
+`server/src/lib/search.ts`(+`planExploreSearch`)、
+`server/src/components/map-shell.tsx`(load 写缓存两处 + sync 新 effect +
+handleModeChange ref 同步 + openExploreSearch 基准切换)、
+`server/tests/filter-unicorn-regression.test.mjs`(新)、`tech/16-bug-fixes.md`(本节)。
+
+**验证**:1269 测试(1267 pass / 2 skip,含新回归 12 项);typecheck / docs-check /
+git diff --check 绿。历史文字保留(仅追加)。
+
+---
+
 ## 2026-08-22: 收藏图层互斥语义(开 = 只留收藏;关 = 恢复)
 
 **症状**：用户反馈收藏图层开关「没区别」。判定为**叠加语义**且实现正常(收藏 pin 按 id
