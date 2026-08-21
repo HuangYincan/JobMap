@@ -56,7 +56,7 @@ export function useSavedLayer(deps: UseSavedLayerDeps): UseSavedLayerResult {
   );
 
   // onRequireAuth 经 ref 调用:toggle 的 useCallback 依赖保持与数据
-  // 一致(user/savedOverlay/overlayPois + 稳定 refs),inline 箭头不重建 toggle
+  // 一致(user/savedOverlay + 稳定 refs),inline 箭头不重建 toggle
   const onRequireAuthRef = useRef(onRequireAuth);
   onRequireAuthRef.current = onRequireAuth;
 
