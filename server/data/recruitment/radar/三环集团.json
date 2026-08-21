@@ -26,7 +26,9 @@
       "city": "成都市",
       "province": "四川省",
       "location": {
-        "address": "深圳/成都/苏州"
+        "address": "深圳/成都/苏州",
+        "lng": 104.07,
+        "lat": 30.66
       }
     }
   ],

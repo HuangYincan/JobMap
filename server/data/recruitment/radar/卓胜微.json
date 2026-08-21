@@ -15,7 +15,9 @@
       "city": "成都市",
       "province": "四川省",
       "location": {
-        "address": "成都/无锡"
+        "address": "成都/无锡",
+        "lng": 104.07,
+        "lat": 30.66
       }
     }
   ],

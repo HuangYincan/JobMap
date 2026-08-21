@@ -13,6 +13,10 @@
 //   - site.city 存在且裸城名 ≠ '杭州' (bareCityName: 去 省/市/区 后缀)
 //   - location.lng/lat 都是有限 number 且落在杭州参考框
 //     (118.3 ≤ lng ≤ 120.8 且 29.05 ≤ lat ≤ 30.75)
+//   - 但坐标精确等于 cityCenter(city) 的静态行政中心 → 豁免 (2026-08-21
+//     city-split 补点): 金华中心 119.65/29.08 地理上落在杭州框内, 但它是
+//     CITY_CENTERS 的城市行政中心, 不是 7d19271 杭州 office 坐标的复制;
+//     split-city-sites.mjs 补的中心点全部满足该豁免, 清扫不得再剥掉
 //   → 删除 location.lng/lat 键, 保留 address (无 address 也保留空结构)
 //   - 杭州 site (裸城名 = 杭州/杭州市) 坐标一律保留不动 (7d19271 真杭州坐标)
 //
@@ -28,6 +32,7 @@
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { cityCenter } from '../src/lib/city-centers.ts';
 
 const dataRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment');
 const DROP_DIRS = ['radar', 'official-career'];
@@ -83,6 +88,11 @@ function main() {
       if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue; // 非法坐标 → 不动
       sitesScanned += 1;
       if (inHangzhouBox(lng, lat)) {
+        // CITY_CENTERS 静态行政中心豁免 (2026-08-21 city-split 补点): 精确等值
+        // 于 cityCenter 的坐标是城市中心点, 与事故复制的杭州 office 坐标
+        // (120.221266/30.201767) 可区分, 不清扫。
+        const center = cityCenter(city);
+        if (center && center.lng === lng && center.lat === lat) continue;
         delete loc.lng;
         delete loc.lat;
         fileChanged = true;

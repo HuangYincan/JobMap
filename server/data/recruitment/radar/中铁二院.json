@@ -15,7 +15,9 @@
       "city": "广州市",
       "province": "广东省",
       "location": {
-        "address": "上城区德福巷10号"
+        "address": "上城区德福巷10号",
+        "lng": 113.26,
+        "lat": 23.13
       }
     },
     {
@@ -24,7 +26,9 @@
       "city": "成都市",
       "province": "四川省",
       "location": {
-        "address": "上城区德福巷10号"
+        "address": "上城区德福巷10号",
+        "lng": 104.07,
+        "lat": 30.66
       }
     },
     {

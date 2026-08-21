@@ -11,9 +11,12 @@
     {
       "id": "qqj-捷讯光电-site",
       "name": "捷讯光电",
-      "city": "合肥",
+      "city": "合肥市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 117.28,
+        "lat": 31.86
+      }
     }
   ],
   "positions": [

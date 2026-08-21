@@ -15,7 +15,9 @@
       "city": "北京市",
       "province": "北京市",
       "location": {
-        "address": "北京/苏州/济南"
+        "address": "北京/苏州/济南",
+        "lng": 116.4,
+        "lat": 39.9
       }
     }
   ],

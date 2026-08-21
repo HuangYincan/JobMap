@@ -11,9 +11,12 @@
     {
       "id": "qqj-南京841研究所-site",
       "name": "南京841研究所",
-      "city": "南京",
+      "city": "南京市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 118.78,
+        "lat": 32.06
+      }
     }
   ],
   "positions": [

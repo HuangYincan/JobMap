@@ -15,7 +15,9 @@
       "city": "上海市",
       "province": "上海市",
       "location": {
-        "address": "上海/南京"
+        "address": "上海/南京",
+        "lng": 121.47,
+        "lat": 31.23
       }
     },
     {
@@ -24,7 +26,9 @@
       "city": "南京市",
       "province": "江苏省",
       "location": {
-        "address": "上海/南京"
+        "address": "上海/南京",
+        "lng": 118.78,
+        "lat": 32.06
       }
     }
   ],

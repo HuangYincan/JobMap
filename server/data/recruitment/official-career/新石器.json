@@ -16,7 +16,9 @@
       "city": "北京市",
       "province": "北京市",
       "location": {
-        "address": "桐庐县尹家路66号"
+        "address": "桐庐县尹家路66号",
+        "lng": 116.4,
+        "lat": 39.9
       }
     },
     {
@@ -25,7 +27,9 @@
       "city": "上海市",
       "province": "上海市",
       "location": {
-        "address": "桐庐县尹家路66号"
+        "address": "桐庐县尹家路66号",
+        "lng": 121.47,
+        "lat": 31.23
       }
     },
     {
@@ -34,7 +38,9 @@
       "city": "成都市",
       "province": "四川省",
       "location": {
-        "address": "桐庐县尹家路66号"
+        "address": "桐庐县尹家路66号",
+        "lng": 104.07,
+        "lat": 30.66
       }
     },
     {
@@ -51,10 +57,12 @@
     {
       "id": "新石器-site-石家庄",
       "name": "新石器",
-      "city": "石家庄",
+      "city": "石家庄市",
       "province": "",
       "location": {
-        "address": "河北省石家庄市"
+        "address": "河北省石家庄市",
+        "lng": 114.51,
+        "lat": 38.04
       }
     },
     {
@@ -63,7 +71,9 @@
       "city": "广州市",
       "province": "广东省",
       "location": {
-        "address": "广东省广州市"
+        "address": "广东省广州市",
+        "lng": 113.26,
+        "lat": 23.13
       }
     },
     {
@@ -72,7 +82,9 @@
       "city": "深圳市",
       "province": "广东省",
       "location": {
-        "address": "广东省深圳市"
+        "address": "广东省深圳市",
+        "lng": 114.06,
+        "lat": 22.55
       }
     },
     {
@@ -81,7 +93,9 @@
       "city": "重庆市",
       "province": "重庆市",
       "location": {
-        "address": "重庆市重庆市"
+        "address": "重庆市重庆市",
+        "lng": 106.55,
+        "lat": 29.56
       }
     }
   ],

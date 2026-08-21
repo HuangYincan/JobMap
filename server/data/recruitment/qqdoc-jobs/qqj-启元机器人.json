@@ -11,9 +11,21 @@
     {
       "id": "qqj-启元机器人-site",
       "name": "启元机器人",
-      "city": "北京 上海",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "qqj-启元机器人-site-上海",
+      "name": "启元机器人",
+      "city": "上海市",
+      "location": {
+        "lng": 121.47,
+        "lat": 31.23
+      }
     }
   ],
   "positions": [

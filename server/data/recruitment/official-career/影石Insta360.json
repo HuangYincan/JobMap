@@ -87,7 +87,9 @@
       "city": "东莞市",
       "province": "广东省",
       "location": {
-        "address": "东莞市"
+        "address": "东莞市",
+        "lng": 113.75,
+        "lat": 23.02
       }
     },
     {

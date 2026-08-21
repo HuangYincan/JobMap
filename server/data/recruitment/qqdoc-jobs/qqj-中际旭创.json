@@ -11,9 +11,39 @@
     {
       "id": "qqj-中际旭创-site",
       "name": "中际旭创",
-      "city": "苏州  成都  铜陵  淮安  上海 北京 泰国  新加坡",
+      "city": "苏州市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 120.58,
+        "lat": 31.3
+      }
+    },
+    {
+      "id": "qqj-中际旭创-site-成都",
+      "name": "中际旭创",
+      "city": "成都市",
+      "location": {
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "qqj-中际旭创-site-上海",
+      "name": "中际旭创",
+      "city": "上海市",
+      "location": {
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "qqj-中际旭创-site-北京",
+      "name": "中际旭创",
+      "city": "北京市",
+      "location": {
+        "lng": 116.4,
+        "lat": 39.9
+      }
     }
   ],
   "positions": [

@@ -11,9 +11,21 @@
     {
       "id": "qqj-中科本原-site",
       "name": "中科本原",
-      "city": "北京  青岛 潍坊",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "qqj-中科本原-site-青岛",
+      "name": "中科本原",
+      "city": "青岛市",
+      "location": {
+        "lng": 120.38,
+        "lat": 36.07
+      }
     }
   ],
   "positions": [

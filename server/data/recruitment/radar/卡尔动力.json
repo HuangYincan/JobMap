@@ -15,7 +15,9 @@
       "city": "北京市",
       "province": "北京市",
       "location": {
-        "address": "北京/上海/天津"
+        "address": "北京/上海/天津",
+        "lng": 116.4,
+        "lat": 39.9
       }
     },
     {
@@ -24,7 +26,9 @@
       "city": "上海市",
       "province": "上海市",
       "location": {
-        "address": "北京/上海/天津"
+        "address": "北京/上海/天津",
+        "lng": 121.47,
+        "lat": 31.23
       }
     }
   ],

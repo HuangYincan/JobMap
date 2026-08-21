@@ -11,9 +11,21 @@
     {
       "id": "qqj-库洛游戏-site",
       "name": "库洛游戏",
-      "city": "上海、广州",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "qqj-库洛游戏-site-广州",
+      "name": "库洛游戏",
+      "city": "广州市",
+      "location": {
+        "lng": 113.26,
+        "lat": 23.13
+      }
     }
   ],
   "positions": [

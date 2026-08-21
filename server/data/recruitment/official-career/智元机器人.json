@@ -39,7 +39,9 @@
       "city": "深圳市",
       "province": "广东省",
       "location": {
-        "address": "北京/上海/深圳"
+        "address": "北京/上海/深圳",
+        "lng": 114.06,
+        "lat": 22.55
       }
     },
     {
