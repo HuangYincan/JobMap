@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMarkdownParser, renderMarkdown, LINK_REL, LINK_TARGET } from '../src/lib/markdown-pipeline.ts';
+import {
+  buildNaviWebUrl,
+  createMarkdownParser,
+  renderMarkdown,
+  LINK_REL,
+  LINK_TARGET,
+} from '../src/lib/markdown-pipeline.ts';
 
 test('renderMarkdown: 纯文本/强调/代码等基础语法渲染为 HTML', () => {
   const spy = (html) => `[sanitized:${html}]`;
@@ -62,4 +68,72 @@ test('renderMarkdown: 空文本/纯文本兜底', () => {
   assert.equal(typeof out, 'string');
   const plain = renderMarkdown('你好,世界', (html) => html);
   assert.match(plain, /你好,世界/);
+});
+
+// ---------- 导航链接(amapuri://navi → 高德 Web 导航,2026-08-22 ws-navi) ----------
+
+test('buildNaviWebUrl: 标准 amapuri navi → 高德 Web 导航 URL', () => {
+  assert.equal(
+    buildNaviWebUrl('amapuri://navi?lon=113.9491&lat=22.5458&name=%E6%B7%B1%E5%9C%B3%E8%85%BE%E8%AE%AF'),
+    'https://uri.amap.com/navigation?to=113.9491,22.5458,%E6%B7%B1%E5%9C%B3%E8%85%BE%E8%AE%AF&mode=car&coordinate=gaode',
+  );
+});
+
+test('buildNaviWebUrl: 键名大小写/顺序任意 + lng 别名 + 未编码值', () => {
+  assert.equal(
+    buildNaviWebUrl('amapuri://navi?LAT=30.25&LNG=120.15&NAME=hangzhou'),
+    'https://uri.amap.com/navigation?to=120.15,30.25,hangzhou&mode=car&coordinate=gaode',
+  );
+  assert.equal(
+    buildNaviWebUrl('AMAPURI://NAVI?name=%E4%B8%AD&lon=120&lat=30'),
+    'https://uri.amap.com/navigation?to=120,30,%E4%B8%AD&mode=car&coordinate=gaode',
+  );
+});
+
+test('buildNaviWebUrl: 无 name → to 末尾空名称段', () => {
+  assert.equal(
+    buildNaviWebUrl('amapuri://navi?lon=120.15&lat=30.25'),
+    'https://uri.amap.com/navigation?to=120.15,30.25,&mode=car&coordinate=gaode',
+  );
+});
+
+test('buildNaviWebUrl: 解析失败 → null(不强行渲染)', () => {
+  assert.equal(buildNaviWebUrl('https://example.com/navi?lon=120&lat=30'), null, '非 amapuri scheme');
+  assert.equal(buildNaviWebUrl('amapuri://other?lon=120&lat=30'), null, '非 navi 主机');
+  assert.equal(buildNaviWebUrl('amapuri://navi'), null, '无 query');
+  assert.equal(buildNaviWebUrl('amapuri://navi?lon=abc&lat=30'), null, 'lon 非数字');
+  assert.equal(buildNaviWebUrl('amapuri://navi?lon=120'), null, '缺 lat');
+  assert.equal(buildNaviWebUrl('amapuri://navi?lat=30'), null, '缺 lon');
+  assert.equal(buildNaviWebUrl('amapuri://navi?lon=120&lat=91'), null, 'lat 越界');
+  assert.equal(buildNaviWebUrl('amapuri://navi?lon=181&lat=0'), null, 'lon 越界');
+  assert.equal(buildNaviWebUrl('amapuri://navi?lon=120&lat=30&name=%zz'), null, 'name 编码损坏');
+  assert.equal(buildNaviWebUrl(''), null, '空串');
+  assert.equal(buildNaviWebUrl(null), null, 'null');
+});
+
+test('renderMarkdown: amapuri navi 链接 → dm-navi 按钮(https href + data-navi 原生 URI)', () => {
+  const out = renderMarkdown('[导航](amapuri://navi?lon=120.15&lat=30.25&name=%E6%9D%AD%E5%B7%9E)', (html) => html);
+  assert.match(out, /<a class="dm-navi"/);
+  assert.ok(
+    out.includes('href="https://uri.amap.com/navigation?to=120.15,30.25,%E6%9D%AD%E5%B7%9E&amp;mode=car&amp;coordinate=gaode"'),
+    'href 为 https Web 导航 URL(属性内 & 实体转义)',
+  );
+  assert.ok(
+    out.includes('data-navi="amapuri://navi?lon=120.15&amp;lat=30.25&amp;name=%E6%9D%AD%E5%B7%9E"'),
+    'data-navi 保留原生 amapuri URI',
+  );
+  assert.match(out, /target="_blank" rel="noopener noreferrer">打开高德导航<\/a>/);
+});
+
+test('renderMarkdown: naviLabel 可经 opts 注入(i18n 按钮文案)', () => {
+  const out = renderMarkdown('[x](amapuri://navi?lon=120&lat=30)', (html) => html, { naviLabel: 'Open in AMap' });
+  assert.match(out, />Open in AMap<\/a>/);
+});
+
+test('renderMarkdown: 解析失败的 amapuri 回落普通链接;普通 http 链接行为不变', () => {
+  const bad = renderMarkdown('[x](amapuri://navi?lon=abc&lat=30)', (html) => html);
+  assert.doesNotMatch(bad, /class="dm-navi"/);
+  assert.match(bad, /<a href="amapuri:\/\/navi\?lon=abc&amp;lat=30" target="_blank" rel="noopener noreferrer">x<\/a>/);
+  const http = renderMarkdown('[官网](https://example.com)', (html) => html);
+  assert.match(http, /<a href="https:\/\/example\.com" target="_blank" rel="noopener noreferrer">官网<\/a>/);
 });

@@ -1025,6 +1025,10 @@ export const translations = {
     zh: '调用失败',
     en: 'Call failed',
   },
+  agentOpenNavi: {
+    zh: '打开高德导航',
+    en: 'Open in AMap',
+  },
   agentRateLimited: {
     zh: '请求过于频繁,请稍后再试',
     en: 'Too many requests. Please try again later.',

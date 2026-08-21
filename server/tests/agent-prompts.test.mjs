@@ -87,3 +87,10 @@ test('buildSystemPrompt: 动作契约边界数字与 validateAction 一致(point
     assert.match(p, /10\.\.50000/, `lang=${lang} radiusMeters 边界 10..50000`);
   }
 });
+
+test('buildSystemPrompt: 动作纪律禁止正文复述/展示 actions JSON(zh/en,2026-08-22 ws-navi)', () => {
+  const zh = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'zh');
+  const en = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'en');
+  assert.match(zh, /动作 JSON 由系统自动提取并执行,严禁在回复正文中复述\/展示 actions JSON/);
+  assert.match(en, /never repeat or display actions JSON in your reply body/);
+});

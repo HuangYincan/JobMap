@@ -42,6 +42,55 @@ function lastMessage(messages: AgentMessage[]): AgentMessage | undefined {
   return messages[messages.length - 1];
 }
 
+/** 从 start(必须是 '{')开始做花括号配对,返回配对的 '}' 下标;失败 -1。
+ * 与后端 run-agent.ts extractActions 同款扫描(客户端侧复刻,不 import 服务端模块)。 */
+function matchJsonEnd(text: string, start: number): number {
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * 纯函数:从助手正文中移除 LLM 复述的动作 JSON 块({"actions": [...]})。
+ * 与后端 extractActions 同款花括号配对扫描;整块连同前置换行一并移除,多块全清;
+ * 配对失败(残缺)保守移除到最近可配对位置或保留原文不破坏。正文渲染前调用,
+ * 动作本身仍由后端从原始文本提取执行,这里只负责 UI 面不再裸奔 JSON。
+ */
+export function stripActionJsonBlocks(text: string): string {
+  if (!text) return text;
+  const re = /\{\s*"actions"\s*:/g;
+  let out = '';
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const end = matchJsonEnd(text, m.index);
+    if (end === -1) break; // 残缺块:保留原文不破坏
+    let cutStart = m.index;
+    while (cutStart > last && (text[cutStart - 1] === '\n' || text[cutStart - 1] === '\r')) cutStart--;
+    out += text.slice(last, cutStart);
+    last = end + 1;
+    re.lastIndex = last; // 跳过块体(避免嵌套 actions 二次匹配)
+  }
+  out += text.slice(last);
+  return out;
+}
+
 /** 最后一条 assistant 消息是否已带工具活动(轮边界判据)。 */
 function lastHasTools(messages: AgentMessage[]): boolean {
   const last = lastMessage(messages);

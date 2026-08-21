@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { reduceAgentEvent } from '../src/lib/agent-panel-state.ts';
+import { reduceAgentEvent, stripActionJsonBlocks } from '../src/lib/agent-panel-state.ts';
 
 const delta = (text) => ({ type: 'delta', text });
 const reasoning = (text) => ({ type: 'reasoning', text });
@@ -157,4 +157,43 @@ test('done/error 事件级:透传不拆消息、不改内容(数组引用不变)
   const out2 = reduceAgentEvent(base, { type: 'error', code: 'ERROR', message: '' });
   assert.equal(out, base);
   assert.equal(out2, base);
+});
+
+// ---------- stripActionJsonBlocks(正文不展示动作 JSON,2026-08-22 ws-navi) ----------
+
+test('stripActionJsonBlocks: 单块连同前置换行移除,前后缀文本保留', () => {
+  assert.equal(
+    stripActionJsonBlocks('已定位到:\n{"actions":[{"type":"flyTo","payload":{"center":{"lng":120.15,"lat":30.25},"zoom":14}}]}\n希望有帮助'),
+    '已定位到:\n希望有帮助',
+  );
+  assert.equal(
+    stripActionJsonBlocks('结果:{"actions":[{"type":"flyTo","payload":{"center":{"lng":120,"lat":30}}}]} 完成'),
+    '结果: 完成',
+  );
+  assert.equal(stripActionJsonBlocks('{"actions":[{"type":"flyTo","payload":{"center":{"lng":120,"lat":30}}}]}'), '');
+});
+
+test('stripActionJsonBlocks: 多块全清', () => {
+  assert.equal(
+    stripActionJsonBlocks('第一块:{"actions":[{"type":"flyTo","payload":{"center":{"lng":1,"lat":2}}}]} 第二块:{"actions":[{"type":"search","payload":{"query":"x"}}]} 结尾'),
+    '第一块: 第二块: 结尾',
+  );
+});
+
+test('stripActionJsonBlocks: 嵌套 payload 花括号配对(字符串内花括号/转义引号不干扰)', () => {
+  const nested = '说明:{"actions":[{"type":"drawCircle","payload":{"center":{"lng":120,"lat":30},"radiusMeters":1000}}]} 完毕';
+  assert.equal(stripActionJsonBlocks(nested), '说明: 完毕');
+  const quoted = '说明:{"actions":[{"type":"search","payload":{"query":"{\\"a\\":1}"}}]} 完毕';
+  assert.equal(stripActionJsonBlocks(quoted), '说明: 完毕');
+});
+
+test('stripActionJsonBlocks: 残缺块容错(配对失败保留原文;已配对块后残缺 → 只清可配对部分)', () => {
+  assert.equal(stripActionJsonBlocks('前缀 {"actions": [{"type":"flyTo"}'), '前缀 {"actions": [{"type":"flyTo"}');
+  assert.equal(stripActionJsonBlocks('A:{"actions":[]} B:{"actions":[{'), 'A: B:{"actions":[{');
+});
+
+test('stripActionJsonBlocks: 无动作 JSON → 原文不变', () => {
+  assert.equal(stripActionJsonBlocks('普通文本'), '普通文本');
+  assert.equal(stripActionJsonBlocks(''), '');
+  assert.equal(stripActionJsonBlocks('{"foo":"bar"}'), '{"foo":"bar"}');
 });

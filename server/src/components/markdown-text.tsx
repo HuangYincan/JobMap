@@ -13,9 +13,10 @@
 // - URI 过滤(IS_ALLOWED_URI)拒绝 javascript:/data: 等危险协议;
 // - 配置对象每次调用克隆,不跨调用泄漏。
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import DOMPurify from "dompurify";
 import { renderMarkdown } from "@/lib/markdown-pipeline";
+import { t, type Language } from "@/lib/i18n";
 import styles from "./markdown-text.module.css";
 
 const PURIFY_CONFIG = {
@@ -23,14 +24,28 @@ const PURIFY_CONFIG = {
   ADD_ATTR: ["target"],
 };
 
-export function MarkdownText({ text }: { text: string }) {
+export function MarkdownText({ text, lang = "zh" }: { text: string; lang?: Language }) {
   const [html, setHtml] = useState<string | null>(null);
+  const naviLabel = t("agentOpenNavi", lang);
 
   useEffect(() => {
     // renderMarkdown = marked.parse → DOMPurify.sanitize(不消毒绝不注入)
-    setHtml(renderMarkdown(text, (raw) => DOMPurify.sanitize(raw, PURIFY_CONFIG)));
-  }, [text]);
+    setHtml(renderMarkdown(text, (raw) => DOMPurify.sanitize(raw, PURIFY_CONFIG), { naviLabel }));
+  }, [text, naviLabel]);
+
+  // 导航按钮事件委托:命中 .dm-navi → 移动端经 data-navi(amapuri)唤起原生 App
+  // (preventDefault 阻止 https href 覆盖),桌面端放行默认 href(Web 导航,任何浏览器可用)
+  const handleClick = (e: MouseEvent<HTMLDivElement>) => {
+    const el = (e.target as HTMLElement).closest("a.dm-navi");
+    if (!el) return;
+    const naviRaw = el.getAttribute("data-navi");
+    if (!naviRaw) return;
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      e.preventDefault();
+      window.location.href = naviRaw;
+    }
+  };
 
   if (html === null) return <span className={styles.raw}>{text}</span>;
-  return <div className={styles.md} dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div className={styles.md} onClick={handleClick} dangerouslySetInnerHTML={{ __html: html }} />;
 }

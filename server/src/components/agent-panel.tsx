@@ -21,7 +21,7 @@ import styles from "./agent-panel.module.css";
 import { t, type Language } from "@/lib/i18n";
 import type { AgentAction, AgentEvent } from "@/lib/agent/types";
 import type { MapBridge } from "@/lib/agent-map-bridge";
-import { reduceAgentEvent, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
+import { reduceAgentEvent, stripActionJsonBlocks, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
 import { streamAgentChat, type AgentChatRequest } from "./agent-chat-client";
 import {
   createAgentMapExecutor,
@@ -364,7 +364,11 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
               </div>
             )}
             <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
-              {m.role === "assistant" ? <MarkdownText text={m.content} /> : m.content}
+              {m.role === "assistant" ? (
+                <MarkdownText text={stripActionJsonBlocks(m.content)} lang={lang} />
+              ) : (
+                m.content
+              )}
             </div>
             {m.role === "assistant" && m.tools && m.tools.length > 0 && (
               <ul className={styles.toolActivity} aria-label={t("agentToolsSection", lang)}>
