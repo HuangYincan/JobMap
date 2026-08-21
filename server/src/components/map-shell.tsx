@@ -1343,7 +1343,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     return () => {
       for (const marker of created) {
         try {
+          // ws-5 修:createCityClusterMarker 返回厂商裸实例(见 map-markers),
+          // 无统一摘除 API——AMap/Tencent 官方移除 = setMap(null)(GL 标注点无
+          // remove),BMapGL 无 setMap、官方移除 = remove() → 按能力分派,
+          // 与契约 MapMarker.remove 的引擎语义一致;旧实现只调 setMap(null)
+          // 在 BMapGL 上静默 no-op,跨 zoom 分桶切换旧徽章泄漏叠图。
           if (typeof marker.setMap === "function") marker.setMap(null);
+          else if (typeof marker.remove === "function") marker.remove();
         } catch {
           // 地图已销毁等场景:忽略,与 controller 的 detachFromMap 同语义
         }
