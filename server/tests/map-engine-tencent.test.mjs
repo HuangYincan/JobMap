@@ -556,35 +556,41 @@ test('createView:控件防御时序——先等就绪再摘除默认控件(ready
 
 test('createView:idle 永不触发 → 1.5s 超时兜底放行(卡顿减半)', async () => {
   mock.timers.enable({ apis: ['setTimeout'] });
-  const { ns, restore } = installTMapDouble();
   try {
     setKey('test-key');
     globalThis.window = globalThis;
-    // 瓦片失败/网络被拦时 idle 永不触发:必须靠超时兜底放行,且超时从 3s 收紧到 1.5s
-    ns.Map = class NeverReadyMap extends MockView {
-      constructor(container, opts = {}) {
-        super({ ...opts, container });
-        this.container = container;
-      }
-    };
-    const p = TENCENT_ENGINE.createView({
-      container: { nodeType: 1 },
-      center: { lng: 120.15, lat: 30.27 },
-      zoom: 12,
-      style: 'normal',
-    });
-    let settled = false;
-    p.then(() => {
-      settled = true;
-    });
-    p.catch(() => {}); // 防未处理拒绝噪音
-    mock.timers.tick(1400);
-    assert.equal(settled, false, '1.4s 未到超时,仍挂起等待');
-    mock.timers.tick(150);
-    await p;
-    assert.equal(settled, true, '1.5s 超时兜底放行,不永久挂起');
+    const { ns, restore } = installTMapDouble();
+    try {
+      // 瓦片失败/网络被拦时 idle 永不触发:必须靠超时兜底放行,且超时从 3s 收紧到 1.5s
+      ns.Map = class NeverReadyMap extends MockView {
+        constructor(container, opts = {}) {
+          super({ ...opts, container });
+          this.container = container;
+        }
+      };
+      const p = TENCENT_ENGINE.createView({
+        container: { nodeType: 1 },
+        center: { lng: 120.15, lat: 30.27 },
+        zoom: 12,
+        style: 'normal',
+      });
+      let settled = false;
+      p.then(() => {
+        settled = true;
+      });
+      p.catch(() => {}); // 防未处理拒绝噪音
+      // createView 头部是 await load() 的异步链——先等微任务排空(setImmediate 宏任务
+      // 边界),1500ms 超时定时器创建后再 tick,否则 tick 落在定时器创建之前空转
+      await new Promise((r) => setImmediate(r));
+      mock.timers.tick(1400);
+      assert.equal(settled, false, '1.4s 未到超时,仍挂起等待');
+      mock.timers.tick(150);
+      await p;
+      assert.equal(settled, true, '1.5s 超时兜底放行,不永久挂起');
+    } finally {
+      restore();
+    }
   } finally {
-    restore();
     mock.timers.reset();
   }
 });
