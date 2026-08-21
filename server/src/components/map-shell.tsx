@@ -35,7 +35,7 @@ import { usePOIMap } from "@/hooks/use-poi-map";
 import { useModeCacheRestore } from "@/hooks/use-mode-cache-restore";
 import { useSavedLayer } from "@/hooks/use-saved-layer";
 import { useSearchState } from "@/hooks/use-search-state";
-import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
+import { useWorkViewport, cameraAtDestination, readMapViewSnapshot, type SavedCameraSync, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { useMapEngine } from "@/hooks/use-map-engine";
 import type { MapMarkerOptions, MapView } from "@/lib/map-engine/types";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
@@ -283,8 +283,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
   /** 主加载在飞期间到达的视口刷新:置位后由主加载 finally 补跑,避免被吞(Bug 7) */
   const viewportRefreshPendingRef = useRef(false);
-  /** 程序化相机移动(toggle 收藏图层)触发的视口刷新抑制截止时间戳(ms);过期自动失效 */
-  const suppressViewportRefreshUntilRef = useRef(0);
+  /** 收藏图层 toggle 程序化相机移动的同步状态(useSavedLayer 置位,useWorkViewport/
+   *  syncView 消费;结构性抑制,替代原 500ms 时间窗补丁,ws1 saved-overlay-wipe) */
+  const savedCameraSyncRef = useRef<SavedCameraSync | null>(null);
   /** 视口加载器实例由 useWorkViewport 创建并返回(主加载 finally 用它补跑) */
   // 供一次性创建的地图监听/视口加载器读取最新状态(避免闭包过期)
   const viewStateRef = useRef<WorkViewportState>({
@@ -772,7 +773,16 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
     const syncView = () => {
       const state = view.getState();
-      setMapCenter({ lng: state.center.lng, lat: state.center.lat });
+      const center = { lng: state.center.lng, lat: state.center.lat };
+      // 收藏图层 toggle 程序化相机移动期间冻结 distance 圆心(mapCenter):
+      // 圆心不跟随程序化移动——工作模式 distance 筛选不会因 toggle 换圆心把
+      // 视野外 pin 整批裁掉(ws1 根因 #2);相机已离开目标(用户接管)即结束同步,
+      // 圆心恢复正常跟随(视口刷新事件侧同样消费该状态,见 useWorkViewport)。
+      const sync = savedCameraSyncRef.current;
+      if (!sync || !cameraAtDestination(center, sync)) {
+        if (sync) savedCameraSyncRef.current = null;
+        setMapCenter(center);
+      }
       const b = view.getBounds();
       if (b) {
         setMapBounds({ west: b.west, south: b.south, east: b.east, north: b.north });
@@ -1056,7 +1066,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     noMoreRef,
     viewportEpochRef,
     skipFetchRef,
-    suppressViewportRefreshUntilRef,
+    savedCameraSyncRef,
     catalogRef,
     viewStateRef,
     setCatalog,
@@ -1252,7 +1262,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     compareCatalog,
     mode,
     mapInstance,
-    suppressViewportRefreshUntilRef,
+    savedCameraSyncRef,
     onRequireAuth: () => setAuthOpen(true),
   });
   // ---- marker 池(b2):marker 源与列表分离 ----
