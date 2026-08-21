@@ -623,3 +623,45 @@ AMap 的 onerror 回退链在 icon 路径不可用);徽章 dataURL 图标阴影(
 - `map-engine-tencent.test.mjs` setStyle 用例同步更新(钉旧 'raster' 的断言
   是修复的必然结果,不改则门禁红);
 - 相关回归:map-engine-tencent-style + map-engine-tencent 61/61 通过。
+
+## ws-d 回填:非 AMap 引擎用户定位蓝点(2026-08-22,fix/geolocation-blue-dot,bug 5)
+
+> 真机反馈 bug 5「腾讯地图之类连用户定位点都消失了」:定位蓝点是 AMap 专属路径
+> (amap-api Geolocation 控件蓝点+精度圈),腾讯/百度引擎只做了定位(改相机)没有
+> 蓝点渲染(旧注释「无蓝点渲染,deferred」)。
+
+### 实现(仅 map-shell.tsx 定位/蓝点段;引擎文件零改动)
+
+- `syncUserBlueDot(view, lng, lat)`(组件级函数声明,createMap 与 handleLocate
+  共用):非 AMap 引擎定位成功后经契约 `view.createMarker({ position, icon:
+  USER_BLUE_DOT_ICON, zIndex: 200 })` 创建蓝点;已有则 `marker.setPosition` 跟随
+  更新;卸载/切引擎经 createMap cleanup `remove()` + 置空 ref 清理。
+- **蓝点 icon 走既有契约 icon 路径**(腾讯 MultiMarker MarkerStyle / 单点
+  Marker setIcon / 百度 BMapGL Icon 均支持 src/size)——引擎适配层零改动,与
+  ws-a/b 的引擎工作不相交。
+- 蓝点 dataURL 内联 SVG(22x22):#007AFF 实心圆点 + 半透明精度晕圈 + 白心,
+  对齐 AMap Geolocation 蓝点观感(仓库 map-constants 的 USER_LOCATION_ICONS
+  是旧主题色 #4A90E2 且不在本 WS 边界,故内联生成,不引用)。
+- **zIndex 200**:高于 POI marker(普通 10/20、高亮 80、选中 100)与聚合徽章
+  (50),蓝点恒在最上。
+- **AMap 路径零改动**:locateForMap amap 分支仍走 amap-api Geolocation 控件
+  (蓝点+精度圈绑定原始实例);syncUserBlueDot 对 amap 直接早退。
+- **与 POI 共存**:蓝点是独立 marker(view.createMarker 直建,只记入 blueDotRef),
+  不进 POI 控制器 → LOD/聚合(zoom tier 摘挂、聚合摘单)不感知、不误删。
+
+### 锚点说明(已知取舍)
+
+- 蓝点不传 contract offset:各引擎 icon 锚点像素语义由引擎适配层负责
+  (TMap anchor/MarkerStyle 归 ws-a 的 bug 1 域;BMapGL Icon 归 ws-b/c),
+  契约层不跨引擎猜 offset,避免语义分歧。TMap 默认锚点(底边中点)下圆点
+  中心约高于定位点 size/2 px —— 若需精确居中,后续由引擎锚点修复统一处理。
+
+### 测试
+
+- 新 `server/tests/map-shell-blue-dot.test.mjs`(6 项,源码契约风格,
+  map-shell 为 TSX 无法 import,沿用 component-contracts 断言模式):
+  蓝点图标资产(SVG dataURL 解码断言 #007AFF/晕圈/白心/22x22)、契约
+  createMarker 调用形状(icon src=dataURL、zIndex 200 > POI 最高 100)、
+  setPosition/remove 生命周期、挂载 settle 与 handleLocate 双接线、
+  AMap 路径零变化(locateForMap 分派 + amap 早退无 createMarker)、
+  与 POI 控制器隔离(map-markers 零处 blueDot)。
