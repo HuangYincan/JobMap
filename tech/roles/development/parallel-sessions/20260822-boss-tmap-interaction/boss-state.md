@@ -11,8 +11,15 @@
 
 ## stage
 
-- current: MERGE(done)→VERIFY(done, 6/7 bug 绿)→DISPATCH(轮2 ws-e favicon CORS)
+- current: NEXT(全部 3 轮完成:MERGED_ALL ×3,dev push 13bf229;最终复验零报错)
 - updated_at: 2026-08-22
+
+## 最终复验(boss Playwright,轮3 合并后)
+
+- ✅ 首次进入 TMap:console **0 errors**(此前 189-190)
+- ✅ 刷新后:0 errors(sessionStorage 失败清单持久化生效,~94 URL)
+- ✅ 公司 POI:31 徽章簇全部渲染(#007AFF,无 SDK 默认样式)
+- ✅ 全部 8 bug(7 原始 + 疯狂报错)闭环
 
 ## 验证矩阵结果(boss Playwright,2026-08-22)
 
@@ -41,7 +48,7 @@
 | c | fix/baidu-diagnostics | /Users/acccan/dm-wt-ic | prompts/ws-c.md | reports/ws-c.md | DONE | 8d5cee4 | 轮1 | 2026-08-22 | OK(4 commits, 1270/1268 pass, boss 已验证) |
 | d | fix/geolocation-blue-dot | /Users/acccan/dm-wt-id | prompts/ws-d.md | reports/ws-d.md | DONE | 7c8032a | 轮1(补) | 2026-08-22 | OK(3 commits, 1275/1273 pass, boss 已验证) |
 | e | fix/icon-cors-preflight | /Users/acccan/dm-wt-icon | prompts/ws-e.md | reports/ws-e.md | DONE | 3124474 | 轮2(新 bug) | 2026-08-22 | OK(4 commits, 1361/1359 pass, boss 已验证) |
-| f | fix/icon-preflight-silent | /Users/acccan/dm-wt-icon2 | prompts/ws-f.md | reports/ws-f.md | RUNNING | — | 轮3(噪音消除) | | |
+| f | fix/icon-preflight-silent | /Users/acccan/dm-wt-icon2 | prompts/ws-f.md | reports/ws-f.md | DONE | 114cfee | 轮3(噪音消除) | 2026-08-22 | OK(3 commits, 1366/1364 pass, boss 已验证) |
 
 ## 关键证据(用户 console,2026-08-22)
 
