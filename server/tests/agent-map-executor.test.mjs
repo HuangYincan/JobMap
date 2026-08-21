@@ -124,6 +124,64 @@ test('handleEvent: 未提供 onReasoning 回调 → reasoning 事件安全忽略
   assert.deepEqual(callbacks.events, [['delta']]);
 });
 
+test('execute: 执行动作但不回调 onAction(重放语义,不追加建议卡片/不重复定位)', () => {
+  const bridge = mockBridge();
+  const { executor, callbacks } = makeExecutor(bridge);
+  executor.execute(action('flyTo', { center: { lng: 121, lat: 31 }, zoom: 14 }));
+  assert.deepEqual(bridge.calls.at(-1), ['flyTo', 121, 31, 14]);
+  // 仍压 undo 栈:可撤销回执行前 camera
+  assert.equal(executor.canUndo(), true);
+  assert.equal(executor.undo(), true);
+  assert.deepEqual(bridge.calls.at(-1), ['flyTo', 120.15, 30.27, 13]);
+  assert.deepEqual(callbacks.events, []); // 全程不通知 onAction
+});
+
+test('execute: 500ms 同类型限流生效,非法动作丢弃(与 handleEvent 共享限流窗口)', () => {
+  const bridge = mockBridge();
+  let t = 1000;
+  const { executor, callbacks } = makeExecutor(bridge, { now: () => t });
+  executor.execute(action('flyTo', { center: { lng: 121, lat: 31 } }));
+  t += 100; // +100ms:同类型仍限流
+  executor.execute(action('flyTo', { center: { lng: 122, lat: 32 } }));
+  executor.execute(action('flyTo', { center: { lng: 999, lat: 30 } })); // 非法 → 丢弃
+  assert.equal(bridge.calls.filter((c) => c[0] === 'flyTo').length, 1);
+  assert.deepEqual(callbacks.events, []); // 被丢弃的动作也不通知
+  // 与流式 handleEvent 共享同一限流窗口:execute 后 handleEvent 同类型被限流
+  executor.handleEvent({ type: 'action', action: action('flyTo', { center: { lng: 123, lat: 33 } }) });
+  assert.equal(bridge.calls.filter((c) => c[0] === 'flyTo').length, 1);
+  // 窗口过后恢复
+  t += ACTION_THROTTLE_MS;
+  executor.execute(action('flyTo', { center: { lng: 124, lat: 34 } }));
+  assert.equal(bridge.calls.filter((c) => c[0] === 'flyTo').length, 2);
+});
+
+test('execute: bridge 未就绪 → 错误回调,不执行、不压栈', () => {
+  const bridge = mockBridge();
+  bridge.setReady(false);
+  const { executor, callbacks } = makeExecutor(bridge);
+  executor.execute(action('flyTo', { center: { lng: 121, lat: 31 } }));
+  assert.equal(bridge.calls.length, 0);
+  assert.equal(executor.canUndo(), false);
+  assert.deepEqual(callbacks.events, [['error', 'MAP_NOT_READY', 'map is not ready']]);
+});
+
+test('handleEvent(action): 流式路径仍回调 onAction(建议卡片)', () => {
+  const bridge = mockBridge();
+  const { executor, callbacks } = makeExecutor(bridge);
+  executor.handleEvent({ type: 'action', action: action('select', { id: 'cmp_a' }) });
+  assert.deepEqual(bridge.calls.at(-1), ['select', 'cmp_a', undefined]);
+  assert.deepEqual(callbacks.events, [['action', 'select']]);
+});
+
+test('search 动作 execute: 无地图副作用,不回调 onAction,不入 undo 栈', () => {
+  const bridge = mockBridge();
+  const { executor, callbacks } = makeExecutor(bridge);
+  executor.execute(action('search', { query: '滨江区' }));
+  assert.equal(bridge.calls.length, 0);
+  assert.equal(executor.canUndo(), false);
+  assert.deepEqual(callbacks.events, []);
+});
+
 test('friendlyToolName: provider 前缀映射友好名(zh/en)', () => {
   assert.equal(friendlyToolName('amap__place_search', 'zh'), '高德 · place_search');
   assert.equal(friendlyToolName('tencent__direction', 'zh'), '腾讯 · direction');

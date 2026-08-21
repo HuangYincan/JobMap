@@ -346,7 +346,8 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
   }, []);
 
   const replayAction = useCallback((action: AgentAction) => {
-    executorRef.current?.handleEvent({ type: "action", action });
+    // 纯执行语义:只在地图上重放动作,不再回调 onAction(否则按钮翻倍 + 地图反复定位)
+    executorRef.current?.execute(action);
   }, []);
 
   const toggleThinking = useCallback((idx: number) => {

@@ -2,14 +2,16 @@
 //
 // 事件分流:delta/reasoning/tool/done/error → 渲染回调(供面板);action → 客户端再校验
 // (与后端 lib/agent/action-schema.ts 同款规则,非法丢弃)→ 500ms 同类型限流 →
-// bridge.isReady() 检查(失败 → 错误回调)→ 执行 → 压 undo 栈。
+// bridge.isReady() 检查(失败 → 错误回调)→ 执行 → 压 undo 栈 → 通知 onAction(建议卡片)。
+// execute(action):纯执行语义(重放按钮用)——校验→限流→执行→压 undo 栈,不回调
+// onAction(重放不应再追加建议卡片/地图重复定位);与 handleEvent 的 action 分支共用实现。
 //
 // undo 逆操作:
 // - flyTo → 执行前 getSnapshot() 捕获旧 camera,undo 飞回;
 // - addMarkers/drawCircle → 保存清理函数,undo 时调用;
 // - select/openDetail → 保存各自动作历史,undo 回放上一条(旧值回调);
-// - search → bridge 无 search 能力(接口不含),只通知 onAction 渲染建议卡片,
-//   无可撤销的地图副作用,不入 undo 栈。
+// - search → bridge 无 search 能力(接口不含),流式路径只通知 onAction 渲染建议卡片,
+//   execute 路径为空操作;无可撤销的地图副作用,不入 undo 栈。
 //
 // 校验规则本地复刻(lib/agent/** 只 import types,不 import 其函数)。
 
@@ -37,6 +39,8 @@ export interface AgentMapExecutorCallbacks {
 
 export interface AgentMapExecutor {
   handleEvent(ev: AgentEvent): void;
+  /** 纯执行语义:校验→限流→执行→压 undo 栈,不回调 onAction(重放按钮用)。 */
+  execute(action: AgentAction): void;
   undo(): boolean;
   canUndo(): boolean;
   reset(): void;
@@ -192,7 +196,8 @@ export function createAgentMapExecutor(
     return false;
   }
 
-  function handleAction(action: AgentAction): void {
+  /** 执行单个动作(execute 与 handleEvent action 分支共用);notify 控制是否回调 onAction。 */
+  function executeAction(action: AgentAction, notify: boolean): void {
     const validated = validateAction(action);
     if (!validated) return; // 非法 → 丢弃(与后端同款规则)
     if (throttled(validated.type)) return; // 500ms 同类型限流 → 丢弃
@@ -243,11 +248,11 @@ export function createAgentMapExecutor(
         break;
       }
       case "search": {
-        // bridge 接口不含 search:无可执行的地图副作用,只通知面板渲染建议卡片
+        // bridge 接口不含 search:无可执行的地图副作用,不入 undo 栈
         break;
       }
     }
-    callbacks.onAction?.(validated);
+    if (notify) callbacks.onAction?.(validated);
   }
 
   return {
@@ -269,9 +274,12 @@ export function createAgentMapExecutor(
           callbacks.onError?.(ev.code, ev.message);
           break;
         case "action":
-          handleAction(ev.action);
+          executeAction(ev.action, true);
           break;
       }
+    },
+    execute(action) {
+      executeAction(action, false);
     },
     undo() {
       const entry = undoStack.pop();
