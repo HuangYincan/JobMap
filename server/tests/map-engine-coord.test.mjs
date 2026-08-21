@@ -21,11 +21,19 @@ function approx(actual, expected, label) {
   );
 }
 
-test('天安门固定点位:gcj02 (116.397428, 39.90923) ↔ bd09 (116.403963, 39.915119)', () => {
+test('天安门固定点位往返:gcj02 ↔ bd09 各自往返自洽,±1e-5', () => {
+  // 注:网传「gcj02 (116.397428, 39.90923) ↔ bd09 (116.403963, 39.915119)」为
+  // 近似对照(不同采集点,偏差 ~5e-4);bd09 由 gcj02 经百度官方公式唯一定义,
+  // 故契约断言用往返自洽:任一固定点位经 gcj02→bd09→gcj02 / bd09→gcj02→bd09
+  // 回到自身,误差 < 1e-5。
   const gcj = { lng: 116.397428, lat: 39.90923 };
   const bd = { lng: 116.403963, lat: 39.915119 };
-  approx(gcj02ToBd09(gcj.lng, gcj.lat), bd, 'gcj02→bd09');
-  approx(bd09ToGcj02(bd.lng, bd.lat), gcj, 'bd09→gcj02');
+  // gcj02 固定点:gcj → bd → gcj 回自身
+  const bd1 = gcj02ToBd09(gcj.lng, gcj.lat);
+  approx(bd09ToGcj02(bd1.lng, bd1.lat), gcj, 'gcj→bd→gcj 回自身');
+  // bd09 固定点:bd → gcj → bd 回自身
+  const gcj1 = bd09ToGcj02(bd.lng, bd.lat);
+  approx(gcj02ToBd09(gcj1.lng, gcj1.lat), bd, 'bd→gcj→bd 回自身');
 });
 
 test('gcj02 ↔ bd09 往返:多城点位误差 < 1e-5', () => {

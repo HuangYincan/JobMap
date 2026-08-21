@@ -79,15 +79,15 @@ test('注入方同步抛错:同样走失败清理,可重试', async () => {
   let calls = 0;
   const inject = (conf, hooks) => {
     calls++;
-    if (calls === 1) throw new Error('injector boom');
-    return { element: null };
+    // 每次注入都同步抛错:验证失败清理后重试会重新注入(而非复用挂起 Promise)
+    throw new Error('injector boom');
   };
   const conf = { url: 'https://mock.example/sdk.js?v=4', globalVar: 'MockNS' };
 
   await assert.rejects(loadScript(conf, { inject }), /injector boom/);
-  // 缓存已清 → 再次调用重新注入
+  // 缓存已清 → 再次调用重新注入,同样抛错
   await assert.rejects(loadScript(conf, { inject }), /injector boom/);
-  assert.equal(calls, 2);
+  assert.equal(calls, 2, '失败后缓存清空,重试重新注入');
 });
 
 test('callback 模式:window[callbackName] 先注册,回调触发即成功,settle 后清理', async () => {

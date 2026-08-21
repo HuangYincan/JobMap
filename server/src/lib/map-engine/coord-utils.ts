@@ -58,10 +58,18 @@ export function wgs84ToGcj02(lng: number, lat: number): LngLat {
   return { lng: lng + dlng, lat: lat + dlat };
 }
 
-/** GCJ-02 → WGS84(近似逆变换,境内误差 < 1 米) */
+/**
+ * GCJ-02 → WGS84(迭代逆变换:偏移场随位置缓变,2 次迭代后误差 < 1e-7;
+ * 单向近似在沿海点位可到 ~1.5e-5,达不到 ±1e-5 契约)。
+ */
 export function gcj02ToWgs84(lng: number, lat: number): LngLat {
-  const { dlng, dlat } = delta(lng, lat);
-  return { lng: lng - dlng, lat: lat - dlat };
+  // 迭代:每次用当前估计点的偏移量修正,向 gcj02 目标收敛
+  let est = { lng, lat };
+  for (let i = 0; i < 2; i++) {
+    const { dlng, dlat } = delta(est.lng, est.lat);
+    est = { lng: lng - dlng, lat: lat - dlat };
+  }
+  return est;
 }
 
 /** GCJ-02 → BD-09(百度坐标系) */

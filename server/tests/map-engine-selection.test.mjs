@@ -179,7 +179,7 @@ test('isLoaded:window 无厂商 namespace 时为 false,安装后为 true', () =>
   }
 });
 
-test('engine-mock 工厂:可安装到任意 namespace,视图/marker/circle/事件语义可用', () => {
+test('engine-mock 工厂:可安装到任意 namespace,视图/marker/circle/事件语义可用', async () => {
   const { ns, uninstall } = installEngineMock('TMap', { coordSystem: 'gcj02' });
   try {
     assert.equal(globalThis.TMap, ns);
