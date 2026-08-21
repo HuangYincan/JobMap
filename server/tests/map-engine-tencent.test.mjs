@@ -2,8 +2,9 @@
 // 腾讯地图引擎测试 — TMap JS API GL 适配(map-engine-tencent)
 // 用 engine-mock(installEngineMock 装到 TMap 命名空间)+ 本地忠实厂商双面
 // (LatLng 纬度在前 / LatLngBounds / offset 对象 / setBaseMap / ScaleControl)
-// 测:createView 参数传递、createMarker offset 元组转换、setStyle 映射/降级、
-// search 归一化(gcj02 直通断言)、isConfigured env 开关、脚本 URL / API 命名。
+// 测:createView 参数传递、createMarker 构造器多路径(单点 Marker / MultiMarker
+// 聚合 / 两者皆无诊断)、offset 元组转换、setStyle 映射/降级、search 归一化
+// (gcj02 直通断言)、isConfigured env 开关、脚本 URL / API 命名。
 // ============================================================
 
 import { test, afterEach } from 'node:test';
@@ -14,7 +15,13 @@ import {
   normalizeTencentSuggestion,
 } from '../src/lib/map-engine/tencent/tencent-engine.ts';
 import { wgs84ToGcj02 } from '../src/lib/map-engine/coord-utils.ts';
-import { installEngineMock, MockView, MockMarker, MockCircle } from './fixtures/engine-mock.mjs';
+import {
+  installEngineMock,
+  MockView,
+  MockMarker,
+  MockCircle,
+  MockMultiMarker,
+} from './fixtures/engine-mock.mjs';
 
 const KEY = 'NEXT_PUBLIC_TENCENT_JSAPI_KEY';
 
@@ -68,6 +75,18 @@ function installTMapDouble() {
     }
     getNorth() {
       return this.ne.lat;
+    }
+  };
+  // MultiMarker 路径依赖:Point(anchor 偏移)/ MarkerStyle(样式,仅图片 src 无 HTML)
+  ns.Point = class TMapPoint {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+    }
+  };
+  ns.MarkerStyle = class TMapMarkerStyle {
+    constructor(opts = {}) {
+      this.opts = opts;
     }
   };
   ns.control = {
@@ -630,6 +649,132 @@ test('createMarker:构造失败 → console.error 可见 + rethrow(保留 addMar
   } finally {
     console.error = origError;
     ns.Marker = OrigMarker;
+    restore();
+  }
+});
+
+test('createMarker:仅 MultiMarker(无 Marker)→ 聚合路径,geometries/id/offset→anchor/zIndex 构造正确', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker; // 真实 v=1.exp 全局形态:无单点 Marker
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const marker = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      offset: [4, -6],
+      zIndex: 9,
+    });
+    assert.ok(marker.raw instanceof MockMultiMarker, '走 MultiMarker 聚合路径');
+    const geo = marker.raw.geometries[0];
+    assert.match(geo.id, /^dm-mk-\d+$/, 'id 递增唯一(dm-mk-N)');
+    assert.deepEqual({ ...geo.position }, { lat: 30.28, lng: 120.16 }, 'position LatLng 纬度在前');
+    assert.equal(geo.styleId, 'default', 'styleId 显式 default(SDK 缺省即 default)');
+    assert.equal(marker.raw.map, view.raw, 'MultiMarker 挂到当前地图');
+    assert.equal(marker.raw.zIndex, 9, 'zIndex 透传(SDK:overlay zIndex → layer rank)');
+    // 契约 offset [x,y](相对锚点屏幕位移)→ MarkerStyle.anchor 平移:
+    // 渲染公式 imageTopLeft = 屏幕位 - anchor,Δanchor = -(x,y) ⇒ 整图位移 (x,y)
+    assert.ok(marker.raw.styles.default instanceof ns.MarkerStyle, 'offset 存在 → 注入 default 样式');
+    assert.ok(marker.raw.styles.default.opts.anchor instanceof ns.Point, 'anchor 必须是 TMap.Point 实例');
+    assert.deepEqual(
+      { ...marker.raw.styles.default.opts.anchor },
+      { x: 13, y: 56 },
+      '默认锚点 (17,50) 平移 (x,y)→ anchor (17-4, 50+6)=(13,56)',
+    );
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):setPosition → updateGeometries 更新同 geometry;remove → setMap(null)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const marker = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+    const geo = marker.raw.geometries[0];
+    marker.setPosition({ lng: 1, lat: 2 });
+    assert.equal(marker.raw.geometries[0], geo, 'updateGeometries 更新同一 geometry 引用(保留 styleId)');
+    assert.deepEqual({ ...geo.position }, { lat: 2, lng: 1 }, 'setPosition LatLng 纬度在前');
+    assert.equal(marker.raw.geometries.length, 1, '单 geometry 不变多');
+    marker.remove();
+    assert.equal(marker.raw.map, null, 'MultiMarker 移除 = setMap(null)(官方方式)');
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):onClick 经 click 事件,按 e.geometry.id 过滤', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    let clicked = 0;
+    const marker = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      onClick: () => clicked++,
+    });
+    const geo = marker.raw.geometries[0];
+    marker.raw.trigger('click', { geometry: { id: 'dm-mk-999' } });
+    assert.equal(clicked, 0, '其他 geometry.id 不得触发');
+    marker.raw.trigger('click', { geometry: { id: geo.id } });
+    assert.equal(clicked, 1, '本 marker id 触发');
+    marker.raw.trigger('click', { geometry: { id: geo.id } });
+    assert.equal(clicked, 2, '可重复触发');
+  } finally {
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):HTML content 降级默认点 + 一次性 warn(SDK 无 HTML 渲染)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const m1 = view.createMarker({ position: { lng: 1, lat: 2 }, content: '<b>X</b>' });
+    const m2 = view.createMarker({ position: { lng: 3, lat: 4 } });
+    m1.setContent('<i>Y</i>');
+    assert.equal(warn.calls.length, 1, '构造 content + setContent 合计只告警一次(不刷屏)');
+    assert.match(String(warn.calls[0][0]), /MultiMarker 不支持 HTML content/);
+    assert.equal(m2.raw.geometries[0].content, undefined, 'content 不写入 geometry(会渲染成 GL 文本标签,非 HTML)');
+  } finally {
+    warn.restore();
+    restore();
+  }
+});
+
+test('createMarker:Marker/MultiMarker 皆无 → console.error 命名空间诊断 + throw', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  const errors = [];
+  const origError = console.error;
+  console.error = (...args) => errors.push(args);
+  try {
+    delete ns.Marker;
+    delete ns.MultiMarker;
+    const view = await createView();
+    assert.throws(
+      () => view.createMarker({ position: { lng: 1, lat: 2 } }),
+      /TMap 无 Marker\/MultiMarker/,
+      '必须 throw(调用方簿记依赖)',
+    );
+    assert.equal(errors.length, 1, '必须 console.error 诊断(可观测)');
+    assert.match(String(errors[0][0]), /TMap 无 Marker\/MultiMarker/);
+    assert.ok(Array.isArray(errors[0][1]), '第二参为命名空间 keys 数组(诊断用)');
+  } finally {
+    console.error = origError;
     restore();
   }
 });

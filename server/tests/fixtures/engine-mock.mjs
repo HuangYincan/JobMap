@@ -52,6 +52,84 @@ export class MockCircle {
   }
 }
 
+/**
+ * MultiMarker 聚合标注 mock — 忠实 TMap.MultiMarker(v=1.exp 全局版形态,SDK v1.8.0.2
+ * 核实):构造 { map, geometries, styles?, zIndex };updateGeometries 按 id 更新(整体
+ * 替换,携带 styleId);setMap(null) 移除;click 载荷 { geometry, type, target }。
+ */
+export class MockMultiMarker {
+  constructor(opts = {}) {
+    this.opts = opts;
+    this.map = opts.map ?? null;
+    this.styles = opts.styles ?? {};
+    this.zIndex = opts.zIndex ?? 0;
+    this.geometries = [...(opts.geometries ?? [])];
+    this.listeners = new Map();
+  }
+
+  setMap(map) {
+    this.map = map;
+  }
+
+  getMap() {
+    return this.map;
+  }
+
+  updateGeometries(geos) {
+    const list = Array.isArray(geos) ? geos : [geos];
+    for (const g of list) {
+      const i = this.geometries.findIndex((x) => x.id === g.id);
+      if (i >= 0) this.geometries[i] = g;
+      else this.geometries.push(g);
+    }
+    return this;
+  }
+
+  setGeometries(geos) {
+    this.geometries = Array.isArray(geos) ? [...geos] : [geos];
+    return this;
+  }
+
+  add(geos) {
+    const list = Array.isArray(geos) ? geos : [geos];
+    for (const g of list) {
+      if (!this.geometries.some((x) => x.id === g.id)) this.geometries.push(g);
+    }
+    return this;
+  }
+
+  remove(ids) {
+    const list = Array.isArray(ids) ? ids : [ids];
+    this.geometries = this.geometries.filter((g) => !list.includes(g.id));
+    return this;
+  }
+
+  getGeometryById(id) {
+    return this.geometries.find((g) => g.id === id) ?? null;
+  }
+
+  on(event, cb) {
+    const list = this.listeners.get(event) ?? [];
+    list.push(cb);
+    this.listeners.set(event, list);
+    return this;
+  }
+
+  off(event, cb) {
+    const list = this.listeners.get(event) ?? [];
+    this.listeners.set(
+      event,
+      list.filter((f) => f !== cb),
+    );
+    return this;
+  }
+
+  trigger(event, payload) {
+    for (const cb of this.listeners.get(event) ?? []) cb(payload);
+    return this;
+  }
+}
+
 export class MockView {
   constructor(opts = {}) {
     this.opts = opts;
