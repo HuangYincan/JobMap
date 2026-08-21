@@ -579,6 +579,14 @@ export const translations = {
     zh: '邮箱',
     en: 'Email',
   },
+  phonePlaceholder: {
+    zh: '请输入手机号',
+    en: 'Enter phone number',
+  },
+  emailPlaceholder: {
+    zh: '请输入邮箱',
+    en: 'Enter email address',
+  },
   otpCode: {
     zh: '验证码',
     en: 'Code',
