@@ -230,6 +230,16 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
         // 错误路径:清空视图状态(旧 view 已在 switch.ts 销毁;回滚也失败 →
         // 容器无图),暴露可重试——下次 switchEngine 从 viewRef=null 正常走
         console.error("[use-map-engine] switchEngine failed:", err);
+        // 失败分类可见化(bug 3):switch.ts 重包装后分类属性丢失(message 仍
+        // 含分类码原文),引擎层 failBaidu 已 console.error 结构化输出——此处
+        // 兜底输出仍携带分类的错误;无 toast 基建,不新增 UI 组件
+        const classified = (err ?? {}) as { code?: string; guidance?: string };
+        if (classified.code) {
+          console.error("[use-map-engine] 引擎切换失败分类:", {
+            code: classified.code,
+            guidance: classified.guidance,
+          });
+        }
         viewRef.current = null;
         setView(null);
       } finally {
@@ -336,6 +346,21 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
       })
       .catch((err) => {
         console.warn("[use-map-engine] map engine load/createView failed:", err);
+        // 失败分类可见化(bug 3,2026-08-22 ws-c):引擎错误携带 code/stage/
+        // guidance 时输出结构化诊断(含可操作指引,用户可直接照做)。挂载
+        // 路径 mount.ts 原样上抛引擎错误,分类属性可直达;切换路径被
+        // switch.ts 重包装(分类仅留在引擎层 console,见 switchEngine catch)。
+        // 无共享 toast/alert 基建(已核查,map-shell 注明「后续可接 toast 提示、
+        // 不新增 UI」)→ 仅 console 结构化输出,不新增 UI 组件。
+        const classified = (err ?? {}) as { code?: string; stage?: string; guidance?: string };
+        if (classified.code) {
+          console.warn("[use-map-engine] 引擎加载失败分类:", {
+            engine: resolved.id,
+            code: classified.code,
+            stage: classified.stage,
+            guidance: classified.guidance,
+          });
+        }
       });
 
     return relinquishView;
