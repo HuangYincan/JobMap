@@ -115,6 +115,7 @@ interface BMapInstance {
   getTilt?(): number;
   getHeading?(): number;
   getBounds?(): BBounds | null;
+  getContainer?(): unknown;
   addOverlay?(overlay: unknown): unknown;
   removeOverlay?(overlay: unknown): unknown;
   addControl?(control: unknown): unknown;
@@ -182,6 +183,39 @@ const STYLE_CONSTANT: Record<'normal' | 'satellite', string> = {
 
 /** Autocomplete headless 路径超时兜底(ms):厂商静默失败时避免 promise 挂起 */
 const AUTOCOMPLETE_TIMEOUT_MS = 5000;
+
+// ------------------------------------------------------------
+// 默认控件防御:BMapGL createView 不禁默认控件(zoom 左上 / 版权右下,
+// 2026-08-21 ws-4 诊断坐实)。BMapGL 无「构造选项禁用默认控件」形态,
+// 默认控件实例也无法经 removeControl 摘除(那是 addControl 自建实例的反向)
+// → 防御式 DOM 隐藏。版权 .BMap_cpyCtrl 由 map-shell CSS 隐藏(与 AMap 同款
+// 模式);.BMap_scaleCtrl 为引擎 addControl 自建比例尺,不在此列。
+// ------------------------------------------------------------
+
+/**
+ * BMapGL 默认控件 DOM 防御:创建后隐藏默认 zoom 控件与 3D 指北针。
+ * - .BMap_omView:3D 指北针(z-index 1000 量级,盖过 sidebar/topTools 拦截点击)
+ * - .BMap_zoomCtrl:默认缩放控件(左上,与 app 自带 zoomControls 重复)
+ * 类名以 BMapGL 真实 DOM 核实为准,宽泛子串选择器防御多版本差异;
+ * 有/无 getContainer/querySelectorAll 都不抛(控件缺失/异常形态静默跳过)。
+ */
+function hideBaiduDefaultControls(map: BMapInstance): void {
+  const container = map.getContainer?.();
+  if (!container || typeof (container as { querySelectorAll?: unknown }).querySelectorAll !== 'function') {
+    return;
+  }
+  try {
+    const nodes = (container as { querySelectorAll(sel: string): unknown }).querySelectorAll(
+      '[class*="BMap_omView"], [class*="BMap_zoomCtrl"]',
+    ) as Array<{ style: Record<string, string> }>;
+    for (const el of nodes) {
+      el.style.display = 'none';
+      el.style.pointerEvents = 'none';
+    }
+  } catch {
+    // DOM 探测失败静默:不影响主流程(防御式,不抛)
+  }
+}
 
 /**
  * 解析厂商常量(BMAPGL_*):BMapGL 脚本以全局常量暴露(示例代码裸用
@@ -714,6 +748,9 @@ class BaiduEngine implements MapEngine {
       throw new Error('[map-engine] baidu BMapGL 未就绪:先调用 load()');
     }
     const map = new ns.Map(opts.container);
+    // 默认控件 DOM 防御(BMapGL 同步建 DOM,构造后立即隐藏 zoom/指北针;
+    // 版权由 map-shell CSS 隐藏;有/无控件 API 均不抛)
+    hideBaiduDefaultControls(map);
     // 初始中心点 bd09 转换(漏转 ≈700m 偏移)
     const c = gcj02ToBd09(opts.center.lng, opts.center.lat);
     map.centerAndZoom(new ns.Point(c.lng, c.lat), opts.zoom);
