@@ -39,7 +39,7 @@ import { useSavedLayer } from "@/hooks/use-saved-layer";
 import { useSearchState } from "@/hooks/use-search-state";
 import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { useMapEngine } from "@/hooks/use-map-engine";
-import type { MapMarkerOptions, MapView } from "@/lib/map-engine/types";
+import type { MapMarker, MapMarkerOptions, MapView } from "@/lib/map-engine/types";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
 import { SecondarySidebar, suggestionDisplayIcon, candidateCategoriesFor, pickCategoryFilter, type SearchSuggestion } from "./secondary-sidebar";
@@ -194,10 +194,10 @@ function Icon({ name }: { name: "search" | "layers" | "bookmark" | "grid" | "his
 }
 
 /**
- * 定位按引擎分派(2026-08-21 fix-runtime):
+ * 定位按引擎分派(2026-08-21 fix-runtime;2026-08-22 ws-d 补蓝点):
  * - AMap 走 amap-api(Geolocation 控件绑定原始实例,蓝点 + 精度圈渲染在地图上);
- * - 非 AMap(腾讯/百度)走引擎 search 纯定位(浏览器 Geolocation / 厂商定位,
- *   无蓝点渲染,deferred)。
+ * - 非 AMap(腾讯/百度)走引擎 search 纯定位(浏览器 Geolocation / 厂商定位),
+ *   定位成功后由 syncUserBlueDot 经契约 createMarker 自绘蓝点(ws-d)。
  * 统一返回 { lng, lat } | null:调用方不再接触 loc.position(amap-api 专属形状),
  * 也不再把 amap 控件塞给非 amap 的 raw map(腾讯 addControl 类型错误崩溃根因)。
  */
@@ -211,6 +211,24 @@ function locateForMap(view: MapView): Promise<{ lng: number; lat: number } | nul
     p ? { lng: p.lng, lat: p.lat } : null,
   );
 }
+
+/**
+ * 非 AMap 引擎用户定位蓝点图标(dataURL 内联 SVG,不新增素材文件)。
+ * 视觉对齐 AMap Geolocation 蓝点:蓝色圆点(#007AFF 系)+ 半透明精度晕圈 + 白心
+ * (与 map-constants 的 USER_LOCATION_ICONS 同构;后者为旧主题 #4A90E2 且
+ * map-constants.ts 不在本 WS 边界,故内联 #007AFF 系)。
+ * 经契约 createMarker icon 路径渲染(腾讯 MultiMarker MarkerStyle / 百度
+ * BMapGL Icon 均支持 src/size),与 POI marker 引擎无关共存(独立 marker,
+ * 不参与 LOD/聚合,见 map-markers 控制器隔离)。
+ * 不传 offset:各引擎 icon 锚点像素语义由引擎适配层负责(ws-a/b 域),契约层
+ * 不跨引擎猜 offset,避免锚点语义分歧(腾讯锚点偏移修复见 ws-a)。
+ */
+const USER_BLUE_DOT_ICON: { src: string; size: [number, number] } = {
+  src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='9' fill='%23007AFF' opacity='0.25'/%3E%3Ccircle cx='11' cy='11' r='5' fill='%23007AFF'/%3E%3Ccircle cx='11' cy='11' r='2' fill='white'/%3E%3C/svg%3E",
+  size: [22, 22],
+};
+/** 蓝点 zIndex:高于 POI marker(普通 10/20、高亮 80、选中 100;聚合徽章 50) */
+const USER_BLUE_DOT_Z_INDEX = 200;
 
 export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<MapView | null>(null);
@@ -278,6 +296,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     style: initialMapViewRef.current.style,
   });
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
+  /** 非 AMap 引擎用户定位蓝点 marker(AMap 走 amap-api Geolocation 控件,不经此 ref) */
+  const blueDotRef = useRef<MapMarker | null>(null);
   const [searchOrigin, setSearchOrigin] = useState<{ lng: number; lat: number } | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
   const [pageOffset, setPageOffset] = useState(0);
@@ -608,6 +628,37 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 视图接线只随 view 实例变化
   }, [engineView]);
 
+  /**
+   * 非 AMap 引擎用户定位蓝点同步(2026-08-22 ws-d,bug 5「腾讯地图之类连用户
+   * 定位点都消失了」):
+   * - 定位成功(挂载 settle / 定位按钮 handleLocate)后创建蓝点 marker,
+   *   已有则 setPosition 更新(蓝点跟随最新定位);
+   * - AMap 引擎零改动:蓝点仍由 amap-api Geolocation 控件渲染(蓝点+精度圈
+   *   绑定原始实例),本函数对 amap 直接返回;
+   * - 蓝点是独立 marker(view.createMarker 直建,不进 POI 控制器)→ LOD/
+   *   聚合不误删;卸载/切引擎由 createMap cleanup remove 清理。
+   * 函数声明提升,createMap / handleLocate 共用。
+   */
+  function syncUserBlueDot(view: MapView, lng: number, lat: number) {
+    if (view.engine.id === "amap") return; // AMap 走 Geolocation 控件蓝点
+    if (view.isDestroyed?.()) return; // 视图已销毁(StrictMode/切引擎竞态):不建点
+    const marker = blueDotRef.current;
+    if (marker) {
+      marker.setPosition({ lng, lat });
+      return;
+    }
+    try {
+      blueDotRef.current = view.createMarker({
+        position: { lng, lat },
+        icon: USER_BLUE_DOT_ICON,
+        zIndex: USER_BLUE_DOT_Z_INDEX,
+      });
+    } catch (err) {
+      // 创建失败(引擎销毁竞态等):蓝点缺失不阻断定位流程
+      console.warn("[map-shell] 用户定位蓝点创建失败:", err);
+    }
+  }
+
   function createMap(view: MapView) {
     setMapReady(true);
 
@@ -623,7 +674,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     };
 
     // 挂载定位按引擎分派:AMap 走 amap-api(蓝点+精度圈绑定原始实例);非 AMap 走
-    // 引擎 search 纯定位(无蓝点渲染,deferred)——见模块级 locateForMap
+    // 引擎 search 纯定位 + 契约 createMarker 自绘蓝点(syncUserBlueDot,ws-d)
     locateForMap(view)
       .then((loc) => {
         if (!loc) {
@@ -633,6 +684,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         const { lng, lat } = loc;
         setUserLocation({ lng, lat });
         setSearchOrigin((prev) => prev ?? { lng, lat });
+        // 非 AMap 引擎自绘用户定位蓝点(AMap 零改动,Geolocation 控件已渲染)
+        syncUserBlueDot(view, lng, lat);
         // 相机 + mapCenter(距离圆心,ws-b 语义跟随镜头)只在用户未手动移图且相机
         // 仍处默认中心时一起更新:已移图 → 两者都保持当前镜头状态,不把圆心甩去
         // 用户位置;remount 恢复的用户视野(非默认)同样不抢镜头(ws-poi-vanish2:
@@ -726,6 +779,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       darkModeQuery.removeEventListener('change', handleThemeChange);
       window.removeEventListener('resize', handleResize);
       scaleControlRef.current = null;
+      // 非 AMap 引擎蓝点:卸载/切引擎时摘除(AMap 蓝点随 Geolocation 控件销毁)
+      try {
+        blueDotRef.current?.remove?.();
+      } catch {
+        // 视图已销毁等场景:忽略
+      }
+      blueDotRef.current = null;
     };
 
     // 用户没写过底图偏好时才跟系统主题；选过卫星/浅色后不再被系统覆盖
@@ -1868,11 +1928,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   const handleLocate = () => {
     if (!mapInstance.current) return;
+    const view = mapInstance.current;
 
     // 定位按引擎分派:AMap 用 Geolocation 控件(addControl 绑定到 map,蓝点 + 精度圈
-    // 渲染在地图上);非 AMap 走引擎 search 纯定位(无蓝点渲染,deferred)。
+    // 渲染在地图上);非 AMap 走引擎 search 纯定位 + 契约 createMarker 自绘蓝点
+    // (syncUserBlueDot,ws-d 2026-08-22)。
     // 不直接 getCurrentPosition(raw)——amap 控件塞给非 amap raw map 会类型错误崩溃。
-    locateForMap(mapInstance.current)
+    locateForMap(view)
       .then((loc) => {
         if (!loc) {
           // 定位失败/被拒:保持当前视野,不跳回杭州默认中心(ws-poi-vanish)。
@@ -1881,6 +1943,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           return;
         }
         const { lng, lat } = loc;
+        // 非 AMap 引擎:蓝点创建或 setPosition 跟随最新定位(AMap 零改动)
+        syncUserBlueDot(view, lng, lat);
         mapInstance.current?.setCenter({ lng, lat });
         mapInstance.current?.setZoom(15);
         setMapCenter({ lng, lat });
