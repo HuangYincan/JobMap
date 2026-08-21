@@ -892,3 +892,70 @@ marker/mapgl 模块,均为实包抓取)
   setPosition/remove 生命周期、挂载 settle 与 handleLocate 双接线、
   AMap 路径零变化(locateForMap 分派 + amap 早退无 createMarker)、
   与 POI 控制器隔离(map-markers 零处 blueDot)。
+
+## ws-e 回填:WebGL 纹理 CORS 限制 + 图标预检降级(2026-08-22,fix/icon-cors-preflight,bug 1/7)
+
+> boss 真机实测实锤:用户报「疯狂报错」+ bug 1/7(TMap POI 样式不对)。根因链:
+> favicon.im 等公司 logo 候选**不返回 CORS 头**;TMap GL 是 WebGL 渲染,marker
+> 图标作为 GPU 纹理加载,纹理必须 CORS-clean → 远程无 CORS 头的图标**恒加载
+> 失败**,SDK 疯狂刷「Image加载失败」(单次引擎加载 179-190 errors,dev log 累计
+> 10192 次)并降级 SDK 默认 marker →「POI 样式不对」直接成因。
+
+### 机制:三引擎 icon 路径的 CORS 敏感度
+
+| 引擎 | 公司 POI 渲染路径 | CORS 需求 | 结论 |
+|---|---|---|---|
+| AMap | DOM 渲染,`<img>` content 徽章 | 无需 | 不受影响 |
+| TMap | **icon 路径**(MultiMarker MarkerStyle `src` → GPU 纹理) | **必须** | favicon.im 恒失败 |
+| BMapGL | 公司 POI 走 content 路径(msTarget DOM 覆盖层) | 无需(当前) | 不受影响 |
+
+- AMap/BMapGL content 的 HTML `<img>` 有内联 onerror 候选链(favicon.im →
+  icon.horse);TMap 走 icon 路径,Sdk 自己的 onerror 处理失败,**候选链在
+  TMap 上无机会执行** —— 这就是「问题特定于 TMap 的 icon 纹理路径」的原因。
+- BMapGL 同为 WebGL(`new Icon(url)` 远程纹理同样需要 CORS),只是当前业务
+  无人给它传远程 icon(公司 POI 走 content、蓝点/聚合徽章均为 dataURL),
+  属防御性接入(见下)。
+
+### 实现(ws-e,3 文件 + 测试)
+
+**新模块 `server/src/lib/map-engine/icon-preflight.ts`**(纯模块,无 React 依赖):
+
+- `remoteIconStatus(src)`:`'data'`(data: URI 本地恒安全)/ `'ok'`(已预检成功)/
+  `'fail'`(已预检失败)/ `'unknown'`(未预检);
+- `preflightRemoteIcon(src)`:幂等后台 CORS 预检 `fetch(src, { mode: 'cors' })`
+  ——服务端无 ACAO 头时 fetch 直接 reject 即 CORS/网络失败;非 2xx 也记 fail;
+  结果缓存于模块级 Map,**成功与失败均记忆化(同会话同 URL 不重复,失败不重试)**;
+  pending 期间去重;data: URI 不预检;无全局 fetch 时 no-op(保持 unknown 降级);
+- `isRemoteIconUrl(src)`:http(s) 闸(data:/相对路径/blob: 同源恒安全直通,
+  避免对相对路径误触发 fetch);
+- `resetIconPreflightCache()`:测试钩子(生产不调用)。
+
+**`map-markers.ts` TMap icon 构造段(L539 起,engine 门控不变)**:远程未验证/
+已失败 → 降级 `svgToDataUri(recruitmentBadgeSVG(...))`(白底蓝框 emoji 徽章,
+纯本地 data URL,SDK 加载必成功 → **零报错、零 SDK 默认 marker**);data:/
+已预检 ok → 真 src;未验证时触发后台预检,**预检成功后下次 LOD 重建/重渲染
+自然升级**为真 logo(不做已渲染 marker 的原地升级——favicon.im 在 TMap 上
+恒失败,升级路径是为未来 CORS 合规图源预留)。
+
+**`baidu-engine.ts` icon 路径(核查性防御,零行为漂移)**:核查确认 BMapGL
+`new Icon(src)` 存在接收远程 URL 的 icon 路径(WebGL 纹理同病)→ 同样接
+`isRemoteIconUrl` + `remoteIconStatus` 闸:远程未验证/已失败 → 不构造远程
+Icon,回退 content 锚点路径(透明 1×1 dataURL 图标,msTarget DOM 渲染,
+`<img>` 无需 CORS);data:/相对路径/已 ok → 原样。现有 content 路径零改动,
+相对路径 icon(测试既有 `'pin.svg'`)行为不变。
+
+### 验收(真机标准)
+
+TMap 下 favicon.im 加载失败 → console 零「Image加载失败」报错;失败公司
+显示我们的 emoji 徽章(不是 SDK 默认样式);已预检成功的 URL 显示真 logo。
+
+### 测试
+
+- 新 `server/tests/icon-preflight.test.mjs`(13 项):data 直通 / unknown /
+  2xx→ok / CORS 拒绝→fail / 404→fail / pending 去重 / fail·ok 记忆化 /
+  data 不预检 / 无 fetch no-op / reset 钩子 / TMap icon 构造断言(未验证→
+  徽章 dataURL + 预检触发;ok→真 src + 升级路径;fail→徽章不重试;data·缺
+  logo 零预检;AMap 引擎零变化);
+- `map-engine-baidu.test.mjs` 追加 2 项:远程未验证 → content 锚点回退 +
+  后台预检;ok → 真 URL Icon / fail → 回退不重试(afterEach 加
+  resetIconPreflightCache 防串扰)。
