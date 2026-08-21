@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -762,5 +762,28 @@ test('地图源 section + 引擎切换接线契约(ws-f)', () => {
     'engineNotConfigured',
   ]) {
     assert.match(i18n, new RegExp(`${key}:`));
+  }
+});
+
+test('map-engine 契约:env 读取必须裸字面量,禁止 process.env[ 动态访问(ws-b 轮 3)', () => {
+  // 2026-08-21 bugfix:图层面板三 chip 全部「未配置 key」,根因是 isConfigured / key 读取
+  // 用了 process.env[常量] 括号动态访问——Node 下正常、浏览器端(Next 构建期只做静态
+  // 字面量替换)恒 undefined,测试全绿抓不到。契约:引擎目录内所有代码只允许
+  // process.env.NEXT_PUBLIC_XXX 裸字面量形式。
+  const engineDir = join(root, 'lib', 'map-engine');
+  const files = readdirSync(engineDir, { recursive: true }).filter((f) => f.endsWith('.ts'));
+  assert.ok(files.length >= 3, 'map-engine 目录应至少含 registry/tencent/baidu 三引擎文件');
+  for (const rel of files) {
+    const code = readFileSync(join(engineDir, rel), 'utf8');
+    assert.doesNotMatch(
+      code,
+      /process\.env\[/,
+      `${rel} 不得含 process.env[ 动态访问(浏览器端恒 undefined,须改裸字面量)`,
+    );
+  }
+  // 三引擎 isConfigured / key 读取必须能定位到具体字面量 key(静态分派已生效)
+  const registry = src('lib/map-engine/engine-registry.ts');
+  for (const key of ['NEXT_PUBLIC_AMAP_KEY', 'NEXT_PUBLIC_TENCENT_JSAPI_KEY', 'NEXT_PUBLIC_BAIDU_AK']) {
+    assert.match(registry, new RegExp(`process\\.env\\.${key}`), `registry 应含裸字面量 ${key}`);
   }
 });
