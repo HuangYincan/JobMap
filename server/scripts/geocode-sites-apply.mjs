@@ -61,6 +61,9 @@ import {
 import { loadOfflineWorkCatalog } from '../src/lib/server-catalog.ts';
 import { RADAR_DIR } from '../src/lib/recruitment-adapters/radar.ts';
 import { OFFICIAL_CAREER_DIR } from '../src/lib/recruitment-adapters/official-career.ts';
+import { QQDOC_JOBS_DIR } from '../src/lib/recruitment-adapters/qqdoc-jobs.ts';
+import { QQDOC_OFFICIAL_DIR } from '../src/lib/recruitment-adapters/qqdoc-official.ts';
+import { EMBODIED_JOBS_DIR } from '../src/lib/recruitment-adapters/embodied-jobs.ts';
 
 // 代理/网络挂起防御:所有 fetch 默认 20s 超时(不覆盖调用方显式 signal)。
 // 背景:Node 原生 fetch 无超时,请求卡死在代理(Clash 198.18.0.0/15,
@@ -149,8 +152,14 @@ function setSiteLocation(file, slug, siteId, location) {
   return changed;
 }
 
+// 2026-08-22 (fix/geocode-qqdoc-embodied, w3): 覆盖 5 源 — w2 已把 342 个
+// 有地址站点回填进 qqdoc-jobs / qqdoc-official / embodied-jobs drops, 不纳入
+// 本扫描则这些站点永远无法落坐标上地图。qqdoc-official 的 city_pending 站点
+// (city 仍为「XX总部」脏值, 如 qq-中国矿产资源集团-site-hq) 照常进计划: 地址
+// 检索可执行, 脏 city 在 regeo 城市闸门 (outside-province / outside-city) 被
+// 跳过是可接受行为 — 不崩脚本, 留待 city 修正后自然解。
 function dropFiles() {
-  const dirs = [RADAR_DIR, OFFICIAL_CAREER_DIR];
+  const dirs = [RADAR_DIR, OFFICIAL_CAREER_DIR, QQDOC_JOBS_DIR, QQDOC_OFFICIAL_DIR, EMBODIED_JOBS_DIR];
   const files = [];
   for (const dir of dirs) {
     if (!fs.existsSync(dir)) continue;
