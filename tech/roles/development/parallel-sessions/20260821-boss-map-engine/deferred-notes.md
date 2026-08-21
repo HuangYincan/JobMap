@@ -10,3 +10,5 @@
 | 4 | Env-only | 三家同配的真实冒烟(默认高德、手动切腾讯/百度、状态保持、样式降级)需项 1/2 的 key 就位后执行,结果记录进 tech/23 | 依赖 1/2 |
 | 5 | 其他 | 切换引擎后底图样式回到首渲染快照(契约无 getStyle()):后续可在 MapView 契约加 getStyle() 后消除;三家同配时用户切换可能遇到底图回退(小) | 待后续契约增强 |
 | 6 | 其他 | 非 AMap 引擎的 geolocation 蓝点行为未验证(createMap 里 getCurrentPosition(view.raw) 是 amap-api 专属逃生舱);真机冒烟时核对,必要时 map-shell 层适配 | 依赖 1/2 |
+| 7 | 上游 | **Turbopack panic 地雷**:`next-code-frame` 对含 CJK 长行的代码帧按终端宽度截断时字节切片撞多字节字符 → panic abort dev server(vercel/next.js#92641,修复 PR #92646 未合入,16.3.1 仍复现)。触发链:任何浏览器未捕获错误/编译 issue 打印到 TTY 终端即可能触发;非 TTY 输出(管道)不截断不崩。本批次回归(amap-engine onViewEvent 丢 this)已修;上游合入后升级 next 即可 | 待上游 |
+| 8 | 依赖 | `@modelcontextprotocol/sdk` 已被 dev HEAD 代码引用(agent-mcp 批次)但 package.json 未声明——干净安装缺依赖;主工作树有未提交的依赖补充(另含 dompurify/marked,agent 特性相关),用户确认后提交 | 待用户 |
