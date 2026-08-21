@@ -164,3 +164,40 @@ ort 干净合并,零手动冲突解决。本批累计 6 个 merge(轮 2 三个 +
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+---
+
+# 合并报告 — 轮 6(2026-08-22):ws-8 挂载失败回退
+
+> 轮 1-5 明细见上文;本段为轮 6(追加批次,feature/engine-mount-fallback)。
+
+## 结果总览
+
+- 成功合并: ws-8 feature/engine-mount-fallback(1 个分支,merge `f6604e2`,ort 无冲突)
+- 失败/遗留: 无(本批次累计轮 1-6 全部 8 个分支已按序并入 dev)
+- **push: 已完成**(`8c72f27..f6604e2 dev -> dev`,未被权限分类器拦截;origin/dev 现含本批全部 8 个 merge)
+
+## 逐分支明细
+
+| WS | 分支 | merge | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| 8 | feature/engine-mount-fallback | 无冲突(ort 干净,merge f6604e2;分支基线与 dev 差 2 个其他会话 merge,文件零重叠) | test ✅ 1128 tests / 1126 pass / 2 skip / 0 fail(含新增 13 项 map-engine-mount.test.mjs);typecheck ✅ 0 error;docs-check ✅ 通过(基线红已由 docs-check-exclude-sessions 修复终结,本批非红);diff --check ✅ | 无冲突。合并 4 文件:use-map-engine.ts(挂载链替换为 mountEngineView 接线)+ 新增 server/src/lib/map-engine/mount.ts + 新增 map-engine-mount.test.mjs + tech/23-map-engines.md 追加(ws-8 节) |
+
+## 冲突解决清单
+
+ort 干净合并,零手动冲突解决。本批累计 7 个 merge(轮 2 三个 + 轮 3 一个 + 轮 4 一个 + 轮 5 一个 + 轮 6 一个)全部无冲突;`git diff --check` 通过。
+
+## 遗留问题
+
+1. ws-8 deferred(tech/23 已记,同 ws-5/6/7 模式):真机浏览器验证(挂载回退链路在故障引擎偏好下的实际呈现)需 key + 浏览器,headless 无法执行,由 boss 合并后 Playwright 冒烟回填。
+2. ws-5 deferred(tech/23 已记,仍开):map-shell distance overlay(距离圈/手柄)持 `.raw` 直调 AMap 专属 API,腾讯/百度引擎下同款风险(当前 UI 无入口)。
+3. **主工作树存在其他会话未提交改动**(合并前已存在,与本次 merge 无关,未触碰未提交):`server/.env.example`、`server/docs/environment-variables.md`(env-example 相关会话)、`boss-state.md`(boss 更新)及多个其他批次 untracked 目录(20260821/20260822 其他 boss 批次)。本次仅提交批次目录自身,未混入这些改动。
+
+## 最终 dev 状态
+
+- dev tip: `f6604e2`(merge: feature/engine-mount-fallback),已 push origin/dev,含轮 1-6 全部 8 个分支
+- 清理已完成:`git worktree remove /Users/acccan/dm-wt-rw8` 成功;`git branch -d feature/engine-mount-fallback` 成功
+- 未 push main、未 force-push;Env-only 步骤未做(无)
+
+门禁: ALL_GREEN
+结论: MERGED_ALL
