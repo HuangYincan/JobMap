@@ -150,6 +150,8 @@ export type AgentAction =
 
 `validateAction(raw: unknown): AgentAction | null` — 服务端(后端 run-agent)与客户端(前端执行器)用**同款规则**各校验一次:后端在提取动作 JSON 后逐个校验(非法丢弃),前端在执行前再校验(非法丢弃)。双重校验是「代理权要赚取」的实现保障。
 
+> **2026-08-21 增补(ws-afix)**:LLM 所见动作契约由 `prompts.ts` 的动作契约示例承载(中英文各一份,逐字段与 `validateAction` 对齐),以 `validateAction` 为准。
+
 ---
 
 ## 5. 三平台接入

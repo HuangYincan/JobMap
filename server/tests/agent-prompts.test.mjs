@@ -48,3 +48,42 @@ test('buildSystemPrompt: maxTurns 数值注入正确', () => {
   assert.match(buildSystemPrompt({ maxTurns: 1, hasTools: true }, 'zh'), /1 次工具往返/);
   assert.match(buildSystemPrompt({ maxTurns: 12, hasTools: true }, 'zh'), /12 次工具往返/);
 });
+
+test('buildSystemPrompt: 动作契约(zh/en)均含 6 种动作示例 JSON(逐字段与 validateAction 一致)', () => {
+  const zh = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'zh');
+  const en = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'en');
+  const zhExamples = [
+    '{"type":"flyTo","payload":{"center":{"lng":120.15,"lat":30.25},"zoom":14}}',
+    '{"type":"select","payload":{"id":"poi-id","mode":"card"}}',
+    '{"type":"addMarkers","payload":{"points":[{"lng":120.15,"lat":30.25,"label":"可选"}]}}',
+    '{"type":"drawCircle","payload":{"center":{"lng":120.15,"lat":30.25},"radiusMeters":1000,"label":"可选"}}',
+    '{"type":"openDetail","payload":{"id":"poi-id"}}',
+    '{"type":"search","payload":{"query":"关键词","mode":"card"}}',
+  ];
+  const enExamples = [
+    '{"type":"flyTo","payload":{"center":{"lng":120.15,"lat":30.25},"zoom":14}}',
+    '{"type":"select","payload":{"id":"poi-id","mode":"card"}}',
+    '{"type":"addMarkers","payload":{"points":[{"lng":120.15,"lat":30.25,"label":"optional"}]}}',
+    '{"type":"drawCircle","payload":{"center":{"lng":120.15,"lat":30.25},"radiusMeters":1000,"label":"optional"}}',
+    '{"type":"openDetail","payload":{"id":"poi-id"}}',
+    '{"type":"search","payload":{"query":"keywords","mode":"card"}}',
+  ];
+  for (const ex of zhExamples) assert.ok(zh.includes(ex), `zh 缺动作示例: ${ex}`);
+  for (const ex of enExamples) assert.ok(en.includes(ex), `en 缺动作示例: ${ex}`);
+});
+
+test('buildSystemPrompt: flyTo/drawCircle 必须嵌套 center,不允许扁平 lng/lat(zh/en)', () => {
+  for (const lang of ['zh', 'en']) {
+    const p = buildSystemPrompt({ maxTurns: 8, hasTools: true }, lang);
+    assert.doesNotMatch(p, /\{"type":"flyTo","payload":\{"lng":/, `lang=${lang} flyTo 不得扁平 lng/lat`);
+    assert.doesNotMatch(p, /\{"type":"drawCircle","payload":\{"lng":/, `lang=${lang} drawCircle 不得扁平 lng/lat`);
+  }
+});
+
+test('buildSystemPrompt: 动作契约边界数字与 validateAction 一致(points 1..50、radiusMeters 10..50000,zh/en)', () => {
+  for (const lang of ['zh', 'en']) {
+    const p = buildSystemPrompt({ maxTurns: 8, hasTools: true }, lang);
+    assert.match(p, /1\.\.50/, `lang=${lang} points 边界 1..50`);
+    assert.match(p, /10\.\.50000/, `lang=${lang} radiusMeters 边界 10..50000`);
+  }
+});
