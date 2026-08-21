@@ -27,6 +27,11 @@
 | 7 POI 样式 | 根因=favicon CORS(与 1 同);ws-e 统一降级徽章 |
 | 新:疯狂报错 | 实锤:favicon.im 无 CORS 头+WebGL 纹理需 CORS → 单次 190 errors,累计 10192;ws-e 预检降级 |
 
+## 轮2 复验(boss Playwright,ws-e 合并后)
+
+- ✅ SDK「Image加载失败:改为用默认marker」报错**零**(不再刷屏、不换默认 marker)
+- ✅ 公司 POI 全部显示我们的 #007AFF 徽章(地图区 12+ 簇)
+- ⚠️ 剩余:预检 fetch 一次性 CORS 报错(~94 URL×2 行/次会话)→ ws-f 消除(Image 预检减半 + sessionStorage 持久化)
 ## workstreams
 
 | ws | branch | worktree | prompt | report | status | last_tip | dispatched_at | finished_at | verdict |
@@ -36,6 +41,7 @@
 | c | fix/baidu-diagnostics | /Users/acccan/dm-wt-ic | prompts/ws-c.md | reports/ws-c.md | DONE | 8d5cee4 | 轮1 | 2026-08-22 | OK(4 commits, 1270/1268 pass, boss 已验证) |
 | d | fix/geolocation-blue-dot | /Users/acccan/dm-wt-id | prompts/ws-d.md | reports/ws-d.md | DONE | 7c8032a | 轮1(补) | 2026-08-22 | OK(3 commits, 1275/1273 pass, boss 已验证) |
 | e | fix/icon-cors-preflight | /Users/acccan/dm-wt-icon | prompts/ws-e.md | reports/ws-e.md | DONE | 3124474 | 轮2(新 bug) | 2026-08-22 | OK(4 commits, 1361/1359 pass, boss 已验证) |
+| f | fix/icon-preflight-silent | /Users/acccan/dm-wt-icon2 | prompts/ws-f.md | reports/ws-f.md | RUNNING | — | 轮3(噪音消除) | | |
 
 ## 关键证据(用户 console,2026-08-22)
 

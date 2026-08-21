@@ -75,3 +75,40 @@
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+---
+
+# 轮3 合并报告(2026-08-22)— ws-f(fix/icon-preflight-silent)
+
+## 结果总览
+
+- 成功合并: ws-f(fix/icon-preflight-silent,tip 114cfee,3 commits)
+- 失败/遗留: 无
+- 合并方式: `git merge --no-ff`,干净 merge 零冲突(基座 740d4e4,分支文件与 dev 零重叠)
+
+## 逐分支明细
+
+| WS | 分支 | merge | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| f | fix/icon-preflight-silent (114cfee) | 干净 merge | 1366 tests / 1364 pass / 0 fail / 2 skip;typecheck 绿;docs 绿;diff 绿 | 无冲突 |
+
+## 门禁明细
+
+- npm test: **1366 tests / 1364 pass / 0 fail / 2 skip**(与 ws-f 汇报一致,零漂移)
+- `npm run typecheck`: 通过
+- `make docs-check`: Documentation policy check passed
+- `git diff --check`: 干净(工作树 + merge commit)
+
+## 收尾
+
+- `git push origin dev` 完成(740d4e4..67b2907)
+- worktree `/Users/acccan/dm-wt-icon2` 已 remove,分支 `fix/icon-preflight-silent` 已 -d 删除
+- 批次目录(merge-report 轮3 + reports/ws-f.md + boss-state/merge-instructions)随本轮 commit 入库
+
+## 遗留问题
+
+- 维持轮1/轮2 遗留:真机冒烟(Playwright)由 boss 合并后统一回填;TMap 远程 logoUrl CORS 真机核实 deferred。
+- ws-f 自身无遗留(汇报结论 PASSED / OK)。
+
+门禁: ALL_GREEN
+结论: MERGED_ALL
