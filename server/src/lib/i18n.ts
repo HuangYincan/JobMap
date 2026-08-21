@@ -976,6 +976,39 @@ export const translations = {
     zh: '{name} 执行失败',
     en: '{name} failed',
   },
+  // 工具类别(公开 SSE tool 事件 name 字段:search/geocode/directions/weather/project/other)
+  agentToolSearch: {
+    zh: '搜索地点',
+    en: 'Search places',
+  },
+  agentToolGeocode: {
+    zh: '地理编码',
+    en: 'Geocoding',
+  },
+  agentToolDirections: {
+    zh: '路线规划',
+    en: 'Route planning',
+  },
+  agentToolWeather: {
+    zh: '天气查询',
+    en: 'Weather',
+  },
+  agentToolProject: {
+    zh: '项目数据',
+    en: 'Project data',
+  },
+  agentToolOther: {
+    zh: '其他操作',
+    en: 'Other',
+  },
+  agentToolFailed: {
+    zh: '调用失败',
+    en: 'Call failed',
+  },
+  agentRateLimited: {
+    zh: '请求过于频繁,请稍后再试',
+    en: 'Too many requests. Please try again later.',
+  },
   agentActionCircle: {
     zh: '绘制范围圈',
     en: 'Draw range circle',

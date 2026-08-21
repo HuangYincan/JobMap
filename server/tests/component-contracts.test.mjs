@@ -940,11 +940,12 @@ test('agent panel renders thinking + tool activity for assistant messages (ws-c-
   assert.match(panel, /aria-expanded=\{!isCollapsed\}/);
   assert.match(panel, /thinkingBody/);
   assert.match(css, /\.thinkingBody \{[\s\S]*max-height: 140px[\s\S]*overflow-y: auto/);
-  // 工具活动列表:⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary
+  // 工具活动列表:⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案(不再显示内部名/summary)
   assert.match(panel, /toolActivity/);
-  assert.match(panel, /friendlyToolName\(toolItem\.name, lang\)/);
+  assert.match(panel, /toolCategoryName\(toolItem\.name, lang\)/);
   assert.match(panel, /toolItem\.status === "start" \? "⟳" : toolItem\.status === "done" \? "✓" : "✗"/);
   assert.match(panel, /toolRowError/);
+  assert.doesNotMatch(panel, /toolItem\.summary/, 'tool 行不再渲染 summary(公开事件不携带)');
   assert.match(css, /\.toolActivity \{/);
   // 助手消息体走 MarkdownText(用户消息保持纯文本)
   assert.match(panel, /import \{ MarkdownText \} from "\.\/markdown-text"/);

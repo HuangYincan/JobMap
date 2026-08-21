@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {
   ACTION_THROTTLE_MS,
   createAgentMapExecutor,
-  friendlyToolName,
   validateAction,
 } from '../src/components/agent-map-executor.ts';
 
@@ -180,18 +179,6 @@ test('search 动作 execute: 无地图副作用,不回调 onAction,不入 undo �
   assert.equal(bridge.calls.length, 0);
   assert.equal(executor.canUndo(), false);
   assert.deepEqual(callbacks.events, []);
-});
-
-test('friendlyToolName: provider 前缀映射友好名(zh/en)', () => {
-  assert.equal(friendlyToolName('amap__place_search', 'zh'), '高德 · place_search');
-  assert.equal(friendlyToolName('tencent__direction', 'zh'), '腾讯 · direction');
-  assert.equal(friendlyToolName('baidu__weather', 'zh'), '百度 · weather');
-  assert.equal(friendlyToolName('rest__geocodeAddress', 'zh'), '兜底 · geocodeAddress');
-  assert.equal(friendlyToolName('builtin__viewport', 'zh'), '内置 · viewport');
-  assert.equal(friendlyToolName('amap__place_search', 'en'), 'AMap · place_search');
-  assert.equal(friendlyToolName('unknown__x', 'zh'), 'unknown__x');
-  assert.equal(friendlyToolName('no-prefix', 'zh'), 'no-prefix');
-  assert.equal(friendlyToolName('', 'zh'), '');
 });
 
 test('flyTo: 执行 + undo 恢复旧 camera(执行前快照)', () => {

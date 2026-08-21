@@ -49,30 +49,6 @@ export interface AgentMapExecutor {
 /** 同类型动作限流窗口(ms)。 */
 export const ACTION_THROTTLE_MS = 500;
 
-// ---- 工具名友好化(provider 前缀 → 显示名;活动列表用)----
-
-const PROVIDER_NAMES: Record<string, { zh: string; en: string }> = {
-  amap: { zh: '高德', en: 'AMap' },
-  tencent: { zh: '腾讯', en: 'Tencent' },
-  baidu: { zh: '百度', en: 'Baidu' },
-  rest: { zh: '兜底', en: 'fallback' },
-  builtin: { zh: '内置', en: 'built-in' },
-};
-
-/**
- * `amap__place_search` → `高德 · place_search`(en: `AMap · place_search`);
- * 未知前缀 → 原样返回。
- */
-export function friendlyToolName(name: string, lang: 'zh' | 'en'): string {
-  const sep = name.indexOf('__');
-  if (sep <= 0) return name;
-  const prefix = name.slice(0, sep);
-  const label = PROVIDER_NAMES[prefix];
-  const rest = name.slice(sep + 2);
-  if (!label) return name;
-  return rest ? `${label[lang]} · ${rest}` : label[lang];
-}
-
 // ---- 客户端动作校验(action-schema.ts 同款规则,逐字段,非法 → null)----
 const MAX_LAT = 90;
 const MAX_LNG = 180;

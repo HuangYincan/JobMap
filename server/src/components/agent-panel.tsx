@@ -22,7 +22,6 @@ import type { MapBridge } from "@/lib/agent-map-bridge";
 import { streamAgentChat, type AgentChatRequest } from "./agent-chat-client";
 import {
   createAgentMapExecutor,
-  friendlyToolName,
   type AgentMapExecutor,
   type AgentMapExecutorCallbacks,
   type AgentToolInfo,
@@ -109,6 +108,24 @@ function actionLabel(action: AgentAction, lang: Language): string {
       return t("agentActionDetail", lang);
     case "search":
       return t("agentActionSearch", lang).replace("{query}", action.payload.query);
+  }
+}
+
+/** 工具类别(公开 SSE tool 事件 name 字段)→ i18n 文案;未知类别 → 「其他操作」。 */
+function toolCategoryName(name: string, lang: Language): string {
+  switch (name) {
+    case "search":
+      return t("agentToolSearch", lang);
+    case "geocode":
+      return t("agentToolGeocode", lang);
+    case "directions":
+      return t("agentToolDirections", lang);
+    case "weather":
+      return t("agentToolWeather", lang);
+    case "project":
+      return t("agentToolProject", lang);
+    default:
+      return t("agentToolOther", lang);
   }
 }
 
@@ -217,6 +234,7 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
   const handleError = useCallback((code: string) => {
     setTool(null);
     if (code === "LLM_UNCONFIGURED") setNotConfigured(true);
+    else if (code === "RATE_LIMITED") setFatalError(t("agentRateLimited", langRef.current));
     else setFatalError(t("agentError", langRef.current));
   }, []);
 
@@ -383,7 +401,7 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
       {tool && (
         <div className={styles.toolBar} role="status">
           <span className={styles.toolDot} aria-hidden="true" />
-          {t("agentToolRunning", lang).replace("{name}", friendlyToolName(tool.name, lang))}
+          {t("agentToolRunning", lang).replace("{name}", toolCategoryName(tool.name, lang))}
         </div>
       )}
 
@@ -418,9 +436,9 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
                       <span className={styles.toolStatus} aria-hidden="true">
                         {toolItem.status === "start" ? "⟳" : toolItem.status === "done" ? "✓" : "✗"}
                       </span>
-                      <span className={styles.toolName}>{friendlyToolName(toolItem.name, lang)}</span>
-                      {toolItem.status !== "start" && toolItem.summary && (
-                        <span className={styles.toolSummary}>{toolItem.summary}</span>
+                      <span className={styles.toolName}>{toolCategoryName(toolItem.name, lang)}</span>
+                      {toolItem.status === "error" && (
+                        <span className={styles.toolSummary}>{t("agentToolFailed", lang)}</span>
                       )}
                     </li>
                   ))}
