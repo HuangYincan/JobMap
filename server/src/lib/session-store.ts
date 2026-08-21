@@ -3,7 +3,8 @@
 //
 // 无 DATABASE_URL 时 API 走这里，满足开发。
 // 有库后同一契约切到 Postgres，不改前端。
-// 邮箱验证码为真实随机码;手机仍固定 000000(demo)。GitHub 为演示账号。
+// 邮箱/手机验证码均为真实随机码(email 经 Resend 真发,phone 经阿里云短信真发)。
+// GitHub 为演示账号。
 // ============================================================
 
 import { createHmac, randomBytes, randomInt, randomUUID } from 'node:crypto';
@@ -13,11 +14,8 @@ import { hashPassword, verifyPassword } from './password.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const OTP_TTL_MS = 10 * 60 * 1000;
-const DEMO_OTP = '000000';
 
-export const DEMO_OTP_CODE = DEMO_OTP;
-
-/** 6 位随机验证码(邮箱真发用):randomInt [0, 1_000_000) + padStart 保证前导零。 */
+/** 6 位随机验证码(OTP 真发用,email 经 Resend / phone 经阿里云短信):randomInt [0, 1_000_000) + padStart 保证前导零。 */
 export function randomOtpCode(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, '0');
 }
@@ -231,7 +229,8 @@ export function getAvatarData(userId: string): Uint8Array | null {
 export function issueOtp(provider: 'phone' | 'email', target: string): { expiresAt: number; code: string } {
   const normalized = target.trim().toLowerCase();
   const expiresAt = Date.now() + OTP_TTL_MS;
-  const code = provider === 'email' ? randomOtpCode() : DEMO_OTP;
+  // phone/email 统一随机码(phone 经阿里云短信真发,见 aliyun-sms-client)。
+  const code = randomOtpCode();
   otps.set(`${provider}:${normalized}`, {
     target: normalized,
     provider,
