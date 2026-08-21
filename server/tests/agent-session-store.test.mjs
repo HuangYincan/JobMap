@@ -10,6 +10,7 @@ import {
   SESSIONS_KEY,
   SESSION_MESSAGES_CAP,
   appendMessage,
+  archiveAndNew,
   createSession,
   createSessionId,
   deleteSession,
@@ -263,6 +264,86 @@ test('saveMessages: 清空 → 标题重置「新会话」;坏行丢弃;cap 30',
 test('saveMessages: 未知会话 → 原状态不动', () => {
   const s1 = createSession(emptyState(), { id: 'a', now: NOW });
   assert.equal(saveMessages(s1, 'nope', [userMsg('x')]), s1);
+});
+
+// ---- archiveAndNew(清屏 = 归档当前会话 + 新建空会话,ws-clearfix)----
+
+test('archiveAndNew: 有消息归档当前会话(标题保留)+ 新建空会话并激活', () => {
+  const s1 = createSession(emptyState(), { id: 'a', now: NOW });
+  const s2 = appendMessage(s1, 'a', userMsg('帮我看看杭州的岗位'), { now: NOW + 1 });
+  const s3 = appendMessage(s2, 'a', assistantMsg('为你找到 3 个'), { now: NOW + 2 });
+  const next = archiveAndNew(s3, { activeId: 'a', messages: s3.sessions[0].messages, title: '帮我看看杭州的岗位', id: 'b', now: NOW + 3 });
+  // 归档:原会话条目保留,消息落库,标题保留原样,updatedAt 刷新
+  assert.equal(next.sessions.length, 2);
+  const archived = next.sessions.find((s) => s.id === 'a');
+  assert.deepEqual(archived.messages, [userMsg('帮我看看杭州的岗位'), assistantMsg('为你找到 3 个')]);
+  assert.equal(archived.title, '帮我看看杭州的岗位', '标题保留原样(不清 title)');
+  assert.equal(archived.updatedAt, NOW + 3);
+  // 新会话:空消息,标题「新会话」
+  const fresh = next.sessions.find((s) => s.id === 'b');
+  assert.deepEqual(fresh.messages, []);
+  assert.equal(fresh.title, DEFAULT_SESSION_TITLE);
+  assert.equal(fresh.updatedAt, NOW + 3);
+  assert.equal(next.activeId, 'b', 'activeId 指向新会话');
+  // 原状态不可变
+  assert.equal(s3.sessions.length, 1);
+});
+
+test('archiveAndNew: 空会话不产生空历史(原条目不动)+ 新建激活', () => {
+  const s1 = createSession(emptyState(), { id: 'a', now: NOW });
+  const next = archiveAndNew(s1, { activeId: 'a', messages: [], title: DEFAULT_SESSION_TITLE, id: 'b', now: NOW + 1 });
+  assert.equal(next.sessions.length, 2);
+  const old = next.sessions.find((s) => s.id === 'a');
+  assert.deepEqual(old.messages, []);
+  assert.equal(old.title, DEFAULT_SESSION_TITLE);
+  assert.equal(old.updatedAt, NOW, '空会话不刷新(不归档)');
+  assert.equal(next.activeId, 'b');
+});
+
+test('archiveAndNew: 无/未知 activeId → 无归档,仅新建空会话', () => {
+  const s1 = createSession(emptyState(), { id: 'a', now: NOW });
+  const n1 = archiveAndNew(s1, { activeId: null, messages: [userMsg('x')], id: 'b', now: NOW + 1 });
+  assert.equal(n1.sessions.length, 2);
+  assert.equal(n1.activeId, 'b');
+  assert.deepEqual(n1.sessions.find((s) => s.id === 'a').messages, [], '无 activeId 不归档');
+  const n2 = archiveAndNew(s1, { activeId: 'ghost', messages: [userMsg('x')], id: 'c', now: NOW + 1 });
+  assert.equal(n2.activeId, 'c');
+  assert.deepEqual(n2.sessions.find((s) => s.id === 'a').messages, [], '未知 id 不归档');
+});
+
+test('archiveAndNew: 归档消息 cap 30 + 坏行丢弃 + 无标题参数时派生兜底', () => {
+  const s1 = createSession(emptyState(), { id: 'a', now: NOW });
+  const many = [
+    ...Array.from({ length: SESSION_MESSAGES_CAP + 3 }, (_, i) => userMsg(`m${i}`)),
+    { role: 'bad', content: 1 },
+  ];
+  const next = archiveAndNew(s1, { activeId: 'a', messages: many, id: 'b', now: NOW + 1 });
+  const archived = next.sessions.find((s) => s.id === 'a');
+  assert.equal(archived.messages.length, SESSION_MESSAGES_CAP);
+  assert.equal(archived.messages[0].content, 'm3');
+  assert.ok(archived.messages.every((m) => m.role !== 'bad'));
+  assert.equal(archived.title, 'm3', '无 title 参数 → deriveTitle 兜底');
+});
+
+test('archiveAndNew: cap 10,归档 + 新建挤出最旧;归档会话存活', () => {
+  let state = emptyState();
+  for (let i = 0; i < SESSIONS_CAP; i++) {
+    state = createSession(state, { id: `s${i}`, now: NOW + i });
+  }
+  // 当前会话 s9(最新)已有消息
+  state = appendMessage(state, 's9', userMsg('当前问题'), { now: NOW + 100 });
+  const next = archiveAndNew(state, {
+    activeId: 's9',
+    messages: state.sessions.find((s) => s.id === 's9').messages,
+    title: '当前问题',
+    id: 'fresh',
+    now: NOW + 101,
+  });
+  assert.equal(next.sessions.length, SESSIONS_CAP);
+  assert.equal(next.activeId, 'fresh');
+  assert.ok(next.sessions.some((s) => s.id === 'fresh'), '新会话不被丢');
+  assert.ok(next.sessions.some((s) => s.id === 's9'), '归档会话 updatedAt 已刷新,不被丢');
+  assert.ok(next.sessions.every((s) => s.id !== 's0'), '丢最旧 s0');
 });
 
 // ---- parseState / 持久化 round-trip ----

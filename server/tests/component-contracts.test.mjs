@@ -925,11 +925,15 @@ test('agent panel completion status + clear screen (ws-done)', () => {
   assert.match(executor, /export function resolveCompletion\(doneReceived: boolean, aborted: boolean\)/);
   // 新消息发送清零完成状态
   assert.match(panel, /doneRef\.current = false;/);
-  // 清屏按钮:clearOverlays + 清当前会话消息(条目保留,标题重置「新会话」)+ 清状态;流式期间禁用
+  // 清屏按钮:clearOverlays + 归档当前会话(有消息才归档,标题保留)+ 新建空会话
+  // 并激活(ws-clearfix)+ 清状态;流式期间禁用
   assert.match(panel, /onClick=\{clearScreen\} disabled=\{streaming\}/);
   assert.match(panel, /t\("agentClear", lang\)/);
   assert.match(panel, /executorRef\.current\?\.clearOverlays\(\)/);
-  assert.match(panel, /saveMessages\(cur, cur\.activeId, \[\]\)/); // 会话条目保留,消息清空
+  assert.match(panel, /archiveAndNew\(cur, \{/); // 清屏路径走 archiveAndNew
+  assert.match(panel, /activeId: cur\.activeId,/);
+  assert.match(panel, /messages: messagesRef\.current,/); // 工作副本落库为历史
+  assert.match(panel, /title: curSession\?\.title,/); // 标题保留原样
   assert.match(panel, /setMessagesBoth\(\[\]\)/);
   assert.doesNotMatch(panel, /sessionStorage\.removeItem/); // 不再直写旧键(迁移归 store)
   // 执行器:undo 栈条目带 kind 标记(overlay 类供清屏识别);clearOverlays 只清 overlay
@@ -1035,8 +1039,9 @@ test('agent panel sessions: header entry + popover + local store (ws-panel2)', (
   // 新建/切换:streaming 先 stop;切换前工作副本落库旧会话
   assert.match(panel, /if \(streaming\) stop\(\)/);
   assert.match(panel, /saveMessages\(next, cur\.activeId, messagesRef\.current\)/);
-  // 清屏/会话语义:消息变更统一走 store;旧键仅迁移读(不再直写)
-  assert.match(panel, /saveMessages\(cur, cur\.activeId, \[\]\)/);
+  // 清屏/会话语义:清屏 = archiveAndNew(归档当前会话 + 新建空会话),其余消息
+  // 变更统一走 store;旧键仅迁移读(不再直写)
+  assert.match(panel, /archiveAndNew\(cur, \{/);
   assert.doesNotMatch(panel, /HISTORY_KEY/); // 旧键常量已移除(注释提及不算直写)
   assert.doesNotMatch(panel, /sessionStorage\.setItem/);
   assert.match(panel, /loadSessionState\(window\.localStorage, window\.sessionStorage\)/);
@@ -1051,6 +1056,7 @@ test('agent panel sessions: header entry + popover + local store (ws-panel2)', (
   assert.match(store, /export function listSessions\(/);
   assert.match(store, /export function appendMessage\(/);
   assert.match(store, /export function saveMessages\(/);
+  assert.match(store, /export function archiveAndNew\(/); // 清屏:归档当前会话 + 新建空会话
   assert.match(store, /export function loadSessionState\(/);
   assert.match(store, /export function saveSessionState\(/);
   assert.match(store, /export function deriveTitle\(/);

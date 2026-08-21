@@ -323,9 +323,10 @@ Content-Type: application/json
   登录/guest 均可用(本地功能,与账号无关);弹层列表(标题 + 相对时间 + 删除 ×,
   当前会话蓝底高亮 + ●)+ 新建会话 + 空态;新建/切换若 streaming 先 stop,切换即载入
   该会话消息(替换 messages 状态),完成/停止状态行、工具活动均按当前会话;清屏 =
-  清当前会话消息(会话条目保留,标题重置「新会话」,记忆不动);消息变更统一走 store
-  (appendMessage/saveMessages),不再直写旧键——旧 sessionStorage `dm.agent-history.v1`
-  仅迁移读(无 v1 键时迁为第一个会话,迁移后旧键清除);新会话首条自动带视口快照。
+  归档当前会话(有消息才归档,标题保留原样)+ 新建空会话并激活,旧内容在会话
+  列表可回溯(记忆不动;ws-clearfix);消息变更统一走 store
+  (appendMessage/saveMessages/archiveAndNew),不再直写旧键——旧 sessionStorage
+  `dm.agent-history.v1` 仅迁移读(无 v1 键时迁为第一个会话,迁移后旧键清除);新会话首条自动带视口快照。
 - 「停止」→ abort(链到 fetch);「撤销」→ `executor.undo()`。
 - **助手消息体用 MarkdownText 渲染**(marked → DOMPurify,见 §9.10);用户消息保持纯文本。
 
