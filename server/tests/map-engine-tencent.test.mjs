@@ -141,6 +141,12 @@ function installTMapDouble() {
     getContainer() {
       return this.container;
     },
+    // content DOM overlay 定位 API(TMap 官方 lngLat → 容器像素;this.projectedPixel
+    // 可设返回像素,lastProjected 记录最近投影点供 LatLng 断言)
+    lngLatToContainerPoint(latLng) {
+      this.lastProjected = latLng;
+      return this.projectedPixel ?? { x: 500, y: 400 };
+    },
     setShowControl(v) {
       this.showControl = v;
     },
@@ -2100,6 +2106,302 @@ test('createMarker(MultiMarker):remove 后 setVisible 置空 no-op(防僵尸重�
     assert.equal(raw.geometries.length, 2, '新 marker 正常挂载');
     assert.equal(raw.geometries[1].id, 'dm-mk-3', 'id 递增不冲突');
   } finally {
+    restore();
+  }
+});
+
+// ------------------------------------------------------------
+// ws-pinfix2(2026-08-22):content marker → DOM overlay 渲染
+// (TMap v1.exp 无单点 Marker + MultiMarker 无 HTML 渲染 = 目标点不可见;
+// 主路径 = 容器内 DOM 覆盖物,与自绘比例尺同路径实证)
+// ------------------------------------------------------------
+
+/** 伪造 document + 地图容器(div 带 style/innerHTML/listeners;容器记录 children) */
+function installFakeDom() {
+  const created = [];
+  const container = {
+    nodeType: 1,
+    children: [],
+    appendChild(el) {
+      el.parentNode = this;
+      this.children.push(el);
+    },
+    removeChild(el) {
+      this.children = this.children.filter((c) => c !== el);
+      el.parentNode = null;
+    },
+    querySelectorAll: () => [],
+  };
+  const doc = {
+    createElement(tag) {
+      const el = {
+        tag,
+        style: {},
+        innerHTML: '',
+        listeners: new Map(),
+        parentNode: null,
+        addEventListener(event, cb) {
+          const list = this.listeners.get(event) ?? [];
+          list.push(cb);
+          this.listeners.set(event, list);
+        },
+        removeEventListener(event, cb) {
+          const list = (this.listeners.get(event) ?? []).filter((f) => f !== cb);
+          if (list.length) this.listeners.set(event, list);
+          else this.listeners.delete(event);
+        },
+        trigger(event, payload) {
+          for (const cb of this.listeners.get(event) ?? []) cb(payload);
+        },
+      };
+      created.push(el);
+      return el;
+    },
+  };
+  globalThis.document = doc;
+  return { doc, container, created, restore: () => delete globalThis.document };
+}
+
+test('createMarker(content):DOM overlay 渲染——div 注入容器 + 锚定(px - offset) + 契约方法(不走 MultiMarker)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const dom = installFakeDom();
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker; // 真实 v=1.exp 全局形态:无单点 Marker
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView({ container: dom.container });
+    view.raw.projectedPixel = { x: 400, y: 300 };
+    let clicked = 0;
+    const marker = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      content: '<b>X</b>',
+      offset: [-10, -10],
+      zIndex: 50,
+      onClick: () => clicked++,
+    });
+    assert.equal(dom.container.children.length, 1, 'overlay div 追加到地图容器(自绘比例尺同路径实证)');
+    const div = dom.container.children[0];
+    assert.equal(div.className, 'dm-engine-content', '类名避开 hideControlDom 的 tencent-map-* 选择器');
+    assert.equal(div.innerHTML, '<b>X</b>', 'content 原样注入(可信 HTML 契约,amap 同语义)');
+    assert.equal(div.style.position, 'absolute');
+    assert.equal(div.style.zIndex, '50', 'zIndex → div style.zIndex');
+    assert.equal(div.style.left, '410px', 'left = px.x - offset[0] = 400 - (-10)');
+    assert.equal(div.style.top, '310px', 'top = px.y - offset[1] = 300 - (-10)');
+    assert.deepEqual({ ...view.raw.lastProjected }, { lat: 30.28, lng: 120.16 }, '投影点 LatLng 纬度在前');
+    assert.equal(marker.raw instanceof MockMultiMarker, false, 'content 不走 MultiMarker(无 geometry)');
+    // click:onClick 绑 div;不冒泡到地图(清选中防御)
+    let bubbled = 0;
+    const ev = {
+      stopPropagation() {
+        bubbled++;
+      },
+    };
+    div.trigger('click', ev);
+    assert.equal(clicked, 1, 'onClick 经 div click 触发');
+    assert.equal(bubbled, 1, 'click 必须 stopPropagation(与 amap marker click 不冒泡同语义)');
+    // 契约 on/off
+    let extra = 0;
+    const cb = () => extra++;
+    marker.on('click', cb);
+    div.trigger('click', ev);
+    assert.equal(extra, 1, 'on → div click 追加回调');
+    marker.off('click', cb);
+    div.trigger('click', ev);
+    assert.equal(extra, 1, 'off(cb) 精确解绑');
+    // setPosition → 重投影重定位
+    marker.setPosition({ lng: 1, lat: 2 });
+    assert.deepEqual({ ...view.raw.lastProjected }, { lat: 2, lng: 1 }, 'setPosition 重投影');
+    assert.equal(div.style.left, '410px', 'px 未变 → 位置不变');
+    // setContent / setZIndex / setVisible
+    marker.setContent('<i>Y</i>');
+    assert.equal(div.innerHTML, '<i>Y</i>', 'setContent → innerHTML 更新');
+    marker.setZIndex(80);
+    assert.equal(div.style.zIndex, '80');
+    marker.setVisible(false);
+    assert.equal(div.style.display, 'none');
+    marker.setVisible(true);
+    assert.equal(div.style.display, '');
+    // remove → div 摘除
+    marker.remove();
+    assert.equal(dom.container.children.length, 0, 'remove → div 摘除(无 DOM 泄漏)');
+    assert.equal(div.listeners.has('click'), false, 'click 解绑');
+  } finally {
+    dom.restore();
+    restore();
+  }
+});
+
+test('createMarker(content):锚定一致性——div 左上角 = 容器像素 - offset(amap 语义对齐)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const dom = installFakeDom();
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView({ container: dom.container });
+    view.raw.projectedPixel = { x: 500, y: 400 };
+    // 聚合徽章契约形态:offset [-27,-27](54 徽章)→ 中心对准点位
+    const badge = view.createMarker({
+      position: { lng: 120.15, lat: 30.27 },
+      content: '<div class="dm-cluster">杭州 12</div>',
+      offset: [-27, -27],
+      zIndex: 50,
+    });
+    const badgeDiv = dom.container.children[0];
+    assert.equal(badgeDiv.style.left, '527px');
+    assert.equal(badgeDiv.style.top, '427px');
+    // agent 蓝点契约形态:offset [-10,-10] → 圆心对准坐标(用户反馈场景)
+    const dot = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      content: '<div style="width:20px;height:20px">',
+      offset: [-10, -10],
+    });
+    const dotDiv = dom.container.children[1];
+    assert.equal(dotDiv.style.left, '510px');
+    assert.equal(dotDiv.style.top, '410px');
+    // 无 offset → 左上角钉坐标(amap 无 offset 语义)
+    const plain = view.createMarker({ position: { lng: 1, lat: 2 }, content: 'x' });
+    const plainDiv = dom.container.children[2];
+    assert.equal(plainDiv.style.left, '500px');
+    assert.equal(plainDiv.style.top, '400px');
+  } finally {
+    dom.restore();
+    restore();
+  }
+});
+
+test('createMarker(content+icon):content 为渲染主机制,icon 不参与(不产生 geometry/样式归组)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const dom = installFakeDom();
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView({ container: dom.container });
+    // 聚合徽章形态(content + dataURL icon):content 经 overlay 渲染,icon 忽略
+    const m1 = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      content: '<div class="dm-cluster">杭州 12</div>',
+      offset: [-27, -27],
+      zIndex: 50,
+      icon: { src: 'data:image/svg+xml,%3Csvg%3Ebadge', size: [54, 54] },
+    });
+    const div = dom.container.children[0];
+    assert.equal(div.innerHTML, '<div class="dm-cluster">杭州 12</div>', 'content 经 overlay 渲染');
+    assert.equal(div.style.zIndex, '50');
+    assert.equal(m1.raw instanceof MockMultiMarker, false, '不走 MultiMarker(无 geometry/样式归组)');
+    assert.equal(dom.container.children.length, 1, '只挂一个 div(icon 不参与 → 无双渲染)');
+    // 无 content 的 icon marker 仍走 MultiMarker 归组(既有行为不变)
+    const pin = view.createMarker({ position: { lng: 1, lat: 2 }, icon: { src: 'a.png', size: [20, 20] } });
+    assert.ok(pin.raw instanceof MockMultiMarker, 'icon-only → MultiMarker 归组路径不变');
+    assert.equal(pin.raw.geometries[0].styleId, 'dm-st-1', 'icon 归组样式照常');
+  } finally {
+    dom.restore();
+    restore();
+  }
+});
+
+test('createMarker(content):相机变化重定位——地图事件(zoom/drag/dragend/idle)+ 视图相机方法双通道', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const dom = installFakeDom();
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView({ container: dom.container });
+    view.raw.projectedPixel = { x: 100, y: 100 };
+    const marker = view.createMarker({ position: { lng: 1, lat: 2 }, content: '<b>X</b>' });
+    const div = dom.container.children[0];
+    assert.equal(div.style.left, '100px');
+    assert.equal(div.style.top, '100px');
+    // 用户拖拽/缩放(不经视图方法):地图事件 → 重定位
+    view.raw.projectedPixel = { x: 200, y: 150 };
+    view.raw.trigger('drag');
+    assert.equal(div.style.left, '200px');
+    assert.equal(div.style.top, '150px');
+    view.raw.projectedPixel = { x: 220, y: 170 };
+    view.raw.trigger('idle');
+    assert.equal(div.style.left, '220px');
+    assert.equal(div.style.top, '170px');
+    // 程序化相机(视图方法):setCenter/setZoom 后同步重定位
+    view.raw.projectedPixel = { x: 300, y: 250 };
+    view.setCenter({ lng: 3, lat: 4 });
+    assert.equal(div.style.left, '300px');
+    assert.equal(div.style.top, '250px');
+    view.raw.projectedPixel = { x: 50, y: 60 };
+    view.setZoom(14);
+    assert.equal(div.style.left, '50px');
+    assert.equal(div.style.top, '60px');
+    // 事件懒注册一次(不重复绑定)
+    for (const ev of ['zoom', 'drag', 'dragend', 'idle']) {
+      assert.ok(view.raw.listeners.has(ev), `注册地图事件 ${ev}`);
+      assert.equal(view.raw.listeners.get(ev).length, 1, `${ev} 恰一个监听(懒注册幂等)`);
+    }
+    // setPosition 后重定位(未变 px)
+    marker.setPosition({ lng: 5, lat: 6 });
+    assert.equal(div.style.left, '50px');
+  } finally {
+    dom.restore();
+    restore();
+  }
+});
+
+test('createMarker(content):remove/setMap(null) 摘除 + destroy 清理 + 无 DOM 回退降级(不抛错)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const dom = installFakeDom();
+  const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView({ container: dom.container });
+    const m1 = view.createMarker({ position: { lng: 1, lat: 2 }, content: '<i>1</i>' });
+    const m2 = view.createMarker({ position: { lng: 3, lat: 4 }, content: '<i>2</i>' });
+    assert.equal(dom.container.children.length, 2);
+    m1.remove();
+    assert.equal(dom.container.children.length, 1, 'remove → div 摘除');
+    assert.equal(dom.container.children[0].innerHTML, '<i>2</i>', '未误伤其他覆盖物');
+    m2.raw.setMap(null); // map-shell 摘除分派(badgeCleanupHandle 收敛)
+    assert.equal(dom.container.children.length, 0, 'setMap(null) → div 摘除');
+    // destroy:残留覆盖物统一清理(div 直挂容器,必须手动摘除)
+    view.createMarker({ position: { lng: 5, lat: 6 }, content: '<i>3</i>' });
+    assert.equal(dom.container.children.length, 1);
+    view.destroy();
+    assert.equal(dom.container.children.length, 0, 'destroy → 全部覆盖物 div 摘除(无 DOM 泄漏)');
+    assert.equal(view.raw.destroyed, true);
+    assert.equal(warn.calls.length, 0, 'overlay 路径零降级告警');
+  } finally {
+    dom.restore();
+    warn.restore();
+    restore();
+  }
+});
+
+test('createMarker(content):无 DOM(node/SSR)→ 回退既有路径(单点 content / MultiMarker 降级,不抛错)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
+  try {
+    // 无 document → 回退单点路径(MockMarker 原生 content)
+    const view = await createView();
+    const m1 = view.createMarker({ position: { lng: 1, lat: 2 }, content: '<b>X</b>' });
+    assert.ok(m1.raw instanceof MockMarker, '无 DOM → 回退单点 Marker 路径(原生 content)');
+    assert.equal(m1.raw.opts.content, '<b>X</b>');
+    // 仅 MultiMarker 形态 → 回退聚合路径(降级 warn,旧行为)
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const m2 = view.createMarker({ position: { lng: 3, lat: 4 }, content: '<b>Y</b>' });
+    assert.ok(m2.raw instanceof MockMultiMarker, '仅 MultiMarker → 回退聚合路径');
+    assert.equal(warn.calls.length, 1, '回退降级一次性 warn(旧行为)');
+    assert.match(String(warn.calls[0][0]), /MultiMarker 不支持 HTML content/);
+  } finally {
+    warn.restore();
     restore();
   }
 });

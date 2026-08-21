@@ -529,6 +529,7 @@ class TencentView implements MapView {
     const tmap = this.tmap;
     const offset = opts.offset;
     const clickHandlers: Array<() => void> = [];
+    if (opts.onClick) clickHandlers.push(opts.onClick);
     let position = opts.position;
     const el = document.createElement('div');
     // 类名避开 hideControlDom 的 tencent-map-* 选择器(pointer-events 解除面)
