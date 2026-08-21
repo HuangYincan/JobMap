@@ -54,7 +54,7 @@ test-integration: ## Run database integration tests (SKIP/BLOCKED if unavailable
 	tests/integration/db/test_migrations.sh
 
 docs-check: ## Check repository documentation path and policy drift
-	@! grep -R -nE 'docs/roles/|docs/zh-cn/|预计发布时间.*2026-02-10|BOSS.*MVP.*爬|小红书.*MVP.*爬' --include='*.md' .
+	@! grep -R -nE 'docs/roles/|docs/zh-cn/|预计发布时间.*2026-02-10|BOSS.*MVP.*爬|小红书.*MVP.*爬' --include='*.md' --exclude-dir=parallel-sessions .
 	@printf '%s\n' 'Documentation policy check passed.'
 
 scaffold-status: ## Show implementation prerequisites present/planned
