@@ -4,6 +4,7 @@
 //   - delta / tool start 事件随 LLM 流式实时转发(内部用事件队列桥接回调→生成器)
 //   - 流结束无 tool_calls → 容错提取文本内 {"actions":[...]} → 逐个校验后下发
 //   - 有 tool_calls → 白名单查表、sanitize、执行、结果回流 → 下一轮
+//     (assistant 消息附回本轮 reasoning_content 累计——DeepSeek 思考模式必需,否则 400)
 //   - unsupported_tools → 无 tools 降级重跑一次(最多一次)
 //   - 超 maxTurns → done truncated;signal.abort → 静默停止,不再发事件
 
@@ -201,8 +202,9 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
 
       let text: string;
       let calls: PendingToolCall[];
+      let turnReasoning: string;
       try {
-        ({ text, calls } = yield* streamRound(llmTools));
+        ({ text, calls, reasoning: turnReasoning } = yield* streamRound(llmTools));
       } catch (err) {
         const providerErr = err as AgentProviderError;
         if (providerErr.kind === 'unsupported_tools' && !noTools) {
@@ -242,6 +244,10 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
         role: 'assistant',
         content: text,
         tool_calls: calls.map((c) => ({ id: c.id, name: c.name, arguments: c.arguments })),
+        // DeepSeek 思考模式要求 tool_calls 消息回传该轮 reasoning_content,否则下一轮 400。
+        // 仅非空时附加(非推理模型不污染请求);若某 provider 空 reasoning + tool_calls 仍 400,
+        // 改为总是附加(空串):turnReasoning || ''。
+        ...(turnReasoning ? { reasoning_content: turnReasoning } : {}),
       });
       history.push(...toolMessages);
       trimHistory(history.length - toolMessages.length);
@@ -249,15 +255,18 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
     yield { type: 'done', truncated: true };
   }
 
-  /** 一轮 LLM 流式往返:转发 delta / tool start 事件,返回完整文本与工具调用。 */
-  async function* streamRound(llmTools: StreamChatOptions['tools']): AsyncGenerator<AgentEvent, { text: string; calls: PendingToolCall[] }> {
+  /** 一轮 LLM 流式往返:转发 delta / tool start 事件,返回完整文本、工具调用与本轮 reasoning 累计。 */
+  async function* streamRound(
+    llmTools: StreamChatOptions['tools'],
+  ): AsyncGenerator<AgentEvent, { text: string; calls: PendingToolCall[]; reasoning: string }> {
     const queue = new EventQueue<AgentEvent>();
     let text = '';
+    let turnReasoning = ''; // 本轮 reasoning_content 累计(provider 轮末 onTurnReasoning 回传全文)
     const callsById = new Map<string, PendingToolCall>();
     const order: string[] = [];
 
-    let resolveRound: (v: { text: string; calls: PendingToolCall[] }) => void = () => {};
-    const round = new Promise<{ text: string; calls: PendingToolCall[] }>((res) => {
+    let resolveRound: (v: { text: string; calls: PendingToolCall[]; reasoning: string }) => void = () => {};
+    const round = new Promise<{ text: string; calls: PendingToolCall[]; reasoning: string }>((res) => {
       resolveRound = res;
     });
 
@@ -275,6 +284,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
         },
         onReasoning: (r) => {
           // 总量上限:剩余额度为 0 → 不再转发;不足整段 → 截断只转剩余额度
+          // (仅限转发给前端的 reasoning 事件;回传用全文由 onTurnReasoning 提供,不受此上限)
           const remaining = REASONING_MAX - reasoningSent;
           if (remaining <= 0) return;
           const slice = r.slice(0, remaining);
@@ -282,6 +292,10 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
             reasoningSent += slice.length;
             queue.push({ type: 'reasoning', text: slice });
           }
+        },
+        onTurnReasoning: (r) => {
+          // 轮末回传:本轮 reasoning_content 累计全文(供 tool_calls 消息回传,不截断)
+          turnReasoning = r;
         },
         onToolCall: (tc) => {
           if (!callsById.has(tc.id)) {
@@ -295,7 +309,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
         },
         onDone: () => {
           queue.close();
-          resolveRound({ text, calls: order.map((id) => callsById.get(id)!) });
+          resolveRound({ text, calls: order.map((id) => callsById.get(id)!), reasoning: turnReasoning });
         },
       });
     streamPromise.catch((err: unknown) => {

@@ -3,7 +3,8 @@
 // 复用 llm-validate.ts 的 HttpError / isRetryableStatus 语义(只 import 这两个,
 // 不 import 其函数)。SSE 解析按 `data: ` 行,兼容 choices[0].delta.content
 // 与 delta.tool_calls 两种 chunk;工具参数跨 chunk 增量拼接;推理模型思考内容
-// (delta.reasoning_content)经 onReasoning 回调转发(可选,缺省不回调)。
+// (delta.reasoning_content)经 onReasoning 回调逐段转发(可选,缺省不回调),轮末经
+// onTurnReasoning 回传本轮累计全文(可选;run-agent 用于 tool_calls 消息回传)。
 //
 // 超时与重试(参数可注入以便测试,默认值即 spec):
 //   - 30s 首包超时(每次尝试:收到首个 chunk 后取消定时器)
@@ -19,6 +20,9 @@ import { HttpError, isRetryableStatus } from '../llm-validate.ts';
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
+  /** DeepSeek 思考模式:assistant(tool_calls) 消息必须回传该轮 reasoning_content,否则 400
+   * (The reasoning_content in the thinking mode must be passed back to the API.)。 */
+  reasoning_content?: string;
   tool_calls?: Array<{ id: string; name: string; arguments: string }>;
   tool_call_id?: string;
 }
@@ -46,6 +50,9 @@ export interface StreamChatOptions {
   onDelta(text: string): void;
   /** 推理模型思考内容(delta.reasoning_content,如 DeepSeek);非推理模型缺省不回调。 */
   onReasoning?(text: string): void;
+  /** 本轮 reasoning_content 累计全文,流成功结束时回调(非空才有);run-agent 据此给
+   * assistant(tool_calls) 消息附加 reasoning_content 回传(DeepSeek 思考模式必需)。 */
+  onTurnReasoning?(text: string): void;
   onToolCall(tc: { id: string; name: string; arguments: string }): void;
   onDone(): void;
 }
@@ -189,6 +196,7 @@ export function createLlmProvider(fetchLike?: typeof fetch, options?: LlmProvide
         let sawFirstPacket = false;
         const calls = new Map<number, ToolCallAccumulator>();
         let streamDone = false;
+        let turnReasoning = ''; // 本轮 reasoning_content 累计(流成功结束时经 onTurnReasoning 回传)
 
         while (!streamDone) {
           const { value, done } = await reader.read();
@@ -210,6 +218,8 @@ export function createLlmProvider(fetchLike?: typeof fetch, options?: LlmProvide
         }
         // 收尾:可能没有尾随换行的最后一行
         if (buffer.trim().length > 0) handleLine(buffer);
+        // 流成功结束:回传本轮累计 reasoning(非空才有);失败路径(抛错)不触发
+        if (turnReasoning.length > 0) opts.onTurnReasoning?.(turnReasoning);
 
         /** 处理一行 SSE;返回 true 表示遇到 [DONE] 终止流。 */
         function handleLine(line: string): boolean {
@@ -233,6 +243,7 @@ export function createLlmProvider(fetchLike?: typeof fetch, options?: LlmProvide
           if (typeof d.content === 'string' && d.content.length > 0) opts.onDelta(d.content);
           // 推理内容(reasoning_content)与 content/tool_calls 并列;顺序 = chunk 内字段顺序
           if (typeof d.reasoning_content === 'string' && d.reasoning_content.length > 0) {
+            turnReasoning += d.reasoning_content; // 累计本轮全文(回传用,不随 onReasoning 截断)
             opts.onReasoning?.(d.reasoning_content);
           }
           const toolCalls = d.tool_calls;
