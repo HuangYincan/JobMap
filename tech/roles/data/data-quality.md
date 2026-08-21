@@ -107,6 +107,42 @@
   - 剩余 1 error 为腾讯 `radar-302c5ea36a84`(LLM 空响应,非数据问题,下次全量自动覆盖)。
 - 报告:`tech/roles/data/validation-report-20260818.json`(gitignored)。
 
+## 无地址站点「网络查地址」优先通道 (2026-08-21, `fix/geocode-address-first`)
+
+只带城市无地址的站点 (`siteNeedsGeocode` 为 true 且 `location.address` 缺失,如
+official-career drops 的 `"address": "无"` / `/` / 城市名文本) 把网络检索当首要通道,
+提高拿到「地址+坐标」的命中率。**检索源不变** — 仍是 AMap/百度/腾讯 place-search
+(已登记,见 README「AMap Web services key」/「Tencent WebService key」);新增的是
+query 策略与补查行为:
+
+- **先精确后宽 (每站点 place-text ≤ 2 次)**: 站点名存在且不同于公司名/城市名时,
+  先发「公司名 站点名」精确候选 (网易 杭州研究院), 命中且地址可用 (非空含街道)
+  即收; 否则回落裸公司名宽候选 (既有行为, 同公司同城共享 memo)。理由: 精确命中
+  多数站点 1 次调用即收, 配额最优 (AMap place-text 免费 100 次/天); 精确未命中
+  自动回落 → 命中率不低于现状 (现状只有宽检索)。站点名 = 公司名 / 空 / 只是城市名
+  时精确候选跳过 (去重), 行为与旧版一致。
+- **memo 覆盖所有变体 key**: `(query, province, city)` 精确到变体检索串, 同
+  query+region 跨站点复用成功命中; 失败/空/配额类失败仍不缓存 (配额恢复后重试)。
+- **精确命中两级评分** (`gradeVariantHit`): 精确候选搜到的 POI 常以完整名命名
+  (网易杭州研究院) — 先按完整检索串评分 (整名命中 → 精确可信), 被拒再回落公司名
+  评分 (网易大厦等通用形态); name-match 闸门不绕过, 同品牌陷阱两级都拒。
+- **地址缺失补查**: 命中 POI 的 address 为空/仅区名时, 先换另一个变体补查 (受
+  配额约束, ≤2 次/站); 仍缺则用 **regeo 格式化地址兜底** (AMap
+  `regeocode.formatted_address` / 百度 `result.formatted_address` / 腾讯
+  `result.address`; 零额外配额 — 复用城市校验的那次 regeo, 坐标已过城市闸门 →
+  格式化地址必属目标城市)。补查后与命中时同口径重评分: name-match-no-street 的
+  medium 升 high → 可写回; 补查失败保持 medium → 不写回。
+- **回填保障**: 所有写回路径 `location.address` 非空 (区名前缀逻辑保留);
+  resolution 里 address 非空 (极少数兜底 verified 城市+区文本)。
+- **不变**: 地址-城市一致性闸门 (`addressConflictsWithCity`)、regeo 城市/区级双
+  闸门、override 优先级、配额短路 (连续 5 站配额类失败提前停, 退出码 2) — 变体链
+  原样传播 quota reason, 不绕过。无地址站点每站配额上限: place-text ≤2、
+  regeo 1 (5000/天)、地址 geocode 0、补查 0。
+- 实际提升受数据形态限制: 当前 drops 的站点名多数 = 公司名 (精确候选去重, 行为
+  近旧版); 增益主要来自 (a) 少数有意义站点名 (如 Shopee研发中心) 的精确命中,
+  (b) name-match-no-street 的 medium 命中经 regeo 格式化地址补查升级为 high 写回。
+  真实命中率需用户重跑 `geocode:sites:apply` 后对比 (Env-only)。
+
 ## Geocode 腾讯第三级兜底(2026-08-21,`feature/geocode-tencent`)
 
 兜底链升级为 AMap→Baidu→Tencent(第三级)。以下为真实 key 探测实测记录(Env-only 步骤由用户配置 `TENCENT_MAP_KEY`,Agent 不代写、不打印):
