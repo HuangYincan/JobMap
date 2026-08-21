@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,14 +17,12 @@ test('useWorkViewport hook exists with exported signature', () => {
   assert.match(hook, /export function useWorkViewport\(\s*deps: WorkViewportDeps/);
   assert.match(hook, /export interface WorkViewportDeps/);
   assert.match(hook, /export interface WorkViewportState/);
-  // ws1 saved-layer-nofly(2026-08-22):toggle 不再移动相机(用户反馈),
   // 「收藏相机同步」状态机(ws1 saved-overlay-wipe 结构性抑制,替代 500ms
-  // 时间窗补丁)随其唯一输入源 setBounds 一起退役——hook 不再再导出,
-  // 模块降级为零导出退役桩(物理删除被沙箱禁止,由 boss 合并时收尾)。
+  // 时间窗补丁)随其唯一输入源 setBounds 一起退役——模块已由 boss 合并时
+  // 物理删除(git rm 收尾),零导出断言随之失去意义,改断言文件不存在。
   assert.doesNotMatch(hook, /VIEWPORT_SUPPRESS_MS|Date\.now\(\) \+ 500/);
   assert.doesNotMatch(hook, /saved-camera-sync|SavedCameraSync|cameraAtDestination|consumeSavedCameraSync|SAVED_CAMERA_MATCH_METERS/);
-  const lib = src('lib/saved-camera-sync.ts');
-  assert.doesNotMatch(lib, /^export /m, '退役模块零导出');
+  assert.equal(existsSync(join(root, 'lib/saved-camera-sync.ts')), false, '退役模块已物理删除');
   assert.match(hook, /export function readMapViewSnapshot/);
   assert.match(hook, /createViewportLoader\(/);
   // 返回 loader 实例供主加载 finally 补跑 pending 视口刷新

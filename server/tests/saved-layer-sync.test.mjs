@@ -23,7 +23,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -115,8 +115,8 @@ test('死代码:src 全树零引用退役模块,模块零导出', () => {
   // 排除退役模块本身(纯注释桩,注释里会提到自己的名字)
   const offenders = allTsFiles().filter((f) => f !== 'lib/saved-camera-sync.ts' && dead.test(src(f)));
   assert.deepEqual(offenders, [], 'src 全树无文件引用已退役的收藏相机同步状态机');
-  const module = src('lib/saved-camera-sync.ts');
-  assert.doesNotMatch(module, /^export /m, '退役模块零导出');
+  // 退役模块已物理删除(boss 合并时 git rm 收尾),断言文件不存在(零导出断言随之失去意义)
+  assert.equal(existsSync(join(root, 'lib/saved-camera-sync.ts')), false, '退役模块已物理删除');
 });
 
 // ---- 保留项:空批次不置空 catalog(独立于状态机,不得随清理误删)----
