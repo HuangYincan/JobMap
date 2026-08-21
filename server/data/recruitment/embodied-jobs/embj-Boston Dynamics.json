@@ -6,9 +6,11 @@
     {
       "id": "embj-Boston Dynamics-site",
       "name": "Boston Dynamics",
-      "city": "Waltham, MA Billerica, MA",
+      "city": "Waltham, MA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "200 Smith Street, Suite 4100, Waltham, MA 02451, USA"
+      }
     }
   ],
   "careerUrl": "https://bostondynamics.wd1.myworkdayjobs.com/en-US/Boston_Dynamics/job/Senior-Robotics-Engineer--Spot-Manipulation_R2500",

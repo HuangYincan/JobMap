@@ -8,7 +8,9 @@
       "name": "HTX",
       "city": "Singapore",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "1 Stars Avenue, Singapore 138507"
+      }
     }
   ],
   "careerUrl": "https://jobs.careers.gov.sg/jobs/hrp/16942564/005056a3-d347-1fe0-b9f5-c21905af6284",

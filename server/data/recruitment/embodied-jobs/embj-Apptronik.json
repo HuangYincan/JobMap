@@ -6,9 +6,11 @@
     {
       "id": "embj-Apptronik-site",
       "name": "Apptronik",
-      "city": "Sunnyvale, CA, USA Austin, TX",
+      "city": "Austin, TX",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "11701 Stonehollow Dr, Austin, TX 78758, USA"
+      }
     }
   ],
   "careerUrl": "https://job-boards.greenhouse.io/apptronik/jobs/5848437004?gh_jid=5848437004",

@@ -11,9 +11,11 @@
     {
       "id": "qqj-神州税道-site",
       "name": "神州税道",
-      "city": "上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市静安区北京西路1701号静安中华大厦206-207室"
+      }
     }
   ]
 }

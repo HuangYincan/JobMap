@@ -6,9 +6,11 @@
     {
       "id": "embj-Tactus-site",
       "name": "Tactus",
-      "city": "Irvine, CA, USA",
+      "city": "Fremont, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "47509 Seabridge Dr, Fremont, CA 94538, USA"
+      }
     }
   ],
   "careerUrl": "https://career.calvin.edu/",

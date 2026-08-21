@@ -11,9 +11,11 @@
     {
       "id": "qqj-首形科技-site",
       "name": "首形科技",
-      "city": "北京 杭州 上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市徐汇区乐山路33号5幢2楼200"
+      }
     }
   ]
 }

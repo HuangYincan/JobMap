@@ -96,8 +96,8 @@ test('embodied-jobs 语料: 47 个新 drop, 537 个 embj-* 岗位, 结构逐项�
     assert.equal(site.name, drop.name, `${file} site.name`);
     assert.ok(site.city.length > 0, `${file} site.city 城市并集非空`);
     assert.deepEqual(site.province, '', `${file} province 留空`);
-    // 2026-08-22 地址回填 (e506c4d) 新契约: location 为空对象 (9 站海外无办公点可查)
-    // 或仅含 address 字段 (38 站已回填); 不得混入 lng/lat。
+    // 2026-08-22 地址回填 (e506c4d + r2 768adc4) 新契约: location 为空对象 (2 站海外无办公点可查)
+    // 或仅含 address 字段 (45 站已回填); 不得混入 lng/lat。
     assert.ok(site.location && typeof site.location === 'object', `${file} location 为对象`);
     const locKeys = Object.keys(site.location);
     const shapeOk = locKeys.length === 0 || (locKeys.length === 1 && locKeys[0] === 'address');
@@ -128,9 +128,9 @@ test('embodied-jobs 语料: 47 个新 drop, 537 个 embj-* 岗位, 结构逐项�
       assert.equal(pos.retrievedAt, '2026-08-21', `${file} retrievedAt 快照日期`);
     }
   }
-  // 地址回填快照事实 (2026-08-22, e506c4d): 38 站带 address, 9 站为空 (海外无办公点可查)
-  assert.equal(withAddrCount, 38, '回填后 38 站带 address');
-  assert.equal(emptyLocCount, 9, '回填后 9 站仍为空对象');
+  // 地址回填快照事实 (2026-08-22, r2 768adc4 后): 45 站带 address, 2 站为空 (AIM/Grit 海外无办公点可查)
+  assert.equal(withAddrCount, 45, '回填后 45 站带 address');
+  assert.equal(emptyLocCount, 2, '回填后 2 站仍为空对象');
   // 抽查个别站点地址非空 (跨国 / 国内 / 高校各一)
   const addrOf = (name) => embjDrops.find((r) => r.drop.name === name)?.drop.sites[0].location.address;
   for (const name of ['Tesla', '柏楚', '浙江大学']) {
