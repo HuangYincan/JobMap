@@ -11,9 +11,14 @@
 
 | ws | 主题 | 分支 | worktree | prompt | report |
 |---|---|---|---|---|---|
-| navi | 导航链接可点击 + 正文隐藏动作 JSON + 类别映射 | `feature/agent-navi-links` | `../dm-wt-agent-navi` | `prompts/ws-navi.md` | `reports/ws-navi.md` |
+| navi | 导航链接可点击 + 正文隐藏动作 JSON + 类别映射 | `feature/agent-navi-links` | (已清理) | `prompts/ws-navi.md` | `reports/ws-navi.md` |
+| navi2 | 裸 amapuri:// URL 预扫描修复(渲染 bug) | `feature/agent-navi-bare-url` | `../dm-wt-agent-navi2` | `prompts/ws-navi2.md` | `reports/ws-navi2.md` |
+| bubble | 删空白气泡与思考提示 | `feature/agent-drop-think-ui` | (已清理) | `prompts/ws-bubble.md` | `reports/ws-bubble.md` |
+| done | 完成/停止显式 UI + 清屏 | `feature/agent-completion-ui` | `../dm-wt-agent-done` | `prompts/ws-done.md` | `reports/ws-done.md` |
 
-拥有:`server/src/lib/markdown-pipeline.ts` + `server/src/components/markdown-text.tsx(+module.css)` + `server/src/lib/i18n.ts`(新键)+ `server/src/lib/agent-panel-state.ts` + `server/src/components/agent-panel.tsx` + `server/src/lib/agent/prompts.ts` + `server/src/lib/agent/run-agent.ts`(仅 TOOL_KIND_RULES 追加)+ 相关测试。
+**合并顺序**:navi(已合)→ navi2(已合)→ bubble(已合)→ done。
+
+拥有:done = `agent-panel.tsx` + `agent-map-executor.ts` + i18n + module.css + 测试。
 
 ## 门禁
 
