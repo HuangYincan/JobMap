@@ -178,12 +178,21 @@ function installTMapDouble() {
       this.map = map;
     },
   };
+  // 批量化(ws-6)依赖 MultiMarker.setStyles(单共享实例新增样式归组):
+  // 忠实 SDK v1.8.0.2 语义(全量替换 this.styles,自动补 default)
+  const multiPatches = {
+    setStyles(styles) {
+      this.styles = { ...(styles ?? {}) };
+      return this;
+    },
+  };
 
   const originals = new Map();
   for (const [cls, patches] of [
     [MockView, viewPatches],
     [MockMarker, markerPatches],
     [MockCircle, circlePatches],
+    [MockMultiMarker, multiPatches],
   ]) {
     for (const [name, fn] of Object.entries(patches)) {
       originals.set(`${cls.name}:${name}`, { cls, name, had: Object.hasOwn(cls.prototype, name) });
@@ -795,19 +804,19 @@ test('createMarker:仅 MultiMarker(无 Marker)→ 聚合路径,geometries/id/off
       offset: [4, -6],
       zIndex: 9,
     });
-    assert.ok(marker.raw instanceof MockMultiMarker, '走 MultiMarker 聚合路径');
+    assert.ok(marker.raw instanceof MockMultiMarker, '走 MultiMarker 聚合路径(共享实例)');
     const geo = marker.raw.geometries[0];
     assert.match(geo.id, /^dm-mk-\d+$/, 'id 递增唯一(dm-mk-N)');
     assert.deepEqual({ ...geo.position }, { lat: 30.28, lng: 120.16 }, 'position LatLng 纬度在前');
-    assert.equal(geo.styleId, 'default', 'styleId 显式 default(SDK 缺省即 default)');
-    assert.equal(marker.raw.map, view.raw, 'MultiMarker 挂到当前地图');
+    assert.equal(geo.styleId, 'dm-st-1', '有 offset → 样式归组分配 dm-st-N(非 default)');
+    assert.equal(marker.raw.map, view.raw, '共享 MultiMarker 挂到当前地图');
     assert.equal(marker.raw.zIndex, 9, 'zIndex 透传(SDK:overlay zIndex → layer rank)');
     // 契约 offset [x,y](相对锚点屏幕位移)→ MarkerStyle.anchor 平移:
     // 渲染公式 imageTopLeft = 屏幕位 - anchor,Δanchor = -(x,y) ⇒ 整图位移 (x,y)
-    assert.ok(marker.raw.styles.default instanceof ns.MarkerStyle, 'offset 存在 → 注入 default 样式');
-    assert.ok(marker.raw.styles.default.opts.anchor instanceof ns.Point, 'anchor 必须是 TMap.Point 实例');
+    assert.ok(marker.raw.styles['dm-st-1'] instanceof ns.MarkerStyle, 'offset 存在 → 注入归组样式(dm-st-N)');
+    assert.ok(marker.raw.styles['dm-st-1'].opts.anchor instanceof ns.Point, 'anchor 必须是 TMap.Point 实例');
     assert.deepEqual(
-      { ...marker.raw.styles.default.opts.anchor },
+      { ...marker.raw.styles['dm-st-1'].opts.anchor },
       { x: 13, y: 56 },
       '默认锚点 (17,50) 平移 (x,y)→ anchor (17-4, 50+6)=(13,56)',
     );
@@ -816,7 +825,7 @@ test('createMarker:仅 MultiMarker(无 Marker)→ 聚合路径,geometries/id/off
   }
 });
 
-test('createMarker(MultiMarker):setPosition → updateGeometries 更新同 geometry;remove → setMap(null)', async () => {
+test('createMarker(MultiMarker):setPosition → updateGeometries 更新同 geometry;remove → 摘单 geometry(共享实例保留)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { ns, restore } = installTMapDouble();
@@ -831,7 +840,8 @@ test('createMarker(MultiMarker):setPosition → updateGeometries 更新同 geome
     assert.deepEqual({ ...geo.position }, { lat: 2, lng: 1 }, 'setPosition LatLng 纬度在前');
     assert.equal(marker.raw.geometries.length, 1, '单 geometry 不变多');
     marker.remove();
-    assert.equal(marker.raw.map, null, 'MultiMarker 移除 = setMap(null)(官方方式)');
+    assert.equal(marker.raw.geometries.length, 0, 'remove → 该 geometry 从共享实例摘除');
+    assert.equal(marker.raw.map, view.raw, '共享实例保留挂图(批量化:不 setMap(null) 误伤他 marker)');
   } finally {
     restore();
   }
@@ -966,7 +976,7 @@ test('createMarker(MultiMarker):契约 on/off 按 geometry.id 过滤注册/解�
   }
 });
 
-test('createMarker(MultiMarker):setZIndex/setVisible 直通(SDK 经 GeometryOverlay 继承)不告警', async () => {
+test('createMarker(MultiMarker):setZIndex max 收敛;setVisible 摘挂单 geometry(不误伤他 marker)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { ns, restore } = installTMapDouble();
@@ -975,35 +985,43 @@ test('createMarker(MultiMarker):setZIndex/setVisible 直通(SDK 经 GeometryOver
     delete ns.Marker;
     ns.MultiMarker = MockMultiMarker;
     const view = await createView();
-    const marker = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+    const m1 = view.createMarker({ position: { lng: 120.16, lat: 30.28 }, zIndex: 10 });
+    const m2 = view.createMarker({ position: { lng: 120.17, lat: 30.29 }, zIndex: 99 });
+    const raw = m1.raw; // 共享实例
+    const g1 = raw.geometries[0]; // m1 的 geometry(先创建)
+    assert.equal(raw.geometries.length, 2, '两 marker 共享同一 MultiMarker 实例');
 
-    marker.setZIndex(99);
-    assert.equal(marker.raw.zIndex, 99, '直通 GeometryOverlay 继承的 setZIndex(→ layer.setZIndex + 存储)');
-    marker.setZIndex(120);
-    assert.equal(marker.raw.zIndex, 120);
+    // zIndex 实例级:max 收敛(单 marker 层级语义的批量化近似)
+    assert.equal(raw.zIndex, 99, '实例 zIndex = max(10, 99)');
+    m1.setZIndex(120);
+    assert.equal(raw.zIndex, 120, 'max 收敛到 120');
+    m2.setZIndex(30);
+    assert.equal(raw.zIndex, 120, 'm2 降级后 max 仍为 120(m1 保持)');
 
-    marker.setVisible(false);
-    assert.equal(marker.raw.visible, false, '直通 setVisible(→ layer.setVisible)');
-    marker.setVisible(true);
-    assert.equal(marker.raw.visible, true);
-    assert.equal(marker.raw.map, view.raw, '直通路径不触发 setMap 兜底(实例保留挂图)');
-    assert.equal(warn.calls.length, 0, 'SDK 正常路径不告警');
+    // setVisible:摘挂单 geometry,实例保留挂图、不触碰实例级 setVisible
+    m1.setVisible(false);
+    assert.equal(raw.geometries.length, 1, '隐藏 = 该 geometry 从共享实例摘除');
+    assert.equal(raw.geometries.some((g) => g.id === g1.id), false, 'm1 geometry 不在实例');
+    assert.equal(raw.visible, true, '实例级 visible 不受影响(不误伤 m2)');
+    assert.equal(raw.map, view.raw, '实例保留挂图');
+    m1.setVisible(true);
+    assert.equal(raw.geometries.length, 2, '显示 = 重新挂载(同 id 同 geometry)');
+    assert.equal(raw.geometries.some((g) => g.id === g1.id), true, 'm1 geometry 回到实例');
+    assert.equal(warn.calls.length, 0, '批量化路径不告警(SDK 正常形态)');
   } finally {
     warn.restore();
     restore();
   }
 });
 
-test('createMarker(MultiMarker):setZIndex/setVisible 缺失(老 SDK)→ 一次性 warn 降级不抛', async () => {
+test('createMarker(MultiMarker):setZIndex 缺失(老 SDK)→ 一次性 warn 降级不抛;setVisible 不依赖实例级 API', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { ns, restore } = installTMapDouble();
   const warn = captureWarn();
   const proto = MockMultiMarker.prototype;
   const origZIndex = proto.setZIndex;
-  const origVisible = proto.setVisible;
   delete proto.setZIndex;
-  delete proto.setVisible;
   try {
     delete ns.Marker;
     ns.MultiMarker = MockMultiMarker;
@@ -1015,23 +1033,24 @@ test('createMarker(MultiMarker):setZIndex/setVisible 缺失(老 SDK)→ 一次�
     assert.equal(warn.calls.length, 1, '多次调用只 warn 一次(防刷屏)');
     assert.match(String(warn.calls[0][0]), /MultiMarker 无 setZIndex/);
 
+    // setVisible 走 add/remove 摘挂(不依赖实例级 setVisible)→ 老 SDK 无
+    // setVisible 也能工作,无降级告警(ws-6 批量化:实例级 setVisible 会误伤
+    // 全部 marker,设计上不再使用)
     warn.calls.length = 0;
     marker.setVisible(false);
-    assert.equal(marker.raw.map, null, '隐藏 = setMap(null)(官方移除路径兜底)');
+    assert.equal(marker.raw.geometries.length, 0, '隐藏 = 摘除该 geometry(无 setVisible 也可用)');
     marker.setVisible(true);
-    assert.equal(marker.raw.map, view.raw, '显示 = setMap(map) 重新添加');
-    marker.setVisible(false);
-    assert.equal(warn.calls.length, 1, '多次切换只 warn 一次(防刷屏)');
-    assert.match(String(warn.calls[0][0]), /setMap 切换降级/);
+    assert.equal(marker.raw.geometries.length, 1, '显示 = 重新挂载');
+    assert.equal(marker.raw.map, view.raw, '实例始终保留挂图');
+    assert.equal(warn.calls.length, 0, 'setVisible 路径不产生降级告警');
   } finally {
     proto.setZIndex = origZIndex;
-    proto.setVisible = origVisible;
     warn.restore();
     restore();
   }
 });
 
-test('createMarker(MultiMarker):icon 规格 → MarkerStyle src/width/height/anchor(含 offset 合并)', async () => {
+test('createMarker(MultiMarker):icon 规格 → 归组 MarkerStyle src/width/height/anchor(含 offset 合并)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { ns, restore } = installTMapDouble();
@@ -1044,8 +1063,8 @@ test('createMarker(MultiMarker):icon 规格 → MarkerStyle src/width/height/anc
       icon: { src: 'pin.svg', size: [30, 40] },
       offset: [4, -6],
     });
-    const style = marker.raw.styles.default;
-    assert.ok(style instanceof ns.MarkerStyle, 'icon 存在 → MarkerStyle 注入');
+    const style = marker.raw.styles['dm-st-1'];
+    assert.ok(style instanceof ns.MarkerStyle, 'icon 存在 → 归组样式注入(dm-st-N)');
     assert.equal(style.opts.src, 'pin.svg');
     assert.equal(style.opts.width, 30);
     assert.equal(style.opts.height, 40);
@@ -1055,9 +1074,11 @@ test('createMarker(MultiMarker):icon 规格 → MarkerStyle src/width/height/anc
       '锚点 (w/2,h)=(15,40) 平移 offset (4,-6) → (11,46)',
     );
 
-    // icon 无 offset:锚点 = (w/2, h)(与默认 pin 语义一致)
+    // icon 无 offset:锚点 = (w/2, h)(与默认 pin 语义一致);不同签名 → 新样式归组
     const m2 = view.createMarker({ position: { lng: 1, lat: 2 }, icon: { src: 'a.png', size: [20, 20] } });
-    assert.deepEqual({ ...m2.raw.styles.default.opts.anchor }, { x: 10, y: 20 });
+    assert.deepEqual({ ...m2.raw.styles['dm-st-2'].opts.anchor }, { x: 10, y: 20 });
+    assert.equal(m2.raw.styles['dm-st-1'], style, '共享实例累积样式:旧样式保留');
+    assert.ok(m2.raw.styles['dm-st-2'] instanceof ns.MarkerStyle, '新签名 → 新 styleId(dm-st-2)');
   } finally {
     restore();
   }
@@ -1080,6 +1101,180 @@ test('createMarker(MultiMarker):HTML content 降级默认点 + 一次性 warn(SD
     assert.equal(m2.raw.geometries[0].content, undefined, 'content 不写入 geometry(会渲染成 GL 文本标签,非 HTML)');
   } finally {
     warn.restore();
+    restore();
+  }
+});
+
+test('批量 MultiMarker:145 marker 单共享实例(无「数据层过多」/监听爆炸)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const constructions = [];
+    const OrigMM = MockMultiMarker;
+    ns.MultiMarker = class CountingMM extends OrigMM {
+      constructor(opts) {
+        super(opts);
+        constructions.push(this);
+      }
+    };
+    const view = await createView();
+    const wrappers = [];
+    for (let i = 0; i < 145; i++) {
+      wrappers.push(
+        view.createMarker({
+          position: { lng: 120.0 + i * 0.001, lat: 30.0 + i * 0.001 },
+          zIndex: i % 2 === 0 ? 10 : 20,
+        }),
+      );
+    }
+    assert.equal(constructions.length, 1, '145 marker 只构造 1 个 MultiMarker 实例(旧实现 = 145 数据层)');
+    const raw = wrappers[0].raw;
+    assert.equal(raw, wrappers[144].raw, '全部 wrapper 共享同一实例(逃生舱一致)');
+    assert.equal(raw.geometries.length, 145, '全部 geometry 在单实例内');
+    const ids = new Set(raw.geometries.map((g) => g.id));
+    assert.equal(ids.size, 145, 'geometry id 全局唯一(dm-mk-N)');
+    assert.equal(raw.map, view.raw, '实例挂到当前地图');
+    assert.equal(raw.zIndex, 20, '实例 zIndex = max(10,20)');
+    // click 过滤在共享实例下依然互不误触
+    let clicked = 0;
+    wrappers[42].on('click', () => clicked++);
+    raw.trigger('click', { geometry: { id: 'dm-mk-999' } });
+    assert.equal(clicked, 0, '他 geometry.id 不触发');
+    raw.trigger('click', { geometry: { id: raw.geometries[42].id } });
+    assert.equal(clicked, 1, '本 id 触发(共享实例过滤分发)');
+    // 单实例渲染预算:listeners 只有 click(无每实例 mousemove 泄漏)
+    const listenerCount = [...raw.listeners.values()].reduce((n, l) => n + l.length, 0);
+    assert.equal(listenerCount, 1, '145 marker 只有 1 个 click 监听(旧实现 = 145 × N 监听)');
+  } finally {
+    restore();
+  }
+});
+
+test('批量 MultiMarker:样式归组——同签名共享 styleId,异签名新增归组(setStyles 累积)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    // 同签名(同 icon + 同 offset)→ 共享同一 styleId
+    const m1 = view.createMarker({
+      position: { lng: 1, lat: 2 },
+      icon: { src: 'pin.svg', size: [30, 40] },
+      offset: [4, -6],
+    });
+    const m2 = view.createMarker({
+      position: { lng: 3, lat: 4 },
+      icon: { src: 'pin.svg', size: [30, 40] },
+      offset: [4, -6],
+    });
+    assert.equal(m1.raw.geometries[0].styleId, m2.raw.geometries[1].styleId, '同签名 → 同 styleId(dm-st-1)');
+    assert.equal(Object.keys(m1.raw.styles).length, 1, '样式字典不膨胀(1 个签名 1 个样式)');
+
+    // 异签名 → 新 styleId + setStyles 累积(旧样式保留)
+    const m3 = view.createMarker({
+      position: { lng: 5, lat: 6 },
+      icon: { src: 'badge.png', size: [20, 20] },
+    });
+    assert.equal(m3.raw.geometries[2].styleId, 'dm-st-2', '异签名 → 新归组 dm-st-2');
+    assert.equal(Object.keys(m3.raw.styles).length, 2, '累积 2 个样式');
+    assert.ok(m3.raw.styles['dm-st-1'] instanceof ns.MarkerStyle, '旧样式保留(setStyles 全量替换语义)');
+    assert.ok(m3.raw.styles['dm-st-2'] instanceof ns.MarkerStyle, '新样式注入');
+
+    // 无 icon/offset → SDK 内建 default(零样式注入)
+    const m4 = view.createMarker({ position: { lng: 7, lat: 8 } });
+    assert.equal(m4.raw.geometries[3].styleId, 'default', '无 icon/offset → default(SDK 内建 pin)');
+    assert.equal(Object.keys(m4.raw.styles).length, 2, 'default 不占样式字典');
+  } finally {
+    restore();
+  }
+});
+
+test('批量 MultiMarker:off 缺省 cb 只解绑本 marker(不误伤他 marker 回调)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const m1 = view.createMarker({ position: { lng: 1, lat: 2 } });
+    const m2 = view.createMarker({ position: { lng: 3, lat: 4 } });
+    const raw = m1.raw;
+    let c1 = 0;
+    let c2 = 0;
+    m1.on('click', () => c1++);
+    m2.on('click', () => c2++);
+    raw.trigger('click', { geometry: { id: raw.geometries[0].id } });
+    assert.equal(c1, 1);
+    assert.equal(c2, 0, 'm1 的 click 不触发 m2 回调(id 过滤)');
+    m1.off('click'); // 缺省 cb → 只解绑 m1
+    raw.trigger('click', { geometry: { id: raw.geometries[0].id } });
+    assert.equal(c1, 1, 'm1 回调已解绑');
+    raw.trigger('click', { geometry: { id: raw.geometries[1].id } });
+    assert.equal(c2, 1, 'm2 回调不受影响(共享实例按 id 精确解绑)');
+  } finally {
+    restore();
+  }
+});
+
+test('批量 MultiMarker:remove 摘单 geometry + 解绑本 marker 回调 + 他 marker 不受影响', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const m1 = view.createMarker({ position: { lng: 1, lat: 2 }, onClick: () => c1++ });
+    const m2 = view.createMarker({ position: { lng: 3, lat: 4 }, onClick: () => c2++ });
+    const raw = m1.raw;
+    let c1 = 0;
+    let c2 = 0;
+    raw.trigger('click', { geometry: { id: raw.geometries[0].id } });
+    assert.equal(c1, 1, 'm1 onClick 生效');
+    raw.trigger('click', { geometry: { id: raw.geometries[1].id } });
+    assert.equal(c2, 1, 'm2 onClick 生效');
+
+    m1.remove();
+    assert.equal(raw.geometries.length, 1, 'm1 geometry 已摘除');
+    assert.equal(raw.geometries[0].id, 'dm-mk-2', 'm2 geometry 保留');
+    assert.equal(raw.map, view.raw, '共享实例保留挂图(不 setMap(null))');
+    raw.trigger('click', { geometry: { id: 'dm-mk-1' } });
+    assert.equal(c1, 1, 'm1 回调已解绑(remove 清理)');
+    raw.trigger('click', { geometry: { id: raw.geometries[0].id } });
+    assert.equal(c2, 2, 'm2 回调不受影响');
+    assert.equal(raw.zIndex, 10, 'm1 移除后实例 zIndex 回落(默认 10)');
+  } finally {
+    restore();
+  }
+});
+
+test('批量 MultiMarker:zIndex max 收敛——移除 max 回落次高', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const m1 = view.createMarker({ position: { lng: 1, lat: 2 }, zIndex: 10 });
+    const m2 = view.createMarker({ position: { lng: 3, lat: 4 }, zIndex: 100 }); // 选中
+    const m3 = view.createMarker({ position: { lng: 5, lat: 6 }, zIndex: 80 }); // 高亮
+    const raw = m1.raw;
+    assert.equal(raw.zIndex, 100, '实例 zIndex = max(10,100,80)');
+    m2.remove();
+    assert.equal(raw.zIndex, 80, '选中移除 → 回落次高(80)');
+    m3.setZIndex(30);
+    assert.equal(raw.zIndex, 30, '高亮降级 → max(10,30) = 30');
+    m1.remove();
+    m3.remove();
+    assert.equal(raw.zIndex, 0, '全部移除 → 0(空图层)');
+  } finally {
     restore();
   }
 });
