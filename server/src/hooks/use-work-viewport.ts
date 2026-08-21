@@ -1,17 +1,16 @@
 "use client";
 
 // ============================================================
-// useWorkViewport — 视口加载器 Hook(2026-08-22 修订)
+// useWorkViewport — 视口加载器 Hook(2026-08-22 no-fly 修订)
 //
 // 抽取自 map-shell(QA scan #6):视口加载器创建/调度 + 挂载对齐加载。
 // - work:全量加载后无需视口请求——marker 池(catalog)首载一次取尽,
 //   侧栏列表按视野的裁剪移到 map-shell 客户端(pois memo 按 mapBounds 过滤);
 // - domain:随视角变化刷新(替换+淡入),无分类选择 → 视口移动不拉取;
 // - moveend/zoomend 防抖调度,主加载在飞时置 pending 由主加载 finally 补跑;
-// - 收藏图层 toggle 的程序化相机移动(setBounds)由「收藏相机同步」状态机
-//   抑制(替代 500ms 时间窗补丁):settle 事件(moveend/zoomend/idle)以事件
-//   到达时相机是否位于目标中心判定归属并跳过,相机离开目标或消费满事件对
-//   后自动结束——慢动画/迟到事件不逃逸,且不残留误伤后续用户视口刷新。
+// - 收藏 toggle 不移动相机(2026-08-22):moveend/zoomend 只来自用户操作,
+//   直接防抖调度,无需任何程序化相机抑制(「收藏相机同步」状态机已随
+//   saved-overlay-wipe 的触发源 setBounds 移除,ws1 saved-layer-nofly)。
 // 共享 ref/state 全部由调用方(map-shell)传入,本 hook 不拥有数据,
 // 保证与主加载 effect 的读写顺序、行为完全一致。
 // ============================================================
@@ -31,21 +30,6 @@ import {
   type ViewportSnapshot,
 } from "@/lib/viewport-search";
 import { readModeCache, writeModeCache } from "@/lib/mode-cache";
-import {
-  cameraAtDestination,
-  consumeSavedCameraSync,
-  type SavedCameraSync,
-} from "@/lib/saved-camera-sync";
-
-// 收藏相机同步状态机(结构性抑制,替代 500ms 时间窗补丁,ws1 saved-overlay-wipe):
-// 纯函数定义在 lib/saved-camera-sync.ts(无 @ 别名,node 测试可直接 import),
-// 本 hook 再导出供 useSavedLayer(置位)/ map-shell syncView(圆心冻结)使用。
-export {
-  cameraAtDestination,
-  consumeSavedCameraSync,
-  SAVED_CAMERA_MATCH_METERS,
-  type SavedCameraSync,
-} from "@/lib/saved-camera-sync";
 
 /**
  * 当前地图视野快照(center+zoom+bounds);地图未就绪返回 null。写缓存/对齐判定共用。
@@ -115,8 +99,6 @@ export interface WorkViewportDeps {
   noMoreRef: MutableRefObject<boolean>;
   viewportEpochRef: MutableRefObject<number>;
   skipFetchRef: MutableRefObject<boolean>;
-  /** 收藏图层 toggle 程序化相机移动的同步状态 ref(与 useSavedLayer 共享同一实例) */
-  savedCameraSyncRef: MutableRefObject<SavedCameraSync | null>;
   catalogRef: MutableRefObject<POI[]>;
   viewStateRef: MutableRefObject<WorkViewportState>;
   setCatalog: (catalog: POI[]) => void;
@@ -137,7 +119,6 @@ export function useWorkViewport(
     noMoreRef,
     viewportEpochRef,
     skipFetchRef,
-    savedCameraSyncRef,
     catalogRef,
     viewStateRef,
     setCatalog,
@@ -249,17 +230,8 @@ export function useWorkViewport(
     });
 
     const onViewChange = () => {
-      // 结构性抑制(ws1 saved-overlay-wipe,替代 500ms 时间窗补丁):收藏图层
-      // toggle 的 setBounds 是程序化相机移动——其 settle 事件(moveend/zoomend/
-      // idle)一律跳过视口刷新,以「事件到达时相机是否位于目标中心」判定事件
-      // 归属(慢动画/迟到事件不逃逸,无时间常数);相机离开目标(用户接管)或
-      // 消费满 settle 事件对后自动结束,后续用户操作触发的视口刷新完全恢复。
-      const sync = savedCameraSyncRef.current;
-      if (sync) {
-        const snap = readMapViewSnapshot(mapInstance.current);
-        savedCameraSyncRef.current = consumeSavedCameraSync(sync, snap?.center);
-        return;
-      }
+      // 直接防抖调度:收藏 toggle 不再移动相机(ws1 saved-layer-nofly),
+      // moveend/zoomend 只来自用户操作/其他程序化移动,无需抑制。
       loader.schedule();
     };
     viewportLoaderRef.current = loader;
