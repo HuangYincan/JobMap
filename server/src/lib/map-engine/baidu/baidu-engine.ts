@@ -206,13 +206,14 @@ class BaiduMapView implements MapView {
   /** 厂商地图实例逃生舱 */
   readonly raw: unknown;
   readonly engine: MapEngine;
+  private readonly map: BMapInstance;
+  private readonly ns: BMapGLNamespace;
   private destroyed = false;
 
-  constructor(
-    private readonly map: BMapInstance,
-    private readonly ns: BMapGLNamespace,
-    engine: MapEngine,
-  ) {
+  // 注:不用 TS 参数属性(node 测试 strip-only 模式不支持,ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX)
+  constructor(map: BMapInstance, ns: BMapGLNamespace, engine: MapEngine) {
+    this.map = map;
+    this.ns = ns;
     this.raw = map;
     this.engine = engine;
   }
@@ -285,16 +286,18 @@ class BaiduMapView implements MapView {
 
   on(event: MapViewEvent, cb: () => void): () => void {
     const vendorEvent = EVENT_MAP[event] ?? event;
-    const add = this.map.addEventListener;
-    const remove = this.map.removeEventListener;
-    if (typeof add === 'function' && typeof remove === 'function') {
+    const map = this.map;
+    // bind 保 this + 局部函数变量让 typeof 收窄在返回闭包内依然有效
+    const addEventListener = map.addEventListener?.bind(map);
+    const removeEventListener = map.removeEventListener?.bind(map);
+    if (typeof addEventListener === 'function' && typeof removeEventListener === 'function') {
       const handler = () => cb();
-      add(vendorEvent, handler);
-      return () => remove(vendorEvent, handler);
+      addEventListener(vendorEvent, handler);
+      return () => removeEventListener(vendorEvent, handler);
     }
     // duck-typed 视图兜底(测试 mock 等):on(event, cb) → 返回解绑
     const off = (
-      this.map as unknown as { on?: (e: string, c: () => void) => (() => void) | undefined }
+      map as unknown as { on?: (e: string, c: () => void) => (() => void) | undefined }
     ).on?.(vendorEvent, cb);
     return off ?? (() => {});
   }
@@ -471,7 +474,12 @@ function toSuggestionsFromAutocomplete(result: unknown): AmapSuggestion[] {
 // ------------------------------------------------------------
 
 class BaiduSearchProvider implements MapSearchProvider {
-  constructor(private readonly engine: BaiduEngine) {}
+  private readonly engine: BaiduEngine;
+
+  // 注:不用 TS 参数属性(node 测试 strip-only 模式不支持)
+  constructor(engine: BaiduEngine) {
+    this.engine = engine;
+  }
 
   /** 命名空间缺失时返回 undefined(调用方回退安全值,绝不同步抛错) */
   private ns(): BMapGLNamespace | undefined {
