@@ -821,6 +821,57 @@ test('agent ball has a labelled glass button and toggles the panel (ws-c)', () =
   assert.match(css, /cubic-bezier\(0\.32, 0\.72, 0, 1\)/); // 吸附动画曲线
 });
 
+test('agent ball is controlled: open/onOpenChange props drive the panel (ws-mt)', () => {
+  const ball = src('components/agent-ball.tsx');
+  const css = src('components/agent-ball.module.css');
+  // 受控化:本地 open state 移除,open/onOpenChange 由 MapShell 提升提供(移动端入口 = 工具栏 AI item)
+  assert.match(ball, /open: boolean;/);
+  assert.match(ball, /onOpenChange: \(open: boolean\) => void/);
+  assert.doesNotMatch(ball, /setOpen/, '本地 open state 已移除(受控)');
+  // 点击(非拖动)→ onOpenChange(!open);面板 onClose → onOpenChange(false)
+  assert.match(ball, /onOpenChange\(!open\)/);
+  assert.match(ball, /onClose=\{\(\) => onOpenChange\(false\)\}/);
+  // 移动端(≤767px)球隐藏——球与面板是 fragment 兄弟,隐藏球不影响面板渲染
+  assert.match(css, /@media \(max-width: 767px\)[\s\S]*\.ball \{\s*display: none;\s*\}/);
+  // 移动端面板层级高于抽屉域(≤767px 块内 z-index 13;桌面锚球卡片基础 z-12 不变)
+  const panelCss = src('components/agent-panel.module.css');
+  assert.match(panelCss, /z-index: 12/);
+  assert.match(panelCss, /@media \(max-width: 767px\)[\s\S]*\.panel \{[\s\S]*z-index: 13;/);
+});
+
+test('map shell mobile toolbar: 5 icon items + auth gate + agent toggle + back target (ws-mt)', () => {
+  const shell = src('components/map-shell.tsx');
+  const css = src('components/map-shell.module.css');
+  // 左簇容器:ModeSwitcher + 图层/已保存/探索/最近/AI 图标钮,aria-label 走 i18n 键
+  assert.match(shell, /<div className=\{styles\.mobileToolbarItems\}>[\s\S]{0,60}<ModeSwitcher/);
+  assert.match(shell, /aria-label=\{t\("layers", lang\)\}/);
+  assert.match(shell, /aria-label=\{t\("saved", lang\)\}/);
+  assert.match(shell, /aria-label=\{t\("explore", lang\)\}/);
+  assert.match(shell, /aria-label=\{t\("recent", lang\)\}/);
+  assert.match(shell, /aria-label=\{t\("agentBall", lang\)\}/);
+  // 图标与桌面 rail 同款:layers/bookmark/grid/history + 新 agent(sparkle)
+  assert.match(shell, /<Icon name="layers" \/>/);
+  assert.match(shell, /<Icon name="bookmark" \/>/);
+  assert.match(shell, /<Icon name="grid" \/>/);
+  assert.match(shell, /<Icon name="history" \/>/);
+  assert.match(shell, /<Icon name="agent" \/>/);
+  // 已保存:未登录 → auth 流程;已登录 → saved sheet + full drawer
+  assert.match(shell, /if \(!user\) \{[\s\S]{0,40}setAuthOpen\(true\)[\s\S]{0,200}setMobileSheet\("saved"\)/);
+  // AI item:受控 toggle agentOpen(重复点已开 → 关面板)
+  assert.match(shell, /setAgentOpen\(\(v\) => !v\)/);
+  // 重复点激活项 → 回 explore(镜像桌面 openRail toggle 语义)
+  assert.match(shell, /if \(mobileSheet === "layers"\) \{[\s\S]{0,60}setMobileSheet\("explore"\)/);
+  assert.match(shell, /if \(mobileSheet === "recent"\) \{[\s\S]{0,60}setMobileSheet\("explore"\)/);
+  // back 目标追踪:工具栏入口 → "explore";account 导航 → "account";三个 back 走 mobileSheetBack
+  assert.match(shell, /setMobileSheetBack\("explore"\)/);
+  assert.match(shell, /setMobileSheetBack\("account"\)/);
+  assert.match(shell, /setMobileSheet\(mobileSheetBack\)/);
+  // CSS:40px 触控钮 + 簇 gap 4px + 激活蓝(参照 .navItemActive)
+  assert.match(css, /\.mobileToolbarItems \{[\s\S]{0,120}gap: 4px/);
+  assert.match(css, /\.mobileToolbarItem \{[\s\S]{0,300}(?:min-width|min-height): 40px[\s\S]{0,80}(?:min-height|min-width): 40px/);
+  assert.match(css, /\.mobileToolbarItemActive[\s\S]{0,80}var\(--blue\)/);
+});
+
 test('agent panel has input, send/stop/undo buttons and tool status bar (ws-c)', () => {
   const panel = src('components/agent-panel.tsx');
   const css = src('components/agent-panel.module.css');
@@ -900,7 +951,8 @@ test('agent panel memory: login-only entry + embedded overlay (ws-mem-b)', () =>
   assert.match(ball, /user: AccountUser \| null/);
   assert.match(ball, /user=\{user\}/);
   assert.match(panel, /user: AccountUser \| null/);
-  assert.match(shell, /<AgentBall bridge=\{agentBridgeRef\.current\} lang=\{lang\} user=\{user\} \/>/);
+  // ws-mt 受控化:agentOpen/onOpenChange 一并透传(移动端入口为工具栏 AI item)
+  assert.match(shell, /<AgentBall[\s\S]{0,120}bridge=\{agentBridgeRef\.current\}[\s\S]{0,120}user=\{user\}[\s\S]{0,120}open=\{agentOpen\}[\s\S]{0,120}onOpenChange=\{setAgentOpen\}/);
   // 记忆按钮:仅在 user 非空时渲染(guest 不渲染);位于 header 右侧(关闭钮旁)
   assert.match(panel, /\{user && \([\s\S]{0,160}styles\.memoryBtn/);
   assert.match(panel, /aria-label=\{t\("agentMemory", lang\)\}/);
@@ -1024,8 +1076,9 @@ test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
   assert.match(shell, /import AgentBall from "\.\/agent-ball";/);
   assert.match(shell, /agentBridgeRef = useRef<MapBridge \| null>\(null\)/);
   assert.match(shell, /createAgentBridge\(engineView/);
-  // 接线(ws-mem-b):登录态 user 一并透传(记忆入口只对登录用户渲染)
-  assert.match(shell, /<AgentBall bridge=\{agentBridgeRef\.current\} lang=\{lang\} user=\{user\} \/>/);
+  // 接线(ws-mem-b):登录态 user 一并透传(记忆入口只对登录用户渲染);
+  // ws-mt 受控化:agentOpen/onOpenChange 提升至 MapShell
+  assert.match(shell, /<AgentBall[\s\S]{0,120}bridge=\{agentBridgeRef\.current\}[\s\S]{0,120}user=\{user\}[\s\S]{0,120}open=\{agentOpen\}[\s\S]{0,120}onOpenChange=\{setAgentOpen\}/);
   // bridge 实现只认 MapView 门面,不直连厂商全局
   assert.match(bridge, /import type \{ MapView \} from "\.\/map-engine\/types\.ts"/);
   assert.doesNotMatch(bridge, /window\.AMap/);
