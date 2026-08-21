@@ -11,12 +11,84 @@ import {
   searchPOI,
   searchViewportPOIsFallback,
 } from './amap-api.ts';
+import type { MapSearchProvider } from './map-engine/types.ts';
 import { INTERNSHIP_SEED } from './seed-data.ts';
 import { fetchWorkCatalogFromApi } from './recruitment-adapters/api.ts';
 import type { QueryPipeline } from './search.ts';
-import { mergePoisById, isCommonOrExactName, inHangzhouBox, DOMAIN_POI_HARD_CAP, DOMAIN_POI_FULL_PAGE_SIZE, DOMAIN_POI_OFFSET_CAP, DOMAIN_BATCH_SIZE, searchRadiusMeters, type ViewportBounds } from './viewport-search.ts';
+import {
+  DOMAIN_POI_HARD_CAP,
+  DOMAIN_POI_FULL_PAGE_SIZE,
+  DOMAIN_POI_OFFSET_CAP,
+  DOMAIN_BATCH_SIZE,
+  fallbackTaskWindow,
+  inHangzhouBox,
+  isCommonOrExactName,
+  isCommonPoi,
+  keywordsFor,
+  mergePoisById,
+  MORE_PAGE_SIZE,
+  searchRadiusMeters,
+  zoomStrategy,
+  type ViewportBounds,
+} from './viewport-search.ts';
 import type { DomainPOI, MapMode, POI, RecruitmentPOI } from './types.ts';
 import { isRecruitmentMode } from './types.ts';
+
+/**
+ * 活跃引擎的搜索能力(use-map-engine 挂载时注入,卸载时清空)。
+ * 视口兜底搜索经它路由:引擎切换(腾讯/百度)后兜底不再硬绑 amap-api。
+ * 未注入(SSR/测试/零配置)→ 回落 amap-api 直连,行为与迁移前一致。
+ */
+let activeSearchProvider: MapSearchProvider | null = null;
+
+export function setActiveSearchProvider(provider: MapSearchProvider | null): void {
+  activeSearchProvider = provider;
+}
+
+/** 视口兜底搜索:活跃引擎优先;未注入回落 amap-api searchViewportPOIsFallback(同参数语义)。 */
+async function viewportFallbackSearch(
+  options: Parameters<typeof searchViewportPOIsFallback>[0]
+): Promise<DomainPOI[]> {
+  const provider = activeSearchProvider;
+  if (!provider) {
+    return searchViewportPOIsFallback(options);
+  }
+  // 与 amap-api searchViewportPOIsFallback 同一窗口策略:按 zoom 切关键词窗口,
+  // 窗口空(预算耗尽)→ 不再发请求;每批按 id 去重合并,onBatch 增量回调。
+  const strategy = zoomStrategy(options.zoom);
+  const center = options.center ?? { lng: 120.15, lat: 30.27 };
+  const radius = searchRadiusMeters(options.zoom, center.lat);
+  const keywords = options.categories?.length
+    ? options.categories
+    : keywordsFor(strategy.categories);
+  const tasks = fallbackTaskWindow(keywords, strategy.pages, options.pageOffset ?? 0);
+  if (tasks.length === 0) return options.existing ?? [];
+
+  const existing = options.existing ?? [];
+  const room = Math.max(0, DOMAIN_POI_HARD_CAP - existing.length);
+  const thisRoundCap =
+    existing.length + Math.min(options.addCap ?? MORE_PAGE_SIZE, room, MORE_PAGE_SIZE);
+  let merged: DomainPOI[] = existing.slice();
+
+  for (const task of tasks) {
+    if (options.signal?.cancelled) break;
+    if (merged.length >= thisRoundCap) break;
+    // page 是引擎分页的 duck-type 扩展(契约 MapSearchProvider.searchPOI 未含;
+    // AMap 引擎透传到 PlaceSearch pageIndex,与 amap-api searchViewportPOIsFallback 同语义)
+    const pois = await provider.searchPOI({
+      keyword: task.keyword,
+      center,
+      radius,
+      limit: strategy.pageSize,
+      page: task.page,
+      city: strategy.city,
+    } as Parameters<MapSearchProvider['searchPOI']>[0]);
+    merged = mergePoisById(merged, pois.filter(isCommonPoi), thisRoundCap);
+    options.onBatch?.(merged);
+  }
+
+  return merged;
+}
 
 export interface FetchPOIOptions extends QueryPipeline {
   mode: MapMode;
@@ -125,7 +197,7 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<FetchPOIResult
 
   // 杭州外 → 高德省调用回退:每次滚动 1 次 PlaceSearch(25 条),窗口耗尽即停
   try {
-    const pois = await searchViewportPOIsFallback({
+    const pois = await viewportFallbackSearch({
       center,
       zoom,
       bounds: options.bounds,
@@ -192,7 +264,7 @@ async function fetchLocalPois(
     if (q) return null;
     console.warn('[poi-service] local domain POIs failed, fallback to AMap:', err);
     try {
-      const pois = await searchViewportPOIsFallback({
+      const pois = await viewportFallbackSearch({
         center: options.center,
         zoom,
         bounds: options.bounds,
@@ -274,7 +346,7 @@ async function fetchLocalPoisAll(
     // 库未导入 / 网络错 → 回退高德 fallback(带 categories),不白屏
     console.warn('[poi-service] local category POIs failed, fallback to AMap:', err);
     try {
-      const pois = await searchViewportPOIsFallback({
+      const pois = await viewportFallbackSearch({
         center: options.center,
         zoom,
         bounds: options.bounds,
