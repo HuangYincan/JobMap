@@ -1287,11 +1287,21 @@
   }
 
   .mobileAccount,
-  .mobileLayers {
+  .mobileLayers,
+  .mobileAgent {
     width: 100%;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
+  }
+
+  /* ws-ae:AI 内嵌 sheet body — flex column 撑满 drawerContent(height: 100%;
+     min-height: 0),内嵌 AgentPanel flex: 1 接管高度:消息列表内部滚动、输入贴底 */
+  .mobileAgent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
   }
 
   .mobileSheetBar {

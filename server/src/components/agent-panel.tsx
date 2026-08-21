@@ -75,13 +75,16 @@ interface Props {
   lang: Language;
   /** 登录态;非空才渲染记忆管理入口(guest 不渲染,记忆是账号级数据;会话是本地功能,guest 可用)。 */
   user: AccountUser | null;
-  /** 悬浮球当前矩形(viewport 坐标);面板以此为锚实时跟随。 */
-  ballRect: BallRect;
+  /** 悬浮球当前矩形(viewport 坐标);面板以此为锚实时跟随。嵌入式(drawer sheet)实例不传。 */
+  ballRect?: BallRect | null;
   /** 球正在拖拽:面板关闭吸附过渡,transform 跟手。 */
-  dragging: boolean;
+  dragging?: boolean;
   /** 球当前吸附边缘(拖拽中/未吸附为 null → 面板按球心半区分侧,旧行为)。 */
-  snapEdge: BallSnapEdge | null;
+  snapEdge?: BallSnapEdge | null;
   onClose: () => void;
+  /** 内嵌模式(ws-ae):drawer 内 agent sheet 渲染(mobileSheet "agent"),
+   *  不做锚点跟随定位(placement/panelStyle 跳过),随抽屉流填满 sheet body。 */
+  embedded?: boolean;
 }
 
 /** SSR 安全初始状态:读 localStorage 会话 + 迁移旧 sessionStorage 历史。 */
@@ -169,7 +172,7 @@ export function memoryViewState(loading: boolean, error: boolean, count: number)
   return count > 0 ? "list" : "empty";
 }
 
-export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, onClose }: Props) {
+export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, onClose, embedded = false }: Props) {
   // 会话存储(多会话,localStorage):单源真相;messages = 当前会话消息工作副本,
   // 流式期间只改副本,在 发送/完成/停止/切换 等边界经 saveMessages 落库。
   const [sessionState, setSessionState] = useState<AgentSessionState>(initSessionState);
@@ -286,15 +289,18 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     setPanelSize({ width: el.offsetWidth, height: el.offsetHeight });
   }, [viewport]); // 视口变化(70vh 高度随之变)→ 重测
 
+  // 嵌入式(drawer sheet):不做锚点跟随定位,placement 为 null,panelStyle 不注入
+  // --px/--py(基类 transform 由 .panel.embedded 覆盖为 none)。
   const placement = useMemo(
-    () => computePanelPlacement(ballRect, panelSize, viewport, snapEdge ?? undefined),
-    [ballRect, panelSize, viewport, snapEdge],
+    () => (embedded || !ballRect ? null : computePanelPlacement(ballRect, panelSize, viewport, snapEdge ?? undefined)),
+    [embedded, ballRect, panelSize, viewport, snapEdge],
   );
-  const isSheet = placement.mode === "sheet";
+  const isSheet = placement ? placement.mode === "sheet" : false;
   // side 模式:transform 锚定(--px/--py 供 CSS translate3d 与入场动画共用)
-  const panelStyle: CSSProperties | undefined = isSheet
-    ? undefined
-    : ({ "--px": `${placement.left}px`, "--py": `${placement.top}px` } as CSSProperties);
+  const panelStyle: CSSProperties | undefined =
+    placement && placement.mode === "side"
+      ? ({ "--px": `${placement.left}px`, "--py": `${placement.top}px` } as CSSProperties)
+      : undefined;
 
   // ---- 渲染回调(供执行器分流;bridge 缺失时面板直接渲染无地图事件)----
   // 消息变更统一走 reduceAgentEvent 纯状态机(按轮拆分/归并,见 lib/agent-panel-state.ts)
@@ -655,7 +661,7 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   return (
     <section
       ref={panelRef}
-      className={`${styles.panel} ${isSheet ? styles.panelSheet : ""} ${dragging ? styles.panelDragging : ""}`}
+      className={`${styles.panel} ${embedded ? styles.embedded : ""} ${isSheet ? styles.panelSheet : ""} ${dragging ? styles.panelDragging : ""}`}
       style={panelStyle}
       aria-label={t("agentTitle", lang)}
     >

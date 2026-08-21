@@ -49,6 +49,7 @@ import { FilterPanel } from "./filter-panel";
 import { SortSelector } from "./sort-selector";
 import { createAgentBridge, type MapBridge } from "@/lib/agent-map-bridge";
 import AgentBall from "./agent-ball";
+import { AgentPanel } from "./agent-panel";
 
 const POIDetailView = dynamic(() => import("./poi-detail").then((mod) => mod.POIDetailView));
 const JdPanel = dynamic(() => import("./jd-panel").then((mod) => mod.JdPanel));
@@ -357,11 +358,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     setMapStyle(readMapStylePref(system));
   }, []);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers" | "account" | "recent">("explore");
-  /** 移动 sheet 来源追踪(ws-mt):工具栏 item 打开 saved/layers/recent → "explore";
-   *  account 内导航打开 → "account";三个 sheet 的 back 按钮按此回退。 */
+  const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers" | "account" | "recent" | "agent">("explore");
+  /** 移动 sheet 来源追踪(ws-mt):工具栏 item 打开 saved/layers/recent/agent → "explore";
+   *  account 内导航打开 → "account";四个 sheet 的 back 按钮按此回退。 */
   const [mobileSheetBack, setMobileSheetBack] = useState<"explore" | "account">("explore");
-  /** AI 助手开关(ws-mt 受控提升):悬浮球与移动工具栏 AI item 共用;移动端入口为工具栏 item。 */
+  /** AI 助手开关(ws-mt 受控提升):仅桌面悬浮球入口使用;移动端球隐藏,
+   *  AI 入口 = 工具栏 item → drawer 内嵌 agent sheet(mobileSheet "agent",ws-ae)。 */
   const [agentOpen, setAgentOpen] = useState(false);
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
@@ -2736,11 +2738,19 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 </button>
                 <button
                   type="button"
-                  className={`${styles.mobileToolbarItem} ${agentOpen ? styles.mobileToolbarItemActive : ""}`}
+                  className={`${styles.mobileToolbarItem} ${mobileSheet === "agent" ? styles.mobileToolbarItemActive : ""}`}
                   aria-label={t("agentBall", lang)}
                   title={t("agentBall", lang)}
-                  aria-pressed={agentOpen}
-                  onClick={() => setAgentOpen((v) => !v)}
+                  aria-pressed={mobileSheet === "agent"}
+                  onClick={() => {
+                    if (mobileSheet === "agent") {
+                      setMobileSheet("explore");
+                      return;
+                    }
+                    setMobileSheetBack("explore");
+                    setMobileSheet("agent");
+                    setDrawer("full");
+                  }}
                 >
                   <Icon name="agent" />
                 </button>
@@ -3002,6 +3012,25 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     ))}
                   </div>
                   <MapSourceSection lang={lang} />
+                </div>
+              ) : mobileSheet === "agent" ? (
+                <div className={styles.mobileAgent}>
+                  <div className={styles.mobileSheetBar}>
+                    <button
+                      type="button"
+                      className={styles.mobileBackBtn}
+                      onClick={() => setMobileSheet(mobileSheetBack)}
+                    >
+                      {t("back", lang)}
+                    </button>
+                  </div>
+                  <AgentPanel
+                    bridge={agentBridgeRef.current}
+                    lang={lang}
+                    user={user}
+                    embedded
+                    onClose={() => setMobileSheet(mobileSheetBack)}
+                  />
                 </div>
               ) : (
               <>
