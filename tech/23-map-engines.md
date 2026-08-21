@@ -623,3 +623,73 @@ AMap 的 onerror 回退链在 icon 路径不可用);徽章 dataURL 图标阴影(
 - `map-engine-tencent.test.mjs` setStyle 用例同步更新(钉旧 'raster' 的断言
   是修复的必然结果,不改则门禁红);
 - 相关回归:map-engine-tencent-style + map-engine-tencent 61/61 通过。
+
+## ws-a 回填:anchor 核实(SDK 常量默认)+ LOD 摘挂状态 + click 绑定簿记(2026-08-22,fix/tmap-poi-interaction)
+
+> 来源:批次 `20260822-boss-tmap-interaction` ws-a(bug 1:腾讯 POI 失效 + 缩放偏移)。
+> 本轮对 SDK v1.8.0.2 实包(map.qq.com/api/gljs?v=1.exp,2.2MB)做 marker/anchor/click
+> 段源码核实,结论与修复如下。**既有 anchor 归组公式(w/2-ox, h-oy)核实正确,零
+> 改动**;本轮修的是三处真实缺陷(见下)。
+
+### SDK v1.8.0.2 源码核实(本段结论)
+
+- **MarkerStyle 默认 anchor 是常量 (17,50),不随 width/height 归一化**:
+  构造 `{iconUrl: src||默认pin, iconSize:[width||34, height||50],
+  iconAnchor:[t.anchor&&t.anchor.x||17, t.anchor&&t.anchor.y||50]}` —— 自定义尺寸
+  图标(60×60 徽章等)不显式传 anchor 即锚点错位(34×50 默认 pin 的底部中心 ≠
+  60×60 的底部中心)→ **缩放级别变化时表现为视觉漂移 + 点击命中区与视觉不一致**
+  (boss 调查线索坐实;engine 侧 resolveMultiStyle 恒显式传 anchor,核实正确);
+- **锚点渲染公式双路径同语义**:DOM 2d-adapter 路径 `marginLeft/Top = -anchor`
+  (`_setIconStyles`),GL 实例路径 `instanceInfos.xy = (width/2-anchor.x,
+  height/2-anchor.y)`(marker fill `Ct`)→ 均为 imageTopLeft = 屏幕位 - anchor;
+- **像素偏移不随 zoom 缩放**(无漂移):着色器 `relativeZoomScale =
+  mix(1.0, calZoomScale(uZoom, ...), instanceRelativeScale.x)`,而
+  `enableRelativeScale` 默认关闭(instanceRelativeScale.x = 0)→ scale = 1;
+- **remove(ids) 全量清理**:`_idSet`/`_idGeoIndexSet` 删除 + `_removeGeoFromMap`
+  摘除该 geometry 的 DOM 拾取元素(Leaflet 式 marker,`_geometryId` 标记 →
+  click 链:DOM 拾取元素 → `_fireGeometryOverlayEvent` → `_idSet` 查 id →
+  `e.geometry`);摘挂后重 add 同 id 不冲突(updateGeometries/add 均按 id 键控);
+- **updateGeometries 对不在 _idSet 的 id 会重新 add**(`_idSet.has(t.id)?替换:push`)
+  —— 这是本轮 LOD 状态缺陷的 SDK 侧根因。
+
+### 修复(tencent-engine.ts marker 段,三段独立)
+
+1. **anchor 纯函数化**:`resolveTMapMarkerAnchor(iconW, iconH, offset)` 导出纯函数
+   (无 offset = (w/2, h) 底部中心,与高德 content 锚点语义对齐;契约 offset 经
+   Δanchor = -(x,y) 合并,AMap 同位移语义),resolveMultiStyle 改调该函数;
+   文件头/TENCENT_DEFAULT_MARKER_ANCHOR 注释回填 SDK 常量默认锚点核实结论。
+2. **LOD 摘挂状态一致性**:`setPosition` 仅挂载态(multiAttached)调 updateGeometries
+   ——隐藏(LOD 摘除)期只原地改共享 geometry 对象,重新挂载时自然带新位置;
+   旧实现隐藏期 setPosition 会把摘除 geometry **重挂回图层(隐藏变可见+可点)**,
+   破坏 LOD 可见性状态;`setVisible` 在 remove 后(geometry 已注销)置空 no-op,
+   防僵尸重挂。
+3. **click 绑定簿记数组化**:`multiClickHandlers`(Map<cb, entry>)→
+   `multiClickBindings`(数组)——同一 cb 注册到多个 marker 时旧实现后注册覆盖
+   先注册,off/remove 解绑错位;数组按 (cb, id) 精确解绑 + 同 (cb, id) 重复
+   注册去重(防 on 两次双触发)。
+
+### 测试(map-engine-tencent.test.mjs,+5,53→58)
+
+- `resolveTMapMarkerAnchor` 纯函数断言:60×60→(30,60) 底部中心、offset 位移合并
+  (40/54 徽章 → (40,60)/(54,81),与既有归组断言同源)、34×50→(17,50) 默认常量
+  对齐、60×60 不得落回常量(原 bug 回归);
+- **缩放一致性(纯函数级)**:任意 zoom 下 imageTopLeft = 屏幕位 - anchor → 锚点
+  恒钉地理点(2 级缩放前后不漂移,锚点为 zoom 无关常量);
+- LOD 摘挂后 click 分发不失效:隐藏 → 隐藏期 setPosition 不重挂 → 显示后同 id
+  命中恢复(handler 跨摘挂存活,同 id 同 geometry 引用无冲突);
+- 同一 cb 注册到两个 marker → off/remove 按 id 精确解绑(旧 Map<cb> 覆盖 bug);
+- remove 后 setVisible no-op(防僵尸重挂)。
+
+### 验收(离线)
+
+| 项 | 结果 |
+|---|---|
+| map-engine-tencent.test.mjs | ✅ 58/58(53 + 5)|
+| 全量 npm test | ✅ 1259 pass / 2 skip / 0 fail |
+| typecheck / git diff --check | ✅ |
+| make docs-check | ✅ 通过 |
+| 真实验证(Playwright:点击 marker 命中 + 缩放前后像素一致性)| ⛔ 未做:headless worker 无浏览器、worktree 无 .env.local;由 boss 合并后冒烟回填(deferred)|
+
+**遗留(边界外)**:TMap 状态样式(选中/高亮)仅 zIndex 层序近似(前批遗留);
+远程 logoUrl 经 GL 纹理的 CORS 表现待真机核实(前批遗留);物理点击隐藏 marker
+由 SDK 侧杜绝(geometry 不在图层 + DOM 拾取元素已摘除),mock 无拾取层不可测。
