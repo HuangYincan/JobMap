@@ -994,9 +994,10 @@ test('agent panel renders thinking status + tool activity for assistant messages
   assert.ok(bubbleIdx !== -1 && toolsIdx !== -1 && bubbleIdx < toolsIdx, '工具活动列表应在文本气泡下方');
   // 消息状态机走纯函数 reducer(按轮拆分)
   assert.match(panel, /reduceAgentEvent/);
-  // 助手消息体走 MarkdownText(用户消息保持纯文本)
+  // 助手消息体走 MarkdownText(用户消息保持纯文本);渲染前剥离正文动作 JSON + 传 lang
   assert.match(panel, /import \{ MarkdownText \} from "\.\/markdown-text"/);
-  assert.match(panel, /m\.role === "assistant" \? <MarkdownText text=\{m\.content\} \/> : m\.content/);
+  assert.match(panel, /<MarkdownText text=\{stripActionJsonBlocks\(m\.content\)\} lang=\{lang\} \/>/);
+  assert.match(panel, /stripActionJsonBlocks\(m\.content\)/);
   // i18n 新键:思考状态(思考中… / 思考完成);思考过程键已删除
   assert.match(i18n, /agentThinking: \{[\s\S]*思考中…[\s\S]*Thinking…/);
   assert.match(i18n, /agentThinkingDone: \{[\s\S]*思考完成[\s\S]*Thinking done/);
