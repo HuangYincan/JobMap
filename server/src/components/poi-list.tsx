@@ -6,7 +6,6 @@ import { POICard } from "./poi-card";
 import { t, type Language } from "@/lib/i18n";
 import type { POI } from "@/lib/types";
 import styles from "./poi-list.module.css";
-import filterStyles from "./filter-panel.module.css";
 
 export interface POIListProps {
   pois: POI[];
@@ -22,9 +21,9 @@ export interface POIListProps {
   empty?: boolean;
   /** 空态标题覆写(分类门控:domain 无分类时提示「选择类别开始浏览」) */
   emptyTitle?: string;
-  /** 空态候选类别 chips(work 未选类别时显示;点击写 filters)。 */
+  /** 空态候选类别(work 未选类别时显示;Apple 列表行,点击写 filters)。 */
   candidateCategories?: { key: string; value: string; label: string }[];
-  /** 候选类别 chip 点击:写 filters[key] = [value]。 */
+  /** 候选类别行点击:写 filters[key] = [value]。 */
   onPickCategory?: (key: string, value: string) => void;
   lang?: Language;
   accentColor?: string;
@@ -158,7 +157,7 @@ export function POIList({
           </span>
           <p className={styles.emptyTitle}>{emptyTitle ?? t("noResults", lang)}</p>
           <p className={styles.emptyHint}>{t("noResultsHint", lang)}</p>
-          {/* F2 候选类别(work 未选类别):玻璃卡片 + filter-panel chips,点击写 filters */}
+          {/* F2 候选类别(work 未选类别):玻璃卡片 + Apple 列表行(一行一类,行末 chevron),点击写 filters */}
           {candidateCategories && candidateCategories.length > 0 && (
             <div
               className={styles.candidateCard}
@@ -169,10 +168,24 @@ export function POIList({
                 <button
                   key={`${chip.key}-${chip.value}`}
                   type="button"
-                  className={filterStyles.chip}
+                  className={styles.candidateRow}
                   onClick={() => onPickCategory?.(chip.key, chip.value)}
                 >
-                  {chip.label}
+                  <span className={styles.candidateLabel}>{chip.label}</span>
+                  <svg
+                    className={styles.candidateChevron}
+                    viewBox="0 0 12 20"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="m4 2 8 8-8 8"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </button>
               ))}
             </div>
