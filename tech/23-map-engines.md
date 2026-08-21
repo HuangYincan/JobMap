@@ -1225,3 +1225,47 @@ onerror fallbackUrls;TMap icon 路径此前只有单一 src,预检失败直接�
   用例扩展:mock `navigator.geolocation.getCurrentPosition` 捕获第三参 opts,
   断言 `enableHighAccuracy === true` / `maximumAge === 0` / `timeout === 8000`;
   坐标转换断言保留(境内点位必须经 gcj02 偏移);失败/无 navigator → null 不变。
+
+## ws-e 回填:百度单点级 content 渲染根因实锤 + 深色卫星组合 + 蓝点坐标一致性(2026-08-22,fix/baidu-round2)
+
+> boss 真机实测三项(bug 2 单点级 0 徽章 / 深色+卫星不生效 / 蓝点 147px 偏差),
+> 本 WS 以**真机 Chromium + 真实 SDK**(ak=test + 拦截 `qt=verify` 返回 error:0
+> 绕过 AK 自毁,瓦片 403 不影响 marker/相机/样式机制)+ SDK 源码双向坐实。
+> **ws-b 上一轮「content 路径三环节正确」结论作废**——以实测为准(见下)。
+
+### 1. bug 2 单点级 POI 不渲染:真实 SDK Marker 根本没有 setContent
+
+- **SDK 源码**:getscript v=1.0 本体 + marker 模块(`getmodules?mod=marker_crvckn`)
+  核实 —— Marker 类(l4)原型与构造函数 `_config` **0 处 setContent / content**
+  (仅 InfoWindow/Label 有 setContent);markerMouseTarget pane 的 `BMap_Marker`
+  点击目标 DOM 恒创建、恒为空容器、尺寸=图标尺寸、位置=屏幕位+契约 offset。
+- **真机 Chromium 坐实**:`typeof BMapGL.Marker.prototype.setContent === 'undefined'`;
+  引擎旧路径 `raw.setContent?.(html)` 静默 no-op → zoom 17 DOM `.dm-badge` 0 个、
+  无视觉、无点击反馈(与 boss 实测完全一致)。聚合级(z≤8)正常 = dataURL icon
+  GL 纹理路径,与 content 无关。
+- **修复**(baidu-engine.ts `scheduleMarkerContentInjection`):无 setContent 时把
+  content HTML 注入厂商 marker 自带的点击目标 DOM(位置/点击/生命周期语义不变:
+  子元素冒泡到 marker click;hide/show/remove 由厂商 DOM 管理;有界重试 20×50ms
+  等待模块加载回调后 DOM 就绪)。真机验收:zoom 17 `.dm-badge` = 1、徽章 40×40
+  完整渲染、真实 click 冒泡命中 marker。
+- 聚合徽章(content+icon 双传)走 icon 纹理路径,注入兜底不介入(零行为变化)。
+
+### 2. bug 1 深色 ← 卫星组合:深色自定义样式只对 vector 底图生效
+
+- **实测**:卫星底图 + `setMapStyleV2` → `config.style` 已写入但 mapType 仍
+  `B_SATELLITE_MAP`、瓦片无变化(与 boss「卫星→深色停在卫星」一致);标准→深色
+  正常(boss 235→106)。
+- **修复**:whitesmoke 分支先 `setMapType(BMAP_NORMAL_MAP)` 强制切回 vector,
+  再应用 styleJson(顺序断言测试钉住);离开深色复位逻辑不变。
+
+### 3. bug 5 蓝点与相机中心 147px 偏差:两路径坐标一致,未复现
+
+- **真机复测**:`setCenter(gcj02 mock)` 与 `createMarker(同一 gcj02,蓝点 icon)`
+  全场景(平视/俯仰 45°+旋转 30°/动画中断/蓝点先建)蓝点 DOM 均精确落在容器
+  中心 (700,450);`map.getCenter()` 精确 = bd09(mock)(dlng≈1e-14)。
+  相机与蓝点共用同一 gcj02→bd09 转换,引擎层不存在分叉。
+- **判定**(按 boss 决策树):相机中心 = mock 位置且蓝点 = 相机中心 → 两路径
+  一致,转换无错;147px 为测量状态伪差(疑似定位后 setCenter+setZoom 动画
+  ~450ms 中间帧截图,或窗口中心≠容器中心帧)。测试钉住一致性;建议 boss 在
+  动画结束后用容器 boundingRect 复测。
+- 蓝点无契约 offset → anchor (0,0) 左上角(与 AMap/TMap 同款契约,不改)。
