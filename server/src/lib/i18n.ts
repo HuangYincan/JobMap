@@ -587,6 +587,18 @@ export const translations = {
     zh: '发送验证码',
     en: 'Send code',
   },
+  resendInSeconds: {
+    zh: '{s} 秒后再次发送',
+    en: 'Resend in {s}s',
+  },
+  sendCodeSuccessEmail: {
+    zh: '验证码已发送,请查收邮件',
+    en: 'Code sent, check your inbox',
+  },
+  sendCodeSuccess: {
+    zh: '验证码已发送',
+    en: 'Code sent',
+  },
   autoRegisterHint: {
     zh: '新用户将自动注册',
     en: 'New users are registered automatically',
