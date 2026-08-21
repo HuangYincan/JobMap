@@ -11,6 +11,8 @@ import type { FilterConfig, FilterOption, FilterState, JobFamily, Position } fro
 export interface FilterPlugin {
   id: string;
   label: string;
+  /** 英文标签：英文 UI 优先使用,缺失时回退中文 label(见 uiLabel) */
+  labelEn?: string;
   /** 产出可挂到 ModeConfig.filters 的配置 */
   filter: FilterConfig;
 }
@@ -21,37 +23,42 @@ export type TaxonomyPath = string;
 export const JOB_FAMILY_PLUGIN: FilterPlugin = {
   id: 'job-family',
   label: '岗位类型',
+  labelEn: 'Job type',
   filter: {
     key: 'jobTaxonomy',
     label: '岗位类型',
+    labelEn: 'Job type',
     type: 'taxonomy',
     options: [
       {
         value: 'intern',
         label: '实习',
+        labelEn: 'Intern',
         children: [
-          { value: 'intern/summer', label: '暑期实习' },
-          { value: 'intern/daily', label: '日常实习' },
-          { value: 'intern/conversion', label: '有转正' },
-          { value: 'intern/no-conversion', label: '无转正' },
+          { value: 'intern/summer', label: '暑期实习', labelEn: 'Summer intern' },
+          { value: 'intern/daily', label: '日常实习', labelEn: 'Daily intern' },
+          { value: 'intern/conversion', label: '有转正', labelEn: 'Conversion' },
+          { value: 'intern/no-conversion', label: '无转正', labelEn: 'No conversion' },
         ],
       },
       {
         value: 'campus',
         label: '校招',
+        labelEn: 'Campus',
         children: [
-          { value: 'campus/autumn', label: '秋招' },
-          { value: 'campus/spring', label: '春招' },
+          { value: 'campus/autumn', label: '秋招', labelEn: 'Autumn' },
+          { value: 'campus/spring', label: '春招', labelEn: 'Spring' },
         ],
       },
       {
         value: 'social',
         label: '社招',
+        labelEn: 'Full-time',
         children: [
-          { value: 'social/0-1', label: '0–1 年' },
-          { value: 'social/1-3', label: '1–3 年' },
-          { value: 'social/3-5', label: '3–5 年' },
-          { value: 'social/5+', label: '5 年+' },
+          { value: 'social/0-1', label: '0–1 年', labelEn: '0–1 yr' },
+          { value: 'social/1-3', label: '1–3 年', labelEn: '1–3 yr' },
+          { value: 'social/3-5', label: '3–5 年', labelEn: '3–5 yr' },
+          { value: 'social/5+', label: '5 年+', labelEn: '5+ yr' },
         ],
       },
     ],
@@ -60,18 +67,20 @@ export const JOB_FAMILY_PLUGIN: FilterPlugin = {
 
 /** 职能（技术/产品/运营/设计）。与 intern/campus/social 的岗位类型树分开。 */
 export const ROLE_OPTIONS: FilterOption[] = [
-  { value: 'tech', label: '技术' },
-  { value: 'product', label: '产品' },
-  { value: 'ops', label: '运营' },
-  { value: 'design', label: '设计' },
+  { value: 'tech', label: '技术', labelEn: 'Tech' },
+  { value: 'product', label: '产品', labelEn: 'Product' },
+  { value: 'ops', label: '运营', labelEn: 'Operations' },
+  { value: 'design', label: '设计', labelEn: 'Design' },
 ];
 
 export const ROLE_FAMILY_PLUGIN: FilterPlugin = {
   id: 'role-family',
   label: '职能',
+  labelEn: 'Role',
   filter: {
     key: 'roleFamily',
     label: '职能',
+    labelEn: 'Role',
     type: 'multi-select',
     options: ROLE_OPTIONS,
   },
