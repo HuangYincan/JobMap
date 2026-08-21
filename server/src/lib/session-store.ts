@@ -100,6 +100,7 @@ export function upsertIdentity(input: {
     avatarUrl: input.avatarUrl,
     phone,
     email,
+    hasPassword: false,
     provider: input.provider,
     preferences: emptyPreferences(),
     createdAt: Date.now(),
@@ -114,6 +115,7 @@ function publicUser(user: StoredUser): AccountUser {
   const { createdAt: _createdAt, passwordHash: _passwordHash, avatarData: _avatarData, ...rest } = user;
   return {
     ...rest,
+    hasPassword: !!user.passwordHash,
     accountLabel: accountLabel(rest),
     preferences: mergePreferences(user.preferences),
   };
@@ -138,6 +140,7 @@ export function registerWithPassword(username: string, password: string, display
     displayName: displayName?.trim() || name,
     accountLabel: name,
     username: name,
+    hasPassword: true,
     passwordHash: hashPassword(password),
     provider: 'password',
     preferences: emptyPreferences(),
@@ -149,12 +152,83 @@ export function registerWithPassword(username: string, password: string, display
   return publicUser(user);
 }
 
-/** 密码登录:失败统一返回 null(调用方 401「账号或密码错误」,不泄露哪个错)。 */
+/** 密码登录(username 或邮箱):失败统一返回 null(调用方 401「账号或密码错误」,不泄露哪个错)。 */
 export function loginWithPassword(username: string, password: string): AccountUser | null {
   const key = identityKey('password', username);
   const id = identities.get(key);
-  const user = id ? users.get(id) : undefined;
+  let user = id ? users.get(id) : undefined;
+  if (!user) {
+    // 与 DB 路径对齐:username 或已绑定邮箱均可登录(邮箱登录用户无 password identity)。
+    const name = username.trim().toLowerCase();
+    user = [...users.values()].find(
+      (u) => u.username?.toLowerCase() === name || u.email?.toLowerCase() === name,
+    );
+  }
   if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) return null;
+  return publicUser(user);
+}
+
+/** 校验当前密码(mem 分支):无密码或错 → false,不泄露。 */
+export function verifyUserPassword(userId: string, password: string): boolean {
+  const user = users.get(userId);
+  if (!user?.passwordHash) return false;
+  return verifyPassword(password, user.passwordHash);
+}
+
+/** 设置/修改密码(mem 分支):hashPassword 落库,hasPassword 翻 true。 */
+export function setPassword(userId: string, newPassword: string): AccountUser | null {
+  const user = users.get(userId);
+  if (!user) return null;
+  user.passwordHash = hashPassword(newPassword);
+  users.set(userId, user);
+  return publicUser(user);
+}
+
+/** 手机已被他人绑定(内存路径)。account-store 对 Postgres 路径抛同一类型。 */
+export class PhoneTakenError extends Error {
+  constructor(phone: string) {
+    super(`phone taken: ${phone}`);
+    this.name = 'PhoneTakenError';
+  }
+}
+
+/** 邮箱已被他人绑定(内存路径)。account-store 对 Postgres 路径抛同一类型。 */
+export class EmailTakenError extends Error {
+  constructor(email: string) {
+    super(`email taken: ${email}`);
+    this.name = 'EmailTakenError';
+  }
+}
+
+/** 绑定/更换手机(mem 分支):users.phone 更新 + 身份 upsert 新行/删旧行;占用 → PhoneTakenError。 */
+export function bindPhone(userId: string, phone: string): AccountUser | null {
+  const user = users.get(userId);
+  if (!user) return null;
+  const norm = phone.trim().toLowerCase();
+  for (const u of users.values()) {
+    if (u.id !== userId && u.phone?.toLowerCase() === norm) throw new PhoneTakenError(phone);
+  }
+  const oldKey = user.phone ? `phone:${user.phone.trim().toLowerCase()}` : null;
+  user.phone = phone.trim();
+  users.set(userId, user);
+  if (oldKey && identities.get(oldKey) === userId) identities.delete(oldKey);
+  identities.set(`phone:${norm}`, userId);
+  return publicUser(user);
+}
+
+/** 绑定/更换邮箱(mem 分支):users.email 更新 + 身份 upsert 新行/删旧行;占用 → EmailTakenError。 */
+export function bindEmail(userId: string, email: string): AccountUser | null {
+  const user = users.get(userId);
+  if (!user) return null;
+  const norm = email.trim().toLowerCase();
+  for (const u of users.values()) {
+    if (u.id !== userId && u.email?.toLowerCase() === norm) throw new EmailTakenError(email);
+  }
+  const oldKey = user.email ? `email:${user.email.trim().toLowerCase()}` : null;
+  user.email = email.trim();
+  users.set(userId, user);
+  if (oldKey && identities.get(oldKey) === userId) identities.delete(oldKey);
+  identities.set(`email:${norm}`, userId);
   return publicUser(user);
 }
 
