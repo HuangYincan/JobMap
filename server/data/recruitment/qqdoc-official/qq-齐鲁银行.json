@@ -9,9 +9,11 @@
     {
       "id": "qq-齐鲁银行-site-hq",
       "name": "齐鲁银行",
-      "city": "齐鲁银行总部",
+      "city": "济南市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "山东省济南市历下区经十路10817号"
+      }
     }
   ],
   "city_pending": true

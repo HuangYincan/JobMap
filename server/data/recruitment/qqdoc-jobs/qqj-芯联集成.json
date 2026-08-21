@@ -11,9 +11,11 @@
     {
       "id": "qqj-芯联集成-site",
       "name": "芯联集成",
-      "city": "绍兴 上海",
+      "city": "绍兴市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省绍兴市越城区皋埠镇临江路518号"
+      }
     }
   ]
 }

@@ -9,9 +9,11 @@
     {
       "id": "qq-渣打银行-site-hq",
       "name": "渣打银行",
-      "city": "渣打银行总部",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市浦东新区世纪大道201号渣打银行大厦"
+      }
     }
   ],
   "city_pending": true

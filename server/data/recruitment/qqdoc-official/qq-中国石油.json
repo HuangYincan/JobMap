@@ -11,7 +11,9 @@
       "name": "中国石油",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市东城区东直门北大街9号"
+      }
     }
   ]
 }

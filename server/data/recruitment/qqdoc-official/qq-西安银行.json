@@ -11,7 +11,9 @@
       "name": "西安银行",
       "city": "西安市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "陕西省西安市雁塔区高新路60号"
+      }
     }
   ]
 }

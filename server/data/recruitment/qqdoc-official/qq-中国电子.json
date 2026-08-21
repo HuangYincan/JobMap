@@ -9,9 +9,11 @@
     {
       "id": "qq-中国电子-site-hq",
       "name": "中国电子",
-      "city": "北京市",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省深圳市南山区科发路3号中电长城大厦A座"
+      }
     }
   ]
 }

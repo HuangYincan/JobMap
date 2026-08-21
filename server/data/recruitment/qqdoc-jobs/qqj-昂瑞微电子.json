@@ -11,9 +11,11 @@
     {
       "id": "qqj-昂瑞微电子-site",
       "name": "昂瑞微电子",
-      "city": "北京 成都 深圳 香港",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区东北旺西路8号院23号楼5层101"
+      }
     }
   ]
 }

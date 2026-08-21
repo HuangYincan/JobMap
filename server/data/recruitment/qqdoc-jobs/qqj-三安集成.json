@@ -11,9 +11,11 @@
     {
       "id": "qqj-三安集成-site",
       "name": "三安集成",
-      "city": "泉州  厦门",
+      "city": "厦门市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "福建省厦门市同安区洪塘镇民安大道753号"
+      }
     }
   ]
 }

@@ -8,7 +8,9 @@
       "name": "高仙机器人",
       "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市闵行区新虹街道申滨南路998号龙湖天街E栋8楼"
+      }
     }
   ],
   "careerUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=68ac2772b8fdf84cde4e83da&postType=society",

@@ -6,9 +6,11 @@
     {
       "id": "embj-Google-site",
       "name": "Google",
-      "city": "全球 美国",
+      "city": "Mountain View, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "1600 Amphitheatre Parkway, Mountain View, CA"
+      }
     }
   ],
   "careerUrl": "https://research.google/programs-and-events/phd-fellowship/",

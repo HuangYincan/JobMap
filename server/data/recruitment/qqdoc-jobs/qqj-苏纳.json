@@ -11,9 +11,11 @@
     {
       "id": "qqj-苏纳-site",
       "name": "苏纳",
-      "city": "苏州",
+      "city": "苏州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江苏省苏州市工业园区华凌街9号泰凌产业园2号楼"
+      }
     }
   ]
 }

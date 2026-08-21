@@ -11,9 +11,11 @@
     {
       "id": "qqj-航天502所-site",
       "name": "航天502所",
-      "city": "北京",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区中关村南三街16号"
+      }
     }
   ]
 }

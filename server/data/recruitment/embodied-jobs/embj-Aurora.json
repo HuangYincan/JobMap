@@ -6,9 +6,11 @@
     {
       "id": "embj-Aurora-site",
       "name": "Aurora",
-      "city": "Pittsburgh, PA Mountain View, CA USA",
+      "city": "Pittsburgh, PA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "1600 Smallman Street, Pittsburgh, PA"
+      }
     }
   ],
   "careerUrl": "https://www.aurora.tech/careers",

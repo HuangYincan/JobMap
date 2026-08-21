@@ -11,7 +11,9 @@
       "name": "华润集团",
       "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省深圳市南山区粤海街道科苑南路2666号中国华润大厦"
+      }
     }
   ]
 }

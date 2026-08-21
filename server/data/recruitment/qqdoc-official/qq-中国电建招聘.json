@@ -9,9 +9,11 @@
     {
       "id": "qq-中国电建招聘-site-hq",
       "name": "中国电建招聘",
-      "city": "中国电建招聘总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区车公庄西路22号"
+      }
     }
   ],
   "city_pending": true

@@ -11,9 +11,11 @@
     {
       "id": "qqj-绿盟科技-site",
       "name": "绿盟科技",
-      "city": "北京 西安 武汉 成都 南京 全国其他",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区北洼路4号益泰大厦"
+      }
     }
   ]
 }

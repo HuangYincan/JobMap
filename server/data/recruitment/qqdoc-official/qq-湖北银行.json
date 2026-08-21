@@ -9,9 +9,11 @@
     {
       "id": "qq-湖北银行-site-hq",
       "name": "湖北银行",
-      "city": "湖北银行总部",
+      "city": "武汉市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "湖北省武汉市武昌区中北路86号湖北银行大厦"
+      }
     }
   ],
   "city_pending": true

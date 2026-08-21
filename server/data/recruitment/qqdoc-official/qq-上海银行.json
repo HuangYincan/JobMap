@@ -11,7 +11,9 @@
       "name": "上海银行",
       "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市浦东新区银城中路168号上海银行大厦"
+      }
     }
   ]
 }

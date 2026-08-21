@@ -11,9 +11,11 @@
     {
       "id": "qqj-天府江东-site",
       "name": "天府江东",
-      "city": "四川眉山",
+      "city": "眉山市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "四川省眉山市仁寿县视高街道腾飞大道二段3号"
+      }
     }
   ]
 }

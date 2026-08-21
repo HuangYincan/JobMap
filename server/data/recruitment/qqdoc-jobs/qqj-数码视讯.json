@@ -11,9 +11,11 @@
     {
       "id": "qqj-数码视讯-site",
       "name": "数码视讯",
-      "city": "北京  西安  全国其他",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区开拓路15号数码视讯大厦"
+      }
     }
   ]
 }

@@ -11,9 +11,11 @@
     {
       "id": "qqj-斯道德机械-site",
       "name": "斯道德机械",
-      "city": "江苏无锡",
+      "city": "宜兴市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江苏省宜兴市芳桥工业集中开发区郁南路18号"
+      }
     }
   ]
 }

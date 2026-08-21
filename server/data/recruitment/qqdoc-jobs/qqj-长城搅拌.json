@@ -11,9 +11,11 @@
     {
       "id": "qqj-长城搅拌-site",
       "name": "长城搅拌",
-      "city": "温州  上海",
+      "city": "温州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省温州市鹿城区戍浦江路28号"
+      }
     }
   ]
 }

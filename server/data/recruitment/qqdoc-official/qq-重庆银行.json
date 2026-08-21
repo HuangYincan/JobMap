@@ -11,7 +11,9 @@
       "name": "重庆银行",
       "city": "重庆市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "重庆市江北区江北城街道永平门街6号"
+      }
     }
   ]
 }

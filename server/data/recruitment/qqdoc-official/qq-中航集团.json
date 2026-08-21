@@ -9,9 +9,11 @@
     {
       "id": "qq-中航集团-site-hq",
       "name": "中航集团",
-      "city": "中航集团总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市顺义区空港工业区天柱路30号"
+      }
     }
   ],
   "city_pending": true

@@ -11,9 +11,11 @@
     {
       "id": "qqj-爱科微-site",
       "name": "爱科微",
-      "city": "北京 上海 深圳  成都",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市浦东新区祥科路268号(佑越国际·张江AI小镇)"
+      }
     }
   ]
 }

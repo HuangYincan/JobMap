@@ -6,9 +6,11 @@
     {
       "id": "embj-节卡-site",
       "name": "节卡",
-      "city": "上海市 常州市",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市闵行区剑川路610号33-35栋"
+      }
     }
   ],
   "careerUrl": "https://jaka.zhiye.com/social/detail?jobAdId=75c99003-aff5-4812-8c31-68d15caab061",

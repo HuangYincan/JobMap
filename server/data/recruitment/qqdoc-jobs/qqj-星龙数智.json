@@ -11,9 +11,11 @@
     {
       "id": "qqj-星龙数智-site",
       "name": "星龙数智",
-      "city": "北京",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市北京经济技术开发区科谷一街10号院6号楼3层305-6A室"
+      }
     }
   ]
 }

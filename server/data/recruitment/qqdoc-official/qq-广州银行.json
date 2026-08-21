@@ -11,7 +11,9 @@
       "name": "广州银行",
       "city": "广州市",
       "province": "广东省",
-      "location": {}
+      "location": {
+        "address": "广东省广州市天河区珠江东路30号广州银行大厦"
+      }
     }
   ]
 }

@@ -11,7 +11,9 @@
       "name": "国药集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区知春路20号中国医药大厦"
+      }
     }
   ]
 }

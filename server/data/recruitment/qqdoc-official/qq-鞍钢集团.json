@@ -11,7 +11,9 @@
       "name": "鞍钢集团",
       "city": "鞍山市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "辽宁省鞍山市铁西区环钢路1号"
+      }
     }
   ]
 }

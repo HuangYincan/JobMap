@@ -11,9 +11,11 @@
     {
       "id": "qqj-共济科技-site",
       "name": "共济科技",
-      "city": "深圳 苏州 全国",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "深圳市南山区高新中三道2号深圳软件园七栋四层"
+      }
     }
   ]
 }

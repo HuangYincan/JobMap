@@ -6,9 +6,11 @@
     {
       "id": "embj-极佳-site",
       "name": "极佳",
-      "city": "北京市 杭州市 上海市",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市昌平区能源东路1号院1号楼3层304-68(集群注册)"
+      }
     }
   ],
   "careerUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7636991424973785407/detail",

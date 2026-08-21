@@ -11,7 +11,9 @@
       "name": "东莞银行",
       "city": "东莞市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "东莞市莞城区体育路21号"
+      }
     }
   ]
 }

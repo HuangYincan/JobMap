@@ -9,9 +9,11 @@
     {
       "id": "qq-中国宝武钢铁集团-site-hq",
       "name": "中国宝武钢铁集团",
-      "city": "中国宝武钢铁集团总部",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市浦东新区世博大道1859号宝武大厦1号楼"
+      }
     }
   ],
   "city_pending": true

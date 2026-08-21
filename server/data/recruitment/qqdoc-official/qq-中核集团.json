@@ -11,7 +11,9 @@
       "name": "中核集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市三里河南三巷"
+      }
     }
   ]
 }

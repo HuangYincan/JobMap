@@ -11,9 +11,11 @@
     {
       "id": "qqj-奥马冰箱-site",
       "name": "奥马冰箱",
-      "city": "广东中山",
+      "city": "中山市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省中山市南头镇东福北路54号"
+      }
     }
   ]
 }

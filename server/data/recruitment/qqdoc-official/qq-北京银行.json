@@ -11,7 +11,9 @@
       "name": "北京银行",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区金融街街道金融大街17号"
+      }
     }
   ]
 }

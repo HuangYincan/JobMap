@@ -9,9 +9,11 @@
     {
       "id": "qq-BOSS直聘-site-hq",
       "name": "BOSS直聘",
-      "city": "BOSS直聘总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市朝阳区太阳宫中路8号冠捷大厦3层302室"
+      }
     }
   ],
   "city_pending": true

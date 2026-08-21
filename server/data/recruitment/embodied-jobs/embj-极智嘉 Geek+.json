@@ -6,9 +6,11 @@
     {
       "id": "embj-极智嘉 Geek+-site",
       "name": "极智嘉 Geek+",
-      "city": "北京市 合肥市 上海市 苏州市 广州市",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市长宁区金钟路968号凌空SOHO 7号楼10层"
+      }
     }
   ],
   "careerUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/ea5138d0-82f0-4bc2-ae8c-d1938753dddc",

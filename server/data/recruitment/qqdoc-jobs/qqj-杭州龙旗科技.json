@@ -11,9 +11,11 @@
     {
       "id": "qqj-杭州龙旗科技-site",
       "name": "杭州龙旗科技",
-      "city": "杭州",
+      "city": "杭州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省杭州市访溪路西溪艺术集合村21栋"
+      }
     }
   ]
 }

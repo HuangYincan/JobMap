@@ -9,9 +9,11 @@
     {
       "id": "qq-中国一众集团-site-hq",
       "name": "中国一众集团",
-      "city": "中国一众集团总部",
+      "city": "齐齐哈尔市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "黑龙江省齐齐哈尔市富拉尔基区"
+      }
     }
   ],
   "city_pending": true

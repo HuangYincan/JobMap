@@ -8,7 +8,9 @@
       "name": "Figure AI",
       "city": "San Jose, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "3960 N First St, San Jose, CA 95134"
+      }
     }
   ],
   "careerUrl": "https://job-boards.greenhouse.io/figureai/jobs/4431092006",

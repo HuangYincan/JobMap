@@ -11,7 +11,9 @@
       "name": "浙商银行",
       "city": "杭州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省杭州市上城区民心路1号"
+      }
     }
   ]
 }

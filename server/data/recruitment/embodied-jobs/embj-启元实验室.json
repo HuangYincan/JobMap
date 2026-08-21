@@ -8,7 +8,9 @@
       "name": "启元实验室",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区紫雀路55号院8号楼"
+      }
     }
   ],
   "careerUrl": "https://yzb.hit.edu.cn/2026/0310/c19935a388130/pagem.htm",

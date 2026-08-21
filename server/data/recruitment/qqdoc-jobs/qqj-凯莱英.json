@@ -11,9 +11,11 @@
     {
       "id": "qqj-凯莱英-site",
       "name": "凯莱英",
-      "city": "天津",
+      "city": "天津市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "天津市滨海新区第七大街71号"
+      }
     }
   ]
 }

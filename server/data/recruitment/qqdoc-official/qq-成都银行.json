@@ -11,7 +11,9 @@
       "name": "成都银行",
       "city": "成都市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "四川省成都市青羊区西御街16号成都银行大厦"
+      }
     }
   ]
 }

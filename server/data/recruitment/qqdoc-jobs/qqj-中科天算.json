@@ -11,9 +11,11 @@
     {
       "id": "qqj-中科天算-site",
       "name": "中科天算",
-      "city": "上海 南京 北京  杭州",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市松江区千帆路288弄G60科创云廊6号楼"
+      }
     }
   ]
 }

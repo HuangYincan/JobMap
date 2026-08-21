@@ -11,7 +11,9 @@
       "name": "杭州银行",
       "city": "杭州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省杭州市上城区解放东路168号杭州银行大厦"
+      }
     }
   ]
 }

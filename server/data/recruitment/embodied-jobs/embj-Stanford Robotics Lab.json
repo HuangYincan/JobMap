@@ -8,7 +8,9 @@
       "name": "Stanford Robotics Lab",
       "city": "Stanford, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "Gates Computer Science Building, Stanford, CA 94305-9010"
+      }
     }
   ],
   "careerUrl": "https://ai.stanford.edu/postdoctoralfellows/",

@@ -11,9 +11,11 @@
     {
       "id": "qqj-湖南杰楚微半导体-site",
       "name": "湖南杰楚微半导体",
-      "city": "长沙",
+      "city": "长沙市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "长沙高新开发区青山西路60号"
+      }
     }
   ]
 }

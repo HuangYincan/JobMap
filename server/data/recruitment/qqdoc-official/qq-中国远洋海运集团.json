@@ -9,9 +9,11 @@
     {
       "id": "qq-中国远洋海运集团-site-hq",
       "name": "中国远洋海运集团",
-      "city": "中国远洋海运集团总部",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市浦东新区滨江大道5299号"
+      }
     }
   ],
   "city_pending": true

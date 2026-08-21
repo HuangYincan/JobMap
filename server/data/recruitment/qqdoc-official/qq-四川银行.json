@@ -11,7 +11,9 @@
       "name": "四川银行",
       "city": "成都市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "四川省成都市天府新区湖畔路北段715号"
+      }
     }
   ]
 }

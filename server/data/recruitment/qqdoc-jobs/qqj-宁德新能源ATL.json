@@ -11,9 +11,11 @@
     {
       "id": "qqj-宁德新能源ATL-site",
       "name": "宁德新能源(ATL）",
-      "city": "宁德",
+      "city": "宁德市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "福建省宁德市蕉城区漳湾镇新港路1号"
+      }
     }
   ]
 }

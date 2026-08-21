@@ -11,7 +11,9 @@
       "name": "宁波银行",
       "city": "宁波市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省宁波市鄞州区宁东路345号"
+      }
     }
   ]
 }

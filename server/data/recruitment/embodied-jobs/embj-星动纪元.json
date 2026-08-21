@@ -8,7 +8,9 @@
       "name": "星动纪元",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区中关村东路1号院7号楼7层701"
+      }
     }
   ],
   "careerUrl": "https://k0fqxcszc9.jobs.feishu.cn/index/position/7550252790111750427/detail",

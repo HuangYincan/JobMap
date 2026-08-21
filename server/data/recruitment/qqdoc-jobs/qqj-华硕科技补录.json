@@ -11,9 +11,11 @@
     {
       "id": "qqj-华硕科技补录-site",
       "name": "华硕科技—补录",
-      "city": "苏州",
+      "city": "苏州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江苏省苏州市高新区珠江路117号创新中心大厦A座"
+      }
     }
   ]
 }

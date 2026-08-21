@@ -9,9 +9,11 @@
     {
       "id": "qq-国务院国有资产监督管理委员会-site-hq",
       "name": "国务院国有资产监督管理委员会",
-      "city": "国务院国有资产监督管理委员会总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区宣武门西大街26号"
+      }
     }
   ],
   "city_pending": true

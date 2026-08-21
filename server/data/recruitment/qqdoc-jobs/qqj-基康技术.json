@@ -11,9 +11,11 @@
     {
       "id": "qqj-基康技术-site",
       "name": "基康技术",
-      "city": "北京 武汉  成都  西安  广州",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市房山区良乡凯旋大街滨河西街3号"
+      }
     }
   ]
 }

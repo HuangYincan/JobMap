@@ -84,6 +84,8 @@ test('embodied-jobs 语料: 47 个新 drop, 537 个 embj-* 岗位, 结构逐项�
   const seenExternalIds = new Set();
   let positionsTotal = 0;
   let zeroLinkDrops = 0;
+  let withAddrCount = 0;
+  let emptyLocCount = 0;
   for (const { file, drop } of embjDrops) {
     assert.match(drop.slug, /^embj-/, `${file} slug embj- 前缀`);
     assert.equal(drop.source, 'embodied-jobs', `${file} source`);
@@ -93,8 +95,20 @@ test('embodied-jobs 语料: 47 个新 drop, 537 个 embj-* 岗位, 结构逐项�
     assert.equal(site.id, `embj-${drop.name}-site`, `${file} site.id`);
     assert.equal(site.name, drop.name, `${file} site.name`);
     assert.ok(site.city.length > 0, `${file} site.city 城市并集非空`);
-    assert.deepEqual(site.province, '', `${file} province 留空 (待 geocode)`);
-    assert.deepEqual(site.location, {}, `${file} location 留空 (待 geocode)`);
+    assert.deepEqual(site.province, '', `${file} province 留空`);
+    // 2026-08-22 地址回填 (e506c4d) 新契约: location 为空对象 (9 站海外无办公点可查)
+    // 或仅含 address 字段 (38 站已回填); 不得混入 lng/lat。
+    assert.ok(site.location && typeof site.location === 'object', `${file} location 为对象`);
+    const locKeys = Object.keys(site.location);
+    const shapeOk = locKeys.length === 0 || (locKeys.length === 1 && locKeys[0] === 'address');
+    assert.ok(shapeOk, `${file} location 为空对象或仅含 address (got ${JSON.stringify(site.location)})`);
+    if (site.location.address) {
+      assert.ok(site.location.address.length > 0, `${file} address 非空`);
+      withAddrCount += 1;
+    } else {
+      assert.deepEqual(site.location, {}, `${file} location 未回填仍为空对象`);
+      emptyLocCount += 1;
+    }
     if (drop.careerUrl) assert.match(drop.careerUrl, /^https?:\/\//, `${file} careerUrl http(s)`);
     assert.ok(Array.isArray(drop.positions), `${file} positions 数组`);
     if (drop.positions.length === 0) zeroLinkDrops += 1;
@@ -113,6 +127,14 @@ test('embodied-jobs 语料: 47 个新 drop, 537 个 embj-* 岗位, 结构逐项�
       assert.match(pos.applyUrl, /^https?:\/\//, `${file} applyUrl http(s) (2026-08-21 快照全行有链接)`);
       assert.equal(pos.retrievedAt, '2026-08-21', `${file} retrievedAt 快照日期`);
     }
+  }
+  // 地址回填快照事实 (2026-08-22, e506c4d): 38 站带 address, 9 站为空 (海外无办公点可查)
+  assert.equal(withAddrCount, 38, '回填后 38 站带 address');
+  assert.equal(emptyLocCount, 9, '回填后 9 站仍为空对象');
+  // 抽查个别站点地址非空 (跨国 / 国内 / 高校各一)
+  const addrOf = (name) => embjDrops.find((r) => r.drop.name === name)?.drop.sites[0].location.address;
+  for (const name of ['Tesla', '柏楚', '浙江大学']) {
+    assert.ok(typeof addrOf(name) === 'string' && addrOf(name).length > 0, `${name} 地址已回填且非空`);
   }
   assert.equal(positionsTotal, 301, '新建 47 个 embj-* drop 共 301 岗 (总 537 − 匹配追加 236)');
   assert.equal(zeroLinkDrops, 0, '本快照无零链接公司');

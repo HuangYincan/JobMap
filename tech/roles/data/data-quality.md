@@ -151,3 +151,15 @@ query 策略与补查行为:
 - **错误码分类校准(非破坏性探测)**:缺 key → `301 必要字段key缺少或有多个`;错误 key 格式 → `311 key格式错误`;缺 address/location → `404 错误的请求路径`。与预设(`TENCENT_QUOTA_STATUSES={121,321,322}`、瞬态 `{120}`)无冲突;`311` 为永久配置失效 → 并入 `QUOTA_CLASS_REASONS` 短路集。
 - **腾讯-only 链路探测**(临时仅保留 TENCENT_MAP_KEY,`--dry-run --only=MiniMax --cities=重庆`):REPORT 正确显示 `AMAP_WEB_KEY: MISSING | BAIDU_MAP_AK: MISSING | TENCENT_MAP_KEY: set | mode: DRY-RUN`;链正确落到腾讯。
 - **实测发现:key 日配额在探测期间耗尽。** 探测开始时三端点均 status:0,约 7 次调用后全部返回 `121 此key每日调用量已达到上限`(与官方状态码页一致)。推测 key 日配额在探测前已接近耗尽(今日早前已有调用),或账号未完成个人认证导致配额小于官方文档的 10000 次/天。**待办**:用户在 lbs.qq.com 控制台核对账号认证状态与今日用量;日配额重置后重跑腾讯-only 探测(`--dry-run --only=MiniMax --cities=重庆`),观察 RESOLVED 出现 `[…/tencent]`;三 key 齐全时跑全量 `geocode:sites:apply`,记录 provider 分布。
+
+## 无地址站点网络检索补全(2026-08-22,`fix/address-backfill`)
+
+373 个只带城市、无街道地址的站点(qqdoc-jobs 203 + qqdoc-official 123 + embodied-jobs 47)由 17 个 subagent 上网检索地址后回填进 drop JSON:
+
+- **检索产物**:`parallel-sessions/20260821-boss-address-first/results/batch-01..17.json`(主仓库只读)——398 条结果,每条含 `site_id / address / source_url / address_type / confidence / note`;**来源 URL 全量存于批次 results/**,本小节不重复搬运。
+- **命中率**:398 条结果中带地址 353 条(条目级 88.7%);按站点聚合后 **342/373 站点成功回填(91.7%)**,31 站点无地址(子代理未检索到,清单见下)。
+- **聚合规则**:一站点多条结果选 `confidence: high > medium > low`,同 confidence 选 `address_type: office > registered`;无 address 的条目不参与。多城市拆分条目(site_id 带 `-城市` 后缀)按 `city-only-list.json` 权威清单归属原 site_id(精确匹配;不在清单时去掉最后一段 `-<城市>` 再匹配,仍不中记入批次报告)。
+- **city 修正规则(确定性)**:从回填地址提取城市——地址含省/市/自治区 → 取首段城市名(直辖市取「北京市」式,省+市取「XX市」);自贸区/经开区/高新区/工业园区前缀与「中国(上海)自由贸易试验区」式写法单独处理;海外英文地址取末段城市(「Waltham, MA」式取 `城市, 州`,国家后缀回落前段);已知城市表以 `official-site-parse.ts` 的 CITY_TABLE 为准。**qqdoc-official 数据契约**:提取结果必须为已知城市全称(CITY_TABLE 内,`normalizeCityName` 闸门),否则保留原值记 city-unresolved。
+- **结果**:342 站回填 `location.address`(location 已有 lng/lat 的保留坐标);203 站 city 由脏值(多城市文本/「XX总部」占位/「全国」)修正为单城市全称;2 站 city-unresolved 保留原值(`qq-三菱东京日联银行-site-hq` 地址为「日本东京都…」、`qq-中国矿产资源集团-site-hq` 地址为「河北省雄安新区…」——均不在 CITY_TABLE,仍待 geocode 城市解析)。
+- **剩余 null 清单**:31 站无地址可回填(仍保持原样,待后续通道)——`qqj-中际旭创-site-上海/北京`、`qqj-临界点-site-深圳/北京`、`qqj-启元机器人-site-上海`、`qqj-圣邦微电子-site-厦门`、`qqj-时代共赢私募基金-site`、`qqj-沛睿微电子-site-苏州`、`qqj-源件星球-site`、`qqj-神州税道-site`、`qqj-箭元科技-site`、`qqj-络明芯微电子-site`、`qqj-联合电子-site-重庆`、`qqj-艾飞智控-site`、`qqj-荣盛集团-site-苏州`、`qqj-语核科技-site`、`qqj-逆矩阵-site`、`qqj-量智开物-site`、`qqj-靖戈量化-site`、`qqj-首形科技-site`、`qq-九江银行-site-hq`、`qq-北京市各级机关-site-hq`、`embj-1X Technologies-site`、`embj-AIM Intelligent Machines-site`、`embj-Amazon Robotics-site`、`embj-Apptronik-site`、`embj-Boston Dynamics-site`、`embj-Cruise-site`、`embj-Grit Ventures-site`、`embj-HTX-site`、`embj-Tactus-site`。
+- **数据契约注意**:本次回填使 4 个断言旧值的真实数据 canary 测试不再适用(`tests/qqdoc-jobs.test.mjs` 新东方西安学校、`tests/qqdoc-official.test.mjs` 城市全称闸门已通过契约对齐、`tests/split-city-sites.test.mjs` 临界点 location、`tests/embodied-jobs-drops.test.mjs` 47 个 embj drop location 留空)——待 boss 裁决更新为回填后状态(见批次汇报 w2)。

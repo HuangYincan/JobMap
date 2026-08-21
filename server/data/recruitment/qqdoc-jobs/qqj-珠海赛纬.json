@@ -11,9 +11,11 @@
     {
       "id": "qqj-珠海赛纬-site",
       "name": "珠海赛纬",
-      "city": "珠海  合肥 淮南 抚州",
+      "city": "珠海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省珠海市高栏港经济区南水镇南化二路2号"
+      }
     }
   ]
 }

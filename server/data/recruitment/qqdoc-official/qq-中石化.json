@@ -9,9 +9,11 @@
     {
       "id": "qq-中石化-site-hq",
       "name": "中石化",
-      "city": "中石化总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市朝阳区朝阳门北大街22号"
+      }
     }
   ],
   "city_pending": true

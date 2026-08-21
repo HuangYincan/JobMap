@@ -11,9 +11,11 @@
     {
       "id": "qqj-中祥英-site",
       "name": "中祥英",
-      "city": "北京  成都  重庆",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市北京经济技术开发区科谷一街10号院8号楼9层"
+      }
     }
   ]
 }

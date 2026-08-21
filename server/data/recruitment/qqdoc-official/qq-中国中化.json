@@ -9,9 +9,11 @@
     {
       "id": "qq-中国中化-site-hq",
       "name": "中国中化",
-      "city": "中国中化总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区复兴门内大街28号凯晨世贸中心中座"
+      }
     }
   ],
   "city_pending": true

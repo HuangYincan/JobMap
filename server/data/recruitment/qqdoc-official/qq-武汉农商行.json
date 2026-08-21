@@ -11,7 +11,9 @@
       "name": "武汉农商行",
       "city": "武汉市",
       "province": "湖北省",
-      "location": {}
+      "location": {
+        "address": "湖北省武汉市江岸区建设大道618号"
+      }
     }
   ]
 }

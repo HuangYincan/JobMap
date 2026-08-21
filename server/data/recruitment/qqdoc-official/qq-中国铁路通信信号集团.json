@@ -9,9 +9,11 @@
     {
       "id": "qq-中国铁路通信信号集团-site-hq",
       "name": "中国铁路通信信号集团",
-      "city": "中国铁路通信信号集团总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市丰台区汽车博物馆南路1号院"
+      }
     }
   ],
   "city_pending": true

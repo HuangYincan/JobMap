@@ -9,9 +9,11 @@
     {
       "id": "qq-中国航信-site-hq",
       "name": "中国航信",
-      "city": "中国航信总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市顺义区后沙峪镇裕民大街7号"
+      }
     }
   ],
   "city_pending": true

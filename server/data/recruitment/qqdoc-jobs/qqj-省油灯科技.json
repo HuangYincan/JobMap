@@ -11,9 +11,11 @@
     {
       "id": "qqj-省油灯科技-site",
       "name": "省油灯科技",
-      "city": "深圳",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "深圳市龙岗区南湾街道布澜路21号联创科技园一期4栋4楼"
+      }
     }
   ]
 }

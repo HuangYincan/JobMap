@@ -9,9 +9,11 @@
     {
       "id": "qq-电网招聘平台-site-hq",
       "name": "电网招聘平台",
-      "city": "电网招聘平台总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区西长安街86号"
+      }
     }
   ],
   "city_pending": true

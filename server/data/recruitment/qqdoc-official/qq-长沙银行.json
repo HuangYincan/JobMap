@@ -11,7 +11,9 @@
       "name": "长沙银行",
       "city": "长沙市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "湖南省长沙市岳麓区观沙岭街道滨江路53号楷林商务中心B座"
+      }
     }
   ]
 }

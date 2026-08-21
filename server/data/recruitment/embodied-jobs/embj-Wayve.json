@@ -6,9 +6,11 @@
     {
       "id": "embj-Wayve-site",
       "name": "Wayve",
-      "city": "Sunnyvale, CA London, UK",
+      "city": "London",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "230 York Way, London N7 9AG, UK"
+      }
     }
   ],
   "careerUrl": "https://wayve.firststage.co/jobs/u4ZL35a8AP/view?layout=grid",

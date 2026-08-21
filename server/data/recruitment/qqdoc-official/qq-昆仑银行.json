@@ -9,9 +9,11 @@
     {
       "id": "qq-昆仑银行-site-hq",
       "name": "昆仑银行",
-      "city": "昆仑银行总部",
+      "city": "克拉玛依市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "新疆克拉玛依市克拉玛依区世纪大道7号"
+      }
     }
   ],
   "city_pending": true

@@ -11,9 +11,11 @@
     {
       "id": "qqj-江苏超力-site",
       "name": "江苏超力",
-      "city": "江苏省丹阳市",
+      "city": "丹阳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江苏省丹阳市访仙工业园兴园路1号"
+      }
     }
   ]
 }

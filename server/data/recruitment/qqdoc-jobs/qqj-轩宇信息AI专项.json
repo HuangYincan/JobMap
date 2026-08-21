@@ -11,9 +11,11 @@
     {
       "id": "qqj-轩宇信息AI专项-site",
       "name": "轩宇信息—AI专项",
-      "city": "北京",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区中关村南三街16号"
+      }
     }
   ]
 }

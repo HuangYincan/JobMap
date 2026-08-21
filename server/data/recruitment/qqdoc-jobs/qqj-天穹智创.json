@@ -11,9 +11,11 @@
     {
       "id": "qqj-天穹智创-site",
       "name": "天穹智创",
-      "city": "四川眉山",
+      "city": "眉山市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "四川省眉山市仁寿县视高街道腾飞大道二段商务中心(CBD二期)2号楼五层"
+      }
     }
   ]
 }

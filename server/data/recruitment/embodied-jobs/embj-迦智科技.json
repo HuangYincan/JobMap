@@ -6,9 +6,11 @@
     {
       "id": "embj-迦智科技-site",
       "name": "迦智科技",
-      "city": "杭州市 济南市 汕尾",
+      "city": "杭州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "浙江省杭州市滨江区东冠路611号金盛科技园8幢1层101-110室"
+      }
     }
   ],
   "careerUrl": "https://www.zhipin.com/gongsi/job/bcd987db80a996f61nR_09-6Eg~~.html?ka=company-jobs",

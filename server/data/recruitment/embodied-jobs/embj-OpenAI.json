@@ -8,7 +8,9 @@
       "name": "OpenAI",
       "city": "San Francisco, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "1455 3rd Street, San Francisco, CA"
+      }
     }
   ],
   "careerUrl": "https://openai.com/careers/robotics-software-engineer/",

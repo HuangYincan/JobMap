@@ -11,9 +11,11 @@
     {
       "id": "qqj-瑞发科半导体-site",
       "name": "瑞发科半导体",
-      "city": "天津",
+      "city": "天津市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "天津华苑产业区华天道8号海泰信息广场B-1108"
+      }
     }
   ]
 }

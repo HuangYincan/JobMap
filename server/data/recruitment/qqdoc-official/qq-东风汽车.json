@@ -11,7 +11,9 @@
       "name": "东风汽车",
       "city": "武汉市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "湖北省武汉市武汉经济技术开发区东风大道特1号"
+      }
     }
   ]
 }

@@ -6,9 +6,11 @@
     {
       "id": "embj-Microsoft-site",
       "name": "Microsoft",
-      "city": "美国 全球",
+      "city": "Redmond, WA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "One Microsoft Way, Redmond, WA 98052-6399"
+      }
     }
   ],
   "careerUrl": "https://www.microsoft.com/en-us/research/academic-program/microsoft-research-fellowship/",

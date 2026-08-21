@@ -11,9 +11,11 @@
     {
       "id": "qqj-长光卫星-site",
       "name": "长光卫星",
-      "city": "吉林长春",
+      "city": "长春市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "吉林省长春市北湖科技开发区明溪路1299号"
+      }
     }
   ]
 }

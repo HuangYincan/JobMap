@@ -9,9 +9,11 @@
     {
       "id": "qq-晋商银行-site-hq",
       "name": "晋商银行",
-      "city": "晋商银行总部",
+      "city": "太原市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "山西省太原市小店区长风街59号"
+      }
     }
   ],
   "city_pending": true

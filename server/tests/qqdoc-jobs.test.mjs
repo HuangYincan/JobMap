@@ -114,10 +114,11 @@ test('parseQqdocJobsPayload handles array / single / garbage', () => {
 });
 
 test('qqdoc-jobs drops carry no city_pending-style placeholders as sites', async () => {
-  // sites[].city 是「北京、杭州、上海」式多城市文本 (与 radar 同语义), 保留原样;
-  // location 可为空对象 {} (待 geocode), 不得被丢弃。
+  // 2026-08-22 地址回填 (e506c4d): 单城市 site 的 city 归一为「西安市」, location 带回填 address;
+  // 未回填时 location 仍可为空对象 {}, 不得被丢弃。
   const raw = dropFile('qqj-新东方西安学校.json');
   assert.equal(raw.sites.length, 1);
-  assert.equal(raw.sites[0].city, '西安 咸阳');
-  assert.deepEqual(raw.sites[0].location, {});
+  assert.equal(raw.sites[0].city, '西安市');
+  assert.ok(raw.sites[0].location.address.length > 0, 'location 含回填 address');
+  assert.equal(raw.sites[0].location.address, '陕西省西安市碑林区南二环西段27号新东方大厦');
 });

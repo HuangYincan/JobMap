@@ -6,9 +6,11 @@
     {
       "id": "embj-Apple-site",
       "name": "Apple",
-      "city": "Cupertino, CA 全球",
+      "city": "Cupertino, CA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "One Apple Park Way, Cupertino, CA 95014"
+      }
     }
   ],
   "careerUrl": "https://machinelearning.apple.com/",

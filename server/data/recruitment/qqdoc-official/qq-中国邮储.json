@@ -11,7 +11,9 @@
       "name": "中国邮储",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区金融大街3号"
+      }
     }
   ]
 }

@@ -11,9 +11,11 @@
     {
       "id": "qqj-赛乐医疗-site",
       "name": "赛乐医疗",
-      "city": "江苏常州",
+      "city": "常州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "江苏省常州市新北区雁荡河路26号"
+      }
     }
   ]
 }

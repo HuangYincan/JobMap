@@ -11,9 +11,11 @@
     {
       "id": "qqj-中铁大桥院-site",
       "name": "中铁大桥院",
-      "city": "武汉 南京  广州  芜湖",
+      "city": "武汉市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "湖北省武汉经济技术开发区博学路8号(沌口院区)"
+      }
     }
   ]
 }

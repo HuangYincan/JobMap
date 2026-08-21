@@ -11,9 +11,11 @@
     {
       "id": "qqj-中大咨询集团-site",
       "name": "中大咨询集团",
-      "city": "北京 广州 全国其他",
+      "city": "广州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广州市海珠区沥滘路368号广州之窗商务港A区7楼"
+      }
     }
   ]
 }

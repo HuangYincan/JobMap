@@ -11,7 +11,9 @@
       "name": "顺德农商行",
       "city": "佛山市",
       "province": "广东省",
-      "location": {}
+      "location": {
+        "address": "广东省佛山市顺德区大良街道德和社区兴业路8号"
+      }
     }
   ]
 }

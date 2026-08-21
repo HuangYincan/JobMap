@@ -11,9 +11,11 @@
     {
       "id": "qqj-中国电科43所-site",
       "name": "中国电科43 所",
-      "city": "合肥",
+      "city": "合肥市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "安徽省合肥市高新区合欢路19号"
+      }
     }
   ]
 }

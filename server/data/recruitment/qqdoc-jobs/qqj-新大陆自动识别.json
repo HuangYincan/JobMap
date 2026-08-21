@@ -11,9 +11,11 @@
     {
       "id": "qqj-新大陆自动识别-site",
       "name": "新大陆自动识别",
-      "city": "福州 全国其他  海外",
+      "city": "福州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "福建省福州市马尾区儒江西路1号新大陆科技园"
+      }
     }
   ]
 }

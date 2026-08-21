@@ -11,9 +11,11 @@
     {
       "id": "qqj-妙芯微-site",
       "name": "妙芯微",
-      "city": "无锡 苏州",
+      "city": "无锡市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "无锡市滨湖区建筑西路583号803"
+      }
     }
   ]
 }

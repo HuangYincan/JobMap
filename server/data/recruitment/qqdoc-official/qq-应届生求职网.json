@@ -9,9 +9,11 @@
     {
       "id": "qq-应届生求职网-site-hq",
       "name": "应届生求职网",
-      "city": "应届生求职网总部",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市静安区灵石路697号巨丰商务5楼"
+      }
     }
   ],
   "city_pending": true

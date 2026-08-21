@@ -11,9 +11,11 @@
     {
       "id": "qqj-格赛科技-site",
       "name": "格赛科技",
-      "city": "成都",
+      "city": "成都市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "四川省成都市郫县天虹路3号B幢4层"
+      }
     }
   ]
 }

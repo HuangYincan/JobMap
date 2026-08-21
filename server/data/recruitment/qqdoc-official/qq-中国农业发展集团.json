@@ -11,7 +11,9 @@
       "name": "中国农业发展集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区西单民丰胡同31号中水大厦"
+      }
     }
   ]
 }

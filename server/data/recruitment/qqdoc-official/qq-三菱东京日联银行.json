@@ -11,7 +11,9 @@
       "name": "三菱东京日联银行",
       "city": "三菱东京日联银行总部",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "日本东京都千代田区丸之内二丁目7番1号(邮编100-8388)"
+      }
     }
   ],
   "city_pending": true

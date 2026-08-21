@@ -11,9 +11,11 @@
     {
       "id": "qqj-瑶芯微电子-site",
       "name": "瑶芯微电子",
-      "city": "上海 成都",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "中国(上海)自由贸易试验区蔡伦路1690号3幢405室"
+      }
     }
   ]
 }

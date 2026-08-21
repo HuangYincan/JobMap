@@ -11,9 +11,11 @@
     {
       "id": "qqj-微风安全-site",
       "name": "微风安全",
-      "city": "北京 上海 广州 苏州 浙江 湖北",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区永澄北路2号院1号楼1层872号"
+      }
     }
   ]
 }

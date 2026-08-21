@@ -11,9 +11,11 @@
     {
       "id": "qqj-芯恩-site",
       "name": "芯恩",
-      "city": "青岛",
+      "city": "青岛市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "山东省青岛市黄岛区山王河路1088号"
+      }
     }
   ]
 }

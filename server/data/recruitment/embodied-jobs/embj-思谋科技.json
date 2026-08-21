@@ -6,9 +6,11 @@
     {
       "id": "embj-思谋科技-site",
       "name": "思谋科技",
-      "city": "深圳市 上海市",
+      "city": "深圳市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "深圳市前海深港合作区南山街道前海大道前海嘉里商务中心四期T2写字楼2201A"
+      }
     }
   ],
   "careerUrl": "https://app.mokahr.com/m/campus-recruitment/smartmore/40506#/job/1758bda9-1d08-48c7-9930-10105329a460",

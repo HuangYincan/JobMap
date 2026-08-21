@@ -11,9 +11,11 @@
     {
       "id": "qqj-曼胡默尔-site",
       "name": "曼胡默尔",
-      "city": "上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市嘉定区兴庆路168号"
+      }
     }
   ]
 }

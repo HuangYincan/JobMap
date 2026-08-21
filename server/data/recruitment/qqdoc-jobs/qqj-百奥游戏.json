@@ -11,9 +11,11 @@
     {
       "id": "qqj-百奥游戏-site",
       "name": "百奥游戏",
-      "city": "广州",
+      "city": "广州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广州市天河区黄埔大道西120号高志大厦29-35层"
+      }
     }
   ]
 }

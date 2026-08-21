@@ -11,9 +11,11 @@
     {
       "id": "qqj-光大证劵-site",
       "name": "光大证劵",
-      "city": "北京 上海  深圳 广州 全国",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市静安区新闸路1508号"
+      }
     }
   ]
 }

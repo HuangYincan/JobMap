@@ -11,9 +11,11 @@
     {
       "id": "qqj-易动宇航-site",
       "name": "易动宇航",
-      "city": "北京 上海",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区建材城中路27号12幢1层101号"
+      }
     }
   ]
 }

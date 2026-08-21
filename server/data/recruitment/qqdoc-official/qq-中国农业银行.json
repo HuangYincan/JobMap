@@ -9,9 +9,11 @@
     {
       "id": "qq-中国农业银行-site-hq",
       "name": "中国农业银行",
-      "city": "中国农业银行总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市东城区建国门内大街69号"
+      }
     }
   ],
   "city_pending": true

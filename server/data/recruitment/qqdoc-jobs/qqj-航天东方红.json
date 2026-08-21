@@ -11,9 +11,11 @@
     {
       "id": "qqj-航天东方红-site",
       "name": "航天东方红",
-      "city": "北京",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市海淀区友谊路104号(北京航天城)"
+      }
     }
   ]
 }

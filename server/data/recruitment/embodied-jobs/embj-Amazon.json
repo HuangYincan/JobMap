@@ -6,9 +6,11 @@
     {
       "id": "embj-Amazon-site",
       "name": "Amazon",
-      "city": "全球 北美",
+      "city": "Seattle, WA",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "2111 7th Avenue, Seattle, WA"
+      }
     }
   ],
   "careerUrl": "https://www.amazon.science/research-awards",

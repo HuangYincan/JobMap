@@ -11,9 +11,11 @@
     {
       "id": "qqj-ShopeeAIStarProgram顶尖技术人-site",
       "name": "Shopee — AI Star Program 顶尖技术人才",
-      "city": "北京  上海  深圳 新加坡",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市徐汇区桂平路391号3号楼31层"
+      }
     }
   ]
 }

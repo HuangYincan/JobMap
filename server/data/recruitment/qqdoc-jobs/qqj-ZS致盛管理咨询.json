@@ -11,9 +11,11 @@
     {
       "id": "qqj-ZS致盛管理咨询-site",
       "name": "ZS致盛管理咨询",
-      "city": "上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市静安区南京西路1788号10层06单元(实际楼层8层)"
+      }
     }
   ]
 }

@@ -11,9 +11,11 @@
     {
       "id": "qqj-启鸣芯半导体-site",
       "name": "启鸣芯半导体",
-      "city": "上海 苏州",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "中国(上海)自由贸易试验区碧波路690号4幢701室"
+      }
     }
   ]
 }

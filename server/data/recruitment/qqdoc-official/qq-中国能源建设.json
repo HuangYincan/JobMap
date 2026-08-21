@@ -9,9 +9,11 @@
     {
       "id": "qq-中国能源建设-site-hq",
       "name": "中国能源建设",
-      "city": "中国能源建设总部",
+      "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市朝阳区西大望路甲26号院1号楼"
+      }
     }
   ],
   "city_pending": true

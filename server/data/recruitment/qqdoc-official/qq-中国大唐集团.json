@@ -11,7 +11,9 @@
       "name": "中国大唐集团",
       "city": "北京市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "北京市西城区广宁伯街1号"
+      }
     }
   ]
 }

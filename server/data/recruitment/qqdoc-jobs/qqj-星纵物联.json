@@ -11,9 +11,11 @@
     {
       "id": "qqj-星纵物联-site",
       "name": "星纵物联",
-      "city": "厦门",
+      "city": "厦门市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "厦门市集美区软件园三期C09栋"
+      }
     }
   ]
 }

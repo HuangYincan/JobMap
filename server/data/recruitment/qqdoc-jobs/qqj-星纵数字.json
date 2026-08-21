@@ -11,9 +11,11 @@
     {
       "id": "qqj-星纵数字-site",
       "name": "星纵数字",
-      "city": "厦门",
+      "city": "厦门市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "厦门市软件园二期望海路63-2号4-5楼"
+      }
     }
   ]
 }

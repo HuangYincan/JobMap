@@ -11,9 +11,11 @@
     {
       "id": "qqj-新能德-site",
       "name": "新能德",
-      "city": "东莞",
+      "city": "东莞市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广东省东莞市东坑镇角社村兴国中路8号"
+      }
     }
   ]
 }

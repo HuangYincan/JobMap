@@ -11,9 +11,11 @@
     {
       "id": "qqj-中汽工程暑期开放日-site",
       "name": "| 中汽工程—暑期开放日",
-      "city": "天津  苏州",
+      "city": "天津市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "天津市南开区长江道591号"
+      }
     }
   ]
 }

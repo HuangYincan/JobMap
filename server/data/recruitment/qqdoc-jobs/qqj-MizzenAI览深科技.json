@@ -11,9 +11,11 @@
     {
       "id": "qqj-MizzenAI览深科技-site",
       "name": "Mizzen AI 览深科技",
-      "city": "上海",
+      "city": "上海市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "上海市徐汇区龙台路180号3层01部位3-1室"
+      }
     }
   ]
 }

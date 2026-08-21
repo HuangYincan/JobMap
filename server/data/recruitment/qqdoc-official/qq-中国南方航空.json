@@ -9,9 +9,11 @@
     {
       "id": "qq-中国南方航空-site-hq",
       "name": "中国南方航空",
-      "city": "中国南方航空总部",
+      "city": "广州市",
       "province": "",
-      "location": {}
+      "location": {
+        "address": "广州市白云区齐心路68号中国南方航空大厦"
+      }
     }
   ],
   "city_pending": true
