@@ -215,3 +215,43 @@ Geocoder / Geolocation);`coordSystem: 'bd09'`;失败一律安全值([]/null + wa
   顺序配置化;
 - **多引擎同时加载**:单视图单引擎,切换为「销毁旧 view → 加载新引擎 → 重建」,
   不存在双引擎同屏。
+
+## ws-5 收尾与验证回填(2026-08-22,feature/engine-search-cleanup)
+
+> 本批次第 5 轮(轮 1-4 = 契约扩展 + 控制器引擎无关化 + 切换生命周期 + 层级)。
+
+### 搜索引擎化(poi-service 关键词回退 provider 化)
+
+关键词回退(domain 搜索)原硬绑 `amap-api.searchPOI`,与视口兜底
+(`viewportFallbackSearch`,轮 1 已 provider 化)口径不一致——引擎切到腾讯/百度后
+关键词搜索仍走高德。修复:改走活跃引擎 `activeSearchProvider.searchPOI`
+(`limit/page/city` 与视口兜底同口径,`page` 为契约 duck-type 扩展);未注入
+(SSR/测试/零配置)回落 `amap-api.searchPOI` 直连,行为与迁移前一致;provider
+抛错仍为错误信号(可重试),不静默 return existing。注入机制不变
+(`use-map-engine` 挂载/卸载时 `setActiveSearchProvider`,poi-service L42-46)。
+
+### 聚合徽章清理(city cluster 摘除能力分派)
+
+聚合徽章清理原调 `marker.setMap(null)`——`createCityClusterMarker` 返回的是
+**厂商裸实例**(`wrapper.raw`),BMapGL 无 setMap → 静默 no-op → 跨 zoom 分桶
+切换旧徽章泄漏叠图。修复:按能力分派摘除(`typeof marker.setMap === 'function'
+→ setMap(null)`,否则 `remove()`),与契约 `MapMarker.remove` 的引擎语义一致
+(AMap/TMap glMarker = setMap(null),BMapGL = remove())。
+
+### 验证结果(ws-5 验收)
+
+| 项 | 结果 |
+|---|---|
+| 三引擎 marker 生命周期贯通(创建 → setZIndex → setVisible → on/off → remove,engine-mock 断言三引擎语义一致)| ✅ 6/6(map-engine-lifecycle.test.mjs)|
+| 徽章形态摘除回归(offset/zIndex/bubble 透传 + 分派摘除)| ✅ 3/3(同上文件)|
+| poi-service 关键词 provider 路由(杭州外/全国+翻页/杭州内回退/抛错信号)| ✅ 4/4 |
+| 全量 npm test(含轮 1-4 合并基线:切换回滚/重入取代/层级隔离 CSS 断言)| ✅ 1096 pass / 2 skip / 0 fail |
+| typecheck / git diff --check | ✅ |
+| 契约 grep(徽章段不再出现裸实例 setMap(null) 直调)| ✅(distance overlay 遗留见下)|
+| 真实验证(切三家 / POI 交互 / 徽章聚合在腾讯 MultiMarker 降级与百度 HTML 徽章)| ⛔ 未做:headless worker 无浏览器工具、worktree 无真实 key;记 deferred #1 依赖真实 key + 浏览器回填 |
+
+**遗留(边界外,建议后续 fix WS)**:distance overlay(距离圈/手柄,
+map-shell L1097/1101/1120/1138 等)仍持 `.raw` 直调 AMap 专属 API
+(setMap(null)/setCenter/setRadius/getMap/getRadius)——腾讯/百度引擎下与徽章
+同款风险(无 setMap 的 raw 上直调会 TypeError / no-op);ws-5 行段边界未及,
+已记 deferred,待后续轮次契约化。

@@ -151,19 +151,32 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<FetchPOIResult
       if (local !== null && local.pois.length > existing.length) return local;
     }
     try {
-      const result = await searchPOI({
-        keyword: options.query,
-        center,
-        radius: searchRadiusMeters(zoom, center.lat),
-        pageSize: 25,
-        page: (options.pageOffset ?? 0) + 1,
-        city: zoom <= 8 ? '全国' : '',
-      });
+      // 关键词回退与视口兜底同口径(ws-5 修):活跃引擎优先——引擎切换(腾讯/百度)
+      // 后关键词搜索不再硬绑 amap-api;未注入(SSR/测试/零配置)→ 回落 amap-api
+      // searchPOI,行为与迁移前一致(AMap 引擎 searchPOI 本就走 amap-api 同语义)。
+      const provider = activeSearchProvider;
+      const pois = provider
+        ? await provider.searchPOI({
+            keyword: options.query,
+            center,
+            radius: searchRadiusMeters(zoom, center.lat),
+            limit: 25,
+            page: (options.pageOffset ?? 0) + 1,
+            city: zoom <= 8 ? '全国' : '',
+          } as Parameters<MapSearchProvider['searchPOI']>[0])
+        : (await searchPOI({
+            keyword: options.query,
+            center,
+            radius: searchRadiusMeters(zoom, center.lat),
+            pageSize: 25,
+            page: (options.pageOffset ?? 0) + 1,
+            city: zoom <= 8 ? '全国' : '',
+          })).pois;
       // Exact-name hits survive isCommonPoi: the user asked for that place by
       // name, so a sparse-but-matching card beats "searched but no card".
       const next = mergePoisById(
         existing,
-        result.pois.filter((p) => isCommonOrExactName(p, options.query || '')),
+        pois.filter((p) => isCommonOrExactName(p, options.query || '')),
         DOMAIN_POI_HARD_CAP,
       );
       options.onBatch?.(next);
