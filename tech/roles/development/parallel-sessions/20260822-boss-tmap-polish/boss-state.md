@@ -11,24 +11,24 @@
 
 ## stage
 
-- current: VERIFY(6/7 真实验证通过;ws-d 修卫星中)
+- current: 终态(4/4 WS MERGED;7/7 bug 真实验证通过)
 - updated_at: 2026-08-22
 
 ## workstreams
 
 | ws | branch | worktree | prompt | report | status | last_tip | dispatched_at | finished_at | verdict |
 |---|---|---|---|---|---|---|---|---|---|
-| a | feature/tmap-poi | /Users/acccan/dm-wt-pa | prompts/ws-a.md | reports/ws-a.md | MERGED | 729c55f | 轮1 | | OK(1145/1143 pass 复核;聚合徽章+icon 真实验证✅) |
-| b | feature/tmap-style-controls | /Users/acccan/dm-wt-pb | prompts/ws-b.md | reports/ws-b.md | MERGED | b9bbfe3 | 轮1 | | OK(1149/1147 pass 复核;水印/比例尺/zoom/深色真实验证✅) |
-| c | feature/baidu-ready-signal | /Users/acccan/dm-wt-pc | prompts/ws-c.md | reports/ws-c.md | MERGED | cdb1918 | 轮1 | | OK(1140 pass 复核;**百度首次真机渲染成功**✅) |
-| d | feature/tmap-satellite | /Users/acccan/dm-wt-pd | prompts/ws-d.md | reports/ws-d.md | RUNNING | 9af00b3 | 轮2 | | 卫星样式修正 |
+| a | feature/tmap-poi | /Users/acccan/dm-wt-pa | prompts/ws-a.md | reports/ws-a.md | MERGED | 729c55f | 轮1 | | OK(1145/1143 pass 复核) |
+| b | feature/tmap-style-controls | /Users/acccan/dm-wt-pb | prompts/ws-b.md | reports/ws-b.md | MERGED | b9bbfe3 | 轮1 | | OK(1149/1147 pass 复核) |
+| c | feature/baidu-ready-signal | /Users/acccan/dm-wt-pc | prompts/ws-c.md | reports/ws-c.md | MERGED | cdb1918 | 轮1 | | OK(1140 pass 复核) |
+| d | feature/tmap-satellite | /Users/acccan/dm-wt-pd | prompts/ws-d.md | reports/ws-d.md | MERGED | d46fff7 | 轮2 | | OK(1186 pass 复核) |
 
 ## verification(boss 亲自 Playwright,2026-08-22 19:10-19:20)
 
 | bug | 验证方式 | 结果 |
 |---|---|---|
 | 1 POI 缩放/聚合 | zoom≤8 蓝像素 5500(聚合徽章 dataURL)+ LOD 切换 | ✅ |
-| 2 卫星 | 亮度 231/方差 21(全白,瓦片未加载) | ❌ ws-d |
+| 2 卫星 | 修复前 231/21(全白)→ 修复后 75/38(影像渲染) | ✅ ws-d |
 | 2 深色 | 标准 177 vs 深色 104,差值 73 | ✅ |
 | 3 百度 | BMap 元素+canvas 渲染,挂载直连无回退,零错误 | ✅ |
 | 4 水印 | logo_def.png 存在但 CSS 隐藏 | ✅ |
