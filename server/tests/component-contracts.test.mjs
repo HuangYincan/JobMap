@@ -445,7 +445,21 @@ test('map shell Bug3 locate: 挂载定位不抢占已移图相机(首点 pin 不
   // 默认才 setCenter+setZoom+setMapCenter(已交互不抢镜头:geolocation resolve 可能
   // 晚于首交互,此时跳变 = 「整页刷新」观感)。ws-c:视图方法经 view 契约。
   // 2026-08-21 追加第四门控:视图已销毁(StrictMode 双调用弹卡窗口)不读相机。
-  assert.match(shell, /getCurrentPosition\(view\.raw\)/);
+  // 挂载定位按引擎分派(fix-runtime):AMap 走 amap-api(蓝点+精度圈),非 AMap 走
+  // 引擎 search 纯定位(无蓝点渲染)。getCurrentPosition(view.raw) 只允许出现在
+  // locateForMap 分派内部——调用点一律 locateForMap(view),杜绝 amap 控件塞给
+  // 非 amap raw map(腾讯 addControl 类型错误崩溃根因)。
+  assert.match(shell, /function locateForMap\(view: MapView\)/);
+  assert.match(shell, /view\.engine\.id === "amap"/);
+  assert.match(shell, /view\.engine\.search\.getCurrentPosition\(\)/);
+  assert.equal(
+    (shell.match(/getCurrentPosition\(view\.raw\)/g) ?? []).length,
+    1,
+    'AMap 专属 getCurrentPosition(view.raw) 只允许在 locateForMap 内出现一次',
+  );
+  assert.match(shell, /locateForMap\(view\)/);
+  assert.match(shell, /locateForMap\(mapInstance\.current\)/);
+  assert.doesNotMatch(shell, /getCurrentPosition\(mapInstance\.current\.raw\)/);
   assert.match(shell, /setUserLocation\(\{ lng, lat \}\)/);
   assert.match(shell, /setSearchOrigin\(\(prev\) => prev \?\? \{ lng, lat \}\)/);
   assert.match(
