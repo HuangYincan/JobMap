@@ -580,3 +580,46 @@ AMap 的 onerror 回退链在 icon 路径不可用);徽章 dataURL 图标阴影(
 - `component-contracts.test.mjs` 追加 zoom 契约化防回归;既有
   map-engine-tencent.test.mjs 的 setStyle / addControl 降级 / 版权隐藏三个
   用例按新语义更新(行为变更的必然结果)。
+
+## ws-d 回填:卫星底图修正 —— 'raster' 非法,正确形态 `{type:'satellite'}`(2026-08-22,feature/tmap-satellite)
+
+> **本节修正 ws-b 节「卫星核实:raster 实现正确」的记录错误**。ws-b 真机合并后
+> 冒烟(boss Playwright 2026-08-22)坐实:切「卫星」后 TMap 地图全白(中心亮度
+> 231/标准差 21,瓦片未渲染,console 无瓦片请求错误 = 请求根本没发出)。
+> 根因与 SDK 实包源码完全吻合(见下),以本节为准。
+
+### SDK v1.8.0.2 实包源码核实(ws-d,2026-08-22,map.qq.com/api/gljs?v=1.exp 2.2MB 全包)
+
+- **MAP_TYPE 常量**(constants 模块 `o`):`{vector:"vector", satellite:"satellite",
+  traffic:"traffic", handdraw:"handdraw", oversea:"oversea"}` —— **无 `raster`**;
+  全包 2.2MB **零处** `"raster"` 字符串 → `baseMap:{type:'raster'}` 是非法值;
+- **卫星判定**:`hasSatellite()` 用 `oc(t)=t.type===MAP_TYPE.satellite`;底图层
+  分派 `"Tencent.Satellite.Map"===i ? {type:"satellite",feature:"base"}`
+  (LITEMODE_LAYER_TYPE.Satellite = "Tencent.Satellite.Map");
+- **features 缺省回退**:`Vl(type, features)` 对缺省 features 查
+  `DEFAULT_BASEMAP[type].features` —— `DEFAULT_BASEMAP.satellite` =
+  `{type:o.satellite, features:[satellite_base, road]}`(影像 + 道路注记,
+  审图号 GS(2025)5644号);`DEFAULT_BASEMAP['raster']` = undefined →
+  features 空 → resetBaseLayer 不建任何底图层 → **瓦片请求不发、地图全白**
+  (与真机症状逐项吻合:无请求、无报错、白屏);
+- **正确形态**:`{ type: 'satellite' }`(features 缺省即影像+道路注记);
+  构造期 `baseMap` 选项与运行期 `setBaseMap` 同路径
+  (layerResource.setBaseMap → _initBaseLayer);`{type:'satellite'}` 与暗色
+  mapStyleId 不冲突(引擎对卫星不传/复位 'DEFAULT',LITEMODE 暗色层不激活)。
+
+### 修复(仅 setStyle 段)
+
+- `styleToBaseMap`:satellite 映射 `'raster'` → `'satellite'`(构造期 + 运行期
+  setStyle 共用,一处修复两路生效);其余(whitesmoke → vector+DARK、
+  normal → vector、setMapStyleId 复位顺序)不变;
+- 契约 MapStyleId 三值语义不变;其他引擎零改动。
+
+### 测试
+
+- `map-engine-tencent-style.test.mjs`:卫星断言 `raster` → `satellite`;新增
+  「卫星 setBaseMap 调用断言」回归 —— mock 忠实复刻 SDK 图层解析
+  (MAP_TYPE/DEFAULT_BASEMAP 查表:satellite → [base,road] 两层、raster →
+  零层),钉死非法值白图根因 + 卫星→深色→标准往返;
+- `map-engine-tencent.test.mjs` setStyle 用例同步更新(钉旧 'raster' 的断言
+  是修复的必然结果,不改则门禁红);
+- 相关回归:map-engine-tencent-style + map-engine-tencent 61/61 通过。
