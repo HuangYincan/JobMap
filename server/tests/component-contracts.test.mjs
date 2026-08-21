@@ -907,7 +907,7 @@ test('agent panel memory: login-only entry + embedded overlay (ws-mem-b)', () =>
   assert.match(panel, /t\("agentMemoryError", lang\)/);
   assert.match(panel, /t\("agentMemoryDelete", lang\)/);
   assert.match(panel, /t\("agentMemoryClear", lang\)/);
-  assert.match(panel, /t\("agentMemoryClearConfirm", lang\)/);
+  assert.match(panel, /t\("agentMemoryClearConfirm", langRef\.current\)/);
   assert.match(panel, /memoryViewState\(memoriesLoading, memoriesError, memories\.length\)/);
   // 数据契约:GET 列表 / DELETE 逐条(id 查询参数,saved 范式)/ DELETE 清除全量
   assert.match(panel, /fetch\("\/api\/me\/memories"\)/);
@@ -920,8 +920,9 @@ test('agent panel memory: login-only entry + embedded overlay (ws-mem-b)', () =>
   assert.match(panel, /export type MemoryViewState = "loading" \| "error" \| "empty" \| "list"/);
   // 清屏语义不变:clearScreen 只清对话/覆盖物,不触碰记忆状态(记忆跨会话)
   const clearAt = panel.indexOf('const clearScreen = useCallback');
-  assert.ok(clearAt !== -1, 'clearScreen anchor exists');
-  const clearBlock = panel.slice(clearAt, clearAt + 900);
+  const clearEnd = panel.indexOf('const replayAction = useCallback', clearAt);
+  assert.ok(clearAt !== -1 && clearEnd > clearAt, 'clearScreen anchor exists');
+  const clearBlock = panel.slice(clearAt, clearEnd);
   assert.doesNotMatch(clearBlock, /setMemories|memoriesOpen|agentMemory/);
   // i18n 键齐全(双语文案)
   assert.match(i18n, /agentMemory: \{\s*zh: '记忆',\s*en: 'Memory',\s*\},/);
