@@ -327,3 +327,50 @@ getscript 开头即 `BMapGL={}` 占位,残缺命名空间由轮询兜住,超时�
 发布无 document.write 的新加载器可再评估升级;TMap 单 marker 精确 zIndex
 (SDK 无 per-geometry zIndex)以实例 max 近似,若产品要求单 marker 层级差需
 按层级分实例(与批量化权衡)。
+
+## ws-7 就绪等待与超时回填(2026-08-22,feature/engine-baidu-ready:百度 createView 就绪超时回滚)
+
+### 诊断(boss 真实验证,2026-08-22 Playwright)
+
+轮6 后百度加载器已生效,但用户 Baidu AK 被禁用(服务端弹窗「APP服务被禁用了」)
+→ SDK 内部异步崩溃(`BMapGL._rd` null 等 telemetry 错误),`new BMapGL.Map()`
+创建**成功但不渲染、不抛错** → switch 报告成功 → UI 显示百度选中但地图全空,
+无回滚(旧 AMap 已销毁,容器无图)。
+
+根因:`createView` 构造 Map 后直接返回,不等就绪事件——SDK 对象创建成功即
+通过,异步渲染失败无法触发回滚。对比:腾讯引擎(ws-4)已有
+`TENCENT_MAP_READY_TIMEOUT_MS=1.5s` 就绪超时模式,百度缺失。
+
+### 修复(baidu-engine.ts;switch.ts 零改动,回滚契约已就绪)
+
+- **就绪等待双通道**(`waitForMapReady`,任一先到即就绪):
+  1. `setMapReadyCallback`(BMapGL 2.0 官方就绪回调,存在时优先注册);
+  2. `tilesloaded` 事件(官方事件集,`EVENT_MAP.complete` 同源)兜底。
+  双通道防 SDK 单通道异常(回调注册了但永不触发)造成误判回滚。
+- **超时抛错**:`BAIDU_MAP_READY_TIMEOUT_MS = 1500`(与腾讯同量级);超时
+  → 先 `map.destroy()` 销毁未渲染的 Map(容器交还回滚视图),再抛
+  「BMapGL 地图就绪超时」——switch.ts:181-206 已实现 createView 抛错回滚,
+  零改动直接生效。**与腾讯的差异(有意)**:腾讯超时兜底放行(不阻塞),
+  百度超时抛错(绝不返回空图)——AK 禁用/渲染失败必须触发回滚。
+- **相机时序**:就绪信号到达**后**才应用 centerAndZoom/setTilt/setHeading/
+  setStyle(创建后立即设置会被异步初始化重置,丢失相机;正常 AK 下
+  tilesloaded 数十 ms 内触发,延迟不可感知)。事件系统/回调通道均不可用
+  → 立即放行(测试 mock/异常形态不阻塞);就绪/超时均解绑 tilesloaded 监听。
+- **共享测试 mock 适配**(map-engine-lifecycle.test.mjs RawMap,ws-5 同款
+  先例:tencent 就绪等 idle):构造后同时触发 `tilesloaded`(baidu 就绪信号)。
+
+### 验收(离线 mock)
+
+| 项 | 结果 |
+|---|---|
+| baidu 就绪等待(mock:tilesloaded 触发后才返回/相机就绪后应用/监听解绑)| ✅ 46/46(map-engine-baidu.test.mjs,含 3 新增)|
+| 超时抛错(mock:就绪信号永不触发 → 1.5s 超时抛「BMapGL 地图就绪超时」+ Map 销毁 + 监听解绑)| ✅ |
+| setMapReadyCallback 优先(mock:回调触发即就绪;回调注册但永不触发 → 超时)| ✅ |
+| 全量 npm test | ✅ 1107 pass / 2 skip / 0 fail |
+| typecheck / git diff --check | ✅ |
+| make docs-check | ⛔ 基线红(既有:`20260821-boss-agent-thinkfix/merge-report.md:20` 复述 grep 正则自匹配;本批零新增违例)|
+| 真实验证(AK 禁用场景 Playwright 冒烟:百度选中 → 1.5s 超时 → 自动回滚旧引擎)| ⛔ 未做:headless worker 无浏览器、worktree 无 .env.local;由 boss 合并后冒烟回填(deferred)|
+
+**遗留(边界外)**:BMapGL 真实 SDK 中 `setMapReadyCallback` 是否存在于
+getscript v=1.0(官方标注 BMapGL 2.0 API)未能离线核实——实现按「存在即优先、
+不存在走 tilesloaded」双通道防御,真机行为由 boss Playwright 冒烟坐实。

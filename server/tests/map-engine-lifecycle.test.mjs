@@ -41,8 +41,11 @@ class RawMap {
     this.listeners = new Map();
     this.overlays = new Set();
     this.destroyed = false;
-    // 腾讯 createView 等待 idle 就绪(TMap 异步初始化);amap/baidu 不消费,无害
+    // 共享 mock 触发各引擎的就绪信号:tencent createView 等 idle(TMap 异步
+    // 初始化,ws-4 起);baidu createView 等 tilesloaded(BMapGL 异步渲染,
+    // ws-7 起);amap 不消费,无害
     setTimeout(() => this.trigger('idle'), 5);
+    setTimeout(() => this.trigger('tilesloaded'), 5);
   }
 
   // 事件(amap on/off;tencent on/off;baidu addEventListener/removeEventListener)
