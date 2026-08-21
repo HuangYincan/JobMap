@@ -15,7 +15,17 @@ import {
   normalizeTencentSuggestion,
   resolveTMapMarkerAnchor,
 } from '../src/lib/map-engine/tencent/tencent-engine.ts';
-import { createCityClusterMarker } from '../src/lib/map-markers.ts';
+import {
+  createCityClusterMarker,
+  createPOIMarkerController,
+  resolveTMapIconSrc,
+} from '../src/lib/map-markers.ts';
+import {
+  preflightRemoteIcon,
+  remoteIconStatus,
+  resetIconPreflightCache,
+} from '../src/lib/map-engine/icon-preflight.ts';
+import { faviconCandidatesFromUrl } from '../src/lib/company-logo.ts';
 import { wgs84ToGcj02 } from '../src/lib/map-engine/coord-utils.ts';
 import {
   installEngineMock,
@@ -24,6 +34,7 @@ import {
   MockCircle,
   MockMultiMarker,
 } from './fixtures/engine-mock.mjs';
+import { makePoi, makeDomainPoi } from './fixtures/amap-mock.mjs';
 
 const KEY = 'NEXT_PUBLIC_TENCENT_JSAPI_KEY';
 
@@ -265,6 +276,13 @@ afterEach(() => {
   delete globalThis.document;
   delete globalThis.navigator;
   delete globalThis.fetch;
+  // ws-c:icon 候选链测试使用预检状态机 → 每测后清缓存防串扰
+  resetIconPreflightCache();
+  try {
+    globalThis.sessionStorage?.removeItem('domain-map:icon-preflight-fail');
+  } catch {
+    // 忽略:sessionStorage 不可用时不需清理
+  }
 });
 
 // ------------------------------------------------------------
@@ -824,14 +842,16 @@ test('createMarker:仅 MultiMarker(无 Marker)→ 聚合路径,geometries/id/off
     assert.equal(geo.styleId, 'dm-st-1', '有 offset → 样式归组分配 dm-st-N(非 default)');
     assert.equal(marker.raw.map, view.raw, '共享 MultiMarker 挂到当前地图');
     assert.equal(marker.raw.zIndex, 9, 'zIndex 透传(SDK:overlay zIndex → layer rank)');
-    // 契约 offset [x,y](相对锚点屏幕位移)→ MarkerStyle.anchor 平移:
-    // 渲染公式 imageTopLeft = 屏幕位 - anchor,Δanchor = -(x,y) ⇒ 整图位移 (x,y)
+    // 契约 offset [x,y](AMap content 语义:左上角置于 屏幕位+offset)→
+    // MarkerStyle.anchor = -(x,y)(渲染公式 imageTopLeft = 屏幕位 - anchor,
+    // 联立即 anchor = -offset;ws-c bug 3 修正,旧公式 (w/2-ox, h-oy) 把
+    // 图钉/徽章整图上移左上,表现为 POI 坐标偏移)
     assert.ok(marker.raw.styles['dm-st-1'] instanceof ns.MarkerStyle, 'offset 存在 → 注入归组样式(dm-st-N)');
     assert.ok(marker.raw.styles['dm-st-1'].opts.anchor instanceof ns.Point, 'anchor 必须是 TMap.Point 实例');
     assert.deepEqual(
       { ...marker.raw.styles['dm-st-1'].opts.anchor },
-      { x: 13, y: 56 },
-      '默认锚点 (17,50) 平移 (x,y)→ anchor (17-4, 50+6)=(13,56)',
+      { x: -4, y: 6 },
+      '契约 offset (4,-6) → anchor (-4,6)(左上角置于 屏幕位+offset)',
     );
   } finally {
     restore();
@@ -1083,13 +1103,14 @@ test('createMarker(MultiMarker):icon 规格 → 归组 MarkerStyle src/width/hei
     assert.equal(style.opts.height, 40);
     assert.deepEqual(
       { ...style.opts.anchor },
-      { x: 11, y: 46 },
-      '锚点 (w/2,h)=(15,40) 平移 offset (4,-6) → (11,46)',
+      { x: -4, y: 6 },
+      '契约 offset (4,-6) → anchor = -(x,y) = (-4,6)(ws-c 修正,与 AMap/Baidu 同语义)',
     );
 
-    // icon 无 offset:锚点 = (w/2, h)(与默认 pin 语义一致);不同签名 → 新样式归组
+    // icon 无 offset:anchor = (0,0) 左上角(AMap 无 offset 语义一致,百度同款);
+    // 不同签名 → 新样式归组
     const m2 = view.createMarker({ position: { lng: 1, lat: 2 }, icon: { src: 'a.png', size: [20, 20] } });
-    assert.deepEqual({ ...m2.raw.styles['dm-st-2'].opts.anchor }, { x: 10, y: 20 });
+    assert.deepEqual({ ...m2.raw.styles['dm-st-2'].opts.anchor }, { x: 0, y: 0 });
     assert.equal(m2.raw.styles['dm-st-1'], style, '共享实例累积样式:旧样式保留');
     assert.ok(m2.raw.styles['dm-st-2'] instanceof ns.MarkerStyle, '新签名 → 新 styleId(dm-st-2)');
   } finally {
@@ -1823,8 +1844,8 @@ test('createMarker(MultiMarker):聚合徽章形态——icon dataURL → MarkerS
     assert.equal(style.opts.height, 54);
     assert.deepEqual(
       { ...style.opts.anchor },
-      { x: 54, y: 81 },
-      '锚点 (w/2,h)=(27,54) 平移 offset (-27,-27) → (54,81)(与 AMap 同 offset 位移语义)',
+      { x: 27, y: 27 },
+      '锚点 = -offset = (27,27)(徽章中心钉地理点;旧公式 (54,81) 把徽章整图上移左上 → bug 3 偏移根因,ws-c 修正)',
     );
     // 同签名徽章共享 styleId(样式字典不膨胀)
     const badge2 = view.createMarker({
@@ -1947,43 +1968,68 @@ test('聚合徽章清理句柄:setMap(null)/remove 收敛为按 marker 摘单 ge
 // DOM 拾取元素 → 摘挂后重 add 同 id 不冲突;updateGeometries 对不在
 // _idSet 的 id 会重新 add → 隐藏期 setPosition 必须跳过,否则可见性泄漏)
 // ------------------------------------------------------------
+// ws-c(2026-08-22,bug 3)修正锚点公式:契约 offset 语义 = AMap content 路径
+// (内容左上角置于 屏幕位+offset,百度 ws-c SDK 源码核实同款 anchor=-offset)
+// → 联立 SDK 渲染公式 imageTopLeft = 屏幕位 - anchor 得 **anchor = -offset**,
+// 与图标尺寸无关。旧公式 (w/2-ox, h-oy) 把图钉/徽章整图相对地理点上移左上
+// (图钉 [-16,-40]→(32,80) 而非 (16,40);徽章 [-20,-20]→(40,60) 而非 (20,20);
+// 聚合 [-27,-27]→(54,81) 而非 (27,27))——即用户 bug 3「腾讯 poi 坐标偏移」
+// 根因。三生产形态修正后落点:图钉底尖 (16,40)、徽章中心 (20,20)、
+// 聚合中心 (27,27),与 AMap/Baidu 逐像素一致。
+// ------------------------------------------------------------
 
-test('resolveTMapMarkerAnchor:锚点按 icon 实际尺寸计算(底部中心 + offset 位移,AMap 语义对齐)', () => {
-  // 无 offset:锚点 = (w/2, h) 底部中心(与高德 content 锚点语义一致——
-  // 图钉底尖 / 徽章底边钉在地理点)
-  assert.deepEqual(resolveTMapMarkerAnchor(60, 60, undefined), { x: 30, y: 60 }, '60×60 徽章 → 底部中心 (30,60)');
-  assert.deepEqual(resolveTMapMarkerAnchor(40, 40, undefined), { x: 20, y: 40 });
-  assert.deepEqual(resolveTMapMarkerAnchor(32, 40, undefined), { x: 16, y: 40 }, '32×40 图钉 → 底部中心');
-  // 契约 offset [x,y] = 整图位移:Δanchor = -(x,y)(imageTopLeft = 屏幕位 - anchor)
-  assert.deepEqual(resolveTMapMarkerAnchor(40, 40, [-20, -20]), { x: 40, y: 60 }, '40 徽章 offset[-20,-20] → (40,60)(与 AMap 同位移)');
-  assert.deepEqual(resolveTMapMarkerAnchor(54, 54, [-27, -27]), { x: 54, y: 81 }, '54 徽章 offset[-27,-27] → (54,81)(既有归组断言同源)');
-  assert.deepEqual(resolveTMapMarkerAnchor(32, 40, [-16, -40]), { x: 32, y: 80 }, '32×40 图钉 offset[-16,-40] → 底尖钉在地理点');
-  // 默认 pin 规格(34×50)无 offset → 恰为 SDK 默认常量 (17,50)(34×50 底部中心)
-  assert.deepEqual(resolveTMapMarkerAnchor(34, 50, undefined), { x: 17, y: 50 }, '34×50 默认 pin → SDK 默认锚点 (17,50)');
-  // 回归(原 bug):60×60 徽章不得落回 SDK 默认常量 (17,50)(那是 34×50 pin 的
-  // 底部中心;60×60 用它会锚点错位 → 缩放漂移 + 点击命中区与视觉不一致)
-  assert.notDeepEqual(resolveTMapMarkerAnchor(60, 60, undefined), { x: 17, y: 50 }, '自定义尺寸图标必须按实际尺寸算锚点,不得用 SDK 常量');
+test('resolveTMapMarkerAnchor:锚点 = -契约 offset(AMap content 语义,与图标尺寸无关)', () => {
+  // 契约(AMap content 路径):内容左上角置于 屏幕位+offset;SDK:imageTopLeft
+  // = 屏幕位 - anchor → anchor = -offset。三生产形态落点与高德一致:
+  assert.deepEqual(resolveTMapMarkerAnchor(32, 40, [-16, -40]), { x: 16, y: 40 }, '图钉 32×40 offset[-16,-40] → (16,40) 底尖钉地理点');
+  assert.deepEqual(resolveTMapMarkerAnchor(40, 40, [-20, -20]), { x: 20, y: 20 }, '徽章 40×40 offset[-20,-20] → (20,20) 中心钉地理点');
+  assert.deepEqual(resolveTMapMarkerAnchor(54, 54, [-27, -27]), { x: 27, y: 27 }, '聚合 54×54 offset[-27,-27] → (27,27) 中心钉地理点');
+  assert.deepEqual(resolveTMapMarkerAnchor(30, 40, [4, -6]), { x: -4, y: 6 }, 'offset (4,-6) → anchor (-4,6)(左上角置于 屏幕位+offset)');
+  // 无 offset → (0,0) 左上角(AMap 无 offset 语义一致,百度同款)
+  assert.deepEqual(resolveTMapMarkerAnchor(60, 60, undefined), { x: 0, y: 0 }, '无 offset → 左上角锚点 (0,0)');
+  // 锚点与图标尺寸无关(纯 offset 函数):同一 offset 下任意尺寸同锚点
+  assert.deepEqual(resolveTMapMarkerAnchor(1, 1, [-20, -20]), { x: 20, y: 20 });
+  assert.deepEqual(resolveTMapMarkerAnchor(100, 100, [-20, -20]), { x: 20, y: 20 });
+});
+
+test('resolveTMapMarkerAnchor:状态尺寸零漂移——40/46/52 同 offset 恒同锚点', () => {
+  // 徽章状态尺寸(40 normal / 46 highlighted / 52 selected)在 TMap icon 路径
+  // 恒为 [40,40](map-markers 契约 icon.size 常量),且锚点 = -offset 与尺寸
+  // 无关 → 选中/高亮态 anchor 不变,不生成新 styleId、无漂移(疑点 c 结论)。
+  const a40 = resolveTMapMarkerAnchor(40, 40, [-20, -20]);
+  const a46 = resolveTMapMarkerAnchor(46, 46, [-20, -20]);
+  const a52 = resolveTMapMarkerAnchor(52, 52, [-20, -20]);
+  assert.deepEqual(a40, { x: 20, y: 20 });
+  assert.deepEqual(a46, a40, 'highlighted 尺寸 46 → 锚点不变');
+  assert.deepEqual(a52, a40, 'selected 尺寸 52 → 锚点不变');
+  // 图钉同理:选中态 42×52(1.3 倍)与基准 32×40 同 offset [-16,-40] 同锚点
+  assert.deepEqual(resolveTMapMarkerAnchor(42, 52, [-16, -40]), resolveTMapMarkerAnchor(32, 40, [-16, -40]));
 });
 
 test('resolveTMapMarkerAnchor:缩放无关——锚点恒定钉死地理点(2 级缩放前后不漂移)', () => {
   // 渲染公式 imageTopLeft = 屏幕位 - anchor:锚点(图像局部坐标)恒与地理点的
   // 屏幕位重合。anchor 是纯像素常量(与 zoom 无关,S 库 relativeZoomScale
   // 默认关闭,像素偏移不随地图比例联动)→ 任意 zoom 下钉点不漂移。
-  // 模拟缩放前后同一地理点的屏幕位(zoom 变化 → 屏幕位平移,像素距离无关):
+  // 契约断言:imageTopLeft = 屏幕位 + offset(AMap 同款)——缩放前后地理点
+  // 屏幕位变化,但 anchor 不变,图像相对点位移恒 = offset。
   const screenZ10 = { x: 500, y: 400 };
   const screenZ12 = { x: 620, y: 330 }; // 相机移动后的屏幕位
   const cases = [
-    { w: 60, h: 60, offset: undefined },
+    { w: 32, h: 40, offset: [-16, -40] },
     { w: 40, h: 40, offset: [-20, -20] },
     { w: 54, h: 54, offset: [-27, -27] },
-    { w: 32, h: 40, offset: [-16, -40] },
+    { w: 60, h: 60, offset: undefined },
   ];
   for (const c of cases) {
     const a = resolveTMapMarkerAnchor(c.w, c.h, c.offset);
     for (const screen of [screenZ10, screenZ12]) {
       const imageTopLeft = { x: screen.x - a.x, y: screen.y - a.y };
-      // 图像内锚点坐标 = topLeft + anchor,必须与地理点屏幕位重合(钉点不漂移)
-      assert.deepEqual({ x: imageTopLeft.x + a.x, y: imageTopLeft.y + a.y }, screen, `${c.w}×${c.h} 锚点恒钉地理点`);
+      // 契约:图像左上角 = 屏幕位 + offset(锚点恒钉地理点)
+      assert.deepEqual(
+        { x: imageTopLeft.x - (c.offset?.[0] ?? 0), y: imageTopLeft.y - (c.offset?.[1] ?? 0) },
+        screen,
+        `${c.w}×${c.h} 锚点恒钉地理点(缩放无关)`,
+      );
     }
   }
 });
@@ -2099,6 +2145,262 @@ test('createMarker(MultiMarker):remove 后 setVisible 置空 no-op(防僵尸重�
     const m3 = view.createMarker({ position: { lng: 3, lat: 4 } });
     assert.equal(raw.geometries.length, 2, '新 marker 正常挂载');
     assert.equal(raw.geometries[1].id, 'dm-mk-3', 'id 递增不冲突');
+  } finally {
+    restore();
+  }
+});
+
+// ------------------------------------------------------------
+// ws-c(2026-08-22,bug 3/4):icon 候选链 + 锚点公式集成
+// - bug 4「腾讯 poi 不带 icon」:logoUrl(favicon.im 实测无 CORS 头)预检失败
+//   → faviconCandidatesFromUrl(careerUrl) 候选链(icon.horse 实测 ACAO:* 合规)
+//   首个通过预检者作 icon.src;全败 → emoji 徽章;候选也记忆化(失败不重试)
+// - bug 3「腾讯 poi 坐标偏移」:锚点 = -契约 offset(与 AMap/Baidu 逐像素一致),
+//   状态尺寸零漂移(anchor 与 icon 尺寸无关)
+// ------------------------------------------------------------
+
+/** Image mock(与 icon-preflight.test.mjs 同款):failUrls → onerror,否则 onload。 */
+function installImageMock({ failUrls = [] } = {}) {
+  const original = globalThis.Image;
+  const calls = [];
+  class MockImage {
+    constructor() {
+      this.crossOrigin = undefined;
+      this.referrerPolicy = undefined;
+      this.onload = null;
+      this.onerror = null;
+      this._src = null;
+      calls.push(this);
+    }
+    set src(url) {
+      this._src = url;
+      queueMicrotask(() => {
+        if (failUrls.includes(url)) {
+          if (typeof this.onerror === 'function') this.onerror(new Error('image load failed'));
+        } else if (typeof this.onload === 'function') {
+          this.onload();
+        }
+      });
+    }
+    get src() {
+      return this._src;
+    }
+  }
+  globalThis.Image = MockImage;
+  return { calls, restore: () => (globalThis.Image = original) };
+}
+
+const settle = () => new Promise((r) => setTimeout(r, 0));
+
+/** 招聘 POI(logoUrl / careerUrl 可控)。 */
+function makeRecruitPoi(id, logoUrl, careerUrl) {
+  return makePoi(id, `公司${id}`, 120.1 + id.length * 0.01, 30.2, {
+    company: { id: `c-${id}`, name: `公司${id}`, logo: '🏢', logoUrl, careerUrl },
+  });
+}
+
+/** 假 tencent view:记录 createMarker opts,返回契约包装(与 icon-preflight.test.mjs 同款)。 */
+function makeTencentView() {
+  const calls = [];
+  const view = {
+    engine: { id: 'tencent' },
+    isDestroyed: () => false,
+    createMarker: (opts) => {
+      calls.push(opts);
+      return {
+        on: () => {},
+        setPosition: () => {},
+        setZIndex: () => {},
+        setVisible: () => {},
+        remove: () => {},
+      };
+    },
+  };
+  return { view, calls };
+}
+
+test('resolveTMapIconSrc:纯函数——本地直通;unknown → fallback + 候选预检清单;候选去重', () => {
+  const badge = 'data:image/svg+xml,%3Csvg%3Ebadge';
+  const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
+  // logoUrl 本地(data URL)→ 直通,零预检
+  assert.deepEqual(resolveTMapIconSrc('data:image/svg+xml,%3Csvg%3Elogo', undefined, badge), {
+    src: 'data:image/svg+xml,%3Csvg%3Elogo',
+    toPreflight: [],
+  });
+  // 无 logoUrl → fallback(徽章),零预检
+  assert.deepEqual(resolveTMapIconSrc(undefined, 'https://example.com/careers', badge), {
+    src: badge,
+    toPreflight: [],
+  });
+  // logoUrl unknown → fallback + 预检清单(logoUrl 与全部候选,一次重建升级到位)
+  assert.equal(resolveTMapIconSrc(faviconIm, 'https://example.com/careers', badge).src, badge, 'unknown → fallback + 预检清单');
+  const r = resolveTMapIconSrc(faviconIm, 'https://example.com/careers', badge);
+  assert.ok(r.toPreflight.includes(faviconIm) && r.toPreflight.includes(iconHorse), 'unknown 候选入预检清单(favicon.im + icon.horse)');
+  // 候选 === logoUrl 去重:same URL 不重复入清单
+  const r2 = resolveTMapIconSrc(faviconIm, 'https://example.com/careers', badge);
+  assert.equal(r2.toPreflight.filter((u) => u === faviconIm).length, 1, '候选与 logoUrl 相同 → 跳过不重复');
+});
+
+test('TMap icon 候选链:logoUrl 预检失败 → icon.horse 候选作 src(去重跳过同 URL)', async () => {
+  const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
+  const image = installImageMock({ failUrls: [faviconIm] }); // favicon.im 无 CORS 头 → 恒败
+  try {
+    // 先决:logoUrl(favicon.im)失败;icon.horse(实测 ACAO:* 合规)成功
+    preflightRemoteIcon(faviconIm);
+    await settle();
+    assert.equal(remoteIconStatus(faviconIm), 'fail');
+    preflightRemoteIcon(iconHorse);
+    await settle();
+    assert.equal(remoteIconStatus(iconHorse), 'ok');
+
+    const { view, calls } = makeTencentView();
+    const c = createPOIMarkerController(view, {});
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
+    assert.equal(
+      calls[0].icon.src,
+      iconHorse,
+      'logoUrl 失败 → 候选链首个通过预检者(icon.horse)作 icon.src(公司 logo 显示)',
+    );
+    assert.deepEqual(calls[0].icon.size, [40, 40], '徽章 40×40 与 AMap 同视觉');
+    assert.equal(image.calls.filter((i) => i.src === faviconIm).length, 1, '候选去重:同 URL 不重复预检');
+    c.destroy();
+  } finally {
+    image.restore();
+  }
+});
+
+test('TMap icon 候选链:候选未预检 → 徽章降级 + logoUrl 与候选后台预检(下次重建升级真 logo)', async () => {
+  const image = installImageMock({ failUrls: [faviconCandidatesFromUrl('https://example.com/careers')[0]] });
+  try {
+    const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
+    const { view, calls } = makeTencentView();
+    const c = createPOIMarkerController(view, {});
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '未定 → 徽章 dataURL 降级');
+    assert.equal(image.calls.length, 2, 'logoUrl + 候选都后台预检(升级路径一次重建到位)');
+    assert.deepEqual(image.calls.map((i) => i.src), [faviconIm, iconHorse]);
+    await settle();
+    assert.equal(remoteIconStatus(faviconIm), 'fail');
+    assert.equal(remoteIconStatus(iconHorse), 'ok', 'icon.horse 预检成功(CORS 合规)');
+
+    // 升级路径:新增同 URL 新 POI(LOD 重建形态)→ icon.horse 真 logo
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p2', faviconIm, 'https://example.com/careers')]);
+    assert.equal(calls[1].icon.src, iconHorse, '重建的新 marker 走候选链升级为真 logo');
+    assert.equal(image.calls.length, 2, '失败记忆化 + ok 记忆化:不重复预检');
+    c.destroy();
+  } finally {
+    image.restore();
+  }
+});
+
+test('TMap icon 候选链:logoUrl 已预检 ok → 直通真 src,不试候选', async () => {
+  const image = installImageMock();
+  try {
+    const [faviconIm] = faviconCandidatesFromUrl('https://example.com/careers');
+    preflightRemoteIcon(faviconIm);
+    await settle();
+    const { view, calls } = makeTencentView();
+    const c = createPOIMarkerController(view, {});
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
+    assert.equal(calls[0].icon.src, faviconIm, 'ok → 真 logo 直通');
+    assert.equal(image.calls.length, 1, '候选不预检(logoUrl ok 即止)');
+    c.destroy();
+  } finally {
+    image.restore();
+  }
+});
+
+test('TMap icon 候选链:全部失败 → emoji 徽章;失败记忆化不重试', async () => {
+  const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
+  const image = installImageMock({ failUrls: [faviconIm, iconHorse] });
+  try {
+    preflightRemoteIcon(faviconIm);
+    preflightRemoteIcon(iconHorse);
+    await settle();
+    const { view, calls } = makeTencentView();
+    const c = createPOIMarkerController(view, {});
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p2', faviconIm, 'https://example.com/careers')]);
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '全败 → emoji 徽章');
+    assert.ok(String(calls[1].icon.src).startsWith('data:image/svg+xml'));
+    assert.equal(image.calls.length, 2, '失败记忆化:同会话不重试');
+    c.destroy();
+  } finally {
+    image.restore();
+  }
+});
+
+test('TMap icon 候选链:无 careerUrl/无候选 → 徽章降级 + 仅 logoUrl 预检(ws-e 行为保持)', async () => {
+  const image = installImageMock();
+  try {
+    const [faviconIm] = faviconCandidatesFromUrl('https://example.com/careers');
+    const { view, calls } = makeTencentView();
+    const c = createPOIMarkerController(view, {});
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, undefined)]);
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), 'unknown → 徽章');
+    assert.equal(image.calls.length, 1, '仅 logoUrl 预检');
+    assert.equal(image.calls[0].src, faviconIm);
+    c.destroy();
+  } finally {
+    image.restore();
+  }
+});
+
+test('TMap icon:Domain POI 走图钉 dataURL icon(32×40)+ 基准底尖 offset(本地零预检)', async () => {
+  const image = installImageMock();
+  try {
+    const { view, calls } = makeTencentView();
+    const c = createPOIMarkerController(view, {});
+    c.setPOIs([makeDomainPoi('d1', '西湖', 120.1, 30.2)]);
+    const icon = calls[0].icon;
+    assert.ok(icon, 'Domain POI 在 TMap 下也走契约 icon(图钉,与 AMap 同视觉)');
+    assert.ok(String(icon.src).startsWith('data:image/svg+xml'), '图钉 dataURL SVG(本地 CORS-clean)');
+    assert.deepEqual(icon.size, [32, 40], '32×40 与 AMap 图钉同规格');
+    assert.deepEqual(calls[0].offset, [-16, -40], '基准底尖 offset');
+    assert.equal(image.calls.length, 0, 'dataURL 零预检');
+    c.destroy();
+  } finally {
+    image.restore();
+  }
+});
+
+test('控制器×引擎集成:徽章/图钉/聚合 anchor 钉死契约点(20,20)/(16,40)/(27,27)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const c = createPOIMarkerController(view, {});
+    c.setPOIs([
+      makeRecruitPoi('p1', undefined, undefined), // 招聘徽章:emoji 徽章 dataURL 40×40,offset [-20,-20]
+      makeDomainPoi('d1', '西湖', 120.15, 30.25), // 图钉 dataURL 32×40,offset [-16,-40]
+    ]);
+    const raw = c.getMarkerByPOIId('p1'); // 共享 MultiMarker 实例(wrapper.raw)
+    const badgeStyleId = raw.geometries[0].styleId;
+    const pinStyleId = raw.geometries[1].styleId;
+    assert.notEqual(badgeStyleId, pinStyleId, '不同签名(尺寸/offset)→ 独立 styleId');
+    assert.deepEqual(
+      { ...raw.styles[badgeStyleId].opts.anchor },
+      { x: 20, y: 20 },
+      '徽章 40×40 offset[-20,-20] → anchor (20,20) 中心钉地理点(疑点 a/c)',
+    );
+    assert.deepEqual(
+      { ...raw.styles[pinStyleId].opts.anchor },
+      { x: 16, y: 40 },
+      '图钉 32×40 offset[-16,-40] → anchor (16,40) 底尖钉地理点(疑点 b)',
+    );
+    // 聚合徽章(zoom≤8):createCityClusterMarker 同款参数 → 中心锚点
+    const badge = createCityClusterMarker(view, { city: '杭州', count: 12, lng: 120.15, lat: 30.27 });
+    assert.ok(badge, '聚合徽章创建成功');
+    const clusterGeo = raw.geometries[raw.geometries.length - 1];
+    assert.deepEqual(
+      { ...raw.styles[clusterGeo.styleId].opts.anchor },
+      { x: 27, y: 27 },
+      '聚合 54×54 offset[-27,-27] → anchor (27,27) 中心钉地理点',
+    );
+    c.destroy();
+    badge.remove();
   } finally {
     restore();
   }
