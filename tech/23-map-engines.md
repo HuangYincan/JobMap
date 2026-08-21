@@ -255,3 +255,75 @@ map-shell L1097/1101/1120/1138 等)仍持 `.raw` 直调 AMap 专属 API
 (setMap(null)/setCenter/setRadius/getMap/getRadius)——腾讯/百度引擎下与徽章
 同款风险(无 setMap 的 raw 上直调会 TypeError / no-op);ws-5 行段边界未及,
 已记 deferred,待后续轮次契约化。
+
+## ws-6 修复与验证回填(2026-08-22,feature/engine-fixes:百度加载器 + TMap 批量化)
+
+> 来源:批次 `20260821-boss-map-engine-rework` ws-6 汇报;轮 1-5 合入后 boss
+> Playwright 冒烟坐实两问题(百度切换失败 / TMap 数据层爆炸),本 WS 修复。
+
+### 百度加载器:直连 getscript 绕开 document.write 拦截
+
+**诊断(实测坐实)**:官方 `/api` 包装器
+(`https://api.map.baidu.com/api?type=webgl&v=1.0&ak=...`,实测 401B)内部
+`document.write` 注入 getscript 子脚本 + bmap.css——SPA 运行时异步注入时浏览器
+拦截 document.write(`Failed to execute 'write' on 'Document'`)→ 子脚本不加载 →
+`window.BMapGL` 永不就绪 → 切换百度失败回滚。**`v=3.0` 的 /api 包装器与
+v=1.0 逐字节相同(2026-08-22 实测),升级版本号无效**。
+
+**修复**:直连 getscript 本体
+(`https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=<AK>`,实测 1.2MB,
+grep **零 document.write**,同步定义 `window.BMapGL` + `BMAPGL_*` 常量)+
+**同步注入**(`script.async=false` + 无 defer + head 最前,百度专用注入器,
+script-loader 默认 async 路径不动)+ **就绪轮询**(50ms × 40 ≈ 2s 超时;
+getscript 开头即 `BMapGL={}` 占位,残缺命名空间由轮询兜住,超时抛既有
+「命名空间未就绪」,switch 回滚契约文案不变)+ **bmap.css 幂等注入**
+(包装器第二支 document.write 的等价物,失败静默)。`isLoaded()` 改功能判定
+(`typeof ns.Map === 'function'`),半载命名空间视为未就绪。
+
+**验收(离线)**:mock 断言注入 URL(async=false + head 最前)、就绪轮询补全、
+2s 超时抛错、CSS 幂等、isLoaded 功能判定(43/43 绿)。
+
+### TMap MultiMarker 批量化:单共享实例承载全部 geometry
+
+**诊断**:旧实现每 marker 一个 MultiMarker 实例 → ~145 数据层(TMap 连续警告
+「数据层过多,影响点击拾取」)+ `MaxListenersExceededWarning`(mousemove 监听
+泄漏)。**SDK v1.8.0.2 源码核实**单实例内部方法面齐备:
+`add(geos)` 增量 / `remove(ids)` 按 id 摘除 / `updateGeometries` 按 id 更新 /
+`setStyles(styles)` 全量替换 / `getGeometryById` / `setMap(null)` 移除 /
+`setZIndex`·`setVisible` 实例级 / click 载荷 `e.geometry.id`。
+
+**修复**(types.ts 契约零改动):
+
+- **单共享实例**:首次 createMarker 惰性构造,后续 `raw.add([geometry])` 增量;
+  身份映射表 `multiGeometries`(id → 活 geometry 引用)+ `multiAttached`(挂载集);
+- **样式归组**:icon 规格 + offset 签名 → styleId(`dm-st-N`),同签名共享(样式
+  字典不随 marker 数膨胀);新签名经 `setStyles` 全量替换上实例(**先于 add**,
+  geometry 引用的 styleId 不能缺失);无 icon/offset → `default`(SDK 内建 pin);
+- **zIndex 实例级**(overlay layer rank)→ `max(全部 marker)` 近似契约层级
+  语义:选中(100)/高亮(80)整体抬升图层、移除/降级回落;老 SDK 无 setZIndex
+  → 一次性 warn 降级;
+- **setVisible 经 remove/add 摘挂单 geometry**:隐藏 = 不在图层,天然不可点击/
+  零渲染开销(实例级 setVisible 会误伤全部 marker,弃用;老 SDK 无实例级
+  setVisible 也照常工作,无降级路径);
+- **事件**:单实例 click 按 `e.geometry.id` 过滤分发(ws-1 模式扩展);off 缺省
+  cb 按 id 精确解绑本 marker(不误伤他 marker);remove 同步清理回调簿记;
+- destroy 显式 `setMap(null)` 摘除共享实例 + 清簿记。
+
+**验收(离线)**:145 marker 只构造 1 个实例(无数据层爆炸/监听爆炸)、样式归组、
+增删改(添加/移除/可见性/层级/点击)契约测试全绿 + 批量化专项(49/49 绿)。
+
+### 验证结果(ws-6 验收)
+
+| 项 | 结果 |
+|---|---|
+| baidu 加载器(mock:getscript URL/同步注入/轮询补全/超时抛错/CSS 幂等/isLoaded 功能判定)| ✅ 43/43(map-engine-baidu.test.mjs)|
+| TMap 批量化(mock:145 单实例/样式归组/off·remove 隔离/zIndex 回落/可见性摘挂)| ✅ 49/49(map-engine-tencent.test.mjs)|
+| 全量 npm test | ✅ 1104 pass / 2 skip / 0 fail |
+| typecheck / git diff --check | ✅ |
+| make docs-check | ⛔ 基线红(`20260821-boss-agent-thinkfix/merge-report.md:20` 复述 grep 正则自匹配,先于本批并入 dev;本批零新增违例)|
+| 真实验证(dev server 切高德→百度→腾讯往返 + TMap 无数据层警告)| ⛔ 未做:headless worker 无浏览器、worktree 无 .env.local;由 boss 合并后 Playwright 冒烟回填(deferred)|
+
+**遗留(边界外)**:v=3.0 加载器与 v=1.0 同源同 document.write 形态,若百度未来
+发布无 document.write 的新加载器可再评估升级;TMap 单 marker 精确 zIndex
+(SDK 无 per-geometry zIndex)以实例 max 近似,若产品要求单 marker 层级差需
+按层级分实例(与批量化权衡)。

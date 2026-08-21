@@ -26,12 +26,16 @@
 //   createMarker 按 typeof 分派:Marker 可用走单点路径,否则 MultiMarker 聚合路径
 // - 单点 Marker(仅 npm SDK 形态):{ position, map, content, offset:{x,y}, zIndex };
 //   移除 = setMap(null)(glMarker 标注点;无 remove 方法;zIndex → DOM overlay style.zIndex)
-// - MultiMarker(v=1.exp 全局形态):new TMap.MultiMarker({ map, geometries, styles?, zIndex })
+// - MultiMarker(v=1.exp 全局形态,2026-08-22 ws-6 批量化):
+//   **单共享实例承载全部 geometry**(消灭旧实现「每 marker 一实例」的
+//   「数据层过多」警告 + mousemove 监听泄漏;单实例内部方法面实测核实:
+//   add(geos) 增量添加 / remove(ids) 按 id 摘除 / updateGeometries 按 id 更新 /
+//   setStyles(styles) 全量替换 / getGeometryById / setMap(null) 移除 /
+//   setZIndex·setVisible 实例级 / click 载荷 e.geometry.id);
 //   geometry:{ id, position: LatLng, styleId? }(styleId 缺省 "default");
-//   updateGeometries([...]) 按 id 更新、add/remove、setMap(null) 移除、click 载荷 e.geometry.id;
-//   **setZIndex/setVisible 经 GeometryOverlay 继承存在**(v=1.exp 源码核实:
-//   setZIndex → this.layer.setZIndex + 自身 zIndex 存储;setVisible → layer.setVisible;
-//   MultiMarker 自身重写 setVisible 处理进入/离开动画)→ 适配层直通,缺失才降级;
+//   样式归组:icon/offset 签名 → styleId(dm-st-N),同签名共享,新签名 setStyles;
+//   zIndex 实例级 → 取全部 marker 的 max 近似单 marker 语义;
+//   setVisible 经 add/remove 摘挂单 geometry(隐藏即不在图层,不可点击);
 //   MarkerStyle 仅图片 src,anchor 是唯一像素偏移(imageTopLeft = 屏幕位 - anchor),
 //   geometry.content 仅 GL 文本标签(非 HTML)→ HTML content 降级为默认点 + 一次性 warn
 // - Circle:{ center, radius, map, strokeColor, fillColor, fillOpacity }(glCircle)
@@ -243,16 +247,31 @@ class TencentView implements MapView {
   private destroyed = false;
   /** MultiMarker 路径 marker id 递增序列(dm-mk-1...) */
   private multiMarkerSeq = 0;
+  /** 自定义样式 id 递增序列(dm-st-1...):icon/offset 签名 → styleId 归组 */
+  private multiStyleSeq = 0;
   /** HTML content 降级告警一次性标记(多 marker 不刷屏) */
   private multiContentWarned = false;
   /** MultiMarker setZIndex 降级告警一次性标记(老 SDK 无 setZIndex 时,防刷屏) */
   private multiZIndexWarned = false;
-  /** MultiMarker setVisible 降级告警一次性标记(无 setVisible → setMap 切换兜底) */
-  private multiVisibleWarned = false;
+  /** MultiMarker setStyles 降级告警一次性标记(老 SDK 无 setStyles → 归组样式降级) */
+  private multiStylesWarned = false;
   /** 单点 Marker setIcon 降级告警一次性标记(npm SDK 老形态无 setIcon) */
   private singleIconWarned = false;
-  /** MultiMarker click 解绑簿记:契约 cb → 带 geometry.id 过滤的厂商 handler */
-  private multiClickHandlers = new Map<() => void, (e: any) => void>();
+  /** 共享 MultiMarker 实例(批量化核心:单实例承载全部 geometry;首次 createMarker 惰性创建) */
+  private multiMarker: any = null;
+  /** id → 活 geometry 引用(setPosition 原地改 position 后 updateGeometries,保留 styleId) */
+  private multiGeometries = new Map<string, { id: string; position: unknown; styleId: string }>();
+  /** id → 当前 zIndex(实例 zIndex = max;契约单 marker 层级语义的批量化近似) */
+  private multiZIndexes = new Map<string, number>();
+  /** 样式签名 → styleId(同签名 marker 共享样式;icon 规格 + offset 归组) */
+  private multiStyleBySignature = new Map<string, string>();
+  /** styleId → MarkerStyle 实例(累积;新样式经 setStyles 全量替换上实例) */
+  private multiStyles: Record<string, unknown> = {};
+  /** 当前挂载在共享实例上的 id 集(setVisible 摘挂经 add/remove 维护) */
+  private multiAttached = new Set<string>();
+  /** MultiMarker click 解绑簿记:契约 cb → { id, handler(带 geometry.id 过滤) }。
+   * id 关联是共享实例下精确解绑的前提(off 缺省 cb 只解本 marker) */
+  private multiClickHandlers = new Map<() => void, { id: string; handler: (e: any) => void }>();
 
   constructor(tmap: any, raw: any, engine: MapEngine) {
     this.tmap = tmap;
@@ -422,86 +441,92 @@ class TencentView implements MapView {
   }
 
   /**
-   * MultiMarker 聚合路径(v=1.exp 全局版;SDK v1.8.0.2 源码核实)。
-   * 每个 createMarker 独立一个 MultiMarker 实例(单 geometry;POI 数量百级,
-   * 简单正确优先,不做共享池)。
+   * MultiMarker 批量路径(v=1.exp 全局版;SDK v1.8.0.2 源码核实)。
+   * **单共享实例承载全部 geometry**(2026-08-22 ws-6 批量化):旧实现每 marker
+   * 一个 MultiMarker 实例 → ~145 数据层(TMap 连续警告「数据层过多,影响点击
+   * 拾取」)+ MaxListenersExceededWarning(mousemove 监听泄漏)。批量化后:
+   * - 首次 createMarker 惰性构造共享实例(带首批 geometry/归组样式/zIndex);
+   * - 后续 marker:raw.add([geometry]) 增量添加,新样式经 setStyles 归组;
+   * - 身份映射:multiGeometries(id → 活 geometry)+ multiAttached(挂载集);
+   * - zIndex 实例级(overlay layer rank)→ max(全部 marker)近似契约语义;
+   * - setVisible 经 remove/add 摘挂单 geometry(隐藏 = 不在图层,不可点击);
+   * - 事件:单实例 click 按 e.geometry.id 过滤分发(ws-1 模式扩展)。
    */
   private createMultiMarker(opts: MapMarkerOptions): MapMarker {
     const tmap = this.tmap;
     // id 递增唯一(SDK 核实:geometry.id 缺失会自动生成,但显式传更可控;
-    // 单实例单 geometry,只需实例内唯一)
+    // 共享实例内必须全局唯一)
     const id = `dm-mk-${++this.multiMarkerSeq}`;
-    // 活 geometry 引用:setPosition 原地改 position 后 updateGeometries(SDK 核实:
-    // updateGeometries 按 id 整体替换 raw geometry → 必须携带 styleId,故用同一对象)
+    // 活 geometry 引用:setPosition 原地改 position 后 updateGeometries
+    // (SDK 核实:updateGeometries 按 id 整体替换 raw geometry → 必须携带
+    // styleId,故用同一对象;styleId 由样式归组解析)
     const geometry: { id: string; position: unknown; styleId: string } = {
       id,
       position: toTMapLatLng(tmap, opts.position),
-      styleId: 'default',
+      styleId: this.resolveMultiStyle(opts),
     };
-    const mmOpts: Record<string, unknown> = {
-      map: this.raw,
-      geometries: [geometry],
-      // SDK 核实:overlay zIndex → layer rank 排序(越大越靠上)
-      zIndex: opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX,
-    };
-    // 契约 offset [x,y](相对锚点屏幕位移)→ MarkerStyle.anchor:渲染公式
-    // imageTopLeft = 屏幕位 - anchor,Δanchor = -(x,y) 即整图位移 (x,y);
-    // style.offset 渲染器不消费,不可用。默认 pin 34x50、锚点 (17,50)。
-    // 契约 icon(规格)→ MarkerStyle 的 src/width/height(SDK v1.8.0.2 核实:
-    // MarkerStyle 仅图片 src 形态);自定义图标锚点沿用默认语义 (w/2, h),
-    // 即 width/height 缺省时等价默认 pin 锚点。
-    if (opts.offset || opts.icon) {
-      const iconW = opts.icon?.size?.[0] ?? TENCENT_DEFAULT_MARKER_ANCHOR.x * 2;
-      const iconH = opts.icon?.size?.[1] ?? TENCENT_DEFAULT_MARKER_ANCHOR.y;
-      const styleOpts: Record<string, unknown> = {
-        anchor: new tmap.Point(iconW / 2 - (opts.offset?.[0] ?? 0), iconH - (opts.offset?.[1] ?? 0)),
-      };
-      if (opts.icon) {
-        styleOpts.src = opts.icon.src;
-        styleOpts.width = iconW;
-        styleOpts.height = iconH;
-      }
-      mmOpts.styles = { default: new tmap.MarkerStyle(styleOpts) };
-    }
+    this.multiGeometries.set(id, geometry);
+    this.multiZIndexes.set(id, opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX);
     // HTML content:MultiMarker 无 HTML 渲染(SDK 核实:geometry.content 是 GL
     // 文本标签,MarkerStyle 仅图片 src)→ 降级默认点 + 一次性 warn(boss 记 deferred)
     if (opts.content !== undefined) this.warnMultiMarkerContentDegraded();
-    let raw: any;
-    try {
-      raw = new tmap.MultiMarker(mmOpts);
-    } catch (err) {
-      // 与单点路径同语义:可观测 + rethrow(保留 addMarker 簿记语义)
-      console.error('[map-engine] TMap MultiMarker 创建失败', err);
-      throw err;
+
+    let raw = this.multiMarker;
+    if (!raw) {
+      // 首个 marker:构造共享实例(首批 geometry + 已归组样式 + zIndex)
+      const mmOpts: Record<string, unknown> = {
+        map: this.raw,
+        geometries: [geometry],
+        // SDK 核实:overlay zIndex → layer rank 排序(越大越靠上)
+        zIndex: opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX,
+      };
+      if (Object.keys(this.multiStyles).length > 0) mmOpts.styles = this.multiStyles;
+      try {
+        raw = new tmap.MultiMarker(mmOpts);
+      } catch (err) {
+        // 与单点路径同语义:可观测 + rethrow(保留 addMarker 簿记语义)
+        console.error('[map-engine] TMap MultiMarker 创建失败', err);
+        throw err;
+      }
+      this.multiMarker = raw;
+    } else {
+      // 增量添加(SDK 核实:add 跳过已存在 id;新样式已在 resolveMultiStyle
+      // 经 setStyles 上实例,必须先于 add——geometry 引用的 styleId 不能缺失)
+      raw.add([geometry]);
+      this.maybeUpdateMultiZIndex();
     }
+    this.multiAttached.add(id);
     if (opts.onClick) this.bindMultiMarkerClick(raw, id, opts.onClick);
     return {
+      // 逃生舱 = 共享 MultiMarker 实例(契约「厂商 marker 实例」语义不变)
       raw,
       setPosition: (p: LngLat) => {
         geometry.position = toTMapLatLng(tmap, p);
         raw.updateGeometries([geometry]);
       },
       setContent: (_html: string) => this.warnMultiMarkerContentDegraded(),
-      // SDK 源码核实(v=1.exp 实测):MultiMarker 经 GeometryOverlay 继承 setZIndex
-      // (→ this.layer.setZIndex + 自身 zIndex 存储,非「仅构造期」)→ 直通;
-      // 防御:老版本/异常形态缺失时一次性 warn 降级不抛(与 content 同款防刷屏)
+      // zIndex 实例级(overlay layer rank):批量化下取全部 marker 的 max——
+      // 选中(100)/高亮(80)整体抬升图层、普通(10/20)回落;共享实例内单
+      // marker 精确层级不可达(SDK 无 per-geometry zIndex),max 为近似。
+      // 老 SDK 无 setZIndex → 一次性 warn 降级不抛(防刷屏)
       setZIndex: (z: number) => {
-        if (typeof raw.setZIndex === 'function') {
-          raw.setZIndex(z);
-          return;
-        }
-        this.warnMultiMarkerZIndexDegraded();
+        this.multiZIndexes.set(id, z);
+        this.maybeUpdateMultiZIndex();
       },
-      // 可见性:SDK 源码核实(v=1.exp 实测)MultiMarker 有 setVisible(→
-      // layer.setVisible;有进入/离开动画时经 _visibleAction 兜底)→ 直通;
-      // 防御:缺失 → setMap(null/map) 切换兜底 + 一次性 warn
+      // 可见性:隐藏 = 从共享实例摘除该 geometry(remove([id])),显示 = 重新
+      // 挂载(add)——隐藏 marker 不在图层,天然不可点击/不参与渲染/零开销;
+      // 实例级 setVisible 会误伤全部 marker,不可用(ws-6 批量化设计)
       setVisible: (v: boolean) => {
-        if (typeof raw.setVisible === 'function') {
-          raw.setVisible(v);
-          return;
+        if (!this.multiMarker) return;
+        if (v) {
+          if (!this.multiAttached.has(id)) {
+            this.multiMarker.add([geometry]);
+            this.multiAttached.add(id);
+          }
+        } else if (this.multiAttached.has(id)) {
+          this.multiMarker.remove([id]);
+          this.multiAttached.delete(id);
         }
-        this.warnMultiMarkerVisibleDegraded();
-        if (typeof raw.setMap === 'function') raw.setMap(v ? this.raw : null);
       },
       on: (event: 'click', cb: () => void) => {
         if (event !== 'click') return;
@@ -509,34 +534,116 @@ class TencentView implements MapView {
       },
       off: (event: 'click', cb?: () => void) => {
         if (event !== 'click') return;
+        if (!this.multiMarker) return;
         if (cb) {
-          const handler = this.multiClickHandlers.get(cb);
-          if (handler) {
-            raw.off?.('click', handler);
+          const entry = this.multiClickHandlers.get(cb);
+          if (entry && entry.id === id) {
+            this.multiMarker.off?.('click', entry.handler);
             this.multiClickHandlers.delete(cb);
           }
         } else {
-          // cb 缺省 = 解绑本 marker 全部 click(契约语义)
-          for (const handler of [...this.multiClickHandlers.values()]) raw.off?.('click', handler);
-          this.multiClickHandlers.clear();
+          // cb 缺省 = 解绑本 marker 全部 click(共享实例必须按 id 过滤,
+          // 不能清全量——会误伤其他 marker 的回调)
+          for (const [cbKey, entry] of [...this.multiClickHandlers]) {
+            if (entry.id === id) {
+              this.multiMarker.off?.('click', entry.handler);
+              this.multiClickHandlers.delete(cbKey);
+            }
+          }
         }
       },
-      // SDK 核实:MultiMarker 官方移除方式 = setMap(null)(与单点 Marker 一致)
-      remove: () => raw.setMap(null),
+      // 移除 = 摘除该 geometry + 清理全部簿记(共享实例保留挂图)
+      remove: () => {
+        if (!this.multiMarker) return;
+        if (this.multiAttached.has(id)) {
+          this.multiMarker.remove([id]);
+          this.multiAttached.delete(id);
+        }
+        this.multiGeometries.delete(id);
+        this.multiZIndexes.delete(id);
+        for (const [cbKey, entry] of [...this.multiClickHandlers]) {
+          if (entry.id === id) {
+            this.multiMarker.off?.('click', entry.handler);
+            this.multiClickHandlers.delete(cbKey);
+          }
+        }
+        this.maybeUpdateMultiZIndex();
+      },
     };
   }
 
   /**
-   * MultiMarker click 绑定(SDK 核实:点击载荷 { ...mapEvent, geometry, type, target }
-   * → 按 geometry.id 过滤;每 marker 独立 MultiMarker 实例,过滤等价实例隔离)。
-   * handler 注册进 multiClickHandlers,供 off 精确解绑。
+   * 样式归组解析:icon 规格 + offset 签名 → styleId。
+   * - 无 icon 无 offset → 'default'(SDK 内建默认 pin,零样式注入);
+   * - 有 icon/offset → 签名查表;首见创建 MarkerStyle + 分配 dm-st-N;
+   *   同签名后续 marker 复用同一 styleId(共享实例样式字典不膨胀);
+   * - 新样式在共享实例已存在时经 setStyles 全量替换上实例(**必须先于
+   *   add geometry**:geometry 引用的 styleId 在实例上不能缺失);
+   * - MarkerStyle 仅图片 src 形态(SDK v1.8.0.2 核实);契约 offset [x,y]
+   *   → anchor 平移(渲染公式 imageTopLeft = 屏幕位 - anchor,Δanchor =
+   *   -(x,y) 即整图位移 (x,y);style.offset 渲染器不消费)。
+   */
+  private resolveMultiStyle(opts: MapMarkerOptions): string {
+    if (!opts.offset && !opts.icon) return 'default';
+    const iconW = opts.icon?.size?.[0] ?? TENCENT_DEFAULT_MARKER_ANCHOR.x * 2;
+    const iconH = opts.icon?.size?.[1] ?? TENCENT_DEFAULT_MARKER_ANCHOR.y;
+    const signature = `${opts.icon?.src ?? ''}|${iconW}|${iconH}|${opts.offset?.[0] ?? 0}|${opts.offset?.[1] ?? 0}`;
+    const existing = this.multiStyleBySignature.get(signature);
+    if (existing) return existing;
+    const styleId = `dm-st-${++this.multiStyleSeq}`;
+    const styleOpts: Record<string, unknown> = {
+      anchor: new this.tmap.Point(iconW / 2 - (opts.offset?.[0] ?? 0), iconH - (opts.offset?.[1] ?? 0)),
+    };
+    if (opts.icon) {
+      styleOpts.src = opts.icon.src;
+      styleOpts.width = iconW;
+      styleOpts.height = iconH;
+    }
+    this.multiStyles[styleId] = new this.tmap.MarkerStyle(styleOpts);
+    this.multiStyleBySignature.set(signature, styleId);
+    if (this.multiMarker) {
+      if (typeof this.multiMarker.setStyles === 'function') {
+        this.multiMarker.setStyles({ ...this.multiStyles });
+      } else {
+        this.warnMultiMarkerStylesDegraded();
+      }
+    }
+    return styleId;
+  }
+
+  /**
+   * 实例 zIndex 收敛为 max(全部 marker zIndex)。SDK 核实:overlay zIndex →
+   * layer rank(越大越靠上);共享实例只占一个 rank,max 让选中/高亮整体抬升、
+   * 移除后回落;值未变不调用(避免无谓 setZIndex)。老 SDK 无 setZIndex →
+   * 一次性 warn 降级不抛。
+   */
+  private maybeUpdateMultiZIndex(): void {
+    const raw = this.multiMarker;
+    if (!raw) return;
+    let max = 0;
+    for (const z of this.multiZIndexes.values()) {
+      if (z > max) max = z;
+    }
+    if (raw.zIndex === max) return;
+    if (typeof raw.setZIndex === 'function') {
+      raw.setZIndex(max);
+    } else {
+      this.warnMultiMarkerZIndexDegraded();
+    }
+  }
+
+  /**
+   * MultiMarker click 绑定(SDK 核实:点击载荷 { ...mapEvent, geometry, type,
+   * target } → 按 geometry.id 过滤;共享实例下所有 marker 的 handler 注册在
+   * 同一实例,id 过滤等价实例隔离,互不误触)。
+   * handler 注册进 multiClickHandlers(id 关联),供 off/remove 精确解绑。
    */
   private bindMultiMarkerClick(raw: any, id: string, cb: () => void): void {
     if (typeof raw.on !== 'function') return;
     const handler = (e: any) => {
       if (e?.geometry?.id === id) cb();
     };
-    this.multiClickHandlers.set(cb, handler);
+    this.multiClickHandlers.set(cb, { id, handler });
     raw.on('click', handler);
   }
 
@@ -547,11 +654,11 @@ class TencentView implements MapView {
     console.warn('[map-engine] TMap MultiMarker 无 setZIndex,zIndex 变更降级忽略');
   }
 
-  /** MultiMarker setVisible 降级告警(一次性;无 setVisible → setMap 切换兜底) */
-  private warnMultiMarkerVisibleDegraded(): void {
-    if (this.multiVisibleWarned) return;
-    this.multiVisibleWarned = true;
-    console.warn('[map-engine] TMap MultiMarker 无 setVisible,可见性经 setMap 切换降级');
+  /** MultiMarker setStyles 降级告警(一次性;老 SDK 无 setStyles → 后续归组样式不生效,降级默认点) */
+  private warnMultiMarkerStylesDegraded(): void {
+    if (this.multiStylesWarned) return;
+    this.multiStylesWarned = true;
+    console.warn('[map-engine] TMap MultiMarker 无 setStyles,新样式归组降级为默认点');
   }
 
   /** 单点 Marker setIcon 降级告警(一次性;npm SDK 老形态无 setIcon) */
@@ -597,6 +704,22 @@ class TencentView implements MapView {
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
+    // 共享 MultiMarker 显式摘除(双保险:地图销毁时覆盖物随之销毁;清理簿记
+    // 防 view 复用残留)
+    if (this.multiMarker && typeof this.multiMarker.setMap === 'function') {
+      try {
+        this.multiMarker.setMap(null);
+      } catch {
+        // 销毁路径不抛
+      }
+    }
+    this.multiMarker = null;
+    this.multiGeometries.clear();
+    this.multiZIndexes.clear();
+    this.multiStyleBySignature.clear();
+    this.multiStyles = {};
+    this.multiAttached.clear();
+    this.multiClickHandlers.clear();
     this.raw.destroy();
   }
 }
