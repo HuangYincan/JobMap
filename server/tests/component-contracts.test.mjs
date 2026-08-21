@@ -902,9 +902,10 @@ test('markdown-text: 组件引用 marked 与 dompurify,且消毒先于注入(ws-
 test('agent panel follows the ball via transform anchor (ws-c-enhance)', () => {
   const panel = src('components/agent-panel.tsx');
   const css = src('components/agent-panel.module.css');
-  // 纯函数定位:computePanelPlacement 输入 ballRect + 面板实测尺寸 + 视口
+  // 纯函数定位:computePanelPlacement 输入 ballRect + 面板实测尺寸 + 视口 + 吸附 edge
+  // (edge 缺省/拖拽中传 undefined → 按球心半区分侧;吸附后传 edge → 垂直锚定,2026-08-21 ws-nfix)
   assert.match(panel, /import \{ computePanelPlacement[^\n]*\} from "@\/lib\/agent-panel-placement"/);
-  assert.match(panel, /computePanelPlacement\(ballRect, panelSize, viewport\)/);
+  assert.match(panel, /computePanelPlacement\(ballRect, panelSize, viewport, snapEdge \?\? undefined\)/);
   // transform 锚定:--px/--py 注入 + translate3d(拖动实时跟随,松手平滑归位)
   assert.match(panel, /"--px": `\$\{placement\.left\}px`/);
   assert.match(panel, /"--py": `\$\{placement\.top\}px`/);
