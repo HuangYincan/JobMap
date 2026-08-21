@@ -1324,6 +1324,55 @@
     padding: 0 0 8px;
   }
 
+  /* ws-mt 移动工具栏左簇:ModeSwitcher + 图层/已保存/探索/最近/AI 图标钮
+     (与 ModeSwitcher / 桌面折叠 rail 同构;头像仍 margin-left:auto 右置) */
+  .mobileToolbarItems {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .mobileToolbarItem {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: var(--ink);
+    cursor: pointer;
+    display: inline-flex;
+    height: 40px;
+    justify-content: center;
+    min-height: 40px; /* 40px 触控目标 */
+    min-width: 40px;
+    padding: 0;
+    transition:
+      background 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+      color 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+    -webkit-tap-highlight-color: transparent;
+    width: 40px;
+  }
+
+  .mobileToolbarItem:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .mobileToolbarItem:active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .mobileToolbarItem svg {
+    height: 20px;
+    width: 20px;
+  }
+
+  .mobileToolbarItemActive,
+  .mobileToolbarItemActive:hover {
+    color: var(--blue); /* 激活蓝 #007AFF(参照 .navItemActive) */
+    background: rgba(255, 255, 255, 0.12);
+  }
+
   .drawerMini .mobileSearchStack {
     margin-top: 0;
   }

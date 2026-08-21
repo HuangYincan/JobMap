@@ -2664,7 +2664,87 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         ) : (
           <>
             <div className={styles.mobileToolbar}>
-              <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} lang={lang} />
+              <div className={styles.mobileToolbarItems}>
+                <ModeSwitcher activeMode={mode} onModeChange={handleModeChange} lang={lang} />
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${mobileSheet === "layers" ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("layers", lang)}
+                  title={t("layers", lang)}
+                  aria-pressed={mobileSheet === "layers"}
+                  onClick={() => {
+                    if (mobileSheet === "layers") {
+                      setMobileSheet("explore");
+                      return;
+                    }
+                    setMobileSheetBack("explore");
+                    setMobileSheet("layers");
+                    setDrawer("full");
+                  }}
+                >
+                  <Icon name="layers" />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${mobileSheet === "saved" ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("saved", lang)}
+                  title={t("saved", lang)}
+                  aria-pressed={mobileSheet === "saved"}
+                  onClick={() => {
+                    if (!user) {
+                      setAuthOpen(true);
+                      return;
+                    }
+                    if (mobileSheet === "saved") {
+                      setMobileSheet("explore");
+                      return;
+                    }
+                    setMobileSheetBack("explore");
+                    setMobileSheet("saved");
+                    setDrawer("full");
+                  }}
+                >
+                  <Icon name="bookmark" />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${mobileSheet === "explore" ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("explore", lang)}
+                  title={t("explore", lang)}
+                  aria-pressed={mobileSheet === "explore"}
+                  onClick={() => setMobileSheet("explore")}
+                >
+                  <Icon name="grid" />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${mobileSheet === "recent" ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("recent", lang)}
+                  title={t("recent", lang)}
+                  aria-pressed={mobileSheet === "recent"}
+                  onClick={() => {
+                    if (mobileSheet === "recent") {
+                      setMobileSheet("explore");
+                      return;
+                    }
+                    setMobileSheetBack("explore");
+                    setMobileSheet("recent");
+                    setDrawer("full");
+                  }}
+                >
+                  <Icon name="history" />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileToolbarItem} ${agentOpen ? styles.mobileToolbarItemActive : ""}`}
+                  aria-label={t("agentBall", lang)}
+                  title={t("agentBall", lang)}
+                  aria-pressed={agentOpen}
+                  onClick={() => setAgentOpen((v) => !v)}
+                >
+                  <Icon name="agent" />
+                </button>
+              </div>
               <button
                 type="button"
                 className={styles.mobileAvatarBtn}
@@ -2790,6 +2870,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                           setAuthOpen(true);
                           return;
                         }
+                        setMobileSheetBack("account");
                         setMobileSheet("saved");
                       }}
                     >
@@ -2798,14 +2879,20 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     <button
                       type="button"
                       className={styles.mobileFilterBtn}
-                      onClick={() => setMobileSheet("layers")}
+                      onClick={() => {
+                        setMobileSheetBack("account");
+                        setMobileSheet("layers");
+                      }}
                     >
                       {t("layers", lang)}
                     </button>
                     <button
                       type="button"
                       className={styles.mobileFilterBtn}
-                      onClick={() => setMobileSheet("recent")}
+                      onClick={() => {
+                        setMobileSheetBack("account");
+                        setMobileSheet("recent");
+                      }}
                     >
                       {t("recent", lang)}
                     </button>
@@ -2842,7 +2929,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   lang={lang}
                   mode={mode}
                   embedded
-                  onClose={() => setMobileSheet("account")}
+                  onClose={() => setMobileSheet(mobileSheetBack)}
                   onPick={(entry) => {
                     handlePickRecent(entry);
                     setMobileSheet("explore");
@@ -2859,7 +2946,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     <button
                       type="button"
                       className={styles.mobileBackBtn}
-                      onClick={() => setMobileSheet("account")}
+                      onClick={() => setMobileSheet(mobileSheetBack)}
                     >
                       {t("back", lang)}
                     </button>
@@ -2881,7 +2968,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     <button
                       type="button"
                       className={styles.mobileBackBtn}
-                      onClick={() => setMobileSheet("account")}
+                      onClick={() => setMobileSheet(mobileSheetBack)}
                     >
                       {t("back", lang)}
                     </button>
