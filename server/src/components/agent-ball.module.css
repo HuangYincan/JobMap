@@ -1,0 +1,57 @@
+/* AI Agent 悬浮球(44px 圆形玻璃按钮;造型参照 map-shell .toolButton/.locateButton) */
+
+.ball {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(165%);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  box-shadow: var(--shadow);
+  color: #007aFF;
+  cursor: grab;
+  display: inline-flex;
+  height: 44px;
+  justify-content: center;
+  padding: 0;
+  position: fixed;
+  transition:
+    left 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    right 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    top 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  touch-action: none; /* 拖拽不触发页面滚动/缩放 */
+  user-select: none;
+  -webkit-user-select: none;
+  width: 44px;
+  z-index: 11; /* 高于地图控件(.mapControls z-index 10) */
+}
+
+.ball:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.ball:active {
+  cursor: grabbing;
+}
+
+/* 拖拽期间禁用吸附动画(跟手),松手后恢复过渡吸附 */
+.dragging {
+  cursor: grabbing;
+  transition: none;
+}
+
+.sparkle {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* 深色模式(参照 .toolButton 深色:rgba(28,28,30,0.72)) */
+@media (prefers-color-scheme: dark) {
+  .ball {
+    background: rgba(28, 28, 30, 0.72);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .ball:hover {
+    background: rgba(28, 28, 30, 0.85);
+  }
+}

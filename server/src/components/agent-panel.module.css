@@ -1,0 +1,305 @@
+/* AI Agent 聊天面板:360px × 70vh liquid glass 卡片浮层,贴吸附侧;
+   移动端(≤767px)变全宽底部 sheet(参照 mobileDrawer 动效)。 */
+
+.panel {
+  animation: panelIn 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  background: var(--soft-strong, rgba(255, 255, 255, 0.84));
+  backdrop-filter: blur(24px) saturate(165%);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  height: 70vh;
+  overflow: hidden;
+  position: fixed;
+  top: 12px;
+  width: 360px;
+  z-index: 11; /* 与悬浮球同层,高于地图控件 */
+}
+
+.panelLeft {
+  left: 12px;
+}
+
+.panelRight {
+  right: 12px;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.header {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: 12px 14px;
+}
+
+.titleIcon {
+  color: #007aFF;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.title {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.close {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  height: 28px;
+  justify-content: center;
+  margin-left: auto;
+  padding: 0;
+  width: 28px;
+}
+
+.close:hover {
+  background: rgba(120, 140, 160, 0.12);
+  color: var(--ink);
+}
+
+/* tool 状态条(「{name} 正在执行…」) */
+.toolBar {
+  align-items: center;
+  background: rgba(0, 122, 255, 0.06);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 12px;
+  gap: 7px;
+  padding: 7px 14px;
+}
+
+.toolDot {
+  animation: toolPulse 1.2s ease-in-out infinite;
+  background: #007aFF;
+  border-radius: 50%;
+  height: 6px;
+  width: 6px;
+}
+
+@keyframes toolPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+
+.welcome {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 24px auto 0;
+  max-width: 240px;
+  text-align: center;
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+}
+
+.msgUser {
+  align-items: flex-end;
+}
+
+.msgAssistant {
+  align-items: flex-start;
+}
+
+.bubbleUser {
+  background: #007aFF;
+  border-radius: 14px 14px 4px 14px;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 86%;
+  padding: 8px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bubbleAssistant {
+  align-self: flex-start;
+  background: rgba(120, 140, 160, 0.1);
+  border: 1px solid var(--line);
+  border-radius: 4px 14px 14px 14px;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 86%;
+  padding: 8px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.typing {
+  animation: typingPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes typingPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 建议卡片(动作摘要按钮,点击 = 重放该 action) */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.actionBtn {
+  background: rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(0, 122, 255, 0.25);
+  border-radius: 99px;
+  color: #007aFF;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 5px 11px;
+}
+
+.actionBtn:hover {
+  background: rgba(0, 122, 255, 0.14);
+}
+
+.notice {
+  background: rgba(255, 149, 0, 0.08);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 12px;
+  color: #b25e00;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 12px;
+}
+
+.footer {
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  flex: 1;
+  font-size: 13px;
+  min-width: 0;
+  outline: none;
+  padding: 8px 12px;
+}
+
+.input:focus {
+  border-color: rgba(0, 122, 255, 0.5);
+}
+
+.input:disabled {
+  opacity: 0.6;
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+.send {
+  background: #007aFF;
+  border: 0;
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 14px;
+}
+
+.send:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.controlBtn {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.controlBtn:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.controlBtn:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+/* 移动端:全宽底部 sheet(参照 mobileDrawer) */
+@media (max-width: 767px) {
+  .panel {
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
+    bottom: 0;
+    height: min(72svh, 560px);
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+  }
+}

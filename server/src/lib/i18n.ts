@@ -907,6 +907,91 @@ export const translations = {
     zh: '我的投递',
     en: 'My applications',
   },
+  // ---- AI Agent(ws-c:悬浮球 + 聊天面板)----
+  agentBall: {
+    zh: 'AI 助手',
+    en: 'AI Assistant',
+  },
+  agentTitle: {
+    zh: 'AI 助手',
+    en: 'AI Assistant',
+  },
+  agentClose: {
+    zh: '关闭助手',
+    en: 'Close assistant',
+  },
+  agentInput: {
+    zh: '输入问题…',
+    en: 'Ask anything…',
+  },
+  agentSend: {
+    zh: '发送',
+    en: 'Send',
+  },
+  agentStop: {
+    zh: '停止',
+    en: 'Stop',
+  },
+  agentUndo: {
+    zh: '撤销上一步',
+    en: 'Undo',
+  },
+  agentThinking: {
+    zh: '正在思考…',
+    en: 'Thinking…',
+  },
+  agentNotConfigured: {
+    zh: 'AI 助手未配置,请在服务器配置',
+    en: 'AI assistant is not configured. Configure it on the server.',
+  },
+  agentError: {
+    zh: '出错了,请重试',
+    en: 'Something went wrong. Please retry.',
+  },
+  agentLocate: {
+    zh: '在地图上定位',
+    en: 'Locate on map',
+  },
+  agentSearch: {
+    zh: '搜索',
+    en: 'Search',
+  },
+  agentToolRunning: {
+    zh: '{name} 正在执行…',
+    en: 'Running {name}…',
+  },
+  agentToolDone: {
+    zh: '{name} 完成',
+    en: '{name} done',
+  },
+  agentToolError: {
+    zh: '{name} 执行失败',
+    en: '{name} failed',
+  },
+  agentActionCircle: {
+    zh: '绘制范围圈',
+    en: 'Draw range circle',
+  },
+  agentActionMarkers: {
+    zh: '标记 {count} 个地点',
+    en: 'Mark {count} places',
+  },
+  agentActionSelect: {
+    zh: '选中地点',
+    en: 'Select place',
+  },
+  agentActionDetail: {
+    zh: '打开详情',
+    en: 'Open detail',
+  },
+  agentActionSearch: {
+    zh: '搜索 {query}',
+    en: 'Search {query}',
+  },
+  agentWelcome: {
+    zh: '你好!问我附近有什么推荐,或让我在地图上定位、画圈。',
+    en: 'Hi! Ask for nearby recommendations, or let me locate and draw on the map.',
+  },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
