@@ -123,9 +123,11 @@ REST 调用;生产环境切换 key 必须**重新构建**部署,仅改环境变�
 # 申请:https://lbs.qq.com 控制台新建 key,产品勾选「JS API GL」。
 NEXT_PUBLIC_TENCENT_JSAPI_KEY=your_tencent_jsapi_key_here
 
-# 百度地图 JS API AK(与服务端 BAIDU_MAP_AK 同一控制台,AK 可复用于 JSAPI)。
-# 申请:https://lbs.baidu.com 控制台;JSAPI 需配置 referer 白名单
-# (开发 localhost:3000,生产填真实域名)。
+# 百度地图 JS API AK —— 必须与控制台「浏览器端」类型 AK 对应。
+# ⚠️ 与服务端 BAIDU_MAP_AK 严格区分:百度按应用类型隔离(服务端/浏览器端),
+# 服务端 key 调 JSAPI 会被拒(弹窗「APP服务被禁用了」),不可复用。
+# 申请:https://lbs.baidu.com 控制台新建「浏览器端」应用;JSAPI 需配置
+# referer 白名单(开发 localhost:3000,生产填真实域名)。
 NEXT_PUBLIC_BAIDU_AK=your_baidu_jsapi_ak_here
 ```
 
