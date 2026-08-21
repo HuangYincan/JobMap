@@ -1,0 +1,329 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createLlmProvider, parseSseLine, providerError } from '../src/lib/agent/llm-provider.ts';
+import { HttpError } from '../src/lib/llm-validate.ts';
+
+/** 由字符串片段构造 SSE 响应体(片段可跨 chunk 拆行,模拟网络分片)。 */
+function sseResponse(chunks, status = 200) {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      for (const c of chunks) controller.enqueue(encoder.encode(c));
+      controller.close();
+    },
+  });
+  return new Response(stream, { status, headers: { 'content-type': 'text/event-stream' } });
+}
+
+const BASE = { baseUrl: 'https://llm.example.com/v1', apiKey: 'sk-test', model: 'm' };
+
+function streamChat(provider, overrides = {}) {
+  const api = { deltas: [], toolCalls: [], doneCount: 0, calls: [] };
+  const opts = {
+    ...BASE,
+    messages: [{ role: 'user', content: 'hi' }],
+    signal: overrides.signal ?? new AbortController().signal,
+    onDelta: (t) => {
+      api.deltas.push(t);
+    },
+    onToolCall: (tc) => {
+      api.toolCalls.push(tc);
+    },
+    onDone: () => {
+      api.doneCount++;
+    },
+  };
+  const p = provider.streamChat(opts);
+  api.promise = p;
+  api.opts = opts;
+  return api;
+}
+
+// ---------- parseSseLine 纯函数矩阵 ----------
+
+test('parseSseLine: 合法 data 行 → payload', () => {
+  assert.equal(parseSseLine('data: [DONE]'), '[DONE]');
+  assert.equal(parseSseLine('data: {"a":1}'), '{"a":1}');
+  assert.equal(parseSseLine('data:  {"a":1}'), '{"a":1}'); // 多空格
+  assert.equal(parseSseLine('data: {"a":1}\r'), '{"a":1}'); // CRLF
+  assert.equal(parseSseLine('data:'), '');
+});
+
+test('parseSseLine: 非 data 行 → null', () => {
+  assert.equal(parseSseLine(': comment'), null);
+  assert.equal(parseSseLine('event: message'), null);
+  assert.equal(parseSseLine(''), null);
+  assert.equal(parseSseLine('   '), null);
+  assert.equal(parseSseLine('random text'), null);
+});
+
+// ---------- 流式解析 ----------
+
+test('streamChat: delta 文本逐 chunk 转发,[DONE] 终止', async () => {
+  const seen = {};
+  const provider = createLlmProvider(async (url, init) => {
+    seen.url = url;
+    seen.auth = init.headers.authorization;
+    seen.body = JSON.parse(init.body);
+    return sseResponse([
+      'data: {"choices":[{"delta":{"content":"你"}}]}\n\n',
+      'data: {"choices":[{"delta":{"content":"好"}}]}\n\n',
+      'data: [DONE]\n\n',
+    ]);
+  });
+  const api = streamChat(provider);
+  await api.promise;
+  assert.deepEqual(api.deltas, ['你', '好']);
+  assert.equal(api.doneCount, 1);
+  assert.equal(seen.url, 'https://llm.example.com/v1/chat/completions');
+  assert.equal(seen.auth, 'Bearer sk-test');
+  assert.equal(seen.body.stream, true);
+  assert.deepEqual(seen.body.messages, [{ role: 'user', content: 'hi' }]);
+  assert.equal('tools' in seen.body, false, '无工具时不带 tools 字段');
+});
+
+test('streamChat: 工具调用跨 chunk 增量拼接(参数直到流末完整)', async () => {
+  const provider = createLlmProvider(async () =>
+    sseResponse([
+      'data: {"choices":[{"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"c1","type":"function","function":{"name":"amap__place_search","arguments":""}}]}}]}\n\n',
+      'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\\"query\\":\\"杭"}}]}}]}\n\n',
+      'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"州\\"}"}}]}}]}\n\n',
+      'data: [DONE]\n\n',
+    ]),
+  );
+  const api = streamChat(provider);
+  await api.promise;
+  assert.equal(api.deltas.length, 0);
+  assert.ok(api.toolCalls.length >= 1);
+  const last = api.toolCalls[api.toolCalls.length - 1];
+  assert.equal(last.id, 'c1');
+  assert.equal(last.name, 'amap__place_search');
+  assert.equal(last.arguments, '{"query":"杭州"}');
+  assert.equal(api.doneCount, 1);
+});
+
+test('streamChat: 多工具调用(index 0/1)分别累计', async () => {
+  const provider = createLlmProvider(async () =>
+    sseResponse([
+      'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"a","function":{"name":"t1","arguments":"{}"}},{"index":1,"id":"b","function":{"name":"t2","arguments":"{\\"x\\":1}"}}]}}]}\n\n',
+      'data: [DONE]\n\n',
+    ]),
+  );
+  const api = streamChat(provider);
+  await api.promise;
+  const byId = new Map(api.toolCalls.map((tc) => [tc.id, tc]));
+  assert.equal(byId.get('a').name, 't1');
+  assert.equal(byId.get('a').arguments, '{}');
+  assert.equal(byId.get('b').name, 't2');
+  assert.equal(byId.get('b').arguments, '{"x":1}');
+});
+
+test('streamChat: 注释行/事件行/坏 JSON 行被忽略,不中断流', async () => {
+  const provider = createLlmProvider(async () =>
+    sseResponse([
+      ': keep-alive\n\n',
+      'event: message\n',
+      'data: not-json{\n\n',
+      'data: {"choices":[{"delta":{"content":"ok"}}]}\n\n',
+      'data: [DONE]\n\n',
+    ]),
+  );
+  const api = streamChat(provider);
+  await api.promise;
+  assert.deepEqual(api.deltas, ['ok']);
+  assert.equal(api.doneCount, 1);
+});
+
+test('streamChat: EOF 无 [DONE] 也视为完成', async () => {
+  const provider = createLlmProvider(async () => sseResponse(['data: {"choices":[{"delta":{"content":"末"}}]}\n\n']));
+  const api = streamChat(provider);
+  await api.promise;
+  assert.deepEqual(api.deltas, ['末']);
+  assert.equal(api.doneCount, 1);
+});
+
+test('streamChat: 带 tools 时 body 含 tools', async () => {
+  const seen = {};
+  const provider = createLlmProvider(async (url, init) => {
+    seen.body = JSON.parse(init.body);
+    return sseResponse(['data: [DONE]\n\n']);
+  });
+  const api = streamChat(provider);
+  api.opts.tools = [{ type: 'function', function: { name: 't', description: 'd', parameters: { type: 'object' } } }];
+  await provider.streamChat(api.opts);
+  assert.equal(seen.body.tools.length, 1);
+  assert.equal(seen.body.tools[0].function.name, 't');
+});
+
+// ---------- 重试与错误 ----------
+
+test('streamChat: 429 两次后 200(重试 2 次,退避注入 0)', async () => {
+  let calls = 0;
+  const provider = createLlmProvider(
+    async () => {
+      calls++;
+      if (calls <= 2) return new Response('rate limited', { status: 429 });
+      return sseResponse(['data: {"choices":[{"delta":{"content":"好"}}]}\n\n', 'data: [DONE]\n\n']);
+    },
+    { retryDelaysMs: [0, 0] },
+  );
+  const api = streamChat(provider);
+  await api.promise;
+  assert.equal(calls, 3);
+  assert.deepEqual(api.deltas, ['好']);
+  assert.equal(api.doneCount, 1);
+});
+
+test('streamChat: 500 后 200(重试一次)', async () => {
+  let calls = 0;
+  const provider = createLlmProvider(
+    async () => {
+      calls++;
+      if (calls === 1) return new Response('boom', { status: 500 });
+      return sseResponse(['data: [DONE]\n\n']);
+    },
+    { retryDelaysMs: [0] },
+  );
+  const api = streamChat(provider);
+  await api.promise;
+  assert.equal(calls, 2);
+  assert.equal(api.doneCount, 1);
+});
+
+test('streamChat: 429 持续 → HttpError(429),不再重试', async () => {
+  let calls = 0;
+  const provider = createLlmProvider(
+    async () => {
+      calls++;
+      return new Response('rate limited', { status: 429 });
+    },
+    { retryDelaysMs: [0, 0] },
+  );
+  await assert.rejects(streamChat(provider).promise, (err) => err instanceof HttpError && err.status === 429);
+  assert.equal(calls, 3, '共 3 次尝试(1 + 2 重试)');
+});
+
+test('streamChat: 网络错 2 次退避后成功;持续网络错 → kind network', async () => {
+  let calls = 0;
+  const okProvider = createLlmProvider(
+    async () => {
+      calls++;
+      if (calls <= 2) throw new TypeError('fetch failed');
+      return sseResponse(['data: [DONE]\n\n']);
+    },
+    { retryDelaysMs: [0, 0] },
+  );
+  await streamChat(okProvider).promise;
+  assert.equal(calls, 3);
+
+  const failProvider = createLlmProvider(
+    async () => {
+      throw new TypeError('fetch failed');
+    },
+    { retryDelaysMs: [0, 0] },
+  );
+  await assert.rejects(streamChat(failProvider).promise, (err) => err.kind === 'network');
+});
+
+test('streamChat: 400/422 且响应体涉及 tools → kind unsupported_tools', async () => {
+  for (const status of [400, 422]) {
+    const provider = createLlmProvider(async () => new Response('{"error":{"message":"tools is not supported"}}', { status }));
+    await assert.rejects(
+      streamChat(provider).promise,
+      (err) => err.kind === 'unsupported_tools' && err instanceof Error,
+      `status ${status}`,
+    );
+  }
+});
+
+test('streamChat: 400 无 tools 字样 → HttpError(400),非 unsupported_tools', async () => {
+  const provider = createLlmProvider(async () => new Response('bad request', { status: 400 }));
+  await assert.rejects(streamChat(provider).promise, (err) => err instanceof HttpError && err.status === 400);
+});
+
+test('streamChat: 401 → HttpError(401),不重试', async () => {
+  let calls = 0;
+  const provider = createLlmProvider(
+    async () => {
+      calls++;
+      return new Response('unauthorized', { status: 401 });
+    },
+    { retryDelaysMs: [0, 0] },
+  );
+  await assert.rejects(streamChat(provider).promise, (err) => err instanceof HttpError && err.status === 401);
+  assert.equal(calls, 1);
+});
+
+// ---------- 超时与 abort ----------
+
+/** 永不产生数据的流;收到 abort 时以 AbortError 报错(模拟真实 fetch 行为)。 */
+function hangingResponse(fetchInit) {
+  const stream = new ReadableStream({
+    start(controller) {
+      fetchInit.signal.addEventListener('abort', () => controller.error(new DOMException('aborted', 'AbortError')));
+    },
+  });
+  return new Response(stream, { status: 200, headers: { 'content-type': 'text/event-stream' } });
+}
+
+test('streamChat: 首包超时 → kind timeout,不重试', async () => {
+  let calls = 0;
+  const provider = createLlmProvider(
+    async (url, init) => {
+      calls++;
+      return hangingResponse(init);
+    },
+    { firstPacketTimeoutMs: 20, overallTimeoutMs: 5000, retryDelaysMs: [0] },
+  );
+  await assert.rejects(streamChat(provider).promise, (err) => err.kind === 'timeout');
+  assert.equal(calls, 1, '超时不重试');
+});
+
+test('streamChat: 整体超时上限生效 → kind timeout', async () => {
+  const provider = createLlmProvider(
+    async (url, init) => hangingResponse(init),
+    { firstPacketTimeoutMs: 10000, overallTimeoutMs: 30, retryDelaysMs: [0] },
+  );
+  await assert.rejects(streamChat(provider).promise, (err) => err.kind === 'timeout');
+});
+
+test('streamChat: 调用方已 abort → kind aborted,且不发请求', async () => {
+  let calls = 0;
+  const ac = new AbortController();
+  ac.abort();
+  const provider = createLlmProvider(async () => {
+    calls++;
+    return sseResponse(['data: [DONE]\n\n']);
+  });
+  await assert.rejects(streamChat(provider, { signal: ac.signal }).promise, (err) => err.kind === 'aborted');
+  assert.equal(calls, 0);
+});
+
+test('streamChat: 流中 abort → kind aborted', async () => {
+  const ac = new AbortController();
+  const provider = createLlmProvider(
+    async (url, init) => {
+      const stream = new ReadableStream({
+        start(controller) {
+          init.signal.addEventListener('abort', () => controller.error(new DOMException('aborted', 'AbortError')));
+          // 先给一个 chunk 再挂起,等 abort
+          controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"半"}}]}\n\n'));
+        },
+      });
+      return new Response(stream, { status: 200, headers: { 'content-type': 'text/event-stream' } });
+    },
+    { retryDelaysMs: [0] },
+  );
+  const api = streamChat(provider, { signal: ac.signal });
+  const p = api.promise;
+  setTimeout(() => ac.abort(), 5);
+  await assert.rejects(p, (err) => err.kind === 'aborted');
+  assert.deepEqual(api.deltas, ['半']);
+});
+
+test('providerError: 构造 kind 可判别的错误', () => {
+  const e = providerError('unsupported_tools', 'no tools');
+  assert.equal(e.kind, 'unsupported_tools');
+  assert.equal(e.name, 'AgentProviderError');
+  assert.ok(e instanceof Error);
+});
