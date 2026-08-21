@@ -8,7 +8,7 @@ import { qqdocOfficialAdapter } from '../src/lib/recruitment-adapters/qqdoc-offi
 import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
 import { seedRecruitmentAdapter } from '../src/lib/recruitment-adapters/seed.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
-import { listImportedSitesNeedingGeocode, planSiteGeocode } from '../src/lib/site-geocode.ts';
+import { formatGeocodeProviderReport, listImportedSitesNeedingGeocode, planSiteGeocode } from '../src/lib/site-geocode.ts';
 
 const drops = await Promise.all([
   seedRecruitmentAdapter.list(),
@@ -40,3 +40,4 @@ console.log(
     2,
   ),
 );
+console.log(formatGeocodeProviderReport());

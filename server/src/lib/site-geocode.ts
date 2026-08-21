@@ -220,6 +220,36 @@ export function tencentWebKey(): string | undefined {
   return key || undefined;
 }
 
+// ---------------------------------------------------------------------------
+// Geocode provider 只读注册表 (2026-08-21, feature/map-engine-backend).
+// 只读配置面:脚本 REPORT(PROVIDERS 行)、配置校验、未来 UI 面板读取,不改
+// fallbackChain 的固定顺序语义。注册表与上方 key getter 读同一 env
+// (AMAP_WEB_KEY / BAIDU_MAP_AK / TENCENT_MAP_KEY,trim 后非空即 configured),
+// 但**不共享实现**——两者一致性由 tests/geocode-providers.test.mjs 钉住
+// (防注册表与链漂移),改 getter 或注册表任一侧都必须同步另一侧并跑该测试。
+export interface GeocodeProviderInfo {
+  id: 'amap' | 'baidu' | 'tencent';
+  envVar: string;
+  configured: boolean;
+}
+
+/** 按 fallbackChain 顺序 (AMap→百度→腾讯) 返回 provider 配置状态。 */
+export function getGeocodeProviders(): GeocodeProviderInfo[] {
+  return [
+    { id: 'amap', envVar: 'AMAP_WEB_KEY', configured: amapWebKey() != null },
+    { id: 'baidu', envVar: 'BAIDU_MAP_AK', configured: baiduWebKey() != null },
+    { id: 'tencent', envVar: 'TENCENT_MAP_KEY', configured: tencentWebKey() != null },
+  ];
+}
+
+/** 脚本 REPORT 一行输出:各 provider 配置状态 + 固定链顺序说明。 */
+export function formatGeocodeProviderReport(): string {
+  const flags = getGeocodeProviders()
+    .map((p) => `${p.id}=${p.configured ? 'set' : 'missing'}`)
+    .join(' ');
+  return `PROVIDERS ${flags} | chain=AMap→Baidu→Tencent (skip no-key)`;
+}
+
 /**
  * AMap daily-quota / key-unusable detection. AMap reports these as
  * status="0" + infocode 10044 (USER_DAILY_QUERY_OVER_LIMIT) or 10043.

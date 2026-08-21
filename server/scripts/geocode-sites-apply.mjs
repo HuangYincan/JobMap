@@ -40,6 +40,7 @@ import {
   addressConflictsWithCity,
   addressConflictsWithRegeoDistrict,
   cleanCompanySearchName,
+  formatGeocodeProviderReport,
   geocodeAddressRest,
   gradeOfficePoi,
   pickBestOfficePoi,
@@ -399,6 +400,7 @@ mainLoop: for (const { file, company, site } of needing) {
 
 // --- report -----------------------------------------------------------------
 console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | BAIDU_MAP_AK: ${env.BAIDU_MAP_AK ? 'set' : 'MISSING'} | TENCENT_MAP_KEY: ${env.TENCENT_MAP_KEY ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
+console.log(formatGeocodeProviderReport());
 console.log(`Sites needing a point: ${planTotal} (attempted: ${planCount}) | skipped (not-in-only-list): ${skipped.filter((s) => s.reason === 'not-in-only-list').length} | city-not-in-list: ${skipped.filter((s) => s.reason.startsWith('city-not-in-list')).length} | override-city-mismatch: ${skipped.filter((s) => s.reason === 'override-city-mismatch').length}`);
 console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`);
 console.log('\n=== RESOLVED ===');
