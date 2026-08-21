@@ -101,14 +101,18 @@ export function createAgentBridge(
       for (const p of points ?? []) {
         if (!isLng(p?.lng) || !isLat(p?.lat)) continue; // 单项非法 → 忽略该点
         const label = isLabel(p.label) ? p.label : undefined;
-        // 一律自定义 content:蓝点 + 白边 + 蓝影(与距离手柄同款,定位点显眼可辨);
-        // 有 label 时标签叠在圆点上方(蓝底白字,flex column 布局)
+        // 一律自定义 content:蓝点 + 白边 + 蓝影(与距离手柄同款,定位点显眼可辨)。
+        // 外层 wrapper 固定 20×20(即圆点本体);label(有则)绝对定位出流、不占布局,
+        // 叠在圆点上方 2px —— content 实测尺寸恒为 20×20,锚点可精确计算,
+        // 避免旧 flex 竖排(高约 44px、含非整数 2.5px 边框)在缩放重排期间锚定错位。
+        // offset [-10,-10] 以圆心锚定地理坐标(与距离手柄 18px 点 [-9,-9] 同款语义)。
         const dot =
           '<div style="width:20px;height:20px;border-radius:50%;background:#007AFF;' +
           'border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,122,255,0.45)"></div>';
         const content = label
-          ? '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">' +
-            '<div style="background:#007AFF;color:#fff;border-radius:99px;padding:2px 10px;' +
+          ? '<div style="position:relative;width:20px;height:20px">' +
+            '<div style="position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);' +
+            'background:#007AFF;color:#fff;border-radius:99px;padding:2px 10px;' +
             'font-size:12px;box-shadow:0 2px 8px rgba(0,122,255,0.35);white-space:nowrap">' +
             `${escapeHtml(label)}</div>${dot}</div>`
           : dot;
@@ -116,6 +120,7 @@ export function createAgentBridge(
           view?.createMarker({
             position: { lng: p.lng, lat: p.lat },
             content,
+            offset: [-10, -10],
           }) ?? { remove() {} },
         );
       }
