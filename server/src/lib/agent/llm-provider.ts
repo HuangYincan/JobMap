@@ -99,9 +99,26 @@ export function createLlmProvider(fetchLike?: typeof fetch, options?: LlmProvide
       if (opts.signal.aborted) throw providerError('aborted', 'request aborted before start');
 
       const url = `${opts.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+      // OpenAI 兼容 API 要求 assistant(tool_calls) 消息用嵌套形状
+      // {id, type:'function', function:{name, arguments}};内部存的是 delta 解析产物扁平
+      // {id, name, arguments}(run-agent 回传),序列化时必须转换,否则 400
+      // (missing field 'type')。content / reasoning_content / role 等原样保留;
+      // role:'tool' 消息的 tool_call_id 已正确,不在此处理。
+      const messages = opts.messages.map((msg) =>
+        msg.role === 'assistant' && msg.tool_calls && msg.tool_calls.length > 0
+          ? {
+              ...msg,
+              tool_calls: msg.tool_calls.map((tc) => ({
+                id: tc.id,
+                type: 'function' as const,
+                function: { name: tc.name, arguments: tc.arguments },
+              })),
+            }
+          : msg,
+      );
       const body = JSON.stringify({
         model: opts.model,
-        messages: opts.messages,
+        messages,
         ...(opts.tools && opts.tools.length > 0 ? { tools: opts.tools } : {}),
         stream: true,
       });

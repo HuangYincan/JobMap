@@ -278,6 +278,48 @@ test('streamChat: 带 tools 时 body 含 tools', async () => {
   assert.equal(seen.body.tools[0].function.name, 't');
 });
 
+test('streamChat: assistant(tool_calls) 序列化为 OpenAI 嵌套形状,reasoning_content 保留;无 tool_calls 消息不受影响', async () => {
+  const seen = {};
+  const provider = createLlmProvider(async (url, init) => {
+    seen.body = JSON.parse(init.body);
+    return sseResponse(['data: [DONE]\n\n']);
+  });
+  const api = streamChat(provider);
+  api.opts.messages = [
+    { role: 'system', content: 'sys' },
+    { role: 'user', content: 'hi' },
+    {
+      role: 'assistant',
+      content: '',
+      reasoning_content: '先想想', // DeepSeek 思考模式:tool_calls 消息必须回传
+      tool_calls: [
+        { id: 'c1', name: 'amap__place_search', arguments: '{"query":"杭州"}' },
+        { id: 'c2', name: 'rest__geocode', arguments: '{}' },
+      ],
+    },
+    { role: 'tool', tool_call_id: 'c1', content: '{"ok":true}' },
+    { role: 'assistant', content: '直接回答,无工具调用' },
+  ];
+  await provider.streamChat(api.opts);
+  const msgs = seen.body.messages;
+  // 扁平 {id,name,arguments} → 嵌套 {id, type:'function', function:{name,arguments}}
+  assert.deepEqual(msgs[2].tool_calls, [
+    { id: 'c1', type: 'function', function: { name: 'amap__place_search', arguments: '{"query":"杭州"}' } },
+    { id: 'c2', type: 'function', function: { name: 'rest__geocode', arguments: '{}' } },
+  ]);
+  assert.equal(msgs[2].reasoning_content, '先想想', 'reasoning_content 随消息保留(回传必需)');
+  assert.equal(msgs[2].content, '');
+  assert.equal(msgs[2].role, 'assistant');
+  // tool 消息原样(tool_call_id 已正确)
+  assert.equal(msgs[3].role, 'tool');
+  assert.equal(msgs[3].tool_call_id, 'c1');
+  assert.equal(msgs[3].content, '{"ok":true}');
+  // 无 tool_calls 的 assistant / system / user 消息不受影响
+  assert.equal('tool_calls' in msgs[4], false, '无 tool_calls 的 assistant 消息不附加字段');
+  assert.deepEqual(msgs[0], { role: 'system', content: 'sys' });
+  assert.deepEqual(msgs[1], { role: 'user', content: 'hi' });
+});
+
 // ---------- 重试与错误 ----------
 
 test('streamChat: 429 两次后 200(重试 2 次,退避注入 0)', async () => {
