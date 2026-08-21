@@ -11,6 +11,7 @@
 | Feishu jobs ATS (`*.jobs.feishu.cn`) | Reviewed 2026-08-19 | **Adapter implemented + live-validated**; 28 tenants configured (`cli.py FEISHU_TENANTS`); polite GET JSON API + robots | `tech/roles/data/etl/feishu-ats.md` (得物/智元/禾赛 crawled 2026-08-19; 4 候选租户 2026-08-20) |
 | Hotjob (wecruit / hr.sensetime.com) | Candidate 2026-08-19 | Not yet — API endpoint needs live probe | `tech/roles/data/etl/hotjob-ats.md` |
 | Zhiye (Beisen italent `*.zhiye.com`) | Reviewed 2026-08-19; adapter implemented 2026-08-20 | **Code only** — probe-driven adapter (`ats_zhiye.py`), live crawl pending (boss Env E3); polite robots-gated fetch | `tech/roles/data/etl/zhiye-ats.md` |
+| `embodied-jobs` `topics/02-jobs.md` | Reviewed 2026-08-21 | Published GitHub file only (no LICENSE — community-maintained list) | `tech/roles/data/etl/embodied-jobs.md` |
 | BOSS Direct Hire | Not approved | No | Written authorization and separate security/legal review |
 | Nowcoder / Shixiseng | Not approved | No | Same as BOSS — commercial ToS, login walls |
 | Xiaohongshu | Not approved | No | Written authorization and separate security/legal review |

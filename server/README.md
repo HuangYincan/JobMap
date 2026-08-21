@@ -246,7 +246,7 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 ### Automated Tests
 
 ```bash
-npm test        # 568 tests / 566 pass / 0 fail / 2 skip (2026-08-21)
+npm test        # 599 tests / 597 pass / 0 fail / 2 skip (2026-08-21)
 npm run typecheck
 ```
 
