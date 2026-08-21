@@ -307,6 +307,14 @@
   opacity: 0.4;
 }
 
+/* 密码 tab 登录模式辅助提示:邮箱注册的账号,设置密码后可用邮箱登录 */
+.pwdLoginHint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--blue-ink, #0062cc);
+  text-align: center;
+}
+
 .socialGrid {
   display: grid;
   grid-template-columns: 1fr;

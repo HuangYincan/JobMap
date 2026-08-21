@@ -355,12 +355,12 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
           {tab === "password" ? (
             <>
               <label className={styles.field}>
-                <span>{t("usernameLabel", lang)}</span>
+                <span>{pwdMode === "login" ? t("loginIdOrEmail", lang) : t("usernameLabel", lang)}</span>
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
-                  placeholder={t("usernamePlaceholder", lang)}
+                  placeholder={pwdMode === "login" ? t("loginIdOrEmail", lang) : t("usernamePlaceholder", lang)}
                 />
               </label>
               <label className={styles.field}>
@@ -412,6 +412,9 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
                   {pwdMode === "login" ? t("registerLink", lang) : t("loginLink", lang)}
                 </button>
               </div>
+              {pwdMode === "login" && (
+                <p className={styles.pwdLoginHint}>{t("pwdLoginHint", lang)}</p>
+              )}
             </>
           ) : tab === "other" ? (
             <div className={styles.socialGrid}>
