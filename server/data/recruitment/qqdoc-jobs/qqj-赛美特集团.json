@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-赛美特集团",
+  "name": "赛美特集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://semi.zhiye.com/campus/jobs",
+  "direction": "软件研发工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-赛美特集团-site",
+      "name": "赛美特集团",
+      "city": "上海 苏州 深圳北京 成都 大连 杭州 合肥 厦门 广州 香港 全国",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

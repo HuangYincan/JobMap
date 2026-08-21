@@ -34,6 +34,45 @@
       "applyUrl": "https://join.tencentmusic.com/campus/post?type=40",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-00wzvbgj",
+      "title": "社会招聘",
+      "siteId": "腾讯音乐娱乐集团-site-shenzhen",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://join.tencentmusic.com/campus/post/?type=40/social",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01aj8rmt",
+      "title": "校园招聘",
+      "siteId": "腾讯音乐娱乐集团-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://join.tencentmusic.com/campus/post/?type=40/campus",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-001k6p0i",
+      "title": "技术大咖计划",
+      "siteId": "腾讯音乐娱乐集团-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://join.tencentmusic.com/campus/post/?type=40/master",
+      "retrievedAt": "2026-08-20"
     }
   ],
   "category": "64"

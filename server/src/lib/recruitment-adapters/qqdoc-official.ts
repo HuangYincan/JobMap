@@ -39,6 +39,8 @@ export interface QqdocOfficialDrop {
   /** 地址提取失败标记（extract-qqdoc-addresses.mjs 写入，adapter 忽略）。 */
   city_pending?: boolean;
   sites?: QqdocOfficialSite[];
+  /** 投递链接岗位（extract-qqdoc-jobs.mjs 按 name 匹配追加；缺省空数组）。 */
+  positions?: Array<Record<string, unknown>>;
 }
 
 const INDUSTRY_BY_NAME: ReadonlyArray<[RegExp, string]> = [
@@ -49,7 +51,9 @@ const INDUSTRY_BY_NAME: ReadonlyArray<[RegExp, string]> = [
   [/电信|移动|联通/, 'internet'],
 ];
 
-function industriesOf(name: string): string[] {
+/** 公司名 → 行业标签(银行→finance, 航空/海运/铁路→transport, …;未知 → other)。
+ *  qqdoc-jobs adapter 复用同一启发式。 */
+export function industriesOf(name: string): string[] {
   for (const [pattern, industry] of INDUSTRY_BY_NAME) {
     if (pattern.test(name)) return [industry];
   }
@@ -81,6 +85,11 @@ export function qqdocOfficialToSourceCompany(raw: unknown): SourceCompany | null
       province: site.province || undefined,
       location: dropLocation(site.location),
     }));
+  const positions: SourceCompany['positions'] = Array.isArray(drop.positions)
+    ? (drop.positions as unknown as SourceCompany['positions']).filter(
+        (pos) => pos && typeof pos.externalId === 'string' && pos.externalId.length > 0,
+      )
+    : [];
   return {
     slug: drop.slug,
     name: drop.name,
@@ -89,7 +98,7 @@ export function qqdocOfficialToSourceCompany(raw: unknown): SourceCompany | null
     scale: 'enterprise',
     careerUrl: drop.official_url,
     sites,
-    positions: [],
+    positions,
   };
 }
 

@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-对点咨询",
+  "name": "对点咨询",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "猎头实习生/猎头管培生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-对点咨询-site",
+      "name": "对点咨询",
+      "city": "北京  天津  大连 青岛  西安  南京  上海  杭州  成都  重庆 广州  深圳",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

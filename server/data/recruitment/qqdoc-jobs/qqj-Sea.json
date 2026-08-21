@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-Sea",
+  "name": "Sea",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://app.mokahr.com/campus-recruitment/garena/148076?sessionid=#/job/911f2cc8-7514-4788-bd2e-75a6a3718eba?from=qrcode",
+  "direction": "2027 Sea 全球管培生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-Sea-site",
+      "name": "Sea",
+      "city": "上海",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

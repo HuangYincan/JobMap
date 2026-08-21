@@ -85,6 +85,19 @@
       "applyUrl": "https://app.mokahr.com/campus-recruitment/kpmg/74356#/jobs?project%5B0%5D=100096754&page=1&anchorName=jobsList",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-01rhdat9",
+      "title": "校园招聘",
+      "siteId": "毕马威-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kpmg.com/cn/zh/careers/campus/graduate-applications.html/cn/zh/careers/campus.html",
+      "retrievedAt": "2026-08-20"
     }
   ],
   "category": "72"

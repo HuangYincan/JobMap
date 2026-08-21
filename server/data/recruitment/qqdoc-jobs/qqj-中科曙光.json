@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-中科曙光",
+  "name": "中科曙光",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://sugon.zhiye.com/campus/jobs?sessionid=",
+  "direction": "计算机 硬件 软件 电子 通信 自动化  物理 化学  气象  机械等相关专业",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中科曙光-site",
+      "name": "中科曙光",
+      "city": "郑州 天津 西安 昆山 北京 上海 深圳 南京 杭州",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

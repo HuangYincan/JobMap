@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-招银云创",
+  "name": "招银云创",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://app.mokahr.com/m/campus_apply/mbcloud/150116?recommendCode=DSmnP5XC#/jobs",
+  "direction": "JAVA开发工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-招银云创-site",
+      "name": "招银云创",
+      "city": "深圳市、武汉市、杭州市",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

@@ -554,7 +554,7 @@ test('planSeedImport orders real drops before the seed scaffold', () => {
   const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
   assert.match(
     store,
-    /\.\.\.qqdocOfficial,\s*\.\.\.official,\s*\.\.\.radar,\s*\.\.\.boss,\s*\.\.\.nowcoder,\s*\.\.\.shixiseng,\s*\.\.\.seed/,
+    /\.\.\.qqdocOfficial,\s*\.\.\.qqdocJobs,\s*\.\.\.official,\s*\.\.\.radar,\s*\.\.\.boss,\s*\.\.\.nowcoder,\s*\.\.\.shixiseng,\s*\.\.\.seed/,
   );
 });
 

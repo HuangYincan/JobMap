@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-中联重科",
+  "name": "中联重科",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://文中扫码投递简历",
+  "direction": "机械研发工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中联重科-site",
+      "name": "中联重科",
+      "city": "长沙",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

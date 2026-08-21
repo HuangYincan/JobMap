@@ -1,0 +1,34 @@
+{
+  "slug": "qqj-芯原股份",
+  "name": "芯原股份",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://campus.51job.com/VeriSilicon2027/post.html",
+  "direction": "数字前端设计验证工程师 数字后端设计工程师 模拟电路设计工程师 基础IP 电路设计工程师 射频集成电路设计工程 数字基带设计工程师版图设计工程 硬件测试工程师 软件工程师 编译器工程师",
+  "deadline": "2026 08  23",
+  "sites": [
+    {
+      "id": "qqj-芯原股份-site",
+      "name": "芯原股份",
+      "city": "上海  南京 成都 广州 海口",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-01lj3j8j",
+      "title": "直通校招",
+      "siteId": "qqj-芯原股份-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/VeriSilicon2027/post.html/#",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

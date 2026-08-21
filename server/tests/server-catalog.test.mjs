@@ -52,7 +52,10 @@ test('async catalog keeps only authentic positions (radar/portal) when there is 
   // Companies with only example jobs (no radar/portal rows) are not shown.
   assert.equal(await loadServerCatalogById('work', 'tencent-hangzhou'), undefined);
   assert.equal(await loadServerCatalogById('work', 'huawei-hangzhou'), undefined);
-  assert.equal(await loadServerCatalogById('work', 'xiaomi-hangzhou'), undefined);
+  // xiaomi-hangzhou got real portal-* jobs appended by extract-qqdoc-jobs
+  // (official-career drop, 2026-08-21) → now shown with authentic positions.
+  const xiaomi = await loadServerCatalogById('work', 'xiaomi-hangzhou');
+  assert.ok(xiaomi?.kind === 'recruitment' && xiaomi.positions.some((p) => p.id.startsWith('portal-')));
   assert.equal(await loadServerCatalogById('work', 'zhejiang-lab:zhejiang-lab-site'), undefined);
   // zhejiang-lab's radar positions live on an ungeocoded multi-city site → off.
   assert.equal(await loadServerCatalogById('work', 'zhejiang-lab'), undefined);

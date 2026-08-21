@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-民泰银行",
+  "name": "民泰银行",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://mintai.zhiye.com/campus/jobs",
+  "direction": "总行管理培训生 总行职能培训生  总行IT培训生 各分行培训生",
+  "deadline": "2026  11  30",
+  "sites": [
+    {
+      "id": "qqj-民泰银行-site",
+      "name": "民泰银行",
+      "city": "台州 丹山 杭州 成都 宁波 上海 金华  嘉兴 绍兴 温州   湖州 丽水  义乌 衡州  全国其他",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

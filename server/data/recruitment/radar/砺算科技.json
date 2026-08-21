@@ -61,6 +61,84 @@
       "applyUrl": "https://www.lisuantech.com/join/campus-recruitment",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-01e7dorw",
+      "title": "创新与技术",
+      "siteId": "砺算科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lisuantech.com/join/campus-recruitment/innovation",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00gu7rzh",
+      "title": "校园招聘",
+      "siteId": "砺算科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lisuantech.com/join/campus-recruitment/join/campus-recruitment",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01i47iet",
+      "title": "CAx 工业设计",
+      "siteId": "砺算科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lisuantech.com/join/campus-recruitment/solution/cax",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01mest27",
+      "title": "核心架构",
+      "siteId": "砺算科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lisuantech.com/join/campus-recruitment/innovation#section13",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00n1k5kw",
+      "title": "开发者区域",
+      "siteId": "砺算科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lisuantech.com/join/campus-recruitment/innovation#section14",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00e99mln",
+      "title": "社会招聘",
+      "siteId": "砺算科技-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.lisuantech.com/join/campus-recruitment/join/social-recruitment",
+      "retrievedAt": "2026-08-20"
     }
   ],
   "category": "39"

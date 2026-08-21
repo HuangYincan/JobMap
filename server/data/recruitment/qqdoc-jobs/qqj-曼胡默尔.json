@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-曼胡默尔",
+  "name": "曼胡默尔",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "管培生岗位  工程师学院",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-曼胡默尔-site",
+      "name": "曼胡默尔",
+      "city": "上海",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

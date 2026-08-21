@@ -34,6 +34,510 @@
       "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/list?keywords=&category=&location=&project=7579564375197239562&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-feishu-7657838027116742955",
+      "title": "【27届校招】后端开发工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657838027116742955/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 设计并实现公司数据平台业务的后端服务，确保系统的可靠性、可扩展性和性能 2. 参与基础设施建设，包括服务框架、数据库、存储、日志告警等； 3. 分析解决系统中的技术难题，持续优化系统架构和性能 4. 参与具身数据采集、处理、存储、分发等全流程开发； 5. 负责接口设计、SDK开发、数据可视化相关工作； 6. 与前端、算法、产品等团队协作，推进服务迭代和落地\n\n岗位要求:\n1. 本科及以上学历，计算机科学和软件工程相关专业； 2. 熟悉Python、Go、Java、C++等语言，有3年以上相关开发经验； 3. 全面的后端技术栈，包括不限于容器技术、数据库、对象存储、消息队列等； 4. 有从0-1构建业务系统的经验；具备基础设施建设、公有云使用经验； 5. 熟悉分布式系统、微服务架构，有高并发系统开发经验优先； 6. 具备良好的工程能力，能够独立完成高质量的项目交付；"
+    },
+    {
+      "externalId": "portal-feishu-7657835681578502443",
+      "title": "【27届校招】训练平台开发工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657835681578502443/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责大模型训练平台的整体设计与工程落地，支撑从单机到千卡级集群的训练任务高效运行； 2. 构建统一多云多端的训练平台，支持多种分布式训练模式（DDP/FSDP/ZeRO/Megatron），实现训练任务的自动化编排与弹性调度； 3. 设计高性能数据通路与存储体系（数据加载加速、缓存、分布式文件系统/对象存储、数据预取），解决大规模训练中的 I/O 瓶颈； 4. 构建训练性能优化体系（profiling、算子与通信分析、GPU 利用率），完善训练可观测性与稳定性体系（metrics/logs/traces、异常检测、自动恢复、checkpoint/容灾），支撑长时间稳定训练； 5. 同时推进平台化能力（实验管理、版本管理、CI/CD、权限与多租户隔离）、自动化训练能力，提升整体研发效率与资源利用率。\n\n岗位要求:\n1. 具备扎实的系统基础（操作系统、网络、并发/分布式系统），精通 Kubernetes 及 Go 语言；熟悉主流深度学习框架及其分布式训练机制（DDP/FSDP/ZeRO 等），理解训练过程中的计算、通信与 I/O 协同； 2. 具备集群与调度系统经验（K8s/Slurm/Ray），理解 GPU/NUMA/网络拓扑与资源调度策略； 3. 对训练性能优化有实战经验（profiling、瓶颈定位、数据加载与通信优化），能够提升 GPU 利用率与整体吞吐； 4. 熟悉存储与数据系统（如分布式文件系统、对象存储、缓存机制）优先；有大规模训练平台或生产环境经验（千卡级集群、长任务稳定性）优先； 5. 具备良好的工程抽象能力与平台化思维，能够在复杂系统中推进标准化与自动化，并对稳定性与效率负责。"
+    },
+    {
+      "externalId": "portal-feishu-7657835305828174143",
+      "title": "【27届校招】具身智能后训练算法工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657835305828174143/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责具身智能具体任务的算法研发与落地，基于现有 LLM、VLM、VLA、World Model、World Action Model 等模型能力，完成任务后训练、调优、评测和真机部署。 2.面向真实机器人任务构建完整闭环，包括任务定义、数据采集、数据标注、模型训练、离线评测、真机调试、失败分析和迭代优化。 3.针对具体任务进行模型后训练和任务适配，包括 SFT、行为克隆、模仿学习、轨迹学习、动作预测、偏好优化、失败样本学习等。 4.负责真机数据、VLM/VLA 多模态数据的分析和建设，包括图像、视频、语言指令、动作轨迹、任务阶段、成功/失败样本、人工接管数据等。 5.建立数据采集和标注规范，持续分析数据质量、数据分布、长尾场景、标注一致性和模型表现之间的关系，推动数据闭环迭代。 6.参与机器人系统工程集成，包括模型推理服务、控制接口、传感器数据接入、ROS/ROS2 通信、日志系统和调试工具建设。 7.负责真机部署与调试，处理真实环境中的延迟、噪声、遮挡、标定误差、动作偏差、执行失败和环境变化等问题。 8.与硬件、控制、数据、产品和现场团队协作，将算法能力转化为稳定、可演示、可复现、可迭代的机器人任务能力。\n\n岗位要求:\n1.计算机、人工智能、机器人、自动化、电子工程等相关专业，本科及以上学历。 2.熟悉 LLM、VLM、VLA 相关技术，理解多模态理解、指令跟随、任务规划、动作生成和机器人策略学习的基本方法。 3.了解 World Model、World Action Model、状态预测、动作后果建模、环境理解等方向，并能结合具体任务进行应用和调试。 4.熟悉具身智能常见算法，包括 behavior cloning、imitation learning、diffusion policy、ACT、trajectory modeling、planning、control、sim-to-real 等。 5.熟练掌握 PyTorch 等深度学习框架，具备模型训练、调参、评测、debug 和工程集成经验。 6.熟悉分布式训练或多卡训练流程，了解 DDP、FSDP、DeepSpeed、Ray 等工具，能够完成任务级模型训练和实验管理。 7.具备较强工程能力，熟悉 Python/C++，能够独立搭建训练 pipeline、推理服务、数据处理脚本、评测工具和调试工具。 8.对数据敏感，能够从模型失败案例中定位数据问题，判断是数据缺失、分布偏差、标注不一致、任务定义不清还是模型能力不足。 9.熟悉真机数据特点，理解传感器噪声、控制延迟、轨迹偏差、人工接管、失败恢复、环境变化等真实系统问题。 10.具备良好的问题拆解、现场 debug、实验设计和跨团队协作能力，能够在不确定环境下快速推进 demo 和任务交付。 加分项 1.有机械臂、双臂机器人、灵巧手、移动操作机器人、工业机器人或服务机器人真机项目经验。 2.有 VLA、OpenVLA、RT-1/RT-2、ACT、Diffusion Policy、Octo、SayCan、PaLM-E 等相关项目实践经验。 3.有机器人遥操作数据、专家演示数据、human-in-the-loop 数据、失败恢复数据或多模态任务数据建设经验。 4.有真实 demo、客户现场、展会演示、PoC 项目或机器人产品化落地经验。 5.熟悉 Isaac Sim、Mujoco、PyBullet、ManiSkill、RoboSuite 等仿真平台，并有 sim-to-real 调试经验。"
+    },
+    {
+      "externalId": "portal-feishu-7657834902566439214",
+      "title": "【27届校招】具身智能大模型算法工程师（FDE / 现场部署方向）",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657834902566439214/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责具身智能大模型在客户现场及真实业务场景中的部署、调试与效果优化，保障算法能力稳定落地。 2.参与机器人系统的现场联调工作，协同解决模型推理、感知输入、动作执行、系统通信及硬件适配等问题。 3.结合现场数据和客户反馈，分析算法效果问题，推动数据采集、样本构建、模型微调及策略优化。 4.支持多模态信息，包括多视角视觉、深度、点云、力反馈、触觉等，在实际机器人任务中的接入、验证与调试。 5.参与具身智能系统的测试评估与交付验收，包括测试用例设计、问题复现、效果评估、调试记录和技术文档沉淀。 6.根据项目需要支持客户现场驻场和出差工作，预计约 30% 工作时间涉及出差或现场支持。\n\n岗位要求:\n1.熟悉多模态大模型训练与微调流程，具备语言模型或视觉-语言模型训练经验 2.理解主流具身大模型的核心结构与设计思想，有 Pi0、Dexbotic、Gr00T 等相关算法训练或微调经验者优先 3.具备扎实的数学基础和编程能力，熟悉Python编程语言，熟悉Pytorch/Tensorflow等深度学习框架，能独立完成工程实现 4.具备较强的工程调试和问题定位能力，能够在现场环境中分析并解决算法、系统集成或硬件适配相关问题。 5.具备良好的跨团队沟通能力，能够与算法、软件、硬件、产品、项目交付及客户团队协同推进问题闭环。 6.计算机科学、电子信息、自动化、人工智能、控制工程、机器人或相关专业。有计算机视觉、大模型训练/微调、自动驾驶、具身智能等领域的科研或项目经验者优先"
+    },
+    {
+      "externalId": "portal-feishu-7657834425413093674",
+      "title": "【27届校招】具身智能世界模型算法研究员",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657834425413093674/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责研发和优化世界模型算法，构建机器人的环境感知、状态预测和决策规划能力，提升机器人在复杂环境中的自主决策和适应性; 2.开发适用于机器人端到端操作的多模态世界模型，整合视觉、语言、触觉等多模态信息，构建统的环境表征和动态预测模型; 3.设计和优化机器人视频表征学习方法从多模态数据中提取有效的时空特征表示，提升机器人的视觉空间推理和环境理解能力; 4.研究基于世界模型的机器人强化学习技术，开发高效的仿真环境，提升机器人在现实世界中的学习效率和泛化能力; 5.跟踪世界模型、多模态学习、机器人学等领域的最新研究进展，推动技术创新和产业化应用落地。\n\n岗位要求:\n1.2027届应届生，计算机、人工智能、机器人相关专业，硕士及以上学历优先； 2.熟练掌握深度学习基本原理，具备扎实的数学功底和极强的算法工程实现能力; 3.对世界模型、生成模型(如Diffusion、GAN、Flow、Transformer等)有深入理解； 4.熟悉 ROS/ROS2, MuJoCo、 Isaac Sim/Isaac Gym/Isaac Lab、Gazebo、ManiSkill 等工具； 5.有VLA、多模态大模型、Diffusion Policy、ACT、强化学习、Sim2Real等相关项目经验； 加分项 1.在国际顶会和期刊(如 ICLR, NeurlPS,CVPR,ICCV,ICML，ICRA等)以第一作者发表过相关方向的学术论文； 2.具备较为完整的研发经验，经历过模型设计、训练调优到验证的完整流程; 3.有数据闭环、机器人数据集构建、模型评测工具链或真机部署经验者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7657833888471501119",
+      "title": "【27届校招】产品经理",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657833888471501119/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与制定具身智能数据采集标准，包括采集场景、任务流程、设备要求、文件格式、命名规范、元数据字段、质量验收标准等。 2.负责数据平台相关产品设计，包括数据上传、数据管理、任务分发、数据检索、版本管理、质量看板、权限管理、交付管理等模块。 3.设计数据清洗与标注工具功能，覆盖视频、图像、深度、IMU、轨迹、动作、物体、场景、手部/人体关键点等多模态数据。 4.梳理数据处理流程，推动采集、清洗、标注、质检、算法、交付等环节形成标准化 SOP。 5.与算法工程师、数据运营、采集团队、标注团队和客户需求方协作，将算法训练需求转化为可执行的数据生产方案。 6.跟踪数据质量指标，分析数据问题原因，推动平台功能和流程持续优化。 7.参与具身智能数据产品化工作，沉淀可复用的数据集规格、交付模板、验收标准和产品文档。\n\n岗位要求:\n1.计算机、人工智能、机器人、自动化、数据科学、工业工程、信息管理等相关专业优先。 2.对具身智能、机器人、AI 数据、自动驾驶、计算机视觉、多模态模型等方向有兴趣，愿意长期深耕数据产品方向。 3.具备较强的结构化思维，能把复杂流程拆解成清晰的字段、规则、页面、流程和验收标准。 4.具备良好的文档能力，能够输出 PRD、流程图、字段表、标注规范、验收标准、需求说明等产品文档。 5.具备基础技术理解能力，了解 SQL、Python、API、数据结构、机器学习或计算机视觉相关概念者优先。 6.有数据标注平台、数据治理、AI 产品、机器人项目、CV/NLP/多模态项目、科研项目或实习经历者优先。 7.沟通推进能力强，能在算法、运营、标注、采集和客户之间协调需求并推动落地。"
+    },
+    {
+      "externalId": "portal-feishu-7657831686922701075",
+      "title": "【27届校招】具身智能强化学习算法研究员",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657831686922701075/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "研发面向机器人控制的强化学习模型，基于高层规划策略与底层控制策略的结合，实现机械臂、足式机器人在家庭、医疗、教育等领域的落地。\n\n岗位要求:\n1. 2027届应届生，计算机科学、机器人学、控制工程或相关专业优先； 2. 具备扎实的数学基础和编程能力，熟悉基本的深度学习理论、强化学习算法； 3. 对技术充满热情，有较强的自驱力和学习力，勇于尝试不同的学术研究想法； 4. 有在机器人领域顶会、顶刊发表论文经历，包括但不限于ICRA、RSS、IROS，或者作为核心技术人员参与过国际、国内机器人重大研发项目者优先； 5. 有 Isaac Sim/Gym、Mujoco 等仿真器的开发经历或者使用经验者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7657829483101653299",
+      "title": "【27届校招】具身智能大模型算法研究员",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657829483101653299/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与具身智能大模型方向前沿算法研究，具体包括但不限于具身智能大模型的框架设计、模型优化、数据生成、面向导航和操作等不同下游任务的微调和部署、持续学习优化等； 2. 跟踪和评估最新研究进展，设计和维护相关算法框架，开发、集成和优化具身智能系统； 3. 协同工程等团队推动真机部署和开源开放等项目，打造创新应用展示，形成工作影响力和价值。\n\n岗位要求:\n1. 2027届应届生，计算机、人工智能、机器人相关专业，有相关方向实习/研究经历优先； 2. 对大模型和具身智能有整体了解，对其中相关子方向相关工作和发展方向有一定理解和思考； 3. 熟练掌握 Python、PyTorch 等编程语言和深度学习框架，有较强的工程实现能力； 4. 对于有仿真平台研究需求的方向，需熟练掌握 Omniverse 等仿真平台； 5. 熟悉 C++，CUDA，ROS 等，有相关研究经历或者在顶级学术会议 CVPR、ICCV、NeurIPS、CoRL 等上发表过文章，参与过相关数据集和基准搭建、真机系统上优化部署和开源项目贡献者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7657828677783554314",
+      "title": "【27届校招】软件开发工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657828677783554314/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与机器人平台、后台服务、业务系统等软件模块开发。 2.参与任务调度、数据管理、设备管理、用户权限、接口服务等平台能力建设。 3.参与前后端接口设计、服务开发、数据库设计和系统联调。 4.支持平台稳定性、性能、可维护性优化。 5.根据业务需求快速完成原型开发、功能迭代和问题修复。\n\n岗位要求:\n1.本科及以上学历，计算机、软件工程、信息工程等相关专业。 2.熟悉 Java / Go / Python / TypeScript / C++ 中至少一种编程语言。 3.掌握基本的数据结构、操作系统、计算机网络和数据库知识。 4.了解常见 Web 后端开发框架、数据库、缓存、消息队列者优先。 5.有后台服务、管理平台、数据平台、前端工程化项目经验优先。 6.具备良好的代码习惯、沟通能力和快速学习能力。"
+    },
+    {
+      "externalId": "portal-feishu-7657828360391772443",
+      "title": "【27届校招】机器人系统开发工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657828360391772443/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与机器人系统软件开发，包括通信、任务执行、设备接入、状态管理等模块。 2.参与多类型机器人系统集成，支持机器人与平台、算法、硬件设备之间的协同。 3.参与机器人端基础能力建设，包括传感器接入、数据采集、指令下发、状态回传等。 4.支持系统仿真、功能验证和机器人现场联调。 5.参与机器人系统稳定性、可维护性和可扩展性优化。\n\n岗位要求:\n1.本科及以上学历，计算机、软件工程、机器人、自动化、电子信息等相关专业。 2.熟悉 C++ / Python / Go / Java 中至少一种编程语言。 3.了解 Linux 开发环境，具备基本的问题定位和调试能力。 4.了解进程通信、网络通信、多线程、系统服务等基础知识。 5.有 ROS / ROS2、机器人系统集成、嵌入式 Linux、物联网设备接入经验优先。 6.具备良好的系统思维和学习能力，能适应软硬件结合的开发场景。"
+    },
+    {
+      "externalId": "portal-feishu-7657827197881665819",
+      "title": "【27届校招】具身运控算法工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657827197881665819/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与机器人运动控制、底盘控制、机械臂控制等相关模块开发与调试。 2.参与机器人运动规划、轨迹跟踪、控制参数调优等工作。 3.配合完成机器人整机联调、场景测试和问题定位。 4.参与控制算法在真实机器人上的部署、验证和优化。 5.支持机器人基础能力建设，包括运动稳定性、响应速度、任务执行可靠性等。\n\n岗位要求:\n1.硕士及以上学历，机器人、自动化、控制工程、机械电子、计算机等相关专业。 2.熟悉 C++ / Python 中至少一种编程语言。 3.了解 PID、MPC、轨迹规划、运动学、动力学等相关基础知识。 4.有机器人、无人车、机械臂、自动化设备相关项目经验优先。 5.熟悉 ROS / ROS2、Gazebo、MoveIt、仿真平台者优先。 6.具备较好的工程落地意识，愿意参与真实机器人调试和问题排查。"
+    },
+    {
+      "externalId": "portal-feishu-7657826877692725567",
+      "title": "【27届校招】模型部署与推理优化工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657826877692725567/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与 AI 模型在机器人端、边缘设备或服务器端的部署和推理优化。 2.支持视觉、语言、多模态、具身智能相关模型的工程化落地。 3.参与模型转换、推理加速、显存/内存优化、延迟优化等工作。 4.配合算法团队完成模型效果验证、性能测试和线上问题定位。 5.参与模型服务化能力建设，包括模型管理、版本管理、推理接口和性能监控。\n\n岗位要求:\n1.本科及以上学历，计算机、人工智能、软件工程、电子信息等相关专业。 2.熟悉 Python / C++ 中至少一种编程语言。 3.了解 PyTorch、TensorFlow、ONNX、TensorRT、OpenVINO 等任一模型部署工具或框架。 4.了解深度学习基础知识，熟悉 CNN、Transformer、多模态模型者优先。 4.有模型压缩、量化、蒸馏、推理加速、GPU/CUDA 开发经验优先。 5.对模型工程化和系统性能优化有兴趣，具备较强的问题分析能力。"
+    },
+    {
+      "externalId": "portal-feishu-7657825189274863935",
+      "title": "【27届校招】具身智能算法工程师（多模态与System0方向）",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657825189274863935/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.以数据驱动的方式，结合大规模训练与RL算法，设计能够进行高频控制的VLA模型 2.面向复杂精细的高难度任务，充分挖掘机器人传感器与硬件能力，设计新的模型算法 3.将算法运用在实际的场景与项目中\n\n岗位要求:\n1. 熟练的C++、Python编程能力 2.强大的动手实验能力 3.有机器人操作相关的项目或科研经验者优先"
+    },
+    {
+      "externalId": "portal-feishu-7657824661452376356",
+      "title": "【27届校招】具身智能算法工程师（灵巧手方向）",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657824661452376356/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.依托 VLA + RL 的预训练与后训练技术，开发能在高自由度灵巧手上工作的模型与算法 2.建立面向灵巧手算法的数据集与benchmark 3.将算法运用在实际的场景与项目中\n\n岗位要求:\n1.熟练的C++、Python编程能力 2.强大的动手实验能力 3.有灵巧手相关的项目或科研经验者优先\""
+    },
+    {
+      "externalId": "portal-feishu-7657824332672092422",
+      "title": "【27届校招】测试工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657824332672092422/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责 1. 参与人形机器人系统测试工作，根据产品需求和系统设计，在导师指导下制定测试计划、设计测试场景并执行测试任务，协助开展整机性能验证与版本验收。 2. 根据典型客户使用场景，设计、维护测试用例，完成测试数据采集、整理与分析，编写测试报告。 3. 跟踪测试过程中发现的问题，协助复现问题、定位原因，推动缺陷闭环管理。 4. 参与产品性能评估与竞品对比测试，输出测试结论及改进建议。 5. 参与测试指标体系建设和测试标准优化，协助开展测试数据分析与挖掘工作。 6. 参与自动化测试工具、测试脚本及测试工站的开发与维护，持续提升测试效率。 7. 与系统、算法、软件、硬件等团队协同合作，参与需求评审和测试方案讨论，推动产品质量持续提升。\n\n岗位要求:\n1. 机械工程、测控技术与仪器、自动化、电子信息、计算机、机器人工程等相关专业，本科及以上学历，硕士优先。 2. 对机器人系统测试、产品质量保障工作有浓厚兴趣，具备较强的责任心和主动学习意识。 3. 具备良好的逻辑分析能力和系统性思维，能够独立思考并解决一般技术问题。 4. 具有扎实的数据分析基础，对测试数据敏感，了解基本统计学方法者优先。 5. 具备良好的沟通表达能力和文档编写能力，能够编写测试用例、测试记录及测试报告。 6. 具备基本编程能力，熟悉 Python、C/C++、MATLAB 中至少一种语言，有课程项目、实验室项目或竞赛开发经验者优先。 7. 熟悉 Linux 基本操作和常用 Shell 命令，有 Shell 脚本编写经验者优先。 8. 了解软件测试基本流程和缺陷管理方法，有自动化测试、持续集成（CI）、测试平台开发经验者优先。 9. 具有机器人、智能硬件、自动驾驶、嵌入式系统等相关项目、科研或竞赛经历者优先。 10. 具备英文技术文档阅读能力，能够查阅和理解英文资料。 11. 工作认真细致，具备团队协作意识，乐于接受挑战，能够适应快速迭代的研发环境。"
+    },
+    {
+      "externalId": "portal-feishu-7657823772343748910",
+      "title": "【27届校招】软件工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657823772343748910/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与机器人软件系统的研发与交付，不需要同时掌握所有方向，可根据个人能力和兴趣参与其中一类或多类工作。 2、参与 ROS 2 机器人软件开发，包括节点、消息接口、launch、参数配置、状态诊断、数据记录与回放分析。 3、参与机械臂、外骨骼、夹爪、底盘、升降/腰部等执行机构的 MCU 嵌入式软件控制与调试。 4、参与 EtherCAT、CAN/SocketCAN、串口、LiDAR、相机等设备接入、通信协议解析和异常诊断。 5、参与机器人软件 SDK、CICD、现场运维工具的开发及版本包交付和设备部署流程建设。\n\n岗位要求:\n1、2027应届生，计算机、软件工程、自动化等相关专业优先，熟练掌握 C/C++编程语言。 2、具备扎实的计算机基础，理解数据结构、操作系统、网络通信、并发编程、基本调试方法。 3、熟悉 Linux 开发环境，能够使用 Git、CMake/Make、Docker、Shell 等常见工程工具。 4、对机器人、嵌入式、运动控制、实时系统或工程工具平台有浓厚兴趣。 5、有较强的问题定位能力，愿意面对真实硬件、日志、现场环境和复杂系统集成问题。"
+    },
+    {
+      "externalId": "portal-feishu-7657822601600141587",
+      "title": "【27届校招】硬件工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657822601600141587/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与机器人控制板、电源板、传感器接口板的原理图设计与PCB Layout； 2.协助完成硬件电路的焊接、调试、信号测试与故障排查； 3.完成样机的线缆制作； 4配合软件团队进行底层驱动联调（CAN、SPI、I2C、UART等通信协议）； 5.负责元器件选型、BOM整理及硬件设计文档撰写； 6.参与征集可靠性测试及问题整改；\n\n岗位要求:\n1.2027应届生，电子工程、自动化、机械电子、测控等相关专业； 2.熟悉模拟/数字电路，了解运放、比较器、MOS管开关、DC-DC，接触过IMU、编码器、激光雷达等传感器接口电路； 3.至少掌握一款EDA工具（Altium Designer / Cadence / PADS / KiCad），有绘制或多层板经验； 4.熟悉一种主流MCU及SOC（STM32、ESP，RK等），了解其最小系统及外设（GPIO、ADC、定时器、PWM，串口等）； 5.有基础的程序编写能力，熟悉C，C++等语言。 6.熟练使用示波器、万用表、信号发生器、逻辑分析仪等常用仪器； 7.具备良好的动手能力，能独立搭建简单测试电路； 8.有机器人竞赛（RoboMaster、RoboCup、全国大学生电子设计竞赛等）获奖经历；做过BLDC电机驱动、四轴飞行器、平衡小车等硬件项目； 9.有英文文档阅读能力，有较强的学习意愿和自驱力，善于沟通协作。"
+    },
+    {
+      "externalId": "portal-feishu-7657822046949214500",
+      "title": "【27届校招】机械结构工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657822046949214500/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与人形机器人本体结构设计，包括躯干、头部、双臂、腿部、关节安装、外壳覆盖件、传感器支架、线束固定等设计工作； 2、参与机器人机械臂、末端执行器、夹爪、灵巧手、腿部机构等相关结构方案设计与预研工作； 3、负责零部件三维建模、二维工程图输出、BOM整理、标准件选型、加工跟进及样件确认； 4、参与样机装配、调试、测试和结构问题分析，针对装配干涉、结构异响、强度刚度不足、间隙松动、维护不便等问题进行优化； 5、配合电子、嵌软、算法、NPI、测试等团队完成整机集成、装配验证和结构方案迭代。\n\n岗位要求:\n1、2027应届生，机械类、机器人工程、车辆工程、航天类、自动化、智能制造等相关工科专业； 2、机械基础扎实，熟悉机械原理、机械设计、材料力学、理论力学、工程材料、机械制造工艺、公差配合等基础知识； 3、熟练使用SolidWorks、Creo、catia 等至少一种三维设计软件，具备二维工程图输出能力，能够完成零件建模、装配设计、工程图、BOM整理等工作； 4、有机器人、机械臂、移动底盘、四足/双足机器人、夹爪、灵巧手、外骨骼、RoboMaster、机械创新设计大赛等相关项目经验优先； 5、对机器人行业有兴趣，具备较强学习能力、沟通协作能力和主动性，具备独立思考和方案创新意识。"
+    },
+    {
+      "externalId": "portal-feishu-7657821500008319278",
+      "title": "【27届校招】PE工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657821500008319278/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责人形机器人生产工艺方案设计、编制、优化及落地执行； 2. 跟进新品试产、量产全流程，调试工艺参数，完成工艺验证与固化； 3. 快速处理产线工艺异常，制定改善对策，保障生产稳定运行； 4. 推进工艺提效、降本、提质项目，持续优化生产流程与作业标准。\n\n岗位要求:\n1. 机械、自动化、电子、测控、智能制造等相关理工科专业； 2. 逻辑思维清晰，具备良好的问题分析沟通能力； 3. 2027 届应届毕业生，热爱机器人行业，愿意扎根现场学习成长。"
+    },
+    {
+      "externalId": "portal-feishu-7657821001850439963",
+      "title": "【27届校招】QE工程师",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7657821001850439963/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责人形机器人整机、零部件全流程质量管控，识别质量风险并跟进整改； 2. 制定、完善产品检验标准、质量规范，统筹来料、生产、成品各环节质检工作； 3. 分析生产、测试过程中的质量异常，推动跨部门完成问题复盘与闭环改善； 4. 整理质量数据，输出分析报告，持续优化品质体系，提升产品可靠性与良率。\n\n岗位要求:\n1. 机械、自动化、电子、测控、智能制造等相关理工科专业； 2. 逻辑思维清晰，具备良好的问题分析沟通能力； 3. 2027 届应届毕业生，热爱机器人行业，愿意扎根现场学习成长。"
+    },
+    {
+      "externalId": "portal-feishu-7628828394868508954",
+      "title": "感知算法实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7628828394868508954/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与物流分拣场景下感知模块的算法设计、应用落地与前沿技术预研; 2.负责目标检测、识别、分割与多目标跟踪算法的开发与优化，面向复杂仓储分拣环境实现高鲁棒性感知能力; 3.处理点云与深度数据，实现三维场景理解、物体识别与空间定位等关键能力; 4.推动感知模块与多模态大模型及Agent系统的融合; 5.优化感知算法在云端与端侧设备上的推理性能与资源占用，提升系统实时性与部署效率。\n\n岗位要求:\n1.具备视觉感知、深度估计、抓取姿态生成等相关项目或研究经验; 2.熟悉主流多模态大模型(如LLaVA、Qwen-VL等); 3.熟悉相机与多传感器标定方法; 4.具备扎实的数学基础和编程能力，熟悉Python编程语言，熟悉Pytorch/Tensorflow等深度学习框架，能独立完成工程实现 5.计算机科学、电子信息、自动化、人工智能、控制工程、机器人或相关专业。有计算机视觉、大模型训练/微调、自动驾驶、具身智能等领域的科研或项目经验者优先"
+    },
+    {
+      "externalId": "portal-feishu-7628824317845653810",
+      "title": "算法实习生（灵巧手方向）",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7628824317845653810/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.依托VLA+RL的预训练与后训练技术，开发能在高自由度灵巧手上工作的模型与算法 2.建立面向灵巧手算法的数据集与benchmark 3.将算法运用在实际的场景与项目中\n\n岗位要求:\n1.熟练的C++、Python编程能力 2.强大的动手实验能力 3.有灵巧手相关的项目或科研经验者优先"
+    },
+    {
+      "externalId": "portal-feishu-7626261765630888211",
+      "title": "校园大使",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7626261765630888211/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、作为原力灵机品牌的校园代表，积极推广品牌文化和产品； 2、策划并执行校园内的品牌活动，增强品牌在校内的知名度和影响力； 3、建立并维护与校园社群的良好关系，收集反馈为品牌提供建议； 4、协助组织线上线下活动，提升用户体验和品牌忠诚度。\n\n岗位要求:\n1、具备良好的沟通能力和团队协作精神，能够独立策划活动； 2、熟悉校园文化和学生群体，有较强的社交网络和资源； 3、积极主动，责任心强，能够承担一定的项目管理和执行压力； 4、有创意，对品牌推广有热情，愿意为原力灵机品牌贡献自己的力量； 5、2027届及以后毕业的本科/硕士生，人工智能、计算机、机器人、自动化等相关专业优先。"
+    },
+    {
+      "externalId": "portal-feishu-7625861011215632681",
+      "title": "具身规控算法实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7625861011215632681/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "加入我们具身智能团队，深入参与机器人任务规划与控制的核心算法研发。你将有机会在仿真与真实机器人平台上，将前沿算法转化为可执行的机器人行为，积累从算法设计到系统验证的完整工程经验。 工作内容： 1. 参与开发与调试基于规则/学习的任务执行策略，协助构建模块化执行框架。 2. 参与规控算法开发，端到端调试，完成规控算法的验证与性能分析。 3. 协助分析机器人任务失败案例，归纳根因，并提出改进方案。 4. 参与算法模型输出与底层控制接口的联调，系统记录实验数据与结果。 5. 跟踪具身智能、运动规划等方向的前沿研究，完成技术调研报告。\n\n岗位要求:\n1. 机器人、自动化、人工智能等相关专业，本科大三及以上或硕士在读。 2. 扎实的Python编程能力，了解C++基础。 3. 掌握机器人学基础，理解运动学/动力学、轨迹规划等概念。 4. 熟悉ROS/ROS2开发流程者优先。 5. 具备具身智能、机械臂操作或强化学习相关项目/研究经验者优先。 6. 对机器人技术有浓厚兴趣，具备良好的逻辑分析与问题解决能力。"
+    },
+    {
+      "externalId": "portal-feishu-7623988852788594986",
+      "title": "机器人软件系统研发实习生（C++）",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7623988852788594986/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.根据产品需求，使用C++进行高质量代码的编写。 2.参与机器人软件的软件架构设计和模块设计。 3.开发机器人场景数据采集模块。 4.对自己编写的代码进行单元测试和功能测试，确保代码的稳定性和可靠性。\n\n岗位要求:\n1.计算机科学或相关专业。 2.熟练掌握C++语言，了解其特性和标准库。 3.对数据结构和算法有深入理解。 4.熟悉Linux系统，掌握Shell，Python等脚本编程。 5.具备良好的问题分析和解决能力，具备优秀的代码调试技能。 6.良好的团队协作精神和沟通技巧。"
+    },
+    {
+      "externalId": "portal-feishu-7582417142303672586",
+      "title": "具身智能仿真算法实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7582417142303672586/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "面向机械臂抓取、机器人导航等任务构建孪生仿真评测环境、合成数据等，研究如何用仿真相关技术推动VLA、VLN、RL前沿算法迭代。 包含但不限于三维重建与渲染算法（VGGT、3DGS、Mesh重建等），3D资产构建与场景生成，研究减小Sim-Real gap（系统辨识、神经仿真器）等。 协助迭代公司内工具链，协助解决仿真及其应用过程中的科学问题，产出高影响力的学术工作。\n\n岗位要求:\n拥有至少以下一项经验：熟悉主流仿真平台之一（Isaac Sim, Mujoco等）；熟悉重建算法（VGGT、3DGS、NeRF等）；熟悉生成式AI在物理仿真中的应用；熟悉VLA、VLN、RL等算法。 本科或研究生在读，计算机科学、机器人学、人工智能、计算机图形学、软件工程等相关专业优先。 对技术充满热情，有较强的自驱力和自我学习能力，勇于尝试不同的想法，能快速适应新技术和新工具；具备良好的调试和寻找解决思路的能力，能够快速定位并修复问题。 具备良好的沟通协作能力，能够高效地与其他算法团队协作。 实习时长至少 3 个月，实习时间超过 6 个月、可线下实习者优先； 有在机器人、计算机视觉、人工智能领域发表论文经历，包括但不限于CVPR、ICLR、NeurIPS、ICRA、RSS、IROS，或者作为核心技术人员参与过国际、国内机器人重大研发项目者优先；"
+    },
+    {
+      "externalId": "portal-feishu-7582416477288335626",
+      "title": "具身智能多模态融合算法实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7582416477288335626/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "参与研发深度、视触觉、力反馈等多模态融合的VLA大模型。 参与多模态融合VLA大模型在真机上的部署工作，对外演示。 协助解决多模态融合VLA大模型研发中遇到的科学问题，产出高影响力的学术工作。\n\n岗位要求:\n计算机科学、机器人学、控制工程或相关专业优先； 具备扎实的数学基础和编程能力，熟悉基本的深度学习理论、强化学习算法； 对技术充满热情，有较强的自驱力和学习力，勇于尝试不同的学术研究想法； 实习时长至少 3 个月，实习时间超过 6 个月、可线下实习者优先； 有在机器人领域顶会、顶刊发表论文经历，包括但不限于ICRA、RSS、IROS，或者作为核心技术人员参与过国际、国内机器人重大研发项目者优先； 有 Isaac Sim/Gym、Mujoco 等仿真器的开发经历或者使用经验者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7582415852365367603",
+      "title": "强化学习（VLA大模型）算法实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7582415852365367603/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "参与公司自研算法平台与主流强化学习算法的适配工作，支持在主流仿真、Sim2Real等环境的训练与部署。 参与利用Human-In-Loop范式的强化学习算法在真机上的研发工作。 研究面向具身领域的VLA大模型与强化学习结合的算法，产出高影响力的学术工作。\n\n岗位要求:\n计算机科学、机器人学、控制工程或相关专业优先； 具备扎实的数学基础和编程能力，熟悉基本的深度学习理论、强化学习算法； 对技术充满热情，有较强的自驱力和学习力，勇于尝试不同的学术研究想法； 实习时长至少 3 个月，实习时间超过 6 个月、可线下实习者优先； 有在机器人领域顶会、顶刊发表论文经历，包括但不限于ICRA、RSS、IROS，或者作为核心技术人员参与过国际、国内机器人重大研发项目者优先； 有 Isaac Sim/Gym、Mujoco 等仿真器的开发经历或者使用经验者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7582067494816647434",
+      "title": "具身智能多模态数据实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7582067494816647434/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "参与具身智能应用场景下的数据采集、清洗与标注pipeline搭建，探索新模块设计，并通过实验对其进行优化，提升数据处理效率与数据质量 面向大规模具身智能数采场景，设计并落地感知任务自动标注系统，与工程、产品团队配合推进核心项目的数据标注进度 持续追踪具身数据处理、多模态数据标注领域的最新研究进展与技术方案，在产出高质量的数据pipeline同时，在高影响力学术会议上发表工作\n\n岗位要求:\n国内外知名高校在读（本科及以上），计算机科学、电子信息、自动化、人工智能、控制工程、机器人或相关专业。有计算机视觉、大模型训练/微调、自动驾驶、具身智能等领域的科研或实习项目经验者优先； 具备扎实的数学基础和编程能力，熟悉Python编程语言，熟悉Pytorch/Tensorflow等深度学习框架，能独立完成工程实现； 对技术充满热情，有较强的自驱力和学习力，勇于尝试不同的学术研究想法； 实习时长至少 3 个月，实习时间超过 6 个月、可线下实习者优先； 有在机器人、计算机视觉、人工智能领域发表论文经历，包括但不限于CVPR、ICLR、NeurIPS、ICRA、RSS、IROS，或者作为核心技术人员参与过国际、国内机器人重大研发项目者优先；"
+    },
+    {
+      "externalId": "portal-feishu-7582065377250576666",
+      "title": "具身智能VLA大模型算法实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7582065377250576666/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "参与具身智能VLA大模型算法的调研、设计和优化。 参与研究多视角、深度、触觉等多模态在具身VLA大模型中的应用。 参与先进开源VLA大模型的复现、优化及工程开发工作。 参与具身VLM大模型的训练和测评工作。\n\n岗位要求:\n国内外知名高校在读（本科及以上），计算机科学、电子信息、自动化、人工智能、控制工程、机器人或相关专业。有计算机视觉、大模型训练/微调、自动驾驶、具身智能等领域的科研或实习项目经验者优先； 具备扎实的数学基础和编程能力，熟悉Python编程语言，熟悉Pytorch/Tensorflow等深度学习框架，能独立完成工程实现； 对技术充满热情，有较强的自驱力和学习力，勇于尝试不同的学术研究想法； 实习时长至少 3 个月，实习时间超过 6 个月、可线下实习者优先； 有在机器人、计算机视觉、人工智能领域发表论文经历，包括但不限于CVPR、ICLR、NeurIPS、ICRA、RSS、IROS，或者作为核心技术人员参与过国际、国内机器人重大研发项目者优先；"
+    },
+    {
+      "externalId": "portal-feishu-7580298189325093130",
+      "title": "分布式存储开发实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7580298189325093130/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责面向分布式场景的存储系统设计和开发； 2. 负责存储产品的后台研发工作，构建高性能、高可用的对象存储和文件存储解决方案； 3. 开发多级缓存提升系统性能；\n\n岗位要求:\n1. 本科及以上学历，计算机、软件工作相关专业； 2. 熟悉Go、Python，C++等至少一种语言，熟悉并发编程，分布式系统，性能优化等，有扎实的编程基础；熟悉Shell脚本，计算机操作系统原理等； 3. 具备存储系统稳定性和性能优化的实战经验者优先； 4.实习时长不少于三个月。"
+    },
+    {
+      "externalId": "portal-feishu-7580297458883660068",
+      "title": "数据库开发实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7580297458883660068/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与开发和维护数据平台系统； 2. 负责后端开发、优化后端服务、数据库性能；\n\n岗位要求:\n1. 具备扎实的编程基础，良好的代码设计和工程习惯，热爱编程； 2. 熟悉Python、Go、C++至少一种编程语言；至少熟悉一种Python后端框架（Flask/FastAPI）；熟练使用Git版本控制；了解容器化技术； 3. 熟悉Linux常用命令，能够编写Shell脚本； 4. 扎实的计算机基础知识：I/O、进程线程，内存，网络，文件存储等；掌握数据库和数据结构算法； 5. 了解或使用过MySQL、PostgreSQL、Redis、MongoDB、消息队列等； 6. 实习时长不少于3个月；"
+    },
+    {
+      "externalId": "portal-feishu-7580297407343921471",
+      "title": "DevOps实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7580297407343921471/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 设计、构建、维护Devpos工具链和基础设施，包括持续集成、持续部署、持续测试等，确保软件交付高效和高质量； 2. 制定和执行Devpos策略和流程，推动容器化、微服务架构落地；建立开发流程、代码规范、分支策略、CR门禁、CI/CD、版本发布等； 3. 负责基础设施自动化脚本，配置管理，部署脚本等； 4. 负责系统和日志监控分析，及时发现和解决问题，提供高效性能和稳定性；\n\n岗位要求:\n1. 本科及以上学历，计算机、软件工程相关专业； 2. 熟悉Go、Python、C++、Shell等至少一种语言； 3. 熟悉云平台、容器化技术者优先； 4. 实习时长不少于3个月。"
+    },
+    {
+      "externalId": "portal-feishu-7580297130892560646",
+      "title": "后端开发实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7580297130892560646/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 设计并实现公司数据平台业务的后端服务，确保系统的可靠性、可扩展性和性能 2. 参与基础设施建设，包括服务框架、数据库、存储、日志告警等； 3. 分析解决系统中的技术难题，持续优化系统架构和性能 4. 参与具身数据采集、处理、存储、分发等全流程开发； 5. 负责接口设计、SDK开发、数据可视化相关工作； 6. 与前端、算法、产品等团队协作，推进服务迭代和落地；\n\n岗位要求:\n1. 本科及以上学历，计算机科学和软件工程相关专业； 2. 熟悉Python、Go、Java、C++等至少一种语言； 3.可实习三个月及以上。"
+    },
+    {
+      "externalId": "portal-feishu-7573621558804400427",
+      "title": "前端开发实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7573621558804400427/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与公司Web端产品的前端开发与迭代，配合团队完成功能实现与体验优化； 2. 根据产品原型与设计稿，完成高保真页面的还原，确保视觉效果、交互细节与设计方案一致； 3. 配合后端完成接口联调，保障数据展示的准确性与页面性能；\n\n岗位要求:\n1. 本科及以上学历（大三、大四或研究生在读均可），计算机相关专业，保证每周可实习3天以上，能连续实习3个月以上； 2. 具备一定React或Vue的项目开发经验，理解组件化开发思想，有个人项目、课程项目或实习经验者优先； 3. 熟悉HTML/CSS/JavaScript（TypeScript了解者优先），基础扎实； 4. 具备良好的审美能力，对界面布局、色彩搭配、交互细节有敏感度，能够根据原型进行高保真的实现； 5. 熟练掌握AI辅助编程，有Cursor、Codex、Qoder等AI编程工具实际使用经验，能借助AI提升编码效率并对生成代码进行审查和纠偏； 6. 较好的沟通交流能力，逻辑思维清晰，具备良好的算法与数据结构基础（数组、链表、树、常见排序与查找算法等）；"
+    },
+    {
+      "externalId": "portal-feishu-7572102804824082726",
+      "title": "python开发实习生",
+      "siteId": "dexmal-原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/7572102804824082726/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、负责具身数据系统业务研发工作; 2、负责机器人数据生产链的全流程保障 3、包括后端开发, sdk发布, 数据可视化 4、主要实现语言为Python/golang/C++。\n\n岗位要求:\n1、本科及以上学历,计算机、通信等相关专业; 2、深刻理解计算机原理和常用组件,有良好的数据结构和算法基础, 具备一定的前端开发能力; 3、具备一定程度的工程化抽象能力, 对达到事物本该的样子有追求; 4、学习能力强, 责任心强者优先"
     }
   ],
   "category": "39"

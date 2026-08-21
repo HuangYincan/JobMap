@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-海能达",
+  "name": "海能达",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://app.mokahr.com/campus-recruitment/hytera/182194?locale=zh-CN#/jobs",
+  "direction": "技术类 设计类  供应链类  营销类  职能类  产品类  运营类 市场类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-海能达-site",
+      "name": "海能达",
+      "city": "东莞  深圳  哈尔滨  北京  南京  成都",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

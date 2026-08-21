@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-AdvancyAsia",
+  "name": "Advancy Asia",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://文中扫码投递简历",
+  "direction": "初级顾问  实习生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-AdvancyAsia-site",
+      "name": "Advancy Asia",
+      "city": "上海 新加坡",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

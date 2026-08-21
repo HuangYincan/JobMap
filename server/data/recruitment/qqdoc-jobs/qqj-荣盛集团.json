@@ -1,0 +1,99 @@
+{
+  "slug": "qqj-荣盛集团",
+  "name": "荣盛集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0",
+  "direction": "职能支持类  生产运行类  市场营销类  供应链物流类  研发技术类",
+  "deadline": "2026  11 30",
+  "sites": [
+    {
+      "id": "qqj-荣盛集团-site",
+      "name": "荣盛集团",
+      "city": "杭州 宁波  丹山 苏州  大连  海南洋浦",
+      "province": "",
+      "location": {}
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-00uf69df",
+      "title": "人才招聘",
+      "siteId": "qqj-荣盛集团-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0/ProductInfoCategory?categoryId=818960&amp;PageInfoId=0",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-0138ljqa",
+      "title": "社会招聘",
+      "siteId": "qqj-荣盛集团-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0/javascript:void(0);",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00rgdbki",
+      "title": "校园招聘",
+      "siteId": "qqj-荣盛集团-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0/javascript:void(0);",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00h748cr",
+      "title": "技术研究员（绿色炼化）",
+      "siteId": "qqj-荣盛集团-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0/productinfo/335915.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00z84oqy",
+      "title": "管道技术员",
+      "siteId": "qqj-荣盛集团-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0/productinfo/335912.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00pabfxk",
+      "title": "工艺技术员",
+      "siteId": "qqj-荣盛集团-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0/productinfo/335911.html",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

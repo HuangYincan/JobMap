@@ -78,6 +78,244 @@
       "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839?sessionid=",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-feishu-7662269580135450916",
+      "title": "2027届校招-模拟设计工程师",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7662269580135450916/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、负责芯片模拟模块规格、设计方案和验证计划的评估与制定； 2、负责芯片模拟模块设计和仿真； 3、协助layout人员完成版图设计； 4、参与芯片相关模块的回片测试并Debug； 5、参与专题的技术攻关及技术培训。\n\n岗位要求:\n1、 2027届获得博士学位，微电子、通信或电子相关专业； 2、了解模拟电路设计流程，有模电、数电、电路、信号与系统等专业知识积累，对半导体器件以及工艺流程有一定的了解； 3、熟练使用Cadence、Synopsys和Mentor等EDA软件进行设计和仿真验证； 4、具备开拓创新精神，勇于迎接挑战，有较强的学习能力和良好的团队合作精神。 加分项： 1、掌握Opamp，Bandgap，Reference等基础模拟电路设计，掌握以下模拟模块/系统（不少于1种）模拟电路设计：LDO，Buck/Boost DCDC、SAR/Delta-Sigma ADC、DAC、OSC、I/F-PLL、MIPI（含PHY）、USB（含PHY）设计；有Video，Audio等系统设计经验优先考虑； 2、了解CMOS、FD-SOI、Finfet等工艺流程及器件结构，有40/28/22/14/12nm等设计经验； 3、掌握Matlab/Veriloga对模拟系统建模方法； 4、熟练运用Spectre,Hspice等电路级仿真工具、Hsim，XA等数模混合仿真工具； 5、熟悉基本skill/awk/perl/python等脚本语言。"
+    },
+    {
+      "externalId": "portal-feishu-7662263691585833225",
+      "title": "2027届校招-存算研发工程师-工程方向",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7662263691585833225/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、对存算性能进行系统深入的分析研究，探索软硬件协同优化方案并实现最终落地； 2、深度参与芯片的开发/测试/量产，分析解决存算芯片大规模应用中的各项挑战。\n\n岗位要求:\n1、2027届应届毕业生，硕士及以上学历，集成电路及相关专业； 2、熟练运用Python和C语言，有数据分析经验，有相关软件开发经验更佳； 3、对存算一体技术有一定了解，熟悉半导体器件/模拟电路/数字电路之一； 4、有很强的学习能力、动手能力、逻辑分析能力，乐于主动探索并自己动手解决实际问题。"
+    },
+    {
+      "externalId": "portal-feishu-7661947654499027209",
+      "title": "2027届校招-系统固件验证工程师",
+      "siteId": "知存科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661947654499027209/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、负责AI芯片与固态存储协同场景下的系统功能/性能/稳定性测试, 验证存储固件在 AI 特定负载下的表现； 2、开发并维护在模型推理场景下的数据流负载测试方法和验证标准, 基于Python、Shell等脚本语言设计自动化测试用例； 3、AI推理芯片与存储固件交互场景下的故障定位, 协同固件/驱动/系统软件团队完成问题回归与闭环； 4、利用Jenkins等平台搭建维护CI/CD持续集成测试流水线, 引入AI工具优化测试用例生成效率； 5、针对 AI 存储产品的硬件/固件特点, 制定专项测试策略与规范, 输出测试报告； 6、参与测试平台架构设计与升级维护, 对测试规范、流程、方法、技术持续改进。\n\n岗位要求:\n1、计算机、电子电气、微电子、自动化、通信工程、集成电路、半导体物理等相关理工科专业, 2027届全日制硕士及以上学历； 2、熟悉 SSD/UFS/eMMC等固态存储的固件机制, 了解固态存储内部FTL算法、NAND闪存特性, 以及AI推理芯片的基本架构与大模型推理的数据流特征； 3、熟练使用Linux/Windows操作系统, 掌握Python、Shell等脚本语言编程, 能独立开发测试工具与自动化用例； 4、具备严谨的逻辑分析能力, 能独立定位复杂软硬件交互问题； 5、良好的跨团队沟通协作能力, 能承受研发项目的阶段性工作压力, 具备较强的自主学习与技术迭代能力。"
+    },
+    {
+      "externalId": "portal-feishu-7661947316883048730",
+      "title": "2027届校招-3DIC系统工程师",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661947316883048730/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、负责3D异构集成与系统技术协同优化（STCO）确保跨尺度的通道满足电源完整性以及信号完整性的需求； 2、负责3D堆叠中热管理方案与系统散热方案设计，确保可以满足芯片温度需求； 3、负责3D异构集成与STCO等前沿领域技术研究与方案仿真验证，突破现有多DIE堆叠方案中的电、热等性能的瓶颈，帮助实现更优的\"存算\" 性能； 4、应用先进封装技术，参与解决3D异构集成中热-力-电多物理场耦合问题。\n\n岗位要求:\n1、2027届毕业，微电子、集成电路、电子工程、材料物理、机械热流体等相关专业硕士及以上（热设计方向博士优先）； 2、深入掌握半导体物理、器件物理、电路理论、传输线理论、计算流体力学、有限元分析等知识； 3、熟练掌握Synopsys/Cadence/ANSYS/Mentor/COMSOL等一种或者多种仿真平台工具； 4、具备良好的沟通能力和团队协作精神，工作认真负责，以客户为导向，能够自我驱动。 加分项： 1、参与过3DIC或者其他多DIE堆叠的先进封装项目； 2、参与过AI/GPU等大尺寸、高功耗芯片的设计，了解AVFS/DVFS feature或者其他功耗or热管理方案； 3、参与过高速D2D通信接口或者UCIE/PCIE Gen5+/LPDDR5X+/HBM2E+相关的芯片项目。"
+    },
+    {
+      "externalId": "portal-feishu-7661944558225901843",
+      "title": "2027届校招-可靠性工程师",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661944558225901843/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、依据产品应用及特点，负责制定可靠性测试方案和测试计划； 2、负责可靠性软硬件联调，确保可靠性测试实施，沟通和跟进外协测试进展，实验数据整理分析，失效问题分析，汇总并输出可靠性测试报告，样品管理，组织评审； 3、参与产品开发及测试过程中质量与可靠性问题解决； 4、针对产线异常和变更制定可靠性评价方案； 5、熟悉可靠性行业测试标准，如JEDEC标准等。\n\n岗位要求:\n1、微电子专业、电子、半导体物理、可靠性等相关专业背景，2027届硕士或博士学历； 2、具备一定半导体物理、半导体器件工作原理或半导体工艺知识； 3、熟悉DRAM/Flash器件及工艺知识的优先； 4、有较强的学习能力和沟通协调能力。"
+    },
+    {
+      "externalId": "portal-feishu-7661944448884197670",
+      "title": "2027届校招-工艺器件工程师",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661944448884197670/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、负责 IGZO、电容、硅晶体管器件的版图设计， flow 与工艺集成方案； 2、负责相关器件电性测试与分析； 3、TCAD与SPICE器件模型仿真、可靠性与老化分析； 4、阵列测试、设计仿真电路模块。\n\n岗位要求:\n1、2027届毕业，微电子、集成电路、电子工程、应用物理等专业博士毕业； 2、深入掌握半导体物理、器件物理、电路理论等知识； 3、有版图设计、FET电学测试、高频测试、噪声测试等经验； 4、有短沟道器件制备与测试经验，熟悉工艺流程及整合； 5、掌握基本的半导体器件SPICE模型、Sentuarus模型、可靠性分析等经验。 加分项： 1、有DRAM存储、传感阵列设计与制备、外围测试电路流片经验； 2、有晶圆厂、EDA公司等实习经验； 3、掌握spectre、Virtuoso等工具； 4、有AI for science相关经验。"
+    },
+    {
+      "externalId": "portal-feishu-7661942656783763739",
+      "title": "2027届校招-存算研发工程师-算法方向",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661942656783763739/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、对存算精度进行系统深入的分析研究，探索优化方案； 2、针对存算精度的理解进行神经网络训练、量化等适配性方法研究； 3、参与存算设计方案的评估以及设计需求的确认。\n\n岗位要求:\n1、2027届获得硕士及以上学位，集成电路、半导体、计算机、物理、材料、光电等理工科专业； 2、有较强的python编程、数据分析能力，有基本的半导体器件和电路知识优先； 3、有模型训练经验，熟悉神经网络正向传播、反向传播过程，熟悉PyTorch或TensorFlow； 4、对数据分析/建模、优化算法感兴趣，有芯片行业工作经历优先。"
+    },
+    {
+      "externalId": "portal-feishu-7661937241070438675",
+      "title": "2027届校招-存算研发工程师-设计方向",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661937241070438675/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、 参与评估和制定存内计算模拟芯片的规格、设计方案及验证计划； 2、负责存算核电路的模块设计和仿真验证并指导版图设计； 3、对存算电路的结构和性能进行持续优化。\n\n岗位要求:\n1、 2027届获得硕士及以上学位，微电子、集成电路等相关专业； 2、了解模拟电路设计流程，熟悉Cadence、Synopsys等EDA软件； 3、 对新技术的学习意愿和学习能力较强，有较强的逻辑分析能力； 4、有模拟电路设计工作经历优先； 5、有Eflash或新兴NVM相关经验优先。"
+    },
+    {
+      "externalId": "portal-feishu-7661927536910666020",
+      "title": "2027届校招-芯片验证工程师",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661927536910666020/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与芯片模块及系统级验证方案制定，根据设计规格文档拆解验证需求，编写详细验证计划与测试用例； 2、基于UVM验证方法学，独立完成模块级、子系统级的Testbench搭建、代码编写、调试及仿真验证工作； 3、定位、分析仿真过程中出现的bug，联合设计工程师复盘问题、追溯根因，协助完成问题修复与回归验证； 4、参与芯片FPGA验证，后仿验证工作，协助解决前端验证与后端落地衔接的各类问题； 5、持续优化验证环境、提升仿真效率与覆盖率，完成功能覆盖率、代码覆盖率收集与分析，确保验证完备性； 6、跟进行业前沿验证技术，参与团队技术沉淀，输出验证文档、技术总结，完善团队验证流程体系。\n\n岗位要求:\n1、2027届应届硕士研究生，电子信息、微电子、集成电路、通信工程、计算机等相关专业； 2、熟悉数字电路、时序逻辑、组合逻辑等集成电路基础知识，掌握芯片设计与验证基本流程； 3、熟练掌握Verilog、SystemVerilog编程语言，了解UVM验证方法学，有相关项目实操经验者优先； 4、掌握Linux基础命令、Vim操作，熟悉Makefile脚本、仿真工具（VCS/Questa）使用者优先； 5、具备良好的英语读写能力，可读懂英文技术手册、规格文档； 6、逻辑思维清晰，具备较强的问题拆解、故障排查能力，对芯片验证工作有浓厚兴趣； 7、踏实细心、责任心强，具备良好的团队协作能力与沟通能力，能高效配合设计、测试团队推进工作； 8、拥有主动学习意识，愿意深耕半导体行业，能够承受研发岗位正常的工作节奏与技术攻关压力； 9、有各类集成电路竞赛、芯片验证实训、课设项目、实验室流片项目经验者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7661924378460899603",
+      "title": "2027届校招-AI存储固件开发工程师",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661924378460899603/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、基于推理场景存储特征，完成定制化NAND产品系统设计； 2、完成存储/存算模块设计，并进行相关模块开发； 3、基于定制化介质进行介质管理开发及测试工作； 4、支持硅前硅后存储域逻辑的验证与问题攻关； 5、配合逻辑设计团队完成产品的功能，性能，可靠性等指标的定义； 6、总结团队优秀想法形成专利，论文等输出；探索AI场景的新型存储产品可行性。\n\n岗位要求:\n1、2027届获得本科及以上学位，专业要求：微电子，自动化，集成电路，计算机等大类相关专业； 2、技能要求：C / C++ 3、语言要求：英语4级以上，能读懂全英文SPEC； 4、课题方向：存储相关领域课题组硕博优先。"
+    },
+    {
+      "externalId": "portal-feishu-7661922954741582106",
+      "title": "2027届校招-芯片架构工程师",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661922954741582106/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、客户/市场需求分析；系统性能评估和竞争性分析； 2、高性能芯片的架构，AI加速器架构及软硬件接口设计/优化； 3、高性能芯片的流水线设计，包括SOC、高性能计算和处理器模块；地址空间划分、IP集成；时钟域、电压域规划；互连网络带宽均衡设计、功耗评估； 4、芯片前沿领域技术的研究和实现，以提高芯片的计算力和内存吞吐量； 5、拟制芯片规格，负责芯片功能模块的定义。\n\n岗位要求:\n1、2027届获得本科及以上学位，电子、微电子、计算机、自动化等相关专业； 2、以下方向至少精通一种：AI/视觉处理/无线通信/SoC/NoC/处理器核； 3、精通Verilog/ SystemC/ C++； 4、具备至少一次完整的SoC流片经验。"
+    },
+    {
+      "externalId": "portal-feishu-7661921200650389806",
+      "title": "2027届校招- AI算法工具链工程师",
+      "siteId": "知存科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7661921200650389806/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、AI加速器算法工具链的开发，包括而不限于：算子开发、性能优化及验证、AI编译器开发、模型量化研发、Runtime开发； 2、AI工具链跟系统的集成，业务上线支持，系统软硬件协同优化工作； 3、前沿模型探索以及和硬件的适配性评估。\n\n岗位要求:\n1、2027届获得硕士及以上学位，计算机、系统软件、算法、电子、微电子、通信等相关专业毕业； 2、理解深度学习算法并行计算特征，了解主流算法框架或推理引擎，熟悉 C/C++、Python 、汇编等编程语言； 3、有主动学习、快速解决问题的能力和自我驱动力。 加分项： 1、 熟悉计算机体系结构和并行计算； 2、理解编译器和代码优化技术，熟悉 MLIR、LLVM、TVM、XLA 等中间表示，有相关开发经验； 3、熟悉常用的深度学习框架，包括但不限于 TensorFlow、PyTorch、JAX，Llamacpp； 4、理解模型量化基本原理，有AI加速硬件的量化工具开发经验； 5、有 GPU、FPGA或AI芯片相关的开发和评测经验。"
+    },
+    {
+      "externalId": "portal-feishu-7618940667431848242",
+      "title": "实习生-存算工程",
+      "siteId": "知存科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7618940667431848242/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、设计存算芯片实验，探索存算芯片功能、精度、性能的软硬件协同优化； 2、理解存算芯片软硬件方案，探索适合存算芯片的软件开发和软硬件协同验证方案。\n\n岗位要求:\n1、集成电路、计算机等相关专业硕士及以上学历； 2、熟悉C、Python语言，熟悉以下一个或多个方向：模拟存算技术/软件开发/SOC设计； 3、对新技术的学习意愿和学习能力较强，有较强的逻辑和数据分析能力。"
+    },
+    {
+      "externalId": "portal-feishu-7618938727280658742",
+      "title": "实习生-存算设计",
+      "siteId": "知存科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7618938727280658742/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、存算电路架构探索与研究； 2、存算电路误差分析； 3、存算电路模块设计及仿真验证。\n\n岗位要求:\n1、2027届获得硕士及以上学位，微电子、集成电路、电子工程等相关专业优先； 2、了解模拟电路设计流程，熟悉Cadence、Synopsys等EDA软件，掌握主流算法开发语言； 3、对新技术的学习意愿和学习能力较强，有较强的逻辑分析能力； 4、有模拟电路设计工作经历优先，有Eflash或新兴NVM相关经验优先。"
+    },
+    {
+      "externalId": "portal-feishu-7618938464768444726",
+      "title": "实习生-存算算法",
+      "siteId": "知存科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7618938464768444726/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、对存算精度进行系统深入的分析研究，探索优化方案； 2、针对存算精度的理解进行神经网络训练、量化等适配性方法研究； 3、参与存算设计方案的评估以及设计需求的确认。\n\n岗位要求:\n1、硕士及以上学历，集成电路、半导体、计算机、物理、材料、光电等理工科专业； 2、有较强的python编程、数据分析能力，有基本的半导体器件和电路知识优先； 3、有模型训练经验，熟悉神经网络正向传播、反向传播过程，熟悉PyTorch或TensorFlow； 4、对数据分析/建模、优化算法感兴趣，有芯片行业工作经历优先。"
+    },
+    {
+      "externalId": "portal-feishu-7605159024220342554",
+      "title": "实习生-芯片验证",
+      "siteId": "知存科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7605159024220342554/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与芯片模块级/系统级验证环境搭建、用例开发与执行； 2、根据设计规格文档，编写验证计划、测试点与测试用例； 3、运行仿真、定位并分析仿真失败，协助定位设计问题； 4、整理验证报告，维护覆盖率（代码/功能），推动覆盖率收敛； 5、配合设计、集成等团队，完成问题定位、回归验证与版本交付。\n\n岗位要求:\n1、掌握数字电路基础、计算机组成原理、Verilog/SystemVerilog基础语法； 2、理解UVM验证方法学，有UVM环境搭建/用例编写经验优先； 3、熟悉VCS/Verdi等主流EDA工具，能进行仿真、波形调试与覆盖率分析； 4、具备基本脚本能力（Python/Perl/Shell），可实现用例批跑、结果自动化处理； 5、学习能力强，逻辑清晰，责任心强，良好沟通与团队协作意识； 6、有SoC/接口协议（AXI/UART/I2C/SPI等）验证经验者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7481542259663538458",
+      "title": "实习生-芯片架构",
+      "siteId": "知存科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iucylxooqp.jobs.feishu.cn/200839/position/7481542259663538458/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、客户/市场需求分析；系统性能评估和竞争性分析； 2、高性能芯片的架构，AI加速器架构及软硬件接口设计/优化 3、高性能芯片的流水线设计，包括SOC、高性能计算和处理器模块；地址空间划分、IP集成；时钟域、电压域规划；互连网络带宽均衡设计、功耗评估； 4、芯片前沿领域技术的研究和实现，以提高芯片的计算力和内存吞吐量； 5、拟制芯片规格，负责芯片功能模块的定义。\n\n岗位要求:\n1、2026届硕士及以上上学位，电子、微电子、计算机、自动化等相关专业优先； 2、以下方向至少精通一种：AI/视觉处理/无线通信/SoC/NoC/处理器核； 3、精通verilog/systemC/C++； 4、具备至少一次完整的SoC流片经验。"
     }
   ],
   "category": "39"

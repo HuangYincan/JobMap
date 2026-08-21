@@ -1,0 +1,19 @@
+{
+  "slug": "qqj-珠海赛纬",
+  "name": "珠海赛纬",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "研发技术类  质量管理类  制造类 销售及职能类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-珠海赛纬-site",
+      "name": "珠海赛纬",
+      "city": "珠海  合肥 淮南 抚州",
+      "province": "",
+      "location": {}
+    }
+  ]
+}

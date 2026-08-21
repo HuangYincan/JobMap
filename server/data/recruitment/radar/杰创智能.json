@@ -34,6 +34,32 @@
       "applyUrl": "https://www.nexwise.com.cn/zp/col230/list",
       "retrievedAt": "2026-08-11",
       "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-012idiz1",
+      "title": "社会招聘",
+      "siteId": "杰创智能-site-guangzhou",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.nexwise.com.cn/zp/col230/list/zp/col69/list",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00nhwv63",
+      "title": "校园招聘",
+      "siteId": "杰创智能-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.nexwise.com.cn/zp/col230/list/zp/col230/list",
+      "retrievedAt": "2026-08-20"
     }
   ],
   "category": "65"
