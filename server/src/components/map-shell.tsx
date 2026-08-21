@@ -45,6 +45,8 @@ import { POIList } from "./poi-list";
 import { ModeSwitcher } from "./mode-switcher";
 import { FilterPanel } from "./filter-panel";
 import { SortSelector } from "./sort-selector";
+import { createAgentBridge, type MapBridge } from "@/lib/agent-map-bridge";
+import AgentBall from "./agent-ball";
 
 const POIDetailView = dynamic(() => import("./poi-detail").then((mod) => mod.POIDetailView));
 const JdPanel = dynamic(() => import("./jd-panel").then((mod) => mod.JdPanel));
@@ -287,6 +289,28 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
   const [inbox, setInbox] = useState<NotificationRecord[]>([]);
+
+  // ---- AI Agent 悬浮球 seam(boss 红线豁免,只追加,不动任何现有逻辑)----
+  // agentBridge 惰性初始化:活跃视图可用后建一次;视图实例变更(引擎重建)时重建。
+  const agentBridgeViewRef = useRef<MapView | null>(null);
+  const agentBridgeRef = useRef<MapBridge | null>(null);
+  if (engineView && agentBridgeViewRef.current !== engineView) {
+    agentBridgeViewRef.current = engineView;
+    agentBridgeRef.current = createAgentBridge(engineView, {
+      onSelect: (id) => setSelectedId(id),
+      onOpenDetail: (id) => {
+        const poi =
+          catalogRef.current.find((p) => p.id === id) ??
+          poisRef.current.find((p) => p.id === id);
+        setSelectedId(id);
+        if (poi) setDetailPoi(poi);
+        setRailPanel("explore");
+        if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+          setDrawer("full");
+        }
+      },
+    });
+  }
 
   useEffect(() => {
     const system: BasemapStyle = window.matchMedia("(prefers-color-scheme: dark)").matches ? "whitesmoke" : "normal";
@@ -2347,6 +2371,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           <Icon name="locate" />
         </button>
       </div>
+
+      {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点) */}
+      <AgentBall bridge={agentBridgeRef.current} lang={lang} />
 
       <section
         ref={drawerRef}
