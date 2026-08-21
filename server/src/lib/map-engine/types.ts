@@ -65,6 +65,8 @@ export interface MapMarkerOptions {
   /** 像素偏移 [x, y](相对锚点,元组形态) */
   offset?: [number, number];
   zIndex?: number;
+  /** 图标规格(src 必填;size 缺省用厂商默认尺寸)。替代控制器侧 new Icon/Size,适配层转厂商图标 */
+  icon?: { src: string; size?: [number, number] };
   onClick?: () => void;
 }
 
@@ -72,8 +74,16 @@ export interface MapMarker {
   /** 厂商 marker 实例逃生舱(未迁移代码直连用,标注 TODO 限期迁移) */
   raw: unknown;
   setPosition(p: LngLat): void;
-  setContent(html: string): void;
+  setContent?(html: string): void;
   remove(): void;
+  /** 统一 zIndex 语义:AMap 小写 setzIndex / TMap·BMapGL 大写 setZIndex 差异由适配层吸收 */
+  setZIndex?(z: number): void;
+  /** 统一可见性语义:AMap·BMapGL show()/hide() 与 TMap setVisible 差异由适配层吸收 */
+  setVisible?(v: boolean): void;
+  /** 统一事件注册(仅 'click';AMap·TMap .on 与 BMapGL addEventListener 差异由适配层吸收) */
+  on?(event: 'click', cb: () => void): void;
+  /** 统一事件解绑(cb 缺省 = 解绑该事件全部回调) */
+  off?(event: 'click', cb?: () => void): void;
 }
 
 export interface MapCircleOptions {

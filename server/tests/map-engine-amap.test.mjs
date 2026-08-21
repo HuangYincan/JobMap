@@ -125,6 +125,23 @@ function makeNs() {
   }
   ns.Pixel = FakePixel;
 
+  class FakeSize {
+    constructor(width, height) {
+      this.width = width;
+      this.height = height;
+    }
+  }
+  ns.Size = FakeSize;
+
+  class FakeIcon {
+    constructor(opts) {
+      this.opts = opts;
+      ns.instances.icons ||= [];
+      ns.instances.icons.push(this);
+    }
+  }
+  ns.Icon = FakeIcon;
+
   class FakeBounds {
     constructor(sw, ne) {
       this.sw = sw;
@@ -140,17 +157,35 @@ function makeNs() {
       this._map = opts.map;
       this.position = opts.position;
       this.content = opts.content ?? null;
+      this._visible = true;
+      this.lastZIndex = undefined;
+      this.icon = null;
       ns.instances.markers ||= [];
       ns.instances.markers.push(this);
     }
     on(e, cb) {
       (this.listeners[e] ||= []).push(cb);
     }
+    off(e, cb) {
+      this.listeners[e] = (this.listeners[e] || []).filter((f) => f !== cb);
+    }
     setPosition(p) {
       this.position = p;
     }
     setContent(html) {
       this.content = html;
+    }
+    setzIndex(z) {
+      this.lastZIndex = z;
+    }
+    show() {
+      this._visible = true;
+    }
+    hide() {
+      this._visible = false;
+    }
+    setIcon(icon) {
+      this.icon = icon;
     }
     setMap(m) {
       this._map = m;
@@ -429,6 +464,97 @@ test('createMarker:duck-type 透传 AMap 专属选项(cursor/bubble,契约未含
   const raw = ns.instances.markers[0];
   assert.equal(raw.opts.cursor, 'ew-resize');
   assert.equal(raw.opts.bubble, false);
+  view.destroy();
+});
+
+test('createMarker:icon 规格 → AMap.Icon(size/image/imageSize) + setIcon', async () => {
+  const ns = installNs();
+  const view = await createView(ns, 'normal');
+  view.createMarker({
+    position: { lng: 120.1, lat: 30.2 },
+    icon: { src: 'data:image/svg+xml;utf8,<svg/>', size: [22, 30] },
+  });
+  const raw = ns.instances.markers[0];
+  const icon = raw.icon;
+  assert.ok(icon instanceof ns.Icon, 'setIcon 收到 AMap.Icon 实例');
+  assert.equal(icon.opts.image, 'data:image/svg+xml;utf8,<svg/>', 'image = icon.src');
+  assert.ok(icon.opts.size instanceof ns.Size, 'size 转 AMap.Size');
+  assert.equal(icon.opts.size.width, 22);
+  assert.equal(icon.opts.size.height, 30);
+  assert.equal(icon.opts.imageSize, icon.opts.size, 'data URI SVG:imageSize = size(与旧 buildIcon 同款)');
+  view.destroy();
+});
+
+test('createMarker:icon 无 size → 仅 image(AMap 用图片自然尺寸)', async () => {
+  const ns = installNs();
+  const view = await createView(ns, 'normal');
+  view.createMarker({ position: { lng: 120.1, lat: 30.2 }, icon: { src: 'x.png' } });
+  const icon = ns.instances.markers[0].icon;
+  assert.equal(icon.opts.image, 'x.png');
+  assert.equal(icon.opts.size, undefined, '无 size 不注入 size/imageSize');
+  view.destroy();
+});
+
+test('createMarker 契约方法:setZIndex→setzIndex(小写)/setVisible→show·hide/on·off 事件', async () => {
+  const ns = installNs();
+  const view = await createView(ns, 'normal');
+  const marker = view.createMarker({ position: { lng: 120.1, lat: 30.2 } });
+  const raw = ns.instances.markers[0];
+
+  marker.setZIndex(55);
+  assert.equal(raw.lastZIndex, 55, 'AMap 小写 setzIndex 由适配层吸收');
+  marker.setZIndex(100);
+  assert.equal(raw.lastZIndex, 100);
+
+  marker.setVisible(false);
+  assert.equal(raw._visible, false, 'setVisible(false) → hide()');
+  marker.setVisible(true);
+  assert.equal(raw._visible, true, 'setVisible(true) → show()');
+
+  let clicks = 0;
+  const cb = () => clicks++;
+  marker.on('click', cb);
+  assert.equal(raw.listeners.click.length, 1, 'on → raw.on');
+  raw.trigger('click');
+  assert.equal(clicks, 1);
+  marker.off('click', cb);
+  assert.equal(raw.listeners.click.length, 0, 'off(cb) → raw.off 精确解绑');
+  raw.trigger('click');
+  assert.equal(clicks, 1, '解绑后不再触发');
+  view.destroy();
+});
+
+test('createMarker 契约方法:厂商方法缺失 → warn 降级不抛', async () => {
+  const ns = installNs();
+  const view = await createView(ns, 'normal');
+  const marker = view.createMarker({ position: { lng: 120.1, lat: 30.2 } });
+  const raw = ns.instances.markers.at(-1);
+  // 方法在原型上:实例 delete 无效 → 从原型摘除(厂商缺失模拟),测后还原
+  const proto = Object.getPrototypeOf(raw);
+  const orig = {
+    setzIndex: proto.setzIndex,
+    show: proto.show,
+    hide: proto.hide,
+    setVisible: proto.setVisible,
+  };
+  delete proto.setzIndex;
+  delete proto.show;
+  delete proto.hide;
+  delete proto.setVisible;
+  const warns = [];
+  const origWarn = console.warn;
+  console.warn = (...args) => warns.push(args);
+  try {
+    assert.doesNotThrow(() => marker.setZIndex(10), 'setzIndex 缺失不得抛');
+    assert.doesNotThrow(() => marker.setVisible(false), 'show/hide/setVisible 全缺失不得抛');
+  } finally {
+    proto.setzIndex = orig.setzIndex;
+    proto.show = orig.show;
+    proto.hide = orig.hide;
+    proto.setVisible = orig.setVisible;
+    console.warn = origWarn;
+  }
+  assert.ok(warns.length >= 2, '缺失方法必须 console.warn(可观测)');
   view.destroy();
 });
 

@@ -53,9 +53,11 @@ export class MockCircle {
 }
 
 /**
- * MultiMarker 聚合标注 mock — 忠实 TMap.MultiMarker(v=1.exp 全局版形态,SDK v1.8.0.2
+ * MultiMarker 聚合标注 mock — 忠实 TMap.MultiMarker(v=1.exp 全局版形态,SDK 源码
  * 核实):构造 { map, geometries, styles?, zIndex };updateGeometries 按 id 更新(整体
  * 替换,携带 styleId);setMap(null) 移除;click 载荷 { geometry, type, target }。
+ * setZIndex/setVisible 经 GeometryOverlay 继承存在(源码核实:setZIndex →
+ * layer.setZIndex + 自身 zIndex 存储;setVisible → layer.setVisible)。
  */
 export class MockMultiMarker {
   constructor(opts = {}) {
@@ -63,6 +65,7 @@ export class MockMultiMarker {
     this.map = opts.map ?? null;
     this.styles = opts.styles ?? {};
     this.zIndex = opts.zIndex ?? 0;
+    this.visible = true;
     this.geometries = [...(opts.geometries ?? [])];
     this.listeners = new Map();
   }
@@ -73,6 +76,24 @@ export class MockMultiMarker {
 
   getMap() {
     return this.map;
+  }
+
+  setZIndex(z) {
+    this.zIndex = z;
+    return this;
+  }
+
+  getZIndex() {
+    return this.zIndex;
+  }
+
+  setVisible(v) {
+    this.visible = Boolean(v);
+    return this;
+  }
+
+  getVisible() {
+    return this.visible;
   }
 
   updateGeometries(geos) {
