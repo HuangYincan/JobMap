@@ -9,13 +9,13 @@
 
 ## 1. 背景与动机
 
-项目已有完整 OTP 登录体系(存储 + 校验 + 限流 + 尝试锁),只缺「发送」环节。本批次把 **email 验证码经 Resend 真实发送**;phone 保留 demo 桩(000000),等待真实短信服务商接入。
+项目已有完整 OTP 登录体系(存储 + 校验 + 限流 + 尝试锁),只缺「发送」环节。本批次把 **email 验证码经 Resend 真实发送**;phone 保留 demo 桩(000000),等待真实短信服务商接入(phone 桩已于 2026-08-22 由阿里云短信认证服务接入,见 tech/26)。
 
 现状(可验证事实):
 
-- `POST /api/auth/otp/send`:email 经 Resend 真发,phone 返回 `{ ok, provider, expiresAt, demo: true, hint: '000000' }`
+- `POST /api/auth/otp/send`:email 经 Resend 真发;phone 经阿里云短信认证服务真发,返回 `{ ok, provider, expiresAt, requestId }`(2026-08-22,见 tech/26)
 - 存储/校验不变:`auth_otp_challenges`(code_hash sha256、10 分钟 TTL)+ 内存 `otpGuards`(60s 冷却、24h 10 次上限、5 次错锁 15 分钟),测试已有
-- 客户端 `auth-modal.tsx` 只读 `res.ok`/`body.message`,不依赖 `demo`/`hint`;后续批次补发送反馈 UI(顶部气泡 + 60s 重发倒计时,见第 9 节)
+- 客户端 `auth-modal.tsx` 只读 `res.ok`/`body.message`,不依赖 `demo`/`hint`(2026-08-22 后端已删除该字段);后续批次补发送反馈 UI(顶部气泡 + 60s 重发倒计时,见第 9 节)
 
 ## 2. 端点契约
 
@@ -28,7 +28,7 @@
 | provider | 200 响应 | 说明 |
 |---|---|---|
 | email | `{ ok: true, provider, expiresAt, messageId }` | 先 `issueOtp`(守卫先行保配额)再 `sendVerificationEmail`;`messageId` 取自 Resend 响应 body.id |
-| phone | `{ ok: true, provider, expiresAt, demo: true, hint: '000000' }` | demo 桩,不发短信 |
+| phone | `{ ok: true, provider, expiresAt, requestId }` | 阿里云短信认证服务真发(2026-08-22,见 tech/26);`requestId` 取自阿里云响应 |
 
 ### 错误映射(信封 `{ code, message }`,message 即用户可见文案)
 
@@ -66,6 +66,7 @@ RESEND_API_KEY=re_xxx
 - 未配置 → 发送接口 503 `EMAIL_NOT_CONFIGURED`(优雅降级,不 crash)
 - 申请:https://resend.com → API Keys
 - Resend 免费额度约 **3000 封/月**(Free plan,2026-08 时点),超限返回 429 → 走 `EMAIL_RATE_LIMITED`
+- phone 走阿里云短信,见 tech/26(env 为 `ALIYUN_*`,见该文档 §5)
 
 ## 6. 垃圾箱预案
 
@@ -85,7 +86,7 @@ RESEND_API_KEY=re_xxx
 
 | provider | 现状 | 后续 |
 |---|---|---|
-| phone | demo 桩:`demo: true, hint: '000000'`,不发送 | 接入真实短信服务商后删除 demo hint(D-04 余项) |
+| phone | 阿里云短信认证服务真发,返回 `requestId`(2026-08-22,见 tech/26) | 完成(demo hint 已删除) |
 | email | Resend 真发,返回 `messageId` | 完成 |
 
 ## 9. 前端发送反馈(批次 `20260821-resend-otp-feedback`)
