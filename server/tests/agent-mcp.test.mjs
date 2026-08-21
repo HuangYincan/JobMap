@@ -5,6 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getMcpProvider, normalizeTool, resetMcpProvidersForTest } from '../src/lib/agent/mcp-providers.ts';
+import { MCP_ENDPOINTS } from '../src/lib/agent/mcp-endpoints.ts';
 
 const MAP_KEYS = ['AMAP_WEB_KEY', 'BAIDU_MAP_AK', 'TENCENT_MAP_KEY', 'BAIDU_MAP_AUTH_TOKEN'];
 
@@ -205,12 +206,12 @@ test('streamable: SSE 响应形态(tools/call 走 text/event-stream)', async () 
 });
 
 // ---------------------------------------------------------------------------
-// legacy SSE transport
+// legacy SSE transport(经 tencent 端点实测;amap 2026-08-21 已校准为 streamable)
 // ---------------------------------------------------------------------------
 
 test('legacy SSE: GET 流 + POST 关联 + Mcp-Session-Id 回传', async () => {
   resetMcpProvidersForTest();
-  await withEnv({ AMAP_WEB_KEY: 'amap-key' }, async () => {
+  await withEnv({ TENCENT_MAP_KEY: 'tencent-key' }, async () => {
     const calls = [];
     let stream = null;
     const fetchImpl = async (url, init = {}) => {
@@ -237,7 +238,7 @@ test('legacy SSE: GET 流 + POST 关联 + Mcp-Session-Id 回传', async () => {
       return okResponse();
     };
 
-    const h = getMcpProvider('amap', { fetchImpl });
+    const h = getMcpProvider('tencent', { fetchImpl });
     const tools = await h.listTools();
     assert.equal(tools.length, 1);
     const r = await h.callTool('around', { keyword: '公园' });
@@ -258,7 +259,7 @@ test('legacy SSE: GET 流 + POST 关联 + Mcp-Session-Id 回传', async () => {
 
 test('legacy SSE: 防御 —— POST 直接返回 JSON-RPC 响应体(部分服务器实现)', async () => {
   resetMcpProvidersForTest();
-  await withEnv({ AMAP_WEB_KEY: 'amap-key' }, async () => {
+  await withEnv({ TENCENT_MAP_KEY: 'tencent-key' }, async () => {
     let gotGet = false;
     const fetchImpl = async (url, init = {}) => {
       const method = init.method ?? 'GET';
@@ -273,7 +274,7 @@ test('legacy SSE: 防御 —— POST 直接返回 JSON-RPC 响应体(部分服�
       if (body?.method === 'tools/list') return jsonResponse({ jsonrpc: '2.0', id: body.id, result: { tools: [{ name: 'direct' }] } });
       return jsonResponse({ jsonrpc: '2.0', id: body.id, result: { content: [{ type: 'text', text: 'direct-json' }] } });
     };
-    const h = getMcpProvider('amap', { fetchImpl });
+    const h = getMcpProvider('tencent', { fetchImpl });
     await h.listTools();
     const r = await h.callTool('direct', {});
     assert.equal(r.text, 'direct-json');
@@ -443,5 +444,49 @@ test('listTools 失败 → dispose,下次 getMcpProvider 重建可成功', async
     assert.equal(tools[0].name, 'ok-tool');
     assert.equal(good.isReady(), true);
     assert.equal(initSeen, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 端点校准(2026-08-21 实测:高德 /sse 404 → /mcp streamable)
+// ---------------------------------------------------------------------------
+
+test('amap 端点已校准:Streamable HTTP /mcp?key=(实测替代已 404 的 /sse)', async () => {
+  await withEnv({ AMAP_WEB_KEY: 'amap-key' }, () => {
+    const ep = MCP_ENDPOINTS.amap;
+    assert.ok(ep, 'AMAP_WEB_KEY 已配 → 端点非 null');
+    assert.equal(ep.transport, 'streamable');
+    assert.ok(ep.url.startsWith('https://mcp.amap.com/mcp?key='), `url=${ep.url}`);
+    assert.ok(ep.url.includes('key=amap-key'), 'query auth 保持 key=<key>');
+    assert.ok(!ep.url.includes('/sse'), '旧 SSE 端点已弃用');
+  });
+});
+
+test('协议版本容忍:服务器回 2025-03-26(高德实测)→ 客户端不抛错', async () => {
+  resetMcpProvidersForTest();
+  await withEnv({ AMAP_WEB_KEY: 'amap-key' }, async () => {
+    const fetchImpl = async (url, init = {}) => {
+      const body = init.body ? JSON.parse(init.body) : null;
+      if (body?.method === 'initialize') {
+        return jsonResponse({
+          jsonrpc: '2.0',
+          id: body.id,
+          result: { protocolVersion: '2025-03-26', capabilities: {}, serverInfo: { name: 'amap-mcp' } },
+        });
+      }
+      if (body && body.id === undefined) return okResponse();
+      if (body?.method === 'tools/list') {
+        return jsonResponse({ jsonrpc: '2.0', id: body.id, result: { tools: [{ name: 'placeSearch' }] } });
+      }
+      return jsonResponse({ jsonrpc: '2.0', id: body.id, result: { content: [{ type: 'text', text: 'ok' }] } });
+    };
+    const h = getMcpProvider('amap', { fetchImpl });
+    const tools = await h.listTools(); // 版本不匹配也不得抛错
+    assert.equal(tools.length, 1);
+    assert.equal(tools[0].name, 'placeSearch');
+    assert.equal(h.isReady(), true);
+    const r = await h.callTool('placeSearch', {});
+    assert.equal(r.isError, false);
+    assert.equal(r.text, 'ok');
   });
 });

@@ -35,7 +35,8 @@ function makeEndpoint(
 
 /**
  * 三平台 MCP 端点(惰性 getter:每次读取按当前 env 求值,测试可注入 env)。
- * - 高德:官方文档 SSE;key=AMAP_WEB_KEY
+ * - 高德:Streamable HTTP /mcp?key=<key>(2026-08-21 实测校准:POST initialize
+ *   返回 200,协议版本 2025-03-26;旧 /sse 端点实测 404,已弃用)
  * - 腾讯:SSE,format=0 文本输出适合 LLM;key=TENCENT_MAP_KEY
  * - 百度:streamable(官方推荐),备选 SSE;ak=BAIDU_MAP_AK
  */
@@ -43,7 +44,10 @@ export const MCP_ENDPOINTS: Record<'amap' | 'tencent' | 'baidu', McpEndpoint | n
   get amap(): McpEndpoint | null {
     const key = amapWebKey();
     if (!key) return null;
-    return makeEndpoint('https://mcp.amap.com/sse', 'key', key, 'sse');
+    // 2026-08-21 实测校准:高德为 Streamable HTTP(非官方文档所写 SSE);
+    // 旧 /sse 端点实测 404 弃用。/mcp 端点 POST initialize 返回 200,
+    // protocolVersion 2025-03-26。query auth 保持 key=<key>。
+    return makeEndpoint('https://mcp.amap.com/mcp', 'key', key, 'streamable');
   },
   get tencent(): McpEndpoint | null {
     const key = tencentWebKey();
