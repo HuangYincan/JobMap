@@ -12,13 +12,21 @@ import {
   EmailSendFailedError,
   sendVerificationEmail,
 } from '@/lib/resend-client';
+import {
+  SmsAuthError,
+  SmsConfigError,
+  SmsDayLimitedError,
+  SmsRateLimitedError,
+  SmsSendFailedError,
+  sendSmsVerifyCode,
+} from '@/lib/aliyun-sms-client';
 
 /**
  * email:经 Resend 真发(需 RESEND_API_KEY;未配置 → 503 EMAIL_NOT_CONFIGURED)。
- * phone:仍为 demo 桩,固定 000000,不发送。
+ * phone:经阿里云短信认证服务真发(需 ALIYUN_* 四件套;未配置 → 503 SMS_NOT_CONFIGURED)。
  *
  * 限流:同 target 60s 冷却 + 24h 上限(issueOtp 内守卫);写路径 DB 故障 → 503,不静默降级。
- * 秘密纪律:绝不打印/返回验证码、key 或 Resend 原始错误。
+ * 秘密纪律:绝不打印/返回验证码、key 或 Resend/阿里云原始错误。
  */
 export async function POST(request: Request) {
   let body: { provider?: 'phone' | 'email'; target?: string };
@@ -47,15 +55,10 @@ export async function POST(request: Request) {
       const { messageId } = await sendVerificationEmail({ to: target, code, expiresAt });
       return NextResponse.json({ ok: true, provider, expiresAt, messageId });
     }
-    const { expiresAt } = await issueOtp(provider, target);
-    return NextResponse.json({
-      ok: true,
-      provider,
-      expiresAt,
-      // Demo only — phone SMS 未接入,保留固定码。
-      demo: true,
-      hint: '000000',
-    });
+    // phone:先 issueOtp 守卫先行保配额,再经阿里云短信认证服务真发。
+    const { expiresAt, code } = await issueOtp(provider, target);
+    const { requestId } = await sendSmsVerifyCode({ phoneNumber: target, code });
+    return NextResponse.json({ ok: true, provider, expiresAt, requestId });
   } catch (err) {
     if (err instanceof OtpRateLimitedError || err instanceof OtpTooManyAttemptsError) {
       return NextResponse.json(
@@ -94,6 +97,36 @@ export async function POST(request: Request) {
     if (err instanceof EmailSendFailedError) {
       return NextResponse.json(
         { code: 'EMAIL_SEND_FAILED', message: '验证码发送失败,请稍后再试' },
+        { status: 500 },
+      );
+    }
+    if (err instanceof SmsConfigError) {
+      return NextResponse.json(
+        { code: 'SMS_NOT_CONFIGURED', message: '验证码服务暂不可用,请稍后再试' },
+        { status: 503 },
+      );
+    }
+    if (err instanceof SmsRateLimitedError) {
+      return NextResponse.json(
+        { code: 'SMS_RATE_LIMITED', message: '发送太频繁,请稍后再试' },
+        { status: 429 },
+      );
+    }
+    if (err instanceof SmsDayLimitedError) {
+      return NextResponse.json(
+        { code: 'SMS_DAY_LIMITED', message: '今日发送次数已达上限,请稍后再试' },
+        { status: 429 },
+      );
+    }
+    if (err instanceof SmsAuthError) {
+      return NextResponse.json(
+        { code: 'SMS_PROVIDER_ERROR', message: '验证码服务暂不可用,请稍后再试' },
+        { status: 503 },
+      );
+    }
+    if (err instanceof SmsSendFailedError) {
+      return NextResponse.json(
+        { code: 'SMS_SEND_FAILED', message: '验证码发送失败,请稍后再试' },
         { status: 500 },
       );
     }
