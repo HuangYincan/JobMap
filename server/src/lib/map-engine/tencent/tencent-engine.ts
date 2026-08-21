@@ -36,7 +36,10 @@
 //   样式归组:icon/offset 签名 → styleId(dm-st-N),同签名共享,新签名 setStyles;
 //   zIndex 实例级 → 取全部 marker 的 max 近似单 marker 语义;
 //   setVisible 经 add/remove 摘挂单 geometry(隐藏即不在图层,不可点击);
-//   MarkerStyle 仅图片 src,anchor 是唯一像素偏移(imageTopLeft = 屏幕位 - anchor),
+//   MarkerStyle 仅图片 src,anchor 是唯一像素偏移(imageTopLeft = 屏幕位 - anchor);
+//   **SDK 默认 anchor 是常量 (17,50),不随 width/height 归一化**(ws-a 源码核实:
+//   MarkerStyle 构造 iconAnchor:[t.anchor&&t.anchor.x||17, ...])——自定义尺寸
+//   图标必须显式传 anchor,否则锚点错位 → 缩放漂移 + 点击命中区与视觉不一致;
 //   geometry.content 仅 GL 文本标签(非 HTML)→ HTML content 降级为默认点 + 一次性 warn
 // - Circle:{ center, radius, map, strokeColor, fillColor, fillOpacity }(glCircle)
 // - 底图样式:baseMap.type vector=标准 / satellite=卫星(影像+道路注记,
@@ -92,10 +95,40 @@ const TENCENT_PAGE_SIZE_MAX = 20;
 const TENCENT_MAP_READY_TIMEOUT_MS = 1500;
 /** Marker 默认 zIndex:未显式传入时的合理默认(底图之上可见;显式值优先) */
 const TENCENT_MARKER_DEFAULT_ZINDEX = 10;
-/** MultiMarker 默认 pin 样式锚点(SDK v1.8.0.2 核实:MarkerStyle 默认 src 图 34x50,
- * anchor 默认 (width/2, height)=(17,50);渲染公式 imageTopLeft = 屏幕位 - anchor,
- * style.offset 渲染器不消费 → anchor 是唯一像素偏移机制) */
+/** MultiMarker 默认 pin 样式锚点(SDK v1.8.0.2 源码核实,ws-a 2026-08-22):
+ * MarkerStyle 构造 `iconAnchor:[t.anchor&&t.anchor.x||17, t.anchor&&t.anchor.y||50]`
+ * —— 默认锚点是**常量 (17,50)**(34x50 默认 pin 的底部中心),**不随 width/height
+ * 归一化**:自定义尺寸图标(60x60 徽章等)不显式传 anchor 就会锚点错位 →
+ * 缩放级别变化时表现为视觉漂移(锚点像素偏移不随地图比例联动)。
+ * 渲染公式(双路径同语义):DOM 2d-adapter `marginLeft/Top = -anchor`;
+ * GL 实例 `instanceInfos.xy = (width/2 - anchor.x, height/2 - anchor.y)` →
+ * imageTopLeft = 屏幕位 - anchor;style.offset 渲染器不消费 → anchor 是唯一
+ * 像素偏移机制(契约 offset 经 Δanchor = -(x,y) 合并,见 resolveTMapMarkerAnchor) */
 const TENCENT_DEFAULT_MARKER_ANCHOR = { x: 17, y: 50 } as const;
+
+/**
+ * 计算 MultiMarker MarkerStyle 锚点(SDK v1.8.0.2 源码核实,ws-a 2026-08-22)。
+ * - 锚点 = 图片局部坐标(原点左上、y 向下)中与地理点屏幕位重合的点;
+ *   SDK 渲染:imageTopLeft = 屏幕位 - anchor(GL 与 DOM 双路径同语义);
+ * - **语义与高德 content 锚点(底部中心)对齐**:无 offset 时锚点 = (w/2, h)
+ *   底部中心——图钉底尖 / 徽章底边钉在地理点;
+ * - 契约 offset [x,y] = 整图位移 (x,y)(AMap offset 同语义):Δanchor = -(x,y),
+ *   即 anchor = (w/2 - ox, h - oy);缩放级别变化不影响 anchor(纯像素常量,
+ *   与地图比例无关,S库 relativeZoomScale 默认关闭)→ 锚点钉死地理点不漂移。
+ * @param iconW 图标渲染宽度(px)
+ * @param iconH 图标渲染高度(px)
+ * @param offset 契约像素偏移 [x, y](相对锚点,元组形态)
+ */
+export function resolveTMapMarkerAnchor(
+  iconW: number,
+  iconH: number,
+  offset: [number, number] | undefined,
+): { x: number; y: number } {
+  return {
+    x: iconW / 2 - (offset?.[0] ?? 0),
+    y: iconH - (offset?.[1] ?? 0),
+  };
+}
 
 function getKey(): string {
   // 裸字面量:Next 构建期只做静态替换,process.env 括号动态访问浏览器端恒 undefined
@@ -312,9 +345,11 @@ class TencentView implements MapView {
   private multiStyles: Record<string, unknown> = {};
   /** 当前挂载在共享实例上的 id 集(setVisible 摘挂经 add/remove 维护) */
   private multiAttached = new Set<string>();
-  /** MultiMarker click 解绑簿记:契约 cb → { id, handler(带 geometry.id 过滤) }。
-   * id 关联是共享实例下精确解绑的前提(off 缺省 cb 只解本 marker) */
-  private multiClickHandlers = new Map<() => void, { id: string; handler: (e: any) => void }>();
+  /** MultiMarker click 绑定簿记(数组,ws-a 2026-08-22):契约 cb → { id, handler
+   * (带 geometry.id 过滤) } 的**绑定记录数组**。id 关联是共享实例下精确解绑的
+   * 前提(off 缺省 cb 只解本 marker);**用数组而非 Map<cb,...>**——同一 cb 注册到
+   * 多个 marker 时(调用方复用回调),Map 会被后注册覆盖导致 off/remove 解绑错位 */
+  private multiClickBindings: Array<{ cb: () => void; id: string; handler: (e: any) => void }> = [];
   /** 自绘比例尺 DOM(SDK 无公共 ScaleControl 的降级路径;见 addControl) */
   private scaleEl: HTMLDivElement | null = null;
   /** 自绘比例尺事件解绑簿记(zoom_changed/scale_changed/zoomend/idle) */
@@ -566,7 +601,13 @@ class TencentView implements MapView {
       raw,
       setPosition: (p: LngLat) => {
         geometry.position = toTMapLatLng(tmap, p);
-        raw.updateGeometries([geometry]);
+        // 仅挂载态 updateGeometries(ws-a SDK 源码核实):SDK updateGeometries 对
+        // **不在 _idSet 的 id 会重新 add**(geometry 被 LOD 摘除后)→ 隐藏期
+        // setPosition 会把该 geometry 重新挂回图层(可见 + 可点),破坏可见性
+        // 状态;隐藏期只原地改共享 geometry 对象,重新挂载(add)时自然带新位置。
+        if (this.multiAttached.has(id) && this.multiMarker) {
+          raw.updateGeometries([geometry]);
+        }
       },
       setContent: (_html: string) => {
         // content 变更对 MultiMarker 无效(无 HTML 渲染);有 icon 时视觉不受影响
@@ -583,9 +624,12 @@ class TencentView implements MapView {
       },
       // 可见性:隐藏 = 从共享实例摘除该 geometry(remove([id])),显示 = 重新
       // 挂载(add)——隐藏 marker 不在图层,天然不可点击/不参与渲染/零开销;
-      // 实例级 setVisible 会误伤全部 marker,不可用(ws-6 批量化设计)
+      // 实例级 setVisible 会误伤全部 marker,不可用(ws-6 批量化设计)。
+      // remove() 之后(geometry 已从 multiGeometries 注销)setVisible 置空
+      // no-op,防僵尸重挂(ws-a)。
       setVisible: (v: boolean) => {
         if (!this.multiMarker) return;
+        if (!this.multiGeometries.has(id)) return;
         if (v) {
           if (!this.multiAttached.has(id)) {
             this.multiMarker.add([geometry]);
@@ -603,22 +647,16 @@ class TencentView implements MapView {
       off: (event: 'click', cb?: () => void) => {
         if (event !== 'click') return;
         if (!this.multiMarker) return;
-        if (cb) {
-          const entry = this.multiClickHandlers.get(cb);
-          if (entry && entry.id === id) {
-            this.multiMarker.off?.('click', entry.handler);
-            this.multiClickHandlers.delete(cb);
-          }
-        } else {
-          // cb 缺省 = 解绑本 marker 全部 click(共享实例必须按 id 过滤,
-          // 不能清全量——会误伤其他 marker 的回调)
-          for (const [cbKey, entry] of [...this.multiClickHandlers]) {
-            if (entry.id === id) {
-              this.multiMarker.off?.('click', entry.handler);
-              this.multiClickHandlers.delete(cbKey);
-            }
-          }
+        // 按绑定记录解绑:cb 给定时只解「本 marker 上该 cb」的绑定(同一 cb 注册
+        // 到多个 marker 时互不影响,ws-a 数组簿记);cb 缺省 = 解绑本 marker 全部
+        // click(共享实例必须按 id 过滤,不能清全量——会误伤其他 marker 的回调)
+        const rest = [];
+        for (const binding of this.multiClickBindings) {
+          const match = binding.id === id && (cb === undefined || binding.cb === cb);
+          if (match) this.multiMarker.off?.('click', binding.handler);
+          else rest.push(binding);
         }
+        this.multiClickBindings = rest;
       },
       // 移除 = 摘除该 geometry + 清理全部簿记(共享实例保留挂图)
       remove: () => {
@@ -629,12 +667,12 @@ class TencentView implements MapView {
         }
         this.multiGeometries.delete(id);
         this.multiZIndexes.delete(id);
-        for (const [cbKey, entry] of [...this.multiClickHandlers]) {
-          if (entry.id === id) {
-            this.multiMarker.off?.('click', entry.handler);
-            this.multiClickHandlers.delete(cbKey);
-          }
+        const rest = [];
+        for (const binding of this.multiClickBindings) {
+          if (binding.id === id) this.multiMarker.off?.('click', binding.handler);
+          else rest.push(binding);
         }
+        this.multiClickBindings = rest;
         this.maybeUpdateMultiZIndex();
       },
     };
@@ -664,8 +702,13 @@ class TencentView implements MapView {
     const existing = this.multiStyleBySignature.get(signature);
     if (existing) return existing;
     const styleId = `dm-st-${++this.multiStyleSeq}`;
+    // anchor 按 icon 实际尺寸计算(ws-a 纯函数 resolveTMapMarkerAnchor):
+    // SDK 默认 anchor 是常量 (17,50),不随 width/height 归一化——自定义尺寸
+    // 图标必须显式传,否则锚点错位 → 缩放视觉漂移 + 点击命中区与视觉不一致。
+    // 语义 = AMap content 锚点(底部中心)+ 契约 offset 位移,与高德视觉对齐。
+    const anchor = resolveTMapMarkerAnchor(iconW, iconH, opts.offset);
     const styleOpts: Record<string, unknown> = {
-      anchor: new this.tmap.Point(iconW / 2 - (opts.offset?.[0] ?? 0), iconH - (opts.offset?.[1] ?? 0)),
+      anchor: new this.tmap.Point(anchor.x, anchor.y),
     };
     if (opts.icon) {
       styleOpts.src = opts.icon.src;
@@ -709,14 +752,16 @@ class TencentView implements MapView {
    * MultiMarker click 绑定(SDK 核实:点击载荷 { ...mapEvent, geometry, type,
    * target } → 按 geometry.id 过滤;共享实例下所有 marker 的 handler 注册在
    * 同一实例,id 过滤等价实例隔离,互不误触)。
-   * handler 注册进 multiClickHandlers(id 关联),供 off/remove 精确解绑。
+   * 绑定记录 push 进 multiClickBindings(数组,支持同一 cb 注册到多个 marker
+   * 的精确解绑);同 (cb, id) 重复注册去重(防 on 两次双触发)。
    */
   private bindMultiMarkerClick(raw: any, id: string, cb: () => void): void {
     if (typeof raw.on !== 'function') return;
+    if (this.multiClickBindings.some((b) => b.cb === cb && b.id === id)) return;
     const handler = (e: any) => {
       if (e?.geometry?.id === id) cb();
     };
-    this.multiClickHandlers.set(cb, { id, handler });
+    this.multiClickBindings.push({ cb, id, handler });
     raw.on('click', handler);
   }
 
@@ -910,7 +955,7 @@ class TencentView implements MapView {
     this.multiStyleBySignature.clear();
     this.multiStyles = {};
     this.multiAttached.clear();
-    this.multiClickHandlers.clear();
+    this.multiClickBindings = [];
     this.raw.destroy();
   }
 }
