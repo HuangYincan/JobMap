@@ -36,6 +36,8 @@ export interface ProfilePanelProps {
   onSignOut: () => void;
   /** 已投递/通知行点击 → 打开对应岗位(载荷为跳转所需最小字段;通知行缺字段时行禁用)。 */
   onOpenApplication?: (record: { positionId: string; companyPoiId: string }) => void;
+  /** 密码/手机/邮箱变更成功 → 通知外壳刷新 user(换绑/设密后展示值与 hasPassword 同步)。 */
+  onUserChanged?: () => void;
   applications?: ApplicationRecord[];
   notifications?: NotificationRecord[];
   shifted?: boolean;
@@ -76,6 +78,38 @@ const PROVIDER_LABELS: Partial<Record<AuthProvider, "authPhone" | "authEmail" | 
 
 function toggleValue<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+}
+
+/** 联系凭证脱敏:手机整串按「前 3 后 4」;邮箱只遮罩 @ 前的本地部分(保留域名便于辨认)。
+ *  长度 < 7 的短值只保留尾 2 位。 */
+function maskSegment(s: string): string {
+  if (s.length >= 7) return `${s.slice(0, 3)}****${s.slice(-4)}`;
+  if (s.length <= 2) return s;
+  return `${s.slice(0, -2)}**${s.slice(-2)}`;
+}
+
+function maskContact(value: string): string {
+  const v = value.trim();
+  const at = v.indexOf("@");
+  if (at > 0) return `${maskSegment(v.slice(0, at))}${v.slice(at)}`;
+  return maskSegment(v);
+}
+
+/** 设置/修改密码错误码 → i18n key(未知码回退通用错误)。 */
+function passwordErrorKey(code: string | undefined): "wrongPassword" | "codeInvalid" | "codeTargetMismatch" | "passwordTooShort" | "securityFailed" {
+  if (code === "WRONG_PASSWORD") return "wrongPassword";
+  if (code === "INVALID_CODE") return "codeInvalid";
+  if (code === "NOT_BOUND") return "codeTargetMismatch";
+  if (code === "PASSWORD_TOO_SHORT") return "passwordTooShort";
+  return "securityFailed";
+}
+
+/** 更换手机/邮箱错误码 → i18n key(未知码回退通用错误)。 */
+function contactErrorKey(code: string | undefined, kind: "phone" | "email"): "takenPhone" | "takenEmail" | "codeInvalid" | "securityFailed" {
+  if (code === "PHONE_TAKEN" && kind === "phone") return "takenPhone";
+  if (code === "EMAIL_TAKEN" && kind === "email") return "takenEmail";
+  if (code === "INVALID_CODE") return "codeInvalid";
+  return "securityFailed";
 }
 
 /** 下拉字段:求职偏好(单选 status + 三个多选)+ 偏好(单选 language / defaultMode)。 */
@@ -216,6 +250,7 @@ export function ProfilePanel({
   onAvatarUrlChange,
   onSignOut,
   onOpenApplication,
+  onUserChanged,
   applications = [],
   notifications = [],
   shifted = false,
@@ -230,6 +265,40 @@ export function ProfilePanel({
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [demoNote, setDemoNote] = useState<string | null>(null);
+
+  // ---- 密码与安全 / 手机与邮箱 子面板 ----
+  type SecurityView = "main" | "password" | "contacts";
+  const [view, setView] = useState<SecurityView>("main");
+  // 设置/修改密码表单
+  const [pwOld, setPwOld] = useState("");
+  const [pwNew, setPwNew] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwCode, setPwCode] = useState("");
+  const [pwSent, setPwSent] = useState(false);
+  const [pwResendIn, setPwResendIn] = useState(0);
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  // 手机 / 邮箱更换表单(各自独立展开)
+  const [phoneOpen, setPhoneOpen] = useState(false);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
+  const [phoneSent, setPhoneSent] = useState(false);
+  const [phoneResendIn, setPhoneResendIn] = useState(0);
+  const [phoneBusy, setPhoneBusy] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailCode, setEmailCode] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailResendIn, setEmailResendIn] = useState(0);
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  /** 后端契约:user JSON 增 hasPassword(ws-backend 实现);类型未合并前按可选读,缺省视为无密码。 */
+  const hasPassword = Boolean((user as AccountUser & { hasPassword?: boolean }).hasPassword);
+  /** 设置密码的身份验证 OTP:优先发到已绑定邮箱,否则手机;两者皆无 → 不可设密码。 */
+  const otpProvider = user.email ? "email" : "phone";
+  const otpTarget = user.email || user.phone || "";
 
   // 求职偏好下拉:openField + 触发钮锚点矩形 + 触发钮/浮层 refs。
   const [openField, setOpenField] = useState<PrefField | null>(null);
@@ -281,6 +350,17 @@ export function ProfilePanel({
     const id = window.setTimeout(() => setDemoNote(null), 2600);
     return () => window.clearTimeout(id);
   }, [demoNote]);
+
+  // 发送验证码倒计时(60s 冷却,与 auth-modal 同模式):任一计数 >0 每秒递减
+  useEffect(() => {
+    if (pwResendIn <= 0 && phoneResendIn <= 0 && emailResendIn <= 0) return;
+    const timer = setInterval(() => {
+      setPwResendIn((v) => (v > 1 ? v - 1 : 0));
+      setPhoneResendIn((v) => (v > 1 ? v - 1 : 0));
+      setEmailResendIn((v) => (v > 1 ? v - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [pwResendIn > 0 || phoneResendIn > 0 || emailResendIn > 0]);
 
   const save = async (patch: {
     displayName?: string;
@@ -348,7 +428,117 @@ export function ProfilePanel({
     setSaved(false);
   };
 
-  const showDemo = () => setDemoNote(t("demoNotice", lang));
+  /** OTP 发送(设置密码的身份验证 / 更换手机 / 更换邮箱):复用 POST /api/auth/otp/send,
+   *  成功置 60s 冷却倒计时并 toast;失败行内错误。 */
+  const sendOtp = async (provider: "email" | "phone", target: string, setSent: (v: boolean) => void, setResendIn: (v: number) => void, setError: (v: string | null) => void) => {
+    setError(null);
+    setBusy(true);
+    try {
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, target }),
+      });
+      const body = (await res.json()) as { message?: string; retryAfterMs?: number };
+      if (!res.ok) throw new Error(body?.message || "send failed");
+      setSent(true);
+      // 60s 冷却与后端 otpRateConfig.cooldownMs 对齐;响应带 retryAfterMs 则按其取整
+      const cooldown = typeof body?.retryAfterMs === "number" ? Math.max(60, Math.ceil(body.retryAfterMs / 1000)) : 60;
+      setResendIn(cooldown);
+      setDemoNote(t("sendCodeSuccess", lang));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "send failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** 设置/修改密码:有密码 → 旧密码验证;无密码 → 已绑定凭证 OTP 验证。成功 toast + 回主视图 + 刷新 user。 */
+  const savePassword = async () => {
+    if (pwNew.length < 8) {
+      setPwError(t("passwordTooShort", lang));
+      return;
+    }
+    if (pwConfirm !== pwNew) {
+      setPwError(t("passwordMismatch", lang));
+      return;
+    }
+    if (!hasPassword && !otpTarget) {
+      setPwError(t("noBoundContact", lang));
+      return;
+    }
+    setPwBusy(true);
+    setPwError(null);
+    try {
+      const body = hasPassword
+        ? { oldPassword: pwOld, newPassword: pwNew }
+        : { otp: { provider: otpProvider, target: otpTarget, code: pwCode }, newPassword: pwNew };
+      const res = await fetch("/api/auth/me/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = (await res.json()) as { ok?: boolean; message?: string; code?: string };
+      if (!res.ok) throw new Error(t(passwordErrorKey(json?.code), lang));
+      setDemoNote(t("passwordSaved", lang));
+      setView("main");
+      onUserChanged?.();
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : t("securityFailed", lang));
+    } finally {
+      setPwBusy(false);
+    }
+  };
+
+  /** 更换手机:OTP 验证新手机 → POST /api/auth/me/phone。成功 toast + 折叠 + 刷新 user。 */
+  const submitPhone = async () => {
+    setPhoneBusy(true);
+    setPhoneError(null);
+    try {
+      const res = await fetch("/api/auth/me/phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phoneInput.trim(), code: phoneCode.trim() }),
+      });
+      const json = (await res.json()) as { ok?: boolean; message?: string; code?: string };
+      if (!res.ok) throw new Error(t(contactErrorKey(json?.code, "phone"), lang));
+      setDemoNote(t("phoneEmailSaved", lang));
+      setPhoneOpen(false);
+      setPhoneInput("");
+      setPhoneCode("");
+      setPhoneSent(false);
+      onUserChanged?.();
+    } catch (err) {
+      setPhoneError(err instanceof Error ? err.message : t("securityFailed", lang));
+    } finally {
+      setPhoneBusy(false);
+    }
+  };
+
+  /** 更换邮箱:OTP 验证新邮箱 → POST /api/auth/me/email。成功 toast + 折叠 + 刷新 user。 */
+  const submitEmail = async () => {
+    setEmailBusy(true);
+    setEmailError(null);
+    try {
+      const res = await fetch("/api/auth/me/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailInput.trim(), code: emailCode.trim() }),
+      });
+      const json = (await res.json()) as { ok?: boolean; message?: string; code?: string };
+      if (!res.ok) throw new Error(t(contactErrorKey(json?.code, "email"), lang));
+      setDemoNote(t("phoneEmailSaved", lang));
+      setEmailOpen(false);
+      setEmailInput("");
+      setEmailCode("");
+      setEmailSent(false);
+      onUserChanged?.();
+    } catch (err) {
+      setEmailError(err instanceof Error ? err.message : t("securityFailed", lang));
+    } finally {
+      setEmailBusy(false);
+    }
+  };
 
   // ---- 求职偏好触发钮显示文本 ----
   const emptyText = lang === "zh" ? "未选择" : "Not selected";
@@ -498,8 +688,237 @@ export function ProfilePanel({
   const providerLabelKey = PROVIDER_LABELS[user.provider];
   const accountText = user.accountLabel || (providerLabelKey ? t(providerLabelKey, lang) : t("account", lang));
 
+  const toastEl = demoNote ? (
+    <div className={styles.toast} role="status">{demoNote}</div>
+  ) : null;
+
+  /** 子面板头:返回钮(chevronLeft)+ 标题 + 关闭(与主头同语义,保持面板可随时关闭)。 */
+  const renderSubHeader = (title: string) => (
+    <header className={styles.subHeader}>
+      <button
+        type="button"
+        className={styles.backBtn}
+        onClick={() => setView("main")}
+        aria-label={t("securityBack", lang)}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M14.5 5 8 12l6.5 7" />
+        </svg>
+      </button>
+      <h2 className={styles.subTitle}>{title}</h2>
+      <button
+        type="button"
+        className={styles.close}
+        onClick={onClose}
+        aria-label={embedded ? t("backToExplore", lang) : t("closePanel", lang)}
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </header>
+  );
+
+  /** A.「密码与安全」子面板:状态行 + 身份验证(旧密码 / 已绑定凭证 OTP)+ 新密码 + 保存。 */
+  const renderPasswordSecurity = () => (
+    <section className={styles.group} aria-label={t("passwordSecurity", lang)}>
+      <h3 className={styles.groupLabel}>{t("loginPassword", lang)}</h3>
+      <div className={styles.card}>
+        <div className={styles.secPanel}>
+          <div className={styles.secStatusRow}>
+            <span className={styles.secStatusDot} aria-hidden="true" />
+            <span className={styles.secStatusText}>
+              {hasPassword ? t("passwordSet", lang) : t("passwordNotSet", lang)}
+            </span>
+          </div>
+          {!hasPassword && (
+            <p className={styles.secHint}>
+              {otpTarget ? t("setPasswordHint", lang) : t("noBoundContact", lang)}
+            </p>
+          )}
+          {hasPassword ? (
+            <label className={styles.secField}>
+              <span>{t("oldPassword", lang)}</span>
+              <input
+                type="password"
+                value={pwOld}
+                onChange={(e) => setPwOld(e.target.value)}
+                autoComplete="current-password"
+              />
+            </label>
+          ) : (
+            <label className={styles.secField}>
+              <span>{t("verifyCode", lang)}</span>
+              <div className={styles.secInputShell}>
+                <input
+                  value={pwCode}
+                  onChange={(e) => setPwCode(e.target.value)}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                />
+                <button
+                  type="button"
+                  className={styles.secSend}
+                  disabled={busy || pwResendIn > 0 || !otpTarget}
+                  onClick={() => void sendOtp(otpProvider, otpTarget, setPwSent, setPwResendIn, setPwError)}
+                >
+                  {pwResendIn > 0
+                    ? t("resendInSeconds", lang).replace("{s}", String(pwResendIn))
+                    : pwSent
+                      ? t("resendCode", lang)
+                      : t("sendCode", lang)}
+                </button>
+              </div>
+            </label>
+          )}
+          <label className={styles.secField}>
+            <span>{t("newPassword", lang)}</span>
+            <input
+              type="password"
+              value={pwNew}
+              onChange={(e) => setPwNew(e.target.value)}
+              autoComplete="new-password"
+            />
+            <small className={styles.secFieldHint}>{t("passwordTooShort", lang)}</small>
+          </label>
+          <label className={styles.secField}>
+            <span>{t("confirmNewPassword", lang)}</span>
+            <input
+              type="password"
+              value={pwConfirm}
+              onChange={(e) => setPwConfirm(e.target.value)}
+              autoComplete="new-password"
+            />
+          </label>
+          {pwError && <p className={styles.secError} role="alert">{pwError}</p>}
+          <button type="button" className={styles.saveBtn} disabled={pwBusy} onClick={() => void savePassword()}>
+            {t("savePassword", lang)}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+
+  /** B.「手机与邮箱」子面板:手机/邮箱各一块(凭证展示 + 更换表单,独立展开)。 */
+  const renderContactBlock = (
+    kind: "phone" | "email",
+    value: string | undefined,
+    open: boolean,
+    input: string,
+    code: string,
+    sent: boolean,
+    resendIn: number,
+    fieldBusy: boolean,
+    error: string | null,
+    onToggle: () => void,
+    onInput: (v: string) => void,
+    onCode: (v: string) => void,
+    onSend: () => void,
+    onSubmit: () => void,
+  ) => {
+    const isPhone = kind === "phone";
+    return (
+      <div className={styles.secBlock}>
+        <h4 className={styles.groupLabel}>{isPhone ? t("phoneNumber", lang) : t("emailAddress", lang)}</h4>
+        <div className={styles.contactRow}>
+          <span className={styles.rowLabel}>{value ? maskContact(value) : t("unbound", lang)}</span>
+          <button
+            type="button"
+            className={styles.contactAction}
+            aria-expanded={open}
+            onClick={onToggle}
+          >
+            {isPhone ? t("changePhone", lang) : t("changeEmail", lang)}
+          </button>
+        </div>
+        {open && (
+          <div className={styles.secPanel}>
+            <label className={styles.secField}>
+              <span>{isPhone ? t("newPhone", lang) : t("newEmail", lang)}</span>
+              <input
+                value={input}
+                onChange={(e) => onInput(e.target.value)}
+                inputMode={isPhone ? "tel" : "email"}
+                autoComplete={isPhone ? "tel" : "email"}
+              />
+            </label>
+            <label className={styles.secField}>
+              <span>{t("verifyCode", lang)}</span>
+              <div className={styles.secInputShell}>
+                <input
+                  value={code}
+                  onChange={(e) => onCode(e.target.value)}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                />
+                <button
+                  type="button"
+                  className={styles.secSend}
+                  disabled={busy || resendIn > 0 || !input.trim()}
+                  onClick={onSend}
+                >
+                  {resendIn > 0
+                    ? t("resendInSeconds", lang).replace("{s}", String(resendIn))
+                    : sent
+                      ? t("resendCode", lang)
+                      : t("sendCode", lang)}
+                </button>
+              </div>
+            </label>
+            {error && <p className={styles.secError} role="alert">{error}</p>}
+            <button type="button" className={styles.saveBtn} disabled={fieldBusy} onClick={onSubmit}>
+              {t("confirmChange", lang)}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderPhoneEmail = () => (
+    <section className={styles.group} aria-label={t("phoneEmail", lang)}>
+      <div className={styles.card}>
+        {renderContactBlock(
+          "phone",
+          user.phone,
+          phoneOpen,
+          phoneInput,
+          phoneCode,
+          phoneSent,
+          phoneResendIn,
+          phoneBusy,
+          phoneError,
+          () => setPhoneOpen((v) => !v),
+          setPhoneInput,
+          setPhoneCode,
+          () => void sendOtp("phone", phoneInput.trim(), setPhoneSent, setPhoneResendIn, setPhoneError),
+          () => void submitPhone(),
+        )}
+        <div className={styles.secDivider} aria-hidden="true" />
+        {renderContactBlock(
+          "email",
+          user.email,
+          emailOpen,
+          emailInput,
+          emailCode,
+          emailSent,
+          emailResendIn,
+          emailBusy,
+          emailError,
+          () => setEmailOpen((v) => !v),
+          setEmailInput,
+          setEmailCode,
+          () => void sendOtp("email", emailInput.trim(), setEmailSent, setEmailResendIn, setEmailError),
+          () => void submitEmail(),
+        )}
+      </div>
+    </section>
+  );
+
   const body = (
     <aside className={`${styles.sidebar} ${embedded ? styles.sheet : ""}`} aria-label={t("profile", lang)}>
+      {view === "main" ? (
+        <>
       <header className={styles.header}>
         <h2 className={styles.title}>{t("profile", lang)}</h2>
         <button
@@ -584,13 +1003,13 @@ export function ProfilePanel({
             </div>
           )}
 
-          <button type="button" className={`${styles.row} ${styles.rowBtn}`} onClick={showDemo}>
+          <button type="button" className={`${styles.row} ${styles.rowBtn}`} onClick={() => setView("password")}>
             <span className={styles.rowIcon}><Icon name="lock" /></span>
             <span className={styles.rowLabel}>{t("passwordSecurity", lang)}</span>
             <span className={styles.rowChevron}><Icon name="chevronRight" /></span>
           </button>
 
-          <button type="button" className={`${styles.row} ${styles.rowBtn}`} onClick={showDemo}>
+          <button type="button" className={`${styles.row} ${styles.rowBtn}`} onClick={() => setView("contacts")}>
             <span className={styles.rowIcon}><Icon name="phone" /></span>
             <span className={styles.rowLabel}>{t("phoneEmail", lang)}</span>
             <span className={styles.rowChevron}><Icon name="chevronRight" /></span>
@@ -709,6 +1128,20 @@ export function ProfilePanel({
           )}
         </div>
       </section>
+        </>
+      ) : view === "password" ? (
+        <>
+          {renderSubHeader(t("passwordSecurity", lang))}
+          {renderPasswordSecurity()}
+          {toastEl}
+        </>
+      ) : (
+        <>
+          {renderSubHeader(t("phoneEmail", lang))}
+          {renderPhoneEmail()}
+          {toastEl}
+        </>
+      )}
     </aside>
   );
 
