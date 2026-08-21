@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import styles from "./agent-panel.module.css";
 import { t, type Language } from "@/lib/i18n";
+import type { AccountUser } from "@/lib/account";
 import type { AgentAction, AgentEvent } from "@/lib/agent/types";
 import type { MapBridge } from "@/lib/agent-map-bridge";
 import { reduceAgentEvent, stripActionJsonBlocks, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
@@ -41,6 +42,8 @@ const HISTORY_CAP = 30;
 interface Props {
   bridge: MapBridge | null;
   lang: Language;
+  /** 登录态;非空才渲染记忆管理入口(guest 不渲染,记忆是账号级数据)。 */
+  user: AccountUser | null;
   /** 悬浮球当前矩形(viewport 坐标);面板以此为锚实时跟随。 */
   ballRect: BallRect;
   /** 球正在拖拽:面板关闭吸附过渡,transform 跟手。 */
@@ -114,18 +117,67 @@ function toolCategoryName(name: string, lang: Language): string {
       return t("agentToolWeather", lang);
     case "project":
       return t("agentToolProject", lang);
+    case "memory":
+      return t("agentToolMemory", lang);
     default:
       return t("agentToolOther", lang);
   }
 }
 
-export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose }: Props) {
+/** 记忆条目(GET /api/me/memories 列表项;id 兼容 number/string,仅作 key 与删除入参)。 */
+export interface AgentMemoryItem {
+  id: number | string;
+  content: string;
+  createdAt?: string;
+}
+
+/**
+ * GET /api/me/memories 响应解析(纯函数):接受 {items:[...]}(saved 路由范式)/
+ * {memories:[...]}/裸数组三种形态(与 ws-mem-a 并行开发,宽松兼容);
+ * 缺 id 或 content 非字符串的条目丢弃。解析失败 → 空数组(调用方走弱提示)。
+ */
+export function parseMemories(json: unknown): AgentMemoryItem[] {
+  if (!json || typeof json !== "object") return [];
+  let raw: unknown;
+  if (Array.isArray(json)) raw = json;
+  else if (Array.isArray((json as { items?: unknown }).items)) raw = (json as { items: unknown }).items;
+  else if (Array.isArray((json as { memories?: unknown }).memories)) raw = (json as { memories: unknown }).memories;
+  else return [];
+  return (raw as unknown[]).flatMap((m): AgentMemoryItem[] => {
+    if (!m || typeof m !== "object") return [];
+    const item = m as { id?: unknown; content?: unknown; createdAt?: unknown };
+    if (item.id === undefined || item.id === null || typeof item.content !== "string") return [];
+    return [
+      {
+        id: item.id as number | string,
+        content: item.content,
+        ...(typeof item.createdAt === "string" ? { createdAt: item.createdAt } : {}),
+      },
+    ];
+  });
+}
+
+/** 记忆弹层渲染状态机(纯函数):加载中 → 失败弱提示 → 空态 → 列表。 */
+export type MemoryViewState = "loading" | "error" | "empty" | "list";
+
+export function memoryViewState(loading: boolean, error: boolean, count: number): MemoryViewState {
+  if (loading) return "loading";
+  if (error) return "error";
+  return count > 0 ? "list" : "empty";
+}
+
+export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, onClose }: Props) {
   const [messages, setMessages] = useState<AgentMessage[]>(readHistory);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [tool, setTool] = useState<AgentToolInfo | null>(null);
   const [notConfigured, setNotConfigured] = useState(false);
   const [fatalError, setFatalError] = useState<string | null>(null);
+  // 记忆弹层:打开(登录)时拉取列表;失败弱提示;不随「清屏」清除(记忆跨会话)。
+  const [memoriesOpen, setMemoriesOpen] = useState(false);
+  const [memories, setMemories] = useState<AgentMemoryItem[]>([]);
+  const [memoriesLoading, setMemoriesLoading] = useState(false);
+  const [memoriesError, setMemoriesError] = useState(false);
   // 完成/停止显式状态:done 事件 → 'done';用户停止 → 'stopped';新消息/清屏清零。
   // truncated 标记 done 事件携带的截断说明(「已达回答上限」弱提示)。
   const [completion, setCompletion] = useState<AgentCompletionState>(null);
@@ -349,6 +401,57 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
     executorRef.current?.execute(action);
   }, []);
 
+  // ---- 记忆弹层:打开(且登录)拉取列表;失败 → 弱提示(不打断对话);关闭/登出即取消 ----
+  useEffect(() => {
+    if (!memoriesOpen || !user) return;
+    let cancelled = false;
+    setMemoriesLoading(true);
+    setMemoriesError(false);
+    fetch("/api/me/memories")
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`memories list ${res.status}`);
+        const json: unknown = await res.json();
+        if (!cancelled) {
+          setMemories(parseMemories(json));
+          setMemoriesLoading(false);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMemories([]);
+        setMemoriesLoading(false);
+        setMemoriesError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [memoriesOpen, user]);
+
+  /** 逐条删除:DELETE /api/me/memories?id=N(saved 路由范式);失败 → 复用弱提示。 */
+  const deleteMemory = useCallback(async (id: number | string) => {
+    try {
+      const res = await fetch(`/api/me/memories?id=${encodeURIComponent(String(id))}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`memories delete ${res.status}`);
+      setMemories((prev) => prev.filter((m) => m.id !== id));
+    } catch {
+      setMemoriesError(true);
+    }
+  }, []);
+
+  /** 一键清除:轻确认(原生 confirm,用 langRef 避免闭包依赖)后 DELETE 全量。 */
+  const clearMemories = useCallback(() => {
+    if (!window.confirm(t("agentMemoryClearConfirm", langRef.current))) return;
+    void (async () => {
+      try {
+        const res = await fetch("/api/me/memories", { method: "DELETE" });
+        if (!res.ok) throw new Error(`memories clear ${res.status}`);
+        setMemories([]);
+      } catch {
+        setMemoriesError(true);
+      }
+    })();
+  }, []);
+
   // 消息/状态变化 → 滚动到底部
   useEffect(() => {
     const el = listRef.current;
@@ -357,6 +460,7 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
 
   const canUndo = Boolean(executorRef.current?.canUndo());
   const lastIsAssistant = messages[messages.length - 1]?.role === "assistant";
+  const memoryView = memoryViewState(memoriesLoading, memoriesError, memories.length);
 
   return (
     <section
@@ -370,10 +474,58 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
           ✦
         </span>
         <strong className={styles.title}>{t("agentTitle", lang)}</strong>
-        <button type="button" className={styles.close} onClick={onClose} aria-label={t("agentClose", lang)}>
-          ✕
-        </button>
+        <div className={styles.headerActions}>
+          {user && (
+            <button
+              type="button"
+              className={styles.memoryBtn}
+              onClick={() => setMemoriesOpen((v) => !v)}
+              aria-label={t("agentMemory", lang)}
+              aria-expanded={memoriesOpen}
+            >
+              {t("agentMemory", lang)}
+            </button>
+          )}
+          <button type="button" className={styles.close} onClick={onClose} aria-label={t("agentClose", lang)}>
+            ✕
+          </button>
+        </div>
       </header>
+
+      {/* 记忆弹层(面板内嵌,工具活动同体系):登录用户打开时渲染;加载/空/失败弱提示;
+          条目逐条删除 + 一键清除(轻确认);与「清屏」互不相干(记忆跨会话)。 */}
+      {user && memoriesOpen && (
+        <div className={styles.memoryPanel} role="region" aria-label={t("agentMemory", lang)}>
+          <div className={styles.memoryHead}>
+            <span className={styles.memoryTitle}>{t("agentMemory", lang)}</span>
+            {memoryView === "list" && (
+              <button type="button" className={styles.memoryClear} onClick={clearMemories}>
+                {t("agentMemoryClear", lang)}
+              </button>
+            )}
+          </div>
+          {memoryView === "loading" && <p className={styles.memoryHint}>{t("agentMemoryLoading", lang)}</p>}
+          {memoryView === "error" && <p className={styles.memoryHint}>{t("agentMemoryError", lang)}</p>}
+          {memoryView === "empty" && <p className={styles.memoryHint}>{t("agentMemoryEmpty", lang)}</p>}
+          {memoryView === "list" && (
+            <ul className={styles.memoryList}>
+              {memories.map((m) => (
+                <li key={m.id} className={styles.memoryRow}>
+                  <span className={styles.memoryContent}>{m.content}</span>
+                  <button
+                    type="button"
+                    className={styles.memoryDelete}
+                    onClick={() => void deleteMemory(m.id)}
+                    aria-label={t("agentMemoryDelete", lang)}
+                  >
+                    {t("agentMemoryDelete", lang)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {tool && (
         <div className={styles.toolBar} role="status">
