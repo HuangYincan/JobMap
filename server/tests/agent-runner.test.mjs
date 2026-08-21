@@ -369,6 +369,73 @@ test('runAgent: 历史裁剪 — 超 maxHistoryChars 时删最旧 user,保留 sy
   assert.ok(round2Messages.some((m) => m.role === 'tool'), '最近一轮的 tool 消息保留');
 });
 
+/** 断言 LLM 收到的 history 形状合法:system 在最前(永在);每个 role:'tool' 消息之前存在
+ *  声明其 tool_call_id 的 assistant(tool_calls);每个 assistant(tool_calls) 的 tool_calls
+ *  均有对应 tool 消息(裁剪不拆散配对、不留孤儿 tool —— 否则 DeepSeek 400)。 */
+function assertHistoryWellFormed(messages) {
+  assert.equal(messages[0].role, 'system', 'history 以 system 开头(system 永在)');
+  const declared = new Set();
+  for (const m of messages) {
+    if (m.role === 'assistant' && m.tool_calls && m.tool_calls.length > 0) {
+      for (const tc of m.tool_calls) declared.add(tc.id);
+    } else if (m.role === 'tool') {
+      assert.ok(
+        declared.has(m.tool_call_id),
+        `tool 消息 ${m.tool_call_id} 之前存在带匹配 tool_call_id 的 assistant(tool_calls)`,
+      );
+    }
+  }
+  const toolIds = messages.filter((m) => m.role === 'tool').map((m) => m.tool_call_id);
+  for (const m of messages) {
+    if (m.role === 'assistant' && m.tool_calls && m.tool_calls.length > 0) {
+      for (const tc of m.tool_calls) {
+        assert.ok(toolIds.includes(tc.id), `assistant(tool_calls) 的 ${tc.id} 有对应 tool 消息`);
+      }
+    }
+  }
+}
+
+test('runAgent: 工具结果 >3000 字符 → 入 history 前 sanitizeToolText 截断(ok 与 error 摘要均处理)', async () => {
+  const big = 'x'.repeat(5000);
+  const toolOk = mockTool('amap__place_search', () => ({ ok: true, text: big }));
+  const toolErr = mockTool('builtin__viewport', () => ({ ok: false, error: big }));
+  const mp = mockProvider([
+    {
+      toolCalls: [
+        { id: 'c1', name: 'amap__place_search', arguments: '{"query":"q"}' },
+        { id: 'c2', name: 'builtin__viewport', arguments: '{}' },
+      ],
+    },
+    { deltas: ['ok'] },
+  ]);
+  const events = await collectEvents(baseReq({ tools: [toolOk, toolErr], provider: mp }));
+  const toolMsgs = mp.seen[1].messages.filter((m) => m.role === 'tool');
+  assert.equal(toolMsgs.length, 2);
+  for (const tm of toolMsgs) assert.equal(tm.content.length, 3000, 'tool 消息内容被截断到 3000 字符');
+  const summaries = events.filter((e) => e.type === 'tool' && e.status !== 'start').map((e) => e.summary);
+  assert.equal(summaries.length, 2);
+  for (const s of summaries) assert.equal(s.length, 3000, 'tool 事件 summary 同步截断');
+});
+
+test('runAgent: 历史裁剪按轮删除 — 小预算多轮后无孤儿 tool 消息、system 永在、history 形状合法', async () => {
+  const tool = mockTool('amap__place_search', () => ({ ok: true, text: '结果' + 'x'.repeat(300) }));
+  const mp = mockProvider([
+    { toolCalls: [{ id: 'c1', name: 'amap__place_search', arguments: '{"query":"a"}' }] },
+    { toolCalls: [{ id: 'c2', name: 'amap__place_search', arguments: '{"query":"b"}' }] },
+    { toolCalls: [{ id: 'c3', name: 'amap__place_search', arguments: '{"query":"c"}' }] },
+    { deltas: ['收尾答复'] },
+  ]);
+  const events = await collectEvents(
+    baseReq({ config: { ...CFG, maxHistoryChars: 500 }, tools: [tool], provider: mp }),
+  );
+  assert.equal(events.at(-1).type, 'done');
+  // 每一轮 LLM 收到的 history 形状都合法(裁剪按整轮删除,不产生孤儿 tool、不拆散配对)
+  for (const seen of mp.seen) assertHistoryWellFormed(seen.messages);
+  // 裁剪确实发生:最早轮的工具结果已随整轮被裁掉
+  const finalMessages = mp.seen[mp.seen.length - 1].messages;
+  assert.ok(!finalMessages.some((m) => m.role === 'tool' && m.tool_call_id === 'c1'), '最早轮的 tool 结果已被裁掉');
+});
+
 test('runAgent: unsupported_tools → 无 tools 降级重跑一次(成功路径)', async () => {
   const tool = mockTool('amap__place_search');
   const mp = mockProvider([

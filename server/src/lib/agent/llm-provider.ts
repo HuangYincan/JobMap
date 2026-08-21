@@ -10,7 +10,8 @@
 //   - 30s 首包超时(每次尝试:收到首个 chunk 后取消定时器)
 //   - 120s 整体上限(整个 streamChat 调用)
 //   - 首包前 408/429/5xx/网络错:2 次重试,指数退避 500ms → 1s
-//   - 400/422 且响应体涉及 tools → kind 'unsupported_tools'(供降级重跑)
+//   - 400/422 且响应体表明「tools 参数不被支持」→ kind 'unsupported_tools'(供降级重跑);
+//     其余 400/422(含 tool 消息配对错误)归 http——不误判、不掩盖真因
 //   - 调用方 signal.abort → kind 'aborted';超时 → kind 'timeout'
 // 错误一律原样抛出(HttpError / AbortError / AgentProviderError / 网络 Error),
 // 由调用方(run-agent)分类;重试判定只认 HttpError 状态与网络错。
@@ -71,6 +72,15 @@ export interface LlmProviderOptions {
 const DEFAULT_FIRST_PACKET_MS = 30_000;
 const DEFAULT_OVERALL_MS = 120_000;
 const DEFAULT_RETRY_DELAYS = [500, 1000];
+
+/**
+ * 400/422 且响应体表明「tools 参数不被支持」才分类 unsupported_tools(触发无 tools 降级重跑):
+ * unknown parameter.*tool / does not support.*tool / unsupported.*tool / tool.*not supported。
+ * 其余 400/422 归 http——尤其「tool 消息配对错误」类 400(正文含 "tool" 但说的是消息角色配对)
+ * 不能被误判为 unsupported_tools,否则会触发降级重跑掩盖真因。
+ */
+const UNSUPPORTED_TOOLS_BODY =
+  /unknown parameter.*tool|does not support.*tool|unsupported.*tool|tool.*not supported/i;
 
 /**
  * 纯函数:解析一条 SSE 行。`data: <payload>` → payload 字符串(含 [DONE]);
@@ -188,7 +198,7 @@ export function createLlmProvider(fetchLike?: typeof fetch, options?: LlmProvide
             } catch {
               /* 读 body 失败不改变判定 */
             }
-            if (/tool/i.test(bodyText)) {
+            if (UNSUPPORTED_TOOLS_BODY.test(bodyText)) {
               throw providerError('unsupported_tools', `provider 不支持 tools 参数(HTTP ${res.status})`);
             }
           }

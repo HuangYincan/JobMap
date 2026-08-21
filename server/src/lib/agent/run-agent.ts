@@ -228,12 +228,13 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
         return;
       }
 
-      // 执行工具,结果回流
+      // 执行工具,结果回流(入 history 前一律经 sanitizeToolText 净化:截断 3000、剔除
+      // script/超长 URL——否则一条 MCP 结果瞬间打爆 maxHistoryChars 预算,见 tech/24 §6.2)
       const toolMessages: ChatMessage[] = [];
       for (const call of calls) {
         if (req.signal.aborted) return;
         const result = await runTool(call);
-        const summary = result.ok ? result.text : result.error;
+        const summary = sanitizeToolText(result.ok ? result.text : result.error);
         yield result.ok
           ? { type: 'tool', name: call.name, status: 'done', summary }
           : { type: 'tool', name: call.name, status: 'error', summary };
@@ -250,7 +251,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
         ...(turnReasoning ? { reasoning_content: turnReasoning } : {}),
       });
       history.push(...toolMessages);
-      trimHistory(history.length - toolMessages.length);
+      trimHistory();
     }
     yield { type: 'done', truncated: true };
   }
@@ -345,16 +346,62 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
     }
   }
 
-  /** 每轮后按 maxHistoryChars 裁剪历史:从最旧 user 起删,保留 system 与最近一轮。 */
-  function trimHistory(keepFromIndex: number): void {
+  /**
+   * 每轮后按 maxHistoryChars 裁剪历史:以「轮」为单位从最前删除——每轮 = 一个 user 消息 +
+   * 其后的 assistant(可能带 tool_calls)+ 该 assistant 之后连续的 tool 消息组;system 永不删。
+   * 最近一轮(本轮刚追加的 assistant(tool_calls)+ 其 tool 结果组)永远保留,保证
+   * tool_calls↔tool 配对不破(逐条删 user/assistant 会留下孤儿 tool 消息 → DeepSeek 400
+   * "role 'tool' must be a response to 'tool_calls'")。预算计算沿用 maxHistoryChars
+   * (content.length 求和)。
+   */
+  function trimHistory(): void {
     const limit = req.config.maxHistoryChars;
     if (limit <= 0) return;
+    // 最近一轮起点:从尾部 tool 消息回退到其 assistant(tool_calls);该起点之后永不删
+    let keepFrom = history.length - 1;
+    while (keepFrom > 1 && history[keepFrom].role === 'tool') keepFrom--;
     const total = () => history.reduce((sum, m) => sum + m.content.length, 0);
-    while (total() > limit && keepFromIndex > 1) {
-      const idx = history.slice(0, keepFromIndex).findIndex((m) => m.role !== 'system');
-      if (idx === -1) break;
-      history.splice(idx, 1);
-      keepFromIndex--;
+    while (total() > limit && keepFrom > 1) {
+      const end = frontDeletableEnd(keepFrom);
+      if (end <= 1) break;
+      history.splice(1, end - 1); // 删除 [1, end):system 之后的整轮
+      keepFrom -= end - 1;
     }
+  }
+
+  /** 从最前找可整轮删除的区间终点(区间 [1, end),不越过最近一轮起点 keepFrom);无可删 → 1。
+   * 轮 = user + 其后的 assistant(可能带 tool_calls)+ assistant 之后连续的 tool 消息组;
+   * 轮不完整时(历史被外部截断/轮起点缺失)保守处理:删除该轮全部可识别部分。 */
+  function frontDeletableEnd(keepFrom: number): number {
+    if (keepFrom <= 1) return 1;
+    const first = history[1];
+    if (!first) return 1;
+    if (first.role === 'user') {
+      // 该 user 之后的第一个 assistant(或下一个 user 标记新轮起点)
+      let i = 2;
+      let asstIdx = -1;
+      for (; i < history.length && i < keepFrom; i++) {
+        if (history[i].role === 'assistant') {
+          asstIdx = i;
+          break;
+        }
+        if (history[i].role === 'user') break; // 无 assistant 的不完整轮
+      }
+      if (asstIdx === -1) return i; // 不完整轮:只删到可识别部分(该 user)
+      const asst = history[asstIdx];
+      let end = asstIdx + 1;
+      if (asst.tool_calls && asst.tool_calls.length > 0) {
+        // assistant 之后连续的 tool 消息组(整组随轮删除,不拆散配对)
+        while (end < history.length && end < keepFrom && history[end].role === 'tool') end++;
+      }
+      return end;
+    }
+    if (first.role === 'assistant' || first.role === 'tool') {
+      // 轮起点缺失(孤立 assistant/tool,如外部截断):删除该段全部可识别部分(含其后连续 tool)
+      let end = 2;
+      while (end < history.length && end < keepFrom && history[end].role === 'tool') end++;
+      return end;
+    }
+    return 1;
   }
 }

@@ -406,6 +406,35 @@ test('streamChat: 400 无 tools 字样 → HttpError(400),非 unsupported_tools'
   await assert.rejects(streamChat(provider).promise, (err) => err instanceof HttpError && err.status === 400);
 });
 
+test('streamChat: 400/422 正文为 tool 消息配对错误 → kind http,而非 unsupported_tools', async () => {
+  const body = `{"error":{"message":"Messages with role 'tool' must be a response to a preceding message with 'tool_calls'"}}`;
+  for (const status of [400, 422]) {
+    const provider = createLlmProvider(async () => new Response(body, { status }));
+    await assert.rejects(
+      streamChat(provider).promise,
+      (err) => err instanceof HttpError && err.status === status,
+      `status ${status}`,
+    );
+  }
+});
+
+test('streamChat: 400/422 正文表明 tools 参数不被支持 → kind unsupported_tools(触发无 tools 降级)', async () => {
+  const bodies = [
+    '{"error":{"message":"Unknown parameter \'tools\' in messages"}}',
+    '{"error":{"message":"This model does not support tools"}}',
+    '{"error":{"message":"unsupported tools parameter"}}',
+    '{"error":{"message":"tools is not supported by this model"}}',
+  ];
+  for (const body of bodies) {
+    const provider = createLlmProvider(async () => new Response(body, { status: 400 }));
+    await assert.rejects(
+      streamChat(provider).promise,
+      (err) => err.kind === 'unsupported_tools' && err instanceof Error,
+      body,
+    );
+  }
+});
+
 test('streamChat: 401 → HttpError(401),不重试', async () => {
   let calls = 0;
   const provider = createLlmProvider(
