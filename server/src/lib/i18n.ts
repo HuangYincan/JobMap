@@ -572,8 +572,8 @@ export const translations = {
     en: 'Close panel',
   },
   displayName: {
-    zh: '显示名',
-    en: 'Display name',
+    zh: '用户名',
+    en: 'Username',
   },
   preferences: {
     zh: '偏好设置',
@@ -636,16 +636,16 @@ export const translations = {
     en: 'Not looking',
   },
   careerFamilies: {
-    zh: '意向岗位',
-    en: 'Target roles',
+    zh: '求职类型',
+    en: 'Job types',
   },
   careerIndustries: {
     zh: '意向行业',
     en: 'Industries',
   },
   careerStrengths: {
-    zh: '个人实力',
-    en: 'Strengths',
+    zh: '意向岗位',
+    en: 'Target roles',
   },
   strengthAlgorithm: {
     zh: '算法',
@@ -822,6 +822,14 @@ export const translations = {
   account: {
     zh: '账户',
     en: 'Account',
+  },
+  accountImmutable: {
+    zh: '不可修改',
+    en: 'Not editable',
+  },
+  avatarUploadFailed: {
+    zh: '头像上传失败，请重试',
+    en: 'Avatar upload failed, please retry',
   },
   editProfile: {
     zh: '编辑资料',

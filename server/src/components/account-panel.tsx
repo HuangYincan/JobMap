@@ -7,6 +7,7 @@ import {
   mergePreferences,
   type AccountUser,
   type ApplicationRecord,
+  type AuthProvider,
   type CareerStrength,
   type JobSeekingStatus,
   type NotificationRecord,
@@ -29,6 +30,8 @@ export interface ProfilePanelProps {
     avatarUrl?: string;
     preferences?: Partial<UserPreferences>;
   }) => Promise<void>;
+  /** 头像上传成功后通知外壳同步 user 状态(头像即时保存,不等「保存」按钮)。 */
+  onAvatarUrlChange?: (avatarUrl: string) => void;
   /** 退出登录(复用 /api/auth/me DELETE 与 handleAuthAction 逻辑)。 */
   onSignOut: () => void;
   /** 已投递/通知行点击 → 打开对应岗位(载荷为跳转所需最小字段;通知行缺字段时行禁用)。 */
@@ -60,6 +63,16 @@ const FAMILIES: { id: "intern" | "campus" | "social"; labelKey: "jobFamilyIntern
   { id: "campus", labelKey: "jobFamilyCampus" },
   { id: "social", labelKey: "jobFamilySocial" },
 ];
+
+/** 账户缺失(email/手机/用户名都没有,如纯 OAuth)时的回退展示:登录方式即账户。 */
+const PROVIDER_LABELS: Partial<Record<AuthProvider, "authPhone" | "authEmail" | "authGithub" | "authGoogle" | "authWechat" | "authPassword">> = {
+  phone: "authPhone",
+  email: "authEmail",
+  github: "authGithub",
+  google: "authGoogle",
+  wechat: "authWechat",
+  password: "authPassword",
+};
 
 function toggleValue<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
@@ -200,6 +213,7 @@ export function ProfilePanel({
   lang,
   onClose,
   onSave,
+  onAvatarUrlChange,
   onSignOut,
   onOpenApplication,
   applications = [],
@@ -213,6 +227,7 @@ export function ProfilePanel({
   const [cropOpen, setCropOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [demoNote, setDemoNote] = useState<string | null>(null);
 
@@ -279,6 +294,28 @@ export function ProfilePanel({
       setSaved(true);
     } finally {
       setBusy(false);
+    }
+  };
+
+  /** 裁剪完成 → 即时上传二进制到 POST /api/me/avatar(不等「保存」按钮),
+   *  成功即更新本地头像与服务端 user 状态;失败弹 toast。 */
+  const uploadAvatar = async (dataUrl: string) => {
+    setUploading(true);
+    try {
+      const blobRes = await fetch(dataUrl);
+      const blob = await blobRes.blob();
+      const form = new FormData();
+      form.append("file", blob, "avatar.jpg");
+      const res = await fetch("/api/me/avatar", { method: "POST", body: form });
+      const body = (await res.json()) as { user?: AccountUser; message?: string };
+      const nextUrl = body.user?.avatarUrl;
+      if (!res.ok || !nextUrl) throw new Error(body?.message ?? "upload failed");
+      setAvatarUrl(nextUrl);
+      onAvatarUrlChange?.(nextUrl);
+    } catch {
+      setDemoNote(t("avatarUploadFailed", lang));
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -457,6 +494,10 @@ export function ProfilePanel({
 
   const initials = initialsFromName(name || user.displayName).slice(0, 1);
 
+  // 账户:登录凭证(email/手机号/注册用户名),永不修改;纯 OAuth 无凭证时回退展示登录方式。
+  const providerLabelKey = PROVIDER_LABELS[user.provider];
+  const accountText = user.accountLabel || (providerLabelKey ? t(providerLabelKey, lang) : t("account", lang));
+
   const body = (
     <aside className={`${styles.sidebar} ${embedded ? styles.sheet : ""}`} aria-label={t("profile", lang)}>
       <header className={styles.header}>
@@ -473,12 +514,13 @@ export function ProfilePanel({
         </button>
       </header>
 
-      {/* 身份卡:头像(点击裁剪)+ 名字 + 账号 */}
+      {/* 身份卡:头像(点击裁剪)+ 用户名 + 账户(登录凭证,永不修改) */}
       <section className={`${styles.card} ${styles.identityCard}`} aria-label={t("account", lang)}>
         <button
           type="button"
           className={styles.avatarBtn}
           onClick={() => setCropOpen(true)}
+          disabled={uploading}
           aria-label={t("changeAvatar", lang)}
         >
           {avatarUrl ? (
@@ -492,7 +534,10 @@ export function ProfilePanel({
         </button>
         <strong className={styles.identityName}>{name || user.displayName}</strong>
         <small className={styles.accountLabel}>
-          {[user.accountLabel, t("signedIn", lang)].filter(Boolean).join(" · ")}
+          <Icon name="lock" />
+          <span>
+            {t("account", lang)}: {accountText} · {t("accountImmutable", lang)}
+          </span>
         </small>
       </section>
 
@@ -518,7 +563,7 @@ export function ProfilePanel({
                 <input value={name} onChange={(e) => setName(e.target.value)} disabled={busy} />
               </label>
               <div className={styles.editActions}>
-                <button type="button" className={styles.editAction} onClick={() => setCropOpen(true)}>
+                <button type="button" className={styles.editAction} onClick={() => setCropOpen(true)} disabled={uploading}>
                   <Icon name="pencil" />
                   {t("changeAvatar", lang)}
                 </button>
@@ -675,7 +720,7 @@ export function ProfilePanel({
         open={cropOpen}
         lang={lang}
         onClose={() => setCropOpen(false)}
-        onSave={(dataUrl) => setAvatarUrl(dataUrl)}
+        onSave={(dataUrl) => void uploadAvatar(dataUrl)}
       />
     </div>
   );
