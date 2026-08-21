@@ -1069,3 +1069,34 @@ test('StrictMode 双调用不再杀活图(2026-08-21 热修:dynamic 面板挂载
   const settleBlock = shell.slice(Math.max(0, settleAt - 120), settleAt + 40);
   assert.match(settleBlock, /!view\.isDestroyed\?\.\(\)/, 'settle 对已销毁视图不读相机');
 });
+
+test('mapCanvas 层级隔离契约(z-index:0 + isolation:isolate + 厂商版权隐藏, ws-4)', () => {
+  const css = src('components/map-shell.module.css');
+  // 层级隔离:.mapCanvas 自身构成独立 stacking context(z-index + isolation),
+  // 厂商内部高 z-index(TMap 控件/覆盖物面板、BMapGL .BMap_omView 1000 量级)
+  // 被困在容器内,不再参与 shell 全局竞争——sidebar(5)/topTools(5)/
+  // mapControls(10)/AgentBall(11) 相对关系不变(全部高于 mapCanvas 0)
+  const mapCanvasAt = css.indexOf('.mapCanvas {');
+  assert.ok(mapCanvasAt !== -1, '.mapCanvas 块存在');
+  const mapCanvasBlock = css.slice(mapCanvasAt, css.indexOf('\n}', mapCanvasAt) + 1);
+  assert.match(mapCanvasBlock, /z-index: 0;/, 'mapCanvas 必须 z-index:0(困住厂商层)');
+  assert.match(mapCanvasBlock, /isolation: isolate;/, 'mapCanvas 必须 isolation:isolate(独立 stacking context)');
+  // 厂商版权/默认控件隐藏(对齐 .amap-copyright/.amap-logo 模式):
+  // 腾讯 TMap 默认 zoom/rotate/copyright;百度 .BMap_cpyCtrl/.BMap_omView/.BMap_zoomCtrl
+  assert.match(css, /\.mapCanvas :global\(\[class\*="tencent-map-ctrl-zoom"\]\)/);
+  assert.match(css, /\.mapCanvas :global\(\[class\*="tencent-map-ctrl-rotate"\]\)/);
+  assert.match(css, /\.mapCanvas :global\(\[class\*="tencent-map-copyright"\]\)/);
+  assert.match(css, /\.mapCanvas :global\(\.BMap_cpyCtrl\)/);
+  assert.match(css, /\.mapCanvas :global\(\.BMap_omView\)/);
+  assert.match(css, /\.mapCanvas :global\(\.BMap_zoomCtrl\)/);
+  // UI 层叠审计(相对关系保持):sidebar(5)/topTools(5) 低于 mapControls(10),
+  // mapControls(10) 低于 AgentBall(11)——所有 UI 层高于 mapCanvas(0)
+  const sidebarAt = css.indexOf('.sidebar {');
+  const sidebarBlock = css.slice(sidebarAt, css.indexOf('\n}', sidebarAt) + 1);
+  assert.match(sidebarBlock, /z-index: 5;/);
+  const controlsAt = css.indexOf('.mapControls {');
+  const controlsBlock = css.slice(controlsAt, css.indexOf('\n}', controlsAt) + 1);
+  assert.match(controlsBlock, /z-index: 10;/);
+  const ballCss = src('components/agent-ball.module.css');
+  assert.match(ballCss, /z-index: 11;/);
+});

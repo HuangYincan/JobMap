@@ -7,7 +7,7 @@
 // (gcj02 直通断言)、isConfigured env 开关、脚本 URL / API 命名。
 // ============================================================
 
-import { test, afterEach } from 'node:test';
+import { test, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   TENCENT_ENGINE,
@@ -387,7 +387,7 @@ test('createView:地图异步初始化——等 idle 事件就绪再返回;超�
     const t0 = Date.now();
     const view = await p;
     assert.ok(view.raw instanceof ns.Map, '就绪后返回视图');
-    assert.ok(Date.now() - t0 < 1000, '事件驱动就绪必须在超时(3s)前返回');
+    assert.ok(Date.now() - t0 < 1000, '事件驱动就绪必须在超时(1.5s)前返回');
     assert.equal(view.raw.listeners.size, 0, '就绪后 ready/idle 监听必须解绑(off 清理)');
   } finally {
     restore();
@@ -430,21 +430,26 @@ test('createView:老版本 SDK 忽略 showControl → getControl/removeControl �
   }
 });
 
-test('createView:控件 API 全缺失 → DOM 兜底隐藏控件层(不碰 canvas,版权保留可见)', async () => {
+test('createView:控件 API 全缺失 → DOM 兜底隐藏控件层;canvas/marker 面板 pointer-events:none(版权保留可见)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const { ns, restore } = installTMapDouble();
   try {
-    const controlEl = { style: {}, className: 'tmap-zoom-control' };
-    const copyrightEl = { style: {}, className: 'tmap-copyright' };
-    const canvasEl = { style: {}, className: 'tmap-canvas' };
+    // 忠实 TMap GL DOM 类名:tencent-map-ctrl-zoom(交互控件)/ tencent-map-copyright
+    // (版权)/ tencent-map-canvas(canvas 面板)/ tencent-map-marker(marker 覆盖物面板)
+    const zoomEl = { tag: 'div', style: {}, className: 'tencent-map-ctrl-zoom' };
+    const copyrightEl = { tag: 'div', style: {}, className: 'tencent-map-copyright' };
+    const canvasEl = { tag: 'canvas', style: {}, className: 'tencent-map-canvas' };
+    const markerEl = { tag: 'div', style: {}, className: 'tencent-map-marker' };
+    const all = [zoomEl, copyrightEl, canvasEl, markerEl];
     const container = {
       nodeType: 1,
       querySelectorAll(sel) {
-        // 忠实模拟 DOM 选择器:只返回 className 命中选择器子串的元素
+        // 忠实模拟 DOM 选择器:class*="X" 子串匹配 + 裸 canvas 标签匹配
         const terms = [...sel.matchAll(/class\*="([^"]+)"/g)].map((m) => m[1]);
-        return [controlEl, copyrightEl, canvasEl].filter((el) =>
-          terms.some((t) => el.className.includes(t)),
+        const hasCanvasTag = /(^|[\s,])canvas([\s,\[]|$)/.test(sel);
+        return all.filter(
+          (el) => (el.tag === 'canvas' && hasCanvasTag) || terms.some((t) => el.className.includes(t)),
         );
       },
     };
@@ -467,11 +472,14 @@ test('createView:控件 API 全缺失 → DOM 兜底隐藏控件层(不碰 canva
         }
       };
       await createView({ container });
-      assert.equal(controlEl.style.display, 'none', '交互控件必须隐藏(display:none)');
-      assert.equal(controlEl.style.pointerEvents, 'none', '交互控件同时解除点击');
+      assert.equal(zoomEl.style.display, 'none', '交互控件必须隐藏(display:none)');
+      assert.equal(zoomEl.style.pointerEvents, 'none', '交互控件同时解除点击');
       assert.equal(copyrightEl.style.display, undefined, '版权标识保留可见(ToS 署名)');
       assert.equal(copyrightEl.style.pointerEvents, 'none', '版权标识解除点击拦截');
-      assert.equal(canvasEl.style.display, undefined, 'canvas 不得隐藏');
+      assert.equal(canvasEl.style.display, undefined, 'canvas 不得隐藏(底图渲染)');
+      assert.equal(canvasEl.style.pointerEvents, 'none', 'canvas 面板解除点击拦截(命中检测经 container)');
+      assert.equal(markerEl.style.display, undefined, 'marker 覆盖物面板不得隐藏(SDK 渲染)');
+      assert.equal(markerEl.style.pointerEvents, 'none', 'marker 覆盖物面板解除点击拦截');
     } finally {
       if (hadControlApi) MockView.prototype.getControl = () => null;
       if (hadRemove) MockView.prototype.removeControl = () => {};
@@ -479,6 +487,105 @@ test('createView:控件 API 全缺失 → DOM 兜底隐藏控件层(不碰 canva
     }
   } finally {
     restore();
+  }
+});
+
+test('createView:控件防御时序——先等就绪再摘除默认控件(ready 前不空转)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    const removed = [];
+    const domQueries = [];
+    let setShowControlCalls = 0;
+    const fakeDom = {
+      querySelectorAll(sel) {
+        domQueries.push(sel);
+        return []; // 空 DOM:ready 前控件尚未建立(真实 TMap 异步初始化)
+      },
+    };
+    // 不自动触发 idle 的 Map:由测试手动触发,断言 ready 前后调用序
+    // (2026-08-21 ws-4 时序修复:disableDefaultControls 必须在 waitForMapReady 之后)
+    let lastMap = null;
+    ns.Map = class ManualReadyMap extends MockView {
+      constructor(container, opts = {}) {
+        super({ ...opts, container });
+        this.container = container;
+        this.controls = new Map([
+          ['zoom', { id: 'zoom' }],
+          ['scale', { id: 'scale' }],
+        ]);
+        lastMap = this;
+      }
+      getControl(id) {
+        return this.controls.get(id) ?? null;
+      }
+      removeControl(ctrl) {
+        removed.push(ctrl.id);
+        this.controls.delete(ctrl.id);
+      }
+      setShowControl() {
+        setShowControlCalls++;
+      }
+      getContainer() {
+        return fakeDom;
+      }
+    };
+    const p = TENCENT_ENGINE.createView({
+      container: { nodeType: 1 },
+      center: { lng: 120.15, lat: 30.27 },
+      zoom: 12,
+      style: 'normal',
+    });
+    await new Promise((r) => setTimeout(r, 20));
+    assert.deepEqual(removed, [], 'ready 前不得调用 removeControl(控件 DOM 未建立,扫空空转)');
+    assert.equal(setShowControlCalls, 0, 'ready 前不得调用 setShowControl');
+    assert.equal(domQueries.length, 0, 'ready 前不得扫 DOM');
+
+    lastMap.trigger('idle');
+    const view = await p;
+    assert.deepEqual(removed.sort(), ['scale', 'zoom'], 'ready 后必须摘除默认 zoom/scale 控件');
+    assert.equal(view.raw.controls.size, 0, '默认控件全部摘除');
+    assert.equal(setShowControlCalls, 1, 'ready 后 setShowControl(false) 阻止重建');
+    assert.ok(domQueries.length >= 1, 'ready 后 DOM 兜底隐藏执行');
+    assert.equal(view.raw.listeners.size, 0, '就绪后 ready/idle 监听必须解绑');
+  } finally {
+    restore();
+  }
+});
+
+test('createView:idle 永不触发 → 1.5s 超时兜底放行(卡顿减半)', async () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  const { ns, restore } = installTMapDouble();
+  try {
+    setKey('test-key');
+    globalThis.window = globalThis;
+    // 瓦片失败/网络被拦时 idle 永不触发:必须靠超时兜底放行,且超时从 3s 收紧到 1.5s
+    ns.Map = class NeverReadyMap extends MockView {
+      constructor(container, opts = {}) {
+        super({ ...opts, container });
+        this.container = container;
+      }
+    };
+    const p = TENCENT_ENGINE.createView({
+      container: { nodeType: 1 },
+      center: { lng: 120.15, lat: 30.27 },
+      zoom: 12,
+      style: 'normal',
+    });
+    let settled = false;
+    p.then(() => {
+      settled = true;
+    });
+    p.catch(() => {}); // 防未处理拒绝噪音
+    mock.timers.tick(1400);
+    assert.equal(settled, false, '1.4s 未到超时,仍挂起等待');
+    mock.timers.tick(150);
+    await p;
+    assert.equal(settled, true, '1.5s 超时兜底放行,不永久挂起');
+  } finally {
+    restore();
+    mock.timers.reset();
   }
 });
 
