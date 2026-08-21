@@ -24,7 +24,8 @@ const OAUTH: Record<string, { subject: string; email: string; displayName: strin
   },
 };
 
-/** Demo social login. Later: real OAuth code exchange per provider. */
+/** Demo fallback,仅未配置真实 OAuth 时使用(真实流程见 lib/oauth/* 与
+ *  /api/auth/oauth/{providers,start,callback/[provider]})。逻辑保持原样。 */
 export async function POST(request: Request) {
   let body: { provider?: string };
   try {

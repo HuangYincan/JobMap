@@ -224,6 +224,45 @@ async function withDbWrite<T>(fn: (pool: Pool) => Promise<T>, memory: () => T | 
   }
 }
 
+type UpsertUserRow = {
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  email: string | null;
+  username: string | null;
+  preferences: UserPreferences | null;
+};
+
+/**
+ * 23505 邮箱冲突分支(users_email_uidx):Google 邮箱撞已有 OTP 邮箱用户时
+ * INSERT 抛 23505 → 按 lower(email) 查到已有用户 → 为其挂接 auth_identities
+ * (provider, subject) → 返回该用户,不新建。只在 23505 时走此分支;
+ * 其余错误照旧上抛(外层 withDbWrite 包 DbUnavailableError)。
+ */
+async function attachIdentityToExistingEmailUser(
+  db: Pool,
+  input: { provider: AuthProvider; subject: string; email?: string },
+  originalError: unknown,
+): Promise<AccountUser> {
+  if (!input.email) throw originalError; // 理论上 23505 只可能来自 email 唯一键
+  const existing = await db.query<UpsertUserRow>(
+    `SELECT id::text, display_name, avatar_url, phone, email, username, preferences
+     FROM users
+     WHERE lower(email) = lower($1)`,
+    [input.email],
+  );
+  const row = existing.rows[0];
+  if (!row) throw originalError; // 竞态下查无此人 → 原样上抛,不静默
+  await db.query(
+    `INSERT INTO auth_identities (user_id, provider, subject)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (provider, subject) DO NOTHING`,
+    [row.id, input.provider, input.subject.trim().toLowerCase()],
+  );
+  return asUser({ ...row, provider: input.provider });
+}
+
 export async function upsertIdentity(input: {
   provider: AuthProvider;
   subject: string;
@@ -235,32 +274,33 @@ export async function upsertIdentity(input: {
   return withDbWrite(async (db) => {
     const subject = subjectKey(input.provider, input.subject);
     const prefs = JSON.stringify(DEFAULT_PREFERENCES);
-    const inserted = await db.query<{
-      id: string;
-      display_name: string | null;
-      avatar_url: string | null;
-      phone: string | null;
-      email: string | null;
-      preferences: UserPreferences;
-    }>(
-      `INSERT INTO users (subject, display_name, phone, email, avatar_url, preferences)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb)
-       ON CONFLICT (subject) DO UPDATE SET
-         display_name = COALESCE(users.display_name, EXCLUDED.display_name),
-         phone = COALESCE(EXCLUDED.phone, users.phone),
-         email = COALESCE(EXCLUDED.email, users.email),
-         avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
-         updated_at = now()
-       RETURNING id::text, display_name, avatar_url, phone, email, preferences`,
-      [
-        subject,
-        input.displayName ?? null,
-        input.phone ?? null,
-        input.email ?? null,
-        input.avatarUrl ?? null,
-        prefs,
-      ],
-    );
+    let inserted: { rows: UpsertUserRow[] };
+    try {
+      inserted = await db.query<UpsertUserRow>(
+        `INSERT INTO users (subject, display_name, phone, email, avatar_url, preferences)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+         ON CONFLICT (subject) DO UPDATE SET
+           display_name = COALESCE(users.display_name, EXCLUDED.display_name),
+           phone = COALESCE(EXCLUDED.phone, users.phone),
+           email = COALESCE(EXCLUDED.email, users.email),
+           avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
+           updated_at = now()
+         RETURNING id::text, display_name, avatar_url, phone, email, username, preferences`,
+        [
+          subject,
+          input.displayName ?? null,
+          input.phone ?? null,
+          input.email ?? null,
+          input.avatarUrl ?? null,
+          prefs,
+        ],
+      );
+    } catch (err) {
+      if ((err as { code?: string }).code === '23505') {
+        return attachIdentityToExistingEmailUser(db, input, err);
+      }
+      throw err;
+    }
     const user = inserted.rows[0];
     await db.query(
       `INSERT INTO auth_identities (user_id, provider, subject)
