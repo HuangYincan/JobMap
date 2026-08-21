@@ -557,6 +557,7 @@
 ## Phase 4 起步（2026-08-16）
 
 - 收藏叠加层：Layers 二级霜面卡（`layers-panel.tsx`）里的开关控制 `mergeMapPois`；底图样式也在这张卡，不再放右上角第二套选择器。Explore 列表仍只走 `runPOIPipeline`。叠加层开关和底图样式都写入 sessionStorage；打开叠加层时视野收到收藏点。用户选过的底图不被系统深浅色覆盖。
+  - ⚠️ **2026-08-22 修订(互斥语义,见 tech/16-bug-fixes.md「收藏图层互斥」)**:本段描述的「叠加(并集显示)」已废止。用户决策:收藏图层开 = 地图**只**显示收藏点 pin + Explore 列表切为收藏列表;关 = 恢复搜索管线。`mergeMapPois` 退化为 marker 池构建(catalog 全量保留,池只增不删),互斥在可见性层落地(`mutexVisibleIds`);Explore 列表在互斥开时不再走 `runPOIPipeline` 显示,而是切为收藏列表。历史规划文字保留,以本条修正为准。
 - 受控 fly / highlight 继续走现有 `usePOIMap`（选中优先于高亮；Saved 行 hover 也会高亮图钉）。收藏行 / 列表卡 / 搜索建议点中走同一条 `setZoomAndCenter` 飞行动作；收藏优先 `resolveSavedForFly`（catalog / seed 活数据）。
 - 搜索已在 Phase 2 完成；本阶段不重做搜索框。Recent 回放走 `replayRecentSearch`（internship → work）+ 模式缓存，再打开 Explore，不直接 `setMode`。
 

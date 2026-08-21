@@ -2,6 +2,49 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-22: 收藏图层互斥语义(开 = 只留收藏;关 = 恢复)
+
+**症状**：用户反馈收藏图层开关「没区别」。判定为**叠加语义**且实现正常(收藏 pin 按 id
+去重并入结果集、同样式,典型场景开关 pin 级零差异)——「开 = 只显示收藏点」从未被实现。
+
+**决策**：用户当面拍板:**地图 + 列表都切**的互斥语义(数据流语义变更,非 UI 设计变更;
+视觉样式/布局/交互细节一律不动)。
+
+**目标语义**：
+- 开(savedOverlay && user):地图**只**显示收藏点 pin(普通 POI 全部隐藏/排除)+
+  Explore 列表(桌面侧控栏 / 移动抽屉)切为收藏列表(「我的收藏」视图);
+- 关:恢复 toggle 前的正常模式——搜索管线 catalog pin + Explore 列表恢复搜索管线;
+- 未登录:保持现有门控(toggle 弹登录窗);已登录无收藏:允许开(空地图 + 列表空态);
+  有收藏时保留现有相机 fit 收藏外接框;
+- 搜索词/视口联动:互斥开启期间 pipeline 刷新结果不显示(被互斥);关闭后恢复显示,
+  **不额外重查**。
+
+**实现**(`fix/saved-layer-mutex`,池/可见性分工):
+1. **marker 池只增不删**：`mergeMapPois` 退化为池构建——catalog 结果全量保留
+   (复用 6bf2092「空批次不置空 catalog」保证),开时把 catalog 未命中的收藏点快照
+   补入池;关时池回到 catalog 本体。catalog marker 实例全程保留。
+2. **互斥在可见性层落地**：新增 `mutexVisibleIds(pool, overlayIds, enabled)`——
+   开时 visible 只含收藏点 id(普通 POI 全部排除,`setVisiblePOIs` show/hide 切换,
+   实例不销毁),关时返回 null 走正常 LOD/聚合可见性。关时秒恢复、零重查。
+3. **聚合(work zoom ≤ 8)互斥**：`clusterState` 在互斥开时按 `overlayPois` 聚合
+   (徽章计数/个体 pin 不混入普通 catalog 公司)。
+4. **列表互斥**：桌面 `SecondarySidebar` 新增 `savedMode` 接线,开时列表区渲染
+   `SavedList`(收藏列表;行点击沿用 `handlePickSaved` 打开详情,行移除走
+   `handleRemoveSaved`);移动抽屉 Explore sheet 同口径切 `SavedList`。
+5. **契约同步**：`saved-overlay.ts` 头注释 / `mergeMapPois` 注释由叠加语义改为
+   互斥语义;`tech/11-phase2-plan.md` Phase 4 起步段追加修订注;component-contracts
+   互斥断言 + 新增 `saved-layer-mutex.test.mjs` 回归测试(纯函数 + 源码契约双覆盖)。
+
+**修改文件**：`server/src/lib/saved-overlay.ts`、`server/src/components/map-shell.tsx`、
+`server/src/components/secondary-sidebar.tsx`、`server/tests/saved-layer-mutex.test.mjs`、
+`server/tests/component-contracts.test.mjs`、`tech/11-phase2-plan.md`
+
+**测试验证**：互斥流(开 → 地图只含收藏点 + 池保留 catalog;关 → 恢复管线,零重查)、
+mutexVisibleIds 空收藏 = 空地图、池只增不删、桌面/移动列表互斥接线、契约注释修正。
+全量 `npm test` + `typecheck` + `docs-check` + `git diff --check` 绿。
+
+---
+
 ## 2026-08-20: 首点刷新+视角回杭州 + 聚合计数漂移 + 死代码清理(work 全量加载重构)
 
 **症状**：

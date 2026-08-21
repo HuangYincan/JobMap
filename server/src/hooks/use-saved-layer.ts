@@ -12,7 +12,10 @@
 //   是同一实例;同步状态以「相机是否到达目标中心」判定事件归属(结构性
 //   抑制,替代 500ms 时间窗补丁,ws1 saved-overlay-wipe),无时间常数;
 // - overlayPois 派生(savedPlacesToOverlay)与 toggle 相机移动逻辑
-//   与原 map-shell 实现逐行对应,行为完全不变(纯重构)。
+//   与原 map-shell 实现逐行对应,行为完全不变(纯重构);
+// - 互斥语义(2026-08-22 用户决策)在消费方落地:map-shell 用
+//   savedOverlay && user 做地图可见性互斥(mutexVisibleIds)+ Explore
+//   列表切收藏列表,本 hook 只负责状态/派生/toggle 本身。
 // ============================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";

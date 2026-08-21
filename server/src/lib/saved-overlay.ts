@@ -1,8 +1,16 @@
 // ============================================================
-// 收藏点地图叠加层（纯函数）
+// 收藏图层（纯函数,2026-08-22 互斥语义修订）
 //
-// 搜索列表仍只走 catalog 管线。叠加层只给地图：有坐标的收藏
-// 转成可打点的 POI；catalog 命中用活数据（logo），否则用快照图钉。
+// 互斥语义（用户决策）:开 = 地图只显示收藏点 pin + Explore 列表切为
+// 收藏列表;关 = 恢复搜索管线。搜索列表不再与叠加层「并集显示」。
+//
+// 池/可见性分工:
+// - mergeMapPois 只负责 marker「池」——catalog 结果全量保留(空批次不
+//   置空、池只增不删,关时秒恢复),enabled 时把 catalog 未命中的收藏点
+//   快照补进池(实例保留);关时池回到 catalog 本体;
+// - 互斥的「只显示收藏点」在可见性层落地:mutexVisibleIds 在开时返回
+//   只含收藏点 id 的可见集(普通 POI 全部排除,marker 实例不销毁),
+//   关时返回 null 走正常 LOD/聚合可见性。
 // ============================================================
 
 import type { SavedPlace } from './account.ts';
@@ -63,7 +71,13 @@ export function savedPlacesToOverlay(places: SavedPlace[], catalog: POI[], mode?
   return out;
 }
 
-/** 搜索结果优先，再补上叠加层里还没出现的收藏点。 */
+/**
+ * marker 池构建（互斥语义,2026-08-22）:池永远保留 catalog 结果全量
+ * （marker 实例只增不删,关时秒恢复、不触发重查）;enabled 时把 catalog
+ * 未命中的收藏点快照补进池,关时池回到 catalog 本体。
+ * 「开 = 只显示收藏点」由调用方用 mutexVisibleIds 在可见性层落地,本函数
+ * 不做并集显示。
+ */
 export function mergeMapPois(results: POI[], overlay: POI[], enabled: boolean): POI[] {
   if (!enabled || overlay.length === 0) return results;
   const byId = new Map<string, POI>();
@@ -72,6 +86,17 @@ export function mergeMapPois(results: POI[], overlay: POI[], enabled: boolean): 
     if (!byId.has(poi.id)) byId.set(poi.id, poi);
   }
   return Array.from(byId.values());
+}
+
+/**
+ * 互斥可见性（2026-08-22 用户决策）:开 = 地图只显示收藏点 pin。
+ * enabled 时返回「当前该显示谁的 id」——只保留 overlay id,普通 POI 全部
+ * 排除(按 id 排除而非清空池:marker 实例保留,关时恢复显示零重查);
+ * disabled 返回 null = 调用方走正常 LOD/聚合可见性。
+ */
+export function mutexVisibleIds(pool: POI[], overlayIds: Set<string>, enabled: boolean): string[] | null {
+  if (!enabled) return null;
+  return pool.filter((p) => overlayIds.has(p.id)).map((p) => p.id);
 }
 
 export const SAVED_OVERLAY_KEY = 'domain-map:saved-overlay';

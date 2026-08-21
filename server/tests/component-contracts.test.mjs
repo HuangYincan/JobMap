@@ -606,9 +606,16 @@ test('useSavedLayer owns saved overlay state, derivation and guest gate (QA scan
   assert.match(hook, /if \(!user\) \{\s*onRequireAuthRef\.current\(\);\s*return;\s*\}/);
   assert.match(hook, /const next = !savedOverlay;\s*writeSavedOverlayPref\(next\);\s*setSavedOverlay\(next\);/);
   assert.match(hook, /if \(!next\) return;/);
-  // map-shell 接线:overlayPois/savedOverlay 仍供 marker 池合并与 LOD 恒显示(行为不变)
+  // map-shell 接线(2026-08-22 互斥语义):mergeMapPois 只建 marker「池」(catalog
+  // 全量保留,池只增不删);「开 = 只显示收藏点」由 mutexVisibleIds 在可见性层
+  // 落地,关时恢复 LOD/聚合可见性——关时秒恢复、不触发重查
   assert.match(shell, /mergeMapPois\(pois, overlayPois, savedOverlay && Boolean\(user\)\)/);
+  assert.match(shell, /const savedLayerEnabled = savedOverlay && Boolean\(user\);/);
+  assert.match(shell, /mutexVisibleIds\(markerPois, overlayIds, savedLayerEnabled\)/);
   assert.match(shell, /if \(overlayIds\.has\(p\.id\)\) return true; \/\/ 收藏 overlay 恒显示/);
+  // 列表互斥:桌面 Explore 与移动抽屉在互斥开时都切收藏列表(关时恢复搜索管线)
+  assert.match(shell, /savedMode=\{savedLayerEnabled\}/);
+  assert.match(shell, /savedLayerEnabled \? \(\s*\/\* 收藏图层互斥开:移动 Explore 列表切为收藏列表/);
 });
 
 test('work no-category empty state renders candidate category rows wired to filters', () => {
