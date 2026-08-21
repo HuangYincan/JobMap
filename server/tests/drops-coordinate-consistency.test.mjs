@@ -78,6 +78,16 @@ test('无任何非杭州 drop 站点坐标落在杭州参考框内 (fecef85 清�
       // 坐标可区分; 无法区分/非静态中心 → 仍判为串味。
       const center = cityCenter(row.city);
       if (center && center.lng === row.lng && center.lat === row.lat) continue;
+      // 2026-08-22 (geocode r4, 3e6deb3): 真实 geocode 坐标豁免。r4 把
+      // 城市中心坐标(2 位小数)重跑解析为街道级真实办公点(6 位小数,
+      // 地址带区级前缀)。邻市(如 蔚来-site-绍兴 = 柯桥区钱陶公路799号
+      // 万达广场,120.512106/30.092944)地理上落在杭州+周边宽松参考框内,
+      // 但坐标属于其自身城市 —— cityLabelMatchesCoordinates(与聚合徽章
+      // 防御同源)证明坐标与其城市参考框一致(未收录城市放行) →
+      // 是 geocode 产物, 不是 7d19271 杭州 office 坐标的复制串味。
+      // 事故复制(沪京广深等框内城市站点 = 杭州 office 坐标)仍会被拦截:
+      // 其坐标不在自身城市参考框内, cityLabelMatchesCoordinates 返回 false。
+      if (cityLabelMatchesCoordinates(row.city, row.lng, row.lat)) continue;
       offenders.push({
         file: `${row.dir}/${row.file}`,
         site: row.site.id ?? row.site.name ?? '?',
