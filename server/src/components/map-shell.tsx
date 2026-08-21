@@ -36,7 +36,7 @@ import { usePOIMap } from "@/hooks/use-poi-map";
 import { useModeCacheRestore } from "@/hooks/use-mode-cache-restore";
 import { useSavedLayer } from "@/hooks/use-saved-layer";
 import { useSearchState } from "@/hooks/use-search-state";
-import { useWorkViewport, cameraAtDestination, readMapViewSnapshot, type SavedCameraSync, type WorkViewportState } from "@/hooks/use-work-viewport";
+import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { useMapEngine } from "@/hooks/use-map-engine";
 import type { MapMarkerOptions, MapView } from "@/lib/map-engine/types";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
@@ -284,9 +284,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
   /** 主加载在飞期间到达的视口刷新:置位后由主加载 finally 补跑,避免被吞(Bug 7) */
   const viewportRefreshPendingRef = useRef(false);
-  /** 收藏图层 toggle 程序化相机移动的同步状态(useSavedLayer 置位,useWorkViewport/
-   *  syncView 消费;结构性抑制,替代原 500ms 时间窗补丁,ws1 saved-overlay-wipe) */
-  const savedCameraSyncRef = useRef<SavedCameraSync | null>(null);
   /** 视口加载器实例由 useWorkViewport 创建并返回(主加载 finally 用它补跑) */
   // 供一次性创建的地图监听/视口加载器读取最新状态(避免闭包过期)
   const viewStateRef = useRef<WorkViewportState>({
@@ -775,15 +772,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     const syncView = () => {
       const state = view.getState();
       const center = { lng: state.center.lng, lat: state.center.lat };
-      // 收藏图层 toggle 程序化相机移动期间冻结 distance 圆心(mapCenter):
-      // 圆心不跟随程序化移动——工作模式 distance 筛选不会因 toggle 换圆心把
-      // 视野外 pin 整批裁掉(ws1 根因 #2);相机已离开目标(用户接管)即结束同步,
-      // 圆心恢复正常跟随(视口刷新事件侧同样消费该状态,见 useWorkViewport)。
-      const sync = savedCameraSyncRef.current;
-      if (!sync || !cameraAtDestination(center, sync)) {
-        if (sync) savedCameraSyncRef.current = null;
-        setMapCenter(center);
-      }
+      // 圆心直接跟随相机:收藏 toggle 不再移动相机(ws1 saved-layer-nofly),
+      // moveend/complete 只来自用户操作,无需任何圆心冻结。
+      setMapCenter(center);
       const b = view.getBounds();
       if (b) {
         setMapBounds({ west: b.west, south: b.south, east: b.east, north: b.north });
@@ -984,11 +975,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         }
         // ---- 空批次三态(ws1 Bug1 视口)----
         // 请求成功但 0 条(未并入新行):旧目录若仍有 POI 落在当前视野 bounds
-        // 内 → 保留旧目录(收藏 fitToPins 退化视野,由视口刷新抑制窗口
-        // 兜底,tech/16 方案 A);否则视为真空 → 清空走空态(整城空白不再被
-        // 旧城市 pin 占住,列表显示现有空态文案)。请求失败不走到这里(上方
-        // catch 保留旧目录)。保留时跳过缓存写入:旧目录顶着「当前视野」快照
-        // 会污染挂载对齐判定(下次刷新不再触发对齐加载)。
+        // 内 → 保留旧目录(空批次 ≠ 无数据:滤波/层级裁剪可致整页为空,清空会
+        // 闪没——收藏 toggle 已不移动相机(no-fly),此兜底独立成立);否则视为
+        // 真空 → 清空走空态(整城空白不再被旧城市 pin 占住,列表显示现有空态
+        // 文案)。请求失败不走到这里(上方 catch 保留旧目录)。保留时跳过缓存
+        // 写入:旧目录顶着「当前视野」快照会污染挂载对齐判定(下次刷新不再
+        // 触发对齐加载)。
         if (vacant && beforeLen > 0) {
           if (catalogCoversView(catalogRef.current, view.bounds)) {
             noMoreRef.current = noMore;
@@ -1053,7 +1045,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [mode, query, mapReady, refreshToken, pageOffset, filters.category]);
 
   // ---- 工作模式视口按需加载 + 挂载对齐加载(ws1 Bug1)----
-  // 视口加载器创建/调度(moveend/zoomend 防抖 + 抑制窗口)与挂载对齐判定抽到
+  // 视口加载器创建/调度(moveend/zoomend 防抖)与挂载对齐判定抽到
   // useWorkViewport;共享 ref 全部传入,与主加载 effect 的读写顺序保持一致。
   // loader 实例经返回的 viewportLoaderRef 暴露,主加载 finally 用它补跑 pending
   // 视口刷新(skipFetch 消费与 Bug 7 补跑路径不变)。
@@ -1067,7 +1059,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     noMoreRef,
     viewportEpochRef,
     skipFetchRef,
-    savedCameraSyncRef,
     catalogRef,
     viewStateRef,
     setCatalog,
@@ -1262,8 +1253,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     savedPlaces,
     compareCatalog,
     mode,
-    mapInstance,
-    savedCameraSyncRef,
     onRequireAuth: () => setAuthOpen(true),
   });
   // ---- 收藏图层互斥(2026-08-22 用户决策)----

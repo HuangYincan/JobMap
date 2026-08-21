@@ -17,17 +17,14 @@ test('useWorkViewport hook exists with exported signature', () => {
   assert.match(hook, /export function useWorkViewport\(\s*deps: WorkViewportDeps/);
   assert.match(hook, /export interface WorkViewportDeps/);
   assert.match(hook, /export interface WorkViewportState/);
-  // ws1 saved-overlay-wipe:500ms 时间窗补丁已删除,改为「收藏相机同步」状态机
-  // (事件/状态语义:以相机是否到达目标中心判定事件归属,无时间常数)。
-  // 纯函数定义在 lib/saved-camera-sync.ts(无 @ 别名,node 测试可直接 import),
-  // 本 hook 再导出供 useSavedLayer/map-shell 共享。
+  // ws1 saved-layer-nofly(2026-08-22):toggle 不再移动相机(用户反馈),
+  // 「收藏相机同步」状态机(ws1 saved-overlay-wipe 结构性抑制,替代 500ms
+  // 时间窗补丁)随其唯一输入源 setBounds 一起退役——hook 不再再导出,
+  // 模块降级为零导出退役桩(物理删除被沙箱禁止,由 boss 合并时收尾)。
   assert.doesNotMatch(hook, /VIEWPORT_SUPPRESS_MS|Date\.now\(\) \+ 500/);
-  assert.match(hook, /export \{\s*cameraAtDestination,\s*consumeSavedCameraSync,?[\s\S]{0,80}type SavedCameraSync,\s*\} from "@\/lib\/saved-camera-sync"/);
+  assert.doesNotMatch(hook, /saved-camera-sync|SavedCameraSync|cameraAtDestination|consumeSavedCameraSync|SAVED_CAMERA_MATCH_METERS/);
   const lib = src('lib/saved-camera-sync.ts');
-  assert.match(lib, /export interface SavedCameraSync/);
-  assert.match(lib, /export function cameraAtDestination/);
-  assert.match(lib, /export function consumeSavedCameraSync/);
-  assert.match(lib, /^import \{ haversineDistance \} from '\.\/types\.ts';/m);
+  assert.doesNotMatch(lib, /^export /m, '退役模块零导出');
   assert.match(hook, /export function readMapViewSnapshot/);
   assert.match(hook, /createViewportLoader\(/);
   // 返回 loader 实例供主加载 finally 补跑 pending 视口刷新
@@ -51,11 +48,11 @@ test('work viewport scheduling conditions live in the hook, not map-shell', () =
   // 挂载对齐加载(ws1 Bug1):缓存视野与当前视野不符 → 主动调度
   assert.match(hook, /needsViewportAlign\(cached\.viewport, snap\.center, snap\.zoom\)/);
   assert.match(hook, /viewportLoaderRef\.current\.schedule\(\);/);
-  // 抑制事件监听(moveend/zoomend)在 hook 内;收藏同步状态机在 onViewChange 消费
+  // 抑制事件监听(moveend/zoomend)在 hook 内;toggle 不再移动相机(no-fly),
+  // onViewChange 直接调度,无任何程序化相机抑制
   assert.match(hook, /map\.on\("moveend", onViewChange\)/);
   assert.match(hook, /map\.on\("zoomend", onViewChange\)/);
-  assert.match(hook, /const sync = savedCameraSyncRef\.current;/);
-  assert.match(hook, /consumeSavedCameraSync\(sync, snap\?\.center\)/);
+  assert.doesNotMatch(hook, /savedCameraSyncRef|consumeSavedCameraSync/);
   // 空批次 ≠ 无数据(ws1 结构性修复):视口空批次不再把 catalog 置空销毁 marker 池
   assert.match(hook, /空批次 ≠ 无数据/);
   assert.doesNotMatch(hook, /catalogRef\.current = \[\];\s*setCatalog\(\[\]\);/);
@@ -76,9 +73,9 @@ test('work viewport scheduling conditions live in the hook, not map-shell', () =
   assert.match(shell, /useWorkViewport\(\{/);
   assert.match(shell, /viewportLoaderRef\.current\?\.schedule\(\);/);
   const savedLayer = src('hooks/use-saved-layer.ts');
-  // toggle 侧:setBounds 前置位「收藏相机同步」状态(结构性抑制,替代时间窗写入)
-  assert.match(savedLayer, /savedCameraSyncRef\.current = \{\s*destCenter:/);
-  assert.match(savedLayer, /consumed: 0,/);
+  // toggle 侧:无相机动作、无状态机置位(ws1 saved-layer-nofly)——只写 pref + 翻转
+  assert.doesNotMatch(savedLayer, /savedCameraSyncRef|setBounds|overlayBounds|mapInstance/);
+  assert.match(savedLayer, /writeSavedOverlayPref\(next\)/);
   assert.match(shell, /useSavedLayer\(\{/);
 });
 
