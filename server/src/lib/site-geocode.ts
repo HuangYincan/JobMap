@@ -855,6 +855,11 @@ export function normalizeNameForMatch(name: string): string {
 // 候选名只能以「限定词」认领公司名: 城市前缀 / 品牌拼音 / 总部·分公司·大厦·
 // 科技·公司 等。"得物" ⊂ "广州得物包装实业有限公司" 不是匹配; "上海燧原科技"
 // 匹配 "燧原科技"。括号段(门店指示)必须呈办公形态, 带 店/站/驿站 拒收。
+// 2026-08-22 (fix/geocode-grader-relax): 单个限定词 token 放宽为「限定词 token
+// 序列」— 集合内 token 可拼接 (研发大厦 = 研发+大厦, 2026-08-19 的规则只认整段
+// 在集合内 → 真实办公室 POI 被拒, r4 apply 831 站 no-result 主因)。整段仍必须
+// 完全由集合 token 组成, 非限定词 token (包装/实业/造型/鱼庄/驿站/店/站/
+// 旗舰店…) 混入 → 整段拒绝, 假阳性防线不变。
 
 const QUALIFIER_SUFFIXES = new Set([
   '总部', '运营总部', '分公司', '子公司', '研发', '研究院', '办公', '大楼', '大厦', '广场',
@@ -866,17 +871,66 @@ const CITY_PREFIXES = new Set([
   '珠海', '无锡', '常州', '嘉兴', '温州', '金华', '绍兴', '台州', '香港', '澳门',
 ]);
 const ROMAN_PREFIX_RE = /^[a-z]{2,}$/;
-const GOOD_BRACKET_SEG_RE = /(号楼|大厦|中心|园区|广场|总部|办公|研究院|大学|学院|医院|产业园|科技园|软件园|创业园|世界城|金融城|天地)$/;
+const GOOD_BRACKET_SEG_RE = /(号楼|大厦|中心|园区|广场|总部|办公|研究院|大学|学院|医院|产业园|科技园|软件园|创业园|世界城|金融城|天地|分公司|公司|科技|研发|基地|大楼|学校)$/;
 
-function isQualifierPrefix(token: string): boolean {
-  if (CITY_PREFIXES.has(token.replace(/[省市]$/, ''))) return true;
-  return ROMAN_PREFIX_RE.test(token);
+/** 限定词后缀 token 最长长度 (序列拆解用, 最长 token 优先). */
+const MAX_QUALIFIER_SUFFIX_LEN = 4;
+
+/**
+ * 限定词前缀 token 序列 (2026-08-22, fix/geocode-grader-relax): 整段完全由
+ * 城市名 token (可带 省/市 后缀, 最长优先: 北京市 → 北京) + 品牌拼音 token
+ * (连续 ≥2 位小写字母, ROMAN_PREFIX_RE 语义) 组成; 任何其他 token → false。
+ */
+function isQualifierPrefixSeq(text: string): boolean {
+  let rest = text;
+  while (rest.length > 0) {
+    const roman = rest.match(/^[a-z]+/);
+    if (roman) {
+      if (!ROMAN_PREFIX_RE.test(roman[0])) return false;
+      rest = rest.slice(roman[0].length);
+      continue;
+    }
+    const len =
+      rest.length >= 3 && CITY_PREFIXES.has(rest.slice(0, 3).replace(/[省市]$/, ''))
+        ? 3
+        : rest.length >= 2 && CITY_PREFIXES.has(rest.slice(0, 2))
+          ? 2
+          : 0;
+    if (!len) return false;
+    rest = rest.slice(len);
+  }
+  return true;
 }
 
-/** 公司名+城市 也是常见分支命名 (快手北京 / 某司上海) — 城市名算限定词后缀. */
-function isQualifierSuffix(token: string): boolean {
-  if (QUALIFIER_SUFFIXES.has(token)) return true;
-  return CITY_PREFIXES.has(token.replace(/[省市]$/, ''));
+/**
+ * 限定词后缀 token 序列: 整段必须完全由 QUALIFIER_SUFFIXES / 城市名 token
+ * (快手北京) 拼接而成。最长 token 优先 — 「研发大厦」拆 研发|大厦 而非
+ * 研发大|厦 (研发大 不在集合内, 集合 token 贪婪即等价于最长优先); 非限定词
+ * token 混入 → false。任意长度线性拼接, 超长串不递归不崩。
+ */
+function isQualifierSuffixSeq(text: string): boolean {
+  let rest = text;
+  while (rest.length > 0) {
+    let matched = false;
+    for (let len = MAX_QUALIFIER_SUFFIX_LEN; len >= 1; len--) {
+      if (rest.length < len) continue;
+      if (QUALIFIER_SUFFIXES.has(rest.slice(0, len))) {
+        rest = rest.slice(len);
+        matched = true;
+        break;
+      }
+    }
+    if (matched) continue;
+    const cityLen =
+      rest.length >= 3 && CITY_PREFIXES.has(rest.slice(0, 3).replace(/[省市]$/, ''))
+        ? 3
+        : rest.length >= 2 && CITY_PREFIXES.has(rest.slice(0, 2))
+          ? 2
+          : 0;
+    if (!cityLen) return false;
+    rest = rest.slice(cityLen);
+  }
+  return true;
 }
 
 function candidateBracketSegments(name: string): string[] {
@@ -892,11 +946,12 @@ export function officeNameMatchStrength(candidateName: string, companyName: stri
   const q = normalizeNameForMatch(companyName);
   const c = normalizeNameForMatch(candidateName);
   if (!q || !c || !c.includes(q)) return 'no';
+  // 每侧为空或全限定词 token 序列; 精确同名 (两侧皆空) 是最强认领, 保持既有行为.
   const matches = (prefix: string, suffix: string) =>
     (prefix === '' && suffix === '') ||
-    (prefix === '' && isQualifierSuffix(suffix)) ||
-    (suffix === '' && isQualifierPrefix(prefix)) ||
-    (isQualifierPrefix(prefix) && isQualifierSuffix(suffix));
+    (prefix === '' && isQualifierSuffixSeq(suffix)) ||
+    (suffix === '' && isQualifierPrefixSeq(prefix)) ||
+    (isQualifierPrefixSeq(prefix) && isQualifierSuffixSeq(suffix));
   let strong = false;
   for (let i = 0; i + q.length <= c.length; i++) {
     if (c.slice(i, i + q.length) !== q) continue;
