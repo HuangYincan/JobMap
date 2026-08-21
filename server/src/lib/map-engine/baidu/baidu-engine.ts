@@ -77,12 +77,18 @@ interface BBounds {
   getNorthEast(): BPoint;
 }
 
-/** BMapGL.Marker(覆盖物子集) */
+/** BMapGL.Marker(覆盖物子集;方法命名按官方 SDK 核实:setZIndex 大写/show·hide/
+ * addEventListener·removeEventListener/setIcon) */
 interface BMarker {
   setPosition(point: BPoint): void;
   setContent?(html: string): void;
-  remove?(): void;
+  setZIndex?(z: number): void;
+  show?(): void;
+  hide?(): void;
+  setIcon?(icon: unknown): void;
   addEventListener?(event: string, cb: () => void): void;
+  removeEventListener?(event: string, cb: () => void): void;
+  remove?(): void;
 }
 
 /** BMapGL.Circle(覆盖物子集) */
@@ -146,6 +152,7 @@ interface BMapGLNamespace {
   Point: new (lng: number, lat: number) => BPoint;
   Size: new (width: number, height: number) => BSize;
   Bounds: new (southWest: BPoint, northEast: BPoint) => BBounds;
+  Icon?: new (url: string, size: BSize) => unknown;
   ScaleControl?: new () => unknown;
   PlaceSearch?: new (opts: Record<string, unknown>) => BPlaceSearch;
   Geocoder?: new () => BGeocoder;
@@ -310,6 +317,20 @@ class BaiduMapView implements MapView {
     const raw = new this.ns.Marker(new this.ns.Point(bd.lng, bd.lat), markerOpts);
     if (opts.content !== undefined) raw.setContent?.(opts.content);
     if (opts.onClick) raw.addEventListener?.('click', opts.onClick);
+    // icon 规格(契约)→ BMapGL.Icon(官方构造:new BMapGL.Icon(url, size, opts?);
+    // size 为必传第二参 → 缺省兜底 BMapGL 默认 marker 尺寸 21x21)
+    if (opts.icon) {
+      if (typeof raw.setIcon === 'function' && typeof this.ns.Icon === 'function') {
+        const [w, h] = opts.icon.size ?? [21, 21];
+        try {
+          raw.setIcon(new this.ns.Icon(opts.icon.src, new this.ns.Size(w, h)));
+        } catch (err) {
+          console.warn('[map-engine] BMapGL Icon 构造失败,图标降级', err);
+        }
+      } else {
+        console.warn('[map-engine] BMapGL Icon/setIcon 不可用,图标降级');
+      }
+    }
     this.map.addOverlay?.(raw); // BMapGL 覆盖物需 addOverlay 上地图
     return {
       raw,
@@ -318,6 +339,37 @@ class BaiduMapView implements MapView {
         raw.setPosition(new this.ns.Point(next.lng, next.lat));
       },
       setContent: (html: string) => raw.setContent?.(html),
+      // BMapGL 官方大写 setZIndex(与 AMap 小写 setzIndex 的差异在适配层吸收)
+      setZIndex: (z: number) => {
+        if (typeof raw.setZIndex === 'function') raw.setZIndex(z);
+        else console.warn('[map-engine] BMapGL Marker 无 setZIndex,忽略 zIndex');
+      },
+      // BMapGL 官方 show()/hide()
+      setVisible: (v: boolean) => {
+        if (v) {
+          if (typeof raw.show === 'function') raw.show();
+          else console.warn('[map-engine] BMapGL Marker 无 show,忽略可见性');
+        } else if (typeof raw.hide === 'function') {
+          raw.hide();
+        } else {
+          console.warn('[map-engine] BMapGL Marker 无 hide,忽略可见性');
+        }
+      },
+      // BMapGL 事件 = addEventListener/removeEventListener(官方;无 on/off)
+      on: (event: 'click', cb: () => void) => {
+        if (event !== 'click') return;
+        if (typeof raw.addEventListener === 'function') raw.addEventListener('click', cb);
+        else console.warn('[map-engine] BMapGL Marker 无 addEventListener,忽略事件注册');
+      },
+      off: (event: 'click', cb?: () => void) => {
+        if (event !== 'click') return;
+        if (typeof raw.removeEventListener !== 'function') {
+          console.warn('[map-engine] BMapGL Marker 无 removeEventListener,忽略解绑');
+          return;
+        }
+        if (cb) raw.removeEventListener('click', cb);
+        // cb 缺省:BMapGL 无「按事件清空」形态 → 保留(调用方应传 cb 精确解绑)
+      },
       remove: () => {
         this.map.removeOverlay?.(raw);
         raw.remove?.();
