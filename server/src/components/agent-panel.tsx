@@ -5,12 +5,14 @@
 // 移动端(≤767px)与极窄视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。
 // - 消息列表(用户纯文本 / 助手 MarkdownText 渲染,助手侧可含建议卡片)+ 输入框 +
 //   发送/停止/撤销;
+// - 按轮交替:reduceAgentEvent 纯状态机把每轮(reasoning→delta→tool)拆成独立
+//   assistant 消息,视觉上「文本1、工具1、文本2、工具2…」;
 // - 思考过程:reasoning 事件累积,每条助手消息内可折叠「💭 思考过程」(默认展开,
 //   muted 小字,滚动上限);
-// - 工具活动列表:每条 tool 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary),
-//   渲染在助手消息上方;运行中工具另有顶部状态条;
-// - 未配置提示:503 LLM_UNCONFIGURED → agentNotConfigured;
-// - 建议卡片:执行器捕获 action 时渲染动作摘要按钮,点击 = 重放该 action;
+// - 工具活动列表:每条 tool 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案;失败附
+//   「调用失败」弱提示),渲染在文本气泡下方;运行中工具另有顶部状态条;
+// - 未配置提示:503 LLM_UNCONFIGURED → agentNotConfigured;RATE_LIMITED → agentRateLimited;
+// - 建议卡片:执行器捕获 action 时渲染动作摘要按钮,点击 = 重放该 action(execute);
 // - 历史:sessionStorage 'dm.agent-history.v1' cap 30 条;新会话首条自动带视口快照;
 // - 「停止」→ abort(链到 fetch);「撤销」→ executor.undo()。
 
@@ -19,10 +21,10 @@ import styles from "./agent-panel.module.css";
 import { t, type Language } from "@/lib/i18n";
 import type { AgentAction, AgentEvent } from "@/lib/agent/types";
 import type { MapBridge } from "@/lib/agent-map-bridge";
+import { reduceAgentEvent, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
 import { streamAgentChat, type AgentChatRequest } from "./agent-chat-client";
 import {
   createAgentMapExecutor,
-  friendlyToolName,
   type AgentMapExecutor,
   type AgentMapExecutorCallbacks,
   type AgentToolInfo,
@@ -30,21 +32,7 @@ import {
 import { computePanelPlacement, type BallRect, type BallSnapEdge, type ViewportSize } from "@/lib/agent-panel-placement";
 import { MarkdownText } from "./markdown-text";
 
-export interface ToolActivity {
-  name: string;
-  status: "start" | "done" | "error";
-  summary?: string;
-}
-
-export interface AgentMessage {
-  role: "user" | "assistant";
-  content: string;
-  actions?: AgentAction[];
-  /** 思考过程(reasoning 事件流式累积;服务端已截断 4000 字符)。 */
-  reasoning?: string;
-  /** 工具活动列表(tool 事件;⟳ 开始 / ✓ 完成 / ✗ 失败)。 */
-  tools?: ToolActivity[];
-}
+export type { AgentMessage, ToolActivity } from "@/lib/agent-panel-state";
 
 const HISTORY_KEY = "dm.agent-history.v1";
 const HISTORY_CAP = 30;
@@ -112,6 +100,24 @@ function actionLabel(action: AgentAction, lang: Language): string {
   }
 }
 
+/** 工具类别(公开 SSE tool 事件 name 字段)→ i18n 文案;未知类别 → 「其他操作」。 */
+function toolCategoryName(name: string, lang: Language): string {
+  switch (name) {
+    case "search":
+      return t("agentToolSearch", lang);
+    case "geocode":
+      return t("agentToolGeocode", lang);
+    case "directions":
+      return t("agentToolDirections", lang);
+    case "weather":
+      return t("agentToolWeather", lang);
+    case "project":
+      return t("agentToolProject", lang);
+    default:
+      return t("agentToolOther", lang);
+  }
+}
+
 export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose }: Props) {
   const [messages, setMessages] = useState<AgentMessage[]>(readHistory);
   const [input, setInput] = useState("");
@@ -160,50 +166,21 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
     : ({ "--px": `${placement.left}px`, "--py": `${placement.top}px` } as CSSProperties);
 
   // ---- 渲染回调(供执行器分流;bridge 缺失时面板直接渲染无地图事件)----
+  // 消息变更统一走 reduceAgentEvent 纯状态机(按轮拆分/归并,见 lib/agent-panel-state.ts)
   const handleDelta = useCallback((text: string) => {
-    setMessages((prev) => {
-      const last = prev[prev.length - 1];
-      if (last && last.role === "assistant") {
-        const copy = [...prev];
-        copy[copy.length - 1] = { ...last, content: last.content + text };
-        return copy;
-      }
-      return [...prev, { role: "assistant", content: text }];
-    });
+    setMessages((prev) => reduceAgentEvent(prev, { type: "delta", text }));
   }, []);
 
   const handleReasoning = useCallback((text: string) => {
-    setMessages((prev) => {
-      const last = prev[prev.length - 1];
-      if (last && last.role === "assistant") {
-        const copy = [...prev];
-        copy[copy.length - 1] = { ...last, reasoning: (last.reasoning ?? "") + text };
-        return copy;
-      }
-      return [...prev, { role: "assistant", content: "", reasoning: text }];
-    });
+    setMessages((prev) => reduceAgentEvent(prev, { type: "reasoning", text }));
   }, []);
 
   const handleTool = useCallback((info: AgentToolInfo) => {
     // 顶部状态条:只反映运行中的工具
     setTool(info.status === "start" ? info : null);
-    // 活动列表:累积到当前助手消息(无助手消息则新建)
-    setMessages((prev) => {
-      const last = prev[prev.length - 1];
-      if (!last || last.role !== "assistant") {
-        return [...prev, { role: "assistant", content: "", tools: [info] }];
-      }
-      const copy = [...prev];
-      const tools = last.tools ? [...last.tools] : [];
-      const idx = tools.findIndex((x) => x.name === info.name && x.status === "start");
-      if (idx !== -1) {
-        tools[idx] = { ...tools[idx], ...info }; // start → done/error 原位更新
-      } else {
-        tools.push(info);
-      }
-      copy[copy.length - 1] = { ...last, tools };
-      return copy;
-    });
+    setMessages((prev) =>
+      reduceAgentEvent(prev, { type: "tool", name: info.name, status: info.status, summary: info.summary }),
+    );
   }, []);
 
   const handleDone = useCallback(() => {
@@ -217,20 +194,13 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
   const handleError = useCallback((code: string) => {
     setTool(null);
     if (code === "LLM_UNCONFIGURED") setNotConfigured(true);
+    else if (code === "RATE_LIMITED") setFatalError(t("agentRateLimited", langRef.current));
     else setFatalError(t("agentError", langRef.current));
   }, []);
 
   const handleAction = useCallback((action: AgentAction) => {
     // 动作已执行:在消息底部渲染「重放」建议卡片
-    setMessages((prev) => {
-      const last = prev[prev.length - 1];
-      if (last && last.role === "assistant") {
-        const copy = [...prev];
-        copy[copy.length - 1] = { ...last, actions: [...(last.actions ?? []), action] };
-        return copy;
-      }
-      return [...prev, { role: "assistant", content: "", actions: [action] }];
-    });
+    setMessages((prev) => reduceAgentEvent(prev, { type: "action", action }));
     setUndoVersion((v) => v + 1);
   }, []);
 
@@ -346,7 +316,8 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
   }, []);
 
   const replayAction = useCallback((action: AgentAction) => {
-    executorRef.current?.handleEvent({ type: "action", action });
+    // 纯执行语义:只在地图上重放动作,不再回调 onAction(否则按钮翻倍 + 地图反复定位)
+    executorRef.current?.execute(action);
   }, []);
 
   const toggleThinking = useCallback((idx: number) => {
@@ -382,7 +353,7 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
       {tool && (
         <div className={styles.toolBar} role="status">
           <span className={styles.toolDot} aria-hidden="true" />
-          {t("agentToolRunning", lang).replace("{name}", friendlyToolName(tool.name, lang))}
+          {t("agentToolRunning", lang).replace("{name}", toolCategoryName(tool.name, lang))}
         </div>
       )}
 
@@ -410,6 +381,9 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
                   {!isCollapsed && <div className={styles.thinkingBody}>{m.reasoning}</div>}
                 </div>
               )}
+              <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
+                {m.role === "assistant" ? <MarkdownText text={m.content} /> : m.content}
+              </div>
               {m.role === "assistant" && m.tools && m.tools.length > 0 && (
                 <ul className={styles.toolActivity} aria-label={t("agentToolsSection", lang)}>
                   {m.tools.map((toolItem, j) => (
@@ -417,17 +391,14 @@ export function AgentPanel({ bridge, lang, ballRect, dragging, snapEdge, onClose
                       <span className={styles.toolStatus} aria-hidden="true">
                         {toolItem.status === "start" ? "⟳" : toolItem.status === "done" ? "✓" : "✗"}
                       </span>
-                      <span className={styles.toolName}>{friendlyToolName(toolItem.name, lang)}</span>
-                      {toolItem.status !== "start" && toolItem.summary && (
-                        <span className={styles.toolSummary}>{toolItem.summary}</span>
+                      <span className={styles.toolName}>{toolCategoryName(toolItem.name, lang)}</span>
+                      {toolItem.status === "error" && (
+                        <span className={styles.toolSummary}>{t("agentToolFailed", lang)}</span>
                       )}
                     </li>
                   ))}
                 </ul>
               )}
-              <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
-                {m.role === "assistant" ? <MarkdownText text={m.content} /> : m.content}
-              </div>
               {m.role === "assistant" && m.actions && m.actions.length > 0 && (
                 <div className={styles.actions}>
                   {m.actions.map((a, j) => (

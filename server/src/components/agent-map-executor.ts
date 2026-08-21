@@ -2,14 +2,16 @@
 //
 // 事件分流:delta/reasoning/tool/done/error → 渲染回调(供面板);action → 客户端再校验
 // (与后端 lib/agent/action-schema.ts 同款规则,非法丢弃)→ 500ms 同类型限流 →
-// bridge.isReady() 检查(失败 → 错误回调)→ 执行 → 压 undo 栈。
+// bridge.isReady() 检查(失败 → 错误回调)→ 执行 → 压 undo 栈 → 通知 onAction(建议卡片)。
+// execute(action):纯执行语义(重放按钮用)——校验→限流→执行→压 undo 栈,不回调
+// onAction(重放不应再追加建议卡片/地图重复定位);与 handleEvent 的 action 分支共用实现。
 //
 // undo 逆操作:
 // - flyTo → 执行前 getSnapshot() 捕获旧 camera,undo 飞回;
 // - addMarkers/drawCircle → 保存清理函数,undo 时调用;
 // - select/openDetail → 保存各自动作历史,undo 回放上一条(旧值回调);
-// - search → bridge 无 search 能力(接口不含),只通知 onAction 渲染建议卡片,
-//   无可撤销的地图副作用,不入 undo 栈。
+// - search → bridge 无 search 能力(接口不含),流式路径只通知 onAction 渲染建议卡片,
+//   execute 路径为空操作;无可撤销的地图副作用,不入 undo 栈。
 //
 // 校验规则本地复刻(lib/agent/** 只 import types,不 import 其函数)。
 
@@ -37,6 +39,8 @@ export interface AgentMapExecutorCallbacks {
 
 export interface AgentMapExecutor {
   handleEvent(ev: AgentEvent): void;
+  /** 纯执行语义:校验→限流→执行→压 undo 栈,不回调 onAction(重放按钮用)。 */
+  execute(action: AgentAction): void;
   undo(): boolean;
   canUndo(): boolean;
   reset(): void;
@@ -44,30 +48,6 @@ export interface AgentMapExecutor {
 
 /** 同类型动作限流窗口(ms)。 */
 export const ACTION_THROTTLE_MS = 500;
-
-// ---- 工具名友好化(provider 前缀 → 显示名;活动列表用)----
-
-const PROVIDER_NAMES: Record<string, { zh: string; en: string }> = {
-  amap: { zh: '高德', en: 'AMap' },
-  tencent: { zh: '腾讯', en: 'Tencent' },
-  baidu: { zh: '百度', en: 'Baidu' },
-  rest: { zh: '兜底', en: 'fallback' },
-  builtin: { zh: '内置', en: 'built-in' },
-};
-
-/**
- * `amap__place_search` → `高德 · place_search`(en: `AMap · place_search`);
- * 未知前缀 → 原样返回。
- */
-export function friendlyToolName(name: string, lang: 'zh' | 'en'): string {
-  const sep = name.indexOf('__');
-  if (sep <= 0) return name;
-  const prefix = name.slice(0, sep);
-  const label = PROVIDER_NAMES[prefix];
-  const rest = name.slice(sep + 2);
-  if (!label) return name;
-  return rest ? `${label[lang]} · ${rest}` : label[lang];
-}
 
 // ---- 客户端动作校验(action-schema.ts 同款规则,逐字段,非法 → null)----
 const MAX_LAT = 90;
@@ -192,7 +172,8 @@ export function createAgentMapExecutor(
     return false;
   }
 
-  function handleAction(action: AgentAction): void {
+  /** 执行单个动作(execute 与 handleEvent action 分支共用);notify 控制是否回调 onAction。 */
+  function executeAction(action: AgentAction, notify: boolean): void {
     const validated = validateAction(action);
     if (!validated) return; // 非法 → 丢弃(与后端同款规则)
     if (throttled(validated.type)) return; // 500ms 同类型限流 → 丢弃
@@ -243,11 +224,11 @@ export function createAgentMapExecutor(
         break;
       }
       case "search": {
-        // bridge 接口不含 search:无可执行的地图副作用,只通知面板渲染建议卡片
+        // bridge 接口不含 search:无可执行的地图副作用,不入 undo 栈
         break;
       }
     }
-    callbacks.onAction?.(validated);
+    if (notify) callbacks.onAction?.(validated);
   }
 
   return {
@@ -269,9 +250,12 @@ export function createAgentMapExecutor(
           callbacks.onError?.(ev.code, ev.message);
           break;
         case "action":
-          handleAction(ev.action);
+          executeAction(ev.action, true);
           break;
       }
+    },
+    execute(action) {
+      executeAction(action, false);
     },
     undo() {
       const entry = undoStack.pop();

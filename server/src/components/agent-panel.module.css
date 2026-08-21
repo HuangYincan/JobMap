@@ -255,7 +255,7 @@
   word-break: break-word;
 }
 
-/* 工具活动列表(⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary) */
+/* 工具活动列表(⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案;失败附「调用失败」弱提示;渲染在文本气泡下方) */
 .toolActivity {
   align-self: flex-start;
   display: flex;
