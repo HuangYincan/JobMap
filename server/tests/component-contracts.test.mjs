@@ -698,3 +698,58 @@ test('map-engine core: registry skeleton never touches vendor SDK globals direct
   assert.doesNotMatch(registry, /window\.TMap/);
   assert.doesNotMatch(registry, /window\.BMapGL/);
 });
+
+test('agent ball has a labelled glass button and toggles the panel (ws-c)', () => {
+  const ball = src('components/agent-ball.tsx');
+  const css = src('components/agent-ball.module.css');
+  // 悬浮球:44px 圆形玻璃按钮,aria-label 走 i18n agentBall 键
+  assert.match(ball, /aria-label=\{t\("agentBall", lang\)\}/);
+  assert.match(ball, /"use client"/);
+  assert.match(ball, /dm\.agent-ball-pos/); // 位置持久化 key
+  assert.match(ball, /DRAG_THRESHOLD_PX = 3/); // 3px 阈值区分点击/拖动
+  assert.match(ball, /AgentPanel/); // 点击展开面板
+  assert.match(css, /height:\s*44px;[\s\S]*width:\s*44px/);
+  assert.match(css, /backdrop-filter: blur\(24px\) saturate\(165%\)/); // 玻璃拟态
+  assert.match(css, /z-index: 11/); // 高于地图控件
+  assert.match(css, /cubic-bezier\(0\.32, 0\.72, 0, 1\)/); // 吸附动画曲线
+});
+
+test('agent panel has input, send/stop/undo buttons and tool status bar (ws-c)', () => {
+  const panel = src('components/agent-panel.tsx');
+  const css = src('components/agent-panel.module.css');
+  assert.match(panel, /"use client"/);
+  // 输入框 + 发送/停止/撤销按钮
+  assert.match(panel, /t\("agentInput", lang\)/);
+  assert.match(panel, /t\("agentSend", lang\)/);
+  assert.match(panel, /t\("agentStop", lang\)/);
+  assert.match(panel, /t\("agentUndo", lang\)/);
+  // tool 状态条 + 未配置提示 + 建议卡片(点击 = 重放该 action)
+  assert.match(panel, /agentToolRunning/);
+  assert.match(panel, /LLM_UNCONFIGURED/);
+  assert.match(panel, /replayAction/);
+  // 历史:sessionStorage cap 30
+  assert.match(panel, /dm\.agent-history\.v1/);
+  assert.match(panel, /HISTORY_CAP = 30/);
+  // 新会话首条自动带视口快照
+  assert.match(panel, /viewport: \{ center: snapshot\.center, zoom: snapshot\.zoom \}/);
+  // 360px × 70vh liquid glass 卡片
+  assert.match(css, /width: 360px/);
+  assert.match(css, /height: 70vh/);
+  assert.match(css, /backdrop-filter: blur\(24px\) saturate\(165%\)/);
+  assert.match(css, /@media \(max-width: 767px\)/); // 移动端全宽 sheet
+});
+
+test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
+  const shell = src('components/map-shell.tsx');
+  const bridge = src('lib/agent-map-bridge.ts');
+  // seam 三处:import + ref(惰性初始化)+ JSX
+  assert.match(shell, /import AgentBall from "\.\/agent-ball";/);
+  assert.match(shell, /agentBridgeRef = useRef<MapBridge \| null>\(null\)/);
+  assert.match(shell, /createAgentBridge\(engineView/);
+  assert.match(shell, /<AgentBall bridge=\{agentBridgeRef\.current\} lang=\{lang\} \/>/);
+  // bridge 实现只认 MapView 门面,不直连厂商全局
+  assert.match(bridge, /import type \{ MapView \} from "\.\/map-engine\/types\.ts"/);
+  assert.doesNotMatch(bridge, /window\.AMap/);
+  assert.match(bridge, /view\.createMarker/);
+  assert.match(bridge, /view\.createCircle/);
+});
