@@ -55,19 +55,23 @@
     {
       "id": "影石Insta360-site-慕尼黑",
       "name": "影石Insta360",
-      "city": "慕尼黑",
+      "city": "慕尼黑市",
       "province": "",
       "location": {
-        "address": "Munich"
+        "address": "Munich",
+        "lng": 11.58,
+        "lat": 48.14
       }
     },
     {
       "id": "影石Insta360-site-洛杉矶",
       "name": "影石Insta360",
-      "city": "洛杉矶",
+      "city": "洛杉矶市",
       "province": "",
       "location": {
-        "address": "11846 Ventura Blvd ste 205 studio city ca 91604"
+        "address": "11846 Ventura Blvd ste 205 studio city ca 91604",
+        "lng": -118.24,
+        "lat": 34.05
       }
     },
     {
@@ -95,10 +99,12 @@
     {
       "id": "影石Insta360-site-东京",
       "name": "影石Insta360",
-      "city": "东京",
+      "city": "东京市",
       "province": "",
       "location": {
-        "address": "東京都中央区入船2丁目3番7号 築地イーストスクエア 4F"
+        "address": "東京都中央区入船2丁目3番7号 築地イーストスクエア 4F",
+        "lng": 139.69,
+        "lat": 35.69
       }
     }
   ],

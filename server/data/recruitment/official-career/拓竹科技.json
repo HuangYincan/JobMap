@@ -57,10 +57,12 @@
     {
       "id": "拓竹科技-site-新加坡",
       "name": "拓竹科技",
-      "city": "新加坡",
+      "city": "新加坡市",
       "province": "",
       "location": {
-        "address": "新加坡"
+        "address": "新加坡",
+        "lng": 103.82,
+        "lat": 1.35
       }
     },
     {

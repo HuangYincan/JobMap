@@ -66,10 +66,12 @@
     {
       "id": "安克创新-site-洛杉矶",
       "name": "安克创新",
-      "city": "洛杉矶",
+      "city": "洛杉矶市",
       "province": "",
       "location": {
-        "address": "洛杉矶"
+        "address": "洛杉矶",
+        "lng": -118.24,
+        "lat": 34.05
       }
     },
     {
@@ -162,10 +164,12 @@
     {
       "id": "安克创新-site-悉尼",
       "name": "安克创新",
-      "city": "悉尼",
+      "city": "悉尼市",
       "province": "",
       "location": {
-        "address": "Ternary Tower, 15 Orion Road, Lane Cove West NSW;Suitet605"
+        "address": "Ternary Tower, 15 Orion Road, Lane Cove West NSW;Suitet605",
+        "lng": 151.21,
+        "lat": -33.87
       }
     },
     {
@@ -198,10 +202,12 @@
     {
       "id": "安克创新-site-迪拜",
       "name": "安克创新",
-      "city": "迪拜",
+      "city": "迪拜市",
       "province": "",
       "location": {
-        "address": "阿联酋 迪拜 E wing 205, Dubai Silicon Authority."
+        "address": "阿联酋 迪拜 E wing 205, Dubai Silicon Authority.",
+        "lng": 55.27,
+        "lat": 25.2
       }
     },
     {
@@ -243,10 +249,12 @@
     {
       "id": "安克创新-site-新加坡",
       "name": "安克创新",
-      "city": "新加坡",
+      "city": "新加坡市",
       "province": "",
       "location": {
-        "address": "新加坡"
+        "address": "新加坡",
+        "lng": 103.82,
+        "lat": 1.35
       }
     },
     {
@@ -279,10 +287,12 @@
     {
       "id": "安克创新-site-巴黎",
       "name": "安克创新",
-      "city": "巴黎",
+      "city": "巴黎市",
       "province": "",
       "location": {
-        "address": "巴黎"
+        "address": "巴黎",
+        "lng": 2.35,
+        "lat": 48.86
       }
     },
     {
@@ -297,10 +307,12 @@
     {
       "id": "安克创新-site-伦敦",
       "name": "安克创新",
-      "city": "伦敦",
+      "city": "伦敦市",
       "province": "",
       "location": {
-        "address": "伦敦"
+        "address": "伦敦",
+        "lng": -0.13,
+        "lat": 51.51
       }
     },
     {
@@ -317,10 +329,12 @@
     {
       "id": "安克创新-site-吉隆坡",
       "name": "安克创新",
-      "city": "吉隆坡",
+      "city": "吉隆坡市",
       "province": "",
       "location": {
-        "address": "吉隆坡"
+        "address": "吉隆坡",
+        "lng": 101.69,
+        "lat": 3.14
       }
     },
     {
@@ -353,10 +367,12 @@
     {
       "id": "安克创新-site-慕尼黑",
       "name": "安克创新",
-      "city": "慕尼黑",
+      "city": "慕尼黑市",
       "province": "",
       "location": {
-        "address": "Georg-Muche-Street 3, 80807 Munich"
+        "address": "Georg-Muche-Street 3, 80807 Munich",
+        "lng": 11.58,
+        "lat": 48.14
       }
     },
     {

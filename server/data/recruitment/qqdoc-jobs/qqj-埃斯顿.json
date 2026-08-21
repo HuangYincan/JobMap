@@ -12,9 +12,21 @@
     {
       "id": "qqj-埃斯顿-site",
       "name": "埃斯顿",
-      "city": "南京 深圳",
+      "city": "南京市",
       "province": "",
-      "location": {}
+      "location": {
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    },
+    {
+      "id": "qqj-埃斯顿-site-深圳",
+      "name": "埃斯顿",
+      "city": "深圳市",
+      "location": {
+        "lng": 114.06,
+        "lat": 22.55
+      }
     }
   ],
   "positions": [
