@@ -28,6 +28,7 @@
 // ============================================================
 
 import { faviconCandidatesFromUrl } from './company-logo.ts';
+import { preflightRemoteIcon, remoteIconStatus, isRemoteIconUrl } from './map-engine/icon-preflight.ts';
 import { CLUSTER_MAX_ZOOM, type CityCluster } from './city-cluster.ts';
 import type { POI, RecruitmentPOI } from './types.ts';
 import { isDomainPOI, isRecruitmentPOI } from './types.ts';
@@ -536,10 +537,33 @@ class POIMarkerControllerImpl implements POIMarkerController {
     // icon → MarkerStyle(src) 真图标路径；logoUrl 直接作图标，缺 logo 回退
     // emoji 徽章数据图（与 AMap 徽章同视觉）。AMap/BMapGL content 可渲染，
     // 保持 HTML 徽章形态，零影响（engine 门控，不触碰其他引擎行为）。
+    // 2026-08-22 ws-e（bug 1/7 CORS 实锤）：TMap GL 把 icon 当 GPU 纹理加载，
+    // 纹理必须 CORS-clean——favicon.im 等远程候选无 CORS 头 → 恒加载失败 +
+    // SDK 疯狂报「Image加载失败」并降级默认 marker。故远程 src 必须经
+    // icon-preflight 预检：data URI / 已预检 ok → 真 src；未预检/已失败 →
+    // 降级本地 dataURL emoji 徽章（纯本地，加载必成功 → 零报错零默认样式），
+    // 未预检时后台触发预检，成功后下次重建/LOD 重渲染自然升级真 logo。
     if (this.view.engine?.id === 'tencent' && isRecruitmentPOI(poi)) {
       const logo = poi.company.logoUrl;
+      const badgeUri = svgToDataUri(
+        recruitmentBadgeSVG(poi.company.logo, undefined, this.color, state)
+      );
+      let iconSrc = badgeUri;
+      if (logo) {
+        // 仅 http(s) 远程 URL 需要 CORS 预检闸(data:/相对路径同源恒安全直通)
+        if (!isRemoteIconUrl(logo)) {
+          iconSrc = logo;
+        } else {
+          const status = remoteIconStatus(logo);
+          if (status === 'ok' || status === 'data') {
+            iconSrc = logo;
+          } else if (status === 'unknown') {
+            preflightRemoteIcon(logo);
+          }
+        }
+      }
       markerOpts.icon = {
-        src: logo ?? svgToDataUri(recruitmentBadgeSVG(poi.company.logo, undefined, this.color, state)),
+        src: iconSrc,
         size: [BADGE_BASE, BADGE_BASE],
       };
     }
