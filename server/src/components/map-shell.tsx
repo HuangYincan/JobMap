@@ -2262,14 +2262,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           setHighlightedId(null);
         }}
         onOpenDetail={(poi) => {
-          // 用户主动打开详情即「已接管相机」(会 flyTo)(Bug1)
-          userMovedMapRef.current = true;
-          // 2026-08-20 修复:不再被 geolocation 门控——首点打开详情立即飞,
-          // 与后续点击行为一致。
+          // 2026-08-21 热修:二级卡片 = 侧控栏纯视图,弹卡不动相机、不接管相机
+          // (与 handleSelect 的 ws-poi-vanish 语义一致:geolocation 晚 settle
+          // 仍会飞用户位置)。不再 flyTo —— 弹卡不再触发地图动画,work 列表
+          // 也不再因视野变化重过滤重排(此前弹卡体感 = 刷新页面)。
           // 桌面详情不保存移动抽屉滚动(保存只发生在移动卡片点击链),清零避免把旧值带回移动端
           drawerScrollRef.current = 0;
           setDetailPoi(poi);
-          if (poi.location) flyToLocation(mapInstance.current, poi.location.lng, poi.location.lat);
         }}
       />
       )}
@@ -2760,10 +2759,11 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   handleSelect(poi);
                   // 交互 1:进详情前保存抽屉列表滚动位置,返回时恢复
                   drawerScrollRef.current = drawerContentRef.current?.scrollTop ?? 0;
+                  // 2026-08-21 热修:弹卡不动相机(与桌面 onOpenDetail 同口径)——
+                  // 二级卡片是侧控栏纯视图,不触发地图动画/视野联动
                   setDetailPoi(poi);
                   setMobileJd(null);
                   setDrawer("full");
-                  if (poi.location) flyToLocation(mapInstance.current, poi.location.lng, poi.location.lat);
                 }}
                 onDeselect={() => {
                   // 交互 2:点卡片边缘空隙取消选中(与桌面点地图取消口径一致)

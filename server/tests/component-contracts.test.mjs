@@ -512,8 +512,8 @@ test('map shell Bug1 flyTo 入口置位:userMovedMapRef 与相机手势同口径
     shell,
     /const handleSelectSuggestion = useCallback\(\(s: SearchSuggestion\) => \{[\s\S]{0,200}userMovedMapRef\.current = true/
   );
-  // 其余 flyTo 入口与相机手势同口径:已保存落地 / 岗位打开 / 附近条目 / 卡片详情,
-  // 凡用户主动选择会动相机的都在点前置位
+  // 其余 flyTo 入口与相机手势同口径:已保存落地 / 岗位打开 / 附近条目 / 最近回放,
+  // 凡用户主动选择会动相机的都在点前置位(这些是「跳到所选地点」的搜索意图)
   assert.match(
     shell,
     /const handlePickSaved = useCallback\(\(place: SavedPlace\) => \{[\s\S]{0,160}userMovedMapRef\.current = true/
@@ -526,7 +526,10 @@ test('map shell Bug1 flyTo 入口置位:userMovedMapRef 与相机手势同口径
     shell,
     /const openDetail = \(poi: POI\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/
   );
-  assert.match(
+  // 2026-08-21 热修:二级卡片 = 侧控栏纯视图,弹卡不动相机——桌面 onOpenDetail
+  // 不再 flyTo、不置位(与 handleSelect 同口径:选择 ≠ 放弃定位,geolocation 晚
+  // settle 仍会飞用户位置)。弹卡不再触发地图动画 / work 列表视野重排(刷新感)。
+  assert.doesNotMatch(
     shell,
     /onOpenDetail=\{\(poi\) => \{[\s\S]{0,120}userMovedMapRef\.current = true/
   );
@@ -961,4 +964,34 @@ test('agent panel renders thinking + tool activity for assistant messages (ws-c-
   assert.match(panel, /replayAction/);
   assert.match(panel, /LLM_UNCONFIGURED/);
   assert.match(panel, /dm\.agent-history\.v1/);
+});
+
+test('map-shell 弹卡不动相机(2026-08-21 热修:二级卡片 = 侧控栏纯视图)', () => {
+  // 回归守卫:桌面 onOpenDetail / 移动抽屉 POIList onSelect 是「浏览弹卡」路径,
+  // 只 setDetailPoi,不得 flyTo —— 弹卡动地图会触发地图动画 + work 列表按视野
+  // 重过滤重排(体感 = 刷新页面),且叠加渲染尖峰。搜索跳转路径(建议/收藏/应聘/
+  // 最近回放)保留 flyTo,那是「跳到所选地点」的意图本体,不是弹卡副作用。
+  const shell = src('components/map-shell.tsx');
+
+  // 桌面侧栏 onOpenDetail
+  const desktopAt = shell.indexOf('onOpenDetail={(poi) => {');
+  assert.ok(desktopAt !== -1, 'onOpenDetail 锚点存在');
+  const desktopBlock = shell.slice(desktopAt, desktopAt + 700);
+  assert.match(desktopBlock, /setDetailPoi\(poi\)/, '弹卡打开详情');
+  assert.doesNotMatch(desktopBlock, /flyToLocation/, '弹卡不得 flyTo(不接管相机)');
+  assert.doesNotMatch(desktopBlock, /userMovedMapRef\.current = true/, '弹卡不置位接管相机标记');
+
+  // 移动抽屉 POIList onSelect
+  const scrollAnchor = 'drawerScrollRef.current = drawerContentRef.current?.scrollTop ?? 0;';
+  const mobileAt = shell.indexOf(scrollAnchor);
+  assert.ok(mobileAt !== -1, '移动抽屉滚动锚点存在');
+  const mobileBlock = shell.slice(mobileAt, mobileAt + 260);
+  assert.match(mobileBlock, /setDetailPoi\(poi\)/, '移动弹卡打开详情');
+  assert.doesNotMatch(mobileBlock, /flyToLocation/, '移动弹卡也不得 flyTo');
+
+  // 搜索跳转路径保留 flyTo(建议选择)
+  const suggestionAt = shell.indexOf('const handleSelectSuggestion = useCallback');
+  assert.ok(suggestionAt !== -1, 'handleSelectSuggestion 锚点存在');
+  const suggestionBlock = shell.slice(suggestionAt, suggestionAt + 400);
+  assert.match(suggestionBlock, /flyToLocation/, '建议选择保留跳转(搜索落地语义)');
 });
