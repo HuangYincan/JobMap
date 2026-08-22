@@ -1653,3 +1653,57 @@ ws-pinfix2(f2e4f60)曾令**全部 content marker 走 DOM overlay**——动机�
 - 测试:构造顺序(无 map + setMap 挂图)+ setGeometries 全量重推副本断言;
   1461 通过 / 0 失败 / 2 skip;typecheck / docs-check / git diff --check
   通过。
+
+---
+
+## §6 修订(2026-08-23 ws-j):「混合块」根因 = 腾讯矢量底图 POI 图标,非渲染 bug
+
+### 症状与复现差异
+
+- boss 真机(light 模式,dev 6119a2d):15 个完整 40×40 徽章 + 3 个
+  「混合块」稳定存在(4 次 reload + 20s 延迟截图全复现):(656,399)、
+  (894,292)、(362,413)——35×15 圆角蓝块(#2699f5)+ 白 glyph + 光晕,
+  随地图平移、不在 DOM、点击无响应、非 MultiMarker geometry;
+- ws-i 验收环境(worktree headless):声称「零 34×14 扁块」——**差异根因
+  = 明暗模式**:ws-i 的 headless 跟随系统深色(whitesmoke → DARK 样式),
+  腾讯 dark 样式实测**不渲染** POI 图标层;boss 真机为 light 样式,
+  渲染 POI 图标 → 复现矛盾解开(与 viewport/等待时间/webpack 无关)。
+
+### 实测证据链(2026-08-23,headless Chrome CDP + 像素分析)
+
+1. **裸 TMap 地图**(零应用代码,`file://` 页面 + 同 key):在 3 个混合块
+   地理坐标(30.27757,120.14245 / 30.29346,120.18330 / 30.27549,
+   120.09198)渲染**同款 35×15 #2699f5 图标**(zoom 13),三处 glyph
+   逐像素一致 → 同一 POI 类别图标,随平移 pan 锚定;
+2. **枚举**:`TMap.MultiMarker` 构造器 + add/remove/setGeometries/
+   setMap hook 全程仅 1 实例、400 geometry、零 'default' styleId;
+   全部 geometry `map.projectToContainer` 投影比对 → 3 个混合块位置
+   500m 内**零 geometry**(最近 1.1-2.4km)→ 非本应用渲染实体;
+3. **明暗对照**:同页 light 样式下 3 图标稳定出现;dark 样式 0 图标;
+   light 底图(light 样式 #f2f1ed 底)+ 排除 point 后逐像素 diff:
+   **仅 POI 图标簇消失**,道路/绿地/水体/建筑/地名路名标注('label')
+   全部保留(SDK v1.8.0.2 源码核实 DEFAULT_BASEMAP.vector.features =
+   [base, building3d, point, label, arrow];'base' 含道路)。
+
+### 修复(tencent-engine.ts styleToBaseMap)
+
+- 矢量底图 features 排除 `'point'`(POI 图标层):
+  `{ type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] }`
+  ——保留地名/路名标注与全部底图内容,仅去除与徽章视觉相近的 POI 图标;
+- 卫星底图不受影响(satellite 路径原样);
+- 产品含义:腾讯底图不再显示任何 POI 图标(医院/商场/地铁等图标);如
+  需保留底图 POI 图标,撤销该单点改动即可(混合块为底图原生内容)。
+
+### 真机验收(worktree :3100 + headless Chrome CDP,light 模式)
+
+- 腾讯:3 个混合块消失(对应位置无图标、无徽章——该处 catalog 无公司,
+  投影 500m 内零 geometry);14 个完整 40×40 徽章 + 1 个「双徽章」
+  (dm-mk-14/15 两家相距 ~430m 的公司,diagonal 叠印为正常地图行为,
+  非 bug);点击中心徽章 → 「高频杭州」POI 卡弹出;zoom +1 / pan 后
+  徽章保持完整;3/3 全新 reload 复验:0 混合块 + 15 徽章组件;
+- console errors:首会话 360 行(180 唯一 favicon.im × 2,与 ws-i 基线
+  一致,链式预检语义保持),第二会话 10 行(5 个候选推进 icon.horse),
+  第三会话 0 行;
+- AMap 400 徽章 DOM 全渲染 / Baidu 400 徽章 DOM 全渲染,零回归;
+- 测试:1461 通过 / 0 失败 / 2 skip;typecheck / docs-check /
+  git diff --check 通过;baseMap 断言更新(构造 + setStyle 两处)。
