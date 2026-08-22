@@ -259,16 +259,155 @@ test('loadWorkViewport: 用服务端 total 判 noMore(满页但已取完 → 到
   }
 });
 
-test('loadWorkViewport: 失败抛错上抛,不置 noMore(可重试,poi-loading A)', async () => {
+test('loadWorkViewport: 失败页跳过不置 noMore(错误 ≠ 没有更多,first-load-bounded)', async () => {
+  // 旧契约「任一页失败整体抛错」= 首访挂在加载的根源(C2);新契约:warn +
+  // 跳过该页,失败页不置 noMore/vacant(「错误 ≠ 没有更多」,由已有部分目录
+  // + mapReady 后视口加载自然补齐,不引入新刷新机制)。
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => ({ ok: false });
+  const originalWarn = console.warn;
+  const warns = [];
+  console.warn = (...args) => { warns.push(args.join(' ')); };
+  let pageNo = 0;
+  globalThis.fetch = async () => {
+    pageNo += 1;
+    return pageNo === 1
+      ? { ok: false }
+      : {
+          ok: true,
+          json: async () => ({
+            results: [recruitmentPoi('a', [{ id: 'p1', title: '后端', type: 'social', status: 'open' }])],
+          }),
+        };
+  };
   try {
-    await assert.rejects(
-      loadWorkViewport({ bounds: VIEWPORT_BOX, pageSize: 2, existing: [] }),
-      /api\/pois failed/
-    );
+    const { pois, noMore, vacant } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 1,
+      maxPages: 2,
+      existing: [],
+    });
+    assert.deepEqual(pois.map((p) => p.id), ['a']); // 失败页跳过,后续页照常并入
+    assert.equal(noMore, false); // 失败不闩锁 noMore(可重试)
+    assert.equal(vacant, false); // 失败页不标记真空(不清空旧目录)
+    assert.equal(warns.length, 1); // 每失败页 warn 一次(页码 + 原因)
+    assert.match(warns[0], /work page 1 failed/);
   } finally {
     globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
+  }
+});
+
+test('loadWorkViewport: 单页超时跳过,循环继续,返回其余页合并结果(warn 1 次)', async () => {
+  // 第 1 页永不 settle → withTimeout(pageTimeoutMs) 按失败跳过;2/3 页照常
+  // 并入。任一页挂起不再拖死首访全量加载(C2 主场景)。
+  const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  const warns = [];
+  console.warn = (...args) => { warns.push(args.join(' ')); };
+  const seenPages = [];
+  globalThis.fetch = (url) => {
+    const p = Number(new URL(String(url), 'http://x').searchParams.get('page'));
+    seenPages.push(String(p));
+    if (p === 1) return new Promise(() => {}); // 永久挂起,等超时兜底
+    return Promise.resolve({
+      ok: true,
+      json: async () => ({
+        results: [recruitmentPoi(`r${p}`, [{ id: `p${p}`, title: '岗位', type: 'social', status: 'open' }])],
+      }),
+    });
+  };
+  try {
+    const { pois, noMore } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 1,
+      maxPages: 3,
+      pageTimeoutMs: 20,
+      existing: [],
+    });
+    assert.deepEqual(seenPages, ['1', '2', '3']); // 超时页之后循环继续
+    assert.deepEqual(pois.map((p) => p.id), ['r2', 'r3']); // 其余页合并结果
+    assert.equal(noMore, false); // 超时页不闩锁(错误 ≠ 到底)
+    assert.equal(warns.length, 1); // 只 warn 一次,不刷屏
+    assert.match(warns[0], /work page 1 failed.*timed out after 20ms/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
+  }
+});
+
+test('loadWorkViewport: 连续失败达阈值提前止损,返回已取部分(warn 汇总)', async () => {
+  // 第 1 页成功后 3 页连续失败 → 第 4 页后止损:只打 3 次单页 warn + 1 次
+  // 汇总,不再空转 10k 页(服务端故障时防日志洪泛)。
+  const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  const warns = [];
+  console.warn = (...args) => { warns.push(args.join(' ')); };
+  const seenPages = [];
+  globalThis.fetch = async (url) => {
+    const p = Number(new URL(String(url), 'http://x').searchParams.get('page'));
+    seenPages.push(String(p));
+    if (p === 1) {
+      return {
+        ok: true,
+        json: async () => ({
+          results: [recruitmentPoi('r1', [{ id: 'p1', title: '岗位', type: 'social', status: 'open' }])],
+        }),
+      };
+    }
+    return { ok: false };
+  };
+  try {
+    const { pois, noMore } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 1,
+      maxPages: 10,
+      existing: [],
+    });
+    assert.deepEqual(seenPages, ['1', '2', '3', '4']); // 止损前只打了 4 页
+    assert.deepEqual(pois.map((p) => p.id), ['r1']); // 返回已取部分
+    assert.equal(noMore, false); // 止损 ≠ 到底
+    assert.equal(warns.length, 4); // 3 次单页 + 1 次汇总
+    assert.match(warns[3], /stopped after 3 consecutive failures \(page 4\); returning 1 pois/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
+  }
+});
+
+test('loadWorkViewport: 全部页快速成功与现状等价(无行为漂移)', async () => {
+  // 无失败路径:页数、合并顺序、noMore 与旧实现完全一致,且零 warn。
+  const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  const warns = [];
+  console.warn = (...args) => { warns.push(args.join(' ')); };
+  const seenPages = [];
+  globalThis.fetch = async (url) => {
+    const p = Number(new URL(String(url), 'http://x').searchParams.get('page'));
+    seenPages.push(String(p));
+    return {
+      ok: true,
+      json: async () => ({
+        results: [
+          recruitmentPoi(`a${p}`, [{ id: `pa${p}`, title: '岗位', type: 'social', status: 'open' }]),
+          recruitmentPoi(`b${p}`, [{ id: `pb${p}`, title: '岗位', type: 'social', status: 'open' }]),
+        ],
+      }),
+    };
+  };
+  try {
+    const { pois, noMore } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 2,
+      maxPages: 2,
+      existing: [],
+    });
+    assert.deepEqual(seenPages, ['1', '2']); // 页数与旧行为一致
+    assert.deepEqual(pois.map((p) => p.id), ['a1', 'b1', 'a2', 'b2']); // 合并顺序稳定
+    assert.equal(noMore, false); // 全满页 → 未到底
+    assert.equal(warns.length, 0); // 无失败 → 零 warn
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
   }
 });
 
