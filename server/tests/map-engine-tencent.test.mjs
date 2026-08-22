@@ -383,7 +383,11 @@ test('createView:TMap.Map(container, opts) 参数传递,LatLng 纬度在前', as
     assert.equal(view.raw.opts.zoom, 12);
     assert.equal(view.raw.opts.pitch, 30);
     assert.equal(view.raw.opts.rotation, 45);
-    assert.deepEqual(view.raw.opts.baseMap, { type: 'vector' }, 'normal → 矢量底图');
+    assert.deepEqual(
+      view.raw.opts.baseMap,
+      { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] },
+      'normal → 矢量底图(排除 point POI 图标层,ws-j 2026-08-23:混合块根因)'
+    );
     assert.equal(view.raw.opts.showControl, false, '构造 options 必须传 showControl:false(禁用默认控件)');
     assert.equal(view.raw.showControl, false, '构造后 setShowControl(false) 补防御');
     assert.equal(view.raw.listeners.size, 0, '就绪等待的 ready/idle 监听必须解绑');
@@ -730,12 +734,20 @@ test('setStyle:satellite→satellite、normal→vector、whitesmoke→暗色(map
     assert.equal(warn.calls.length, 0, '支持样式不告警');
 
     view.setStyle('normal');
-    assert.deepEqual(view.raw.baseMap, { type: 'vector' });
+    assert.deepEqual(
+      view.raw.baseMap,
+      { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] },
+      'normal → 矢量底图(排除 point,ws-j)'
+    );
 
     // ws-b(2026-08-22):whitesmoke(UI「深色」/系统深色偏好)不再回退 normal——
     // SDK v1.8.0.2 核实暗色 = Map 选项 mapStyleId 'DARK'(无 styleType 字段)
     view.setStyle('whitesmoke');
-    assert.deepEqual(view.raw.baseMap, { type: 'vector' }, '暗色 = vector 底图 + mapStyleId DARK');
+    assert.deepEqual(
+      view.raw.baseMap,
+      { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] },
+      '暗色 = vector 底图(排除 point,ws-j)+ mapStyleId DARK'
+    );
     assert.equal(view.raw.mapStyleId, 'DARK', 'whitesmoke → mapStyleId DARK(暗色底图层)');
     assert.equal(warn.calls.length, 0, 'whitesmoke 已支持(暗色),不告警');
 

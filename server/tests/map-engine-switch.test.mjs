@@ -641,7 +641,7 @@ test('bug2 滚轮平滑:TMap 构造显式 scrollable:true(SDK 无 smoothWheelZoo
     assert.equal(captured.opts.zoom, 12);
     assert.equal(captured.opts.pitch, 30);
     assert.equal(captured.opts.rotation, 45);
-    assert.deepEqual(captured.opts.baseMap, { type: 'vector' });
+    assert.deepEqual(captured.opts.baseMap, { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] }, '矢量底图排除 point POI 图标层(ws-j 混合块根因)');
     // 断言构造选项里没有不存在的 smoothWheelZoom(文档化 SDK 核实:选项不存在,
     // 不传幻觉键——平滑由内建滚轮处理器承担)
     assert.equal('smoothWheelZoom' in captured.opts, false);

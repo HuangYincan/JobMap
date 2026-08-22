@@ -249,7 +249,7 @@ test('setStyle:satellite→satellite、normal→vector、whitesmoke→mapStyleId
     // UI「深色」按钮 / 系统深色偏好的 value 即 whitesmoke:不再回退 normal,
     // 映射为暗色矢量底图(mapStyleId 'DARK',SDK STYLE_ID 常量)
     view.setStyle('whitesmoke');
-    assert.deepEqual(view.raw.baseMap, { type: 'vector' }, '暗色 = vector 底图');
+    assert.deepEqual(view.raw.baseMap, { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] }, '暗色 = vector 底图(排除 point,ws-j)');
     assert.equal(view.raw.mapStyleId, 'DARK', 'whitesmoke → mapStyleId DARK(暗色底图层)');
 
     view.setStyle('normal');
@@ -268,7 +268,7 @@ test('createView:初始样式 whitesmoke → 构造选项透传 mapStyleId DARK(
   try {
     const view = await createView(container, { style: 'whitesmoke' });
     assert.equal(view.raw.opts.mapStyleId, 'DARK', '构造期透传暗色 mapStyleId');
-    assert.deepEqual(view.raw.opts.baseMap, { type: 'vector' });
+    assert.deepEqual(view.raw.opts.baseMap, { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] }, '构造期矢量底图排除 point(ws-j)');
 
     const normal = await createView(container, { style: 'normal' });
     assert.equal(normal.raw.opts.mapStyleId, undefined, 'normal 不透传 mapStyleId(SDK 默认)');
@@ -318,7 +318,7 @@ test('setStyle:卫星 setBaseMap 调用断言 —— SDK MAP_TYPE 合法值(ws-d
 
     // 对照:raster 在 SDK 中非法(全包零处字符串)→ 零底图层(白图),证明旧值必失败
     view.setStyle('normal');
-    assert.deepEqual(view.raw.baseMap, { type: 'vector' });
+    assert.deepEqual(view.raw.baseMap, { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] });
     assert.equal(view.raw.resolvedBaseLayers.length, 1, 'normal → vector 底图层');
     assert.ok(!('raster' in MAP_TYPE), 'SDK MAP_TYPE 无 raster(旧实现白图根因)');
 
@@ -326,10 +326,10 @@ test('setStyle:卫星 setBaseMap 调用断言 —— SDK MAP_TYPE 合法值(ws-d
     view.setStyle('satellite');
     assert.equal(view.raw.baseMap.type, 'satellite');
     view.setStyle('whitesmoke');
-    assert.deepEqual(view.raw.baseMap, { type: 'vector' });
+    assert.deepEqual(view.raw.baseMap, { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] });
     assert.equal(view.raw.mapStyleId, 'DARK');
     view.setStyle('normal');
-    assert.deepEqual(view.raw.baseMap, { type: 'vector' });
+    assert.deepEqual(view.raw.baseMap, { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] });
     assert.equal(view.raw.mapStyleId, 'DEFAULT');
   } finally {
     MockView.prototype.setBaseMap = origSetBaseMap;
@@ -346,7 +346,7 @@ test('setStyle:whitesmoke 且 SDK 无 setMapStyleId → 降级 normal + console.
     const view = await createView(container);
     MockView.prototype.setMapStyleId = undefined; // 老 SDK 形态无 setMapStyleId
     view.setStyle('whitesmoke');
-    assert.deepEqual(view.raw.baseMap, { type: 'vector' });
+    assert.deepEqual(view.raw.baseMap, { type: 'vector', features: ['base', 'building3d', 'label', 'arrow'] });
     assert.equal(warn.calls.length, 1, '无 setMapStyleId 必须可观测告警');
     assert.match(String(warn.calls[0][0]), /降级 normal/);
   } finally {
