@@ -1269,3 +1269,55 @@ onerror fallbackUrls;TMap icon 路径此前只有单一 src,预检失败直接�
   ~450ms 中间帧截图,或窗口中心≠容器中心帧)。测试钉住一致性;建议 boss 在
   动画结束后用容器 boundingRect 复测。
 - 蓝点无契约 offset → anchor (0,0) 左上角(与 AMap/TMap 同款契约,不改)。
+
+## ws-f r3 回填:百度「标记全部消失 + 渲染卡死」根因实锤 —— 自定义 Overlay 主路径在真实 SDK 静默失效(2026-08-22,fix/baidu-r3)
+
+> boss 真机实测(ws-e 合并后):zoom 6-16 全级别 `.dm-badge` = 0、无 overlay 节点、
+> 无聚合图标(聚合+单点都不渲染),截图持续超时(合成器卡住)/滚轮无响应。
+> 本 WS 以**真机 Chromium + 真实 SDK + 引擎代码实跑**(dev server + Playwright,
+> 拦截式 instrument)定位并修复,并推翻 ws-pinfix2 的「自定义 Overlay 主路径」。
+
+### 1. 根因:Map.addOverlay 不挂载自定义 Overlay 的 initialize 返回值
+
+- **SDK 源码**(getscript v=1.0 本体):`addOverlay=function(i){if(i&&cs(i._i)){
+  ...; i._i(this); ...}}` —— 只调用 overlay 的**内部钩子 `_i(map)`**,不调用
+  `initialize`、不做任何 DOM 挂载;
+- **SDK 源码**(Overlay 基类 bb 的 `_i`):`this.domElement=this.initialize(mw)`
+  后**无任何 appendChild**——经典 BMap「initialize 返回 div、SDK 自动加入覆盖物
+  容器」契约在 GL v1.0 **不成立**(BMapGL 官方自定义 Overlay 需开发者在
+  initialize 内自行 `map.getPanes().markerPane.appendChild(div)`);
+- **真机坐实**:引擎 Overlay 子类(ws-pinfix2 形态)在真实 SDK 上 `initialize` 被
+  调、div 已定位(left/top 正确),但 `parentNode` 恒 null → 0 徽章 + 0 聚合图标
+  (boss「标记全部消失」实锤)。1049 个 addOverlay 全部静默失效,且 SDK 长期持有
+  `overlay.domElement` 引用 → 无主 div + badge HTML(img dataURI)随会话膨胀
+  (实测 JS heap 139→218MB),叠加合成器负载(低 zoom 截图 3.5-4.5s,接近超时)。
+- ws-e 的「注入兜底」在 Overlay 主路径存在时**永远不会执行**(`BMapGL.Overlay`
+  存在 → 走 Overlay 路径)→ 单点级修复也被吞掉。
+
+### 2. 修复(baidu-engine.ts r3):主路径 = 厂商 Marker + 点击目标 DOM 注入
+
+- `createContentMarker` 重写为**厂商 Marker 主路径**(删除 Overlay 路径):
+  - 有 `setContent`(测试 mock / 未来 SDK 形态)→ 直调原契约路径;
+  - 无 setContent(真实 SDK)→ content HTML 注入 `BMap_Marker` 点击目标 DOM;
+    **addOverlay 同步创建该 DOM**(r3 实测 ms 级),位置 = 屏幕位 + 契约 offset
+    (空白 1×1 锚点图标 anchor=-offset 数学驱动,与 AMap 逐像素同语义);
+  - 点击:子元素冒泡到厂商 DOM → marker click(选中/卡片反馈真机验证);
+  - content+icon 并存(聚合徽章)→ **icon 为渲染主机制、content 不注入**(dataURL
+    icon 纹理即视觉,注入会双渲染;远程 icon 未预检先回落 content 注入,预检成功
+    后下次重建升级);
+- **零定时器**:ws-e 版 20×50ms `setInterval` 轮询(渲染卡死嫌疑)删除,改为
+  **同步注入 + 微任务 4 轮 + rAF 5 帧**有界重试(实测同步就绪,重试纯防御);
+- 无主 div 泄漏消除(domElement 由厂商管理,随 marker 生命周期释放)。
+
+### 3. 真机验收(fix 后,dev server + Playwright,headed Chromium + 真实 AK)
+
+- z13 单点级:1048 个 `.dm-badge` 全部可见;badge 真实点击 → POI 详情面板 +
+  选中态;setContent(选中样式)重入更新
+- z≤8 聚合级:135 个聚合 marker 可见(GL dataURL icon 纹理;个体 pin 由
+  setVisible(false) 隐藏,互斥正确);z→13 个体 pin 恢复可见
+- zoom 6→16 全级别:截图 0.1-0.5s(z9 峰值 0.88s,瓦片加载;修复前 3.5-4.5s);
+  滚轮缩放全级别响应;console 零报错
+- 样式切换:标准/卫星/深色/回标准全通过,深色(whitesmoke)真机变暗
+  (rgb 230→110),切换后 1048 徽章仍在
+- 内存:固定 zoom 下 marker 总数稳定,无增长循环;zoom 分桶切换的 addOverlay
+  增量有界(≤135)
