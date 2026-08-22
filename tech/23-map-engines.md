@@ -1363,3 +1363,57 @@ onerror fallbackUrls;TMap icon 路径此前只有单一 src,预检失败直接�
   零报错、截图 0.1s 级
 - 测试:`map-engine-baidu.test.mjs` +3(定时器兜底注入 / rAF 快路径 / remove
   终止注入链),85/85 通过;`npm test` 1419 通过 / 0 失败 / 2 skip
+
+## ws-g r5 回填:注入后「徽章全部定位屏幕外」根因实锤 —— SDK fixPosition 反绕 + 修复(2026-08-22,fix/baidu-r5)
+
+> r4 合并进 dev 后 boss 主树复验:注入成功(400 个 .dm-badge,0 警告)但
+> `getBoundingClientRect()` 全在屏幕外(rect x≈±125 万 px 量级,实测样本
+> 5,009,397 ≈ 4×worldSize(z15)),截图视觉零徽章 —— 用户仍看不到百度 POI。
+> 本 WS 真机 Chromium + 真实 SDK(v1.0 getscript 本体)定位根因并修复。
+
+### 根因:marker 模块 `_getPixPos` 恒传 `fixPosition: true`,视口外像素被整世界反绕
+
+- SDK v1.0 源码(真机 `Marker.prototype._getPixPos.toString()` 坐实):
+  `mu={zoom:T,center:i,fixPosition:true}; C=this.map.pointToOverlayPixelIn(e,mu)`;
+- `pointToOverlayPixelIn` 的 fixPosition 分支(`pointToOverlayPixelIn.toString()` 坐实):
+  `if(C.x>mu.width){C.x-=Math.ceil((C.x-mu.width)/i)*i}else if(C.x<0){C.x+=Math.ceil((0-C.x)/i)*i}`
+  (i = `worldSize(T.zoom)`;z13 ≈ 1,252,358px,z15 ≈ 5,009,432px);
+- 效果:任何**视口外** marker 的屏幕 x 被按整世界尺寸反绕到 ±worldSize
+  (z13 ±125 万 px,z15 ±500 万 px,缩放逐级翻倍)——注入成功但 DOM 全错乱、
+  视觉零徽章(boss 主树复验);
+- 真机观察补充:marker DOM 在**构造/addOverlay 与每次相机变化**都被 SDK 重写
+  (实例属性 hook 坐实每帧 4.4×10^5 次投影调用);视口内 marker 不受反绕影响
+  (x∈[0,width] 不触发分支)→ 与 r3/r4「视口内徽章可见、点击可达」验收不冲突,
+  boss 的「400 全部屏幕外」= 相机/zoom 下视口内无 POI 时全量反绕的极端形态。
+
+### 修复(baidu-engine.ts r5):实例级遮蔽强制 fixPosition:false + 相机事件校准
+
+1. **实例级同名遮蔽**(view 构造时):`map.pointToOverlayPixelIn` 换为包装器,
+   强制 `fixPosition:false` —— SDK 与引擎经属性查找的**全部**投影调用都拿到
+   未反绕视口像素(内部数学不变:`(point−centerPoint)/zoomUnits+width/2`,与
+   SDK 反绕前中间值字节级等同);own property 优先于原型,SDK 捕获的模块引用
+   路径外的调用全被遮蔽;
+2. **注入成功即校准 + 相机事件重算**(moveend/zoomend/tilesloaded 懒注册监听,
+   首个 content marker 时绑定,空视图零监听残留):`repositionContentMarkerDom`
+   以 `pointToOverlayPixelIn(getPositionIn(), {zoom, fixPosition:false})` 覆写
+   DOM left/top(减锚点分量 anchor=-契约 offset,与 SDK `C.x+=mw.width-mv.width`
+   逐像素同语义)——对绕开属性查找的路径兜底;remove 摘除即注销,零写入;
+3. 反绕语义取舍:fixPosition 只为 ±180° 反经纬线「就近副本」服务(本产品中国区
+   POI 恒不触及),其副作用(视口外 POI 被迫迁到世界对面、缩放逐级翻倍)正是
+   被修复的威胁。
+
+### 真机验收(fix 后,dev server :3100 + Playwright,1048 单点徽章)
+
+- 注入 0 警告、console 零报错;z13 视口内 32 徽章可见(与修复前一致,位置正确);
+- **±worldSize 爆炸消除**:marker DOM left 分布 = 视口内 50 + 视口外近距
+  (≤±1.5 万 px,Hangzhou 域 POI)+ 远距真值(拉萨/乌鲁木齐/新加坡/旧金山等
+  全国+国际数据,±10 万~±100 万 px 与地理距离严格对应,zip 核对逐点成立);
+- 相机跟随:z13→z12→z11→z10→z9 可见数 32→39→133→150→375(数据密度随距离
+  衰减,亚线性增长符合预期);z15 视口内 13 徽章、pan 后新中心 3 徽章;
+  z13 停 7s 位置零漂移;
+- 聚合 z≤8:+270 聚合 marker(addOverlay 计数 1048→1318),54×54 簇徽章
+  DOM/GL 纹理均可见;z10/z13 切回单点正常;
+- badge 点击 → `.dm-badge-selected` + POI 详情面板(点击命中保持);
+- 测试:`map-engine-baidu.test.mjs` +5(注入即校准 / 相机事件重算 / remove
+  注销 / destroy 解绑 / 旧 SDK 缺 API 静默跳过),90/90 通过;
+  `npm test` 1432 通过 / 0 失败 / 2 skip;typecheck / docs-check / diff-check 通过。
