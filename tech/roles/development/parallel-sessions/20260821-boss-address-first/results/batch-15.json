@@ -1,0 +1,203 @@
+[
+  {
+    "site_id": "qq-国务院国有资产监督管理委员会-site-hq",
+    "company": "国务院国有资产监督管理委员会",
+    "city": "北京市",
+    "address": "北京市西城区宣武门西大街26号",
+    "source_url": "https://zh.wikipedia.org/wiki/国务院国有资产监督管理委员会",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox 总部'北京市宣武门西大街26号'(邮编100053);搜狗微信8篇(国资小新巡视公告邮政信箱、国企招聘公务员面试公告、财融圈接收毕业生公示等)均为'北京市西城区宣武门西大街26号',多源一致。city 脏值'国务院国有资产监督管理委员会总部'实为北京市。"
+  },
+  {
+    "site_id": "qq-国家技能人才评价服务-site-hq",
+    "company": "国家技能人才评价服务",
+    "city": "北京市",
+    "address": "北京市朝阳区育慧路3号",
+    "source_url": "https://weixin.sogou.com/weixin?type=2&query=职业技能鉴定中心 育慧路3号",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "'国家技能人才评价服务'即人社部职业技能鉴定中心/中国就业培训技术指导中心运营的 OSTA 技能人才评价网;搜狗微信10篇(技能中国官方征集通告、未来大工匠、职教圈、心宇心理网等)均为'北京市朝阳区育慧路3号(邮编100101)';官网 osta.mohrss.gov.cn 证书指向 osta.org.cn 且页脚无地址(仅电话010-84661145),以微信官方渠道地址为准。city 脏值'国家技能人才评价服务总部'实为北京市。"
+  },
+  {
+    "site_id": "qq-国家电投-site-hq",
+    "company": "国家电投",
+    "city": "北京市",
+    "address": "北京市西城区北三环中路29号院1号楼国家电投大厦",
+    "source_url": "http://www.spic.com.cn/",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "官网 www.spic.com.cn 页脚即'北京市西城区北三环中路29号院1号楼';搜狗微信7篇(国家电力投资集团有限公司官方公众号、青海中公教育招聘公告、华夏能源网、赛思隆科技等)一致,何继江文载'2020年国电投将总部大楼迁至北京市西城区北三环中路29号院的国家电投大厦现址';维基百科'金融大街28号院3号楼'为旧办公地,未采用。"
+  },
+  {
+    "site_id": "qq-国家电网-site-hq",
+    "company": "国家电网",
+    "city": "北京市",
+    "address": "北京市西城区西长安街86号",
+    "source_url": "https://zh.wikipedia.org/wiki/国家电网",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科(国家电网)infobox 明载'国家电网公司大楼,位于北京市西城区西长安街86号';官网 www.sgcc.com.cn 多次访问均 socket closed 无法核验,西长安街86号为公开常识性总部地址。"
+  },
+  {
+    "site_id": "qq-国家能源集团-site-hq",
+    "company": "国家能源集团",
+    "city": "北京市",
+    "address": "北京市东城区安定门西滨河路22号",
+    "source_url": "https://zh.wikipedia.org/wiki/国家能源投资集团",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox '北京市东城区安定门西滨河路22号';搜狗微信4篇(中国注册会计师俱乐部审计招标'北京市东城区安定门西滨河路22号'、紫荆人事、我们电厂人住所表述)一致;个别文章出现'西滨河路26号'异文,以多数与维基为准。"
+  },
+  {
+    "site_id": "qq-国机招聘-site-hq",
+    "company": "国机招聘",
+    "city": "北京市",
+    "address": "北京市海淀区丹棱街3号国机大厦",
+    "source_url": "https://zh.wikipedia.org/wiki/中国机械工业集团",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "国机招聘为央企中国机械工业集团(国机集团)招聘平台,以集团总部为代表地址;维基百科 infobox '北京市海淀区丹棱街3号国机大厦';搜狗微信9篇(国机集团官方公众号招聘、四大新鲜事儿审计公示'丹棱街3号国机大厦'、一拖人/中机建设等巡视公告通信地址)全部一致。city 脏值'国机招聘总部'实为北京市。"
+  },
+  {
+    "site_id": "qq-国聘网-site-hq",
+    "company": "国聘网",
+    "city": "北京市",
+    "address": "北京市西城区阜成门北大街6-6号国际投资大厦A座",
+    "source_url": "https://weixin.sogou.com/weixin?type=2&query=国投人力 阜成门北大街6号",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "国聘网运营方为国投人力资源服务有限公司(国投集团全资子公司);搜狗微信8篇(郑州大学/南京航空航天大学/重大/OUC 就业信息、四川师范大学就业信息、北语就业创业、中国注册会计师俱乐部等)均为'北京市西城区阜成门北大街6-6号国际投资大厦A座',楼层异文(6层613室/5号楼1803室)不影响楼址。city 脏值'国聘网总部'实为北京市。"
+  },
+  {
+    "site_id": "qq-国药集团-site-hq",
+    "company": "国药集团",
+    "city": "北京市",
+    "address": "北京市海淀区知春路20号中国医药大厦",
+    "source_url": "http://www.sinopharm.com/",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "官网 www.sinopharm.com 页脚及'联系我们'均为'地址:北京市海淀区知春路20号 中国医药大厦';维基百科(中国医药集团)infobox 同址,两源一致。"
+  },
+  {
+    "site_id": "qq-大连银行-site-hq",
+    "company": "大连银行",
+    "city": "大连市",
+    "address": "辽宁省大连市中山区中山路88号天安国际大厦",
+    "source_url": "https://zh.wikipedia.org/wiki/大连银行",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox 总部'中山区青泥洼桥街道中山路88号大连天安国际大厦';搜狗微信3篇佐证(中国东方博士后科研工作站招聘'辽宁省大连市中山区中山路88号天安国际大厦13层'、保理法律研究'大连银行股份有限公司 中国大连市中山区中山路88号天安国际大厦3楼'、V中山大厦专攻金融介绍)一致;官网 bankofdl.com 412 反爬无法访问。"
+  },
+  {
+    "site_id": "qq-宁波银行-site-hq",
+    "company": "宁波银行",
+    "city": "宁波市",
+    "address": "浙江省宁波市鄞州区宁东路345号",
+    "source_url": "https://zh.wikipedia.org/wiki/宁波银行",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox '宁波市鄞州区福明街道宁东路345号';搜狗微信6篇(宁波工程学院就业、RPA招标公告'宁波银行总行大楼A座2楼'、宁波市建筑业协会'现门牌号为宁东路345号'、银行招聘考试笔面通知)全部一致。"
+  },
+  {
+    "site_id": "qq-常熟农商行-site-hq",
+    "company": "常熟农商行",
+    "city": "常熟市",
+    "address": "江苏省常熟市新世纪大道58号",
+    "source_url": "https://weixin.sogou.com/weixin?type=2&query=常熟农商银行 总行 新世纪大道",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "搜狗微信8篇招聘公告(常熟人才招聘、江苏前途信息、杰赛人才、中公农商招聘考试、招聘中等)均表述'工作地点:常熟农商银行总行(新世纪大道58号)';官网 csrcbank.com 页脚无地址,维基百科无条目。"
+  },
+  {
+    "site_id": "qq-广东组织工作-site-hq",
+    "company": "广东组织工作",
+    "city": "广州市",
+    "address": "广州市越秀区合群三马路省委大院1号楼",
+    "source_url": "https://weixin.sogou.com/weixin?type=2&query=中共广东省委 地址 大院",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "广东组织工作网(www.gdzz.gov.cn)主办单位中共广东省委组织部,官网页脚无地址;搜狗微信多篇(中公广东公务员考试、武大选调、粤说新语、看人事等)为'广州市越秀区合群三马路省委大院1号楼省委组织部人事处'(邮编510082),同院省委政研室16号楼、改革办4号楼佐证大院地址。city 脏值'广东组织工作总部'实为广州市。"
+  },
+  {
+    "site_id": "qq-广发银行-site-hq",
+    "company": "广发银行",
+    "city": "广州市",
+    "address": "广东省广州市越秀区东风东路713号广发银行大厦",
+    "source_url": "https://zh.wikipedia.org/wiki/广发银行",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox '越秀区黄花岗街道东风东路713号广发银行大厦';搜狗微信5篇(华商职协'总部在中国广东省广州市越秀区东风东路713号'、深圳联交所股权转让公告注册地、高校人才网博士后招收公告、广发银行微讯社)一致。"
+  },
+  {
+    "site_id": "qq-广州银行-site-hq",
+    "company": "广州银行",
+    "city": "广州市",
+    "address": "广东省广州市天河区珠江东路30号广州银行大厦",
+    "source_url": "https://zh.wikipedia.org/wiki/广州银行",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox '天河区冼村街道珠江东路30号';搜狗微信2篇(会计雅苑招标'广州市天河区珠江东路30号广州银行大厦37楼'、高校人才网博士后简章'广州银行地址:广州市天河区珠江东路30号广州银行大厦37楼')一致。"
+  },
+  {
+    "site_id": "qq-广西北部湾银行-site-hq",
+    "company": "广西北部湾银行",
+    "city": "南宁市",
+    "address": "广西南宁市良庆区云英路8号五象总部大厦A座",
+    "source_url": "https://zh.wikipedia.org/wiki/广西北部湾银行",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox '南宁市良庆区大沙田街道云英路8号五象总部大厦A座';搜狗微信广西北部湾银行微生活(官方)《总部进驻中国—东盟金融城》及五象本地生活均确认总行迁入五象总部大厦A座;官网 bankofbbg.com 412 反爬无法访问。city 脏值'广西北部湾银行总部'实为南宁市。"
+  },
+  {
+    "site_id": "qq-应届生求职网-site-hq",
+    "company": "应届生求职网",
+    "city": "上海市",
+    "address": "上海市静安区灵石路697号巨丰商务5楼",
+    "source_url": "https://weixin.sogou.com/weixin?type=2&query=前程无忧 灵石路697号",
+    "address_type": "office",
+    "confidence": "low",
+    "note": "应届生求职网页脚确认运营方为前锦网络信息技术(上海)有限公司(前程无忧/51job 旗下,沪ICP备12015550号);上海民航职业技术学院就创指导(2017校招企业介绍)明载'总部办公地点位于上海市静安区灵石路697号巨丰商务5楼',上海虹口等转载招聘信息亦列该址;但2022年多家媒体(投资与地产、魔都办公、ONLEAD 等)报道前程无忧上海总部迁入浦东前滩晶耀前滩T6(未披露门牌),该址或已变更,故置信度低,建议以工商注册信息复核。city 脏值'应届生求职网总部'实为上海市。"
+  },
+  {
+    "site_id": "qq-微众银行-site-hq",
+    "company": "微众银行",
+    "city": "深圳市",
+    "address": "广东省深圳市南山区金港街88号微众银行大厦",
+    "source_url": "https://zh.wikipedia.org/wiki/微众银行",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox(年报口径)办公地址'深圳市南山区南山街道金港街88号微众银行大厦1层、7-10层、12-21层、23-30层';搜狗微信崇杰律师事务所《微信、支付宝律师调查取证指引》同址'前海深港合作区南山街道金港街88号微众银行大厦1层',湾区高楼迷称大厦位于前海桂湾二路与创新十五街交汇处佐证前海片区;官网 webank.com 为JS应用无页脚地址。"
+  },
+  {
+    "site_id": "qq-徽商银行-site-hq",
+    "company": "徽商银行",
+    "city": "合肥市",
+    "address": "安徽省合肥市包河区云谷路1699号徽银大厦",
+    "source_url": "https://zh.wikipedia.org/wiki/徽商银行",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox '合肥市包河区万年埠街道云谷路1699号';搜狗微信4篇(安徽先锋微讯巡视整改公告'合肥市包河区云谷路1699号徽银大厦'、歙县吧'注册地址为...云谷路1699号徽银大厦'、礼采圈招标公告'滨湖新区云谷路1699号徽银大厦')一致,滨湖新区属包河区表述并存不冲突。"
+  },
+  {
+    "site_id": "qq-恒丰银行-site-hq",
+    "company": "恒丰银行",
+    "city": "济南市",
+    "address": "山东省济南市历下区泺源大街8号绿城金融中心",
+    "source_url": "https://zh.wikipedia.org/wiki/恒丰银行",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox '济南市历下区解放路街道泺源大街8号';搜狗微信 CBD济南《恒丰银行总部终落定济南》'恒丰银行股份有限公司...住所为济南市历下区泺源大街8号绿城金融中心',两源一致。city 脏值'恒丰银行总部'实为济南市。"
+  },
+  {
+    "site_id": "qq-成都农商行-site-hq",
+    "company": "成都农商行",
+    "city": "成都市",
+    "address": "四川省成都市武侯区科华中路88号",
+    "source_url": "https://zh.wikipedia.org/wiki/成都农商银行",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "维基百科 infobox '武侯区科华中路88号';搜狗微信3篇(成都招聘中心、银行招聘考试录用/面试公告均'成都农商银行总行(地址:成都市武侯区科华中路88号)19楼'、成都招聘公司介绍'工作地址:成都市科华中路88号')一致。"
+  }
+]
+ADDR_BATCH_DONE: 20/20

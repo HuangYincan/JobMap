@@ -1,0 +1,305 @@
+{
+ "batch": 3,
+ "companies": [
+  {
+   "file": "embodied-jobs/embj-清华大学.json",
+   "sites": [
+    {
+     "file": "embodied-jobs/embj-清华大学.json",
+     "slug": "embj-清华大学",
+     "company": "清华大学",
+     "site_id": "embj-清华大学-site",
+     "site_name": "清华大学",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://postdoctor.tsinghua.edu.cn/"
+    }
+   ]
+  },
+  {
+   "file": "embodied-jobs/embj-节卡.json",
+   "sites": [
+    {
+     "file": "embodied-jobs/embj-节卡.json",
+     "slug": "embj-节卡",
+     "company": "节卡",
+     "site_id": "embj-节卡-site",
+     "site_name": "节卡",
+     "city": "上海市 常州市",
+     "province": "",
+     "careerUrl": "https://jaka.zhiye.com/social/detail?jobAdId=75c99003-aff5-4812-8c31-68d15caab061"
+    }
+   ]
+  },
+  {
+   "file": "embodied-jobs/embj-节卡机器人.json",
+   "sites": [
+    {
+     "file": "embodied-jobs/embj-节卡机器人.json",
+     "slug": "embj-节卡机器人",
+     "company": "节卡机器人",
+     "site_id": "embj-节卡机器人-site",
+     "site_name": "节卡机器人",
+     "city": "上海市 常州市",
+     "province": "",
+     "careerUrl": "https://www.jaka.com/zh/position"
+    }
+   ]
+  },
+  {
+   "file": "embodied-jobs/embj-西湖大学.json",
+   "sites": [
+    {
+     "file": "embodied-jobs/embj-西湖大学.json",
+     "slug": "embj-西湖大学",
+     "company": "西湖大学",
+     "site_id": "embj-西湖大学-site",
+     "site_name": "西湖大学",
+     "city": "杭州市",
+     "province": "",
+     "careerUrl": "https://www.westlake.edu.cn/careers/"
+    }
+   ]
+  },
+  {
+   "file": "embodied-jobs/embj-迦智科技.json",
+   "sites": [
+    {
+     "file": "embodied-jobs/embj-迦智科技.json",
+     "slug": "embj-迦智科技",
+     "company": "迦智科技",
+     "site_id": "embj-迦智科技-site",
+     "site_name": "迦智科技",
+     "city": "杭州市 济南市 汕尾",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/gongsi/job/bcd987db80a996f61nR_09-6Eg~~.html?ka=company-jobs"
+    }
+   ]
+  },
+  {
+   "file": "embodied-jobs/embj-逐际动力.json",
+   "sites": [
+    {
+     "file": "embodied-jobs/embj-逐际动力.json",
+     "slug": "embj-逐际动力",
+     "company": "逐际动力",
+     "site_id": "embj-逐际动力-site",
+     "site_name": "逐际动力",
+     "city": "深圳市",
+     "province": "",
+     "careerUrl": "https://career.limxdynamics.com/index/position/7512732459647027493/detail"
+    }
+   ]
+  },
+  {
+   "file": "embodied-jobs/embj-高仙机器人.json",
+   "sites": [
+    {
+     "file": "embodied-jobs/embj-高仙机器人.json",
+     "slug": "embj-高仙机器人",
+     "company": "高仙机器人",
+     "site_id": "embj-高仙机器人-site",
+     "site_name": "高仙机器人",
+     "city": "上海市",
+     "province": "",
+     "careerUrl": "https://wecruit.hotjob.cn/SU6629d2ce1eb8053acd8065ac/pb/posDetail.html?postId=68ac2772b8fdf84cde4e83da&postType=society"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-AdvancyAsia.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-AdvancyAsia.json",
+     "slug": "qqj-AdvancyAsia",
+     "company": "Advancy Asia",
+     "site_id": "qqj-AdvancyAsia-site",
+     "site_name": "Advancy Asia",
+     "city": "上海 新加坡",
+     "province": "",
+     "careerUrl": "https://文中扫码投递简历"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-BrainCo强脑科技.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-BrainCo强脑科技.json",
+     "slug": "qqj-BrainCo强脑科技",
+     "company": "BrainCo强脑科技",
+     "site_id": "qqj-BrainCo强脑科技-site",
+     "site_name": "BrainCo强脑科技",
+     "city": "深圳",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-FMCConsulting.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-FMCConsulting.json",
+     "slug": "qqj-FMCConsulting",
+     "company": "FMC Consulting",
+     "site_id": "qqj-FMCConsulting-site",
+     "site_name": "FMC Consulting",
+     "city": "上海 苏州 广州 深圳 北京  成都等",
+     "province": "",
+     "careerUrl": "https://www.fmces.com/candidate"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-LEK中国.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-LEK中国.json",
+     "slug": "qqj-LEK中国",
+     "company": "L E  K中国",
+     "site_id": "qqj-LEK中国-site",
+     "site_name": "L E  K中国",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-Meshy.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-Meshy.json",
+     "slug": "qqj-Meshy",
+     "company": "Meshy",
+     "site_id": "qqj-Meshy-site",
+     "site_name": "Meshy",
+     "city": "上海 北京 深圳",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-MizzenAI览深科技.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-MizzenAI览深科技.json",
+     "slug": "qqj-MizzenAI览深科技",
+     "company": "Mizzen AI 览深科技",
+     "site_id": "qqj-MizzenAI览深科技-site",
+     "site_name": "Mizzen AI 览深科技",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-OCC欧晰折咨询.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-OCC欧晰折咨询.json",
+     "slug": "qqj-OCC欧晰折咨询",
+     "company": "OC&C欧晰折咨询",
+     "site_id": "qqj-OCC欧晰折咨询-site",
+     "site_name": "OC&C欧晰折咨询",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-Sea.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-Sea.json",
+     "slug": "qqj-Sea",
+     "company": "Sea",
+     "site_id": "qqj-Sea-site",
+     "site_name": "Sea",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/campus-recruitment/garena/148076?sessionid=#/job/911f2cc8-7514-4788-bd2e-75a6a3718eba?from=qrcode"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-ShopeeAIStarProgram顶尖技术人.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-ShopeeAIStarProgram顶尖技术人.json",
+     "slug": "qqj-ShopeeAIStarProgram顶尖技术人",
+     "company": "Shopee — AI Star Program 顶尖技术人才",
+     "site_id": "qqj-ShopeeAIStarProgram顶尖技术人-site",
+     "site_name": "Shopee — AI Star Program 顶尖技术人才",
+     "city": "北京  上海  深圳 新加坡",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/m/campus-recruitment/shopee/170008?recommendCode=DSsGCxv8#/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-ZS致盛管理咨询.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-ZS致盛管理咨询.json",
+     "slug": "qqj-ZS致盛管理咨询",
+     "company": "ZS致盛管理咨询",
+     "site_id": "qqj-ZS致盛管理咨询-site",
+     "site_name": "ZS致盛管理咨询",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-vivo产品总经理储备计划.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-vivo产品总经理储备计划.json",
+     "slug": "qqj-vivo产品总经理储备计划",
+     "company": "vivo 产品总经理储备计划",
+     "site_id": "qqj-vivo产品总经理储备计划-site",
+     "site_name": "vivo 产品总经理储备计划",
+     "city": "东莞",
+     "province": "",
+     "careerUrl": "https://hr-campus.vivo.com/jobs?1=%5B%7B%22id%22%3A%2213%22%2C%22label%22%3A%22%E4%BA%A7%E5%93%81%E6%80%BB%E7%BB%8F%E7%90%86%E5%82%A8%E5%A4%87%E8%AE%A1%E5%88%92%22%7D%5D"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-三安集成.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-三安集成.json",
+     "slug": "qqj-三安集成",
+     "company": "三安集成",
+     "site_id": "qqj-三安集成-site",
+     "site_name": "三安集成",
+     "city": "泉州  厦门",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-上海朗跃.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-上海朗跃.json",
+     "slug": "qqj-上海朗跃",
+     "company": "上海朗跃",
+     "site_id": "qqj-上海朗跃-site",
+     "site_name": "上海朗跃",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  }
+ ]
+}

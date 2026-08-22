@@ -1,0 +1,355 @@
+{
+ "batch": 9,
+ "companies": [
+  {
+   "file": "qqdoc-jobs/qqj-沛睿微电子.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-沛睿微电子.json",
+     "slug": "qqj-沛睿微电子",
+     "company": "沛睿微电子",
+     "site_id": "qqj-沛睿微电子-site",
+     "site_name": "沛睿微电子",
+     "city": "合肥市",
+     "province": "",
+     "careerUrl": "https://www.raymx-micro.com/Home/Position"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-沛睿微电子.json",
+     "slug": "qqj-沛睿微电子",
+     "company": "沛睿微电子",
+     "site_id": "qqj-沛睿微电子-site-苏州",
+     "site_name": "沛睿微电子",
+     "city": "苏州市",
+     "province": "",
+     "careerUrl": "https://www.raymx-micro.com/Home/Position"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-海德斯通信有限公司.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-海德斯通信有限公司.json",
+     "slug": "qqj-海德斯通信有限公司",
+     "company": "海德斯通信有限公司",
+     "site_id": "qqj-海德斯通信有限公司-site",
+     "site_name": "海德斯通信有限公司",
+     "city": "深圳 南京",
+     "province": "",
+     "careerUrl": "https://hr.hdscomms.com/campus-recruitment/tanhai/118014/#/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-海能达.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-海能达.json",
+     "slug": "qqj-海能达",
+     "company": "海能达",
+     "site_id": "qqj-海能达-site",
+     "site_name": "海能达",
+     "city": "东莞  深圳  哈尔滨  北京  南京  成都",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/campus-recruitment/hytera/182194?locale=zh-CN#/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-湖南杰楚微半导体.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-湖南杰楚微半导体.json",
+     "slug": "qqj-湖南杰楚微半导体",
+     "company": "湖南杰楚微半导体",
+     "site_id": "qqj-湖南杰楚微半导体-site",
+     "site_name": "湖南杰楚微半导体",
+     "city": "长沙",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-源件星球.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-源件星球.json",
+     "slug": "qqj-源件星球",
+     "company": "源件星球",
+     "site_id": "qqj-源件星球-site",
+     "site_name": "源件星球",
+     "city": "北京 洛阳  海外",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-爱凡哲投资.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-爱凡哲投资.json",
+     "slug": "qqj-爱凡哲投资",
+     "company": "爱凡哲投资",
+     "site_id": "qqj-爱凡哲投资-site",
+     "site_name": "爱凡哲投资",
+     "city": "上海 成都",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告 "
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-爱科微.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-爱科微.json",
+     "slug": "qqj-爱科微",
+     "company": "爱科微",
+     "site_id": "qqj-爱科微-site",
+     "site_name": "爱科微",
+     "city": "北京 上海 深圳  成都",
+     "province": "",
+     "careerUrl": "https://投递连接看福安防公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-玫瑰岛集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-玫瑰岛集团.json",
+     "slug": "qqj-玫瑰岛集团",
+     "company": "玫瑰岛集团",
+     "site_id": "qqj-玫瑰岛集团-site",
+     "site_name": "玫瑰岛集团",
+     "city": "广东中山",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-珠海赛纬.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-珠海赛纬.json",
+     "slug": "qqj-珠海赛纬",
+     "company": "珠海赛纬",
+     "site_id": "qqj-珠海赛纬-site",
+     "site_name": "珠海赛纬",
+     "city": "珠海  合肥 淮南 抚州",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-理工雷科.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-理工雷科.json",
+     "slug": "qqj-理工雷科",
+     "company": "理工雷科",
+     "site_id": "qqj-理工雷科-site",
+     "site_name": "理工雷科",
+     "city": "北京 天津 西安 深圳  成都",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-瑞发科半导体.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-瑞发科半导体.json",
+     "slug": "qqj-瑞发科半导体",
+     "company": "瑞发科半导体",
+     "site_id": "qqj-瑞发科半导体-site",
+     "site_name": "瑞发科半导体",
+     "city": "天津",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-瑶芯微电子.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-瑶芯微电子.json",
+     "slug": "qqj-瑶芯微电子",
+     "company": "瑶芯微电子",
+     "site_id": "qqj-瑶芯微电子-site",
+     "site_name": "瑶芯微电子",
+     "city": "上海 成都",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-电科微博中国电科38所.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-电科微博中国电科38所.json",
+     "slug": "qqj-电科微博中国电科38所",
+     "company": "电科微博/、中国电科38 所",
+     "site_id": "qqj-电科微博中国电科38所-site",
+     "site_name": "电科微博/、中国电科38 所",
+     "city": "合肥",
+     "province": "",
+     "careerUrl": "https://cetc38.zhaopin.com/school/index.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-百奥游戏.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-百奥游戏.json",
+     "slug": "qqj-百奥游戏",
+     "company": "百奥游戏",
+     "site_id": "qqj-百奥游戏-site",
+     "site_name": "百奥游戏",
+     "city": "广州",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/campus_apply/aobi/25016#/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-省油灯科技.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-省油灯科技.json",
+     "slug": "qqj-省油灯科技",
+     "company": "省油灯科技",
+     "site_id": "qqj-省油灯科技-site",
+     "site_name": "省油灯科技",
+     "city": "深圳",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-神州税道.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-神州税道.json",
+     "slug": "qqj-神州税道",
+     "company": "神州税道",
+     "site_id": "qqj-神州税道-site",
+     "site_name": "神州税道",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告 "
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-箭元科技.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-箭元科技.json",
+     "slug": "qqj-箭元科技",
+     "company": "箭元科技",
+     "site_id": "qqj-箭元科技-site",
+     "site_name": "箭元科技",
+     "city": "北京  杭州",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-络明芯微电子.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-络明芯微电子.json",
+     "slug": "qqj-络明芯微电子",
+     "company": "络明芯微电子",
+     "site_id": "qqj-络明芯微电子-site",
+     "site_name": "络明芯微电子",
+     "city": "武汉 厦门 合肥",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-绿盟科技.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-绿盟科技.json",
+     "slug": "qqj-绿盟科技",
+     "company": "绿盟科技",
+     "site_id": "qqj-绿盟科技-site",
+     "site_name": "绿盟科技",
+     "city": "北京 西安 武汉 成都 南京 全国其他",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/campus_apply/nsfocus/29118#/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-联合电子.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-联合电子.json",
+     "slug": "qqj-联合电子",
+     "company": "联合电子",
+     "site_id": "qqj-联合电子-site",
+     "site_name": "联合电子",
+     "city": "上海市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/uaes2027/job.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-联合电子.json",
+     "slug": "qqj-联合电子",
+     "company": "联合电子",
+     "site_id": "qqj-联合电子-site-西安",
+     "site_name": "联合电子",
+     "city": "西安市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/uaes2027/job.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-联合电子.json",
+     "slug": "qqj-联合电子",
+     "company": "联合电子",
+     "site_id": "qqj-联合电子-site-芜湖",
+     "site_name": "联合电子",
+     "city": "芜湖市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/uaes2027/job.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-联合电子.json",
+     "slug": "qqj-联合电子",
+     "company": "联合电子",
+     "site_id": "qqj-联合电子-site-重庆",
+     "site_name": "联合电子",
+     "city": "重庆市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/uaes2027/job.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-联合电子.json",
+     "slug": "qqj-联合电子",
+     "company": "联合电子",
+     "site_id": "qqj-联合电子-site-苏州",
+     "site_name": "联合电子",
+     "city": "苏州市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/uaes2027/job.html"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,365 @@
+{
+ "batch": 4,
+ "companies": [
+  {
+   "file": "qqdoc-jobs/qqj-上海立芯.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-上海立芯.json",
+     "slug": "qqj-上海立芯",
+     "company": "上海立芯",
+     "site_id": "qqj-上海立芯-site",
+     "site_name": "上海立芯",
+     "city": "上海 北京 福州   长沙 成都  西安 深圳",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-东风柳汽.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-东风柳汽.json",
+     "slug": "qqj-东风柳汽",
+     "company": "东风柳汽",
+     "site_id": "qqj-东风柳汽-site",
+     "site_name": "东风柳汽",
+     "city": "柳州市",
+     "province": "",
+     "careerUrl": "https://xy.liepin.com/dflzqcwzcl/positions.html?area=%E8%81%94%E5%90%88%E5%8F%91%E8%B5%B7%E4%BB%AA%E5%BC%8F%E4%B8%93%E5%8C%BA&company=%E4%B8%9C%E9%A3%8E%E6%9F%B3%E5%B7%9E%E6%B1%BD%E8%BD%A6%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中国人民保险集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中国人民保险集团.json",
+     "slug": "qqj-中国人民保险集团",
+     "company": "中国人民保险集团",
+     "site_id": "qqj-中国人民保险集团-site",
+     "site_name": "中国人民保险集团",
+     "city": "全国",
+     "province": "",
+     "careerUrl": "https://picc.zhiye.com/custom/xiaoyuan?hideAll=true"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中国电科43所.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中国电科43所.json",
+     "slug": "qqj-中国电科43所",
+     "company": "中国电科43 所",
+     "site_id": "qqj-中国电科43所-site",
+     "site_name": "中国电科43 所",
+     "city": "合肥",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中国电科产业基础研究院暑期开放日.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中国电科产业基础研究院暑期开放日.json",
+     "slug": "qqj-中国电科产业基础研究院暑期开放日",
+     "company": "中国电科产业基础研究院—暑期开放日",
+     "site_id": "qqj-中国电科产业基础研究院暑期开放日-site",
+     "site_name": "中国电科产业基础研究院—暑期开放日",
+     "city": "石家庄",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中国电科网络通信研究院.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中国电科网络通信研究院.json",
+     "slug": "qqj-中国电科网络通信研究院",
+     "company": "“中国电科网络通信研究院”",
+     "site_id": "qqj-中国电科网络通信研究院-site",
+     "site_name": "“中国电科网络通信研究院”",
+     "city": "石家庄",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/2026cetc54/about1.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中国软件评测中心.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中国软件评测中心.json",
+     "slug": "qqj-中国软件评测中心",
+     "company": "中国软件评测中心",
+     "site_id": "qqj-中国软件评测中心-site",
+     "site_name": "中国软件评测中心",
+     "city": "北京",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中大咨询集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中大咨询集团.json",
+     "slug": "qqj-中大咨询集团",
+     "company": "中大咨询集团",
+     "site_id": "qqj-中大咨询集团-site",
+     "site_name": "中大咨询集团",
+     "city": "北京 广州 全国其他",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中汽工程暑期开放日.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中汽工程暑期开放日.json",
+     "slug": "qqj-中汽工程暑期开放日",
+     "company": "| 中汽工程—暑期开放日",
+     "site_id": "qqj-中汽工程暑期开放日-site",
+     "site_name": "| 中汽工程—暑期开放日",
+     "city": "天津  苏州",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中泰证券.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中泰证券.json",
+     "slug": "qqj-中泰证券",
+     "company": "中泰证券",
+     "site_id": "qqj-中泰证券-site",
+     "site_name": "中泰证券",
+     "city": "北京 上海  深圳 济南 青岛 全国其他",
+     "province": "",
+     "careerUrl": "https://zts.hotjob.cn/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中洲集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中洲集团.json",
+     "slug": "qqj-中洲集团",
+     "company": "中洲集团",
+     "site_id": "qqj-中洲集团-site",
+     "site_name": "中洲集团",
+     "city": "宁波",
+     "province": "",
+     "careerUrl": "https://career.shenzhouintl.com/campus/jobs?sessionid="
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中祥英.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中祥英.json",
+     "slug": "qqj-中祥英",
+     "company": "中祥英",
+     "site_id": "qqj-中祥英-site",
+     "site_name": "中祥英",
+     "city": "北京  成都  重庆",
+     "province": "",
+     "careerUrl": "https://投递简历看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中科天算.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中科天算.json",
+     "slug": "qqj-中科天算",
+     "company": "中科天算",
+     "site_id": "qqj-中科天算-site",
+     "site_name": "中科天算",
+     "city": "上海 南京 北京  杭州",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中科曙光.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中科曙光.json",
+     "slug": "qqj-中科曙光",
+     "company": "中科曙光",
+     "site_id": "qqj-中科曙光-site",
+     "site_name": "中科曙光",
+     "city": "郑州 天津 西安 昆山 北京 上海 深圳 南京 杭州",
+     "province": "",
+     "careerUrl": "https://sugon.zhiye.com/campus/jobs?sessionid="
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中科本原.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中科本原.json",
+     "slug": "qqj-中科本原",
+     "company": "中科本原",
+     "site_id": "qqj-中科本原-site",
+     "site_name": "中科本原",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://www.fdmtek.com/fresh-graduate.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-中科本原.json",
+     "slug": "qqj-中科本原",
+     "company": "中科本原",
+     "site_id": "qqj-中科本原-site-青岛",
+     "site_name": "中科本原",
+     "city": "青岛市",
+     "province": "",
+     "careerUrl": "https://www.fdmtek.com/fresh-graduate.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中联重科.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中联重科.json",
+     "slug": "qqj-中联重科",
+     "company": "中联重科",
+     "site_id": "qqj-中联重科-site",
+     "site_name": "中联重科",
+     "city": "长沙",
+     "province": "",
+     "careerUrl": "https://文中扫码投递简历"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中船七二五所.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中船七二五所.json",
+     "slug": "qqj-中船七二五所",
+     "company": "中船七二五所",
+     "site_id": "qqj-中船七二五所-site",
+     "site_name": "中船七二五所",
+     "city": "洛阳市",
+     "province": "",
+     "careerUrl": "https://xiaoyuan.zhaopin.com/company/KA1511175220D90000001000"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中铁大桥院.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中铁大桥院.json",
+     "slug": "qqj-中铁大桥院",
+     "company": "中铁大桥院",
+     "site_id": "qqj-中铁大桥院-site",
+     "site_name": "中铁大桥院",
+     "city": "武汉 南京  广州  芜湖",
+     "province": "",
+     "careerUrl": "https://brdi.zhiye.com/campus"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-中际旭创.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-中际旭创.json",
+     "slug": "qqj-中际旭创",
+     "company": "中际旭创",
+     "site_id": "qqj-中际旭创-site",
+     "site_name": "中际旭创",
+     "city": "苏州市",
+     "province": "",
+     "careerUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/list"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-中际旭创.json",
+     "slug": "qqj-中际旭创",
+     "company": "中际旭创",
+     "site_id": "qqj-中际旭创-site-成都",
+     "site_name": "中际旭创",
+     "city": "成都市",
+     "province": "",
+     "careerUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/list"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-中际旭创.json",
+     "slug": "qqj-中际旭创",
+     "company": "中际旭创",
+     "site_id": "qqj-中际旭创-site-上海",
+     "site_name": "中际旭创",
+     "city": "上海市",
+     "province": "",
+     "careerUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/list"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-中际旭创.json",
+     "slug": "qqj-中际旭创",
+     "company": "中际旭创",
+     "site_id": "qqj-中际旭创-site-北京",
+     "site_name": "中际旭创",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://zj-innolight.jobs.feishu.cn/300308/position/list"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-临界点.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-临界点.json",
+     "slug": "qqj-临界点",
+     "company": "临界点",
+     "site_id": "qqj-临界点-site",
+     "site_name": "临界点",
+     "city": "上海市",
+     "province": "",
+     "careerUrl": "https://agirobot.jobs.feishu.cn/referral/campus/position/share/?token=MjsxNzg1ODUzOTMzMDAwOzc2MDM1NjY1MzQzNzE0MTMxODg7NzY3MDE3NTQxNjQxMDU3MzA5OTsxLzE"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-临界点.json",
+     "slug": "qqj-临界点",
+     "company": "临界点",
+     "site_id": "qqj-临界点-site-深圳",
+     "site_name": "临界点",
+     "city": "深圳市",
+     "province": "",
+     "careerUrl": "https://agirobot.jobs.feishu.cn/referral/campus/position/share/?token=MjsxNzg1ODUzOTMzMDAwOzc2MDM1NjY1MzQzNzE0MTMxODg7NzY3MDE3NTQxNjQxMDU3MzA5OTsxLzE"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-临界点.json",
+     "slug": "qqj-临界点",
+     "company": "临界点",
+     "site_id": "qqj-临界点-site-北京",
+     "site_name": "临界点",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://agirobot.jobs.feishu.cn/referral/campus/position/share/?token=MjsxNzg1ODUzOTMzMDAwOzc2MDM1NjY1MzQzNzE0MTMxODg7NzY3MDE3NTQxNjQxMDU3MzA5OTsxLzE"
+    }
+   ]
+  }
+ ]
+}

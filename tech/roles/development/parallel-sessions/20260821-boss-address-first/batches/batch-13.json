@@ -1,0 +1,305 @@
+{
+ "batch": 13,
+ "companies": [
+  {
+   "file": "qqdoc-official/qq-中国机械科学研究总院.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国机械科学研究总院.json",
+     "slug": "qq-中国机械科学研究总院",
+     "company": "中国机械科学研究总院",
+     "site_id": "qq-中国机械科学研究总院-site-hq",
+     "site_name": "中国机械科学研究总院",
+     "city": "中国机械科学研究总院总部",
+     "province": "",
+     "careerUrl": "https://www.cam.com.cn/channels/175.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国电信.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国电信.json",
+     "slug": "qq-中国电信",
+     "company": "中国电信",
+     "site_id": "qq-中国电信-site-hq",
+     "site_name": "中国电信",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "http://www.chinatelecom.com.cn/zp/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国电子.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国电子.json",
+     "slug": "qq-中国电子",
+     "company": "中国电子",
+     "site_id": "qq-中国电子-site-hq",
+     "site_name": "中国电子",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://cec.hotjob.cn/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国电子科技集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国电子科技集团.json",
+     "slug": "qq-中国电子科技集团",
+     "company": "中国电子科技集团",
+     "site_id": "qq-中国电子科技集团-site-hq",
+     "site_name": "中国电子科技集团",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "http://www.cetc.com.cn/zgdk/1593022/1592495/index.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国电建招聘.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国电建招聘.json",
+     "slug": "qq-中国电建招聘",
+     "company": "中国电建招聘",
+     "site_id": "qq-中国电建招聘-site-hq",
+     "site_name": "中国电建招聘",
+     "city": "中国电建招聘总部",
+     "province": "",
+     "careerUrl": "https://zhaopin.powerchina.cn/index"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国盐业集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国盐业集团.json",
+     "slug": "qq-中国盐业集团",
+     "company": "中国盐业集团",
+     "site_id": "qq-中国盐业集团-site-hq",
+     "site_name": "中国盐业集团",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "http://www.chinasalt.com.cn/rlzy/rczp/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国石油.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国石油.json",
+     "slug": "qq-中国石油",
+     "company": "中国石油",
+     "site_id": "qq-中国石油-site-hq",
+     "site_name": "中国石油",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://www.cnpc.com.cn/cnpc/jrwm/jrwm_index.shtml"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国矿产资源集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国矿产资源集团.json",
+     "slug": "qq-中国矿产资源集团",
+     "company": "中国矿产资源集团",
+     "site_id": "qq-中国矿产资源集团-site-hq",
+     "site_name": "中国矿产资源集团",
+     "city": "中国矿产资源集团总部",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/p/cmr/campus"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国移动.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国移动.json",
+     "slug": "qq-中国移动",
+     "company": "中国移动",
+     "site_id": "qq-中国移动-site-hq",
+     "site_name": "中国移动",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://job.10086.cn/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国联通.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国联通.json",
+     "slug": "qq-中国联通",
+     "company": "中国联通",
+     "site_id": "qq-中国联通-site-hq",
+     "site_name": "中国联通",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "http://www.chinaunicom.com.cn/46/menu01/528/column06"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国能源建设.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国能源建设.json",
+     "slug": "qq-中国能源建设",
+     "company": "中国能源建设",
+     "site_id": "qq-中国能源建设-site-hq",
+     "site_name": "中国能源建设",
+     "city": "中国能源建设总部",
+     "province": "",
+     "careerUrl": "https://www.ceec.net.cn/col/col11057/index.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国航信.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国航信.json",
+     "slug": "qq-中国航信",
+     "company": "中国航信",
+     "site_id": "qq-中国航信-site-hq",
+     "site_name": "中国航信",
+     "city": "中国航信总部",
+     "province": "",
+     "careerUrl": "http://www.travelsky.cn/publish/main/38/61/258/index.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国航天科技集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国航天科技集团.json",
+     "slug": "qq-中国航天科技集团",
+     "company": "中国航天科技集团",
+     "site_id": "qq-中国航天科技集团-site-hq",
+     "site_name": "中国航天科技集团",
+     "city": "中国航天科技集团总部",
+     "province": "",
+     "careerUrl": "https://www.spacetalent.com.cn/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国航空发动机集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国航空发动机集团.json",
+     "slug": "qq-中国航空发动机集团",
+     "company": "中国航空发动机集团",
+     "site_id": "qq-中国航空发动机集团-site-hq",
+     "site_name": "中国航空发动机集团",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://aecc.iguopin.com/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国航空工业集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国航空工业集团.json",
+     "slug": "qq-中国航空工业集团",
+     "company": "中国航空工业集团",
+     "site_id": "qq-中国航空工业集团-site-hq",
+     "site_name": "中国航空工业集团",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://www.avic.com.cn/hdjl/jtgg/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国航空油料集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国航空油料集团.json",
+     "slug": "qq-中国航空油料集团",
+     "company": "中国航空油料集团",
+     "site_id": "qq-中国航空油料集团-site-hq",
+     "site_name": "中国航空油料集团",
+     "city": "中国航空油料集团总部",
+     "province": "",
+     "careerUrl": "http://www.cnaf.com/PORTAL_LNG_RLS_XWGJ.getFormList.do?LM_CODE=CNAF_HR_RCZLHLN&amp;LM_CONTENT_TYPE=2"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国远洋海运集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国远洋海运集团.json",
+     "slug": "qq-中国远洋海运集团",
+     "company": "中国远洋海运集团",
+     "site_id": "qq-中国远洋海运集团-site-hq",
+     "site_name": "中国远洋海运集团",
+     "city": "中国远洋海运集团总部",
+     "province": "",
+     "careerUrl": "https://www.coscoshipping.com/col9555/art/2022/art_9555_287771.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国邮储.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国邮储.json",
+     "slug": "qq-中国邮储",
+     "company": "中国邮储",
+     "site_id": "qq-中国邮储-site-hq",
+     "site_name": "中国邮储",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://www.psbc.com/cn/gyyc/rczp/xyzp/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国铁建股份.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国铁建股份.json",
+     "slug": "qq-中国铁建股份",
+     "company": "中国铁建股份",
+     "site_id": "qq-中国铁建股份-site-hq",
+     "site_name": "中国铁建股份",
+     "city": "中国铁建股份总部",
+     "province": "",
+     "careerUrl": "https://www.crcc.cn/col/col214/index.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-中国铁路通信信号集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-中国铁路通信信号集团.json",
+     "slug": "qq-中国铁路通信信号集团",
+     "company": "中国铁路通信信号集团",
+     "site_id": "qq-中国铁路通信信号集团-site-hq",
+     "site_name": "中国铁路通信信号集团",
+     "city": "中国铁路通信信号集团总部",
+     "province": "",
+     "careerUrl": "http://www.crsc.cn/1095.html"
+    }
+   ]
+  }
+ ]
+}

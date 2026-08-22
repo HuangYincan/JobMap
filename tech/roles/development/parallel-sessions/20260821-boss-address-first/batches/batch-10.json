@@ -1,0 +1,355 @@
+{
+ "batch": 10,
+ "companies": [
+  {
+   "file": "qqdoc-jobs/qqj-航天502所.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-航天502所.json",
+     "slug": "qqj-航天502所",
+     "company": "航天502所",
+     "site_id": "qqj-航天502所-site",
+     "site_name": "航天502所",
+     "city": "北京",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/campus-recruitment/bice/144168#/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-航天东方红.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-航天东方红.json",
+     "slug": "qqj-航天东方红",
+     "company": "航天东方红",
+     "site_id": "qqj-航天东方红-site",
+     "site_name": "航天东方红",
+     "city": "北京",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-航天五院.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-航天五院.json",
+     "slug": "qqj-航天五院",
+     "company": "航天五院",
+     "site_id": "qqj-航天五院-site",
+     "site_name": "航天五院",
+     "city": "北京 天津 烟台  西安  兰州 深圳  杭州",
+     "province": "",
+     "careerUrl": "https://文中扫码看报名方式"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-航天科技集团五院遥感卫星总体部.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-航天科技集团五院遥感卫星总体部.json",
+     "slug": "qqj-航天科技集团五院遥感卫星总体部",
+     "company": "航天科技集团五院遥感卫星总体部",
+     "site_id": "qqj-航天科技集团五院遥感卫星总体部-site",
+     "site_name": "航天科技集团五院遥感卫星总体部",
+     "city": "北京",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-航空工业兴华.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-航空工业兴华.json",
+     "slug": "qqj-航空工业兴华",
+     "company": "航空工业兴华",
+     "site_id": "qqj-航空工业兴华-site",
+     "site_name": "航空工业兴华",
+     "city": "沈阳",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-艾飞智控.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-艾飞智控.json",
+     "slug": "qqj-艾飞智控",
+     "company": "艾飞智控",
+     "site_id": "qqj-艾飞智控-site",
+     "site_name": "艾飞智控",
+     "city": "深圳 南京 西安",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-芯原股份.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-芯原股份.json",
+     "slug": "qqj-芯原股份",
+     "company": "芯原股份",
+     "site_id": "qqj-芯原股份-site",
+     "site_name": "芯原股份",
+     "city": "上海市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/VeriSilicon2027/post.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-芯原股份.json",
+     "slug": "qqj-芯原股份",
+     "company": "芯原股份",
+     "site_id": "qqj-芯原股份-site-南京",
+     "site_name": "芯原股份",
+     "city": "南京市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/VeriSilicon2027/post.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-芯原股份.json",
+     "slug": "qqj-芯原股份",
+     "company": "芯原股份",
+     "site_id": "qqj-芯原股份-site-成都",
+     "site_name": "芯原股份",
+     "city": "成都市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/VeriSilicon2027/post.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-芯原股份.json",
+     "slug": "qqj-芯原股份",
+     "company": "芯原股份",
+     "site_id": "qqj-芯原股份-site-广州",
+     "site_name": "芯原股份",
+     "city": "广州市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/VeriSilicon2027/post.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-芯恩.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-芯恩.json",
+     "slug": "qqj-芯恩",
+     "company": "芯恩",
+     "site_id": "qqj-芯恩-site",
+     "site_name": "芯恩",
+     "city": "青岛",
+     "province": "",
+     "careerUrl": "https://wecruit.hotjob.cn/SU64ebfd3f1eb80519a8f9db42/pb/school.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-芯联集成.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-芯联集成.json",
+     "slug": "qqj-芯联集成",
+     "company": "芯联集成",
+     "site_id": "qqj-芯联集成-site",
+     "site_name": "芯联集成",
+     "city": "绍兴 上海",
+     "province": "",
+     "careerUrl": "https://smec.zhiye.com/campus/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-苏纳.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-苏纳.json",
+     "slug": "qqj-苏纳",
+     "company": "苏纳",
+     "site_id": "qqj-苏纳-site",
+     "site_name": "苏纳",
+     "city": "苏州",
+     "province": "",
+     "careerUrl": "https://suna-opto.zhiye.com/campus/detail?jobAdId=35cc995a-3680-44aa-9bcd-7aeb857c3bf0"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-荣盛集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-荣盛集团.json",
+     "slug": "qqj-荣盛集团",
+     "company": "荣盛集团",
+     "site_id": "qqj-荣盛集团-site",
+     "site_name": "荣盛集团",
+     "city": "杭州市",
+     "province": "",
+     "careerUrl": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-荣盛集团.json",
+     "slug": "qqj-荣盛集团",
+     "company": "荣盛集团",
+     "site_id": "qqj-荣盛集团-site-宁波",
+     "site_name": "荣盛集团",
+     "city": "宁波市",
+     "province": "",
+     "careerUrl": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-荣盛集团.json",
+     "slug": "qqj-荣盛集团",
+     "company": "荣盛集团",
+     "site_id": "qqj-荣盛集团-site-苏州",
+     "site_name": "荣盛集团",
+     "city": "苏州市",
+     "province": "",
+     "careerUrl": "https://www.cnrspc.com/ProductInfoCategory?categoryId=818961&PageInfoId=0"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-语核科技.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-语核科技.json",
+     "slug": "qqj-语核科技",
+     "company": "语核科技",
+     "site_id": "qqj-语核科技-site",
+     "site_name": "语核科技",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-豪迈集团职能实习生.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-豪迈集团职能实习生.json",
+     "slug": "qqj-豪迈集团职能实习生",
+     "company": "豪迈集团—职能实习生",
+     "site_id": "qqj-豪迈集团职能实习生-site",
+     "site_name": "豪迈集团—职能实习生",
+     "city": "上东 潍坊高密",
+     "province": "",
+     "careerUrl": "https://himile1.zhiye.com/social/detail?jobAdId=d9140fec-a078-4b43-b6d0-d83b3070bb5e"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-赛乐医疗.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-赛乐医疗.json",
+     "slug": "qqj-赛乐医疗",
+     "company": "赛乐医疗",
+     "site_id": "qqj-赛乐医疗-site",
+     "site_name": "赛乐医疗",
+     "city": "江苏常州",
+     "province": "",
+     "careerUrl": "https://sifary.zhiye.com/campus/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-赛美特集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-赛美特集团.json",
+     "slug": "qqj-赛美特集团",
+     "company": "赛美特集团",
+     "site_id": "qqj-赛美特集团-site",
+     "site_name": "赛美特集团",
+     "city": "上海 苏州 深圳北京 成都 大连 杭州 合肥 厦门 广州 香港 全国",
+     "province": "",
+     "careerUrl": "https://semi.zhiye.com/campus/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-路威凯腾.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-路威凯腾.json",
+     "slug": "qqj-路威凯腾",
+     "company": "路威凯腾",
+     "site_id": "qqj-路威凯腾-site",
+     "site_name": "路威凯腾",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://投 递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-轩宇信息AI专项.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-轩宇信息AI专项.json",
+     "slug": "qqj-轩宇信息AI专项",
+     "company": "轩宇信息—AI专项",
+     "site_id": "qqj-轩宇信息AI专项-site",
+     "site_name": "轩宇信息—AI专项",
+     "city": "北京",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-迈睿机器人.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-迈睿机器人.json",
+     "slug": "qqj-迈睿机器人",
+     "company": "迈睿机器人",
+     "site_id": "qqj-迈睿机器人-site",
+     "site_name": "迈睿机器人",
+     "city": "杭州",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-远景动力.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-远景动力.json",
+     "slug": "qqj-远景动力",
+     "company": "远景动力",
+     "site_id": "qqj-远景动力-site",
+     "site_name": "远景动力",
+     "city": "上海 江阴  鄂尔多斯 宜昌  十堰  沧州  美国  法国  日本  英国  西班牙",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/campus-recruitment/envisiongroup/43123?sharePageId=4688577&sourceToken=d744864c724488515e88c7cb4885e2c9#/page/%E8%BF%9C%E6%99%AF%E5%8A%A8%E5%8A%9B"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-逆矩阵.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-逆矩阵.json",
+     "slug": "qqj-逆矩阵",
+     "company": "逆矩阵",
+     "site_id": "qqj-逆矩阵-site",
+     "site_name": "逆矩阵",
+     "city": "北京",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  }
+ ]
+}
