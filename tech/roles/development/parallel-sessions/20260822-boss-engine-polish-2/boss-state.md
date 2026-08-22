@@ -11,7 +11,7 @@
 
 ## stage
 
-- current: NEXT(5 轮全部完成:MERGED_ALL ×5,push f32d3cc;5 bug 全绿 + 主树最终复验通过)
+- current: NEXT(6 轮全部完成:MERGED_ALL ×6,push d3690e8;切换堆叠 bug 修复 + 主树最终复验通过)
 - updated_at: 2026-08-22
 
 ## 最终复验(boss,轮5 合并后主树)
