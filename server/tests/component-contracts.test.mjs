@@ -983,22 +983,22 @@ test('agent panel completion status + clear screen (ws-done)', () => {
   assert.match(panel, /completion && !streaming/);
   assert.match(panel, /styles\.completion\}[^]*role="status"/);
   assert.match(css, /\.completion \{\s*align-self: center;\s*color: var\(--muted\)/);
-  // done 事件 → 'done';停止 abort → finally 判定 'stopped'(纯函数 resolveCompletion)
-  assert.match(panel, /setCompletion\("done"\)/);
-  assert.match(panel, /setCompletion\(resolveCompletion\(doneRef\.current, controller\.signal\.aborted\)\)/);
+  // 完成状态 per-session(ws-pstream):done 事件经 markDone 只落本会话 entry;
+  // 停止 abort → finally 的 finishStream 判定 'stopped'(与 executor resolveCompletion
+  // 同款规则,纯函数在 lib/agent-stream-store)
+  assert.match(panel, /setStreamsBoth\(\(prev\) => markDone\(prev, sid, Boolean\(truncated\)\)\)/);
+  assert.match(panel, /finishStream\(prev, sessionId, controller\.signal\.aborted\)/);
   assert.match(executor, /export function resolveCompletion\(doneReceived: boolean, aborted: boolean\)/);
-  // 新消息发送清零完成状态
-  assert.match(panel, /doneRef\.current = false;/);
+  // 新消息发送清零完成状态:startStream 覆盖式建流(createSessionStream 重置
+  // done/completion/truncated/notConfigured/fatalError/tool)
+  assert.match(panel, /startStream\(prev, sessionId, controller, nextMessages\)/);
   // 清屏按钮:clearOverlays + 归档当前会话(有消息才归档,标题保留)+ 新建空会话
-  // 并激活(ws-clearfix)+ 清状态;流式期间禁用
-  assert.match(panel, /onClick=\{clearScreen\} disabled=\{streaming\}/);
+  // 并激活(ws-clearfix);**流式时先停当前会话并移除其流**(不再禁用,其余会话流不受影响)
+  assert.match(panel, /onClick=\{clearScreen\}/);
   assert.match(panel, /t\("agentClear", lang\)/);
   assert.match(panel, /executorRef\.current\?\.clearOverlays\(\)/);
-  assert.match(panel, /archiveAndNew\(cur, \{/); // 清屏路径走 archiveAndNew
-  assert.match(panel, /activeId: cur\.activeId,/);
-  assert.match(panel, /messages: messagesRef\.current,/); // 工作副本落库为历史
-  assert.match(panel, /title: curSession\?\.title,/); // 标题保留原样
-  assert.match(panel, /setMessagesBoth\(\[\]\)/);
+  assert.match(panel, /archiveAndNew\(cur, \{\s*activeId,\s*messages: sessionMessages\(activeId\),\s*title: curSession\?\.title,/); // 归档当前会话 + 新建空会话
+  assert.match(panel, /removeStream\(prev, activeId\)/); // 停止并移除当前会话流(迟到事件 no-op)
   assert.doesNotMatch(panel, /sessionStorage\.removeItem/); // 不再直写旧键(迁移归 store)
   // 执行器:undo 栈条目带 kind 标记(overlay 类供清屏识别);clearOverlays 只清 overlay
   assert.match(executor, /kind: "camera"/);
@@ -1137,9 +1137,17 @@ test('agent panel sessions: header entry + popover + local store (ws-panel2)', (
   assert.match(panel, /sessionRowActive/);
   assert.match(panel, /isActive \? "●" : "○"/);
   assert.match(panel, /aria-current=\{isActive \? "true" : undefined\}/);
-  // 新建/切换:streaming 先 stop;切换前工作副本落库旧会话
-  assert.match(panel, /if \(streaming\) stop\(\)/);
-  assert.match(panel, /saveMessages\(next, cur\.activeId, messagesRef\.current\)/);
+  // 切换会话(ws-pstream):只改 activeId,**不 stop、不打断**(正则断言切换路径无
+  // stop()/abort —— 并行流后台继续跑);切换前工作副本落库旧会话
+  const switchAt = panel.indexOf('const switchToSession = useCallback');
+  assert.ok(switchAt !== -1, 'switchToSession anchor exists');
+  const switchBlock = panel.slice(switchAt, panel.indexOf('const newSession = useCallback', switchAt));
+  assert.doesNotMatch(switchBlock, /stop\(\)/, '切换会话不再调用 stop(切走不打断)');
+  assert.doesNotMatch(switchBlock, /abort/, '切换会话不终止任何流');
+  assert.match(panel, /saveMessages\(next, cur\.activeId, sessionMessages\(cur\.activeId\)\)/);
+  // 流式中的会话显示「进行中」弱化蓝点标记(per-session 条件渲染,addon 必做)
+  assert.match(panel, /const isRunning = isStreaming\(streams, s\.id\)/);
+  assert.match(panel, /\{isRunning && \([\s\S]{0,120}styles\.sessionStreaming[\s\S]{0,120}t\("agentSessionStreaming", lang\)/);
   // 清屏/会话语义:清屏 = archiveAndNew(归档当前会话 + 新建空会话),其余消息
   // 变更统一走 store;旧键仅迁移读(不再直写)
   assert.match(panel, /archiveAndNew\(cur, \{/);
@@ -1170,10 +1178,12 @@ test('agent panel sessions: header entry + popover + local store (ws-panel2)', (
   assert.match(i18n, /agentSessionJustNow: \{\s*zh: '刚刚',\s*en: 'Just now',\s*\},/);
   assert.match(i18n, /agentSessionMinutesAgo: \{\s*zh: '\{n\} 分钟前',\s*en: '\{n\} min ago',\s*\},/);
   assert.match(i18n, /agentSessionHoursAgo: \{\s*zh: '\{n\} 小时前',\s*en: '\{n\} hr ago',\s*\},/);
-  // CSS:会话弹层 + 当前会话蓝底高亮 + 删除 hover 红
+  assert.match(i18n, /agentSessionStreaming: \{\s*zh: '进行中',\s*en: 'Running',\s*\},/); // 流式进行中标记(ws-pstream)
+  // CSS:会话弹层 + 当前会话蓝底高亮 + 删除 hover 红 + 进行中弱化蓝点脉冲
   assert.match(css, /\.sessionsPanel \{/);
   assert.match(css, /\.sessionRowActive \{[\s\S]*rgba\(0, 122, 255, 0\.1\)/);
   assert.match(css, /\.sessionDelete:hover \{[\s\S]*color: #ff3b30/);
+  assert.match(css, /\.sessionStreaming \{[\s\S]*animation: sessionStreamingPulse/);
 });
 
 test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
