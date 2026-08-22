@@ -11,8 +11,18 @@
 
 ## stage
 
-- current: DISPATCH(轮10 ws-k/ws-l 并行:腾讯 icon 边框 + 百度滚轮闪烁,2026-08-23)
+- current: NEXT(轮10 闭环:MERGED_ALL,push 868bab1;主树最终复验通过)
 - updated_at: 2026-08-23
+
+## 轮10 终态(2026-08-23,ws-k + ws-l 并行)
+
+- **ws-k(腾讯 icon 边框)**:icon.horse 升级丢边框 → `badgeWithRemoteIcon`(fetch 字节内联
+  真 logo 进徽章 SVG;`<image href>` 远程直引实测不渲染 → 字节内联预案)→ MERGED 56bc627。
+- **ws-l(百度滚轮闪烁)**:根因 = BMapGL SDK webgl 在 zoomstart/movestart/animation_start
+  隐藏 markerMouseTarget pane(徽章全灭);修复 = 同事件恢复 pane + rAF 按帧重算 → MERGED 868bab1。
+- **主树最终复验(boss)**:腾讯徽章 = 白底 + 边框 + 居中真 logo(采样 (853,422) 完整);
+  百度滚轮缩放 DOM 徽章 0 隐藏瞬变(total==visible 恒定)、像素位移连续(4.7px→0 平滑);
+  console 0 error。
 
 ## 轮10(2026-08-23,ws-k + ws-l)用户新报 2 bug
 
@@ -56,8 +66,8 @@
 | g | fix/baidu-r5 | /Users/acccan/dm-wt-br5 | prompts/ws-g.md | reports/ws-g.md | DONE | 385155e | 轮5(fixPosition 反绕) | 2026-08-22 | OK(3 commits, 1434/1432 pass;SDK fixPosition 反绕根因 + 实例遮蔽修复) |
 | i | fix/tmap-badge-overlap | /Users/acccan/dm-wt-tov | prompts/ws-i.md | reports/ws-i.md | MERGED | c16e0d5 | 轮8 | 2026-08-23 | OK(6 commits, 1461/1461 pass boss 复验;竞态修复 + 链式预检) |
 | j | fix/tmap-mixed-block | /Users/acccan/dm-wt-tmb | prompts/ws-j.md | reports/ws-j.md | MERGED | da4a5fe | 轮9 | 2026-08-23 | OK(2 commits, 1461/1461 pass boss 复验;根因=底图 POI 图标层,features 排除 point) |
-| k | fix/tmap-icon-frame | /Users/acccan/dm-wt-tif | prompts/ws-k.md | reports/ws-k.md | RUNNING | dev c6a919a 切 | 轮10 | — | — |
-| l | fix/baidu-blink | /Users/acccan/dm-wt-bbl | prompts/ws-l.md | reports/ws-l.md | RUNNING | dev c6a919a 切 | 轮10 | — | — |
+| k | fix/tmap-icon-frame | /Users/acccan/dm-wt-tif | prompts/ws-k.md | reports/ws-k.md | MERGED | (worker tip) | 轮10 | 2026-08-23 | OK(4 commits, 1464/1464 pass boss 复验;fetch 字节内联保边框) |
+| l | fix/baidu-blink | /Users/acccan/dm-wt-bbl | prompts/ws-l.md | reports/ws-l.md | MERGED | (worker tip) | 轮10 | 2026-08-23 | OK(3 commits, 1465/1465 pass boss 复验;pane 恢复 + rAF 按帧) |
 
 ## 关键证据(2026-08-22)
 
