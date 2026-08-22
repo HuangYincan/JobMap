@@ -171,9 +171,10 @@ test('officeNameMatchStrength accepts qualifier-wrapped names and rejects same-b
   }
 });
 
-test('officeNameMatchStrength accepts compound qualifier sequences (r4 relax)', () => {
+test('officeNameMatchStrength accepts compound qualifier sequences (grader relax)', () => {
   // 复合限定词: 集合内 token 可拼接 — 研发+大厦 / 科技+公司 / 4 段长串 /
-  // 城市名后缀 (快手北京)。最长 token 优先: 研究院 单段 (不是 研|究|院).
+  // 城市名后缀 (快手北京)。最长 token 优先: 研发大厦 拆 研发|大厦 (不是 研发大|厦),
+  // 研究院 单段 3 字优先于拆段。
   for (const [candidate, company] of [
     ['百度研发大厦', '百度'],
     ['百度大厦', '百度'],
@@ -183,14 +184,14 @@ test('officeNameMatchStrength accepts compound qualifier sequences (r4 relax)', 
     ['得物大厦', '得物'],
     ['快手北京', '快手'],
     ['上海燧原科技', '燧原科技'],
-    // 子品牌名认领: 城市前缀(北京) + 科技(限定词) + 括号 分公司 — 智图 是
-    // 品牌词, 与公司名 百度智图 同源; 对裸 百度 的认领 (智图科技 作后缀) 被
-    // 非限定词防线拒绝 (同 得物包装), 见下方拒收组.
+    // 城市前缀(北京) + 科技|公司 复合 + 括号 分公司 — 认领的公司名须含子品牌
+    // 智图; 对裸 百度 的认领被非限定词 智图 防线拒绝 (同 得物包装), 见拒收组.
     ['北京百度智图科技有限公司(上海分公司)', '百度智图'],
   ]) {
     assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
   }
-  // 非限定词 token 混入 → 整段拒绝 (2026-08-19 防线不回退).
+  // 非限定词 token 混入 → 整段拒绝 (2026-08-19 防线不回退): 包装/实业/鱼庄/造型/
+  // 旗舰店/驿站, 复合中混入 (研发鱼庄), 以及子品牌词 (智图 vs 裸 百度).
   for (const [candidate, company] of [
     ['广州得物包装实业有限公司', '得物'],
     ['百度鱼庄', '百度'],
@@ -216,7 +217,7 @@ test('GOOD_BRACKET_SEG_RE accepts extended office brackets and keeps store/stati
   ]) {
     assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
   }
-  // 店|站|驿站 括号段仍拒收 (不在允许表内即拒).
+  // 店|站|驿站 括号段仍拒收 — 不在允许表内即拒 (分店/旗舰店/体验店/站).
   for (const [candidate, company] of [
     ['百度(分店002)', '百度'],
     ['得物(旗舰店)', '得物'],
