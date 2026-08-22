@@ -22,6 +22,7 @@
 | b | fix/baidu-poi-locate | /Users/acccan/dm-wt-bp | prompts/ws-b.md | reports/ws-b.md | DONE | f77cad0 | 轮1 | 2026-08-22 | OK(3 commits, 1381/1379 pass, boss 已验证;POI 单点级核查三环节正确,定位改浏览器高精度) |
 | c | fix/tencent-poi-icon | /Users/acccan/dm-wt-ti | prompts/ws-c.md | reports/ws-c.md | DONE | 171c544 | 轮1 | 2026-08-22 | OK(3 commits, 1384/1382 pass, boss 已验证;anchor=-offset 契约修正 + icon 候选链) |
 | d | fix/tencent-locate | /Users/acccan/dm-wt-tl | prompts/ws-d.md | reports/ws-d.md | DONE | 2545985 | 轮1 | 2026-08-22 | OK(3 commits, 1375/1373 pass, boss 已验证) |
+| e | fix/baidu-round2 | /Users/acccan/dm-wt-br2 | prompts/ws-e.md | reports/ws-e.md | DONE | 230ff5c | 轮2(boss 实测 follow-up) | 2026-08-22 | OK(3 commits, 1397 pass;2 基线失败=数据域 deferred;POI 根因=BMapGL v1.0 无 setContent 实锤) |
 
 ## 关键证据(2026-08-22)
 
