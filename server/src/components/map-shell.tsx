@@ -38,7 +38,7 @@ import { useModeCacheRestore } from "@/hooks/use-mode-cache-restore";
 import { useSavedLayer } from "@/hooks/use-saved-layer";
 import { useSearchState } from "@/hooks/use-search-state";
 import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
-import { useMapEngine } from "@/hooks/use-map-engine";
+import { useMapEngine, type UseMapEngineResult } from "@/hooks/use-map-engine";
 import type { MapMarker, MapMarkerOptions, MapView } from "@/lib/map-engine/types";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
@@ -97,6 +97,24 @@ function prefetchAllRail() {
 
 type DrawerState = "mini" | "half" | "full";
 type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;
+
+/**
+ * ws-3 加载覆盖层失败态(2026-08-22):useMapEngine 新增契约(与 ws-2 钉死)——
+ *   mountError: { engine: string; code?: string; message: string } | null
+ *   retryMount: () => void(重新执行挂载链;挂载中/已有活 view 时 no-op)
+ * ws-2 分支尚未并入本 worktree 前,以可选属性容错消费:缺省 = 无错误(覆盖层保持
+ * 现状加载态)/ 重试 no-op;并入后失败态与重试自动生效。类型取交叠超集,
+ * 当前与并入后两种签名均通过 typecheck。
+ */
+type MapMountApi = UseMapEngineResult & {
+  mountError?: { engine: string; code?: string; message: string } | null;
+  retryMount?: () => void;
+};
+
+/** 占位重试:ws-2 未并入(useMapEngine 尚无 retryMount)时点击无副作用 */
+const noopMapRetry = () => {
+  /* 并入后由 useMapEngine 的真实 retryMount 替代 */
+};
 
 /** 移动抽屉手势(跟手拖动):三态高度(mini px / half·full 按 vh 计算) */
 const DRAWER_MINI_H = 96;
@@ -291,12 +309,28 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   if (!initialMapViewRef.current) {
     initialMapViewRef.current = { center: { ...mapCenter }, zoom, style: readInitialMapStyle() };
   }
-  const { engine: mapEngine, view: engineView } = useMapEngine({
+  const {
+    engine: mapEngine,
+    view: engineView,
+    mountError = null,
+    retryMount = noopMapRetry,
+  } = useMapEngine({
     containerRef: mapContainer,
     center: initialMapViewRef.current.center,
     zoom: initialMapViewRef.current.zoom,
     style: initialMapViewRef.current.style,
-  });
+  }) as MapMountApi;
+  /** ws-3 重试态:点击后按钮进「重试中…」(disabled + opacity 0.6);新一轮失败
+   * 落地(mountError 重新非空)时复位可再次点击;成功路径由 retryMount 清空
+   * mountError 驱动,覆盖层自动回现状加载态 */
+  const [mapRetrying, setMapRetrying] = useState(false);
+  const handleMountRetry = useCallback(() => {
+    setMapRetrying(true);
+    retryMount();
+  }, [retryMount]);
+  useEffect(() => {
+    if (mountError) setMapRetrying(false);
+  }, [mountError]);
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   /** 非 AMap 引擎用户定位蓝点 marker(AMap 走 amap-api Geolocation 控件,不经此 ref) */
   const blueDotRef = useRef<MapMarker | null>(null);
@@ -2255,7 +2289,27 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         <div ref={mapContainer} style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }} />
         {!mapReady && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 14 }}>
-            {process.env.NEXT_PUBLIC_AMAP_KEY && process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE
+            {mountError ? (
+              <div className={styles.loadFailed}>
+                <p className={styles.loadFailedTitle}>{t("mapLoadFailed", lang)}</p>
+                <button
+                  type="button"
+                  className={styles.loadFailedRetry}
+                  onClick={handleMountRetry}
+                  disabled={mapRetrying}
+                  aria-label={mapRetrying ? t("mapLoadRetrying", lang) : t("mapLoadRetry", lang)}
+                >
+                  {mapRetrying ? t("mapLoadRetrying", lang) : t("mapLoadRetry", lang)}
+                </button>
+                {mountError.code || mountError.message ? (
+                  <p className={styles.loadFailedDetail}>
+                    {mountError.code && mountError.message
+                      ? `${mountError.code} · ${mountError.message}`
+                      : mountError.code ?? mountError.message}
+                  </p>
+                ) : null}
+              </div>
+            ) : process.env.NEXT_PUBLIC_AMAP_KEY && process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE
               ? "Loading map..."
               : "Set NEXT_PUBLIC_AMAP_KEY and NEXT_PUBLIC_AMAP_SECURITY_CODE in .env.local"}
           </div>

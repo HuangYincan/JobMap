@@ -199,6 +199,19 @@ export const translations = {
     zh: '加载中…',
     en: 'Loading…',
   },
+  // ws-3 加载覆盖层失败态(2026-08-22):引擎挂载失败时替代无反馈永转
+  mapLoadFailed: {
+    zh: '地图加载失败',
+    en: 'Map failed to load',
+  },
+  mapLoadRetry: {
+    zh: '重试',
+    en: 'Retry',
+  },
+  mapLoadRetrying: {
+    zh: '重试中…',
+    en: 'Retrying…',
+  },
   noResults: {
     zh: '未找到结果',
     en: 'No results found',

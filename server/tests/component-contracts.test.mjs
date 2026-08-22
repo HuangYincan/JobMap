@@ -303,6 +303,36 @@ test('map shell scale control: cleanup 接线 + 销毁保护 + 无双 addControl
   assert.match(shell, /addScaleControl/); // 统一创建函数
 });
 
+test('map loading overlay: 挂载失败态 + 重试按钮接线(ws-3 loading-error-ui)', () => {
+  const shell = src('components/map-shell.tsx');
+  const css = src('components/map-shell.module.css');
+  const i18n = src('lib/i18n.ts');
+  // 失败态由 useMapEngine 契约驱动(与 ws-2 钉死:mountError / retryMount);
+  // ws-2 未并入时以缺省容错,mountError 缺省 null → 覆盖层保持现状加载态
+  assert.match(shell, /mountError = null/);
+  assert.match(shell, /retryMount = noopMapRetry/);
+  // 覆盖层三态:失败态分支在加载中文案前;加载中/配置缺失文案零改动
+  assert.match(shell, /mountError \? \(/);
+  assert.match(shell, /"Loading map\.\.\."/);
+  assert.match(shell, /Set NEXT_PUBLIC_AMAP_KEY and NEXT_PUBLIC_AMAP_SECURITY_CODE in \.env\.local/);
+  // 重试按钮:点击走 retryMount,重试中 disabled + 切换文案,键盘可达(type=button)
+  assert.match(shell, /onClick=\{handleMountRetry\}/);
+  assert.match(shell, /disabled=\{mapRetrying\}/);
+  assert.match(shell, /type="button"/);
+  assert.match(shell, /retryMount\(\)/);
+  assert.match(shell, /t\("mapLoadRetrying", lang\)/);
+  // 错误小字:code · message 拼接(单行 ellipsis 类)
+  assert.match(shell, /mountError\.code \?\? mountError\.message/);
+  assert.match(css, /\.loadFailed \{[\s\S]*flex-direction: column/);
+  assert.match(css, /\.loadFailedTitle \{[\s\S]*font-weight: 600/);
+  assert.match(css, /\.loadFailedRetry:focus-visible \{[\s\S]*outline: 2px solid var\(--blue\)/);
+  assert.match(css, /\.loadFailedDetail \{[\s\S]*text-overflow: ellipsis/);
+  // i18n 三级 Key 双写(zh/en)
+  assert.match(i18n, /mapLoadFailed: \{\s*zh: '地图加载失败',\s*en: 'Map failed to load',\s*\},/);
+  assert.match(i18n, /mapLoadRetry: \{\s*zh: '重试',\s*en: 'Retry',\s*\},/);
+  assert.match(i18n, /mapLoadRetrying: \{\s*zh: '重试中…',\s*en: 'Retrying…',\s*\},/);
+});
+
 test('domain category gating (poi-category-loading): 门控/驱动加载/空态提示/空批次保护', () => {
   const shell = src('components/map-shell.tsx');
   const hook = src('hooks/use-work-viewport.ts');

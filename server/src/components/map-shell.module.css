@@ -52,6 +52,59 @@
   isolation: isolate;
 }
 
+/* 加载覆盖层失败态(ws-3,fix/loading-error-ui):引擎挂载失败时替代无反馈永转,
+   提供可操作的重试。加载中/配置缺失文案不归本态(覆盖层容器 inline 样式零改动) */
+.loadFailed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: min(360px, 80vw);
+}
+
+.loadFailedTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.loadFailedRetry {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.loadFailedRetry:hover {
+  background: color-mix(in srgb, var(--blue) 20%, transparent);
+}
+
+.loadFailedRetry:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.loadFailedRetry:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.loadFailedDetail {
+  margin: 0;
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 隐藏高德地图版权信息和 logo，但不影响比例尺 */
 .mapCanvas :global(.amap-copyright) {
   display: none !important;
