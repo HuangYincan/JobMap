@@ -83,12 +83,17 @@ export interface UseMapEngineOptions {
 /** 挂载失败错误态(ws-2):挂载链(含引擎回退、watchdog)全部失败后非 null;
  * 重新开始挂载时立即清 null。ws-3 据此渲染错误出口(重试入口)。 */
 export interface MapMountError {
-  /** 失败引擎 id(回退链全部失败 = 最后一个失败引擎,mount.ts 在最终错误上
-   * 携带 engineId;watchdog 超时 = 偏好引擎 resolved.id) */
+  /** 失败引擎 id(ws-eng-meta 语义修正,2026-08-22):回退链全部失败 =
+   * 实际**最后失败引擎**(mount.ts 在最终错误上携带 engineId;修前缺口:
+   * ① 最后一个失败不是 Error 实例时 mount.ts 兜底错误无 engineId →
+   * engine 回退偏好引擎;② 分类诊断日志 engine 硬编码 偏好引擎,REPRO R4
+   * 观测到的「engine=amap 而 message 是 baidu」即源于此)。语义对齐后
+   * engine/message 恒指同一(最后失败)引擎;watchdog 超时无 engineId →
+   * 偏好引擎 resolved.id(整链超时无法定位单引擎,诚实近似) */
   engine: string;
   /** 引擎错误分类码(透传 err.code;watchdog 超时为 'MOUNT_TIMEOUT') */
   code?: string;
-  /** 可读错误文本(err.message 原文) */
+  /** 可读错误文本(err.message 原文;与 engine 字段同一引擎的失败详情) */
   message: string;
 }
 
@@ -403,10 +408,11 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
           stage?: string;
           guidance?: string;
           engineId?: string;
+          engine?: string;
         };
         if (classified.code) {
           console.warn("[use-map-engine] 引擎加载失败分类:", {
-            engine: resolved.id,
+            engine: classified.engineId ?? resolved.id,
             code: classified.code,
             stage: classified.stage,
             guidance: classified.guidance,
@@ -417,10 +423,13 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
         // 单线程保证:超时触发时链必然 parked 在 await 上,catch 先于其恢复。
         if (classified.code === 'MOUNT_TIMEOUT') mountSeqRef.current++;
         // 错误态(ws-2):失败不再只有 warn —— warn + mountError,调用方据此
-        // 渲染错误出口(重试按钮)。engine = 失败引擎 id(mount.ts 在最终错误
-        // 上携带 engineId;watchdog 超时无 engineId → 偏好引擎 resolved.id)。
+        // 渲染错误出口(重试按钮)。engine = **最后失败引擎** id(ws-eng-meta
+        // 语义归一:mount.ts 在最终错误上携带 engineId → err.engineId 优先,
+        // 其次 err.engine(其它错误形状),兜底偏好引擎 resolved.id——仅
+        // watchdog 超时(无 engineId/engine)落此分支,此时整链超时无法定位
+        // 单引擎,退回偏好引擎是诚实近似)。
         setMountError({
-          engine: classified.engineId ?? resolved.id,
+          engine: classified.engineId ?? classified.engine ?? resolved.id,
           code: classified.code,
           message: err instanceof Error ? err.message : String(err),
         });

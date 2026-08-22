@@ -94,10 +94,18 @@ export async function mountEngineView(
 
   // 全部候选失败:上抛最后一个错误(调用方保持空视图 + warn)。错误对象补上
   // 失败引擎 id(ws-2 错误态 mountError.engine 需要定位「哪个引擎」;分类
-  // 属性 code/stage/guidance 原样保留,不重包装)。
+  // 属性 code/stage/guidance 原样保留,不重包装)。engineId 语义 = 最后一个
+  // 尝试(失败)的引擎 = 回退链最终失败引擎(ws-eng-meta:与 mountError.
+  // engine 归一;偏好引擎 ≠ 最后失败引擎时,取错会误导「偏好引擎挂了」)。
   if (lastError instanceof Error) {
     (lastError as Error & { engineId?: string }).engineId ??= lastEngineId ?? undefined;
     throw lastError;
   }
-  throw new Error('[map-engine] 所有已配置引擎挂载失败');
+  // 最后一个失败不是 Error 实例(引擎实现抛非 Error 值):兜底 Error 同样
+  // 携带最后失败引擎 id,调用方挂载错误态 engine 语义一致(ws-eng-meta)。
+  const fallbackError = new Error('[map-engine] 所有已配置引擎挂载失败') as Error & {
+    engineId?: string;
+  };
+  fallbackError.engineId = lastEngineId ?? undefined;
+  throw fallbackError;
 }
