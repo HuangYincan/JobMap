@@ -20,6 +20,14 @@ export function randomOtpCode(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, '0');
 }
 
+/** 登录「查无此账号」时执行的 dummy 校验:真实 scrypt 抹平时间侧信道(与 account-store 同款)。
+ *  lazy 生成(仅首次命中时 50ms);非秘密。 */
+let dummyVerifyHash: string | null = null;
+function dummyVerifyPassword(password: string): void {
+  if (!dummyVerifyHash) dummyVerifyHash = hashPassword('domain-map-dummy-verify');
+  verifyPassword(password, dummyVerifyHash);
+}
+
 interface StoredUser extends AccountUser {
   createdAt: number;
   /** 仅 password provider 用户有,绝不随 publicUser 返回 */
@@ -170,7 +178,12 @@ export function loginWithPassword(username: string, password: string): AccountUs
       (u) => u.username?.toLowerCase() === name || u.email?.toLowerCase() === name,
     );
   }
-  if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) return null;
+  if (!user?.passwordHash) {
+    // 查无此账号/无密码:也执行一次真实 scrypt,抹平「账号不存在」时间侧信道(scan #3/#17)。
+    dummyVerifyPassword(password);
+    return null;
+  }
+  if (!verifyPassword(password, user.passwordHash)) return null;
   return publicUser(user);
 }
 

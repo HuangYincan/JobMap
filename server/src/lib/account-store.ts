@@ -70,6 +70,15 @@ function hashOtp(code: string): string {
   return createHash('sha256').update(`otp:${code.trim()}`).digest('hex');
 }
 
+/** 登录「查无此人/无密码」时执行的 dummy 校验:用真实 scrypt 参数跑一次,
+ *  抹平「账号不存在」与「密码错误」的响应时间差(时间侧信道,scan #3/#17)。
+ *  lazy 生成(仅首次命中时 50ms),非秘密。 */
+let dummyVerifyHash: string | null = null;
+function dummyVerifyPassword(password: string): void {
+  if (!dummyVerifyHash) dummyVerifyHash = hashPassword('domain-map-dummy-verify');
+  verifyPassword(password, dummyVerifyHash);
+}
+
 function subjectKey(provider: AuthProvider, subject: string): string {
   return `${provider}:${subject.trim().toLowerCase()}`;
 }
@@ -470,7 +479,11 @@ export async function loginWithPassword(username: string, password: string): Pro
         [name.toLowerCase()],
       );
       const row = result.rows[0];
-      if (!row || !row.password_hash) return null;
+      if (!row || !row.password_hash) {
+        // 查无此人/无密码:也执行一次真实 scrypt,抹平「账号不存在」时间侧信道(scan #3/#17)。
+        dummyVerifyPassword(password);
+        return null;
+      }
       if (!verifyPassword(password, row.password_hash)) return null;
       return asUser({ ...row, provider: row.provider ?? 'password' });
     },

@@ -23,6 +23,7 @@ import {
   checkOtpSendLimits as storeCheckOtpSendLimits,
   consumeOtp as storeConsumeOtp,
   issueOtp as storeIssueOtp,
+  loginWithPassword as storeLogin,
   otpRateConfig,
   OtpRateLimitedError,
   upsertIdentity as storeUpsert,
@@ -183,4 +184,50 @@ test('#2 otp/send 路由:per-IP / per-账号桶接线在 issueOtp 之前', () =>
   const guardIdx = route.indexOf('checkOtpSendLimits(clientIp(request), provider, target)');
   const issueIdx = route.indexOf('await issueOtp(provider, target)');
   assert.ok(guardIdx !== -1 && issueIdx !== -1 && guardIdx < issueIdx, '桶校验先于 issueOtp');
+});
+
+// ============================================================
+// #3 密码登录防爆破 + 查无此人 dummy verify
+// ============================================================
+
+test('#3 密码登录路由:429 防爆破滑动窗口接线(守卫先于 scrypt)', () => {
+  const route = src('app/api/auth/password/login/route.ts');
+  assert.match(route, /LOGIN_MAX_FAILURES/);
+  assert.match(route, /LOGIN_IP_MAX_FAILURES/);
+  assert.match(route, /LOGIN_ATTEMPT_WINDOW_MS = 15 \* 60 \* 1000/);
+  assert.match(route, /const loginGuards = new Map<string, LoginGuard>\(\)/);
+  assert.match(route, /checkLoginRateLimit\(ipKey\)/);
+  assert.match(route, /recordLoginFailure\(ipKey, LOGIN_IP_MAX_FAILURES\)/);
+  assert.match(route, /clearLoginFailures\(ipKey\)/);
+  assert.match(route, /clientIp\(request\)/);
+  assert.match(route, /code: 'TOO_MANY_ATTEMPTS'/);
+  assert.match(route, /status: 429/);
+  assert.match(route, /retryAfterMs/);
+  const guardIdx = route.indexOf('checkLoginRateLimit(accountKey)');
+  const loginIdx = route.indexOf('loginWithPassword(username, password)');
+  assert.ok(guardIdx !== -1 && loginIdx !== -1 && guardIdx < loginIdx, '限流先于密码校验(锁定期不跑 scrypt)');
+  // 原契约保持:统一 401 语义,不泄露账号存在性
+  assert.match(route, /code: 'INVALID_CREDENTIALS'/);
+  assert.match(route, /status: 401/);
+  assert.match(route, /invalid username or password/);
+});
+
+test('#3/#17 查无此人 dummy verify:DB(account-store)与内存(session-store)两路径均抹平时序', () => {
+  const store = src('lib/account-store.ts');
+  const mem = src('lib/session-store.ts');
+  assert.match(store, /dummyVerifyPassword\(password\)/);
+  assert.match(mem, /dummyVerifyPassword\(password\)/);
+  assert.match(store, /hashPassword\('domain-map-dummy-verify'\)/);
+  assert.match(mem, /hashPassword\('domain-map-dummy-verify'\)/);
+  // 内存路径登录失败语义不变(统一 null)
+  assert.match(mem, /if \(!user\?\.passwordHash\) \{/);
+});
+
+test('#3 行为:未知账号登录仍统一返回 null(dummy 校验不改变契约)', async () => {
+  __accountStoreTest.poolOverride = () => null;
+  try {
+    assert.equal(await storeLogin(`ghost-${Date.now()}@test.local`, 'password-123'), null);
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+  }
 });
