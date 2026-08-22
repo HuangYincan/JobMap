@@ -215,8 +215,25 @@ function fromTMapLatLng(ll: any): LngLat | null {
 //   value,见 map-shell layers-panel 样式行)在本引擎映射为暗色矢量底图
 // ------------------------------------------------------------
 
-function styleToBaseMap(style: MapStyleId): { type: string } {
-  return { type: style === 'satellite' ? 'satellite' : 'vector' };
+/**
+ * 矢量底图 features(SDK v1.8.0.2 源码核实:DEFAULT_BASEMAP.vector.features =
+ * [base, building3d, point, label, arrow];'base' 含道路,无独立 'road' 项)。
+ * **排除 'point'(POI 图标层)——2026-08-23 ws-j 实测**:
+ * - boss 真机(light 模式)复现的「混合块」(3 处稳定 35×15 #2699f5 圆角蓝块 +
+ *   白 glyph + 光晕) = 腾讯矢量底图自身的 POI 图标,非本应用渲染实体:
+ *   裸 TMap 地图(零应用代码)同位置渲染同款图标;图标随地图平移、不在 DOM、
+ *   不可点击、无对应 MultiMarker geometry(枚举 400 geometry 全投影比对,3 处
+ *   500m 内零 geometry);
+ * - 仅 light(标准)矢量样式渲染 POI 图标;dark 样式实测不渲染(ws-i 验收环境
+ *   为 dark → 与 boss light 环境复现矛盾的根因);
+ * - features 排除 'point' 后混合块消失,道路/绿地/水体/建筑/地名路名标注
+ *   ('label')全部保留(裸地图逐像素 diff 验证:diff 仅 POI 图标簇)。
+ */
+const TENCENT_VECTOR_BASEMAP_FEATURES = ['base', 'building3d', 'label', 'arrow'];
+
+function styleToBaseMap(style: MapStyleId): { type: string; features?: string[] } {
+  if (style === 'satellite') return { type: 'satellite' };
+  return { type: 'vector', features: TENCENT_VECTOR_BASEMAP_FEATURES };
 }
 
 /** 暗色样式 → TMap mapStyleId 选项(见上注释;返回 undefined = 不传,SDK 默认) */
