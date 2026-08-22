@@ -6,7 +6,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
-- **引擎打磨系列收尾(`20260822-boss-engine-polish-2` 轮8–10).** 腾讯 MultiMarker 初始渲染竞态——构造不传 map、挂图后全量 `setGeometries` 重推,首帧徽章即完整,图层落 MARKER 层不被底图文字标注遮挡(ws-i,cd27acd+441231a)+ icon 预检链式推进(只预检候选链第一个 unknown,失败记忆化下次重建推进,26e7673);腾讯矢量底图排除 `point`(POI 图标层)——light 样式「混合块」根因修复,保留地名/路名标注(ws-j,e1f37a8);腾讯 POI 徽章自然升级真 logo——`badgeWithRemoteIcon` 包裹 icon.horse 保留徽章形态 + 远程真 logo 改 fetch 字节内联(SVG-as-image 实测不抓远程子资源,ws-k,0345983+52a3d0e)+ pan/LOD 可见集切换 `maybeUpgradeIcon` 预检链原地重建(5b3c17d);百度滚轮缩放徽章闪烁——SDK webgl 隐藏 markerMouseTarget pane 时同步恢复 + rAF 按帧重算定位(rAF 停摆自终止,ws-l,99ef028)。全量套件实测:**npm test 1470 tests / 1468 pass / 2 skip**(2026-08-23)。
+- **引擎打磨系列收尾(`20260822-boss-engine-polish-2` 轮8–10).** 腾讯 MultiMarker 初始渲染竞态——构造不传 map、挂图后全量 `setGeometries` 重推,首帧徽章即完整,图层落 MARKER 层不被底图文字标注遮挡(ws-i,cd27acd+441231a)+ icon 预检链式推进(只预检候选链第一个 unknown,失败记忆化下次重建推进,26e7673);腾讯矢量底图排除 `point`(POI 图标层)——light 样式「混合块」根因修复,保留地名/路名标注(ws-j,e1f37a8);腾讯 POI 徽章自然升级真 logo——`badgeWithRemoteIcon` 包裹 icon.horse 保留徽章形态 + 远程真 logo 改 fetch 字节内联(SVG-as-image 实测不抓远程子资源,ws-k,0345983+52a3d0e)+ pan/LOD 可见集切换 `maybeUpgradeIcon` 预检链原地重建(5b3c17d);百度滚轮缩放徽章闪烁——SDK webgl 隐藏 markerMouseTarget pane 时同步恢复 + rAF 按帧重算定位(rAF 停摆自终止,ws-l,99ef028)。全量套件实测:**npm test 1487 tests / 1485 pass / 2 skip**(2026-08-23,合并 20260823-boss-scan-fix 后终态)。
 
 ## 2026-08-22
 
