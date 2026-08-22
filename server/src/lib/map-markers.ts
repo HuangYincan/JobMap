@@ -286,15 +286,12 @@ export function resolveTMapIconSrc(
   return { src: fallbackSrc, toPreflight };
 }
 
-/** 无远程图时的 SVG 徽章（测试 / 无 logoUrl 回退）。 */
-export function recruitmentBadgeSVG(
-  logo: string | undefined,
-  _logoUrl: string | undefined,
-  color: string,
-  state: MarkerState
-): string {
-  const c = normalizeColor(color);
-  const emoji = toEmojiLogo(logo);
+/**
+ * 徽章 SVG 外壳（白底圆角 + 强调色描边 + 状态外圈），recruitmentBadgeSVG 与
+ * badgeWithRemoteIcon 共享——emoji 与远程真 logo 两种内容形态的边框视觉语言
+ * 逐像素一致（ws-k：升级真 logo 后徽章形态不丢失，三引擎同语言）。
+ */
+function badgeShellSVG(c: string, state: MarkerState): string {
   const fillOpacity = state === 'highlighted' ? 0.9 : 1;
   const parts: string[] = [];
   if (state !== 'normal') {
@@ -306,10 +303,55 @@ export function recruitmentBadgeSVG(
     `<rect x="2" y="2" width="36" height="36" rx="10" fill="#ffffff" fill-opacity="${fillOpacity}" ` +
       `stroke="${c}" stroke-width="2"/>`
   );
-  parts.push(
-    `<text x="20" y="21" font-size="16" text-anchor="middle" dominant-baseline="central">${emoji}</text>`
+  return parts.join('');
+}
+
+/** 无远程图时的 SVG 徽章（测试 / 无 logoUrl 回退）。 */
+export function recruitmentBadgeSVG(
+  logo: string | undefined,
+  _logoUrl: string | undefined,
+  color: string,
+  state: MarkerState
+): string {
+  const emoji = toEmojiLogo(logo);
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">` +
+    badgeShellSVG(normalizeColor(color), state) +
+    `<text x="20" y="21" font-size="16" text-anchor="middle" dominant-baseline="central">${emoji}</text>` +
+    `</svg>`
   );
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">${parts.join('')}</svg>`;
+}
+
+/**
+ * 远程真 logo 徽章 SVG 数据图（2026-08-23 ws-k,fix/tmap-icon-frame）。
+ *
+ * 升级保留徽章形态的主修复：icon.horse 等远程真 logo 预检成功后，不再把裸
+ * favicon URL 直接作 TMap GL 纹理（无白底无边框，用户报「腾讯地图 poi 只有
+ * icon 没有边框」），而是包进徽章 SVG 再作纹理——白底圆角 + 强调色描边 +
+ * 居中远程图标（约 24×24，preserveAspectRatio 保比例 + clipPath 圆角裁剪），
+ * 与 recruitmentBadgeSVG（emoji）/ AMap/Baidu HTML 徽章（recruitmentBadgeHTML）
+ * 同视觉语言。状态样式（selected/highlighted）保持现有语义：外圈 + 尺寸经
+ * 调用方 stateScale 缩放。
+ *
+ * <image href> 引用远程 URL 的跨域光栅化（SVG 作为 WebGL 纹理的 origin-clean）
+ * 实测结论见 tech/23 §7（ws-k 真机实测；icon.horse 有 ACAO:*）。
+ *
+ * @returns dataURL SVG（可直接作契约 icon.src；iconUrl 为本地 dataURI 时
+ *   内联亦成立，升级路径统一走本函数不另设分支）。
+ */
+export function badgeWithRemoteIcon(
+  iconUrl: string,
+  color: string,
+  state: MarkerState
+): string {
+  const url = escapeAttr(iconUrl);
+  return svgToDataUri(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">` +
+      badgeShellSVG(normalizeColor(color), state) +
+      `<clipPath id="bc"><rect x="2" y="2" width="36" height="36" rx="10"/></clipPath>` +
+      `<image href="${url}" x="8" y="8" width="24" height="24" preserveAspectRatio="xMidYMid meet" clip-path="url(#bc)"/>` +
+      `</svg>`
+  );
 }
 
 const BADGE_STYLE = `
@@ -616,7 +658,15 @@ class POIMarkerControllerImpl implements POIMarkerController {
           badgeUri
         );
         for (const url of toPreflight) preflightRemoteIcon(url);
-        markerOpts.icon = { src, size: [BADGE_BASE, BADGE_BASE] };
+        // 升级保留徽章形态（ws-k,2026-08-23）：远程真 logo（icon.horse 等，
+        // 预检 ok）→ 包进徽章 SVG 再作纹理——白底 + 边框 + 居中 logo，与
+        // AMap/Baidu 同视觉语言；裸 URL 直接作纹理 = 无边框裸 favicon（boss
+        // 实测用户报「只有 icon 没有边框」）。本地 dataURL（emoji 徽章/图钉）
+        // 路径不变，零额外开销。
+        const iconSrc = isRemoteIconUrl(src)
+          ? badgeWithRemoteIcon(src, this.color, state)
+          : src;
+        markerOpts.icon = { src: iconSrc, size: [BADGE_BASE, BADGE_BASE] };
       } else {
         // Domain 图钉：dataURL SVG 与 AMap 同视觉（32×40 底尖），本地直通零预检
         markerOpts.icon = {

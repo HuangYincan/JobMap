@@ -11,9 +11,9 @@
 //   reset 后从 sessionStorage 读回 fail、已知失败 URL 零新预检;
 //   隐私模式(get/set throw)与损坏内容(JSON 解析失败)静默降级不抛;
 // - map-markers TMap icon 构造(控制器级,假 tencent view):
-//   未验证 → 徽章 dataURL + 后台预检触发;ok → 真 src;fail → 徽章且不重试;
-//   成功升级路径(下次重建真 logo);data URL / 缺 logo → 徽章或直通零预检;
-//   AMap 引擎零变化(不设 icon)。
+//   未验证 → 徽章 dataURL + 后台预检触发;ok → 真 src(包进徽章 SVG,ws-k);
+//   fail → 徽章且不重试;成功升级路径(下次重建真 logo);data URL / 缺 logo
+//   → 徽章或直通零预检;AMap 引擎零变化(不设 icon)。
 // ============================================================
 
 import test from 'node:test';
@@ -377,7 +377,7 @@ test('TMap icon:远程未验证 → 徽章 dataURL 降级 + 后台 Image 匿名�
   }
 });
 
-test('TMap icon:预检成功 → 真 logo src;升级路径(下次重建自然升级)', async () => {
+test('TMap icon:预检成功 → 真 logo src(包进徽章 SVG,ws-k 保留徽章形态);升级路径(下次重建自然升级)', async () => {
   const image = installImageMock();
   try {
     // 先预检成功
@@ -387,11 +387,14 @@ test('TMap icon:预检成功 → 真 logo src;升级路径(下次重建自然升
     const { view, calls } = makeTencentView();
     const c = createPOIMarkerController(view, {});
     c.setPOIs([makeRecruitPoi('p1', REMOTE)]);
-    assert.equal(calls[0].icon.src, REMOTE, '已预检 ok → 真 logo 直通');
+    const svg1 = decodeURIComponent(String(calls[0].icon.src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+    assert.ok(svg1.includes(`href="${REMOTE}"`), '远程真 logo 内嵌进徽章 SVG(不裸传 URL 作纹理,ws-k)');
+    assert.ok(svg1.includes('fill="#ffffff"') && svg1.includes('stroke-width="2"'), '白底 + 边框保留(升级不丢徽章形态)');
     assert.equal(image.calls.length, 1, 'ok 缓存命中,不重复预检');
-    // 升级路径:LOD 重建新增同 URL 新 POI → 真 logo
+    // 升级路径:LOD 重建新增同 URL 新 POI → 真 logo(徽章包裹)
     c.setPOIs([makeRecruitPoi('p1', REMOTE), makeRecruitPoi('p2', REMOTE)]);
-    assert.equal(calls[1].icon.src, REMOTE, '重建的新 marker 拿到 ok 状态 → 真 logo');
+    const svg2 = decodeURIComponent(String(calls[1].icon.src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+    assert.ok(svg2.includes(`href="${REMOTE}"`), '重建的新 marker 拿到 ok 状态 → 真 logo 徽章');
     assert.equal(image.calls.length, 1);
     c.destroy();
   } finally {

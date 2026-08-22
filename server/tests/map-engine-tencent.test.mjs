@@ -16,6 +16,7 @@ import {
   resolveTMapMarkerAnchor,
 } from '../src/lib/map-engine/tencent/tencent-engine.ts';
 import {
+  badgeWithRemoteIcon,
   createCityClusterMarker,
   createPOIMarkerController,
   resolveTMapIconSrc,
@@ -2256,6 +2257,25 @@ function makeRecruitPoi(id, logoUrl, careerUrl) {
   });
 }
 
+/** 解码 icon.src(dataURL SVG)→ 原始 SVG 文本(断言徽章包裹用)。 */
+function decodeIconSvg(src) {
+  assert.ok(
+    String(src).startsWith('data:image/svg+xml'),
+    `升级 src 必须是 dataURL SVG(实际:${String(src).slice(0, 50)}…)`,
+  );
+  return decodeURIComponent(String(src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+}
+
+/** 断言远程真 logo 的 icon.src 是「徽章包裹」dataURL(白底 + 边框 + 居中远程图)。 */
+function assertWrappedBadge(src, remoteUrl) {
+  const svg = decodeIconSvg(src);
+  assert.ok(svg.includes('width="40" height="40"'), '徽章 40×40(与 AMap 同视觉)');
+  assert.ok(svg.includes('rx="10"') && svg.includes('stroke-width="2"'), '白底圆角 + 边框(徽章形态保留)');
+  assert.ok(svg.includes(`href="${remoteUrl}"`), `远程真 logo 内嵌进徽章(实际缺失 ${remoteUrl})`);
+  assert.ok(svg.includes('preserveAspectRatio="xMidYMid meet"'), '保比例居中');
+  assert.ok(svg.includes('clip-path="url(#bc)"'), 'clipPath 圆角裁剪');
+}
+
 /** 假 tencent view:记录 createMarker opts,返回契约包装(与 icon-preflight.test.mjs 同款)。 */
 function makeTencentView() {
   const calls = [];
@@ -2298,6 +2318,27 @@ test('resolveTMapIconSrc:纯函数——本地直通;unknown → fallback + 预�
   assert.equal(r2.toPreflight.filter((u) => u === faviconIm).length, 1, '候选与 logoUrl 相同 → 跳过不重复');
 });
 
+test('badgeWithRemoteIcon:远程真 logo 包进徽章 SVG(白底 + 边框 + 居中保比例 + 圆角裁剪)', () => {
+  const url = 'https://icon.horse/icon/example.com';
+  const src = badgeWithRemoteIcon(url, '#007AFF', 'normal');
+  const svg = decodeIconSvg(src);
+  assert.ok(svg.includes('width="40" height="40"'), '40×40 与 recruitmentBadgeSVG 同规格');
+  assert.ok(svg.includes('fill="#ffffff"'), '白底');
+  assert.ok(svg.includes('rx="10"') && svg.includes('stroke="#007AFF" stroke-width="2"'), '圆角 + #007AFF 边框(徽章视觉语言)');
+  assert.ok(svg.includes(`href="${url}"`), '远程 URL 原样进 <image href>(icon.horse ACAO:* 供 GL 纹理光栅化)');
+  assert.ok(svg.includes('x="8" y="8" width="24" height="24"'), '约 24×24 居中(40-24)/2=8');
+  assert.ok(svg.includes('preserveAspectRatio="xMidYMid meet"'), '保比例');
+  assert.ok(svg.includes('clip-path="url(#bc)"'), 'clipPath 圆角裁剪');
+  assert.ok(svg.includes('<clipPath id="bc"><rect x="2" y="2" width="36" height="36" rx="10"/></clipPath>'), '裁剪区 = 内白底圆角区');
+  // 状态语义:selected 外圈 + highlighted 透明度(与 recruitmentBadgeSVG 同)
+  // 注意:dataURL 是 encodeURIComponent 形态,必须先 decode 再断言 SVG 内容
+  assert.ok(!decodeIconSvg(badgeWithRemoteIcon(url, '#007AFF', 'normal')).includes('opacity="0.45"'), 'normal 无外圈');
+  assert.ok(decodeIconSvg(badgeWithRemoteIcon(url, '#007AFF', 'selected')).includes('stroke-width="2.5" opacity="0.45"'), 'selected 外圈保留');
+  assert.ok(decodeIconSvg(badgeWithRemoteIcon(url, '#007AFF', 'highlighted')).includes('fill-opacity="0.9"'), 'highlighted 轻微透明');
+  // 非法色注入防护:非法十六进制 → 品牌蓝兜底(normalizeColor 语义)
+  assert.ok(decodeIconSvg(badgeWithRemoteIcon(url, 'red', 'normal')).includes('stroke="#3478F6"'), '非法色 → 默认色兜底');
+});
+
 test('TMap icon 候选链:logoUrl 预检失败 → icon.horse 候选作 src(去重跳过同 URL)', async () => {
   const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
   const image = installImageMock({ failUrls: [faviconIm] }); // favicon.im 无 CORS 头 → 恒败
@@ -2313,11 +2354,7 @@ test('TMap icon 候选链:logoUrl 预检失败 → icon.horse 候选作 src(去�
     const { view, calls } = makeTencentView();
     const c = createPOIMarkerController(view, {});
     c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
-    assert.equal(
-      calls[0].icon.src,
-      iconHorse,
-      'logoUrl 失败 → 候选链首个通过预检者(icon.horse)作 icon.src(公司 logo 显示)',
-    );
+    assertWrappedBadge(calls[0].icon.src, iconHorse);
     assert.deepEqual(calls[0].icon.size, [40, 40], '徽章 40×40 与 AMap 同视觉');
     assert.equal(image.calls.filter((i) => i.src === faviconIm).length, 1, '候选去重:同 URL 不重复预检');
     c.destroy();
@@ -2348,7 +2385,7 @@ test('TMap icon 候选链:链式预检——只预检第一个 unknown;失败记
 
     // 第三次:icon.horse ok → 新 marker 升级真 logo;记忆化:零新增预检
     c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p2', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p3', faviconIm, 'https://example.com/careers')]);
-    assert.equal(calls[2].icon.src, iconHorse, '重建的新 marker 走候选链升级为真 logo(icon.horse)');
+    assertWrappedBadge(calls[2].icon.src, iconHorse);
     assert.equal(image.calls.length, 2, '失败/成功记忆化:不重复预检(首会话每 POI 最多 1 个预检)');
     c.destroy();
   } finally {
@@ -2365,7 +2402,7 @@ test('TMap icon 候选链:logoUrl 已预检 ok → 直通真 src,不试候选', 
     const { view, calls } = makeTencentView();
     const c = createPOIMarkerController(view, {});
     c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
-    assert.equal(calls[0].icon.src, faviconIm, 'ok → 真 logo 直通');
+    assertWrappedBadge(calls[0].icon.src, faviconIm);
     assert.equal(image.calls.length, 1, '候选不预检(logoUrl ok 即止)');
     c.destroy();
   } finally {
