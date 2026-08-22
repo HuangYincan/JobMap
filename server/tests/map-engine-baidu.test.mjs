@@ -283,8 +283,8 @@ class FakeNoContentMarker {
     this.zIndex = undefined;
     this.visible = true;
     this.icon = null;
-    // 模拟真实 SDK:domElement 在模块加载回调(_draw→initialize)后才创建;
-    // domReady=false 时构造不建 DOM(测试「延迟就绪 → 有界重试注入」)
+    // 模拟真实 SDK:domElement 由 addOverlay(_i→initialize)同步创建;
+    // domReady=false 时构造不建 DOM(测试「延迟就绪 → 微任务+rAF 重试注入」)
     if (FakeNoContentMarker.domReady) this.domElement = { innerHTML: '' };
   }
   getPosition() {
@@ -2230,19 +2230,33 @@ test('createMarker(ws-e):真实 SDK 形态(无 setContent)→ content 注入厂�
   assert.equal(clicks, 1, '注入内容点击可达(选中反馈)');
 });
 
-test('createMarker(ws-e):domElement 延迟就绪 → 有界重试注入(模块加载回调后创建)', async () => {
+test('createMarker(ws-e):domElement 延迟就绪 → 微任务+rAF 有界重试注入(零定时器,ws-f r3)', async () => {
   setup();
   mockNs.ns.Marker = FakeNoContentMarker;
-  FakeNoContentMarker.domReady = false; // 模拟模块未加载:构造后 DOM 尚未创建
-  const { view } = await makeView();
-  const html = '<div class="dm-badge">延迟注入</div>';
-  const marker = view.createMarker({ position: GCJ, content: html });
-  const raw = marker.raw;
-  assert.equal(raw.domElement, undefined, '前置:domElement 尚未创建');
-  await new Promise((r) => setTimeout(r, 150)); // 模块加载回调创建 DOM
-  raw.domElement = { innerHTML: '' };
-  await new Promise((r) => setTimeout(r, 120)); // 重试间隔 50ms → 已注入
-  assert.equal(raw.domElement.innerHTML, html, '重试注入成功(不丢 content)');
+  FakeNoContentMarker.domReady = false; // 模拟异常形态:构造后 DOM 尚未创建
+  // 浏览器帧回调双面(node 无 rAF;真实浏览器 addOverlay 同步创建 domElement,
+  // 重试纯防御 → rAF 5 帧内命中)
+  const origRAF = globalThis.requestAnimationFrame;
+  globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 5);
+  const origWarn = console.warn;
+  const warns = [];
+  console.warn = (...args) => warns.push(args);
+  try {
+    const { view } = await makeView();
+    const html = '<div class="dm-badge">延迟注入</div>';
+    const marker = view.createMarker({ position: GCJ, content: html });
+    const raw = marker.raw;
+    assert.equal(raw.domElement, undefined, '前置:domElement 尚未创建');
+    await new Promise((r) => setTimeout(r, 10)); // 微任务 4 轮已耗尽,rAF 重试段进行中
+    raw.domElement = { innerHTML: '' }; // 模块加载回调后 DOM 就绪
+    await new Promise((r) => setTimeout(r, 50)); // rAF 5 帧(5ms×5)内注入
+    assert.equal(raw.domElement.innerHTML, html, '重试注入成功(不丢 content)');
+    assert.equal(warns.length, 0, '注入命中 → 无超时告警');
+  } finally {
+    globalThis.requestAnimationFrame = origRAF;
+    console.warn = origWarn;
+    FakeNoContentMarker.domReady = true;
+  }
 });
 
 test('createMarker(ws-e):wrapper.setContent 重入 → 注入 DOM 内容更新(选中/高亮状态)', async () => {
@@ -2365,191 +2379,121 @@ test('getCurrentPosition(ws-b):浏览器与 SDK 均失败 → null(不抛)', asy
 
 // ws-pinfix2(2026-08-22):content marker → 自定义 Overlay DOM 渲染
 // (BMapGL v1.0 setContent 空操作 → 旧路径目标点不可见;主路径 = DOM overlay)
+// ws-f r3(2026-08-22):**Overlay 主路径在真实 SDK 静默失效**(真机坐实:
+// Map.addOverlay 只调 overlay._i(map),基类 _i 把 initialize 返回值存入
+// domElement 后不挂载任何 pane → 全级别 0 徽章)——主路径改回「厂商 Marker +
+// 点击目标 DOM 注入」(ws-e 验证过的真实 SDK 形态),以下测试随之重写。
 // ------------------------------------------------------------
 
-/** 伪造 document:div 元素带 style/innerHTML/listeners(overlay 渲染测试用) */
-function installFakeDom() {
-  const created = [];
-  const doc = {
-    createElement(tag) {
-      const el = {
-        tag,
-        style: {},
-        innerHTML: '',
-        listeners: new Map(),
-        parentNode: null,
-        addEventListener(event, cb) {
-          const list = this.listeners.get(event) ?? [];
-          list.push(cb);
-          this.listeners.set(event, list);
-        },
-        removeEventListener(event, cb) {
-          const list = (this.listeners.get(event) ?? []).filter((f) => f !== cb);
-          if (list.length) this.listeners.set(event, list);
-          else this.listeners.delete(event);
-        },
-        trigger(event, payload) {
-          for (const cb of this.listeners.get(event) ?? []) cb(payload);
-        },
-      };
-      created.push(el);
-      return el;
-    },
-  };
-  globalThis.document = doc;
-  return { doc, created, restore: () => delete globalThis.document };
-}
-
-test('createMarker(content):DOM overlay 路径——Overlay 子类 + initialize/draw + 锚定 + 契约方法', async () => {
+test('createMarker(content):真实 SDK 形态——厂商 Marker + 点击目标 DOM 注入主路径(锚点/点击/契约方法)', async () => {
   setup();
-  const dom = installFakeDom();
-  try {
-    const { view } = await makeView();
-    const bd = gcj02ToBd09(GCJ.lng, GCJ.lat);
-    view.raw.px = { x: 400, y: 300 }; // pointToOverlayPixel 返回像素
-    let clicked = 0;
-    const marker = view.createMarker({
-      position: GCJ,
-      content: '<b>徽章</b>',
-      offset: [-16, -40],
-      zIndex: 50,
-      onClick: () => clicked++,
-    });
-    const raw = marker.raw;
-    assert.ok(raw instanceof FakeOverlay, 'content → 自定义 Overlay 子类实例(extends BMapGL.Overlay)');
-    assert.equal(view.raw.overlays.length, 1, 'addOverlay 上地图');
-    assert.equal(view.raw.overlays[0], raw);
-    assert.equal(raw._map, null, 'addOverlay 时未 initialize(SDK 在 addOverlay 内调用)');
-    // SDK 生命周期:addOverlay → SDK 调用 initialize(map)(真实行为;测试显式模拟)
-    const div = raw.initialize(view.raw);
-    assert.equal(div.tag, 'div');
-    assert.equal(div.innerHTML, '<b>徽章</b>', 'content 原文注入(可信 HTML 契约,amap 同语义)');
-    assert.equal(div.style.position, 'absolute');
-    assert.equal(div.style.zIndex, '50', 'zIndex → div style.zIndex');
-    assert.equal(raw._map, view.raw, 'initialize 持有地图引用');
-    // initialize 内已首绘:div 左上角 = 容器像素 - offset
-    assert.equal(div.style.left, '416px', 'left = px.x - offset[0] = 400 - (-16)');
-    assert.equal(div.style.top, '340px', 'top = px.y - offset[1] = 300 - (-40)');
-    // 投影点必须为 bd09(漏转 ≈700m 偏移)
-    assert.equal(view.raw.lastPxPoint.lng, bd.lng);
-    assert.equal(view.raw.lastPxPoint.lat, bd.lat);
-    // 相机变化 → SDK 调 draw() 重定位(测试模拟)
-    view.raw.px = { x: 100, y: 50 };
-    raw.draw();
-    assert.equal(div.style.left, '116px');
-    assert.equal(div.style.top, '90px');
-    // click:onClick 绑 div(内容子元素冒泡可达);不冒泡到地图(清选中防御)
-    let bubbled = 0;
-    const ev = {
-      stopPropagation() {
-        bubbled++;
-      },
-    };
-    div.trigger('click', ev);
-    assert.equal(clicked, 1, 'onClick 经 div click 触发');
-    assert.equal(bubbled, 1, 'click 必须 stopPropagation(与 amap marker click 不冒泡同语义)');
-    // 契约 on/off
-    let extra = 0;
-    const cb = () => extra++;
-    marker.on('click', cb);
-    div.trigger('click', ev);
-    assert.equal(extra, 1, 'on → div click 追加回调');
-    marker.off('click', cb);
-    div.trigger('click', ev);
-    assert.equal(extra, 1, 'off(cb) 精确解绑');
-    // setPosition → bd09 更新 + draw 重定位
-    const p2 = { lng: 120.15005, lat: 30.24246 };
-    marker.setPosition(p2);
-    const bd2 = gcj02ToBd09(p2.lng, p2.lat);
-    assert.equal(view.raw.lastPxPoint.lng, bd2.lng);
-    assert.equal(view.raw.lastPxPoint.lat, bd2.lat);
-    assert.equal(div.style.left, '116px', 'setPosition 后 draw 重定位(px 未变)');
-    // setContent / setZIndex / setVisible
-    marker.setContent('<i>Y</i>');
-    assert.equal(div.innerHTML, '<i>Y</i>', 'setContent → innerHTML 更新');
-    marker.setZIndex(99);
-    assert.equal(div.style.zIndex, '99');
-    marker.setVisible(false);
-    assert.equal(div.style.display, 'none');
-    marker.setVisible(true);
-    assert.equal(div.style.display, '');
-    // remove → removeOverlay + div 摘除(SDK 挂载模拟:div.parentNode)
-    div.parentNode = { removeChild(child) { this.removed = child; } };
-    marker.remove();
-    assert.equal(view.raw.overlays.length, 0, 'removeOverlay 摘除');
-    assert.equal(div.parentNode.removed, div, 'div 从父节点摘除(无 DOM 泄漏)');
-    assert.equal(div.listeners.has('click'), false, 'click 解绑');
-  } finally {
-    dom.restore();
-  }
+  mockNs.ns.Marker = FakeNoContentMarker; // 真实 SDK v1.0:无 setContent
+  const { view } = await makeView();
+  let clicked = 0;
+  const marker = view.createMarker({
+    position: GCJ,
+    content: '<b>徽章</b>',
+    offset: [-16, -40],
+    zIndex: 50,
+    onClick: () => clicked++,
+  });
+  const raw = marker.raw;
+  assert.ok(raw instanceof FakeNoContentMarker, 'content → 厂商 Marker(非自定义 Overlay)');
+  assert.equal(view.raw.overlays.length, 1, 'addOverlay 上地图');
+  assert.equal(view.raw.overlays[0], raw);
+  assert.ok(raw.domElement, '厂商点击目标 DOM 存在(真实 SDK addOverlay 同步创建)');
+  assert.equal(raw.domElement.innerHTML, '<b>徽章</b>', 'content 原文注入点击目标 DOM(可信 HTML 契约)');
+  // 锚点:透明 1×1 图标 anchor = -契约 offset(SDK 数学:屏幕位 + 契约 offset)
+  assert.ok(raw.icon instanceof FakeIcon, 'content 标记必须配透明锚点图标');
+  assert.equal(raw.icon.size.width, 1);
+  assert.equal(raw.icon.size.height, 1);
+  assert.equal(raw.icon.anchor.width, 16, 'anchor = -offset[0]');
+  assert.equal(raw.icon.anchor.height, 40, 'anchor = -offset[1]');
+  assert.equal(raw.opts.zIndex, 50, 'zIndex → Marker 构造 opts');
+  // 点击:子元素事件冒泡到厂商 DOM → marker click(SDK _bind 分发语义)
+  raw.triggerClickFromDom();
+  assert.equal(clicked, 1, 'onClick 经厂商 DOM 冒泡触发');
+  // 契约 on/off
+  let extra = 0;
+  const cb = () => extra++;
+  marker.on('click', cb);
+  raw.triggerClickFromDom();
+  assert.equal(extra, 1, 'on → addEventListener 追加回调');
+  marker.off('click', cb);
+  raw.triggerClickFromDom();
+  assert.equal(extra, 1, 'off(cb) 精确解绑');
+  // setPosition → bd09 更新(漏转 ≈700m 偏移)
+  const p2 = { lng: 120.15005, lat: 30.24246 };
+  marker.setPosition(p2);
+  const bd2 = gcj02ToBd09(p2.lng, p2.lat);
+  assert.equal(raw.point.lng, bd2.lng);
+  assert.equal(raw.point.lat, bd2.lat);
+  // setContent / setZIndex / setVisible
+  marker.setContent('<i>Y</i>');
+  assert.equal(raw.domElement.innerHTML, '<i>Y</i>', 'setContent → 注入 DOM 更新(状态样式切换)');
+  marker.setZIndex(99);
+  assert.equal(raw.zIndex, 99);
+  marker.setVisible(false);
+  assert.equal(raw.visible, false, 'hide 由厂商管理');
+  marker.setVisible(true);
+  assert.equal(raw.visible, true, 'show 由厂商管理');
+  // remove → removeOverlay + raw.remove(厂商 DOM 生命周期随 marker)
+  marker.remove();
+  assert.equal(view.raw.overlays.length, 0, 'removeOverlay 摘除');
+  assert.equal(raw.removed, true, 'raw.remove 同步调用');
 });
 
-test('createMarker(content):锚定一致性——div 左上角 = 容器像素 - offset(amap 语义对齐)', async () => {
+test('createMarker(content):锚定一致性——空白锚点图标 anchor = -契约 offset(amap 语义对齐)', async () => {
   setup();
-  const dom = installFakeDom();
-  try {
-    const { view } = await makeView();
-    view.raw.px = { x: 500, y: 400 };
-    // 图钉契约形态:content + offset [-16,-40] → 底尖钉点位
-    const pin = view.createMarker({ position: GCJ, content: '<img .../>', offset: [-16, -40] });
-    const pinDiv = pin.raw.initialize(view.raw);
-    assert.equal(pinDiv.style.left, '516px', 'offset [-16,-40] → left = px - (-16)');
-    assert.equal(pinDiv.style.top, '440px');
-    // 徽章契约形态:offset [-20,-20] → 中心对准点位
-    const badge = view.createMarker({ position: GCJ, content: '<div class="dm-badge">', offset: [-20, -20] });
-    const badgeDiv = badge.raw.initialize(view.raw);
-    assert.equal(badgeDiv.style.left, '520px');
-    assert.equal(badgeDiv.style.top, '420px');
-    // agent 蓝点契约形态:offset [-10,-10] → 圆心对准坐标(用户反馈场景)
-    const dot = view.createMarker({
-      position: GCJ,
-      content: '<div style="width:20px;height:20px">',
-      offset: [-10, -10],
-    });
-    const dotDiv = dot.raw.initialize(view.raw);
-    assert.equal(dotDiv.style.left, '510px');
-    assert.equal(dotDiv.style.top, '410px');
-    // 无 offset → 左上角钉坐标(amap 无 offset 语义)
-    const plain = view.createMarker({ position: GCJ, content: 'x' });
-    const plainDiv = plain.raw.initialize(view.raw);
-    assert.equal(plainDiv.style.left, '500px');
-    assert.equal(plainDiv.style.top, '400px');
-  } finally {
-    dom.restore();
-  }
+  mockNs.ns.Marker = FakeNoContentMarker;
+  const { view } = await makeView();
+  // 图钉契约形态:content + offset [-16,-40] → 底尖钉点位
+  const pin = view.createMarker({ position: GCJ, content: '<img .../>', offset: [-16, -40] });
+  assert.equal(pin.raw.icon.anchor.width, 16, 'offset [-16,-40] → anchor (16,40)');
+  assert.equal(pin.raw.icon.anchor.height, 40);
+  // 徽章契约形态:offset [-20,-20] → 中心对准点位
+  const badge = view.createMarker({ position: GCJ, content: '<div class="dm-badge">', offset: [-20, -20] });
+  assert.equal(badge.raw.icon.anchor.width, 20);
+  assert.equal(badge.raw.icon.anchor.height, 20);
+  // agent 蓝点契约形态:offset [-10,-10] → 圆心对准坐标(用户反馈场景)
+  const dot = view.createMarker({
+    position: GCJ,
+    content: '<div style="width:20px;height:20px">',
+    offset: [-10, -10],
+  });
+  assert.equal(dot.raw.icon.anchor.width, 10);
+  assert.equal(dot.raw.icon.anchor.height, 10);
+  // 无 offset → anchor (0,0) 左上角(amap 无 offset 语义)
+  const plain = view.createMarker({ position: GCJ, content: 'x' });
+  assert.equal(plain.raw.icon.anchor.width, 0);
+  assert.equal(plain.raw.icon.anchor.height, 0);
 });
 
-test('createMarker(content):map-shell 摘除分派——raw.setMap(null)/remove 都摘除 div', async () => {
+test('createMarker(content):map-shell 摘除分派——wrapper.remove() 摘除(removeOverlay + raw.remove)', async () => {
   setup();
-  const dom = installFakeDom();
-  try {
-    const { view } = await makeView();
-    const marker = view.createMarker({ position: GCJ, content: '<i>1</i>' });
-    const div = marker.raw.initialize(view.raw);
-    div.parentNode = { removeChild(child) { this.removed = child; } };
-    marker.raw.setMap(null); // map-shell detachRaw 分派(badgeCleanupHandle 收敛)
-    assert.equal(div.parentNode.removed, div, 'setMap(null) → div 摘除');
-    assert.equal(view.raw.overlays.length, 0, 'removeOverlay 同步摘除');
-    const m2 = view.createMarker({ position: GCJ, content: '<i>2</i>' });
-    const div2 = m2.raw.initialize(view.raw);
-    div2.parentNode = { removeChild(child) { this.removed = child; } };
-    m2.raw.remove(); // remove 分派
-    assert.equal(div2.parentNode.removed, div2, 'remove → div 摘除');
-    assert.equal(view.raw.overlays.length, 0, 'removeOverlay 同步摘除');
-  } finally {
-    dom.restore();
-  }
+  mockNs.ns.Marker = FakeNoContentMarker;
+  const { view } = await makeView();
+  const marker = view.createMarker({ position: GCJ, content: '<i>1</i>' });
+  assert.equal(view.raw.overlays.length, 1, 'addOverlay 上地图');
+  marker.remove(); // map-shell 摘除:raw 无 setMap → 一律 wrapper.remove 分派
+  assert.equal(view.raw.overlays.length, 0, 'removeOverlay 摘除');
+  assert.equal(marker.raw.removed, true, 'raw.remove 同步摘除');
+  const m2 = view.createMarker({ position: GCJ, content: '<i>2</i>' });
+  assert.equal(view.raw.overlays.length, 1);
+  m2.remove();
+  assert.equal(view.raw.overlays.length, 0, 'remove 幂等可重复');
+  m2.remove();
+  assert.equal(view.raw.overlays.length, 0);
 });
 
-test('createMarker(content):SDK 无 Overlay 能力 → 回退 setContent + 透明锚点图标(不抛错)', async () => {
+test('createMarker(content):有 setContent(mock/未来 SDK 形态)→ 直调 setContent + 透明锚点图标(不抛错)', async () => {
   setup();
-  delete mockNs.ns.Overlay; // 老 SDK/异常形态:无 Overlay 基类
   const { view } = await makeView();
   const marker = view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-16, -40] });
   const raw = marker.raw;
-  assert.ok(raw instanceof FakeMarker, '回退路径:普通 Marker(setContent 旧行为)');
-  assert.equal(raw.content, '<b>x</b>', 'setContent 仍调用(旧路径语义保留)');
-  assert.ok(raw.icon instanceof FakeIcon, '透明 1×1 锚点图标扛锚点(旧路径)');
+  assert.ok(raw instanceof FakeMarker, '有 setContent 的 Marker 形态');
+  assert.equal(raw.content, '<b>x</b>', 'setContent 直调(原契约路径保留)');
+  assert.ok(raw.icon instanceof FakeIcon, '透明 1×1 锚点图标扛锚点');
   assert.equal(raw.icon.size.width, 1);
   assert.equal(raw.icon.size.height, 1);
   assert.equal(raw.icon.anchor.width, 16, 'anchor = -offset');
@@ -2559,9 +2503,9 @@ test('createMarker(content):SDK 无 Overlay 能力 → 回退 setContent + 透�
   assert.equal(view.raw.overlays.length, 0);
 });
 
-test('createMarker(content):SDK 无定位 API → draw 跳过 + 一次性 warn(不抛错)', async () => {
+test('createMarker(content):无定位 API 依赖——marker 路径定位由厂商 SDK 管理(无 draw 依赖、零告警)', async () => {
   setup();
-  const dom = installFakeDom();
+  mockNs.ns.Marker = FakeNoContentMarker;
   const warns = [];
   const origWarn = console.warn;
   console.warn = (...args) => warns.push(args);
@@ -2573,48 +2517,52 @@ test('createMarker(content):SDK 无定位 API → draw 跳过 + 一次性 warn(�
     delete proto.pointToContainerPixel;
     const { view } = await makeView();
     const marker = view.createMarker({ position: GCJ, content: 'x' });
-    assert.doesNotThrow(() => marker.raw.initialize(view.raw), '无定位 API 不得抛');
-    const div = dom.created[0];
-    assert.equal(div.style.left, undefined, '无法定位 → 不设置位置');
-    assert.ok(warns.length >= 1, '一次性 warn(可观测)');
-    assert.match(String(warns[0][0]), /pointToOverlayPixel/);
-    // 第二个 marker 不再刷屏
-    const m2 = view.createMarker({ position: GCJ, content: 'y' });
-    m2.raw.initialize(view.raw);
-    assert.equal(warns.length, 1, '一次性 warn(防刷屏)');
+    assert.equal(marker.raw.domElement.innerHTML, 'x', 'content 注入正常(定位由厂商 SDK 管理)');
+    assert.equal(warns.length, 0, '无定位 API 不再告警(overlay draw 路径已删除)');
   } finally {
     proto.pointToOverlayPixel = origO;
     proto.pointToContainerPixel = origC;
     console.warn = origWarn;
-    dom.restore();
   }
 });
 
-test('createMarker(content+icon):content 为渲染主机制,icon 不参与(不双渲染、不触发远程预检)', async () => {
+test('createMarker(content+icon):icon 为渲染主机制,content 不注入(防双渲染);远程 icon 参与预检', async () => {
   setup();
-  const dom = installFakeDom();
+  mockNs.ns.Marker = FakeNoContentMarker;
   const image = installImageMock();
   try {
     const { view } = await makeView();
-    // 聚合徽章形态:content + 远程 icon → content 经 overlay 渲染,icon 忽略
+    // 聚合徽章形态:content + 远程 icon(未预检)→ icon 参与预检,首次回落 content 注入
     const marker = view.createMarker({
       position: GCJ,
       content: '<b>徽章</b>',
       icon: { src: 'https://favicon.im/example.com', size: [24, 24] },
     });
-    const div = marker.raw.initialize(view.raw);
-    assert.equal(div.innerHTML, '<b>徽章</b>', 'content 经 overlay 渲染');
-    assert.equal(marker.raw instanceof FakeMarker, false, '不构造普通 Marker(icon 无 GL 纹理路径)');
-    assert.equal(image.calls.length, 0, 'icon 不参与 → 不触发远程预检(防双渲染)');
-    // icon-only(无 content)仍走既有 icon 路径(预检照常;先预检成功再建点)
+    assert.ok(marker.raw instanceof FakeNoContentMarker, 'content+icon → 厂商 Marker');
+    assert.ok(marker.raw.icon instanceof FakeIcon, '远程 icon 未预检 → 空白锚点图标(回落 content 注入渲染)');
+    assert.equal(marker.raw.icon.size.width, 1, '回落空白锚点图标');
+    assert.equal(marker.raw.domElement.innerHTML, '<b>徽章</b>', '回落 content 注入(不丢视觉)');
+    assert.equal(image.calls.length, 1, '远程 icon 触发预检一次(与 icon-only 路径同契约)');
+    // 预检成功后重建 → 真图标纹理 + content 不注入(防双渲染)
     preflightRemoteIcon('https://favicon.im/ok.example');
     await settle();
     assert.equal(remoteIconStatus('https://favicon.im/ok.example'), 'ok');
-    const m2 = view.createMarker({ position: GCJ, icon: { src: 'https://favicon.im/ok.example' } });
-    assert.ok(m2.raw.icon instanceof FakeIcon, '无 content 场景 icon 路径不变');
-    assert.equal(image.calls.length, 1, '仅 icon-only 预检一次(content+icon 未触发)');
+    const m2 = view.createMarker({
+      position: GCJ,
+      content: '<b>徽章2</b>',
+      icon: { src: 'https://favicon.im/ok.example', size: [24, 24] },
+    });
+    assert.ok(m2.raw.icon instanceof FakeIcon, '预检 ok → 真图标纹理(GL 渲染)');
+    assert.equal(m2.raw.domElement.innerHTML, '', 'content 不注入(icon 主机制,防双渲染)');
+    // dataURL icon 恒可用 → 同语义
+    const m3 = view.createMarker({
+      position: GCJ,
+      content: '<b>徽章3</b>',
+      icon: { src: 'data:image/svg+xml,%3Csvg/%3E', size: [40, 40] },
+    });
+    assert.ok(m3.raw.icon instanceof FakeIcon, 'dataURL icon → 真图标');
+    assert.equal(m3.raw.domElement.innerHTML, '', 'content 不注入');
   } finally {
     image.restore();
-    dom.restore();
   }
 });
