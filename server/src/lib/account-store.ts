@@ -714,8 +714,11 @@ export async function consumeOtp(provider: 'phone' | 'email', target: string, co
     return true;
   }, () => memConsumeOtp(provider, normalized, code));
 
-  const succeeded = ok || memConsumeOtp(provider, normalized, code);
-  if (succeeded) {
+  if (ok) {
+    // 单次性契约(scan #1):成功路径无条件消费内存挑战。DB 模式双写时,DB 行已
+    // consumed;若不删内存挑战,同一 code 会在 10min TTL 内经内存分支再次成功
+    // (重放)。内存模式此调用幂等(挑战已被 fallback 删除,重复调用无副作用)。
+    memConsumeOtp(provider, normalized, code);
     guard.wrongAt = [];
     return true;
   }
