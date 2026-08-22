@@ -28,6 +28,11 @@ import {
   OtpRateLimitedError,
   upsertIdentity as storeUpsert,
 } from '../src/lib/account-store.ts';
+import {
+  createSession as memCreateSession,
+  sessionSigningSecret,
+} from '../src/lib/session-store.ts';
+import { signOauthState } from '../src/lib/oauth/oauth-state.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 function src(rel) {
@@ -230,4 +235,68 @@ test('#3 行为:未知账号登录仍统一返回 null(dummy 校验不改变契�
   } finally {
     __accountStoreTest.poolOverride = undefined;
   }
+});
+
+// ============================================================
+// #4 SESSION_SECRET:生产必配 / 非生产 boot 随机并统一
+// ============================================================
+
+test('#4 非生产缺 SESSION_SECRET:boot 随机密钥(64 hex,进程内一致)', () => {
+  const savedSecret = process.env.SESSION_SECRET;
+  const savedEnv = process.env.NODE_ENV;
+  delete process.env.SESSION_SECRET;
+  delete process.env.NODE_ENV;
+  try {
+    const a = sessionSigningSecret();
+    const b = sessionSigningSecret();
+    assert.match(a, /^[0-9a-f]{64}$/);
+    assert.equal(a, b, 'boot 随机密钥进程内稳定');
+  } finally {
+    if (savedSecret === undefined) delete process.env.SESSION_SECRET;
+    else process.env.SESSION_SECRET = savedSecret;
+    if (savedEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = savedEnv;
+  }
+});
+
+test('#4 生产缺 SESSION_SECRET:拒绝签名(createSession / oauth_state / secret 均抛错)', () => {
+  const savedSecret = process.env.SESSION_SECRET;
+  const savedEnv = process.env.NODE_ENV;
+  delete process.env.SESSION_SECRET;
+  process.env.NODE_ENV = 'production';
+  try {
+    assert.throws(() => memCreateSession('1'), /SESSION_SECRET is required/);
+    assert.throws(() => signOauthState({ state: 'a1'.repeat(32), next: '/' }), /SESSION_SECRET is required/);
+    assert.throws(() => sessionSigningSecret(), /SESSION_SECRET is required/);
+  } finally {
+    if (savedSecret === undefined) delete process.env.SESSION_SECRET;
+    else process.env.SESSION_SECRET = savedSecret;
+    if (savedEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = savedEnv;
+  }
+});
+
+test('#4 SESSION_SECRET 显式设置:会话 token / oauth_state 均可签名', () => {
+  const savedSecret = process.env.SESSION_SECRET;
+  process.env.SESSION_SECRET = 'unit-test-secret';
+  try {
+    const { token } = memCreateSession('1');
+    assert.match(token, /^[0-9a-f]{48}\.[0-9a-f]{16}$/);
+    const raw = signOauthState({ state: 'a1'.repeat(32), next: '/' });
+    assert.match(raw, /^v1\.\d+\.[0-9a-f]{64}\./);
+  } finally {
+    if (savedSecret === undefined) delete process.env.SESSION_SECRET;
+    else process.env.SESSION_SECRET = savedSecret;
+  }
+});
+
+test('#4 会话与 oauth-state 共用同一密钥机制(不再有公开常量回退)', () => {
+  const store = src('lib/session-store.ts');
+  const oauth = src('lib/oauth/oauth-state.ts');
+  assert.doesNotMatch(store, /domain-map-demo-session/);
+  assert.match(store, /export function sessionSigningSecret\(\): string/);
+  assert.match(store, /NODE_ENV === 'production'/);
+  assert.match(oauth, /sessionSigningSecret/);
+  // 非生产回退为 boot 随机(与 oauth-state 统一:两处均为随机而非公开常量)
+  assert.match(store, /bootSecret \?\?= randomBytes\(32\)/);
 });

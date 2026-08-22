@@ -68,10 +68,28 @@ export function resolveAccountBySubject(provider: AuthProvider, subject: string)
   return identities.get(identityKey(provider, subject)) ?? null;
 }
 
+/**
+ * 会话 token 与 oauth_state 共用的 HMAC 签名密钥(scan #4):
+ * - 优先 `SESSION_SECRET`(生产必配,见 tech/15 / tech/27);
+ * - 未设置且非生产 → 进程启动时随机(bootSecret,与 oauth-state 同源:oauth-state
+ *   直接复用本函数,不再各自回退);
+ * - 未设置且 NODE_ENV=production → 抛错拒绝签名(杜绝公开常量回退值成为未来
+ *   「校验签名/客户端提供 token」路径的伪造入口)。
+ */
+let bootSecret: string | null = null;
+export function sessionSigningSecret(): string {
+  const fromEnv = process.env.SESSION_SECRET?.trim();
+  if (fromEnv) return fromEnv;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET is required in production: refusing to sign session tokens');
+  }
+  bootSecret ??= randomBytes(32).toString('hex');
+  return bootSecret;
+}
+
 function signToken(): string {
   const raw = randomBytes(24).toString('hex');
-  const secret = process.env.SESSION_SECRET || 'domain-map-demo-session';
-  const mac = createHmac('sha256', secret).update(raw).digest('hex').slice(0, 16);
+  const mac = createHmac('sha256', sessionSigningSecret()).update(raw).digest('hex').slice(0, 16);
   return `${raw}.${mac}`;
 }
 
