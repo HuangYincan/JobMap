@@ -261,3 +261,35 @@ ws-e 与 dev 既有 ws-pinfix2 各自独立修复同一根因(BMapGL v1.0 `Marke
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+# 轮10 合并(ws-k fix/tmap-icon-frame + ws-l fix/baidu-blink,2026-08-23)
+
+## 结果总览
+- 成功合并: ws-k(fix/tmap-icon-frame,tip 1315c62,4 commits)+ ws-l(fix/baidu-blink,tip 2749584,4 commits)2 分支并入 dev。
+- 失败/遗留: 无。门禁 0 失败(合并后全量 1468 pass / 0 fail / 2 skip),typecheck / docs-check / diff-check 全绿。
+
+## 逐分支明细
+| WS | 分支 | merge commit | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| ws-k | fix/tmap-icon-frame (1315c62) | 56bc627 | 1464 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 无冲突(自动合并) |
+| ws-l | fix/baidu-blink (2749584) | 868bab1 | 1468 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 1 冲突(tech/23,双方都追加回填)→ 保留双方段落 |
+
+- 合并后全量:1470 tests / 1468 pass / 0 fail / 2 skip;`npm run typecheck` 零错误;`make docs-check` passed;`git diff --check` 干净。
+- 合并内容核验:
+  - ws-k(map-markers.ts):badgeWithRemoteIcon(白底 + #007AFF 边框 + 居中真 logo)+ fetchRemoteIconDataUri 字节内联(Chrome SVG-as-image 远程直引实测不渲染→ 字节内联是唯一可行形态)+ maybeUpgradeIcon(pan/LOD 可见集切换自然升级);升级后徽章 = 白底 + #007AFF 边框 + 居中真 logo,点击弹卡、zoom/pan 完整,AMap/Baidu 零回归;
+  - ws-l(baidu-engine.ts):zoomstart/movestart/animation_start 恢复 markerMouseTarget pane(SDK webgl 动画期间隐藏该 pane = 闪烁根因)+ rAF 按帧重算定位(停摆守卫 + 无 rAF 兜底);百度滚轮 0 消失帧 + 0 往返瞬移帧,点击/reload/AMap/Tencent 零回归,console 0 error。
+
+## 冲突解决清单
+- 仅 tech/23-map-engines.md 一处冲突:ws-k 追加 §7 回填(升级保留徽章形态 + SVG-as-image 子资源实测)与 ws-l 追加回填(百度滚轮缩放闪烁根因 = SDK 隐藏 markerMouseTarget pane + 修复)双侧文档追加,按「保留双方段落」为据解决 —— ws-k §7 保留在前、ws-l 回填追加其后,以 `---` 分隔,两侧内容逐字保留、零删改。
+
+## 遗留问题
+- 主工作树其他未跟踪内容(`.address-work/`、其他批次目录)与本次合并零交集,未动。
+- **跨会话即时升级(首帧即真 logo)**:ws-k 记录图标字节/预检成功为会话级内存,reload 后链从 sessionStorage 恢复推进(实测 ~15s 内自然升级);如需首帧即真 logo 需持久化预检成功/字节缓存(sessionStorage),超出 ws-k 文件边界,留待 boss 裁决(详见 reports/ws-k.md)。
+
+## 最终 dev 状态
+- 本轮两个 merge commit:`56bc627`(ws-k,parents c6a919a + 1315c62)、`868bab1`(ws-l,parents 56bc627 + 2749584),均已 push origin dev(`56735a6..56bc627..868bab1`)。
+- worktree `/Users/acccan/dm-wt-tif`、`/Users/acccan/dm-wt-bbl` 均已 `git worktree remove` 成功(零残留);分支 `fix/tmap-icon-frame`、`fix/baidu-blink` 已 `git branch -d` 删除。
+- 批次目录入库 commit: `chore: 20260822 boss engine-polish-2 轮10入库(ws-k tmap-icon-frame + ws-l baidu-blink merge-report + 汇报)`(随本批入库提交完成)。
+
+门禁: ALL_GREEN
+结论: MERGED_ALL

@@ -11,8 +11,17 @@
 
 ## stage
 
-- current: NEXT(轮8/9 全部闭环:MERGED_ALL,dev push 56735a6;主树最终复验通过)
+- current: DISPATCH(轮10 ws-k/ws-l 并行:腾讯 icon 边框 + 百度滚轮闪烁,2026-08-23)
 - updated_at: 2026-08-23
+
+## 轮10(2026-08-23,ws-k + ws-l)用户新报 2 bug
+
+- **ws-k 腾讯「只有 icon 没有边框」**:boss 实测 = icon.horse 预检升级后纹理 = 裸 favicon
+  (无白底边框,hook 实证 dm-st-11+ = icon.horse src);修复 = 升级时把远程 icon 包进徽章
+  SVG(badgeWithRemoteIcon,白底 + 边框 + 居中 logo,与 AMap/百度同语言;CORS 实测决定
+  <image> 跨域 or fetch base64 内联)。
+- **ws-l 百度「滚轮缩放 POI 闪烁」**:boss 高频帧实锤 f00→f01 全部 30 徽章瞬移(消失 23 +
+  新增 23)、f01→f02 再 11、后稳定;二分(校准循环/LOD 摘挂/注入定时器)定位修复。
 
 ## 轮8/9 终态(2026-08-23,ws-i + ws-j)
 
@@ -47,6 +56,8 @@
 | g | fix/baidu-r5 | /Users/acccan/dm-wt-br5 | prompts/ws-g.md | reports/ws-g.md | DONE | 385155e | 轮5(fixPosition 反绕) | 2026-08-22 | OK(3 commits, 1434/1432 pass;SDK fixPosition 反绕根因 + 实例遮蔽修复) |
 | i | fix/tmap-badge-overlap | /Users/acccan/dm-wt-tov | prompts/ws-i.md | reports/ws-i.md | MERGED | c16e0d5 | 轮8 | 2026-08-23 | OK(6 commits, 1461/1461 pass boss 复验;竞态修复 + 链式预检) |
 | j | fix/tmap-mixed-block | /Users/acccan/dm-wt-tmb | prompts/ws-j.md | reports/ws-j.md | MERGED | da4a5fe | 轮9 | 2026-08-23 | OK(2 commits, 1461/1461 pass boss 复验;根因=底图 POI 图标层,features 排除 point) |
+| k | fix/tmap-icon-frame | /Users/acccan/dm-wt-tif | prompts/ws-k.md | reports/ws-k.md | RUNNING | dev c6a919a 切 | 轮10 | — | — |
+| l | fix/baidu-blink | /Users/acccan/dm-wt-bbl | prompts/ws-l.md | reports/ws-l.md | RUNNING | dev c6a919a 切 | 轮10 | — | — |
 
 ## 关键证据(2026-08-22)
 
