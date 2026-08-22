@@ -533,6 +533,23 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
                   placeholder="••••••••"
                 />
               </label>
+              {pwdMode === "login" && (
+                <button
+                  type="button"
+                  className={styles.forgotLink}
+                  onClick={() => {
+                    setTab("email");
+                    setError(null);
+                    setSent(false);
+                    setResendIn(0);
+                    setCode("");
+                    resetPasswordForm();
+                    setNotice(t("forgotHint", lang));
+                  }}
+                >
+                  {t("forgotPassword", lang)}
+                </button>
+              )}
               {pwdMode === "register" && (
                 <label className={styles.field}>
                   <span>{t("confirmPassword", lang)}</span>

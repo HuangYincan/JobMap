@@ -397,6 +397,24 @@
   color: var(--blue-ink, #0062cc);
 }
 
+/* 忘记密码入口(password tab 登录模式):12px --blue-ink 文字链接,点击区 ≥44px */
+.forgotLink {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  color: var(--blue-ink, #0062cc);
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+}
+
+.forgotLink:hover {
+  color: #64b5ff;
+}
+
 .socialGrid {
   display: grid;
   grid-template-columns: 1fr;
