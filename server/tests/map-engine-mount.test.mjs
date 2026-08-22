@@ -313,7 +313,8 @@ test('视图被接管(isViewTaken)→ 已建视图销毁并返回 null(切换抢
 test('hook 挂载路径接线 mountEngineView(resolved, getConfiguredEngines, ...)', () => {
   const hook = src('hooks/use-map-engine.ts');
   assert.match(hook, /mountEngineView\(resolved, getConfiguredEngines\(\), \{\s*container,\s*center,\s*zoom,\s*style,/);
-  assert.match(hook, /isCancelled: \(\) => cancelled/);
+  // ws-2:取消语义 ref 化(挂载代际)——cleanup/卸载/watchdog 超时递增即作废在飞链
+  assert.match(hook, /isCancelled: \(\) => seq !== mountSeqRef\.current/);
   assert.match(hook, /isViewTaken: \(\) => Boolean\(viewRef\.current\)/);
   assert.match(hook, /export \{ mountEngineView \} from "@\/lib\/map-engine\/mount"/, 're-export 供 node 测试直接 import(同 saved-camera-sync 模式)');
 });
@@ -341,4 +342,84 @@ test('挂载/回退路径不写偏好(偏好由手动切换专属;失败不持�
   // 挂载 effect 内不得调用(回退不覆盖 sessionStorage 用户选择)
   const mountRegion = hook.slice(hook.indexOf('mountEngineView('), hook.indexOf('.catch((err) =>'));
   assert.doesNotMatch(mountRegion, /writeEnginePreference/);
+});
+
+// ---------------------------------------------------------------------------
+// ws-2(2026-08-22):挂载失败错误态(mountError)+ 重试状态机(retryMount)+ watchdog
+// ---------------------------------------------------------------------------
+
+test('全部候选失败 → 最终错误携带 engineId(最后一个失败引擎;hook 错误态定位用)', async () => {
+  const preferred = makeMockEngine('baidu', {
+    overrides: {
+      createView: async () => {
+        events.push('createView:baidu');
+        throw new Error('BMapGL init 失败(模拟)');
+      },
+    },
+  });
+  const tencent = makeMockEngine('tencent', {
+    overrides: {
+      createView: async () => {
+        events.push('createView:tencent');
+        throw new Error('TMap init 失败(模拟)');
+      },
+    },
+  });
+  const configured = [tencent, preferred];
+
+  await assert.rejects(
+    mountEngineView(preferred, configured, {
+      ...OPTS,
+      isCancelled: () => false,
+      isViewTaken: () => false,
+    }),
+    (err) => {
+      assert.equal(err.engineId, 'tencent', 'engineId = 最后一个尝试(失败)的引擎,供 mountError.engine 定位');
+      assert.match(err.message, /TMap init 失败/, 'message/分类属性原样保留(不重包装)');
+      return true;
+    },
+  );
+});
+
+test('hook:挂载链全部失败 → catch 进入错误态(mountError 非 null;engine/code/message)', () => {
+  const hook = src('hooks/use-map-engine.ts');
+  // 错误态三字段:engine(失败引擎 id,mount.ts 在错误上携带 engineId;watchdog
+  // 超时无 engineId → 偏好引擎 resolved.id)/code(透传分类码)/message(原文)
+  assert.match(hook, /setMountError\(\{\s*engine: classified\.engineId \?\? resolved\.id,\s*code: classified\.code,\s*message: err instanceof Error \? err\.message : String\(err\),\s*\}\);/);
+  // 失败不再只有 warn:catch 第一句仍是 console.warn(行为基线),随后即错误态
+  assert.match(hook, /\.catch\(\(err\) => \{\s*console\.warn\("\[use-map-engine\] map engine load\/createView failed:", err\);/);
+});
+
+test('hook:重新开始挂载(首挂载/retryMount)与 .then 落地 → mountError 清 null', () => {
+  const hook = src('hooks/use-map-engine.ts');
+  // runMount 入口清(null):重新开始挂载立即清错误态(ws-2 契约)
+  assert.match(hook, /mountRunningRef\.current = true;\s*setMountError\(null\); \/\/ 重新开始挂载:立即清错误态\(ws-2 契约\)/);
+  // 成功落地清(null):.then 落地路径(挂载成功,视图/引擎状态落地后)
+  assert.match(hook, /setActiveSearchProvider\(created\.engine\.search\);\s*setMountError\(null\); \/\/ 挂载成功:错误态清除/);
+});
+
+test('hook:retryMount 幂等(已有活 view / 挂载进行中 → no-op),与首挂载共用 runMount', () => {
+  const hook = src('hooks/use-map-engine.ts');
+  // no-op 守卫:viewRef 战位(已挂载/接管)或挂载链在飞 → 直接返回,不重复创建
+  assert.match(hook, /const retryMount = useCallback\(\(\): void => \{\s*if \(viewRef\.current \|\| mountRunningRef\.current\) return;\s*runMount\(\);\s*\}, \[runMount\]\);/);
+  // 单一挂载链:首挂载 effect 与 retryMount 都走 runMount(不复制第二份链)
+  assert.ok(hook.match(/runMount\(\);/g).length >= 2, 'runMount 至少被首挂载 effect 与 retryMount 两处调用');
+});
+
+test('hook:watchdog —— mountEngineView 整体包 withTimeout(25_000),超时 code=MOUNT_TIMEOUT', () => {
+  const hook = src('hooks/use-map-engine.ts');
+  assert.match(hook, /const MOUNT_TIMEOUT_MS = 25_000;/);
+  assert.match(hook, /withTimeout\(\s*mountEngineView\(resolved, getConfiguredEngines\(\), \{/);
+  assert.match(hook, /MOUNT_TIMEOUT_MS,\s*'map-engine mount',\s*\)/);
+  assert.match(hook, /err\.code = 'MOUNT_TIMEOUT';/);
+  // 超时 → 作废在飞挂载链(后台链恢复后经 isCancelled 销毁已建视图,不泄漏)
+  assert.match(hook, /if \(classified\.code === 'MOUNT_TIMEOUT'\) mountSeqRef\.current\+\+;/);
+  // 成功后 must clear timer(不吞正常挂载成功路径)
+  assert.match(hook, /clearTimeout\(timer\);/);
+});
+
+test('hook:首挂载 effect deps 仍 [containerRef](提取 runMount 后不改变重挂载语义)', () => {
+  const hook = src('hooks/use-map-engine.ts');
+  assert.match(hook, /runMount\(\);\s*return relinquishView;/);
+  assert.match(hook, /\}, \[containerRef\]\);/);
 });
