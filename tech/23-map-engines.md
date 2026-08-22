@@ -1761,3 +1761,72 @@ ws-pinfix2(f2e4f60)曾令**全部 content marker 走 DOM overlay**——动机�
    → 预检完成后同会话自然升级(实测 reload 后 ~15s 内 21/22 可见徽章升级,零
    交互);若需跨会话即时升级(首帧即真 logo),需把预检成功/字节缓存持久化
    (sessionStorage),留待 boss 裁决。
+
+---
+
+## ws-l 回填:百度滚轮缩放 POI 闪烁(SDK webgl 隐藏 markerMouseTarget pane,2026-08-23,fix/baidu-blink)
+
+用户报「百度地图下滚动地图会导致 poi 闪烁」;boss 高频帧实锤(60ms 间隔 15 帧截图,
+视口 1400×900):滚轮触发瞬间全部徽章位置瞬移(消失 23 + 新增 23),f01→f02 再瞬移 11,
+后稳定。**根因不在本应用三条假设路径(校准循环/LOD 摘挂/注入定时器),而在 BMapGL
+SDK webgl 渲染的 overlay 管理器设计本身。**
+
+### 复现(worktree :3100 + headless Chromium + 真实 AK)
+
+- 每帧采样 `.BMap_Marker` 可见数 + markerMouseTarget pane 的 display:
+  滚轮每步 `visible=0 pane=none`(~180-260ms,zoomend 后恢复)——**徽章随 pane
+  整批消失再出现**;无任何引擎侧代码参与(校准事件 moveend/zoomend/tilesloaded
+  在 deep zoom 动画期间根本不派发,p2o 调用 0 次)。
+
+### 根因(SDK getscript v1.0 源码核实 + 真机 hook)
+
+BMapGL webgl 下,overlay 管理器(a8)在相机动画开始/结束事件隐藏/恢复整
+markerMouseTarget pane:
+
+```
+mu.addEventListener("movestart", C); mu.addEventListener("moveend", e);
+mu.addEventListener("zoomstart", C); mu.addEventListener("zoomend", e);
+mu.addEventListener("animation_start", C); mu.addEventListener("animation_end", e);
+// C: this._panes.markerMouseTarget.style.display = "none"; _zoomingOrMoving = true;
+// e: 恢复 display + _zoomingOrMoving=false + 全部 Marker overlay 重绘(l4.draw)
+// a8.draw: _zoomingOrMoving 期间跳过 Marker 类 overlay 的 draw
+```
+
+设计意图:动画期间 DOM 点击目标不更新(厂商 GL 纹理 marker 由 canvas 动画承载,
+点击目标本就不可见)。**本引擎 content 徽章的视觉 = 注入该 pane 的 DOM(厂商 GL
+纹理是 1×1 透明锚点)→ pane 隐藏即徽章全灭 = 用户感知的「闪烁」**。zoomend 派发
+带 150ms 防抖(`_checkFireZoomend` 定时器),故每次滚轮步徽章消失 ~180-260ms。
+
+二分结论(每步真机复验):
+1. **禁校准循环**(moveend/zoomend/tilesloaded → 重定位):瞬移不消失(校准事件在
+   deep zoom 动画期间本就不派发)——非校准时机问题;
+2. **禁 LOD 摘挂**(setVisiblePOIs):瞬移不消失(LOD 只切单个 marker 自身
+   display,不碰共享 pane;pane 隐藏与 LOD 无关);
+3. **禁注入定时器兜底**:已注入徽章 pendingContentInjection 为空,定时器空闲——
+   与瞬移无因果关系。
+
+### 修复(baidu-engine.ts,最小改动)
+
+1. **同步恢复 pane**:监听 `zoomstart/movestart/animation_start` → `getPanes()
+   .markerMouseTarget` display 复原(官方公开 API;监听晚于 SDK 内部处理器,
+   同任务内恢复,无绘制间隙);zoomend/moveend/animation_end 时 SDK 自身恢复 +
+   重绘,不冲突;
+2. **rAF 按帧重算定位**(动画期间 SDK 跳过 marker draw):实测 deep zoom 动画中
+   `getZoom()` 返回逐帧变化的动画 zoom(deepZoomTo 逐帧回写 zoomLevel/centerPoint),
+   `pointToOverlayPixelIn({zoom: getZoom(), fixPosition:false})` 投影与画布同相机
+   (2D 数学与 `_webglMapCamera` 投影实测逐值一致)→ 每帧重算全部 content 标记
+   定位,徽章平滑跟随画布;zoomend/moveend/animation_end 停止并收敛;停摆守卫
+   (相机 ~1s 未变自终止)防事件丢失悬挂;无 rAF 环境(node)同步收敛一次;
+3. `repositionContentMarkerDom` 值未变不写(同帧循环下避免重复 style 失效)。
+
+### 真机验收(worktree :3100 + headless Chromium + 真实 AK)
+
+- 百度:滚轮连续缩放(放大/缩小各 3 次,快拨 + 步进两种节奏)60ms 帧序列——
+  **0 消失帧(可见徽章数全程不落 0)、0 往返瞬移帧(位置单调连续,最坏单帧位移
+  与相机 zoom 增量一致)**,徽章平滑跟随;点击徽章 → POI 卡正常弹出;reload
+  复验正常;console 0 error;
+- AMap:400 徽章 DOM 全渲染、reload 正常、0 error;腾讯:canvas 渲染正常
+  (仅既有 favicon.im CORS 预检噪音,与 ws-j 基线一致)——零回归;
+- 测试:1465 通过 / 0 失败 / 2 skip(新增 4 条 ws-l 单测:事件恢复 pane /
+  rAF 按帧重算 + 停摆自终止 / 无 rAF 同步收敛 / destroy 终止);
+  typecheck / docs-check / git diff --check 通过。
