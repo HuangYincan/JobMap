@@ -11,8 +11,17 @@
 
 ## stage
 
-- current: NEXT(6 轮全部完成:MERGED_ALL ×6,push d3690e8;切换堆叠 bug 修复 + 主树最终复验通过)
-- updated_at: 2026-08-22
+- current: DISPATCH(轮7 ws-i 腾讯徽章遮挡修复,2026-08-23)
+- updated_at: 2026-08-23
+
+## 轮7(2026-08-23,ws-i)—— 用户报「腾讯底图的公司poi有问题,渲染很奇怪」
+
+- boss 实测:POI 徽章主体正常(15 完整徽章,MultiMarker hook 验证无双渲染/无 default styleId);
+  幽灵元素 = **TMap 底图 POI 文字标注与徽章混叠**(OCR 实证:「18号級」(638,393) 覆盖
+  (656,399) 徽章上部露下半 34×14;「塘河」标注与 (385,272) 徽章并排(35×58 竖卡);
+  AMap DOM 徽章在 canvas 之上不受影响 → 腾讯独有);次要:首会话 370-740 行 favicon.im
+  预检刷屏(全候选预检而非链式)。
+- 派发 ws-i(fix/tmap-badge-overlap,worktree dm-wt-tov):A 徽章层级修复 + B 预检链式推进。
 
 ## 最终复验(boss,轮5 合并后主树)
 
@@ -34,6 +43,7 @@
 | e | fix/baidu-round2 | /Users/acccan/dm-wt-br2 | prompts/ws-e.md | reports/ws-e.md | DONE | 230ff5c | 轮2 | 2026-08-22 | OK(3 commits;POI 根因=BMapGL v1.0 无 setContent 实锤,深色切 vector,蓝点判定) |
 | f | fix/baidu-r3/r4 | /Users/acccan/dm-wt-br3/br4 | prompts/ws-f.md | reports/ws-f.md | DONE | bf1dd7c | 轮3/4 | 2026-08-22 | OK(r3:Overlay 静默失效→Marker 注入主路径;r4:定时器兜底,主树复验 136 警告修复) |
 | g | fix/baidu-r5 | /Users/acccan/dm-wt-br5 | prompts/ws-g.md | reports/ws-g.md | DONE | 385155e | 轮5(fixPosition 反绕) | 2026-08-22 | OK(3 commits, 1434/1432 pass;SDK fixPosition 反绕根因 + 实例遮蔽修复) |
+| i | fix/tmap-badge-overlap | /Users/acccan/dm-wt-tov | prompts/ws-i.md | reports/ws-i.md | RUNNING | dev 58bc838 切 | 轮7 | — | — |
 
 ## 关键证据(2026-08-22)
 

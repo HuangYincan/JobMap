@@ -196,3 +196,35 @@ ws-e 与 dev 既有 ws-pinfix2 各自独立修复同一根因(BMapGL v1.0 `Marke
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+---
+
+# 轮8 合并(ws-i fix/tmap-badge-overlap,2026-08-23)
+
+## 结果总览
+- 成功合并: ws-i(fix/tmap-badge-overlap,tip c16e0d5,6 commits)1 分支并入 dev。
+- 失败/遗留: 无。门禁 0 失败(1461 pass / 0 fail / 2 skip),typecheck / docs-check / diff-check 全绿。
+
+## 逐分支明细
+| WS | 分支 | merge commit | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| ws-i | fix/tmap-badge-overlap (c16e0d5) | f8efbdd | 1461 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 无冲突(自动合并) |
+
+- 合并后全量:1463 tests / 1461 pass / 0 fail / 2 skip;`npm run typecheck` 零错误;`make docs-check` passed;`git diff --check` 干净。
+- 合并内容核验:tencent-engine.ts 腾讯徽章初始渲染竞态修复(共享实例挂图后 `setTimeout(0)` 全量 `setGeometries(geometries.slice())` 重推,宏任务等同步批量 add 完成;SDK guard 引用同数组直接返回故传副本;老 SDK 无 setGeometries 跳过)+ 构造后 setMap 挂图形态收敛 + destroy setMap(null) 对称 + 注释按实测修正(根因非「level=4 被标注遮挡」——SDK v1.8.0.2 实测 GeometryOverlay 层恒 OVERLAY_NAA 7 / rank 70020,文字标注层 60000 在其下,真实问题为 geometry_changed→_createLayer 重建链在页面初始可能整体错过的渲染竞态);map-markers.ts `resolveTMapIconSrc` 预检候选链只 push 第一个 unknown(logoUrl 优先),失败记忆化后下次重建推进下一候选;测试断言更新(构造顺序 + setGeometries 全量重推副本);tech/23 追加 §5 修订(根因修正 + 竞态机制 + 修复 + 真机验收)。boss 已实测复验 1461 pass。
+
+## 冲突解决清单
+- 无冲突。四个文件(tencent-engine.ts / map-markers.ts / map-engine-tencent.test.mjs / tech/23-map-engines.md)均自动合并成功。
+
+## 遗留问题
+- 主工作树其他未跟踪内容(`.address-work/`、其他批次目录)与本次合并零交集,未动。
+- merge-instructions.md / boss-state.md 已由 boss 更新为轮8 版本(随本轮批次目录入库)。
+- ws-i 遗留:预检候选面若需压 console 行数(当前 2×活跃 POI 数,180+ POI 数据规模所致),方向为优先 icon.horse 白名单,待 boss 裁决(见 reports/ws-i.md 问题 2);真机环境为 headless Chrome(SwiftShader 软 GL),建议 boss 合并后按 tech/23 §5 真机复核一次。
+
+## 最终 dev 状态
+- ws-i merge commit: `f8efbdd`(merge: fix/tmap-badge-overlap,parents 58bc838 + c16e0d5),已 push origin dev(`58bc838..f8efbdd`)。
+- worktree `/Users/acccan/dm-wt-tov` 已 remove;分支 `fix/tmap-badge-overlap` 已 `git branch -d` 删除。
+- 批次目录入库 commit: `chore: 20260822 boss engine-polish-2 轮8入库(ws-i tmap-badge-overlap merge-report + 汇报)`。
+
+门禁: ALL_GREEN
+结论: MERGED_ALL
