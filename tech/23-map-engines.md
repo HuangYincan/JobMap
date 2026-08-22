@@ -1476,3 +1476,75 @@ onerror fallbackUrls;TMap icon 路径此前只有单一 src,预检失败直接�
 - 测试:`map-engine-baidu.test.mjs` +5(注入即校准 / 相机事件重算 / remove
   注销 / destroy 解绑 / 旧 SDK 缺 API 静默跳过),90/90 通过;
   `npm test` 1432 通过 / 0 失败 / 2 skip;typecheck / docs-check / diff-check 通过。
+
+## ws-h 回填:腾讯 POI 堆叠根因实锤 —— DOM overlay 分派收窄 + 定位 API 实测修正(2026-08-22,fix/tmap-content-scope)
+
+> 来源:批次 `20260822-boss-engine-polish-2` ws-h。用户报「来回切换底图导致 POI
+> 各种奇怪 bug」;boss 真机实测:腾讯引擎 `.dm-badge` 100 个全部堆叠在 (0,900)
+> 一个点(unique=1,xRange=[0,0])。
+
+### 1. 堆叠根因(prompt 前提澄清 + 真机实锤)
+
+ws-pinfix2(f2e4f60)曾令**全部 content marker 走 DOM overlay**——动机是修
+「content+offset 无 icon 的 agent 蓝点被 MultiMarker 拒绝」,但副作用是
+**公司 POI 徽章(content+icon 并存)也改走 DOM overlay** → 依赖假定 API
+`lngLatToContainerPoint` —— **真机 Chromium + 真实 SDK 实测该 API 不存在**:
+
+- `typeof map.lngLatToContainerPoint === 'undefined'`(v1.8.0.2 Map 原型导出面:
+  `projectToContainer` / `unprojectFromContainer` / `projectToWorldPlane` /
+  `projectToCenterLocalPlane` / `glLatLngToPosition` 等,**无 lngLatToContainerPoint**);
+- 引擎 `project()` 判空 → 一次性 warn + 返回 null → `redraw` 不写 left/top →
+  全部 overlay div 停在静态位置 → **100 徽章全堆叠(用户 bug 终端形态)**;
+- 结论:ws-pinfix2 的定位 API 假设(官方命名)不成立,不是「API 存在但定位错」,
+  而是 **API 不存在 + DOM overlay 分派过宽** 双因叠加。
+
+### 2. 修复 A(主修复):createMarker 分派收窄
+
+`tencent-engine.ts` `createMarker` 按 ws-c 语义回归:
+
+- **content 存在且无 icon** → `createContentOverlay`(保留,ws-pinfix2 目标场景:
+  agent 蓝点等无 icon 的 HTML 形态);
+- **content+icon 并存(公司 POI 徽章/聚合徽章)/ 仅 icon** → 既有 icon 路径
+  (MultiMarker 纹理 + ws-c 修正锚点 anchor = -contract offset)——公司 POI
+  恢复;content 不写 geometry 不渲染(HTML 与 icon 纹理双渲染会叠印);
+- 无 content 无 icon → 单点 / MultiMarker 路径不变;
+- `createMultiMarker` / `resolveMultiStyle` 注释同步(icon 主机制语义回归)。
+
+### 3. 修复 B(双保险):DOM overlay 定位 API 双路径
+
+`createContentOverlay.project()`:
+
+- 优先 `lngLatToContainerPoint`(测试双面/未来 SDK 兼容);
+- **兜底 `projectToContainer(latLng)`**(真实 SDK v1.8.0.2 实测适配:返回
+  `TMap.Point {x,y}` 容器像素——center → 精确容器中心 (640,400)/1280×800,
+  geo 偏移 (lat+0.02,lng+0.02) → (757,265) 方向量级正确;+2 zoom 后同点
+  像素间距精确 ×4);
+- 两者皆无 → 一次性 warn + 跳过定位(不抛错)。
+
+### 4. 真机验收(dev server :3100 + Playwright Chromium + 真实 AK)
+
+- **腾讯不堆叠**:`.dm-badge` DOM 0 个(GL 纹理路径);MultiMarker 单实例
+  400 geometry / 177 唯一坐标 / 11 样式;截图 ~14-18 徽章分踞正确地理点
+  (截图 `.playwright-mcp/ws-h-10-tmap-final.png` 等);
+- **点击命中**:点击 `projectToContainer` 定位到的 dm-mk-1(640,400)→
+  「高频杭州」POI 详情卡片弹出(ws-h-16-after-click.png);
+- **缩放跟随**:+2 zoom 后同 geo 偏移像素距离精确 ×4(698,333 → 873,130,
+  相对中心 4.02×),视觉徽章尖点钉地理点(ws-h-17-after-zoom.png);
+- **agent 蓝点(无 icon content)不回归**:分派仍走 DOM overlay,定位链
+  projectToContainer 兜底(单元 74/74 钉住);
+- **百度/高德零回归**:amap 回切 400 DOM 徽章(63 唯一可见点)、baidu
+  400 徽章(177 唯一),截图正常,console 零报错(ws-h-08/11/12)。
+
+### 5. 测试(map-engine-tencent.test.mjs 73→74)
+
+- 重写 ws-pinfix2「content+icon → content 主机制」测试:改断言 icon 主机制
+  (MultiMarker + styleId + anchor (27,27) + 零 DOM overlay + content 不写
+  geometry + content-only 仍 DOM overlay);
+- 新增:projectToContainer 兜底定位(left/top = proj - offset、LatLng 纬度
+  在前、双 API 缺失一次性 warn 不抛、no-DOM 回退不受影响)。
+
+### 6. 遗留
+
+- DOM overlay 仅服务无 icon content(agent 蓝点/距离手柄);蓝点生产场景
+  (ws-d 用户定位)本就走 icon 路径,未受影响;
+- 未触发保底方案(用户「只用高德」授权):方案 A/B 验收通过,未启用。
