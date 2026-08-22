@@ -643,6 +643,48 @@ export const translations = {
     zh: '邮箱注册的账号，可在个人资料设置密码后登录',
     en: 'Accounts registered with an email can sign in with it after you set a password in your profile',
   },
+  // ---- 注册后绑定引导(password 注册成功 → 弹窗内引导绑定手机/邮箱,可跳过) ----
+  welcomeBindTitle: {
+    zh: '注册成功,欢迎!',
+    en: 'Welcome! You are signed up',
+  },
+  bindGuideHint: {
+    zh: '建议绑定手机或邮箱:忘记密码时可用验证码找回',
+    en: 'Recommend binding a phone or email — you can then recover your password with a verification code',
+  },
+  bindPhone: {
+    zh: '绑定手机',
+    en: 'Bind phone',
+  },
+  bindEmail: {
+    zh: '绑定邮箱',
+    en: 'Bind email',
+  },
+  targetLabel: {
+    zh: '绑定手机或邮箱',
+    en: 'Bind phone or email',
+  },
+  bindDone: {
+    zh: '完成绑定',
+    en: 'Complete binding',
+  },
+  skipBind: {
+    zh: '跳过',
+    en: 'Skip',
+  },
+  bindSuccess: {
+    zh: '绑定成功',
+    en: 'Bound successfully',
+  },
+  // ---- 忘记密码入口(password tab 登录模式 → 切 email tab 验证码登录) ----
+  forgotPassword: {
+    zh: '忘记密码?',
+    en: 'Forgot password?',
+  },
+  forgotHint: {
+    zh: '验证码登录后,可在 个人资料 → 密码与安全 中重设密码',
+    en: 'After signing in with a code, you can reset your password in Profile → Password & security',
+  },
   continueGithub: {
     zh: '使用 GitHub 继续',
     en: 'Continue with GitHub',
