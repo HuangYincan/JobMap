@@ -1,4 +1,4 @@
-// API 加固契约测试（quality-scan #7 / #10 / #11 / #12）。
+// API 加固契约测试（quality-scan #7 / #10 / #11 / #12 / #18）。
 // route.ts 使用 next/server + `@/` 别名（tsconfig paths 仅 bundler 解析），
 // node:test 无法直接 import，沿用仓库既有契约测试模式：readFileSync + 正则断言
 // 守卫路径与常量（行为逻辑：enqueue 幂等 / matchJobAlerts / 管线均有独立 lib 测试）。
@@ -142,4 +142,30 @@ test('#12 saved: name/poiId 长度上限 + lng/lat 范围校验 → 400', () => 
   assert.match(route, /poiId and name required/);
   assert.match(route, /isPersistableSavedSnapshot/);
   assert.match(route, /canonicalMode/);
+});
+
+test('#12 pois: q 超长 / page / pageSize 非法 → 400,且先于缓存 key', () => {
+  const route = src('app/api/pois/route.ts');
+  assert.match(route, /const MAX_Q_LENGTH = 100/);
+  assert.match(route, /const MAX_PAGE_SIZE = 100/);
+  assert.match(route, /const MAX_PAGE = 10_000/);
+  assert.match(route, /code: 'Q_TOO_LONG'/);
+  assert.match(route, /code: 'INVALID_PAGE'/);
+  assert.match(route, /code: 'INVALID_PAGE_SIZE'/);
+  assert.match(route, /status: 400/);
+  // 三类校验都必须先于缓存 key 构造(超限值永不进缓存)
+  const keyIdx = route.indexOf('const cacheKey =');
+  const qIdx = route.indexOf("code: 'Q_TOO_LONG'");
+  const pageIdx = route.indexOf("code: 'INVALID_PAGE'");
+  const sizeIdx = route.indexOf("code: 'INVALID_PAGE_SIZE'");
+  assert.ok(qIdx !== -1 && qIdx < keyIdx, 'q 校验先于缓存 key');
+  assert.ok(pageIdx !== -1 && pageIdx < keyIdx, 'page 校验先于缓存 key');
+  assert.ok(sizeIdx !== -1 && sizeIdx < keyIdx, 'pageSize 校验先于缓存 key');
+  // 缺失/空串回退默认(1 / 20),不误伤正常请求
+  assert.match(route, /pagedParam\(url\.searchParams\.get\('page'\), 1, MAX_PAGE\)/);
+  assert.match(route, /pagedParam\(url\.searchParams\.get\('pageSize'\), 20, MAX_PAGE_SIZE\)/);
+  // 原契约保持:共享 catalog + 管线 + 缓存
+  assert.match(route, /loadServerCatalog/);
+  assert.match(route, /searchPublicCatalog/);
+  assert.match(route, /writePublicCache/);
 });

@@ -31,6 +31,22 @@ function parseFilters(raw: string | null): Record<string, unknown> {
   }
 }
 
+// ---- 输入上限（quality-scan #12，2026-08-23；与 POST /api/search 对齐）----
+/** q 上限：超长关键词直接 400（防超长 q 进全 catalog 匹配循环 + 缓存 key 膨胀）。 */
+const MAX_Q_LENGTH = 100;
+/** page 上限：超过即视为越界请求（正常分页恒远小于此）。 */
+const MAX_PAGE = 10_000;
+/** pageSize 上限：无 bounds 全量搜索时防单次大响应（客户端语义不变，正常请求恒 ≤50）。 */
+const MAX_PAGE_SIZE = 100;
+
+/** 分页参数：缺失/空串 → fallback；非整数或越出 1..max → null（调用方回 400）。 */
+function pagedParam(raw: string | null, fallback: number, max: number): number | null {
+  if (raw === null || raw === '') return fallback;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1 || n > max) return null;
+  return n;
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const mode = (url.searchParams.get('mode') || 'work') as MapMode;
@@ -38,8 +54,30 @@ export async function GET(request: Request) {
   const sort = url.searchParams.get('sort') || undefined;
   const filters = parseFilters(url.searchParams.get('filters'));
   const bounds = url.searchParams.get('bounds');
-  const page = Number(url.searchParams.get('page')) || 1;
-  const pageSize = Number(url.searchParams.get('pageSize')) || 20;
+
+  // #12：q 长度与 page/pageSize 校验（均先于缓存 key 构造，与 POST /api/search
+  // 的 MAX_Q_LENGTH=100 / pageSize 1..100 规则对齐；page 额外要求整数 1..MAX_PAGE）。
+  if (q && q.length > MAX_Q_LENGTH) {
+    return NextResponse.json(
+      { code: 'Q_TOO_LONG', message: `q must be a string of at most ${MAX_Q_LENGTH} chars` },
+      { status: 400 }
+    );
+  }
+  const page = pagedParam(url.searchParams.get('page'), 1, MAX_PAGE);
+  if (page === null) {
+    return NextResponse.json(
+      { code: 'INVALID_PAGE', message: `page must be an integer in 1..${MAX_PAGE}` },
+      { status: 400 }
+    );
+  }
+  const pageSize = pagedParam(url.searchParams.get('pageSize'), 20, MAX_PAGE_SIZE);
+  if (pageSize === null) {
+    return NextResponse.json(
+      { code: 'INVALID_PAGE_SIZE', message: `pageSize must be an integer in 1..${MAX_PAGE_SIZE}` },
+      { status: 400 }
+    );
+  }
+
   const cacheKey = publicCacheKey(['pois', mode, q, sort, url.searchParams.get('filters'), bounds, page, pageSize]);
   const cached = readPublicCache(cacheKey);
   if (cached) {

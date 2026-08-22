@@ -775,6 +775,8 @@ Response:
 }
 ```
 
+> **输入上限(2026-08-23,quality-scan #12)**:现路径为 `GET /api/pois`(与 `POST /api/search` 共用校验规则):`q` ≤ 100 字符(超限 400 `Q_TOO_LONG`)、`page` 整数 1..10000、`pageSize` 整数 1..100(超限 400 `INVALID_PAGE` / `INVALID_PAGE_SIZE`,先于缓存 key 构造);分页参数缺失/空串回退默认 `page=1`/`pageSize=20`。
+
 ### 2. 建议 API
 
 ```
