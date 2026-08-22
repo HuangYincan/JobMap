@@ -370,6 +370,8 @@ class TencentView implements MapView {
   private multiZIndexWarned = false;
   /** MultiMarker setStyles 降级告警一次性标记(老 SDK 无 setStyles → 归组样式降级) */
   private multiStylesWarned = false;
+  /** MultiMarker setMap 缺失告警一次性标记(SDK v1.8.0.2 恒有 setMap,仅极老形态缺失) */
+  private multiSetMapWarned = false;
   /** 单点 Marker setIcon 降级告警一次性标记(npm SDK 老形态无 setIcon) */
   private singleIconWarned = false;
   /** 共享 MultiMarker 实例(批量化核心:单实例承载全部 geometry;首次 createMarker 惰性创建) */
@@ -800,10 +802,20 @@ class TencentView implements MapView {
     let raw = this.multiMarker;
     if (!raw) {
       // 首个 marker:构造共享实例(首批 geometry + 已归组样式 + zIndex)
+      // ⚠️ **构造不传 map,构造后显式 setMap 挂图**(ws-i 2026-08-23,SDK
+      // v1.8.0.2 实包源码核实):构造期传 `map` → GL GeometryOverlay 基类构造器
+      // 在子类 `_setGeometryType()`(设置 `_layerType="MARKER"`)执行**之前**
+      // 调 `setMap(map)` → `_createLayer()` 读 `_layerType` 仍 undefined →
+      // 图层 level 落 **OVERLAY_AA(4)**,低于底图文字标注层 TEXT(6)——
+      // rank=10000·level+zIndex(全包唯一 rank 公式)排序在标注之下 →
+      // 「底图文字标注盖住徽章,只露下半截」(用户「腾讯 poi 渲染很奇怪」根因,
+      // 与 AMap DOM 徽章在 canvas 之上形成对比)。构造后 setMap:`_setGeometryType`
+      // 已执行 → 图层 type="MARKER" → level **OVERLAY_NAA(7,标注之上)** →
+      // 徽章完整不被遮挡。zIndex 只是 level 内偏移(上限 9999),无法跨级,
+      // 必须修 level —— 本构造顺序即 SDK 设计意图(OVERLAY_NAA 专为 marker 预留)。
       const mmOpts: Record<string, unknown> = {
-        map: this.raw,
         geometries: [geometry],
-        // SDK 核实:overlay zIndex → layer rank 排序(越大越靠上)
+        // SDK 核实:overlay zIndex → layer rank 排序(越大越靠上;同一 level 内)
         zIndex: opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX,
       };
       if (Object.keys(this.multiStyles).length > 0) mmOpts.styles = this.multiStyles;
@@ -813,6 +825,14 @@ class TencentView implements MapView {
         // 与单点路径同语义:可观测 + rethrow(保留 addMarker 簿记语义)
         console.error('[map-engine] TMap MultiMarker 创建失败', err);
         throw err;
+      }
+      // 构造后挂图(见上注释:修复 SDK 构造顺序 bug 的必需步骤;destroy 摘除
+      // 已依赖 setMap(null),此处同款可用性)。老 SDK 无 setMap → 一次性 warn
+      // 降级不抛(实例挂不上图,由调用方可见性逻辑兜底)。
+      if (typeof raw.setMap === 'function') {
+        raw.setMap(this.raw);
+      } else {
+        this.warnMultiMarkerSetMapDegraded();
       }
       this.multiMarker = raw;
     } else {
@@ -1008,6 +1028,14 @@ class TencentView implements MapView {
     if (this.multiStylesWarned) return;
     this.multiStylesWarned = true;
     console.warn('[map-engine] TMap MultiMarker 无 setStyles,新样式归组降级为默认点');
+  }
+
+  /** MultiMarker setMap 缺失告警(一次性;SDK v1.8.0.2 实包核实 GeometryOverlay 恒有
+   * setMap,仅异常/极老形态缺失;缺失时共享实例挂不上图,降级不抛) */
+  private warnMultiMarkerSetMapDegraded(): void {
+    if (this.multiSetMapWarned) return;
+    this.multiSetMapWarned = true;
+    console.warn('[map-engine] TMap MultiMarker 无 setMap,实例无法挂图(层 rank 修复降级)');
   }
 
   /** 单点 Marker setIcon 降级告警(一次性;npm SDK 老形态无 setIcon) */
