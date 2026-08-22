@@ -39,6 +39,11 @@ export const SCRIPT_ID = 'amap-jsapi-script';
 /** 随主脚本预加载的插件（v2.0 支持 URL plugin 参数，避免 AMap.plugin 时序竞态） */
 const AMAP_PLUGINS = 'AMap.PlaceSearch,AMap.AutoComplete,AMap.Geolocation,AMap.Geocoder';
 
+/** 主脚本加载超时(ms)。loadAMap 曾经是全链路唯一无超时的 await——脚本中途卡死
+ *  (DNS/TLS/CDN)时 Promise 永不落定,map-shell 首屏永久 Loading(刷新即好)。
+ *  超时后清理标签并 reject(code='AMAP_LOAD_TIMEOUT'),调用方即可重试。 */
+export const AMAP_LOAD_TIMEOUT_MS = 8_000;
+
 /** 加载状态缓存，避免重复注入 */
 let loadPromise: Promise<any> | null = null;
 
@@ -72,11 +77,43 @@ export function loadAMap(): Promise<any> {
     // 安全码必须在脚本加载前配置
     window._AMapSecurityConfig = { securityJsCode: securityCode };
 
+    // settle 竞态守卫:超时/error 之后迟到的 onload/onerror 一律无效(不二次
+    // settle)。不依赖「remove 后浏览器不再触发回调」的行为——显式防。
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const settleFail = (err: Error) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      loadPromise = null;
+      // 移除失败/超时标签:否则下次 loadAMap 走「复用 existing」分支,给一个
+      // 已死且不会再触发 load/error 的标签挂监听,Promise 永不落定,
+      // 后续所有 searchPOI/geocode 全部永久挂起(直到整页刷新)。
+      document.getElementById(SCRIPT_ID)?.remove();
+      reject(err);
+    };
+    const settleOk = (value: any) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      resolve(value);
+    };
+
+    // 超时兜底(对比 tencent 1.5s 就绪超时 / baidu 2s 分类超时;AMap 主脚本
+    // 含插件必须等真实网络链路,8s 是安全上界):卡死时绝不永久 pending。
+    timer = setTimeout(() => {
+      settleFail(
+        Object.assign(new Error(`AMap script failed to load within ${AMAP_LOAD_TIMEOUT_MS}ms`), {
+          code: 'AMAP_LOAD_TIMEOUT',
+        }),
+      );
+    }, AMAP_LOAD_TIMEOUT_MS);
+
     // 复用已存在的 script 标签
     const existing = document.getElementById(SCRIPT_ID);
     if (existing) {
-      existing.addEventListener('load', () => resolve(window.AMap));
-      existing.addEventListener('error', () => reject(new Error('AMap script failed to load')));
+      existing.addEventListener('load', () => settleOk(window.AMap));
+      existing.addEventListener('error', () => settleFail(new Error('AMap script failed to load')));
       return;
     }
 
@@ -84,15 +121,8 @@ export function loadAMap(): Promise<any> {
     script.id = SCRIPT_ID;
     script.src = `${AMAP_URL}${apiKey}&plugin=${AMAP_PLUGINS}`;
     script.async = true;
-    script.onload = () => resolve(window.AMap);
-    script.onerror = () => {
-      loadPromise = null;
-      // 移除失败标签:否则下次 loadAMap 走「复用 existing」分支,给一个
-      // 已死且不会再触发 load/error 的标签挂监听,Promise 永不落定,
-      // 后续所有 searchPOI/geocode 全部永久挂起(直到整页刷新)。
-      script.remove();
-      reject(new Error('AMap script failed to load'));
-    };
+    script.onload = () => settleOk(window.AMap);
+    script.onerror = () => settleFail(new Error('AMap script failed to load'));
     document.head.appendChild(script);
   });
 
