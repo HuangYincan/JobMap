@@ -13,6 +13,14 @@ export const translations = {
     zh: '收藏图层',
     en: 'Saved layer',
   },
+  savedOverlayShow: {
+    zh: '仅展示收藏图层',
+    en: 'Show saved places only',
+  },
+  savedOverlayHide: {
+    zh: '取消展示收藏图层',
+    en: 'Hide saved places only',
+  },
   saved: {
     zh: '已保存',
     en: 'Saved',

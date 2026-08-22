@@ -2989,7 +2989,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     onClick={handleToggleSavedOverlay}
                     aria-pressed={savedOverlay}
                   >
-                    {overlayPois.length ? `${t("savedOverlay", lang)} ${overlayPois.length}` : t("savedOverlay", lang)}
+                    {savedOverlay ? t("savedOverlayHide", lang) : t("savedOverlayShow", lang)} {overlayPois.length}
                   </button>
                   <div className={styles.mobileStyleRow} role="listbox" aria-label={t("mapStyle", lang)}>
                     {(

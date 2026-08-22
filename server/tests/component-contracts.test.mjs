@@ -1428,3 +1428,36 @@ test('agent panel dark mode: 深色覆盖块 + 关键类无硬编码白底 (ws-d
   assert.doesNotMatch(md, /background: rgba\(255, 255, 255, 0\.[1-9]/);
   assert.doesNotMatch(md, /background: #fff\b/i);
 });
+
+test('mobile sheets: agent fills drawer + saved-layer toggle copy (ws-fx)', () => {
+  const css = src('components/map-shell.module.css');
+  const shell = src('components/map-shell.tsx');
+  const i18n = src('lib/i18n.ts');
+
+  // 高度链:drawerContent 是 drawer flex column 的可伸缩子项(flex:1 1 auto; min-height:0),
+  // 获得确定高度 → 撑起 .mobileAgent height:100% / .panel.embedded flex:1,输入框贴 drawer 底
+  const drawerContentAt = css.indexOf('.drawerContent {');
+  assert.ok(drawerContentAt !== -1, '.drawerContent 块存在');
+  const drawerContentBlock = css.slice(drawerContentAt, css.indexOf('\n}', drawerContentAt) + 1);
+  assert.match(drawerContentBlock, /flex: 1 1 auto;/, 'drawerContent 必须 flex:1 1 auto(drawer flex column 可伸缩子项)');
+  assert.match(drawerContentBlock, /min-height: 0;/, 'drawerContent 必须 min-height:0(允许收缩)');
+  assert.match(drawerContentBlock, /overflow: auto;/, 'drawerContent 保持 overflow:auto(长内容滚动)');
+
+  // 收藏图层 pill:32 → 40px(与 sheet 内标准/卫星/深色/地图源按钮同高)
+  const btnAt = css.indexOf('.mobileFilterBtn {');
+  assert.ok(btnAt !== -1, '.mobileFilterBtn 块存在');
+  const btnBlock = css.slice(btnAt, css.indexOf('\n}', btnAt) + 1);
+  assert.match(btnBlock, /height: 40px;/, 'mobileFilterBtn 高度 40px');
+
+  // i18n 按态新键(zh/en 文案)
+  assert.match(i18n, /savedOverlayShow: \{\s*zh: '仅展示收藏图层',\s*en: 'Show saved places only',\s*\},/);
+  assert.match(i18n, /savedOverlayHide: \{\s*zh: '取消展示收藏图层',\s*en: 'Hide saved places only',\s*\},/);
+  // 旧键保留(桌面 layers-panel 区块标题用)
+  assert.match(i18n, /savedOverlay: \{\s*zh: '收藏图层',\s*en: 'Saved layer',\s*\},/);
+
+  // toggle 文案按态取键,保留计数,aria-pressed 不动
+  assert.match(shell, /savedOverlay \? t\("savedOverlayHide"/, '开态取 savedOverlayHide');
+  assert.match(shell, /: t\("savedOverlayShow"/, '关态取 savedOverlayShow');
+  assert.match(shell, /overlayPois\.length/, '计数保留');
+  assert.match(shell, /aria-pressed=\{savedOverlay\}/, 'aria-pressed 保留');
+});
