@@ -383,11 +383,53 @@ test('全部候选失败 → 最终错误携带 engineId(最后一个失败引�
 
 test('hook:挂载链全部失败 → catch 进入错误态(mountError 非 null;engine/code/message)', () => {
   const hook = src('hooks/use-map-engine.ts');
-  // 错误态三字段:engine(失败引擎 id,mount.ts 在错误上携带 engineId;watchdog
-  // 超时无 engineId → 偏好引擎 resolved.id)/code(透传分类码)/message(原文)
-  assert.match(hook, /setMountError\(\{\s*engine: classified\.engineId \?\? resolved\.id,\s*code: classified\.code,\s*message: err instanceof Error \? err\.message : String\(err\),\s*\}\);/);
+  // 错误态三字段:engine(取错误对象携带的最后失败引擎 id:err.engineId ??
+  // err.engine ?? 偏好引擎 resolved.id —— ws-eng-meta 语义修正:全链失败时
+  // engine=最后失败引擎,与 message(对应引擎失败详情)对齐,不再误导
+  // 「偏好引擎挂了」)/code(透传分类码)/message(原文)
+  assert.match(hook, /setMountError\(\{\s*engine: classified\.engineId \?\? classified\.engine \?\? resolved\.id,\s*code: classified\.code,\s*message: err instanceof Error \? err\.message : String\(err\),\s*\}\);/);
+  // 分类诊断日志的 engine 与 mountError.engine 同口径(不再硬编码偏好引擎;
+  // R4 repro 曾显示 engine=amap 而 message 是 baidu 的,字段误导源)
+  assert.match(hook, /console\.warn\("\[use-map-engine\] 引擎加载失败分类:", \{\s*engine: classified\.engineId \?\? resolved\.id,/);
   // 失败不再只有 warn:catch 第一句仍是 console.warn(行为基线),随后即错误态
   assert.match(hook, /\.catch\(\(err\) => \{\s*console\.warn\("\[use-map-engine\] map engine load\/createView failed:", err\);/);
+});
+
+test('最后一个失败不是 Error 实例 → 兜底错误仍携带 engineId(最后失败引擎;mountError.engine 语义一致)', async () => {
+  // 引擎实现抛非 Error 值(如字符串)时,mount.ts 上抛兜底 Error;它同样
+  // 必须携带最后失败引擎 id —— 否则调用方 getMountError 取 engineId 得到
+  // undefined → 回退偏好引擎,全链失败时 engine 字段再次误导
+  const preferred = makeMockEngine('amap', {
+    overrides: {
+      load: async () => {
+        events.push('load:amap');
+        throw 'AMap boom(非 Error 值)';
+      },
+    },
+  });
+  const tencent = makeMockEngine('tencent', {
+    overrides: {
+      load: async () => {
+        events.push('load:tencent');
+        throw 'TMap boom(非 Error 值)';
+      },
+    },
+  });
+  const configured = [preferred, tencent];
+
+  await assert.rejects(
+    mountEngineView(preferred, configured, {
+      ...OPTS,
+      isCancelled: () => false,
+      isViewTaken: () => false,
+    }),
+    (err) => {
+      assert.equal(err.engineId, 'tencent', '兜底错误携带最后失败引擎 id(供 mountError.engine 定位)');
+      assert.match(err.message, /所有已配置引擎挂载失败/);
+      return true;
+    },
+  );
+  assert.deepEqual(events, ['load:amap', 'load:tencent']);
 });
 
 test('hook:重新开始挂载(首挂载/retryMount)与 .then 落地 → mountError 清 null', () => {
