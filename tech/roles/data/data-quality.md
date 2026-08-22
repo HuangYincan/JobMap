@@ -1,6 +1,6 @@
 # Data Quality
 
-> **Status:** evidence recorded 2026-08-17 for the radar snapshot + official-page refresh work.
+> **Status:** evidence recorded 2026-08-17 for the radar snapshot + official-page refresh work;下文按时间追加后续小节(地址回填 / geocode r4–r5 / 腾讯兜底等);**2026-08-23 计数口径刷新见「Import plan 现行口径与 Drops 现状」**。
 > **Owner:** product / data
 
 ## Radar multi-city mapper (national scope, 2026-08-17)
@@ -16,7 +16,13 @@
 - Drops: **630 companies / 761 positions** (all `radar-*` externalIds unique), **700 marked
   aggregate**. Sites by city: 上海市 397 · 北京市 336 · 深圳市 253 · 成都市 127 · 广州市 117 ·
   杭州市 98 · 武汉市 61.
-- Import plan (all sources): **669 companies / 1440 sites / 877 positions, 0 issues, 0 dropped**.
+- Import plan (all sources): **669 companies / 1440 sites / 877 positions, 0 issues, 0 dropped**(2026-08-17 口径,历史快照)。
+- **Import plan 现行口径(2026-08-23,`plan-seed-import` dry-run 实测)**:companies **1040** / sites **2351** / positions **12932** / dropped **0** / issues []。drops 变动后请重跑 dry-run 取新计数,本文件不硬编码。
+
+### Drops 现状与迁移(2026-08-23,实测计数)
+
+- `server/data/recruitment/<源>/*.json` 文件数:**radar 646 / official-career 78 / qqdoc-official 142 / qqdoc-jobs 163 / embodied-jobs 47**(company 级每源一文件;`boss`/`nowcoder`/`shixiseng` 为 stub 空目录)。来源审查记录:`tech/roles/data/etl/`(radar / official-career / qqdoc-official / embodied-jobs / feishu-ats / hotjob-ats / zhiye-ats;qqdoc-jobs 见批次 `20260821-boss-qqdoc-jobs`)。
+- `db/migrations/` **001–018**(017 avatar / 018 memories)。
 - **范围:全国 drops(2026-08-17)。** Geocode 已改为 **city-scoped**(`geocode-sites-apply.mjs` + `site-geocode.ts`):per-site
   place-text search with `citylimit`, and grade + regeo validate against the site's own
   province/city. **Live apply not yet run** on the national drops — the 2026-08-17 snapshot

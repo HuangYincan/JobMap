@@ -1,14 +1,14 @@
 # 05 - Milestones
 
 > **Status:** current execution roadmap
-> **Last reviewed:** 2026-08-20
+> **Last reviewed:** 2026-08-23
 > **Authority:** this file is the in-repository milestone source of truth. Historical `tech/00-*` reports are context only.
 
 ## Current Baseline
 
 P0–P4 are **complete and merged to `dev`** (2026-08-17): a runnable Next.js application (Domain + Work modes, account / saved / applications / job-alert queue), real recruitment catalog (Postgres first, offline drops fallback), reviewed polite acquisition (radar `jobs.json` + official career pages + reviewed ATS endpoints), PostGIS migrations `001`–`016`, and nationwide work mode (LOD tiers / city superset / viewport loading, migrations `011`–`013`). Historical Phase 1 records remain on `feature/phase-1-platform-baseline`.
 
-**Frontend status (2026-08-20):** map shell, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter, sort, autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle — all browser-verified. Server suite: **488 tests / 486 pass / 2 skip** (`cd server && npm test`, 2026-08-20).
+**Frontend status (2026-08-23):** map shell, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter, sort, autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle, 三引擎地图源切换 — all browser-verified. Server suite: **1470 tests / 1468 pass / 2 skip** (`cd server && npm test`, 2026-08-23).
 
 **Backend status:** importer unit tests pass (`make test-unit`). Live PostGIS apply is verified: `make db-migrate` wrote `001`–`016`, `make test-integration` passed. Seed import (2026-08-17 Hangzhou pilot): 137 companies / 137 sites / 240 open positions (official-career + radar + portals); national import plan: **669 companies / 1440 sites / 877 positions, 0 issues, 0 dropped**. Public `/api/pois` and `/api/search` push `bounds` / distance through `company_sites_geom_gist` (`&&` then `ST_DWithin`) when `DATABASE_URL` is set; no-DB stays on `inBounds`. Live `EXPLAIN` (51 sites): `&&` + `ST_DWithin` uses the gist; bbox-only is still a Seq Scan on this tiny table.
 

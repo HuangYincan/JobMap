@@ -2,6 +2,28 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-23
+
+### Fixed
+
+- **引擎打磨系列收尾(`20260822-boss-engine-polish-2` 轮8–10).** 腾讯 MultiMarker 初始渲染竞态——构造不传 map、挂图后全量 `setGeometries` 重推,首帧徽章即完整,图层落 MARKER 层不被底图文字标注遮挡(ws-i,cd27acd+441231a)+ icon 预检链式推进(只预检候选链第一个 unknown,失败记忆化下次重建推进,26e7673);腾讯矢量底图排除 `point`(POI 图标层)——light 样式「混合块」根因修复,保留地名/路名标注(ws-j,e1f37a8);腾讯 POI 徽章自然升级真 logo——`badgeWithRemoteIcon` 包裹 icon.horse 保留徽章形态 + 远程真 logo 改 fetch 字节内联(SVG-as-image 实测不抓远程子资源,ws-k,0345983+52a3d0e)+ pan/LOD 可见集切换 `maybeUpgradeIcon` 预检链原地重建(5b3c17d);百度滚轮缩放徽章闪烁——SDK webgl 隐藏 markerMouseTarget pane 时同步恢复 + rAF 按帧重算定位(rAF 停摆自终止,ws-l,99ef028)。全量套件实测:**npm test 1470 tests / 1468 pass / 2 skip**(2026-08-23)。
+
+## 2026-08-22
+
+### Added
+
+- **OAuth 登录(`tech/27-oauth-login.md`;`feature/oauth-backend` d22c3f8 + `oauth-frontend` 8e8d07ca + `oauth-docs` 9300fd1).** 真实 OAuth2 authorization code flow:`lib/oauth`(provider registry + signed state cookie + github/google/wechat code exchange client)+ `api/auth/oauth/{providers,start,callback}` 路由 + upsertIdentity 邮箱冲突挂接(41 用例);前端登录按钮 providers 探测(已配置 → 跳 start,未配置 → 回退 demo POST)+ `auth_error` 处理;`fix/oauth-callback-500`(Next 16 absolute redirect URLs,ef20c09)。同日 auth-recovery(`feature/auth-recovery`,15eafb1):注册成功弹窗引导绑定手机/邮箱(OTP 验证,可跳过)+ password 模式忘记密码入口(切 email 验证码登录)。
+- **阿里云短信 OTP 真发(`feature/aliyun-sms-send`,76eec04;`tech/26-aliyun-sms.md`).** phone OTP 经阿里云短信认证服务真发(`lib/aliyun-sms-client`),email 经 Resend 真发;删除 demo `000000` stub 与 hint(server/src 全量 grep 0 命中);缺配置 → 503 `EMAIL_NOT_CONFIGURED` / `SMS_NOT_CONFIGURED`,无效 AccessKey/签名 → `SMS_PROVIDER_ERROR` 短路。
+- **Agent Memory(`feature/agent-memory-core` a34da06 + `agent-memory-ui` d7452bf;`tech/26-agent-memory.md`).** 迁移 `018_user_memories` + `lib/memory-store` + agent prompt 注入 + `builtin__memory_save` 工具 + `/api/me/memories`;前端记忆管理 UI(入口/列表/逐条删除/一键清除/弱提示,i18n `agentMemory*` 七键,登录才渲染)。
+
+### Fixed
+
+- **收藏图层 mobile sheet 修复(fx,09a5cd7).** layers sheet 收藏图层 toggle 按态文案(`savedOverlayShow`/`savedOverlayHide`,保留计数)+ `drawerContent` flex 高度链撑起 AI sheet。
+- **首访卡死修复(loading-hang ws1–4 + docs 回填).** `loadAMap` 超时化 + 失败可重试(f5c3d17);引擎挂载失败暴露 `mountError` + `retryMount` 重试状态机(6c780dc);加载覆盖层失败态 UI + 重试按钮(8e05d2d);首访全量加载逐页超时 + 连续失败止损(5165904);根因与修复回填 `tech/16`、`tech/23`(1d586e7/5a2e649)。
+- **三引擎打磨系列(`20260822-boss-tmap-polish` 轮1–2、`20260822-boss-tmap-interaction` 轮1–3、`20260822-boss-engine-polish-2` 轮1–6)。** 腾讯:zoom 契约化(`raw.zoomIn` 逃生舱废止)、卫星/深色暴露、比例尺、水印隐藏、公司 POI icon 候选链、POI 锚点契约修正、locate 高精度、滚轮平滑(`smoothWheelZoom`)、切回引擎 POI 丢失修复、content marker DOM overlay 双路径、MultiMarker 构造时序落 MARKER 层。百度:就绪信号修正、卫星常量/深色、单点级 content 注入兜底、r3 厂商 Marker 主路径、r4 重负载定时器兜底(rAF 停摆免疫)、r5 `fixPosition` 反绕修正 + 实例遮蔽。通用:`mountError.engine` 语义归一(245039d)+ dynamic chunk 15s 超时守卫 GATE_A(f25ad78)。
+- **AI agent 系列(`20260822-boss-agent-bugfix` / `agent-inputbar` / `agent-navi` / `agent-parallel-stream`).** 深色适配;清屏 = 归档当前会话 + 新建空会话(旧内容可回溯);send↔stop in-place 双态 + clear 左移;navi 按钮 `.md` 前缀 specificity + 空 name 去尾逗号;每会话独立流(切会话不打断);AI 移动端并入抽屉 sheet(撤销独立浮层,`feature/mobile-agent-embed`)。
+- **geocode r4/r5(`20260821-boss-address-first` 批次收尾).** 地址回填 342/373 站(首轮 353 条 + 二轮 18 站;最终 13 站 null);geocode 覆盖 5 源(radar/official-career/qqdoc-jobs/qqdoc-official/embodied-jobs);office POI 限定词 token 序列放宽(r5 16 站复合限定词 POI 落真实坐标);城市中心堆叠修复闭环 r4+r5 共 304 站落真实坐标;`audit-city-center-pins` 只读诊断脚本(`tech/29`)。
+
 ## 2026-08-21
 
 ### Added
@@ -11,6 +33,9 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - **place-text 结果缓存(`fix/geocode-place-memo`,`4ffebe6`+`a41e5e1`+`64e8be6`,merge `9d5ed19`).** 同 (query, province, city) 进程内复用,只缓存成功命中(失败/空结果/配额类/低置信度一律不写);10 新用例(全量 530:528 pass / 2 skip);同城多站点实例调用削减 97%+(安克创新 38→1 / 元气森林 71→1 / 小鹏 52→1)。报告 `tech/roles/development/parallel-sessions/20260821-boss-geocode-memo/`。
 - **全量计数输出修正(`fix/geocode-plan-count`,`e5cd04d`+`fa5f854`,merge `6737a6b`).** 只读预扫统计过滤前全量 `planTotal`;配额短路后剩余 = planTotal − resolutions − unresolved − skipped(旧口径短路后恒为 0,误导);8 新用例(全量 536:534 pass / 2 skip);实跑:1783 站待 geocode、attempted 5、剩余 1778 如实报告。报告 `tech/roles/development/parallel-sessions/20260821-boss-geocode-count/`。
 - **腾讯文档官方招聘源 142 家入库(`feat/qqdoc-official-source`,merge `1ec3fff`).** qqdoc-official 适配器 + 礼貌官网地址提取(壳 HTML → 官方招聘 URL + 城市/街道地址,`extract-qqdoc-addresses.mjs` / `official-site-parse.ts`),142 央企/银行/国企 drops(name + 官方招聘 URL),19 家城市+街道地址提取、50 家 `city_pending` 待后续;19 用例(全量 568:566 pass / 2 skip)。采集仅礼貌 GET + robots(RFC 9309 重定向跟随)。Docs:`tech/roles/data/etl/qqdoc-official.md`;报告 `tech/roles/development/parallel-sessions/20260821-boss-qqdoc-official/`。
+- **多地图引擎插件契约落地(`feature/map-engine` 批次 a–f,`tech/23-map-engines.md`,2026-08-21).** `lib/map-adapter.ts` 删除(零引用确认);AMap / 腾讯 TMap / 百度 BMapGL 各实现 `MapEngine` 契约(生命周期 `isConfigured/load/isLoaded/createView` + `searchPOI`),图层面板「地图源」切换 + localStorage 偏好;`use-map-engine` 把活跃引擎 search provider 注入 poi-service。后续打磨见 2026-08-22/23 条目。
+- **头像真实存储(迁移 `017_avatar_data`;`feat/avatar-username` f1dc329 + `fix/avatar-account-label` 782d2ca,2026-08-21).** 上传接口 + bytea 落库 + 账户/用户名分离;`updateUser`/`updateAvatar` RETURNING 带回 username,改用户名/传头像后账户不再消失。
+- **i18n 选项标签(2026-08-21;`feature/i18n-option-labels-foundation|renderers|prefs`).** i18n 类型扩展(SortOption/FilterOption/FilterConfig 加可选 `labelEn`/`unitEn`/`searchPlaceholderEn`);modes.ts 全量补 labelEn;filter-panel/sort-selector 渲染层走 `uiLabel`(英文 UI 用 labelEn,缺失回退中文 label);账户偏好 defaultMode/industries 选项英文;OTP 发送反馈 i18n keys(倒计时文案 + 成功气泡)。
 
 ## 2026-08-20
 

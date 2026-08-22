@@ -1,8 +1,8 @@
 # Domain Map Frontend
 
-**Status:** Phase 2–4 complete, merged to `dev` (2026-08-17). Real recruitment catalog + Postgres + auth.  
-**Framework:** Next.js 15.5 (App Router) + React 19 + TypeScript 5.9  
-**Map Engine:** AMap JavaScript API v2.0 (`loadAMap`, not an npm package)
+**Status:** Phase 2–4 + 全国 work 模式已合入 `dev`(2026-08-21 起,真实招聘 catalog + Postgres + auth);地图引擎打磨系列 2026-08-22/23 持续合入。当前状态以仓库根 [README](../README.md) 与 `tech/` 为准,本文件只保留本目录可操作信息与历史快照。
+**Framework:** Next.js 16.3.1 (App Router) + React 19.2.8 + TypeScript 5.9 (以 `package.json` 为准)
+**Map Engine:** 三引擎插件契约 —— AMap / 腾讯 TMap / 百度 BMapGL(图层面板「地图源」切换,偏好存 localStorage;架构见仓库根 `tech/23-map-engines.md`)
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ NEXT_PUBLIC_AMAP_KEY=your_amap_key_here
 NEXT_PUBLIC_AMAP_SECURITY_CODE=your_security_code_here
 ```
 
-**Note:** These are `NEXT_PUBLIC_*` variables, meaning they are exposed to the browser. Only use client-safe API keys with domain restrictions configured in AMap console.
+**Note:** These are `NEXT_PUBLIC_*` variables, meaning they are exposed to the browser. Only use client-safe API keys with domain restrictions configured in AMap console. 三引擎各自的 key(s) 见 [docs/environment-variables.md](docs/environment-variables.md)(AMap / `TENCENT_MAP_KEY` / `BAIDU_MAP_AK`;引擎 `isConfigured` 判定按引擎实现)。
 
 ### Obtaining AMap Credentials
 
@@ -42,7 +42,7 @@ NEXT_PUBLIC_AMAP_SECURITY_CODE=your_security_code_here
 
 ### Fallback Behavior
 
-If AMap credentials are missing, the app displays a CSS-only fallback map placeholder. The shell UI remains functional for development/testing without live map tiles.
+挂载路径按 `mount.ts` 语义:偏好引擎(会话/本地存储)加载失败后按 `ENGINE_PRIORITY` 序回退其余**已配置**引擎,全部失败(或一个引擎都没配置)→ 抛错并回退 CSS-only fallback 地图占位。Shell UI 无 live 地图时仍可用于开发/测试。
 
 ## Project Structure
 
@@ -116,9 +116,11 @@ Do not run `npx tsc` from the repo root.
 npm run dev          # Start dev server (port 3000)
 npm run build        # Production build
 npm run start        # Run production server
-npm run lint         # Run ESLint
 npm run typecheck    # Run TypeScript compiler check
+npm test             # node:test 全量(1470 tests / 1468 pass / 2 skip,2026-08-23)
 ```
+
+`package.json` 没有 `lint` script(项目无 ESLint 配置);写 DB 的数据命令(`import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)见根 README,属 Env-only 用户步骤。
 
 ### Code Style
 
@@ -150,19 +152,13 @@ See `docs/i18n.md` for full documentation.
 
 ## Architecture
 
-### Map Adapter Pattern
+### Map Engine Plugin Contract
 
-The frontend is designed to support multiple map engines via an adapter pattern:
+前端通过统一引擎插件契约支持多地图引擎(`src/lib/map-engine/`):
 
-```typescript
-// lib/map-adapter.ts
-export type MapAdapter = "fallback" | "amap";
-export function getMapAdapter(): MapAdapter {
-  return process.env.NEXT_PUBLIC_AMAP_KEY ? "amap" : "fallback";
-}
-```
-
-Currently, only AMap is implemented. Future adapters (Mapbox, Leaflet, etc.) can be added as plugins.
+- 契约定义于 `src/lib/map-engine/types.ts`:每引擎实现 `MapEngine`(生命周期 `isConfigured` / `load` / `isLoaded` / `createView` + `searchPOI` 检索能力)与 `MapView`(相机 / 样式 / 事件 / overlay / scale 控件)。
+- 已实现:`amap/`(高德)、`tencent/`(腾讯 TMap)、`baidu/`(百度 BMapGL);`engine-registry.ts` 注册与优先级,`engine-preference.ts` 存本地偏好,`switch.ts` 交互式切换回滚,`mount.ts` 挂载回退。
+- 用户在图层面板「地图源」section 切换引擎;`use-map-engine` 把活跃引擎的 `searchPOI` 注入 `poi-service`(域外 POI 检索随之切换,未注入时回落 amap-api)。架构详见仓库根 `tech/23-map-engines.md`。
 
 ### Data Flow
 
@@ -173,10 +169,10 @@ lib (server-catalog / recruitment-store / hz-poi-store — Postgres first, offli
     ↓
 Client Components (map-shell.tsx)
     ↓
-Map Engine (AMap)
+Map Engine (契约层:AMap / 腾讯 TMap / 百度 BMapGL)
 ```
 
-Work mode reads **Postgres first** (imported SQL rows via `loadServerCatalog`, 30s public cache), falling back to offline drops when the DB is absent. Domain mode: in-Hangzhou browse uses the local `hz_pois` table (`/api/pois/domain-local`); outside Hangzhou the browser calls the AMap API directly. The frontend no longer uses a hardcoded `places` array for live data.
+Work mode reads **Postgres first** (imported SQL rows via `loadServerCatalog`, 30s public cache), falling back to offline drops when the DB is absent. Domain mode: in-Hangzhou browse uses the local `hz_pois` table (`/api/pois/domain-local`); outside Hangzhou (或本地 0 命中) the **活跃引擎**的 `searchPOI` 承接检索(`poi-service` 经 `use-map-engine` 注入的 search provider;SSR/测试/零配置回落 amap-api,行为与迁移前一致)。The frontend no longer uses a hardcoded `places` array for live data.
 
 ### Plugin Readiness
 
@@ -220,12 +216,10 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 ## Known Limitations
 
 1. **No offline support:** Requires network for map tiles
-2. **Single map engine:** AMap only, no multi-engine switching yet
-3. **OTP is demo-stubbed:** `000000` with the hint echoed in the response; real SMS/email send is deferred (rate limiting / attempt caps are a pre-launch hardening item)
-4. **Job alerts are queue-only:** email/SMS toggles enqueue inbox rows; nothing is actually sent
-5. **No error boundary:** Map initialization errors not caught at React boundary
-6. **Accessibility:** ARIA labels present, screen reader testing pending (VoiceOver/NVDA manual tests deferred)
-7. **DB write-path degradation:** `withDb` falls back to in-memory on DB errors (read fallback is intentional; write fallback is a known hardening item)
+2. **Job alerts are queue-only:** email/SMS toggles enqueue inbox rows; nothing is actually sent (real send still deferred)
+3. **No error boundary:** Map initialization errors are not caught at a React boundary; engine mount failures now surface a retry overlay (`mountError` / `retryMount` 状态机,2026-08-22),其他初始化错误仍可能白屏
+4. **Accessibility:** ARIA labels present, screen reader testing pending (VoiceOver/NVDA manual tests deferred)
+5. **DB write-path degradation (设计决策):** 写路径遇 DB 故障直接抛 `DbUnavailableError`,由 route 层转 503 `DB_UNAVAILABLE`——绝不静默回落内存(防内存/DB 数据分裂);读路径保持 offline drops 回退
 
 ## Testing
 
@@ -246,7 +240,7 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 ### Automated Tests
 
 ```bash
-npm test        # 600 tests / 598 pass / 0 fail / 2 skip (2026-08-21)
+npm test        # 1470 tests / 1468 pass / 0 fail / 2 skip (2026-08-23, npm test 实测)
 npm run typecheck
 ```
 
@@ -293,7 +287,7 @@ Tests live in `server/tests/` (`node --test`, unit + component contracts + API i
 
 Live account flows run against Postgres when `DATABASE_URL` is set (cookie session; guests get 401, never a fabricated list):
 
-1. **Auth:** phone/email OTP (demo `000000` stub) + password accounts (`/api/auth/password/register|login`, scrypt-hashed, migration 014)
+1. **Auth:** phone/email OTP 真发 —— phone 经阿里云短信认证服务、email 经 Resend(未配置 → 503 `SMS_NOT_CONFIGURED` / `EMAIL_NOT_CONFIGURED`;demo `000000` stub 已删)+ password accounts (`/api/auth/password/register|login`, scrypt-hashed, migration 014);OAuth 登录(github / google / wechat,authorization code flow)见 `tech/27-oauth-login.md`
 2. **Persistence:** search history, saved places, applications, job-alert queue (`/api/me/*`); saved/compare are catalog-recruitment only (domain snapshots → 400 `NOT_PERSISTABLE`); guest Recent is browser-localStorage
 3. **Public reads:** `/api/pois`, `/api/search`, `/api/suggest` — Postgres first, offline drops fallback, 30s cache; spatial clip via `geom && ST_MakeEnvelope` + `ST_DWithin` (PostGIS)
 4. **Loading states:** map-shell lazy-loads (`next/dynamic`, `ssr: false`); viewport loader debounces 800ms with per-batch epoch guards
@@ -308,5 +302,5 @@ See `LICENSE` in the repository root.
 
 ---
 
-**Phase 2–4 complete (merged to `dev`)** — real catalog, auth, saved, applications, alerts queue  
-**Last Updated:** 2026-08-19
+**Phase 2–4 + 全国 work 模式(merged to `dev`)** — real catalog, auth (OTP 真发 / password / OAuth), saved, applications, alerts queue;地图引擎三引擎插件契约 + 源切换(tech/23)
+**Last Updated:** 2026-08-23
