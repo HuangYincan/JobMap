@@ -26,6 +26,7 @@
 // v12（2026-08-19 官方 ATS 直爬）：得物/智元机器人/禾赛科技 官方 drops 全量真实
 // v16（2026-08-22 geocode r4）：w9 城市中心重跑后 288 站落真实坐标（上海 376→347 等），
 //   旧缓存含堆叠中心点，bump 使其失效重拉。
+// v17（2026-08-22 geocode r5）：grader 放宽后再 16 站落真实坐标（腾讯北京总部大楼等）。
 // 岗位（portal-feishu-*，校招+社招 ~1900 条，radar 聚合行被抑制）——旧缓存含
 // radar 聚合行与示例岗位，bump 使其失效重拉。
 // v13（2026-08-19 沪杭落点）：24 家 feishu 租户 10533 真实岗位 + 21 个沪杭真实
@@ -45,7 +46,7 @@ import { canonicalMode } from './modes.ts';
 import type { ViewportBounds, ViewportSnapshot } from './viewport-search.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 16;
+export const MODE_CACHE_VERSION = 17;
 
 export interface ModeCacheEntry {
   version: number;
