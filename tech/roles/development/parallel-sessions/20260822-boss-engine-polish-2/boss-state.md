@@ -11,17 +11,21 @@
 
 ## stage
 
-- current: DISPATCH(轮7 ws-i 腾讯徽章遮挡修复,2026-08-23)
+- current: DISPATCH(轮9 ws-j 混合块根因二分,2026-08-23)
 - updated_at: 2026-08-23
 
-## 轮7(2026-08-23,ws-i)—— 用户报「腾讯底图的公司poi有问题,渲染很奇怪」
+## 轮8/9(2026-08-23,ws-i + ws-j)
 
-- boss 实测:POI 徽章主体正常(15 完整徽章,MultiMarker hook 验证无双渲染/无 default styleId);
-  幽灵元素 = **TMap 底图 POI 文字标注与徽章混叠**(OCR 实证:「18号級」(638,393) 覆盖
-  (656,399) 徽章上部露下半 34×14;「塘河」标注与 (385,272) 徽章并排(35×58 竖卡);
-  AMap DOM 徽章在 canvas 之上不受影响 → 腾讯独有);次要:首会话 370-740 行 favicon.im
-  预检刷屏(全候选预检而非链式)。
-- 派发 ws-i(fix/tmap-badge-overlap,worktree dm-wt-tov):A 徽章层级修复 + B 预检链式推进。
+- **ws-i(轮8)**:用户报「腾讯底图的公司poi有问题,渲染很奇怪」。boss 实测:POI 徽章主体正常;
+  ws-i worker 实测根因修正 = **初始渲染竞态**(首帧 0 徽章,reload 随机;SDK layer level 恒 7
+  OVERLAY_NAA rank 70020 > 标注 60000,排除文字遮挡);修复 = 挂图后 setTimeout(0) 全量
+  setGeometries 重推 + icon 预检链式推进。MERGED_ALL push f8efbdd(1461 pass/0 fail)。
+- **ws-j(轮9)**:boss 主树复验发现 ws-i 未解决的**独立问题「混合块」**:3 个稳定元素
+  (656,399/894,292/362,413)= 40px 徽章上半消失(平顶)+ 内部 38,153,245 碎片 + 点击无响应
+  (对照完整徽章可点弹卡)、随地图移动、不在 DOM、非 MultiMarker geometry、非标注遮挡。
+  4 次 reload + 20s 延迟截图稳定复现;ws-i worker 验收(:3100)未复现,差异未明。
+  派发 ws-j(fix/tmap-mixed-block,worktree dm-wt-tmb):复现 → 枚举 overlay 实体(找第二套
+  渲染源)→ 二分(禁 setGeometries 重推/禁 LOD 摘挂/禁 icon.horse)→ 修复。
 
 ## 最终复验(boss,轮5 合并后主树)
 

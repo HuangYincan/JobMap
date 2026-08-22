@@ -228,3 +228,36 @@ ws-e 与 dev 既有 ws-pinfix2 各自独立修复同一根因(BMapGL v1.0 `Marke
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+---
+
+# 轮9 合并(ws-j fix/tmap-mixed-block,2026-08-23)
+
+## 结果总览
+- 成功合并: ws-j(fix/tmap-mixed-block,tip da4a5fe,2 commits)1 分支并入 dev。
+- 失败/遗留: 无。门禁 0 失败(1461 pass / 0 fail / 2 skip),typecheck / docs-check / diff-check 全绿。
+
+## 逐分支明细
+| WS | 分支 | merge commit | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| ws-j | fix/tmap-mixed-block (da4a5fe) | 30219b2 | 1461 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 无冲突(自动合并) |
+
+- 合并后全量:1463 tests / 1461 pass / 0 fail / 2 skip;`npm run typecheck` 零错误;`make docs-check` passed;`git diff --check` 干净。
+- 合并内容核验:tencent-engine.ts `styleToBaseMap` 矢量底图 features 显式排除 `'point'`(腾讯底图 POI 图标层,SDK v1.8.0.2 `DEFAULT_BASEMAP.vector.features=[base,building3d,point,label,arrow]` 源码核实),保留 `'label'`(地名/路名文字标注);卫星底图路径不受影响;测试断言更新(构造 + setStyle 两处 features 期望,涉及 map-engine-switch / map-engine-tencent-style / map-engine-tencent 三个测试文件);tech/23 追加 §6 ws-j 回填(54 行,根因 = 腾讯矢量底图原生 POI 图标,裸地图对照决定性证据)。boss 已实测复验 1461 pass。
+
+## 冲突解决清单
+- 无冲突。五个文件(tencent-engine.ts / map-engine-switch.test.mjs / map-engine-tencent-style.test.mjs / map-engine-tencent.test.mjs / tech/23-map-engines.md)均自动合并成功。
+
+## 遗留问题
+- 主工作树其他未跟踪内容(`.address-work/`、其他批次目录)与本次合并零交集,未动。
+- merge-instructions.md / boss-state.md 已由 boss 更新为轮9 版本(随本轮批次目录入库)。
+- **worktree 目录残留待授权清理**:`git worktree remove /Users/acccan/dm-wt-tmb` 已注销该 worktree 并删除大部分跟踪文件,但因目录内未跟踪本地文件(`server/.env.local` 本地运行用副本、node_modules symlink 等,均 gitignored)导致「Directory not empty」残留目录。git 侧已无该 worktree 登记;残留目录仅为已入库文件副本 + 本地运行杂物,建议用户授权 `rm -rf /Users/acccan/dm-wt-tmb` 后删除分支(分支已 merge 且已 push,删除零损失)。
+- ws-j 产品含义遗留:腾讯 light 底图 POI 图标整体隐藏(视口内约 890 个,医院/商场/地铁小图标);若 boss 裁决保留底图 POI 图标,回退 `styleToBaseMap` 单点改动即可(混合块即恢复为底图原生内容),见 reports/ws-j.md 与 tech/23 §6。
+
+## 最终 dev 状态
+- ws-j merge commit: `30219b2`(merge: fix/tmap-mixed-block,parents 6119a2d + da4a5fe),已 push origin dev(`6119a2d..30219b2`)。
+- worktree `/Users/acccan/dm-wt-tmb` 已注销(git 侧),目录残留待授权清理;分支 `fix/tmap-mixed-block` 已 merge 待 `git branch -d`。
+- 批次目录入库 commit: `chore: 20260822 boss engine-polish-2 轮9入库(ws-j tmap-mixed-block merge-report + 汇报)`。
+
+门禁: ALL_GREEN
+结论: MERGED_ALL
