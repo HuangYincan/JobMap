@@ -164,3 +164,35 @@ ws-e 与 dev 既有 ws-pinfix2 各自独立修复同一根因(BMapGL v1.0 `Marke
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+---
+
+# 轮6 合并(ws-h fix/tmap-content-scope,2026-08-22)
+
+## 结果总览
+- 成功合并: ws-h(fix/tmap-content-scope,tip d28dfa5,2 commits)1 分支并入 dev。
+- 失败/遗留: 无。门禁 0 失败(1460 pass / 0 fail / 2 skip),typecheck / docs-check / diff-check 全绿。
+
+## 逐分支明细
+| WS | 分支 | merge commit | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| ws-h | fix/tmap-content-scope (d28dfa5) | 8b92772 | 1460 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 无冲突(自动合并) |
+
+- 合并后全量:1462 tests / 1460 pass / 0 fail / 2 skip;`npm run typecheck` 零错误;`make docs-check` passed;`git diff --check` 干净。
+- 合并内容核验:tencent-engine.ts `createMarker` 分派收窄(content 无 icon → DOM overlay;content+icon / 仅 icon → icon 主机制,content 不写 geometry 避免 HTML/纹理双渲染叠印)+ DOM overlay 定位 API 双路径(`lngLatToContainerPoint` 优先 → `projectToContainer` 兜底,双缺失一次性 warn);测试 73→74(重写 icon 主机制语义 + projectToContainer 兜底 4 用例);tech/23 追加 ws-h 回填节。根因:真实 TMap GL SDK(v1.8.0.2)`lngLatToContainerPoint` 不存在 + DOM overlay 分派过宽双因叠加导致 100 徽章堆叠(0,900)。
+
+## 冲突解决清单
+- 无冲突。三个文件(tencent-engine.ts / map-engine-tencent.test.mjs / tech/23-map-engines.md)均自动合并成功。
+
+## 遗留问题
+- 主工作树其他未跟踪内容(`.address-work/`、其他批次目录)与本次合并零交集,未动。
+- merge-instructions.md 已由 boss 更新为轮6 版本(随本轮批次目录入库)。
+- ws-h 遗留(agent 蓝点 DOM overlay 活体端到端验证据链而非真机直测)见 reports/ws-h.md 与 tech/23 回填节。
+
+## 最终 dev 状态
+- ws-h merge commit: `8b92772`(merge: fix/tmap-content-scope,parents 245039d + d28dfa5),已 push origin dev(`245039d..8b92772`)。
+- worktree `/Users/acccan/dm-wt-tc` 已 remove;分支 `fix/tmap-content-scope` 已 `git branch -d` 删除。
+- 批次目录入库 commit: `chore: 20260822 boss engine-polish-2 轮6入库(ws-h tmap-content-scope merge-report + 汇报)`。
+
+门禁: ALL_GREEN
+结论: MERGED_ALL
