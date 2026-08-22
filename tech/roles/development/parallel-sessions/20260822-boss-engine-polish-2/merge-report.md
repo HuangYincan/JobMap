@@ -67,3 +67,35 @@ ws-e 与 dev 既有 ws-pinfix2 各自独立修复同一根因(BMapGL v1.0 `Marke
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+---
+
+# 轮3 合并(ws-f fix/baidu-r3,2026-08-22)
+
+## 结果总览
+- 成功合并: ws-f(fix/baidu-r3,tip 712ea4d,3 commits)1 分支并入 dev。
+- 失败/遗留: 无。门禁 0 失败(1423 pass / 0 fail / 2 skip),typecheck / docs-check / diff-check 全绿。
+
+## 逐分支明细
+| WS | 分支 | merge commit | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| ws-f | fix/baidu-r3 (712ea4d) | 7a4c3c3 (merge commit, merge: bed7082) | 1423 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 无冲突(自动合并) |
+
+- 合并后全量:1425 tests / 1423 pass / 0 fail / 2 skip;`npm run typecheck` 零错误;`make docs-check` passed;`git diff --check` 干净。
+- 合并内容核验:baidu-engine.ts 删除自定义 Overlay 主路径(真机坐实 `addOverlay` 只调 `_i` 不挂 pane,1049 个 addOverlay 静默失效 + DOM/img 泄漏)→ 厂商 Marker + 点击目标 DOM 注入主路径,注入零定时器(同步 + 微任务 4 轮 + rAF 5 帧有界重试);测试重写 6 用例;tech/23 追加 ws-f r3 回填节(52 行)。真机验收:z13 单点级 1048 `.dm-badge` 全可见可点击,z≤8 聚合走 GL dataURL icon 纹理(135 聚合 marker),截图 3.5-4.5s → 0.1-0.5s。
+
+## 冲突解决清单
+- 无冲突。三个文件(baidu-engine.ts / map-engine-baidu.test.mjs / tech/23-map-engines.md)均自动合并成功。
+
+## 遗留问题
+- ws-f 建议:若 boss 仍可复现「截图持续超时」卡死,建议在长会话/多引擎切换场景复测(本 WS 修复已消除两个嫌疑:Overlay 无主 div + img 泄漏、ws-e 版 setInterval 轮询注入)。
+- worktree dev server 基建(硬链接 node_modules、.env.local)为本地未跟踪改动,git 零影响。
+- 主工作树其他未跟踪内容(`.address-work/`、其他批次目录)与本次合并零交集,未动。
+
+## 最终 dev 状态
+- dev HEAD: `bed7082`(merge: fix/baidu-r3),已 push origin dev(`ef20c09..bed7082`)。
+- worktree `/Users/acccan/dm-wt-br3` 已 remove;分支 `fix/baidu-r3` 已 `git branch -d` 删除。
+- 批次目录入库 commit: `chore: 20260822 boss engine-polish-2 轮3入库(ws-f baidu-r3 merge-report + 汇报)`。
+
+门禁: ALL_GREEN
+结论: MERGED_ALL
