@@ -384,7 +384,9 @@ body,消息列表内部滚动、输入贴底;`map-shell.module.css` `.mobileAgen
 浮层面板同样 `display:none`(桌面开着面板缩窗到移动端也不漂浮;原「面板 ≤767px 全宽
 底部 sheet、z-index 13 盖在 drawer 之上」的独立浮层方案已撤销,ws-ae)。桌面端球与
 吸附规则不变;极窄桌面视口(两侧都放不下)仍降级为全宽 sheet(`panelSheet`,2026-08-21
-起,见 §9.10)。
+起,见 §9.10)。**内嵌高度链(ws-fx,2026-08-22)**:`.drawerContent { flex: 1 1 auto;
+min-height: 0 }`(drawer flex column 的可伸缩子项)撑起 `.mobileAgent`/`.panel.embedded`
+的百分比高度链,消息列表内部滚动、输入框贴 drawer 底。
 
 ### 9.5 i18n 键清单(`i18n.ts` 追加 `agent*` 组,zh/en,约 20 键)
 
