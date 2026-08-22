@@ -75,16 +75,13 @@ const BAIDU_MAP_READY_TIMEOUT_MS = 1500;
 export const BAIDU_SCRIPT_URL = (ak: string): string =>
   `https://api.map.baidu.com/getscript?type=webgl&v=1.0&ak=${encodeURIComponent(ak)}`;
 
-/** 透明 1×1 GIF data URI:content 标记的锚点图标(仅**回退路径**使用——
- * SDK 无 Overlay/DOM 能力时 content 走 setContent 渲染进 msTarget DOM,
- * 锚点必须由图标扛;主路径 content = 自定义 Overlay DOM 渲染,无图标,
- * 见 createMarker 注释) */
+/** 透明 1×1 GIF data URI:content 标记的锚点图标(r3 起为主路径——真实
+ * BMapGL v1.0 Marker 无 setContent、自定义 Overlay 返回值不被挂载(见
+ * createContentMarker 注释)→ content 视觉经厂商 BMap_Marker 点击目标 DOM
+ * 注入,位置 = 屏幕位 + 契约 offset 由空白锚点图标 anchor=-offset 数学驱动,
+ * 锚点必须由图标扛) */
 const BAIDU_BLANK_ICON_DATA_URI =
   'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-
-/** content overlay 定位 API 缺失一次性告警标记(防御:老 SDK 无
- * pointToOverlayPixel/pointToContainerPixel 时 draw 跳过,不刷屏) */
-let baiduOverlayProjectWarned = false;
 
 // ------------------------------------------------------------
 // 失败分类与可操作指引(bug 3 用户端「百度加载不了」诊断,2026-08-22 ws-c)
@@ -477,7 +474,7 @@ const BAIDU_DARK_STYLE_JSON: BMapStyleItem[] = [
 const styleJsonApplied = new WeakSet<BMapInstance>();
 
 // ------------------------------------------------------------
-// content 标记 DOM 注入兜底(2026-08-22 ws-e,bug 2「百度 POI 单点级不渲染」)
+// content 标记 DOM 注入(2026-08-22 ws-e 初版;r3 重写:主路径 + 零定时器)
 //
 // 实测根因(SDK marker 模块 marker_crvckn 源码 + 真机 Chromium 坐实):**真实
 // BMapGL v1.0 的 Marker 类没有 setContent 方法**(原型 0 处命中;构造函数
@@ -485,22 +482,36 @@ const styleJsonApplied = new WeakSet<BMapInstance>();
 // no-op → 单点级 POI(图钉/公司徽章)content 路径不渲染:DOM 0 个徽章、无视觉、
 // 无点击反馈(boss Playwright 实测 2026-08-22;聚合级走 dataURL icon 纹理正常)。
 //
-// 兜底姿势:厂商 marker 在 markerMouseTarget pane 恒创建 BMap_Marker 点击目标
-// DOM(模块源码 _addDom/_msTargetRender 核实;GL 下为唯一 DOM,空容器承载
-// 点击),位置 = 屏幕位 + 契约 offset(由空白锚点图标 anchor = -offset 数学驱动,
-// 与 AMap content 路径逐像素同语义)→ 把 content HTML 注入该 DOM:
+// r3 新增实证(2026-08-22 真机 Chromium + 真实 SDK,详见 reports/ws-f.md):
+// **自定义 Overlay 主路径(ws-pinfix2)在真实 SDK 上是静默失效路径**——
+// Map.addOverlay 只调用 overlay._i(map)(getscript 源码坐实:
+// `addOverlay=function(i){if(i&&cs(i._i)){...;i._i(this);...}}`);Overlay 基类
+// bb 的 _i 实现为 `this.domElement=this.initialize(mw)` 后**不把返回值插入任何
+// pane**(无 appendChild)——经典 BMap「initialize 返回 div、SDK 自动挂载」契约
+// 在 GL v1.0 不成立。引擎 Overlay 子类实测:initialize 被调、div 已定位
+// (left/top 正确),但 parentNode 恒 null → 徽章 0 个 + 聚合图标 0 个 + 无
+// overlay 节点(boss「标记全部消失」实锤根因;1000+ 无主 div 且 SDK 长期持有
+// domElement 引用 → 内存随会话膨胀,叠加合成器负载)。Overlay 主路径已删除。
+//
+// 兜底姿势(现为主路径):厂商 marker 在 markerMouseTarget pane 恒创建
+// BMap_Marker 点击目标 DOM(模块源码 _addDom/_msTargetRender 核实;GL 下为唯一
+// DOM,空容器承载点击),**addOverlay 同步创建**(r3 实测 ms 级就绪),位置 =
+// 屏幕位 + 契约 offset(由空白锚点图标 anchor = -offset 数学驱动,与 AMap
+// content 路径逐像素同语义)→ 把 content HTML 注入该 DOM:
 //   - 视觉:徽章/图钉按契约锚点渲染(内容负 margin 补偿跨状态零漂移);
 //   - 点击:子元素事件冒泡到该 DOM → 厂商 click 事件 → 适配层 onClick;
 //   - 生命周期:hide/show/remove 由厂商 DOM 管理,注入内容跟随;
-//   - 注入时机:DOM 在模块加载回调(_draw→initialize)后才创建 → 有界重试。
+//   - 注入时机:addOverlay 后同步命中;未命中(理论防御)走**微任务 + rAF
+//     有界重试**(4 微任务 + 5 帧),**零定时器**——ws-e 版 20×50ms setInterval
+//     轮询是渲染卡死嫌疑(r3 实测同步就绪,轮询无必要)。
 // 仅当厂商 Marker 无 setContent 时启用(测试 mock / 未来 SDK 形态仍走原路径)。
 // ------------------------------------------------------------
 
 /** raw marker → 最新 content HTML(注入重入/延迟注入读取用) */
 const markerContentDom = new WeakMap<object, string>();
-/** domElement 就绪重试上限与间隔(20 × 50ms = 1s;实测数十 ms 内就绪) */
-const CONTENT_DOM_MAX_ATTEMPTS = 20;
-const CONTENT_DOM_RETRY_MS = 50;
+/** domElement 未就绪重试上限(微任务 4 轮 + rAF 5 帧;实测 addOverlay 同步就绪) */
+const CONTENT_DOM_MICRO_MAX_ATTEMPTS = 4;
+const CONTENT_DOM_RAF_MAX_ATTEMPTS = 5;
 
 /** 单次注入尝试:domElement 存在 → innerHTML 更新(内容变化才写,防闪动) */
 function injectMarkerContent(raw: BMarker): boolean {
@@ -511,19 +522,45 @@ function injectMarkerContent(raw: BMarker): boolean {
   return true;
 }
 
-/** 注入调度:立即尝试,失败则有界重试(domElement 异步创建)后 warn 降级 */
+/** rAF 重试段(浏览器帧回调;无 rAF 环境跳过 → warn 降级) */
+function injectRetryByFrames(raw: BMarker): void {
+  if (typeof requestAnimationFrame !== 'function') {
+    console.warn('[map-engine] BMapGL content 标记 DOM 注入超时(domElement 未就绪),徽章可能不渲染');
+    return;
+  }
+  let frames = 0;
+  const frame = (): void => {
+    frames++;
+    if (injectMarkerContent(raw)) return;
+    if (frames >= CONTENT_DOM_RAF_MAX_ATTEMPTS) {
+      console.warn('[map-engine] BMapGL content 标记 DOM 注入超时(domElement 未就绪),徽章可能不渲染');
+      return;
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
+/** 注入调度:立即尝试;失败 → 微任务重试(同任务内 addOverlay 完成)→ rAF
+ * 重试(浏览器下一帧)→ 全失败 warn 降级。**零定时器**(2026-08-22 r3:
+ * 轮询定时器是渲染卡死嫌疑,实测 addOverlay 同步创建 domElement,重试纯防御)。 */
 function scheduleMarkerContentInjection(raw: BMarker): void {
   if (injectMarkerContent(raw)) return;
+  if (typeof queueMicrotask !== 'function') {
+    injectRetryByFrames(raw);
+    return;
+  }
   let attempts = 0;
-  const timer = setInterval(() => {
+  const retry = (): void => {
     attempts++;
-    if (injectMarkerContent(raw) || attempts >= CONTENT_DOM_MAX_ATTEMPTS) {
-      clearInterval(timer);
-      if (attempts >= CONTENT_DOM_MAX_ATTEMPTS && !injectMarkerContent(raw)) {
-        console.warn('[map-engine] BMapGL content 标记 DOM 注入超时(domElement 未就绪),徽章可能不渲染');
-      }
+    if (injectMarkerContent(raw)) return;
+    if (attempts >= CONTENT_DOM_MICRO_MAX_ATTEMPTS) {
+      injectRetryByFrames(raw);
+      return;
     }
-  }, CONTENT_DOM_RETRY_MS);
+    queueMicrotask(retry);
+  };
+  queueMicrotask(retry);
 }
 
 /** Autocomplete headless 路径超时兜底(ms):厂商静默失败时避免 promise 挂起 */
@@ -817,154 +854,28 @@ class BaiduMapView implements MapView {
   }
 
   /**
-   * content 存在 → **自定义 Overlay DOM 渲染**(2026-08-22 ws-pinfix2)。
-   * 背景:BMapGL v1.0 getscript 实包源码核实 `Marker.setContent` 是空操作
-   * (`setContent:function(e){this.content=e||""}` 只存字符串,msTarget DOM
-   * 渲染在 GL 版本不存在)→ content 标记(agent 蓝点/POI 徽章/聚合徽章)
-   * 在百度底图只渲染 1×1 透明图标,目标点完全不可见(bug 实锤)。
-   * 修复:content 走官方**自定义 Overlay 机制**(继承 BMapGL.Overlay,SDK
-   * 生命周期 initialize(建 DOM)/draw(定位)):
-   *   - initialize(map):创建 div,content 原文注入 innerHTML(转义边界:
-   *     content 是引擎调用方可信的 HTML,与 amap 同语义,原样注入——既有契约);
-   *     zIndex → div style.zIndex;click 绑 div(内容子元素冒泡可达,与
-   *     amap/旧 msTarget 同语义);返回 div(SDK 自动加入覆盖物容器);
-   *   - draw():`lngLat 转容器像素(pointToOverlayPixel,bd09 点)` →
-   *     div 左上角 = 像素 - 契约 offset(锚定一致性:content 左上角 - offset
-   *     元组,与 amap 语义对齐;agent 蓝点 offset [-10,-10] → 圆心对准坐标);
-   *     SDK 在相机变化时自动重调 draw()(无需自绑地图事件);
-   *   - 移除:removeOverlay + div 摘除(SDK removeOverlay 亦会调用本类
-   *     remove(),幂等);raw 带 setMap(null)/remove 供 map-shell 摘除分派。
-   * 锚点语义:div 左上角 = 屏幕位 - offset(无 offset → 左上角钉坐标,与
-   * AMap 无 offset content 同语义)。content 与 icon 并存时 **content 为渲染
-   * 主机制,icon 不参与**(内容 HTML 自包含;icon 路径仅无 content 场景——
-   * 避免徽章双渲染,见 createPlainMarker)。
-   * 防御性守卫:SDK 无 Overlay 能力 / 无 DOM → 回退 createContentFallbackMarker
-   * (旧 setContent + 透明锚点图标路径,不抛错)。
+   * content 存在 → **厂商 Marker + 点击目标 DOM 内容注入**(2026-08-22 r3 重写)。
+   * 背景(真机实证,详见模块注释):BMapGL v1.0 的 Marker **无 setContent**;
+   * 自定义 Overlay 主路径(ws-pinfix2)被 SDK 静默丢弃——`Map.addOverlay` 只调
+   * `overlay._i(map)`,基类 `_i` 把 `initialize(map)` 返回值存入 `this.domElement`
+   * 后**不挂载到任何 pane**(initialize 被调、div 已定位,parentNode 恒 null →
+   * 全级别 0 徽章 + 0 聚合图标,boss 实测)。两条旧路径都不渲染 → 主路径 =
+   * ws-e 验证过的「厂商 Marker 自带 BMap_Marker 点击目标 DOM 注入」:
+   *   - 有 setContent(测试 mock / 未来 SDK 形态)→ 直调原契约路径;
+   *   - 无 setContent(真实 SDK)→ content HTML 注入 markerMouseTarget pane 的
+   *     BMap_Marker 点击目标 DOM(addOverlay **同步创建**,r3 实测 ms 级就绪;
+   *     位置 = 屏幕位 + 契约 offset 由空白锚点图标 anchor=-offset 数学驱动,
+   *     与 AMap content 路径逐像素同语义);
+   *   - 点击:marker 模块把 click 绑在该 DOM 上,内容子元素事件冒泡可达;
+   *   - 生命周期:hide/show/remove 由厂商管理,注入内容跟随。
+   * 锚点语义:icon.anchor = -契约 offset(透明 1×1 图标;无 offset → (0,0)
+   * 左上角,与 AMap 无 offset content 同语义)。content 与 icon 并存时
+   * **icon 为渲染主机制、content 不注入**(聚合徽章 dataURL 图标纹理即视觉,
+   * 注入会双渲染;远程 icon 未预检先回落 content 注入,成功后下次重建升级,
+   * 见 resolveIconUsable)。
    */
   private createContentMarker(opts: MapMarkerOptions): MapMarker {
     const bd = gcj02ToBd09(opts.position.lng, opts.position.lat);
-    const fallback = () => this.createContentFallbackMarker(opts, bd);
-    const OverlayBase = this.ns.Overlay;
-    if (typeof OverlayBase !== 'function') return fallback();
-    if (typeof document === 'undefined' || typeof document.createElement !== 'function') {
-      return fallback();
-    }
-    const map = this.map;
-    const offset = opts.offset;
-    const clickHandlers: Array<() => void> = [];
-    if (opts.onClick) clickHandlers.push(opts.onClick);
-    let point = new this.ns.Point(bd.lng, bd.lat);
-    let el: HTMLElement | null = null;
-    // 点击不冒泡到地图(与 amap marker click 不触发 map click 同语义;
-    // 徽章/蓝点点击不得清选中);div click 冒泡自内容子元素可达
-    const onClick = (e: { stopPropagation?: () => void }) => {
-      e.stopPropagation?.();
-      for (const cb of clickHandlers) cb();
-    };
-    const overlay = new (class extends (OverlayBase as unknown as new () => object) {
-      _map: BMapInstance | null = null;
-      /** SDK 生命周期:创建 content DOM 并返回(自动加入覆盖物容器) */
-      initialize(m: BMapInstance): HTMLElement {
-        this._map = m;
-        const div = document.createElement('div');
-        div.style.position = 'absolute';
-        if (opts.zIndex !== undefined) div.style.zIndex = String(opts.zIndex);
-        const extras = opts as unknown as { cursor?: string };
-        if (extras.cursor) div.style.cursor = extras.cursor;
-        // content 原文注入(可信 HTML 契约)
-        div.innerHTML = opts.content ?? '';
-        div.addEventListener('click', onClick);
-        el = div;
-        this.draw();
-        return div;
-      }
-      /** SDK 生命周期:相机变化时重定位(div 左上角 = 容器像素 - offset) */
-      draw(): void {
-        if (!el || !this._map) return;
-        const px =
-          this._map.pointToOverlayPixel?.(point) ?? this._map.pointToContainerPixel?.(point);
-        if (px && typeof px.x === 'number' && typeof px.y === 'number') {
-          el.style.left = `${px.x - (offset?.[0] ?? 0)}px`;
-          el.style.top = `${px.y - (offset?.[1] ?? 0)}px`;
-          return;
-        }
-        if (!baiduOverlayProjectWarned && typeof this._map.pointToOverlayPixel !== 'function') {
-          baiduOverlayProjectWarned = true;
-          console.warn('[map-engine] BMapGL 无 pointToOverlayPixel/pointToContainerPixel,content 标记无法定位');
-        }
-      }
-      /** 防御:SDK removeOverlay / map-shell setMap(null) 分派可能调用;幂等摘除 */
-      remove(): void {
-        if (this._map && typeof this._map.removeOverlay === 'function') {
-          try {
-            this._map.removeOverlay(this);
-          } catch {
-            // removeOverlay 异常不阻断 DOM 摘除
-          }
-        }
-        if (el) {
-          try {
-            el.parentNode?.removeChild(el);
-          } catch {
-            // 已脱离 DOM:忽略
-          }
-          try {
-            el.removeEventListener('click', onClick);
-          } catch {
-            // 解绑失败不影响摘除语义
-          }
-          el = null;
-        }
-      }
-      /** map-shell 摘除分派(setMap(null) 形态):null → 摘除;其他值忽略 */
-      setMap(next: unknown): void {
-        if (!next) this.remove();
-      }
-    })();
-    this.map.addOverlay?.(overlay); // SDK 在此调用 initialize(map)(建 DOM + 首绘)
-    return {
-      raw: overlay,
-      setPosition: (p: LngLat) => {
-        const next = gcj02ToBd09(p.lng, p.lat);
-        point = new this.ns.Point(next.lng, next.lat);
-        overlay.draw();
-      },
-      setContent: (html: string) => {
-        if (el) el.innerHTML = html;
-      },
-      setZIndex: (z: number) => {
-        if (el) el.style.zIndex = String(z);
-      },
-      setVisible: (v: boolean) => {
-        if (el) el.style.display = v ? '' : 'none';
-      },
-      on: (event: 'click', cb: () => void) => {
-        if (event !== 'click') return;
-        clickHandlers.push(cb);
-      },
-      off: (event: 'click', cb?: () => void) => {
-        if (event !== 'click') return;
-        if (cb) {
-          const i = clickHandlers.indexOf(cb);
-          if (i >= 0) clickHandlers.splice(i, 1);
-        }
-        // cb 缺省:保留(与既有引擎 off 语义一致,调用方应传 cb 精确解绑)
-      },
-      remove: () => {
-        this.map.removeOverlay?.(overlay);
-        overlay.remove?.();
-      },
-    };
-  }
-
-  /**
-   * content 回退路径(SDK 无 Overlay/DOM 能力时):Marker + content 注入
-   * (有 setContent 直调;真实 BMapGL v1.0 无 setContent → 注入厂商 marker
-   * 自带 BMap_Marker 点击目标 DOM,见 scheduleMarkerContentInjection)+
-   * 透明 1×1 图标扛锚点(icon.anchor = -契约 offset)。icon 存在且可用时
-   * 仍走真图标。
-   */
-  private createContentFallbackMarker(opts: MapMarkerOptions, bd: { lng: number; lat: number }): MapMarker {
     // 锚点语义(2026-08-22 SDK v1.0 源码核实:getscript 本体 + marker/mapgl 模块):
     // - **Marker 构造 offset 选项不参与渲染定位**(仅 getPoint/infoWindow 数学
     //   用;marker 模块 _getPixPos 与 mapgl 纹理 quad 均不含它)→ 不再传入;
@@ -974,25 +885,19 @@ class BaiduMapView implements MapView {
     //   要求 **icon.anchor = -契约 offset**(imageTopLeft = 屏幕位 + offset,
     //   AMap 同款契约:content/icon 左上角相对屏幕位的偏移);
     // - Icon 的 anchor === offset 构造选项,默认 (w/2,h/2) = 图标中心(lA 源码);
-    // - GL 无内容纹理(2026-08-22 ws-e 实测修正):**真实 SDK v1.0 Marker 无
-    //   setContent**(原型 0 命中,真机坐实)——旧注释「setContent 渲染进
-    //   msTarget DOM」不成立;内容标记的视觉经「厂商 BMap_Marker 点击目标
-    //   DOM 注入」兜底渲染(scheduleMarkerContentInjection,见模块注释),且
-    //   必须配**透明 1×1 图标扛锚点**——否则默认红图钉纹理照渲 + anchor(10,25)
-    //   偏置 → 「样式不对 + 偏移」(bug 7 用户症状);
     // - 点击:marker 模块把 click 绑在 markerMouseTarget DOM 上,内容子元素
     //   事件冒泡可达(注入后同语义)。
     const markerOpts: Record<string, unknown> = {};
     if (opts.zIndex !== undefined) markerOpts.zIndex = opts.zIndex;
     const raw = new this.ns.Marker(new this.ns.Point(bd.lng, bd.lat), markerOpts);
-    if (opts.content !== undefined) {
-      // 最新 content 先入账(DOM 注入兜底延迟读取;wrapper.setContent 重入更新)
-      markerContentDom.set(raw, opts.content);
+    const content = opts.content;
+    if (content !== undefined) {
+      // 最新 content 先入账(DOM 注入延迟读取;wrapper.setContent 重入更新)
+      markerContentDom.set(raw, content);
       // 真实 BMapGL v1.0 Marker **无 setContent**(SDK 源码 + 真机实测,ws-e):
       // 有则走原契约路径(测试 mock / 未来 SDK 形态),无则注入厂商 marker 自带
       // 的 BMap_Marker 点击目标 DOM(位置/点击/生命周期语义见模块注释)。
-      if (typeof raw.setContent === 'function') raw.setContent(opts.content);
-      else scheduleMarkerContentInjection(raw);
+      if (typeof raw.setContent === 'function') raw.setContent(content);
     }
     if (opts.onClick) raw.addEventListener?.('click', opts.onClick);
     const ax = opts.offset ? -opts.offset[0] : 0;
@@ -1003,19 +908,20 @@ class BaiduMapView implements MapView {
     // baidu-engine 确有 icon 路径接收远程 URL(下方 Icon 构造),故同样接
     // icon-preflight 预检防御:data URI / 已预检 ok → 真 src 原样;远程未
     // 预检/已失败 → 回退 content 锚点路径(厂商 marker DOM 渲染,<img> 无需
-    // CORS;content 已在上面入账(有 setContent 直调,无则 DOM 注入兜底),此处
-    // 只补透明 1×1 锚点图标)——仅
-    // 防御,现有 content 路径行为零改动;未预检时后台触发预检,成功后下次
-    // 重建自然升级。当前业务方无人给 BMapGL 传远程 icon(公司 POI 走 content,
-    // 蓝点/聚合徽章均为 dataURL),本分支纯防御性接入。
-    if (opts.icon && this.resolveIconUsable(opts.icon)) {
+    // CORS;content 已入账(有 setContent 直调,无则 DOM 注入兜底),此处只补
+    // 透明 1×1 锚点图标)——仅防御,content 路径行为零改动;未预检时后台触发
+    // 预检,成功后下次重建自然升级。当前业务方无人给 BMapGL 传远程 icon
+    // (公司 POI 走 content,蓝点/聚合徽章均为 dataURL),本分支纯防御性接入。
+    const icon = opts.icon;
+    const iconRenders = Boolean(icon && this.resolveIconUsable(icon));
+    if (iconRenders && icon) {
       // icon 规格(契约)→ BMapGL.Icon(url, size, { offset: anchor });size 为
       // 必传第二参 → 缺省兜底 BMapGL 默认 marker 尺寸 21x21
       if (typeof raw.setIcon === 'function' && typeof this.ns.Icon === 'function') {
-        const [w, h] = opts.icon.size ?? [21, 21];
+        const [w, h] = icon.size ?? [21, 21];
         try {
           raw.setIcon(
-            new this.ns.Icon(opts.icon.src, new this.ns.Size(w, h), {
+            new this.ns.Icon(icon.src, new this.ns.Size(w, h), {
               offset: new this.ns.Size(ax, ay),
             }),
           );
@@ -1025,7 +931,7 @@ class BaiduMapView implements MapView {
       } else {
         console.warn('[map-engine] BMapGL Icon/setIcon 不可用,图标降级');
       }
-    } else if (opts.content !== undefined) {
+    } else if (content !== undefined) {
       // content 标记:透明 1×1 图标扛锚点(位置 = 屏幕位 + 契约 offset)
       if (typeof raw.setIcon === 'function' && typeof this.ns.Icon === 'function') {
         try {
@@ -1041,7 +947,12 @@ class BaiduMapView implements MapView {
         console.warn('[map-engine] BMapGL Icon/setIcon 不可用,content 标记锚点无法对齐');
       }
     }
-    this.map.addOverlay?.(raw);
+    this.map.addOverlay?.(raw); // SDK 同步创建点击目标 DOM(_i → initialize)
+    // 无 setContent → DOM 注入(icon 主机制时不注入,防双渲染);addOverlay 后
+    // 同步命中,失败走微任务 + rAF 有界重试(零定时器)
+    if (content !== undefined && typeof raw.setContent !== 'function' && !iconRenders) {
+      scheduleMarkerContentInjection(raw);
+    }
     return {
       raw,
       setPosition: (p: LngLat) => {
@@ -1051,7 +962,8 @@ class BaiduMapView implements MapView {
       setContent: (html: string) => {
         markerContentDom.set(raw, html);
         if (typeof raw.setContent === 'function') raw.setContent(html);
-        else scheduleMarkerContentInjection(raw);
+        // icon 主机制(content 不注入,防双渲染;图标纹理为静态视觉)
+        else if (!iconRenders) scheduleMarkerContentInjection(raw);
       },
       setZIndex: (z: number) => {
         if (typeof raw.setZIndex === 'function') raw.setZIndex(z);
