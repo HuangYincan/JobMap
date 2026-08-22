@@ -27,8 +27,22 @@ test('createTtlCache expires entries after ttl', () => {
   assert.equal(cache.size(), 0);
 });
 
-test('publicCacheKey joins missing parts as empty slots', () => {
-  assert.equal(publicCacheKey(['work', undefined, 'q']), 'work||q');
+test('publicCacheKey encodes missing parts with explicit tag', () => {
+  assert.equal(publicCacheKey(['work', undefined, 'q']), 's:4:worku:0:s:1:q');
+});
+
+test('publicCacheKey:组件值含 | 不碰撞(quality-scan #13)', () => {
+  // 旧拼接 `a|b|c` 下两组输入同 key;长度前缀编码后必须不同
+  assert.notEqual(publicCacheKey(['a|b', 'c']), publicCacheKey(['a', 'b|c']));
+  // 同输入必须同 key(确定性)
+  assert.equal(publicCacheKey(['a|b', 'c']), publicCacheKey(['a|b', 'c']));
+  // undefined 与 null 分别编码(JSON 数组序列化会把两者同归为 null)
+  assert.notEqual(publicCacheKey(['x', undefined]), publicCacheKey(['x', null]));
+  // 类型标记:数字/布尔与同形字符串不碰撞
+  assert.notEqual(publicCacheKey([1]), publicCacheKey(['1']));
+  assert.notEqual(publicCacheKey([true]), publicCacheKey(['true']));
+  // 值内换行/引号不破坏定界
+  assert.notEqual(publicCacheKey(['a\nb', 'c']), publicCacheKey(['a', 'b\nc']));
 });
 
 test('read/writePublicCache share one store', () => {

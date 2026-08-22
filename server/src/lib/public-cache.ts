@@ -78,7 +78,37 @@ export const PUBLIC_CACHE_TTL_MS = 30_000;
 export const PUBLIC_CACHE_CONTROL = 'public, max-age=30, stale-while-revalidate=60';
 
 export function publicCacheKey(parts: Array<string | number | boolean | null | undefined>): string {
-  return parts.map((part) => (part == null ? '' : String(part))).join('|');
+  // quality-scan #13(2026-08-23):裸 `|` 拼接不转义,组件值(如 filters JSON)含 `|`
+  // 时不同查询命中同一缓存。改为「类型标记 + 长度前缀 + 原值」逐段编码:每段按
+  // 长度自定界,值内任意字符(含 `|` / 引号 / 换行)都不影响段边界;undefined 与
+  // null、数字与同形字符串分别编码(JSON 数组序列化会把 undefined/null 同归为
+  // `null`,存在残余碰撞)。
+  let key = '';
+  for (const part of parts) {
+    let tag: string;
+    let raw: string;
+    if (part === null) {
+      tag = 'n';
+      raw = '';
+    } else if (part === undefined) {
+      tag = 'u';
+      raw = '';
+    } else if (typeof part === 'string') {
+      tag = 's';
+      raw = part;
+    } else if (typeof part === 'number' && Number.isNaN(part)) {
+      tag = 'x';
+      raw = '';
+    } else if (typeof part === 'number') {
+      tag = 'd';
+      raw = String(part);
+    } else {
+      tag = 'b';
+      raw = String(part);
+    }
+    key += `${tag}:${raw.length}:${raw}`;
+  }
+  return key;
 }
 
 export function readPublicCache<T>(key: string): T | undefined {
