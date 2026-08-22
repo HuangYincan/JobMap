@@ -211,6 +211,15 @@ class FakeMap {
   getContainer() {
     return this.container;
   }
+  /**
+   * ws-l:官方公开 API 返回 overlay pane 表(真实 SDK webgl 在 zoomstart/
+   * movestart/animation_start 隐藏 markerMouseTarget pane——滚轮闪烁根因,
+   * 引擎监听同事件恢复显示;mock 提供可写 style 的 pane)。
+   */
+  getPanes() {
+    if (!this.panes) this.panes = { markerMouseTarget: { style: {} } };
+    return this.panes;
+  }
   addEventListener(event, handler) {
     const list = this.listeners.get(event) ?? [];
     list.push(handler);
@@ -2727,4 +2736,156 @@ test('r5 定位异象:无 pointToOverlayPixelIn(旧 SDK 形态/测试缺面)→ 
   assert.equal(marker.raw.domElement.innerHTML, '<b>x</b>', '注入不受影响');
   // DOM 定位保留 SDK 值(空)→ 不抛、不写异常值
   assert.equal(marker.raw.domElement.style.left, '');
+});
+
+// ------------------------------------------------------------
+// 7. ws-l 滚轮缩放闪烁修复(2026-08-23):SDK webgl 相机动画期间隐藏整
+//    markerMouseTarget pane → 引擎同步恢复 + rAF 按帧重算定位
+// ------------------------------------------------------------
+
+/**
+ * 自愈守卫:r5「无 pointToOverlayPixelIn(旧 SDK 形态)」测试会
+ * `delete FakeMap.prototype.pointToOverlayPixelIn`——FakeMap 是模块级共享类,
+ * 该删除对后续所有测试残留(本组测试依赖投影定位断言)。缺失时按同一合同
+ * (fixPosition:true 反绕 / false 未反绕,this.px 为未反绕像素)恢复。
+ */
+function ensureFakeMapProjection() {
+  if (typeof FakeMap.prototype.pointToOverlayPixelIn === 'function') return;
+  FakeMap.prototype.pointToOverlayPixelIn = function (point, opts = {}) {
+    this.lastPxPoint = point;
+    this.lastPxOpts = opts;
+    const raw = this.px ?? { x: 320, y: 180 };
+    if (opts.fixPosition) {
+      const world = this.worldSizePx ?? 1252357.9; // 模拟 SDK worldSize(z13)
+      const w = this.sizePx?.width ?? 1440;
+      let x = raw.x;
+      if (x > w) x -= Math.ceil((x - w) / world) * world;
+      else if (x < 0) x += Math.ceil(-x / world) * world;
+      return { x, y: raw.y };
+    }
+    return { x: raw.x, y: raw.y };
+  };
+}
+
+test('ws-l 滚轮闪烁:zoomstart/movestart/animation_start 恢复被 SDK 隐藏的 markerMouseTarget pane', async () => {
+  setup();
+  mockNs.ns.Marker = FakePosMarker;
+  const { view } = await makeView();
+  const map = view.raw;
+  map.px = { x: 1888, y: 139 };
+  view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-20, -20] });
+  const pane = map.getPanes().markerMouseTarget;
+  assert.equal(pane.style.display, undefined, '初始 pane 可见(未写 display)');
+  // SDK 内部处理器(zoomstart)隐藏 pane → 引擎同事件监听恢复
+  for (const ev of ['zoomstart', 'movestart', 'animation_start']) {
+    pane.style.display = 'none'; // 模拟 SDK overlay 管理器 C 处理器
+    map.trigger(ev);
+    assert.equal(pane.style.display, '', `${ev} → pane 恢复显示(徽章不消失)`);
+  }
+  // 引擎监听晚于 SDK 内部处理器:同事件触发两次,仍保持可见(幂等)
+  map.trigger('zoomstart');
+  assert.equal(pane.style.display, '', '重复 zoomstart 幂等保持');
+  // 终止事件不抛、不反向隐藏
+  map.trigger('zoomend');
+  map.trigger('moveend');
+  map.trigger('animation_end');
+  assert.equal(pane.style.display, '', '终止事件后 pane 保持可见');
+});
+
+test('ws-l 滚轮闪烁:zoomstart 启动 rAF 按帧重算定位(跟随动画相机),相机稳定 ~1s 自终止', async () => {
+  setup();
+  ensureFakeMapProjection(); // r5「无 pointToOverlayPixelIn」测试删过共享 FakeMap 原型方法
+  mockNs.ns.Marker = FakePosMarker;
+  const savedRaf = globalThis.requestAnimationFrame;
+  const queue = [];
+  globalThis.requestAnimationFrame = (cb) => {
+    queue.push(cb);
+    return queue.length;
+  };
+  try {
+    const { view } = await makeView();
+    const map = view.raw;
+    map.px = { x: 1888, y: 139 };
+    map.zoom = 13;
+    map.center = { lng: 120, lat: 30 };
+    view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-20, -20] });
+    assert.equal(map.getPanes().markerMouseTarget.style.display, undefined, '初始 pane 可见');
+    // zoomstart → 启动 rAF 同步循环
+    map.trigger('zoomstart');
+    assert.equal(queue.length, 1, 'zoomstart 启动一帧同步');
+    // 帧 1:相机未变 → 重算(同值不写),继续排队
+    queue.shift()();
+    assert.equal(queue.length, 1, '帧 1 后继续排队');
+    // 相机变化(动画中):下一帧按新相机重算 → DOM 跟随
+    map.px = { x: 500, y: 300 };
+    queue.shift()();
+    // 帧 2 已按新相机重算:第一个 content marker 的 DOM(上一帧 1868px → 480px)
+    const dom = [...map.overlays].find((o) => o.domElement);
+    assert.equal(dom.domElement.style.left, '480px', '帧 2:相机动画中新位置 500−20');
+    assert.equal(dom.domElement.style.top, '280px', '帧 2:top = 300−20');
+    // 相机稳定 ~1s(60 帧)无变化 → 循环自终止(防事件丢失悬挂)
+    for (let i = 0; i < 60; i++) queue.shift()();
+    assert.equal(queue.length, 0, '相机 60 帧未变 → 自终止,不再排队');
+    // zoomend 终止路径不抛(循环已停,幂等)
+    map.trigger('zoomend');
+  } finally {
+    globalThis.requestAnimationFrame = savedRaf;
+  }
+});
+
+test('ws-l 滚轮闪烁:无 rAF 环境(node)→ zoomstart 同步收敛一次,不悬挂不抛', async () => {
+  setup();
+  ensureFakeMapProjection(); // r5「无 pointToOverlayPixelIn」测试删过共享 FakeMap 原型方法
+  mockNs.ns.Marker = FakePosMarker;
+  const savedRaf = globalThis.requestAnimationFrame;
+  delete globalThis.requestAnimationFrame;
+  try {
+    const { view } = await makeView();
+    const map = view.raw;
+    map.px = { x: 700, y: 430 };
+    map.zoom = 13;
+    map.center = { lng: 120, lat: 30 };
+    view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-20, -20] });
+    const pane = map.getPanes().markerMouseTarget;
+    pane.style.display = 'none';
+    map.px = { x: 900, y: 500 };
+    map.trigger('zoomstart'); // 无 rAF → 同步收敛 + pane 恢复
+    const dom = [...map.overlays].find((o) => o.domElement);
+    assert.equal(dom.domElement.style.left, '880px', '无 rAF:同步收敛到当前相机');
+    assert.equal(pane.style.display, '', 'pane 恢复显示');
+    map.trigger('zoomend');
+    map.trigger('moveend');
+    assert.equal(dom.domElement.style.left, '880px', '终止事件不抛');
+  } finally {
+    globalThis.requestAnimationFrame = savedRaf;
+  }
+});
+
+test('ws-l 滚轮闪烁:destroy 终止 rAF 同步(不悬挂);pane 恢复后 destroy 正常', async () => {
+  setup();
+  mockNs.ns.Marker = FakePosMarker;
+  const savedRaf = globalThis.requestAnimationFrame;
+  const queue = [];
+  globalThis.requestAnimationFrame = (cb) => {
+    queue.push(cb);
+    return queue.length;
+  };
+  try {
+    const { view } = await makeView();
+    const map = view.raw;
+    map.px = { x: 1888, y: 139 };
+    map.zoom = 13;
+    map.center = { lng: 120, lat: 30 };
+    view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-20, -20] });
+    map.trigger('zoomstart');
+    assert.equal(queue.length, 1, '同步循环已启动');
+    view.destroy();
+    // destroy 后残留帧直接退出(destroyed 守卫),不再排队
+    queue.shift()();
+    assert.equal(queue.length, 0, 'destroy 后循环终止');
+    map.trigger('zoomstart'); // 监听已解绑 → 不抛
+    assert.equal(map.destroyed, true, 'destroy 语义保持');
+  } finally {
+    globalThis.requestAnimationFrame = savedRaf;
+  }
 });
