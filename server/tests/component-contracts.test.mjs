@@ -979,6 +979,43 @@ test('agent panel completion status + clear screen (ws-done)', () => {
   assert.match(executor, /undoStack\[i\]\.kind === "overlay"/);
 });
 
+test('agent panel input row: send↔stop in-place dual state, controls = clear then undo (ws-inputbar)', () => {
+  const panel = src('components/agent-panel.tsx');
+  const css = src('components/agent-panel.module.css');
+  // 双态(2026-08-22 用户要求):流式中输入行右侧发送位原位变「停止」(onClick=stop、
+  // 复用 agentStop 文案 + ■ 图标 + sendStop 红系警示样式);非流式渲染「发送」
+  // (onClick=send,disabled 条件不变)
+  const inputRowAt = panel.indexOf('<div className={styles.inputRow}>');
+  assert.ok(inputRowAt !== -1, 'inputRow 锚点存在');
+  const inputRowBlock = panel.slice(inputRowAt, panel.indexOf('</footer>'));
+  assert.match(
+    inputRowBlock,
+    /streaming \? \([\s\S]{0,80}className=\{`\$\{styles\.send\} \$\{styles\.sendStop\}`\}[\s\S]{0,120}onClick=\{stop\}[\s\S]{0,120}t\("agentStop", lang\)/,
+    '流式中发送位渲染「停止」(sendStop 样式 + onClick=stop + agentStop 文案)',
+  );
+  assert.match(inputRowBlock, /■ \{t\("agentStop", lang\)\}/, '停止态带 ■ 图标');
+  assert.match(
+    inputRowBlock,
+    /: \([\s\S]{0,80}className=\{styles\.send\}[\s\S]{0,120}onClick=\{\(\) => send\(\)\}[\s\S]{0,120}disabled=\{!input\.trim\(\) \|\| streaming\}/,
+    '非流式渲染「发送」且 disabled 条件不变',
+  );
+  assert.match(inputRowBlock, /t\("agentSend", lang\)/);
+  // 控件行:独立停止控件已移除;顺序 = [清屏] [撤销](清屏最左)
+  const controlsAt = panel.indexOf('<div className={styles.controls}>');
+  assert.ok(controlsAt !== -1, 'controls 锚点存在');
+  const controlsBlock = panel.slice(controlsAt, panel.indexOf('</footer>'));
+  assert.doesNotMatch(controlsBlock, /onClick=\{stop\}|disabled=\{!streaming\}/, '控件行不再有独立停止控件');
+  const clearAt = controlsBlock.indexOf('clearScreen');
+  const undoAt = controlsBlock.indexOf('onClick={undo}');
+  assert.ok(clearAt !== -1 && undoAt !== -1 && clearAt < undoAt, '控件行顺序:清屏在撤销前');
+  // 全 footer 仅一处 onClick={stop}(并入发送位,原控件行停止钮已移除)
+  const footerBlock = panel.slice(panel.indexOf('<footer className={styles.footer}>'), panel.indexOf('</footer>'));
+  assert.equal((footerBlock.match(/onClick=\{stop\}/g) ?? []).length, 1, 'stop 只存在于发送位');
+  // CSS:sendStop 红系警示底 + 控件行左对齐(清屏最左)
+  assert.match(css, /\.sendStop \{[\s\S]*background: #ff3b30/, 'sendStop 红系警示底');
+  assert.match(css, /\.controls \{[\s\S]*justify-content: flex-start;/, '控件行左对齐');
+});
+
 test('agent panel memory: login-only entry + embedded overlay (ws-mem-b)', () => {
   const panel = src('components/agent-panel.tsx');
   const ball = src('components/agent-ball.tsx');
