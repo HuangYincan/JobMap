@@ -168,9 +168,32 @@ class FakeMap {
   }
   addOverlay(overlay) {
     this.overlays.push(overlay);
+    // r5(2026-08-22)SDK 语义:addOverlay(_i(map)) 后 marker 持有 map 引用
+    // (真实 SDK marker._i → initialize 时建 map 绑定;定位重算依赖)
+    if (overlay && typeof overlay === 'object') overlay.map = this;
   }
   removeOverlay(overlay) {
     this.overlays = this.overlays.filter((o) => o !== overlay);
+  }
+  /**
+   * r5 SDK 反绕模拟(v1.0 getscript 源码坐实):marker 模块 _getPixPos 恒传
+   * fixPosition:true;点出视口外时按 worldSize 反绕到 ±worldSize(≈±125 万
+   * px @z13,boss 主树复验根因)。mock 与真实 SDK 同合同:
+   * fixPosition:true → 反绕;false → 未反绕视口像素。this.px = 未反绕像素。
+   */
+  pointToOverlayPixelIn(point, opts = {}) {
+    this.lastPxPoint = point;
+    this.lastPxOpts = opts;
+    const raw = this.px ?? { x: 320, y: 180 };
+    if (opts.fixPosition) {
+      const world = this.worldSizePx ?? 1252357.9; // 模拟 SDK worldSize(z13)
+      const w = this.sizePx?.width ?? 1440;
+      let x = raw.x;
+      if (x > w) x -= Math.ceil((x - w) / world) * world;
+      else if (x < 0) x += Math.ceil(-x / world) * world;
+      return { x, y: raw.y };
+    }
+    return { x: raw.x, y: raw.y };
   }
   // content 自定义 Overlay draw() 定位 API(BMapGL 官方点 → 覆盖物/容器像素;
   // this.px 可设返回像素,lastPxPoint 记录最近投影点供 bd09 断言)
@@ -286,6 +309,10 @@ class FakeNoContentMarker {
     // 模拟真实 SDK:domElement 由 addOverlay(_i→initialize)同步创建;
     // domReady=false 时构造不建 DOM(测试「延迟就绪 → 微任务+rAF 重试注入」)
     if (FakeNoContentMarker.domReady) this.domElement = { innerHTML: '' };
+  }
+  /** SDK 坐标同系统内点位(_getPixPos 源码坐实:getPositionIn → pointToOverlayPixelIn) */
+  getPositionIn() {
+    return this.point;
   }
   getPosition() {
     return this.point;
@@ -2600,4 +2627,104 @@ test('createMarker(content+icon):icon 为渲染主机制,content 不注入(防�
   } finally {
     image.restore();
   }
+});
+
+// ------------------------------------------------------------
+// r5(2026-08-22):SDK fixPosition 反绕异象修复——定位重算
+// boss 主树复验:注入成功(400 徽章/0 警告)但全部定位到 ±worldSize
+// (rect x≈±125 万 px,视觉零徽章)。根因:marker 模块 _getPixPos 恒传
+// fixPosition:true → 视口外像素按整世界尺寸反绕(SDK v1.0 源码坐实)。
+// 修复:DOM 注入 + 相机/瓦片事件后以 fixPosition:false 重算未反绕视口定位。
+// ------------------------------------------------------------
+
+/** r5 定位重算断言用 Marker:domElement 携带 style(SDK 真实形态) */
+class FakePosMarker extends FakeNoContentMarker {
+  constructor(point, opts = {}) {
+    super(point, opts);
+    if (this.domElement) this.domElement.style = { left: '', top: '' };
+  }
+}
+
+test('r5 定位异象:注入即经 fixPosition:false 校准——视口外 marker 停在未反绕像素(±worldSize 不再出现)', async () => {
+  setup();
+  mockNs.ns.Marker = FakePosMarker;
+  const { view } = await makeView();
+  const map = view.raw;
+  // 模拟 SDK 视角外东侧 POI:未反绕 x=1888(画布 1440,越界 448px)+ 图钉锚点
+  map.px = { x: 1888, y: 139 };
+  const marker = view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-20, -20] });
+  const raw = marker.raw;
+  // 注入即校准:DOM left/top = 未反绕像素 − 锚点(anchor = -offset = (20,20))
+  assert.equal(raw.domElement.style.left, '1868px', 'left = 1888 − 20(未反绕,非 −125 万)');
+  assert.equal(raw.domElement.style.top, '119px', 'top = 139 − 20');
+  // 引擎向 SDK 请求的是 fixPosition:false(禁用反绕);且点位为 bd09 转换后的坐标
+  assert.equal(map.lastPxOpts.fixPosition, false, '点进投影的请求必须 fixPosition:false');
+  assert.equal(map.lastPxPoint, raw.point, '投影点位 = marker bd09 点(getPositionIn 语义)');
+  // 对照:SDK 原始 fixPosition:true(经原型直调,避开引擎的实例遮蔽)
+  // 会反绕到 ±worldSize(≈−125 万)——即本次修复消除的异象
+  const wrapped = FakeMap.prototype.pointToOverlayPixelIn.call(map, raw.getPositionIn(), { zoom: 13, fixPosition: true });
+  assert.ok(Math.abs(wrapped.x) > 1000000, 'SDK 默认(fixPosition:true)必反绕 → 修复必须禁用它');
+});
+
+test('r5 定位异象:相机事件后重算——moveend/zoomend/tilesloaded 均校准跟随新相机', async () => {
+  setup();
+  mockNs.ns.Marker = FakePosMarker;
+  const { view } = await makeView();
+  const map = view.raw;
+  map.px = { x: 1888, y: 139 };
+  const marker = view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-20, -20] });
+  assert.equal(marker.raw.domElement.style.left, '1868px', '初始校准');
+  // 平移:相机东移后视口像素变化 → moveend 重算
+  map.px = { x: 1180, y: 220 };
+  map.trigger('moveend');
+  assert.equal(marker.raw.domElement.style.left, '1160px', 'moveend → 新相机像素 − 锚点');
+  assert.equal(map.lastPxOpts.fixPosition, false, 'moveend 重算仍 fixPosition:false');
+  // 缩放:zoomend 重算
+  map.px = { x: 1440, y: 450 };
+  map.trigger('zoomend');
+  assert.equal(marker.raw.domElement.style.left, '1420px', 'zoomend → 重算');
+  // 瓦片批(首帧/重负载):tilesloaded 重算
+  map.px = { x: 700, y: 430 };
+  map.trigger('tilesloaded');
+  assert.equal(marker.raw.domElement.style.left, '680px', 'tilesloaded → 重算');
+  assert.equal(marker.raw.domElement.style.top, '410px');
+});
+
+test('r5 定位异象:remove 摘除 → 相机事件零写入(无主 marker 不重算)', async () => {
+  setup();
+  mockNs.ns.Marker = FakePosMarker;
+  const { view } = await makeView();
+  const map = view.raw;
+  map.px = { x: 1888, y: 139 };
+  const marker = view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-20, -20] });
+  assert.equal(marker.raw.domElement.style.left, '1868px');
+  marker.remove();
+  map.px = { x: 100, y: 100 };
+  map.trigger('moveend');
+  map.trigger('zoomend');
+  map.trigger('tilesloaded');
+  assert.equal(marker.raw.domElement.style.left, '1868px', '摘除后不写入(保持摘除时刻值)');
+});
+
+test('r5 定位异象:destroy 后相机事件不抛(监听解绑,零异常)', async () => {
+  setup();
+  mockNs.ns.Marker = FakePosMarker;
+  const { view } = await makeView();
+  const map = view.raw;
+  map.px = { x: 1888, y: 139 };
+  view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-20, -20] });
+  view.destroy();
+  map.trigger('moveend'); // 监听已解绑 → 不抛
+  assert.equal(map.destroyed, true, 'destroy 语义保持');
+});
+
+test('r5 定位异象:无 pointToOverlayPixelIn(旧 SDK 形态/测试缺面)→ 定位重算静默跳过零告警', async () => {
+  setup();
+  mockNs.ns.Marker = FakePosMarker;
+  delete mockNs.ns.Map.prototype.pointToOverlayPixelIn; // 旧 SDK 无该 API
+  const { view } = await makeView();
+  const marker = view.createMarker({ position: GCJ, content: '<b>x</b>', offset: [-20, -20] });
+  assert.equal(marker.raw.domElement.innerHTML, '<b>x</b>', '注入不受影响');
+  // DOM 定位保留 SDK 值(空)→ 不抛、不写异常值
+  assert.equal(marker.raw.domElement.style.left, '');
 });

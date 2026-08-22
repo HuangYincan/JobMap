@@ -133,3 +133,34 @@ ws-e 与 dev 既有 ws-pinfix2 各自独立修复同一根因(BMapGL v1.0 `Marke
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+---
+
+# 轮5 合并(ws-g fix/baidu-r5,2026-08-22)
+
+## 结果总览
+- 成功合并: ws-g(fix/baidu-r5,tip 385155e,3 commits)1 分支并入 dev。
+- 失败/遗留: 无。门禁 0 失败(1446 pass / 0 fail / 2 skip),typecheck / docs-check / diff-check 全绿。
+
+## 逐分支明细
+| WS | 分支 | merge commit | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| ws-g | fix/baidu-r5 (385155e) | d8f2e8a | 1446 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 无冲突(自动合并) |
+
+- 合并后全量:1448 tests / 1446 pass / 0 fail / 2 skip;`npm run typecheck` 零错误;`make docs-check` passed;`git diff --check` 干净。
+- 合并内容核验:baidu-engine.ts SDK `fixPosition` 反绕把视口外徽章抛到 ±worldSize 的根因 —— 实例遮蔽 `fixPosition: false` + 相机事件定位校准(r5);测试 +5 用例(注入即校准/相机事件重算/remove 注销/destroy 解绑/旧 SDK 静默跳过,85→90);tech/23 追加 ws-g r5 回填节(54 行)。
+
+## 冲突解决清单
+- 无冲突。三个文件(baidu-engine.ts / map-engine-baidu.test.mjs / tech/23-map-engines.md)均自动合并成功。
+
+## 遗留问题
+- 主工作树其他未跟踪内容(`.address-work/`、其他批次目录)与本次合并零交集,未动。
+- merge-instructions.md 已由 boss 更新为轮5 版本(随本轮批次目录入库)。
+
+## 最终 dev 状态
+- ws-g r5 merge commit: `d8f2e8a`(merge: fix/baidu-r5,parents 5165904 + 385155e),已 push origin dev(`5165904..d8f2e8a`)。
+- worktree `/Users/acccan/dm-wt-br5` 已 remove;分支 `fix/baidu-r5` 已 `git branch -d` 删除。
+- 批次目录入库 commit: `chore: 20260822 boss engine-polish-2 轮5入库(ws-g baidu-r5 merge-report + 汇报)`。
+
+门禁: ALL_GREEN
+结论: MERGED_ALL
