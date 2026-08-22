@@ -11,8 +11,17 @@
 
 ## stage
 
-- current: MERGE(4 ws 全部 DONE+验证,派 merger)
+- current: NEXT(5 轮全部完成:MERGED_ALL ×5,push f32d3cc;5 bug 全绿 + 主树最终复验通过)
 - updated_at: 2026-08-22
+
+## 最终复验(boss,轮5 合并后主树)
+
+- ✅ 百度徽章:32 视口内 40px 徽章,位置正常(无 ±worldSize 偏移),0 errors
+- ✅ 百度点击:徽章→POI 卡完整打开(公司名/Save/职位列表)
+- ✅ 缩放跟随:滚轮放大后 31 徽章仍可见
+- ✅ 腾讯 icon:53 个 icon.horse 全部 200 加载
+- ✅ 卫星/深色:生效
+- ✅ 定位:三引擎浏览器高精度 + 蓝点渲染
 
 ## workstreams
 
@@ -22,7 +31,9 @@
 | b | fix/baidu-poi-locate | /Users/acccan/dm-wt-bp | prompts/ws-b.md | reports/ws-b.md | DONE | f77cad0 | 轮1 | 2026-08-22 | OK(3 commits, 1381/1379 pass, boss 已验证;POI 单点级核查三环节正确,定位改浏览器高精度) |
 | c | fix/tencent-poi-icon | /Users/acccan/dm-wt-ti | prompts/ws-c.md | reports/ws-c.md | DONE | 171c544 | 轮1 | 2026-08-22 | OK(3 commits, 1384/1382 pass, boss 已验证;anchor=-offset 契约修正 + icon 候选链) |
 | d | fix/tencent-locate | /Users/acccan/dm-wt-tl | prompts/ws-d.md | reports/ws-d.md | DONE | 2545985 | 轮1 | 2026-08-22 | OK(3 commits, 1375/1373 pass, boss 已验证) |
-| e | fix/baidu-round2 | /Users/acccan/dm-wt-br2 | prompts/ws-e.md | reports/ws-e.md | DONE | 230ff5c | 轮2(boss 实测 follow-up) | 2026-08-22 | OK(3 commits, 1397 pass;2 基线失败=数据域 deferred;POI 根因=BMapGL v1.0 无 setContent 实锤) |
+| e | fix/baidu-round2 | /Users/acccan/dm-wt-br2 | prompts/ws-e.md | reports/ws-e.md | DONE | 230ff5c | 轮2 | 2026-08-22 | OK(3 commits;POI 根因=BMapGL v1.0 无 setContent 实锤,深色切 vector,蓝点判定) |
+| f | fix/baidu-r3/r4 | /Users/acccan/dm-wt-br3/br4 | prompts/ws-f.md | reports/ws-f.md | DONE | bf1dd7c | 轮3/4 | 2026-08-22 | OK(r3:Overlay 静默失效→Marker 注入主路径;r4:定时器兜底,主树复验 136 警告修复) |
+| g | fix/baidu-r5 | /Users/acccan/dm-wt-br5 | prompts/ws-g.md | reports/ws-g.md | DONE | 385155e | 轮5(fixPosition 反绕) | 2026-08-22 | OK(3 commits, 1434/1432 pass;SDK fixPosition 反绕根因 + 实例遮蔽修复) |
 
 ## 关键证据(2026-08-22)
 
