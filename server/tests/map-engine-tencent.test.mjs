@@ -846,8 +846,13 @@ test('createMarker:仅 MultiMarker(无 Marker)→ 聚合路径,geometries/id/off
     assert.match(geo.id, /^dm-mk-\d+$/, 'id 递增唯一(dm-mk-N)');
     assert.deepEqual({ ...geo.position }, { lat: 30.28, lng: 120.16 }, 'position LatLng 纬度在前');
     assert.equal(geo.styleId, 'dm-st-1', '有 offset → 样式归组分配 dm-st-N(非 default)');
-    assert.equal(marker.raw.opts.map, undefined, '构造不传 map(ws-i 层级修复:构造期挂图 → 图层 level 低于底图标注层,徽章被文字盖住;改为构造后 setMap 挂图)');
+    assert.equal(marker.raw.opts.map, undefined, '构造不传 map(ws-i 层级修复:构造后 setMap 挂图;实测两形态 layer level 均 7,构造顺序只为形态收敛)');
     assert.equal(marker.raw.map, view.raw, '构造后 setMap 挂图(共享 MultiMarker 挂到当前地图)');
+    assert.deepEqual(
+      marker.raw.geometries.map((g) => g.id),
+      [geo.id],
+      '挂图后 setGeometries 全量重推(副本:初始渲染竞态修复,数据事件重触发渲染管线)',
+    );
     assert.equal(marker.raw.zIndex, 9, 'zIndex 透传(SDK:overlay zIndex → layer rank)');
     // 契约 offset [x,y](AMap content 语义:左上角置于 屏幕位+offset)→
     // MarkerStyle.anchor = -(x,y)(渲染公式 imageTopLeft = 屏幕位 - anchor,

@@ -802,17 +802,22 @@ class TencentView implements MapView {
     let raw = this.multiMarker;
     if (!raw) {
       // 首个 marker:构造共享实例(首批 geometry + 已归组样式 + zIndex)
-      // ⚠️ **构造不传 map,构造后显式 setMap 挂图**(ws-i 2026-08-23,SDK
-      // v1.8.0.2 实包源码核实):构造期传 `map` → GL GeometryOverlay 基类构造器
-      // 在子类 `_setGeometryType()`(设置 `_layerType="MARKER"`)执行**之前**
-      // 调 `setMap(map)` → `_createLayer()` 读 `_layerType` 仍 undefined →
-      // 图层 level 落 **OVERLAY_AA(4)**,低于底图文字标注层 TEXT(6)——
-      // rank=10000·level+zIndex(全包唯一 rank 公式)排序在标注之下 →
-      // 「底图文字标注盖住徽章,只露下半截」(用户「腾讯 poi 渲染很奇怪」根因,
-      // 与 AMap DOM 徽章在 canvas 之上形成对比)。构造后 setMap:`_setGeometryType`
-      // 已执行 → 图层 type="MARKER" → level **OVERLAY_NAA(7,标注之上)** →
-      // 徽章完整不被遮挡。zIndex 只是 level 内偏移(上限 9999),无法跨级,
-      // 必须修 level —— 本构造顺序即 SDK 设计意图(OVERLAY_NAA 专为 marker 预留)。
+      // ⚠️ **构造不传 map,构造后显式 setMap 挂图**(ws-i 2026-08-23)。
+      // SDK v1.8.0.2 实包源码 + 浏览器实测(两种形态都验证过):
+      // - GeometryOverlay 构造器内部先执行 `_setGeometryType()`(置
+      //   `_layerType="MARKER"`)→ 再 `e.map ? i.setMap(e.map)`;因此**无论
+      //   构造传不传 map,layer.type 都是 "MARKER"、layer.level 都是 7
+      //   (OVERLAY_NAA)**——原「构造时序导致 level=4 被标注层盖住」的推断
+      //   不成立(实包源码核实 + 页面内双形态实验均 level 7;layerResource
+      //   实测排序 rank 70020 > 底图 POI 标注层 vector_top_poi rank 60000
+      //   → 徽章恒在文字标注之上);
+      // - 统一「构造后 setMap」仅为形态收敛(与 destroy 的 setMap(null)
+      //   对称、调用点单一),层级语义与构造传 map 完全等价;
+      // - **真正问题(ws-i 实测)**:初始渲染竞态 —— geometry 数据经 geojson
+      //   source(worker 异步)推送,与地图 idle/GL 初始化时序竞争,data 事件
+      //   可能错过渲染管线 → 首帧 0 个徽章,直到用户交互(缩放/平移触发
+      //   LOD 摘挂)才全部出现;实测 `setGeometries(全量重推)` 后视口内徽章
+      //   立即全部渲染 → 挂图后补一次重推消除竞态(见下方)。
       const mmOpts: Record<string, unknown> = {
         geometries: [geometry],
         // SDK 核实:overlay zIndex → layer rank 排序(越大越靠上;同一 level 内)
@@ -833,6 +838,20 @@ class TencentView implements MapView {
         raw.setMap(this.raw);
       } else {
         this.warnMultiMarkerSetMapDegraded();
+      }
+      // 初始渲染竞态修复(ws-i 2026-08-23 实测):GeometryOverlay 的
+      // geometry_changed → layer 重建链在页面初始(地图 idle/渲染管线未稳)
+      // 可能整体错过 → 首帧 0 个徽章(用户交互/缩放后 LOD 摘挂才全部出现;
+      // 实测对共享实例做**全量** setGeometries 重推 → 视口内徽章立即全部
+      // 渲染)。setTimeout(0) 让本次同步批量(数百 add)先完成,再一次性
+      // 重推全量 —— 此刻重推的是完整 geometry 集,数据事件重触发渲染管线。
+      // setGeometries 传引用相同数组时 SDK guard 直接返回,必须传副本。
+      // 老 SDK 无 setGeometries → 跳过(用户交互兜底)。
+      if (typeof raw.setGeometries === 'function' && typeof setTimeout === 'function') {
+        const mm = raw;
+        setTimeout(() => {
+          mm.setGeometries(mm.geometries?.slice?.() ?? []);
+        }, 0);
       }
       this.multiMarker = raw;
     } else {
