@@ -54,6 +54,12 @@ function identityKey(provider: AuthProvider, subject: string): string {
   return `${provider}:${subject.trim().toLowerCase()}`;
 }
 
+/** target(phone/email subject)是否已绑定账户(内存路径):返回 userId,未绑定 → null。
+ *  只服务 OTP 发送的账号级限流键(account-store resolveOtpAccountKey),非秘密。 */
+export function resolveAccountBySubject(provider: AuthProvider, subject: string): string | null {
+  return identities.get(identityKey(provider, subject)) ?? null;
+}
+
 function signToken(): string {
   const raw = randomBytes(24).toString('hex');
   const secret = process.env.SESSION_SECRET || 'domain-map-demo-session';

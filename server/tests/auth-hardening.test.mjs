@@ -19,8 +19,13 @@ import { fileURLToPath } from 'node:url';
 
 import {
   __accountStoreTest,
+  bindPhone as storeBindPhone,
+  checkOtpSendLimits as storeCheckOtpSendLimits,
   consumeOtp as storeConsumeOtp,
   issueOtp as storeIssueOtp,
+  otpRateConfig,
+  OtpRateLimitedError,
+  upsertIdentity as storeUpsert,
 } from '../src/lib/account-store.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
@@ -102,4 +107,80 @@ test('#1 DB 模式:同一 code 二次 consume 必 false(成功路径已消费内
   } finally {
     __accountStoreTest.poolOverride = undefined;
   }
+});
+
+// ============================================================
+// #2 OTP 发送 per-IP / per-账号 24h 桶
+// ============================================================
+
+test('#2 per-IP 24h 发送桶:同 IP 轮换 target 超出即限流(429 语义)', async () => {
+  __accountStoreTest.poolOverride = () => null;
+  const prev = { ...otpRateConfig };
+  otpRateConfig.ipDailyLimit = 2;
+  try {
+    const stamp = Date.now();
+    const ip = `test-ip-${stamp}-1`;
+    await storeCheckOtpSendLimits(ip, 'email', `a-${stamp}@test.local`);
+    await storeCheckOtpSendLimits(ip, 'phone', `138${String(stamp).slice(-8)}`);
+    await assert.rejects(
+      storeCheckOtpSendLimits(ip, 'email', `c-${stamp}@test.local`),
+      (err) => err instanceof OtpRateLimitedError && err.retryAfterMs > 0,
+    );
+  } finally {
+    Object.assign(otpRateConfig, prev);
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
+test('#2 per-账号 24h 发送桶:同一用户的手机/邮箱共享;未绑定 target 独立', async () => {
+  __accountStoreTest.poolOverride = () => null;
+  const prev = { ...otpRateConfig };
+  otpRateConfig.accountDailyLimit = 2;
+  try {
+    const stamp = Date.now();
+    const email = `acct-${stamp}@test.local`;
+    const phone = `138${String(stamp).slice(-8)}`;
+    const ip = `acct-ip-${stamp}-1`;
+    const user = await storeUpsert({ provider: 'email', subject: email, email });
+    await storeBindPhone(user.id, phone);
+
+    await storeCheckOtpSendLimits(ip, 'email', email);
+    await storeCheckOtpSendLimits(ip, 'email', email.toUpperCase()); // 规范化后同账号
+    // 换手机号仍共享同一账号桶 → 超出(防同账号两标识轮流发送翻倍配额)
+    await assert.rejects(storeCheckOtpSendLimits(ip, 'phone', phone), OtpRateLimitedError);
+    // 未绑定 target 使用独立账号桶(同 IP 未超时不受影响)
+    await storeCheckOtpSendLimits(ip, 'email', `fresh-${stamp}@test.local`);
+  } finally {
+    Object.assign(otpRateConfig, prev);
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
+test('#2 DB 模式:账号桶按 auth_identities 解析(user_id 相同即共享)', async () => {
+  __accountStoreTest.poolOverride = () => ({
+    query: async (sql) => {
+      if (sql.includes('FROM auth_identities')) return { rows: [{ user_id: '42' }], rowCount: 1 };
+      throw new Error(`unexpected SQL: ${sql}`);
+    },
+  });
+  const prev = { ...otpRateConfig };
+  otpRateConfig.accountDailyLimit = 2;
+  try {
+    const ip = `db-acct-ip-${Date.now()}`;
+    await storeCheckOtpSendLimits(ip, 'email', 'bound-a@test.local');
+    await storeCheckOtpSendLimits(ip, 'phone', '13800001111');
+    await assert.rejects(storeCheckOtpSendLimits(ip, 'email', 'bound-c@test.local'), OtpRateLimitedError);
+  } finally {
+    Object.assign(otpRateConfig, prev);
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
+test('#2 otp/send 路由:per-IP / per-账号桶接线在 issueOtp 之前', () => {
+  const route = src('app/api/auth/otp/send/route.ts');
+  assert.match(route, /checkOtpSendLimits\(clientIp\(request\), provider, target\)/);
+  assert.match(route, /function clientIp\(request: Request\)/);
+  const guardIdx = route.indexOf('checkOtpSendLimits(clientIp(request), provider, target)');
+  const issueIdx = route.indexOf('await issueOtp(provider, target)');
+  assert.ok(guardIdx !== -1 && issueIdx !== -1 && guardIdx < issueIdx, '桶校验先于 issueOtp');
 });
