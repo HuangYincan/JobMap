@@ -88,3 +88,57 @@
 
 门禁: PASSED
 结论: OK
+
+---
+
+# ws-f r4 续作汇报(2026-08-22,主树复验失败 → 定时器兜底修复)
+
+分支 `fix/baidu-r4`(worktree `/Users/acccan/dm-wt-br4`,基于 dev HEAD `692324a`
+含 agent-inputbar 合并;原 dm-wt-br3 已被 merger 清理,worktree 重建)。
+3 个 commit:`c3776fb`(引擎)、`5b7b04f`(测试)、`bf1dd7c`(docs)。
+
+## 主树复验失败定位(dev server :3000,Playwright)
+
+- boss 复验证据:136 条注入超时警告 + `.dm-badge` = 0 + 页面交互正常(无卡死)。
+  我侧复现:主树全新会话/缓存重载/4×-12× CPU 节流均**通过**(0 警告 + 徽章渲染,
+  与 worktree 验收一致)——常规时序 domElement 由 addOverlay 同步/数帧创建。
+- **真机 8× 节流 + 缓存重载坐实根因**:addOverlay 后 domElement 迟至 **1-10s**
+  才创建(400/400 marker),期间 **rAF 帧回调停摆**(r3 链既不注入也不告警 →
+  静默悬挂);应用侧 setContent(状态变化)只是偶然救援,状态不变时不触发 →
+  boss 场景(缓存数据快 + MCP 长会话重负载)即「5 帧窗口耗尽 → 警告 + 徽章
+  永久缺失」。注入链不依赖 rAF 帧调度 + 窗口覆盖迟到量级是必要条件。
+
+## 修复(baidu-engine.ts r4)
+
+- 注入链 = 同步 + 微任务 4 轮 + **rAF 3 帧快路径** + **定时器兜底**(首 tick
+  100ms 后 250ms 步进,80 tick ≈ 20s,自终止;内容不变不重写零抖动);
+- `pendingContentInjection` 登记表:注入成功 / wrapper.remove 摘除 / 链耗尽
+  即摘除;重试链**先查登记再注入**(修掉「已摘除 marker 仍被写入」的顺序缺陷);
+- 超时警告降为 20s 全失败后一次性输出(正常时序零噪音);
+- 定时器频率远低于 ws-e 版(50ms→250ms)且无 Overlay 无主 DOM 拖累(r3 已
+  消除)→ 不构成渲染负担(主树 r3 已无卡死,boss「页面交互正常」佐证)。
+
+## 门禁结果
+
+- npm test: **1427 通过 / 0 失败 / 2 skip**(baidu 85/85)
+- typecheck / docs-check / git diff --check: 通过
+
+## 验证(r4 worktree :3100,真机 Chromium + 真实 AK)
+
+- 全新会话:1048 徽章 / 0 警告;缓存重载 + 8× 节流:400 徽章 / 0 警告
+  (domElement 迟至 2s 的 marker 由定时器兜底注入)
+- 回归(r3 验收矩阵全过):z≤8 聚合徽章、z>8 单点 1048 徽章、badge 点击 →
+  POI 详情 + 选中态、滚轮缩放、标准/卫星/深色切换、截图 0.1s 级、零报错
+- 测试:定时器兜底注入(无 rAF 环境 = node)/ rAF 快路径 / remove 终止链三用例
+
+## 遇到的问题
+
+1. 主树 136 警告场景未能 100% 复现(需「缓存数据快 + 渲染慢 + 无状态变化」
+   三条件同时成立;我侧节流下 setContent 救援偶发介入)——但 rAF 停摆 +
+   domElement 迟到的机制已被真机坐实,定时器兜底为该机制的直接修复,单元
+   测试在无 rAF 环境确定性验证注入成功。
+2. 原 worktree `/Users/acccan/dm-wt-br3` 已被 merger 清理,本次在重建的
+   `/Users/acccan/dm-wt-br4` 续作(r4 基于 dev HEAD,含 agent-inputbar)。
+
+门禁: PASSED
+结论: OK

@@ -101,3 +101,35 @@ ws-e 与 dev 既有 ws-pinfix2 各自独立修复同一根因(BMapGL v1.0 `Marke
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
+
+---
+
+# 轮4 合并(ws-f fix/baidu-r4,2026-08-22)
+
+## 结果总览
+- 成功合并: ws-f(fix/baidu-r4,tip bf1dd7c,3 commits,基于 dev HEAD 692324a)1 分支并入 dev。
+- 失败/遗留: 无。门禁 0 失败(1427 pass / 0 fail / 2 skip),typecheck / docs-check / diff-check 全绿。
+
+## 逐分支明细
+| WS | 分支 | merge commit | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
+|---|---|---|---|---|
+| ws-f | fix/baidu-r4 (bf1dd7c) | 4583425 | 1427 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 无冲突(自动合并) |
+
+- 合并后全量:1429 tests / 1427 pass / 0 fail / 2 skip;`npm run typecheck` 零错误;`make docs-check` passed;`git diff --check` 干净。
+- 合并内容核验:baidu-engine.ts 注入链 = 同步 + 微任务 4 轮 + rAF 3 帧快路径 + **定时器兜底**(首 tick 100ms 后 250ms 步进,80 tick ≈ 20s 自终止)——修复主树复验的「重负载下 domElement 迟到 1-10s + rAF 帧回调停摆 → 5 帧窗口耗尽后徽章永久缺失(136 条注入超时警告 + 0 徽章)」根因;新增 `pendingContentInjection` 登记表(先查登记再注入,修掉已摘除 marker 仍被写入的顺序缺陷);超时警告降为 20s 全失败后一次性输出。测试 +3 用例(定时器兜底无 rAF 依赖/rAF 快路径/remove 终止注入链);tech/23 追加 ws-f r4 回填节(42 行)。
+
+## 冲突解决清单
+- 无冲突。三个文件(baidu-engine.ts / map-engine-baidu.test.mjs / tech/23-map-engines.md)均自动合并成功。
+
+## 遗留问题
+- 主树复验 136 警告场景未 100% 复现(需「缓存数据快 + 渲染慢 + 无状态变化」三条件同时成立),但 rAF 停摆 + domElement 迟到的机制已被真机 8× 节流坐实,定时器兜底为该机制的直接修复,单元测试在无 rAF 环境确定性验证注入成功。若 boss 长会话重负载场景仍异常,建议复测。
+- 主工作树其他未跟踪内容(`.address-work/`、其他批次目录)与本次合并零交集,未动。
+- `server/next-env.d.ts` 自动生成文件残留(dev/build 路径差异)已按半成品规则 `git checkout --` 清理,不影响任何分支内容。
+
+## 最终 dev 状态
+- ws-f r4 merge commit: `4583425`(merge: fix/baidu-r4,parents 692324a + bf1dd7c),已 push origin dev(`692324a..4583425`)。
+- worktree `/Users/acccan/dm-wt-br4` 已 remove;分支 `fix/baidu-r4` 已 `git branch -d` 删除。
+- 批次目录入库 commit: `chore: 20260822 boss engine-polish-2 轮4入库(ws-f r4 merge-report + 汇报)`。
+
+门禁: ALL_GREEN
+结论: MERGED_ALL
