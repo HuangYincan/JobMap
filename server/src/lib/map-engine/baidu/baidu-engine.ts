@@ -297,6 +297,14 @@ interface BMarker {
   addEventListener?(event: string, cb: () => void): void;
   removeEventListener?(event: string, cb: () => void): void;
   remove?(): void;
+  /**
+   * 厂商 marker 的点击目标 DOM(markerMouseTarget pane,模块源码
+   * _msTargetRender/_addDom 核实):GL 下恒创建、默认空容器、尺寸=图标尺寸、
+   * 位置=屏幕位 + 契约 offset(经空白锚点图标 anchor=-offset 数学);
+   * 子元素事件冒泡可达(点击命中)。真实 SDK v1.0 Marker 无 setContent →
+   * content 注入兜底的目标(见 scheduleMarkerContentInjection)。
+   */
+  domElement?: HTMLElement | null;
 }
 
 /** BMapGL.Circle(覆盖物子集) */
@@ -468,6 +476,56 @@ const BAIDU_DARK_STYLE_JSON: BMapStyleItem[] = [
  */
 const styleJsonApplied = new WeakSet<BMapInstance>();
 
+// ------------------------------------------------------------
+// content 标记 DOM 注入兜底(2026-08-22 ws-e,bug 2「百度 POI 单点级不渲染」)
+//
+// 实测根因(SDK marker 模块 marker_crvckn 源码 + 真机 Chromium 坐实):**真实
+// BMapGL v1.0 的 Marker 类没有 setContent 方法**(原型 0 处命中;构造函数
+// _config 也无 content 选项)——适配层旧实现 `raw.setContent?.(html)` 静默
+// no-op → 单点级 POI(图钉/公司徽章)content 路径不渲染:DOM 0 个徽章、无视觉、
+// 无点击反馈(boss Playwright 实测 2026-08-22;聚合级走 dataURL icon 纹理正常)。
+//
+// 兜底姿势:厂商 marker 在 markerMouseTarget pane 恒创建 BMap_Marker 点击目标
+// DOM(模块源码 _addDom/_msTargetRender 核实;GL 下为唯一 DOM,空容器承载
+// 点击),位置 = 屏幕位 + 契约 offset(由空白锚点图标 anchor = -offset 数学驱动,
+// 与 AMap content 路径逐像素同语义)→ 把 content HTML 注入该 DOM:
+//   - 视觉:徽章/图钉按契约锚点渲染(内容负 margin 补偿跨状态零漂移);
+//   - 点击:子元素事件冒泡到该 DOM → 厂商 click 事件 → 适配层 onClick;
+//   - 生命周期:hide/show/remove 由厂商 DOM 管理,注入内容跟随;
+//   - 注入时机:DOM 在模块加载回调(_draw→initialize)后才创建 → 有界重试。
+// 仅当厂商 Marker 无 setContent 时启用(测试 mock / 未来 SDK 形态仍走原路径)。
+// ------------------------------------------------------------
+
+/** raw marker → 最新 content HTML(注入重入/延迟注入读取用) */
+const markerContentDom = new WeakMap<object, string>();
+/** domElement 就绪重试上限与间隔(20 × 50ms = 1s;实测数十 ms 内就绪) */
+const CONTENT_DOM_MAX_ATTEMPTS = 20;
+const CONTENT_DOM_RETRY_MS = 50;
+
+/** 单次注入尝试:domElement 存在 → innerHTML 更新(内容变化才写,防闪动) */
+function injectMarkerContent(raw: BMarker): boolean {
+  const el = (raw as { domElement?: HTMLElement | null }).domElement;
+  if (!el) return false;
+  const html = markerContentDom.get(raw);
+  if (html !== undefined && el.innerHTML !== html) el.innerHTML = html;
+  return true;
+}
+
+/** 注入调度:立即尝试,失败则有界重试(domElement 异步创建)后 warn 降级 */
+function scheduleMarkerContentInjection(raw: BMarker): void {
+  if (injectMarkerContent(raw)) return;
+  let attempts = 0;
+  const timer = setInterval(() => {
+    attempts++;
+    if (injectMarkerContent(raw) || attempts >= CONTENT_DOM_MAX_ATTEMPTS) {
+      clearInterval(timer);
+      if (attempts >= CONTENT_DOM_MAX_ATTEMPTS && !injectMarkerContent(raw)) {
+        console.warn('[map-engine] BMapGL content 标记 DOM 注入超时(domElement 未就绪),徽章可能不渲染');
+      }
+    }
+  }, CONTENT_DOM_RETRY_MS);
+}
+
 /** Autocomplete headless 路径超时兜底(ms):厂商静默失败时避免 promise 挂起 */
 const AUTOCOMPLETE_TIMEOUT_MS = 5000;
 
@@ -515,11 +573,13 @@ function resolveGlobalConstant(name: string): unknown {
 }
 
 /**
- * 样式 → 厂商底图(ws-a 2026-08-22):
+ * 样式 → 厂商底图(ws-a 2026-08-22;ws-e 深色+卫星组合修复):
  * - normal/satellite → setMapType(常量经 resolveGlobalConstant 解析,缺失静默
  *   跳过不抛);离开深色时先 setMapStyleV2({styleJson: []}) 复位自定义样式
  *   (SDK 核实:config.style 对象持续生效,setMapType 不清理 → 必须显式复位);
- * - whitesmoke(UI 图层面板「深色」)→ 深色 styleJson(setMapStyleV2;API 缺失
+ * - whitesmoke(UI 图层面板「深色」)→ 先强制 setMapType(normal) 切回 vector,
+ *   再应用深色 styleJson(setMapStyleV2)——深色自定义样式只对 vector 底图生效,
+ *   卫星→深色不先切回则停在卫星无变化(2026-08-22 真机实测坐实);API 缺失
  *   时 warn 降级 normal,与腾讯无 setMapStyleId 降级同契约);
  * - 其他不支持的样式回退 normal + console.warn。
  */
@@ -532,6 +592,12 @@ function applyMapStyle(map: BMapInstance, style: MapStyleId): void {
       if (normalConstant !== undefined) map.setMapType(normalConstant);
       return;
     }
+    // 深色自定义样式只对 **vector** 底图生效(2026-08-22 boss 真机实测 + 本 WS
+    // 真机复测):卫星底图 + setMapStyleV2 时 config.style 已写入但瓦片无变化
+    // (亮度/色彩不变,停在卫星)——深色切换必须先把底图强制切回 vector
+    // (BMAP_NORMAL_MAP),再应用 styleJson;标准→深色路径同样先切(幂等)。
+    const normalConstant = resolveGlobalConstant(STYLE_CONSTANT.normal);
+    if (normalConstant !== undefined) map.setMapType(normalConstant);
     map.setMapStyleV2({ styleJson: BAIDU_DARK_STYLE_JSON });
     styleJsonApplied.add(map);
     return;
@@ -892,21 +958,59 @@ class BaiduMapView implements MapView {
   }
 
   /**
-   * content 回退路径(SDK 无 Overlay/DOM 能力时,行为与旧实现逐字一致):
-   * Marker + setContent(msTarget DOM;GL 版本为空操作,视觉=透明 1×1 图标,
-   * 即修复前的缺陷形态——仅在无法走 DOM overlay 的极端环境兜底,不抛错)
-   * + 透明 1×1 图标扛锚点(icon.anchor = -契约 offset)。icon 存在且可用时
-   * 仍走真图标(与旧实现同语义)。
+   * content 回退路径(SDK 无 Overlay/DOM 能力时):Marker + content 注入
+   * (有 setContent 直调;真实 BMapGL v1.0 无 setContent → 注入厂商 marker
+   * 自带 BMap_Marker 点击目标 DOM,见 scheduleMarkerContentInjection)+
+   * 透明 1×1 图标扛锚点(icon.anchor = -契约 offset)。icon 存在且可用时
+   * 仍走真图标。
    */
   private createContentFallbackMarker(opts: MapMarkerOptions, bd: { lng: number; lat: number }): MapMarker {
+    // 锚点语义(2026-08-22 SDK v1.0 源码核实:getscript 本体 + marker/mapgl 模块):
+    // - **Marker 构造 offset 选项不参与渲染定位**(仅 getPoint/infoWindow 数学
+    //   用;marker 模块 _getPixPos 与 mapgl 纹理 quad 均不含它)→ 不再传入;
+    // - 定位公式:GL 纹理 quad `imageTopLeft = 屏幕位 - icon.anchor`(lA 顶点
+    //   (-aw, ah-h);mapgl 模块按 icon.anchor 建 quad);DOM content(msTarget)
+    //   `= 屏幕位 + marker.offset - icon.anchor`(_getPixPos)→ 双路径一致
+    //   要求 **icon.anchor = -契约 offset**(imageTopLeft = 屏幕位 + offset,
+    //   AMap 同款契约:content/icon 左上角相对屏幕位的偏移);
+    // - Icon 的 anchor === offset 构造选项,默认 (w/2,h/2) = 图标中心(lA 源码);
+    // - GL 无内容纹理(2026-08-22 ws-e 实测修正):**真实 SDK v1.0 Marker 无
+    //   setContent**(原型 0 命中,真机坐实)——旧注释「setContent 渲染进
+    //   msTarget DOM」不成立;内容标记的视觉经「厂商 BMap_Marker 点击目标
+    //   DOM 注入」兜底渲染(scheduleMarkerContentInjection,见模块注释),且
+    //   必须配**透明 1×1 图标扛锚点**——否则默认红图钉纹理照渲 + anchor(10,25)
+    //   偏置 → 「样式不对 + 偏移」(bug 7 用户症状);
+    // - 点击:marker 模块把 click 绑在 markerMouseTarget DOM 上,内容子元素
+    //   事件冒泡可达(注入后同语义)。
     const markerOpts: Record<string, unknown> = {};
     if (opts.zIndex !== undefined) markerOpts.zIndex = opts.zIndex;
     const raw = new this.ns.Marker(new this.ns.Point(bd.lng, bd.lat), markerOpts);
-    if (opts.content !== undefined) raw.setContent?.(opts.content);
+    if (opts.content !== undefined) {
+      // 最新 content 先入账(DOM 注入兜底延迟读取;wrapper.setContent 重入更新)
+      markerContentDom.set(raw, opts.content);
+      // 真实 BMapGL v1.0 Marker **无 setContent**(SDK 源码 + 真机实测,ws-e):
+      // 有则走原契约路径(测试 mock / 未来 SDK 形态),无则注入厂商 marker 自带
+      // 的 BMap_Marker 点击目标 DOM(位置/点击/生命周期语义见模块注释)。
+      if (typeof raw.setContent === 'function') raw.setContent(opts.content);
+      else scheduleMarkerContentInjection(raw);
+    }
     if (opts.onClick) raw.addEventListener?.('click', opts.onClick);
     const ax = opts.offset ? -opts.offset[0] : 0;
     const ay = opts.offset ? -opts.offset[1] : 0;
+    // icon 路径 CORS 防御(2026-08-22 ws-e,fix/icon-cors-preflight):
+    // BMapGL 同为 WebGL 渲染,`new Icon(url)` 的远程纹理必须 CORS-clean——
+    // favicon.im 等候选无 CORS 头时纹理恒加载失败(与 TMap 同病)。核查结论:
+    // baidu-engine 确有 icon 路径接收远程 URL(下方 Icon 构造),故同样接
+    // icon-preflight 预检防御:data URI / 已预检 ok → 真 src 原样;远程未
+    // 预检/已失败 → 回退 content 锚点路径(厂商 marker DOM 渲染,<img> 无需
+    // CORS;content 已在上面入账(有 setContent 直调,无则 DOM 注入兜底),此处
+    // 只补透明 1×1 锚点图标)——仅
+    // 防御,现有 content 路径行为零改动;未预检时后台触发预检,成功后下次
+    // 重建自然升级。当前业务方无人给 BMapGL 传远程 icon(公司 POI 走 content,
+    // 蓝点/聚合徽章均为 dataURL),本分支纯防御性接入。
     if (opts.icon && this.resolveIconUsable(opts.icon)) {
+      // icon 规格(契约)→ BMapGL.Icon(url, size, { offset: anchor });size 为
+      // 必传第二参 → 缺省兜底 BMapGL 默认 marker 尺寸 21x21
       if (typeof raw.setIcon === 'function' && typeof this.ns.Icon === 'function') {
         const [w, h] = opts.icon.size ?? [21, 21];
         try {
@@ -944,7 +1048,11 @@ class BaiduMapView implements MapView {
         const next = gcj02ToBd09(p.lng, p.lat);
         raw.setPosition(new this.ns.Point(next.lng, next.lat));
       },
-      setContent: (html: string) => raw.setContent?.(html),
+      setContent: (html: string) => {
+        markerContentDom.set(raw, html);
+        if (typeof raw.setContent === 'function') raw.setContent(html);
+        else scheduleMarkerContentInjection(raw);
+      },
       setZIndex: (z: number) => {
         if (typeof raw.setZIndex === 'function') raw.setZIndex(z);
         else console.warn('[map-engine] BMapGL Marker 无 setZIndex,忽略 zIndex');
@@ -1045,7 +1153,11 @@ class BaiduMapView implements MapView {
         const next = gcj02ToBd09(p.lng, p.lat);
         raw.setPosition(new this.ns.Point(next.lng, next.lat));
       },
-      setContent: (html: string) => raw.setContent?.(html),
+      setContent: (html: string) => {
+        markerContentDom.set(raw, html);
+        if (typeof raw.setContent === 'function') raw.setContent(html);
+        else scheduleMarkerContentInjection(raw);
+      },
       // BMapGL 官方大写 setZIndex(与 AMap 小写 setzIndex 的差异在适配层吸收)
       setZIndex: (z: number) => {
         if (typeof raw.setZIndex === 'function') raw.setZIndex(z);

@@ -104,6 +104,7 @@ class FakeMap {
     this.overlays = [];
     this.controls = [];
     this.styleV2Calls = [];
+    this.styleSeq = []; // ws-e:setMapType/setMapStyleV2 调用序(深色+卫星组合断言)
     this.listeners = new Map();
     this.destroyed = false;
     this.panned = false;
@@ -144,9 +145,11 @@ class FakeMap {
   }
   setMapType(mapType) {
     this.mapType = mapType;
+    this.styleSeq.push(`mapType:${mapType}`);
   }
   setMapStyleV2(opts) {
     this.styleV2Calls.push(opts);
+    this.styleSeq.push('styleV2');
   }
   getCenter() {
     return this.center;
@@ -259,6 +262,67 @@ class FakeIcon {
     // BMapGL Icon 第三参 opts.offset === anchor(锚点从图标左上角量起;
     // 2026-08-22 SDK 源码核实:anchor===offset,默认 (w/2,h/2))
     this.anchor = opts.offset ?? null;
+  }
+}
+
+/**
+ * 真实 BMapGL v1.0 SDK 形状的 Marker(2026-08-22 ws-e 真机坐实):
+ * **无 setContent**(原型 0 命中;构造函数 _config 也无 content 选项)——厂商
+ * marker 在 markerMouseTarget pane 恒创建 BMap_Marker 点击目标 DOM
+ * (domElement;空容器、尺寸=图标尺寸、位置=屏幕位+契约 offset),点击绑定在该
+ * DOM 上、子元素冒泡可达。本双面模拟该形态:domElement 承载 innerHTML 注入
+ * (content DOM 注入兜底的目标);triggerClickFromDom 模拟 SDK _bind 的
+ * 冒泡分发(事件目标在 domElement 内 → dispatch onclick)。
+ */
+class FakeNoContentMarker {
+  constructor(point, opts = {}) {
+    this.point = point;
+    this.opts = opts;
+    this.listeners = new Map();
+    this.removed = false;
+    this.zIndex = undefined;
+    this.visible = true;
+    this.icon = null;
+    // 模拟真实 SDK:domElement 在模块加载回调(_draw→initialize)后才创建;
+    // domReady=false 时构造不建 DOM(测试「延迟就绪 → 有界重试注入」)
+    if (FakeNoContentMarker.domReady) this.domElement = { innerHTML: '' };
+  }
+  getPosition() {
+    return this.point;
+  }
+  setPosition(point) {
+    this.point = point;
+  }
+  addEventListener(event, cb) {
+    const list = this.listeners.get(event) ?? [];
+    list.push(cb);
+    this.listeners.set(event, list);
+  }
+  removeEventListener(event, cb) {
+    const list = this.listeners.get(event) ?? [];
+    this.listeners.set(event, list.filter((h) => h !== cb));
+  }
+  trigger(event) {
+    for (const cb of this.listeners.get(event) ?? []) cb();
+  }
+  /** 模拟 SDK _bind 点击分发:子元素事件冒泡到 markerMouseTarget DOM → dispatch */
+  triggerClickFromDom() {
+    this.trigger('click');
+  }
+  setZIndex(z) {
+    this.zIndex = z;
+  }
+  show() {
+    this.visible = true;
+  }
+  hide() {
+    this.visible = false;
+  }
+  setIcon(icon) {
+    this.icon = icon;
+  }
+  remove() {
+    this.removed = true;
   }
 }
 
@@ -419,6 +483,7 @@ function setup() {
   FakeGeocoder.result = undefined;
   FakeGeolocation.result = undefined;
   FakeAutocomplete.result = undefined;
+  FakeNoContentMarker.domReady = true;
   mockNs = installEngineMock(BAIDU_NAMESPACE, { coordSystem: 'bd09' });
   Object.assign(mockNs.ns, {
     Point: FakePoint,
@@ -1020,10 +1085,19 @@ test('setStyle:normal/satellite 映射(常量名已修正为 SDK 主名 BMAP_*,w
   assert.match(warns[0], /bogus/);
 });
 
-test('setStyle:whitesmoke(UI「深色」)→ setMapStyleV2({styleJson: 深色样式})', async () => {
+test('setStyle:whitesmoke(UI「深色」)→ 先强制切回 vector 再 setMapStyleV2(深色+卫星组合,ws-e)', async () => {
   setup();
-  const { view } = await makeView();
+  // boss 真机实测场景:卫星底图 + 深色。SDK 深色自定义样式只对 vector 底图生效
+  // ——不先切回则停在卫星(亮度/色彩无变化)。断言:先 setMapType(normal) 后 styleJson
+  const { view } = await makeView({ style: 'satellite' });
+  assert.equal(view.raw.mapType, 'B_SATELLITE_MAP', '前置:卫星底图');
   view.setStyle('whitesmoke');
+  assert.equal(view.raw.mapType, 'B_NORMAL_MAP', '深色必须强制切回 vector(卫星→深色生效前提)');
+  assert.deepEqual(
+    view.raw.styleSeq.slice(-2),
+    ['mapType:B_NORMAL_MAP', 'styleV2'],
+    '调用序:先切 vector 后应用 styleJson(顺序坐实)',
+  );
   assert.equal(view.raw.styleV2Calls.length, 1, '深色经 setMapStyleV2 应用');
   const arg = view.raw.styleV2Calls[0];
   assert.ok(Array.isArray(arg.styleJson), '对象形态 {styleJson:[...]}(SDK setMapStyleV2 核实)');
@@ -2126,6 +2200,83 @@ test('单点级徽章 onerror 链:空候选 → 首错即 emoji;多候选按序�
   assert.equal(el2.src, 'https://fallback2.example/x.png', '第二候选');
   fire2();
   assert.equal(el2.style.display, 'none', '候选耗尽 → emoji');
+});
+
+test('createMarker(ws-e):真实 SDK 形态(无 setContent)→ content 注入厂商 marker 点击目标 DOM', async () => {
+  setup();
+  mockNs.ns.Marker = FakeNoContentMarker; // 真实 SDK v1.0 形状:Marker 无 setContent
+  const { view } = await makeView();
+  const badgeHtml = recruitmentBadgeHTML('A', undefined, '#007AFF', 'normal');
+  let clicks = 0;
+  const marker = view.createMarker({
+    position: GCJ,
+    offset: [-20, -20],
+    content: badgeHtml,
+    onClick: () => clicks++,
+  });
+  const raw = marker.raw;
+  assert.ok(!('setContent' in raw), '前置:厂商 Marker 无 setContent(boss 实测 0 徽章根因)');
+  assert.equal(raw.domElement.innerHTML, badgeHtml, '徽章 HTML 注入厂商点击目标 DOM(markerMouseTarget)');
+  assert.match(raw.domElement.innerHTML, /dm-badge/, 'dm-badge 视觉类名在真实 DOM 中(zoom 17 可查)');
+  // 锚点数学不变:content 标记仍配透明 1×1 图标,anchor = -契约 offset(位置语义)
+  assert.ok(raw.icon instanceof FakeIcon, 'content 标记必须配透明锚点图标(GL 无内容纹理)');
+  assert.equal(raw.icon.size.width, 1);
+  assert.equal(raw.icon.size.height, 1);
+  assert.equal(raw.icon.anchor.width, 20, '徽章契约 offset [-20,-20] → anchor (20,20) 中心对齐点位');
+  assert.equal(raw.icon.anchor.height, 20);
+  assert.equal(view.raw.overlays.length, 1, 'addOverlay 上地图');
+  // 点击:子元素事件冒泡到厂商 DOM → marker click(SDK _bind 分发语义)
+  raw.triggerClickFromDom();
+  assert.equal(clicks, 1, '注入内容点击可达(选中反馈)');
+});
+
+test('createMarker(ws-e):domElement 延迟就绪 → 有界重试注入(模块加载回调后创建)', async () => {
+  setup();
+  mockNs.ns.Marker = FakeNoContentMarker;
+  FakeNoContentMarker.domReady = false; // 模拟模块未加载:构造后 DOM 尚未创建
+  const { view } = await makeView();
+  const html = '<div class="dm-badge">延迟注入</div>';
+  const marker = view.createMarker({ position: GCJ, content: html });
+  const raw = marker.raw;
+  assert.equal(raw.domElement, undefined, '前置:domElement 尚未创建');
+  await new Promise((r) => setTimeout(r, 150)); // 模块加载回调创建 DOM
+  raw.domElement = { innerHTML: '' };
+  await new Promise((r) => setTimeout(r, 120)); // 重试间隔 50ms → 已注入
+  assert.equal(raw.domElement.innerHTML, html, '重试注入成功(不丢 content)');
+});
+
+test('createMarker(ws-e):wrapper.setContent 重入 → 注入 DOM 内容更新(选中/高亮状态)', async () => {
+  setup();
+  mockNs.ns.Marker = FakeNoContentMarker;
+  const { view } = await makeView();
+  const marker = view.createMarker({ position: GCJ, content: '普通徽章' });
+  assert.equal(marker.raw.domElement.innerHTML, '普通徽章', '初始注入');
+  marker.setContent('选中徽章');
+  assert.equal(marker.raw.domElement.innerHTML, '选中徽章', 'setContent 更新注入 DOM(状态样式切换)');
+});
+
+test('定位蓝点两路径坐标一致性(ws-e):setCenter 与 createMarker 同一 gcj02 → 厂商侧同一 bd09 点', async () => {
+  setup();
+  const { view } = await makeView();
+  const pos = { lng: 120.1551, lat: 30.2741 }; // mock 杭州(gcj02 契约输出)
+  const bd = gcj02ToBd09(pos.lng, pos.lat);
+  view.setCenter(pos); // handleLocate 相机路径(引擎内 gcj02→bd09)
+  const blue = view.createMarker({
+    position: pos, // syncUserBlueDot 蓝点路径(同一 gcj02 → 同一 bd09)
+    icon: { src: 'data:image/svg+xml,%3Csvg/%3E', size: [22, 22] },
+    zIndex: 200,
+  });
+  assert.equal(view.raw.center.lng, bd.lng, '相机 setCenter 收到 bd09(精确)');
+  assert.equal(view.raw.center.lat, bd.lat);
+  assert.equal(blue.raw.point.lng, bd.lng, '蓝点 marker 收到同一 bd09(精确)');
+  assert.equal(blue.raw.point.lat, bd.lat);
+  assert.ok(
+    view.raw.center.lng === blue.raw.point.lng && view.raw.center.lat === blue.raw.point.lat,
+    '两路径坐标一致 → 蓝点渲染在相机中心(真机复测:容器中心 (700,450),无 147px 偏差)',
+  );
+  // 无 offset 蓝点:anchor (0,0) 左上角(契约:无 offset = 左上角,AMap/TMap 同款)
+  assert.equal(blue.raw.icon.anchor.width, 0, '蓝点无契约 offset → anchor (0,0)');
+  assert.equal(blue.raw.icon.anchor.height, 0);
 });
 
 /** navigator.geolocation mock:成功/失败/选项捕获;restore 还原(node 的
