@@ -81,8 +81,12 @@
 /* 导航按钮(amapuri://navi → 高德 Web 导航,2026-08-22 ws-navi):
    蓝色主题胶囊(liquid glass 语义:主色 #007AFF、hover 提亮),内联于文本流。
    :global —— 类名由 markdown 管线在 HTML 字符串里输出,dangerouslySetInnerHTML
-   注入的内容不经 CSS Modules 哈希,必须用全局类名匹配。 */
-:global(.dm-navi) {
+   注入的内容不经 CSS Modules 哈希,必须用全局类名匹配。
+   特异性(2026-08-22 ws-navi3,防回归):选择器必须写成 `.md :global(.dm-navi)`
+   形态(0,2,0)——裸 `:global(.dm-navi)` 只有 (0,1,0),会被上方 `.md a`
+   (0,1,1) 的 color/text-decoration 覆盖 → 按钮文字变 #007AFF 蓝、蓝字蓝底
+   不可见。`.md` 前缀稳压 `.md a`;hover/active 同样带前缀。 */
+.md :global(.dm-navi) {
   display: inline-block;
   margin: 2px 4px 2px 0;
   padding: 5px 14px;
@@ -97,12 +101,12 @@
   transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
-:global(.dm-navi:hover) {
+.md :global(.dm-navi:hover) {
   background: #3395ff;
   box-shadow: 0 2px 10px rgba(0, 122, 255, 0.35);
 }
 
-:global(.dm-navi:active) {
+.md :global(.dm-navi:active) {
   background: #0066d6;
 }
 

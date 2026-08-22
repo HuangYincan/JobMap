@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   buildNaviWebUrl,
   createMarkdownParser,
@@ -91,10 +92,15 @@ test('buildNaviWebUrl: 键名大小写/顺序任意 + lng 别名 + 未编码值'
   );
 });
 
-test('buildNaviWebUrl: 无 name → to 末尾空名称段', () => {
+test('buildNaviWebUrl: 空 name(缺省或空串)→ to 无尾逗号(2026-08-22 ws-navi3)', () => {
   assert.equal(
     buildNaviWebUrl('amapuri://navi?lon=120.15&lat=30.25'),
-    'https://uri.amap.com/navigation?to=120.15,30.25,&mode=car&coordinate=gaode',
+    'https://uri.amap.com/navigation?to=120.15,30.25&mode=car&coordinate=gaode',
+  );
+  assert.equal(
+    buildNaviWebUrl('amapuri://navi?lon=120.15&lat=30.25&name='),
+    'https://uri.amap.com/navigation?to=120.15,30.25&mode=car&coordinate=gaode',
+    'name 参数存在但为空串 → 同样无尾逗号',
   );
 });
 
@@ -147,8 +153,8 @@ test('preprocessNaviUrls: 裸 URL(LLM 真实形态,含 sourceApplication/dev/sty
   const out = preprocessNaviUrls('amapuri://navi?sourceApplication=amap_mcp&lon=113.934497&lat=22.540517&dev=1&style=2');
   assert.match(out, /^<a class="dm-navi"/);
   assert.ok(
-    out.includes('href="https://uri.amap.com/navigation?to=113.934497,22.540517,&amp;mode=car&amp;coordinate=gaode"'),
-    'href 为 https Web 导航 URL(属性内 & 实体转义)',
+    out.includes('href="https://uri.amap.com/navigation?to=113.934497,22.540517&amp;mode=car&amp;coordinate=gaode"'),
+    'href 为 https Web 导航 URL(属性内 & 实体转义;空 name 无尾逗号)',
   );
   assert.ok(
     out.includes('data-navi="amapuri://navi?sourceApplication=amap_mcp&amp;lon=113.934497&amp;lat=22.540517&amp;dev=1&amp;style=2"'),
@@ -161,8 +167,8 @@ test('renderMarkdown: 裸 URL 出现在句子中间(前后有中文)→ 按钮�
   const out = renderMarkdown('从这里出发:amapuri://navi?lon=120.15&lat=30.25 大约需要15分钟', (html) => html);
   assert.match(out, /从这里出发:/);
   assert.ok(
-    out.includes('<a class="dm-navi" href="https://uri.amap.com/navigation?to=120.15,30.25,&amp;mode=car&amp;coordinate=gaode"'),
-    '按钮锚就位',
+    out.includes('<a class="dm-navi" href="https://uri.amap.com/navigation?to=120.15,30.25&amp;mode=car&amp;coordinate=gaode"'),
+    '按钮锚就位(空 name 无尾逗号)',
   );
   assert.ok(out.includes('data-navi="amapuri://navi?lon=120.15&amp;lat=30.25"'));
   assert.match(out, />打开高德导航<\/a>/);
@@ -172,8 +178,10 @@ test('renderMarkdown: 裸 URL 出现在句子中间(前后有中文)→ 按钮�
 test('renderMarkdown: 多个裸 URL → 全部替换', () => {
   const out = renderMarkdown('甲:amapuri://navi?lon=120.15&lat=30.25 乙:amapuri://navi?lon=113.9491&lat=22.5458', (html) => html);
   assert.equal(out.match(/class="dm-navi"/g).length, 2);
-  assert.ok(out.includes('to=120.15,30.25,'));
-  assert.ok(out.includes('to=113.9491,22.5458,'));
+  assert.ok(out.includes('to=120.15,30.25&amp;'), '无尾逗号');
+  assert.ok(out.includes('to=113.9491,22.5458&amp;'), '无尾逗号');
+  assert.doesNotMatch(out, /to=120\.15,30\.25,&/);
+  assert.doesNotMatch(out, /to=113\.9491,22\.5458,&/);
 });
 
 test('renderMarkdown: 尾部句号/右括号 → 正确剥离并替换(句号被剥离;括号保留为文本)', () => {
@@ -202,4 +210,28 @@ test('renderMarkdown: 链接语法形态不触发预扫描(renderer 路径保持
 test('preprocessNaviUrls: naviLabel 注入 + 坏 URL 原样返回', () => {
   assert.match(preprocessNaviUrls('amapuri://navi?lon=120&lat=30', 'Open in AMap'), />Open in AMap<\/a>/);
   assert.equal(preprocessNaviUrls('amapuri://navi?lon=abc&lat=30'), 'amapuri://navi?lon=abc&lat=30');
+});
+
+// ---------- 导航按钮样式契约(2026-08-22 ws-navi3) ----------
+// 背景:裸 `:global(.dm-navi)` 特异性 (0,1,0) < `.md a`(0,1,1) → 按钮文字被
+// `.md a` 的 color 染成 #007AFF,蓝字蓝底不可见(用户反馈 2026-08-22)。
+
+test('契约: dm-navi 选择器带 .md 前缀且定义在 .md a 之后(特异性稳压,防回归)', () => {
+  const css = readFileSync(new URL('../src/components/markdown-text.module.css', import.meta.url), 'utf8');
+  // 按钮规则必须写成 `.md :global(.dm-navi)`(0,2,0) 形态;hover/active 同样带前缀。
+  assert.match(css, /\.md :global\(\.dm-navi\)\s*\{/);
+  assert.match(css, /\.md :global\(\.dm-navi:hover\)\s*\{/);
+  assert.match(css, /\.md :global\(\.dm-navi:active\)\s*\{/);
+  // 不得退回行首裸 `:global(.dm-navi)`(0,1,0,会被 .md a 覆盖)。
+  assert.doesNotMatch(css, /^:global\(\.dm-navi/m);
+  // 定义顺序:navi 规则必须在 `.md a` 之后(同等条件下靠后覆盖兜底)。
+  const mdARule = /\.md a\s*\{/.exec(css);
+  const naviRule = /\.md :global\(\.dm-navi\)\s*\{/.exec(css);
+  assert.ok(mdARule && naviRule, '`.md a` 与 `.md :global(.dm-navi)` 规则都必须存在');
+  assert.ok(naviRule.index > mdARule.index, 'navi 规则必须定义在 `.md a` 之后');
+  // 按钮本体:白字 + 无下划线 + 蓝底(`.md a` 的 color/underline 不得侵入)。
+  const naviBlock = css.slice(naviRule.index, css.indexOf('.md table'));
+  assert.match(naviBlock, /background:\s*#007aff/);
+  assert.match(naviBlock, /color:\s*#fff/);
+  assert.match(naviBlock, /text-decoration:\s*none/);
 });
