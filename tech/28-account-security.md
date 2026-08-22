@@ -109,6 +109,12 @@ body `{ email, code }`(code 来自 `POST /api/auth/otp/send` 发往该 email 的
 - Profile → 「手机与邮箱」子面板:绑定/更换手机、绑定/更换邮箱(先 OTP 发送,再提交 code)。
 - AuthModal password tab:登录字段 label 改为「邮箱或用户名」,placeholder 相应提示;仍保持 username 注册 tab 不变。
 
+### 5.1 忘记密码恢复
+
+- 验证码登录是**唯一的密码找回通道**:password tab 登录模式提供「忘记密码」入口 → 切 email tab 验证码登录 → 在 个人资料 → 密码与安全 中重设密码。
+- username 注册成功后弹窗内**引导绑定手机/邮箱**(OTP 验证,可跳过),保证新账号默认有备用凭证可走恢复通道。
+- 死锁边界:未绑定任何凭证的 username 账号(跳过引导)忘记密码后无恢复通道——与业界纯用户名系统一致,不做免凭证改密。
+
 ## 6. 测试(`server/tests/account-security.test.mjs`)
 
 node --test,内存模式、零网络(复用 `__accountStoreTest.poolOverride` / `withEnv` 先例):

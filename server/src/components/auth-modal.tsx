@@ -81,6 +81,13 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwdMode, setPwdMode] = useState<PasswordMode>("login");
+  /** 注册后绑定引导:password 注册成功 → 弹窗内引导绑定手机/邮箱(OTP 验证,可跳过) */
+  const [bindGuide, setBindGuide] = useState(false);
+  const [bindTarget, setBindTarget] = useState<"phone" | "email" | null>(null);
+  const [bindValue, setBindValue] = useState("");
+  const [bindCode, setBindCode] = useState("");
+  const [bindSent, setBindSent] = useState(false);
+  const [bindResendIn, setBindResendIn] = useState(0);
   /** OAuth provider 配置探测结果(null = 未加载/失败) */
   const [providers, setProviders] = useState<{ id: string; configured: boolean }[] | null>(null);
 
@@ -111,6 +118,12 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
       setBusy(false);
       setError(null);
       resetPasswordForm();
+      setBindGuide(false);
+      setBindTarget(null);
+      setBindValue("");
+      setBindCode("");
+      setBindSent(false);
+      setBindResendIn(0);
     }
   }, [open]);
 
@@ -120,6 +133,13 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
     const timer = setInterval(() => setResendIn((v) => (v > 1 ? v - 1 : 0)), 1000);
     return () => clearInterval(timer);
   }, [resendIn > 0]);
+
+  // 绑定引导发送倒计时:与 resendIn 同模式(绑定表单独立 state,避免与 OTP tab 串扰)
+  useEffect(() => {
+    if (bindResendIn <= 0) return;
+    const timer = setInterval(() => setBindResendIn((v) => (v > 1 ? v - 1 : 0)), 1000);
+    return () => clearInterval(timer);
+  }, [bindResendIn > 0]);
 
   // OAuth provider 配置探测:modal 打开时拉一次(不重试),失败静默置 null,不影响 UI
   useEffect(() => {
@@ -244,6 +264,17 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
     }
   };
 
+  /** 绑定引导错误码 → i18n key(与 account-panel contactErrorKey 同一映射表) */
+  const bindErrorKey = (
+    code: string | undefined,
+    kind: "phone" | "email",
+  ): "takenPhone" | "takenEmail" | "codeInvalid" | "securityFailed" => {
+    if (code === "PHONE_TAKEN" && kind === "phone") return "takenPhone";
+    if (code === "EMAIL_TAKEN" && kind === "email") return "takenEmail";
+    if (code === "INVALID_CODE") return "codeInvalid";
+    return "securityFailed";
+  };
+
   const passwordSignIn = async () => {
     setBusy(true);
     setError(null);
@@ -284,9 +315,59 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
       const body = await res.json();
       if (!res.ok) throw new Error(describeError(body?.code, body?.message || "register failed"));
       onSignedIn();
-      onClose();
+      // 注册成功不立即关弹窗 → 进入绑定引导 step(可跳过;登录态已建立)
+      setBindGuide(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "register failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** 绑定引导:发送验证码到所选凭证(复用 POST /api/auth/otp/send,60s 冷却与 OTP tab 同模式) */
+  const bindSendCode = async () => {
+    if (!bindTarget) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: bindTarget, target: bindValue.trim() }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message || "send failed");
+      setBindSent(true);
+      setBindResendIn(RESEND_COOLDOWN_SECONDS);
+      setNotice(t(bindTarget === "email" ? "sendCodeSuccessEmail" : "sendCodeSuccess", lang));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "send failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** 绑定引导:完成绑定 → POST /api/auth/me/phone|email。成功:短 toast「绑定成功」→ 关闭弹窗 */
+  const bindNow = async () => {
+    if (!bindTarget) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(bindTarget === "phone" ? "/api/auth/me/phone" : "/api/auth/me/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          bindTarget === "phone"
+            ? { phone: bindValue.trim(), code: bindCode.trim() }
+            : { email: bindValue.trim(), code: bindCode.trim() },
+        ),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(t(bindErrorKey(body?.code, bindTarget), lang));
+      setNotice(t("bindSuccess", lang));
+      setTimeout(onClose, 700);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "bind failed");
     } finally {
       setBusy(false);
     }
@@ -324,6 +405,85 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
         </aside>
 
         <div className={styles.form}>
+          {bindGuide ? (
+            <div className={styles.bindGuide}>
+              <h2 id={titleId} className={styles.bindTitle}>
+                {t("welcomeBindTitle", lang)}
+              </h2>
+              <p className={styles.bindHint}>{t("bindGuideHint", lang)}</p>
+              <div className={styles.bindCards} role="group" aria-label={t("targetLabel", lang)}>
+                <button
+                  type="button"
+                  className={`${styles.bindCard} ${bindTarget === "phone" ? styles.bindCardActive : ""}`}
+                  onClick={() => setBindTarget("phone")}
+                >
+                  <span aria-hidden="true">📱</span> {t("bindPhone", lang)}
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.bindCard} ${bindTarget === "email" ? styles.bindCardActive : ""}`}
+                  onClick={() => setBindTarget("email")}
+                >
+                  <span aria-hidden="true">✉️</span> {t("bindEmail", lang)}
+                </button>
+              </div>
+              {bindTarget && (
+                <>
+                  <label className={styles.field}>
+                    <span>{t(bindTarget === "phone" ? "phoneNumber" : "emailAddress", lang)}</span>
+                    <div className={styles.inputShell}>
+                      <input
+                        value={bindValue}
+                        onChange={(e) => setBindValue(e.target.value)}
+                        inputMode={bindTarget === "phone" ? "tel" : "email"}
+                        autoComplete={bindTarget === "phone" ? "tel" : "email"}
+                        placeholder={
+                          bindTarget === "phone"
+                            ? t("phonePlaceholder", lang)
+                            : t("emailPlaceholder", lang)
+                        }
+                      />
+                      <button
+                        type="button"
+                        className={styles.inlineSend}
+                        disabled={busy || !bindValue.trim() || bindResendIn > 0}
+                        onClick={bindSendCode}
+                      >
+                        {bindResendIn > 0
+                          ? t("resendInSeconds", lang).replace("{s}", String(bindResendIn))
+                          : bindSent
+                            ? t("resendCode", lang)
+                            : t("sendCode", lang)}
+                      </button>
+                    </div>
+                  </label>
+                  <label className={styles.field}>
+                    <span>{t("verifyCode", lang)}</span>
+                    <input
+                      value={bindCode}
+                      onChange={(e) => setBindCode(e.target.value)}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder={t("otpCodePlaceholder", lang)}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className={styles.bindDone}
+                    disabled={busy || !bindValue.trim() || !bindCode.trim()}
+                    onClick={bindNow}
+                  >
+                    {t("bindDone", lang)}
+                  </button>
+                </>
+              )}
+              <button type="button" className={styles.skipBind} onClick={onClose}>
+                {t("skipBind", lang)}
+              </button>
+              {error && <p className={styles.error}>{error}</p>}
+            </div>
+          ) : (
+            <>
           <nav className={styles.methods} aria-label={t("authMethods", lang)}>
             {(["phone", "email", "password", "other"] as const).map((id) => (
               <button
@@ -373,6 +533,23 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
                   placeholder="••••••••"
                 />
               </label>
+              {pwdMode === "login" && (
+                <button
+                  type="button"
+                  className={styles.forgotLink}
+                  onClick={() => {
+                    setTab("email");
+                    setError(null);
+                    setSent(false);
+                    setResendIn(0);
+                    setCode("");
+                    resetPasswordForm();
+                    setNotice(t("forgotHint", lang));
+                  }}
+                >
+                  {t("forgotPassword", lang)}
+                </button>
+              )}
               {pwdMode === "register" && (
                 <label className={styles.field}>
                   <span>{t("confirmPassword", lang)}</span>
@@ -482,6 +659,8 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
           )}
 
           {error && <p className={styles.error}>{error}</p>}
+            </>
+          )}
         </div>
       </div>
     </div>
