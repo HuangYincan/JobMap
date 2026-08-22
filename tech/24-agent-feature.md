@@ -238,7 +238,7 @@ GET 请求,header `Authorization: Bearer $BAIDU_MAP_AUTH_TOKEN`。契约红线:�
 | 轮数 | `maxTurns`(`AGENT_MAX_TOOL_TURNS`,默认 **8**)→ `{type:'done', truncated:true}` |
 | 消息 | body ≤ 32KB;条数 ≤ 20;单条 ≤ 4000 字符 |
 | SSE 输出 | 200KB 上限,超 → `done, truncated` |
-| IP 频率 | 模块级内存令牌桶,每 IP **10 req/min**,超 → 429 `RATE_LIMITED` |
+| IP 频率 | 模块级内存令牌桶,每桶 **10 req/min**,超 → 429 `RATE_LIMITED`。**桶键(2026-08-23,quality-scan #11)**:配置了 `TRUSTED_PROXY_IPS`(可信反代)才取 `x-forwarded-for` 首段;未配置时忽略转发头,桶键 = 会话指纹(登录用户按会话 cookie 哈希;匿名归固定桶)——伪造 XFF 不再换桶 |
 | LLM 请求 | 30s 首包超时 + 120s 整体上限;首包前 408/429/5xx/网络错 2 次指数退避(500ms→1s) |
 
 ---
@@ -289,6 +289,7 @@ Content-Type: application/json
 | `AGENT_LLM_MODEL` | → `LLM_MODEL` | 模型名(如 `deepseek-v4-flash`) |
 | `AGENT_MAX_TOOL_TURNS` | 8 | agent 最大工具轮数 |
 | `AGENT_HISTORY_LIMIT` | 6000 | 历史上下文字符上限 |
+| `TRUSTED_PROXY_IPS` | 空(忽略转发头) | 逗号分隔的可信反代出口地址;非空时 `/api/agent/chat` 限流取 `x-forwarded-for` 首段为桶键(客户端直连不可伪造的场景才部署,quality-scan #11) |
 | `BAIDU_MAP_AUTH_TOKEN` | 无(未配置则 baidu-ai-map 工具组不注册) | 百度 agentplan SK,申请 `https://lbs.baidu.com/apiconsole/agentplan` |
 
 复用现有 key(均非空):`AMAP_WEB_KEY`(高德 MCP)、`TENCENT_MAP_KEY`(腾讯 MCP)、`BAIDU_MAP_AK`(百度 MCP)、`LLM_API_KEY`/`LLM_MODEL`/`LLM_BASE_URL`(LLM 回退)。全缺 LLM → 503 优雅提示。**任何 key 绝不打印/不提交**(与全项目密钥纪律一致)。
