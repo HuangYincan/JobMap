@@ -169,3 +169,23 @@ test('#12 pois: q 超长 / page / pageSize 非法 → 400,且先于缓存 key', 
   assert.match(route, /searchPublicCatalog/);
   assert.match(route, /writePublicCache/);
 });
+
+test('#18 me/PATCH: displayName 长度上限 + avatarUrl 协议白名单(>2048/非 http(s))→ 400', () => {
+  const route = src('app/api/auth/me/route.ts');
+  assert.match(route, /const MAX_DISPLAY_NAME_LENGTH = 50/);
+  assert.match(route, /const MAX_AVATAR_URL_LENGTH = 2048/);
+  assert.match(route, /code: 'INVALID_DISPLAY_NAME'/);
+  assert.match(route, /code: 'DISPLAY_NAME_TOO_LONG'/);
+  assert.match(route, /code: 'INVALID_AVATAR_URL'/);
+  assert.match(route, /url\.protocol === 'http:' \|\| url\.protocol === 'https:'/);
+  assert.match(route, /status: 400/);
+  // 校验先于 updateUser(不入库不回显)
+  const saveIdx = route.indexOf('updateUser(user.id,');
+  const nameIdx = route.indexOf("code: 'DISPLAY_NAME_TOO_LONG'");
+  const urlIdx = route.indexOf("code: 'INVALID_AVATAR_URL'");
+  assert.ok(nameIdx !== -1 && saveIdx !== -1 && nameIdx < saveIdx, 'displayName 校验先于 updateUser');
+  assert.ok(urlIdx !== -1 && saveIdx !== -1 && urlIdx < saveIdx, 'avatarUrl 校验先于 updateUser');
+  // avatarUrl='' 保留清头像语义(removeAvatar 流程);401 未登录契约保持
+  assert.match(route, /body\.avatarUrl !== ''/);
+  assert.match(route, /code: 'UNAUTHORIZED'/);
+});
