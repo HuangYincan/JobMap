@@ -212,6 +212,11 @@ export const translations = {
     zh: '重试中…',
     en: 'Retrying…',
   },
+  // ws-gate-a GATE_A 守卫(2026-08-22):dynamic chunk 加载超时失败态的小字提示
+  mapLoadTimeoutHint: {
+    zh: '加载超时,请检查网络后重试',
+    en: 'Loading timed out. Check your network and retry.',
+  },
   noResults: {
     zh: '未找到结果',
     en: 'No results found',
