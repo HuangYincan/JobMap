@@ -302,6 +302,18 @@ interface BMarker {
    * content 注入兜底的目标(见 scheduleMarkerContentInjection)。
    */
   domElement?: HTMLElement | null;
+  /**
+   * 厂商 marker 所挂地图实例(真实 SDK 内部属性,保持原 Map 原型链,
+   * getPositionIn == getPosition 语义;r5 修复用只读):
+   * map: 定位重算需要 BMapGL 地图实例(注入后 + 相机事件后)。
+   */
+  map?: BMapInstance;
+  /**
+   * 坐标系统内点位(SDK 语义:与 pointToOverlayPixelIn 同坐标系,实测为
+   * Web-Mercator 米;真实 SDK v1.0 存在,见 getscript marker 模块
+   * _getPixPos = `this.getPositionIn()` → pointToOverlayPixelIn)。
+   */
+  getPositionIn?(): BPoint;
 }
 
 /** BMapGL.Circle(覆盖物子集) */
@@ -336,6 +348,16 @@ interface BMapInstance {
    */
   pointToOverlayPixel?(point: BPoint): { x: number; y: number } | null;
   pointToContainerPixel?(point: BPoint): { x: number; y: number } | null;
+  /**
+   * 标量 API 双面(与 pointToOverlayPixel 同坐标链):opts 传入 {zoom,
+   * center, fixPosition} 时按指定相机投影;**r5: fixPosition:false = 禁用
+   * SDK 反绕**(视口外 marker 不抛到 ±worldSize,见 repositionContentMarkerDom
+   * 注释与 tech/23 回填);opts 缺省时 SDK 用内部 centerPoint/zoom。
+   */
+  pointToOverlayPixelIn?(
+    point: BPoint,
+    opts?: { zoom?: number; fixPosition?: boolean },
+  ): { x: number; y: number } | null;
   /**
    * 滚轮缩放开关(2026-08-22 SDK 源码核实):Map config 默认
    * `enableWheelZoom: !H.apiVersionIsGL()` → GL 恒 false(经典 BMap 恒 true),
@@ -514,6 +536,10 @@ const styleJsonApplied = new WeakSet<BMapInstance>();
 const markerContentDom = new WeakMap<object, string>();
 /** 待注入 marker 登记表(各重试链自终止判定 + remove 清理;注入成功即摘除) */
 const pendingContentInjection = new Set<BMarker>();
+/** content marker → 锚点分量(ax/ay = -契约 offset;r5 定位重算时:
+ * DOM left = 屏幕像素 x - ax(与 SDK _getPixPos `C.x += mw.width - mv.width`
+ * 逐像素同语义:marker 构造不传 offset(0,0),icon anchor 即 -offset)) */
+const contentMarkerAnchors = new WeakMap<BMarker, { ax: number; ay: number }>();
 /** 快速路径上限(微任务 4 轮 + rAF 3 帧;常规时序下 addOverlay 后同步/数帧就绪) */
 const CONTENT_DOM_MICRO_MAX_ATTEMPTS = 4;
 const CONTENT_DOM_RAF_MAX_ATTEMPTS = 3;
@@ -522,12 +548,51 @@ const CONTENT_DOM_TIMER_FIRST_MS = 100;
 const CONTENT_DOM_TIMER_STEP_MS = 250;
 const CONTENT_DOM_TIMER_MAX_ATTEMPTS = 80;
 
-/** 单次注入尝试:domElement 存在 → innerHTML 更新(内容变化才写,防闪动) */
+/**
+ * r5(2026-08-22,boss 主树复验)定位异象修复:
+ * **SDK `pointToOverlayPixelIn` 的 fixPosition 反绕把视口外 marker 抛到 ±worldSize
+ * (z13 ≈ ±1.25M px,z15 ≈ ±5.0M px,boss 实测 5,009,397 量级)。**
+ * SDK marker 模块 _getPixPos 恒传 `fixPosition: true`(getscript 源码坐实:
+ * `mu={zoom:T,center:i,fixPosition:true}`),越出容器宽度的屏幕像素会被
+ * `C.x -= ceil((C.x-w)/worldSize)*worldSize` 按整世界尺寸反绕 → 视口外 POI
+ * 全被钉到 ±worldSize(百万 px 级,屏幕外),且随缩放逐级翻倍(z13 ±1.25M →
+ * z14 ±2.5M → z15 ±5.0M)——视觉零徽章(boss 主树复验根因)。
+ * 修复:**注入成功 + 相机事件(moveend/zoomend/tilesloaded)后主动重算并覆写
+ * DOM 定位,经 `fixPosition: false` 取未反绕的视口像素**(SDK 同一
+ * pointToOverlayPixelIn 官方 API;webgl 渲染下 fixPosition 分支跳过、
+ * _renderType==="webgl" 直接返回,数学 = `(pointLng-centerPointLng)/zoomUnits
+ * + width/2`,与 SDK 内部一致)→ 视口外 marker 停在「画布附近屏幕坐标」
+ * (如 1888px),不再抛到 ±worldSize;视口内 marker 与 SDK 同值,零视觉变化。
+ * 时序安全:SDK 在相机变化期间先写(视口内正确、视口外反绕——均不可见),
+ * moveend/zoomend 派发在相机稳定之后,覆写不产生闪烁;视口内两侧数值恒等
+ * (fixPosition 不触及 [0,width] 区间),零双写冲突。
+ */
+function repositionContentMarkerDom(raw: BMarker): void {
+  try {
+    const el = (raw as { domElement?: HTMLElement | null }).domElement;
+    if (!el || typeof (el.style as { left?: string } | undefined)?.left !== 'string') return;
+    const map = (raw as { map?: BMapInstance | null }).map;
+    const pt = (raw as { getPositionIn?: () => BPoint }).getPositionIn?.();
+    if (!map || !pt) return;
+    const pix = map.pointToOverlayPixelIn?.(pt, { zoom: map.getZoom(), fixPosition: false });
+    if (!pix || !Number.isFinite(pix.x) || !Number.isFinite(pix.y)) return;
+    const anchor = contentMarkerAnchors.get(raw) ?? { ax: 0, ay: 0 };
+    el.style.left = `${Math.round(pix.x) - anchor.ax}px`;
+    el.style.top = `${Math.round(pix.y) - anchor.ay}px`;
+  } catch {
+    // 定位重算失败静默(防御):SDK 自身定位兜底,不影响注入主流程
+  }
+}
+
+/** 单次注入尝试:domElement 存在 → innerHTML 更新(内容变化才写,防闪动)+
+ * 重算定位(见 repositionContentMarkerDom 注释,r5) */
 function injectMarkerContent(raw: BMarker): boolean {
   const el = (raw as { domElement?: HTMLElement | null }).domElement;
   if (!el) return false;
   const html = markerContentDom.get(raw);
   if (html !== undefined && el.innerHTML !== html) el.innerHTML = html;
+  // 内容注入成功后校准定位(首次注入/延迟注入共用;SDK 反绕异象修复)
+  repositionContentMarkerDom(raw);
   return true;
 }
 
@@ -788,6 +853,12 @@ class BaiduMapView implements MapView {
   private readonly map: BMapInstance;
   private readonly ns: BMapGLNamespace;
   private destroyed = false;
+  /** r5 content 标记注册表:相机/瓦片事件后重算定位(SDK fixPosition 反绕修复) */
+  private readonly contentMarkers = new Set<BMarker>();
+  /** 相机/瓦片事件解绑句柄(destroy 清理;首个 content marker 时懒注册) */
+  private readonly viewUnsubscribers: Array<() => void> = [];
+  /** 相机/瓦片事件监听已绑(懒注册,避免空视图监听残留——就绪通道解绑断言) */
+  private cameraListenersBound = false;
 
   // 注:不用 TS 参数属性(node 测试 strip-only 模式不支持,ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX)
   constructor(map: BMapInstance, ns: BMapGLNamespace, engine: MapEngine) {
@@ -795,6 +866,57 @@ class BaiduMapView implements MapView {
     this.ns = ns;
     this.raw = map;
     this.engine = engine;
+    this.disableBaiduOverlayPixelWrap();
+  }
+
+  /**
+   * r5(2026-08-22)实例级同名遮蔽:禁用 BMapGL v1.0 `pointToOverlayPixelIn`
+   * 的 fixPosition 反绕(视口外 marker 被抛到 ±worldSize 的根因;SDK 源码
+   * 坐实:marker 模块 _getPixPos 恒传 fixPosition:true,越出容器宽度的像素
+   * 按整世界尺寸反绕 —— boss 主树复验 5,009,397 ≈ 4×worldSize(z15))。
+   * SDK 经 `map.pointToOverlayPixelIn(...)` 属性查找调投影(addOverlay 与
+   * 相机重绘全走实例属性,真机 hook 坐实)→ 实例 own property 遮蔽 == 全局
+   * 生效(own 优先于原型);遮蔽内强制 fixPosition:false = 未反绕视口像素
+   * (pointToPixelIn 内部数学不变:centerPoint/zoomUnits 投影与 SDK 反绕前
+   * 中间值字节级等同)。
+   * 取舍:反绕语义仅在 ±180° 反经纬线「就近副本」场景有用(本产品中国区
+   * POI 恒不触及),而其副作用(视口外 POI 被迫迁到世界对面 ±125 万 px、
+   * 缩放逐级翻倍)正是被修复的威胁。mask 缺失(旧 SDK/测试缺面)静默跳过。
+   * 防御兜底:相机事件后的 repositionContentMarkers 校准(对绕开属性查找的
+   * 路径,如模块加载时捕获的原型引用,再兜一层)。
+   */
+  private disableBaiduOverlayPixelWrap(): void {
+    const map = this.map as BMapInstance & {
+      pointToOverlayPixelIn?: (
+        p: BPoint,
+        o?: { zoom?: number; fixPosition?: boolean },
+      ) => { x: number; y: number } | null;
+    };
+    const orig = map.pointToOverlayPixelIn;
+    if (typeof orig !== 'function') return;
+    map.pointToOverlayPixelIn = (pt, opts) => orig.call(map, pt, { ...(opts ?? {}), fixPosition: false });
+  }
+
+  /**
+   * r5(2026-08-22):SDK marker _getPixPos 恒传 fixPosition:true,把视口外
+   * marker 反绕到 ±worldSize(百万 px,「视觉零徽章」root cause,boss 主树
+   * 复验)。相机事件派发于 SDK 相机稳定之后 → 覆写定位不闪烁(视口内与
+   * SDK 同值、视口外本不可见),保证任意时刻 marker DOM 均为未反绕视口坐标。
+   * 首个 content marker 时懒注册(空视图零监听残留)。
+   */
+  private ensureCameraListeners(): void {
+    if (this.cameraListenersBound) return;
+    this.cameraListenersBound = true;
+    this.viewUnsubscribers.push(this.on('moveend', () => this.repositionContentMarkers()));
+    this.viewUnsubscribers.push(this.on('zoomchange', () => this.repositionContentMarkers()));
+    // tilesloaded:首帧/重负载瓦片批加载后 SDK 可能补一轮定位,一并校准
+    this.viewUnsubscribers.push(this.on('complete', () => this.repositionContentMarkers()));
+  }
+
+  /** 相机/瓦片事件后重算全部 content 标记的未反绕视口定位(r5) */
+  private repositionContentMarkers(): void {
+    if (this.destroyed || this.contentMarkers.size === 0) return;
+    for (const raw of this.contentMarkers) repositionContentMarkerDom(raw);
   }
 
   getState(): MapViewState {
@@ -984,7 +1106,14 @@ class BaiduMapView implements MapView {
     // 无 setContent → DOM 注入(icon 主机制时不注入,防双渲染);addOverlay 后
     // 同步命中,失败走微任务 + rAF 有界重试(零定时器)
     if (content !== undefined && typeof raw.setContent !== 'function' && !iconRenders) {
+      // r5:登记锚点分量 + 注册表(相机事件重算),注入即校准定位——
+      // SDK _getPixPos 的 fixPosition 反绕把视口外 marker 抛到 ±worldSize
+      // (百万 px,视觉零徽章 root cause,boss 主树复验)
+      contentMarkerAnchors.set(raw, { ax, ay });
+      this.ensureCameraListeners();
+      this.contentMarkers.add(raw);
       scheduleMarkerContentInjection(raw);
+      repositionContentMarkerDom(raw); // DOM 可能未就绪,注入链成功时再校准
     }
     return {
       raw,
@@ -1028,6 +1157,7 @@ class BaiduMapView implements MapView {
       },
       remove: () => {
         pendingContentInjection.delete(raw); // 摘除 → 终止注入重试链
+        this.contentMarkers.delete(raw); // r5:摘除后不再重算定位
         this.map.removeOverlay?.(raw);
         raw.remove?.();
       },
@@ -1102,7 +1232,14 @@ class BaiduMapView implements MapView {
       setContent: (html: string) => {
         markerContentDom.set(raw, html);
         if (typeof raw.setContent === 'function') raw.setContent(html);
-        else scheduleMarkerContentInjection(raw);
+        else {
+          // r5:与 content 主路径同契约——DOM 注入后按未反绕视口像素校准定位
+          contentMarkerAnchors.set(raw, { ax, ay });
+          this.ensureCameraListeners();
+          this.contentMarkers.add(raw);
+          scheduleMarkerContentInjection(raw);
+          repositionContentMarkerDom(raw);
+        }
       },
       // BMapGL 官方大写 setZIndex(与 AMap 小写 setzIndex 的差异在适配层吸收)
       setZIndex: (z: number) => {
@@ -1137,6 +1274,7 @@ class BaiduMapView implements MapView {
       },
       remove: () => {
         pendingContentInjection.delete(raw); // 摘除 → 终止注入重试链
+        this.contentMarkers.delete(raw); // r5:摘除后不再重算定位
         this.map.removeOverlay?.(raw);
         raw.remove?.();
       },
@@ -1171,6 +1309,8 @@ class BaiduMapView implements MapView {
 
   destroy(): void {
     this.destroyed = true;
+    for (const unsub of this.viewUnsubscribers.splice(0)) unsub(); // r5:解绑相机/瓦片监听
+    this.contentMarkers.clear();
     this.map.destroy();
   }
 }
