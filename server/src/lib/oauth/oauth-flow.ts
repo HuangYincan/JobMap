@@ -74,6 +74,20 @@ export function errorRedirectPath(next: string, code: string): string {
   return url.pathname + (url.search || '');
 }
 
+/**
+ * 相对路径 → 同源绝对 URL(Next 16 的 NextResponse.redirect 只接受绝对 URL,
+ * 相对路径会在 validateURL 抛错 → 路由 500)。
+ * path 必须已 sanitize(单 `/` 开头、非 `//`);origin 来自 request.url。
+ * 防御:解析结果跨源(理论上不可能,next 已清洗)→ 回落 origin + '/'。
+ */
+export function absoluteRedirect(path: string, origin: string): string {
+  const url = new URL(path, origin);
+  if (url.origin !== origin) {
+    return origin + '/';
+  }
+  return url.toString();
+}
+
 // ---- start:构造 authorize 302 + oauth_state cookie ----
 
 export interface OauthStartResult {
