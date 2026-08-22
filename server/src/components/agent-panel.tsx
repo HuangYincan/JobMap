@@ -4,7 +4,8 @@
 // (transform 驱动,computePanelPlacement 纯函数;拖动球时同步移动,松手平滑归位)。
 // 移动端(≤767px)与极窄视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。
 // - 消息列表(用户纯文本 / 助手 MarkdownText 渲染,助手侧可含建议卡片)+ 输入框 +
-//   发送/停止/撤销;
+//   输入行 [输入框][发送|停止](ws-inputbar:流式中发送位原位变「停止」,红系警示,
+//   点击 = 中止)+ 控件行 [清屏][撤销](清屏最左,独立停止控件已并入发送位);
 // - 按轮交替:reduceAgentEvent 纯状态机把每轮(delta→tool)拆成独立 assistant 消息,
 //   视觉上「文本1、工具1、文本2、工具2…」;reasoning 事件前端不消费(no-op,
 //   2026-08-22 ws-bubble:思考提示与空白气泡已删除);
@@ -885,25 +886,33 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
             aria-label={t("agentInput", lang)}
             disabled={streaming}
           />
-          <button
-            type="button"
-            className={styles.send}
-            onClick={() => send()}
-            disabled={!input.trim() || streaming}
-            aria-label={t("agentSend", lang)}
-          >
-            {t("agentSend", lang)}
-          </button>
+          {streaming ? (
+            <button
+              type="button"
+              className={`${styles.send} ${styles.sendStop}`}
+              onClick={stop}
+              aria-label={t("agentStop", lang)}
+            >
+              ■ {t("agentStop", lang)}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.send}
+              onClick={() => send()}
+              disabled={!input.trim() || streaming}
+              aria-label={t("agentSend", lang)}
+            >
+              {t("agentSend", lang)}
+            </button>
+          )}
         </div>
         <div className={styles.controls}>
-          <button type="button" className={styles.controlBtn} onClick={stop} disabled={!streaming} aria-label={t("agentStop", lang)}>
-            {t("agentStop", lang)}
+          <button type="button" className={styles.controlBtn} onClick={clearScreen} disabled={streaming} aria-label={t("agentClear", lang)}>
+            {t("agentClear", lang)}
           </button>
           <button type="button" className={styles.controlBtn} onClick={undo} disabled={!canUndo} aria-label={t("agentUndo", lang)}>
             {t("agentUndo", lang)}
-          </button>
-          <button type="button" className={styles.controlBtn} onClick={clearScreen} disabled={streaming} aria-label={t("agentClear", lang)}>
-            {t("agentClear", lang)}
           </button>
         </div>
       </footer>

@@ -708,10 +708,23 @@
   opacity: 0.45;
 }
 
+/* 发送↔停止双态(ws-inputbar):流式中发送位原位变「停止」——红系警示语义,
+   几何/圆角沿用 .send(同槽位同尺寸),颜色红系覆盖(替代原控件行独立停止钮) */
+.sendStop {
+  background: #ff3b30;
+  border: 0;
+  color: #fff;
+}
+
+.sendStop:hover {
+  background: #d9352b;
+}
+
+/* 控件行(ws-inputbar):停止已并入发送位,剩 [清屏][撤销];清屏最左(左对齐) */
 .controls {
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .controlBtn {
