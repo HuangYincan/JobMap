@@ -1364,6 +1364,65 @@ onerror fallbackUrls;TMap icon 路径此前只有单一 src,预检失败直接�
 - 测试:`map-engine-baidu.test.mjs` +3(定时器兜底注入 / rAF 快路径 / remove
   终止注入链),85/85 通过;`npm test` 1419 通过 / 0 失败 / 2 skip
 
+## 加载超时契约与挂载错误态回填(2026-08-22,fix/amap-load-timeout + fix/mount-retry + fix/loading-error-ui)
+
+> 来源:批次 `20260822-boss-loading-hang`(首访卡死修复,症状/根因/验证全链见
+> `tech/16-bug-fixes.md` 对应条目)。本批把引擎加载/挂载链补成**有界 + 有出口**。
+> 超时先例与既有 tencent 1.5s 就绪超时(ws-7)/ baidu 1.5s 就绪 + 2s 命名空间
+> (ws-7 / ws-c)并列,本批新增 amap 8s 加载超时 + 挂载链 25s watchdog 两层上界。
+
+### loadAMap 8s 超时契约(amap-api.ts)
+
+- **`AMAP_LOAD_TIMEOUT_MS = 8_000`**(amap-api.ts:45):主脚本(含插件)加载上界。
+  此前 `loadAMap()` 是全链路唯一无超时 await——CDN/DNS 卡死则 Promise 永不
+  落定,map-shell 首屏永久 "Loading map..."(刷新即好)。
+- **超时/onerror 同语义**:清 `loadPromise` + 移除 `SCRIPT_ID` 标签 + reject
+  (超时错误 `code: 'AMAP_LOAD_TIMEOUT'`,:104-107);移除标签是关键——否则下次
+  走「复用 existing」分支给已死标签挂监听,Promise 永不落定。
+- **`settled` 竞态守卫**(:82-100):超时/error 后迟到的 onload/onerror 一律无效
+  (不二次 settle,成功路径 clearTimeout),重试由调用方经新注入标签恢复。
+- **与既有先例的并列关系**:tencent createView 就绪超时 1.5s / baidu 就绪超时
+  1.5s + 命名空间轮询 2s(均为「等待厂商渲染信号」上界);amap 8s 是「主脚本
+  网络加载」上界——AMap 脚本含插件必须等真实网络链路,8s 为安全上界(代码
+  注释原文)。四者合流:引擎加载/就绪全链无永久 await。
+
+### useMapEngine mountError/retryMount 错误态契约(ws-2,use-map-engine.ts)
+
+- **`runMount` 挂载链统一**(use-map-engine.ts:337):首挂载 effect 与 `retryMount`
+  共用同一挂载链(resolveEngine → setEngine/setActiveSearchProvider →
+  `mountEngineView` + watchdog),不复制第二份;可重入,每次调用递增挂载代际
+  `mountSeqRef`。
+- **`mountError`**(:85-92,:199):挂载链(含引擎回退)全部失败后非 null
+  `{ engine, code?, message }`;重新开始挂载时立即清 null。engine = 失败引擎 id
+  (`mount.ts` 在最终错误上携带 `engineId`,mount.ts:96-101;watchdog 超时无
+  engineId → 偏好引擎 resolved.id)。此前失败仅 `console.warn`,无任何出口。
+- **`retryMount()`**(:438-441):重新执行完整挂载链;挂载进行中(`mountRunningRef`)
+  或已有活 view(`viewRef`)时 no-op(幂等);成功后走与首挂载相同的 .then 落地
+  (viewRef/setView/setEngine 不变)。
+- **25s watchdog `MOUNT_TIMEOUT_MS = 25_000`**(:167):整条挂载链
+  withTimeout 上界(与 amap-api.withTimeout 同款语义,超时错误
+  `code: 'MOUNT_TIMEOUT'`);单引擎各有界(ws-1 loadAMap 8s 超时 reject),此上界
+  防未来新增无界引擎/钻缝;超时进入错误态并作废在飞挂载链——后台链恢复后经
+  `isCancelled`(代际比较)销毁已建视图,不泄漏(单线程保证:超时触发时链必然
+  parked 在 await 上,catch 先于其恢复)。
+- **消费方契约**:引擎总线载荷含 `mountError`/`retryMount`(:119-126),面板侧
+  不用即可;map-shell 覆盖层按「加载中 / 失败态(i18n mapLoadFailed 系 +
+  重试按钮走 retryMount)/ 配置缺失」三态渲染(ws-3,map-shell.tsx:2290-2311)。
+
+### 验收(离线)
+
+| 项 | 结果 |
+|---|---|
+| loadAMap 超时/迟到 onload/onerror 重试(amap-api.test.mjs +3)| ✅ 6/6 |
+| mount 错误态/重试幂等/watchdog(map-engine-mount.test.mjs +7)| ✅ 13/13 |
+| 覆盖层失败态 + 重试接线(component-contracts +1)| ✅ |
+| 首访逐页超时/止损(viewport-search.test.mjs +3)| ✅ |
+| 合并后全量 npm test | ✅ 1443 tests / 1441 pass / 2 skip / 0 fail |
+| typecheck / make docs-check / git diff --check | ✅ |
+
+**遗留(边界外)**:首访全量加载失败的缺口由「mapReady 后视口加载增量语义」
+自然补齐,不做整轮重试;挂载回退成功是否改写引擎偏好仍为 ws-8 遗留决策项。
+
 ## ws-g r5 回填:注入后「徽章全部定位屏幕外」根因实锤 —— SDK fixPosition 反绕 + 修复(2026-08-22,fix/baidu-r5)
 
 > r4 合并进 dev 后 boss 主树复验:注入成功(400 个 .dm-badge,0 警告)但
