@@ -315,6 +315,88 @@
   text-align: center;
 }
 
+/* ---- 注册后绑定引导(password 注册成功 → 引导绑定手机/邮箱,可跳过) ---- */
+.bindGuide {
+  display: flex;
+  flex-direction: column;
+}
+
+.bindTitle {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.bindHint {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* 选择卡:手机 / 邮箱二选一,选中 #007AFF 边框高亮 */
+.bindCards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.bindCard {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.32);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.bindCardActive {
+  border-color: var(--blue, #007AFF);
+  color: var(--blue, #007AFF);
+  background: rgba(0, 122, 255, 0.06);
+}
+
+/* 主按钮:完成绑定(蓝 #007AFF,与全局主色一致) */
+.bindDone {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: var(--blue, #007AFF);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  min-height: 44px;
+  margin-top: 4px;
+}
+
+.bindDone:disabled {
+  opacity: 0.45;
+}
+
+/* 跳过:文字按钮,弱化置灰 */
+.skipBind {
+  align-self: center;
+  margin-top: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 32px;
+  padding: 0 8px;
+}
+
+.skipBind:hover {
+  color: var(--blue-ink, #0062cc);
+}
+
 .socialGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -402,7 +484,8 @@
 
   .field input,
   .inputShell,
-  .social {
+  .social,
+  .bindCard {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.1);
   }
