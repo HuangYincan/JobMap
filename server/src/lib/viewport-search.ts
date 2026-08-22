@@ -280,6 +280,8 @@ export interface LoadWorkViewportOptions extends WorkViewportQuery {
   onBatch?: (pois: POI[]) => void;
   /** 注入 fetcher(测试用);缺省用全局 fetch */
   fetcher?: typeof fetch;
+  /** 单页请求超时(ms),仅测试注入用;缺省 WORK_VIEWPORT_PAGE_TIMEOUT_MS */
+  pageTimeoutMs?: number;
 }
 
 /**
@@ -288,6 +290,18 @@ export interface LoadWorkViewportOptions extends WorkViewportQuery {
  * 服务端返回全量;实际由短页/空页 break 提前停,此值只是防呆。
  */
 export const WORK_FULL_LOAD_MAX_PAGES = 10_000;
+
+/**
+ * 单页请求超时(ms)(2026-08-22,first-load-bounded):loadWorkViewport 每页
+ * fetch 包 withTimeout——任一页挂起(服务端冷启动/公网抖动)不再拖死首访
+ * 全量加载,超时按「该页失败」跳过处理。
+ */
+export const WORK_VIEWPORT_PAGE_TIMEOUT_MS = 10_000;
+/**
+ * 连续失败止损阈值(页):连续失败达到该值后提前终止本轮并 warn 汇总,
+ * 防 10k 页全卡(服务端故障)时日志洪泛 + 无限空转。
+ */
+export const WORK_VIEWPORT_MAX_CONSECUTIVE_FAILURES = 3;
 
 // ============================================================
 // 挂载对齐加载(ws1 Bug1 视口)
@@ -415,6 +429,27 @@ export function catalogCoversView(
 }
 
 /**
+ * 单页 fetch 超时兜底(2026-08-22,first-load-bounded):任何一页永久挂起都按
+ * 「该页失败」处理跳过,绝不永久 await。与 amap-api 的 withTimeout 同构;
+ * amap-api 反向依赖本模块(import 会成环),故在本文件内建不导出的局部版本。
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
+/**
  * 工作模式视口加载:从 page 起连取 maxPages 页(默认 1 页) → 每页 alive 过滤
  * → 按 poi.id 增量合并进现有池(不清空已有 marker;重复 id 跳过;
  * cap 缺省 POI_HARD_CAP 防无限堆,work 视口传 Infinity 去上限)。
@@ -423,6 +458,10 @@ export function catalogCoversView(
  * 取尽),供调用方停止哨兵并显示「没有更多结果」;空页不置 noMore(空批次≠
  * 到底,ws1 Bug1),vacant 标记「整个请求 0 条」供空批次三态判定。
  * 取消时不置位 noMore(状态未知)。
+ * 单页失败/超时(first-load-bounded):warn(页码+原因)后跳过该页继续,
+ * 连续失败达 WORK_VIEWPORT_MAX_CONSECUTIVE_FAILURES 提前止损返回已取部分;
+ * 失败页一律不置 noMore/vacant(「错误 ≠ 没有更多」,由已有部分目录 +
+ * mapReady 后的视口加载增量语义自然补齐)。
  */
 export async function loadWorkViewport(
   options: LoadWorkViewportOptions,
@@ -432,20 +471,46 @@ export async function loadWorkViewport(
   const maxPages = options.maxPages ?? 1;
   const pageSize = options.pageSize ?? WORK_VIEWPORT_PAGE_SIZE;
   const cap = options.cap ?? POI_HARD_CAP;
+  const pageTimeoutMs = options.pageTimeoutMs ?? WORK_VIEWPORT_PAGE_TIMEOUT_MS;
   // 客户端 kind 守卫(2026-08-19):work 累计池只允许 recruitment 行。
   // 服务端已过滤,这里兜底清掉被污染缓存/历史残留的 domain 行,
   // 避免「高德 POI 混进工作列表」跨会话粘住。
   let merged: POI[] = existing.filter(isRecruitmentPoi);
   let noMore = false;
   let vacant = false;
+  let consecutiveFailures = 0;
   for (let p = 0; p < maxPages; p += 1) {
+    const pageNo = startPage + p;
     if (signal?.cancelled) return { pois: merged, noMore: false, vacant };
-    const page = await fetchWorkViewportPage(
-      { ...options, page: startPage + p },
-      options.fetcher,
-    );
+    let page: WorkViewportPage;
+    try {
+      page = await withTimeout(
+        fetchWorkViewportPage({ ...options, page: pageNo }, options.fetcher),
+        pageTimeoutMs,
+        `work viewport page ${pageNo}`,
+      );
+    } catch (err) {
+      // 单页失败/超时跳过不中断(2026-08-22,first-load-bounded):任一页挂起
+      // 不再拖死首访全量加载。失败页不计入结果,也不置 noMore/vacant——
+      // 「错误 ≠ 没有更多」,由已有部分目录 + mapReady 后视口加载自然补齐。
+      consecutiveFailures += 1;
+      const reason = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `[viewport-search] work page ${pageNo} failed (${consecutiveFailures}/${WORK_VIEWPORT_MAX_CONSECUTIVE_FAILURES}), skipped: ${reason}`,
+      );
+      // 连续失败达阈值 → 止损:10k 页全卡(服务端故障)时只打阈值次 warn
+      // 汇总后提前返回已取部分,不日志洪泛、不空转。
+      if (consecutiveFailures >= WORK_VIEWPORT_MAX_CONSECUTIVE_FAILURES) {
+        console.warn(
+          `[viewport-search] work full load stopped after ${consecutiveFailures} consecutive failures (page ${pageNo}); returning ${merged.length} pois`,
+        );
+        break;
+      }
+      continue;
+    }
+    consecutiveFailures = 0;
     if (signal?.cancelled) return { pois: merged, noMore: false, vacant };
-    const offset = (startPage + p - 1) * pageSize;
+    const offset = (pageNo - 1) * pageSize;
     merged = mergePoisById(merged, page.pois, cap);
     onBatch?.(merged);
     // 空批次(0 条)≠ 到底(ws1 Bug1 视口):滤波/层级 maxTier 裁剪可致整页为空,
