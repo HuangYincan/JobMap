@@ -66,9 +66,9 @@
 
 三方后台注册的授权回调 URL 必须与 `redirect_uri`(`<origin>/api/auth/oauth/callback/<provider>`)**完全一致**;部署域名变化需同步改三方后台,否则回调时报 redirect_uri 不匹配。
 
-### 3.5 SESSION_SECRET(可选但生产建议)
+### 3.5 SESSION_SECRET(生产必配)
 
-`SESSION_SECRET` 是既有变量(见 `server/docs/environment-variables.md`),现在兼任 `oauth_state` 的 HMAC 签名密钥。**多实例部署时显式设置**,保证 oauth_state 跨实例可验;未设置时 boot 随机(会话仍可用,但重启后已签发 state 失效,用户需重新走一次登录)。
+`SESSION_SECRET` 是既有变量(见 `server/docs/environment-variables.md`),现在兼任 `oauth_state` 的 HMAC 签名密钥;与会话 token 共用同一密钥入口(session-store `sessionSigningSecret`)。**生产部署必须显式设置**(≥32 字符强随机);未设置时非生产回退进程启动时随机(boot 随机,重启后已签发 state / 会话签名失效,用户需重新登录);`NODE_ENV=production` 且未设置时**拒绝签名**(`createSession` / oauth_state 签发抛错),绝不会回到公开常量密钥(scan #4)。
 
 ## 4. 端点契约
 
@@ -99,7 +99,7 @@
 | `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth App |
 | `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Google Cloud OAuth Client(Web application) |
 | `WECHAT_OAUTH_APP_ID` / `WECHAT_OAUTH_SECRET` | 微信开放平台网站应用 |
-| `SESSION_SECRET`(已有)| oauth_state HMAC 签名密钥;未设 → boot 随机 |
+| `SESSION_SECRET`(已有)| 会话 token 与 oauth_state 的 HMAC 签名密钥;**生产必配**;非生产未设 → boot 随机(两模块共用) |
 
 configured 判定 = 对应两变量**均非空**(trim 后)。**服务端秘密:永不打印、永不进日志、永不进响应**。写入 `server/.env.local`(唯一生效配置文件),模板见 `server/.env.example` 的「第三方登录(OAuth)」段。
 

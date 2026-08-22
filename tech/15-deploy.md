@@ -72,3 +72,7 @@ Account routes then write sessions / Recent / Saved / applications / queued noti
 ## Rollback
 
 The app is the git branch. `git revert` / `git reset` the last conventional commit. Session cookies are demo HMAC; rotating `SESSION_SECRET` signs everyone out.
+
+## SESSION_SECRET(生产必配)
+
+会话 token 与 OAuth `oauth_state` 的 HMAC 签名密钥经 `sessionSigningSecret` 统一取自 `SESSION_SECRET`(scan #4)。**生产(NODE_ENV=production)必须显式设置**(≥32 字符强随机);非生产未设置 → boot 随机(重启失效,单实例可用);生产未设置 → 服务端拒绝签名(`createSession` / oauth_state 签发抛错),杜绝公开常量回退。配置见 `server/docs/environment-variables.md`。

@@ -48,10 +48,11 @@ DATABASE_LOG_QUERIES=false
 # write to the 005 tables. When unset, APIs stay in process memory.
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/domain_map
 
-# Signs the demo session token, and (2026-08-22) the OAuth `oauth_state`
-# HMAC. When unset, oauth_state falls back to a boot-time random key
-# (works single-instance; multi-instance deployments should set it
-# explicitly so state verifies across instances).
+# HMAC 签名密钥:会话 token(写入)与 OAuth `oauth_state`
+# (2026-08-22)共用。**生产(NODE_ENV=production)必配**——≥32 字符强随机;
+# 生产未设置时服务端拒绝签名(登录/OAuth start 报错),绝不会回退到
+# 公开常量密钥。非生产未设置 → 进程启动时随机(boot 随机,单实例可用;
+# 重启后已签发 token/state 失效)。
 SESSION_SECRET=replace-me
 
 # Sends email OTP codes via Resend (tech/25). When unset, email OTP send
@@ -218,7 +219,7 @@ npm run dev
 - [ ] `NEXT_PUBLIC_AMAP_KEY` - Domain restricted to production URL
 - [ ] `NEXT_PUBLIC_AMAP_SECURITY_CODE` - Matches key
 - [ ] `DATABASE_URL` - Production PostgreSQL connection
-- [ ] `AUTH_SECRET` - Strong random secret (32+ characters)
+- [ ] `SESSION_SECRET` - Strong random secret (32+ characters); **production 必配**(未设时服务端拒绝签名)
 - [ ] `NODE_ENV=production` - Set automatically by hosting platform
 
 ### Security Best Practices
