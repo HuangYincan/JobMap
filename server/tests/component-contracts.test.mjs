@@ -113,6 +113,22 @@ test('home page lazy-loads MapShell on the client', () => {
   assert.match(loader, /MapShell/);
 });
 
+test('GATE_A guard times out a stalled map-shell chunk (2026-08-22 ws-gate-a)', () => {
+  const loader = src('components/home-map.tsx');
+  // 15s 超时常量 + 挂载即计时 + 卸载清理
+  assert.match(loader, /GUARD_TIMEOUT_MS\s*=\s*15_000/);
+  assert.match(loader, /setTimeout\(/);
+  assert.match(loader, /clearTimeout\(id\)/);
+  // loading 帧换成守卫组件;失败态 = 标题 + 胶囊重试按钮 + 小字
+  assert.match(loader, /loading:\s*\(\) => <MapLoadingGuard \/>/);
+  assert.match(loader, /mapLoadFailed/, 'title key');
+  assert.match(loader, /mapLoadTimeoutHint/, 'hint key');
+  // 重试只能走 reload:dynamic 的 import promise 挂起后不会重试
+  assert.match(loader, /window\.location\.reload\(\)/);
+  // dynamic 配置保持不动(项目铁律:ssr:false 留在 home-map,不挪 page.tsx)
+  assert.match(loader, /ssr:\s*false/);
+});
+
 test('avatar cropper portals above pointer-events-none clusters', () => {
   const cropper = src('components/avatar-cropper.tsx');
   assert.match(cropper, /createPortal/);
