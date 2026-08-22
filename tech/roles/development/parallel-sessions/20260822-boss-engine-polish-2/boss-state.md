@@ -11,21 +11,19 @@
 
 ## stage
 
-- current: DISPATCH(轮9 ws-j 混合块根因二分,2026-08-23)
+- current: NEXT(轮8/9 全部闭环:MERGED_ALL,dev push 56735a6;主树最终复验通过)
 - updated_at: 2026-08-23
 
-## 轮8/9(2026-08-23,ws-i + ws-j)
+## 轮8/9 终态(2026-08-23,ws-i + ws-j)
 
-- **ws-i(轮8)**:用户报「腾讯底图的公司poi有问题,渲染很奇怪」。boss 实测:POI 徽章主体正常;
-  ws-i worker 实测根因修正 = **初始渲染竞态**(首帧 0 徽章,reload 随机;SDK layer level 恒 7
-  OVERLAY_NAA rank 70020 > 标注 60000,排除文字遮挡);修复 = 挂图后 setTimeout(0) 全量
-  setGeometries 重推 + icon 预检链式推进。MERGED_ALL push f8efbdd(1461 pass/0 fail)。
-- **ws-j(轮9)**:boss 主树复验发现 ws-i 未解决的**独立问题「混合块」**:3 个稳定元素
-  (656,399/894,292/362,413)= 40px 徽章上半消失(平顶)+ 内部 38,153,245 碎片 + 点击无响应
-  (对照完整徽章可点弹卡)、随地图移动、不在 DOM、非 MultiMarker geometry、非标注遮挡。
-  4 次 reload + 20s 延迟截图稳定复现;ws-i worker 验收(:3100)未复现,差异未明。
-  派发 ws-j(fix/tmap-mixed-block,worktree dm-wt-tmb):复现 → 枚举 overlay 实体(找第二套
-  渲染源)→ 二分(禁 setGeometries 重推/禁 LOD 摘挂/禁 icon.horse)→ 修复。
+- **ws-i(轮8)**:初始渲染竞态修复(setTimeout(0) 全量 setGeometries 重推)+ icon 预检链式
+  推进 → MERGED push f8efbdd。
+- **ws-j(轮9)**:「混合块」根因 = **腾讯矢量底图自身 POI 图标层**(light 样式;裸地图对照
+  决定性;dark 样式不渲染 → 解释 ws-i 与 boss 复现矛盾);修复 = styleToBaseMap features
+  排除 point(保留地名/路名标注)→ MERGED push 56735a6。
+- **主树最终复验(boss,2026-08-23,light 模式)**:3 个混合块消失;15 徽章完整;点击弹卡
+  (高频杭州);剩余扁平元素均为视口边缘/固定 UI;首会话 errors 794 行 = 397 唯一
+  favicon.im × 2(400 POI × 1 候选链式,后续会话 0 行)。
 
 ## 最终复验(boss,轮5 合并后主树)
 
@@ -47,7 +45,8 @@
 | e | fix/baidu-round2 | /Users/acccan/dm-wt-br2 | prompts/ws-e.md | reports/ws-e.md | DONE | 230ff5c | 轮2 | 2026-08-22 | OK(3 commits;POI 根因=BMapGL v1.0 无 setContent 实锤,深色切 vector,蓝点判定) |
 | f | fix/baidu-r3/r4 | /Users/acccan/dm-wt-br3/br4 | prompts/ws-f.md | reports/ws-f.md | DONE | bf1dd7c | 轮3/4 | 2026-08-22 | OK(r3:Overlay 静默失效→Marker 注入主路径;r4:定时器兜底,主树复验 136 警告修复) |
 | g | fix/baidu-r5 | /Users/acccan/dm-wt-br5 | prompts/ws-g.md | reports/ws-g.md | DONE | 385155e | 轮5(fixPosition 反绕) | 2026-08-22 | OK(3 commits, 1434/1432 pass;SDK fixPosition 反绕根因 + 实例遮蔽修复) |
-| i | fix/tmap-badge-overlap | /Users/acccan/dm-wt-tov | prompts/ws-i.md | reports/ws-i.md | RUNNING | dev 58bc838 切 | 轮7 | — | — |
+| i | fix/tmap-badge-overlap | /Users/acccan/dm-wt-tov | prompts/ws-i.md | reports/ws-i.md | MERGED | c16e0d5 | 轮8 | 2026-08-23 | OK(6 commits, 1461/1461 pass boss 复验;竞态修复 + 链式预检) |
+| j | fix/tmap-mixed-block | /Users/acccan/dm-wt-tmb | prompts/ws-j.md | reports/ws-j.md | MERGED | da4a5fe | 轮9 | 2026-08-23 | OK(2 commits, 1461/1461 pass boss 复验;根因=底图 POI 图标层,features 排除 point) |
 
 ## 关键证据(2026-08-22)
 
