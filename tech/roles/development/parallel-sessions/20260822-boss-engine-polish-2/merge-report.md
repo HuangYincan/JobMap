@@ -79,7 +79,7 @@ ws-e 与 dev 既有 ws-pinfix2 各自独立修复同一根因(BMapGL v1.0 `Marke
 ## 逐分支明细
 | WS | 分支 | merge commit | 门禁(npm test/typecheck/docs-check/diff) | 冲突解决 |
 |---|---|---|---|---|
-| ws-f | fix/baidu-r3 (712ea4d) | 7a4c3c3 (merge commit, merge: bed7082) | 1423 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 无冲突(自动合并) |
+| ws-f | fix/baidu-r3 (712ea4d) | 218b6eb | 1423 pass/0 fail/2 skip;typecheck 过;docs 过;diff 干净 | 无冲突(自动合并) |
 
 - 合并后全量:1425 tests / 1423 pass / 0 fail / 2 skip;`npm run typecheck` 零错误;`make docs-check` passed;`git diff --check` 干净。
 - 合并内容核验:baidu-engine.ts 删除自定义 Overlay 主路径(真机坐实 `addOverlay` 只调 `_i` 不挂 pane,1049 个 addOverlay 静默失效 + DOM/img 泄漏)→ 厂商 Marker + 点击目标 DOM 注入主路径,注入零定时器(同步 + 微任务 4 轮 + rAF 5 帧有界重试);测试重写 6 用例;tech/23 追加 ws-f r3 回填节(52 行)。真机验收:z13 单点级 1048 `.dm-badge` 全可见可点击,z≤8 聚合走 GL dataURL icon 纹理(135 聚合 marker),截图 3.5-4.5s → 0.1-0.5s。
@@ -88,14 +88,16 @@ ws-e 与 dev 既有 ws-pinfix2 各自独立修复同一根因(BMapGL v1.0 `Marke
 - 无冲突。三个文件(baidu-engine.ts / map-engine-baidu.test.mjs / tech/23-map-engines.md)均自动合并成功。
 
 ## 遗留问题
+- **并发协调提示**:本批合并期间,另一并行批次(20260822-boss-agent-inputbar)的 merge(bed7082)由并发进程并入同一主工作树并随本批 push 上行。本批门禁在 218b6eb 树全绿;bed7082 引入的 agent-inputbar 改动由该批自己的 merger 负责门禁。已在最终 HEAD(1de6e78)复核全量门禁,见下。
 - ws-f 建议:若 boss 仍可复现「截图持续超时」卡死,建议在长会话/多引擎切换场景复测(本 WS 修复已消除两个嫌疑:Overlay 无主 div + img 泄漏、ws-e 版 setInterval 轮询注入)。
 - worktree dev server 基建(硬链接 node_modules、.env.local)为本地未跟踪改动,git 零影响。
 - 主工作树其他未跟踪内容(`.address-work/`、其他批次目录)与本次合并零交集,未动。
 
 ## 最终 dev 状态
-- dev HEAD: `bed7082`(merge: fix/baidu-r3),已 push origin dev(`ef20c09..bed7082`)。
+- ws-f merge commit: `218b6eb`(merge: fix/baidu-r3,parents ef20c09 + 712ea4d)。
+- 合并期间另一并行批次(agent-inputbar)的 merge `bed7082`(parents 218b6eb + 9eaa0eb)由并发进程并入同一主树,随本批 push 一并上行;dev HEAD = `1de6e78`(本批 入库 commit)。已 push origin dev(`ef20c09..bed7082` 首推,`bed7082..1de6e78` 入库后二推),未 force-push。
 - worktree `/Users/acccan/dm-wt-br3` 已 remove;分支 `fix/baidu-r3` 已 `git branch -d` 删除。
-- 批次目录入库 commit: `chore: 20260822 boss engine-polish-2 轮3入库(ws-f baidu-r3 merge-report + 汇报)`。
+- 批次目录入库 commit: `chore: 20260822 boss engine-polish-2 轮3入库(ws-f baidu-r3 merge-report + 汇报)`(1de6e78)。
 
 门禁: ALL_GREEN
 结论: MERGED_ALL
