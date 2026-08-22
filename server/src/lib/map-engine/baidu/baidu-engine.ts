@@ -501,17 +501,26 @@ const styleJsonApplied = new WeakSet<BMapInstance>();
 //   - 视觉:徽章/图钉按契约锚点渲染(内容负 margin 补偿跨状态零漂移);
 //   - 点击:子元素事件冒泡到该 DOM → 厂商 click 事件 → 适配层 onClick;
 //   - 生命周期:hide/show/remove 由厂商 DOM 管理,注入内容跟随;
-//   - 注入时机:addOverlay 后同步命中;未命中(理论防御)走**微任务 + rAF
-//     有界重试**(4 微任务 + 5 帧),**零定时器**——ws-e 版 20×50ms setInterval
-//     轮询是渲染卡死嫌疑(r3 实测同步就绪,轮询无必要)。
+//   - 注入时机:addOverlay 后同步命中;未命中走**微任务 4 轮 + rAF 3 帧快速
+//     路径 + 定时器兜底**(首 tick 100ms 后每 250ms,上限 80 tick ≈ 20s,
+//     自终止、低频率)——r4 实证:重负载/慢首帧下 rAF 链会停摆(8× CPU 节流
+//     实测 addOverlay 后 domElement 迟至 1-10s 才创建,期间 rAF 帧不回调,
+//     零定时器版注入链静默悬挂 → 徽章永久缺失(boss 主树复验 136 警告 +
+//     0 徽章);定时器兜底不依赖帧调度,domElement 一旦就绪即注入。
 // 仅当厂商 Marker 无 setContent 时启用(测试 mock / 未来 SDK 形态仍走原路径)。
 // ------------------------------------------------------------
 
 /** raw marker → 最新 content HTML(注入重入/延迟注入读取用) */
 const markerContentDom = new WeakMap<object, string>();
-/** domElement 未就绪重试上限(微任务 4 轮 + rAF 5 帧;实测 addOverlay 同步就绪) */
+/** 待注入 marker 登记表(各重试链自终止判定 + remove 清理;注入成功即摘除) */
+const pendingContentInjection = new Set<BMarker>();
+/** 快速路径上限(微任务 4 轮 + rAF 3 帧;常规时序下 addOverlay 后同步/数帧就绪) */
 const CONTENT_DOM_MICRO_MAX_ATTEMPTS = 4;
-const CONTENT_DOM_RAF_MAX_ATTEMPTS = 5;
+const CONTENT_DOM_RAF_MAX_ATTEMPTS = 3;
+/** 定时器兜底参数(首 tick 100ms,之后 250ms 步进,80 tick ≈ 20s 上限) */
+const CONTENT_DOM_TIMER_FIRST_MS = 100;
+const CONTENT_DOM_TIMER_STEP_MS = 250;
+const CONTENT_DOM_TIMER_MAX_ATTEMPTS = 80;
 
 /** 单次注入尝试:domElement 存在 → innerHTML 更新(内容变化才写,防闪动) */
 function injectMarkerContent(raw: BMarker): boolean {
@@ -522,45 +531,69 @@ function injectMarkerContent(raw: BMarker): boolean {
   return true;
 }
 
-/** rAF 重试段(浏览器帧回调;无 rAF 环境跳过 → warn 降级) */
+/** 注入完成/标记已摘除 → 从登记表摘除并终止各重试链 */
+function finishContentInjection(raw: BMarker): void {
+  pendingContentInjection.delete(raw);
+}
+
+/** rAF 快速路径(下一帧起 ≤3 帧;rAF 在重负载下可能停摆 → 定时器兜底接管) */
 function injectRetryByFrames(raw: BMarker): void {
-  if (typeof requestAnimationFrame !== 'function') {
-    console.warn('[map-engine] BMapGL content 标记 DOM 注入超时(domElement 未就绪),徽章可能不渲染');
-    return;
-  }
+  if (typeof requestAnimationFrame !== 'function') return;
   let frames = 0;
   const frame = (): void => {
     frames++;
-    if (injectMarkerContent(raw)) return;
-    if (frames >= CONTENT_DOM_RAF_MAX_ATTEMPTS) {
-      console.warn('[map-engine] BMapGL content 标记 DOM 注入超时(domElement 未就绪),徽章可能不渲染');
+    // 先查登记(已摘除/已注入 → 终止),再尝试注入(避免向已摘除 marker 写入)
+    if (!pendingContentInjection.has(raw) || injectMarkerContent(raw)) {
+      finishContentInjection(raw);
       return;
     }
-    requestAnimationFrame(frame);
+    if (frames < CONTENT_DOM_RAF_MAX_ATTEMPTS) requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
 }
 
-/** 注入调度:立即尝试;失败 → 微任务重试(同任务内 addOverlay 完成)→ rAF
- * 重试(浏览器下一帧)→ 全失败 warn 降级。**零定时器**(2026-08-22 r3:
- * 轮询定时器是渲染卡死嫌疑,实测 addOverlay 同步创建 domElement,重试纯防御)。 */
-function scheduleMarkerContentInjection(raw: BMarker): void {
-  if (injectMarkerContent(raw)) return;
-  if (typeof queueMicrotask !== 'function') {
-    injectRetryByFrames(raw);
-    return;
-  }
-  let attempts = 0;
-  const retry = (): void => {
-    attempts++;
-    if (injectMarkerContent(raw)) return;
-    if (attempts >= CONTENT_DOM_MICRO_MAX_ATTEMPTS) {
-      injectRetryByFrames(raw);
+/** 定时器兜底(不依赖 rAF/帧调度;低频率、自终止、约 20s 上限后一次性 warn) */
+function injectRetryByTimers(raw: BMarker): void {
+  let ticks = 0;
+  const tick = (): void => {
+    ticks++;
+    if (!pendingContentInjection.has(raw) || injectMarkerContent(raw)) {
+      finishContentInjection(raw);
       return;
     }
-    queueMicrotask(retry);
+    if (ticks >= CONTENT_DOM_TIMER_MAX_ATTEMPTS) {
+      finishContentInjection(raw);
+      console.warn('[map-engine] BMapGL content 标记 DOM 注入超时(domElement 未就绪),徽章可能不渲染');
+      return;
+    }
+    setTimeout(tick, ticks === 1 ? CONTENT_DOM_TIMER_FIRST_MS : CONTENT_DOM_TIMER_STEP_MS);
   };
-  queueMicrotask(retry);
+  setTimeout(tick, CONTENT_DOM_TIMER_FIRST_MS);
+}
+
+/** 注入调度:立即尝试;失败 → 登记 + 微任务/rAF 快速路径 + 定时器兜底。
+ * r4(2026-08-22):r3「零定时器 5 帧」窗口在重负载下失效(主树复验 136 警告 +
+ * 0 徽章;真机 8× CPU 节流坐实 domElement 迟至 1-10s 才创建且 rAF 帧停摆),
+ * 定时器兜底保证 domElement 一旦就绪即注入;频率低(100ms 首 tick + 250ms
+ * 步进)、每 marker 独立自终止、内容不变不重写(防闪动/防渲染抖动)。 */
+function scheduleMarkerContentInjection(raw: BMarker): void {
+  if (injectMarkerContent(raw)) return;
+  pendingContentInjection.add(raw);
+  if (typeof queueMicrotask === 'function') {
+    let attempts = 0;
+    const retry = (): void => {
+      attempts++;
+      // 先查登记(已摘除/已注入 → 终止),再尝试注入
+      if (!pendingContentInjection.has(raw) || injectMarkerContent(raw)) {
+        finishContentInjection(raw);
+        return;
+      }
+      if (attempts < CONTENT_DOM_MICRO_MAX_ATTEMPTS) queueMicrotask(retry);
+    };
+    queueMicrotask(retry);
+  }
+  injectRetryByFrames(raw);
+  injectRetryByTimers(raw);
 }
 
 /** Autocomplete headless 路径超时兜底(ms):厂商静默失败时避免 promise 挂起 */
@@ -994,6 +1027,7 @@ class BaiduMapView implements MapView {
         // cb 缺省:BMapGL 无「按事件清空」形态 → 保留(调用方应传 cb 精确解绑)
       },
       remove: () => {
+        pendingContentInjection.delete(raw); // 摘除 → 终止注入重试链
         this.map.removeOverlay?.(raw);
         raw.remove?.();
       },
@@ -1102,6 +1136,7 @@ class BaiduMapView implements MapView {
         // cb 缺省:BMapGL 无「按事件清空」形态 → 保留(调用方应传 cb 精确解绑)
       },
       remove: () => {
+        pendingContentInjection.delete(raw); // 摘除 → 终止注入重试链
         this.map.removeOverlay?.(raw);
         raw.remove?.();
       },

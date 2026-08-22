@@ -1321,3 +1321,45 @@ onerror fallbackUrls;TMap icon 路径此前只有单一 src,预检失败直接�
   (rgb 230→110),切换后 1048 徽章仍在
 - 内存:固定 zoom 下 marker 总数稳定,无增长循环;zoom 分桶切换的 addOverlay
   增量有界(≤135)
+
+## ws-f r4 回填:注入重试窗口在重负载下失效(主树复验 136 警告 + 0 徽章)→ 定时器兜底(2026-08-22,fix/baidu-r4)
+
+> r3 合并进 dev 后 boss 主树复验(dev server :3000,Playwright):console 136 条
+> `[map-engine] BMapGL content 标记 DOM 注入超时` + `.dm-badge` = 0(徽章未渲染),
+> 页面交互正常(无卡死)。本 WS 以**真机 Chromium + 真实 SDK**对比 r3/r4 定位。
+
+### 根因:r3「零定时器」重试窗口太短且依赖 rAF 调度
+
+- r3 注入链 = 同步 + 微任务 4 轮 + **rAF 5 帧**(≈80-350ms)。重负载/慢首帧下
+  **rAF 帧回调停摆**(真机 8× CPU 节流 + 缓存目录重载坐实:addOverlay 后
+  domElement 迟至 **1-10s** 才创建,期间 rAF 链静默悬挂——旧链既不注入也不
+  告警;且 5 帧窗口对迟到的 domElement 恒失败);
+- 主树复验为何 r3 单元/验收全绿却失败:常规时序 domElement 同步/数帧就绪
+  (r3 实测依据),但**数据快(缓存目录)+ 渲染慢(MCP 长会话/重负载)**时 marker
+  先于首帧渲染创建 → domElement 迟到 → 5 帧窗口耗尽 → 警告 + 徽章永久缺失;
+  应用侧 setContent 重入(状态变化)只是偶然救援,状态不变时不触发;
+- 结论:**注入必须不依赖 rAF 帧调度,且窗口必须覆盖「domElement 迟到」量级**。
+
+### 修复(baidu-engine.ts r4):低频率自终止定时器兜底 + rAF 快路径保留
+
+- 注入链 = 同步 + 微任务 4 轮 + **rAF 3 帧快路径** + **定时器兜底**(首 tick
+  100ms,之后 250ms 步进,上限 80 tick ≈ 20s,自终止;每 marker 独立一条链,
+  `injectMarkerContent` 内容不变不重写 → 零抖动);
+- `pendingContentInjection` 登记表:注入成功 / marker 摘除(wrapper.remove)/
+  链耗尽即摘除,重试链先查登记再注入(已摘除 marker 不得写入);
+- 超时警告降为 20s 全失败后**一次性**输出(正常时序零噪音;r3 的 5 帧短窗口
+  + 依赖 rAF 的机制删除);
+- 定时器频率远低于 ws-e 版(50ms→250ms),且无 Overlay 无主 DOM 拖累(r3 已
+  消除)→ 不构成渲染负担(主树 r3 已无卡死,boss 复验「页面交互正常」佐证)。
+
+### 真机验收(fix 后,dev server + Playwright)
+
+- 主树同条件复测(r3→r4 同环境):全新会话 1048 徽章、缓存重载 400 徽章、
+  8×/12× CPU 节流重载徽章全渲染、注入超时警告 **0** 条;domElement 迟至
+  1-10s 的 marker 由定时器兜底注入成功(单元测试无 rAF 环境坐实:node 无
+  requestAnimationFrame → 定时器链 100ms 首 tick 命中)
+- 回归(与 r3 验收同矩阵):z≤8 聚合徽章可见、z>8 单点 1048 徽章可见、badge
+  点击 → POI 详情 + 选中态、滚轮缩放响应、标准/卫星/深色切换正常、console
+  零报错、截图 0.1s 级
+- 测试:`map-engine-baidu.test.mjs` +3(定时器兜底注入 / rAF 快路径 / remove
+  终止注入链),85/85 通过;`npm test` 1419 通过 / 0 失败 / 2 skip

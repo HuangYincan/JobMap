@@ -2230,14 +2230,10 @@ test('createMarker(ws-e):真实 SDK 形态(无 setContent)→ content 注入厂�
   assert.equal(clicks, 1, '注入内容点击可达(选中反馈)');
 });
 
-test('createMarker(ws-e):domElement 延迟就绪 → 微任务+rAF 有界重试注入(零定时器,ws-f r3)', async () => {
+test('createMarker(ws-f r4):domElement 延迟就绪 → 定时器兜底注入(无 rAF 依赖,低频率自终止)', async () => {
   setup();
   mockNs.ns.Marker = FakeNoContentMarker;
-  FakeNoContentMarker.domReady = false; // 模拟异常形态:构造后 DOM 尚未创建
-  // 浏览器帧回调双面(node 无 rAF;真实浏览器 addOverlay 同步创建 domElement,
-  // 重试纯防御 → rAF 5 帧内命中)
-  const origRAF = globalThis.requestAnimationFrame;
-  globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 5);
+  FakeNoContentMarker.domReady = false; // 重负载/慢首帧形态:addOverlay 后 domElement 迟建
   const origWarn = console.warn;
   const warns = [];
   console.warn = (...args) => warns.push(args);
@@ -2247,14 +2243,53 @@ test('createMarker(ws-e):domElement 延迟就绪 → 微任务+rAF 有界重试�
     const marker = view.createMarker({ position: GCJ, content: html });
     const raw = marker.raw;
     assert.equal(raw.domElement, undefined, '前置:domElement 尚未创建');
-    await new Promise((r) => setTimeout(r, 10)); // 微任务 4 轮已耗尽,rAF 重试段进行中
-    raw.domElement = { innerHTML: '' }; // 模块加载回调后 DOM 就绪
-    await new Promise((r) => setTimeout(r, 50)); // rAF 5 帧(5ms×5)内注入
-    assert.equal(raw.domElement.innerHTML, html, '重试注入成功(不丢 content)');
+    await new Promise((r) => setTimeout(r, 30)); // 微任务快速路径已耗尽(node 无 rAF → 定时器接管)
+    raw.domElement = { innerHTML: '' }; // 数百 ms 后 domElement 才就绪(真机 8× 节流实测 1-10s)
+    await new Promise((r) => setTimeout(r, 200)); // 定时器首 tick 100ms 命中
+    assert.equal(raw.domElement.innerHTML, html, '定时器兜底注入成功(不丢 content)');
     assert.equal(warns.length, 0, '注入命中 → 无超时告警');
   } finally {
-    globalThis.requestAnimationFrame = origRAF;
     console.warn = origWarn;
+    FakeNoContentMarker.domReady = true;
+  }
+});
+
+test('createMarker(ws-f r4):rAF 快路径——domElement 次帧就绪 → 帧内注入', async () => {
+  setup();
+  mockNs.ns.Marker = FakeNoContentMarker;
+  FakeNoContentMarker.domReady = false;
+  // 浏览器帧回调双面(node 无 rAF;真实浏览器帧调度正常时 rAF 3 帧内命中)
+  const origRAF = globalThis.requestAnimationFrame;
+  globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 5);
+  try {
+    const { view } = await makeView();
+    const marker = view.createMarker({ position: GCJ, content: '帧注入' });
+    const raw = marker.raw;
+    await new Promise((r) => setTimeout(r, 10)); // 微任务已耗尽,rAF 段进行中
+    raw.domElement = { innerHTML: '' };
+    await new Promise((r) => setTimeout(r, 40)); // rAF 3 帧(5ms×3)内注入
+    assert.equal(raw.domElement.innerHTML, '帧注入', 'rAF 快路径注入成功');
+  } finally {
+    globalThis.requestAnimationFrame = origRAF;
+    FakeNoContentMarker.domReady = true;
+  }
+});
+
+test('createMarker(ws-f r4):remove 摘除 → 注入链终止(不注入已摘除 marker)', async () => {
+  setup();
+  mockNs.ns.Marker = FakeNoContentMarker;
+  FakeNoContentMarker.domReady = false;
+  try {
+    const { view } = await makeView();
+    const marker = view.createMarker({ position: GCJ, content: 'x' });
+    const raw = marker.raw;
+    marker.remove(); // 摘除 → pending 登记摘除,重试链自终止
+    await new Promise((r) => setTimeout(r, 30));
+    raw.domElement = { innerHTML: '' }; // 摘除后才就绪
+    await new Promise((r) => setTimeout(r, 200));
+    assert.equal(raw.domElement.innerHTML, '', '已摘除 marker 不再注入(链已终止)');
+    assert.equal(view.raw.overlays.length, 0, 'removeOverlay 已摘除');
+  } finally {
     FakeNoContentMarker.domReady = true;
   }
 });
