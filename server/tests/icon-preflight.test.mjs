@@ -11,7 +11,8 @@
 //   reset 后从 sessionStorage 读回 fail、已知失败 URL 零新预检;
 //   隐私模式(get/set throw)与损坏内容(JSON 解析失败)静默降级不抛;
 // - map-markers TMap icon 构造(控制器级,假 tencent view):
-//   未验证 → 徽章 dataURL + 后台预检触发;ok → 真 src;fail → 徽章且不重试;
+//   未验证 → 徽章 dataURL + 后台预检触发;ok → fetch 字节内联进徽章 SVG
+//   (ws-k:SVG-as-image 不抓远程子资源,必须内联);fail → 徽章且不重试;
 //   成功升级路径(下次重建真 logo);data URL / 缺 logo → 徽章或直通零预检;
 //   AMap 引擎零变化(不设 icon)。
 // ============================================================
@@ -25,7 +26,7 @@ import {
   remoteIconStatus,
   resetIconPreflightCache,
 } from '../src/lib/map-engine/icon-preflight.ts';
-import { createPOIMarkerController } from '../src/lib/map-markers.ts';
+import { createPOIMarkerController, resetRemoteIconDataUriCache } from '../src/lib/map-markers.ts';
 import { makePoi } from './fixtures/amap-mock.mjs';
 
 const REMOTE = 'https://favicon.im/example.com';
@@ -104,6 +105,28 @@ const readFailList = (store) => JSON.parse(store.get(FAIL_KEY));
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
+/** 1×1 红色 PNG(ws-k 远程图标内联 fetch mock 的响应字节)。 */
+const PNG_BYTES = new Uint8Array(
+  atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
+    .split('')
+    .map((c) => c.charCodeAt(0))
+);
+const PNG_DATA_URI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+/** fetch mock(ws-k 内联升级):任意 URL → 1×1 PNG;failUrls → 404。 */
+function installFetchMock({ failUrls = [] } = {}) {
+  const original = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, opts) => {
+    calls.push({ url: String(url), opts });
+    if (failUrls.includes(String(url))) {
+      return new Response('not found', { status: 404 });
+    }
+    return new Response(PNG_BYTES, { status: 200, headers: { 'content-type': 'image/png' } });
+  };
+  return { calls, restore: () => (globalThis.fetch = original) };
+}
+
 test.beforeEach(() => {
   resetIconPreflightCache();
   // Node ≥22 暴露实验性全局 sessionStorage(真实存储,模块 flush 可能残留)→
@@ -117,6 +140,7 @@ test.beforeEach(() => {
 
 test.afterEach(() => {
   resetIconPreflightCache();
+  resetRemoteIconDataUriCache();
 });
 
 // ---- 纯模块:状态机 --------------------------------------------------------
@@ -377,8 +401,9 @@ test('TMap icon:远程未验证 → 徽章 dataURL 降级 + 后台 Image 匿名�
   }
 });
 
-test('TMap icon:预检成功 → 真 logo src;升级路径(下次重建自然升级)', async () => {
+test('TMap icon:预检成功 → 真 logo(字节内联进徽章 SVG,ws-k);升级路径(下次重建自然升级)', async () => {
   const image = installImageMock();
+  const fetchMock = installFetchMock();
   try {
     // 先预检成功
     preflightRemoteIcon(REMOTE);
@@ -387,15 +412,25 @@ test('TMap icon:预检成功 → 真 logo src;升级路径(下次重建自然升
     const { view, calls } = makeTencentView();
     const c = createPOIMarkerController(view, {});
     c.setPOIs([makeRecruitPoi('p1', REMOTE)]);
-    assert.equal(calls[0].icon.src, REMOTE, '已预检 ok → 真 logo 直通');
+    // 内联未就绪(字节未 fetch)→ 先挂 emoji 徽章(绝不裸 URL 作纹理)
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '内联未就绪 → emoji 徽章(不裸传 URL,ws-k)');
     assert.equal(image.calls.length, 1, 'ok 缓存命中,不重复预检');
-    // 升级路径:LOD 重建新增同 URL 新 POI → 真 logo
+    await settle();
+    // fetch 完成 → 原地重建升级:徽章包裹 base64 dataURI
+    assert.equal(fetchMock.calls.length, 1, '远程字节 fetch 1 次(CORS 可读)');
+    const svg1 = decodeURIComponent(String(calls[1].icon.src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+    assert.ok(svg1.includes(`href="${PNG_DATA_URI}"`), 'fetch 字节 base64 内联进徽章 SVG(真 logo 进入白底边框徽章)');
+    assert.ok(svg1.includes('fill="#ffffff"') && svg1.includes('stroke-width="2"'), '白底 + 边框保留(升级不丢徽章形态)');
+    // 升级路径:LOD 重建新增同 URL 新 POI → 缓存命中,同步徽章包裹真 logo
     c.setPOIs([makeRecruitPoi('p1', REMOTE), makeRecruitPoi('p2', REMOTE)]);
-    assert.equal(calls[1].icon.src, REMOTE, '重建的新 marker 拿到 ok 状态 → 真 logo');
+    const svg2 = decodeURIComponent(String(calls[2].icon.src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+    assert.ok(svg2.includes(`href="${PNG_DATA_URI}"`), '重建的新 marker 缓存命中 → 同步徽章包裹真 logo');
+    assert.equal(fetchMock.calls.length, 1, '缓存记忆化:同 URL 零重复 fetch');
     assert.equal(image.calls.length, 1);
     c.destroy();
   } finally {
     image.restore();
+    fetchMock.restore();
   }
 });
 

@@ -16,9 +16,12 @@ import {
   resolveTMapMarkerAnchor,
 } from '../src/lib/map-engine/tencent/tencent-engine.ts';
 import {
+  badgeWithRemoteIcon,
   createCityClusterMarker,
   createPOIMarkerController,
+  fetchRemoteIconDataUri,
   resolveTMapIconSrc,
+  resetRemoteIconDataUriCache,
 } from '../src/lib/map-markers.ts';
 import {
   preflightRemoteIcon,
@@ -284,6 +287,7 @@ afterEach(() => {
   delete globalThis.fetch;
   // ws-c:icon 候选链测试使用预检状态机 → 每测后清缓存防串扰
   resetIconPreflightCache();
+  resetRemoteIconDataUriCache();
   try {
     globalThis.sessionStorage?.removeItem('domain-map:icon-preflight-fail');
   } catch {
@@ -2256,6 +2260,51 @@ function makeRecruitPoi(id, logoUrl, careerUrl) {
   });
 }
 
+/** 解码 icon.src(dataURL SVG)→ 原始 SVG 文本(断言徽章包裹用)。 */
+function decodeIconSvg(src) {
+  assert.ok(
+    String(src).startsWith('data:image/svg+xml'),
+    `升级 src 必须是 dataURL SVG(实际:${String(src).slice(0, 50)}…)`,
+  );
+  return decodeURIComponent(String(src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+}
+
+/** 断言远程真 logo 的 icon.src 是「徽章包裹」dataURL(白底 + 边框 + 居中内联图)。 */
+function assertWrappedBadge(src) {
+  const svg = decodeIconSvg(src);
+  assert.ok(svg.includes('width="40" height="40"'), '徽章 40×40(与 AMap 同视觉)');
+  assert.ok(svg.includes('rx="10"') && svg.includes('stroke-width="2"'), '白底圆角 + 边框(徽章形态保留)');
+  assert.ok(svg.includes('href="data:image/'), '远程字节已内联 dataURI 进徽章(ws-k:SVG-as-image 不抓子资源,必须内联)');
+  assert.ok(svg.includes('preserveAspectRatio="xMidYMid meet"'), '保比例居中');
+  assert.ok(svg.includes('clip-path="url(#bc)"'), 'clipPath 圆角裁剪');
+}
+
+/** 1×1 红色 PNG(远程图标 fetch mock 的响应字节 → base64 dataURI 恒定可断言)。 */
+const PNG_BYTES = new Uint8Array(
+  atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==')
+    .split('')
+    .map((c) => c.charCodeAt(0))
+);
+const PNG_DATA_URI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+/**
+ * fetch mock(ws-k 远程图标内联升级路径):任意 URL → 1×1 PNG 字节
+ * (content-type image/png → blob.type → base64 dataURI 确定可断言);
+ * failUrls → 404(模拟 fetch 失败 → 保持 emoji 徽章)。
+ */
+function installFetchMock({ failUrls = [] } = {}) {
+  const original = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, opts) => {
+    calls.push({ url: String(url), opts });
+    if (failUrls.includes(String(url))) {
+      return new Response('not found', { status: 404 });
+    }
+    return new Response(PNG_BYTES, { status: 200, headers: { 'content-type': 'image/png' } });
+  };
+  return { calls, restore: () => (globalThis.fetch = original) };
+}
+
 /** 假 tencent view:记录 createMarker opts,返回契约包装(与 icon-preflight.test.mjs 同款)。 */
 function makeTencentView() {
   const calls = [];
@@ -2298,9 +2347,30 @@ test('resolveTMapIconSrc:纯函数——本地直通;unknown → fallback + 预�
   assert.equal(r2.toPreflight.filter((u) => u === faviconIm).length, 1, '候选与 logoUrl 相同 → 跳过不重复');
 });
 
-test('TMap icon 候选链:logoUrl 预检失败 → icon.horse 候选作 src(去重跳过同 URL)', async () => {
+test('badgeWithRemoteIcon:真 logo 内联 dataURI 包进徽章 SVG(白底 + 边框 + 居中保比例 + 圆角裁剪)', () => {
+  const src = badgeWithRemoteIcon(PNG_DATA_URI, '#007AFF', 'normal');
+  const svg = decodeIconSvg(src);
+  assert.ok(svg.includes('width="40" height="40"'), '40×40 与 recruitmentBadgeSVG 同规格');
+  assert.ok(svg.includes('fill="#ffffff"'), '白底');
+  assert.ok(svg.includes('rx="10"') && svg.includes('stroke="#007AFF" stroke-width="2"'), '圆角 + #007AFF 边框(徽章视觉语言)');
+  assert.ok(svg.includes(`href="${PNG_DATA_URI}"`), '内联 dataURI 原样进 <image href>(SVG-as-image 不抓远程子资源,必须内联)');
+  assert.ok(svg.includes('x="8" y="8" width="24" height="24"'), '约 24×24 居中(40-24)/2=8');
+  assert.ok(svg.includes('preserveAspectRatio="xMidYMid meet"'), '保比例');
+  assert.ok(svg.includes('clip-path="url(#bc)"'), 'clipPath 圆角裁剪');
+  assert.ok(svg.includes('<clipPath id="bc"><rect x="2" y="2" width="36" height="36" rx="10"/></clipPath>'), '裁剪区 = 内白底圆角区');
+  // 状态语义:selected 外圈 + highlighted 透明度(与 recruitmentBadgeSVG 同)
+  // 注意:dataURL 是 encodeURIComponent 形态,必须先 decode 再断言 SVG 内容
+  assert.ok(!decodeIconSvg(badgeWithRemoteIcon(PNG_DATA_URI, '#007AFF', 'normal')).includes('opacity="0.45"'), 'normal 无外圈');
+  assert.ok(decodeIconSvg(badgeWithRemoteIcon(PNG_DATA_URI, '#007AFF', 'selected')).includes('stroke-width="2.5" opacity="0.45"'), 'selected 外圈保留');
+  assert.ok(decodeIconSvg(badgeWithRemoteIcon(PNG_DATA_URI, '#007AFF', 'highlighted')).includes('fill-opacity="0.9"'), 'highlighted 轻微透明');
+  // 非法色注入防护:非法十六进制 → 品牌蓝兜底(normalizeColor 语义)
+  assert.ok(decodeIconSvg(badgeWithRemoteIcon(PNG_DATA_URI, 'red', 'normal')).includes('stroke="#3478F6"'), '非法色 → 默认色兜底');
+});
+
+test('TMap icon 候选链:logoUrl 预检失败 → icon.horse 候选作 src(去重跳过同 URL);内联升级', async () => {
   const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
   const image = installImageMock({ failUrls: [faviconIm] }); // favicon.im 无 CORS 头 → 恒败
+  const fetchMock = installFetchMock();
   try {
     // 先决:logoUrl(favicon.im)失败;icon.horse(实测 ACAO:* 合规)成功
     preflightRemoteIcon(faviconIm);
@@ -2313,21 +2383,37 @@ test('TMap icon 候选链:logoUrl 预检失败 → icon.horse 候选作 src(去�
     const { view, calls } = makeTencentView();
     const c = createPOIMarkerController(view, {});
     c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
-    assert.equal(
-      calls[0].icon.src,
-      iconHorse,
-      'logoUrl 失败 → 候选链首个通过预检者(icon.horse)作 icon.src(公司 logo 显示)',
-    );
+    // 内联未就绪(字节未 fetch)→ 先挂 emoji 徽章(绝不裸 URL 作纹理)
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '内联未就绪 → emoji 徽章');
     assert.deepEqual(calls[0].icon.size, [40, 40], '徽章 40×40 与 AMap 同视觉');
     assert.equal(image.calls.filter((i) => i.src === faviconIm).length, 1, '候选去重:同 URL 不重复预检');
+    await settle();
+    // fetch 完成 → 原地重建升级:徽章包裹 base64 dataURI(白底 + 边框 + 居中真 logo)
+    assert.equal(fetchMock.calls.length, 1, '同 URL 只 fetch 一次');
+    assert.equal(fetchMock.calls[0].url, iconHorse, 'fetch 目标 = 候选链选中的 icon.horse');
+    assert.equal(calls.length, 2, '升级 = 摘除 + 重建(第二次 createMarker)');
+    assertWrappedBadge(calls[1].icon.src);
+    assert.ok(
+      decodeIconSvg(calls[1].icon.src).includes(`href="${PNG_DATA_URI}"`),
+      '内联 dataURI 与 fetch 字节一致(真 logo 进入徽章)',
+    );
+    // 缓存命中:后续同 URL 新 marker 同步徽章包裹,零新 fetch
+    c.setPOIs([
+      makeRecruitPoi('p1', faviconIm, 'https://example.com/careers'),
+      makeRecruitPoi('p2', faviconIm, 'https://example.com/careers'),
+    ]);
+    assertWrappedBadge(calls[2].icon.src);
+    assert.equal(fetchMock.calls.length, 1, '缓存记忆化:同 URL 零重复 fetch');
     c.destroy();
   } finally {
     image.restore();
+    fetchMock.restore();
   }
 });
 
 test('TMap icon 候选链:链式预检——只预检第一个 unknown;失败记忆化后下次重建推进下一候选', async () => {
   const image = installImageMock({ failUrls: [faviconCandidatesFromUrl('https://example.com/careers')[0]] });
+  const fetchMock = installFetchMock();
   try {
     const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
     const { view, calls } = makeTencentView();
@@ -2345,19 +2431,27 @@ test('TMap icon 候选链:链式预检——只预检第一个 unknown;失败记
     assert.deepEqual(image.calls.map((i) => i.src), [faviconIm, iconHorse], '链推进:第二个 unknown(icon.horse)才预检');
     await settle();
     assert.equal(remoteIconStatus(iconHorse), 'ok', 'icon.horse 预检成功(CORS 合规)');
+    assert.equal(fetchMock.calls.length, 0, 'icon.horse 未定期间零 fetch(字节内联在预检 ok 门后)');
 
-    // 第三次:icon.horse ok → 新 marker 升级真 logo;记忆化:零新增预检
+    // 第三次:icon.horse ok → 新 marker 先 emoji 待内联,fetch 完成后原地升级真 logo
     c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p2', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p3', faviconIm, 'https://example.com/careers')]);
-    assert.equal(calls[2].icon.src, iconHorse, '重建的新 marker 走候选链升级为真 logo(icon.horse)');
+    assert.ok(String(calls[2].icon.src).startsWith('data:image/svg+xml'), '内联未就绪 → 先 emoji(不裸 URL 作纹理)');
     assert.equal(image.calls.length, 2, '失败/成功记忆化:不重复预检(首会话每 POI 最多 1 个预检)');
+    await settle();
+    // p3(新 marker)+ p1/p2(存量 emoji 经 maybeUpgradeIcon 自然升级)全部重建
+    assert.equal(fetchMock.calls.length, 1, '升级 fetch 只 1 次(同 URL 缓存记忆化)');
+    assert.equal(calls.length, 6, 'p3 重建 + p1/p2 存量 emoji 自然升级(pan/LOD 可见集检查路径)');
+    for (let i = 3; i < 6; i++) assertWrappedBadge(calls[i].icon.src);
     c.destroy();
   } finally {
     image.restore();
+    fetchMock.restore();
   }
 });
 
-test('TMap icon 候选链:logoUrl 已预检 ok → 直通真 src,不试候选', async () => {
+test('TMap icon 候选链:logoUrl 已预检 ok → 真 src,不试候选;字节内联后徽章包裹', async () => {
   const image = installImageMock();
+  const fetchMock = installFetchMock();
   try {
     const [faviconIm] = faviconCandidatesFromUrl('https://example.com/careers');
     preflightRemoteIcon(faviconIm);
@@ -2365,11 +2459,19 @@ test('TMap icon 候选链:logoUrl 已预检 ok → 直通真 src,不试候选', 
     const { view, calls } = makeTencentView();
     const c = createPOIMarkerController(view, {});
     c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
-    assert.equal(calls[0].icon.src, faviconIm, 'ok → 真 logo 直通');
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '内联未就绪 → 先 emoji(不裸 URL 作纹理)');
     assert.equal(image.calls.length, 1, '候选不预检(logoUrl ok 即止)');
+    await settle();
+    assert.equal(fetchMock.calls.length, 1, '内联 fetch 1 次');
+    assertWrappedBadge(calls[1].icon.src);
+    assert.ok(
+      decodeIconSvg(calls[1].icon.src).includes(`href="${PNG_DATA_URI}"`),
+      'logoUrl 字节内联进徽章(白底 + 边框 + 居中真 logo)',
+    );
     c.destroy();
   } finally {
     image.restore();
+    fetchMock.restore();
   }
 });
 
@@ -2389,6 +2491,75 @@ test('TMap icon 候选链:全部失败 → emoji 徽章;失败记忆化不重试
     c.destroy();
   } finally {
     image.restore();
+  }
+});
+
+test('TMap icon 内联升级:fetch 失败 → 保持 emoji 徽章(静默降级,不裸 URL 不报错)', async () => {
+  const [faviconIm] = faviconCandidatesFromUrl('https://example.com/careers');
+  const image = installImageMock();
+  const fetchMock = installFetchMock({ failUrls: [faviconIm] }); // 预检 ok 但字节 fetch 404
+  try {
+    preflightRemoteIcon(faviconIm);
+    await settle();
+    const { view, calls } = makeTencentView();
+    const c = createPOIMarkerController(view, {});
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '内联未就绪 → emoji');
+    await settle();
+    assert.equal(fetchMock.calls.length, 1, 'fetch 尝试 1 次');
+    assert.equal(calls.length, 1, 'fetch 失败 → 不重建,保持 emoji 徽章');
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '失败后仍是 emoji 徽章(视觉不回归)');
+    assert.equal(image.calls.length, 1, '预检记忆化:不重试');
+    // 不记失败缓存 → 下次重建(新 marker)自然重试 fetch
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p2', faviconIm, 'https://example.com/careers')]);
+    await settle();
+    assert.equal(fetchMock.calls.length, 2, '失败不记忆化:新 marker 重建重试 fetch');
+    c.destroy();
+  } finally {
+    image.restore();
+    fetchMock.restore();
+  }
+});
+
+test('TMap icon 自然升级:pan/LOD 可见集切换(setVisiblePOIs)补升级存量 emoji 徽章', async () => {
+  const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
+  const image = installImageMock({ failUrls: [faviconIm] });
+  const fetchMock = installFetchMock();
+  try {
+    const { view, calls } = makeTencentView();
+    const c = createPOIMarkerController(view, {});
+    // 首次创建:favicon.im 未定 → emoji 徽章(无升级待办)
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '未定 → emoji 徽章');
+    await settle();
+    assert.equal(remoteIconStatus(faviconIm), 'fail');
+    // 可见集切换(pan/LOD):链推进预检 icon.horse → ok(不重建,仍 emoji)
+    c.setVisiblePOIs(['p1']);
+    await settle();
+    assert.equal(remoteIconStatus(iconHorse), 'ok', 'pan/LOD 检查推进候选链预检 icon.horse');
+    assert.equal(calls.length, 1, '预检未定 → 不重建');
+    assert.equal(fetchMock.calls.length, 0, '预检未定 → 不 fetch');
+    // 再切一次可见集:icon.horse ok → 异步 fetch 内联 → 原地升级徽章包裹
+    c.setVisiblePOIs(['p1']);
+    assert.equal(calls.length, 1, 'fetch 未决 → 先不重建');
+    await settle();
+    assert.equal(fetchMock.calls.length, 1, '自然升级 fetch 1 次');
+    assert.equal(calls.length, 2, '原地重建升级(摘除 + addMarker)');
+    assertWrappedBadge(calls[1].icon.src);
+    assert.ok(
+      decodeIconSvg(calls[1].icon.src).includes(`href="${PNG_DATA_URI}"`),
+      '升级徽章 = 白底 + 边框 + 居中真 logo 字节',
+    );
+    // 已升级(logo 形态)→ 后续可见集切换零动作
+    c.setVisiblePOIs([]);
+    c.setVisiblePOIs(['p1']);
+    await settle();
+    assert.equal(calls.length, 2, '已升级 → 零重建');
+    assert.equal(fetchMock.calls.length, 1, '已升级 → 零新 fetch');
+    c.destroy();
+  } finally {
+    image.restore();
+    fetchMock.restore();
   }
 });
 

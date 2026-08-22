@@ -286,15 +286,12 @@ export function resolveTMapIconSrc(
   return { src: fallbackSrc, toPreflight };
 }
 
-/** 无远程图时的 SVG 徽章（测试 / 无 logoUrl 回退）。 */
-export function recruitmentBadgeSVG(
-  logo: string | undefined,
-  _logoUrl: string | undefined,
-  color: string,
-  state: MarkerState
-): string {
-  const c = normalizeColor(color);
-  const emoji = toEmojiLogo(logo);
+/**
+ * 徽章 SVG 外壳（白底圆角 + 强调色描边 + 状态外圈），recruitmentBadgeSVG 与
+ * badgeWithRemoteIcon 共享——emoji 与远程真 logo 两种内容形态的边框视觉语言
+ * 逐像素一致（ws-k：升级真 logo 后徽章形态不丢失，三引擎同语言）。
+ */
+function badgeShellSVG(c: string, state: MarkerState): string {
   const fillOpacity = state === 'highlighted' ? 0.9 : 1;
   const parts: string[] = [];
   if (state !== 'normal') {
@@ -306,10 +303,117 @@ export function recruitmentBadgeSVG(
     `<rect x="2" y="2" width="36" height="36" rx="10" fill="#ffffff" fill-opacity="${fillOpacity}" ` +
       `stroke="${c}" stroke-width="2"/>`
   );
-  parts.push(
-    `<text x="20" y="21" font-size="16" text-anchor="middle" dominant-baseline="central">${emoji}</text>`
+  return parts.join('');
+}
+
+/** 无远程图时的 SVG 徽章（测试 / 无 logoUrl 回退）。 */
+export function recruitmentBadgeSVG(
+  logo: string | undefined,
+  _logoUrl: string | undefined,
+  color: string,
+  state: MarkerState
+): string {
+  const emoji = toEmojiLogo(logo);
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">` +
+    badgeShellSVG(normalizeColor(color), state) +
+    `<text x="20" y="21" font-size="16" text-anchor="middle" dominant-baseline="central">${emoji}</text>` +
+    `</svg>`
   );
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">${parts.join('')}</svg>`;
+}
+
+/**
+ * 远程真 logo 徽章 SVG 数据图（2026-08-23 ws-k,fix/tmap-icon-frame）。
+ *
+ * 升级保留徽章形态的主修复：icon.horse 等远程真 logo 预检成功后，不再把裸
+ * favicon URL 直接作 TMap GL 纹理（无白底无边框，用户报「腾讯地图 poi 只有
+ * icon 没有边框」），而是包进徽章 SVG 再作纹理——白底圆角 + 强调色描边 +
+ * 居中图标（约 24×24，preserveAspectRatio 保比例 + clipPath 圆角裁剪），
+ * 与 recruitmentBadgeSVG（emoji）/ AMap/Baidu HTML 徽章（recruitmentBadgeHTML）
+ * 同视觉语言。状态样式（selected/highlighted）保持现有语义：外圈 + 尺寸经
+ * 调用方 stateScale 缩放。
+ *
+ * **<image href> 必须传内联 dataURI，不能直引远程 URL**（ws-k 真机实测，
+ * 结论见 tech/23 §7）：Chrome 对 SVG-as-image（dataURL SVG 经 <img>/Image
+ * 解码）不抓取任何子资源——<image href="https://icon.horse/..."> 的请求
+ * 根本不会发出（Network 零请求），图像区光栅化为浅蓝占位（或透明）而非
+ * favicon；TMap GL 纹理路径同此行为。远程字节须由调用方先 fetch（icon.horse
+ * 有 ACAO:*，CORS 可读）→ base64 dataURI 内联进本 SVG（fetchRemoteIconDataUri
+ * + 调用方升级流程）。
+ *
+ * @param iconUrl 内联图标 dataURI（升级路径由 fetchRemoteIconDataUri 产出）
+ * @returns dataURL SVG（可直接作契约 icon.src）。
+ */
+export function badgeWithRemoteIcon(
+  iconUrl: string,
+  color: string,
+  state: MarkerState
+): string {
+  const url = escapeAttr(iconUrl);
+  return svgToDataUri(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">` +
+      badgeShellSVG(normalizeColor(color), state) +
+      `<clipPath id="bc"><rect x="2" y="2" width="36" height="36" rx="10"/></clipPath>` +
+      `<image href="${url}" x="8" y="8" width="24" height="24" preserveAspectRatio="xMidYMid meet" clip-path="url(#bc)"/>` +
+      `</svg>`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 远程图标内联化(2026-08-23 ws-k)——升级路径的字节搬运层
+//
+// 背景:见 badgeWithRemoteIcon 注释——SVG-as-image 不抓取子资源,远程
+// favicon 必须 fetch 成字节 → base64 dataURI 内联进徽章 SVG,纹理才渲染
+// 真 logo。icon.horse 有 access-control-allow-origin:*（ws-c 实测）→
+// fetch(mode:'cors') 可读;fetch 已在 icon-preflight 'ok' 门后触发
+// （resolveTMapIconSrc 只对预检成功的远程 URL 返回真 src）,不会对无 CORS
+// 头/失败的 URL 发起(favicon.im 等被预检拦截,链式推进语义保持)。
+// ---------------------------------------------------------------------------
+
+/** URL → base64 dataURI 缓存（同会话同 URL 只 fetch 一次,成功后记忆化）。 */
+const remoteIconDataUriCache = new Map<string, string>();
+/** 进行中的 fetch:URL → Promise。失败从表中摘除(下次 marker 重建自然重试)。 */
+const remoteIconFetching = new Map<string, Promise<string>>();
+
+/** Blob → base64 dataURI（浏览器与 node 测试同路径,无 FileReader 依赖）。 */
+async function blobToDataUri(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return `data:${blob.type || 'image/png'};base64,${btoa(bin)}`;
+}
+
+/**
+ * fetch 远程图标字节 → base64 dataURI（幂等,成功记忆化;失败可重试）。
+ * 调用前提:URL 已过 icon-preflight 'ok'(CORS 合规 + 可解码)——fetch 失败
+ * 属网络偶发,不记失败缓存,下次重建自然重试(与预检失败记忆化语义区分)。
+ * 无全局 fetch(异常环境)→ 返回 reject,调用方保持 emoji 徽章不抛错。
+ */
+export async function fetchRemoteIconDataUri(url: string): Promise<string> {
+  const cached = remoteIconDataUriCache.get(url);
+  if (cached) return cached;
+  let pending = remoteIconFetching.get(url);
+  if (!pending) {
+    if (typeof fetch !== 'function') {
+      return Promise.reject(new Error('[map-markers] 无全局 fetch,远程图标无法内联'));
+    }
+    pending = (async () => {
+      const res = await fetch(url, { mode: 'cors', referrerPolicy: 'no-referrer' });
+      if (!res.ok) throw new Error(`[map-markers] favicon fetch ${res.status}: ${url}`);
+      const dataUri = await blobToDataUri(await res.blob());
+      remoteIconDataUriCache.set(url, dataUri);
+      return dataUri;
+    })();
+    pending.catch(() => remoteIconFetching.delete(url));
+    remoteIconFetching.set(url, pending);
+  }
+  return pending;
+}
+
+/** 清空远程图标内联缓存(仅测试使用,生产不调用)。 */
+export function resetRemoteIconDataUriCache(): void {
+  remoteIconDataUriCache.clear();
+  remoteIconFetching.clear();
 }
 
 const BADGE_STYLE = `
@@ -524,6 +628,12 @@ class POIMarkerControllerImpl implements POIMarkerController {
   /** poiId → 当前视觉状态，用于避免重复 setIcon 造成闪烁。 */
   private markerStates = new Map<string, MarkerState>();
   /**
+   * poiId → 当前 icon 形态（ws-k 升级机):'emoji' = 本地 emoji 徽章(可升级)、
+   * 'logo' = 远程真 logo 徽章(已升级)、'local' = 本地直通 src(无升级路径)。
+   * maybeUpgradeIcon 只对 'emoji' 尝试升级;removeMarker 同步清理。
+   */
+  private markerIconKinds = new Map<string, 'emoji' | 'logo' | 'local'>();
+  /**
    * 可见 id 集(b2)：null = 全部显示。跨 setPOIs 保留——marker 实例只增不删,
    * zoom tier(LOD)/聚合边界只切换 show/hide,不销毁重建。
    */
@@ -571,6 +681,11 @@ class POIMarkerControllerImpl implements POIMarkerController {
     if (!this.isReady() || !this.view) return;
 
     const state = resolveMarkerState(poi.id, this.selectedId, this.highlightedId);
+    // 远程真 logo 待内联升级的 URL（ws-k）:fetch 未决期间本 marker 先挂
+    // emoji 徽章,登记完成后经 upgradeMarkerIcon 原地重建升级
+    let asyncUpgradeUrl: string | null = null;
+    // 当前 icon 形态('emoji'/'logo'/'local',见 markerIconKinds 注释)
+    let iconKind: 'emoji' | 'logo' | 'local' | null = null;
 
     const markerOpts: MapMarkerOptions = {
       position: { lng: poi.location.lng, lat: poi.location.lat },
@@ -616,7 +731,33 @@ class POIMarkerControllerImpl implements POIMarkerController {
           badgeUri
         );
         for (const url of toPreflight) preflightRemoteIcon(url);
-        markerOpts.icon = { src, size: [BADGE_BASE, BADGE_BASE] };
+        // 升级保留徽章形态（ws-k,2026-08-23）：远程真 logo（icon.horse 等，
+        // 预检 ok）→ 包进徽章 SVG 再作纹理——白底 + 边框 + 居中 logo，与
+        // AMap/Baidu 同视觉语言；裸 URL 直接作纹理 = 无边框裸 favicon（boss
+        // 实测用户报「只有 icon 没有边框」）。本地 dataURL（emoji 徽章/图钉）
+        // 路径不变，零额外开销。
+        // SVG-as-image 不抓取子资源（ws-k 真机实测,tech/23 §7）→ 远程字节
+        // 必须 fetch → base64 dataURI 内联；fetch 未决期间先挂 emoji 徽章,
+        // 完成后 upgradeMarkerIcon 原地重建升级（缓存记忆化,同 URL 只
+        // fetch 一次;失败保持 emoji,下次重建重试）。
+        if (isRemoteIconUrl(src)) {
+          const dataUri = remoteIconDataUriCache.get(src);
+          if (dataUri) {
+            markerOpts.icon = {
+              src: badgeWithRemoteIcon(dataUri, this.color, state),
+              size: [BADGE_BASE, BADGE_BASE],
+            };
+            iconKind = 'logo';
+          } else {
+            markerOpts.icon = { src: badgeUri, size: [BADGE_BASE, BADGE_BASE] };
+            asyncUpgradeUrl = src;
+            iconKind = 'emoji';
+          }
+        } else {
+          markerOpts.icon = { src, size: [BADGE_BASE, BADGE_BASE] };
+          // 回退徽章 = emoji(可升级);本地直通 logoUrl(data: URL)= 本地(无升级路径)
+          iconKind = src === badgeUri ? 'emoji' : 'local';
+        }
       } else {
         // Domain 图钉：dataURL SVG 与 AMap 同视觉（32×40 底尖），本地直通零预检
         markerOpts.icon = {
@@ -654,8 +795,67 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.markers.set(poi.id, wrapper);
     this.poiById.set(poi.id, poi);
     this.markerStates.set(poi.id, state);
+    if (iconKind) this.markerIconKinds.set(poi.id, iconKind);
     // 新增标记按当前可见集应用 show/hide(b2:实例保留,zoom/聚合切换不重建)
     this.applyVisibility(poi.id, wrapper);
+    // 远程真 logo 内联升级(ws-k):fetch 未决期间已挂 emoji 徽章,登记完成后
+    // 异步 fetch 字节 → 徽章包裹真 logo 原地重建(守卫:仅当该 marker 仍是
+    // 本次创建的实例——clear/差分摘除/重建后跳过)
+    if (asyncUpgradeUrl) {
+      const url = asyncUpgradeUrl;
+      void this.upgradeMarkerIcon(poi, url, wrapper);
+    }
+  }
+
+  /**
+   * 远程 logo 内联化后的原地升级(ws-k,2026-08-23 fix/tmap-icon-frame)。
+   * fetchRemoteIconDataUri 成功(base64 dataURI,icon.horse ACAO:* 可读)→
+   * 摘除当前 marker 并重建:addMarker 重新走 resolveTMapIconSrc(缓存命中 →
+   * 同步 badgeWithRemoteIcon(dataUri)),徽章 = 白底 + 边框 + 居中真 logo。
+   * 守卫:控制器已销毁 / 该 poi 的 marker 已被 clear/差分摘除或重建(指针
+   * 变化)→ 跳过;fetch 失败(网络/非 2xx)→ 保持 emoji 徽章静默降级(与预检
+   * 失败同语义,不刷屏;不记失败缓存,下次重建自然重试)。
+   */
+  private async upgradeMarkerIcon(poi: POI, url: string, wrapper: MapMarker): Promise<void> {
+    let dataUri: string;
+    try {
+      dataUri = await fetchRemoteIconDataUri(url);
+    } catch {
+      return; // fetch 失败 → 保持 emoji 徽章(静默,下次重建重试)
+    }
+    if (this.destroyed) return;
+    if (this.markers.get(poi.id) !== wrapper) return; // 已被摘除/重建
+    this.removeMarker(poi.id);
+    this.addMarker(poi); // 缓存命中 → 同步徽章包裹真 logo
+  }
+
+  /**
+   * 可见性/LOD 驱动的自然升级(ws-k):marker 在预检 ok 之前创建(emoji 徽章),
+   * 之后的数据变化(pan/LOD 可见集切换、POI 列表差分)经本检查补上升级——
+   * 「预检成功后下次重建自然升级真 logo」的落地路径(map-shell 不重建
+   * marker 实例,b2 只增不删,必须由控制器内补检查)。
+   * 只处理当前可见的 'emoji' 形态 marker;已升级('logo')/本地直通('local')
+   * /非招聘 POI 零开销跳过。fetch 未决由 upgradeMarkerIcon 指针守卫兜底
+   * (重复触发不重复重建)。
+   */
+  private maybeUpgradeIcon(poi: POI, wrapper: MapMarker): void {
+    if (this.markerIconKinds.get(poi.id) !== 'emoji') return;
+    if (this.visibleIds !== null && !this.visibleIds.has(poi.id)) return; // 隐藏期不升级
+    if (!isRecruitmentPOI(poi)) return;
+    const badgeUri = svgToDataUri(
+      recruitmentBadgeSVG(poi.company.logo, undefined, this.color, this.markerStates.get(poi.id) ?? 'normal')
+    );
+    const { src, toPreflight } = resolveTMapIconSrc(poi.company.logoUrl, poi.company.careerUrl, badgeUri);
+    // 链式推进:创建时未定的候选(如 favicon.im 失败后的 icon.horse)在此补预检
+    for (const url of toPreflight) preflightRemoteIcon(url);
+    if (!isRemoteIconUrl(src)) return; // 仍未通过预检 → 保持 emoji,下次再查
+    if (remoteIconDataUriCache.has(src)) {
+      // 字节已就绪 → 同步重建升级
+      this.removeMarker(poi.id);
+      this.addMarker(poi);
+    } else {
+      void this.upgradeMarkerIcon(poi, src, wrapper); // 异步 fetch → 完成后升级
+    }
   }
 
   /** 移除指定 id 的标记（从地图上摘除并清空内部记录）。 */
@@ -665,6 +865,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.markers.delete(id);
     this.poiById.delete(id);
     this.markerStates.delete(id);
+    this.markerIconKinds.delete(id);
     if (marker) this.placed.delete(marker);
   }
 
@@ -727,6 +928,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
           poi,
           resolveMarkerState(poi.id, this.selectedId, this.highlightedId)
         );
+        // ws-k:预检 ok 后数据变化 → emoji 徽章自然升级真 logo(缓存命中同步)
+        this.maybeUpgradeIcon(poi, existing);
       } else {
         this.addMarker(poi);
       }
@@ -738,6 +941,10 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.visibleIds = ids ? new Set(ids) : null;
     for (const [id, marker] of this.markers) {
       this.applyVisibility(id, marker);
+      // ws-k:pan/LOD 可见集切换 → emoji 徽章自然升级真 logo(预检 ok 后;
+      // 可见性/形态守卫在 maybeUpgradeIcon 内部)
+      const poi = this.poiById.get(id);
+      if (poi) this.maybeUpgradeIcon(poi, marker);
     }
   }
 

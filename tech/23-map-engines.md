@@ -1707,3 +1707,57 @@ ws-pinfix2(f2e4f60)曾令**全部 content marker 走 DOM overlay**——动机�
 - AMap 400 徽章 DOM 全渲染 / Baidu 400 徽章 DOM 全渲染,零回归;
 - 测试:1461 通过 / 0 失败 / 2 skip;typecheck / docs-check /
   git diff --check 通过;baseMap 断言更新(构造 + setStyle 两处)。
+
+---
+
+## §7 回填(2026-08-23 ws-k,fix/tmap-icon-frame):升级保留徽章形态 + SVG-as-image 子资源实测
+
+### 背景:用户报「腾讯地图下 poi 只有 icon 没有边框」
+
+- 腾讯引擎 TMap MultiMarker 纹理路径:首次渲染用 dataURL 徽章(白底 + #007AFF
+  边框 + emoji,recruitmentBadgeSVG);icon-preflight 预检成功后,
+  resolveTMapIconSrc 升级为 icon.horse 真 logo URL(ws-c 候选链 + ws-e/ws-i
+  预检设计「预检成功后下次重建自然升级」)——升级后纹理 = 裸 favicon(icon.horse
+  返回透明底小图标),无白底无边框,与 AMap/Baidu 的徽章视觉语言不一致。
+
+### 修复(server/src/lib/map-markers.ts,ws-k)
+
+- **`badgeWithRemoteIcon(iconUrl, color, state)`**:远程真 logo 包进徽章 SVG 再作
+  纹理——白底圆角 + 强调色描边(与 recruitmentBadgeSVG 同壳,badgeShellSVG 共享)
+  + 居中 `<image>`(约 24×24,preserveAspectRatio 保比例 + clipPath 圆角裁剪);
+  状态样式(selected/highlighted 外圈 + 透明度)语义保持;
+- **调用点**:resolveTMapIconSrc 选中**远程 URL** 时 icon.src 改走徽章包裹(本地
+  dataURL emoji 徽章路径不变);裸 URL 直接作纹理 = 无边框裸 favicon 的回归源;
+- **字节内联(关键实测结论)**:`<image href="https://icon.horse/...">` 远程直引在
+  Chrome 的 SVG-as-image 光栅化中**根本不渲染**——见下方 CORS 实测;升级路径
+  改为先 `fetch(url)`(icon.horse 有 `access-control-allow-origin:*`,CORS 可读)
+  → base64 dataURI 内联进徽章 SVG(`fetchRemoteIconDataUri`,成功记忆化、同 URL
+  只 fetch 一次、失败可重试不刷屏);fetch 未决期间 marker 先挂 emoji 徽章,
+  完成后 `upgradeMarkerIcon` 摘除 + 重建原地升级(指针守卫防重复重建);
+- **自然升级路径(`maybeUpgradeIcon`)**:marker 在预检 ok 之前创建(emoji 徽章),
+  之后的数据变化(pan/LOD 可见集切换 setVisiblePOIs、POI 列表差分 setPOIs)补
+  检查升级——「预检成功后下次重建自然升级」的落地(map-shell b2 只增不删,
+  不重建 marker 实例,必须由控制器内补检查);链式预检也在检查内推进
+  (favicon.im 失败记忆化后,pan 即触发 icon.horse 预检)。
+
+### `<image>` 跨域光栅化实测结论(headless Chrome,真实 TMap GL 管线)
+
+1. **远程直引不渲染(决定性)**:dataURL SVG 内嵌 `<image href="https://icon.horse/
+   icon/xxx">` 经 `<img>`/Image 解码 → canvas/WebGL 纹理——**子资源请求根本不
+   发出**(Network 零请求),图像区光栅化为浅蓝占位(197,214,243 附近)或透明,
+   **不是 favicon**;对 163(红)/poizon(灰)/deepseek(蓝)等不同 favicon 全部同
+   色 → 与 URL 无关,是 SVG-as-image 的机制性行为(Chrome 不抓取 SVG 图像文档
+   的子资源;dataURI 内联图则正常渲染,1×1 红图实测中心 (255,128,128));
+2. **fetch 内联可行**:icon.horse 有 ACAO:* → `fetch(mode:'cors')` 取字节成功;
+   base64 dataURI 内联进 SVG 后纹理恒 origin-clean(texImage2D ok,无
+   SecurityError、无「Image加载失败」);
+3. **真机端到端**:升级后徽章 = 白底 + #007AFF 边框 + 居中真 logo(favicon 主色
+   与内联字节一致:深色 dee pseek 蓝 (77,107,254) 精确命中、灰/蓝多例命中);
+   未升级 POI 保持 dataURL emoji 徽章;点击弹 POI 卡;zoom/pan 完整;console
+   零「Image加载失败」/ 纹理错误(favicon.im 预检 CORS 噪音为既有基线,与纹理
+   无关);AMap/Baidu 400 徽章 DOM 零回归;
+4. **会话行为**:图标字节缓存为会话级内存(与 icon-preflight 成功记忆同语义)——
+   reload 后 favicon.im 失败清单从 sessionStorage 恢复 → 链即时推进 icon.horse
+   → 预检完成后同会话自然升级(实测 reload 后 ~15s 内 21/22 可见徽章升级,零
+   交互);若需跨会话即时升级(首帧即真 logo),需把预检成功/字节缓存持久化
+   (sessionStorage),留待 boss 裁决。
