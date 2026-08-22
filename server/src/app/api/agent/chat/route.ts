@@ -9,8 +9,9 @@
 // error);本端点做逐事件 `data: <单行 JSON>\n\n` 转述,error 事件经公开面脱敏
 // (code/message 收敛到安全集合)后下发,不下发其它 type。
 
+import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { readSessionUser } from '@/lib/http-session';
+import { readSessionToken, readSessionUser } from '@/lib/http-session';
 import { readAgentConfig, hasBaiduAgentPlan } from '@/lib/agent/config';
 import { runAgent } from '@/lib/agent/run-agent';
 import { getMcpProvider, normalizeTool } from '@/lib/agent/mcp-providers';
@@ -33,16 +34,27 @@ const SSE_TAIL_RESERVE = 512;
 /** 事件 type 白名单(delta/tool/action/done/error 之外的 type 一律不下发)。 */
 const SSE_EVENT_TYPES = ['delta', 'tool', 'action', 'done', 'error'] as const;
 
-// ---- 限流:模块级内存令牌桶,每 IP 10 req/min(tech/24 §6.5)----
+// ---- 限流:模块级内存令牌桶,每桶 10 req/min(tech/24 §6.5)----
 const RATE_LIMIT_PER_MIN = 10;
 const RATE_REFILL_MS = 60_000 / RATE_LIMIT_PER_MIN;
 const buckets = new Map<string, { tokens: number; last: number }>();
 
-function rateLimit(ip: string): boolean {
+// ---- 代理信任开关(quality-scan #11,2026-08-23)----
+// x-forwarded-for 由网络代理注入;客户端直连 Next 时可任意伪造并轮换该头,仅凭首段
+// 取 IP 会让「10 req/min」桶被绕过(LLM 费用滥用)。因此仅当部署在可信反代之后
+// (配置 TRUSTED_PROXY_IPS,逗号分隔的代理出站地址)才信任转发头;未配置时完全
+// 忽略转发头,桶键改用会话指纹(登录用户按会话 cookie 哈希;匿名无 cookie 归入
+// 固定桶)——伪造 XFF 不再换桶。SSE 端点保持公开可达,但限流键不再可被请求头操纵。
+const TRUSTED_PROXY_IPS = (process.env.TRUSTED_PROXY_IPS ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function rateLimit(key: string): boolean {
   const now = Date.now();
-  let b = buckets.get(ip);
+  let b = buckets.get(key);
   if (!b) {
-    buckets.set(ip, { tokens: RATE_LIMIT_PER_MIN - 1, last: now });
+    buckets.set(key, { tokens: RATE_LIMIT_PER_MIN - 1, last: now });
     return true;
   }
   b.tokens = Math.min(RATE_LIMIT_PER_MIN, b.tokens + (now - b.last) / RATE_REFILL_MS);
@@ -54,13 +66,22 @@ function rateLimit(ip: string): boolean {
   return false;
 }
 
-function clientIp(request: Request): string {
-  const fwd = request.headers.get('x-forwarded-for');
-  if (fwd) {
-    const first = fwd.split(',')[0].trim();
-    if (first) return first;
+/** 限流桶键:可信反代之后 → 转发头首段(代理注入,客户端不可控);否则 → 会话指纹
+ *  (cookie 哈希;匿名固定桶)——轮换 x-forwarded-for 对桶键零影响。 */
+async function rateLimitKey(request: Request): Promise<string> {
+  if (TRUSTED_PROXY_IPS.length > 0) {
+    const fwd = request.headers.get('x-forwarded-for');
+    if (fwd) {
+      const first = fwd.split(',')[0].trim();
+      if (first) return `ip:${first}`;
+    }
+    const real = request.headers.get('x-real-ip');
+    if (real) return `ip:${real}`;
+    return 'ip:unknown';
   }
-  return request.headers.get('x-real-ip') ?? 'unknown';
+  const token = await readSessionToken();
+  if (!token) return 'anon:public';
+  return `session:${createHash('sha256').update(token).digest('hex')}`;
 }
 
 function isFiniteNum(v: unknown): v is number {
@@ -83,7 +104,7 @@ function bad(code: string, message: string) {
 
 export async function POST(request: Request) {
   // 1. 限流(最前置,读 body 之前;超限 → 429)
-  if (!rateLimit(clientIp(request))) {
+  if (!rateLimit(await rateLimitKey(request))) {
     return NextResponse.json({ code: 'RATE_LIMITED', message: 'too many requests, retry later' }, { status: 429 });
   }
 

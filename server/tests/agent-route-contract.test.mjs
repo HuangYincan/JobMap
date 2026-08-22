@@ -59,12 +59,30 @@ test('校验顺序契约:body 大小 < messages < viewport < LLM 配置', () => 
   }
 });
 
-test('限流:模块级内存令牌桶,每 IP 10 req/min,超限 429 RATE_LIMITED', () => {
+test('限流:模块级内存令牌桶 10 req/min,超限 429 RATE_LIMITED', () => {
   assert.match(route, /const RATE_LIMIT_PER_MIN = 10/);
   assert.match(route, /const buckets = new Map<string, \{ tokens: number; last: number \}>\(\)/);
   assert.match(route, /status: 429/);
   assert.match(route, /code: 'RATE_LIMITED'/);
-  assert.match(route, /x-forwarded-for/);
+});
+
+test('#11 限流键:仅可信代理(TRUSTED_PROXY_IPS)门控后才信任 XFF;否则会话指纹', () => {
+  assert.match(route, /const TRUSTED_PROXY_IPS =/);
+  // 桶键派生:转发头读取必须位于门控(TRUSTED_PROXY_IPS.length > 0)之内
+  const fwdIdx = route.indexOf("request.headers.get('x-forwarded-for')");
+  const gateIdx = route.indexOf('TRUSTED_PROXY_IPS.length > 0');
+  assert.ok(fwdIdx !== -1 && gateIdx !== -1 && gateIdx < fwdIdx, 'XFF 读取必须在可信代理门控之后');
+  // 未配置可信代理 → 忽略转发头,指纹 = 会话 cookie 哈希(匿名无 cookie 归固定桶)
+  assert.match(route, /readSessionToken\(\)/);
+  assert.match(route, /createHash\('sha256'\)/);
+  // 无转发头依赖路径(rateLimitKey 只在可信分支读 x-real-ip / x-forwarded-for)
+  const realIdx = route.indexOf("headers.get('x-real-ip')");
+  assert.ok(realIdx !== -1 && gateIdx < realIdx, 'x-real-ip 读取同样位于门控之后');
+  // 限流仍是最前置(读 body 之前),且经 rateLimitKey 取键
+  assert.match(route, /rateLimit\(await rateLimitKey\(request\)\)/);
+  const rateIdx = route.indexOf('rateLimit(await rateLimitKey(request))');
+  const tooLargeIdx = route.indexOf("'BODY_TOO_LARGE'");
+  assert.ok(rateIdx !== -1 && tooLargeIdx !== -1 && rateIdx < tooLargeIdx, '限流必须先于 body 读取');
 });
 
 test('输入上限:body 32KB / messages 20 条 / 单条 4000 字符 / SSE 输出 200KB', () => {
