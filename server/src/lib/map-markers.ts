@@ -628,6 +628,12 @@ class POIMarkerControllerImpl implements POIMarkerController {
   /** poiId → 当前视觉状态，用于避免重复 setIcon 造成闪烁。 */
   private markerStates = new Map<string, MarkerState>();
   /**
+   * poiId → 当前 icon 形态（ws-k 升级机):'emoji' = 本地 emoji 徽章(可升级)、
+   * 'logo' = 远程真 logo 徽章(已升级)、'local' = 本地直通 src(无升级路径)。
+   * maybeUpgradeIcon 只对 'emoji' 尝试升级;removeMarker 同步清理。
+   */
+  private markerIconKinds = new Map<string, 'emoji' | 'logo' | 'local'>();
+  /**
    * 可见 id 集(b2)：null = 全部显示。跨 setPOIs 保留——marker 实例只增不删,
    * zoom tier(LOD)/聚合边界只切换 show/hide,不销毁重建。
    */
@@ -678,6 +684,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
     // 远程真 logo 待内联升级的 URL（ws-k）:fetch 未决期间本 marker 先挂
     // emoji 徽章,登记完成后经 upgradeMarkerIcon 原地重建升级
     let asyncUpgradeUrl: string | null = null;
+    // 当前 icon 形态('emoji'/'logo'/'local',见 markerIconKinds 注释)
+    let iconKind: 'emoji' | 'logo' | 'local' | null = null;
 
     const markerOpts: MapMarkerOptions = {
       position: { lng: poi.location.lng, lat: poi.location.lat },
@@ -739,12 +747,16 @@ class POIMarkerControllerImpl implements POIMarkerController {
               src: badgeWithRemoteIcon(dataUri, this.color, state),
               size: [BADGE_BASE, BADGE_BASE],
             };
+            iconKind = 'logo';
           } else {
             markerOpts.icon = { src: badgeUri, size: [BADGE_BASE, BADGE_BASE] };
             asyncUpgradeUrl = src;
+            iconKind = 'emoji';
           }
         } else {
           markerOpts.icon = { src, size: [BADGE_BASE, BADGE_BASE] };
+          // 回退徽章 = emoji(可升级);本地直通 logoUrl(data: URL)= 本地(无升级路径)
+          iconKind = src === badgeUri ? 'emoji' : 'local';
         }
       } else {
         // Domain 图钉：dataURL SVG 与 AMap 同视觉（32×40 底尖），本地直通零预检
@@ -783,6 +795,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.markers.set(poi.id, wrapper);
     this.poiById.set(poi.id, poi);
     this.markerStates.set(poi.id, state);
+    if (iconKind) this.markerIconKinds.set(poi.id, iconKind);
     // 新增标记按当前可见集应用 show/hide(b2:实例保留,zoom/聚合切换不重建)
     this.applyVisibility(poi.id, wrapper);
     // 远程真 logo 内联升级(ws-k):fetch 未决期间已挂 emoji 徽章,登记完成后
@@ -816,6 +829,35 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.addMarker(poi); // 缓存命中 → 同步徽章包裹真 logo
   }
 
+  /**
+   * 可见性/LOD 驱动的自然升级(ws-k):marker 在预检 ok 之前创建(emoji 徽章),
+   * 之后的数据变化(pan/LOD 可见集切换、POI 列表差分)经本检查补上升级——
+   * 「预检成功后下次重建自然升级真 logo」的落地路径(map-shell 不重建
+   * marker 实例,b2 只增不删,必须由控制器内补检查)。
+   * 只处理当前可见的 'emoji' 形态 marker;已升级('logo')/本地直通('local')
+   * /非招聘 POI 零开销跳过。fetch 未决由 upgradeMarkerIcon 指针守卫兜底
+   * (重复触发不重复重建)。
+   */
+  private maybeUpgradeIcon(poi: POI, wrapper: MapMarker): void {
+    if (this.markerIconKinds.get(poi.id) !== 'emoji') return;
+    if (this.visibleIds !== null && !this.visibleIds.has(poi.id)) return; // 隐藏期不升级
+    if (!isRecruitmentPOI(poi)) return;
+    const badgeUri = svgToDataUri(
+      recruitmentBadgeSVG(poi.company.logo, undefined, this.color, this.markerStates.get(poi.id) ?? 'normal')
+    );
+    const { src, toPreflight } = resolveTMapIconSrc(poi.company.logoUrl, poi.company.careerUrl, badgeUri);
+    // 链式推进:创建时未定的候选(如 favicon.im 失败后的 icon.horse)在此补预检
+    for (const url of toPreflight) preflightRemoteIcon(url);
+    if (!isRemoteIconUrl(src)) return; // 仍未通过预检 → 保持 emoji,下次再查
+    if (remoteIconDataUriCache.has(src)) {
+      // 字节已就绪 → 同步重建升级
+      this.removeMarker(poi.id);
+      this.addMarker(poi);
+    } else {
+      void this.upgradeMarkerIcon(poi, src, wrapper); // 异步 fetch → 完成后升级
+    }
+  }
+
   /** 移除指定 id 的标记（从地图上摘除并清空内部记录）。 */
   private removeMarker(id: string): void {
     const marker = this.markers.get(id);
@@ -823,6 +865,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.markers.delete(id);
     this.poiById.delete(id);
     this.markerStates.delete(id);
+    this.markerIconKinds.delete(id);
     if (marker) this.placed.delete(marker);
   }
 
@@ -885,6 +928,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
           poi,
           resolveMarkerState(poi.id, this.selectedId, this.highlightedId)
         );
+        // ws-k:预检 ok 后数据变化 → emoji 徽章自然升级真 logo(缓存命中同步)
+        this.maybeUpgradeIcon(poi, existing);
       } else {
         this.addMarker(poi);
       }
@@ -896,6 +941,10 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.visibleIds = ids ? new Set(ids) : null;
     for (const [id, marker] of this.markers) {
       this.applyVisibility(id, marker);
+      // ws-k:pan/LOD 可见集切换 → emoji 徽章自然升级真 logo(预检 ok 后;
+      // 可见性/形态守卫在 maybeUpgradeIcon 内部)
+      const poi = this.poiById.get(id);
+      if (poi) this.maybeUpgradeIcon(poi, marker);
     }
   }
 
