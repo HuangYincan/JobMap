@@ -16,8 +16,12 @@
 // - 会话:localStorage 'dm.agent-sessions.v1' 多会话管理(cap 10 会话 × 30 条,
 //   agent-session-store 纯函数;旧 sessionStorage 'dm.agent-history.v1' 仅迁移读,
 //   不再直写);「💬 会话」入口登录/guest 均可用(本地功能,与账号无关);
-//   切换/新建会话若 streaming 先 stop;完成/停止状态行按当前会话;
-//   清屏 = 归档当前会话(有消息才归档,标题保留)+ 新建空会话并激活(ws-clearfix);
+//   **每会话独立流(2026-08-22 ws-pstream)**:流状态在 Map<sessionId, SessionStream>
+//   (lib/agent-stream-store 纯函数,内存为事实源)——切会话只改 activeId,**不 stop、
+//   不打断**,切走后台继续跑;同一时刻可多会话流式(并行),done/error 只落所属会话;
+//   显示 = streams.get(activeId)?.messages ?? 从 store 载入;完成/停止状态行、
+//   顶部工具条 per-session(切走再切回状态仍正确);停止/清屏只作用于当前会话;
+//   会话删除终止并移除该会话流;组件卸载 abort 全部流(不泄漏);
 // - 「停止」→ abort(链到 fetch);「撤销」→ executor.undo()。
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -26,17 +30,31 @@ import { t, type Language } from "@/lib/i18n";
 import type { AccountUser } from "@/lib/account";
 import type { AgentAction, AgentEvent } from "@/lib/agent/types";
 import type { MapBridge } from "@/lib/agent-map-bridge";
-import { reduceAgentEvent, stripActionJsonBlocks, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
+import { stripActionJsonBlocks, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
 import { streamAgentChat, type AgentChatRequest } from "./agent-chat-client";
 import {
   createAgentMapExecutor,
-  resolveCompletion,
-  type AgentCompletionState,
   type AgentMapExecutor,
   type AgentMapExecutorCallbacks,
   type AgentToolInfo,
 } from "./agent-map-executor";
 import { computePanelPlacement, type BallRect, type BallSnapEdge, type ViewportSize } from "@/lib/agent-panel-placement";
+import {
+  abortAllStreams,
+  finishStream,
+  getStreamMessages,
+  isStreaming,
+  markDone,
+  markStreamError,
+  removeStream,
+  routeAction,
+  routeDelta,
+  routeTool,
+  startStream,
+  stopStream,
+  EMPTY_STREAM_MAP,
+  type SessionStreamMap,
+} from "@/lib/agent-stream-store";
 import {
   appendMessage,
   archiveAndNew,
@@ -174,18 +192,14 @@ export function memoryViewState(loading: boolean, error: boolean, count: number)
 }
 
 export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, onClose, embedded = false }: Props) {
-  // 会话存储(多会话,localStorage):单源真相;messages = 当前会话消息工作副本,
-  // 流式期间只改副本,在 发送/完成/停止/切换 等边界经 saveMessages 落库。
+  // 会话存储(多会话,localStorage);**每会话独立流状态**(Map<sessionId, SessionStream>,
+  // 内存为事实源)与 store 双轨:
+  // - 流式会话:entry.messages 是工作副本,事件只改内存;显示 = entry.messages;
+  // - 非流式会话:内存 entry 保留(streaming=false)或不存在 → 显示从 store 载入;
+  // - 边界(发送/完成/停止/切换/删除/清屏)经 saveMessages 落库 localStorage。
   const [sessionState, setSessionState] = useState<AgentSessionState>(initSessionState);
-  const [messages, setMessages] = useState<AgentMessage[]>(() => {
-    const active = sessionState.sessions.find((s) => s.id === sessionState.activeId);
-    return active ? active.messages : [];
-  });
+  const [streams, setStreams] = useState<SessionStreamMap>(EMPTY_STREAM_MAP);
   const [input, setInput] = useState("");
-  const [streaming, setStreaming] = useState(false);
-  const [tool, setTool] = useState<AgentToolInfo | null>(null);
-  const [notConfigured, setNotConfigured] = useState(false);
-  const [fatalError, setFatalError] = useState<string | null>(null);
   // 会话弹层:登录/guest 均可用(会话是本地功能,与账号无关)。
   const [sessionsOpen, setSessionsOpen] = useState(false);
   // 记忆弹层:打开(登录)时拉取列表;失败弱提示;不随「清屏」清除(记忆跨会话)。
@@ -195,33 +209,27 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   const [memories, setMemories] = useState<AgentMemoryItem[]>([]);
   const [memoriesLoading, setMemoriesLoading] = useState(false);
   const [memoriesError, setMemoriesError] = useState(false);
-  // 完成/停止显式状态:done 事件 → 'done';用户停止 → 'stopped';新消息/清屏清零。
-  // truncated 标记 done 事件携带的截断说明(「已达回答上限」弱提示)。
-  const [completion, setCompletion] = useState<AgentCompletionState>(null);
-  const [truncated, setTruncated] = useState(false);
-  // done 事件是否已到达(finally 判定用:setState 异步,ref 同步可靠)
-  const doneRef = useRef(false);
   // undo 可用性重渲染信号(执行器实例在 ref 中,栈变化不触发渲染)
   const [, setUndoVersion] = useState(0);
 
-  const abortRef = useRef<AbortController | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const langRef = useRef(lang);
   langRef.current = lang;
-  // 会话/消息镜像:回调内读最新值(避免闭包陈旧;与 langRef 同模式)。
+  // 会话/流镜像:回调内读最新值(避免闭包陈旧;与 langRef 同模式)。
   const sessionStateRef = useRef(sessionState);
   sessionStateRef.current = sessionState;
-  const messagesRef = useRef(messages);
-  messagesRef.current = messages;
-  // 当前流所属会话 id:send 时固定;finally/完成时落库目标(切换后仍写回旧会话)。
-  const streamSessionIdRef = useRef<string | null>(sessionState.activeId);
+  const streamsRef = useRef<SessionStreamMap>(streams);
+  streamsRef.current = streams;
+  // 当前事件所属流 sessionId:dispatchEvent 在事件分流前写入(执行器回调同步读);
+  // 并行流在同一 tick 内串行 dispatch,回调读取时恒为本流会话。
+  const streamSessionRef = useRef<string | null>(null);
 
-  /** 消息状态入口:setMessages + 同步镜像(ref 写入幂等,供事件回调读最新副本)。 */
-  const setMessagesBoth = useCallback((updater: AgentMessage[] | ((prev: AgentMessage[]) => AgentMessage[])) => {
-    setMessages((prev) => {
-      const next = typeof updater === "function" ? updater(prev) : updater;
-      messagesRef.current = next;
+  /** 流状态入口:setStreams + 同步镜像(ref 写入幂等,供回调读最新副本)。 */
+  const setStreamsBoth = useCallback((updater: (prev: SessionStreamMap) => SessionStreamMap) => {
+    setStreams((prev) => {
+      const next = updater(prev);
+      streamsRef.current = next;
       return next;
     });
   }, []);
@@ -232,43 +240,29 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     saveSessionState(window.localStorage, state);
   }, []);
 
-  /** 把工作副本快照存进指定会话(流完成/停止/切换前)。 */
+  /** 把工作副本快照存进指定会话(流完成/停止/切换/删除前);未知会话 → no-op。 */
   const persistSessionMessages = useCallback(
-    (sessionId: string | null, msgs: AgentMessage[]) => {
-      if (!sessionId) return;
-      setSessionState((prev) => {
-        const next = saveMessages(prev, sessionId, msgs);
-        sessionStateRef.current = next;
-        persist(next);
-        return next;
-      });
+    (sessionId: string, msgs: AgentMessage[]) => {
+      const cur = sessionStateRef.current;
+      const next = saveMessages(cur, sessionId, msgs);
+      if (next === cur) return; // 会话已删 → store no-op
+      sessionStateRef.current = next;
+      setSessionState(next);
+      persist(next);
     },
     [persist],
   );
 
   /**
-   * 流完成/停止时落库:经 setMessages 函数式更新读「flush 时」的最终消息
-   * (同 tick 内 delta+done 连发时,ref 可能还没被 React flush,函数式 prev 才可靠)。
+   * 某会话当前消息(工作副本读取):流式会话 → 内存 entry.messages(事实源);
+   * 无流会话 → store 该会话消息;未知会话 → []。
    */
-  const flushMessagesToSession = useCallback(
-    (sessionId: string | null) => {
-      if (!sessionId) return;
-      setMessages((prev) => {
-        persistSessionMessages(sessionId, prev);
-        return prev;
-      });
-    },
-    [persistSessionMessages],
-  );
-
-  /** 会话切换/新建/删除后的 UI 态复位(完成/停止/工具/错误均按当前会话)。 */
-  const resetStreamUi = useCallback(() => {
-    doneRef.current = false;
-    setCompletion(null);
-    setTruncated(false);
-    setNotConfigured(false);
-    setFatalError(null);
-    setTool(null);
+  const sessionMessages = useCallback((sessionId: string | null): AgentMessage[] => {
+    if (!sessionId) return [];
+    const streamed = getStreamMessages(streamsRef.current, sessionId);
+    if (streamed) return streamed;
+    const sess = sessionStateRef.current.sessions.find((s) => s.id === sessionId);
+    return sess ? sess.messages : [];
   }, []);
 
   // ---- 面板跟随:视口 + 实测尺寸 → 锚定位置(transform)----
@@ -304,43 +298,59 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
       : undefined;
 
   // ---- 渲染回调(供执行器分流;bridge 缺失时面板直接渲染无地图事件)----
-  // 消息变更统一走 reduceAgentEvent 纯状态机(按轮拆分/归并,见 lib/agent-panel-state.ts)
-  const handleDelta = useCallback((text: string) => {
-    setMessagesBoth((prev) => reduceAgentEvent(prev, { type: "delta", text }));
-  }, [setMessagesBoth]);
+  // 事件按**流所属 sessionId** 路由(并行流互不打断):回调经 streamSessionRef
+  // 取得当前 dispatch 的会话,只更新该会话 entry;其余会话不受影响。
+  const handleDelta = useCallback(
+    (text: string) => {
+      const sid = streamSessionRef.current;
+      if (!sid) return;
+      setStreamsBoth((prev) => routeDelta(prev, sid, text));
+    },
+    [setStreamsBoth],
+  );
 
-  const handleTool = useCallback((info: AgentToolInfo) => {
-    // 顶部状态条:只反映运行中的工具
-    setTool(info.status === "start" ? info : null);
-    setMessagesBoth((prev) =>
-      reduceAgentEvent(prev, { type: "tool", name: info.name, status: info.status, summary: info.summary }),
-    );
-  }, [setMessagesBoth]);
+  const handleTool = useCallback(
+    (info: AgentToolInfo) => {
+      const sid = streamSessionRef.current;
+      if (!sid) return;
+      setStreamsBoth((prev) => routeTool(prev, sid, info));
+    },
+    [setStreamsBoth],
+  );
 
-  const handleDone = useCallback((truncated?: boolean) => {
-    setTool(null);
-    doneRef.current = true;
-    setTruncated(Boolean(truncated));
-    setCompletion("done");
-    // 完成即把整份工作副本落库(当前流所属会话);切换/删除场景由对应 handler
-    // 存好旧会话,此处若再存会把新会话消息写进旧会话,故仅当前会话时落库
-    if (streamSessionIdRef.current === sessionStateRef.current.activeId) {
-      flushMessagesToSession(streamSessionIdRef.current);
-    }
-  }, [flushMessagesToSession]);
+  const handleDone = useCallback(
+    (truncated?: boolean) => {
+      const sid = streamSessionRef.current;
+      if (!sid) return;
+      setStreamsBoth((prev) => markDone(prev, sid, Boolean(truncated)));
+    },
+    [setStreamsBoth],
+  );
 
-  const handleError = useCallback((code: string) => {
-    setTool(null);
-    if (code === "LLM_UNCONFIGURED") setNotConfigured(true);
-    else if (code === "RATE_LIMITED") setFatalError(t("agentRateLimited", langRef.current));
-    else setFatalError(t("agentError", langRef.current));
-  }, []);
+  const handleError = useCallback(
+    (code: string) => {
+      const sid = streamSessionRef.current;
+      if (!sid) return;
+      if (code === "LLM_UNCONFIGURED") {
+        setStreamsBoth((prev) => markStreamError(prev, sid, { notConfigured: true, fatalText: null }));
+      } else if (code === "RATE_LIMITED") {
+        setStreamsBoth((prev) => markStreamError(prev, sid, { notConfigured: false, fatalText: t("agentRateLimited", langRef.current) }));
+      } else {
+        setStreamsBoth((prev) => markStreamError(prev, sid, { notConfigured: false, fatalText: t("agentError", langRef.current) }));
+      }
+    },
+    [setStreamsBoth],
+  );
 
-  const handleAction = useCallback((action: AgentAction) => {
-    // 动作已执行:在消息底部渲染「重放」建议卡片
-    setMessagesBoth((prev) => reduceAgentEvent(prev, { type: "action", action }));
-    setUndoVersion((v) => v + 1);
-  }, [setMessagesBoth]);
+  const handleAction = useCallback(
+    (action: AgentAction) => {
+      // 动作已执行:在消息底部渲染「重放」建议卡片(落在该流所属会话)
+      const sid = streamSessionRef.current;
+      if (sid) setStreamsBoth((prev) => routeAction(prev, sid, action));
+      setUndoVersion((v) => v + 1);
+    },
+    [setStreamsBoth],
+  );
 
   // ---- 执行器实例:bridge 可用时惰性创建,bridge 实例变更时重建 ----
   const bridgeRef = useRef<MapBridge | null>(null);
@@ -361,9 +371,10 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
       : null;
   }
 
-  /** 统一事件入口:有执行器走执行器(动作落地地图),否则只渲染无地图事件 */
+  /** 统一事件入口:按流所属 sessionId 分流;有执行器走执行器(动作落地地图),否则只渲染无地图事件 */
   const dispatchEvent = useCallback(
-    (ev: AgentEvent) => {
+    (sessionId: string, ev: AgentEvent) => {
+      streamSessionRef.current = sessionId;
       const ex = executorRef.current;
       if (ex) {
         ex.handleEvent(ev);
@@ -392,64 +403,57 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   );
 
   const runStream = useCallback(
-    async (req: AgentChatRequest) => {
-      const controller = new AbortController();
-      abortRef.current = controller;
-      doneRef.current = false;
-      setStreaming(true);
+    async (sessionId: string, req: AgentChatRequest, controller: AbortController) => {
       try {
         for await (const ev of streamAgentChat(req, controller.signal)) {
-          dispatchEvent(ev);
+          dispatchEvent(sessionId, ev);
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
-          setFatalError(t("agentError", langRef.current));
+          setStreamsBoth((prev) =>
+            markStreamError(prev, sessionId, { notConfigured: false, fatalText: t("agentError", langRef.current) }),
+          );
         }
       } finally {
-        abortRef.current = null;
-        setStreaming(false);
-        setTool(null);
         // 完成状态以 finally 为准(done 事件 → 'done';用户停止 → 'stopped';异常 → null);
-        // 仅当流所属会话仍是当前会话时写状态行(切换/删除后不污染新会话视图)
-        if (streamSessionIdRef.current === sessionStateRef.current.activeId) {
-          setCompletion(resolveCompletion(doneRef.current, controller.signal.aborted));
-          // 工作副本落库(切换/删除场景已由 handler 存好旧会话,此处再存会把
-          // 新会话消息写进旧会话,故仅当前会话时落库;会话已删 → store no-op)
-          flushMessagesToSession(streamSessionIdRef.current);
-        }
+        // 流结束只触碰本流所属会话(并行流互不影响);会话已删/已清屏 → entry 缺失 no-op
+        setStreamsBoth((prev) => {
+          const next = finishStream(prev, sessionId, controller.signal.aborted);
+          const entry = next.get(sessionId);
+          if (entry) persistSessionMessages(sessionId, entry.messages);
+          return next;
+        });
       }
     },
-    [dispatchEvent, flushMessagesToSession],
+    [dispatchEvent, setStreamsBoth, persistSessionMessages],
   );
 
   const send = useCallback(
     (text?: string) => {
       const content = (text ?? input).trim();
-      if (!content || streaming) return;
-      const isFirst = messagesRef.current.length === 0;
+      const state = sessionStateRef.current;
+      const activeId = state.activeId;
+      if (!content || isStreaming(streamsRef.current, activeId)) return;
+      const curMessages = sessionMessages(activeId);
+      const isFirst = curMessages.length === 0;
       const userMsg: AgentMessage = { role: "user", content };
-      const nextMessages = [...messagesRef.current, userMsg];
-      setMessagesBoth(nextMessages);
+      const nextMessages = [...curMessages, userMsg];
       setInput("");
-      setNotConfigured(false);
-      setFatalError(null);
-      setTool(null);
-      // 新消息开始:清零完成状态(done/stopped 不再显示)
-      doneRef.current = false;
-      setCompletion(null);
-      setTruncated(false);
       // 会话存储:无当前会话 → 先建空会话;appendMessage 落库(刷新/中断保留本条用户消息)
-      let state = sessionStateRef.current;
-      let sessionId = state.activeId;
+      let nextState = state;
+      let sessionId = activeId;
       if (!sessionId) {
         sessionId = createSessionId();
-        state = createSession(state, { id: sessionId });
+        nextState = createSession(nextState, { id: sessionId });
       }
-      state = appendMessage(state, sessionId, userMsg);
-      sessionStateRef.current = state;
-      setSessionState(state);
-      persist(state);
-      streamSessionIdRef.current = sessionId;
+      nextState = appendMessage(nextState, sessionId, userMsg);
+      sessionStateRef.current = nextState;
+      setSessionState(nextState);
+      persist(nextState);
+      // 每会话独立流:新 AbortController + 内存消息为事实源(切走不打断);
+      // 覆盖式建流(上一轮完成/停止状态随新一轮清零)
+      const controller = new AbortController();
+      setStreamsBoth((prev) => startStream(prev, sessionId, controller, nextMessages));
       // 新会话首条自动带视口快照(bridge.getSnapshot() → viewport 参数)
       const snapshot = bridgeRef.current?.getSnapshot() ?? null;
       const req: AgentChatRequest = {
@@ -457,13 +461,14 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
         ...(isFirst && snapshot ? { viewport: { center: snapshot.center, zoom: snapshot.zoom } } : {}),
         lang: langRef.current,
       };
-      void runStream(req);
+      void runStream(sessionId, req, controller);
     },
-    [input, streaming, setMessagesBoth, runStream, persist],
+    [input, sessionMessages, setStreamsBoth, runStream, persist],
   );
 
   const stop = useCallback(() => {
-    abortRef.current?.abort();
+    // 停止**当前会话**的流(其余会话不受影响)
+    stopStream(streamsRef.current, sessionStateRef.current.activeId ?? "");
   }, []);
 
   const undo = useCallback(() => {
@@ -471,29 +476,29 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   }, []);
 
   // 清屏:清覆盖物(仅 overlay 类 undo 条目)+ 归档当前会话(有消息才归档,
-  // 标题保留原样)+ 新建空会话并激活 + 清状态;记忆不动;相机/select 逆操作
-  // 保留(可继续撤销)。流式期间禁用(不打断回答)。
+  // 标题保留原样)+ 新建空会话并激活;**流式时先停当前会话并移除其流**
+  // (其余会话的流不受影响);记忆不动;相机/select 逆操作保留(可继续撤销)。
   const clearScreen = useCallback(() => {
     executorRef.current?.clearOverlays();
     setUndoVersion((v) => v + 1); // clearOverlays 可能改变 canUndo
     const cur = sessionStateRef.current;
-    const curSession = cur.activeId ? cur.sessions.find((s) => s.id === cur.activeId) : null;
+    const activeId = cur.activeId;
+    const curSession = activeId ? cur.sessions.find((s) => s.id === activeId) : null;
     const next = archiveAndNew(cur, {
-      activeId: cur.activeId,
-      messages: messagesRef.current,
+      activeId,
+      messages: sessionMessages(activeId),
       title: curSession?.title,
     });
+    if (activeId) setStreamsBoth((prev) => removeStream(prev, activeId));
     sessionStateRef.current = next;
     setSessionState(next);
     persist(next);
-    setMessagesBoth([]);
-    resetStreamUi();
-  }, [persist, setMessagesBoth, resetStreamUi]);
+  }, [persist, sessionMessages, setStreamsBoth]);
 
-  /** 切换会话:streaming 先 stop;工作副本落库旧会话 → 载入目标会话消息;状态按新会话。 */
+  /** 切换会话:只改 activeId,**不 stop、不打断**(并行流后台继续跑);
+   *  工作副本落库旧会话 → 目标会话显示 = streams 内存态 ?? store 载入。 */
   const switchToSession = useCallback(
     (id: string) => {
-      if (streaming) stop();
       const cur = sessionStateRef.current;
       if (cur.activeId === id) {
         setSessionsOpen(false); // 已是当前会话:只关弹层
@@ -501,7 +506,7 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
       }
       let next = cur;
       if (cur.activeId) {
-        next = saveMessages(next, cur.activeId, messagesRef.current);
+        next = saveMessages(next, cur.activeId, sessionMessages(cur.activeId));
       }
       next = storeSwitchSession(next, id);
       const target = next.sessions.find((s) => s.id === id);
@@ -509,49 +514,40 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
       setSessionState(next);
       persist(next);
       if (target) {
-        setMessagesBoth(target.messages);
-        resetStreamUi();
         setSessionsOpen(false);
       }
       // 未知 id:仅提交落库(保存生效),消息/UI 不动
     },
-    [streaming, stop, persist, setMessagesBoth, resetStreamUi],
+    [persist, sessionMessages],
   );
 
-  /** 新建会话:streaming 先 stop;工作副本落库旧会话 → 空消息。 */
+  /** 新建会话:不 stop、不打断;工作副本落库旧会话 → 空消息。 */
   const newSession = useCallback(() => {
-    if (streaming) stop();
     const cur = sessionStateRef.current;
     let next = cur;
     if (cur.activeId) {
-      next = saveMessages(next, cur.activeId, messagesRef.current);
+      next = saveMessages(next, cur.activeId, sessionMessages(cur.activeId));
     }
     next = createSession(next);
     sessionStateRef.current = next;
     setSessionState(next);
     persist(next);
-    setMessagesBoth([]);
-    resetStreamUi();
     setSessionsOpen(false);
-  }, [streaming, stop, persist, setMessagesBoth, resetStreamUi]);
+  }, [persist, sessionMessages]);
 
-  /** 删除会话:删当前且 streaming → 先 stop;store 处理「切最近 / 全删建新」。 */
+  /** 删除会话:终止并移除该会话的流(无论是否当前;迟到事件 entry 缺失 no-op);
+   *  store 处理「切最近 / 全删建新」。 */
   const deleteSession = useCallback(
     (id: string) => {
       const cur = sessionStateRef.current;
-      if (cur.activeId === id && streaming) stop();
       const next = storeDeleteSession(cur, id);
       if (next === cur) return; // 未知 id:不动
+      setStreamsBoth((prev) => removeStream(prev, id));
       sessionStateRef.current = next;
       setSessionState(next);
       persist(next);
-      if (cur.activeId === id) {
-        const active = next.sessions.find((s) => s.id === next.activeId);
-        setMessagesBoth(active ? active.messages : []);
-        resetStreamUi();
-      }
     },
-    [streaming, stop, persist, setMessagesBoth, resetStreamUi],
+    [persist, setStreamsBoth],
   );
 
   const replayAction = useCallback((action: AgentAction) => {
@@ -646,6 +642,27 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     });
   }, []);
 
+  // ---- 卸载清理:组件卸载/严格模式销毁时 abort 全部流(不泄漏)----
+  useEffect(() => {
+    return () => abortAllStreams(streamsRef.current);
+  }, []);
+
+  // ---- 当前会话显示(派生):显示 = streams.get(activeId)?.messages ?? 从 store 载入;
+  // 完成/停止、工具条、错误提示均 per-session(切走再切回状态仍正确)----
+  const activeId = sessionState.activeId;
+  const activeEntry = activeId ? streams.get(activeId) : undefined;
+  const activeSession = activeId ? sessionState.sessions.find((s) => s.id === activeId) : undefined;
+  const messages = useMemo(
+    () => (activeEntry ? activeEntry.messages : activeSession ? activeSession.messages : []),
+    [activeEntry, activeSession],
+  );
+  const streaming = activeEntry?.streaming ?? false;
+  const tool = activeEntry?.tool ?? null;
+  const completion = activeEntry?.completion ?? null;
+  const truncated = activeEntry?.truncated ?? false;
+  const notConfigured = activeEntry?.notConfigured ?? false;
+  const fatalError = activeEntry?.fatalError ?? null;
+
   // 消息/状态变化 → 滚动到底部
   useEffect(() => {
     const el = listRef.current;
@@ -704,7 +721,8 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
       </header>
 
       {/* 会话弹层(glass 卡,面板内嵌,与记忆弹层同体系;登录/guest 均可用):
-          列表(标题 + 相对时间 + 删除 ×,当前会话蓝底高亮 + ●)+ 新建会话 + 空态。 */}
+          列表(标题 + 相对时间 + 删除 ×,当前会话蓝底高亮 + ●;**流式中的会话
+          显示「进行中」弱化蓝点标记**)+ 新建会话 + 空态。 */}
       {sessionsOpen && (
         <div className={styles.sessionsPanel} role="region" aria-label={t("agentSessions", lang)}>
           <div className={styles.sessionsHead}>
@@ -719,6 +737,7 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
             <ul className={styles.sessionsList}>
               {sessionList.map((s) => {
                 const isActive = s.id === sessionState.activeId;
+                const isRunning = isStreaming(streams, s.id);
                 return (
                   <li key={s.id} className={isActive ? styles.sessionRowActive : styles.sessionRow}>
                     <button
@@ -731,6 +750,14 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
                         {isActive ? "●" : "○"}
                       </span>
                       <span className={styles.sessionTitle}>{s.title}</span>
+                      {isRunning && (
+                        <span
+                          className={styles.sessionStreaming}
+                          role="status"
+                          title={t("agentSessionStreaming", lang)}
+                          aria-label={t("agentSessionStreaming", lang)}
+                        />
+                      )}
                       <span className={styles.sessionTime}>{sessionTimeLabel(relativeTime(s.updatedAt, Date.now()), lang)}</span>
                     </button>
                     <button
@@ -908,7 +935,7 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
           )}
         </div>
         <div className={styles.controls}>
-          <button type="button" className={styles.controlBtn} onClick={clearScreen} disabled={streaming} aria-label={t("agentClear", lang)}>
+          <button type="button" className={styles.controlBtn} onClick={clearScreen} aria-label={t("agentClear", lang)}>
             {t("agentClear", lang)}
           </button>
           <button type="button" className={styles.controlBtn} onClick={undo} disabled={!canUndo} aria-label={t("agentUndo", lang)}>

@@ -405,6 +405,27 @@
   line-height: 1;
 }
 
+/* 流式中的会话「进行中」标记(ws-pstream):弱化蓝点脉冲,liquid glass 弱化样式,
+   与当前会话 ●/○ 圆点并存(不抢高亮)。 */
+.sessionStreaming {
+  animation: sessionStreamingPulse 1.2s ease-in-out infinite;
+  background: rgba(0, 122, 255, 0.55);
+  border-radius: 50%;
+  flex: 0 0 auto;
+  height: 6px;
+  width: 6px;
+}
+
+@keyframes sessionStreamingPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .sessionTitle {
   color: var(--ink);
   flex: 1 1 auto;

@@ -17,7 +17,7 @@
 
 import type { AgentAction, AgentEvent } from "./agent/types.ts";
 import { reduceAgentEvent, type AgentMessage } from "./agent-panel-state.ts";
-import type { AgentToolInfo } from "../components/agent-map-executor.ts";
+import type { AgentCompletionState, AgentToolInfo } from "../components/agent-map-executor.ts";
 
 /** 单个会话的流状态(controller + 进行中标记 + 内存消息 + per-session UI 状态)。 */
 export interface SessionStream {
@@ -30,7 +30,7 @@ export interface SessionStream {
   /** done 事件是否已到达(finishStream 判定 completion 用)。 */
   done: boolean;
   /** 完成状态行:done 事件 → 'done';用户停止 → 'stopped';无 → null。 */
-  completion: "done" | "stopped" | null;
+  completion: AgentCompletionState;
   /** done 事件携带的截断说明(「已达回答上限」弱提示)。 */
   truncated: boolean;
   /** 未配置提示(503 LLM_UNCONFIGURED → agentNotConfigured)。 */

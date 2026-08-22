@@ -1235,6 +1235,10 @@ export const translations = {
     zh: '{n} 小时前',
     en: '{n} hr ago',
   },
+  agentSessionStreaming: {
+    zh: '进行中',
+    en: 'Running',
+  },
   agentToolsSection: {
     zh: '工具调用',
     en: 'Tool calls',
