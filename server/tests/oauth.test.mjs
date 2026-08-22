@@ -46,6 +46,7 @@ import {
   OauthNotConfiguredError,
   OauthProviderError,
   OauthStateInvalidError,
+  absoluteRedirect,
   errorRedirectPath,
   runOauthCallback,
   startOauthFlow,
@@ -483,6 +484,28 @@ test('errorRedirectPath:next 拼接 auth_error,兼容 next 自带 query', () => 
   assert.equal(errorRedirectPath('/jobs?sort=new', 'oauth_provider_error'), '/jobs?sort=new&auth_error=oauth_provider_error');
 });
 
+test('absoluteRedirect:相对路径 → 同源绝对 URL(Next 16 redirect 只收绝对 URL)', () => {
+  assert.equal(absoluteRedirect('/map?x=1', 'http://localhost:3000'), 'http://localhost:3000/map?x=1');
+  assert.equal(absoluteRedirect('/', 'http://localhost:3000'), 'http://localhost:3000/');
+  assert.equal(absoluteRedirect('/jobs?sort=new&auth_error=oauth_provider_error', 'http://localhost:3000'), 'http://localhost:3000/jobs?sort=new&auth_error=oauth_provider_error');
+});
+
+test('absoluteRedirect:与 errorRedirectPath 组合 → 同源 auth_error 绝对 URL', () => {
+  assert.equal(
+    absoluteRedirect(errorRedirectPath('/', 'oauth_state_invalid'), 'http://localhost:3000'),
+    'http://localhost:3000/?auth_error=oauth_state_invalid',
+  );
+  assert.equal(
+    absoluteRedirect(errorRedirectPath('/jobs', 'oauth_provider_error'), 'http://localhost:3000'),
+    'http://localhost:3000/jobs?auth_error=oauth_provider_error',
+  );
+});
+
+test('absoluteRedirect:跨源防御(//host / 绝对 URL 直传)→ 回落 origin + /', () => {
+  assert.equal(absoluteRedirect('//evil.com/x', 'http://localhost:3000'), 'http://localhost:3000/');
+  assert.equal(absoluteRedirect('https://evil.com/x', 'http://localhost:3000'), 'http://localhost:3000/');
+});
+
 // ============================================================
 // 5. oauth-flow callback:全链路(内存 store + mock fetch + fake jar)
 // ============================================================
@@ -804,14 +827,16 @@ test('route start:flow 接线 + 400 BAD_REQUEST + 503 OAUTH_NOT_CONFIGURED + coo
   assert.match(route, /status: 503/);
 });
 
-test('route callback:runOauthCallback 接线 + session cookie + state/provider 错误 302 参数', () => {
+test('route callback:runOauthCallback 接线 + session cookie + 全部 302 经 absoluteRedirect(Next 16 绝对 URL)', () => {
   const route = src('app/api/auth/oauth/callback/[provider]/route.ts');
   assert.match(route, /runOauthCallback\(\{/);
   assert.match(route, /writeSessionCookie\(result\.session\.token, result\.session\.expiresAt\)/);
-  assert.match(route, /NextResponse\.redirect\(result\.next, 302\)/);
-  assert.match(route, /errorRedirectPath\(err\.next, 'oauth_state_invalid'\)/);
-  assert.match(route, /errorRedirectPath\(err\.next, 'oauth_provider_error'\)/);
-  assert.match(route, /\/\?auth_error=oauth_provider_error/); // 未预期错误兜底
+  assert.match(route, /NextResponse\.redirect\(absoluteRedirect\(result\.next, base\), 302\)/);
+  assert.match(route, /NextResponse\.redirect\(absoluteRedirect\(errorRedirectPath\(err\.next, 'oauth_state_invalid'\), base\), 302\)/);
+  assert.match(route, /NextResponse\.redirect\(absoluteRedirect\(errorRedirectPath\(err\.next, 'oauth_provider_error'\), base\), 302\)/);
+  assert.match(route, /NextResponse\.redirect\(absoluteRedirect\('\/\?auth_error=oauth_provider_error', base\), 302\)/);
+  assert.ok(!route.includes('NextResponse.redirect(result.next'), '不得裸传相对 result.next');
+  assert.ok(!route.includes('NextResponse.redirect(errorRedirectPath(err.next'), '不得裸传相对 errorRedirectPath');
   assert.match(route, /code: 'BAD_REQUEST'/);
   assert.match(route, /status: 400/);
   assert.match(route, /params: Promise<\{ provider: string \}>/);
