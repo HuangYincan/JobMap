@@ -2,6 +2,67 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-22: 首访卡死加载界面——三条无界/无出口链修复(loading-hang)
+
+**症状**：首次进入网站必定卡死在 "Loading map..." 覆盖层,刷新(或重开)即好。
+用户报告后 Explore 定位三根因三修复(批次 `20260822-boss-loading-hang`,
+merge `f5c3d17` ws-1 / `6c780dc` ws-2 / `8e05d2d` ws-3 / `5165904` ws-4)。
+
+**根因**(三条无界/无出口链):
+
+1. **C1(loadAMap 无超时)**：`loadAMap()` 是全链路唯一无超时 await——主脚本
+   中途卡死(DNS/TLS/CDN)时 Promise 永不落定,`mapReady` 恒 false,覆盖层永转。
+2. **C2(挂载失败无出口)**：引擎挂载(含回退)失败仅 `console.warn`,无任何
+   错误出口/重试入口——失败一次首屏即永久 Loading。
+3. **C2'(首访全量加载逐页无界)**：首访 work 全量加载逐页 fetch 无超时,
+   任一页挂起(服务端冷启动/公网抖动)拖死整个首屏;刷新走
+   `useModeCacheRestore` 短路不重拉,故「刷新即好」——对称问题另一面。
+
+**修复**：
+
+- **C1**(`fix/amap-load-timeout`,amap-api.ts):
+  - `AMAP_LOAD_TIMEOUT_MS = 8_000`(:45)——主脚本(含插件)加载上界;
+  - 超时(:104-107)→ 清 `loadPromise` + `document.getElementById(SCRIPT_ID)?.remove()`
+    移除标签 + `reject`(`code: 'AMAP_LOAD_TIMEOUT'`);onerror 同语义(:125);
+    移除标签是关键——否则下次 loadAMap 走「复用 existing」分支(:113-118)给已死
+    标签挂监听,Promise 永不落定;
+  - `settled` 竞态守卫(:82-100):超时/error 后迟到的 onload/onerror 一律无效
+    (不二次 settle,不依赖「remove 后浏览器不再触发」)。
+- **C2**(`fix/mount-retry`,use-map-engine.ts + lib/map-engine/mount.ts):
+  - 挂载链提取 `runMount`(use-map-engine.ts:337,首挂载 effect 与 retryMount
+    共用,不复制第二份挂载链);
+  - 失败(含引擎回退全败)置 `mountError`——`MapMountError { engine, code?, message }`
+    (:85-92);engine = 失败引擎 id,mount.ts 在最终错误上携带 `engineId`(mount.ts:96-101);
+  - `retryMount()`(:438-441):重新执行完整挂载链,挂载进行中/已有活 view 时
+    no-op(幂等),成功后走与首挂载相同的 .then 落地;
+  - 25s watchdog `MOUNT_TIMEOUT_MS = 25_000`(:167):整条链 withTimeout 上界,
+    超时以 `code: 'MOUNT_TIMEOUT'` 进入错误态并作废在飞挂载链(代际
+    `mountSeqRef` 递增,mount.ts 经 isCancelled 销毁已建视图,不泄漏)。
+- **C3**(`fix/loading-error-ui`,map-shell.tsx):覆盖层三态(:2290-2311)——加载中
+  (现状零改动)/ 失败态(`mountError` 非空:标题 `mapLoadFailed` + 重试按钮
+  `mapLoadRetry`/`mapLoadRetrying` i18n zh+en(i18n.ts:202-213),点击走
+  `handleMountRetry` → `retryMount`(map-shell.tsx:327-333),错误小字
+  `code · message`(无 code 或无 message 时单边显示))/ 配置缺失(现状)。
+- **C2'**(`fix/first-load-bounded`,viewport-search.ts):
+  - 首访全量加载 `WORK_FULL_LOAD_MAX_PAGES=10_000`(:292)逐页
+    `withTimeout`(:436,`WORK_VIEWPORT_PAGE_TIMEOUT_MS=10_000` :299)——任一页挂起
+    按该页失败跳过,绝不永久 await;
+  - 失败页跳过继续(不置 noMore/vacant),连续失败
+    `WORK_VIEWPORT_MAX_CONSECUTIVE_FAILURES=3` 页(:301-304,:484-504)止损返回
+    已取部分(服务端故障时防日志洪泛 + 空转);缺口由 mapReady 后视口加载
+    增量语义自然补齐。
+
+**修改文件**：`server/src/lib/amap-api.ts`、`server/src/hooks/use-map-engine.ts`、
+`server/src/lib/map-engine/mount.ts`、`server/src/components/map-shell.tsx`、
+`server/src/lib/viewport-search.ts`、`server/src/lib/i18n.ts`、测试
+(`amap-api.test.mjs` +3 / `map-engine-mount.test.mjs` +7 / `component-contracts
+.test.mjs` +1 / `viewport-search.test.mjs` +3)、`tech/23-map-engines.md`(契约回填,见该文档)。
+
+**验证**：合并后全量 1443 tests / **1441 pass / 2 skip / 0 fail**(merge-report);
+typecheck / docs-check / git diff --check 绿。历史文字保留(仅追加)。
+
+---
+
 ## 2026-08-22: 筛选「莫名勾选独角兽」(缓存残留 + 切模式闭包 stale filters)
 
 **症状**：用户报告筛选面板莫名勾选上「独角兽」(work 模式公司规模筛选
