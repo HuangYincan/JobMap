@@ -2,7 +2,7 @@
 
 **Status:** Phase 2–4 + 全国 work 模式已合入 `dev`(2026-08-21 起,真实招聘 catalog + Postgres + auth);地图引擎打磨系列 2026-08-22/23 持续合入。当前状态以仓库根 [README](../README.md) 与 `tech/` 为准,本文件只保留本目录可操作信息与历史快照。
 **Framework:** Next.js 16.3.1 (App Router) + React 19.2.8 + TypeScript 5.9 (以 `package.json` 为准)
-**Map Engine:** 三引擎插件契约 —— AMap / 腾讯 TMap / 百度 BMapGL(图层面板「地图源」切换,偏好存 localStorage;架构见 `tech/23-map-engines.md`)
+**Map Engine:** 三引擎插件契约 —— AMap / 腾讯 TMap / 百度 BMapGL(图层面板「地图源」切换,偏好存 localStorage;架构见仓库根 `tech/23-map-engines.md`)
 
 ## Quick Start
 
@@ -158,7 +158,7 @@ See `docs/i18n.md` for full documentation.
 
 - 契约定义于 `src/lib/map-engine/types.ts`:每引擎实现 `MapEngine`(生命周期 `isConfigured` / `load` / `isLoaded` / `createView` + `searchPOI` 检索能力)与 `MapView`(相机 / 样式 / 事件 / overlay / scale 控件)。
 - 已实现:`amap/`(高德)、`tencent/`(腾讯 TMap)、`baidu/`(百度 BMapGL);`engine-registry.ts` 注册与优先级,`engine-preference.ts` 存本地偏好,`switch.ts` 交互式切换回滚,`mount.ts` 挂载回退。
-- 用户在图层面板「地图源」section 切换引擎;`use-map-engine` 把活跃引擎的 `searchPOI` 注入 `poi-service`(域外 POI 检索随之切换,未注入时回落 amap-api)。架构详见 `tech/23-map-engines.md`。
+- 用户在图层面板「地图源」section 切换引擎;`use-map-engine` 把活跃引擎的 `searchPOI` 注入 `poi-service`(域外 POI 检索随之切换,未注入时回落 amap-api)。架构详见仓库根 `tech/23-map-engines.md`。
 
 ### Data Flow
 
