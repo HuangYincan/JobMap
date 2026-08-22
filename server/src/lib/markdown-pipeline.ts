@@ -37,6 +37,7 @@ function escapeAttr(value: string): string {
  * 接受 `amapuri://navi?lon=<lng>&lat=<lat>[&name=<名称>]`(键名大小写/顺序任意、
  * 值为 URL 编码);lon/lng 均可作经度键。坐标必须为有限数且在合法范围,
  * 任一解析失败(缺参/编码损坏/非数字/越界)→ null,不强行渲染。
+ * name 为空或缺省 → `to=lng,lat`(不带尾逗号,2026-08-22 ws-navi3)。
  */
 export function buildNaviWebUrl(raw: string): string | null {
   if (!raw || !raw.toLowerCase().startsWith("amapuri://")) return null;
@@ -80,7 +81,9 @@ export function buildNaviWebUrl(raw: string): string | null {
     name = decoded;
   }
 
-  return `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(name)}&mode=car&coordinate=gaode`;
+  // name 为空 → to=lng,lat(不带尾逗号;尾逗号会让高德侧解析出空名称段)。
+  const namePart = name === "" ? "" : `,${encodeURIComponent(name)}`;
+  return `https://uri.amap.com/navigation?to=${lng},${lat}${namePart}&mode=car&coordinate=gaode`;
 }
 
 /**
