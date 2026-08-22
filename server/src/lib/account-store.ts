@@ -44,6 +44,7 @@ import {
   recordApplication as memRecordApplication,
   removeSaved as memRemoveSaved,
   savePlace as memSavePlace,
+  resolveAccountBySubject as memResolveAccountBySubject,
   updateUser as memUpdateUser,
   updateAvatar as memUpdateAvatar,
   getAvatarData as memGetAvatarData,
@@ -67,6 +68,15 @@ function hashToken(token: string): string {
 
 function hashOtp(code: string): string {
   return createHash('sha256').update(`otp:${code.trim()}`).digest('hex');
+}
+
+/** 登录「查无此人/无密码」时执行的 dummy 校验:用真实 scrypt 参数跑一次,
+ *  抹平「账号不存在」与「密码错误」的响应时间差(时间侧信道,scan #3/#17)。
+ *  lazy 生成(仅首次命中时 50ms),非秘密。 */
+let dummyVerifyHash: string | null = null;
+function dummyVerifyPassword(password: string): void {
+  if (!dummyVerifyHash) dummyVerifyHash = hashPassword('domain-map-dummy-verify');
+  verifyPassword(password, dummyVerifyHash);
 }
 
 function subjectKey(provider: AuthProvider, subject: string): string {
@@ -151,6 +161,10 @@ const OTP_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const OTP_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const OTP_MAX_WRONG_ATTEMPTS = 5;
 const OTP_LOCK_MS = 15 * 60 * 1000;
+/** 每 IP 24h OTP 发送上限(防轮换 target 绕过 per-target 限额持续耗配额,scan #2)。 */
+const OTP_IP_DAILY_LIMIT = 20;
+/** 每账号 24h OTP 发送上限:账号 = 绑定用户(手机/邮箱共享同一桶),未绑定 → provider:target。 */
+const OTP_ACCOUNT_DAILY_LIMIT = 10;
 
 /** OTP 限流参数(生产用默认常量;测试可临时缩小窗口,用后还原)。 */
 export const otpRateConfig = {
@@ -160,6 +174,8 @@ export const otpRateConfig = {
   attemptWindowMs: OTP_ATTEMPT_WINDOW_MS,
   maxWrongAttempts: OTP_MAX_WRONG_ATTEMPTS,
   lockMs: OTP_LOCK_MS,
+  ipDailyLimit: OTP_IP_DAILY_LIMIT,
+  accountDailyLimit: OTP_ACCOUNT_DAILY_LIMIT,
 };
 
 interface OtpGuard {
@@ -170,16 +186,18 @@ interface OtpGuard {
 }
 
 const otpGuards = new Map<string, OtpGuard>();
+const otpIpGuards = new Map<string, OtpGuard>();
+const otpAccountGuards = new Map<string, OtpGuard>();
 
 function otpKey(provider: 'phone' | 'email', target: string): string {
   return `${provider}:${target.trim().toLowerCase()}`;
 }
 
-function getOtpGuard(key: string): OtpGuard {
-  let guard = otpGuards.get(key);
+function getOtpGuard(bucket: Map<string, OtpGuard>, key: string): OtpGuard {
+  let guard = bucket.get(key);
   if (!guard) {
     guard = { lastSentAt: 0, sentAt: [], wrongAt: [], lockedUntil: 0 };
-    otpGuards.set(key, guard);
+    bucket.set(key, guard);
   }
   return guard;
 }
@@ -189,6 +207,65 @@ function pruneOtpGuard(guard: OtpGuard, now: number): void {
   guard.sentAt = guard.sentAt.filter((t) => t > now - cfg.dailyWindowMs);
   guard.wrongAt = guard.wrongAt.filter((t) => t > now - cfg.attemptWindowMs);
   if (guard.lockedUntil <= now) guard.lockedUntil = 0;
+}
+
+/**
+ * 账号级发送桶的 key:target 已绑定账户 → `user:<id>`(手机/邮箱共享同一桶,
+ * 防止用同一账号的两个标识轮流发送翻倍配额);未绑定 → `account:<provider>:<target>`。
+ * 只做身份映射查询;DB 不可用时回退 target 键(随后 issueOtp 的写路径仍会抛
+ * DbUnavailableError,不存在借回退绕过发送的可能)。
+ */
+async function resolveOtpAccountKey(provider: 'phone' | 'email', normalized: string): Promise<string> {
+  const pool = getPoolForCall();
+  if (pool) {
+    try {
+      const result = await pool.query<{ user_id: string }>(
+        `SELECT user_id::text FROM auth_identities WHERE provider = $1 AND subject = $2 LIMIT 1`,
+        [provider, normalized],
+      );
+      const userId = result.rows[0]?.user_id;
+      if (userId) return `user:${userId}`;
+    } catch {
+      // DB 不可用:回退 target 键(见函数注释)。
+    }
+  } else {
+    const userId = memResolveAccountBySubject(provider, normalized);
+    if (userId) return `user:${userId}`;
+  }
+  return `account:${provider}:${normalized}`;
+}
+
+/**
+ * OTP 发送前追加守卫(scan #2):在 issueOtp 的 per-target(60s 冷却 / 24h 10 次)之上,
+ * 增加 per-IP(默认 20/24h)与 per-账号(默认 10/24h,账号 = 绑定用户,未绑定 → target)
+ * 两个独立 24h 发送桶。超出 → OtpRateLimitedError(route 层转 429 RATE_LIMITED)。
+ * 与 per-target 守卫同构:计数先于实际发送(发送失败也不退配额,防绕过)。
+ * 进程内守卫,适用于单实例演示(与 otpGuards 同一信任假设;IP 取自请求头,见 send route)。
+ */
+export async function checkOtpSendLimits(
+  ip: string,
+  provider: 'phone' | 'email',
+  target: string,
+): Promise<void> {
+  const normalized = target.trim().toLowerCase();
+  const now = Date.now();
+  const cfg = otpRateConfig;
+
+  const ipGuard = getOtpGuard(otpIpGuards, `ip:${ip}`);
+  pruneOtpGuard(ipGuard, now);
+  if (ipGuard.sentAt.length >= cfg.ipDailyLimit) {
+    const retryAfterMs = Math.max(cfg.cooldownMs, ipGuard.sentAt[0] + cfg.dailyWindowMs - now);
+    throw new OtpRateLimitedError(retryAfterMs, 'per-IP daily send limit reached');
+  }
+  ipGuard.sentAt.push(now);
+
+  const accountGuard = getOtpGuard(otpAccountGuards, await resolveOtpAccountKey(provider, normalized));
+  pruneOtpGuard(accountGuard, now);
+  if (accountGuard.sentAt.length >= cfg.accountDailyLimit) {
+    const retryAfterMs = Math.max(cfg.cooldownMs, accountGuard.sentAt[0] + cfg.dailyWindowMs - now);
+    throw new OtpRateLimitedError(retryAfterMs, 'per-account daily send limit reached');
+  }
+  accountGuard.sentAt.push(now);
 }
 
 // ---- DB 连接与故障策略 ----
@@ -402,7 +479,11 @@ export async function loginWithPassword(username: string, password: string): Pro
         [name.toLowerCase()],
       );
       const row = result.rows[0];
-      if (!row || !row.password_hash) return null;
+      if (!row || !row.password_hash) {
+        // 查无此人/无密码:也执行一次真实 scrypt,抹平「账号不存在」时间侧信道(scan #3/#17)。
+        dummyVerifyPassword(password);
+        return null;
+      }
       if (!verifyPassword(password, row.password_hash)) return null;
       return asUser({ ...row, provider: row.provider ?? 'password' });
     },
@@ -648,7 +729,7 @@ export async function issueOtp(
   const normalized = target.trim().toLowerCase();
   const now = Date.now();
   const cfg = otpRateConfig;
-  const guard = getOtpGuard(otpKey(provider, normalized));
+  const guard = getOtpGuard(otpGuards, otpKey(provider, normalized));
   pruneOtpGuard(guard, now);
   // 锁定期内不允许补发新码(防止绕过尝试上限)。
   if (guard.lockedUntil > now) {
@@ -686,7 +767,7 @@ export async function consumeOtp(provider: 'phone' | 'email', target: string, co
   const normalized = target.trim().toLowerCase();
   const now = Date.now();
   const cfg = otpRateConfig;
-  const guard = getOtpGuard(otpKey(provider, normalized));
+  const guard = getOtpGuard(otpGuards, otpKey(provider, normalized));
   pruneOtpGuard(guard, now);
   if (guard.lockedUntil > now) {
     throw new OtpTooManyAttemptsError(guard.lockedUntil - now, 'too many failed attempts, locked');
@@ -714,8 +795,11 @@ export async function consumeOtp(provider: 'phone' | 'email', target: string, co
     return true;
   }, () => memConsumeOtp(provider, normalized, code));
 
-  const succeeded = ok || memConsumeOtp(provider, normalized, code);
-  if (succeeded) {
+  if (ok) {
+    // 单次性契约(scan #1):成功路径无条件消费内存挑战。DB 模式双写时,DB 行已
+    // consumed;若不删内存挑战,同一 code 会在 10min TTL 内经内存分支再次成功
+    // (重放)。内存模式此调用幂等(挑战已被 fallback 删除,重复调用无副作用)。
+    memConsumeOtp(provider, normalized, code);
     guard.wrongAt = [];
     return true;
   }

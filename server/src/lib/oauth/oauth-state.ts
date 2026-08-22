@@ -6,24 +6,23 @@
 //   - state:32-byte 随机 hex nonce(与三方回跳的 ?state= 一致)
 //   - nextBase64Url:同源相对路径的 base64url 编码(签名时已清洗)
 //   - mac:HMAC-SHA256("v1|ts|state|next") 前 32 hex
-// 签名密钥复用 SESSION_SECRET;未设置 → 进程启动时随机(bootSecret),
-// 不引入新 env。cookie 有效期 600s;httpOnly / sameSite=lax / secure 仅生产。
+// 签名密钥复用 SESSION_SECRET —— 与会话 token 共用 sessionSigningSecret
+// (scan #4:生产缺 SESSION_SECRET → 抛错拒绝签名;非生产 → 两个模块共享同一
+// boot 随机密钥,不再各自回退)。不引入新 env。cookie 有效期 600s;
+// httpOnly / sameSite=lax / secure 仅生产。
 // ============================================================
 
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { sessionSigningSecret } from '../session-store.ts';
 
 export const OAUTH_STATE_COOKIE = 'oauth_state';
 export const OAUTH_STATE_TTL_SECONDS = 600;
 export const OAUTH_STATE_TTL_MS = OAUTH_STATE_TTL_SECONDS * 1000;
 export const OAUTH_STATE_MAX_NEXT_LENGTH = 2048;
 
-/** SESSION_SECRET 复用;未设置 → boot 随机(进程内一致)。 */
-let bootSecret: string | null = null;
+/** SESSION_SECRET(经 session-store 统一入口;未设 → 非生产 boot 随机 / 生产抛错)。 */
 function oauthStateSecret(): string {
-  const fromEnv = process.env.SESSION_SECRET?.trim();
-  if (fromEnv) return fromEnv;
-  bootSecret ??= randomBytes(32).toString('hex');
-  return bootSecret;
+  return sessionSigningSecret();
 }
 
 /** 32-byte 随机 hex nonce(64 字符)。 */

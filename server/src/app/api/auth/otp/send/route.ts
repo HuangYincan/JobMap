@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import {
+  checkOtpSendLimits,
   DbUnavailableError,
   issueOtp,
   OtpRateLimitedError,
@@ -25,7 +26,9 @@ import {
  * email:经 Resend 真发(需 RESEND_API_KEY;未配置 → 503 EMAIL_NOT_CONFIGURED)。
  * phone:经阿里云短信认证服务真发(需 ALIYUN_* 四件套;未配置 → 503 SMS_NOT_CONFIGURED)。
  *
- * 限流:同 target 60s 冷却 + 24h 上限(issueOtp 内守卫);写路径 DB 故障 → 503,不静默降级。
+ * 限流:同 target 60s 冷却 + 24h 上限(issueOtp 内守卫);发送前再经
+ * checkOtpSendLimits 做 per-IP(默认 20/24h)与 per-账号(默认 10/24h)校验,
+ * 防轮换 target 绕过限额持续耗配额(scan #2);写路径 DB 故障 → 503,不静默降级。
  * 秘密纪律:绝不打印/返回验证码、key 或 Resend/阿里云原始错误。
  */
 export async function POST(request: Request) {
@@ -49,6 +52,8 @@ export async function POST(request: Request) {
   }
 
   try {
+    // per-IP / per-账号 24h 发送桶先于 issueOtp(与 per-target 守卫同构:计数先于发送)。
+    await checkOtpSendLimits(clientIp(request), provider, target);
     if (provider === 'email') {
       // 先 issueOtp:守卫先行,配额(60s 冷却/24h 上限)不因发送失败被绕过。
       const { expiresAt, code } = await issueOtp(provider, target);
@@ -132,4 +137,18 @@ export async function POST(request: Request) {
     }
     throw err;
   }
+}
+
+/**
+ * 客户端 IP(与 agent/chat 同款取法):x-forwarded-for 首段 → x-real-ip → 'unknown'。
+ * 信任假设:仅可信代理注入的转发头有效(客户端可伪造 XFF 自选桶,与 otpGuards
+ * 同属单实例演示的进程内守卫假设;多实例/生产需代理层清洗转发头,deferred)。
+ */
+function clientIp(request: Request): string {
+  const fwd = request.headers.get('x-forwarded-for');
+  if (fwd) {
+    const first = fwd.split(',')[0].trim();
+    if (first) return first;
+  }
+  return request.headers.get('x-real-ip') ?? 'unknown';
 }

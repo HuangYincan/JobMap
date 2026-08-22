@@ -20,6 +20,14 @@ export function randomOtpCode(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, '0');
 }
 
+/** 登录「查无此账号」时执行的 dummy 校验:真实 scrypt 抹平时间侧信道(与 account-store 同款)。
+ *  lazy 生成(仅首次命中时 50ms);非秘密。 */
+let dummyVerifyHash: string | null = null;
+function dummyVerifyPassword(password: string): void {
+  if (!dummyVerifyHash) dummyVerifyHash = hashPassword('domain-map-dummy-verify');
+  verifyPassword(password, dummyVerifyHash);
+}
+
 interface StoredUser extends AccountUser {
   createdAt: number;
   /** 仅 password provider 用户有,绝不随 publicUser 返回 */
@@ -54,10 +62,34 @@ function identityKey(provider: AuthProvider, subject: string): string {
   return `${provider}:${subject.trim().toLowerCase()}`;
 }
 
+/** target(phone/email subject)是否已绑定账户(内存路径):返回 userId,未绑定 → null。
+ *  只服务 OTP 发送的账号级限流键(account-store resolveOtpAccountKey),非秘密。 */
+export function resolveAccountBySubject(provider: AuthProvider, subject: string): string | null {
+  return identities.get(identityKey(provider, subject)) ?? null;
+}
+
+/**
+ * 会话 token 与 oauth_state 共用的 HMAC 签名密钥(scan #4):
+ * - 优先 `SESSION_SECRET`(生产必配,见 tech/15 / tech/27);
+ * - 未设置且非生产 → 进程启动时随机(bootSecret,与 oauth-state 同源:oauth-state
+ *   直接复用本函数,不再各自回退);
+ * - 未设置且 NODE_ENV=production → 抛错拒绝签名(杜绝公开常量回退值成为未来
+ *   「校验签名/客户端提供 token」路径的伪造入口)。
+ */
+let bootSecret: string | null = null;
+export function sessionSigningSecret(): string {
+  const fromEnv = process.env.SESSION_SECRET?.trim();
+  if (fromEnv) return fromEnv;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET is required in production: refusing to sign session tokens');
+  }
+  bootSecret ??= randomBytes(32).toString('hex');
+  return bootSecret;
+}
+
 function signToken(): string {
   const raw = randomBytes(24).toString('hex');
-  const secret = process.env.SESSION_SECRET || 'domain-map-demo-session';
-  const mac = createHmac('sha256', secret).update(raw).digest('hex').slice(0, 16);
+  const mac = createHmac('sha256', sessionSigningSecret()).update(raw).digest('hex').slice(0, 16);
   return `${raw}.${mac}`;
 }
 
@@ -164,7 +196,12 @@ export function loginWithPassword(username: string, password: string): AccountUs
       (u) => u.username?.toLowerCase() === name || u.email?.toLowerCase() === name,
     );
   }
-  if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) return null;
+  if (!user?.passwordHash) {
+    // 查无此账号/无密码:也执行一次真实 scrypt,抹平「账号不存在」时间侧信道(scan #3/#17)。
+    dummyVerifyPassword(password);
+    return null;
+  }
+  if (!verifyPassword(password, user.passwordHash)) return null;
   return publicUser(user);
 }
 
