@@ -2580,16 +2580,19 @@ test('createMarker(content):锚定一致性——div 左上角 = 容器像素 - 
   }
 });
 
-test('createMarker(content+icon):content 为渲染主机制,icon 不参与(不产生 geometry/样式归组)', async () => {
+test('createMarker(content+icon):icon 为渲染主机制——走 MultiMarker(几何/样式归组),不产生 DOM overlay(ws-h 收窄回归 ws-c)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;
   const dom = installFakeDom();
   const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
   try {
     delete ns.Marker;
     ns.MultiMarker = MockMultiMarker;
     const view = await createView({ container: dom.container });
-    // 聚合徽章形态(content + dataURL icon):content 经 overlay 渲染,icon 忽略
+    // 聚合徽章形态(content + dataURL icon):icon 是 TMap 渲染形态(MultiMarker
+    // 纹理,ws-c 锚点公式)——不再走 DOM overlay(ws-pinfix2 全量 content →
+    // DOM 定位在真实 SDK 全堆叠,ws-h 收窄回 icon 路径)
     const m1 = view.createMarker({
       position: { lng: 120.16, lat: 30.28 },
       content: '<div class="dm-cluster">杭州 12</div>',
@@ -2597,17 +2600,33 @@ test('createMarker(content+icon):content 为渲染主机制,icon 不参与(不�
       zIndex: 50,
       icon: { src: 'data:image/svg+xml,%3Csvg%3Ebadge', size: [54, 54] },
     });
-    const div = dom.container.children[0];
-    assert.equal(div.innerHTML, '<div class="dm-cluster">杭州 12</div>', 'content 经 overlay 渲染');
-    assert.equal(div.style.zIndex, '50');
-    assert.equal(m1.raw instanceof MockMultiMarker, false, '不走 MultiMarker(无 geometry/样式归组)');
-    assert.equal(dom.container.children.length, 1, '只挂一个 div(icon 不参与 → 无双渲染)');
+    assert.ok(m1.raw instanceof MockMultiMarker, 'content+icon → MultiMarker(icon 主机制)');
+    assert.equal(dom.container.children.length, 0, '零 DOM overlay div(icon 纹理渲染,content 不注入)');
+    assert.equal(m1.raw.geometries[0].styleId, 'dm-st-1', 'icon → 归组样式(dm-st-N,ws-c 锚点)');
+    assert.deepEqual(
+      { ...m1.raw.styles['dm-st-1'].opts.anchor },
+      { x: 27, y: 27 },
+      'anchor = -offset = (27,27)(徽章中心钉地理点,ws-c 修正公式)',
+    );
+    assert.equal(m1.raw.geometries[0].content, undefined, 'content 不写入 geometry(GL 文本标签禁用)');
+    assert.equal(warn.calls.length, 0, 'icon 存在 → content 不降级告警(icon 优先渲染)');
     // 无 content 的 icon marker 仍走 MultiMarker 归组(既有行为不变)
     const pin = view.createMarker({ position: { lng: 1, lat: 2 }, icon: { src: 'a.png', size: [20, 20] } });
     assert.ok(pin.raw instanceof MockMultiMarker, 'icon-only → MultiMarker 归组路径不变');
-    assert.equal(pin.raw.geometries[0].styleId, 'dm-st-1', 'icon 归组样式照常');
+    assert.equal(pin.raw.geometries[1].styleId, 'dm-st-2', '新签名 → 新 styleId');
+    // content-only(无 icon,agent 蓝点语义)→ 仍走 DOM overlay(ws-pinfix2 目标不回归)
+    const dot = view.createMarker({
+      position: { lng: 3, lat: 4 },
+      content: '<div style="width:20px;height:20px">',
+      offset: [-10, -10],
+    });
+    assert.equal(dot.raw instanceof MockMultiMarker, false, 'content-only → DOM overlay(不走 MultiMarker)');
+    assert.equal(dom.container.children.length, 1, '仅 content-only 挂 div(蓝点 DOM 覆盖物)');
+    assert.equal(dom.container.children[0].innerHTML, '<div style="width:20px;height:20px">');
+    assert.equal(warn.calls.length, 0, '全路径零降级告警');
   } finally {
     dom.restore();
+    warn.restore();
     restore();
   }
 });
@@ -2709,6 +2728,52 @@ test('createMarker(content):无 DOM(node/SSR)→ 回退既有路径(单点 conte
     assert.equal(warn.calls.length, 1, '回退降级一次性 warn(旧行为)');
     assert.match(String(warn.calls[0][0]), /MultiMarker 不支持 HTML content/);
   } finally {
+    warn.restore();
+    restore();
+  }
+});
+
+test('createMarker(content):projectToContainer 兜底定位(真实 SDK v1.8.0.2 无 lngLatToContainerPoint,ws-h 实测修正)', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const dom = installFakeDom();
+  const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView({ container: dom.container });
+    // 真实 SDK 面:stdout 无 lngLatToContainerPoint,只有 projectToContainer
+    // (ws-h 真机 Chromium 实测:typeof map.lngLatToContainerPoint === 'undefined';
+    // projectToContainer(center) → 精确容器中心)
+    delete view.raw.lngLatToContainerPoint;
+    // 赋值 own property(delete 对原型 patch 无效;own 属性遮蔽原型 → nullish 链走兜底)
+    view.raw.lngLatToContainerPoint = undefined;
+    let lastProj = null;
+    view.raw.projectToContainer = (latLng) => {
+      lastProj = latLng;
+      return { x: 600, y: 500 };
+    };
+    const marker = view.createMarker({
+      position: { lng: 120.16, lat: 30.28 },
+      content: '<div style="width:20px;height:20px">',
+      offset: [-10, -10],
+    });
+    const div = dom.container.children[0];
+    assert.equal(div.style.left, '610px', 'left = projectToContainer().x - offset[0] = 600 - (-10)');
+    assert.equal(div.style.top, '510px', 'top = projectToContainer().y - offset[1] = 500 - (-10)');
+    assert.deepEqual({ ...lastProj }, { lat: 30.28, lng: 120.16 }, 'projectToContainer 收 LatLng 纬度在前');
+    assert.equal(warn.calls.length, 0, 'projectToContainer 兜底零告警');
+    // 两者皆无 → 一次性 warn + 跳过定位(不抛错)
+    delete view.raw.projectToContainer;
+    const m2 = view.createMarker({ position: { lng: 1, lat: 2 }, content: '<b>Y</b>' });
+    const div2 = dom.container.children[1];
+    assert.equal(div2.style.left, undefined, '无定位 API → left 不设置(div 跳过定位)');
+    assert.equal(div2.style.top, undefined);
+    assert.equal(warn.calls.length, 1, '双 API 缺失 → 一次性 warn');
+    assert.match(String(warn.calls[0][0]), /无 lngLatToContainerPoint\/projectToContainer/);
+  } finally {
+    dom.restore();
     warn.restore();
     restore();
   }

@@ -29,18 +29,31 @@
 // - LatLngBounds(sw: LatLng, ne: LatLng);getWest/getSouth/getEast/getNorth
 // - **createMarker 构造器多路径**(SDK v1.8.0.2 源码核实):`v=1.exp` 全局 TMap
 //   命名空间**无单点 Marker**(导出表只有 MultiMarker/MarkerStyle 等聚合类)→
-//   createMarker 按 typeof 分派:content 存在 → **DOM overlay**(容器 div,
-//   见 createContentOverlay);无 content:Marker 可用走单点路径,否则
-//   MultiMarker 聚合路径(2026-08-22 ws-pinfix2:content 不再走 MultiMarker
-//   降级——浏览器端无单点 Marker,agent 的 content+offset 无 icon 样式被
+//   createMarker 按 typeof 分派:content 存在**且无 icon** → **DOM overlay**
+//   (容器 div,见 createContentOverlay——ws-pinfix2 目标场景:agent 蓝点等
+//   无 icon 的 HTML 形态);**content+icon 并存(公司 POI 徽章/聚合徽章)与
+//   有 icon → 走 icon 路径**(MultiMarker 纹理,ws-c 修正锚点 = -contract
+//   offset;content 不写 geometry,2026-08-22 ws-h 收窄:content 不再无条件
+//   走 DOM overlay——DOM 定位在真实 SDK 全堆叠 bug 根因,见 tech/23 ws-h);
+//   无 content 无 icon:Marker 可用走单点路径,否则 MultiMarker 聚合路径
+//   (2026-08-22 ws-pinfix2:agent 的 content+offset 无 icon 样式被
 //   resolveMultiStyle 生成无 src/width/height 的 MarkerStyle → GL 校验
 //   「width 属性无效」拒绝渲染 + content 降级 = 目标点不可见根因)
 // - 单点 Marker(仅 npm SDK 形态):{ position, map, content, offset:{x,y}, zIndex };
 //   移除 = setMap(null)(glMarker 标注点;无 remove 方法;zIndex → DOM overlay style.zIndex)
-// - **content 语义(三引擎一致,2026-08-22 ws-pinfix2)**:content 存在 → 引擎层
-//   DOM 覆盖物渲染 HTML(div 注入地图容器,定位 = lngLatToContainerPoint -
-//   offset;与 amap content 原生渲染、baidu 自定义 Overlay 同语义);MultiMarker
-//   的 icon 化路径仅服务无 content marker(或 DOM 不可用的回退)。
+// - **content 语义(2026-08-22 ws-h 收窄)**:content 存在**且无 icon** → 引擎层
+//   DOM 覆盖物渲染 HTML(div 注入地图容器,定位 = 容器像素投影 - offset;
+//   **真实 SDK v1.8.0.2 实测(ws-h,真机 Chromium)**:`lngLatToContainerPoint`
+//   **不存在**于 Map 原型(导出面 = projectToContainer/unprojectFromContainer/
+//   projectToWorldPlane 等,`typeof map.lngLatToContainerPoint === 'undefined'`)
+//   —— ws-pinfix2 假定的官方命名 API 不存在 → DOM overlay 全部不定位 →
+//   堆叠(用户「POI 各种奇怪 bug」根因);`projectToContainer(latLng)` 实测
+//   返回容器像素 {x,y}(center → 精确容器中心,偏移点方向/量级正确)——
+//   引擎定位链 = lngLatToContainerPoint(兼容/测试) → projectToContainer
+//   (真实 SDK 兜底);与 amap content 原生渲染、baidu DOM 注入同语义);
+//   content+icon 并存 → icon 为渲染主机制(MultiMarker 纹理,content 不渲染
+//   —— HTML 双渲染会叠印);MultiMarker 的 icon 化路径兼服务无 content marker,
+//   content-only 仅 DOM 不可用时回退(降级 warn)。
 // - MultiMarker(v=1.exp 全局形态,2026-08-22 ws-6 批量化):
 //   **单共享实例承载全部 geometry**(消灭旧实现「每 marker 一实例」的
 //   「数据层过多」警告 + mousemove 监听泄漏;单实例内部方法面实测核实:
@@ -498,11 +511,16 @@ class TencentView implements MapView {
   }
 
   createMarker(opts: MapMarkerOptions): MapMarker {
-    // content 存在 → **DOM overlay 渲染 HTML**(2026-08-22 ws-pinfix2):
-    // 三引擎 content 语义一致;不走 MultiMarker(无 HTML 渲染 + 无 icon 样式
-    // 被 GL 拒绝 = 目标点不可见根因)。无 content 走构造器多路径(单点 Marker /
+    // content 存在**且无 icon** → DOM overlay 渲染 HTML(2026-08-22 ws-pinfix2):
+    // agent 蓝点等无 icon 内容形态;不走 MultiMarker(无 HTML 渲染 + 无 icon 样式
+    // 被 GL 拒绝 = 目标点不可见根因)。
+    // **content+icon 并存(公司 POI 徽章 / 聚合徽章)与有 icon → 既有 icon 路径**
+    // (2026-08-22 ws-h 收窄:ws-pinfix2 曾让全部 content(含 content+icon
+    // 并存)走 DOM overlay → 真实 SDK lngLatToContainerPoint 定位失效,POI
+    // 全部堆叠;回归 ws-c 语义:icon 是 TMap 渲染形态(纹理),content 不参与,
+    // 避免 HTML 双渲染叠印)。无 content 无 icon 走构造器多路径(单点 Marker /
     // MultiMarker 聚合;v=1.exp 全局 TMap 无单点 Marker → MultiMarker)
-    if (opts.content !== undefined) return this.createContentOverlay(opts);
+    if (opts.content !== undefined && !opts.icon) return this.createContentOverlay(opts);
     if (typeof this.tmap.Marker === 'function') return this.createSingleMarker(opts);
     if (typeof this.tmap.MultiMarker === 'function') return this.createMultiMarker(opts);
     console.error('[map-engine] TMap 无 Marker/MultiMarker,命名空间:', Object.keys(this.tmap || {}));
@@ -513,9 +531,10 @@ class TencentView implements MapView {
    * content → DOM 覆盖物渲染(TMap 容器内绝对定位 div;项目实证可用机制:
    * 自绘比例尺 ensureFallbackScale 同路径——直接 appendChild 到
    * getContainer(),生产坐实可用)。
-   * - 定位:`lngLatToContainerPoint(lngLat)` → 容器像素 - 契约 offset
-   *   (div 左上角 = 屏幕位 - offset;锚定一致性,与 amap content 语义对齐;
-   *   agent 蓝点 offset [-10,-10] → 圆心对准坐标);
+   * - 定位:`lngLatToContainerPoint(lngLat)` → **真实 SDK 缺此 API(v1.8.0.2
+   *   实测 ws-h)→ 兜底 `projectToContainer(latLng)`**(均返回容器像素 {x,y})
+   *   → 容器像素 - 契约 offset(div 左上角 = 屏幕位 - offset;锚定一致性,
+   *   与 amap content 语义对齐;agent 蓝点 offset [-10,-10] → 圆心对准坐标);
    * - 内容原样注入 innerHTML(转义边界:content 是引擎调用方可信的 HTML,与
    *   amap 同语义,原样注入——既有契约);
    * - click 绑 div(内容子元素冒泡可达)+ stopPropagation(不触发地图 click,
@@ -524,8 +543,10 @@ class TencentView implements MapView {
    *   + 视图相机方法(setCenter 等,兜底程序化相机;idle 为 debounce 收敛);
    * - 移除 = div 摘除 + 注册表清理;raw 带 setMap(null)/remove 供 map-shell
    *   摘除分派(badgeCleanupHandle);
-   * - content 与 icon 并存 → content 为渲染主机制,icon 不参与(内容 HTML
-   *   自包含:徽章 HTML 内嵌 logo img + 失败回退链;避免 icon 双渲染)。
+   * - **仅无 icon 的 content 到达本路径**(ws-h 收窄):content+icon 并存时
+   *   icon 为渲染主机制(MultiMarker 纹理,见 createMultiMarker)——icon 不
+   *   参与 DOM overlay(content HTML 双渲染会与 icon 纹理叠印;回归 ws-a/
+   *   ws-c 语义:icon 是 TMap 渲染形态)。
    * 防御性守卫:无 DOM/容器 → createContentFallback(单点 Marker 原生 content /
    * MultiMarker icon 化降级,不抛错)。
    */
@@ -557,14 +578,21 @@ class TencentView implements MapView {
     el.addEventListener('click', onClick);
     container.appendChild(el);
     const project = () => {
-      if (typeof this.raw.lngLatToContainerPoint !== 'function') {
+      // 定位 API 双路径(2026-08-22 ws-h 真机实测):真实 SDK v1.8.0.2 Map 原型
+      // **无 lngLatToContainerPoint**(`typeof === 'undefined'`,ws-pinfix2 假定
+      // 的官方命名不存在 → 判空失败 → 全部覆盖物不定位 → 堆叠根因);实测
+      // **projectToContainer(latLng) 返回容器像素 {x,y}**(center → 精确容器
+      // 中心;容器契约点偏移正向)。优先走既有名(测试双面/未来 SDK 兼容),
+      // 兜底 projectToContainer(真实 SDK 适配);两者皆无 → 一次性 warn + 跳过
+      const proj = this.raw.lngLatToContainerPoint ?? this.raw.projectToContainer;
+      if (typeof proj !== 'function') {
         if (!this.contentOverlayProjectWarned) {
           this.contentOverlayProjectWarned = true;
-          console.warn('[map-engine] TMap 无 lngLatToContainerPoint,content 标记无法定位');
+          console.warn('[map-engine] TMap 无 lngLatToContainerPoint/projectToContainer,content 标记无法定位');
         }
         return null;
       }
-      return this.raw.lngLatToContainerPoint(toTMapLatLng(tmap, position));
+      return proj.call(this.raw, toTMapLatLng(tmap, position));
     };
     const redraw = () => {
       const px = project();
@@ -759,10 +787,11 @@ class TencentView implements MapView {
     };
     this.multiGeometries.set(id, geometry);
     this.multiZIndexes.set(id, opts.zIndex ?? TENCENT_MARKER_DEFAULT_ZINDEX);
-    // HTML content:主路径已由 createContentOverlay(DOM overlay)承载(ws-pinfix2);
-    // 本方法仅在 **无 DOM 回退** 时接收 content —— MultiMarker 无 HTML 渲染
-    // (SDK 核实:geometry.content 是 GL 文本标签,MarkerStyle 仅图片 src)→
-    // 降级默认点 + 一次性 warn。
+    // HTML content:main dispatch 仅把 **content 且无 icon** 交给
+    // createContentOverlay(DOM overlay)承载;本方法在 content+icon 并存(公司
+    // POI 徽章/聚合徽章,icon 为渲染主机制,ws-h 收窄回归 ws-c)与 **DOM 不可用
+    // 回退**时接收 content —— MultiMarker 无 HTML 渲染(SDK 核实:geometry.content
+    // 是 GL 文本标签,MarkerStyle 仅图片 src)→ 降级默认点 + 一次性 warn。
     // **icon 存在时不降级**(ws-a,bug 1/6):icon → MarkerStyle(src) 真图标路径
     // 才是 TMap 渲染形态;content 只是 AMap 等引擎的 HTML 形态(公司 icon /
     // 聚合徽章 dataURL 图标均同时传 content+icon,契约 icon 缺省才走默认点)
@@ -886,8 +915,8 @@ class TencentView implements MapView {
    * - **SDK 类名核实(ws-a,2026-08-22)**:GL API **无 IconStyle 类**——MultiMarker
    *   图片样式类就是 `MarkerStyle`,内嵌 `{ src, width, height, anchor }`(src 可
    *   为 dataURL 数据图或远程 URL);公司 icon / 聚合徽章走本路径真图标渲染
-   *   (仅无 content 场景;content 由 createContentOverlay DOM overlay 承载,
-   *   ws-pinfix2——三引擎 content 语义一致);
+   *   (content+icon 并存时 icon 为渲染主机制,ws-h 收窄回归 ws-c——content
+   *   由 createContentOverlay DOM overlay 承载仅限无 icon 的内容形态);
    * - 契约 icon 缺省 → 默认 pin;icon 存在 → 真图标;content 不写入 geometry
    *   (主路径 content 不经本方法;回退路径 MultiMarker 无 HTML 渲染);
    * - MarkerStyle 仅图片 src 形态;契约 offset [x,y] → anchor 平移(渲染公式
