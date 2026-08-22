@@ -1548,3 +1548,108 @@ ws-pinfix2(f2e4f60)曾令**全部 content marker 走 DOM overlay**——动机�
 - DOM overlay 仅服务无 icon content(agent 蓝点/距离手柄);蓝点生产场景
   (ws-d 用户定位)本就走 icon 路径,未受影响;
 - 未触发保底方案(用户「只用高德」授权):方案 A/B 验收通过,未启用。
+
+## ws-i 回填:腾讯 POI 徽章层级修复(构造后 setMap 挂图)+ icon 预检链式推进(2026-08-23,fix/tmap-badge-overlap)
+
+> 来源:批次 `20260822-boss-engine-polish-2` ws-i。用户报「腾讯底图的公司 poi
+> 有问题,渲染很奇怪」;boss 真机实测(全新 reload):徽章主体 15 个完整 40×40
+> 正常、点击弹卡、MultiMarker hook 无双渲染/无 default styleId;但存在 3 个
+> 「幽灵元素」(34×14 扁平,白上蓝内,地图锚定、点击无响应、不在 DOM、非
+> MultiMarker geometry);OCR 实证:TMap 底图矢量瓦片自带海量 POI 文字标注
+> (「18号級」等),「18号級」(638,393)-(672,403) 与混合块 (656,399) 精确
+> 重叠 → **混合块 = 徽章被底图文字标注遮挡(文字白底盖住徽章上部,只露下半)**。
+> AMap 徽章是 DOM 元素画在 canvas 之上不受影响 → 腾讯独有。
+
+### 1. 根因:MultiMarker 构造期挂图 → 图层 level 落标注层之下
+
+- TMap GL MultiMarker(GeometryOverlay 派生)的图层 level 在 `_createLayer()`
+  时按 `_layerType` 决定(子类 `_setGeometryType()` 设置 `_layerType="MARKER"`);
+- **构造 options 传 `map`** → GeometryOverlay 基类构造器在子类
+  `_setGeometryType()` 执行**之前**调 `setMap(map)` → `_createLayer()` 读
+  `_layerType` 仍 undefined → 图层 level 落 **OVERLAY_AA(4)**,低于底图文字
+  标注层 TEXT(6);overlay 排序 rank = 10000·level + zIndex(层内 zIndex 上限
+  9999,无法跨级)→ 文字标注盖住徽章;
+- **构造后显式 `setMap(map)`** → `_setGeometryType()` 已执行 → 图层
+  type="MARKER" → level **OVERLAY_NAA(7,标注之上)** → 徽章完整不被遮挡;
+- 修复(tencent-engine.ts `createMultiMarker`):构造 options **不传 map**,
+  构造后立即 `raw.setMap(this.raw)`(SDK v1.8.0.2 实包源码核实:GeometryOverlay
+  恒有 setMap,destroy 路径本就依赖 `setMap(null)`,同款可用性;极老形态缺失
+  → 一次性 warn 降级不抛)。zIndex 语义不变(level 内偏移)。
+
+### 2. 预检刷屏根因 + 修复:resolveTMapIconSrc 链式推进
+
+- 症状:首会话 console 370-740 行 favicon.im CORS 错误(185 唯一 URL × 2 行);
+- 根因:`resolveTMapIconSrc` 把**全部 unknown 候选都 push 进 toPreflight**
+  (每 POI 候选链 ~8 个 URL)→ 调用方全量预检 → 24 POI × ~8 ≈ 192 个失败
+  请求;ws-e/ws-f 的记忆化本身正常(每 URL 只报 1 次),问题在「一次性预检
+  全部候选」而非「链式推进」;
+- 修复(map-markers.ts):只 push 候选链中**第一个 unknown**(logoUrl 优先,
+  其次候选链顺序);失败记忆化后下次重建自然试下一个候选 → 每 POI 最多 1
+  个预检请求,渐进收敛;纯函数契约(返回 {src, toPreflight})与调用方
+  `for (url of toPreflight) preflightRemoteIcon(url)` 不变。
+
+### 3. 测试
+
+- `map-engine-tencent.test.mjs`:
+  - 构造顺序:MultiMarker 构造 options 无 `map` + 构造后 setMap 挂图
+    (raw.map === view.raw);
+  - 无 setMap(极老 SDK)→ 一次性 warn 降级不抛,实例不挂图;
+  - `resolveTMapIconSrc` 纯函数:toPreflight 只含链中第一个 unknown
+    (favicon.im),icon.horse 不预检;
+  - 控制器级链式推进:首预检 favicon.im → 失败记忆化 → 重建预检
+    icon.horse → 成功 → 再次重建升级真 logo;全程零重复预检。
+
+### 4. 验收状态与遗留
+
+- 单元/门禁:1461 通过 / 0 失败 / 2 skip;typecheck / docs-check /
+  git diff --check 通过;
+- **真机复验(boss 轮后)**:混合块消失(该位置徽章完整 40×40)、15+ 徽章
+  全部完整、点击弹卡、缩放/pan 后仍完整、AMap/Baidu 零回归;首会话 console
+  errors ≤50 行、第二会话(记忆化)0 行。若混合块仍在 → 二分:禁 icon.horse
+  候选(全 dataURL)是否消失;禁 `setStyles` 全量替换(改增量)是否消失;
+  LOD 摘挂(1100 次 add 观测)是否相关。
+
+### 5. 修订:根因修正 + 初始渲染竞态修复(2026-08-23 ws-i 续,真机复验)
+
+> 上节 1 的「构造时序 → level=4 被标注遮挡」推断在真机复验中**被推翻**,
+> 本节以 SDK v1.8.0.2 实包源码 + 页面内浏览器实验为准修正。
+
+**构造方式不影响层级(实测)**:
+- GeometryOverlay 构造器内部顺序(实包源码):先 `_setGeometryType()`(置
+  `_layerType="MARKER"`)→ 再 `e.map ? i.setMap(e.map)`;`_createLayer()`
+  → `new Jl({type: this._layerType})` → Jl 构造 `type==='marker' →
+  level=OVERLAY_NAA(7)`。**构造传 map 与构造后 setMap 殊途同归,均
+  level 7 / type MARKER**(页面内双形态实验:layer.level 均 7,rank 均
+  70020);layerResource 实测排序:`vector_top_poi`(文字标注)rank 60000
+  < MARKER 层 70020 → 徽章恒在文字标注之上,**不存在「文字盖徽章」**。
+- 因此保留「构造后 setMap」仅为形态收敛(与 destroy setMap(null) 对称),
+  zIndex 语义不变。
+
+**真正问题 = 初始渲染竞态(实测)**:
+- 症状随机:全新 reload 后徽章 0 个(首帧缺失)或正常(时序运气);一次
+  缩放/平移(LOD 摘挂)后全部出现;
+- 机制:GeometryOverlay 的 `geometry_changed → _createLayer 重建 layer +
+  redraw` 链在页面初始(地图 idle/渲染管线未稳)可能整体错过,layer 的
+  sourceData 快照停留在创建时(1 个 geometry)而 geojson source 内已是
+  全量 → 渲染无数据;任何后续数据变化(手动 add/setGeometries/相机触发
+  LOD)重触发链 → 全部渲染(实测 setGeometries(全量)在 0 徽章态立即
+  恢复 15 个视口内徽章);
+- 修复(tencent-engine.ts createMultiMarker):共享实例挂图后
+  `setTimeout(0)` 一次**全量 `setGeometries(geometries.slice())`** 重推
+  (宏任务让同步批量 add 先完成;SDK guard 引用相同数组直接返回,必须
+  传副本;无 setGeometries 老 SDK 跳过,用户交互兜底)。
+
+**真机验收(worktree :3100 + headless Chrome CDP,2026-08-23)**:
+- 腾讯:连续 5/5 全新 reload 徽章全部渲染(13-15 个 40×40 完整,零
+  34×14 扁块——修复前同法复现 0 徽章态);点击徽章 → POI 详情卡弹出
+  (代塔供应链,含地址/在招岗位);缩放 + 平移后徽章保持完整(视口边缘
+  裁剪为正常地图行为);layer 实测 rank 70020 居标注层之上;
+- 预检链式:首会话 180 唯一 favicon.im URL(每 POI 仅预检候选链第一个
+  unknown;修复前整链 ~8 URL/POI),console 行数 = 2 × 活跃 POI 数
+  (当前工作模式 catalog 180+ POI,远大于 boss 实测时的 24 → 绝对行数
+  高于 ≤50 行预估,语义达标:每 POI 1 个、失败记忆化、零重复);
+  第二会话(记忆化)errors = 0;
+- AMap 13 徽章 / Baidu 20 徽章,均 0 错误 → 零回归;
+- 测试:构造顺序(无 map + setMap 挂图)+ setGeometries 全量重推副本断言;
+  1461 通过 / 0 失败 / 2 skip;typecheck / docs-check / git diff --check
+  通过。

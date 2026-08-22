@@ -846,7 +846,13 @@ test('createMarker:仅 MultiMarker(无 Marker)→ 聚合路径,geometries/id/off
     assert.match(geo.id, /^dm-mk-\d+$/, 'id 递增唯一(dm-mk-N)');
     assert.deepEqual({ ...geo.position }, { lat: 30.28, lng: 120.16 }, 'position LatLng 纬度在前');
     assert.equal(geo.styleId, 'dm-st-1', '有 offset → 样式归组分配 dm-st-N(非 default)');
-    assert.equal(marker.raw.map, view.raw, '共享 MultiMarker 挂到当前地图');
+    assert.equal(marker.raw.opts.map, undefined, '构造不传 map(ws-i 层级修复:构造后 setMap 挂图;实测两形态 layer level 均 7,构造顺序只为形态收敛)');
+    assert.equal(marker.raw.map, view.raw, '构造后 setMap 挂图(共享 MultiMarker 挂到当前地图)');
+    assert.deepEqual(
+      marker.raw.geometries.map((g) => g.id),
+      [geo.id],
+      '挂图后 setGeometries 全量重推(副本:初始渲染竞态修复,数据事件重触发渲染管线)',
+    );
     assert.equal(marker.raw.zIndex, 9, 'zIndex 透传(SDK:overlay zIndex → layer rank)');
     // 契约 offset [x,y](AMap content 语义:左上角置于 屏幕位+offset)→
     // MarkerStyle.anchor = -(x,y)(渲染公式 imageTopLeft = 屏幕位 - anchor,
@@ -1084,6 +1090,32 @@ test('createMarker(MultiMarker):setZIndex 缺失(老 SDK)→ 一次性 warn 降�
     assert.equal(warn.calls.length, 0, 'setVisible 路径不产生降级告警');
   } finally {
     proto.setZIndex = origZIndex;
+    warn.restore();
+    restore();
+  }
+});
+
+test('createMarker(MultiMarker):无 setMap(极老 SDK)→ 构造后挂图降级:一次性 warn,实例不挂图不抛', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  const warn = captureWarn();
+  const proto = MockMultiMarker.prototype;
+  const origSetMap = proto.setMap;
+  delete proto.setMap;
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const marker = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+    assert.ok(marker.raw instanceof MockMultiMarker, '走 MultiMarker 聚合路径');
+    assert.equal(marker.raw.opts.map, undefined, '构造不传 map(ws-i 层级修复语义)');
+    assert.equal(marker.raw.map, null, '无 setMap → 实例无法挂图(降级,不抛错)');
+    assert.equal(warn.calls.length, 1, '一次性 warn(防刷屏)');
+    assert.match(String(warn.calls[0][0]), /MultiMarker 无 setMap/);
+    assert.doesNotThrow(() => marker.remove(), 'remove 降级不抛');
+  } finally {
+    proto.setMap = origSetMap;
     warn.restore();
     restore();
   }
@@ -2232,7 +2264,7 @@ function makeTencentView() {
   return { view, calls };
 }
 
-test('resolveTMapIconSrc:纯函数——本地直通;unknown → fallback + 候选预检清单;候选去重', () => {
+test('resolveTMapIconSrc:纯函数——本地直通;unknown → fallback + 预检清单仅链中第一个 unknown(链式);候选去重', () => {
   const badge = 'data:image/svg+xml,%3Csvg%3Ebadge';
   const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
   // logoUrl 本地(data URL)→ 直通,零预检
@@ -2245,10 +2277,10 @@ test('resolveTMapIconSrc:纯函数——本地直通;unknown → fallback + 候�
     src: badge,
     toPreflight: [],
   });
-  // logoUrl unknown → fallback + 预检清单(logoUrl 与全部候选,一次重建升级到位)
+  // logoUrl unknown → fallback + 预检清单(链式:只 push 第一个 unknown,不一次性全量)
   assert.equal(resolveTMapIconSrc(faviconIm, 'https://example.com/careers', badge).src, badge, 'unknown → fallback + 预检清单');
   const r = resolveTMapIconSrc(faviconIm, 'https://example.com/careers', badge);
-  assert.ok(r.toPreflight.includes(faviconIm) && r.toPreflight.includes(iconHorse), 'unknown 候选入预检清单(favicon.im + icon.horse)');
+  assert.deepEqual(r.toPreflight, [faviconIm], '链式预检:只 push 候选链第一个 unknown(favicon.im),icon.horse 不预检(失败记忆化后下次重建再试)');
   // 候选 === logoUrl 去重:same URL 不重复入清单
   const r2 = resolveTMapIconSrc(faviconIm, 'https://example.com/careers', badge);
   assert.equal(r2.toPreflight.filter((u) => u === faviconIm).length, 1, '候选与 logoUrl 相同 → 跳过不重复');
@@ -2282,24 +2314,30 @@ test('TMap icon 候选链:logoUrl 预检失败 → icon.horse 候选作 src(去�
   }
 });
 
-test('TMap icon 候选链:候选未预检 → 徽章降级 + logoUrl 与候选后台预检(下次重建升级真 logo)', async () => {
+test('TMap icon 候选链:链式预检——只预检第一个 unknown;失败记忆化后下次重建推进下一候选', async () => {
   const image = installImageMock({ failUrls: [faviconCandidatesFromUrl('https://example.com/careers')[0]] });
   try {
     const [faviconIm, iconHorse] = faviconCandidatesFromUrl('https://example.com/careers');
     const { view, calls } = makeTencentView();
     const c = createPOIMarkerController(view, {});
+    // 首次:logoUrl(favicon.im)unknown → 只预检它(不一次性预检整条候选链)
     c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers')]);
     assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '未定 → 徽章 dataURL 降级');
-    assert.equal(image.calls.length, 2, 'logoUrl + 候选都后台预检(升级路径一次重建到位)');
-    assert.deepEqual(image.calls.map((i) => i.src), [faviconIm, iconHorse]);
+    assert.deepEqual(image.calls.map((i) => i.src), [faviconIm], '链式:只预检第一个 unknown(favicon.im),icon.horse 不预检');
     await settle();
     assert.equal(remoteIconStatus(faviconIm), 'fail');
+
+    // 第二次(新增 POI 触发重建):faviconIm 已失败记忆化 → 链推进到 icon.horse → 才预检它
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p2', faviconIm, 'https://example.com/careers')]);
+    assert.ok(String(calls[1].icon.src).startsWith('data:image/svg+xml'), 'icon.horse 未定 → 仍降级徽章');
+    assert.deepEqual(image.calls.map((i) => i.src), [faviconIm, iconHorse], '链推进:第二个 unknown(icon.horse)才预检');
+    await settle();
     assert.equal(remoteIconStatus(iconHorse), 'ok', 'icon.horse 预检成功(CORS 合规)');
 
-    // 升级路径:新增同 URL 新 POI(LOD 重建形态)→ icon.horse 真 logo
-    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p2', faviconIm, 'https://example.com/careers')]);
-    assert.equal(calls[1].icon.src, iconHorse, '重建的新 marker 走候选链升级为真 logo');
-    assert.equal(image.calls.length, 2, '失败记忆化 + ok 记忆化:不重复预检');
+    // 第三次:icon.horse ok → 新 marker 升级真 logo;记忆化:零新增预检
+    c.setPOIs([makeRecruitPoi('p1', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p2', faviconIm, 'https://example.com/careers'), makeRecruitPoi('p3', faviconIm, 'https://example.com/careers')]);
+    assert.equal(calls[2].icon.src, iconHorse, '重建的新 marker 走候选链升级为真 logo(icon.horse)');
+    assert.equal(image.calls.length, 2, '失败/成功记忆化:不重复预检(首会话每 POI 最多 1 个预检)');
     c.destroy();
   } finally {
     image.restore();
