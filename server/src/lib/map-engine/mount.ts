@@ -68,6 +68,7 @@ export async function mountEngineView(
   }
 
   let lastError: unknown = null;
+  let lastEngineId: string | null = null;
   for (const engine of candidates) {
     try {
       await engine.load();
@@ -87,10 +88,16 @@ export async function mountEngineView(
       return created;
     } catch (err) {
       lastError = err; // 单引擎失败 → 回退下一个候选
+      lastEngineId = engine.id;
     }
   }
 
-  // 全部候选失败:上抛最后一个错误(调用方保持空视图 + warn)
-  if (lastError instanceof Error) throw lastError;
+  // 全部候选失败:上抛最后一个错误(调用方保持空视图 + warn)。错误对象补上
+  // 失败引擎 id(ws-2 错误态 mountError.engine 需要定位「哪个引擎」;分类
+  // 属性 code/stage/guidance 原样保留,不重包装)。
+  if (lastError instanceof Error) {
+    (lastError as Error & { engineId?: string }).engineId ??= lastEngineId ?? undefined;
+    throw lastError;
+  }
   throw new Error('[map-engine] 所有已配置引擎挂载失败');
 }
