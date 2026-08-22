@@ -375,6 +375,12 @@ interface BMapInstance {
   getHeading?(): number;
   getBounds?(): BBounds | null;
   getContainer?(): unknown;
+  /**
+   * 官方公开 API:返回底图 overlay pane 容器表(ws-l 用 markerMouseTarget——
+   * content 徽章 DOM 所在 pane;SDK webgl 在相机动画开始/结束时隐藏/恢复该
+   * pane,见 resumeMarkerPane 注释与 tech/23 回填)。
+   */
+  getPanes?(): { markerMouseTarget?: HTMLElement } | undefined;
   addOverlay?(overlay: unknown): unknown;
   removeOverlay?(overlay: unknown): unknown;
   addControl?(control: unknown): unknown;
@@ -577,8 +583,11 @@ function repositionContentMarkerDom(raw: BMarker): void {
     const pix = map.pointToOverlayPixelIn?.(pt, { zoom: map.getZoom(), fixPosition: false });
     if (!pix || !Number.isFinite(pix.x) || !Number.isFinite(pix.y)) return;
     const anchor = contentMarkerAnchors.get(raw) ?? { ax: 0, ay: 0 };
-    el.style.left = `${Math.round(pix.x) - anchor.ax}px`;
-    el.style.top = `${Math.round(pix.y) - anchor.ay}px`;
+    // 值未变不写(ws-l:相机动画同步 rAF 每帧调用,同值写会重复触发 style 失效)
+    const left = `${Math.round(pix.x) - anchor.ax}px`;
+    const top = `${Math.round(pix.y) - anchor.ay}px`;
+    if (el.style.left !== left) el.style.left = left;
+    if (el.style.top !== top) el.style.top = top;
   } catch {
     // 定位重算失败静默(防御):SDK 自身定位兜底,不影响注入主流程
   }
@@ -859,6 +868,12 @@ class BaiduMapView implements MapView {
   private readonly viewUnsubscribers: Array<() => void> = [];
   /** 相机/瓦片事件监听已绑(懒注册,避免空视图监听残留——就绪通道解绑断言) */
   private cameraListenersBound = false;
+  /** 相机动画同步 rAF 循环运行中(ws-l;见 startCameraAnimSync 注释) */
+  private cameraAnimSyncRunning = false;
+  /** 相机动画同步停摆守卫:相机连续未变帧数(>60 ≈ 1s 自终止,防事件丢失悬挂) */
+  private cameraAnimSyncStalledFrames = 0;
+  /** 相机动画同步上次相机键(zoom:center,停摆判定用) */
+  private cameraAnimSyncLastKey = '';
 
   // 注:不用 TS 参数属性(node 测试 strip-only 模式不支持,ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX)
   constructor(map: BMapInstance, ns: BMapGLNamespace, engine: MapEngine) {
@@ -911,6 +926,110 @@ class BaiduMapView implements MapView {
     this.viewUnsubscribers.push(this.on('zoomchange', () => this.repositionContentMarkers()));
     // tilesloaded:首帧/重负载瓦片批加载后 SDK 可能补一轮定位,一并校准
     this.viewUnsubscribers.push(this.on('complete', () => this.repositionContentMarkers()));
+    // 相机动画开始事件(ws-l,2026-08-23):见 resumeMarkerPane/startCameraAnimSync
+    // 注释——SDK webgl 在 zoomstart/movestart/animation_start 隐藏整
+    // markerMouseTarget pane(content 徽章视觉全灭 = 用户报的「滚轮闪烁」),
+    // zoomend/moveend/animation_end 才恢复。这里同步恢复 pane + 启动 rAF 按帧
+    // 重算定位(动画期间 SDK 跳过 marker draw,getZoom/getCenter 即动画中相机)。
+    this.viewUnsubscribers.push(this.onRaw('zoomstart', () => { this.resumeMarkerPane(); this.startCameraAnimSync(); }));
+    this.viewUnsubscribers.push(this.onRaw('movestart', () => { this.resumeMarkerPane(); this.startCameraAnimSync(); }));
+    this.viewUnsubscribers.push(this.onRaw('animation_start', () => { this.resumeMarkerPane(); this.startCameraAnimSync(); }));
+    this.viewUnsubscribers.push(this.onRaw('zoomend', () => this.stopCameraAnimSync()));
+    this.viewUnsubscribers.push(this.onRaw('moveend', () => this.stopCameraAnimSync()));
+    this.viewUnsubscribers.push(this.onRaw('animation_end', () => this.stopCameraAnimSync()));
+  }
+
+  /** 直接绑厂商事件名(不经过 MapViewEvent 映射;返回解绑句柄) */
+  private onRaw(event: string, cb: () => void): () => void {
+    const map = this.map;
+    const addEventListener = map.addEventListener?.bind(map);
+    const removeEventListener = map.removeEventListener?.bind(map);
+    if (typeof addEventListener === 'function' && typeof removeEventListener === 'function') {
+      const handler = () => cb();
+      addEventListener(event, handler);
+      return () => removeEventListener(event, handler);
+    }
+    return () => {};
+  }
+
+  /**
+   * 恢复 markerMouseTarget pane 显示(ws-l,2026-08-23 真机实测 + SDK 源码核实):
+   * BMapGL webgl 渲染下,地图 overlay 管理器在 **zoomstart / movestart /
+   * animation_start** 时把整 markerMouseTarget pane 置 display:none
+   * (getscript 源码:`_zoomingOrMoving` 状态 + `addEventListener("zoomstart", C)`
+   * C 内 `this._panes.markerMouseTarget.style.display="none"`),zoomend /
+   * moveend / animation_end 才恢复并重绘 marker——设计意图是动画期间不更新
+   * DOM 点击目标(厂商 GL 纹理 marker 由 canvas 动画承载,点击目标本就不可见)。
+   * 本引擎 content 徽章的**视觉 = 注入该 pane 的 DOM**(厂商 GL 纹理是 1×1
+   * 透明锚点)→ pane 隐藏即徽章全灭,滚轮缩放时全部瞬移再出现 = 用户报的
+   * 「百度地图下滚动地图导致 poi 闪烁」(boss 高频帧实锤 f00→f01 全部消失)。
+   * 修复:相机动画开始事件(本引擎监听晚于 SDK 内部处理器,同任务内恢复,
+   * 无绘制间隙)同步恢复 pane;zoomend 时 SDK 自身恢复 + 重绘,不冲突。
+   * getPanes() 为官方公开 API;异常形态静默(不影响主流程)。
+   */
+  private resumeMarkerPane(): void {
+    try {
+      const panes = this.map.getPanes?.() as { markerMouseTarget?: HTMLElement } | undefined;
+      const pane = panes?.markerMouseTarget;
+      if (pane && pane.style.display === 'none') pane.style.display = '';
+    } catch {
+      // 防御:pane 结构异常时静默(不影响主流程)
+    }
+  }
+
+  /**
+   * 相机动画同步(ws-l,2026-08-23):动画期间 SDK 跳过 marker draw(a8.draw 对
+   * _zoomingOrMoving 期间的 Marker 类 overlay 直接 continue)→ 仅恢复 pane
+   * 徽章会停在旧位置随画布漂移。实测(SDK 源码 + 真机):BMapGL 滚轮 deep zoom
+   * 动画中 `getZoom()` 返回**逐帧变化的动画 zoom**(mouseWheel 先置目标、
+   * deepZoomTo 动画逐帧回写 zoomLevel/centerPoint),`pointToOverlayPixelIn`
+   * 投影与画布同相机(2D 数学与 _webglMapCamera 投影实测逐值一致)→ rAF 按帧
+   * 重算全部 content 标记定位,徽章平滑跟随画布(位置连续变化,0 瞬移帧)。
+   * 终止:zoomend/moveend/animation_end 停止并收敛(与 SDK redraw 同值);
+   * 停摆守卫兜底:相机连续 ~1s 不变自动终止(防事件丢失/动画中断悬挂)。
+   */
+  private startCameraAnimSync(): void {
+    if (this.cameraAnimSyncRunning) return;
+    this.cameraAnimSyncRunning = true;
+    this.cameraAnimSyncStalledFrames = 0;
+    if (typeof requestAnimationFrame !== 'function') {
+      // 无帧调度环境(node 测试/旧宿主):同步收敛一次,zoomend/moveend 校准兜底
+      this.cameraAnimSyncRunning = false;
+      this.repositionContentMarkers();
+      return;
+    }
+    const map = this.map;
+    const tick = (): void => {
+      if (!this.cameraAnimSyncRunning || this.destroyed) return;
+      if (this.contentMarkers.size === 0) {
+        this.cameraAnimSyncRunning = false;
+        return;
+      }
+      const zoom = map.getZoom();
+      const center = map.getCenter();
+      const key = `${zoom}:${center ? Math.round(center.lng * 1e7) : ''}:${center ? Math.round(center.lat * 1e7) : ''}`;
+      if (key !== this.cameraAnimSyncLastKey) {
+        this.cameraAnimSyncLastKey = key;
+        this.cameraAnimSyncStalledFrames = 0;
+      } else {
+        this.cameraAnimSyncStalledFrames++;
+        if (this.cameraAnimSyncStalledFrames > 60) {
+          // 相机 ~1s 未变:动画已结束但终止事件未达(异常/中断)→ 自终止
+          this.cameraAnimSyncRunning = false;
+          return;
+        }
+      }
+      this.repositionContentMarkers();
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  /** 终止相机动画同步并做终点收敛(与 SDK zoomend 重绘同值,零视觉变化) */
+  private stopCameraAnimSync(): void {
+    if (!this.cameraAnimSyncRunning) return;
+    this.cameraAnimSyncRunning = false;
+    this.repositionContentMarkers();
   }
 
   /** 相机/瓦片事件后重算全部 content 标记的未反绕视口定位(r5) */
@@ -1309,6 +1428,7 @@ class BaiduMapView implements MapView {
 
   destroy(): void {
     this.destroyed = true;
+    this.cameraAnimSyncRunning = false; // ws-l:终止相机动画同步 rAF 循环
     for (const unsub of this.viewUnsubscribers.splice(0)) unsub(); // r5:解绑相机/瓦片监听
     this.contentMarkers.clear();
     this.map.destroy();
