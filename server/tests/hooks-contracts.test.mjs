@@ -160,7 +160,8 @@ test('useMapEngine:最新意图优先 + 错误态清理(ws-3 生命周期契约)
   assert.match(hook, /console\.error\("\[use-map-engine\] switchEngine failed:", err\);/);
   assert.match(hook, /viewRef\.current = null;/);
   // 挂载/teardown 竞态:teardown 在 createView resolve 后发生 → 已建视图销毁
-  assert.match(hook, /if \(cancelled\) \{[\s\S]{0,160}created\.destroy\(\);/);
+  // (ws-2 起取消语义 ref 化为挂载代际 seq !== mountSeqRef.current)
+  assert.match(hook, /if \(seq !== mountSeqRef\.current\) \{[\s\S]{0,160}created\.destroy\(\);/);
   // 挂载与切换并发:切换落地时销毁期间落地的挂载视图(同容器双实例兜底)
   assert.match(hook, /viewRef\.current !== next && !viewRef\.current\.isDestroyed\?\.\(\)/);
 });
@@ -172,4 +173,18 @@ test('map-shell:usePOIMap 的 view 参数来自 state(engineView),非 mapInstanc
   assert.doesNotMatch(shell, /usePOIMap\(mapInstance\.current/);
   // mapInstance ref 仍保留给事件回调内同步读(locate/快照),不用于 POI 重建
   assert.match(shell, /mapInstance\.current = engineView;/);
+});
+
+// ---- useMapEngine(ws-2 增量:挂载失败错误态 + 重试;旧断言不放宽)----
+
+test('useMapEngine:返回契约增量(4 旧字段 + mountError/retryMount 2 新字段)', () => {
+  const hook = src('hooks/use-map-engine.ts');
+  // 旧 4 字段 + 新 2 字段同处返回(ws-3 消费 mountError/retryMount 渲染错误出口)
+  assert.match(hook, /return \{ engine, view, isSwitching, switchEngine, mountError, retryMount \};/);
+  // 契约类型:MapMountError 三字段(engine/code?/message)+ 两个返回字段声明
+  assert.match(hook, /export interface MapMountError \{[\s\S]*?engine: string;[\s\S]*?code\?: string;[\s\S]*?message: string;/);
+  assert.match(hook, /mountError: MapMountError \| null;/);
+  assert.match(hook, /retryMount: \(\) => void;/);
+  // 引擎总线同步对齐:面板侧(useMapEnginePanel)无活跃实例时 null/noop 兜底
+  assert.match(hook, /mountError: null, retryMount: noop \};/);
 });

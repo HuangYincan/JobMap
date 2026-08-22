@@ -22,6 +22,16 @@
 //
 // - 引擎未配置(零 key)→ 返回 engine=null,调用方回退 CSS fallback 地图;
 // - 活跃引擎的 search 能力注入 poi-service(视口兜底搜索路由,支持引擎切换)。
+//
+// ws-2(2026-08-22)扩展——挂载失败错误态 + 重试状态机:
+// - 挂载链(含引擎回退、watchdog)全部失败 → 返回 mountError 非 null
+//   (engine/code/message),调用方可渲染错误出口(不再只有 console.warn);
+// - retryMount:重新执行完整挂载链(resolveEngine → mountEngineView);挂载
+//   进行中/已有活 view 时 no-op(幂等),成功后走与首挂载相同的 .then 落地;
+// - watchdog:mountEngineView 整体 withTimeout(25s)上界——单引擎各有界
+//   (ws-1 loadAMap 超时 reject),此上界防未来新增无界引擎/钻缝;超时以
+//   code 'MOUNT_TIMEOUT' 进入错误态并作废在飞挂载链(后台链恢复后经
+//   isCancelled 销毁已建视图,不泄漏)。
 // ============================================================
 
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
@@ -70,6 +80,18 @@ export interface UseMapEngineOptions {
   style: MapStyleId;
 }
 
+/** 挂载失败错误态(ws-2):挂载链(含引擎回退、watchdog)全部失败后非 null;
+ * 重新开始挂载时立即清 null。ws-3 据此渲染错误出口(重试入口)。 */
+export interface MapMountError {
+  /** 失败引擎 id(回退链全部失败 = 最后一个失败引擎,mount.ts 在最终错误上
+   * 携带 engineId;watchdog 超时 = 偏好引擎 resolved.id) */
+  engine: string;
+  /** 引擎错误分类码(透传 err.code;watchdog 超时为 'MOUNT_TIMEOUT') */
+  code?: string;
+  /** 可读错误文本(err.message 原文) */
+  message: string;
+}
+
 export interface UseMapEngineResult {
   engine: MapEngine | null;
   view: MapView | null;
@@ -81,18 +103,26 @@ export interface UseMapEngineResult {
    * 随 view 变化自动重建控制器。
    */
   switchEngine: (id: MapEngineId, replay?: EngineSwitchReplay) => Promise<void>;
+  /** 挂载链(含引擎回退、watchdog)全部失败 → 非 null;重新开始挂载时立即清 null */
+  mountError: MapMountError | null;
+  /** 重新执行完整挂载链(resolveEngine → mountEngineView);挂载进行中/
+   * 已有活 view 时 no-op(幂等)。成功后走与首挂载相同的落地路径。 */
+  retryMount: () => void;
 }
 
 // ---------------------------------------------------------------------------
 // 引擎切换总线(图层面板等 MapShell 外子树接线)
 // ---------------------------------------------------------------------------
 
-/** 引擎总线载荷:活跃引擎实例 + 切换能力(hook 实例发布) */
+/** 引擎总线载荷:活跃引擎实例 + 切换能力 + 挂载错误态(hook 实例发布;
+ * ws-2 起含 mountError/retryMount,与 UseMapEngineResult 对齐,面板侧不用即可) */
 export interface EngineBusValue {
   engine: MapEngine | null;
   view: MapView | null;
   isSwitching: boolean;
   switchEngine: (id: MapEngineId, replay?: EngineSwitchReplay) => Promise<void>;
+  mountError: MapMountError | null;
+  retryMount: () => void;
 }
 
 let busValue: EngineBusValue | null = null;
@@ -121,18 +151,60 @@ export function useMapEnginePanel(): UseMapEngineResult {
   const [value, setValue] = useState<EngineBusValue | null>(busValue);
   useEffect(() => subscribeEngineBus(setValue), []);
   const noop = useCallback(async () => {}, []);
-  return value ?? { engine: null, view: null, isSwitching: false, switchEngine: noop };
+  return value ?? { engine: null, view: null, isSwitching: false, switchEngine: noop, mountError: null, retryMount: noop };
 }
 
 // ---------------------------------------------------------------------------
 // useMapEngine
 // ---------------------------------------------------------------------------
 
+/**
+ * 挂载 watchdog 上界(ws-2):整条挂载链(load+createView+回退)的兜底超时。
+ * 单引擎各有界(ws-1 loadAMap 超时 reject),此上界防未来新增无界引擎/钻缝;
+ * 超时以错误 settle(携带 code 'MOUNT_TIMEOUT'),调用方进入错误态并作废在飞
+ * 挂载链(见 runMount catch)。
+ */
+const MOUNT_TIMEOUT_MS = 25_000;
+
+/**
+ * 给 promise 加超时兜底(与 amap-api.withTimeout 同款语义):超时以 error 形态
+ * settle,绝不永久 await;底层 promise 超时后才 settle 也无副作用(promise
+ * 单次 settle 天然守卫)。超时错误携带 code='MOUNT_TIMEOUT' 供调用方分类。
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      const err = new Error(`${label} timed out after ${ms}ms`) as Error & { code: string };
+      err.code = 'MOUNT_TIMEOUT';
+      reject(err);
+    }, ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer); // 正常成功:must clear timer,不吞成功路径
+        resolve(v);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
   const { containerRef, center, zoom, style } = options;
   const [engine, setEngine] = useState<MapEngine | null>(null);
   const [view, setView] = useState<MapView | null>(null);
   const [isSwitching, setIsSwitching] = useState(false);
+  const [mountError, setMountError] = useState<MapMountError | null>(null);
+  /**
+   * 挂载代际(ws-2):每次 runMount 递增;cleanup/卸载/watchdog 超时递增即作废
+   * 在飞挂载链——mount.ts 经 isCancelled 观察,已建视图在落地前销毁,不泄漏。
+   * 原挂载 effect 的 closure cancelled 语义 ref 化,供首挂载与 retryMount 共用。
+   */
+  const mountSeqRef = useRef(0);
+  /** 挂载链是否在飞(ws-2):retryMount 的「挂载进行中 → no-op」判定依据 */
+  const mountRunningRef = useRef(false);
   const viewRef = useRef<MapView | null>(null);
   /**
    * StrictMode 双调用存活接管(2026-08-21 热修):React dev 的 double-invoke 对
@@ -205,6 +277,7 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
           // 不写偏好,错误上报
           viewRef.current = next;
           setView(next);
+          setMountError(null); // 活 view 落地:无挂载错误(错误态诚实化)
           console.error("[use-map-engine] switchEngine 目标创建失败,已回滚旧引擎视图", result.error);
           return;
         }
@@ -219,6 +292,7 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
         }
         viewRef.current = next;
         setView(next);
+        setMountError(null); // 活 view 落地:无挂载错误(错误态诚实化)
         setEngine(to);
         // 切换成功才写偏好(失败不持久化)
         writeEnginePreference(id);
@@ -252,16 +326,130 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
     [containerRef, center, zoom, style],
   );
 
+  /**
+   * 完整挂载链(ws-2 提取,首挂载 effect 与 retryMount 共用;keepalive 接管
+   * 分支之外):resolveEngine → setEngine/setActiveSearchProvider →
+   * mountEngineView(withTimeout watchdog)→ .then 落地 / .catch 错误态。
+   * 可重入:每次调用递增挂载代际(mountSeqRef),cleanup/卸载/watchdog 超时
+   * 递增即作废在飞轮次——mount.ts 经 isCancelled 观察,已建视图落地前销毁。
+   * 首挂载 effect 与 retryMount 同走本函数,不复制第二份挂载链。
+   */
+  const runMount = useCallback((): void => {
+    const container = containerRef.current;
+    if (!container) return;
+    const resolved = resolveEngine(readEnginePreference());
+    if (!resolved) {
+      // 零配置(无任何引擎 key):不加载脚本,调用方回退 CSS fallback 地图
+      // (非挂载失败,不进错误态;原首挂载 effect 同口径)
+      return;
+    }
+    mountRunningRef.current = true;
+    setMountError(null); // 重新开始挂载:立即清错误态(ws-2 契约)
+    const seq = ++mountSeqRef.current;
+    setEngine(resolved);
+    // 视口兜底搜索/建议回退随活跃引擎路由(引擎切换后不再硬绑 amap-api)
+    setActiveSearchProvider(resolved.search);
+
+    // 挂载 + 失败回退(ws-8):偏好引擎 load/createView 失败 → 自动回退其余
+    // 已配置引擎(ENGINE_PRIORITY 序)重试,修复「偏好指向故障引擎时刷新即
+    // 空白、只 warn 无视图」的缺口。回退成功 → engine/search 状态随实际
+    // 挂载引擎更新;全部失败 → 保持空视图 + warn + 错误态(ws-2,调用方渲染
+    // 重试出口)。挂载/回退均不写偏好(偏好由手动切换专属,见 switchEngine
+    // 成功路径;挂载回退不覆盖 sessionStorage——故障可能是瞬时的,静默改写
+    // 用户选择会让偏好永久丢失,取舍见 23-map-engines.md)。
+    // watchdog(ws-2):整条链 25s 上界,超时以 code 'MOUNT_TIMEOUT' 进入错误态。
+    withTimeout(
+      mountEngineView(resolved, getConfiguredEngines(), {
+        container,
+        center,
+        zoom,
+        style,
+        isCancelled: () => seq !== mountSeqRef.current,
+        isViewTaken: () => Boolean(viewRef.current),
+      }),
+      MOUNT_TIMEOUT_MS,
+      'map-engine mount',
+    )
+      .then((created) => {
+        if (!created) return; // 取消/被接管:helper 已销毁或未创建,零落地
+        if (seq !== mountSeqRef.current) {
+          // teardown 竞态双保险(主路径同口径):已建视图销毁,不落地
+          created.destroy();
+          return;
+        }
+        if (viewRef.current) {
+          // 双保险(与主路径同口径):切换抢先落地 → 同容器视图销毁
+          created.destroy();
+          return;
+        }
+        viewRef.current = created;
+        setView(created);
+        // 回退成功后 engine/search 状态落到实际挂载引擎(首引擎成功时
+        // 同引用,setEngine/setActiveSearchProvider 均为 no-op)
+        setEngine(created.engine);
+        setActiveSearchProvider(created.engine.search);
+        setMountError(null); // 挂载成功:错误态清除
+      })
+      .catch((err) => {
+        console.warn("[use-map-engine] map engine load/createView failed:", err);
+        // 失败分类可见化(bug 3,2026-08-22 ws-c):引擎错误携带 code/stage/
+        // guidance 时输出结构化诊断(含可操作指引,用户可直接照做)。挂载
+        // 路径 mount.ts 原样上抛引擎错误,分类属性可直达;切换路径被
+        // switch.ts 重包装(分类仅留在引擎层 console,见 switchEngine catch)。
+        // 无共享 toast/alert 基建(已核查,map-shell 注明「后续可接 toast 提示、
+        // 不新增 UI」)→ 仅 console 结构化输出,不新增 UI 组件。
+        const classified = (err ?? {}) as {
+          code?: string;
+          stage?: string;
+          guidance?: string;
+          engineId?: string;
+        };
+        if (classified.code) {
+          console.warn("[use-map-engine] 引擎加载失败分类:", {
+            engine: resolved.id,
+            code: classified.code,
+            stage: classified.stage,
+            guidance: classified.guidance,
+          });
+        }
+        // watchdog 超时:作废在飞挂载链——后台链(mount.ts)恢复后检查
+        // isCancelled → 已建视图销毁/零落地,不留僵尸链(超时不泄漏视图)。
+        // 单线程保证:超时触发时链必然 parked 在 await 上,catch 先于其恢复。
+        if (classified.code === 'MOUNT_TIMEOUT') mountSeqRef.current++;
+        // 错误态(ws-2):失败不再只有 warn —— warn + mountError,调用方据此
+        // 渲染错误出口(重试按钮)。engine = 失败引擎 id(mount.ts 在最终错误
+        // 上携带 engineId;watchdog 超时无 engineId → 偏好引擎 resolved.id)。
+        setMountError({
+          engine: classified.engineId ?? resolved.id,
+          code: classified.code,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      })
+      .finally(() => {
+        mountRunningRef.current = false;
+      });
+  }, [containerRef, center, zoom, style]);
+
+  /**
+   * 重试挂载(ws-2):重新执行 resolveEngine → mountEngineView 完整挂载链。
+   * 幂等:已有活 view(已挂载/接管后 viewRef 战位)或挂载进行中 → no-op;
+   * 成功后走与首挂载相同的 .then 落地路径(viewRef/setView/setEngine 不变)。
+   */
+  const retryMount = useCallback((): void => {
+    if (viewRef.current || mountRunningRef.current) return;
+    runMount();
+  }, [runMount]);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    let cancelled = false;
 
     // 活图交棒 keepalive 供重连接管(不立即销毁,相机/标记零丢失);真卸载
     // (无重连或未接管)由延迟销毁兜底,不泄漏。disconnect 与 reconnect 的 cleanup
     // 共用——重连复用后下一次 double-invoke 的 disconnect 必须再次交棒,链条才不断。
     const relinquishView = () => {
-      cancelled = true;
+      mountSeqRef.current++; // 作废在飞挂载(原 closure cancelled 语义 ref 化)
+      mountRunningRef.current = false;
       if (viewRef.current && !viewRef.current.isDestroyed()) {
         const doomed = viewRef.current;
         keepaliveRef.current = { view: doomed, container };
@@ -301,70 +489,11 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
       }
     }
 
-    const resolved = resolveEngine(readEnginePreference());
-    if (!resolved) {
-      // 零配置(无任何引擎 key):不加载脚本,调用方回退 CSS fallback 地图
-      return;
-    }
-    setEngine(resolved);
-    // 视口兜底搜索/建议回退随活跃引擎路由(引擎切换后不再硬绑 amap-api)
-    setActiveSearchProvider(resolved.search);
-
-    // 挂载 + 失败回退(ws-8):偏好引擎 load/createView 失败 → 自动回退其余
-    // 已配置引擎(ENGINE_PRIORITY 序)重试,修复「偏好指向故障引擎时刷新即
-    // 空白、只 warn 无视图」的缺口。回退成功 → engine/search 状态随实际
-    // 挂载引擎更新;全部失败 → 保持空视图 + warn(调用方回退 CSS fallback)。
-    // 挂载/回退均不写偏好(偏好由手动切换专属,见 switchEngine 成功路径;
-    // 挂载回退不覆盖 sessionStorage——故障可能是瞬时的,静默改写用户选择
-    // 会让偏好永久丢失,取舍见 23-map-engines.md)。
-    mountEngineView(resolved, getConfiguredEngines(), {
-      container,
-      center,
-      zoom,
-      style,
-      isCancelled: () => cancelled,
-      isViewTaken: () => Boolean(viewRef.current),
-    })
-      .then((created) => {
-        if (!created) return; // 取消/被接管:helper 已销毁或未创建,零落地
-        if (cancelled) {
-          // teardown 竞态双保险(主路径同口径):已建视图销毁,不落地
-          created.destroy();
-          return;
-        }
-        if (viewRef.current) {
-          // 双保险(与主路径同口径):切换抢先落地 → 同容器视图销毁
-          created.destroy();
-          return;
-        }
-        viewRef.current = created;
-        setView(created);
-        // 回退成功后 engine/search 状态落到实际挂载引擎(首引擎成功时
-        // 同引用,setEngine/setActiveSearchProvider 均为 no-op)
-        setEngine(created.engine);
-        setActiveSearchProvider(created.engine.search);
-      })
-      .catch((err) => {
-        console.warn("[use-map-engine] map engine load/createView failed:", err);
-        // 失败分类可见化(bug 3,2026-08-22 ws-c):引擎错误携带 code/stage/
-        // guidance 时输出结构化诊断(含可操作指引,用户可直接照做)。挂载
-        // 路径 mount.ts 原样上抛引擎错误,分类属性可直达;切换路径被
-        // switch.ts 重包装(分类仅留在引擎层 console,见 switchEngine catch)。
-        // 无共享 toast/alert 基建(已核查,map-shell 注明「后续可接 toast 提示、
-        // 不新增 UI」)→ 仅 console 结构化输出,不新增 UI 组件。
-        const classified = (err ?? {}) as { code?: string; stage?: string; guidance?: string };
-        if (classified.code) {
-          console.warn("[use-map-engine] 引擎加载失败分类:", {
-            engine: resolved.id,
-            code: classified.code,
-            stage: classified.stage,
-            guidance: classified.guidance,
-          });
-        }
-      });
+    // 首挂载:完整挂载链在 runMount(与 retryMount 共用,ws-2)
+    runMount();
 
     return relinquishView;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- center/zoom/style 只取初始快照
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- center/zoom/style 只取初始快照;runMount 同口径(ws-2)
   }, [containerRef]);
 
   // 卸载标记(切换 await 竞态保护)
@@ -381,9 +510,9 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
   // 引擎总线发布:依赖变化才重跑(cleanup 先撤下再发布,同一次 effect flush
   // 内被 React 批处理合并,订阅者无 null 闪烁);卸载时撤下
   useEffect(() => {
-    publishEngineBus({ engine, view, isSwitching, switchEngine });
+    publishEngineBus({ engine, view, isSwitching, switchEngine, mountError, retryMount });
     return () => publishEngineBus(null);
-  }, [engine, view, isSwitching, switchEngine]);
+  }, [engine, view, isSwitching, switchEngine, mountError, retryMount]);
 
-  return { engine, view, isSwitching, switchEngine };
+  return { engine, view, isSwitching, switchEngine, mountError, retryMount };
 }
