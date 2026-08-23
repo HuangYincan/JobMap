@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 
 from domain_map_importer import (
     AcquisitionError,
@@ -11,6 +12,23 @@ from domain_map_importer import (
     radar_fixture,
     refresh_company_from_html,
     validate_local_fixture,
+)
+from domain_map_importer.acquire import (
+    MAX_RESPONSE_BYTES,
+    PrivateAddressError,
+    READ_CHUNK_BYTES,
+    PublicHTTPSHandler,
+    PublicHTTPHandler,
+    _SafeHTTPSConnection,
+    SafeRedirectHandler,
+    _SafeHTTPConnection,
+    _SafeHTTPSConnection,
+    _http_fetch,
+    _has_share_token,
+    _require_public_peer,
+    _read_limited,
+    is_allowed_redirect,
+    is_allowed_redirect_from,
 )
 
 
@@ -57,6 +75,147 @@ class RobotsAndHostTests(unittest.TestCase):
         with self.assertRaises(AcquisitionError):
             fetcher.fetch("https://www.zhipin.com/web/geek/job")
 
+    def test_fetcher_refuses_non_public_literal_hosts_before_http(self):
+        def boom(_url):
+            raise AssertionError("must not fetch")
+
+        fetcher = PoliteFetcher(min_interval_s=0, sleep=lambda _s: None, get=boom)
+        for url in (
+            "http://127.0.0.1/careers",
+            "http://10.0.0.8/careers",
+            "http://169.254.169.254/latest/meta-data/",
+            "http://[::1]/careers",
+            "https://metadata.google.internal/",
+        ):
+            with self.assertRaisesRegex(AcquisitionError, "non-public"):
+                fetcher.fetch(url)
+
+    def test_fetcher_refuses_referral_and_share_token_urls_before_http(self):
+        def boom(_url):
+            raise AssertionError("must not fetch attributed share links")
+
+        fetcher = PoliteFetcher(min_interval_s=0, sleep=lambda _s: None, get=boom)
+        for url in (
+            "https://jobs.example.com/referral/position/share/?token=abc",
+            "https://jobs.example.com/campus?share_token=abc",
+        ):
+            with self.assertRaisesRegex(AcquisitionError, "share token"):
+                fetcher.fetch(url)
+
+        self.assertTrue(_has_share_token("https://jobs.example.com/referral/job"))
+        self.assertFalse(_has_share_token("https://jobs.example.com/jobs?category=token"))
+
+    def test_resolved_private_peer_is_rejected_before_http(self):
+        class FakeSocket:
+            def __init__(self, peer):
+                self.peer = peer
+                self.closed = False
+
+            def getpeername(self):
+                return (self.peer,)
+
+            def setsockopt(self, *args):
+                pass
+
+            def close(self):
+                self.closed = True
+
+        sock = FakeSocket("10.1.2.3")
+        connection = _SafeHTTPConnection("dns.rebind.example")
+        connection._create_connection = mock.Mock(return_value=sock)
+        with self.assertRaisesRegex(PrivateAddressError, "non-public resolved address"):
+            connection.connect()
+        self.assertTrue(sock.closed)
+
+        mapped = FakeSocket("::ffff:127.0.0.1")
+        with self.assertRaises(PrivateAddressError):
+            _require_public_peer(mapped)
+
+        # HTTPS must reject the TCP peer before exchanging any TLS bytes.
+        https_sock = FakeSocket("192.168.1.10")
+        https_connection = _SafeHTTPSConnection("dns.rebind.example", context=mock.Mock())
+        https_connection._create_connection = mock.Mock(return_value=https_sock)
+        with self.assertRaisesRegex(PrivateAddressError, "non-public resolved address"):
+            https_connection.connect()
+        self.assertTrue(https_sock.closed)
+        https_connection._context.wrap_socket.assert_not_called()
+
+        http_handler = PublicHTTPHandler()
+        with mock.patch.object(http_handler, "do_open", return_value="http-response") as do_open:
+            self.assertEqual(http_handler.http_open("request"), "http-response")
+        self.assertIs(do_open.call_args.args[0], _SafeHTTPConnection)
+
+        https_handler = PublicHTTPSHandler()
+        with mock.patch.object(https_handler, "do_open", return_value="https-response") as do_open:
+            self.assertEqual(https_handler.https_open("request"), "https-response")
+        self.assertIs(do_open.call_args.args[0], _SafeHTTPSConnection)
+        self.assertIn("context", do_open.call_args.kwargs)
+
+    def test_redirect_rules_reject_blocked_hosts_and_schemes(self):
+        self.assertFalse(is_allowed_redirect("https://www.zhipin.com/job/1"))
+        self.assertFalse(is_allowed_redirect("ftp://jobs.example.com/job"))
+        self.assertFalse(is_allowed_redirect("https:///no-host"))
+        self.assertFalse(is_allowed_redirect("http://127.0.0.1/job"))
+        self.assertFalse(is_allowed_redirect("http://169.254.169.254/latest/meta-data/"))
+        self.assertFalse(is_allowed_redirect("http://[::1]/job"))
+        self.assertTrue(is_allowed_redirect("https://jobs.example.com/careers"))
+
+        # Imported job content follows redirects automatically; never let a
+        # trusted HTTPS source move the request onto plaintext HTTP.
+        self.assertFalse(
+            is_allowed_redirect_from("https://jobs.example.com/a", "http://jobs.example.com/b")
+        )
+        self.assertTrue(
+            is_allowed_redirect_from("https://jobs.example.com/a", "https://careers.jobs.example.com/b")
+        )
+        self.assertTrue(
+            is_allowed_redirect_from("http://jobs.example.com/a", "https://jobs.example.com/b")
+        )
+
+        class Request:
+            full_url = "https://jobs.example.com/careers"
+
+        handler = SafeRedirectHandler()
+        with self.assertRaisesRegex(ValueError, "unsafe redirect"):
+            handler.redirect_request(
+                Request(), None, 302, "Found",
+                {"location": "https://jobs.example.com/x"},
+                "https://jobs.example.com/referral/x?token=abc",
+            )
+
+        http_request = Request()
+        http_request.full_url = "http://jobs.example.com/careers"
+        with self.assertRaisesRegex(ValueError, "unsafe redirect"):
+            handler.redirect_request(
+                http_request, None, 302, "Found",
+                {"location": "https://jobs.example.com/x"},
+                "https://jobs.example.com/x?share_token=abc",
+            )
+
+        plain_request = Request()
+        plain_request.full_url = "http://jobs.example.com/careers"
+        with self.assertRaisesRegex(ValueError, "unsafe redirect"):
+            handler.redirect_request(
+                plain_request, None, 302, "Found",
+                {"location": "https://www.zhipin.com/job/1"},
+                "https://www.zhipin.com/job/1",
+            )
+
+        legacy_request = Request()
+        legacy_request.full_url = "https://jobs.example.com/careers"
+        with self.assertRaisesRegex(ValueError, "unsafe redirect"):
+            handler.redirect_request(
+                legacy_request, None, 302, "Found",
+                {"location": "https://www.zhipin.com/job/1"},
+                "https://www.zhipin.com/job/1",
+            )
+        with self.assertRaisesRegex(ValueError, "unsafe redirect"):
+            handler.redirect_request(
+                Request(), None, 302, "Found",
+                {"location": "https://www.zhipin.com/job/1"},
+                "https://www.zhipin.com/job/1",
+            )
+
     def test_fetcher_skips_when_robots_disallow(self):
         def fake(url):
             if url.endswith("robots.txt"):
@@ -86,7 +245,12 @@ class RobotsAndHostTests(unittest.TestCase):
         class FakeResp:
             status = 200
             headers = hdr
-            def read(self):
+            def __init__(self):
+                self._reads = 0
+            def read(self, _size=0):
+                if self._reads:
+                    return b""
+                self._reads += 1
                 return "<html><body>hi</body></html>".encode("utf-8")
             def __enter__(self):
                 return self
@@ -104,6 +268,48 @@ class RobotsAndHostTests(unittest.TestCase):
             self.assertIn("hi", body)
         finally:
             acquire_mod.urlopen = original
+
+    def test_http_response_is_size_limited(self):
+        import domain_map_importer.acquire as acquire_mod
+        from email.message import Message
+
+        hdr = Message()
+        hdr["Content-Type"] = "text/plain"
+
+        class OversizedResp:
+            status = 200
+            headers = hdr
+            def read(self, size):
+                return b"x" * size
+            def __enter__(self):
+                return self
+            def __exit__(self, *exc):
+                return False
+
+        original = acquire_mod.urlopen
+        acquire_mod.urlopen = lambda _req, timeout=0: OversizedResp()
+        try:
+            status, body = _http_fetch("https://jobs.example.com/large")
+            self.assertEqual((status, body), (0, ""))
+        finally:
+            acquire_mod.urlopen = original
+
+    def test_read_limited_reads_chunks_and_enforces_cap(self):
+        class Chunked:
+            def __init__(self, chunks):
+                self.chunks = iter(chunks)
+                self.sizes = []
+            def read(self, size):
+                self.sizes.append(size)
+                return next(self.chunks, b"")
+
+        payload = Chunked([b"a" * READ_CHUNK_BYTES, b"tail", b""])
+        self.assertEqual(_read_limited(payload), b"a" * READ_CHUNK_BYTES + b"tail")
+        self.assertEqual(payload.sizes, [READ_CHUNK_BYTES, READ_CHUNK_BYTES, READ_CHUNK_BYTES])
+
+        oversized = Chunked([b"x" * (MAX_RESPONSE_BYTES - 8), b"overflow!"])
+        with self.assertRaisesRegex(OSError, "response exceeds"):
+            _read_limited(oversized)
 
 
 class HtmlExtractTests(unittest.TestCase):

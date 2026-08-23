@@ -4,17 +4,21 @@
 from __future__ import annotations
 
 import codecs
+import http.client
+import ipaddress
 import re
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
-from urllib.parse import urljoin, urlparse
-from urllib.request import Request, urlopen
+from urllib.parse import parse_qsl, urljoin, urlparse
+from urllib.request import HTTPRedirectHandler, HTTPSHandler, HTTPHandler, ProxyHandler, Request, build_opener
 
 USER_AGENT = "DomainMapImporter/0.1 (+https://github.com/acccan/domain-map; recruitment catalog refresh)"
 DEFAULT_TIMEOUT_S = 12
 DEFAULT_MIN_INTERVAL_S = 2.0
+MAX_RESPONSE_BYTES = 2 * 1024 * 1024
+READ_CHUNK_BYTES = 64 * 1024
 
 # Aggregators / boards this repo will not fetch automatically.
 BLOCKED_HOST_SUFFIXES = (
@@ -46,6 +50,17 @@ class AcquisitionError(ValueError):
     """Raised when a URL is not eligible for automated fetch."""
 
 
+def _is_public_ip(raw_address: str) -> bool:
+    """Treat loopback/private/link-local/mapped-private addresses as unsafe."""
+    try:
+        address = ipaddress.ip_address(raw_address)
+    except ValueError:
+        return False
+    if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped is not None:
+        address = address.ipv4_mapped
+    return address.is_global
+
+
 def host_of(url: str) -> str:
     return (urlparse(url).hostname or "").lower()
 
@@ -53,6 +68,132 @@ def host_of(url: str) -> str:
 def is_blocked_host(url: str) -> bool:
     host = host_of(url)
     return any(host == suffix or host.endswith(f".{suffix}") for suffix in BLOCKED_HOST_SUFFIXES)
+
+
+_INTERNAL_HOST_SUFFIXES = (
+    ".localhost",
+    ".local",
+    ".internal",
+)
+
+
+def _is_non_public_literal_host(host: str) -> bool:
+    """Reject loopback/private/link-local literals and conventional internal names."""
+    if host == "localhost" or host.endswith(_INTERNAL_HOST_SUFFIXES):
+        return True
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return not _is_public_ip(address)
+
+
+def is_allowed_redirect(url: str) -> bool:
+    """Keep automatic redirects public and inside the same eligibility rules."""
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return False
+    host = (parsed.hostname or "").lower()
+    return (
+        parsed.scheme in {"http", "https"}
+        and bool(host)
+        and not is_blocked_host(url)
+        and not _is_non_public_literal_host(host)
+        and not _has_share_token(url)
+    )
+
+
+def _has_share_token(url: str) -> bool:
+    """Referral/share tokens are personal attribution, not public page URLs."""
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return True
+    if "/referral/" in parsed.path.lower():
+        return True
+    return any(
+        key.lower() in {"token", "share_token"}
+        for key, _value in parse_qsl(parsed.query, keep_blank_values=True)
+    )
+
+
+def is_allowed_redirect_from(previous_url: str, url: str) -> bool:
+    """Reject TLS downgrades while retaining the normal public-host checks."""
+    if urlparse(previous_url).scheme.lower() != "https":
+        return is_allowed_redirect(url)
+    return urlparse(url).scheme.lower() == "https" and is_allowed_redirect(url)
+
+
+class SafeRedirectHandler(HTTPRedirectHandler):
+    """Reject unsafe redirects, blocked hosts, and HTTPS downgrades."""
+
+    def __init__(self, *, allow_redirect=is_allowed_redirect_from) -> None:
+        super().__init__()
+        self._allow_redirect = allow_redirect
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        previous_url = req.full_url
+        if not self._allow_redirect(previous_url, newurl):
+            raise AcquisitionError(f"unsafe redirect: {newurl}")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+class PrivateAddressError(OSError):
+    """Raised after a resolver selects an address outside the public Internet."""
+
+
+def _require_public_peer(sock) -> None:
+    address = ipaddress.ip_address(sock.getpeername()[0])
+    if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped is not None:
+        address = address.ipv4_mapped
+    if not address.is_global:
+        raise PrivateAddressError(f"refusing non-public resolved address: {address}")
+
+
+class _SafeHTTPConnection(http.client.HTTPConnection):
+    def connect(self):
+        try:
+            super().connect()
+            _require_public_peer(self.sock)
+        except Exception:
+            self.close()
+            raise
+
+
+class _SafeHTTPSConnection(http.client.HTTPSConnection):
+    def connect(self):
+        # Establish only TCP first. Validating after HTTPSConnection.connect()
+        # would complete the TLS handshake with a rebound private endpoint.
+        try:
+            http.client.HTTPConnection.connect(self)
+            _require_public_peer(self.sock)
+            server_hostname = self._tunnel_host or self.host
+            self.sock = self._context.wrap_socket(
+                self.sock,
+                server_hostname=server_hostname,
+            )
+        except Exception:
+            self.close()
+            raise
+
+
+class PublicHTTPHandler(HTTPHandler):
+    def http_open(self, req):
+        return self.do_open(_SafeHTTPConnection, req)
+
+
+class PublicHTTPSHandler(HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(_SafeHTTPSConnection, req, context=self._context)
+
+
+urlopen = build_opener(
+    ProxyHandler({}),
+    SafeRedirectHandler(),
+    PublicHTTPHandler(),
+    PublicHTTPSHandler(),
+).open
 
 
 def parse_robots(robots_txt: str, path: str, user_agent: str = USER_AGENT) -> bool:
@@ -113,6 +254,20 @@ def parse_robots(robots_txt: str, path: str, user_agent: str = USER_AGENT) -> bo
     return "allow" in tie
 
 
+def _read_limited(response) -> bytes:
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = response.read(READ_CHUNK_BYTES)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > MAX_RESPONSE_BYTES:
+            raise OSError(f"response exceeds {MAX_RESPONSE_BYTES} bytes")
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
 def _http_fetch(url: str, method: str = "GET", body: str | None = None, headers: dict[str, str] | None = None, timeout: int = DEFAULT_TIMEOUT_S) -> tuple[int, str]:
     request_headers = {"User-Agent": USER_AGENT, "Accept": "text/html,application/json;q=0.9,*/*;q=0.8"}
     data = None
@@ -124,7 +279,7 @@ def _http_fetch(url: str, method: str = "GET", body: str | None = None, headers:
     request = Request(url, data=data, method=method, headers=request_headers)
     try:
         with urlopen(request, timeout=timeout) as response:
-            raw = response.read()
+            raw = _read_limited(response)
             charset = response.headers.get_content_charset()
             try:
                 if charset:
@@ -133,7 +288,7 @@ def _http_fetch(url: str, method: str = "GET", body: str | None = None, headers:
                 charset = None  # some sites ship a misspelled charset (e.g. "uft-8")
             return response.status, raw.decode(charset or "utf-8", errors="replace")
     except HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace") if exc.fp else ""
+        body = _read_limited(exc.fp).decode("utf-8", errors="replace") if exc.fp else ""
         return exc.code, body
     except (OSError, URLError, TimeoutError):
         # Transient network / SSL errors are a soft skip, not a fatal crash.
@@ -169,6 +324,10 @@ class PoliteFetcher:
             raise AcquisitionError("only http(s) URLs are allowed")
         if is_blocked_host(url):
             raise AcquisitionError(f"blocked host: {host_of(url)}")
+        if _has_share_token(url):
+            raise AcquisitionError("referral/share token URLs are not fetched")
+        if not is_allowed_redirect(url):
+            raise AcquisitionError(f"non-public fetch target: {host_of(url)}")
         if not robots_allows(url, self._get):
             return FetchResult(
                 url=url,
