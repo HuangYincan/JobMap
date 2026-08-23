@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   NOMINATIM_MIN_INTERVAL_MS,
+  NOMINATIM_QUERY_MAX_LEN,
   NOMINATIM_TIMEOUT_MS,
   NOMINATIM_USER_AGENT,
   gradeNominatimHit,
@@ -10,6 +12,8 @@ import {
   nominatimMatchTokens,
   nominatimQueryVariants,
   nominatimReverseRest,
+  nominatimSearchMemoKey,
+  nominatimSearchMemoSet,
   nominatimSearchRest,
   parseNominatimPoi,
   pickBestNominatimPoi,
@@ -247,3 +251,138 @@ test('nominatimQueryVariants: 城市名占位地址 (新加坡/非中国大陆�
 // 限速契约: nominatimSearchRest 自身不 sleep (调用方 throttleMs('nominatim')=1000
 // 在 geocode-sites-apply.mjs 调用点执行) — 上述 mock 全部即时返回即可证明无
 // 内部限速; ≥1s 的下限由 NOMINATIM_MIN_INTERVAL_MS 常量测试钉住。
+
+// --- Nominatim search memo (scan r2 #6) + q 长度上限 (scan r2 #7) --------------
+
+test('nominatimSearchMemoKey: 同 query+同城市 → 同 key;不同城市/不同 query 不串', () => {
+  assert.equal(nominatimSearchMemoKey('安克创新 慕尼黑市', '慕尼黑市'), nominatimSearchMemoKey('安克创新 慕尼黑市', '慕尼黑市'));
+  assert.notEqual(nominatimSearchMemoKey('安克创新 慕尼黑市', '慕尼黑市'), nominatimSearchMemoKey('安克创新 慕尼黑市', '新加坡市'));
+  assert.notEqual(nominatimSearchMemoKey('安克创新 慕尼黑市', '慕尼黑市'), nominatimSearchMemoKey('元气森林 慕尼黑市', '慕尼黑市'));
+});
+
+test('nominatimSearchMemoSet: 成功命中 (poi 非空) 才入 memo;失败/空/超时绝不缓存', () => {
+  const memo = new Map();
+  const poi = parseNominatimPoi({ display_name: 'Anker Innovations, Munich', lon: '11.582', lat: '48.149', type: 'building', address: {} });
+  nominatimSearchMemoSet(memo, 'k1', { poi, confidence: 'high', reason: 'nominatim-company-match', query: 'q' });
+  assert.equal(memo.size, 1);
+  nominatimSearchMemoSet(memo, 'k2', { poi: null, confidence: null, reason: 'nominatim-no-result', query: 'q' });
+  nominatimSearchMemoSet(memo, 'k3', { poi: null, confidence: null, reason: 'http', query: 'q' });
+  nominatimSearchMemoSet(memo, 'k4', { poi: null, confidence: null, reason: 'timeout', query: 'q' });
+  nominatimSearchMemoSet(memo, 'k5', null);
+  nominatimSearchMemoSet(memo, 'k6', undefined);
+  assert.equal(memo.size, 1);
+});
+
+/** 镜像 scripts/geocode-sites-apply.mjs searchOverseasNominatim 的 memo 流程. */
+function makeMemoizedNominatimSearch(memo, fetchImpl) {
+  return async function search(companyQuery, address, city) {
+    for (const q of nominatimQueryVariants(companyQuery, address, city)) {
+      const memoKey = nominatimSearchMemoKey(q, city);
+      const cached = memo.get(memoKey);
+      if (cached) return cached;
+      const res = await nominatimSearchRest(q, { city }, fetchImpl);
+      if (!res.ok || !res.pois.length) continue;
+      const picked = pickBestNominatimPoi(res.pois, companyQuery, q, city);
+      if (!picked) continue;
+      const grade = gradeNominatimHit(picked, companyQuery, q, city);
+      const hit = { poi: picked, confidence: grade.confidence, reason: grade.reason, query: q };
+      nominatimSearchMemoSet(memo, memoKey, hit);
+      return hit;
+    }
+    return { poi: null, confidence: null, reason: 'nominatim-no-result', query: null };
+  };
+}
+
+test('memo 流程: 同 query+同城市第二次零请求;不同城市各自请求 (scan r2 #6)', async () => {
+  const requested = [];
+  const fetchImpl = async (input) => {
+    requested.push(String(input));
+    // 按解码后的 q 参数分流: 新加坡检索 → 中文公司名 display (公司名强匹配 high);
+    // 其余 → 慕尼黑地址命中 (URL 中 CJK 被百分号编码, 必须经 searchParams 解码)
+    const q = new URL(String(input)).searchParams.get('q') ?? '';
+    if (q.includes('新加坡')) {
+      return { ok: true, json: async () => [{ display_name: '安克创新, Singapore', lon: '103.85', lat: '1.29', type: 'company', address: {} }] };
+    }
+    return { ok: true, json: async () => [MUNICH_HIT] };
+  };
+  const memo = new Map();
+  const search = makeMemoizedNominatimSearch(memo, fetchImpl);
+
+  // 同公司同城两个站点 (安克创新 38 站场景) — 第二次 memo 命中零请求
+  const r1 = await search('安克创新', 'Georg-Muche-Street 3 Munich', '慕尼黑市');
+  assert.equal(r1.poi.name, MUNICH_HIT.display_name);
+  const calls1 = requested.length;
+  assert.ok(calls1 >= 1, '第一站至少 1 次请求');
+  const r2 = await search('安克创新', 'Georg-Muche-Street 3 Munich', '慕尼黑市');
+  assert.equal(r2.poi.lng, r1.poi.lng);
+  assert.equal(requested.length, calls1, '同 query+同城市第二次零请求 (memo 命中)');
+
+  // 不同城市 → 不同 key, 各自请求 (不串)
+  const r3 = await search('安克创新', null, '新加坡市');
+  assert.equal(r3.poi.lng, 103.85);
+  assert.ok(requested.length > calls1, '不同城市重新请求');
+});
+
+test('memo 流程: 失败/空结果/超时不缓存 — 同 query 第二次仍重新请求', async () => {
+  let respond = async () => ({ ok: true, json: async () => [] });
+  const requested = [];
+  const fetchImpl = async (input) => {
+    requested.push(String(input));
+    return respond();
+  };
+  const memo = new Map();
+  const search = makeMemoizedNominatimSearch(memo, fetchImpl);
+
+  // 空结果: 不缓存 → 两次调用各重新请求
+  const a1 = await search('安克创新', null, '新加坡市');
+  assert.equal(a1.poi, null);
+  const n1 = requested.length;
+  const a2 = await search('安克创新', null, '新加坡市');
+  assert.equal(a2.poi, null);
+  assert.equal(requested.length, n1 + 1, '空结果不缓存 → 第二次重新请求');
+  assert.equal(memo.size, 0);
+
+  // http 失败: 不缓存 → 继续重试 (配额/服务恢复后必须重新尝试)
+  respond = async () => ({ ok: false, status: 503 });
+  await search('安克创新', null, '新加坡市');
+  await search('安克创新', null, '新加坡市');
+  assert.equal(memo.size, 0);
+});
+
+test('nominatimSearchRest: q 超 256 截断 — 保留公司名主体, 丢弃头部地址段 (scan r2 #7)', async () => {
+  // 超长: 30 字符头部标记 + 270 字符地址 + 公司名 = 305 字符
+  const longQ = `${'X'.repeat(30)}${'Y'.repeat(270)} 安克创新`;
+  const captured = {};
+  const res = await nominatimSearchRest(longQ, null, captureFetch(captured, async () => ({ ok: true, json: async () => [MUNICH_HIT] })));
+  assert.equal(res.ok, true);
+  const u = new URL(captured.input);
+  const final = u.searchParams.get('q');
+  assert.equal(final.length, NOMINATIM_QUERY_MAX_LEN, '超长必须截断到 256');
+  assert.ok(!final.includes('X'), '头部地址段被丢弃');
+  assert.ok(final.includes('Y'), '公司名前的地址主体保留');
+  assert.ok(final.endsWith('安克创新'), '公司名主体保留在尾部');
+  // 带城市约束同样受截断保护 (追加城市后仍 ≤256, 公司名不丢)
+  const captured2 = {};
+  await nominatimSearchRest(longQ, { city: '慕尼黑市' }, captureFetch(captured2, async () => ({ ok: true, json: async () => [MUNICH_HIT] })));
+  const u2 = new URL(captured2.input);
+  assert.ok(u2.searchParams.get('q').length <= NOMINATIM_QUERY_MAX_LEN);
+  assert.ok(u2.searchParams.get('q').includes('安克创新'));
+  // 未超长: 原样发送 (回归)
+  const captured3 = {};
+  await nominatimSearchRest('安克创新 慕尼黑市', { city: '慕尼黑市' }, captureFetch(captured3, async () => ({ ok: true, json: async () => [] })));
+  assert.equal(new URL(captured3.input).searchParams.get('q'), '安克创新 慕尼黑市');
+});
+
+test('geocode-sites-apply.mjs 接线: searchOverseasNominatim 按 (变体串, city) memo 成功命中', () => {
+  const script = readFileSync(new URL('../scripts/geocode-sites-apply.mjs', import.meta.url), 'utf8');
+  assert.match(script, /const nominatimSearchMemo = new Map\(\)/);
+  assert.match(script, /const memoKey = nominatimSearchMemoKey\(q, target\.city\)/);
+  // 命中优先: memo get 在 Nominatim 请求之前 → 同 query+city 第二次零请求
+  const getIdx = script.indexOf('nominatimSearchMemo.get(memoKey)');
+  const fetchIdx = script.indexOf('nominatimSearchRest(q, target)');
+  assert.ok(getIdx !== -1 && fetchIdx !== -1, 'memo get 与 Nominatim 请求都必须在 searchOverseasNominatim 内');
+  assert.ok(getIdx < fetchIdx, 'memo get 必须先于 Nominatim 请求');
+  // 只缓存成功命中: 写入发生在请求 + 评分之后
+  const setIdx = script.indexOf('nominatimSearchMemoSet(nominatimSearchMemo, memoKey, hit)');
+  assert.ok(setIdx !== -1 && setIdx > fetchIdx, 'memo 写入必须发生在请求与评分之后 (只缓存成功命中)');
+});
