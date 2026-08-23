@@ -3,9 +3,15 @@ import assert from 'node:assert/strict';
 
 import {
   loadAMap,
+  searchPOI,
+  fetchSuggestions,
+  getCurrentPosition,
+  geocodeAddress,
   resetAMapLoader,
+  resetGeocodeCache,
   normalizeAMapPOI,
   AMAP_LOAD_TIMEOUT_MS,
+  AMAP_CALLBACK_TIMEOUT_MS,
   SCRIPT_ID,
   AMAP_URL,
 } from '../src/lib/amap-api.ts';
@@ -16,6 +22,275 @@ const BASE = {
   location: '120.135687,30.251276',
   type: '风景名胜;公园广场;公园',
 };
+
+async function withAmap(classes, fn) {
+  globalThis.window = { AMap: classes };
+  resetAMapLoader();
+  resetGeocodeCache();
+  try {
+    return await fn();
+  } finally {
+    delete globalThis.window;
+    resetAMapLoader();
+    resetGeocodeCache();
+  }
+}
+
+test('normalizeAMapPOI accepts object, string, and lnglat coordinates and drops invalid rows', () => {
+  const object = normalizeAMapPOI({ ...BASE, location: { lng: 120.1, lat: 30.2 } });
+  assert.equal(object?.location.lng, 120.1);
+  assert.equal(object?.location.lat, 30.2);
+  const legacy = normalizeAMapPOI({ ...BASE, lnglat: { lng: 120.2, lat: 30.3 } });
+  assert.equal(legacy?.location.lng, 120.2);
+  assert.equal(normalizeAMapPOI({ ...BASE, location: 'bad' }), null);
+  assert.equal(normalizeAMapPOI({ ...BASE, location: '120,30' }).location.lat, 30);
+  assert.equal(normalizeAMapPOI({ ...BASE, name: '' }), null);
+});
+
+test('searchPOI normalizes rows, dedupes ids, and rejects bad callbacks', async () => {
+  let mode = 'complete';
+  class FakePlaceSearch {
+    constructor() {
+      if (mode === 'ctor') throw new Error('ctor failed');
+    }
+
+    search(_keyword, done) {
+      if (mode === 'complete') {
+        done('complete', {
+          poiList: {
+            count: 2,
+            pois: [
+              { ...BASE, tel: '0571-85791266' },
+              { ...BASE, name: 'duplicate' },
+            ],
+          },
+        });
+      } else {
+        done(mode, null);
+      }
+    }
+
+    searchNearBy(_keyword, _center, _radius, done) {
+      this.search('', done);
+    }
+
+    on() {}
+  }
+
+  await withAmap({ PlaceSearch: FakePlaceSearch }, async () => {
+    const result = await searchPOI({ keyword: '西湖' });
+    assert.equal(result.total, 2);
+    assert.equal(result.pois.length, 1, 'same poiid must be deduped');
+    assert.equal(result.pois[0].tel, '0571-85791266');
+
+    mode = 'error';
+    await assert.rejects(searchPOI({ keyword: '西湖' }), /AMap PlaceSearch failed/);
+
+    mode = 'incomplete';
+    await assert.rejects(searchPOI({ keyword: '西湖' }), /PlaceSearch incomplete/);
+
+    mode = 'ctor';
+    await assert.rejects(searchPOI({ keyword: '西湖' }), /PlaceSearch constructor failed/);
+  });
+});
+
+test('fetchSuggestions parses tips and returns [] on failure or constructor errors', async () => {
+  let mode = 'complete';
+  class FakeAutoComplete {
+    constructor() {
+      if (mode === 'ctor') throw new Error('ctor failed');
+    }
+
+    search(_keyword, done) {
+      if (mode === 'complete') {
+        done('complete', {
+          tips: [
+            {
+              id: 'tip-1',
+              name: '西湖',
+              location: '120.1,30.2',
+              type: '风景名胜;公园',
+              typecode: '110101',
+              address: '龙井路',
+              cityname: '杭州市',
+              adname: '西湖区',
+            },
+            { name: 'no-location' },
+          ],
+        });
+      } else {
+        done(mode, null);
+      }
+    }
+
+    on() {}
+  }
+
+  await withAmap({ AutoComplete: FakeAutoComplete }, async () => {
+    const tips = await fetchSuggestions('西湖', '杭州');
+    assert.equal(tips.length, 2);
+    assert.deepEqual(tips[0].location, { lng: 120.1, lat: 30.2 });
+    assert.equal(tips[0].type, '风景名胜');
+    assert.equal(tips[0].city[0], '杭州市');
+    assert.equal(tips[0].district, '西湖区');
+    assert.equal(tips[1].location, undefined, 'tips without coordinates are still returned for search text');
+
+    mode = 'error';
+    assert.deepEqual(await fetchSuggestions('x'), []);
+
+    mode = 'ctor';
+    assert.deepEqual(await fetchSuggestions('x'), []);
+  });
+});
+
+test('getCurrentPosition returns parsed positions and null on failure', async () => {
+  let mode = 'complete';
+  class FakeGeolocation {
+    constructor() {
+      if (mode === 'ctor') throw new Error('ctor failed');
+    }
+
+    getCurrentPosition(done) {
+      if (mode === 'complete') {
+        done('complete', {
+          position: { getLng: () => 120.1, getLat: () => 30.2 },
+          accuracy: 25,
+          isConverted: true,
+          formattedAddress: '杭州',
+          info: 'ok',
+        });
+      } else {
+        done(mode, null);
+      }
+    }
+  }
+
+  await withAmap({ Geolocation: FakeGeolocation }, async () => {
+    const map = { addControl() {} };
+    const pos = await getCurrentPosition(map);
+    assert.deepEqual(pos, {
+      position: { lng: 120.1, lat: 30.2 },
+      accuracy: 25,
+      converted: true,
+      address: '杭州',
+      info: 'ok',
+    });
+
+    mode = 'error';
+    assert.equal(await getCurrentPosition({ addControl() {} }), null);
+
+    mode = 'ctor';
+    assert.equal(await getCurrentPosition({ addControl() {} }), null);
+  });
+});
+
+test('geocodeAddress caches results and returns null on failure or constructor errors', async () => {
+  let mode = 'complete';
+  let calls = 0;
+  class FakeGeocoder {
+    constructor() {
+      if (mode === 'ctor') throw new Error('ctor failed');
+    }
+
+    getLocation(_address, done) {
+      calls += 1;
+      if (mode === 'complete') {
+        done('complete', { geocodes: [{ location: { lng: 120.1, lat: 30.2 } }] });
+      } else {
+        done(mode, null);
+      }
+    }
+  }
+
+  await withAmap({ Geocoder: FakeGeocoder }, async () => {
+    const first = await geocodeAddress('西湖区');
+    assert.deepEqual(first, { lng: 120.1, lat: 30.2, address: '西湖区' });
+    const cached = await geocodeAddress('西湖区');
+    assert.equal(calls, 1, 'second call must hit the cache');
+    assert.deepEqual(cached, first);
+
+    mode = 'error';
+    assert.equal(await geocodeAddress('不存在'), null);
+
+    mode = 'ctor';
+    assert.equal(await geocodeAddress('不存在2'), null);
+
+    assert.equal(await geocodeAddress('   '), null);
+  });
+});
+
+test('low-level AMap callbacks time out instead of hanging', async (t) => {
+  mock.timers.enable({ apis: ['setTimeout'] });
+  t.after(() => mock.timers.reset());
+
+  class SilentAutoComplete {
+    search() {}
+
+    on() {}
+  }
+
+  class SilentGeolocation {
+    getCurrentPosition() {}
+  }
+
+  class SilentGeocoder {
+    getLocation() {}
+  }
+
+  await withAmap(
+    {
+      AutoComplete: SilentAutoComplete,
+      Geolocation: SilentGeolocation,
+      Geocoder: SilentGeocoder,
+    },
+    async () => {
+      const suggestions = fetchSuggestions('西湖');
+      const position = getCurrentPosition({ addControl() {} });
+      const location = geocodeAddress('西湖区');
+      await new Promise((resolve) => setImmediate(resolve));
+      mock.timers.tick(AMAP_CALLBACK_TIMEOUT_MS);
+
+      assert.deepEqual(await suggestions, []);
+      assert.equal(await position, null);
+      assert.equal(await location, null);
+    },
+  );
+});
+
+test('AMap low-level calls catch synchronous plugin method failures', async () => {
+  class ThrowingAutoComplete {
+    search() {
+      throw new Error('autocomplete failed');
+    }
+
+    on() {}
+  }
+
+  class ThrowingGeolocation {
+    getCurrentPosition() {
+      throw new Error('geolocation failed');
+    }
+  }
+
+  class ThrowingGeocoder {
+    getLocation() {
+      throw new Error('geocoder failed');
+    }
+  }
+
+  await withAmap(
+    {
+      AutoComplete: ThrowingAutoComplete,
+      Geolocation: ThrowingGeolocation,
+      Geocoder: ThrowingGeocoder,
+    },
+    async () => {
+      assert.deepEqual(await fetchSuggestions('x'), []);
+      assert.equal(await getCurrentPosition({ addControl() {} }), null);
+      assert.equal(await geocodeAddress('x'), null);
+    },
+  );
+});
 
 test('normalizeAMapPOI: 真实电话保留', () => {
   const poi = normalizeAMapPOI({ ...BASE, tel: '0571-85791266' });

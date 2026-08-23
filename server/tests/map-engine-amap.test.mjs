@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 process.env.NEXT_PUBLIC_AMAP_KEY = 'test-key';
 process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE = 'test-code';
 
+import { GEOCODE_CACHE_MAX, resetGeocodeCache } from '../src/lib/amap-api.ts';
 import { registerAmapEngine } from '../src/lib/map-engine/amap/amap-engine.ts';
 import { AMAP_ENGINE, resolveEngine } from '../src/lib/map-engine/engine-registry.ts';
 
@@ -705,6 +706,37 @@ test('search 转发:searchPOI 无 center → 关键词搜索', async () => {
   assert.equal(call.mode, 'search');
   assert.equal(call.kw, '天安门');
   assert.equal(ns.instances.placeSearch.opts.city, '北京');
+});
+
+test('geocodeAddress 缓存有界并保留最近使用项', async () => {
+  const ns = installNs();
+  const engine = registerAmapEngine();
+  await engine.load();
+  resetGeocodeCache();
+
+  const addresses = Array.from({ length: GEOCODE_CACHE_MAX + 1 }, (_, i) => `地址-${i}`);
+  for (const address of addresses) await engine.search.geocodeAddress(address);
+  assert.equal(ns.instances.geocoderCalls.length, GEOCODE_CACHE_MAX + 1);
+
+  // 触碰最旧项后，下一次淘汰的是第二旧项，而不是最近使用的最旧项。
+  await engine.search.geocodeAddress(addresses[0]);
+  assert.equal(ns.instances.geocoderCalls.at(-1), addresses[0]);
+  await engine.search.geocodeAddress(`地址-${GEOCODE_CACHE_MAX}`);
+
+  const callsBeforeHits = ns.instances.geocoderCalls.length;
+  assert.deepEqual(await engine.search.geocodeAddress(addresses[0]), {
+    lng: 121,
+    lat: 31,
+    address: addresses[0],
+  });
+  assert.deepEqual(await engine.search.geocodeAddress(addresses[1]), {
+    lng: 121,
+    lat: 31,
+    address: addresses[1],
+  });
+  assert.equal(ns.instances.geocoderCalls.length, callsBeforeHits + 1);
+  assert.equal(ns.instances.geocoderCalls.at(-1), addresses[1]);
+  resetGeocodeCache();
 });
 
 // ---------------------------------------------------------------------------

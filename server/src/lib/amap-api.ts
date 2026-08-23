@@ -349,6 +349,9 @@ function acquireAmapSlot(): Promise<void> {
 /** PlaceSearch 超时(ms):配额异常/脚本异常时绝不永久 await(poi-loading B) */
 export const SEARCH_TIMEOUT_MS = 15_000;
 
+/** AutoComplete / Geolocation / Geocoder 回调超时(ms) */
+export const AMAP_CALLBACK_TIMEOUT_MS = 8_000;
+
 /**
  * 给 AMap 回调型 promise 加超时兜底:超时以 error 形态 settle,
  * 走调用方的重试路径,绝不永久 await(poi-loading B)。
@@ -514,47 +517,51 @@ export async function fetchSuggestions(
   const AMap = await loadAMap();
   await waitForPlugin(AMap, 'AutoComplete');
 
-  return new Promise((resolve) => {
-    let auto: any;
-    try {
-      auto = new AMap.AutoComplete({ city });
-    } catch {
-      resolve([]);
-      return;
-    }
-
-    auto.search(keyword, (status: string, result: any) => {
-      if (status === 'complete' && Array.isArray(result?.tips)) {
-        resolve(
-          result.tips
-            .filter((tip: any) => tip?.name)
-            .map((tip: any): AmapSuggestion => {
-              // 解析 "lng,lat" 字符串（AutoComplete 建议通常带经纬度）
-              let location: { lng: number; lat: number } | undefined;
-              if (typeof tip.location === 'string' && tip.location.includes(',')) {
-                const [lngStr, latStr] = tip.location.split(',');
-                const lng = parseFloat(lngStr);
-                const lat = parseFloat(latStr);
-                if (!isNaN(lng) && !isNaN(lat)) location = { lng, lat };
-              }
-              return {
-                id: tip.id,
-                name: tip.name,
-                type: tip.typecode ? tip.type?.split(';')[0] : tip.type,
-                location,
-                address: tip.address,
-                city: tip.cityname ? [tip.cityname] : undefined,
-                district: tip.adname,
-              };
-            })
-            .slice(0, 10)
-        );
-      } else {
+  return withTimeout(
+    new Promise<AmapSuggestion[]>((resolve) => {
+      let auto: any;
+      try {
+        auto = new AMap.AutoComplete({ city });
+      } catch {
         resolve([]);
+        return;
       }
-    });
-    auto.on('error', () => resolve([]));
-  });
+
+      auto.search(keyword, (status: string, result: any) => {
+        if (status === 'complete' && Array.isArray(result?.tips)) {
+          resolve(
+            result.tips
+              .filter((tip: any) => tip?.name)
+              .map((tip: any): AmapSuggestion => {
+                // 解析 "lng,lat" 字符串（AutoComplete 建议通常带经纬度）
+                let location: { lng: number; lat: number } | undefined;
+                if (typeof tip.location === 'string' && tip.location.includes(',')) {
+                  const [lngStr, latStr] = tip.location.split(',');
+                  const lng = parseFloat(lngStr);
+                  const lat = parseFloat(latStr);
+                  if (!isNaN(lng) && !isNaN(lat)) location = { lng, lat };
+                }
+                return {
+                  id: tip.id,
+                  name: tip.name,
+                  type: tip.typecode ? tip.type?.split(';')[0] : tip.type,
+                  location,
+                  address: tip.address,
+                  city: tip.cityname ? [tip.cityname] : undefined,
+                  district: tip.adname,
+                };
+              })
+              .slice(0, 10)
+          );
+        } else {
+          resolve([]);
+        }
+      });
+      auto.on('error', () => resolve([]));
+    }),
+    AMAP_CALLBACK_TIMEOUT_MS,
+    'AMap AutoComplete',
+  ).catch(() => []);
 }
 
 // ============================================================
@@ -588,53 +595,57 @@ export async function getCurrentPosition(map: any): Promise<GeocodedPosition | n
   const AMap = await loadAMap();
   await waitForPlugin(AMap, 'Geolocation');
 
-  return new Promise((resolve) => {
-    let geolocation: any;
-    try {
-      // 每个 map 复用同一个 Geolocation 实例（Control 只能 addControl 一次）
-      let cached = geolocationByMap.get(map);
-      if (!cached) {
-        cached = new AMap.Geolocation({
-          enableHighAccuracy: true,
-          timeout: 8000,
-          maximumAge: 30000,
-          convert: true,
-          needAddress: true,
-          showButton: false,
-          showCircle: true,
-          showMarker: true,
-          zoomToAccuracy: false,
-          panToLocation: false,
-        });
-        if (map && typeof map.addControl === 'function') {
-          map.addControl(cached);
+  return withTimeout(
+    new Promise<GeocodedPosition | null>((resolve) => {
+      let geolocation: any;
+      try {
+        // 每个 map 复用同一个 Geolocation 实例（Control 只能 addControl 一次）
+        let cached = geolocationByMap.get(map);
+        if (!cached) {
+          cached = new AMap.Geolocation({
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 30000,
+            convert: true,
+            needAddress: true,
+            showButton: false,
+            showCircle: true,
+            showMarker: true,
+            zoomToAccuracy: false,
+            panToLocation: false,
+          });
+          if (map && typeof map.addControl === 'function') {
+            map.addControl(cached);
+          }
+          geolocationByMap.set(map, cached);
         }
-        geolocationByMap.set(map, cached);
-      }
-      geolocation = cached;
-    } catch {
-      resolve(null);
-      return;
-    }
-
-    geolocation.getCurrentPosition((status: string, result: any) => {
-      if (status === 'complete' && result?.position) {
-        const pos = result.position;
-        resolve({
-          position: {
-            lng: typeof pos.getLng === 'function' ? pos.getLng() : pos.lng,
-            lat: typeof pos.getLat === 'function' ? pos.getLat() : pos.lat,
-          },
-          accuracy: result.accuracy,
-          converted: !!result.isConverted,
-          address: result.formattedAddress,
-          info: result.info,
-        });
-      } else {
+        geolocation = cached;
+      } catch {
         resolve(null);
+        return;
       }
-    });
-  });
+
+      geolocation.getCurrentPosition((status: string, result: any) => {
+        if (status === 'complete' && result?.position) {
+          const pos = result.position;
+          resolve({
+            position: {
+              lng: typeof pos.getLng === 'function' ? pos.getLng() : pos.lng,
+              lat: typeof pos.getLat === 'function' ? pos.getLat() : pos.lat,
+            },
+            accuracy: result.accuracy,
+            converted: !!result.isConverted,
+            address: result.formattedAddress,
+            info: result.info,
+          });
+        } else {
+          resolve(null);
+        }
+      });
+    }),
+    AMAP_CALLBACK_TIMEOUT_MS,
+    'AMap Geolocation',
+  ).catch(() => null);
 }
 
 /** 每地图复用的 Geolocation 实例缓存（WeakMap，map 销毁自动回收） */
@@ -644,7 +655,23 @@ const geolocationByMap = new WeakMap<object, any>();
 // Geocoder — 地址转经纬度
 // ============================================================
 
+/** Bounded LRU: long sessions must not retain every unique external address. */
+export const GEOCODE_CACHE_MAX = 256;
 const geocodeCache = new Map<string, POILocation>();
+
+export function resetGeocodeCache(): void {
+  geocodeCache.clear();
+}
+
+function rememberGeocode(key: string, location: POILocation): void {
+  geocodeCache.delete(key);
+  while (geocodeCache.size >= GEOCODE_CACHE_MAX) {
+    const oldest = geocodeCache.keys().next().value;
+    if (oldest === undefined) break;
+    geocodeCache.delete(oldest);
+  }
+  geocodeCache.set(key, location);
+}
 
 /**
  * 地址 → 经纬度（AMap.Geocoder）。
@@ -662,34 +689,39 @@ export async function geocodeAddress(
   const AMap = await loadAMap();
   await waitForPlugin(AMap, 'Geocoder');
 
-  return new Promise((resolve) => {
-    let geocoder: any;
-    try {
-      geocoder = new AMap.Geocoder({
-        city: city && city.length > 0 ? city : '全国',
-      });
-    } catch {
-      resolve(null);
-      return;
-    }
+  return withTimeout(
+    new Promise<POILocation | null>((resolve) => {
+      let geocoder: any;
+      try {
+        geocoder = new AMap.Geocoder({
+          city: city && city.length > 0 ? city : '全国',
+        });
+      } catch {
+        resolve(null);
+        return;
+      }
 
-    geocoder.getLocation(address, (status: string, result: any) => {
-      const loc = result?.geocodes?.[0]?.location;
-      if (status !== 'complete' || !loc) {
-        resolve(null);
-        return;
-      }
-      const lng = typeof loc.getLng === 'function' ? loc.getLng() : loc.lng;
-      const lat = typeof loc.getLat === 'function' ? loc.getLat() : loc.lat;
-      if (typeof lng !== 'number' || typeof lat !== 'number') {
-        resolve(null);
-        return;
-      }
-      const parsed: POILocation = { lng, lat, address };
-      geocodeCache.set(key, parsed);
-      resolve(parsed);
-    });
-  });
+      geocoder.getLocation(address, (status: string, result: any) => {
+        const loc = result?.geocodes?.[0]?.location;
+        if (status !== 'complete' || !loc) {
+          resolve(null);
+          return;
+        }
+        const lng = typeof loc.getLng === 'function' ? loc.getLng() : loc.lng;
+        const lat = typeof loc.getLat === 'function' ? loc.getLat() : loc.lat;
+        if (typeof lng !== 'number' || typeof lat !== 'number') {
+          resolve(null);
+          return;
+        }
+        const parsed: POILocation = { lng, lat, address };
+        geocodeCache.delete(key);
+        rememberGeocode(key, parsed);
+        resolve(parsed);
+      });
+    }),
+    AMAP_CALLBACK_TIMEOUT_MS,
+    'AMap Geocoder',
+  ).catch(() => null);
 }
 
 export interface ViewportSearchOptions {
