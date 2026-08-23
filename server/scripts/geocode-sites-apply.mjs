@@ -291,12 +291,16 @@ async function searchOverseasNominatim(companyQuery, site, target) {
  * (reason 带 /nominatim 后缀标明已尝试第四 provider) + 配额窗口 + 短路检查。
  */
 async function overseasFallback(slug, siteId, query, target, companyQuery, site, failReason) {
-  if (NOMINATIM_ACTIVE && isOverseasCity(target.city)) {
+  const overseas = NOMINATIM_ACTIVE && isOverseasCity(target.city);
+  if (overseas) {
     const nom = await searchOverseasNominatim(companyQuery, site, target);
     if (nom.poi) return { hit: true, poi: nom.poi, confidence: nom.confidence, reason: nom.reason, query: nom.query };
   }
-  unresolved.push({ slug, siteId, query, reason: `${failReason}/nominatim` });
-  return { hit: false, shortCircuit: recordOutcome(`${failReason}/nominatim`) };
+  // /nominatim 后缀只在实际尝试过 Nominatim (海外站 + 非纯计划 dry-run) 时标注;
+  // 国内站点 / 纯计划模式 reason 原样 — 非海外站行为与合并前完全一致。
+  const reason = overseas ? `${failReason}/nominatim` : failReason;
+  unresolved.push({ slug, siteId, query, reason });
+  return { hit: false, shortCircuit: recordOutcome(reason) };
 }
 
 // --- main -------------------------------------------------------------------
