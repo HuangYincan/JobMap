@@ -1579,6 +1579,13 @@ export const NOMINATIM_TIMEOUT_MS = 10_000;
 /** 调用方限速下限: ≥1 req/s (Usage Policy). 实际节流在 apply 脚本调用点. */
 export const NOMINATIM_MIN_INTERVAL_MS = 1_000;
 
+/**
+ * Nominatim 检索串长度上限 — 官方建议 ≤256 字符 (超长返回 400 → unresolved
+ * 噪音, 优雅但无谓). 变体检索串形如 "<街道地址> <公司名>", 公司名在尾部 —
+ * 超长时保留尾部 (公司名主体), 丢弃头部地址段 (见 nominatimSearchRest).
+ */
+export const NOMINATIM_QUERY_MAX_LEN = 256;
+
 // --- 海外站判定 (独立命名, 不污染国内路径) ------------------------------------
 // 数据实测口径 (2026-08-23 摸底, 见 20260823-boss-poi-datasource 批次汇报):
 // drops 海外站 114 站 = CJK 海外/港澳台城市名 91 站 (65 城) + 纯拉丁城市串
@@ -1653,6 +1660,8 @@ export function parseNominatimPoi(raw: Record<string, unknown>): OfficePoiCandid
 /**
  * Nominatim /search (format=jsonv2, limit=3)。target.city 提供且检索串未含城市
  * 名时, 追加 bare 城市名作约束 (Nominatim 无 region 参数, 文本约束最接近)。
+ * 2026-08-23 (scan r2 #7): 最终 q 超 NOMINATIM_QUERY_MAX_LEN (256, 官方建议)
+ * 时截断到 256 — 保留尾部 (公司名主体), 丢弃头部地址段; 不改变失败降级语义。
  * 失败 (http/超时/解析) 一律降级为 { ok: false } — 调用方记 unresolved, 不抛。
  */
 export async function nominatimSearchRest(
@@ -1667,6 +1676,11 @@ export async function nominatimSearchRest(
   const bare = city ? bareCity(city) : '';
   if (city && !q.includes(city) && !q.includes(bare)) url.searchParams.set('q', `${q} ${bare}`);
   else url.searchParams.set('q', q);
+  // 超长截断: 保留尾部 (公司名主体), 丢弃头部地址段 (与 Nominatim ≤256 建议对齐)
+  const composed = url.searchParams.get('q') ?? '';
+  if (composed.length > NOMINATIM_QUERY_MAX_LEN) {
+    url.searchParams.set('q', composed.slice(composed.length - NOMINATIM_QUERY_MAX_LEN));
+  }
   url.searchParams.set('format', 'jsonv2');
   url.searchParams.set('limit', '3');
   url.searchParams.set('addressdetails', '1');
@@ -1696,6 +1710,42 @@ export interface NominatimReverseResult {
   city?: string;
   country?: string;
   reason?: 'http' | 'parse' | 'empty' | 'timeout';
+}
+
+// ---------------------------------------------------------------------------
+// Nominatim search memo (2026-08-23, quality-scan r2 #6)。
+// 海外路径 (geocode-sites-apply.mjs searchOverseasNominatim) 逐站重复打 OSM
+// 公共实例 — 同公司同城多海外站 (安克创新 38 站 / 元气森林 71 站 / 小鹏 52 站)
+// 用相同 query+city 逐站重复检索是结构性浪费, 且 OSM 公共服务有限速/封 IP
+// 政策风险。与国内 place-search memo 同构 (见上): 只缓存成功命中 (poi 非空);
+// 失败/空结果/超时 (poi: null) 绝不缓存 — 服务恢复后必须重新尝试, 缓存旧失败
+// 会永久卡死站点。key 精确到 (query, city): 公司名相同但城市不同 → 不同 key,
+// 不串。策略放本模块 (而非 apply 脚本内) 是为了可单测 — 与 shouldShortCircuitQuota
+// / placeSearchMemoKey 同模式; 调用方层级接线见 geocode-sites-apply.mjs。
+// ---------------------------------------------------------------------------
+
+export interface NominatimMemoHit {
+  poi: OfficePoiCandidate;
+  confidence: GeocodeConfidence;
+  reason: string;
+  query: string;
+}
+
+/** Memo key: 检索变体串 + 城市精确绑定 — 城市不同不串。 */
+export function nominatimSearchMemoKey(query: string, city: string): string {
+  return `${query}\t${city}`;
+}
+
+/**
+ * 只缓存成功命中 (poi 非空)。失败/空结果/超时 (poi: null) 绝不写入 —
+ * 服务恢复后调用方必须重新尝试, 缓存旧失败会永久卡死站点。
+ */
+export function nominatimSearchMemoSet(
+  memo: Map<string, NominatimMemoHit>,
+  key: string,
+  hit: NominatimMemoHit | null | undefined,
+): void {
+  if (hit?.poi) memo.set(key, hit);
 }
 
 /** Nominatim /reverse — WGS-84 坐标的证据文本 (海外路径的 regeo 替代证据). */

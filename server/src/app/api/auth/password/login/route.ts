@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSession, loginWithPassword } from '@/lib/account-store';
-import { writeSessionCookie } from '@/lib/http-session';
+import { writeSessionCookie, readSessionToken } from '@/lib/http-session';
+import { clientIpBucketKey } from '@/lib/client-ip';
 
 /**
  * 密码登录(username + password)。成功写 dm_session cookie。
@@ -26,7 +27,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const ipKey = loginGuardKey('ip', clientIp(request));
+  // per-IP 维度与 agent-chat 同语义(scan r2 #1):可信反代后取转发头 IP;未配置
+  // TRUSTED_PROXY_IPS 时忽略转发头,登录用户按会话指纹、匿名归固定桶——
+  // 伪造/轮换 XFF 不再换桶。per-账号 守卫保持 account-keyed 不变。
+  const ipKey = loginGuardKey('ip', clientIpBucketKey(request, await readSessionToken()));
   const accountKey = loginGuardKey('account', username);
   try {
     checkLoginRateLimit(ipKey);
@@ -87,16 +91,6 @@ interface LoginGuard {
 }
 
 const loginGuards = new Map<string, LoginGuard>();
-
-/** 客户端 IP(与 agent/chat / otp/send 同款取法,信任假设一致)。 */
-function clientIp(request: Request): string {
-  const fwd = request.headers.get('x-forwarded-for');
-  if (fwd) {
-    const first = fwd.split(',')[0].trim();
-    if (first) return first;
-  }
-  return request.headers.get('x-real-ip') ?? 'unknown';
-}
 
 function loginGuardKey(kind: 'ip' | 'account', value: string): string {
   return `${kind}:${value.trim().toLowerCase().slice(0, 128)}`;

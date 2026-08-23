@@ -65,6 +65,8 @@ import {
   isOverseasCity,
   nominatimQueryVariants,
   nominatimReverseRest,
+  nominatimSearchMemoKey,
+  nominatimSearchMemoSet,
   nominatimSearchRest,
   pickBestNominatimPoi,
   pickBestOfficePoi,
@@ -286,21 +288,36 @@ async function searchCompanyPoiVariants(query, target, site) {
 const NOMINATIM_ACTIVE = !DRY_RUN || !!(env.AMAP_WEB_KEY || env.BAIDU_MAP_AK || env.TENCENT_MAP_KEY);
 const nominatimThrottle = () => sleep(throttleMs('nominatim'));
 
+// Nominatim search memo (2026-08-23, scan r2 #6) — 与国内 place-search memo
+// 同构: 同公司同城多海外站 (安克创新 38 站 / 元气森林 71 站 / 小鹏 52 站) 用相同
+// query+city 逐站重复打 OSM 公共实例是结构性浪费。按 (变体检索串, city) 只缓存
+// 成功命中; 失败/空结果/超时绝不缓存 (服务恢复后必须重试)。memo 命中不走网络,
+// 不消耗节流 (与国内 memo 命中一致)。
+const nominatimSearchMemo = new Map();
+
 /**
  * 海外站 Nominatim 解析: 按 nominatimQueryVariants 顺序检索
  * (街道地址+公司 → 公司+城市), 每变体 1 次调用 + ≥1s 节流; 首个非 low 命中返回。
  * 全部失败 → poi: null (reason 'nominatim-no-result')。
+ * 2026-08-23 (scan r2 #6): memo 成功命中 — 同 query+city 的后续站点直接复用
+ * 第一个命中 POI, 不再逐站重复请求 OSM 公共服务。
  */
 async function searchOverseasNominatim(companyQuery, site, target) {
   const address = site.location?.address?.trim() ?? '';
   for (const q of nominatimQueryVariants(companyQuery, address, target.city)) {
+    const memoKey = nominatimSearchMemoKey(q, target.city);
+    const cached = nominatimSearchMemo.get(memoKey);
+    if (cached) return cached;
     const res = await nominatimSearchRest(q, target);
     await nominatimThrottle();
     if (!res.ok || !res.pois.length) continue;
     const picked = pickBestNominatimPoi(res.pois, companyQuery, q, target.city);
     if (!picked) continue;
     const grade = gradeNominatimHit(picked, companyQuery, q, target.city);
-    return { poi: picked, confidence: grade.confidence, reason: grade.reason, query: q };
+    const hit = { poi: picked, confidence: grade.confidence, reason: grade.reason, query: q };
+    // 只缓存成功命中 (poi 非空); 失败/空结果/超时留在 memo 外, 下次重试。
+    nominatimSearchMemoSet(nominatimSearchMemo, memoKey, hit);
+    return hit;
   }
   return { poi: null, confidence: null, reason: 'nominatim-no-result', query: null };
 }

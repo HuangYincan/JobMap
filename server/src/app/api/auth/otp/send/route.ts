@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { readSessionToken } from '@/lib/http-session';
+import { clientIpBucketKey } from '@/lib/client-ip';
 import {
   checkOtpSendLimits,
   DbUnavailableError,
@@ -53,7 +55,10 @@ export async function POST(request: Request) {
 
   try {
     // per-IP / per-账号 24h 发送桶先于 issueOtp(与 per-target 守卫同构:计数先于发送)。
-    await checkOtpSendLimits(clientIp(request), provider, target);
+    // per-IP 维度与 agent-chat 同语义(scan r2 #1):可信反代后取转发头 IP;未配置
+    // TRUSTED_PROXY_IPS 时忽略转发头,登录用户按会话指纹、匿名归固定桶——
+    // 伪造/轮换 XFF 不再换桶。per-target / per-账号 守卫保持 account-keyed 不变。
+    await checkOtpSendLimits(await clientIpBucketKey(request, await readSessionToken()), provider, target);
     if (provider === 'email') {
       // 先 issueOtp:守卫先行,配额(60s 冷却/24h 上限)不因发送失败被绕过。
       const { expiresAt, code } = await issueOtp(provider, target);
@@ -137,18 +142,4 @@ export async function POST(request: Request) {
     }
     throw err;
   }
-}
-
-/**
- * 客户端 IP(与 agent/chat 同款取法):x-forwarded-for 首段 → x-real-ip → 'unknown'。
- * 信任假设:仅可信代理注入的转发头有效(客户端可伪造 XFF 自选桶,与 otpGuards
- * 同属单实例演示的进程内守卫假设;多实例/生产需代理层清洗转发头,deferred)。
- */
-function clientIp(request: Request): string {
-  const fwd = request.headers.get('x-forwarded-for');
-  if (fwd) {
-    const first = fwd.split(',')[0].trim();
-    if (first) return first;
-  }
-  return request.headers.get('x-real-ip') ?? 'unknown';
 }

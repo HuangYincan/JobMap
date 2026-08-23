@@ -9,9 +9,9 @@
 // error);本端点做逐事件 `data: <单行 JSON>\n\n` 转述,error 事件经公开面脱敏
 // (code/message 收敛到安全集合)后下发,不下发其它 type。
 
-import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { readSessionToken, readSessionUser } from '@/lib/http-session';
+import { clientIpBucketKey } from '@/lib/client-ip';
 import { readAgentConfig, hasBaiduAgentPlan } from '@/lib/agent/config';
 import { runAgent } from '@/lib/agent/run-agent';
 import { getMcpProvider, normalizeTool } from '@/lib/agent/mcp-providers';
@@ -39,16 +39,12 @@ const RATE_LIMIT_PER_MIN = 10;
 const RATE_REFILL_MS = 60_000 / RATE_LIMIT_PER_MIN;
 const buckets = new Map<string, { tokens: number; last: number }>();
 
-// ---- 代理信任开关(quality-scan #11,2026-08-23)----
+// ---- 代理信任开关(quality-scan #11 落点,2026-08-23;语义抽至 lib/client-ip)----
 // x-forwarded-for 由网络代理注入;客户端直连 Next 时可任意伪造并轮换该头,仅凭首段
 // 取 IP 会让「10 req/min」桶被绕过(LLM 费用滥用)。因此仅当部署在可信反代之后
 // (配置 TRUSTED_PROXY_IPS,逗号分隔的代理出站地址)才信任转发头;未配置时完全
 // 忽略转发头,桶键改用会话指纹(登录用户按会话 cookie 哈希;匿名无 cookie 归入
 // 固定桶)——伪造 XFF 不再换桶。SSE 端点保持公开可达,但限流键不再可被请求头操纵。
-const TRUSTED_PROXY_IPS = (process.env.TRUSTED_PROXY_IPS ?? '')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
 
 function rateLimit(key: string): boolean {
   const now = Date.now();
@@ -67,21 +63,10 @@ function rateLimit(key: string): boolean {
 }
 
 /** 限流桶键:可信反代之后 → 转发头首段(代理注入,客户端不可控);否则 → 会话指纹
- *  (cookie 哈希;匿名固定桶)——轮换 x-forwarded-for 对桶键零影响。 */
+ *  (cookie 哈希;匿名固定桶)——轮换 x-forwarded-for 对桶键零影响。解析统一在
+ *  lib/client-ip(quality-scan r2 #1,与 OTP/密码登录路由同语义)。 */
 async function rateLimitKey(request: Request): Promise<string> {
-  if (TRUSTED_PROXY_IPS.length > 0) {
-    const fwd = request.headers.get('x-forwarded-for');
-    if (fwd) {
-      const first = fwd.split(',')[0].trim();
-      if (first) return `ip:${first}`;
-    }
-    const real = request.headers.get('x-real-ip');
-    if (real) return `ip:${real}`;
-    return 'ip:unknown';
-  }
-  const token = await readSessionToken();
-  if (!token) return 'anon:public';
-  return `session:${createHash('sha256').update(token).digest('hex')}`;
+  return clientIpBucketKey(request, await readSessionToken());
 }
 
 function isFiniteNum(v: unknown): v is number {
