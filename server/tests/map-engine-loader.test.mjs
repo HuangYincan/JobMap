@@ -4,9 +4,13 @@
 // callback 模式 / globalVar 短路 / 非浏览器守卫 / 默认注入器。
 // ============================================================
 
-import { test, afterEach } from 'node:test';
+import { test, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadScript, resetScriptLoader } from '../src/lib/map-engine/script-loader.ts';
+import {
+  SCRIPT_LOAD_TIMEOUT_MS,
+  loadScript,
+  resetScriptLoader,
+} from '../src/lib/map-engine/script-loader.ts';
 
 /** DI fake:记录注入次数并暴露 hooks,测试手动触发 onload/onerror */
 function countingInjector(record) {
@@ -70,6 +74,32 @@ test('失败:移除 script 标签 + 清缓存,下次调用可重试(复刻 amap-
   // 缓存已清 → 再次调用重新注入(重试路径)
   const second = loadScript(conf, { inject: countingInjector(record) });
   assert.equal(record.calls, 2, '失败后缓存清空,重试重新注入');
+  record.hooks.onload();
+  await second;
+});
+
+test('超时:脚本/CDN 卡死时清理标签与缓存,下次调用可重新注入', async (t) => {
+  globalThis.window = {};
+  mock.timers.enable({ apis: ['setTimeout'] });
+  t.after(() => mock.timers.reset());
+
+  const removed = [];
+  const record = {
+    calls: 0,
+    hooks: null,
+    confs: [],
+    element: { remove: () => removed.push('removed') },
+  };
+  const conf = { url: 'https://mock.example/hang.js', globalVar: 'MockNS' };
+
+  const first = loadScript(conf, { inject: countingInjector(record) });
+  assert.equal(record.calls, 1);
+  mock.timers.tick(SCRIPT_LOAD_TIMEOUT_MS);
+  await assert.rejects(first, /failed to load within/);
+  assert.equal(removed.length, 1, '超时必须移除 script 标签');
+
+  const second = loadScript(conf, { inject: countingInjector(record) });
+  assert.equal(record.calls, 2, '超时清缓存后重试重新注入');
   record.hooks.onload();
   await second;
 });

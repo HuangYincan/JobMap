@@ -21,6 +21,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  ICON_PREFLIGHT_FAIL_RAW_MAX,
+  ICON_PREFLIGHT_FAIL_LIST_MAX,
+  ICON_PREFLIGHT_URL_MAX,
   isRemoteIconUrl,
   preflightRemoteIcon,
   remoteIconStatus,
@@ -498,5 +501,103 @@ test('TMap icon:AMap 引擎零变化(不设 icon,content 徽章路径不变)', a
     c.destroy();
   } finally {
     image.restore();
+  }
+});
+
+test('sessionStorage 失败清单有界,超限保留最近失败', async () => {
+  const oldUrls = Array.from(
+    { length: ICON_PREFLIGHT_FAIL_LIST_MAX + 50 },
+    (_, i) => `https://icons.test/old-${i}.png`,
+  );
+  const recentUrls = [
+    'https://icons.test/new-a.png',
+    'https://icons.test/new-b.png',
+    'https://icons.test/new-c.png',
+  ];
+  const storage = installSessionStorageMock();
+  storage.store.set(FAIL_KEY, JSON.stringify(oldUrls));
+  const image = installImageMock({ failUrls: recentUrls });
+
+  try {
+    for (const url of recentUrls) preflightRemoteIcon(url);
+    await settle();
+
+    const failures = readFailList(storage.store);
+    assert.equal(failures.length, ICON_PREFLIGHT_FAIL_LIST_MAX);
+    assert.ok(!failures.includes(oldUrls[0]), '最旧失败被裁剪');
+    for (const url of recentUrls) {
+      assert.ok(failures.includes(url), '最近失败仍在清单中');
+      assert.equal(remoteIconStatus(url), 'fail');
+    }
+  } finally {
+    image.restore();
+    storage.restore();
+  }
+});
+
+test('读取超长持久化失败清单时先裁剪', () => {
+  const oldUrls = Array.from(
+    { length: ICON_PREFLIGHT_FAIL_LIST_MAX + 1 },
+    (_, i) => `https://icons.test/read-${i}.png`,
+  );
+  const storage = installSessionStorageMock();
+  storage.store.set(FAIL_KEY, JSON.stringify(oldUrls));
+
+  try {
+    resetIconPreflightCache();
+    assert.equal(remoteIconStatus(oldUrls.at(-1)), 'fail');
+    assert.equal(remoteIconStatus(oldUrls[0]), 'unknown');
+  } finally {
+    storage.restore();
+  }
+});
+
+test('超长远程 URL 不进入预检或持久失败清单', async () => {
+  const longUrl = `https://icons.test/${'x'.repeat(ICON_PREFLIGHT_URL_MAX)}`;
+  assert.equal(longUrl.length > ICON_PREFLIGHT_URL_MAX, true);
+  assert.equal(isRemoteIconUrl(longUrl), false);
+
+  resetIconPreflightCache();
+  const image = installImageMock();
+  try {
+    preflightRemoteIcon(longUrl);
+    assert.equal(image.calls.length, 0, '无效超长 URL 不创建预检请求');
+    assert.equal(remoteIconStatus(longUrl), 'unknown');
+    await settle();
+  } finally {
+    image.restore();
+  }
+});
+
+test('超大 sessionStorage 原文按损坏处理并被有效失败清单替换', async () => {
+  const storage = installSessionStorageMock();
+  storage.store.set(FAIL_KEY, 'x'.repeat(ICON_PREFLIGHT_FAIL_RAW_MAX + 1));
+  const image = installImageMock({ failUrls: [REMOTE] });
+
+  try {
+    resetIconPreflightCache();
+    assert.equal(remoteIconStatus(REMOTE), 'unknown');
+    preflightRemoteIcon(REMOTE);
+    await settle();
+
+    assert.deepEqual(readFailList(storage.store), [REMOTE]);
+    assert.equal(remoteIconStatus(REMOTE), 'fail');
+  } finally {
+    image.restore();
+    storage.restore();
+  }
+});
+
+test('持久化清单中的非 http(s) 字符串被过滤', () => {
+  const storage = installSessionStorageMock();
+  storage.store.set(FAIL_KEY, JSON.stringify(['javascript:alert(1)', '/local.png', REMOTE]));
+
+  try {
+    resetIconPreflightCache();
+    assert.equal(remoteIconStatus('javascript:alert(1)'), 'unknown');
+    assert.equal(remoteIconStatus('/local.png'), 'unknown');
+    assert.equal(remoteIconStatus(REMOTE), 'fail');
+  } finally {
+    storage.restore();
   }
 });

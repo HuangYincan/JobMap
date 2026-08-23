@@ -5,6 +5,7 @@
 // third-level fallback behind Baidu. Never print any of those keys.
 
 import { getPool } from './db.ts';
+import { isAbortError, fetchWithTimeout } from './fetch-with-timeout.ts';
 import { cityProvinceOf } from './recruitment-adapters/official-site-parse.ts';
 import { CITY_CENTERS, OVERSEAS_CITY_KEYS, bareCityName } from './city-centers.ts';
 import type { CompanySite, POILocation } from './types.ts';
@@ -471,7 +472,7 @@ export interface PlaceSearchMemoHit {
 
 /** Memo key: query + target (province, city) 精确绑定 — 城市不同不串。 */
 export function placeSearchMemoKey(query: string, target: CityTarget): string {
-  return `${query} ${target.province} ${target.city}`;
+  return JSON.stringify([query, target.province, target.city]);
 }
 
 /**
@@ -743,7 +744,7 @@ export function addressConflictsWithRegeoDistrict(address: string, adname: strin
 export interface RestGeocodeResult {
   ok: boolean;
   location?: POILocation;
-  reason?: 'no-key' | 'http' | 'empty' | 'parse' | 'quota' | `baidu-status:${number}` | `tencent-status:${number}`;
+  reason?: 'no-key' | 'http' | 'timeout' | 'empty' | 'parse' | 'quota' | `baidu-status:${number}` | `tencent-status:${number}`;
   /** AMap unusable (no key / daily quota exhausted) — result may come from Baidu or Tencent. */
   amapUnavailable?: boolean;
   provider?: 'amap' | 'baidu' | 'tencent';
@@ -797,11 +798,11 @@ export async function geocodeAddressRest(
   url.searchParams.set('key', key);
   let payload: { status?: string; info?: string; infocode?: string; geocodes?: Array<{ location?: string }> };
   try {
-    const res = await fetchImpl(url);
+    const res = await fetchWithTimeout(url, undefined, fetchImpl);
     if (!res.ok) return { ok: false, reason: 'http' };
     payload = (await res.json()) as typeof payload;
-  } catch {
-    return { ok: false, reason: 'http' };
+  } catch (err) {
+    return { ok: false, reason: isAbortError(err) ? 'timeout' : 'http' };
   }
   const down = amapQuotaExhausted(payload);
   if (down) {
@@ -1108,7 +1109,7 @@ export function pickBestOfficePoi(
 export interface PlaceTextResult {
   ok: boolean;
   pois: OfficePoiCandidate[];
-  reason?: 'no-key' | 'http' | 'parse' | 'quota' | `baidu-status:${number}` | `tencent-status:${number}`;
+  reason?: 'no-key' | 'http' | 'timeout' | 'parse' | 'quota' | `baidu-status:${number}` | `tencent-status:${number}`;
   amapUnavailable?: boolean;
   provider?: 'amap' | 'baidu' | 'tencent';
 }
@@ -1141,7 +1142,7 @@ export async function placeTextSearchRest(
   url.searchParams.set('output', 'JSON');
   url.searchParams.set('key', key);
   try {
-    const res = await fetchImpl(url);
+    const res = await fetchWithTimeout(url, undefined, fetchImpl);
     if (!res.ok) return { ok: false, pois: [], reason: 'http' };
     const payload = (await res.json()) as {
       status?: string;
@@ -1165,8 +1166,8 @@ export async function placeTextSearchRest(
       provider: 'amap',
       pois: (payload.pois ?? []).map(parseOfficePoi).filter((p): p is OfficePoiCandidate => !!p),
     };
-  } catch {
-    return { ok: false, pois: [], reason: 'http' };
+  } catch (err) {
+    return { ok: false, pois: [], reason: isAbortError(err) ? 'timeout' : 'http' };
   }
 }
 
@@ -1215,7 +1216,7 @@ export async function regeoCityRest(
   url.searchParams.set('output', 'JSON');
   url.searchParams.set('key', key);
   try {
-    const res = await fetchImpl(url);
+    const res = await fetchWithTimeout(url, undefined, fetchImpl);
     if (!res.ok) return { ok: false };
     const payload = (await res.json()) as {
       status?: string;
@@ -1286,11 +1287,11 @@ export async function baiduPlaceSearchRest(
   let payload: { status?: number; results?: Array<Record<string, unknown>> };
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const res = await fetchImpl(url);
+      const res = await fetchWithTimeout(url, undefined, fetchImpl);
       if (!res.ok) return { ok: false, pois: [], reason: 'http' };
       payload = (await res.json()) as typeof payload;
-    } catch {
-      return { ok: false, pois: [], reason: 'http' };
+    } catch (err) {
+      return { ok: false, pois: [], reason: isAbortError(err) ? 'timeout' : 'http' };
     }
     if (payload.status !== 0) {
       const reason = `baidu-status:${payload.status ?? -1}` as PlaceTextResult['reason'];
@@ -1326,7 +1327,7 @@ export async function baiduRegeoCityRest(
   let payload: { status?: number; result?: { addressComponent?: { province?: string; city?: string; district?: string }; formatted_address?: string } };
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const res = await fetchImpl(url);
+      const res = await fetchWithTimeout(url, undefined, fetchImpl);
       if (!res.ok) return { ok: false };
       payload = (await res.json()) as typeof payload;
     } catch {
@@ -1366,11 +1367,11 @@ export async function baiduGeocodeAddressRest(
   };
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const res = await fetchImpl(url);
+      const res = await fetchWithTimeout(url, undefined, fetchImpl);
       if (!res.ok) return { ok: false, reason: 'http' };
       payload = (await res.json()) as typeof payload;
-    } catch {
-      return { ok: false, reason: 'http' };
+    } catch (err) {
+      return { ok: false, reason: isAbortError(err) ? 'timeout' : 'http' };
     }
     const loc = payload.result?.location;
     const lng = Number(loc?.lng);
@@ -1451,11 +1452,11 @@ export async function tencentPlaceSearchRest(
   let payload: { status?: number; data?: Array<Record<string, unknown>> };
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const res = await fetchImpl(url);
+      const res = await fetchWithTimeout(url, undefined, fetchImpl);
       if (!res.ok) return { ok: false, pois: [], reason: 'http' };
       payload = (await res.json()) as typeof payload;
-    } catch {
-      return { ok: false, pois: [], reason: 'http' };
+    } catch (err) {
+      return { ok: false, pois: [], reason: isAbortError(err) ? 'timeout' : 'http' };
     }
     if (payload.status !== 0) {
       const reason = `tencent-status:${payload.status ?? -1}` as PlaceTextResult['reason'];
@@ -1489,7 +1490,7 @@ export async function tencentRegeoCityRest(
   let payload: { status?: number; result?: { ad_info?: { province?: string; city?: string; district?: string }; address?: string } };
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const res = await fetchImpl(url);
+      const res = await fetchWithTimeout(url, undefined, fetchImpl);
       if (!res.ok) return { ok: false };
       payload = (await res.json()) as typeof payload;
     } catch {
@@ -1528,11 +1529,11 @@ export async function tencentGeocodeAddressRest(
   };
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const res = await fetchImpl(url);
+      const res = await fetchWithTimeout(url, undefined, fetchImpl);
       if (!res.ok) return { ok: false, reason: 'http' };
       payload = (await res.json()) as typeof payload;
-    } catch {
-      return { ok: false, reason: 'http' };
+    } catch (err) {
+      return { ok: false, reason: isAbortError(err) ? 'timeout' : 'http' };
     }
     const loc = payload.result?.location;
     const lng = Number(loc?.lng);

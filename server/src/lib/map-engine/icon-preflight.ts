@@ -37,7 +37,18 @@
 /** 预检状态:data=本地 data URI;ok=已预检成功;fail=已预检失败;unknown=未预检。 */
 export type IconPreflightStatus = 'data' | 'ok' | 'fail' | 'unknown';
 
-/** 会话级缓存:URL → 预检结果。成功与失败均记忆化(失败不重试,同会话幂等)。 */
+/** 预检状态很小，但远程 URL 数量不可信；LRU 保持会话内存有界。 */
+export const ICON_PREFLIGHT_CACHE_MAX = 128;
+/** 未决 Image 持有浏览器加载资源；超限时跳过本轮，后续渲染自然重试。 */
+export const MAX_PENDING_ICON_PREFLIGHTS = 128;
+/** 持久失败清单也必须有界；保留最近失败项，避免唯一冷门 URL 无限增长。 */
+export const ICON_PREFLIGHT_FAIL_LIST_MAX = 256;
+/** 远程 URL 长度上限；超长值不是有效图标源，也不应进入缓存/预检。 */
+export const ICON_PREFLIGHT_URL_MAX = 2048;
+/** sessionStorage 原文超过配额级上限时按损坏处理，避免先解析超大不可信文本。 */
+export const ICON_PREFLIGHT_FAIL_RAW_MAX = 64 * 1024;
+
+/** 有界会话缓存:URL → 预检结果。成功与失败均记忆化(失败不重试,同会话幂等)。 */
 const resultCache = new Map<string, 'ok' | 'fail'>();
 /**
  * 进行中的预检集合:URL → 进行中的 Image 对象。同一 URL 未决期间不重复发起;
@@ -52,13 +63,23 @@ const FAIL_KEY = 'domain-map:icon-preflight-fail';
 const failWriteBuffer = new Set<string>();
 let failWriteScheduled = false;
 
+function touchResultCache(src: string, status: 'ok' | 'fail'): void {
+  resultCache.delete(src);
+  while (resultCache.size >= ICON_PREFLIGHT_CACHE_MAX) {
+    const oldest = resultCache.keys().next().value;
+    if (oldest === undefined) break;
+    resultCache.delete(oldest);
+  }
+  resultCache.set(src, status);
+}
+
 /**
  * 是否是需要 CORS 预检的远程 URL(http/https)。
  * data:/blob:/相对路径等其余形态同源或本地,纹理加载天然 CORS-clean,
  * 恒安全直通,不预检(防御接入时先过此闸,避免对相对路径误触发预检)。
  */
 export function isRemoteIconUrl(src: string): boolean {
-  return /^https?:\/\//i.test(src);
+  return src.length <= ICON_PREFLIGHT_URL_MAX && /^https?:\/\//i.test(src);
 }
 
 /**
@@ -70,8 +91,14 @@ function readFailSet(): Set<string> | null {
   try {
     const raw = globalThis.sessionStorage?.getItem(FAIL_KEY);
     if (!raw) return new Set();
+    if (raw.length > ICON_PREFLIGHT_FAIL_RAW_MAX) return new Set();
     const arr = JSON.parse(raw);
-    return new Set(Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : []);
+    const urls = Array.isArray(arr)
+      ? arr
+          .filter((x): x is string => typeof x === 'string' && isRemoteIconUrl(x))
+          .slice(-ICON_PREFLIGHT_FAIL_LIST_MAX)
+      : [];
+    return new Set(urls);
   } catch {
     return null;
   }
@@ -79,6 +106,7 @@ function readFailSet(): Set<string> | null {
 
 /** 失败 URL 记入防抖缓冲(不逐 URL 写 sessionStorage)。 */
 function rememberFail(src: string): void {
+  if (!isRemoteIconUrl(src)) return;
   failWriteBuffer.add(src);
   scheduleWriteFailSet();
 }
@@ -96,10 +124,14 @@ function scheduleWriteFailSet(): void {
       failWriteBuffer.clear();
       return;
     }
-    for (const url of failWriteBuffer) merged.add(url);
+    for (const url of failWriteBuffer) {
+      if (isRemoteIconUrl(url)) merged.add(url);
+    }
     failWriteBuffer.clear();
+    // Set 保持插入序；旧项在前，新失败项在后。超限时从最旧一侧裁剪。
+    const urls = [...merged].slice(-ICON_PREFLIGHT_FAIL_LIST_MAX);
     try {
-      globalThis.sessionStorage?.setItem(FAIL_KEY, JSON.stringify([...merged]));
+      globalThis.sessionStorage?.setItem(FAIL_KEY, JSON.stringify(urls));
     } catch {
       // 隐私模式写入被拒 → 静默放弃(内存记忆照常,绝不抛错)
     }
@@ -117,11 +149,14 @@ function scheduleWriteFailSet(): void {
 export function remoteIconStatus(src: string): IconPreflightStatus {
   if (src.startsWith('data:')) return 'data';
   const cached = resultCache.get(src);
-  if (cached) return cached;
+  if (cached) {
+    touchResultCache(src, cached);
+    return cached;
+  }
   // 内存未命中 → 回退 sessionStorage 会话记忆
   const knownFail = readFailSet();
   if (knownFail && knownFail.has(src)) {
-    resultCache.set(src, 'fail');
+    touchResultCache(src, 'fail');
     return 'fail';
   }
   return 'unknown';
@@ -138,12 +173,14 @@ export function remoteIconStatus(src: string): IconPreflightStatus {
  */
 export function preflightRemoteIcon(src: string): void {
   if (src.startsWith('data:')) return;
+  if (!isRemoteIconUrl(src)) return;
   if (resultCache.has(src) || pending.has(src)) return;
+  if (pending.size >= MAX_PENDING_ICON_PREFLIGHTS) return;
   if (typeof Image !== 'function') return;
   // 会话内已知失败(本页刷新前的记忆)→ 直接 fail,不再发起网络(噪音只在首次)
   const knownFail = readFailSet();
   if (knownFail && knownFail.has(src)) {
-    resultCache.set(src, 'fail');
+    touchResultCache(src, 'fail');
     return;
   }
   let img: HTMLImageElement;
@@ -154,12 +191,12 @@ export function preflightRemoteIcon(src: string): void {
     img.referrerPolicy = 'no-referrer';
     img.onload = () => {
       // 有 CORS 头 + 网络通 + 图像可解码 → 纹理可用
-      resultCache.set(src, 'ok');
+      touchResultCache(src, 'ok');
       pending.delete(src);
     };
     img.onerror = () => {
       // CORS 拒绝 / 网络失败 / 不可解码 → 纹理加载必失败,记忆化 fail 不重试
-      resultCache.set(src, 'fail');
+      touchResultCache(src, 'fail');
       pending.delete(src);
       rememberFail(src);
     };

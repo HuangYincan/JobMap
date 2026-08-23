@@ -51,6 +51,16 @@ test('placeSearchMemoKey: province 也参与 key — 同城不同省不串', () 
   assert.notEqual(placeSearchMemoKey('安克创新', TARGET_HZ), placeSearchMemoKey('安克创新', wrongProvince));
 });
 
+test('placeSearchMemoKey delimits fields without source-hostile control bytes', () => {
+  const key = placeSearchMemoKey('a\tb\nc', { province: 'p|q', city: 'c|r' });
+  assert.equal(key, JSON.stringify(['a\tb\nc', 'p|q', 'c|r']));
+  assert.doesNotMatch(key, /[\0\r\n]/);
+  assert.notEqual(
+    placeSearchMemoKey('a', { province: 'p', city: 'c' }),
+    placeSearchMemoKey('a', { province: 'p\rc', city: '' }),
+  );
+});
+
 // --- 写策略: 只缓存成功命中 -----------------------------------------------------
 
 test('placeSearchMemoSet: 成功命中 (poi 非空) 才入 memo', () => {

@@ -13,6 +13,7 @@ import {
   buildVerificationEmailHtml,
   buildVerificationEmailText,
 } from './verification-email.ts';
+import { fetchWithTimeout } from './fetch-with-timeout.ts';
 
 /** RESEND_API_KEY(server/.env.local,服务端秘密)。trim 后非空即视为已配置。 */
 export function resendApiKey(): string | undefined {
@@ -100,7 +101,7 @@ export async function sendVerificationEmail(
   const retryDelayMs = options.retryDelayMs ?? 500;
 
   const attempt = async (): Promise<Response> => {
-    return fetchImpl('https://api.resend.com/emails', {
+    return fetchWithTimeout('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${key}`,
@@ -113,7 +114,7 @@ export async function sendVerificationEmail(
         html: buildVerificationEmailHtml(input.code, input.expiresAt),
         text: buildVerificationEmailText(input.code, input.expiresAt),
       }),
-    });
+    }, fetchImpl);
   };
 
   let res: Response;

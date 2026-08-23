@@ -9,8 +9,9 @@
 // 明确提供或可信来源(本组工具的坐标输出全部来自百度 API 原样响应);响应
 // **不裁剪**(直接转述原文,不进 sanitizeToolText)。
 
-import type { AgentTool, ToolResult } from '../types.ts';
+import type { AgentContext, AgentTool, ToolResult } from '../types.ts';
 import { hasBaiduAgentPlan } from '../config.ts';
+import { fetchWithTimeout } from '../../fetch-with-timeout.ts';
 
 const AGENT_PLAN_BASE = 'https://api.map.baidu.com/agent_plan/v1';
 
@@ -73,6 +74,7 @@ async function callAgentPlan(
   endpoint: string,
   params: Record<string, string>,
   fetchImpl: typeof fetch,
+  signal?: AbortSignal,
 ): Promise<{ text: string; isError: boolean }> {
   const token = process.env.BAIDU_MAP_AUTH_TOKEN?.trim();
   if (!token) return { text: 'baidu agent plan 未配置', isError: true };
@@ -82,7 +84,7 @@ async function callAgentPlan(
   }
   let res: Response;
   try {
-    res = await fetchImpl(url, { headers: { Authorization: `Bearer ${token}` } });
+    res = await fetchWithTimeout(url, { headers: { Authorization: `Bearer ${token}` }, signal }, fetchImpl);
   } catch {
     return { text: 'baidu agent plan 请求失败(网络错误)', isError: true };
   }
@@ -116,7 +118,7 @@ export function baiduAgentPlanTools(fetchImpl: typeof fetch = fetch): AgentTool[
         required: spec.required,
       },
       provider: 'baidu',
-      async call(input: Record<string, unknown>): Promise<ToolResult> {
+      async call(input: Record<string, unknown>, ctx: AgentContext): Promise<ToolResult> {
         for (const k of spec.required) {
           const v = input[k];
           if (typeof v !== 'string' || v.trim().length === 0) {
@@ -132,7 +134,7 @@ export function baiduAgentPlanTools(fetchImpl: typeof fetch = fetch): AgentTool[
           const v = input[k];
           if (typeof v === 'string') params[k] = v;
         }
-        const r = await callAgentPlan(path, params, fetchImpl);
+        const r = await callAgentPlan(path, params, fetchImpl, ctx.signal);
         return r.isError ? { ok: false, error: r.text } : { ok: true, text: r.text };
       },
     };

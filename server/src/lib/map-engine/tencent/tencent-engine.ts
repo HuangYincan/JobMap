@@ -106,6 +106,7 @@ import type {
 } from '../types.ts';
 import { loadScript } from '../script-loader.ts';
 import { wgs84ToGcj02 } from '../coord-utils.ts';
+import { fetchWithTimeout } from '../../fetch-with-timeout.ts';
 
 /** 腾讯 JS API GL 脚本地址(官方文档:快速开始) */
 const TENCENT_SCRIPT_BASE = 'https://map.qq.com/api/gljs?v=1.exp';
@@ -1354,7 +1355,7 @@ async function wsGet(path: string, params: Record<string, string>): Promise<any>
     throw new Error('[map-engine] tencent WebService 需要浏览器 fetch');
   }
   const query = new URLSearchParams({ ...params, key }).toString();
-  const res = await fetch(`${TENCENT_WS_BASE}${path}?${query}`);
+  const res = await fetchWithTimeout(`${TENCENT_WS_BASE}${path}?${query}`, undefined);
   if (!res.ok) {
     throw new Error(`[map-engine] tencent WebService ${path} HTTP ${res.status}`);
   }

@@ -10,6 +10,8 @@
 // ============================================================
 
 import type { OAuthProviderConfig, OAuthProviderId } from './oauth-config.ts';
+import { isValidEmail } from '../contact-validation.ts';
+import { fetchWithTimeout } from '../fetch-with-timeout.ts';
 
 /** code 交换 / userinfo 失败:flow 层包成 OauthProviderError(带 next)转 302。 */
 export class OauthExchangeError extends Error {
@@ -27,7 +29,7 @@ export interface OAuthUserInfo {
   avatarUrl?: string;
 }
 
-export type FetchLike = (url: string, init?: RequestInit) => Promise<Response>;
+export type FetchLike = (url: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
 /** 测试钩子(仅测试):注入假 fetch 覆盖 token/userinfo 两跳,生产零网络。 */
 export const __oauthExchangeTest = {
@@ -42,7 +44,7 @@ function resolveFetch(explicit?: FetchLike): FetchLike {
 
 /** 请求 + JSON 解析 + HTTP 状态判定;2xx 也返回 body(错误码可能藏在 200 里)。 */
 async function fetchJson(url: string, init: RequestInit, fetchImpl: FetchLike): Promise<unknown> {
-  const res = await fetchImpl(url, init);
+  const res = await fetchWithTimeout(url, init, fetchImpl);
   const text = await res.text();
   let body: unknown = null;
   try {
@@ -73,6 +75,40 @@ function requireNoError(body: unknown, kind: string): Record<string, unknown> {
 
 function nonEmptyString(value: unknown): string | undefined {
   return typeof value === 'string' && value ? value : undefined;
+}
+
+/** Provider identities are external data; bound them before storage or rendering. */
+const MAX_SUBJECT_LENGTH = 255;
+const MAX_DISPLAY_NAME_LENGTH = 100;
+const MAX_AVATAR_URL_LENGTH = 2048;
+
+function subjectString(value: unknown): string {
+  const subject = String(value ?? '').trim();
+  if (!subject || subject.length > MAX_SUBJECT_LENGTH) {
+    throw new OauthExchangeError('userinfo: invalid subject');
+  }
+  return subject;
+}
+
+function boundedDisplayName(value: unknown): string | undefined {
+  const name = nonEmptyString(value)?.trim();
+  return name && name.length <= MAX_DISPLAY_NAME_LENGTH ? name : undefined;
+}
+
+function safeHttpUrl(value: unknown): string | undefined {
+  const raw = nonEmptyString(value);
+  if (!raw || raw.length > MAX_AVATAR_URL_LENGTH) return undefined;
+  try {
+    const url = new URL(raw);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? raw : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function safeEmail(value: unknown): string | undefined {
+  const email = nonEmptyString(value)?.trim();
+  return email && email.length <= 254 && isValidEmail(email) ? email : undefined;
 }
 
 /**
@@ -118,10 +154,10 @@ export async function exchangeCodeForUserinfo(
       }
       return {
         provider: 'github',
-        subject: String(info.id),
-        email: nonEmptyString(info.email),
-        displayName: nonEmptyString(info.name) ?? nonEmptyString(info.login),
-        avatarUrl: nonEmptyString(info.avatar_url),
+        subject: subjectString(info.id),
+        email: safeEmail(info.email),
+        displayName: boundedDisplayName(info.name) ?? boundedDisplayName(info.login),
+        avatarUrl: safeHttpUrl(info.avatar_url),
       };
     }
     case 'google': {
@@ -154,10 +190,10 @@ export async function exchangeCodeForUserinfo(
       }
       return {
         provider: 'google',
-        subject: info.sub,
-        email: nonEmptyString(info.email),
-        displayName: nonEmptyString(info.name),
-        avatarUrl: nonEmptyString(info.picture),
+        subject: subjectString(info.sub),
+        email: safeEmail(info.email),
+        displayName: boundedDisplayName(info.name),
+        avatarUrl: safeHttpUrl(info.picture),
       };
     }
     case 'wechat': {
@@ -184,10 +220,10 @@ export async function exchangeCodeForUserinfo(
       const info = requireNoError(infoBody, 'wechat userinfo');
       return {
         provider: 'wechat',
-        subject: openid,
+        subject: subjectString(openid),
         email: undefined, // 微信无邮箱,不报错
-        displayName: nonEmptyString(info.nickname),
-        avatarUrl: nonEmptyString(info.headimgurl),
+        displayName: boundedDisplayName(info.nickname),
+        avatarUrl: safeHttpUrl(info.headimgurl),
       };
     }
   }

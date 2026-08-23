@@ -11,6 +11,7 @@
 // ============================================================
 
 import { createHmac, randomUUID } from 'node:crypto';
+import { fetchWithTimeout } from './fetch-with-timeout.ts';
 
 /** 阿里云短信配置(server/.env.local,服务端秘密)。trim 后任一缺失 → undefined。 */
 export function aliyunSmsConfig(): {
@@ -180,12 +181,12 @@ export async function sendSmsVerifyCode(
 
   let res: Response;
   try {
-    res = await fetchImpl(url);
+    res = await fetchWithTimeout(url, undefined, fetchImpl);
   } catch (err) {
     // 网络错误 → 重试 1 次
     await sleep(retryDelayMs);
     try {
-      res = await fetchImpl(url);
+      res = await fetchWithTimeout(url, undefined, fetchImpl);
     } catch (err2) {
       console.log('aliyun sms network error after retry:', describeNetworkError(err2));
       throw new SmsSendFailedError();

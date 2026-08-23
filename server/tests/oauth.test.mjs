@@ -341,6 +341,36 @@ test('exchange github:userinfo 无 email → email undefined;name 缺 → login 
   assert.equal(info.avatarUrl, undefined);
 });
 
+test('exchange github:oversized or unsafe optional userinfo fields are dropped', async () => {
+  const cfg = getOAuthProviderConfig('github', GITHUB_ENV);
+  const { impl } = fakeFetch([
+    [/access_token/, 200, { access_token: 't' }],
+    [/\/user$/, 200, {
+      id: 8,
+      name: 'x'.repeat(101),
+      email: `${'x'.repeat(250)}@example.com`,
+      avatar_url: 'javascript:alert(1)',
+    }],
+  ]);
+  const info = await exchangeCodeForUserinfo(cfg, 'c', { redirectUri: 'https://app.dev/cb', fetchImpl: impl });
+  assert.equal(info.subject, '8');
+  assert.equal(info.displayName, undefined);
+  assert.equal(info.email, undefined);
+  assert.equal(info.avatarUrl, undefined);
+});
+
+test('exchange rejects an oversized provider subject before account upsert', async () => {
+  const cfg = getOAuthProviderConfig('github', GITHUB_ENV);
+  const { impl } = fakeFetch([
+    [/access_token/, 200, { access_token: 't' }],
+    [/\/user$/, 200, { id: 'x'.repeat(256) }],
+  ]);
+  await assert.rejects(
+    exchangeCodeForUserinfo(cfg, 'c', { redirectUri: 'https://app.dev/cb', fetchImpl: impl }),
+    OauthExchangeError,
+  );
+});
+
 test('exchange google:POST token(grant_type) + Bearer userinfo(sub/email/name/picture)', async () => {
   const cfg = getOAuthProviderConfig('google', GOOGLE_ENV);
   const { calls, impl } = fakeFetch([
@@ -842,9 +872,25 @@ test('route callback:runOauthCallback 接线 + session cookie + 全部 302 经 a
   assert.match(route, /params: Promise<\{ provider: string \}>/);
 });
 
-test('demo stub 兼容:POST /api/auth/oauth 与 /api/auth/github 行为保持不变(demo 身份仍在)', () => {
+test('demo login is gated by provider configuration and never enabled in production', () => {
   const oauth = src('app/api/auth/oauth/route.ts');
   const github = src('app/api/auth/github/route.ts');
+  assert.match(oauth, /import \{ demoLoginGate \} from '@\/lib\/demo-login-gate'/);
+  assert.match(github, /import \{ demoLoginGate \} from '@\/lib\/demo-login-gate'/);
+  const configuredIdxOauth = oauth.indexOf('const gate = demoLoginGate(spec.provider)');
+  const demoUpsertIdxOauth = oauth.indexOf('upsertIdentity(spec)');
+  assert.ok(configuredIdxOauth !== -1 && demoUpsertIdxOauth !== -1);
+  assert.ok(configuredIdxOauth < demoUpsertIdxOauth, 'real-provider check must precede demo session creation');
+  assert.match(oauth, /gate\.code/);
+  assert.match(oauth, /status: 403/);
+
+  const configuredIdxGithub = github.indexOf("const gate = demoLoginGate('github')");
+  const demoUpsertIdxGithub = github.indexOf('upsertIdentity(');
+  assert.ok(configuredIdxGithub !== -1 && demoUpsertIdxGithub !== -1);
+  assert.ok(configuredIdxGithub < demoUpsertIdxGithub, 'real-provider check must precede demo session creation');
+  assert.match(github, /gate\.code/);
+  assert.match(github, /status: 403/);
+
   assert.match(oauth, /export async function POST\(request: Request\)/);
   assert.match(oauth, /github:demo/);
   assert.match(oauth, /google:demo/);

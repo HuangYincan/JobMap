@@ -8,8 +8,13 @@
 // - 两种就绪模式:
 //   onload 模式(AMap):script.onload → 成功
 //   callback 模式(腾讯/百度):window[callbackName] 先注册,厂商脚本加载后调用
+// - 超时:脚本/CDN 卡死(网络代理、DNS、拦截)绝不永久 pending;超时走同一
+//   失败恢复(移除标签 + 清缓存),下次调用可重试
 // - inject 可 DI:测试注入 fake(返回 onload/onerror 语义),不依赖真实 DOM
 // ============================================================
+
+/** 厂商脚本加载超时(ms)。AMap 主脚本 8s、地图引擎整体在 use-map-engine 还有 25s watchdog。 */
+export const SCRIPT_LOAD_TIMEOUT_MS = 15_000;
 
 export interface ScriptConfig {
   /** 脚本完整 URL(含 key / 回调参数) */
@@ -87,6 +92,7 @@ export function loadScript(
 
   let settled = false;
   let element: { remove?: () => void } | null | undefined = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
 
   const cleanupCallback = () => {
     if (conf.callbackName) delete windowRecord()[conf.callbackName];
@@ -95,6 +101,7 @@ export function loadScript(
   const succeed = () => {
     if (settled) return;
     settled = true;
+    if (timer) clearTimeout(timer);
     cleanupCallback();
     resolveLoad();
   };
@@ -102,6 +109,7 @@ export function loadScript(
   const fail = (err: unknown) => {
     if (settled) return;
     settled = true;
+    if (timer) clearTimeout(timer);
     cleanupCallback();
     // 失败恢复(复刻 amap-api.ts L94-100):移除 script 标签 + 清缓存 → 可重试
     element?.remove?.();
@@ -110,6 +118,10 @@ export function loadScript(
   };
 
   const injector = options.inject ?? defaultInjector;
+  timer = setTimeout(
+    () => fail(new Error(`${conf.globalVar} script failed to load within ${SCRIPT_LOAD_TIMEOUT_MS}ms`)),
+    SCRIPT_LOAD_TIMEOUT_MS,
+  );
   try {
     if (conf.callbackName) {
       // 回调模式:回调必须在脚本注入前注册(厂商脚本执行时调用它)

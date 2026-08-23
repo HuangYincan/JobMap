@@ -28,6 +28,7 @@
 // ============================================================
 
 import { faviconCandidatesFromUrl } from './company-logo.ts';
+import { fetchWithTimeout } from './fetch-with-timeout.ts';
 import { preflightRemoteIcon, remoteIconStatus, isRemoteIconUrl } from './map-engine/icon-preflight.ts';
 import { CLUSTER_MAX_ZOOM, type CityCluster } from './city-cluster.ts';
 import type { POI, RecruitmentPOI } from './types.ts';
@@ -370,6 +371,12 @@ export function badgeWithRemoteIcon(
 // 头/失败的 URL 发起(favicon.im 等被预检拦截,链式推进语义保持)。
 // ---------------------------------------------------------------------------
 
+/** Typical favicons are tiny; this rejects pathological responses without buffering them. */
+export const MAX_REMOTE_ICON_BYTES = 256 * 1024;
+/** Bounded data-URI cache: 128 entries keeps browser memory predictable. */
+export const REMOTE_ICON_DATA_URI_CACHE_MAX = 128;
+const REMOTE_ICON_FETCH_MAX_CONCURRENT = 128;
+
 /** URL → base64 dataURI 缓存（同会话同 URL 只 fetch 一次,成功后记忆化）。 */
 const remoteIconDataUriCache = new Map<string, string>();
 /** 进行中的 fetch:URL → Promise。失败从表中摘除(下次 marker 重建自然重试)。 */
@@ -383,6 +390,48 @@ async function blobToDataUri(blob: Blob): Promise<string> {
   return `data:${blob.type || 'image/png'};base64,${btoa(bin)}`;
 }
 
+function touchRemoteIconCache(url: string, value: string): void {
+  remoteIconDataUriCache.delete(url);
+  while (remoteIconDataUriCache.size >= REMOTE_ICON_DATA_URI_CACHE_MAX) {
+    const oldest = remoteIconDataUriCache.keys().next().value;
+    if (oldest === undefined) break;
+    remoteIconDataUriCache.delete(oldest);
+  }
+  remoteIconDataUriCache.set(url, value);
+}
+
+async function readBoundedIconBlob(res: Response): Promise<Blob> {
+  const contentType = res.headers.get('content-type') || 'image/png';
+  const contentLength = Number(res.headers.get('content-length'));
+  if (Number.isInteger(contentLength) && contentLength > MAX_REMOTE_ICON_BYTES) {
+    throw new Error(`[map-markers] favicon exceeds ${MAX_REMOTE_ICON_BYTES} bytes`);
+  }
+
+  const body = res.body;
+  if (!body || typeof body.getReader !== 'function') {
+    const blob = await res.blob();
+    if (blob.size > MAX_REMOTE_ICON_BYTES) {
+      throw new Error(`[map-markers] favicon exceeds ${MAX_REMOTE_ICON_BYTES} bytes`);
+    }
+    return blob;
+  }
+
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  const reader = body.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_REMOTE_ICON_BYTES) {
+      await reader.cancel();
+      throw new Error(`[map-markers] favicon exceeds ${MAX_REMOTE_ICON_BYTES} bytes`);
+    }
+    chunks.push(value);
+  }
+  return new Blob(chunks as BlobPart[], { type: contentType });
+}
+
 /**
  * fetch 远程图标字节 → base64 dataURI（幂等,成功记忆化;失败可重试）。
  * 调用前提:URL 已过 icon-preflight 'ok'(CORS 合规 + 可解码)——fetch 失败
@@ -391,19 +440,29 @@ async function blobToDataUri(blob: Blob): Promise<string> {
  */
 export async function fetchRemoteIconDataUri(url: string): Promise<string> {
   const cached = remoteIconDataUriCache.get(url);
-  if (cached) return cached;
+  if (cached) {
+    touchRemoteIconCache(url, cached);
+    return cached;
+  }
   let pending = remoteIconFetching.get(url);
   if (!pending) {
     if (typeof fetch !== 'function') {
       return Promise.reject(new Error('[map-markers] 无全局 fetch,远程图标无法内联'));
     }
+    if (remoteIconFetching.size >= REMOTE_ICON_FETCH_MAX_CONCURRENT) {
+      return Promise.reject(new Error('[map-markers] too many concurrent favicon fetches'));
+    }
     pending = (async () => {
-      const res = await fetch(url, { mode: 'cors', referrerPolicy: 'no-referrer' });
+      const res = await fetchWithTimeout(url, { mode: 'cors', referrerPolicy: 'no-referrer' });
       if (!res.ok) throw new Error(`[map-markers] favicon fetch ${res.status}: ${url}`);
-      const dataUri = await blobToDataUri(await res.blob());
-      remoteIconDataUriCache.set(url, dataUri);
+      const dataUri = await blobToDataUri(await readBoundedIconBlob(res));
+      touchRemoteIconCache(url, dataUri);
       return dataUri;
     })();
+    void pending.then(
+      () => remoteIconFetching.delete(url),
+      () => remoteIconFetching.delete(url),
+    );
     pending.catch(() => remoteIconFetching.delete(url));
     remoteIconFetching.set(url, pending);
   }
