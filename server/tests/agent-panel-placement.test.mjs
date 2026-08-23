@@ -139,7 +139,8 @@ test('移动端(≤767px)→ 恒 sheet,不受球位置影响', () => {
     { left: 700, top: 100, width: 44, height: 44 },
   ]) {
     assert.deepEqual(computePanelPlacement(ball, PANEL, { width: MOBILE_MAX_WIDTH, height: 700 }), { mode: 'sheet' });
-}
+  }
+});
 
 // ---------- 持久化位置恢复(旧视口数据收敛)----------
 
@@ -161,7 +162,6 @@ test('clampBallPosition: 极小视口退回贴边位置', () => {
     right: null,
     top: 12,
   });
-});
 });
 
 // ---------- 常量契约 ----------
