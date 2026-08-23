@@ -45,6 +45,12 @@ import {
   formatGeocodeProviderReport,
   geocodeAddressRest,
   gradeVariantHit,
+  gradeNominatimHit,
+  isOverseasCity,
+  nominatimQueryVariants,
+  nominatimReverseRest,
+  nominatimSearchRest,
+  pickBestNominatimPoi,
   pickBestOfficePoi,
   placeSearchMemoKey,
   placeSearchMemoSet,
@@ -117,8 +123,9 @@ const CITIES = citiesArg
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // 节流: 百度 ~2 QPS → 600ms; 高德 ~3 QPS、腾讯 ~5 QPS(个人开发者) → 340ms。
+// Nominatim (OSM) Usage Policy ≥1 req/s → 1000ms (2026-08-23, feat/poi-nominatim)。
 // provider 缺失(unverified 等)按 340ms 兜底。340ms ≥ 腾讯 5 QPS 的 200ms 间隔。
-const throttleMs = (provider) => (provider === 'baidu' ? 600 : 340);
+const throttleMs = (provider) => (provider === 'baidu' ? 600 : provider === 'nominatim' ? 1000 : 340);
 const round = (x, d = 6) => Number(x.toFixed(d));
 
 function readJson(file) {
@@ -246,6 +253,56 @@ async function searchCompanyPoiVariants(query, target, site) {
   return lastMiss ?? { poi: null, confidence: null, reason: 'no-pois', provider: 'amap' };
 }
 
+// --- Nominatim 海外路径 (2026-08-23, feat/poi-nominatim) ----------------------
+// AMap/百度/腾讯 place 检索不支持海外地址 — 三级兜底链对海外站 (isOverseasCity:
+// 悉尼/新加坡/东京/英文城市等, 2026-08-23 摸底 114 站) 必然全失败。海外站全失败
+// 后走 OSM Nominatim (第四 provider, keyless, WGS-84 与 OVERSEAS_CENTERS 一致)。
+// 政策合规: UA 带项目标识 (NOMINATIM_USER_AGENT) + ≥1 req/s 限速
+// (throttleMs('nominatim')=1000) + 10s 超时优雅降级 (res.ok=false → unresolved,
+// 不崩溃)。评分独立于国内 grader (gradeNominatimHit) — 海外 POI 名多为本地语言
+// (Anker Innovations), 中文公司名强匹配 + 地址 token 重叠 (≥2) 双通道。
+// DRY-RUN 无 key 时 (纯计划模式) 不发真实网络请求 — Nominatim keyless 没有
+// provider no-key 短路, 必须显式门控; --dry-run 带 key (排演) 与国内链一致放行。
+const NOMINATIM_ACTIVE = !DRY_RUN || !!(env.AMAP_WEB_KEY || env.BAIDU_MAP_AK || env.TENCENT_MAP_KEY);
+const nominatimThrottle = () => sleep(throttleMs('nominatim'));
+
+/**
+ * 海外站 Nominatim 解析: 按 nominatimQueryVariants 顺序检索
+ * (街道地址+公司 → 公司+城市), 每变体 1 次调用 + ≥1s 节流; 首个非 low 命中返回。
+ * 全部失败 → poi: null (reason 'nominatim-no-result')。
+ */
+async function searchOverseasNominatim(companyQuery, site, target) {
+  const address = site.location?.address?.trim() ?? '';
+  for (const q of nominatimQueryVariants(companyQuery, address, target.city)) {
+    const res = await nominatimSearchRest(q, target);
+    await nominatimThrottle();
+    if (!res.ok || !res.pois.length) continue;
+    const picked = pickBestNominatimPoi(res.pois, companyQuery, q, target.city);
+    if (!picked) continue;
+    const grade = gradeNominatimHit(picked, companyQuery, q, target.city);
+    return { poi: picked, confidence: grade.confidence, reason: grade.reason, query: q };
+  }
+  return { poi: null, confidence: null, reason: 'nominatim-no-result', query: null };
+}
+
+/**
+ * 海外站失败兜底入口: 三级兜底链失败 (no-result / regeo-outside) 时尝试
+ * Nominatim。命中 → { hit: true, ... } 供主循环继续写回; 未命中 → 记 unresolved
+ * (reason 带 /nominatim 后缀标明已尝试第四 provider) + 配额窗口 + 短路检查。
+ */
+async function overseasFallback(slug, siteId, query, target, companyQuery, site, failReason) {
+  const overseas = NOMINATIM_ACTIVE && isOverseasCity(target.city);
+  if (overseas) {
+    const nom = await searchOverseasNominatim(companyQuery, site, target);
+    if (nom.poi) return { hit: true, poi: nom.poi, confidence: nom.confidence, reason: nom.reason, query: nom.query };
+  }
+  // /nominatim 后缀只在实际尝试过 Nominatim (海外站 + 非纯计划 dry-run) 时标注;
+  // 国内站点 / 纯计划模式 reason 原样 — 非海外站行为与合并前完全一致。
+  const reason = overseas ? `${failReason}/nominatim` : failReason;
+  unresolved.push({ slug, siteId, query, reason });
+  return { hit: false, shortCircuit: recordOutcome(reason) };
+}
+
 // --- main -------------------------------------------------------------------
 const onMap = await loadOfflineWorkCatalog();
 // 2026-08-19:公司级 already-pinned 跳过已废弃——多城市时代一家公司可有多个
@@ -335,6 +392,8 @@ mainLoop: for (const { file, company, site } of needing) {
   let reason = '';
   let provider = 'amap';
   let addressGeocode = false;
+  /** Nominatim 海外路径命中 — 跳过国内 regeo 闸门 (三 provider 对海外无 regeo 覆盖). */
+  let nominatimHit = false;
   /** 本次命中的检索变体 (precise/broad) 与对应检索串 — 仅无地址站点网络检索路径有值. */
   let variant = null;
   let variantQuery = null;
@@ -390,9 +449,20 @@ mainLoop: for (const { file, company, site } of needing) {
   }
 
   if (!poi) {
-    unresolved.push({ slug, siteId: site.id, query, reason: reason || 'no-result' });
-    if (recordOutcome(reason || 'no-result')) break mainLoop;
-    continue;
+    // 2026-08-23 (feat/poi-nominatim): 海外站三级兜底全失败 → 试 OSM Nominatim
+    // (AMap/百度/腾讯无海外地址覆盖); 非海外站保持原行为不变。
+    const fb = await overseasFallback(slug, site.id, query, target, query, site, reason || 'no-result');
+    if (!fb.hit) {
+      if (fb.shortCircuit) break mainLoop;
+      continue;
+    }
+    poi = fb.poi;
+    confidence = fb.confidence;
+    reason = fb.reason;
+    provider = 'nominatim';
+    variant = 'nominatim';
+    variantQuery = fb.query;
+    nominatimHit = true;
   }
 
   // Regeo guard: a place-search hit must actually sit in the site's city.
@@ -402,42 +472,65 @@ mainLoop: for (const { file, company, site } of needing) {
   /** 校验最终 poi 的那次 regeo 结果 — 地址兜底补查的来源 (格式化地址零额外配额). */
   let finalRe = null;
   if (!override) {
-    const re = await regeoCityRest(poi.lng, poi.lat);
-    await sleep(throttleMs(re.provider));
-    const match = regeoMatchesTarget(re, target);
-    if (re.ok && !match.ok) {
-      unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match.reason}` });
-      if (recordOutcome(`regeo-outside:${match.reason}`)) break mainLoop;
-      continue;
-    }
-    // 2026-08-20 (w4): 区级校验 —— 地址检索命中但 geocoder 落点所在的区
-    // (regeo adname) 与地址文本区名不符 (未收录区名的地址在目标城市内错配,
-    // 如 杭州地址 → 广州 "花都区西湖"), 坐标不可信 → 回退公司名检索,
-    // 不写错坐标。
-    if (re.ok && addressGeocode && addressConflictsWithRegeoDistrict(addr, re.district ?? '')) {
-      const res = await searchCompanyPoi(query, target);
-      if (!res.poi) {
-        unresolved.push({ slug, siteId: site.id, query, reason: 'address-district-mismatch' });
-        if (recordOutcome('address-district-mismatch')) break mainLoop;
-        continue;
-      }
-      poi = res.poi;
-      confidence = res.confidence;
-      reason = res.reason;
-      provider = res.provider;
-      const re2 = await regeoCityRest(poi.lng, poi.lat);
-      await sleep(throttleMs(re2.provider));
-      const match2 = regeoMatchesTarget(re2, target);
-      if (re2.ok && !match2.ok) {
-        unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match2.reason}` });
-        if (recordOutcome(`regeo-outside:${match2.reason}`)) break mainLoop;
-        continue;
-      }
-      finalRe = re2;
-      verified = re2.ok ? `${re2.cityname ?? ''} ${re2.district ?? ''}`.trim() || re2.province || 'unverified' : 'unverified';
+    if (nominatimHit) {
+      // 2026-08-23 (feat/poi-nominatim): Nominatim 海外命中跳过国内 regeo 闸门 —
+      // 三 provider 对海外坐标无 regeo 覆盖, 强行调用只会得到 outside 误拒。
+      // reverse 只做证据文本 (best-effort, 失败不阻塞写回; 同样 ≥1s 节流)。
+      const rev = await nominatimReverseRest(poi.lng, poi.lat);
+      await nominatimThrottle();
+      verified = rev.ok && rev.displayName ? `nominatim:${rev.displayName}` : 'unverified';
     } else {
-      finalRe = re;
-      verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() || re.province || 'unverified' : 'unverified';
+      const re = await regeoCityRest(poi.lng, poi.lat);
+      await sleep(throttleMs(re.provider));
+      const match = regeoMatchesTarget(re, target);
+      if (re.ok && !match.ok) {
+        // 2026-08-23 (feat/poi-nominatim): 海外站命中国内/他城 POI (如 安克创新
+        // 深圳) — regeo 城市不符即三级链失败, 海外站再试 Nominatim 落真实坐标;
+        // 命中后与 nominatimHit 分支同款 (reverse 证据文本, 不碰国内 regeo)。
+        const fb = await overseasFallback(slug, site.id, query, target, query, site, `regeo-outside:${match.reason}`);
+        if (!fb.hit) {
+          if (fb.shortCircuit) break mainLoop;
+          continue;
+        }
+        poi = fb.poi;
+        confidence = fb.confidence;
+        reason = fb.reason;
+        provider = 'nominatim';
+        variant = 'nominatim';
+        variantQuery = fb.query;
+        nominatimHit = true;
+        const rev = await nominatimReverseRest(poi.lng, poi.lat);
+        await nominatimThrottle();
+        verified = rev.ok && rev.displayName ? `nominatim:${rev.displayName}` : 'unverified';
+      } else if (re.ok && addressGeocode && addressConflictsWithRegeoDistrict(addr, re.district ?? '')) {
+        // 2026-08-20 (w4): 区级校验 —— 地址检索命中但 geocoder 落点所在的区
+        // (regeo adname) 与地址文本区名不符 (未收录区名的地址在目标城市内错配,
+        // 如 杭州地址 → 广州 "花都区西湖"), 坐标不可信 → 回退公司名检索,
+        // 不写错坐标。
+        const res = await searchCompanyPoi(query, target);
+        if (!res.poi) {
+          unresolved.push({ slug, siteId: site.id, query, reason: 'address-district-mismatch' });
+          if (recordOutcome('address-district-mismatch')) break mainLoop;
+          continue;
+        }
+        poi = res.poi;
+        confidence = res.confidence;
+        reason = res.reason;
+        provider = res.provider;
+        const re2 = await regeoCityRest(poi.lng, poi.lat);
+        await sleep(throttleMs(re2.provider));
+        const match2 = regeoMatchesTarget(re2, target);
+        if (re2.ok && !match2.ok) {
+          unresolved.push({ slug, siteId: site.id, query, reason: `regeo-outside:${match2.reason}` });
+          if (recordOutcome(`regeo-outside:${match2.reason}`)) break mainLoop;
+          continue;
+        }
+        finalRe = re2;
+        verified = re2.ok ? `${re2.cityname ?? ''} ${re2.district ?? ''}`.trim() || re2.province || 'unverified' : 'unverified';
+      } else {
+        finalRe = re;
+        verified = re.ok ? `${re.cityname ?? ''} ${re.district ?? ''}`.trim() || re.province || 'unverified' : 'unverified';
+      }
     }
   }
 
@@ -476,6 +569,10 @@ mainLoop: for (const { file, company, site } of needing) {
 // --- report -----------------------------------------------------------------
 console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | BAIDU_MAP_AK: ${env.BAIDU_MAP_AK ? 'set' : 'MISSING'} | TENCENT_MAP_KEY: ${env.TENCENT_MAP_KEY ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
 console.log(formatGeocodeProviderReport());
+// 2026-08-23 (feat/poi-nominatim): 第四 provider 状态 — 海外站 (isOverseasCity)
+// 三级兜底失败后 keyless 走 OSM Nominatim (WGS-84, ≥1 req/s)。纯计划 dry-run
+// (无 key) 不联网, nominatim=skip。
+console.log(`NOMINATIM: overseas-only, keyless, ${NOMINATIM_ACTIVE ? 'active (1 req/s)' : 'skip (plan-only dry-run, no network)'}`);
 console.log(`Sites needing a point: ${planTotal} (attempted: ${planCount}) | skipped (not-in-only-list): ${skipped.filter((s) => s.reason === 'not-in-only-list').length} | city-not-in-list: ${skipped.filter((s) => s.reason.startsWith('city-not-in-list')).length} | override-city-mismatch: ${skipped.filter((s) => s.reason === 'override-city-mismatch').length}`);
 console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`);
 console.log('\n=== RESOLVED ===');

@@ -6,7 +6,7 @@
 
 import { getPool } from './db.ts';
 import { cityProvinceOf } from './recruitment-adapters/official-site-parse.ts';
-import { CITY_CENTERS, bareCityName } from './city-centers.ts';
+import { CITY_CENTERS, OVERSEAS_CITY_KEYS, bareCityName } from './city-centers.ts';
 import type { CompanySite, POILocation } from './types.ts';
 import type { SourceCompany } from './recruitment-source.ts';
 
@@ -1548,4 +1548,290 @@ export async function tencentGeocodeAddressRest(
     return { ok: true, provider: 'tencent', location: { lng, lat, address: query } };
   }
   return { ok: false, reason: 'http' };
+}
+
+// ---------------------------------------------------------------------------
+// OSM Nominatim — 海外站第四 provider (2026-08-23, feat/poi-nominatim)。
+// 背景: drops 2410 站中海外站 (悉尼/新加坡/东京/英文城市等, 2026-08-23 摸底
+// 114 站 = CJK 海外 91 站/65 城 + 纯拉丁城市串 23 站/18 城串, 其中 88 站无
+// 可用坐标) 的城市不在 AMap/百度/腾讯 place 检索覆盖范围 — 三级兜底链对海外
+// 地址必然全失败, 海外站永远无法落真实坐标。Nominatim (OpenStreetMap 公共
+// 实例 https://nominatim.openstreetmap.org) 全球覆盖, 输出 WGS-84 — 与
+// city-centers.ts OVERSEAS_CENTERS 的 WGS-84 约定一致, 无需坐标转换。
+//
+// 政策合规 (Nominatim Usage Policy,
+// https://operations.osmfoundation.org/policies/nominatim/):
+//   1. UA 必须标识应用: NOMINATIM_USER_AGENT — 缺失/通用 UA 会被 OSM 封 IP。
+//   2. 限速 ≥1 req/s: 调用方 (geocode-sites-apply.mjs throttleMs) 每次调用后
+//      sleep ≥ NOMINATIM_MIN_INTERVAL_MS; 本模块不自行限速 (保持可单测)。
+//   3. 不并发轰炸: apply 脚本主循环严格串行, 本模块无并发启动。
+//   4. 错误/超时 (NOMINATIM_TIMEOUT_MS = 10s, AbortSignal.timeout) 优雅降级为
+//      { ok: false, ... } — 调用方记 unresolved, 不崩溃。
+// 海外站判定 (isOverseasCity) 独立命名, 国内站点永不进本路径。
+// ---------------------------------------------------------------------------
+
+/** Nominatim 请求 User-Agent — 项目标识 (Usage Policy 强制). */
+export const NOMINATIM_USER_AGENT = 'DomainMap/1.0 (job-map contact)';
+
+/** 单次请求超时 — 超过视为失败降级 (reason 'timeout'), 不重试不崩溃. */
+export const NOMINATIM_TIMEOUT_MS = 10_000;
+
+/** 调用方限速下限: ≥1 req/s (Usage Policy). 实际节流在 apply 脚本调用点. */
+export const NOMINATIM_MIN_INTERVAL_MS = 1_000;
+
+// --- 海外站判定 (独立命名, 不污染国内路径) ------------------------------------
+// 数据实测口径 (2026-08-23 摸底, 见 20260823-boss-poi-datasource 批次汇报):
+// drops 海外站 114 站 = CJK 海外/港澳台城市名 91 站 (65 城) + 纯拉丁城市串
+// 23 站 (18 城串, embodied-jobs 为主)。判定四通道 (命中任一即海外):
+//   1. 城市名含拉丁字母 — Mountain View, CA / Singapore / London…
+//   2. 城市 bare 名命中 city-centers.ts OVERSEAS_CITY_KEYS (新加坡/悉尼/东京/
+//      洛杉矶/伦敦/慕尼黑/吉隆坡/纽约/旧金山/巴黎/柏林/首尔/曼谷/迪拜)。
+//   3. 城市名命中实测海外/港澳台 CJK 名单 (墨尔本/台北/雅加达/多伦多/中国香港/
+//      九龙/新界/胡志明/三菱东京日联银行总部…)。
+//   4. 城市名含「海外」标记 — "北京 洛阳  海外"。
+// ---------------------------------------------------------------------------
+
+/** 数据实测海外/港澳台 CJK 城市名 (bare 或原样均可命中; 2026-08-23 摸底). */
+export const OVERSEAS_CJK_CITIES = new Set([
+  // 港澳台
+  '中国香港', '香港', '九龙', '新界', '台北', '台北市',
+  // 日本
+  '东京', '横滨', '横滨市', '札幌', '札幌市', '三菱东京日联银行总部',
+  // 东南亚
+  '雅加达', '南雅加达行政', '南雅加达行政市', '吉隆坡', '胡志明', '胡志明市',
+  '曼谷', '马尼拉', '清化', '清化市', '下龙', '下龙市', '巴生', '瓜拉雪兰莪',
+  '梅赫伦', '普哇加达县', '亚罗牙也',
+  // 欧美澳
+  '墨尔本', '西雅图', '温哥华', '多伦多', '纽约', '洛杉矶', '旧金山', '费利蒙',
+  '圣克拉拉', '帕洛阿尔托', '奥斯汀', '布鲁克林', '墨西哥城', '圣保罗',
+  '伦敦', '巴黎', '柏林', '慕尼黑', '杜塞尔多夫', '鹿特丹', '华沙', '苏黎世',
+  '米兰', '马德里', '莫斯科', '布达佩斯', '哥本哈根', '巴塞罗那', '阿姆斯特丹',
+  '法兰克福', '斯图加特', '格拉茨', '巴尔韦伦', '松德比贝里', '范雷宁', '迪门',
+  '巴勒鲁普', '维厄勒', '阿斯塔纳', '仁川',
+]);
+
+/**
+ * 海外站判定。国内站点永不进 Nominatim 分支 — 判定通道见上 (拉丁城市名 /
+ * OVERSEAS_CITY_KEYS / 实测 CJK 名单 / 「海外」标记)。
+ */
+export function isOverseasCity(city: string | null | undefined): boolean {
+  const c = city?.trim();
+  if (!c) return false;
+  if (/[A-Za-z]/.test(c)) return true;
+  const bare = bareCity(c);
+  if (OVERSEAS_CITY_KEYS.has(bare) || OVERSEAS_CITY_KEYS.has(c)) return true;
+  if (OVERSEAS_CJK_CITIES.has(bare) || OVERSEAS_CJK_CITIES.has(c)) return true;
+  if (c.includes('海外')) return true;
+  return false;
+}
+
+export interface NominatimSearchResult {
+  ok: boolean;
+  pois: OfficePoiCandidate[];
+  reason?: 'http' | 'parse' | 'empty' | 'timeout';
+  provider?: 'nominatim';
+}
+
+/** Nominatim search 行 → 统一 OfficePoiCandidate (name/address = display_name). */
+export function parseNominatimPoi(raw: Record<string, unknown>): OfficePoiCandidate | null {
+  const lng = Number(raw.lon);
+  const lat = Number(raw.lat);
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  const address = (raw.address ?? {}) as Record<string, unknown>;
+  return {
+    name: String(raw.display_name ?? ''),
+    address: String(raw.display_name ?? ''),
+    lng,
+    lat,
+    type: String(raw.type ?? ''),
+    adname: String(address.city_district ?? address.suburb ?? address.neighbourhood ?? ''),
+    pname: String(address.state ?? address.country ?? ''),
+    cityname: String(address.city ?? address.town ?? address.county ?? address.municipality ?? ''),
+  };
+}
+
+/**
+ * Nominatim /search (format=jsonv2, limit=3)。target.city 提供且检索串未含城市
+ * 名时, 追加 bare 城市名作约束 (Nominatim 无 region 参数, 文本约束最接近)。
+ * 失败 (http/超时/解析) 一律降级为 { ok: false } — 调用方记 unresolved, 不抛。
+ */
+export async function nominatimSearchRest(
+  query: string,
+  target: { city: string } | null = null,
+  fetchImpl: typeof fetch = fetch,
+): Promise<NominatimSearchResult> {
+  const q = query.trim();
+  if (!q) return { ok: false, pois: [], reason: 'empty' };
+  const url = new URL('https://nominatim.openstreetmap.org/search');
+  const city = target?.city?.trim();
+  const bare = city ? bareCity(city) : '';
+  if (city && !q.includes(city) && !q.includes(bare)) url.searchParams.set('q', `${q} ${bare}`);
+  else url.searchParams.set('q', q);
+  url.searchParams.set('format', 'jsonv2');
+  url.searchParams.set('limit', '3');
+  url.searchParams.set('addressdetails', '1');
+  url.searchParams.set('accept-language', 'zh-CN,en');
+  try {
+    const res = await fetchImpl(url, {
+      headers: { 'User-Agent': NOMINATIM_USER_AGENT, Accept: 'application/json' },
+      signal: AbortSignal.timeout(NOMINATIM_TIMEOUT_MS),
+    });
+    if (!res.ok) return { ok: false, pois: [], reason: 'http' };
+    const payload = (await res.json()) as unknown;
+    if (!Array.isArray(payload)) return { ok: false, pois: [], reason: 'parse' };
+    return {
+      ok: true,
+      provider: 'nominatim',
+      pois: payload.map(parseNominatimPoi).filter((p): p is OfficePoiCandidate => !!p),
+    };
+  } catch (err) {
+    const name = (err as { name?: string })?.name ?? '';
+    return { ok: false, pois: [], reason: name === 'TimeoutError' || name === 'AbortError' ? 'timeout' : 'http' };
+  }
+}
+
+export interface NominatimReverseResult {
+  ok: boolean;
+  displayName?: string;
+  city?: string;
+  country?: string;
+  reason?: 'http' | 'parse' | 'empty' | 'timeout';
+}
+
+/** Nominatim /reverse — WGS-84 坐标的证据文本 (海外路径的 regeo 替代证据). */
+export async function nominatimReverseRest(
+  lng: number,
+  lat: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<NominatimReverseResult> {
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return { ok: false, reason: 'parse' };
+  const url = new URL('https://nominatim.openstreetmap.org/reverse');
+  url.searchParams.set('lat', String(lat));
+  url.searchParams.set('lon', String(lng));
+  url.searchParams.set('format', 'jsonv2');
+  url.searchParams.set('zoom', '16');
+  url.searchParams.set('addressdetails', '1');
+  url.searchParams.set('accept-language', 'zh-CN,en');
+  try {
+    const res = await fetchImpl(url, {
+      headers: { 'User-Agent': NOMINATIM_USER_AGENT, Accept: 'application/json' },
+      signal: AbortSignal.timeout(NOMINATIM_TIMEOUT_MS),
+    });
+    if (!res.ok) return { ok: false, reason: 'http' };
+    const payload = (await res.json()) as { display_name?: unknown; address?: Record<string, unknown>; error?: unknown };
+    if (!payload || typeof payload !== 'object' || payload.error) return { ok: false, reason: 'empty' };
+    const address = payload.address ?? {};
+    return {
+      ok: true,
+      displayName: String(payload.display_name ?? ''),
+      city: String(address.city ?? address.town ?? address.county ?? ''),
+      country: String(address.country ?? ''),
+    };
+  } catch (err) {
+    const name = (err as { name?: string })?.name ?? '';
+    return { ok: false, reason: name === 'TimeoutError' || name === 'AbortError' ? 'timeout' : 'http' };
+  }
+}
+
+// --- Nominatim 命中评分 (海外独立口径) ----------------------------------------
+// 国内 grader (gradeOfficePoi/gradeVariantHit) 校验 pname/cityname 对海外不适用
+// (siteCityTarget 的 province 缺省 浙江省, 海外 POI 必被拒), 且海外 POI 名多为
+// 本地语言 (Anker Innovations / 渋谷区神宮前…), 中文公司名强匹配命中率低。
+// 海外口径双通道 (任一中 high/medium, 都不中 → low 不写回 — 宁可留
+// unresolved, 不钉错点):
+//   1. 公司名 (归一) 出现在 display_name → 自家 POI 命中 → high。
+//   2. 检索串去掉公司名/城市名后的地址部分与 display_name 的 token 重叠 ≥2 →
+//      地址级解析命中。地址部分含数字 (门牌) → high, 否则 (城市级) → medium。
+//      跨语言归一: 拉丁 token 小写 + NFKD 去变音 + ß→ss (Georg-Muche-Street 与
+//      Georg-Muche-Straße 仍重叠), CJK 滑窗 bigram (渋谷区神宮前 → 渋谷/谷区/
+//      区神/神宮/宮前)。
+// ---------------------------------------------------------------------------
+
+const NOMINATIM_DIACRITICS_RE = /[̀-ͯ]/g; // 组合变音符号 (NFKD 后剥离)
+const NOMINATIM_CJK_RE = /[぀-ヿ㐀-鿿]/; // 平假名/片假名/汉字
+
+/** NFKD 去变音 + ß→ss + 小写 — 跨语言可比面 (Straße ≡ strasse). */
+function normalizeNominatimText(text: string): string {
+  return text
+    .normalize('NFKD')
+    .replace(NOMINATIM_DIACRITICS_RE, '')
+    .replace(/ß/g, 'ss')
+    .toLowerCase();
+}
+
+/** 检索/显示名 → 可比 token: 拉丁+数字 (≥3 字符) + CJK 滑窗 bigram. */
+export function nominatimMatchTokens(text: string): Set<string> {
+  const norm = normalizeNominatimText(text);
+  const out = new Set<string>();
+  for (const m of norm.matchAll(/[a-z0-9]{3,}/g)) out.add(m[0]);
+  if (NOMINATIM_CJK_RE.test(norm)) {
+    const chars = [...norm];
+    for (let i = 0; i + 1 < chars.length; i += 1) {
+      if (NOMINATIM_CJK_RE.test(chars[i]) && NOMINATIM_CJK_RE.test(chars[i + 1])) out.add(`${chars[i]}${chars[i + 1]}`);
+    }
+  }
+  return out;
+}
+
+/**
+ * Nominatim 命中评分 (海外口径, 见上)。query 为实际发送的检索串
+ * (地址+公司 或 公司+城市), city 为目标城市 (供剔除城市 token)。
+ */
+export function gradeNominatimHit(
+  poi: OfficePoiCandidate,
+  companyName: string,
+  query: string,
+  city: string | null,
+): { confidence: GeocodeConfidence; reason: string } {
+  const display = poi.name;
+  const normCompany = normalizeNameForMatch(companyName);
+  if (normCompany && normalizeNominatimText(display).includes(normCompany)) {
+    return { confidence: 'high', reason: 'nominatim-company-match' };
+  }
+  const addrPart = query.replace(companyName, '').replace(bareCity(city ?? ''), '').trim();
+  const addrTokens = nominatimMatchTokens(addrPart);
+  const displayTokens = nominatimMatchTokens(display);
+  let overlap = 0;
+  for (const t of addrTokens) {
+    if (displayTokens.has(t)) overlap += 1;
+  }
+  if (addrTokens.size > 0 && overlap >= 2) {
+    const streetLevel = /\d/.test(addrPart);
+    return streetLevel
+      ? { confidence: 'high', reason: `nominatim-address-match:${poi.type || 'place'}` }
+      : { confidence: 'medium', reason: `nominatim-city-match:${poi.type || 'place'}` };
+  }
+  return { confidence: 'low', reason: `nominatim-name-mismatch:${display.slice(0, 48)}` };
+}
+
+/** 按评分顺序取首个非 low 候选 (Nominatim 自身 relevance 已排序). */
+export function pickBestNominatimPoi(
+  pois: OfficePoiCandidate[],
+  companyName: string,
+  query: string,
+  city: string | null,
+): OfficePoiCandidate | undefined {
+  for (const poi of pois) {
+    if (gradeNominatimHit(poi, companyName, query, city).confidence !== 'low') return poi;
+  }
+  return undefined;
+}
+
+/**
+ * Nominatim 检索变体 (海外路径, 每站点 ≤2 次检索):
+ *   1. 街道地址 + 公司名 (地址级, 命中即高置信)
+ *   2. 公司名 + 城市 (城市级, 兜底)
+ * 地址不呈街道级 (城市名占位 新加坡/伦敦/非中国大陆地区) 时跳过变体 1 —
+ * STREET_RE 同国内口径 (含门牌/路/街/大厦…)。去重后返回。
+ */
+export function nominatimQueryVariants(
+  companyQuery: string,
+  address: string | null | undefined,
+  city: string,
+): string[] {
+  const out: string[] = [];
+  const addr = address?.trim();
+  if (addr && STREET_RE.test(addr)) out.push(`${addr} ${companyQuery}`);
+  out.push(`${companyQuery} ${city}`);
+  return [...new Set(out)];
 }
