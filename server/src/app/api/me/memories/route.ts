@@ -1,4 +1,4 @@
-// /api/me/memories — 用户个性化记忆(tech/26-agent-memory.md §5)。
+// /api/me/memories — 用户个性化记忆(tech/30-agent-memory.md §5)。
 // GET: 列表(guest → 空 items,仿 saved 路由范式);DELETE: 清除全部(guest → 401)。
 
 import { NextResponse } from 'next/server';

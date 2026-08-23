@@ -357,7 +357,7 @@ make refresh-radar    # 下载已审查 radar 快照、重映射 drops、校验 
 make geocode-sites    # 城市文本站点解析为真实办公点(需 AMAP_WEB_KEY + BAIDU/TENCENT 兜底 key;--dry-run 只列计划)
 ```
 
-Server 侧(`cd server`):`npm test`(1487 测试 / 1485 pass / 2 skip,2026-08-23)、`npm run typecheck`、
+Server 侧(`cd server`):`npm test`(1517 测试 / 1515 pass / 2 skip,2026-08-23)、`npm run typecheck`、
 `npm run dev` / `build` / `start`。写 Postgres 的数据命令
 (`npm run import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)
 需要 `server/.env.local` 的 `DATABASE_URL`(绝不打印、不提交)，个别还需 `AMAP_WEB_KEY`(geocode 另可配 `BAIDU_MAP_AK` / `TENCENT_MAP_KEY` 兜底)。

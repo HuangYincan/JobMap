@@ -172,7 +172,7 @@ test('rest__regeo: 非有限坐标 → error;成功 → 省/市/区', async () =
 });
 
 // ---------------------------------------------------------------------------
-// builtin__memory_save(2026-08-22 ws-mem-a;tech/26-agent-memory.md §4)
+// builtin__memory_save(2026-08-22 ws-mem-a;tech/30-agent-memory.md §4)
 // ---------------------------------------------------------------------------
 
 test('memory_save: guest(无 ctx.userId)→ 拒绝「请先登录后再保存记忆」', async () => {

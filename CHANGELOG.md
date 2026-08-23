@@ -6,7 +6,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
-- **引擎打磨系列收尾(`20260822-boss-engine-polish-2` 轮8–10).** 腾讯 MultiMarker 初始渲染竞态——构造不传 map、挂图后全量 `setGeometries` 重推,首帧徽章即完整,图层落 MARKER 层不被底图文字标注遮挡(ws-i,cd27acd+441231a)+ icon 预检链式推进(只预检候选链第一个 unknown,失败记忆化下次重建推进,26e7673);腾讯矢量底图排除 `point`(POI 图标层)——light 样式「混合块」根因修复,保留地名/路名标注(ws-j,e1f37a8);腾讯 POI 徽章自然升级真 logo——`badgeWithRemoteIcon` 包裹 icon.horse 保留徽章形态 + 远程真 logo 改 fetch 字节内联(SVG-as-image 实测不抓远程子资源,ws-k,0345983+52a3d0e)+ pan/LOD 可见集切换 `maybeUpgradeIcon` 预检链原地重建(5b3c17d);百度滚轮缩放徽章闪烁——SDK webgl 隐藏 markerMouseTarget pane 时同步恢复 + rAF 按帧重算定位(rAF 停摆自终止,ws-l,99ef028)。全量套件实测:**npm test 1487 tests / 1485 pass / 2 skip**(2026-08-23,合并 20260823-boss-scan-fix 后终态)。
+- **引擎打磨系列收尾(`20260822-boss-engine-polish-2` 轮8–10).** 腾讯 MultiMarker 初始渲染竞态——构造不传 map、挂图后全量 `setGeometries` 重推,首帧徽章即完整,图层落 MARKER 层不被底图文字标注遮挡(ws-i,cd27acd+441231a)+ icon 预检链式推进(只预检候选链第一个 unknown,失败记忆化下次重建推进,26e7673);腾讯矢量底图排除 `point`(POI 图标层)——light 样式「混合块」根因修复,保留地名/路名标注(ws-j,e1f37a8);腾讯 POI 徽章自然升级真 logo——`badgeWithRemoteIcon` 包裹 icon.horse 保留徽章形态 + 远程真 logo 改 fetch 字节内联(SVG-as-image 实测不抓远程子资源,ws-k,0345983+52a3d0e)+ pan/LOD 可见集切换 `maybeUpgradeIcon` 预检链原地重建(5b3c17d);百度滚轮缩放徽章闪烁——SDK webgl 隐藏 markerMouseTarget pane 时同步恢复 + rAF 按帧重算定位(rAF 停摆自终止,ws-l,99ef028)。全量套件实测:**npm test 1517 tests / 1515 pass / 2 skip**(2026-08-23,dev 99281c1 ws-a 合并后实测)。
 
 ## 2026-08-22
 
@@ -14,7 +14,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 - **OAuth 登录(`tech/27-oauth-login.md`;`feature/oauth-backend` d22c3f8 + `oauth-frontend` 8e8d07ca + `oauth-docs` 9300fd1).** 真实 OAuth2 authorization code flow:`lib/oauth`(provider registry + signed state cookie + github/google/wechat code exchange client)+ `api/auth/oauth/{providers,start,callback}` 路由 + upsertIdentity 邮箱冲突挂接(41 用例);前端登录按钮 providers 探测(已配置 → 跳 start,未配置 → 回退 demo POST)+ `auth_error` 处理;`fix/oauth-callback-500`(Next 16 absolute redirect URLs,ef20c09)。同日 auth-recovery(`feature/auth-recovery`,15eafb1):注册成功弹窗引导绑定手机/邮箱(OTP 验证,可跳过)+ password 模式忘记密码入口(切 email 验证码登录)。
 - **阿里云短信 OTP 真发(`feature/aliyun-sms-send`,76eec04;`tech/26-aliyun-sms.md`).** phone OTP 经阿里云短信认证服务真发(`lib/aliyun-sms-client`),email 经 Resend 真发;删除 demo `000000` stub 与 hint(server/src 全量 grep 0 命中);缺配置 → 503 `EMAIL_NOT_CONFIGURED` / `SMS_NOT_CONFIGURED`,无效 AccessKey/签名 → `SMS_PROVIDER_ERROR` 短路。
-- **Agent Memory(`feature/agent-memory-core` a34da06 + `agent-memory-ui` d7452bf;`tech/26-agent-memory.md`).** 迁移 `018_user_memories` + `lib/memory-store` + agent prompt 注入 + `builtin__memory_save` 工具 + `/api/me/memories`;前端记忆管理 UI(入口/列表/逐条删除/一键清除/弱提示,i18n `agentMemory*` 七键,登录才渲染)。
+- **Agent Memory(`feature/agent-memory-core` a34da06 + `agent-memory-ui` d7452bf;`tech/30-agent-memory.md`).** 迁移 `018_user_memories` + `lib/memory-store` + agent prompt 注入 + `builtin__memory_save` 工具 + `/api/me/memories`;前端记忆管理 UI(入口/列表/逐条删除/一键清除/弱提示,i18n `agentMemory*` 七键,登录才渲染)。
 
 ### Fixed
 
