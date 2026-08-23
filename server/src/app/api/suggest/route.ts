@@ -20,6 +20,9 @@ import { trendingForMode } from '@/lib/trending-search';
 
 /** q 上限：与 /api/search 一致。超长 q 对 autocomplete 无意义，直接 400。 */
 const MAX_Q_LENGTH = 100;
+/** mode 是短枚举；center 只接受“lng,lat”两个十进制数。 */
+const MAX_MODE_LENGTH = 32;
+const MAX_CENTER_LENGTH = 128;
 
 /** 解析可选 center=lng,lat。非法值返回 null(客户端自行按位置算距离)。 */
 function parseCenter(raw: string | null): { lng: number; lat: number } | null {
@@ -33,15 +36,21 @@ function parseCenter(raw: string | null): { lng: number; lat: number } | null {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const q = (url.searchParams.get('q') || '').trim().toLowerCase();
-  if (q.length > MAX_Q_LENGTH) {
+  const rawQ = url.searchParams.get('q') || '';
+  const mode = (url.searchParams.get('mode') || 'work') as MapMode;
+  const centerRaw = url.searchParams.get('center');
+  if (
+    rawQ.length > MAX_Q_LENGTH ||
+    mode.length > MAX_MODE_LENGTH ||
+    (centerRaw && centerRaw.length > MAX_CENTER_LENGTH)
+  ) {
     return NextResponse.json(
-      { code: 'Q_TOO_LONG', message: `q must be at most ${MAX_Q_LENGTH} chars` },
+      { code: 'PARAM_TOO_LARGE', message: 'one or more query parameters exceed their length limit' },
       { status: 400 }
     );
   }
-  const mode = (url.searchParams.get('mode') || 'work') as MapMode;
-  const center = parseCenter(url.searchParams.get('center'));
+  const q = rawQ.trim().toLowerCase();
+  const center = parseCenter(centerRaw);
   const cacheKey = publicCacheKey(['suggest', mode, q]);
   const cached = readPublicCache(cacheKey);
   if (cached) {

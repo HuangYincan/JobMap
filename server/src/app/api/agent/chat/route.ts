@@ -10,6 +10,8 @@
 // (code/message 收敛到安全集合)后下发,不下发其它 type。
 
 import { NextResponse } from 'next/server';
+import { BoundedRateStore } from '@/lib/bounded-rate-store';
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { readSessionToken, readSessionUser } from '@/lib/http-session';
 import { clientIpBucketKey } from '@/lib/client-ip';
 import { readAgentConfig, hasBaiduAgentPlan } from '@/lib/agent/config';
@@ -37,7 +39,10 @@ const SSE_EVENT_TYPES = ['delta', 'tool', 'action', 'done', 'error'] as const;
 // ---- 限流:模块级内存令牌桶,每桶 10 req/min(tech/24 §6.5)----
 const RATE_LIMIT_PER_MIN = 10;
 const RATE_REFILL_MS = 60_000 / RATE_LIMIT_PER_MIN;
-const buckets = new Map<string, { tokens: number; last: number }>();
+const RATE_BUCKET_TTL_MS = 2 * 60_000;
+/** Request keys are attacker-controlled; cap process-local bucket memory. */
+const RATE_BUCKET_CAPACITY = 10_000;
+const buckets = new BoundedRateStore<{ tokens: number; last: number }>(RATE_BUCKET_CAPACITY);
 
 // ---- 代理信任开关(quality-scan #11 落点,2026-08-23;语义抽至 lib/client-ip)----
 // x-forwarded-for 由网络代理注入;客户端直连 Next 时可任意伪造并轮换该头,仅凭首段
@@ -48,18 +53,20 @@ const buckets = new Map<string, { tokens: number; last: number }>();
 
 function rateLimit(key: string): boolean {
   const now = Date.now();
-  let b = buckets.get(key);
+  let b = buckets.get(key, now);
   if (!b) {
-    buckets.set(key, { tokens: RATE_LIMIT_PER_MIN - 1, last: now });
+    buckets.set(key, { tokens: RATE_LIMIT_PER_MIN - 1, last: now }, RATE_BUCKET_TTL_MS, now);
     return true;
   }
   b.tokens = Math.min(RATE_LIMIT_PER_MIN, b.tokens + (now - b.last) / RATE_REFILL_MS);
   b.last = now;
+  let allowed = false;
   if (b.tokens >= 1) {
     b.tokens -= 1;
-    return true;
+    allowed = true;
   }
-  return false;
+  buckets.set(key, b, RATE_BUCKET_TTL_MS, now);
+  return allowed;
 }
 
 /** 限流桶键:可信反代之后 → 转发头首段(代理注入,客户端不可控);否则 → 会话指纹
@@ -98,16 +105,15 @@ export async function POST(request: Request) {
   if (contentLength > MAX_BODY_CHARS) {
     return bad('BODY_TOO_LARGE', `request body must be ≤ ${MAX_BODY_CHARS} bytes`);
   }
-  const raw = await request.text();
-  if (raw.length > MAX_BODY_CHARS) {
-    return bad('BODY_TOO_LARGE', `request body must be ≤ ${MAX_BODY_CHARS} bytes`);
-  }
 
   // 3. JSON 解析 + messages 形状(空/首条非 user/条数 > 20/单条 > 4000 → 400)
   let body: ChatBody;
   try {
-    body = JSON.parse(raw) as ChatBody;
-  } catch {
+    body = await readJsonBody<ChatBody>(request, MAX_BODY_CHARS);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return bad('BODY_TOO_LARGE', `request body must be ≤ ${MAX_BODY_CHARS} bytes`);
+    }
     return bad('BAD_MESSAGES', 'invalid JSON body');
   }
   const msgs = body.messages;
@@ -211,6 +217,11 @@ export async function POST(request: Request) {
     : undefined;
   const lang: 'zh' | 'en' = body.lang === 'en' ? 'en' : 'zh';
 
+  const upstreamAbort = new AbortController();
+  const propagateRequestAbort = () => upstreamAbort.abort(request.signal.reason);
+  if (request.signal.aborted) propagateRequestAbort();
+  else request.signal.addEventListener('abort', propagateRequestAbort);
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -234,10 +245,10 @@ export async function POST(request: Request) {
           tools,
           viewport,
           lang,
-          signal: request.signal,
+          signal: upstreamAbort.signal,
           userId: sessionUser?.id,
         })) {
-          if (request.signal.aborted) break;
+          if (upstreamAbort.signal.aborted) break;
           // 公开面脱敏:error 事件 code/message 收敛到安全集合;内部细节只进服务端日志
           let out: unknown = event;
           if (event.type === 'error') {
@@ -246,6 +257,7 @@ export async function POST(request: Request) {
           }
           if (!send(out)) {
             // 输出超限 → done, truncated(tech/24 §6.5)
+            upstreamAbort.abort(new Error('SSE output budget exhausted'));
             send({ type: 'done', truncated: true }, true);
             return;
           }
@@ -255,6 +267,10 @@ export async function POST(request: Request) {
         console.error('[agent] SSE 流异常', err);
         send({ type: 'error', code: 'ERROR', message: '' });
       } finally {
+        request.signal.removeEventListener('abort', propagateRequestAbort);
+        // The response is terminal; don't leave an LLM/MCP round running because
+        // a client disappeared or the public byte budget was reached.
+        upstreamAbort.abort(new Error('SSE response finished'));
         try {
           controller.close();
         } catch {

@@ -6,6 +6,8 @@
 // ============================================================
 
 export const MAX_AVATAR_BYTES = 512 * 1024; // 256px JPEG ~15-60KB;上限留足余量
+/** Allow multipart framing around the image without permitting an unbounded body. */
+export const MAX_AVATAR_REQUEST_BYTES = MAX_AVATAR_BYTES + 64 * 1024;
 export const MAX_DIMENSION = 4096;
 export const MIN_DIMENSION = 1;
 

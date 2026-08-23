@@ -28,6 +28,7 @@ import {
   OtpRateLimitedError,
   upsertIdentity as storeUpsert,
 } from '../src/lib/account-store.ts';
+import { normalizePhone } from '../src/lib/contact-validation.ts';
 import {
   createSession as memCreateSession,
   sessionSigningSecret,
@@ -43,8 +44,15 @@ function src(rel) {
 function otpDbPool() {
   let seq = 0;
   const challenges = [];
+  const queries = [];
   return {
     query: async (sql, params = []) => {
+      queries.push({ sql, params });
+      if (sql.includes('DELETE FROM auth_otp_challenges') && sql.includes('WHERE id = $1')) {
+        const hit = challenges.find((c) => c.id === params[0]);
+        if (hit) hit.deleted = true;
+        return { rows: [], rowCount: 1 };
+      }
       if (sql.includes('DELETE FROM auth_otp_challenges')) {
         return { rows: [], rowCount: 0 };
       }
@@ -56,6 +64,7 @@ function otpDbPool() {
           codeHash: params[2],
           expiresAtMs: params[3],
           consumed: false,
+          deleted: false,
         });
         return { rows: [], rowCount: 1 };
       }
@@ -63,6 +72,7 @@ function otpDbPool() {
         const row = challenges.find(
           (c) =>
             !c.consumed &&
+            !c.deleted &&
             c.provider === params[0] &&
             c.target === params[1] &&
             c.expiresAtMs > Date.now() &&
@@ -70,13 +80,9 @@ function otpDbPool() {
         );
         return { rows: row ? [{ id: row.id }] : [], rowCount: row ? 1 : 0 };
       }
-      if (sql.includes('UPDATE auth_otp_challenges SET consumed_at')) {
-        const hit = challenges.find((c) => c.id === params[0]);
-        if (hit) hit.consumed = true;
-        return { rows: [], rowCount: 1 };
-      }
       throw new Error(`unexpected SQL in otp fake pool: ${sql}`);
     },
+    queries,
   };
 }
 
@@ -96,7 +102,7 @@ test('#1 内存模式:同一 code 二次 consume 必 false', async () => {
   }
 });
 
-test('#1 DB 模式:同一 code 二次 consume 必 false(成功路径已消费内存挑战,不可重放)', async () => {
+test('#1 DB 模式:成功验证立即删除 OTP 行且不可重放', async () => {
   // poolOverride 每次调用 getPoolForCall 都会取一次:必须共享同一池实例(状态在池内)。
   const pool = otpDbPool();
   __accountStoreTest.poolOverride = () => pool;
@@ -104,6 +110,10 @@ test('#1 DB 模式:同一 code 二次 consume 必 false(成功路径已消费内
     const target = `db-single-${Date.now()}@test.local`;
     const { code } = await storeIssueOtp('email', target);
     assert.equal(await storeConsumeOtp('email', target, code), true);
+    assert.ok(
+      pool.queries.some(({ sql }) => sql.includes('DELETE FROM auth_otp_challenges WHERE id = $1')),
+      'successful verification must destroy the durable OTP row immediately',
+    );
     assert.equal(await storeConsumeOtp('email', target, code), false);
     // 独立 target 不受影响:错码 false → 正确码 true(原契约保持)
     const t2 = `db-single2-${Date.now()}@test.local`;
@@ -182,6 +192,33 @@ test('#2 DB 模式:账号桶按 auth_identities 解析(user_id 相同即共享)'
   }
 });
 
+test('#2/#identity formatted phone input resolves to the canonical bound account', async () => {
+  __accountStoreTest.poolOverride = () => null;
+  const prev = { ...otpRateConfig };
+  otpRateConfig.accountDailyLimit = 1;
+  try {
+    const stamp = Date.now();
+    // 8 digits from the timestamp keeps this fixture valid (6-15 total digits).
+    const formatted = `+86 138-${String(stamp).slice(-8)}`;
+    const user = await storeUpsert({ provider: 'phone', subject: formatted, phone: formatted });
+    assert.equal(user.phone, normalizePhone(formatted));
+
+    // Different source IPs force the second lookup through the bound identity,
+    // rather than accidentally sharing an IP-side limiter bucket.
+    await storeCheckOtpSendLimits(`canonical-ip-a-${stamp}`, 'phone', formatted);
+    await assert.rejects(
+      storeCheckOtpSendLimits(`canonical-ip-b-${stamp}`, 'phone', normalizePhone(formatted)),
+      OtpRateLimitedError,
+    );
+
+    const rebound = await storeBindPhone(user.id, formatted);
+    assert.equal(rebound?.phone, normalizePhone(formatted));
+  } finally {
+    Object.assign(otpRateConfig, prev);
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
 test('#2 otp/send 路由:per-IP / per-账号桶接线在 issueOtp 之前', () => {
   const route = src('app/api/auth/otp/send/route.ts');
   // per-IP 维度经 lib/client-ip 统一解析(scan r2 #1:可信反代后取转发头 IP,
@@ -203,7 +240,8 @@ test('#3 密码登录路由:429 防爆破滑动窗口接线(守卫先于 scrypt)
   assert.match(route, /LOGIN_MAX_FAILURES/);
   assert.match(route, /LOGIN_IP_MAX_FAILURES/);
   assert.match(route, /LOGIN_ATTEMPT_WINDOW_MS = 15 \* 60 \* 1000/);
-  assert.match(route, /const loginGuards = new Map<string, LoginGuard>\(\)/);
+  assert.match(route, /loginGuards = new BoundedRateStore<LoginGuard>\(LOGIN_GUARD_CAPACITY\)/);
+  assert.match(route, /LOGIN_GUARD_CAPACITY = 10_000/);
   assert.match(route, /checkLoginRateLimit\(ipKey\)/);
   assert.match(route, /recordLoginFailure\(ipKey, LOGIN_IP_MAX_FAILURES\)/);
   assert.match(route, /clearLoginFailures\(ipKey\)/);

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { readSessionUser } from '@/lib/http-session';
 import {
   bindEmail,
@@ -7,9 +8,7 @@ import {
   EmailTakenError,
   OtpTooManyAttemptsError,
 } from '@/lib/account-store';
-
-/** 邮箱格式(与 otp/send 一致)。 */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { isValidEmail, normalizeEmail } from '@/lib/contact-validation';
 
 /**
  * 绑定/更换邮箱(OTP 验证新邮箱),与 me/phone 对称。
@@ -23,14 +22,21 @@ export async function POST(request: Request) {
 
   let body: { email?: unknown; code?: unknown };
   try {
-    body = (await request.json()) as typeof body;
-  } catch {
+    body = await readJsonBody<typeof body>(request);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { code: 'BODY_TOO_LARGE', message: 'request body too large' },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
-  const email = (typeof body.email === 'string' ? body.email : '').trim();
+  const inputEmail = typeof body.email === 'string' ? body.email.trim() : '';
+  const email = isValidEmail(inputEmail) ? normalizeEmail(inputEmail) : inputEmail;
   const code = typeof body.code === 'string' ? body.code.trim() : '';
-  if (!EMAIL_RE.test(email)) {
+  if (!isValidEmail(email)) {
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid email' }, { status: 400 });
   }
   if (!code) {

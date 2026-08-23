@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { createSession, loginWithPassword } from '@/lib/account-store';
 import { writeSessionCookie, readSessionToken } from '@/lib/http-session';
 import { clientIpBucketKey } from '@/lib/client-ip';
+import { BoundedRateStore } from '@/lib/bounded-rate-store';
 
 /**
  * 密码登录(username + password)。成功写 dm_session cookie。
@@ -13,8 +15,14 @@ import { clientIpBucketKey } from '@/lib/client-ip';
 export async function POST(request: Request) {
   let body: { username?: string; password?: string };
   try {
-    body = (await request.json()) as typeof body;
-  } catch {
+    body = await readJsonBody<typeof body>(request);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { ok: false, code: 'BODY_TOO_LARGE', message: 'request body too large' },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ ok: false, code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
@@ -90,23 +98,17 @@ interface LoginGuard {
   lockedUntil: number; // 0 = 未锁
 }
 
-const loginGuards = new Map<string, LoginGuard>();
+const LOGIN_GUARD_CAPACITY = 10_000;
+const LOGIN_GUARD_TTL_MS = Math.max(LOGIN_ATTEMPT_WINDOW_MS, LOGIN_LOCK_MS) * 2;
+const loginGuards = new BoundedRateStore<LoginGuard>(LOGIN_GUARD_CAPACITY);
 
 function loginGuardKey(kind: 'ip' | 'account', value: string): string {
   return `${kind}:${value.trim().toLowerCase().slice(0, 128)}`;
 }
 
-function getLoginGuard(key: string): LoginGuard {
-  let guard = loginGuards.get(key);
-  if (!guard) {
-    guard = { failures: [], lockedUntil: 0 };
-    loginGuards.set(key, guard);
-  }
-  return guard;
-}
-
 function checkLoginRateLimit(key: string): void {
-  const guard = getLoginGuard(key);
+  const guard = loginGuards.get(key);
+  if (!guard) return;
   const now = Date.now();
   guard.failures = guard.failures.filter((t) => t > now - LOGIN_ATTEMPT_WINDOW_MS);
   if (guard.lockedUntil <= now) guard.lockedUntil = 0;
@@ -116,7 +118,11 @@ function checkLoginRateLimit(key: string): void {
 }
 
 function recordLoginFailure(key: string, maxFailures: number): void {
-  const guard = getLoginGuard(key);
+  let guard = loginGuards.get(key);
+  if (!guard) {
+    guard = { failures: [], lockedUntil: 0 };
+    loginGuards.set(key, guard, LOGIN_GUARD_TTL_MS);
+  }
   const now = Date.now();
   guard.failures = guard.failures.filter((t) => t > now - LOGIN_ATTEMPT_WINDOW_MS);
   guard.failures.push(now);
@@ -128,9 +134,7 @@ function recordLoginFailure(key: string, maxFailures: number): void {
 }
 
 function clearLoginFailures(key: string): void {
-  const guard = getLoginGuard(key);
-  guard.failures = [];
-  guard.lockedUntil = 0;
+  loginGuards.delete(key);
 }
 
 function rateLimited(err: LoginRateLimitedError): NextResponse {

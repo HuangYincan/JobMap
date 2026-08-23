@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { clearSessionCookie, readSessionUser } from '@/lib/http-session';
 import { updateUser } from '@/lib/account-store';
 import type { Language } from '@/lib/i18n';
@@ -40,8 +41,14 @@ export async function PATCH(request: Request) {
     };
   };
   try {
-    body = (await request.json()) as typeof body;
-  } catch {
+    body = await readJsonBody<typeof body>(request);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { code: 'BODY_TOO_LARGE', message: 'request body too large' },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 

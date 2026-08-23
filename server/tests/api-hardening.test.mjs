@@ -28,9 +28,11 @@ test('#10 search: q 超长 → 400（不做静默截断）', () => {
 test('#10 search: body 大小超限（64KB）→ 400', () => {
   const route = src('app/api/search/route.ts');
   assert.match(route, /const MAX_BODY_CHARS = 64 \* 1024/);
-  assert.match(route, /raw\.length > MAX_BODY_CHARS/);
+  assert.match(route, /readJsonBody<SearchBody>\(request, MAX_BODY_CHARS\)/);
+  assert.match(route, /RequestBodyTooLargeError/);
   assert.match(route, /code: 'BODY_TOO_LARGE'/);
   assert.match(route, /status: 400/);
+  assert.doesNotMatch(route, /await request\.text\(\)/, 'body must be stream-bounded before parsing');
 });
 
 test('#10 search: filters 序列化超限 → 400，且限长结果复用为缓存 key 组件', () => {
@@ -61,15 +63,19 @@ test('#7 search: pageSize 超限（>100 / <1 / 非有限数）→ 400', () => {
   assert.match(route, /invalid JSON body/);
 });
 
-test('#10 suggest: q 超长 → 400（在缓存 key 之前拦截）', () => {
+test('#10 suggest: q/mode/center 超长 → 400（在缓存 key 之前拦截）', () => {
   const route = src('app/api/suggest/route.ts');
   assert.match(route, /const MAX_Q_LENGTH = 100/);
-  assert.match(route, /q\.length > MAX_Q_LENGTH/);
-  assert.match(route, /code: 'Q_TOO_LONG'/);
+  assert.match(route, /const MAX_MODE_LENGTH = 32/);
+  assert.match(route, /const MAX_CENTER_LENGTH = 128/);
+  assert.match(route, /rawQ\.length > MAX_Q_LENGTH/);
+  assert.match(route, /mode\.length > MAX_MODE_LENGTH/);
+  assert.match(route, /centerRaw\.length > MAX_CENTER_LENGTH/);
+  assert.match(route, /code: 'PARAM_TOO_LARGE'/);
   assert.match(route, /status: 400/);
   const keyIdx = route.indexOf('const cacheKey =');
-  const guardIdx = route.indexOf("code: 'Q_TOO_LONG'");
-  assert.ok(guardIdx !== -1 && keyIdx !== -1 && guardIdx < keyIdx, 'suggest q 校验先于缓存 key');
+  const guardIdx = route.indexOf("code: 'PARAM_TOO_LARGE'");
+  assert.ok(guardIdx !== -1 && keyIdx !== -1 && guardIdx < keyIdx, 'suggest 参数校验先于缓存 key');
   // 原契约保持：空 q 热门搜索 / 本地优先 / 空结果不缓存
   assert.match(route, /trendingForMode/);
   assert.match(route, /mode === 'domain'/);
@@ -102,15 +108,16 @@ test('#7 pois/[id]: id 超长（>256）→ 400，且在缓存 key 之前拦截',
 test('#11 notifications: 同用户 60s 冷却 → 429 + Retry-After', () => {
   const route = src('app/api/me/notifications/route.ts');
   assert.match(route, /const NOTIFY_COOLDOWN_MS = 60_000/);
-  assert.match(route, /const notifyCooldown = new Map<string, number>\(\)/);
-  assert.match(route, /notifyCooldown\.get\(user\.id\)/);
+  assert.match(route, /import \{ BoundedRateStore \} from "@\/lib\/bounded-rate-store"/);
+  assert.match(route, /const notifyCooldown = new BoundedRateStore<number>\(NOTIFY_COOLDOWN_CAPACITY\)/);
+  assert.match(route, /notifyCooldown\.get\(user\.id, now\)/);
   assert.match(route, /now - last < NOTIFY_COOLDOWN_MS/);
   assert.match(route, /code: "RATE_LIMITED"/);
   assert.match(route, /status: 429/);
   assert.match(route, /"Retry-After"/);
   // 冷却通过后才执行扫描 + 入队
   const scanIdx = route.indexOf('loadServerCatalog("work")');
-  const setIdx = route.indexOf('notifyCooldown.set(user.id, now)');
+  const setIdx = route.indexOf('notifyCooldown.set(user.id, now, NOTIFY_COOLDOWN_MS, now)');
   assert.ok(setIdx !== -1 && scanIdx !== -1 && setIdx < scanIdx, '冷却记录先于全量扫描');
   // 原有行为保持
   assert.match(route, /matchJobAlerts/);
@@ -122,12 +129,17 @@ test('#12 saved: name/poiId 长度上限 + lng/lat 范围校验 → 400', () => 
   const route = src('app/api/me/saved/route.ts');
   assert.match(route, /const MAX_NAME_LENGTH = 100/);
   assert.match(route, /const MAX_POI_ID_LENGTH = 200/);
+  assert.match(route, /code: "ADDRESS_TOO_LONG"/);
   assert.match(route, /const MIN_LNG = -180/);
   assert.match(route, /const MAX_LNG = 180/);
   assert.match(route, /const MIN_LAT = -90/);
   assert.match(route, /const MAX_LAT = 90/);
   assert.match(route, /code: "NAME_TOO_LONG"/);
   assert.match(route, /code: "POI_ID_TOO_LONG"/);
+  const deleteIdx = route.indexOf('export async function DELETE');
+  const deleteLimitIdx = route.indexOf('poiId.length > MAX_POI_ID_LENGTH', deleteIdx);
+  const removeIdx = route.indexOf('removeSaved(user.id, poiId)', deleteIdx);
+  assert.ok(deleteLimitIdx !== -1 && removeIdx !== -1 && deleteLimitIdx < removeIdx, 'DELETE poiId is bounded before storage');
   assert.match(route, /code: "INVALID_LNG"/);
   assert.match(route, /code: "INVALID_LAT"/);
   assert.match(route, /status: 400/);
@@ -144,21 +156,25 @@ test('#12 saved: name/poiId 长度上限 + lng/lat 范围校验 → 400', () => 
   assert.match(route, /canonicalMode/);
 });
 
-test('#12 pois: q 超长 / page / pageSize 非法 → 400,且先于缓存 key', () => {
+test('#12 pois: 超长外部参数 / page / pageSize 非法 → 400,且先于缓存 key 与 JSON.parse', () => {
   const route = src('app/api/pois/route.ts');
   assert.match(route, /const MAX_Q_LENGTH = 100/);
+  assert.match(route, /const MAX_FILTERS_JSON_LENGTH = 4000/);
+  assert.match(route, /const MAX_BOUNDS_LENGTH = 128/);
   assert.match(route, /const MAX_PAGE_SIZE = 100/);
   assert.match(route, /const MAX_PAGE = 10_000/);
-  assert.match(route, /code: 'Q_TOO_LONG'/);
+  assert.match(route, /code: 'PARAM_TOO_LARGE'/);
   assert.match(route, /code: 'INVALID_PAGE'/);
   assert.match(route, /code: 'INVALID_PAGE_SIZE'/);
   assert.match(route, /status: 400/);
-  // 三类校验都必须先于缓存 key 构造(超限值永不进缓存)
+  // 外部字符串长度、分页都必须先于缓存 key 构造与 filters JSON 解析。
   const keyIdx = route.indexOf('const cacheKey =');
-  const qIdx = route.indexOf("code: 'Q_TOO_LONG'");
+  const paramIdx = route.indexOf("code: 'PARAM_TOO_LARGE'");
+  const parseIdx = route.indexOf('parseFilters(filtersRaw)');
   const pageIdx = route.indexOf("code: 'INVALID_PAGE'");
   const sizeIdx = route.indexOf("code: 'INVALID_PAGE_SIZE'");
-  assert.ok(qIdx !== -1 && qIdx < keyIdx, 'q 校验先于缓存 key');
+  assert.ok(paramIdx !== -1 && paramIdx < keyIdx, '参数限长先于缓存 key');
+  assert.ok(parseIdx !== -1 && paramIdx < parseIdx, 'filters 先限长再 JSON.parse');
   assert.ok(pageIdx !== -1 && pageIdx < keyIdx, 'page 校验先于缓存 key');
   assert.ok(sizeIdx !== -1 && sizeIdx < keyIdx, 'pageSize 校验先于缓存 key');
   // 缺失/空串回退默认(1 / 20),不误伤正常请求
@@ -168,6 +184,19 @@ test('#12 pois: q 超长 / page / pageSize 非法 → 400,且先于缓存 key', 
   assert.match(route, /loadServerCatalog/);
   assert.match(route, /searchPublicCatalog/);
   assert.match(route, /writePublicCache/);
+});
+
+test('#12 domain-local: bounds/q/categories/分页参数超长 → 400,且先于缓存 key', () => {
+  const route = src('app/api/pois/domain-local/route.ts');
+  assert.match(route, /const MAX_Q_LENGTH = 100/);
+  assert.match(route, /const MAX_PARAM_LENGTH = 128/);
+  assert.match(route, /const MAX_CATEGORIES_LENGTH = 300/);
+  assert.match(route, /code: 'PARAM_TOO_LARGE'/);
+  const keyIdx = route.indexOf('const cacheKey =');
+  const paramIdx = route.indexOf("code: 'PARAM_TOO_LARGE'");
+  const dbIdx = route.indexOf('await loadHangzhouPoisFromDb');
+  assert.ok(paramIdx !== -1 && keyIdx !== -1 && paramIdx < keyIdx, '参数限长先于缓存 key');
+  assert.ok(dbIdx !== -1 && paramIdx < dbIdx, '参数限长先于 SQL 查询');
 });
 
 test('#18 me/PATCH: displayName 长度上限 + avatarUrl 协议白名单(>2048/非 http(s))→ 400', () => {
@@ -188,4 +217,32 @@ test('#18 me/PATCH: displayName 长度上限 + avatarUrl 协议白名单(>2048/�
   // avatarUrl='' 保留清头像语义(removeAvatar 流程);401 未登录契约保持
   assert.match(route, /body\.avatarUrl !== ''/);
   assert.match(route, /code: 'UNAUTHORIZED'/);
+});
+
+test('avatar upload rejects File.size before materializing the ArrayBuffer', () => {
+  const route = src('app/api/me/avatar/route.ts');
+  const sizeIdx = route.indexOf('file.size > MAX_AVATAR_BYTES');
+  const bufferIdx = route.indexOf('await file.arrayBuffer()');
+  assert.ok(sizeIdx !== -1, 'must check File.size');
+  assert.ok(bufferIdx !== -1 && sizeIdx < bufferIdx, 'size guard must precede ArrayBuffer');
+});
+
+test('search history persists only bounded queries and entity refs', () => {
+  const historyRoute = src('app/api/me/search-history/route.ts');
+  assert.match(historyRoute, /const MAX_QUERY_LENGTH = 100/);
+  assert.match(historyRoute, /code: 'QUERY_TOO_LONG'/);
+  const queryIdx = historyRoute.indexOf("code: 'QUERY_TOO_LONG'");
+  const addIdx = historyRoute.indexOf('addHistory(user.id, query, mode, entity)');
+  assert.ok(queryIdx !== -1 && addIdx !== -1 && queryIdx < addIdx);
+});
+
+test('applications persist bounded fields and only http(s) apply links', () => {
+  const route = src('app/api/me/applications/route.ts');
+  assert.match(route, /MAX_ID_LENGTH = 200/);
+  assert.match(route, /code: "APPLICATION_FIELD_TOO_LONG"/);
+  assert.match(route, /code: "INVALID_APPLY_URL"/);
+  assert.match(route, /url\.protocol === "http:" \|\| url\.protocol === "https:"/);
+  const guardIdx = route.indexOf('recordApplication(user.id,');
+  const urlIdx = route.indexOf('code: "INVALID_APPLY_URL"');
+  assert.ok(urlIdx !== -1 && guardIdx !== -1 && urlIdx < guardIdx);
 });

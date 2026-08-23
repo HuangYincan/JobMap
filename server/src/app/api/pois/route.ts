@@ -34,6 +34,12 @@ function parseFilters(raw: string | null): Record<string, unknown> {
 // ---- 输入上限（quality-scan #12，2026-08-23；与 POST /api/search 对齐）----
 /** q 上限：超长关键词直接 400（防超长 q 进全 catalog 匹配循环 + 缓存 key 膨胀）。 */
 const MAX_Q_LENGTH = 100;
+/** filters 原始 JSON 上限：先拦长度，再做 JSON.parse。 */
+const MAX_FILTERS_JSON_LENGTH = 4000;
+/** bounds 是四个十进制坐标；sort/mode 是短枚举值，超长必非合法输入。 */
+const MAX_BOUNDS_LENGTH = 128;
+const MAX_SORT_LENGTH = 50;
+const MAX_MODE_LENGTH = 32;
 /** page 上限：超过即视为越界请求（正常分页恒远小于此）。 */
 const MAX_PAGE = 10_000;
 /** pageSize 上限：无 bounds 全量搜索时防单次大响应（客户端语义不变，正常请求恒 ≤50）。 */
@@ -52,17 +58,25 @@ export async function GET(request: Request) {
   const mode = (url.searchParams.get('mode') || 'work') as MapMode;
   const q = url.searchParams.get('q') || undefined;
   const sort = url.searchParams.get('sort') || undefined;
-  const filters = parseFilters(url.searchParams.get('filters'));
   const bounds = url.searchParams.get('bounds');
 
-  // #12：q 长度与 page/pageSize 校验（均先于缓存 key 构造，与 POST /api/search
-  // 的 MAX_Q_LENGTH=100 / pageSize 1..100 规则对齐；page 额外要求整数 1..MAX_PAGE）。
-  if (q && q.length > MAX_Q_LENGTH) {
+  const filtersRaw = url.searchParams.get('filters');
+  if (
+    mode.length > MAX_MODE_LENGTH ||
+    (q && q.length > MAX_Q_LENGTH) ||
+    (sort && sort.length > MAX_SORT_LENGTH) ||
+    (filtersRaw && filtersRaw.length > MAX_FILTERS_JSON_LENGTH) ||
+    (bounds && bounds.length > MAX_BOUNDS_LENGTH)
+  ) {
     return NextResponse.json(
-      { code: 'Q_TOO_LONG', message: `q must be a string of at most ${MAX_Q_LENGTH} chars` },
+      { code: 'PARAM_TOO_LARGE', message: 'one or more query parameters exceed their length limit' },
       { status: 400 }
     );
   }
+  const filters = parseFilters(filtersRaw);
+
+  // #12：q 长度与 page/pageSize 校验（均先于缓存 key 构造，与 POST /api/search
+  // 的 MAX_Q_LENGTH=100 / pageSize 1..100 规则对齐；page 额外要求整数 1..MAX_PAGE）。
   const page = pagedParam(url.searchParams.get('page'), 1, MAX_PAGE);
   if (page === null) {
     return NextResponse.json(

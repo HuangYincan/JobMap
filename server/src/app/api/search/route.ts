@@ -9,6 +9,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { loadServerCatalog } from '@/lib/server-catalog';
 import { searchPublicCatalog, spatialClipFromSearch } from '@/lib/public-search';
 import type { MapMode } from '@/lib/types';
@@ -35,17 +36,16 @@ const MAX_FILTERS_JSON_LENGTH = 4000;
 const MAX_PAGE_SIZE = 100;
 
 export async function POST(request: Request) {
-  const raw = await request.text();
-  if (raw.length > MAX_BODY_CHARS) {
-    return NextResponse.json(
-      { code: 'BODY_TOO_LARGE', message: 'request body too large' },
-      { status: 400 }
-    );
-  }
   let body: SearchBody;
   try {
-    body = JSON.parse(raw) as SearchBody;
-  } catch {
+    body = await readJsonBody<SearchBody>(request, MAX_BODY_CHARS);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { code: 'BODY_TOO_LARGE', message: 'request body too large' },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { code: 'BAD_REQUEST', message: 'invalid JSON body' },
       { status: 400 }

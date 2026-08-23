@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
 import { listSaved, removeSaved, savePlace } from "@/lib/account-store";
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { canonicalMode } from "@/lib/modes";
 import { isPersistableSavedSnapshot } from "@/lib/persistable";
 import type { MapMode } from "@/lib/types";
@@ -8,6 +9,7 @@ import type { MapMode } from "@/lib/types";
 // 加固（quality-scan #12）：name/poiId 长度上限 + lng/lat 范围校验（对齐 account.ts sanitize 风格）。
 const MAX_NAME_LENGTH = 100;
 const MAX_POI_ID_LENGTH = 200;
+const MAX_ADDRESS_LENGTH = 500;
 const MIN_LNG = -180;
 const MAX_LNG = 180;
 const MIN_LAT = -90;
@@ -34,8 +36,14 @@ export async function POST(request: Request) {
     lat?: number;
   };
   try {
-    body = (await request.json()) as typeof body;
-  } catch {
+    body = await readJsonBody<typeof body>(request);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { code: "BODY_TOO_LARGE", message: "request body too large" },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
   }
   const poiId = (body.poiId || "").trim();
@@ -52,6 +60,12 @@ export async function POST(request: Request) {
   if (poiId.length > MAX_POI_ID_LENGTH) {
     return NextResponse.json(
       { code: "POI_ID_TOO_LONG", message: `poiId must be at most ${MAX_POI_ID_LENGTH} chars` },
+      { status: 400 },
+    );
+  }
+  if ((body.address || "").length > MAX_ADDRESS_LENGTH) {
+    return NextResponse.json(
+      { code: "ADDRESS_TOO_LONG", message: `address must be at most ${MAX_ADDRESS_LENGTH} chars` },
       { status: 400 },
     );
   }
@@ -102,6 +116,12 @@ export async function DELETE(request: Request) {
   const poiId = (url.searchParams.get("poiId") || "").trim();
   if (!poiId) {
     return NextResponse.json({ code: "BAD_REQUEST", message: "poiId required" }, { status: 400 });
+  }
+  if (poiId.length > MAX_POI_ID_LENGTH) {
+    return NextResponse.json(
+      { code: "POI_ID_TOO_LONG", message: `poiId must be at most ${MAX_POI_ID_LENGTH} chars` },
+      { status: 400 },
+    );
   }
   await removeSaved(user.id, poiId);
   return NextResponse.json({ ok: true });

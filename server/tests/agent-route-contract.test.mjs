@@ -61,7 +61,10 @@ test('校验顺序契约:body 大小 < messages < viewport < LLM 配置', () => 
 
 test('限流:模块级内存令牌桶 10 req/min,超限 429 RATE_LIMITED', () => {
   assert.match(route, /const RATE_LIMIT_PER_MIN = 10/);
-  assert.match(route, /const buckets = new Map<string, \{ tokens: number; last: number \}>\(\)/);
+  assert.match(route, /import \{ BoundedRateStore \} from '@\/lib\/bounded-rate-store'/);
+  assert.match(route, /const RATE_BUCKET_CAPACITY = 10_000/);
+  assert.match(route, /const buckets = new BoundedRateStore<\{ tokens: number; last: number \}>\(RATE_BUCKET_CAPACITY\)/);
+  assert.match(route, /buckets\.set\(key, b, RATE_BUCKET_TTL_MS, now\)/);
   assert.match(route, /status: 429/);
   assert.match(route, /code: 'RATE_LIMITED'/);
 });
@@ -83,6 +86,8 @@ test('#11 限流键:经 lib/client-ip 统一解析 — 仅可信代理(TRUSTED_P
 
 test('输入上限:body 32KB / messages 20 条 / 单条 4000 字符 / SSE 输出 200KB', () => {
   assert.match(route, /const MAX_BODY_CHARS = 32 \* 1024/);
+  assert.match(route, /readJsonBody<ChatBody>\(request, MAX_BODY_CHARS\)/);
+  assert.doesNotMatch(route, /await request\.text\(\)/, 'chunked bodies must be stream-bounded');
   assert.match(route, /const MAX_MESSAGES = 20/);
   assert.match(route, /const MAX_MESSAGE_CHARS = 4000/);
   assert.match(route, /const MAX_SSE_BYTES = 200 \* 1024/);
@@ -115,9 +120,11 @@ test('工具集构建:builtin + MCP(失败跳过) + rest 兜底 + baidu-agent-pl
   assert.match(route, /跳过该 provider/);
 });
 
-test('request.signal 透传 run-agent(停止/断开完整 abort 链路)', () => {
-  assert.match(route, /signal: request\.signal/);
-  assert.match(route, /request\.signal\.aborted/);
+test('request abort/output budget 传播到 run-agent(停止/断开完整 abort 链路)', () => {
+  assert.match(route, /const upstreamAbort = new AbortController\(\)/);
+  assert.match(route, /request\.signal\.addEventListener\('abort', propagateRequestAbort\)/);
+  assert.match(route, /signal: upstreamAbort\.signal/);
+  assert.match(route, /upstreamAbort\.abort\(new Error\('SSE output budget exhausted'\)\)/);
 });
 
 test('SSE error 事件公开面脱敏:只产出 LLM_UNCONFIGURED/RATE_LIMITED/ERROR,message 置空', () => {

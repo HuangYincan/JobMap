@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import {
   consumeOtp,
   createSession,
@@ -7,6 +8,7 @@ import {
   upsertIdentity,
 } from '@/lib/account-store';
 import { writeSessionCookie } from '@/lib/http-session';
+import { isValidEmail, isValidPhone, normalizeContact } from '@/lib/contact-validation';
 
 /**
  * 验证:15min 窗口错误尝试 ≥5 次 → 锁 15min(consumeOtp 内守卫,→ 429 TOO_MANY_ATTEMPTS);
@@ -15,17 +17,30 @@ import { writeSessionCookie } from '@/lib/http-session';
 export async function POST(request: Request) {
   let body: { provider?: 'phone' | 'email'; target?: string; code?: string };
   try {
-    body = (await request.json()) as typeof body;
-  } catch {
+    body = await readJsonBody<typeof body>(request);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { code: 'BODY_TOO_LARGE', message: 'request body too large' },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
   const provider = body.provider === 'email' ? 'email' : 'phone';
-  const target = (body.target || '').trim();
+  const inputTarget = (body.target || '').trim();
   const code = (body.code || '').trim();
-  if (!target || !code) {
-    return NextResponse.json({ code: 'BAD_REQUEST', message: 'target and code required' }, { status: 400 });
+  if (
+    !inputTarget ||
+    !code ||
+    (provider === 'email' && !isValidEmail(inputTarget)) ||
+    (provider === 'phone' && !isValidPhone(inputTarget)) ||
+    !/^\d{6}$/.test(code)
+  ) {
+    return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid provider target or code' }, { status: 400 });
   }
+  const target = normalizeContact(provider, inputTarget);
 
   try {
     if (!(await consumeOtp(provider, target, code))) {

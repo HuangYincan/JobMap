@@ -1,9 +1,21 @@
 import { NextResponse } from 'next/server';
 import { createSession, upsertIdentity } from '@/lib/account-store';
+import { demoLoginGate } from '@/lib/demo-login-gate';
 import { writeSessionCookie } from '@/lib/http-session';
 
-/** Demo fallback,仅未配置真实 OAuth 时使用(真实流程见 /api/auth/oauth/start?provider=github)。逻辑保持原样。 */
+/**
+ * Demo fallback for local development. Once real GitHub OAuth credentials are
+ * present, this endpoint must not mint a demo session.
+ */
 export async function POST() {
+  const gate = demoLoginGate('github');
+  if (!gate.ok) {
+    return NextResponse.json(
+      { code: gate.code, message: gate.message },
+      { status: 403 },
+    );
+  }
+
   const user = await upsertIdentity({
     provider: 'github',
     subject: 'github:demo',

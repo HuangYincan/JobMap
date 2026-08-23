@@ -55,6 +55,13 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/domain_map
 # 重启后已签发 token/state 失效)。
 SESSION_SECRET=replace-me
 
+# Optional. Set only when Next.js runs behind a trusted reverse proxy.
+# List the proxy's outbound IPs (comma-separated). The proxy must overwrite or
+# strip client-supplied X-Forwarded-For / X-Real-IP. Auth and agent rate limiters
+# trust forwarded headers only while this is configured; otherwise they ignore
+# those headers and use a conservative session/public fingerprint bucket.
+TRUSTED_PROXY_IPS=
+
 # Sends email OTP codes via Resend (tech/25). When unset, email OTP send
 # returns 503 EMAIL_NOT_CONFIGURED. Server secret: never commit or log.
 RESEND_API_KEY=replace-me
@@ -78,9 +85,10 @@ random 6-digit; never log codes or secrets.
 
 Real OAuth 2.0 authorization code flow for GitHub / Google / WeChat
 (`server/src/lib/oauth/`, routes under `/api/auth/oauth/*`). All three
-providers are optional — when unconfigured the frontend falls back to demo
-login (`POST /api/auth/oauth` stub, unchanged). Configured = both variables
-of the pair non-empty (trimmed).
+providers are optional. In non-production, an unconfigured provider may use
+the gated demo fallback (`POST /api/auth/oauth`); production and configured
+providers never use it. Configured = both variables of the pair non-empty
+(trimmed).
 
 ```bash
 # GitHub OAuth App (github.com → Settings → Developer settings → OAuth Apps)
@@ -220,6 +228,7 @@ npm run dev
 - [ ] `NEXT_PUBLIC_AMAP_SECURITY_CODE` - Matches key
 - [ ] `DATABASE_URL` - Production PostgreSQL connection
 - [ ] `SESSION_SECRET` - Strong random secret (32+ characters); **production 必配**(未设时服务端拒绝签名)
+- [ ] `TRUSTED_PROXY_IPS` - Required when a reverse proxy supplies client IPs; configure the proxy to sanitize forwarding headers
 - [ ] `NODE_ENV=production` - Set automatically by hosting platform
 
 ### Security Best Practices

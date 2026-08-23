@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { createSession, upsertIdentity } from '@/lib/account-store';
+import { demoLoginGate } from '@/lib/demo-login-gate';
 import { writeSessionCookie } from '@/lib/http-session';
-import type { AuthProvider } from '@/lib/account';
+import type { OAuthProviderId } from '@/lib/oauth/oauth-config';
 
-const OAUTH: Record<string, { subject: string; email: string; displayName: string; provider: AuthProvider }> = {
+const OAUTH: Record<string, { subject: string; email: string; displayName: string; provider: OAuthProviderId }> = {
   github: {
     provider: 'github',
     subject: 'github:demo',
@@ -24,19 +26,31 @@ const OAUTH: Record<string, { subject: string; email: string; displayName: strin
   },
 };
 
-/** Demo fallback,仅未配置真实 OAuth 时使用(真实流程见 lib/oauth/* 与
- *  /api/auth/oauth/{providers,start,callback/[provider]})。逻辑保持原样。 */
+/** Demo fallback; disabled per provider as soon as its real OAuth env is set. */
 export async function POST(request: Request) {
   let body: { provider?: string };
   try {
-    body = (await request.json()) as typeof body;
-  } catch {
+    body = await readJsonBody<typeof body>(request);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { code: 'BODY_TOO_LARGE', message: 'request body too large' },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
   const spec = OAUTH[body.provider || ''];
   if (!spec) {
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'unsupported provider' }, { status: 400 });
+  }
+  const gate = demoLoginGate(spec.provider);
+  if (!gate.ok) {
+    return NextResponse.json(
+      { code: gate.code, message: gate.message },
+      { status: 403 },
+    );
   }
 
   const user = await upsertIdentity(spec);

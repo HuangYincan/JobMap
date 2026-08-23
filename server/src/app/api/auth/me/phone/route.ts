@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { readSessionUser } from '@/lib/http-session';
 import {
   bindPhone,
@@ -7,9 +8,7 @@ import {
   OtpTooManyAttemptsError,
   PhoneTakenError,
 } from '@/lib/account-store';
-
-/** 手机号格式(与 otp/send 一致):+86 前缀可带,6-15 位数字,忽略空格/连字符。 */
-const PHONE_RE = /^\+?\d{6,15}$/;
+import { isValidPhone, normalizePhone } from '@/lib/contact-validation';
 
 /**
  * 绑定/更换手机(OTP 验证新手机)。成功 200 { ok:true, user }(user.phone 已更新)。
@@ -24,14 +23,21 @@ export async function POST(request: Request) {
 
   let body: { phone?: unknown; code?: unknown };
   try {
-    body = (await request.json()) as typeof body;
-  } catch {
+    body = await readJsonBody<typeof body>(request);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { code: 'BODY_TOO_LARGE', message: 'request body too large' },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
-  const phone = (typeof body.phone === 'string' ? body.phone : '').trim();
+  const inputPhone = typeof body.phone === 'string' ? body.phone.trim() : '';
+  const phone = isValidPhone(inputPhone) ? normalizePhone(inputPhone) : inputPhone;
   const code = typeof body.code === 'string' ? body.code.trim() : '';
-  if (!PHONE_RE.test(phone.replace(/[\s-]/g, ''))) {
+  if (!isValidPhone(phone)) {
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid phone' }, { status: 400 });
   }
   if (!code) {

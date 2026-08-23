@@ -48,6 +48,26 @@ function memoryMode() {
 // 1. loginWithPassword 支持邮箱(username 登录保持)
 // ============================================================
 
+test('password register: body limit + registration rate limit precede scrypt and durable writes', () => {
+  const route = src('app/api/auth/password/register/route.ts');
+  assert.match(route, /const MAX_BODY_CHARS = 4 \* 1024/);
+  assert.match(route, /readJsonBody<typeof body>\(request, MAX_BODY_CHARS\)/);
+  assert.match(route, /RequestBodyTooLargeError/);
+  assert.match(route, /const REGISTER_MAX_PER_KEY = 5/);
+  assert.match(route, /registrationAttempts = new BoundedRateStore<number\[\]>\(/);
+  assert.match(route, /REGISTRATION_GUARD_CAPACITY = 10_000/);
+  assert.match(route, /clientIpBucketKey\(request, await readSessionToken\(\)\)/);
+
+  const parseIdx = route.indexOf('readJsonBody<typeof body>');
+  const bucketIdx = route.indexOf('clientIpBucketKey(request');
+  const recordIdx = route.indexOf('recordRegistration(bucketKey)');
+  const registerIdx = route.indexOf('registerWithPassword(username, password)');
+  const lateRecordIdx = route.indexOf('recordRegistration(bucketKey)', registerIdx);
+  assert.ok(bucketIdx > parseIdx && recordIdx > bucketIdx && registerIdx > recordIdx,
+    'body parsing → rate-limit key → reserve attempt → scrypt/register ordering must be enforced');
+  assert.equal(lateRecordIdx, -1, 'duplicate-username attempts must consume the registration quota');
+});
+
 test('loginWithPassword accepts a bound email (memory store)', async () => {
   const restore = memoryMode();
   try {
@@ -273,7 +293,7 @@ test('route me/phone:UNAUTHORIZED / BAD_REQUEST / INVALID_CODE / PHONE_TAKEN / 4
   assert.match(route, /readSessionUser\(\)/);
   assert.match(route, /code: 'UNAUTHORIZED'/);
   assert.match(route, /status: 401/);
-  assert.match(route, /PHONE_RE/);
+  assert.match(route, /isValidPhone/);
   assert.match(route, /code: 'BAD_REQUEST'/);
   assert.match(route, /status: 400/);
   assert.match(route, /consumeOtp\('phone', phone, code\)/);
@@ -294,7 +314,7 @@ test('route me/email:UNAUTHORIZED / BAD_REQUEST / INVALID_CODE / EMAIL_TAKEN / 4
   assert.match(route, /readSessionUser\(\)/);
   assert.match(route, /code: 'UNAUTHORIZED'/);
   assert.match(route, /status: 401/);
-  assert.match(route, /EMAIL_RE/);
+  assert.match(route, /isValidEmail/);
   assert.match(route, /code: 'BAD_REQUEST'/);
   assert.match(route, /status: 400/);
   assert.match(route, /consumeOtp\('email', email, code\)/);

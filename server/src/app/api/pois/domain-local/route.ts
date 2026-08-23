@@ -29,6 +29,24 @@ export async function GET(request: Request) {
   const limitRaw = url.searchParams.get('limit');
   const offsetRaw = url.searchParams.get('offset');
 
+  // 与 /api/pois 的 API 加固对齐：所有外部字符串先限长，再进入缓存 key / SQL。
+  const MAX_Q_LENGTH = 100;
+  const MAX_PARAM_LENGTH = 128;
+  const MAX_CATEGORIES_LENGTH = 300;
+  if (
+    (boundsRaw && boundsRaw.length > MAX_PARAM_LENGTH) ||
+    (zoomRaw && zoomRaw.length > MAX_PARAM_LENGTH) ||
+    (q && q.length > MAX_Q_LENGTH) ||
+    (categoriesRaw && categoriesRaw.length > MAX_CATEGORIES_LENGTH) ||
+    (limitRaw && limitRaw.length > MAX_PARAM_LENGTH) ||
+    (offsetRaw && offsetRaw.length > MAX_PARAM_LENGTH)
+  ) {
+    return NextResponse.json(
+      { code: 'PARAM_TOO_LARGE', message: 'one or more query parameters exceed their length limit' },
+      { status: 400 }
+    );
+  }
+
   const bounds = parseBoundsParam(boundsRaw);
   // NaN/Infinity 落回默认值(非法数值经 pg 序列化成 "NaN" 会让 Postgres 报错,
   // 而 catch 会把它伪装成「无数据」的 200 并缓存 30s)

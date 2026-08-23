@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { readSessionToken } from '@/lib/http-session';
 import { clientIpBucketKey } from '@/lib/client-ip';
 import {
@@ -8,6 +9,7 @@ import {
   OtpRateLimitedError,
   OtpTooManyAttemptsError,
 } from '@/lib/account-store';
+import { isValidEmail, isValidPhone, normalizeContact } from '@/lib/contact-validation';
 import {
   EmailAuthError,
   EmailConfigError,
@@ -36,20 +38,30 @@ import {
 export async function POST(request: Request) {
   let body: { provider?: 'phone' | 'email'; target?: string };
   try {
-    body = (await request.json()) as typeof body;
-  } catch {
+    body = await readJsonBody<typeof body>(request);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { code: 'BODY_TOO_LARGE', message: 'request body too large' },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
   const provider = body.provider === 'email' ? 'email' : 'phone';
-  const target = (body.target || '').trim();
+  const inputTarget = (body.target || '').trim();
+  const target = (provider === 'phone' && isValidPhone(inputTarget)) ||
+      (provider === 'email' && isValidEmail(inputTarget))
+    ? normalizeContact(provider, inputTarget)
+    : inputTarget;
   if (!target) {
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'target required' }, { status: 400 });
   }
-  if (provider === 'phone' && !/^\+?\d{6,15}$/.test(target.replace(/[\s-]/g, ''))) {
+  if (provider === 'phone' && !isValidPhone(target)) {
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid phone' }, { status: 400 });
   }
-  if (provider === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
+  if (provider === 'email' && !isValidEmail(target)) {
     return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid email' }, { status: 400 });
   }
 
