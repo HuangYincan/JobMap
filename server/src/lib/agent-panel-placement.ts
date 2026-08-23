@@ -39,6 +39,12 @@ export type PanelPlacement =
   | { mode: 'side'; left: number; top: number; flipped: boolean }
   | { mode: 'sheet' };
 
+export interface BallPosition {
+  left: number | null;
+  right: number | null;
+  top: number;
+}
+
 /** clamp 到 [min, max];min > max 时取 min(面板高于视口时贴顶)。 */
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -94,6 +100,25 @@ export function computeBallSnap(
     return { edge, left: clampAxis(drop.left, margin, viewport.width - ballSize - margin), top: margin };
   }
   return { edge, left: clampAxis(drop.left, margin, viewport.width - ballSize - margin), top: viewport.height - ballSize - margin };
+}
+
+/**
+ * 恢复持久化位置时收敛到当前视口。极小视口下可用区间可能为负,
+ * 此时退回贴边距位置,保证球至少有一角可见且可拖拽。
+ */
+export function clampBallPosition(
+  position: BallPosition,
+  viewport: ViewportSize,
+  ballSize: number,
+  margin: number,
+): BallPosition {
+  const maxTop = Math.max(margin, viewport.height - ballSize - margin);
+  const maxLeft = Math.max(margin, viewport.width - ballSize - margin);
+  return {
+    left: position.left === null ? null : clamp(position.left, margin, maxLeft),
+    right: position.right,
+    top: clamp(position.top, margin, maxTop),
+  };
 }
 
 /**

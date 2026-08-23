@@ -8,10 +8,15 @@ const root = path.resolve(import.meta.dirname, "..");
 test("map shell vertical slice is present", () => {
   const page = fs.readFileSync(path.join(root, "src/app/page.tsx"), "utf8");
   const shell = fs.readFileSync(path.join(root, "src/components/map-shell.tsx"), "utf8");
+  const drawerGesture = fs.readFileSync(
+    path.join(root, "src/hooks/use-mobile-drawer-gesture.ts"),
+    "utf8",
+  );
 
   assert.match(page, /HomeMap/);
   // Three mobile drawer states must be present.
-  assert.match(shell, /DrawerState = "mini" \| "half" \| "full"/);
+  assert.match(drawerGesture, /export type DrawerState = "mini" \| "half" \| "full"/);
+  assert.match(shell, /useMobileDrawerGesture\(/);
   assert.match(shell, /drawerHalf|drawerFull|snapControls/);
   // Map engine graceful-degradation-without-key contract lives in the engine
   // layer now (engine.isConfigured / resolveEngine null fallback): the old

@@ -15,7 +15,7 @@
 
 import { useEffect, useState, type MouseEvent } from "react";
 import DOMPurify from "dompurify";
-import { renderMarkdown } from "@/lib/markdown-pipeline";
+import { buildNaviWebUrl, renderMarkdown } from "@/lib/markdown-pipeline";
 import { t, type Language } from "@/lib/i18n";
 import styles from "./markdown-text.module.css";
 
@@ -41,6 +41,12 @@ export function MarkdownText({ text, lang = "zh" }: { text: string; lang?: Langu
     const naviRaw = el.getAttribute("data-navi");
     if (!naviRaw) return;
     if (/Mobi|Android/i.test(navigator.userAgent)) {
+      // DOMPurify preserves data-* attributes; revalidate before navigation so
+      // a corrupted or future markup path cannot hand an arbitrary URI to the OS.
+      if (!buildNaviWebUrl(naviRaw)) {
+        e.preventDefault();
+        return;
+      }
       e.preventDefault();
       window.location.href = naviRaw;
     }

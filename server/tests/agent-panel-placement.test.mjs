@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  clampBallPosition,
   computeBallSnap,
   computePanelPlacement,
   MOBILE_MAX_WIDTH,
@@ -138,7 +139,29 @@ test('移动端(≤767px)→ 恒 sheet,不受球位置影响', () => {
     { left: 700, top: 100, width: 44, height: 44 },
   ]) {
     assert.deepEqual(computePanelPlacement(ball, PANEL, { width: MOBILE_MAX_WIDTH, height: 700 }), { mode: 'sheet' });
-  }
+}
+
+// ---------- 持久化位置恢复(旧视口数据收敛)----------
+
+test('clampBallPosition: 恢复坐标收敛到当前视口', () => {
+  assert.deepEqual(
+    clampBallPosition({ left: -80, right: null, top: 99999 }, V, 44, 12),
+    { left: 12, right: null, top: 800 - 44 - 12 },
+  );
+  assert.deepEqual(
+    clampBallPosition({ left: 99999, right: null, top: -30 }, V, 44, 12),
+    { left: 1280 - 44 - 12, right: null, top: 12 },
+  );
+});
+
+test('clampBallPosition: 极小视口退回贴边位置', () => {
+  const tiny = { width: 40, height: 40 };
+  assert.deepEqual(clampBallPosition({ left: -100, right: null, top: -100 }, tiny, 44, 12), {
+    left: 12,
+    right: null,
+    top: 12,
+  });
+});
 });
 
 // ---------- 常量契约 ----------

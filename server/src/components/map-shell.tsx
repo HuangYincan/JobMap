@@ -39,6 +39,7 @@ import { useSavedLayer } from "@/hooks/use-saved-layer";
 import { useSearchState } from "@/hooks/use-search-state";
 import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { useMapEngine, type UseMapEngineResult } from "@/hooks/use-map-engine";
+import { useMobileDrawerGesture, type DrawerState } from "@/hooks/use-mobile-drawer-gesture";
 import type { MapMarker, MapMarkerOptions, MapView } from "@/lib/map-engine/types";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
@@ -95,7 +96,6 @@ function prefetchAllRail() {
   for (const load of Object.values(RAIL_PANEL_MODULES)) void load();
 }
 
-type DrawerState = "mini" | "half" | "full";
 type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;
 
 /**
@@ -115,48 +115,6 @@ type MapMountApi = UseMapEngineResult & {
 const noopMapRetry = () => {
   /* 并入后由 useMapEngine 的真实 retryMount 替代 */
 };
-
-/** 移动抽屉手势(跟手拖动):三态高度(mini px / half·full 按 vh 计算) */
-const DRAWER_MINI_H = 96;
-const DRAWER_HALF_RATIO = 0.42;
-/** 快滑判定阈值(px/s):超过则直接吸附到 full(上)/mini(下) */
-const DRAWER_FLING_V = 900;
-
-/** 移动端 topTools 工具按钮(指南针/定位)尺寸与顶部偏移 */
-const DRAWER_TOOL_BUTTON_H = 40;
-const DRAWER_TOP_MIN = 12;
-
-/** 运行时读取 env(safe-area-inset-top)(探测元素实测 padding-top);无安全区返回 0 */
-function readSafeAreaTop(): number {
-  if (typeof window === "undefined" || typeof document === "undefined") return 0;
-  const probe = document.createElement("div");
-  probe.style.cssText =
-    "position:fixed;top:0;left:-9999px;width:0;height:0;padding-top:env(safe-area-inset-top);pointer-events:none;visibility:hidden;";
-  document.documentElement.appendChild(probe);
-  const px = parseFloat(getComputedStyle(probe).paddingTop) || 0;
-  probe.remove();
-  return px > 0 ? px : 0;
-}
-
-/** 指南针中心 Y(移动端 topTools 组):top 偏移 + 按钮高度一半 */
-function compassCenterY(safeTop: number): number {
-  return Math.max(DRAWER_TOP_MIN, safeTop) + DRAWER_TOOL_BUTTON_H / 2;
-}
-
-/** 全开抽屉高度:顶边 = 指南针中心 Y(对齐 CSS calc(100svh - max(12px, env(safe-area-inset-top)) - 20px)) */
-function drawerFullHeight(vh: number, safeTop: number): number {
-  return vh - compassCenterY(safeTop);
-}
-
-/** 慢拖松手:按当前位置取最近的三态 */
-function nearestDrawerState(h: number, half: number, full: number): DrawerState {
-  const d = (a: number) => Math.abs(h - a);
-  return d(DRAWER_MINI_H) <= d(half) && d(DRAWER_MINI_H) <= d(full)
-    ? "mini"
-    : d(half) <= d(full)
-      ? "half"
-      : "full";
-}
 
 function readLngLat(
   value?: { lng?: number; lat?: number; getLng?: () => number; getLat?: () => number } | null,
@@ -403,21 +361,24 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
   const [mobileSuggestIndex, setMobileSuggestIndex] = useState(-1);
   const [online, setOnline] = useState(true);
-  /** 移动抽屉跟手手势状态 */
-  const [drawerDragging, setDrawerDragging] = useState(false);
-  const drawerRef = useRef<HTMLElement | null>(null);
-  const drawerDraggingRef = useRef(false);
-  const drawerSuppressClickRef = useRef(false);
-  const drawerStateRef = useRef<DrawerState>(drawer);
   const drawerFullishRef = useRef(false);
-  const drawerGestureRef = useRef<{
-    startY: number;
-    baseH: number;
-    lastY: number;
-    lastTime: number;
-    vel: number;
-    safeTop: number;
-  } | null>(null);
+  const {
+    drawerDragging,
+    drawerRef,
+    drawerSuppressClickRef,
+    handleDrawerPointerDown,
+    handleDrawerPointerMove,
+    finishDrawerGesture,
+  } = useMobileDrawerGesture({
+    drawer,
+    detailPoi,
+    mobileJd,
+    mobileSheet,
+    setDrawer,
+    setDetailPoi,
+    setMobileJd,
+    setMobileSheet,
+  });
   /** 移动端抽屉列表滚动容器（.drawerContent）与滚动位置保存（交互 1） */
   const drawerContentRef = useRef<HTMLDivElement>(null);
   const drawerScrollRef = useRef(0);
@@ -820,6 +781,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       document.removeEventListener('mouseup', handleMouseUp);
       darkModeQuery.removeEventListener('change', handleThemeChange);
       window.removeEventListener('resize', handleResize);
+      offZoomChange?.();
+      offRotate?.();
+      offMoveEnd?.();
+      offComplete?.();
+      offDragStart?.();
+      offZoomStart?.();
+      offClick?.();
       scaleControlRef.current = null;
       // 非 AMap 引擎蓝点:卸载/切引擎时摘除(AMap 蓝点随 Geolocation 控件销毁)
       try {
@@ -877,13 +845,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     window.addEventListener('resize', handleResize);
 
     // Sync zoom state
-    view.on("zoomchange", () => {
+    const offZoomChange = view.on("zoomchange", () => {
       const currentZoom = view.getState().zoom;
       setZoom(Math.round(currentZoom));
     });
 
     // 监听地图旋转变化(rotatechange 不在 MapViewEvent 联合,经 onViewEvent 转发)
-    onViewEvent(view, "rotatechange", () => {
+    const offRotate = onViewEvent(view, "rotatechange", () => {
       setRotation(view.getState().rotation);
     });
 
@@ -898,21 +866,21 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         setMapBounds({ west: b.west, south: b.south, east: b.east, north: b.north });
       }
     };
-    view.on("moveend", syncView);
-    view.on("complete", syncView);
+    const offMoveEnd = view.on("moveend", syncView);
+    const offComplete = view.on("complete", syncView);
     // 首帧立即同步一次视野:mapBounds 在第一批数据到达前就绪,
     // work 列表客户端裁剪(全量池按视野过滤)从第一次渲染起就有 bounds 可用
     syncView();
     // 相机接管标记:只有用户手动移动/缩放相机(拖/缩)才置位;
     // pin/卡片/空白点击不置位——选择公司 ≠ 放弃定位,geolocation settle
     // 仍会飞用户位置(ws-poi-vanish 首点修复)。
-    onViewEvent(view, "dragstart", () => {
+    const offDragStart = onViewEvent(view, "dragstart", () => {
       userMovedMapRef.current = true;
     });
-    onViewEvent(view, "zoomstart", () => {
+    const offZoomStart = onViewEvent(view, "zoomstart", () => {
       userMovedMapRef.current = true;
     });
-    view.on("click", () => {
+    const offClick = view.on("click", () => {
       if (ignoreNextMapClick.current) {
         ignoreNextMapClick.current = false;
         return;
@@ -2151,10 +2119,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   const cycleDrawer = () => setDrawer((current) => current === "mini" ? "half" : current === "half" ? "full" : "mini");
 
-  useEffect(() => {
-    drawerStateRef.current = drawer;
-  }, [drawer]);
-
   /** 抽屉全开或详情打开:隐藏 topTools(指南针+定位)与比例尺;half/mini 恢复 */
   const drawerFullish = drawer === "full" || !!detailPoi;
 
@@ -2178,105 +2142,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       drawerContentRef.current.scrollTop = drawerScrollRef.current;
     }
   }, [detailPoi]);
-
-  /** 手势状态机 —— 跟手拖动:pointerdown 记录起点,pointermove 直接写 height(px),pointerup 按位置+速度决定三态 */
-  const handleDrawerPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    const el = drawerRef.current;
-    if (!el) return;
-    drawerGestureRef.current = {
-      startY: event.clientY,
-      baseH: el.getBoundingClientRect().height,
-      lastY: event.clientY,
-      lastTime: performance.now(),
-      vel: 0,
-      safeTop: readSafeAreaTop(),
-    };
-    drawerDraggingRef.current = true;
-    setDrawerDragging(true);
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      /* 指针捕获失败时退化为按下事件上的位移判定 */
-    }
-  };
-
-  const handleDrawerPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
-    const g = drawerGestureRef.current;
-    if (!g || !drawerDraggingRef.current) return;
-    const now = performance.now();
-    const dt = now - g.lastTime;
-    const instant = dt > 0 ? ((event.clientY - g.lastY) / dt) * 1000 : 0;
-    g.vel = Number.isFinite(instant) ? g.vel * 0.4 + instant * 0.6 : g.vel;
-    g.lastY = event.clientY;
-    g.lastTime = now;
-
-    // 跟手核心:拖拽中直接用 transform 系的 height 写 px,拖拽态 CSS 为 transition:none,不做缓动
-    const h = g.baseH - (event.clientY - g.startY);
-    const el = drawerRef.current;
-    if (el) el.style.height = `${h}px`;
-
-    // 内容可见性随手指所在档位切换(mini 只露搜索,越过档位即显示内容)
-    // 全开阈值 = 抽屉顶边到指南针中心(vh - max(12px, safe-area-top) - 20px),与 CSS drawerFull 对齐
-    const vh = window.innerHeight;
-    const fullH = drawerFullHeight(vh, g.safeTop);
-    const halfH = vh * DRAWER_HALF_RATIO;
-    const eff: DrawerState = h >= fullH ? "full" : h >= halfH ? "half" : "mini";
-    if (eff !== drawerStateRef.current) setDrawer(eff);
-  };
-
-  const finishDrawerGesture = (clientY: number) => {
-    const g = drawerGestureRef.current;
-    drawerGestureRef.current = null;
-    if (!g || !drawerDraggingRef.current) return;
-    drawerDraggingRef.current = false;
-    setDrawerDragging(false);
-
-    // 手势已提交:清空拖拽期 inline height,交给 CSS class(svh)过渡从当前位置吸附到档位。
-    // rAF 在 React 离散事件同步提交之后、绘制之前执行,确保 transition 从手指位置平滑收尾。
-    requestAnimationFrame(() => {
-      if (drawerDraggingRef.current) return; // 新手势已开始,不打断
-      const el = drawerRef.current;
-      if (el) el.style.height = "";
-    });
-
-    // 真拖动(超过 8px)抑制随后的 onClick 循环切换;点按保留原有 cycle 逻辑
-    if (Math.abs(clientY - g.startY) > 8) drawerSuppressClickRef.current = true;
-
-    const currentH = drawerRef.current?.getBoundingClientRect().height ?? g.baseH;
-    const vh = window.innerHeight;
-    const fullH = drawerFullHeight(vh, g.safeTop);
-    const halfH = vh * DRAWER_HALF_RATIO;
-    const vel = g.vel;
-
-    // 内容栈优先:详情/JD 被下拉到过半(或快滑)→ 收到各自上一层;否则回弹 full
-    if (detailPoi || mobileJd) {
-      const popContent =
-        vel > DRAWER_FLING_V || currentH < (fullH + halfH) / 2;
-      if (popContent) {
-        if (mobileJd) {
-          setMobileJd(null);
-          setDrawer("full");
-        } else {
-          setDetailPoi(null);
-          setMobileJd(null);
-          setDrawer("half");
-        }
-      } else {
-        setDrawer("full");
-      }
-      return;
-    }
-    if (mobileSheet !== "explore") {
-      if (vel > DRAWER_FLING_V) setMobileSheet("explore");
-      else setDrawer(nearestDrawerState(currentH, halfH, fullH));
-      return;
-    }
-    // 三态判定:向上快滑→full,向下快滑→mini,慢拖→就近档位
-    if (vel < -DRAWER_FLING_V) setDrawer("full");
-    else if (vel > DRAWER_FLING_V) setDrawer("mini");
-    else setDrawer(nearestDrawerState(currentH, halfH, fullH));
-  };
 
   return (
     <main className={styles.shell}>

@@ -11,12 +11,12 @@
 // - 受控化(2026-08-22 ws-mt):open/onOpenChange 由 MapShell 提升提供(local state 移除);
 //   移动端(≤767px)球隐藏,入口改为移动工具栏 AI item(见 map-shell mobileToolbarItems)。
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./agent-ball.module.css";
 import { t, type Language } from "@/lib/i18n";
 import type { AccountUser } from "@/lib/account";
 import type { MapBridge } from "@/lib/agent-map-bridge";
-import { computeBallSnap, type BallRect, type BallSnapEdge } from "@/lib/agent-panel-placement";
+import { clampBallPosition, computeBallSnap, type BallRect, type BallSnapEdge } from "@/lib/agent-panel-placement";
 import { AgentPanel } from "./agent-panel";
 
 const BALL_SIZE = 44;
@@ -51,6 +51,7 @@ function readInitialState(): InitialState {
   // SSR 安全:window 不存在时直接返回默认位(top 占位,客户端 hydration 时重算)
   if (typeof window === "undefined") return { pos: { left: null, right: EDGE_MARGIN, top: 0 }, edge: "right" };
   try {
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
     const raw = window.localStorage.getItem(POS_KEY);
     if (raw) {
       const parsed: unknown = JSON.parse(raw);
@@ -61,12 +62,35 @@ function readInitialState(): InitialState {
           typeof top === "number" &&
           Number.isFinite(top)
         ) {
-          if (edge === "left") return { pos: { left: EDGE_MARGIN, right: null, top }, edge };
-          if (edge === "right") return { pos: { left: null, right: EDGE_MARGIN, top }, edge };
+          if (edge === "left") {
+            return {
+              pos: clampBallPosition({ left: EDGE_MARGIN, right: null, top }, viewport, BALL_SIZE, EDGE_MARGIN),
+              edge,
+            };
+          }
+          if (edge === "right") {
+            return {
+              pos: clampBallPosition({ left: null, right: EDGE_MARGIN, top }, viewport, BALL_SIZE, EDGE_MARGIN),
+              edge,
+            };
+          }
           // top/bottom 吸附:left 存水平位置;缺失/非法 → 默认贴左
           const savedLeft = typeof left === "number" && Number.isFinite(left) ? left : EDGE_MARGIN;
-          if (edge === "top") return { pos: { left: savedLeft, right: null, top: EDGE_MARGIN }, edge };
-          return { pos: { left: savedLeft, right: null, top: window.innerHeight - BALL_SIZE - EDGE_MARGIN }, edge };
+          if (edge === "top") {
+            return {
+              pos: clampBallPosition({ left: savedLeft, right: null, top: EDGE_MARGIN }, viewport, BALL_SIZE, EDGE_MARGIN),
+              edge,
+            };
+          }
+          return {
+            pos: clampBallPosition(
+              { left: savedLeft, right: null, top: viewport.height - BALL_SIZE - EDGE_MARGIN },
+              viewport,
+              BALL_SIZE,
+              EDGE_MARGIN,
+            ),
+            edge,
+          };
         }
       }
     }
@@ -91,6 +115,21 @@ export default function AgentBall({ bridge, lang, user, open, onOpenChange }: Pr
     baseLeft: number;
     baseTop: number;
   } | null>(null);
+
+  // Resize 后重新收敛：持久化位置可能来自更大的视口。
+  useEffect(() => {
+    const handleResize = () => {
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+      setPos((current) => {
+        const next = clampBallPosition(current, viewport, BALL_SIZE, EDGE_MARGIN);
+        return next.left === current.left && next.right === current.right && next.top === current.top
+          ? current
+          : next;
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   /** 球当前矩形(viewport 坐标):pos 状态派生;面板锚定用。 */
   const ballRect: BallRect = useMemo(() => {

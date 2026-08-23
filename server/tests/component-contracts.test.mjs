@@ -142,8 +142,13 @@ test('mobile JD panel stays visible inside the drawer', () => {
 
 test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   const shell = src('components/map-shell.tsx');
+  const gesture = src('hooks/use-mobile-drawer-gesture.ts');
   const css = src('components/map-shell.module.css');
-  assert.match(shell, /type DrawerState = "mini" \| "half" \| "full"/);
+  assert.match(shell, /import \{ useMobileDrawerGesture, type DrawerState \} from "@\/hooks\/use-mobile-drawer-gesture"/);
+  assert.match(shell, /useMobileDrawerGesture\(\{/);
+  assert.match(gesture, /export type DrawerState = "mini" \| "half" \| "full"/);
+  assert.match(gesture, /handleDrawerPointerDown/);
+  assert.match(gesture, /finishDrawerGesture/);
   assert.match(shell, /mobileSheet === "saved"/);
   assert.match(shell, /mobileSheet === "layers"/);
   assert.match(shell, /mobileSheet === "account"/);
@@ -317,6 +322,29 @@ test('map shell scale control: cleanup 接线 + 销毁保护 + 无双 addControl
   assert.match(shell, /isDestroyed\?\.\(\)/); // handleResize 对已销毁实例直接 return
   assert.match(shell, /scaleControlRef\.current\) return/); // 插件回调已存在则不再 add
   assert.match(shell, /addScaleControl/); // 统一创建函数
+});
+
+test('map shell view subscriptions are removed by createMap cleanup', () => {
+  const shell = src('components/map-shell.tsx');
+  for (const assignment of [
+    'const offZoomChange = view.on("zoomchange"',
+    'const offRotate = onViewEvent(view, "rotatechange"',
+    'const offMoveEnd = view.on("moveend"',
+    'const offComplete = view.on("complete"',
+    'const offDragStart = onViewEvent(view, "dragstart"',
+    'const offZoomStart = onViewEvent(view, "zoomstart"',
+    'const offClick = view.on("click"',
+  ]) {
+    assert.match(shell, new RegExp(assignment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  }
+  const cleanup = shell.slice(shell.indexOf('const cleanup = () => {'), shell.indexOf('// 非 AMap 引擎蓝点'));
+  assert.match(cleanup, /offZoomChange\?\.\(\)/);
+  assert.match(cleanup, /offRotate\?\.\(\)/);
+  assert.match(cleanup, /offMoveEnd\?\.\(\)/);
+  assert.match(cleanup, /offComplete\?\.\(\)/);
+  assert.match(cleanup, /offDragStart\?\.\(\)/);
+  assert.match(cleanup, /offZoomStart\?\.\(\)/);
+  assert.match(cleanup, /offClick\?\.\(\)/);
 });
 
 test('map loading overlay: 挂载失败态 + 重试按钮接线(ws-3 loading-error-ui)', () => {
@@ -1202,6 +1230,24 @@ test('agent panel sessions: header entry + popover + local store (ws-panel2)', (
   assert.match(css, /\.sessionStreaming \{[\s\S]*animation: sessionStreamingPulse/);
 });
 
+test('agent memory DELETE distinguishes one-item removal from clear-all', () => {
+  const route = src('app/api/me/memories/route.ts');
+  assert.match(route, /import \{ clearMemories, listMemories, removeMemory \} from '@\/lib\/memory-store'/);
+  assert.match(route, /const memoryId = \(new URL\(request\.url\)\.searchParams\.get\('id'\) \|\| ''\)\.trim\(\)/);
+  assert.match(route, /if \(!memoryId\) \{[\s\S]*await clearMemories\(user\.id\)/);
+  assert.match(route, /await removeMemory\(user\.id, memoryId\)/);
+  assert.match(route, /MEMORY_ID_TOO_LONG/);
+
+  const panel = src('components/agent-panel.tsx');
+  const deleteAt = panel.indexOf('const deleteMemory = useCallback');
+  const clearAt = panel.indexOf('const clearMemories = useCallback');
+  assert.ok(deleteAt !== -1 && clearAt !== -1 && deleteAt < clearAt);
+  assert.match(panel, /\/api\/me\/memories\?id=\$\{encodeURIComponent\(String\(id\)\)\}/);
+  const singleDeleteAt = panel.indexOf('{ method: "DELETE" }', deleteAt);
+  const clearAllAt = panel.indexOf('fetch("/api/me/memories", { method: "DELETE" })', clearAt);
+  assert.ok(singleDeleteAt !== -1 && clearAllAt !== -1 && singleDeleteAt < clearAllAt);
+});
+
 test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
   const shell = src('components/map-shell.tsx');
   const bridge = src('lib/agent-map-bridge.ts');
@@ -1306,6 +1352,16 @@ test('markdown-text: 组件引用 marked 与 dompurify,且消毒先于注入(ws-
   assert.match(pipeline, /sanitize: \(html: string\) => string/);
 });
 
+test('markdown-text revalidates native navigation URIs before OS handoff', () => {
+  const text = src('components/markdown-text.tsx');
+  assert.match(text, /import \{ buildNaviWebUrl, renderMarkdown \} from "@\/lib\/markdown-pipeline"/);
+  const rawAt = text.indexOf('const naviRaw = el.getAttribute("data-navi")');
+  const guardAt = text.indexOf('if (!buildNaviWebUrl(naviRaw))');
+  const assignAt = text.indexOf('window.location.href = naviRaw');
+  assert.ok(rawAt !== -1 && guardAt !== -1 && assignAt !== -1);
+  assert.ok(guardAt > rawAt && assignAt > guardAt, 'invalid native URIs must be blocked before assignment');
+});
+
 test('agent panel follows the ball via transform anchor (ws-c-enhance)', () => {
   const panel = src('components/agent-panel.tsx');
   const css = src('components/agent-panel.module.css');
@@ -1333,6 +1389,9 @@ test('agent panel follows the ball via transform anchor (ws-c-enhance)', () => {
   const ball = src('components/agent-ball.tsx');
   assert.match(ball, /ballRect=\{ballRect\}/);
   assert.match(ball, /dragging=\{dragging\}/);
+  // 窗口缩小后，当前球位也要收敛；否则旧视口坐标会落在可视区域外。
+  assert.match(ball, /clampBallPosition\(current, viewport, BALL_SIZE, EDGE_MARGIN\)/);
+  assert.match(ball, /window\.addEventListener\("resize", handleResize\)/);
 });
 
 test('agent panel: 思考提示与空白气泡已删除,工具活动保留 (ws-bubble)', () => {
