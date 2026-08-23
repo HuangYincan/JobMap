@@ -24,7 +24,7 @@ set -euo pipefail
 
 BATCH="${1:?用法: resume-boss.sh <批次目录> [--headless]}"
 MODE="${2:-interactive}"
-MAIN=/Users/acccan/domain-map
+MAIN=/Users/acccan/Repos/huangyincan/domain-map
 PROBE_MAX="${RESUME_MAX_PROBES:-9999}"
 PROBE_INTERVAL="${RESUME_INTERVAL:-60}"
 LOG="$BATCH/logs/resume-boss.log"

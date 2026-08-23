@@ -49,7 +49,7 @@ export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 # DATABASE_URL from .env.example — do not echo it
 export DATABASE_URL='postgresql://postgres:postgres@localhost:5432/domain_map'
 make preflight
-make db-migrate                 # 001–018
+make db-migrate                 # 001–019
 cd server && npm run import:seed:apply
 ```
 
@@ -71,8 +71,12 @@ Account routes then write sessions / Recent / Saved / applications / queued noti
 
 ## Rollback
 
-The app is the git branch. `git revert` / `git reset` the last conventional commit. Session cookies are demo HMAC; rotating `SESSION_SECRET` signs everyone out.
+The app is the git branch. `git revert` / `git reset` the last conventional commit. Session cookies are HMAC-signed; rotating `SESSION_SECRET` signs everyone out.
 
 ## SESSION_SECRET(生产必配)
 
 会话 token 与 OAuth `oauth_state` 的 HMAC 签名密钥经 `sessionSigningSecret` 统一取自 `SESSION_SECRET`(scan #4)。**生产(NODE_ENV=production)必须显式设置**(≥32 字符强随机);非生产未设置 → boot 随机(重启失效,单实例可用);生产未设置 → 服务端拒绝签名(`createSession` / oauth_state 签发抛错),杜绝公开常量回退。配置见 `server/docs/environment-variables.md`。
+
+## HTTP 安全头与可信代理
+
+Next 全局响应带 CSP、Referrer-Policy、Permissions-Policy、`Cross-Origin-Opener-Policy: same-origin`、`X-Content-Type-Options: nosniff` 与反嵌入头;生产另加 HSTS。CSP 显式放行三家地图 JS 来源,图片和连接保留 `https:` 以兼容各地图瓦片/CDN;若收紧导致地图资源阻断,先在浏览器 Network 检查被 CSP 拦截的具体来源。反代部署还必须按 `TRUSTED_PROXY_IPS` 文档清洗并声明转发头来源,auth/agent 限流才信任客户端 IP。

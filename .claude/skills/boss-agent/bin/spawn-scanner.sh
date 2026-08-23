@@ -6,9 +6,9 @@
 #
 #   <scope>      docs | frontend | backend | db | data | all (comma-separated allowed)
 #   <scanDirAbs> where scan-report.md + scan-stdout.log land,
-#                e.g. /Users/acccan/domain-map/tech/roles/development/quality-scans/20260819-docs
+#                e.g. /Users/acccan/Repos/huangyincan/domain-map/tech/roles/development/quality-scans/20260819-docs
 #
-# The scanner runs in the main repo (cwd = /Users/acccan/domain-map) from a clean
+# The scanner runs in the main repo (cwd = /Users/acccan/Repos/huangyincan/domain-map) from a clean
 # context. It is strictly read-only: its only writable file is
 # <scanDirAbs>/scan-report.md (Write:<reportPath> is the sole write allow).
 # Run with the Bash tool run_in_background=true so the boss gets a completion
@@ -16,7 +16,7 @@
 set -euo pipefail
 SCOPE="$1"; SCANDIR="$2"
 REPORT="$SCANDIR/scan-report.md"
-MAIN=/Users/acccan/domain-map
+MAIN=/Users/acccan/Repos/huangyincan/domain-map
 
 mkdir -p "$SCANDIR"
 cd "$MAIN"

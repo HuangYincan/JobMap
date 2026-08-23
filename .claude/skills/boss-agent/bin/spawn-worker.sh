@@ -7,7 +7,7 @@
 #   <ws>          workstream id, e.g. w1
 #   <worktreeAbs> absolute path to the pre-built worktree, e.g. /Users/acccan/dm-wt-w1
 #   <batchDirAbs> absolute path to the batch dir, e.g.
-#                 /Users/acccan/domain-map/tech/roles/development/parallel-sessions/20260819-<slug>
+#                 /Users/acccan/Repos/huangyincan/domain-map/tech/roles/development/parallel-sessions/20260819-<slug>
 #
 # Reads the prompt from <batchDir>/prompts/<ws>.md (stdin), writes stdout to
 # <batchDir>/logs/<ws>.log. Run with the Bash tool run_in_background=true so the

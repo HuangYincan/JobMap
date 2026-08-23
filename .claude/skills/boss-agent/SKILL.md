@@ -68,11 +68,11 @@ NEXT 全自动回环,直到整个目标完成(含 fix 迭代),然后一次性总
 顺序预建所有 worktree(避免并发 git 锁),每个 WS:
 ```bash
 git worktree add -b <branch> ../dm-wt-<ws> dev
-ln -s /Users/acccan/domain-map/server/node_modules /Users/acccan/dm-wt-<ws>/server/node_modules
+ln -s /Users/acccan/Repos/huangyincan/domain-map/server/node_modules /Users/acccan/dm-wt-<ws>/server/node_modules
 ```
 并行 spawn worker(每 WS 一个 Bash 工具调用,`run_in_background=true`):
 ```bash
-bash .claude/skills/boss-agent/bin/spawn-worker.sh <ws> /Users/acccan/dm-wt-<ws> /Users/acccan/domain-map/tech/roles/development/parallel-sessions/<date>-<slug>
+bash .claude/skills/boss-agent/bin/spawn-worker.sh <ws> /Users/acccan/dm-wt-<ws> /Users/acccan/Repos/huangyincan/domain-map/tech/roles/development/parallel-sessions/<date>-<slug>
 ```
 更新 boss-state.md:各 WS status=RUNNING。
 
@@ -93,7 +93,7 @@ bash .claude/skills/boss-agent/bin/spawn-worker.sh <ws> /Users/acccan/dm-wt-<ws>
 ### MERGE
 全部 WS 绿后 spawn merger(一个 Bash 调用,`run_in_background=true`):
 ```bash
-bash .claude/skills/boss-agent/bin/spawn-merger.sh /Users/acccan/domain-map <batchDirAbs>
+bash .claude/skills/boss-agent/bin/spawn-merger.sh /Users/acccan/Repos/huangyincan/domain-map <batchDirAbs>
 ```
 merger 读 manifest+reports,按序 `--no-ff` 合并、红则停、门禁绿自动 `git push origin dev`、清理 worktree/分支、写 `merge-report.md`。boss 读 merge-report「结果总览」+ 末两行 token。
 
@@ -110,7 +110,7 @@ merger 读 manifest+reports,按序 `--no-ff` 合并、红则停、门禁绿自�
 1. **定 scope**:从目标解析 `docs`/`frontend`/`backend`/`db`/`data`/`all`(默认 all);可组合。
 2. **派 scanner**(进程外,干净上下文,严格只读;Bash `run_in_background=true`):
    ```bash
-   bash .claude/skills/boss-agent/bin/spawn-scanner.sh <scope> /Users/acccan/domain-map/tech/roles/development/quality-scans/<YYYYMMDD>-<scope>
+   bash .claude/skills/boss-agent/bin/spawn-scanner.sh <scope> /Users/acccan/Repos/huangyincan/domain-map/tech/roles/development/quality-scans/<YYYYMMDD>-<scope>
    ```
    scanner 只读扫描,把报告写入 `<scanDir>/scan-report.md`,末行 token `结论: SCAN_DONE: <H>/<M>/<L>`。
 3. **读报告 + 审批**:逐项判定——
@@ -132,7 +132,7 @@ cd /Users/acccan/dm-wt-<ws> && claude -p \
 ```
 merge worker(全部绿后,cwd=主仓库):
 ```bash
-cd /Users/acccan/domain-map && claude -p \
+cd /Users/acccan/Repos/huangyincan/domain-map && claude -p \
   --agent boss-merger --name "boss-merger" --output-format text \
   --allowedTools "Read, Grep, Glob, Edit, Write, Bash(cd*), Bash(git switch dev), Bash(git pull --ff-only origin dev), Bash(git status*), Bash(git log*), Bash(git branch --merged*), Bash(git worktree list), Bash(git worktree remove*), Bash(git branch -d*), Bash(git merge --no-ff*), Bash(git push origin dev), Bash(git diff*), Bash(git add*), Bash(git commit*), Bash(git checkout --*), Bash(npm*), Bash(make docs-check*), Bash(cat*), Bash(grep*), Bash(ls*), Bash(pwd)" \
   --disallowedTools "Bash(git push origin main), Bash(git push --force*), Bash(git reset --hard*), Bash(git rebase*), Bash(git worktree add*), Bash(git checkout dev), Bash(git checkout main), Bash(git checkout master), Bash(npm install*), Bash(npm ci*), Bash(npm run import:*), Bash(npm run geocode:*), Bash(npm audit*), Bash(npx*), Bash(export*), Bash(chmod*), Bash(rm -rf*), Bash(sudo*), Bash(make db-*), Bash(make crawl-official*), Bash(make refresh-radar*), Bash(make geocode-sites*)" \

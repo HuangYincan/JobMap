@@ -45,7 +45,7 @@ cd ../domain-map-wt-<scope>
 ## Merge back to `dev`
 
 ```bash
-cd /Users/acccan/domain-map          # back on the main tree
+cd /Users/acccan/Repos/huangyincan/domain-map          # back on the main tree
 git switch dev && git pull --ff-only origin dev
 git merge --no-ff feature/<scope>   # keep a merge commit per feature
 git worktree remove ../domain-map-wt-<scope>

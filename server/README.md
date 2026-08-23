@@ -117,7 +117,7 @@ npm run dev          # Start dev server (port 3000)
 npm run build        # Production build
 npm run start        # Run production server
 npm run typecheck    # Run TypeScript compiler check
-npm test             # node:test 全量(1517 tests / 1515 pass / 2 skip,2026-08-23)
+npm test             # node:test 全量(1610 tests / 1608 pass / 2 skip,2026-08-24)
 ```
 
 `package.json` 没有 `lint` script(项目无 ESLint 配置);写 DB 的数据命令(`import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)见根 README,属 Env-only 用户步骤。
@@ -240,7 +240,7 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 ### Automated Tests
 
 ```bash
-npm test        # 1517 tests / 1515 pass / 0 fail / 2 skip (2026-08-23, npm test 实测)
+npm test        # 1610 tests / 1608 pass / 0 fail / 2 skip (2026-08-24, npm test 实测)
 npm run typecheck
 ```
 

@@ -140,4 +140,4 @@ node --test,内存模式,**零网络**(mock fetch 注入 `fetchImpl`;env 注入 
 
 ## 11. Demo 兼容
 
-`POST /api/auth/oauth` 与 `POST /api/auth/github` **行为保持不变**(demo 桩,注释注明「Demo fallback,仅未配置真实 OAuth 时使用」);已存在的 demo `'x'` 账号行保持有效。真实 OAuth 凭据配置后,前端不再走 demo 路径。
+`POST /api/auth/oauth` 与 `POST /api/auth/github` 仅是**非生产且未配置凭据时的本地开发兜底**:对应 provider 的 client id/secret 配置完成后返回 `403 DEMO_LOGIN_DISABLED`;生产环境即使凭据未配置也返回 `403 DEMO_LOGIN_DISABLED_IN_PRODUCTION`,绝不签发演示会话。前端按 `/api/auth/oauth/providers` 优先走真实流程。已存在的 demo `'x'` 账号行保持有效。

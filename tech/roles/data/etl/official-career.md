@@ -16,6 +16,8 @@ When a career page ships HTML or JSON-LD `JobPosting`, extract extra titles and 
 
 - Only hosts already listed as `careerUrl` on curated companies.
 - Missing robots.txt → allow. Matching `Disallow` → skip that URL.
+- Blocked regardless of robots: referral paths and URLs carrying a `token` or
+  `share_token`; these are attributed share links, not stable public career pages.
 - Blocked regardless of robots: `zhipin.com`, `nowcoder.com`, `xiaohongshu.com`, `shixiseng.com`, `51job.com`, `zhaopin.com`, `liepin.com`, `lagou.com`, `docs.qq.com`.
 
 ## Rate / retention / kill switch

@@ -3,7 +3,7 @@
 ## meta
 - slug: 20260823-all
 - date: 2026-08-23
-- scan_dir: /Users/acccan/domain-map/tech/roles/development/quality-scans/20260823-all
+- scan_dir: /Users/acccan/Repos/huangyincan/domain-map/tech/roles/development/quality-scans/20260823-all
 - goal: 全库全量代码扫描(docs/frontend/backend/db/data 全 scope)+ 自主修复检测出的漏洞与优化点
 - owner: boss
 - trigger: 用户指令(等 4195c9b5 会话结束后扫描 → 用户 2026-08-23 06:11 直接指令「开始」;该会话仍存活并在推进 engine-polish-2 轮10+,范围仅限其自身批次)

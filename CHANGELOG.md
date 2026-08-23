@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-24
+
+### Fixed
+
+- **持续安全加固(无人值守循环).** 头像上传按已登录用户 5 次/小时滑动窗口限流(`429 AVATAR_RATE_LIMITED`),限流先于 multipart 解析和字节上限检查;用户记忆与无库会话回退的进程内用户/身份/历史/收藏/投递/通知存储统一收敛到有界 LRU(`BoundedLruStore`,用户键上限 1000);地图视图订阅在 `createMap` cleanup 中完整解绑(zoom/rotate/move/complete/drag/click),避免 StrictMode/引擎重建后旧监听重复叠加;Agent 会话、Guest Recent、模式缓存在 `JSON.parse` 前增加本地原文长度上限,异常大值按损坏存储处理;删除被 `tech/30-agent-memory.md` 取代的孤儿 `tech/26-agent-memory.md`。本轮续扫:work 目录读取共享 promise(同轮不再重复拉 `/api/pois`,同时保留 raw/geocoded 两次 `onBatch`);`college`/`overseas` 即使传 `onlyActive:false` 也不再误走 work 读取;`source` 增加与 `sources.code` 同款约束校验,DB 导入/裁剪路径用 fake pool 覆盖事务 upsert、回滚与 `maxTier` 参数下推;收藏列表补距离改为返回新对象,不再污染共享 catalog;账号仓储 DB 写失败时回滚/保留进程镜像(`createSession` 失败删内存会话、`issueOtp` 失败撤内存验证码、logout/清历史先确认 DB 成功再清内存),避免失败写路径产生数据分裂;AMap AutoComplete/Geolocation/Geocoder 低层回调统一加 8s 超时兜底,同步抛出的插件方法也降级为空结果/null,不再留下永久挂起或未处理拒绝;外部 HTTP 调用(地图 Web 服务/OAuth 交换/腾讯 WebService/远程图标内联/百度智能体工具/Resend/阿里云短信)统一走 20s fetch 超时守卫,配合调用方 abort 信号,避免上游无响应时 API 路由或 Agent 工具永久挂起;厂商脚本加载器补 15s 超时,CDN 卡死同样走移除标签 + 清缓存 + 可重试路径。生产依赖 `npm audit` 0 漏洞。全量套件实测:**npm test 1610 tests / 1608 pass / 2 skip**(2026-08-24)。
+
 ## 2026-08-23
 
 ### Fixed

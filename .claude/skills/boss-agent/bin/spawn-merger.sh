@@ -4,7 +4,7 @@
 # Usage:
 #   bash spawn-merger.sh <mainRepoAbs> <batchDirAbs>
 #
-#   <mainRepoAbs> absolute path to the main repo, e.g. /Users/acccan/domain-map
+#   <mainRepoAbs> absolute path to the main repo, e.g. /Users/acccan/Repos/huangyincan/domain-map
 #   <batchDirAbs> absolute path to the batch dir (contains README.md, reports/, prompts/)
 #
 # Writes a small merge-instructions.md into the batch dir, feeds it to the

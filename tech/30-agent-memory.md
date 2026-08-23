@@ -37,7 +37,7 @@ CREATE INDEX user_memories_user_created_idx ON user_memories (user_id, created_a
 | 函数 | 语义 |
 |---|---|
 | `listMemories(userId)` | 按 `created_at DESC` 返回 `{id, content, createdAt}[]`,上限 50 |
-| `addMemory(userId, content)` | 写入一条记忆;content 经 `sanitizeMemoryContent`(trim + 截断 200 字);空串不写 |
+| `addMemory(userId, content)` | 写入一条记忆;content 经 `sanitizeMemoryContent`(trim + 截断 200 字);空串不写;写入后每用户仅保留最新 `MEMORY_STORAGE_MAX=50` 条 |
 | `removeMemory(userId, id)` | 删除自己的某条(`WHERE user_id = $1 AND id = $2`) |
 | `clearMemories(userId)` | 清空该用户全部记忆 |
 | `sanitizeMemoryContent(raw)` | 纯函数:非 string/空白 → `''`;超 200 字截断 |
@@ -94,7 +94,7 @@ CREATE INDEX user_memories_user_created_idx ON user_memories (user_id, created_a
 ### `GET/DELETE /api/me/memories`(新)
 
 - `GET`:返回 `{ items: [{id, content, createdAt}] }`;guest → `{ items: [] }`(仿 saved 路由范式)。
-- `DELETE`:清除当前用户全部记忆;guest → 401 `UNAUTHORIZED`。
+- `DELETE`:无 `id` 时清除当前用户全部记忆；带 `id` 时仅删除该条（仍强制 `user_id` 归属）；guest → 401 `UNAUTHORIZED`。
 
 ## 7. 隐私边界
 

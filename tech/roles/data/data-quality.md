@@ -22,7 +22,7 @@
 ### Drops 现状与迁移(2026-08-23,实测计数)
 
 - `server/data/recruitment/<源>/*.json` 文件数:**radar 646 / official-career 78 / qqdoc-official 142 / qqdoc-jobs 163 / embodied-jobs 47**(company 级每源一文件;`boss`/`nowcoder`/`shixiseng` 为 stub 空目录)。来源审查记录:`tech/roles/data/etl/`(radar / official-career / qqdoc-official / embodied-jobs / feishu-ats / hotjob-ats / zhiye-ats;qqdoc-jobs 见批次 `20260821-boss-qqdoc-jobs`)。
-- `db/migrations/` **001–018**(017 avatar / 018 memories)。
+- `db/migrations/` **001–019**(017 avatar / 018 memories / 019 user memory unique)。
 - **范围:全国 drops(2026-08-17)。** Geocode 已改为 **city-scoped**(`geocode-sites-apply.mjs` + `site-geocode.ts`):per-site
   place-text search with `citylimit`, and grade + regeo validate against the site's own
   province/city. **Live apply not yet run** on the national drops — the 2026-08-17 snapshot

@@ -27,7 +27,7 @@ make db-status
 | 类别 | 判定 | 处置 |
 |---|---|---|
 | **A. worktree 会话的 dev server** | cwd = `/Users/acccan/dm-wt-ws*/server` | **不动**——并行 Agent(WS1–4)可能正在用;只有用户确认该会话已关闭才停 |
-| **B. 用户自己终端起的 dev server** | cwd = `/Users/acccan/domain-map/server` 且父链是终端(zsh/login/Otty/iTerm 等) | 询问用户是否停止 |
+| **B. 用户自己终端起的 dev server** | cwd = `/Users/acccan/Repos/huangyincan/domain-map/server` 且父链是终端(zsh/login/Otty/iTerm 等) | 询问用户是否停止 |
 | **C. 死会话遗留的 dev server** | 孤儿(PPID=1)或父链上没有活着的终端/claude | 建议停止,确认后执行 |
 | **D. 死会话遗留的 MCP 进程** | plumb-mcp / markitdown-mcp / mcp-server-github / playwright-mcp / cc98-mcp / videonote 等,沿 PPID 上溯**没有任何存活 claude** | 建议停止,确认后执行 |
 | **E. 活会话的 MCP 进程** | 沿 PPID 上溯能找到存活 claude | **不动** |

@@ -2,7 +2,7 @@
 
 > **Status:** implementation-backed; migrations `001`–`016` are live-applied and verified against the local PostGIS database
 > **Last reviewed:** 2026-08-21
-> **Authority:** `db/migrations/001-016` are the implementation source of truth; this document must be updated when migrations change.
+> **Authority:** `db/migrations/001-019` are the implementation source of truth; this document must be updated when migrations change.
 
 ## Implementation Evidence
 
