@@ -13,6 +13,7 @@
     "import:seed:apply": "node scripts/plan-seed-import.mjs --apply",
     "geocode:sites": "node scripts/plan-site-geocode.mjs",
     "geocode:sites:apply": "node scripts/geocode-sites-apply.mjs",
+    "geocode:sites:daily": "node scripts/geocode-sites-daily.mjs",
     "audit:pins": "node --experimental-strip-types --no-warnings scripts/audit-pin-locations.mjs",
     "import:hz:pois": "node scripts/import-hz-pois.mjs",
     "import:hz:pois:apply": "node scripts/import-hz-pois.mjs --apply"

@@ -5,7 +5,7 @@
 // searched within its own city (site.city, falling back to 杭州市) and regeo
 // confirms the hit sits inside that city.
 //
-//   node scripts/geocode-sites-apply.mjs [--dry-run] [--only slug1,slug2]
+//   node scripts/geocode-sites-apply.mjs [--dry-run] [--only slug1,slug2] [--cities 上海,杭州] [--continue]
 //
 //   --dry-run          print the plan and resolutions, write nothing (default
 //                      when none of AMAP_WEB_KEY / BAIDU_MAP_AK / TENCENT_MAP_KEY
@@ -13,6 +13,9 @@
 //   --only a,b         resolve only these slugs (bypasses the confidence gate)
 //   --cities 上海,杭州  resolve only sites whose site.city is in this list
 //                      (海外/非目标城市站点跳过,防止单公司 170 站拖垮全流程)
+//   --continue         显式续跑 (多日执行)。默认行为: 存在
+//                      server/.geocode-progress.json 即读回并打印「上次进展 +
+//                      剩余 Top 城市」; 本 flag 仅显式表达意图, 供 runbook 使用。
 //   (no flag)          resolve every non-pinned site that gets a high-confidence
 //                      match; low-confidence / unresolved stay off the map
 //
@@ -23,6 +26,19 @@
 // WebService (TENCENT_MAP_KEY) when Baidu also fails — all GCJ-02 coordinates.
 // Never prints any key. AMap throttles at 3 req/s, Baidu at ~2 req/s (sleep
 // ≥600ms), Tencent at ~5 req/s (sleep ≥340ms after a fallback call).
+//
+// 配额事实 (2026-08-23 查证, 个人开发者配额): AMap 地点搜索 place-text ~100 次/日
+//   (https://lbs.amap.com), 百度 Web 服务地点检索 ~100 次/日
+//   (https://lbsyun.baidu.com), 腾讯 WebService 地点搜索 ~100 次/日
+//   (https://lbs.qq.com)。三 provider 合计日吞吐 ~300 站 — 2026-08-23 实测
+//   backlog 1076 站 (上海 269 / 北京 246 / 深圳 182 …), 全量约需 4 天。
+// 跨日执行 (2026-08-23, ws-c): 每次运行结束写 server/.geocode-progress.json
+//   (已在 .gitignore 登记) — 运行时间/计数/QUOTA_EXHAUSTED 标记/按城市分组的
+//   剩余清单; 下次运行开始时读回并打印「上次进展 + 剩余 Top 城市」。进度文件
+//   只是报告/排程辅助, 不参与判定 — 已有坐标站点照常由 siteNeedsGeocode 幂等
+//   跳过, 也不缓存任何检索结果 (place-search memo 仍是内存态)。
+//   `npm run geocode:sites:daily -- --cities 上海` 封装单日跑 + 配额耗尽后的
+//   明日续跑指引 (scripts/geocode-sites-daily.mjs, 薄封装)。
 //
 // 2026-08-20 (w4): 地址-城市一致性闸门。城市拆分时代 drops 的城市站点继承了
 // 杭州 office 地址文本 ("西湖区莲花街333号…"), 在目标城市做地址检索会城市内
@@ -120,6 +136,10 @@ const CITIES = citiesArg
       .map((s) => s.trim())
       .filter(Boolean)
   : [];
+
+// 2026-08-23 (ws-c): 显式续跑标记。默认行为即读进度文件 — 有
+// server/.geocode-progress.json 就在启动时打印「上次进展 + 剩余 Top 城市」。
+const CONTINUE = process.argv.includes('--continue');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // 节流: 百度 ~2 QPS → 600ms; 高德 ~3 QPS、腾讯 ~5 QPS(个人开发者) → 340ms。
@@ -345,6 +365,58 @@ const recordOutcome = (reason) => {
   return false;
 };
 
+// --- 跨日进度记录 (2026-08-23, ws-c) ------------------------------------------
+// 多日执行 (配额 ~300 站/日, 全量 1076 站约 4 天 — 见头部注释) 的报告/排程辅助:
+// 运行结束时写 server/.geocode-progress.json (已在 .gitignore 登记), 下次运行
+// 开始时读回打印「上次进展 + 剩余 Top 城市」。只报告、不参与判定 — 已有坐标
+// 站点照常由 siteNeedsGeocode 幂等跳过; 进度文件不缓存任何检索结果。
+const PROGRESS_FILE = path.join(SERVER_DIR, '.geocode-progress.json');
+
+/** 配额事实 (2026-08-23 查证, 个人开发者配额, 来源见头部注释)。 */
+function printQuotaFacts() {
+  console.log(
+    '配额事实 (2026-08-23 查证, 个人开发者配额): AMap place-text ~100 次/日 (https://lbs.amap.com) + 百度 Web 服务地点检索 ~100 次/日 (https://lbsyun.baidu.com) + 腾讯 WebService 地点搜索 ~100 次/日 (https://lbs.qq.com) ≈ 300 站/日 — 2026-08-23 实测 backlog 1076 站 (上海 269 / 北京 246 / 深圳 182 …), 全量约 4 天。',
+  );
+}
+
+// 剩余清单排序: 上海/北京/深圳优先 (多日执行按单城跑), 其余按剩余数降序。
+const CITY_PRIORITY = ['上海', '北京', '深圳'];
+function citySortKey(city) {
+  const i = CITY_PRIORITY.findIndex((p) => city.startsWith(p) || p.startsWith(city));
+  return i === -1 ? CITY_PRIORITY.length : i;
+}
+
+/** 分组城市键: 取首个空白分隔 token 并去「市」后缀 — 与 --cities 过滤的
+ *  startsWith 匹配口径一致 (脏 city 值如 "上海  南京" 归入 上海 组, 报告的
+ *  --cities 提示值可直接命中)。只影响报告分组, 不改检索逻辑。 */
+function cityGroupKey(city) {
+  return (city ?? '').trim().split(/\s+/)[0].replace(/市$/, '');
+}
+
+/** 剩余 = 预扫 needing − 本次 applied (写回坐标的站点明天幂等跳过; unresolved/
+ *  skipped 仍留待重试, 计入剩余)。按城市分组 (cityGroupKey) + 排序。
+ *  appliedKeys: slug:siteId。 */
+function buildRemainingByCity(needingList, appliedKeys) {
+  const byCity = new Map();
+  for (const n of needingList) {
+    const city = cityGroupKey(n.city);
+    if (appliedKeys.has(`${n.company.slug}:${n.site.id}`)) continue;
+    const entry = byCity.get(city) ?? { city, count: 0, sites: [] };
+    entry.count += 1;
+    entry.sites.push(`${n.company.slug}:${n.site.id}`);
+    byCity.set(city, entry);
+  }
+  return [...byCity.values()].sort(
+    (a, b) => citySortKey(a.city) - citySortKey(b.city) || b.count - a.count,
+  );
+}
+
+function formatTopCities(byCity, top = 8) {
+  if (!byCity.length) return '无';
+  const head = byCity.slice(0, top).map((c) => `${c.city} ${c.count}`).join(' | ');
+  return byCity.length > top ? `${head} | …共 ${byCity.length} 城` : head;
+}
+
 const files = dropFiles();
 const resolutions = [];
 const applied = [];
@@ -363,9 +435,26 @@ const needing = [];
 for (const file of files) {
   const raw = readJson(file);
   const companies = Array.isArray(raw) ? raw : raw ? [raw] : [];
-  for (const n of sitesNeedingGeocode(companies)) needing.push({ file, ...n });
+  // 2026-08-23 (ws-c): 预扫时顺带记下每站目标城市 (siteCityTarget 纯函数, 无
+  // 网络), 供运行结束时的按城剩余清单分组 — 不重算、不改主循环逻辑。
+  for (const n of sitesNeedingGeocode(companies)) needing.push({ file, ...n, city: siteCityTarget(n.site).city });
 }
 const planTotal = needing.length;
+
+// 跨日续跑 (2026-08-23, ws-c): 有上次进度文件即打印「上次进展 + 剩余 Top 城市」
+// (--continue 显式续跑, 默认行为一致)。只报告, 不参与判定。
+const prevProgress = readJson(PROGRESS_FILE);
+if (prevProgress) {
+  const r = prevProgress.run ?? {};
+  const rem = prevProgress.remaining ?? { total: 0, byCity: [] };
+  console.log(`\n--- 上次运行进展 (${prevProgress.updatedAt ?? '?'}) [${prevProgress.mode ?? '?'}]${CONTINUE ? ' (--continue 续跑)' : ''} ---`);
+  console.log(
+    `计划 ${r.planTotal ?? 0} 站 | 已尝试 ${r.attempted ?? 0} | 解析 ${r.resolved ?? 0} / 失败 ${r.unresolved ?? 0} | 写回 ${r.applied ?? 0} | 配额耗尽 ${r.quotaExhausted ? '是' : '否'}`,
+  );
+  console.log(`上次剩余 ${rem.total ?? 0} 站 (Top 城市): ${formatTopCities(rem.byCity ?? [])}`);
+  printQuotaFacts();
+  console.log('续跑: npm run geocode:sites:daily -- --cities 上海 (或 --cities 北京/深圳 — 单城 ~250 站, 可切 --cities 单城多日消化)');
+}
 
 let planCount = 0;
 mainLoop: for (const { file, company, site } of needing) {
@@ -590,6 +679,43 @@ if (!DRY_RUN) {
   if (applied.length !== resolutions.length) {
     console.log(`Skipped ${resolutions.length - applied.length} low-confidence resolution(s) (use --only to force).`);
   }
+}
+
+// --- 跨日进度记录 + 下次续跑指引 (2026-08-23, ws-c) ---------------------------
+// 运行结束时写 server/.geocode-progress.json (gitignore): 运行时间/计数/配额
+// 标记/按城市分组的剩余清单。剩余 = 预扫 needing − 本次 applied — 写回坐标的
+// 站点明天由 siteNeedsGeocode 幂等跳过; unresolved/skipped 仍待重试, 计入剩余。
+const appliedKeys = new Set(applied.map((a) => `${a.slug}:${a.siteId}`));
+const remainingByCity = buildRemainingByCity(needing, appliedKeys);
+const remainingTotal = remainingByCity.reduce((s, c) => s + c.count, 0);
+const progressRecord = {
+  version: 1,
+  updatedAt: new Date().toISOString(),
+  mode: DRY_RUN ? 'DRY-RUN' : 'APPLY',
+  flags: { only: ONLY, cities: CITIES },
+  run: {
+    planTotal,
+    attempted: planCount,
+    resolved: resolutions.length,
+    unresolved: unresolved.length,
+    applied: applied.length,
+    skippedTotal: skipped.length,
+    quotaExhausted: shortCircuited,
+    // 未尝试量 (短路前剩余) — 与下方 QUOTA_EXHAUSTED 行的 remaining 同口径。
+    untouched: planTotal - resolutions.length - unresolved.length - skipped.length,
+  },
+  remaining: { total: remainingTotal, byCity: remainingByCity },
+};
+fs.writeFileSync(PROGRESS_FILE, JSON.stringify(progressRecord, null, 2) + '\n');
+
+console.log(`\n=== 进度已记录 (${PROGRESS_FILE}, 仅报告/排程辅助, 不参与判定) ===`);
+console.log(`剩余 ${remainingTotal} 站 (按城市): ${formatTopCities(remainingByCity)}`);
+printQuotaFacts();
+if (remainingTotal > 0) {
+  const next = remainingByCity[0];
+  console.log(`单城跑法: npm run geocode:sites:apply -- --cities ${next.city}   (每日封装: npm run geocode:sites:daily -- --cities ${next.city})`);
+} else {
+  console.log('无剩余站点 — 本轮 geocode 全部完成。');
 }
 
 // 配额耗尽 → 提前停止 (REPORT 已按正常收尾同款打印): 醒目说明 + 剩余站数 +
