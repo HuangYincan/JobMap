@@ -13,8 +13,13 @@
 import type { MapEngine, MapEngineId, MapSearchProvider } from './types.ts';
 import { readEnginePreference } from './engine-preference.ts';
 
-/** 引擎优先级:无偏好 / 指定项未配置时的默认选择顺序 */
-export const ENGINE_PRIORITY: MapEngineId[] = ['amap', 'tencent', 'baidu'];
+/**
+ * 引擎优先级:无偏好 / 指定项未配置时的默认选择顺序。
+ * 2026-08-23 用户决策:三家底图切换有 POI 消失 bug,禁用腾讯/百度(实现代码保留,
+ * 仅从候选列表移除);UI 无入口、解析与回退恒为高德,历史 sessionStorage 偏好经
+ * resolveEngine 过滤自动回落;后续修好可加回。
+ */
+export const ENGINE_PRIORITY: MapEngineId[] = ['amap'];
 
 interface EngineDescriptor {
   id: MapEngineId;
