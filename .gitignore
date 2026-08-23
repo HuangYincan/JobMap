@@ -38,6 +38,10 @@ dist/
 .env.*.local
 *.env
 
+# Geocode multi-day run progress (report/scheduling aid, written by
+# server/scripts/geocode-sites-apply.mjs; never participates in decisions)
+/server/.geocode-progress.json
+
 # IDEs
 .vscode/
 .idea/
