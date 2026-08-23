@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import {
   createTtlCache,
+  PUBLIC_CACHE_TTL_MS,
+  PUBLIC_CACHE_MAX,
   publicCacheKey,
   publicCacheSize,
   readPublicCache,
@@ -62,6 +64,17 @@ test('createTtlCache evicts the oldest key when max is reached', () => {
   assert.equal(cache.get('a'), undefined);
   assert.equal(cache.get('b'), 2);
   assert.equal(cache.get('c'), 3);
+});
+
+test('public response cache is bounded against unique query flooding', () => {
+  resetPublicCache();
+  for (let i = 0; i < PUBLIC_CACHE_MAX + 1; i += 1) {
+    writePublicCache(`unique:${i}`, { i }, PUBLIC_CACHE_TTL_MS);
+  }
+  assert.equal(publicCacheSize(), PUBLIC_CACHE_MAX);
+  assert.equal(readPublicCache('unique:0'), undefined);
+  assert.deepEqual(readPublicCache(`unique:${PUBLIC_CACHE_MAX}`), { i: PUBLIC_CACHE_MAX });
+  resetPublicCache();
 });
 
 test('suggest cache is a separate 5-minute LRU', () => {
