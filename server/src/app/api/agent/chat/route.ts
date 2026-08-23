@@ -145,7 +145,7 @@ export async function POST(request: Request) {
 
   // 6. 身份读取(会话 cookie → userId;guest = null)。位于全部前置校验之后、
   //    任何 MCP/LLM 连接之前(保持既有行序契约):登录 → 注入用户记忆段并追加
-  //    memory_save 工具;guest → userId 不传、不加工具(tech/26-agent-memory.md §5)。
+  //    memory_save 工具;guest → userId 不传、不加工具(tech/30-agent-memory.md §5)。
   const sessionUser = await readSessionUser();
 
   // ---- 公开 error 事件脱敏(2026-08-21 安全要求):code 收敛到安全集合,message 一律置空 ----

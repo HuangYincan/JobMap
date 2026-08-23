@@ -45,7 +45,7 @@ const URL_MAX_LEN = 150;
 /** 思考内容(reasoning 事件)总量上限:超出截断且不再转发(与 delta 顺序保持)。 */
 const REASONING_MAX = 4000;
 
-// ---- 用户记忆注入预算(tech/26-agent-memory.md §3)----
+// ---- 用户记忆注入预算(tech/30-agent-memory.md §3)----
 const MEMORY_LINE_MAX = 20; // 最多 20 条
 const MEMORY_ITEM_MAX = 200; // 单条 200 字(与 sanitizeMemoryContent / 工具 schema 一致)
 const MEMORY_BUDGET = 4000; // 总长预算(含 "- " 前缀),超限截断

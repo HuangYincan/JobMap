@@ -2,7 +2,7 @@
 // 无网络、无状态、无 secret;listTools 经工厂注入的 getter 读取当前工具集
 // (route 侧在构建完工具后设置,闭包读取最新值)。
 //
-// builtin__memory_save(2026-08-22 ws-mem-a):用户个性化记忆写入(tech/26-agent-memory.md §4)。
+// builtin__memory_save(2026-08-22 ws-mem-a):用户个性化记忆写入(tech/30-agent-memory.md §4)。
 // 有状态(写 user_memories),但只经 ctx.userId 归属当前会话用户,不接触任何 secret。
 
 import type { AgentTool, ToolResult } from '../types.ts';
@@ -45,7 +45,7 @@ export function builtinTools(getToolNames?: () => string[]): AgentTool[] {
 }
 
 /**
- * 用户记忆保存工具(2026-08-22 ws-mem-a;tech/26-agent-memory.md §4)。
+ * 用户记忆保存工具(2026-08-22 ws-mem-a;tech/30-agent-memory.md §4)。
  * 仅在会话用户已登录时由 route 追加进工具集;ctx.userId 缺失(guest/防御)一律拒绝。
  * 敏感信息不做硬性拦截——由工具描述约束 LLM 不保存密码/密钥/完整地址等,
  * 存储层只做纯文本 sanitize(trim + 截断 200 字),不解析内容。

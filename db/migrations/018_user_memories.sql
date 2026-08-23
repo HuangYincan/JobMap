@@ -1,4 +1,4 @@
--- User personalized memory (tech/26-agent-memory.md).
+-- User personalized memory (tech/30-agent-memory.md).
 -- One row per saved fact. Guests do not write here; user_id is always the session user.
 
 CREATE TABLE user_memories (
