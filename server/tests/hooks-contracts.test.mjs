@@ -102,7 +102,8 @@ test('useSavedLayer hook exists with exported signature', () => {
   assert.match(hook, /export interface UseSavedLayerResult/);
   // 派生 + 初始化 + toggle + hide 四件事都在 hook 内
   assert.match(hook, /savedPlacesToOverlay\(savedPlaces, compareCatalog, mode\)/);
-  assert.match(hook, /readSavedOverlayPref\(true\)/);
+  // 挂载初始化:读回持久化偏好,默认关(2026-08-23 用户决策)
+  assert.match(hook, /readSavedOverlayPref\(false\)/);
   assert.match(hook, /writeSavedOverlayPref\(next\)/);
   assert.match(hook, /writeSavedOverlayPref\(false\)/);
   assert.match(hook, /return \{ savedOverlay, overlayPois, toggle, hide \};/);
