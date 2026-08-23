@@ -11,7 +11,10 @@
 //   相机完全不动(不调用任何视图移动方法);
 // - 互斥语义(2026-08-22 用户决策)在消费方落地:map-shell 用
 //   savedOverlay && user 做地图可见性互斥(mutexVisibleIds)+ Explore
-//   列表切收藏列表,本 hook 只负责状态/派生/toggle 本身。
+//   列表切收藏列表,本 hook 只负责状态/派生/toggle 本身;
+// - 默认不开启(2026-08-23 用户决策):首次渲染默认关(useState(false)),
+//   挂载后读 sessionStorage 偏好——显式开过的用户('1')保持开,未存过 /
+//   显式关('0')的用户保持关。
 // ============================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -43,11 +46,12 @@ export interface UseSavedLayerResult {
 export function useSavedLayer(deps: UseSavedLayerDeps): UseSavedLayerResult {
   const { user, savedPlaces, compareCatalog, mode, onRequireAuth } = deps;
 
-  const [savedOverlay, setSavedOverlay] = useState(true);
+  // 默认关(2026-08-23 用户决策:默认不开收藏图层),显式偏好挂载后覆盖
+  const [savedOverlay, setSavedOverlay] = useState(false);
 
   // 挂载时读回持久化偏好(原 map-shell 挂载 effect 中的对应行)
   useEffect(() => {
-    setSavedOverlay(readSavedOverlayPref(true));
+    setSavedOverlay(readSavedOverlayPref(false));
   }, []);
 
   const overlayPois = useMemo(

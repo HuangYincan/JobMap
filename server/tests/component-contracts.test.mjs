@@ -648,8 +648,8 @@ test('useSavedLayer owns saved overlay state, derivation and guest gate (QA scan
   const hook = src('hooks/use-saved-layer.ts');
   // 派生:overlay POI 由 savedPlaces + 目录 + 模式算出(与 marker 池合并共用同一 memo 依赖)
   assert.match(hook, /savedPlacesToOverlay\(savedPlaces, compareCatalog, mode\)/);
-  // 挂载初始化:读回持久化偏好(原 map-shell 挂载 effect 的对应行)
-  assert.match(hook, /setSavedOverlay\(readSavedOverlayPref\(true\)\)/);
+  // 挂载初始化:读回持久化偏好,默认关(2026-08-23 用户决策)
+  assert.match(hook, /setSavedOverlay\(readSavedOverlayPref\(false\)\)/);
   // toggle:未登录 → onRequireAuth(打开登录弹窗),不回写 pref;登录 → 写 pref + 翻转状态
   assert.match(hook, /if \(!user\) \{\s*onRequireAuthRef\.current\(\);\s*return;\s*\}/);
   assert.match(hook, /const next = !savedOverlay;\s*writeSavedOverlayPref\(next\);\s*setSavedOverlay\(next\);/);
