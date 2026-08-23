@@ -184,9 +184,12 @@ test('#2 DB 模式:账号桶按 auth_identities 解析(user_id 相同即共享)'
 
 test('#2 otp/send 路由:per-IP / per-账号桶接线在 issueOtp 之前', () => {
   const route = src('app/api/auth/otp/send/route.ts');
-  assert.match(route, /checkOtpSendLimits\(clientIp\(request\), provider, target\)/);
-  assert.match(route, /function clientIp\(request: Request\)/);
-  const guardIdx = route.indexOf('checkOtpSendLimits(clientIp(request), provider, target)');
+  // per-IP 维度经 lib/client-ip 统一解析(scan r2 #1:可信反代后取转发头 IP,
+  // 否则会话指纹/匿名固定桶 — 伪造 XFF 不再换桶)
+  assert.match(route, /@\/lib\/client-ip/);
+  assert.match(route, /checkOtpSendLimits\(await clientIpBucketKey\(request, await readSessionToken\(\)\), provider, target\)/);
+  assert.doesNotMatch(route, /function clientIp\(/);
+  const guardIdx = route.indexOf('checkOtpSendLimits(await clientIpBucketKey(request, await readSessionToken()), provider, target)');
   const issueIdx = route.indexOf('await issueOtp(provider, target)');
   assert.ok(guardIdx !== -1 && issueIdx !== -1 && guardIdx < issueIdx, '桶校验先于 issueOtp');
 });
@@ -204,7 +207,11 @@ test('#3 密码登录路由:429 防爆破滑动窗口接线(守卫先于 scrypt)
   assert.match(route, /checkLoginRateLimit\(ipKey\)/);
   assert.match(route, /recordLoginFailure\(ipKey, LOGIN_IP_MAX_FAILURES\)/);
   assert.match(route, /clearLoginFailures\(ipKey\)/);
-  assert.match(route, /clientIp\(request\)/);
+  // per-IP 维度经 lib/client-ip 统一解析(scan r2 #1:可信反代后取转发头 IP,
+  // 否则会话指纹/匿名固定桶 — 伪造 XFF 不再换桶)
+  assert.match(route, /@\/lib\/client-ip/);
+  assert.match(route, /clientIpBucketKey\(request, await readSessionToken\(\)\)/);
+  assert.doesNotMatch(route, /function clientIp\(/);
   assert.match(route, /code: 'TOO_MANY_ATTEMPTS'/);
   assert.match(route, /status: 429/);
   assert.match(route, /retryAfterMs/);

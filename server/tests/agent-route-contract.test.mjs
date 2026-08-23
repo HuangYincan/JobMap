@@ -66,18 +66,14 @@ test('限流:模块级内存令牌桶 10 req/min,超限 429 RATE_LIMITED', () =>
   assert.match(route, /code: 'RATE_LIMITED'/);
 });
 
-test('#11 限流键:仅可信代理(TRUSTED_PROXY_IPS)门控后才信任 XFF;否则会话指纹', () => {
-  assert.match(route, /const TRUSTED_PROXY_IPS =/);
-  // 桶键派生:转发头读取必须位于门控(TRUSTED_PROXY_IPS.length > 0)之内
-  const fwdIdx = route.indexOf("request.headers.get('x-forwarded-for')");
-  const gateIdx = route.indexOf('TRUSTED_PROXY_IPS.length > 0');
-  assert.ok(fwdIdx !== -1 && gateIdx !== -1 && gateIdx < fwdIdx, 'XFF 读取必须在可信代理门控之后');
-  // 未配置可信代理 → 忽略转发头,指纹 = 会话 cookie 哈希(匿名无 cookie 归固定桶)
+test('#11 限流键:经 lib/client-ip 统一解析 — 仅可信代理(TRUSTED_PROXY_IPS)门控后才信任 XFF;否则会话指纹', () => {
+  // XFF 读取与门控已抽至 lib/client-ip(quality-scan r2 #1 三路由统一);行为级
+  // 契约(伪造 XFF 不换桶 / 会话指纹)在 tests/rate-limit-xff.test.mjs 直测。
+  assert.match(route, /import \{[^}]*clientIpBucketKey[^}]*\} from '@\/lib\/client-ip'/);
+  // 桶键派生:route 不再直接读转发头,统一经 clientIpBucketKey(request, token)
+  assert.match(route, /clientIpBucketKey\(request, await readSessionToken\(\)\)/);
+  // 未配置可信代理 → 指纹 = 会话 cookie 哈希(匿名无 cookie 归固定桶),见 helper
   assert.match(route, /readSessionToken\(\)/);
-  assert.match(route, /createHash\('sha256'\)/);
-  // 无转发头依赖路径(rateLimitKey 只在可信分支读 x-real-ip / x-forwarded-for)
-  const realIdx = route.indexOf("headers.get('x-real-ip')");
-  assert.ok(realIdx !== -1 && gateIdx < realIdx, 'x-real-ip 读取同样位于门控之后');
   // 限流仍是最前置(读 body 之前),且经 rateLimitKey 取键
   assert.match(route, /rateLimit\(await rateLimitKey\(request\)\)/);
   const rateIdx = route.indexOf('rateLimit(await rateLimitKey(request))');
