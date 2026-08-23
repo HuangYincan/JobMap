@@ -49,7 +49,7 @@ export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 # DATABASE_URL from .env.example — do not echo it
 export DATABASE_URL='postgresql://postgres:postgres@localhost:5432/domain_map'
 make preflight
-make db-migrate                 # 001–016
+make db-migrate                 # 001–018
 cd server && npm run import:seed:apply
 ```
 
@@ -65,7 +65,7 @@ Account routes then write sessions / Recent / Saved / applications / queued noti
 
 - No Vercel / Railway / CI publish.
 - No Redis (public cache is in-process, 30s).
-- No real SMS / email. Inbox rows stay `queued`.
+- OTP 已真发(Resend email / 阿里云短信,2026-08-22,见 tech/25/26);岗位提醒仍仅入队(queue-only:Inbox rows stay `queued`).
 - No AMap → Postgres importer for Domain POIs. `npm run geocode:sites` only plans missing points (radar/portal recruitment data imports via `import:seed:apply`).
 - Backup / restore is “the Docker volume + git”. Record a real runbook when there is a host.
 

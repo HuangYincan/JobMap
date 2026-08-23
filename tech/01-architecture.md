@@ -67,7 +67,7 @@ AI is deferred. When introduced, it may only return a discriminated allowlist su
 ```text
 server/                 # Next.js application (App Router + API routes)
 crawler/                # approved-data importer (Python + uv)
-db/migrations/          # ordered SQL migrations (001–016, live-applied)
+db/migrations/          # ordered SQL migrations (001–018, live-applied)
 db/scripts/             # migration runner
 tests/                  # cross-service test suites
 tech/zh-cn/             # planned public documentation source
