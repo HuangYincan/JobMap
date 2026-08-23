@@ -16,6 +16,7 @@ import {
   geocodeQueryForSite,
   gradeOfficePoi,
   importedSiteQuery,
+  isCityListPlaceholderAddress,
   isCityNameAddress,
   matchesCityCenter,
   normalizeNameForMatch,
@@ -448,6 +449,43 @@ test('siteHasStreetAddress only accepts a real street/building address', () => {
   assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '西湖区文二西路712号西溪乐谷2号楼' } }), true);
   assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '北京/上海/杭州' } }), false);
   assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: {} }), false);
+});
+
+// --- 多城市列表占位串 (2026-08-23, fix/poi-citylist-branch) ------------------
+// tech/29 §3.1: 6 站 (radar: metapp×2 / 万物云×3 / 中电福富×1) 的多城市占位串
+// 含「厦门」—「门」∈ STREET_RE → siteHasStreetAddress 误判 true → 走地址检索
+// 分支而非公司名检索分支。占位串必须判 false, 且不误杀含 "/" 的真实地址。
+
+test('isCityListPlaceholderAddress: 多城市占位串判定', () => {
+  // 6 站真实占位串 (radar drops): metapp×2 / 万物云×3 / 中电福富×1
+  assert.equal(isCityListPlaceholderAddress('北京/成都/厦门'), true);
+  assert.equal(isCityListPlaceholderAddress('广州/深圳/武汉/厦门'), true);
+  assert.equal(isCityListPlaceholderAddress('成都/重庆/厦门/福州'), true);
+  // 通用形态 + 可带「市」后缀 / 空格
+  assert.equal(isCityListPlaceholderAddress('北京/上海/杭州'), true);
+  assert.equal(isCityListPlaceholderAddress('北京/上海/厦门/深圳'), true);
+  assert.equal(isCityListPlaceholderAddress('北京/上海市/厦门'), true);
+  assert.equal(isCityListPlaceholderAddress('北京 / 上海 / 厦门'), true);
+  // 非列表: 单城市 / 空段 / 街道特征段 → 不判占位 (交回 STREET_RE)
+  assert.equal(isCityListPlaceholderAddress('北京'), false);
+  assert.equal(isCityListPlaceholderAddress('北京//上海'), false);
+  assert.equal(isCityListPlaceholderAddress('文二西路/莲花街'), false);
+  assert.equal(isCityListPlaceholderAddress('北京/上海路'), false);
+  assert.equal(isCityListPlaceholderAddress('杭州/西湖区文二西路712号'), false);
+  assert.equal(isCityListPlaceholderAddress('北京市朝阳区/海淀区'), false);
+  assert.equal(isCityListPlaceholderAddress(''), false);
+});
+
+test('siteHasStreetAddress: 含「厦门」的多城市占位串判非街道 (fix/poi-citylist-branch)', () => {
+  // 回归: 修复前 厦门 的「门」命中 STREET_RE → true → 走地址检索分支
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '北京/成都/厦门' } }), false);
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '广州/深圳/武汉/厦门' } }), false);
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '成都/重庆/厦门/福州' } }), false);
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '北京/上海/厦门/深圳' } }), false);
+  // 含 "/" 的真实地址不误杀
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '文二西路/莲花街' } }), true);
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '北京/上海路' } }), true);
+  assert.equal(siteHasStreetAddress({ id: 's', name: 'x', location: { address: '西湖区文二西路712号西溪乐谷2号楼' } }), true);
 });
 
 // --- 城市中心假坐标重跑 (2026-08-22, fix/geocode-citycenter-rerun) ----------

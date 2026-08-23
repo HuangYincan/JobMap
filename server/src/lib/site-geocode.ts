@@ -486,10 +486,38 @@ export function placeSearchMemoSet(
   if (hit?.poi) memo.set(key, hit);
 }
 
+// ---------------------------------------------------------------------------
+// 多城市列表占位串判定 (2026-08-23, fix/poi-citylist-branch)。
+// radar 快照无办公地址时用城市列表占位 ("北京/上海/厦门/深圳")。STREET_RE
+// 含「门」→ "厦门" 命中 → siteHasStreetAddress 误判 true → 走地址检索分支
+// (对城市列表串 no-result 白跑, 或命中目标城内任意点写非真实办公坐标, 见
+// tech/29 §3.1)。「/」分隔且每段都是城市名 (bare 名, 可带「市」后缀) →
+// 城市列表占位, 非街道地址; 任一段含街道特征 (路/街/号…) → 真实地址,
+// 放行 STREET_RE 判定, 不误杀 ("文二西路/莲花街" 类交叉口地址)。
+// ---------------------------------------------------------------------------
+
+/** 城市 bare 名集合 (CITY_CENTERS 键去「省/市/区」后缀) — 占位串段判定用。 */
+const CITY_CENTER_BARE_NAMES = new Set(Object.keys(CITY_CENTERS).map(bareCityName));
+
+/** 地址是否多城市列表占位串 ("/" 分隔 ≥2 段, 每段都是城市 bare 名或「城市名+市」)。 */
+export function isCityListPlaceholderAddress(address: string): boolean {
+  const parts = address.split('/');
+  if (parts.length < 2) return false;
+  for (const part of parts) {
+    if (!CITY_CENTER_BARE_NAMES.has(bareCityName(part.trim()))) return false;
+  }
+  return true;
+}
+
 /** A site whose address names a real street/building — geocodable as-is. */
 export function siteHasStreetAddress(site: CompanySite): boolean {
   const address = site.location?.address?.trim();
-  return !!address && STREET_RE.test(address);
+  if (!address) return false;
+  // 2026-08-23 (fix/poi-citylist-branch): 城市列表占位串优先于 STREET_RE —
+  // "北京/上海/厦门/深圳" 是城市列表占位 (厦门含「门」会误命中 STREET_RE),
+  // 必须走公司名检索分支而非地址检索分支。
+  if (isCityListPlaceholderAddress(address)) return false;
+  return STREET_RE.test(address);
 }
 
 /**
