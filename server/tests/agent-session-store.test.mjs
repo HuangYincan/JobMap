@@ -4,11 +4,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  ACTIONS_PER_MESSAGE_CAP,
+  AGENT_STATE_RAW_MAX,
   DEFAULT_SESSION_TITLE,
+  LEGACY_HISTORY_RAW_MAX,
   LEGACY_HISTORY_KEY,
   SESSIONS_CAP,
   SESSIONS_KEY,
   SESSION_MESSAGES_CAP,
+  MESSAGE_CONTENT_MAX,
+  TITLE_MAX,
+  TOOLS_PER_MESSAGE_CAP,
+  TOOL_SUMMARY_MAX,
   appendMessage,
   archiveAndNew,
   createSession,
@@ -378,6 +385,81 @@ test('parseState: activeId 无效 → 回落到最近会话;无会话 → null',
   assert.equal(parseState('{"sessions": [], "activeId": null}').activeId, null);
 });
 
+test('parseState refuses oversized local raw values before JSON.parse', () => {
+  assert.equal(parseState('x'.repeat(AGENT_STATE_RAW_MAX + 1)), null);
+});
+
+test('parseState bounds a corrupted store to the supported session working set', () => {
+  const sessions = Array.from({ length: SESSIONS_CAP + 5 }, (_, i) => ({
+    id: `s${i}`,
+    title: 't'.repeat(TITLE_MAX + 10),
+    messages: [userMsg('q'.repeat(MESSAGE_CONTENT_MAX + 1))],
+    updatedAt: NOW + i,
+  }));
+  const parsed = parseState(JSON.stringify({ sessions }));
+
+  assert.equal(parsed.sessions.length, SESSIONS_CAP);
+  assert.deepEqual(
+    parsed.sessions.map((s) => s.id),
+    ['s14', 's13', 's12', 's11', 's10', 's9', 's8', 's7', 's6', 's5'],
+  );
+  assert.ok(parsed.sessions.every((s) => [...s.title].length === TITLE_MAX));
+  assert.ok(parsed.sessions.every((s) => s.messages[0].content.length === MESSAGE_CONTENT_MAX));
+});
+
+test('parseState normalizes only the retained message tail', () => {
+  const inflated = Array.from({ length: SESSION_MESSAGES_CAP + 100 }, (_, i) => userMsg(`m${i}`));
+  const parsed = parseState(JSON.stringify({
+    sessions: [{ id: 'a', title: 'old', messages: inflated, updatedAt: 2 }],
+    activeId: 'a',
+  }));
+
+  assert.equal(parsed.sessions.length, 1);
+  assert.equal(parsed.sessions[0].messages.length, SESSION_MESSAGES_CAP);
+});
+
+test('archiveAndNew truncates an oversized caller-supplied title by code point', () => {
+  const state = createSession(emptyState(), { id: 'a', now: NOW });
+  const next = archiveAndNew(state, {
+    activeId: 'a',
+    messages: [userMsg('x')],
+    title: 'x'.repeat(TITLE_MAX + 20),
+    id: 'b',
+    now: NOW + 1,
+  });
+  const archived = next.sessions.find((session) => session.id === 'a');
+
+  assert.equal([...archived.title].length, TITLE_MAX);
+});
+
+test('persisted messages validate and bound action/tool attachments', () => {
+  const state = createSession(emptyState(), { id: 'a', now: NOW });
+  const actions = [
+    { type: 'unknown', payload: {} },
+    ...Array.from({ length: ACTIONS_PER_MESSAGE_CAP + 2 }, (_, i) => ({
+      type: 'search',
+      payload: { query: `q${i}` },
+    })),
+  ];
+  const tools = Array.from({ length: TOOLS_PER_MESSAGE_CAP + 8 }, (_, i) => ({
+    name: 'search',
+    status: 'done',
+    summary: `summary-${i}-${'x'.repeat(TOOL_SUMMARY_MAX)}`,
+  }));
+  const next = appendMessage(state, 'a', {
+    role: 'assistant',
+    content: 'c'.repeat(MESSAGE_CONTENT_MAX + 1),
+    actions,
+    tools,
+  }, { now: NOW + 1 });
+  const saved = next.sessions[0].messages[0];
+
+  assert.equal(saved.content.length, MESSAGE_CONTENT_MAX);
+  assert.equal(saved.actions.length, ACTIONS_PER_MESSAGE_CAP);
+  assert.equal(saved.actions[0].payload.query, 'q0');
+  assert.equal(saved.tools.length, TOOLS_PER_MESSAGE_CAP);
+});
+
 test('saveSessionState / loadSessionState round-trip', () => {
   const storage = makeStorage();
   let state = createSession(emptyState(), { id: 'a', now: NOW });
@@ -469,6 +551,10 @@ test('parseLegacyHistory: 纯解析(数组/坏数据/空)', () => {
   assert.deepEqual(parseLegacyHistory('{"a":1}'), []);
   assert.deepEqual(parseLegacyHistory(JSON.stringify([userMsg('q'), { role: 'bad', content: 1 }])), [userMsg('q')]);
   assert.deepEqual(parseLegacyHistory(JSON.stringify([])), []);
+});
+
+test('parseLegacyHistory refuses oversized legacy raw values', () => {
+  assert.deepEqual(parseLegacyHistory('x'.repeat(LEGACY_HISTORY_RAW_MAX + 1)), []);
 });
 
 // ---- relativeTime ----

@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 
 import {
   clearModeCache,
+  FILTER_KEYS_MAX,
+  FILTER_VALUE_MAX,
+  MODE_CACHE_RAW_MAX,
+  MODE_PAGE_OFFSET_MAX,
+  MODE_QUERY_MAX,
+  MODE_SORT_MAX,
   MODE_CACHE_PREFIX,
   MODE_CACHE_VERSION,
   readModeCache,
@@ -158,6 +164,12 @@ test('stale cache version is rejected so refreshed data loads', () => {
   assert.equal(readModeCache('work'), null);
 });
 
+test('oversized mode-cache raw values are rejected before JSON.parse', () => {
+  const store = installMemoryStorage();
+  store.set(`${MODE_CACHE_PREFIX}work`, 'x'.repeat(MODE_CACHE_RAW_MAX + 1));
+  assert.equal(readModeCache('work'), null);
+});
+
 test('work cache containing a domain-kind row is rejected as polluted (kind guard)', () => {
   const store = installMemoryStorage();
   store.set(
@@ -289,4 +301,36 @@ test('corrupt viewport snapshot is dropped, cache still readable (按不符处�
   const cached = readModeCache('work');
   assert.equal(cached?.catalog[0].id, 'corrupt-snap');
   assert.equal(cached?.viewport, undefined);
+});
+
+test('mode cache bounds scalar fields, filters, coordinates, and viewport', () => {
+  const store = installMemoryStorage();
+  const filters = Object.fromEntries(
+    Array.from({ length: FILTER_KEYS_MAX + 10 }, (_, i) => [
+      `filter-${i}`,
+      [i < FILTER_KEYS_MAX ? 'x'.repeat(FILTER_VALUE_MAX) : 'x'.repeat(FILTER_VALUE_MAX + 1)],
+    ]),
+  );
+  store.set(`${MODE_CACHE_PREFIX}domain`, JSON.stringify({
+    version: MODE_CACHE_VERSION,
+    mode: 'domain',
+    catalog: [samplePoi],
+    pageOffset: MODE_PAGE_OFFSET_MAX + 1,
+    searchOrigin: { lng: Number.NaN, lat: 30 },
+    query: 'q'.repeat(MODE_QUERY_MAX + 1),
+    filters,
+    sort: 's'.repeat(MODE_SORT_MAX + 1),
+    savedAt: 1,
+    viewport: { center: { lng: Number.POSITIVE_INFINITY, lat: 30 }, zoom: 12 },
+  }));
+  const cached = readModeCache('domain');
+
+  assert.equal(cached.pageOffset, MODE_PAGE_OFFSET_MAX);
+  assert.equal(cached.searchOrigin, null);
+  assert.equal(cached.query.length, MODE_QUERY_MAX);
+  assert.equal(Object.keys(cached.filters).length, FILTER_KEYS_MAX);
+  const expectedValue = ['x'.repeat(FILTER_VALUE_MAX)];
+  for (const value of Object.values(cached.filters)) assert.deepEqual(value, expectedValue);
+  assert.equal(cached.sort.length, MODE_SORT_MAX);
+  assert.equal(cached.viewport, undefined);
 });

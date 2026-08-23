@@ -72,7 +72,10 @@ export function createTtlCache<T = unknown>(
   };
 }
 
-const publicStore = createTtlCache();
+// Public list/detail responses are attacker-influenced through query parameters.
+// Keep a bounded LRU so unique requests cannot grow process memory without limit.
+export const PUBLIC_CACHE_MAX = 512;
+const publicStore = createTtlCache(Date.now, { max: PUBLIC_CACHE_MAX });
 
 export const PUBLIC_CACHE_TTL_MS = 30_000;
 export const PUBLIC_CACHE_CONTROL = 'public, max-age=30, stale-while-revalidate=60';

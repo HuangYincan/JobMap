@@ -4,12 +4,14 @@
 // 无 DATABASE_URL 时 API 走这里，满足开发。
 // 有库后同一契约切到 Postgres，不改前端。
 // 邮箱/手机验证码均为真实随机码(email 经 Resend 真发,phone 经阿里云短信真发)。
-// GitHub 为演示账号。
+// 未配置 OAuth 的 GitHub/Google/微信为开发期演示账号,生产禁用。
 // ============================================================
 
-import { createHmac, randomBytes, randomInt, randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt, randomUUID } from 'node:crypto';
 import type { AccountUser, ApplicationRecord, AuthProvider, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from './account.ts';
 import { emptyPreferences, mergePreferences } from './account.ts';
+import { BoundedLruStore } from './bounded-lru-store.ts';
+import { normalizeContact, normalizeEmail, normalizePhone } from './contact-validation.ts';
 import { hashPassword, verifyPassword } from './password.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -45,21 +47,75 @@ interface StoredSession {
 interface OtpChallenge {
   target: string;
   provider: 'phone' | 'email';
-  code: string;
+  codeHash: string;
   expiresAt: number;
 }
 
-const users = new Map<string, StoredUser>();
+/** Fallback user/identity/collection store ceiling, including avatar bytes. */
+export const FALLBACK_ACCOUNT_MEMORY_MAX = 1_000;
+const users = new BoundedLruStore<StoredUser>(FALLBACK_ACCOUNT_MEMORY_MAX);
 const sessions = new Map<string, StoredSession>();
-const identities = new Map<string, string>();
-const otps = new Map<string, OtpChallenge>();
-const history = new Map<string, SearchHistoryEntry[]>();
-const saved = new Map<string, SavedPlace[]>();
-const applications = new Map<string, ApplicationRecord[]>();
-const notifications = new Map<string, NotificationRecord[]>();
+/** Successful login is not rate-limited; the process mirror still needs a ceiling. */
+export const SESSION_MEMORY_MAX = 10_000;
+const identities = new BoundedLruStore<string>(FALLBACK_ACCOUNT_MEMORY_MAX);
+/** Unique rotated targets must not turn the always-written process mirror into a leak. */
+export const OTP_CHALLENGE_MEMORY_MAX = 10_000;
+const otps = new BoundedLruStore<OtpChallenge>(OTP_CHALLENGE_MEMORY_MAX);
+
+function sweepExpiredOtpChallenges(now = Date.now()): void {
+  for (const [key, challenge] of otps) {
+    if (challenge.expiresAt <= now) otps.delete(key);
+  }
+}
+
+function hashOtpForMemory(code: string): string {
+  return createHash('sha256').update(`memory-otp:${code}`).digest('hex');
+}
+
+/** Test hook: the challenge map intentionally has no public production reader. */
+export function otpChallengeMemorySize(): number {
+  sweepExpiredOtpChallenges();
+  return otps.size;
+}
+
+export function resetOtpChallengeMemory(): void {
+  otps.clear();
+}
+
+function sweepExpiredSessions(now = Date.now()): void {
+  for (const [token, session] of sessions) {
+    if (session.expiresAt <= now) sessions.delete(token);
+  }
+}
+
+export function sessionMemorySize(): number {
+  sweepExpiredSessions();
+  return sessions.size;
+}
+
+export function resetSessionMemory(): void {
+  sessions.clear();
+}
+
+/** Number of process-local users retained by the fallback account store. */
+export function fallbackAccountMemorySize(): number {
+  return users.size;
+}
+
+const history = new BoundedLruStore<SearchHistoryEntry[]>(FALLBACK_ACCOUNT_MEMORY_MAX);
+const saved = new BoundedLruStore<SavedPlace[]>(FALLBACK_ACCOUNT_MEMORY_MAX);
+const applications = new BoundedLruStore<ApplicationRecord[]>(FALLBACK_ACCOUNT_MEMORY_MAX);
+const notifications = new BoundedLruStore<NotificationRecord[]>(FALLBACK_ACCOUNT_MEMORY_MAX);
+/** Authenticated collections need durable-style ceilings in the fallback store too. */
+export const SAVED_PLACES_MEMORY_MAX = 500;
+export const APPLICATIONS_MEMORY_MAX = 500;
+export const NOTIFICATIONS_MEMORY_MAX = 200;
 
 function identityKey(provider: AuthProvider, subject: string): string {
-  return `${provider}:${subject.trim().toLowerCase()}`;
+  const value = provider === 'phone' || provider === 'email'
+    ? normalizeContact(provider, subject)
+    : subject.trim().toLowerCase();
+  return `${provider}:${value}`;
 }
 
 /** target(phone/email subject)是否已绑定账户(内存路径):返回 userId,未绑定 → null。
@@ -115,7 +171,17 @@ export function upsertIdentity(input: {
   displayName?: string;
   avatarUrl?: string;
 }): AccountUser {
-  const key = identityKey(input.provider, input.subject);
+  const subjectValue = input.provider === 'phone' || input.provider === 'email'
+    ? normalizeContact(input.provider, input.subject)
+    : input.subject.trim().toLowerCase();
+  const phone = input.provider === 'phone'
+    ? normalizePhone(input.phone ?? subjectValue)
+    : input.phone?.trim();
+  const email = input.provider === 'email'
+    ? normalizeEmail(input.email ?? subjectValue)
+    : input.email?.trim();
+
+  const key = identityKey(input.provider, subjectValue);
   const existingId = identities.get(key);
   if (existingId) {
     const user = users.get(existingId);
@@ -123,12 +189,10 @@ export function upsertIdentity(input: {
   }
 
   const id = randomUUID();
-  const phone = input.phone;
-  const email = input.email;
   const user: StoredUser = {
     id,
-    displayName: input.displayName || defaultDisplayName(input.provider, input.subject),
-    accountLabel: accountLabel({ phone, email }),
+    displayName: input.displayName || defaultDisplayName(input.provider, subjectValue),
+    accountLabel: accountLabel({ phone: phone ?? undefined, email: email ?? undefined }),
     avatarUrl: input.avatarUrl,
     phone,
     email,
@@ -241,12 +305,14 @@ export class EmailTakenError extends Error {
 export function bindPhone(userId: string, phone: string): AccountUser | null {
   const user = users.get(userId);
   if (!user) return null;
-  const norm = phone.trim().toLowerCase();
+  const norm = normalizePhone(phone);
   for (const u of users.values()) {
-    if (u.id !== userId && u.phone?.toLowerCase() === norm) throw new PhoneTakenError(phone);
+    if (u.id !== userId && normalizeContact('phone', u.phone ?? '') === norm) {
+      throw new PhoneTakenError(norm);
+    }
   }
-  const oldKey = user.phone ? `phone:${user.phone.trim().toLowerCase()}` : null;
-  user.phone = phone.trim();
+  const oldKey = user.phone ? identityKey('phone', user.phone) : null;
+  user.phone = norm;
   users.set(userId, user);
   if (oldKey && identities.get(oldKey) === userId) identities.delete(oldKey);
   identities.set(`phone:${norm}`, userId);
@@ -257,12 +323,12 @@ export function bindPhone(userId: string, phone: string): AccountUser | null {
 export function bindEmail(userId: string, email: string): AccountUser | null {
   const user = users.get(userId);
   if (!user) return null;
-  const norm = email.trim().toLowerCase();
+  const norm = normalizeEmail(email);
   for (const u of users.values()) {
-    if (u.id !== userId && u.email?.toLowerCase() === norm) throw new EmailTakenError(email);
+    if (u.id !== userId && normalizeEmail(u.email ?? '') === norm) throw new EmailTakenError(norm);
   }
-  const oldKey = user.email ? `email:${user.email.trim().toLowerCase()}` : null;
-  user.email = email.trim();
+  const oldKey = user.email ? identityKey('email', user.email) : null;
+  user.email = norm;
   users.set(userId, user);
   if (oldKey && identities.get(oldKey) === userId) identities.delete(oldKey);
   identities.set(`email:${norm}`, userId);
@@ -272,6 +338,12 @@ export function bindEmail(userId: string, email: string): AccountUser | null {
 export function createSession(userId: string): { token: string; expiresAt: number } {
   const token = signToken();
   const expiresAt = Date.now() + SESSION_TTL_MS;
+  sweepExpiredSessions();
+  while (sessions.size >= SESSION_MEMORY_MAX) {
+    const oldest = sessions.keys().next().value;
+    if (oldest === undefined) break;
+    sessions.delete(oldest);
+  }
   sessions.set(token, { token, userId, expiresAt });
   return { token, expiresAt };
 }
@@ -284,7 +356,11 @@ export function getSessionUser(token: string | undefined | null): AccountUser | 
     return null;
   }
   const user = users.get(session.userId);
-  return user ? publicUser(user) : null;
+  if (!user) return null;
+  // Keep active sessions at the LRU tail so a login flood evicts idle tokens first.
+  sessions.delete(token);
+  sessions.set(token, session);
+  return publicUser(user);
 }
 
 export function destroySession(token: string | undefined | null): void {
@@ -338,27 +414,41 @@ export function getAvatarData(userId: string): Uint8Array | null {
 }
 
 export function issueOtp(provider: 'phone' | 'email', target: string): { expiresAt: number; code: string } {
-  const normalized = target.trim().toLowerCase();
+  const normalized = normalizeContact(provider, target);
   const expiresAt = Date.now() + OTP_TTL_MS;
   // phone/email 统一随机码(phone 经阿里云短信真发,见 aliyun-sms-client)。
   const code = randomOtpCode();
-  otps.set(`${provider}:${normalized}`, {
+  const key = `${provider}:${normalized}`;
+  otps.delete(key);
+  sweepExpiredOtpChallenges();
+  while (otps.size >= OTP_CHALLENGE_MEMORY_MAX) {
+    const oldest = otps.keys().next().value;
+    if (oldest === undefined) break;
+    otps.delete(oldest);
+  }
+  otps.set(key, {
     target: normalized,
     provider,
-    code,
+    codeHash: hashOtpForMemory(code),
     expiresAt,
   });
   return { expiresAt, code };
 }
 
+/** 撤销尚未消费的内存 OTP(DB 写入失败时用于回滚进程镜像)。 */
+export function revokeOtpChallenge(provider: 'phone' | 'email', target: string): void {
+  otps.delete(`${provider}:${normalizeContact(provider, target)}`);
+}
+
 export function consumeOtp(provider: 'phone' | 'email', target: string, code: string): boolean {
-  const key = `${provider}:${target.trim().toLowerCase()}`;
+  const normalizedCode = code.trim();
+  const key = `${provider}:${normalizeContact(provider, target)}`;
   const challenge = otps.get(key);
   if (!challenge || challenge.expiresAt < Date.now()) {
     otps.delete(key);
     return false;
   }
-  if (challenge.code !== code.trim()) return false;
+  if (challenge.codeHash !== hashOtpForMemory(normalizedCode)) return false;
   otps.delete(key);
   return true;
 }
@@ -411,7 +501,7 @@ export function savePlace(userId: string, place: Omit<SavedPlace, 'id' | 'create
     id: randomUUID(),
     createdAt: new Date().toISOString(),
   };
-  saved.set(userId, [entry, ...items]);
+  saved.set(userId, [entry, ...items].slice(0, SAVED_PLACES_MEMORY_MAX));
   return entry;
 }
 
@@ -439,7 +529,7 @@ export function recordApplication(
     id: randomUUID(),
     createdAt: new Date().toISOString(),
   };
-  applications.set(userId, [entry, ...items]);
+  applications.set(userId, [entry, ...items].slice(0, APPLICATIONS_MEMORY_MAX));
   return entry;
 }
 
@@ -462,6 +552,6 @@ export function enqueueNotification(
     id: randomUUID(),
     createdAt: new Date().toISOString(),
   };
-  notifications.set(userId, [entry, ...items]);
+  notifications.set(userId, [entry, ...items].slice(0, NOTIFICATIONS_MEMORY_MAX));
   return entry;
 }

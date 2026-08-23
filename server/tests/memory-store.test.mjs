@@ -10,8 +10,11 @@ import {
   listMemories,
   MEMORY_CONTENT_MAX,
   MEMORY_LIST_MAX,
+  MEMORY_STORAGE_MAX,
+  MEMORY_USER_STORE_MAX,
   removeMemory,
   sanitizeMemoryContent,
+  memoryUserStoreSize,
 } from '../src/lib/memory-store.ts';
 
 // ---- sanitizeMemoryContent 纯函数 ----
@@ -103,8 +106,13 @@ function fakeDb({ failRead = false, failWrite = false } = {}) {
       }
       if (sql.includes('DELETE FROM user_memories')) {
         const arr = rows.get(params[0]) ?? [];
-        if (params.length > 1) rows.set(params[0], arr.filter((m) => String(m.id) !== String(params[1])));
-        else rows.set(params[0], []);
+        if (sql.includes('id NOT IN')) {
+          rows.set(params[0], arr.slice(0, params[1]));
+        } else if (params.length > 1) {
+          rows.set(params[0], arr.filter((m) => String(m.id) !== String(params[1])));
+        } else {
+          rows.set(params[0], []);
+        }
         return { rows: [], rowCount: 1 };
       }
       return { rows: [], rowCount: 0 };
@@ -131,6 +139,9 @@ test('memory(DB 模式): SQL 契约 — SELECT 按 user_id + LIMIT 50,INSERT 经
 
     const inserts = db.calls.filter((c) => c.sql.includes('INSERT INTO user_memories'));
     assert.equal(inserts.length, 2);
+    for (const insert of inserts) {
+      assert.match(insert.sql, /ON CONFLICT \(user_id, content\) DO NOTHING/);
+    }
     assert.equal(inserts[0].params[0], 'db-1');
     assert.equal(inserts[0].params[1], '我常驻杭州', 'trim 后入库');
     assert.equal(inserts[1].params[1].length, MEMORY_CONTENT_MAX, '超长截断 200 后入库');
@@ -141,7 +152,7 @@ test('memory(DB 模式): SQL 契约 — SELECT 按 user_id + LIMIT 50,INSERT 经
 
     // removeMemory 带 user_id 条件
     await removeMemory('db-1', items[1].id);
-    const del = db.calls.find((c) => c.sql.includes('DELETE FROM user_memories') && c.params.length > 1);
+    const del = db.calls.find((c) => c.sql.includes('DELETE FROM user_memories') && c.sql.includes('id = $2'));
     assert.ok(del.sql.includes('user_id = $1 AND id = $2'), '仅删自己的行');
     assert.equal((await listMemories('db-1')).length, 1);
 
@@ -150,6 +161,38 @@ test('memory(DB 模式): SQL 契约 — SELECT 按 user_id + LIMIT 50,INSERT 经
     const delAll = db.calls.find((c) => c.sql.includes('DELETE FROM user_memories') && c.params.length === 1);
     assert.ok(delAll.sql.includes('user_id = $1'));
     assert.equal((await listMemories('db-1')).length, 0);
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
+});
+
+test('memory: per-user storage is capped to the newest 50 facts', async () => {
+  __memoryStoreTest.poolOverride = () => null;
+  try {
+    await clearMemories('mem-cap');
+    for (let i = 0; i < MEMORY_STORAGE_MAX + 5; i += 1) {
+      await addMemory('mem-cap', `fact-${String(i).padStart(2, '0')}`);
+    }
+    const items = await listMemories('mem-cap');
+    assert.equal(items.length, MEMORY_STORAGE_MAX);
+    assert.equal(items[0].content, `fact-${String(MEMORY_STORAGE_MAX + 4).padStart(2, '0')}`);
+    assert.equal(items.at(-1)?.content, 'fact-05');
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
+});
+
+test('memory(DB 模式): INSERT 后按 user_id 淘汰最旧行', async () => {
+  const db = fakeDb();
+  __memoryStoreTest.poolOverride = () => db;
+  try {
+    await addMemory('db-cap', '事实');
+    const prune = db.calls.find((c) => c.sql.includes('DELETE FROM user_memories') && c.sql.includes('id NOT IN'));
+    assert.ok(prune, 'INSERT 后必须执行总量裁剪');
+    assert.match(prune.sql, /WHERE user_id = \$1/);
+    assert.match(prune.sql, /ORDER BY created_at DESC, id DESC/);
+    assert.match(prune.sql, /LIMIT \$2/);
+    assert.deepEqual(prune.params, ['db-cap', MEMORY_STORAGE_MAX]);
   } finally {
     __memoryStoreTest.poolOverride = undefined;
   }
@@ -183,6 +226,28 @@ test('memory(DB 模式): 读失败回落(可恢复,返回空/内存),写失败�
     await assert.rejects(clearMemories('db-down'), DbUnavailableError);
     // 故障期间内存不残留(写从未成功)
     assert.equal((await listMemories('db-down')).length, 0);
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
+});
+
+test('memory(内存模式): fallback user keys are capped to a bounded LRU', async () => {
+  __memoryStoreTest.poolOverride = () => null;
+  try {
+    const firstUser = 'memory-user-000';
+    await clearMemories(firstUser);
+    for (let i = 0; i < MEMORY_USER_STORE_MAX + 1; i += 1) {
+      const userId = `memory-user-${String(i).padStart(3, '0')}`;
+      await addMemory(userId, `preference-${i}`);
+    }
+
+    assert.equal(memoryUserStoreSize(), MEMORY_USER_STORE_MAX);
+    assert.deepEqual(await listMemories(firstUser), [], 'inactive oldest user is evicted');
+    assert.deepEqual(
+      (await listMemories(`memory-user-${String(MEMORY_USER_STORE_MAX).padStart(3, '0')}`))
+        .map((item) => item.content),
+      [`preference-${MEMORY_USER_STORE_MAX}`],
+    );
   } finally {
     __memoryStoreTest.poolOverride = undefined;
   }

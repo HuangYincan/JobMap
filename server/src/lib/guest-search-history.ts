@@ -12,6 +12,11 @@ import { isPersistableMode } from './persistable.ts';
 
 export const GUEST_HISTORY_KEY = 'dm.guest-search-history.v1';
 export const GUEST_HISTORY_CAP = 30;
+/** Local parser ceiling; oversized values are treated as corrupt storage. */
+export const GUEST_HISTORY_RAW_MAX = 256 * 1024;
+/** Corrupt or oversized local rows must not enter app state unchanged. */
+export const GUEST_QUERY_MAX = 100;
+export const GUEST_ID_MAX = 100;
 
 function storage(): Storage | null {
   if (typeof window === 'undefined') return null;
@@ -23,26 +28,34 @@ function storage(): Storage | null {
 }
 
 function parse(raw: string | null): SearchHistoryEntry[] {
-  if (!raw) return [];
+  if (!raw || raw.length > GUEST_HISTORY_RAW_MAX) return [];
   try {
     const data = JSON.parse(raw) as unknown;
     if (!Array.isArray(data)) return [];
     return data
-      .filter((item): item is SearchHistoryEntry => {
-        if (!item || typeof item !== 'object') return false;
-        const row = item as SearchHistoryEntry;
-        return Boolean(row.id && row.query && row.mode && row.createdAt);
-      })
-      .filter((item) => isPersistableMode(item.mode))
-      // 旧数据无 entity 字段 → 原样保留（纯搜索回放）；有但结构损坏 → 剥离
-      .map((item) => {
-        const entity = sanitizeEntityRef(item.entity);
-        if (entity) return { ...item, entity };
-        if (item.entity) {
-          const { entity: _dropped, ...rest } = item;
-          return rest;
-        }
-        return item;
+      .slice(0, GUEST_HISTORY_CAP)
+      .flatMap((item): SearchHistoryEntry[] => {
+        if (!item || typeof item !== 'object') return [];
+        const row = item as Partial<SearchHistoryEntry>;
+        if (
+          typeof row.id !== 'string' || !row.id ||
+          typeof row.query !== 'string' ||
+          typeof row.mode !== 'string' ||
+          typeof row.createdAt !== 'string'
+        ) return [];
+        if (!isPersistableMode(row.mode)) return [];
+        const createdAt = new Date(row.createdAt);
+        if (Number.isNaN(createdAt.getTime()) || !row.query.trim()) return [];
+
+        const entity = sanitizeEntityRef(row.entity);
+        const normalized: SearchHistoryEntry = {
+          id: row.id.slice(0, GUEST_ID_MAX),
+          query: row.query.trim().slice(0, GUEST_QUERY_MAX),
+          mode: row.mode,
+          createdAt: createdAt.toISOString(),
+          ...(entity ? { entity } : {}),
+        };
+        return [normalized];
       });
   } catch {
     return [];

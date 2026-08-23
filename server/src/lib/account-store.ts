@@ -10,7 +10,7 @@
 // ============================================================
 
 import { createHash } from 'node:crypto';
-import type { Pool } from 'pg';
+import type { Pool, QueryResult } from 'pg';
 import {
   DEFAULT_PREFERENCES,
   mergePreferences,
@@ -28,6 +28,8 @@ import { getPool } from './db.ts';
 import { canonicalMode } from './modes.ts';
 import { hashPassword, verifyPassword } from './password.ts';
 import type { MapMode } from './types.ts';
+import { BoundedRateStore } from './bounded-rate-store.ts';
+import { normalizeContact, normalizeEmail, normalizePhone } from './contact-validation.ts';
 import {
   addHistory as memAddHistory,
   clearHistory as memClearHistory,
@@ -36,6 +38,7 @@ import {
   destroySession as memDestroySession,
   getSessionUser as memGetSessionUser,
   issueOtp as memIssueOtp,
+  revokeOtpChallenge as memRevokeOtp,
   listHistory as memListHistory,
   listApplications as memListApplications,
   listNotifications as memListNotifications,
@@ -185,19 +188,28 @@ interface OtpGuard {
   lockedUntil: number; // 0 = 未锁
 }
 
-const otpGuards = new Map<string, OtpGuard>();
-const otpIpGuards = new Map<string, OtpGuard>();
-const otpAccountGuards = new Map<string, OtpGuard>();
+const otpGuardCapacity = 10_000;
+const otpGuards = new BoundedRateStore<OtpGuard>(otpGuardCapacity);
+const otpIpGuards = new BoundedRateStore<OtpGuard>(otpGuardCapacity);
+const otpAccountGuards = new BoundedRateStore<OtpGuard>(otpGuardCapacity);
 
 function otpKey(provider: 'phone' | 'email', target: string): string {
-  return `${provider}:${target.trim().toLowerCase()}`;
+  return `${provider}:${normalizeContact(provider, target)}`;
 }
 
-function getOtpGuard(bucket: Map<string, OtpGuard>, key: string): OtpGuard {
+function otpGuardTtlMs(): number {
+  return Math.max(
+    otpRateConfig.dailyWindowMs,
+    otpRateConfig.attemptWindowMs,
+    otpRateConfig.lockMs,
+  ) * 2;
+}
+
+function getOtpGuard(bucket: BoundedRateStore<OtpGuard>, key: string): OtpGuard {
   let guard = bucket.get(key);
   if (!guard) {
     guard = { lastSentAt: 0, sentAt: [], wrongAt: [], lockedUntil: 0 };
-    bucket.set(key, guard);
+    bucket.set(key, guard, otpGuardTtlMs());
   }
   return guard;
 }
@@ -247,7 +259,7 @@ export async function checkOtpSendLimits(
   provider: 'phone' | 'email',
   target: string,
 ): Promise<void> {
-  const normalized = target.trim().toLowerCase();
+  const normalized = normalizeContact(provider, target);
   const now = Date.now();
   const cfg = otpRateConfig;
 
@@ -363,8 +375,19 @@ export async function upsertIdentity(input: {
   displayName?: string;
   avatarUrl?: string;
 }): Promise<AccountUser> {
+  const subjectValue = input.provider === 'phone' || input.provider === 'email'
+    ? normalizeContact(input.provider, input.subject)
+    : input.subject.trim().toLowerCase();
+  const phone = input.provider === 'phone'
+    ? normalizePhone(input.phone ?? subjectValue)
+    : input.phone?.trim();
+  const email = input.provider === 'email'
+    ? normalizeEmail(input.email ?? subjectValue)
+    : input.email?.trim();
+  const normalizedInput: typeof input = { ...input, subject: subjectValue, phone, email };
+
   return withDbWrite(async (db) => {
-    const subject = subjectKey(input.provider, input.subject);
+    const subject = subjectKey(input.provider, subjectValue);
     const prefs = JSON.stringify(DEFAULT_PREFERENCES);
     let inserted: { rows: UpsertUserRow[] };
     try {
@@ -381,15 +404,15 @@ export async function upsertIdentity(input: {
         [
           subject,
           input.displayName ?? null,
-          input.phone ?? null,
-          input.email ?? null,
+          phone ?? null,
+          email ?? null,
           input.avatarUrl ?? null,
           prefs,
         ],
       );
     } catch (err) {
       if ((err as { code?: string }).code === '23505') {
-        return attachIdentityToExistingEmailUser(db, input, err);
+        return attachIdentityToExistingEmailUser(db, normalizedInput, err);
       }
       throw err;
     }
@@ -398,10 +421,10 @@ export async function upsertIdentity(input: {
       `INSERT INTO auth_identities (user_id, provider, subject)
        VALUES ($1, $2, $3)
        ON CONFLICT (provider, subject) DO NOTHING`,
-      [user.id, input.provider, input.subject.trim().toLowerCase()],
+      [user.id, input.provider, subjectValue],
     );
     return asUser({ ...user, provider: input.provider });
-  }, () => memUpsertIdentity(input));
+  }, () => memUpsertIdentity(normalizedInput));
 }
 
 /** 注册密码账号:subject = password:<username>;用户名冲突抛 UsernameTakenError(→409)。 */
@@ -521,6 +544,7 @@ export async function setPassword(userId: string, newPassword: string): Promise<
 /** 绑定/更换手机:users.phone 更新 + auth_identities 新 phone 行 upsert + 旧 phone 行删除;
  *  手机已被他人绑定 → 23505 → PhoneTakenError(→409)。 */
 export async function bindPhone(userId: string, phone: string): Promise<AccountUser | null> {
+  const normalized = normalizePhone(phone);
   return withDbWrite(async (db) => {
     try {
       const result = await db.query<UserRowWithProvider>(
@@ -528,27 +552,28 @@ export async function bindPhone(userId: string, phone: string): Promise<AccountU
          WHERE id = $1
          RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
            (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
-        [userId, phone.trim()],
+        [userId, normalized],
       );
-      if (!result.rows[0]) return memBindPhone(userId, phone);
+      if (!result.rows[0]) return memBindPhone(userId, normalized);
       const user = result.rows[0];
       await db.query(`DELETE FROM auth_identities WHERE user_id = $1 AND provider = 'phone'`, [userId]);
       await db.query(
         `INSERT INTO auth_identities (user_id, provider, subject)
          VALUES ($1, 'phone', $2)
          ON CONFLICT (provider, subject) DO NOTHING`,
-        [userId, phone.trim().toLowerCase()],
+        [userId, normalized],
       );
       return asUser(user);
     } catch (err) {
-      if ((err as { code?: string }).code === '23505') throw new PhoneTakenError(phone);
+      if ((err as { code?: string }).code === '23505') throw new PhoneTakenError(normalized);
       throw err;
     }
-  }, () => memBindPhone(userId, phone));
+  }, () => memBindPhone(userId, normalized));
 }
 
 /** 绑定/更换邮箱:与 bindPhone 对称(lower(email) 唯一 → 23505 → EmailTakenError)。 */
 export async function bindEmail(userId: string, email: string): Promise<AccountUser | null> {
+  const normalized = normalizeEmail(email);
   return withDbWrite(async (db) => {
     try {
       const result = await db.query<UserRowWithProvider>(
@@ -556,34 +581,42 @@ export async function bindEmail(userId: string, email: string): Promise<AccountU
          WHERE id = $1
          RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
            (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
-        [userId, email.trim()],
+        [userId, normalized],
       );
-      if (!result.rows[0]) return memBindEmail(userId, email);
+      if (!result.rows[0]) return memBindEmail(userId, normalized);
       const user = result.rows[0];
       await db.query(`DELETE FROM auth_identities WHERE user_id = $1 AND provider = 'email'`, [userId]);
       await db.query(
         `INSERT INTO auth_identities (user_id, provider, subject)
          VALUES ($1, 'email', $2)
          ON CONFLICT (provider, subject) DO NOTHING`,
-        [userId, email.trim().toLowerCase()],
+        [userId, normalized],
       );
       return asUser(user);
     } catch (err) {
-      if ((err as { code?: string }).code === '23505') throw new EmailTakenError(email);
+      if ((err as { code?: string }).code === '23505') throw new EmailTakenError(normalized);
       throw err;
     }
-  }, () => memBindEmail(userId, email));
+  }, () => memBindEmail(userId, normalized));
 }
 
 export async function createSession(userId: string): Promise<{ token: string; expiresAt: number }> {
   return withDbWrite(async (db) => {
     const memory = memCreateSession(userId);
-    await db.query(
-      `INSERT INTO auth_sessions (user_id, token_hash, expires_at)
-       VALUES ($1, $2, to_timestamp($3 / 1000.0))`,
-      [userId, hashToken(memory.token), memory.expiresAt],
-    );
-    return memory;
+    try {
+      await db.query(
+        `DELETE FROM auth_sessions WHERE expires_at <= now()`,
+      );
+      await db.query(
+        `INSERT INTO auth_sessions (user_id, token_hash, expires_at)
+         VALUES ($1, $2, to_timestamp($3 / 1000.0))`,
+        [userId, hashToken(memory.token), memory.expiresAt],
+      );
+      return memory;
+    } catch (err) {
+      memDestroySession(memory.token);
+      throw err;
+    }
   }, () => memCreateSession(userId));
 }
 
@@ -622,12 +655,12 @@ export async function getSessionUser(token: string | undefined | null): Promise<
 }
 
 export async function destroySession(token: string | undefined | null): Promise<void> {
-  memDestroySession(token);
   if (!token) return;
   await withDbWrite(async (db) => {
     await db.query(`DELETE FROM auth_sessions WHERE token_hash = $1`, [hashToken(token)]);
     return undefined;
   }, () => undefined);
+  memDestroySession(token);
 }
 
 export async function updateUser(
@@ -726,7 +759,7 @@ export async function issueOtp(
   provider: 'phone' | 'email',
   target: string,
 ): Promise<{ expiresAt: number; code: string }> {
-  const normalized = target.trim().toLowerCase();
+  const normalized = normalizeContact(provider, target);
   const now = Date.now();
   const cfg = otpRateConfig;
   const guard = getOtpGuard(otpGuards, otpKey(provider, normalized));
@@ -747,24 +780,32 @@ export async function issueOtp(
   guard.sentAt.push(now);
 
   const memory = memIssueOtp(provider, normalized);
-  await withDbWrite(async (db) => {
-    // 顺手清掉该 target 的过期挑战行,控制 auth_otp_challenges 膨胀。
-    await db.query(
-      `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
-      [provider, normalized],
-    );
-    await db.query(
-      `INSERT INTO auth_otp_challenges (provider, target, code_hash, expires_at)
-       VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
-      [provider, normalized, hashOtp(memory.code), memory.expiresAt],
-    );
-    return undefined;
-  }, () => undefined);
+  try {
+    await withDbWrite(async (db) => {
+      // 顺手清掉该 target 的过期挑战行,控制 auth_otp_challenges 膨胀。
+      await db.query(
+        `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
+        [provider, normalized],
+      );
+      await db.query(
+        `DELETE FROM auth_otp_challenges WHERE expires_at <= now()`,
+      );
+      await db.query(
+        `INSERT INTO auth_otp_challenges (provider, target, code_hash, expires_at)
+         VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
+        [provider, normalized, hashOtp(memory.code), memory.expiresAt],
+      );
+      return undefined;
+    }, () => undefined);
+  } catch (err) {
+    memRevokeOtp(provider, normalized);
+    throw err;
+  }
   return memory;
 }
 
 export async function consumeOtp(provider: 'phone' | 'email', target: string, code: string): Promise<boolean> {
-  const normalized = target.trim().toLowerCase();
+  const normalized = normalizeContact(provider, target);
   const now = Date.now();
   const cfg = otpRateConfig;
   const guard = getOtpGuard(otpGuards, otpKey(provider, normalized));
@@ -791,13 +832,15 @@ export async function consumeOtp(provider: 'phone' | 'email', target: string, co
       );
       return false;
     }
-    await db.query(`UPDATE auth_otp_challenges SET consumed_at = now() WHERE id = $1`, [row.id]);
+    // Successful verification destroys the credential immediately. Keeping a
+    // consumed hash until expiry extends the lifetime of authentication data.
+    await db.query(`DELETE FROM auth_otp_challenges WHERE id = $1`, [row.id]);
     return true;
   }, () => memConsumeOtp(provider, normalized, code));
 
   if (ok) {
-    // 单次性契约(scan #1):成功路径无条件消费内存挑战。DB 模式双写时,DB 行已
-    // consumed;若不删内存挑战,同一 code 会在 10min TTL 内经内存分支再次成功
+    // 单次性契约(scan #1):成功路径无条件删除挑战。DB 模式双写时,DB 行已
+    // 删除;若不删内存挑战,同一 code 会在 10min TTL 内经内存分支再次成功
     // (重放)。内存模式此调用幂等(挑战已被 fallback 删除,重复调用无副作用)。
     memConsumeOtp(provider, normalized, code);
     guard.wrongAt = [];
@@ -860,6 +903,33 @@ const HISTORY_SELECT_WITH_ENTITY = `
   WHERE user_id = $1
   ORDER BY created_at DESC
   LIMIT $2`;
+/** Keep durable rows aligned with the in-memory history cap. */
+const HISTORY_STORAGE_MAX = 50;
+const HISTORY_PRUNE_SQL = `
+  DELETE FROM search_history
+  WHERE user_id = $1
+    AND id NOT IN (
+      SELECT id FROM search_history
+      WHERE user_id = $1
+      ORDER BY created_at DESC, id DESC
+      LIMIT $2
+    )`;
+/** Authenticated collections are bounded to prevent durable storage exhaustion. */
+export const SAVED_STORAGE_MAX = 500;
+export const APPLICATION_STORAGE_MAX = 500;
+export const NOTIFICATION_STORAGE_MAX = 200;
+
+function recentRowsPruneSql(table: string): string {
+  return `
+    DELETE FROM ${table}
+    WHERE user_id = $1
+      AND id NOT IN (
+        SELECT id FROM ${table}
+        WHERE user_id = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT $2
+      )`;
+}
 
 export async function listHistory(userId: string, limit = 30): Promise<SearchHistoryEntry[]> {
   return withDbRead(async (db) => {
@@ -901,8 +971,9 @@ export async function addHistory(
       ),
     );
     const prev = last.rows[0];
+    let current: QueryResult<HistoryRow> | undefined;
     if (prev && prev.query === q && canonicalMode(prev.mode) === canon) {
-      const updated = await withEntityColumnFallback(
+      current = await withEntityColumnFallback(
         () => db.query<HistoryRow>(
           `UPDATE search_history
            SET created_at = now(), entity = COALESCE($2::jsonb, entity)
@@ -916,32 +987,36 @@ export async function addHistory(
           [prev.id],
         ),
       );
-      return toHistoryEntry(updated.rows[0]);
     }
-    const inserted = await withEntityColumnFallback(
-      () => db.query<HistoryRow>(
-        `INSERT INTO search_history (user_id, query, mode, entity)
-         VALUES ($1, $2, $3, $4::jsonb)
-         RETURNING id::text, query, mode, entity, created_at`,
-        [userId, q, canon, ent],
-      ),
-      () => db.query<HistoryRow>(
-        `INSERT INTO search_history (user_id, query, mode)
-         VALUES ($1, $2, $3)
-         RETURNING id::text, query, mode, created_at`,
-        [userId, q, canon],
-      ),
-    );
-    return toHistoryEntry(inserted.rows[0]);
+
+    if (!current) {
+      current = await withEntityColumnFallback(
+        () => db.query<HistoryRow>(
+          `INSERT INTO search_history (user_id, query, mode, entity)
+           VALUES ($1, $2, $3, $4::jsonb)
+           RETURNING id::text, query, mode, entity, created_at`,
+          [userId, q, canon, ent],
+        ),
+        () => db.query<HistoryRow>(
+          `INSERT INTO search_history (user_id, query, mode)
+           VALUES ($1, $2, $3)
+           RETURNING id::text, query, mode, created_at`,
+          [userId, q, canon],
+        ),
+      );
+    }
+
+    await db.query(HISTORY_PRUNE_SQL, [userId, HISTORY_STORAGE_MAX]);
+    return toHistoryEntry(current.rows[0]);
   }, () => memAddHistory(userId, q, canon, entity));
 }
 
 export async function clearHistory(userId: string): Promise<void> {
-  memClearHistory(userId);
   await withDbWrite(async (db) => {
     await db.query(`DELETE FROM search_history WHERE user_id = $1`, [userId]);
     return undefined;
   }, () => undefined);
+  memClearHistory(userId);
 }
 
 function asSaved(row: {
@@ -981,11 +1056,12 @@ export async function listSaved(userId: string): Promise<SavedPlace[]> {
       lat: number | null;
       created_at: Date;
     }>(
-      `SELECT id::text, poi_id, name, mode, kind, address, lng, lat, created_at
+       `SELECT id::text, poi_id, name, mode, kind, address, lng, lat, created_at
        FROM saved_places
        WHERE user_id = $1
-       ORDER BY created_at DESC`,
-      [userId],
+       ORDER BY created_at DESC, id DESC
+       LIMIT $2`,
+      [userId, SAVED_STORAGE_MAX],
     );
     return result.rows.map(asSaved);
   }, () => memListSaved(userId));
@@ -1014,6 +1090,7 @@ export async function savePlace(
        RETURNING id::text, poi_id, name, mode, kind, address, lng, lat, created_at`,
       [userId, place.poiId, place.name, canon, place.kind, place.address ?? null, place.lng ?? null, place.lat ?? null],
     );
+    await db.query(recentRowsPruneSql('saved_places'), [userId, SAVED_STORAGE_MAX]);
     return asSaved(result.rows[0]);
   }, () => memSavePlace(userId, { ...place, mode: canon }));
 }
@@ -1059,11 +1136,12 @@ export async function listApplications(userId: string): Promise<ApplicationRecor
       status: ApplicationRecord['status'];
       created_at: Date;
     }>(
-      `SELECT id::text, position_id, company_poi_id, title, company_name, apply_url, status, created_at
+       `SELECT id::text, position_id, company_poi_id, title, company_name, apply_url, status, created_at
        FROM applications
        WHERE user_id = $1
-       ORDER BY created_at DESC`,
-      [userId],
+       ORDER BY created_at DESC, id DESC
+       LIMIT $2`,
+      [userId, APPLICATION_STORAGE_MAX],
     );
     return result.rows.map(asApplication);
   }, () => memListApplications(userId));
@@ -1098,6 +1176,7 @@ export async function recordApplication(
         input.status ?? 'applied',
       ],
     );
+    await db.query(recentRowsPruneSql('applications'), [userId, APPLICATION_STORAGE_MAX]);
     return asApplication(result.rows[0]);
   }, () => memRecordApplication(userId, input));
 }
@@ -1142,11 +1221,12 @@ export async function listNotifications(userId: string): Promise<NotificationRec
       status: NotificationRecord['status'];
       created_at: Date;
     }>(
-      `SELECT id::text, kind, position_id, company_poi_id, title, company_name, apply_url, channels, status, created_at
+       `SELECT id::text, kind, position_id, company_poi_id, title, company_name, apply_url, channels, status, created_at
        FROM notifications
        WHERE user_id = $1
-       ORDER BY created_at DESC`,
-      [userId],
+       ORDER BY created_at DESC, id DESC
+       LIMIT $2`,
+      [userId, NOTIFICATION_STORAGE_MAX],
     );
     return result.rows.map(asNotification);
   }, () => memListNotifications(userId));
@@ -1185,6 +1265,7 @@ export async function enqueueNotification(
         input.status ?? 'queued',
       ],
     );
+    await db.query(recentRowsPruneSql('notifications'), [userId, NOTIFICATION_STORAGE_MAX]);
     return asNotification(result.rows[0]);
   }, () => memEnqueueNotification(userId, input));
 }

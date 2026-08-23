@@ -5,7 +5,9 @@ import {
   addGuestHistory,
   clearGuestHistory,
   GUEST_HISTORY_CAP,
+  GUEST_HISTORY_RAW_MAX,
   GUEST_HISTORY_KEY,
+  GUEST_QUERY_MAX,
   listGuestHistory,
   mergeGuestHistoryIntoAccount,
 } from '../src/lib/guest-search-history.ts';
@@ -134,6 +136,33 @@ test('guest merge upload carries entity refs for entity rows', async () => {
   const plain = calls.find((c) => c.query === '纯关键词');
   assert.deepEqual(byEntity.entity, { kind: 'company', id: 'bytedance-hz', name: '字节跳动' });
   assert.equal('entity' in plain, false);
+});
+
+test('guest history parser caps rows and truncates corrupt oversized fields', () => {
+  const store = installMemoryStorage();
+  store.set(GUEST_HISTORY_KEY, JSON.stringify(
+    Array.from({ length: GUEST_HISTORY_CAP + 5 }, (_, i) => ({
+      id: `guest-${i}`,
+      query: `${i}-${'q'.repeat(GUEST_QUERY_MAX)}`,
+      mode: 'work',
+      createdAt: '2026-08-23T00:00:00Z',
+    })),
+  ));
+  const items = listGuestHistory();
+  assert.equal(items.length, GUEST_HISTORY_CAP);
+  assert.equal(items[0].query.length, GUEST_QUERY_MAX);
+
+  store.set(GUEST_HISTORY_KEY, JSON.stringify([
+    { id: 'bad-date', query: 'bad', mode: 'work', createdAt: 'not-a-date' },
+    { id: 'empty-query', query: '   ', mode: 'work', createdAt: '2026-08-23T00:00:00Z' },
+  ]));
+  assert.equal(listGuestHistory().length, 0);
+});
+
+test('guest history treats oversized local raw values as corrupt storage', () => {
+  const store = installMemoryStorage();
+  store.set(GUEST_HISTORY_KEY, 'x'.repeat(GUEST_HISTORY_RAW_MAX + 1));
+  assert.deepEqual(listGuestHistory(), []);
 });
 
 test('mergeGuestHistoryIntoAccount uploads only rows absent from cloud', async () => {

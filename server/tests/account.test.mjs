@@ -6,14 +6,29 @@ import { fileURLToPath } from 'node:url';
 
 import { DEFAULT_PREFERENCES, emptyPreferences, entityRefFromSelection, initialsFromName, mergePreferences, resolvePreferences, sanitizeEntityRef } from '../src/lib/account.ts';
 import {
+  __accountStoreTest,
   addHistory as storeAddHistory,
+  APPLICATION_STORAGE_MAX,
+  clearHistory as storeClearHistory,
+  createSession as storeCreateSession,
+  destroySession as storeDestroySession,
+  listApplications as storeListApplications,
   listHistory as storeListHistory,
+  listNotifications as storeListNotifications,
+  listSaved as storeListSaved,
+  issueOtp as storeIssueOtp,
+  NOTIFICATION_STORAGE_MAX,
+  recordApplication as storeRecordApplication,
+  savePlace as storeSavePlace,
+  SAVED_STORAGE_MAX,
   updateAvatar as storeUpdateAvatar,
   getAvatarData as storeGetAvatarData,
   upsertIdentity as storeUpsert,
 } from '../src/lib/account-store.ts';
 import {
+  APPLICATIONS_MEMORY_MAX,
   addHistory,
+  clearHistory,
   consumeOtp,
   createSession,
   destroySession,
@@ -25,10 +40,14 @@ import {
   listApplications,
   listNotifications,
   listSaved,
+  NOTIFICATIONS_MEMORY_MAX,
+  otpChallengeMemorySize,
+  SAVED_PLACES_MEMORY_MAX,
   recordApplication,
   removeSaved,
   registerWithPassword,
   savePlace,
+  sessionMemorySize,
   updateAvatar,
   updateUser,
   upsertIdentity,
@@ -52,6 +71,48 @@ test('mergePreferences deep-merges career and notifications', () => {
   assert.deepEqual(next.career.families, ['intern', 'campus']);
   assert.equal(next.notifications.emailJobs, true);
   assert.equal(next.notifications.smsJobs, false);
+});
+
+test('mergePreferences normalizes corrupt or hostile persisted preferences', () => {
+  const next = mergePreferences(
+    {
+      language: 'fr',
+      defaultMode: 'work',
+      notifications: 'not-an-object',
+      career: {
+        status: 'hostile',
+        families: ['intern', 'unknown-family', 42],
+        industries: ['robotics', 'x'.repeat(41), null],
+        strengths: ['backend'],
+      },
+    },
+    {
+      language: 'de',
+      notifications: { emailJobs: 'yes' },
+    },
+  );
+
+  assert.equal(next.language, 'zh');
+  assert.deepEqual(next.notifications, {
+    emailJobs: false,
+    smsJobs: false,
+    emailSchools: false,
+    smsSchools: false,
+  });
+  assert.equal(next.career.status, 'casually');
+  assert.deepEqual(next.career.families, ['intern']);
+  assert.deepEqual(next.career.industries, ['robotics']);
+  assert.deepEqual(next.career.strengths, ['backend']);
+});
+
+test('mergePreferences preserves an explicit empty list while bounding oversized input', () => {
+  const cleared = mergePreferences(null, { career: { industries: [] } });
+  assert.deepEqual(cleared.career.industries, []);
+
+  const bounded = mergePreferences(null, {
+    career: { industries: Array.from({ length: 30 }, (_, i) => `industry-${i}`) },
+  });
+  assert.equal(bounded.career.industries.length, 20);
 });
 
 test('initialsFromName uses two letters when possible', () => {
@@ -84,7 +145,16 @@ test('sanitizeEntityRef rejects corrupt refs and normalizes valid ones', () => {
   assert.equal(sanitizeEntityRef('string'), undefined);
   assert.equal(sanitizeEntityRef({ nope: true }), undefined);
   assert.equal(sanitizeEntityRef({ id: '', name: 'x' }), undefined);
+  assert.equal(sanitizeEntityRef({ id: '  ', name: 'x' }), undefined);
+  assert.equal(sanitizeEntityRef({ id: 'c1', name: '  ' }), undefined);
   assert.equal(sanitizeEntityRef({ id: 'c1', name: 42 }), undefined);
+  assert.equal(sanitizeEntityRef({ id: 'x'.repeat(201), name: 'x' }), undefined);
+  assert.equal(sanitizeEntityRef({ id: 'c1', name: 'x'.repeat(101) }), undefined);
+  assert.equal(
+    sanitizeEntityRef({ id: 'c1', name: 'x', address: 'x'.repeat(501) }),
+    undefined,
+    'oversized persisted strings must not enter history rows',
+  );
   assert.deepEqual(sanitizeEntityRef({ kind: 'company', id: 'c1', name: '公司' }), {
     kind: 'company',
     id: 'c1',
@@ -95,6 +165,16 @@ test('sanitizeEntityRef rejects corrupt refs and normalizes valid ones', () => {
     kind: 'company',
     id: 'c2',
     name: 'x',
+  });
+  assert.deepEqual(sanitizeEntityRef({ kind: 'company', id: 'c3', name: 'x', lng: 181, lat: -91 }), {
+    kind: 'company',
+    id: 'c3',
+    name: 'x',
+  });
+  assert.deepEqual(sanitizeEntityRef({ kind: 'company', id: '  c4  ', name: ' 公司 ' }), {
+    kind: 'company',
+    id: 'c4',
+    name: '公司',
   });
 });
 
@@ -177,6 +257,44 @@ test('search history entries carry optional entity refs through the store', asyn
   assert.equal(listHistory(user.id).length, 2);
 });
 
+test('database history writes prune to the durable storage cap', async () => {
+  const queries = [];
+  __accountStoreTest.poolOverride = () => ({
+    query: async (sql, params = []) => {
+      queries.push({ sql, params });
+      if (sql.includes('FROM search_history') && sql.trim().endsWith('LIMIT 1')) {
+        return { rows: [] };
+      }
+      if (sql.includes('INSERT INTO search_history')) {
+        return {
+          rows: [{
+            id: 'history-1',
+            query: 'frontend',
+            mode: 'work',
+            entity: null,
+            created_at: new Date('2026-08-23T00:00:00Z'),
+          }],
+        };
+      }
+      if (sql.includes('DELETE FROM search_history') && sql.includes('LIMIT $2')) {
+        assert.deepEqual(params, ['db-history-user', 50]);
+        return { rows: [] };
+      }
+      throw new Error(`unexpected history SQL: ${sql}`);
+    },
+  });
+  try {
+    const entry = await storeAddHistory('db-history-user', 'frontend', 'work');
+    assert.equal(entry.id, 'history-1');
+    assert.ok(
+      queries.some(({ sql }) => sql.includes('DELETE FROM search_history') && sql.includes('LIMIT $2')),
+      'insert must be followed by a durable cap guard',
+    );
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
 test('saved places are per user and idempotent', () => {
   const user = upsertIdentity({ provider: 'email', subject: 'save@example.com', email: 'save@example.com' });
   const first = savePlace(user.id, {
@@ -242,6 +360,134 @@ test('enqueueNotification is idempotent per position', () => {
   assert.equal(listNotifications(user.id)[0].status, 'queued');
 });
 
+test('authenticated collections stay capped and retain the newest rows', () => {
+  const suffix = `${Date.now()}-${process.pid}`;
+  const user = upsertIdentity({ provider: 'email', subject: `caps-${suffix}@example.com` });
+
+  for (let i = 0; i < SAVED_PLACES_MEMORY_MAX + 1; i += 1) {
+    savePlace(user.id, { poiId: `saved-${i}`, name: `Saved ${i}`, mode: 'work', kind: 'recruitment' });
+  }
+  const savedItems = listSaved(user.id);
+  assert.equal(savedItems.length, SAVED_PLACES_MEMORY_MAX);
+  assert.equal(savedItems[0].poiId, `saved-${SAVED_PLACES_MEMORY_MAX}`);
+  assert.ok(!savedItems.some((item) => item.poiId === 'saved-0'));
+
+  for (let i = 0; i < APPLICATIONS_MEMORY_MAX + 1; i += 1) {
+    recordApplication(user.id, {
+      positionId: `position-${i}`,
+      companyPoiId: `company-${i}`,
+      title: `Role ${i}`,
+      companyName: `Company ${i}`,
+    });
+  }
+  const applications = listApplications(user.id);
+  assert.equal(applications.length, APPLICATIONS_MEMORY_MAX);
+  assert.equal(applications[0].positionId, `position-${APPLICATIONS_MEMORY_MAX}`);
+  assert.ok(!applications.some((item) => item.positionId === 'position-0'));
+
+  for (let i = 0; i < NOTIFICATIONS_MEMORY_MAX + 1; i += 1) {
+    enqueueNotification(user.id, {
+      kind: 'job',
+      positionId: `alert-${i}`,
+      title: `Alert ${i}`,
+      channels: ['inbox'],
+    });
+  }
+  const notifications = listNotifications(user.id);
+  assert.equal(notifications.length, NOTIFICATIONS_MEMORY_MAX);
+  assert.equal(notifications[0].positionId, `alert-${NOTIFICATIONS_MEMORY_MAX}`);
+  assert.ok(!notifications.some((item) => item.positionId === 'alert-0'));
+
+  assert.equal(SAVED_PLACES_MEMORY_MAX, SAVED_STORAGE_MAX);
+  assert.equal(APPLICATIONS_MEMORY_MAX, APPLICATION_STORAGE_MAX);
+  assert.equal(NOTIFICATIONS_MEMORY_MAX, NOTIFICATION_STORAGE_MAX);
+});
+
+test('database writes prune bounded authenticated collections', async () => {
+  const queries = [];
+  __accountStoreTest.poolOverride = () => ({
+    query: async (sql, params = []) => {
+      queries.push({ sql, params });
+      if (sql.includes('INSERT INTO saved_places')) {
+        return {
+          rows: [{
+            id: 'saved-1', poi_id: 'p1', name: 'Place', mode: 'work', kind: 'recruitment',
+            address: null, lng: null, lat: null, created_at: new Date('2026-08-23T00:00:00Z'),
+          }],
+        };
+      }
+      if (sql.includes('DELETE FROM saved_places') && sql.includes('LIMIT $2')) {
+        assert.deepEqual(params, ['db-caps-user', SAVED_STORAGE_MAX]);
+        return { rows: [] };
+      }
+      if (sql.includes('INSERT INTO applications')) {
+        return {
+          rows: [{
+            id: 'application-1', position_id: 'p1', company_poi_id: 'c1', title: 'Role',
+            company_name: 'Company', apply_url: null, status: 'applied',
+            created_at: new Date('2026-08-23T00:00:00Z'),
+          }],
+        };
+      }
+      if (sql.includes('DELETE FROM applications') && sql.includes('LIMIT $2')) {
+        assert.deepEqual(params, ['db-caps-user', APPLICATION_STORAGE_MAX]);
+        return { rows: [] };
+      }
+      throw new Error(`unexpected SQL: ${sql}`);
+    },
+  });
+
+  try {
+    await storeSavePlace('db-caps-user', {
+      poiId: 'p1', name: 'Place', mode: 'work', kind: 'recruitment',
+    });
+    await storeRecordApplication('db-caps-user', {
+      positionId: 'p1', companyPoiId: 'c1', title: 'Role', companyName: 'Company',
+    });
+    for (const table of ['saved_places', 'applications']) {
+      assert.ok(
+        queries.some(({ sql }) => sql.includes(`DELETE FROM ${table}`) && sql.includes('LIMIT $2')),
+        `${table} insert must be followed by a durable cap guard`,
+      );
+    }
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
+test('database reads bound legacy authenticated collections', async () => {
+  const calls = [];
+  __accountStoreTest.poolOverride = () => ({
+    query: async (sql, params = []) => {
+      calls.push({ sql, params });
+      if (!sql.includes('SELECT') || !sql.includes('LIMIT $2')) {
+        throw new Error(`unbounded read SQL: ${sql}`);
+      }
+      return { rows: [] };
+    },
+  });
+
+  try {
+    await storeListSaved('db-read-user');
+    await storeListApplications('db-read-user');
+    await storeListNotifications('db-read-user');
+
+    const expectations = [
+      ['saved_places', SAVED_STORAGE_MAX],
+      ['applications', APPLICATION_STORAGE_MAX],
+      ['notifications', NOTIFICATION_STORAGE_MAX],
+    ];
+    for (const [table, limit] of expectations) {
+      const call = calls.find(({ sql }) => sql.includes(`FROM ${table}`));
+      assert.ok(call, `missing bounded read for ${table}`);
+      assert.match(call.sql, /ORDER BY created_at DESC, id DESC/);
+      assert.deepEqual(call.params, ['db-read-user', limit]);
+    }
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
 test('resolveCompanyLogo prefers site career icon over company fallback', () => {
   const site = resolveCompanyLogo({
     siteCareerUrl: 'https://talent.alibaba.com/',
@@ -269,6 +515,71 @@ test('account-store without DATABASE_URL stays in memory', async () => {
   assert.ok(user.id);
   assert.ok(await storeAddHistory(user.id, '西溪', 'work'));
   assert.equal((await storeListHistory(user.id))[0].query, '西溪');
+});
+
+test('createSession DB failure rolls back the process-local session mirror', async () => {
+  const before = sessionMemorySize();
+  __accountStoreTest.poolOverride = () => ({
+    query: async () => {
+      throw new Error('connection refused');
+    },
+  });
+  try {
+    await assert.rejects(() => storeCreateSession('db-session-fail'));
+    assert.equal(sessionMemorySize(), before, 'failed DB session insert must not leak a memory session');
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
+test('issueOtp DB failure rolls back the process-local OTP mirror', async () => {
+  const before = otpChallengeMemorySize();
+  __accountStoreTest.poolOverride = () => ({
+    query: async () => {
+      throw new Error('connection refused');
+    },
+  });
+  try {
+    await assert.rejects(() => storeIssueOtp('email', `db-otp-fail-${Date.now()}@test.dev`));
+    assert.equal(otpChallengeMemorySize(), before, 'failed DB OTP insert must not leak a memory challenge');
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
+test('destroySession DB failure keeps the process-local session until durable delete succeeds', async () => {
+  const memorySession = createSession('db-destroy-user');
+  const before = sessionMemorySize();
+  __accountStoreTest.poolOverride = () => ({
+    query: async () => {
+      throw new Error('connection refused');
+    },
+  });
+  try {
+    await assert.rejects(() => storeDestroySession(memorySession.token));
+    assert.equal(sessionMemorySize(), before, 'failed DB logout must not clear the memory mirror');
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+    destroySession(memorySession.token);
+  }
+});
+
+test('clearHistory DB failure keeps the process-local history mirror', async () => {
+  const userId = 'db-clear-fail';
+  addHistory(userId, '旧查询', 'work');
+  const before = listHistory(userId).length;
+  __accountStoreTest.poolOverride = () => ({
+    query: async () => {
+      throw new Error('connection refused');
+    },
+  });
+  try {
+    await assert.rejects(() => storeClearHistory(userId));
+    assert.equal(listHistory(userId).length, before, 'failed DB clear must not erase the memory mirror');
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+    clearHistory(userId);
+  }
 });
 
 test('avatar upload persists bytes and clears them on remove (memory store)', () => {
@@ -377,13 +688,15 @@ test('seed adapter round-trips work companies through the plugin contract', asyn
   }
 });
 
-test('account-store sweeps expired sessions and OTP rows on miss', () => {
+test('account-store sweeps expired auth rows on miss/create/send', () => {
   const store = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'lib', 'account-store.ts'),
     'utf8',
   );
   assert.match(store, /DELETE FROM auth_sessions WHERE expires_at <= now\(\) OR token_hash = \$1/);
   assert.match(store, /DELETE FROM auth_otp_challenges WHERE provider = \$1 AND target = \$2 AND expires_at <= now\(\)/);
+  assert.match(store, /`DELETE FROM auth_sessions WHERE expires_at <= now\(\)`/);
+  assert.match(store, /`DELETE FROM auth_otp_challenges WHERE expires_at <= now\(\)`/);
 });
 
 test('updateUser/updateAvatar RETURNING 必须带回 username(密码账号 PATCH 后 accountLabel 不丢)', () => {

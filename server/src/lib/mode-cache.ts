@@ -47,6 +47,15 @@ import type { ViewportBounds, ViewportSnapshot } from './viewport-search.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
 export const MODE_CACHE_VERSION = 17;
+/** Local cache raw-value ceiling before JSON.parse (sessionStorage is local, not trusted). */
+export const MODE_CACHE_RAW_MAX = 8 * 1024 * 1024;
+/** Bound scalar/filter fields restored from storage; catalogs have their own app cap. */
+export const MODE_QUERY_MAX = 200;
+export const MODE_SORT_MAX = 100;
+export const MODE_PAGE_OFFSET_MAX = 10_000;
+export const FILTER_KEYS_MAX = 64;
+export const FILTER_VALUES_MAX = 100;
+export const FILTER_VALUE_MAX = 200;
 
 export interface ModeCacheEntry {
   version: number;
@@ -73,7 +82,10 @@ function canUseStorage(): boolean {
 function isLocation(value: unknown): value is POILocation {
   if (!value || typeof value !== 'object') return false;
   const loc = value as POILocation;
-  return typeof loc.lng === 'number' && typeof loc.lat === 'number';
+  return (
+    Number.isFinite(loc.lng) && Math.abs(loc.lng) <= 180 &&
+    Number.isFinite(loc.lat) && Math.abs(loc.lat) <= 90
+  );
 }
 
 function isPoi(value: unknown): value is POI {
@@ -85,7 +97,45 @@ function isPoi(value: unknown): value is POI {
 function isBox(value: unknown): value is ViewportBounds {
   if (!value || typeof value !== 'object') return false;
   const b = value as Partial<ViewportBounds>;
-  return [b.west, b.south, b.east, b.north].every((n) => typeof n === 'number');
+  return (
+    typeof b.west === 'number' && Number.isFinite(b.west) &&
+    typeof b.south === 'number' && Number.isFinite(b.south) &&
+    typeof b.east === 'number' && Number.isFinite(b.east) &&
+    typeof b.north === 'number' && Number.isFinite(b.north) &&
+    b.west < b.east &&
+    b.south < b.north
+  );
+}
+
+function isFilterValue(value: unknown): boolean {
+  if (typeof value === 'string') return value.length <= FILTER_VALUE_MAX;
+  if (typeof value === 'boolean') return true;
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (Array.isArray(value)) {
+    if (value.length > FILTER_VALUES_MAX) return false;
+    return value.every((item) =>
+      (typeof item === 'string' && item.length <= FILTER_VALUE_MAX) || Number.isFinite(item)
+    );
+  }
+  return false;
+}
+
+function parseFilters(raw: unknown): FilterState {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const filters: FilterState = {};
+  for (const [key, value] of Object.entries(raw).slice(0, FILTER_KEYS_MAX)) {
+    if (key.length <= FILTER_VALUE_MAX && isFilterValue(value)) filters[key] = value as FilterState[string];
+  }
+  return filters;
+}
+
+function parsePageOffset(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) return 0;
+  return Math.min(value, MODE_PAGE_OFFSET_MAX);
+}
+
+function boundedText(value: unknown, max: number): string {
+  return typeof value === 'string' ? value.slice(0, max) : '';
 }
 
 /**
@@ -95,7 +145,7 @@ function isBox(value: unknown): value is ViewportBounds {
 function parseCachedViewport(raw: unknown): ViewportSnapshot | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const vp = raw as Partial<ViewportSnapshot>;
-  if (!isLocation(vp.center) || typeof vp.zoom !== 'number') return undefined;
+    if (!isLocation(vp.center) || typeof vp.zoom !== 'number' || !Number.isFinite(vp.zoom)) return undefined;
   return {
     center: vp.center,
     zoom: vp.zoom,
@@ -123,7 +173,7 @@ export function readModeCache(mode: MapMode): ModeCacheEntry | null {
     if (!raw && canonicalMode(mode) === 'work') {
       raw = window.sessionStorage.getItem(`${MODE_CACHE_PREFIX}internship`);
     }
-    if (!raw) return null;
+    if (!raw || raw.length > MODE_CACHE_RAW_MAX) return null;
     const parsed = JSON.parse(raw) as ModeCacheEntry;
     if (parsed?.version !== MODE_CACHE_VERSION) return null;
     if (canonicalMode(parsed.mode) !== canonicalMode(mode) || !Array.isArray(parsed.catalog)) return null;
@@ -134,12 +184,12 @@ export function readModeCache(mode: MapMode): ModeCacheEntry | null {
       version: MODE_CACHE_VERSION,
       mode: canonicalMode(mode),
       catalog,
-      pageOffset: typeof parsed.pageOffset === 'number' ? parsed.pageOffset : 0,
+      pageOffset: parsePageOffset(parsed.pageOffset),
       searchOrigin: isLocation(parsed.searchOrigin) ? parsed.searchOrigin : null,
-      query: typeof parsed.query === 'string' ? parsed.query : '',
-      filters: parsed.filters && typeof parsed.filters === 'object' ? parsed.filters : {},
-      sort: typeof parsed.sort === 'string' ? parsed.sort : '',
-      savedAt: typeof parsed.savedAt === 'number' ? parsed.savedAt : 0,
+      query: boundedText(parsed.query, MODE_QUERY_MAX),
+      filters: parseFilters(parsed.filters),
+      sort: boundedText(parsed.sort, MODE_SORT_MAX),
+      savedAt: typeof parsed.savedAt === 'number' && Number.isFinite(parsed.savedAt) ? parsed.savedAt : 0,
       viewport: parseCachedViewport(parsed.viewport),
     };
   } catch {

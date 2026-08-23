@@ -12,6 +12,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import { DbUnavailableError } from './account-store.ts';
+import { BoundedLruStore } from './bounded-lru-store.ts';
 import { getPool } from './db.ts';
 
 export interface UserMemory {
@@ -24,6 +25,10 @@ export interface UserMemory {
 export const MEMORY_CONTENT_MAX = 200;
 /** listMemories 返回上限。 */
 export const MEMORY_LIST_MAX = 50;
+/** 每个用户的持久化总量上限;写入后保留最新一条并淘汰最旧。 */
+export const MEMORY_STORAGE_MAX = MEMORY_LIST_MAX;
+/** 进程内回退存储的用户键上限;键洪泛时淘汰最早未活跃用户。 */
+export const MEMORY_USER_STORE_MAX = 1_000;
 
 /** 纯函数:记忆内容清洗——非 string/trim 后空串 → '',超长截断 200 字。 */
 export function sanitizeMemoryContent(raw: unknown): string {
@@ -34,25 +39,38 @@ export function sanitizeMemoryContent(raw: unknown): string {
 }
 
 // ---- 内存模式存储(无 DATABASE_URL 时) ----
-const memMemories = new Map<string, UserMemory[]>();
+const memMemories = new BoundedLruStore<UserMemory[]>(MEMORY_USER_STORE_MAX);
 
 function memList(userId: string): UserMemory[] {
   return [...(memMemories.get(userId) ?? [])];
 }
 
+function memPut(userId: string, items: UserMemory[]): void {
+  if (items.length === 0) {
+    memMemories.delete(userId);
+    return;
+  }
+  memMemories.set(userId, items);
+}
+
 function memAdd(userId: string, content: string): void {
   const items = memMemories.get(userId) ?? [];
   items.unshift({ id: randomUUID(), content, createdAt: new Date().toISOString() });
-  memMemories.set(userId, items);
+  memPut(userId, items.slice(0, MEMORY_STORAGE_MAX));
 }
 
 function memRemove(userId: string, id: string): void {
   const items = memMemories.get(userId) ?? [];
-  memMemories.set(userId, items.filter((m) => m.id !== id));
+  memPut(userId, items.filter((m) => m.id !== id));
 }
 
 function memClear(userId: string): void {
-  memMemories.set(userId, []);
+  memMemories.delete(userId);
+}
+
+/** Observability/test seam for the process-local fallback's key ceiling. */
+export function memoryUserStoreSize(): number {
+  return memMemories.size;
 }
 
 // ---- DB 连接与故障策略 ----
@@ -117,7 +135,23 @@ export async function addMemory(userId: string, content: string): Promise<void> 
   if (!clean) return;
   await withDbWrite(
     async (db) => {
-      await db.query(`INSERT INTO user_memories (user_id, content) VALUES ($1, $2)`, [userId, clean]);
+      await db.query(
+        `INSERT INTO user_memories (user_id, content)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id, content) DO NOTHING`,
+        [userId, clean],
+      );
+      await db.query(
+        `DELETE FROM user_memories
+         WHERE user_id = $1
+           AND id NOT IN (
+             SELECT id FROM user_memories
+             WHERE user_id = $1
+             ORDER BY created_at DESC, id DESC
+             LIMIT $2
+           )`,
+        [userId, MEMORY_STORAGE_MAX],
+      );
       return undefined;
     },
     () => memAdd(userId, clean),

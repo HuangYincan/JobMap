@@ -69,6 +69,15 @@ export interface SearchHistoryEntityRef {
   address?: string;
 }
 
+/** Persisted entity refs are bounded so malformed client snapshots cannot bloat rows. */
+const MAX_ENTITY_REF_ID_LENGTH = 200;
+const MAX_ENTITY_REF_NAME_LENGTH = 100;
+const MAX_ENTITY_REF_ADDRESS_LENGTH = 500;
+const MIN_LNG = -180;
+const MAX_LNG = 180;
+const MIN_LAT = -90;
+const MAX_LAT = 90;
+
 export interface SearchHistoryEntry {
   id: string;
   query: string;
@@ -82,15 +91,31 @@ export interface SearchHistoryEntry {
 export function sanitizeEntityRef(raw: unknown): SearchHistoryEntityRef | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const ref = raw as Record<string, unknown>;
-  if (typeof ref.id !== 'string' || !ref.id) return undefined;
-  if (typeof ref.name !== 'string' || !ref.name) return undefined;
+  const id = typeof ref.id === 'string' ? ref.id.trim() : '';
+  const name = typeof ref.name === 'string' ? ref.name.trim() : '';
+  if (!id || !name) return undefined;
+  if (
+    id.length > MAX_ENTITY_REF_ID_LENGTH ||
+    name.length > MAX_ENTITY_REF_NAME_LENGTH ||
+    (typeof ref.address === 'string' && ref.address.length > MAX_ENTITY_REF_ADDRESS_LENGTH)
+  ) {
+    return undefined;
+  }
   const out: SearchHistoryEntityRef = {
     kind: ref.kind === 'poi' ? 'poi' : 'company',
-    id: ref.id,
-    name: ref.name,
+    id,
+    name,
   };
   if (typeof ref.lng === 'number' && Number.isFinite(ref.lng)) out.lng = ref.lng;
   if (typeof ref.lat === 'number' && Number.isFinite(ref.lat)) out.lat = ref.lat;
+  if (
+    out.lng !== undefined &&
+    (out.lng < MIN_LNG || out.lng > MAX_LNG)
+  ) delete out.lng;
+  if (
+    out.lat !== undefined &&
+    (out.lat < MIN_LAT || out.lat > MAX_LAT)
+  ) delete out.lat;
   if (typeof ref.address === 'string' && ref.address) out.address = ref.address;
   return out;
 }
@@ -179,6 +204,80 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   career: { ...DEFAULT_CAREER, families: [...DEFAULT_CAREER.families], industries: [...DEFAULT_CAREER.industries], strengths: [] },
 };
 
+const LANGUAGES = ['zh', 'en'] as const;
+const JOB_SEEKING_STATUSES = ['open', 'casually', 'not-looking'] as const;
+const CAREER_FAMILY_VALUES = ['intern', 'campus', 'social'] as const;
+const CAREER_STRENGTH_VALUES = ['algorithm', 'frontend', 'backend', 'product', 'design', 'data'] as const;
+
+/** Client preferences are persisted only after every field is normalized. */
+function sanitizeLanguage(value: unknown, fallback: Language = 'zh'): Language {
+  return (LANGUAGES as readonly string[]).includes(value as string)
+    ? value as Language
+    : fallback;
+}
+
+function sanitizeBoolean(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function sanitizeEnum<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return (allowed as readonly string[]).includes(value as string) ? value as T : fallback;
+}
+
+function sanitizeBoundedStrings(
+  value: unknown,
+  maxItems: number,
+  maxLength: number,
+  fallback: string[] = [],
+): string[] {
+  if (!Array.isArray(value)) return fallback;
+  const out = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== 'string') continue;
+    const normalized = item.trim();
+    if (!normalized || normalized.length > maxLength) continue;
+    out.add(normalized);
+    if (out.size === maxItems) break;
+  }
+  return [...out];
+}
+
+function sanitizeNotificationPreferences(value: unknown): NotificationPreferences {
+  const raw = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  return {
+    emailJobs: sanitizeBoolean(raw.emailJobs, false),
+    smsJobs: sanitizeBoolean(raw.smsJobs, false),
+    emailSchools: sanitizeBoolean(raw.emailSchools, false),
+    smsSchools: sanitizeBoolean(raw.smsSchools, false),
+  };
+}
+
+function sanitizeCareerPreferences(value: unknown): CareerPreferences {
+  const raw = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  const families = sanitizeBoundedStrings(
+    raw.families,
+    CAREER_FAMILY_VALUES.length,
+    16,
+    [...DEFAULT_CAREER.families],
+  )
+    .filter((item): item is typeof CAREER_FAMILY_VALUES[number] =>
+      (CAREER_FAMILY_VALUES as readonly string[]).includes(item));
+  const strengths = sanitizeBoundedStrings(
+    raw.strengths,
+    CAREER_STRENGTH_VALUES.length,
+    16,
+    [...DEFAULT_CAREER.strengths],
+  )
+    .filter((item): item is typeof CAREER_STRENGTH_VALUES[number] =>
+      (CAREER_STRENGTH_VALUES as readonly string[]).includes(item));
+  return {
+    status: sanitizeEnum(raw.status, JOB_SEEKING_STATUSES, DEFAULT_CAREER.status),
+    families,
+    industries: sanitizeBoundedStrings(raw.industries, 20, 40, [...DEFAULT_CAREER.industries]),
+    strengths,
+  };
+}
+
 export const SESSION_COOKIE = 'dm_session';
 
 export function emptyPreferences(language: Language = 'zh'): UserPreferences {
@@ -200,18 +299,17 @@ export function mergePreferences(
   patch?: Partial<UserPreferences>,
 ): UserPreferences {
   const start = base ?? emptyPreferences();
+  const patchNotifications = patch?.notifications === undefined
+    ? {}
+    : sanitizeNotificationPreferences(patch.notifications);
   return {
-    language: patch?.language ?? start.language,
+    language: sanitizeLanguage(patch?.language, sanitizeLanguage(start.language)),
     defaultMode: canonicalMode(patch?.defaultMode ?? start.defaultMode ?? 'work'),
-    notifications: { ...DEFAULT_NOTIFICATIONS, ...start.notifications, ...patch?.notifications },
-    career: {
-      ...DEFAULT_CAREER,
-      ...start.career,
-      ...patch?.career,
-      families: patch?.career?.families ?? start.career?.families ?? [...DEFAULT_CAREER.families],
-      industries: patch?.career?.industries ?? start.career?.industries ?? [...DEFAULT_CAREER.industries],
-      strengths: patch?.career?.strengths ?? start.career?.strengths ?? [],
-    },
+    notifications: { ...sanitizeNotificationPreferences(start.notifications), ...patchNotifications },
+    career: sanitizeCareerPreferences({
+      ...sanitizeCareerPreferences(start.career),
+      ...(patch?.career && typeof patch.career === 'object' ? patch.career : {}),
+    }),
   };
 }
 

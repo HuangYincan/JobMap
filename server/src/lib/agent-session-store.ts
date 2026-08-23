@@ -16,15 +16,26 @@
 // ============================================================
 
 import type { AgentMessage } from "./agent-panel-state.ts";
+import { validateAction } from "./agent/action-schema.ts";
 
 /** 新版会话存储 key(localStorage)。 */
 export const SESSIONS_KEY = "dm.agent-sessions.v1";
 /** 旧版单会话历史 key(sessionStorage;仅迁移读)。 */
 export const LEGACY_HISTORY_KEY = "dm.agent-history.v1";
+/** 本地会话整份原文上限;超过直接视为损坏,不进入 JSON.parse。 */
+export const AGENT_STATE_RAW_MAX = 4 * 1024 * 1024;
+/** 旧版历史原文上限(旧键只存单会话,上限更严)。 */
+export const LEGACY_HISTORY_RAW_MAX = 512 * 1024;
 /** 会话数上限。 */
 export const SESSIONS_CAP = 10;
 /** 单会话消息数上限。 */
 export const SESSION_MESSAGES_CAP = 30;
+/** Persisted text and attachment arrays are bounded before entering app memory. */
+export const MESSAGE_CONTENT_MAX = 4000;
+export const ACTIONS_PER_MESSAGE_CAP = 20;
+export const TOOLS_PER_MESSAGE_CAP = 32;
+export const TOOL_SUMMARY_MAX = 200;
+export const SESSION_ID_MAX = 128;
 /** 标题截断长度(码点)。 */
 export const TITLE_MAX = 12;
 /** 无用户消息时的默认标题。 */
@@ -67,13 +78,45 @@ function isValidMessage(m: unknown): m is AgentMessage {
   return (r.role === "user" || r.role === "assistant") && typeof r.content === "string";
 }
 
+function isValidToolActivity(value: unknown): value is {
+  name: string;
+  status: "start" | "done" | "error";
+  summary?: string;
+} {
+  if (!value || typeof value !== "object") return false;
+  const tool = value as { name?: unknown; status?: unknown };
+  return (
+    typeof tool.name === "string" &&
+    (tool.status === "start" || tool.status === "done" || tool.status === "error")
+  );
+}
+
+function normalizeToolActivity(tool: { name: string; status: "start" | "done" | "error"; summary?: string }) {
+  return {
+    name: tool.name.slice(0, 64),
+    status: tool.status,
+    ...(typeof tool.summary === "string"
+      ? { summary: tool.summary.slice(0, TOOL_SUMMARY_MAX) }
+      : {}),
+  };
+}
+
 /** 消息归一化:只保留 role/content + 合法 actions/tools 数组。 */
 function normalizeMessage(m: AgentMessage): AgentMessage {
+  const actions = Array.isArray(m.actions)
+    ? m.actions
+        .map(validateAction)
+        .filter((action): action is NonNullable<typeof action> => action !== null)
+        .slice(0, ACTIONS_PER_MESSAGE_CAP)
+    : [];
+  const tools = Array.isArray(m.tools)
+    ? m.tools.filter(isValidToolActivity).map(normalizeToolActivity).slice(0, TOOLS_PER_MESSAGE_CAP)
+    : [];
   return {
     role: m.role,
-    content: m.content,
-    ...(Array.isArray(m.actions) ? { actions: m.actions } : {}),
-    ...(Array.isArray(m.tools) ? { tools: m.tools } : {}),
+    content: m.content.slice(0, MESSAGE_CONTENT_MAX),
+    ...(actions.length > 0 ? { actions } : {}),
+    ...(tools.length > 0 ? { tools } : {}),
   };
 }
 
@@ -94,7 +137,7 @@ export function emptyState(): AgentSessionState {
 
 /** 纯解析:坏 JSON / 结构不符 → null;部分行损坏 → 丢弃该行。 */
 export function parseState(raw: string | null): AgentSessionState | null {
-  if (!raw) return null;
+  if (!raw || raw.length > AGENT_STATE_RAW_MAX) return null;
   let data: unknown;
   try {
     data = JSON.parse(raw);
@@ -108,20 +151,26 @@ export function parseState(raw: string | null): AgentSessionState | null {
   for (const s of d.sessions) {
     if (!s || typeof s !== "object") continue;
     const row = s as { id?: unknown; title?: unknown; messages?: unknown; updatedAt?: unknown };
-    if (typeof row.id !== "string" || !row.id) continue;
+    if (typeof row.id !== "string" || !row.id || row.id.length > SESSION_ID_MAX) continue;
     if (typeof row.updatedAt !== "number" || !Number.isFinite(row.updatedAt)) continue;
     if (!Array.isArray(row.messages)) continue;
     const messages = row.messages
+      .slice(-SESSION_MESSAGES_CAP)
       .filter(isValidMessage)
-      .map(normalizeMessage)
-      .slice(-SESSION_MESSAGES_CAP);
+      .map(normalizeMessage);
     sessions.push({
       id: row.id,
-      title: typeof row.title === "string" && row.title ? row.title : deriveTitle(messages),
+      title: typeof row.title === "string" && row.title
+        ? [...row.title].slice(0, TITLE_MAX).join("")
+        : deriveTitle(messages),
       messages,
       updatedAt: row.updatedAt,
     });
   }
+  // A corrupted store may contain thousands of rows; keep the most recent
+  // product-supported working set instead of materializing all of it.
+  sessions.sort((a, b) => b.updatedAt - a.updatedAt);
+  sessions.length = Math.min(sessions.length, SESSIONS_CAP);
   const activeId = typeof d.activeId === "string" && sessions.some((s) => s.id === d.activeId)
     ? d.activeId
     : sessions.length > 0
@@ -132,7 +181,7 @@ export function parseState(raw: string | null): AgentSessionState | null {
 
 /** 旧版历史(裸消息数组)解析:坏数据/空 → []。 */
 export function parseLegacyHistory(raw: string | null): AgentMessage[] {
-  if (!raw) return [];
+  if (!raw || raw.length > LEGACY_HISTORY_RAW_MAX) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -257,10 +306,11 @@ export function archiveAndNew(
   if (idx !== -1) {
     const normalized = opts.messages.filter(isValidMessage).map(normalizeMessage).slice(-SESSION_MESSAGES_CAP);
     if (normalized.length > 0) {
+      const customTitle = opts.title?.trim();
       sessions[idx] = {
         ...sessions[idx],
         messages: normalized,
-        title: opts.title || deriveTitle(normalized),
+        title: customTitle ? [...customTitle].slice(0, TITLE_MAX).join("") : deriveTitle(normalized),
         updatedAt: now,
       };
     }
