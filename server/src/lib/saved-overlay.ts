@@ -69,7 +69,7 @@ export function savedPlacesToListPois(
     if (!poi) return [];
     if (origin && typeof poi.distance !== 'number') {
       const meters = haversineDistance(poi.location, origin);
-      if (Number.isFinite(meters)) poi.distance = meters;
+      if (Number.isFinite(meters)) return [{ ...poi, distance: meters }];
     }
     return [poi];
   });
@@ -190,10 +190,12 @@ export function overlayBounds(pois: POI[]): { sw: { lng: number; lat: number }; 
   let maxLng = -Infinity;
   let maxLat = -Infinity;
   for (const poi of pois) {
+    const { lng, lat } = poi.location;
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue;
     minLng = Math.min(minLng, poi.location.lng);
-    minLat = Math.min(minLat, poi.location.lat);
-    maxLng = Math.max(maxLng, poi.location.lng);
-    maxLat = Math.max(maxLat, poi.location.lat);
+    minLat = Math.min(minLat, lat);
+    maxLng = Math.max(maxLng, lng);
+    maxLat = Math.max(maxLat, lat);
   }
   if (!Number.isFinite(minLng)) return null;
   return { sw: { lng: minLng, lat: minLat }, ne: { lng: maxLng, lat: maxLat } };

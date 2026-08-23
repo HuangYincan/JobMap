@@ -9,6 +9,7 @@ import {
   mergeMapPois,
   resolveSavedForFly,
   savedPlacesToOverlay,
+  savedPlacesToListPois,
 } from '../src/lib/saved-overlay.ts';
 
 test('savedPlacesToOverlay uses live recruitment when catalog hits', () => {
@@ -190,6 +191,31 @@ test('work saved company missing from catalog falls back to a recruitment pin, n
   assert.equal(overlay[0].positions.length, 0);
 });
 
+test('savedPlacesToListPois adds distance without mutating the shared catalog POI', () => {
+  const alibaba = INTERNSHIP_SEED.find((item) => item.id === 'alibaba-xixi');
+  assert.ok(alibaba);
+  const pois = savedPlacesToListPois(
+    [
+      {
+        id: 's1',
+        poiId: 'alibaba-xixi',
+        name: '阿里',
+        mode: 'work',
+        kind: 'recruitment',
+        lng: 120.02,
+        lat: 30.28,
+        createdAt: '2026-08-16T00:00:00.000Z',
+      },
+    ],
+    [alibaba],
+    { lng: 120.15, lat: 30.27 },
+  );
+  assert.equal(pois[0].id, 'alibaba-xixi');
+  assert.equal(typeof pois[0].distance, 'number');
+  assert.notEqual(pois[0], alibaba);
+  assert.equal(alibaba.distance, undefined);
+});
+
 test('mergeMapPois keeps search results first and only adds missing saved pins', () => {
   const alibaba = INTERNSHIP_SEED.find((item) => item.id === 'alibaba-xixi');
   assert.ok(alibaba);
@@ -233,6 +259,19 @@ test('overlayBounds covers every saved pin', () => {
   assert.equal(bounds.ne.lng, 121);
   assert.equal(bounds.ne.lat, 31);
   assert.equal(overlayBounds([]), null);
+});
+
+test('overlayBounds ignores a single non-finite coordinate', () => {
+  const bounds = overlayBounds([
+    { id: 'valid-a', kind: 'domain', name: 'A', mode: 'domain', source: 'api', location: { lng: 120, lat: 30 }, category: '收藏' },
+    { id: 'corrupt', kind: 'domain', name: '坏点', mode: 'domain', source: 'api', location: { lng: Number.NaN, lat: Number.POSITIVE_INFINITY }, category: '收藏' },
+    { id: 'valid-b', kind: 'domain', name: 'B', mode: 'domain', source: 'api', location: { lng: 121, lat: 31 }, category: '收藏' },
+  ]);
+  assert.ok(bounds);
+  assert.deepEqual(bounds, {
+    sw: { lng: 120, lat: 30 },
+    ne: { lng: 121, lat: 31 },
+  });
 });
 
 test('parseMapStyle only accepts the three basemap keys', () => {

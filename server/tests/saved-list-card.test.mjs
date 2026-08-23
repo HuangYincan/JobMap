@@ -152,7 +152,7 @@ test('桥接:无坐标且无活数据 → 丢弃(卡片必须有点位)', () => 
   assert.deepEqual(pois, []);
 });
 
-test('桥接:origin 补全快照 distance(与 SavedList 对比表同口径);活数据 distance 不动', () => {
+test('桥接:origin 补全快照/活数据 distance 但不污染共享 catalog', () => {
   const origin = { lng: 120.1, lat: 30.2 };
   const pois = savedPlacesToListPois(
     [
@@ -184,7 +184,13 @@ test('桥接:origin 补全快照 distance(与 SavedList 对比表同口径);活�
   assert.equal(snapshot.distance, expected, '快照 distance 按 haversine 补全');
   const live = pois.find((p) => p.id === alibaba.id);
   assert.ok(live, '活数据存在');
-  assert.equal(live.distance, alibaba.distance, '活数据 distance 不被改写(保留自身字段)');
+  assert.equal(alibaba.distance, undefined, 'catalog POI 不被原地改写');
+  assert.equal(
+    live.distance,
+    haversineDistance(alibaba.location, origin),
+    '返回的活数据卡片 distance 按 haversine 补全',
+  );
+  assert.notEqual(live, alibaba, '补距离时返回新对象');
 });
 
 // ---- ③ handlePickRecent 收藏门控(方案 A:先关图层再走原链路)----

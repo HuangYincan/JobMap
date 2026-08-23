@@ -7,6 +7,10 @@ import { resolveCompanyLogo, type ResolvedLogo } from './company-logo.ts';
 import { cityBoundsConsistencySql, companySitesSpatialSql, hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
 import type { ApplySource, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
 
+type DbPoolLike = {
+  query<T>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
+};
+
 interface CompanyRow {
   id: string;
   slug: string;
@@ -105,8 +109,10 @@ export function resolveDbCompanyLogo(
   });
 }
 
-export async function loadWorkCatalogFromDb(clip?: SpatialClip): Promise<RecruitmentPOI[] | null> {
-  const pool = getPool();
+export async function loadWorkCatalogFromDb(
+  clip?: SpatialClip,
+  pool: DbPoolLike | null = getPool(),
+): Promise<RecruitmentPOI[] | null> {
   if (!pool) return null;
   try {
     const spatial = companySitesSpatialSql(clip);

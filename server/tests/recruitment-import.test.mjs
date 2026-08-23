@@ -68,6 +68,21 @@ test('validateSourceCompany flags double-scheme and non-http URL fields', () => 
   assert.deepEqual(validateSourceCompany(company), []);
 });
 
+test('validateSourceCompany rejects source codes that would violate sources.code', () => {
+  const company = sample();
+  for (const bad of ['', 'BAD', 'bad_source', 'has space', '1bad']) {
+    company.source = bad;
+    assert.ok(
+      validateSourceCompany(company).some((row) => row.field === 'source'),
+      `${bad} should be rejected`,
+    );
+  }
+  company.source = 'xiaozhao-radar';
+  assert.deepEqual(validateSourceCompany(company), []);
+  company.source = undefined;
+  assert.deepEqual(validateSourceCompany(company), []);
+});
+
 test('radar drops with the scan #4 double-prefix fix stay clean (2 files, 4 URLs)', () => {
   // 数据级回归: 修正过的 2 个 drop 不再含 https://https:// (careerUrl/applyUrl 各 2 处)。
   const radarDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment', 'radar');
@@ -399,6 +414,147 @@ test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {
   assert.equal(result.wrote, false);
   assert.equal(result.reason, 'no-database');
   assert.equal(result.companies, plan.companies.length);
+});
+
+function fakeImportPlan() {
+  return {
+    companies: [
+      {
+        slug: 'fake-hz',
+        name: 'Fake',
+        source: 'xiaozhao-radar',
+        industries: ['internet'],
+        scale: 'startup',
+        sites: [{ id: 'fake-site', name: 'Fake HQ', location: { lng: 120.1, lat: 30.2 } }],
+        positions: [
+          {
+            externalId: 'radar-fake-1',
+            title: 'Fake role',
+            siteId: 'fake-site',
+            family: 'campus',
+            status: 'open',
+            deadline: '2026-12-31',
+            applySource: 'official',
+            applyUrl: 'https://apply.example/1',
+            salary: { min: 100, max: 200 },
+          },
+          {
+            externalId: 'seed-fake',
+            title: 'Example',
+            siteId: 'fake-site',
+            family: 'campus',
+            status: 'open',
+          },
+        ],
+      },
+    ],
+    issues: [],
+    dropped: 0,
+  };
+}
+
+function fakeApplyPool(opts = {}) {
+  const calls = [];
+  let released = false;
+  const client = {
+    release() {
+      released = true;
+    },
+    async query(sql, params = []) {
+      calls.push({ sql, params });
+      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') return { rows: [] };
+      if (sql.includes('INSERT INTO sources')) return { rows: [{ id: 'source-fake' }] };
+      if (sql.includes('INSERT INTO companies')) {
+        if (opts.failAt === 'company') throw new Error('company upsert failed');
+        return { rows: [{ id: 'company-fake' }] };
+      }
+      if (sql.includes('SELECT id::text FROM company_sites WHERE company_id = $1 AND site_key = $2')) {
+        return { rows: opts.existingSite ? [{ id: 'site-fake' }] : [] };
+      }
+      if (sql.includes('site_key IS NULL')) return { rows: [] };
+      if (sql.includes('INSERT INTO company_sites')) return { rows: [{ id: 'site-fake' }] };
+      if (sql.includes('INSERT INTO positions') && opts.failAt === 'position') {
+        throw new Error('position upsert failed');
+      }
+      return { rows: [] };
+    },
+  };
+  return {
+    pool: { connect: async () => client },
+    calls,
+    get released() {
+      return released;
+    },
+  };
+}
+
+test('applyRecruitmentImport runs a transactional upsert with an injected pool', async () => {
+  const fake = fakeApplyPool();
+  const result = await applyRecruitmentImport(fakeImportPlan(), fake.pool);
+  assert.equal(result.wrote, true);
+  assert.equal(result.companies, 1);
+  assert.equal(result.sites, 1);
+  assert.equal(result.positions, 1);
+  assert.equal(fake.released, true);
+
+  const sqls = fake.calls.map((call) => call.sql);
+  assert.ok(sqls.includes('BEGIN'));
+  assert.ok(sqls.includes('COMMIT'));
+  assert.ok(sqls.indexOf('COMMIT') > sqls.indexOf('BEGIN'));
+  assert.ok(sqls.some((sql) => sql.includes('INSERT INTO sources')));
+  assert.ok(sqls.some((sql) => sql.includes('INSERT INTO companies')));
+  assert.ok(sqls.some((sql) => sql.includes('INSERT INTO company_sites')));
+  assert.ok(sqls.some((sql) => sql.includes('DELETE FROM positions')));
+  assert.ok(sqls.some((sql) => sql.includes('UPDATE positions SET source_id')));
+
+  const companyCall = fake.calls.find((call) => call.sql.includes('INSERT INTO companies'));
+  assert.equal(companyCall.params[0], 'fake-hz');
+  assert.equal(companyCall.params[1], 'Fake');
+  assert.equal(companyCall.params[9], 12); // tier fallback
+  assert.equal(companyCall.params[10], 'other'); // category fallback
+
+  const positionCall = fake.calls.find((call) => call.sql.includes('INSERT INTO positions'));
+  assert.equal(positionCall.params[3], 'Fake role');
+  assert.equal(positionCall.params[7], 100);
+  assert.equal(positionCall.params[13], '2026-12-31');
+  assert.equal(positionCall.params[14], 'official');
+  assert.equal(positionCall.params[16], 'open');
+  assert.equal(positionCall.params[17], 'source-fake');
+});
+
+test('applyRecruitmentImport reuses an existing company site instead of inserting', async () => {
+  const fake = fakeApplyPool({ existingSite: true });
+  const result = await applyRecruitmentImport(fakeImportPlan(), fake.pool);
+  assert.equal(result.wrote, true);
+  assert.ok(fake.calls.some((call) => call.sql.includes('UPDATE company_sites SET')));
+  assert.ok(!fake.calls.some((call) => call.sql.includes('INSERT INTO company_sites')));
+});
+
+test('applyRecruitmentImport rolls back and releases the client on failure', async () => {
+  const fake = fakeApplyPool({ failAt: 'company' });
+  await assert.rejects(applyRecruitmentImport(fakeImportPlan(), fake.pool), /company upsert failed/);
+  assert.ok(fake.calls.some((call) => call.sql === 'ROLLBACK'));
+  assert.ok(fake.calls.some((call) => call.sql === 'BEGIN'));
+  assert.equal(fake.released, true);
+});
+
+test('applyRecruitmentImport returns early for an empty plan', async () => {
+  let connected = false;
+  const pool = {
+    connect: async () => {
+      connected = true;
+      throw new Error('must not connect');
+    },
+  };
+  const result = await applyRecruitmentImport({ companies: [], issues: [], dropped: 0 }, pool);
+  assert.deepEqual(result, {
+    wrote: false,
+    reason: 'empty-plan',
+    companies: 0,
+    sites: 0,
+    positions: 0,
+  });
+  assert.equal(connected, false);
 });
 
 test('official-career adapter reads JSON drops and skips a missing dir', async () => {

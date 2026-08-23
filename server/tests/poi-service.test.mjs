@@ -21,6 +21,29 @@ function domainPoi(id) {
   };
 }
 
+test('fetchPOIsForMode returns empty for college/overseas without touching data sources', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw new Error('must not fetch');
+  };
+  let batches = 0;
+  try {
+    for (const mode of ['college', 'overseas']) {
+      const result = await fetchPOIsForMode({
+        mode,
+        onlyActive: false,
+        onBatch: () => {
+          batches += 1;
+        },
+      });
+      assert.deepEqual(result, { pois: [] });
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  assert.equal(batches, 0);
+});
+
 test('withTimeout: 超时以 error 形态 settle(poi-loading B 兜底)', async () => {
   const never = new Promise(() => {});
   await assert.rejects(

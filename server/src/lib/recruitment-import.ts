@@ -33,6 +33,7 @@ export interface ImportPlan {
 const FAMILIES = new Set(['intern', 'campus', 'social']);
 const SCALES = new Set(['startup', 'unicorn', 'bigtech', 'enterprise']);
 const STATUSES = new Set(['open', 'closed', 'paused']);
+const SOURCE_CODE_RE = /^[a-z][a-z0-9-]*$/;
 
 function issue(slug: string, field: string, message: string): ImportIssue {
   return { slug, field, message };
@@ -147,6 +148,9 @@ export function validateSourceCompany(company: SourceCompany): ImportIssue[] {
   }
   if (company.tier !== undefined && !(Number.isInteger(company.tier) && company.tier >= 0 && company.tier <= 21)) {
     issues.push(issue(slug, 'tier', `unknown ${company.tier}`));
+  }
+  if (company.source !== undefined && !SOURCE_CODE_RE.test(company.source)) {
+    issues.push(issue(slug, 'source', 'must match sources.code ^[a-z][a-z0-9-]*$'));
   }
   if (!hasValidUrlScheme(company.careerUrl)) {
     issues.push(issue(slug, 'careerUrl', 'must start with http(s):// and have no repeated scheme'));
@@ -321,6 +325,15 @@ export interface ImportApplyResult {
   positions: number;
 }
 
+type ApplyDbClient = {
+  query<T = { id: string }>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
+  release(): void;
+};
+
+type ApplyDbPool = {
+  connect(): Promise<ApplyDbClient>;
+};
+
 /**
  * Normalize a position deadline to an ISO date or null (positions.deadline is a
  * date column). Mirrors crawler parse_deadline: YYYY[-/ .]MM[-/ .]DD, delimiters
@@ -351,7 +364,10 @@ export function positionTaxonomy(pos: SourcePosition): JobTaxonomy {
 }
 
 /** Upsert a validated plan. No DATABASE_URL → no-op (tests / laptop without Docker). */
-export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportApplyResult> {
+export async function applyRecruitmentImport(
+  plan: ImportPlan,
+  pool: ApplyDbPool | null = getPool(),
+): Promise<ImportApplyResult> {
   if (plan.companies.length === 0) {
     return { wrote: false, reason: 'empty-plan', companies: 0, sites: 0, positions: 0 };
   }
@@ -361,7 +377,6 @@ export async function applyRecruitmentImport(plan: ImportPlan): Promise<ImportAp
     ...company,
     positions: company.positions.filter((pos) => isAuthenticPositionId(pos.externalId)),
   }));
-  const pool = getPool();
   if (!pool) {
     return {
       wrote: false,

@@ -92,7 +92,6 @@ async function viewportFallbackSearch(
 
 export interface FetchPOIOptions extends QueryPipeline {
   mode: MapMode;
-  onlyActive?: boolean;
   zoom?: number;
   bounds?: ViewportBounds;
   /** 已累计的 POI，本轮往里合并，不整表替换 */
@@ -119,9 +118,9 @@ export interface FetchPOIResult {
 
 /** 获取指定模式的 POI。失败抛错(错误信号),成功返回 { pois, noMore? }。 */
 export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<FetchPOIResult> {
-  const { mode, onlyActive = true } = options;
+  const { mode } = options;
 
-  if (onlyActive && mode !== 'domain' && !isRecruitmentMode(mode)) {
+  if (mode !== 'domain' && !isRecruitmentMode(mode)) {
     return { pois: [] };
   }
 
@@ -420,16 +419,21 @@ export async function resolveInternshipLocations(
   return resolved;
 }
 
+let workSeedPromise: Promise<RecruitmentPOI[]> | null = null;
+
 async function workSeedFromAdapters(): Promise<RecruitmentPOI[]> {
-  try {
-    const fromApi = await fetchWorkCatalogFromApi();
-    if (fromApi.length) return fromApi;
-  } catch {
-    // Relative /api/pois is browser-only; tests and SSR take the empty path.
+  if (!workSeedPromise) {
+    workSeedPromise = (async () => {
+      try {
+        const fromApi = await fetchWorkCatalogFromApi();
+        if (fromApi.length) return fromApi;
+      } catch {
+        // Relative /api/pois is browser-only; tests and SSR take the empty path.
+      }
+      return [];
+    })();
   }
-  // No scaffold fallback: example seed jobs are development scaffolding and must
-  // not appear on the map (2026-08-17). Offline work mode shows an empty list.
-  return [];
+  return workSeedPromise;
 }
 
 async function internshipSeedResolved(): Promise<RecruitmentPOI[]> {
