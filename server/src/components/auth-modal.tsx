@@ -18,10 +18,16 @@ type AuthTab = "phone" | "email" | "password" | "other";
 type PasswordMode = "login" | "register";
 type SocialProvider = Extract<AuthProvider, "github" | "google" | "wechat">;
 
-const SOCIAL: { id: SocialProvider; labelKey: "authGithub" | "authGoogle" | "authWechat" }[] = [
+// 灰度期禁用 google/wechat(用户授权 2026-08-24,deferred-notes #UI-001):
+// 按钮置灰不可点(图标保留),API 层 /api/auth/oauth* 不动,仅前端入口关闭
+const SOCIAL: {
+  id: SocialProvider;
+  labelKey: "authGithub" | "authGoogle" | "authWechat";
+  disabled?: boolean;
+}[] = [
   { id: "github", labelKey: "authGithub" },
-  { id: "google", labelKey: "authGoogle" },
-  { id: "wechat", labelKey: "authWechat" },
+  { id: "google", labelKey: "authGoogle", disabled: true },
+  { id: "wechat", labelKey: "authWechat", disabled: true },
 ];
 
 // 发送冷却(秒):与后端 otpRateConfig.cooldownMs = 60s 对齐,客户端禁用防连点
@@ -600,7 +606,7 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
                   key={item.id}
                   type="button"
                   className={styles.social}
-                  disabled={busy}
+                  disabled={busy || item.disabled}
                   onClick={() => social(item.id)}
                 >
                   <SocialIcon id={item.id} />

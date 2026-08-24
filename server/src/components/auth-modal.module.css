@@ -437,6 +437,14 @@
   padding: 0 14px;
 }
 
+/* 灰度期禁用(google/wechat):中性灰态,降低可读性、无 hover 反馈;尺寸/图标照旧 */
+.social:disabled {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .error {
   margin: 12px 0 0;
   font-size: 12px;
@@ -506,5 +514,11 @@
   .bindCard {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* 深色卡片上 disabled 更暗:弱于 enabled 的 rgba(255,255,255,0.06) */
+  .social:disabled {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
   }
 }
