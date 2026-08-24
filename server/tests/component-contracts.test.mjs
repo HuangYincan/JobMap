@@ -261,6 +261,13 @@ test('auth Other is icon rows without X', () => {
   assert.doesNotMatch(modal, /id: "x"/);
   assert.doesNotMatch(modal, /authX/);
   assert.match(modal, /function SocialIcon/);
+  // 灰度期禁用 google/wechat(用户授权 2026-08-24,deferred-notes #UI-001):
+  // SOCIAL 带 disabled 标记 + 渲染 disabled 条件;github 保持可点
+  assert.match(modal, /\{ id: "google", labelKey: "authGoogle", disabled: true \}/);
+  assert.match(modal, /\{ id: "wechat", labelKey: "authWechat", disabled: true \}/);
+  assert.doesNotMatch(modal, /\{ id: "github", labelKey: "authGithub", disabled: true \}/);
+  assert.match(modal, /disabled=\{busy \|\| item\.disabled\}/);
+  assert.match(css, /\.social:disabled/);
   assert.match(css, /grid-template-columns:\s*1fr;/);
   assert.match(css, /@media \(max-width: 720px\)[\s\S]*\.promo \{\s*display:\s*none/);
 });
