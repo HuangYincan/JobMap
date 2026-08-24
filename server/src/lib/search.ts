@@ -665,9 +665,14 @@ function soonestDeadline(poi: POI): number {
   }, Number.MAX_SAFE_INTEGER);
 }
 
-function priceSortValue(poi: POI): number {
-  if (isRecruitmentPOI(poi)) return Number.MAX_SAFE_INTEGER;
-  return poi.priceLevel ?? Number.MAX_SAFE_INTEGER;
+/**
+ * 价格排序值（priceLevel 1..4）。未知价格（无 priceLevel / 招聘 POI）返回 null：
+ * sortPOIs 对 null 哨兵在 asc/desc 两个方向都置末（priceDesc 缺失项不再被反置成最贵）。
+ * 口径：只认 priceLevel；与 matchFilter case 'price' 优先 cost 的差异保持现状（deferred）。
+ */
+function priceSortValue(poi: POI): number | null {
+  if (isRecruitmentPOI(poi)) return null;
+  return poi.priceLevel ?? null;
 }
 
 function relevanceSortValue(poi: POI, query?: string): number {
@@ -692,8 +697,8 @@ function relevanceSortValue(poi: POI, query?: string): number {
   return score;
 }
 
-/** 获取 POI 的排序分值 */
-function sortValue(poi: POI, key: string, query?: string): number {
+/** 获取 POI 的排序分值。null = 缺失哨兵（目前只有价格键），比较器将其置末。 */
+function sortValue(poi: POI, key: string, query?: string): number | null {
   switch (key) {
     case 'distance':
       return poi.distance ?? Number.MAX_SAFE_INTEGER;
@@ -745,7 +750,15 @@ export function sortPOIs(pois: POI[], sortKey: string, query?: string): POI[] {
   const sorted = [...pois];
   const desc = SORT_DESCENDING[sortKey] ?? false;
   sorted.sort((a, b) => {
-    const diff = sortValue(a, sortKey, query) - sortValue(b, sortKey, query);
+    const va = sortValue(a, sortKey, query);
+    const vb = sortValue(b, sortKey, query);
+    // 缺失哨兵（null，目前只有价格键未知价位）在两个方向都置末：
+    // 修复 priceDesc 把无价格 POI 反置成最贵；distance/deadline 的 MAX 哨兵与
+    // rating/salaryDesc 的 0 哨兵不受影响（仍各自保持原 asc/desc 行为）。
+    if (va === null && vb === null) return 0;
+    if (va === null) return 1;
+    if (vb === null) return -1;
+    const diff = va - vb;
     return desc ? -diff : diff;
   });
   return sorted;
