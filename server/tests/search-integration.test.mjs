@@ -117,6 +117,9 @@ test('GET /api/suggest domain: 本地优先 hz_pois 前缀 + center 距离 + 空
   assert.match(route, /haversineDistance\(location, center\)/);
   // 只缓存有建议的响应——空结果被缓存会掩盖「0 命中→高德回退」信号
   assert.match(route, /if \(suggestions\.length > 0\) \{\s*writePublicCache/);
+  // cache key 含 center：distance 按 center 计算，不同 center 必须分桶缓存
+  assert.match(route, /const centerKey = center \? .+ : 'none'/);
+  assert.match(route, /publicCacheKey\(\['suggest', mode, q, centerKey\]\)/);
   const store = src('lib/hz-poi-store.ts');
   assert.match(store, /loadHzPoiSuggestions/);
   assert.match(store, /p\.name ILIKE \$1/);

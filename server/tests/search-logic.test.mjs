@@ -500,6 +500,26 @@ test('applyFilters: price range maps priceLevel to tier midpoints', () => {
   }
 });
 
+test('sortPOIs: priceDesc ranks priced POIs high→low, missing price last', () => {
+  const sorted = sortPOIs(DOMAIN_SEED, 'priceDesc');
+  const levels = sorted.map((p) => (p.kind === 'domain' ? (p.priceLevel ?? null) : null));
+  const firstMissing = levels.indexOf(null);
+  assert.ok(firstMissing > 0, 'priced POIs keep ahead of price-less ones');
+  assert.ok(levels.slice(firstMissing).every((l) => l === null), 'price-less POIs all at tail');
+  const priced = levels.slice(0, firstMissing);
+  for (let i = 1; i < priced.length; i++) {
+    assert.ok(priced[i - 1] >= priced[i], `priceDesc high→low at ${i}`);
+  }
+  // 档位 4 → 3 → 2（去重后）
+  assert.deepEqual(priced.filter((l, i) => i === 0 || l !== priced[i - 1]), [4, 3, 2]);
+  assert.equal(sorted[0].id, 'hz-yinyuequan'); // priceLevel 4
+  // priceAsc 现状保持：缺失价格仍排末
+  const asc = sortPOIs(DOMAIN_SEED, 'priceAsc');
+  const ascMissing = asc.map((p) => (p.priceLevel ?? null)).indexOf(null);
+  assert.ok(ascMissing > 0);
+  assert.ok(asc.slice(ascMissing).every((p) => p.priceLevel === undefined));
+});
+
 test('applyFilters: price prefers real cost over priceLevel tier', () => {
   const poi = {
     id: 'x', kind: 'domain', name: 'X', mode: 'domain', source: 'amap',
