@@ -13,19 +13,32 @@
 import { createHmac, randomUUID } from 'node:crypto';
 import { fetchWithTimeout } from './fetch-with-timeout.ts';
 
-/** 阿里云短信配置(server/.env.local,服务端秘密)。trim 后任一缺失 → undefined。 */
+/**
+ * 阿里云短信配置(server/.env.local,服务端秘密)。trim 后任一缺失 → undefined。
+ * 模板分钟变量(ALIYUN_SMS_TEMPLATE_MINUTES)可选,缺省 '5':
+ * 短信认证服务赠送模板含 {code, min} 双变量(实测 isv.INVALID_PARAMETERS「模版变量min内容非法」
+ * 当 min 缺失时),min 为「X 分钟内有效」文案值,须与模板变量名匹配
+ * (换自定义模板且变量名不同时,此处键名需对应用户模板)。
+ */
 export function aliyunSmsConfig(): {
   accessKeyId: string;
   accessKeySecret: string;
   signName: string;
   templateCode: string;
+  templateMinutes: string;
 } | undefined {
   const accessKeyId = process.env.ALIYUN_ACCESS_KEY_ID?.trim();
   const accessKeySecret = process.env.ALIYUN_ACCESS_KEY_SECRET?.trim();
   const signName = process.env.ALIYUN_SMS_SIGN_NAME?.trim();
   const templateCode = process.env.ALIYUN_SMS_TEMPLATE_CODE?.trim();
   if (!accessKeyId || !accessKeySecret || !signName || !templateCode) return undefined;
-  return { accessKeyId, accessKeySecret, signName, templateCode };
+  return {
+    accessKeyId,
+    accessKeySecret,
+    signName,
+    templateCode,
+    templateMinutes: process.env.ALIYUN_SMS_TEMPLATE_MINUTES?.trim() || '5',
+  };
 }
 
 // ---- 错误类型(route 层映射 HTTP 状态,仓库 instanceof 映射惯例) ----
@@ -128,7 +141,7 @@ function requestIdFromBody(body: Record<string, unknown>): string {
  * 5. 最终 URL = 端点 + canonicalizedQuery + '&Signature=' + percentEncode(Signature)
  */
 function buildSignedUrl(
-  cfg: { accessKeyId: string; accessKeySecret: string; signName: string; templateCode: string },
+  cfg: { accessKeyId: string; accessKeySecret: string; signName: string; templateCode: string; templateMinutes: string },
   input: { phoneNumber: string; code: string },
   now: Date,
   signatureNonce: string,
@@ -145,8 +158,8 @@ function buildSignedUrl(
     PhoneNumber: input.phoneNumber,
     SignName: cfg.signName,
     TemplateCode: cfg.templateCode,
-    // 直接传值模式:验证码由服务端生成,模板参数 {"code": "123456"}。
-    TemplateParam: JSON.stringify({ code: input.code }),
+    // 直接传值模式:验证码由服务端生成,模板参数 {"code": "...", "min": "N"}(赠送模板双变量,min 缺省会报 isv.INVALID_PARAMETERS)。
+    TemplateParam: JSON.stringify({ code: input.code, min: cfg.templateMinutes }),
   };
   const canonicalizedQuery = Object.keys(params)
     .sort()

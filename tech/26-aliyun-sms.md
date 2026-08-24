@@ -50,7 +50,7 @@ GET `https://dypnsapi.aliyuncs.com/?<signed-query>`(`Format=JSON`),RPC 签名(HM
 1. 组装请求参数:公共参数(`AccessKeyId`、`Action=SendSmsVerifyCode`、`Version=2017-05-25`、`Format=JSON`、`SignatureMethod=HMAC-SHA1`、`SignatureVersion=1.0`、`SignatureNonce` 每次唯一、`Timestamp` UTC ISO8601)+ 业务参数(`PhoneNumber`、`SignName`、`TemplateCode`、`TemplateParam`)
 2. 参数按 key 字典序排序,value 经 **RFC3986 percent-encode**;拼成待签串 `GET&%2F&<percent-encoded-query>`
 3. 用 `HMAC-SHA1(secret + '&', stringToSign)` 签名 → base64 → 再 RFC3986 编码,作为 `Signature` 参数拼入 query
-4. `TemplateParam = {"code": "6位码"}` **直接传值模式**:服务端生成 6 位码直接放入 JSON 传给阿里云,由短信网关下发,本地 `consumeOtp` 校验
+4. `TemplateParam = {"code": "6位码", "min": "N"}` **直接传值模式**:服务端生成 6 位码直接放入 JSON 传给阿里云,由短信网关下发,本地 `consumeOtp` 校验。**实测(2026-08-24)赠送模板为 `{code, min}` 双变量** —— 只传 `code` 缺 `min` 时阿里云返回 `isv.INVALID_PARAMETERS`(模版变量min内容非法);`min` 值为「N 分钟内有效」文案,取 `ALIYUN_SMS_TEMPLATE_MINUTES`(缺省 `5`)
 
 **取舍说明**:阿里云官方 `##code##` 占位符 + `CheckSmsVerifyCode`(服务端核验)路径**不采用** —— 本地 `auth_otp_challenges` 已有生成/存储/校验/限流全链,直接传值保持 phone/email 统一验证路径与既有守卫;阿里云「无法校验自定义码」对本方案无影响(校验本就在本地完成),本方案也未使用阿里云侧付费核验能力。
 
@@ -69,11 +69,12 @@ GET `https://dypnsapi.aliyuncs.com/?<signed-query>`(`Format=JSON`),RPC 签名(HM
 ALIYUN_ACCESS_KEY_ID=xxx
 ALIYUN_ACCESS_KEY_SECRET=xxx
 ALIYUN_SMS_SIGN_NAME=xxx      # 系统赠送签名,不支持自定义
-ALIYUN_SMS_TEMPLATE_CODE=xxx  # 赠送模板,参数名 code
+ALIYUN_SMS_TEMPLATE_CODE=xxx  # 赠送模板,{code, min} 双变量
+ALIYUN_SMS_TEMPLATE_MINUTES=5 # 可选,默认 5:模板 min 变量值(「N 分钟内有效」文案),换模板后按需调整
 ```
 
-- 四条缺任一 → 发送接口 503 `SMS_NOT_CONFIGURED`(优雅降级,不 crash,不影响 email/其他功能)
-- 签名 = **系统赠送签名,不支持自定义**;模板 = **赠送模板,参数名 `code`**(若用户后续换成自定义模板且参数名不同,`TemplateParam` 键名需对应用户模板,由用户告知)
+- 前四条缺任一 → 发送接口 503 `SMS_NOT_CONFIGURED`(优雅降级,不 crash,不影响 email/其他功能);`ALIYUN_SMS_TEMPLATE_MINUTES` 可选(有默认值)
+- 签名 = **系统赠送签名,不支持自定义**;模板 = **赠送模板,{code, min} 双变量**(实测,2026-08-24);若用户后续换成自定义模板且变量名/数量不同,`TemplateParam` 键名与取值需对应用户模板(由用户告知)
 - 获取途径见 §6;冒烟流程见批次 `20260822-aliyun-sms-otp/deferred-notes.md`
 
 ## 6. 开通步骤(用户侧)
@@ -104,3 +105,4 @@ ALIYUN_SMS_TEMPLATE_CODE=xxx  # 赠送模板,参数名 code
 
 - `db/migrations/005` 注释「Production send goes through Aliyun SMS (PNvs)」在本批实现后**成为事实**(迁移文件不可变,未改)
 - 本批仅剩 Env-only 遗留:用户配置真实 `ALIYUN_*` 值 + 真实短信冒烟(见批次 deferred-notes;deferred-ledger D-04 关闭 / D-29 登记)
+- **TTL 口径**:短信文案「N 分钟内有效」的 N 由 `ALIYUN_SMS_TEMPLATE_MINUTES` 控制,而本地 `auth_otp_challenges` TTL 固定 10 分钟 —— 若设 N=5,用户在第 5 分钟后输入会报「已过期」而本地码仍有效(体验偏差,不构成安全缺口,码仍 10 分钟作废);**对齐方案由用户拍板**:设 `ALIYUN_SMS_TEMPLATE_MINUTES=10`(短信与本地一致,无需改代码)或改本地 TTL 常量(改动 `session-store.ts` / `account-store.ts`,不在本批)

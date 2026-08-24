@@ -34,17 +34,24 @@ const ENV = {
 async function withEnv(env, fn) {
   const saved = {};
   for (const key of ENV_KEYS) saved[key] = process.env[key];
+  // 模板分钟变量可选(有默认值):测试内清除外部残留,避免默认值用例被环境干扰
+  const minutesKey = 'ALIYUN_SMS_TEMPLATE_MINUTES';
+  const savedMinutes = process.env[minutesKey];
   try {
     for (const key of ENV_KEYS) {
       if (key in env) process.env[key] = env[key];
       else delete process.env[key];
     }
+    if (minutesKey in env) process.env[minutesKey] = env[minutesKey];
+    else delete process.env[minutesKey];
     return await fn();
   } finally {
     for (const key of ENV_KEYS) {
       if (saved[key] === undefined) delete process.env[key];
       else process.env[key] = saved[key];
     }
+    if (savedMinutes === undefined) delete process.env[minutesKey];
+    else process.env[minutesKey] = savedMinutes;
   }
 }
 
@@ -126,12 +133,21 @@ test('sendSmsVerifyCode: OK → 返回 requestId;URL 参数齐全、签名可复
     assert.equal(url.searchParams.get('PhoneNumber'), input.phoneNumber);
     assert.equal(url.searchParams.get('SignName'), ENV.ALIYUN_SMS_SIGN_NAME);
     assert.equal(url.searchParams.get('TemplateCode'), ENV.ALIYUN_SMS_TEMPLATE_CODE);
-    // 直接传值模式:模板参数为 {"code":"123456"}
-    assert.equal(url.searchParams.get('TemplateParam'), JSON.stringify({ code: input.code }));
+    // 直接传值模式:赠送模板为 {code, min} 双变量,min 缺省 '5'
+    // (实测缺 min → 阿里云 isv.INVALID_PARAMETERS「模版变量min内容非法」)
+    assert.equal(url.searchParams.get('TemplateParam'), JSON.stringify({ code: input.code, min: '5' }));
     // 签名可复算:与实现同算法重算,证明签名正确
     assert.equal(url.searchParams.get('Signature'), recomputeSignature(calls[0], ENV.ALIYUN_ACCESS_KEY_SECRET));
     // URL 中无 secret 明文(AccessKeyId 是 ID,secret 只参与 HMAC)
     assert.ok(!calls[0].includes(ENV.ALIYUN_ACCESS_KEY_SECRET), 'URL must not contain access key secret');
+  }));
+
+test('sendSmsVerifyCode: ALIYUN_SMS_TEMPLATE_MINUTES 覆盖 → TemplateParam min 用覆盖值', () =>
+  withEnv({ ...ENV, ALIYUN_SMS_TEMPLATE_MINUTES: '10' }, async () => {
+    const { calls, impl } = fakeFetch([{ body: { Code: 'OK', RequestId: 'R1' } }]);
+    await sendSmsVerifyCode(input, { fetchImpl: impl, ...successOptions });
+    const url = new URL(calls[0]);
+    assert.equal(url.searchParams.get('TemplateParam'), JSON.stringify({ code: input.code, min: '10' }));
   }));
 
 test('sendSmsVerifyCode: FREQUENCY_FAIL → SmsRateLimitedError(恰好 1 次,不重试)', () =>
