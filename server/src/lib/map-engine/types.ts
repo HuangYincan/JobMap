@@ -84,6 +84,13 @@ export interface MapMarker {
   on?(event: 'click', cb: () => void): void;
   /** 统一事件解绑(cb 缺省 = 解绑该事件全部回调) */
   off?(event: 'click', cb?: () => void): void;
+  /**
+   * 厂商侧是否仍挂在地图/共享层上(被外部删除时返回 false;不支持探测的
+   * 适配层可省略本方法,控制器 sync 对 undefined 跳过)。探测必须走适配层
+   * 可判定的挂载状态(如厂商 getMap / 适配层挂载簿记),控制器自身绝不直
+   * 碰厂商裸实例。
+   */
+  isAttached?(): boolean;
 }
 
 export interface MapCircleOptions {

@@ -679,6 +679,9 @@ class TencentView implements MapView {
         }
         // cb 缺省:保留(与既有引擎 off 语义一致,调用方应传 cb 精确解绑)
       },
+      // 挂载探测(契约 isAttached):attach 标志 = 适配层可判定的挂载状态
+      // (getMap 包装同源,见 overlayObj);detach(remove/setMap(null)) 后为 false
+      isAttached: () => attached,
       remove: detach,
     };
   }
@@ -749,7 +752,7 @@ class TencentView implements MapView {
         this.warnSingleIconDegraded();
       }
     }
-    return {
+    const wrapped: MapMarker = {
       raw,
       setPosition: (p: LngLat) => raw.setPosition(toTMapLatLng(this.tmap, p)),
       setContent: (html: string) => raw.setContent(html),
@@ -778,6 +781,12 @@ class TencentView implements MapView {
       // GL Marker 无 remove();官方移除方式为 setMap(null)
       remove: () => raw.setMap(null),
     };
+    // 挂载探测(契约 isAttached):单点 Marker 有 getMap 时按厂商语义探测
+    // (setMap(null) 后为 null);无 getMap(探测不支持)→ 省略,控制器 sync 跳过
+    if (typeof raw.getMap === 'function') {
+      wrapped.isAttached = () => raw.getMap() != null;
+    }
+    return wrapped;
   }
 
   /**
@@ -942,6 +951,12 @@ class TencentView implements MapView {
         }
         this.multiClickBindings = rest;
       },
+      // 挂载探测(契约 isAttached):multiAttached = 适配层可判定的挂载状态
+      // (setVisible(true) add / setVisible(false)·remove 摘单 geometry 维护。
+      // 共享实例外部摘除同一 geometry 时本簿记不同步——multiGeometries/
+      // multiAttached 是适配层自身可见的权威挂载状态,经 wrapper 的摘挂
+      // 都经本簿记,外部直碰共享实例的场景无法探测,按保守真值返回)
+      isAttached: () => this.multiAttached.has(id),
       // 移除 = 摘除该 geometry + 清理全部簿记(共享实例保留挂图)
       remove: () => {
         if (!this.multiMarker) return;
