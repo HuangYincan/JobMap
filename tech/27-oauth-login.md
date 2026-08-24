@@ -19,6 +19,8 @@
 - 微信无邮箱 → email 传 undefined,不报错;accountLabel 回退 provider 名
 - 邮箱冲突(23505):Google 邮箱撞已有 OTP 邮箱用户 → 身份挂接已有用户,不新建、不覆盖
 
+> **2026-08-24 现状:** 登录弹窗第三方登录区中 **Google / 微信按钮已置灰禁用**(deferred-notes #UI-001,用户授权)——前端入口关闭(按钮 `disabled`、不可点击),**GitHub 按钮保持可用**。API 层 `/api/auth/oauth*` 不变(仍可被直接调用),下文描述的协议与端点全部继续有效。
+
 ## 2. 流程总览
 
 ```
