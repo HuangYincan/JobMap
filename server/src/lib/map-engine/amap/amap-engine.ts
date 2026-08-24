@@ -227,7 +227,7 @@ class AmapView implements MapView {
         console.warn('[map-engine] AMap.Icon 不可用,图标降级');
       }
     }
-    return {
+    const wrapped: MapMarker = {
       raw: marker,
       setPosition: (p: LngLat) => {
         marker.setPosition([p.lng, p.lat]);
@@ -276,6 +276,13 @@ class AmapView implements MapView {
         }
       },
     };
+    // 挂载探测(契约 isAttached):AMap.Marker.getMap() 为真 = 仍挂地图,
+    // setMap(null)/厂商侧外部移除后返回 null。老 SDK 无 getMap → 省略本方法
+    // (不支持探测,控制器 sync 对该 marker 跳过)。
+    if (typeof marker.getMap === 'function') {
+      wrapped.isAttached = () => marker.getMap() != null;
+    }
+    return wrapped;
   }
 
   /** 距离圈(L1067 同款参数:strokeColor/strokeOpacity/strokeWeight/fillColor/fillOpacity/bubble/zIndex) */

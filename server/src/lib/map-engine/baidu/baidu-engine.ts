@@ -295,6 +295,11 @@ interface BMarker {
   removeEventListener?(event: string, cb: () => void): void;
   remove?(): void;
   /**
+   * 厂商挂载探测(契约 isAttached):部分形态提供 getMap(经典 BMap 同命名);
+   * 缺失时适配层回退自身挂载簿记(见 BaiduMapView.mountedMarkers)。
+   */
+  getMap?(): unknown;
+  /**
    * 厂商 marker 的点击目标 DOM(markerMouseTarget pane,模块源码
    * _msTargetRender/_addDom 核实):GL 下恒创建、默认空容器、尺寸=图标尺寸、
    * 位置=屏幕位 + 契约 offset(经空白锚点图标 anchor=-offset 数学);
@@ -864,6 +869,12 @@ class BaiduMapView implements MapView {
   private destroyed = false;
   /** r5 content 标记注册表:相机/瓦片事件后重算定位(SDK fixPosition 反绕修复) */
   private readonly contentMarkers = new Set<BMarker>();
+  /**
+   * 挂载簿记(契约 isAttached 探测):addOverlay 成功登记、wrapper.remove 摘除。
+   * BMapGL Marker 无可靠公共 getMap(接口子集未含)→ 适配层自身判定的挂载
+   * 状态作为 isAttached 真值来源;厂商 getMap 存在时优先用厂商语义。
+   */
+  private readonly mountedMarkers = new Set<BMarker>();
   /** 相机/瓦片事件解绑句柄(destroy 清理;首个 content marker 时懒注册) */
   private readonly viewUnsubscribers: Array<() => void> = [];
   /** 相机/瓦片事件监听已绑(懒注册,避免空视图监听残留——就绪通道解绑断言) */
@@ -1222,6 +1233,8 @@ class BaiduMapView implements MapView {
       }
     }
     this.map.addOverlay?.(raw); // SDK 同步创建点击目标 DOM(_i → initialize)
+    // 挂载簿记(契约 isAttached 探测源):addOverlay 成功后登记
+    if (typeof this.map.addOverlay === 'function') this.mountedMarkers.add(raw);
     // 无 setContent → DOM 注入(icon 主机制时不注入,防双渲染);addOverlay 后
     // 同步命中,失败走微任务 + rAF 有界重试(零定时器)
     if (content !== undefined && typeof raw.setContent !== 'function' && !iconRenders) {
@@ -1274,9 +1287,16 @@ class BaiduMapView implements MapView {
         if (cb) raw.removeEventListener('click', cb);
         // cb 缺省:BMapGL 无「按事件清空」形态 → 保留(调用方应传 cb 精确解绑)
       },
+      // 挂载探测(契约 isAttached):厂商 getMap 可用则按厂商语义,否则回退
+      // 适配层挂载簿记(addOverlay 登记 / remove 摘除)
+      isAttached: () => {
+        if (typeof raw.getMap === 'function') return raw.getMap() != null;
+        return this.mountedMarkers.has(raw);
+      },
       remove: () => {
         pendingContentInjection.delete(raw); // 摘除 → 终止注入重试链
         this.contentMarkers.delete(raw); // r5:摘除后不再重算定位
+        this.mountedMarkers.delete(raw); // 挂载簿记同步(契约 isAttached 探测源)
         this.map.removeOverlay?.(raw);
         raw.remove?.();
       },
@@ -1342,6 +1362,8 @@ class BaiduMapView implements MapView {
       }
     }
     this.map.addOverlay?.(raw); // BMapGL 覆盖物需 addOverlay 上地图
+    // 挂载簿记(契约 isAttached 探测源):addOverlay 成功后登记
+    if (typeof this.map.addOverlay === 'function') this.mountedMarkers.add(raw);
     return {
       raw,
       setPosition: (p: LngLat) => {
@@ -1391,9 +1413,16 @@ class BaiduMapView implements MapView {
         if (cb) raw.removeEventListener('click', cb);
         // cb 缺省:BMapGL 无「按事件清空」形态 → 保留(调用方应传 cb 精确解绑)
       },
+      // 挂载探测(契约 isAttached):厂商 getMap 可用则按厂商语义,否则回退
+      // 适配层挂载簿记(addOverlay 登记 / remove 摘除)
+      isAttached: () => {
+        if (typeof raw.getMap === 'function') return raw.getMap() != null;
+        return this.mountedMarkers.has(raw);
+      },
       remove: () => {
         pendingContentInjection.delete(raw); // 摘除 → 终止注入重试链
         this.contentMarkers.delete(raw); // r5:摘除后不再重算定位
+        this.mountedMarkers.delete(raw); // 挂载簿记同步(契约 isAttached 探测源)
         this.map.removeOverlay?.(raw);
         raw.remove?.();
       },

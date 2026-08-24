@@ -45,13 +45,25 @@ export interface POIMarkerController {
    * 全量同步标记(b2):非空列表 = 只增不删——新增缺失的标记、更新存量标记的
    * 位置/样式,离开列表的 id 保留实例(可见性由 setVisiblePOIs 控制);
    * 空列表 = 清空全部标记(刷新/重置路径)。
+   *
+   * opts.replace = true(视口整体换 catalog 语义):add/update 遍历完成后,
+   * 销毁「不在新列表、也不在 retainIds」的 id——池外 marker 不再永久累积;
+   * 保留 id(新列表 + retainIds)行为与现状一致:更新存量、应用样式、升级图标。
    */
-  setPOIs(pois: POI[]): void;
+  setPOIs(pois: POI[], opts?: { replace?: boolean; retainIds?: Iterable<string> }): void;
   /**
    * 可见性切换(b2):只显示给定 id 集的标记(其余 hide),实例保留在内部表,
    * 跨调用差分,后续 setPOIs 新增的标记按同一可见集应用。null = 全部显示。
    */
   setVisiblePOIs(ids: string[] | null): void;
+  /**
+   * 完整性自动补回:遍历登记簿记(含 placed 兜底),探测每个 marker 是否仍
+   * 挂在地图/共享层上(MapMarker.isAttached;被厂商侧外部删除时返回 false,
+   * undefined = 引擎不支持探测 → 跳过)。被外部删除的 marker 按 poiById 原
+   * 状态重建(图标/位置/click/可见集/selected/highlighted);幂等、O(n)、
+   * 失败静默(地图销毁等场景不抛)。
+   */
+  sync(): void;
   /** 移除地图上所有标记并清空内部状态。 */
   clear(): void;
   /** 高亮指定标记：轻微放大 + 透明度变化。 */
@@ -965,7 +977,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
 
   // -- 公共接口实现 ---------------------------------------------------------
 
-  setPOIs(pois: POI[]): void {
+  setPOIs(pois: POI[], opts?: { replace?: boolean; retainIds?: Iterable<string> }): void {
     if (!this.isReady()) return;
 
     // 空列表 = 清空(刷新/重置路径,等价 clear;b2 保留该语义以释放实例)
@@ -977,6 +989,10 @@ class POIMarkerControllerImpl implements POIMarkerController {
     // b2 只增不删:marker 实例跨视口/跨 zoom 保留,离开列表的 id 不销毁
     // (可见性由 setVisiblePOIs 切换)——「只 add 新的 + setPosition 存量」,
     // removeMarker 只留给 clear/destroy。
+    // replace 模式(2026-08-25,视口整体换 catalog):add/update 遍历完成后
+    // 销毁「不在新列表、也不在 retainIds」的 id——池外 marker 不再永久累积;
+    // retainIds(收藏 overlay 层)即使不在新列表也保留实例,隐藏与否由
+    // setVisiblePOIs 决定。默认(不传 opts)行为 = 现状,零变化。
     for (const poi of pois) {
       const existing = this.markers.get(poi.id);
       if (existing) {
@@ -992,6 +1008,51 @@ class POIMarkerControllerImpl implements POIMarkerController {
       } else {
         this.addMarker(poi);
       }
+    }
+
+    if (opts?.replace) {
+      const inList = new Set(pois.map((p) => p.id));
+      const retain = opts.retainIds ? new Set(opts.retainIds) : null;
+      for (const id of Array.from(this.markers.keys())) {
+        if (inList.has(id)) continue;
+        if (retain?.has(id)) continue;
+        this.removeMarker(id);
+      }
+    }
+  }
+
+  /**
+   * 完整性自动补回(2026-08-25)：探测全部登记 marker 的挂载状态,被厂商侧
+   * 外部删除(getMap → null / 共享层摘除)的 marker 重新 add 还原。
+   * - 探测走契约 isAttached?(undefined = 引擎不支持探测 → 跳过该 marker);
+   * - 重建经 addMarker 全量还原:图标(emoji/logo/local)/位置/click 回调 +
+   *   当前 visibleIds(隐藏集同样应用)/selectedId/highlightedId;
+   * - 幂等(二次调用全挂载 → 零操作)、单遍 O(n)、失败静默——isReady 门
+   *   拒收地图销毁等场景,不抛;
+   * - placed 孤儿(簿记丢失导致不在 markers)只做失效引用清理:已脱挂的
+   *   (isAttached === false)从 placed 摘除(无 poi 数据可重建);仍挂载的
+   *   保留,由 destroy 的 sweepPlaced 兜底。
+   */
+  sync(): void {
+    if (!this.isReady()) return;
+    for (const id of Array.from(this.markers.keys())) {
+      const marker = this.markers.get(id);
+      if (!marker) continue;
+      const attached = marker.isAttached?.();
+      if (attached === undefined || attached) continue; // 不支持探测 / 仍挂载
+      const poi = this.poiById.get(id);
+      if (!poi) continue; // poi 数据缺失 → 无法重建,静默跳过(下次 setPOIs 可恢复)
+      this.removeMarker(id);
+      this.addMarker(poi);
+    }
+    // placed 孤儿簿记同步(保持两簿记一致):不在 markers 的 placed wrapper
+    // 若已脱挂(外部删除),摘除失效引用;仍挂载的孤儿留给 destroy sweepPlaced
+    const live = new Set(this.markers.values());
+    for (const marker of Array.from(this.placed)) {
+      if (live.has(marker)) continue;
+      const attached = marker.isAttached?.();
+      if (attached === undefined || attached) continue;
+      this.placed.delete(marker);
     }
   }
 
