@@ -1,8 +1,8 @@
 # 26 — 阿里云短信认证服务(phone OTP 真发)
 
-**文档版本:** 1.0
+**文档版本:** 1.1
 **创建日期:** 2026-08-22
-**状态:** 已实现(批次 `20260822-aliyun-sms-otp` 合入 dev 后生效;实现与文档同批并行,如 README 所述)
+**状态:** 已实现 + 真实冒烟通过(2026-08-24:用户配真 `ALIYUN_*` 四件套,实测「发码 → 收短信 → 输码 → 登录」全流程通过;实测发现赠送模板为 {code, min} 双变量并已修复,见 §3/§5 与 D-29)
 **相关:** `tech/14-api-contract.md`(Account 段 OTP 行)、`tech/25-resend-email.md`(email 分支对照)、`tech/roles/development/deferred-ledger.md` D-04(2026-08-22 关闭)、批次目录 `tech/roles/development/parallel-sessions/20260822-aliyun-sms-otp/`
 
 ---
@@ -104,5 +104,5 @@ ALIYUN_SMS_TEMPLATE_MINUTES=5 # 可选,默认 5:模板 min 变量值(「N 分钟
 ## 9. 备注
 
 - `db/migrations/005` 注释「Production send goes through Aliyun SMS (PNvs)」在本批实现后**成为事实**(迁移文件不可变,未改)
-- 本批仅剩 Env-only 遗留:用户配置真实 `ALIYUN_*` 值 + 真实短信冒烟(见批次 deferred-notes;deferred-ledger D-04 关闭 / D-29 登记)
-- **TTL 口径**:短信文案「N 分钟内有效」的 N 由 `ALIYUN_SMS_TEMPLATE_MINUTES` 控制,而本地 `auth_otp_challenges` TTL 固定 10 分钟 —— 若设 N=5,用户在第 5 分钟后输入会报「已过期」而本地码仍有效(体验偏差,不构成安全缺口,码仍 10 分钟作废);**对齐方案由用户拍板**:设 `ALIYUN_SMS_TEMPLATE_MINUTES=10`(短信与本地一致,无需改代码)或改本地 TTL 常量(改动 `session-store.ts` / `account-store.ts`,不在本批)
+- Env-only 遗留已闭环:用户配置真实 `ALIYUN_*` 值 + 真实短信冒烟均于 2026-08-24 完成(deferred-ledger D-29 **DONE-记录**;commit 07dc34b 修复模板双变量问题)
+- **TTL 口径(已拍板)**:短信文案「N 分钟内有效」的 N 由 `ALIYUN_SMS_TEMPLATE_MINUTES` 控制(缺省 5),本地 `auth_otp_challenges` TTL 固定 10 分钟;用户 2026-08-24 选择 **`ALIYUN_SMS_TEMPLATE_MINUTES=10`** 对齐本地(零代码改动,已生效)。若未来改用其他 N,注意与本地 TTL 的口径一致(改本地 TTL 常量则涉及 `session-store.ts` / `account-store.ts`,不在本批)
