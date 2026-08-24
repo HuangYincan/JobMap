@@ -728,7 +728,7 @@ AMap 的 onerror 回退链在 icon 路径不可用);徽章 dataURL 图标阴影(
   有差);②bug 1 的 marker anchor 偏移在缩放中表现为 pin 漂移(ws-a 修复面);
   两者均非构造选项可解。
 
-### bug 4:切回高德 POI 消失 —— 核查结论 + 修复 + 遗留
+### bug 4:切回高德 POI 消失 —— 核查结论 + 修复
 
 核查回放链(switch.ts replayController + usePOIMap applySync + map-shell
 usePOIMap 接线):
