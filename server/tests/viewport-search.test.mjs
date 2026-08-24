@@ -686,6 +686,52 @@ test('createViewportLoader: dispose cancels pending and stops future loads', asy
   assert.equal(calls, 0);
 });
 
+test('createViewportLoader: dispose 后在飞 load 完成的副作用不落地(signal 协作取消)', async () => {
+  // epoch-guard 配套(2026-08-25):dispose 只能置 signal.cancelled,在飞 load 无法
+  // 终止照常完成——「回调不落地」由调用方以 signal 自查是唯一闭合方式(无真取消)。
+  let landed = 0;
+  let release = null;
+  let seenSignal = null;
+  const loader = createViewportLoader({
+    delayMs: 10,
+    load: (signal) =>
+      new Promise((resolve) => {
+        seenSignal = signal;
+        release = () => {
+          // 调用方自查 signal.cancelled 后才落地副作用(与 use-work-viewport 同形态)
+          if (!signal.cancelled) landed += 1;
+          resolve();
+        };
+      }),
+  });
+  loader.schedule();
+  await sleep(30); // 已进入 in-flight
+  assert.equal(seenSignal.cancelled, false);
+  loader.dispose(); // 在飞 load 无法终止,只能协作式让路
+  assert.equal(seenSignal.cancelled, true);
+  release(); // 在飞 load 此刻完成
+  await sleep(30);
+  assert.equal(landed, 0); // 回调不落地
+});
+
+test('createViewportLoader: signal.cancelled 活性(未 dispose false → dispose true)', async () => {
+  let seenSignal = null;
+  const loader = createViewportLoader({
+    delayMs: 5,
+    load: (signal) => {
+      seenSignal = signal;
+    },
+  });
+  loader.schedule();
+  await sleep(20);
+  assert.equal(seenSignal.cancelled, false); // 未 dispose 时信号未取消
+  loader.schedule(); // 完成后补跑:仍收到同一信号对象
+  await sleep(20);
+  assert.equal(seenSignal.cancelled, false);
+  loader.dispose();
+  assert.equal(seenSignal.cancelled, true); // dispose 后恒 cancelled
+});
+
 test('VIEWPORT_DEBOUNCE_MS is 800ms (spec: UI 刷新防抖 800ms)', () => {
   assert.equal(VIEWPORT_DEBOUNCE_MS, 800);
 });
