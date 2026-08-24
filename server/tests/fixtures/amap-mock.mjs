@@ -37,6 +37,13 @@ export class MockMarker {
     return this._map;
   }
 
+  /** 模拟厂商侧外部移除(等价 AMap setMap(null) / removeOverlay):从地图
+   * overlay 表摘除、getMap() 归 null——控制器 sync() 探测「被外部删除」的
+   * 测试手段(不经控制器 remove 路径)。 */
+  mockDetach() {
+    this.setMap(null);
+  }
+
   getPosition() {
     return this.position;
   }
@@ -177,6 +184,9 @@ export class MockMap {
         calls.remove += 1;
         marker.setMap(null);
       },
+      // 挂载探测(契约 isAttached):getMap() 非 null = 仍挂地图(外部 mockDetach
+      // 后为 false → 控制器 sync() 检测到「被外部删除」并重建)
+      isAttached: () => marker.getMap() !== null,
     };
   }
 

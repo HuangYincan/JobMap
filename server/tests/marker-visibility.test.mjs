@@ -298,3 +298,81 @@ test('setPOIs 存量更新走契约 setPosition 对象形态(非数组)', () => 
   assert.deepEqual(hz1.position, [120.099, 30.299], '适配层收对象形态转厂商数组');
   c.destroy();
 });
+
+// ---- replace 模式(2026-08-25 a-marker-core)— 视口整体换 catalog 语义 ----
+// setPOIs(pois, { replace: true }):add/update 完成后销毁「不在新列表、也不在
+// retainIds」的 id;默认(不传 opts)行为 = 只增不删,完全不变。
+
+test('setPOIs replace:池外 id 被销毁,新列表保留(不再永久累积)', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ); // hz-1 + hz-2
+  assert.equal(countOnMap(map), 2);
+
+  // 视口整体替换:hz-2 离开列表且不在 retainIds → 销毁;sh-1 新增
+  c.setPOIs(VIEWPORT_B, { replace: true });
+  assert.equal(countOnMap(map), 2, 'replace:池外 hz-2 销毁,只剩新列表 2 个');
+  assert.equal(c.getMarkerByPOIId('hz-2'), undefined, '池外 hz-2 已销毁(实例释放)');
+  assert.ok(c.getMarkerByPOIId('hz-1'), '新列表 hz-1 保留');
+  assert.ok(c.getMarkerByPOIId('sh-1'), '新列表 sh-1 已 add');
+  c.destroy();
+  assert.equal(countOnMap(map), 0, 'destroy 清零');
+});
+
+test('replace + retainIds:收藏 overlay 离开列表也保留实例,隐藏/再显示可控', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const hz2Before = c.getMarkerByPOIId('hz-2');
+
+  // 收藏 overlay 层(hz-2)即使离开新列表也保留(仅隐藏由 setVisiblePOIs 决定)
+  const SH_ONLY = [makePoi('sh-1', '上海一', 121.47, 31.23)];
+  c.setPOIs(SH_ONLY, { replace: true, retainIds: ['hz-2'] });
+  assert.equal(countOnMap(map), 2, 'retainIds 保留 hz-2 + 新增 sh-1');
+  assert.equal(c.getMarkerByPOIId('hz-2'), hz2Before, 'retained 实例同一性不变(不重建)');
+  assert.ok(c.getMarkerByPOIId('hz-2'), 'retained hz-2 实例仍在可再 show');
+  assert.equal(c.getMarkerByPOIId('hz-1'), undefined, '非保留的池外 hz-1 仍销毁');
+
+  c.setVisiblePOIs(['hz-2', 'sh-1']);
+  assert.ok(c.getMarkerByPOIId('hz-2').isVisible(), 'retained 实例按可见集可再 show');
+  assert.ok(c.getMarkerByPOIId('sh-1').isVisible(), '新列表 marker 同可见集');
+  c.setVisiblePOIs(['hz-2']); // 收藏层单独显示
+  assert.ok(c.getMarkerByPOIId('hz-2').isVisible(), '收藏层显示');
+  assert.ok(!c.getMarkerByPOIId('sh-1').isVisible(), '非收藏隐藏');
+  c.destroy();
+});
+
+test('replace 保留存量/选中/高亮状态(存量实例不重建)', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const hz1Before = c.getMarkerByPOIId('hz-1');
+  c.select('hz-1');
+  c.highlight('hz-2');
+
+  // hz-1 在新列表(保留 + 选中状态保持);hz-2 高亮但离开列表 → 销毁
+  c.setPOIs(VIEWPORT_B, { replace: true });
+  assert.equal(c.getMarkerByPOIId('hz-1'), hz1Before, '存量 hz-1 实例同一性不变(不重建)');
+  assert.equal(hz1Before.zIndex, 100, '选中状态保持(zIndex 100)');
+  assert.ok(hz1Before.content.includes('dm-badge-selected'), '选中徽章 content 保持');
+  assert.equal(c.getMarkerByPOIId('hz-2'), undefined, '高亮的 hz-2 离开列表 → 销毁');
+  const sh1 = c.getMarkerByPOIId('sh-1');
+  assert.ok(sh1, '新列表 sh-1 已 add');
+  assert.ok(sh1.opts.content.includes('dm-badge-normal'), '新增 marker 按当前选中/高亮关系建 normal 样式');
+  assert.equal(sh1.zIndex, 20, '新增 marker normal zIndex');
+  c.destroy();
+});
+
+test('默认 patch 模式(不传 opts):离开列表的 id 仍保留(只增不删不变)', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  c.setPOIs(VIEWPORT_B); // 不带 opts
+  assert.equal(countOnMap(map), 3, '默认模式只增不删:计数 3');
+  assert.ok(c.getMarkerByPOIId('hz-2'), '离开列表的 hz-2 实例保留(默认 patch 语义不变)');
+  c.destroy();
+});

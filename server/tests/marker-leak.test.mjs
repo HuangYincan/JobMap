@@ -184,3 +184,101 @@ test('destroy 摘除走 remove 契约:placed 内每实例 wrapper.remove() 调�
     assert.ok(m.contractCalls.remove >= 1, 'destroy 经 wrapper.remove() 摘除(非 setMap 直调)');
   }
 });
+
+// ---- sync() 完整性自动补回(2026-08-25 a-marker-core)— 厂商侧外部删除的被动检测 ----
+// 不变式:marker 被厂商侧删除(getMap → null)而 React 的 pois 引用不变时,
+// sync() 发现缺失并按 poiById 原状态重建;幂等、O(n)、失败静默。
+
+test('外部移除(mockDetach)→ sync() 重新 add,状态(位置/图标/click/选中/可见性)保持', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  let clicked = null;
+  const c = createPOIMarkerController(map, {
+    color: '#007AFF',
+    onMarkerClick: (id) => {
+      clicked = id;
+    },
+  });
+  c.setPOIs(HZ);
+  c.select('hz-1');
+  c.setVisiblePOIs(['hz-1']); // hz-2 隐藏(可见集先于删除存在)
+  const hz1Raw = c.getMarkerByPOIId('hz-1');
+  const hz2Raw = c.getMarkerByPOIId('hz-2');
+  assert.equal(countOnMap(map), 2);
+
+  // 厂商侧外部删除 hz-1(等价 map.removeOverlay:getMap → null,不经控制器)
+  hz1Raw.mockDetach();
+  assert.equal(hz1Raw.getMap(), null, 'mockDetach 后 getMap() = null');
+  assert.equal(countOnMap(map), 1, '外部删除后地图 overlay 只剩 hz-2');
+  assert.equal(c.markers.get('hz-1').isAttached(), false, '契约探测:已脱挂');
+
+  c.sync();
+  const hz1Rebuilt = c.getMarkerByPOIId('hz-1');
+  assert.ok(hz1Rebuilt && hz1Rebuilt !== hz1Raw, 'sync 重建 hz-1(新实例,非旧实例)');
+  assert.equal(countOnMap(map), 2, '重建后地图恢复 2 个');
+  assert.equal(hz1Rebuilt.getMap(), map, '重建实例挂回地图');
+  assert.equal(hz2Raw, c.getMarkerByPOIId('hz-2'), '未删除的 hz-2 实例同一性不变');
+  assert.deepEqual(hz1Rebuilt.position, { lng: 120.099, lat: 30.299 }, '位置按 poiById 还原');
+  assert.ok(hz1Rebuilt.opts.content.includes('dm-badge-selected'), '选中徽章 content 还原');
+  assert.equal(hz1Rebuilt.zIndex, 100, 'selected 状态还原(zIndex 100)');
+  assert.ok(hz1Rebuilt.isVisible(), '可见集还原:hz-1 显示');
+  assert.ok(!c.getMarkerByPOIId('hz-2').isVisible(), '可见集还原:hz-2 仍隐藏');
+  hz1Rebuilt.trigger('click');
+  assert.equal(clicked, 'hz-1', '重建后的 click 回调还原(onMarkerClick 可达)');
+  c.destroy();
+  assert.equal(countOnMap(map), 0, 'destroy 后地图清零');
+});
+
+test('sync 幂等:全挂载/已恢复后零重建、零重复 add', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const before = new Map(HZ.map((p) => [p.id, c.getMarkerByPOIId(p.id)]));
+
+  c.sync(); // 全挂载 → 零重建
+  for (const [id, m] of before) {
+    assert.equal(c.getMarkerByPOIId(id), m, `${id} 全挂载时零重建(实例同一性不变)`);
+  }
+  assert.equal(countOnMap(map), 2, 'sync 后计数不变');
+
+  // 删除 hz-1 → sync 恢复 → 二次 sync 不再重建(幂等)
+  c.getMarkerByPOIId('hz-1').mockDetach();
+  c.sync();
+  const rebuilt = c.getMarkerByPOIId('hz-1');
+  assert.ok(rebuilt, 'sync 恢复 hz-1');
+  c.sync();
+  assert.equal(c.getMarkerByPOIId('hz-1'), rebuilt, '二次 sync 零重建(幂等)');
+  assert.equal(countOnMap(map), 2, '二次 sync 计数不变');
+  c.destroy();
+});
+
+test('sync 清理 placed 孤儿:簿记丢失 + 外部脱挂 → 失效引用摘除,仍挂载孤儿保留', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const w1 = c.markers.get('hz-1'); // placed 存的是契约 wrapper(非裸实例)
+  const w2 = c.markers.get('hz-2');
+  assert.ok(w1 && w2, 'wrapper 簿记可探(TS private 仅编译期,runtime 可读)');
+  c.markers.clear(); // 簿记丢失:hz-1/hz-2 沦为 placed 孤儿
+  w1.raw.mockDetach(); // 厂商侧外部删除 hz-1
+
+  c.sync();
+  assert.equal(c.placed.has(w1), false, '已脱挂孤儿从 placed 摘除(失效引用清理)');
+  assert.equal(c.placed.has(w2), true, '仍挂载孤儿保留(destroy sweepPlaced 负责兜底)');
+  c.destroy();
+  assert.equal(countOnMap(map), 0, 'destroy 后地图清零');
+});
+
+test('sync 在已销毁地图/已销毁控制器上静默 no-op(不抛、不重建)', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  map.destroy(); // 地图先销毁
+  assert.doesNotThrow(() => c.sync(), '地图已销毁 → sync 不抛');
+  assert.equal(countOnMap(map), 2, '地图已销毁 → sync 不重建不新增');
+  c.destroy();
+  assert.doesNotThrow(() => c.sync(), '控制器已销毁 → sync 不抛');
+});
