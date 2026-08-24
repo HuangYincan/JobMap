@@ -1620,3 +1620,14 @@ test('mobile sheets: agent fills drawer + saved-layer toggle copy (ws-fx)', () =
   assert.match(shell, /overlayPois\.length/, '计数保留');
   assert.match(shell, /aria-pressed=\{savedOverlay\}/, 'aria-pressed 保留');
 });
+
+test('cluster effect 依赖含 engineView(2026-08-25 ws-b bug 4 修复:切引擎后徽章重建)', () => {
+  const shell = src('components/map-shell.tsx');
+  // 依赖数组含 engineView:切引擎时 clusterState/mapReady/modeConfig.color 均
+  // 不变,旧徽章随旧 view 销毁后由本 effect 在新 view 重建(修复前不重建 =
+  // work 全国视野「切回高德 POI 都消失」)。
+  assert.match(shell, /\}, \[clusterState, mapReady, modeConfig\.color, engineView\]\);/);
+  // effect body 仍读 mapInstance.current(视图接线 effect 同 commit 声明序先行;
+  // 已销毁视图置 null → 本 effect 跳过,与旧行为一致)
+  assert.match(shell, /useEffect\(\(\) => \{\s*const view = mapInstance\.current;\s*if \(!view \|\| !clusterState\) return;/);
+});

@@ -176,6 +176,51 @@ test('map-shell:usePOIMap 的 view 参数来自 state(engineView),非 mapInstanc
   assert.match(shell, /mapInstance\.current = engineView;/);
 });
 
+// ---- usePOIMap(2026-08-25 ws-b:replace 语义 + sync() 完整性补回)----
+
+test('usePOIMap:applySync 走 setPOIs(pois, {replace, retainIds}) 一次带 opts 的调用', () => {
+  const hook = src('hooks/use-poi-map.ts');
+  // applySync 函数体切片(不含头部注释,锚点精确)
+  const applySyncBody = hook.slice(
+    hook.indexOf('function applySync'),
+    hook.indexOf('// ---------------------------------------------------------------------------')
+  );
+  // setPOIs 调用带 opts 对象:replace 键(默认 false)+ retainIds 键(默认 [])
+  assert.match(applySyncBody, /controller\.setPOIs\(\s*pois,\s*\{\s*replace: opts\.replacePOIsOnSync \?\? false,/);
+  assert.match(applySyncBody, /retainIds: opts\.retainPOIIds \?\? \[\],/);
+  // 选项契约定义
+  assert.match(hook, /replacePOIsOnSync\?: boolean;/);
+  assert.match(hook, /retainPOIIds\?: Iterable<string> \| null;/);
+  // domain 接线:replacePOIsOnSync: true + retainPOIIds = 最近一次收藏 overlay id
+  const shell = src('components/map-shell.tsx');
+  assert.match(shell, /canonicalMode\(mode\) === "domain"\s*\? \{ replacePOIsOnSync: true, retainPOIIds: lastOverlayIdsRef\.current \}/);
+  // lastOverlayIdsRef:savedOverlay 关闭/未登录时仍保留最近一次已知 overlay id
+  assert.match(shell, /lastOverlayIdsRef = useRef<string\[\]>\(\[\]\)/);
+  assert.match(shell, /if \(overlayPois\.length > 0\) lastOverlayIdsRef\.current = overlayPois\.map\(\(p\) => p\.id\);/);
+});
+
+test('usePOIMap:applySync 末尾 sync() + 视图事件自动补回(外部删除不经过 React 状态)', () => {
+  const hook = src('hooks/use-poi-map.ts');
+  // 同步顺序保持:setPOIs → setVisiblePOIs → … → sync(末尾追加完整性补回;
+  // 文件头注释也含 "controller.sync()",搜索起点用 setVisiblePOIs 之后)
+  const setPoisAt = hook.indexOf('controller.setPOIs(');
+  const setVisibleAt = hook.indexOf('controller.setVisiblePOIs(');
+  const syncAt = hook.indexOf('controller.sync()', setVisibleAt);
+  assert.ok(
+    setPoisAt !== -1 && setVisibleAt !== -1 && syncAt !== -1,
+    'setPOIs / setVisiblePOIs / sync 三个锚点均存在'
+  );
+  assert.ok(
+    setPoisAt < setVisibleAt && setVisibleAt < syncAt,
+    '顺序:setPOIs → setVisiblePOIs → … → sync(末尾)'
+  );
+  // 无状态变化自动补回:view 契约事件(moveend/zoomchange)触发 sync,
+  // cleanup 用解绑函数停止(销毁后不再触发)
+  assert.match(hook, /view\.on\('moveend', \(\) => \{\s*controller\.sync\(\);\s*\}\);/);
+  assert.match(hook, /view\.on\('zoomchange', \(\) => \{\s*controller\.sync\(\);\s*\}\);/);
+  assert.match(hook, /offMove\(\);\s*offZoom\(\);\s*controller\.destroy\(\);/);
+});
+
 // ---- useMapEngine(ws-2 增量:挂载失败错误态 + 重试;旧断言不放宽)----
 
 test('useMapEngine:返回契约增量(4 旧字段 + mountError/retryMount 2 新字段)', () => {

@@ -5,9 +5,12 @@
 //
 // 将 POIMarkerController 绑定到 React 生命周期：
 // - view 可用时创建控制器，卸载时销毁
-// - pois 变化 → setPOIs 差分更新标记
+// - pois 变化 → setPOIs 差分更新标记（replace 语义可选）
 // - selectedId / highlightedId 变化 → select / highlight
 // - accentColor 变化 → 重建控制器并应用新配色
+// - 每次 applySync 末尾调用 controller.sync()：厂商侧被外部删除的
+//   marker 自动补回（完整性扫描，幂等 O(n)）
+// - 无状态变化（视图事件）时也触发 sync：外部删除不经过 React 状态
 // ============================================================
 
 import { useEffect, useRef } from 'react';
@@ -36,6 +39,16 @@ export interface UsePOIMapOptions {
   accentColor?: string;
   /** 地图标记点击回调。 */
   onMarkerClick?: (id: string) => void;
+  /**
+   * 同步是否以 replace 语义全量替换(domain 视口替换:池外 id 销毁,旧视口
+   * marker 不再累积)。缺省 false = 只增不删(work 全量池语义,行为不变)。
+   */
+  replacePOIsOnSync?: boolean;
+  /**
+   * replace 时恒保留的 id 集合(收藏 overlay 层,实例不销毁,隐藏与否由
+   * visiblePOIs 决定)。缺省 null = 不额外保留。仅在 replacePOIsOnSync 时生效。
+   */
+  retainPOIIds?: Iterable<string> | null;
 }
 
 /**
@@ -45,16 +58,22 @@ export interface UsePOIMapOptions {
 function applySync(
   controller: POIMarkerController,
   pois: POI[],
+  opts: Pick<UsePOIMapOptions, 'replacePOIsOnSync' | 'retainPOIIds'>,
   selectedId?: string | null,
   highlightedId?: string | null,
   visiblePOIs?: string[] | null
 ): void {
-  controller.setPOIs(pois);
+  controller.setPOIs(pois, {
+    replace: opts.replacePOIsOnSync ?? false,
+    retainIds: opts.retainPOIIds ?? [],
+  });
   controller.setVisiblePOIs(visiblePOIs ?? null);
   if (selectedId) controller.select(selectedId);
   else controller.deselect();
   if (highlightedId) controller.highlight(highlightedId);
   else controller.unhighlight();
+  // 完整性补回:厂商侧被外部删除的 marker 由 sync 扫描重建(幂等 O(n))
+  controller.sync();
 }
 
 // ---------------------------------------------------------------------------
@@ -70,11 +89,36 @@ function applySync(
  * @param opts POI 列表、选中/高亮状态、强调色与点击回调。
  */
 export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
-  const { pois, visiblePOIs, selectedId, highlightedId, accentColor, onMarkerClick } = opts;
+  const {
+    pois,
+    visiblePOIs,
+    selectedId,
+    highlightedId,
+    accentColor,
+    onMarkerClick,
+    replacePOIsOnSync,
+    retainPOIIds,
+  } = opts;
 
   // 缓存最新的回调与状态，避免 effect 依赖函数/对象导致频繁重建
-  const latest = useRef({ accentColor, onMarkerClick, selectedId, highlightedId, visiblePOIs });
-  latest.current = { accentColor, onMarkerClick, selectedId, highlightedId, visiblePOIs };
+  const latest = useRef({
+    accentColor,
+    onMarkerClick,
+    selectedId,
+    highlightedId,
+    visiblePOIs,
+    replacePOIsOnSync,
+    retainPOIIds,
+  });
+  latest.current = {
+    accentColor,
+    onMarkerClick,
+    selectedId,
+    highlightedId,
+    visiblePOIs,
+    replacePOIsOnSync,
+    retainPOIIds,
+  };
 
   const controllerRef = useRef<POIMarkerController | null>(null);
 
@@ -94,25 +138,39 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
     applySync(
       controller,
       pois,
+      latest.current,
       latest.current.selectedId,
       latest.current.highlightedId,
       latest.current.visiblePOIs
     );
 
+    // 无状态变化时的完整性补回:marker 可能被厂商侧外部删除而 React 状态
+    // 不感知(引用不变不触发任何 effect)——挂视图轻量事件触发 sync,幂等
+    // O(n);卸载/切视图时由解绑函数停止,销毁后不再触发。
+    const offMove = view.on('moveend', () => {
+      controller.sync();
+    });
+    const offZoom = view.on('zoomchange', () => {
+      controller.sync();
+    });
+
     return () => {
+      offMove();
+      offZoom();
       controller.destroy();
       controllerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, accentColor]);
 
-  // POI 列表变化 → 差分更新标记（只增不删），并重放当前可见集/选中/高亮
+  // POI 列表变化 → 差分更新标记（replace 可选），并重放当前可见集/选中/高亮
   useEffect(() => {
     const controller = controllerRef.current;
     if (!controller) return;
     applySync(
       controller,
       pois,
+      latest.current,
       latest.current.selectedId,
       latest.current.highlightedId,
       latest.current.visiblePOIs

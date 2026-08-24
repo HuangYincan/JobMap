@@ -728,7 +728,7 @@ AMap 的 onerror 回退链在 icon 路径不可用);徽章 dataURL 图标阴影(
   有差);②bug 1 的 marker anchor 偏移在缩放中表现为 pin 漂移(ws-a 修复面);
   两者均非构造选项可解。
 
-### bug 4:切回高德 POI 消失 —— 核查结论 + 修复 + 遗留
+### bug 4:切回高德 POI 消失 —— 核查结论 + 修复
 
 核查回放链(switch.ts replayController + usePOIMap applySync + map-shell
 usePOIMap 接线):
@@ -747,15 +747,17 @@ usePOIMap 接线):
   已销毁、mapReady 恒 true 不重绑),domain 视口刷新与挂载对齐在切换后静默
   失效。修复:经引擎总线(subscribeEngineBus)订阅活跃 view,监听 effect 与
   挂载对齐判定按 view 实例重绑/重跑(无总线时退化为原一次性绑定);
-- **⚠ 遗留(需 boss 裁决,map-shell.tsx 不在 ws-b 边界)**:work 模式
+- **✅ 已修复(2026-08-25 ws-b,fix/poi-marker-wiring)**:work 模式
   zoom ≤ 8 的**城市聚合徽章**由 map-shell 的 cluster effect 创建,依赖
-  [clusterState, mapReady, modeConfig.color] —— 三者引擎切换时均不变 →
-  徽章随旧 view 销毁后**不重建**;同时聚合分支的 visiblePOIIds 只显示
-  「无 city 的个体 pin」→ 城市公司全部不可见 =「切回高德后 POI 都消失了」
-  (work 模式,全国视野)。domain 模式无聚合(clusterState=null → LOD 分支全
-  显示),与 boss「domain 复现未果(1574 蓝像素正常)」吻合。修复建议:
-  cluster effect 依赖加入 engineView(view 实例),切换后徽章在新 view 重建
-  (一行 deps 改动,map-shell.tsx)。
+  [clusterState, mapReady, modeConfig.color, **engineView**]——切引擎时
+  clusterState/mapReady/color 均不变,但 engineView 变化使 effect 重跑:旧
+  徽章随旧 view 清理,新徽章在新 view 重建(视图接线 effect 同一 commit 按
+  声明序先行,effect body 读 mapInstance.current 仍拿到新视图)。同时聚合分支
+  的 visiblePOIIds 只显示「无 city 的个体 pin」(城市公司由徽章代表)→ 切回
+  高德后全国视野不再「POI 都消失了」。domain 模式无聚合(clusterState=null
+  → LOD 分支全显示),与 boss「domain 复现未果(1574 蓝像素正常)」吻合。
+  现状保持:MapShell 主链路不传 replayController(usePOIMap 随 view 重建 +
+  applySync 末尾 sync() 完整性补回覆盖切引擎后的 POI 回放)。
 
 ### 测试
 
