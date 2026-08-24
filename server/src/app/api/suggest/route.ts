@@ -51,7 +51,10 @@ export async function GET(request: Request) {
   }
   const q = rawQ.trim().toLowerCase();
   const center = parseCenter(centerRaw);
-  const cacheKey = publicCacheKey(['suggest', mode, q]);
+  // 响应 distance 按 center 计算：不同 center 的响应必须分桶缓存，否则 30s public TTL
+  // 内会复用他人 center 计算出的距离。用解析后的有限数 center（与 distance 口径一致）。
+  const centerKey = center ? `${center.lng},${center.lat}` : 'none';
+  const cacheKey = publicCacheKey(['suggest', mode, q, centerKey]);
   const cached = readPublicCache(cacheKey);
   if (cached) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
