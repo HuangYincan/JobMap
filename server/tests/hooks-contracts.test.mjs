@@ -78,6 +78,35 @@ test('work viewport scheduling conditions live in the hook, not map-shell', () =
   assert.match(shell, /useSavedLayer\(\{/);
 });
 
+test('useWorkViewport: 视口世代 epoch 校验 + loader 协作取消信号(epoch-guard)', () => {
+  const hook = src('hooks/use-work-viewport.ts');
+  const vp = src('lib/viewport-search.ts');
+  // 世代捕获在 +1 之后:本世代批次以新值校验,更新的刷新再 +1 → 旧在飞批次被丢弃
+  assert.match(hook, /viewportEpochRef\.current \+= 1;/);
+  assert.match(hook, /const epoch = viewportEpochRef\.current;/);
+  // onBatch 入口:mode 守卫旁加 epoch 校验(丢弃过期世代:不 setCatalog、不写缓存)
+  assert.match(hook, /epoch !== viewportEpochRef\.current/);
+  const guardAt = hook.indexOf('epoch !== viewportEpochRef.current');
+  const writeAt = hook.indexOf('catalogRef.current = batch;');
+  assert.ok(guardAt !== -1 && writeAt !== -1 && guardAt < writeAt, 'epoch 校验必须先于 catalog 落地');
+  // loader 信号:load 签名收 signal;透传进 fetchPOIsForMode(domain 分支已支持 signal)
+  assert.match(hook, /load: async \(signal\) =>/);
+  const fetchAt = hook.indexOf('fetchPOIsForMode({');
+  const signalAt = hook.indexOf('signal,');
+  const onBatchAt = hook.indexOf('onBatch: (batch) => {');
+  assert.ok(
+    fetchAt !== -1 && signalAt > fetchAt && onBatchAt > signalAt,
+    'signal 须经 fetchPOIsForMode 选项透传且在 onBatch 之前',
+  );
+  assert.match(hook, /if \(signal\?\.cancelled\) return;/);
+  // loader 侧:options.load 签名收 { cancelled } 信号;dispose 置 cancelled;
+  // runPending 把同一信号对象传给 load(调用方闭包捕获后自查)
+  assert.match(vp, /load: \(signal: \{ cancelled: boolean \}\) =>/);
+  assert.match(vp, /const cancelSignal = \{ cancelled: false \};/);
+  assert.match(vp, /cancelSignal\.cancelled = true;/);
+  assert.match(vp, /options\.load\(cancelSignal\)/);
+});
+
 // ---- useSearchState(搜索/建议状态)----
 
 test('useSearchState hook exists and owns suggest/cleanup logic', () => {
