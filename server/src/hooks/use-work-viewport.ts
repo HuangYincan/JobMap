@@ -148,7 +148,7 @@ export function useWorkViewport(
 
     const loader = createViewportLoader({
       delayMs: VIEWPORT_DEBOUNCE_MS,
-      load: async () => {
+      load: async (signal) => {
         const v = viewStateRef.current;
         if (!v.geoSettled) return;
         if (loadingRef.current) {
@@ -187,6 +187,9 @@ export function useWorkViewport(
           setNoMoreData(false);
           // 视口世代 +1:主加载在飞的对旧视野追加批次将被 epoch 校验丢弃
           viewportEpochRef.current += 1;
+          // 本世代捕获(必须取递增后的值):后续任何新刷新再 +1 → 本世代在飞
+          // 批次的 onBatch 与 noMore 落地都因 epoch 不匹配被丢弃(见 onBatch)。
+          const epoch = viewportEpochRef.current;
           // pageOffset 状态归零,并跳过其触发的重复主加载
           // (skipFetch 由 load() 先消费;offset 已为 0 时 setPageOffset 是
           // 同值 no-op,不 arm skipFetch,避免吞掉下一次合法的滚动加载)
@@ -203,9 +206,19 @@ export function useWorkViewport(
               existing: [], // 替换:新视野清空旧卡片
               addCap: DOMAIN_BATCH_SIZE,
               pageOffset: 0,
+              // loader 的协作取消信号透传:dispose(卸载/重绑)后在飞请求
+              // 的批次经 onBatch 的 signal 自查丢弃(poi-service 已检查部分
+              // 路径,这里兜底闭环——本地库路径 fetchLocalPois 不查 signal)
+              signal,
               onBatch: (batch) => {
                 // 模式守卫:同上——域名刷新批次不得落进切换后的工作模式
                 if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
+                // 过期世代丢弃(epoch guard):本批次所属视野加载开始后,又有新
+                // 视野刷新(+1)→ 旧请求后到只能覆盖新视野 → 直接丢弃,
+                // 不 setCatalog、不写 mode cache、不置 noMore。
+                if (epoch !== viewportEpochRef.current) return;
+                // dispose 让路:loader 已销毁(卸载/引擎重绑)时不落地任何副作用
+                if (signal?.cancelled) return;
                 // 空批次 ≠ 无数据(ws1 saved-layer-wipe 结构性修复,替代时间窗兜底):
                 // 不把 catalog 置空——保留旧目录 = 保留 marker 池实例(b2「只增不删、
                 // 跨视口保留」),收藏图层 toggle 的程序化相机移动即使有 settle 事件
@@ -227,6 +240,8 @@ export function useWorkViewport(
                 });
               },
             });
+            // 过期世代/dispose 后 noMore 同样不得落地(旧视野结果污染新刷新状态)
+            if (signal?.cancelled || epoch !== viewportEpochRef.current) return;
             // 分类全量加载带 total:新视野是否已到底由循环结果决定
             // (短页/total 取尽;硬顶 1000 时 noMore=false,由 atCap 停止哨兵)
             if (result.noMore !== undefined) {
