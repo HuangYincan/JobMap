@@ -1454,8 +1454,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // 本 effect(b2),只有跨整数分桶 / 池增长 / 模式切换才整批重建徽章。
   // 依赖含 engineView(bug 4 修复):切引擎时 clusterState/mapReady/color 均不变,
   // 但徽章随旧 view 销毁——依赖加视图实例后,徽章在新 view 上重建。
-  // effect body 用 mapInstance.current(声明序先于本 effect 的 :595 接线 effect
-  // 同 commit 先置好;已销毁视图置 null → 本 effect 跳过,与旧行为一致)。
+  // effect body 用 mapInstance.current(视图接线 effect 同组件声明序在先,
+  // 同 commit 先置好新视图;已销毁视图置 null → 本 effect 跳过,与旧行为一致)。
   useEffect(() => {
     const view = mapInstance.current;
     if (!view || !clusterState) return;
