@@ -1452,6 +1452,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // 与个体 marker 模式互斥——聚合激活时个体 pin 实例保留(由 visiblePOIIds 隐藏),
   // 出聚合直接 show,不重建。clusterState 已按 clusterZoom 分桶:zoom 微调不触发
   // 本 effect(b2),只有跨整数分桶 / 池增长 / 模式切换才整批重建徽章。
+  // 依赖含 engineView(bug 4 修复):切引擎时 clusterState/mapReady/color 均不变,
+  // 但徽章随旧 view 销毁——依赖加视图实例后,徽章在新 view 上重建。
+  // effect body 用 mapInstance.current(声明序先于本 effect 的 :595 接线 effect
+  // 同 commit 先置好;已销毁视图置 null → 本 effect 跳过,与旧行为一致)。
   useEffect(() => {
     const view = mapInstance.current;
     if (!view || !clusterState) return;
@@ -1488,7 +1492,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         }
       }
     };
-  }, [clusterState, mapReady, modeConfig.color]);
+  }, [clusterState, mapReady, modeConfig.color, engineView]);
 
   // ---- marker 可见性(b2 + 2026-08-22 互斥)----
   // 控制器始终持有全量 markerPois 池,此处只算「当前该显示谁」,实例保留:
@@ -1497,7 +1501,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // - 聚合激活(zoom ≤ 8):城市公司由徽章代表,只显示无 city 的个体 pin
   //   (互斥开时 clusterState 已按收藏点聚合,此分支天然只含收藏 pin);
   // - 个体模式:按 LOD(maxTierForZoom)过滤,overlay 与 domain pin 恒显示;
-  // 离开 marker 池的 id(刷新/筛选变窄/domain 换视野)不在集合内 → 隐藏,不销毁。
+  // 离开 marker 池的 id(刷新/筛选变窄/domain 换视野)不在集合内 → 隐藏;实例
+  // 在 replace 语义(domain 视口替换,replacePOIsOnSync)下才销毁池外 id,
+  // 收藏 overlay 经 retainPOIIds 恒保留(实例不销毁,秒恢复零重查);
+  // LOD/聚合/个体 pin 仍在池内,不受销毁语义影响。
   // 依赖已分桶(clusterZoom / maxTier 均只随整数 zoom 变化):zoom 微调零重算。
   const maxTier = maxTierForZoom(zoom);
   const visiblePOIIds = useMemo(() => {
@@ -1685,12 +1692,23 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // 自然**显式重建**控制器,在新视图上 applySync 回放 pois/visible/selected/
   // highlighted——不依赖任何隐式 setState 链(mapInstance ref 仅供事件回调内
   // 同步读,如 readMapViewSnapshot/locateForMap)。
+  // 收藏 overlay id 的「最近一次已知集合」:savedOverlay 关闭/未登录时也保留,
+  // domain replace 语义下收藏层不被销毁(marker 实例保留,秒恢复零重查,
+  // 见上方可见性注释)。
+  const lastOverlayIdsRef = useRef<string[]>([]);
+  if (overlayPois.length > 0) lastOverlayIdsRef.current = overlayPois.map((p) => p.id);
   usePOIMap(engineView, {
     pois: markerPois,
     visiblePOIs: visiblePOIIds,
     selectedId,
     highlightedId,
     accentColor: modeConfig.color,
+    // domain:视口替换语义(池外 id 随 replace 销毁,旧视口 marker 不累积;
+    // 收藏 overlay 经 retainPOIIds 恒保留实例);work:不传 = 只增不删(全量池
+    // 语义不变,workMarkerPois 引用稳定,零 setPOIs)。
+    ...(canonicalMode(mode) === "domain"
+      ? { replacePOIsOnSync: true, retainPOIIds: lastOverlayIdsRef.current }
+      : {}),
     onMarkerClick: (id) => {
       // 点 marker 只选中不动相机:不置 userMovedMapRef(ws-poi-vanish 首点修复
       // ——选择公司 ≠ 放弃定位,geolocation settle 仍会飞用户位置)。
