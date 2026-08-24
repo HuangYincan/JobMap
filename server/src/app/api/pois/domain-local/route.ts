@@ -13,7 +13,8 @@
 // - categories:big_type 过滤(逗号分隔)
 // - limit:1..300(默认 300);offset:0..1000(默认 0)
 // 返回 { total, offset, limit, source:'local', results: DomainPOI[] }。
-// 无库/表缺失 → { total:0, results:[] }(前端再回退高德)。
+// 无库/表缺失(null)= 故障,≠ 空结果 → 502 { error:'local_db_unavailable' }
+// (前端回退高德,不伪装成成功空结果)。
 // ============================================================
 
 import { NextResponse } from 'next/server';
@@ -83,18 +84,24 @@ export async function GET(request: Request) {
     offset,
   });
 
-  const payload = {
-    total: result?.total ?? 0,
-    offset: result?.offset ?? 0,
-    limit: result?.limit ?? 300,
-    source: 'local' as const,
-    results: result?.results ?? [],
-  };
-  // 只在真实查库成功时缓存:DB 故障/表缺失(null)的兜底空响应若被缓存,
-  // 30s 内即使库恢复也会继续返回空,把「走回退」的信号伪装成成功 200。
-  if (result) {
-    writePublicCache(cacheKey, payload);
-    return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  // DB 故障/表缺失(null)≠ 空结果:真空(查库成功但 0 行)才是 200 空;
+  // null 是失败信号 → 502,前端回退高德。返回 200 空会让
+  // mergePoisById(existing, [], cap) ≈ 无操作,高德回退与错误信号全部失效。
+  // 502 分支不写缓存(故障兜底响应被缓存会掩盖恢复)。
+  if (!result) {
+    return NextResponse.json(
+      { error: 'local_db_unavailable' },
+      { status: 502, headers: { 'Cache-Control': 'no-store' } },
+    );
   }
-  return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } });
+
+  const payload = {
+    total: result.total,
+    offset: result.offset,
+    limit: result.limit,
+    source: 'local' as const,
+    results: result.results,
+  };
+  writePublicCache(cacheKey, payload);
+  return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
 }

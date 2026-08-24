@@ -199,6 +199,24 @@ test('#12 domain-local: bounds/q/categories/分页参数超长 → 400,且先于
   assert.ok(dbIdx !== -1 && paramIdx < dbIdx, '参数限长先于 SQL 查询');
 });
 
+test('#12 domain-local: 本地库故障(null)→ 502 错误信号,不写缓存(不伪装成功空结果)', () => {
+  const route = src('app/api/pois/domain-local/route.ts');
+  // null 分支返回 502 { error: 'local_db_unavailable' },no-store
+  assert.match(route, /error: 'local_db_unavailable'/);
+  assert.match(route, /status: 502/);
+  assert.match(route, /'Cache-Control': 'no-store'/);
+  assert.match(route, /if \(!result\)/);
+  // 顺序契约:null 判定在查库结果之后、且先于缓存写入(故障响应不得入缓存)
+  const dbIdx = route.indexOf('await loadHangzhouPoisFromDb');
+  const failIdx = route.indexOf("error: 'local_db_unavailable'");
+  const cacheIdx = route.indexOf('writePublicCache(cacheKey');
+  assert.ok(dbIdx !== -1 && failIdx !== -1 && dbIdx < failIdx, '失败分支在查库之后返回');
+  assert.ok(cacheIdx !== -1 && failIdx < cacheIdx, '502 分支先于写缓存(故障不缓存)');
+  // 真实查库成功(真空 results:[] 也是 200)仍走缓存 + PUBLIC_CACHE_CONTROL
+  assert.match(route, /writePublicCache\(cacheKey, payload\)/);
+  assert.match(route, /PUBLIC_CACHE_CONTROL/);
+});
+
 test('#18 me/PATCH: displayName 长度上限 + avatarUrl 协议白名单(>2048/非 http(s))→ 400', () => {
   const route = src('app/api/auth/me/route.ts');
   assert.match(route, /const MAX_DISPLAY_NAME_LENGTH = 50/);

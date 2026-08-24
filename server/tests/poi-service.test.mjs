@@ -122,6 +122,72 @@ test('fetchPOIsForMode(domain 杭州内): 本地库失败 → 抛错(错误信�
   }
 });
 
+test('fetchPOIsForMode(domain 杭州内 + 关键词): route 502 → fetchLocalPois return null → 走 searchPOI 高德兜底', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  setActiveSearchProvider({
+    searchPOI: async (params) => {
+      calls.push(params);
+      return [domainPoi('provider-poi')];
+    },
+    fetchSuggestions: async () => [],
+    getCurrentPosition: async () => null,
+    geocodeAddress: async () => null,
+  });
+  // 只对 domain-local 模拟 502(DB 故障);其余 URL 不允许被请求(证明走了 provider)
+  globalThis.fetch = async (url) => {
+    if (String(url).includes('/api/pois/domain-local')) {
+      return { ok: false, status: 502, json: async () => ({}) };
+    }
+    throw new Error(`unexpected fetch: ${url}`);
+  };
+  try {
+    const { pois } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 13,
+      pageOffset: 0,
+      existing: [],
+      query: '肯德基',
+    });
+    assert.equal(calls.length, 1, '502 → null → 恰走一次 searchPOI 兜底');
+    assert.equal(calls[0].keyword, '肯德基');
+    assert.ok(pois.some((p) => p.id === 'provider-poi'), '高德兜底结果并入累计池');
+  } finally {
+    globalThis.fetch = originalFetch;
+    setActiveSearchProvider(null);
+  }
+});
+
+test('fetchPOIsForMode(domain 杭州内浏览): route 502 → 高德视口兜底,不抛错不静默', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  setActiveSearchProvider({
+    searchPOI: async (params) => {
+      calls.push(params);
+      return [domainPoi('amap-fallback')];
+    },
+    fetchSuggestions: async () => [],
+    getCurrentPosition: async () => null,
+    geocodeAddress: async () => null,
+  });
+  globalThis.fetch = async () => ({ ok: false, status: 502, json: async () => ({}) });
+  try {
+    const { pois } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 13,
+      pageOffset: 0,
+      existing: [],
+    });
+    assert.ok(calls.length > 0, '浏览路径 502 → 视口兜底(searchPOI)被触发');
+    assert.ok(pois.some((p) => p.id === 'amap-fallback'), '兜底 POI 返回,不静默清空');
+  } finally {
+    globalThis.fetch = originalFetch;
+    setActiveSearchProvider(null);
+  }
+});
+
 test('fetchPOIsForMode(domain 杭州内 + 分类): categories 参数构造 + 全量分页循环(短页到底)', async () => {
   const originalFetch = globalThis.fetch;
   const urls = [];
