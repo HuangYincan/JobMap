@@ -549,7 +549,13 @@ export interface ViewportLoader {
 
 export interface ViewportLoaderOptions {
   delayMs: number;
-  load: () => Promise<void> | void;
+  /**
+   * 协作取消信号(2026-08-25 epoch guard):loader 每个实例持有一个
+   * { cancelled } 可变对象,dispose 时置 true——在飞 load 的副作用
+   * (回调 → setCatalog / 写 mode cache)由调用方经 signal 自查丢弃。
+   * 与 loadWorkViewport / fetchPOIsForMode 的 signal 形态一致。
+   */
+  load: (signal: { cancelled: boolean }) => Promise<void> | void;
 }
 
 /**
@@ -557,20 +563,24 @@ export interface ViewportLoaderOptions {
  * - schedule():每次事件重置防抖计时器,窗口内只发一次请求;
  * - 请求进行中收到的新事件只替换 pending;当前请求完成后立即补跑
  *   「最新一次」(中间态丢弃,不会堆积);
- * - dispose():清空计时器与 pending,不再触发。
+ * - dispose():清空计时器与 pending,不再触发;同时置 signal.cancelled=true,
+ *   在飞 load 完成后其回调/副作用被调用方以 signal 自查丢弃
+ *   (dispose 前 in-flight 的 load 无法终止,只能协作式让路)。
  */
 export function createViewportLoader(options: ViewportLoaderOptions): ViewportLoader {
   let timer: ReturnType<typeof setTimeout> | null = null;
   let inFlight = false;
   let pending = false;
   let disposed = false;
+  // 每个 loader 实例一个取消信号;dispose 后恒为 true(schedule 已失效,不重置)
+  const cancelSignal = { cancelled: false };
 
   const runPending = () => {
     if (disposed || inFlight || !pending) return;
     pending = false;
     inFlight = true;
     Promise.resolve()
-      .then(() => options.load())
+      .then(() => options.load(cancelSignal))
       .catch(() => {
         // load 的错误由调用方自己处理;这里兜底避免 inFlight 卡死
       })
@@ -593,6 +603,7 @@ export function createViewportLoader(options: ViewportLoaderOptions): ViewportLo
     },
     dispose() {
       disposed = true;
+      cancelSignal.cancelled = true; // 在飞 load 让路:回调不落地(调用方自查)
       if (timer !== null) clearTimeout(timer);
       timer = null;
       pending = false;
