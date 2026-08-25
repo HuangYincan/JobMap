@@ -164,6 +164,31 @@ test('stale cache version is rejected so refreshed data loads', () => {
   assert.equal(readModeCache('work'), null);
 });
 
+// 2026-08-25 (fix/hide-center-pins + fix/server-catalog-semantics): 读路径语义两连修,
+// MODE_CACHE_VERSION 17 → 18。v17 缓存 = 未过滤 1046 条目录 / 旧回退语义, 必须失效重拉。
+test('current MODE_CACHE_VERSION is 18 (read-path semantic fixes force refresh)', () => {
+  assert.equal(MODE_CACHE_VERSION, 18);
+});
+
+test('v17 work cache is rejected after read-path semantic fixes', () => {
+  const store = installMemoryStorage();
+  store.set(
+    `${MODE_CACHE_PREFIX}work`,
+    JSON.stringify({
+      version: 17, // v17 = 中心钉过滤 / clip 空语义修正落地前的线上版本
+      mode: 'work',
+      catalog: [{ ...sampleRecruitmentPoi, id: 'pre-fix', mode: 'work' }],
+      pageOffset: 0,
+      searchOrigin: null,
+      query: '',
+      filters: {},
+      sort: 'distance',
+      savedAt: 1,
+    }),
+  );
+  assert.equal(readModeCache('work'), null);
+});
+
 test('oversized mode-cache raw values are rejected before JSON.parse', () => {
   const store = installMemoryStorage();
   store.set(`${MODE_CACHE_PREFIX}work`, 'x'.repeat(MODE_CACHE_RAW_MAX + 1));

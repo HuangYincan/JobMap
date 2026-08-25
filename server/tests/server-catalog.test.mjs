@@ -289,6 +289,63 @@ test('loadWorkCatalogFromDb passes clipped ids and maxTier through to company/po
   assert.deepEqual(positions.params, [['101']]);
 });
 
+// 2026-08-25 (fix/server-catalog-semantics): null/[] 契约 — SQL 命中但 JS 侧过滤
+// (hasPlausibleCoord / isCityCenterPin)后为空 = DB 健康 + 范围空, 必须返回 []
+// (而非 null); null 会被 loadServerCatalog 当作「失败」回退离线目录。
+test('loadWorkCatalogFromDb returns [] when clipped rows are all filtered out (clip-miss stays empty)', async () => {
+  const queries = [];
+  const pool = {
+    async query(sql, params) {
+      queries.push({ sql, params });
+      if (sql.includes('FROM company_sites')) {
+        return {
+          rows: [
+            {
+              id: '301', company_id: '30', name: 'Downtown fake', address: 'City Center', city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 120.15, lat: 30.27, // 杭州行政中心 = 城市中心钉
+              career_url: null, logo_url: null,
+            },
+            {
+              id: '302', company_id: '30', name: 'Origin fake', address: null, city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 0, lat: 0, // (0,0) 无合理坐标
+              career_url: null, logo_url: null,
+            },
+          ],
+        };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  };
+
+  const result = await loadWorkCatalogFromDb(
+    { bounds: { west: 120.0, south: 30.2, east: 120.2, north: 30.3 } },
+    pool,
+  );
+  assert.deepEqual(result, []);
+  assert.equal(queries.length, 1); // 过滤后为空 → 提前返回, 不再查 companies/positions
+});
+
+test('loadWorkCatalogFromDb returns null when an unclipped table has no located rows (fallback signal)', async () => {
+  const pool = {
+    async query(sql) {
+      if (sql.includes('FROM company_sites')) {
+        return {
+          rows: [
+            {
+              id: '401', company_id: '40', name: 'No coord', address: null, city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 0, lat: 0,
+              career_url: null, logo_url: null,
+            },
+          ],
+        };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  };
+  // 无 clip(全量读): 表全被过滤 → null → loadServerCatalog 回退离线目录(导入行不存在 ≠ 空结果)。
+  assert.equal(await loadWorkCatalogFromDb(undefined, pool), null);
+});
+
 test('loadWorkCatalogFromDb returns null when the DB read fails', async () => {
   const pool = {
     async query() {
@@ -302,6 +359,8 @@ test('loadServerCatalog prefers imported work rows, then seed + file drops', () 
   const catalog = src('lib/server-catalog.ts');
   assert.match(catalog, /loadWorkCatalogFromDb/);
   assert.match(catalog, /if \(imported && \(imported\.length > 0 \|\| clip\)\) return imported/);
+  assert.match(catalog, /null = 无 DB \/ 查询失败/);
+  assert.match(catalog, /带 clip 必须保持空/);
   assert.match(catalog, /loadOfflineWorkCatalog/);
   assert.match(catalog, /mergeCompaniesIntoPois/);
   assert.match(catalog, /hasPlausibleCoord/);
@@ -362,4 +421,24 @@ test('loadWorkCatalogFromDb filters by city / maxTier / alive when DATABASE_URL 
   const alive = await loadWorkCatalogFromDb({ alive: true });
   assert.ok(Array.isArray(alive));
   assert.ok(alive.every((p) => p.positions.every((pos) => pos.status === 'open')));
+});
+
+// 2026-08-25 (fix/server-catalog-semantics): 端到端契约 — DB 健康时带 clip 的
+// 空结果保持 [] 而不是回退离线目录(旧实现: located 过滤后 null → 离线回退,
+// 搜索/建议结果来自种子而非当前 DB 的真实空结果)。
+test('loadServerCatalog keeps clip-miss empty instead of falling back to offline (DB healthy)', async (t) => {
+  if (!process.env.DATABASE_URL) {
+    t.skip('DATABASE_URL is not set');
+    return;
+  }
+  const probe = await loadWorkCatalogFromDb();
+  if (probe === null) {
+    t.skip('Postgres pool unavailable');
+    return;
+  }
+  // 东海无公司 → SQL 裁剪未命中; DB 健康时契约 = [] 空结果, 绝不回退离线目录。
+  const empty = await loadServerCatalog('work', {
+    bounds: { west: 122.5, south: 30.0, east: 123.5, north: 31.0 },
+  });
+  assert.deepEqual(empty, []);
 });
