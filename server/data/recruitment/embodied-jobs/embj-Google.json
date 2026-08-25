@@ -9,7 +9,9 @@
       "city": "Mountain View, CA",
       "province": "",
       "location": {
-        "address": "1600 Amphitheatre Parkway, Mountain View, CA"
+        "address": "Google Building 41, 1600, Amphitheatre Parkway, 山景城, Santa Clara County, 加利福尼亚州;加利福尼亞州, 94043, 美国;美國",
+        "lng": -122.085585,
+        "lat": 37.422486
       }
     }
   ],

@@ -9,7 +9,9 @@
       "city": "San Francisco, CA",
       "province": "",
       "location": {
-        "address": "333 Brannan Street, San Francisco, CA 94107, USA"
+        "address": "Cruise, 329;333, Brannan Street, 南滩区, 索玛区, 旧金山;舊金山;三藩市, 加利福尼亚州;加利福尼亞州, 94017, 美国;美國",
+        "lng": -122.392529,
+        "lat": 37.780856
       }
     }
   ],

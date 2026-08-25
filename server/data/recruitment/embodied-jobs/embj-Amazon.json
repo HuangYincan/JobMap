@@ -9,7 +9,9 @@
       "city": "Seattle, WA",
       "province": "",
       "location": {
-        "address": "2111 7th Avenue, Seattle, WA"
+        "address": "2111, 7th Avenue, Amazon, Belltown, 西雅圖, King County, 华盛顿州;華盛頓州, 98121, 美国;美國",
+        "lng": -122.339002,
+        "lat": 47.615863
       }
     }
   ],

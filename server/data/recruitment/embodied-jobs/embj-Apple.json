@@ -9,7 +9,9 @@
       "city": "Cupertino, CA",
       "province": "",
       "location": {
-        "address": "One Apple Park Way, Cupertino, CA 95014"
+        "address": "Apple Park Visitor Center, 10600, North Tantau Avenue, Cupertino, Santa Clara County, 加利福尼亚州;加利福尼亞州, 95014, 美国;美國",
+        "lng": -122.005374,
+        "lat": 37.332843
       }
     }
   ],

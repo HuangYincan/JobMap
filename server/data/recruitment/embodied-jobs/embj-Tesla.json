@@ -9,7 +9,9 @@
       "city": "Austin, TX",
       "province": "",
       "location": {
-        "address": "1 Tesla Road, Austin, TX 78725"
+        "address": "Tesla Gigafactory Texas Main Building, 1, Tesla Road, 奥斯汀;奧斯汀;柯士甸, Travis County, 得克萨斯州;德克薩斯州;德薩斯州, 78725, 美国;美國",
+        "lng": -97.618773,
+        "lat": 30.221932
       }
     }
   ],

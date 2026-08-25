@@ -9,7 +9,9 @@
       "city": "Mountain View, CA",
       "province": "",
       "location": {
-        "address": "1600 Amphitheatre Parkway, Mountain View, CA 94043, USA"
+        "address": "Waymo, 690, East Middlefield Road, 山景城, Santa Clara County, 加利福尼亚州;加利福尼亞州, 94035, 美国;美國",
+        "lng": -122.050347,
+        "lat": 37.394484
       }
     }
   ],

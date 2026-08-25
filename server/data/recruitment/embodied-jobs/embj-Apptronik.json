@@ -9,7 +9,9 @@
       "city": "Austin, TX",
       "province": "",
       "location": {
-        "address": "11701 Stonehollow Dr, Austin, TX 78758, USA"
+        "address": "Apptronik, 11701, Stonehollow Drive, 奥斯汀;奧斯汀;柯士甸, Travis County, 得克萨斯州;德克薩斯州;德薩斯州, 78758, 美国;美國",
+        "lng": -97.709785,
+        "lat": 30.397231
       }
     }
   ],

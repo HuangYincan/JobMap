@@ -9,7 +9,9 @@
       "city": "Mountain View, CA",
       "province": "",
       "location": {
-        "address": "1290 Terra Bella Ave, Mountain View, CA 94043"
+        "address": "Nuro, 1300, Terra Bella Avenue, 山景城, Santa Clara County, 加利福尼亚州;加利福尼亞州, 94043, 美国;美國",
+        "lng": -122.080831,
+        "lat": 37.410496
       }
     }
   ],

@@ -9,7 +9,9 @@
       "city": "San Francisco, CA",
       "province": "",
       "location": {
-        "address": "1455 3rd Street, San Francisco, CA"
+        "address": "OpenAI, 575, Florida Street, 教会区, 旧金山;舊金山;三藩市, 加利福尼亚州;加利福尼亞州, 94110, 美国;美國",
+        "lng": -122.41044,
+        "lat": 37.76221
       }
     }
   ],

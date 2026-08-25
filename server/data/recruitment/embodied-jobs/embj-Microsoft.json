@@ -9,7 +9,9 @@
       "city": "Redmond, WA",
       "province": "",
       "location": {
-        "address": "One Microsoft Way, Redmond, WA 98052-6399"
+        "address": "Microsoft Building 2, 15935, NE One Microsoft Way, Microsoft Redmond East Campus, Overlake, 雷德蒙德, King County, 华盛顿州;華盛頓州, 98052, 美国;美國",
+        "lng": -122.127838,
+        "lat": 47.640599
       }
     }
   ],
