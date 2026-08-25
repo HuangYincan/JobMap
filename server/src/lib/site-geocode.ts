@@ -913,6 +913,11 @@ export function normalizeNameForMatch(name: string): string {
 // 诊断 139 站 name-mismatch 的主因是「公司简称 vs 全称形态词」: 博时基金 →
 // 博时基金管理有限公司 / 傅利叶 → 傅利叶智能 / 思格新能源 → …全球总部。
 // 再增加 中国/科技园 (GE医疗中国科技园 类外企中国区/园区办公点)。
+// 2026-08-25 (fix/grader-word-v5): 增加 信息/投资/研究/开发/责任/代表处/技术 —
+// 网关实测 (2026-08-25) 这些词挡下的全是在库真实办公点: 诺华集团(中国) /
+// 阿里云(上海)信息科技有限公司 / 辉瑞(中国)研究开发有限公司 / 辉瑞投资有限公司 /
+// 高盛(中国有限责任公司上海代表处)。门店类 (店/站/馆/超市/驿站/旗舰店) 不在
+// 集合 → 混入即整段拒, 防线不变。
 // 这些是真实办公点 (城市闸门 + regeo 兜底), 非限定词 token (物业…) 混入仍拒。
 
 const QUALIFIER_SUFFIXES = new Set([
@@ -920,6 +925,7 @@ const QUALIFIER_SUFFIXES = new Set([
   '园区', '基地', '公司', '集团', '科技', '学院', '学校', '大学',
   '管理', '有限', '股份', '智能', '全球',
   '中国', '科技园',
+  '信息', '投资', '研究', '开发', '责任', '代表处', '技术',
 ]);
 const CITY_PREFIXES = new Set([
   '北京', '上海', '广州', '深圳', '杭州', '成都', '武汉', '苏州', '宁波', '南京', '天津', '重庆',
@@ -1044,12 +1050,11 @@ export function officeNameMatchStrength(candidateName: string, companyName: stri
   if (!strong) return 'no';
   for (const seg of candidateBracketSegments(candidateName)) {
     if (GOOD_BRACKET_SEG_RE.test(seg)) continue;
-    // 2026-08-25 (fix/grader-company-forms): 括号段=城市名开头 + 剩余为限定词
-    // 序列 → 办公形态放行 (某司(上海) / 某司(上海分公司) / 歌尔微电子
-    // 股份有限公司(上海));「上海黄浦店」类 城市+店铺名 剩余含非限定词 (黄浦/店)
-    // → 仍拒。
-    const cut = cityTokenLen(seg);
-    if (cut > 0 && isQualifierSuffixSeq(seg.slice(cut))) continue;
+    // 2026-08-25 (fix/grader-word-v5): 括号段整段为「限定词序列 (含城市 token)」
+    // → 办公形态放行 — 高盛(中国有限责任公司上海代表处) / 某司(上海分公司) /
+    // 歌尔微电子股份有限公司(上海)。序列含非限定词 token (黄浦/店/站/川图路…)
+    // → 整段拒: 得物(宝龙旭辉广场店) / 美团(上海黄浦店) / 拼多多驿站(川图路…) 不变。
+    if (isQualifierSuffixSeq(seg)) continue;
     return 'no';
   }
   return 'strong';

@@ -315,6 +315,30 @@ test('officeNameMatchStrength strips city tokens before matching (2026-08-25)', 
   }
 });
 
+test('officeNameMatchStrength accepts info/investment/research qualifiers (2026-08-25 v5)', () => {
+  // 2026-08-25 (fix/grader-word-v5): 网关实测在库真实办公点, 词表补齐:
+  // 信息 (阿里云(上海)信息科技有限公司) / 投资 (辉瑞投资有限公司) /
+  // 研究+开发 (辉瑞(中国)研究开发有限公司) / 责任+代表处 (高盛(中国有限责任
+  // 公司上海代表处) 的括号段整段=限定词序列)。
+  for (const [candidate, company] of [
+    ['诺华集团(中国)', '诺华集团'],
+    ['阿里云(上海)信息科技有限公司', '阿里云'],
+    ['辉瑞(中国)研究开发有限公司', '辉瑞'],
+    ['高盛(中国有限责任公司上海代表处)', '高盛'],
+    ['辉瑞投资有限公司', '辉瑞'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
+  }
+  // 门店/驿站类括号段含非限定词 → 仍拒 (序列完整判定, 防线不回退)。
+  for (const [candidate, company] of [
+    ['得物(宝龙旭辉广场店)', '得物'],
+    ['美团(上海黄浦店)', '美团'],
+    ['拼多多驿站(川图路海中心站)', '拼多多'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'no', `${candidate} vs ${company}`);
+  }
+});
+
 test('gradeOfficePoi rejects same-brand store/warehouse traps from Baidu', () => {
   const trap = { name: '拼多多驿站(川图路海中心站)', address: '浦东新区川图路海中心', lng: 121.7, lat: 31.15, type: '', adname: '浦东新区', pname: '上海市', cityname: '上海市' };
   assert.equal(gradeOfficePoi(trap, '拼多多', '上海市', '上海市').confidence, 'low');
