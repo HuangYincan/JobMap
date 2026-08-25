@@ -46,7 +46,8 @@ import {
 
 test('current WORK_SEED sites already have coordinates', () => {
   const plan = planSiteGeocode(WORK_SEED.map((poi) => poiToSourceCompany(poi)));
-  assert.equal(plan.needs.length, 0);
+  assert.equal(plan.needsGeocode.length, 0);
+  assert.equal(plan.needsPlaceSearch.length, 0);
   assert.ok(plan.alreadyLocated >= 50);
 });
 
@@ -54,8 +55,8 @@ test('planSiteGeocode lists (0,0) and missing points', () => {
   const company = poiToSourceCompany(WORK_SEED[0]);
   company.sites[0].location = { lng: 0, lat: 0, address: '余杭区文一西路' };
   const plan = planSiteGeocode([company]);
-  assert.equal(plan.needs.length, 1);
-  assert.match(plan.needs[0].query, /余杭区文一西路/);
+  assert.equal(plan.needsGeocode.length, 1);
+  assert.match(plan.needsGeocode[0].query, /余杭区文一西路/);
   assert.equal(siteNeedsGeocode(company.sites[0]), true);
 });
 
@@ -424,9 +425,9 @@ test('planSiteGeocode scopes multi-city sites to their own city', () => {
     location: { lng: 0, lat: 0, address: '北京市朝阳区望京东路' },
   };
   const plan = planSiteGeocode([radarCompany([beijing])]);
-  assert.equal(plan.needs.length, 1);
-  assert.equal(plan.needs[0].city, '北京市');
-  assert.match(plan.needs[0].query, /望京东路/);
+  assert.equal(plan.needsGeocode.length, 1);
+  assert.equal(plan.needsGeocode[0].city, '北京市');
+  assert.match(plan.needsGeocode[0].query, /望京东路/);
 });
 
 test('geocodeQueryForSite uses the site city (not the fallback) when the site has one', () => {

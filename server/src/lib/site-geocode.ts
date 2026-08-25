@@ -8,7 +8,7 @@ import { getPool } from './db.ts';
 import { isAbortError, fetchWithTimeout } from './fetch-with-timeout.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { cityProvinceOf } from './recruitment-adapters/official-site-parse.ts';
-import { CITY_CENTERS, OVERSEAS_CITY_KEYS, bareCityName } from './city-centers.ts';
+import { CITY_CENTERS, CITY_CENTER_EPS, OVERSEAS_CITY_KEYS, bareCityName, cityCenter } from './city-centers.ts';
 import type { CompanySite, POILocation } from './types.ts';
 import type { SourceCompany } from './recruitment-source.ts';
 
@@ -21,13 +21,27 @@ export interface GeocodeNeed {
   city: string;
 }
 
+export interface PlaceSearchNeed {
+  slug: string;
+  companyName: string;
+  siteId: string;
+  siteName: string;
+  /** 地点检索串 = 清洗后的公司名 (别名/装饰剥离); 城市由 provider 检索 region 限定。 */
+  query: string;
+  city: string;
+  province: string;
+}
+
 export interface GeocodeHit {
   query: string;
   location: POILocation;
 }
 
 export interface GeocodePlan {
-  needs: GeocodeNeed[];
+  /** 地址可做地址级 geocode 的站点 (街道地址/多城市列表占位串/非占位地址)。 */
+  needsGeocode: GeocodeNeed[];
+  /** 地址为占位 (仅城市名) 或无地址的站点 → 公司名+城市地点检索补全。 */
+  needsPlaceSearch: PlaceSearchNeed[];
   alreadyLocated: number;
   skippedNoAddress: number;
 }
@@ -57,6 +71,9 @@ export function siteNeedsGeocode(site: CompanySite): boolean {
  * skipped。返回 (company, site) 引用供主循环复用, 避免预扫 + 主循环两次
  * JSON.parse。放在本模块 (而非脚本内) 是为了可单测 — 脚本顶层跑主循环 +
  * 真实网络, 无法 import; 与 shouldShortCircuitQuota 同模式。
+ * 2026-08-25 (fix/site-place-search): 并入 siteNeedsPlaceSearch 站 — 中心钉
+ * 占位/无地址站 (siteNeedsGeocode false, 旧口径「留中心」) 也要进 apply 主循环
+ * 做地点检索补全, 否则用户裁定的补全永远不发生 (剩余计算/续跑随之为真实全量)。
  */
 export interface NeedingSite {
   company: SourceCompany;
@@ -68,7 +85,7 @@ export function sitesNeedingGeocode(companies: ReadonlyArray<SourceCompany>): Ne
   for (const company of companies) {
     if (!company || typeof company.slug !== 'string') continue;
     for (const site of company.sites ?? []) {
-      if (siteNeedsGeocode(site)) out.push({ company, site });
+      if (siteNeedsGeocode(site) || siteNeedsPlaceSearch(site)) out.push({ company, site });
     }
   }
   return out;
@@ -82,9 +99,9 @@ export function sitesNeedingGeocode(companies: ReadonlyArray<SourceCompany>): Ne
 // 中心坐标 (±CITY_CENTER_EPS) + 地址非空且不是城市名 → 需要重新 geocode。
 // 地址仍是城市名 (占位) 的站点留在中心。多城市串地址 (北京/上海/深圳/成都)
 // 是城市列表占位、不是城市名 → 需要重新 geocode。
+// CITY_CENTER_EPS 收敛自 city-centers.ts (2026-08-25, fix/site-place-search) —
+// 与其导出常量共用一份, 不再本地重复定义。
 // ---------------------------------------------------------------------------
-
-const CITY_CENTER_EPS = 0.0005;
 
 /** 命中静态城市中心 (±CITY_CENTER_EPS) 的所有城市 bare 名 (同坐标多 key 去重). */
 export function cityCenterBareNames(lng: number, lat: number): string[] {
@@ -107,12 +124,61 @@ const PROVINCE_BARE_RE =
   /^(?:北京|天津|上海|重庆|河北|山西|辽宁|吉林|黑龙江|江苏|浙江|安徽|福建|江西|山东|河南|湖北|湖南|广东|海南|四川|贵州|云南|陕西|甘肃|青海|台湾|内蒙古|广西|西藏|宁夏|新疆|香港|澳门)$/;
 
 /** 剥掉城市 bare 名后, 残余只有 省/市/县/区 前后缀或省级名 → 仅含城市名。 */
-function cityNameOnlyAddress(address: string, cityName: string): boolean {
+function addressIsCityNameOnlyFor(address: string, cityName: string): boolean {
   const bare = bareCityName(cityName);
   if (!bare || !address.includes(bare)) return false;
   const rest = address.replace(bare, '');
   const stripped = rest.replace(/^(?:省|市|县|区)+/, '').replace(/(?:省|市|县|区)+$/, '');
   return stripped === '' || PROVINCE_BARE_RE.test(stripped);
+}
+
+/** CITY_CENTERS 键按长度降序 (重复城市名收拢时最长键优先, 如 北京市 > 北京). */
+const CITY_KEYS_BY_LEN = Object.keys(CITY_CENTERS).sort((a, b) => b.length - a.length);
+
+/**
+ * 地址自身是否「仅城市名」占位 (2026-08-25, fix/site-place-search)。
+ * 归一化 (不动点: bareCityName 去「省/市/区」尾缀 + 剥「省+城市」连写前缀 +
+ * 前后缀窗口剥离) 后恰为静态城市中心表收录的城市名 → 是占位: 上海 / 上海市 /
+ * 深圳市 / 浙江省杭州市 / 广西柳州 / 伦敦市区 / 重庆市重庆市 (重复城市名形态,
+ * 迭代剥除中心表键收拢)。街道地址 (北京市海淀区中关村) → false;
+ * 多城市列表占位串 (北京/上海/深圳/成都) → false (isCityListPlaceholderAddress
+ * 单独判定; 列表串有「地址」形态, 归 needsGeocode 的公司名检索通道, 不是本
+ * 占位通道)。与 isCityNameAddress 互补: 后者面向中心钉站点 (站点城市/中心名
+ * 上下文已知), 本判定自包含, 供 plan/audit 把「占位地址」站点归类到地点检索
+ * 补全 (公司名+城市检索), 而非地址 geocode。归一化收不拢的脏形态 (残余非纯
+ * 省市区/非城市键) → false (保守: 留中心钉, 不烧检索配额、不猜点)。
+ */
+export function cityNameOnlyAddress(address: string): boolean {
+  const s = address.trim();
+  if (!s) return false;
+  const strip = (t: string): string => {
+    let prev = '';
+    while (prev !== t) {
+      prev = t;
+      t = bareCityName(t);
+      t = t.replace(/^(?:省|市|区)+/, '').replace(/(?:省|市|区)+$/, '');
+    }
+    return t;
+  };
+  const t = strip(s);
+  if (t && Object.hasOwn(CITY_CENTERS, t)) return true;
+  if (!t) return false;
+  // 重复城市名形态 (重庆市重庆市 = 重庆+市+重庆+市 / 上海市上海): 迭代剥除
+  // 中心表键 + 前后缀重归一, 每次收拢后复核是否恰为城市键。
+  for (const key of CITY_KEYS_BY_LEN) {
+    if (t.length <= key.length) continue;
+    if (t.startsWith(key)) {
+      const rest = strip(t.slice(key.length));
+      if (rest && Object.hasOwn(CITY_CENTERS, rest)) return true;
+      if (!rest) return false;
+    }
+    if (t.endsWith(key)) {
+      const rest = strip(t.slice(0, -key.length));
+      if (rest && Object.hasOwn(CITY_CENTERS, rest)) return true;
+      if (!rest) return false;
+    }
+  }
+  return false;
 }
 
 /**
@@ -141,7 +207,7 @@ export function isCityNameAddress(
   if (!names.size) return false;
   for (const name of names) {
     if (a === name || a === `${name}市`) return true;
-    if (cityNameOnlyAddress(a, name)) return true;
+    if (addressIsCityNameOnlyFor(a, name)) return true;
   }
   return false;
 }
@@ -185,22 +251,48 @@ export function geocodeQueryForSite(companyName: string, site: CompanySite): str
 }
 
 export function planSiteGeocode(companies: SourceCompany[]): GeocodePlan {
-  const needs: GeocodeNeed[] = [];
+  const needsGeocode: GeocodeNeed[] = [];
+  const needsPlaceSearch: PlaceSearchNeed[] = [];
   let alreadyLocated = 0;
   let skippedNoAddress = 0;
   for (const company of companies) {
     for (const site of company.sites) {
+      const address = site.location?.address?.trim() ?? '';
+      // 2026-08-25 (fix/site-place-search): 占位/无地址站 (无论坐标缺还是仍在
+      // 中心钉) → 地点检索补全 (公司名+城市 检索, 不浪费地址 geocode 配额);
+      // 多城市列表占位串不属本通道 (siteNeedsPlaceSearch false) → 落 needsGeocode
+      // (apply 既有公司名检索分支)。旧 needs 分类 (地址可 geocode) 改名
+      // needsGeocode 保持语义: 地址非占位 → 地址 geocode。
+      if (siteNeedsPlaceSearch(site)) {
+        // 无地址且无站点名 → 公司名检索尚且可跑 (公司名是 query 主体), 但旧
+        // 口径 (skippedNoAddress) 视为「无从定位」— 保持: 地址缺 + 站点名缺的
+        // 双缺站连站点维度信息都没有, 检索命中不可信。
+        if (!address && !site.name) {
+          skippedNoAddress += 1;
+          continue;
+        }
+        const target = siteCityTarget(site);
+        needsPlaceSearch.push({
+          slug: company.slug,
+          companyName: company.name,
+          siteId: site.id,
+          siteName: site.name,
+          query: cleanCompanySearchName(company.name),
+          city: target.city,
+          province: target.province,
+        });
+        continue;
+      }
       if (!siteNeedsGeocode(site)) {
         alreadyLocated += 1;
         continue;
       }
-      const address = site.location?.address?.trim();
       if (!address && !site.name) {
         skippedNoAddress += 1;
         continue;
       }
       const target = siteCityTarget(site);
-      needs.push({
+      needsGeocode.push({
         slug: company.slug,
         companyName: company.name,
         siteId: site.id,
@@ -210,7 +302,7 @@ export function planSiteGeocode(companies: SourceCompany[]): GeocodePlan {
       });
     }
   }
-  return { needs, alreadyLocated, skippedNoAddress };
+  return { needsGeocode, needsPlaceSearch, alreadyLocated, skippedNoAddress };
 }
 
 /** Copy-on-write: fill missing site coords from hits keyed by query. */
@@ -570,6 +662,42 @@ export function siteHasStreetAddress(site: CompanySite): boolean {
   // 必须走公司名检索分支而非地址检索分支。
   if (isCityListPlaceholderAddress(address)) return false;
   return STREET_RE.test(address);
+}
+
+/**
+ * 站点是否需要「地点检索补全」(公司名+城市) 而非地址 geocode
+ * (2026-08-25, fix/site-place-search)。判定 = 地址是占位 (无地址 / 仅城市名
+ * 占位 — 上海 / 上海市 / 深圳市 / 浙江省杭州市, cityNameOnlyAddress) 且坐标尚
+ * 不可用 (缺坐标 / 仍是城市中心钉):
+ *   1. 无地址 (address 缺失/空白);
+ *   2. 仅城市名占位 (中心钉上最常见的占位形态);
+ * 其余情形不属本通道:
+ *   - 多城市列表占位串 (北京/上海/深圳/成都 — isCityListPlaceholderAddress):
+ *     它有「地址」形态, siteNeedsGeocode 已判 needsRerun, apply 走公司名检索
+ *     分支 (既有 ws-a 通道), 点选规则不变 — 不混入本通道。
+ *   - 街道地址 / 非占位地址 → false (走地址 geocode)。
+ *   - 坐标真实可用 (非中心钉) 的占位/无地址站 → false: 读路径按真实坐标展示,
+ *     地址缺失可容忍, 不烧检索配额。
+ * plan/audit/apply 共用本判定: plan 把占位/无地址站列 needsPlaceSearch (与
+ * needsGeocode 并列), audit 分类表同样以它 +「有真实岗位」判定 needsPlaceSearch,
+ * apply 主循环 (sitesNeedingGeocode 已并入) 对这类站换用 pickPlaceSearchPoi
+ * 选点规则。修正后坐标离开中心钉 → isCityCenterPin false → 读路径自然可见;
+ * 无有效候选 → 站点留中心钉待后续跟进, 不猜点。
+ */
+export function siteNeedsPlaceSearch(site: CompanySite): boolean {
+  const loc = site.location;
+  const address = loc?.address?.trim() ?? '';
+  if (!(address === '' || cityNameOnlyAddress(address))) return false;
+  if (
+    loc &&
+    Number.isFinite(loc.lng) &&
+    Number.isFinite(loc.lat) &&
+    !(loc.lng === 0 && loc.lat === 0) &&
+    !matchesCityCenter(loc.lng, loc.lat)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -1238,6 +1366,78 @@ export function pickBestOfficePoi(
   const sorted = scored.sort((a, b) => GRADE_ORDER[b.grade.confidence] - GRADE_ORDER[a.grade.confidence] || b.rank - a.rank);
   const best = sorted[0];
   return best && best.grade.confidence !== 'low' ? best.poi : undefined;
+}
+
+// ---------------------------------------------------------------------------
+// 占位地址站点「地点检索补全」选点规则 (2026-08-25, fix/site-place-search)。
+// 背景: 读路径无差别剔除城市中心钉后, 地址为城市名占位 (上海/深圳市) 或无地址
+// 的站点 (带真实在招岗位) 被一并隐藏 — 用户裁定做数据补全: 公司名 + 城市 →
+// 地点检索 → 取真实办公点。候选来自 provider 的「公司名 + 城市」检索
+// (region 已限定目标城市), 评分三维 (简单可测, 不做复杂模型):
+//   1. 名称相关性 (闸门) — officeNameMatchStrength 强匹配: 门店/驿站/同名
+//      工厂不认领公司 (与 grader 同口径), 不过闸门 → 淘汰。
+//   2. 同城/近似城市 (主排序) — POI cityname === 目标城市 → 10 分 (严格优先);
+//      pname === 目标省 (同省近邻, 如 广州站↔佛山 POI) → 1 分; 城市与省信息
+//      均不匹配 (明确异城异省) → 淘汰 — 宁可留中心钉, 不写疑似错点。
+//   3. 距市中心半径 (次级) — 中心 3km 内 0 分, 之后每 10km +0.1 封顶 +1:
+//      中心钉本身是占位 (真实办公点几乎不在行政中心 ±55m), 远郊办公区加分,
+//      同时压制「市中心模糊命中」与「超远跨城错配」两端。
+//   4. office 类型 (OFFICE_TYPE_RE: 公司企业/商务/科教/金融保险) → +1。
+// 同分保序 (provider 自身相关性排序作 tie-break)。最佳候选的写回置信度复用
+// gradeOfficePoi 同口径 (近似城市 → low, 既有写回闸门不写; 名称匹配无街道 →
+// medium, 同既有行为)。无候选过闸门 → null — 调用方记 unresolved, 站点留
+// 中心钉, 后续跟进, 不猜点。
+// ---------------------------------------------------------------------------
+
+/** 两点球面距离 (km, Haversine — 0.01° 级城市内评分够用). */
+export function distanceKm(lng1: number, lat1: number, lng2: number, lat2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+/**
+ * 距市中心半径分 [0, 1]: 3km 内 0 (中心钉是占位, 不与真实办公点加分),
+ * 3km 外每 10km +0.1, ≥13km 满 1 (真实办公区几乎都超出行政中心 ±3km)。
+ */
+export function placeSearchRadiusScore(lng: number, lat: number, center: { lng: number; lat: number }): number {
+  const km = distanceKm(lng, lat, center.lng, center.lat);
+  return Math.min(Math.max((km - 3) / 10, 0), 1);
+}
+
+export interface PlaceSearchPick {
+  poi: OfficePoiCandidate;
+  confidence: GeocodeConfidence;
+  reason: string;
+}
+
+/** 地点检索候选选点 (规则见模块注释; 同城 10 分恒压过同省近邻 1 分 + 满附加分). */
+export function pickPlaceSearchPoi(
+  pois: readonly OfficePoiCandidate[],
+  companyName: string,
+  target: CityTarget,
+): PlaceSearchPick | null {
+  const center = cityCenter(target.city);
+  let best: PlaceSearchPick | null = null;
+  let bestScore = -1;
+  for (const poi of pois) {
+    if (officeNameMatchStrength(poi.name, companyName) !== 'strong') continue;
+    const cityScore = poi.cityname && poi.cityname === target.city ? 10 : poi.pname && poi.pname === target.province ? 1 : 0;
+    if (cityScore === 0) continue;
+    const radius = center ? placeSearchRadiusScore(poi.lng, poi.lat, center) : 0;
+    const office = OFFICE_TYPE_RE.test(poi.type) ? 1 : 0;
+    const score = cityScore + radius + office;
+    if (score <= bestScore) continue;
+    const grade = gradeOfficePoi(poi, companyName, target.province, target.city);
+    best = { poi, confidence: grade.confidence, reason: `place-search:${grade.reason}` };
+    bestScore = score;
+  }
+  return best;
 }
 
 export interface PlaceTextResult {

@@ -38,7 +38,8 @@
 4. **已有合规替代**:
    - 国内:AMap / 百度 / 腾讯 place 检索 API(结构化、带坐标、有配额契约与官方文档;即 r5 geocode 链,见 `tech/29-geocode-r5-status.md`);
    - 海外:OSM Nominatim(2026-08-23 批次 ws-b 集成,1 req/s + UA 标识政策,来源审查见同目录 ws-b 文档);
-   - 无地址站兜底:geocode 链的「公司名 place-text 检索」通道(address-first,2026-08-21 批次)。
+   - 无地址站兜底:geocode 链的「公司名 place-text 检索」通道(address-first,2026-08-21 批次);
+   - 占位/无地址站数据补全(2026-08-25,`fix/site-place-search`):地址为城市名占位(上海/深圳市/浙江省杭州市)或无地址的带岗位站 → 「公司名+城市」地点检索取真实办公点(site-geocode.ts `siteNeedsPlaceSearch` / `pickPlaceSearchPoi`)。属**数据加工**(加工既有 drop 数据 + 既有 provider 检索链),非新增外部数据源采集——检索走本文档所列合规 provider(AMap/公司网关/百度/腾讯 place API 链,配额契约与官方文档齐备),不涉及本文档审查的搜索引擎 SERP 抓取;BOSS 直聘/牛客/小红书/实习僧直抓红线不变。
 
 **判定:列为 deferred 探索项——不建自动管线,不进数据源清单。**
 
