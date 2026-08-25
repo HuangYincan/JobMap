@@ -8,9 +8,12 @@
 //     - 地址为城市名 (上海 / 上海市 / 仅含城市名) → siteNeedsGeocode === false (留在中心)
 //     - 地址非空且非城市名 (街道地址 / 北京/上海/深圳/成都 城市列表占位) → true (重新 geocode)
 //     - 无地址 → false (规则要求地址非空)
-// 计数快照 (2026-08-22, 5 源 drops 全量): 中心钉点 1634 = 需要重跑 1380 + 留在中心 254
-// (上海 319 / 北京 296 / 深圳 225 / 成都 124 / 广州 105 居前)。apply 重跑后站点
-// 离开中心桶, 断言随之变空洞但不误报 — 本测试只钉语义不变式, 不钉会漂移的计数。
+// 计数快照漂移史 (本测试只钉语义不变式 + 量级守卫, 不钉会漂移的精确计数): 2026-08-22
+// 基线 1634 = 需要重跑 1380 + 留在中心 254 (上海 319 / 北京 296 / 深圳 225 / 成都 124 /
+// 广州 105 居前); r4/r5 apply 后站点逐批离开中心桶 → 2026-08-26 实测 941 (radar 839 /
+// official-career 95 / qqdoc-jobs 7; 地址分类: 街道地址需重跑 781 + 城市名占位留中心 155 +
+// 无地址 5)。断言下限 900 只防「中心钉桶整体消失 / 源缺失」类退化, 允许后续 apply 继续
+// 把站点挪出中心桶 — 快照基准漂移时同步调下限。
 // 城市中心钉点数据契约: 中心钉点站语义与数据一致, 只钉不变式不钉会漂移的计数。
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -55,7 +58,7 @@ function centerSites() {
 
 test('中心钉点站数据契约: 城市名地址留中心 / 非城市名地址重新 geocode', () => {
   const rows = centerSites();
-  assert.ok(rows.length >= 1000, `中心钉点站应大量存在 (city-centers 批次落点), 实际 ${rows.length}`);
+  assert.ok(rows.length >= 900, `中心钉点站应大量存在 (city-centers 批次落点; 快照基准 941, r5 后 2026-08-26 实测), 实际 ${rows.length}`);
   const violations = [];
   for (const { file, site, lng, lat } of rows) {
     const address = site.location?.address?.trim() ?? '';
