@@ -124,6 +124,40 @@ CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
 
 ---
 
+### 2.7 聚合行 = 公司级在招信号，读路径 fan-out 到全部站点（2026-08-26）
+
+> 背景：用户发现「深圳腾讯没有收录」。radar 上游快照把全国招聘大类标题
+> （「技术类 产品类…」，`is_aggregate_title` 判定，约 87% 行）压成一行并打
+> `aggregate: true`；crawler 侧 `radar_jobs.py` 把它挂到 `main_site_id`
+> （首城占位）——**数据文件本身没问题**（如 `腾讯.json` 4 站坐标全真实），
+> 但读路径按 `pos.siteId === site.id` 精确分配岗位 → 首城占位站独占全部
+> 聚合岗，其余城市站 `positions.length === 0` 被整条过滤（radar 594 家含
+> 聚合行公司、1385 站中 696 站零岗位；字节/美团/百度/京东/小米同病）。
+
+**规则（`fix/aggregate-site-fanout`）：**
+
+1. **aggregate 行是公司级信号**：离线路径（`recruitment-source.ts`
+   `poiFromSourceSite`）filter 改为 `p.siteId === site.id || p.aggregate === true`；
+   DB 路径（`recruitment-store.ts`）站点取数 = 精确 `site_id` 命中 ∪ 本公司
+   `taxonomy.aggregate` 行，按 `external_id` 去重（占位 site_id 恰等于本站不双计）、
+   具体行在前排序稳定、不跨公司泄漏。
+2. **语义守卫**：仅 `aggregate === true` 行扩散，specific 行绝不扩散；
+   单站点公司零变化；「一 POI 一职场」粒度不变（不合并站点、不新增 POI）；
+   `openOnly` / A1 alive 过滤叠加不变（closed 聚合行同样隐藏）；展示层
+   （i18n 聚合徽标、JD 兜底文案）按 `position.aggregate` 渲染，零改动。
+3. **seed 合并路径同语义**：`mergeCompanyOntoSeedPois` 把打开的聚合行计入
+   该 slug 全部 POI（含 seed 骨架 POI 与新建站点 pin），逐 POI 防重；
+   closed 聚合墓碑照旧从所有 POI 清除。副作用（符合预期）：seed 匹配 slug 的
+   公司（阿里巴巴/网易/之江实验室等）的真实坐标种子 POI 重新带聚合岗出现。
+4. **crawler 侧约定不变**：`main_site_id` 首城占位、`aggregate: true` 标记、
+   数据文件格式均不动 —— 这是读路径修复，不是数据修复。
+
+**量化效果（离线目录，2026-08-26 实测）：POI 529 → 833（+304）；腾讯 1 城 →
+4 城（北京/上海/广州/深圳各带 3 条聚合岗）。** 徽章计数口径不受影响
+（tech/21 规则 7「N = 该城市全部公司数」仍成立，只是池内公司变多）。
+
+---
+
 ## 3. 并行开发工作流
 
 按 `tech/04-workflow.md` + `parallel-development` skill：每个 workstream 一个 worktree + 分支，从 `dev` 切，完成 merge 回 `dev`。
