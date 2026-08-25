@@ -55,6 +55,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadEnv, injectEnv } from './lib/load-env.mjs';
 import {
   addressConflictsWithCity,
   addressConflictsWithRegeoDistrict,
@@ -108,23 +109,9 @@ const SERVER_DIR = path.resolve(__dirname, '..');
 const DATA_DIR = path.join(SERVER_DIR, 'data', 'recruitment');
 const OVERRIDES_FILE = path.join(DATA_DIR, 'geocode-overrides.json');
 
-// --- env (server/.env.local, without printing the key) ---------------------
-function loadEnv() {
-  const envFile = path.join(SERVER_DIR, '.env.local');
-  if (!fs.existsSync(envFile)) return {};
-  const out = {};
-  for (const line of fs.readFileSync(envFile, 'utf8').split('\n')) {
-    const m = line.match(/^([A-Za-z0-9_]+)=(.*)$/);
-    if (!m) continue;
-    out[m[1]] = m[2].replace(/^['"]|['"]$/g, '').trim();
-  }
-  return out;
-}
+// --- env (server/.env.local, 共享 loadEnv, 不打印 key) ----------------------
 const env = { ...loadEnv(), ...process.env };
-if (env.AMAP_WEB_KEY && !process.env.AMAP_WEB_KEY) process.env.AMAP_WEB_KEY = env.AMAP_WEB_KEY;
-if (env.BAIDU_MAP_AK && !process.env.BAIDU_MAP_AK) process.env.BAIDU_MAP_AK = env.BAIDU_MAP_AK;
-if (env.TENCENT_MAP_KEY && !process.env.TENCENT_MAP_KEY) process.env.TENCENT_MAP_KEY = env.TENCENT_MAP_KEY;
-if (env.JIAOYUNTONG_MAP_KEY && !process.env.JIAOYUNTONG_MAP_KEY) process.env.JIAOYUNTONG_MAP_KEY = env.JIAOYUNTONG_MAP_KEY;
+injectEnv(['AMAP_WEB_KEY', 'JIAOYUNTONG_MAP_KEY', 'BAIDU_MAP_AK', 'TENCENT_MAP_KEY']);
 
 const DRY_RUN = process.argv.includes('--dry-run') || (!env.AMAP_WEB_KEY && !env.BAIDU_MAP_AK && !env.TENCENT_MAP_KEY && !env.JIAOYUNTONG_MAP_KEY);
 const onlyArg = process.argv.find((a) => a.startsWith('--only=')) || process.argv.find((a, i) => process.argv[i - 1] === '--only');

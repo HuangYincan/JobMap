@@ -103,8 +103,8 @@ test('geocode-sites-apply.mjs 接线: 连续配额类失败 → 提前停止 + e
   assert.match(script, /process\.exit\(2\)/);
   // 解析成功冲掉窗口 — 不误停的接线点
   assert.match(script, /recordOutcome\(null\)/);
-  // 腾讯 key 接入: env 注入、DRY_RUN 判定、REPORT 展示
-  assert.match(script, /if \(env\.TENCENT_MAP_KEY && !process\.env\.TENCENT_MAP_KEY\) process\.env\.TENCENT_MAP_KEY = env\.TENCENT_MAP_KEY;/);
+  // env 接入 (2026-08-25 fix/plan-env-load: 共享 injectEnv, 覆盖四 provider key)
+  assert.match(script, /injectEnv\(\['AMAP_WEB_KEY', 'JIAOYUNTONG_MAP_KEY', 'BAIDU_MAP_AK', 'TENCENT_MAP_KEY'\]\)/);
   assert.match(script, /!env\.AMAP_WEB_KEY && !env\.BAIDU_MAP_AK && !env\.TENCENT_MAP_KEY/);
   assert.match(script, /TENCENT_MAP_KEY: \$\{env\.TENCENT_MAP_KEY \? 'set' : 'MISSING'\}/);
 });
