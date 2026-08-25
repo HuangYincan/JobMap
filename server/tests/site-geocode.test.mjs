@@ -261,6 +261,60 @@ test('officeNameMatchStrength accepts 职场/写字楼 office brackets (2026-08-
   }
 });
 
+test('officeNameMatchStrength accepts company-form qualifiers (管理/有限/股份/智能/全球/中国/科技园, 2026-08-25)', () => {
+  // 2026-08-25 (fix/grader-company-forms): 全量诊断 139 站 name-mismatch 主因 —
+  // 简称 vs 全称形态词: 博时基金 → 博时基金管理有限公司 (管理/有限),
+  // 傅利叶 → 傅利叶智能, 思格新能源 → …全球总部, GE医疗 → …中国科技园。
+  // 真实办公点, 城市闸门兜底。
+  for (const [candidate, company] of [
+    ['博时基金管理有限公司', '博时基金'],
+    ['嘉实基金管理有限公司', '嘉实基金'],
+    ['博时股份(上海)', '博时'],
+    ['傅利叶智能', '傅利叶'],
+    ['思格新能源全球总部', '思格新能源'],
+    ['GE医疗中国科技园', 'GE医疗'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
+  }
+});
+
+test('officeNameMatchStrength accepts city-name bracket segments (2026-08-25)', () => {
+  // 括号段=城市名 (或 城市+限定词): 某司(上海) / 歌尔微电子股份有限公司(上海)。
+  for (const [candidate, company] of [
+    ['某司(上海)', '某司'],
+    ['歌尔微电子股份有限公司(上海)', '歌尔微电子'],
+    ['某司(上海分公司)', '某司'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
+  }
+  // 城市+店铺名/网点仍拒 — 城市 token 后剩余含非限定词 (黄浦/店) → 整段拒。
+  for (const [candidate, company] of [
+    ['美团(上海黄浦店)', '美团'],
+    ['京东(万达广场店)', '京东'],
+    ['某司(上海站)', '某司'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'no', `${candidate} vs ${company}`);
+  }
+});
+
+test('officeNameMatchStrength strips city tokens before matching (2026-08-25)', () => {
+  // 公司名与 POI 名之间夹城市词: 快手上海公司 ↔ 快手 / Shopee上海研发 ↔ Shopee研发。
+  for (const [candidate, company] of [
+    ['快手上海公司', '快手'],
+    ['Shopee上海研发', 'Shopee研发'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
+  }
+  // 剔除城市词后非限定词 token 仍拒 — 城市+店铺/包装/实业混入, 防线不回退。
+  for (const [candidate, company] of [
+    ['美团上海黄浦店', '美团'],
+    ['上海得物包装实业有限公司', '得物'],
+    ['拼多多上海驿站', '拼多多'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'no', `${candidate} vs ${company}`);
+  }
+});
+
 test('gradeOfficePoi rejects same-brand store/warehouse traps from Baidu', () => {
   const trap = { name: '拼多多驿站(川图路海中心站)', address: '浦东新区川图路海中心', lng: 121.7, lat: 31.15, type: '', adname: '浦东新区', pname: '上海市', cityname: '上海市' };
   assert.equal(gradeOfficePoi(trap, '拼多多', '上海市', '上海市').confidence, 'low');

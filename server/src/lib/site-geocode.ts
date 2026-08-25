@@ -909,10 +909,17 @@ export function normalizeNameForMatch(name: string): string {
 // 科技+公司)。旧规则只认整段在集合内, 「百度研发大厦」类真实办公室 POI 被误拒
 // (r4 apply 831 站 no-result 主因)。整段仍必须完全由集合 token 组成 — 非限定词
 // token (包装/实业/造型/鱼庄/驿站/店/站/旗舰店…) 混入 → 整段拒绝, 防线不变。
+// 2026-08-25 (fix/grader-company-forms): 增加 管理/有限/股份/智能/全球 — 全量
+// 诊断 139 站 name-mismatch 的主因是「公司简称 vs 全称形态词」: 博时基金 →
+// 博时基金管理有限公司 / 傅利叶 → 傅利叶智能 / 思格新能源 → …全球总部。
+// 再增加 中国/科技园 (GE医疗中国科技园 类外企中国区/园区办公点)。
+// 这些是真实办公点 (城市闸门 + regeo 兜底), 非限定词 token (物业…) 混入仍拒。
 
 const QUALIFIER_SUFFIXES = new Set([
   '总部', '运营总部', '分公司', '子公司', '研发', '研究院', '办公', '大楼', '大厦', '广场',
   '园区', '基地', '公司', '集团', '科技', '学院', '学校', '大学',
+  '管理', '有限', '股份', '智能', '全球',
+  '中国', '科技园',
 ]);
 const CITY_PREFIXES = new Set([
   '北京', '上海', '广州', '深圳', '杭州', '成都', '武汉', '苏州', '宁波', '南京', '天津', '重庆',
@@ -990,10 +997,33 @@ function candidateBracketSegments(name: string): string[] {
   return segments;
 }
 
+/**
+ * 剔除文本中所有城市名 token (2026-08-25, fix/grader-company-forms)。
+ * 「Shopee上海研发中心」→「Shopee研发中心」。城市词可能出现在任意位置
+ * (前缀已被 isQualifierPrefixSeq 支持, 中间位置此前不处理)。城市词按最长
+ * 优先替换; 城市词是其他词一部分的情况 (杭州湾/香港路) 与既有 cityTokenLen
+ * 语义一致 (也按城市处理), 不引入新判定差异。
+ */
+function stripCityTokens(text: string): string {
+  let out = text;
+  for (const city of CITY_SORTED) {
+    // 带 市/省 后缀的整段优先删 (深圳市 → 去掉整段, 不能只剩「市」).
+    out = out.split(city + '市').join('').split(city + '省').join('').split(city).join('');
+  }
+  return out;
+}
+
+/** 城市词列表 (按长度降序, 长词优先 — 与 cityTokenLen 的最长匹配语义一致). */
+const CITY_SORTED = [...CITY_PREFIXES].sort((a, b) => b.length - a.length);
+
 /** 'strong' iff the candidate name claims `companyName` with only qualifier tokens. */
 export function officeNameMatchStrength(candidateName: string, companyName: string): 'strong' | 'no' {
   const q = normalizeNameForMatch(companyName);
-  const c = normalizeNameForMatch(candidateName);
+  // 2026-08-25 (fix/grader-company-forms): 匹配前剔除候选名中的城市名 token —
+  // 「Shopee上海研发中心」↔「Shopee研发中心」类 (公司名与 POI 名之间夹城市词)
+  // 此前被误拒 (c.includes(q) 因「上海」插入而 false)。剔除后非限定词 token
+  // (店/站/驿站/包装/实业…) 仍然混入整段 → 拒, 防线不变。
+  const c = stripCityTokens(normalizeNameForMatch(candidateName));
   if (!q || !c || !c.includes(q)) return 'no';
   // 每侧为空或「全限定词 token 序列」; 组合须至少一边非空且全限定词, 但
   // 精确同名 (两侧皆空) 是最强认领, 保持既有行为 (得物=得物 / 快手(星耀中心
@@ -1013,7 +1043,14 @@ export function officeNameMatchStrength(candidateName: string, companyName: stri
   }
   if (!strong) return 'no';
   for (const seg of candidateBracketSegments(candidateName)) {
-    if (!GOOD_BRACKET_SEG_RE.test(seg)) return 'no';
+    if (GOOD_BRACKET_SEG_RE.test(seg)) continue;
+    // 2026-08-25 (fix/grader-company-forms): 括号段=城市名开头 + 剩余为限定词
+    // 序列 → 办公形态放行 (某司(上海) / 某司(上海分公司) / 歌尔微电子
+    // 股份有限公司(上海));「上海黄浦店」类 城市+店铺名 剩余含非限定词 (黄浦/店)
+    // → 仍拒。
+    const cut = cityTokenLen(seg);
+    if (cut > 0 && isQualifierSuffixSeq(seg.slice(cut))) continue;
+    return 'no';
   }
   return 'strong';
 }
@@ -1320,7 +1357,9 @@ export async function jiaoyuntongPlaceSearchRest(
   url.searchParams.set('region', city);
   url.searchParams.set('output', 'json');
   url.searchParams.set('ret_coordtype', 'gcj02ll');
-  url.searchParams.set('page_size', '10');
+  // 2026-08-25 (fix/grader-company-forms): 10→20 — 百度 page_size 上限 20;
+  // 真实办公点常排在店铺/网点之后 (第 11-20 位), 10 条漏掉整批。
+  url.searchParams.set('page_size', '20');
   url.searchParams.set('scope', '1');
   url.searchParams.set('ak', key);
   let payload: { status?: number; results?: Array<Record<string, unknown>> };
@@ -1381,7 +1420,9 @@ export async function baiduPlaceSearchRest(
   url.searchParams.set('region', city);
   url.searchParams.set('output', 'json');
   url.searchParams.set('ret_coordtype', 'gcj02ll');
-  url.searchParams.set('page_size', '10');
+  // 2026-08-25 (fix/grader-company-forms): 10→20 — 百度 page_size 上限 20;
+  // 真实办公点常排在店铺/网点之后 (第 11-20 位), 10 条漏掉整批。
+  url.searchParams.set('page_size', '20');
   url.searchParams.set('scope', '1');
   url.searchParams.set('ak', key);
   let payload: { status?: number; results?: Array<Record<string, unknown>> };
