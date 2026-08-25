@@ -1,11 +1,11 @@
 # 公司官网/工商公开地址 → geocode overrides — 来源审查
 
 **接入日期:** 2026-08-25
-**数据文件:** `server/data/recruitment/geocode-overrides.json`(仅本次上海批次条目)
+**数据文件:** `server/data/recruitment/geocode-overrides.json`
 **方法:** WebSearch 定位来源页 → WebFetch 提取地址文本 → 高德 geocode v3(`geocodeAddressRest`,
 AMAP_WEB_KEY, 5000 次/日配额, 不耗公司网关额度)→ 写入 overrides(`city` 字段 = 目标城市)。
-**状态:** 3 个批次共 12 家(上海 194 站剩余中检索无解的知名公司;第 2/3 批为
-券商/国企研究院, 检索命中弱但地址可从工商公开渠道确认)。
+**状态:** 上海 12 家 + 北京/深圳 14 家(大厂总部/上市公告级来源; 城市中心假坐标重跑
+期间网关额度耗尽, 用官网/工商公开渠道补齐检索无解的大厂)。
 
 ## 1. 合规纪律(本批次执行)
 
@@ -15,7 +15,9 @@ AMAP_WEB_KEY, 5000 次/日配额, 不耗公司网关额度)→ 写入 overrides(
 - 来源记录到具体 URL;坐标经高德 geocode v3 校验(非 POI 检索, 不耗网关/place 配额)。
 - 不做任何登录/验证码绕过;仅公开网页礼貌 GET(WebFetch 单页)。
 
-## 2. 批次清单(12 家)
+## 2. 批次清单(28 家)
+
+### 2a. 上海批次(12 家, `city: "上海市"`)
 
 | slug | 地址(写回 drops) | 来源类型 | 来源 URL |
 |---|---|---|---|
@@ -32,8 +34,33 @@ AMAP_WEB_KEY, 5000 次/日配额, 不耗公司网关额度)→ 写入 overrides(
 | 中望软件 | 虹口区海伦路440号金融街海伦中心A座23层 | 工商公开转载(广州中望龙腾上海分公司) | https://www.dianhua.cn/dt/eccbc34ea9714892a0455b10b4ee8bb4/457a5e917744e39e1a2f177353897af8 |
 | 中国电信天翼云 | 浦东新区秀沿西路189号中国电信信息园区25号楼 | 高校就业网工商信息(天翼云科技上海分部) | https://job.xidian.edu.cn/company/view/id/818771 |
 
-(注: 表格列出 12 家 — 每条的 `city: "上海市"` 由
-apply 的 override-city 闸门消费, 缺失即被默认杭州市误拒。)
+(注: 每条的 `city: "上海市"` 由 apply 的 override-city 闸门消费, 缺失即被默认杭州市误拒。)
+
+### 2b. 北京批次(7 家, `city: "北京市"`)
+
+| slug | 地址(写回 drops) | 来源类型 | 来源 URL |
+|---|---|---|---|
+| 京东 | 大兴区科创十一街18号院(亦庄总部) | 新闻(总部1号园区 DEF 座启用) | https://tech.ifeng.com/c/8bWtutDZT54 |
+| 摩尔线程 | 朝阳区酒仙桥路6号电子城国际电子总部I区3号楼 | 上市公告(招股书 办公地址) | http://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?CompanyCode=82620734&gather=1&id=12484622 |
+| 地平线 | 海淀区丰豪东路9号院2号楼 | 高校就业网工商信息(北京地平线信息技术有限公司) | http://career.csu.edu.cn/company/view/id/521475 |
+| 快手 | 海淀区西二旗西路16号院12号楼 | 高校就业网工商信息(北京达佳互联) | https://myjob.dlmu.edu.cn/company/view/id/939080 |
+| 小米 | 海淀区安宁庄路小米科技园 | 高校就业网工商信息(北京小米移动软件) | https://career.shiep.edu.cn/company/view/id/720021 |
+| 美团longcat大模型 | 朝阳区望京东路4号院恒电大厦 | 地图标注(美团点评北京总部) | https://map.baidu.com/mobile/webapp/search/search/qt=s&wd=北京朝阳望京东路4号院恒电大厦BC座美团点评北京总部 |
+| 联想 | 海淀区上地西路6号 | 联想官网 ESG 证书(ISO14001 地址) | https://www.lenovo.com/content/dam/lenovo/site-design/esg-document-library/global/corp-policies/iso-certs/iso14001/lenovo-iso-14001-certificate-cesi.pdf |
+
+### 2c. 深圳批次(7 家, `city: "深圳市"`)
+
+| slug | 地址(写回 drops) | 来源类型 | 来源 URL |
+|---|---|---|---|
+| 比亚迪 | 坪山区比亚迪路3009号六角大楼 | 高校就业网工商信息 | https://cqu.cqbys.com/company/view/id/700983 |
+| 腾讯 | 南山区海天二路33号腾讯滨海大厦 | 行业协会参访通知(地址原文) | https://cmra.org.cn/m/newsshow.php?id=1014 |
+| 招商银行 | 福田区深南大道7088号招商银行大厦 | 维基百科(大厦词条) | https://zh.wikipedia.org/wiki/%E6%8B%9B%E5%95%86%E9%93%B6%E8%A1%8C%E5%A4%A7%E5%8E%A6 |
+| 迈瑞医疗 | 南山区高新技术产业园科技南十二路迈瑞大厦 | 上市公告(2025 年报 办公地址) | http://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=300760&id=12044611 |
+| 荣耀honor | 福田区红荔西路8089号深业中城6号楼 | 高校就业网工商信息(荣耀终端) | https://career.hebut.edu.cn/company/index/id/11113.html |
+| 华为ai | 龙岗区坂田街道华为总部基地 | 政府公开(龙岗区 华为总部基地) | https://www.lg.gov.cn/zjlg/qwlg/cy/kj/content/post_12861307.html |
+| 传音控股-taig-ai顶尖 | 南山区西丽街道留仙大道传音大厦 | 上市公告(变更主要办公地址公告) | https://www.sohu.com/a/745178237_115433 |
+| 正浩ecoflow | 宝安区福海街道福园一路润恒工业厂区 | 高校就业网工商信息 | https://career.shiep.edu.cn/company/view/id/722332 |
+| 影石insta360 | 宝安区新安街道留仙三路1100号金利通金融中心 | 上市公告(公司概况) | https://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpInfo/stockid/688775.phtml |
 
 ## 3. 失败与拒绝记录(不写)
 
@@ -48,6 +75,8 @@ apply 的 override-city 闸门消费, 缺失即被默认杭州市误拒。)
 
 ## 4. 后续
 
-- overrides 在下次 `geocode-sites-apply` 时按 slug 生效(manual-override, 不走检索,
+- overrides 在下次 `geocode-sites-apply` 时按 slug + city 生效(manual-override, 不走检索,
   不耗网关额度); 之后 `import:seed:apply` 入库。
+- 操作提示(2026-08-25 实测): 高德 geocode v3 批量连发有 QPS 限流(连发 ~6 个后
+  `empty`), 间隔 ≥800ms 稳定; 后续扩批按此节奏。
 - 若需扩批: 按 §1 纪律对剩余知名公司继续; 注册地址一律不写。
