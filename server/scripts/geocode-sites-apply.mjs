@@ -49,6 +49,17 @@
 // 已知区县/城市名 → 跳过地址检索, 直接公司名检索; 地址检索命中后 regeo 区级
 // 校验 (落点区 ≠ 地址区名) → 回退公司名检索。两种路径都不写错坐标。
 //
+// 2026-08-25 (fix/site-place-search): 地点检索补全阶段 (读路径剔除城市中心钉
+// 后的数据补全)。地址为城市名占位 ("上海"/"深圳市"/"浙江省杭州市") 或无地址
+// 的带岗位站点 — 地址无从 geocode, 用「公司名 + 城市」地点检索取真实办公点:
+//   - plan/audit 分类: siteNeedsPlaceSearch (site-geocode.ts) 与 needsGeocode
+//     并列; plan 输出 needsPlaceSearch 计数 + samples。
+//   - 选点规则: pickPlaceSearchPoi — 名称强匹配 (officeNameMatchStrength) +
+//     同城 10 分/同省近邻 1 分 + 市中心半径惩罚 (3km 内 0, 13km+ 满 1) +
+//     office 类型 +1; 无候选过闸门 → 记 unresolved, 站点留中心钉待后续跟进。
+//     memo 键在 place-search 模式加 "ps:" 前缀, 与地址 geocode 站选点不串。
+//   - 写回口径不变: 仅 confidence === 'high' 写回 drop JSON (regeo 城市闸门
+//     照常), 近似城市 (同省不同市) 候选等级 low 不写, medium 同既有行为不写。
 // Hand-curated resolutions can be dropped into data/recruitment/geocode-overrides.json
 // as { "<slug>": { "name", "address", "lng", "lat" } } — they apply verbatim.
 
@@ -74,6 +85,7 @@ import {
   nominatimSearchRest,
   pickBestNominatimPoi,
   pickBestOfficePoi,
+  pickPlaceSearchPoi,
   placeSearchMemoKey,
   placeSearchMemoLoad,
   placeSearchMemoPersist,
@@ -86,6 +98,7 @@ import {
   siteCityTarget,
   siteHasStreetAddress,
   siteNeedsGeocode,
+  siteNeedsPlaceSearch,
   sitesNeedingGeocode,
 } from '../src/lib/site-geocode.ts';
 import { loadOfflineWorkCatalog } from '../src/lib/server-catalog.ts';
@@ -217,24 +230,36 @@ process.on('exit', () => placeSearchMemoPersist(placeSearchMemo));
  * (公司名+站点名) 检索、按站点名完整串或裸公司名两级评分 (gradeVariantHit);
  * 宽候选 gradeName 缺省 = query, 行为不变。
  */
-async function searchCompanyPoi(query, target, gradeName = query) {
+async function searchCompanyPoi(query, target, gradeName = query, placeSearchMode = false) {
   const out = { poi: null, confidence: null, reason: '', provider: 'amap' };
   if (DRY_RUN || env.AMAP_WEB_KEY || env.BAIDU_MAP_AK || env.TENCENT_MAP_KEY) {
-    const memoKey = placeSearchMemoKey(query, target);
+    // 2026-08-25 (fix/site-place-search): 占位/无地址站走 place-search 选点规则
+    // (同城优先 + 名称强匹配 + 市中心半径惩罚), 与地址 geocode 站选点不同 —
+    // memo 键加 "ps:" 前缀隔离, 同一 query+城市 两种选点不串 (旧磁盘 memo 不受影响)。
+    const memoKey = placeSearchMode ? `ps:${placeSearchMemoKey(query, target)}` : placeSearchMemoKey(query, target);
     const cached = placeSearchMemo.get(memoKey);
     if (cached) return cached;
     const hit = await placeTextSearchRest(query, target.city);
     await sleep(throttleMs(hit.provider));
     if (hit.ok && hit.pois.length) {
-      // 用别名后的 query 评分: 中微公司 → 中微半导体设备, 否则查询命中但
-      // 原始快照名对不上 POI 名会被 grader 拒. 精确候选先按完整检索串评分
-      // (网易杭州研究院 整名命中), 被拒回落 gradeName (公司名) 评分.
-      const picked = pickBestOfficePoi(hit.pois, gradeName, target.province, target.city, query);
-      if (picked) {
-        const grade = gradeVariantHit(picked, query, gradeName, target.province, target.city);
-        out.poi = grade.confidence === 'low' ? null : picked;
-        out.confidence = grade.confidence;
-        out.reason = grade.reason;
+      if (placeSearchMode) {
+        const picked = pickPlaceSearchPoi(hit.pois, gradeName, target);
+        if (picked) {
+          out.poi = picked.confidence === 'low' ? null : picked.poi;
+          out.confidence = picked.confidence;
+          out.reason = picked.reason;
+        }
+      } else {
+        // 用别名后的 query 评分: 中微公司 → 中微半导体设备, 否则查询命中但
+        // 原始快照名对不上 POI 名会被 grader 拒. 精确候选先按完整检索串评分
+        // (网易杭州研究院 整名命中), 被拒回落 gradeName (公司名) 评分.
+        const picked = pickBestOfficePoi(hit.pois, gradeName, target.province, target.city, query);
+        if (picked) {
+          const grade = gradeVariantHit(picked, query, gradeName, target.province, target.city);
+          out.poi = grade.confidence === 'low' ? null : picked;
+          out.confidence = grade.confidence;
+          out.reason = grade.reason;
+        }
       }
     } else {
       out.reason = hit.reason ?? 'no-pois';
@@ -255,12 +280,12 @@ async function searchCompanyPoi(query, target, gradeName = query) {
  * medium 不写回)。配额类失败 (quota / baidu-status:302 / tencent-status:*)
  * 原样传播 → 配额短路不受影响。
  */
-async function searchCompanyPoiVariants(query, target, site) {
+async function searchCompanyPoiVariants(query, target, site, placeSearchMode = false) {
   const variants = addresslessQueryVariants(query, site.name, target);
   let firstHit = null;
   let lastMiss = null;
   for (const v of variants) {
-    const res = await searchCompanyPoi(v.searchQuery, target, v.gradeName);
+    const res = await searchCompanyPoi(v.searchQuery, target, v.gradeName, placeSearchMode);
     const tagged = { ...res, variant: v.kind, searchQuery: v.searchQuery };
     if (!res.poi) {
       lastMiss = tagged;
@@ -472,9 +497,14 @@ if (prevProgress) {
 }
 
 let planCount = 0;
+/** 2026-08-25 (fix/site-place-search): 占位/无地址 (地点检索补全) 站点数 — 报告用。 */
+let placeSearchSites = 0;
 mainLoop: for (const { file, company, site } of needing) {
   const slug = company.slug;
   planCount += 1;
+  /** 2026-08-25 (fix/site-place-search): 占位地址/无地址站走地点检索补全选点规则. */
+  const placeSearchMode = siteNeedsPlaceSearch(site);
+  if (placeSearchMode) placeSearchSites += 1;
   if (ONLY && !ONLY.includes(slug)) {
     skipped.push({ slug, siteId: site.id, reason: 'not-in-only-list' });
     continue;
@@ -543,7 +573,9 @@ mainLoop: for (const { file, company, site } of needing) {
     // 2026-08-21 (fix/geocode-address-first): 无地址站点网络检索优先通道 —
     // 先精确候选 (公司名+站点名, 站点名存在时), 未命中/地址缺失回落宽候选
     // (裸公司名, 既有行为); 每站点 place-text ≤ 2 次。
-    const res = await searchCompanyPoiVariants(query, target, site);
+    // 2026-08-25 (fix/site-place-search): 占位/无地址站 (placeSearchMode) 换用
+    // pickPlaceSearchPoi 选点规则 — 公司名+城市地点检索, 同城优先 + 半径惩罚。
+    const res = await searchCompanyPoiVariants(query, target, site, placeSearchMode);
     poi = res.poi;
     confidence = res.confidence;
     reason = res.reason;
@@ -677,7 +709,7 @@ console.log(formatGeocodeProviderReport());
 // 三级兜底失败后 keyless 走 OSM Nominatim (WGS-84, ≥1 req/s)。纯计划 dry-run
 // (无 key) 不联网, nominatim=skip。
 console.log(`NOMINATIM: overseas-only, keyless, ${NOMINATIM_ACTIVE ? 'active (1 req/s)' : 'skip (plan-only dry-run, no network)'}`);
-console.log(`Sites needing a point: ${planTotal} (attempted: ${planCount}) | skipped (not-in-only-list): ${skipped.filter((s) => s.reason === 'not-in-only-list').length} | city-not-in-list: ${skipped.filter((s) => s.reason.startsWith('city-not-in-list')).length} | override-city-mismatch: ${skipped.filter((s) => s.reason === 'override-city-mismatch').length}`);
+console.log(`Sites needing a point: ${planTotal} (attempted: ${planCount}) | place-search(占位/无地址): ${placeSearchSites} | skipped (not-in-only-list): ${skipped.filter((s) => s.reason === 'not-in-only-list').length} | city-not-in-list: ${skipped.filter((s) => s.reason.startsWith('city-not-in-list')).length} | override-city-mismatch: ${skipped.filter((s) => s.reason === 'override-city-mismatch').length}`);
 console.log(`Resolved: ${resolutions.length} | unresolved: ${unresolved.length}`);
 console.log('\n=== RESOLVED ===');
 for (const r of resolutions) {

@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // Dry-run: which drop / imported sites still need a point.
 // Does not call AMap. Live REST apply is a later step (AMAP_WEB_KEY).
+// 2026-08-25 (fix/site-place-search): 输出增加 needsPlaceSearch 分类 —
+// 占位/无地址站点 (地址无从 geocode, 需公司名+城市地点检索补全) 与 needs
+// (地址 geocode) 并列; place-search 与 geocode 一样仍不调 REST (纯本地分类)。
 import { injectEnv } from './lib/load-env.mjs';
 import { bossAdapter } from '../src/lib/recruitment-adapters/boss.ts';
 import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
@@ -33,9 +36,11 @@ console.log(
     {
       companies: allCompanies.length,
       alreadyLocated: plan.alreadyLocated,
-      needs: plan.needs.length,
+      needsGeocode: plan.needsGeocode.length,
+      needsPlaceSearch: plan.needsPlaceSearch.length,
       skippedNoAddress: plan.skippedNoAddress,
-      samples: plan.needs.slice(0, 10),
+      samples: plan.needsGeocode.slice(0, 10),
+      placeSearchSamples: plan.needsPlaceSearch.slice(0, 10),
       imported:
         imported == null
           ? { available: false, reason: 'no-database' }
