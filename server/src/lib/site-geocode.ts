@@ -7,6 +7,7 @@
 import { getPool } from './db.ts';
 import { isAbortError, fetchWithTimeout } from './fetch-with-timeout.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { cityProvinceOf } from './recruitment-adapters/official-site-parse.ts';
 import { CITY_CENTERS, CITY_CENTER_EPS, OVERSEAS_CITY_KEYS, bareCityName, cityCenter } from './city-centers.ts';
 import type { CompanySite, POILocation } from './types.ts';
@@ -597,8 +598,18 @@ export function placeSearchMemoSet(
   if (hit?.poi) memo.set(key, hit);
 }
 
-/** 默认持久化文件 (server/.geocode-memo.json, 已 gitignore). */
-export const PLACE_SEARCH_MEMO_FILE = new URL('../../.geocode-memo.json', import.meta.url).pathname;
+/**
+ * 默认持久化文件路径 (server/.geocode-memo.json, 已 gitignore)。
+ * **调用期求值**而非顶层常量: `new URL(相对路径, import.meta.url)` 是
+ * Turbopack 的资产引用模式, 构建期静态解析该文件 — .geocode-memo.json 已
+ * gitignore, CI checkout 无此文件 → next build Module not found。故改惰性求值。
+ * cwd 契约: geocode 脚本 (npm run geocode:sites:*, make geocode-sites 均
+ * `cd server`) 与 Next server runtime (next dev/start) 均以 server/ 为 cwd,
+ * 解析结果一致 = server/.geocode-memo.json。
+ */
+export function placeSearchMemoFile(): string {
+  return join(process.cwd(), '.geocode-memo.json');
+}
 
 /**
  * 跨进程持久化 (2026-08-25, fix/geocode-persist-memo): 把成功命中写盘。
@@ -608,7 +619,7 @@ export const PLACE_SEARCH_MEMO_FILE = new URL('../../.geocode-memo.json', import
  * 持久化后: 换 key / 隔日续跑 / 诊断复用, 已查过的 query+city 直接读盘,
  * 不重打网关。只 dump 成功命中 (与 placeSearchMemoSet 语义一致 — 失败不缓存)。
  */
-export function placeSearchMemoPersist(memo: ReadonlyMap<string, PlaceSearchMemoHit>, filePath = PLACE_SEARCH_MEMO_FILE): void {
+export function placeSearchMemoPersist(memo: ReadonlyMap<string, PlaceSearchMemoHit>, filePath = placeSearchMemoFile()): void {
   try {
     const out: Record<string, PlaceSearchMemoHit> = {};
     for (const [k, v] of memo) out[k] = v;
@@ -619,7 +630,7 @@ export function placeSearchMemoPersist(memo: ReadonlyMap<string, PlaceSearchMemo
 }
 
 /** 从磁盘加载成功命中 (文件缺失/损坏 → 空 memo, 不抛). */
-export function placeSearchMemoLoad(memo: Map<string, PlaceSearchMemoHit>, filePath = PLACE_SEARCH_MEMO_FILE): void {
+export function placeSearchMemoLoad(memo: Map<string, PlaceSearchMemoHit>, filePath = placeSearchMemoFile()): void {
   try {
     const raw = JSON.parse(readFileSync(filePath, 'utf8')) as Record<string, PlaceSearchMemoHit>;
     for (const [k, v] of Object.entries(raw)) {
