@@ -1,11 +1,12 @@
 // ============================================================
 // marker 泄漏契约测试 — 控制器与地图 overlay 表的失同步防护
 //
-// 目标不变式(Bug1 伴生,ws2 + b2 修订;ws-c 同步语义):
+// 目标不变式(Bug1 伴生,ws2 + b2 修订;ws-c 同步语义;2026-08-25 f-lod-pool):
 //   1. destroy() 后,地图上无该控制器管理过的 overlay(计数归零)
 //   2. setPOIs 非空列表 = 只增不删(b2):地图计数单调不减——只新增缺失标记,
 //      离开列表的 id 保留实例(可见性由 setVisiblePOIs 控制);
-//      空列表 = 清空(刷新/重置路径)
+//      空列表 = 保留实例(空过滤 ≠ 清空池,2026-08-25 修订:刷新/重置/筛选
+//      空批次的清场交给调用方 setVisiblePOIs([]);显式清空只有 clear()/destroy)
 //   3. 控制器拿到 view 即引擎就绪(ws-c 删除了 loadAMap 异步门):所有操作
 //      同步生效,不再有「就绪前销毁」竞态
 //
@@ -160,14 +161,48 @@ test('已销毁的 map 上不创建 marker(控制器晚于地图销毁)', () => 
   c.destroy();
 });
 
-test('setPOIs 空列表 → 地图清零(空列表 = 清空,刷新/重置路径)', () => {
+test('setPOIs 空列表 → 保留实例(空过滤 ≠ 清空池),可见性由 setVisiblePOIs 负责;clear() 才显式清空', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
   c.setPOIs(HZ);
   assert.equal(countOnMap(map), 2);
-  c.setPOIs([]);
-  assert.equal(countOnMap(map), 0, '空列表即移除全部(等价 clear)');
+  const hz1Before = c.getMarkerByPOIId('hz-1');
+  const hz2Before = c.getMarkerByPOIId('hz-2');
+
+  c.setPOIs([]); // 刷新/加载瞬态:空过滤 ≠ 清空
+  assert.equal(countOnMap(map), 2, '空列表保留全部实例(不摘除)');
+  assert.equal(c.getMarkerByPOIId('hz-1'), hz1Before, 'hz-1 实例同一性不变');
+  assert.equal(c.getMarkerByPOIId('hz-2'), hz2Before, 'hz-2 实例同一性不变');
+
+  // 隐藏职责在可见集:空批次 = 全部隐藏,实例仍在(恢复零重建)
+  c.setVisiblePOIs([]);
+  for (const p of HZ) assert.ok(!c.getMarkerByPOIId(p.id).isVisible(), `${p.id} 空批次隐藏`);
+  c.setVisiblePOIs(HZ.map((p) => p.id));
+  for (const p of HZ) assert.ok(c.getMarkerByPOIId(p.id).isVisible(), `${p.id} 恢复显示(实例未重建)`);
+  assert.equal(countOnMap(map), 2, '整段空批次往返,实例计数不变');
+
+  c.clear(); // 显式清空路径(仅 clear/destroy)
+  assert.equal(countOnMap(map), 0, 'clear() 显式清空仍有效');
+  c.destroy();
+});
+
+test('setPOIs 空列表 + replace(目录更换为空):不销毁任何实例,池保留等新批次', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const before = new Map(HZ.map((p) => [p.id, c.getMarkerByPOIId(p.id)]));
+
+  // domain 搜索空结果/空视口:目录更换为 [] → 空列表 + replace 不销毁
+  // (含 retainIds 之外的 id):池保留,隐藏交给 setVisiblePOIs([])
+  c.setPOIs([], { replace: true, retainIds: ['hz-2'] });
+  assert.equal(countOnMap(map), 2, '空列表 + replace 不销毁任何实例');
+  for (const [id, m] of before) {
+    assert.equal(c.getMarkerByPOIId(id), m, `${id} 实例同一性不变`);
+  }
+  c.setVisiblePOIs([]);
+  for (const p of HZ) assert.ok(!c.getMarkerByPOIId(p.id).isVisible(), `${p.id} 空可见集隐藏`);
   c.destroy();
 });
 
