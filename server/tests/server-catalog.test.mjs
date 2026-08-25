@@ -14,6 +14,7 @@ import {
   serverCatalogById,
 } from '../src/lib/server-catalog.ts';
 import { loadWorkCatalogFromDb } from '../src/lib/recruitment-store.ts';
+import { isCityCenterPin } from '../src/lib/city-centers.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -310,6 +311,14 @@ test('loadServerCatalog prefers imported work rows, then seed + file drops', () 
   assert.match(catalog, /NOWCODER_DIR/);
   assert.match(catalog, /SHIXISENG_DIR/);
   assert.match(catalog, /RADAR_DIR/);
+});
+
+// 2026-08-25 (fix/hide-center-pins): 读路径必须排除城市中心钉 —
+// 中心钉 = 无真实办公坐标、钉在行政中心的站点, 展示即误导。
+test('offline catalog excludes city-center pins (no fake downtown POIs)', async () => {
+  const work = await loadOfflineWorkCatalog();
+  const pins = work.filter((poi) => isCityCenterPin(poi.location.lng, poi.location.lat));
+  assert.equal(pins.length, 0, `离线 catalog 含 ${pins.length} 个城市中心钉: ${pins.slice(0, 3).map((p) => p.id).join(', ')}`);
 });
 
 test('offline catalog keeps every position alive (A1: open + deadline future or none)', async () => {

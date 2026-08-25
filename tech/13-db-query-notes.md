@@ -102,6 +102,7 @@ gist 已接上。行数涨到几百以后，单独的 bbox 也应切到 Index Sc
 - 视野裁剪仍 `geom && ST_MakeEnvelope` + `ST_DWithin`（已有）。
 - `positions_open_site_idx (site_id) WHERE status='open'`：部分索引，alive 过滤只扫在招行。
 - A1 只在招：DB 读路径恒开 `status='open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)`；离线 catalog 在 `loadOfflineWorkCatalog` 里按 `isAlivePosition` 内存过滤；筛选器 `alive` 同规则。
+- 城市中心钉排除（2026-08-25，fix/hide-center-pins）：读路径不展示「位置未知」站点 —— 坐标命中 `CITY_CENTERS` ±0.0005（`city-centers.isCityCenterPin`）的站点是 city-centers 批次占位，非真实办公点；DB 路径在 `loadWorkCatalogFromDb` 的 `located` 过滤、离线路径在 `loadOfflineWorkCatalog` 的 `hasShownCoord` 同规则排除。公司若所有站点都是中心钉则该公司整体不返回（`located.length===0 → null` 后离线 catalog 同样过滤），不出现在地图与检索结果。
 - 读路径透传（`/api/pois` + `/api/search` 的 `filters`）：`maxTier`（SQL 下推 `companies.tier <= n`，内存 `applyFilters` 兜底）、`city`（SQL：`city_code` 精确 OR `city` ILIKE；内存：site 城市/地址文本包含）、`alive`。
 - 导入映射（`recruitment-import.ts`）：`companies.tier` 缺省 12、`category` 缺省 `'other'`（国标大类 code，tech/19）；site `city` 从 drop `site.city` 或地址解析（`siteCityOf`：目标城市名 / 杭州区名前缀），`province`/`city_code` 原样落库。
 - 百万级预留：按 `province`/`city_code` 分区或聚合展示（缩到全国时按 tier 聚合计数）。

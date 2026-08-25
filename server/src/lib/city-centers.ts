@@ -160,3 +160,26 @@ export function cityCenter(city: string): { lng: number; lat: number } | undefin
   const bare = bareCityName(city);
   return CITY_CENTERS[bare] ?? CITY_CENTERS[city];
 }
+
+/**
+ * 城市中心钉判定容差(度)。≈0.0005° ≈ 55m,足以覆盖 city-centers 批次
+ * 钉入的精确中心坐标,又不会误伤市中心真实办公(距市政府 55m 内的
+ * 办公实体几乎不存在)。与 site-geocode.ts 的 CITY_CENTER_EPS 同值。
+ */
+export const CITY_CENTER_EPS = 0.0005;
+
+/**
+ * 坐标是否命中任意静态城市中心(±CITY_CENTER_EPS) — 「城市中心钉」判定。
+ * 城市中心钉 = 站点无真实办公坐标、由 city-centers 批次钉在行政中心;
+ * 读路径用它把「位置未知」的站点排除在展示外(2026-08-25,
+ * fix/hide-center-pins),避免地图在市中心堆出假办公点。
+ */
+export function isCityCenterPin(lng: number, lat: number): boolean {
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return false;
+  for (const center of Object.values(CITY_CENTERS)) {
+    if (Math.abs(lng - center.lng) <= CITY_CENTER_EPS && Math.abs(lat - center.lat) <= CITY_CENTER_EPS) {
+      return true;
+    }
+  }
+  return false;
+}
