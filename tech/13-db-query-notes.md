@@ -9,7 +9,7 @@ Live PostGIS apply is verified (`001`–`016`, 51 companies / 51 sites at the 20
 | 路径 | 何时打 Postgres | 不打 |
 |---|---|---|
 | MapShell 列表 / 搜索 / 筛选 | 从不。浏览器高德 + `runPOIPipeline` | 公开读走 `loadServerCatalog`（有导入行读库，否则 seed + official-career JSON）+ 30s 进程缓存 |
-| `loadWorkCatalogFromDb(clip?)` | 有 `DATABASE_URL` | 无池 / 查询失败 → `null`（调用方回落 seed）；空表无 clip → seed；带 clip 的空结果保持 `[]` |
+| `loadWorkCatalogFromDb(clip?)` | 有 `DATABASE_URL` | 契约（2026-08-25 修订，`fix/server-catalog-semantics`）：`null` = 无池 / 查询失败（调用方回落 seed/离线目录）；`[]` = DB 健康但裁剪未命中或 JS 过滤（`hasPlausibleCoord` / `isCityCenterPin`）后为空；空表无 clip → `null`（回落 seed）；带 clip 的空结果保持 `[]` 不回退 |
 | `/api/me/*`、登录、Recent、Saved、投递、提醒 | 有 `DATABASE_URL` 时走 `account-store` | 没有库 → 内存 Map |
 
 连接：`lib/db.ts` 单例 `Pool({ max: 5 })`。不要打印连接串。
