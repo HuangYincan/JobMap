@@ -46,11 +46,16 @@ test('async catalog keeps only authentic positions (radar/portal) when there is 
   const deepseek = await loadServerCatalogById('work', 'deepseek');
   assert.ok(deepseek?.kind === 'recruitment' && deepseek.positions.some((p) => p.id.startsWith('portal-')));
   // Multi-city radar drops carry city text, not coordinates, until geocoded →
-  // they stay off the offline map; their authentic radar-* positions only
-  // appear after geocode-sites-apply + import.
-  assert.equal(await loadServerCatalogById('work', 'alibaba-xixi'), undefined);
-  assert.equal(await loadServerCatalogById('work', 'netease-hangzhou'), undefined);
-  // Companies with only example jobs (no radar/portal rows) are not shown.
+  // their own site pins stay off the offline map until geocoded. But since
+  // 2026-08-26 (fix/aggregate-site-fanout) aggregate rows are company-level
+  // signals: they fan out onto seed-matched POIs with real coordinates, so
+  // those companies pin again with authentic radar-* aggregate rows.
+  const alibaba = await loadServerCatalogById('work', 'alibaba-xixi');
+  assert.ok(alibaba?.positions.every((p) => p.id.startsWith('radar-') && p.aggregate === true));
+  const netease = await loadServerCatalogById('work', 'netease-hangzhou');
+  assert.ok(netease?.positions.length > 0 && netease.positions.every((p) => p.aggregate === true));
+  // Companies whose seed ids match no drop slug (radar uses 中文 slugs like
+  // 腾讯/华为) keep only example jobs → not shown.
   assert.equal(await loadServerCatalogById('work', 'tencent-hangzhou'), undefined);
   assert.equal(await loadServerCatalogById('work', 'huawei-hangzhou'), undefined);
   // xiaomi-hangzhou got real portal-* jobs appended by extract-qqdoc-jobs
@@ -58,8 +63,9 @@ test('async catalog keeps only authentic positions (radar/portal) when there is 
   const xiaomi = await loadServerCatalogById('work', 'xiaomi-hangzhou');
   assert.ok(xiaomi?.kind === 'recruitment' && xiaomi.positions.some((p) => p.id.startsWith('portal-')));
   assert.equal(await loadServerCatalogById('work', 'zhejiang-lab:zhejiang-lab-site'), undefined);
-  // zhejiang-lab's radar positions live on an ungeocoded multi-city site → off.
-  assert.equal(await loadServerCatalogById('work', 'zhejiang-lab'), undefined);
+  // zhejiang-lab's seed POI carries a fanned-out aggregate row (real coords).
+  const zhejiangLab = await loadServerCatalogById('work', 'zhejiang-lab');
+  assert.ok(zhejiangLab?.positions.every((p) => p.id.startsWith('radar-')));
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');
 });
@@ -206,6 +212,9 @@ test('loadWorkCatalogFromDb normalizes joined rows and drops ungeocoded or empty
   assert.equal(queries.length, 3);
   assert.ok(queries.every((call) => !call.sql.includes(' WHERE s.geom IS NOT NULL')));
 });
+
+// 2026-08-26 (fix/aggregate-site-fanout): DB 读路径 aggregate 用例见下方
+// 「fans aggregate rows out to every site」(随 recruitment-store 修复提交)。
 
 test('loadWorkCatalogFromDb applies spatial clips and returns empty when no clipped sites', async () => {
   const queries = [];
@@ -390,6 +399,25 @@ test('offline catalog keeps every position alive (A1: open + deadline future or 
         assert.ok(Date.parse(pos.deadline) >= Date.parse(today), `${poi.id} expired ${pos.deadline}`);
       }
     }
+  }
+});
+
+// 2026-08-26 (fix/aggregate-site-fanout): 端到端锚点 — 用户反馈「深圳腾讯没有收录」。
+// radar 聚合行(aggregate: true, 全挂首城占位)fan-out 到公司全部站点后,
+// 腾讯 4 城 POI 都应存在且带岗位; 修复前仅 beijing 有 3 岗位, 其余 3 城被过滤。
+test('offline catalog fans aggregate rows to every city of 腾讯 (深圳/上海/广州恢复)', async () => {
+  const work = await loadOfflineWorkCatalog();
+  const tencent = work.filter((p) => p.name === '腾讯');
+  const ids = tencent.map((p) => p.id).sort();
+  assert.deepEqual(ids, [
+    '腾讯:腾讯-site-beijing',
+    '腾讯:腾讯-site-guangzhou',
+    '腾讯:腾讯-site-shanghai',
+    '腾讯:腾讯-site-shenzhen',
+  ]);
+  for (const poi of tencent) {
+    assert.ok(poi.positions.length >= 1, `${poi.id} 至少 1 个岗位`);
+    assert.ok(poi.positions.every((p) => p.aggregate === true), `${poi.id} 岗位均为聚合行`);
   }
 });
 
