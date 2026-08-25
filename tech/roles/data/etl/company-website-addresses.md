@@ -4,8 +4,8 @@
 **数据文件:** `server/data/recruitment/geocode-overrides.json`
 **方法:** WebSearch 定位来源页 → WebFetch 提取地址文本 → 高德 geocode v3(`geocodeAddressRest`,
 AMAP_WEB_KEY, 5000 次/日配额, 不耗公司网关额度)→ 写入 overrides(`city` 字段 = 目标城市)。
-**状态:** 上海 12 家 + 北京/深圳/广州 18 家(大厂总部/上市公告级来源; 城市中心假坐标重跑
-期间网关额度耗尽, 用官网/工商公开渠道补齐检索无解的大厂)。
+**状态:** 8 批共 44 家(上海 18 + 北京 9 + 深圳 12 + 广州 7 + 成都 1; 网关新 key
+全城跑 + 官网/工商公开渠道补齐大厂; 今日写回 185 站)。
 
 ## 1. 合规纪律(本批次执行)
 
@@ -15,7 +15,7 @@ AMAP_WEB_KEY, 5000 次/日配额, 不耗公司网关额度)→ 写入 overrides(
 - 来源记录到具体 URL;坐标经高德 geocode v3 校验(非 POI 检索, 不耗网关/place 配额)。
 - 不做任何登录/验证码绕过;仅公开网页礼貌 GET(WebFetch 单页)。
 
-## 2. 批次清单(32 家)
+## 2. 批次清单(44 家)
 
 ### 2a. 上海批次(12 家, `city: "上海市"`)
 
@@ -70,6 +70,28 @@ AMAP_WEB_KEY, 5000 次/日配额, 不耗公司网关额度)→ 写入 overrides(
 | 寒武纪 | 海淀区知春路7号致真大厦D座 | 上市公告(定增预案 注册地址) | https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=688256&id=11087558 |
 | 腾讯(广州) | 海珠区芳园路99号腾讯广州总部大楼 | 新闻(总部大楼启用, 2025-09) | https://www.thepaper.cn/newsDetail_forward_31587884 |
 | 京东(广州) | 海珠区宝地广场20层 | 就业网招聘信息(京东华南岗位) | https://jyw.gpnu.edu.cn/info/1148/11499.htm |
+
+### 2e. 第 6/7/8 批(14 家)
+
+| slug | 地址(写回 drops) | 来源类型 | 来源 URL |
+|---|---|---|---|
+| netease-hangzhou(广州) | 天河区科韵路16号 | 就业网工商(广州博冠=网易游戏) | https://jy.xmu.edu.cn/company/view/id/1108923/tab/ |
+| 极飞科技 | 天河区高唐软件园思成路1号(已被检索命中高普路115号, 备用) | 就业网工商 | https://job.xidian.edu.cn/company/view/id/810847/tab/ |
+| 汇丰科技 | 天河区天河北路886号(已被检索命中石牌西路117号, 备用) | 就业网工商(汇丰软开) | http://career.csu.edu.cn/company/view/id/508617 |
+| 英特尔中国 | 闵行区紫星路880号(紫竹) | 就业网工商(英特尔亚太研发) | http://career.csu.edu.cn/company/view/id/524137 |
+| 德勤 | 黄浦区延安东路222号外滩中心27层 | 地图黄页 | https://poi.mapbar.com/shanghai/MAPIZPHIXWJWQRQBCNTAC |
+| 毕马威 | 静安区南京西路1266号恒隆广场50楼 | 上市公告(双来源) | http://static.cninfo.com.cn/finalpage/2015-10-17/1201707986.PDF |
+| 安永 | 浦东新区世纪大道100号环球金融中心50层 | 注协官网(上海市注协) | https://shcpa.org.cn/office/getOfficeDetail.do?code=11000243 |
+| 德州仪器 | 浦东新区亮秀路72号(张江) | 就业网工商 | https://jobcareer.sdu.edu.cn/eweb/jygl/zpfw.so?entityId=SCFW_JYGL_DWXX&subsyscode=zpfw&modcode=jygl_scfwyrdw&type=viewDwxx&id=Mg8aC1NLgY9JfNYsd8Cgsg |
+| 瑞银 | 浦东新区花园石桥路33号 | 券商黄页(瑞银证券上海分公司) | https://licai.jiantou8.com/sale/detail_id_56931_f_4.html |
+| 文远知行 | 黄埔区国际生物岛螺旋大道68号合景科盛广场 | 就业网工商 | https://jy.xmu.edu.cn/company/view/id/1113922 |
+| 阿里灵犀互娱 | 天河区高普路38号 | 百科(广州灵犀互动娱乐) | https://wapbaike.baidu.com/item/%E5%B9%BF%E5%B7%9E%E7%81%B5%E7%8A%80%E4%BA%92%E5%8A%A8%E5%A8%B1%E4%B9%90%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8/24530721 |
+| 腾讯音乐 | 南山区科技中三路科兴科学园D3栋(已被检索命中, 备用) | 就业网工商 | http://career.csu.edu.cn/company/view/id/516498 |
+| 京东方 | 高新西区合作路1188号(已被检索命中郫都区, 备用) | 就业网招聘信息 | https://jy.swun.edu.cn/detail/company?company_id=308581 |
+| 顺丰科技 | 南山区白石路软件产业基地1栋B座(备用) | 就业网工商 | http://career.csu.edu.cn/company/view/id/503467 |
+| 中国平安 | 福田区益田路5033号平安金融中心 | 官网联系页 | https://www.pingan.cn/other/contact-us.shtml |
+| 小马智行 | 南沙区横沥镇明珠一街1号 | 工商转载 | https://www.jobciic.com/index.php?m=company&c=show&id=74873 |
+| 多益网络 | 黄埔区新阳东路27号总部大楼 | 就业网单位信息 | https://jy.gzhu.edu.cn/index.php/web/Index/company-job?id=9206 |
 
 ## 3. 失败与拒绝记录(不写)
 
