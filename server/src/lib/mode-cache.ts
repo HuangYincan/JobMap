@@ -39,6 +39,9 @@
 //   ② work 裁剪未命中语义修正（DB 健康 + 裁剪/过滤后为空 = 空结果，不再回退
 //   离线目录）——旧缓存（未过滤 1046 条目录 / 旧回退语义）与新语义不符，bump
 //   使其失效重拉。
+// v19（2026-08-26 r5 geocode 数据落地，commit 313fc61）：用户执行 r5 apply 后 135 站
+//   占位/中心钉坐标落真实办公点（address/lng/lat 改写）——旧缓存含旧坐标，bump
+//   使其失效重拉。
 //
 // 视野快照（v13 兼容字段，2026-08-19 ws1）：ModeCacheEntry.viewport 记录写入时的
 // 地图视野（center+zoom+bounds），供刷新页面后的「挂载对齐加载」判断缓存目录是否
@@ -51,7 +54,7 @@ import { canonicalMode } from './modes.ts';
 import type { ViewportBounds, ViewportSnapshot } from './viewport-search.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 18;
+export const MODE_CACHE_VERSION = 19;
 /** Local cache raw-value ceiling before JSON.parse (sessionStorage is local, not trusted). */
 export const MODE_CACHE_RAW_MAX = 8 * 1024 * 1024;
 /** Bound scalar/filter fields restored from storage; catalogs have their own app cap. */
