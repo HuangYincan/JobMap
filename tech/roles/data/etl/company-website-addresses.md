@@ -4,7 +4,7 @@
 **数据文件:** `server/data/recruitment/geocode-overrides.json`
 **方法:** WebSearch 定位来源页 → WebFetch 提取地址文本 → 高德 geocode v3(`geocodeAddressRest`,
 AMAP_WEB_KEY, 5000 次/日配额, 不耗公司网关额度)→ 写入 overrides(`city` 字段 = 目标城市)。
-**状态:** 上海 12 家 + 北京/深圳 14 家(大厂总部/上市公告级来源; 城市中心假坐标重跑
+**状态:** 上海 12 家 + 北京/深圳/广州 18 家(大厂总部/上市公告级来源; 城市中心假坐标重跑
 期间网关额度耗尽, 用官网/工商公开渠道补齐检索无解的大厂)。
 
 ## 1. 合规纪律(本批次执行)
@@ -61,6 +61,15 @@ AMAP_WEB_KEY, 5000 次/日配额, 不耗公司网关额度)→ 写入 overrides(
 | 传音控股-taig-ai顶尖 | 南山区西丽街道留仙大道传音大厦 | 上市公告(变更主要办公地址公告) | https://www.sohu.com/a/745178237_115433 |
 | 正浩ecoflow | 宝安区福海街道福园一路润恒工业厂区 | 高校就业网工商信息 | https://career.shiep.edu.cn/company/view/id/722332 |
 | 影石insta360 | 宝安区新安街道留仙三路1100号金利通金融中心 | 上市公告(公司概况) | https://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CorpInfo/stockid/688775.phtml |
+
+### 2d. 北京/广州 第 2 批(4 家)
+
+| slug | 地址(写回 drops) | 来源类型 | 来源 URL |
+|---|---|---|---|
+| 百度 | 海淀区西北旺东路10号院百度科技园 | 百科(百度科技园词条) | https://wapbaike.baidu.com/item/%E7%99%BE%E5%BA%A6%E7%A7%91%E6%8A%80%E5%9B%AD/2773125 |
+| 寒武纪 | 海淀区知春路7号致真大厦D座 | 上市公告(定增预案 注册地址) | https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=688256&id=11087558 |
+| 腾讯(广州) | 海珠区芳园路99号腾讯广州总部大楼 | 新闻(总部大楼启用, 2025-09) | https://www.thepaper.cn/newsDetail_forward_31587884 |
+| 京东(广州) | 海珠区宝地广场20层 | 就业网招聘信息(京东华南岗位) | https://jyw.gpnu.edu.cn/info/1148/11499.htm |
 
 ## 3. 失败与拒绝记录(不写)
 
