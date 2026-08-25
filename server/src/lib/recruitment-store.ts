@@ -86,6 +86,31 @@ function isoDate(value: Date | string | null | undefined): string | undefined {
 }
 
 /**
+ * 站点岗位 = 精确 site_id 命中 ∪ 本公司聚合行(公司级在招信号, fan-out)。
+ * 按 external_id 去重——聚合行的 site_id 恰等于本站 id 时不能双计;
+ * 排序稳定: 具体行(查询顺序)在前, 聚合行在后。
+ */
+function positionsForSite(
+  siteId: string,
+  companyId: string,
+  bySite: Map<string, PositionRow[]>,
+  aggregates: PositionRow[],
+): PositionRow[] {
+  const rows = [
+    ...(bySite.get(siteId) ?? []),
+    ...aggregates.filter((pos) => pos.company_id === companyId),
+  ];
+  const seen = new Set<string>();
+  const merged: PositionRow[] = [];
+  for (const pos of rows) {
+    if (seen.has(pos.external_id)) continue;
+    seen.add(pos.external_id);
+    merged.push(pos);
+  }
+  return merged;
+}
+
+/**
  * DB 行 → 公司级 logo（2026-08-19 Bug2 修复：DB 读路径此前直接读列、绕过
  * 解析链，672 家公司 logo_url/logo_emoji 全空 → 全 🏢）。
  * 已落库的 logo_url / logo_emoji 优先；两者皆空才走 company-logo.ts 解析链
@@ -187,6 +212,10 @@ export async function loadWorkCatalogFromDb(
       list.push(pos);
       positionsBySite.set(pos.site_id, list);
     }
+    // 2026-08-26 (fix/aggregate-site-fanout): 聚合行(taxonomy.aggregate, crawler
+    // 全国大类标题的 site_id 只是首城占位)= 公司级在招信号 → 计入公司每个站点,
+    // 否则多城公司除占位站外全被 positions.length > 0 过滤(深圳腾讯不收录的根因)。
+    const aggregateRows = positions.rows.filter((pos) => pos.taxonomy?.aggregate === true);
 
     const pois: RecruitmentPOI[] = [];
     for (const company of companies.rows) {
@@ -231,7 +260,7 @@ export async function loadWorkCatalogFromDb(
               logoUrl: site.logo_url ?? undefined,
             },
           ],
-          positions: (positionsBySite.get(site.id) ?? []).map((pos) => ({
+          positions: positionsForSite(site.id, company.id, positionsBySite, aggregateRows).map((pos) => ({
             id: pos.external_id,
             siteId: site.id,
             title: pos.title,

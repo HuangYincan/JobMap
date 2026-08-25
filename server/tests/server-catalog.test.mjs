@@ -213,8 +213,104 @@ test('loadWorkCatalogFromDb normalizes joined rows and drops ungeocoded or empty
   assert.ok(queries.every((call) => !call.sql.includes(' WHERE s.geom IS NOT NULL')));
 });
 
-// 2026-08-26 (fix/aggregate-site-fanout): DB 读路径 aggregate 用例见下方
-// 「fans aggregate rows out to every site」(随 recruitment-store 修复提交)。
+// 2026-08-26 (fix/aggregate-site-fanout): DB 读路径把 aggregate 行(taxonomy jsonb)
+// fan-out 到公司每个站点; site_id 恰等于本站时不双计; 不跨公司泄漏。
+test('loadWorkCatalogFromDb fans aggregate rows out to every site of the company', async () => {
+  const pool = {
+    async query(sql) {
+      if (sql.includes('FROM company_sites')) {
+        return {
+          rows: [
+            {
+              id: '101', company_id: '10', name: 'Western', address: 'Western Rd', city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 120.1, lat: 30.2,
+              career_url: null, logo_url: null,
+            },
+            {
+              id: '102', company_id: '10', name: 'Eastern', address: 'Eastern Rd', city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 120.2, lat: 30.25,
+              career_url: null, logo_url: null,
+            },
+            {
+              id: '201', company_id: '20', name: 'Brand HQ', address: 'Brand Rd', city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 120.15, lat: 30.22,
+              career_url: null, logo_url: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes('FROM companies')) {
+        return {
+          rows: [
+            {
+              id: '10', slug: 'acme-hz', name: 'Acme', industries: ['internet'], scale: null,
+              tier: null, category: null, rating: null, summary: null,
+              career_url: null, logo_url: null, logo_emoji: null,
+            },
+            {
+              id: '20', slug: 'brand-hz', name: 'Brand', industries: ['finance'], scale: 'bank',
+              tier: 2, category: 'enterprise', rating: 4.5, summary: null,
+              career_url: null, logo_url: null, logo_emoji: 'B',
+            },
+          ],
+        };
+      }
+      if (sql.includes('FROM positions')) {
+        return {
+          rows: [
+            {
+              company_id: '10', site_id: '101', external_id: 'portal-1', title: 'Backend',
+              department: 'RD', family: 'campus', taxonomy: { family: 'campus' },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+            {
+              // 聚合行: crawler 占位 site_id 恰为本站 → 不得双计
+              company_id: '10', site_id: '101', external_id: 'radar-agg-1', title: '技术类 产品类',
+              department: 'RD', family: 'intern', taxonomy: { family: 'intern', aggregate: true },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+            {
+              company_id: '10', site_id: '102', external_id: 'portal-2', title: 'Frontend',
+              department: 'Web', family: 'campus', taxonomy: { family: 'campus' },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+            {
+              // 另一家公司的聚合行: 不得 fan-out 到 Acme
+              company_id: '20', site_id: '201', external_id: 'radar-agg-brand', title: '分析类',
+              department: null, family: 'campus', taxonomy: { family: 'campus', aggregate: true },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+          ],
+        };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  };
+
+  const pois = await loadWorkCatalogFromDb(undefined, pool);
+  const byId = new Map(pois.map((poi) => [poi.id, poi]));
+
+  const west = byId.get('acme-hz:101');
+  assert.deepEqual(west.positions.map((p) => p.id), ['portal-1', 'radar-agg-1']);
+  assert.equal(west.positions.filter((p) => p.id === 'radar-agg-1').length, 1, '占位 site_id 命中本站不双计');
+  assert.equal(west.positions[1].aggregate, true);
+
+  const east = byId.get('acme-hz:102');
+  assert.deepEqual(east.positions.map((p) => p.id), ['portal-2', 'radar-agg-1']);
+  assert.equal(east.positions[1].aggregate, true);
+  assert.equal(east.positions.filter((p) => p.id === 'radar-agg-1').length, 1);
+
+  const brand = byId.get('brand-hz');
+  assert.deepEqual(brand.positions.map((p) => p.id), ['radar-agg-brand'], '聚合行按公司隔离, 不跨公司 fan-out');
+});
 
 test('loadWorkCatalogFromDb applies spatial clips and returns empty when no clipped sites', async () => {
   const queries = [];
