@@ -1,9 +1,9 @@
 # 29 — geocode r5 状态与操作清单(城市中心假坐标修复链)
 
-**文档版本:** 2.1
+**文档版本:** 2.2
 **创建日期:** 2026-08-22
-**更新日期:** 2026-08-25
-**状态:** r5 可执行 runbook——前置代码(2026-08-23 批次 ws-a/b/c 与 2026-08-25 批次 ws-d-data-completion)合并后,用户按 §4 跑 Env-only apply 即可;本文档为**当前事实契约**,数字来自 2026-08-23 boss 实测(批次 `20260823-boss-poi-datasource` manifest)与 2026-08-22 基线(worktree `fix/geocode-r5-readiness` 复算)
+**更新日期:** 2026-08-26
+**状态:** r5 runbook——**主波次已执行(2026-08-26)**:用户 Env-only apply 后 `313fc61` 落地 135 站真实办公点(中心钉点 1330→941),缓存已 bump v19(§4.5);残余站点按 §4.2 增量续跑,import 落库(§4.4)与 Nominatim 海外执行(§7)仍待用户。历史基线数字来自 2026-08-23 boss 实测(批次 `20260823-boss-poi-datasource` manifest)与 2026-08-22 基线(worktree `fix/geocode-r5-readiness` 复算)
 **相关:** `tech/16-bug-fixes.md`(坐标 bug 记录)、`tech/21-city-clustering.md`、`tech/23-map-engines.md`、批次 `tech/roles/development/parallel-sessions/20260822-boss-poi-city-center/`(根因/基线)与 `20260823-boss-poi-datasource/`(r5 执行能力批次:ws-a 列表串判定 / ws-b Nominatim 海外源 / ws-c daily 进度封装 / ws-d 本文档)、`20260825-boss-hi-priority-fixes/`(ws-d-data-completion:占位地址地点检索补全)、r4 commit `3e6deb3`、v17 bump commit `9e693a9`、`server/src/lib/site-geocode.ts`、`server/scripts/geocode-sites-apply.mjs`、`server/scripts/plan-site-geocode.mjs`、`server/scripts/audit-city-center-pins.mjs`
 
 ---
@@ -122,6 +122,9 @@ r4(`3e6deb3`):288 城市中心/缺坐标站落真实坐标(上海 376→347→34
 
 ### 4.2 多日排程建议
 
+> **状态(2026-08-26)**:r5 主波次已完成——用户执行 Env-only apply 后 `313fc61` 落地
+> 135 站真实办公点,JSON 口径中心钉点 1330 → **941**;下述节奏适用于残余站点的后续增量。
+
 - **每天一次**,跑至 **QUOTA_EXHAUSTED 自动短路**(exit 2,打印剩余站数)——这是设计行为,不是报错。脚本幂等(已有坐标站跳过),中断/重跑安全。
 - **按 Top 城市优先**:`--cities 上海` → `--cities 北京` → `--cities 深圳,广州,成都` → 其余城市(每城一天或多天,以当日 short-circuit 为准)。
 - (ws-c 合并后)直接用 `npm run geocode:sites:daily`,自动打印今日进展与明日剩余 Top 城市。
@@ -156,7 +159,7 @@ cd server && npm run import:seed:apply   # 需 DATABASE_URL(读 server/.env.loca
 ### 4.5 UI 验证 + MODE_CACHE_VERSION bump
 
 - 地图堆叠明显下降(上海/北京/深圳等中心点 marker 数大幅减少,聚合点向真实办公区散开);旧会话缓存需失效重拉。
-- 数据变化 → bump `server/src/lib/mode-cache.ts` 的 `MODE_CACHE_VERSION`:**当前已 v18**(2026-08-25 读路径语义两连修占用:中心钉排除 + clip 空语义,`fix/server-catalog-semantics`;此前 v17 为 2026-08-22 08:12 预 bump,commit `9e693a9`,等待 r5 数据);r5 + import 落地后 bump **v19**。
+- 数据变化 → bump `server/src/lib/mode-cache.ts` 的 `MODE_CACHE_VERSION`:**当前已 v19**(2026-08-26,r5 数据落地善后批次 `20260826-boss-post-geocode` ws p-cache-snapshot;v18 为 2026-08-25 读路径语义两连修占用:中心钉排除 + clip 空语义,`fix/server-catalog-semantics`;v17 为 2026-08-22 08:12 预 bump,commit `9e693a9`)。✅ **已完成(2026-08-26)**:r5 数据落地 commit `313fc61`(135 站)后 bump v18→**v19**,版本历史注记 + v18 拒绝用例随批提交。
 
 ## 5. 诊断与验证工具
 
@@ -175,13 +178,15 @@ cd server && npm run import:seed:apply   # 需 DATABASE_URL(读 server/.env.loca
 | 2026-08-22 | 批次 `20260822-boss-poi-city-center`:ws-a grader 放宽 / ws-b 数据契约测试 / ws-c 本文档 v1.0 + 基线诊断(中心钉点 1346) |
 | 2026-08-23 | 批次 `20260823-boss-poi-datasource`:ws-a 「/」列表串判定(修 6 站)/ ws-b Nominatim 海外源 / ws-c daily 进度封装 / ws-d 本文档 v2.0 runbook + etl 审查;实测基线 1330(上海 344,数据源更新所致) |
 | 2026-08-25 | 批次 `20260825-boss-hi-priority-fixes` ws-d-data-completion(`fix/site-place-search`,本文档 v2.1):读路径剔除中心钉后的**数据补全**——占位/无地址带岗位站 →「公司名+城市」地点检索(`cityNameOnlyAddress` / `siteNeedsPlaceSearch` / `pickPlaceSearchPoi`;audit 分类表新增 needsPlaceSearch;apply 主循环并入此类站,place-search 选点 + `ps:` memo 前缀);读路径 isCityCenterPin 过滤不变 |
-| (待用户,Env-only) | r5 apply 多日(约 4 天,§4.2 排程)→ import:seed:apply(§4.4)→ UI 验证 + bump v19(§4.5,v18 已被读路径语义修复占用)→ Nominatim 海外执行(§7) |
+| 2026-08-26 | r5 apply 完成:用户执行 Env-only apply,commit `313fc61` 数据落地——135 站占位/中心钉坐标落真实办公点(address/lng/lat 改写);中心钉点 JSON 口径 1330 → **941**(实测,radar 839 / official-career 95 / qqdoc-jobs 7) |
+| 2026-08-26 | 善后批次 `20260826-boss-post-geocode` ws p-cache-snapshot(本文档 v2.2):`MODE_CACHE_VERSION` 18→19(v18 拒绝用例 + 版本历史注记);数据契约测试 `city-center-pins.test.mjs` 计数下限 1000→900(快照基准 941,r5 后 2026-08-26 实测) |
+| (待用户,Env-only) | import:seed:apply(§4.4,把 `313fc61` 新坐标落 DB;不 import 则 `/api/pois` 继续吐旧中心钉点)→ Nominatim 海外执行(§7);r5 apply 多日与 UI 验证已随 2026-08-26 落地完成 |
 
 ## 7. Env-only deferred 清单(用户执行)
 
 | # | 待办 | 命令/位置 | 前置 |
 |---|---|---|---|
-| 1 | geocode r5 apply 多日 | `npm run geocode:sites:apply`(建议 `--cities 上海` 优先;ws-c 合并后可用 `geocode:sites:daily`;每天跑至 QUOTA_EXHAUSTED 短路) | 2026-08-23 批次(a/b/c)合并 |
-| 2 | import 落地 | `npm run import:seed:apply`(需 DATABASE_URL) | r5 全量后(§4.4) |
-| 3 | UI 验证 + bump | `server/src/lib/mode-cache.ts` → `MODE_CACHE_VERSION` v19(v18 已被 2026-08-25 读路径语义修复占用) | import 后(§4.5) |
+| 1 | ~~geocode r5 apply 多日~~ ✅ **已完成(2026-08-26)**:`313fc61` 落地 135 站,中心钉点 1330→941;后续增量(残余 941 中 needsRerun/stayCenter)按 §4.2 排程继续跑至 QUOTA_EXHAUSTED 短路即可 | `npm run geocode:sites:apply`(建议 `--cities 上海` 优先;可用 `geocode:sites:daily`) | — |
+| 2 | import 落地 | `npm run import:seed:apply`(需 DATABASE_URL;**当前待执行**——`313fc61` 新坐标尚未进 DB,不 import 则 `/api/pois` 继续吐旧中心钉点) | r5 数据已落地(§4.4) |
+| 3 | ~~UI 验证 + bump~~ ✅ **已完成(2026-08-26)**:`MODE_CACHE_VERSION` → **v19**(善后批次 p-cache-snapshot;v18 已被 2026-08-25 读路径语义修复占用) | `server/src/lib/mode-cache.ts` | — |
 | 4 | Nominatim 海外站执行 | ws-b 集成(合并后生效);执行方式与政策见 `tech/roles/data/etl/`(ws-b 来源审查文档);海外站规模 ~41 站(20260821 批次 deferred-notes 记录,另含新摸底的钉中心海外站) | r5 国内全量后 |
