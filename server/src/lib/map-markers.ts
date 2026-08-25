@@ -17,11 +17,16 @@
 //   徽章中心），状态尺寸经内容负 margin 补偿，锚点跨状态零漂移（契约无
 //   setOffset，删除 AMap.Pixel 依赖）；无浏览器环境（node 测试）下静默降级
 //
-// marker 生命周期(b2 修订):「只添加一次、跨视口/跨 zoom 保留实例」。
-// - setPOIs 非空列表 = 只增不删(新增 + setPosition 存量),空列表 = 清空;
+// marker 生命周期(b2 修订,2026-08-25 f-lod-pool):「只添加一次、跨视口/跨
+// zoom 保留实例」。
+// - setPOIs 非空列表 = 只增不删(新增 + setPosition 存量),空列表 = 保留实例
+//   (空过滤 ≠ 清空池:刷新/加载瞬态/筛选空批次由调用方 setVisiblePOIs([])
+//   负责隐藏,实例保持挂载,恢复零重建);
 // - setVisiblePOIs(ids) 只切换 show/hide,实例保留在 markers Map——
-//   zoom tier 过滤(LOD)与城市聚合(zoom ≤ 8)不再销毁重建 marker;
-// - removeMarker 只由 clear()/destroy() 调用。
+//   zoom tier 过滤(历史 LOD,已随 2026-08-25 用户裁定退役于工作地图)与
+//   城市聚合(zoom ≤ 8)不再销毁重建 marker;
+// - removeMarker 只由 clear()/destroy()(显式清空)与 replace 销毁池外 id 调用;
+// - 显式清空 = controller.clear()/destroy(),空列表路径不再触发。
 //
 // 同步语义(ws-c):view 只会在 engine.load() 之后创建,控制器拿到 view 即引擎
 // 就绪——旧版 loadAMap().then(flush) 异步门已删除,pendingPOIs 回放简化为同步。
@@ -44,11 +49,14 @@ export interface POIMarkerController {
   /**
    * 全量同步标记(b2):非空列表 = 只增不删——新增缺失的标记、更新存量标记的
    * 位置/样式,离开列表的 id 保留实例(可见性由 setVisiblePOIs 控制);
-   * 空列表 = 清空全部标记(刷新/重置路径)。
+   * 空列表 = 保留实例(2026-08-25 f-lod-pool 修订:空过滤 ≠ 清空池,可见性
+   * 由调用方 setVisiblePOIs([]) 负责;显式清空只发生在 clear()/destroy())。
    *
-   * opts.replace = true(视口整体换 catalog 语义):add/update 遍历完成后,
+   * opts.replace = true(目录整体更换语义):add/update 遍历完成后,
    * 销毁「不在新列表、也不在 retainIds」的 id——池外 marker 不再永久累积;
    * 保留 id(新列表 + retainIds)行为与现状一致:更新存量、应用样式、升级图标。
+   * 空列表 + replace = 目录更换为空(空搜索/空视口):不销毁任何实例
+   * (池保留,隐藏由可见集负责,恢复零重建)。
    */
   setPOIs(pois: POI[], opts?: { replace?: boolean; retainIds?: Iterable<string> }): void;
   /**
@@ -523,11 +531,11 @@ export const CLUSTER_BADGE_SIZE = 54;
 const CLUSTER_DEFAULT_COLOR = '#007AFF';
 
 /**
- * 聚合/LOD 可见性分桶 zoom(b2)——「zoom≤8 分桶变化」的记忆化键。
+ * 聚合/个体可见性分桶 zoom(b2)——「zoom≤8 分桶变化」的记忆化键。
  *
- * 城市聚合与 LOD 计数只依赖 floor(zoom)(maxTierForZoom 语义),分桶内的
+ * 聚合状态只依赖 floor(zoom)(clusterZoomForZoom 语义),分桶内的
  * zoom 微调(8.1→8.4、5.2→5.9)不改变任何可见性结果:
- * - zoom ≤ CLUSTER_MAX_ZOOM(8)→ 返回 floor(zoom)(聚合区间内的 LOD 分桶,
+ * - zoom ≤ CLUSTER_MAX_ZOOM(8)→ 返回 floor(zoom)(聚合区间内的分桶,
  *   徽章计数/个体可见集在该桶内恒定,跨整数分桶 7→8 才变化);
  * - zoom > 8 → 返回 CLUSTER_MAX_ZOOM + 1(恒个体 pin 模式,与
  *   clusterCities 的 zoom > 8 → null 判定一致)——8.0→8.1 即聚合↔个体的
@@ -980,16 +988,17 @@ class POIMarkerControllerImpl implements POIMarkerController {
   setPOIs(pois: POI[], opts?: { replace?: boolean; retainIds?: Iterable<string> }): void {
     if (!this.isReady()) return;
 
-    // 空列表 = 清空(刷新/重置路径,等价 clear;b2 保留该语义以释放实例)
-    if (pois.length === 0) {
-      this.clear();
-      return;
-    }
+    // 空列表 = 保留实例(2026-08-25 f-lod-pool):「空过滤 ≠ 清空池」——
+    // 刷新/加载瞬态/筛选空批次时池内实例保持挂载,可见性由调用方
+    // setVisiblePOIs([]) 负责(全部隐藏,实例不销毁);replace + 空列表
+    // (目录更换为空)同样不销毁任何 id——旧池隐藏后由新批次自然补回,
+    // 显式清空只发生在 controller.clear()/destroy() 路径。
+    if (pois.length === 0) return;
 
     // b2 只增不删:marker 实例跨视口/跨 zoom 保留,离开列表的 id 不销毁
     // (可见性由 setVisiblePOIs 切换)——「只 add 新的 + setPosition 存量」,
-    // removeMarker 只留给 clear/destroy。
-    // replace 模式(2026-08-25,视口整体换 catalog):add/update 遍历完成后
+    // removeMarker 除 clear/destroy 外只留给 replace 的池外销毁。
+    // replace 模式(2026-08-25,目录整体更换):add/update 遍历完成后
     // 销毁「不在新列表、也不在 retainIds」的 id——池外 marker 不再永久累积;
     // retainIds(收藏 overlay 层)即使不在新列表也保留实例,隐藏与否由
     // setVisiblePOIs 决定。默认(不传 opts)行为 = 现状,零变化。
