@@ -16,6 +16,7 @@ import {
   geocodeQueryForSite,
   gradeOfficePoi,
   importedSiteQuery,
+  addresslessQueryVariants,
   isCityListPlaceholderAddress,
   isCityNameAddress,
   jiaoyuntongPlaceSearchRest,
@@ -337,6 +338,23 @@ test('officeNameMatchStrength accepts info/investment/research qualifiers (2026-
   ]) {
     assert.equal(officeNameMatchStrength(candidate, company), 'no', `${candidate} vs ${company}`);
   }
+});
+
+test('addresslessQueryVariants adds tail variant for qualifier-suffixed queries (2026-08-25)', () => {
+  const target = { city: '上海市', province: '上海市' };
+  const kinds = (q, name) => addresslessQueryVariants(q, name, target).map((v) => v.kind);
+  const tailOf = (q, name) => addresslessQueryVariants(q, name, target)[1]?.searchQuery;
+  // 站名=公司名 (cityList 站) → [broad, tail]; tail = 剥一层尾限定词
+  assert.deepEqual(kinds('辉瑞中国', '辉瑞中国'), ['broad', 'tail']);
+  assert.equal(tailOf('辉瑞中国', '辉瑞中国'), '辉瑞');
+  assert.equal(tailOf('中金公司', '中金公司'), '中金');
+  // 单层剥: 中国商飞公司 → 中国商飞 (不连剥品牌词「中国」)
+  assert.equal(tailOf('中国商飞公司', '中国商飞公司'), '中国商飞');
+  // 无尾限定词 / 剩余 <2 字 → 无 tail
+  assert.equal(kinds('英伟达', '英伟达').length, 1);
+  assert.equal(kinds('亿集团', '亿集团').length, 1);
+  // 有精确候选 (站名≠公司名) → [precise, broad] 不变, 预算仍 ≤2
+  assert.deepEqual(kinds('辉瑞中国', '辉瑞研发中心'), ['precise', 'broad']);
 });
 
 test('gradeOfficePoi rejects same-brand store/warehouse traps from Baidu', () => {
