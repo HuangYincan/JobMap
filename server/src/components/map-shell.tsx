@@ -16,7 +16,6 @@ import { fetchPOIDetail } from "@/lib/api";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
 import { batchMatchesCurrentMode, catalogCoversView, inBounds, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { loadWorkViewport, WORK_FULL_LOAD_MAX_PAGES } from "@/lib/viewport-search";
-import { maxTierForZoom, TIER_DEFAULT } from "@/lib/lod";
 import { clearModeCache, readModeCache, syncModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
 import { entityRefFromSelection, initialsFromName } from "@/lib/account";
@@ -197,7 +196,7 @@ function locateForMap(view: MapView): Promise<{ lng: number; lat: number } | nul
  * map-constants.ts 不在本 WS 边界,故内联 #007AFF 系)。
  * 经契约 createMarker icon 路径渲染(腾讯 MultiMarker MarkerStyle / 百度
  * BMapGL Icon 均支持 src/size),与 POI marker 引擎无关共存(独立 marker,
- * 不参与 LOD/聚合,见 map-markers 控制器隔离)。
+ * 不参与控制器可见性切换/聚合,见 map-markers 控制器隔离)。
  * 不传 offset:各引擎 icon 锚点像素语义由引擎适配层负责(ws-a/b 域),契约层
  * 不跨引擎猜 offset,避免锚点语义分歧(腾讯锚点偏移修复见 ws-a)。
  */
@@ -638,8 +637,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
    *   已有则 setPosition 更新(蓝点跟随最新定位);
    * - AMap 引擎零改动:蓝点仍由 amap-api Geolocation 控件渲染(蓝点+精度圈
    *   绑定原始实例),本函数对 amap 直接返回;
-   * - 蓝点是独立 marker(view.createMarker 直建,不进 POI 控制器)→ LOD/
-   *   聚合不误删;卸载/切引擎由 createMap cleanup remove 清理。
+   * - 蓝点是独立 marker(view.createMarker 直建,不进 POI 控制器)→ 控制器
+   *   可见性切换/聚合不误删;卸载/切引擎由 createMap cleanup remove 清理。
    * 函数声明提升,createMap / handleLocate 共用。
    */
   function syncUserBlueDot(view: MapView, lng: number, lat: number) {
@@ -1383,10 +1382,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // ---- 收藏图层互斥(2026-08-22 用户决策)----
   // 开 = 地图只显示收藏点 pin + Explore 列表切为收藏列表;关 = 恢复搜索管线。
   // 池(mergeMapPois)保留 catalog 全量(空批次不置空、池只增不删),互斥在
-  // 「可见性/排除」层落地:开时 visible 只含 overlay id,关时恢复 LOD/聚合
-  // 可见性——catalog marker 实例全程保留,关时秒恢复、不触发重查。
+  // 「可见性/排除」层落地:开时 visible 只含 overlay id,关时恢复正常(全量/
+  // 聚合)可见性——catalog marker 实例全程保留,关时秒恢复、不触发重查。
   const savedLayerEnabled = savedOverlay && Boolean(user);
-  // ---- marker 池(b2):marker 源与列表分离 ----
+  // ---- marker 池(b2 + 2026-08-25 f-lod-pool 拆分):marker 源与列表分离 ----
   // work 的 marker 源 = catalog(全量池,2026-08-20 起一次取尽,跨视口/跨 zoom
   // 保留实例)+ 同一客户端管线(查询/筛选/排序,与列表同口径)。
   // workMarkerPois 不依赖 pois(列表按视野裁剪):列表变化不触碰 marker 池引用
@@ -1417,22 +1416,36 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       distanceOrigin,
     ],
   );
-  // domain 无列表池概念,pois(=pipeline(catalog))即 marker 源。
-  // 注意:工作分支返回 workMarkerPois 同引用——即使列表(pois)按视野裁剪变化,
-  // 下游 marker 源引用不变,零 setPOIs。
+  // domain 的 marker 池 = 目录全量(2026-08-25 f-lod-pool):catalog 原始行
+  // (不经 query/filters/sort 管线)+ overlay + saved overlay——与「列表(pois)
+  // 管线口径」解耦:客户端筛选/排序/搜索文本只影响可见集(visiblePOIIds →
+  // setVisiblePOIs,实例 show/hide),不再经 replace 销毁筛选出的 marker
+  // (minRating/price/关键词变化不再「筛选掉 = 移除,恢复 = 整批不回来」);
+  // 仅当 catalog 真正更换(新视口/新搜索换目录、分类重载、模式切换)引用变化
+  // → replace 销毁池外 id(旧视口/旧模式不累积)。
+  const domainMarkerPool = useMemo(
+    () =>
+      canonicalMode(mode) === "domain"
+        ? mergeMapPois(catalog, overlayPois, savedOverlay && Boolean(user))
+        : null,
+    [mode, catalog, overlayPois, savedOverlay, user],
+  );
+  // work 分支返回 workMarkerPois 同引用——即使列表(pois)按视野裁剪变化,
+  // 下游 marker 源引用不变,零 setPOIs。domain 分支同理:筛选变化不改 catalog
+  // → 池引用不变,只算可见集。
   const markerPois = useMemo(
     () =>
       canonicalMode(mode) === "work"
         ? (workMarkerPois ?? [])
-        : mergeMapPois(pois, overlayPois, savedOverlay && Boolean(user)),
-    [mode, workMarkerPois, pois, overlayPois, savedOverlay, user],
+        : (domainMarkerPool ?? []),
+    [mode, workMarkerPois, domainMarkerPool],
   );
 
   // ---- 城市聚合(tech/21,zoom ≤ 8)----
-  // 渲染层第二种模式,与视口增量加载/选中高亮/LOD 过滤零冲突:
+  // 渲染层第二种模式,与视口增量加载/选中高亮/个体 pin 可见性零冲突:
   // work 模式 zoom ≤ 8 时按 site.city 分组渲染圆形徽章(点击下钻 zoom 11);
   // zoom > 8 自动切回个体 pin。无 city 的 pin 保持个体(规则 2)。
-  // 分桶记忆化(b2):LOD 只依赖 floor(zoom),clusterZoom 在分桶内恒定(聚合区间
+  // 分桶记忆化(b2):聚合状态只依赖 floor(zoom),clusterZoom 在分桶内恒定(聚合区间
   // 按整数 zoom 分桶,个体区间恒 9)→ zoom 微调(8.1→8.4、5.2→5.9)不重建徽章;
   // 只有跨整数分桶(7→8,徽章计数变化)或聚合↔个体切换(8.0→8.1)才重建。
   const clusterZoom = clusterZoomForZoom(zoom);
@@ -1494,19 +1507,21 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     };
   }, [clusterState, mapReady, modeConfig.color, engineView]);
 
-  // ---- marker 可见性(b2 + 2026-08-22 互斥)----
+  // ---- marker 可见性(b2 + 2026-08-22 互斥 + 2026-08-25 f-lod-pool)----
   // 控制器始终持有全量 markerPois 池,此处只算「当前该显示谁」,实例保留:
   // - 互斥开(savedLayerEnabled):只显示收藏点 pin——mutexVisibleIds 按 id
   //   排除普通 POI(空数组 = 空地图);关时恢复下面正常逻辑,秒恢复零重查;
   // - 聚合激活(zoom ≤ 8):城市公司由徽章代表,只显示无 city 的个体 pin
   //   (互斥开时 clusterState 已按收藏点聚合,此分支天然只含收藏 pin);
-  // - 个体模式:按 LOD(maxTierForZoom)过滤,overlay 与 domain pin 恒显示;
+  // - 个体模式:工作公司全量显示(2026-08-25 用户裁定:取消按缩放层级隐藏
+  //   公司标记——zoom > 8 后所有公司恒显,不再按 tier <= zoom 过滤;聚合
+  //   zoom ≤ 8 保留);domain 可见集 = 管线(查询/筛选/排序,与列表同口径)
+  //   + overlay 并集(池 = 目录全量,筛选只改可见集,实例不销毁);
   // 离开 marker 池的 id(刷新/筛选变窄/domain 换视野)不在集合内 → 隐藏;实例
-  // 在 replace 语义(domain 视口替换,replacePOIsOnSync)下才销毁池外 id,
-  // 收藏 overlay 经 retainPOIIds 恒保留(实例不销毁,秒恢复零重查);
-  // LOD/聚合/个体 pin 仍在池内,不受销毁语义影响。
-  // 依赖已分桶(clusterZoom / maxTier 均只随整数 zoom 变化):zoom 微调零重算。
-  const maxTier = maxTierForZoom(zoom);
+  // 在 replace 语义(domain 目录更换:新视口/新搜索/模式切换换目录,
+  // replacePOIsOnSync)下才销毁池外 id,收藏 overlay 经 retainPOIIds 恒保留
+  // (实例不销毁,秒恢复零重查);LOD/聚合/个体 pin 仍在池内,不受销毁语义影响。
+  // 纯客户端筛选变化(不改 catalog 引用)→ 池 id 不变,仅可见集重算。
   const visiblePOIIds = useMemo(() => {
     const overlayIds = new Set(overlayPois.map((p) => p.id));
     if (clusterState) {
@@ -1516,14 +1531,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     // 互斥开:只留收藏点 id(普通 POI 全部排除,marker 实例保留不销毁)
     const mutexIds = mutexVisibleIds(markerPois, overlayIds, savedLayerEnabled);
     if (mutexIds) return mutexIds;
-    return markerPois
-      .filter((p) => {
-        if (overlayIds.has(p.id)) return true; // 收藏 overlay 恒显示(不随 LOD)
-        if (!isRecruitmentPOI(p)) return true; // domain pin 无 tier,恒显示
-        return (p.company?.tier ?? TIER_DEFAULT) <= maxTier;
-      })
-      .map((p) => p.id);
-  }, [clusterState, markerPois, overlayPois, maxTier, savedLayerEnabled]);
+    if (canonicalMode(mode) === "domain") {
+      // domain:可见集 = 管线结果 ∪ overlay(池 = 目录全量,见 domainMarkerPool);
+      // 空批次/筛选瞬态 → 空集(全部隐藏,实例保留,恢复零重建)
+      return Array.from(new Set([...pois.map((p) => p.id), ...overlayPois.map((p) => p.id)]));
+    }
+    // work:全量显示(2026-08-25 用户裁定取消 LOD——tier 只作数据标注,
+    // 不再按 zoom 隐藏公司;聚合区间由上方 clusterState 分支代表)
+    return markerPois.map((p) => p.id);
+  }, [clusterState, markerPois, overlayPois, savedLayerEnabled, mode, pois]);
 
   const handleRefreshHere = useCallback(() => {
     const view = mapInstance.current;
@@ -1703,12 +1719,16 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     selectedId,
     highlightedId,
     accentColor: modeConfig.color,
-    // domain:视口替换语义(池外 id 随 replace 销毁,旧视口 marker 不累积;
-    // 收藏 overlay 经 retainPOIIds 恒保留实例);work:不传 = 只增不删(全量池
-    // 语义不变,workMarkerPois 引用稳定,零 setPOIs)。
+    // domain:目录更换语义(池外 id 随 replace 销毁,旧视口/旧搜索/旧模式的
+    // marker 不累积;收藏 overlay 经 retainPOIIds 恒保留实例);work:不传 =
+    // 只增不删(全量池语义不变,workMarkerPois 引用稳定,零 setPOIs)。
     ...(canonicalMode(mode) === "domain"
       ? { replacePOIsOnSync: true, retainPOIIds: lastOverlayIdsRef.current }
       : {}),
+    // 模式切换换目录 = 池语义切换:显式清空旧语义实例(2026-08-25 f-lod-pool
+    // 审计——setPOIs 空列表已不再清场,domain→work 无 replace,若不清空,
+    // 旧模式遗留实例跨模式泄漏成隐藏堆积)。
+    resetKey: canonicalMode(mode),
     onMarkerClick: (id) => {
       // 点 marker 只选中不动相机:不置 userMovedMapRef(ws-poi-vanish 首点修复
       // ——选择公司 ≠ 放弃定位,geolocation settle 仍会飞用户位置)。

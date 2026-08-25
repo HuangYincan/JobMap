@@ -10,7 +10,7 @@
 //   快照补进池(实例保留);关时池回到 catalog 本体;
 // - 互斥的「只显示收藏点」在可见性层落地:mutexVisibleIds 在开时返回
 //   只含收藏点 id 的可见集(普通 POI 全部排除,marker 实例不销毁),
-//   关时返回 null 走正常 LOD/聚合可见性。
+//   关时返回 null 走正常(全量/聚合)可见性。
 // ============================================================
 
 import type { SavedPlace } from './account.ts';
@@ -118,7 +118,7 @@ export function mergeMapPois(results: POI[], overlay: POI[], enabled: boolean): 
  * 互斥可见性（2026-08-22 用户决策）:开 = 地图只显示收藏点 pin。
  * enabled 时返回「当前该显示谁的 id」——只保留 overlay id,普通 POI 全部
  * 排除(按 id 排除而非清空池:marker 实例保留,关时恢复显示零重查);
- * disabled 返回 null = 调用方走正常 LOD/聚合可见性。
+ * disabled 返回 null = 调用方走正常(全量/聚合)可见性。
  */
 export function mutexVisibleIds(pool: POI[], overlayIds: Set<string>, enabled: boolean): string[] | null {
   if (!enabled) return null;
