@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { poiToSourceCompany } from '../src/lib/recruitment-source.ts';
 import { WORK_SEED } from '../src/lib/seed-data.ts';
@@ -26,6 +28,9 @@ import {
   parseBaiduOfficePoi,
   parseTencentOfficePoi,
   pickBestOfficePoi,
+  placeSearchMemoKey,
+  placeSearchMemoLoad,
+  placeSearchMemoPersist,
   placeTextSearchRest,
   planSiteGeocode,
   regeoCityRest,
@@ -355,6 +360,23 @@ test('addresslessQueryVariants adds tail variant for qualifier-suffixed queries 
   assert.equal(kinds('亿集团', '亿集团').length, 1);
   // 有精确候选 (站名≠公司名) → [precise, broad] 不变, 预算仍 ≤2
   assert.deepEqual(kinds('辉瑞中国', '辉瑞研发中心'), ['precise', 'broad']);
+});
+
+test('placeSearchMemoPersist/Load round-trips successful hits only (2026-08-25)', () => {
+  const file = join(tmpdir(), 'geocode-memo-test.json');
+  const key = placeSearchMemoKey('诺华集团', { city: '上海市', province: '上海市' });
+  const hit = { poi: { name: '诺华集团(中国)', address: '上海市浦东新区金科路4218号', lng: 121.58, lat: 31.2, type: '', adname: '浦东新区', pname: '上海市', cityname: '上海市' }, confidence: 'high', reason: 'matched:诺华集团(中国)', provider: 'jiaoyuntong' };
+  const memo = new Map([[key, hit]]);
+  placeSearchMemoPersist(memo, file);
+  const memo2 = new Map();
+  placeSearchMemoLoad(memo2, file);
+  assert.equal(memo2.get(key)?.poi.name, '诺华集团(中国)');
+  assert.equal(memo2.get(key)?.provider, 'jiaoyuntong');
+  assert.equal(memo2.get(key)?.confidence, 'high');
+  // 文件缺失 → 空 memo, 不抛
+  const memo3 = new Map();
+  placeSearchMemoLoad(memo3, join(tmpdir(), 'no-such-memo.json'));
+  assert.equal(memo3.size, 0);
 });
 
 test('gradeOfficePoi rejects same-brand store/warehouse traps from Baidu', () => {
