@@ -148,7 +148,7 @@ cd server && npm run import:seed:apply   # 需 DATABASE_URL(读 server/.env.loca
 ### 4.5 UI 验证 + MODE_CACHE_VERSION bump
 
 - 地图堆叠明显下降(上海/北京/深圳等中心点 marker 数大幅减少,聚合点向真实办公区散开);旧会话缓存需失效重拉。
-- 数据变化 → bump `server/src/lib/mode-cache.ts` 的 `MODE_CACHE_VERSION`:**当前已 v17**(2026-08-22 08:12 预 bump,commit `9e693a9`,等待 r5 数据);r5 + import 落地后 bump **v18**。
+- 数据变化 → bump `server/src/lib/mode-cache.ts` 的 `MODE_CACHE_VERSION`:**当前已 v18**(2026-08-25 读路径语义两连修占用:中心钉排除 + clip 空语义,`fix/server-catalog-semantics`;此前 v17 为 2026-08-22 08:12 预 bump,commit `9e693a9`,等待 r5 数据);r5 + import 落地后 bump **v19**。
 
 ## 5. 诊断与验证工具
 
@@ -163,9 +163,10 @@ cd server && npm run import:seed:apply   # 需 DATABASE_URL(读 server/.env.loca
 |---|---|
 | 2026-08-22 06:29 | r4 `3e6deb3`:288 站落真实坐标(上海 376→347);`MODE_CACHE_VERSION` → v16 |
 | 2026-08-22 08:12 | `MODE_CACHE_VERSION` 16→17(geocode r5 预 bump,`9e693a9`) |
+| 2026-08-25 | `MODE_CACHE_VERSION` 17→18(读路径语义两连修:中心钉排除 + clip 空语义,`fix/server-catalog-semantics`) |
 | 2026-08-22 | 批次 `20260822-boss-poi-city-center`:ws-a grader 放宽 / ws-b 数据契约测试 / ws-c 本文档 v1.0 + 基线诊断(中心钉点 1346) |
 | 2026-08-23 | 批次 `20260823-boss-poi-datasource`:ws-a 「/」列表串判定(修 6 站)/ ws-b Nominatim 海外源 / ws-c daily 进度封装 / ws-d 本文档 v2.0 runbook + etl 审查;实测基线 1330(上海 344,数据源更新所致) |
-| (待用户,Env-only) | r5 apply 多日(约 4 天,§4.2 排程)→ import:seed:apply(§4.4)→ UI 验证 + bump v18(§4.5)→ Nominatim 海外执行(§7) |
+| (待用户,Env-only) | r5 apply 多日(约 4 天,§4.2 排程)→ import:seed:apply(§4.4)→ UI 验证 + bump v19(§4.5,v18 已被读路径语义修复占用)→ Nominatim 海外执行(§7) |
 
 ## 7. Env-only deferred 清单(用户执行)
 
@@ -173,5 +174,5 @@ cd server && npm run import:seed:apply   # 需 DATABASE_URL(读 server/.env.loca
 |---|---|---|---|
 | 1 | geocode r5 apply 多日 | `npm run geocode:sites:apply`(建议 `--cities 上海` 优先;ws-c 合并后可用 `geocode:sites:daily`;每天跑至 QUOTA_EXHAUSTED 短路) | 2026-08-23 批次(a/b/c)合并 |
 | 2 | import 落地 | `npm run import:seed:apply`(需 DATABASE_URL) | r5 全量后(§4.4) |
-| 3 | UI 验证 + bump | `server/src/lib/mode-cache.ts` → `MODE_CACHE_VERSION` v18 | import 后(§4.5) |
+| 3 | UI 验证 + bump | `server/src/lib/mode-cache.ts` → `MODE_CACHE_VERSION` v19(v18 已被 2026-08-25 读路径语义修复占用) | import 后(§4.5) |
 | 4 | Nominatim 海外站执行 | ws-b 集成(合并后生效);执行方式与政策见 `tech/roles/data/etl/`(ws-b 来源审查文档);海外站规模 ~41 站(20260821 批次 deferred-notes 记录,另含新摸底的钉中心海外站) | r5 国内全量后 |

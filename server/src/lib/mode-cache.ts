@@ -34,6 +34,11 @@
 // v14（2026-08-20 全量加载修复）：work 改为首载全量取尽（672 公司 / ~1843 站点
 // POI，无 bounds/maxTier），pageOffset 恒 0——旧缓存是视口部分池（跨会话还原
 // 后 marker 不全且聚合计数漂移），bump 使其失效重拉一次全量。
+// v18（2026-08-25 读路径语义两连修，fix/hide-center-pins + fix/server-catalog-semantics）：
+//   ① 读路径排除城市中心钉（位置未知站点不再展示，work 目录条目 1046→617）；
+//   ② work 裁剪未命中语义修正（DB 健康 + 裁剪/过滤后为空 = 空结果，不再回退
+//   离线目录）——旧缓存（未过滤 1046 条目录 / 旧回退语义）与新语义不符，bump
+//   使其失效重拉。
 //
 // 视野快照（v13 兼容字段，2026-08-19 ws1）：ModeCacheEntry.viewport 记录写入时的
 // 地图视野（center+zoom+bounds），供刷新页面后的「挂载对齐加载」判断缓存目录是否
@@ -46,7 +51,7 @@ import { canonicalMode } from './modes.ts';
 import type { ViewportBounds, ViewportSnapshot } from './viewport-search.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 17;
+export const MODE_CACHE_VERSION = 18;
 /** Local cache raw-value ceiling before JSON.parse (sessionStorage is local, not trusted). */
 export const MODE_CACHE_RAW_MAX = 8 * 1024 * 1024;
 /** Bound scalar/filter fields restored from storage; catalogs have their own app cap. */

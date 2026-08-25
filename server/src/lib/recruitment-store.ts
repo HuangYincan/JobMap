@@ -1,6 +1,8 @@
 // Read imported recruitment rows when DATABASE_URL is set.
 // One company + one site → POI id = companies.slug (matches WORK_SEED).
-// No rows / no database → caller falls back to seed.
+// Return contract (2026-08-25, fix/server-catalog-semantics):
+//   null = no pool / query failure → caller falls back to the offline catalog;
+//   []   = DB healthy but empty after clip or coord-filter → caller keeps empty.
 
 import { getPool } from './db.ts';
 import { isCityCenterPin } from './city-centers.ts';
@@ -129,16 +131,20 @@ export async function loadWorkCatalogFromDb(
       : `SELECT id::text, company_id::text, name, address, city, province, city_code, lng, lat, career_url, logo_url
          FROM company_sites`;
     const sites = await pool.query<SiteRow>(siteSql, [...spatial.params, ...consistency.params]);
+    // SQL 级裁剪未命中 = 空：已知 clip 范围内无行 → 调用方保持空、不回退离线目录。
     if (clipped && sites.rows.length === 0) return [];
 
     // Ungeocoded sites (address-only, lng/lat NULL) must not pin at (0,0).
     // A clip already restricts to geom-bearing sites; the unrestricted path filters here.
     // 2026-08-25 (fix/hide-center-pins): 城市中心钉(无真实办公坐标、钉在行政中心的
     // 站点)一并排除, 与离线 catalog 路径同规则 — 地图不再堆假办公点。
+    // null/[] 契约(2026-08-25, fix/server-catalog-semantics): 带 clip 的请求过滤后
+    // 为空必须返回 [] — 旧实现返回 null 会触发离线目录回退, 使搜索/建议结果来自
+    // 种子而非当前 DB 的真实空结果([] = DB 健康但裁剪或过滤后为空; null = 无 DB/失败)。
     const located = sites.rows.filter(
       (site) => hasPlausibleCoord(site.lng, site.lat) && !isCityCenterPin(site.lng as number, site.lat as number),
     );
-    if (located.length === 0) return null;
+    if (located.length === 0) return clipped ? [] : null;
 
     const companyIds = [...new Set(located.map((site) => site.company_id))];
     const siteIds = located.map((site) => site.id);
