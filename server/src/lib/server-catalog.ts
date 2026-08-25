@@ -78,7 +78,11 @@ export function serverCatalog(mode: MapMode): POI[] {
 export async function loadServerCatalog(mode: MapMode, clip?: SpatialClip): Promise<POI[]> {
   if (isRecruitmentMode(mode)) {
     const imported = await loadWorkCatalogFromDb(clip);
-    // Clip miss must stay empty. An unclipped empty table still falls back to seed.
+    // null/[] 契约(2026-08-25, fix/server-catalog-semantics):
+    //   null = 无 DB / 查询失败 → 唯一需要离线回退的情形;
+    //   []   = DB 健康但(裁剪或坐标过滤后)为空 → 带 clip 必须保持空(裁剪未命中
+    //          是「当前范围内确实没有结果」, 不是「没数据可回退」);
+    //           空表无 clip 仍回退离线目录(导入行不存在 ≠ 查询失败)。
     if (imported && (imported.length > 0 || clip)) return imported;
     return loadOfflineWorkCatalog();
   }
