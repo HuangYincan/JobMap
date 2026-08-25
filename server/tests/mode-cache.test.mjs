@@ -164,10 +164,29 @@ test('stale cache version is rejected so refreshed data loads', () => {
   assert.equal(readModeCache('work'), null);
 });
 
-// 2026-08-25 (fix/hide-center-pins + fix/server-catalog-semantics): 读路径语义两连修,
-// MODE_CACHE_VERSION 17 → 18。v17 缓存 = 未过滤 1046 条目录 / 旧回退语义, 必须失效重拉。
-test('current MODE_CACHE_VERSION is 18 (read-path semantic fixes force refresh)', () => {
-  assert.equal(MODE_CACHE_VERSION, 18);
+// 2026-08-26 (r5 geocode 数据落地, commit 313fc61): 135 站占位/中心钉坐标落真实办公点
+// (address/lng/lat 改写), MODE_CACHE_VERSION 18 → 19。v18 缓存含旧坐标, 必须失效重拉。
+test('current MODE_CACHE_VERSION is 19 (r5 geocode landing forces refresh)', () => {
+  assert.equal(MODE_CACHE_VERSION, 19);
+});
+
+test('v18 work cache is rejected after r5 geocode landing', () => {
+  const store = installMemoryStorage();
+  store.set(
+    `${MODE_CACHE_PREFIX}work`,
+    JSON.stringify({
+      version: 18, // v18 = r5 数据落地前的线上版本(旧坐标目录)
+      mode: 'work',
+      catalog: [{ ...sampleRecruitmentPoi, id: 'pre-geocode', mode: 'work' }],
+      pageOffset: 0,
+      searchOrigin: null,
+      query: '',
+      filters: {},
+      sort: 'distance',
+      savedAt: 1,
+    }),
+  );
+  assert.equal(readModeCache('work'), null);
 });
 
 test('v17 work cache is rejected after read-path semantic fixes', () => {
