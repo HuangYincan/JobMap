@@ -127,8 +127,8 @@ test('5 源目录常量互不相同且真实存在、含 json drops (dropFiles �
 
 test('planSiteGeocode: qqdoc-official city_pending + 脏 city 站点照常生成 needs (不崩)', () => {
   const plan = planSiteGeocode([QQDOC_OFFICIAL_PENDING]);
-  assert.equal(plan.needs.length, 1);
-  const need = plan.needs[0];
+  assert.equal(plan.needsGeocode.length, 1);
+  const need = plan.needsGeocode[0];
   assert.equal(need.slug, 'qq-中国矿产资源集团');
   // 有地址 → 地址 geocode query (地址在前, 公司名殿后), 不回落城市级检索
   assert.equal(need.query, '河北省雄安新区启动区中谷甲1号 中国矿产资源集团');
@@ -147,10 +147,11 @@ test('planSiteGeocode: qqdoc-official city_pending + 脏 city 站点照常生成
 
 test('planSiteGeocode: qqdoc-jobs / embodied-jobs 有地址站点 → 地址 geocode query', () => {
   const plan = planSiteGeocode([QQDOC_JOBS_SAMPLE, EMBODIED_JOBS_SAMPLE]);
-  assert.equal(plan.needs.length, 2);
+  assert.equal(plan.needsGeocode.length, 2);
+  assert.equal(plan.needsPlaceSearch.length, 0);
   assert.equal(plan.alreadyLocated, 0);
   assert.equal(plan.skippedNoAddress, 0);
-  const [need1, need2] = plan.needs;
+  const [need1, need2] = plan.needsGeocode;
   assert.equal(need1.slug, 'qqj-新东方西安学校');
   assert.equal(need1.query, '陕西省西安市碑林区南二环西段27号新东方大厦 新东方西安学校');
   assert.equal(need1.city, '西安市');

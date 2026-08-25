@@ -206,9 +206,12 @@ test('memo 流程: 失败/空结果/配额类失败不缓存 — 同 query 第�
 
 test('geocode-sites-apply.mjs 接线: searchCompanyPoi 按 (query, province, city) memo 成功命中', () => {
   const script = readFileSync(new URL('../scripts/geocode-sites-apply.mjs', import.meta.url), 'utf8');
-  // memo 容器 + key 精确到 query+target (城市不同不串)
+  // memo 容器 + key 精确到 query+target (城市不同不串); 2026-08-25
+  // (fix/site-place-search): place-search 模式 memo 键加 "ps:" 前缀 —
+  // 同一 query+城市 占位站 (pickPlaceSearchPoi 选点) 与地址 geocode 站
+  // (pickBestOfficePoi 选点) 不串; base key 仍是 query+target。
   assert.match(script, /const placeSearchMemo = new Map\(\)/);
-  assert.match(script, /const memoKey = placeSearchMemoKey\(query, target\)/);
+  assert.match(script, /const memoKey = placeSearchMode \? `ps:\$\{placeSearchMemoKey\(query, target\)\}` : placeSearchMemoKey\(query, target\)/);
   // 命中优先: memo get 在 place-text 请求之前 → 同 query+region 第二次零请求
   const getIdx = script.indexOf('placeSearchMemo.get(memoKey)');
   const fetchIdx = script.indexOf('placeTextSearchRest(query, target.city)');

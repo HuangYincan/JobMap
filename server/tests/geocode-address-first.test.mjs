@@ -450,8 +450,9 @@ test('写回保障: 补查成功 → address 到 location.address (镜像脚本�
 
 test('geocode-sites-apply.mjs 接线: 变体链 + memo 全变体 + 地址补查 + 回填保障', () => {
   const script = readFileSync(new URL('../scripts/geocode-sites-apply.mjs', import.meta.url), 'utf8');
-  // 无地址站点 (公司检索路径) 走变体链
-  assert.match(script, /searchCompanyPoiVariants\(query, target, site\)/);
+  // 无地址站点 (公司检索路径) 走变体链; 2026-08-25 (fix/site-place-search):
+  // 占位/无地址站 (placeSearchMode) 传第四参 — 换 pickPlaceSearchPoi 选点规则
+  assert.match(script, /searchCompanyPoiVariants\(query, target, site, placeSearchMode\)/);
   assert.match(script, /addresslessQueryVariants\(query, site\.name, target\)/);
   // 每站点 ≤ 2 次 place-text: 链只遍历变体 (最多 2 个), 命中可用地址即提前返回
   assert.match(script, /for \(const v of variants\)/);

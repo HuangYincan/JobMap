@@ -23,6 +23,7 @@ import {
   isCityNameAddress,
   matchesCityCenter,
   siteNeedsGeocode,
+  siteNeedsPlaceSearch,
 } from '../src/lib/site-geocode.ts';
 
 const SERVER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -67,5 +68,24 @@ test('中心钉点站数据契约: 城市名地址留中心 / 非城市名地址
     violations,
     [],
     `中心钉点站语义与数据不符 (${violations.length} 条): ${JSON.stringify(violations)}`,
+  );
+});
+
+test('中心钉点站数据契约: 占位/无地址站 → 地点检索补全通道 (2026-08-25)', () => {
+  // fix/site-place-search: 地址为城市名占位/无地址的中心钉站 (旧口径 stayCenter/
+  // noAddress) 需要「公司名+城市」地点检索补全; 街道地址站走地址 geocode。
+  const rows = centerSites();
+  const violations = [];
+  for (const { file, site } of rows) {
+    const address = site.location?.address?.trim() ?? '';
+    const isCityName = isCityNameAddress(address, site.city, cityCenterBareNames(site.location.lng, site.location.lat));
+    const expected = address === '' || isCityName;
+    if (siteNeedsPlaceSearch(site) === expected) continue;
+    violations.push({ file, site: site.id ?? site.name ?? '?', address });
+  }
+  assert.deepEqual(
+    violations,
+    [],
+    `中心钉点站 place-search 通道判定与数据不符 (${violations.length} 条): ${JSON.stringify(violations)}`,
   );
 });
