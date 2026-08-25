@@ -141,6 +141,16 @@ test('pickBestOfficePoi prefers a real office over a retail store of the same br
   assert.equal(best?.name, '快手(星耀中心7号楼)');
 });
 
+test('pickBestOfficePoi picks a later high candidate over a same-rank leading low (2026-08-25)', () => {
+  // 2026-08-25 fix/grader-office-bracket: 百度/网关 POI 的 type 恒空 → street 位
+  // 全员打平 → 旧排序保序取首位; 首位是店/营业部 (low) 时, 后面的真实办公点
+  // (high) 永远选不到 → undefined。confidence 优先排序修复。
+  const store = { name: '京东电器城市旗舰店(松江店)', address: '上海市松江区中山中路98号', lng: 121.22, lat: 31.01, type: '', adname: '松江区', pname: '上海市', cityname: '上海市' };
+  const office = { name: '京东上海(中海中心职场)', address: '上海市普陀区铜川路699弄2号', lng: 121.39, lat: 31.27, type: '', adname: '普陀区', pname: '上海市', cityname: '上海市' };
+  const best = pickBestOfficePoi([store, office], '京东', '上海市', '上海市');
+  assert.equal(best?.name, '京东上海(中海中心职场)');
+});
+
 test('pickBestOfficePoi grades against the site province/city (multi-city)', () => {
   const shanghai = { name: '得物公司', address: '杨浦区淞沪路518号', lng: 121.511, lat: 31.307, type: '', adname: '杨浦区', pname: '上海市', cityname: '上海市' };
   // 默认 浙江省/杭州市 (legacy) → 上海 POI 被拒; 传站点城市 → 接受.
@@ -225,6 +235,27 @@ test('GOOD_BRACKET_SEG_RE accepts extended office brackets and keeps store/stati
     ['得物(旗舰店)', '得物'],
     ['某司(体验店)', '某司'],
     ['拼多多驿站(川图路海中心站)', '拼多多'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'no', `${candidate} vs ${company}`);
+  }
+});
+
+test('officeNameMatchStrength accepts 职场/写字楼 office brackets (2026-08-25)', () => {
+  // 2026-08-25 (fix/grader-office-bracket): 237 站 unresolved 主因之一 — 真实
+  // 办公点名「京东上海(中海中心职场)」括号段不在白名单 → 整候选被拒。
+  for (const [candidate, company] of [
+    ['京东上海(中海中心职场)', '京东'],
+    ['某司(环球港写字楼)', '某司'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
+  }
+  // 商铺/营业部/物流园/跨城总部仍拒 — 防线不回退 (城市闸门 + regeo 兜底).
+  for (const [candidate, company] of [
+    ['京东(万达广场店)', '京东'],
+    ['京东便利店(康定路店)', '京东'],
+    ['京东(上海沈杜营业部)', '京东'],
+    ['京东上海亚洲一号基地', '京东'],
+    ['58同城(北京分公司)', '58集团'],
   ]) {
     assert.equal(officeNameMatchStrength(candidate, company), 'no', `${candidate} vs ${company}`);
   }

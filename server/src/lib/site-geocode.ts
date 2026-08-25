@@ -922,7 +922,11 @@ const CITY_PREFIXES = new Set([
 const ROMAN_PREFIX_RE = /^[a-z]{2,}$/;
 // 允许表语义: 不在表内即拒 — 分店/旗舰店/体验店/站/驿站 括号段无需显式排除.
 // 2026-08-22 (fix/grader-seq-relax): 增加 分公司/公司/科技/研发/基地/大楼/学校.
-const GOOD_BRACKET_SEG_RE = /(号楼|大厦|中心|园区|广场|总部|办公|研究院|大学|学院|医院|产业园|科技园|软件园|创业园|世界城|金融城|天地|分公司|公司|科技|研发|基地|大楼|学校)$/;
+// 2026-08-25 (fix/grader-office-bracket): 增加 职场/写字楼 — 实测 237 站 unresolved
+// 主因之一: 「京东上海(中海中心职场)」类候选中括号段是办公形态词, 但不在白名单
+// → 整候选判 no → name-mismatch。商铺/营业部/驿站类括号段仍拒 (真办公点名不
+// 含这些词), 城市-地址闸门 + regeo 校验照常兜底。
+const GOOD_BRACKET_SEG_RE = /(号楼|大厦|中心|园区|广场|总部|办公|研究院|大学|学院|医院|产业园|科技园|软件园|创业园|世界城|金融城|天地|分公司|公司|科技|研发|基地|大楼|学校|职场|写字楼)$/;
 
 /** 限定词 token 最长长度 (序列拆解用, 最长 token 优先). */
 const MAX_QUALIFIER_TOKEN_LEN = 4;
@@ -1121,7 +1125,15 @@ export function pickBestOfficePoi(
     const exact = normalizeNameForMatch(poi.name) === normalizeNameForMatch(companyName) ? 2 : 0;
     return { poi, grade, rank: exact + office * 2 + street };
   });
-  const sorted = scored.sort((a, b) => b.rank - a.rank);
+  // 2026-08-25 (fix/grader-office-bracket): confidence 优先于 rank — 旧排序只看
+  // rank, 而 rank 不含 grade (street 位几乎全员打平, stable sort 保序) → sorted[0]
+  // 恒等于「第一个候选」; 若它恰是 low (旗舰店/营业部常排首位), 哪怕后面存在
+  // high 真实办公点也返回 undefined — 2026-08-25 实测 237 站 unresolved 主因
+  // (京东: 「京东上海(中海中心职场)」 high, 但首位「京东电器城市旗舰店」low)。
+  // 新语义: 先按 grade (high>medium>low), 同级再按 rank, 保证真实命中不被
+  // 排名挤掉; 全 low 仍返回 undefined (防线不变)。
+  const GRADE_ORDER = { high: 2, medium: 1, low: 0 } as const;
+  const sorted = scored.sort((a, b) => GRADE_ORDER[b.grade.confidence] - GRADE_ORDER[a.grade.confidence] || b.rank - a.rank);
   const best = sorted[0];
   return best && best.grade.confidence !== 'low' ? best.poi : undefined;
 }
