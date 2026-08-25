@@ -137,8 +137,10 @@ test('map-shell:互斥接线(池不变 + 可见性互斥 + 聚合/列表互斥)'
   const shell = src('components/map-shell.tsx');
   // 互斥开关 = savedOverlay && user(未登录保持现有门控)
   assert.match(shell, /const savedLayerEnabled = savedOverlay && Boolean\(user\);/);
-  // 可见性层落地:池保留(mergeMapPois 照旧),只显示收藏点由 mutexVisibleIds 决定
-  assert.match(shell, /mergeMapPois\(pois, overlayPois, savedOverlay && Boolean\(user\)\)/);
+  // 可见性层落地:池保留(2026-08-25 f-lod-pool 后 domain 池 = catalog 原始全量
+  // 目录,work 池 = 管线输出;均不经 replace 销毁筛选出的 marker),只显示收藏点
+  // 由 mutexVisibleIds 决定
+  assert.match(shell, /mergeMapPois\(catalog, overlayPois, savedOverlay && Boolean\(user\)\)/);
   assert.match(shell, /mutexVisibleIds\(markerPois, overlayIds, savedLayerEnabled\)/);
   // 聚合(work zoom ≤ 8)互斥:互斥开时按收藏点聚合,徽章不混入 catalog 公司
   assert.match(shell, /const source = savedLayerEnabled \? overlayPois : markerPois;/);

@@ -4,7 +4,8 @@
 //
 // 目标不变式(修复公司 POI 屏闪):
 //   (a) setPOIs 跨批次只增不删:离开视口的 id 不再被 remove,实例保留
-//       (removeMarker 只留给 clear/destroy;空列表 = 清空)
+//       (removeMarker 只留给 clear/destroy;空列表 = 保留实例,2026-08-25
+//       f-lod-pool 修订:空过滤 ≠ 清空池,可见性由 setVisiblePOIs 负责)
 //   (b) setVisiblePOIs 只切换 show/hide,实例保留在 markers Map;
 //       后续新增的 marker 按同一可见集应用
 //   (c) clusterZoomForZoom 分桶:zoom 8.1/8.4 同桶(LOD/徽章零重建),
@@ -181,20 +182,32 @@ test('clusterZoomForZoom 分桶:zoom 微调不重建,聚合↔个体只切换一
   assert.equal(clusterZoomForZoom(NaN), 9, '非法 zoom 落入个体 pin 桶');
 });
 
-// ---- 空列表语义(与 marker-leak 互补)----
+// ---- 空列表语义(与 marker-leak 互补;2026-08-25 f-lod-pool 修订)----
 
-test('setPOIs([]) 清空后可见集重置:新批次全显', () => {
+test('setPOIs([]) 保留实例且不重置可见集:空过滤 ≠ 清空池,clear() 才显式清空', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
   c.setPOIs(HZ);
   c.setVisiblePOIs(['hz-1']);
-  c.setPOIs([]); // 刷新:清空
-  assert.equal(countOnMap(map), 0, '空列表清空全部');
-  c.setPOIs(HZ); // 刷新完成,新批次进池
+  const hz1Before = c.getMarkerByPOIId('hz-1');
+  const hz2Before = c.getMarkerByPOIId('hz-2');
+
+  c.setPOIs([]); // 刷新/加载瞬态:空过滤 ◁ 清空——实例保留、可见集不变
+  assert.equal(countOnMap(map), 2, '空列表保留全部实例(不摘除)');
+  assert.equal(c.getMarkerByPOIId('hz-1'), hz1Before, 'hz-1 实例同一性不变');
+  assert.equal(c.getMarkerByPOIId('hz-2'), hz2Before, 'hz-2 实例同一性不变');
+
+  c.setPOIs(HZ); // 刷新完成,新批次进池(同内容):可见集未被空列表重置
   assert.equal(countOnMap(map), 2);
+  assert.ok(c.getMarkerByPOIId('hz-1').isVisible(), '可见集未重置:hz-1 仍显示');
+  assert.ok(!c.getMarkerByPOIId('hz-2').isVisible(), '可见集未重置:hz-2 仍隐藏');
+
+  c.clear(); // 显式清空(唯一清场路径):全部摘除 + 可见集复位
+  assert.equal(countOnMap(map), 0, 'clear() 清零');
+  c.setPOIs(HZ); // clear 后新批次全显(visibleIds 已复位 null)
   for (const p of HZ) {
-    assert.ok(c.getMarkerByPOIId(p.id).isVisible(), '清空后可见集重置 → 新批次全显');
+    assert.ok(c.getMarkerByPOIId(p.id).isVisible(), 'clear 后可见集重置 → 新批次全显');
   }
   c.destroy();
 });

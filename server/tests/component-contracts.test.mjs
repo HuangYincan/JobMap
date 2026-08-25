@@ -691,13 +691,15 @@ test('useSavedLayer owns saved overlay state, derivation and guest gate (QA scan
   // no-fly(2026-08-22):toggle 到此结束——无相机动作(setBounds/状态机置位),
   // 也无旧版关闭分支的早期返回
   assert.doesNotMatch(hook, /if \(!next\) return;|savedCameraSyncRef|setBounds\(/);
-  // map-shell 接线(2026-08-22 互斥语义):mergeMapPois 只建 marker「池」(catalog
-  // 全量保留,池只增不删);「开 = 只显示收藏点」由 mutexVisibleIds 在可见性层
-  // 落地,关时恢复 LOD/聚合可见性——关时秒恢复、不触发重查
-  assert.match(shell, /mergeMapPois\(pois, overlayPois, savedOverlay && Boolean\(user\)\)/);
+  // map-shell 接线(2026-08-22 互斥语义;2026-08-25 f-lod-pool 池拆分):mergeMapPois
+  // 只建 marker「池」——domain 池 = catalog 原始全量(不经查询/筛选/排序管线),
+  // work 池 = 管线输出;「开 = 只显示收藏点」由 mutexVisibleIds 在可见性层落地,
+  // 关时恢复 LOD/聚合可见性——关时秒恢复、不触发重查
+  assert.match(shell, /mergeMapPois\(catalog, overlayPois, savedOverlay && Boolean\(user\)\)/);
   assert.match(shell, /const savedLayerEnabled = savedOverlay && Boolean\(user\);/);
   assert.match(shell, /mutexVisibleIds\(markerPois, overlayIds, savedLayerEnabled\)/);
-  assert.match(shell, /if \(overlayIds\.has\(p\.id\)\) return true; \/\/ 收藏 overlay 恒显示/);
+  // 池/可见集拆分后,overlay 恒显并入可见集并集(筛选变化只 show/hide 不销毁)
+  assert.match(shell, /\.\.\.overlayPois\.map\(\(p\) => p\.id\)\]/);
   // 列表互斥(2026-08-22 卡片化):桌面 Explore 与移动抽屉在互斥开时都切收藏
   // 卡片列表(POIList + POICard,与普通模式同组件/同样式;对比表保留账户页)
   assert.match(shell, /savedMode=\{savedLayerEnabled\}/);

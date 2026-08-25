@@ -71,18 +71,25 @@ CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
 
 ### 2.2 Q1 — 按层级展示（LOD）
 
-- 用户按位置按需加载 DB 中的 POI：空间查询（`bounds` + `ST_DWithin`）+ **层级过滤**。
-- **模型（2026-08-17 修订）**：公司 `tier` = 可见最小 zoom，`tier <= 当前 zoom` 才展示。
+> **2026-08-25 修订（用户裁定）**：工作模式客户端**取消**按 zoom 隐藏公司——
+> 地图上所有公司全量展示（`map-shell` 的 marker 可见性不再用 `maxTier`，
+> `tier` 降级为数据标注字段，见 `tech/19`）。本节下表为**历史模型**
+> （2026-08-17 ~ 2026-08-24，已退役于工作地图客户端）。服务端 `/api/pois`
+> 的 `maxTier` 参数与 `lod.ts` 导出**保留**（API 契约，其它消费者/测试在用），
+> `zoom ≤ 8` 城市聚合链路（tech/21）保留。
+
+- 用户按位置按需加载 DB 中的 POI：空间查询（`bounds` + `ST_DWithin`）+ **层级过滤**（历史）。
+- **模型（2026-08-17 修订，2026-08-25 客户端退役）**：公司 `tier` = 可见最小 zoom，`tier <= 当前 zoom` 才展示。
   缩放连续变化 → 公司逐步涌现/消退；zoom 取整传 `filters.maxTier`（`lib/lod.ts:maxTierForZoom`）。
 
-| 视角 | 展示 |
+| 视角 | 展示（历史模型） |
 |---|---|
 | 缩到全国（zoom < 4） | 只显示国际化名企（`tier <= 0`）——最顶层稀疏视野 |
 | 全国（zoom 4–5） | 国家级名企加入（`tier <= 5`） |
 | 省级（zoom 6–7） | 省级龙头 + 城市名企加入（`tier <= 7`） |
 | 城市及以下（zoom ≥ 8） | 中厂/小厂逐步加入（`tier <= zoom`）——密度随缩放提升 |
 
-- 客户端从 zoom 计算 `maxTier`，随 `bounds` 一起传给 `/api/pois`。
+- 客户端从 zoom 计算 `maxTier`，随 `bounds` 一起传给 `/api/pois`（历史；2026-08-20 起工作模式主加载已不传 `bounds`/`maxTier`，全量取尽；`maxTier` 参数仍为 API 契约）。
 - 语义按用户原话实现，阈值做成常量便于日后调。
 
 ### 2.3 Q2 — 工作模式随视角按需加载（高性能）
@@ -168,4 +175,4 @@ CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
 - [x] WS3 LLM 验证脚本（报告 + 用户配 key 后跑批）—— **2026-08-17 完成（817 条全量：82 pass / 724 warn / 10 fail / 1 error；10 条 fail 待 B2.1 决策）**
 - [x] WS4 视口按需加载 + LOD + 在招呈现
 - [x] 公司打标（tech/19）：tier 0..21 + category 国标大类，668 家全量 QA 通过—— **2026-08-17 完成**
-- [ ] 全国工作模式验收：非杭州城市按位置加载、LOD 正常、真实性校验通过（**等待 AMap geocode 配额重置 → geocode:sites:apply → import:seed:apply**）
+- [ ] 全国工作模式验收：非杭州城市按位置加载、公司全量展示（2026-08-25 起取消 LOD 层级隐藏）、真实性校验通过（**等待 AMap geocode 配额重置 → geocode:sites:apply → import:seed:apply**）

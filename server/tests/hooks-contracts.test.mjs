@@ -250,6 +250,64 @@ test('usePOIMap:applySync 末尾 sync() + 视图事件自动补回(外部删除�
   assert.match(hook, /offMove\(\);\s*offZoom\(\);\s*controller\.destroy\(\);/);
 });
 
+// ---- 2026-08-25 f-lod-pool:工作 LOD 取消 + domain 池/可见集拆分 + 空池守卫 ----
+
+test('fix 4:map-shell 工作模式取消 LOD tier 过滤——全量公司恒显,聚合保留', () => {
+  const shell = src('components/map-shell.tsx');
+  const lod = src('lib/lod.ts');
+  // 客户端不再 import / 使用 tier 过滤符号(服务端 /api/pois 的 maxTier 契约保留)
+  assert.doesNotMatch(shell, /maxTierForZoom|TIER_DEFAULT/);
+  assert.doesNotMatch(shell, /company\?\.tier|\.tier \?\?/);
+  // 可见性 work 分支 = markerPois 全量(无 tier <= maxTier 过滤;zoom > 8 个体
+  // pin 全量出现,含未打标 tier 12);domain 分支 = 管线结果 ∪ overlay
+  assert.match(shell, /return markerPois\.map\(\(p\) => p\.id\);/);
+  // 全片段内不再存在 tier 过滤表达式(maxTier 变量、tier 条件均退役)
+  assert.doesNotMatch(shell, /tier\s*[<>=!]=?\s*maxTier|maxTier\s*[<>=!]=?\s*/);
+  // lod.ts 模块导出保留(API 契约 + 数据管线),仅注释声明客户端退役
+  assert.match(lod, /export function maxTierForZoom/);
+  assert.match(lod, /2026-08-25 修订/);
+  // 聚合(drill)链路保留:徽章点击下钻 CLUSTER_DRILL_ZOOM 仍为 11
+  const cluster = src('lib/city-cluster.ts');
+  assert.match(cluster, /CLUSTER_DRILL_ZOOM = 11/);
+  assert.match(cluster, /2026-08-25 修订/);
+});
+
+test('fix 5:map-shell domain marker 池 = 目录全量(catalog 原始),筛选只改可见集', () => {
+  const shell = src('components/map-shell.tsx');
+  // 池 memo:catalog 原始 + overlay(+ saved overlay),不经 query/filters/sort 管线
+  assert.match(shell, /const domainMarkerPool = useMemo\(/);
+  assert.match(
+    shell,
+    /canonicalMode\(mode\) === "domain"\s*\? mergeMapPois\(catalog, overlayPois, savedOverlay && Boolean\(user\)\)/
+  );
+  // 依赖数组不含 query/filters/sort → 纯客户端筛选变化池引用不变(零 setPOIs)
+  assert.match(shell, /\[mode, catalog, overlayPois, savedOverlay, user\],/);
+  // markerPois 的 domain 分支 = 池(非管线 pois)——列表变化不触碰 marker 源
+  assert.match(shell, /: \(domainMarkerPool \?\? \[\]\)/);
+  // 可见集 domain 分支 = 管线结果 ∪ overlay(筛选只 show/hide,实例不销毁)
+  assert.match(shell, /\.\.\.pois\.map\(\(p\) => p\.id\), \.\.\.overlayPois\.map\(\(p\) => p\.id\)/);
+  // 列表(pois)管线口径不动:明细/卡片/详情查找仍消费同在的 pois memo
+  assert.match(shell, /const pois = useMemo\(/);
+  assert.match(shell, /runPOIPipeline\(/);
+});
+
+test('fix 6:usePOIMap resetKey 模式切换显式清空(map-shell 接线);map-markers 空列表 = 保留实例', () => {
+  const shell = src('components/map-shell.tsx');
+  const hook = src('hooks/use-poi-map.ts');
+  const markers = src('lib/map-markers.ts');
+  // map-shell 接线:resetKey = 模式键(切模式换目录,域↔工池语义切换)
+  assert.match(shell, /resetKey: canonicalMode\(mode\),/);
+  // resetKey 变化 → 显式 clear()(setPOIs 空列表已不再清场,须显式摘旧实例
+  // 防 domain→work 无 replace 的跨模式隐藏堆积);首运行(prev 未初始化)不清
+  // ——create effect 同 commit 已回放,首变清场无谓销毁刚回放的实例
+  assert.match(hook, /const reset = prev !== undefined && resetKey !== prev;/);
+  assert.match(hook, /if \(reset\) controller\.clear\(\);/);
+  assert.match(hook, /prevResetKeyRef = useRef/);
+  // map-markers:空列表分支 = 保留实例(不触碰实例,可见性由 setVisiblePOIs 负责)
+  assert.match(markers, /if \(pois\.length === 0\) return;/);
+  assert.doesNotMatch(markers, /pois\.length === 0\) \{\s*this\.clear\(\)/);
+});
+
 // ---- useMapEngine(ws-2 增量:挂载失败错误态 + 重试;旧断言不放宽)----
 
 test('useMapEngine:返回契约增量(4 旧字段 + mountError/retryMount 2 新字段)', () => {

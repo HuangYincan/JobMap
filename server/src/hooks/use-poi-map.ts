@@ -6,6 +6,7 @@
 // 将 POIMarkerController 绑定到 React 生命周期：
 // - view 可用时创建控制器，卸载时销毁
 // - pois 变化 → setPOIs 差分更新标记（replace 语义可选）
+// - resetKey 变化 → 显式 clear() 后重放新池（模式切换换目录,池语义切换）
 // - selectedId / highlightedId 变化 → select / highlight
 // - accentColor 变化 → 重建控制器并应用新配色
 // - 每次 applySync 末尾调用 controller.sync()：厂商侧被外部删除的
@@ -28,7 +29,7 @@ export interface UsePOIMapOptions {
   pois: POI[];
   /**
    * 可选：只显示这些 id 的标记(b2)——marker 实例保留在控制器内,仅切换
-   * show/hide(zoom tier/聚合边界/筛选变化不再销毁重建)。缺省/null = 全部显示。
+   * show/hide(聚合边界/筛选/可见集变化不再销毁重建)。缺省/null = 全部显示。
    */
   visiblePOIs?: string[] | null;
   /** 当前选中的 POI id；变化时地图标记放大 + 强调环。 */
@@ -49,6 +50,12 @@ export interface UsePOIMapOptions {
    * visiblePOIs 决定)。缺省 null = 不额外保留。仅在 replacePOIsOnSync 时生效。
    */
   retainPOIIds?: Iterable<string> | null;
+  /**
+   * 池语义切换键(2026-08-25 f-lod-pool):变化时显式 `controller.clear()`
+   * 再重放新池——模式切换换目录时旧语义实例不跨模式泄漏(setPOIs 空列表
+   * 已不再是清空路径,transient 空目录不再兜底清场)。缺省 = 不重置。
+   */
+  resetKey?: string | number | null;
 }
 
 /**
@@ -98,6 +105,7 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
     onMarkerClick,
     replacePOIsOnSync,
     retainPOIIds,
+    resetKey,
   } = opts;
 
   // 缓存最新的回调与状态，避免 effect 依赖函数/对象导致频繁重建
@@ -109,6 +117,7 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
     visiblePOIs,
     replacePOIsOnSync,
     retainPOIIds,
+    resetKey,
   });
   latest.current = {
     accentColor,
@@ -118,6 +127,7 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
     visiblePOIs,
     replacePOIsOnSync,
     retainPOIIds,
+    resetKey,
   };
 
   const controllerRef = useRef<POIMarkerController | null>(null);
@@ -163,10 +173,20 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, accentColor]);
 
-  // POI 列表变化 → 差分更新标记（replace 可选），并重放当前可见集/选中/高亮
+  // POI 池变化 → 差分更新标记（replace 可选），并重放当前可见集/选中/高亮。
+  // resetKey 变化(模式切换换目录,2026-08-25 f-lod-pool):先显式 clear() 摘除
+  // 旧语义实例再重放新池——setPOIs 空列表已不再清场(空过滤 ≠ 清空池),
+  // 若不做显式清空,domain→work(无 replace)会把旧模式遗留实例留在池内隐藏。
+  // 首次运行(prev 未初始化)不清:挂载时本 effect 与 create effect 同 commit
+  // 执行,create 已回放最新池;首变清场会无谓销毁刚回放的实例。
+  const prevResetKeyRef = useRef<string | number | null | undefined>(undefined);
   useEffect(() => {
+    const prev = prevResetKeyRef.current;
+    prevResetKeyRef.current = resetKey;
+    const reset = prev !== undefined && resetKey !== prev;
     const controller = controllerRef.current;
     if (!controller) return;
+    if (reset) controller.clear();
     applySync(
       controller,
       pois,
@@ -176,7 +196,7 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
       latest.current.visiblePOIs
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pois]);
+  }, [pois, resetKey]);
 
   // 可见集变化 → show/hide 切换（实例保留，b2）
   useEffect(() => {
