@@ -3,6 +3,7 @@
 // No rows / no database → caller falls back to seed.
 
 import { getPool } from './db.ts';
+import { isCityCenterPin } from './city-centers.ts';
 import { resolveCompanyLogo, type ResolvedLogo } from './company-logo.ts';
 import { cityBoundsConsistencySql, companySitesSpatialSql, hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
 import type { ApplySource, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
@@ -132,7 +133,11 @@ export async function loadWorkCatalogFromDb(
 
     // Ungeocoded sites (address-only, lng/lat NULL) must not pin at (0,0).
     // A clip already restricts to geom-bearing sites; the unrestricted path filters here.
-    const located = sites.rows.filter((site) => hasPlausibleCoord(site.lng, site.lat));
+    // 2026-08-25 (fix/hide-center-pins): 城市中心钉(无真实办公坐标、钉在行政中心的
+    // 站点)一并排除, 与离线 catalog 路径同规则 — 地图不再堆假办公点。
+    const located = sites.rows.filter(
+      (site) => hasPlausibleCoord(site.lng, site.lat) && !isCityCenterPin(site.lng as number, site.lat as number),
+    );
     if (located.length === 0) return null;
 
     const companyIds = [...new Set(located.map((site) => site.company_id))];

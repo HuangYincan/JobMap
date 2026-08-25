@@ -4,9 +4,11 @@ import assert from 'node:assert/strict';
 
 import {
   CITY_CENTERS,
+  CITY_CENTER_EPS,
   OVERSEAS_CITY_KEYS,
   bareCityName,
   cityCenter,
+  isCityCenterPin,
 } from '../src/lib/city-centers.ts';
 
 test('CITY_CENTERS: 覆盖主要城市且坐标在合理范围(大陆 lng 73–136 / lat 3–54, 海外全球)', () => {
@@ -61,4 +63,24 @@ test('cityCenter: 省前缀连写与新增城市命中(柳州 / 新加坡 / 东�
 test('cityCenter: 未知城市返回 undefined(调用方回退均值)', () => {
   assert.equal(cityCenter('三亚'), undefined);
   assert.equal(cityCenter('随便城'), undefined);
+});
+
+test('isCityCenterPin: 精确中心坐标命中, 偏移/真实坐标不命中', () => {
+  // 每个主要城市中心(±EPS 内)都应判为 pin
+  for (const [k, v] of Object.entries(CITY_CENTERS)) {
+    assert.ok(isCityCenterPin(v.lng, v.lat), `${k} 中心应判为 pin`);
+  }
+  // 偏移超过 EPS 的真实坐标不命中
+  assert.ok(!isCityCenterPin(121.4745, 31.2345), '上海中心 +~500m 不是 pin');
+  assert.ok(!isCityCenterPin(116.405, 39.905), '北京中心 +~500m 不是 pin');
+  assert.ok(!isCityCenterPin(120.16, 30.28), '杭州真实办公区不是 pin');
+  // 非有限值安全返回 false
+  assert.ok(!isCityCenterPin(NaN, 31.23));
+  assert.ok(!isCityCenterPin(121.47, Infinity));
+});
+
+test('isCityCenterPin: 边界 — EPS 边缘命中, 略过不命中', () => {
+  const sh = CITY_CENTERS['上海'];
+  assert.ok(isCityCenterPin(sh.lng + CITY_CENTER_EPS, sh.lat), '恰在 EPS 内命中');
+  assert.ok(!isCityCenterPin(sh.lng + CITY_CENTER_EPS + 0.0001, sh.lat), '越过 EPS 不命中');
 });

@@ -9,6 +9,7 @@ import { NOWCODER_DIR } from './recruitment-adapters/nowcoder.ts';
 import { OFFICIAL_CAREER_DIR, listOfficialCareerFiles } from './recruitment-adapters/official-career.ts';
 import { RADAR_DIR } from './recruitment-adapters/radar.ts';
 import { SHIXISENG_DIR } from './recruitment-adapters/shixiseng.ts';
+import { isCityCenterPin } from './city-centers.ts';
 import { isAuthenticPositionId } from './freshness.ts';
 import { isAlivePosition } from './position-alive.ts';
 import { mergeCompaniesIntoPois } from './recruitment-source.ts';
@@ -22,6 +23,16 @@ let offlineWorkCatalog: Promise<POI[]> | null = null;
 function hasPlausibleCoord(poi: POI): boolean {
   const { lng, lat } = poi.location ?? {};
   return Number.isFinite(lng) && Number.isFinite(lat) && !(lng === 0 && lat === 0);
+}
+
+/**
+ * 可展示判定:有真实坐标且不是城市中心钉(2026-08-25, fix/hide-center-pins)。
+ * 中心钉 = 站点无真实办公坐标、由 city-centers 批次钉在行政中心;读路径排除,
+ * 避免地图在市中心堆出假办公点(用户反馈「很多 POI 在市中心」)。
+ */
+function hasShownCoord(poi: POI): boolean {
+  const { lng, lat } = poi.location ?? {};
+  return hasPlausibleCoord(poi) && !isCityCenterPin(lng as number, lat as number);
 }
 
 export async function loadOfflineWorkCatalog(): Promise<POI[]> {
@@ -50,7 +61,7 @@ export async function loadOfflineWorkCatalog(): Promise<POI[]> {
             (pos) => isAuthenticPositionId(pos.id) && isAlivePosition(pos),
           ),
         }))
-        .filter((poi) => poi.positions.length > 0 && hasPlausibleCoord(poi));
+        .filter((poi) => poi.positions.length > 0 && hasShownCoord(poi));
     });
   }
   return offlineWorkCatalog;
