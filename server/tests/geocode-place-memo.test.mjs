@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
   gradeOfficePoi,
   pickBestOfficePoi,
+  placeSearchMemoFile,
   placeSearchMemoKey,
   placeSearchMemoSet,
   placeTextSearchRest,
@@ -222,4 +224,13 @@ test('geocode-sites-apply.mjs 接线: searchCompanyPoi 按 (query, province, cit
   const setIdx = script.indexOf('placeSearchMemoSet(placeSearchMemo, memoKey, out)');
   assert.ok(elseIdx !== -1 && setIdx !== -1, '失败分支与 memo 写入点都必须在 searchCompanyPoi 内');
   assert.ok(setIdx > elseIdx, 'memo 写入必须发生在解析完成之后 (只缓存成功命中)');
+});
+
+// --- 持久化默认路径 (bundle 安全, 2026-08-25 fix/geocode-persist-memo 回归) ----
+
+test('placeSearchMemoFile: 默认路径 = cwd/.geocode-memo.json (调用期求值, 无顶层资产解析)', () => {
+  // 顶层 new URL(相对路径, import.meta.url) 会被 Turbopack 当资产引用静态解析,
+  // .geocode-memo.json 已 gitignore → CI checkout 无此文件 → next build 失败。
+  // 修复后路径调用期求值: cwd 契约 = server/ (npm scripts / next dev|start)。
+  assert.equal(placeSearchMemoFile(), join(process.cwd(), '.geocode-memo.json'));
 });
