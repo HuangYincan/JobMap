@@ -79,8 +79,9 @@ test('isCityCenterPin: 精确中心坐标命中, 偏移/真实坐标不命中', 
   assert.ok(!isCityCenterPin(121.47, Infinity));
 });
 
-test('isCityCenterPin: 边界 — EPS 边缘命中, 略过不命中', () => {
+test('isCityCenterPin: 边界 — EPS 内命中, 略过不命中', () => {
   const sh = CITY_CENTERS['上海'];
-  assert.ok(isCityCenterPin(sh.lng + CITY_CENTER_EPS, sh.lat), '恰在 EPS 内命中');
-  assert.ok(!isCityCenterPin(sh.lng + CITY_CENTER_EPS + 0.0001, sh.lat), '越过 EPS 不命中');
+  // 用带余量的偏移(±1e-4), 避开浮点加法在恰好 EPS 处的 1e-16 级误差。
+  assert.ok(isCityCenterPin(sh.lng + 0.0004, sh.lat), 'EPS 内命中');
+  assert.ok(!isCityCenterPin(sh.lng + 0.0006, sh.lat), 'EPS 外不命中');
 });
