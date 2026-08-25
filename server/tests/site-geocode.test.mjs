@@ -18,6 +18,7 @@ import {
   importedSiteQuery,
   isCityListPlaceholderAddress,
   isCityNameAddress,
+  jiaoyuntongPlaceSearchRest,
   matchesCityCenter,
   normalizeNameForMatch,
   officeNameMatchStrength,
@@ -677,6 +678,106 @@ test('baiduPlaceSearchRest parses a gcj02ll place response', async () => {
     assert.match(requested, /ret_coordtype=gcj02ll/);
     assert.ok(requested.includes(`region=${encodeURIComponent('上海市')}`));
   });
+});
+
+test('jiaoyuntongPlaceSearchRest hits the company gateway with baidu-style params', async () => {
+  const prev = process.env.JIAOYUNTONG_MAP_KEY;
+  process.env.JIAOYUNTONG_MAP_KEY = 'jyt-token';
+  try {
+    let requested = '';
+    const hit = await jiaoyuntongPlaceSearchRest('英伟达', '上海市', async (input) => {
+      requested = String(input);
+      return {
+        ok: true,
+        json: async () => ({
+          status: 0,
+          results: [{ name: '英伟达半导体科技(上海)有限公司', location: { lng: 121.626376, lat: 31.202382 }, province: '上海市', city: '上海市', district: '浦东新区' }],
+        }),
+      };
+    });
+    assert.equal(hit.ok, true);
+    assert.equal(hit.provider, 'jiaoyuntong');
+    assert.equal(hit.pois.length, 1);
+    assert.equal(hit.pois[0].lng, 121.626376);
+    assert.equal(hit.pois[0].cityname, '上海市');
+    assert.match(requested, /map\.jiaoyuntong\.net\/place\/v2\/search/);
+    assert.match(requested, /ak=jyt-token/);
+    assert.match(requested, /ret_coordtype=gcj02ll/);
+  } finally {
+    if (prev == null) delete process.env.JIAOYUNTONG_MAP_KEY;
+    else process.env.JIAOYUNTONG_MAP_KEY = prev;
+  }
+});
+
+test('placeTextSearchRest falls back to 公司网关 before Baidu when AMap quota is exhausted', async () => {
+  const prevA = process.env.AMAP_WEB_KEY;
+  const prevJ = process.env.JIAOYUNTONG_MAP_KEY;
+  process.env.AMAP_WEB_KEY = 'test-web-key';
+  process.env.JIAOYUNTONG_MAP_KEY = 'jyt-token';
+  try {
+    await withBaiduKey(async () => {
+      const hit = await placeTextSearchRest('英伟达', '上海市', async (input) => {
+        const url = String(input);
+        if (url.includes('restapi.amap.com')) {
+          return { ok: true, json: async () => ({ ...AMAP_EXHAUSTED, pois: [] }) };
+        }
+        // 网关优先于官方百度被调用 (fallback 链 baidu 槽位).
+        assert.match(url, /map\.jiaoyuntong\.net/);
+        return {
+          ok: true,
+          json: async () => ({
+            status: 0,
+            results: [{ name: '英伟达上海办公室', location: { lng: 121.604193, lat: 31.180505 }, province: '上海市', city: '上海市', district: '浦东新区' }],
+          }),
+        };
+      });
+      assert.equal(hit.ok, true);
+      assert.equal(hit.amapUnavailable, true);
+      assert.equal(hit.provider, 'jiaoyuntong');
+      assert.equal(hit.pois[0].lng, 121.604193);
+    });
+  } finally {
+    if (prevA == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prevA;
+    if (prevJ == null) delete process.env.JIAOYUNTONG_MAP_KEY;
+    else process.env.JIAOYUNTONG_MAP_KEY = prevJ;
+  }
+});
+
+test('placeTextSearchRest: 网关失败 (status 101) → 官方百度兜底', async () => {
+  const prevA = process.env.AMAP_WEB_KEY;
+  const prevJ = process.env.JIAOYUNTONG_MAP_KEY;
+  process.env.AMAP_WEB_KEY = 'test-web-key';
+  process.env.JIAOYUNTONG_MAP_KEY = 'jyt-token';
+  try {
+    await withBaiduKey(async () => {
+      const hit = await placeTextSearchRest('得物', '上海市', async (input) => {
+        const url = String(input);
+        if (url.includes('restapi.amap.com')) {
+          return { ok: true, json: async () => ({ ...AMAP_EXHAUSTED, pois: [] }) };
+        }
+        if (url.includes('map.jiaoyuntong.net')) {
+          return { ok: true, json: async () => ({ status: 101, message: 'AK参数不存在' }) };
+        }
+        return {
+          ok: true,
+          json: async () => ({
+            status: 0,
+            results: [{ name: '得物App总部', location: { lng: 121.512, lat: 31.272 }, province: '上海市', city: '上海市' }],
+          }),
+        };
+      });
+      assert.equal(hit.ok, true);
+      assert.equal(hit.amapUnavailable, true);
+      assert.equal(hit.provider, 'baidu');
+      assert.equal(hit.pois[0].lng, 121.512);
+    });
+  } finally {
+    if (prevA == null) delete process.env.AMAP_WEB_KEY;
+    else process.env.AMAP_WEB_KEY = prevA;
+    if (prevJ == null) delete process.env.JIAOYUNTONG_MAP_KEY;
+    else process.env.JIAOYUNTONG_MAP_KEY = prevJ;
+  }
 });
 
 test('baiduRegeoCityRest sends lat,lng + coordtype=gcj02ll and parses the municipality', async () => {

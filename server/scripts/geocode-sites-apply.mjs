@@ -22,10 +22,13 @@
 // Writes back into the owning drop JSON (copy-on-write: only site.location is
 // replaced). The site's city is enforced via regeo. Reads AMAP_WEB_KEY from
 // server/.env.local; when AMap's daily quota is exhausted (infocode 10044) or
-// no AMap key is set, falls back to Baidu Web 服务 (BAIDU_MAP_AK), then Tencent
-// WebService (TENCENT_MAP_KEY) when Baidu also fails — all GCJ-02 coordinates.
-// Never prints any key. AMap throttles at 3 req/s, Baidu at ~2 req/s (sleep
-// ≥600ms), Tencent at ~5 req/s (sleep ≥340ms after a fallback call).
+// no AMap key is set, place 检索 falls back to 公司内部地图网关
+// (map.jiaoyuntong.net, JIAOYUNTONG_MAP_KEY, 2026-08-25 feature/company-jyt-provider),
+// then Baidu Web 服务 (BAIDU_MAP_AK), then Tencent WebService (TENCENT_MAP_KEY)
+// when those fail — all GCJ-02 coordinates. geocode/regeo (5000/日) stay on the
+// AMap→Baidu→Tencent chain. Never prints any key. AMap throttles at 3 req/s,
+// Baidu/公司网关 at ~2 req/s (sleep ≥600ms), Tencent at ~5 req/s (sleep ≥340ms
+// after a fallback call).
 //
 // 配额事实 (2026-08-23 查证, 个人开发者配额): AMap 地点搜索 place-text ~100 次/日
 //   (https://lbs.amap.com), 百度 Web 服务地点检索 ~100 次/日
@@ -121,8 +124,9 @@ const env = { ...loadEnv(), ...process.env };
 if (env.AMAP_WEB_KEY && !process.env.AMAP_WEB_KEY) process.env.AMAP_WEB_KEY = env.AMAP_WEB_KEY;
 if (env.BAIDU_MAP_AK && !process.env.BAIDU_MAP_AK) process.env.BAIDU_MAP_AK = env.BAIDU_MAP_AK;
 if (env.TENCENT_MAP_KEY && !process.env.TENCENT_MAP_KEY) process.env.TENCENT_MAP_KEY = env.TENCENT_MAP_KEY;
+if (env.JIAOYUNTONG_MAP_KEY && !process.env.JIAOYUNTONG_MAP_KEY) process.env.JIAOYUNTONG_MAP_KEY = env.JIAOYUNTONG_MAP_KEY;
 
-const DRY_RUN = process.argv.includes('--dry-run') || (!env.AMAP_WEB_KEY && !env.BAIDU_MAP_AK && !env.TENCENT_MAP_KEY);
+const DRY_RUN = process.argv.includes('--dry-run') || (!env.AMAP_WEB_KEY && !env.BAIDU_MAP_AK && !env.TENCENT_MAP_KEY && !env.JIAOYUNTONG_MAP_KEY);
 const onlyArg = process.argv.find((a) => a.startsWith('--only=')) || process.argv.find((a, i) => process.argv[i - 1] === '--only');
 const ONLY = onlyArg
   ? String(onlyArg.split('=')[1] ?? process.argv[process.argv.indexOf('--only') + 1] ?? '')
@@ -145,9 +149,10 @@ const CONTINUE = process.argv.includes('--continue');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // 节流: 百度 ~2 QPS → 600ms; 高德 ~3 QPS、腾讯 ~5 QPS(个人开发者) → 340ms。
+// 公司网关 (jiaoyuntong) 为内部 ASP.NET 服务且保底走百度语义 → 同百度档 600ms。
 // Nominatim (OSM) Usage Policy ≥1 req/s → 1000ms (2026-08-23, feat/poi-nominatim)。
 // provider 缺失(unverified 等)按 340ms 兜底。340ms ≥ 腾讯 5 QPS 的 200ms 间隔。
-const throttleMs = (provider) => (provider === 'baidu' ? 600 : provider === 'nominatim' ? 1000 : 340);
+const throttleMs = (provider) => (provider === 'baidu' || provider === 'jiaoyuntong' ? 600 : provider === 'nominatim' ? 1000 : 340);
 const round = (x, d = 6) => Number(x.toFixed(d));
 
 function readJson(file) {
@@ -285,7 +290,7 @@ async function searchCompanyPoiVariants(query, target, site) {
 // (Anker Innovations), 中文公司名强匹配 + 地址 token 重叠 (≥2) 双通道。
 // DRY-RUN 无 key 时 (纯计划模式) 不发真实网络请求 — Nominatim keyless 没有
 // provider no-key 短路, 必须显式门控; --dry-run 带 key (排演) 与国内链一致放行。
-const NOMINATIM_ACTIVE = !DRY_RUN || !!(env.AMAP_WEB_KEY || env.BAIDU_MAP_AK || env.TENCENT_MAP_KEY);
+const NOMINATIM_ACTIVE = !DRY_RUN || !!(env.AMAP_WEB_KEY || env.BAIDU_MAP_AK || env.TENCENT_MAP_KEY || env.JIAOYUNTONG_MAP_KEY);
 const nominatimThrottle = () => sleep(throttleMs('nominatim'));
 
 // Nominatim search memo (2026-08-23, scan r2 #6) — 与国内 place-search memo
@@ -673,7 +678,7 @@ mainLoop: for (const { file, company, site } of needing) {
 }
 
 // --- report -----------------------------------------------------------------
-console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | BAIDU_MAP_AK: ${env.BAIDU_MAP_AK ? 'set' : 'MISSING'} | TENCENT_MAP_KEY: ${env.TENCENT_MAP_KEY ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
+console.log(`\nAMAP_WEB_KEY: ${env.AMAP_WEB_KEY ? 'set' : 'MISSING'} | BAIDU_MAP_AK: ${env.BAIDU_MAP_AK ? 'set' : 'MISSING'} | TENCENT_MAP_KEY: ${env.TENCENT_MAP_KEY ? 'set' : 'MISSING'} | JIAOYUNTONG_MAP_KEY: ${env.JIAOYUNTONG_MAP_KEY ? 'set' : 'MISSING'} | mode: ${DRY_RUN ? 'DRY-RUN (no writes)' : 'APPLY'}`);
 console.log(formatGeocodeProviderReport());
 // 2026-08-23 (feat/poi-nominatim): 第四 provider 状态 — 海外站 (isOverseasCity)
 // 三级兜底失败后 keyless 走 OSM Nominatim (WGS-84, ≥1 req/s)。纯计划 dry-run
