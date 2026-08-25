@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-25
+
+### Fixed
+
+- **高优先级修复批次(`20260825-boss-hi-priority-fixes`,fix/server-catalog-semantics 25498d9 + fix/site-place-search 3ca0efb + fix/work-lod-marker-pool 16a3add).** 读路径语义两连修:`MODE_CACHE_VERSION` 17→18(中心钉排除后目录口径变化,+ 版本历史注释);裁剪空语义契约 —— SQL 命中但 JS 侧过滤后为空返回 `[]`(DB 健康 + 范围空,不再回退离线目录),`null` 仅表无 DB/失败。数据补全工具链:占位/无地址带岗位站 →「公司名+城市」地点检索(`cityNameOnlyAddress`/`siteNeedsPlaceSearch`/`pickPlaceSearchPoi`;plan/audit/apply 感知 needsPlaceSearch,`ps:` memo 前缀隔离;仅实现+dry-run+测试,apply 执行 Env-only 延后)。前端:工作模式取消 zoom 层 tier 隐藏(公司全量展示,zoom ≤ 8 城市聚合保留,服务端 maxTier API 契约不变);Domain 按「目录全量 = marker 池、筛选只算 visiblePOIIds」拆分(`domainMarkerPool` 不经 query/filters/sort 管线,仅真换视口/换目录才 replace);`setPOIs([])` 空守卫(空列表不触碰实例,显式清空仅 `clear()`/`destroy()`,`use-poi-map` 加 `resetKey` 防跨模式泄漏)。全量套件实测:**npm test 1667 tests / 1664 pass / 3 skip**(2026-08-25,dev 16a3add)。
+
 ## 2026-08-24
 
 ### Fixed
