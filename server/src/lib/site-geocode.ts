@@ -561,7 +561,33 @@ export interface AddresslessQueryVariant {
   searchQuery: string;
   /** 评分用公司名 — 精确候选 query 含站点名, POI 名通常不含, 评分必须用裸公司名兜底. */
   gradeName: string;
-  kind: 'precise' | 'broad';
+  kind: 'precise' | 'broad' | 'tail';
+}
+
+/**
+ * 尾限定词剥离一层 (2026-08-25, fix/grader-tail-variant): 「辉瑞中国」→「辉瑞」、
+ * 「中金公司」→「中金」。「中国商飞公司」→ 只剥「公司」→「中国商飞」(单层 —
+ * 连剥会把品牌词「中国」也剥掉剩「商飞」, 检索失真)。剩余 <2 字 → 不给变体
+ * (过短检索噪音大)。
+ */
+function stripTrailingQualifier(text: string): string {
+  for (let n = Math.min(MAX_QUALIFIER_TOKEN_LEN, text.length); n >= 1; n--) {
+    if (QUALIFIER_SUFFIXES.has(text.slice(-n)) && text.length - n >= 2) {
+      return text.slice(0, -n);
+    }
+  }
+  return '';
+}
+
+/**
+ * broad 变体 + 可选尾限定词精简变体 (2026-08-25, fix/grader-tail-variant)。
+ * POI 名常以「q+限定词」全称命名 (辉瑞(中国)研究开发有限公司 在库, 但 query
+ * 「辉瑞中国」太宽、无关结果占满前 20 条 2026-08-25 实测); 精简 query 让真实
+ * 办公点排到前列。调用方先试 broad 全 miss 后才用 tail → 预算仍 ≤2 次/站。
+ */
+function withTailVariant(broad: AddresslessQueryVariant): AddresslessQueryVariant[] {
+  const tail = stripTrailingQualifier(broad.searchQuery);
+  return tail ? [broad, { searchQuery: tail, gradeName: tail, kind: 'tail' }] : [broad];
 }
 
 /**
@@ -576,13 +602,13 @@ export function addresslessQueryVariants(
 ): AddresslessQueryVariant[] {
   const broad: AddresslessQueryVariant = { searchQuery: companyQuery, gradeName: companyQuery, kind: 'broad' };
   const name = siteName?.trim();
-  if (!name) return [broad];
+  if (!name) return withTailVariant(broad);
   const normName = normalizeNameForMatch(name);
   const normCompany = normalizeNameForMatch(companyQuery);
-  if (!normName || !normCompany || normName === normCompany) return [broad];
+  if (!normName || !normCompany || normName === normCompany) return withTailVariant(broad);
   // 站点名只是城市名 (北京/北京市/杭州市 …) → 无定位信息, 跳过精确候选
   const normCity = normName.replace(/[省市县]$/, '');
-  if (normCity === bareCity(target.city) || CITY_PREFIXES.has(normCity) || CITY_PREFIXES.has(normName)) return [broad];
+  if (normCity === bareCity(target.city) || CITY_PREFIXES.has(normCity) || CITY_PREFIXES.has(normName)) return withTailVariant(broad);
   const searchQuery = normName.includes(normCompany) ? name : `${companyQuery} ${name}`;
   return [{ searchQuery, gradeName: companyQuery, kind: 'precise' }, broad];
 }
