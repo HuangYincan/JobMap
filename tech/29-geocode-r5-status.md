@@ -93,6 +93,7 @@ r4(`3e6deb3`):288 城市中心/缺坐标站落真实坐标(上海 376→347→34
 | Nominatim 海外源(第四 provider) | ws-b `feat/poi-nominatim` | 三 provider 全部失败且站点判定为海外站时,尝试 OSM Nominatim(`nominatimSearchRest` / `nominatimReverseRest`;UA 带项目标识、≥1 次/秒限速、10s 超时降级);海外站判定独立命名,不污染国内路径;来源审查见 `tech/roles/data/etl/`(ws-b 文档) |
 | 跨日进度 + daily 封装 | ws-c `feat/poi-daily-run` | 运行结束写 `server/.geocode-progress.json`(gitignore);新增 `npm run geocode:sites:daily` 薄封装:打印「今日进展 + 明日剩余 Top 城市(按城排序)+ QUOTA_EXHAUSTED 续跑指引」;配额事实注释入 apply 头部 |
 | 本文档 | ws-d `docs/poi-r5-runbook` | 本 runbook + etl 来源审查(搜索引擎地址源) |
+| 公司网关 place 检索 | `feature/company-jyt-provider`(2026-08-25) | place 链变为 AMap→**公司网关(map.jiaoyuntong.net, JIAOYUNTONG_MAP_KEY)**→百度→腾讯(网关配额充足, 不受 100 次/日 place 限制); geocode/regeo 链不变; 来源审查 `tech/roles/data/etl/company-gateway-map.md` |
 
 ## 4. r5 执行 runbook(2026-08-23,Env-only)
 

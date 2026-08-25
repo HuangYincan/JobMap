@@ -351,23 +351,40 @@ export function tencentWebKey(): string | undefined {
   return key || undefined;
 }
 
+/**
+ * 公司内部地图网关 token (server/.env.local JIAOYUNTONG_MAP_KEY, 2026-08-25)。
+ * map.jiaoyuntong.net 为公司内部 ASP.NET 网关, 百度 place/v2/search 请求格式
+ * (响应结构与错误码均透传百度), 网关侧统一持有地图服务配额 → 不受个人开发者
+ * 100 次/日 place 限额。Never printed.
+ */
+export function jiaoyuntongWebKey(): string | undefined {
+  const key = process.env.JIAOYUNTONG_MAP_KEY?.trim();
+  return key || undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Geocode provider 只读注册表 (2026-08-21, feature/map-engine-backend).
 // 只读配置面:脚本 REPORT(PROVIDERS 行)、配置校验、未来 UI 面板读取,不改
 // fallbackChain 的固定顺序语义。注册表与上方 key getter 读同一 env
-// (AMAP_WEB_KEY / BAIDU_MAP_AK / TENCENT_MAP_KEY,trim 后非空即 configured),
-// 但**不共享实现**——两者一致性由 tests/geocode-providers.test.mjs 钉住
-// (防注册表与链漂移),改 getter 或注册表任一侧都必须同步另一侧并跑该测试。
+// (AMAP_WEB_KEY / BAIDU_MAP_AK / TENCENT_MAP_KEY / JIAOYUNTONG_MAP_KEY,
+// trim 后非空即 configured),但**不共享实现**——两者一致性由
+// tests/geocode-providers.test.mjs 钉住(防注册表与链漂移),改 getter 或
+// 注册表任一侧都必须同步另一侧并跑该测试。
 export interface GeocodeProviderInfo {
-  id: 'amap' | 'baidu' | 'tencent';
+  id: 'amap' | 'baidu' | 'tencent' | 'jiaoyuntong';
   envVar: string;
   configured: boolean;
 }
 
-/** 按 fallbackChain 顺序 (AMap→百度→腾讯) 返回 provider 配置状态。 */
+/**
+ * 按 place 检索链顺序 (AMap→公司网关→百度→腾讯) 返回 provider 配置状态。
+ * 公司网关 (jiaoyuntong) 只接入 place 检索链; geocode/regeo 链仍为
+ * AMap→百度→腾讯(那两接口日配额 5000, 不占 place 的 100 次/日)。
+ */
 export function getGeocodeProviders(): GeocodeProviderInfo[] {
   return [
     { id: 'amap', envVar: 'AMAP_WEB_KEY', configured: amapWebKey() != null },
+    { id: 'jiaoyuntong', envVar: 'JIAOYUNTONG_MAP_KEY', configured: jiaoyuntongWebKey() != null },
     { id: 'baidu', envVar: 'BAIDU_MAP_AK', configured: baiduWebKey() != null },
     { id: 'tencent', envVar: 'TENCENT_MAP_KEY', configured: tencentWebKey() != null },
   ];
@@ -378,7 +395,7 @@ export function formatGeocodeProviderReport(): string {
   const flags = getGeocodeProviders()
     .map((p) => `${p.id}=${p.configured ? 'set' : 'missing'}`)
     .join(' ');
-  return `PROVIDERS ${flags} | chain=AMap→Baidu→Tencent (skip no-key)`;
+  return `PROVIDERS ${flags} | place-chain=AMap→jiaoyuntong(公司网关)→Baidu→Tencent | geo/regeo-chain=AMap→Baidu→Tencent (skip no-key)`;
 }
 
 /**
@@ -762,7 +779,10 @@ async function fallbackChain<T extends { ok: boolean }>(
   makeTencent: () => Promise<T>,
   noFallback: () => T,
 ): Promise<T & { amapUnavailable?: boolean }> {
-  if (baiduWebKey()) {
+  // 公司网关 (jiaoyuntong) 只在 place 检索链中占 baidu 槽位 (见
+  // companyPlaceSearchRest); 仅配网关 token 时也进入该槽, 使 place 链
+  // AMap→网关→百度→腾讯全链路可用。
+  if (baiduWebKey() || jiaoyuntongWebKey()) {
     const b = await makeBaidu();
     if (b.ok || !tencentWebKey()) return { ...b, amapUnavailable: true };
   }
@@ -1111,7 +1131,7 @@ export interface PlaceTextResult {
   pois: OfficePoiCandidate[];
   reason?: 'no-key' | 'http' | 'timeout' | 'parse' | 'quota' | `baidu-status:${number}` | `tencent-status:${number}`;
   amapUnavailable?: boolean;
-  provider?: 'amap' | 'baidu' | 'tencent';
+  provider?: 'amap' | 'baidu' | 'tencent' | 'jiaoyuntong';
 }
 
 /**
@@ -1129,7 +1149,7 @@ export async function placeTextSearchRest(
   const key = amapWebKey();
   if (!key) {
     return fallbackChain(
-      () => baiduPlaceSearchRest(query, city, fetchImpl),
+      () => companyPlaceSearchRest(query, city, fetchImpl),
       () => tencentPlaceSearchRest(query, city, fetchImpl),
       () => ({ ok: false, pois: [], reason: 'no-key' } as PlaceTextResult),
     );
@@ -1154,7 +1174,7 @@ export async function placeTextSearchRest(
       const down = amapQuotaExhausted(payload);
       if (down) {
         return fallbackChain(
-          () => baiduPlaceSearchRest(query, city, fetchImpl),
+          () => companyPlaceSearchRest(query, city, fetchImpl),
           () => tencentPlaceSearchRest(query, city, fetchImpl),
           () => ({ ok: false, pois: [], reason: 'quota', amapUnavailable: true } as PlaceTextResult),
         );
@@ -1265,6 +1285,74 @@ export function parseBaiduOfficePoi(raw: Record<string, unknown>): OfficePoiCand
     pname: String(raw.province ?? ''),
     cityname: String(raw.city ?? ''),
   };
+}
+
+/**
+ * 公司内部地图网关 place 检索 (2026-08-25, feature/company-jyt-provider)。
+ * map.jiaoyuntong.net 是百度 place/v2/search 请求格式的网关 (响应结构与错误码
+ * 透传百度) — 与 baiduPlaceSearchRest 参数完全同构, 仅 base URL 与 ak 来源不同
+ * (JIAOYUNTONG_MAP_KEY 网关 token, 非官方百度 ak)。网关持有公司地图服务配额,
+ * 不受个人开发者 100 次/日 place 限额; 实测 (2026-08-25) 真实公司名 +
+ * region=目标城市 返回城内结果 (与官方百度一致的 GCJ-02 坐标, 例: 英伟达 →
+ * 上海浦东张江)。网关为 http 明文 — token 仅存 server/.env.local, 绝不落审计输出。
+ */
+export async function jiaoyuntongPlaceSearchRest(
+  query: string,
+  city = '杭州',
+  fetchImpl: typeof fetch = fetch,
+): Promise<PlaceTextResult> {
+  const key = jiaoyuntongWebKey();
+  if (!key) return { ok: false, pois: [], reason: 'no-key' };
+  const url = new URL('http://map.jiaoyuntong.net/place/v2/search');
+  url.searchParams.set('query', query);
+  url.searchParams.set('region', city);
+  url.searchParams.set('output', 'json');
+  url.searchParams.set('ret_coordtype', 'gcj02ll');
+  url.searchParams.set('page_size', '10');
+  url.searchParams.set('scope', '1');
+  url.searchParams.set('ak', key);
+  let payload: { status?: number; results?: Array<Record<string, unknown>> };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, undefined, fetchImpl);
+      if (!res.ok) return { ok: false, pois: [], reason: 'http' };
+      payload = (await res.json()) as typeof payload;
+    } catch (err) {
+      return { ok: false, pois: [], reason: isAbortError(err) ? 'timeout' : 'http' };
+    }
+    if (payload.status !== 0) {
+      const reason = `baidu-status:${payload.status ?? -1}` as PlaceTextResult['reason'];
+      if (attempt === 0 && isTransientBaiduStatus(reason)) {
+        await sleep(BAIDU_RETRY_SLEEP_MS);
+        continue;
+      }
+      return { ok: false, pois: [], reason };
+    }
+    return {
+      ok: true,
+      provider: 'jiaoyuntong',
+      pois: (payload.results ?? []).map(parseBaiduOfficePoi).filter((p): p is OfficePoiCandidate => !!p),
+    };
+  }
+  return { ok: false, pois: [], reason: 'http' };
+}
+
+/**
+ * place 检索链的 baidu 槽位: 公司网关 (jiaoyuntong) 优先 — 配额充裕且由公司
+ * 负担; 网关未配置或失败 (网络/网关错) → 官方百度 Web 服务兜底, 再交由
+ * fallbackChain 接手腾讯。未配置 JIAOYUNTONG_MAP_KEY 时行为与旧版完全一致
+ * (直接官方百度), 现有调用方与测试不受影响。
+ */
+async function companyPlaceSearchRest(
+  query: string,
+  city: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<PlaceTextResult> {
+  if (jiaoyuntongWebKey()) {
+    const j = await jiaoyuntongPlaceSearchRest(query, city, fetchImpl);
+    if (j.ok) return j;
+  }
+  return baiduPlaceSearchRest(query, city, fetchImpl);
 }
 
 /** Baidu place/v2/search (行政区域检索) scoped to one city, GCJ-02 output.
