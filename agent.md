@@ -44,7 +44,7 @@ domain-map/
 | `plan-site-geocode.mjs` | 待 geocode 站点清单 | `npm run geocode:sites`;只列出缺坐标站点,不写 |
 | `label-categories.mjs` | category 国标大类打标辅助 | 见 `tech/19-company-labeling.md` |
 
-打标口径与国标大类字典:`tech/19-company-labeling.md`;LOD tier 语义(0..21 可见最小 zoom)同文档。
+打标口径与国标大类字典:`tech/19-company-labeling.md`;tier 语义(2026-08-25 起为数据标注字段——工作地图客户端已取消按 zoom 隐藏公司,`maxTier` 仅存于服务端 API 契约;历史 LOD 模型同 `tech/19`/`tech/18` §2.2)。
 杭州 POI 本地化(表/导入/tier/回退预算/API 契约):`tech/22-hangzhou-poi-local.md`;来源审查:`tech/roles/data/etl/hangzhou-poi.md`。
 
 ## 工作流程

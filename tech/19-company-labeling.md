@@ -4,7 +4,8 @@
 
 ## 1. tier:可见最小 zoom(0–21)
 
-**模型**:每家公司一个 `tier` 值,含义 = 「可见最小缩放级别」。
+**模型**:每家公司一个 `tier` 值,含义 = 「可见最小缩放级别」(2026-08-25 起
+为**数据标注字段**,工作地图客户端不再按 zoom 过滤——见文末修订)。
 
 ```
 zoom >= tier 时该公司在地图上显示 → 服务端 SQL 过滤:companies.tier <= :zoom
@@ -24,6 +25,16 @@ zoom >= tier 时该公司在地图上显示 → 服务端 SQL 过滤:companies.t
 | 12–16 | 小厂 | 缺省 12(未打标按此处理) |
 | 17–20 | 微小/待定(几乎不显示) | — |
 | 21 | 永不显示(zoom 最大 20,等价隐藏标记) | 数据标记/黑名单 |
+
+> **2026-08-25 修订(用户裁定,fix/工作 LOD 取消)**:工作地图客户端**不再**
+> 按 zoom 从 `tier` 过滤公司标记(`map-shell` marker 可见性全量展示,
+> `lod.ts` 的 `maxTierForZoom`/`TIER_DEFAULT` 不再被 map-shell 引用;
+> `zoom ≤ 8` 城市聚合保留,tech/21)——`tier` 降级为数据标注字段
+> (名企/大厂/独角兽标记,仍供筛选与 UI 提示使用)。**服务端 `/api/pois` /
+> `/api/search` 的 `maxTier` 参数语义保留**(API 契约,其它消费者/测试在用),
+> `companies.tier` 列与 SQL 下推 `tier <= maxTier` 不动;`lod.ts` 导出与
+> `lod.test.mjs` 锁定行为保留。注意:tier 21(永隐标记)公司因此会
+> 随全量展示出现——如需恢复「黑名单隐藏」语义应另立字段,不绑定 zoom。
 
 **DB 缺省**:`companies.tier DEFAULT 12`(迁移 012)。缺省值的读路径兜底
 (`recruitment-store.ts` / `recruitment-source.ts` / `search.ts` 均 `?? 12`)。
