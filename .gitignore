@@ -41,6 +41,9 @@ dist/
 # Geocode multi-day run progress (report/scheduling aid, written by
 # server/scripts/geocode-sites-apply.mjs; never participates in decisions)
 /server/.geocode-progress.json
+# Geocode place-search success memo (cross-process cache, written by
+# server/scripts/geocode-sites-apply.mjs; only successful hits, never failures)
+/server/.geocode-memo.json
 
 # IDEs
 .vscode/

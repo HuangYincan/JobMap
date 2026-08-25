@@ -6,6 +6,7 @@
 
 import { getPool } from './db.ts';
 import { isAbortError, fetchWithTimeout } from './fetch-with-timeout.ts';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { cityProvinceOf } from './recruitment-adapters/official-site-parse.ts';
 import { CITY_CENTERS, OVERSEAS_CITY_KEYS, bareCityName } from './city-centers.ts';
 import type { CompanySite, POILocation } from './types.ts';
@@ -502,6 +503,39 @@ export function placeSearchMemoSet(
   hit: PlaceSearchMemoHit | null | undefined,
 ): void {
   if (hit?.poi) memo.set(key, hit);
+}
+
+/** 默认持久化文件 (server/.geocode-memo.json, 已 gitignore). */
+export const PLACE_SEARCH_MEMO_FILE = new URL('../../.geocode-memo.json', import.meta.url).pathname;
+
+/**
+ * 跨进程持久化 (2026-08-25, fix/geocode-persist-memo): 把成功命中写盘。
+ * 背景: 公司网关额度实测 3100 总限 (2026-08-25 耗尽, status 4), 而 memo 此前
+ * 只存活于单进程 — 每轮 apply 重跑 (幂等只跳已落坐标站, 已试过但 miss 的站
+ * 每轮重烧) + 只读诊断轮次, 让 272 站被检索 5-7 次 ≈ 3100 额度烧光。
+ * 持久化后: 换 key / 隔日续跑 / 诊断复用, 已查过的 query+city 直接读盘,
+ * 不重打网关。只 dump 成功命中 (与 placeSearchMemoSet 语义一致 — 失败不缓存)。
+ */
+export function placeSearchMemoPersist(memo: ReadonlyMap<string, PlaceSearchMemoHit>, filePath = PLACE_SEARCH_MEMO_FILE): void {
+  try {
+    const out: Record<string, PlaceSearchMemoHit> = {};
+    for (const [k, v] of memo) out[k] = v;
+    writeFileSync(filePath, JSON.stringify(out));
+  } catch {
+    // 持久化失败不阻断主流程 (检索结果仍在内存 memo 生效).
+  }
+}
+
+/** 从磁盘加载成功命中 (文件缺失/损坏 → 空 memo, 不抛). */
+export function placeSearchMemoLoad(memo: Map<string, PlaceSearchMemoHit>, filePath = PLACE_SEARCH_MEMO_FILE): void {
+  try {
+    const raw = JSON.parse(readFileSync(filePath, 'utf8')) as Record<string, PlaceSearchMemoHit>;
+    for (const [k, v] of Object.entries(raw)) {
+      if (v?.poi) memo.set(k, v);
+    }
+  } catch {
+    // 首次运行无文件 → 空 memo; 损坏文件 → 忽略, 重新积累.
+  }
 }
 
 // ---------------------------------------------------------------------------

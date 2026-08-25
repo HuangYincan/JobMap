@@ -75,6 +75,8 @@ import {
   pickBestNominatimPoi,
   pickBestOfficePoi,
   placeSearchMemoKey,
+  placeSearchMemoLoad,
+  placeSearchMemoPersist,
   placeSearchMemoSet,
   placeTextSearchRest,
   poiAddressUsable,
@@ -200,6 +202,10 @@ function dropFiles() {
 // 路径 (geocodeAddressRest) 不受影响。regeo 验证仍按站点独立执行 (5000 次/天,
 // 不是瓶颈)。
 const placeSearchMemo = new Map();
+// 2026-08-25 (fix/geocode-persist-memo): 跨进程持久化 — 启动读盘 (换 key/隔日
+// 续跑/诊断复用不再重打网关), 进程退出 (含 QUOTA 短路 process.exit(2)) 统一落盘。
+placeSearchMemoLoad(placeSearchMemo);
+process.on('exit', () => placeSearchMemoPersist(placeSearchMemo));
 
 /**
  * 公司名城市级 place-search 解析 (无街道地址 / 地址不可信时的统一路径)。
