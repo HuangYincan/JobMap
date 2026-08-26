@@ -533,6 +533,11 @@ const CLUSTER_DEFAULT_COLOR = '#007AFF';
 /**
  * 聚合/个体可见性分桶 zoom(b2)——「zoom≤8 分桶变化」的记忆化键。
  *
+ * **输入必须是真实(未取整)zoom**。调用方传入 round 后的值会把 real 8.4
+ * (个体,>8)取整成 8 → `8 <= 8` 误判聚合,点 marker 容器 resize→zoout
+ * (8.6→8.4)时从个体误切聚合,一批个体 POI「消失」(2026-08-26 ws z-cluster,
+ * 修复见 map-shell `clusterZoomForZoom(realZoom)`)。
+ *
  * 聚合状态只依赖 floor(zoom)(clusterZoomForZoom 语义),分桶内的
  * zoom 微调(8.1→8.4、5.2→5.9)不改变任何可见性结果:
  * - zoom ≤ CLUSTER_MAX_ZOOM(8)→ 返回 floor(zoom)(聚合区间内的分桶,
