@@ -117,6 +117,7 @@ export function logoForSite(company: SourceCompany, site?: CompanySite): Resolve
     companyCareerUrl: company.careerUrl,
     companyLogoUrl: company.logoUrl,
     fallbackEmoji: company.logoEmoji,
+    companyName: company.name,
   });
 }
 

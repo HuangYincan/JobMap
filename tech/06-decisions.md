@@ -200,6 +200,17 @@ favicon.im 是国内运营的免费 favicon API(中文文档,CDN `a.favicon.im`)
   如 favicon.im 故障可一行切换
 - 本机 egress 与真实国内浏览器网络不完全等价,上线后需在浏览器端抽查
 
+**后续(2026-08-26, fix/brand-logo-landmark)**:
+favicon.im 解决的是「生成了 URL 但国内被墙」,但很多公司 logo 仍是通用占位:
+833 个 POI 中 822 个 logo 走 favicon,而大量 careerUrl 指向**第三方招聘托管平台**
+(`*.mokahr.com` / `*.jobs.feishu.cn` / `*.zhiye.com` / `wecruit.hotjob.cn`),其 favicon
+是平台默认图标,非公司品牌;大厂自有招聘域(join.qq.com / jobs.bytedance.com)favicon
+也未必是品牌主 logo。→ 新增 `BRAND_LOGO_MAP`(公司名 → 品牌官网 host),在
+`resolveCompanyLogo` 的 companyCareerUrl favicon 之前插入:命中则 favicon 指向品牌官网
+(`https://favicon.im/<brand-host>?size=128`,source=`company`)。键全部取自离线目录
+`p.name` 全集(仅收录实际存在且域名确定的知名大厂,不造表);只在公司层插入,站点层不插
+(站点可能只是招聘子站点,未必是主品牌)。无品牌映射的第三方托管平台维持平台 favicon。
+
 ---
 
 ## 未来待决策
