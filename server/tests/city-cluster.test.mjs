@@ -8,6 +8,7 @@ import {
   clusterCities,
   poiCity,
 } from '../src/lib/city-cluster.ts';
+import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
 import {
   CLUSTER_BADGE_SIZE,
   cityClusterBadgeHTML,
@@ -166,6 +167,34 @@ test('poiCity: 一 POI 一职场,取 sites[0].city 并 trim;无则 undefined', (
   assert.equal(poiCity(workPoi('a', ' 北京 ', 116.4, 39.9)), '北京');
   assert.equal(poiCity({ ...workPoi('b', '北京', 116.4, 39.9), sites: [] }), undefined);
   assert.equal(poiCity(domainPoi('x')), undefined);
+});
+
+// ---- Seed 站点 city 覆盖(2026-08-26, sc-seed-city:zoom ≤ 8 全部聚合进城市徽章)----
+
+test('INTERNSHIP_SEED: 50 个骨架 POI 的 sites[0] 全部携带非空 city(无遗漏)', () => {
+  assert.equal(INTERNSHIP_SEED.length, 50);
+  const noCity = INTERNSHIP_SEED.filter((poi) => !poi.sites?.[0]?.city?.trim());
+  assert.deepEqual(noCity.map((p) => p.id), []);
+});
+
+test('poiCity: 带 city 的 seed POI 返回「杭州市」(trim 后)', () => {
+  const alibaba = INTERNSHIP_SEED.find((poi) => poi.id === 'alibaba-xixi');
+  assert.ok(alibaba);
+  assert.equal(poiCity(alibaba), '杭州市');
+});
+
+test('clusterCities: INTERNSHIP_SEED 全量聚合 → 唯一「杭州」组 count=50', () => {
+  // seed 坐标 100% 在杭州参考框内(spatial-query CITY_REFERENCE_BOXES),
+  // 无串味剔除;裸城名归一后徽章标签为「杭州」,锚点命中静态行政中心。
+  const groups = clusterCities(INTERNSHIP_SEED, 6);
+  assert.ok(Array.isArray(groups));
+  assert.deepEqual(
+    groups.map((g) => [g.city, g.count]),
+    [['杭州', 50]],
+  );
+  const hz = groups[0];
+  assert.equal(hz.lng, 120.15); // 杭州静态行政中心
+  assert.equal(hz.lat, 30.27);
 });
 
 test('常量:CLUSTER_MAX_ZOOM=8 / CLUSTER_DRILL_ZOOM=11(用户批准阈值)', () => {

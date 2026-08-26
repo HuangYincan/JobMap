@@ -1823,6 +1823,11 @@ function withWorkDefaults(poi: RecruitmentPOI): RecruitmentPOI {
       location: poi.location,
       careerUrl: poi.company.careerUrl,
       logoUrl: logo.url ?? poi.company.logoUrl,
+      // Seed 骨架站点统一挂杭州:全部 50 个 seed 坐标都在杭州参考框内
+      // (spatial-query CITY_REFERENCE_BOXES:118.3/29.05/120.8/30.75),
+      // city 缺失会导致 zoom ≤ 8 不聚合进「杭州」徽章(city-cluster poiCity)。
+      // 2026-08-26 修复:此前 11 家未被 radar/official 行覆盖 city 的公司散落个体 pin。
+      city: '杭州市',
     },
   ];
   return {
