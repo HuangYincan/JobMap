@@ -10,7 +10,8 @@
 //       后续新增的 marker 按同一可见集应用
 //   (c) clusterZoomForZoom 分桶:zoom 8.1/8.4 同桶(LOD/徽章零重建),
 //       8→9 切换一次(聚合 ↔ 个体 pin);map-shell 以该值为
-//       clusterState/可见性 memo 依赖键
+//       clusterState/可见性 memo 依赖键——输入是真实 zoom(ws z-cluster:
+//       real 8.4 必须个体,不被取整误判聚合)
 //   (d) marker 源 = catalog 只增池:新增 POI 进池只 add,已有实例不重建
 //
 // 用 MockMap(duck-type MapView)+ MockMarker 直接观察 overlay 注册表
@@ -159,8 +160,10 @@ test('可见集先于 setPOIs:新建 marker 按可见集应用(同步语义,异�
 // ---- (c) cluster effect 依赖分桶(clusterZoomForZoom)----
 
 test('clusterZoomForZoom 分桶:zoom 微调不重建,聚合↔个体只切换一次', () => {
+  // 输入是真实(未取整)zoom——边界语义 `real <= 8 聚合,> 8 个体`。
   // 聚合区间(zoom ≤ 8,严格边界与 clusterCities 一致):LOD 分桶 = floor(zoom)
   // ——徽章计数只随整数 zoom 变化,区间内微调(5.2→5.9)零重建
+  assert.equal(clusterZoomForZoom(0), 0, '全国最远视野 zoom 0 → 分桶 0');
   assert.equal(clusterZoomForZoom(5.0), 5);
   assert.equal(clusterZoomForZoom(5.2), 5);
   assert.equal(clusterZoomForZoom(5.9), 5);
@@ -168,9 +171,12 @@ test('clusterZoomForZoom 分桶:zoom 微调不重建,聚合↔个体只切换一
   assert.equal(clusterZoomForZoom(7.9), 7);
   assert.equal(clusterZoomForZoom(8.0), 8);
 
-  // 个体 pin 桶(zoom > 8):8.1/8.4/8.9 恒为 CLUSTER_MAX_ZOOM + 1 → 零重建
+  // 个体 pin 桶(zoom > 8):8.1/8.4/8.6/8.9 恒为 CLUSTER_MAX_ZOOM + 1 → 零重建
+  // 边界回归(ws z-cluster):real 8.4 必须个体——传 round 后的 8 会误判聚合,
+  // 点 marker 容器 resize→zoout 时一批个体 POI「消失」。这里用真实 zoom 断言。
   assert.equal(clusterZoomForZoom(8.1), 9);
-  assert.equal(clusterZoomForZoom(8.4), 9);
+  assert.equal(clusterZoomForZoom(8.4), 9, '8.4 是个体(>8),不被取整误判聚合');
+  assert.equal(clusterZoomForZoom(8.6), 9);
   assert.equal(clusterZoomForZoom(8.9), 9);
   assert.equal(clusterZoomForZoom(9.0), 9);
   assert.equal(clusterZoomForZoom(12.5), 9);
