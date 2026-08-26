@@ -151,10 +151,17 @@ test('次因:同模式点历史 #独角兽 语义保持(applyTagSuggestion 既�
 
 // ---- 源码契约:map-shell 接线(viewStateRef 模式 + 同步重写)----
 
-test('契约:主加载写缓存用写缓存时刻的最新 filters/setState(非闭包快照)', () => {
+test('契约:主加载写缓存用写缓存时刻的最新 filters(最终落库,onBatch 中途不写)', () => {
   const shell = src('components/map-shell.tsx');
+  // 中途批次(onBatch)不写缓存(poi-click-vanish,2026-08-26):逐页写会把残缺池
+  // 落进 sessionStorage;缓存只在最终结果落库时写一次。写库时刻的 filters 用
+  // viewStateRef(最新,非闭包快照——ws1 独角兽残留修复口径保留)。
+  const onBatchAt = shell.indexOf('const onBatch = (batch: POI[]) => {');
+  assert.ok(onBatchAt !== -1, 'onBatch 锚点存在');
+  const onBatchEnd = shell.indexOf('\n        };', onBatchAt);
+  assert.doesNotMatch(shell.slice(onBatchAt, onBatchEnd), /writeModeCache\(/, 'onBatch 中途批次不写缓存');
   const matches = shell.match(/filters: viewStateRef\.current\.filters,/g) ?? [];
-  assert.ok(matches.length >= 2, `load 内两处写缓存(onBatch + 最终)都改用 viewStateRef 最新 filters,实际 ${matches.length} 处`);
+  assert.ok(matches.length >= 1, `最终落库写缓存用 viewStateRef 最新 filters,实际 ${matches.length} 处`);
 });
 
 test('契约:filters 变更 → syncModeCache 同步重写缓存(deps 只留 [filters])', () => {

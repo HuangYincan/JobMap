@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-26
+
+### Fixed
+
+- **点击部分 POI 后全部消失(`fix/poi-click-markers-vanish`).** 用户实测(深圳街景级,移动端):点快手 marker → 详情面板打开,但地图全部徽章 + 列表消失,永久不恢复。ego-browser 插桩定位根因链:① 点 marker(≤767px)挂载 dynamic 详情面板 → MapShell fiber disconnect/reconnect(keepalive 链);② React 重放 mount-only effects,`useModeCacheRestore` 的 `[]`-effect 被再次执行,把 sessionStorage 快照盖回活目录;③ 快照是全量加载中途的残缺批次(`loadWorkViewport` 曾每页 onBatch 写缓存,实测定格 350 条、无深圳公司)→ work 池塌缩 → `visiblePOIIds` 清空 → 屏上全部 marker 隐藏 + 列表归零,主加载缓存早退致永久不恢复。修复两处:① `useModeCacheRestore` 加 once 守卫(`didRestoreRef`),fiber reconnect 重放短路,活目录不被覆盖;② 主加载 `onBatch` 不再逐页写缓存(中途批次只落 React 状态,缓存仅在最终结果落库时写一次),消灭「残缺池」污染 sessionStorage 的源头(domain 视口替换 onBatch 属完整批次,保留写缓存)。回归:`poi-click-vanish.test.mjs`(最小 hook 运行时 + 源码契约)3 条,过滤独角兽契约测试同步新口径。全量套件实测:**npm test 1686 tests / 1683 pass / 3 skip**(2026-08-26,dev 41d8b82)。
+
 ## 2026-08-25
 
 ### Fixed

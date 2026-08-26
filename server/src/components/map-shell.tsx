@@ -984,21 +984,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           lastBatchLen = batch.length;
           catalogRef.current = batch;
           setCatalog(batch);
-          // 2026-08-22 ws1 独角兽残留修复:写缓存用「写缓存时刻的最新 filters/sort」
-          // (viewStateRef,与 use-work-viewport 同款),不用 load 时刻闭包快照——
-          // 加载在飞期间用户改筛选(非 category 不重搜),闭包 filters 已过期,
-          // 写入会残留旧筛选,F5/重开复活。query 由 signal.cancelled 门控
-          // (query 变更即取消本轮写),闭包值即最新,无需换。
-          writeModeCache({
-            mode,
-            catalog: batch,
-            pageOffset,
-            searchOrigin: origin,
-            query,
-            filters: viewStateRef.current.filters,
-            sort: viewStateRef.current.sort,
-            viewport: view,
-          });
+          // 中途批次不再写缓存(poi-click-vanish,2026-08-26):逐页写会把
+          // 「全量加载中途的残缺池」落进 sessionStorage——任何中断(关页/
+          // 导航/崩溃)都留下残缺快照,之后 fiber reconnect 重放 restore
+          // (见 use-mode-cache-restore 守卫注释)或刷新还原时,work 池塌缩、
+          // 屏上 marker 全隐藏。缓存只在最终结果落库时写一次(load() 尾部),
+          // filters/sort 用写库时刻的 viewStateRef 快照(ws1 同款口径)。
           if (batch.length > 0) setLoading(false);
         };
         // 工作模式:全量加载(2026-08-20 修复)——不传 bounds/maxTier,服务端
