@@ -1,20 +1,13 @@
-// Public catalog: seed when there is no DB; imported work rows when Postgres has them.
+// Public catalog — 严格 DB-only(2026-08-26):读 Postgres;无 DB / 失败 → 空。
+// seed 示例数据已归档 tech/backup/seed-data,不再作为任何回退来源。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
-import {
-  loadOfflineWorkCatalog,
-  loadServerCatalog,
-  loadServerCatalogById,
-  serverCatalog,
-  serverCatalogById,
-} from '../src/lib/server-catalog.ts';
+import { loadServerCatalog, loadServerCatalogById } from '../src/lib/server-catalog.ts';
 import { loadWorkCatalogFromDb } from '../src/lib/recruitment-store.ts';
-import { isCityCenterPin } from '../src/lib/city-centers.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -22,84 +15,14 @@ function src(rel) {
   return readFileSync(join(srcRoot, rel), 'utf8');
 }
 
-test('sync catalog is still the seed (tests and dry helpers)', () => {
-  const work = serverCatalog('work');
-  assert.equal(work.length, INTERNSHIP_SEED.length);
-  assert.ok(work.every((p) => p.kind === 'recruitment'));
-  assert.ok(serverCatalogById('work', 'alibaba-xixi'));
-  assert.equal(serverCatalogById('domain', 'hz-westlake')?.name, '西湖');
-  assert.equal(serverCatalog('college').length, 0);
-});
-
-test('async catalog keeps only authentic positions (radar/portal) when there is no DATABASE_URL', async () => {
-  const work = await loadServerCatalog('work');
-  assert.ok(work.length > 0);
-  // No scaffold example jobs anywhere: every position is radar-* or portal-*.
-  for (const poi of work) {
-    for (const pos of poi.positions) {
-      assert.ok(pos.id.startsWith('radar-') || pos.id.startsWith('portal-'), `${poi.id} has ${pos.id}`);
-    }
-  }
-  // Portal companies with curated coordinates still pin with portal-* jobs.
-  const betta = await loadServerCatalogById('work', 'betta-hangzhou');
-  assert.ok(betta?.kind === 'recruitment' && betta.positions.some((p) => p.id.startsWith('portal-')));
-  const deepseek = await loadServerCatalogById('work', 'deepseek');
-  assert.ok(deepseek?.kind === 'recruitment' && deepseek.positions.some((p) => p.id.startsWith('portal-')));
-  // Multi-city radar drops carry city text, not coordinates, until geocoded →
-  // their own site pins stay off the offline map until geocoded. But since
-  // 2026-08-26 (fix/aggregate-site-fanout) aggregate rows are company-level
-  // signals: they fan out onto seed-matched POIs with real coordinates, so
-  // those companies pin again with authentic radar-* aggregate rows.
-  const alibaba = await loadServerCatalogById('work', 'alibaba-xixi');
-  assert.ok(alibaba?.positions.every((p) => p.id.startsWith('radar-') && p.aggregate === true));
-  const netease = await loadServerCatalogById('work', 'netease-hangzhou');
-  assert.ok(netease?.positions.length > 0 && netease.positions.every((p) => p.aggregate === true));
-  // Companies whose seed ids match no drop slug (radar uses 中文 slugs like
-  // 腾讯/华为) keep only example jobs → not shown.
-  assert.equal(await loadServerCatalogById('work', 'tencent-hangzhou'), undefined);
-  assert.equal(await loadServerCatalogById('work', 'huawei-hangzhou'), undefined);
-  // xiaomi-hangzhou got real portal-* jobs appended by extract-qqdoc-jobs
-  // (official-career drop, 2026-08-21) → now shown with authentic positions.
-  const xiaomi = await loadServerCatalogById('work', 'xiaomi-hangzhou');
-  assert.ok(xiaomi?.kind === 'recruitment' && xiaomi.positions.some((p) => p.id.startsWith('portal-')));
-  assert.equal(await loadServerCatalogById('work', 'zhejiang-lab:zhejiang-lab-site'), undefined);
-  // zhejiang-lab's seed POI carries a fanned-out aggregate row (real coords).
-  const zhejiangLab = await loadServerCatalogById('work', 'zhejiang-lab');
-  assert.ok(zhejiangLab?.positions.every((p) => p.id.startsWith('radar-')));
-  const westlake = await loadServerCatalogById('domain', 'hz-westlake');
-  assert.equal(westlake?.name, '西湖');
-});
-
-test('radar-only companies without coordinates stay off the offline map', async () => {
-  const work = await loadServerCatalog('work');
-  // No (0,0) placeholder pins; only plausible coordinates reach the map.
-  assert.equal(work.some((p) => p.location?.lng === 0 && p.location?.lat === 0), false);
-  // Curated portal companies with coordinates still pin.
-  assert.ok(await loadServerCatalogById('work', 'betta-hangzhou'));
-  // Multi-city radar drops carry city text, not coordinates, until geocoded →
-  // they stay off the offline map. geocode-sites-apply resolves them per city.
-  assert.equal(await loadServerCatalogById('work', '招商银行'), undefined);
-  assert.equal(await loadServerCatalogById('work', '理想汽车'), undefined);
-  // Companies with no resolvable office in AMap POI stay off.
-  assert.equal(await loadServerCatalogById('work', '海天集团'), undefined);
-  assert.equal(await loadServerCatalogById('work', '恒瑞医药'), undefined);
-});
-
-test('offline catalog: seed 站点 city 覆盖 — 无 city POI 仅剩 drop 自带的 zhejiang-lab(sc-seed-city)', async () => {
-  // 2026-08-26 修复:seed 骨架合成 site 统一带 city=「杭州市」→ zoom ≤ 8
-  // 可聚合进城市徽章。修复前 11 家无 city(alibaba-xixi/netease-hangzhou/
-  // bytedance-hangzhou/antgroup-hangzhou/didi-hangzhou/deepseek/hithink-
-  // hangzhou/h3c-hangzhou/betta-hangzhou/xiaomi-hangzhou/zhejiang-lab),
-  // 修复后 10 家恢复;唯一残留 zhejiang-lab 不在 seed 里 —— 其 pin 来自
-  // official-career drop(data/recruitment/official-career/zhejiang-lab.json
-  // 的 site 本身无 city),属数据文件而非 seed 骨架。
-  const work = await loadOfflineWorkCatalog();
-  const noCity = work.filter((poi) => !poi.sites?.[0]?.city?.trim());
-  assert.deepEqual(noCity.map((p) => p.id), ['zhejiang-lab']);
-  // 杭州(zoom=6)徽章计数:73 → 83(+10 家 seed 公司聚合进来)。
-  const { clusterCities } = await import('../src/lib/city-cluster.ts');
-  const hz = clusterCities(work, 6)?.find((g) => g.city === '杭州');
-  assert.equal(hz?.count, 83);
+test('strict DB-only: no DATABASE_URL → work catalog is empty (no seed fallback)', async () => {
+  // 测试环境无 DATABASE_URL → getPool() null → loadWorkCatalogFromDb null →
+  // loadServerCatalog 返回 [],绝不再回退离线 seed 目录。
+  assert.deepEqual(await loadServerCatalog('work'), []);
+  assert.deepEqual(await loadServerCatalog('domain'), []);
+  assert.equal(await loadServerCatalogById('work', 'alibaba-xixi'), undefined);
+  assert.equal(await loadServerCatalogById('domain', 'hz-westlake'), undefined);
+  assert.deepEqual(await loadServerCatalog('college'), []);
 });
 
 test('loadWorkCatalogFromDb joins companies + sites + open positions', () => {
@@ -413,7 +336,7 @@ test('loadWorkCatalogFromDb passes clipped ids and maxTier through to company/po
 
 // 2026-08-25 (fix/server-catalog-semantics): null/[] 契约 — SQL 命中但 JS 侧过滤
 // (hasPlausibleCoord / isCityCenterPin)后为空 = DB 健康 + 范围空, 必须返回 []
-// (而非 null); null 会被 loadServerCatalog 当作「失败」回退离线目录。
+// (而非 null); null 会被 loadServerCatalog 当作「失败」→ 严格 DB-only 下返回空。
 test('loadWorkCatalogFromDb returns [] when clipped rows are all filtered out (clip-miss stays empty)', async () => {
   const queries = [];
   const pool = {
@@ -447,7 +370,7 @@ test('loadWorkCatalogFromDb returns [] when clipped rows are all filtered out (c
   assert.equal(queries.length, 1); // 过滤后为空 → 提前返回, 不再查 companies/positions
 });
 
-test('loadWorkCatalogFromDb returns null when an unclipped table has no located rows (fallback signal)', async () => {
+test('loadWorkCatalogFromDb returns null when an unclipped table has no located rows (empty signal)', async () => {
   const pool = {
     async query(sql) {
       if (sql.includes('FROM company_sites')) {
@@ -464,7 +387,7 @@ test('loadWorkCatalogFromDb returns null when an unclipped table has no located 
       throw new Error(`unexpected query: ${sql}`);
     },
   };
-  // 无 clip(全量读): 表全被过滤 → null → loadServerCatalog 回退离线目录(导入行不存在 ≠ 空结果)。
+  // 无 clip(全量读): 表全被过滤 → null → loadServerCatalog 严格 DB-only 下返回 []。
   assert.equal(await loadWorkCatalogFromDb(undefined, pool), null);
 });
 
@@ -477,61 +400,13 @@ test('loadWorkCatalogFromDb returns null when the DB read fails', async () => {
   assert.equal(await loadWorkCatalogFromDb(undefined, pool), null);
 });
 
-test('loadServerCatalog prefers imported work rows, then seed + file drops', () => {
+test('loadServerCatalog is strict DB-only (no seed / offline fallback in source)', () => {
   const catalog = src('lib/server-catalog.ts');
   assert.match(catalog, /loadWorkCatalogFromDb/);
-  assert.match(catalog, /if \(imported && \(imported\.length > 0 \|\| clip\)\) return imported/);
-  assert.match(catalog, /null = 无 DB \/ 查询失败/);
-  assert.match(catalog, /带 clip 必须保持空/);
-  assert.match(catalog, /loadOfflineWorkCatalog/);
-  assert.match(catalog, /mergeCompaniesIntoPois/);
-  assert.match(catalog, /hasPlausibleCoord/);
-  assert.match(catalog, /clip\?: SpatialClip/);
   assert.match(catalog, /loadWorkCatalogFromDb\(clip\)/);
-  assert.match(catalog, /BOSS_DIR/);
-  assert.match(catalog, /NOWCODER_DIR/);
-  assert.match(catalog, /SHIXISENG_DIR/);
-  assert.match(catalog, /RADAR_DIR/);
-});
-
-// 2026-08-25 (fix/hide-center-pins): 读路径必须排除城市中心钉 —
-// 中心钉 = 无真实办公坐标、钉在行政中心的站点, 展示即误导。
-test('offline catalog excludes city-center pins (no fake downtown POIs)', async () => {
-  const work = await loadOfflineWorkCatalog();
-  const pins = work.filter((poi) => isCityCenterPin(poi.location.lng, poi.location.lat));
-  assert.equal(pins.length, 0, `离线 catalog 含 ${pins.length} 个城市中心钉: ${pins.slice(0, 3).map((p) => p.id).join(', ')}`);
-});
-
-test('offline catalog keeps every position alive (A1: open + deadline future or none)', async () => {
-  const work = await loadOfflineWorkCatalog();
-  const _now = new Date();
-  const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
-  for (const poi of work) {
-    for (const pos of poi.positions) {
-      if (pos.deadline) {
-        assert.ok(Date.parse(pos.deadline) >= Date.parse(today), `${poi.id} expired ${pos.deadline}`);
-      }
-    }
-  }
-});
-
-// 2026-08-26 (fix/aggregate-site-fanout): 端到端锚点 — 用户反馈「深圳腾讯没有收录」。
-// radar 聚合行(aggregate: true, 全挂首城占位)fan-out 到公司全部站点后,
-// 腾讯 4 城 POI 都应存在且带岗位; 修复前仅 beijing 有 3 岗位, 其余 3 城被过滤。
-test('offline catalog fans aggregate rows to every city of 腾讯 (深圳/上海/广州恢复)', async () => {
-  const work = await loadOfflineWorkCatalog();
-  const tencent = work.filter((p) => p.name === '腾讯');
-  const ids = tencent.map((p) => p.id).sort();
-  assert.deepEqual(ids, [
-    '腾讯:腾讯-site-beijing',
-    '腾讯:腾讯-site-guangzhou',
-    '腾讯:腾讯-site-shanghai',
-    '腾讯:腾讯-site-shenzhen',
-  ]);
-  for (const poi of tencent) {
-    assert.ok(poi.positions.length >= 1, `${poi.id} 至少 1 个岗位`);
-    assert.ok(poi.positions.every((p) => p.aggregate === true), `${poi.id} 岗位均为聚合行`);
-  }
+  assert.match(catalog, /\?\? \[\]/);
+  // 不再 import/导出示例数据、离线目录或同步 seed catalog(注释里提及 archive 不算)。
+  assert.doesNotMatch(catalog, /DOMAIN_SEED|INTERNSHIP_SEED|loadOfflineWorkCatalog|mergeCompaniesIntoPois|export function serverCatalog\b|from '\.\/seed-data/);
 });
 
 test('loadWorkCatalogFromDb filters by city / maxTier / alive when DATABASE_URL is set', async (t) => {
@@ -564,9 +439,6 @@ test('loadWorkCatalogFromDb filters by city / maxTier / alive when DATABASE_URL 
   assert.ok(alive.every((p) => p.positions.every((pos) => pos.status === 'open')));
 });
 
-// 2026-08-25 (fix/server-catalog-semantics): 端到端契约 — DB 健康时带 clip 的
-// 空结果保持 [] 而不是回退离线目录(旧实现: located 过滤后 null → 离线回退,
-// 搜索/建议结果来自种子而非当前 DB 的真实空结果)。
 test('loadServerCatalog keeps clip-miss empty instead of falling back to offline (DB healthy)', async (t) => {
   if (!process.env.DATABASE_URL) {
     t.skip('DATABASE_URL is not set');

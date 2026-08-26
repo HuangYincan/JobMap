@@ -12,7 +12,6 @@ import { officialCareerAdapter } from './recruitment-adapters/official-career.ts
 import { qqdocJobsAdapter } from './recruitment-adapters/qqdoc-jobs.ts';
 import { qqdocOfficialAdapter } from './recruitment-adapters/qqdoc-official.ts';
 import { radarAdapter } from './recruitment-adapters/radar.ts';
-import { seedRecruitmentAdapter } from './recruitment-adapters/seed.ts';
 import { shixisengAdapter } from './recruitment-adapters/shixiseng.ts';
 import { isAuthenticPositionId } from './freshness.ts';
 import { HANGZHOU_DISTRICTS } from './spatial-filters.ts';
@@ -60,7 +59,9 @@ const TARGET_CITIES = ['北京', '上海', '广州', '深圳', '成都', '武汉
  */
 export const SOURCE_META: Record<string, { originUri: string; authorizationBasis: string; accessMethod: string; attribution: string; retention: string; deletion: string }> = {
   seed: {
-    originUri: 'local:WORK_SEED',
+    // 2026-08-26 起 seed 示例数据已归档 tech/backup/seed-data(不再作为导入源);
+    // 此处保留 provenance 供历史行(早期 import:seed 写入的 source_id='seed')追溯。
+    originUri: 'local:WORK_SEED (archived 2026-08-26: tech/backup/seed-data/work-seed.json)',
     authorizationBasis: 'curated-public',
     accessMethod: 'manual',
     attribution: 'Domain Map curated seed',
@@ -68,7 +69,7 @@ export const SOURCE_META: Record<string, { originUri: string; authorizationBasis
     deletion: 'delete-with-source',
   },
   'official-career': {
-    originUri: 'local:WORK_SEED',
+    originUri: 'local:server/data/recruitment/official-career/',
     authorizationBasis: 'curated-public',
     accessMethod: 'manual',
     attribution: 'Domain Map curated official career pages',
@@ -267,10 +268,9 @@ export function planRecruitmentImport(input: SourceCompany[]): ImportPlan {
 }
 
 export async function planSeedImport(): Promise<ImportPlan> {
-  const [qqdocOfficial, qqdocJobs, seed, official, boss, nowcoder, shixiseng, radar, embodiedJobs] = await Promise.all([
+  const [qqdocOfficial, qqdocJobs, official, boss, nowcoder, shixiseng, radar, embodiedJobs] = await Promise.all([
     qqdocOfficialAdapter().list(),
     qqdocJobsAdapter().list(),
-    seedRecruitmentAdapter.list(),
     officialCareerAdapter().list(),
     bossAdapter().list(),
     nowcoderAdapter().list(),
@@ -278,11 +278,8 @@ export async function planSeedImport(): Promise<ImportPlan> {
     radarAdapter().list(),
     embodiedJobsAdapter().list(),
   ]);
-  // 真实 drops 优先于 seed 脚手架: dedupeSourceCompanies 保留每个 slug 的
-  // 第一个公司, seed 里的示例副本 (过期坐标/tier/示例岗位) 会压过官方 drops
-  // 的当前数据 (2026-08-19: tencent 被 seed 的 120.155 旧坐标盖掉, deepseek
-  // tier 被 seed 的 12 盖掉官方 drop 的 1, 高 zoom 才可见)。seed 只补
-  // 无 drops 的公司 (坐标骨架)。
+  // 严格 DB-only(2026-08-26): seed 示例数据已归档 tech/backup/seed-data,
+  // 不再作为灌库数据源; 仅真实 drop(radar/portal/qqdoc/official/embodied 等)入库。
   const plan = planRecruitmentImport([
     ...embodiedJobs,
     ...qqdocOfficial,
@@ -292,7 +289,6 @@ export async function planSeedImport(): Promise<ImportPlan> {
     ...boss,
     ...nowcoder,
     ...shixiseng,
-    ...seed,
   ]);
   // 数据策略 (2026-08-19): 公司有 portal-* 官方直爬岗位时, 抑制其 radar-*
   // 聚合行。radar 是快照聚合 (合成岗位, 非真实 JD); 官方 ATS 直爬是雇主录入

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { DEFAULT_CAREER, DEFAULT_NOTIFICATIONS } from '../src/lib/account.ts';
 import { matchJobAlerts, positionMatchesCareer } from '../src/lib/job-alerts.ts';
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { INTERNSHIP_SEED } from './fixtures/seed-data.ts';
 
 test('matchJobAlerts stays empty until email or SMS is on', () => {
   const empty = matchJobAlerts(INTERNSHIP_SEED, DEFAULT_CAREER, DEFAULT_NOTIFICATIONS);

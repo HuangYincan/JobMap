@@ -38,7 +38,6 @@ import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
 import { officialCareerAdapter } from '../src/lib/recruitment-adapters/official-career.ts';
 import { qqdocOfficialAdapter } from '../src/lib/recruitment-adapters/qqdoc-official.ts';
 import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
-import { seedRecruitmentAdapter } from '../src/lib/recruitment-adapters/seed.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
 import { qqdocJobsAdapter } from '../src/lib/recruitment-adapters/qqdoc-jobs.ts';
 import { embodiedJobsAdapter } from '../src/lib/recruitment-adapters/embodied-jobs.ts';
@@ -123,7 +122,6 @@ function summarize(rows) {
 
 // --- JSON drops (同 geocode-sites-apply.mjs dropFiles 5 源 + 其余 catalog 源) --
 const adapters = [
-  seedRecruitmentAdapter,
   qqdocOfficialAdapter(),
   officialCareerAdapter(),
   bossAdapter(),

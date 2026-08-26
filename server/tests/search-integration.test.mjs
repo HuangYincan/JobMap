@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { parseSearchQuery } from '../src/lib/search.ts';
 import { searchPublicCatalog } from '../src/lib/public-search.ts';
-import { serverCatalog, serverCatalogById } from '../src/lib/server-catalog.ts';
+import { WORK_SEED, DOMAIN_SEED } from './fixtures/seed-data.ts';
 import { getMode, MODES } from '../src/lib/modes.ts';
 import { trendingForMode } from '../src/lib/trending-search.ts';
 import { poiMatchesDistrict } from '../src/lib/spatial-filters.ts';
@@ -20,10 +20,18 @@ function src(rel) {
   return readFileSync(join(root, rel), 'utf8');
 }
 
+// 管道测试用 fixture 目录作为 catalog 输入（seed 示例数据已归档 tech/backup/seed-data，
+// 运行时不再提供同步 serverCatalog；此处仅测「解析 → 管道 → 分页 → 聚合」组合）。
+function catalogFor(mode) {
+  if (mode === 'work') return WORK_SEED;
+  if (mode === 'domain') return DOMAIN_SEED;
+  return [];
+}
+
 function searchLikeRoute(body) {
   const parsed = parseSearchQuery(body.q || '');
   const filters = { ...parsed.filters, ...(body.filters || {}) };
-  return searchPublicCatalog(serverCatalog(body.mode || 'work'), {
+  return searchPublicCatalog(catalogFor(body.mode || 'work'), {
     mode: body.mode,
     q: parsed.text || body.q,
     filters,
@@ -51,9 +59,9 @@ test('GET /api/pois contract: shared server catalog + pipeline', () => {
   assert.match(route, /searchPublicCatalog/);
   assert.match(route, /spatialClipFromSearch/);
   assert.match(route, /parseFilters/);
-  assert.ok(serverCatalog('work').length > 0);
-  assert.ok(serverCatalog('domain').some((p) => p.id === 'hz-westlake'));
-  assert.equal(serverCatalog('college').length, 0);
+  assert.ok(catalogFor('work').length > 0);
+  assert.ok(catalogFor('domain').some((p) => p.id === 'hz-westlake'));
+  assert.equal(catalogFor('college').length, 0);
 });
 
 test('GET /api/filter-options contract: unknown mode 400, work has taxonomy + kept filters', () => {
@@ -173,9 +181,9 @@ test('GET /api/pois/[id] contract: shared catalog, 404 when missing', () => {
   const route = src('app/api/pois/[id]/route.ts');
   assert.match(route, /loadServerCatalogById/);
   assert.match(route, /status: 404/);
-  assert.equal(serverCatalogById('domain', 'hz-westlake')?.name, '西湖');
-  assert.ok(serverCatalogById('work', 'alibaba-xixi'));
-  assert.equal(serverCatalogById('domain', 'no-such'), undefined);
+  assert.equal(catalogFor('domain').find((p) => p.id === 'hz-westlake')?.name, '西湖');
+  assert.ok(catalogFor('work').find((p) => p.id === 'alibaba-xixi'));
+  assert.equal(catalogFor('domain').find((p) => p.id === 'no-such'), undefined);
 });
 
 test('filter options for work expose at least five dimensions', () => {
@@ -193,7 +201,7 @@ test('public search clips to a tight Hangzhou west-lake box', () => {
     pageSize: 50,
   });
   assert.ok(out.total > 0);
-  assert.ok(out.total < serverCatalog('work').length);
+  assert.ok(out.total < catalogFor('work').length);
   assert.ok(out.results.every((p) => p.location.lng >= 120.01 && p.location.lng <= 120.04));
   assert.ok(out.results.some((p) => p.id === 'alibaba-xixi'));
 });
@@ -205,7 +213,7 @@ test('district filter keeps address hits and falls back to the coarse box', () =
   assert.ok(yuhang.results.some((p) => p.id === 'alibaba-xixi'));
 
   const unnamed = {
-    ...serverCatalogById('work', 'alibaba-xixi'),
+    ...catalogFor('work').find((p) => p.id === 'alibaba-xixi'),
     location: { lng: 120.023, lat: 30.279, address: '文一西路969号' },
   };
   assert.equal(poiMatchesDistrict(unnamed, ['余杭区']), true);

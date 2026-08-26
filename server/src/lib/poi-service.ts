@@ -2,7 +2,7 @@
 // POI 数据服务 — 按模式统一获取（插件化数据源）
 //
 // Domain：视口网格波次增量并入累计池，空结果不回退假数据。
-// Internship / 工作：公开 catalog（导入行优先）+ 缺坐标时再地理编码。
+// Internship / 工作：DB catalog（/api/pois 读 Postgres，无本地示例数据）+ 缺坐标时再地理编码。
 // 距离与列表裁剪由调用方用钉死的 origin 走 runPOIPipeline。
 // ============================================================
 
@@ -12,7 +12,6 @@ import {
   searchViewportPOIsFallback,
 } from './amap-api.ts';
 import type { MapSearchProvider } from './map-engine/types.ts';
-import { INTERNSHIP_SEED } from './seed-data.ts';
 import { fetchWorkCatalogFromApi } from './recruitment-adapters/api.ts';
 import type { QueryPipeline } from './search.ts';
 import {
@@ -390,9 +389,10 @@ function hasPlausibleCoord(poi: RecruitmentPOI): boolean {
   return Number.isFinite(lng) && Number.isFinite(lat) && !(lng === 0 && lat === 0);
 }
 
-/** 用 Geocoder 校正缺坐标或 (0,0) 的办公点；已有坐标不打高德。 */
+/** 用 Geocoder 校正缺坐标或 (0,0) 的办公点；已有坐标不打高德。
+ *  seed 已归档(tech/backup/seed-data),调用方传入 DB catalog / 真实 drop。 */
 export async function resolveInternshipLocations(
-  seed: RecruitmentPOI[] = INTERNSHIP_SEED
+  seed: RecruitmentPOI[]
 ): Promise<RecruitmentPOI[]> {
   const resolved = await Promise.all(
     seed.map(async (poi) => {
@@ -441,7 +441,7 @@ async function internshipSeedResolved(): Promise<RecruitmentPOI[]> {
     geocodePromise = workSeedFromAdapters()
       .then((seed) => resolveInternshipLocations(seed))
       .catch((err) => {
-        console.warn('[poi-service] geocode work seed failed:', err);
+        console.warn('[poi-service] geocode work catalog failed:', err);
         geocodePromise = null;
         return [];
       });

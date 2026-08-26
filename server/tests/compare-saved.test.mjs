@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { INTERNSHIP_SEED } from './fixtures/seed-data.ts';
 import {
   buildCompareColumn,
   buildCompareColumns,

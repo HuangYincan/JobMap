@@ -8,7 +8,7 @@ import {
   clusterCities,
   poiCity,
 } from '../src/lib/city-cluster.ts';
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { INTERNSHIP_SEED } from './fixtures/seed-data.ts';
 import {
   CLUSTER_BADGE_SIZE,
   cityClusterBadgeHTML,

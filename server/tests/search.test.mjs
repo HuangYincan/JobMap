@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 
 // 由于 node:test 直接加载 .ts 在 Node 22 可用 --experimental-strip-types，
 // 但项目用 Node 22 LTS，稳妥起见这里仅做 smoke 断言 seed 数据形状。
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { INTERNSHIP_SEED } from './fixtures/seed-data.ts';
 
 test('seed data: work companies have required fields and taxonomy', () => {
   assert.ok(INTERNSHIP_SEED.length >= 50, 'expect at least 50 Hangzhou companies');

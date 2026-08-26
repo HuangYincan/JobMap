@@ -60,7 +60,8 @@ export async function GET(request: Request) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  const catalog = await loadServerCatalog(mode);
+  // DB-only：catalog 仅工作模式用（domain 走 hz_pois 建议，不必加载 catalog）。
+  const catalog = isRecruitmentMode(mode) ? await loadServerCatalog(mode) : [];
   const suggestions = [];
 
   if (q && isRecruitmentMode(mode)) {

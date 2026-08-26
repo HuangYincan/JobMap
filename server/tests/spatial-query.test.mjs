@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { searchPublicCatalog, spatialClipFromSearch } from '../src/lib/public-search.ts';
 import { loadWorkCatalogFromDb } from '../src/lib/recruitment-store.ts';
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { INTERNSHIP_SEED } from './fixtures/seed-data.ts';
 import { DISTRICT_BOXES } from '../src/lib/spatial-filters.ts';
 import {
   cityBoundsConsistencySql,

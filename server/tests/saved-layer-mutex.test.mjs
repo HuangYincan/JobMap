@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { INTERNSHIP_SEED } from './fixtures/seed-data.ts';
 import { mergeMapPois, mutexVisibleIds, savedPlacesToOverlay } from '../src/lib/saved-overlay.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');

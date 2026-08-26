@@ -4,9 +4,9 @@
 // 遵循 tech/10-search-filter.md API 设计：
 //   ?mode=work&q=算法&filters={"industry":["ai"]}&sort=salaryDesc
 //
-// Phase 2 数据策略：
-// - 工作模式：导入行优先，否则 seed
-// - Domain 模式：服务端 DOMAIN_SEED；浏览器直连 AMap JS API
+// 数据策略（2026-08-26 起严格 DB-only，seed 示例数据已归档 tech/backup/seed-data）：
+// - 工作模式：读 Postgres（companies / company_sites / positions）
+// - Domain 模式：本端点返回空；浏览器直连 /api/pois/domain-local（hz_pois）+ AMap JS API
 //
 // filters 透传（national scope，2026-08-17）：
 // - maxTier: LOD 上限 = 当前 zoom 取整（0..20；公司 tier = 可见最小 zoom，tier<=zoom 显示，tech/19）
