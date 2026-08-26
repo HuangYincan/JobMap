@@ -85,6 +85,23 @@ test('radar-only companies without coordinates stay off the offline map', async 
   assert.equal(await loadServerCatalogById('work', '恒瑞医药'), undefined);
 });
 
+test('offline catalog: seed 站点 city 覆盖 — 无 city POI 仅剩 drop 自带的 zhejiang-lab(sc-seed-city)', async () => {
+  // 2026-08-26 修复:seed 骨架合成 site 统一带 city=「杭州市」→ zoom ≤ 8
+  // 可聚合进城市徽章。修复前 11 家无 city(alibaba-xixi/netease-hangzhou/
+  // bytedance-hangzhou/antgroup-hangzhou/didi-hangzhou/deepseek/hithink-
+  // hangzhou/h3c-hangzhou/betta-hangzhou/xiaomi-hangzhou/zhejiang-lab),
+  // 修复后 10 家恢复;唯一残留 zhejiang-lab 不在 seed 里 —— 其 pin 来自
+  // official-career drop(data/recruitment/official-career/zhejiang-lab.json
+  // 的 site 本身无 city),属数据文件而非 seed 骨架。
+  const work = await loadOfflineWorkCatalog();
+  const noCity = work.filter((poi) => !poi.sites?.[0]?.city?.trim());
+  assert.deepEqual(noCity.map((p) => p.id), ['zhejiang-lab']);
+  // 杭州(zoom=6)徽章计数:73 → 83(+10 家 seed 公司聚合进来)。
+  const { clusterCities } = await import('../src/lib/city-cluster.ts');
+  const hz = clusterCities(work, 6)?.find((g) => g.city === '杭州');
+  assert.equal(hz?.count, 83);
+});
+
 test('loadWorkCatalogFromDb joins companies + sites + open positions', () => {
   const store = src('lib/recruitment-store.ts');
   assert.match(store, /FROM companies ORDER BY slug/);
