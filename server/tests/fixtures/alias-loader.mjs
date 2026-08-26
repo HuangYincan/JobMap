@@ -1,7 +1,10 @@
 // poi-click-vanish 回归测试用 @/ 别名解析器(node:test 下 tsconfig paths 不可用)
+// SRC 从自身位置推导(server/tests/fixtures/ → server/src/),CI/本地均可用,
+// 不得硬编码绝对路径(CI runner 目录不同会 ERR_MODULE_NOT_FOUND)。
+import { dirname, join } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
-const SRC = '/Users/acccan/Repos/huangyincan/domain-map-wt-poi-click-vanish/server/src/';
+const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'src') + '/';
 
 export async function resolve(specifier, context, next) {
   if (specifier.startsWith('@/')) {
