@@ -34,6 +34,9 @@ zoom ≤ 8(全国 / 省级视野)               zoom ≥ 9(城市级,自动展�
 
 **规则**:
 1. 触发:work 模式,`zoom <= 8`(全国/省级)时启用;`zoom > 8` 自动切回个体 pin。
+   **边界用真实 zoom 判定(2026-08-26 fix/zoom-cluster-boundary)**:缩放 8.1~8.5
+   保持个体,不被取整误判聚合(real 8.4 个体,round 后 8 才聚合);容器 resize
+   (点 marker 开面板)引起的 zoom 微降(8.6→8.4)不触发聚合切换。
 2. 聚合粒度:`site.city`(公司办公点城市);无 city 的 pin 保持个体。
    seed 骨架站点已统一带 `city: '杭州市'`(2026-08-26 修复,sc-seed-city:
    `seed-data.ts` `withWorkDefaults` 合成 site 补 city——此前 11 家未被

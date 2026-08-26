@@ -244,6 +244,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [lang, setLang] = useState<Language>('zh');
   const [mapStyle, setMapStyle] = useState<BasemapStyle>('normal');
   const [zoom, setZoom] = useState(DEFAULT_MAP_ZOOM);
+  // 真实(未取整)zoom:聚合/个体边界判定用。zoom state 是 round(UI 显示 / 旧路径),
+  // 但聚合边界语义是「真实 zoom <= 8」——若用 round 后的 state,real 8.4(个体)会被
+  // round 成 8 → 误判聚合,点 marker 容器 resize→zoout 时一批个体 POI「消失」(ws z-cluster)。
+  const [realZoom, setRealZoom] = useState(DEFAULT_MAP_ZOOM);
   const [mapReady, setMapReady] = useState(false);
   const [rotation, setRotation] = useState(0);
 
@@ -846,7 +850,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     // Sync zoom state
     const offZoomChange = view.on("zoomchange", () => {
       const currentZoom = view.getState().zoom;
-      setZoom(Math.round(currentZoom));
+      setRealZoom(currentZoom); // 真实 zoom:聚合/个体边界判定用(边界语义是 real <= 8)
+      setZoom(Math.round(currentZoom)); // 取整 state:UI 显示与旧相机快照回退用
     });
 
     // 监听地图旋转变化(rotatechange 不在 MapViewEvent 联合,经 onViewEvent 转发)
@@ -1448,7 +1453,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // 分桶记忆化(b2):聚合状态只依赖 floor(zoom),clusterZoom 在分桶内恒定(聚合区间
   // 按整数 zoom 分桶,个体区间恒 9)→ zoom 微调(8.1→8.4、5.2→5.9)不重建徽章;
   // 只有跨整数分桶(7→8,徽章计数变化)或聚合↔个体切换(8.0→8.1)才重建。
-  const clusterZoom = clusterZoomForZoom(zoom);
+  // 边界用真实 zoom(realZoom,未 round):round 后的 zoom state 会把 real 8.4(个体)
+  // 取整成 8 → 误判聚合,点 marker 开面板触发容器 resize→zoout(8.6→8.4)时会从个体
+  // 切到聚合,一批个体 POI「消失」(ws z-cluster)。传 realZoom 后 8.1~8.5 保持个体。
+  const clusterZoom = clusterZoomForZoom(realZoom);
   const clusterState = useMemo(() => {
     if (!isRecruitmentMode(mode)) return null; // 非 work 上下文 → 个体 pin
     // 互斥开:聚合只计收藏点(徽章计数/个体 pin 不得混入普通 catalog 公司)
