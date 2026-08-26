@@ -46,11 +46,16 @@ test('async catalog keeps only authentic positions (radar/portal) when there is 
   const deepseek = await loadServerCatalogById('work', 'deepseek');
   assert.ok(deepseek?.kind === 'recruitment' && deepseek.positions.some((p) => p.id.startsWith('portal-')));
   // Multi-city radar drops carry city text, not coordinates, until geocoded →
-  // they stay off the offline map; their authentic radar-* positions only
-  // appear after geocode-sites-apply + import.
-  assert.equal(await loadServerCatalogById('work', 'alibaba-xixi'), undefined);
-  assert.equal(await loadServerCatalogById('work', 'netease-hangzhou'), undefined);
-  // Companies with only example jobs (no radar/portal rows) are not shown.
+  // their own site pins stay off the offline map until geocoded. But since
+  // 2026-08-26 (fix/aggregate-site-fanout) aggregate rows are company-level
+  // signals: they fan out onto seed-matched POIs with real coordinates, so
+  // those companies pin again with authentic radar-* aggregate rows.
+  const alibaba = await loadServerCatalogById('work', 'alibaba-xixi');
+  assert.ok(alibaba?.positions.every((p) => p.id.startsWith('radar-') && p.aggregate === true));
+  const netease = await loadServerCatalogById('work', 'netease-hangzhou');
+  assert.ok(netease?.positions.length > 0 && netease.positions.every((p) => p.aggregate === true));
+  // Companies whose seed ids match no drop slug (radar uses 中文 slugs like
+  // 腾讯/华为) keep only example jobs → not shown.
   assert.equal(await loadServerCatalogById('work', 'tencent-hangzhou'), undefined);
   assert.equal(await loadServerCatalogById('work', 'huawei-hangzhou'), undefined);
   // xiaomi-hangzhou got real portal-* jobs appended by extract-qqdoc-jobs
@@ -58,8 +63,9 @@ test('async catalog keeps only authentic positions (radar/portal) when there is 
   const xiaomi = await loadServerCatalogById('work', 'xiaomi-hangzhou');
   assert.ok(xiaomi?.kind === 'recruitment' && xiaomi.positions.some((p) => p.id.startsWith('portal-')));
   assert.equal(await loadServerCatalogById('work', 'zhejiang-lab:zhejiang-lab-site'), undefined);
-  // zhejiang-lab's radar positions live on an ungeocoded multi-city site → off.
-  assert.equal(await loadServerCatalogById('work', 'zhejiang-lab'), undefined);
+  // zhejiang-lab's seed POI carries a fanned-out aggregate row (real coords).
+  const zhejiangLab = await loadServerCatalogById('work', 'zhejiang-lab');
+  assert.ok(zhejiangLab?.positions.every((p) => p.id.startsWith('radar-')));
   const westlake = await loadServerCatalogById('domain', 'hz-westlake');
   assert.equal(westlake?.name, '西湖');
 });
@@ -205,6 +211,105 @@ test('loadWorkCatalogFromDb normalizes joined rows and drops ungeocoded or empty
   assert.deepEqual(brand.positions[0].taxonomy, { family: 'social' });
   assert.equal(queries.length, 3);
   assert.ok(queries.every((call) => !call.sql.includes(' WHERE s.geom IS NOT NULL')));
+});
+
+// 2026-08-26 (fix/aggregate-site-fanout): DB 读路径把 aggregate 行(taxonomy jsonb)
+// fan-out 到公司每个站点; site_id 恰等于本站时不双计; 不跨公司泄漏。
+test('loadWorkCatalogFromDb fans aggregate rows out to every site of the company', async () => {
+  const pool = {
+    async query(sql) {
+      if (sql.includes('FROM company_sites')) {
+        return {
+          rows: [
+            {
+              id: '101', company_id: '10', name: 'Western', address: 'Western Rd', city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 120.1, lat: 30.2,
+              career_url: null, logo_url: null,
+            },
+            {
+              id: '102', company_id: '10', name: 'Eastern', address: 'Eastern Rd', city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 120.2, lat: 30.25,
+              career_url: null, logo_url: null,
+            },
+            {
+              id: '201', company_id: '20', name: 'Brand HQ', address: 'Brand Rd', city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 120.15, lat: 30.22,
+              career_url: null, logo_url: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes('FROM companies')) {
+        return {
+          rows: [
+            {
+              id: '10', slug: 'acme-hz', name: 'Acme', industries: ['internet'], scale: null,
+              tier: null, category: null, rating: null, summary: null,
+              career_url: null, logo_url: null, logo_emoji: null,
+            },
+            {
+              id: '20', slug: 'brand-hz', name: 'Brand', industries: ['finance'], scale: 'bank',
+              tier: 2, category: 'enterprise', rating: 4.5, summary: null,
+              career_url: null, logo_url: null, logo_emoji: 'B',
+            },
+          ],
+        };
+      }
+      if (sql.includes('FROM positions')) {
+        return {
+          rows: [
+            {
+              company_id: '10', site_id: '101', external_id: 'portal-1', title: 'Backend',
+              department: 'RD', family: 'campus', taxonomy: { family: 'campus' },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+            {
+              // 聚合行: crawler 占位 site_id 恰为本站 → 不得双计
+              company_id: '10', site_id: '101', external_id: 'radar-agg-1', title: '技术类 产品类',
+              department: 'RD', family: 'intern', taxonomy: { family: 'intern', aggregate: true },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+            {
+              company_id: '10', site_id: '102', external_id: 'portal-2', title: 'Frontend',
+              department: 'Web', family: 'campus', taxonomy: { family: 'campus' },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+            {
+              // 另一家公司的聚合行: 不得 fan-out 到 Acme
+              company_id: '20', site_id: '201', external_id: 'radar-agg-brand', title: '分析类',
+              department: null, family: 'campus', taxonomy: { family: 'campus', aggregate: true },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+          ],
+        };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  };
+
+  const pois = await loadWorkCatalogFromDb(undefined, pool);
+  const byId = new Map(pois.map((poi) => [poi.id, poi]));
+
+  const west = byId.get('acme-hz:101');
+  assert.deepEqual(west.positions.map((p) => p.id), ['portal-1', 'radar-agg-1']);
+  assert.equal(west.positions.filter((p) => p.id === 'radar-agg-1').length, 1, '占位 site_id 命中本站不双计');
+  assert.equal(west.positions[1].aggregate, true);
+
+  const east = byId.get('acme-hz:102');
+  assert.deepEqual(east.positions.map((p) => p.id), ['portal-2', 'radar-agg-1']);
+  assert.equal(east.positions[1].aggregate, true);
+  assert.equal(east.positions.filter((p) => p.id === 'radar-agg-1').length, 1);
+
+  const brand = byId.get('brand-hz');
+  assert.deepEqual(brand.positions.map((p) => p.id), ['radar-agg-brand'], '聚合行按公司隔离, 不跨公司 fan-out');
 });
 
 test('loadWorkCatalogFromDb applies spatial clips and returns empty when no clipped sites', async () => {
@@ -390,6 +495,25 @@ test('offline catalog keeps every position alive (A1: open + deadline future or 
         assert.ok(Date.parse(pos.deadline) >= Date.parse(today), `${poi.id} expired ${pos.deadline}`);
       }
     }
+  }
+});
+
+// 2026-08-26 (fix/aggregate-site-fanout): 端到端锚点 — 用户反馈「深圳腾讯没有收录」。
+// radar 聚合行(aggregate: true, 全挂首城占位)fan-out 到公司全部站点后,
+// 腾讯 4 城 POI 都应存在且带岗位; 修复前仅 beijing 有 3 岗位, 其余 3 城被过滤。
+test('offline catalog fans aggregate rows to every city of 腾讯 (深圳/上海/广州恢复)', async () => {
+  const work = await loadOfflineWorkCatalog();
+  const tencent = work.filter((p) => p.name === '腾讯');
+  const ids = tencent.map((p) => p.id).sort();
+  assert.deepEqual(ids, [
+    '腾讯:腾讯-site-beijing',
+    '腾讯:腾讯-site-guangzhou',
+    '腾讯:腾讯-site-shanghai',
+    '腾讯:腾讯-site-shenzhen',
+  ]);
+  for (const poi of tencent) {
+    assert.ok(poi.positions.length >= 1, `${poi.id} 至少 1 个岗位`);
+    assert.ok(poi.positions.every((p) => p.aggregate === true), `${poi.id} 岗位均为聚合行`);
   }
 });
 

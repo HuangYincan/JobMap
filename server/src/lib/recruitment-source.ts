@@ -156,6 +156,14 @@ function isOpenPosition(pos: { status?: string }): boolean {
   return pos.status === 'open';
 }
 
+/**
+ * 站点岗位分配(2026-08-26, fix/aggregate-site-fanout):
+ * - specific 行仍按 siteId 精确归属;
+ * - aggregate 行(radar 全国大类标题, crawler main_site_id 只是首城占位)是
+ *   「公司级在招信号」→ 计入公司每个站点, 否则多城公司除首站外全被
+ *   positions.length > 0 过滤掉(深圳腾讯不收录的根因)。
+ * openOnly 语义不变: 关闭的 aggregate 行同样不出现。
+ */
 function poiFromSourceSite(
   company: SourceCompany,
   site: CompanySite,
@@ -185,7 +193,7 @@ function poiFromSourceSite(
     },
     sites: [site],
     positions: company.positions
-      .filter((p) => p.siteId === site.id && (!opts.openOnly || isOpenPosition(p)))
+      .filter((p) => (p.siteId === site.id || p.aggregate === true) && (!opts.openOnly || isOpenPosition(p)))
       .map(positionFromSource),
   };
 }
@@ -284,7 +292,14 @@ function mergeCompanyOntoSeedPois(pois: RecruitmentPOI[], company: SourceCompany
     for (const pos of pin.positions) knownJobs.add(pos.id);
   }
 
+  const aggregateIds = new Set<string>();
   for (const pos of company.positions) {
+    // 聚合行是公司级在招信号(radar 全国大类标题, siteId 只是首城占位):
+    // 不走单站点归属, 统一在下方 fan-out 到公司全部 POI(2026-08-26)。
+    if (pos.aggregate === true && isOpenPosition(pos)) {
+      aggregateIds.add(pos.externalId);
+      continue;
+    }
     if (!isOpenPosition(pos)) {
       for (const poi of pois) {
         poi.positions = poi.positions.filter((row) => row.id !== pos.externalId);
@@ -297,5 +312,15 @@ function mergeCompanyOntoSeedPois(pois: RecruitmentPOI[], company: SourceCompany
     if (!target) continue;
     target.positions.push(positionFromSource(pos));
     knownJobs.add(pos.externalId);
+  }
+
+  // 2026-08-26 (fix/aggregate-site-fanout): 打开的聚合行计入公司每个站点 POI,
+  // 逐个校验防重(含「站点 id 恰为聚合行占位 siteId」的情形), 排序保持在具体行之后。
+  for (const pos of company.positions) {
+    if (!aggregateIds.has(pos.externalId)) continue;
+    for (const poi of pois) {
+      if (poi.positions.some((existing) => existing.id === pos.externalId)) continue;
+      poi.positions.push(positionFromSource(pos));
+    }
   }
 }
