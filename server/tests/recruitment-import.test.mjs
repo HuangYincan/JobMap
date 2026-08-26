@@ -19,7 +19,7 @@ import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
 import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
 import { mergeCompaniesIntoPois, poiToSourceCompany } from '../src/lib/recruitment-source.ts';
-import { WORK_SEED } from '../src/lib/seed-data.ts';
+import { WORK_SEED } from './fixtures/seed-data.ts';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -248,7 +248,7 @@ test('planRecruitmentImport drops invalid companies and keeps the rest', () => {
   assert.ok(plan.issues.length > 0);
 });
 
-test('planSeedImport accepts every current WORK_SEED company', async () => {
+test('planSeedImport accepts every real drop with valid sites (strict DB-only import)', async () => {
   const plan = await planSeedImport();
   assert.equal(plan.dropped, 0);
   assert.equal(plan.issues.length, 0);
@@ -353,12 +353,12 @@ test('mergeCompaniesIntoPois hides closed jobs on the read path', () => {
   assert.equal(merged.find((p) => p.id === 'closed-only-lab'), undefined);
 });
 
-test('planSeedImport merges official-career drops onto seed slugs', async () => {
+test('planSeedImport merges real drops onto catalog slugs (no seed scaffold)', async () => {
   const plan = await planSeedImport();
+  // 官方 career drop 携带 seed 风格 slug(alibaba-xixi 等), 是真实数据而非 seed 示例。
   const alibaba = plan.companies.find((c) => c.slug === 'alibaba-xixi');
   assert.ok(alibaba);
   assert.ok(alibaba.positions.some((p) => p.externalId === 'alibaba-campus-frontend-2026'));
-  assert.ok(alibaba.positions.some((p) => p.externalId === 'alibaba-java'));
 
   const lab = plan.companies.find((c) => c.slug === 'zhejiang-lab');
   assert.ok(lab);
@@ -367,44 +367,28 @@ test('planSeedImport merges official-career drops onto seed slugs', async () => 
   const bytedance = plan.companies.find((c) => c.slug === 'bytedance-hangzhou');
   assert.ok(bytedance);
   assert.ok(bytedance.positions.some((p) => p.externalId === 'bytedance-campus-frontend-2026'));
-  assert.ok(bytedance.positions.some((p) => p.externalId === 'bytedance-algo'));
 
   const tencent = plan.companies.find((c) => c.slug === 'tencent-hangzhou');
   assert.ok(tencent);
   assert.ok(tencent.positions.some((p) => p.externalId === 'tencent-campus-frontend-2026'));
-  assert.ok(tencent.positions.some((p) => p.externalId === 'tencent-backend'));
   assert.equal(tencent.sites.filter((s) => s.id === 'tencent-hangzhou-site').length, 1);
 
   const netease = plan.companies.find((c) => c.slug === 'netease-hangzhou');
   assert.ok(netease);
   assert.ok(netease.positions.some((p) => p.externalId === 'netease-campus-frontend-2026'));
 
-  const huawei = plan.companies.find((c) => c.slug === 'huawei-hangzhou');
-  assert.ok(huawei);
-  assert.ok(huawei.positions.some((p) => p.externalId === 'huawei-campus-frontend-2026'));
-
-  const ant = plan.companies.find((c) => c.slug === 'antgroup-hangzhou');
-  assert.ok(ant);
-  assert.ok(ant.positions.some((p) => p.externalId === 'antgroup-campus-frontend-2026'));
-
   const xiaomi = plan.companies.find((c) => c.slug === 'xiaomi-hangzhou');
   assert.ok(xiaomi);
   assert.ok(xiaomi.positions.some((p) => p.externalId === 'xiaomi-campus-frontend-2026'));
-  assert.ok(xiaomi.positions.some((p) => p.externalId === 'mi-android'));
-  assert.equal(xiaomi.sites.filter((s) => s.id === 'xiaomi-hangzhou-site').length, 1);
-
-  const didi = plan.companies.find((c) => c.slug === 'didi-hangzhou');
-  assert.ok(didi?.positions.some((p) => p.externalId === 'didi-campus-frontend-2026'));
 
   const deepseek = plan.companies.find((c) => c.slug === 'deepseek');
   assert.ok(deepseek?.positions.some((p) => p.externalId === 'deepseek-campus-frontend-2026'));
 
-  const bili = plan.companies.find((c) => c.slug === 'bilibili-hangzhou');
-  assert.ok(bili?.positions.some((p) => p.externalId === 'bilibili-campus-frontend-2026'));
-  assert.ok(bili?.positions.some((p) => p.externalId === 'bili-community'));
-
-  const megvii = plan.companies.find((c) => c.slug === 'megvii-hangzhou');
-  assert.ok(megvii?.positions.some((p) => p.externalId === 'megvii-campus-frontend-2026'));
+  // 2026-08-26: seed 示例岗位已移除(alibaba-java / tencent-backend 等不再出现),
+  // 只保留真实 drop 岗位(官方 career / portal-* / radar-*)。
+  assert.equal(alibaba.positions.some((p) => p.externalId === 'alibaba-java'), false);
+  assert.equal(tencent.positions.some((p) => p.externalId === 'tencent-backend'), false);
+  assert.ok(xiaomi.positions.some((p) => p.externalId.startsWith('portal-feishu-')));
 });
 
 test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {
@@ -702,15 +686,15 @@ test('positions dedup plan scope: migrate/dedup use the plan external ids, not t
   assert.match(store, /if \(planExtIds\.length > 0\)/);
 });
 
-test('planSeedImport orders real drops before the seed scaffold', () => {
-  // dedupeSourceCompanies 保留每个 slug 的第一个公司 — seed 排前面会让示例副本
-  // (过期坐标/tier/示例岗位) 压过官方 drops 的当前数据 (2026-08-19: tencent
-  // 120.155 旧坐标、deepseek tier 12)。真实 drops (qqdoc/official/radar) 必须先于 seed。
+test('planSeedImport excludes the seed scaffold (strict DB-only import)', () => {
+  // 2026-08-26: seed 示例数据已归档 tech/backup/seed-data, 不再作为灌库源;
+  // 真实 drops (qqdoc/official/radar/embodied 等) 仍按官方优先合并。
   const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
   const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
+  assert.doesNotMatch(store, /seedRecruitmentAdapter|\.\.\.seed\b|'\.\/recruitment-adapters\/seed'/);
   assert.match(
     store,
-    /\.\.\.qqdocOfficial,\s*\.\.\.qqdocJobs,\s*\.\.\.official,\s*\.\.\.radar,\s*\.\.\.boss,\s*\.\.\.nowcoder,\s*\.\.\.shixiseng,\s*\.\.\.seed/,
+    /\.\.\.qqdocOfficial,\s*\.\.\.qqdocJobs,\s*\.\.\.official,\s*\.\.\.radar,\s*\.\.\.boss,\s*\.\.\.nowcoder,\s*\.\.\.shixiseng/,
   );
 });
 

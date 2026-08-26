@@ -1,7 +1,7 @@
 // Read imported recruitment rows when DATABASE_URL is set.
-// One company + one site → POI id = companies.slug (matches WORK_SEED).
-// Return contract (2026-08-25, fix/server-catalog-semantics):
-//   null = no pool / query failure → caller falls back to the offline catalog;
+// One company + one site → POI id = companies.slug.
+// Return contract (2026-08-25, fix/server-catalog-semantics; 2026-08-26 收紧):
+//   null = no pool / query failure → caller keeps empty (strict DB-only, no offline seed);
 //   []   = DB healthy but empty after clip or coord-filter → caller keeps empty.
 
 import { getPool } from './db.ts';

@@ -72,8 +72,9 @@ export const DOMAIN_LOGO_MAP: Readonly<Record<string, string>> = {
  * 其 favicon 是平台默认图标，非公司品牌；大厂自有招聘域（join.qq.com / jobs.bytedance.com）
  * favicon 也未必是品牌主 logo。→ 经「公司名 → 品牌官网 host」映射，favicon 指向品牌主 logo。
  *
- * 键全部来自离线目录 `p.name` 全集（node --experimental-strip-types 枚举 loadOfflineWorkCatalog，
- * 397 家唯一公司名），只收录实际存在且域名确定的知名大厂，不造表。
+ * 键全部来自旧离线目录 `p.name` 全集（2026-08-26 前枚举 loadOfflineWorkCatalog，
+ * 397 家唯一公司名；该目录基于 seed + 真实 drop，seed 已归档 tech/backup/seed-data）。
+ * 只收录实际存在且域名确定的知名大厂，不造表。
  * 命中时 faviconFromUrl('https://<host>/') 生成 `https://favicon.im/<host>?size=128`，source='company'。
  * 站点层不插（站点可能只是某招聘子站点，未必是主品牌）；无映射者维持原链（favicon / emoji 兜底）。
  */

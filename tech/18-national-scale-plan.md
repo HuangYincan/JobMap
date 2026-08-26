@@ -97,7 +97,7 @@ CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
 - **工作模式**：地图 `moveend` / `zoomend` → 防抖（~300ms）→ 请求 `/api/pois`（当前 `bounds` + `maxTier`）→ **增量合并**进现有 catalog（不整体替换）→ 复用 marker。主地图（Domain）**保持刷新才更新**（AMap 负载/余额），不实现此功能。
 - 性能手段：请求合并（同刻只有一个 in-flight）、旧请求取消、增量 merge、marker 复用。
 - 服务端：`loadServerCatalog` / `loadWorkCatalogFromDb` 支持 `bounds` + `filters.maxTier` + `filters.city`，走 PostGIS（gist `&&` + `ST_DWithin`；距离用 `geom_geog` geography 更准）。
-- **读路径 null/[] 契约（2026-08-25 修订，`fix/server-catalog-semantics`；细则见 `tech/13`）**：`null` = 无 DB / 查询失败 → 回退离线目录（唯一回退情形）；`[]` = DB 健康但裁剪未命中或 JS 过滤（`hasPlausibleCoord` / `isCityCenterPin`）后为空 → 带 clip 时保持空结果，绝不回退离线目录。
+- **读路径 null/[] 契约（2026-08-25 修订 `fix/server-catalog-semantics`；2026-08-26 起严格 DB-only，细则见 `tech/13`）**：`null` = 无 DB / 查询失败 → 返回空数组（不再回退离线 seed 目录；seed 示例数据已归档 `tech/backup/seed-data`）；`[]` = DB 健康但裁剪未命中或 JS 过滤（`hasPlausibleCoord` / `isCityCenterPin`）后为空 → 带 clip 时保持空结果，绝不回退离线目录。
 
 ### 2.4 Q3 — 全国数据源（预爬入库）
 
@@ -145,16 +145,19 @@ CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
    单站点公司零变化；「一 POI 一职场」粒度不变（不合并站点、不新增 POI）；
    `openOnly` / A1 alive 过滤叠加不变（closed 聚合行同样隐藏）；展示层
    （i18n 聚合徽标、JD 兜底文案）按 `position.aggregate` 渲染，零改动。
-3. **seed 合并路径同语义**：`mergeCompanyOntoSeedPois` 把打开的聚合行计入
+3. **seed 合并路径同语义（2026-08-26 起离线目录已移除，此条归档）**：
+   `mergeCompanyOntoSeedPois`（保留为测试工具，运行时不调用）曾把打开的聚合行计入
    该 slug 全部 POI（含 seed 骨架 POI 与新建站点 pin），逐 POI 防重；
    closed 聚合墓碑照旧从所有 POI 清除。副作用（符合预期）：seed 匹配 slug 的
    公司（阿里巴巴/网易/之江实验室等）的真实坐标种子 POI 重新带聚合岗出现。
+   **严格 DB-only 后**：读路径只有 `recruitment-store.ts`（点 1）的 DB 聚合行
+   fan-out，无 seed 骨架；seed 示例数据已归档 `tech/backup/seed-data`。
 4. **crawler 侧约定不变**：`main_site_id` 首城占位、`aggregate: true` 标记、
    数据文件格式均不动 —— 这是读路径修复，不是数据修复。
 
-**量化效果（离线目录，2026-08-26 实测）：POI 529 → 833（+304）；腾讯 1 城 →
-4 城（北京/上海/广州/深圳各带 3 条聚合岗）。** 徽章计数口径不受影响
-（tech/21 规则 7「N = 该城市全部公司数」仍成立，只是池内公司变多）。
+**量化效果（离线目录，2026-08-26 实测；该目录随后被严格 DB-only 移除，数据供追溯）：
+POI 529 → 833（+304）；腾讯 1 城 → 4 城（北京/上海/广州/深圳各带 3 条聚合岗）。**
+徽章计数口径不受影响（tech/21 规则 7「N = 该城市全部公司数」仍成立，只是池内公司变多）。
 
 ---
 

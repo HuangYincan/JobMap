@@ -8,7 +8,6 @@ import type { FilterState, MapMode, POI } from "@/lib/types";
 import { canonicalMode, getMode, replayRecentSearch } from "@/lib/modes";
 import { fetchPOIsForMode } from "@/lib/poi-service";
 import { getCurrentPosition, suggestionToDomainPoi } from "@/lib/amap-api";
-import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, planExploreSearch, pointAtDistanceEast, runPOIPipeline, widenSearchScope } from "@/lib/search";
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, isNearDefaultCenter } from "@/lib/camera-center";
 import { suggestKeyAction } from "@/lib/suggest-nav";
@@ -1355,8 +1354,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   const compareCatalog = useMemo(() => {
     const byId = new Map<string, POI>();
-    // Live catalog first; seed only fills ids the current list has not loaded yet.
-    for (const poi of INTERNSHIP_SEED) byId.set(poi.id, poi);
+    // DB-only：仅当前 catalog 活数据；未加载的收藏/最近项走快照或 fetchPOIDetail。
     for (const poi of catalog) byId.set(poi.id, poi);
     return Array.from(byId.values());
   }, [catalog]);
@@ -1669,8 +1667,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     };
     const local =
       catalog.find((p) => p.id === ref.companyPoiId) ??
-      pois.find((p) => p.id === ref.companyPoiId) ??
-      INTERNSHIP_SEED.find((p) => p.id === ref.companyPoiId);
+      pois.find((p) => p.id === ref.companyPoiId);
     if (local) {
       openCompany(local);
       return;
@@ -1928,8 +1925,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     } else if (s.poiId) {
       const company =
         catalog.find((p) => p.id === s.poiId) ??
-        pois.find((p) => p.id === s.poiId) ??
-        INTERNSHIP_SEED.find((p) => p.id === s.poiId);
+        pois.find((p) => p.id === s.poiId);
       if (company) {
         openCompany(company, s.positionId);
       } else if (isRecruitmentMode(mode)) {
@@ -2138,8 +2134,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     const targetMode = replay.modeChanged ? replay.mode : mode;
     const local =
       catalog.find((p) => p.id === ent.id) ??
-      pois.find((p) => p.id === ent.id) ??
-      INTERNSHIP_SEED.find((p) => p.id === ent.id);
+      pois.find((p) => p.id === ent.id);
     const openDetail = (poi: POI) => {
       // 2026-08-21 热修:弹卡不动相机——最近条目回放仅侧栏详情 + 搜索回放,
       // 不 flyTo、不置位 userMovedMapRef(同 handlePickSaved 注释)。

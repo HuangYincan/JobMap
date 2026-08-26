@@ -2,7 +2,8 @@
 // 招聘数据源插件
 //
 // 一家公司多个职场；一个岗位必须挂一个 site。
-// 先 seed，再 official-career / boss 等 adapter。
+// 2026-08-26 起严格 DB-only：seed 示例数据已归档 tech/backup/seed-data，
+// 导入只走 official-career / boss / radar / qqdoc / embodied 等真实 adapter。
 // 过期岗位由 adapter 标 closed，新岗增量 upsert。
 // ============================================================
 

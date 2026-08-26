@@ -101,7 +101,6 @@ import {
   siteNeedsPlaceSearch,
   sitesNeedingGeocode,
 } from '../src/lib/site-geocode.ts';
-import { loadOfflineWorkCatalog } from '../src/lib/server-catalog.ts';
 import { RADAR_DIR } from '../src/lib/recruitment-adapters/radar.ts';
 import { OFFICIAL_CAREER_DIR } from '../src/lib/recruitment-adapters/official-career.ts';
 import { QQDOC_JOBS_DIR } from '../src/lib/recruitment-adapters/qqdoc-jobs.ts';
@@ -364,19 +363,11 @@ async function overseasFallback(slug, siteId, query, target, companyQuery, site,
 }
 
 // --- main -------------------------------------------------------------------
-const onMap = await loadOfflineWorkCatalog();
 // 2026-08-19:公司级 already-pinned 跳过已废弃——多城市时代一家公司可有多个
 // 城市办公点(上海试点:得物/禾赛/商汤有杭州 pin 仍需解析上海 office)。
-// 防重复由站点级 siteNeedsGeocode(有坐标即跳过)承担;此处仅保留城市级去重
-// 视图信息供日志输出。
-const pinnedCities = new Map();
-for (const p of onMap) {
-  const slug = p.id.split(':')[0];
-  const city = p.sites?.[0]?.city ?? p.location?.address ?? '';
-  const list = pinnedCities.get(slug) ?? new Set();
-  list.add(city);
-  pinnedCities.set(slug, list);
-}
+// 防重复由站点级 siteNeedsGeocode(有坐标即跳过)承担。
+// 2026-08-26:删除了基于 loadOfflineWorkCatalog 的 pinnedCities 诊断视图
+// (seed 已归档,严格 DB-only;该 Map 只写不读)。
 const overrides = loadOverrides();
 
 // --- 配额短路 (2026-08-21, fix/geocode-quota-short-circuit) ------------------

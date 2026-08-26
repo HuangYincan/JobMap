@@ -21,7 +21,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { INTERNSHIP_SEED } from '../src/lib/seed-data.ts';
+import { INTERNSHIP_SEED } from './fixtures/seed-data.ts';
 import { savedPlacesToListPois } from '../src/lib/saved-overlay.ts';
 import { haversineDistance } from '../src/lib/types.ts';
 import { t } from '../src/lib/i18n.ts';

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { poiToSourceCompany } from '../src/lib/recruitment-source.ts';
-import { WORK_SEED } from '../src/lib/seed-data.ts';
+import { WORK_SEED } from './fixtures/seed-data.ts';
 import {
   addressConflictsWithCity,
   addressConflictsWithRegeoDistrict,

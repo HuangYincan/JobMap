@@ -16,7 +16,6 @@ import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import type { MapMode, POI } from "@/lib/types";
 import { haversineDistance, isRecruitmentMode } from "@/lib/types";
 import type { MapEngine } from "@/lib/map-engine/types";
-import { INTERNSHIP_SEED } from "@/lib/seed-data";
 import { suggestRecruitment, suggestSearchTags } from "@/lib/search";
 import {
   fetchSearchSuggest,
@@ -76,7 +75,8 @@ export function useSearchState(options: SearchStateOptions) {
 
       if (isRecruitmentMode(mode)) {
         const fallback = () => {
-          const pool = catalogRef.current.length ? catalogRef.current : INTERNSHIP_SEED;
+          // DB-only：兜底只用已加载 catalog；目录空时仅返回标签（无示例数据池）。
+          const pool = catalogRef.current;
           const tags = suggestSearchTags(query, 3).map((tag) => ({
             id: tag.id,
             name: tag.title,

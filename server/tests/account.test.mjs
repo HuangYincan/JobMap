@@ -54,7 +54,7 @@ import {
 } from '../src/lib/session-store.ts';
 import { faviconFromUrl, resolveCompanyLogo } from '../src/lib/company-logo.ts';
 import { poiToSourceCompany, sourceCompanyToPois } from '../src/lib/recruitment-source.ts';
-import { seedRecruitmentAdapter } from '../src/lib/recruitment-adapters/seed.ts';
+import { WORK_SEED } from './fixtures/seed-data.ts';
 
 test('guest preferences default to work mode and browser language', () => {
   assert.equal(DEFAULT_PREFERENCES.defaultMode, 'work');
@@ -676,8 +676,10 @@ test('sourceCompanyToPois splits one company into one POI per office site', () =
   assert.equal(pois[1].positions[0].title, 'Frontend');
 });
 
-test('seed adapter round-trips work companies through the plugin contract', async () => {
-  const companies = await seedRecruitmentAdapter.list();
+test('source company contract round-trips work catalog POIs through the plugin contract', async () => {
+  // seed 示例数据已归档 tech/backup/seed-data(运行时不再引用);此处用 fixture
+  // WORK_SEED 验证 SourceCompany ↔ POI 插件契约的往返一致性。
+  const companies = WORK_SEED.map((poi) => poiToSourceCompany(poi));
   assert.ok(companies.length >= 50);
   for (const company of companies) {
     assert.ok(company.sites.length >= 1);

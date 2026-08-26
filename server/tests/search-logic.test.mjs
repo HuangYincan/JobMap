@@ -20,7 +20,7 @@ import {
   suggestRecruitment,
   widenSearchScope,
 } from '../src/lib/search.ts';
-import { INTERNSHIP_SEED, DOMAIN_SEED } from '../src/lib/seed-data.ts';
+import { INTERNSHIP_SEED, DOMAIN_SEED } from './fixtures/seed-data.ts';
 import { resolveApplyLink, withDistance } from '../src/lib/types.ts';
 import { ACTIVE_MODES, getMode, replayRecentSearch } from '../src/lib/modes.ts';
 import { positionMatchesRole, positionMatchesTaxonomy } from '../src/lib/job-taxonomy.ts';

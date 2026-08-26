@@ -209,6 +209,8 @@ favicon.im 解决的是「生成了 URL 但国内被墙」,但很多公司 logo 
 `resolveCompanyLogo` 的 companyCareerUrl favicon 之前插入:命中则 favicon 指向品牌官网
 (`https://favicon.im/<brand-host>?size=128`,source=`company`)。键全部取自离线目录
 `p.name` 全集(仅收录实际存在且域名确定的知名大厂,不造表);只在公司层插入,站点层不插
+> ⚠️ **2026-08-26 修订(严格 DB-only)**:该离线目录(seed 骨架 + 真实 drop)已移除,
+> seed 示例数据归档 `tech/backup/seed-data`;`BRAND_LOGO_MAP` 静态表保留不变。
 (站点可能只是招聘子站点,未必是主品牌)。无品牌映射的第三方托管平台维持平台 favicon。
 
 ---

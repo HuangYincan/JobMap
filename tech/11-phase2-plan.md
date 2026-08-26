@@ -42,7 +42,7 @@
 
 **1.3 API 路由**
 - [x] `GET /api/modes` - 获取可用模式
-- [x] `GET /api/pois` - POI 列表（`loadServerCatalog`：导入行优先，否则 seed + official-career JSON）
+- [x] `GET /api/pois` - POI 列表（`loadServerCatalog`：严格 DB-only，无库返回空；seed 已归档 `tech/backup/seed-data`）
 - [x] `GET /api/pois/:id` - POI 详情（`loadServerCatalogById`）
 - [x] `POST /api/search` - 搜索 API（同一 catalog）
 
@@ -124,11 +124,11 @@
 - [x] 公司-岗位关系建模（公司 1—N 职场；岗位挂一个 site）
 
 **3.2 招聘数据导入**
-- [x] 数据源选择（先 `seed` adapter；`official-career` 读本地 JSON 目录，Boss 后接）
+- [x] 数据源选择（2026-08-26 起严格 DB-only：`official-career` / `boss` / `radar` / `qqdoc` / `embodied` 等真实 adapter；seed 示例数据已归档 `tech/backup/seed-data`）
 - [x] 数据清洗 / 验证（`lib/recruitment-import.ts`；坏行进 `issues` 不入库）
-- [x] 公司地理位置匹配（seed 已带坐标；`planSiteGeocode` / `npm run geocode:sites` 列出缺坐标职场。Live AMap REST 需 `AMAP_WEB_KEY`，本机无 key 不打接口）
-- [x] 导入计划脚本（`npm run import:seed` dry-run；`import:seed:apply` 有库才写入 `006` 表）
-- [x] 公开读走导入行（`loadWorkCatalogFromDb` → `loadServerCatalog`；无库回落 seed + official-career JSON）
+- [x] 公司地理位置匹配（`planSiteGeocode` / `npm run geocode:sites` 列出缺坐标职场。Live AMap REST 需 `AMAP_WEB_KEY`，本机无 key 不打接口）
+- [x] 导入计划脚本（`npm run import:seed` dry-run；`import:seed:apply` 有库才写入 `006` 表；seed 不再参与导入）
+- [x] 公开读走导入行（`loadWorkCatalogFromDb` → `loadServerCatalog`；严格 DB-only，无库返回空）
 - [x] 工作模式地图读同一 catalog（`fetchWorkCatalogFromApi`；已有坐标不打 Geocoder）
 - [x] 数据验证和去重（同 slug 合并职场/岗位）
 
@@ -196,7 +196,7 @@
    - `companies` 1 — N `company_sites`（办公点，含正确坐标）。
    - `positions` 必须挂一个 `site_id`（一个岗位一个办公点）。
    - Logo：优先该职场/子公司招聘页 favicon 或官网 icon；失败回退集团保底 icon；再失败 emoji。
-   - 来源插件化：先 `seed`，再 `official-career` / `boss` 等 adapter；过期岗位淘汰，新岗增量。
+   - 来源插件化：`official-career` / `boss` / `radar` / `qqdoc` / `embodied` 等真实 adapter（seed 示例数据已归档）；过期岗位淘汰，新岗增量。
 
 #### 任务清单
 
@@ -328,7 +328,7 @@
 **5.5 测试**
 - [x] 单元测试（筛选逻辑、排序逻辑、对比度 token）
 - [x] 组件测试（卡片、筛选器、列表、抽屉：`tests/component-contracts.test.mjs` 源码契约；未引 RTL）
-- [x] 集成测试（搜索流程、筛选流程：`tests/search-integration.test.mjs` 走与 `/api/search` 相同的 seed→pipeline→page 组合；Playwright E2E 仍待）
+- [x] 集成测试（搜索流程、筛选流程：`tests/search-integration.test.mjs` 走与 `/api/search` 相同的 pipeline→page 组合，catalog 输入用 `tests/fixtures/seed-data.ts`（归档副本）；Playwright E2E 仍待）
 - [ ] E2E 测试（关键路径）
 - [ ] 跨浏览器测试
 
@@ -558,7 +558,7 @@
 
 - 收藏叠加层：Layers 二级霜面卡（`layers-panel.tsx`）里的开关控制 `mergeMapPois`；底图样式也在这张卡，不再放右上角第二套选择器。Explore 列表仍只走 `runPOIPipeline`。叠加层开关和底图样式都写入 sessionStorage；打开叠加层时视野收到收藏点。用户选过的底图不被系统深浅色覆盖。
   - ⚠️ **2026-08-22 修订(互斥语义,见 tech/16-bug-fixes.md「收藏图层互斥」)**:本段描述的「叠加(并集显示)」已废止。用户决策:收藏图层开 = 地图**只**显示收藏点 pin + Explore 列表切为收藏列表;关 = 恢复搜索管线。`mergeMapPois` 退化为 marker 池构建(catalog 全量保留,池只增不删),互斥在可见性层落地(`mutexVisibleIds`);Explore 列表在互斥开时不再走 `runPOIPipeline` 显示,而是切为收藏列表。历史规划文字保留,以本条修正为准。
-- 受控 fly / highlight 继续走现有 `usePOIMap`（选中优先于高亮；Saved 行 hover 也会高亮图钉）。收藏行 / 列表卡 / 搜索建议点中走同一条 `setZoomAndCenter` 飞行动作；收藏优先 `resolveSavedForFly`（catalog / seed 活数据）。
+- 受控 fly / highlight 继续走现有 `usePOIMap`（选中优先于高亮；Saved 行 hover 也会高亮图钉）。收藏行 / 列表卡 / 搜索建议点中走同一条 `setZoomAndCenter` 飞行动作；收藏优先 `resolveSavedForFly`（catalog 活数据；seed 已归档）。
 - 搜索已在 Phase 2 完成；本阶段不重做搜索框。Recent 回放走 `replayRecentSearch`（internship → work）+ 模式缓存，再打开 Explore，不直接 `setMode`。
 
 ## Phase 3 预览

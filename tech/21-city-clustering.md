@@ -42,6 +42,8 @@ zoom ≤ 8(全国 / 省级视野)               zoom ≥ 9(城市级,自动展�
    `seed-data.ts` `withWorkDefaults` 合成 site 补 city——此前 11 家未被
    radar/official 行覆盖 city 的公司在 zoom ≤ 8 散落个体 pin,不进「杭州」
    徽章;50 个 seed 坐标均在杭州参考框内,无误伤)。
+   > ⚠️ **2026-08-26 修订(严格 DB-only)**:seed 骨架已归档 `tech/backup/seed-data`,
+   > 离线目录移除;DB 读路径 `company_sites.city` 由站点数据提供,聚合规则不变。
 3. 徽章点击 → `map.setZoomAndCenter(11, 城市中心点)`,城市中心从该城
    所有 pin 坐标取均值(或 DB city_code 中心,先均值)。
 4. 徽章 hover 显示城市 + 数量;点击仅下钻,不弹卡片(卡片由个体 pin 负责)。

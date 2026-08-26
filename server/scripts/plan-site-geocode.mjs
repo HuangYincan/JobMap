@@ -10,7 +10,6 @@ import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
 import { officialCareerAdapter } from '../src/lib/recruitment-adapters/official-career.ts';
 import { qqdocOfficialAdapter } from '../src/lib/recruitment-adapters/qqdoc-official.ts';
 import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
-import { seedRecruitmentAdapter } from '../src/lib/recruitment-adapters/seed.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
 import { formatGeocodeProviderReport, listImportedSitesNeedingGeocode, planSiteGeocode } from '../src/lib/site-geocode.ts';
 
@@ -19,7 +18,6 @@ import { formatGeocodeProviderReport, listImportedSitesNeedingGeocode, planSiteG
 injectEnv(['AMAP_WEB_KEY', 'JIAOYUNTONG_MAP_KEY', 'BAIDU_MAP_AK', 'TENCENT_MAP_KEY']);
 
 const drops = await Promise.all([
-  seedRecruitmentAdapter.list(),
   qqdocOfficialAdapter().list(),
   officialCareerAdapter().list(),
   bossAdapter().list(),
