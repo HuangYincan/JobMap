@@ -119,7 +119,7 @@ function positionsForSite(
  * 「无 logo → 🏢 emoji」的兜底语义不变。
  */
 export function resolveDbCompanyLogo(
-  company: Pick<CompanyRow, 'logo_url' | 'logo_emoji' | 'career_url'>,
+  company: Pick<CompanyRow, 'name' | 'logo_url' | 'logo_emoji' | 'career_url'>,
   site: Pick<SiteRow, 'career_url' | 'logo_url'>,
 ): ResolvedLogo {
   if (company.logo_url || company.logo_emoji) {
@@ -134,6 +134,7 @@ export function resolveDbCompanyLogo(
     siteLogoUrl: site.logo_url ?? undefined,
     companyCareerUrl: company.career_url ?? undefined,
     companyLogoUrl: company.logo_url ?? undefined,
+    companyName: company.name,
   });
 }
 
