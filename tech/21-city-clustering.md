@@ -35,6 +35,10 @@ zoom ≤ 8(全国 / 省级视野)               zoom ≥ 9(城市级,自动展�
 **规则**:
 1. 触发:work 模式,`zoom <= 8`(全国/省级)时启用;`zoom > 8` 自动切回个体 pin。
 2. 聚合粒度:`site.city`(公司办公点城市);无 city 的 pin 保持个体。
+   seed 骨架站点已统一带 `city: '杭州市'`(2026-08-26 修复,sc-seed-city:
+   `seed-data.ts` `withWorkDefaults` 合成 site 补 city——此前 11 家未被
+   radar/official 行覆盖 city 的公司在 zoom ≤ 8 散落个体 pin,不进「杭州」
+   徽章;50 个 seed 坐标均在杭州参考框内,无误伤)。
 3. 徽章点击 → `map.setZoomAndCenter(11, 城市中心点)`,城市中心从该城
    所有 pin 坐标取均值(或 DB city_code 中心,先均值)。
 4. 徽章 hover 显示城市 + 数量;点击仅下钻,不弹卡片(卡片由个体 pin 负责)。
