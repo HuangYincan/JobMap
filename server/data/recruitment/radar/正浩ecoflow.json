@@ -30,6 +30,15 @@
         "lng": 108.94,
         "lat": 34.34
       }
+    },
+    {
+      "id": "正浩ecoflow-site-suzhou",
+      "name": "正浩EcoFlow",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "深圳/西安/苏州"
+      }
     }
   ],
   "positions": [

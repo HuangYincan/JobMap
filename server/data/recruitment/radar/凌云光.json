@@ -30,6 +30,15 @@
         "lng": 114.017386,
         "lat": 22.742788
       }
+    },
+    {
+      "id": "凌云光-site-suzhou",
+      "name": "凌云光",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/苏州"
+      }
     }
   ],
   "positions": [

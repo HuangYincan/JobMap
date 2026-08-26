@@ -1,0 +1,39 @@
+{
+  "slug": "永卓控股",
+  "name": "永卓控股",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://everrising.jobs.feishu.cn/graduate/position/list",
+  "sites": [
+    {
+      "id": "永卓控股-site-suzhou",
+      "name": "永卓控股",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-31e54752835b",
+      "title": "助理数据开发工程师 助理软件开发工程师 助理软件开发工程师(C#)助理算法工程师 助理软件测试工程师 助理交付经理信息安全岗位 大模型数据飞轮实习生运筹优化算法",
+      "siteId": "永卓控股-site-suzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://everrising.jobs.feishu.cn/graduate/position/list",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -30,6 +30,15 @@
         "lng": 104.07,
         "lat": 30.66
       }
+    },
+    {
+      "id": "中建咨询-site-suzhou",
+      "name": "中建咨询",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "广州/成都/苏州/佛山"
+      }
     }
   ],
   "positions": [

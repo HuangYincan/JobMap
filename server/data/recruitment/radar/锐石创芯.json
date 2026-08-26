@@ -41,6 +41,15 @@
         "lng": 104.057147,
         "lat": 30.537162
       }
+    },
+    {
+      "id": "锐石创芯-site-chongqing",
+      "name": "锐石创芯",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "上海/深圳/成都/重庆"
+      }
     }
   ],
   "positions": [

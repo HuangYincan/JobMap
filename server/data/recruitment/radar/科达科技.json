@@ -19,6 +19,15 @@
         "lng": 121.394178,
         "lat": 31.171652
       }
+    },
+    {
+      "id": "科达科技-site-suzhou",
+      "name": "科达科技",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/苏州"
+      }
     }
   ],
   "positions": [

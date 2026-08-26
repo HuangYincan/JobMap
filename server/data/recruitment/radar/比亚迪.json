@@ -41,6 +41,15 @@
         "lng": 114.364125,
         "lat": 22.678732
       }
+    },
+    {
+      "id": "比亚迪-site-chongqing",
+      "name": "比亚迪—博士校招",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "北京/上海/深圳/重庆"
+      }
     }
   ],
   "positions": [

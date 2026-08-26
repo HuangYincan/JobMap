@@ -1,0 +1,39 @@
+{
+  "slug": "沛睿微电子",
+  "name": "沛睿微电子",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.raymx-micro.com/Home/Position",
+  "sites": [
+    {
+      "id": "沛睿微电子-site-suzhou",
+      "name": "沛睿微电子",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "苏州/合肥"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-48631d3f4ba3",
+      "title": "IC验证工程师 算法/架构工程师 数字IC设计工程师  模拟IC设计工程师  固件/软件开发工程师  布局布线/SOC后端工程师",
+      "siteId": "沛睿微电子-site-suzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-09-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

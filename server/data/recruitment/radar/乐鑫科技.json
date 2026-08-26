@@ -30,6 +30,15 @@
         "lng": 113.953374,
         "lat": 22.532137
       }
+    },
+    {
+      "id": "乐鑫科技-site-suzhou",
+      "name": "乐鑫科技",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/深圳/苏州"
+      }
     }
   ],
   "positions": [

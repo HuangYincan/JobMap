@@ -30,6 +30,15 @@
         "lng": 113.860013,
         "lat": 22.553621
       }
+    },
+    {
+      "id": "银河通用机器人-site-suzhou",
+      "name": "银河通用机器人",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/苏州"
+      }
     }
   ],
   "positions": [

@@ -41,6 +41,15 @@
         "lng": 113.26,
         "lat": 23.13
       }
+    },
+    {
+      "id": "华硕电脑-site-chongqing",
+      "name": "华硕电脑",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "北京/上海/广州/重庆"
+      }
     }
   ],
   "positions": [

@@ -52,6 +52,15 @@
         "lng": 114.3,
         "lat": 30.59
       }
+    },
+    {
+      "id": "汇川技术-site-suzhou",
+      "name": "汇川技术—联合动力新能源汽车业务",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "苏州"
+      }
     }
   ],
   "positions": [
@@ -225,6 +234,21 @@
       "applySource": "official",
       "applyUrl": "https://inovance.zhiye.com/campus/detail?jobAdId=5dbb23d9-285c-42ac-9aad-0babd9e9d757",
       "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "radar-dd0942e759b7",
+      "title": "联合动力新能源汽车业务 ，硬件方向 软件方向 测试方向 结构方向 可靠性方向 工程方向 职能方向",
+      "siteId": "汇川技术-site-suzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://inovance.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
     }
   ],
   "category": "35"

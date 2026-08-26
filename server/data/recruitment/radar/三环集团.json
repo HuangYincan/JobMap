@@ -30,6 +30,15 @@
         "lng": 103.999075,
         "lat": 30.708945
       }
+    },
+    {
+      "id": "三环集团-site-suzhou",
+      "name": "三环集团",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "深圳/成都/苏州"
+      }
     }
   ],
   "positions": [

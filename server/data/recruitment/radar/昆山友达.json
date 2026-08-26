@@ -1,0 +1,39 @@
+{
+  "slug": "昆山友达",
+  "name": "昆山友达",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/auo/98048#/",
+  "sites": [
+    {
+      "id": "昆山友达-site-suzhou",
+      "name": "昆山友达",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6e6a0fd31d09",
+      "title": "工艺整合  工艺制成  智能制造( IE) 自动化设备管理",
+      "siteId": "昆山友达-site-suzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/auo/98048#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

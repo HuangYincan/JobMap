@@ -74,6 +74,15 @@
         "lng": 108.94,
         "lat": 34.34
       }
+    },
+    {
+      "id": "三一集团-site-suzhou",
+      "name": "三一集团—星辰计划",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/广州/西安/苏州"
+      }
     }
   ],
   "positions": [

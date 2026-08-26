@@ -19,6 +19,15 @@
         "lng": 121.360947,
         "lat": 30.757344
       }
+    },
+    {
+      "id": "欧普照明-site-suzhou",
+      "name": "欧普照明",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/苏州"
+      }
     }
   ],
   "positions": [

@@ -23,7 +23,7 @@ ATTRIBUTION = "xiaozhao-radar contributors (Apache-2.0); Domain Map field mappin
 
 # Default target cities; the CLI --cities flag overrides. Canonical order is
 # only a fallback — per-row site order follows the company's own city text.
-CITY_TARGETS = ("北京", "上海", "广州", "深圳", "成都", "武汉", "杭州", "南京", "苏州", "西安")
+CITY_TARGETS = ("北京", "上海", "广州", "深圳", "成都", "武汉", "杭州", "南京", "苏州", "西安", "重庆")
 CITY_KEY = {
     "北京": "beijing",
     "上海": "shanghai",
@@ -35,6 +35,7 @@ CITY_KEY = {
     "南京": "nanjing",
     "苏州": "suzhou",
     "西安": "xian",
+    "重庆": "chongqing",
 }
 CITY_FULL = {
     "北京": "北京市",
@@ -47,6 +48,7 @@ CITY_FULL = {
     "南京": "南京市",
     "苏州": "苏州市",
     "西安": "西安市",
+    "重庆": "重庆市",
 }
 CITY_PROVINCE = {
     "北京": "北京市",
@@ -59,6 +61,7 @@ CITY_PROVINCE = {
     "南京": "江苏省",
     "苏州": "江苏省",
     "西安": "陕西省",
+    "重庆": "重庆市",
 }
 
 # Anchors match normalized radar names onto our curated official-career slugs.

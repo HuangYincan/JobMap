@@ -19,6 +19,15 @@
         "lng": 121.47,
         "lat": 31.23
       }
+    },
+    {
+      "id": "博世中国智行学院-site-suzhou",
+      "name": "博世中国智行学院",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/苏州/无锡"
+      }
     }
   ],
   "positions": [

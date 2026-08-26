@@ -30,6 +30,15 @@
         "lng": 104.07,
         "lat": 30.66
       }
+    },
+    {
+      "id": "中国兵器-site-chongqing",
+      "name": "中国兵器—兵器未来科学家",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "北京/成都/重庆/太原"
+      }
     }
   ],
   "positions": [

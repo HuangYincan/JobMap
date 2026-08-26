@@ -30,6 +30,24 @@
         "lng": 103.906786,
         "lat": 30.637616
       }
+    },
+    {
+      "id": "浪潮集团-site-chongqing",
+      "name": "浪潮集团",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "北京/成都/重庆/苏州"
+      }
+    },
+    {
+      "id": "浪潮集团-site-suzhou",
+      "name": "浪潮集团",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/成都/重庆/苏州"
+      }
     }
   ],
   "positions": [

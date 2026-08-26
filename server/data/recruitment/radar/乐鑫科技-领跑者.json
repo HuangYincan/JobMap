@@ -19,6 +19,15 @@
         "lng": 121.47,
         "lat": 31.23
       }
+    },
+    {
+      "id": "乐鑫科技-领跑者-site-suzhou",
+      "name": "乐鑫科技-领跑者计划",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/苏州"
+      }
     }
   ],
   "positions": [

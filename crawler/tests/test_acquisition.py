@@ -395,6 +395,29 @@ class RadarMapTests(unittest.TestCase):
         self.assertEqual(mapped["sites"][1]["province"], "江苏省")
         self.assertEqual(mapped["sites"][2]["province"], "陕西省")
 
+    def test_maps_chongqing_target_city(self):
+        # 2026-08-26: CITY_TARGETS 扩到十一城(加重庆,直辖市 province=重庆市,
+        # 拼音段与 ats_feishu.CITY_PINYIN 一致)。
+        mapped = map_radar_job({
+            "c": "某司", "p": "Java 实习生", "l": "成都/重庆", "u": "https://jobs.example.com/a",
+        })
+        self.assertIsNotNone(mapped)
+        self.assertEqual(
+            [site["id"] for site in mapped["sites"]],
+            ["某司-site-chengdu", "某司-site-chongqing"],
+        )
+        self.assertEqual(mapped["sites"][1]["city"], "重庆市")
+        self.assertEqual(mapped["sites"][1]["province"], "重庆市")
+
+    def test_chongqing_only_row_survives(self):
+        # 此前重庆不在目标集 → location 只含重庆的行整行丢弃;现在必须成站。
+        mapped = map_radar_job({
+            "c": "某司", "p": "测试工程师（重庆）", "l": "重庆", "u": "https://jobs.example.com/b",
+        })
+        self.assertIsNotNone(mapped)
+        self.assertEqual([site["id"] for site in mapped["sites"]], ["某司-site-chongqing"])
+        self.assertEqual(mapped["positions"][0]["siteId"], "某司-site-chongqing")
+
     def test_title_city_paren_attaches_to_that_city_site(self):
         mapped = map_radar_job({
             "c": "蚂蚁集团", "p": "算法工程师（杭州）", "l": "北京/杭州", "u": "https://talent.antgroup.com/1",

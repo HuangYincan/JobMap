@@ -30,6 +30,15 @@
         "lng": 121.197143,
         "lat": 31.278733
       }
+    },
+    {
+      "id": "轻舟智航-site-suzhou",
+      "name": "轻舟智航",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/苏州"
+      }
     }
   ],
   "positions": [
