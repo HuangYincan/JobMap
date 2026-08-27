@@ -301,11 +301,12 @@ test('state 校验:嵌入的 next 非法(签名后不被信任)→ 整票作废'
 // 3. oauth-exchange:code→token→userinfo(零网络,mock fetch)
 // ============================================================
 
-test('exchange github:POST token + Bearer userinfo,映射 id/name/email/avatar', async () => {
+test('exchange github:POST token + Bearer userinfo + verified primary email,映射 id/name/email/avatar', async () => {
   const cfg = getOAuthProviderConfig('github', GITHUB_ENV);
   const { calls, impl } = fakeFetch([
     [/^https:\/\/github\.com\/login\/oauth\/access_token$/, 200, { access_token: 'gh-tok-1' }],
-    [/^https:\/\/api\.github\.com\/user$/, 200, { id: 12345, login: 'octo', name: 'Octo Cat', email: 'octo@users.noreply.github.com', avatar_url: 'https://a.github/u.png' }],
+    [/^https:\/\/api\.github\.com\/user$/, 200, { id: 12345, login: 'octo', name: 'Octo Cat', email: 'untrusted@example.com', avatar_url: 'https://a.github/u.png' }],
+    [/^https:\/\/api\.github\.com\/user\/emails$/, 200, [{ email: 'octo@users.noreply.github.com', primary: true, verified: true }]],
   ]);
   const info = await exchangeCodeForUserinfo(cfg, 'code-1', { redirectUri: 'https://app.dev/api/auth/oauth/callback/github', fetchImpl: impl });
   assert.deepEqual(info, {
@@ -315,7 +316,7 @@ test('exchange github:POST token + Bearer userinfo,映射 id/name/email/avatar',
     displayName: 'Octo Cat',
     avatarUrl: 'https://a.github/u.png',
   });
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
   const tokenCall = calls[0];
   assert.equal(tokenCall.init.method, 'POST');
   assert.equal(tokenCall.init.headers.Accept, 'application/json');
@@ -327,13 +328,19 @@ test('exchange github:POST token + Bearer userinfo,映射 id/name/email/avatar',
   assert.equal(body.get('redirect_uri'), 'https://app.dev/api/auth/oauth/callback/github');
   assert.equal(calls[1].init.headers.Authorization, 'Bearer gh-tok-1');
   assert.match(calls[1].url, /^https:\/\/api\.github\.com\/user$/);
+  assert.equal(calls[2].init.headers.Authorization, 'Bearer gh-tok-1');
+  assert.match(calls[2].url, /^https:\/\/api\.github\.com\/user\/emails$/);
 });
 
-test('exchange github:userinfo 无 email → email undefined;name 缺 → login 兜底', async () => {
+test('exchange github:无 verified primary email → email undefined;name 缺 → login 兜底', async () => {
   const cfg = getOAuthProviderConfig('github', GITHUB_ENV);
   const { impl } = fakeFetch([
     [/access_token/, 200, { access_token: 't' }],
-    [/\/user$/, 200, { id: 7, login: 'login-only' }],
+    [/\/user$/, 200, { id: 7, login: 'login-only', email: 'unverified@example.com' }],
+    [/\/user\/emails$/, 200, [
+      { email: 'unverified@example.com', primary: true, verified: false },
+      { email: 'secondary@example.com', primary: false, verified: true },
+    ]],
   ]);
   const info = await exchangeCodeForUserinfo(cfg, 'c', { redirectUri: 'https://app.dev/cb', fetchImpl: impl });
   assert.equal(info.email, undefined);
@@ -351,6 +358,7 @@ test('exchange github:oversized or unsafe optional userinfo fields are dropped',
       email: `${'x'.repeat(250)}@example.com`,
       avatar_url: 'javascript:alert(1)',
     }],
+    [/\/user\/emails$/, 200, [{ email: `${'x'.repeat(250)}@example.com`, primary: true, verified: true }]],
   ]);
   const info = await exchangeCodeForUserinfo(cfg, 'c', { redirectUri: 'https://app.dev/cb', fetchImpl: impl });
   assert.equal(info.subject, '8');
@@ -375,7 +383,7 @@ test('exchange google:POST token(grant_type) + Bearer userinfo(sub/email/name/pi
   const cfg = getOAuthProviderConfig('google', GOOGLE_ENV);
   const { calls, impl } = fakeFetch([
     [/^https:\/\/oauth2\.googleapis\.com\/token$/, 200, { access_token: 'gg-tok' }],
-    [/^https:\/\/openidconnect\.googleapis\.com\/v1\/userinfo$/, 200, { sub: 'sub-42', email: 'g@gmail.com', name: 'G User', picture: 'https://p.g' }],
+    [/^https:\/\/openidconnect\.googleapis\.com\/v1\/userinfo$/, 200, { sub: 'sub-42', email: 'g@gmail.com', email_verified: true, name: 'G User', picture: 'https://p.g' }],
   ]);
   const info = await exchangeCodeForUserinfo(cfg, 'code-2', { redirectUri: 'https://app.dev/api/auth/oauth/callback/google', fetchImpl: impl });
   assert.deepEqual(info, {
@@ -556,7 +564,8 @@ test('callback github 全链路成功:新用户落库、session 可用、cookie 
       const jar = fakeCookieJar({ [OAUTH_STATE_COOKIE]: raw });
       const { calls, impl } = fakeFetch([
         [/github\.com\/login\/oauth\/access_token/, 200, { access_token: 'tok' }],
-        [/api\.github\.com\/user/, 200, { id: 999, login: 'octo', name: 'Octo', email: 'octo@dev.io', avatar_url: 'https://a/1.png' }],
+        [/api\.github\.com\/user$/, 200, { id: 999, login: 'octo', name: 'Octo', email: 'untrusted@dev.io', avatar_url: 'https://a/1.png' }],
+        [/api\.github\.com\/user\/emails/, 200, [{ email: 'octo@dev.io', primary: true, verified: true }]],
       ]);
       const result = await runOauthCallback({
         provider: 'github',
@@ -572,7 +581,7 @@ test('callback github 全链路成功:新用户落库、session 可用、cookie 
       assert.equal(result.user.displayName, 'Octo');
       assert.equal(result.user.accountLabel, 'octo@dev.io');
       assert.equal(jar.map.has(OAUTH_STATE_COOKIE), false, 'state cookie 已清');
-      assert.equal(calls.length, 2);
+      assert.equal(calls.length, 3);
       // 会话可用:session token 能取回同一用户
       const viaSession = await getSessionUser(result.session.token);
       assert.equal(viaSession.id, result.user.id);
@@ -592,7 +601,8 @@ test('callback:同一 provider 二次登录复用同一用户(id 不变)', () =>
         const jar = fakeCookieJar({ [OAUTH_STATE_COOKIE]: raw });
         const { impl } = fakeFetch([
           [/access_token/, 200, { access_token: `tok-${i}` }],
-          [/api\.github\.com\/user/, 200, { id: 999, login: 'octo', name: 'Octo', email: 'octo@dev.io' }],
+          [/api\.github\.com\/user$/, 200, { id: 999, login: 'octo', name: 'Octo', email: 'untrusted@dev.io' }],
+          [/api\.github\.com\/user\/emails/, 200, [{ email: 'octo@dev.io', primary: true, verified: true }]],
         ]);
         const result = await runOauthCallback({ provider: 'github', code: `c-${i}`, state, cookieJar: jar, origin: 'https://app.dev', fetchImpl: impl });
         if (firstId === null) firstId = result.user.id;
@@ -633,13 +643,61 @@ test('callback google:邮箱撞已有 OTP 用户路径在 upsertIdentity(见第 
       const jar = fakeCookieJar({ [OAUTH_STATE_COOKIE]: raw });
       const { impl } = fakeFetch([
         [/oauth2\.googleapis\.com\/token/, 200, { access_token: 'gg-t' }],
-        [/userinfo/, 200, { sub: 'sub-77', email: 'g77@gmail.com', name: 'G Seven' }],
+        [/userinfo/, 200, { sub: 'sub-77', email: 'g77@gmail.com', email_verified: true, name: 'G Seven' }],
       ]);
       const result = await runOauthCallback({ provider: 'google', code: 'gc', state, cookieJar: jar, origin: 'https://app.dev', fetchImpl: impl });
       assert.equal(result.next, '/recent');
       assert.equal(result.user.email, 'g77@gmail.com');
       assert.equal(result.user.provider, 'google');
       assert.equal(result.user.accountLabel, 'g77@gmail.com');
+    } finally {
+      restore();
+    }
+  }));
+
+test('callback google:email_verified 非 true 时不使用邮箱自动挂接', () =>
+  withEnv(ALL_ENV, async () => {
+    const restore = memoryMode();
+    try {
+      const email = `google-unverified-${Date.now()}@test.dev`;
+      const existing = await upsertIdentity({ provider: 'email', subject: email, email });
+      const state = randomOauthState();
+      const raw = signOauthState({ state, next: '/recent' });
+      const jar = fakeCookieJar({ [OAUTH_STATE_COOKIE]: raw });
+      const { impl } = fakeFetch([
+        [/oauth2\.googleapis\.com\/token/, 200, { access_token: 'gg-unverified' }],
+        [/userinfo/, 200, { sub: `google-unverified-${Date.now()}`, email, email_verified: false, name: 'Unverified Google' }],
+      ]);
+      const result = await runOauthCallback({ provider: 'google', code: 'gc', state, cookieJar: jar, origin: 'https://app.dev', fetchImpl: impl });
+      assert.notEqual(result.user.id, existing.id, 'unverified email must not attach the existing account');
+      assert.equal(result.user.email, undefined, 'unverified email is omitted from the new identity');
+    } finally {
+      restore();
+    }
+  }));
+
+test('callback github:只有 verified primary email 才允许自动挂接', async () =>
+  await withEnv(ALL_ENV, async () => {
+    const restore = memoryMode();
+    try {
+      for (const [label, emails] of [
+        ['unverified primary', [{ email: 'github-unverified@test.dev', primary: true, verified: false }]],
+        ['no primary', [{ email: 'github-secondary@test.dev', primary: false, verified: true }]],
+      ]) {
+        const email = `github-${label.replaceAll(' ', '-')}-${Date.now()}@test.dev`;
+        const existing = await upsertIdentity({ provider: 'email', subject: email, email });
+        const state = randomOauthState();
+        const raw = signOauthState({ state, next: '/recent' });
+        const jar = fakeCookieJar({ [OAUTH_STATE_COOKIE]: raw });
+        const { impl } = fakeFetch([
+          [/access_token/, 200, { access_token: `gh-${label}` }],
+          [/api\.github\.com\/user$/, 200, { id: `gh-${label}`, login: 'octo', email }],
+          [/api\.github\.com\/user\/emails$/, 200, emails],
+        ]);
+        const result = await runOauthCallback({ provider: 'github', code: 'gc', state, cookieJar: jar, origin: 'https://app.dev', fetchImpl: impl });
+        assert.notEqual(result.user.id, existing.id, `${label} email must not attach the existing account`);
+        assert.equal(result.user.email, undefined, `${label} email is omitted from the new identity`);
+      }
     } finally {
       restore();
     }
@@ -655,7 +713,8 @@ test('callback:next 绝对 URL 在 start 已清洗 → 跳回 /', () =>
       const jar = fakeCookieJar({ [OAUTH_STATE_COOKIE]: start.cookie.value });
       const { impl } = fakeFetch([
         [/access_token/, 200, { access_token: 't' }],
-        [/api\.github\.com\/user/, 200, { id: 5, login: 'l', name: 'N' }],
+        [/api\.github\.com\/user$/, 200, { id: 5, login: 'l', name: 'N' }],
+        [/api\.github\.com\/user\/emails/, 200, [{ email: 'callback@dev.io', primary: true, verified: true }]],
       ]);
       const result = await runOauthCallback({ provider: 'github', code: 'c', state, cookieJar: jar, origin: 'https://app.dev', fetchImpl: impl });
       assert.equal(result.next, '/');
@@ -767,20 +826,27 @@ test('upsertIdentity:INSERT 23505(邮箱冲突)→ 复用已有用户 + 挂接�
     username: null,
     preferences: null,
   };
-  __accountStoreTest.poolOverride = () => ({
-    query: async (sql, params) => {
-      sqlLog.push(sql);
-      if (sql.includes('INSERT INTO users')) {
-        throw { code: '23505', message: 'duplicate key value violates unique constraint "users_email_uidx"' };
-      }
-      if (sql.includes('FROM users')) return { rows: [existingRow] };
-      if (sql.includes('INSERT INTO auth_identities')) {
-        identityParams.push(params);
-        return { rows: [], rowCount: 1 };
-      }
-      throw new Error(`unexpected SQL: ${sql}`);
-    },
-  });
+  __accountStoreTest.poolOverride = () => {
+    const client = {
+      query: async (sql, params) => {
+        sqlLog.push(sql);
+        if (['BEGIN', 'COMMIT', 'ROLLBACK', 'SAVEPOINT oauth_user_insert', 'RELEASE SAVEPOINT oauth_user_insert', 'ROLLBACK TO SAVEPOINT oauth_user_insert'].includes(sql)) {
+          return { rows: [], rowCount: 0 };
+        }
+        if (sql.includes('INSERT INTO users')) {
+          throw { code: '23505', message: 'duplicate key value violates unique constraint "users_email_uidx"' };
+        }
+        if (sql.includes('FROM users')) return { rows: [existingRow] };
+        if (sql.includes('INSERT INTO auth_identities')) {
+          identityParams.push(params);
+          return { rows: [], rowCount: 1 };
+        }
+        throw new Error(`unexpected SQL: ${sql}`);
+      },
+      release() {},
+    };
+    return { connect: async () => client };
+  };
   try {
     const user = await upsertIdentity({
       provider: 'google',
@@ -802,11 +868,16 @@ test('upsertIdentity:INSERT 23505(邮箱冲突)→ 复用已有用户 + 挂接�
 });
 
 test('upsertIdentity:非 23505 错误照抛 DbUnavailableError', async () => {
-  __accountStoreTest.poolOverride = () => ({
-    query: async () => {
-      throw { code: 'XX000', message: 'internal_error (test)' };
-    },
-  });
+  __accountStoreTest.poolOverride = () => {
+    const client = {
+      query: async (sql) => {
+        if (sql === 'BEGIN' || sql === 'ROLLBACK') return { rows: [], rowCount: 0 };
+        throw { code: 'XX000', message: 'internal_error (test)' };
+      },
+      release() {},
+    };
+    return { connect: async () => client };
+  };
   try {
     await assert.rejects(
       upsertIdentity({ provider: 'google', subject: 's1', email: 'a@test.dev' }),
@@ -818,12 +889,19 @@ test('upsertIdentity:非 23505 错误照抛 DbUnavailableError', async () => {
 });
 
 test('upsertIdentity:23505 但查无此人(竞态)→ 仍抛 DbUnavailableError,不静默', async () => {
-  __accountStoreTest.poolOverride = () => ({
-    query: async (sql) => {
-      if (sql.includes('INSERT INTO users')) throw { code: '23505', message: 'dup' };
-      return { rows: [] };
-    },
-  });
+  __accountStoreTest.poolOverride = () => {
+    const client = {
+      query: async (sql) => {
+        if (sql === 'BEGIN' || sql === 'ROLLBACK' || sql === 'SAVEPOINT oauth_user_insert' || sql === 'ROLLBACK TO SAVEPOINT oauth_user_insert' || sql === 'RELEASE SAVEPOINT oauth_user_insert') {
+          return { rows: [], rowCount: 0 };
+        }
+        if (sql.includes('INSERT INTO users')) throw { code: '23505', message: 'dup' };
+        return { rows: [] };
+      },
+      release() {},
+    };
+    return { connect: async () => client };
+  };
   try {
     await assert.rejects(
       upsertIdentity({ provider: 'google', subject: 's2', email: 'ghost@test.dev' }),

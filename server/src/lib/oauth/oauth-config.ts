@@ -18,6 +18,8 @@ export interface OAuthProviderConfig {
   /** client id + secret 均已在 env(trim 后非空) */
   configured: boolean;
   tokenEndpoint: string;
+  /** GitHub only: endpoint that supplies verified primary-email evidence. */
+  emailEndpoint?: string;
   userinfoEndpoint: string;
 }
 
@@ -37,6 +39,10 @@ const USERINFO_ENDPOINTS: Record<OAuthProviderId, string> = {
   github: 'https://api.github.com/user',
   google: 'https://openidconnect.googleapis.com/v1/userinfo',
   wechat: 'https://api.weixin.qq.com/sns/userinfo',
+};
+
+const EMAIL_ENDPOINTS: Partial<Record<OAuthProviderId, string>> = {
+  github: 'https://api.github.com/user/emails',
 };
 
 export function isOAuthProviderId(value: string | null | undefined): value is OAuthProviderId {
@@ -68,6 +74,7 @@ export function getOAuthProviderConfig(
     configured: clientId !== '' && clientSecret !== '',
     tokenEndpoint: TOKEN_ENDPOINTS[id],
     userinfoEndpoint: USERINFO_ENDPOINTS[id],
+    emailEndpoint: EMAIL_ENDPOINTS[id],
   };
 }
 

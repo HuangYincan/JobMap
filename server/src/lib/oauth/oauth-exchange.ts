@@ -152,10 +152,37 @@ export async function exchangeCodeForUserinfo(
       if (info.id === undefined || info.id === null) {
         throw new OauthExchangeError('github userinfo: missing id');
       }
+      // Validate the subject before the extra /user/emails call so an unusable
+      // identity never triggers an unnecessary (or unrouteable) network request.
+      const subject = subjectString(info.id);
+      let verifiedPrimaryEmail: string | undefined;
+      if (cfg.emailEndpoint) {
+        const emailsBody = await fetchJson(
+          cfg.emailEndpoint,
+          { headers: { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'domain-map' } },
+          fetchImpl,
+        );
+        if (!Array.isArray(emailsBody)) {
+          throw new OauthExchangeError('github emails: invalid response');
+        }
+        const primary = emailsBody.find(
+          (entry) =>
+            typeof entry === 'object' &&
+            entry !== null &&
+            !Array.isArray(entry) &&
+            (entry as Record<string, unknown>).primary === true &&
+            (entry as Record<string, unknown>).verified === true,
+        );
+        if (primary && typeof primary === 'object' && !Array.isArray(primary)) {
+          verifiedPrimaryEmail = safeEmail((primary as Record<string, unknown>).email);
+        }
+      }
       return {
         provider: 'github',
-        subject: subjectString(info.id),
-        email: safeEmail(info.email),
+        subject,
+        // /user.email is not proof of ownership. Only /user/emails with both
+        // verified=true and primary=true may be used for account linking.
+        email: verifiedPrimaryEmail,
         displayName: boundedDisplayName(info.name) ?? boundedDisplayName(info.login),
         avatarUrl: safeHttpUrl(info.avatar_url),
       };
@@ -191,7 +218,9 @@ export async function exchangeCodeForUserinfo(
       return {
         provider: 'google',
         subject: subjectString(info.sub),
-        email: safeEmail(info.email),
+        // Google only declares an email for linking when the ID-token/userinfo
+        // claim explicitly says it is verified. Missing/false is no-email.
+        email: info.email_verified === true ? safeEmail(info.email) : undefined,
         displayName: boundedDisplayName(info.name),
         avatarUrl: safeHttpUrl(info.picture),
       };
