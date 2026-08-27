@@ -1,7 +1,9 @@
 // 动作校验(纯函数,无 IO)。LLM 输出的结构化动作 JSON 必须逐字段通过这里,
-// 任何越界/未知字段/未知 type 一律返回 null(丢弃),不给前端地图引擎。
+// 其它越界/未知字段/未知 type 一律返回 null(丢弃),不给前端地图引擎。
+// flyTo.zoom 的有限值会按项目/引擎共同支持范围[3,20]规范化,非 finite 仍拒绝。
 
 import type { AgentAction } from './types.ts';
+import { clampMapZoom } from '../map-engine/zoom.ts';
 
 const MAX_LAT = 90;
 const MAX_LNG = 180;
@@ -34,10 +36,6 @@ function isOptionalString(v: unknown, max: number): boolean {
   return v === undefined || (typeof v === 'string' && v.length <= max);
 }
 
-function isOptionalNumber(v: unknown): boolean {
-  return v === undefined || isFiniteNumber(v);
-}
-
 function isValidCenter(v: unknown): boolean {
   return isRecord(v) && isLng(v.lng) && isLat(v.lat);
 }
@@ -59,12 +57,13 @@ export function validateAction(raw: unknown): AgentAction | null {
   switch (type) {
     case 'flyTo': {
       if (!isValidCenter(payload.center)) return null;
-      if (!isOptionalNumber(payload.zoom)) return null;
+      const zoom = payload.zoom === undefined ? undefined : clampMapZoom(payload.zoom);
+      if (payload.zoom !== undefined && zoom === null) return null;
       return {
         type: 'flyTo',
         payload: {
           center: { lng: (payload.center as { lng: number }).lng, lat: (payload.center as { lat: number }).lat },
-          ...(isFiniteNumber(payload.zoom) ? { zoom: payload.zoom } : {}),
+          ...(zoom !== undefined && zoom !== null ? { zoom } : {}),
         },
       };
     }

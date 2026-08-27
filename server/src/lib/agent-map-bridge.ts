@@ -8,6 +8,7 @@
 // 覆盖物(addMarkers/drawCircle)创建后由返回的清理函数自维护,undo 时调用。
 
 import type { MapView } from "./map-engine/types.ts";
+import { clampMapZoom } from './map-engine/zoom.ts';
 
 /** 相机快照(undo 逆操作 flyTo 用) */
 export interface MapSnapshot {
@@ -38,7 +39,7 @@ export interface AgentBridgeCallbacks {
   onOpenDetail?: (id: string, mode?: string) => void;
 }
 
-// ---- 动作边界(lib/agent/action-schema.ts 同款;bridge 只认 MapView,规则本地复刻)----
+// ---- 动作边界(lib/agent/action-schema.ts 同款;zoom 范围经 map-engine/zoom 共享) ----
 const MAX_LAT = 90;
 const MAX_LNG = 180;
 const MIN_RADIUS_M = 10;
@@ -89,7 +90,9 @@ export function createAgentBridge(
     flyTo(lng, lat, zoom) {
       if (!view || view.isDestroyed()) return;
       if (!isLng(lng) || !isLat(lat)) return; // 非法坐标 → 忽略(动作边界)
-      view.flyTo({ center: { lng, lat }, zoom: zoom ?? view.getState().zoom });
+      const nextZoom = zoom === undefined ? view.getState().zoom : clampMapZoom(zoom);
+      if (nextZoom === null) return; // 非 finite zoom → 忽略,不触碰引擎
+      view.flyTo({ center: { lng, lat }, zoom: nextZoom });
     },
 
     select(id, mode) {

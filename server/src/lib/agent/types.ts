@@ -46,9 +46,10 @@ export type AgentAction =
  */
 export type ToolKind = 'search' | 'geocode' | 'directions' | 'weather' | 'project' | 'memory' | 'other';
 
+/** Agent 内部事件 union;网络 route 仅将公开 allowlist 子集序列化为 SSE。 */
 export type AgentEvent =
   | { type: 'delta'; text: string }
-  | { type: 'reasoning'; text: string } // 推理模型流式思考内容(DeepSeek reasoning_content;run-agent 截断 4000 字符)
+  | { type: 'reasoning'; text: string } // provider 思考内容仅供服务端 tool-call replay
   | {
       // name 为**公开类别**(search/geocode/directions/weather/project/other),非内部工具名
       // (不携带 MCP 标识/供应商前缀/工具原名);summary 不对外——公开事件不携带工具结果
