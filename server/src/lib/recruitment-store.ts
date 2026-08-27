@@ -4,7 +4,7 @@
 //   null = no pool / query failure → caller keeps empty (strict DB-only, no offline seed);
 //   []   = DB healthy but empty after clip or coord-filter → caller keeps empty.
 
-import { getPool } from './db.ts';
+import { getPool, queryPublicRead } from './db.ts';
 import { isCityCenterPin } from './city-centers.ts';
 import { resolveCompanyLogo, type ResolvedLogo } from './company-logo.ts';
 import { cityBoundsConsistencySql, companySitesSpatialSql, hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
@@ -138,6 +138,98 @@ export function resolveDbCompanyLogo(
   });
 }
 
+function buildRecruitmentPois(
+  companies: CompanyRow[],
+  located: SiteRow[],
+  positions: PositionRow[],
+): RecruitmentPOI[] {
+  const sitesByCompany = new Map<string, SiteRow[]>();
+  for (const site of located) {
+    const list = sitesByCompany.get(site.company_id) ?? [];
+    list.push(site);
+    sitesByCompany.set(site.company_id, list);
+  }
+  const positionsBySite = new Map<string, PositionRow[]>();
+  for (const pos of positions) {
+    const list = positionsBySite.get(pos.site_id) ?? [];
+    list.push(pos);
+    positionsBySite.set(pos.site_id, list);
+  }
+  // 聚合行(taxonomy.aggregate, crawler 全国大类标题的 site_id 只是首城占位)
+  // 是公司级在招信号，计入公司每个站点。
+  const aggregateRows = positions.filter((pos) => pos.taxonomy?.aggregate === true);
+
+  const pois: RecruitmentPOI[] = [];
+  for (const company of companies) {
+    const companySites = sitesByCompany.get(company.id) ?? [];
+    if (companySites.length === 0) continue;
+    for (const site of companySites) {
+      const id = companySites.length === 1 ? company.slug : `${company.slug}:${site.id}`;
+      const loc = {
+        lng: site.lng ?? 0,
+        lat: site.lat ?? 0,
+        address: site.address ?? undefined,
+      };
+      const logo = resolveDbCompanyLogo(company, site);
+      pois.push({
+        id,
+        kind: 'recruitment',
+        name: company.name,
+        mode: 'work',
+        source: 'api',
+        location: loc,
+        company: {
+          name: company.name,
+          industries: company.industries ?? [],
+          scale: company.scale ?? 'startup',
+          tier: num(company.tier) ?? 12,
+          category: company.category ?? 'other',
+          rating: num(company.rating),
+          logo: logo.emoji,
+          logoUrl: logo.url,
+          summary: company.summary ?? undefined,
+          careerUrl: site.career_url || company.career_url || undefined,
+        },
+        sites: [
+          {
+            id: site.id,
+            name: site.name,
+            location: loc,
+            city: site.city ?? undefined,
+            province: site.province ?? undefined,
+            cityCode: site.city_code ?? undefined,
+            careerUrl: site.career_url ?? undefined,
+            logoUrl: site.logo_url ?? undefined,
+          },
+        ],
+        positions: positionsForSite(site.id, company.id, positionsBySite, aggregateRows).map((pos) => ({
+          id: pos.external_id,
+          siteId: site.id,
+          title: pos.title,
+          department: pos.department ?? undefined,
+          type: pos.family,
+          taxonomy: pos.taxonomy ?? { family: pos.family },
+          salary:
+            pos.salary_min != null || pos.salary_max != null
+              ? { min: num(pos.salary_min) ?? 0, max: num(pos.salary_max) ?? 0 }
+              : undefined,
+          education: pos.education ?? undefined,
+          majors: pos.majors ?? undefined,
+          skills: pos.skills ?? undefined,
+          description: pos.description ?? undefined,
+          deadline: isoDate(pos.deadline),
+          apply: pos.apply_url
+            ? { source: pos.apply_source ?? 'official', url: pos.apply_url }
+            : undefined,
+          status: pos.status,
+          aggregate: pos.taxonomy?.aggregate === true ? true : undefined,
+        })),
+      });
+    }
+  }
+  return pois.filter((poi) => poi.positions.length > 0);
+}
+
 export async function loadWorkCatalogFromDb(
   clip?: SpatialClip,
   pool: DbPoolLike | null = getPool(),
@@ -156,7 +248,7 @@ export async function loadWorkCatalogFromDb(
          WHERE s.geom IS NOT NULL${spatial.sql}${consistency.sql}`
       : `SELECT id::text, company_id::text, name, address, city, province, city_code, lng, lat, career_url, logo_url
          FROM company_sites`;
-    const sites = await pool.query<SiteRow>(siteSql, [...spatial.params, ...consistency.params]);
+    const sites = await queryPublicRead<SiteRow>(pool, siteSql, [...spatial.params, ...consistency.params]);
     // SQL 级裁剪未命中 = 空：已知 clip 范围内无行 → 调用方保持空、不回退离线目录。
     if (clipped && sites.rows.length === 0) return [];
 
@@ -199,102 +291,293 @@ export async function loadWorkCatalogFromDb(
                 apply_source, apply_url, status
          FROM positions WHERE status = 'open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)`;
     const [companies, positions] = await Promise.all([
-      pool.query<CompanyRow>(
+      queryPublicRead<CompanyRow>(
+        pool,
         companySql,
         clipped ? (maxTier !== null ? [companyIds, maxTier] : [companyIds]) : [],
       ),
-      pool.query<PositionRow>(positionSql, clipped ? [siteIds, companyIds] : []),
+      queryPublicRead<PositionRow>(pool, positionSql, clipped ? [siteIds, companyIds] : []),
     ]);
     if (companies.rows.length === 0) return [];
 
-    const sitesByCompany = new Map<string, SiteRow[]>();
-    for (const site of located) {
-      const list = sitesByCompany.get(site.company_id) ?? [];
-      list.push(site);
-      sitesByCompany.set(site.company_id, list);
-    }
-    const positionsBySite = new Map<string, PositionRow[]>();
-    for (const pos of positions.rows) {
-      const list = positionsBySite.get(pos.site_id) ?? [];
-      list.push(pos);
-      positionsBySite.set(pos.site_id, list);
-    }
-    // 2026-08-26 (fix/aggregate-site-fanout): 聚合行(taxonomy.aggregate, crawler
-    // 全国大类标题的 site_id 只是首城占位)= 公司级在招信号 → 计入公司每个站点,
-    // 否则多城公司除占位站外全被 positions.length > 0 过滤(深圳腾讯不收录的根因)。
-    const aggregateRows = positions.rows.filter((pos) => pos.taxonomy?.aggregate === true);
+    return buildRecruitmentPois(companies.rows, located, positions.rows);
+  } catch {
+    return null;
+  }
+}
 
-    const pois: RecruitmentPOI[] = [];
-    for (const company of companies.rows) {
-      const companySites = sitesByCompany.get(company.id) ?? [];
-      if (companySites.length === 0) continue;
-      for (const site of companySites) {
-        const id = companySites.length === 1 ? company.slug : `${company.slug}:${site.id}`;
-        const loc = {
-          lng: site.lng ?? 0,
-          lat: site.lat ?? 0,
-          address: site.address ?? undefined,
-        };
-        const logo = resolveDbCompanyLogo(company, site);
-        pois.push({
-          id,
-          kind: 'recruitment',
-          name: company.name,
-          mode: 'work',
-          source: 'api',
-          location: loc,
-          company: {
-            name: company.name,
-            industries: company.industries ?? [],
-            scale: company.scale ?? 'startup',
-            tier: num(company.tier) ?? 12,
-            category: company.category ?? 'other',
-            rating: num(company.rating),
-            logo: logo.emoji,
-            logoUrl: logo.url,
-            summary: company.summary ?? undefined,
-            careerUrl: site.career_url || company.career_url || undefined,
-          },
-          sites: [
-            {
-              id: site.id,
-              name: site.name,
-              location: loc,
-              city: site.city ?? undefined,
-              province: site.province ?? undefined,
-              cityCode: site.city_code ?? undefined,
-              careerUrl: site.career_url ?? undefined,
-              logoUrl: site.logo_url ?? undefined,
-            },
-          ],
-          positions: positionsForSite(site.id, company.id, positionsBySite, aggregateRows).map((pos) => ({
-            id: pos.external_id,
-            siteId: site.id,
-            title: pos.title,
-            department: pos.department ?? undefined,
-            type: pos.family,
-            taxonomy: pos.taxonomy ?? { family: pos.family },
-            salary:
-              pos.salary_min != null || pos.salary_max != null
-                ? { min: num(pos.salary_min) ?? 0, max: num(pos.salary_max) ?? 0 }
-                : undefined,
-            education: pos.education ?? undefined,
-            majors: pos.majors ?? undefined,
-            skills: pos.skills ?? undefined,
-            description: pos.description ?? undefined,
-            deadline: isoDate(pos.deadline),
-            apply: pos.apply_url
-              ? { source: pos.apply_source ?? 'official', url: pos.apply_url }
-              : undefined,
-            status: pos.status,
-            // Aggregate flag is persisted inside taxonomy jsonb (recruitment-import).
-            aggregate: pos.taxonomy?.aggregate === true ? true : undefined,
-          })),
-        });
-      }
+function splitCatalogId(id: string): { slug: string; siteId?: string } | null {
+  const separator = id.indexOf(':');
+  if (separator < 0) return id ? { slug: id } : null;
+  const slug = id.slice(0, separator);
+  const siteId = id.slice(separator + 1);
+  if (!slug || !/^\d+$/.test(siteId)) return null;
+  return { slug, siteId };
+}
+
+/**
+ * Detail read: resolve one company slug and its requested site before loading
+ * only that company's open positions. It intentionally does not call the full
+ * catalog loader, which would materialize every company on a detail cache miss.
+ */
+export async function loadWorkCatalogByIdFromDb(
+  id: string,
+  pool: DbPoolLike | null = getPool(),
+): Promise<RecruitmentPOI | null | undefined> {
+  if (!pool) return null;
+  const parsed = splitCatalogId(id);
+  if (!parsed) return undefined;
+
+  try {
+    const companyResult = await queryPublicRead<CompanyRow>(
+      pool,
+      `SELECT c.id::text, c.slug, c.name, c.industries, c.scale, c.rating, c.summary,
+              c.career_url, c.logo_url, c.logo_emoji, c.tier, c.category
+       FROM companies c
+       WHERE c.slug = $1
+       LIMIT 1`,
+      [parsed.slug],
+    );
+    const company = companyResult.rows[0];
+    if (!company) return undefined;
+
+    // Load only this company's sites so the slug-vs-slug:site.id shape can be
+    // reconstructed exactly as it is for the full catalog path.
+    const sites = await queryPublicRead<SiteRow>(
+      pool,
+      `SELECT s.id::text, s.company_id::text, s.name, s.address, s.city, s.province,
+              s.city_code, s.lng, s.lat, s.career_url, s.logo_url
+       FROM company_sites s
+       WHERE s.company_id = $1::bigint
+         AND s.geom IS NOT NULL`,
+      [company.id],
+    );
+    const located = sites.rows.filter(
+      (site) => hasPlausibleCoord(site.lng, site.lat) && !isCityCenterPin(site.lng as number, site.lat as number),
+    );
+    const targetSites = parsed.siteId
+      ? located.filter((site) => site.id === parsed.siteId)
+      : located;
+    if (targetSites.length === 0) return undefined;
+
+    const siteIds = targetSites.map((site) => site.id);
+    const positions = await queryPublicRead<PositionRow>(
+      pool,
+      `SELECT p.company_id::text, p.site_id::text, p.external_id, p.title, p.department,
+              p.family, p.taxonomy, p.salary_min, p.salary_max, p.education, p.majors,
+              p.skills, p.description, p.deadline, p.apply_source, p.apply_url, p.status
+       FROM positions p
+       WHERE p.company_id = $2::bigint
+         AND p.status = 'open'
+         AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+         AND (p.site_id = ANY($1::bigint[])
+              OR p.taxonomy->>'aggregate' = 'true')`,
+      [siteIds, company.id],
+    );
+    const pois = buildRecruitmentPois([company], located, positions.rows);
+    return pois.find((poi) => poi.id === id);
+  } catch {
+    return null;
+  }
+}
+
+export interface WorkSuggestionRow {
+  kind: 'company' | 'job';
+  slug: string;
+  company_name: string;
+  industries: string[];
+  summary: string | null;
+  logo_emoji: string | null;
+  site_id: string;
+  site_count: string | number;
+  lng: number;
+  lat: number;
+  position_id?: string;
+  position_title?: string;
+  department?: string | null;
+  education?: string | null;
+}
+
+const SUGGEST_ALIAS_GROUPS: string[][] = [
+  ['前端', 'fe', 'frontend', 'front-end'],
+  ['后端', 'be', 'backend', 'back-end'],
+  ['算法', 'algorithm', 'ml', '机器学习'],
+  ['产品', 'pm', 'product'],
+  ['设计', 'ui', 'ux', 'designer'],
+  ['阿里巴巴', '阿里', 'alibaba'],
+  ['字节跳动', '字节', 'bytedance'],
+  ['腾讯', 'tencent'],
+  ['网易', 'netease'],
+  ['华为', 'huawei'],
+  ['蚂蚁集团', '蚂蚁', 'antgroup'],
+  ['哔哩哔哩', 'b站', 'bilibili'],
+  ['深信服', 'sangfor'],
+  ['之江实验室', '之江', 'zhejiang lab'],
+];
+
+function suggestSearchGroups(query: string): string[][] {
+  return query
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((term) => SUGGEST_ALIAS_GROUPS.find((group) => group.some((alias) => alias === term)) ?? [term]);
+}
+
+function sqlSuggestionMatch(
+  fields: string[],
+  query: string,
+  start = 1,
+): { sql: string; params: unknown[] } {
+  const params: unknown[] = [];
+  let index = start;
+  const terms = suggestSearchGroups(query);
+  const clauses = terms.map((group) => {
+    const alternatives = group.flatMap((term) => {
+      const patterns = [`${term}%`];
+      // The existing title trigram index can serve longer contains matches;
+      // short aliases stay prefix-only to avoid broad two-character scans.
+      if (term.length >= 3) patterns.push(`%${term}%`);
+      return patterns.flatMap((pattern) => {
+        const placeholder = `$${index++}`;
+        params.push(pattern);
+        return fields.map((field) => `${field} ILIKE ${placeholder}`);
+      });
+    });
+    return alternatives.length > 1 ? `(${alternatives.join(' OR ')})` : alternatives[0];
+  });
+  return { sql: clauses.join(' AND '), params };
+}
+
+/**
+ * SQL-backed work autocomplete. Both result families are capped independently
+ * at ten rows; callers merge them without ever loading the full work catalog.
+ */
+export async function loadWorkSuggestionsFromDb(
+  query: string,
+  limit = 10,
+  pool: DbPoolLike | null = getPool(),
+): Promise<WorkSuggestionRow[] | null> {
+  if (!pool) return null;
+  const q = query.trim();
+  if (!q || limit <= 0) return [];
+  const n = Math.min(10, Math.max(1, Math.floor(limit)));
+  const companyMatch = sqlSuggestionMatch(['c.name', 'c.slug'], q);
+  const jobMatch = sqlSuggestionMatch(['p.title', 'COALESCE(p.department, \'\')'], q);
+  const companySql = `
+    SELECT 'company'::text AS kind, c.slug, c.name AS company_name, c.industries,
+           c.summary, c.logo_emoji, s.id::text AS site_id,
+           (SELECT count(*) FROM company_sites all_sites
+            WHERE all_sites.company_id = c.id AND all_sites.geom IS NOT NULL) AS site_count,
+           s.lng, s.lat
+    FROM companies c
+    JOIN company_sites s ON s.company_id = c.id
+    WHERE s.geom IS NOT NULL
+      AND (${companyMatch.sql})
+      AND EXISTS (
+        SELECT 1 FROM positions ep
+        WHERE ep.company_id = c.id
+          AND (ep.site_id = s.id OR ep.taxonomy->>'aggregate' = 'true')
+          AND ep.status = 'open'
+          AND (ep.deadline IS NULL OR ep.deadline >= CURRENT_DATE)
+      )
+    ORDER BY c.slug, s.id
+    LIMIT $${companyMatch.params.length + 1}`;
+  const jobSql = `
+    SELECT 'job'::text AS kind, c.slug, c.name AS company_name, c.industries,
+           c.summary, c.logo_emoji, s.id::text AS site_id,
+           (SELECT count(*) FROM company_sites all_sites
+            WHERE all_sites.company_id = c.id AND all_sites.geom IS NOT NULL) AS site_count,
+           s.lng, s.lat, p.external_id AS position_id, p.title AS position_title,
+           p.department, p.education
+    FROM positions p
+    JOIN companies c ON c.id = p.company_id
+    JOIN company_sites s ON s.company_id = p.company_id
+      AND (s.id = p.site_id OR p.taxonomy->>'aggregate' = 'true')
+    WHERE s.geom IS NOT NULL
+      AND p.status = 'open'
+      AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+      AND (${jobMatch.sql})
+    ORDER BY p.title, c.slug, s.id
+    LIMIT $${jobMatch.params.length + 1}`;
+
+  try {
+    const [companies, jobs] = await Promise.all([
+      queryPublicRead<WorkSuggestionRow>(pool, companySql, [...companyMatch.params, n]),
+      queryPublicRead<WorkSuggestionRow>(pool, jobSql, [...jobMatch.params, n]),
+    ]);
+    const rows = [...companies.rows, ...jobs.rows].filter(
+      (row) => hasPlausibleCoord(row.lng, row.lat) && !isCityCenterPin(row.lng, row.lat),
+    );
+    return rows;
+  } catch {
+    return null;
+  }
+}
+
+/** Count a tag without materializing all company/site/position rows. */
+export async function countWorkTagMatchesFromDb(
+  tag: { key: string; value: string },
+  pool: DbPoolLike | null = getPool(),
+): Promise<number | null> {
+  if (!pool) return null;
+  // benefits/班车 未持久化到 DB（buildRecruitmentPois 不产出 benefits），与旧
+  // JS countPoisMatchingTag 对 DB catalog 的行为一致：恒为 0，不按全量计数。
+  if (tag.key === 'providesHousing' || tag.key === 'providesShuttle') return 0;
+  let clause = `TRUE`;
+  const params: unknown[] = [];
+  if (tag.key === 'scale') {
+    clause = 'c.scale = $1';
+    params.push(tag.value);
+  } else if (tag.key === 'jobTaxonomy') {
+    const [family, detail] = tag.value.split('/');
+    if (detail && family === 'intern') {
+      // 与 positionMatchesTaxonomy 的 intern 语义一致：internKind 或 conversion。
+      clause = `p.family = $1 AND (p.taxonomy->>'internKind' = $2 OR p.taxonomy->>'conversion' = $2)`;
+      params.push(family, detail);
+    } else {
+      clause = detail
+        ? `p.family = $1 AND p.taxonomy->>$2 = $3`
+        : 'p.family = $1';
+      params.push(family);
+      if (detail) params.push(family === 'intern' ? 'internKind' : 'campusSeason', detail);
     }
-    // A site with no open positions is not a map pin (matches the offline path).
-    return pois.filter((poi) => poi.positions.length > 0);
+  } else if (tag.key === 'education') {
+    clause = 'p.education = $1';
+    params.push(tag.value);
+  } else if (tag.key === 'roleFamily') {
+    // 对齐 job-taxonomy.ts 的 positionMatchesRole 关键词（含 skills），
+    // 避免「技术」「设计」这种窄模式把 tech/design 计数显著低估。
+    const hay = `concat_ws(' ', p.title, COALESCE(p.department, ''), array_to_string(p.skills, ' '))`;
+    if (tag.value === 'ops') {
+      clause = `${hay} ~* $1`;
+      params.push('运营');
+    } else if (tag.value === 'product') {
+      clause = `${hay} ~* $1 AND NOT ${hay} ~* $2`;
+      params.push('产品', '运营');
+    } else if (tag.value === 'design') {
+      clause = `${hay} ~* $1 AND NOT ${hay} ~* $2`;
+      params.push('视觉|设计师|UI|UX', '芯片');
+    } else if (tag.value === 'tech') {
+      clause = `${hay} ~* $1 AND NOT ${hay} ~* $2 AND NOT ${hay} ~* $3`;
+      params.push('前端|后端|算法|开发|工程|Java|Android|iOS|SLAM|NLP|Infra|芯片|嵌入式|SRE|测试|数据', '运营', '产品经理');
+    }
+  }
+  try {
+    const result = await queryPublicRead<{ count: string }>(
+      pool,
+      `SELECT count(DISTINCT s.id)::text AS count
+       FROM companies c
+       JOIN company_sites s ON s.company_id = c.id
+       JOIN positions p ON p.company_id = c.id
+       WHERE s.geom IS NOT NULL
+         AND (p.site_id = s.id OR p.taxonomy->>'aggregate' = 'true')
+         AND p.status = 'open'
+         AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+         AND ${clause}`,
+      params,
+    );
+    return Number(result.rows[0]?.count ?? 0);
   } catch {
     return null;
   }
