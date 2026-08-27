@@ -115,9 +115,16 @@ test('useSearchState hook exists and owns suggest/cleanup logic', () => {
   assert.match(hook, /export interface SearchStateOptions/);
   // 空查询清空建议
   assert.match(hook, /if \(!query\.trim\(\)\) \{\s*setSuggestions\(\[\]\);/);
-  // 防抖依赖只留 [query, mode](zoom/catalog 高频变化不再重置定时器)
-  assert.match(hook, /\}, \[query, mode\]\);/);
+  // 防抖依赖为 [query, mode, searchReadyKey]:zoom/catalog 高频变化不再重置定时器;
+  // 引擎 view ready / identity 变化可重试当前 domain query
+  assert.match(hook, /engineReady\?: boolean;/);
+  assert.match(hook, /const searchReadyKey = mode === "domain" && engineReady \? engine\?\.id \?\? null : null;/);
+  assert.match(hook, /\}, \[query, mode, searchReadyKey\]\);/);
   assert.doesNotMatch(hook, /\}, \[query, mode, zoom, catalog\]\);/);
+  assert.match(hook, /if \(!engineReady \|\| !engineRef\.current\) return;/);
+  // 取消守卫必须保留,避免 query/mode/ready 切换时旧结果落地
+  assert.match(hook, /cancelled = true;/);
+  assert.match(hook, /if \(cancelled\) return;/);
   const shell = src('components/map-shell.tsx');
   assert.match(shell, /useSearchState\(/);
 });

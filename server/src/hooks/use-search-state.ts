@@ -54,14 +54,19 @@ export interface SearchStateOptions {
   catalogRef: MutableRefObject<POI[]>;
   /** 活跃引擎(use-map-engine 注入;domain 建议兜底经 engine.search.fetchSuggestions) */
   engine: MapEngine | null;
+  /** 视图已创建且引擎 search provider 可用;用于输入早于地图就绪时重试当前 query。 */
+  engineReady?: boolean;
 }
 
 export function useSearchState(options: SearchStateOptions) {
-  const { query, mode, distanceOriginRef, zoomRef, catalogRef, engine } = options;
+  const { query, mode, distanceOriginRef, zoomRef, catalogRef, engine, engineReady = Boolean(engine) } = options;
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
-  // 引擎经 ref 读取:依赖保持 [query, mode](引擎切换由 f 扩展统一处理)
+  // 引擎经 ref 读取:依赖保持原始 query/mode + 稳定 readiness key(引擎切换/地图
+  // 就绪时重跑;每次 render 不因对象引用变化而重置 200ms 防抖)。
   const engineRef = useRef(engine);
   engineRef.current = engine;
+  // 仅 Domain 兜底依赖引擎 readiness；work 的服务端建议不因地图 view 就绪重复请求。
+  const searchReadyKey = mode === "domain" && engineReady ? engine?.id ?? null : null;
 
   useEffect(() => {
     if (!query.trim()) {
@@ -119,10 +124,10 @@ export function useSearchState(options: SearchStateOptions) {
       } catch {
         if (cancelled) return;
       }
-      // 本地 0 命中 / 请求失败 → 回退高德 AutoComplete 一次(经活跃引擎,
-      // use-map-engine 注入;引擎未就绪 → 无建议回退,与地图不可用同语义)
+      // 本地 0 命中 / 请求失败 → 回退活跃引擎 AutoComplete 一次(经 use-map-engine
+      // 注入;引擎未就绪时本轮让路,searchReadyKey 在 view ready 后重跑当前 query)。
       try {
-        if (!engineRef.current) return;
+        if (!engineReady || !engineRef.current) return;
         const tips = await engineRef.current.search.fetchSuggestions(query.trim(), zoomRef.current <= 8 ? "全国" : "");
         if (cancelled) return;
         setSuggestions(
@@ -143,7 +148,7 @@ export function useSearchState(options: SearchStateOptions) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, mode]);
+  }, [query, mode, searchReadyKey]);
 
   return { suggestions, setSuggestions };
 }

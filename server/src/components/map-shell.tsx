@@ -1845,8 +1845,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
   // ---- 搜索建议 ----
   // 建议获取/清理逻辑抽到 useSearchState(work:/api/suggest 服务端目录 + 本地回退;
-  // domain:本地优先 + 高德 AutoComplete 兜底(经活跃引擎 use-map-engine 注入);
-  // 依赖只留 [query, mode])。
+  // domain:本地优先 + 活跃引擎 AutoComplete 兜底(经 use-map-engine 注入);
+  // 防抖依赖为 [query, mode, searchReadyKey]，引擎就绪/切换时仅按稳定身份重试。
   // 选择建议后的落地逻辑在 handleSelectSuggestion(下方)。
   const { suggestions, setSuggestions } = useSearchState({
     query,
@@ -1855,6 +1855,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     zoomRef,
     catalogRef,
     engine: mapEngine,
+    engineReady: Boolean(engineView),
   });
 
   useEffect(() => {
