@@ -199,9 +199,9 @@ urlopen = build_opener(
 def parse_robots(robots_txt: str, path: str, user_agent: str = USER_AGENT) -> bool:
     """Return True when the path is allowed for this UA. Missing file → allow.
 
-    RFC 9309: the most specific matching UA group wins (a group naming our UA
-    beats ``User-agent: *``); within that group the longest-matching path rule
-    wins, with ``Allow`` breaking ties over ``Disallow``.
+    RFC 9309: combine every group matching the most specific UA (a group naming
+    our UA beats ``User-agent: *``); within the combined rules the
+    longest-matching path wins, with ``Allow`` breaking ties over ``Disallow``.
     """
     ua = user_agent.split("/")[0].lower()
     groups: list[tuple[list[str], list[tuple[str, str]]]] = []
@@ -231,20 +231,18 @@ def parse_robots(robots_txt: str, path: str, user_agent: str = USER_AGENT) -> bo
             current_rules.append((key, value))
     flush()
 
-    # Most specific UA group wins; RFC 9309 §2.2.1: when several groups match the
-    # same UA, the last one in the file applies. The anonymous "*" group is only
-    # the fallback when no group names our UA.
-    selected: list[tuple[str, str]] | None = None
-    for agents, rules in groups:
-        if ua in agents:
-            selected = rules
-    if selected is None:
-        for agents, rules in groups:
-            if "*" in agents:
-                selected = rules
-    if selected is None:
+    # RFC 9309 §2.2.1 combines all groups matching the same UA. A named UA
+    # match is more specific than the fallback wildcard, so wildcard groups
+    # are considered only when no named group matches. Preserve empty matching
+    # groups: they intentionally suppress the wildcard rules and allow paths
+    # that have no rule in the named group.
+    matching_groups = [rules for agents, rules in groups if ua in agents]
+    if not matching_groups:
+        matching_groups = [rules for agents, rules in groups if "*" in agents]
+    if not matching_groups:
         return True
 
+    selected = [rule for rules in matching_groups for rule in rules]
     applicable = [(kind, rule) for kind, rule in selected if rule and path.startswith(rule)]
     if not applicable:
         # No rule matched (including a bare "Disallow:") → allowed.

@@ -1,0 +1,6 @@
+# Rules from both exact-UA groups must be combined.
+User-agent: DomainMapImporter
+Disallow: /private
+
+User-agent: DomainMapImporter
+Allow: /private/public
