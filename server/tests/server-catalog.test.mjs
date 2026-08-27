@@ -252,6 +252,80 @@ test('loadWorkCatalogFromDb fans aggregate rows out to every site of the company
   assert.deepEqual(brand.positions.map((p) => p.id), ['radar-agg-brand'], '聚合行按公司隔离, 不跨公司 fan-out');
 });
 
+// 2026-08-27 (fix/agg-fanout-clipped): 城市裁剪查询也必须加载公司级聚合行。
+// 聚合岗的 site_id 是首城占位(如北京), 只按 site_id = ANY(located) 加载会把它们
+// 挡在 aggregateRows 之外 → 扇出失效 → 单城市视野下多城公司整条不出现
+// (实测重庆视野 2 POI → 修复后 6)。
+test('loadWorkCatalogFromDb fans company-level aggregate rows on a clipped city view', async () => {
+  const pool = {
+    async query(sql, params) {
+      if (sql.includes('FROM company_sites s')) {
+        // 城市裁剪: 只返回重庆站点(北京占位站不在本视野)
+        return {
+          rows: [
+            {
+              id: '3050', company_id: '10', name: 'Acme 重庆', address: '重庆市江津区枫林大道1号',
+              city: '重庆市', province: '重庆市', city_code: '500100', lng: 106.31, lat: 29.4,
+              career_url: null, logo_url: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes('FROM companies')) {
+        return {
+          rows: [
+            {
+              id: '10', slug: 'acme', name: 'Acme', industries: ['internet'], scale: 'enterprise',
+              tier: 7, category: '64', rating: null, summary: null,
+              career_url: null, logo_url: null, logo_emoji: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes('FROM positions')) {
+        const [siteIds, companyIds] = params;
+        // 新 SQL: site_id = ANY($1) OR (aggregate AND company_id = ANY($2))
+        // —— 聚合行挂在北京占位站(930), 不在本视野 siteIds, 但 company_id 命中必须返回。
+        assert.deepEqual(siteIds, ['3050'], '裁剪 siteIds 只含视野内站点');
+        assert.deepEqual(companyIds, ['10'], '裁剪 companyIds 传公司 id');
+        return {
+          rows: [
+            {
+              // 重庆站的具体岗(在 siteIds 内)
+              company_id: '10', site_id: '3050', external_id: 'portal-cq', title: '后端工程师',
+              department: null, family: 'campus', taxonomy: { family: 'campus' },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+            {
+              // 聚合岗: 首城占位站 930(北京), 不在 siteIds → 必须靠 company_id 分支返回
+              company_id: '10', site_id: '930', external_id: 'radar-agg', title: '技术类 产品类',
+              department: null, family: 'intern', taxonomy: { family: 'intern', aggregate: true },
+              salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+              description: null, deadline: null, apply_source: null, apply_url: null,
+              status: 'open',
+            },
+          ],
+        };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  };
+
+  const pois = await loadWorkCatalogFromDb({ city: '重庆市', maxTier: 21 }, pool);
+  assert.equal(pois?.length, 1);
+  const cq = pois[0];
+  // 公司仅一个站点在本视野 → id = slug(与多站视野的 slug:site.id 区分)
+  assert.equal(cq.id, 'acme');
+  assert.deepEqual(
+    cq.positions.map((p) => p.id),
+    ['portal-cq', 'radar-agg'],
+    '城市裁剪视野下聚合岗仍须扇出到本城站点',
+  );
+  assert.equal(cq.positions[1].aggregate, true);
+});
+
 test('loadWorkCatalogFromDb applies spatial clips and returns empty when no clipped sites', async () => {
   const queries = [];
   const pool = {
@@ -330,8 +404,12 @@ test('loadWorkCatalogFromDb passes clipped ids and maxTier through to company/po
   assert.deepEqual(companies.params, [['10'], 1]);
 
   const positions = queries.find((call) => call.sql.includes('FROM positions'));
-  assert.match(positions.sql, /WHERE status = 'open'[\s\S]*site_id = ANY\(\$1::bigint\[\]\)/);
-  assert.deepEqual(positions.params, [['101']]);
+  assert.match(
+    positions.sql,
+    /WHERE status = 'open'[\s\S]*\(site_id = ANY\(\$1::bigint\[\]\)\s+OR \(taxonomy->>'aggregate' = 'true' AND company_id = ANY\(\$2::bigint\[\]\)\)\)/,
+    '裁剪查询按 site_id 加载视野站岗位, 并按 company_id 补加载公司级聚合行',
+  );
+  assert.deepEqual(positions.params, [['101'], ['10']]);
 });
 
 // 2026-08-25 (fix/server-catalog-semantics): null/[] 契约 — SQL 命中但 JS 侧过滤
