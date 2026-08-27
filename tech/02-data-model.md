@@ -1,8 +1,8 @@
 # 02 - Data Model and Spatial Contract
 
-> **Status:** implementation-backed; migrations `001`–`016` are live-applied and verified against the local PostGIS database
-> **Last reviewed:** 2026-08-21
-> **Authority:** `db/migrations/001-019` are the implementation source of truth; this document must be updated when migrations change.
+> **Status:** implementation-backed; migrations `001`–`019` are existing, and migration `020` adds the position/site ownership invariant (apply remains an environment-only operation)
+> **Last reviewed:** 2026-08-27
+> **Authority:** `db/migrations/001-020` are the implementation source of truth; this document must be updated when migrations change.
 
 ## Implementation Evidence
 
@@ -10,9 +10,9 @@
 - `db/migrations/002_plugins_and_provenance.sql`: `plugin_manifests`, `plugin_schema_versions`, `sources`, `import_runs`, `source_records`.
 - `db/migrations/003_canonical_entities_and_items.sql`: canonical `entities` and `items` with composite provenance keys, coordinate constraints, generated SRID 4326 geometry and GiST index.
 - `db/migrations/004_overlays_and_audit.sql`: `map_entity_overlays`, `map_annotations`, `map_favorites`, `audit_events`.
-- Later migrations extend the model: `005` accounts/sessions/history, `006` recruitment sites (`companies` / `company_sites` / `positions`), `007` profile prefs/OAuth, `008` saved places, `009` applications, `010` notifications, `011` national scope (tier/city/alive), `012` tier 0..21 + category, `013` Hangzhou POIs (`hz_pois`), `014` credentials auth, `015` recent entity, `016` site key.
+- Later migrations extend the model: `005` accounts/sessions/history, `006` recruitment sites (`companies` / `company_sites` / `positions`), `007` profile prefs/OAuth, `008` saved places, `009` applications, `010` notifications, `011` national scope (tier/city/alive), `012` tier 0..21 + category, `013` Hangzhou POIs (`hz_pois`), `014` credentials auth, `015` recent entity, `016` site key, `017` avatar data, `018` user memories, `019` user-memory uniqueness, `020` position/site/company ownership integrity.
 - `db/scripts/apply.sh` runs each migration and its ledger row in a single transaction with a transaction-scoped advisory lock; `db/scripts/preflight.sh` checks PostGIS and ledger checksum drift.
-- Live verification: `make db-migrate` applied `001`–`016` on the local PostGIS (2026-08-16 and later); `make test-integration` passed.
+- Live verification: `make db-migrate` applied `001`–`016` on the local PostGIS (2026-08-16 and later); `make test-integration` passed. Migration `020` has static coverage and a DB integration probe, but this workstream did not apply it (migration apply is Env-only).
 
 ## Modeling Boundaries
 
@@ -24,7 +24,7 @@
 
 ## Required Phase 1 Tables
 
-The first migrations define, in dependency order (implemented in `001`–`004`; extended by `005`–`016`):
+The first migrations define, in dependency order (implemented in `001`–`004`; extended by `005`–`020`):
 
 1. `users`
 2. `map_memberships` and `maps` (owner/editor/viewer access)
@@ -35,6 +35,12 @@ The first migrations define, in dependency order (implemented in `001`–`004`; 
 7. audit events for access-sensitive actions
 
 Foreign-key and application authorization rules must guarantee that an item domain matches its entity domain and that overlay writes are scoped to an editable map. Cross-table invariants that cannot be expressed as `CHECK` constraints require a tested trigger or transaction-level validation.
+
+### Recruitment position/site ownership integrity (migration `020`)
+
+Migration `006` keeps `positions.company_id → companies.id ON DELETE CASCADE` and `positions.site_id → company_sites.id ON DELETE RESTRICT` as separate foreign keys. Migration `020_position_site_company_fk.sql` adds the missing pairwise invariant: `(positions.site_id, positions.company_id)` must reference `(company_sites.id, company_sites.company_id)`, with `ON DELETE RESTRICT` on the additional key. The original foreign keys are not dropped or weakened.
+
+Before installing the key, migration `020` runs a read-only preflight for rows where `p.company_id IS DISTINCT FROM s.company_id`. A non-zero result raises an exception, emits the count, and includes a read-only diagnostic `SELECT`; it does not update or delete business data. After an approved data remediation, rerun `make db-migrate` as an environment-only operation.
 
 ## Source and Provenance Minimums
 
