@@ -211,6 +211,23 @@ test('fetchWorkViewportPage sends bounds + maxTier and keeps only alive position
   assert.equal(a.positions[0].id, 'p1');
 });
 
+test('fetchWorkViewportPage sends maxTier=0 and omits only undefined/null', async () => {
+  const seenFilters = [];
+  const fetcher = async (url) => {
+    const parsed = new URL(String(url), 'http://x');
+    seenFilters.push(parsed.searchParams.get('filters'));
+    return { ok: true, json: async () => ({ results: [] }) };
+  };
+
+  await fetchWorkViewportPage({ bounds: VIEWPORT_BOX, maxTier: 0 }, fetcher);
+  await fetchWorkViewportPage({ bounds: VIEWPORT_BOX, maxTier: undefined }, fetcher);
+  await fetchWorkViewportPage({ bounds: VIEWPORT_BOX, maxTier: null }, fetcher);
+
+  assert.equal(seenFilters[0], JSON.stringify({ maxTier: 0 }));
+  assert.equal(seenFilters[1], null);
+  assert.equal(seenFilters[2], null);
+});
+
 test('fetchWorkViewportPage: 透出服务端 total(poi-loading D noMore 判定用)', async () => {
   const fetcher = async () => ({
     ok: true,

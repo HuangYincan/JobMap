@@ -1361,3 +1361,23 @@ docs-check / git diff --check 绿。历史文字保留(仅追加)。
 单城视野 POI:重庆 2→**6**、苏州→**23**、南京→**17**、广州→**48**、成都→**42**、深圳→**117**。`MODE_CACHE_VERSION` 19→20 失效旧缓存。
 
 **验证**:server 全量 0 fail;typecheck / docs-check / git diff --check 绿。
+
+---
+
+## 2026-08-27: Domain 搜索引擎就绪重试 + viewport tier 0 边界(search-readiness)
+
+### 症状
+
+用户在地图引擎尚未创建 view 时输入 Domain 查询，本地建议无命中后会提前结束；引擎随后就绪也不会重放当前 query，因此高德/活跃引擎兜底建议一直为空。另有 `maxTier=0` 被 truthy 判断误当成未设置，服务端收不到合法的 0 档位。
+
+### 修复
+
+- `use-search-state.ts` 保留 200ms 防抖、请求取消守卫和 `mode` 隔离；新增稳定 `searchReadyKey`（仅 Domain 为 `engineReady ? engine.id : null`）。MapShell 以 `Boolean(engineView)` 作为 readiness：输入早于 view 就绪时先让本轮兜底让路，view ready 或引擎身份变化后只重跑当前 Domain query；work 的服务端建议不因地图 view 就绪重复请求。
+- `viewport-search.ts` 对 `maxTier` 使用显式 `undefined`/`null` 判断；`0` 作为合法值写入 `filters`，仅 undefined/null 不发送该字段。
+- 新增 search-state 回归契约/语义镜像，覆盖输入早于 engine ready、旧请求取消、切模式不串结果；viewport 回归覆盖 tier 0、undefined、null。
+
+### 修改文件
+
+`server/src/hooks/use-search-state.ts`、`server/src/components/map-shell.tsx`、`server/src/lib/viewport-search.ts`、`server/tests/search-state-regression.test.mjs`、`server/tests/hooks-contracts.test.mjs`、`server/tests/component-contracts.test.mjs`、`server/tests/viewport-search.test.mjs`。
+
+**验证**:待本批次完整门禁运行。
