@@ -24,6 +24,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname='postgis') OR NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pg_trgm') THEN RAISE EXCEPTION 'required extension missing'; END IF;
 END $$;
 SQL
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -X <<'SQL'
 DO $$
 DECLARE
   composite_fk text;
