@@ -79,4 +79,11 @@ The app is the git branch. `git revert` / `git reset` the last conventional comm
 
 ## HTTP 安全头与可信代理
 
-Next 全局响应带 CSP、Referrer-Policy、Permissions-Policy、`Cross-Origin-Opener-Policy: same-origin`、`X-Content-Type-Options: nosniff` 与反嵌入头;生产另加 HSTS。CSP 显式放行三家地图 JS 来源,图片和连接保留 `https:` 以兼容各地图瓦片/CDN;若收紧导致地图资源阻断,先在浏览器 Network 检查被 CSP 拦截的具体来源。反代部署还必须按 `TRUSTED_PROXY_IPS` 文档清洗并声明转发头来源,auth/agent 限流才信任客户端 IP。
+Next 按路由发送 CSP、Referrer-Policy、Permissions-Policy、`Cross-Origin-Opener-Policy: same-origin`、`X-Content-Type-Options: nosniff` 与反嵌入头;生产另加 HSTS。CSP 的路由范围和残余放宽项如下:
+
+- `/` 是当前唯一挂载 `MapShell` 的页面(账号与 Agent 是该页面内的 overlay),使用地图策略: `script-src`/`style-src` 明确允许 `https://*.amap.com`、`https://*.map.baidu.com`、`https://map.qq.com`、`https://*.map.qq.com`;地图脚本的 `'unsafe-inline'` 和样式的 `'unsafe-inline'` 只在 `/` 保留。
+- 非根路径(配置中的 `/:path+`,包括 `/api/*` 与未来独立账号页面)使用严格策略: `script-src 'self'`、`style-src 'self'`,不含任一 `'unsafe-*'`。因此不会把地图兼容性例外扩散到 API 或非地图页面。
+- `/` 的 `img-src` 与 `connect-src` 仍保留 `https:`。这是有意的兼容性边界:当前 AMap 瓦片/CDN 主机随区域变化,工作地图还会显示外部公司 logo/岗位照片,而腾讯/百度适配器保留可切换实现;贸然改为少数主机会造成地图或卡片资源静默失败。这两个宽泛来源只存在于地图路由。
+- `'unsafe-eval'` 仅通过 `NODE_ENV === "development"` 条件拼入 `/` 的 `script-src`;生产构建不含它。Next 文档说明开发调试栈可能需要该例外,生产的 React/Next 默认不需要。
+
+当前架构没有把每个动态地图 `<script>`/`<style>` 注入点统一接入 nonce,也没有稳定的 hash 清单;因此没有做表面上的 nonce/hash 改造。上述 route-specific 收紧是真实生效的增量,但地图根路由仍有 `'unsafe-inline'` 与受限 host 列表外的 HTTPS 图片/连接风险。若将账号/Agent 移到独立页面,应继续使用严格策略并单独验证其资源需求;若要进一步收紧 `/`,先以浏览器 Network/CSP violation 证据建立完整瓦片/CDN 与动态样式清单,再落地 nonce/hash 或更窄 host allowlist。反代部署还必须按 `TRUSTED_PROXY_IPS` 文档清洗并声明转发头来源,auth/agent 限流才信任客户端 IP。
