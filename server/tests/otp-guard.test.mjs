@@ -36,6 +36,12 @@ const failingPool = {
   query: async () => {
     throw new Error('connection refused (test)');
   },
+  connect: async () => ({
+    query: async () => {
+      throw new Error('connection refused (test)');
+    },
+    release() {},
+  }),
 };
 
 test('issueOtp rate-limits the same target within 60s (cooldown)', async () => {
@@ -112,19 +118,23 @@ test('correct code resets the wrong-attempt counter', async () => {
 test('issueOtp sweeps expired challenge rows for the target before insert (DB path)', async () => {
   // DB 路径:插入前先清理过期行;SQL 与 consumeOtp 的清扫同款(见 account.test.mjs 契约断言)
   let sqlCalls = [];
-  __accountStoreTest.poolOverride = () => ({
-    query: async (sql) => {
-      sqlCalls.push(sql);
-      return { rows: [], rowCount: 0 };
-    },
-  });
+  __accountStoreTest.poolOverride = () => {
+    const client = {
+      query: async (sql) => {
+        sqlCalls.push(sql);
+        return { rows: [], rowCount: 0 };
+      },
+      release() {},
+    };
+    return { connect: async () => client };
+  };
   try {
     await storeIssueOtp('phone', '13800138000');
   } finally {
     __accountStoreTest.poolOverride = undefined;
   }
   assert.ok(
-    sqlCalls[0].includes('DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()'),
+    sqlCalls.some((sql) => sql.includes('DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()')),
     'expected expired-row sweep before insert',
   );
 });

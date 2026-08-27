@@ -45,9 +45,10 @@ function otpDbPool() {
   let seq = 0;
   const challenges = [];
   const queries = [];
-  return {
+  const client = {
     query: async (sql, params = []) => {
       queries.push({ sql, params });
+      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') return { rows: [], rowCount: 0 };
       if (sql.includes('DELETE FROM auth_otp_challenges') && sql.includes('WHERE id = $1')) {
         const hit = challenges.find((c) => c.id === params[0]);
         if (hit) hit.deleted = true;
@@ -82,6 +83,10 @@ function otpDbPool() {
       }
       throw new Error(`unexpected SQL in otp fake pool: ${sql}`);
     },
+    release() {},
+  };
+  return {
+    connect: async () => client,
     queries,
   };
 }
