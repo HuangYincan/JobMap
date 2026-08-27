@@ -10,11 +10,15 @@ Live PostGIS apply is verified (`001`–`016`, 51 companies / 51 sites at the 20
 |---|---|---|
 | MapShell 列表 / 搜索 / 筛选 | 从不。浏览器高德 + `runPOIPipeline` | 公开读走 `loadServerCatalog`（严格 DB-only：读库，无库返回空，不回退 seed）+ 30s 进程缓存 |
 | `loadWorkCatalogFromDb(clip?)` | 有 `DATABASE_URL` | 契约（2026-08-25 修订 `fix/server-catalog-semantics`，2026-08-26 起严格 DB-only）：`null` = 无池 / 查询失败（调用方返回空，不再回落 seed/离线目录）；`[]` = DB 健康但裁剪未命中或 JS 过滤（`hasPlausibleCoord` / `isCityCenterPin`）后为空；带 clip 的空结果保持 `[]` 不回退 |
-| `/api/me/*`、登录、Recent、Saved、投递、提醒 | 有 `DATABASE_URL` 时走 `account-store` | 没有库 → 内存 Map |
+| `/api/suggest` work | 有 `DATABASE_URL` 时走 `loadWorkSuggestionsFromDb` 的受限公司/岗位 SQL（每类 `LIMIT 10`）；标签走聚合 count | 无库 / 查询失败 → 空候选，不物化全 catalog |
 
 连接：`lib/db.ts` 单例 `Pool({ max: 5 })`。不要打印连接串。
 
-## 已有索引（对着真实查询）
+## Public read guardrails (2026-08-27)
+
+- `loadWorkCatalogByIdFromDb(id)` 按 `companies.slug` 定位，再只读目标公司的站点与目标站点/聚合岗位；不再先加载全目录。`/api/suggest` 的公司/岗位候选同样走受限 SQL（每类 `LIMIT 10`），标签数字走聚合 count。
+- 公共读路径通过 `queryPublicRead` 使用 3s `statement_timeout`（测试注入池用同一超时竞速），domain-local 还固定单次最多 300 行；因此慢查询与异常大结果会 fail closed。
+
 
 账户行都按「当前用户 + 新→旧 + LIMIT」读。迁移已经给了匹配的 btree：
 

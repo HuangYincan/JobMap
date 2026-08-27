@@ -85,16 +85,16 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
 
 `GET /api/pois/domain-local?bounds=west,south,east,north&zoom=13&q=&categories=&limit=50&offset=0`
 
-- bbox:`p.geom && ST_MakeEnvelope(...)`;`p.tier <= floor(zoom)`
+- bbox **必填且必须完全落在** `HANGZHOU_BBOX={west:118.3,south:29.1,east:120.8,north:30.7}` 内；缺失/格式非法/逆序 → API 400 `INVALID_BOUNDS`，越出导入范围 → 400 `BOUNDS_OUT_OF_RANGE`。SQL 使用 `p.geom && ST_MakeEnvelope(...)`；store 层即使被其他调用方直接使用，也会把缺失 bbox 限制到该导入范围。
 - `q`:`name ILIKE`;`categories`:`big_type = ANY(...)`
 - common 过滤下推:`(rating > 0 OR jsonb_array_length(photos) > 0 OR tier <= 3)`
   (与 AMap 的 `isCommonPoi` 语义对齐:有评分/有图/地标才值得上卡)
 - `ORDER BY rating DESC NULLS LAST, photos DESC, poi_id`(稳定性)
-- `LIMIT` 钳 1..300,`OFFSET` 钳 0..1000;非法数值(NaN)落回默认;
+- `LIMIT` 钳 1..300,`OFFSET` 钳 0..1000；SQL 单次返回上限 300，公开读通过 `queryPublicRead` 设置 3s `statement_timeout`（注入池也有可测超时竞速）；非法数值(NaN)落回默认;
   `zoom` 钳 0..20(0 = 仅 tier-0 地标,20 封顶防止 tier-21 永隐类放出)
 - public-cache 30s;**仅真实查库成功时缓存**——DB 故障/表缺失的空兜底响应
   带 `no-store`,避免把「走回退」伪装成成功 200 并缓存 30s
-- 无 bounds 参数 → 全表热门榜(ORDER BY rating 走索引,行为与 work 模式一致)
+- HTTP 缺失 bounds 直接 400；store 直调缺失 bounds 时使用杭州导入范围作为防御性边界，不执行全表热门榜。
 - 返回 `{ total, offset, limit, source:'local', results }`;无库/空 → 空数组
 - 坐标 GCJ 零转换;photos 截 3;`category=big_type`、`subcategory=mid_type`
 
@@ -176,6 +176,7 @@ false`,被取消后该 ref 永久卡 true → 后续所有 load() 直接短路�
 - **suggest effect 依赖收窄为 `[query, mode]`**:`zoom`/`catalog` 改经 ref
   读取,平移/分页不再重置 200ms 防抖(旧 `[query, mode, zoom, catalog]` 在
   hz-poi 批量加载时候选永远不落地)。
+- **work 分支**不加载全目录：公司名/岗位匹配由 `loadWorkSuggestionsFromDb` 下推 SQL，按前缀与现有岗位 trigram 可用的 contains 条件筛选，公司/岗位各自 `LIMIT 10`；标签计数走聚合 count。
 - 点击建议:work 公司未加载时经 `/api/pois/[id]?mode=work` 拉详情打开;
   domain 行优先打开已加载富卡,否则用 `location` upsert 会话卡。
 

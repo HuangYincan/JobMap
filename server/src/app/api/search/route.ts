@@ -32,6 +32,8 @@ const MAX_Q_LENGTH = 100;
 const MAX_BODY_CHARS = 64 * 1024;
 /** filters 序列化长度上限：超限 400，且序列化结果直接复用为缓存 key 组件（key 卫生）。 */
 const MAX_FILTERS_JSON_LENGTH = 4000;
+/** page 上限：与 GET /api/pois 一致，防止异常分页偏移。 */
+const MAX_PAGE = 10_000;
 /** pageSize 上限：无 bounds 全量搜索时防单次大响应（客户端语义不变，正常请求恒 ≤50）。 */
 const MAX_PAGE_SIZE = 100;
 
@@ -73,11 +75,20 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  // #7：pageSize 上限（1..MAX_PAGE_SIZE，超限 400）。
+  // GET /api/pois 同口径：缺失/null 使用默认值，其余分页输入必须是有限正整数。
+  if (
+    body.page != null &&
+    (typeof body.page !== 'number' || !Number.isInteger(body.page) || body.page < 1 || body.page > MAX_PAGE)
+  ) {
+    return NextResponse.json(
+      { code: 'INVALID_PAGE', message: `page must be an integer in 1..${MAX_PAGE}` },
+      { status: 400 },
+    );
+  }
   if (
     body.pageSize != null &&
     (typeof body.pageSize !== 'number' ||
-      !Number.isFinite(body.pageSize) ||
+      !Number.isInteger(body.pageSize) ||
       body.pageSize < 1 ||
       body.pageSize > MAX_PAGE_SIZE)
   ) {

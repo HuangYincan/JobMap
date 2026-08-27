@@ -7,7 +7,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { loadServerCatalog, loadServerCatalogById } from '../src/lib/server-catalog.ts';
-import { loadWorkCatalogFromDb } from '../src/lib/recruitment-store.ts';
+import {
+  countWorkTagMatchesFromDb,
+  loadWorkCatalogByIdFromDb,
+  loadWorkCatalogFromDb,
+  loadWorkSuggestionsFromDb,
+} from '../src/lib/recruitment-store.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -485,6 +490,156 @@ test('loadServerCatalog is strict DB-only (no seed / offline fallback in source)
   assert.match(catalog, /\?\? \[\]/);
   // 不再 import/导出示例数据、离线目录或同步 seed catalog(注释里提及 archive 不算)。
   assert.doesNotMatch(catalog, /DOMAIN_SEED|INTERNSHIP_SEED|loadOfflineWorkCatalog|mergeCompaniesIntoPois|export function serverCatalog\b|from '\.\/seed-data/);
+});
+
+test('loadWorkCatalogByIdFromDb targets one company/site without full catalog loading', async () => {
+  const queries = [];
+  const pool = {
+    async query(sql, params) {
+      queries.push({ sql, params });
+      if (sql.includes('FROM companies c')) {
+        return {
+          rows: [{
+            id: '10', slug: 'acme', name: 'Acme', industries: ['internet'], scale: 'startup',
+            tier: 3, category: '64', rating: null, summary: 'Target',
+            career_url: null, logo_url: null, logo_emoji: 'A',
+          }],
+        };
+      }
+      if (sql.includes('FROM company_sites s')) {
+        return {
+          rows: [
+            {
+              id: '101', company_id: '10', name: 'Hangzhou', address: 'West Rd', city: '杭州市',
+              province: '浙江省', city_code: '330100', lng: 120.1, lat: 30.2,
+              career_url: null, logo_url: null,
+            },
+            {
+              id: '102', company_id: '10', name: 'Beijing', address: 'North Rd', city: '北京市',
+              province: '北京市', city_code: '110000', lng: 116.41, lat: 39.91,
+              career_url: null, logo_url: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes('FROM positions p')) {
+        return {
+          rows: [{
+            company_id: '10', site_id: '102', external_id: 'portal-target', title: 'Target role',
+            department: 'RD', family: 'social', taxonomy: { family: 'social' },
+            salary_min: null, salary_max: null, education: '本科', majors: [], skills: [],
+            description: 'JD', deadline: null, apply_source: 'official', apply_url: 'https://apply.example',
+            status: 'open',
+          }],
+        };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  };
+
+  const poi = await loadWorkCatalogByIdFromDb('acme:102', pool);
+  assert.equal(poi?.id, 'acme:102');
+  assert.equal(poi?.company.name, 'Acme');
+  assert.equal(poi?.positions[0].id, 'portal-target');
+  assert.equal(queries.length, 3);
+  assert.ok(queries[0].sql.includes('WHERE c.slug = $1'));
+  assert.deepEqual(queries[0].params, ['acme']);
+  assert.ok(queries[1].sql.includes('WHERE s.company_id = $1::bigint'));
+  assert.ok(queries[2].sql.includes('p.site_id = ANY($1::bigint[])'));
+  assert.ok(queries.every(({ sql }) => !sql.includes('FROM companies ORDER BY slug')));
+});
+
+test('loadWorkCatalogByIdFromDb preserves 404 semantics for unknown/malformed ids', async () => {
+  let calls = 0;
+  const pool = {
+    async query() {
+      calls += 1;
+      return { rows: [] };
+    },
+  };
+  assert.equal(await loadWorkCatalogByIdFromDb('bad:site', pool), undefined);
+  assert.equal(calls, 0, 'malformed site ids are rejected before SQL');
+  assert.equal(await loadWorkCatalogByIdFromDb('missing', pool), undefined);
+  assert.equal(calls, 1, 'unknown slug uses one targeted company query');
+});
+
+test('loadWorkSuggestionsFromDb returns capped SQL matches without loading the catalog', async () => {
+  const queries = [];
+  const pool = {
+    async query(sql, params) {
+      queries.push({ sql, params });
+      if (sql.includes("'company'::text")) {
+        return {
+          rows: [{
+            kind: 'company', slug: 'acme', company_name: 'Acme', industries: ['internet'],
+            summary: 'Target', logo_emoji: 'A', site_id: '101', site_count: '1', lng: 120.1, lat: 30.2,
+          }],
+        };
+      }
+      if (sql.includes("'job'::text")) {
+        return {
+          rows: [{
+            kind: 'job', slug: 'other', company_name: 'Other', industries: [], summary: null,
+            logo_emoji: null, site_id: '201', site_count: '1', lng: 120.2, lat: 30.25,
+            position_id: 'portal-job', position_title: 'Frontend Engineer', department: 'RD', education: '本科',
+          }],
+        };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  };
+
+  const rows = await loadWorkSuggestionsFromDb('frontend', 99, pool);
+  assert.equal(rows?.length, 2);
+  assert.deepEqual(rows?.map((row) => row.kind), ['company', 'job']);
+  assert.ok(queries.every(({ sql }) => sql.includes('LIMIT $')), 'each suggestion family is capped in SQL');
+  assert.ok(queries.some(({ sql }) => sql.includes('ILIKE')));
+  assert.ok(queries.every(({ params }) => params.at(-1) === 10));
+  assert.ok(queries.every(({ sql }) => !sql.includes('FROM companies ORDER BY slug')));
+});
+
+test('countWorkTagMatchesFromDb uses an aggregate SQL count, not catalog materialization', async () => {
+  const calls = [];
+  const pool = {
+    async query(sql, params) {
+      calls.push({ sql, params });
+      return { rows: [{ count: '4' }] };
+    },
+  };
+  assert.equal(await countWorkTagMatchesFromDb({ key: 'scale', value: 'bigtech' }, pool), 4);
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].sql, /count\(DISTINCT s\.id\)/);
+  assert.deepEqual(calls[0].params, ['bigtech']);
+});
+
+test('countWorkTagMatchesFromDb preserves legacy JS semantics for DB-unsupported tags', async () => {
+  let called = false;
+  const pool = {
+    async query() {
+      called = true;
+      return { rows: [{ count: '99' }] };
+    },
+  };
+  // benefits 未持久化 → 与旧 countPoisMatchingTag 对 DB catalog 一致：恒 0，不发 SQL。
+  assert.equal(await countWorkTagMatchesFromDb({ key: 'providesHousing', value: 'true' }, pool), 0);
+  assert.equal(await countWorkTagMatchesFromDb({ key: 'providesShuttle', value: 'true' }, pool), 0);
+  assert.equal(called, false);
+
+  const calls = [];
+  const countingPool = {
+    async query(sql, params) {
+      calls.push({ sql, params });
+      return { rows: [{ count: '3' }] };
+    },
+  };
+  // jobTaxonomy intern 细类：internKind 或 conversion 双路径（对齐 positionMatchesTaxonomy）。
+  assert.equal(await countWorkTagMatchesFromDb({ key: 'jobTaxonomy', value: 'intern/summer' }, countingPool), 3);
+  assert.match(calls.at(-1).sql, /p\.taxonomy->>'internKind' = \$2 OR p\.taxonomy->>'conversion' = \$2/);
+  assert.deepEqual(calls.at(-1).params, ['intern', 'summer']);
+  // roleFamily：关键词集下推 SQL（含 skills），不发全量加载。
+  assert.equal(await countWorkTagMatchesFromDb({ key: 'roleFamily', value: 'tech' }, countingPool), 3);
+  assert.match(calls.at(-1).sql, /array_to_string\(p\.skills, ' '\)/);
+  assert.deepEqual(calls.at(-1).params, ['前端|后端|算法|开发|工程|Java|Android|iOS|SLAM|NLP|Infra|芯片|嵌入式|SRE|测试|数据', '运营', '产品经理']);
 });
 
 test('loadWorkCatalogFromDb filters by city / maxTier / alive when DATABASE_URL is set', async (t) => {

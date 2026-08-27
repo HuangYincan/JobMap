@@ -63,6 +63,34 @@ test('#7 search: pageSize 超限（>100 / <1 / 非有限数）→ 400', () => {
   assert.match(route, /invalid JSON body/);
 });
 
+test('#19 search: page/pageSize 必须是有限正整数且与 GET 范围一致', () => {
+  const route = src('app/api/search/route.ts');
+  assert.match(route, /const MAX_PAGE = 10_000/);
+  assert.match(route, /body\.page != null/);
+  assert.match(route, /body\.pageSize != null/);
+  assert.match(route, /Number\.isInteger\(body\.page\)/);
+  assert.match(route, /Number\.isInteger\(body\.pageSize\)/);
+  assert.match(route, /body\.page > MAX_PAGE/);
+  assert.match(route, /body\.pageSize > MAX_PAGE_SIZE/);
+  const keyIdx = route.indexOf('const cacheKey =');
+  const pageIdx = route.indexOf("code: 'INVALID_PAGE'");
+  const sizeIdx = route.indexOf("code: 'INVALID_PAGE_SIZE'");
+  assert.ok(pageIdx !== -1 && pageIdx < keyIdx, 'page 校验先于缓存 key');
+  assert.ok(sizeIdx !== -1 && sizeIdx < keyIdx, 'pageSize 校验先于缓存 key');
+});
+
+test('#19 domain-local: 缺失/非法/杭州范围外 bounds → 400，不触发 store', () => {
+  const route = src('app/api/pois/domain-local/route.ts');
+  assert.match(route, /isAllowedHangzhouBounds/);
+  assert.match(route, /code: 'INVALID_BOUNDS'/);
+  assert.match(route, /code: 'BOUNDS_OUT_OF_RANGE'/);
+  const boundsIdx = route.indexOf('const bounds = parseBoundsParam');
+  const dbIdx = route.indexOf('await loadHangzhouPoisFromDb');
+  assert.ok(boundsIdx !== -1 && dbIdx !== -1 && boundsIdx < dbIdx);
+  assert.ok(route.indexOf("code: 'INVALID_BOUNDS'") < dbIdx);
+  assert.ok(route.indexOf("code: 'BOUNDS_OUT_OF_RANGE'") < dbIdx);
+});
+
 test('#10 suggest: q/mode/center 超长 → 400（在缓存 key 之前拦截）', () => {
   const route = src('app/api/suggest/route.ts');
   assert.match(route, /const MAX_Q_LENGTH = 100/);
