@@ -203,3 +203,64 @@ query 策略与补查行为:
 重跑 geocode:解析 16 站(上轮仅 1 站)——帆软成都(顺带修正跨城串味,原挂杭州地址)、
 锐捷网络、中望软件、泰隆银行苏州支行、平头哥、紫光国芯等;导入 DB 后五城可见 POI
 重庆 7 / 苏州 24 / 南京 20 / 广州 53 / 成都 47 / 深圳 119。5 城剩余中心钉 **~331 站**待续跑。
+
+## 招聘导入真实性与审计链(2026-08-27,`fix/quality-recruitment-integrity`)
+
+基于 2026-08-27 只读质量扫描 #4 #5 #9 #20,招聘导入从「前缀判定真实性 + 公司级
+source」升级为「来源注册表判定 + 记录级 provenance + 可审计导入链」。配套代码:
+`server/src/lib/recruitment-provenance.ts`(来源注册表)、`freshness.ts`、`recruitment-import.ts`、
+`recruitment-source.ts`(SourcePosition/CompanySite 增加记录级 `source`)。
+
+### 来源注册表与真实性(扫描 #4)
+
+- **新增 `recruitment-provenance.ts` 来源注册表** `SOURCE_META`:每个来源含
+  originUri / 授权依据 / 访问方式 / 署名 / 保留与删除策略 / **authenticity 策略**。
+  策略三态:`source`(整源真实,全部可入库)、`id-prefix`(历史官方门户行只认
+  portal-*/radar-* 前缀)、`none`(永不可入库,如 seed 示例)。
+- **embodied-jobs 注册为 `source` 策略** → `embj-*` 岗位不再被 `isAuthenticPositionId`
+  的 `radar-*`/`portal-*` 前缀整源过滤。回归测试:
+  `recruitment-import.test.mjs` 断言 `isAuthenticPositionRecord({source:'embodied-jobs'})`
+  为真、整源 plan 全部岗位通过真实性过滤。
+- 旧前缀检查 `isAuthenticPositionId` 保留为**身份兼容**用途(无 source 的历史行),
+  新导入路径统一走 `isAuthenticPositionRecord`(来源注册表优先)。
+
+### 记录级 provenance(扫描 #5)
+
+- `SourcePosition.source` / `CompanySite.source` 记录每条记录的真实来源;
+  公司级 `source` 作为缺省回退,不再作为合并后的唯一事实。
+- `dedupeSourceCompanies` 合并同 slug 公司时逐条保留 site/position 的 source
+  (cloneCompany/mergeCompany 都做 `site.source ?? company.source` 下沉)。
+- 落库按每条 site/position 的真实 source 写 `source_id`,跨源同 slug(如
+  official-career DeepSeek + radar DeepSeek)不再被首家公司 source 覆盖。
+  回归测试:DeepSeek 双源合并断言各站/各岗 source 独立。
+
+### 导入审计链(扫描 #9)
+
+- `applyRecruitmentImport` 每次 apply 建立:
+  - **plugin_manifests**(`recruitment` 1.0.0,平台 plugin);
+  - **import_runs**(按 source 一个批次:status running/succeeded/failed、
+    input_version/input_hash、parser_version `recruitment-import/2.0.0`、
+    record_count/success_count/failure_count、failures jsonb);
+  - **source_records**(每条 position:source_id、import_run_id、external_id、
+    record_version、retrieved_at、content_hash(sha256 of {source,position})、
+    parser_version、original_payload、normalized_evidence)。
+- `positions.retrieved_at/expires_at` 现在由 source 提供的时间字段写入;**禁止伪造
+  抓取时间**——缺 `retrievedAt` 的 position 不写库、不写 source_record,而是进入该
+  批次 failures(`missing-or-invalid-retrievedAt`),批次状态标记 `failed`。
+- 事务回滚时先提交 run 行(短设置事务),再在独立事务把批次标记 `failed` +
+  `transaction-rolled-back`,保证失败可审计、不吞证据。
+- 语义坏链(见下)在校验阶段即把公司/岗位拦下,不会进入 apply。
+
+### 投递 URL 语义校验与数据修复(扫描 #20)
+
+- `hasValidUrlScheme` 升级为 URL 语义校验:拒绝重复 scheme、拒绝 `.` / `..` path
+  segment、拒绝 **HTML 文件后继续拼接另一段路径**(如 `job.html/job.html`)。
+  保留「可选 URL 字段缺省合法」。
+- 数据修复(HTML 拼接残片 → canonical 首段 HTML 路径):
+  - 扫描列出的 2 条施耐德 qqdoc-jobs 已修(`qqj-施耐德电气.json`、
+    `qqj-施耐德电气AI星火实习生计划.json`);
+  - 新校验器额外暴露的同类坏链 9 家公司一并修复:radar 4 家(润石科技 /
+    芯朋微电子 / 毕马威 / mps芯源系统)、qqdoc-jobs 5 家(中科本原 / 兆芯 /
+    南京841研究所 / 圣邦微电子 / 联合电子)。
+  - 数据 fixture 回归:`施耐德 drops use canonical apply URL` 断言两条施耐德
+    数据无 `/./` 且过校验;`全部生成 drops 零校验 issue` 全源重扫 0 issue。

@@ -106,6 +106,8 @@ export interface CompanySite {
   location?: POILocation;
   careerUrl?: string;
   logoUrl?: string;
+  /** Source code that supplied this site record (record-level provenance). */
+  source?: string;
   /** 城市名（'北京'），来自 drop site.city 或地址解析；城市过滤用 */
   city?: string;
   /** 省份（'北京市'） */

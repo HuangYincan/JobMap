@@ -19,6 +19,8 @@ import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
 import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
 import { mergeCompaniesIntoPois, poiToSourceCompany } from '../src/lib/recruitment-source.ts';
+import { isAuthenticPositionRecord } from '../src/lib/freshness.ts';
+import { embodiedJobsAdapter } from '../src/lib/recruitment-adapters/embodied-jobs.ts';
 import { WORK_SEED } from './fixtures/seed-data.ts';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -40,6 +42,9 @@ test('hasValidUrlScheme rejects non-http schemes and repeated schemes (scan #4 r
   assert.equal(hasValidUrlScheme('https://https://zhaopin.aircas.ac.cn/'), false);
   assert.equal(hasValidUrlScheme('http://http://example.com/'), false);
   assert.equal(hasValidUrlScheme('https://http://example.com/'), false);
+  assert.equal(hasValidUrlScheme('https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html/./ai_star_shixisheng.html'), false);
+  assert.equal(hasValidUrlScheme('https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html/other.html'), false);
+  assert.equal(hasValidUrlScheme('https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html#/apply'), true);
   assert.equal(hasValidUrlScheme('zhaopin.aircas.ac.cn'), false);
   assert.equal(hasValidUrlScheme('//cdn.example.com/logo.png'), false);
   // 可选字段缺省 (undefined / null / 空串) 合法 — 不因缺 URL 拒收公司。
@@ -94,6 +99,18 @@ test('radar drops with the scan #4 double-prefix fix stay clean (2 files, 4 URLs
   }
 });
 
+test('施耐德 drops use canonical apply URL and reject extracted path fragments', () => {
+  const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment', 'qqdoc-jobs');
+  for (const name of ['qqj-施耐德电气.json', 'qqj-施耐德电气AI星火实习生计划.json']) {
+    const raw = JSON.parse(readFileSync(join(dir, name), 'utf8'));
+    const applyUrl = raw.positions[0].applyUrl;
+    assert.equal(applyUrl, 'https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html');
+    assert.equal(hasValidUrlScheme(applyUrl), true);
+    assert.doesNotMatch(applyUrl, /\/\.\//);
+  }
+});
+
+
 test('validateSourceCompany accepts an address-only site (pending geocode)', () => {
   const company = sample();
   company.sites = [{ id: 'demo-site', name: company.name, location: { address: '杭州' } }];
@@ -112,6 +129,31 @@ test('validateSourceCompany flags a non-ISO deadline before the DB apply', () =>
   company.positions[0].deadline = '2026 10 15';
   assert.deepEqual(validateSourceCompany(company), []);
 });
+
+test('authenticity uses registered source provenance for embodied jobs', () => {
+  assert.equal(isAuthenticPositionRecord({ externalId: 'embj-迦智科技-1', source: 'embodied-jobs' }), true);
+  assert.equal(isAuthenticPositionRecord({ externalId: 'embj-迦智科技-1', source: 'official-career' }), false);
+  assert.equal(isAuthenticPositionRecord({ externalId: 'portal-deepseek', source: 'official-career' }), true);
+  assert.equal(isAuthenticPositionRecord({ externalId: 'embj-迦智科技-1' }), false);
+});
+
+test('embodied-jobs plan records survive authenticity filtering as a whole source', async () => {
+  const companies = await embodiedJobsAdapter().list();
+  assert.ok(companies.length > 0);
+  const plan = planRecruitmentImport(companies);
+  assert.equal(plan.dropped, 0);
+  assert.ok(plan.companies.every((company) => company.source === 'embodied-jobs'));
+  const positions = plan.companies.flatMap((company) => company.positions);
+  assert.ok(positions.length > 0);
+  assert.ok(positions.every((position) => position.source === 'embodied-jobs'));
+  const authentic = plan.companies.flatMap((company) =>
+    company.positions.filter((position) =>
+      isAuthenticPositionRecord({ externalId: position.externalId, source: position.source }),
+    ),
+  );
+  assert.equal(authentic.length, positions.length);
+});
+
 
 test('applyRecruitmentImport only counts authentic positions (no re-opening example jobs)', async () => {
   const plan = await planSeedImport();
@@ -198,6 +240,27 @@ test('dedupeSourceCompanies merges sites and unique positions on the same slug',
   const [merged] = dedupeSourceCompanies([a, b]);
   assert.equal(merged.sites.length, 2);
   assert.ok(merged.positions.some((p) => p.externalId === b.positions[0].externalId));
+});
+
+test('dedupeSourceCompanies preserves site and position source per record', () => {
+  const official = sample();
+  official.slug = 'deepseek';
+  official.source = 'official-career';
+  official.sites = [{ ...official.sites[0], id: 'deepseek-official-site' }];
+  official.positions = [{ ...official.positions[0], externalId: 'portal-deepseek', siteId: 'deepseek-official-site' }];
+
+  const radar = sample();
+  radar.slug = 'deepseek';
+  radar.source = 'xiaozhao-radar';
+  radar.sites = [{ ...radar.sites[0], id: 'deepseek-radar-site' }];
+  radar.positions = [{ ...radar.positions[0], externalId: 'radar-deepseek', siteId: 'deepseek-radar-site' }];
+
+  const [merged] = dedupeSourceCompanies([official, radar]);
+  assert.equal(merged.source, 'official-career');
+  assert.equal(merged.sites.find((site) => site.id === 'deepseek-official-site')?.source, 'official-career');
+  assert.equal(merged.sites.find((site) => site.id === 'deepseek-radar-site')?.source, 'xiaozhao-radar');
+  assert.equal(merged.positions.find((position) => position.externalId === 'portal-deepseek')?.source, 'official-career');
+  assert.equal(merged.positions.find((position) => position.externalId === 'radar-deepseek')?.source, 'xiaozhao-radar');
 });
 
 test('dedupeSourceCompanies merges logoUrl/logoEmoji (seed logo fills a logo-less drop)', () => {
@@ -420,6 +483,8 @@ function fakeImportPlan() {
             deadline: '2026-12-31',
             applySource: 'official',
             applyUrl: 'https://apply.example/1',
+            retrievedAt: '2026-08-20T10:30:00Z',
+            expiresAt: '2026-12-31T23:59:59Z',
             salary: { min: 100, max: 200 },
           },
           {
@@ -447,7 +512,12 @@ function fakeApplyPool(opts = {}) {
     async query(sql, params = []) {
       calls.push({ sql, params });
       if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') return { rows: [] };
-      if (sql.includes('INSERT INTO sources')) return { rows: [{ id: 'source-fake' }] };
+      if (sql.includes('INSERT INTO plugin_manifests')) return { rows: [{ id: 'plugin-fake' }] };
+      if (sql.includes('INSERT INTO sources')) {
+        return { rows: [{ id: opts.sourceIds?.[params[0]] ?? 'source-fake' }] };
+      }
+      if (sql.includes('INSERT INTO import_runs')) return { rows: [{ id: 'run-fake' }] };
+      if (sql.includes('UPDATE import_runs')) return { rows: [] };
       if (sql.includes('INSERT INTO companies')) {
         if (opts.failAt === 'company') throw new Error('company upsert failed');
         return { rows: [{ id: 'company-fake' }] };
@@ -486,10 +556,13 @@ test('applyRecruitmentImport runs a transactional upsert with an injected pool',
   assert.ok(sqls.includes('COMMIT'));
   assert.ok(sqls.indexOf('COMMIT') > sqls.indexOf('BEGIN'));
   assert.ok(sqls.some((sql) => sql.includes('INSERT INTO sources')));
+  assert.ok(sqls.some((sql) => sql.includes('INSERT INTO plugin_manifests')));
+  assert.ok(sqls.some((sql) => sql.includes('INSERT INTO import_runs')));
+  assert.ok(sqls.some((sql) => sql.includes('INSERT INTO source_records')));
   assert.ok(sqls.some((sql) => sql.includes('INSERT INTO companies')));
   assert.ok(sqls.some((sql) => sql.includes('INSERT INTO company_sites')));
   assert.ok(sqls.some((sql) => sql.includes('DELETE FROM positions')));
-  assert.ok(sqls.some((sql) => sql.includes('UPDATE positions SET source_id')));
+  assert.ok(!sqls.some((sql) => sql.includes('UPDATE positions SET source_id')));
 
   const companyCall = fake.calls.find((call) => call.sql.includes('INSERT INTO companies'));
   assert.equal(companyCall.params[0], 'fake-hz');
@@ -504,6 +577,58 @@ test('applyRecruitmentImport runs a transactional upsert with an injected pool',
   assert.equal(positionCall.params[14], 'official');
   assert.equal(positionCall.params[16], 'open');
   assert.equal(positionCall.params[17], 'source-fake');
+  assert.equal(positionCall.params[18], '2026-08-20T10:30:00Z');
+  assert.equal(positionCall.params[19], '2026-12-31T23:59:59Z');
+});
+
+test('applyRecruitmentImport writes each site/position source provenance independently', async () => {
+  const plan = {
+    companies: [
+      {
+        slug: 'deepseek',
+        name: 'DeepSeek',
+        source: 'official-career',
+        industries: ['ai'],
+        scale: 'unicorn',
+        sites: [
+          { id: 'official-site', name: '官网站点', source: 'official-career' },
+          { id: 'radar-site', name: '雷达站点', source: 'xiaozhao-radar' },
+        ],
+        positions: [
+          {
+            externalId: 'portal-deepseek',
+            title: '官网岗位',
+            siteId: 'official-site',
+            source: 'official-career',
+            family: 'campus',
+            status: 'open',
+            retrievedAt: '2026-08-20',
+          },
+          {
+            externalId: 'radar-deepseek',
+            title: '雷达岗位',
+            siteId: 'radar-site',
+            source: 'xiaozhao-radar',
+            family: 'campus',
+            status: 'open',
+            retrievedAt: '2026-08-21',
+          },
+        ],
+      },
+    ],
+    issues: [],
+    dropped: 0,
+  };
+  const fake = fakeApplyPool({ sourceIds: { 'official-career': 'source-official', 'xiaozhao-radar': 'source-radar' } });
+  const result = await applyRecruitmentImport(plan, fake.pool);
+  assert.equal(result.positions, 2);
+  const positionCalls = fake.calls.filter((call) => call.sql.includes('INSERT INTO positions'));
+  assert.deepEqual(positionCalls.map((call) => call.params[17]), ['source-official', 'source-radar']);
+  const siteCalls = fake.calls.filter((call) => call.sql.includes('INSERT INTO company_sites'));
+  assert.deepEqual(siteCalls.map((call) => call.params[11]), ['source-official', 'source-radar']);
+  const recordCalls = fake.calls.filter((call) => call.sql.includes('INSERT INTO source_records'));
+  assert.equal(recordCalls.length, 2);
+  assert.deepEqual(recordCalls.map((call) => call.params[0]), ['source-official', 'source-radar']);
 });
 
 test('applyRecruitmentImport reuses an existing company site instead of inserting', async () => {
@@ -520,6 +645,19 @@ test('applyRecruitmentImport rolls back and releases the client on failure', asy
   assert.ok(fake.calls.some((call) => call.sql === 'ROLLBACK'));
   assert.ok(fake.calls.some((call) => call.sql === 'BEGIN'));
   assert.equal(fake.released, true);
+});
+
+test('applyRecruitmentImport records missing retrieval time as a failed audit record without inventing now', async () => {
+  const plan = fakeImportPlan();
+  plan.companies[0].positions[0].retrievedAt = undefined;
+  const fake = fakeApplyPool();
+  const result = await applyRecruitmentImport(plan, fake.pool);
+  assert.equal(result.wrote, true);
+  assert.equal(result.positions, 0);
+  assert.equal(fake.calls.some((call) => call.sql.includes('INSERT INTO source_records')), false);
+  const runUpdates = fake.calls.filter((call) => call.sql.includes('UPDATE import_runs'));
+  assert.ok(runUpdates.some((call) => call.params[1] === 'failed'));
+  assert.doesNotMatch(JSON.stringify(runUpdates), /2026-08-27/);
 });
 
 test('applyRecruitmentImport returns early for an empty plan', async () => {
@@ -633,7 +771,7 @@ test('site merge keys on site_key, not name (multi-city sites must not collapse)
   assert.doesNotMatch(store, /WHERE company_id = \$1 AND name = \$2 LIMIT 1/);
 });
 
-test('positions dedup: apply dedups first (keep MIN(id)) then migrates old-source rows, before the upsert', () => {
+test('positions dedup is scoped to each record source and does not migrate provenance', () => {
   // 2026-08-20: 同 external_id 曾在旧 source(seed) 与新真实 source 下各存一行,
   // upsert 唯一键 (source_id, external_id) 不冲突 → 旧行不删 → 双行并存 →
   // poi-card 同 key 警告上百条。apply 事务内自愈, 顺序不可颠倒:
@@ -648,42 +786,27 @@ test('positions dedup: apply dedups first (keep MIN(id)) then migrates old-sourc
   //    保最早行 → applications.position_id 引用不悬空)
   assert.match(store, /DELETE FROM positions p/);
   assert.match(store, /MIN\(id\) AS keep_id/);
-  assert.match(store, /GROUP BY external_id\) keep/);
+  assert.match(store, /GROUP BY source_id, external_id/);
   assert.match(store, /p\.id <> keep\.keep_id/);
 
-  // 2) 迁移: 同 external_id 的旧 source 行改挂本次 source (幂等, 已同源不迁;
-  //    此时每 external_id 仅一行, 无唯一键冲突)
-  assert.match(store, /UPDATE positions SET source_id = \$2/);
-  assert.match(store, /WHERE external_id = ANY\(\$1::text\[\]\) AND source_id IS DISTINCT FROM \$2/);
+  assert.match(store, /source_id = \$2 AND external_id = ANY\(\$1::text\[\]\)/);
+  assert.match(store, /p\.source_id = keep\.source_id/);
+  assert.doesNotMatch(store, /UPDATE positions SET source_id/);
 
-  // 3) 顺序: 去重 → 迁移 → ON CONFLICT (source_id, external_id) upsert。
-  // 注释里也可能出现这段 SQL 字样, 真实 upsert 恒为最后一次出现 → lastIndexOf。
-  const migrateAt = store.indexOf('UPDATE positions SET source_id');
-  const dedupAt = store.indexOf('DELETE FROM positions p');
-  const upsertAt = store.lastIndexOf('ON CONFLICT (source_id, external_id) DO UPDATE');
-  assert.ok(migrateAt !== -1 && dedupAt !== -1 && upsertAt !== -1, 'migrate/dedup/upsert anchors exist');
-  assert.ok(dedupAt < migrateAt, 'dedup must run before source migration (migration first would hit the unique key inside the UPDATE)');
-  assert.ok(migrateAt < upsertAt, 'migration must run before the upsert');
-
-  // 自愈只作用于 authentic 岗位 (radar-*/portal-*): 代码位于 authentic 过滤之后,
-  // seed 示例岗位 (seed-* 等外部 id) 不迁移、不去重、不删除。
-  const authenticAt = store.indexOf('isAuthenticPositionId(pos.externalId)');
-  assert.ok(authenticAt !== -1 && authenticAt < dedupAt, 'self-heal must only run inside the authentic filter');
+  // Cross-source rows are intentionally not migrated: source_id is an
+  // auditable fact, not a deduplication hint.
+  assert.match(store, /isAuthenticPositionRecord/);
 });
 
-test('positions dedup plan scope: migrate/dedup use the plan external ids, not the whole table', () => {
+test('positions dedup is scoped by plan external ids and per-source', () => {
   const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
   const store = readFileSync(join(srcRoot, 'lib/recruitment-import.ts'), 'utf8');
-  // 迁移/去重都按 `external_id = ANY($1::text[])` 限定在本次 plan 的 external_id
-  // 集合内 — 绝不整表扫描式清理, 其他公司/其他来源的岗位不受影响。
-  const anyPattern = /external_id = ANY\(\$1::text\[\]\)/g;
-  const matches = store.match(anyPattern) ?? [];
-  assert.ok(matches.length >= 2, `migrate + dedup must both be scoped by plan external ids (got ${matches.length})`);
-  // 迁移批量按公司聚合: 参数 $1 = 本公司的 external_id 数组, $2 = 该公司 source。
-  assert.match(store, /const planExtIds = company\.positions/);
-  assert.match(store, /\.filter\(\(pos\) => siteIds\.has\(pos\.siteId\)\)/);
-  assert.match(store, /\.map\(\(pos\) => pos\.externalId\)/);
-  assert.match(store, /if \(planExtIds\.length > 0\)/);
+  // 去重按「本次 plan 的 external_id 集合 + 记录级 source」双重限定 — 绝不整表
+  // 扫描式清理, 其他公司 / 其他来源的岗位不受影响。
+  assert.match(store, /source_id = \$2 AND external_id = ANY\(\$1::text\[\]\)/);
+  assert.match(store, /p\.source_id = keep\.source_id/);
+  // 跨源迁移已删除: source_id 是审计事实, 不是去重提示。
+  assert.doesNotMatch(store, /UPDATE positions SET source_id/);
 });
 
 test('planSeedImport excludes the seed scaffold (strict DB-only import)', () => {
