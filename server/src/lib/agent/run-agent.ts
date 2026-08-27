@@ -1,7 +1,8 @@
 // Agent 循环主体:LLM(OpenAI 兼容流式)↔ 白名单工具 ↔ AgentEvent 事件流。
 //
-// runAgent 是 AsyncGenerator,route 侧(ws-b)可直接消费为 SSE:
-//   - delta / tool start 事件随 LLM 流式实时转发(内部用事件队列桥接回调→生成器)
+// runAgent 是 AsyncGenerator,route 侧(ws-b)消费后再过滤为 SSE:
+//   - delta / reasoning / tool start 事件随 LLM 流式进入服务端事件队列;
+//     reasoning 只留给服务端,网络出口由 route 的 allowlist 丢弃
 //   - 流结束无 tool_calls → 容错提取文本内 {"actions":[...]} → 逐个校验后下发
 //   - 有 tool_calls → 白名单查表、sanitize、执行、结果回流 → 下一轮
 //     (assistant 消息附回本轮 reasoning_content 累计——DeepSeek 思考模式必需,否则 400)

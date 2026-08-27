@@ -5,9 +5,9 @@
 // 行号 < getMcpProvider/runAgent 引用行号」断言(工具集构建内联在 POST 内、
 // 位于全部校验之后,保证源码行序 = 执行序)。
 //
-// 事件 type 白名单即 run-agent 的 AgentEvent 5 种(delta/tool/action/done/
-// error);本端点做逐事件 `data: <单行 JSON>\n\n` 转述,error 事件经公开面脱敏
-// (code/message 收敛到安全集合)后下发,不下发其它 type。
+// 事件公开白名单由 `lib/agent/public-sse.ts` 统一定义;本端点在网络发送前逐事件过滤,
+// reasoning 仅保留在服务端 run-agent/provider tool-call replay 链路,error 事件经公开面脱敏
+// (code/message 收敛到安全集合)后下发。
 
 import { NextResponse } from 'next/server';
 import { BoundedRateStore } from '@/lib/bounded-rate-store';
@@ -19,6 +19,7 @@ import { runAgent } from '@/lib/agent/run-agent';
 import { getMcpProvider, normalizeTool } from '@/lib/agent/mcp-providers';
 import type { ProviderId } from '@/lib/agent/mcp-providers';
 import type { AgentTool, AgentContext } from '@/lib/agent/types';
+import { filterPublicSseEvent } from '@/lib/agent/public-sse';
 import { builtinTools, memorySaveTool } from '@/lib/agent/tools/builtin';
 import { restFallbackTools } from '@/lib/agent/tools/rest-fallback';
 import { baiduAgentPlanTools } from '@/lib/agent/tools/baidu-agent-plan';
@@ -32,9 +33,6 @@ const MAX_MESSAGE_CHARS = 4000;
 /** SSE 输出字节上限;超 → `done, truncated`(为终态事件保留余量)。 */
 const MAX_SSE_BYTES = 200 * 1024;
 const SSE_TAIL_RESERVE = 512;
-
-/** 事件 type 白名单(delta/tool/action/done/error 之外的 type 一律不下发)。 */
-const SSE_EVENT_TYPES = ['delta', 'tool', 'action', 'done', 'error'] as const;
 
 // ---- 限流:模块级内存令牌桶,每桶 10 req/min(tech/24 §6.5)----
 const RATE_LIMIT_PER_MIN = 10;
@@ -249,11 +247,14 @@ export async function POST(request: Request) {
           userId: sessionUser?.id,
         })) {
           if (upstreamAbort.signal.aborted) break;
+          // 网络发送边界显式 allowlist:reasoning/未知事件只留在服务端,不得进入 SSE。
+          const publicEvent = filterPublicSseEvent(event);
+          if (!publicEvent) continue;
           // 公开面脱敏:error 事件 code/message 收敛到安全集合;内部细节只进服务端日志
-          let out: unknown = event;
-          if (event.type === 'error') {
-            console.error(`[agent] 内部错误 code=${event.code} message=${event.message}`);
-            out = publicErrorEvent(event);
+          let out: unknown = publicEvent;
+          if (publicEvent.type === 'error') {
+            console.error(`[agent] 内部错误 code=${publicEvent.code} message=${publicEvent.message}`);
+            out = publicErrorEvent(publicEvent);
           }
           if (!send(out)) {
             // 输出超限 → done, truncated(tech/24 §6.5)

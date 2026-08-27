@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { filterPublicSseEvent, SSE_EVENT_TYPES } from '../src/lib/agent/public-sse.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 const route = readFileSync(join(srcRoot, 'app/api/agent/chat/route.ts'), 'utf8');
@@ -29,12 +30,27 @@ test('SSE 响应常量:headers 三件套 + ReadableStream/TextEncoder + data 行
   assert.match(route, /\\n\\n/);
 });
 
-test('事件 type 白名单:5 种(delta/tool/action/done/error)', () => {
-  assert.match(route, /const SSE_EVENT_TYPES = \['delta', 'tool', 'action', 'done', 'error'\] as const/);
-  // 端点只转述 run-agent 事件;自身唯一主动下发的事件是 done truncated
+test('事件 type 白名单:5 种(delta/tool/action/done/error),网络边界过滤 reasoning', () => {
+  assert.deepEqual(SSE_EVENT_TYPES, ['delta', 'tool', 'action', 'done', 'error']);
+  assert.doesNotMatch(route, /const SSE_EVENT_TYPES =/);
+  assert.match(route, /const publicEvent = filterPublicSseEvent\(event\)/);
+  assert.match(route, /if \(!publicEvent\) continue/);
+  // 端点只转述公开事件;自身唯一主动下发的事件是 done truncated
   assert.match(route, /\{ type: 'done', truncated: true \}/);
   // 流异常兜底只发安全码 ERROR
   assert.match(route, /\{ type: 'error', code: 'ERROR', message: '' \}/);
+});
+
+test('SSE 网络边界:reasoning 不出流,合法事件仍可逐事件流式转述', () => {
+  const allowed = [
+    { type: 'delta', text: '回答' },
+    { type: 'tool', name: 'search', status: 'start' },
+    { type: 'action', action: { type: 'search', payload: { query: '杭州' } } },
+    { type: 'done' },
+    { type: 'error', code: 'ERROR', message: '' },
+  ];
+  for (const event of allowed) assert.deepEqual(filterPublicSseEvent(event), event);
+  assert.equal(filterPublicSseEvent({ type: 'reasoning', text: '内部推理' }), null);
 });
 
 test('前置校验先于任何 MCP/LLM 连接(行号定位)', () => {
@@ -131,8 +147,8 @@ test('SSE error 事件公开面脱敏:只产出 LLM_UNCONFIGURED/RATE_LIMITED/ER
   // 安全集合映射存在(内部码一律收敛;LLM_UNCONFIGURED/RATE_LIMITED 前端专用码保留)
   assert.match(route, /const PUBLIC_ERROR_CODES = new Set\(\['LLM_UNCONFIGURED', 'RATE_LIMITED'\]\)/);
   // SSE 循环内 error 事件必须经 publicErrorEvent 收敛,不允许原样转述内部错误
-  assert.match(route, /event\.type === 'error'/);
-  assert.match(route, /out = publicErrorEvent\(event\)/);
+  assert.match(route, /publicEvent\.type === 'error'/);
+  assert.match(route, /out = publicErrorEvent\(publicEvent\)/);
   // 除安全集合外,SSE error 事件构造处不存在其它 code 字面量(不泄露 http_401/llm_network_error 等内部码)
   assert.doesNotMatch(route, /type: 'error', code: '(?!LLM_UNCONFIGURED|RATE_LIMITED|ERROR)[A-Za-z_0-9]+'/);
   // message 一律置空:SSE error 事件构造处不携带内部文本
