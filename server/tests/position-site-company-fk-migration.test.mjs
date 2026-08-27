@@ -63,7 +63,10 @@ test('020 preflight reports and blocks legacy cross-company rows', () => {
   assert.match(migration, /RAISE EXCEPTION USING/);
   assert.match(migration, /Read-only diagnostic SQL:/);
   assert.match(migration, /ORDER BY p\.id/);
-  assert.doesNotMatch(migration, /(?:UPDATE|DELETE|INSERT)\s+INTO?\s+public\.positions/i);
+  assert.doesNotMatch(
+    migration,
+    /\b(?:UPDATE|DELETE\s+FROM|INSERT\s+INTO)\s+public\.positions\b/i,
+  );
 });
 
 test('020 adds an idempotent ownership-matching FK and preserves delete actions', () => {
