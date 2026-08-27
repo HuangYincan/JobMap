@@ -1,16 +1,16 @@
 # 05 - Milestones
 
 > **Status:** current execution roadmap
-> **Last reviewed:** 2026-08-23
+> **Last reviewed:** 2026-08-27
 > **Authority:** this file is the in-repository milestone source of truth. Historical `tech/00-*` reports are context only.
 
 ## Current Baseline
 
-P0–P4 are **complete and merged to `dev`** (2026-08-17): a runnable Next.js application (Domain + Work modes, account / saved / applications / job-alert queue), real recruitment catalog (Postgres first, offline drops fallback), reviewed polite acquisition (radar `jobs.json` + official career pages + reviewed ATS endpoints), PostGIS migrations `001`–`016`, and nationwide work mode (LOD tiers / city superset / viewport loading, migrations `011`–`013`). Historical Phase 1 records remain on `feature/phase-1-platform-baseline`.
+P0–P4 are **complete and merged to `dev`**. The current application is a runnable Next.js map with Domain + Work modes, account / saved / applications / job-alert queue, reviewed acquisition adapters, and nationwide Work data. Public Work reads are **strict DB-only**: `server/src/lib/server-catalog.ts` delegates to Postgres (`companies` / `company_sites` / `positions`) and returns `[]` when `DATABASE_URL` is absent, the query fails, or the DB-backed result is empty; seed example data is archived under `tech/backup/seed-data`. Historical Phase 1 records remain on `feature/phase-1-platform-baseline`.
 
-**Frontend status (2026-08-24):** map shell, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter, sort, autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle, 三引擎地图源切换 — all browser-verified. Server suite: **1610 tests / 1608 pass / 2 skip** (`cd server && npm test`, 2026-08-24).
+**Frontend status (2026-08-27 snapshot at commit `d899b3f`):** map shell, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter, sort, autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle, and three map engines — all browser-verified. The server suite is **1689 tests / 1686 pass / 0 fail / 3 skip** (`cd server && npm test`). This is a transient baseline; later workstreams may change the count.
 
-**Backend status:** importer unit tests pass (`make test-unit`). Live PostGIS apply is verified: `make db-migrate` wrote `001`–`016`, `make test-integration` passed. Seed import (2026-08-17 Hangzhou pilot): 137 companies / 137 sites / 240 open positions (official-career + radar + portals); national import plan: **669 companies / 1440 sites / 877 positions, 0 issues, 0 dropped**. Public `/api/pois` and `/api/search` push `bounds` / distance through `company_sites_geom_gist` (`&&` then `ST_DWithin`) when `DATABASE_URL` is set; no-DB stays on `inBounds`. Live `EXPLAIN` (51 sites): `&&` + `ST_DWithin` uses the gist; bbox-only is still a Seq Scan on this tiny table.
+**Backend and data status:** `crawler/tests/` contains **111** Python unit tests, executed by `make test-unit` (`unittest discover`); the repository has no Black dependency/configuration. The ordered migration set is **`db/migrations/001`–`019`**; `db/scripts/apply.sh` enumerates the set and records checksums in `schema_migrations`. The latest data ledger snapshot (2026-08-27, `tech/roles/data/data-quality.md` §「多城 POI 扩展」) reports an import plan of **1052 companies / 2411 sites / 12890 positions / 0 dropped**. The same ledger records the radar expansion **646 → 659 companies**, +64 sites / +18 positions, and the latest geocode follow-up; it is the source for per-source and coordinate statistics. Public `/api/pois` and `/api/search` read the DB catalog and apply `geom && ST_MakeEnvelope` followed by `ST_DWithin` for viewport/distance clips. `npm run import:seed:apply`, geocode, and migration-apply operations remain user/Env-only actions.
 
 ## Delivery Sequence
 
@@ -49,7 +49,7 @@ No calendar release date is committed. Each phase is estimated only after its en
 
 ## Phase 2: Multi-Mode System + POI Display + Search & Filter
 
-> **状态(2026-08-19):已完成并并入 `dev`。以下为实施期记录。**
+> **状态(2026-08-19):已完成并并入 `dev`。** 以下内容保留为实施期记录；当前运行时读路径、数据源和 DB-only 语义以本页「Current Baseline」、`tech/13-db-query-notes.md` 与 `tech/14-api-contract.md` 为准。
 
 **Scope:** Core differentiation features - multi-mode map system with Domain and Work modes
 
@@ -121,9 +121,9 @@ No calendar release date is committed. Each phase is estimated only after its en
 - PII handling
 - Recommendation system
 
-**Phase 3 started (2026-08-16):** Saved places — `008_saved_places`. Applications — `009_applications`. Company compare — Saved L2 / mobile `SavedList`. Job alerts — `010_notifications` + `/api/me/notifications` enqueue matching seed jobs into Profile inbox when email/SMS is on; nothing is actually sent. Guests are prompted to sign in.
+**Phase 3 implementation record (historical, 2026-08-16):** Saved places — `008_saved_places`. Applications — `009_applications`. Company compare — Saved L2 / mobile `SavedList`. Job alerts — `010_notifications` + `/api/me/notifications` enqueue matching seed jobs into Profile inbox when email/SMS is on; nothing is actually sent. Guests are prompted to sign in.
 
-**Phase 4 started (2026-08-16):** Saved overlay — Layers L2 frost card (`layers-panel.tsx`) toggles `lib/saved-overlay.ts` and owns basemap styles. Overlay + style persist in sessionStorage. Search list stays the pipeline; the map merges leftover saved pins (catalog/seed live, snapshot pin fallback). Fly/highlight still go through `usePOIMap`; Saved click uses `resolveSavedForFly`. Recent replay goes through `replayRecentSearch` + mode cache. Public read APIs cache 30s (`lib/public-cache.ts`) and load work via `loadServerCatalog` (imported SQL rows when present, else seed + official-career JSON). Contrast tokens live in `lib/contrast.ts`. Home `home-map.tsx` lazy-loads `MapShell` (`next/dynamic`, `ssr: false`); first-party client deps stay Next/React/CSS Modules (`tech/12-bundle-notes.md`). Account SQL + spatial reads are inventoried in `tech/13-db-query-notes.md` (live gist / account `EXPLAIN` recorded 2026-08-16). Search/filter integration lives in `tests/search-integration.test.mjs` (same seed → pipeline → page path as `/api/search`). Seed import planner is `lib/recruitment-import.ts` / `npm run import:seed`. Local runbook: `tech/15-deploy.md`.
+**Phase 4 implementation record (historical, 2026-08-16):** Saved overlay — Layers L2 frost card (`layers-panel.tsx`) toggles `lib/saved-overlay.ts` and owns basemap styles. Overlay + style persist in sessionStorage. Search list stays the pipeline; the map merges leftover saved pins (catalog/seed live, snapshot pin fallback). Fly/highlight still go through `usePOIMap`; Saved click uses `resolveSavedForFly`. Recent replay goes through `replayRecentSearch` + mode cache. Public read APIs cache 30s (`lib/public-cache.ts`) and load work via `loadServerCatalog` (imported SQL rows when present, else seed + official-career JSON). Contrast tokens live in `lib/contrast.ts`. Home `home-map.tsx` lazy-loads `MapShell` (`next/dynamic`, `ssr: false`); first-party client deps stay Next/React/CSS Modules (`tech/12-bundle-notes.md`). Account SQL + spatial reads are inventoried in `tech/13-db-query-notes.md` (live gist / account `EXPLAIN` recorded 2026-08-16). Search/filter integration lives in `tests/search-integration.test.mjs` (same seed → pipeline → page path as `/api/search`). Seed import planner is `lib/recruitment-import.ts` / `npm run import:seed`. Local runbook: `tech/15-deploy.md`.
 
 
 ## Deferred Decisions

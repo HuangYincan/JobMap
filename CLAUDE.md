@@ -40,7 +40,7 @@ Next.js 16 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。
 ```bash
 make help                 # 支持的 make 命令
 make docs-check           # 文档规范检查
-cd server && npm test     # 1610 测试(1608 pass / 2 skip,2026-08-24)
+cd server && npm test     # 1689 测试(1686 pass / 3 skip,2026-08-27,commit d899b3f 快照)
 cd server && npm run typecheck
 npm run import:seed:apply  # 同步 Postgres(需 DATABASE_URL,读 server/.env.local)
 npm run geocode:sites:apply --dry-run  # 雷达公司落真实办公点(需 AMAP_WEB_KEY;配额耗尽自动用 BAIDU_MAP_AK / TENCENT_MAP_KEY 兜底)

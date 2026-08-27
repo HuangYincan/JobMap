@@ -1,7 +1,7 @@
 # 02 - Data Model and Spatial Contract
 
-> **Status:** implementation-backed; migrations `001`–`016` are live-applied and verified against the local PostGIS database
-> **Last reviewed:** 2026-08-21
+> **Status:** implementation-backed; migrations `001`–`019` are the current ordered set (the runner records applied checksums in `schema_migrations`; `017` stores avatar bytes, `018` stores user memories, and `019` enforces memory uniqueness)
+> **Last reviewed:** 2026-08-27
 > **Authority:** `db/migrations/001-019` are the implementation source of truth; this document must be updated when migrations change.
 
 ## Implementation Evidence
@@ -10,9 +10,9 @@
 - `db/migrations/002_plugins_and_provenance.sql`: `plugin_manifests`, `plugin_schema_versions`, `sources`, `import_runs`, `source_records`.
 - `db/migrations/003_canonical_entities_and_items.sql`: canonical `entities` and `items` with composite provenance keys, coordinate constraints, generated SRID 4326 geometry and GiST index.
 - `db/migrations/004_overlays_and_audit.sql`: `map_entity_overlays`, `map_annotations`, `map_favorites`, `audit_events`.
-- Later migrations extend the model: `005` accounts/sessions/history, `006` recruitment sites (`companies` / `company_sites` / `positions`), `007` profile prefs/OAuth, `008` saved places, `009` applications, `010` notifications, `011` national scope (tier/city/alive), `012` tier 0..21 + category, `013` Hangzhou POIs (`hz_pois`), `014` credentials auth, `015` recent entity, `016` site key.
+- Later migrations extend the model: `005` accounts/sessions/history, `006` recruitment sites (`companies` / `company_sites` / `positions`), `007` profile prefs/OAuth, `008` saved places, `009` applications, `010` notifications, `011` national scope (tier/city/alive), `012` tier 0..21 + category, `013` Hangzhou POIs (`hz_pois`), `014` credentials auth, `015` recent entity, `016` site key, `017` avatar bytes, `018` user memories, `019` user-memory uniqueness.
 - `db/scripts/apply.sh` runs each migration and its ledger row in a single transaction with a transaction-scoped advisory lock; `db/scripts/preflight.sh` checks PostGIS and ledger checksum drift.
-- Live verification: `make db-migrate` applied `001`–`016` on the local PostGIS (2026-08-16 and later); `make test-integration` passed.
+- Live verification: `make db-migrate` applied `001`–`019` on the local PostGIS (2026-08-16 and later); `make test-integration` passed.
 
 ## Modeling Boundaries
 
