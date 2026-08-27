@@ -117,7 +117,7 @@ npm run dev          # Start dev server (port 3000)
 npm run build        # Production build
 npm run start        # Run production server
 npm run typecheck    # Run TypeScript compiler check
-npm test             # node:test 全量(1610 tests / 1608 pass / 2 skip,2026-08-24)
+npm test             # node:test 全量(1689 tests / 1686 pass / 3 skip,2026-08-27,commit d899b3f 快照)
 ```
 
 `package.json` 没有 `lint` script(项目无 ESLint 配置);写 DB 的数据命令(`import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)见根 README,属 Env-only 用户步骤。
@@ -165,14 +165,14 @@ See `docs/i18n.md` for full documentation.
 ```
 POST /api/search (work) / GET /api/pois (domain) / GET /api/pois/domain-local (hz_pois)
     ↓
-lib (server-catalog / recruitment-store / hz-poi-store — Postgres first, offline drops fallback)
+lib (server-catalog / recruitment-store / hz-poi-store — public Work reads are strict DB-only)
     ↓
 Client Components (map-shell.tsx)
     ↓
 Map Engine (契约层:AMap / 腾讯 TMap / 百度 BMapGL)
 ```
 
-Work mode reads **Postgres first** (imported SQL rows via `loadServerCatalog`, 30s public cache), falling back to offline drops when the DB is absent. Domain mode: in-Hangzhou browse uses the local `hz_pois` table (`/api/pois/domain-local`); outside Hangzhou (或本地 0 命中) the **活跃引擎**的 `searchPOI` 承接检索(`poi-service` 经 `use-map-engine` 注入的 search provider;SSR/测试/零配置回落 amap-api,行为与迁移前一致)。The frontend no longer uses a hardcoded `places` array for live data.
+Work mode public reads **require Postgres** (imported SQL rows via `loadServerCatalog`); no `DATABASE_URL`, a DB failure, or an empty DB result returns an empty list—there is no offline seed fallback. Domain mode: in-Hangzhou browse uses the local `hz_pois` table (`/api/pois/domain-local`); outside Hangzhou (or a local zero-hit search) the **active engine**'s `searchPOI` handles the lookup (`poi-service` receives the provider through `use-map-engine`; SSR/tests/no engine configuration fall back to `amap-api`). The frontend no longer uses a hardcoded `places` array for live data.
 
 ### Plugin Readiness
 
@@ -219,7 +219,7 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 2. **Job alerts are queue-only:** email/SMS toggles enqueue inbox rows; nothing is actually sent (real send still deferred)
 3. **No error boundary:** Map initialization errors are not caught at a React boundary; engine mount failures now surface a retry overlay (`mountError` / `retryMount` 状态机,2026-08-22),其他初始化错误仍可能白屏
 4. **Accessibility:** ARIA labels present, screen reader testing pending (VoiceOver/NVDA manual tests deferred)
-5. **DB write-path degradation (设计决策):** 写路径遇 DB 故障直接抛 `DbUnavailableError`,由 route 层转 503 `DB_UNAVAILABLE`——绝不静默回落内存(防内存/DB 数据分裂);读路径保持 offline drops 回退
+5. **DB read-path requirement (设计决策):** public Work reads require Postgres; no `DATABASE_URL`, a DB failure, or a DB-backed empty result returns an empty list—never a seed/offline fallback. Account write paths similarly surface `DbUnavailableError` as 503 rather than silently falling back to memory, while selected account/session features may use in-memory development storage when no database is configured.
 
 ## Testing
 
@@ -240,7 +240,7 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 ### Automated Tests
 
 ```bash
-npm test        # 1610 tests / 1608 pass / 0 fail / 2 skip (2026-08-24, npm test 实测)
+npm test        # 1689 tests / 1686 pass / 0 fail / 3 skip (2026-08-27, commit d899b3f, npm test 实测)
 npm run typecheck
 ```
 
@@ -289,7 +289,7 @@ Live account flows run against Postgres when `DATABASE_URL` is set (cookie sessi
 
 1. **Auth:** phone/email OTP 真发 —— phone 经阿里云短信认证服务、email 经 Resend(未配置 → 503 `SMS_NOT_CONFIGURED` / `EMAIL_NOT_CONFIGURED`;demo `000000` stub 已删)+ password accounts (`/api/auth/password/register|login`, scrypt-hashed, migration 014);OAuth 登录(github / google / wechat,authorization code flow)见 `tech/27-oauth-login.md`
 2. **Persistence:** search history, saved places, applications, job-alert queue (`/api/me/*`); saved/compare are catalog-recruitment only (domain snapshots → 400 `NOT_PERSISTABLE`); guest Recent is browser-localStorage
-3. **Public reads:** `/api/pois`, `/api/search`, `/api/suggest` — Postgres first, offline drops fallback, 30s cache; spatial clip via `geom && ST_MakeEnvelope` + `ST_DWithin` (PostGIS)
+3. **Public reads:** `/api/pois`, `/api/search`, `/api/suggest` — Work mode is strict DB-only (Postgres; no DB/failure/empty result → empty list), Domain mode uses `hz_pois` in Hangzhou plus the active map engine outside; public cache is 30s; spatial clip uses `geom && ST_MakeEnvelope` + `ST_DWithin` (PostGIS)
 4. **Loading states:** map-shell lazy-loads (`next/dynamic`, `ssr: false`); viewport loader debounces 800ms with per-batch epoch guards
 
 ## Contributing

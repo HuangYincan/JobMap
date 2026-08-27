@@ -143,7 +143,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
      panel chrome 保持 `--soft-strong`);组件开发技能见
      `.claude/skills/liquid-glass-components/` 与 `.claude/skills/frontend-component-dev/`
    - 引入新组件库前必须按 CONTRIBUTING 门禁审查(源码/许可证/安全/SSR 体积/记录理由);
-     `server/package.json` 当前依赖仅 next/pg/react/react-dom,不要凭空引用未安装依赖
+     `server/package.json` 当前运行时依赖包括 Next/React/ReactDOM/pg、MCP SDK、DOMPurify 与 marked；不要凭空引用未安装依赖，也不要把现有依赖当作格式化或 lint 工具链
    - 详见 `tech/07-frontend-design-system.md`
 
 3. **遵循 Apple 设计风格**:
@@ -177,7 +177,9 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
    - 详见 `tech/07-frontend-design-system.md`
 
 4. **遵循规范**:
-   - 代码风格:ESLint + Prettier(前端),Black(Python)
+   - TypeScript/React:以 `server/package.json` 中的 `npm run typecheck` 和 `npm test` 为可执行门禁；保持仓库现有 CSS Modules 与 2 空格风格。
+   - 当前没有 ESLint 配置或 `lint` script，也没有 Prettier 配置/依赖；不要声称或运行不存在的 ESLint/Prettier 门禁。
+   - Python: `crawler/pyproject.toml` 未声明 Black 依赖或配置；使用现有 `make test-unit`（`unittest discover`）验证 importer，不臆造 Black 门禁。
    - 命名约定:组件用 PascalCase,函数用 camelCase,数据库表用 snake_case
    - 注释:复杂逻辑必须注释,简单代码不过度注释
 
@@ -187,7 +189,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
    - **布局示意图**记录到对应 Phase 的实施文档中
 
 6. **编写测试**:
-   - 单元测试/契约测试:`server/tests/`(Next.js,`node --test`)+ `crawler/tests/`(pytest,`make test-unit`)
+   - 单元测试/契约测试:`server/tests/`(Node `node --test`)+ `crawler/tests/`(Python `unittest`,通过 `make test-unit`)
    - DB 集成测试:`tests/integration/db/test_migrations.sh`(`make test-integration`)
    - E2E:Playwright E2E 尚未实现(见 README deferred 清单)
 
@@ -357,7 +359,7 @@ make refresh-radar    # 下载已审查 radar 快照、重映射 drops、校验 
 make geocode-sites    # 城市文本站点解析为真实办公点(需 AMAP_WEB_KEY + BAIDU/TENCENT 兜底 key;--dry-run 只列计划)
 ```
 
-Server 侧(`cd server`):`npm test`(1610 测试 / 1608 pass / 2 skip,2026-08-24)、`npm run typecheck`、
+Server 侧(`cd server`):`npm test`(1689 测试 / 1686 pass / 0 fail / 3 skip,2026-08-27,commit `d899b3f` 快照)、`npm run typecheck`、
 `npm run dev` / `build` / `start`。写 Postgres 的数据命令
 (`npm run import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)
 需要 `server/.env.local` 的 `DATABASE_URL`(绝不打印、不提交)，个别还需 `AMAP_WEB_KEY`(geocode 另可配 `BAIDU_MAP_AK` / `TENCENT_MAP_KEY` 兜底)。

@@ -74,12 +74,15 @@ ALIYUN_ACCESS_KEY_ID=replace-me
 ALIYUN_ACCESS_KEY_SECRET=replace-me
 ALIYUN_SMS_SIGN_NAME=replace-me
 ALIYUN_SMS_TEMPLATE_CODE=replace-me
+# Optional template {min} value; defaults to 5. Keep it aligned with the template text.
+ALIYUN_SMS_TEMPLATE_MINUTES=5
 ```
 
 Email OTP goes out for real via Resend (`RESEND_API_KEY`). Phone OTP goes
-out for real via Aliyun SMS Verification Service (`ALIYUN_*` four-set,
-template param `{"code": "..."}` direct-value mode) — both codes are
-random 6-digit; never log codes or secrets.
+out for real via Aliyun SMS Verification Service (`ALIYUN_*` four-set, with
+optional `ALIYUN_SMS_TEMPLATE_MINUTES`; the template params are
+`{"code": "...", "min": "..."}` direct values) — both codes are random
+6-digit; never log codes or secrets.
 
 ### 第三方登录 (OAuth, tech/27)
 
@@ -114,24 +117,23 @@ variables are **server secrets: never commit or log**.
 
 ### API Configuration
 ```bash
-# API base URL (for frontend to call backend)
-# Default: Same origin in production
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api
-
-# Rate limiting (requests per minute)
-API_RATE_LIMIT=60
-
-# Maximum query results per request
-API_MAX_PAGE_SIZE=100
+# API base URL prefix for the frontend client.
+# Leave empty for same-origin deployment. The client appends /api/... itself,
+# so do not include the trailing /api or requests become /api/api/....
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
 ```
 
-### Feature Flags (Phase 3+)
-```bash
-# Enable experimental features
-NEXT_PUBLIC_FEATURE_SAVED_MAPS=false
-NEXT_PUBLIC_FEATURE_SEARCH=false
-NEXT_PUBLIC_FEATURE_AI_ASSISTANT=false
-```
+`NEXT_PUBLIC_API_BASE_URL` is consumed by `server/src/lib/api.ts`; its request
+paths already begin with `/api/`. Use only an origin (or a deployment prefix
+that does not already end in `/api`) here.
+
+### Feature Flags (reserved; not implemented)
+
+No generic `API_*` or `NEXT_PUBLIC_FEATURE_*` runtime switches are currently
+read by the application. The former `API_RATE_LIMIT`, `API_MAX_PAGE_SIZE`, and
+`NEXT_PUBLIC_FEATURE_*` examples are intentionally not exposed as usable
+configuration; route-specific limits and feature availability remain defined
+by the code and API contracts.
 
 ## Geocode 兜底链(REST,服务端秘密)
 

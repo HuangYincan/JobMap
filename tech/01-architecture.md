@@ -1,7 +1,7 @@
 # 01 - Target Architecture
 
 > **Status:** architecture contract; Phase 1–4 implemented and merged into `dev`
-> **Last reviewed:** 2026-08-21
+> **Last reviewed:** 2026-08-27
 
 ## Current Repository Fact
 
@@ -10,10 +10,10 @@ The platform is implemented and runs on `dev`: an importer Python package with d
 ## MVP Direction
 
 - **Application:** Next.js 16.3.1 App Router, TypeScript 5.9.3, React 19.2.8, Node 22. The map shell and API routes live in `server/`; styling is CSS Modules (Tailwind was never adopted — see [06-decisions.md](06-decisions.md) ADR-003).
-- **Database:** PostgreSQL 16 with PostGIS 3.4 is mandatory. PostGIS is the spatial system of record; pgvector is deferred. Migrations `001`–`016` are live-applied on the local Docker database.
-- **Data import:** Python 3.12 with uv in `crawler/`. The manifest validator and local-fixture normalizer exist; acquisition follows source-review records (`tech/roles/data/etl/`), and scheduled crawling is a later, source-reviewed capability.
-- **Map:** Amap is the initial adapter. Domain mode inside Hangzhou reads the local `hz_pois` table via `/api/pois/domain-local` (zero AMap calls); outside Hangzhou it falls back to the AMap browser API. Work mode reads the recruitment catalog from PostGIS (`loadServerCatalog`). Runtime multi-engine support is deferred.
-- **Authentication:** self-built demo OTP + OAuth stub (no NextAuth/Clerk — see [06-decisions.md](06-decisions.md)). The application-level `map_access`/`can_access_map` seam defines the authorization boundary.
+- **Database:** PostgreSQL 16 with PostGIS 3.4 is mandatory. PostGIS is the spatial system of record; pgvector is deferred. Migrations `001`–`019` are the current ordered migration set (the runner records applied checksums in `schema_migrations`; migration `017` stores avatar bytes, `018` stores user memories, and `019` enforces memory uniqueness).
+- **Data import:** Python 3.12 with uv in `crawler/`. The manifest validator, local-fixture normalizer, reviewed acquisition adapters, and import-plan validation exist; public Work reads are strict DB-only through `loadServerCatalog` (no database/query failure returns an empty list, not seed data). Acquisition follows source-review records (`tech/roles/data/etl/`), and scheduled crawling remains a later, source-reviewed capability.
+- **Map:** Amap is the initial adapter. Domain mode inside Hangzhou reads the local `hz_pois` table via `/api/pois/domain-local` (zero AMap calls); outside Hangzhou it uses the active map engine's `searchPOI` provider, with `amap-api` as the SSR/test/no-provider fallback. Work mode reads the recruitment catalog from PostGIS (`loadServerCatalog`) and does not fall back to offline drops. Runtime multi-engine support is implemented for the registered engines; adding further adapters remains deferred.
+- **Authentication:** self-built password, OTP, and OAuth authorization-code flows (provider configuration is optional; demo login is gated and non-production-only; no NextAuth/Clerk — see [06-decisions.md](06-decisions.md)). The application-level `map_access`/`can_access_map` seam defines the authorization boundary.
 
 ## System Boundaries
 
@@ -76,4 +76,4 @@ tech/roles/             # internal evidence records
 
 ## Phase 1 Required Decisions
 
-Resolved: supported Node/Python versions (Node 22, Python 3.12), auth strategy (self-built OTP + OAuth stub), application-vs-RLS enforcement (application-level), migration convention (ordered SQL + ledger), manifest validator, source registry format, environment variables, and local development topology. ORM, cache, pgvector, LLM provider, production deployment, and multi-engine map support remain undecided.
+Resolved: supported Node/Python versions (Node 22, Python 3.12), auth strategy (self-built password/OTP + OAuth authorization-code flow with gated demo fallback), application-vs-RLS enforcement (application-level), migration convention (ordered SQL + ledger), manifest validator, source registry format, environment variables, and local development topology. ORM, distributed cache, pgvector, LLM provider selection, production deployment, and further map-engine adapters remain undecided or deferred.

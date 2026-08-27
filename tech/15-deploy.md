@@ -57,7 +57,7 @@ Verified 2026-08-16 against `postgis/postgis:16-3.4`: ledger `001`–`010`, `mak
 
 **2026-08-17 re-import:** `npm run import:seed:apply` live-wrote **137 companies / 137 sites / 240 open positions** (official-career + radar + portals). The DB read path keeps ungeocoded radar sites off the map. `npm run geocode:sites:apply` (2026-08-17) resolved **65 city-list radar sites to real Hangzhou offices** via AMap place-text search (curated in `data/recruitment/geocode-overrides.json`; ~21 companies with no verifiable office stay off). Re-run `import:seed:apply` after a geocode apply so PostGIS picks the new coordinates up.
 
-Account routes then write sessions / Recent / Saved / applications / queued notifications. After `npm run import:seed:apply`, public list APIs and the Work map read imported rows via `loadServerCatalog`. Without a database they stay on the seed. Live `EXPLAIN` notes are in `tech/13-db-query-notes.md`.
+Account routes then write sessions / Recent / Saved / applications / queued notifications. After `npm run import:seed:apply`, public list APIs and the Work map read imported rows via `loadServerCatalog`. Public Work reads are strict DB-only: without a database (or on DB failure) they return an empty list — there is no offline seed fallback (seed examples are archived under `tech/backup/seed-data`). Live `EXPLAIN` notes are in `tech/13-db-query-notes.md`.
 
 `make db-down` stops the container. Volume `postgres_data` keeps data until you `docker compose down -v`.
 
