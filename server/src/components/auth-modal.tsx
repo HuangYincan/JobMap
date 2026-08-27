@@ -73,6 +73,133 @@ function SocialIcon({ id }: { id: SocialProvider }) {
   );
 }
 
+function DomainMapArtwork() {
+  return (
+    <svg
+      className={styles.brandArt}
+      viewBox="0 0 360 360"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <defs>
+        <linearGradient id="brandSurface" x1="42" y1="28" x2="318" y2="338" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#1E5B7D" />
+          <stop offset="0.52" stopColor="#123F5C" />
+          <stop offset="1" stopColor="#0A293E" />
+        </linearGradient>
+        <linearGradient id="brandRoute" x1="54" y1="264" x2="286" y2="72" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#A6F1D2" />
+          <stop offset="0.5" stopColor="#62D9F4" />
+          <stop offset="1" stopColor="#D8FBFF" />
+        </linearGradient>
+        <linearGradient id="brandPin" x1="-22" y1="-26" x2="24" y2="38" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#D9FCFF" />
+          <stop offset="1" stopColor="#5EDAF1" />
+        </linearGradient>
+        <filter id="brandShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="18" stdDeviation="16" floodColor="#061B2A" floodOpacity="0.34" />
+        </filter>
+        <clipPath id="brandClip">
+          <rect x="22" y="22" width="316" height="316" rx="54" />
+        </clipPath>
+      </defs>
+
+      <rect
+        className={styles.brandSurface}
+        x="22"
+        y="22"
+        width="316"
+        height="316"
+        rx="54"
+        fill="url(#brandSurface)"
+        stroke="#DDF8FF"
+        strokeOpacity="0.28"
+        filter="url(#brandShadow)"
+      />
+
+      <g clipPath="url(#brandClip)" opacity="0.9">
+        <path
+          className={styles.mapContour}
+          d="M-20 104C38 78 82 86 124 64c42-22 86-42 144-18 42 17 73 10 112-12"
+        />
+        <path
+          className={styles.mapContour}
+          d="M-32 158c58-27 111-4 155-22 51-21 79-62 139-47 38 10 67 5 102-19"
+        />
+        <path
+          className={styles.mapContour}
+          d="M-28 238c46-22 85-18 128 2 37 17 83 7 113-17 31-25 62-32 118-6"
+        />
+        <path
+          className={styles.mapContour}
+          d="M-16 300c62-18 91-6 129-13 57-11 80-42 128-48 32-4 62 7 97 30"
+        />
+        <path className={styles.mapRoad} d="M42 12 168 350M146 4 266 354M286 12 124 350" />
+        <path className={styles.mapRoad} d="m-12 198 348-96M-12 278l348-92" />
+        <path className={styles.mapBoundary} d="M68 22c20 55 16 102 48 142 28 34 24 75 4 174" />
+        <path className={styles.mapBoundary} d="M276 22c-28 34-37 68-25 102 16 46 0 92-35 118-24 18-33 52-27 96" />
+        <circle className={styles.mapPoint} cx="76" cy="102" r="3" />
+        <circle className={styles.mapPoint} cx="286" cy="236" r="3" />
+        <circle className={styles.mapPoint} cx="118" cy="302" r="3" />
+      </g>
+
+      <path
+        className={styles.routeHalo}
+        d="M58 270c20-28 44-45 74-55 39-13 45-43 68-67 24-25 48-20 61-47 9-18 20-31 42-44"
+        stroke="#6DE1F4"
+        strokeOpacity="0.22"
+        strokeWidth="22"
+        strokeLinecap="round"
+      />
+      <path
+        className={styles.route}
+        d="M58 270c20-28 44-45 74-55 39-13 45-43 68-67 24-25 48-20 61-47 9-18 20-31 42-44"
+        stroke="url(#brandRoute)"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray="18 11"
+      />
+
+      <g className={styles.routeNodeOne}>
+        <circle cx="58" cy="270" r="10" fill="#A6F1D2" fillOpacity="0.2" />
+        <circle cx="58" cy="270" r="4.5" fill="#F3FFFB" />
+      </g>
+      <g className={styles.routeNodeTwo}>
+        <circle cx="132" cy="215" r="8" fill="#66DDF3" fillOpacity="0.2" />
+        <circle cx="132" cy="215" r="3.5" fill="#D8FBFF" />
+      </g>
+      <g className={styles.routeNodeThree}>
+        <circle cx="200" cy="148" r="8" fill="#66DDF3" fillOpacity="0.2" />
+        <circle cx="200" cy="148" r="3.5" fill="#D8FBFF" />
+      </g>
+
+      <g transform="translate(303 57)">
+        <circle className={styles.signalDot} r="4" fill="#A6F1D2" />
+        <circle className={styles.signalRing} r="12" stroke="#A6F1D2" strokeOpacity="0.32" />
+      </g>
+
+      <g transform="translate(245 103)">
+        <circle className={styles.focusRing} r="43" stroke="#D8FBFF" strokeOpacity="0.22" />
+        <g className={styles.focusMarker}>
+          <path
+            d="M0-31c-18 0-32 14-32 31 0 24 32 51 32 51S32 24 32 0c0-17-14-31-32-31Z"
+            fill="url(#brandPin)"
+            stroke="#F3FFFF"
+            strokeOpacity="0.8"
+          />
+          <circle r="10" fill="#123F5C" />
+          <circle r="4" fill="#E8FFFF" />
+        </g>
+      </g>
+
+      <path className={styles.crosshair} d="M245 45v18M245 143v18M187 103h18M285 103h18" />
+      <circle className={styles.crosshairCore} cx="245" cy="103" r="3" fill="#F3FFFF" />
+    </svg>
+  );
+}
+
 export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: AuthModalProps) {
   const titleId = useId();
   const [tab, setTab] = useState<AuthTab>("phone");
@@ -387,9 +514,6 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
         </div>
       )}
       <div className={styles.overlay} onClick={onClose} role="presentation">
-      <div className={styles.orbA} aria-hidden="true" />
-      <div className={styles.orbB} aria-hidden="true" />
-      <div className={styles.orbC} aria-hidden="true" />
       <div
         className={styles.card}
         role="dialog"
@@ -404,10 +528,7 @@ export function AuthModal({ open, lang, onClose, onSignedIn, initialError }: Aut
         </button>
 
         <aside className={styles.promo} aria-hidden="true">
-          <div className={styles.promoGlass}>
-            <div className={styles.mark}>DM</div>
-            <p className={styles.promoName}>Domain Map</p>
-          </div>
+          <DomainMapArtwork />
         </aside>
 
         <div className={styles.form}>
