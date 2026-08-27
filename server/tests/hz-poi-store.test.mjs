@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { hzPoiSpatialSql, hzRowToDomainPoi, parseBoundsParam, loadHzPoiSuggestions } from '../src/lib/hz-poi-store.ts';
+import {
+  hzPoiSpatialSql,
+  hzRowToDomainPoi,
+  isAllowedHangzhouBounds,
+  parseBoundsParam,
+  loadHzPoiSuggestions,
+} from '../src/lib/hz-poi-store.ts';
 
 test('hzPoiSpatialSql: bbox + zoom + q + categories + common 过滤', () => {
   const { where, params } = hzPoiSpatialSql({
@@ -112,13 +118,11 @@ test('hzRowToDomainPoi: cost → priceLevel(与 normalizeAMapPOI 同口径)', ()
   assert.equal(poi.rating, 4.2);
 });
 
-test('parseBoundsParam: 复用现有解析', () => {
-  assert.deepEqual(parseBoundsParam('120.0,30.2,120.2,30.3'), {
-    west: 120.0, south: 30.2, east: 120.2, north: 30.3,
-  });
-  assert.equal(parseBoundsParam('bad'), null);
-  assert.equal(parseBoundsParam('120,30'), null);
-  assert.equal(parseBoundsParam('118.3,29.1,,30.7'), null); // 空段 → 0 的坑
+test('isAllowedHangzhouBounds: missing/invalid/outside extents are rejected', () => {
+  assert.equal(isAllowedHangzhouBounds(null), false);
+  assert.equal(isAllowedHangzhouBounds(parseBoundsParam('120,30,120.2,30.2')), true);
+  assert.equal(isAllowedHangzhouBounds(parseBoundsParam('118.2,29.1,120.2,30.3')), false);
+  assert.equal(isAllowedHangzhouBounds(parseBoundsParam('118.3,29.1,120.8,30.7')), true);
 });
 
 // ---- loadHangzhouPoisFromDb: 钳位/总数/回退(池注入) ----

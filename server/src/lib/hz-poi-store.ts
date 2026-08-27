@@ -6,9 +6,9 @@
 // 无 DATABASE_URL → 返回 null(调用方走回退)。
 // ============================================================
 
-import { getPool } from './db.ts';
+import { getPool, queryPublicRead } from './db.ts';
 import type { DomainPOI, POILocation } from './types.ts';
-import { parseBoundsParam, type ViewportBounds } from './viewport-search.ts';
+import { HANGZHOU_BBOX, parseBoundsParam, type ViewportBounds } from './viewport-search.ts';
 
 export interface HzPoiQueryOptions {
   /** bbox(GCJ-02) */
@@ -31,6 +31,20 @@ export interface HzPoiResult {
   limit: number;
   results: DomainPOI[];
 }
+
+/** Public domain-local reads are only valid inside the imported Hangzhou extent. */
+export function isAllowedHangzhouBounds(bounds: ViewportBounds | null | undefined): boolean {
+  if (!bounds) return false;
+  return (
+    bounds.west >= HANGZHOU_BBOX.west &&
+    bounds.south >= HANGZHOU_BBOX.south &&
+    bounds.east <= HANGZHOU_BBOX.east &&
+    bounds.north <= HANGZHOU_BBOX.north
+  );
+}
+
+/** Maximum rows returned by one domain-local read, independent of client input. */
+export const HZ_POI_RESULT_LIMIT = 300;
 
 interface HzPoiRow {
   poi_id: string;
@@ -136,15 +150,16 @@ export async function loadHangzhouPoisFromDb(
 ): Promise<HzPoiResult | null> {
   if (!pool) return null;
 
-  // 非法数值(NaN/Infinity)落回默认值;pg 驱动会把 NaN 序列化成字面量
-  // "NaN" 让 Postgres 报错,而 catch 会把它伪装成「无数据」的 200。
-  const limit = Number.isFinite(opts.limit)
-    ? Math.min(300, Math.max(1, Math.floor(opts.limit as number)))
-    : 300;
-  const offset = Number.isFinite(opts.offset)
-    ? Math.min(1000, Math.max(0, Math.floor(opts.offset as number)))
+  // Keep the store itself bounded too: the HTTP route rejects missing/invalid
+  // bounds, while direct callers get the imported extent instead of an accidental full-table read.
+  const boundedOpts = isAllowedHangzhouBounds(opts.bounds) ? opts : { ...opts, bounds: HANGZHOU_BBOX };
+  const limit = Number.isFinite(boundedOpts.limit)
+    ? Math.min(HZ_POI_RESULT_LIMIT, Math.max(1, Math.floor(boundedOpts.limit as number)))
+    : HZ_POI_RESULT_LIMIT;
+  const offset = Number.isFinite(boundedOpts.offset)
+    ? Math.min(1000, Math.max(0, Math.floor(boundedOpts.offset as number)))
     : 0;
-  const { where, params } = hzPoiSpatialSql(opts);
+  const { where, params } = hzPoiSpatialSql(boundedOpts);
 
   // count(*) OVER() 一次拿总数 + 分页窗口
   const sql = `
@@ -157,11 +172,12 @@ export async function loadHangzhouPoisFromDb(
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
 
   try {
-    const result = await pool.query<HzPoiRow>(sql, [...params, limit, offset]);
+    const result = await queryPublicRead<HzPoiRow>(pool, sql, [...params, limit, offset]);
     if (result.rows.length === 0) {
       // OFFSET 越过结果末尾时 count(*) OVER() 不产出行,total 会误报 0;
       // 补一次独立 count 保持契约(调用方用 offset+rows 判「没有更多」)。
-      const countRes = await pool.query<{ n: string }>(
+      const countRes = await queryPublicRead<{ n: string }>(
+        pool,
         `SELECT count(*) AS n FROM hz_pois p ${where}`,
         params,
       );
@@ -213,7 +229,7 @@ export async function loadHzPoiSuggestions(
     ORDER BY p.rating DESC NULLS LAST, jsonb_array_length(p.photos) DESC, p.poi_id
     LIMIT $2`;
   try {
-    const result = await pool.query<HzPoiSuggestionRow>(sql, [`${kw}%`, n]);
+    const result = await queryPublicRead<HzPoiSuggestionRow>(pool, sql, [`${kw}%`, n]);
     return result.rows;
   } catch {
     // 表缺失 / 连接错误 → 走回退

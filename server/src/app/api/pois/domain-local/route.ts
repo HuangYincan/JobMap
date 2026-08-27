@@ -19,7 +19,7 @@
 
 import { NextResponse } from 'next/server';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
-import { loadHangzhouPoisFromDb, parseBoundsParam } from '@/lib/hz-poi-store';
+import { loadHangzhouPoisFromDb, isAllowedHangzhouBounds, parseBoundsParam } from '@/lib/hz-poi-store';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -49,6 +49,21 @@ export async function GET(request: Request) {
   }
 
   const bounds = parseBoundsParam(boundsRaw);
+  // An unbounded hz_pois read can count/sort roughly one million rows. The
+  // public endpoint is intentionally a bounded Hangzhou viewport only.
+  if (!bounds) {
+    return NextResponse.json(
+      { code: 'INVALID_BOUNDS', message: 'bounds must be a finite west,south,east,north bbox' },
+      { status: 400 },
+    );
+  }
+  if (!isAllowedHangzhouBounds(bounds)) {
+    return NextResponse.json(
+      { code: 'BOUNDS_OUT_OF_RANGE', message: 'bounds must stay within the Hangzhou data extent' },
+      { status: 400 },
+    );
+  }
+
   // NaN/Infinity 落回默认值(非法数值经 pg 序列化成 "NaN" 会让 Postgres 报错,
   // 而 catch 会把它伪装成「无数据」的 200 并缓存 30s)
   const zoomNum = zoomRaw !== null ? Number(zoomRaw) : NaN;
