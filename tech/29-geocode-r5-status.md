@@ -180,6 +180,7 @@ cd server && npm run import:seed:apply   # 需 DATABASE_URL(读 server/.env.loca
 | 2026-08-25 | 批次 `20260825-boss-hi-priority-fixes` ws-d-data-completion(`fix/site-place-search`,本文档 v2.1):读路径剔除中心钉后的**数据补全**——占位/无地址带岗位站 →「公司名+城市」地点检索(`cityNameOnlyAddress` / `siteNeedsPlaceSearch` / `pickPlaceSearchPoi`;audit 分类表新增 needsPlaceSearch;apply 主循环并入此类站,place-search 选点 + `ps:` memo 前缀);读路径 isCityCenterPin 过滤不变 |
 | 2026-08-26 | r5 apply 完成:用户执行 Env-only apply,commit `313fc61` 数据落地——135 站占位/中心钉坐标落真实办公点(address/lng/lat 改写);中心钉点 JSON 口径 1330 → **941**(实测,radar 839 / official-career 95 / qqdoc-jobs 7) |
 | 2026-08-26 | 善后批次 `20260826-boss-post-geocode` ws p-cache-snapshot(本文档 v2.2):`MODE_CACHE_VERSION` 18→19(v18 拒绝用例 + 版本历史注记);数据契约测试 `city-center-pins.test.mjs` 计数下限 1000→900(快照基准 941,r5 后 2026-08-26 实测) |
+| 2026-08-27 | 多城扩展批次 `feature/expand-city-pois`(本文档 §2.1 提及的 5 城):重庆入 radar 管线(快照 30 行在招重庆此前整行丢弃)+ 苏州 41 站欠账补齐;增量合并保留 1478 坐标。apply 落 23 站真实办公点(重庆/苏州新站 21 + 小米南京 + 三一广州串味修正);grader `QUALIFIER_SUFFIXES` 加八大区域词(「小米集团华东总部」类此前整候选被拒,南京 35 站 0 解析的根因之一)。5 城残余中心钉 **349 站**按 §4.2 续跑 |
 | (待用户,Env-only) | import:seed:apply(§4.4,把 `313fc61` 新坐标落 DB;不 import 则 `/api/pois` 继续吐旧中心钉点)→ Nominatim 海外执行(§7);r5 apply 多日与 UI 验证已随 2026-08-26 落地完成 |
 
 ## 7. Env-only deferred 清单(用户执行)
