@@ -12,9 +12,9 @@ import { industriesOf } from '../src/lib/recruitment-adapters/qqdoc-official.ts'
 import {
   dedupeSourceCompanies,
   planRecruitmentImport,
-  SOURCE_META,
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
+import { SOURCE_META } from '../src/lib/recruitment-provenance.ts';
 
 // Fixtures are self-contained (no dependency on the checked-in data dir) and
 // mirror the REAL embj-* drop shape (2026-08-21): slug embj-* / name / source

@@ -1,31 +1,55 @@
 // ============================================================
-// Position freshness signals (backend of tech/17 proposal)
+// Position freshness and authenticity signals.
 //
-// radar-*  → 「正在校招」: mapped xiaozhao-radar rows (real apply links)
-// portal-* → 「官网直投」: curated verified official career portals
-// These are NOT job JD — they are "this company is recruiting now" signals.
-// 2026-08-17 决策 (tech/18 §A1): 不做复杂新鲜度徽标, 呈现上只突出「在招中」信号,
-// 过期岗位自动隐藏。tech/17 提案已存档; 本文件判断函数仍用于真实岗位过滤
-// (isAuthenticPositionId, 只留 radar-*/portal-* 在招行)。
+// Authenticity is primarily a source-provenance decision. External-id prefixes
+// remain only as a compatibility rule for the historical official-career
+// portal rows and for source-less legacy records; adding a new source must be
+// done in recruitment-provenance.ts, not by scattering another prefix check.
 // ============================================================
+
+import { sourceAuthenticityPolicy } from './recruitment-provenance.ts';
 
 export type FreshnessKind = 'radar' | 'portal' | 'seed';
 
+const AUTHENTIC_ID_PREFIXES: ReadonlyArray<[string, FreshnessKind]> = [
+  ['radar-', 'radar'],
+  ['portal-', 'portal'],
+];
+
 export function positionFreshness(id: string | undefined): FreshnessKind {
   if (!id) return 'seed';
-  if (id.startsWith('radar-')) return 'radar';
-  if (id.startsWith('portal-')) return 'portal';
-  return 'seed';
+  return AUTHENTIC_ID_PREFIXES.find(([prefix]) => id.startsWith(prefix))?.[1] ?? 'seed';
 }
 
 /**
- * Authentic positions only: radar snapshot rows and curated verified portals.
- * Seed / official-career example jobs are development scaffolding and are not
- * shown on the map (decision 2026-08-17: work mode shows real data only).
+ * Backward-compatible identity-only check. New import paths should call
+ * isAuthenticPositionRecord so registered source provenance wins.
  */
 export function isAuthenticPositionId(id: string | undefined): boolean {
-  const kind = positionFreshness(id);
-  return kind === 'radar' || kind === 'portal';
+  return positionFreshness(id) !== 'seed';
+}
+
+export interface PositionProvenance {
+  externalId?: string;
+  source?: string;
+}
+
+/**
+ * Decide whether a normalized position may be written as live recruitment data.
+ *
+ * - `source` policy: every position from that reviewed source is authentic;
+ * - `id-prefix` policy: the source contains mixed scaffold and portal rows, so
+ *   only the centrally defined portal/radar identity is eligible;
+ * - `none`: never make a position live;
+ * - missing source: preserve the legacy radar/portal behavior for old callers.
+ */
+export function isAuthenticPositionRecord(position: PositionProvenance): boolean {
+  const source = position.source?.trim();
+  if (!source) return isAuthenticPositionId(position.externalId);
+  const policy = sourceAuthenticityPolicy(source);
+  if (policy === 'source') return true;
+  if (policy === 'id-prefix') return isAuthenticPositionId(position.externalId);
+  return false;
 }
 
 export interface FreshnessSummary {

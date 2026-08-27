@@ -16,6 +16,8 @@ export interface SourcePosition {
   externalId: string;
   title: string;
   siteId: string;
+  /** Source code that supplied this position record. */
+  source?: string;
   family: JobFamily;
   taxonomy?: JobTaxonomy;
   department?: string;
@@ -63,13 +65,18 @@ export interface RecruitmentAdapter {
 /** 现有 RecruitmentPOI → 源记录（seed / 回写库表）。一 POI 一职场。 */
 export function poiToSourceCompany(poi: RecruitmentPOI): SourceCompany {
   const siteId = poi.sites?.[0]?.id ?? `${poi.id}-site`;
-  const site: CompanySite = poi.sites?.[0] ?? {
-    id: siteId,
-    name: poi.name,
-    location: poi.location,
-    careerUrl: poi.company.careerUrl,
-    logoUrl: poi.company.logoUrl,
-  };
+  const site: CompanySite = poi.sites?.[0]
+    ? {
+        ...poi.sites[0],
+        location: poi.sites[0].location ? { ...poi.sites[0].location } : undefined,
+      }
+    : {
+        id: siteId,
+        name: poi.name,
+        location: poi.location,
+        careerUrl: poi.company.careerUrl,
+        logoUrl: poi.company.logoUrl,
+      };
   return {
     slug: poi.id.includes(':') ? poi.id.slice(0, poi.id.indexOf(':')) : poi.id,
     name: poi.company.name,

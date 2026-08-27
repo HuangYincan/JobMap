@@ -2,6 +2,7 @@
 // Live insert waits on DATABASE_URL + migrations 002/006. Tests cover
 // the dry-run path only.
 
+import { createHash } from 'node:crypto';
 import { getPool } from './db.ts';
 import type { SourceCompany, SourcePosition } from './recruitment-source.ts';
 import { TIER_DEFAULT } from './lod.ts';
@@ -13,9 +14,10 @@ import { qqdocJobsAdapter } from './recruitment-adapters/qqdoc-jobs.ts';
 import { qqdocOfficialAdapter } from './recruitment-adapters/qqdoc-official.ts';
 import { radarAdapter } from './recruitment-adapters/radar.ts';
 import { shixisengAdapter } from './recruitment-adapters/shixiseng.ts';
-import { isAuthenticPositionId } from './freshness.ts';
+import { isAuthenticPositionRecord } from './freshness.ts';
 import { HANGZHOU_DISTRICTS } from './spatial-filters.ts';
 import type { CompanySite, JobTaxonomy } from './types.ts';
+import { sourceMetadataFor, SOURCE_META } from './recruitment-provenance.ts';
 
 export interface ImportIssue {
   slug: string;
@@ -39,84 +41,38 @@ function issue(slug: string, field: string, message: string): ImportIssue {
 }
 
 /**
- * URL scheme 归一断言 (2026-08-20 scan #4): URL 字段必须以 http(s):// 开头,
- * 且不含重复 scheme (https://https://… 直接失败 — radar 2 文件 4 处双前缀
- * 事故, JD 面板「投递」链接不可用)。undefined/null/空串 (可选字段缺省) 视为
- * 合法, 只校验实际存在的值。
+ * URL 语义校验：scheme、主机和 pathname 必须可解析；拒绝重复 scheme、dot
+ * path segment，以及 HTML 文件后继续拼接另一段路径。HTTP URL 能被 URL
+ * 构造器接受并不代表它是可用投递链接，因此这里保留路径级质量闸门。
  */
-export function hasValidUrlScheme(raw: string | undefined): boolean {
+export function hasValidUrlScheme(raw: string | null | undefined): boolean {
   if (!raw) return true;
-  return /^https?:\/\//.test(raw) && !/^https?:\/\/https?:\/\//.test(raw);
+  if (raw.trim() !== raw || !/^https?:\/\//i.test(raw) || /^https?:\/\/https?:\/\//i.test(raw)) {
+    return false;
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (!parsed.hostname) return false;
+
+  let pathname: string;
+  try {
+    pathname = decodeURIComponent(parsed.pathname);
+  } catch {
+    return false;
+  }
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.some((segment) => segment === '.' || segment === '..')) return false;
+  const htmlFile = /\.(?:html?|shtml?)$/i;
+  const fileIndex = segments.findIndex((segment) => htmlFile.test(segment));
+  return fileIndex === -1 || fileIndex === segments.length - 1;
 }
 
 /** 首批目标城市（tech/18 D2）。地址解析只认这些城市的名字。 */
 const TARGET_CITIES = ['北京', '上海', '广州', '深圳', '成都', '武汉', '杭州'] as const;
-
-/**
- * drop 自带 source code → sources 表元数据（sources.code 约束 ^[a-z][a-z0-9-]*$）。
- * 缺失 source 的 drop 回退 'seed' code；未收录的 code 保留其 code、元数据用
- * seed 默认值 —— 不臆造 attribution（取值与 tech/roles/data/etl/ 各源评审一致）。
- */
-export const SOURCE_META: Record<string, { originUri: string; authorizationBasis: string; accessMethod: string; attribution: string; retention: string; deletion: string }> = {
-  seed: {
-    // 2026-08-26 起 seed 示例数据已归档 tech/backup/seed-data(不再作为导入源);
-    // 此处保留 provenance 供历史行(早期 import:seed 写入的 source_id='seed')追溯。
-    originUri: 'local:WORK_SEED (archived 2026-08-26: tech/backup/seed-data/work-seed.json)',
-    authorizationBasis: 'curated-public',
-    accessMethod: 'manual',
-    attribution: 'Domain Map curated seed',
-    retention: 'until-replaced',
-    deletion: 'delete-with-source',
-  },
-  'official-career': {
-    originUri: 'local:server/data/recruitment/official-career/',
-    authorizationBasis: 'curated-public',
-    accessMethod: 'manual',
-    attribution: 'Domain Map curated official career pages',
-    retention: 'until-replaced',
-    deletion: 'delete-with-source',
-  },
-  'feishu-ats': {
-    originUri: 'https://*.jobs.feishu.cn',
-    authorizationBasis: 'public-api',
-    accessMethod: 'polite-json-api',
-    attribution: 'Feishu ATS public job search API (tech/roles/data/etl/feishu-ats.md)',
-    retention: 'until-replaced',
-    deletion: 'delete-with-source',
-  },
-  'xiaozhao-radar': {
-    originUri: 'https://raw.githubusercontent.com/jiabaobei/xiaozhao-radar/main/jobs.json',
-    authorizationBasis: 'apache-2.0',
-    accessMethod: 'public-file',
-    attribution: 'xiaozhao-radar contributors (Apache-2.0); Domain Map field mapping',
-    retention: 'until-replaced',
-    deletion: 'delete-with-source',
-  },
-  'qqdoc-official': {
-    originUri: 'Tencent Docs public share (27届秋招信息汇总, docs.qq.com)',
-    authorizationBasis: 'public-share',
-    accessMethod: 'manual-curation',
-    attribution: 'Tencent Docs public share curated by user + boss extraction',
-    retention: 'until-replaced',
-    deletion: 'delete-with-source',
-  },
-  'qqdoc-jobs': {
-    originUri: 'Tencent Docs public share (27届秋招信息汇总, docs.qq.com) + apply-link ATS/official pages',
-    authorizationBasis: 'public-share + public-api',
-    accessMethod: 'manual-curation + polite-etl',
-    attribution: 'Tencent Docs public share curated by user + boss extraction; jobs fetched politely from apply links',
-    retention: 'until-replaced',
-    deletion: 'delete-with-source',
-  },
-  'embodied-jobs': {
-    originUri: 'https://raw.githubusercontent.com/Octoday-Hub/Embodied-AI/main/topics/02-jobs.md',
-    authorizationBasis: 'published-github-file',
-    accessMethod: 'public-file',
-    attribution: 'Octoday-Hub/Embodied-AI contributors (community-maintained list; no LICENSE file); Domain Map field mapping',
-    retention: 'until-replaced',
-    deletion: 'delete-with-source',
-  },
-};
 
 /**
  * site 城市名（写入 company_sites.city）：site.city 字段优先（WS2 drop 形状）；
@@ -222,11 +178,21 @@ export function dedupeSourceCompanies(input: SourceCompany[]): SourceCompany[] {
 }
 
 function cloneCompany(company: SourceCompany): SourceCompany {
+  const companySource = company.source;
   return {
     ...company,
     industries: [...company.industries],
-    sites: company.sites.map((site) => ({ ...site, location: site.location ? { ...site.location } : undefined })),
-    positions: company.positions.map((pos) => ({ ...pos, majors: pos.majors ? [...pos.majors] : undefined, skills: pos.skills ? [...pos.skills] : undefined })),
+    sites: company.sites.map((site) => ({
+      ...site,
+      source: site.source ?? companySource,
+      location: site.location ? { ...site.location } : undefined,
+    })),
+    positions: company.positions.map((pos) => ({
+      ...pos,
+      source: pos.source ?? companySource,
+      majors: pos.majors ? [...pos.majors] : undefined,
+      skills: pos.skills ? [...pos.skills] : undefined,
+    })),
   };
 }
 
@@ -237,12 +203,23 @@ function mergeCompany(target: SourceCompany, extra: SourceCompany): void {
   if (!target.logoUrl && extra.logoUrl) target.logoUrl = extra.logoUrl;
   if (!target.logoEmoji && extra.logoEmoji) target.logoEmoji = extra.logoEmoji;
   for (const site of extra.sites) {
-    if (!target.sites.some((row) => row.id === site.id)) target.sites.push({ ...site });
+    if (!target.sites.some((row) => row.id === site.id)) {
+      target.sites.push({
+        ...site,
+        source: site.source ?? extra.source,
+        location: site.location ? { ...site.location } : undefined,
+      });
+    }
   }
   const seen = new Set(target.positions.map((pos) => pos.externalId));
   for (const pos of extra.positions) {
     if (!seen.has(pos.externalId)) {
-      target.positions.push({ ...pos });
+      target.positions.push({
+        ...pos,
+        source: pos.source ?? extra.source,
+        majors: pos.majors ? [...pos.majors] : undefined,
+        skills: pos.skills ? [...pos.skills] : undefined,
+      });
       seen.add(pos.externalId);
     }
   }
@@ -359,7 +336,117 @@ export function positionTaxonomy(pos: SourcePosition): JobTaxonomy {
   };
 }
 
-/** Upsert a validated plan. No DATABASE_URL → no-op (tests / laptop without Docker). */
+const IMPORT_INPUT_VERSION = 'recruitment-plan-v1';
+const IMPORT_PARSER_VERSION = 'recruitment-import/2.0.0';
+
+function hashJson(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+/** Return a source-supplied timestamp without inventing one at apply time. */
+function normalizeAuditTimestamp(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const value = raw.trim();
+  if (!value) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  return Number.isNaN(Date.parse(value)) ? null : value;
+}
+
+interface AuditPosition {
+  companySlug: string;
+  siteId: string;
+  position: SourcePosition;
+  sourceCode: string;
+  retrievedAt: string;
+  expiresAt: string | null;
+  contentHash: string;
+  recordVersion: string;
+}
+
+interface AuditFailure {
+  externalId: string;
+  companySlug: string;
+  sourceCode: string;
+  reason: string;
+}
+
+interface AuditSourceBatch {
+  records: AuditPosition[];
+  failures: AuditFailure[];
+}
+
+function effectiveSource(position: SourcePosition, company: SourceCompany): string {
+  return position.source?.trim() || company.source?.trim() || 'seed';
+}
+
+function prepareAudit(plan: SourceCompany[]): Map<string, AuditSourceBatch> {
+  const batches = new Map<string, AuditSourceBatch>();
+  const ensure = (sourceCode: string): AuditSourceBatch => {
+    const existing = batches.get(sourceCode);
+    if (existing) return existing;
+    const created: AuditSourceBatch = { records: [], failures: [] };
+    batches.set(sourceCode, created);
+    return created;
+  };
+
+  for (const company of plan) {
+    // A source with no eligible positions still gets a zero-record import run;
+    // that makes an empty/filtered batch observable without fabricating records.
+    ensure(company.source?.trim() || 'seed');
+    for (const site of company.sites) ensure(site.source?.trim() || company.source?.trim() || 'seed');
+    for (const position of company.positions) {
+      const sourceCode = effectiveSource(position, company);
+      const batch = ensure(sourceCode);
+      const retrievedAt = normalizeAuditTimestamp(position.retrievedAt);
+      const expiresAt = normalizeAuditTimestamp(position.expiresAt);
+      if (!retrievedAt) {
+        batch.failures.push({
+          externalId: position.externalId,
+          companySlug: company.slug,
+          sourceCode,
+          reason: 'missing-or-invalid-retrievedAt',
+        });
+        continue;
+      }
+      if (position.expiresAt && !expiresAt) {
+        batch.failures.push({
+          externalId: position.externalId,
+          companySlug: company.slug,
+          sourceCode,
+          reason: 'invalid-expiresAt',
+        });
+        continue;
+      }
+      const evidence = {
+        entityType: 'position',
+        companySlug: company.slug,
+        siteId: position.siteId,
+        externalId: position.externalId,
+        source: sourceCode,
+        title: position.title,
+        family: position.family,
+        status: position.status,
+      };
+      const contentHash = hashJson({ source: sourceCode, position });
+      batch.records.push({
+        companySlug: company.slug,
+        siteId: position.siteId,
+        position,
+        sourceCode,
+        retrievedAt,
+        expiresAt,
+        contentHash,
+        recordVersion: `${IMPORT_PARSER_VERSION}:${contentHash.slice(0, 24)}`,
+      });
+      // Keep this object construction adjacent to hashing: normalized evidence
+      // is recreated from the same source fields when source_records is written.
+      void evidence;
+    }
+  }
+  return batches;
+}
+
+/** Upsert a validated plan and leave an auditable import/source-record chain. */
 export async function applyRecruitmentImport(
   plan: ImportPlan,
   pool: ApplyDbPool | null = getPool(),
@@ -367,11 +454,14 @@ export async function applyRecruitmentImport(
   if (plan.companies.length === 0) {
     return { wrote: false, reason: 'empty-plan', companies: 0, sites: 0, positions: 0 };
   }
-  // Product rule (2026-08-17): only authentic positions (radar-* / portal-*) are
-  // imported/kept open — example jobs stay closed even if a drop re-offers them.
+  // Authenticity is source-provenance driven. official-career retains its
+  // historical portal-* compatibility rule; embodied-jobs is approved by its
+  // registered source policy, so embj-* is not silently discarded.
   const authentic = plan.companies.map((company) => ({
     ...company,
-    positions: company.positions.filter((pos) => isAuthenticPositionId(pos.externalId)),
+    positions: company.positions.filter((pos) =>
+      isAuthenticPositionRecord({ externalId: pos.externalId, source: effectiveSource(pos, company) }),
+    ),
   }));
   if (!pool) {
     return {
@@ -383,35 +473,141 @@ export async function applyRecruitmentImport(
     };
   }
 
+  const audit = prepareAudit(authentic);
   const client = await pool.connect();
+  const sourceIds = new Map<string, string>();
+  const runIds = new Map<string, string>();
+  let pluginManifestId = '';
   let companies = 0;
   let sites = 0;
   let positions = 0;
-  try {
-    await client.query('BEGIN');
-    // 落库 provenance: 尊重 drop 自带 source(2026-08-20 w5),缺失回退 'seed'。
-    // 按 code 幂等 upsert 并缓存,同一次 apply 内同 code 只写一行 sources。
-    const sourceIds = new Map<string, string>();
-    const sourceIdFor = async (code: string): Promise<string> => {
-      const cached = sourceIds.get(code);
-      if (cached) return cached;
-      const meta = SOURCE_META[code] ?? SOURCE_META.seed;
-      const source = await client.query<{ id: string }>(
-        `INSERT INTO sources (
-           code, origin_uri, authorization_basis, allowed_access_method,
-           attribution_text, retention_policy, deletion_policy
-         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-         ON CONFLICT (code) DO UPDATE SET origin_uri = EXCLUDED.origin_uri
-         RETURNING id::text`,
-        [code, meta.originUri, meta.authorizationBasis, meta.accessMethod, meta.attribution, meta.retention, meta.deletion],
+
+  const sourceIdFor = async (code: string): Promise<string> => {
+    const cached = sourceIds.get(code);
+    if (cached) return cached;
+    const meta = sourceMetadataFor(code);
+    const source = await client.query<{ id: string }>(
+      `INSERT INTO sources (
+         code, origin_uri, authorization_basis, allowed_access_method,
+         attribution_text, retention_policy, deletion_policy
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (code) DO UPDATE SET origin_uri = EXCLUDED.origin_uri
+       RETURNING id::text`,
+      [code, meta.originUri, meta.authorizationBasis, meta.accessMethod, meta.attribution, meta.retention, meta.deletion],
+    );
+    const id = source.rows[0]?.id;
+    if (!id) throw new Error(`source upsert returned no id for ${code}`);
+    sourceIds.set(code, id);
+    return id;
+  };
+
+  const runFor = async (code: string): Promise<string> => {
+    const cached = runIds.get(code);
+    if (cached) return cached;
+    const sourceId = await sourceIdFor(code);
+    const batch = audit.get(code) ?? { records: [], failures: [] };
+    const inputHash = hashJson({
+      inputVersion: IMPORT_INPUT_VERSION,
+      source: code,
+      records: batch.records.map((record) => ({ recordVersion: record.recordVersion, contentHash: record.contentHash })),
+      failures: batch.failures,
+    });
+    const recordCount = batch.records.length + batch.failures.length;
+    const run = await client.query<{ id: string }>(
+      `INSERT INTO import_runs (
+         source_id, plugin_manifest_id, status, input_version, input_hash,
+         parser_version, record_count, success_count, failure_count, failures
+       ) VALUES ($1, $2, 'running', $3, $4, $5, $6, 0, $7, $8::jsonb)
+       ON CONFLICT (source_id, plugin_manifest_id, input_hash, parser_version)
+       DO UPDATE SET
+         status = 'running', started_at = now(), finished_at = NULL,
+         input_version = EXCLUDED.input_version, record_count = EXCLUDED.record_count,
+         success_count = 0, failure_count = EXCLUDED.failure_count,
+         failures = EXCLUDED.failures
+       RETURNING id::text`,
+      [sourceId, pluginManifestId, IMPORT_INPUT_VERSION, inputHash, IMPORT_PARSER_VERSION, recordCount, batch.failures.length, JSON.stringify(batch.failures)],
+    );
+    const id = run.rows[0]?.id;
+    if (!id) throw new Error(`import run upsert returned no id for ${code}`);
+    runIds.set(code, id);
+    return id;
+  };
+
+  const finalizeRuns = async (status: 'succeeded' | 'failed', failedBatch = false): Promise<void> => {
+    for (const [code, runId] of runIds) {
+      const batch = audit.get(code) ?? { records: [], failures: [] };
+      const failureCount = failedBatch ? batch.records.length + batch.failures.length : batch.failures.length;
+      const failures = failedBatch
+        ? [...batch.failures, ...batch.records.map((record) => ({
+            externalId: record.position.externalId,
+            companySlug: record.companySlug,
+            sourceCode: code,
+            reason: 'transaction-rolled-back',
+          }))]
+        : batch.failures;
+      const successCount = failedBatch ? 0 : batch.records.length;
+      // A batch that had any failed record is audited as 'failed' even when the
+      // business transaction itself committed — the run row keeps the exact
+      // success/failure counts for the partial-success distinction.
+      const finalStatus = failureCount > 0 ? 'failed' : status;
+      await client.query(
+        `UPDATE import_runs
+            SET status = $2, finished_at = now(), success_count = $3,
+                failure_count = $4, record_count = $5, failures = $6::jsonb
+          WHERE id = $1`,
+        [runId, finalStatus, successCount, failureCount, batch.records.length + batch.failures.length, JSON.stringify(failures)],
       );
-      const id = source.rows[0].id;
-      sourceIds.set(code, id);
-      return id;
-    };
+    }
+  };
+
+  try {
+    // Resolve the plugin and source rows in a short setup transaction. The run
+    // rows must commit before business writes so a later rollback can record a
+    // durable failed batch instead of rolling the audit row away too.
+    await client.query('BEGIN');
+    const manifest = await client.query<{ id: string }>(
+      `INSERT INTO plugin_manifests (
+         code, version, owner_kind, entity_type, item_type, capabilities, data_policy
+       ) VALUES ('recruitment', '1.0.0', 'platform', 'company', 'position',
+                 ARRAY['seed-import', 'spatial-query', 'map-render']::text[], '{}'::jsonb)
+       ON CONFLICT (code, version) DO UPDATE SET data_policy = EXCLUDED.data_policy
+       RETURNING id::text`,
+    );
+    pluginManifestId = manifest.rows[0]?.id ?? '';
+    if (!pluginManifestId) throw new Error('plugin manifest upsert returned no id');
+    for (const code of audit.keys()) await runFor(code);
+    await client.query('COMMIT');
+
+    await client.query('BEGIN');
+
+    // Per-source cleanup only removes duplicate rows that already have the same
+    // provenance. It deliberately does not migrate a row from another source:
+    // that old behavior was the provenance corruption this importer is fixing.
+    for (const [code, batch] of audit) {
+      const ids = [...new Set(batch.records.map((record) => record.position.externalId))];
+      if (ids.length === 0) continue;
+      const sourceId = await sourceIdFor(code);
+      await client.query(
+        `DELETE FROM positions p
+          USING (
+            SELECT source_id, external_id, MIN(id) AS keep_id
+              FROM positions
+             WHERE source_id = $2 AND external_id = ANY($1::text[])
+             GROUP BY source_id, external_id
+          ) keep
+         WHERE p.source_id = keep.source_id
+           AND p.external_id = keep.external_id
+           AND p.id <> keep.keep_id`,
+        [ids, sourceId],
+      );
+    }
+
+    const auditByPosition = new Map<SourcePosition, AuditPosition>();
+    for (const batch of audit.values()) {
+      for (const record of batch.records) auditByPosition.set(record.position, record);
+    }
 
     for (const company of authentic) {
-      const sourceId = await sourceIdFor(company.source ?? 'seed');
       const upserted = await client.query<{ id: string }>(
         `INSERT INTO companies (slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier, category)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -442,23 +638,20 @@ export async function applyRecruitmentImport(
           company.category ?? 'other',
         ],
       );
-      const companyId = upserted.rows[0].id;
+      const companyId = upserted.rows[0]?.id;
+      if (!companyId) throw new Error(`company upsert returned no id for ${company.slug}`);
       companies += 1;
 
       const siteIds = new Map<string, string>();
       for (const site of company.sites) {
         const siteCity = siteCityOf(site);
-        // 站点合并键 = drop 的 site.id (site_key)。按 (company_id, name) 合并会
-        // 把多城市公司同名站点全部折叠进一行,city/坐标互相覆盖 (2026-08-19 事故:
-        // 得物/米哈游等 9 家 import 后只剩 1 站,米哈游 city=北京市 坐标却在上海)。
+        const siteSourceId = await sourceIdFor(site.source?.trim() || company.source?.trim() || 'seed');
         const existing = await client.query<{ id: string }>(
           `SELECT id::text FROM company_sites WHERE company_id = $1 AND site_key = $2 LIMIT 1`,
           [companyId, site.id],
         );
         let siteRowId = existing.rows[0]?.id;
         if (!siteRowId) {
-          // site_key 迁移前的存量行: 按 (name, city) 一次性认领并回填 key。
-          // 多城市站点按城市区分, (name, city) 组合唯一, 不会误配。
           const legacy = await client.query<{ id: string }>(
             `SELECT id::text FROM company_sites
               WHERE company_id = $1 AND name = $2 AND site_key IS NULL
@@ -491,10 +684,10 @@ export async function applyRecruitmentImport(
               site.location?.lat ?? null,
               site.careerUrl ?? null,
               site.logoUrl ?? null,
-              sourceId,
+              siteSourceId,
             ],
           );
-          siteRowId = inserted.rows[0].id;
+          siteRowId = inserted.rows[0]?.id;
         } else {
           await client.query(
             `UPDATE company_sites SET
@@ -503,9 +696,6 @@ export async function applyRecruitmentImport(
                lng = COALESCE($8, lng), lat = COALESCE($9, lat),
                career_url = $10, logo_url = $11, source_id = $12, updated_at = now()
              WHERE id = $1 AND company_id = $2`,
-            // COALESCE: 绝不因 drop 缺坐标而清空已 geocoded 的既有坐标
-            // (2026-08-19 事故:refresh-radar 重生成 drops 丢坐标后,import:apply
-            //  曾把 DB 里唯一的坐标覆盖成 NULL,地图 79 pins → 2)。
             [
               siteRowId,
               companyId,
@@ -518,59 +708,66 @@ export async function applyRecruitmentImport(
               site.location?.lat ?? null,
               site.careerUrl ?? null,
               site.logoUrl ?? null,
-              sourceId,
+              siteSourceId,
             ],
           );
         }
+        if (!siteRowId) throw new Error(`site upsert returned no id for ${company.slug}/${site.id}`);
         siteIds.set(site.id, siteRowId);
         sites += 1;
       }
 
-      // 2026-08-20 (positions 去重): 同 external_id 曾在旧 source(seed) 与新真实
-      // source 下各存一行 (upsert 唯一键是 (source_id, external_id), source 变了就
-      // 插新行、旧行不删) → poi-card 同 key 警告上百条。apply 事务内自愈, 顺序不可颠倒:
-      //   1) 去重: 每 external_id 保 MIN(id) 一行 (最早行 — applications 表的
-      //      position_id 引用多指向旧行, 保留旧 id 避免悬空);
-      //   2) 迁移: 该 external_id 下旧 source 行 → 本次 source (幂等, 已同源不迁);
-      //   3) 照常 ON CONFLICT (source_id, external_id) DO UPDATE upsert 刷新内容。
-      // 必须先删重再迁移: 若先迁移, 同 external_id 的旧行与新增行会共享
-      // (source_id, external_id), UPDATE 语句内即触发唯一索引
-      // positions_source_id_external_id_key 冲突 (_bt_check_unique), 事务回滚 —
-      // 2026-08-20 boss 实测: 重跑 import:seed:apply 报唯一键冲突, DB 未变。
-      // 按公司批量 (同公司同 source, 仅对本 plan 的 authentic 岗位) — 等价于逐岗位
-      // 执行, 但把 2×N 次往返压成 2 次。seed 示例岗位不在 authentic 集合内, 不受影响。
-      const planExtIds = company.positions
-        .filter((pos) => siteIds.has(pos.siteId))
-        .map((pos) => pos.externalId);
-      if (planExtIds.length > 0) {
-        await client.query(
-          `DELETE FROM positions p
-           USING (SELECT external_id, MIN(id) AS keep_id
-                  FROM positions
-                  WHERE external_id = ANY($1::text[])
-                  GROUP BY external_id) keep
-           WHERE p.external_id = keep.external_id AND p.id <> keep.keep_id`,
-          [planExtIds],
-        );
-        await client.query(
-          `UPDATE positions SET source_id = $2
-           WHERE external_id = ANY($1::text[]) AND source_id IS DISTINCT FROM $2`,
-          [planExtIds, sourceId],
-        );
-      }
-
       for (const pos of company.positions) {
         const siteRowId = siteIds.get(pos.siteId);
-        if (!siteRowId) continue;
+        const record = auditByPosition.get(pos);
+        // No source retrieval timestamp means no source_record and no position
+        // write. This is an explicit auditable failure, never `now()`.
+        if (!siteRowId || !record) continue;
+        const sourceId = await sourceIdFor(record.sourceCode);
+        const runId = await runFor(record.sourceCode);
+        const evidence = {
+          entityType: 'position',
+          companySlug: company.slug,
+          siteId: pos.siteId,
+          externalId: pos.externalId,
+          source: record.sourceCode,
+          title: pos.title,
+          family: pos.family,
+          status: pos.status,
+        };
+        await client.query(
+          `INSERT INTO source_records (
+             source_id, import_run_id, external_id, record_version, retrieved_at,
+             content_hash, parser_version, original_payload, normalized_evidence
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb)
+           ON CONFLICT (source_id, external_id, record_version) DO UPDATE SET
+             import_run_id = EXCLUDED.import_run_id,
+             retrieved_at = EXCLUDED.retrieved_at,
+             content_hash = EXCLUDED.content_hash,
+             parser_version = EXCLUDED.parser_version,
+             original_payload = EXCLUDED.original_payload,
+             normalized_evidence = EXCLUDED.normalized_evidence`,
+          [
+            sourceId,
+            runId,
+            pos.externalId,
+            record.recordVersion,
+            record.retrievedAt,
+            record.contentHash,
+            IMPORT_PARSER_VERSION,
+            JSON.stringify(pos),
+            JSON.stringify(evidence),
+          ],
+        );
         await client.query(
           `INSERT INTO positions (
              company_id, site_id, external_id, title, department, family, taxonomy,
              salary_min, salary_max, education, majors, skills, description, deadline,
-             apply_source, apply_url, status, source_id
+             apply_source, apply_url, status, source_id, retrieved_at, expires_at
            ) VALUES (
              $1, $2, $3, $4, $5, $6, $7::jsonb,
              $8, $9, $10, $11, $12, $13, $14,
-             $15, $16, $17, $18
+             $15, $16, $17, $18, $19, $20
            )
            ON CONFLICT (source_id, external_id) DO UPDATE SET
              title = EXCLUDED.title,
@@ -588,6 +785,8 @@ export async function applyRecruitmentImport(
              apply_url = EXCLUDED.apply_url,
              status = EXCLUDED.status,
              site_id = EXCLUDED.site_id,
+             retrieved_at = EXCLUDED.retrieved_at,
+             expires_at = EXCLUDED.expires_at,
              updated_at = now()`,
           [
             companyId,
@@ -608,14 +807,28 @@ export async function applyRecruitmentImport(
             pos.applyUrl ?? null,
             pos.status,
             sourceId,
+            record.retrievedAt,
+            record.expiresAt,
           ],
         );
         positions += 1;
       }
     }
+    await finalizeRuns('succeeded');
     await client.query('COMMIT');
   } catch (error) {
-    await client.query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+      await client.query('BEGIN');
+      await finalizeRuns('failed', true);
+      await client.query('COMMIT');
+    } catch {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Preserve the original apply error when audit finalization also fails.
+      }
+    }
     throw error;
   } finally {
     client.release();
