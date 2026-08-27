@@ -520,9 +520,12 @@ test('account-store without DATABASE_URL stays in memory', async () => {
 test('createSession DB failure rolls back the process-local session mirror', async () => {
   const before = sessionMemorySize();
   __accountStoreTest.poolOverride = () => ({
-    query: async () => {
-      throw new Error('connection refused');
-    },
+    connect: async () => ({
+      query: async () => {
+        throw new Error('connection refused');
+      },
+      release() {},
+    }),
   });
   try {
     await assert.rejects(() => storeCreateSession('db-session-fail'));
@@ -535,9 +538,12 @@ test('createSession DB failure rolls back the process-local session mirror', asy
 test('issueOtp DB failure rolls back the process-local OTP mirror', async () => {
   const before = otpChallengeMemorySize();
   __accountStoreTest.poolOverride = () => ({
-    query: async () => {
-      throw new Error('connection refused');
-    },
+    connect: async () => ({
+      query: async () => {
+        throw new Error('connection refused');
+      },
+      release() {},
+    }),
   });
   try {
     await assert.rejects(() => storeIssueOtp('email', `db-otp-fail-${Date.now()}@test.dev`));
@@ -551,9 +557,12 @@ test('destroySession DB failure keeps the process-local session until durable de
   const memorySession = createSession('db-destroy-user');
   const before = sessionMemorySize();
   __accountStoreTest.poolOverride = () => ({
-    query: async () => {
-      throw new Error('connection refused');
-    },
+    connect: async () => ({
+      query: async () => {
+        throw new Error('connection refused');
+      },
+      release() {},
+    }),
   });
   try {
     await assert.rejects(() => storeDestroySession(memorySession.token));
@@ -569,9 +578,12 @@ test('clearHistory DB failure keeps the process-local history mirror', async () 
   addHistory(userId, '旧查询', 'work');
   const before = listHistory(userId).length;
   __accountStoreTest.poolOverride = () => ({
-    query: async () => {
-      throw new Error('connection refused');
-    },
+    connect: async () => ({
+      query: async () => {
+        throw new Error('connection refused');
+      },
+      release() {},
+    }),
   });
   try {
     await assert.rejects(() => storeClearHistory(userId));

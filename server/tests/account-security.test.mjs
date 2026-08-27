@@ -233,14 +233,19 @@ test('bindPhone/bindEmail: 已被他人绑定 → PhoneTakenError / EmailTakenEr
 });
 
 test('bindPhone/bindEmail DB 路径:23505 唯一冲突 → PhoneTakenError / EmailTakenError(409 语义)', async () => {
-  __accountStoreTest.poolOverride = () => ({
-    query: async (sql) => {
-      if (sql.includes('UPDATE users')) {
-        throw { code: '23505', message: 'duplicate key value violates unique constraint (test)' };
-      }
-      throw new Error(`unexpected SQL: ${sql}`);
-    },
-  });
+  __accountStoreTest.poolOverride = () => {
+    const client = {
+      query: async (sql) => {
+        if (sql === 'BEGIN' || sql === 'ROLLBACK') return { rows: [], rowCount: 0 };
+        if (sql.includes('UPDATE users')) {
+          throw { code: '23505', message: 'duplicate key value violates unique constraint (test)' };
+        }
+        throw new Error(`unexpected SQL: ${sql}`);
+      },
+      release() {},
+    };
+    return { connect: async () => client };
+  };
   try {
     await assert.rejects(() => storeBindPhone('1', '13800138000'), PhoneTakenError);
     await assert.rejects(() => storeBindEmail('1', 'taken@test.dev'), EmailTakenError);

@@ -10,7 +10,7 @@
 // ============================================================
 
 import { createHash } from 'node:crypto';
-import type { Pool, QueryResult } from 'pg';
+import type { Pool, PoolClient, QueryResult } from 'pg';
 import {
   DEFAULT_PREFERENCES,
   mergePreferences,
@@ -309,7 +309,52 @@ async function withDbRead<T>(fn: (pool: Pool) => Promise<T>, fallback: () => T |
   }
 }
 
-/** 写路径:DB 故障直接抛 DbUnavailableError,绝不静默回落内存造成数据分裂。 */
+/**
+ * 在单个 PoolClient 上执行一个原子写操作。client 的生命周期必须覆盖
+ * BEGIN 到 COMMIT/ROLLBACK；回滚失败时保留原始错误，避免掩盖冲突/数据库错误。
+ */
+async function runDbTransaction<T>(
+  db: Pool,
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    try {
+      const result = await fn(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (err) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Preserve the statement/constraint error for the route mapper.
+      }
+      throw err;
+    }
+  } finally {
+    client.release();
+  }
+}
+
+/** 认证多语句写路径的 DB 封装:冲突只在回滚完成后映射,client 必 release。 */
+async function withDbTransactionWrite<T>(
+  fn: (client: PoolClient) => Promise<T>,
+  memory: () => T | Promise<T>,
+): Promise<T> {
+  const db = getPoolForCall();
+  if (!db) return memory();
+  try {
+    return await runDbTransaction(db, fn);
+  } catch (err) {
+    if (err instanceof UsernameTakenError || err instanceof PhoneTakenError || err instanceof EmailTakenError) {
+      throw err;
+    }
+    throw new DbUnavailableError(err);
+  }
+}
+
+/** 写路径 DB 故障直接抛 DbUnavailableError,绝不静默回落内存造成数据分裂。 */
 async function withDbWrite<T>(fn: (pool: Pool) => Promise<T>, memory: () => T | Promise<T>): Promise<T> {
   const db = getPoolForCall();
   if (!db) return memory(); // 未配置 DB:内存模式本身就是存储,写内存。
@@ -342,10 +387,10 @@ type UserRowWithProvider = UpsertUserRow & { provider: AuthProvider | null };
  * 23505 邮箱冲突分支(users_email_uidx):Google 邮箱撞已有 OTP 邮箱用户时
  * INSERT 抛 23505 → 按 lower(email) 查到已有用户 → 为其挂接 auth_identities
  * (provider, subject) → 返回该用户,不新建。只在 23505 时走此分支;
- * 其余错误照旧上抛(外层 withDbWrite 包 DbUnavailableError)。
+ * 其余错误照旧上抛(外层 withDbTransactionWrite 包 DbUnavailableError)。
  */
 async function attachIdentityToExistingEmailUser(
-  db: Pool,
+  db: PoolClient,
   input: { provider: AuthProvider; subject: string; email?: string },
   originalError: unknown,
 ): Promise<AccountUser> {
@@ -386,10 +431,14 @@ export async function upsertIdentity(input: {
     : input.email?.trim();
   const normalizedInput: typeof input = { ...input, subject: subjectValue, phone, email };
 
-  return withDbWrite(async (db) => {
+  return withDbTransactionWrite(async (db) => {
     const subject = subjectKey(input.provider, subjectValue);
     const prefs = JSON.stringify(DEFAULT_PREFERENCES);
     let inserted: { rows: UpsertUserRow[] };
+    // A unique-email violation aborts a PostgreSQL transaction. Use a savepoint
+    // so the verified-email auto-link can continue on this same client, while
+    // every later failure still reaches the outer ROLLBACK.
+    await db.query('SAVEPOINT oauth_user_insert');
     try {
       inserted = await db.query<UpsertUserRow>(
         `INSERT INTO users (subject, display_name, phone, email, avatar_url, preferences)
@@ -410,11 +459,12 @@ export async function upsertIdentity(input: {
           prefs,
         ],
       );
+      await db.query('RELEASE SAVEPOINT oauth_user_insert');
     } catch (err) {
-      if ((err as { code?: string }).code === '23505') {
-        return attachIdentityToExistingEmailUser(db, normalizedInput, err);
-      }
-      throw err;
+      if ((err as { code?: string }).code !== '23505') throw err;
+      await db.query('ROLLBACK TO SAVEPOINT oauth_user_insert');
+      await db.query('RELEASE SAVEPOINT oauth_user_insert');
+      return attachIdentityToExistingEmailUser(db, normalizedInput, err);
     }
     const user = inserted.rows[0];
     await db.query(
@@ -436,7 +486,7 @@ export async function registerWithPassword(
   const name = username.trim();
   const subject = `password:${name.toLowerCase()}`;
   const prefs = JSON.stringify(DEFAULT_PREFERENCES);
-  return withDbWrite(
+  return withDbTransactionWrite(
     async (db) => {
       const existing = await db.query<{ id: string }>(
         `SELECT id::text FROM users WHERE lower(username) = $1`,
@@ -545,7 +595,7 @@ export async function setPassword(userId: string, newPassword: string): Promise<
  *  手机已被他人绑定 → 23505 → PhoneTakenError(→409)。 */
 export async function bindPhone(userId: string, phone: string): Promise<AccountUser | null> {
   const normalized = normalizePhone(phone);
-  return withDbWrite(async (db) => {
+  return withDbTransactionWrite(async (db) => {
     try {
       const result = await db.query<UserRowWithProvider>(
         `UPDATE users SET phone = $2, updated_at = now()
@@ -574,7 +624,7 @@ export async function bindPhone(userId: string, phone: string): Promise<AccountU
 /** 绑定/更换邮箱:与 bindPhone 对称(lower(email) 唯一 → 23505 → EmailTakenError)。 */
 export async function bindEmail(userId: string, email: string): Promise<AccountUser | null> {
   const normalized = normalizeEmail(email);
-  return withDbWrite(async (db) => {
+  return withDbTransactionWrite(async (db) => {
     try {
       const result = await db.query<UserRowWithProvider>(
         `UPDATE users SET email = $2, updated_at = now()
@@ -601,9 +651,10 @@ export async function bindEmail(userId: string, email: string): Promise<AccountU
 }
 
 export async function createSession(userId: string): Promise<{ token: string; expiresAt: number }> {
-  return withDbWrite(async (db) => {
-    const memory = memCreateSession(userId);
-    try {
+  let memory: { token: string; expiresAt: number } | undefined;
+  try {
+    return await withDbTransactionWrite(async (db) => {
+      memory = memCreateSession(userId);
       await db.query(
         `DELETE FROM auth_sessions WHERE expires_at <= now()`,
       );
@@ -613,11 +664,11 @@ export async function createSession(userId: string): Promise<{ token: string; ex
         [userId, hashToken(memory.token), memory.expiresAt],
       );
       return memory;
-    } catch (err) {
-      memDestroySession(memory.token);
-      throw err;
-    }
-  }, () => memCreateSession(userId));
+    }, () => memCreateSession(userId));
+  } catch (err) {
+    if (memory) memDestroySession(memory.token);
+    throw err;
+  }
 }
 
 export async function getSessionUser(token: string | undefined | null): Promise<AccountUser | null> {
@@ -781,7 +832,7 @@ export async function issueOtp(
 
   const memory = memIssueOtp(provider, normalized);
   try {
-    await withDbWrite(async (db) => {
+    await withDbTransactionWrite(async (db) => {
       // 顺手清掉该 target 的过期挑战行,控制 auth_otp_challenges 膨胀。
       await db.query(
         `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
@@ -814,7 +865,7 @@ export async function consumeOtp(provider: 'phone' | 'email', target: string, co
     throw new OtpTooManyAttemptsError(guard.lockedUntil - now, 'too many failed attempts, locked');
   }
 
-  const ok = await withDbWrite(async (db) => {
+  const ok = await withDbTransactionWrite(async (db) => {
     const result = await db.query<{ id: string }>(
       `SELECT id::text
        FROM auth_otp_challenges
