@@ -54,7 +54,9 @@ import { canonicalMode } from './modes.ts';
 import type { ViewportBounds, ViewportSnapshot } from './viewport-search.ts';
 
 export const MODE_CACHE_PREFIX = 'domain-map:mode-cache:v1:';
-export const MODE_CACHE_VERSION = 19;
+// 2026-08-27: 城市裁剪视野聚合扇出补全(fix/agg-fanout-clipped) — 单城视野
+// POI 数大幅变化(重庆 2→6 等), 旧 v19 缓存不失效则客户端继续吐旧目录。
+export const MODE_CACHE_VERSION = 20;
 /** Local cache raw-value ceiling before JSON.parse (sessionStorage is local, not trusted). */
 export const MODE_CACHE_RAW_MAX = 8 * 1024 * 1024;
 /** Bound scalar/filter fields restored from storage; catalogs have their own app cap. */
