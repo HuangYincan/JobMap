@@ -251,8 +251,8 @@ export const WORK_VIEWPORT_PAGE_SIZE = 50;
 export interface WorkViewportQuery {
   /** 当前视野;缺省时不带 bounds 参数(服务端返回整库首页,仅首屏兜底) */
   bounds?: ViewportBounds;
-  /** 缩放级别 → 档位上限(见 lod.ts;服务端忽略前按现有数据工作) */
-  maxTier?: number;
+  /** 缩放级别 → 档位上限(见 lod.ts;服务端忽略前按现有数据工作);null 同未设置 */
+  maxTier?: number | null;
   /** 用户筛选(industry/scale/onlyOpen…;maxTier 由本模块并入) */
   filters?: FilterState;
   q?: string;
@@ -382,7 +382,7 @@ export async function fetchWorkViewportPage(
   params.set('pageSize', String(query.pageSize ?? WORK_VIEWPORT_PAGE_SIZE));
   if (query.q) params.set('q', query.q);
   if (query.sort) params.set('sort', query.sort);
-  const filters = query.maxTier
+  const filters = query.maxTier !== undefined && query.maxTier !== null
     ? { ...query.filters, maxTier: query.maxTier }
     : { ...(query.filters ?? {}) };
   if (Object.keys(filters).length > 0) params.set('filters', JSON.stringify(filters));

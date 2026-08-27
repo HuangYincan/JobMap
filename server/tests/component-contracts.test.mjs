@@ -222,9 +222,13 @@ test('work autocomplete prefers GET /api/suggest and falls back locally', () => 
 test('domain autocomplete is local-first via /api/suggest and falls back to AMap once', () => {
   const shell = src('components/map-shell.tsx');
   const hook = src('hooks/use-search-state.ts');
-  // 依赖只留 [query, mode]——zoom/catalog 高频变化不再重置防抖定时器(位置随 hook 移动)
-  assert.match(hook, /\}, \[query, mode\]\);/);
+  // 防抖依赖为 [query, mode, searchReadyKey]:zoom/catalog 高频变化不再重置定时器;
+  // 地图 view ready / 稳定 engine identity 变化时重试当前 Domain query
+  assert.match(hook, /engineReady\?: boolean;/);
+  assert.match(hook, /const searchReadyKey = mode === "domain" && engineReady \? engine\?\.id \?\? null : null;/);
+  assert.match(hook, /\}, \[query, mode, searchReadyKey\]\);/);
   assert.doesNotMatch(hook, /\}, \[query, mode, zoom, catalog\]\);/);
+  assert.match(shell, /engineReady: Boolean\(engineView\)/);
   // domain 本地 0 命中/报错 → 高德 AutoComplete 一次(位置随 hook 移动)
   assert.match(hook, /fetchSuggestions\(query\.trim\(\), zoomRef\.current <= 8/);
   assert.match(hook, /kind: "place"/);
