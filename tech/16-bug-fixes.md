@@ -1341,3 +1341,23 @@ POIList,移除 SavedList 动态导入)、`map-shell.tsx`(桥接 memo + 移动抽
 **验证**:1159 pass / 0 fail / 2 skip(+saved-list-card 回归 10 项);typecheck /
 docs-check / git diff --check 绿。历史文字保留(仅追加)。
 
+
+## 2026-08-27: 城市裁剪视野聚合行不扇出(五城 POI 稀疏根因,fix/agg-fanout-clipped)
+
+### 症状
+
+五城地图视野(广州/深圳/成都/重庆/南京)POI 稀少——重庆视野仅 2 个 POI,尽管 DB 有 34 家公司、6 站有岗位。全国视野正常。
+
+### 根本原因
+
+2026-08-26 的 `fix/aggregate-site-fanout` 只修了**未裁剪查询**:聚合行(radar 全国大类标题,`taxonomy.aggregate=true`,site_id 是首城占位如北京)挂在首城站点。`loadWorkCatalogFromDb` 在裁剪(city/bounds)时 `positionSql` 只按 `site_id = ANY(located)` 加载 → 聚合行被挡在 `aggregateRows` 之外 → `positionsForSite` 扇出失效 → 单城市视野下多城公司(仅聚合岗、本城站无具体岗)整条不出现。实测确认:中国兵器/浪潮/华硕/国家电投的聚合岗全挂北京市站(930/1649 等),重庆 clip 查询不加载。
+
+### 方案
+
+裁剪 `positionSql` 加 `OR (taxonomy->>'aggregate' = 'true' AND company_id = ANY($2::bigint[]))`,按 company_id 补加载聚合行,扇出语义与全国查询一致。新增回归测试 + 更新既有参数断言。
+
+### 结果
+
+单城视野 POI:重庆 2→**6**、苏州→**23**、南京→**17**、广州→**48**、成都→**42**、深圳→**117**。`MODE_CACHE_VERSION` 19→20 失效旧缓存。
+
+**验证**:server 全量 0 fail;typecheck / docs-check / git diff --check 绿。
