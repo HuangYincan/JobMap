@@ -101,6 +101,7 @@ body `{ email, code }`(code 来自 `POST /api/auth/otp/send` 发往该 email 的
 - **邮箱注册仍走 OTP**:email tab 验证即登录(行为不变,tech/25);设置密码在 Profile「密码与安全」,设置后可用邮箱+密码登录。
 - **password tab 注册保持 username**(行为不变,2026-08-19 契约);仅**登录字段**扩展为接受邮箱或用户名。
 - **OTP 发送复用 `POST /api/auth/otp/send`**(email/phone 真发通道不变,tech/25 / tech/26-aliyun-sms.md);`me/*` 路由**只 `consumeOtp` 校验**,不重复发送逻辑。
+- **多语句写路径事务原子性**:密码注册(建用户 + 插 password identity)、手机/邮箱换绑(更新 `users` + 删旧 identity + 插新 identity)、会话创建、OTP 签发/消费均在**同一 pool client** 的 `BEGIN/COMMIT/ROLLBACK` 内执行;任一步失败 → 整笔回滚,绝不留下半完成用户/identity/凭证;冲突(23505 → `PHONE_TAKEN`/`EMAIL_TAKEN`)在回滚完成后映射,client 始终 release。
 - **密码哈希沿用 `lib/password.ts` scrypt**(格式 `scrypt$N$r$p$salt$hash`,N=16384 / r=8 / p=1,salt 16 字节 hex,hash 32 字节 hex;`isValidPassword` 最短 8 位),密码永不返回前端。
 
 ## 5. 前端入口
@@ -122,6 +123,7 @@ node --test,内存模式、零网络(复用 `__accountStoreTest.poolOverride` / 
 - `password/login`:邮箱与用户名均可登录;未知账号与密码错误统一 401 `INVALID_CREDENTIALS`(响应完全一致)
 - `me/password`:无密码用户设置密码(otp 必须、target 命中已绑定凭证);已有密码用户改密码(oldPassword 校验、otp 可替代);`PASSWORD_TOO_SHORT` / `WRONG_PASSWORD` / `INVALID_CODE` / `NOT_BOUND` / `UNAUTHORIZED` 全覆盖
 - `me/phone` / `me/email`:绑定成功 → `users.phone|email` 更新 + auth_identities 换行;重复绑定他人凭证 → 409 `PHONE_TAKEN` / `EMAIL_TAKEN`;错误码 → 401 `INVALID_CODE`
+- **失败注入事务测试**(`server/tests/auth-transactions.test.mjs`):第二/第三条 SQL 抛错 → ROLLBACK + client release;重试成功不产生 orphan 用户/identity;ROLLBACK 自身抛错仍 release 且保留原始错误映射
 - user JSON:`hasPassword` 随设置/修改密码正确翻转;`GET /api/auth/me` 与登录响应均含且一致
 
 ## 7. 安全说明

@@ -88,8 +88,8 @@
 
 ## 5. Provider 细节
 
-- **github**: authorize `https://github.com/login/oauth/authorize`(scope `read:user user:email`);token `POST https://github.com/login/oauth/access_token`(Accept: application/json);userinfo `GET https://api.github.com/user`(Bearer)→ subject=`id`, email=`email`(可空), displayName=`name ?? login`, avatarUrl=`avatar_url`
-- **google**: authorize `https://accounts.google.com/o/oauth2/v2/auth`(scope `openid email profile`);token `POST https://oauth2.googleapis.com/token`;userinfo `GET https://openidconnect.googleapis.com/v1/userinfo`(Bearer)→ subject=`sub`, email=`email`, displayName=`name`, avatarUrl=`picture`
+- **github**: authorize `https://github.com/login/oauth/authorize`(scope `read:user user:email`);token `POST https://github.com/login/oauth/access_token`(Accept: application/json);userinfo `GET https://api.github.com/user`(Bearer)→ subject=`id`;email 取自 `GET https://api.github.com/user/emails`(Bearer)中 **`primary === true && verified === true`** 的那条(无则 undefined);`/user.email` 字段**不作为**邮箱证据;displayName=`name ?? login`, avatarUrl=`avatar_url`
+- **google**: authorize `https://accounts.google.com/o/oauth2/v2/auth`(scope `openid email profile`);token `POST https://oauth2.googleapis.com/token`;userinfo `GET https://openidconnect.googleapis.com/v1/userinfo`(Bearer)→ subject=`sub`;email 仅当 **`email_verified === true`** 时采用(否则 undefined);displayName=`name`, avatarUrl=`picture`
 - **wechat**: authorize `https://open.weixin.qq.com/connect/qrconnect`(scope `snsapi_login`,`#wechat_redirect`);token **GET** `https://api.weixin.qq.com/sns/oauth2/access_token?appid&secret&code&grant_type=authorization_code` → openid;userinfo `GET https://api.weixin.qq.com/sns/userinfo?access_token&openid&lang=zh_CN` → subject=`openid`, **email=无(微信不给邮箱)**, displayName=`nickname`, avatarUrl=`headimgurl`
 
 失败判定:HTTP 非 2xx、JSON 含 `error` / `errcode` 非 0、字段缺失。
@@ -129,7 +129,8 @@ configured 判定 = 对应两变量**均非空**(trim 后)。**服务端秘密:�
 - **密钥只在服务端**:`client_secret` / `WECHAT_OAUTH_SECRET` 仅在服务端 fetch 中引用(`process.env`),绝不打印、绝不进日志 / 请求 / 响应
 - **next 防开放重定向**:仅接受同源相对路径——单个 `/` 开头、非 `//`、非 `/\`、≤2048 字符;不合法默认 `/`;callback 成功 302 回 next **不带参数**
 - **微信无邮箱**:email 传 undefined(不报错),accountLabel 回退 provider 名
-- **邮箱冲突挂接**:Google 邮箱撞已有 OTP 邮箱用户(INSERT 23505)→ 按 lower(email) 查到已有用户 → 插 `auth_identities (provider, subject)` → 返回该用户;只在 23505 走此分支,其余错误照旧抛
+- **邮箱冲突挂接(仅 verified email)**:只有 provider 明确验证且可声明的邮箱才会被用于挂接——Google 要求 userinfo `email_verified === true`;GitHub 要求 `/user/emails` 中存在 `primary === true && verified === true` 的条目。未验证的邮箱**不会**凭字符串冲突挂接已有用户,而是创建独立新账号(email 留空)。挂接流程:INSERT 23505(users_email_uidx)→ 同一事务内 SAVEPOINT 回滚到挂接前 → 按 lower(email) 查已有用户 → 插 `auth_identities (provider, subject)` → 返回该用户;只在 23505 走此分支,其余错误照旧抛
+- **写路径事务原子性**:OAuth callback 的 `upsertIdentity`(建用户 + 插 identity)在单个 pool client 上以 `BEGIN/COMMIT/ROLLBACK` 执行,任何中间语句失败会整笔回滚,不会留下「无 identity 的孤儿用户」;冲突类错误在回滚完成后映射,client 始终 release(失败注入测试见 `server/tests/auth-transactions.test.mjs`)
 
 ## 10. 测试(`server/tests/oauth.test.mjs`)
 
@@ -139,6 +140,7 @@ node --test,内存模式,**零网络**(mock fetch 注入 `fetchImpl`;env 注入 
 - **start**:合法 provider → 302 + Location 含 authorize host / client_id / state / redirect_uri;`oauth_state` cookie 已设(httpOnly 标记);`next` 绝对 URL / `//evil` → 清洗为 `/`;非法 provider → 400;未配置 → 503
 - **callback**(按 provider 注入 token / userinfo 响应):全链路成功 → 新用户落库(内存 store)→ session cookie 已写 → 302 到 next 无 auth_error;同一 provider 二次登录 → 复用同一用户(id 不变);state 缺失/不匹配/过期 → `?auth_error=oauth_state_invalid` 且**未**调用三方;code 交换失败 / userinfo 失败 → `?auth_error=oauth_provider_error`;wechat:email undefined → accountLabel 回退 provider 名;next 绝对 URL → 跳回 `/`
 - **upsertIdentity 邮箱冲突**:fake 池先 INSERT 抛 23505 再 SELECT/INSERT 成功 → 返回已有用户 + 身份挂接;非 23505 → 仍抛 DbUnavailableError
+- **verified-email 证据路径**:google `email_verified:false` → 不挂接已有邮箱用户、新用户 email 为空;github 无 verified primary(仅 unverified primary / 仅 verified secondary)→ 同上;只有 verified primary 才参与挂接
 
 ## 11. Demo 兼容
 
