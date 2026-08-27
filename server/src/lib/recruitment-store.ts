@@ -182,12 +182,18 @@ export async function loadWorkCatalogFromDb(
       : `SELECT id::text, slug, name, industries, scale, rating, summary, career_url, logo_url, logo_emoji, tier, category
          FROM companies ORDER BY slug`;
     // A1 (tech/18)：只读在招 —— status='open' 且 deadline 为空或 >= 今天。
+    // 2026-08-27 (fix/agg-fanout-clipped): 裁剪查询也必须加载公司级聚合行 —
+    // 聚合岗的 site_id 是首城占位(如北京), 只按 site_id = ANY(located) 加载会把
+    // 这些行挡在 aggregateRows 之外 → 扇出失效 → 单城市视野下多城公司(仅聚合岗、
+    // 本城站无具体岗)整条不出现。按 company_id 补加载聚合行, 扇出语义与全国
+    // (未裁剪)查询一致。
     const positionSql = clipped
       ? `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
                 salary_min, salary_max, education, majors, skills, description, deadline,
                 apply_source, apply_url, status
          FROM positions WHERE status = 'open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)
-           AND site_id = ANY($1::bigint[])`
+           AND (site_id = ANY($1::bigint[])
+                OR (taxonomy->>'aggregate' = 'true' AND company_id = ANY($2::bigint[])))`
       : `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
                 salary_min, salary_max, education, majors, skills, description, deadline,
                 apply_source, apply_url, status
@@ -197,7 +203,7 @@ export async function loadWorkCatalogFromDb(
         companySql,
         clipped ? (maxTier !== null ? [companyIds, maxTier] : [companyIds]) : [],
       ),
-      pool.query<PositionRow>(positionSql, clipped ? [siteIds] : []),
+      pool.query<PositionRow>(positionSql, clipped ? [siteIds, companyIds] : []),
     ]);
     if (companies.rows.length === 0) return [];
 
