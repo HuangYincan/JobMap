@@ -1,0 +1,8 @@
+# A named UA group is more specific than every wildcard group.
+User-agent: *
+Disallow: /
+Allow: /public
+
+User-agent: DomainMapImporter
+Disallow: /private
+Allow: /private/public

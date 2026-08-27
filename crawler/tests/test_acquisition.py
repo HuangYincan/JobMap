@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from domain_map_importer import (
@@ -32,6 +33,9 @@ from domain_map_importer.acquire import (
 )
 
 
+ROBOTS_FIXTURES = Path(__file__).parent / "fixtures" / "robots"
+
+
 class RobotsAndHostTests(unittest.TestCase):
     def test_blocks_aggregator_hosts(self):
         self.assertTrue(is_blocked_host("https://www.zhipin.com/job_detail/1.html"))
@@ -54,15 +58,33 @@ class RobotsAndHostTests(unittest.TestCase):
         self.assertTrue(parse_robots(robots, "/"))
         self.assertFalse(parse_robots(robots, "/private"))
 
-    def test_robots_last_duplicate_ua_group_wins(self):
-        robots = (
-            "User-agent: *\nDisallow: /\n"
-            "User-agent: DomainMapImporter\nAllow: /\n"
-            "User-agent: DomainMapImporter\nDisallow: /beta\n"
-        )
-        # RFC 9309 §2.2.1: the last group naming our UA applies.
-        self.assertTrue(parse_robots(robots, "/"))
-        self.assertFalse(parse_robots(robots, "/beta"))
+    def test_robots_duplicate_exact_ua_groups_are_combined(self):
+        robots = (ROBOTS_FIXTURES / "duplicate-exact-ua.txt").read_text(encoding="utf-8")
+        # The first group's Disallow remains active after the second group.
+        self.assertFalse(parse_robots(robots, "/private"))
+        # The second group's longer Allow can override the first group's rule.
+        self.assertTrue(parse_robots(robots, "/private/public"))
+
+    def test_robots_duplicate_wildcard_groups_are_combined(self):
+        robots = (ROBOTS_FIXTURES / "duplicate-wildcard-ua.txt").read_text(encoding="utf-8")
+        self.assertFalse(parse_robots(robots, "/private", user_agent="OtherCrawler/1.0"))
+        self.assertTrue(parse_robots(robots, "/private/public", user_agent="OtherCrawler/1.0"))
+
+    def test_robots_specific_ua_groups_suppress_wildcard_groups(self):
+        robots = (ROBOTS_FIXTURES / "specific-over-wildcard.txt").read_text(encoding="utf-8")
+        # A named group applies even when its rules do not match; the wildcard
+        # Disallow: / must not leak into this UA's decision.
+        self.assertTrue(parse_robots(robots, "/other"))
+        self.assertFalse(parse_robots(robots, "/private"))
+        self.assertTrue(parse_robots(robots, "/private/public"))
+
+    def test_robots_combines_cross_group_conflicts_before_longest_match(self):
+        robots = (ROBOTS_FIXTURES / "cross-group-conflict-longest.txt").read_text(encoding="utf-8")
+        self.assertFalse(parse_robots(robots, "/jobs/secret"))
+        # Allow wins a same-length Allow/Disallow tie across groups.
+        self.assertTrue(parse_robots(robots, "/jobs/public"))
+        # The most specific path still wins across groups.
+        self.assertTrue(parse_robots(robots, "/jobs/public/open"))
 
     def test_robots_empty_disallow_allows(self):
         self.assertTrue(parse_robots("User-agent: *\nDisallow:\n", "/anything"))
