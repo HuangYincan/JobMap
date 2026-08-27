@@ -308,6 +308,30 @@ test('officeNameMatchStrength accepts region-prefix office names (华东/华南,
   }
 });
 
+test('officeNameMatchStrength accepts legal-entity words (软件/电子/分行, 2026-08-27)', () => {
+  // 2026-08-27 (fix/grader-legal-entity): 法律实体词是真实办公点常见后缀
+  // (帆软软件有限公司 / 中信银行南京分行 / XX电子科技有限公司)。此前这些词
+  // 不在表内 → 整候选判 no → name-mismatch, 有真实办公 POI 的公司也被拒
+  // (实测帆软/银行类 5 城站全拒)。
+  for (const [candidate, company] of [
+    ['帆软软件有限公司(南京运营中心)', '帆软'],
+    ['中信银行南京分行', '中信银行'],
+    ['华为电子科技有限公司', '华为'],
+    ['某司网络科技有限公司', '某司'],
+    ['某司通信研究院', '某司'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
+  }
+  // 非办公形态仍拒 — 专卖店/电子城/支行店 混入, 防线不回退。
+  for (const [candidate, company] of [
+    ['某司软件专卖店', '某司'],
+    ['某司电子城', '某司'],
+    ['小米电子旗舰店', '小米集团'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'no', `${candidate} vs ${company}`);
+  }
+});
+
 test('officeNameMatchStrength accepts city-name bracket segments (2026-08-25)', () => {
   // 括号段=城市名 (或 城市+限定词): 某司(上海) / 歌尔微电子股份有限公司(上海)。
   for (const [candidate, company] of [
