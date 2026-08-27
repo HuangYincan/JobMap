@@ -17,4 +17,5 @@
 - **类型 → family 映射**: 社招 → `social`、校招 → `campus`、实习 → `intern`(SourcePosition.family)
 - **同名公司追加**: 同一公司可能多次出现(不同岗位组)/与既有 catalog 或其他来源重名——合并为同一公司的 positions,externalId 一律以 `embj-` 前缀标识来源,不与 portal-*/radar-* 混淆
 - **产出**: `server/data/recruitment/embodied-jobs/*.json`(每公司一文件,SourceCompany 形状:slug `embj-*`、source `'embodied-jobs'`、单 site id `embj-<name>-site`、positions externalId `embj-*`、每岗 applyUrl、retrievedAt)
+- **真实性登记(2026-08-27)**:本来源已注册进 `server/src/lib/recruitment-provenance.ts` 的 `SOURCE_META`,authenticity 策略 = `source`(整源真实)。此前 `isAuthenticPositionId` 只认 `radar-*`/`portal-*` 前缀,`embj-*` 在 apply 阶段会被整源过滤;现在真实性判定优先走来源注册表,`embj-*` 岗位正常入库(扫描 #4 修复)。
 - **红线核对**: 零网络抓取(纯快照解析);不涉及 BOSS/牛客/小红书/实习僧;不登录/验证码/限流绕过
