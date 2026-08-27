@@ -12,6 +12,18 @@ test('validateAction: flyTo 无 zoom 也合法(规范化为无 zoom 键)', () =>
   assert.deepEqual(a, { type: 'flyTo', payload: { center: { lng: -0.12, lat: -45.6 } } });
 });
 
+test('validateAction: flyTo zoom 钳制到项目/引擎共同范围[3,20](极端/负值/边界稳定)', () => {
+  const center = { lng: 120, lat: 30 };
+  assert.equal(validateAction({ type: 'flyTo', payload: { center, zoom: -1 } }).payload.zoom, 3);
+  assert.equal(validateAction({ type: 'flyTo', payload: { center, zoom: 0 } }).payload.zoom, 3);
+  assert.equal(validateAction({ type: 'flyTo', payload: { center, zoom: 3 } }).payload.zoom, 3);
+  assert.equal(validateAction({ type: 'flyTo', payload: { center, zoom: 20 } }).payload.zoom, 20);
+  assert.equal(validateAction({ type: 'flyTo', payload: { center, zoom: 21 } }).payload.zoom, 20);
+  assert.equal(validateAction({ type: 'flyTo', payload: { center, zoom: 1e6 } }).payload.zoom, 20);
+  assert.equal(validateAction({ type: 'flyTo', payload: { center, zoom: Number.NaN } }), null);
+  assert.equal(validateAction({ type: 'flyTo', payload: { center, zoom: Number.POSITIVE_INFINITY } }), null);
+});
+
 test('validateAction: 越界/非法坐标一律 null', () => {
   assert.equal(validateAction({ type: 'flyTo', payload: { center: { lng: 181, lat: 30 } } }), null);
   assert.equal(validateAction({ type: 'flyTo', payload: { center: { lng: 120, lat: 91 } } }), null);

@@ -68,6 +68,9 @@ test('validateAction: 客户端校验与后端同款(越界坐标/超长 id/超�
     type: 'flyTo',
     payload: { center: { lng: 120.1, lat: 30.2 }, zoom: 12 },
   });
+  assert.equal(validateAction(action('flyTo', { center: { lng: 120, lat: 30 }, zoom: -1 })).payload.zoom, 3);
+  assert.equal(validateAction(action('flyTo', { center: { lng: 120, lat: 30 }, zoom: 21 })).payload.zoom, 20);
+  assert.equal(validateAction(action('flyTo', { center: { lng: 120, lat: 30 }, zoom: 1e6 })).payload.zoom, 20);
   assert.equal(validateAction(action('flyTo', { center: { lng: 181, lat: 30 } })), null);
   assert.equal(validateAction(action('flyTo', { center: { lng: 120, lat: NaN } })), null);
   assert.equal(validateAction(action('select', { id: 'x'.repeat(129) })), null);

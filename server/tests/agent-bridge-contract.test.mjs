@@ -32,6 +32,21 @@ function makeView() {
   return new MockView({ center: { lng: 120.15, lat: 30.27 }, zoom: 13 });
 }
 
+test('flyTo: zoom 极端/负值钳制到共同范围[3,20],边界保持稳定,非 finite 忽略', () => {
+  const view = makeView();
+  const bridge = createAgentBridge(view);
+  const center = { lng: 121, lat: 31 };
+  const expected = [3, 3, 3, 20, 20, 20];
+  for (const [zoom, target] of [-1, 0, 3, 20, 21, 1e6].map((value, i) => [value, expected[i]])) {
+    bridge.flyTo(center.lng, center.lat, zoom);
+    assert.equal(view.getState().zoom, target, `zoom=${zoom} 应稳定落在共同范围`);
+  }
+  bridge.flyTo(center.lng, center.lat, Number.NaN);
+  assert.equal(view.getState().zoom, 20, 'NaN 不应触碰引擎或污染上一合法 zoom');
+  bridge.flyTo(center.lng, center.lat, undefined);
+  assert.equal(view.getState().zoom, 20, '缺省 zoom 保持当前值');
+});
+
 test('addMarkers:createMarker 显式锚点 offset [-10,-10](圆心锚定,有/无 label 一致)', () => {
   const view = makeView();
   const bridge = createAgentBridge(view);

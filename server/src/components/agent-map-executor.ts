@@ -13,10 +13,11 @@
 // - search → bridge 无 search 能力(接口不含),流式路径只通知 onAction 渲染建议卡片,
 //   execute 路径为空操作;无可撤销的地图副作用,不入 undo 栈。
 //
-// 校验规则本地复刻(lib/agent/** 只 import types,不 import 其函数)。
+// 校验规则本地复刻(lib/agent/** 只 import types,坐标等规则保持本地;zoom 范围共享 map-engine/zoom)。
 
 import type { AgentAction, AgentEvent, ToolKind } from "../lib/agent/types.ts";
 import type { MapBridge } from "../lib/agent-map-bridge.ts";
+import { clampMapZoom } from "../lib/map-engine/zoom.ts";
 
 export interface AgentToolInfo {
   /** 公开类别(sanitize 后 SSE name 即 ToolKind,此处同步收敛类型)。 */
@@ -103,10 +104,6 @@ function isOptionalString(v: unknown, max: number): boolean {
   return v === undefined || (typeof v === "string" && v.length <= max);
 }
 
-function isOptionalNumber(v: unknown): boolean {
-  return v === undefined || isFiniteNumber(v);
-}
-
 function isValidCenter(v: unknown): boolean {
   return isRecord(v) && isLng(v.lng) && isLat(v.lat);
 }
@@ -124,12 +121,13 @@ export function validateAction(raw: unknown): AgentAction | null {
   switch (type) {
     case "flyTo": {
       if (!isValidCenter(payload.center)) return null;
-      if (!isOptionalNumber(payload.zoom)) return null;
+      const zoom = payload.zoom === undefined ? undefined : clampMapZoom(payload.zoom);
+      if (payload.zoom !== undefined && zoom === null) return null;
       return {
         type: "flyTo",
         payload: {
           center: { lng: (payload.center as { lng: number }).lng, lat: (payload.center as { lat: number }).lat },
-          ...(isFiniteNumber(payload.zoom) ? { zoom: payload.zoom } : {}),
+          ...(zoom !== undefined && zoom !== null ? { zoom } : {}),
         },
       };
     }
