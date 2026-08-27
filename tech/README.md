@@ -36,6 +36,7 @@
 | [27-oauth-login.md](27-oauth-login.md) | 第三方登录(GitHub/Google/微信 OAuth:契约/手动配置/回退) | 后端 |
 | [28-account-security.md](28-account-security.md) | 账号安全:密码/手机/邮箱管理、邮箱+密码登录(2026-08-22) | 后端 |
 | [29-geocode-r5-status.md](29-geocode-r5-status.md) | geocode r5 状态与操作清单:城市中心假坐标修复链(基线/配额/import/UI 验证) | 数据/后端 |
+| [31-job-navigation-agent-plan.md](31-job-navigation-agent-plan.md) | 📌 求职导航 Agent 下一阶段计划(岗位/通勤/面试到达) | 产品/前端/后端/数据 |
 
 ## 快速导航
 
@@ -48,6 +49,7 @@
 - 了解技术决策理由 → [06-decisions.md](06-decisions.md)
 - **开发前端界面** → [07-frontend-design-system.md](07-frontend-design-system.md) 🎨
 - **了解全国规模计划** → [18-national-scale-plan.md](18-national-scale-plan.md) 📌
+- **启动求职导航 Agent 下一阶段** → [31-job-navigation-agent-plan.md](31-job-navigation-agent-plan.md) 📌
 - **查 API 契约** → [14-api-contract.md](14-api-contract.md)
 - **查 Bug 修复记录** → [16-bug-fixes.md](16-bug-fixes.md)
 - **本地跑起来** → [15-deploy.md](15-deploy.md)

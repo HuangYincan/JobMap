@@ -6,7 +6,7 @@
 
 ## Current Baseline
 
-P0–P4 are **complete and merged to `dev`**. The current application is a runnable Next.js map with Domain + Work modes, account / saved / applications / job-alert queue, reviewed acquisition adapters, and nationwide Work data. Public Work reads are **strict DB-only**: `server/src/lib/server-catalog.ts` delegates to Postgres (`companies` / `company_sites` / `positions`) and returns `[]` when `DATABASE_URL` is absent, the query fails, or the DB-backed result is empty; seed example data is archived under `tech/backup/seed-data`. Historical Phase 1 records remain on `feature/phase-1-platform-baseline`.
+P0–P4 are **complete and merged to `dev`**. The current application is a runnable Next.js map with Domain + Work modes, account / saved / applications / job-alert queue, reviewed acquisition adapters, nationwide Work data, controlled AI map actions, and per-user Agent memory. Public Work reads are **strict DB-only**: `server/src/lib/server-catalog.ts` delegates to Postgres (`companies` / `company_sites` / `positions`) and returns `[]` when `DATABASE_URL` is absent, the query fails, or the DB-backed result is empty; seed example data is archived under `tech/backup/seed-data`. Historical Phase 1 records remain on `feature/phase-1-platform-baseline`.
 
 **Frontend status (2026-08-27 snapshot at commit `d899b3f`):** map shell, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter, sort, autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle, and three map engines — all browser-verified. The server suite is **1689 tests / 1686 pass / 0 fail / 3 skip** (`cd server && npm test`). This is a transient baseline; later workstreams may change the count.
 
@@ -22,8 +22,8 @@ P0–P4 are **complete and merged to `dev`**. The current application is a runna
 | P3 | Recruitment map interface | Complete (dev) | P2 complete; explicit ASCII/text approval | Approved desktop/mobile layout record, implemented UI, agent-browser screenshots, accessibility and responsive checks |
 | P4 | Map productivity features | Complete (dev) | P3 client slice on branch | Search, saved map overlays, controlled fly/highlight interactions |
 
-| P5 | Additional approved data and spatial analysis | Deferred | P4 evidence plus source review | Housing/commute or another approved domain; PostGIS correctness tests |
-| P6 | Sensitive and AI features | Deferred | Privacy/security design and evaluation plan | PII consent/retention controls, map-action validation, recommendation evaluation |
+| P5 | Work-mode job-navigation Agent | Planned; implementation not started | P4 evidence; route-provider/source/privacy contracts; explicit layout approval before frontend work | Commute-constrained job search, explainable job/commute comparison, interview-arrival planning, trusted route artifacts, offline evaluation |
+| P6 | Proactive navigation and experiment loop | Deferred | P5 evidence plus background-location/notification privacy and operations design | Consent-based out-of-session reminders, controlled experiments, monitoring and rollback evidence |
 | P7 | Public docs and production delivery | Deferred | Runnable product and operations design | Verified public docs, deploy/runbook, backup/restore and release evidence |
 
 No calendar release date is committed. Each phase is estimated only after its entry gate is satisfied.
@@ -124,6 +124,14 @@ No calendar release date is committed. Each phase is estimated only after its en
 **Phase 3 implementation record (historical, 2026-08-16):** Saved places — `008_saved_places`. Applications — `009_applications`. Company compare — Saved L2 / mobile `SavedList`. Job alerts — `010_notifications` + `/api/me/notifications` enqueue matching seed jobs into Profile inbox when email/SMS is on; nothing is actually sent. Guests are prompted to sign in.
 
 **Phase 4 implementation record (historical, 2026-08-16):** Saved overlay — Layers L2 frost card (`layers-panel.tsx`) toggles `lib/saved-overlay.ts` and owns basemap styles. Overlay + style persist in sessionStorage. Search list stays the pipeline; the map merges leftover saved pins (catalog/seed live, snapshot pin fallback). Fly/highlight still go through `usePOIMap`; Saved click uses `resolveSavedForFly`. Recent replay goes through `replayRecentSearch` + mode cache. Public read APIs cache 30s (`lib/public-cache.ts`) and load work via `loadServerCatalog` (imported SQL rows when present, else seed + official-career JSON). Contrast tokens live in `lib/contrast.ts`. Home `home-map.tsx` lazy-loads `MapShell` (`next/dynamic`, `ssr: false`); first-party client deps stay Next/React/CSS Modules (`tech/12-bundle-notes.md`). Account SQL + spatial reads are inventoried in `tech/13-db-query-notes.md` (live gist / account `EXPLAIN` recorded 2026-08-16). Search/filter integration lives in `tests/search-integration.test.mjs` (same seed → pipeline → page path as `/api/search`). Seed import planner is `lib/recruitment-import.ts` / `npm run import:seed`. Local runbook: `tech/15-deploy.md`.
+
+## Phase 5: Work-mode Job Navigation Agent (Planned)
+
+The authoritative product/technical plan is [`tech/31-job-navigation-agent-plan.md`](31-job-navigation-agent-plan.md). P5 evolves Work mode from a recruitment map into a bounded job-navigation Agent for three tasks: commute-constrained job discovery, explainable job/commute comparison, and interview-arrival planning.
+
+P5 does not claim turn-by-turn navigation, background location tracking, out-of-session reminders, or learned recommendation. Server-side route providers must remain separate from browser map-engine adapters; every route must expose provenance and quality, and estimate fallback must remain explicit. Frontend implementation is blocked until the user explicitly approves the desktop/mobile ASCII layout in `tech/31`.
+
+P5 work proceeds as `WS0 → WS1 → WS2 → WS3 → WS4 → WS5`, with route-provider/source/privacy review first and the three core scenarios plus offline evaluation as the exit gate.
 
 
 ## Deferred Decisions

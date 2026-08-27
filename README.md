@@ -1,6 +1,6 @@
 # Domain Map Platform
 
-> A plugin-oriented map platform for location-bound domain data. The first planned vertical slice is a recruitment map built only from approved data imports.
+> A plugin-oriented map platform for location-bound domain data. The first implemented vertical slice is a recruitment map built only from approved data imports.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
@@ -18,7 +18,7 @@ Implemented and verified:
 - PostGIS spatial queries: `/api/pois` and `/api/search` use `geom && ST_MakeEnvelope` + `ST_DWithin` for viewport/distance clip. Warm local Next P95: `/api/pois` 12.7ms, bounds clip 5.8ms.
 - Frontend `server/` (Next.js 16.3.1, React 19.2.8): Domain + Work map modes, Explore / POI detail / JD panel, mobile drawer, Profile / Recent / Saved / Layers L2, search/filter (30+ dimensions), sort (6 modes), autocomplete, apply tracking, job alerts (queued), saved overlay, basemap toggle. Guest Recent persists in localStorage (persistable work queries only); Saved/Recent reject domain POIs. **Current test snapshot at commit `d899b3f` (2026-08-27): 1689 tests / 1686 pass / 0 fail / 3 skipped** (`cd server && npm test`); run `npm run typecheck` as the TypeScript gate. Pin coordinates are audited against AMap Web services (`npm run audit:pins`, needs `AMAP_WEB_KEY`).
 - Official-career file adapter: drops 现 **78 家公司**(2026-08-23 计数);适配器首版 51 家(32 个 JSON drops 覆盖全部有公开 career URL 的 seed slug + 之江实验室新 slug)。曦曦AI stays seed-only (no career page)。审查记录:`tech/roles/data/etl/official-career.md`。
-- Changelog: [CHANGELOG.md](CHANGELOG.md). API: [tech/14-api-contract.md](tech/14-api-contract.md). Local run: [tech/15-deploy.md](tech/15-deploy.md). Roadmap: [tech/05-milestones.md](tech/05-milestones.md).
+- Changelog: [CHANGELOG.md](CHANGELOG.md). API: [tech/14-api-contract.md](tech/14-api-contract.md). Local run: [tech/15-deploy.md](tech/15-deploy.md). Roadmap: [tech/05-milestones.md](tech/05-milestones.md). Next phase (planned): [Work-mode job-navigation Agent](tech/31-job-navigation-agent-plan.md).
 
 Deferred to future phases:
 - `boss` / `nowcoder` / `shixiseng` adapters are stubs (empty dirs); no acquisition is run against them. `xiaozhao-radar` and official career pages are **reviewed and implemented** (records: `tech/roles/data/etl/xiaozhao-radar.md`, `etl/official-career.md`).
@@ -33,7 +33,7 @@ Deferred to future phases:
 - PostgreSQL 16 and PostGIS 3.4 are required platform infrastructure (migrations written).
 - A canonical entity/item model with map overlays, data provenance, and tenant-scoped visibility (implemented).
 - Declarative domain plugins; a plugin does not grant permission to acquire data (validator implemented).
-- A full-screen map UI with an Apple Maps-inspired shell, responsive drawer, system theme, and controlled AI map actions (shell implemented; AI deferred).
+- A full-screen map UI with an Apple Maps-inspired shell, responsive drawer, system theme, controlled AI map actions, and per-user Agent memory (implemented); Work-mode job-navigation intelligence is planned in `tech/31-job-navigation-agent-plan.md`.
 - Amap is the initial map adapter; Tencent and Baidu engines are implemented behind the map-engine contract, while adding further adapters remains deferred.
 
 ### MVP data boundary
@@ -44,7 +44,8 @@ BOSS and Xiaohongshu are **not** MVP sources. No direct automated acquisition, l
 
 ### Explicitly deferred
 
-- Resume upload, user profiling, AI recommendation, RAG, and all PII processing.
+- Resume upload/parsing, learned recommendation or ranking, private-document RAG, and new sensitive PII processing beyond the existing account and Agent-memory controls.
+- Background location tracking, turn-by-turn navigation, and out-of-session proactive travel reminders.
 - Housing, university, and other domain plugins.
 - Executable third-party plugins and additional map-engine adapters.
 - Production deployment and the public documentation website.
@@ -61,6 +62,7 @@ BOSS and Xiaohongshu are **not** MVP sources. No direct automated acquisition, l
 | [tech/04-workflow.md](tech/04-workflow.md) | Branch, review, and release workflow | Current |
 | [tech/05-milestones.md](tech/05-milestones.md) | In-repository roadmap and entry gates | Current |
 | [tech/07-frontend-design-system.md](tech/07-frontend-design-system.md) | UI constraints and approval gate | Design contract |
+| [tech/31-job-navigation-agent-plan.md](tech/31-job-navigation-agent-plan.md) | Planned Work-mode job-navigation Agent phase | Current plan |
 | [tech/roles/README.md](tech/roles/README.md) | Internal role-record taxonomy | Current |
 
 Future public documentation will live at `tech/zh-cn/` and be deployed at `https://map.nvc.ac/doc/zh-cn` only after the site is implemented. It is not present in this repository yet.

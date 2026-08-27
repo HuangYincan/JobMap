@@ -2,8 +2,8 @@
 
 **文档版本:** 1.0
 **创建日期:** 2026-08-21
-**状态:** Spec 定稿(批次 `20260821-boss-agent-feature` 已派发,ws-a/b/c 开发中,**尚未合并 dev**)。本文为**规划/契约文档**,一律描述「将实现」的行为;实现以 ws-a/b/c 的 prompt 为执行基准,合并后由 merger 更新本状态行与 `tech/03-plugin-system.md`。
-**相关:** `tech/03-plugin-system.md`(ai-assistant 插件状态)、`tech/18-national-scale-plan.md` §2.6(LLM 校验先例 `llm-validate.ts`)、`tech/22-hangzhou-poi-local.md`(REST 兜底模式)、批次目录 `tech/roles/development/parallel-sessions/20260821-boss-agent-feature/`(manifest / prompts / deferred-notes)
+**状态:** Agent 核心、受控地图动作与前端交互已实现并合并 `dev`;本文保留 2026-08-21 原始决策/实施契约及后续修订记录。当前求职导航扩展仍为规划,见 `tech/31-job-navigation-agent-plan.md`。
+**相关:** `tech/03-plugin-system.md`(ai-assistant 插件状态)、`tech/18-national-scale-plan.md` §2.6(LLM 校验先例 `llm-validate.ts`)、`tech/22-hangzhou-poi-local.md`(REST 兜底模式)、`tech/30-agent-memory.md`(已实现用户记忆)、`tech/31-job-navigation-agent-plan.md`(P5 规划)、批次目录 `tech/roles/development/parallel-sessions/20260821-boss-agent-feature/`(manifest / prompts / deferred-notes)
 
 ---
 
@@ -11,7 +11,7 @@
 
 ### 1.1 为什么做
 
-地图产品天然适合与 LLM 结合:**智能建议**(「滨江区长河街道有什么推荐?」)与**直接操作地图**(「画出从公司出发 30 分钟通勤圈」)。Domain Map 已有完整地图栈(AMap + 工作/域多模式)、真实数据(岗位/POI)与三平台 key,缺的是把 LLM 接到地图上的「agent 层」。
+地图产品天然适合与 LLM 结合:**智能建议**(「滨江区长河街道有什么推荐?」)与**直接操作地图**(「画出从公司出发 30 分钟通勤圈」)。2026-08-21 立项时,Domain Map 已有完整地图栈和真实岗位/POI 数据,缺少连接 LLM 与地图的 Agent 层；该通用 Agent 层现已实现。下一阶段缺口是项目域内的岗位工具、可信路线规划和求职导航编排,见 `tech/31-job-navigation-agent-plan.md`。
 
 ### 1.2 CC/CD 框架:代理权要赚取
 
@@ -28,7 +28,7 @@ v1 建议能力作为地基保留(同一对话流,动作是「可选增强」);v
 
 - 项目已有 LLM 调用先例:`server/src/lib/llm-validate.ts`(OpenAI 兼容 chat completions,`LLM_API_KEY`/`LLM_MODEL`/`LLM_BASE_URL`,脚本 `validate-positions-llm.mjs`)。
 - 三平台 key 全配(`server/.env.local` 均非空):`AMAP_WEB_KEY`、`BAIDU_MAP_AK`、`TENCENT_MAP_KEY`;REST 三级兜底链已存在(`server/src/lib/site-geocode.ts` 的 `geocodeAddressRest`/`placeTextSearchRest`/`regeoCityRest`,AMap→百度→腾讯)。
-- 项目**无任何 agent / MCP 代码**——本批次为从零新增,全部以 `server/src/lib/agent/**` 新模块落地,不改现有文件(除 ws-c 的 map-shell 最小 seam,见 §9.6)。
+- **历史基线(2026-08-21 立项时):** 项目当时无任何 Agent / MCP 代码,本批次从零新增 `server/src/lib/agent/**` 并接入 map-shell seam。**当前事实:** 这些模块已实现并合并 `dev`,后续用户记忆见 `tech/30-agent-memory.md`。
 - 约束:`npm install` 被会话权限 deny(D5),不得引入第三方 SDK,手写零依赖 MCP 客户端。
 
 ---
