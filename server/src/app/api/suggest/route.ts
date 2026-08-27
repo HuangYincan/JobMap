@@ -10,10 +10,13 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { countPoisMatchingTag, matchKeyword, suggestSearchTags } from '@/lib/search';
-import { loadServerCatalog } from '@/lib/server-catalog';
+import { suggestSearchTags } from '@/lib/search';
+import {
+  countWorkTagMatchesFromDb,
+  loadWorkSuggestionsFromDb,
+} from '@/lib/recruitment-store';
 import { isRecruitmentMode, haversineDistance } from '@/lib/types';
-import type { MapMode, RecruitmentPOI } from '@/lib/types';
+import type { MapMode } from '@/lib/types';
 import { loadHzPoiSuggestions } from '@/lib/hz-poi-store';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 import { trendingForMode } from '@/lib/trending-search';
@@ -60,52 +63,59 @@ export async function GET(request: Request) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  // DB-only：catalog 仅工作模式用（domain 走 hz_pois 建议，不必加载 catalog）。
-  const catalog = isRecruitmentMode(mode) ? await loadServerCatalog(mode) : [];
   const suggestions = [];
 
   if (q && isRecruitmentMode(mode)) {
-    const work = catalog.filter((poi): poi is RecruitmentPOI => poi.kind === 'recruitment');
-    for (const poi of work) {
-      // 公司名匹配
-      if (matchKeyword(poi.company.name, q)) {
+    // Work autocomplete is SQL-backed and independently capped. Do not load the
+    // complete catalog on a cache miss just to scan company/job text in JS.
+    // Unlike loadServerCatalog, this path only asks Postgres for capped matches.
+    const rows = await loadWorkSuggestionsFromDb(q, 10);
+    const companyRows = rows?.filter((row) => row.kind === 'company') ?? [];
+    const companyPoiIds = new Set(
+      companyRows.map((row) => {
+        const siteCount = Number(row.site_count);
+        return siteCount === 1 ? row.slug : `${row.slug}:${row.site_id}`;
+      }),
+    );
+    for (const row of rows ?? []) {
+      const siteCount = Number(row.site_count);
+      const poiId = siteCount === 1 ? row.slug : `${row.slug}:${row.site_id}`;
+      const location = { lng: row.lng, lat: row.lat };
+      if (row.kind === 'company') {
         suggestions.push({
           type: 'poi',
-          id: poi.id,
-          title: poi.company.name,
-          subtitle: poi.company.summary || poi.company.industries.join(' · '),
-          icon: poi.company.logo || '🏢',
-          location: poi.location,
-          distance: center && poi.location ? haversineDistance(poi.location, center) : undefined,
+          id: poiId,
+          title: row.company_name,
+          subtitle: row.summary || (row.industries ?? []).join(' · '),
+          icon: row.logo_emoji || '🏢',
+          location,
+          distance: center ? haversineDistance(location, center) : undefined,
         });
-        continue; // 公司已匹配，避免重复推岗位
-      }
-      // 岗位标题匹配
-      for (const pos of poi.positions) {
-        if (matchKeyword(pos.title, q)) {
-          suggestions.push({
-            type: 'position',
-            id: pos.id,
-            title: `${poi.company.name} · ${pos.title}`,
-            subtitle: pos.department ? `${pos.department} · ${pos.education || ''}` : undefined,
-            icon: '💼',
-            poiId: poi.id,
-            location: poi.location,
-            distance: center && poi.location ? haversineDistance(poi.location, center) : undefined,
-          });
-        }
+      } else if (!companyPoiIds.has(poiId)) {
+        suggestions.push({
+          type: 'position',
+          id: row.position_id,
+          title: `${row.company_name} · ${row.position_title}`,
+          subtitle: row.department ? `${row.department} · ${row.education || ''}` : undefined,
+          icon: '💼',
+          // Preserve the public `poiId: poi.id` field shape for job rows.
+          poiId,
+          location,
+          distance: center ? haversineDistance(location, center) : undefined,
+        });
       }
     }
-    for (const tag of suggestSearchTags(q, 6)) {
-      const count = countPoisMatchingTag(work, tag);
+    const tags = suggestSearchTags(q, 6);
+    const counts = await Promise.all(tags.map((tag) => countWorkTagMatchesFromDb(tag)));
+    tags.forEach((tag, index) => {
       suggestions.push({
         type: 'tag',
         id: tag.id,
         title: tag.title,
-        subtitle: `${count} 个公司`,
+        subtitle: `${counts[index] ?? 0} 个公司`,
         icon: '🏷️',
       });
-    }
+    });
   } else if (q && mode === 'domain') {
     // 本地优先：hz_pois name 前缀匹配。无库/表缺失(null)或 0 命中 → 空列表，
     // 客户端回退高德 AutoComplete 一次（见 map-shell suggest effect）。
