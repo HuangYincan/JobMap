@@ -30,6 +30,15 @@
         "lng": 108.94,
         "lat": 34.34
       }
+    },
+    {
+      "id": "云智研发公司-site-chongqing",
+      "name": "云智研发公司",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "武汉/重庆/西安/长沙"
+      }
     }
   ],
   "positions": [

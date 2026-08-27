@@ -30,6 +30,28 @@
         "lng": 103.906786,
         "lat": 30.637616
       }
+    },
+    {
+      "id": "浪潮集团-site-chongqing",
+      "name": "浪潮集团",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "重庆市两江新区锦嘉国际大厦15层",
+        "lng": 106.573887,
+        "lat": 29.571342
+      }
+    },
+    {
+      "id": "浪潮集团-site-suzhou",
+      "name": "浪潮集团",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "苏州市吴中区纬三路伟创力电脑公司",
+        "lng": 120.720633,
+        "lat": 31.221584
+      }
     }
   ],
   "positions": [

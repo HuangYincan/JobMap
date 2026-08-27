@@ -41,6 +41,15 @@
         "lng": 108.94,
         "lat": 34.34
       }
+    },
+    {
+      "id": "日立能源-site-chongqing",
+      "name": "日立能源",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "北京/上海/重庆/西安"
+      }
     }
   ],
   "positions": [

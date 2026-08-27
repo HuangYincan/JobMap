@@ -182,3 +182,15 @@ query 策略与补查行为:
 ## geocode:sites:apply 覆盖 5 源(2026-08-22,`fix/geocode-qqdoc-embodied`,w3)
 
 `geocode-sites-apply.mjs` 的 `dropFiles()` 扫描目录从 2 源(radar + official-career)扩到 **5 源**:radar / official-career / qqdoc-jobs / qqdoc-official / embodied-jobs(复用各 adapter 导出的 `*_DIR` 常量)。w2 回填进后三源的 342 个有地址站点因此进入 geocode 计划(有地址 → 地址 geocode query),不再永远上不了地图;配额短路、memo、regeo 双闸门、override 优先级、confidence 门、写回逻辑均不变。qqdoc-official 的 `city_pending` 站点(city 仍为「XX总部」脏值,如 `qq-中国矿产资源集团-site-hq`)照常进计划,脏 city 在 regeo 城市闸门被跳过是**可接受行为**(不崩脚本、不写错坐标),待 city 修正后自然解。
+
+## 多城 POI 扩展:重庆入管线 + 苏州欠账(2026-08-27,`feature/expand-city-pois`)
+
+用户要求扩展广州/深圳/成都/重庆/南京的 POI 岗位信息。诊断与执行:
+
+- **重庆缺口**:`radar_jobs.py` 目标城市原为十城,无重庆 → 快照 30 行在招重庆的公司(28 家,8 家全新)整行丢弃。`CITY_TARGETS/CITY_KEY/CITY_FULL/CITY_PROVINCE` 加重庆(2026-08-27),crawler 测试 +2 用例。
+- **增量合并而非全量重刷**:`cli radar` 整文件覆写会冲掉 1478 个已 geocode 坐标 + 历史打标(事故记录 fix-sweep-accident-coords)。新增 `server/scripts/merge-radar-remap.mjs`:重映射产物增量合并进现有 drops,只加站点/岗位,保留既有坐标与 tier/category。结果:radar drops 646→659 公司,+64 站(重庆 23 + **苏州 41 欠账** —— 苏州 2026-08-20 进目标城市后 drops 从未跟上)、+18 岗位行,其他城市零变动。
+- **geocode apply**(配额 ~300 站/日,AMap→百度→腾讯链):重庆/苏州新站 21 站 + 南京小米集团 1 站 + 广州三一集团 1 站 = **23 站落真实办公坐标**(high grade);三一广州站同时修正「跨城串味」地址(原挂杭州地址+广州中心坐标)。
+- **grader 区域前缀修复**(`site-geocode.ts`):`QUALIFIER_SUFFIXES` 加八大区域词(华东/华南/华北/华中/西南/西北/东北/东南)——「小米集团华东总部」类真实办公名此前拆不出 token 被整候选拒(实测南京 35 站 0 解析的根因之一),修复后小米南京解析 high。新增回归测试。
+- **中心钉重跑低产**:南京 34 / 广州 78 / 成都 90 / 深圳 147 站经公司名 place-search 解析率约 1-2%(法人名差异/门店/无 POI 是主要拒因)。本轮后 5 城剩余中心钉 **349 站**待后续(每日 geocode / grader 继续调优 / 大厂手工 override),见 tech/29 §4.2 backlog。
+- **DB 导入**(`import:seed:apply`):1052 companies / 2411 sites / 12303 positions,0 dropped。五城可见(有岗位+真实坐标):重庆 8→12、苏州 16→23;南京 52 / 广州 120 / 成都 130 / 深圳 250 不变(其增量受中心钉重跑低产限制)。
+- **Import plan 现行口径(2026-08-27)**:companies **1052** / sites **2411** / positions **12890**(plan 口径,含未到期),dropped 0。

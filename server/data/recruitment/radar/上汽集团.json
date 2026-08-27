@@ -19,6 +19,24 @@
         "lng": 121.462242,
         "lat": 31.226809
       }
+    },
+    {
+      "id": "上汽集团-site-chongqing",
+      "name": "上汽集团",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "上海/重庆/苏州/合肥"
+      }
+    },
+    {
+      "id": "上汽集团-site-suzhou",
+      "name": "上汽集团",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/重庆/苏州/合肥"
+      }
     }
   ],
   "positions": [

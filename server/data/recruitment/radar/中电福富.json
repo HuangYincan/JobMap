@@ -19,6 +19,15 @@
         "lng": 104.07,
         "lat": 30.66
       }
+    },
+    {
+      "id": "中电福富-site-chongqing",
+      "name": "中电福富",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "成都/重庆/厦门/福州"
+      }
     }
   ],
   "positions": [

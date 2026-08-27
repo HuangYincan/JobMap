@@ -41,6 +41,17 @@
         "lng": 113.26,
         "lat": 23.13
       }
+    },
+    {
+      "id": "国家电投集团-site-chongqing",
+      "name": "国家电投集团",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "重庆市九龙坡区含谷镇科翔二路",
+        "lng": 106.360938,
+        "lat": 29.547872
+      }
     }
   ],
   "positions": [

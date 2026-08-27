@@ -19,6 +19,15 @@
         "lng": 120.151463,
         "lat": 30.348752
       }
+    },
+    {
+      "id": "禾迈股份-site-suzhou",
+      "name": "禾迈股份",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "杭州/苏州"
+      }
     }
   ],
   "positions": [

@@ -52,6 +52,15 @@
         "lng": 121.47,
         "lat": 31.23
       }
+    },
+    {
+      "id": "安克创新-site-suzhou",
+      "name": "安克创新",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/杭州/苏州"
+      }
     }
   ],
   "positions": [

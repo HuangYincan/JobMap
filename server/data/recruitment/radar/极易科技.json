@@ -1,0 +1,41 @@
+{
+  "slug": "极易科技",
+  "name": "极易科技",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ecmax.zhiye.com/campus/detail?jobAdId=e26828ab-944f-421e-b1bb-167ee55acea4",
+  "sites": [
+    {
+      "id": "极易科技-site-suzhou",
+      "name": "极易科技",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "虎丘区江苏省苏州市苏州工业园区仁爱路99号西交大科创园B3幢",
+        "lng": 120.739889,
+        "lat": 31.274687
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-095792b56c4f",
+      "title": "人力资源 财经运维 运营类 数投分析类 投放推广类 设计类 算法工程师实习岗位",
+      "siteId": "极易科技-site-suzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ecmax.zhiye.com/campus/detail?jobAdId=e26828ab-944f-421e-b1bb-167ee55acea4",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

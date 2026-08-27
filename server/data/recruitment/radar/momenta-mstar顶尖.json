@@ -30,6 +30,15 @@
         "lng": 121.47,
         "lat": 31.23
       }
+    },
+    {
+      "id": "momenta-mstar顶尖-site-suzhou",
+      "name": "Momenta Mstar顶尖人才计划",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/苏州"
+      }
     }
   ],
   "positions": [

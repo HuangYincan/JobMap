@@ -30,6 +30,15 @@
         "lng": 113.944823,
         "lat": 22.578342
       }
+    },
+    {
+      "id": "传音控股-taig-ai顶尖-site-chongqing",
+      "name": "传音控股 TAIG-AI顶尖人才招聘计划",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "上海/深圳/重庆"
+      }
     }
   ],
   "positions": [

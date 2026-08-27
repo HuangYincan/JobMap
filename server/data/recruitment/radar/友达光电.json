@@ -1,0 +1,40 @@
+{
+  "slug": "友达光电",
+  "name": "友达光电",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/auo/98048#/jobs",
+  "sites": [
+    {
+      "id": "友达光电-site-suzhou",
+      "name": "友达光电",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "吴中区江苏省苏州市苏州工业园区苏虹中路398号",
+        "lng": 120.706576,
+        "lat": 31.335515
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0b71ff62319d",
+      "title": "软件开发工程师",
+      "siteId": "友达光电-site-suzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/auo/98048#/jobs",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

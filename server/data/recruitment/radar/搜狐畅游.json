@@ -19,6 +19,15 @@
         "lng": 116.4,
         "lat": 39.9
       }
+    },
+    {
+      "id": "搜狐畅游-site-chongqing",
+      "name": "搜狐畅游",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "北京/重庆/福州"
+      }
     }
   ],
   "positions": [

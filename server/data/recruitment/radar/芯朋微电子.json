@@ -30,6 +30,15 @@
         "lng": 113.94561,
         "lat": 22.57849
       }
+    },
+    {
+      "id": "芯朋微电子-site-suzhou",
+      "name": "芯朋微电子",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/苏州/无锡"
+      }
     }
   ],
   "positions": [

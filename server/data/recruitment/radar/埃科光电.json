@@ -41,6 +41,15 @@
         "lng": 104.062902,
         "lat": 30.571045
       }
+    },
+    {
+      "id": "埃科光电-site-suzhou",
+      "name": "埃科光电",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/成都/苏州"
+      }
     }
   ],
   "positions": [

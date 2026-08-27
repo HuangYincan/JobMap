@@ -30,6 +30,15 @@
         "lng": 120.212591,
         "lat": 30.182156
       }
+    },
+    {
+      "id": "tigermed-hangzhou-site-chongqing",
+      "name": "泰格医药",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "上海/杭州/重庆/济南"
+      }
     }
   ],
   "positions": [

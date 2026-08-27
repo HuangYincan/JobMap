@@ -52,6 +52,17 @@
         "lng": 114.299868,
         "lat": 22.689037
       }
+    },
+    {
+      "id": "momenta-site-suzhou",
+      "name": "Momenta",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "江苏省苏州市相城区青龙港路59号",
+        "lng": 120.641429,
+        "lat": 31.418581
+      }
     }
   ],
   "positions": [

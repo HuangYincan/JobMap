@@ -41,6 +41,15 @@
         "lng": 120.200789,
         "lat": 30.30288
       }
+    },
+    {
+      "id": "中铁二院-site-chongqing",
+      "name": "中铁二院",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "广州/成都/杭州/重庆"
+      }
     }
   ],
   "positions": [

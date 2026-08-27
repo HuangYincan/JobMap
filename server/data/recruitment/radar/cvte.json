@@ -30,6 +30,26 @@
         "lng": 108.761153,
         "lat": 34.267873
       }
+    },
+    {
+      "id": "cvte-site-chongqing",
+      "name": "CVTE—人力资源",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "广州/重庆/西安/苏州"
+      }
+    },
+    {
+      "id": "cvte-site-suzhou",
+      "name": "CVTE—人力资源",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "苏州市吴中区外塘路苏州太湖假日酒店西侧约190米",
+        "lng": 120.446191,
+        "lat": 31.225168
+      }
     }
   ],
   "positions": [

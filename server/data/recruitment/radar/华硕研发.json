@@ -1,0 +1,41 @@
+{
+  "slug": "华硕研发",
+  "name": "华硕研发",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://asustek.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "华硕研发-site-suzhou",
+      "name": "华硕研发",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "吴中区苏州市苏州工业园区钟南街永旺梦乐城",
+        "lng": 120.75806,
+        "lat": 31.323389
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d44d3aed9f11",
+      "title": "软件测试实习生  硬件测试实习生 无线网络设备测试实习生",
+      "siteId": "华硕研发-site-suzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://asustek.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

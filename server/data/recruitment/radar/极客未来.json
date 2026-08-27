@@ -1,0 +1,39 @@
+{
+  "slug": "极客未来",
+  "name": "极客未来",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://geek3.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "极客未来-site-chongqing",
+      "name": "极客未来",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "重庆"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-fac678757183",
+      "title": "小学班课主教师   初中班课主讲教师  学科校长管培生（教学方向）运营校长管培生 （销售方向）",
+      "siteId": "极客未来-site-chongqing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://geek3.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

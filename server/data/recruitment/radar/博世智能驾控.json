@@ -17,8 +17,33 @@
       "location": {
         "address": "上海/苏州"
       }
+    },
+    {
+      "id": "博世智能驾控-site-suzhou",
+      "name": "博世智能驾控",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/苏州"
+      }
     }
   ],
-  "positions": [],
+  "positions": [
+    {
+      "externalId": "radar-c08140d30e81",
+      "title": "XFUture  camp长期战略实习生岗位  具体见官方公告及投递方式链接",
+      "siteId": "博世智能驾控-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://v.wjx.cn/vm/mvTFKdf.aspx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
   "category": "36"
 }

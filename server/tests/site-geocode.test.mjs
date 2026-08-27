@@ -285,6 +285,29 @@ test('officeNameMatchStrength accepts company-form qualifiers (管理/有限/股
   }
 });
 
+test('officeNameMatchStrength accepts region-prefix office names (华东/华南, 2026-08-27)', () => {
+  // 2026-08-27 (fix/grader-region-prefix): 区域前缀 + 办公形态词 = 真实办公点
+  // (小米集团华东总部 / 华南研究院)。此前「华东总部」拆不出 token → 整候选
+  // 被拒 → 多城中心钉站点重 geocode 全 no-result (实测南京 35 站 0 解析)。
+  for (const [candidate, company] of [
+    ['小米集团华东总部', '小米集团'],
+    ['某司华南研究院', '某司'],
+    ['某司西南研究院', '某司'],
+    ['某司华北分公司', '某司'],
+    ['某司东北总部', '某司'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'strong', `${candidate} vs ${company}`);
+  }
+  // 区域词后非办公形态仍拒 — 门店/驿站/包装 混入, 防线不回退。
+  for (const [candidate, company] of [
+    ['小米华东旗舰店', '小米集团'],
+    ['某司华南驿站', '某司'],
+    ['小米华东包装', '小米集团'],
+  ]) {
+    assert.equal(officeNameMatchStrength(candidate, company), 'no', `${candidate} vs ${company}`);
+  }
+});
+
 test('officeNameMatchStrength accepts city-name bracket segments (2026-08-25)', () => {
   // 括号段=城市名 (或 城市+限定词): 某司(上海) / 歌尔微电子股份有限公司(上海)。
   for (const [candidate, company] of [

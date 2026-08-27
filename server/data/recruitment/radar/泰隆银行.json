@@ -30,6 +30,15 @@
         "lng": 120.196586,
         "lat": 30.22445
       }
+    },
+    {
+      "id": "泰隆银行-site-suzhou",
+      "name": "泰隆银行",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/杭州/苏州"
+      }
     }
   ],
   "positions": [

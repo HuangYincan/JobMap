@@ -30,6 +30,15 @@
         "lng": 114.06,
         "lat": 22.55
       }
+    },
+    {
+      "id": "星海图-site-suzhou",
+      "name": "星海图",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/苏州"
+      }
     }
   ],
   "positions": [
