@@ -83,6 +83,7 @@ LLM/Agent 配置全部走服务端环境变量(`AGENT_LLM_BASE_URL`/`AGENT_LLM_A
 │ llm-provider.ts  OpenAI 兼容流式客户端(SSE 解析/重试/超时/abort)        │
 │ run-agent.ts     循环主体(AsyncGenerator<AgentEvent>)                  │
 │ types.ts         AgentTool/AgentContext/AgentEvent/AgentAction 契约    │
+│ public-sse.ts    SSE 网络下行 allowlist(reasoning 仅内部)             │
 │ action-schema.ts validateAction 纯函数(动作参数服务端校验)              │
 │ mcp-endpoints.ts 三平台 MCP 端点常量(单点校准)                          │
 │ mcp-providers.ts 手写零依赖 MCP 客户端(streamable + legacy SSE)        │
@@ -107,21 +108,26 @@ LLM/Agent 配置全部走服务端环境变量(`AGENT_LLM_BASE_URL`/`AGENT_LLM_A
 
 ## 4. 事件协议(完整定义)
 
-### 4.1 `AgentEvent`(SSE 下行事件 union)
+### 4.1 `AgentEvent`(内部事件 union 与公开 SSE 子集)
 
 ```ts
 export type AgentEvent =
   | { type: 'delta'; text: string }                                  // 流式文本增量
-  | { type: 'reasoning'; text: string }                              // 推理模型思考内容(DeepSeek reasoning_content;run-agent 截断 4000 字符)
+  | { type: 'reasoning'; text: string }                              // provider 思考内容(仅服务端内部)
   | { type: 'tool'; name: string; status: 'start' | 'done' | 'error'; summary?: string }
   | { type: 'action'; action: AgentAction }                          // 结构化地图动作
   | { type: 'done'; truncated?: boolean }                            // 结束(truncated=true 表示超轮/超输出)
   | { type: 'error'; code: string; message: string };                // message 绝不含 secret
 ```
 
-SSE 线上格式:每事件一行 `data: <单行 JSON>\n\n`(空行分隔);事件 type 白名单即上述 6 种。
+`reasoning` 保留在服务端 `run-agent` 与 provider 之间,用于 DeepSeek 等推理模型的
+`tool_calls` replay(`assistant.reasoning_content`);它不属于网络公开协议。`/api/agent/chat`
+在写入 `ReadableStream` 前通过 `lib/agent/public-sse.ts` 的显式 allowlist,公开 SSE 仅允许
+`delta` / `tool` / `action` / `done` / `error` 五种事件。线上格式:每事件一行
+`data: <单行 JSON>\n\n`(空行分隔)。
 
-> **2026-08-21 增补(ws-c-enhance)**:`reasoning` 事件随流式顺序转发(与 delta 顺序保持),总量上限 **4000 字符**,超出截断且不再转发;`llm-provider` 解析 `choices[0].delta.reasoning_content`(缺省不回调,非推理模型零开销)。
+> **2026-08-27 质量修复(#2)**:`reasoning` 不再转发给网络客户端;服务端内部全文仍由
+> `onTurnReasoning` 回传并用于下一轮 provider 请求,不受公开事件过滤或 4000 字符展示预算影响。
 
 ### 4.2 `AgentAction` 白名单(6 种)
 
@@ -142,6 +148,7 @@ export type AgentAction =
 | 字段 | 边界 |
 |---|---|
 | `lng` / `lat` | `Number.isFinite` 且 `|lat| ≤ 90`、`|lng| ≤ 180`(NaN/Infinity 一律拒绝) |
+| `flyTo.zoom` | 非 finite 拒绝;有限值由 schema 与 bridge 共同钳制到 **3 .. 20**(项目/引擎共同支持范围) |
 | `radiusMeters` | 10 .. 50_000 |
 | `points` | ≤ 50 项;每项 lng/lat finite;`label` ≤ 50 字符 |
 | `id` | ≤ 128 字符 |
@@ -318,7 +325,8 @@ Content-Type: application/json
 
 - 360px × 70vh,**liquid glass 卡片浮层**(玻璃只用于卡片类浮层,符合设计系统);外壳霜面 `--soft-strong`;**以悬浮球为锚实时跟随**(见 §9.9,2026-08-21 起替代「贴吸附侧固定」);消息列表滚动 + 输入框 + 发送 / 停止 / 撤销 + tool 状态条 + 建议卡片。
 - **tool 状态条**:`{type:'tool'}` 事件驱动,显示「正在查询周边…」等(`agentToolRunning`,友好工具名)。
-- **思考过程**:`{type:'reasoning'}` 事件驱动,每条助手消息内渲染可折叠「💭 思考过程」(默认展开,点击折叠;muted 小字,滚动上限)。
+- **思考过程**:`reasoning` 仅在服务端保留用于 provider `tool_calls` replay,不经 SSE
+  下发;前端不接收、不渲染内部推理内容。
 - **工具活动列表**:每条 `{type:'tool'}` 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary),渲染在助手消息上方;provider 前缀映射友好名(`amap__`→高德、`tencent__`→腾讯、`baidu__`→百度、`rest__`→兜底、`builtin__`→内置)。
 - **建议卡片**:执行器捕获 action 时,面板在消息底部渲染动作摘要按钮(「在地图上定位」等),点击 = 重放该 action。
 - **未配置提示**:503 `LLM_UNCONFIGURED` → 显示 `t('agentNotConfigured')`(「AI 助手未配置,请在服务器配置」)。
@@ -469,12 +477,12 @@ drawer body 新增 `mobileSheet === "agent"` 分支:`mobileAgent` 包装 + sheet
 | a | `tests/agent-llm-provider.test.mjs` | mock fetchLike:SSE 解析(delta 文本、tool_calls chunk 拼接、[DONE]);首包超时;429/5xx 重试计数;400+tools → unsupported_tools;abort 传播;parseSseLine 纯函数矩阵 |
 | a | `tests/agent-runner.test.mjs` | tool_calls→工具被调→结果回流→二轮;无工具→done;动作 JSON 提取/校验/逐个下发(含非法动作丢弃);超轮截断;工具抛错→tool error+继续;历史裁剪;unsupported_tools 降级一次 |
 | b | `tests/agent-mcp.test.mjs` | normalizeTool 矩阵(前缀/slug/截断/兜底);key 缺失 → getMcpProvider null;mock fetchLike/内嵌 http server:streamable 握手→listTools→callTool 全流程(SSE 与 JSON 两种响应形态);legacy SSE(GET 流 + POST 关联,含 Mcp-Session-Id 回传);超时/连接失败 → isReady false;并发信号量 |
-| b | `tests/agent-route-contract.test.mjs` | 契约测试(参照 api-hardening 模式):`runtime='nodejs'`、SSE headers 常量、事件 type 白名单、**「校验先于连接」定位断言**、限流存在 |
+| b | `tests/agent-route-contract.test.mjs` | 契约测试(参照 api-hardening 模式):`runtime='nodejs'`、SSE headers 常量、公开事件 allowlist(含 reasoning 不出网、合法事件仍流式转述)、**「校验先于连接」定位断言**、限流存在 |
 | c | `tests/agent-chat-client.test.mjs` | parseSseChunk 矩阵(单/多事件、坏 JSON、空行、事件跨 chunk 按 `\n\n` 切分) |
 | c | `tests/agent-map-executor.test.mjs` | mock bridge:各动作分流、非法动作丢弃、限流、undo 栈逆操作顺序、canUndo、isReady 失败 |
 | c | `tests/component-contracts.test.mjs`(**追加**) | agent-ball 有 aria-label 且含 `t('agentBall')`;agent-panel 有输入框与停止/撤销按钮;map-shell 含 `<AgentBall` seam |
 | enh | `tests/agent-llm-provider.test.mjs`(**追加**) | reasoning_content 逐 chunk 转发、同 chunk 与 content 并存、空串不回调、onReasoning 缺省兼容 |
-| enh | `tests/agent-runner.test.mjs`(**追加**) | reasoning 事件顺序转发(与 delta/tool 交错)、总量 4000 截断且不再转发、非推理模型零 reasoning |
+| enh | `tests/agent-runner.test.mjs`(**追加**) | reasoning 在服务端按顺序累计;仅 `onTurnReasoning` 供 tool-call replay,不描述为公开 SSE;非推理模型零 reasoning 事件 |
 | enh | `tests/markdown-pipeline.test.mjs` | marked 渲染(GFM 表格/删除线)、链接 target=_blank+rel=noopener、标题转义、sanitize 必须被调用(管线契约) |
 | enh | `tests/agent-panel-placement.test.mjs` | pickPanelSide 决策矩阵(首选/翻转/sheet)、左右缘锚定、垂直 clamp、极窄视口 sheet、移动端恒 sheet、常量契约;+ computeBallSnap 四向吸附(四边/四角/视口中央/平局顺序/clamp 边界)、垂直锚定 edge 矩阵(top/bottom 首选侧+翻转+sheet+水平居中 clamp,2026-08-21 ws-nfix) |
 | enh | `tests/component-contracts.test.mjs`(**追加**) | markdown-text 引用 marked+dompurify 且 sanitize 先于注入;面板 transform 锚定(--px/--py)+z-index 12;思考/工具活动类名;i18n 新键 |
