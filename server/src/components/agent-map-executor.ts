@@ -108,6 +108,33 @@ function isValidCenter(v: unknown): boolean {
   return isRecord(v) && isLng(v.lng) && isLat(v.lat);
 }
 
+const OPAQUE_ROUTE_ID_PATTERN = /^rte_[a-f0-9]{32,124}$/;
+const SHOW_ROUTE_GEOMETRY_KEYS = new Set([
+  "geometry",
+  "polyline",
+  "path",
+  "coordinates",
+  "points",
+  "providerRaw",
+  "rawResponse",
+  "provider_response",
+  "lng",
+  "lat",
+]);
+
+function containsForbiddenGeometry(value: unknown, depth = 0): boolean {
+  if (depth > 4 || value == null) return false;
+  if (Array.isArray(value)) {
+    return value.some((item) => containsForbiddenGeometry(item, depth + 1));
+  }
+  if (!isRecord(value)) return false;
+  for (const [key, nested] of Object.entries(value)) {
+    if (SHOW_ROUTE_GEOMETRY_KEYS.has(key)) return true;
+    if (containsForbiddenGeometry(nested, depth + 1)) return true;
+  }
+  return false;
+}
+
 /** 校验未知来源的动作对象:通过 → 规范化 AgentAction;任何越界/未知 type → null。 */
 export function validateAction(raw: unknown): AgentAction | null {
   if (!isRecord(raw)) return null;
@@ -168,6 +195,13 @@ export function validateAction(raw: unknown): AgentAction | null {
       if (typeof payload.query !== "string" || payload.query.length === 0 || payload.query.length > MAX_QUERY_CHARS) return null;
       return { type: "search", payload: { query: payload.query, ...(mode !== undefined ? { mode } : {}) } };
     }
+    case "showRoute": {
+      if (containsForbiddenGeometry(raw) || containsForbiddenGeometry(payload)) return null;
+      if (typeof payload.routeId !== "string" || !OPAQUE_ROUTE_ID_PATTERN.test(payload.routeId)) {
+        return null;
+      }
+      return { type: "showRoute", payload: { routeId: payload.routeId } };
+    }
     default:
       return null;
   }
@@ -197,6 +231,13 @@ export function createAgentMapExecutor(
   function executeAction(action: AgentAction, notify: boolean): void {
     const validated = validateAction(action);
     if (!validated) return; // 非法 → 丢弃(与后端同款规则)
+    if (validated.type === "showRoute") {
+      // Format-valid showRoute is a card-only no-op until the overlay workstream:
+      // do not call the map bridge, do not push undo, do not move the camera.
+      if (throttled(validated.type)) return;
+      if (notify) callbacks.onAction?.(validated);
+      return;
+    }
     if (throttled(validated.type)) return; // 500ms 同类型限流 → 丢弃
     if (!bridge.isReady()) {
       callbacks.onError?.("MAP_NOT_READY", "map is not ready");

@@ -23,6 +23,14 @@ import { filterPublicSseEvent } from '@/lib/agent/public-sse';
 import { builtinTools, memorySaveTool } from '@/lib/agent/tools/builtin';
 import { restFallbackTools } from '@/lib/agent/tools/rest-fallback';
 import { baiduAgentPlanTools } from '@/lib/agent/tools/baidu-agent-plan';
+import { workTools } from '@/lib/agent/tools/work';
+import { navigationTools } from '@/lib/agent/tools/navigation';
+import {
+  createNavigationSessionToken,
+  fingerprintNavigationSession,
+  readNavigationSessionToken,
+  serializeNavigationSessionCookie,
+} from '@/lib/navigation/navigation-session';
 
 export const runtime = 'nodejs';
 
@@ -152,6 +160,17 @@ export async function POST(request: Request) {
   //    memory_save 工具;guest → userId 不传、不加工具(tech/30-agent-memory.md §5)。
   const sessionUser = await readSessionUser();
 
+  // Navigation session cookie is shared with /api/navigation/routes/* (Path=/api,
+  // HttpOnly, SameSite=Lax, Secure in production). Mint after request validation
+  // and before MCP/LLM. The raw cookie never enters JSON, SSE, or logs; only the
+  // SHA-256 fingerprint is placed on AgentContext.
+  const existingNavigationToken = readNavigationSessionToken(request);
+  const navigationToken = existingNavigationToken ?? createNavigationSessionToken();
+  const navigationSetCookie = existingNavigationToken
+    ? undefined
+    : serializeNavigationSessionCookie(navigationToken);
+  const navigationFingerprint = fingerprintNavigationSession(navigationToken);
+
   // ---- 公开 error 事件脱敏(2026-08-21 安全要求):code 收敛到安全集合,message 一律置空 ----
   // 内部细节(provider 错误码 / HTTP 状态 / 内部异常)只进服务端日志(console.error),
   // 不随 SSE 下发;前端按 code 分支展示。注意:本块位于全部前置校验之后(勿前移,
@@ -170,6 +189,8 @@ export async function POST(request: Request) {
   const tools: AgentTool[] = [
     ...builtinTools(() => toolNamesState.names),
     ...restFallbackTools(),
+    ...workTools(),
+    ...navigationTools(),
     ...(hasBaiduAgentPlan() ? baiduAgentPlanTools() : []),
     ...(sessionUser ? [memorySaveTool()] : []),
   ];
@@ -245,6 +266,7 @@ export async function POST(request: Request) {
           lang,
           signal: upstreamAbort.signal,
           userId: sessionUser?.id,
+          navigationSession: { fingerprint: navigationFingerprint },
         })) {
           if (upstreamAbort.signal.aborted) break;
           // 网络发送边界显式 allowlist:reasoning/未知事件只留在服务端,不得进入 SSE。
@@ -286,6 +308,7 @@ export async function POST(request: Request) {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-store',
       'X-Accel-Buffering': 'no',
+      ...(navigationSetCookie ? { 'Set-Cookie': navigationSetCookie } : {}),
     },
   });
 }
