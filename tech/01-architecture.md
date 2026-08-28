@@ -7,14 +7,18 @@
 
 The platform is implemented and runs on `dev`: an importer Python package with declarative plugin/import validation, ordered PostGIS migrations (`001`–`020`) with a migration runner, executable API routes, a map-access policy seam, and a Next.js 16 frontend. Migration `020` enforces the position/site/company ownership invariant; environment application status is documented in [02-data-model.md](02-data-model.md). Live PostGIS verification, the API surface, and the local runbook all exist; the public documentation site and production deployment remain out of scope. This document is the design contract for the current system.
 
-The WS0 job-navigation contract is implemented in `server/src/lib/navigation/{constants,errors,index,types,validation}.ts`.
-These modules contain only frozen contract types, stable errors, and pure validation; they have no network,
-database, or session I/O. This is not a route service: the job-navigation `RouteProvider`, `RouteService`,
-artifact store, navigation API, job/navigation Agent tools, `showRoute`, and frontend route UI are not implemented.
+The WS0 job-navigation contracts and WS1 route core are implemented under `server/src/lib/navigation/`.
+WS1 adds the small `RouteProvider` injection seam, validated `RouteService`, explicit straight-line estimate
+adapter, bounded process-local route-artifact store, navigation-session fingerprinting, and tested HTTP boundary.
+Production registers no live route provider: `POST /api/navigation/routes/plan` therefore returns a labeled
+`estimate` with no geometry or `routeId`; no real road route, live traffic, or provider arrival-by capability is
+claimed. `GET /api/navigation/routes/[routeId]` only returns an unexpired provider artifact to the same
+independent navigation session, and never exposes its internal session fingerprint.
 
-WS0 only validates route-reference syntax: `routeId` must match
-`^rte_[a-f0-9]{32,124}$`, for a total length of 36–128 characters. WS1 is responsible for
-server-side CSPRNG generation and session binding; WS0 does not generate IDs. For `appointment.startsAt`,
+WS0 validates route-reference syntax: `routeId` must match
+`^rte_[a-f0-9]{32,124}$`, for a total length of 36–128 characters. WS1 generates provider-route IDs with
+server-side `node:crypto` CSPRNG only after result/geometry validation and binds artifacts to a one-way session
+fingerprint; estimates never receive an ID. For `appointment.startsAt`,
 `Z` remains valid and an explicit UTC offset is accepted only in this project's closed range of
 `[-12:00, +14:00]`; this is a project acceptance policy, not a statement of the full ISO 8601 range.
 WS0 does not validate whether an offset matches an IANA timezone.
@@ -44,9 +48,12 @@ Existing general Agent and controlled map actions
   -> client revalidates, rate-limits same-type actions, executes, and supports undo
   -> bounded client localStorage may retain actions/tool summaries
 
-WS0 job-navigation contract (implemented)
+WS0/WS1 job-navigation foundation (implemented)
   -> provider-neutral intent/route/error contract
   -> pure server-side validation
+  -> RouteService timeout/abort/result validation
+  -> explicit estimate fallback (no geometry or routeId)
+  -> bounded, session-fingerprinted provider artifacts
 ```
 
 ### Canonical Data vs Map Overlay
@@ -55,19 +62,21 @@ Canonical entities/items describe companies, jobs, or later domains once. A map 
 
 ### Browser Map vs Server Route Boundary
 
-The browser `MapEngine` and the future server-side `RouteProvider` are separate boundaries. `MapEngine` is
-responsible for basemap and overlay presentation; `RouteProvider` will be responsible for route requests,
-provider-result normalization, and route error, timeout, and quality semantics. Until product permissions,
+The browser `MapEngine` and server-side `RouteProvider` are separate boundaries. `MapEngine` is responsible
+for basemap and overlay presentation; WS1's injectable `RouteProvider`/`RouteService` boundary is responsible
+for route requests, provider-result normalization, and route error, timeout, abort, quality, geometry-validation,
+and estimate-fallback semantics. Until product permissions,
 call ordering, terms, quotas, caching/display rights, and commercial authorization are confirmed manually, the
-project must not select, register, configure, or call any live route provider. No real route, traffic data, route
-API, artifact storage, navigation Agent tool, or route UI is implied by the WS0 contract.
+project does not select, register, configure, or call any live route provider. The two navigation route handlers
+and process-local artifact store now exist, but their production planning path is estimate-only; no real route,
+traffic data, navigation Agent tool, `showRoute`, or route UI is implied.
 
 The WS0 provider review records product facts without selecting an adapter. Amap Route Planning 2.0 is recorded
 by its reviewed per-mode endpoints `/v5/direction/driving`, `/v5/direction/walking`,
 `/v5/direction/transit/integrated`, `/v5/direction/bicycling`, and `/v5/direction/electrobike`, not as a
 single endpoint with a `mode=0/1/2/3/4` mapping. Baidu DirectionLite is recorded separately with
 `driving`, `riding`, `walking`, and `transit`; ordinary Baidu Direction API v2 coordinate parameters and
-transit-time fields are not extrapolated to DirectionLite. No provider is selected, registered, or called in WS0.
+transit-time fields are not extrapolated to DirectionLite. No provider is selected, registered, or called in WS1.
 
 ### Tenant and Access Boundary
 
@@ -83,7 +92,7 @@ An import pipeline is `fetch/receive -> validate -> normalize -> provenance -> i
 
 ## API Contract
 
-The API is implemented and tested. Current routes include `/api/pois` (list, with `bounds`/`filters` spatial clip), `/api/pois/[id]`, `/api/pois/domain-local` (Hangzhou `hz_pois` ILIKE + tier LOD), `/api/search`, `/api/suggest`, `/api/modes`, `/api/filter-options`, `/api/auth/*`, and `/api/me/*` (account-scoped: search history, saved places, applications, notifications). The typed contract is in [14-api-contract.md](14-api-contract.md). The contract guarantees:
+The API is implemented and tested. Current routes include `/api/pois` (list, with `bounds`/`filters` spatial clip), `/api/pois/[id]`, `/api/pois/domain-local` (Hangzhou `hz_pois` ILIKE + tier LOD), `/api/search`, `/api/suggest`, `/api/modes`, `/api/filter-options`, `/api/auth/*`, `/api/me/*` (account-scoped: search history, saved places, applications, notifications), `POST /api/navigation/routes/plan`, and `GET /api/navigation/routes/[routeId]`. Navigation responses are always `no-store`; planning JSON is bounded; the dedicated HttpOnly/SameSite=Lax navigation cookie has a narrow route path and only its SHA-256 fingerprint reaches the bounded artifact store. The broader typed contract is in [14-api-contract.md](14-api-contract.md). The contract guarantees:
 
 - identity and map authorization before data access;
 - schema validation, bounded pagination/cursors, strict bbox/radius parsing, and parameterized queries;
@@ -100,15 +109,16 @@ bounds. The server validates extracted action payloads; the client revalidates t
 actions, executes them, and supports undo. Bounded client `localStorage` may retain actions and tool summaries.
 This is not a server-side action audit trail, and no server-side action or product-analytics audit sink is implied.
 The Agent cannot execute arbitrary SQL, browser commands, URLs, or plugin code; this does not make every tool
-read-only because logged-in `memory_save` is controlled write functionality. WS0 adds the provider-neutral
-job-navigation contract and pure validation only; job-navigation `RouteProvider`, `RouteService`, artifact
-store, navigation API, Agent job/navigation tools, `showRoute`, and frontend route UI remain unimplemented.
+read-only because logged-in `memory_save` is controlled write functionality. WS0/WS1 now provide the
+provider-neutral job-navigation contract, route service, explicit estimate path, session-bound artifact store,
+and two navigation route handlers. Agent job/navigation tools, `showRoute`, analytics persistence, live route
+providers, and frontend route UI remain unimplemented.
 
 ## Target Directory Structure
 
 ```text
 server/                 # Next.js application (App Router + API routes)
-server/src/lib/navigation/ # existing WS0 job-navigation contracts, stable errors, and pure validation
+server/src/lib/navigation/ # WS0 contracts + WS1 route service, estimate, session/artifact and HTTP modules
 crawler/                # approved-data importer (Python + uv)
 db/migrations/          # ordered SQL migrations (001–020); 020 enforces position/site/company ownership
 db/scripts/             # migration runner

@@ -231,17 +231,23 @@ favicon.im 解决的是「生成了 URL 但国内被墙」,但很多公司 logo 
    后者负责路线请求、供应商结果归一化，以及错误、超时和质量语义。
 2. 在供应商产品权限、调用顺序、条款、配额、缓存/展示与商业授权经人工确认前，不选择、
    注册、配置或调用任何真实路线供应商。
-3. WS1 的范围仅包括 provider-neutral 接口和显式 `estimate` adapter；不得把估算伪装成
-   `provider_route`。
+3. WS1 在 provider 侧仅实现 provider-neutral 接口和显式 `estimate` adapter，并实现受校验的
+   route service、进程内有界 artifact store 与薄 API；不实现或注册 live adapter，不得把估算
+   伪装成 `provider_route`。
 4. WS0/WS1 不持久化产品分析事件，不得复用 `audit_events`；后续事件 sink 与留存策略必须
    独立决策。
 
 **当前状态**:
 
-WS0 已实现 `server/src/lib/navigation/{constants,errors,index,types,validation}.ts` 中的
-导航契约与纯校验，并完成离线 fixture 和供应商约束审查。路线 provider/service/artifact
-store/API、Agent 工具、analytics persistence 和前端路线 UI 均未实现；本文不将其表述为
-已上线能力。详细供应商事实与未核实项见
+WS0 已实现导航契约、纯校验、离线 fixture 和供应商约束审查；WS1 已实现
+`route-provider.ts`、`route-service.ts`、`estimate-provider.ts`、会话指纹与有界
+`route-artifacts.ts`，以及两个 `no-store` navigation route handler。provider 成功结果只有在
+身份、数值、TTL、坐标系、geometry 点数/范围和起终点偏差通过后，才由服务端 CSPRNG 签发
+`routeId` 并写入会话隔离 artifact；estimate 始终没有 ID 或 geometry。
+
+生产构造器仍注册零个 live provider，正常规划结果只是明确标注的直线估算；没有真实道路路线、
+实时路况或供应商 arrival-by 能力。Agent 工具、analytics persistence 和前端路线 UI 均未实现。
+详细供应商事实与未核实项见
 `tech/roles/development/architecture/navigation-route-provider-review.md`。
 
 ---
