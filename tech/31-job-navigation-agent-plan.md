@@ -4,7 +4,7 @@
 
 **创建日期:** 2026-08-27
 
-**状态:** WS0 的契约/验证/40 条离线评测基线/供应商约束审查、WS1 路线可信地基和 WS2 Agent 域工具已完成并合并；用户研究仍待办；WS3 及以后未实现；WS4 因第 8 节布局未获批准继续 blocked
+**状态:** WS0 的契约/验证/40 条离线评测基线/供应商约束审查、WS1 路线可信地基和 WS2 Agent 域工具已完成并合并；WS3 离线评测 runner、可替换事件 sink 与 SQL/Python 报告已实现；用户研究仍待办；WS4 因第 8 节布局未获批准继续 blocked；WS5 未实现
 
 **目标岗位:** 腾讯地图 AI 产品培训生（导航 Agent）
 
@@ -12,7 +12,9 @@
 
 > 本文是下一阶段的产品、技术和验收总计划。WS0 的导航契约、纯校验、40 条离线评测基线、
 > 供应商约束审查和对应 ADR，以及 WS1 的 provider-neutral 路线服务、显式 estimate、
-> 会话隔离 artifact 与两个 route handler 已实现；WS2 的 Work/Navigation 域工具、`showRoute` 动作与 chat 会话共享已实现(客户端 overlay 仍未实现)。§8 的 ASCII 布局仅供审批，
+> 会话隔离 artifact 与两个 route handler 已实现；WS2 的 Work/Navigation 域工具、`showRoute` 动作与 chat 会话共享已实现(客户端 overlay 仍未实现)；
+> WS3 的可替换事件 sink、离线 runner 与 SQL/Python 报告已实现(不落库、不复用 `audit_events`)。
+> §8 的 ASCII 布局仅供审批，
 > **写入本文不等于用户已批准前端开发**。
 
 ---
@@ -57,6 +59,9 @@
    `route-artifacts.ts`、navigation session/HTTP runtime 和两个 navigation route handler 已实现；
    provider fake、超时/中止、降级、geometry、TTL、entry/aggregate-point 双容量、会话隔离和
    API 错误矩阵均有本地测试。
+8. **WS3 离线评测与事件 sink。** `analytics.ts`、`eval-policy.ts`、`eval-runner.ts`、
+   playbook sidecar 与 `server/scripts/navigation-eval/` 已实现；产品事件不落库，不接到
+   生产 chat / RouteService。
 
 ### 2.2 尚未实现
 
@@ -69,8 +74,8 @@
    岗位-通勤联合比较工具；系统提示含求职导航纪律。生产路线默认仍是直线 `estimate`。
 4. 第七种受控动作 `showRoute { routeId }` 已在服务端与客户端校验；客户端暂不绘制路线
    overlay。LLM 不得输出 polyline。
-5. 已有无敏感信息的离线评测基线，但尚无评测 runner、指标采集、产品事件 sink、失败漏斗
-   或分析留存实现；WS0/WS1 不持久化产品分析事件。
+5. 已有无敏感信息的 40 条离线评测基线、WS3 离线 runner、可替换事件 sink 与 SQL/Python
+   报告；产品事件仍不持久化，不复用 `audit_events`。真实用户样本与 UI 评测仍未实现。
 6. 尚无后台定位、后台提醒或持续重规划能力；P5 也不应暗示已具备这些能力。
 
 ## 3. P5 目标、非目标与成功定义
@@ -343,7 +348,9 @@ WS0 的资料审查只记录已审核的产品接口，不代表已注册适配�
 当前实现状态（2026-08-28）：WS0 契约/验证、WS1 的 `route-provider.ts`、
 `route-service.ts`、`route-artifacts.ts`、`estimate-provider.ts`、navigation session/HTTP
 runtime 与两个 navigation API，以及 WS2 的 `compare.ts`、`work.ts` / `navigation.ts` 域工具、
-`showRoute` 动作与 `/api/agent/chat` 导航 cookie 共享已实现。生产没有 live provider，POST
+`showRoute` 动作与 `/api/agent/chat` 导航 cookie 共享已实现。WS3 增加 `analytics.ts` 事件
+sink、`eval-runner.ts` / `eval-policy.ts` 离线评测与 SQL/Python 报告；sink 不落库，也不接到
+生产 chat / RouteService。生产没有 live provider，POST
 正常结果为明确的 `estimate`，不带 geometry/`routeId`；GET 只向同一 navigation session 返回
 未过期的 provider artifact 公共形状。`providers/`、analytics persistence，以及所有前端路线
 overlay 仍未实现；以下结构图不表示真实路线、实时交通信息或 UI 路线绘制已可用。
@@ -391,6 +398,9 @@ server/src/lib/navigation/
 ├── route-http.ts            # 已实现：有界 JSON、no-store、顶层 RouteError/HTTP 映射
 ├── route-runtime.ts         # 已实现：共享进程 store；生产零 live provider
 ├── compare.ts               # 已实现：通勤矩阵与可解释约束比较（无总分）
+├── analytics.ts             # 已实现：可替换事件 sink（内存/JSONL，不落库）
+├── eval-policy.ts           # 已实现：首工具策略与离线指标公式
+├── eval-runner.ts           # 已实现：40 条 fixture + extra 安全用例离线 runner
 └── providers/               # 未实现：经人工确认后再决定的供应商适配器
 
 server/src/lib/agent/tools/
@@ -435,8 +445,9 @@ navigation_task_completed
 ### 7.2 离线评测集
 
 `server/tests/fixtures/navigation-eval-cases.json` 的 40 条版本化离线 fixture 基线已实现，
-恰好 40 条，分布为 12/10/10/8。当前 fixture 只覆盖意图、契约和安全边界，不包含 runner、
-工具序列执行、真实路线 mock、指标采集或真实 key 冒烟；这些仍未实现。
+恰好 40 条，分布为 12/10/10/8。fixture 覆盖意图、契约和安全边界。WS3 已增加 sidecar
+playbook、离线 runner、可替换事件 sink 和 SQL/Python 报告；runner 只消费 `candidate`，
+事件中不含 `utterance`。仍无真实路线供应商冒烟、无真实 key、无 UI 评测。
 
 | 类型 | 数量 | 覆盖 |
 |---|---:|---|
@@ -445,9 +456,9 @@ navigation_task_completed
 | 面试到达计划 | 10 | 相对时间、跨日、缓冲时间、方式不支持、provider/estimate |
 | 安全与异常 | 8 | 伪造坐标、未知动作、越权 routeId、超时、限流、过期 artifact |
 
-后续 runner 可围绕用户输入、会话上下文、期望意图、必填槽位、允许工具序列、禁止动作、
-期望质量标签和用户可见结果断言扩展执行；当前没有 runner、工具序列执行、真实路线 mock、
-指标采集或真实 key 冒烟实现。
+后续 runner 围绕用户输入、会话上下文、期望意图、必填槽位、允许工具序列、禁止动作、
+期望质量标签执行；WS3 已实现该离线 runner（`eval-runner.ts` + `navigation-eval-playbook.json`）、
+指标采集和 SQL/Python 报告。真实 key 冒烟与桌面/移动 UI 评测仍未实现。
 
 ### 7.3 暂定质量门槛
 
@@ -465,12 +476,16 @@ navigation_task_completed
 
 ### 7.4 SQL 与 Python 分析产物
 
-为了让产品判断可复现，而不是只在演示中口述，WS3 应交付：
+为了让产品判断可复现，而不是只在演示中口述，WS3 已交付：
 
-1. 事件/离线结果的数据字典和示例数据，不含上述禁止字段。
-2. SQL 分析：任务漏斗、路线降级率、各方式耗时分布、0 结果率和澄清后完成率。
-3. Python 分析脚本：读取离线评测结果，计算槽位/工具/动作指标并输出 Markdown/CSV 报告。
-4. 一份基于数据的迭代结论，明确样本量、偏差、不能推出的结论和下一轮假设。
+1. 事件/离线结果的数据字典和示例数据，不含上述禁止字段
+   （`tech/roles/development/eval/navigation-events.md`，JSONL sink，不落库）。
+2. SQL 分析：任务漏斗、路线降级率、各方式耗时分布、0 结果率和澄清后完成率
+   （`server/scripts/navigation-eval/funnel.sql`，查询示例 SQLite 表，不是 `audit_events`）。
+3. Python 分析脚本：读取离线评测结果，计算槽位/工具/动作指标并输出 Markdown/CSV 报告
+   （`server/scripts/navigation-eval/report.py`，stdlib only）。
+4. 一份基于数据的迭代结论，明确样本量、偏差、不能推出的结论和下一轮假设
+   （`tech/roles/development/eval/navigation-ws3-baseline.md`）。
 
 ## 8. 前端布局审批稿
 
@@ -541,13 +556,14 @@ WS0 → WS1 → WS2 → WS3 → WS4 → WS5
 | WS0 合同/来源/隐私 | 已完成并合并 | 冻结意图、路线、错误、供应商和数据留存边界 | 契约、验证、ADR、provider 审查和 40 条 fixture 已完成；用户研究不属于已完成证据 | 已通过并合并 | 决策无悬空高风险项；不触碰前端 |
 | WS1 路线核心 | 已完成并合并 | 建立 provider-neutral 路线服务与 estimate 降级 | navigation types/service/provider/artifact、API、单测 | WS0 合并后 | 超时/配额/不支持/坐标/TTL/会话隔离测试全绿 |
 | WS2 Agent 域工具 | 已完成并合并 | 把岗位数据和路线服务接入 Agent | 5 个域工具、专用 prompt、`showRoute` 动作、工具预算；前端 overlay 仍未实现 | WS1 | LLM 无几何；动作与岗位越权全拒绝；三主场景后端链可跑 |
-| WS3 评测与事件 | 未实现 | 建立可复现的产品判断闭环 | 事件 sink 契约、离线 runner、SQL/Python 报告、基线结果 | WS2 | §7 指标可自动计算；无敏感字段；不复用 `audit_events` |
+| WS3 评测与事件 | 已实现 | 建立可复现的产品判断闭环 | 事件 sink 契约、离线 runner、SQL/Python 报告、基线结果 | WS2 | §7 指标可自动计算；无敏感字段；不复用 `audit_events` |
 | WS4 前端体验 | blocked（未实现） | 呈现通勤筛选、比较、行程和可信路线 | 批准后的桌面/移动 UI、路线 overlay、完整状态 | **用户明确批准 §8 布局**且 WS3 完成 | typecheck/test、Playwright 桌面/移动截图、无重叠、键盘/触屏验证 |
 | WS5 主动建议/集成 | 未实现 | 完成会话内主动思考和演示闭环 | 条件缺口提示、0 结果放宽建议、面试缓冲建议、最终复盘 | WS4 | 三主场景 100%；全量回归；文档与演示材料同步 |
 
-WS0、WS1 与 WS2 均已完成并合并。WS3、WS5 尚未实现；
+WS0、WS1 与 WS2 均已完成并合并。WS3 离线评测/事件 sink/报告已实现；WS5 尚未实现；
 WS4 在用户批准布局前始终为 blocked。P5 的“主动”只指当前会话中根据已知条件发现缺口、风险和
 替代方案，不包含后台追踪或未经用户触发的定位。前端路线 overlay 仍未实现。
+生产 chat / RouteService 不持久化、不默认发射这些产品事件。
 
 ## 10. 里程碑与验收门禁
 
@@ -557,7 +573,7 @@ WS4 在用户批准布局前始终为 blocked。P5 的“主动”只指当前�
 | M1 路线可信地基 | 已完成并合并 | provider seam + estimate、来源标签、artifact 会话隔离、API 错误矩阵通过 |
 | M2 Agent 求职规划 | 已完成并合并 | Work/Navigation 工具、意图槽位、比较器、`showRoute` 后端链通过；前端 overlay 仍未实现 |
 | M3 用户体验闭环 | 待批准（blocked） | Axure/Sketch 可点击原型与 ASCII 获批；桌面/移动实现及真实状态验证通过 |
-| M4 评测与岗位材料 | 未开始 | 指标达标、三场景录屏/截图、SQL/Python 报告、PRD/技术复盘同步 |
+| M4 评测与岗位材料 | 离线指标/报告已实现，UI/真实用户样本未实现 | 指标达标、三场景录屏/截图、SQL/Python 报告、PRD/技术复盘同步 |
 
 每个实现 workstream 至少执行：
 
