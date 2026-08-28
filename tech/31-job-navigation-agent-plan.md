@@ -4,7 +4,7 @@
 
 **创建日期:** 2026-08-27
 
-**状态:** WS0 的契约/验证/40 条离线评测基线/供应商约束审查、WS1 路线可信地基和 WS2 Agent 域工具已完成并合并；WS3 离线评测 runner、可替换事件 sink 与 SQL/Python 报告已实现；用户研究仍待办；WS4 因第 8 节布局未获批准继续 blocked；WS5 未实现
+**状态:** WS0 的契约/验证/40 条离线评测基线/供应商约束审查、WS1 路线可信地基、WS2 Agent 域工具和 WS3 离线评测 runner、可替换事件 sink 与 SQL/Python 报告已完成并合并；用户研究仍待办；WS4 因第 8 节布局未获批准继续 blocked；WS5 未实现
 
 **目标岗位:** 腾讯地图 AI 产品培训生（导航 Agent）
 
@@ -13,7 +13,7 @@
 > 本文是下一阶段的产品、技术和验收总计划。WS0 的导航契约、纯校验、40 条离线评测基线、
 > 供应商约束审查和对应 ADR，以及 WS1 的 provider-neutral 路线服务、显式 estimate、
 > 会话隔离 artifact 与两个 route handler 已实现；WS2 的 Work/Navigation 域工具、`showRoute` 动作与 chat 会话共享已实现(客户端 overlay 仍未实现)；
-> WS3 的可替换事件 sink、离线 runner 与 SQL/Python 报告已实现(不落库、不复用 `audit_events`)。
+> WS3 的可替换事件 sink、离线 runner 与 SQL/Python 报告已完成并合并(不落库、不复用 `audit_events`)。
 > §8 的 ASCII 布局仅供审批，
 > **写入本文不等于用户已批准前端开发**。
 
@@ -556,11 +556,11 @@ WS0 → WS1 → WS2 → WS3 → WS4 → WS5
 | WS0 合同/来源/隐私 | 已完成并合并 | 冻结意图、路线、错误、供应商和数据留存边界 | 契约、验证、ADR、provider 审查和 40 条 fixture 已完成；用户研究不属于已完成证据 | 已通过并合并 | 决策无悬空高风险项；不触碰前端 |
 | WS1 路线核心 | 已完成并合并 | 建立 provider-neutral 路线服务与 estimate 降级 | navigation types/service/provider/artifact、API、单测 | WS0 合并后 | 超时/配额/不支持/坐标/TTL/会话隔离测试全绿 |
 | WS2 Agent 域工具 | 已完成并合并 | 把岗位数据和路线服务接入 Agent | 5 个域工具、专用 prompt、`showRoute` 动作、工具预算；前端 overlay 仍未实现 | WS1 | LLM 无几何；动作与岗位越权全拒绝；三主场景后端链可跑 |
-| WS3 评测与事件 | 已实现 | 建立可复现的产品判断闭环 | 事件 sink 契约、离线 runner、SQL/Python 报告、基线结果 | WS2 | §7 指标可自动计算；无敏感字段；不复用 `audit_events` |
+| WS3 评测与事件 | 已完成并合并 | 建立可复现的产品判断闭环 | 事件 sink 契约、离线 runner、SQL/Python 报告、基线结果 | WS2 | §7 指标可自动计算；无敏感字段；不复用 `audit_events` |
 | WS4 前端体验 | blocked（未实现） | 呈现通勤筛选、比较、行程和可信路线 | 批准后的桌面/移动 UI、路线 overlay、完整状态 | **用户明确批准 §8 布局**且 WS3 完成 | typecheck/test、Playwright 桌面/移动截图、无重叠、键盘/触屏验证 |
 | WS5 主动建议/集成 | 未实现 | 完成会话内主动思考和演示闭环 | 条件缺口提示、0 结果放宽建议、面试缓冲建议、最终复盘 | WS4 | 三主场景 100%；全量回归；文档与演示材料同步 |
 
-WS0、WS1 与 WS2 均已完成并合并。WS3 离线评测/事件 sink/报告已实现；WS5 尚未实现；
+WS0、WS1、WS2 与 WS3 均已完成并合并。WS5 尚未实现；
 WS4 在用户批准布局前始终为 blocked。P5 的“主动”只指当前会话中根据已知条件发现缺口、风险和
 替代方案，不包含后台追踪或未经用户触发的定位。前端路线 overlay 仍未实现。
 生产 chat / RouteService 不持久化、不默认发射这些产品事件。
