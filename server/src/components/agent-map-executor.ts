@@ -8,7 +8,7 @@
 //
 // undo 逆操作:
 // - flyTo → 执行前 getSnapshot() 捕获旧 camera,undo 飞回;
-// - addMarkers/drawCircle → 保存清理函数,undo 时调用;
+// - addMarkers/drawCircle/showRoute → 保存清理函数,undo 时调用;
 // - select/openDetail → 保存各自动作历史,undo 回放上一条(旧值回调);
 // - search → bridge 无 search 能力(接口不含),流式路径只通知 onAction 渲染建议卡片,
 //   execute 路径为空操作;无可撤销的地图副作用,不入 undo 栈。
@@ -18,6 +18,11 @@
 import type { AgentAction, AgentEvent, ToolKind } from "../lib/agent/types.ts";
 import type { MapBridge } from "../lib/agent-map-bridge.ts";
 import { clampMapZoom } from "../lib/map-engine/zoom.ts";
+import {
+  fetchPublicRouteArtifact,
+  type FetchLike,
+  type RouteOverlayMeta,
+} from "../lib/navigation/route-client.ts";
 
 export interface AgentToolInfo {
   /** 公开类别(sanitize 后 SSE name 即 ToolKind,此处同步收敛类型)。 */
@@ -35,8 +40,12 @@ export interface AgentMapExecutorCallbacks {
   onError?: (code: string, message: string) => void;
   /** action 已通过校验并执行;面板据此在消息底部渲染「重放」建议卡片。 */
   onAction?: (action: AgentAction) => void;
+  /** 可信路线已绘制(不含 geometry)。 */
+  onRouteMeta?: (meta: RouteOverlayMeta) => void;
   /** 测试注入时钟(默认 Date.now)。 */
   now?: () => number;
+  /** 测试注入 fetch;生产用 globalThis.fetch。 */
+  fetch?: FetchLike;
 }
 
 export interface AgentMapExecutor {
@@ -47,7 +56,7 @@ export interface AgentMapExecutor {
   canUndo(): boolean;
   reset(): void;
   /**
-   * 清屏:只执行 overlay 类 undo 条目(addMarkers/drawCircle 清理)并移出栈;
+   * 清屏:只执行 overlay 类 undo 条目(addMarkers/drawCircle/showRoute 清理)并移出栈;
    * camera(flyTo 逆操作)/select/detail 条目保留,undo 语义不变。
    */
   clearOverlays(): void;
@@ -212,6 +221,7 @@ export function createAgentMapExecutor(
   callbacks: AgentMapExecutorCallbacks = {},
 ): AgentMapExecutor {
   const now = callbacks.now ?? Date.now;
+  const fetchImpl = callbacks.fetch ?? (globalThis.fetch as FetchLike | undefined);
   const undoStack: Array<{ kind: AgentUndoKind; run: () => void }> = [];
   /** 同类型动作最近执行时间戳(500ms 限流) */
   const lastExecAt: Record<string, number> = {};
@@ -231,16 +241,27 @@ export function createAgentMapExecutor(
   function executeAction(action: AgentAction, notify: boolean): void {
     const validated = validateAction(action);
     if (!validated) return; // 非法 → 丢弃(与后端同款规则)
-    if (validated.type === "showRoute") {
-      // Format-valid showRoute is a card-only no-op until the overlay workstream:
-      // do not call the map bridge, do not push undo, do not move the camera.
-      if (throttled(validated.type)) return;
-      if (notify) callbacks.onAction?.(validated);
-      return;
-    }
     if (throttled(validated.type)) return; // 500ms 同类型限流 → 丢弃
     if (!bridge.isReady()) {
       callbacks.onError?.("MAP_NOT_READY", "map is not ready");
+      return;
+    }
+
+    if (validated.type === "showRoute") {
+      // 卡片可先出现;几何只从同会话 GET 读取,失败不画道路折线。
+      if (notify) callbacks.onAction?.(validated);
+      void (async () => {
+        const result = await fetchPublicRouteArtifact(validated.payload.routeId, fetchImpl ?? (async () => {
+          throw new Error("offline");
+        }));
+        if (!result.ok) {
+          callbacks.onError?.(result.code, result.code);
+          return;
+        }
+        const cleanup = bridge.drawRoute(result.path, { dashed: false, color: "#007AFF" });
+        undoStack.push({ kind: "overlay", run: () => cleanup() });
+        callbacks.onRouteMeta?.(result.meta);
+      })();
       return;
     }
 

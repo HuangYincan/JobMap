@@ -5,10 +5,11 @@
 // MapView 门面(view.flyTo / view.createMarker / view.createCircle /
 // view.getState),不直连任何厂商全局命名空间——后续引擎可平滑切换。
 // 坐标/半径校验复用动作边界(lib/agent/action-schema.ts 同款规则),非法 → 忽略。
-// 覆盖物(addMarkers/drawCircle)创建后由返回的清理函数自维护,undo 时调用。
+// 覆盖物(addMarkers/drawCircle/drawRoute)创建后由返回的清理函数自维护,undo 时调用。
 
 import type { MapView } from "./map-engine/types.ts";
 import { clampMapZoom } from './map-engine/zoom.ts';
+import { normalizePolylinePath } from './map-engine/polyline.ts';
 
 /** 相机快照(undo 逆操作 flyTo 用) */
 export interface MapSnapshot {
@@ -22,6 +23,12 @@ export interface MapPoint {
   label?: string;
 }
 
+export interface DrawRouteOptions {
+  dashed?: boolean;
+  color?: string;
+  weight?: number;
+}
+
 /** 地图操作适配接口(动作执行器只依赖本契约) */
 export interface MapBridge {
   isReady(): boolean;
@@ -30,6 +37,11 @@ export interface MapBridge {
   select(id: string, mode?: string): void;
   addMarkers(points: MapPoint[]): () => void; // 返回清理函数(移除本批 marker)
   drawCircle(center: { lng: number; lat: number }, radiusMeters: number): () => void;
+  /** 画路线折线;业务只经本方法,不直连厂商 Polyline。非法 path → no-op cleanup */
+  drawRoute(
+    path: Array<{ lng: number; lat: number }>,
+    opts?: DrawRouteOptions,
+  ): () => void;
   openDetail(id: string, mode?: string): void;
 }
 
@@ -153,6 +165,32 @@ export function createAgentBridge(
         removed = true;
         try {
           circle?.remove();
+        } catch {
+          // 地图已销毁等场景:忽略
+        }
+      };
+    },
+
+    drawRoute(path, opts) {
+      const normalized = normalizePolylinePath({
+        path,
+        dashed: opts?.dashed,
+        color: opts?.color,
+        weight: opts?.weight,
+      });
+      if (!normalized || !view || view.isDestroyed()) return noopCleanup();
+      const polyline = view.createPolyline({
+        path: normalized,
+        color: opts?.color ?? "#007AFF",
+        dashed: Boolean(opts?.dashed),
+        weight: opts?.weight,
+      });
+      let removed = false;
+      return () => {
+        if (removed) return;
+        removed = true;
+        try {
+          polyline.remove();
         } catch {
           // 地图已销毁等场景:忽略
         }
