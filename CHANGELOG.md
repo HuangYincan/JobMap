@@ -2,6 +2,13 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-28
+
+### Added
+
+- **求职导航 WS0 契约与离线基线。** 冻结 provider-neutral 导航契约和纯校验（含总长度 36–128 的 opaque `routeId` 格式，以及 `startsAt` 的项目 UTC offset 接受范围），建立 40 条离线 fixture：12 条通勤搜索、10 条岗位比较、10 条面试到达、8 条安全异常；完成高德、腾讯、百度官方路线约束审查及对应 ADR。
+- **阶段边界。** 本批不包含 live provider、网络调用、路线服务/API、Agent 导航工具、analytics persistence 或前端变更；不宣称真实路线或实时交通已上线。
+
 ## 2026-08-26
 
 ### Fixed
