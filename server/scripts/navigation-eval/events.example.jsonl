@@ -1,0 +1,4 @@
+{"event":"navigation_intent_parsed","occurredAt":"2026-08-28T12:00:00.005Z","caseId":"commute-01","task":"job_search","city":"杭州","completed":true}
+{"event":"navigation_job_search_completed","occurredAt":"2026-08-28T12:00:00.010Z","caseId":"commute-01","task":"job_search","city":"杭州","resultCount":3,"durationMs":5,"completed":true}
+{"event":"navigation_route_degraded","occurredAt":"2026-08-28T12:00:00.015Z","caseId":"interview-01","task":"interview_arrival","mode":"transit","quality":"estimate","durationMs":5,"completed":true}
+{"event":"navigation_task_completed","occurredAt":"2026-08-28T12:00:00.020Z","caseId":"interview-01","task":"interview_arrival","completed":true}
