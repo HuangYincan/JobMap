@@ -47,8 +47,24 @@ import { ModeSwitcher } from "./mode-switcher";
 import { FilterPanel } from "./filter-panel";
 import { SortSelector } from "./sort-selector";
 import { createAgentBridge, type MapBridge } from "@/lib/agent-map-bridge";
+import type { CommuteMode } from "@/lib/commute";
+import {
+  clampCommuteMinutes,
+  COMMUTE_SLIDER_DEFAULT,
+  estimatePath,
+  filterByCommuteEstimate,
+  listedCommuteHits,
+  toggleCommuteCompare,
+  type CommuteBucket,
+} from "@/lib/commute-filter";
+import { buildCommuteCompareColumns } from "@/lib/commute-compare";
+import { isAlivePosition } from "@/lib/position-alive";
+import type { RouteOverlayMeta } from "@/lib/navigation/route-client";
 import AgentBall from "./agent-ball";
 import { AgentPanel } from "./agent-panel";
+import { CommuteChrome, WorkExploreTabs } from "./commute-chrome";
+import { CommuteCompareTable } from "./commute-compare-table";
+import { RouteOverlayBar, type RouteOverlayModel } from "./route-overlay-bar";
 
 const POIDetailView = dynamic(() => import("./poi-detail").then((mod) => mod.POIDetailView));
 const JdPanel = dynamic(() => import("./jd-panel").then((mod) => mod.JdPanel));
@@ -292,6 +308,17 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     if (mountError) setMapRetrying(false);
   }, [mountError]);
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const [commuteMode, setCommuteMode] = useState<CommuteMode>("transit");
+  const [commuteMaxMinutes, setCommuteMaxMinutes] = useState(COMMUTE_SLIDER_DEFAULT);
+  const [commuteTab, setCommuteTab] = useState<CommuteBucket>("strict");
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [workExploreTab, setWorkExploreTab] = useState<"jobs" | "compare" | "trip">("jobs");
+  const [routeOverlay, setRouteOverlay] = useState<RouteOverlayModel>({ kind: "idle" });
+  const estimateRouteCleanupRef = useRef<(() => void) | null>(null);
+  const providerRouteSelectedIdRef = useRef<string | null>(null);
+  const loadingRouteRef = useRef(false);
   /** 非 AMap 引擎用户定位蓝点 marker(AMap 走 amap-api Geolocation 控件,不经此 ref) */
   const blueDotRef = useRef<MapMarker | null>(null);
   const [searchOrigin, setSearchOrigin] = useState<{ lng: number; lat: number } | null>(null);
@@ -1343,6 +1370,135 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   catalogRef.current = catalog;
   poisRef.current = pois;
 
+  const workMode = canonicalMode(mode) === "work";
+  const commuteResult = useMemo(
+    () =>
+      workMode
+        ? filterByCommuteEstimate(pois, userLocation, commuteMode, commuteMaxMinutes)
+        : { strict: [] as ReturnType<typeof filterByCommuteEstimate>["strict"], near: [], closest: null },
+    [workMode, pois, userLocation, commuteMode, commuteMaxMinutes],
+  );
+  const commuteMinutesById = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const hit of [...commuteResult.strict, ...commuteResult.near]) {
+      out[hit.poi.id] = hit.minutes;
+    }
+    return out;
+  }, [commuteResult]);
+  const listPois = useMemo(() => {
+    if (!workMode || !userLocation) return pois;
+    return listedCommuteHits(commuteResult, commuteTab).map((hit) => hit.poi);
+  }, [workMode, userLocation, pois, commuteResult, commuteTab]);
+  const comparePois = useMemo(
+    () => compareIds.map((id) => pois.find((p) => p.id === id) ?? catalog.find((p) => p.id === id)).filter(Boolean) as POI[],
+    [compareIds, pois, catalog],
+  );
+  const compareColumns = useMemo(
+    () =>
+      buildCommuteCompareColumns(comparePois, commuteMinutesById, "estimate", {
+        estimate: t("commuteQualityEstimate", lang),
+        provider: t("commuteQualityProvider", lang),
+        minutes: t("commuteMinutes", lang),
+      }),
+    [comparePois, commuteMinutesById, lang],
+  );
+  const closestLabel =
+    commuteResult.closest && commuteResult.strict.length === 0
+      ? t("commuteClosestHint", lang)
+          .replace("{name}", commuteResult.closest.poi.name)
+          .replace("{minutes}", String(commuteResult.closest.minutes))
+      : undefined;
+  const partialFail = workMode && userLocation
+    ? pois.filter((p) => !p.location || !Number.isFinite(p.location.lng)).length
+    : 0;
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.permissions?.query) return;
+    let perm: PermissionStatus | undefined;
+    navigator.permissions
+      .query({ name: "geolocation" as PermissionName })
+      .then((status) => {
+        perm = status;
+        setLocationDenied(status.state === "denied");
+        status.onchange = () => setLocationDenied(status.state === "denied");
+      })
+      .catch(() => {});
+    return () => {
+      if (perm) perm.onchange = null;
+    };
+  }, []);
+
+  const handleRouteMeta = useCallback((meta: RouteOverlayMeta) => {
+    estimateRouteCleanupRef.current?.();
+    estimateRouteCleanupRef.current = null;
+    loadingRouteRef.current = false;
+    providerRouteSelectedIdRef.current = selectedId;
+    setRouteOverlay({
+      kind: "provider",
+      provider: meta.provider,
+      fetchedAt: meta.fetchedAt,
+      trafficAware: meta.trafficAware,
+      quality: meta.quality,
+    });
+  }, [selectedId]);
+  const handleRouteError = useCallback((code: string) => {
+    loadingRouteRef.current = false;
+    providerRouteSelectedIdRef.current = null;
+    if (code === "EXPIRED") setRouteOverlay({ kind: "expired" });
+    else if (code === "FORBIDDEN" || code === "UNAUTHORIZED") setRouteOverlay({ kind: "forbidden" });
+    else if (code === "OFFLINE") setRouteOverlay({ kind: "offline" });
+    else setRouteOverlay({ kind: "not-found" });
+  }, []);
+  const handleRouteLoading = useCallback(() => {
+    loadingRouteRef.current = true;
+    setRouteOverlay({ kind: "loading" });
+  }, []);
+
+  useEffect(() => {
+    const bridge = agentBridgeRef.current;
+    if (!workMode || !userLocation || !selectedId) {
+      estimateRouteCleanupRef.current?.();
+      estimateRouteCleanupRef.current = null;
+      return;
+    }
+    if (providerRouteSelectedIdRef.current && providerRouteSelectedIdRef.current !== selectedId) {
+      providerRouteSelectedIdRef.current = null;
+    }
+    if (loadingRouteRef.current || providerRouteSelectedIdRef.current === selectedId) return;
+    const poi = pois.find((item) => item.id === selectedId) ?? catalog.find((item) => item.id === selectedId);
+    if (!poi?.location) return;
+    if (isRecruitmentPOI(poi) && poi.positions.every((pos) => !isAlivePosition(pos))) {
+      estimateRouteCleanupRef.current?.();
+      estimateRouteCleanupRef.current = null;
+      setRouteOverlay({ kind: "position-offline" });
+      return;
+    }
+    if (!bridge?.drawRoute) return;
+    estimateRouteCleanupRef.current?.();
+    estimateRouteCleanupRef.current = bridge.drawRoute(estimatePath(userLocation, poi.location), {
+      dashed: true,
+      color: "#007AFF",
+    });
+    setRouteOverlay((prev) =>
+      (prev.kind === "provider" || prev.kind === "loading") && providerRouteSelectedIdRef.current === selectedId
+        ? prev
+        : { kind: "estimate", reason: t("commuteEstimate", lang) },
+    );
+    return () => {
+      estimateRouteCleanupRef.current?.();
+      estimateRouteCleanupRef.current = null;
+    };
+  }, [workMode, userLocation, selectedId, pois, catalog, lang]);
+
+  const displayOverlay = useMemo((): RouteOverlayModel => {
+    if (!online) return { kind: "offline" };
+    if (workMode && geoSettled && locationDenied && !userLocation) return { kind: "location-denied" };
+    if (workMode && geoSettled && !userLocation) return { kind: "missing-origin" };
+    if (routeOverlay.kind !== "idle") return routeOverlay;
+    if (workMode && partialFail > 0) return { kind: "partial-fail", failedCount: partialFail };
+    return { kind: "idle" };
+  }, [online, workMode, geoSettled, locationDenied, userLocation, routeOverlay, partialFail]);
+
   const compareCatalog = useMemo(() => {
     const byId = new Map<string, POI>();
     // DB-only：仅当前 catalog 活数据；未加载的收藏/最近项走快照或 fetchPOIDetail。
@@ -1986,6 +2142,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           return;
         }
         const { lng, lat } = loc;
+        setUserLocation({ lng, lat });
+        setSearchOrigin((prev) => prev ?? { lng, lat });
         // 非 AMap 引擎:蓝点创建或 setPosition 跟随最新定位(AMap 零改动);
         // 视图与相机同源取 mapInstance.current(切引擎竞态下跟随当前视图)
         if (mapInstance.current) syncUserBlueDot(mapInstance.current, lng, lat);
@@ -2175,6 +2333,34 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       drawerContentRef.current.scrollTop = drawerScrollRef.current;
     }
   }, [detailPoi]);
+
+  const commuteChromeNode = workMode ? (
+    <CommuteChrome
+      lang={lang}
+      originReady={Boolean(userLocation)}
+      originDenied={locationDenied}
+      originPending={!geoSettled && !userLocation && !locationDenied}
+      mode={commuteMode}
+      onModeChange={setCommuteMode}
+      maxMinutes={commuteMaxMinutes}
+      onMaxMinutesChange={(minutes) => setCommuteMaxMinutes(clampCommuteMinutes(minutes))}
+      tab={commuteTab}
+      onTabChange={setCommuteTab}
+      strictCount={commuteResult.strict.length}
+      nearCount={commuteResult.near.length}
+      compareCount={compareIds.length}
+      onToggleCompare={() => setCompareOpen((open) => !open)}
+      compareOpen={compareOpen}
+      closestLabel={closestLabel}
+    />
+  ) : null;
+  const commuteCompareNode = (
+    <CommuteCompareTable columns={compareColumns} lang={lang} />
+  );
+  const handleRouteRetry = () => {
+    if (typeof navigator !== "undefined" && navigator.onLine) setOnline(true);
+    handleLocate();
+  };
 
   return (
     <main className={styles.shell}>
@@ -2373,7 +2559,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         onFiltersReset={() => setFilters({})}
         sort={sort}
         onSortChange={setSort}
-        pois={pois}
+        pois={workMode ? listPois : pois}
         loading={loading}
         selectedId={selectedId}
         highlightedId={highlightedId}
@@ -2391,7 +2577,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         saved={Boolean(detailPoi && savedPlaces.some((item) => item.poiId === detailPoi.id))}
         onToggleSave={detailPoi && isPersistablePoi(detailPoi) ? handleToggleSave : undefined}
         onApply={handleApply}
-        totalCount={pois.length}
+        totalCount={workMode ? listPois.length : pois.length}
         savedMode={savedLayerEnabled}
         savedItems={savedPlaces}
         onPickSaved={handlePickSaved}
@@ -2399,6 +2585,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         savedCatalog={compareCatalog}
         savedOrigin={distanceOrigin}
         lang={lang}
+        workCommute={savedLayerEnabled ? undefined : commuteChromeNode}
+        workListReplace={workMode && compareOpen && !savedLayerEnabled ? commuteCompareNode : undefined}
+        commuteMinutesById={workMode ? commuteMinutesById : undefined}
+        compareSelected={workMode ? compareIds : undefined}
+        onToggleCompare={
+          workMode
+            ? (poi) => setCompareIds((ids) => toggleCommuteCompare(ids, poi.id))
+            : undefined
+        }
         onClose={() => {
           setRailPanel(null);
           setSelectedId(null);
@@ -2536,6 +2731,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         </button>
       </div>
 
+      <RouteOverlayBar
+        model={displayOverlay}
+        lang={lang}
+        shifted={exploreOpen}
+        onRetry={handleRouteRetry}
+      />
+
       {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点;user 透传 → 记忆入口登录才渲染;
           ws-mt 受控:agentOpen/onOpenChange 提升至 MapShell,移动端球隐藏、入口为工具栏 AI item) */}
       <AgentBall
@@ -2544,6 +2746,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         user={user}
         open={agentOpen}
         onOpenChange={setAgentOpen}
+        onRouteMeta={handleRouteMeta}
+        onRouteError={handleRouteError}
+        onRouteLoading={handleRouteLoading}
       />
 
       <section
@@ -2982,10 +3187,16 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     user={user}
                     embedded
                     onClose={() => setMobileSheet(mobileSheetBack)}
+                    onRouteMeta={handleRouteMeta}
+                    onRouteError={handleRouteError}
+                    onRouteLoading={handleRouteLoading}
                   />
                 </div>
               ) : (
               <>
+              {workMode && !savedLayerEnabled && (
+                <WorkExploreTabs lang={lang} value={workExploreTab} onChange={setWorkExploreTab} />
+              )}
               {savedLayerEnabled ? (
                 /* 收藏图层互斥开:移动 Explore 列表切为收藏卡片列表(2026-08-22 卡片化,
                    POIList + POICard,与普通模式同组件/同样式;卡片右上「移除收藏」;
@@ -3011,8 +3222,21 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   accentColor={modeConfig.color}
                   onRemove={user ? (poi) => handleRemoveSaved(poi.id) : undefined}
                 />
+              ) : workMode && workExploreTab === "compare" ? (
+                commuteCompareNode
+              ) : workMode && workExploreTab === "trip" ? (
+                <>
+                  {commuteChromeNode}
+                  <RouteOverlayBar
+                    model={displayOverlay}
+                    lang={lang}
+                    embedded
+                    onRetry={handleRouteRetry}
+                  />
+                </>
               ) : (
               <>
+              {commuteChromeNode}
               <div className={styles.mobileActions}>
                 <button
                   type="button"
@@ -3041,15 +3265,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     values={filters}
                     onChange={(key, value) => setFilters({ ...filters, [key]: value })}
                     onReset={() => setFilters({})}
-                    resultCount={pois.length}
+                    resultCount={(workMode ? listPois : pois).length}
                     lang={lang}
                   />
                 </div>
               )}
               <div className={styles.mobileMeta}>
-                <span>{loading ? t("loading", lang) : `${pois.length} ${t("resultsCount", lang)}`}</span>
+                <span>{loading ? t("loading", lang) : `${(workMode ? listPois : pois).length} ${t("resultsCount", lang)}`}</span>
                 <div className={styles.mobileMetaActions}>
-                  {pois.length === 0 && !loading && (
+                  {(workMode ? listPois : pois).length === 0 && !loading && (
                     <button
                       type="button"
                       className={styles.mobileIconBtn}
@@ -3062,7 +3286,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 </div>
               </div>
               <POIList
-                pois={pois}
+                pois={workMode ? listPois : pois}
                 selectedId={selectedId}
                 highlightedId={highlightedId}
                 onSelect={(poi) => {
@@ -3094,6 +3318,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 onRetry={handleRetry}
                 atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
                 noMore={noMoreData}
+                commuteMinutesById={workMode ? commuteMinutesById : undefined}
+                compareSelected={workMode ? compareIds : undefined}
+                onToggleCompare={
+                  workMode
+                    ? (poi) => setCompareIds((ids) => toggleCommuteCompare(ids, poi.id))
+                    : undefined
+                }
               />
               </>
               )}
