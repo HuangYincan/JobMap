@@ -99,6 +99,21 @@ test('buildSystemPrompt: 动作纪律禁止正文复述/展示 actions JSON(zh/e
   assert.match(en, /never repeat or display actions JSON in your reply body/);
 });
 
+test('buildSystemPrompt: 岗位检索以用户位置为起点,图片在气泡下方(zh/en)', () => {
+  const zh = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'zh');
+  const en = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'en');
+  assert.match(zh, /必须以用户位置为起点/);
+  assert.match(zh, /最终回答气泡下方/);
+  assert.match(en, /start from the user location, not the view center/);
+  assert.match(en, /under the final answer bubble/);
+  const withCtx = buildSystemPrompt(
+    { maxTurns: 8, hasTools: true, mapContext: '用户位置(附近检索/岗位检索起点): 121.470000,31.230000' },
+    'zh',
+  );
+  assert.match(withCtx, /当前地图上下文/);
+  assert.match(withCtx, /121\.470000/);
+});
+
 test('buildSystemPrompt: 求职导航纪律禁止编造岗位/polyline,showRoute 仅 routeId(zh/en)', () => {
   const zh = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'zh');
   const en = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'en');

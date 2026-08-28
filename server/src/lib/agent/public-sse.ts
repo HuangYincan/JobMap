@@ -4,7 +4,7 @@ import type { AgentEvent } from './types.ts';
  * 网络 SSE 允许下行的事件类型。reasoning 只服务于服务端 provider tool-call
  * replay,不属于公开协议;路由在 enqueue 前必须通过此 allowlist。
  */
-export const SSE_EVENT_TYPES = ['delta', 'tool', 'action', 'done', 'error'] as const;
+export const SSE_EVENT_TYPES = ['delta', 'tool', 'action', 'images', 'done', 'error'] as const;
 
 type PublicSseEvent = Exclude<AgentEvent, { type: 'reasoning' }>;
 

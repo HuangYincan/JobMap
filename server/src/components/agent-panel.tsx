@@ -50,6 +50,7 @@ import {
   removeStream,
   routeAction,
   routeDelta,
+  routeImages,
   routeTool,
   startStream,
   stopStream,
@@ -102,6 +103,8 @@ interface Props {
   /** 球当前吸附边缘(拖拽中/未吸附为 null → 面板按球心半区分侧,旧行为)。 */
   snapEdge?: BallSnapEdge | null;
   onClose: () => void;
+  /** 用户定位(GCJ-02);每条请求带上,岗位/附近检索起点优先于视野中心。 */
+  userLocation?: { lng: number; lat: number } | null;
   /** 内嵌模式(ws-ae):drawer 内 agent sheet 渲染(mobileSheet "agent"),
    *  不做锚点跟随定位(placement/panelStyle 跳过),随抽屉流填满 sheet body。 */
   embedded?: boolean;
@@ -209,7 +212,7 @@ export function memoryViewState(loading: boolean, error: boolean, count: number)
   return count > 0 ? "list" : "empty";
 }
 
-export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, onClose, embedded = false, onRouteMeta, onRouteError, onRouteLoading }: Props) {
+export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, onClose, userLocation = null, embedded = false, onRouteMeta, onRouteError, onRouteLoading }: Props) {
   // 会话存储(多会话,localStorage);**每会话独立流状态**(Map<sessionId, SessionStream>,
   // 内存为事实源)与 store 双轨:
   // - 流式会话:entry.messages 是工作副本,事件只改内存;显示 = entry.messages;
@@ -234,6 +237,8 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   const panelRef = useRef<HTMLElement>(null);
   const langRef = useRef(lang);
   langRef.current = lang;
+  const userLocationRef = useRef(userLocation);
+  userLocationRef.current = userLocation;
   const onRouteMetaRef = useRef(onRouteMeta);
   onRouteMetaRef.current = onRouteMeta;
   const onRouteErrorRef = useRef(onRouteError);
@@ -388,6 +393,14 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     [setStreamsBoth],
   );
 
+  const handleImages = useCallback(
+    (images: Array<{ url: string; alt?: string }>) => {
+      const sid = streamSessionRef.current;
+      if (sid) setStreamsBoth((prev) => routeImages(prev, sid, images));
+    },
+    [setStreamsBoth],
+  );
+
   // ---- 执行器实例:bridge 可用时惰性创建,bridge 实例变更时重建 ----
   const bridgeRef = useRef<MapBridge | null>(null);
   const executorRef = useRef<AgentMapExecutor | null>(null);
@@ -413,6 +426,10 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   const dispatchEvent = useCallback(
     (sessionId: string, ev: AgentEvent) => {
       streamSessionRef.current = sessionId;
+      if (ev.type === "images") {
+        handleImages(ev.images);
+        return;
+      }
       const ex = executorRef.current;
       if (ex) {
         ex.handleEvent(ev);
@@ -437,7 +454,7 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
           break; // 2026-08-22 ws-bubble:思考内容前端不消费(no-op)
       }
     },
-    [handleDelta, handleTool, handleDone, handleError],
+    [handleDelta, handleTool, handleDone, handleError, handleImages],
   );
 
   const runStream = useCallback(
@@ -473,7 +490,6 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
       const activeId = state.activeId;
       if (!content || isStreaming(streamsRef.current, activeId)) return;
       const curMessages = sessionMessages(activeId);
-      const isFirst = curMessages.length === 0;
       const userMsg: AgentMessage = { role: "user", content };
       const nextMessages = [...curMessages, userMsg];
       setInput("");
@@ -492,11 +508,12 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
       // 覆盖式建流(上一轮完成/停止状态随新一轮清零)
       const controller = new AbortController();
       setStreamsBoth((prev) => startStream(prev, sessionId, controller, nextMessages));
-      // 新会话首条自动带视口快照(bridge.getSnapshot() → viewport 参数)
       const snapshot = bridgeRef.current?.getSnapshot() ?? null;
+      const loc = userLocationRef.current;
       const req: AgentChatRequest = {
         messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
-        ...(isFirst && snapshot ? { viewport: { center: snapshot.center, zoom: snapshot.zoom } } : {}),
+        ...(snapshot ? { viewport: { center: snapshot.center, zoom: snapshot.zoom } } : {}),
+        ...(loc ? { userLocation: loc } : {}),
         lang: langRef.current,
       };
       void runStream(sessionId, req, controller);
@@ -890,6 +907,28 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
                 )}
               </div>
             ) : null}
+            {m.role === "assistant" && m.images && m.images.length > 0 && (
+              <ul className={styles.imageStrip} aria-label={t("agentSearchImages", lang)}>
+                {m.images.map((img, j) => (
+                  <li key={`${img.url}-${j}`}>
+                    <a
+                      className={styles.imageLink}
+                      href={img.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <img
+                        className={styles.imageThumb}
+                        src={img.url}
+                        alt={img.alt || t("agentSearchImages", lang)}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
             {m.role === "assistant" && m.tools && m.tools.length > 0 && (
               <ul className={styles.toolActivity} aria-label={t("agentToolsSection", lang)}>
                 {m.tools.map((toolItem, j) => (

@@ -22,6 +22,7 @@ export interface AgentChatViewport {
 export interface AgentChatRequest {
   messages: AgentChatMessage[];
   viewport?: AgentChatViewport;
+  userLocation?: { lng: number; lat: number };
   lang?: "zh" | "en";
 }
 

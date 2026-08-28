@@ -47,7 +47,7 @@ function poi({ id, name, city, lng, lat, siteId, siteName, positions }) {
     mode: 'work',
     source: 'api',
     location: { lng, lat, address: city },
-    company: { name, industries: ['internet'], scale: 'bigtech', tier: 3, category: '64' },
+    company: { name, industries: ['internet'], scale: 'bigtech', tier: 3, category: '64', logoUrl: `https://store.is.autonavi.com/${id.split(':')[0]}.png` },
     sites: [
       {
         id: siteId,
@@ -203,6 +203,33 @@ test('five domain tools expose schema, names and providers', () => {
   assert.equal(toolKind('navigation__planRoute'), 'directions');
   assert.equal(toolKind('navigation__compareCommutes'), 'directions');
   assert.equal(toolKind('navigation__filterByCommute'), 'directions');
+});
+
+test('work__searchPositions ranks by userLocation over viewport center and attaches logos', async () => {
+  const search = tool(workTools(workDeps()), 'work__searchPositions');
+  const shanghai = await search.call(
+    { query: 'AI' },
+    ctx({
+      userLocation: { lng: 121.6, lat: 31.2 },
+      viewport: { center: { lng: 120.15, lat: 30.28 }, zoom: 12 },
+    }),
+  );
+  assert.equal(shanghai.ok, true);
+  const farIdx = shanghai.text.indexOf('pos-far');
+  const txIdx = shanghai.text.indexOf('pos-tx-ai');
+  assert.ok(farIdx !== -1 && txIdx !== -1 && farIdx < txIdx, '上海用户位置应让远郊岗位排在杭州岗位前');
+  assert.match(shanghai.text, /距起点/);
+  assert.ok(Array.isArray(shanghai.images) && shanghai.images.length > 0);
+  assert.ok(shanghai.images[0].url.startsWith('https://'));
+
+  const hangzhouView = await search.call(
+    { query: 'AI' },
+    ctx({
+      viewport: { center: { lng: 120.12, lat: 30.28 }, zoom: 12 },
+    }),
+  );
+  assert.equal(hangzhouView.ok, true);
+  assert.ok(hangzhouView.text.indexOf('pos-tx-ai') < hangzhouView.text.indexOf('pos-far'));
 });
 
 test('work__searchPositions uses injected catalog; omits full JD; clamps pageSize', async () => {

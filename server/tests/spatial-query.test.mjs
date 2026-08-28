@@ -80,6 +80,20 @@ test('in-memory public search still clips when there is no database', () => {
   assert.deepEqual(out.results.map((p) => p.id), ['in']);
 });
 
+test('searchPublicCatalog uses explicit center over Hangzhou default', () => {
+  const pois = [
+    { id: 'hz', kind: 'domain', name: 'Hangzhou', mode: 'domain', source: 'seed', location: { lng: 120.15, lat: 30.27 }, category: '风景名胜' },
+    { id: 'sh', kind: 'domain', name: 'Shanghai', mode: 'domain', source: 'seed', location: { lng: 121.47, lat: 31.23 }, category: '风景名胜' },
+  ];
+  const out = searchPublicCatalog(pois, {
+    mode: 'domain',
+    center: { lng: 121.47, lat: 31.23 },
+    sort: 'distance',
+  });
+  assert.deepEqual(out.results.map((p) => p.id), ['sh', 'hz']);
+  assert.ok(out.results[0].distance < out.results[1].distance);
+});
+
 test('companySitesSpatialSql matches city by city_code exact or city ILIKE', () => {
   const city = companySitesSpatialSql({ city: '北京市' });
   assert.match(city.sql, /s\.city_code = \$1 OR COALESCE\(s\.city, ''\) ILIKE \$2/);

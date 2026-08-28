@@ -33,6 +33,11 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
 import { MCP_ENDPOINTS } from './mcp-endpoints.ts';
 import type { McpEndpoint } from './mcp-endpoints.ts';
+import {
+  agentImageFromMcp,
+  collectToolImages,
+  type AgentImage,
+} from './result-images.ts';
 
 export type ProviderId = 'amap' | 'tencent' | 'baidu';
 
@@ -50,7 +55,11 @@ export interface McpProviderHandle {
   /** 工具列表缓存;失败 → 置 not ready 并 throw(调用方跳过该 provider,不致命)。 */
   listTools(): Promise<McpToolMeta[]>;
   /** 调用工具(原工具名,非 LLM 名称);任何错误转成 {isError:true, text},text 不含 key。 */
-  callTool(origName: string, args: unknown, signal?: AbortSignal): Promise<{ text: string; isError: boolean }>;
+  callTool(
+    origName: string,
+    args: unknown,
+    signal?: AbortSignal,
+  ): Promise<{ text: string; isError: boolean; images?: Array<{ url: string; alt?: string }> }>;
 }
 
 /** fetch 的窄接口(转发给 SDK transport;SDK 内部只依赖标准 Response)。 */
@@ -316,7 +325,11 @@ class McpProviderInstance implements McpProviderHandle {
     }
   }
 
-  async callTool(origName: string, args: unknown, signal?: AbortSignal): Promise<{ text: string; isError: boolean }> {
+  async callTool(
+    origName: string,
+    args: unknown,
+    signal?: AbortSignal,
+  ): Promise<{ text: string; isError: boolean; images?: Array<{ url: string; alt?: string }> }> {
     await this.semaphore.acquire();
     try {
       const client = await this.connect(signal);
@@ -326,7 +339,8 @@ class McpProviderInstance implements McpProviderHandle {
         undefined,
         { timeout: this.callMs, signal },
       );
-      return { text: contentToText(result), isError: result.isError === true };
+      const parsed = parseMcpContent(result);
+      return { text: parsed.text, isError: result.isError === true, images: parsed.images };
     } catch (err) {
       // 连接层失败 → 重建;RPC/超时/abort → 保留连接
       if (isConnectionError(err)) this.dispose();
@@ -425,39 +439,51 @@ export function resetMcpProvidersForTest(): void {
 // 结果转述
 // ---------------------------------------------------------------------------
 
-/** tools/call 的 content 数组转述为纯文本(text 项拼接;image 项占位)。 */
-function contentToText(result: unknown): string {
-  if (result === null || result === undefined) return '';
+/** tools/call 的 content 数组转述为纯文本(text 项拼接;image 项占位,图 URL 另附)。 */
+function parseMcpContent(result: unknown): { text: string; images?: AgentImage[] } {
+  if (result === null || result === undefined) return { text: '' };
   const content = (result as { content?: unknown }).content;
   if (!Array.isArray(content)) {
-    if (typeof result === 'string') return result;
-    try {
-      return JSON.stringify(result);
-    } catch {
-      return String(result);
-    }
+    const text = typeof result === 'string'
+      ? result
+      : (() => {
+          try {
+            return JSON.stringify(result);
+          } catch {
+            return String(result);
+          }
+        })();
+    const images = collectToolImages({ text });
+    return images.length > 0 ? { text, images } : { text };
   }
   const parts: string[] = [];
+  const images: AgentImage[] = [];
   for (const item of content) {
     if (!item || typeof item !== 'object') {
       parts.push(String(item));
       continue;
     }
-    const it = item as { type?: unknown; text?: unknown; data?: unknown };
+    const it = item as { type?: unknown; text?: unknown; data?: unknown; mimeType?: unknown };
     if (it.type === 'image') {
       const bytes = typeof it.data === 'string' ? it.data.length : 0;
       parts.push(`[image ${bytes} bytes]`);
+      const image = agentImageFromMcp(it.data, it.mimeType);
+      if (image) images.push(image);
     } else if (typeof it.text === 'string') {
       parts.push(it.text);
+      images.push(...collectToolImages({ text: it.text }));
     } else {
       try {
-        parts.push(JSON.stringify(item));
+        const json = JSON.stringify(item);
+        parts.push(json);
+        images.push(...collectToolImages({ text: json }));
       } catch {
         parts.push('[unserializable content]');
       }
     }
   }
-  return parts.join('\n');
+  const text = parts.join('\n');
+  return images.length > 0 ? { text, images: collectToolImages({ images, text: '' }) } : { text };
 }
 
 /** 错误转述:只含 host/status/错误类别,绝不含 key 与 URL。 */

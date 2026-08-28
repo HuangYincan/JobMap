@@ -18,6 +18,7 @@
 // 面向新的用户消息之后的消息序列。
 
 import type { AgentAction, AgentEvent } from "./agent/types.ts";
+import { normalizeAgentImages, type AgentImage } from "./agent/result-images.ts";
 
 export interface ToolActivity {
   name: string;
@@ -31,6 +32,8 @@ export interface AgentMessage {
   actions?: AgentAction[];
   /** 工具活动列表(tool 事件;⟳ 开始 / ✓ 完成 / ✗ 失败)。 */
   tools?: ToolActivity[];
+  /** 搜索结果图片,渲染在最终回答气泡下方。 */
+  images?: AgentImage[];
 }
 
 function lastMessage(messages: AgentMessage[]): AgentMessage | undefined {
@@ -156,6 +159,19 @@ export function reduceAgentEvent(messages: AgentMessage[], ev: AgentEvent): Agen
         return updateLast(messages, (m) => ({ ...m, actions: [...(m.actions ?? []), ev.action] }));
       }
       return appendAssistant(messages, { actions: [ev.action] });
+    }
+
+    case "images": {
+      const incoming = normalizeAgentImages(ev.images);
+      if (incoming.length === 0) return messages;
+      const last = lastMessage(messages);
+      if (last && last.role === "assistant") {
+        return updateLast(messages, (m) => ({
+          ...m,
+          images: normalizeAgentImages([...(m.images ?? []), ...incoming]),
+        }));
+      }
+      return appendAssistant(messages, { images: incoming });
     }
 
     case "done":

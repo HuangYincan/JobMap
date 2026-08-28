@@ -14,6 +14,8 @@ export interface PublicSearchInput {
   filters?: FilterState | Record<string, unknown>;
   sort?: string;
   bounds?: string | null;
+  /** 距离排序圆心;缺省回退 bounds 中心,再回退杭州默认点。 */
+  center?: { lng: number; lat: number };
   page?: number;
   pageSize?: number;
 }
@@ -65,13 +67,24 @@ export function spatialClipFromSearch(input: PublicSearchInput): SpatialClip | u
   return clip;
 }
 
+function isFiniteCenter(value: unknown): value is { lng: number; lat: number } {
+  if (!value || typeof value !== 'object') return false;
+  const loc = value as { lng?: unknown; lat?: unknown };
+  return typeof loc.lng === 'number' && Number.isFinite(loc.lng)
+    && typeof loc.lat === 'number' && Number.isFinite(loc.lat);
+}
+
 export function searchPublicCatalog(pois: POI[], input: PublicSearchInput): PublicSearchResult {
   const mode = input.mode || 'work';
   const page = clampPage(input.page);
   const pageSize = clampPageSize(input.pageSize);
   const bounds = parseBoundsParam(input.bounds);
   const scoped = bounds ? pois.filter((poi) => inBounds(poi.location, bounds)) : pois;
-  const center = bounds ? boundsCenter(bounds) : HANGZHOU;
+  const center = isFiniteCenter(input.center)
+    ? input.center
+    : bounds
+      ? boundsCenter(bounds)
+      : HANGZHOU;
   const processed = runPOIPipeline(scoped, {
     query: input.q,
     filters: input.filters as FilterState | undefined,

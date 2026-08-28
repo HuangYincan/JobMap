@@ -42,6 +42,8 @@ interface Props {
   lang: Language;
   /** 登录态:原样透传给 AgentPanel(记忆入口只对登录用户渲染)。 */
   user: AccountUser | null;
+  /** 用户定位;透传给面板,岗位检索起点优先于视野中心。 */
+  userLocation?: { lng: number; lat: number } | null;
   /** 受控开关(ws-mt):面板开合由 MapShell 提升提供;点击 toggle / 面板 onClose 都走 onOpenChange。 */
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -105,7 +107,7 @@ function readInitialState(): InitialState {
   return { pos: { left: null, right: EDGE_MARGIN, top }, edge: "right" };
 }
 
-export default function AgentBall({ bridge, lang, user, open, onOpenChange, onRouteMeta, onRouteError, onRouteLoading }: Props) {
+export default function AgentBall({ bridge, lang, user, userLocation = null, open, onOpenChange, onRouteMeta, onRouteError, onRouteLoading }: Props) {
   const [initial] = useState(readInitialState);
   const [pos, setPos] = useState<BallPos>(initial.pos);
   // 当前吸附边缘:松手吸附时更新,拖拽中保持旧值(面板拖拽中不消费)
@@ -233,6 +235,7 @@ export default function AgentBall({ bridge, lang, user, open, onOpenChange, onRo
           bridge={bridge}
           lang={lang}
           user={user}
+          userLocation={userLocation}
           ballRect={ballRect}
           dragging={dragging}
           snapEdge={dragging ? null : snapEdge}

@@ -1174,6 +1174,10 @@ export const translations = {
     zh: '回答完成',
     en: 'Done',
   },
+  agentSearchImages: {
+    zh: '相关图片',
+    en: 'Related photos',
+  },
   agentTruncated: {
     zh: '已达回答上限,部分内容被截断',
     en: 'Reached reply limit, truncated',

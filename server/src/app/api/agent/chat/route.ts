@@ -93,6 +93,7 @@ interface ChatBody {
     zoom?: unknown;
     bounds?: { minLng?: unknown; minLat?: unknown; maxLng?: unknown; maxLat?: unknown };
   };
+  userLocation?: { lng?: unknown; lat?: unknown };
   lang?: unknown;
 }
 
@@ -146,6 +147,12 @@ export async function POST(request: Request) {
       (!isFiniteNum(vp.bounds.minLng) || !isFiniteNum(vp.bounds.minLat) || !isFiniteNum(vp.bounds.maxLng) || !isFiniteNum(vp.bounds.maxLat))
     ) {
       return bad('BAD_VIEWPORT', 'viewport.bounds must contain finite numbers');
+    }
+  }
+  const userLoc = body.userLocation;
+  if (userLoc != null) {
+    if (!isFiniteNum(userLoc.lng) || !isFiniteNum(userLoc.lat)) {
+      return bad('BAD_VIEWPORT', 'userLocation.lng/lat must be finite numbers');
     }
   }
 
@@ -209,7 +216,9 @@ export async function POST(request: Request) {
           provider: id,
           call: async (input, ctx) => {
             const r = await p.callTool(meta.name, input ?? {}, ctx.signal);
-            return r.isError ? { ok: false, error: r.text } : { ok: true, text: r.text };
+            return r.isError
+              ? { ok: false, error: r.text }
+              : { ok: true, text: r.text, ...(r.images && r.images.length > 0 ? { images: r.images } : {}) };
           },
         });
       }
@@ -233,6 +242,9 @@ export async function POST(request: Request) {
             }
           : undefined,
       }
+    : undefined;
+  const userLocation: AgentContext['userLocation'] = userLoc
+    ? { lng: userLoc.lng as number, lat: userLoc.lat as number }
     : undefined;
   const lang: 'zh' | 'en' = body.lang === 'en' ? 'en' : 'zh';
 
@@ -263,6 +275,7 @@ export async function POST(request: Request) {
           messages,
           tools,
           viewport,
+          userLocation,
           lang,
           signal: upstreamAbort.signal,
           userId: sessionUser?.id,

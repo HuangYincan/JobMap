@@ -17,6 +17,8 @@ import { HttpError } from '../llm-validate.ts';
 import { validateAction } from './action-schema.ts';
 import { listMemories } from '../memory-store.ts';
 import { buildSystemPrompt } from './prompts.ts';
+import { collectToolImages, mergeAgentImages, type AgentImage } from './result-images.ts';
+import { formatAgentMapContext } from './search-origin.ts';
 import type { AgentConfig } from './config.ts';
 import type { AgentAction, AgentContext, AgentEvent, AgentTool, ToolKind, ToolResult } from './types.ts';
 
@@ -26,6 +28,8 @@ export interface RunAgentRequest {
   /** 白名单工具,由 route 侧按 key 配置构建(ws-b)。 */
   tools: AgentTool[];
   viewport?: AgentContext['viewport'];
+  /** 用户定位;岗位/附近检索起点优先于 viewport.center。 */
+  userLocation?: AgentContext['userLocation'];
   lang?: 'zh' | 'en';
   signal: AbortSignal;
   /** 会话用户 id(guest = undefined):注入个性化记忆段 + 记忆工具的 userId。 */
@@ -243,7 +247,12 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
   const toolMap = new Map(req.tools.map((t) => [t.name, t]));
   // 构建 system prompt 前注入记忆段:无 userId 或空记忆 → memory undefined → 模板不注入该段。
   const systemPrompt = buildSystemPrompt(
-    { maxTurns: req.config.maxTurns, hasTools: req.tools.length > 0, memory: await loadUserMemory(req.userId) },
+    {
+      maxTurns: req.config.maxTurns,
+      hasTools: req.tools.length > 0,
+      memory: await loadUserMemory(req.userId),
+      mapContext: formatAgentMapContext({ viewport: req.viewport, userLocation: req.userLocation }, lang),
+    },
     lang,
   );
   const history: ChatMessage[] = [
@@ -252,12 +261,14 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
   ];
   const ctx: AgentContext = {
     viewport: req.viewport,
+    ...(req.userLocation ? { userLocation: req.userLocation } : {}),
     lang,
     requestId: globalThis.crypto?.randomUUID?.() ?? String(Math.random()),
     signal: req.signal,
     userId: req.userId,
     ...(req.navigationSession ? { navigationSession: req.navigationSession } : {}),
   };
+  const collectedImages: AgentImage[] = [];
 
   let noTools = false; // unsupported_tools 降级标志(最多一次)
   let reasoningSent = 0; // 思考内容累计转发量(总量上限 REASONING_MAX,超限截断;streamRound 共用)
@@ -307,12 +318,14 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
       if (calls.length === 0) {
         // 无工具调用:提取动作 JSON 逐个下发,然后 done
         for (const action of extractActions(text)) yield { type: 'action', action };
+        if (collectedImages.length > 0) yield { type: 'images', images: collectedImages };
         yield { type: 'done' };
         return;
       }
 
       // 末轮仍要工具 → 截断
       if (turns === req.config.maxTurns - 1) {
+        if (collectedImages.length > 0) yield { type: 'images', images: collectedImages };
         yield { type: 'done', truncated: true };
         return;
       }
@@ -323,6 +336,13 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
       for (const call of calls) {
         if (req.signal.aborted) return;
         const result = await runTool(call);
+        if (result.ok) {
+          collectedImages.splice(
+            0,
+            collectedImages.length,
+            ...mergeAgentImages(collectedImages, collectToolImages(result)),
+          );
+        }
         const summary = sanitizeToolText(result.ok ? result.text : result.error);
         // 公开 tool 事件:name 收敛为类别,summary 不携带(结果全文只进 toolMessages 回流 LLM)
         yield result.ok
@@ -343,6 +363,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
       history.push(...toolMessages);
       trimHistory();
     }
+    if (collectedImages.length > 0) yield { type: 'images', images: collectedImages };
     yield { type: 'done', truncated: true };
   }
 

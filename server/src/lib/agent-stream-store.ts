@@ -111,6 +111,18 @@ export function routeAction(map: SessionStreamMap, sessionId: string, action: Ag
   return updateEntry(map, sessionId, (e) => ({ ...e, messages: reduceAgentEvent(e.messages, { type: "action", action }) }));
 }
 
+/** 搜索结果图片落到该会话最后一条助手消息(最终回答气泡下方)。 */
+export function routeImages(
+  map: SessionStreamMap,
+  sessionId: string,
+  images: Array<{ url: string; alt?: string }>,
+): SessionStreamMap {
+  return updateEntry(map, sessionId, (e) => ({
+    ...e,
+    messages: reduceAgentEvent(e.messages, { type: "images", images }),
+  }));
+}
+
 /** done 事件到达:只落本会话(done/truncated/completion),其余会话不受影响。 */
 export function markDone(map: SessionStreamMap, sessionId: string, truncated: boolean): SessionStreamMap {
   return updateEntry(map, sessionId, (e) => ({ ...e, done: true, truncated, completion: "done", tool: null }));

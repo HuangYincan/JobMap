@@ -182,3 +182,22 @@ test('stripActionJsonBlocks: 无动作 JSON → 原文不变', () => {
   assert.equal(stripActionJsonBlocks(''), '');
   assert.equal(stripActionJsonBlocks('{"foo":"bar"}'), '{"foo":"bar"}');
 });
+
+test('images 事件挂到最后一条助手消息(最终回答气泡下方)', () => {
+  let msgs = [];
+  msgs = reduceAgentEvent(msgs, delta('附近有这些岗位'));
+  msgs = reduceAgentEvent(msgs, {
+    type: 'images',
+    images: [
+      { url: 'https://store.is.autonavi.com/a.png', alt: '店' },
+      { url: 'javascript:alert(1)' },
+      { url: 'http://store.is.autonavi.com/b.jpg' },
+    ],
+  });
+  assert.equal(msgs.length, 1);
+  assert.equal(msgs[0].content, '附近有这些岗位');
+  assert.deepEqual(msgs[0].images, [
+    { url: 'https://store.is.autonavi.com/a.png', alt: '店' },
+    { url: 'https://store.is.autonavi.com/b.jpg' },
+  ]);
+});
