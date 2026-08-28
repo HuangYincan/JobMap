@@ -4,7 +4,7 @@
 
 **创建日期:** 2026-08-27
 
-**状态:** WS0 的契约/验证/40 条离线评测基线/供应商约束审查和 WS1 路线可信地基已实现；用户研究仍待办；WS2 及以后未实现；WS4 因第 8 节布局未获批准继续 blocked
+**状态:** WS0 的契约/验证/40 条离线评测基线/供应商约束审查、WS1 路线可信地基和 WS2 Agent 域工具已实现；用户研究仍待办；WS3 及以后未实现；WS4 因第 8 节布局未获批准继续 blocked
 
 **目标岗位:** 腾讯地图 AI 产品培训生（导航 Agent）
 
@@ -12,7 +12,7 @@
 
 > 本文是下一阶段的产品、技术和验收总计划。WS0 的导航契约、纯校验、40 条离线评测基线、
 > 供应商约束审查和对应 ADR，以及 WS1 的 provider-neutral 路线服务、显式 estimate、
-> 会话隔离 artifact 与两个 route handler 已实现；WS2 及以后仍未实现。§8 的 ASCII 布局仅供审批，
+> 会话隔离 artifact 与两个 route handler 已实现；WS2 的 Work/Navigation 域工具、`showRoute` 动作与 chat 会话共享已实现(客户端 overlay 仍未实现)。§8 的 ASCII 布局仅供审批，
 > **写入本文不等于用户已批准前端开发**。
 
 ---
@@ -65,10 +65,10 @@
    arrival-by 规划。
 2. 浏览器 `map-engine` 是地图渲染/搜索适配器，不能直接充当服务端路线规划层；两者的
    key、权限、坐标、失败语义和调用位置不同。
-3. Agent 只有通用地图/MCP/记忆工具，没有项目域内的岗位搜索、岗位详情、通勤过滤和
-   岗位-通勤联合比较工具；系统提示仍是通用地图助手。
-4. 现有六类动作不能安全承载路线。若让 LLM 直接输出 polyline，会绕过数据来源、坐标、
-   长度和会话归属校验。
+3. Agent 已有通用地图/MCP/记忆工具，以及项目域内的岗位搜索、岗位详情、通勤过滤和
+   岗位-通勤联合比较工具；系统提示含求职导航纪律。生产路线默认仍是直线 `estimate`。
+4. 第七种受控动作 `showRoute { routeId }` 已在服务端与客户端校验；客户端暂不绘制路线
+   overlay。LLM 不得输出 polyline。
 5. 已有无敏感信息的离线评测基线，但尚无评测 runner、指标采集、产品事件 sink、失败漏斗
    或分析留存实现；WS0/WS1 不持久化产品分析事件。
 6. 尚无后台定位、后台提醒或持续重规划能力；P5 也不应暗示已具备这些能力。
@@ -340,12 +340,13 @@ WS0 的资料审查只记录已审核的产品接口，不代表已注册适配�
 
 ## 6. 目标架构与模块边界
 
-当前实现状态（2026-08-28）：WS0 契约/验证和 WS1 的 `route-provider.ts`、
+当前实现状态（2026-08-28）：WS0 契约/验证、WS1 的 `route-provider.ts`、
 `route-service.ts`、`route-artifacts.ts`、`estimate-provider.ts`、navigation session/HTTP
-runtime 与两个 navigation API 已实现。生产没有 live provider，POST 正常结果为明确的
-`estimate`，不带 geometry/`routeId`；GET 只向同一 navigation session 返回未过期的 provider
-artifact 公共形状。`compare.ts`、`providers/`、Agent tools、analytics persistence，以及所有
-前端路线 overlay 仍未实现；以下结构图不表示真实路线、实时交通信息或 UI 已可用。
+runtime 与两个 navigation API，以及 WS2 的 `compare.ts`、`work.ts` / `navigation.ts` 域工具、
+`showRoute` 动作与 `/api/agent/chat` 导航 cookie 共享已实现。生产没有 live provider，POST
+正常结果为明确的 `estimate`，不带 geometry/`routeId`；GET 只向同一 navigation session 返回
+未过期的 provider artifact 公共形状。`providers/`、analytics persistence，以及所有前端路线
+overlay 仍未实现；以下结构图不表示真实路线、实时交通信息或 UI 路线绘制已可用。
 
 ```text
 用户输入 / Work 筛选 / 已授权位置
@@ -389,12 +390,12 @@ server/src/lib/navigation/
 ├── navigation-session.ts    # 已实现：Path=/api 的独立 CSPRNG cookie 与不可逆指纹
 ├── route-http.ts            # 已实现：有界 JSON、no-store、顶层 RouteError/HTTP 映射
 ├── route-runtime.ts         # 已实现：共享进程 store；生产零 live provider
-├── compare.ts               # 未实现：通勤矩阵与可解释约束比较
+├── compare.ts               # 已实现：通勤矩阵与可解释约束比较（无总分）
 └── providers/               # 未实现：经人工确认后再决定的供应商适配器
 
 server/src/lib/agent/tools/
-├── work.ts                  # 未实现：项目岗位工具
-└── navigation.ts            # 未实现：路线/比较/通勤过滤工具
+├── work.ts                  # 已实现：项目岗位搜索/详情
+└── navigation.ts            # 已实现：路线/比较/通勤过滤工具
 
 server/src/app/api/navigation/routes/
 ├── plan/route.ts            # 已实现：校验后规划；当前生产结果为 estimate
@@ -539,14 +540,14 @@ WS0 → WS1 → WS2 → WS3 → WS4 → WS5
 |---|---|---|---|---|---|
 | WS0 合同/来源/隐私 | 已完成并合并 | 冻结意图、路线、错误、供应商和数据留存边界 | 契约、验证、ADR、provider 审查和 40 条 fixture 已完成；用户研究不属于已完成证据 | 已通过并合并 | 决策无悬空高风险项；不触碰前端 |
 | WS1 路线核心 | 已完成并合并 | 建立 provider-neutral 路线服务与 estimate 降级 | navigation types/service/provider/artifact、API、单测 | WS0 合并后 | 超时/配额/不支持/坐标/TTL/会话隔离测试全绿 |
-| WS2 Agent 域工具 | 未实现 | 把岗位数据和路线服务接入 Agent | 5 个域工具、专用 prompt、`showRoute` 动作、工具预算 | WS1 | LLM 无几何；动作与岗位越权全拒绝；三主场景后端链可跑 |
+| WS2 Agent 域工具 | 已实现 | 把岗位数据和路线服务接入 Agent | 5 个域工具、专用 prompt、`showRoute` 动作、工具预算；前端 overlay 仍未实现 | WS1 | LLM 无几何；动作与岗位越权全拒绝；三主场景后端链可跑 |
 | WS3 评测与事件 | 未实现 | 建立可复现的产品判断闭环 | 事件 sink 契约、离线 runner、SQL/Python 报告、基线结果 | WS2 | §7 指标可自动计算；无敏感字段；不复用 `audit_events` |
 | WS4 前端体验 | blocked（未实现） | 呈现通勤筛选、比较、行程和可信路线 | 批准后的桌面/移动 UI、路线 overlay、完整状态 | **用户明确批准 §8 布局**且 WS3 完成 | typecheck/test、Playwright 桌面/移动截图、无重叠、键盘/触屏验证 |
 | WS5 主动建议/集成 | 未实现 | 完成会话内主动思考和演示闭环 | 条件缺口提示、0 结果放宽建议、面试缓冲建议、最终复盘 | WS4 | 三主场景 100%；全量回归；文档与演示材料同步 |
 
-WS0 与 WS1 均已完成并合并。WS2–WS3、WS5 尚未实现；
+WS0、WS1 与 WS2 均已完成。WS3、WS5 尚未实现；
 WS4 在用户批准布局前始终为 blocked。P5 的“主动”只指当前会话中根据已知条件发现缺口、风险和
-替代方案，不包含后台追踪或未经用户触发的定位。
+替代方案，不包含后台追踪或未经用户触发的定位。前端路线 overlay 仍未实现。
 
 ## 10. 里程碑与验收门禁
 
@@ -554,7 +555,7 @@ WS4 在用户批准布局前始终为 blocked。P5 的“主动”只指当前�
 |---|---|---|
 | M0 需求与契约冻结 | 部分完成 | 契约、供应商/隐私边界和评测骨架已完成；5–8 名目标用户任务访谈/可用性输入仍待办 |
 | M1 路线可信地基 | 已完成并合并 | provider seam + estimate、来源标签、artifact 会话隔离、API 错误矩阵通过 |
-| M2 Agent 求职规划 | 未开始 | Work/Navigation 工具、意图槽位、比较器、`showRoute` 后端链通过 |
+| M2 Agent 求职规划 | 后端链已实现 | Work/Navigation 工具、意图槽位、比较器、`showRoute` 后端链通过；前端 overlay 仍未实现 |
 | M3 用户体验闭环 | 待批准（blocked） | Axure/Sketch 可点击原型与 ASCII 获批；桌面/移动实现及真实状态验证通过 |
 | M4 评测与岗位材料 | 未开始 | 指标达标、三场景录屏/截图、SQL/Python 报告、PRD/技术复盘同步 |
 
