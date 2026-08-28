@@ -153,3 +153,29 @@ test('job-taxonomy:岗位类型树 + 职能全量 labelEn,与 i18n.ts 既有条�
   assert.equal(roleByValue.ops, 'Operations');
   assert.equal(roleByValue.design, 'Design');
 });
+
+test('ws4 commute/route i18n keys have zh and en', () => {
+  const keys = [
+    'commuteOriginMissing',
+    'commuteOriginDenied',
+    'commuteStrictEmpty',
+    'commuteNeedTwo',
+    'exploreJobsTab',
+    'exploreCompareTab',
+    'exploreTripTab',
+    'routeSource',
+    'routeSourceEstimate',
+    'routeLoading',
+    'routeExpired',
+    'routeOffline',
+    'routePositionOffline',
+    'agentShowRoute',
+  ];
+  for (const key of keys) {
+    const zh = t(key, 'zh');
+    const en = t(key, 'en');
+    assert.ok(zh.length > 0, `${key}.zh`);
+    assert.ok(en.length > 0, `${key}.en`);
+    assert.notEqual(zh, en, `${key} zh/en 不应相同`);
+  }
+});

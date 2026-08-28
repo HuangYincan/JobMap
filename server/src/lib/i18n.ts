@@ -1338,6 +1338,162 @@ export const translations = {
     zh: '搜索 {query}',
     en: 'Search {query}',
   },
+  agentShowRoute: {
+    zh: '看路线',
+    en: 'View route',
+  },
+  agentRouteHint: {
+    zh: '仅已签发路线；不含折线预览',
+    en: 'Issued route only; no polyline in the card',
+  },
+  commuteOrigin: {
+    zh: '起点',
+    en: 'Origin',
+  },
+  commuteOriginLocated: {
+    zh: '已用当前定位',
+    en: 'Using current location',
+  },
+  commuteOriginMissing: {
+    zh: '尚未授权定位，无法规划通勤',
+    en: 'Location is missing, commute is not planned',
+  },
+  commuteOriginDenied: {
+    zh: '定位被拒绝，无法规划通勤',
+    en: 'Location was denied, commute is not planned',
+  },
+  commuteMaxMinutes: {
+    zh: '上限分钟',
+    en: 'Max minutes',
+  },
+  commuteStrictTab: {
+    zh: '严格命中',
+    en: 'Strict matches',
+  },
+  commuteNearTab: {
+    zh: '接近条件',
+    en: 'Near limit',
+  },
+  commuteStrictEmpty: {
+    zh: '严格命中 0 个岗位',
+    en: '0 strict matches',
+  },
+  commuteClosestHint: {
+    zh: '最接近：{name} · {minutes} 分钟（超过上限，未算命中）',
+    en: 'Closest: {name} · {minutes} min (over limit, not a match)',
+  },
+  commuteWidenHint: {
+    zh: '可放宽上限或改出行方式后再看接近条件',
+    en: 'Widen the limit or change mode, then check near matches',
+  },
+  commuteCompare: {
+    zh: '对比',
+    en: 'Compare',
+  },
+  commuteEstimateBadge: {
+    zh: '估算',
+    en: 'Est.',
+  },
+  commuteHits: {
+    zh: '严格命中 {n}',
+    en: '{n} strict',
+  },
+  commuteQualityEstimate: {
+    zh: '估算',
+    en: 'Estimate',
+  },
+  commuteQualityProvider: {
+    zh: '供应商路线',
+    en: 'Provider route',
+  },
+  commuteRowMinutes: {
+    zh: '通勤',
+    en: 'Commute',
+  },
+  commuteRowQuality: {
+    zh: '质量',
+    en: 'Quality',
+  },
+  commuteRowJobs: {
+    zh: '在招',
+    en: 'Open jobs',
+  },
+  commuteRowSalary: {
+    zh: '薪资',
+    en: 'Salary',
+  },
+  commuteRowAddress: {
+    zh: '地址',
+    en: 'Address',
+  },
+  commuteNeedTwo: {
+    zh: '勾选 2–5 个岗位做事实对比（无总分）',
+    en: 'Pick 2–5 jobs for a fact table (no score)',
+  },
+  exploreJobsTab: {
+    zh: '岗位',
+    en: 'Jobs',
+  },
+  exploreCompareTab: {
+    zh: '对比',
+    en: 'Compare',
+  },
+  exploreTripTab: {
+    zh: '行程',
+    en: 'Trip',
+  },
+  routeSource: {
+    zh: '路线来源',
+    en: 'Route source',
+  },
+  routeSourceEstimate: {
+    zh: '直线估算，无路况',
+    en: 'Straight-line estimate, no traffic',
+  },
+  routeNoTraffic: {
+    zh: '不含实时路况',
+    en: 'No live traffic',
+  },
+  routeHasTraffic: {
+    zh: '含路况',
+    en: 'Traffic-aware',
+  },
+  routeLoading: {
+    zh: '正在获取路线…',
+    en: 'Loading route…',
+  },
+  routeExpired: {
+    zh: '路线已过期，请重新规划',
+    en: 'Route expired. Plan again.',
+  },
+  routeOffline: {
+    zh: '离线，无法获取路线',
+    en: 'Offline, cannot fetch the route',
+  },
+  routeRetry: {
+    zh: '重试',
+    en: 'Retry',
+  },
+  routeForbidden: {
+    zh: '无权查看该路线',
+    en: 'Not allowed to view this route',
+  },
+  routeNotFound: {
+    zh: '找不到该路线',
+    en: 'Route not found',
+  },
+  routePositionOffline: {
+    zh: '该岗位已下线',
+    en: 'This job is no longer open',
+  },
+  routePartialFail: {
+    zh: '部分候选未能估算',
+    en: 'Some candidates could not be estimated',
+  },
+  routeExpandSource: {
+    zh: '展开路线与来源',
+    en: 'Show route and source',
+  },
   agentWelcome: {
     zh: '你好!问我附近有什么推荐,或让我在地图上定位、画圈。',
     en: 'Hi! Ask for nearby recommendations, or let me locate and draw on the map.',

@@ -19,7 +19,7 @@
 // 隐藏;关时恢复。对比表保留在账户页 SavedList(本组件不再消费)。
 // ============================================================
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { ModeSwitcher } from "./mode-switcher";
 import { POIList } from "./poi-list";
 import { POIDetailView } from "./poi-detail";
@@ -222,6 +222,11 @@ export interface SecondarySidebarProps {
   savedCatalog?: POI[];
   /** 收藏列表距离参考点(与 SavedPanel 同口径) */
   savedOrigin?: { lng: number; lat: number } | null;
+  workCommute?: ReactNode;
+  workListReplace?: ReactNode;
+  commuteMinutesById?: Record<string, number>;
+  compareSelected?: string[];
+  onToggleCompare?: (poi: POI) => void;
 }
 
 export function SecondarySidebar({
@@ -270,6 +275,11 @@ export function SecondarySidebar({
   onRemoveSaved,
   savedCatalog = [],
   savedOrigin = null,
+  workCommute,
+  workListReplace,
+  commuteMinutesById,
+  compareSelected,
+  onToggleCompare,
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -513,6 +523,8 @@ export function SecondarySidebar({
         </div>
       </div>
 
+      {workCommute}
+
       {/* 筛选面板（可折叠）+ 结果标题 + POI 列表：共享滚动容器，顶部内容随滚走 */}
       <div className={styles.scrollRegion}>
         {savedMode ? (
@@ -590,6 +602,7 @@ export function SecondarySidebar({
         </div>
 
         {/* POI 列表 */}
+        {workListReplace ?? (
         <POIList
           pois={pois}
           selectedId={selectedId}
@@ -611,7 +624,11 @@ export function SecondarySidebar({
           onRetry={onRetry}
           atCap={atCap}
           noMore={noMore}
+          commuteMinutesById={commuteMinutesById}
+          compareSelected={compareSelected}
+          onToggleCompare={onToggleCompare}
         />
+        )}
         </>
         )}
       </div>

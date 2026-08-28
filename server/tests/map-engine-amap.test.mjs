@@ -216,6 +216,22 @@ function makeNs() {
   }
   ns.Circle = FakeCircle;
 
+  class FakePolyline {
+    constructor(opts) {
+      this.opts = opts;
+      this._map = null;
+      ns.instances.polylines ||= [];
+      ns.instances.polylines.push(this);
+    }
+    setMap(m) {
+      this._map = m;
+    }
+    getMap() {
+      return this._map;
+    }
+  }
+  ns.Polyline = FakePolyline;
+
   class FakeScale {
     constructor(opts) {
       this.opts = opts;
@@ -580,6 +596,33 @@ test('createCircle:距离圈同款参数(stroke/fill/opacity/bubble/zIndex),构�
   assert.ok(ns.instances.map.added.includes(raw), '构造即 add 到地图(旧 map.add 语义)');
   circle.remove();
   assert.equal(raw.getMap(), null);
+  view.destroy();
+});
+
+test('createPolyline:path/颜色/虚线映射 + setMap(null) 移除;非法路径不挂图', async () => {
+  const ns = installNs();
+  const view = await createView(ns, 'normal');
+  const path = [
+    { lng: 120.1, lat: 30.2 },
+    { lng: 120.2, lat: 30.3 },
+  ];
+  const line = view.createPolyline({ path, color: '#007AFF', dashed: true, weight: 5 });
+  const raw = ns.instances.polylines[0];
+  assert.deepEqual(raw.opts.path, [
+    [120.1, 30.2],
+    [120.2, 30.3],
+  ]);
+  assert.equal(raw.opts.strokeColor, '#007AFF');
+  assert.equal(raw.opts.strokeStyle, 'dashed');
+  assert.equal(raw.opts.strokeWeight, 5);
+  assert.ok(ns.instances.map.added.includes(raw), '构造即 add 到地图');
+  line.remove();
+  assert.equal(raw.getMap(), null);
+
+  const before = ns.instances.polylines.length;
+  const noop = view.createPolyline({ path: [{ lng: 120.1, lat: 30.2 }] });
+  assert.equal(ns.instances.polylines.length, before, '单点不挂图');
+  assert.doesNotThrow(() => noop.remove());
   view.destroy();
 });
 

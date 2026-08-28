@@ -19,7 +19,7 @@ import {
   readEnginePreference,
   writeEnginePreference,
 } from '../src/lib/map-engine/engine-preference.ts';
-import { installEngineMock, MockCircle, MockMarker } from './fixtures/engine-mock.mjs';
+import { installEngineMock, MockCircle, MockMarker, MockPolyline } from './fixtures/engine-mock.mjs';
 
 const ENV_KEYS = {
   amap: 'NEXT_PUBLIC_AMAP_KEY',
@@ -233,6 +233,16 @@ test('engine-mock 工厂:可安装到任意 namespace,视图/marker/circle/事�
     assert.ok(circle instanceof MockCircle);
     circle.remove();
     assert.equal(circle.removed, true);
+
+    const line = view.createPolyline({
+      path: [
+        { lng: 120.1, lat: 30.2 },
+        { lng: 120.2, lat: 30.3 },
+      ],
+      dashed: true,
+    });
+    assert.ok(line instanceof MockPolyline || typeof line.remove === 'function');
+    line.remove();
 
     view.setStyle('satellite');
     assert.equal(view.style, 'satellite');

@@ -41,6 +41,10 @@ function mockBridge() {
       calls.push(['drawCircle', center, radiusMeters]);
       return () => calls.push(['cleanup-circle']);
     },
+    drawRoute(path, opts) {
+      calls.push(['drawRoute', path, opts]);
+      return () => calls.push(['cleanup-route']);
+    },
     openDetail(id, mode) {
       calls.push(['openDetail', id, mode]);
     },
@@ -186,6 +190,30 @@ test('search 动作 execute: 无地图副作用,不回调 onAction,不入 undo �
 });
 
 const VALID_ROUTE_ID = `rte_${'a'.repeat(32)}`;
+const ROUTE_PATH = [
+  { lng: 120.1, lat: 30.2 },
+  { lng: 120.2, lat: 30.3 },
+];
+
+function mockFetch(status, body) {
+  const fetchCalls = [];
+  const fetchImpl = async (url, init) => {
+    fetchCalls.push({ url, init });
+    return {
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => body,
+    };
+  };
+  return { fetchImpl, fetchCalls };
+}
+
+function flush() {
+  return Promise.resolve()
+    .then(() => Promise.resolve())
+    .then(() => Promise.resolve())
+    .then(() => Promise.resolve());
+}
 
 test('validateAction: showRoute 合法 ID 通过;带 geometry/过短拒绝', () => {
   assert.deepEqual(validateAction(action('showRoute', { routeId: VALID_ROUTE_ID })), {
@@ -199,21 +227,60 @@ test('validateAction: showRoute 合法 ID 通过;带 geometry/过短拒绝', () 
   );
 });
 
-test('showRoute: 流式路径可 onAction,不画 overlay、不入 undo、不改相机', () => {
+test('showRoute: 200 + geometry 画实线、入 undo;动作不含 geometry', async () => {
   const bridge = mockBridge();
-  const { executor, callbacks } = makeExecutor(bridge);
+  const { fetchImpl, fetchCalls } = mockFetch(200, {
+    routeId: VALID_ROUTE_ID,
+    provider: 'amap',
+    fetchedAt: '2026-08-28T00:00:00.000Z',
+    geometry: ROUTE_PATH,
+  });
+  const routeNotes = [];
+  const { executor, callbacks } = makeExecutor(bridge, {
+    fetch: fetchImpl,
+    onRouteLoading: () => routeNotes.push('loading'),
+    onRouteMeta: (meta) => routeNotes.push(meta.provider),
+  });
   executor.handleEvent({ type: 'action', action: action('showRoute', { routeId: VALID_ROUTE_ID }) });
-  assert.equal(bridge.calls.length, 0);
-  assert.equal(executor.canUndo(), false);
+  await flush();
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0].url, `/api/navigation/routes/${VALID_ROUTE_ID}`);
+  assert.equal(fetchCalls[0].init.credentials, 'include');
+  assert.deepEqual(bridge.calls[0][0], 'drawRoute');
+  assert.equal(bridge.calls[0][2].dashed, false);
+  assert.equal(executor.canUndo(), true);
   assert.deepEqual(callbacks.events, [['action', 'showRoute']]);
+  assert.deepEqual(routeNotes, ['loading', 'amap']);
+  assert.equal(JSON.stringify(callbacks.events).includes('geometry'), false);
+  executor.undo();
+  assert.deepEqual(bridge.calls.at(-1), ['cleanup-route']);
 });
 
-test('showRoute execute: no-op 且不回调 onAction', () => {
+test('showRoute: 410 不画折线,回调 EXPIRED,卡片仍可 onAction', async () => {
   const bridge = mockBridge();
-  const { executor, callbacks } = makeExecutor(bridge);
-  executor.execute(action('showRoute', { routeId: VALID_ROUTE_ID }));
+  const { fetchImpl } = mockFetch(410, { code: 'EXPIRED', message: 'expired', retryable: false });
+  const { executor, callbacks } = makeExecutor(bridge, { fetch: fetchImpl });
+  executor.handleEvent({ type: 'action', action: action('showRoute', { routeId: VALID_ROUTE_ID }) });
+  await flush();
   assert.equal(bridge.calls.length, 0);
   assert.equal(executor.canUndo(), false);
+  assert.deepEqual(callbacks.events, [
+    ['action', 'showRoute'],
+    ['error', 'EXPIRED', 'EXPIRED'],
+  ]);
+});
+
+test('showRoute execute: 200 画线但不回调 onAction', async () => {
+  const bridge = mockBridge();
+  const { fetchImpl } = mockFetch(200, {
+    provider: 'amap',
+    fetchedAt: '2026-08-28T00:00:00.000Z',
+    geometry: ROUTE_PATH,
+  });
+  const { executor, callbacks } = makeExecutor(bridge, { fetch: fetchImpl });
+  executor.execute(action('showRoute', { routeId: VALID_ROUTE_ID }));
+  await flush();
+  assert.equal(bridge.calls[0][0], 'drawRoute');
   assert.deepEqual(callbacks.events, []);
 });
 

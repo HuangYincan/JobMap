@@ -132,3 +132,22 @@ test('源码契约:offset [-10,-10] 字面量 + 无 flex-direction(2026-08-21 ws
   assert.match(bridgeSrc, /position:absolute;bottom:calc\(100% \+ 2px\)/);
   assert.doesNotMatch(bridgeSrc, /flex-direction/, 'agent-map-bridge 不得再出现 flex 竖排撑高');
 });
+
+test('drawRoute:合法路径经 createPolyline;虚线估计;非法路径 no-op', () => {
+  const view = makeView();
+  const bridge = createAgentBridge(view);
+  const cleanup = bridge.drawRoute(
+    [
+      { lng: 120.1, lat: 30.2 },
+      { lng: 120.2, lat: 30.3 },
+    ],
+    { dashed: true, color: '#007AFF' },
+  );
+  assert.equal(view.polylines.length, 1);
+  assert.equal(view.polylines[0].opts.dashed, true);
+  cleanup();
+  assert.equal(view.polylines[0].removed, true);
+  const noop = bridge.drawRoute([{ lng: 120.1, lat: 30.2 }]);
+  assert.equal(view.polylines.length, 1, '单点不挂折线');
+  assert.doesNotThrow(() => noop());
+});

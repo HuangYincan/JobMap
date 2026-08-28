@@ -69,6 +69,10 @@ export interface POICardProps {
   accentColor?: string;
   /** 卡片右上「移除收藏」按钮(仅收藏模式传入;不传则完全不渲染,零影响普通模式) */
   onRemove?: (poi: POI) => void;
+  commuteMinutes?: number;
+  commuteEstimated?: boolean;
+  compareChecked?: boolean;
+  onToggleCompare?: (poi: POI) => void;
 }
 
 /** CSS 自定义属性样式类型（React 19 移除了默认 index signature） */
@@ -197,6 +201,10 @@ export function POICard({
   lang = "zh",
   accentColor,
   onRemove,
+  commuteMinutes,
+  commuteEstimated = true,
+  compareChecked = false,
+  onToggleCompare,
 }: POICardProps) {
   const accent = accentColor || DEFAULT_ACCENT;
   const styleVars: CSSVarStyle = {
@@ -239,6 +247,26 @@ export function POICard({
       ) : isRecruitmentPOI(poi) ? (
         <RecruitmentCardContent poi={poi} lang={lang} onRemove={onRemove} />
       ) : null}
+      {(typeof commuteMinutes === "number" || onToggleCompare) && (
+        <div className={styles.commuteRow}>
+          {onToggleCompare && (
+            <label className={styles.compareLabel} onClick={(e) => e.stopPropagation()}>
+              <input
+                type="checkbox"
+                checked={compareChecked}
+                onChange={() => onToggleCompare(poi)}
+                aria-label={t("commuteCompare", lang)}
+              />
+            </label>
+          )}
+          {typeof commuteMinutes === "number" && (
+            <span className={styles.commuteBadge}>
+              {commuteEstimated ? `${t("commuteEstimateBadge", lang)} ` : ""}
+              {commuteMinutes} {t("commuteMinutes", lang)}
+            </span>
+          )}
+        </div>
+      )}
     </article>
   );
 }

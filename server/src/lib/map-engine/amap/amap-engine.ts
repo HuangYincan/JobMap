@@ -11,6 +11,7 @@
 // - 视图方法:setCenter/setZoom/setPitch/setRotation(animateMs→AMap 动画参数)/
 //   setBounds(内部构造 AMap.Bounds)/flyTo(setZoomAndCenter 同款)/
 //   on(注册返回解绑)/createMarker(offset 元组→AMap.Pixel)/createCircle/
+//   createPolyline(AMap.Polyline path=[[lng,lat]…], strokeStyle dashed|solid)/
 //   addControl('scale'→AMap.Scale,位置/偏移 duck-type 透传)/destroy。
 //
 // 注册方式:本模块被引用(use-map-engine 副作用 import)即把完整实现装配进
@@ -26,6 +27,7 @@ import {
 } from '../../amap-api.ts';
 import type { DomainPOI } from '../../types.ts';
 import { AMAP_ENGINE } from '../engine-registry.ts';
+import { noopPolyline, normalizePolylinePath, polylineVisuals } from '../polyline.ts';
 import type {
   LngLat,
   MapBounds,
@@ -34,6 +36,8 @@ import type {
   MapEngine,
   MapMarker,
   MapMarkerOptions,
+  MapPolyline,
+  MapPolylineOptions,
   MapSearchProvider,
   MapStyleId,
   MapView,
@@ -304,6 +308,40 @@ class AmapView implements MapView {
       remove: () => {
         try {
           circle.setMap(null);
+        } catch {
+          // 地图已销毁等场景:忽略
+        }
+      },
+    };
+  }
+
+  /**
+   * 路线折线。AMap.Polyline path 为 [lng, lat][];strokeStyle dashed 给估算直线,
+   * 可信几何用 solid。非法路径不挂图。
+   */
+  createPolyline(opts: MapPolylineOptions): MapPolyline {
+    const path = normalizePolylinePath(opts);
+    if (!path || this.destroyedFlag) return noopPolyline();
+    const Polyline = this.AMap?.Polyline;
+    if (typeof Polyline !== 'function') return noopPolyline();
+    const visuals = polylineVisuals(opts);
+    const polyline = new Polyline({
+      path: path.map((p) => [p.lng, p.lat]),
+      strokeColor: visuals.color,
+      strokeOpacity: 0.92,
+      strokeWeight: visuals.weight,
+      strokeStyle: visuals.dashed ? 'dashed' : 'solid',
+      lineJoin: 'round',
+      lineCap: 'round',
+      zIndex: 50,
+      bubble: true,
+    });
+    this.map.add(polyline);
+    return {
+      raw: polyline,
+      remove: () => {
+        try {
+          polyline.setMap(null);
         } catch {
           // 地图已销毁等场景:忽略
         }

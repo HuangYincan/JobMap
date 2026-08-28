@@ -456,7 +456,7 @@ test('chat route and panel source: tools, cookie mint, showRoute label, validati
   assert.ok(mint < route.indexOf('getMcpProvider('));
   assert.ok(mint < route.indexOf('runAgent('));
   assert.match(panel, /case "showRoute"/);
-  assert.match(panel, /查看路线/);
+  assert.match(panel, /agentShowRoute/);
 });
 
 test('scenario A commute search chain with injected catalog/route', async () => {

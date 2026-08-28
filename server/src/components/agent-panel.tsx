@@ -30,6 +30,7 @@ import { t, type Language } from "@/lib/i18n";
 import type { AccountUser } from "@/lib/account";
 import type { AgentAction, AgentEvent } from "@/lib/agent/types";
 import type { MapBridge } from "@/lib/agent-map-bridge";
+import type { RouteOverlayMeta } from "@/lib/navigation/route-client";
 import { stripActionJsonBlocks, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
 import { streamAgentChat, type AgentChatRequest } from "./agent-chat-client";
 import {
@@ -104,6 +105,9 @@ interface Props {
   /** 内嵌模式(ws-ae):drawer 内 agent sheet 渲染(mobileSheet "agent"),
    *  不做锚点跟随定位(placement/panelStyle 跳过),随抽屉流填满 sheet body。 */
   embedded?: boolean;
+  onRouteMeta?: (meta: RouteOverlayMeta) => void;
+  onRouteError?: (code: string) => void;
+  onRouteLoading?: () => void;
 }
 
 /** SSR 安全初始状态:读 localStorage 会话 + 迁移旧 sessionStorage 历史。 */
@@ -127,8 +131,20 @@ function actionLabel(action: AgentAction, lang: Language): string {
     case "search":
       return t("agentActionSearch", lang).replace("{query}", action.payload.query);
     case "showRoute":
-      return lang === "en" ? "Show route" : "查看路线";
+      return t("agentShowRoute", lang);
   }
+}
+
+function routeCardHint(action: AgentAction, lang: Language): string {
+  if (action.type !== "showRoute") return t("agentRouteHint", lang);
+  const extra = action.payload as { routeId: string; quality?: string; durationMinutes?: number };
+  const bits: string[] = [];
+  if (typeof extra.quality === "string" && extra.quality.length > 0) bits.push(extra.quality);
+  if (typeof extra.durationMinutes === "number" && Number.isFinite(extra.durationMinutes)) {
+    bits.push(`${extra.durationMinutes} ${t("commuteMinutes", lang)}`);
+  }
+  bits.push(t("agentRouteHint", lang));
+  return bits.join(" · ");
 }
 
 /** 工具类别(公开 SSE tool 事件 name 字段)→ i18n 文案;未知类别 → 「其他操作」。 */
@@ -193,7 +209,7 @@ export function memoryViewState(loading: boolean, error: boolean, count: number)
   return count > 0 ? "list" : "empty";
 }
 
-export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, onClose, embedded = false }: Props) {
+export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, onClose, embedded = false, onRouteMeta, onRouteError, onRouteLoading }: Props) {
   // 会话存储(多会话,localStorage);**每会话独立流状态**(Map<sessionId, SessionStream>,
   // 内存为事实源)与 store 双轨:
   // - 流式会话:entry.messages 是工作副本,事件只改内存;显示 = entry.messages;
@@ -218,6 +234,12 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   const panelRef = useRef<HTMLElement>(null);
   const langRef = useRef(lang);
   langRef.current = lang;
+  const onRouteMetaRef = useRef(onRouteMeta);
+  onRouteMetaRef.current = onRouteMeta;
+  const onRouteErrorRef = useRef(onRouteError);
+  onRouteErrorRef.current = onRouteError;
+  const onRouteLoadingRef = useRef(onRouteLoading);
+  onRouteLoadingRef.current = onRouteLoading;
   // 会话/流镜像:回调内读最新值(避免闭包陈旧;与 langRef 同模式)。
   const sessionStateRef = useRef(sessionState);
   sessionStateRef.current = sessionState;
@@ -331,6 +353,18 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
 
   const handleError = useCallback(
     (code: string) => {
+      if (
+        code === "EXPIRED" ||
+        code === "FORBIDDEN" ||
+        code === "NOT_FOUND" ||
+        code === "UNAUTHORIZED" ||
+        code === "OFFLINE" ||
+        code === "INVALID" ||
+        code === "INTERNAL"
+      ) {
+        onRouteErrorRef.current?.(code);
+        return;
+      }
       const sid = streamSessionRef.current;
       if (!sid) return;
       if (code === "LLM_UNCONFIGURED") {
@@ -368,6 +402,8 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
             onDone: handleDone,
             onError: handleError,
             onAction: handleAction,
+            onRouteMeta: (meta) => onRouteMetaRef.current?.(meta),
+            onRouteLoading: () => onRouteLoadingRef.current?.(),
           } satisfies AgentMapExecutorCallbacks,
         )
       : null;
@@ -872,9 +908,14 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
             {m.role === "assistant" && m.actions && m.actions.length > 0 && (
               <div className={styles.actions}>
                 {m.actions.map((a, j) => (
-                  <button key={j} type="button" className={styles.actionBtn} onClick={() => replayAction(a)}>
-                    {actionLabel(a, lang)}
-                  </button>
+                  <div key={j} className={styles.actionBlock}>
+                    <button type="button" className={styles.actionBtn} onClick={() => replayAction(a)}>
+                      {actionLabel(a, lang)}
+                    </button>
+                    {a.type === "showRoute" && (
+                      <span className={styles.routeHint}>{routeCardHint(a, lang)}</span>
+                    )}
+                  </div>
                 ))}
               </div>
             )}

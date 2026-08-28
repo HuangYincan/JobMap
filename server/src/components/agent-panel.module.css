@@ -656,6 +656,17 @@
   background: rgba(0, 122, 255, 0.14);
 }
 
+.actionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.routeHint {
+  color: var(--muted, #6b7280);
+  font-size: 11px;
+}
+
 .notice {
   background: rgba(255, 149, 0, 0.08);
   border: 1px solid rgba(255, 149, 0, 0.3);

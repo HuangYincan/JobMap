@@ -118,6 +118,26 @@ export class MockCircle {
 }
 MockCircle.seq = 0;
 
+export class MockPolyline {
+  constructor(opts) {
+    this.opts = opts || {};
+    this.id = this.opts.id || `mock-polyline-${++MockPolyline.seq}`;
+    this._map = null;
+  }
+
+  setMap(map) {
+    if (this._map === map) return;
+    if (this._map) this._map._overlays.delete(this.id);
+    this._map = map;
+    if (map) map._overlays.set(this.id, this);
+  }
+
+  getMap() {
+    return this._map;
+  }
+}
+MockPolyline.seq = 0;
+
 export class MockMap {
   constructor() {
     this._overlays = new Map();
@@ -195,6 +215,17 @@ export class MockMap {
     const circle = new MockCircle(opts);
     circle.setMap(this);
     return { raw: circle, remove: () => circle.setMap(null) };
+  }
+
+  /** MapView.createPolyline:非法路径不挂图 */
+  createPolyline(opts) {
+    const path = opts?.path;
+    if (!Array.isArray(path) || path.length < 2) {
+      return { raw: null, remove() {} };
+    }
+    const polyline = new MockPolyline(opts);
+    polyline.setMap(this);
+    return { raw: polyline, remove: () => polyline.setMap(null) };
   }
 
   addControl() {}
