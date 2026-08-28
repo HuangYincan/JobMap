@@ -185,6 +185,38 @@ test('search 动作 execute: 无地图副作用,不回调 onAction,不入 undo �
   assert.deepEqual(callbacks.events, []);
 });
 
+const VALID_ROUTE_ID = `rte_${'a'.repeat(32)}`;
+
+test('validateAction: showRoute 合法 ID 通过;带 geometry/过短拒绝', () => {
+  assert.deepEqual(validateAction(action('showRoute', { routeId: VALID_ROUTE_ID })), {
+    type: 'showRoute',
+    payload: { routeId: VALID_ROUTE_ID },
+  });
+  assert.equal(validateAction(action('showRoute', { routeId: 'rte_short' })), null);
+  assert.equal(
+    validateAction(action('showRoute', { routeId: VALID_ROUTE_ID, geometry: [{ lng: 120, lat: 30 }] })),
+    null,
+  );
+});
+
+test('showRoute: 流式路径可 onAction,不画 overlay、不入 undo、不改相机', () => {
+  const bridge = mockBridge();
+  const { executor, callbacks } = makeExecutor(bridge);
+  executor.handleEvent({ type: 'action', action: action('showRoute', { routeId: VALID_ROUTE_ID }) });
+  assert.equal(bridge.calls.length, 0);
+  assert.equal(executor.canUndo(), false);
+  assert.deepEqual(callbacks.events, [['action', 'showRoute']]);
+});
+
+test('showRoute execute: no-op 且不回调 onAction', () => {
+  const bridge = mockBridge();
+  const { executor, callbacks } = makeExecutor(bridge);
+  executor.execute(action('showRoute', { routeId: VALID_ROUTE_ID }));
+  assert.equal(bridge.calls.length, 0);
+  assert.equal(executor.canUndo(), false);
+  assert.deepEqual(callbacks.events, []);
+});
+
 test('flyTo: 执行 + undo 恢复旧 camera(执行前快照)', () => {
   const bridge = mockBridge();
   const { executor } = makeExecutor(bridge);

@@ -49,7 +49,7 @@ test('buildSystemPrompt: maxTurns 数值注入正确', () => {
   assert.match(buildSystemPrompt({ maxTurns: 12, hasTools: true }, 'zh'), /12 次工具往返/);
 });
 
-test('buildSystemPrompt: 动作契约(zh/en)均含 6 种动作示例 JSON(逐字段与 validateAction 一致)', () => {
+test('buildSystemPrompt: 动作契约(zh/en)均含 7 种动作示例 JSON(逐字段与 validateAction 一致)', () => {
   const zh = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'zh');
   const en = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'en');
   const zhExamples = [
@@ -59,6 +59,7 @@ test('buildSystemPrompt: 动作契约(zh/en)均含 6 种动作示例 JSON(逐字
     '{"type":"drawCircle","payload":{"center":{"lng":120.15,"lat":30.25},"radiusMeters":1000,"label":"可选"}}',
     '{"type":"openDetail","payload":{"id":"poi-id"}}',
     '{"type":"search","payload":{"query":"关键词","mode":"card"}}',
+    '{"type":"showRoute","payload":{"routeId":"rte_0123456789abcdef0123456789abcdef"}}',
   ];
   const enExamples = [
     '{"type":"flyTo","payload":{"center":{"lng":120.15,"lat":30.25},"zoom":14}}',
@@ -67,9 +68,12 @@ test('buildSystemPrompt: 动作契约(zh/en)均含 6 种动作示例 JSON(逐字
     '{"type":"drawCircle","payload":{"center":{"lng":120.15,"lat":30.25},"radiusMeters":1000,"label":"optional"}}',
     '{"type":"openDetail","payload":{"id":"poi-id"}}',
     '{"type":"search","payload":{"query":"keywords","mode":"card"}}',
+    '{"type":"showRoute","payload":{"routeId":"rte_0123456789abcdef0123456789abcdef"}}',
   ];
   for (const ex of zhExamples) assert.ok(zh.includes(ex), `zh 缺动作示例: ${ex}`);
   for (const ex of enExamples) assert.ok(en.includes(ex), `en 缺动作示例: ${ex}`);
+  assert.match(zh, /7 种动作/);
+  assert.match(en, /7 action types/);
 });
 
 test('buildSystemPrompt: flyTo/drawCircle 必须嵌套 center,不允许扁平 lng/lat(zh/en)', () => {
@@ -93,6 +97,21 @@ test('buildSystemPrompt: 动作纪律禁止正文复述/展示 actions JSON(zh/e
   const en = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'en');
   assert.match(zh, /动作 JSON 由系统自动提取并执行,严禁在回复正文中复述\/展示 actions JSON/);
   assert.match(en, /never repeat or display actions JSON in your reply body/);
+});
+
+test('buildSystemPrompt: 求职导航纪律禁止编造岗位/polyline,showRoute 仅 routeId(zh/en)', () => {
+  const zh = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'zh');
+  const en = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'en');
+  assert.match(zh, /不得编造岗位、薪资、坐标或路线/);
+  assert.match(zh, /missingSlots 非空时不得规划路线/);
+  assert.match(zh, /禁止在动作或正文中写 polyline、geometry/);
+  assert.match(zh, /不做黑盒推荐总分/);
+  assert.match(en, /never invent jobs, salaries, coordinates, or routes/);
+  assert.match(en, /When missingSlots is non-empty, do not plan a route/);
+  assert.match(en, /never write polyline, geometry/);
+  assert.match(en, /never invent a black-box recommendation score/);
+  assert.match(zh, /payload 仅含服务端签发的 routeId/);
+  assert.match(en, /payload contains only a server-issued routeId/);
 });
 
 test('buildSystemPrompt: 记忆段仅 memory 非空时注入(zh/en,2026-08-22 ws-mem-a)', () => {

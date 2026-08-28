@@ -94,6 +94,46 @@ test('validateAction: openDetail / search 边界', () => {
   assert.equal(validateAction({ type: 'search', payload: { query: 'q'.repeat(101) } }), null);
 });
 
+test('validateAction: showRoute 合法 routeId 通过;畸形/过短/带 geometry 拒绝', () => {
+  const routeId = `rte_${'a'.repeat(32)}`;
+  assert.deepEqual(validateAction({ type: 'showRoute', payload: { routeId } }), {
+    type: 'showRoute',
+    payload: { routeId },
+  });
+  assert.equal(validateAction({ type: 'showRoute', payload: { routeId: `rte_${'a'.repeat(31)}` } }), null);
+  assert.equal(validateAction({ type: 'showRoute', payload: { routeId: `rte_${'G'.repeat(32)}` } }), null);
+  assert.equal(validateAction({ type: 'showRoute', payload: { routeId: 'not-a-route' } }), null);
+  assert.equal(
+    validateAction({
+      type: 'showRoute',
+      payload: { routeId, geometry: [{ lng: 120, lat: 30 }] },
+    }),
+    null,
+  );
+  assert.equal(
+    validateAction({
+      type: 'showRoute',
+      payload: { routeId, polyline: '120,30;121,31' },
+    }),
+    null,
+  );
+  assert.equal(
+    validateAction({
+      type: 'showRoute',
+      payload: { routeId, extra: { geometry: [{ lng: 120, lat: 30 }] } },
+    }),
+    null,
+  );
+  assert.equal(
+    validateAction({
+      type: 'showRoute',
+      payload: { routeId },
+      geometry: [{ lng: 120, lat: 30 }],
+    }),
+    null,
+  );
+});
+
 test('validateAction: 未知 type / 非对象 / 缺 payload 一律 null', () => {
   assert.equal(validateAction({ type: 'weird', payload: {} }), null);
   assert.equal(validateAction({ type: 'flyTo' }), null);

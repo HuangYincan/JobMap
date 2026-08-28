@@ -4,6 +4,7 @@
 
 import type { AgentAction } from './types.ts';
 import { clampMapZoom } from '../map-engine/zoom.ts';
+import { OPAQUE_ROUTE_ID_PATTERN } from '../navigation/constants.ts';
 
 const MAX_LAT = 90;
 const MAX_LNG = 180;
@@ -38,6 +39,33 @@ function isOptionalString(v: unknown, max: number): boolean {
 
 function isValidCenter(v: unknown): boolean {
   return isRecord(v) && isLng(v.lng) && isLat(v.lat);
+}
+
+/** Keys that would smuggle geometry or provider raw data into showRoute. */
+const SHOW_ROUTE_GEOMETRY_KEYS = new Set([
+  'geometry',
+  'polyline',
+  'path',
+  'coordinates',
+  'points',
+  'providerRaw',
+  'rawResponse',
+  'provider_response',
+  'lng',
+  'lat',
+]);
+
+function containsForbiddenGeometry(value: unknown, depth = 0): boolean {
+  if (depth > 4 || value == null) return false;
+  if (Array.isArray(value)) {
+    return value.some((item) => containsForbiddenGeometry(item, depth + 1));
+  }
+  if (!isRecord(value)) return false;
+  for (const [key, nested] of Object.entries(value)) {
+    if (SHOW_ROUTE_GEOMETRY_KEYS.has(key)) return true;
+    if (containsForbiddenGeometry(nested, depth + 1)) return true;
+  }
+  return false;
 }
 
 /**
@@ -103,6 +131,15 @@ export function validateAction(raw: unknown): AgentAction | null {
     case 'search': {
       if (typeof payload.query !== 'string' || payload.query.length === 0 || payload.query.length > MAX_QUERY_CHARS) return null;
       return { type: 'search', payload: { query: payload.query, ...(mode !== undefined ? { mode } : {}) } };
+    }
+    case 'showRoute': {
+      // Format-only: do not look up the artifact store. Reject geometry /
+      // polyline / provider-raw even if nested under extra keys.
+      if (containsForbiddenGeometry(raw) || containsForbiddenGeometry(payload)) return null;
+      if (typeof payload.routeId !== 'string' || !OPAQUE_ROUTE_ID_PATTERN.test(payload.routeId)) {
+        return null;
+      }
+      return { type: 'showRoute', payload: { routeId: payload.routeId } };
     }
     default:
       return null;

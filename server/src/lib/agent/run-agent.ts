@@ -30,6 +30,8 @@ export interface RunAgentRequest {
   signal: AbortSignal;
   /** 会话用户 id(guest = undefined):注入个性化记忆段 + 记忆工具的 userId。 */
   userId?: string;
+  /** 求职导航会话指纹(SHA-256 hex);缺省则工具侧拒绝规划。 */
+  navigationSession?: AgentContext['navigationSession'];
   /** 测试注入点:默认 createLlmProvider()。 */
   provider?: LLMProvider;
 }
@@ -192,7 +194,7 @@ function sanitizeErrorMessage(err: unknown, fallback: string): string {
 // ---- 公开面脱敏(2026-08-21 安全要求):tool 事件 name → 公开类别,summary 不对外 ----
 
 /** 供应商前缀(先剥掉再按关键词归类);未知前缀不剥,关键词照常匹配。 */
-const TOOL_KIND_PREFIX_RE = /^(amap|tencent|baidu|rest|builtin)__/;
+const TOOL_KIND_PREFIX_RE = /^(amap|tencent|baidu|rest|builtin|work|navigation)__/;
 /** 后缀关键词 → 类别(顺序即优先级:search 先于 geocode/directions/weather/project)。 */
 const TOOL_KIND_RULES: Array<[RegExp, ToolKind]> = [
   [/text_search|place|poi|suggestion|search|query/, 'search'],
@@ -212,6 +214,10 @@ const TOOL_KIND_RULES: Array<[RegExp, ToolKind]> = [
  * 例:amap__maps_text_search → search、baidu__reverse_geocoding → geocode、builtin__viewport → other。
  */
 export function toolKind(name: string): ToolKind {
+  // Domain tools have a closed public kind, even when the slug contains
+  // "search" (work__searchPositions must stay project, not search).
+  if (name.startsWith('work__')) return 'project';
+  if (name.startsWith('navigation__')) return 'directions';
   const bare = name.replace(TOOL_KIND_PREFIX_RE, '');
   for (const [re, kind] of TOOL_KIND_RULES) {
     if (re.test(bare)) return kind;
@@ -250,6 +256,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
     requestId: globalThis.crypto?.randomUUID?.() ?? String(Math.random()),
     signal: req.signal,
     userId: req.userId,
+    ...(req.navigationSession ? { navigationSession: req.navigationSession } : {}),
   };
 
   let noTools = false; // unsupported_tools 降级标志(最多一次)

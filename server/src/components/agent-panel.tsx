@@ -126,6 +126,8 @@ function actionLabel(action: AgentAction, lang: Language): string {
       return t("agentActionDetail", lang);
     case "search":
       return t("agentActionSearch", lang).replace("{query}", action.payload.query);
+    case "showRoute":
+      return lang === "en" ? "Show route" : "查看路线";
   }
 }
 

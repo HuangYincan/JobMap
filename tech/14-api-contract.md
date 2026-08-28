@@ -26,9 +26,10 @@ All public GETs below send `Cache-Control: public, max-age=30, stale-while-reval
 | GET | `/api/navigation/routes/:routeId` | Returns only the unexpired public provider artifact for the same navigation session; public shape excludes the internal session fingerprint. |
 
 Both responses are `Cache-Control: no-store`. The separate host-only HttpOnly/SameSite=Lax navigation cookie
-uses `Path=/api`, allowing the upcoming `/api/agent/chat` integration and route handlers to share one session
-without sending the token to page/static requests. The process-local artifact store is bounded by entry count and
-aggregate geometry points; it does not persist provider raw responses.
+uses `Path=/api`. `POST /api/agent/chat` reads the same cookie after request validation and before MCP/LLM;
+if missing it mints one and sets `Set-Cookie` on the SSE response. The raw cookie is not written to JSON, SSE,
+or logs. The process-local artifact store is bounded by entry count and aggregate geometry points; it does not
+persist provider raw responses.
 
 ## Account (`/api/me/*`, `/api/auth/*`)
 

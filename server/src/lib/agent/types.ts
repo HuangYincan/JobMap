@@ -12,7 +12,7 @@ export interface AgentTool {
   description: string;
   /** JSON Schema(OpenAI tools 参数,parameters 字段)。 */
   inputSchema: Record<string, unknown>;
-  provider: 'amap' | 'tencent' | 'baidu' | 'rest' | 'builtin';
+  provider: 'amap' | 'tencent' | 'baidu' | 'rest' | 'builtin' | 'work' | 'navigation';
   call(input: Record<string, unknown>, ctx: AgentContext): Promise<ToolResult>;
 }
 
@@ -29,6 +29,11 @@ export interface AgentContext {
   signal: AbortSignal;
   /** 会话用户 id(guest = undefined);记忆工具与个性化依赖它。 */
   userId?: string;
+  /**
+   * 求职导航会话指纹(SHA-256 hex,不是 cookie 原文)。
+   * 由 /api/agent/chat 与 navigation route handlers 共享同一 cookie 派生。
+   */
+  navigationSession?: { fingerprint: string };
 }
 
 /** 动作白名单(SSE action 事件 payload)。 */
@@ -38,7 +43,8 @@ export type AgentAction =
   | { type: 'addMarkers'; payload: { points: Array<{ lng: number; lat: number; label?: string }> } }
   | { type: 'drawCircle'; payload: { center: { lng: number; lat: number }; radiusMeters: number; label?: string } }
   | { type: 'openDetail'; payload: { id: string; mode?: string } }
-  | { type: 'search'; payload: { query: string; mode?: string } };
+  | { type: 'search'; payload: { query: string; mode?: string } }
+  | { type: 'showRoute'; payload: { routeId: string } };
 
 /**
  * 公开 tool 事件类别(安全集合):内部工具名 → 通用类别,无供应商前缀、无内部工具名。

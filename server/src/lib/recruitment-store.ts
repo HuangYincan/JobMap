@@ -381,6 +381,114 @@ export async function loadWorkCatalogByIdFromDb(
   }
 }
 
+/**
+ * Targeted position detail by `external_id`. Same open + deadline-alive
+ * semantics as the catalog loaders; does not materialize the national catalog
+ * and does not select `description`.
+ *
+ * Return contract:
+ *   null      = no pool / query failure
+ *   undefined = not found or not currently visible
+ *   record    = one visible position
+ */
+export interface WorkPositionDetailRecord {
+  positionId: string;
+  title: string;
+  department?: string;
+  family: JobFamily;
+  city?: string;
+  siteId?: string;
+  siteLabel?: string;
+  companyCatalogId: string;
+  companyName: string;
+  salary?: { min: number; max: number };
+  education?: string;
+  deadline?: string;
+  applySource?: ApplySource;
+  status: 'open' | 'closed' | 'paused';
+  location?: { lng: number; lat: number; coordinateSystem: 'gcj02' };
+}
+
+interface PositionDetailRow {
+  external_id: string;
+  title: string;
+  department: string | null;
+  family: JobFamily;
+  salary_min: string | number | null;
+  salary_max: string | number | null;
+  education: string | null;
+  deadline: Date | string | null;
+  apply_source: ApplySource | null;
+  status: 'open' | 'closed' | 'paused';
+  site_id: string | null;
+  slug: string;
+  company_name: string;
+  site_name: string | null;
+  city: string | null;
+  lng: number | null;
+  lat: number | null;
+}
+
+export async function loadWorkPositionByExternalIdFromDb(
+  externalId: string,
+  pool: DbPoolLike | null = getPool(),
+): Promise<WorkPositionDetailRecord | null | undefined> {
+  if (!pool) return null;
+  const id = externalId.trim();
+  if (!id || id.length > 128) return undefined;
+
+  try {
+    const result = await queryPublicRead<PositionDetailRow>(
+      pool,
+      `SELECT p.external_id, p.title, p.department, p.family,
+              p.salary_min, p.salary_max, p.education, p.deadline,
+              p.apply_source, p.status, p.site_id::text,
+              c.slug, c.name AS company_name,
+              s.name AS site_name, s.city, s.lng, s.lat
+       FROM positions p
+       INNER JOIN companies c ON c.id = p.company_id
+       LEFT JOIN company_sites s ON s.id = p.site_id
+       WHERE p.external_id = $1
+         AND p.status = 'open'
+         AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+       LIMIT 1`,
+      [id],
+    );
+    const row = result.rows[0];
+    if (!row) return undefined;
+    const siteId = row.site_id ?? undefined;
+    const record: WorkPositionDetailRecord = {
+      positionId: row.external_id,
+      title: row.title,
+      family: row.family,
+      companyCatalogId: siteId ? `${row.slug}:${siteId}` : row.slug,
+      companyName: row.company_name,
+      status: row.status,
+    };
+    if (row.department) record.department = row.department;
+    if (row.city) record.city = row.city;
+    if (siteId) record.siteId = siteId;
+    if (row.site_name) record.siteLabel = row.site_name;
+    if (row.salary_min != null || row.salary_max != null) {
+      record.salary = { min: num(row.salary_min) ?? 0, max: num(row.salary_max) ?? 0 };
+    }
+    if (row.education) record.education = row.education;
+    const deadline = isoDate(row.deadline);
+    if (deadline) record.deadline = deadline;
+    if (row.apply_source) record.applySource = row.apply_source;
+    if (hasPlausibleCoord(row.lng, row.lat) && !isCityCenterPin(row.lng as number, row.lat as number)) {
+      record.location = {
+        lng: row.lng as number,
+        lat: row.lat as number,
+        coordinateSystem: 'gcj02',
+      };
+    }
+    return record;
+  } catch {
+    return null;
+  }
+}
+
 export interface WorkSuggestionRow {
   kind: 'company' | 'job';
   slug: string;

@@ -15,6 +15,8 @@ Production registers no live route provider: `POST /api/navigation/routes/plan` 
 `estimate` with no geometry or `routeId`; no real road route, live traffic, or provider arrival-by capability is
 claimed. `GET /api/navigation/routes/[routeId]` only returns an unexpired provider artifact to the same
 independent navigation session, and never exposes its internal session fingerprint.
+WS2 adds Agent work/navigation domain tools, `showRoute` format validation, and shared navigation-session
+cookie handling on `POST /api/agent/chat`. The client still does not draw a route overlay.
 
 WS0 validates route-reference syntax: `routeId` must match
 `^rte_[a-f0-9]{32,124}$`, for a total length of 36–128 characters. WS1 generates provider-route IDs with
@@ -49,12 +51,13 @@ Existing general Agent and controlled map actions
   -> client revalidates, rate-limits same-type actions, executes, and supports undo
   -> bounded client localStorage may retain actions/tool summaries
 
-WS0/WS1 job-navigation foundation (implemented)
+WS0/WS1/WS2 job-navigation foundation (implemented)
   -> provider-neutral intent/route/error contract
   -> pure server-side validation
   -> RouteService timeout/abort/result validation
   -> explicit estimate fallback (no geometry or routeId)
   -> entry/geometry-budget-bounded, session-fingerprinted provider artifacts
+  -> Agent work/navigation tools + showRoute validation (client overlay not drawn)
 ```
 
 ### Canonical Data vs Map Overlay
@@ -69,8 +72,9 @@ for route requests, provider-result normalization, and route error, timeout, abo
 and estimate-fallback semantics. Until product permissions,
 call ordering, terms, quotas, caching/display rights, and commercial authorization are confirmed manually, the
 project does not select, register, configure, or call any live route provider. The two navigation route handlers
-and process-local artifact store now exist, but their production planning path is estimate-only; no real route,
-traffic data, navigation Agent tool, `showRoute`, or route UI is implied.
+and process-local artifact store now exist, but their production planning path is estimate-only; no real route
+or live traffic data is implied. Agent domain tools share the navigation session cookie with these handlers.
+`showRoute` is validated but the client does not draw a route overlay.
 
 The WS0 provider review records product facts without selecting an adapter. Amap Route Planning 2.0 is recorded
 by its reviewed per-mode endpoints `/v5/direction/driving`, `/v5/direction/walking`,
@@ -93,7 +97,7 @@ An import pipeline is `fetch/receive -> validate -> normalize -> provenance -> i
 
 ## API Contract
 
-The API is implemented and tested. Current routes include `/api/pois` (list, with `bounds`/`filters` spatial clip), `/api/pois/[id]`, `/api/pois/domain-local` (Hangzhou `hz_pois` ILIKE + tier LOD), `/api/search`, `/api/suggest`, `/api/modes`, `/api/filter-options`, `/api/auth/*`, `/api/me/*` (account-scoped: search history, saved places, applications, notifications), `POST /api/navigation/routes/plan`, and `GET /api/navigation/routes/[routeId]`. Navigation responses are always `no-store`; planning JSON is bounded; the dedicated host-only HttpOnly/SameSite=Lax navigation cookie uses `Path=/api`, so the upcoming Agent route and navigation route handlers can share it without sending it to page/static requests. Only its SHA-256 fingerprint reaches the dual-bounded artifact store. The broader typed contract is in [14-api-contract.md](14-api-contract.md). The contract guarantees:
+The API is implemented and tested. Current routes include `/api/pois` (list, with `bounds`/`filters` spatial clip), `/api/pois/[id]`, `/api/pois/domain-local` (Hangzhou `hz_pois` ILIKE + tier LOD), `/api/search`, `/api/suggest`, `/api/modes`, `/api/filter-options`, `/api/auth/*`, `/api/me/*` (account-scoped: search history, saved places, applications, notifications), `POST /api/navigation/routes/plan`, `GET /api/navigation/routes/[routeId]`, and `POST /api/agent/chat`. Navigation responses are always `no-store`; planning JSON is bounded. The dedicated host-only HttpOnly/SameSite=Lax navigation cookie uses `Path=/api`, so `/api/agent/chat` and the navigation route handlers share it without sending it to page/static requests. Only its SHA-256 fingerprint reaches `AgentContext.navigationSession` and the dual-bounded artifact store. The broader typed contract is in [14-api-contract.md](14-api-contract.md). The contract guarantees:
 
 - identity and map authorization before data access;
 - schema validation, bounded pagination/cursors, strict bbox/radius parsing, and parameterized queries;
@@ -105,15 +109,17 @@ The API is implemented and tested. Current routes include `/api/pois` (list, wit
 ### Controlled AI Map Actions
 
 The repository already has a general Agent and controlled map actions. Request/message boundaries are validated,
-allowlisted tools are available, and `action-schema.ts` validates the six allowlisted action schemas and their
-bounds. The server validates extracted action payloads; the client revalidates them, rate-limits same-type
+allowlisted tools are available, and `action-schema.ts` validates the seven allowlisted action schemas and their
+bounds (the seventh is `showRoute { routeId }`, format-only; the client does not draw overlay). The server validates extracted action payloads; the client revalidates them, rate-limits same-type
 actions, executes them, and supports undo. Bounded client `localStorage` may retain actions and tool summaries.
 This is not a server-side action audit trail, and no server-side action or product-analytics audit sink is implied.
 The Agent cannot execute arbitrary SQL, browser commands, URLs, or plugin code; this does not make every tool
 read-only because logged-in `memory_save` is controlled write functionality. WS0/WS1 now provide the
 provider-neutral job-navigation contract, route service, explicit estimate path, session-bound artifact store,
-and two navigation route handlers. Agent job/navigation tools, `showRoute`, analytics persistence, live route
-providers, and frontend route UI remain unimplemented.
+and two navigation route handlers. Agent job/navigation tools, `showRoute` action validation, and
+`POST /api/agent/chat` navigation-session sharing are implemented; production planning remains
+estimate-only. Analytics persistence, live route providers, and frontend route overlay remain
+unimplemented.
 
 ## Target Directory Structure
 
