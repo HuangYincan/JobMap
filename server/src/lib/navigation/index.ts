@@ -40,3 +40,22 @@ export type {
   CompareDestination,
   CompareRuntime,
 } from './compare.ts';
+export {
+  NAVIGATION_EVENT_NAMES,
+  NAVIGATION_EVENT_FIELDS,
+  assertSafeNavigationEvent,
+  createJsonlSink,
+  createMemorySink,
+  parseNavigationEvent,
+} from './analytics.ts';
+export type {
+  NavigationEventSink,
+  NavigationProductEvent,
+} from './analytics.ts';
+export {
+  EVAL_THRESHOLDS,
+  computeOfflineMetrics,
+  selectFirstNavigationTool,
+  shouldForbidPlanning,
+} from './eval-policy.ts';
+export { runNavigationEval } from './eval-runner.ts';
