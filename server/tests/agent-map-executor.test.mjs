@@ -235,7 +235,12 @@ test('showRoute: 200 + geometry 画实线、入 undo;动作不含 geometry', asy
     fetchedAt: '2026-08-28T00:00:00.000Z',
     geometry: ROUTE_PATH,
   });
-  const { executor, callbacks } = makeExecutor(bridge, { fetch: fetchImpl });
+  const routeNotes = [];
+  const { executor, callbacks } = makeExecutor(bridge, {
+    fetch: fetchImpl,
+    onRouteLoading: () => routeNotes.push('loading'),
+    onRouteMeta: (meta) => routeNotes.push(meta.provider),
+  });
   executor.handleEvent({ type: 'action', action: action('showRoute', { routeId: VALID_ROUTE_ID }) });
   await flush();
   assert.equal(fetchCalls.length, 1);
@@ -245,6 +250,7 @@ test('showRoute: 200 + geometry 画实线、入 undo;动作不含 geometry', asy
   assert.equal(bridge.calls[0][2].dashed, false);
   assert.equal(executor.canUndo(), true);
   assert.deepEqual(callbacks.events, [['action', 'showRoute']]);
+  assert.deepEqual(routeNotes, ['loading', 'amap']);
   assert.equal(JSON.stringify(callbacks.events).includes('geometry'), false);
   executor.undo();
   assert.deepEqual(bridge.calls.at(-1), ['cleanup-route']);

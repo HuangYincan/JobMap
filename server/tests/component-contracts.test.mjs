@@ -1637,3 +1637,29 @@ test('cluster effect 依赖含 engineView(2026-08-25 ws-b bug 4 修复:切引擎
   // 已销毁视图置 null → 本 effect 跳过,与旧行为一致)
   assert.match(shell, /useEffect\(\(\) => \{\s*const view = mapInstance\.current;\s*if \(!view \|\| !clusterState\) return;/);
 });
+
+test('ws4: map-shell 来源条与移动 explore 三页签;通勤粗筛不 POST plan;不写 audit_events', () => {
+  const shell = src('components/map-shell.tsx');
+  const overlay = src('components/route-overlay-bar.tsx');
+  const chrome = src('components/commute-chrome.tsx');
+  const compare = src('components/commute-compare-table.tsx');
+  const filter = src('lib/commute-filter.ts');
+  const compareLib = src('lib/commute-compare.ts');
+
+  assert.match(shell, /<RouteOverlayBar/);
+  assert.match(overlay, /data-route-overlay="true"/);
+  assert.match(shell, /<WorkExploreTabs/);
+  assert.match(chrome, /data-work-explore-tabs="true"/);
+  assert.match(chrome, /exploreJobsTab/);
+  assert.match(shell, /workExploreTab === "trip"/);
+  assert.doesNotMatch(shell, /setMobileSheet\("trip"\)/, '行程不是第 6 个工具栏 sheet');
+  assert.doesNotMatch(shell, /fetch\([^)]*\/api\/navigation\/routes\/plan/);
+  assert.doesNotMatch(filter, /fetch\([^)]*\/api\/navigation\/routes\/plan/);
+  assert.doesNotMatch(filter, /method:\s*['"]POST['"]/);
+  assert.doesNotMatch(shell, /audit_events/);
+  assert.doesNotMatch(overlay, /audit_events/);
+  assert.doesNotMatch(compare, /\bscore\b/);
+  assert.doesNotMatch(compareLib, /\bscore\b/);
+  assert.match(shell, /filterByCommuteEstimate/);
+  assert.match(shell, /drawRoute\(estimatePath/);
+});
