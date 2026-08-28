@@ -104,6 +104,25 @@ export interface MapCircle {
   remove(): void;
 }
 
+/**
+ * 路线折线(gcj02)。点数须在 2..MAX_POLYLINE_POINTS;非法/空路径不挂图,
+ * 返回 no-op remove。dashed 给 estimate 直线;可信道路几何用实线。
+ */
+export interface MapPolylineOptions {
+  path: Array<{ lng: number; lat: number }>;
+  color?: string;
+  dashed?: boolean;
+  weight?: number;
+}
+
+export interface MapPolyline {
+  raw: unknown;
+  remove(): void;
+}
+
+/** 与 navigation MAX_GEOMETRY_POINTS 对齐;适配层不得挂超长路径 */
+export const MAX_POLYLINE_POINTS = 10_000;
+
 /** POI 搜索能力(引擎各自适配厂商 SDK,统一返回规范化 DomainPOI) */
 export interface MapSearchProvider {
   searchPOI(opts: {
@@ -158,6 +177,7 @@ export interface MapView {
   on(event: MapViewEvent, cb: () => void): () => void;
   createMarker(opts: MapMarkerOptions): MapMarker;
   createCircle(opts: MapCircleOptions): MapCircle;
+  createPolyline(opts: MapPolylineOptions): MapPolyline;
   addControl?(kind: 'scale'): void;
   destroy(): void;
 }

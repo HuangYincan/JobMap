@@ -5,9 +5,10 @@
 // installEngineMock(namespace, { coordSystem }) 返回:
 // - MockView:getState/getBounds/isDestroyed/setCenter/setZoom/setPitch/
 //   setRotation/setBounds/flyTo/setStyle/on(返回解绑)/createMarker/
-//   createCircle/addControl/destroy + raw(逃生舱=自身)
+//   createCircle/createPolyline/addControl/destroy + raw(逃生舱=自身)
 // - MockMarker:setPosition/setContent/remove
 // - MockCircle:remove
+// - MockPolyline:setMap/remove
 // - search stub(全返回空/失败安全值)
 // 并挂到 globalThis[namespace];返回 uninstall() 摘除。
 // ============================================================
@@ -49,6 +50,23 @@ export class MockCircle {
 
   remove() {
     this.removed = true;
+  }
+}
+
+export class MockPolyline {
+  constructor(opts = {}) {
+    this.opts = opts;
+    this.map = opts.map ?? null;
+    this.removed = false;
+  }
+
+  setMap(map) {
+    this.map = map;
+  }
+
+  remove() {
+    this.removed = true;
+    this.map = null;
   }
 }
 
@@ -166,6 +184,7 @@ export class MockView {
     this.listeners = new Map();
     this.markers = [];
     this.circles = [];
+    this.polylines = [];
     this.control = null;
     this.raw = this; // 逃生舱:mock 自身即 raw 实例
   }
@@ -244,6 +263,16 @@ export class MockView {
     return circle;
   }
 
+  createPolyline(opts) {
+    const path = opts?.path;
+    if (!Array.isArray(path) || path.length < 2) {
+      return { raw: null, remove() {} };
+    }
+    const polyline = new MockPolyline(opts);
+    this.polylines.push(polyline);
+    return polyline;
+  }
+
   addControl(kind) {
     this.control = kind;
   }
@@ -271,6 +300,7 @@ export function installEngineMock(namespace, { coordSystem = 'gcj02' } = {}) {
     Map: MockView,
     Marker: MockMarker,
     Circle: MockCircle,
+    Polyline: MockPolyline,
     search: makeSearchStub(),
   };
   globalThis[namespace] = ns;

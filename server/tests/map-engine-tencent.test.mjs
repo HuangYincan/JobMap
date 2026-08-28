@@ -35,6 +35,7 @@ import {
   MockView,
   MockMarker,
   MockCircle,
+  MockPolyline,
   MockMultiMarker,
 } from './fixtures/engine-mock.mjs';
 import { makePoi, makeDomainPoi } from './fixtures/amap-mock.mjs';
@@ -1412,6 +1413,39 @@ test('createCircle:center/radius/颜色映射 + setMap(null) 移除', async () =
     assert.equal(circle.raw.opts.map, view.raw);
     circle.remove();
     assert.equal(circle.raw.map, null, 'Circle 移除 = setMap(null)');
+  } finally {
+    restore();
+  }
+});
+
+test('createPolyline:LatLng 纬度在前 + 虚线 dashArray + setMap(null);非法路径不挂图', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { restore } = installTMapDouble();
+  try {
+    const view = await createView();
+    const path = [
+      { lng: 120.15, lat: 30.27 },
+      { lng: 120.16, lat: 30.28 },
+    ];
+    const line = view.createPolyline({ path, color: '#007AFF', dashed: true, weight: 5 });
+    assert.ok(line.raw instanceof MockPolyline);
+    assert.equal(line.raw.opts.path.length, 2);
+    assert.deepEqual(
+      { lat: line.raw.opts.path[0].lat, lng: line.raw.opts.path[0].lng },
+      { lat: 30.27, lng: 120.15 },
+    );
+    assert.equal(line.raw.opts.strokeColor, '#007AFF');
+    assert.equal(line.raw.opts.strokeWeight, 5);
+    assert.deepEqual(line.raw.opts.strokeDashArray, [8, 6]);
+    assert.equal(line.raw.opts.map, view.raw);
+    line.remove();
+    assert.equal(line.raw.map, null, 'Polyline 移除 = setMap(null)');
+
+    const before = view.raw.polylines?.length ?? 0;
+    const noop = view.createPolyline({ path: [{ lng: 120.15, lat: 30.27 }] });
+    assert.doesNotThrow(() => noop.remove());
+    assert.equal(view.raw.polylines?.length ?? 0, before, '单点不挂图');
   } finally {
     restore();
   }

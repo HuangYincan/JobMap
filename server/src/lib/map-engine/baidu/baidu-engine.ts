@@ -4,7 +4,7 @@
 // 本引擎是全计划唯一坐标分叉点:coordSystem = 'bd09'(百度原生坐标系),
 // 适配层在**边界**做 gcj02↔bd09 换算(coord-utils 纯函数),内部一律
 // bd09,对外一律 gcj02(规范坐标):
-//   - 入参(gcj02)→ bd09:createMarker / createCircle / setCenter /
+//   - 入参(gcj02)→ bd09:createMarker / createCircle / createPolyline / setCenter /
 //     setBounds / flyTo / searchPOI(周边中心)
 //   - 出参(bd09)→ gcj02:getState / getBounds / searchPOI 结果 /
 //     fetchSuggestions / geocodeAddress / getCurrentPosition(SDK fallback
@@ -31,6 +31,8 @@ import type {
   MapEngineId,
   MapMarker,
   MapMarkerOptions,
+  MapPolyline,
+  MapPolylineOptions,
   MapSearchProvider,
   MapStyleId,
   MapView,
@@ -39,6 +41,7 @@ import type {
   MapViewState,
 } from '../types.ts';
 import { bd09ToGcj02, gcj02ToBd09, wgs84ToGcj02 } from '../coord-utils.ts';
+import { noopPolyline, normalizePolylinePath, polylineVisuals } from '../polyline.ts';
 import { loadScript, resetScriptLoader } from '../script-loader.ts';
 import { isRemoteIconUrl, preflightRemoteIcon, remoteIconStatus } from '../icon-preflight.ts';
 import type { ScriptConfig, ScriptInjection } from '../script-loader.ts';
@@ -328,6 +331,11 @@ interface BCircle {
   remove?(): void;
 }
 
+/** BMapGL.Polyline(覆盖物子集) */
+interface BPolyline {
+  remove?(): void;
+}
+
 /** BMapGL.Map 实例(方法子集,按官方 API 命名) */
 interface BMapInstance {
   centerAndZoom(center: BPoint, zoom: number): unknown;
@@ -420,6 +428,7 @@ interface BMapGLNamespace {
   Map: new (container: HTMLElement | string) => BMapInstance;
   Marker: new (point: BPoint, opts?: Record<string, unknown>) => BMarker;
   Circle: new (center: BPoint, radius: number, opts?: Record<string, unknown>) => BCircle;
+  Polyline: new (path: BPoint[], opts?: Record<string, unknown>) => BPolyline;
   Point: new (lng: number, lat: number) => BPoint;
   Size: new (width: number, height: number) => BSize;
   Bounds: new (southWest: BPoint, northEast: BPoint) => BBounds;
@@ -1438,6 +1447,36 @@ class BaiduMapView implements MapView {
       strokeWeight: 2,
       fillColor: opts.color,
       fillOpacity: 0.08,
+    });
+    this.map.addOverlay?.(raw);
+    return {
+      raw,
+      remove: () => {
+        this.map.removeOverlay?.(raw);
+        raw.remove?.();
+      },
+    };
+  }
+
+  /**
+   * 路线折线。入参 gcj02 → 与 marker 同一套 gcj02ToBd09;BMapGL.Polyline(points, opts),
+   * dashed → strokeStyle:'dashed'。非法路径不挂图。
+   */
+  createPolyline(opts: MapPolylineOptions): MapPolyline {
+    const path = normalizePolylinePath(opts);
+    if (!path || this.destroyed) return noopPolyline();
+    const Polyline = this.ns.Polyline;
+    if (typeof Polyline !== 'function') return noopPolyline();
+    const visuals = polylineVisuals(opts);
+    const points = path.map((p) => {
+      const bd = gcj02ToBd09(p.lng, p.lat);
+      return new this.ns.Point(bd.lng, bd.lat);
+    });
+    const raw = new Polyline(points, {
+      strokeColor: visuals.color,
+      strokeOpacity: 0.92,
+      strokeWeight: visuals.weight,
+      strokeStyle: visuals.dashed ? 'dashed' : 'solid',
     });
     this.map.addOverlay?.(raw);
     return {

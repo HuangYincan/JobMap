@@ -374,6 +374,17 @@ class FakeCircle {
   }
 }
 
+class FakePolyline {
+  constructor(path, opts = {}) {
+    this.path = path;
+    this.opts = opts;
+    this.removed = false;
+  }
+  remove() {
+    this.removed = true;
+  }
+}
+
 class FakeScaleControl {
   constructor() {
     this.scale = true;
@@ -528,6 +539,7 @@ function setup() {
     Map: FakeMap,
     Marker: FakeMarker,
     Circle: FakeCircle,
+    Polyline: FakePolyline,
     Overlay: FakeOverlay,
     Icon: FakeIcon,
     PlaceSearch: FakePlaceSearch,
@@ -1389,6 +1401,37 @@ test('createCircle:中心 bd09 + radius + 视觉样式 + remove', async () => {
   circle.remove();
   assert.equal(view.raw.overlays.length, 0);
   assert.equal(raw.removed, true);
+});
+
+test('createPolyline:路径 bd09 + 虚线样式 + remove;非法路径不挂图', async () => {
+  setup();
+  const { view } = await makeView();
+  const a = { lng: 120.15005, lat: 30.24246 };
+  const b = { lng: 120.16, lat: 30.25 };
+  const line = view.createPolyline({
+    path: [a, b],
+    color: '#007AFF',
+    dashed: true,
+    weight: 5,
+  });
+  const raw = line.raw;
+  const bdA = gcj02ToBd09(a.lng, a.lat);
+  const bdB = gcj02ToBd09(b.lng, b.lat);
+  assert.equal(raw.path[0].lng, bdA.lng);
+  assert.equal(raw.path[0].lat, bdA.lat);
+  assert.equal(raw.path[1].lng, bdB.lng);
+  assert.equal(raw.path[1].lat, bdB.lat);
+  assert.equal(raw.opts.strokeColor, '#007AFF');
+  assert.equal(raw.opts.strokeStyle, 'dashed');
+  assert.equal(raw.opts.strokeWeight, 5);
+  assert.equal(view.raw.overlays.length, 1);
+  line.remove();
+  assert.equal(view.raw.overlays.length, 0);
+  assert.equal(raw.removed, true);
+
+  const noop = view.createPolyline({ path: [] });
+  assert.equal(view.raw.overlays.length, 0, '空路径不挂图');
+  assert.doesNotThrow(() => noop.remove());
 });
 
 test('addControl:scale → ScaleControl;未知 kind no-op', async () => {

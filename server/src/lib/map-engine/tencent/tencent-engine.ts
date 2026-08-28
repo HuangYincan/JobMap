@@ -70,6 +70,10 @@
 //   图标必须显式传 anchor,否则锚点错位 → 缩放漂移 + 点击命中区与视觉不一致;
 //   geometry.content 仅 GL 文本标签(非 HTML)→ HTML content 降级为默认点 + 一次性 warn
 // - Circle:{ center, radius, map, strokeColor, fillColor, fillOpacity }(glCircle)
+// - Polyline/MultiPolyline:路线折线。官方 GL 文档主路径是 MultiPolyline +
+//   PolylineStyle({ color, width, dashArray });v=1.exp 同时保留 Polyline
+//   构造({ path: LatLng[], map, strokeColor, strokeWeight, strokeDashArray })
+//   与 Circle 同款。createPolyline 优先 MultiPolyline,否则 Polyline;非法路径不挂图。
 // - 底图样式:baseMap.type vector=标准 / satellite=卫星(影像+道路注记,
 //   features 缺省回退 DEFAULT_BASEMAP.satellite = [base, road]);暗色 = Map 选项
 //   mapStyleId(SDK v1.8.0.2 源码核实:STYLE_ID 常量 {DEFAULT:0, DARK:1,
@@ -95,6 +99,8 @@ import type {
   MapEngine,
   MapMarker,
   MapMarkerOptions,
+  MapPolyline,
+  MapPolylineOptions,
   MapSearchProvider,
   MapStyleId,
   MapView,
@@ -104,6 +110,7 @@ import type {
   DomainPOI,
   AmapSuggestion,
 } from '../types.ts';
+import { noopPolyline, normalizePolylinePath, polylineVisuals } from '../polyline.ts';
 import { loadScript } from '../script-loader.ts';
 import { wgs84ToGcj02 } from '../coord-utils.ts';
 import { fetchWithTimeout } from '../../fetch-with-timeout.ts';
@@ -1113,6 +1120,44 @@ class TencentView implements MapView {
       fillOpacity: 0.2,
     });
     return { raw, remove: () => raw.setMap(null) };
+  }
+
+  /**
+   * 路线折线(gcj02,纬度在前的 LatLng)。优先 MultiPolyline+PolylineStyle
+   * (GL 文档路径),否则 Polyline 与 Circle 同款构造。dashed → dashArray。
+   */
+  createPolyline(opts: MapPolylineOptions): MapPolyline {
+    const path = normalizePolylinePath(opts);
+    if (!path || this.destroyed) return noopPolyline();
+    const visuals = polylineVisuals(opts);
+    const latLngs = path.map((p) => toTMapLatLng(this.tmap, p));
+    const MultiPolyline = this.tmap.MultiPolyline;
+    const PolylineStyle = this.tmap.PolylineStyle;
+    if (typeof MultiPolyline === 'function' && typeof PolylineStyle === 'function') {
+      const raw = new MultiPolyline({
+        map: this.raw,
+        styles: {
+          route: new PolylineStyle({
+            color: visuals.color,
+            width: visuals.weight,
+            lineCap: 'round',
+            ...(visuals.dashed ? { dashArray: [8, 6] } : {}),
+          }),
+        },
+        geometries: [{ id: 'dm-route', styleId: 'route', paths: latLngs }],
+      });
+      return { raw, remove: () => raw.setMap?.(null) };
+    }
+    const Polyline = this.tmap.Polyline;
+    if (typeof Polyline !== 'function') return noopPolyline();
+    const raw = new Polyline({
+      path: latLngs,
+      map: this.raw,
+      strokeColor: visuals.color,
+      strokeWeight: visuals.weight,
+      ...(visuals.dashed ? { strokeDashArray: [8, 6] } : {}),
+    });
+    return { raw, remove: () => raw.setMap?.(null) };
   }
 
   addControl(
