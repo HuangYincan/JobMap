@@ -1,0 +1,954 @@
+[
+  {
+    "id": "commute-01",
+    "scenario": "commute_search",
+    "utterance": "杭州找 AI 产品实习，地铁 45 分钟内，从杭州合成地铁站 A 出发",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 产品实习",
+      "city": "杭州",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 A",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["transit"],
+        "maxMinutes": 45
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "commute-02",
+    "scenario": "commute_search",
+    "utterance": "杭州 AI 岗位，地铁或步行 60 分钟以内，起点用合成站点 B",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI",
+      "city": "杭州",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 B",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["transit", "walk", "transit"],
+        "maxMinutes": 60
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "commute-03",
+    "scenario": "commute_search",
+    "utterance": "杭州 AI 产品实习，地铁 45 分钟内",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 产品实习",
+      "city": "杭州",
+      "commute": {
+        "preferredModes": ["transit"],
+        "maxMinutes": 45
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": ["origin"]
+    }
+  },
+  {
+    "id": "commute-04",
+    "scenario": "commute_search",
+    "utterance": "从杭州合成站点 C 出发找 AI 实习，通勤不超过 45 分钟",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 实习",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 C",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["transit"],
+        "maxMinutes": 45
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": ["city"]
+    }
+  },
+  {
+    "id": "commute-05",
+    "scenario": "commute_search",
+    "utterance": "帮我找通勤 45 分钟内的 AI 岗位",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 岗位",
+      "commute": {
+        "preferredModes": ["transit"],
+        "maxMinutes": 45
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": ["origin", "city"]
+    }
+  },
+  {
+    "id": "commute-06",
+    "scenario": "commute_search",
+    "utterance": "杭州合成站点 D 到岗位最长 1440 分钟，优先驾车",
+    "candidate": {
+      "task": "job_search",
+      "query": "岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "text",
+        "label": "杭州合成站点 D",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["drive"],
+        "maxMinutes": 1440
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "commute-07",
+    "scenario": "commute_search",
+    "utterance": "杭州找产品岗位，骑行 30 分钟以内，从合成站点 E 出发",
+    "candidate": {
+      "task": "job_search",
+      "query": "产品岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "current_location",
+        "label": "当前大致位置",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["bike"],
+        "maxMinutes": 30
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "commute-08",
+    "scenario": "commute_search",
+    "utterance": "杭州找设计实习，步行或骑行 40 分钟内，起点是合成站点 F",
+    "candidate": {
+      "task": "job_search",
+      "query": "设计实习",
+      "city": "杭州",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 F",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["walk", "bike"],
+        "maxMinutes": 40
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "commute-09",
+    "scenario": "commute_search",
+    "utterance": "杭州找数据岗位，从当前授权位置出发，公交 50 分钟内",
+    "candidate": {
+      "task": "job_search",
+      "query": "数据岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "current_location",
+        "precision": "exact"
+      },
+      "commute": {
+        "preferredModes": ["transit"],
+        "maxMinutes": 50
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "commute-10",
+    "scenario": "commute_search",
+    "utterance": "杭州找运营岗位，从合成商圈 G 出发，公交 55 分钟以内",
+    "candidate": {
+      "task": "job_search",
+      "query": "运营岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "text",
+        "label": "杭州合成商圈 G",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["transit"],
+        "maxMinutes": 55
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "commute-11",
+    "scenario": "commute_search",
+    "utterance": "杭州 AI 岗位，从 WGS84 合成坐标起点出发，驾车 80 分钟内",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "coordinate",
+        "label": "杭州合成坐标起点",
+        "lng": 120.12,
+        "lat": 30.28,
+        "coordinateSystem": "wgs84",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["drive"],
+        "maxMinutes": 80
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "commute-12",
+    "scenario": "commute_search",
+    "utterance": "杭州 AI 岗位，从合成站点 H 出发，地铁 45 分钟内，并限定到合成办公点",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 H",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "destination": {
+        "kind": "poi",
+        "label": "杭州合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["transit"],
+        "maxMinutes": 45
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "compare-01",
+    "scenario": "job_compare",
+    "utterance": "比较两个合成岗位的通勤，从合成站点 A 出发",
+    "candidate": {
+      "task": "job_compare",
+      "positionIds": ["position-synthetic-a", "position-synthetic-b"],
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 A",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "compare-02",
+    "scenario": "job_compare",
+    "utterance": "从合成商圈 B 出发比较五个候选岗位",
+    "candidate": {
+      "task": "job_compare",
+      "positionIds": [
+        "position-synthetic-a",
+        "position-synthetic-b",
+        "position-synthetic-c",
+        "position-synthetic-d",
+        "position-synthetic-e"
+      ],
+      "origin": {
+        "kind": "text",
+        "label": "杭州合成商圈 B",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "compare-03",
+    "scenario": "job_compare",
+    "utterance": "比较岗位 A 和岗位 B，候选列表里有重复项",
+    "candidate": {
+      "task": "job_compare",
+      "positionIds": ["position-synthetic-a", "position-synthetic-a", "position-synthetic-b"],
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 C",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "compare-04",
+    "scenario": "job_compare",
+    "utterance": "比较岗位 A 和岗位 B，但先不提供起点",
+    "candidate": {
+      "task": "job_compare",
+      "positionIds": ["position-synthetic-a", "position-synthetic-b"]
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": true,
+      "missingSlots": ["origin"]
+    }
+  },
+  {
+    "id": "compare-05",
+    "scenario": "job_compare",
+    "utterance": "帮我比较岗位，但候选岗位还没选",
+    "candidate": {
+      "task": "job_compare",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 D",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": true,
+      "missingSlots": ["position"]
+    }
+  },
+  {
+    "id": "compare-06",
+    "scenario": "job_compare",
+    "utterance": "比较岗位列表，当前列表为空",
+    "candidate": {
+      "task": "job_compare",
+      "positionIds": [],
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 E",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": true,
+      "missingSlots": ["position"]
+    }
+  },
+  {
+    "id": "compare-07",
+    "scenario": "job_compare",
+    "utterance": "只比较一个岗位也可以吗",
+    "candidate": {
+      "task": "job_compare",
+      "positionIds": ["position-synthetic-a"],
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 F",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": false,
+      "errorCode": "POSITION_IDS_COUNT"
+    }
+  },
+  {
+    "id": "compare-08",
+    "scenario": "job_compare",
+    "utterance": "从合成站点 G 比较六个岗位",
+    "candidate": {
+      "task": "job_compare",
+      "positionIds": [
+        "position-synthetic-a",
+        "position-synthetic-b",
+        "position-synthetic-c",
+        "position-synthetic-d",
+        "position-synthetic-e",
+        "position-synthetic-f"
+      ],
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 G",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": false,
+      "errorCode": "ARRAY_TOO_LONG"
+    }
+  },
+  {
+    "id": "compare-09",
+    "scenario": "job_compare",
+    "utterance": "比较岗位 A，但输入中重复了岗位 A",
+    "candidate": {
+      "task": "job_compare",
+      "positionIds": ["position-synthetic-a", "position-synthetic-a"],
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 H",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": false,
+      "errorCode": "POSITION_IDS_COUNT"
+    }
+  },
+  {
+    "id": "compare-10",
+    "scenario": "job_compare",
+    "utterance": "从合成坐标起点比较岗位 A 和岗位 B，属于公司候选 C",
+    "candidate": {
+      "task": "job_compare",
+      "companyIds": ["company-synthetic-c"],
+      "positionIds": ["position-synthetic-a", "position-synthetic-b"],
+      "origin": {
+        "kind": "coordinate",
+        "label": "杭州合成坐标起点",
+        "lng": 120.13,
+        "lat": 30.29,
+        "coordinateSystem": "gcj02",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "interview-01",
+    "scenario": "interview_arrival",
+    "utterance": "9 月 1 日 9 点到杭州合成办公点，帮我算最晚出发时间",
+    "candidate": {
+      "task": "interview_arrival",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 A",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "destination": {
+        "kind": "poi",
+        "label": "杭州合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "2026-09-01T09:00:00+08:00",
+        "timezone": "Asia/Shanghai",
+        "arrivalBufferMinutes": 15
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "interview-02",
+    "scenario": "interview_arrival",
+    "utterance": "从合成站点 B 出发，岗位 A 明天上午面试，提前 20 分钟到",
+    "candidate": {
+      "task": "interview_arrival",
+      "positionIds": ["position-synthetic-a"],
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 B",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "2026-09-02T09:00:00+08:00",
+        "timezone": "Asia/Shanghai",
+        "arrivalBufferMinutes": 20
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "interview-03",
+    "scenario": "interview_arrival",
+    "utterance": "9 月 3 日 10 点到合成办公点，但我还没说从哪里出发",
+    "candidate": {
+      "task": "interview_arrival",
+      "destination": {
+        "kind": "poi",
+        "label": "杭州合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "2026-09-03T10:00:00+08:00",
+        "timezone": "Asia/Shanghai",
+        "arrivalBufferMinutes": 15
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": true,
+      "missingSlots": ["origin"]
+    }
+  },
+  {
+    "id": "interview-04",
+    "scenario": "interview_arrival",
+    "utterance": "从合成站点 C 去合成办公点，面试时间待确认",
+    "candidate": {
+      "task": "interview_arrival",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 C",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "destination": {
+        "kind": "poi",
+        "label": "杭州合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": true,
+      "missingSlots": ["appointment_time"]
+    }
+  },
+  {
+    "id": "interview-05",
+    "scenario": "interview_arrival",
+    "utterance": "从合成站点 D 出发，9 月 4 日 9 点面试，但还没选岗位或地点",
+    "candidate": {
+      "task": "interview_arrival",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 D",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "2026-09-04T09:00:00+08:00",
+        "timezone": "Asia/Shanghai",
+        "arrivalBufferMinutes": 15
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": true,
+      "missingSlots": ["destination", "position"]
+    }
+  },
+  {
+    "id": "interview-06",
+    "scenario": "interview_arrival",
+    "utterance": "明天 9 点到合成办公点，从合成站点 E 出发",
+    "candidate": {
+      "task": "interview_arrival",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 E",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "destination": {
+        "kind": "poi",
+        "label": "杭州合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "明天 09:00",
+        "timezone": "Asia/Shanghai",
+        "arrivalBufferMinutes": 15
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": false,
+      "errorCode": "INVALID_TIME"
+    }
+  },
+  {
+    "id": "interview-07",
+    "scenario": "interview_arrival",
+    "utterance": "9 月 5 日 9 点到合成办公点，但时区写错了",
+    "candidate": {
+      "task": "interview_arrival",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 F",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "destination": {
+        "kind": "poi",
+        "label": "杭州合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "2026-09-05T09:00:00+08:00",
+        "timezone": "Mars/Olympus",
+        "arrivalBufferMinutes": 15
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": false,
+      "errorCode": "INVALID_TIMEZONE"
+    }
+  },
+  {
+    "id": "interview-08",
+    "scenario": "interview_arrival",
+    "utterance": "从合成站点 G 到合成办公点，9 月 6 日 9 点面试",
+    "candidate": {
+      "task": "interview_arrival",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 G",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "destination": {
+        "kind": "poi",
+        "label": "杭州合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "2026-09-06T09:00:00+08:00",
+        "timezone": "Asia/Shanghai"
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": false,
+      "errorCode": "INVALID_ARRIVAL_BUFFER"
+    }
+  },
+  {
+    "id": "interview-09",
+    "scenario": "interview_arrival",
+    "utterance": "9 月 7 日 9 点从合成站点 H 去岗位 B 的合成办公点",
+    "candidate": {
+      "task": "interview_arrival",
+      "positionIds": ["position-synthetic-b"],
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站 H",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "destination": {
+        "kind": "poi",
+        "label": "杭州合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "2026-09-07T09:00:00+08:00",
+        "timezone": "Asia/Shanghai",
+        "arrivalBufferMinutes": 10
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "interview-10",
+    "scenario": "interview_arrival",
+    "utterance": "9 月 8 日 9 点 UTC 面试，从当前授权位置到合成办公点",
+    "candidate": {
+      "task": "interview_arrival",
+      "origin": {
+        "kind": "current_location",
+        "label": "当前授权位置",
+        "precision": "approximate"
+      },
+      "destination": {
+        "kind": "text",
+        "label": "合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "2026-09-08T09:00:00Z",
+        "timezone": "UTC",
+        "arrivalBufferMinutes": 5
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": true,
+      "missingSlots": []
+    }
+  },
+  {
+    "id": "safety-01",
+    "scenario": "safety",
+    "utterance": "杭州 AI 岗位，输入包含不受支持的调试字段",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 岗位",
+      "city": "杭州",
+      "debug": true
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": false,
+      "errorCode": "UNKNOWN_FIELD"
+    }
+  },
+  {
+    "id": "safety-02",
+    "scenario": "safety",
+    "utterance": "杭州 AI 岗位，起点坐标越过经度边界",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "coordinate",
+        "label": "合成越界坐标",
+        "lng": 181,
+        "lat": 30.28,
+        "coordinateSystem": "gcj02",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": false,
+      "errorCode": "INVALID_COORDINATE"
+    }
+  },
+  {
+    "id": "safety-03",
+    "scenario": "safety",
+    "utterance": "杭州 AI 岗位，坐标没有声明来源坐标系",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "coordinate",
+        "label": "杭州合成起点",
+        "lng": 120.12,
+        "lat": 30.28,
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": false,
+      "errorCode": "COORDINATE_SYSTEM_REQUIRED"
+    }
+  },
+  {
+    "id": "safety-04",
+    "scenario": "safety",
+    "utterance": "杭州 AI 岗位，候选位置携带完整地址字段",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "text",
+        "label": "杭州合成商圈",
+        "city": "杭州",
+        "precision": "approximate",
+        "unexpectedLocationField": "synthetic marker"
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": false,
+      "errorCode": "UNKNOWN_FIELD"
+    }
+  },
+  {
+    "id": "safety-05",
+    "scenario": "safety",
+    "utterance": "杭州 AI 岗位，候选输入携带路线几何",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 岗位",
+      "city": "杭州",
+      "unexpectedRouteField": "synthetic marker"
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": false,
+      "errorCode": "UNKNOWN_FIELD"
+    }
+  },
+  {
+    "id": "safety-06",
+    "scenario": "safety",
+    "utterance": "杭州 AI 岗位，通勤上限超过契约范围",
+    "candidate": {
+      "task": "job_search",
+      "query": "AI 岗位",
+      "city": "杭州",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "commute": {
+        "preferredModes": ["transit"],
+        "maxMinutes": 1441
+      }
+    },
+    "expected": {
+      "task": "job_search",
+      "ok": false,
+      "errorCode": "VALUE_OUT_OF_RANGE"
+    }
+  },
+  {
+    "id": "safety-07",
+    "scenario": "safety",
+    "utterance": "明天 9 点到合成办公点，未经绝对化就进入契约",
+    "candidate": {
+      "task": "interview_arrival",
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "destination": {
+        "kind": "poi",
+        "label": "杭州合成办公点",
+        "city": "杭州",
+        "precision": "approximate"
+      },
+      "appointment": {
+        "startsAt": "明天 09:00",
+        "timezone": "Asia/Shanghai",
+        "arrivalBufferMinutes": 15
+      }
+    },
+    "expected": {
+      "task": "interview_arrival",
+      "ok": false,
+      "errorCode": "INVALID_TIME"
+    }
+  },
+  {
+    "id": "safety-08",
+    "scenario": "safety",
+    "utterance": "比较两个岗位，但岗位 ID 超过长度上限",
+    "candidate": {
+      "task": "job_compare",
+      "positionIds": ["position-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"],
+      "origin": {
+        "kind": "poi",
+        "label": "杭州合成地铁站",
+        "city": "杭州",
+        "precision": "approximate"
+      }
+    },
+    "expected": {
+      "task": "job_compare",
+      "ok": false,
+      "errorCode": "TEXT_TOO_LONG"
+    }
+  }
+]
