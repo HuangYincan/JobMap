@@ -215,6 +215,37 @@ favicon.im 解决的是「生成了 URL 但国内被墙」,但很多公司 logo 
 
 ---
 
+## ADR-008:求职导航的地图/路线边界与供应商保守默认
+
+**日期**:2026-08-28
+**状态**:已接受
+
+**背景**:
+求职导航需要同时处理浏览器地图呈现和服务端路线规划，但两者的权限、坐标、失败语义和
+调用位置不同。路线供应商的产品权限、调用顺序、条款、配额、缓存/展示与商业授权仍需
+人工确认。
+
+**决策**:
+
+1. 浏览器侧 `MapEngine` 与服务端 `RouteProvider` 是不同边界：前者只负责底图和覆盖物呈现；
+   后者负责路线请求、供应商结果归一化，以及错误、超时和质量语义。
+2. 在供应商产品权限、调用顺序、条款、配额、缓存/展示与商业授权经人工确认前，不选择、
+   注册、配置或调用任何真实路线供应商。
+3. WS1 的范围仅包括 provider-neutral 接口和显式 `estimate` adapter；不得把估算伪装成
+   `provider_route`。
+4. WS0/WS1 不持久化产品分析事件，不得复用 `audit_events`；后续事件 sink 与留存策略必须
+   独立决策。
+
+**当前状态**:
+
+WS0 已实现 `server/src/lib/navigation/{constants,errors,index,types,validation}.ts` 中的
+导航契约与纯校验，并完成离线 fixture 和供应商约束审查。路线 provider/service/artifact
+store/API、Agent 工具、analytics persistence 和前端路线 UI 均未实现；本文不将其表述为
+已上线能力。详细供应商事实与未核实项见
+`tech/roles/development/architecture/navigation-route-provider-review.md`。
+
+---
+
 ## 未来待决策
 
 - **数据库 ORM 选型**:Drizzle vs Prisma

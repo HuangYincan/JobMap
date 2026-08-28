@@ -4,14 +4,14 @@
 
 **创建日期:** 2026-08-27
 
-**状态:** P5 已立项、尚未进入实现；路线供应商、产品事件留存和前端布局仍待决策
+**状态:** WS0 的契约/验证/40 条离线评测基线/供应商约束审查已实现；用户研究仍待办；WS1 及以后未实现；WS4 因第 8 节布局未获批准继续 blocked
 
 **目标岗位:** 腾讯地图 AI 产品培训生（导航 Agent）
 
 **相关:** `tech/05-milestones.md`、`tech/20-development-plan.md`、`tech/23-map-engines.md`、`tech/24-agent-feature.md`、`tech/30-agent-memory.md`
 
-> 本文是下一阶段的产品、技术和验收总计划。文中所有新增模块、接口、动作、
-> 指标和界面均为**规划**，不代表已经实现。§8 的 ASCII 布局仅供审批，
+> 本文是下一阶段的产品、技术和验收总计划。WS0 的导航契约、纯校验、40 条离线评测基线、
+> 供应商约束审查和对应 ADR 已实现；WS1 及以后仍未实现。§8 的 ASCII 布局仅供审批，
 > **写入本文不等于用户已批准前端开发**。
 
 ---
@@ -48,18 +48,24 @@
    POI 搜索；高德为当前启用引擎，腾讯/百度实现保留但暂未开放切换。
 4. **通勤展示地基。** `server/src/lib/commute.ts` 可按直线距离估算步行、骑行、公交、
    驾车时长，并生成外部高德导航链接。
+5. **WS0 导航契约与验证。** `server/src/lib/navigation/{constants,errors,index,types,validation}.ts`
+   已存在，且仅包含导航契约、错误对象和纯校验；不包含路线供应商调用、路线服务、artifact
+   存储或 API。
+6. **WS0 离线评测与供应商约束审查。** `server/tests/fixtures/navigation-eval-cases.json`
+   已建立恰好 40 条基线，分布为 12/10/10/8；路线供应商审查记录和阶段性 ADR 已完成。
 
 ### 2.2 尚未实现
 
-1. 当前通勤结果只是直线距离估算，没有服务端路线供应商契约、真实路径几何、换乘信息、
-   路况属性或到达时间规划。
+1. 当前通勤结果仍只是直线距离估算，没有服务端真实路线供应商、路线服务、真实路径几何、
+   换乘信息、路况属性或到达时间规划。
 2. 浏览器 `map-engine` 是地图渲染/搜索适配器，不能直接充当服务端路线规划层；两者的
    key、权限、坐标、失败语义和调用位置不同。
 3. Agent 只有通用地图/MCP/记忆工具，没有项目域内的岗位搜索、岗位详情、通勤过滤和
    岗位-通勤联合比较工具；系统提示仍是通用地图助手。
 4. 现有六类动作不能安全承载路线。若让 LLM 直接输出 polyline，会绕过数据来源、坐标、
    长度和会话归属校验。
-5. 尚无求职导航专用离线评测集、产品事件口径、失败漏斗或隐私留存决策。
+5. 已有无敏感信息的离线评测基线，但尚无评测 runner、指标采集、产品事件 sink、失败漏斗
+   或分析留存实现；WS0/WS1 不持久化产品分析事件。
 6. 尚无后台定位、后台提醒或持续重规划能力；P5 也不应暗示已具备这些能力。
 
 ## 3. P5 目标、非目标与成功定义
@@ -168,6 +174,7 @@ interface NavigationLocationRef {
   label?: string;
   lng?: number;
   lat?: number;
+  coordinateSystem?: 'wgs84' | 'gcj02' | 'bd09ll';
   city?: string;
   precision: 'exact' | 'approximate';
 }
@@ -193,17 +200,16 @@ interface NavigationIntent {
 }
 ```
 
-约束：`maxMinutes`、缓冲时间、候选数量和文本长度必须有限；坐标必须 finite 且声明坐标系；
+约束：`maxMinutes`、缓冲时间、候选数量和文本长度必须有限；`kind: 'coordinate'` 必须同时
+包含 finite 的 `lng`、`lat` 和显式 `coordinateSystem`。其他位置类型只有在确实携带坐标时才
+使用 `coordinateSystem`；没有坐标时不得单独携带它，非坐标型位置不得伪造默认供应商坐标。
 相对时间只有完成绝对化后才能进入规划；`missingSlots` 非空时不得调用路线规划。
 
 ### 5.2 `RoutePlan`
 
 ```ts
 type RouteQuality = 'provider_route' | 'estimate';
-type RouteProviderId = 'amap' | 'tencent' | 'baidu' | 'estimate';
-
-interface RoutePlan {
-  routeId: string;
+interface RoutePlanBase {
   mode: TravelMode;
   originLabel: string;
   destinationLabel: string;
@@ -211,7 +217,7 @@ interface RoutePlan {
   distanceMeters: number;
   departureAt?: string;
   arrivalAt?: string;
-  provider: RouteProviderId;
+  provider: 'amap' | 'tencent' | 'baidu' | 'estimate';
   quality: RouteQuality;
   trafficAware: boolean;
   fetchedAt: string;
@@ -222,17 +228,40 @@ interface RoutePlan {
   };
   warnings: string[];
 }
+
+interface ProviderRoutePlan extends RoutePlanBase {
+  routeId: string;
+  provider: 'amap' | 'tencent' | 'baidu';
+  quality: 'provider_route';
+}
+
+interface EstimateRoutePlan extends RoutePlanBase {
+  routeId?: never;
+  provider: 'estimate';
+  quality: 'estimate';
+  trafficAware: false;
+}
+
+type RoutePlan = ProviderRoutePlan | EstimateRoutePlan;
 ```
 
-`RoutePlan` 面向产品和 Agent，只暴露可解释摘要。路线 polyline、坐标系、供应商原始 ID、
-原始响应和校验摘要保存在服务端 `RouteArtifact` 中，不进入 LLM 上下文。
+`RoutePlan` 面向产品和 Agent，只暴露可解释摘要，不包含 `geometry`。服务端 `RouteArtifact`
+仅保存冻结类型字段：`routeId`、`sessionId`、`provider`、`mode`、`coordinateSystem`、
+`geometry`、`fetchedAt`、`expiresAt`；原始供应商响应和校验摘要默认不保留，也不进入 LLM
+上下文。
+
+`RoutePlan` 和 `RouteArtifact` 都必须满足 `expiresAt > fetchedAt`，且有效期
+`expiresAt - fetchedAt` 最大为 3600 秒。
 
 ### 5.3 路线产物与可信几何
 
-1. 路线服务校验输入后调用 `RouteProvider`，将供应商结果归一化为 GCJ-02 或地图视图约定的
-   明确坐标系，并校验点数、范围、长度和起终点偏差。
-2. 服务端生成不可猜测、会话绑定、短 TTL 的 `routeId`；默认不持久化路线 artifact。
-3. Agent 工具只拿到 `RoutePlan` 摘要和 `routeId`，LLM 不接触 polyline。
+1. WS1 规划中的路线服务校验输入后调用 `RouteProvider`，将供应商结果归一化为明确坐标系，
+   并校验点数、范围、长度和起终点偏差。
+2. 只有 `provider_route` 结果需要路线引用；WS1 才负责在服务端通过 CSPRNG 生成匹配
+   `^rte_[a-f0-9]{32,128}$` 的不可猜测、会话绑定 `routeId`。WS0 当前只校验格式，不生成 ID；
+   `estimate` 不生成 `routeId`。默认不持久化路线 artifact。
+3. Agent 工具只拿到 `RoutePlan` 摘要；只有 `provider_route` 摘要可带 `routeId`，LLM 不接触
+   polyline。
 4. 新增受控动作候选：`showRoute { routeId }`。`validateAction` 只接受格式合法的 ID；前端再从
    同会话的路线端点读取 artifact，过期、越权或不存在都不绘制。
 5. `estimate` 结果没有可信道路几何，因此不能生成 `showRoute`；UI 只能显示直线估算标签和
@@ -258,8 +287,9 @@ interface RouteProvider {
 }
 ```
 
-供应商注册顺序不能直接照搬 geocode 或浏览器引擎顺序。WS0 必须先核对官方产品权限、
-服务条款、配额、交通方式、时间参数、坐标系和缓存限制，再确定主供应商与降级链。
+`RouteProvider` 接口属于 WS1 规划，当前未实现；本阶段不选择、注册、配置或调用真实路线
+供应商。供应商产品权限、调用顺序、服务条款、配额、交通方式、时间参数、坐标系和
+缓存/展示/商业许可仍须人工确认。
 每个结果必须携带 `provider`、`fetchedAt`、`trafficAware` 和 `quality`；任何失败都收敛为
 稳定错误类别，不向客户端暴露 key、内部 URL 或原始响应。
 
@@ -293,6 +323,12 @@ interface RouteProvider {
 
 ## 6. 目标架构与模块边界
 
+当前实现状态（2026-08-28）：已实现 `server/src/lib/navigation/{constants,errors,index,types,validation}.ts`，
+且仅包含契约、稳定错误和纯校验。未实现 `route-provider.ts`、`route-service.ts`、
+`route-artifacts.ts`、`estimate-provider.ts`、`compare.ts`、`providers/`、Agent tools、两个
+navigation API、analytics persistence，以及所有前端路线 overlay。以下结构图和模块清单是
+WS1 及以后规划，不表示真实路线、交通信息、API 或 UI 已可用。
+
 ```text
 用户输入 / Work 筛选 / 已授权位置
                  │
@@ -319,36 +355,41 @@ POST /api/agent/chat ──> Intent + Slot Validator
                          MapView 路线覆盖物
 ```
 
-建议模块结构（均为规划）：
+目标模块结构（WS1 及以后规划；当前状态见上文）：
 
 ```text
 server/src/lib/navigation/
-├── types.ts                 # intent/request/plan/artifact/error 契约
-├── intent.ts                # 槽位、时间、枚举与范围校验
-├── route-provider.ts        # provider 接口与注册表
-├── route-service.ts         # 超时、降级、来源标签、坐标归一化
-├── route-artifacts.ts       # 会话绑定、TTL、读取授权
-├── compare.ts               # 通勤矩阵与可解释约束比较
-├── estimate-provider.ts     # 对 commute.ts 的显式估算封装
-└── providers/               # 经 WS0 审查后实现的官方供应商适配器
+├── constants.ts             # 已实现：契约常量
+├── errors.ts                # 已实现：稳定错误
+├── index.ts                 # 已实现：导出
+├── types.ts                 # 已实现：契约类型
+├── validation.ts            # 已实现：纯校验
+├── route-provider.ts        # 未实现：provider-neutral 接口
+├── route-service.ts         # 未实现：超时、降级、来源标签、坐标归一化
+├── route-artifacts.ts       # 未实现：会话绑定、TTL、读取授权
+├── estimate-provider.ts     # 未实现：对 commute.ts 的显式估算封装
+├── compare.ts               # 未实现：通勤矩阵与可解释约束比较
+└── providers/               # 未实现：经人工确认后再决定的供应商适配器
 
 server/src/lib/agent/tools/
-├── work.ts                  # 项目岗位工具
-└── navigation.ts            # 路线/比较/通勤过滤工具
+├── work.ts                  # 未实现：项目岗位工具
+└── navigation.ts            # 未实现：路线/比较/通勤过滤工具
 
 server/src/app/api/navigation/routes/
-├── plan/route.ts
-└── [routeId]/route.ts
+├── plan/route.ts            # 未实现
+└── [routeId]/route.ts       # 未实现
 ```
 
-前端路线 overlay 应扩展既有 `MapView`/控制器 seam，不允许组件直接访问某家地图 SDK。
+所有前端路线 overlay 均未实现；未来应扩展既有 `MapView`/控制器 seam，不允许组件直接访问
+某家地图 SDK。
 若不同底图的路线坐标系不同，转换必须在受测的适配边界完成。
 
 ## 7. 数据、隐私、评测与指标
 
 ### 7.1 产品事件
 
-先定义事件契约和可替换 sink，再决定是否持久化。**不得复用 `audit_events` 充当产品分析表**：
+WS0/WS1 不持久化产品分析事件；后续事件 sink 与留存策略需独立决策。先定义事件契约和可替换
+sink，再决定是否持久化。**不得复用 `audit_events` 充当产品分析表**：
 该表用于审计语义，产品漏斗的采样、匿名化、删除和留存要求不同。
 
 首批事件建议：
@@ -371,18 +412,20 @@ navigation_task_completed
 
 ### 7.2 离线评测集
 
-建立 30–50 条版本化案例，建议首版 40 条：
+`server/tests/fixtures/navigation-eval-cases.json` 的 40 条版本化离线 fixture 基线已实现，
+恰好 40 条，分布为 12/10/10/8。当前 fixture 只覆盖意图、契约和安全边界，不包含 runner、
+工具序列执行、真实路线 mock、指标采集或真实 key 冒烟；这些仍未实现。
 
-| 类型 | 数量建议 | 覆盖 |
+| 类型 | 数量 | 覆盖 |
 |---|---:|---|
 | 通勤约束岗位搜索 | 12 | 城市、岗位族、实习/校招、阈值、起点缺失、0 结果 |
 | 岗位与通勤比较 | 10 | 同公司多地点、同名岗位、字段缺失、路线部分失败 |
 | 面试到达计划 | 10 | 相对时间、跨日、缓冲时间、方式不支持、provider/estimate |
 | 安全与异常 | 8 | 伪造坐标、未知动作、越权 routeId、超时、限流、过期 artifact |
 
-每条案例包含：用户输入、会话上下文、期望意图、必填槽位、允许工具序列、禁止动作、
-期望质量标签和用户可见结果断言。路线供应商用固定 fixture/mock 做确定性测试；真实 key 冒烟
-只作为 Env-only 补充证据，不能替代离线回归。
+后续 runner 可围绕用户输入、会话上下文、期望意图、必填槽位、允许工具序列、禁止动作、
+期望质量标签和用户可见结果断言扩展执行；当前没有 runner、工具序列执行、真实路线 mock、
+指标采集或真实 key 冒烟实现。
 
 ### 7.3 暂定质量门槛
 
@@ -471,27 +514,28 @@ navigation_task_completed
 WS0 → WS1 → WS2 → WS3 → WS4 → WS5
 ```
 
-| WS | 目标 | 主要交付 | 进入条件 | 完成门禁 |
-|---|---|---|---|---|
-| WS0 合同/来源/隐私 | 冻结意图、路线、错误、供应商和数据留存边界 | ADR、路线供应商审查、事件隐私决策、40 条案例骨架 | 本计划合并 | 决策无悬空高风险项；不触碰前端 |
-| WS1 路线核心 | 建立 provider-neutral 路线服务与 estimate 降级 | navigation types/service/provider/artifact、API、单测 | WS0 | 超时/配额/不支持/坐标/TTL/会话隔离测试全绿 |
-| WS2 Agent 域工具 | 把岗位数据和路线服务接入 Agent | 5 个域工具、专用 prompt、`showRoute` 动作、工具预算 | WS1 | LLM 无几何；动作与岗位越权全拒绝；三主场景后端链可跑 |
-| WS3 评测与事件 | 建立可复现的产品判断闭环 | 事件 sink 契约、离线 runner、SQL/Python 报告、基线结果 | WS2 | §7 指标可自动计算；无敏感字段；不复用 `audit_events` |
-| WS4 前端体验 | 呈现通勤筛选、比较、行程和可信路线 | 批准后的桌面/移动 UI、路线 overlay、完整状态 | **用户明确批准 §8 布局**且 WS3 完成 | typecheck/test、Playwright 桌面/移动截图、无重叠、键盘/触屏验证 |
-| WS5 主动建议/集成 | 完成会话内主动思考和演示闭环 | 条件缺口提示、0 结果放宽建议、面试缓冲建议、最终复盘 | WS4 | 三主场景 100%；全量回归；文档与演示材料同步 |
+| WS | 状态 | 目标 | 主要交付 | 进入条件 | 完成门禁 |
+|---|---|---|---|---|---|
+| WS0 合同/来源/隐私 | 已完成，待本分支门禁与合并 | 冻结意图、路线、错误、供应商和数据留存边界 | 契约、验证、ADR、provider 审查和 40 条 fixture 已完成；用户研究不属于已完成证据 | 本分支门禁与合并 | 决策无悬空高风险项；不触碰前端 |
+| WS1 路线核心 | 未实现 | 建立 provider-neutral 路线服务与 estimate 降级 | navigation types/service/provider/artifact、API、单测 | WS0 合并后 | 超时/配额/不支持/坐标/TTL/会话隔离测试全绿 |
+| WS2 Agent 域工具 | 未实现 | 把岗位数据和路线服务接入 Agent | 5 个域工具、专用 prompt、`showRoute` 动作、工具预算 | WS1 | LLM 无几何；动作与岗位越权全拒绝；三主场景后端链可跑 |
+| WS3 评测与事件 | 未实现 | 建立可复现的产品判断闭环 | 事件 sink 契约、离线 runner、SQL/Python 报告、基线结果 | WS2 | §7 指标可自动计算；无敏感字段；不复用 `audit_events` |
+| WS4 前端体验 | blocked（未实现） | 呈现通勤筛选、比较、行程和可信路线 | 批准后的桌面/移动 UI、路线 overlay、完整状态 | **用户明确批准 §8 布局**且 WS3 完成 | typecheck/test、Playwright 桌面/移动截图、无重叠、键盘/触屏验证 |
+| WS5 主动建议/集成 | 未实现 | 完成会话内主动思考和演示闭环 | 条件缺口提示、0 结果放宽建议、面试缓冲建议、最终复盘 | WS4 | 三主场景 100%；全量回归；文档与演示材料同步 |
 
-WS0 可立即启动；WS4 在用户批准布局前始终为 blocked。P5 的“主动”只指当前会话中根据已知条件
-发现缺口、风险和替代方案，不包含后台追踪或未经用户触发的定位。
+WS0 实现已完成，待本分支门禁与合并；WS1 可在 WS0 合并后启动。WS1–WS3、WS5 尚未实现；
+WS4 在用户批准布局前始终为 blocked。P5 的“主动”只指当前会话中根据已知条件发现缺口、风险和
+替代方案，不包含后台追踪或未经用户触发的定位。
 
 ## 10. 里程碑与验收门禁
 
 | 里程碑 | 状态 | 退出条件 |
 |---|---|---|
-| M0 需求与契约冻结 | 待开始 | 5–8 名目标用户任务访谈/可用性输入；三主场景 PRD；供应商/隐私/事件决策；评测骨架 |
-| M1 路线可信地基 | 待开始 | provider + estimate、来源标签、artifact 会话隔离、API 错误矩阵通过 |
-| M2 Agent 求职规划 | 待开始 | Work/Navigation 工具、意图槽位、比较器、`showRoute` 后端链通过 |
-| M3 用户体验闭环 | 待批准 | Axure/Sketch 可点击原型与 ASCII 获批；桌面/移动实现及真实状态验证通过 |
-| M4 评测与岗位材料 | 待开始 | 指标达标、三场景录屏/截图、SQL/Python 报告、PRD/技术复盘同步 |
+| M0 需求与契约冻结 | 部分完成 | 契约、供应商/隐私边界和评测骨架已完成；5–8 名目标用户任务访谈/可用性输入仍待办 |
+| M1 路线可信地基 | 未开始 | provider + estimate、来源标签、artifact 会话隔离、API 错误矩阵通过 |
+| M2 Agent 求职规划 | 未开始 | Work/Navigation 工具、意图槽位、比较器、`showRoute` 后端链通过 |
+| M3 用户体验闭环 | 待批准（blocked） | Axure/Sketch 可点击原型与 ASCII 获批；桌面/移动实现及真实状态验证通过 |
+| M4 评测与岗位材料 | 未开始 | 指标达标、三场景录屏/截图、SQL/Python 报告、PRD/技术复盘同步 |
 
 每个实现 workstream 至少执行：
 
@@ -509,7 +553,7 @@ git diff --check
 
 | 风险 | 控制 |
 |---|---|
-| 路线 API 产品权限、条款或配额不满足 | WS0 先审查；供应商注册按配置启用；estimate 显式降级；不绕过限制 |
+| 路线 API 产品权限、条款或配额不满足 | 人工确认供应商产品权限、调用顺序、条款、配额、缓存/展示与商业授权完成前，不选择、注册、配置或调用真实路线供应商；estimate 显式降级；不绕过限制 |
 | 通勤筛选产生大量路线请求 | DB/空间粗筛、Top-K、并发/超时预算、短 TTL 会话缓存、部分结果返回 |
 | LLM 幻觉路线或岗位 | 域工具只读真实 DB；LLM 不接触几何；动作 ID 白名单；来源/新鲜度可见 |
 | 精确位置和出行轨迹泄露 | 起点默认瞬时处理；artifact 会话绑定并过期；事件不记录地址/坐标/polyline |
@@ -537,10 +581,10 @@ git diff --check
 ## 13. 开工前仍需拍板的三项决策
 
 1. **路线供应商顺序与授权。** 完成官方权限/条款/配额审查后，决定主 provider 和降级链；
-   在此之前 WS1 只实现接口、fixture 和 estimate。
+   在此之前 WS1 只实现 provider-neutral 接口和显式 `estimate` adapter，不调用真实供应商。
 2. **产品事件持久化与留存。** 决定 P5 是仅离线评测，还是新增独立事件存储；若落库，需明确
    同意、删除、访问控制和留存天数。
 3. **前端布局批准。** 用户需明确批准或修改 §8 的桌面/移动布局；未批准不得进入 WS4 编码。
 
-在三项决策尚未全部完成时，可以先启动 M0、WS0、离线案例和无外部调用的路线核心契约；
-不得提前宣称真实导航、主动提醒或实时路况已经可用。
+WS0 合并后可启动无 live provider 的 WS1 路线核心；供应商顺序、产品事件持久化和前端布局仍
+各自受决策约束；不得宣称真实导航、主动提醒或实时路况已经可用。
