@@ -195,7 +195,7 @@
       "city": "杭州",
       "origin": {
         "kind": "current_location",
-        "precision": "exact"
+        "precision": "approximate"
       },
       "commute": {
         "preferredModes": ["transit"],
@@ -533,7 +533,7 @@
   {
     "id": "interview-02",
     "scenario": "interview_arrival",
-    "utterance": "从合成站点 B 出发，岗位 A 明天上午面试，提前 20 分钟到",
+    "utterance": "从合成站点 B 出发，岗位 A 于 2026 年 9 月 2 日 09:00 面试，提前 20 分钟到",
     "candidate": {
       "task": "interview_arrival",
       "positionIds": ["position-synthetic-a"],
@@ -625,7 +625,7 @@
     "expected": {
       "task": "interview_arrival",
       "ok": true,
-      "missingSlots": ["destination", "position"]
+      "missingSlots": ["destination"]
     }
   },
   {

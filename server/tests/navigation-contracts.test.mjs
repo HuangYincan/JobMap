@@ -7,6 +7,8 @@ import {
   MAX_CANDIDATE_IDS,
   MAX_GEOMETRY_POINTS,
   MAX_PREFERRED_MODES,
+  MAX_ROUTE_TTL_SECONDS,
+  createRouteError,
   parseNavigationIntent,
   parseRouteRequest,
   parseRouteArtifact,
@@ -42,6 +44,25 @@ function collectObjectKeys(value, keys = []) {
   return keys;
 }
 
+function collectLocationRefs(value, locations = []) {
+  if (Array.isArray(value)) {
+    for (const item of value) collectLocationRefs(item, locations);
+    return locations;
+  }
+  if (value !== null && typeof value === 'object') {
+    if (typeof value.kind === 'string' && Object.hasOwn(value, 'precision')) locations.push(value);
+    for (const child of Object.values(value)) collectLocationRefs(child, locations);
+  }
+  return locations;
+}
+
+const TEST_ROUTE_IDS = [
+  'rte_9f4c2d1a7b3e5f081c6d2a4e8b0f3c5d9a1e7b2c4d6f8a0e3c5b7d9f1a2c4e6',
+  'rte_4b7d1e9a0c3f5a8d2e6b1f4c9a7d0e5b3c8f2a6d1e4b9c0f7a3e5d8b2c6f1',
+  'rte_c2a8f5e1b7d0c4a9f3e6b2d8a1c5f0e7b4d9a2c6f8e3b1d5a7c0e4f6b9',
+  'rte_7e3b9a1d5c0f4e8b2a6d9c3f7e1b5a0d4c8f2a9e6b3c1d7f5a8e0b6c4',
+];
+
 function validRoutePlan(overrides = {}) {
   return {
     mode: 'transit',
@@ -54,8 +75,25 @@ function validRoutePlan(overrides = {}) {
     trafficAware: false,
     fetchedAt: '2026-08-27T08:00:00Z',
     expiresAt: '2026-08-27T08:30:00Z',
-    routeId: `rte_${'a'.repeat(32)}`,
+    routeId: TEST_ROUTE_IDS[0],
     warnings: [],
+    ...overrides,
+  };
+}
+
+function validRouteArtifact(overrides = {}) {
+  return {
+    routeId: TEST_ROUTE_IDS[1],
+    sessionId: 'session-synthetic-1',
+    provider: 'amap',
+    mode: 'drive',
+    coordinateSystem: 'gcj02',
+    geometry: [
+      { lng: 120.1, lat: 30.2 },
+      { lng: 120.2, lat: 30.3 },
+    ],
+    fetchedAt: '2026-08-27T08:00:00Z',
+    expiresAt: '2026-08-27T08:30:00Z',
     ...overrides,
   };
 }
@@ -95,6 +133,9 @@ test('navigation eval fixture stays synthetic and excludes sensitive payload fie
   for (const key of collectObjectKeys(fixtures)) {
     assert.doesNotMatch(key, forbiddenKeyPattern, `sensitive fixture key: ${key}`);
   }
+  const locations = collectLocationRefs(fixtures);
+  assert.ok(locations.length > 0);
+  for (const location of locations) assert.equal(location.precision, 'approximate');
   assert.doesNotMatch(JSON.stringify(fixtures), /(?:sk|pk)[-_][a-z0-9]{16,}/i);
 });
 
@@ -210,6 +251,10 @@ test('missingSlots is recomputed in a fixed order and candidate values are not t
   assert.equal(parsedComplete.ok, true);
   assert.deepEqual(parsedComplete.value.missingSlots, []);
 
+  const interviewOr = parseNavigationIntent(findFixture('interview-05').candidate);
+  assert.equal(interviewOr.ok, true);
+  assert.deepEqual(interviewOr.value.missingSlots, ['destination']);
+
   const invalidCandidateSlots = copy(findFixture('commute-01').candidate);
   invalidCandidateSlots.missingSlots = ['not-a-slot'];
   assert.equal(parseNavigationIntent(invalidCandidateSlots).error.code, 'INVALID_ENUM');
@@ -231,6 +276,16 @@ test('appointment accepts absolute offsets and rejects relative time or invalid 
   const invalidTimezone = copy(findFixture('interview-01').candidate);
   invalidTimezone.appointment.timezone = 'Mars/Olympus';
   assert.equal(parseNavigationIntent(invalidTimezone).error.code, 'INVALID_TIMEZONE');
+
+  const utc = copy(findFixture('interview-01').candidate);
+  utc.appointment.timezone = 'UTC';
+  assert.equal(parseNavigationIntent(utc).ok, true);
+
+  for (const timezone of ['+08:00', 'CST', 'PST']) {
+    const ambiguousTimezone = copy(findFixture('interview-01').candidate);
+    ambiguousTimezone.appointment.timezone = timezone;
+    assert.equal(parseNavigationIntent(ambiguousTimezone).error.code, 'INVALID_TIMEZONE', timezone);
+  }
 });
 
 test('appointment rejects impossible calendar dates and clock or offset values', () => {
@@ -325,49 +380,92 @@ test('route plan validates absolute time ordering and non-negative measurements'
   assert.equal(parseRoutePlan(validRoutePlan({ distanceMeters: Number.POSITIVE_INFINITY })).error.code, 'INVALID_NUMBER');
 });
 
+test('route plan validates summary schema and enforces the short TTL boundary', () => {
+  assert.equal(MAX_ROUTE_TTL_SECONDS, 3_600);
+  const summarized = parseRoutePlan(
+    validRoutePlan({
+      summary: { transferCount: 2, walkingMeters: 350.5 },
+      warnings: ['synthetic provider delay warning'],
+      expiresAt: '2026-08-27T09:00:00Z',
+    }),
+  );
+  assert.equal(summarized.ok, true);
+  assert.deepEqual(summarized.value.summary, { transferCount: 2, walkingMeters: 350.5 });
+  assert.deepEqual(summarized.value.warnings, ['synthetic provider delay warning']);
+
+  assert.equal(
+    parseRoutePlan(validRoutePlan({ summary: { provider: 'amap' } })).error.code,
+    'UNKNOWN_FIELD',
+  );
+  assert.equal(
+    parseRoutePlan(validRoutePlan({ summary: { transferCount: 101 } })).error.code,
+    'VALUE_OUT_OF_RANGE',
+  );
+  assert.equal(
+    parseRoutePlan(validRoutePlan({ expiresAt: '2026-08-27T09:00:01Z' })).error.code,
+    'TTL_INVALID',
+  );
+
+  assert.equal(
+    parseRouteArtifact(validRouteArtifact({ expiresAt: '2026-08-27T09:00:00Z' })).ok,
+    true,
+  );
+  assert.equal(
+    parseRouteArtifact(validRouteArtifact({ expiresAt: '2026-08-27T09:00:01Z' })).error.code,
+    'TTL_INVALID',
+  );
+});
+
 test('route artifact is an internal session-bound geometry object and never an estimate', () => {
-  const artifact = parseRouteArtifact({
-    routeId: `rte_${'b'.repeat(32)}`,
-    sessionId: 'session-synthetic-1',
-    provider: 'amap',
-    mode: 'drive',
-    coordinateSystem: 'gcj02',
-    geometry: [
-      { lng: 120.1, lat: 30.2 },
-      { lng: 120.2, lat: 30.3 },
-    ],
-    fetchedAt: '2026-08-27T08:00:00Z',
-    expiresAt: '2026-08-27T08:30:00Z',
-  });
+  const artifact = parseRouteArtifact(validRouteArtifact());
   assert.equal(artifact.ok, true);
   assert.equal(artifact.value.sessionId, 'session-synthetic-1');
 
   assert.equal(
-    parseRouteArtifact({
-      routeId: `rte_${'c'.repeat(32)}`,
-      sessionId: 'session-synthetic-1',
-      provider: 'estimate',
-      mode: 'drive',
-      coordinateSystem: 'gcj02',
-      geometry: [{ lng: 120.1, lat: 30.2 }, { lng: 120.2, lat: 30.3 }],
-      fetchedAt: '2026-08-27T08:00:00Z',
-      expiresAt: '2026-08-27T08:30:00Z',
-    }).error.code,
+    parseRouteArtifact(validRouteArtifact({ provider: 'estimate', routeId: TEST_ROUTE_IDS[2] })).error.code,
     'ROUTE_ARTIFACT_PROVIDER_INVALID',
   );
   assert.equal(
-    parseRouteArtifact({
-      routeId: `rte_${'d'.repeat(32)}`,
-      sessionId: 'session-synthetic-1',
-      provider: 'amap',
-      mode: 'drive',
-      coordinateSystem: 'gcj02',
-      geometry: Array.from({ length: MAX_GEOMETRY_POINTS + 1 }, () => ({ lng: 120.1, lat: 30.2 })),
-      fetchedAt: '2026-08-27T08:00:00Z',
-      expiresAt: '2026-08-27T08:30:00Z',
-    }).error.code,
+    parseRouteArtifact(
+      validRouteArtifact({
+        routeId: TEST_ROUTE_IDS[3],
+        geometry: Array.from({ length: MAX_GEOMETRY_POINTS + 1 }, () => ({ lng: 120.1, lat: 30.2 })),
+      }),
+    ).error.code,
     'ARRAY_TOO_LONG',
   );
+});
+
+test('route artifact rejects invalid session and geometry payloads', () => {
+  assert.equal(
+    parseRouteArtifact(validRouteArtifact({ sessionId: 'session synthetic 1' })).error.code,
+    'SESSION_ID_INVALID',
+  );
+  assert.equal(
+    parseRouteArtifact(
+      validRouteArtifact({ geometry: [{ lng: Number.NaN, lat: 30.2 }, { lng: 120.2, lat: 30.3 }] }),
+    ).error.code,
+    'GEOMETRY_INVALID',
+  );
+  assert.equal(
+    parseRouteArtifact(
+      validRouteArtifact({ geometry: [{ lng: 120.1, lat: 30.2, altitude: 10 }, { lng: 120.2, lat: 30.3 }] }),
+    ).error.code,
+    'UNKNOWN_FIELD',
+  );
+});
+
+test('route errors have stable client-safe messages and retry semantics', () => {
+  assert.deepEqual(createRouteError('TIMEOUT'), {
+    code: 'TIMEOUT',
+    message: '路线服务响应超时',
+    retryable: true,
+  });
+  assert.deepEqual(createRouteError('INVALID_REQUEST'), {
+    code: 'INVALID_REQUEST',
+    message: '路线请求无效',
+    retryable: false,
+  });
 });
 
 test('route requests require resolved coordinates and validate absolute time ordering', () => {

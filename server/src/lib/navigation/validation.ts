@@ -228,6 +228,8 @@ function isLeapYear(year: number): boolean {
 }
 
 function isValidIanaTimezone(value: string): boolean {
+  if (value === 'UTC') return true;
+  if (!/^[A-Za-z_][A-Za-z0-9._+-]*(?:\/[A-Za-z0-9._+-]+)+$/.test(value)) return false;
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: value }).format(new Date(0));
     return true;
@@ -457,7 +459,6 @@ export function parseNavigationIntent(raw: unknown): NavigationParseResult<Navig
     if (appointment === undefined) missing.add('appointment_time');
     if (destination === undefined && (positionIds === undefined || positionIds.length === 0)) {
       missing.add('destination');
-      missing.add('position');
     }
   }
   if (commute !== undefined && origin === undefined) missing.add('origin');
@@ -477,6 +478,8 @@ export function parseNavigationIntent(raw: unknown): NavigationParseResult<Navig
 }
 
 function parseRouteId(value: unknown, path: string): NavigationParseResult<string> {
+  // Syntax is the only property this validator can establish. WS1 must issue IDs with a server-side CSPRNG;
+  // neither LLM input nor provider input can supply or imply the ID's entropy.
   if (typeof value !== 'string' || value.length === 0 || value.length > MAX_ROUTE_ID_LENGTH) {
     return typeof value === 'string' && value.length > MAX_ROUTE_ID_LENGTH
       ? fail('TEXT_TOO_LONG', path)
