@@ -556,6 +556,11 @@ test('toolKind: 内部工具名 → 公开类别(剥供应商前缀 + 后缀关�
   assert.equal(toolKind('amap__company'), 'project');
   assert.equal(toolKind('builtin__jobs'), 'project');
   assert.equal(toolKind('rest__recruit_list'), 'project');
+  assert.equal(toolKind('work__searchPositions'), 'project');
+  assert.equal(toolKind('work__getPositionDetail'), 'project');
+  assert.equal(toolKind('navigation__planRoute'), 'directions');
+  assert.equal(toolKind('navigation__compareCommutes'), 'directions');
+  assert.equal(toolKind('navigation__filterByCommute'), 'directions');
 });
 
 test('toolKind: 未知前缀仍按关键词归类;未知后缀 → other', () => {

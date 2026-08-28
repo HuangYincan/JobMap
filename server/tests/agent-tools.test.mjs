@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { builtinTools, memorySaveTool } from '../src/lib/agent/tools/builtin.ts';
 import { restFallbackTools } from '../src/lib/agent/tools/rest-fallback.ts';
 import { baiduAgentPlanTools } from '../src/lib/agent/tools/baidu-agent-plan.ts';
+import { workTools } from '../src/lib/agent/tools/work.ts';
+import { navigationTools } from '../src/lib/agent/tools/navigation.ts';
 import { __memoryStoreTest, clearMemories, listMemories } from '../src/lib/memory-store.ts';
 
 const MAP_KEYS = ['AMAP_WEB_KEY', 'BAIDU_MAP_AK', 'TENCENT_MAP_KEY', 'BAIDU_MAP_AUTH_TOKEN'];
@@ -319,4 +321,31 @@ test('baidu agent plan: 非 2xx → error 含 status,不含 token', async () => 
       assert.ok(!r.error.includes('t-secret-token'), '错误绝不含 token');
     }
   });
+});
+
+test('work/navigation 域工具: schema/名称/provider 注册', () => {
+  const work = workTools({ loadCatalog: async () => [], getPosition: async () => undefined });
+  const navigation = navigationTools({
+    routeService: { plan: async () => ({ ok: false, error: { code: 'INTERNAL', message: 'x', retryable: false } }) },
+    resolvePositions: async () => [],
+  });
+  assert.deepEqual(
+    work.map((t) => [t.name, t.provider]),
+    [
+      ['work__searchPositions', 'work'],
+      ['work__getPositionDetail', 'work'],
+    ],
+  );
+  assert.deepEqual(
+    navigation.map((t) => [t.name, t.provider]),
+    [
+      ['navigation__planRoute', 'navigation'],
+      ['navigation__compareCommutes', 'navigation'],
+      ['navigation__filterByCommute', 'navigation'],
+    ],
+  );
+  for (const tool of [...work, ...navigation]) {
+    assert.equal(tool.inputSchema.type, 'object');
+    assert.ok(tool.inputSchema.properties);
+  }
 });

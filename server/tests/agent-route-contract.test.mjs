@@ -126,14 +126,41 @@ test('viewport 校验:center/zoom/bounds 非 finite → 400', () => {
   assert.match(route, /isFiniteNum\(vp\.bounds\.minLng\)/);
 });
 
-test('工具集构建:builtin + MCP(失败跳过) + rest 兜底 + baidu-agent-plan 门控', () => {
+test('工具集构建:builtin + MCP(失败跳过) + rest 兜底 + work/navigation 域工具 + baidu-agent-plan 门控', () => {
   assert.match(route, /builtinTools\(/);
   assert.match(route, /restFallbackTools\(\)/);
+  assert.match(route, /workTools\(\)/);
+  assert.match(route, /navigationTools\(\)/);
   assert.match(route, /hasBaiduAgentPlan\(\) \? baiduAgentPlanTools\(\)/);
   assert.match(route, /getMcpProvider\(id\)/);
   assert.match(route, /normalizeTool\(id, meta\)/);
   // 单个 provider listTools 失败不致命
   assert.match(route, /跳过该 provider/);
+});
+
+test('navigation cookie: 前置校验之后、MCP/LLM 之前 mint;指纹进 ctx;原文不进 SSE', () => {
+  assert.match(route, /readNavigationSessionToken\(request\)/);
+  assert.match(route, /createNavigationSessionToken\(\)/);
+  assert.match(route, /serializeNavigationSessionCookie\(navigationToken\)/);
+  assert.match(route, /fingerprintNavigationSession\(navigationToken\)/);
+  assert.match(route, /navigationSession: \{ fingerprint: navigationFingerprint \}/);
+  assert.match(route, /'Set-Cookie': navigationSetCookie/);
+  const mintIdx = route.indexOf('readNavigationSessionToken(request)');
+  const lastCheck = Math.max(
+    route.indexOf("'BODY_TOO_LARGE'"),
+    route.indexOf("'BAD_MESSAGES'"),
+    route.indexOf("'BAD_VIEWPORT'"),
+    route.indexOf("'RATE_LIMITED'"),
+    route.indexOf("'LLM_UNCONFIGURED'"),
+  );
+  assert.ok(mintIdx > lastCheck, 'cookie mint 必须在全部前置校验之后');
+  for (const c of ['getMcpProvider(', 'runAgent(']) {
+    const j = route.indexOf(c);
+    assert.ok(mintIdx < j, `cookie mint 必须先于连接 ${c}`);
+  }
+  assert.doesNotMatch(route, /JSON\.stringify\([^)]*navigationToken/);
+  assert.doesNotMatch(route, /console\.[a-z]+\([^)]*navigationToken/);
+  assert.doesNotMatch(route, /send\([^)]*navigationToken/);
 });
 
 test('request abort/output budget 传播到 run-agent(停止/断开完整 abort 链路)', () => {
