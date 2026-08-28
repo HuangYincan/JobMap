@@ -42,6 +42,8 @@ export interface AgentMapExecutorCallbacks {
   onAction?: (action: AgentAction) => void;
   /** 可信路线已绘制(不含 geometry)。 */
   onRouteMeta?: (meta: RouteOverlayMeta) => void;
+  /** showRoute 开始拉取 artifact(来源条 loading)。 */
+  onRouteLoading?: () => void;
   /** 测试注入时钟(默认 Date.now)。 */
   now?: () => number;
   /** 测试注入 fetch;生产用 globalThis.fetch。 */
@@ -250,6 +252,7 @@ export function createAgentMapExecutor(
     if (validated.type === "showRoute") {
       // 卡片可先出现;几何只从同会话 GET 读取,失败不画道路折线。
       if (notify) callbacks.onAction?.(validated);
+      callbacks.onRouteLoading?.();
       void (async () => {
         const result = await fetchPublicRouteArtifact(validated.payload.routeId, fetchImpl ?? (async () => {
           throw new Error("offline");

@@ -403,6 +403,23 @@
   }
 }
 
+.commuteRow {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.compareLabel {
+  align-items: center;
+  display: inline-flex;
+}
+
+.commuteBadge {
+  color: var(--blue-ink, #0062cc);
+  font-size: 12px;
+  font-weight: 650;
+}
+
 /* ---------- 不支持 backdrop-filter 的回退 ---------- */
 
 @supports not (backdrop-filter: blur(24px)) {

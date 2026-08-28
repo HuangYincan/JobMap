@@ -16,6 +16,7 @@ import styles from "./agent-ball.module.css";
 import { t, type Language } from "@/lib/i18n";
 import type { AccountUser } from "@/lib/account";
 import type { MapBridge } from "@/lib/agent-map-bridge";
+import type { RouteOverlayMeta } from "@/lib/navigation/route-client";
 import { clampBallPosition, computeBallSnap, type BallRect, type BallSnapEdge } from "@/lib/agent-panel-placement";
 import { AgentPanel } from "./agent-panel";
 
@@ -44,6 +45,9 @@ interface Props {
   /** 受控开关(ws-mt):面板开合由 MapShell 提升提供;点击 toggle / 面板 onClose 都走 onOpenChange。 */
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onRouteMeta?: (meta: RouteOverlayMeta) => void;
+  onRouteError?: (code: string) => void;
+  onRouteLoading?: () => void;
 }
 
 /** 初始位(含 localStorage 恢复):{edge, top, left?} 持久化格式;默认 right:12 / bottom:179。 */
@@ -101,7 +105,7 @@ function readInitialState(): InitialState {
   return { pos: { left: null, right: EDGE_MARGIN, top }, edge: "right" };
 }
 
-export default function AgentBall({ bridge, lang, user, open, onOpenChange }: Props) {
+export default function AgentBall({ bridge, lang, user, open, onOpenChange, onRouteMeta, onRouteError, onRouteLoading }: Props) {
   const [initial] = useState(readInitialState);
   const [pos, setPos] = useState<BallPos>(initial.pos);
   // 当前吸附边缘:松手吸附时更新,拖拽中保持旧值(面板拖拽中不消费)
@@ -233,6 +237,9 @@ export default function AgentBall({ bridge, lang, user, open, onOpenChange }: Pr
           dragging={dragging}
           snapEdge={dragging ? null : snapEdge}
           onClose={() => onOpenChange(false)}
+          onRouteMeta={onRouteMeta}
+          onRouteError={onRouteError}
+          onRouteLoading={onRouteLoading}
         />
       )}
     </>
