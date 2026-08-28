@@ -4,7 +4,7 @@
 
 **创建日期:** 2026-08-27
 
-**状态:** WS0–WS3 已完成并合并；§8 布局已于 2026-08-28 用户明确批准；WS4/M3 前端体验已在本分支实现（生产仍为 estimate-only，无真实路况、无 live provider）；用户研究仍待办；WS5 未实现；Playwright 桌面/移动截图由合并后补采集
+**状态:** WS0–WS4 已完成并合并；§8 布局已于 2026-08-28 用户明确批准；WS4/M3 前端体验已完成并合并（生产仍为 estimate-only，无真实路况、无 live provider、无 live traffic）；用户研究仍待办；WS5 未实现；Playwright 桌面/移动截图由合并后补采集
 
 **目标岗位:** 腾讯地图 AI 产品培训生（导航 Agent）
 
@@ -14,7 +14,7 @@
 > 供应商约束审查和对应 ADR，以及 WS1 的 provider-neutral 路线服务、显式 estimate、
 > 会话隔离 artifact 与两个 route handler 已实现；WS2 的 Work/Navigation 域工具、`showRoute` 动作与 chat 会话共享已实现；
 > WS3 的可替换事件 sink、离线 runner 与 SQL/Python 报告已完成并合并(不落库、不复用 `audit_events`)。
-> §8 的 ASCII 布局已于 **2026-08-28 用户明确批准**；WS4 已实现 MapView polyline、
+> §8 的 ASCII 布局已于 **2026-08-28 用户明确批准**；WS4 已完成并合并 MapView polyline、
 > 客户端 `GET` artifact 后画线、Work 通勤粗筛/对比/来源条与移动 Explore 内页签。
 > 生产构造器仍注册零个 live provider，规划结果仍是明确标注的直线 `estimate`，不宣称真实道路或实时路况。
 
@@ -356,7 +356,7 @@ sink、`eval-runner.ts` / `eval-policy.ts` 离线评测与 SQL/Python 报告；s
 生产 chat / RouteService。生产没有 live provider，POST
 正常结果为明确的 `estimate`，不带 geometry/`routeId`；GET 只向同一 navigation session 返回
 未过期的 provider artifact 公共形状。`providers/` 与 analytics persistence 仍未实现。
-WS4 已实现 `MapView.createPolyline`、`MapBridge.drawRoute`、合法 `showRoute` 的同会话 GET 画线、
+WS4 已完成并合并 `MapView.createPolyline`、`MapBridge.drawRoute`、合法 `showRoute` 的同会话 GET 画线、
 Work 通勤粗筛/对比/来源条与移动 Explore 内页签；生产无 live provider，因此 UI 不会出现真实道路
 或实时路况，估算直线不得伪装成 `provider_route`。以下结构图不表示真实路线或实时交通已可用。
 
@@ -562,11 +562,11 @@ WS0 → WS1 → WS2 → WS3 → WS4 → WS5
 | WS1 路线核心 | 已完成并合并 | 建立 provider-neutral 路线服务与 estimate 降级 | navigation types/service/provider/artifact、API、单测 | WS0 合并后 | 超时/配额/不支持/坐标/TTL/会话隔离测试全绿 |
 | WS2 Agent 域工具 | 已完成并合并 | 把岗位数据和路线服务接入 Agent | 5 个域工具、专用 prompt、`showRoute` 动作、工具预算 | WS1 | LLM 无几何；动作与岗位越权全拒绝；三主场景后端链可跑 |
 | WS3 评测与事件 | 已完成并合并 | 建立可复现的产品判断闭环 | 事件 sink 契约、离线 runner、SQL/Python 报告、基线结果 | WS2 | §7 指标可自动计算；无敏感字段；不复用 `audit_events` |
-| WS4 前端体验 | 已实现（本分支；生产 estimate-only） | 呈现通勤筛选、比较、行程和可信路线 | 已批桌面/移动 UI、路线 overlay、来源条、完整状态文案 | §8 已于 2026-08-28 用户明确批准且 WS3 完成 | typecheck/test；Playwright 截图由合并后补；无第 6 工具栏按钮 |
+| WS4 前端体验 | 已完成并合并（生产 estimate-only） | 呈现通勤筛选、比较、行程和可信路线 | 已批桌面/移动 UI、路线 overlay、来源条、完整状态文案 | §8 已于 2026-08-28 用户明确批准且 WS3 完成 | typecheck/test；Playwright 截图由合并后补；无第 6 工具栏按钮 |
 | WS5 主动建议/集成 | 未实现 | 完成会话内主动思考和演示闭环 | 条件缺口提示、0 结果放宽建议、面试缓冲建议、最终复盘 | WS4 | 三主场景 100%；全量回归；文档与演示材料同步 |
 
-WS0、WS1、WS2 与 WS3 均已完成并合并。WS4 已在本分支实现 overlay 与通勤 UI，生产规划仍为
-直线 `estimate`，无真实路况。WS5 尚未实现。P5 的“主动”只指当前会话中根据已知条件发现缺口、风险和
+WS0、WS1、WS2、WS3 与 WS4 均已完成并合并。生产规划仍为
+直线 `estimate`，无真实路况、无 live traffic。WS5 尚未实现。P5 的“主动”只指当前会话中根据已知条件发现缺口、风险和
 替代方案，不包含后台追踪或未经用户触发的定位。
 生产 chat / RouteService 不持久化、不默认发射这些产品事件。
 
@@ -577,7 +577,7 @@ WS0、WS1、WS2 与 WS3 均已完成并合并。WS4 已在本分支实现 overla
 | M0 需求与契约冻结 | 部分完成 | 契约、供应商/隐私边界和评测骨架已完成；5–8 名目标用户任务访谈/可用性输入仍待办 |
 | M1 路线可信地基 | 已完成并合并 | provider seam + estimate、来源标签、artifact 会话隔离、API 错误矩阵通过 |
 | M2 Agent 求职规划 | 已完成并合并 | Work/Navigation 工具、意图槽位、比较器、`showRoute` 后端链通过 |
-| M3 用户体验闭环 | 已实现（本分支；生产 estimate-only） | §8 已于 2026-08-28 批准；桌面/移动通勤 UI、来源条与 overlay 已落地；无 live provider；Playwright 截图待合并后补 |
+| M3 用户体验闭环 | 已完成并合并（生产 estimate-only） | §8 已于 2026-08-28 批准；桌面/移动通勤 UI、来源条与 overlay 已落地并合并；无 live provider、无 live traffic；Playwright 截图待合并后补 |
 | M4 评测与岗位材料 | 离线指标/报告已实现，UI/真实用户样本未实现 | 指标达标、三场景录屏/截图、SQL/Python 报告、PRD/技术复盘同步 |
 
 每个实现 workstream 至少执行：
@@ -629,5 +629,5 @@ git diff --check
    同意、删除、访问控制和留存天数。
 3. **前端布局批准。** §8 已于 2026-08-28 用户明确批准；WS4 按该布局实现。Playwright 截图由合并后补。
 
-无 live provider 的 WS1 路线核心已实现；§8 已批准且 WS4 overlay 已落地。供应商顺序与产品事件持久化
+无 live provider 的 WS1 路线核心已实现；§8 已批准且 WS4 overlay 已完成并合并。供应商顺序与产品事件持久化
 仍待决策。不得宣称真实导航、主动提醒或实时路况已经可用。
