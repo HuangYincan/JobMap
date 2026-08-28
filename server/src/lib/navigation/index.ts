@@ -20,3 +20,23 @@ export type {
   RouteServiceOptions,
   RouteServiceResult,
 } from './route-service.ts';
+export {
+  COMMUTE_COMPARE_CONCURRENCY,
+  DEFAULT_COMMUTE_TOP_K,
+  MAX_COMMUTE_ROUTE_CALLS,
+  MIN_COMPARE_DESTINATIONS,
+  compareCommutes,
+  filterCandidatesByCommute,
+  formatCommuteMatrix,
+  formatFilterResult,
+  formatRoutePlanSummary,
+} from './compare.ts';
+export type {
+  CommuteCompareInput,
+  CommuteFilterInput,
+  CommuteFilterResult,
+  CommuteMatrix,
+  CommuteMatrixEntry,
+  CompareDestination,
+  CompareRuntime,
+} from './compare.ts';
