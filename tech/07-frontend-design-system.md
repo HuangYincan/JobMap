@@ -290,6 +290,11 @@
 - 样式:液态玻璃圆形
 - 功能:获取用户位置并居中
 
+**路线来源条(Work, 2026-08-28 WS4)**:
+- 桌面:地图底部霜面条(`RouteOverlayBar`)，`z-index: 6`，不得盖住 `.mapControls`(`z-index: 10`)；Explore 打开时 `shifted` 让出侧栏。
+- 字段:供应商、获取时间、是否含路况 / 估算降级原因；不能只藏 tooltip。
+- 移动:Explore 内页签「行程」嵌入同一来源条；工具栏仍为 5 项，AI 仍开 agent sheet。
+
 #### 5. 比例尺(展示性,桌面端 + 移动端)
 
 **位置**:`bottom: 24px; left: 侧边栏宽度 + 24px`(移动端 `LT` offset [12,22])

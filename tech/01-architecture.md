@@ -16,7 +16,10 @@ Production registers no live route provider: `POST /api/navigation/routes/plan` 
 claimed. `GET /api/navigation/routes/[routeId]` only returns an unexpired provider artifact to the same
 independent navigation session, and never exposes its internal session fingerprint.
 WS2 adds Agent work/navigation domain tools, `showRoute` format validation, and shared navigation-session
-cookie handling on `POST /api/agent/chat`. The client still does not draw a route overlay.
+cookie handling on `POST /api/agent/chat`.
+WS4 adds `MapView.createPolyline`, `MapBridge.drawRoute`, and a client `GET` of the same-session route
+artifact before drawing a solid overlay. Estimates have no `routeId` and are drawn only as a dashed
+straight line with a visible source bar. Production still registers no live route provider.
 WS3 adds a replaceable in-memory/JSONL product-event sink (`server/src/lib/navigation/analytics.ts`)
 and an offline eval runner (`eval-runner.ts`, `eval-policy.ts`) that computes §7 metrics and SQL/Python
 reports. The sink is **not** persisted and is **not** wired to production chat or `RouteService`.
@@ -78,7 +81,10 @@ call ordering, terms, quotas, caching/display rights, and commercial authorizati
 project does not select, register, configure, or call any live route provider. The two navigation route handlers
 and process-local artifact store now exist, but their production planning path is estimate-only; no real route
 or live traffic data is implied. Agent domain tools share the navigation session cookie with these handlers.
-`showRoute` is validated but the client does not draw a route overlay.
+`showRoute` is validated on both sides. A legal client `showRoute` fetches
+`GET /api/navigation/routes/:routeId` with `credentials: 'include'` and, on 200 + geometry, draws a
+solid polyline through `MapBridge.drawRoute`. Estimates never call that GET. Live provider adapters
+remain unimplemented; production planning is still estimate-only.
 
 The WS0 provider review records product facts without selecting an adapter. Amap Route Planning 2.0 is recorded
 by its reviewed per-mode endpoints `/v5/direction/driving`, `/v5/direction/walking`,
@@ -114,7 +120,8 @@ The API is implemented and tested. Current routes include `/api/pois` (list, wit
 
 The repository already has a general Agent and controlled map actions. Request/message boundaries are validated,
 allowlisted tools are available, and `action-schema.ts` validates the seven allowlisted action schemas and their
-bounds (the seventh is `showRoute { routeId }`, format-only; the client does not draw overlay). The server validates extracted action payloads; the client revalidates them, rate-limits same-type
+bounds (the seventh is `showRoute { routeId }`; the client fetches the session artifact and draws
+via `MapView.createPolyline`, and never puts geometry back onto AgentAction / SSE). The server validates extracted action payloads; the client revalidates them, rate-limits same-type
 actions, executes them, and supports undo. Bounded client `localStorage` may retain actions and tool summaries.
 This is not a server-side action audit trail, and no server-side action or product-analytics audit sink is implied.
 WS3's navigation event sink is an explicit, replaceable in-memory/JSONL contract for offline eval only;
@@ -124,8 +131,9 @@ read-only because logged-in `memory_save` is controlled write functionality. WS0
 provider-neutral job-navigation contract, route service, explicit estimate path, session-bound artifact store,
 and two navigation route handlers. Agent job/navigation tools, `showRoute` action validation, and
 `POST /api/agent/chat` navigation-session sharing are implemented; production planning remains
-estimate-only. Analytics persistence, live route providers, and frontend route overlay remain
-unimplemented.
+estimate-only. Analytics persistence and live route providers remain unimplemented.
+The frontend route overlay draws estimate dashes and provider polylines when an artifact exists;
+it does not imply live traffic.
 
 ## Target Directory Structure
 

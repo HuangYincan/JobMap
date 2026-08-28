@@ -2,7 +2,7 @@
 
 **文档版本:** 1.0
 **创建日期:** 2026-08-21
-**状态:** Agent 核心、受控地图动作与前端交互已实现并合并 `dev`;本文保留 2026-08-21 原始决策/实施契约及后续修订记录。求职导航 WS2 已实现域工具、`showRoute` 动作校验与 chat 会话共享;客户端暂不绘制路线 overlay,见 `tech/31-job-navigation-agent-plan.md`。
+**状态:** Agent 核心、受控地图动作与前端交互已实现并合并 `dev`;本文保留 2026-08-21 原始决策/实施契约及后续修订记录。求职导航 WS2 已实现域工具、`showRoute` 动作校验与 chat 会话共享;WS4 客户端在同会话 GET artifact 成功后经 `MapBridge.drawRoute` 绘制 overlay。生产仍为 estimate-only，见 `tech/31-job-navigation-agent-plan.md`。
 **相关:** `tech/03-plugin-system.md`(ai-assistant 插件状态)、`tech/18-national-scale-plan.md` §2.6(LLM 校验先例 `llm-validate.ts`)、`tech/22-hangzhou-poi-local.md`(REST 兜底模式)、`tech/30-agent-memory.md`(已实现用户记忆)、`tech/31-job-navigation-agent-plan.md`(P5 规划)、批次目录 `tech/roles/development/parallel-sessions/20260821-boss-agent-feature/`(manifest / prompts / deferred-notes)
 
 ---
@@ -28,7 +28,7 @@ v1 建议能力作为地基保留(同一对话流,动作是「可选增强」);v
 
 - 项目已有 LLM 调用先例:`server/src/lib/llm-validate.ts`(OpenAI 兼容 chat completions,`LLM_API_KEY`/`LLM_MODEL`/`LLM_BASE_URL`,脚本 `validate-positions-llm.mjs`)。
 - 三平台 key 全配(`server/.env.local` 均非空):`AMAP_WEB_KEY`、`BAIDU_MAP_AK`、`TENCENT_MAP_KEY`;REST 三级兜底链已存在(`server/src/lib/site-geocode.ts` 的 `geocodeAddressRest`/`placeTextSearchRest`/`regeoCityRest`,AMap→百度→腾讯)。
-- **历史基线(2026-08-21 立项时):** 项目当时无任何 Agent / MCP 代码,本批次从零新增 `server/src/lib/agent/**` 并接入 map-shell seam。**当前事实:** 这些模块已实现并合并 `dev`,后续用户记忆见 `tech/30-agent-memory.md`。WS2 已接入 `work__*` / `navigation__*` 域工具、第 7 种动作 `showRoute`(仅 `routeId`),以及与 navigation route handlers 共享的 `dm_navigation_session` cookie;生产路线仍为显式 `estimate`,客户端 `showRoute` 为 no-op(不绘制 overlay)。
+- **历史基线(2026-08-21 立项时):** 项目当时无任何 Agent / MCP 代码,本批次从零新增 `server/src/lib/agent/**` 并接入 map-shell seam。**当前事实:** 这些模块已实现并合并 `dev`,后续用户记忆见 `tech/30-agent-memory.md`。WS2 已接入 `work__*` / `navigation__*` 域工具、第 7 种动作 `showRoute`(仅 `routeId`),以及与 navigation route handlers 共享的 `dm_navigation_session` cookie;生产路线仍为显式 `estimate`。WS4 起合法 `showRoute` 同会话 GET artifact 后经 `MapBridge.drawRoute` 画实线;estimate 无 `routeId`,不走该 GET。
 - 约束:`npm install` 被会话权限 deny(D5),不得引入第三方 SDK,手写零依赖 MCP 客户端。
 
 ---
@@ -142,7 +142,7 @@ export type AgentAction =
   | { type: 'showRoute';  payload: { routeId: string } };
 ```
 
-> `mode` 用 `string`(不 import `MapMode`,避免与项目 types.ts 硬编码 union 耦合)。坐标一律 **GCJ-02**(高德底图坐标,与全项目一致,零转换)。`showRoute.routeId` 必须匹配 WS0 `^rte_[a-f0-9]{32,124}$`(总长度 36–128);客户端校验通过后可以展示建议卡片,但 **暂不绘制路线 overlay**。
+> `mode` 用 `string`(不 import `MapMode`,避免与项目 types.ts 硬编码 union 耦合)。坐标一律 **GCJ-02**(高德底图坐标,与全项目一致,零转换)。`showRoute.routeId` 必须匹配 WS0 `^rte_[a-f0-9]{32,124}$`(总长度 36–128);客户端校验通过后展示「看路线」卡片,成功 GET 同会话 artifact 后画实线;geometry 不得回写 AgentAction / SSE。
 
 ### 4.3 校验边界(`action-schema.ts` 的 `validateAction`,纯函数)
 
@@ -429,7 +429,7 @@ drawer body 新增 `mobileSheet === "agent"` 分支:`mobileAgent` 包装 + sheet
 
 ### 9.7 地图操作适配层(`lib/agent-map-bridge.ts`)
 
-`MapBridge` 接口:`isReady` / `getSnapshot` / `flyTo`(AMap `setZoomAndCenter` 动画,zoom 缺省保持当前)/ `select` / `addMarkers`(返回清理函数)/ `drawCircle`(返回清理函数)/ `openDetail`。**实现用 `window.AMap` 直调**——dev 上 map-engine 的 MapView 门面只有接口无实现(eng-c/d/e 在飞),本文件是唯一 AMap 依赖点,后续可平滑切换。覆盖物创建后放模块内 map 维护;坐标校验复用动作边界(非法 → 忽略)。
+`MapBridge` 接口:`isReady` / `getSnapshot` / `flyTo` / `select` / `addMarkers`(返回清理函数)/ `drawCircle`(返回清理函数)/ `drawRoute(path, opts) => cleanup`(WS4,经 `MapView.createPolyline`;estimate 用 `dashed`)/ `openDetail`。覆盖物创建后由返回的清理函数自维护;坐标校验复用动作边界(非法 → 忽略)。业务组件不直连 `AMap`/`TMap`/`BMapGL`。
 
 ### 9.8 动作执行器(`components/agent-map-executor.ts`)
 
@@ -438,7 +438,7 @@ drawer body 新增 `mobileSheet === "agent"` 分支:`mobileAgent` 包装 + sheet
 - 按 type 分流:delta/tool/done/error → 回调(供面板渲染);action → 执行前**客户端再校验**(与后端同款规则,非法丢弃)→ **500ms 同类型动作限流** → 执行 → 压 undo 栈。
 - **undo 逆操作**:flyTo → 执行前 `getSnapshot()` 捕获旧 camera;addMarkers/drawCircle → 保存清理函数,undo 时调用;select/openDetail → 旧值回调。
 - 执行前 `bridge.isReady()` 检查,失败 → 错误回调。
-- **`showRoute`**:格式合法则接受;流式路径可 `onAction`(建议卡片);**必须 no-op**(不调用 map bridge 画线、不入 undo、不改相机)。客户端暂不绘制路线 overlay。
+- **`showRoute`**:格式合法则接受;流式路径可 `onAction`(建议卡片「看路线」);需要 `bridge.isReady()`,然后 `GET /api/navigation/routes/:routeId`(`credentials: 'include'`)。200 + geometry → `drawRoute` 实线并入 undo;401/403/404/410/5xx → 不画道路折线,回调错误码。禁止把 GET body 的 geometry 塞回 AgentAction / SSE / 日志。estimate 无 `routeId`,不得发该 GET。
 
 ### 9.9 SSE 客户端(`components/agent-chat-client.ts`)
 
@@ -487,7 +487,7 @@ drawer body 新增 `mobileSheet === "agent"` 分支:`mobileAgent` 包装 + sheet
 | b | `tests/agent-mcp.test.mjs` | normalizeTool 矩阵(前缀/slug/截断/兜底);key 缺失 → getMcpProvider null;mock fetchLike/内嵌 http server:streamable 握手→listTools→callTool 全流程(SSE 与 JSON 两种响应形态);legacy SSE(GET 流 + POST 关联,含 Mcp-Session-Id 回传);超时/连接失败 → isReady false;并发信号量 |
 | b | `tests/agent-route-contract.test.mjs` | 契约测试(参照 api-hardening 模式):`runtime='nodejs'`、SSE headers 常量、公开事件 allowlist(含 reasoning 不出网、合法事件仍流式转述)、**「校验先于连接」定位断言**、限流存在 |
 | c | `tests/agent-chat-client.test.mjs` | parseSseChunk 矩阵(单/多事件、坏 JSON、空行、事件跨 chunk 按 `\n\n` 切分) |
-| c | `tests/agent-map-executor.test.mjs` | mock bridge:各动作分流、非法动作丢弃、限流、undo 栈逆操作顺序、canUndo、isReady 失败;`showRoute` 合法 ID 通过、geometry 拒绝、流式 onAction 但不画 overlay |
+| c | `tests/agent-map-executor.test.mjs` | mock bridge:各动作分流、非法动作丢弃、限流、undo 栈逆操作顺序、canUndo、isReady 失败;`showRoute` 合法 ID 通过并画线、410 不画、geometry 拒绝 |
 | nav | `tests/navigation-agent-tools.test.mjs` | 五个域工具 schema/provider;注入 catalog 的 search/detail;planRoute 无会话/缺起点不打 provider;estimate 无 routeId、fake provider 签发 routeId 且文本无 geometry;compare 矩阵与部分失败;filterByCommute 严格命中 vs 超限近似与 Top-K 预算;三主场景后端链 |
 | c | `tests/component-contracts.test.mjs`(**追加**) | agent-ball 有 aria-label 且含 `t('agentBall')`;agent-panel 有输入框与停止/撤销按钮;map-shell 含 `<AgentBall` seam |
 | enh | `tests/agent-llm-provider.test.mjs`(**追加**) | reasoning_content 逐 chunk 转发、同 chunk 与 content 并存、空串不回调、onReasoning 缺省兼容 |
