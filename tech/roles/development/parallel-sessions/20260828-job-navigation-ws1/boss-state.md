@@ -11,14 +11,14 @@
 
 ## stage
 
-- current: MERGE
-- updated_at: 2026-08-28T16:57:47+08:00
+- current: VERIFY
+- updated_at: 2026-08-28T17:00:31+08:00
 
 ## workstreams
 
 | ws | branch | worktree | prompt | report | status | last_tip | dispatched_at | finished_at | verdict |
 |---|---|---|---|---|---|---|---|---|---|
-| ws1-route-core | feature/job-navigation-ws1-route-core | /Users/acccan/dm-wt-job-navigation-ws1-route-core | prompts/ws1-route-core.md | reports/ws1-route-core.md | DONE | be4fe91 | 2026-08-28T16:09:50+08:00 | 2026-08-28T16:57:47+08:00 | PASSED+OK；boss 专项 67/67、全量 1787 pass/3 skip、typecheck/docs/diff 全绿 |
+| ws1-route-core | feature/job-navigation-ws1-route-core | /Users/acccan/dm-wt-job-navigation-ws1-route-core | prompts/ws1-route-core.md | reports/ws1-route-core.md | MERGED | be4fe91 | 2026-08-28T16:09:50+08:00 | 2026-08-28T16:57:47+08:00 | PASSED+OK；merge `6125158`；merger 专项 67/67、全量 1787 pass/3 skip、typecheck/docs/diff 全绿 |
 
 ## merge_order
 
@@ -29,6 +29,7 @@
 - 2026-08-28 | WS1 scope | provider 顺序/权限仍未决 | 只实现注入 seam + production estimate；不注册/调用 live provider | APPROVED
 - 2026-08-28 | ws1-route-core review | navigation cookie `Path=/api/navigation/routes` 不会随 `/api/agent/chat` 发送，阻断 WS2 同会话 artifact 链；navigation HTTP 错误使用 `{error:{...}}`，与 `tech/14` 全局 `{code,message}` 契约不一致 | cookie path 收窄到 `/api`；错误体改为 top-level `RouteError`；补 aggregate geometry point budget 使进程内存上限可审计后续派 | FOLLOWUP
 - 2026-08-28 | ws1-route-core follow-up | worker 首次续派被会话中断，留下 5 个未提交文件 | 幂等续派保留有效半成品，完成 `be4fe91`；boss 逐文件复核并独立复跑完整门禁 | PASSED
+- 2026-08-28 | ws1-route-core merge | `be4fe91` 无冲突合入 `dev`，受保护的主树既有改动未暂存或改写 | 专项 67/67、全量 1787 pass/3 skip、typecheck/docs-check/diff-check 全绿 | MERGED
 
 ## deferred_notes
 
@@ -38,11 +39,11 @@
 
 ## next_plan
 
-- 当前 milestone: WS1 / M1 路线可信地基
-- 剩余步骤: MERGE → VERIFY
-- 下一步: WS1 全绿后规划 WS2 Agent 域工具；随后 WS3 评测与事件契约；WS4 保持 blocked
+- 当前 milestone: WS1 / M1 路线可信地基 — 已完成并合并
+- 剩余步骤: 无（WS1 merge 与 VERIFY 已通过）
+- 下一步: 规划 WS2 Agent 域工具；随后 WS3 评测与事件契约；WS4 保持 blocked
 
 ## recovery
 
-- last_stage_written: MERGE
-- resume_history: 2026-08-28 | 从已合并并 push 的 WS0 `b093ea3` 继续，建立 WS1 批次
+- last_stage_written: VERIFY
+- resume_history: 2026-08-28 | 从已合并并 push 的 WS0 `b093ea3` 继续，建立 WS1 批次；`be4fe91` 无冲突合并为 `6125158`，完整 VERIFY 全绿

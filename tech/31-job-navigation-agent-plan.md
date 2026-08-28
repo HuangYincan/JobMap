@@ -538,13 +538,13 @@ WS0 → WS1 → WS2 → WS3 → WS4 → WS5
 | WS | 状态 | 目标 | 主要交付 | 进入条件 | 完成门禁 |
 |---|---|---|---|---|---|
 | WS0 合同/来源/隐私 | 已完成并合并 | 冻结意图、路线、错误、供应商和数据留存边界 | 契约、验证、ADR、provider 审查和 40 条 fixture 已完成；用户研究不属于已完成证据 | 已通过并合并 | 决策无悬空高风险项；不触碰前端 |
-| WS1 路线核心 | 已实现，待本分支门禁与合并 | 建立 provider-neutral 路线服务与 estimate 降级 | navigation types/service/provider/artifact、API、单测 | WS0 合并后 | 超时/配额/不支持/坐标/TTL/会话隔离测试全绿 |
+| WS1 路线核心 | 已完成并合并 | 建立 provider-neutral 路线服务与 estimate 降级 | navigation types/service/provider/artifact、API、单测 | WS0 合并后 | 超时/配额/不支持/坐标/TTL/会话隔离测试全绿 |
 | WS2 Agent 域工具 | 未实现 | 把岗位数据和路线服务接入 Agent | 5 个域工具、专用 prompt、`showRoute` 动作、工具预算 | WS1 | LLM 无几何；动作与岗位越权全拒绝；三主场景后端链可跑 |
 | WS3 评测与事件 | 未实现 | 建立可复现的产品判断闭环 | 事件 sink 契约、离线 runner、SQL/Python 报告、基线结果 | WS2 | §7 指标可自动计算；无敏感字段；不复用 `audit_events` |
 | WS4 前端体验 | blocked（未实现） | 呈现通勤筛选、比较、行程和可信路线 | 批准后的桌面/移动 UI、路线 overlay、完整状态 | **用户明确批准 §8 布局**且 WS3 完成 | typecheck/test、Playwright 桌面/移动截图、无重叠、键盘/触屏验证 |
 | WS5 主动建议/集成 | 未实现 | 完成会话内主动思考和演示闭环 | 条件缺口提示、0 结果放宽建议、面试缓冲建议、最终复盘 | WS4 | 三主场景 100%；全量回归；文档与演示材料同步 |
 
-WS0 已合并；WS1 实现已完成，待本分支最终门禁与合并。WS2–WS3、WS5 尚未实现；
+WS0 与 WS1 均已完成并合并。WS2–WS3、WS5 尚未实现；
 WS4 在用户批准布局前始终为 blocked。P5 的“主动”只指当前会话中根据已知条件发现缺口、风险和
 替代方案，不包含后台追踪或未经用户触发的定位。
 
@@ -553,7 +553,7 @@ WS4 在用户批准布局前始终为 blocked。P5 的“主动”只指当前�
 | 里程碑 | 状态 | 退出条件 |
 |---|---|---|
 | M0 需求与契约冻结 | 部分完成 | 契约、供应商/隐私边界和评测骨架已完成；5–8 名目标用户任务访谈/可用性输入仍待办 |
-| M1 路线可信地基 | 已实现，待本分支门禁与合并 | provider seam + estimate、来源标签、artifact 会话隔离、API 错误矩阵通过 |
+| M1 路线可信地基 | 已完成并合并 | provider seam + estimate、来源标签、artifact 会话隔离、API 错误矩阵通过 |
 | M2 Agent 求职规划 | 未开始 | Work/Navigation 工具、意图槽位、比较器、`showRoute` 后端链通过 |
 | M3 用户体验闭环 | 待批准（blocked） | Axure/Sketch 可点击原型与 ASCII 获批；桌面/移动实现及真实状态验证通过 |
 | M4 评测与岗位材料 | 未开始 | 指标达标、三场景录屏/截图、SQL/Python 报告、PRD/技术复盘同步 |
