@@ -30,4 +30,4 @@ export const MAX_ROUTE_TTL_SECONDS = 3_600;
 export const MAX_TRANSFER_COUNT = 100;
 export const MAX_GEOMETRY_POINTS = 10_000;
 
-export const OPAQUE_ROUTE_ID_PATTERN = /^rte_[a-f0-9]{32,128}$/;
+export const OPAQUE_ROUTE_ID_PATTERN = /^rte_[a-f0-9]{32,124}$/;

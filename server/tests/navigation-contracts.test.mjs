@@ -305,6 +305,18 @@ test('appointment rejects impossible calendar dates and clock or offset values',
   invalidOffset.appointment.startsAt = '2026-09-01T09:00:00+24:00';
   assert.equal(parseNavigationIntent(invalidOffset).error.code, 'INVALID_TIME');
 
+  for (const offset of ['+14:00', '-12:00']) {
+    const acceptedOffset = copy(findFixture('interview-01').candidate);
+    acceptedOffset.appointment.startsAt = `2026-09-01T09:00:00${offset}`;
+    assert.equal(parseNavigationIntent(acceptedOffset).ok, true, offset);
+  }
+
+  for (const offset of ['+14:01', '-12:01', '+23:59', '-23:59', '+24:00', '+05:60']) {
+    const rejectedOffset = copy(findFixture('interview-01').candidate);
+    rejectedOffset.appointment.startsAt = `2026-09-01T09:00:00${offset}`;
+    assert.equal(parseNavigationIntent(rejectedOffset).error.code, 'INVALID_TIME', offset);
+  }
+
   const leapDay = copy(findFixture('interview-01').candidate);
   leapDay.appointment.startsAt = '2024-02-29T09:00:00+08:00';
   assert.equal(parseNavigationIntent(leapDay).ok, true);
@@ -333,6 +345,22 @@ test('route plan enforces provider and quality pairing, opaque references, and n
   assert.equal(
     parseRoutePlan(validRoutePlan({ routeId: 'route-1' })).error.code,
     'ROUTE_ID_INVALID',
+  );
+
+  const minimumRouteId = `rte_${'a'.repeat(32)}`;
+  assert.equal(minimumRouteId.length, 36);
+  assert.equal(parseRoutePlan(validRoutePlan({ routeId: minimumRouteId })).ok, true);
+  assert.equal(
+    parseRoutePlan(validRoutePlan({ routeId: `rte_${'a'.repeat(31)}` })).error.code,
+    'ROUTE_ID_INVALID',
+  );
+
+  const maximumRouteId = `rte_${'a'.repeat(124)}`;
+  assert.equal(maximumRouteId.length, 128);
+  assert.equal(parseRoutePlan(validRoutePlan({ routeId: maximumRouteId })).ok, true);
+  assert.equal(
+    parseRoutePlan(validRoutePlan({ routeId: `rte_${'a'.repeat(125)}` })).error.code,
+    'TEXT_TOO_LONG',
   );
 });
 

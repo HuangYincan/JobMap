@@ -215,7 +215,10 @@ function parseAbsoluteTimestamp(value: unknown, path: string): NavigationParseRe
   if (offset !== 'Z') {
     const offsetHour = Number(offset.slice(1, 3));
     const offsetMinute = Number(offset.slice(4, 6));
-    if (offsetHour > 23 || offsetMinute > 59) return fail('INVALID_TIME', path);
+    if (offsetMinute > 59) return fail('INVALID_TIME', path);
+    const offsetMinutes = (offset[0] === '+' ? 1 : -1) * (offsetHour * 60 + offsetMinute);
+    // This is the project's accepted range, not a claim about the full ISO 8601 offset space.
+    if (offsetMinutes < -12 * 60 || offsetMinutes > 14 * 60) return fail('INVALID_TIME', path);
   }
 
   const milliseconds = Date.parse(value);

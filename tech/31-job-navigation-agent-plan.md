@@ -192,7 +192,7 @@ interface NavigationIntent {
     maxMinutes?: number;
   };
   appointment?: {
-    startsAt: string; // ISO 8601 with offset after validation
+    startsAt: string; // validated ISO 8601 with Z or a project-approved UTC offset
     timezone: string;
     arrivalBufferMinutes: number;
   };
@@ -204,6 +204,9 @@ interface NavigationIntent {
 包含 finite 的 `lng`、`lat` 和显式 `coordinateSystem`。其他位置类型只有在确实携带坐标时才
 使用 `coordinateSystem`；没有坐标时不得单独携带它，非坐标型位置不得伪造默认供应商坐标。
 相对时间只有完成绝对化后才能进入规划；`missingSlots` 非空时不得调用路线规划。
+`appointment.startsAt` 可以使用 `Z` 或显式 `±HH:MM`，但带 offset 的值只接受本项目的
+`[-12:00, +14:00]` 闭区间；这是本项目的接受范围，不是对完整 ISO 8601 offset 范围的表述。
+本阶段不验证 offset 是否与 IANA timezone 一致。
 
 ### 5.2 `RoutePlan`
 
@@ -258,7 +261,8 @@ type RoutePlan = ProviderRoutePlan | EstimateRoutePlan;
 1. WS1 规划中的路线服务校验输入后调用 `RouteProvider`，将供应商结果归一化为明确坐标系，
    并校验点数、范围、长度和起终点偏差。
 2. 只有 `provider_route` 结果需要路线引用；WS1 才负责在服务端通过 CSPRNG 生成匹配
-   `^rte_[a-f0-9]{32,128}$` 的不可猜测、会话绑定 `routeId`。WS0 当前只校验格式，不生成 ID；
+   `^rte_[a-f0-9]{32,124}$` 的不可猜测、会话绑定 `routeId`（总长度 36–128 字符，上限 128）。
+   WS0 当前只校验格式，不生成 ID；
    `estimate` 不生成 `routeId`。默认不持久化路线 artifact。
 3. Agent 工具只拿到 `RoutePlan` 摘要；只有 `provider_route` 摘要可带 `routeId`，LLM 不接触
    polyline。
@@ -292,6 +296,12 @@ interface RouteProvider {
 缓存/展示/商业许可仍须人工确认。
 每个结果必须携带 `provider`、`fetchedAt`、`trafficAware` 和 `quality`；任何失败都收敛为
 稳定错误类别，不向客户端暴露 key、内部 URL 或原始响应。
+
+WS0 的资料审查只记录已审核的产品接口，不代表已注册适配器：高德 Route Planning 2.0 按方式
+记录 `/v5/direction/driving`、`/v5/direction/walking`、`/v5/direction/transit/integrated`、
+`/v5/direction/bicycling`、`/v5/direction/electrobike`，不抽象成统一 endpoint 加
+`mode=0/1/2/3/4`。百度 DirectionLite 单独记录 `driving`、`riding`、`walking`、`transit`；
+它与普通百度 Direction API v2 分开，v2 的坐标参数和公交时间字段不外推到 DirectionLite。
 
 现有 `commute.ts` 保留为 `estimate` provider 的算法基础，不再以“像真实路线一样”的形式
 混入供应商结果。
