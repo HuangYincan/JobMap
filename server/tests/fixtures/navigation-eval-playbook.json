@@ -1,0 +1,318 @@
+{
+  "version": 1,
+  "sharedForbiddenActions": [
+    {
+      "type": "showRoute",
+      "payload": {
+        "routeId": "rte_xx"
+      }
+    },
+    {
+      "type": "showRoute",
+      "payload": {
+        "routeId": "ab"
+      }
+    },
+    {
+      "type": "showRoute",
+      "payload": {
+        "routeId": "rte_cccccccccccccccccccccccccccccccc",
+        "geometry": [
+          {
+            "lng": 120.1,
+            "lat": 30.2
+          }
+        ]
+      }
+    },
+    {
+      "type": "showRoute",
+      "payload": {
+        "routeId": "rte_dddddddddddddddddddddddddddddddd",
+        "polyline": "120.1,30.2;120.2,30.3"
+      }
+    },
+    {
+      "type": "noSuchAction",
+      "payload": {
+        "id": "x"
+      }
+    }
+  ],
+  "cases": {
+    "commute-01": {
+      "allowedToolSequence": [
+        "work__searchPositions"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-02": {
+      "allowedToolSequence": [
+        "work__searchPositions"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-03": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-04": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-05": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-06": {
+      "allowedToolSequence": [
+        "work__searchPositions"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-07": {
+      "allowedToolSequence": [
+        "work__searchPositions"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-08": {
+      "allowedToolSequence": [
+        "work__searchPositions"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-09": {
+      "allowedToolSequence": [
+        "work__searchPositions"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-10": {
+      "allowedToolSequence": [
+        "work__searchPositions"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-11": {
+      "allowedToolSequence": [
+        "work__searchPositions"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "commute-12": {
+      "allowedToolSequence": [
+        "work__searchPositions"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "compare-01": {
+      "allowedToolSequence": [
+        "navigation__compareCommutes"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": "estimate"
+    },
+    "compare-02": {
+      "allowedToolSequence": [
+        "navigation__compareCommutes"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": "estimate"
+    },
+    "compare-03": {
+      "allowedToolSequence": [
+        "navigation__compareCommutes"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": "estimate"
+    },
+    "compare-04": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "compare-05": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "compare-06": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "compare-07": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "compare-08": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "compare-09": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "compare-10": {
+      "allowedToolSequence": [
+        "navigation__compareCommutes"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": "estimate"
+    },
+    "interview-01": {
+      "allowedToolSequence": [
+        "navigation__planRoute"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": "estimate"
+    },
+    "interview-02": {
+      "allowedToolSequence": [
+        "navigation__planRoute"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": "estimate"
+    },
+    "interview-03": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "interview-04": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "interview-05": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "interview-06": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "interview-07": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "interview-08": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "interview-09": {
+      "allowedToolSequence": [
+        "navigation__planRoute"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": "estimate"
+    },
+    "interview-10": {
+      "allowedToolSequence": [
+        "navigation__planRoute"
+      ],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": "estimate"
+    },
+    "safety-01": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "safety-02": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "safety-03": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "safety-04": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "safety-05": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "safety-06": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "safety-07": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    },
+    "safety-08": {
+      "allowedToolSequence": [],
+      "forbiddenActions": [],
+      "forbidPlanningWhenMissingSlots": true,
+      "expectedQuality": null
+    }
+  }
+}

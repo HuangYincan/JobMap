@@ -8,6 +8,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 - **求职导航 WS0 契约与离线基线。** 冻结 provider-neutral 导航契约和纯校验（含总长度 36–128 的 opaque `routeId` 格式，以及 `startsAt` 的项目 UTC offset 接受范围），建立 40 条离线 fixture：12 条通勤搜索、10 条岗位比较、10 条面试到达、8 条安全异常；完成高德、腾讯、百度官方路线约束审查及对应 ADR。
 - **求职导航 WS2 Agent 域工具。** 五个域工具(`work__searchPositions` / `work__getPositionDetail` / `navigation__planRoute` / `navigation__compareCommutes` / `navigation__filterByCommute`)、求职导航 prompt 纪律、第 7 种动作 `showRoute{routeId}`、以及 `/api/agent/chat` 与 navigation handlers 共享的会话 cookie。生产路线仍为显式直线 `estimate`；客户端 `showRoute` 为 no-op，不绘制 overlay。不宣称真实路线或实时交通已上线。
+- **求职导航 WS3 离线评测与事件 sink。** 可替换产品事件 sink（内存/JSONL，闭合 9 个事件名，禁止 utterance/坐标/geometry/密钥）与离线 runner（40 条合成 fixture + playbook 策略，不改契约内容）；SQL/Python 报告计算槽位/工具/非法动作/质量标注指标。生产 chat / RouteService 不落库、不默认发射事件；不复用 `audit_events`。不宣称 LLM、真实路况或桌面/移动端到端已评测。
 
 ## 2026-08-26
 

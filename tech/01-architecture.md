@@ -17,6 +17,9 @@ claimed. `GET /api/navigation/routes/[routeId]` only returns an unexpired provid
 independent navigation session, and never exposes its internal session fingerprint.
 WS2 adds Agent work/navigation domain tools, `showRoute` format validation, and shared navigation-session
 cookie handling on `POST /api/agent/chat`. The client still does not draw a route overlay.
+WS3 adds a replaceable in-memory/JSONL product-event sink (`server/src/lib/navigation/analytics.ts`)
+and an offline eval runner (`eval-runner.ts`, `eval-policy.ts`) that computes §7 metrics and SQL/Python
+reports. The sink is **not** persisted and is **not** wired to production chat or `RouteService`.
 
 WS0 validates route-reference syntax: `routeId` must match
 `^rte_[a-f0-9]{32,124}$`, for a total length of 36–128 characters. WS1 generates provider-route IDs with
@@ -51,13 +54,14 @@ Existing general Agent and controlled map actions
   -> client revalidates, rate-limits same-type actions, executes, and supports undo
   -> bounded client localStorage may retain actions/tool summaries
 
-WS0/WS1/WS2 job-navigation foundation (implemented)
+WS0/WS1/WS2/WS3 job-navigation foundation (implemented)
   -> provider-neutral intent/route/error contract
   -> pure server-side validation
   -> RouteService timeout/abort/result validation
   -> explicit estimate fallback (no geometry or routeId)
   -> entry/geometry-budget-bounded, session-fingerprinted provider artifacts
   -> Agent work/navigation tools + showRoute validation (client overlay not drawn)
+  -> replaceable eval event sink + offline runner (not persisted; not audit_events)
 ```
 
 ### Canonical Data vs Map Overlay
@@ -113,6 +117,8 @@ allowlisted tools are available, and `action-schema.ts` validates the seven allo
 bounds (the seventh is `showRoute { routeId }`, format-only; the client does not draw overlay). The server validates extracted action payloads; the client revalidates them, rate-limits same-type
 actions, executes them, and supports undo. Bounded client `localStorage` may retain actions and tool summaries.
 This is not a server-side action audit trail, and no server-side action or product-analytics audit sink is implied.
+WS3's navigation event sink is an explicit, replaceable in-memory/JSONL contract for offline eval only;
+it is not attached to chat or RouteService and does not write `audit_events`.
 The Agent cannot execute arbitrary SQL, browser commands, URLs, or plugin code; this does not make every tool
 read-only because logged-in `memory_save` is controlled write functionality. WS0/WS1 now provide the
 provider-neutral job-navigation contract, route service, explicit estimate path, session-bound artifact store,
@@ -125,7 +131,7 @@ unimplemented.
 
 ```text
 server/                 # Next.js application (App Router + API routes)
-server/src/lib/navigation/ # WS0 contracts + WS1 route service, estimate, session/artifact and HTTP modules
+server/src/lib/navigation/ # WS0 contracts + WS1 route service, estimate, session/artifact and HTTP modules + WS3 eval sink/runner (not persisted)
 crawler/                # approved-data importer (Python + uv)
 db/migrations/          # ordered SQL migrations (001–020); 020 enforces position/site/company ownership
 db/scripts/             # migration runner

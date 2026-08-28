@@ -248,9 +248,16 @@ entry。provider 成功结果只有在身份、数值、TTL、坐标系、geomet
 geometry。独立 navigation cookie 为 host-only、HttpOnly、SameSite=Lax、`Path=/api`，供后续
 Agent API 与 route handlers 共享；navigation 错误 JSON 遵循顶层 `{ code, message, retryable }`。
 
+WS2 已合并 Agent 域工具（岗位搜索/详情、规划、比较、通勤过滤）、`showRoute` 格式校验，以及
+`/api/agent/chat` 与 navigation handlers 共享的会话 cookie。客户端仍不绘制 overlay。
+
+WS3 已实现可替换产品事件 sink（`createMemorySink` / `createJsonlSink`）和离线 eval runner
+（playbook + 槽位/工具/非法动作/质量标注指标 + SQL/Python 报告）。sink 默认不接到生产 chat
+或 RouteService；事件不落库，不复用 `audit_events`。
+
 生产构造器仍注册零个 live provider，正常规划结果只是明确标注的直线估算；没有真实道路路线、
-实时路况或供应商 arrival-by 能力。Agent 工具、analytics persistence 和前端路线 UI 均未实现。
-详细供应商事实与未核实项见
+实时路况或供应商 arrival-by 能力。analytics persistence、live provider adapter 和前端路线 UI
+均未实现。详细供应商事实与未核实项见
 `tech/roles/development/architecture/navigation-route-provider-review.md`。
 
 ---
