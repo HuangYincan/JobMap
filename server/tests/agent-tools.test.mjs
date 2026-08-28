@@ -49,6 +49,22 @@ test('builtin: viewport 回显 + listTools 不暴露 secret', async () => {
     assert.match(withVp.text, /120\.15/);
     assert.match(withVp.text, /30\.28/);
     assert.match(withVp.text, /zoom: 12/);
+    assert.match(withVp.text, /视野中心/);
+    assert.match(withVp.text, /用户位置未知/);
+  }
+  const withUser = await viewport.call(
+    {},
+    {
+      ...CTX,
+      userLocation: { lng: 121.47, lat: 31.23 },
+      viewport: { center: { lng: 120.15, lat: 30.28 }, zoom: 12 },
+    },
+  );
+  assert.equal(withUser.ok, true);
+  if (withUser.ok) {
+    assert.match(withUser.text, /121\.47/);
+    assert.match(withUser.text, /用户位置/);
+    assert.doesNotMatch(withUser.text, /用户位置未知/);
   }
   const noVp = await viewport.call({}, CTX);
   assert.ok(noVp.ok && /没有可用的视野信息/.test(noVp.text));

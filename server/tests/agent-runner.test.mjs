@@ -611,6 +611,35 @@ test('runAgent: lang 与视图上下文传给工具 ctx', async () => {
   assert.ok(tool.calls[0].ctx.requestId.length > 0);
 });
 
+test('runAgent: userLocation 进入 ctx 且优先于 viewport;工具图片在 done 前下发', async () => {
+  const tool = mockTool('amap__place_search', () => ({
+    ok: true,
+    text: '找到 1 个 POI',
+    images: [{ url: 'https://store.is.autonavi.com/showpic/cafe.png', alt: '店' }],
+  }));
+  const mp = mockProvider([
+    { toolCalls: [{ id: 'c1', name: 'amap__place_search', arguments: '{"query":"咖啡"}' }] },
+    { deltas: ['附近有一家咖啡店'] },
+  ]);
+  const events = await collectEvents(
+    baseReq({
+      tools: [tool],
+      provider: mp,
+      userLocation: { lng: 121.47, lat: 31.23 },
+      viewport: { center: { lng: 120.15, lat: 30.28 }, zoom: 12 },
+    }),
+  );
+  assert.deepEqual(tool.calls[0].ctx.userLocation, { lng: 121.47, lat: 31.23 });
+  const images = events.find((e) => e.type === 'images');
+  assert.ok(images);
+  assert.equal(images.images[0].url, 'https://store.is.autonavi.com/showpic/cafe.png');
+  assert.equal(events.at(-1).type, 'done');
+  assert.ok(events.findIndex((e) => e.type === 'images') < events.length - 1);
+  const system = mp.seen[0].messages[0].content;
+  assert.match(system, /121\.470000/);
+  assert.match(system, /User location|用户位置/);
+});
+
 // ---------- 用户记忆注入(2026-08-22 ws-mem-a) ----------
 
 test('runAgent: 带 userId 且有记忆 → system 首条含记忆段(最新在前)', async () => {

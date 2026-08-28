@@ -17,17 +17,27 @@ export function builtinTools(getToolNames?: () => string[]): AgentTool[] {
   return [
     {
       name: 'builtin__viewport',
-      description: '回显当前地图视野:中心点经纬度(GCJ-02)、缩放级别与可见边界;无需参数',
+      description:
+        '回显用户位置(附近/岗位检索起点,优先)与当前地图视野中心(GCJ-02)、缩放与可见边界;无需参数。附近检索必须用用户位置,不得把视野中心当成人所在地。',
       inputSchema: { type: 'object', properties: {} },
       provider: 'builtin',
       async call(_input: Record<string, unknown>, ctx): Promise<ToolResult> {
-        if (!ctx.viewport) return { ok: true, text: '当前没有可用的视野信息' };
-        const { center, zoom, bounds } = ctx.viewport;
-        const parts = [`中心: ${center.lng},${center.lat}`, `zoom: ${zoom}`];
-        if (bounds) {
-          parts.push(`边界: ${bounds.minLng},${bounds.minLat} ~ ${bounds.maxLng},${bounds.maxLat}`);
+        const parts: string[] = [];
+        if (ctx.userLocation) {
+          parts.push(`用户位置(附近检索/岗位检索起点): ${ctx.userLocation.lng},${ctx.userLocation.lat}`);
         }
-        return { ok: true, text: parts.join(';') };
+        if (ctx.viewport) {
+          const { center, zoom, bounds } = ctx.viewport;
+          parts.push(`视野中心: ${center.lng},${center.lat}`, `zoom: ${zoom}`);
+          if (bounds) {
+            parts.push(`边界: ${bounds.minLng},${bounds.minLat} ~ ${bounds.maxLng},${bounds.maxLat}`);
+          }
+        }
+        if (parts.length === 0) return { ok: true, text: '当前没有可用的视野信息' };
+        if (!ctx.userLocation) {
+          parts.unshift('用户位置未知,附近检索/岗位检索可回退视野中心');
+        }
+        return { ok: true, text: parts.join('; ') };
       },
     },
     {

@@ -975,8 +975,8 @@ test('agent sheet embeds in mobile drawer: mobileSheet "agent" branch + embedded
   assert.match(shell, /mobileSheet === "agent" \? \(/);
   assert.match(shell, /<div className=\{styles\.mobileAgent\}>/);
   assert.match(shell, /className=\{styles\.mobileSheetBar\}[\s\S]{0,200}className=\{styles\.mobileBackBtn\}[\s\S]{0,120}onClick=\{\(\) => setMobileSheet\(mobileSheetBack\)\}/);
-  // 内嵌渲染:bridge/lang/user + embedded + onClose 走 mobileSheetBack(与 sheet bar back 等价)
-  assert.match(shell, /<AgentPanel[\s\S]{0,120}bridge=\{agentBridgeRef\.current\}[\s\S]{0,120}embedded[\s\S]{0,80}onClose=\{\(\) => setMobileSheet\(mobileSheetBack\)\}/);
+  // 内嵌渲染:bridge/lang/user/userLocation + embedded + onClose 走 mobileSheetBack(与 sheet bar back 等价)
+  assert.match(shell, /<AgentPanel[\s\S]{0,220}bridge=\{agentBridgeRef\.current\}[\s\S]{0,220}userLocation=\{userLocation\}[\s\S]{0,80}embedded[\s\S]{0,80}onClose=\{\(\) => setMobileSheet\(mobileSheetBack\)\}/);
   // mobileSheet union 含 "agent"
   assert.match(shell, /"recent" \| "agent">/);
   // AgentPanel:embedded prop 默认 false;锚定 props 全部可选(嵌入式实例不传)
@@ -1114,7 +1114,7 @@ test('agent panel memory: login-only entry + embedded overlay (ws-mem-b)', () =>
   assert.match(ball, /user=\{user\}/);
   assert.match(panel, /user: AccountUser \| null/);
   // ws-mt 受控化:agentOpen/onOpenChange 一并透传(移动端入口为工具栏 AI item)
-  assert.match(shell, /<AgentBall[\s\S]{0,120}bridge=\{agentBridgeRef\.current\}[\s\S]{0,120}user=\{user\}[\s\S]{0,120}open=\{agentOpen\}[\s\S]{0,120}onOpenChange=\{setAgentOpen\}/);
+  assert.match(shell, /<AgentBall[\s\S]{0,160}bridge=\{agentBridgeRef\.current\}[\s\S]{0,160}user=\{user\}[\s\S]{0,80}userLocation=\{userLocation\}[\s\S]{0,80}open=\{agentOpen\}[\s\S]{0,120}onOpenChange=\{setAgentOpen\}/);
   // 记忆按钮:仅在 user 非空时渲染(guest 不渲染);位于 header 右侧(关闭钮旁)
   assert.match(panel, /\{user && \([\s\S]{0,160}styles\.memoryBtn/);
   assert.match(panel, /aria-label=\{t\("agentMemory", lang\)\}/);
@@ -1270,7 +1270,7 @@ test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
   assert.match(shell, /createAgentBridge\(engineView/);
   // 接线(ws-mem-b):登录态 user 一并透传(记忆入口只对登录用户渲染);
   // ws-mt 受控化:agentOpen/onOpenChange 提升至 MapShell
-  assert.match(shell, /<AgentBall[\s\S]{0,120}bridge=\{agentBridgeRef\.current\}[\s\S]{0,120}user=\{user\}[\s\S]{0,120}open=\{agentOpen\}[\s\S]{0,120}onOpenChange=\{setAgentOpen\}/);
+  assert.match(shell, /<AgentBall[\s\S]{0,160}bridge=\{agentBridgeRef\.current\}[\s\S]{0,160}user=\{user\}[\s\S]{0,80}userLocation=\{userLocation\}[\s\S]{0,80}open=\{agentOpen\}[\s\S]{0,120}onOpenChange=\{setAgentOpen\}/);
   // bridge 实现只认 MapView 门面,不直连厂商全局
   assert.match(bridge, /import type \{ MapView \} from "\.\/map-engine\/types\.ts"/);
   assert.doesNotMatch(bridge, /window\.AMap/);
@@ -1434,10 +1434,18 @@ test('agent panel: 思考提示与空白气泡已删除,工具活动保留 (ws-b
   assert.match(panel, /toolRowError/);
   assert.doesNotMatch(panel, /toolItem\.summary/, 'tool 行不再渲染 summary(公开事件不携带)');
   assert.match(css, /\.toolActivity \{/);
-  // 轮序 = 消息序:工具活动列表渲染在文本气泡下方(气泡 → 工具 → 动作按钮)
+  // 轮序 = 消息序:搜索结果图片贴最终回答气泡正下方(气泡 → 图片 → 工具 → 动作按钮)
+  assert.match(panel, /styles\.imageStrip/);
+  assert.match(panel, /t\("agentSearchImages", lang\)/);
+  assert.match(css, /\.imageStrip \{[\s\S]*overflow-x: auto/);
+  assert.match(i18n, /agentSearchImages: \{[\s\S]*相关图片[\s\S]*Related photos/);
   const bubbleIdx = panel.indexOf('bubbleAssistant');
+  const imagesIdx = panel.indexOf('imageStrip');
   const toolsIdx = panel.indexOf('toolActivity');
-  assert.ok(bubbleIdx !== -1 && toolsIdx !== -1 && bubbleIdx < toolsIdx, '工具活动列表应在文本气泡下方');
+  assert.ok(
+    bubbleIdx !== -1 && imagesIdx !== -1 && toolsIdx !== -1 && bubbleIdx < imagesIdx && imagesIdx < toolsIdx,
+    '搜索结果图片应在最终回答气泡下方、工具活动列表上方',
+  );
   // 消息状态机走纯函数 reducer(按轮拆分)
   assert.match(panel, /reduceAgentEvent/);
   // 助手消息体走 MarkdownText(用户消息保持纯文本);渲染前剥离正文动作 JSON + 传 lang

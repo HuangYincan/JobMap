@@ -30,8 +30,8 @@ test('SSE 响应常量:headers 三件套 + ReadableStream/TextEncoder + data 行
   assert.match(route, /\\n\\n/);
 });
 
-test('事件 type 白名单:5 种(delta/tool/action/done/error),网络边界过滤 reasoning', () => {
-  assert.deepEqual(SSE_EVENT_TYPES, ['delta', 'tool', 'action', 'done', 'error']);
+test('事件 type 白名单:6 种(delta/tool/action/images/done/error),网络边界过滤 reasoning', () => {
+  assert.deepEqual(SSE_EVENT_TYPES, ['delta', 'tool', 'action', 'images', 'done', 'error']);
   assert.doesNotMatch(route, /const SSE_EVENT_TYPES =/);
   assert.match(route, /const publicEvent = filterPublicSseEvent\(event\)/);
   assert.match(route, /if \(!publicEvent\) continue/);
@@ -46,6 +46,7 @@ test('SSE 网络边界:reasoning 不出流,合法事件仍可逐事件流式转�
     { type: 'delta', text: '回答' },
     { type: 'tool', name: 'search', status: 'start' },
     { type: 'action', action: { type: 'search', payload: { query: '杭州' } } },
+    { type: 'images', images: [{ url: 'https://store.is.autonavi.com/p.png', alt: '店' }] },
     { type: 'done' },
     { type: 'error', code: 'ERROR', message: '' },
   ];
@@ -119,11 +120,14 @@ test('消息形状校验:空/首条非 user/条数超限/单条超长', () => {
   assert.match(route, /m\.content\.length > MAX_MESSAGE_CHARS/);
 });
 
-test('viewport 校验:center/zoom/bounds 非 finite → 400', () => {
+test('viewport 校验:center/zoom/bounds 非 finite → 400;userLocation 非 finite 同码', () => {
   assert.match(route, /isFiniteNum\(vp\.center\?\.lng\)/);
   assert.match(route, /isFiniteNum\(vp\.center\?\.lat\)/);
   assert.match(route, /isFiniteNum\(vp\.zoom\)/);
   assert.match(route, /isFiniteNum\(vp\.bounds\.minLng\)/);
+  assert.match(route, /isFiniteNum\(userLoc\.lng\)/);
+  assert.match(route, /const userLocation: AgentContext\['userLocation'\] = userLoc/);
+  assert.match(route, /userLocation,/);
 });
 
 test('工具集构建:builtin + MCP(失败跳过) + rest 兜底 + work/navigation 域工具 + baidu-agent-plan 门控', () => {

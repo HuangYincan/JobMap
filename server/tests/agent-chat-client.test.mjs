@@ -199,6 +199,26 @@ test('streamAgentChat: viewport/lang 透传;首条带视口快照', async () => 
   }
 });
 
+test('streamAgentChat: userLocation 透传', async () => {
+  const originalFetch = globalThis.fetch;
+  let sentBody = null;
+  globalThis.fetch = async (_url, opts) => {
+    sentBody = JSON.parse(opts.body);
+    return sseResponse(['data: {"type":"done"}\n\n']);
+  };
+  try {
+    const req = {
+      messages: [{ role: 'user', content: '附近前端' }],
+      userLocation: { lng: 121.47, lat: 31.23 },
+      lang: 'zh',
+    };
+    await collect(req, new AbortController().signal);
+    assert.deepEqual(sentBody.userLocation, req.userLocation);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('streamAgentChat: 503 LLM_UNCONFIGURED → error 事件(不抛错)', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () =>

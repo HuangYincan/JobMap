@@ -545,6 +545,34 @@
   word-break: break-word;
 }
 
+/* 搜索结果图片:贴在最终回答气泡下方,横滑缩略图,不进气泡正文 */
+.imageStrip {
+  align-self: flex-start;
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  margin: 6px 0 8px;
+  max-width: 86%;
+  overflow-x: auto;
+  padding: 0;
+  scrollbar-width: thin;
+}
+
+.imageLink {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.imageThumb {
+  background: rgba(120, 140, 160, 0.12);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: block;
+  height: 72px;
+  object-fit: cover;
+  width: 96px;
+}
+
 /* 流式输入指示(2026-08-22 ws-bubble:思考提示已删除)——三点跳动,纯视觉无文字 */
 .typing {
   align-items: center;

@@ -84,6 +84,8 @@ LLM/Agent 配置全部走服务端环境变量(`AGENT_LLM_BASE_URL`/`AGENT_LLM_A
 │ run-agent.ts     循环主体(AsyncGenerator<AgentEvent>)                  │
 │ types.ts         AgentTool/AgentContext/AgentEvent/AgentAction 契约    │
 │ public-sse.ts    SSE 网络下行 allowlist(reasoning 仅内部)             │
+│ search-origin.ts 岗位/附近检索起点(用户位置 > 视野中心)                 │
+│ result-images.ts 搜索结果图片净化(https / 短 data URL,最多 6 张)       │
 │ action-schema.ts validateAction 纯函数(动作参数服务端校验)              │
 │ mcp-endpoints.ts 三平台 MCP 端点常量(单点校准)                          │
 │ mcp-providers.ts 手写零依赖 MCP 客户端(streamable + legacy SSE)        │
@@ -116,6 +118,7 @@ export type AgentEvent =
   | { type: 'reasoning'; text: string }                              // provider 思考内容(仅服务端内部)
   | { type: 'tool'; name: string; status: 'start' | 'done' | 'error'; summary?: string }
   | { type: 'action'; action: AgentAction }                          // 结构化地图动作
+  | { type: 'images'; images: Array<{ url: string; alt?: string }> } // 搜索结果图片,done 前下发
   | { type: 'done'; truncated?: boolean }                            // 结束(truncated=true 表示超轮/超输出)
   | { type: 'error'; code: string; message: string };                // message 绝不含 secret
 ```
@@ -123,8 +126,10 @@ export type AgentEvent =
 `reasoning` 保留在服务端 `run-agent` 与 provider 之间,用于 DeepSeek 等推理模型的
 `tool_calls` replay(`assistant.reasoning_content`);它不属于网络公开协议。`/api/agent/chat`
 在写入 `ReadableStream` 前通过 `lib/agent/public-sse.ts` 的显式 allowlist,公开 SSE 仅允许
-`delta` / `tool` / `action` / `done` / `error` 五种事件。线上格式:每事件一行
+`delta` / `tool` / `action` / `images` / `done` / `error` 六种事件。线上格式:每事件一行
 `data: <单行 JSON>\n\n`(空行分隔)。
+
+> **2026-08-28**:附近/岗位检索起点改为用户位置优先于视野中心;`images` 事件把工具结果中的图片送到最终回答气泡下方,最多 6 张,https(http 升 https)或短 `data:image`。不把图片二进制塞进 LLM 上下文。
 
 > **2026-08-27 质量修复(#2)**:`reasoning` 不再转发给网络客户端;服务端内部全文仍由
 > `onTurnReasoning` 回传并用于下一轮 provider 请求,不受公开事件过滤或 4000 字符展示预算影响。
@@ -199,7 +204,7 @@ GET 请求,header `Authorization: Bearer $BAIDU_MAP_AUTH_TOKEN`。契约红线:�
 
 | 前缀 | 工具 | 来源 |
 |---|---|---|
-| `builtin__` | `viewport`(回显视野)、`listTools`(列当前可用工具,不暴露 secret) | 白名单无副作用 |
+| `builtin__` | `viewport`(回显用户位置+视野中心)、`listTools`(列当前可用工具,不暴露 secret) | 白名单无副作用 |
 | `amap__` / `tencent__` / `baidu__` | 各 provider `tools/list` 动态注册 | MCP(连接失败本轮剔除) |
 | `rest__` | `geocodeAddress`(address, city?)、`placeSearch`(query, city?)、`regeo`(lng, lat) | REST 兜底,常备 |
 | `baidu__` | 上述 5 个 agentplan 工具 | skill,env 门控 |
@@ -267,11 +272,12 @@ Content-Type: application/json
   "messages": [{ "role": "user" | "assistant", "content": "..." }],
   "viewport": { "center": { "lng": 120.15, "lat": 30.28 }, "zoom": 12,
                 "bounds": { "minLng": .., "minLat": .., "maxLng": .., "maxLat": .. } },  // 可选
+  "userLocation": { "lng": 121.47, "lat": 31.23 },                                     // 可选;岗位/附近检索起点优先于 viewport.center
   "lang": "zh" | "en"                                                                    // 可选,默认 zh
 }
 ```
 
-响应:`Content-Type: text/event-stream; charset=utf-8` + `Cache-Control: no-store` + `X-Accel-Buffering: no`;`export const runtime = 'nodejs'`(显式);ReadableStream + TextEncoder,逐事件 `data: <单行 JSON>\n\n`。`viewport` 由前端在会话首条自动附带(悬浮球面板经 `bridge.getSnapshot()` 取得)。
+响应:`Content-Type: text/event-stream; charset=utf-8` + `Cache-Control: no-store` + `X-Accel-Buffering: no`;`export const runtime = 'nodejs'`(显式);ReadableStream + TextEncoder,逐事件 `data: <单行 JSON>\n\n`。`viewport` 与 `userLocation` 由前端在每条请求附带(定位成功才带 `userLocation`;视野经 `bridge.getSnapshot()`)。`work__searchPositions` 与系统提示以用户位置为检索起点,未知时才回退视野中心。
 
 前置校验全部通过后、MCP/LLM 连接之前,路由读取独立导航 cookie `dm_navigation_session`(与 `POST /api/navigation/routes/plan` 及 `GET /api/navigation/routes/:routeId` 共享,`Path=/api`、HttpOnly、SameSite=Lax、生产 Secure)。缺失则 mint,并在最终 SSE `Response` 上 `Set-Cookie`。cookie 原文不进入 JSON/SSE/日志;仅 SHA-256 fingerprint 放入 `AgentContext.navigationSession`。工具集注入 `workTools()` + `navigationTools()`。
 
@@ -335,6 +341,7 @@ Content-Type: application/json
 - **思考过程**:`reasoning` 仅在服务端保留用于 provider `tool_calls` replay,不经 SSE
   下发;前端不接收、不渲染内部推理内容。
 - **工具活动列表**:每条 `{type:'tool'}` 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 友好工具名 + summary),渲染在助手消息上方;provider 前缀映射友好名(`amap__`→高德、`tencent__`→腾讯、`baidu__`→百度、`rest__`→兜底、`builtin__`→内置)。
+- **搜索结果图片(2026-08-28)**:`{type:'images'}` 在 `done` 前下发,挂到最后一条助手消息,**渲染在最终回答气泡正下方**(横滑缩略图,最多 6 张,https 或短 data URL)。无图不占位。
 - **建议卡片**:执行器捕获 action 时,面板在消息底部渲染动作摘要按钮(「在地图上定位」等),点击 = 重放该 action。
 - **未配置提示**:503 `LLM_UNCONFIGURED` → 显示 `t('agentNotConfigured')`(「AI 助手未配置,请在服务器配置」)。
 - **会话管理(2026-08-22 ws-panel2)**:localStorage `dm.agent-sessions.v1` 多会话
@@ -346,7 +353,7 @@ Content-Type: application/json
   归档当前会话(有消息才归档,标题保留原样)+ 新建空会话并激活,旧内容在会话
   列表可回溯(记忆不动;ws-clearfix);消息变更统一走 store
   (appendMessage/saveMessages/archiveAndNew),不再直写旧键——旧 sessionStorage
-  `dm.agent-history.v1` 仅迁移读(无 v1 键时迁为第一个会话,迁移后旧键清除);新会话首条自动带视口快照。
+  `dm.agent-history.v1` 仅迁移读(无 v1 键时迁为第一个会话,迁移后旧键清除);每条请求附带当前视野与用户位置(有定位时)。
 - 「停止」→ abort(链到 fetch);「撤销」→ `executor.undo()`。
 - **助手消息体用 MarkdownText 渲染**(marked → DOMPurify,见 §9.10);用户消息保持纯文本。
 
@@ -373,11 +380,16 @@ Content-Type: application/json
 │  ┌─ agent-panel(贴吸附侧)──────────────┐    │
 │  │  ✦ AI 助手                    ✕    │    │
 │  │  ───────────────────────────────   │    │
-│  │  [正在查询周边…] ← tool 状态条      │    │
-│  │  ┌────────────────────────────┐    │    │
-│  │  │ 建议:滨江区长河街道…        │    │    │
-│  │  │ [在地图上定位]              │    │    │
-│  │  └────────────────────────────┘    │    │
+│  │  ┌────────────────────────────┐    │
+│  │  │ 附近有这些前端岗位…         │    │  ← 最终回答气泡
+│  │  └────────────────────────────┘    │
+│  │  ┌────┐ ┌────┐ ┌────┐         │    │  ← 搜索结果图片(有则,气泡正下方)
+│  │  │img │ │img │ │img │         │    │
+│  │  └────┘ └────┘ └────┘         │    │
+│  │  ┌────────────────────────────┐    │
+│  │  │ 建议:滨江区长河街道…        │    │
+│  │  │ [在地图上定位]              │    │
+│  │  └────────────────────────────┘    │
 │  │  ┌────────────────────────────┐    │    │
 │  │  │ 输入问题…              [发送]│    │    │
 │  │  │ [⏹ 停止] [↩ 撤销上一步]     │    │    │
@@ -406,7 +418,7 @@ min-height: 0 }`(drawer flex column 的可伸缩子项)撑起 `.mobileAgent`/`.p
 
 ### 9.5 i18n 键清单(`i18n.ts` 追加 `agent*` 组,zh/en,约 20 键)
 
-`agentBall`(AI 助手)/ `agentTitle` / `agentInput`(输入问题…)/ `agentSend` / `agentStop` / `agentUndo` / `agentThinking` / `agentThinkingSection`(思考过程,2026-08-21 增)/ `agentToolsSection`(工具调用,2026-08-21 增)/ `agentNotConfigured`(AI 助手未配置,请在服务器配置)/ `agentError` / `agentLocate`(在地图上定位)/ `agentSearch`(搜索)/ `agentToolRunning`({name} 正在执行…)等,文案简短,中文为主。
+`agentBall`(AI 助手)/ `agentTitle` / `agentInput`(输入问题…)/ `agentSend` / `agentStop` / `agentUndo` / `agentThinking` / `agentThinkingSection`(思考过程,2026-08-21 增)/ `agentToolsSection`(工具调用,2026-08-21 增)/ `agentSearchImages`(相关图片,2026-08-28 增)/ `agentNotConfigured`(AI 助手未配置,请在服务器配置)/ `agentError` / `agentLocate`(在地图上定位)/ `agentSearch`(搜索)/ `agentToolRunning`({name} 正在执行…)等,文案简短,中文为主。
 
 ### 9.6 map-shell seam(boss 裁决红线豁免,~30 行)
 

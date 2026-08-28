@@ -4,6 +4,8 @@
 
 import type { AgentTool, AgentContext, ToolResult } from '../types.ts';
 import { sanitizeToolText } from '../run-agent.ts';
+import { agentSearchOrigin } from '../search-origin.ts';
+import { mergeAgentImages, type AgentImage } from '../result-images.ts';
 import {
   clampPage,
   clampPageSize,
@@ -18,6 +20,8 @@ import {
 import { filterPositions, type PositionFilters } from '../../position-filters.ts';
 import { alivePositions, isAlivePosition } from '../../position-alive.ts';
 import {
+  formatDistance,
+  haversineDistance,
   isRecruitmentPOI,
   type JobFamily,
   type POI,
@@ -45,6 +49,8 @@ export interface WorkPositionSummary {
   salary?: { min: number; max: number };
   applySource?: string;
   deadline?: string;
+  distanceMeters?: number;
+  logoUrl?: string;
 }
 
 export interface WorkToolDeps {
@@ -53,8 +59,10 @@ export interface WorkToolDeps {
   now?: () => Date;
 }
 
-function textOk(text: string): ToolResult {
-  return { ok: true, text: sanitizeToolText(text) };
+function textOk(text: string, images?: AgentImage[]): ToolResult {
+  return images && images.length > 0
+    ? { ok: true, text: sanitizeToolText(text), images }
+    : { ok: true, text: sanitizeToolText(text) };
 }
 
 function textErr(text: string): ToolResult {
@@ -90,7 +98,25 @@ function siteCity(poi: RecruitmentPOI): string | undefined {
   return poi.sites?.[0]?.city ?? undefined;
 }
 
-function toSummary(poi: RecruitmentPOI, position: Position): WorkPositionSummary {
+function positionOrigin(poi: RecruitmentPOI, position: Position): { lng: number; lat: number } | undefined {
+  const site = poi.sites?.find((item) => item.id === position.siteId) ?? poi.sites?.[0];
+  const loc = site?.location ?? poi.location;
+  if (!Number.isFinite(loc?.lng) || !Number.isFinite(loc?.lat)) return undefined;
+  return { lng: loc.lng, lat: loc.lat };
+}
+
+function companyLogoUrl(poi: RecruitmentPOI): string | undefined {
+  const siteLogo = poi.sites?.[0]?.logoUrl;
+  const companyLogo = poi.company.logoUrl;
+  const url = siteLogo || companyLogo;
+  return typeof url === 'string' && url.trim() ? url.trim() : undefined;
+}
+
+function toSummary(
+  poi: RecruitmentPOI,
+  position: Position,
+  origin?: { lng: number; lat: number },
+): WorkPositionSummary {
   const summary: WorkPositionSummary = {
     positionId: position.id,
     title: position.title,
@@ -106,6 +132,10 @@ function toSummary(poi: RecruitmentPOI, position: Position): WorkPositionSummary
   if (position.salary) summary.salary = position.salary;
   if (position.apply?.source) summary.applySource = position.apply.source;
   if (position.deadline) summary.deadline = position.deadline;
+  const logoUrl = companyLogoUrl(poi);
+  if (logoUrl) summary.logoUrl = logoUrl;
+  const loc = positionOrigin(poi, position);
+  if (origin && loc) summary.distanceMeters = haversineDistance(origin, loc);
   return summary;
 }
 
@@ -118,6 +148,7 @@ function formatSummary(row: WorkPositionSummary, index: number): string {
     row.family,
     `company=${row.companyCatalogId}`,
   ];
+  if (row.distanceMeters !== undefined) parts.push(`距起点 ${formatDistance(row.distanceMeters)}`);
   if (row.salary) parts.push(`薪资 ${row.salary.min}-${row.salary.max}`);
   if (row.applySource) parts.push(`来源 ${row.applySource}`);
   if (row.deadline) parts.push(`截止 ${row.deadline}`);
@@ -197,7 +228,7 @@ export function workTools(deps: WorkToolDeps = {}): AgentTool[] {
     {
       name: 'work__searchPositions',
       description:
-        '在当前招聘目录中搜索仍在招的岗位摘要。输入关键词、城市和有限结构化条件;返回稳定岗位 ID、标题、城市、办公点与薪资(若有),不含全文 JD。',
+        '在当前招聘目录中搜索仍在招的岗位摘要。默认以用户位置为起点由近到远排序,用户位置未知时才用视野中心;输入关键词、城市和有限结构化条件;返回稳定岗位 ID、标题、城市、办公点与薪资(若有),不含全文 JD。',
       inputSchema: {
         type: 'object',
         properties: {
@@ -210,7 +241,7 @@ export function workTools(deps: WorkToolDeps = {}): AgentTool[] {
         },
       },
       provider: 'work',
-      async call(input: Record<string, unknown>, _ctx: AgentContext): Promise<ToolResult> {
+      async call(input: Record<string, unknown>, ctx: AgentContext): Promise<ToolResult> {
         const query = asString(input.query, MAX_QUERY_CHARS) ?? '';
         const city = asString(input.city, MAX_CITY_CHARS);
         const family = asFamily(input.family);
@@ -220,6 +251,7 @@ export function workTools(deps: WorkToolDeps = {}): AgentTool[] {
           AGENT_PAGE_SIZE_CAP,
           clampPageSize(typeof input.pageSize === 'number' ? input.pageSize : AGENT_PAGE_SIZE_CAP),
         );
+        const origin = agentSearchOrigin(ctx);
         const filters: Record<string, unknown> = { alive: true };
         if (city) filters.city = city;
         if (family) filters.jobTaxonomy = family;
@@ -235,6 +267,7 @@ export function workTools(deps: WorkToolDeps = {}): AgentTool[] {
           filters,
           page: 1,
           pageSize: 50,
+          ...(origin ? { center: origin, sort: 'distance' } : {}),
         });
         const now = nowFn();
         const positionFilters: PositionFilters = {
@@ -254,16 +287,27 @@ export function workTools(deps: WorkToolDeps = {}): AgentTool[] {
             });
           }
           for (const position of listed) {
-            rows.push(toSummary(poi, position));
+            rows.push(toSummary(poi, position, origin));
           }
+        }
+        if (origin) {
+          rows.sort((a, b) => (a.distanceMeters ?? Number.MAX_SAFE_INTEGER) - (b.distanceMeters ?? Number.MAX_SAFE_INTEGER));
         }
         const start = (page - 1) * pageSize;
         const pageRows = rows.slice(start, start + pageSize);
         if (pageRows.length === 0) {
           return textOk('未找到符合条件的在招岗位。');
         }
-        const header = `找到 ${rows.length} 个岗位摘要(第 ${page} 页,每页 ${pageSize},不含全文 JD):`;
-        return textOk([header, ...pageRows.map((row, i) => formatSummary(row, start + i + 1))].join('\n'));
+        const originNote = origin
+          ? `起点 ${origin.lng.toFixed(6)},${origin.lat.toFixed(6)}(用户位置优先,无定位才用视野中心)`
+          : '未提供用户位置或视野,未按距离排序';
+        const header = `找到 ${rows.length} 个岗位摘要(第 ${page} 页,每页 ${pageSize},${originNote},不含全文 JD):`;
+        const images = mergeAgentImages(
+          pageRows.map((row) => (row.logoUrl ? { url: row.logoUrl, alt: row.companyName } : undefined)).filter(
+            (img): img is { url: string; alt: string } => Boolean(img),
+          ),
+        );
+        return textOk([header, ...pageRows.map((row, i) => formatSummary(row, start + i + 1))].join('\n'), images);
       },
     },
     {

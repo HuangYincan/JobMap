@@ -17,6 +17,7 @@
 
 import type { AgentMessage } from "./agent-panel-state.ts";
 import { validateAction } from "./agent/action-schema.ts";
+import { normalizeAgentImages } from "./agent/result-images.ts";
 
 /** 新版会话存储 key(localStorage)。 */
 export const SESSIONS_KEY = "dm.agent-sessions.v1";
@@ -35,6 +36,7 @@ export const MESSAGE_CONTENT_MAX = 4000;
 export const ACTIONS_PER_MESSAGE_CAP = 20;
 export const TOOLS_PER_MESSAGE_CAP = 32;
 export const TOOL_SUMMARY_MAX = 200;
+export const IMAGES_PER_MESSAGE_CAP = 6;
 export const SESSION_ID_MAX = 128;
 /** 标题截断长度(码点)。 */
 export const TITLE_MAX = 12;
@@ -112,11 +114,17 @@ function normalizeMessage(m: AgentMessage): AgentMessage {
   const tools = Array.isArray(m.tools)
     ? m.tools.filter(isValidToolActivity).map(normalizeToolActivity).slice(0, TOOLS_PER_MESSAGE_CAP)
     : [];
+  const images = Array.isArray(m.images)
+    ? normalizeAgentImages(m.images)
+        .filter((img) => img.url.startsWith("https://"))
+        .slice(0, IMAGES_PER_MESSAGE_CAP)
+    : [];
   return {
     role: m.role,
     content: m.content.slice(0, MESSAGE_CONTENT_MAX),
     ...(actions.length > 0 ? { actions } : {}),
     ...(tools.length > 0 ? { tools } : {}),
+    ...(images.length > 0 ? { images } : {}),
   };
 }
 

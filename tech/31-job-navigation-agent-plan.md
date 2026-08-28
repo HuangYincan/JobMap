@@ -325,7 +325,7 @@ WS0 的资料审查只记录已审核的产品接口，不代表已注册适配�
 
 | 工具 | 输入 | 输出边界 |
 |---|---|---|
-| `work__searchPositions` | 关键词、城市、结构化岗位条件、分页上限 | 当前 DB 中的岗位摘要和稳定 ID；不返回全量 JD |
+| `work__searchPositions` | 关键词、城市、结构化岗位条件、分页上限;检索起点=用户位置,未知才用视野中心 | 当前 DB 中的岗位摘要和稳定 ID,由近到远;公司 logo 作可选图片;不返回全量 JD |
 | `work__getPositionDetail` | `positionId` | 单个仍可见岗位的事实、来源、新鲜度和办公点 |
 | `navigation__planRoute` | 已验证起终点、方式、时间条件 | `RoutePlan` 摘要；不返回几何或原始供应商数据 |
 | `navigation__compareCommutes` | 1 个起点、2–5 个候选办公点、方式 | 统一口径的路线矩阵、失败项和质量标签 |

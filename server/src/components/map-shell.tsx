@@ -2744,6 +2744,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         bridge={agentBridgeRef.current}
         lang={lang}
         user={user}
+        userLocation={userLocation}
         open={agentOpen}
         onOpenChange={setAgentOpen}
         onRouteMeta={handleRouteMeta}
@@ -3185,6 +3186,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     bridge={agentBridgeRef.current}
                     lang={lang}
                     user={user}
+                    userLocation={userLocation}
                     embedded
                     onClose={() => setMobileSheet(mobileSheetBack)}
                     onRouteMeta={handleRouteMeta}

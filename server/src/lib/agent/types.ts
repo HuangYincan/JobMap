@@ -16,7 +16,9 @@ export interface AgentTool {
   call(input: Record<string, unknown>, ctx: AgentContext): Promise<ToolResult>;
 }
 
-export type ToolResult = { ok: true; text: string } | { ok: false; error: string };
+export type ToolResult =
+  | { ok: true; text: string; images?: Array<{ url: string; alt?: string }> }
+  | { ok: false; error: string };
 
 export interface AgentContext {
   viewport?: {
@@ -24,6 +26,8 @@ export interface AgentContext {
     zoom: number;
     bounds?: { minLng: number; minLat: number; maxLng: number; maxLat: number };
   };
+  /** 用户定位(GCJ-02);附近/岗位检索起点优先于 viewport.center。 */
+  userLocation?: { lng: number; lat: number };
   lang: 'zh' | 'en';
   requestId: string;
   signal: AbortSignal;
@@ -66,5 +70,6 @@ export type AgentEvent =
       summary?: string;
     }
   | { type: 'action'; action: AgentAction }
+  | { type: 'images'; images: Array<{ url: string; alt?: string }> }
   | { type: 'done'; truncated?: boolean }
   | { type: 'error'; code: string; message: string }; // code/message 均为安全值,不携带实现细节(route 侧收敛)

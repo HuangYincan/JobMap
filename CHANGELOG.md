@@ -4,6 +4,11 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ## 2026-08-28
 
+### Changed
+
+- **Agent 岗位检索以用户位置为起点。** `/api/agent/chat` 每条请求可带 `userLocation`;`work__searchPositions` 按用户位置由近到远排序,未知时才回退视野中心。系统提示与 `builtin__viewport` 明确区分用户位置与视野中心,避免把相机中心当成人所在地。
+- **Agent 搜索结果图片挂在最终回答气泡下方。** 工具结果中的 https 图(含公司 logo、MCP/地点照片)经 `images` SSE 事件在 `done` 前下发,面板横滑缩略图最多 6 张;不把图片二进制塞进 LLM 上下文。
+
 ### Added
 
 - **求职导航 WS0 契约与离线基线。** 冻结 provider-neutral 导航契约和纯校验（含总长度 36–128 的 opaque `routeId` 格式，以及 `startsAt` 的项目 UTC offset 接受范围），建立 40 条离线 fixture：12 条通勤搜索、10 条岗位比较、10 条面试到达、8 条安全异常；完成高德、腾讯、百度官方路线约束审查及对应 ADR。
