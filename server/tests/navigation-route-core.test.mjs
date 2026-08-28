@@ -8,6 +8,7 @@ import {
 } from '../src/lib/navigation/index.ts';
 import { createEstimateRoutePlan } from '../src/lib/navigation/estimate-provider.ts';
 import {
+  DEFAULT_ROUTE_ARTIFACT_GEOMETRY_POINT_BUDGET,
   createRouteArtifactStore,
   publicRouteArtifact,
 } from '../src/lib/navigation/route-artifacts.ts';
@@ -155,8 +156,10 @@ test('estimate adapter fails closed across coordinate systems', () => {
 test('artifact store is bounded, session-isolated, expiring, and exposes a dedicated public shape', () => {
   let now = NOW;
   const store = createRouteArtifactStore({ capacity: 2, clock: () => now });
+  assert.equal(store.geometryPointBudget, DEFAULT_ROUTE_ARTIFACT_GEOMETRY_POINT_BUDGET);
   assert.equal(store.write(artifact(routeId('a'))).ok, true);
   assert.equal(store.write(artifact(routeId('b'))).ok, true);
+  assert.equal(store.geometryPointCount, 4);
 
   const wrong = store.read(routeId('b'), SESSION_B);
   assert.deepEqual(wrong, { status: 'wrong_session' });
@@ -167,13 +170,66 @@ test('artifact store is bounded, session-isolated, expiring, and exposes a dedic
 
   assert.equal(store.write(artifact(routeId('c'))).ok, true);
   assert.equal(store.size, 2);
+  assert.equal(store.geometryPointCount, 4);
   assert.deepEqual(store.read(routeId('a'), SESSION_A), { status: 'not_found' });
   assert.equal(store.read(routeId('b'), SESSION_A).status, 'ok');
 
   now = Date.parse('2026-08-28T08:10:00.001Z');
   assert.deepEqual(store.read(routeId('b'), SESSION_B), { status: 'wrong_session' });
   assert.deepEqual(store.read(routeId('b'), SESSION_A), { status: 'expired' });
+  assert.equal(store.geometryPointCount, 2);
   assert.deepEqual(store.read(routeId('b'), SESSION_A), { status: 'not_found' });
+});
+
+test('artifact store enforces aggregate geometry-point budget without destructive rejected writes', () => {
+  const point = { lng: 120.15, lat: 30.25 };
+  const geometry = (count) => Array.from({ length: count }, () => ({ ...point }));
+  const store = createRouteArtifactStore({
+    capacity: 10,
+    geometryPointBudget: 5,
+    clock: () => NOW,
+  });
+
+  assert.equal(store.write(artifact(routeId('a'), SESSION_A, { geometry: geometry(2) })).ok, true);
+  assert.equal(store.write(artifact(routeId('b'), SESSION_A, { geometry: geometry(3) })).ok, true);
+  assert.equal(store.size, 2);
+  assert.equal(store.geometryPointCount, 5);
+
+  // The new entry fits only after evicting the oldest entry.
+  assert.equal(store.write(artifact(routeId('c'), SESSION_A, { geometry: geometry(2) })).ok, true);
+  assert.deepEqual(store.read(routeId('a'), SESSION_A), { status: 'not_found' });
+  assert.equal(store.read(routeId('b'), SESSION_A).status, 'ok');
+  assert.equal(store.read(routeId('c'), SESSION_A).status, 'ok');
+  assert.equal(store.geometryPointCount, 5);
+
+  // Duplicate detection happens before budget eviction.
+  assert.deepEqual(
+    store.write(artifact(routeId('b'), SESSION_A, { geometry: geometry(2) })),
+    { ok: false, reason: 'duplicate' },
+  );
+  assert.equal(store.size, 2);
+  assert.equal(store.geometryPointCount, 5);
+
+  // A single artifact over budget is rejected without evicting valid entries.
+  assert.deepEqual(
+    store.write(artifact(routeId('d'), SESSION_A, { geometry: geometry(6) })),
+    { ok: false, reason: 'point_budget' },
+  );
+  assert.equal(store.size, 2);
+  assert.equal(store.geometryPointCount, 5);
+  assert.equal(store.read(routeId('b'), SESSION_A).status, 'ok');
+  assert.equal(store.read(routeId('c'), SESSION_A).status, 'ok');
+});
+
+test('artifact geometry budget configuration fails closed', () => {
+  assert.throws(
+    () => createRouteArtifactStore({ geometryPointBudget: 1 }),
+    /geometry point budget/,
+  );
+  assert.throws(
+    () => createRouteArtifactStore({ geometryPointBudget: Number.POSITIVE_INFINITY }),
+    /geometry point budget/,
+  );
 });
 
 test('artifact reads distinguish malformed, missing session, and not found without geometry leakage', () => {

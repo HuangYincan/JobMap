@@ -241,9 +241,12 @@ favicon.im 解决的是「生成了 URL 但国内被墙」,但很多公司 logo 
 
 WS0 已实现导航契约、纯校验、离线 fixture 和供应商约束审查；WS1 已实现
 `route-provider.ts`、`route-service.ts`、`estimate-provider.ts`、会话指纹与有界
-`route-artifacts.ts`，以及两个 `no-store` navigation route handler。provider 成功结果只有在
-身份、数值、TTL、坐标系、geometry 点数/范围和起终点偏差通过后，才由服务端 CSPRNG 签发
-`routeId` 并写入会话隔离 artifact；estimate 始终没有 ID 或 geometry。
+`route-artifacts.ts`，以及两个 `no-store` navigation route handler。artifact store 同时限制
+1,000 entries 与 50,000 aggregate geometry points；单条超预算拒绝，写入导致超预算时淘汰最老
+entry。provider 成功结果只有在身份、数值、TTL、坐标系、geometry 点数/范围和起终点偏差通过
+后，才由服务端 CSPRNG 签发 `routeId` 并写入会话隔离 artifact；estimate 始终没有 ID 或
+geometry。独立 navigation cookie 为 host-only、HttpOnly、SameSite=Lax、`Path=/api`，供后续
+Agent API 与 route handlers 共享；navigation 错误 JSON 遵循顶层 `{ code, message, retryable }`。
 
 生产构造器仍注册零个 live provider，正常规划结果只是明确标注的直线估算；没有真实道路路线、
 实时路况或供应商 arrival-by 能力。Agent 工具、analytics persistence 和前端路线 UI 均未实现。

@@ -9,7 +9,8 @@ The platform is implemented and runs on `dev`: an importer Python package with d
 
 The WS0 job-navigation contracts and WS1 route core are implemented under `server/src/lib/navigation/`.
 WS1 adds the small `RouteProvider` injection seam, validated `RouteService`, explicit straight-line estimate
-adapter, bounded process-local route-artifact store, navigation-session fingerprinting, and tested HTTP boundary.
+adapter, process-local route-artifact store bounded by both 1,000 entries and 50,000 aggregate geometry points,
+navigation-session fingerprinting, and a tested HTTP boundary.
 Production registers no live route provider: `POST /api/navigation/routes/plan` therefore returns a labeled
 `estimate` with no geometry or `routeId`; no real road route, live traffic, or provider arrival-by capability is
 claimed. `GET /api/navigation/routes/[routeId]` only returns an unexpired provider artifact to the same
@@ -53,7 +54,7 @@ WS0/WS1 job-navigation foundation (implemented)
   -> pure server-side validation
   -> RouteService timeout/abort/result validation
   -> explicit estimate fallback (no geometry or routeId)
-  -> bounded, session-fingerprinted provider artifacts
+  -> entry/geometry-budget-bounded, session-fingerprinted provider artifacts
 ```
 
 ### Canonical Data vs Map Overlay
@@ -92,7 +93,7 @@ An import pipeline is `fetch/receive -> validate -> normalize -> provenance -> i
 
 ## API Contract
 
-The API is implemented and tested. Current routes include `/api/pois` (list, with `bounds`/`filters` spatial clip), `/api/pois/[id]`, `/api/pois/domain-local` (Hangzhou `hz_pois` ILIKE + tier LOD), `/api/search`, `/api/suggest`, `/api/modes`, `/api/filter-options`, `/api/auth/*`, `/api/me/*` (account-scoped: search history, saved places, applications, notifications), `POST /api/navigation/routes/plan`, and `GET /api/navigation/routes/[routeId]`. Navigation responses are always `no-store`; planning JSON is bounded; the dedicated HttpOnly/SameSite=Lax navigation cookie has a narrow route path and only its SHA-256 fingerprint reaches the bounded artifact store. The broader typed contract is in [14-api-contract.md](14-api-contract.md). The contract guarantees:
+The API is implemented and tested. Current routes include `/api/pois` (list, with `bounds`/`filters` spatial clip), `/api/pois/[id]`, `/api/pois/domain-local` (Hangzhou `hz_pois` ILIKE + tier LOD), `/api/search`, `/api/suggest`, `/api/modes`, `/api/filter-options`, `/api/auth/*`, `/api/me/*` (account-scoped: search history, saved places, applications, notifications), `POST /api/navigation/routes/plan`, and `GET /api/navigation/routes/[routeId]`. Navigation responses are always `no-store`; planning JSON is bounded; the dedicated host-only HttpOnly/SameSite=Lax navigation cookie uses `Path=/api`, so the upcoming Agent route and navigation route handlers can share it without sending it to page/static requests. Only its SHA-256 fingerprint reaches the dual-bounded artifact store. The broader typed contract is in [14-api-contract.md](14-api-contract.md). The contract guarantees:
 
 - identity and map authorization before data access;
 - schema validation, bounded pagination/cursors, strict bbox/radius parsing, and parameterized queries;

@@ -55,7 +55,8 @@
    已建立恰好 40 条基线，分布为 12/10/10/8；路线供应商审查记录和阶段性 ADR 已完成。
 7. **WS1 路线可信地基。** `route-provider.ts`、`route-service.ts`、`estimate-provider.ts`、
    `route-artifacts.ts`、navigation session/HTTP runtime 和两个 navigation route handler 已实现；
-   provider fake、超时/中止、降级、geometry、TTL、容量、会话隔离和 API 错误矩阵均有本地测试。
+   provider fake、超时/中止、降级、geometry、TTL、entry/aggregate-point 双容量、会话隔离和
+   API 错误矩阵均有本地测试。
 
 ### 2.2 尚未实现
 
@@ -267,8 +268,9 @@ type RoutePlan = ProviderRoutePlan | EstimateRoutePlan;
 2. 只有 `provider_route` 结果需要路线引用；WS1 在服务端通过 CSPRNG 生成匹配
    `^rte_[a-f0-9]{32,124}$` 的不可猜测、会话绑定 `routeId`（总长度 36–128 字符，上限 128）。
    WS0 当前只校验格式，不生成 ID；
-   `estimate` 不生成 `routeId`。路线 artifact 只在有硬容量/TTL 的进程内存中短暂保存，不做
-   DB、文件或 analytics 持久化。
+   `estimate` 不生成 `routeId`。路线 artifact 只在进程内存中短暂保存，默认同时限制 1,000
+   entries 与 50,000 aggregate geometry points，并受 TTL 约束；单条超过点预算会拒绝，累计
+   超预算则淘汰最老 entry。不做 DB、文件或 analytics 持久化。
 3. Agent 工具只拿到 `RoutePlan` 摘要；只有 `provider_route` 摘要可带 `routeId`，LLM 不接触
    polyline。
 4. 新增受控动作候选：`showRoute { routeId }`。`validateAction` 只接受格式合法的 ID；前端再从
@@ -382,10 +384,10 @@ server/src/lib/navigation/
 ├── validation.ts            # 已实现：纯校验
 ├── route-provider.ts        # 已实现：provider-neutral 接口与封闭结果/错误
 ├── route-service.ts         # 已实现：超时/中止、校验、降级、CSPRNG ID
-├── route-artifacts.ts       # 已实现：有界进程内存、会话指纹、TTL、读取授权
+├── route-artifacts.ts       # 已实现：entry/点预算双上限、会话指纹、TTL、读取授权
 ├── estimate-provider.ts     # 已实现：复用 commute/haversine 的显式估算
-├── navigation-session.ts    # 已实现：独立 CSPRNG cookie 与不可逆指纹
-├── route-http.ts            # 已实现：有界 JSON、no-store、HTTP 错误映射
+├── navigation-session.ts    # 已实现：Path=/api 的独立 CSPRNG cookie 与不可逆指纹
+├── route-http.ts            # 已实现：有界 JSON、no-store、顶层 RouteError/HTTP 映射
 ├── route-runtime.ts         # 已实现：共享进程 store；生产零 live provider
 ├── compare.ts               # 未实现：通勤矩阵与可解释约束比较
 └── providers/               # 未实现：经人工确认后再决定的供应商适配器
@@ -573,7 +575,7 @@ git diff --check
 | 风险 | 控制 |
 |---|---|
 | 路线 API 产品权限、条款或配额不满足 | 人工确认供应商产品权限、调用顺序、条款、配额、缓存/展示与商业授权完成前，不选择、注册、配置或调用真实路线供应商；estimate 显式降级；不绕过限制 |
-| 通勤筛选产生大量路线请求 | DB/空间粗筛、Top-K、并发/超时预算、短 TTL 会话缓存、部分结果返回 |
+| 通勤筛选产生大量路线请求 | DB/空间粗筛、Top-K、并发/超时预算、短 TTL 会话缓存、artifact entry/geometry-point 双预算、部分结果返回 |
 | LLM 幻觉路线或岗位 | 域工具只读真实 DB；LLM 不接触几何；动作 ID 白名单；来源/新鲜度可见 |
 | 精确位置和出行轨迹泄露 | 起点默认瞬时处理；artifact 会话绑定并过期；事件不记录地址/坐标/polyline |
 | 不同供应商坐标和字段不一致 | provider 声明坐标系/能力；归一化与固定点测试；不支持字段显示缺失 |

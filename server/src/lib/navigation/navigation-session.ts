@@ -1,7 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 
 export const NAVIGATION_SESSION_COOKIE = 'dm_navigation_session';
-export const NAVIGATION_SESSION_COOKIE_PATH = '/api/navigation/routes';
+// Host-only and API-scoped: shared by /api/agent/chat and route handlers,
+// without being sent to page/static requests.
+export const NAVIGATION_SESSION_COOKIE_PATH = '/api';
 export const NAVIGATION_SESSION_COOKIE_MAX_AGE_SECONDS = 4 * 60 * 60;
 export const NAVIGATION_SESSION_TOKEN_PATTERN = /^nav_[a-f0-9]{64}$/;
 

@@ -6,6 +6,7 @@ import type { RouteArtifact } from './types.ts';
 import { parseRouteArtifact } from './validation.ts';
 
 export const DEFAULT_ROUTE_ARTIFACT_CAPACITY = 1_000;
+export const DEFAULT_ROUTE_ARTIFACT_GEOMETRY_POINT_BUDGET = 50_000;
 export const NAVIGATION_SESSION_FINGERPRINT_PATTERN = /^[a-f0-9]{64}$/;
 
 export type PublicRouteArtifact = Omit<RouteArtifact, 'sessionId'>;
@@ -20,7 +21,7 @@ export type RouteArtifactReadResult =
 
 export type RouteArtifactWriteResult =
   | { ok: true }
-  | { ok: false; reason: 'invalid' | 'expired' | 'duplicate' };
+  | { ok: false; reason: 'invalid' | 'expired' | 'duplicate' | 'point_budget' };
 
 export interface RouteArtifactReader {
   read(routeId: unknown, sessionFingerprint: string | null): RouteArtifactReadResult;
@@ -28,12 +29,15 @@ export interface RouteArtifactReader {
 
 export interface RouteArtifactStore extends RouteArtifactReader {
   readonly size: number;
+  readonly geometryPointCount: number;
+  readonly geometryPointBudget: number;
   write(candidate: unknown): RouteArtifactWriteResult;
   clearExpired(): number;
 }
 
 export interface RouteArtifactStoreOptions {
   capacity?: number;
+  geometryPointBudget?: number;
   clock?: () => number;
 }
 
@@ -57,8 +61,9 @@ export function publicRouteArtifact(artifact: RouteArtifact): PublicRouteArtifac
 }
 
 /**
- * Process-local, fixed-capacity artifact store. Reads never extend TTL, and an
- * unauthorized read never mutates the owning session's entry.
+ * Process-local store with entry-count and aggregate geometry-point ceilings.
+ * Reads never extend TTL, and an unauthorized read never mutates the owning
+ * session's entry.
  */
 export function createRouteArtifactStore(
   options: RouteArtifactStoreOptions = {},
@@ -67,16 +72,35 @@ export function createRouteArtifactStore(
   if (!Number.isInteger(capacity) || capacity < 1) {
     throw new RangeError('route artifact capacity must be a positive integer');
   }
+  const geometryPointBudget =
+    options.geometryPointBudget ??
+    DEFAULT_ROUTE_ARTIFACT_GEOMETRY_POINT_BUDGET;
+  if (
+    !Number.isSafeInteger(geometryPointBudget) ||
+    geometryPointBudget < 2
+  ) {
+    throw new RangeError(
+      'route artifact geometry point budget must be an integer of at least 2',
+    );
+  }
   const clock = options.clock ?? Date.now;
   const entries = new Map<string, RouteArtifact>();
+  let geometryPointCount = 0;
+
+  const deleteEntry = (id: string): boolean => {
+    const artifact = entries.get(id);
+    if (!artifact) return false;
+    entries.delete(id);
+    geometryPointCount -= artifact.geometry.length;
+    return true;
+  };
 
   const clearExpired = (): number => {
     const now = clock();
     let removed = 0;
     for (const [id, artifact] of entries) {
       if (Date.parse(artifact.expiresAt) <= now) {
-        entries.delete(id);
-        removed += 1;
+        if (deleteEntry(id)) removed += 1;
       }
     }
     return removed;
@@ -85,6 +109,14 @@ export function createRouteArtifactStore(
   return {
     get size() {
       return entries.size;
+    },
+
+    get geometryPointCount() {
+      return geometryPointCount;
+    },
+
+    get geometryPointBudget() {
+      return geometryPointBudget;
     },
 
     clearExpired,
@@ -106,12 +138,20 @@ export function createRouteArtifactStore(
       if (entries.has(parsed.value.routeId)) {
         return { ok: false, reason: 'duplicate' };
       }
-      while (entries.size >= capacity) {
+      const points = parsed.value.geometry.length;
+      if (points > geometryPointBudget) {
+        return { ok: false, reason: 'point_budget' };
+      }
+      while (
+        entries.size >= capacity ||
+        geometryPointCount + points > geometryPointBudget
+      ) {
         const oldest = entries.keys().next().value;
         if (oldest === undefined) break;
-        entries.delete(oldest);
+        deleteEntry(oldest);
       }
       entries.set(parsed.value.routeId, cloneArtifact(parsed.value));
+      geometryPointCount += points;
       return { ok: true };
     },
 
@@ -136,7 +176,7 @@ export function createRouteArtifactStore(
         return { status: 'wrong_session' };
       }
       if (Date.parse(artifact.expiresAt) <= clock()) {
-        entries.delete(routeId);
+        deleteEntry(routeId);
         return { status: 'expired' };
       }
       return { status: 'ok', artifact: publicRouteArtifact(artifact) };

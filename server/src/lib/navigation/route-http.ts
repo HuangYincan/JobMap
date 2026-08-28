@@ -62,7 +62,7 @@ function jsonResponse(
 }
 
 function errorResponse(error: RouteError, setCookie?: string): Response {
-  return jsonResponse({ error }, ROUTE_ERROR_STATUS[error.code], setCookie);
+  return jsonResponse(error, ROUTE_ERROR_STATUS[error.code], setCookie);
 }
 
 function planResponse(
@@ -139,7 +139,7 @@ export async function handleNavigationArtifactRequest(
       return errorResponse(createRouteError('INVALID_REQUEST'));
     case 'unauthorized':
       return jsonResponse(
-        { error: createRouteError('UNAUTHORIZED') },
+        createRouteError('UNAUTHORIZED'),
         401,
       );
     case 'not_found':

@@ -18,6 +18,18 @@ All public GETs below send `Cache-Control: public, max-age=30, stale-while-reval
 
 `pageSize` is clamped to 50. `filters` is JSON. `bounds` is `minLng,minLat,maxLng,maxLat` and **filters** the list (it is not only a sort origin).
 
+## Navigation (`/api/navigation/routes/*`)
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/navigation/routes/plan` | Bounded JSON `RouteRequest` → validated `RoutePlan`. Production has no live provider, so the normal result is an explicit `estimate` without geometry/`routeId`. |
+| GET | `/api/navigation/routes/:routeId` | Returns only the unexpired public provider artifact for the same navigation session; public shape excludes the internal session fingerprint. |
+
+Both responses are `Cache-Control: no-store`. The separate host-only HttpOnly/SameSite=Lax navigation cookie
+uses `Path=/api`, allowing the upcoming `/api/agent/chat` integration and route handlers to share one session
+without sending the token to page/static requests. The process-local artifact store is bounded by entry count and
+aggregate geometry points; it does not persist provider raw responses.
+
 ## Account (`/api/me/*`, `/api/auth/*`)
 
 Cookie session. Guests get 401, never a fabricated list.
@@ -33,4 +45,6 @@ Cookie session. Guests get 401, never a fabricated list.
 
 ## Errors
 
-JSON `{ code, message }`. Typical codes: `BAD_REQUEST`, `INVALID_MODE`, `NOT_FOUND`, `UNAUTHORIZED`, `NOT_PERSISTABLE`.
+JSON `{ code, message }`. Navigation errors use the same top-level shape and add stable `retryable`; they are not
+wrapped in an `error` property. Typical codes: `BAD_REQUEST`, `INVALID_MODE`, `INVALID_REQUEST`, `NOT_FOUND`,
+`UNAUTHORIZED`, `FORBIDDEN`, `EXPIRED`, `RATE_LIMITED`, `TIMEOUT`, `NOT_PERSISTABLE`.

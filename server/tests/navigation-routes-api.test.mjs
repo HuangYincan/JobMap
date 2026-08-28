@@ -102,7 +102,9 @@ test('POST production-default behavior returns an explicit estimate and a harden
   assert.match(setCookie, /HttpOnly/i);
   assert.match(setCookie, /SameSite=Lax/i);
   assert.match(setCookie, /Secure/i);
-  assert.match(setCookie, new RegExp(`Path=${NAVIGATION_SESSION_COOKIE_PATH.replaceAll('/', '\\/')}`));
+  assert.equal(NAVIGATION_SESSION_COOKIE_PATH, '/api');
+  assert.match(setCookie, /(?:^|;\s*)Path=\/api(?:;|$)/);
+  assert.doesNotMatch(setCookie, /(?:^|;\s*)Domain=/i);
   assert.match(setCookie, new RegExp(`Max-Age=${NAVIGATION_SESSION_COOKIE_MAX_AGE_SECONDS}`));
   assert.doesNotMatch(JSON.stringify(body), new RegExp(TOKEN_A));
   assert.equal(store.size, 0);
@@ -131,7 +133,7 @@ test('POST rejects bad and oversized JSON with no-store responses', async (t) =>
     const response = await handleNavigationPlanRequest(postRequest('{not-json'), { service });
     assert.equal(response.status, 400);
     assert.equal(response.headers.get('cache-control'), 'no-store');
-    assert.equal((await response.json()).error.code, 'INVALID_REQUEST');
+    assert.deepEqual(await response.json(), createRouteError('INVALID_REQUEST'));
   });
   await t.test('oversized JSON', async () => {
     const response = await handleNavigationPlanRequest(
@@ -140,7 +142,7 @@ test('POST rejects bad and oversized JSON with no-store responses', async (t) =>
     );
     assert.equal(response.status, 400);
     assert.equal(response.headers.get('cache-control'), 'no-store');
-    assert.equal((await response.json()).error.code, 'INVALID_REQUEST');
+    assert.deepEqual(await response.json(), createRouteError('INVALID_REQUEST'));
   });
 });
 
@@ -163,8 +165,9 @@ test('POST maps stable service failures without exposing provider details', asyn
       assert.equal(response.status, status);
       assert.equal(response.headers.get('cache-control'), 'no-store');
       const body = await response.json();
-      assert.deepEqual(body, { error: createRouteError(code) });
+      assert.deepEqual(body, createRouteError(code));
       assert.equal(Object.hasOwn(body, 'geometry'), false);
+      assert.equal(Object.hasOwn(body, 'error'), false);
     });
   }
 });
@@ -177,23 +180,24 @@ test('GET distinguishes malformed, missing session, not found, wrong session, ex
   await t.test('malformed', async () => {
     const response = await handleNavigationArtifactRequest(cookieRequest(TOKEN_A), 'route-guess', { store });
     assert.equal(response.status, 400);
-    assert.equal((await response.json()).error.code, 'INVALID_REQUEST');
+    assert.deepEqual(await response.json(), createRouteError('INVALID_REQUEST'));
   });
   await t.test('missing session', async () => {
     const response = await handleNavigationArtifactRequest(cookieRequest(), routeId('a'), { store });
     assert.equal(response.status, 401);
-    assert.equal((await response.json()).error.code, 'UNAUTHORIZED');
+    assert.deepEqual(await response.json(), createRouteError('UNAUTHORIZED'));
   });
   await t.test('not found', async () => {
     const response = await handleNavigationArtifactRequest(cookieRequest(TOKEN_A), routeId('b'), { store });
     assert.equal(response.status, 404);
-    assert.equal((await response.json()).error.code, 'NOT_FOUND');
+    assert.deepEqual(await response.json(), createRouteError('NOT_FOUND'));
   });
   await t.test('wrong session', async () => {
     const response = await handleNavigationArtifactRequest(cookieRequest(TOKEN_B), routeId('a'), { store });
     assert.equal(response.status, 403);
     const body = await response.json();
-    assert.equal(body.error.code, 'FORBIDDEN');
+    assert.equal(body.code, 'FORBIDDEN');
+    assert.equal(Object.hasOwn(body, 'error'), false);
     assert.equal(Object.hasOwn(body, 'geometry'), false);
   });
   await t.test('same session', async () => {
@@ -210,7 +214,8 @@ test('GET distinguishes malformed, missing session, not found, wrong session, ex
     const response = await handleNavigationArtifactRequest(cookieRequest(TOKEN_A), routeId('a'), { store });
     assert.equal(response.status, 410);
     const body = await response.json();
-    assert.equal(body.error.code, 'EXPIRED');
+    assert.equal(body.code, 'EXPIRED');
+    assert.equal(Object.hasOwn(body, 'error'), false);
     assert.equal(Object.hasOwn(body, 'geometry'), false);
   });
 });
