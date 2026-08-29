@@ -2,6 +2,24 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-29: 视野内 POI 很多时地图卡顿(HTML Marker DOM overlay)
+
+**症状**:POI 全量加载后,视野里点一多,平移/缩放明显掉帧。加载逻辑没有少加载。
+
+**根因**:每个 POI 是高德 `AMap.Marker` + HTML `content`(独立 DOM,徽章还有
+box-shadow 和 `<img>`)。海量 DOM overlay 在相机变化时由浏览器逐个重排;
+同时 `zoomchange` 上挂了全量 `sync()`(缩放动画中连续 O(n) 扫描)。腾讯侧已是
+WebGL `MultiMarker`;高德官方对 1000+ 点要求 `LabelMarker`/`MassMarks`。
+
+**修复**:AMap 有 `icon` 的点改走共享 `LabelsLayer`+`LabelMarker`(WebGL);
+数据仍全量入池。坐标/可见性未变不触碰 marker;`zoomchange` 不再全量 sync。
+
+**相关文件**:`amap-engine.ts`、`map-markers.ts`、`use-poi-map.ts`、`types.ts`、
+`tencent-engine.ts`(hide ≠ 外部删除)、测试与 `tech/23-map-engines.md`。
+
+**验证**:隔离套件 130/130;`typecheck` / `docs-check` / `git diff --check` 通过;
+工作模式 AMap zoom 9/8 实测 0 个 `.amap-marker` / `.dm-badge`。
+
 ## 2026-08-29: 工作模式从加载起就没有 POI(空目录被当成功缓存)
 
 **症状**:工作模式一进页地图上没有任何公司点,列表也是 0;不是点击后消失,刷新同一标签仍空。

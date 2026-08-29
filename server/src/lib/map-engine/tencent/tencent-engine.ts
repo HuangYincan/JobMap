@@ -914,6 +914,13 @@ class TencentView implements MapView {
         // (icon 才是 TMap 渲染形态),仅无 icon 的纯 HTML 形态才告警降级
         if (!opts.icon) this.warnMultiMarkerContentDegraded();
       },
+      setIcon: (icon) => {
+        opts.icon = icon;
+        geometry.styleId = this.resolveMultiStyle(opts);
+        if (this.multiAttached.has(id) && this.multiMarker) {
+          raw.updateGeometries([geometry]);
+        }
+      },
       // zIndex 实例级(overlay layer rank):批量化下取全部 marker 的 max——
       // 选中(100)/高亮(80)整体抬升图层、普通(10/20)回落;共享实例内单
       // marker 精确层级不可达(SDK 无 per-geometry zIndex),max 为近似。
@@ -958,12 +965,11 @@ class TencentView implements MapView {
         }
         this.multiClickBindings = rest;
       },
-      // 挂载探测(契约 isAttached):multiAttached = 适配层可判定的挂载状态
-      // (setVisible(true) add / setVisible(false)·remove 摘单 geometry 维护。
-      // 共享实例外部摘除同一 geometry 时本簿记不同步——multiGeometries/
-      // multiAttached 是适配层自身可见的权威挂载状态,经 wrapper 的摘挂
-      // 都经本簿记,外部直碰共享实例的场景无法探测,按保守真值返回)
-      isAttached: () => this.multiAttached.has(id),
+      // 挂载探测(契约 isAttached):仍在 geometry 登记簿 = 未被 remove,与
+      // 可见性无关。hide 只从图层摘 geometry(multiAttached),实例仍由适配层
+      // 持有——若把 hide 当成 isAttached=false,控制器 sync() 会在每次
+      // moveend 把隐藏点整批销毁重建(聚合/筛选下的卡顿源)。
+      isAttached: () => this.multiGeometries.has(id),
       // 移除 = 摘除该 geometry + 清理全部簿记(共享实例保留挂图)
       remove: () => {
         if (!this.multiMarker) return;

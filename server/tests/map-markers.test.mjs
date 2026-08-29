@@ -38,8 +38,8 @@ test('控制器源码契约:无 AMap 专属 API 直调(引擎无关化门禁)', 
   const src = readFileSync(new URL('../src/lib/map-markers.ts', import.meta.url), 'utf8');
   assert.doesNotMatch(
     src,
-    /setzIndex|setIcon\(|new this\.amap|\.show\(\)|\.hide\(\)|setMap\(null\)/,
-    'map-markers.ts 不得出现 AMap 专属方法名/构造(适配层才有权出现)'
+    /setzIndex|new this\.amap|\.show\(\)|\.hide\(\)|setMap\(null\)/,
+    'map-markers.ts 不得出现 AMap 专属方法名/构造(契约 wrapper.setIcon 允许)'
   );
   assert.equal((src.match(/\.raw\b/g) ?? []).length, 2, 'raw 直读仅限两处逃生舱');
 });

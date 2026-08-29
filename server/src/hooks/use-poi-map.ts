@@ -11,7 +11,8 @@
 // - accentColor 变化 → 重建控制器并应用新配色
 // - 每次 applySync 末尾调用 controller.sync()：厂商侧被外部删除的
 //   marker 自动补回（完整性扫描，幂等 O(n)）
-// - 无状态变化（视图事件）时也触发 sync：外部删除不经过 React 状态
+// - moveend 时也触发 sync：外部删除不经过 React 状态。不挂 zoomchange
+//   （缩放动画中连续触发，海量点 O(n) 扫描会卡）
 // ============================================================
 
 import { useEffect, useRef } from 'react';
@@ -155,18 +156,15 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
     );
 
     // 无状态变化时的完整性补回:marker 可能被厂商侧外部删除而 React 状态
-    // 不感知(引用不变不触发任何 effect)——挂视图轻量事件触发 sync,幂等
-    // O(n);卸载/切视图时由解绑函数停止,销毁后不再触发。
+    // 不感知(引用不变不触发任何 effect)——挂 moveend 触发 sync,幂等。
+    // 不挂 zoomchange:该事件在缩放动画中连续触发,对海量点做 O(n)
+    // isAttached 扫描会卡顿;缩放结束通常伴随 moveend。
     const offMove = view.on('moveend', () => {
-      controller.sync();
-    });
-    const offZoom = view.on('zoomchange', () => {
       controller.sync();
     });
 
     return () => {
       offMove();
-      offZoom();
       controller.destroy();
       controllerRef.current = null;
     };

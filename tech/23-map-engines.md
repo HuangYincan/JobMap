@@ -918,9 +918,13 @@ marker/mapgl 模块,均为实包抓取)
 
 | 引擎 | 公司 POI 渲染路径 | CORS 需求 | 结论 |
 |---|---|---|---|
-| AMap | DOM 渲染,`<img>` content 徽章 | 无需 | 不受影响 |
+| AMap | **icon 路径**(LabelsLayer + LabelMarker WebGL 纹理;data URI SVG) | data URI 本地,无远程裸 URL | 与 TMap 同预检/内联 |
 | TMap | **icon 路径**(MultiMarker MarkerStyle `src` → GPU 纹理) | **必须** | favicon.im 恒失败 |
 | BMapGL | 公司 POI 走 content 路径(msTarget DOM 覆盖层) | 无需(当前) | 不受影响 |
+
+> 2026-08-29 起 AMap 公司/领域 POI 改走 LabelsLayer+LabelMarker(与 TMap 同
+> 预检/内联 data URI),不再用 HTML `<img>` content 徽章。下表 ws-e 叙述保留
+> 当时现场;现行路径见文末「AMap 海量 POI 走 LabelsLayer」。
 
 - AMap/BMapGL content 的 HTML `<img>` 有内联 onerror 候选链(favicon.im →
   icon.horse);TMap 走 icon 路径,Sdk 自己的 onerror 处理失败,**候选链在
@@ -1843,3 +1847,40 @@ mu.addEventListener("animation_start", C); mu.addEventListener("animation_end", 
 - 测试:1465 通过 / 0 失败 / 2 skip(新增 4 条 ws-l 单测:事件恢复 pane /
   rAF 按帧重算 + 停摆自终止 / 无 rAF 同步收敛 / destroy 终止);
   typecheck / docs-check / git diff --check 通过。
+
+## 2026-08-29: AMap 海量 POI 走 LabelsLayer(WebGL),不再用 HTML Marker
+
+**卡顿点(已核实,不是加载逻辑):**每个 POI 曾是 `AMap.Marker` + HTML `content`
+(独立 DOM overlay,招聘徽章含 `box-shadow` / `<img>`)。视野内数百上千点时,
+平移/缩放每帧都要重排这些 DOM——高德官方明确:1000+ 点必须用 `LabelMarker` /
+`MassMarks`,不要用普通 Marker。腾讯侧早已走共享 `MultiMarker`(WebGL 纹理);
+高德主引擎仍走 DOM,所以「点很多就卡、别的地图海量点也不卡」。
+
+**仍全量加载:**catalog / marker 池 / 可见集语义不变。只换绘制路径。
+
+**改动:**
+
+- `createMarker({ icon })` → 共享 `AMap.LabelsLayer`(collision:false,重叠点全画)
+  + `LabelMarker`;无 icon 的 content(距离手柄等少量 DOM)仍用 `AMap.Marker`。
+- 控制器对 AMap+Tencent 传契约 `icon`(data URI SVG / 内联 logo,与原 TMap 路径
+  相同,CORS-clean);选中/高亮走新增的 `MapMarker.setIcon`。
+- `setPOIs` 坐标未变不 `setPosition`;`setVisiblePOIs` 可见性未变不 `show/hide`。
+- `usePOIMap` 不再在 `zoomchange` 上做 O(n) `sync()`(该事件在缩放动画中连续
+  触发);完整性补回只挂 `moveend`。
+- TMap `isAttached` 改为「仍在 geometry 登记簿」,hide 不再被 sync 当成外部删除
+  而整批重建。
+
+**验证(2026-08-29,本机):**
+
+- 引擎/控制器隔离套件(marker + AMap/Tencent 相关)**130/130** 通过;
+  `npm run typecheck` 通过。
+- `make docs-check` + `git diff --check` 通过。
+- 浏览器(localhost:3000,工作模式,默认 AMap):zoom 9「30 个结果」与 zoom 8
+  城市聚合均 **`.amap-marker` = 0、`.dm-badge` = 0、1 canvas** —— 点在
+  WebGL,不再是 DOM overlay。
+- 全量 `npm test` 曾出现 1 条无关 flake:`tests/db.test.mjs`
+  `queryPublicRead fails a delayed injected read within its timeout`(时序)。
+
+**未改:**catalog / marker 池 / 可见集语义不变(zoom > 8 仍显示全部公司,
+zoom ≤ 8 城市聚合不变)。百度仍走 HTML content。徽章外观改为与腾讯同款
+SVG 纹理(白底圆角描边 / emoji 或内联 logo),不再用 HTML `box-shadow`。

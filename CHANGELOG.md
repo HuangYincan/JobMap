@@ -10,6 +10,11 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
+- **视野内 POI 很多时地图卡顿。** 卡顿点是高德 HTML `AMap.Marker` DOM overlay
+  (加 `zoomchange` 全量 sync),不是少加载。AMap 公司/领域点改走共享
+  `LabelsLayer`+`LabelMarker`(WebGL,与腾讯 MultiMarker 同预检/内联 data URI);
+  坐标/可见性未变不触碰实例;`zoomchange` 不再 O(n) sync。catalog 仍全量入池。
+  工作模式 AMap zoom 9/8 实测 0 个 `.amap-marker` / `.dm-badge`。
 - **Agent 提问因会话历史超过 20 条而 400。** 本地会话 cap 是 30 条,发送时还会再追加本轮 user,旧接口只收 20 条且缺 `content` 即拒。客户端与路由统一 `toAgentChatMessages`:补齐 content、丢掉前导 assistant、从最旧裁到 30 条且首条为 user。
 - **工作模式首屏 POI 全空。** `loadServerCatalog` 在 DB 故障时曾把 `null` 折叠成 `[]`,公开接口按成功空结果缓存 30s;工作模式默认 `sort=distance`,首屏只打这一档缓存,地图从加载起就没有点。现与 domain-local 对齐:故障 → 502 `work_db_unavailable` 且 `no-store`;无裁剪的 0 条也不再写入公开缓存;前端 `unavailable` 不得 `setCatalog([])`。
 

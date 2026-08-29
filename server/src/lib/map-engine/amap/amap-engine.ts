@@ -10,7 +10,8 @@
 //   geocodeAddress(行为零改动,仅输出形态适配契约);
 // - 视图方法:setCenter/setZoom/setPitch/setRotation(animateMs→AMap 动画参数)/
 //   setBounds(内部构造 AMap.Bounds)/flyTo(setZoomAndCenter 同款)/
-//   on(注册返回解绑)/createMarker(offset 元组→AMap.Pixel)/createCircle/
+//   on(注册返回解绑)/createMarker(icon → 共享 LabelsLayer+LabelMarker WebGL
+//   海量点;无 icon 的 content → DOM Marker)/createCircle/
 //   createPolyline(AMap.Polyline path=[[lng,lat]…], strokeStyle dashed|solid)/
 //   addControl('scale'→AMap.Scale,位置/偏移 duck-type 透传)/destroy。
 //
@@ -79,6 +80,14 @@ class AmapView implements MapView {
   private scaleWaiters: Array<(control: any) => void> = [];
   private scaleEnsuring = false;
   private scaleOpts: ScaleControlOptions = {};
+  /**
+   * 海量 POI 共享标注层(AMap.LabelsLayer,WebGL)。有 icon 的 createMarker
+   * 走 LabelMarker 入本层;无 icon 的 content(距离手柄等少量 DOM)仍用 Marker。
+   * collision:false —— 重叠点全部绘制,不因避让把 POI 藏掉。
+   */
+  private labelsLayer: any = null;
+  /** 本视图登记的 LabelMarker(isAttached / destroy 清扫) */
+  private readonly labelMarkers = new Set<any>();
 
   constructor(AMap: any, map: any, style: MapStyleId, engine: MapEngine) {
     this.AMap = AMap;
@@ -194,12 +203,146 @@ class AmapView implements MapView {
     };
   }
 
+  /**
+   * icon 存在且 SDK 有 LabelsLayer/LabelMarker → WebGL 海量点(官方:1000+
+   * 点不要用普通 Marker)。无 icon 的 content(距离手柄等)仍走 DOM Marker。
+   * 老 SDK 无 LabelsLayer → 回退 DOM Marker+Icon(行为与改前 icon 路径一致)。
+   */
   createMarker(opts: MapMarkerOptions): MapMarker {
+    if (opts.icon && this.canUseLabelLayer()) return this.createLabelMarker(opts);
+    return this.createDomMarker(opts);
+  }
+
+  private canUseLabelLayer(): boolean {
+    return (
+      typeof this.AMap?.LabelsLayer === 'function' && typeof this.AMap?.LabelMarker === 'function'
+    );
+  }
+
+  private ensureLabelsLayer(): any {
+    if (this.labelsLayer) return this.labelsLayer;
+    const layer = new this.AMap.LabelsLayer({
+      zooms: [2, 20],
+      zIndex: 120,
+      collision: false,
+      allowCollision: false,
+    });
+    this.map.add(layer);
+    this.labelsLayer = layer;
+    return layer;
+  }
+
+  /** 契约 icon+offset → LabelMarker icon(image/size/anchor=-offset)。 */
+  private toLabelIcon(opts: Pick<MapMarkerOptions, 'icon' | 'offset'>): Record<string, unknown> {
+    const icon = opts.icon!;
+    const spec: Record<string, unknown> = { image: icon.src };
+    if (icon.size) spec.size = icon.size;
+    if (opts.offset) spec.anchor = [-opts.offset[0], -opts.offset[1]];
+    return spec;
+  }
+
+  private createLabelMarker(opts: MapMarkerOptions): MapMarker {
+    const layer = this.ensureLabelsLayer();
+    const markerOpts: Record<string, unknown> = {
+      position: [opts.position.lng, opts.position.lat],
+      icon: this.toLabelIcon(opts),
+    };
+    if (opts.zIndex !== undefined) markerOpts.zIndex = opts.zIndex;
+    const marker = new this.AMap.LabelMarker(markerOpts);
+    layer.add(marker);
+    this.labelMarkers.add(marker);
+    if (typeof opts.onClick === 'function') {
+      marker.on?.('click', () => opts.onClick?.());
+    }
+    let visible = true;
+    const wrapped: MapMarker = {
+      raw: marker,
+      setPosition: (p: LngLat) => {
+        marker.setPosition([p.lng, p.lat]);
+      },
+      setIcon: (icon) => {
+        if (typeof marker.setIcon !== 'function') {
+          console.warn('[map-engine] AMap LabelMarker 无 setIcon,忽略图标');
+          return;
+        }
+        marker.setIcon(this.toLabelIcon({ icon, offset: opts.offset }));
+      },
+      setZIndex: (z: number) => {
+        if (typeof marker.setzIndex === 'function') marker.setzIndex(z);
+        else if (typeof marker.setZIndex === 'function') marker.setZIndex(z);
+        else console.warn('[map-engine] AMap LabelMarker 无 setzIndex,忽略 zIndex');
+      },
+      setVisible: (v: boolean) => {
+        if (v === visible) return;
+        visible = v;
+        if (v) {
+          if (typeof marker.show === 'function') marker.show();
+          else if (typeof marker.setVisible === 'function') marker.setVisible(true);
+        } else if (typeof marker.hide === 'function') {
+          marker.hide();
+        } else if (typeof marker.setVisible === 'function') {
+          marker.setVisible(false);
+        }
+      },
+      on: (event: 'click', cb: () => void) => {
+        if (event !== 'click') return;
+        if (typeof marker.on === 'function') marker.on('click', cb);
+        else console.warn('[map-engine] AMap LabelMarker 无 on,忽略事件注册');
+      },
+      off: (event: 'click', cb?: () => void) => {
+        if (event !== 'click') return;
+        if (typeof marker.off !== 'function') {
+          console.warn('[map-engine] AMap LabelMarker 无 off,忽略解绑');
+          return;
+        }
+        if (cb) marker.off('click', cb);
+      },
+      // hide ≠ 摘层:isAttached 在隐藏期仍为 true,避免 sync() 把隐藏点当外部
+      // 删除整批重建(TMap 旧 multiAttached 语义曾踩过这个坑)。
+      isAttached: () => this.labelMarkers.has(marker),
+      remove: () => {
+        try {
+          layer.remove(marker);
+        } catch {
+          // 层/地图已销毁:忽略
+        }
+        this.labelMarkers.delete(marker);
+      },
+    };
+    return wrapped;
+  }
+
+  private applyDomIcon(marker: any, icon: { src: string; size?: [number, number] }): void {
+    if (typeof marker.setIcon !== 'function') {
+      console.warn('[map-engine] AMap Marker 无 setIcon,忽略图标');
+      return;
+    }
+    if (typeof this.AMap.Icon !== 'function') {
+      console.warn('[map-engine] AMap.Icon 不可用,图标降级');
+      return;
+    }
+    const iconOpts: Record<string, unknown> = { image: icon.src };
+    if (icon.size) {
+      const [w, h] = icon.size;
+      const size = new this.AMap.Size(w, h);
+      iconOpts.size = size;
+      iconOpts.imageSize = size;
+    }
+    try {
+      marker.setIcon(new this.AMap.Icon(iconOpts));
+    } catch (err) {
+      console.warn('[map-engine] AMap Icon 构造失败,图标降级', err);
+    }
+  }
+
+  private createDomMarker(opts: MapMarkerOptions): MapMarker {
     const markerOpts: Record<string, unknown> = {
       position: [opts.position.lng, opts.position.lat],
       map: this.map,
     };
-    if (opts.content !== undefined) markerOpts.content = opts.content;
+    // icon 存在时 HTML content 不写入(避免 DOM 徽章 + Icon 双渲染);海量 POI
+    // 的 fallback(无 LabelsLayer)只走 Icon。距离手柄等少量点无 icon,走 content。
+    if (opts.content !== undefined && !opts.icon) markerOpts.content = opts.content;
     if (opts.offset) markerOpts.offset = new this.AMap.Pixel(opts.offset[0], opts.offset[1]);
     if (opts.zIndex !== undefined) markerOpts.zIndex = opts.zIndex;
     // AMap 专属扩展选项(cursor/bubble 等,契约未含):duck-type 透传,行为保真
@@ -211,26 +354,7 @@ class AmapView implements MapView {
     if (typeof opts.onClick === 'function') {
       marker.on('click', () => opts.onClick?.());
     }
-    // icon 规格(契约)→ AMap.Icon(官方:new AMap.Icon({ size, image, imageSize });
-    // size = 显示尺寸,imageSize = 图片实际尺寸;data URI SVG 两者一致,与旧 buildIcon 同款)
-    if (opts.icon && typeof marker.setIcon === 'function') {
-      if (typeof this.AMap.Icon === 'function') {
-        const iconOpts: Record<string, unknown> = { image: opts.icon.src };
-        if (opts.icon.size) {
-          const [w, h] = opts.icon.size;
-          const size = new this.AMap.Size(w, h);
-          iconOpts.size = size;
-          iconOpts.imageSize = size;
-        }
-        try {
-          marker.setIcon(new this.AMap.Icon(iconOpts));
-        } catch (err) {
-          console.warn('[map-engine] AMap Icon 构造失败,图标降级', err);
-        }
-      } else {
-        console.warn('[map-engine] AMap.Icon 不可用,图标降级');
-      }
-    }
+    if (opts.icon) this.applyDomIcon(marker, opts.icon);
     const wrapped: MapMarker = {
       raw: marker,
       setPosition: (p: LngLat) => {
@@ -238,6 +362,9 @@ class AmapView implements MapView {
       },
       setContent: (html: string) => {
         marker.setContent(html);
+      },
+      setIcon: (icon) => {
+        this.applyDomIcon(marker, icon);
       },
       // 统一大小写语义:AMap 官方小写 setzIndex(适配层兜住大写契约)
       setZIndex: (z: number) => {
@@ -412,6 +539,16 @@ class AmapView implements MapView {
     const waiters = this.scaleWaiters;
     this.scaleWaiters = [];
     for (const w of waiters) w(null);
+    if (this.labelsLayer) {
+      try {
+        this.labelsLayer.clear?.();
+        this.map.remove?.(this.labelsLayer);
+      } catch {
+        // 地图已销毁等场景:忽略
+      }
+      this.labelsLayer = null;
+    }
+    this.labelMarkers.clear();
     try {
       this.map.destroy();
     } catch {

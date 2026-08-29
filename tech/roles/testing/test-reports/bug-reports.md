@@ -5,6 +5,36 @@
 
 ---
 
+## 2026-08-29 — 视野内 POI 很多时地图卡顿(HTML Marker DOM overlay)
+
+**状态:** 已修复(`amap-engine` LabelsLayer + 控制器少触碰 + `usePOIMap` 不再
+`zoomchange` 全量 sync)
+
+### 现象
+
+POI 全量加载后,视野里点一多,平移/缩放明显掉帧。加载逻辑没有少加载;腾讯侧
+同样海量点不卡。
+
+### 根因
+
+每个 POI 是高德 `AMap.Marker` + HTML `content`(独立 DOM overlay)。相机变化时
+浏览器逐个重排;`zoomchange` 在缩放动画中连续触发全量 `sync()`。腾讯已是
+WebGL `MultiMarker`;高德官方对 1000+ 点要求 `LabelMarker` / `MassMarks`。
+
+### 修复
+
+- AMap 有 `icon` 的点改走共享 `LabelsLayer`+`LabelMarker`;catalog 仍全量入池。
+- 坐标/可见性未变不触碰 marker;`zoomchange` 不再全量 sync。
+- TMap `isAttached` = 仍在 geometry 登记簿,hide ≠ 外部删除。
+
+### 回归
+
+- 引擎/控制器隔离套件 130/130;`npm run typecheck`、`make docs-check`、
+  `git diff --check` 通过。
+- 浏览器(工作模式 AMap):zoom 9 / zoom 8 均为 `.amap-marker` = 0、
+  `.dm-badge` = 0、1 canvas。
+- 细则:`tech/16-bug-fixes.md`、`tech/23-map-engines.md`。
+
 ## 2026-08-18 — WS-U6:公司 POI 与地图 POI 混合展示(视口批次跨模式污染)
 
 **状态:** 已修复(`fix/poi-mixing`,`batchMatchesCurrentMode` 模式守卫)

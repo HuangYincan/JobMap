@@ -200,6 +200,70 @@ function makeNs() {
   }
   ns.Marker = FakeMarker;
 
+  class FakeLabelMarker {
+    constructor(opts) {
+      this.opts = opts;
+      this.listeners = {};
+      this.position = opts.position;
+      this.icon = opts.icon ?? null;
+      this._visible = opts.visible !== false;
+      this.lastZIndex = opts.zIndex;
+      this._layer = null;
+      ns.instances.labelMarkers ||= [];
+      ns.instances.labelMarkers.push(this);
+    }
+    on(e, cb) {
+      (this.listeners[e] ||= []).push(cb);
+    }
+    off(e, cb) {
+      this.listeners[e] = (this.listeners[e] || []).filter((f) => f !== cb);
+    }
+    setPosition(p) {
+      this.position = p;
+    }
+    setIcon(icon) {
+      this.icon = icon;
+    }
+    setzIndex(z) {
+      this.lastZIndex = z;
+    }
+    show() {
+      this._visible = true;
+    }
+    hide() {
+      this._visible = false;
+    }
+    trigger(e, payload) {
+      for (const cb of this.listeners[e] || []) cb(payload);
+    }
+  }
+  ns.LabelMarker = FakeLabelMarker;
+
+  class FakeLabelsLayer {
+    constructor(opts) {
+      this.opts = opts;
+      this.items = [];
+      ns.instances.labelsLayers ||= [];
+      ns.instances.labelsLayers.push(this);
+    }
+    add(m) {
+      const list = Array.isArray(m) ? m : [m];
+      for (const item of list) {
+        if (!this.items.includes(item)) this.items.push(item);
+        item._layer = this;
+      }
+    }
+    remove(m) {
+      const list = Array.isArray(m) ? m : [m];
+      this.items = this.items.filter((x) => !list.includes(x));
+      for (const item of list) item._layer = null;
+    }
+    clear() {
+      this.items = [];
+    }
+  }
+  ns.LabelsLayer = FakeLabelsLayer;
+
   class FakeCircle {
     constructor(opts) {
       this.opts = opts;
@@ -484,8 +548,59 @@ test('createMarker:duck-type 透传 AMap 专属选项(cursor/bubble,契约未含
   view.destroy();
 });
 
-test('createMarker:icon 规格 → AMap.Icon(size/image/imageSize) + setIcon', async () => {
+test('createMarker:icon 规格 → 共享 LabelsLayer + LabelMarker(WebGL 海量点)', async () => {
   const ns = installNs();
+  const view = await createView(ns, 'normal');
+  const wrapper = view.createMarker({
+    position: { lng: 120.1, lat: 30.2 },
+    icon: { src: 'data:image/svg+xml;utf8,<svg/>', size: [22, 30] },
+    offset: [-11, -30],
+  });
+  assert.equal(ns.instances.markers, undefined, '有 icon 不走 DOM Marker');
+  const layers = ns.instances.labelsLayers;
+  assert.equal(layers.length, 1, '共享一层 LabelsLayer');
+  assert.equal(layers[0].opts.collision, false, '重叠点全部绘制,不避让隐藏');
+  assert.equal(layers[0].opts.allowCollision, false);
+  assert.equal(ns.instances.map.added[0], layers[0], '层已 map.add');
+  const raw = ns.instances.labelMarkers[0];
+  assert.deepEqual(raw.opts.position, [120.1, 30.2]);
+  assert.equal(raw.icon.image, 'data:image/svg+xml;utf8,<svg/>');
+  assert.deepEqual(raw.icon.size, [22, 30]);
+  assert.deepEqual(raw.icon.anchor, [11, 30], 'anchor = -offset(图钉底尖)');
+  assert.equal(layers[0].items[0], raw, 'LabelMarker 在层上');
+  wrapper.setIcon({ src: 'data:image/svg+xml;utf8,<svg2/>', size: [22, 30] });
+  assert.equal(raw.icon.image, 'data:image/svg+xml;utf8,<svg2/>', '契约 setIcon 换图');
+  wrapper.remove();
+  assert.equal(layers[0].items.length, 0, 'remove 从层摘除');
+  view.destroy();
+  assert.equal(layers[0].items.length, 0, 'destroy 清层');
+});
+
+test('createMarker:icon 无 size → image only;同层复用;content+icon 仍走 LabelMarker', async () => {
+  const ns = installNs();
+  const view = await createView(ns, 'normal');
+  view.createMarker({ position: { lng: 120.1, lat: 30.2 }, icon: { src: 'x.png' } });
+  const icon = ns.instances.labelMarkers[0].icon;
+  assert.equal(icon.image, 'x.png');
+  assert.equal(icon.size, undefined, '无 size 不注入(AMap 用图片自然尺寸)');
+  assert.equal(icon.anchor, undefined, '无 offset → 默认锚点');
+  view.createMarker({
+    position: { lng: 120.2, lat: 30.3 },
+    content: '<div class="dm-badge">x</div>',
+    icon: { src: 'y.png', size: [40, 40] },
+    offset: [-20, -20],
+  });
+  assert.equal(ns.instances.labelsLayers.length, 1, '两枚 icon 共享一层');
+  assert.equal(ns.instances.labelMarkers.length, 2);
+  assert.equal(ns.instances.markers, undefined, 'content+icon 不落 DOM Marker');
+  assert.deepEqual(ns.instances.labelMarkers[1].icon.anchor, [20, 20], '徽章中心锚点');
+  view.destroy();
+});
+
+test('createMarker:无 LabelsLayer 时 icon 回退 DOM Marker+AMap.Icon', async () => {
+  const ns = installNs();
+  delete ns.LabelsLayer;
+  delete ns.LabelMarker;
   const view = await createView(ns, 'normal');
   view.createMarker({
     position: { lng: 120.1, lat: 30.2 },
@@ -493,22 +608,9 @@ test('createMarker:icon 规格 → AMap.Icon(size/image/imageSize) + setIcon', a
   });
   const raw = ns.instances.markers[0];
   const icon = raw.icon;
-  assert.ok(icon instanceof ns.Icon, 'setIcon 收到 AMap.Icon 实例');
-  assert.equal(icon.opts.image, 'data:image/svg+xml;utf8,<svg/>', 'image = icon.src');
-  assert.ok(icon.opts.size instanceof ns.Size, 'size 转 AMap.Size');
-  assert.equal(icon.opts.size.width, 22);
-  assert.equal(icon.opts.size.height, 30);
-  assert.equal(icon.opts.imageSize, icon.opts.size, 'data URI SVG:imageSize = size(与旧 buildIcon 同款)');
-  view.destroy();
-});
-
-test('createMarker:icon 无 size → 仅 image(AMap 用图片自然尺寸)', async () => {
-  const ns = installNs();
-  const view = await createView(ns, 'normal');
-  view.createMarker({ position: { lng: 120.1, lat: 30.2 }, icon: { src: 'x.png' } });
-  const icon = ns.instances.markers[0].icon;
-  assert.equal(icon.opts.image, 'x.png');
-  assert.equal(icon.opts.size, undefined, '无 size 不注入 size/imageSize');
+  assert.ok(icon instanceof ns.Icon, '回退路径 setIcon 收到 AMap.Icon');
+  assert.equal(icon.opts.image, 'data:image/svg+xml;utf8,<svg/>');
+  assert.equal(ns.instances.labelMarkers, undefined);
   view.destroy();
 });
 

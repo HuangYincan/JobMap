@@ -14,7 +14,7 @@
 //   未验证 → 徽章 dataURL + 后台预检触发;ok → fetch 字节内联进徽章 SVG
 //   (ws-k:SVG-as-image 不抓远程子资源,必须内联);fail → 徽章且不重试;
 //   成功升级路径(下次重建真 logo);data URL / 缺 logo → 徽章或直通零预检;
-//   AMap 引擎零变化(不设 icon)。
+//   AMap 与 TMap 同走 GL icon(dataURL 徽章;LabelMarker 纹理须 CORS-clean)。
 // ============================================================
 
 import test from 'node:test';
@@ -475,7 +475,7 @@ test('TMap icon:data URL logo / 缺 logo → 本地直通零预检', async () =>
   }
 });
 
-test('TMap icon:AMap 引擎零变化(不设 icon,content 徽章路径不变)', async () => {
+test('GL icon:AMap 与 TMap 同走 dataURL 徽章(不把未验证远程 URL 当纹理)', async () => {
   const image = installImageMock();
   try {
     const calls = [];
@@ -495,9 +495,11 @@ test('TMap icon:AMap 引擎零变化(不设 icon,content 徽章路径不变)', a
     };
     const c = createPOIMarkerController(view, {});
     c.setPOIs([makeRecruitPoi('p1', REMOTE)]);
-    assert.equal(calls[0].icon, undefined, 'AMap 不设 icon(HTML content 徽章路径)');
-    assert.ok(String(calls[0].content).includes('dm-badge'), 'content 徽章仍在');
-    assert.equal(image.calls.length, 0, 'AMap 路径不触发预检');
+    assert.ok(calls[0].icon, 'AMap 公司 POI 走契约 icon(LabelMarker WebGL)');
+    assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '未验证 → 徽章 dataURL');
+    assert.notEqual(calls[0].icon.src, REMOTE, '远程未验证绝不直接作纹理 src');
+    assert.ok(String(calls[0].content).includes('dm-badge'), 'content 仍传(HTML 降级)');
+    assert.equal(image.calls.length, 1, 'AMap 路径同样触发预检');
     c.destroy();
   } finally {
     image.restore();

@@ -50,7 +50,7 @@ test.afterEach(() => {
 
 // ---- (a) setPOIs 跨批次只增不删 ----
 
-test('视口批次切换:离开视口的 id 不再被 remove,只 add 新 + 更新存量', () => {
+test('池增长:新增 POI 进池只 add,已有实例不重建(marker 源 = catalog 语义)', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
@@ -90,6 +90,23 @@ test('池增长:新增 POI 进池只 add,已有实例不重建(marker 源 = cata
     assert.equal(c.getMarkerByPOIId(id), marker, `${id} 实例同一性不变(只 add,不重建)`);
   }
   assert.ok(c.getMarkerByPOIId('hz-3'), '新进池的 hz-3 已 add');
+  c.destroy();
+});
+
+test('setPOIs 存量:坐标未变不 setPosition(平移后海量点零触碰)', () => {
+  installAMapMock({ immediate: true });
+  const map = new MockMap();
+  const c = createPOIMarkerController(map, { color: '#007AFF' });
+  c.setPOIs(HZ);
+  const hz1 = c.getMarkerByPOIId('hz-1');
+  assert.equal(hz1.contractCalls.setPosition, 0, '首次 add 不走 setPosition');
+  c.setPOIs(HZ);
+  assert.equal(hz1.contractCalls.setPosition, 0, '同坐标重放零触碰');
+  c.setPOIs([
+    makePoi('hz-1', '浙江省发展规划研究院', 120.2, 30.3),
+    HZ[1],
+  ]);
+  assert.equal(hz1.contractCalls.setPosition, 1, '坐标变化才 setPosition');
   c.destroy();
 });
 
@@ -265,15 +282,16 @@ test('highlight 走契约:setContent 重渲染 + setZIndex(80);选中清高亮(�
   c.destroy();
 });
 
-test('domain 图钉:创建即 content(data URI),选中重渲染,无 icon 直调', () => {
+test('domain 图钉:content + GL icon 同传,选中重渲染 content', () => {
   installAMapMock({ immediate: true });
   const map = new MockMap();
   const c = createPOIMarkerController(map, { color: '#007AFF' });
   c.setPOIs([makeDomainPoi('d-1', '西湖', 120.15, 30.27)]);
   const raw = c.getMarkerByPOIId('d-1');
   assert.ok(raw, 'domain pin 已建');
-  assert.equal(raw.opts.icon, undefined, '创建不传 icon 规格(统一 content 路径)');
-  assert.match(raw.opts.content, /data:image\/svg\+xml/, 'content = SVG data URI 图钉');
+  assert.ok(raw.opts.icon?.src?.startsWith('data:image/svg+xml'), 'AMap 走 GL icon(LabelMarker)');
+  assert.deepEqual(raw.opts.icon.size, [32, 40], '图钉 32×40');
+  assert.match(raw.opts.content, /data:image\/svg\+xml/, 'content = SVG data URI 图钉(HTML 降级)');
   assert.match(raw.opts.content, /width="32"/, 'normal 状态 32px 基准');
   assert.equal(raw.opts.offset[0], -16, '锚点 offset 恒定 [-16,-40](图钉底尖)');
   assert.equal(raw.opts.offset[1], -40);
@@ -312,9 +330,9 @@ test('setPOIs 存量更新走契约 setPosition 对象形态(非数组)', () => 
   const c = createPOIMarkerController(map, { color: '#007AFF' });
   c.setPOIs(HZ);
   const hz1 = c.getMarkerByPOIId('hz-1');
-  c.setPOIs(HZ); // 存量路径 → setPosition
-  assert.equal(hz1.contractCalls.setPosition, 1, '存量 marker 经 wrapper.setPosition');
-  assert.deepEqual(hz1.position, [120.099, 30.299], '适配层收对象形态转厂商数组');
+  c.setPOIs([makePoi('hz-1', '浙江省发展规划研究院', 120.2, 30.3), HZ[1]]);
+  assert.equal(hz1.contractCalls.setPosition, 1, '坐标变化才 wrapper.setPosition');
+  assert.deepEqual(hz1.position, [120.2, 30.3], '适配层收对象形态转厂商数组');
   c.destroy();
 });
 

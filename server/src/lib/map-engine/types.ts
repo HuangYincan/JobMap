@@ -75,6 +75,12 @@ export interface MapMarker {
   raw: unknown;
   setPosition(p: LngLat): void;
   setContent?(html: string): void;
+  /**
+   * 图标规格(与 create 时 `opts.icon` 同形)。WebGL 海量点(AMap LabelMarker /
+   * TMap MultiMarker)以 icon 为渲染主机制,选中/高亮换图走本方法;HTML
+   * content 引擎可省略。
+   */
+  setIcon?(icon: { src: string; size?: [number, number] }): void;
   remove(): void;
   /** 统一 zIndex 语义:AMap 小写 setzIndex / TMap·BMapGL 大写 setZIndex 差异由适配层吸收 */
   setZIndex?(z: number): void;

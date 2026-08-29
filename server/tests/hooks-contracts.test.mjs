@@ -250,11 +250,15 @@ test('usePOIMap:applySync 末尾 sync() + 视图事件自动补回(外部删除�
     setPoisAt < setVisibleAt && setVisibleAt < syncAt,
     '顺序:setPOIs → setVisiblePOIs → … → sync(末尾)'
   );
-  // 无状态变化自动补回:view 契约事件(moveend/zoomchange)触发 sync,
-  // cleanup 用解绑函数停止(销毁后不再触发)
+  // 无状态变化自动补回:moveend 触发 sync(zoomchange 在缩放动画中连续
+  // 触发,海量点 O(n) 扫描会卡,不再挂)。cleanup 用解绑函数停止。
   assert.match(hook, /view\.on\('moveend', \(\) => \{\s*controller\.sync\(\);\s*\}\);/);
-  assert.match(hook, /view\.on\('zoomchange', \(\) => \{\s*controller\.sync\(\);\s*\}\);/);
-  assert.match(hook, /offMove\(\);\s*offZoom\(\);\s*controller\.destroy\(\);/);
+  assert.doesNotMatch(
+    hook,
+    /view\.on\('zoomchange', \(\) => \{\s*controller\.sync\(\);\s*\}\);/,
+    'zoomchange 不得触发全量 sync'
+  );
+  assert.match(hook, /offMove\(\);\s*controller\.destroy\(\);/);
 });
 
 // ---- 2026-08-25 f-lod-pool:工作 LOD 取消 + domain 池/可见集拆分 + 空池守卫 ----

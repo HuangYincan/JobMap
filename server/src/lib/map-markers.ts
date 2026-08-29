@@ -7,15 +7,14 @@
 //   （logoUrl 图片优先，缺失/加载失败回退 emoji）
 // - 支持选中（放大 + 强调环）与高亮（轻微放大 + 透明度）
 // - 全部能力经 MapMarker 契约包装（view.createMarker 返回）：setPosition /
-//   setContent / setZIndex / setVisible / on / off / remove——控制器不直碰
+//   setContent / setIcon / setZIndex / setVisible / on / off / remove——控制器不直碰
 //   厂商裸实例（raw 仅保留给 getMarkerByPOIId 探针；createCityClusterMarker
 //   返回清理句柄，map-shell duck-type 依赖）；引擎差异（AMap 小写 z-index 命名、
 //   TMap·BMapGL 大写 setZIndex、BMapGL addEventListener 等）由适配层吸收
-// - 公司 POI 在 TMap 引擎下另传契约 icon(logoUrl → MarkerStyle 真图标)——
-//   MultiMarker 无 HTML 渲染,content 徽章降级默认点(ws-a,bug 6)
-// - 状态样式 = content 重渲染 + zIndex：offset 恒为基准锚点（图钉底尖 /
-//   徽章中心），状态尺寸经内容负 margin 补偿，锚点跨状态零漂移（契约无
-//   setOffset，删除 AMap.Pixel 依赖）；无浏览器环境（node 测试）下静默降级
+// - 公司/领域 POI 在 AMap+TMap 走契约 icon(WebGL:AMap LabelsLayer+LabelMarker /
+//   TMap MultiMarker);远程 logo 须 CORS 预检+内联。百度仍走 HTML content。
+// - 状态样式 = content 重渲染 + GL setIcon + zIndex：offset 恒为基准锚点（图钉底尖 /
+//   徽章中心），HTML 状态尺寸经内容负 margin 补偿；无浏览器环境（node 测试）下静默降级
 //
 // marker 生命周期(b2 修订,2026-08-25 f-lod-pool):「只添加一次、跨视口/跨
 // zoom 保留实例」。
@@ -647,8 +646,13 @@ export function cityClusterBadgeIcon(
 function badgeCleanupHandle(wrapper: MapMarker): any {
   const raw = wrapper.raw;
   const spreadable = raw as Record<string, unknown> | undefined;
-  if (typeof spreadable?.setMap === 'function' && typeof wrapper.remove === 'function') {
-    return { ...spreadable, setMap: () => wrapper.remove(), remove: () => wrapper.remove() };
+  const base =
+    spreadable && typeof spreadable === 'object' ? { ...spreadable } : {};
+  // 始终收敛到契约 remove:AMap LabelMarker 挂在 LabelsLayer 上,raw 往往
+  // 无 setMap;map-shell 按 setMap/remove 分派摘除,必须打到 wrapper.remove
+  // (layer.remove),否则跨 zoom 分桶旧徽章泄漏。
+  if (typeof wrapper.remove === 'function') {
+    return { ...base, setMap: () => wrapper.remove(), remove: () => wrapper.remove() };
   }
   return raw;
 }
@@ -722,6 +726,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
    * zoom tier(LOD)/聚合边界只切换 show/hide,不销毁重建。
    */
   private visibleIds: Set<string> | null = null;
+  /** poiId → 最近一次应用到 wrapper 的可见性(差分,避免海量 show/hide 空转)。 */
+  private appliedVisible = new Map<string, boolean>();
   private selectedId: string | null = null;
   private highlightedId: string | null = null;
   private destroyed = false;
@@ -760,6 +766,68 @@ class POIMarkerControllerImpl implements POIMarkerController {
 
   // -- 标记创建 / 删除 ------------------------------------------------------
 
+  /** AMap LabelMarker / TMap MultiMarker 以 icon(WebGL 纹理)为渲染主机制。 */
+  private usesGlIcon(): boolean {
+    const id = this.view?.engine?.id;
+    return id === 'amap' || id === 'tencent';
+  }
+
+  /**
+   * WebGL 纹理图标:data URI SVG 徽章(远程 logo 须内联,CORS)。
+   * 与 HTML content 并存——GL 引擎以 icon 渲染,content 给 HTML 引擎/降级。
+   */
+  private resolveGlIcon(
+    poi: POI,
+    state: MarkerState
+  ): {
+    icon: { src: string; size: [number, number] };
+    asyncUpgradeUrl: string | null;
+    iconKind: 'emoji' | 'logo' | 'local' | null;
+  } {
+    if (isRecruitmentPOI(poi)) {
+      const badgeUri = svgToDataUri(
+        recruitmentBadgeSVG(poi.company.logo, undefined, this.color, state)
+      );
+      const { src, toPreflight } = resolveTMapIconSrc(
+        poi.company.logoUrl,
+        poi.company.careerUrl,
+        badgeUri
+      );
+      for (const url of toPreflight) preflightRemoteIcon(url);
+      if (isRemoteIconUrl(src)) {
+        const dataUri = remoteIconDataUriCache.get(src);
+        if (dataUri) {
+          return {
+            icon: {
+              src: badgeWithRemoteIcon(dataUri, this.color, state),
+              size: [BADGE_BASE, BADGE_BASE],
+            },
+            asyncUpgradeUrl: null,
+            iconKind: 'logo',
+          };
+        }
+        return {
+          icon: { src: badgeUri, size: [BADGE_BASE, BADGE_BASE] },
+          asyncUpgradeUrl: src,
+          iconKind: 'emoji',
+        };
+      }
+      return {
+        icon: { src, size: [BADGE_BASE, BADGE_BASE] },
+        asyncUpgradeUrl: null,
+        iconKind: src === badgeUri ? 'emoji' : 'local',
+      };
+    }
+    return {
+      icon: {
+        src: svgToDataUri(domainPinSVG(this.color, state)),
+        size: [PIN_BASE.w, PIN_BASE.h],
+      },
+      asyncUpgradeUrl: null,
+      iconKind: null,
+    };
+  }
+
   /** 为单个 POI 创建并添加 Marker（经 view.createMarker，全程持契约包装）。 */
   private addMarker(poi: POI): void {
     if (!this.isReady() || !this.view) return;
@@ -788,67 +856,16 @@ class POIMarkerControllerImpl implements POIMarkerController {
     } else {
       markerOpts.content = domainPinContent(this.color, state);
     }
-    // TMap icon 真图标（2026-08-22 ws-a bug 6 + ws-c bug 3/4）：仅 TMap 引擎——
-    // MultiMarker 无 HTML 渲染，content 一律降级默认点 → 全部 POI 改以契约
-    // icon 渲染（图钉 SVG / 公司 logo / emoji 徽章数据图），视觉与 AMap 同
-    // 语言；AMap/BMapGL content 可渲染，保持 HTML 徽章形态，零影响
-    // （engine 门控，不触碰其他引擎行为）。
-    // - 远程 src 必须经 icon-preflight CORS 预检（ws-e，bug 1/7）：TMap GL
-    //   把 icon 当 GPU 纹理加载，纹理必须 CORS-clean——favicon.im 无 CORS 头
-    //   恒失败 + SDK 刷「Image加载失败」；data URI / 已预检 ok → 真 src；
-    // - 候选链（ws-c，bug 4「腾讯 poi 不带 icon」）：logoUrl 预检失败 →
-    //   依次试 faviconCandidatesFromUrl(careerUrl) 候选（icon.horse 实测
-    //   CORS 合规），首个通过预检者作 src；全败/未定 → 本地 dataURL 徽章
-    //   （纯本地加载必成功 → 零报错零默认样式），未预检 URL 后台预检、失败
-    //   记忆化，成功后下次重建/LOD 重渲染自然升级真 logo。
-    // - 锚点（ws-c，bug 3）：契约 offset 经引擎侧 resolveTMapMarkerAnchor
-    //   转 MarkerStyle anchor = -offset——图钉底尖/徽章中心钉死地理点，
-    //   与 AMap/Baidu 逐像素一致（旧公式整图上移左上，即「坐标偏移」根因）。
-    if (this.view.engine?.id === 'tencent') {
-      if (isRecruitmentPOI(poi)) {
-        const badgeUri = svgToDataUri(
-          recruitmentBadgeSVG(poi.company.logo, undefined, this.color, state)
-        );
-        const { src, toPreflight } = resolveTMapIconSrc(
-          poi.company.logoUrl,
-          poi.company.careerUrl,
-          badgeUri
-        );
-        for (const url of toPreflight) preflightRemoteIcon(url);
-        // 升级保留徽章形态（ws-k,2026-08-23）：远程真 logo（icon.horse 等，
-        // 预检 ok）→ 包进徽章 SVG 再作纹理——白底 + 边框 + 居中 logo，与
-        // AMap/Baidu 同视觉语言；裸 URL 直接作纹理 = 无边框裸 favicon（boss
-        // 实测用户报「只有 icon 没有边框」）。本地 dataURL（emoji 徽章/图钉）
-        // 路径不变，零额外开销。
-        // SVG-as-image 不抓取子资源（ws-k 真机实测,tech/23 §7）→ 远程字节
-        // 必须 fetch → base64 dataURI 内联；fetch 未决期间先挂 emoji 徽章,
-        // 完成后 upgradeMarkerIcon 原地重建升级（缓存记忆化,同 URL 只
-        // fetch 一次;失败保持 emoji,下次重建重试）。
-        if (isRemoteIconUrl(src)) {
-          const dataUri = remoteIconDataUriCache.get(src);
-          if (dataUri) {
-            markerOpts.icon = {
-              src: badgeWithRemoteIcon(dataUri, this.color, state),
-              size: [BADGE_BASE, BADGE_BASE],
-            };
-            iconKind = 'logo';
-          } else {
-            markerOpts.icon = { src: badgeUri, size: [BADGE_BASE, BADGE_BASE] };
-            asyncUpgradeUrl = src;
-            iconKind = 'emoji';
-          }
-        } else {
-          markerOpts.icon = { src, size: [BADGE_BASE, BADGE_BASE] };
-          // 回退徽章 = emoji(可升级);本地直通 logoUrl(data: URL)= 本地(无升级路径)
-          iconKind = src === badgeUri ? 'emoji' : 'local';
-        }
-      } else {
-        // Domain 图钉：dataURL SVG 与 AMap 同视觉（32×40 底尖），本地直通零预检
-        markerOpts.icon = {
-          src: svgToDataUri(domainPinSVG(this.color, state)),
-          size: [PIN_BASE.w, PIN_BASE.h],
-        };
-      }
+    // WebGL 海量点(2026-08-29):AMap LabelMarker / TMap MultiMarker 以契约
+    // icon 为渲染主机制(data URI SVG / 内联 logo),不再为每个 POI 挂 HTML
+    // DOM overlay——视野内上千点时 DOM Marker 平移缩放必卡。远程 src 仍须
+    // icon-preflight CORS 预检(WebGL 纹理);候选链/内联升级与原 TMap 路径相同。
+    // 百度仍走 content HTML(已验证路径,本批不改)。
+    if (this.usesGlIcon()) {
+      const graphic = this.resolveGlIcon(poi, state);
+      markerOpts.icon = graphic.icon;
+      asyncUpgradeUrl = graphic.asyncUpgradeUrl;
+      iconKind = graphic.iconKind;
     }
 
     let wrapper: MapMarker;
@@ -950,10 +967,11 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.poiById.delete(id);
     this.markerStates.delete(id);
     this.markerIconKinds.delete(id);
+    this.appliedVisible.delete(id);
     if (marker) this.placed.delete(marker);
   }
 
-  /** 更新已有标记的视觉样式（content 重渲染 + zIndex；offset 恒为基准锚点）。 */
+  /** 更新已有标记的视觉样式（content 重渲染 + GL icon + zIndex；offset 恒为基准锚点）。 */
   private applyStyle(wrapper: MapMarker, poi: POI, state: MarkerState): void {
     if (!wrapper) return;
     if (this.markerStates.get(poi.id) === state) return;
@@ -970,6 +988,9 @@ class POIMarkerControllerImpl implements POIMarkerController {
       );
     } else {
       wrapper.setContent?.(domainPinContent(this.color, state));
+    }
+    if (this.usesGlIcon()) {
+      wrapper.setIcon?.(this.resolveGlIcon(poi, state).icon);
     }
     wrapper.setZIndex?.(this.zIndexFor(state, poi));
   }
@@ -1010,7 +1031,14 @@ class POIMarkerControllerImpl implements POIMarkerController {
     for (const poi of pois) {
       const existing = this.markers.get(poi.id);
       if (existing) {
-        existing.setPosition({ lng: poi.location.lng, lat: poi.location.lat });
+        const prev = this.poiById.get(poi.id);
+        if (
+          !prev ||
+          prev.location.lng !== poi.location.lng ||
+          prev.location.lat !== poi.location.lat
+        ) {
+          existing.setPosition({ lng: poi.location.lng, lat: poi.location.lat });
+        }
         this.poiById.set(poi.id, poi);
         this.applyStyle(
           existing,
@@ -1085,6 +1113,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
   /** 按当前可见集对单个 marker 应用可见性（契约 setVisible；无方法则跳过）。 */
   private applyVisibility(id: string, wrapper: MapMarker): void {
     const visible = this.visibleIds === null || this.visibleIds.has(id);
+    if (this.appliedVisible.get(id) === visible) return;
+    this.appliedVisible.set(id, visible);
     wrapper.setVisible?.(visible);
   }
 
