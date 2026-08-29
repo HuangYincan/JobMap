@@ -2,6 +2,36 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-29: 全国视野深圳/广州等城市聚合点消失
+
+**症状**:工作模式缩到 zoom ≤ 8,珠海/惠州等小城徽章还在,深圳/广州/东莞/佛山
+等密集城的「城市名 N」徽章没有。下钻后个体公司点仍在。数据接口深圳公司
+齐全,不是旧的残缺缓存。
+
+**根因**:2026-08-29 LabelsLayer 改造让 `createMarker({ icon })` 走共享
+`LabelMarker` 层。`createCityClusterMarker` 对三引擎都传了 icon,AMap 城市
+徽章因此和公司 pin 同层。聚合时公司点只 `hide()`,仍占碰撞;一城上百点在
+全国视野叠成几像素,徽章被吃掉。HTML `AMap.Marker` 不参与该碰撞。
+
+**修复**:AMap/百度聚合徽章只传 `content`(独立 DOM);腾讯仍传 icon(MultiMarker
+无 HTML)。公司/领域海量点继续走 LabelsLayer。
+
+**相关文件**:`map-markers.ts`、`tests/city-cluster.test.mjs`、
+`tests/map-engine-amap.test.mjs`。
+
+## 2026-08-29: 公司 POI 点击后 icon 变成 emoji
+
+**症状**:公司点已显示真 logo,点击选中后徽章变成 emoji。
+
+**根因**:选中走 `applyStyle` → `resolveGlIcon` → `setIcon`。真 logo 字节只记在
+全局 LRU(`REMOTE_ICON_DATA_URI_CACHE_MAX` = 128);目录超过 128 家后点选
+cache miss,把已升级的 LabelMarker/MultiMarker 盖回 `recruitmentBadgeSVG`。
+
+**修复**:每个 marker 实例记住已内联的 logo data URI;选中/高亮只换描边,不回
+查全局缓存。AMap LabelMarker icon 补官方 `type:'image'`(setIcon 换肤规格)。
+
+**相关文件**:`map-markers.ts`、`amap-engine.ts`、`tests/icon-preflight.test.mjs`。
+
 ## 2026-08-29: 视野内 POI 很多时地图卡顿(HTML Marker DOM overlay)
 
 **症状**:POI 全量加载后,视野里点一多,平移/缩放明显掉帧。加载逻辑没有少加载。

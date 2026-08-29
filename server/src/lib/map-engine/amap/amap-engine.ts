@@ -232,10 +232,10 @@ class AmapView implements MapView {
     return layer;
   }
 
-  /** 契约 icon+offset → LabelMarker icon(image/size/anchor=-offset)。 */
+  /** 契约 icon+offset → LabelMarker icon(type/image/size/anchor=-offset)。 */
   private toLabelIcon(opts: Pick<MapMarkerOptions, 'icon' | 'offset'>): Record<string, unknown> {
     const icon = opts.icon!;
-    const spec: Record<string, unknown> = { image: icon.src };
+    const spec: Record<string, unknown> = { type: 'image', image: icon.src };
     if (icon.size) spec.size = icon.size;
     if (opts.offset) spec.anchor = [-opts.offset[0], -opts.offset[1]];
     return spec;

@@ -418,94 +418,6 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Noto Sans SC", sans-serif;
 }
 
-.searchBox {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  border-radius: 10px;
-  color: inherit;
-  cursor: text;
-  display: flex;
-  gap: 12px;
-  margin: 8px 0 2px;
-  min-height: 42px;
-  padding: 0 10px;
-  position: relative;
-  text-align: left;
-  white-space: nowrap;
-  transition:
-    padding 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-    background 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.searchBox:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.searchBox svg,
-.mobileSearch svg {
-  flex: 0 0 auto;
-  width: 18px;
-}
-
-/* 「搜索」标签：与 navItem 文本同款，展开态显示、折叠态隐藏（查询非空时不渲染） */
-.searchLabel {
-  color: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  opacity: 0;
-  pointer-events: none;
-  position: absolute;
-  visibility: hidden;
-}
-
-.sidebarOpen .searchLabel {
-  opacity: 1;
-  pointer-events: auto;
-  position: static;
-  visibility: visible;
-}
-
-/* 输入框：折叠态 clip 隐藏；展开态绝对覆盖整行，聚焦或已有查询时显示 */
-.searchBox input,
-.mobileSearch input {
-  background: transparent;
-  border: 0;
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 600;
-  min-width: 0;
-  outline: none;
-  padding: 0;
-  width: 100%;
-}
-
-.searchBox input {
-  inset: 0;
-  opacity: 0;
-  padding: 0 10px 0 40px;
-  position: absolute;
-  transition: opacity 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.searchBox:focus-within input {
-  opacity: 1;
-}
-
-/* 展开态 + 已有查询文本:失焦后输入框也常显(query 非空时 placeholder 不占位、label 不渲染,
-   折叠态不挂 .sidebarOpen,仍只显示图标) */
-.sidebarOpen .searchBox input:not(:placeholder-shown) {
-  opacity: 1;
-}
-
-.searchBox:focus-within .searchLabel {
-  opacity: 0;
-  pointer-events: none;
-  position: absolute;
-  visibility: hidden;
-}
-
-.searchBox input::placeholder,
 .mobileSearch input::placeholder {
   color: var(--muted);
 }
@@ -528,51 +440,6 @@
   visibility: visible;
 }
 
-.sidebar:not(.sidebarOpen) .searchBox {
-  background: transparent;
-  border-color: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  cursor: pointer;
-  display: grid;
-  gap: 0;
-  height: 42px;
-  justify-items: center;
-  align-items: center;
-  margin: 4px 0 0;
-  padding: 0;
-  place-content: center;
-  width: 100%;
-}
-
-.sidebar:not(.sidebarOpen) .searchBox:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: transparent;
-  box-shadow: none;
-}
-
-.sidebar:not(.sidebarOpen) .searchBox svg {
-  grid-area: 1 / 1;
-  width: 18px;
-  height: 18px;
-}
-
-.sidebar:not(.sidebarOpen) .searchBox input {
-  grid-area: 1 / 1;
-  inset: auto;
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  padding: 0;
-  margin: -1px;
-  border: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  pointer-events: none;
-}
-
 .railDivider {
   display: none;
 }
@@ -588,7 +455,6 @@
 
 /* 侧边栏折叠状态下的 tooltip */
 .sidebar:not(.sidebarOpen) .navItem[data-tooltip]:hover::after,
-.sidebar:not(.sidebarOpen) .searchBox[data-tooltip]:hover::after,
 .sidebar:not(.sidebarOpen) .profile[data-tooltip]:hover::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -628,6 +494,7 @@
 }
 
 .sidebarOpen .navList {
+  margin-top: 8px;
   overflow: auto;
 }
 
@@ -654,7 +521,6 @@
   position: relative;
 }
 
-.sidebar:not(.sidebarOpen) .searchBox,
 .sidebar:not(.sidebarOpen) .profile {
   position: relative;
 }

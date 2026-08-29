@@ -5,6 +5,52 @@
 
 ---
 
+## 2026-08-29 — 全国视野深圳/广州等城市聚合点消失
+
+**状态:** 已修复(AMap 聚合徽章改回独立 HTML Marker)
+
+### 现象
+
+zoom ≤ 8 时珠海/惠州等小城徽章还在,深圳/广州/东莞/佛山没有。下钻后个体
+公司点仍在;API 深圳公司齐全。
+
+### 根因
+
+LabelsLayer 改造后 `createCityClusterMarker` 对 AMap 也传了 `icon`,城市徽章
+与 `hide()` 后仍在同层的公司 LabelMarker 碰撞;密集城被吃掉。
+
+### 修复
+
+AMap/百度聚合只传 `content`;腾讯仍传 icon。
+
+### 回归
+
+- `createCityClusterMarker:AMap 走 DOM Marker,不进 LabelsLayer`
+- `createCityClusterMarker: TMap 仍传 icon`
+
+## 2026-08-29 — 公司 POI 点击后 icon 变成 emoji
+
+**状态:** 已修复(实例侧记住内联 logo,选中只换描边)
+
+### 现象
+
+公司点已显示真 logo,点击选中后徽章变成 emoji。
+
+### 根因
+
+`applyStyle` → `resolveGlIcon` → `setIcon`。真 logo 字节只在 128 槽全局 LRU;
+目录超过上限后点选 cache miss,把已升级纹理盖回 `recruitmentBadgeSVG`。
+
+### 修复
+
+`markerLogoDataUris` 按 poi 记住内联 data URI;选中/高亮用
+`badgeWithRemoteIcon(stored, state)`,不回查全局缓存。
+
+### 回归
+
+- `GL icon:点选时内联缓存已清空仍不得把真 logo 盖成 emoji` 先红后绿。
+- 相关套件 85 + typecheck / docs-check 通过。
+
 ## 2026-08-29 — 视野内 POI 很多时地图卡顿(HTML Marker DOM overlay)
 
 **状态:** 已修复(`amap-engine` LabelsLayer + 控制器少触碰 + `usePOIMap` 不再

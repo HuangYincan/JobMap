@@ -433,6 +433,11 @@ test('createCityClusterMarker: 构造契约(位置/中心锚定/点击回调/防
   assert.equal(created[0].opts.bubble, false); // 点击不冒泡到地图(duck-type 透传)
   assert.ok(created[0].opts.content.includes('杭州'));
   assert.ok(created[0].opts.content.includes('15'));
+  assert.equal(
+    created[0].opts.icon,
+    undefined,
+    'AMap 聚合徽章不传 icon:避免进 LabelsLayer 被同城 hide 的公司点吃掉',
+  );
 
   created[0].handlers.click();
   assert.equal(clicks, 1);
@@ -446,4 +451,26 @@ test('createCityClusterMarker: 构造契约(位置/中心锚定/点击回调/防
     },
   };
   assert.equal(createCityClusterMarker(broken, group), null);
+});
+
+test('createCityClusterMarker: TMap 仍传 icon(MultiMarker 无 HTML content)', () => {
+  const created = [];
+  const view = {
+    engine: { namespace: 'TMap', id: 'tencent' },
+    createMarker(opts) {
+      created.push(opts);
+      return { raw: opts, setPosition() {}, setContent() {}, remove() {} };
+    },
+  };
+  const marker = createCityClusterMarker(view, {
+    city: '深圳',
+    count: 111,
+    lng: 114.06,
+    lat: 22.55,
+  });
+  assert.ok(marker);
+  assert.equal(created.length, 1);
+  assert.ok(created[0].content.includes('深圳'));
+  assert.ok(created[0].icon?.src?.startsWith('data:image/svg+xml'), 'TMap 徽章走 SVG 纹理');
+  assert.deepEqual(created[0].icon.size, [CLUSTER_BADGE_SIZE, CLUSTER_BADGE_SIZE]);
 });

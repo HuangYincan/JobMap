@@ -21,7 +21,7 @@ import {
   widenSearchScope,
 } from '../src/lib/search.ts';
 import { INTERNSHIP_SEED, DOMAIN_SEED } from './fixtures/seed-data.ts';
-import { resolveApplyLink, withDistance } from '../src/lib/types.ts';
+import { resolveApplyLink, withDistance, cardDisplayOrigin, cardDisplayMeters } from '../src/lib/types.ts';
 import { ACTIVE_MODES, getMode, replayRecentSearch } from '../src/lib/modes.ts';
 import { positionMatchesRole, positionMatchesTaxonomy } from '../src/lib/job-taxonomy.ts';
 import { trendingForMode } from '../src/lib/trending-search.ts';
@@ -201,6 +201,42 @@ test('sortPOIs: distance sorts by distance field', () => {
   const withDist = withDistance(INTERNSHIP_SEED, { lng: 120.15, lat: 30.27 });
   const sorted = sortPOIs(withDist, 'distance');
   assert.ok(sorted[0].distance <= sorted[1].distance);
+});
+
+test('cardDisplayOrigin prefers user location, falls back to view center', () => {
+  const view = { lng: 116.4, lat: 39.9 };
+  const user = { lng: 120.15, lat: 30.27 };
+  assert.deepEqual(cardDisplayOrigin(user, view), user);
+  assert.deepEqual(cardDisplayOrigin(null, view), view);
+  assert.deepEqual(cardDisplayOrigin(undefined, view), view);
+});
+
+test('job card display distance uses user location; pipeline sort stays on view center', () => {
+  const viewCenter = { lng: 116.4, lat: 39.9 };
+  const user = { lng: 120.15, lat: 30.27 };
+  const job = (id, lng, lat) => ({
+    id,
+    kind: 'recruitment',
+    name: id,
+    mode: 'work',
+    source: 'seed',
+    location: { lng, lat },
+    company: { name: id, industries: [], scale: 'startup' },
+    positions: [],
+  });
+  const nearView = job('near-view', 116.41, 39.91);
+  const nearUser = job('near-user', 120.16, 30.28);
+  const sorted = runPOIPipeline([nearUser, nearView], { sort: 'distance', center: viewCenter });
+  assert.equal(sorted[0].id, 'near-view');
+  assert.equal(sorted[1].id, 'near-user');
+  assert.ok(sorted[0].distance < sorted[1].distance);
+
+  const origin = cardDisplayOrigin(user, viewCenter);
+  const displayNearView = cardDisplayMeters(sorted[0], origin);
+  const displayNearUser = cardDisplayMeters(sorted[1], origin);
+  assert.ok(typeof displayNearView === 'number' && typeof displayNearUser === 'number');
+  assert.ok(displayNearUser < displayNearView);
+  assert.deepEqual(cardDisplayMeters(sorted[0], null), sorted[0].distance);
 });
 
 test('runPOIPipeline: full pipeline query + filter + center + sort', () => {

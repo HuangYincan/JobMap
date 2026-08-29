@@ -11,8 +11,9 @@
 //   厂商裸实例（raw 仅保留给 getMarkerByPOIId 探针；createCityClusterMarker
 //   返回清理句柄，map-shell duck-type 依赖）；引擎差异（AMap 小写 z-index 命名、
 //   TMap·BMapGL 大写 setZIndex、BMapGL addEventListener 等）由适配层吸收
-// - 公司/领域 POI 在 AMap+TMap 走契约 icon(WebGL:AMap LabelsLayer+LabelMarker /
-//   TMap MultiMarker);远程 logo 须 CORS 预检+内联。百度仍走 HTML content。
+  // - 公司/领域 POI 在 AMap+TMap 走契约 icon(WebGL:AMap LabelsLayer+LabelMarker /
+  //   TMap MultiMarker);远程 logo 须 CORS 预检+内联。百度仍走 HTML content。
+  //   AMap 城市聚合徽章只传 content(独立 DOM),不进 LabelsLayer。
 // - 状态样式 = content 重渲染 + GL setIcon + zIndex：offset 恒为基准锚点（图钉底尖 /
 //   徽章中心），HTML 状态尺寸经内容负 margin 补偿；无浏览器环境（node 测试）下静默降级
 //
@@ -648,9 +649,9 @@ function badgeCleanupHandle(wrapper: MapMarker): any {
   const spreadable = raw as Record<string, unknown> | undefined;
   const base =
     spreadable && typeof spreadable === 'object' ? { ...spreadable } : {};
-  // 始终收敛到契约 remove:AMap LabelMarker 挂在 LabelsLayer 上,raw 往往
-  // 无 setMap;map-shell 按 setMap/remove 分派摘除,必须打到 wrapper.remove
-  // (layer.remove),否则跨 zoom 分桶旧徽章泄漏。
+  // 始终收敛到契约 remove:TMap 徽章挂共享 MultiMarker;AMap 公司 pin 挂
+  // LabelsLayer(raw 往往无 setMap),AMap 聚合徽章是 DOM Marker。map-shell
+  // 按 setMap/remove 分派摘除,必须打到 wrapper.remove,否则跨 zoom 分桶泄漏。
   if (typeof wrapper.remove === 'function') {
     return { ...base, setMap: () => wrapper.remove(), remove: () => wrapper.remove() };
   }
@@ -658,12 +659,23 @@ function badgeCleanupHandle(wrapper: MapMarker): any {
 }
 
 /**
+ * 聚合徽章是否必须走契约 icon(WebGL 纹理)。
+ * TMap MultiMarker 不渲染 HTML content → 必须传 SVG dataURL。
+ * AMap 有 icon 会进共享 LabelsLayer:城市徽章与上百个 hide() 后仍在层上的
+ * 公司 LabelMarker 叠在同一城几像素内,密集城(深圳/广州/东莞…)的徽章被
+ * 吃掉,看起来像「深圳之类的点没了」。AMap/百度只传 content,走独立 DOM。
+ */
+function clusterBadgeUsesGlIcon(view: MapView): boolean {
+  return view.engine?.id === 'tencent';
+}
+
+/**
  * 创建城市聚合徽章 Marker(tech/21)。
  * 中心锚定(offset 居中,元组 → 引擎内部转 Pixel);`bubble: false` 阻止点击冒泡
  * 到地图(地图 click 会清选中);防御性守卫:无 view/构造失败 → 返回 null,
- * node 测试下不抛错。content(HTML,AMap/BMapGL 渲染)+ icon(dataURL 数据图,
- * TMap 渲染)双形态同传;返回清理句柄(见 badgeCleanupHandle,测试探针 +
- * 调用方摘除,duck-type 兼容 map-shell ws-5 分派)。
+ * node 测试下不抛错。AMap/BMapGL 只传 content(HTML);TMap 另传 icon 数据图。
+ * 返回清理句柄(见 badgeCleanupHandle,测试探针 + 调用方摘除,duck-type
+ * 兼容 map-shell ws-5 分派)。
  */
 export function createCityClusterMarker(
   view: MapView | null,
@@ -676,18 +688,22 @@ export function createCityClusterMarker(
 
   let wrapper: MapMarker;
   try {
-    wrapper = view.createMarker({
+    const markerOpts: MapMarkerOptions = {
       position: { lng: group.lng, lat: group.lat },
       offset: [-size / 2, -size / 2],
       content: cityClusterBadgeHTML(group, opts.color, size),
-      // 引擎 icon 形态(契约):TMap MultiMarker 无 HTML 渲染 → 徽章以数据图
-      // 渲染(同视觉);AMap/BMapGL 以 content 渲染,icon 为其图标形态
-      icon: { src: cityClusterBadgeIcon(group, opts.color, size), size: [size, size] },
       zIndex: 50,
       onClick: opts.onClick,
       // AMap 专属选项(契约未含):duck-type 透传,点击不冒泡到地图
       bubble: false,
-    } as MapMarkerOptions);
+    } as MapMarkerOptions;
+    if (clusterBadgeUsesGlIcon(view)) {
+      markerOpts.icon = {
+        src: cityClusterBadgeIcon(group, opts.color, size),
+        size: [size, size],
+      };
+    }
+    wrapper = view.createMarker(markerOpts);
   } catch {
     return null;
   }
@@ -721,6 +737,13 @@ class POIMarkerControllerImpl implements POIMarkerController {
    * maybeUpgradeIcon 只对 'emoji' 尝试升级;removeMarker 同步清理。
    */
   private markerIconKinds = new Map<string, 'emoji' | 'logo' | 'local'>();
+  /**
+   * poiId → 已内联的真 logo data URI。全局 remoteIconDataUriCache 只有 128 槽,
+   * 全国目录点选时 LRU 会把正在显示的 logo 挤掉;applyStyle 若再走 resolveGlIcon
+   * 会 cache miss,把 LabelMarker/MultiMarker 盖回 emoji。实例侧记住当前图,
+   * 选中/高亮只换描边,不丢 logo。
+   */
+  private markerLogoDataUris = new Map<string, string>();
   /**
    * 可见 id 集(b2)：null = 全部显示。跨 setPOIs 保留——marker 实例只增不删,
    * zoom tier(LOD)/聚合边界只切换 show/hide,不销毁重建。
@@ -783,6 +806,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     icon: { src: string; size: [number, number] };
     asyncUpgradeUrl: string | null;
     iconKind: 'emoji' | 'logo' | 'local' | null;
+    logoDataUri?: string;
   } {
     if (isRecruitmentPOI(poi)) {
       const badgeUri = svgToDataUri(
@@ -804,6 +828,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
             },
             asyncUpgradeUrl: null,
             iconKind: 'logo',
+            logoDataUri: dataUri,
           };
         }
         return {
@@ -838,6 +863,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     let asyncUpgradeUrl: string | null = null;
     // 当前 icon 形态('emoji'/'logo'/'local',见 markerIconKinds 注释)
     let iconKind: 'emoji' | 'logo' | 'local' | null = null;
+    let logoDataUri: string | undefined;
 
     const markerOpts: MapMarkerOptions = {
       position: { lng: poi.location.lng, lat: poi.location.lat },
@@ -866,6 +892,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
       markerOpts.icon = graphic.icon;
       asyncUpgradeUrl = graphic.asyncUpgradeUrl;
       iconKind = graphic.iconKind;
+      logoDataUri = graphic.logoDataUri;
     }
 
     let wrapper: MapMarker;
@@ -897,6 +924,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.poiById.set(poi.id, poi);
     this.markerStates.set(poi.id, state);
     if (iconKind) this.markerIconKinds.set(poi.id, iconKind);
+    if (logoDataUri) this.markerLogoDataUris.set(poi.id, logoDataUri);
     // 新增标记按当前可见集应用 show/hide(b2:实例保留,zoom/聚合切换不重建)
     this.applyVisibility(poi.id, wrapper);
     // 远程真 logo 内联升级(ws-k):fetch 未决期间已挂 emoji 徽章,登记完成后
@@ -928,6 +956,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
     if (this.markers.get(poi.id) !== wrapper) return; // 已被摘除/重建
     this.removeMarker(poi.id);
     this.addMarker(poi); // 缓存命中 → 同步徽章包裹真 logo
+    // 实例侧记住内联字节,即使随后全局 LRU 被挤掉,点选也不退回 emoji
+    if (this.markers.has(poi.id)) this.markerLogoDataUris.set(poi.id, dataUri);
   }
 
   /**
@@ -967,8 +997,33 @@ class POIMarkerControllerImpl implements POIMarkerController {
     this.poiById.delete(id);
     this.markerStates.delete(id);
     this.markerIconKinds.delete(id);
+    this.markerLogoDataUris.delete(id);
     this.appliedVisible.delete(id);
     if (marker) this.placed.delete(marker);
+  }
+
+  /**
+   * 选中/高亮换肤:已升级真 logo 的点用实例侧记住的 data URI 包 selected 描边,
+   * 不回查全局 LRU(会被全国目录挤掉 → 点选变 emoji)。
+   */
+  private glIconForState(
+    poi: POI,
+    state: MarkerState
+  ): { src: string; size: [number, number] } {
+    if (isRecruitmentPOI(poi)) {
+      const stored = this.markerLogoDataUris.get(poi.id);
+      if (stored) {
+        this.markerIconKinds.set(poi.id, 'logo');
+        return {
+          src: badgeWithRemoteIcon(stored, this.color, state),
+          size: [BADGE_BASE, BADGE_BASE],
+        };
+      }
+    }
+    const graphic = this.resolveGlIcon(poi, state);
+    if (graphic.logoDataUri) this.markerLogoDataUris.set(poi.id, graphic.logoDataUri);
+    if (graphic.iconKind) this.markerIconKinds.set(poi.id, graphic.iconKind);
+    return graphic.icon;
   }
 
   /** 更新已有标记的视觉样式（content 重渲染 + GL icon + zIndex；offset 恒为基准锚点）。 */
@@ -990,7 +1045,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
       wrapper.setContent?.(domainPinContent(this.color, state));
     }
     if (this.usesGlIcon()) {
-      wrapper.setIcon?.(this.resolveGlIcon(poi, state).icon);
+      wrapper.setIcon?.(this.glIconForState(poi, state));
     }
     wrapper.setZIndex?.(this.zIndexFor(state, poi));
   }

@@ -158,7 +158,6 @@ test('ws4 commute/route i18n keys have zh and en', () => {
   const keys = [
     'commuteOriginMissing',
     'commuteOriginDenied',
-    'commuteStrictEmpty',
     'commuteNeedTwo',
     'exploreJobsTab',
     'exploreCompareTab',

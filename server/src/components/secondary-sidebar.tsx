@@ -227,6 +227,8 @@ export interface SecondarySidebarProps {
   commuteMinutesById?: Record<string, number>;
   compareSelected?: string[];
   onToggleCompare?: (poi: POI) => void;
+  /** 岗位卡片/详情展示距离圆心（用户定位，缺则视野中心）。 */
+  displayOrigin?: { lng: number; lat: number } | null;
 }
 
 export function SecondarySidebar({
@@ -280,6 +282,7 @@ export function SecondarySidebar({
   commuteMinutesById,
   compareSelected,
   onToggleCompare,
+  displayOrigin,
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -371,6 +374,7 @@ export function SecondarySidebar({
           onSelectPosition={(pos) => setJdPosition(pos)}
           saved={saved}
           onToggleSave={onToggleSave ? () => onToggleSave(selectedPoi) : undefined}
+          displayOrigin={displayOrigin}
         />
       ) : (
       <>
@@ -545,6 +549,7 @@ export function SecondarySidebar({
             lang={lang}
             accentColor={config.color}
             onRemove={onRemoveSaved ? (poi) => onRemoveSaved(poi.id) : undefined}
+            displayOrigin={displayOrigin}
           />
         ) : (
         <>
@@ -627,6 +632,7 @@ export function SecondarySidebar({
           commuteMinutesById={commuteMinutesById}
           compareSelected={compareSelected}
           onToggleCompare={onToggleCompare}
+          displayOrigin={displayOrigin}
         />
         )}
         </>

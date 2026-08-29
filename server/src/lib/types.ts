@@ -62,7 +62,10 @@ export interface BasePOI {
   /** 数据源:seed=导入种子 / api=各模式 API 检索 / amap=高德引擎(会话) /
    *  tencent=腾讯引擎归一化 / baidu=百度引擎归一化 */
   source: 'amap' | 'seed' | 'api' | 'tencent' | 'baidu';
-  /** 距当前中心点的距离（米），由客户端计算，可空 */
+  /**
+   * 距排序/筛选圆心的距离（米）。客户端管线按视野中心写入；
+   * 岗位卡片展示距离见 cardDisplayMeters（用户定位，缺则视野中心）。
+   */
   distance?: number;
 }
 
@@ -295,6 +298,29 @@ export function withDistance<T extends POI>(
     ...poi,
     distance: haversineDistance(poi.location, ref),
   }));
+}
+
+/**
+ * 岗位卡片展示距离的圆心：有用户定位用定位，否则回落视野中心。
+ * 排序 / 距离筛选 / 距离圈仍用视野中心，不走这里。
+ */
+export function cardDisplayOrigin(
+  userLocation: { lng: number; lat: number } | null | undefined,
+  viewCenter: { lng: number; lat: number },
+): { lng: number; lat: number } {
+  return userLocation ?? viewCenter;
+}
+
+/**
+ * 卡片上显示的直线距离（米）。传入 origin 时按该点重算；
+ * 否则回落 poi.distance（排序字段）。
+ */
+export function cardDisplayMeters(
+  poi: Pick<BasePOI, 'location' | 'distance'>,
+  origin?: { lng: number; lat: number } | null,
+): number | undefined {
+  if (origin) return haversineDistance(poi.location, origin);
+  return poi.distance;
 }
 
 /** 格式化距离：<1000m 显示米，否则显示 km */

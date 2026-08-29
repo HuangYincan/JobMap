@@ -1350,14 +1350,6 @@ export const translations = {
     zh: '仅已签发路线；不含折线预览',
     en: 'Issued route only; no polyline in the card',
   },
-  commuteOrigin: {
-    zh: '起点',
-    en: 'Origin',
-  },
-  commuteOriginLocated: {
-    zh: '已用当前定位',
-    en: 'Using current location',
-  },
   commuteOriginMissing: {
     zh: '尚未授权定位，无法规划通勤',
     en: 'Location is missing, commute is not planned',
@@ -1366,30 +1358,6 @@ export const translations = {
     zh: '定位被拒绝，无法规划通勤',
     en: 'Location was denied, commute is not planned',
   },
-  commuteMaxMinutes: {
-    zh: '上限分钟',
-    en: 'Max minutes',
-  },
-  commuteStrictTab: {
-    zh: '严格命中',
-    en: 'Strict matches',
-  },
-  commuteNearTab: {
-    zh: '接近条件',
-    en: 'Near limit',
-  },
-  commuteStrictEmpty: {
-    zh: '严格命中 0 个岗位',
-    en: '0 strict matches',
-  },
-  commuteClosestHint: {
-    zh: '最接近：{name} · {minutes} 分钟（超过上限，未算命中）',
-    en: 'Closest: {name} · {minutes} min (over limit, not a match)',
-  },
-  commuteWidenHint: {
-    zh: '可放宽上限或改出行方式后再看接近条件',
-    en: 'Widen the limit or change mode, then check near matches',
-  },
   commuteCompare: {
     zh: '对比',
     en: 'Compare',
@@ -1397,10 +1365,6 @@ export const translations = {
   commuteEstimateBadge: {
     zh: '估算',
     en: 'Est.',
-  },
-  commuteHits: {
-    zh: '严格命中 {n}',
-    en: '{n} strict',
   },
   commuteQualityEstimate: {
     zh: '估算',

@@ -12,7 +12,7 @@ import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, planExplo
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, isNearDefaultCenter } from "@/lib/camera-center";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchPOIDetail } from "@/lib/api";
-import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, type Position } from "@/lib/types";
+import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, cardDisplayOrigin, type Position } from "@/lib/types";
 import { batchMatchesCurrentMode, catalogCoversView, inBounds, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { loadWorkViewport, WORK_FULL_LOAD_MAX_PAGES } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, syncModeCache, writeModeCache } from "@/lib/mode-cache";
@@ -47,22 +47,18 @@ import { ModeSwitcher } from "./mode-switcher";
 import { FilterPanel } from "./filter-panel";
 import { SortSelector } from "./sort-selector";
 import { createAgentBridge, type MapBridge } from "@/lib/agent-map-bridge";
-import type { CommuteMode } from "@/lib/commute";
 import {
-  clampCommuteMinutes,
   COMMUTE_SLIDER_DEFAULT,
   estimatePath,
   filterByCommuteEstimate,
-  listedCommuteHits,
   toggleCommuteCompare,
-  type CommuteBucket,
 } from "@/lib/commute-filter";
 import { buildCommuteCompareColumns } from "@/lib/commute-compare";
 import { isAlivePosition } from "@/lib/position-alive";
 import type { RouteOverlayMeta } from "@/lib/navigation/route-client";
 import AgentBall from "./agent-ball";
 import { AgentPanel } from "./agent-panel";
-import { CommuteChrome, WorkExploreTabs } from "./commute-chrome";
+import { WorkExploreTabs } from "./commute-chrome";
 import { CommuteCompareTable } from "./commute-compare-table";
 import { RouteOverlayBar, type RouteOverlayModel } from "./route-overlay-bar";
 
@@ -228,8 +224,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const distanceHandleRef = useRef<any>(null);
   const draggingDistanceRef = useRef(false);
   const scaleControlRef = useRef<any>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const pendingSearchFocus = useRef(false);
   const catalogRef = useRef<POI[]>([]);
   const poisRef = useRef<POI[]>([]);
   const [geoSettled, setGeoSettled] = useState(false);
@@ -309,11 +303,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [mountError]);
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
-  const [commuteMode, setCommuteMode] = useState<CommuteMode>("transit");
-  const [commuteMaxMinutes, setCommuteMaxMinutes] = useState(COMMUTE_SLIDER_DEFAULT);
-  const [commuteTab, setCommuteTab] = useState<CommuteBucket>("strict");
   const [compareIds, setCompareIds] = useState<string[]>([]);
-  const [compareOpen, setCompareOpen] = useState(false);
   const [workExploreTab, setWorkExploreTab] = useState<"jobs" | "compare" | "trip">("jobs");
   const [routeOverlay, setRouteOverlay] = useState<RouteOverlayModel>({ kind: "idle" });
   const estimateRouteCleanupRef = useRef<(() => void) | null>(null);
@@ -338,7 +328,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const zoomRef = useRef(zoom);
   zoomRef.current = zoom;
   const [error, setError] = useState<string | null>(null);
-  // 左侧结果面板显隐（点击导航"探索"展开）
+  // 左侧结果面板显隐（点击导航「搜索」toggle，原「探索」入口）
   const [railPanel, setRailPanel] = useState<RailPanel>(null);
   const exploreOpen = railPanel === "explore";
   // 搜索建议（AutoComplete）——状态与获取/清理逻辑在 useSearchState hook 内
@@ -1214,6 +1204,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // (moveend 实时更新),而非挂载时一次性的 userLocation——否则 distance filter
   // 持久化跨会话还原后,pipeline 用陈旧圆心(挂载定位点)裁剪,把视口内公司整批裁空。
   // 语义从「离我最近」→「离当前视野中心最近」(与服务端 boundsCenter 口径一致)。
+  // 排序 / 距离筛选 / 距离圈走本圆心;岗位卡片上的显示距离另用 displayOrigin
+  // (userLocation ?? mapCenter),不把「离我多远」写进 pipeline。
   // userLocation 保留用于初次定位/其他用途,distance 圆心不再钉在挂载点。
   //
   // ws-poi-vanish 生效时机:定位成功(userLocation)前 mapCenter 仍是杭州默认值
@@ -1229,6 +1221,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     userLocation || !filters || !("distance" in filters)
       ? filters
       : Object.fromEntries(Object.entries(filters).filter(([key]) => key !== "distance"));
+  // 卡片展示距离圆心:有定位用用户位置,否则回落视野中心。排序/筛选/距离圈
+  // 仍用 distanceOrigin = mapCenter,不把「离我多远」写进 pipeline。
+  const displayOrigin = cardDisplayOrigin(userLocation, mapCenter);
   const distanceOriginRef = useRef(distanceOrigin);
   const distanceRadiusRef = useRef(distanceRadius);
   distanceOriginRef.current = distanceOrigin;
@@ -1382,9 +1377,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const commuteResult = useMemo(
     () =>
       workMode
-        ? filterByCommuteEstimate(pois, userLocation, commuteMode, commuteMaxMinutes)
+        ? filterByCommuteEstimate(pois, userLocation, "transit", COMMUTE_SLIDER_DEFAULT)
         : { strict: [] as ReturnType<typeof filterByCommuteEstimate>["strict"], near: [], closest: null },
-    [workMode, pois, userLocation, commuteMode, commuteMaxMinutes],
+    [workMode, pois, userLocation],
   );
   const commuteMinutesById = useMemo(() => {
     const out: Record<string, number> = {};
@@ -1393,10 +1388,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     }
     return out;
   }, [commuteResult]);
-  const listPois = useMemo(() => {
-    if (!workMode || !userLocation) return pois;
-    return listedCommuteHits(commuteResult, commuteTab).map((hit) => hit.poi);
-  }, [workMode, userLocation, pois, commuteResult, commuteTab]);
   const comparePois = useMemo(
     () => compareIds.map((id) => pois.find((p) => p.id === id) ?? catalog.find((p) => p.id === id)).filter(Boolean) as POI[],
     [compareIds, pois, catalog],
@@ -1410,12 +1401,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       }),
     [comparePois, commuteMinutesById, lang],
   );
-  const closestLabel =
-    commuteResult.closest && commuteResult.strict.length === 0
-      ? t("commuteClosestHint", lang)
-          .replace("{name}", commuteResult.closest.poi.name)
-          .replace("{minutes}", String(commuteResult.closest.minutes))
-      : undefined;
   const partialFail = workMode && userLocation
     ? pois.filter((p) => !p.location || !Number.isFinite(p.location.lng)).length
     : 0;
@@ -2172,26 +2157,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     mapInstance.current?.setStyle(style);
   };
 
-  useEffect(() => {
-    if (!sidebarOpen || !pendingSearchFocus.current) return;
-    pendingSearchFocus.current = false;
-    const input = searchInputRef.current;
-    if (!input) return;
-    const focus = () => input.focus();
-    const id = window.setTimeout(focus, 220);
-    return () => window.clearTimeout(id);
-  }, [sidebarOpen]);
-
-  const openSidebarSearch = () => {
-    setRailPanel("explore");
-    if (sidebarOpen) {
-      searchInputRef.current?.focus();
-      return;
-    }
-    pendingSearchFocus.current = true;
-    setSidebarOpen(true);
-  };
-
   const openMobileAccount = () => {
     if (!user) {
       setAuthOpen(true);
@@ -2342,25 +2307,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     }
   }, [detailPoi]);
 
-  const commuteChromeNode = workMode ? (
-    <CommuteChrome
-      lang={lang}
-      originReady={Boolean(userLocation)}
-      originDenied={locationDenied}
-      originPending={!geoSettled && !userLocation && !locationDenied}
-      mode={commuteMode}
-      onModeChange={setCommuteMode}
-      maxMinutes={commuteMaxMinutes}
-      onMaxMinutesChange={(minutes) => setCommuteMaxMinutes(clampCommuteMinutes(minutes))}
-      tab={commuteTab}
-      onTabChange={setCommuteTab}
-      strictCount={commuteResult.strict.length}
-      nearCount={commuteResult.near.length}
-      compareCount={compareIds.length}
-      onToggleCompare={() => setCompareOpen((open) => !open)}
-      compareOpen={compareOpen}
-      closestLabel={closestLabel}
-    />
+  const workExploreTabsNode = workMode ? (
+    <WorkExploreTabs lang={lang} value={workExploreTab} onChange={setWorkExploreTab} />
   ) : null;
   const commuteCompareNode = (
     <CommuteCompareTable columns={compareColumns} lang={lang} />
@@ -2369,6 +2317,14 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     if (typeof navigator !== "undefined" && navigator.onLine) setOnline(true);
     handleLocate();
   };
+  const tripOverlayNode = (
+    <RouteOverlayBar
+      model={displayOverlay}
+      lang={lang}
+      embedded
+      onRetry={handleRouteRetry}
+    />
+  );
 
   return (
     <main className={styles.shell}>
@@ -2437,35 +2393,19 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           </button>
         </div>
         <div className={styles.railDivider} aria-hidden="true" />
-        <div
-          className={styles.searchBox}
-          data-tooltip={t('search', lang)}
-          onClick={openSidebarSearch}
-        >
-          <Icon name="search" />
-          {!query && <span className={styles.searchLabel}>{t('search', lang)}</span>}
-          <input
-            ref={searchInputRef}
-            type="search"
-            placeholder={lang === "en" ? (modeConfig.searchPlaceholderEn ?? modeConfig.searchPlaceholder) : modeConfig.searchPlaceholder}
-            value={query}
-            tabIndex={sidebarOpen ? 0 : -1}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setRailPanel("explore");
-            }}
-            onFocus={() => {
-              if (!sidebarOpen) openSidebarSearch();
-              else setRailPanel("explore");
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                void recordSearch(query, mode);
-              }
-            }}
-          />
-        </div>
         <nav className={styles.navList}>
+          <button
+            className={`${styles.navItem} ${exploreOpen ? styles.navItemActive : ""}`}
+            data-tooltip={t("search", lang)}
+            aria-expanded={exploreOpen}
+            aria-pressed={exploreOpen}
+            onClick={() => openRail("explore")}
+            onMouseEnter={() => prefetchRail("detail")}
+            onFocus={() => prefetchRail("detail")}
+          >
+            <Icon name="search" />
+            <span>{t("search", lang)}</span>
+          </button>
           <button
             className={`${styles.navItem} ${railPanel === "layers" ? styles.navItemActive : ""}`}
             data-tooltip={t("layers", lang)}
@@ -2493,18 +2433,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           >
             <Icon name="bookmark" />
             <span>{t('saved', lang)}</span>
-          </button>
-          <button
-            className={`${styles.navItem} ${exploreOpen ? styles.navItemActive : ""}`}
-            data-tooltip={t('explore', lang)}
-            aria-expanded={exploreOpen}
-            aria-pressed={exploreOpen}
-            onClick={() => openRail("explore")}
-            onMouseEnter={() => prefetchRail("detail")}
-            onFocus={() => prefetchRail("detail")}
-          >
-            <Icon name="grid" />
-            <span>{t('explore', lang)}</span>
           </button>
           <button
             className={`${styles.navItem} ${railPanel === "recent" ? styles.navItemActive : ""}`}
@@ -2567,7 +2495,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         onFiltersReset={() => setFilters({})}
         sort={sort}
         onSortChange={setSort}
-        pois={workMode ? listPois : pois}
+        pois={pois}
         loading={loading}
         selectedId={selectedId}
         highlightedId={highlightedId}
@@ -2585,7 +2513,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         saved={Boolean(detailPoi && savedPlaces.some((item) => item.poiId === detailPoi.id))}
         onToggleSave={detailPoi && isPersistablePoi(detailPoi) ? handleToggleSave : undefined}
         onApply={handleApply}
-        totalCount={workMode ? listPois.length : pois.length}
+        totalCount={pois.length}
         savedMode={savedLayerEnabled}
         savedItems={savedPlaces}
         onPickSaved={handlePickSaved}
@@ -2593,8 +2521,16 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         savedCatalog={compareCatalog}
         savedOrigin={distanceOrigin}
         lang={lang}
-        workCommute={savedLayerEnabled ? undefined : commuteChromeNode}
-        workListReplace={workMode && compareOpen && !savedLayerEnabled ? commuteCompareNode : undefined}
+        workCommute={savedLayerEnabled ? undefined : workExploreTabsNode}
+        workListReplace={
+          savedLayerEnabled || !workMode
+            ? undefined
+            : workExploreTab === "compare"
+              ? commuteCompareNode
+              : workExploreTab === "trip"
+                ? tripOverlayNode
+                : undefined
+        }
         commuteMinutesById={workMode ? commuteMinutesById : undefined}
         compareSelected={workMode ? compareIds : undefined}
         onToggleCompare={
@@ -2602,6 +2538,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
             ? (poi) => setCompareIds((ids) => toggleCommuteCompare(ids, poi.id))
             : undefined
         }
+        displayOrigin={displayOrigin}
         onClose={() => {
           setRailPanel(null);
           setSelectedId(null);
@@ -2822,6 +2759,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
               onToggleSave={isPersistablePoi(detailPoi) ? () => {
                 void handleToggleSave(detailPoi);
               } : undefined}
+              displayOrigin={displayOrigin}
               onBack={() => {
                 setDetailPoi(null);
                 setMobileJd(null);
@@ -3231,22 +3169,14 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   lang={lang}
                   accentColor={modeConfig.color}
                   onRemove={user ? (poi) => handleRemoveSaved(poi.id) : undefined}
+                  displayOrigin={displayOrigin}
                 />
               ) : workMode && workExploreTab === "compare" ? (
                 commuteCompareNode
               ) : workMode && workExploreTab === "trip" ? (
-                <>
-                  {commuteChromeNode}
-                  <RouteOverlayBar
-                    model={displayOverlay}
-                    lang={lang}
-                    embedded
-                    onRetry={handleRouteRetry}
-                  />
-                </>
+                tripOverlayNode
               ) : (
               <>
-              {commuteChromeNode}
               <div className={styles.mobileActions}>
                 <button
                   type="button"
@@ -3275,15 +3205,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     values={filters}
                     onChange={(key, value) => setFilters({ ...filters, [key]: value })}
                     onReset={() => setFilters({})}
-                    resultCount={(workMode ? listPois : pois).length}
+                    resultCount={pois.length}
                     lang={lang}
                   />
                 </div>
               )}
               <div className={styles.mobileMeta}>
-                <span>{loading ? t("loading", lang) : `${(workMode ? listPois : pois).length} ${t("resultsCount", lang)}`}</span>
+                <span>{loading ? t("loading", lang) : `${pois.length} ${t("resultsCount", lang)}`}</span>
                 <div className={styles.mobileMetaActions}>
-                  {(workMode ? listPois : pois).length === 0 && !loading && (
+                  {pois.length === 0 && !loading && (
                     <button
                       type="button"
                       className={styles.mobileIconBtn}
@@ -3296,7 +3226,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 </div>
               </div>
               <POIList
-                pois={workMode ? listPois : pois}
+                pois={pois}
                 selectedId={selectedId}
                 highlightedId={highlightedId}
                 onSelect={(poi) => {
@@ -3335,6 +3265,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     ? (poi) => setCompareIds((ids) => toggleCommuteCompare(ids, poi.id))
                     : undefined
                 }
+                displayOrigin={displayOrigin}
               />
               </>
               )}

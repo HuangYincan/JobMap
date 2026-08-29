@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type CSSProperties, type KeyboardEvent } from "react";
 import {
+  cardDisplayMeters,
   formatDistance,
   formatSalary,
   isDomainPOI,
@@ -73,6 +74,11 @@ export interface POICardProps {
   commuteEstimated?: boolean;
   compareChecked?: boolean;
   onToggleCompare?: (poi: POI) => void;
+  /**
+   * 岗位卡片展示距离圆心（用户定位，缺则视野中心）。
+   * 不传则回落 poi.distance（排序/筛选字段，视野中心）。
+   */
+  displayOrigin?: { lng: number; lat: number } | null;
 }
 
 /** CSS 自定义属性样式类型（React 19 移除了默认 index signature） */
@@ -205,6 +211,7 @@ export function POICard({
   commuteEstimated = true,
   compareChecked = false,
   onToggleCompare,
+  displayOrigin,
 }: POICardProps) {
   const accent = accentColor || DEFAULT_ACCENT;
   const styleVars: CSSVarStyle = {
@@ -245,7 +252,12 @@ export function POICard({
       {isDomainPOI(poi) ? (
         <DomainCardContent poi={poi} lang={lang} onRemove={onRemove} />
       ) : isRecruitmentPOI(poi) ? (
-        <RecruitmentCardContent poi={poi} lang={lang} onRemove={onRemove} />
+        <RecruitmentCardContent
+          poi={poi}
+          lang={lang}
+          onRemove={onRemove}
+          displayOrigin={displayOrigin}
+        />
       ) : null}
       {(typeof commuteMinutes === "number" || onToggleCompare) && (
         <div className={styles.commuteRow}>
@@ -340,10 +352,12 @@ function RecruitmentCardContent({
   poi,
   lang,
   onRemove,
+  displayOrigin,
 }: {
   poi: RecruitmentPOI;
   lang: Language;
   onRemove?: (poi: POI) => void;
+  displayOrigin?: { lng: number; lat: number } | null;
 }) {
   const openPositions = poi.positions.filter((p) => isAlivePosition(p));
   const openCount = openPositions.length;
@@ -407,7 +421,9 @@ function RecruitmentCardContent({
           <span className={styles.positionsBadge}>{positionsLabel}</span>
         )}
         <span className={styles.metaSpacer} />
-        <span className={styles.distance}>{formatDistance(poi.distance)}</span>
+        <span className={styles.distance}>
+          {formatDistance(cardDisplayMeters(poi, displayOrigin))}
+        </span>
       </div>
 
       {positionsPreview.length > 0 && (

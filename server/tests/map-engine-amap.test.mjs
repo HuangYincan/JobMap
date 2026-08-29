@@ -19,6 +19,7 @@ process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE = 'test-code';
 import { GEOCODE_CACHE_MAX, resetGeocodeCache } from '../src/lib/amap-api.ts';
 import { registerAmapEngine } from '../src/lib/map-engine/amap/amap-engine.ts';
 import { AMAP_ENGINE, resolveEngine } from '../src/lib/map-engine/engine-registry.ts';
+import { createCityClusterMarker } from '../src/lib/map-markers.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 
@@ -565,6 +566,7 @@ test('createMarker:icon 规格 → 共享 LabelsLayer + LabelMarker(WebGL 海量
   const raw = ns.instances.labelMarkers[0];
   assert.deepEqual(raw.opts.position, [120.1, 30.2]);
   assert.equal(raw.icon.image, 'data:image/svg+xml;utf8,<svg/>');
+  assert.equal(raw.icon.type, 'image', '官方 IconOptions.type=image');
   assert.deepEqual(raw.icon.size, [22, 30]);
   assert.deepEqual(raw.icon.anchor, [11, 30], 'anchor = -offset(图钉底尖)');
   assert.equal(layers[0].items[0], raw, 'LabelMarker 在层上');
@@ -594,6 +596,28 @@ test('createMarker:icon 无 size → image only;同层复用;content+icon 仍走
   assert.equal(ns.instances.labelMarkers.length, 2);
   assert.equal(ns.instances.markers, undefined, 'content+icon 不落 DOM Marker');
   assert.deepEqual(ns.instances.labelMarkers[1].icon.anchor, [20, 20], '徽章中心锚点');
+  view.destroy();
+});
+
+test('createCityClusterMarker:AMap 走 DOM Marker,不进 LabelsLayer(密集城聚合不被 hide 的公司点吃掉)', async () => {
+  const ns = installNs();
+  const view = await createView(ns, 'normal');
+  view.createMarker({
+    position: { lng: 114.06, lat: 22.55 },
+    icon: { src: 'data:image/svg+xml;utf8,<svg/>', size: [40, 40] },
+  });
+  assert.equal(ns.instances.labelMarkers.length, 1, '公司 pin 在 LabelsLayer');
+  const cluster = createCityClusterMarker(view, {
+    city: '深圳',
+    count: 111,
+    lng: 114.06,
+    lat: 22.55,
+  });
+  assert.ok(cluster);
+  assert.equal(ns.instances.labelMarkers.length, 1, '聚合徽章不进 LabelsLayer');
+  assert.equal(ns.instances.markers.length, 1, '聚合徽章走独立 DOM Marker');
+  assert.match(ns.instances.markers[0].opts.content, /深圳/);
+  assert.equal(ns.instances.markers[0].opts.icon, undefined);
   view.destroy();
 });
 

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import {
+  cardDisplayMeters,
   formatDistance,
   formatSalary,
   isDomainPOI,
@@ -68,6 +69,8 @@ export interface POIDetailViewProps {
   selectedPositionId?: string | null;
   saved?: boolean;
   onToggleSave?: () => void;
+  /** 岗位详情展示距离圆心，与卡片同口径（用户定位，缺则视野中心）。 */
+  displayOrigin?: { lng: number; lat: number } | null;
 }
 
 export function POIDetailView({
@@ -79,6 +82,7 @@ export function POIDetailView({
   selectedPositionId,
   saved = false,
   onToggleSave,
+  displayOrigin,
 }: POIDetailViewProps) {
   return (
     <div className={styles.detail} style={{ "--accent": accentColor } as CSSProperties}>
@@ -111,6 +115,7 @@ export function POIDetailView({
             lang={lang}
             onSelectPosition={onSelectPosition}
             selectedPositionId={selectedPositionId}
+            displayOrigin={displayOrigin}
           />
         ) : null}
       </div>
@@ -162,11 +167,13 @@ function RecruitmentDetail({
   lang,
   onSelectPosition,
   selectedPositionId,
+  displayOrigin,
 }: {
   poi: RecruitmentPOI;
   lang: Language;
   onSelectPosition?: (position: Position) => void;
   selectedPositionId?: string | null;
+  displayOrigin?: { lng: number; lat: number } | null;
 }) {
   const [logoAttempt, setLogoAttempt] = useState(0);
   const [filters, setFilters] = useState<PositionFilters>(EMPTY_POSITION_FILTERS);
@@ -220,7 +227,7 @@ function RecruitmentDetail({
         <span>
           {open.length} {t("viewPositions", lang)}
         </span>
-        <span>{formatDistance(poi.distance)}</span>
+        <span>{formatDistance(cardDisplayMeters(poi, displayOrigin))}</span>
       </div>
       <InfoRow label={t("address", lang)} value={poi.location.address} />
       {poi.company.summary && (

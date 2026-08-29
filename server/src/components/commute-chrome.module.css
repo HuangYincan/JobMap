@@ -1,45 +1,10 @@
-.chrome {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px 12px 4px;
-}
-
-.origin,
-.warn,
-.hint {
-  color: var(--ink);
-  font-size: 12px;
-  line-height: 1.4;
-  margin: 0;
-}
-
-.originLabel {
-  color: var(--blue-ink, #0062cc);
-  font-weight: 650;
-  margin-right: 6px;
-}
-
-.warn {
-  color: var(--blue-ink, #0062cc);
-}
-
-.hint {
-  color: var(--muted, #6b7280);
-}
-
-.modes,
-.tabs,
 .exploreTabs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  padding: 4px 12px 8px;
 }
 
-.modeBtn,
-.tab,
-.tabOn,
-.compare,
 .exploreTab,
 .exploreOn {
   background: transparent;
@@ -51,46 +16,19 @@
   padding: 5px 10px;
 }
 
-.modeBtn:focus-visible,
-.tab:focus-visible,
-.tabOn:focus-visible,
-.compare:focus-visible,
 .exploreTab:focus-visible,
 .exploreOn:focus-visible {
   outline: 2px solid #007aff;
   outline-offset: 2px;
 }
 
-.modeOn,
-.tabOn,
 .exploreOn {
   background: rgba(0, 122, 255, 0.12);
   border-color: #007aff;
   color: #007aff;
 }
 
-.sliderRow {
-  color: var(--blue-ink, #0062cc);
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
-  gap: 4px;
-}
-
-.sliderRow input {
-  accent-color: #007aff;
-  width: 100%;
-}
-
-.exploreTabs {
-  padding: 4px 12px 8px;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .modeBtn,
-  .tab,
-  .tabOn,
-  .compare,
   .exploreTab,
   .exploreOn {
     transition: none;

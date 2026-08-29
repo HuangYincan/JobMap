@@ -1869,18 +1869,22 @@ mu.addEventListener("animation_start", C); mu.addEventListener("animation_end", 
   触发);完整性补回只挂 `moveend`。
 - TMap `isAttached` 改为「仍在 geometry 登记簿」,hide 不再被 sync 当成外部删除
   而整批重建。
+- 选中/高亮换肤用实例侧记住的内联 logo,不回查 128 槽全局 LRU(否则目录一大
+  点选就把真 logo 盖成 emoji)。
 
 **验证(2026-08-29,本机):**
 
 - 引擎/控制器隔离套件(marker + AMap/Tencent 相关)**130/130** 通过;
   `npm run typecheck` 通过。
 - `make docs-check` + `git diff --check` 通过。
-- 浏览器(localhost:3000,工作模式,默认 AMap):zoom 9「30 个结果」与 zoom 8
-  城市聚合均 **`.amap-marker` = 0、`.dm-badge` = 0、1 canvas** —— 点在
-  WebGL,不再是 DOM overlay。
+- 浏览器(localhost:3000,工作模式,默认 AMap):zoom 9 个体公司点
+  **`.amap-marker` = 0、`.dm-badge` = 0**(WebGL LabelsLayer);zoom ≤ 8 城市
+  聚合徽章是独立 HTML Marker(`.dm-cluster`),不进 LabelsLayer——否则与
+  `hide()` 后仍在层上的密集城公司点碰撞,深圳/广州等徽章会消失。
 - 全量 `npm test` 曾出现 1 条无关 flake:`tests/db.test.mjs`
   `queryPublicRead fails a delayed injected read within its timeout`(时序)。
 
 **未改:**catalog / marker 池 / 可见集语义不变(zoom > 8 仍显示全部公司,
-zoom ≤ 8 城市聚合不变)。百度仍走 HTML content。徽章外观改为与腾讯同款
+zoom ≤ 8 城市聚合)。百度仍走 HTML content。公司徽章外观改为与腾讯同款
 SVG 纹理(白底圆角描边 / emoji 或内联 logo),不再用 HTML `box-shadow`。
+AMap 城市聚合徽章保持 HTML「城市名 N」(不走 LabelsLayer)。

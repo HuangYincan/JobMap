@@ -24,6 +24,25 @@ test('POICard is a keyboard button with selected/highlight states', () => {
   assert.match(card, /onClick=\{\s*\(e\) => \{[\s\S]*onClick\?\.\(poi\)/);
 });
 
+test('job POI card display distance uses user location; sort stays view center', () => {
+  const card = src('components/poi-card.tsx');
+  const list = src('components/poi-list.tsx');
+  const shell = src('components/map-shell.tsx');
+  const detail = src('components/poi-detail.tsx');
+  const domainBlock = card.slice(
+    card.indexOf('function DomainCardContent'),
+    card.indexOf('function RecruitmentCardContent'),
+  );
+  assert.match(card, /cardDisplayMeters\(poi, displayOrigin\)/);
+  assert.match(domainBlock, /formatDistance\(poi\.distance\)/);
+  assert.doesNotMatch(domainBlock, /cardDisplayMeters/);
+  assert.match(list, /displayOrigin=\{displayOrigin\}/);
+  assert.match(shell, /const distanceOrigin = mapCenter;/);
+  assert.match(shell, /const displayOrigin = cardDisplayOrigin\(userLocation, mapCenter\);/);
+  assert.match(shell, /center: distanceOrigin,/);
+  assert.match(detail, /cardDisplayMeters\(poi, displayOrigin\)/);
+});
+
 test('POICard positionsPreview dedups by pos.id before render (duplicate-key defense)', () => {
   const card = src('components/poi-card.tsx');
   // 2026-08-20: 同 external_id 双行 (旧 seed source + 新真实 source) 曾同时进入
@@ -69,13 +88,10 @@ test('map shell saves and restores the mobile drawer scroll across detail', () =
   assert.match(shell, /onDeselect=\{\(\) => \{[\s\S]*setSelectedId\(null\)[\s\S]*setHighlightedId\(null\)/);
 });
 
-test('mobile account open resets drawer scroll; expanded search keeps query text visible', () => {
+test('mobile account open resets drawer scroll', () => {
   const shell = src('components/map-shell.tsx');
-  const css = src('components/map-shell.module.css');
   // 打开 account 面板前重置常驻滚动容器,避免继承列表滚动位置
   assert.match(shell, /setMobileSheet\("account"\);[\s\S]{0,200}drawerContentRef\.current\.scrollTop = 0/);
-  // 展开态已有查询文本时,输入框不依赖 focus-within 也常显(失焦不丢可见文本)
-  assert.match(css, /\.sidebarOpen \.searchBox input:not\(:placeholder-shown\)\s*\{\s*opacity: 1;\s*\}/);
 });
 
 test('FilterPanel select is a labelled listbox', () => {
@@ -316,7 +332,12 @@ test('map shell has skip links, a live result count, brand row and navItem searc
   assert.match(shell, /document\.documentElement\.lang/);
   assert.match(css, /\.skipLink/);
   assert.match(shell, /brandLogo/); // 品牌行 Logo
-  assert.match(shell, /searchLabel/); // 搜索行 navItem 化标签
+  // 桌面 rail「搜索」是 navItem 按钮,toggle 原探索面板;侧栏不再内嵌输入框
+  assert.match(shell, /data-tooltip=\{t\("search", lang\)\}[\s\S]{0,240}onClick=\{\(\) => openRail\("explore"\)\}/);
+  assert.doesNotMatch(shell, /searchLabel/);
+  assert.doesNotMatch(shell, /searchInputRef/);
+  assert.doesNotMatch(shell, /openSidebarSearch/);
+  assert.doesNotMatch(shell, /data-tooltip=\{t\(['"]explore['"], lang\)\}/);
   const layout = src('app/layout.tsx');
   assert.match(layout, /lang="zh-CN"/);
   const sidebar = src('components/secondary-sidebar.tsx');
@@ -1657,7 +1678,7 @@ test('cluster effect 依赖含 engineView(2026-08-25 ws-b bug 4 修复:切引擎
   assert.match(shell, /useEffect\(\(\) => \{\s*const view = mapInstance\.current;\s*if \(!view \|\| !clusterState\) return;/);
 });
 
-test('ws4: map-shell 来源条与移动 explore 三页签;通勤粗筛不 POST plan;不写 audit_events', () => {
+test('ws4: map-shell 来源条与 explore 三页签;无通勤粗筛头;不 POST plan;不写 audit_events', () => {
   const shell = src('components/map-shell.tsx');
   const overlay = src('components/route-overlay-bar.tsx');
   const chrome = src('components/commute-chrome.tsx');
@@ -1675,6 +1696,11 @@ test('ws4: map-shell 来源条与移动 explore 三页签;通勤粗筛不 POST p
   assert.match(chrome, /exploreJobsTab/);
   assert.match(shell, /workExploreTab === "trip"/);
   assert.doesNotMatch(shell, /setMobileSheet\("trip"\)/, '行程不是第 6 个工具栏 sheet');
+  assert.doesNotMatch(shell, /<CommuteChrome/);
+  assert.doesNotMatch(chrome, /data-commute-chrome/);
+  assert.doesNotMatch(chrome, /commuteStrictTab/);
+  assert.doesNotMatch(chrome, /commuteMaxMinutes/);
+  assert.doesNotMatch(shell, /listedCommuteHits/);
   assert.doesNotMatch(shell, /fetch\([^)]*\/api\/navigation\/routes\/plan/);
   assert.doesNotMatch(filter, /fetch\([^)]*\/api\/navigation\/routes\/plan/);
   assert.doesNotMatch(filter, /method:\s*['"]POST['"]/);

@@ -377,6 +377,42 @@ function makeTencentView() {
   return { view, calls };
 }
 
+/** GL view:同时记录 createMarker 与契约 setIcon(AMap LabelMarker / TMap MultiMarker 点选换肤路径)。 */
+function makeGlView(engineId = 'amap') {
+  const creates = [];
+  const icons = [];
+  const view = {
+    engine: { id: engineId },
+    isDestroyed: () => false,
+    createMarker: (opts) => {
+      creates.push(opts);
+      if (opts.icon) icons.push(opts.icon);
+      return {
+        on: () => {},
+        setPosition: () => {},
+        setZIndex: () => {},
+        setVisible: () => {},
+        setContent: () => {},
+        setIcon: (icon) => {
+          icons.push(icon);
+        },
+        remove: () => {},
+      };
+    },
+  };
+  return { view, creates, icons };
+}
+
+function decodeIconSvg(src) {
+  return decodeURIComponent(String(src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+}
+
+function assertLogoBadge(src, label) {
+  const svg = decodeIconSvg(src);
+  assert.ok(svg.includes(`href="${PNG_DATA_URI}"`), `${label}:须保留内联真 logo`);
+  assert.ok(!svg.includes('>🏢<'), `${label}:不得退回 emoji 徽章`);
+}
+
 /** 招聘 POI(company.logoUrl 可控)。 */
 function makeRecruitPoi(id, logoUrl) {
   return makePoi(id, `公司${id}`, 120.1, 30.2, {
@@ -503,6 +539,57 @@ test('GL icon:AMap 与 TMap 同走 dataURL 徽章(不把未验证远程 URL 当�
     c.destroy();
   } finally {
     image.restore();
+  }
+});
+
+test('GL icon:点选已升级真 logo 的公司不得退回 emoji(AMap/TMap)', async () => {
+  const image = installImageMock();
+  const fetchMock = installFetchMock();
+  try {
+    preflightRemoteIcon(REMOTE);
+    await settle();
+    for (const engineId of ['amap', 'tencent']) {
+      const { view, icons } = makeGlView(engineId);
+      const c = createPOIMarkerController(view, {});
+      c.setPOIs([makeRecruitPoi('p1', REMOTE)]);
+      await settle();
+      const upgraded = icons.at(-1);
+      assertLogoBadge(upgraded.src, `${engineId} 升级后`);
+      const beforeSelect = icons.length;
+      c.select('p1');
+      assert.ok(icons.length > beforeSelect, `${engineId} 点选走 setIcon`);
+      const selected = icons.at(-1);
+      assertLogoBadge(selected.src, `${engineId} 点选后`);
+      assert.ok(
+        decodeIconSvg(selected.src).includes('opacity="0.45"'),
+        `${engineId} 点选后须带 selected 外圈`,
+      );
+      c.destroy();
+    }
+  } finally {
+    image.restore();
+    fetchMock.restore();
+  }
+});
+
+test('GL icon:点选时内联缓存已清空仍不得把真 logo 盖成 emoji', async () => {
+  const image = installImageMock();
+  const fetchMock = installFetchMock();
+  try {
+    preflightRemoteIcon(REMOTE);
+    await settle();
+    const { view, icons } = makeGlView('amap');
+    const c = createPOIMarkerController(view, {});
+    c.setPOIs([makeRecruitPoi('p1', REMOTE)]);
+    await settle();
+    assertLogoBadge(icons.at(-1).src, '升级后');
+    resetRemoteIconDataUriCache();
+    c.select('p1');
+    assertLogoBadge(icons.at(-1).src, '缓存清空后点选');
+    c.destroy();
+  } finally {
+    image.restore();
+    fetchMock.restore();
   }
 });
 

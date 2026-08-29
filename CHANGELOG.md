@@ -6,10 +6,17 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Changed
 
+- **岗位卡片显示距离按用户定位。** 列表排序、距离筛选、距离圈仍按视野中心；卡片和公司详情上的米数改用用户定位，没定位再回落视野中心。
 - **去掉默认的「路线来源」霜面条。** `RouteOverlayBar` 对 `idle` / 直线 `estimate` / 缺起点 / 定位拒绝不渲染；地图底部不再出现「直线估算，无路况 · 按直线距离估算」。供应商结果、加载中、过期/离线等状态仍显示。
 
 ### Fixed
 
+- **全国视野深圳/广州等城市聚合点消失。** 海量 POI 改 LabelsLayer 后,城市徽章也带了
+  `icon`,和上百个 `hide()` 后仍在同层的公司点挤在几像素里,密集城徽章被吃掉。AMap
+  聚合徽章改回独立 HTML Marker;公司点仍走 WebGL。
+- **公司 POI 点击后 icon 变成 emoji。** 选中 `setIcon` 会重算纹理;真 logo 只记在
+  128 槽全局 LRU,目录一大就 cache miss,把已升级徽章盖回 emoji SVG。现每个
+  marker 记住自己的内联 logo,选中只换描边。
 - **视野内 POI 很多时地图卡顿。** 卡顿点是高德 HTML `AMap.Marker` DOM overlay
   (加 `zoomchange` 全量 sync),不是少加载。AMap 公司/领域点改走共享
   `LabelsLayer`+`LabelMarker`(WebGL,与腾讯 MultiMarker 同预检/内联 data URI);
