@@ -512,6 +512,16 @@ test('work viewport empty batch three-state (ws1 Bug1): 空批次 ≠ 无数据,
   // work 视口请求已删,只余 domain 分支保留该行为)
   assert.doesNotMatch(hook, /console\.warn\("\[map-shell\] work viewport load failed:/);
   assert.match(hook, /console\.warn\("\[map-shell\] domain viewport load failed:/);
+  // 库故障(502)不得当成真空空目录:首屏会从加载起就没有 POI
+  assert.match(shell, /if \(result\.unavailable\) \{/);
+  assert.match(shell, /Failed to load POIs/);
+  const unavailAt = shell.indexOf('if (result.unavailable)');
+  const setCatalogAt = shell.indexOf('catalogRef.current = data;', unavailAt);
+  const unavailReturnAt = shell.indexOf('return;', unavailAt);
+  assert.ok(
+    unavailAt !== -1 && unavailReturnAt !== -1 && unavailReturnAt < setCatalogAt,
+    'unavailable 早退须先于 setCatalog(data),不得把故障写成空目录',
+  );
   // ws1 saved-layer-nofly(2026-08-22):toggle 不再移动相机,「收藏相机同步」
   // 状态机随 setBounds 一起退役——时间窗补丁与状态机都不复存在
   // (空批次保留加固独立于两者,不得随清理误删)
@@ -1013,8 +1023,9 @@ test('agent panel has input, send/stop/undo buttons and tool status bar (ws-c)',
   assert.match(store, /LEGACY_HISTORY_KEY = "dm\.agent-history\.v1"/);
   assert.match(store, /SESSIONS_CAP = 10/);
   assert.match(store, /SESSION_MESSAGES_CAP = 30/);
-  // 新会话首条自动带视口快照
-  assert.match(panel, /viewport: \{ center: snapshot\.center, zoom: snapshot\.zoom \}/);
+  // 每条请求附带可解析的视野/定位;缺 zoom 或非 finite 则省略,避免 400
+  assert.match(panel, /agentChatMapFields\(snapshot, userLocationRef\.current\)/);
+  assert.match(panel, /toAgentChatMessages\(nextMessages\)/);
   // 360px × 70vh liquid glass 卡片
   assert.match(css, /width: 360px/);
   assert.match(css, /height: 70vh/);
@@ -1656,6 +1667,9 @@ test('ws4: map-shell 来源条与移动 explore 三页签;通勤粗筛不 POST p
 
   assert.match(shell, /<RouteOverlayBar/);
   assert.match(overlay, /data-route-overlay="true"/);
+  assert.match(overlay, /model\.kind === "estimate"/, '直线估算不渲染路线来源条');
+  assert.match(overlay, /model\.kind === "location-denied"/, '定位拒绝不渲染路线来源条');
+  assert.match(overlay, /model\.kind === "missing-origin"/, '缺起点不渲染路线来源条');
   assert.match(shell, /<WorkExploreTabs/);
   assert.match(chrome, /data-work-explore-tabs="true"/);
   assert.match(chrome, /exploreJobsTab/);

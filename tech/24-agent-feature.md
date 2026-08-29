@@ -253,7 +253,7 @@ GET 请求,header `Authorization: Bearer $BAIDU_MAP_AUTH_TOKEN`。契约红线:�
 | 层 | 限制 |
 |---|---|
 | 轮数 | `maxTurns`(`AGENT_MAX_TOOL_TURNS`,默认 **8**)→ `{type:'done', truncated:true}` |
-| 消息 | body ≤ 32KB;条数 ≤ 20;单条 ≤ 4000 字符 |
+| 消息 | body ≤ 32KB;条数 ≤ 30(与会话 cap 对齐;超出从最旧裁到最近一条 user 起,不 400);单条 ≤ 4000 字符(超长截断) |
 | SSE 输出 | 200KB 上限,超 → `done, truncated` |
 | IP 频率 | 模块级内存令牌桶,每桶 **10 req/min**,超 → 429 `RATE_LIMITED`。**桶键(2026-08-23,quality-scan #11)**:配置了 `TRUSTED_PROXY_IPS`(可信反代)才取 `x-forwarded-for` 首段;未配置时忽略转发头,桶键 = 会话指纹(登录用户按会话 cookie 哈希;匿名归固定桶)——伪造 XFF 不再换桶 |
 | LLM 请求 | 30s 首包超时 + 120s 整体上限;首包前 408/429/5xx/网络错 2 次指数退避(500ms→1s) |
@@ -277,7 +277,7 @@ Content-Type: application/json
 }
 ```
 
-响应:`Content-Type: text/event-stream; charset=utf-8` + `Cache-Control: no-store` + `X-Accel-Buffering: no`;`export const runtime = 'nodejs'`(显式);ReadableStream + TextEncoder,逐事件 `data: <单行 JSON>\n\n`。`viewport` 与 `userLocation` 由前端在每条请求附带(定位成功才带 `userLocation`;视野经 `bridge.getSnapshot()`)。`work__searchPositions` 与系统提示以用户位置为检索起点,未知时才回退视野中心。
+响应:`Content-Type: text/event-stream; charset=utf-8` + `Cache-Control: no-store` + `X-Accel-Buffering: no`;`export const runtime = 'nodejs'`(显式);ReadableStream + TextEncoder,逐事件 `data: <单行 JSON>\n\n`。`viewport` 与 `userLocation` 由前端在每条请求附带(定位成功且坐标可解析才带 `userLocation`;视野经 `bridge.getSnapshot()` 且须含 finite zoom)。畸形或缺字段的可选视野/定位**省略,不 400**。`messages` 经 `toAgentChatMessages` 与会话 cap(30)对齐:缺 `content` 补空串、丢掉前导 assistant、超出从最旧裁;**裁完为空才 400**。`work__searchPositions` 与系统提示以用户位置为检索起点,未知时才回退视野中心。
 
 前置校验全部通过后、MCP/LLM 连接之前,路由读取独立导航 cookie `dm_navigation_session`(与 `POST /api/navigation/routes/plan` 及 `GET /api/navigation/routes/:routeId` 共享,`Path=/api`、HttpOnly、SameSite=Lax、生产 Secure)。缺失则 mint,并在最终 SSE `Response` 上 `Set-Cookie`。cookie 原文不进入 JSON/SSE/日志;仅 SHA-256 fingerprint 放入 `AgentContext.navigationSession`。工具集注入 `workTools()` + `navigationTools()`。
 
@@ -286,8 +286,7 @@ Content-Type: application/json
 | HTTP | code | 触发 |
 |---|---|---|
 | 400 | `BODY_TOO_LARGE` | body > 32KB |
-| 400 | `BAD_MESSAGES` | messages 空 / 首条非 user / 条数 > 20 / 单条 > 4000 字符 |
-| 400 | `BAD_VIEWPORT` | viewport 坐标非 finite |
+| 400 | `BAD_MESSAGES` | 裁剪后 messages 空 / 首条非 user |
 | 429 | `RATE_LIMITED` | 每 IP 10 req/min 超限 |
 | 503 | `LLM_UNCONFIGURED` | `readAgentConfig()` fail(LLM_*/AGENT_LLM_* 全缺) |
 | —(SSE 事件) | `TOOL_ERROR` | 工具调用失败(事件流内 `{type:'error', code:'TOOL_ERROR'}`) |
@@ -353,7 +352,7 @@ Content-Type: application/json
   归档当前会话(有消息才归档,标题保留原样)+ 新建空会话并激活,旧内容在会话
   列表可回溯(记忆不动;ws-clearfix);消息变更统一走 store
   (appendMessage/saveMessages/archiveAndNew),不再直写旧键——旧 sessionStorage
-  `dm.agent-history.v1` 仅迁移读(无 v1 键时迁为第一个会话,迁移后旧键清除);每条请求附带当前视野与用户位置(有定位时)。
+  `dm.agent-history.v1` 仅迁移读(无 v1 键时迁为第一个会话,迁移后旧键清除);每条请求附带当前视野与用户位置(有定位时);发给 chat 的 messages 经 `toAgentChatMessages` 裁到 30 条且首条 user。
 - 「停止」→ abort(链到 fetch);「撤销」→ `executor.undo()`。
 - **助手消息体用 MarkdownText 渲染**(marked → DOMPurify,见 §9.10);用户消息保持纯文本。
 

@@ -55,7 +55,7 @@ test('SSE 网络边界:reasoning 不出流,合法事件仍可逐事件流式转�
 });
 
 test('前置校验先于任何 MCP/LLM 连接(行号定位)', () => {
-  const markers = ["'BODY_TOO_LARGE'", "'BAD_MESSAGES'", "'BAD_VIEWPORT'", "'RATE_LIMITED'", "'LLM_UNCONFIGURED'", 'status: 400', 'status: 503'];
+  const markers = ["'BODY_TOO_LARGE'", "'BAD_MESSAGES'", 'parseAgentViewport(', "'RATE_LIMITED'", "'LLM_UNCONFIGURED'", 'status: 400', 'status: 503'];
   const connMarkers = ['getMcpProvider(', 'runAgent('];
   for (const m of markers) {
     const i = route.indexOf(m);
@@ -68,8 +68,8 @@ test('前置校验先于任何 MCP/LLM 连接(行号定位)', () => {
   }
 });
 
-test('校验顺序契约:body 大小 < messages < viewport < LLM 配置', () => {
-  const order = ["'BODY_TOO_LARGE'", "'BAD_MESSAGES'", "'BAD_VIEWPORT'", "'LLM_UNCONFIGURED'"];
+test('校验顺序契约:body 大小 < messages < viewport parse < LLM 配置', () => {
+  const order = ["'BODY_TOO_LARGE'", "'BAD_MESSAGES'", 'parseAgentViewport(', "'LLM_UNCONFIGURED'"];
   const idxs = order.map((m) => route.indexOf(m));
   for (let i = 1; i < idxs.length; i++) {
     assert.ok(idxs[i - 1] !== -1 && idxs[i] !== -1 && idxs[i - 1] < idxs[i], `${order[i - 1]} 必须在 ${order[i]} 之前`);
@@ -101,32 +101,29 @@ test('#11 限流键:经 lib/client-ip 统一解析 — 仅可信代理(TRUSTED_P
   assert.ok(rateIdx !== -1 && tooLargeIdx !== -1 && rateIdx < tooLargeIdx, '限流必须先于 body 读取');
 });
 
-test('输入上限:body 32KB / messages 20 条 / 单条 4000 字符 / SSE 输出 200KB', () => {
+test('输入上限:body 32KB / messages 30 条 / 单条 4000 字符 / SSE 输出 200KB', () => {
   assert.match(route, /const MAX_BODY_CHARS = 32 \* 1024/);
   assert.match(route, /readJsonBody<ChatBody>\(request, MAX_BODY_CHARS\)/);
   assert.doesNotMatch(route, /await request\.text\(\)/, 'chunked bodies must be stream-bounded');
-  assert.match(route, /const MAX_MESSAGES = 20/);
-  assert.match(route, /const MAX_MESSAGE_CHARS = 4000/);
+  assert.match(route, /toAgentChatMessages\(body\.messages\)/);
+  assert.match(route, /AGENT_CHAT_MAX_MESSAGES/);
   assert.match(route, /const MAX_SSE_BYTES = 200 \* 1024/);
   // body 超限必须在校验阶段拦截(先于任何连接)
   const tooLargeIdx = route.indexOf("'BODY_TOO_LARGE'");
   assert.ok(tooLargeIdx < route.indexOf('getMcpProvider('));
 });
 
-test('消息形状校验:空/首条非 user/条数超限/单条超长', () => {
-  assert.match(route, /msgs\.length === 0/);
-  assert.match(route, /msgs\[0\]\?\.role !== 'user'/);
-  assert.match(route, /msgs\.length > MAX_MESSAGES/);
-  assert.match(route, /m\.content\.length > MAX_MESSAGE_CHARS/);
+test('消息形状校验:空数组 400;超限与缺 content 由 toAgentChatMessages 裁剪/补齐', () => {
+  assert.match(route, /!Array\.isArray\(body\.messages\)/);
+  assert.match(route, /toAgentChatMessages\(body\.messages\)/);
+  assert.match(route, /messages\.length === 0/);
+  assert.match(route, /messages\[0\]\.role !== 'user'/);
 });
 
-test('viewport 校验:center/zoom/bounds 非 finite → 400;userLocation 非 finite 同码', () => {
-  assert.match(route, /isFiniteNum\(vp\.center\?\.lng\)/);
-  assert.match(route, /isFiniteNum\(vp\.center\?\.lat\)/);
-  assert.match(route, /isFiniteNum\(vp\.zoom\)/);
-  assert.match(route, /isFiniteNum\(vp\.bounds\.minLng\)/);
-  assert.match(route, /isFiniteNum\(userLoc\.lng\)/);
-  assert.match(route, /const userLocation: AgentContext\['userLocation'\] = userLoc/);
+test('viewport/userLocation:parse 后省略非法值,不 400 整轮对话', () => {
+  assert.match(route, /parseAgentViewport\(body\.viewport\)/);
+  assert.match(route, /parseAgentUserLocation\(body\.userLocation\)/);
+  assert.doesNotMatch(route, /return bad\('BAD_VIEWPORT'/);
   assert.match(route, /userLocation,/);
 });
 
@@ -153,7 +150,7 @@ test('navigation cookie: 前置校验之后、MCP/LLM 之前 mint;指纹进 ctx;
   const lastCheck = Math.max(
     route.indexOf("'BODY_TOO_LARGE'"),
     route.indexOf("'BAD_MESSAGES'"),
-    route.indexOf("'BAD_VIEWPORT'"),
+    route.indexOf('parseAgentViewport('),
     route.indexOf("'RATE_LIMITED'"),
     route.indexOf("'LLM_UNCONFIGURED'"),
   );
@@ -211,7 +208,7 @@ test('身份读取在 MCP/LLM 连接之前(记忆注入,2026-08-22 ws-mem-a)', (
   const lastCheck = Math.max(
     route.indexOf("'BODY_TOO_LARGE'"),
     route.indexOf("'BAD_MESSAGES'"),
-    route.indexOf("'BAD_VIEWPORT'"),
+    route.indexOf('parseAgentViewport('),
     route.indexOf("'RATE_LIMITED'"),
     route.indexOf("'LLM_UNCONFIGURED'"),
   );

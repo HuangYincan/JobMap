@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { parseSearchQuery } from '../src/lib/search.ts';
-import { searchPublicCatalog } from '../src/lib/public-search.ts';
+import { searchPublicCatalog, shouldWritePublicCatalogCache } from '../src/lib/public-search.ts';
 import { WORK_SEED, DOMAIN_SEED } from './fixtures/seed-data.ts';
 import { getMode, MODES } from '../src/lib/modes.ts';
 import { trendingForMode } from '../src/lib/trending-search.ts';
@@ -49,6 +49,7 @@ test('POST /api/search contract: invalid JSON 400, work seed + cache + pipeline'
   assert.match(route, /loadServerCatalog/);
   assert.match(route, /searchPublicCatalog/);
   assert.match(route, /spatialClipFromSearch/);
+  assert.match(route, /shouldWritePublicCatalogCache/);
   assert.match(route, /writePublicCache/);
   assert.doesNotMatch(route, /aggregations: \{ industries \}/);
 });
@@ -59,6 +60,8 @@ test('GET /api/pois contract: shared server catalog + pipeline', () => {
   assert.match(route, /searchPublicCatalog/);
   assert.match(route, /spatialClipFromSearch/);
   assert.match(route, /parseFilters/);
+  assert.match(route, /shouldWritePublicCatalogCache/);
+  assert.match(route, /error: 'work_db_unavailable'/);
   assert.ok(catalogFor('work').length > 0);
   assert.ok(catalogFor('domain').some((p) => p.id === 'hz-westlake'));
   assert.equal(catalogFor('college').length, 0);
@@ -218,4 +221,15 @@ test('district filter keeps address hits and falls back to the coarse box', () =
   };
   assert.equal(poiMatchesDistrict(unnamed, ['余杭区']), true);
   assert.equal(poiMatchesDistrict(unnamed, ['萧山区']), false);
+});
+
+test('shouldWritePublicCatalogCache: 招聘无 clip 且 0 条不缓存(首屏空目录毒)', () => {
+  assert.equal(shouldWritePublicCatalogCache('work', undefined, 0), false);
+  assert.equal(shouldWritePublicCatalogCache('internship', undefined, 0), false);
+  assert.equal(shouldWritePublicCatalogCache('work', undefined, 10), true);
+  assert.equal(
+    shouldWritePublicCatalogCache('work', { bounds: { west: 122.5, south: 30, east: 123.5, north: 31 } }, 0),
+    true,
+  );
+  assert.equal(shouldWritePublicCatalogCache('domain', undefined, 0), true);
 });

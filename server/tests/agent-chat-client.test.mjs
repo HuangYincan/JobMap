@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSseChunk, streamAgentChat } from '../src/components/agent-chat-client.ts';
+import { agentChatMapFields, parseSseChunk, streamAgentChat } from '../src/components/agent-chat-client.ts';
 
 // ---- parseSseChunk 纯函数矩阵 ----
 
@@ -217,6 +217,46 @@ test('streamAgentChat: userLocation 透传', async () => {
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test('streamAgentChat: 超 cap 历史裁到 30 且首条 user;缺 content 补空串', async () => {
+  const originalFetch = globalThis.fetch;
+  let sentBody = null;
+  globalThis.fetch = async (_url, opts) => {
+    sentBody = JSON.parse(opts.body);
+    return sseResponse(['data: {"type":"done"}\n\n']);
+  };
+  try {
+    const many = Array.from({ length: 32 }, (_, i) => ({
+      role: i % 2 === 0 ? 'user' : 'assistant',
+      content: `m${i}`,
+    }));
+    many[2] = { role: 'user' };
+    await collect({ messages: many }, new AbortController().signal);
+    assert.equal(sentBody.messages.length, 30);
+    assert.equal(sentBody.messages[0].role, 'user');
+    assert.equal(sentBody.messages[0].content, '');
+    assert.equal(sentBody.messages[29].content, 'm31');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('agentChatMapFields: 缺 zoom 或非 finite 坐标则省略,数字字符串可解析', () => {
+  assert.deepEqual(agentChatMapFields({ center: { lng: 120.15, lat: 30.28 } }, { lng: 121.47, lat: 31.23 }), {
+    userLocation: { lng: 121.47, lat: 31.23 },
+  });
+  assert.deepEqual(
+    agentChatMapFields({ center: { lng: 120.15, lat: 30.28 }, zoom: Number.NaN }, { lng: null, lat: 31.23 }),
+    {},
+  );
+  assert.deepEqual(
+    agentChatMapFields({ center: { lng: '120.15', lat: '30.28' }, zoom: '11' }, { lng: '121.47', lat: '31.23' }),
+    {
+      viewport: { center: { lng: 120.15, lat: 30.28 }, zoom: 11 },
+      userLocation: { lng: 121.47, lat: 31.23 },
+    },
+  );
 });
 
 test('streamAgentChat: 503 LLM_UNCONFIGURED → error 事件(不抛错)', async () => {

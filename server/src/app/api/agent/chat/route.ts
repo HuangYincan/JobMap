@@ -18,7 +18,9 @@ import { readAgentConfig, hasBaiduAgentPlan } from '@/lib/agent/config';
 import { runAgent } from '@/lib/agent/run-agent';
 import { getMcpProvider, normalizeTool } from '@/lib/agent/mcp-providers';
 import type { ProviderId } from '@/lib/agent/mcp-providers';
-import type { AgentTool, AgentContext } from '@/lib/agent/types';
+import type { AgentTool } from '@/lib/agent/types';
+import { AGENT_CHAT_MAX_MESSAGES, toAgentChatMessages } from '@/lib/agent/chat-messages';
+import { parseAgentUserLocation, parseAgentViewport } from '@/lib/agent/search-origin';
 import { filterPublicSseEvent } from '@/lib/agent/public-sse';
 import { builtinTools, memorySaveTool } from '@/lib/agent/tools/builtin';
 import { restFallbackTools } from '@/lib/agent/tools/rest-fallback';
@@ -36,8 +38,6 @@ export const runtime = 'nodejs';
 
 // ---- 输入上限(tech/24 §6.5)----
 const MAX_BODY_CHARS = 32 * 1024;
-const MAX_MESSAGES = 20;
-const MAX_MESSAGE_CHARS = 4000;
 /** SSE 输出字节上限;超 → `done, truncated`(为终态事件保留余量)。 */
 const MAX_SSE_BYTES = 200 * 1024;
 const SSE_TAIL_RESERVE = 512;
@@ -82,10 +82,6 @@ async function rateLimitKey(request: Request): Promise<string> {
   return clientIpBucketKey(request, await readSessionToken());
 }
 
-function isFiniteNum(v: unknown): v is number {
-  return typeof v === 'number' && Number.isFinite(v);
-}
-
 interface ChatBody {
   messages?: Array<{ role?: string; content?: unknown }>;
   viewport?: {
@@ -113,7 +109,7 @@ export async function POST(request: Request) {
     return bad('BODY_TOO_LARGE', `request body must be ≤ ${MAX_BODY_CHARS} bytes`);
   }
 
-  // 3. JSON 解析 + messages 形状(空/首条非 user/条数 > 20/单条 > 4000 → 400)
+  // 3. JSON 解析 + messages 整形(空/首条非 user → 400;超 cap 从最旧裁,缺 content 补 "")
   let body: ChatBody;
   try {
     body = await readJsonBody<ChatBody>(request, MAX_BODY_CHARS);
@@ -123,38 +119,23 @@ export async function POST(request: Request) {
     }
     return bad('BAD_MESSAGES', 'invalid JSON body');
   }
-  const msgs = body.messages;
-  if (!Array.isArray(msgs) || msgs.length === 0 || msgs.length > MAX_MESSAGES) {
-    return bad('BAD_MESSAGES', `messages must be 1..${MAX_MESSAGES} items`);
+  // 会话 cap 30 + 本轮新 user 会到 31 条;缺 content 的空助手气泡 JSON 也会丢掉字段。
+  // 裁剪/补齐后为空才 400,不因略超上限整轮失败。
+  if (!Array.isArray(body.messages)) {
+    return bad('BAD_MESSAGES', `messages must be 1..${AGENT_CHAT_MAX_MESSAGES} items`);
   }
-  if (msgs[0]?.role !== 'user') {
+  const messages = toAgentChatMessages(body.messages);
+  if (messages.length === 0) {
+    return bad('BAD_MESSAGES', `messages must be 1..${AGENT_CHAT_MAX_MESSAGES} items`);
+  }
+  if (messages[0].role !== 'user') {
     return bad('BAD_MESSAGES', 'first message must have role "user"');
   }
-  for (const m of msgs) {
-    if (!m || (m.role !== 'user' && m.role !== 'assistant') || typeof m.content !== 'string' || m.content.length > MAX_MESSAGE_CHARS) {
-      return bad('BAD_MESSAGES', `each message must have role user|assistant and content ≤ ${MAX_MESSAGE_CHARS} chars`);
-    }
-  }
 
-  // 4. viewport 坐标非 finite → 400(tech/24 §4.3)
-  const vp = body.viewport;
-  if (vp != null) {
-    if (!isFiniteNum(vp.center?.lng) || !isFiniteNum(vp.center?.lat) || !isFiniteNum(vp.zoom)) {
-      return bad('BAD_VIEWPORT', 'viewport.center.lng/lat and viewport.zoom must be finite numbers');
-    }
-    if (
-      vp.bounds != null &&
-      (!isFiniteNum(vp.bounds.minLng) || !isFiniteNum(vp.bounds.minLat) || !isFiniteNum(vp.bounds.maxLng) || !isFiniteNum(vp.bounds.maxLat))
-    ) {
-      return bad('BAD_VIEWPORT', 'viewport.bounds must contain finite numbers');
-    }
-  }
-  const userLoc = body.userLocation;
-  if (userLoc != null) {
-    if (!isFiniteNum(userLoc.lng) || !isFiniteNum(userLoc.lat)) {
-      return bad('BAD_VIEWPORT', 'userLocation.lng/lat must be finite numbers');
-    }
-  }
+  // 4. 可选 viewport / userLocation:解析失败则省略,不 400 整轮对话。
+  // 地图快照缺 zoom、定位坐标被 JSON 成 null/字符串时仍应能提问。
+  const viewport = parseAgentViewport(body.viewport);
+  const userLocation = parseAgentUserLocation(body.userLocation);
 
   // 5. LLM 配置缺失 → 503(tech/24 §5.4 #4)
   const cfgRes = readAgentConfig();
@@ -228,24 +209,6 @@ export async function POST(request: Request) {
   }
   toolNamesState.names = tools.map((t) => t.name);
 
-  const messages = msgs as Array<{ role: 'user' | 'assistant'; content: string }>;
-  const viewport: AgentContext['viewport'] = vp
-    ? {
-        center: { lng: (vp.center as { lng: number }).lng, lat: (vp.center as { lat: number }).lat },
-        zoom: vp.zoom as number,
-        bounds: vp.bounds
-          ? {
-              minLng: (vp.bounds as { minLng: number }).minLng,
-              minLat: (vp.bounds as { minLat: number }).minLat,
-              maxLng: (vp.bounds as { maxLng: number }).maxLng,
-              maxLat: (vp.bounds as { maxLat: number }).maxLat,
-            }
-          : undefined,
-      }
-    : undefined;
-  const userLocation: AgentContext['userLocation'] = userLoc
-    ? { lng: userLoc.lng as number, lat: userLoc.lat as number }
-    : undefined;
   const lang: 'zh' | 'en' = body.lang === 'en' ? 'en' : 'zh';
 
   const upstreamAbort = new AbortController();

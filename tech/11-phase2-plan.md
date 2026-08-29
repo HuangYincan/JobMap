@@ -42,7 +42,7 @@
 
 **1.3 API 路由**
 - [x] `GET /api/modes` - 获取可用模式
-- [x] `GET /api/pois` - POI 列表（`loadServerCatalog`：严格 DB-only，无库返回空；seed 已归档 `tech/backup/seed-data`）
+- [x] `GET /api/pois` - POI 列表（`loadServerCatalog`：严格 DB-only，无库 → 502；seed 已归档 `tech/backup/seed-data`）
 - [x] `GET /api/pois/:id` - POI 详情（`loadServerCatalogById`）
 - [x] `POST /api/search` - 搜索 API（同一 catalog）
 
@@ -128,7 +128,7 @@
 - [x] 数据清洗 / 验证（`lib/recruitment-import.ts`；坏行进 `issues` 不入库）
 - [x] 公司地理位置匹配（`planSiteGeocode` / `npm run geocode:sites` 列出缺坐标职场。Live AMap REST 需 `AMAP_WEB_KEY`，本机无 key 不打接口）
 - [x] 导入计划脚本（`npm run import:seed` dry-run；`import:seed:apply` 有库才写入 `006` 表；seed 不再参与导入）
-- [x] 公开读走导入行（`loadWorkCatalogFromDb` → `loadServerCatalog`；严格 DB-only，无库返回空）
+- [x] 公开读走导入行（`loadWorkCatalogFromDb` → `loadServerCatalog`；严格 DB-only，无库 → 502）
 - [x] 工作模式地图读同一 catalog（`fetchWorkCatalogFromApi`；已有坐标不打 Geocoder）
 - [x] 数据验证和去重（同 slug 合并职场/岗位）
 

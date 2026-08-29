@@ -1051,6 +1051,14 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           // 全量加载后 work 无「加载更多」分页;pageOffset 归零(旧会话缓存
           // 可能残留 >0,否则下一次 load 会从第 N 页起取、漏掉前 N 页)。
           if (pageOffset !== 0) setPageOffset(0);
+          // 库故障(502)不得当成真空空目录:首屏会从加载起就没有 POI,且
+          // 旧实现还把 200 空结果缓存 30s,把所有 sort=distance 首屏毒死。
+          if (result.unavailable) {
+            if (beforeLen === 0) setError("Failed to load POIs");
+            noMoreRef.current = false;
+            setNoMoreData(false);
+            return;
+          }
         } else {
           // 分类门控(poi-category-loading):domain 无分类选择 → 默认不加载,
           // 目录保持空(地图无 domain marker、列表空态);搜索(query)豁免。

@@ -7,13 +7,62 @@ export interface AgentLngLat {
   lat: number;
 }
 
+export function coerceFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return undefined;
+}
+
 export function isFiniteLngLat(value: unknown): value is AgentLngLat {
-  if (!value || typeof value !== 'object') return false;
+  const loc = parseAgentLngLat(value);
+  return Boolean(loc);
+}
+
+/** 解析经纬度:接受 number 或数字字符串;越界/NaN → undefined。 */
+export function parseAgentLngLat(value: unknown): AgentLngLat | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const loc = value as { lng?: unknown; lat?: unknown };
-  return typeof loc.lng === 'number' && Number.isFinite(loc.lng)
-    && typeof loc.lat === 'number' && Number.isFinite(loc.lat)
-    && loc.lng >= -180 && loc.lng <= 180
-    && loc.lat >= -90 && loc.lat <= 90;
+  const lng = coerceFiniteNumber(loc.lng);
+  const lat = coerceFiniteNumber(loc.lat);
+  if (lng === undefined || lat === undefined) return undefined;
+  if (lng < -180 || lng > 180 || lat < -90 || lat > 90) return undefined;
+  return { lng, lat };
+}
+
+export function parseAgentUserLocation(value: unknown): AgentLngLat | undefined {
+  return parseAgentLngLat(value);
+}
+
+export interface AgentViewportFields {
+  center: AgentLngLat;
+  zoom: number;
+  bounds?: { minLng: number; minLat: number; maxLng: number; maxLat: number };
+}
+
+/** 可选视野:缺 zoom/中心或非 finite → undefined(调用方应省略字段,不要 400 整轮对话)。 */
+export function parseAgentViewport(value: unknown): AgentViewportFields | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const vp = value as { center?: unknown; zoom?: unknown; bounds?: unknown };
+  const center = parseAgentLngLat(vp.center);
+  const zoom = coerceFiniteNumber(vp.zoom);
+  if (!center || zoom === undefined) return undefined;
+  let bounds: AgentViewportFields['bounds'];
+  if (vp.bounds != null) {
+    if (typeof vp.bounds !== 'object' || Array.isArray(vp.bounds)) return undefined;
+    const raw = vp.bounds as { minLng?: unknown; minLat?: unknown; maxLng?: unknown; maxLat?: unknown };
+    const minLng = coerceFiniteNumber(raw.minLng);
+    const minLat = coerceFiniteNumber(raw.minLat);
+    const maxLng = coerceFiniteNumber(raw.maxLng);
+    const maxLat = coerceFiniteNumber(raw.maxLat);
+    if (minLng === undefined || minLat === undefined || maxLng === undefined || maxLat === undefined) {
+      return undefined;
+    }
+    bounds = { minLng, minLat, maxLng, maxLat };
+  }
+  return bounds ? { center, zoom, bounds } : { center, zoom };
 }
 
 /** 岗位/附近检索原点:用户位置 > 视野中心。 */

@@ -11,7 +11,7 @@
 import { NextResponse } from 'next/server';
 import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 import { loadServerCatalog } from '@/lib/server-catalog';
-import { searchPublicCatalog, spatialClipFromSearch } from '@/lib/public-search';
+import { searchPublicCatalog, shouldWritePublicCatalogCache, spatialClipFromSearch } from '@/lib/public-search';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
@@ -123,8 +123,18 @@ export async function POST(request: Request) {
     page: body.page,
     pageSize: body.pageSize,
   };
-  const pois = await loadServerCatalog(mode, spatialClipFromSearch(query));
+  const clip = spatialClipFromSearch(query);
+  const pois = await loadServerCatalog(mode, clip);
+  if (pois === null) {
+    return NextResponse.json(
+      { error: 'work_db_unavailable' },
+      { status: 502, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
   const payload = searchPublicCatalog(pois, query);
-  writePublicCache(cacheKey, payload);
-  return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  if (shouldWritePublicCatalogCache(mode, clip, payload.total)) {
+    writePublicCache(cacheKey, payload);
+    return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  }
+  return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } });
 }

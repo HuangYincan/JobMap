@@ -413,6 +413,11 @@ export interface LoadWorkViewportResult {
    * 数据源已取尽。仅供调用方做空批次三态(真空清空 vs 保留旧目录,ws1 Bug1)。
    */
   vacant: boolean;
+  /**
+   * 本轮没有任何成功页(全 4xx/5xx/超时)。首屏应展示错误、不得把故障
+   * 当成真空空目录(否则 502 被公开缓存或失败被当成 0 条后,地图从加载起就没有 POI)。
+   */
+  unavailable: boolean;
 }
 
 /**
@@ -479,9 +484,16 @@ export async function loadWorkViewport(
   let noMore = false;
   let vacant = false;
   let consecutiveFailures = 0;
+  let okPages = 0;
+  const result = (over: { noMore: boolean; vacant: boolean }): LoadWorkViewportResult => ({
+    pois: merged,
+    noMore: over.noMore,
+    vacant: over.vacant,
+    unavailable: okPages === 0 && consecutiveFailures > 0,
+  });
   for (let p = 0; p < maxPages; p += 1) {
     const pageNo = startPage + p;
-    if (signal?.cancelled) return { pois: merged, noMore: false, vacant };
+    if (signal?.cancelled) return result({ noMore: false, vacant });
     let page: WorkViewportPage;
     try {
       page = await withTimeout(
@@ -508,8 +520,9 @@ export async function loadWorkViewport(
       }
       continue;
     }
+    okPages += 1;
     consecutiveFailures = 0;
-    if (signal?.cancelled) return { pois: merged, noMore: false, vacant };
+    if (signal?.cancelled) return result({ noMore: false, vacant });
     const offset = (pageNo - 1) * pageSize;
     merged = mergePoisById(merged, page.pois, cap);
     onBatch?.(merged);
@@ -535,7 +548,7 @@ export async function loadWorkViewport(
       break;
     }
   }
-  return { pois: merged, noMore, vacant };
+  return result({ noMore, vacant });
 }
 
 export interface ViewportLoader {

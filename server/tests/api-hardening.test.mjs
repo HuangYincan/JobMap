@@ -214,6 +214,34 @@ test('#12 pois: 超长外部参数 / page / pageSize 非法 → 400,且先于缓
   assert.match(route, /writePublicCache/);
 });
 
+test('#12 search: 工作目录 DB 故障(null)→ 502,不写缓存(不伪装成功空结果)', () => {
+  const route = src('app/api/search/route.ts');
+  assert.match(route, /error: 'work_db_unavailable'/);
+  assert.match(route, /status: 502/);
+  assert.match(route, /'Cache-Control': 'no-store'/);
+  assert.match(route, /pois === null/);
+  const dbIdx = route.indexOf('await loadServerCatalog');
+  const failIdx = route.indexOf("error: 'work_db_unavailable'");
+  const cacheIdx = route.indexOf('writePublicCache(cacheKey, payload)');
+  assert.ok(dbIdx !== -1 && failIdx !== -1 && dbIdx < failIdx, '失败分支在查库之后返回');
+  assert.ok(cacheIdx !== -1 && failIdx < cacheIdx, '502 分支先于写缓存(故障不缓存)');
+  assert.match(route, /shouldWritePublicCatalogCache/);
+});
+
+test('#12 pois: 工作目录 DB 故障(null)→ 502,不写缓存(不伪装成功空结果)', () => {
+  const route = src('app/api/pois/route.ts');
+  assert.match(route, /error: 'work_db_unavailable'/);
+  assert.match(route, /status: 502/);
+  assert.match(route, /'Cache-Control': 'no-store'/);
+  assert.match(route, /pois === null/);
+  const dbIdx = route.indexOf('await loadServerCatalog');
+  const failIdx = route.indexOf("error: 'work_db_unavailable'");
+  const cacheIdx = route.indexOf('writePublicCache(cacheKey, payload)');
+  assert.ok(dbIdx !== -1 && failIdx !== -1 && dbIdx < failIdx, '失败分支在查库之后返回');
+  assert.ok(cacheIdx !== -1 && failIdx < cacheIdx, '502 分支先于写缓存(故障不缓存)');
+  assert.match(route, /shouldWritePublicCatalogCache/);
+});
+
 test('#12 domain-local: bounds/q/categories/分页参数超长 → 400,且先于缓存 key', () => {
   const route = src('app/api/pois/domain-local/route.ts');
   assert.match(route, /const MAX_Q_LENGTH = 100/);

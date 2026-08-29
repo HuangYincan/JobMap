@@ -16,7 +16,7 @@
 
 import { NextResponse } from 'next/server';
 import { loadServerCatalog } from '@/lib/server-catalog';
-import { searchPublicCatalog, spatialClipFromSearch } from '@/lib/public-search';
+import { searchPublicCatalog, shouldWritePublicCatalogCache, spatialClipFromSearch } from '@/lib/public-search';
 import type { MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
@@ -99,7 +99,16 @@ export async function GET(request: Request) {
   }
 
   const query = { mode, q, filters, sort, bounds, page, pageSize };
-  const pois = await loadServerCatalog(mode, spatialClipFromSearch(query));
+  const clip = spatialClipFromSearch(query);
+  const pois = await loadServerCatalog(mode, clip);
+  // 与 domain-local 同款:DB 故障(null)≠ 真空 []。200 空结果会被 30s 公开缓存,
+  // 工作模式默认 sort=distance 首屏会把整图 POI 吃成空目录。
+  if (pois === null) {
+    return NextResponse.json(
+      { error: 'work_db_unavailable' },
+      { status: 502, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
   const found = searchPublicCatalog(pois, query);
   const payload = {
     total: found.total,
@@ -107,6 +116,9 @@ export async function GET(request: Request) {
     pageSize: found.pageSize,
     results: found.results,
   };
-  writePublicCache(cacheKey, payload);
-  return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  if (shouldWritePublicCatalogCache(mode, clip, found.total)) {
+    writePublicCache(cacheKey, payload);
+    return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+  }
+  return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } });
 }

@@ -172,7 +172,7 @@ Client Components (map-shell.tsx)
 Map Engine (契约层:AMap / 腾讯 TMap / 百度 BMapGL)
 ```
 
-Work mode public reads **require Postgres** (imported SQL rows via `loadServerCatalog`); no `DATABASE_URL`, a DB failure, or an empty DB result returns an empty list—there is no offline seed fallback. Domain mode: in-Hangzhou browse uses the local `hz_pois` table (`/api/pois/domain-local`); outside Hangzhou (or a local zero-hit search) the **active engine**'s `searchPOI` handles the lookup (`poi-service` receives the provider through `use-map-engine`; SSR/tests/no engine configuration fall back to `amap-api`). The frontend no longer uses a hardcoded `places` array for live data.
+Work mode public reads **require Postgres** (imported SQL rows via `loadServerCatalog`); no `DATABASE_URL` or a DB failure is HTTP 502 (not a cached empty list)—there is no offline seed fallback. A healthy DB that is actually empty still returns `[]`. Domain mode: in-Hangzhou browse uses the local `hz_pois` table (`/api/pois/domain-local`); outside Hangzhou (or a local zero-hit search) the **active engine**'s `searchPOI` handles the lookup (`poi-service` receives the provider through `use-map-engine`; SSR/tests/no engine configuration fall back to `amap-api`). The frontend no longer uses a hardcoded `places` array for live data.
 
 ### Plugin Readiness
 
@@ -219,7 +219,7 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 2. **Job alerts are queue-only:** email/SMS toggles enqueue inbox rows; nothing is actually sent (real send still deferred)
 3. **No error boundary:** Map initialization errors are not caught at a React boundary; engine mount failures now surface a retry overlay (`mountError` / `retryMount` 状态机,2026-08-22),其他初始化错误仍可能白屏
 4. **Accessibility:** ARIA labels present, screen reader testing pending (VoiceOver/NVDA manual tests deferred)
-5. **DB read-path requirement (设计决策):** public Work reads require Postgres; no `DATABASE_URL`, a DB failure, or a DB-backed empty result returns an empty list—never a seed/offline fallback. Account write paths similarly surface `DbUnavailableError` as 503 rather than silently falling back to memory, while selected account/session features may use in-memory development storage when no database is configured.
+5. **DB read-path requirement (设计决策):** public Work reads require Postgres; no `DATABASE_URL` or a DB failure is HTTP 502 (not a cached empty list)—never a seed/offline fallback. A healthy empty clip remains `[]`. Account write paths similarly surface `DbUnavailableError` as 503 rather than silently falling back to memory, while selected account/session features may use in-memory development storage when no database is configured.
 
 ## Testing
 
@@ -289,7 +289,7 @@ Live account flows run against Postgres when `DATABASE_URL` is set (cookie sessi
 
 1. **Auth:** phone/email OTP 真发 —— phone 经阿里云短信认证服务、email 经 Resend(未配置 → 503 `SMS_NOT_CONFIGURED` / `EMAIL_NOT_CONFIGURED`;demo `000000` stub 已删)+ password accounts (`/api/auth/password/register|login`, scrypt-hashed, migration 014);OAuth 登录(github / google / wechat,authorization code flow)见 `tech/27-oauth-login.md`
 2. **Persistence:** search history, saved places, applications, job-alert queue (`/api/me/*`); saved/compare are catalog-recruitment only (domain snapshots → 400 `NOT_PERSISTABLE`); guest Recent is browser-localStorage
-3. **Public reads:** `/api/pois`, `/api/search`, `/api/suggest` — Work mode is strict DB-only (Postgres; no DB/failure/empty result → empty list), Domain mode uses `hz_pois` in Hangzhou plus the active map engine outside; public cache is 30s; spatial clip uses `geom && ST_MakeEnvelope` + `ST_DWithin` (PostGIS)
+3. **Public reads:** `/api/pois`, `/api/search`, `/api/suggest` — Work mode is strict DB-only (Postgres; no DB/failure → 502, not a cached empty list), Domain mode uses `hz_pois` in Hangzhou plus the active map engine outside; public cache is 30s except Work faults and unclipped Work `total=0`; spatial clip uses `geom && ST_MakeEnvelope` + `ST_DWithin` (PostGIS)
 4. **Loading states:** map-shell lazy-loads (`next/dynamic`, `ssr: false`); viewport loader debounces 800ms with per-batch epoch guards
 
 ## Contributing

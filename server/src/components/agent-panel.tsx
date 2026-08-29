@@ -32,7 +32,7 @@ import type { AgentAction, AgentEvent } from "@/lib/agent/types";
 import type { MapBridge } from "@/lib/agent-map-bridge";
 import type { RouteOverlayMeta } from "@/lib/navigation/route-client";
 import { stripActionJsonBlocks, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
-import { streamAgentChat, type AgentChatRequest } from "./agent-chat-client";
+import { agentChatMapFields, streamAgentChat, toAgentChatMessages, type AgentChatRequest } from "./agent-chat-client";
 import {
   createAgentMapExecutor,
   type AgentMapExecutor,
@@ -509,11 +509,9 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
       const controller = new AbortController();
       setStreamsBoth((prev) => startStream(prev, sessionId, controller, nextMessages));
       const snapshot = bridgeRef.current?.getSnapshot() ?? null;
-      const loc = userLocationRef.current;
       const req: AgentChatRequest = {
-        messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
-        ...(snapshot ? { viewport: { center: snapshot.center, zoom: snapshot.zoom } } : {}),
-        ...(loc ? { userLocation: loc } : {}),
+        messages: toAgentChatMessages(nextMessages),
+        ...agentChatMapFields(snapshot, userLocationRef.current),
         lang: langRef.current,
       };
       void runStream(sessionId, req, controller);

@@ -6,7 +6,11 @@
 // 事件可能跨 chunk 切分:消费端缓冲残余,只有以 \n\n 结束的完整块才解析。
 // AgentEvent/AgentAction 类型从 lib/agent/types import(同构,前端可 import lib 类型)。
 
+import { toAgentChatMessages } from "../lib/agent/chat-messages.ts";
 import type { AgentEvent } from "../lib/agent/types.ts";
+import { parseAgentUserLocation, parseAgentViewport } from "../lib/agent/search-origin.ts";
+
+export { toAgentChatMessages };
 
 export interface AgentChatMessage {
   role: "user" | "assistant";
@@ -24,6 +28,19 @@ export interface AgentChatRequest {
   viewport?: AgentChatViewport;
   userLocation?: { lng: number; lat: number };
   lang?: "zh" | "en";
+}
+
+/** 只附带可解析的视野/定位;缺 zoom 或坐标非 finite 时省略,避免服务端 400。 */
+export function agentChatMapFields(
+  snapshot: { center?: { lng?: unknown; lat?: unknown }; zoom?: unknown } | null | undefined,
+  userLocation: unknown,
+): Pick<AgentChatRequest, "viewport" | "userLocation"> {
+  const viewport = parseAgentViewport(snapshot);
+  const loc = parseAgentUserLocation(userLocation);
+  return {
+    ...(viewport ? { viewport } : {}),
+    ...(loc ? { userLocation: loc } : {}),
+  };
 }
 
 /**
@@ -62,7 +79,7 @@ export async function* streamAgentChat(
     response = await fetch("/api/agent/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-      body: JSON.stringify(req),
+      body: JSON.stringify({ ...req, messages: toAgentChatMessages(req.messages) }),
       signal,
     });
   } catch (err) {

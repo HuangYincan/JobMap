@@ -2,6 +2,24 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-29: 工作模式从加载起就没有 POI(空目录被当成功缓存)
+
+**症状**:工作模式一进页地图上没有任何公司点,列表也是 0;不是点击后消失,刷新同一标签仍空。
+
+**根因**:
+
+1. `loadServerCatalog('work')` 把 DB 故障/`null` 折成 `[]`。`GET /api/pois` 当成健康真空 **200** 并写入 30s 公开缓存。
+2. 工作模式默认 `sort=distance`,缓存 key 含 sort。无 sort 的探测请求仍能打到满目录,首屏只打中被毒死的 distance 桶。
+3. `loadWorkViewport` 把首页 200 空当 `vacant`,MapShell `setCatalog([])`,用户从加载起就没有点。
+
+**修复**:
+
+- `loadServerCatalog` 招聘模式透传 `null`;`/api/pois` 与 `/api/search` 对齐 domain-local:**502** `{ error: 'work_db_unavailable' }`、`Cache-Control: no-store`。
+- 招聘模式无空间 clip 且 `total===0` 也不写公开缓存(防瞬时空结果再毒 30s)。
+- `loadWorkViewport` 增加 `unavailable`(整轮无成功页);MapShell 首屏报错并保留目录,不得把故障写成空池。
+
+**相关文件**:`server-catalog.ts`、`public-search.ts`、`api/pois/route.ts`、`api/search/route.ts`、`viewport-search.ts`、`map-shell.tsx`。
+
 ## 2026-08-22: 首访卡死加载界面——三条无界/无出口链修复(loading-hang)
 
 **症状**：首次进入网站必定卡死在 "Loading map..." 覆盖层,刷新(或重开)即好。

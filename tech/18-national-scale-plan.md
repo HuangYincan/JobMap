@@ -97,7 +97,7 @@ CREATE INDEX positions_open_site_idx ON positions (site_id) WHERE status='open';
 - **工作模式**：地图 `moveend` / `zoomend` → 防抖（~300ms）→ 请求 `/api/pois`（当前 `bounds` + `maxTier`）→ **增量合并**进现有 catalog（不整体替换）→ 复用 marker。主地图（Domain）**保持刷新才更新**（AMap 负载/余额），不实现此功能。
 - 性能手段：请求合并（同刻只有一个 in-flight）、旧请求取消、增量 merge、marker 复用。
 - 服务端：`loadServerCatalog` / `loadWorkCatalogFromDb` 支持 `bounds` + `filters.maxTier` + `filters.city`，走 PostGIS（gist `&&` + `ST_DWithin`；距离用 `geom_geog` geography 更准）。
-- **读路径 null/[] 契约（2026-08-25 修订 `fix/server-catalog-semantics`；2026-08-26 起严格 DB-only，细则见 `tech/13`）**：`null` = 无 DB / 查询失败 → 返回空数组（不再回退离线 seed 目录；seed 示例数据已归档 `tech/backup/seed-data`）；`[]` = DB 健康但裁剪未命中或 JS 过滤（`hasPlausibleCoord` / `isCityCenterPin`）后为空 → 带 clip 时保持空结果，绝不回退离线目录。
+- **读路径 null/[] 契约（2026-08-25 修订 `fix/server-catalog-semantics`；2026-08-26 起严格 DB-only；2026-08-29 路由 502，细则见 `tech/13`）**：`null` = 无 DB / 查询失败 → HTTP 502，不再回退离线 seed 目录、也不再伪装成 200 空数组（seed 示例数据已归档 `tech/backup/seed-data`）；`[]` = DB 健康但裁剪未命中或 JS 过滤（`hasPlausibleCoord` / `isCityCenterPin`）后为空 → 带 clip 时保持空结果，绝不回退离线目录。
 
 ### 2.4 Q3 — 全国数据源（预爬入库）
 

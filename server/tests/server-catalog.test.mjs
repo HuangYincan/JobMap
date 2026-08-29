@@ -1,4 +1,4 @@
-// Public catalog — 严格 DB-only(2026-08-26):读 Postgres;无 DB / 失败 → 空。
+// Public catalog — 严格 DB-only(2026-08-26):读 Postgres;无 DB / 失败 → null(路由 502)。
 // seed 示例数据已归档 tech/backup/seed-data,不再作为任何回退来源。
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,10 +20,11 @@ function src(rel) {
   return readFileSync(join(srcRoot, rel), 'utf8');
 }
 
-test('strict DB-only: no DATABASE_URL → work catalog is empty (no seed fallback)', async () => {
-  // 测试环境无 DATABASE_URL → getPool() null → loadWorkCatalogFromDb null →
-  // loadServerCatalog 返回 [],绝不再回退离线 seed 目录。
-  assert.deepEqual(await loadServerCatalog('work'), []);
+test('strict DB-only: no DATABASE_URL → work catalog is null (no seed fallback)', async () => {
+  // 测试环境无 DATABASE_URL → getPool() null → loadWorkCatalogFromDb null。
+  // 路由层把 null 变成 502(不缓存);本函数不再把故障折叠成 []。
+  assert.equal(await loadServerCatalog('work'), null);
+  assert.equal(await loadServerCatalog('internship'), null);
   assert.deepEqual(await loadServerCatalog('domain'), []);
   assert.equal(await loadServerCatalogById('work', 'alibaba-xixi'), undefined);
   assert.equal(await loadServerCatalogById('domain', 'hz-westlake'), undefined);
@@ -419,7 +420,7 @@ test('loadWorkCatalogFromDb passes clipped ids and maxTier through to company/po
 
 // 2026-08-25 (fix/server-catalog-semantics): null/[] 契约 — SQL 命中但 JS 侧过滤
 // (hasPlausibleCoord / isCityCenterPin)后为空 = DB 健康 + 范围空, 必须返回 []
-// (而非 null); null 会被 loadServerCatalog 当作「失败」→ 严格 DB-only 下返回空。
+// (而非 null); null 由路由层变成 502,不得再折叠成 200 空目录。
 test('loadWorkCatalogFromDb returns [] when clipped rows are all filtered out (clip-miss stays empty)', async () => {
   const queries = [];
   const pool = {
@@ -470,7 +471,7 @@ test('loadWorkCatalogFromDb returns null when an unclipped table has no located 
       throw new Error(`unexpected query: ${sql}`);
     },
   };
-  // 无 clip(全量读): 表全被过滤 → null → loadServerCatalog 严格 DB-only 下返回 []。
+  // 无 clip(全量读): 表全被过滤 → null(失败/无有效站);路由不得把它缓存成 200 空目录。
   assert.equal(await loadWorkCatalogFromDb(undefined, pool), null);
 });
 
@@ -487,7 +488,7 @@ test('loadServerCatalog is strict DB-only (no seed / offline fallback in source)
   const catalog = src('lib/server-catalog.ts');
   assert.match(catalog, /loadWorkCatalogFromDb/);
   assert.match(catalog, /loadWorkCatalogFromDb\(clip\)/);
-  assert.match(catalog, /\?\? \[\]/);
+  assert.doesNotMatch(catalog, /\?\? \[\]/);
   // 不再 import/导出示例数据、离线目录或同步 seed catalog(注释里提及 archive 不算)。
   assert.doesNotMatch(catalog, /DOMAIN_SEED|INTERNSHIP_SEED|loadOfflineWorkCatalog|mergeCompaniesIntoPois|export function serverCatalog\b|from '\.\/seed-data/);
 });

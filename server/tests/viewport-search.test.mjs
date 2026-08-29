@@ -297,7 +297,7 @@ test('loadWorkViewport: 失败页跳过不置 noMore(错误 ≠ 没有更多,fir
         };
   };
   try {
-    const { pois, noMore, vacant } = await loadWorkViewport({
+    const { pois, noMore, vacant, unavailable } = await loadWorkViewport({
       bounds: VIEWPORT_BOX,
       pageSize: 1,
       maxPages: 2,
@@ -306,6 +306,7 @@ test('loadWorkViewport: 失败页跳过不置 noMore(错误 ≠ 没有更多,fir
     assert.deepEqual(pois.map((p) => p.id), ['a']); // 失败页跳过,后续页照常并入
     assert.equal(noMore, false); // 失败不闩锁 noMore(可重试)
     assert.equal(vacant, false); // 失败页不标记真空(不清空旧目录)
+    assert.equal(unavailable, false); // 有成功页 ≠ 整轮不可用
     assert.equal(warns.length, 1); // 每失败页 warn 一次(页码 + 原因)
     assert.match(warns[0], /work page 1 failed/);
   } finally {
@@ -374,7 +375,7 @@ test('loadWorkViewport: 连续失败达阈值提前止损,返回已取部分(war
     return { ok: false };
   };
   try {
-    const { pois, noMore } = await loadWorkViewport({
+    const { pois, noMore, unavailable } = await loadWorkViewport({
       bounds: VIEWPORT_BOX,
       pageSize: 1,
       maxPages: 10,
@@ -383,6 +384,7 @@ test('loadWorkViewport: 连续失败达阈值提前止损,返回已取部分(war
     assert.deepEqual(seenPages, ['1', '2', '3', '4']); // 止损前只打了 4 页
     assert.deepEqual(pois.map((p) => p.id), ['r1']); // 返回已取部分
     assert.equal(noMore, false); // 止损 ≠ 到底
+    assert.equal(unavailable, false); // 已有成功页,不算整轮不可用
     assert.equal(warns.length, 4); // 3 次单页 + 1 次汇总
     assert.match(warns[3], /stopped after 3 consecutive failures \(page 4\); returning 1 pois/);
   } finally {
@@ -804,7 +806,7 @@ test('loadWorkViewport: 0 条 → noMore=false(空批次不闩锁,ws1 Bug1)', as
     return { ok: true, json: async () => ({ results: [], total: 0 }) };
   };
   try {
-    const { pois, noMore, vacant } = await loadWorkViewport({
+    const { pois, noMore, vacant, unavailable } = await loadWorkViewport({
       bounds: VIEWPORT_BOX,
       pageSize: 2,
       maxPages: 4,
@@ -813,6 +815,7 @@ test('loadWorkViewport: 0 条 → noMore=false(空批次不闩锁,ws1 Bug1)', as
     assert.equal(pois.length, 0);
     assert.equal(noMore, false); // 空批次不闩锁
     assert.equal(vacant, true); // 整个请求 0 条 → 真空标记(三态判定用)
+    assert.equal(unavailable, false); // 200 空 ≠ 库故障
     assert.deepEqual(seenPages, ['1']); // 空页提前停,不白打后续页
   } finally {
     globalThis.fetch = originalFetch;
@@ -871,6 +874,30 @@ test('loadWorkViewport: 首页满页 + 次页空 → vacant=false(请求有数�
     assert.equal(vacant, false); // 首页有数据 → 非真空
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport: 全部页失败且无旧目录 → unavailable(不得当真空)', async () => {
+  // 首屏 502/超时不得 setCatalog([])。旧实现把故障当 0 条,工作模式默认
+  // sort=distance 再被 30s 公开缓存,地图从加载起就没有 POI。
+  const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  globalThis.fetch = async () => ({ ok: false });
+  try {
+    const { pois, noMore, vacant, unavailable } = await loadWorkViewport({
+      bounds: VIEWPORT_BOX,
+      pageSize: 1,
+      maxPages: 10,
+      existing: [],
+    });
+    assert.equal(pois.length, 0);
+    assert.equal(noMore, false);
+    assert.equal(vacant, false);
+    assert.equal(unavailable, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
   }
 });
 

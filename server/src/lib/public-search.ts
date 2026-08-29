@@ -67,6 +67,22 @@ export function spatialClipFromSearch(input: PublicSearchInput): SpatialClip | u
   return clip;
 }
 
+/**
+ * 公开列表/搜索是否写入 30s 进程缓存。
+ * 招聘模式无 clip 且 0 条不得缓存:DB 故障曾被折叠成 [] 后,默认
+ * `sort=distance` 首屏会把整图 POI 吃成空目录(浏览器 max-age=30 同罪)。
+ * 带 clip 的真空仍可缓存(东海裁剪等合法空结果)。
+ */
+export function shouldWritePublicCatalogCache(
+  mode: MapMode,
+  clip: SpatialClip | undefined,
+  total: number,
+): boolean {
+  if (total > 0) return true;
+  if (!isRecruitmentMode(mode)) return true;
+  return Boolean(clip);
+}
+
 function isFiniteCenter(value: unknown): value is { lng: number; lat: number } {
   if (!value || typeof value !== 'object') return false;
   const loc = value as { lng?: unknown; lat?: unknown };

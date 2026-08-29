@@ -35,7 +35,7 @@ export async function POST() {
     );
   }
   notifyCooldown.set(user.id, now, NOTIFY_COOLDOWN_MS, now);
-  const catalog = await loadServerCatalog("work");
+  const catalog = (await loadServerCatalog("work")) ?? [];
   const matches = matchJobAlerts(catalog, user.preferences.career, user.preferences.notifications);
   const items = [];
   for (const match of matches) {

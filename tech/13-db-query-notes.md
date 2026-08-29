@@ -1,6 +1,6 @@
 # 数据库查询笔记（2026-08-16）
 
-Live PostGIS apply is verified (`001`–`016`, 51 companies / 51 sites at the 2026-08-16 baseline; national scope and Hangzhou POI tables since). This page records **indexes already in migrations**, **real `account-store` SQL**, and a 2026-08-16 gist `EXPLAIN`. Without `DATABASE_URL` those statements do not run and callers keep empty (strict DB-only, 2026-08-26; seed 已归档 `tech/backup/seed-data`).
+Live PostGIS apply is verified (`001`–`016`, 51 companies / 51 sites at the 2026-08-16 baseline; national scope and Hangzhou POI tables since). This page records **indexes already in migrations**, **real `account-store` SQL**, and a 2026-08-16 gist `EXPLAIN`. Without `DATABASE_URL` those statements do not run and public Work list APIs return **502** (strict DB-only, 2026-08-26/29; seed 已归档 `tech/backup/seed-data`).
 
 **不要**在没有库的情况下把「查询优化」标成已用 `EXPLAIN ANALYZE` 验证。空间 clip 和账户列表已在本机 51 家 / 1 个用户上跑过 `EXPLAIN`；新查询仍要自己量。
 
@@ -8,8 +8,8 @@ Live PostGIS apply is verified (`001`–`016`, 51 companies / 51 sites at the 20
 
 | 路径 | 何时打 Postgres | 不打 |
 |---|---|---|
-| MapShell 列表 / 搜索 / 筛选 | 从不。浏览器高德 + `runPOIPipeline` | 公开读走 `loadServerCatalog`（严格 DB-only：读库，无库返回空，不回退 seed）+ 30s 进程缓存 |
-| `loadWorkCatalogFromDb(clip?)` | 有 `DATABASE_URL` | 契约（2026-08-25 修订 `fix/server-catalog-semantics`，2026-08-26 起严格 DB-only）：`null` = 无池 / 查询失败（调用方返回空，不再回落 seed/离线目录）；`[]` = DB 健康但裁剪未命中或 JS 过滤（`hasPlausibleCoord` / `isCityCenterPin`）后为空；带 clip 的空结果保持 `[]` 不回退 |
+| MapShell 列表 / 搜索 / 筛选 | 从不。浏览器高德 + `runPOIPipeline` | 公开读走 `loadServerCatalog`（严格 DB-only：读库，无库/`null` → 502 不缓存，不回退 seed）+ 30s 进程缓存 |
+| `loadWorkCatalogFromDb(clip?)` | 有 `DATABASE_URL` | 契约（2026-08-25 修订 `fix/server-catalog-semantics`，2026-08-26 起严格 DB-only，2026-08-29 路由 502）：`null` = 无池 / 查询失败（`/api/pois` `/api/search` 返回 502，不再把故障写成 200 空目录）；`[]` = DB 健康但裁剪未命中或 JS 过滤（`hasPlausibleCoord` / `isCityCenterPin`）后为空；带 clip 的空结果保持 `[]` 不回退 |
 | `/api/suggest` work | 有 `DATABASE_URL` 时走 `loadWorkSuggestionsFromDb` 的受限公司/岗位 SQL（每类 `LIMIT 10`）；标签走聚合 count | 无库 / 查询失败 → 空候选，不物化全 catalog |
 
 连接：`lib/db.ts` 单例 `Pool({ max: 5 })`。不要打印连接串。
@@ -47,7 +47,7 @@ Live PostGIS apply is verified (`001`–`016`, 51 companies / 51 sites at the 20
 - `positions_title_trgm` / `entities_name_trgm` / `items_title_trgm` — `pg_trgm` GIN
 - `positions_company_id_idx` / `positions_site_id_idx` / `company_sites_company_id_idx`
 
-`loadWorkCatalogFromDb(clip?)` 在有 `DATABASE_URL` 时读开岗。`/api/pois` 和 `/api/search` 把 `bounds` / `filters.distance` / `filters.district` 编成 `SpatialClip`（`lib/spatial-query.ts`）再下推：站点先 `s.geom && ST_MakeEnvelope(...)`（gist），有距离再 `ST_DWithin(s.geom::geography, point, meters)`。行政区是超集：地址 `ILIKE` 区名/简称，或点落在粗框。命中站点后再 `companies.id = ANY(...)` / `positions.site_id = ANY(...)`，不要把整表公司和岗位拉进 Node。**严格 DB-only（2026-08-26）**：无库 / 查询失败 → 返回空，不再回落 seed（seed 已归档 `tech/backup/seed-data`）。`/api/suggest` 和 job-alert 不传 clip，仍是全量目录。单站点 POI id = `companies.slug`；多站点 = `slug:site.id`。
+`loadWorkCatalogFromDb(clip?)` 在有 `DATABASE_URL` 时读开岗。`/api/pois` 和 `/api/search` 把 `bounds` / `filters.distance` / `filters.district` 编成 `SpatialClip`（`lib/spatial-query.ts`）再下推：站点先 `s.geom && ST_MakeEnvelope(...)`（gist），有距离再 `ST_DWithin(s.geom::geography, point, meters)`。行政区是超集：地址 `ILIKE` 区名/简称，或点落在粗框。命中站点后再 `companies.id = ANY(...)` / `positions.site_id = ANY(...)`，不要把整表公司和岗位拉进 Node。**严格 DB-only（2026-08-26；2026-08-29 故障不再伪装成空列表）**：无库 / 查询失败 → `null` → HTTP 502，不再回落 seed（seed 已归档 `tech/backup/seed-data`）。`/api/suggest` 和 job-alert 不传 clip，仍是全量目录。单站点 POI id = `companies.slug`；多站点 = `slug:site.id`。
 
 ```sql
 SELECT s.id, s.company_id, s.name, s.address, s.lng, s.lat, s.career_url, s.logo_url

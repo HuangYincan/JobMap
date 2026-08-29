@@ -40,7 +40,15 @@ export function RouteOverlayBar({
   embedded?: boolean;
   onRetry?: () => void;
 }) {
-  if (model.kind === "idle") return null;
+  // 2026-08-29: 去掉地图「路线来源」霜面条的默认占位（直线估算 / 未定位）。
+  if (
+    model.kind === "idle" ||
+    model.kind === "estimate" ||
+    model.kind === "missing-origin" ||
+    model.kind === "location-denied"
+  ) {
+    return null;
+  }
   const text = overlayCopy(model, lang);
   return (
     <div

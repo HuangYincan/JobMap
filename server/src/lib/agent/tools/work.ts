@@ -54,7 +54,7 @@ export interface WorkPositionSummary {
 }
 
 export interface WorkToolDeps {
-  loadCatalog?: (clip?: SpatialClipQuery) => Promise<POI[]>;
+  loadCatalog?: (clip?: SpatialClipQuery) => Promise<POI[] | null>;
   getPosition?: (positionId: string) => Promise<WorkPositionDetailRecord | null | undefined>;
   now?: () => Date;
 }
@@ -261,6 +261,9 @@ export function workTools(deps: WorkToolDeps = {}): AgentTool[] {
           filters,
         });
         const catalog = await loadCatalog(clip);
+        if (!catalog) {
+          return textErr('招聘目录暂时不可用');
+        }
         const matched = searchPublicCatalog(catalog, {
           mode: 'work',
           q: query || undefined,

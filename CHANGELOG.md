@@ -2,7 +2,22 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-29
+
+### Changed
+
+- **去掉默认的「路线来源」霜面条。** `RouteOverlayBar` 对 `idle` / 直线 `estimate` / 缺起点 / 定位拒绝不渲染；地图底部不再出现「直线估算，无路况 · 按直线距离估算」。供应商结果、加载中、过期/离线等状态仍显示。
+
+### Fixed
+
+- **Agent 提问因会话历史超过 20 条而 400。** 本地会话 cap 是 30 条,发送时还会再追加本轮 user,旧接口只收 20 条且缺 `content` 即拒。客户端与路由统一 `toAgentChatMessages`:补齐 content、丢掉前导 assistant、从最旧裁到 30 条且首条为 user。
+- **工作模式首屏 POI 全空。** `loadServerCatalog` 在 DB 故障时曾把 `null` 折叠成 `[]`,公开接口按成功空结果缓存 30s;工作模式默认 `sort=distance`,首屏只打这一档缓存,地图从加载起就没有点。现与 domain-local 对齐:故障 → 502 `work_db_unavailable` 且 `no-store`;无裁剪的 0 条也不再写入公开缓存;前端 `unavailable` 不得 `setCatalog([])`。
+
 ## 2026-08-28
+
+### Fixed
+
+- **Agent 提问因可选视野/定位畸形而 400。** 地图快照缺 `zoom`、定位坐标被 JSON 成 `null`/数字字符串时,`/api/agent/chat` 不再整轮 `BAD_VIEWPORT`;解析失败则省略该可选字段,对话照常进行。
 
 ### Changed
 
