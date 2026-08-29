@@ -220,7 +220,7 @@ const debouncedSearch = useDebouncedCallback(
 - 已登录：`POST /api/me/search-history`。
 - 游客：`lib/guest-search-history.ts`，键 `dm.guest-search-history.v1`，上限 30。不要再用 `search_history` / `MAX_HISTORY 20`。
 - 登录时上传游客 persistable 行后清空本地；登出再读本地列表。
-- 空搜索框不展示 `trendingForMode`；Recent L2 仍展示热门芯片。
+- 空搜索框不展示 `trendingForMode`；Recent L2 是投递监视，不再展示热门芯片。搜索历史仍写入 `/api/me/search-history` / `dm.guest-search-history.v1`，不进 Recent UI。
 
 ---
 

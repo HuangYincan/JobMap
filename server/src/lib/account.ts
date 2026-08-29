@@ -2,13 +2,18 @@
 // 账户 / 偏好 / 会话契约
 //
 // 默认地图模式是 work。语言：已登录读偏好，未登录跟浏览器。
-// Recent 只记已提交的 persistable 搜索（work / internship）。
-// 已登录走 /api/me/search-history；游客走浏览器 dm.guest-search-history.v1。
+// Recent L2 是投递监视（applications + 用户可自定义阶段）。
+// 搜索历史仍写 /api/me/search-history 与游客 dm.guest-search-history.v1，不再进 Recent。
 // ============================================================
 
 import type { Language } from './i18n.ts';
 import type { MapMode } from './types.ts';
 import { canonicalMode } from './modes.ts';
+import {
+  defaultApplicationPipeline,
+  sanitizeApplicationPipeline,
+  type ApplicationPipelinePreferences,
+} from './application-pipeline.ts';
 
 export type AuthProvider = 'phone' | 'email' | 'github' | 'google' | 'x' | 'wechat' | 'password';
 
@@ -35,6 +40,7 @@ export interface UserPreferences {
   defaultMode: MapMode;
   notifications: NotificationPreferences;
   career: CareerPreferences;
+  applicationPipeline: ApplicationPipelinePreferences;
 }
 
 export interface AccountUser {
@@ -58,7 +64,7 @@ export interface SessionState {
 }
 
 /** 搜索历史条目可选的实体引用：记录时查询确定落在一个实体（建议选中）时
- *  一并存下，点击「最近」直接回到该实体（飞行 + 详情），而非仅回放查询串。
+ *  一并存下，供搜索回放打开该公司/地点。Recent L2 现为投递监视，不再展示这些行。
  *  旧条目（localStorage / DB 迁移前）无此字段 → 保持纯搜索回放。 */
 export interface SearchHistoryEntityRef {
   kind: 'company' | 'poi';
@@ -154,7 +160,8 @@ export interface SavedPlace {
   createdAt: string;
 }
 
-export type ApplicationStatus = 'applied' | 'viewed' | 'withdrawn';
+/** 阶段 id：内置 applied/waiting/r1… 或用户自定义 c_* 。旧 viewed 读时归一成 applied。 */
+export type ApplicationStatusId = string;
 
 export interface ApplicationRecord {
   id: string;
@@ -163,8 +170,9 @@ export interface ApplicationRecord {
   title: string;
   companyName: string;
   applyUrl?: string;
-  status: ApplicationStatus;
+  status: ApplicationStatusId;
   createdAt: string;
+  updatedAt: string;
 }
 
 export type NotificationKind = 'job' | 'school';
@@ -202,6 +210,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   defaultMode: 'work',
   notifications: { ...DEFAULT_NOTIFICATIONS },
   career: { ...DEFAULT_CAREER, families: [...DEFAULT_CAREER.families], industries: [...DEFAULT_CAREER.industries], strengths: [] },
+  applicationPipeline: defaultApplicationPipeline(),
 };
 
 const LANGUAGES = ['zh', 'en'] as const;
@@ -291,6 +300,7 @@ export function emptyPreferences(language: Language = 'zh'): UserPreferences {
       industries: [...DEFAULT_CAREER.industries],
       strengths: [],
     },
+    applicationPipeline: defaultApplicationPipeline(),
   };
 }
 
@@ -310,6 +320,11 @@ export function mergePreferences(
       ...sanitizeCareerPreferences(start.career),
       ...(patch?.career && typeof patch.career === 'object' ? patch.career : {}),
     }),
+    applicationPipeline: sanitizeApplicationPipeline(
+      patch && Object.hasOwn(patch, 'applicationPipeline')
+        ? patch.applicationPipeline
+        : start.applicationPipeline,
+    ),
   };
 }
 

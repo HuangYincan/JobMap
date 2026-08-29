@@ -12,19 +12,17 @@ const migration = readFileSync(
   'utf8',
 );
 
-test('020 is the next ordered migration and has no skipped predecessor', () => {
+test('020 has no skipped predecessor and 021 is the current last migration', () => {
   const migrationNumbers = readdirSync(migrationDir)
     .filter((name) => /^\d{3}_[^/]+\.sql$/.test(name))
     .map((name) => Number(name.slice(0, 3)))
     .sort((a, b) => a - b);
   const priorNumbers = migrationNumbers.filter((number) => number < 20);
 
-  assert.equal(migrationNumbers.at(-1), 20);
   assert.equal(priorNumbers.at(-1), 19);
-  assert.equal(
-    migrationNumbers.filter((number) => number === 20).length,
-    1,
-  );
+  assert.equal(migrationNumbers.filter((number) => number === 20).length, 1);
+  assert.equal(migrationNumbers.filter((number) => number === 21).length, 1);
+  assert.equal(migrationNumbers.at(-1), 21);
 });
 
 test('006 has independent company and site foreign keys', () => {

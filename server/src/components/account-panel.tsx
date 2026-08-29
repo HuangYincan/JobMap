@@ -36,6 +36,8 @@ export interface ProfilePanelProps {
   onSignOut: () => void;
   /** 已投递/通知行点击 → 打开对应岗位(载荷为跳转所需最小字段;通知行缺字段时行禁用)。 */
   onOpenApplication?: (record: { positionId: string; companyPoiId: string }) => void;
+  /** Profile「我的投递」跳到 Recent 投递监视，不在本卡列清单。 */
+  onOpenRecent?: () => void;
   /** 密码/手机/邮箱变更成功 → 通知外壳刷新 user(换绑/设密后展示值与 hasPassword 同步)。 */
   onUserChanged?: () => void;
   applications?: ApplicationRecord[];
@@ -250,6 +252,7 @@ export function ProfilePanel({
   onAvatarUrlChange,
   onSignOut,
   onOpenApplication,
+  onOpenRecent,
   onUserChanged,
   applications = [],
   notifications = [],
@@ -1104,28 +1107,18 @@ export function ProfilePanel({
         </div>
       </section>
 
-      {/* 我的投递 */}
+      {/* 我的投递：清单在 Recent，这里只跳转 */}
       <section className={styles.group} aria-label={t("myApplications", lang)}>
         <h3 className={styles.groupLabel}>{t("myApplications", lang)}</h3>
         <div className={styles.card}>
-          {applications.length === 0 ? (
-            <p className={styles.emptyApps}>{t("applicationsEmpty", lang)}</p>
-          ) : (
-            <ul className={styles.appList}>
-              {applications.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    className={styles.appRow}
-                    onClick={() => onOpenApplication?.({ positionId: item.positionId, companyPoiId: item.companyPoiId })}
-                  >
-                    <strong>{item.title}</strong>
-                    <small>{item.companyName}</small>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <button
+            type="button"
+            className={styles.appRow}
+            onClick={() => onOpenRecent?.()}
+          >
+            <strong>{t("myApplications", lang)}</strong>
+            <small>{t("applicationsJump", lang).replace("{n}", String(applications.length))}</small>
+          </button>
         </div>
       </section>
         </>

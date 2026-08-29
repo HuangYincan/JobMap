@@ -91,6 +91,9 @@ export async function PATCH(request: Request) {
           : undefined,
         notifications: body.preferences.notifications,
         career: body.preferences.career,
+        ...(Object.hasOwn(body.preferences, "applicationPipeline")
+          ? { applicationPipeline: body.preferences.applicationPipeline }
+          : {}),
       }
     : undefined;
 

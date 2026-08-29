@@ -10,6 +10,7 @@
 import { createHash, createHmac, randomBytes, randomInt, randomUUID } from 'node:crypto';
 import type { AccountUser, ApplicationRecord, AuthProvider, NotificationRecord, SavedPlace, SearchHistoryEntry, UserPreferences } from './account.ts';
 import { emptyPreferences, mergePreferences } from './account.ts';
+import { sanitizeApplicationStatusId } from './application-pipeline.ts';
 import { BoundedLruStore } from './bounded-lru-store.ts';
 import { normalizeContact, normalizeEmail, normalizePhone } from './contact-validation.ts';
 import { hashPassword, verifyPassword } from './password.ts';
@@ -512,25 +513,75 @@ export function removeSaved(userId: string, poiId: string): boolean {
   return next.length !== items.length;
 }
 
+function normalizeApplication(item: ApplicationRecord): ApplicationRecord {
+  const status = sanitizeApplicationStatusId(item.status) ?? 'applied';
+  return {
+    ...item,
+    status,
+    updatedAt: item.updatedAt || item.createdAt,
+  };
+}
+
 export function listApplications(userId: string): ApplicationRecord[] {
-  return [...(applications.get(userId) ?? [])];
+  return [...(applications.get(userId) ?? [])]
+    .map(normalizeApplication)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 export function recordApplication(
   userId: string,
-  input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'status'> & { status?: ApplicationRecord['status'] },
+  input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { status?: ApplicationRecord['status'] },
 ): ApplicationRecord {
   const items = applications.get(userId) ?? [];
   const existing = items.find((item) => item.positionId === input.positionId);
-  if (existing) return existing;
+  if (existing) return normalizeApplication(existing);
+  const now = new Date().toISOString();
   const entry: ApplicationRecord = {
     ...input,
-    status: input.status ?? 'applied',
+    status: sanitizeApplicationStatusId(input.status) ?? 'applied',
     id: randomUUID(),
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   };
   applications.set(userId, [entry, ...items].slice(0, APPLICATIONS_MEMORY_MAX));
   return entry;
+}
+
+export function updateApplicationStatus(
+  userId: string,
+  id: string,
+  status: string,
+): ApplicationRecord | null {
+  const nextStatus = sanitizeApplicationStatusId(status);
+  if (!nextStatus) return null;
+  const items = applications.get(userId) ?? [];
+  const current = items.find((item) => item.id === id);
+  if (!current) return null;
+  const next = { ...current, status: nextStatus, updatedAt: new Date().toISOString() };
+  applications.set(userId, [next, ...items.filter((item) => item.id !== id)]);
+  return next;
+}
+
+export function reassignApplicationStatuses(
+  userId: string,
+  fromIds: string[],
+  toId: string,
+): number {
+  const nextStatus = sanitizeApplicationStatusId(toId);
+  if (!nextStatus || fromIds.length === 0) return 0;
+  const from = new Set(fromIds.map((id) => sanitizeApplicationStatusId(id) ?? id));
+  const items = applications.get(userId) ?? [];
+  const now = new Date().toISOString();
+  let changed = 0;
+  applications.set(
+    userId,
+    items.map((item) => {
+      if (!from.has(item.status)) return item;
+      changed += 1;
+      return { ...item, status: nextStatus, updatedAt: now };
+    }),
+  );
+  return changed;
 }
 
 export function listNotifications(userId: string): NotificationRecord[] {

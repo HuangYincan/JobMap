@@ -1,8 +1,8 @@
 # 02 - Data Model and Spatial Contract
 
-> **Status:** implementation-backed; migrations `001`–`019` are the current ordered set (the runner records applied checksums in `schema_migrations`; `017` stores avatar bytes, `018` stores user memories, and `019` enforces memory uniqueness), and migration `020` adds the position/site ownership invariant (apply remains an environment-only operation)
-> **Last reviewed:** 2026-08-27
-> **Authority:** `db/migrations/001-020` are the implementation source of truth; this document must be updated when migrations change.
+> **Status:** implementation-backed; migrations `001`–`021` are the current ordered set (the runner records applied checksums in `schema_migrations`; `017` stores avatar bytes, `018` stores user memories, `019` enforces memory uniqueness, `020` adds the position/site ownership invariant, and `021` widens application status ids and adds `updated_at`)
+> **Last reviewed:** 2026-08-29
+> **Authority:** `db/migrations/001-021` are the implementation source of truth; this document must be updated when migrations change.
 
 ## Implementation Evidence
 
@@ -10,7 +10,7 @@
 - `db/migrations/002_plugins_and_provenance.sql`: `plugin_manifests`, `plugin_schema_versions`, `sources`, `import_runs`, `source_records`.
 - `db/migrations/003_canonical_entities_and_items.sql`: canonical `entities` and `items` with composite provenance keys, coordinate constraints, generated SRID 4326 geometry and GiST index.
 - `db/migrations/004_overlays_and_audit.sql`: `map_entity_overlays`, `map_annotations`, `map_favorites`, `audit_events`.
-- Later migrations extend the model: `005` accounts/sessions/history, `006` recruitment sites (`companies` / `company_sites` / `positions`), `007` profile prefs/OAuth, `008` saved places, `009` applications, `010` notifications, `011` national scope (tier/city/alive), `012` tier 0..21 + category, `013` Hangzhou POIs (`hz_pois`), `014` credentials auth, `015` recent entity, `016` site key, `017` avatar bytes, `018` user memories, `019` user-memory uniqueness, `020` position/site/company ownership integrity.
+- Later migrations extend the model: `005` accounts/sessions/history, `006` recruitment sites (`companies` / `company_sites` / `positions`), `007` profile prefs/OAuth, `008` saved places, `009` applications, `010` notifications, `011` national scope (tier/city/alive), `012` tier 0..21 + category, `013` Hangzhou POIs (`hz_pois`), `014` credentials auth, `015` recent entity, `016` site key, `017` avatar bytes, `018` user memories, `019` user-memory uniqueness, `020` position/site/company ownership integrity, `021` application watch (`status` free-form id + `updated_at`; user stage catalog in `users.preferences.applicationPipeline`).
 - `db/scripts/apply.sh` runs each migration and its ledger row in a single transaction with a transaction-scoped advisory lock; `db/scripts/preflight.sh` checks PostGIS and ledger checksum drift.
 - Live verification: `make db-migrate` applied `001`–`016` on the local PostGIS (2026-08-16 and later); `make test-integration` passed. Migration `020` has static coverage and a DB integration probe, but this workstream did not apply it (migration apply is Env-only).
 
@@ -24,7 +24,7 @@
 
 ## Required Phase 1 Tables
 
-The first migrations define, in dependency order (implemented in `001`–`004`; extended by `005`–`020`):
+The first migrations define, in dependency order (implemented in `001`–`004`; extended by `005`–`021`):
 
 1. `users`
 2. `map_memberships` and `maps` (owner/editor/viewer access)
@@ -41,6 +41,10 @@ Foreign-key and application authorization rules must guarantee that an item doma
 Migration `006` keeps `positions.company_id → companies.id ON DELETE CASCADE` and `positions.site_id → company_sites.id ON DELETE RESTRICT` as separate foreign keys. Migration `020_position_site_company_fk.sql` adds the missing pairwise invariant: `(positions.site_id, positions.company_id)` must reference `(company_sites.id, company_sites.company_id)`, with `ON DELETE RESTRICT` on the additional key. The original foreign keys are not dropped or weakened.
 
 Before installing the key, migration `020` runs a read-only preflight for rows where `p.company_id IS DISTINCT FROM s.company_id`. A non-zero result raises an exception, emits the count, and includes a read-only diagnostic `SELECT`; it does not update or delete business data. After an approved data remediation, rerun `make db-migrate` as an environment-only operation.
+
+### Application watch pipeline (migration `021`)
+
+Migration `009` stored `applications.status` as `applied | viewed | withdrawn`. Migration `021_application_pipeline.sql` drops that enum check, allows 1–32 character status ids, adds `updated_at`, backfills `viewed` → `applied`, and indexes `(user_id, updated_at DESC)`. The editable stage catalog is JSON on `users.preferences.applicationPipeline` (not a new table). Apply remains environment-only.
 
 ## Source and Provenance Minimums
 
@@ -102,4 +106,4 @@ Implementation begins with a tested migration; this document must not claim a fu
 
 ## Persistability (client + API gate, no new table)
 
-Account `search_history` and `saved_places` only accept catalog recruitment rows. `lib/persistable.ts` (`PERSISTABLE_MODES` = work / internship) is the extension seam — add `college` when that catalog lands. Domain AMap POIs stay session-only. Guest Recent is browser `dm.guest-search-history.v1`, not a table. `POST /api/me/saved` returns 400 `NOT_PERSISTABLE` for domain snapshots.
+Account `search_history` and `saved_places` only accept catalog recruitment rows. `lib/persistable.ts` (`PERSISTABLE_MODES` = work / internship) is the extension seam — add `college` when that catalog lands. Domain AMap POIs stay session-only. Search-history guests use browser `dm.guest-search-history.v1`, not a table. Recent L2 lists `applications` (signed-in only). `POST /api/me/saved` returns 400 `NOT_PERSISTABLE` for domain snapshots. Application `status` is a stage id (builtin or `c_*`); the user's editable catalog lives in `preferences.applicationPipeline` (max 24, label ≤16). Legacy `viewed` reads as `applied`. `PATCH /api/me/applications` updates one row; `PUT /api/me/applications/pipeline` saves the catalog and reassigns removed ids to the fallback stage. Migration `021` apply is environment-only.

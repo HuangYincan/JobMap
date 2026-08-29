@@ -892,8 +892,128 @@ export const translations = {
     en: 'Applications',
   },
   applicationsEmpty: {
-    zh: '还没有投递记录。从岗位详情点投递后会出现在这里。',
+    zh: '还没有投递。从岗位详情点「投递」后会出现在这里。',
     en: 'No applications yet. Apply from a job detail to see it here.',
+  },
+  recentWatch: {
+    zh: '投递监视',
+    en: 'Application watch',
+  },
+  recentNeedSignIn: {
+    zh: '登录后监视投递进度。',
+    en: 'Sign in to watch application progress.',
+  },
+  applicationsJump: {
+    zh: '{n} 条投递 · 在最近里看',
+    en: '{n} applications · View in Recent',
+  },
+  watchAll: {
+    zh: '全部',
+    en: 'All',
+  },
+  watchActive: {
+    zh: '进行中',
+    en: 'Active',
+  },
+  watchClosed: {
+    zh: '已结束',
+    en: 'Closed',
+  },
+  manageStatuses: {
+    zh: '阶段',
+    en: 'Stages',
+  },
+  doneManageStatuses: {
+    zh: '完成',
+    en: 'Done',
+  },
+  addStatus: {
+    zh: '添加',
+    en: 'Add',
+  },
+  addStatusPlaceholder: {
+    zh: '自定义阶段名',
+    en: 'Custom stage name',
+  },
+  statusGroupActive: {
+    zh: '进行中',
+    en: 'Active',
+  },
+  statusGroupClosed: {
+    zh: '结束',
+    en: 'Closed',
+  },
+  removeStatus: {
+    zh: '删除阶段',
+    en: 'Remove stage',
+  },
+  cannotRemoveLastStatus: {
+    zh: '至少保留一个阶段',
+    en: 'Keep at least one stage',
+  },
+  appStatusApplied: {
+    zh: '已投递',
+    en: 'Applied',
+  },
+  appStatusWaiting: {
+    zh: '等面',
+    en: 'Waiting',
+  },
+  appStatusR1: {
+    zh: '一面',
+    en: 'R1',
+  },
+  appStatusR2: {
+    zh: '二面',
+    en: 'R2',
+  },
+  appStatusR3: {
+    zh: '三面',
+    en: 'R3',
+  },
+  appStatusOffer: {
+    zh: 'Offer',
+    en: 'Offer',
+  },
+  appStatusRejectedR1: {
+    zh: '一面挂',
+    en: 'R1 no',
+  },
+  appStatusRejectedR2: {
+    zh: '二面挂',
+    en: 'R2 no',
+  },
+  appStatusRejectedR3: {
+    zh: '三面挂',
+    en: 'R3 no',
+  },
+  appStatusRejected: {
+    zh: '未通过',
+    en: 'Rejected',
+  },
+  appStatusWithdrawn: {
+    zh: '已撤回',
+    en: 'Withdrawn',
+  },
+  appStatusAccepted: {
+    zh: '已接受',
+    en: 'Accepted',
+  },
+  timeJustNow: {
+    zh: '刚刚',
+    en: 'Just now',
+  },
+  timeMinutesAgo: {
+    zh: '{n}分钟前',
+    en: '{n} min ago',
+  },
+  timeHoursAgo: {
+    zh: '{n}小时前',
+    en: '{n} hr ago',
+  },
+  timeDaysAgo: {
+    zh: '{n}天前',
+    en: '{n}d ago',
   },
   compareHint: {
     zh: '勾选两家已收藏的公司，在本卡并排对比。',

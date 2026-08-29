@@ -205,6 +205,7 @@
 - [x] Demo session cookie + OTP/email/GitHub stub API
 - [x] Profile 二级卡 + 行内 Preference；去掉 Settings nav
 - [x] Recent 二级卡只列搜索；登录后 POST/GET `/api/me/search-history`
+- [x] **2026-08-29 修订:** Recent 二级卡改为投递监视（`/api/me/applications` + 用户可编辑阶段）；搜索历史仍写入但不展示
 - [x] 默认 mode = work
 - [x] Logo resolver（职场招聘页 icon > 公司保底 > emoji）
 - [x] `account-store`：有 `DATABASE_URL` 时 sessions / history 上云，否则内存回落
@@ -567,7 +568,7 @@
 Phase 2 完成后，Phase 3 将实现：
 - 秋招 / 社招继续作为工作模式筛选插件（不是新地图模式）
 - 收藏功能（`008_saved_places` + `/api/me/saved` + Saved L2；游客不写云端）
-- 用户投递记录（`009_applications` + `/api/me/applications`；JD 点投递写入，列表在 Profile 底部）
+- 用户投递记录（`009_applications` + `021_application_pipeline` + `/api/me/applications`；JD 点投递写入，监视列表在 Recent L2，Profile 只跳转）
 - 数据对比（Saved 二级卡内勾选两家招聘点；`lib/compare-saved.ts`；catalog / seed 优先，快照兜底；不新开一层。手机抽屉工具栏切到 Saved，复用同一张 `SavedList`）
 - 通知系统（偏好已在 Profile；`010_notifications` + `/api/me/notifications` 写入账户收件箱；邮件/短信只记 `queued` 渠道，本阶段不真发）
 

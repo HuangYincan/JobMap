@@ -30,11 +30,11 @@ Live PostGIS apply is verified (`001`–`016`, 51 companies / 51 sites at the 20
 | `auth_otp_challenges` 最新未消费码 | `auth_otp_challenges_lookup_idx (provider, target, expires_at DESC)` |
 | `search_history` `WHERE user_id ORDER BY created_at DESC LIMIT n` | `search_history_user_created_idx (user_id, created_at DESC)` |
 | `saved_places` 同上 | `saved_places_user_created_idx` + `UNIQUE(user_id, poi_id)` |
-| `applications` 同上 | `applications_user_created_idx` + `UNIQUE(user_id, position_id)` |
+| `applications` `WHERE user_id ORDER BY COALESCE(updated_at, created_at) DESC` | `applications_user_updated_idx (user_id, updated_at DESC)` + `applications_user_created_idx` + `UNIQUE(user_id, position_id)` |
 | `notifications` 同上 | `notifications_user_created_idx` + `UNIQUE(user_id, kind, position_id)` |
 | 手机 / 邮箱登录查用户 | 部分唯一 `users_phone_uidx`、`users_email_uidx (lower(email))` |
 
-`addHistory` 先 `SELECT … ORDER BY created_at DESC LIMIT 1` 再决定 bump 还是 INSERT。复合索引前缀 `user_id` 覆盖这条。不要再给 `search_history(query)` 加 btree——Recent 不做全文。
+`addHistory` 先 `SELECT … ORDER BY created_at DESC LIMIT 1` 再决定 bump 还是 INSERT。复合索引前缀 `user_id` 覆盖这条。不要再给 `search_history(query)` 加 btree——搜索历史不做全文。Recent L2 是投递监视，按 `applications.updated_at` 排。
 
 `ON CONFLICT` 写 Saved / 投递 / 提醒，靠表上的 UNIQUE，不要另开去重查询。
 

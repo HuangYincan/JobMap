@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
-import { listApplications, recordApplication } from "@/lib/account-store";
+import { listApplications, recordApplication, updateApplicationStatus } from "@/lib/account-store";
+import { sanitizeApplicationPipeline, sanitizeApplicationStatusId } from "@/lib/application-pipeline";
 import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 
 const MAX_ID_LENGTH = 200;
@@ -80,5 +81,38 @@ export async function POST(request: Request) {
     applyUrl: applyUrl || undefined,
     status: "applied",
   });
+  return NextResponse.json({ item });
+}
+
+export async function PATCH(request: Request) {
+  const user = await readSessionUser();
+  if (!user) {
+    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+  }
+  let body: { id?: string; status?: string };
+  try {
+    body = await readJsonBody<typeof body>(request);
+  } catch (err) {
+    if (err instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { code: "BODY_TOO_LARGE", message: "request body too large" },
+        { status: 400 },
+      );
+    }
+    return NextResponse.json({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
+  }
+  const id = (body.id || "").trim();
+  const status = sanitizeApplicationStatusId(body.status);
+  if (!id || id.length > MAX_ID_LENGTH || !status) {
+    return NextResponse.json({ code: "BAD_REQUEST", message: "id and status required" }, { status: 400 });
+  }
+  const catalog = sanitizeApplicationPipeline(user.preferences.applicationPipeline).statuses;
+  if (!catalog.some((item) => item.id === status)) {
+    return NextResponse.json({ code: "UNKNOWN_STATUS", message: "status is not in the user pipeline" }, { status: 400 });
+  }
+  const item = await updateApplicationStatus(user.id, id, status);
+  if (!item) {
+    return NextResponse.json({ code: "NOT_FOUND", message: "application not found" }, { status: 404 });
+  }
   return NextResponse.json({ item });
 }
