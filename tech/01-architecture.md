@@ -5,7 +5,7 @@
 
 ## Current Repository Fact
 
-The platform is implemented and runs on `dev`: an importer Python package with declarative plugin/import validation, ordered PostGIS migrations (`001`–`020`) with a migration runner, executable API routes, a map-access policy seam, and a Next.js 16 frontend. Migration `020` enforces the position/site/company ownership invariant; environment application status is documented in [02-data-model.md](02-data-model.md). Live PostGIS verification, the API surface, and the local runbook all exist; the public documentation site and production deployment remain out of scope. This document is the design contract for the current system.
+The platform is implemented and runs on `dev`: an importer Python package with declarative plugin/import validation, ordered PostGIS migrations (`001`–`021`) with a migration runner, executable API routes, a map-access policy seam, and a Next.js 16 frontend. Migration `020` enforces the position/site/company ownership invariant; migration `021` widens application status ids and adds `updated_at` for Recent watch. Environment application status is documented in [02-data-model.md](02-data-model.md). Live PostGIS verification, the API surface, and the local runbook all exist; the public documentation site and production deployment remain out of scope. This document is the design contract for the current system.
 
 The WS0 job-navigation contracts and WS1 route core are implemented under `server/src/lib/navigation/`.
 WS1 adds the small `RouteProvider` injection seam, validated `RouteService`, explicit straight-line estimate
@@ -35,7 +35,7 @@ WS0 does not validate whether an offset matches an IANA timezone.
 ## MVP Direction
 
 - **Application:** Next.js 16.3.1 App Router, TypeScript 5.9.3, React 19.2.8, Node 22. The map shell and API routes live in `server/`; styling is CSS Modules (Tailwind was never adopted — see [06-decisions.md](06-decisions.md) ADR-003).
-- **Database:** PostgreSQL 16 with PostGIS 3.4 is mandatory. PostGIS is the spatial system of record; pgvector is deferred. Migrations `001`–`020` are the current ordered implementation set (the runner records applied checksums in `schema_migrations`; migration `017` stores avatar bytes, `018` stores user memories, `019` enforces memory uniqueness, and `020` enforces the position/site/company ownership invariant). Environment application status is documented in [02-data-model.md](02-data-model.md).
+- **Database:** PostgreSQL 16 with PostGIS 3.4 is mandatory. PostGIS is the spatial system of record; pgvector is deferred. Migrations `001`–`021` are the current ordered implementation set (the runner records applied checksums in `schema_migrations`; migration `017` stores avatar bytes, `018` stores user memories, `019` enforces memory uniqueness, `020` enforces the position/site/company ownership invariant, and `021` stores application watch status ids plus `updated_at`). Environment application status is documented in [02-data-model.md](02-data-model.md).
 - **Data import:** Python 3.12 with uv in `crawler/`. The manifest validator, local-fixture normalizer, reviewed acquisition adapters, and import-plan validation exist; public Work reads are strict DB-only through `loadServerCatalog` (no database/query failure returns `null` → HTTP 502, not a cached empty list or seed data). Acquisition follows source-review records (`tech/roles/data/etl/`), and scheduled crawling remains a later, source-reviewed capability.
 - **Map:** Amap is the initial adapter. Domain mode inside Hangzhou reads the local `hz_pois` table via `/api/pois/domain-local` (zero AMap calls); outside Hangzhou it uses the active map engine's `searchPOI` provider, with `amap-api` as the SSR/test/no-provider fallback. Work mode reads the recruitment catalog from PostGIS (`loadServerCatalog`) and does not fall back to offline drops. Runtime multi-engine support is implemented for the registered engines; adding further adapters remains deferred.
 - **Authentication:** self-built password, OTP, and OAuth authorization-code flows (provider configuration is optional; demo login is gated and non-production-only; no NextAuth/Clerk — see [06-decisions.md](06-decisions.md)). The application-level `map_access`/`can_access_map` seam defines the authorization boundary.
@@ -141,7 +141,7 @@ it does not imply live traffic.
 server/                 # Next.js application (App Router + API routes)
 server/src/lib/navigation/ # WS0 contracts + WS1 route service, estimate, session/artifact and HTTP modules + WS3 eval sink/runner (not persisted)
 crawler/                # approved-data importer (Python + uv)
-db/migrations/          # ordered SQL migrations (001–020); 020 enforces position/site/company ownership
+db/migrations/          # ordered SQL migrations (001–021); 021 is application watch status + updated_at
 db/scripts/             # migration runner
 tests/                  # cross-service test suites
 tech/zh-cn/             # planned public documentation source

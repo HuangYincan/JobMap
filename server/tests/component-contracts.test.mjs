@@ -178,14 +178,14 @@ test('embedded Profile keeps a close control and fluid card width', () => {
   assert.ok(sheetAt > sidebarAt, 'sheet must follow sidebar so width:100% wins');
 });
 
-test('profile applied/notification rows are clickable buttons wired to the job jump', () => {
+test('profile inbox rows jump to jobs; applications jump to Recent watch', () => {
   const panel = src('components/account-panel.tsx');
-  // 行 button 化:已投递 + 收件箱两处整行 button(键盘可达)
+  // 行 button 化:投递跳转 + 收件箱两处整行 button(键盘可达)
   const rowButtons = panel.match(/className=\{styles\.appRow\}/g) ?? [];
-  assert.ok(rowButtons.length >= 2, 'applied + notification rows are buttons');
-  // 回调 prop + 已投递行触发回调(携 positionId/companyPoiId 载荷)
+  assert.ok(rowButtons.length >= 2, 'applications jump + notification rows are buttons');
+  assert.match(panel, /onOpenRecent\?: \(\) => void/);
+  assert.match(panel, /onClick=\{\(\) => onOpenRecent\?\.\(\)\}/);
   assert.match(panel, /onOpenApplication\?: \(record: \{ positionId: string; companyPoiId: string \}\) => void/);
-  assert.match(panel, /onClick=\{\(\) => onOpenApplication\?\.\(\{ positionId: item\.positionId, companyPoiId: item\.companyPoiId \}\)/);
   // 通知行:缺 positionId/companyPoiId 禁用 + 回调内守卫
   assert.match(panel, /disabled=\{!item\.positionId \|\| !item\.companyPoiId\}/);
   assert.match(panel, /if \(item\.positionId && item\.companyPoiId\)/);
@@ -203,6 +203,8 @@ test('profile applied/notification rows are clickable buttons wired to the job j
   assert.match(shell, /console\.warn\("\[profile\] failed to open application"/);
   const wired = shell.match(/onOpenApplication=\{handleOpenApplication\}/g) ?? [];
   assert.ok(wired.length >= 2, 'desktop + mobile embedded ProfilePanel both wired');
+  assert.match(shell, /onOpenRecent=\{\(\) => openRail\("recent"\)\}/);
+  assert.match(shell, /setMobileSheet\("recent"\)/);
 });
 
 test('work autocomplete prefers GET /api/suggest and falls back locally', () => {
@@ -288,11 +290,28 @@ test('persistable guest history and catalog-only save are wired', () => {
   assert.match(guest, /dm\.guest-search-history\.v1/);
   assert.match(shell, /addGuestHistory/);
   assert.match(shell, /suggestionToDomainPoi/);
-  assert.match(recent, /recentEmptyGuest/);
-  assert.doesNotMatch(recent, /recentNeedSignIn/);
+  assert.match(recent, /recentNeedSignIn/);
+  assert.match(recent, /ApplicationRecord/);
+  assert.doesNotMatch(recent, /SearchHistoryEntry/);
+  assert.doesNotMatch(recent, /trendingForMode/);
   assert.match(saved, /NOT_PERSISTABLE/);
   assert.match(history, /isPersistableMode/);
   assert.match(history, /NOT_PERSISTABLE/);
+});
+
+test('Recent L2 is application watch with user-editable stages', () => {
+  const recent = src('components/recent-panel.tsx');
+  const shell = src('components/map-shell.tsx');
+  const route = src('app/api/me/applications/route.ts');
+  const pipeline = src('app/api/me/applications/pipeline/route.ts');
+  assert.match(recent, /createCustomStatus/);
+  assert.match(recent, /onStatusesChange/);
+  assert.match(recent, /watchAll/);
+  assert.match(shell, /items=\{applications\}/);
+  assert.match(shell, /\/api\/me\/applications\/pipeline/);
+  assert.match(route, /export async function PATCH/);
+  assert.match(pipeline, /export async function PUT/);
+  assert.match(shell, /if \(!user\) \{\s*setAuthOpen\(true\);\s*return;\s*\}\s*openRail\("recent"\)/);
 });
 
 test('map shell zoom 按钮契约化:不再出现 raw.zoomIn/zoomOut 直连(ws-b bug 7)', () => {

@@ -319,4 +319,9 @@ test('applications persist bounded fields and only http(s) apply links', () => {
   const guardIdx = route.indexOf('recordApplication(user.id,');
   const urlIdx = route.indexOf('code: "INVALID_APPLY_URL"');
   assert.ok(urlIdx !== -1 && guardIdx !== -1 && urlIdx < guardIdx);
+  assert.match(route, /export async function PATCH/);
+  assert.match(route, /code: "UNKNOWN_STATUS"/);
+  const pipeline = src('app/api/me/applications/pipeline/route.ts');
+  assert.match(pipeline, /reassignApplicationStatuses/);
+  assert.match(pipeline, /sanitizeApplicationPipeline/);
 });

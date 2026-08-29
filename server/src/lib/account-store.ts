@@ -26,6 +26,7 @@ import {
 } from './account.ts';
 import { getPool } from './db.ts';
 import { canonicalMode } from './modes.ts';
+import { sanitizeApplicationStatusId } from './application-pipeline.ts';
 import { hashPassword, verifyPassword } from './password.ts';
 import type { MapMode } from './types.ts';
 import { BoundedRateStore } from './bounded-rate-store.ts';
@@ -45,7 +46,9 @@ import {
   listSaved as memListSaved,
   enqueueNotification as memEnqueueNotification,
   recordApplication as memRecordApplication,
+  reassignApplicationStatuses as memReassignApplicationStatuses,
   removeSaved as memRemoveSaved,
+  updateApplicationStatus as memUpdateApplicationStatus,
   savePlace as memSavePlace,
   resolveAccountBySubject as memResolveAccountBySubject,
   updateUser as memUpdateUser,
@@ -1162,7 +1165,9 @@ function asApplication(row: {
   apply_url: string | null;
   status: ApplicationRecord['status'];
   created_at: Date;
+  updated_at?: Date | null;
 }): ApplicationRecord {
+  const createdAt = row.created_at.toISOString();
   return {
     id: row.id,
     positionId: row.position_id,
@@ -1170,10 +1175,14 @@ function asApplication(row: {
     title: row.title,
     companyName: row.company_name,
     applyUrl: row.apply_url ?? undefined,
-    status: row.status,
-    createdAt: row.created_at.toISOString(),
+    status: sanitizeApplicationStatusId(row.status) ?? 'applied',
+    createdAt,
+    updatedAt: (row.updated_at ?? row.created_at).toISOString(),
   };
 }
+
+const APPLICATION_RETURNING =
+  'id::text, position_id, company_poi_id, title, company_name, apply_url, status, created_at, COALESCE(updated_at, created_at) AS updated_at';
 
 export async function listApplications(userId: string): Promise<ApplicationRecord[]> {
   return withDbRead(async (db) => {
@@ -1186,11 +1195,12 @@ export async function listApplications(userId: string): Promise<ApplicationRecor
       apply_url: string | null;
       status: ApplicationRecord['status'];
       created_at: Date;
+      updated_at: Date;
     }>(
-       `SELECT id::text, position_id, company_poi_id, title, company_name, apply_url, status, created_at
+      `SELECT ${APPLICATION_RETURNING}
        FROM applications
        WHERE user_id = $1
-       ORDER BY created_at DESC, id DESC
+       ORDER BY COALESCE(updated_at, created_at) DESC, id DESC
        LIMIT $2`,
       [userId, APPLICATION_STORAGE_MAX],
     );
@@ -1200,8 +1210,9 @@ export async function listApplications(userId: string): Promise<ApplicationRecor
 
 export async function recordApplication(
   userId: string,
-  input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'status'> & { status?: ApplicationRecord['status'] },
+  input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { status?: ApplicationRecord['status'] },
 ): Promise<ApplicationRecord> {
+  const status = sanitizeApplicationStatusId(input.status) ?? 'applied';
   return withDbWrite(async (db) => {
     const result = await db.query<{
       id: string;
@@ -1212,11 +1223,12 @@ export async function recordApplication(
       apply_url: string | null;
       status: ApplicationRecord['status'];
       created_at: Date;
+      updated_at: Date;
     }>(
       `INSERT INTO applications (user_id, position_id, company_poi_id, title, company_name, apply_url, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (user_id, position_id) DO UPDATE SET title = EXCLUDED.title
-       RETURNING id::text, position_id, company_poi_id, title, company_name, apply_url, status, created_at`,
+       RETURNING ${APPLICATION_RETURNING}`,
       [
         userId,
         input.positionId,
@@ -1224,12 +1236,62 @@ export async function recordApplication(
         input.title,
         input.companyName,
         input.applyUrl ?? null,
-        input.status ?? 'applied',
+        status,
       ],
     );
     await db.query(recentRowsPruneSql('applications'), [userId, APPLICATION_STORAGE_MAX]);
     return asApplication(result.rows[0]);
-  }, () => memRecordApplication(userId, input));
+  }, () => memRecordApplication(userId, { ...input, status }));
+}
+
+export async function updateApplicationStatus(
+  userId: string,
+  id: string,
+  status: string,
+): Promise<ApplicationRecord | null> {
+  const nextStatus = sanitizeApplicationStatusId(status);
+  if (!nextStatus) return null;
+  return withDbWrite(async (db) => {
+    const result = await db.query<{
+      id: string;
+      position_id: string;
+      company_poi_id: string;
+      title: string;
+      company_name: string;
+      apply_url: string | null;
+      status: ApplicationRecord['status'];
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `UPDATE applications
+       SET status = $3, updated_at = now()
+       WHERE user_id = $1 AND id::text = $2
+       RETURNING ${APPLICATION_RETURNING}`,
+      [userId, id, nextStatus],
+    );
+    return result.rows[0] ? asApplication(result.rows[0]) : null;
+  }, () => memUpdateApplicationStatus(userId, id, nextStatus));
+}
+
+export async function reassignApplicationStatuses(
+  userId: string,
+  fromIds: string[],
+  toId: string,
+): Promise<number> {
+  const nextStatus = sanitizeApplicationStatusId(toId);
+  const from = fromIds
+    .map((id) => sanitizeApplicationStatusId(id))
+    .filter((id): id is string => Boolean(id));
+  if (!nextStatus || from.length === 0) return 0;
+  return withDbWrite(async (db) => {
+    const result = await db.query(
+      `UPDATE applications
+       SET status = $3, updated_at = now()
+       WHERE user_id = $1 AND status = ANY($2::text[])`,
+      [userId, from, nextStatus],
+    );
+    return result.rowCount ?? 0;
+  }, () => memReassignApplicationStatuses(userId, from, nextStatus));
 }
 
 function asNotification(row: {

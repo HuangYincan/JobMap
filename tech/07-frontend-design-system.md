@@ -6,7 +6,7 @@
 
 本项目前端设计遵循 Apple 设计语言,强调:
 - **液态玻璃(Liquid Glass)**:只用在岗位/POI 卡片
-- **霜面面板**: L2 Explore / L3 JD / Profile 用 `--soft-strong`
+- **霜面面板**: L2 Explore / Recent 投递监视 / L3 JD / Profile 用 `--soft-strong`
 - **极简主义**:去除冗余元素,留白充足
 - **响应式**:深色/浅色模式自动适应系统设置 + 移动端适配
 - **原生感**:接近 macOS/iOS 原生 App 体验

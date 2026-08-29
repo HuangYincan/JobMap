@@ -18,8 +18,9 @@ import { loadWorkViewport, WORK_FULL_LOAD_MAX_PAGES } from "@/lib/viewport-searc
 import { clearModeCache, readModeCache, syncModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
 import { entityRefFromSelection, initialsFromName } from "@/lib/account";
+import { sanitizeApplicationPipeline, type ApplicationStatusDef } from "@/lib/application-pipeline";
 import { isPersistableMode, isPersistablePoi } from "@/lib/persistable";
-import { addGuestHistory, clearGuestHistory, listGuestHistory, mergeGuestHistoryIntoAccount } from "@/lib/guest-search-history";
+import { addGuestHistory, listGuestHistory, mergeGuestHistoryIntoAccount } from "@/lib/guest-search-history";
 import {
   MAP_STYLE_KEY,
   mergeMapPois,
@@ -586,15 +587,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       // 网络失败时忽略
     }
   }, [refreshHistory, user]);
-
-  const handleClearRecent = useCallback(() => {
-    if (user) {
-      void fetch("/api/me/search-history", { method: "DELETE" }).then(() => refreshHistory(true));
-      return;
-    }
-    clearGuestHistory();
-    setSearchHistory([]);
-  }, [user, refreshHistory]);
 
   const openRail = useCallback((panel: RailPanel) => {
     setRailPanel((current) => (current === panel ? null : panel));
@@ -1862,6 +1854,50 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     }
   }, [user, refreshApplications]);
 
+  const handleApplicationStatus = useCallback(async (item: ApplicationRecord, statusId: string) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    setApplications((current) =>
+      current.map((row) => (
+        row.id === item.id
+          ? { ...row, status: statusId, updatedAt: new Date().toISOString() }
+          : row
+      )),
+    );
+    try {
+      await fetch("/api/me/applications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, status: statusId }),
+      });
+      await refreshApplications();
+    } catch {
+      await refreshApplications();
+    }
+  }, [user, refreshApplications]);
+
+  const handleApplicationPipeline = useCallback(async (next: ApplicationStatusDef[]) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    try {
+      const res = await fetch("/api/me/applications/pipeline", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statuses: next }),
+      });
+      const body = await res.json();
+      if (body.user) setUser(body.user as AccountUser);
+      await refreshApplications();
+    } catch {
+      await refreshAccount();
+      await refreshApplications();
+    }
+  }, [user, refreshAccount, refreshApplications]);
+
   // ---- 地图联动 ----
   // view 来自 useMapEngine 的 state(engineView)而非 mapInstance ref:引擎切换
   // 时 setView(新视图)触发重渲染,usePOIMap 创建 effect deps [view] 随切换
@@ -2227,7 +2263,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         setApplications([]);
         setInbox([]);
         setRailPanel((current) =>
-          current === "profile" || current === "saved" ? null : current,
+          current === "profile" || current === "saved" || current === "recent" ? null : current,
         );
       });
       return;
@@ -2510,9 +2546,15 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
             className={`${styles.navItem} ${railPanel === "recent" ? styles.navItemActive : ""}`}
             data-tooltip={t('recent', lang)}
             aria-pressed={railPanel === "recent"}
-            onClick={() => openRail("recent")}
-            onMouseEnter={() => prefetchRail("recent")}
-            onFocus={() => prefetchRail("recent")}
+            onClick={() => {
+              if (!user) {
+                setAuthOpen(true);
+                return;
+              }
+              openRail("recent");
+            }}
+            onMouseEnter={() => prefetchRail(user ? "recent" : "auth")}
+            onFocus={() => prefetchRail(user ? "recent" : "auth")}
           >
             <Icon name="history" />
             <span>{t('recent', lang)}</span>
@@ -2637,15 +2679,16 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
 
       {railPanel === "recent" && (
         <RecentPanel
-          items={searchHistory}
+          items={applications}
+          statuses={sanitizeApplicationPipeline(user?.preferences.applicationPipeline).statuses}
           signedIn={Boolean(user)}
           lang={lang}
-          mode={mode}
           shifted={sidebarOpen}
           onClose={() => setRailPanel(null)}
-          onPick={handlePickRecent}
-          onPickTrending={(item) => openExploreSearch(item.query)}
-          onClear={handleClearRecent}
+          onPick={handleOpenApplication}
+          onSignIn={() => setAuthOpen(true)}
+          onStatusChange={handleApplicationStatus}
+          onStatusesChange={handleApplicationPipeline}
         />
       )}
 
@@ -2691,6 +2734,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           applications={applications}
           notifications={inbox}
           onOpenApplication={handleOpenApplication}
+          onOpenRecent={() => openRail("recent")}
         />
       )}
 
@@ -2891,6 +2935,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   title={t("recent", lang)}
                   aria-pressed={mobileSheet === "recent"}
                   onClick={() => {
+                    if (!user) {
+                      setAuthOpen(true);
+                      return;
+                    }
                     if (mobileSheet === "recent") {
                       setMobileSheet("explore");
                       return;
@@ -3093,6 +3141,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                       onSignOut={handleAuthAction}
                       onUserChanged={() => void refreshAccount()}
                       onOpenApplication={handleOpenApplication}
+                      onOpenRecent={() => {
+                        setMobileSheetBack("account");
+                        setMobileSheet("recent");
+                      }}
                     />
                   ) : (
                     <p className={styles.mobileAccountHint}>{t("signInHint", lang)}</p>
@@ -3100,21 +3152,19 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 </div>
               ) : mobileSheet === "recent" ? (
                 <RecentPanel
-                  items={searchHistory}
+                  items={applications}
+                  statuses={sanitizeApplicationPipeline(user?.preferences.applicationPipeline).statuses}
                   signedIn={Boolean(user)}
                   lang={lang}
-                  mode={mode}
                   embedded
                   onClose={() => setMobileSheet(mobileSheetBack)}
-                  onPick={(entry) => {
-                    handlePickRecent(entry);
+                  onPick={(item) => {
+                    handleOpenApplication(item);
                     setMobileSheet("explore");
                   }}
-                  onPickTrending={(item) => {
-                    openExploreSearch(item.query);
-                    setMobileSheet("explore");
-                  }}
-                  onClear={handleClearRecent}
+                  onSignIn={() => setAuthOpen(true)}
+                  onStatusChange={handleApplicationStatus}
+                  onStatusesChange={handleApplicationPipeline}
                 />
               ) : mobileSheet === "saved" ? (
                 <div className={styles.mobileAccount}>

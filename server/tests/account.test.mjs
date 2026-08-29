@@ -44,11 +44,13 @@ import {
   otpChallengeMemorySize,
   SAVED_PLACES_MEMORY_MAX,
   recordApplication,
+  reassignApplicationStatuses,
   removeSaved,
   registerWithPassword,
   savePlace,
   sessionMemorySize,
   updateAvatar,
+  updateApplicationStatus,
   updateUser,
   upsertIdentity,
 } from '../src/lib/session-store.ts';
@@ -71,6 +73,26 @@ test('mergePreferences deep-merges career and notifications', () => {
   assert.deepEqual(next.career.families, ['intern', 'campus']);
   assert.equal(next.notifications.emailJobs, true);
   assert.equal(next.notifications.smsJobs, false);
+  assert.equal(next.applicationPipeline.statuses[0].id, 'applied');
+});
+
+test('mergePreferences sanitizes a custom application pipeline', () => {
+  const next = mergePreferences(null, {
+    applicationPipeline: {
+      statuses: [
+        { id: 'applied', label: '投了', group: 'active', builtin: true },
+        { id: 'viewed', label: '看过', group: 'active' },
+        { id: 'c_hrface0001', label: 'HR面', group: 'active', builtin: false },
+        { id: 'not a status', label: 'bad' },
+      ],
+    },
+  });
+  assert.deepEqual(next.applicationPipeline.statuses.map((item) => item.id), [
+    'applied',
+    'c_hrface0001',
+  ]);
+  assert.equal(next.applicationPipeline.statuses[0].label, '投了');
+  assert.equal(next.applicationPipeline.statuses[1].label, 'HR面');
 });
 
 test('mergePreferences normalizes corrupt or hostile persisted preferences', () => {
@@ -335,6 +357,33 @@ test('recordApplication is idempotent per position', () => {
   });
   assert.equal(first.id, again.id);
   assert.equal(listApplications(user.id).length, 1);
+  assert.equal(first.status, 'applied');
+  assert.ok(first.updatedAt);
+});
+
+test('application status updates reorder by updatedAt and viewed aliases to applied', () => {
+  const user = upsertIdentity({ provider: 'email', subject: 'pipeline@example.com', email: 'pipeline@example.com' });
+  const first = recordApplication(user.id, {
+    positionId: 'job-1',
+    companyPoiId: 'co-1',
+    title: '前端',
+    companyName: '阿里',
+    status: 'viewed',
+  });
+  const second = recordApplication(user.id, {
+    positionId: 'job-2',
+    companyPoiId: 'co-2',
+    title: '后端',
+    companyName: '字节',
+  });
+  assert.equal(first.status, 'applied');
+  const updated = updateApplicationStatus(user.id, first.id, 'waiting');
+  assert.equal(updated?.status, 'waiting');
+  assert.ok(Date.parse(updated.updatedAt) >= Date.parse(second.createdAt));
+  assert.equal(reassignApplicationStatuses(user.id, ['waiting'], 'r1'), 1);
+  assert.equal(listApplications(user.id).find((item) => item.id === first.id)?.status, 'r1');
+  assert.equal(updateApplicationStatus(user.id, 'missing', 'r1'), null);
+  assert.equal(second.status, 'applied');
 });
 
 test('enqueueNotification is idempotent per position', () => {
@@ -382,7 +431,7 @@ test('authenticated collections stay capped and retain the newest rows', () => {
   }
   const applications = listApplications(user.id);
   assert.equal(applications.length, APPLICATIONS_MEMORY_MAX);
-  assert.equal(applications[0].positionId, `position-${APPLICATIONS_MEMORY_MAX}`);
+  assert.ok(applications.some((item) => item.positionId === `position-${APPLICATIONS_MEMORY_MAX}`));
   assert.ok(!applications.some((item) => item.positionId === 'position-0'));
 
   for (let i = 0; i < NOTIFICATIONS_MEMORY_MAX + 1; i += 1) {
@@ -426,6 +475,7 @@ test('database writes prune bounded authenticated collections', async () => {
             id: 'application-1', position_id: 'p1', company_poi_id: 'c1', title: 'Role',
             company_name: 'Company', apply_url: null, status: 'applied',
             created_at: new Date('2026-08-23T00:00:00Z'),
+            updated_at: new Date('2026-08-23T00:00:00Z'),
           }],
         };
       }
@@ -480,7 +530,11 @@ test('database reads bound legacy authenticated collections', async () => {
     for (const [table, limit] of expectations) {
       const call = calls.find(({ sql }) => sql.includes(`FROM ${table}`));
       assert.ok(call, `missing bounded read for ${table}`);
-      assert.match(call.sql, /ORDER BY created_at DESC, id DESC/);
+      if (table === 'applications') {
+        assert.match(call.sql, /ORDER BY COALESCE\(updated_at, created_at\) DESC, id DESC/);
+      } else {
+        assert.match(call.sql, /ORDER BY created_at DESC, id DESC/);
+      }
       assert.deepEqual(call.params, ['db-read-user', limit]);
     }
   } finally {

@@ -6,6 +6,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Changed
 
+- **最近改为投递监视。** Recent L2 / 手机 Recent sheet 列出已登录投递记录，不再展示搜索历史或热搜。阶段默认为已投递 / 等面 / 一面 / 二面 / 三面 / Offer / 一面挂 / 二面挂 / 三面挂 / 未通过 / 已撤回 / 已接受，用户可加减、改名、改分组。Profile「我的投递」改为跳转到最近。游客点最近会打开登录。搜索历史接口仍写入，不进此面板。`021_application_pipeline` 需环境执行 `make db-migrate`。
 - **去掉默认的「路线来源」霜面条。** `RouteOverlayBar` 对 `idle` / 直线 `estimate` / 缺起点 / 定位拒绝不渲染；地图底部不再出现「直线估算，无路况 · 按直线距离估算」。供应商结果、加载中、过期/离线等状态仍显示。
 
 ### Fixed
