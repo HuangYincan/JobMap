@@ -85,11 +85,11 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
 
 `GET /api/pois/domain-local?bounds=west,south,east,north&zoom=13&q=&categories=&limit=50&offset=0`
 
-- bbox **必填且必须完全落在** `HANGZHOU_BBOX={west:118.3,south:29.1,east:120.8,north:30.7}` 内；缺失/格式非法/逆序 → API 400 `INVALID_BOUNDS`，越出导入范围 → 400 `BOUNDS_OUT_OF_RANGE`。SQL 使用 `p.geom && ST_MakeEnvelope(...)`；store 层即使被其他调用方直接使用，也会把缺失 bbox 限制到该导入范围。
+- bbox **必填且必须完全落在** `HANGZHOU_BBOX={west:118.3,south:29.1,east:120.8,north:30.7}` 内；缺失/格式非法/逆序 → API 400 `INVALID_BOUNDS`，越出导入范围 → 400 `BOUNDS_OUT_OF_RANGE`。SQL 使用 `p.city_code = $1`(缺省杭州 `330100`,全国按城扩表时换城码)再 `p.geom && ST_MakeEnvelope(...)`；store 层即使被其他调用方直接使用，也会把缺失 bbox 限制到该导入范围。
 - `q`:`name ILIKE`;`categories`:`big_type = ANY(...)`
 - common 过滤下推:`(rating > 0 OR jsonb_array_length(photos) > 0 OR tier <= 3)`
   (与 AMap 的 `isCommonPoi` 语义对齐:有评分/有图/地标才值得上卡)
-- `ORDER BY rating DESC NULLS LAST, photos DESC, poi_id`(稳定性)
+- `ORDER BY rating DESC NULLS LAST, photos DESC, poi_id`(稳定性)。**不要**再写 `count(*) OVER()` 与 ORDER BY rating 同一层——规划器会走 `hz_pois_rating_idx` 把 gist 当成 Filter,百万行上超过 3s `statement_timeout`(2026-08-29 实测西湖小框 24s)。视口跨度 ≤ 0.35° 用 `WITH clipped AS MATERIALIZED` 先走 `hz_pois_geom_gist`;全市/城级包络(杭州导入范围 ~2.5°×1.6°,以及未来北上广整城框)不物化,靠 `city_code` + rating btree + `LIMIT` 早停。空页 count 带 `LIMIT 1001` 帽。
 - `LIMIT` 钳 1..300,`OFFSET` 钳 0..1000；SQL 单次返回上限 300，公开读通过 `queryPublicRead` 设置 3s `statement_timeout`（注入池也有可测超时竞速）；非法数值(NaN)落回默认;
   `zoom` 钳 0..20(0 = 仅 tier-0 地标,20 封顶防止 tier-21 永隐类放出)
 - public-cache 30s;**仅真实查库成功时缓存**——DB 故障/表缺失的空兜底响应
@@ -166,9 +166,10 @@ false`,被取消后该 ref 永久卡 true → 后续所有 load() 直接短路�
 
 `GET /api/suggest?mode=domain&q=...&center=lng,lat` 本地优先:
 
-- **domain 分支查 `hz_pois`**:`name ILIKE 'q%'` 前缀匹配(带 common 过滤下推、
+- **domain 分支查 `hz_pois`**:`city_code`(缺省 `330100`) + `name ILIKE 'q%'` 前缀匹配(带 common 过滤下推、
   rating 排序),`adname` 作 subtitle,返回 `location`(GCJ 零转换)+ 可选
   `distance`(米,`center` 提供时服务端用 haversine 算好;公司行用 site 坐标)。
+  全国扩表后建议必须带城码,禁止对全国做前缀热门榜。
   本地 0 命中 / 无库 → 空列表(客户端回退高德 AutoComplete 一次,回退失败
   返回空不卡死)。
 - **空结果不缓存**:客户端 suggest LRU 与 `/api/suggest` 公共缓存都只写入
@@ -198,5 +199,8 @@ false`,被取消后该 ref 永久卡 true → 后续所有 load() 直接短路�
 - `reviewCount/website` 本数据源恒缺(前端已对真 poiid 提供「查看评价」高德外链);`open_hours` 空
 - 关键词搜索仍按当前视口 bbox 约束(与旧 AMap searchNearBy 半径语义一致);
   点搜索建议(本地 hz 前缀 / AMap AutoComplete 回退)会飞过去再刷视口
-- 全国扩展:表已带 `city_code` + 分区注释;后续城市导入同管线,前端把
-  `inHangzhouBox` 换成「该城市已导入」判定
+- 全国扩展:表已带 `city_code` + 分区注释;读路径/建议已按城码等值裁剪(当前恒
+  `330100`)。后续城市导入同管线,调用方传入目标 `cityCode`,前端把
+  `inHangzhouBox` 换成「该城市已导入」判定。工作模式全国站点走
+  `company_sites` gist + `city_code`,与 Domain 本地表分轨,不把全国 POI 扫进
+  杭州 gist 查询。

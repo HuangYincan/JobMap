@@ -133,7 +133,8 @@ test('GET /api/suggest domain: 本地优先 hz_pois 前缀 + center 距离 + 空
   assert.match(route, /publicCacheKey\(\['suggest', mode, q, centerKey\]\)/);
   const store = src('lib/hz-poi-store.ts');
   assert.match(store, /loadHzPoiSuggestions/);
-  assert.match(store, /p\.name ILIKE \$1/);
+  assert.match(store, /p\.city_code = \$1/);
+  assert.match(store, /p\.name ILIKE \$2/);
   assert.match(store, /ORDER BY p\.rating DESC NULLS LAST/);
 });
 

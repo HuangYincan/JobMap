@@ -110,3 +110,20 @@ gist 已接上。行数涨到几百以后，单独的 bbox 也应切到 Index Sc
 - 读路径透传（`/api/pois` + `/api/search` 的 `filters`）：`maxTier`（SQL 下推 `companies.tier <= n`，内存 `applyFilters` 兜底）、`city`（SQL：`city_code` 精确 OR `city` ILIKE；内存：site 城市/地址文本包含）、`alive`。
 - 导入映射（`recruitment-import.ts`）：`companies.tier` 缺省 12、`category` 缺省 `'other'`（国标大类 code，tech/19）；site `city` 从 drop `site.city` 或地址解析（`siteCityOf`：目标城市名 / 杭州区名前缀），`province`/`city_code` 原样落库。
 - 百万级预留：按 `province`/`city_code` 分区或聚合展示（缩到全国时按 tier 聚合计数）。
+
+## 杭州 / 全国 Domain POI（`hz_pois`，2026-08-29）
+
+`013` 单表当前 1,006,158 行杭州 POI，`city_code` 缺省 `330100`。gist `hz_pois_geom_gist` 有效；**线上列表不能** `ORDER BY rating` 与 `count(*) OVER()` 写在同一层——规划器会选 `hz_pois_rating_idx`，`geom &&` 变成 Filter，西湖小框实测 24s / 扫完全表（公开读 3s timeout）。
+
+现行 `loadHangzhouPoisFromDb`：
+
+- `WHERE p.city_code = $1 AND p.geom && ST_MakeEnvelope(...)`（城码在前，全国按城导入或 `PARTITION BY LIST (city_code)` 时裁枝）。
+- 视口跨度 ≤ 0.35°：`WITH clipped AS MATERIALIZED` 先 gist 再按 rating 排序分页。
+- 全市/城级包络（杭州导入范围、未来北上广整城框）：不物化，`city_code` + rating btree + `LIMIT`；空页 `count(*)` 带 `LIMIT 1001`。
+- 工作模式全国站点仍走 `company_sites_geom_gist` / `company_sites_geog_gist`，与 Domain 本地表分轨。
+
+Live `EXPLAIN ANALYZE`（PostGIS 3.4，本机 2026-08-29，公开读 3s 预算内）：
+
+- 西湖小框 MATERIALIZED：`Bitmap Index Scan on hz_pois_geom_gist`（27,002 gist 命中 → 14,045 行）**516ms**；修复前同框走 rating 索引 Filter 掉 992,113 行 / **24s**。
+- 杭州导入范围 + rating `LIMIT 300`：**48ms**（rating 索引早停，约 1,099 行）。
+- 全国裁枝 `city_code = '110000'`（本表无北京行）：`Index Scan on hz_pois_city_code_idx` **1.8ms** / 0 行。

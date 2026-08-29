@@ -2,12 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  HANGZHOU_CITY_CODE,
+  hzPoiPageSql,
   hzPoiSpatialSql,
   hzRowToDomainPoi,
   isAllowedHangzhouBounds,
   parseBoundsParam,
+  paginationTotal,
+  shouldPreferGistClip,
   loadHzPoiSuggestions,
 } from '../src/lib/hz-poi-store.ts';
+import { HANGZHOU_BBOX } from '../src/lib/viewport-search.ts';
 
 test('hzPoiSpatialSql: bbox + zoom + q + categories + common 过滤', () => {
   const { where, params } = hzPoiSpatialSql({
@@ -51,6 +56,44 @@ test('hzPoiSpatialSql: 全空 categories 不生成 ANY 参数;含有效值时保
   assert.ok(!r1.params.some((p) => Array.isArray(p)), '全空 categories 无数组参数');
   const r2 = hzPoiSpatialSql({ categories: ['', '餐饮服务'] });
   assert.ok(r2.params.some((p) => Array.isArray(p)), '含有效值 categories 有数组参数');
+});
+
+test('hzPoiSpatialSql: city_code 等值在 WHERE 最前(全国按城裁剪)', () => {
+  const { where, params } = hzPoiSpatialSql({
+    cityCode: '110000',
+    bounds: { west: 116.3, south: 39.8, east: 116.5, north: 40.0 },
+    zoom: 13,
+  });
+  assert.match(where, /WHERE p\.city_code = \$1 AND p\.geom && ST_MakeEnvelope\(\$2/);
+  assert.equal(params[0], '110000');
+  assert.deepEqual(params.slice(1, 5), [116.3, 39.8, 116.5, 40.0]);
+  assert.equal(hzPoiSpatialSql({ cityCode: 'not-a-code' }).params.includes('not-a-code'), false);
+});
+
+test('shouldPreferGistClip: 街区视口 true;杭州导入范围 / 缺 bounds false', () => {
+  assert.equal(shouldPreferGistClip({ west: 120.14, south: 30.25, east: 120.17, north: 30.28 }), true);
+  assert.equal(shouldPreferGistClip(HANGZHOU_BBOX), false);
+  assert.equal(shouldPreferGistClip(null), false);
+});
+
+test('hzPoiPageSql: 视口走 MATERIALIZED gist;全市不物化', () => {
+  const { where, params } = hzPoiSpatialSql({
+    cityCode: HANGZHOU_CITY_CODE,
+    bounds: { west: 120.14, south: 30.25, east: 120.17, north: 30.28 },
+  });
+  const gist = hzPoiPageSql(where, params, 300, 0, true);
+  assert.match(gist.sql, /WITH clipped AS MATERIALIZED/);
+  assert.match(gist.sql, /hz_pois_geom_gist|FROM hz_pois p/);
+  assert.doesNotMatch(gist.sql, /count\(\*\) OVER\(\)/);
+  const city = hzPoiPageSql(where, params, 300, 0, false);
+  assert.doesNotMatch(city.sql, /MATERIALIZED/);
+  assert.match(city.sql, /NULL::int AS total/);
+});
+
+test('paginationTotal: 有 DB total 用精确值;否则短页到底、满页+1', () => {
+  assert.equal(paginationTotal(0, 300, 300, 40807), 40807);
+  assert.equal(paginationTotal(0, 300, 40, null), 40);
+  assert.equal(paginationTotal(0, 300, 300, null), 301);
 });
 
 test('hzRowToDomainPoi: GCJ 坐标零转换 + photos 截 3 + category/subcategory', () => {
@@ -147,18 +190,64 @@ test('loadHangzhouPoisFromDb: NaN limit/offset 落回默认,不把 NaN 传给 pg
   const pool = {
     query: async (sql, params) => {
       calls.push(params ?? []);
-      return sql.includes('OVER()')
-        ? { rows: [{ total: '7' }] } // 窗口查询:带 total 的行
-        : { rows: [{ n: '7' }] }; // 独立 count
+      if (sql.includes('capped')) return { rows: [{ n: '7' }] };
+      return {
+        rows: [{
+          poi_id: 'B0',
+          name: '测',
+          address: null,
+          tel: null,
+          rating: '4',
+          cost: null,
+          lng_gcj: 120.1,
+          lat_gcj: 30.2,
+          big_type: '餐饮服务',
+          mid_type: null,
+          photos: null,
+          open_hours: null,
+          total: '7',
+        }],
+      };
     },
   };
   const r = await loadHangzhouPoisFromDb({ limit: Number.NaN, offset: Number.NaN }, pool);
   assert.equal(r?.limit, 300);
   assert.equal(r?.offset, 0);
   assert.equal(r?.total, 7);
+  assert.equal(r?.results[0].id, 'B0');
   for (const c of calls) {
     assert.ok(c.every((v) => typeof v !== 'number' || Number.isFinite(v)));
   }
+});
+
+test('loadHangzhouPoisFromDb: 街区视口 SQL 含 MATERIALIZED + city_code', async () => {
+  const calls = [];
+  const pool = {
+    query: async (sql, params) => {
+      calls.push({ sql, params });
+      return { rows: [] };
+    },
+  };
+  await loadHangzhouPoisFromDb({
+    bounds: { west: 120.14, south: 30.25, east: 120.17, north: 30.28 },
+    zoom: 13,
+    limit: 50,
+  }, pool);
+  assert.match(calls[0].sql, /WITH clipped AS MATERIALIZED/);
+  assert.equal(calls[0].params[0], HANGZHOU_CITY_CODE);
+  assert.ok(calls.some((c) => c.sql.includes('capped')), '空页走 capped count');
+});
+
+test('loadHangzhouPoisFromDb: 全市包络不物化 gist 命中表', async () => {
+  const calls = [];
+  const pool = {
+    query: async (sql) => {
+      calls.push(sql);
+      return { rows: [] };
+    },
+  };
+  await loadHangzhouPoisFromDb({ bounds: HANGZHOU_BBOX, zoom: 13 }, pool);
+  assert.doesNotMatch(calls[0], /MATERIALIZED/);
 });
 
 test('loadHangzhouPoisFromDb: 查库失败 → null(走回退),不伪装成空 200', async () => {
@@ -187,16 +276,17 @@ test('loadHzPoiSuggestions: name 前缀匹配 + limit 钳位 + adname 返回', a
   const rows = await loadHzPoiSuggestions('肯德基', 5, pool);
   assert.equal(rows?.length, 2);
   assert.equal(rows?.[0].adname, '西湖区');
-  assert.ok(calls[0].sql.includes('p.name ILIKE $1'));
-  assert.ok(calls[0].sql.includes('LIMIT $2'));
+  assert.ok(calls[0].sql.includes('p.city_code = $1'));
+  assert.ok(calls[0].sql.includes('p.name ILIKE $2'));
+  assert.ok(calls[0].sql.includes('LIMIT $3'));
   assert.ok(calls[0].sql.includes('(p.rating > 0 OR jsonb_array_length(p.photos) > 0 OR p.tier <= 3)'));
-  assert.deepEqual(calls[0].params, ['肯德基%', 5]); // 前缀匹配
+  assert.deepEqual(calls[0].params, [HANGZHOU_CITY_CODE, '肯德基%', 5]); // 城内前缀
 });
 
 test('loadHzPoiSuggestions: limit 钳位 1..20;空词直接空数组;查库失败 → null', async () => {
   const pool1 = {
     query: async (sql, params) => {
-      assert.equal(params[1], 20);
+      assert.equal(params[2], 20);
       return { rows: [] };
     },
   };
