@@ -61,6 +61,9 @@ test('map CSP keeps explicit SDK script hosts and limits unsafe-eval to developm
   for (const host of [
     'https://*.amap.com',
     'https://*.map.baidu.com',
+    'http://*.map.baidu.com',
+    'https://*.bdimg.com',
+    'http://*.bdimg.com',
     'https://map.qq.com',
     'https://*.map.qq.com',
   ]) {

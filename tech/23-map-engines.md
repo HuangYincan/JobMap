@@ -1892,3 +1892,18 @@ mu.addEventListener("animation_start", C); mu.addEventListener("animation_end", 
 zoom ≤ 8 城市聚合)。百度仍走 HTML content。公司徽章外观改为与腾讯同款
 SVG 纹理(白底圆角描边 / emoji 或内联 logo),不再用 HTML `box-shadow`。
 AMap 城市聚合徽章保持 HTML「城市名 N」(不走 LabelsLayer)。
+
+## 2026-08-30:百度 CSP 拦 getmodules → 有壳无 canvas(fix/baidu-csp-http)
+
+`/` 地图 CSP 的 `script-src` 原先只允许 `https://*.map.baidu.com`。BMapGL v1.0
+getscript 本体是 https(允许),但 SDK 用 `location.protocol` 拼后续 URL:在
+`http://localhost:3000` 上变成 `http://api.map.baidu.com/getmodules?…mod=mapgl_…`
+与 `http://*.bdimg.com/sty/*.js`。CSP 拦掉渲染器模块 → `new BMapGL.Map()` 同步
+建好 `.bmap-container`/`#platform`/`#mask`,`map.loaded===true`,chip 显示百度,
+**canvas 数为 0、底图灰空**。verify JSONP(`qt=verify`,`error:0`)与 REST 240
+不是这条失败路径(浏览器端 AK 的 Web 服务禁用不影响 JSAPI)。
+
+修复:`MAP_CSP` 为百度/`*.bdimg.com` 补 `http:`(https 生产仍走 https 通道,
+浏览器 mixed-content 不会加载明文脚本);`waitForMapReady` 在真实 DOM 上等到
+`canvas` 再返回,mock 无 `querySelector` 仍认 `loaded`(AlreadyLoadedMap)。
+空 canvas 4s 超时回滚,避免再把空图当成功。

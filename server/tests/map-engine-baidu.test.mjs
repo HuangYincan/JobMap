@@ -453,6 +453,34 @@ class AlreadyLoadedMap extends NeverReadyMap {
   }
 }
 
+/** loaded=true 但真实 DOM 形态(有 querySelector)且永不出现 canvas:
+ * 不得把 loaded 当成已渲染(CSP 拦 getmodules 的空图形态)。 */
+class LoadedNoCanvasMap extends AlreadyLoadedMap {
+  getContainer() {
+    return {
+      querySelector() {
+        return null;
+      },
+    };
+  }
+}
+
+/** loaded=true,querySelector('canvas') 稍后才有节点 → 轮询就绪。 */
+class LoadedCanvasLaterMap extends AlreadyLoadedMap {
+  constructor(container) {
+    super(container);
+    this.canvasNode = null;
+  }
+  getContainer() {
+    const self = this;
+    return {
+      querySelector(sel) {
+        return sel === 'canvas' ? self.canvasNode : null;
+      },
+    };
+  }
+}
+
 /** 带 setMapReadyCallback(BMapGL 2.0 官方就绪回调)的 Map:是否触发回调由
  * 测试手动控制(fireReady);无 tilesloaded 自动触发。 */
 class CallbackReadyMap extends NeverReadyMap {
@@ -1037,6 +1065,49 @@ test('createView:v1.0 map.loaded 已 true(错过 load 事件)→ 立即就绪,�
   });
   assert.equal(view.raw.loaded, true);
   assert.equal(view.raw.listeners.size, 0, '已 loaded → 立即就绪并解绑,不挂 1.5s 超时');
+});
+
+test('createView:loaded 但真实 DOM 无 canvas → 超时抛错(不得空图放行)', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  try {
+    setup();
+    mockNs.ns.Map = LoadedNoCanvasMap;
+    const e = createBaiduEngine();
+    const p = e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
+    let settled = false;
+    p.then(
+      () => {
+        settled = true;
+      },
+      () => {},
+    );
+    mock.timers.tick(3900);
+    assert.equal(settled, false, '3.9s 无 canvas 仍挂起');
+    mock.timers.tick(200);
+    await assert.rejects(p, /BMapGL 地图就绪超时\(4000ms\)/);
+    assert.equal(captures.maps[0].destroyed, true);
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('createView:loaded 后 canvas 出现 → 轮询就绪,不误超时', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  try {
+    setup();
+    mockNs.ns.Map = LoadedCanvasLaterMap;
+    const e = createBaiduEngine();
+    const p = e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
+    const map = captures.maps[0];
+    mock.timers.tick(200);
+    map.canvasNode = { tag: 'canvas' };
+    mock.timers.tick(50);
+    const view = await p;
+    assert.equal(view.raw, map);
+    assert.equal(map.destroyed, false);
+  } finally {
+    mock.timers.reset();
+  }
 });
 
 test('getState:厂商 bd09 中心 → gcj02 返回(±1e-5)+ 形状', async () => {
