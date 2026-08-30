@@ -81,7 +81,7 @@ The app is the git branch. `git revert` / `git reset` the last conventional comm
 
 Next 按路由发送 CSP、Referrer-Policy、Permissions-Policy、`Cross-Origin-Opener-Policy: same-origin`、`X-Content-Type-Options: nosniff` 与反嵌入头;生产另加 HSTS。CSP 的路由范围和残余放宽项如下:
 
-- `/` 是当前唯一挂载 `MapShell` 的页面(账号与 Agent 是该页面内的 overlay),使用地图策略: `script-src`/`style-src` 明确允许 `https://*.amap.com`、`https://*.map.baidu.com`、`https://map.qq.com`、`https://*.map.qq.com`;地图脚本的 `'unsafe-inline'` 和样式的 `'unsafe-inline'` 只在 `/` 保留。
+- `/` 是当前唯一挂载 `MapShell` 的页面(账号与 Agent 是该页面内的 overlay),使用地图策略: `script-src`/`style-src` 明确允许 `https://*.amap.com`、`https://*.map.baidu.com`、`http://*.map.baidu.com`、`https://*.bdimg.com`、`http://*.bdimg.com`、`https://map.qq.com`、`https://*.map.qq.com`;地图脚本的 `'unsafe-inline'` 和样式的 `'unsafe-inline'` 只在 `/` 保留。BMapGL v1.0 在 `http://localhost` 按 `location.protocol` 拉 `http://api.map.baidu.com/getmodules` 与 `http://*.bdimg.com` 样式脚本;只放行 https 时 getscript 能进、GL 渲染器被 CSP 拦,底图有壳无 canvas。`http:` 例外在 https 部署上会被浏览器 mixed-content 拦,不扩大生产明文脚本面。
 - 非根路径(配置中的 `/:path+`,包括 `/api/*` 与未来独立账号页面)使用严格策略: `script-src 'self'`、`style-src 'self'`,不含任一 `'unsafe-*'`。因此不会把地图兼容性例外扩散到 API 或非地图页面。
 - `/` 的 `img-src` 与 `connect-src` 仍保留 `https:`。这是有意的兼容性边界:当前 AMap 瓦片/CDN 主机随区域变化,工作地图还会显示外部公司 logo/岗位照片,而腾讯/百度适配器保留可切换实现;贸然改为少数主机会造成地图或卡片资源静默失败。这两个宽泛来源只存在于地图路由。
 - `'unsafe-eval'` 仅通过 `NODE_ENV === "development"` 条件拼入 `/` 的 `script-src`;生产构建不含它。Next 文档说明开发调试栈可能需要该例外,生产的 React/Next 默认不需要。

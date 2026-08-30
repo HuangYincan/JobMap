@@ -5,18 +5,23 @@ import type { NextConfig } from "next";
 // allowances on that route only: account/agent UI is rendered inside the home
 // route today, so it intentionally inherits the map policy without changing
 // its existing behavior.
+// BMapGL v1.0 picks `location.protocol` for getmodules / JSONP / tiles.
+// On http://localhost the SDK therefore requests http://api.map.baidu.com
+// and http://*.bdimg.com. A https-only script-src lets getscript (https)
+// through, then CSP-blocks the GL renderer module — Map DOM exists, no
+// canvas. http: tokens are inert on https deployments (mixed content).
 const MAP_CSP = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "img-src 'self' data: blob: https:",
+  "img-src 'self' data: blob: https: http://*.map.baidu.com http://*.bdimg.com",
   "media-src 'self' data:",
-  "font-src 'self' data: https://*.amap.com https://*.map.baidu.com https://map.qq.com https://*.map.qq.com",
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://*.amap.com https://*.map.baidu.com https://map.qq.com https://*.map.qq.com`,
-  "style-src 'self' 'unsafe-inline' https://*.map.baidu.com https://*.amap.com https://map.qq.com https://*.map.qq.com",
-  "connect-src 'self' data: blob: https:",
+  "font-src 'self' data: https://*.amap.com https://*.map.baidu.com http://*.map.baidu.com https://*.bdimg.com http://*.bdimg.com https://map.qq.com https://*.map.qq.com",
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://*.amap.com https://*.map.baidu.com http://*.map.baidu.com https://*.bdimg.com http://*.bdimg.com https://map.qq.com https://*.map.qq.com`,
+  "style-src 'self' 'unsafe-inline' https://*.map.baidu.com http://*.map.baidu.com https://*.amap.com https://map.qq.com https://*.map.qq.com",
+  "connect-src 'self' data: blob: https: http://*.map.baidu.com http://*.bdimg.com",
   "worker-src 'self' blob:",
 ].join("; ");
 
