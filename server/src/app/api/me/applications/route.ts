@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
 import { listApplications, recordApplication, updateApplicationStatus } from "@/lib/account-store";
-import { sanitizeApplicationPipeline, sanitizeApplicationStatusId } from "@/lib/application-pipeline";
+import {
+  coerceStatusToCatalog,
+  sanitizeApplicationPipeline,
+  sanitizeApplicationStatusId,
+} from "@/lib/application-pipeline";
 import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
 
 const MAX_ID_LENGTH = 200;
@@ -21,7 +25,12 @@ function isHttpUrl(value: string): boolean {
 export async function GET() {
   const user = await readSessionUser();
   if (!user) return NextResponse.json({ items: [] });
-  return NextResponse.json({ items: await listApplications(user.id) });
+  const catalog = sanitizeApplicationPipeline(user.preferences.applicationPipeline).statuses;
+  const items = (await listApplications(user.id)).map((item) => {
+    const status = coerceStatusToCatalog(item.status, catalog);
+    return status && status !== item.status ? { ...item, status } : item;
+  });
+  return NextResponse.json({ items });
 }
 
 export async function POST(request: Request) {
@@ -102,12 +111,13 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
   }
   const id = (body.id || "").trim();
-  const status = sanitizeApplicationStatusId(body.status);
-  if (!id || id.length > MAX_ID_LENGTH || !status) {
+  const requested = sanitizeApplicationStatusId(body.status);
+  if (!id || id.length > MAX_ID_LENGTH || !requested) {
     return NextResponse.json({ code: "BAD_REQUEST", message: "id and status required" }, { status: 400 });
   }
   const catalog = sanitizeApplicationPipeline(user.preferences.applicationPipeline).statuses;
-  if (!catalog.some((item) => item.id === status)) {
+  const status = coerceStatusToCatalog(requested, catalog);
+  if (!status) {
     return NextResponse.json({ code: "UNKNOWN_STATUS", message: "status is not in the user pipeline" }, { status: 400 });
   }
   const item = await updateApplicationStatus(user.id, id, status);

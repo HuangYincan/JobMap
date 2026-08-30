@@ -1,8 +1,9 @@
 // ============================================================
 // 投递监视阶段词表
 //
-// 默认 12 档（已投递 / 等面 / 一面… / Offer / 挂 / 撤回 / 已接受）。
+// 默认 6 档（已投递 / 面试中 / Offer / 未通过 / 已撤回 / 已接受）。
 // 用户可在 Recent L2 加减、改名、改分组；自定义 id 为 c_* 。
+// 未改过的旧 12 档词表读时收成 6 档；等面/一面… → 面试中，一面挂… → 未通过。
 // 旧库 viewed → applied。删阶段时调用方把仍在用的行归到 fallback。
 // ============================================================
 
@@ -35,35 +36,71 @@ const CUSTOM_ID = /^c_[a-z0-9]{6,16}$/;
 
 const BUILTIN_GROUP: Record<string, ApplicationStatusGroup> = {
   applied: 'active',
+  interview: 'active',
+  offer: 'active',
+  rejected: 'closed',
+  withdrawn: 'closed',
+  accepted: 'closed',
   waiting: 'active',
   r1: 'active',
   r2: 'active',
   r3: 'active',
-  offer: 'active',
   rejected_r1: 'closed',
   rejected_r2: 'closed',
   rejected_r3: 'closed',
-  rejected: 'closed',
-  withdrawn: 'closed',
-  accepted: 'closed',
 };
 
 const BUILTIN_LABEL_KEY: Record<string, TranslationKey> = {
   applied: 'appStatusApplied',
+  interview: 'appStatusInterview',
+  offer: 'appStatusOffer',
+  rejected: 'appStatusRejected',
+  withdrawn: 'appStatusWithdrawn',
+  accepted: 'appStatusAccepted',
   waiting: 'appStatusWaiting',
   r1: 'appStatusR1',
   r2: 'appStatusR2',
   r3: 'appStatusR3',
-  offer: 'appStatusOffer',
   rejected_r1: 'appStatusRejectedR1',
   rejected_r2: 'appStatusRejectedR2',
   rejected_r3: 'appStatusRejectedR3',
-  rejected: 'appStatusRejected',
-  withdrawn: 'appStatusWithdrawn',
-  accepted: 'appStatusAccepted',
 };
 
-export const DEFAULT_APPLICATION_STATUS_IDS = Object.keys(BUILTIN_GROUP);
+/** 未改过的旧默认 12 档。读路径收成 DEFAULT_APPLICATION_STATUS_IDS。 */
+export const LEGACY_DEFAULT_STATUS_IDS = [
+  'applied',
+  'waiting',
+  'r1',
+  'r2',
+  'r3',
+  'offer',
+  'rejected_r1',
+  'rejected_r2',
+  'rejected_r3',
+  'rejected',
+  'withdrawn',
+  'accepted',
+] as const;
+
+/** 旧轮次 id → 默认 6 档。词表里仍留着旧 id 时不改写。 */
+export const LEGACY_STATUS_ALIAS: Record<string, string> = {
+  waiting: 'interview',
+  r1: 'interview',
+  r2: 'interview',
+  r3: 'interview',
+  rejected_r1: 'rejected',
+  rejected_r2: 'rejected',
+  rejected_r3: 'rejected',
+};
+
+export const DEFAULT_APPLICATION_STATUS_IDS = [
+  'applied',
+  'interview',
+  'offer',
+  'rejected',
+  'withdrawn',
+  'accepted',
+] as const;
 
 export function isBuiltinStatusId(id: string): boolean {
   return Object.hasOwn(BUILTIN_GROUP, id);
@@ -82,7 +119,7 @@ export function defaultApplicationPipeline(): ApplicationPipelinePreferences {
   return { statuses: defaultApplicationStatuses() };
 }
 
-/** 规范化阶段 id：viewed → applied；非法返回 null。 */
+/** 规范化阶段 id：viewed → applied；非法返回 null。旧轮次 id 仍合法，收档在 coerce。 */
 export function sanitizeApplicationStatusId(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const id = value.trim();
@@ -91,6 +128,18 @@ export function sanitizeApplicationStatusId(value: unknown): string | null {
   if (isBuiltinStatusId(id)) return id;
   if (CUSTOM_ID.test(id)) return id;
   return null;
+}
+
+function isUnmodifiedLegacyDefault(statuses: ApplicationStatusDef[]): boolean {
+  if (statuses.length !== LEGACY_DEFAULT_STATUS_IDS.length) return false;
+  const ids = new Set(statuses.map((item) => item.id));
+  if (ids.size !== LEGACY_DEFAULT_STATUS_IDS.length) return false;
+  for (const id of LEGACY_DEFAULT_STATUS_IDS) {
+    if (!ids.has(id)) return false;
+  }
+  return statuses.every(
+    (item) => !item.label && item.group === BUILTIN_GROUP[item.id],
+  );
 }
 
 export function sanitizeApplicationPipeline(value: unknown): ApplicationPipelinePreferences {
@@ -117,7 +166,25 @@ export function sanitizeApplicationPipeline(value: unknown): ApplicationPipeline
     statuses.push({ id, label, group, builtin });
     if (statuses.length === APPLICATION_STATUS_MAX) break;
   }
-  return statuses.length === 0 ? defaultApplicationPipeline() : { statuses };
+  if (statuses.length === 0) return defaultApplicationPipeline();
+  if (isUnmodifiedLegacyDefault(statuses)) return defaultApplicationPipeline();
+  return { statuses };
+}
+
+/**
+ * 把存储里的阶段收到当前词表：词表里有原 id 则保留（含用户留下的一面/等面）；
+ * 否则走轮次别名。对不上返回 null。
+ */
+export function coerceStatusToCatalog(
+  statusId: unknown,
+  catalog: ApplicationStatusDef[],
+): string | null {
+  const id = sanitizeApplicationStatusId(statusId);
+  if (!id) return null;
+  if (catalog.some((item) => item.id === id)) return id;
+  const aliased = LEGACY_STATUS_ALIAS[id];
+  if (aliased && catalog.some((item) => item.id === aliased)) return aliased;
+  return null;
 }
 
 export function resolveStatusLabel(def: ApplicationStatusDef, lang: Language): string {
@@ -131,13 +198,19 @@ export function lookupStatusDef(
   statusId: string,
 ): ApplicationStatusDef {
   const id = sanitizeApplicationStatusId(statusId) ?? statusId;
-  return catalog.find((item) => item.id === id)
-    ?? {
-      id,
-      label: '',
-      group: BUILTIN_GROUP[id] ?? 'active',
-      builtin: isBuiltinStatusId(id),
-    };
+  const direct = catalog.find((item) => item.id === id);
+  if (direct) return direct;
+  const aliased = LEGACY_STATUS_ALIAS[id];
+  if (aliased) {
+    const mapped = catalog.find((item) => item.id === aliased);
+    if (mapped) return mapped;
+  }
+  return {
+    id,
+    label: '',
+    group: BUILTIN_GROUP[id] ?? 'active',
+    builtin: isBuiltinStatusId(id),
+  };
 }
 
 export function fallbackStatusId(catalog: ApplicationStatusDef[]): string {

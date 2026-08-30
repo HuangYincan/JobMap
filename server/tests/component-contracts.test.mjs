@@ -334,6 +334,9 @@ test('Recent L2 is application watch with user-editable stages', () => {
   assert.match(recent, /createCustomStatus/);
   assert.match(recent, /onStatusesChange/);
   assert.match(recent, /watchAll/);
+  assert.match(recent, /watchActive/);
+  assert.match(recent, /watchClosed/);
+  assert.doesNotMatch(recent, /statuses\.map\(\(def\) =>/);
   assert.match(shell, /items=\{applications\}/);
   assert.match(shell, /\/api\/me\/applications\/pipeline/);
   assert.match(route, /export async function PATCH/);
