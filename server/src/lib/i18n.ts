@@ -549,42 +549,6 @@ export const translations = {
     zh: '密码',
     en: 'Password',
   },
-  usernameLabel: {
-    zh: '账号',
-    en: 'Username',
-  },
-  usernamePlaceholder: {
-    zh: '用户名',
-    en: 'Username',
-  },
-  passwordLabel: {
-    zh: '密码',
-    en: 'Password',
-  },
-  confirmPassword: {
-    zh: '确认密码',
-    en: 'Confirm password',
-  },
-  register: {
-    zh: '注册',
-    en: 'Sign up',
-  },
-  noAccountRegister: {
-    zh: '没有账号?',
-    en: "Don't have an account?",
-  },
-  registerLink: {
-    zh: '立即注册',
-    en: 'Sign up now',
-  },
-  hasAccountLogin: {
-    zh: '已有账号?',
-    en: 'Already have an account?',
-  },
-  loginLink: {
-    zh: '去登录',
-    en: 'Sign in',
-  },
   passwordTooShort: {
     zh: '密码至少 8 位',
     en: 'Password must be at least 8 characters',
@@ -592,18 +556,6 @@ export const translations = {
   passwordMismatch: {
     zh: '两次密码不一致',
     en: 'Passwords do not match',
-  },
-  usernameTaken: {
-    zh: '账号已存在',
-    en: 'Username already taken',
-  },
-  invalidCredentials: {
-    zh: '账号或密码错误',
-    en: 'Invalid username or password',
-  },
-  usernameInvalid: {
-    zh: '账号需为 2-32 位字母、数字、下划线或中文',
-    en: 'Username: 2-32 letters, digits, underscore or Chinese',
   },
   resendCode: {
     zh: '重新发送',
@@ -652,56 +604,6 @@ export const translations = {
   autoRegisterHint: {
     zh: '新用户将自动注册',
     en: 'New users are registered automatically',
-  },
-  loginIdOrEmail: {
-    zh: '邮箱或用户名',
-    en: 'Email or username',
-  },
-  pwdLoginHint: {
-    zh: '邮箱注册的账号，可在个人资料设置密码后登录',
-    en: 'Accounts registered with an email can sign in with it after you set a password in your profile',
-  },
-  // ---- 注册后绑定引导(password 注册成功 → 弹窗内引导绑定手机/邮箱,可跳过) ----
-  welcomeBindTitle: {
-    zh: '注册成功,欢迎!',
-    en: 'Welcome! You are signed up',
-  },
-  bindGuideHint: {
-    zh: '建议绑定手机或邮箱:忘记密码时可用验证码找回',
-    en: 'Recommend binding a phone or email — you can then recover your password with a verification code',
-  },
-  bindPhone: {
-    zh: '绑定手机',
-    en: 'Bind phone',
-  },
-  bindEmail: {
-    zh: '绑定邮箱',
-    en: 'Bind email',
-  },
-  targetLabel: {
-    zh: '绑定手机或邮箱',
-    en: 'Bind phone or email',
-  },
-  bindDone: {
-    zh: '完成绑定',
-    en: 'Complete binding',
-  },
-  skipBind: {
-    zh: '跳过',
-    en: 'Skip',
-  },
-  bindSuccess: {
-    zh: '绑定成功',
-    en: 'Bound successfully',
-  },
-  // ---- 忘记密码入口(password tab 登录模式 → 切 email tab 验证码登录) ----
-  forgotPassword: {
-    zh: '忘记密码?',
-    en: 'Forgot password?',
-  },
-  forgotHint: {
-    zh: '验证码登录后,可在 个人资料 → 密码与安全 中重设密码',
-    en: 'After signing in with a code, you can reset your password in Profile → Password & security',
   },
   continueGithub: {
     zh: '使用 GitHub 继续',

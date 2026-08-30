@@ -1,8 +1,9 @@
 # 28 — 账号安全(密码管理 / 手机与邮箱绑定 / 邮箱+密码登录)
 
-**文档版本:** 1.0
+**文档版本:** 1.1
 **创建日期:** 2026-08-22
-**状态:** 契约定稿(批次 `20260822-profile-security` 实现中:后端 ws-backend、前端 ws-frontend 并行,合入 dev 后生效)
+**修订:** 2026-08-30 — 登录面板去掉密码 tab;密码设置/改密仍在 Profile;后端 `/api/auth/password/*` 保留
+**状态:** 契约定稿
 **相关:** `tech/14-api-contract.md`(Account 段)、`tech/27-oauth-login.md`(OAuth 登录)、`tech/25-resend-email.md` / `tech/26-aliyun-sms.md`(OTP 真发)、`server/tests/account-security.test.mjs`
 
 ---
@@ -38,13 +39,15 @@ Profile「手机与邮箱」→ 输入新 phone/email → 先走 POST /api/auth/
   → 200 { ok: true, user }
 ```
 
-**邮箱+密码登录**
+**邮箱+密码登录(API,登录面板不暴露)**
 
 ```
-AuthModal password tab「邮箱或用户名」+ 密码 → POST /api/auth/password/login { username, password }
-  → 先按邮箱(lower)匹配 auth_identities,再按用户名匹配(不泄露账号是否存在)
+POST /api/auth/password/login { username, password }
+  → username 接受邮箱(lower)或用户名
   → 成功写 session cookie → { ok: true, user }
 ```
+
+2026-08-30:AuthModal 登录卡片只有 手机 / 邮箱 OTP + 其他登录(OAuth)。不再提供密码 tab、用户名注册、忘记密码链接、注册后绑定引导。已有密码账号请用已绑定手机/邮箱走 OTP,或 GitHub。
 
 ## 3. 端点契约
 
@@ -98,8 +101,8 @@ body `{ email, code }`(code 来自 `POST /api/auth/otp/send` 发往该 email 的
 
 - **绑定/更换 = 更新 + 换身份行**:更新 `users.phone|email` 字段,`auth_identities` 按新凭证 upsert 新行、删除旧行;原凭证即失效。
 - **不做完全解绑**:`me/phone` / `me/email` 不提供解绑动作,保证每个账号**至少保留一个登录凭证**(邮箱 / 手机 / 用户名 / OAuth provider),防止用户唯一凭证被换走后无法登录。
-- **邮箱注册仍走 OTP**:email tab 验证即登录(行为不变,tech/25);设置密码在 Profile「密码与安全」,设置后可用邮箱+密码登录。
-- **password tab 注册保持 username**(行为不变,2026-08-19 契约);仅**登录字段**扩展为接受邮箱或用户名。
+- **邮箱注册仍走 OTP**:email tab 验证即登录(行为不变,tech/25);设置密码在 Profile「密码与安全」。登录卡片不再走密码登录。
+- **username+password 注册 API 仍保留**(`POST /api/auth/password/register`);登录面板不再暴露该入口(2026-08-30)。
 - **OTP 发送复用 `POST /api/auth/otp/send`**(email/phone 真发通道不变,tech/25 / tech/26-aliyun-sms.md);`me/*` 路由**只 `consumeOtp` 校验**,不重复发送逻辑。
 - **多语句写路径事务原子性**:密码注册(建用户 + 插 password identity)、手机/邮箱换绑(更新 `users` + 删旧 identity + 插新 identity)、会话创建、OTP 签发/消费均在**同一 pool client** 的 `BEGIN/COMMIT/ROLLBACK` 内执行;任一步失败 → 整笔回滚,绝不留下半完成用户/identity/凭证;冲突(23505 → `PHONE_TAKEN`/`EMAIL_TAKEN`)在回滚完成后映射,client 始终 release。
 - **密码哈希沿用 `lib/password.ts` scrypt**(格式 `scrypt$N$r$p$salt$hash`,N=16384 / r=8 / p=1,salt 16 字节 hex,hash 32 字节 hex;`isValidPassword` 最短 8 位),密码永不返回前端。
@@ -108,13 +111,12 @@ body `{ email, code }`(code 来自 `POST /api/auth/otp/send` 发往该 email 的
 
 - Profile → 「密码与安全」子面板:设置密码(无密码用户)/ 修改密码(已有密码用户,需旧密码或 OTP 验证)。
 - Profile → 「手机与邮箱」子面板:绑定/更换手机、绑定/更换邮箱(先 OTP 发送,再提交 code)。
-- AuthModal password tab:登录字段 label 改为「邮箱或用户名」,placeholder 相应提示;仍保持 username 注册 tab 不变。
+- AuthModal(2026-08-30):三档 手机 / 邮箱 / 其他登录。无密码 tab。
 
 ### 5.1 忘记密码恢复
 
-- 验证码登录是**唯一的密码找回通道**:password tab 登录模式提供「忘记密码」入口 → 切 email tab 验证码登录 → 在 个人资料 → 密码与安全 中重设密码。
-- username 注册成功后弹窗内**引导绑定手机/邮箱**(OTP 验证,可跳过),保证新账号默认有备用凭证可走恢复通道。
-- 死锁边界:未绑定任何凭证的 username 账号(跳过引导)忘记密码后无恢复通道——与业界纯用户名系统一致,不做免凭证改密。
+- 验证码登录是**唯一的密码找回通道**:用已绑定手机或邮箱 OTP 登录 → 在 个人资料 → 密码与安全 中重设密码。
+- 死锁边界:未绑定手机/邮箱、也无 OAuth 的纯用户名账号无法从登录面板进入——与去掉密码 tab 后的产品选择一致。
 
 ## 6. 测试(`server/tests/account-security.test.mjs`)
 
