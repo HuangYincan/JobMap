@@ -61,6 +61,10 @@ const BAIDU_READY_MAX_POLLS = 40;
  * (绝不返回空图;2026-08-22 ws-7,与腾讯 TENCENT_MAP_READY_TIMEOUT_MS 1.5s
  * 同量级) */
 const BAIDU_MAP_READY_TIMEOUT_MS = 1500;
+/** 真实 DOM 上 `map.loaded===true` 仍无 canvas 时的加长等待:getmodules
+ * (mapgl 渲染器,~250KB)在 CSP 放行后仍是异步注入,1.5s 事件超时不够。
+ * mock 容器无 querySelector 不走此路径,NeverReadyMap 仍 1.5s。 */
+const BAIDU_MAP_CANVAS_TIMEOUT_MS = 4000;
 /**
  * 官方 GL 加载器 URL(2026-08-22 ws-6 实测坐实,见 tech/23 回填):
  * **直连 getscript 本体,绕过 /api 包装器**。
@@ -793,8 +797,8 @@ function applyMapStyle(map: BMapInstance, style: MapStyleId): void {
  * BMapGL v1.0 真实就绪事件(2026-08-22 SDK 源码核实,getscript?type=webgl&v=1.0
  * 直连本体 1.2MB,见 tech/23-map-engines.md 回填):
  *   - `load`:v1.0 在构造/`centerAndZoomIn` 内同步派发(2026-08-30 真机坐实:
- *     派发于相机应用当下;tile 事件 8s 内 0 次)。本函数若在相机之后才注册
- *     会错过,故同时认 `map.loaded === true`
+ *     派发于相机应用当下;tile 事件经常不来)。真实 DOM 上 load/loaded 过早,
+ *     还要等 canvas(getmodules 异步);mock 无 querySelector 才认 loaded
  *   - `onfirsttilesloaded` / `onfirsttileloaded`:首帧瓦片批加载完成(GL 路径
  *     map 级 `_checkTilesLoaded` 派发;第一相机操作后才可能触发)
  *   - `tilesloaded`:当前视野瓦片全部完成(80ms 稳定期后派发;SDK 派发名为
@@ -807,16 +811,37 @@ function applyMapStyle(map: BMapInstance, style: MapStyleId): void {
  */
 const BAIDU_READY_EVENTS = ['load', 'onfirsttilesloaded', 'tilesloaded', 'onstyle_loaded'] as const;
 
+/** mock 容器(`{}`)无 querySelector → 不轮询 canvas,保持立即就绪/1.5s 超时。 */
+function canPollCanvas(map: BMapInstance): boolean {
+  const el = map.getContainer?.();
+  return !!el && typeof (el as { querySelector?: unknown }).querySelector === 'function';
+}
+
+function mapHasCanvas(map: BMapInstance): boolean {
+  const el = map.getContainer?.();
+  if (!el || typeof (el as { querySelector?: unknown }).querySelector !== 'function') {
+    return false;
+  }
+  try {
+    return Boolean((el as { querySelector(sel: string): unknown }).querySelector('canvas'));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * 等待 BMapGL 地图就绪再返回(BMapGL 异步渲染:`new Map()` 立即返回,首帧
  * 渲染完成才派发就绪事件)。就绪信号**多通道**,任一先到即就绪:
  *   1. setMapReadyCallback(BMapGL 2.0 官方就绪回调;v1.0 不存在,保留兼容)
  *   2. BAIDU_READY_EVENTS(`load` / `onfirsttilesloaded` / `tilesloaded` /
  *      `onstyle_loaded`;v1.0 真实 `load` 在相机当下派发,tile 事件经常不来)
- * **已 `map.loaded === true` 则立即就绪**(相机应用后 v1.0 同步置位;`load`
- * 若已错过事件仍认 loaded)。AK 被禁用且 loaded 也永不置位时,仍走
- * BAIDU_MAP_READY_TIMEOUT_MS 超时 reject(文案含「BMapGL 地图就绪超时」),
- * switch.ts 回滚契约依赖 createView 抛错(绝不返回空图)。
+ *   3. 真实 DOM:`container.querySelector('canvas')`(GL 渲染器挂载完成)。
+ *      v1.0 `map.loaded===true` 只表示图层对象已建,**不是** canvas 已绘;
+ *      CSP 拦 getmodules 时 loaded 仍为 true、底图全空(2026-08-30 坐实)。
+ * mock 无 querySelector 且 `loaded===true` → 立即就绪(AlreadyLoadedMap)。
+ * AK 被禁用且 loaded 也永不置位时,仍走 BAIDU_MAP_READY_TIMEOUT_MS 超时
+ * reject(文案含「BMapGL 地图就绪超时」),switch.ts 回滚契约依赖 createView
+ * 抛错(绝不返回空图)。
  * ⚠️ 就绪事件只在**相机操作之后**才可能派发(GL 构造不设默认视图、底图图层
  * 在 centerAndZoomIn 内才创建,见 createView 注释)→ 本函数必须晚于相机应用。
  * 事件系统/回调通道均不可用 → 立即放行(测试 mock/异常形态不阻塞);
@@ -826,9 +851,13 @@ function waitForMapReady(map: BMapInstance): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     let settled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let poll: ReturnType<typeof setInterval> | undefined;
     let channels = 0;
+    const pollCanvas = canPollCanvas(map);
+    const timeoutMs = pollCanvas ? BAIDU_MAP_CANVAS_TIMEOUT_MS : BAIDU_MAP_READY_TIMEOUT_MS;
     const cleanup = () => {
       if (timer !== undefined) clearTimeout(timer);
+      if (poll !== undefined) clearInterval(poll);
       for (const event of BAIDU_READY_EVENTS) {
         try {
           map.removeEventListener?.(event, onReady);
@@ -839,6 +868,9 @@ function waitForMapReady(map: BMapInstance): Promise<void> {
     };
     const onReady = () => {
       if (settled) return;
+      // 真实 DOM 上 load 过早(v1.0 相机当下)≠ canvas 已挂;事件到达但
+      // 仍无 canvas 时继续等轮询/超时,避免 CSP 拦 getmodules 后空图放行。
+      if (pollCanvas && !mapHasCanvas(map)) return;
       settled = true;
       cleanup();
       resolve();
@@ -849,7 +881,7 @@ function waitForMapReady(map: BMapInstance): Promise<void> {
       cleanup();
       reject(
         new Error(
-          `[map-engine] baidu BMapGL 地图就绪超时(${BAIDU_MAP_READY_TIMEOUT_MS}ms):AK 可能被禁用或渲染失败`,
+          `[map-engine] baidu BMapGL 地图就绪超时(${timeoutMs}ms):AK 可能被禁用或渲染失败`,
         ),
       );
     };
@@ -875,14 +907,22 @@ function waitForMapReady(map: BMapInstance): Promise<void> {
       onReady(); // 事件系统不可用 → 立即放行(不阻塞 createView)
       return;
     }
-    // 相机已应用后 `map.loaded` 为 true、`load` 已派发完毕(v1.0 同步)。
-    // 只等 tile 事件会在健康 AK 下 1.5s 误超时(2026-08-30 真机:tile 事件
-    // 8s 内 0 次,loaded 在 centerAndZoom 当下已 true)。
-    if (map.loaded === true) {
+    if (mapHasCanvas(map)) {
       onReady();
       return;
     }
-    timer = setTimeout(onTimeout, BAIDU_MAP_READY_TIMEOUT_MS);
+    // mock 无 DOM:认 loaded,避免健康路径 1.5s 误超时。真实 DOM 继续等到
+    // canvas / 事件 / 超时(loaded 过早,getmodules 被 CSP 拦时会空图)。
+    if (map.loaded === true && !pollCanvas) {
+      onReady();
+      return;
+    }
+    if (pollCanvas) {
+      poll = setInterval(() => {
+        if (mapHasCanvas(map)) onReady();
+      }, BAIDU_READY_POLL_MS);
+    }
+    timer = setTimeout(onTimeout, timeoutMs);
   });
 }
 
