@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { t, type Language, type TranslationKey } from "@/lib/i18n";
 import type { BasemapStyle } from "@/lib/saved-overlay";
 import { ENGINE_PRIORITY, getEngine } from "@/lib/map-engine/engine-registry";
@@ -18,6 +19,8 @@ export interface LayersPanelProps {
   onMapStyle: (style: BasemapStyle) => void;
   onClose: () => void;
   shifted?: boolean;
+  /** Saved list + compare as L3, shown after 收藏图层 is on. */
+  savedCard?: ReactNode;
 }
 
 /** 引擎 id → i18n 短名 key(chip 与状态行文案) */
@@ -99,6 +102,7 @@ export function LayersPanel({
   onMapStyle,
   onClose,
   shifted = false,
+  savedCard,
 }: LayersPanelProps) {
   return (
     <div className={`${styles.cluster} ${shifted ? styles.shifted : ""}`}>
@@ -162,6 +166,7 @@ export function LayersPanel({
         {/* 地图源(底图之后,布局图已批) */}
         <MapSourceSection lang={lang} />
       </aside>
+      {savedCard}
     </div>
   );
 }

@@ -35,7 +35,7 @@ export interface SavedListProps {
   onRemove?: (poiId: string) => void;
 }
 
-/** 列表 + 勾选对比表。桌面霜面卡和手机抽屉共用，不新开一层。 */
+/** 列表 + 勾选对比表。桌面图层 L3 和手机图层 sheet 共用。 */
 export function SavedList({
   items,
   signedIn,
@@ -148,22 +148,34 @@ export function SavedList({
 export interface SavedPanelProps extends SavedListProps {
   onClose: () => void;
   shifted?: boolean;
+  /** Layers L3: frost card beside Layers L2, no own cluster wrapper. */
+  nested?: boolean;
 }
 
-export function SavedPanel({ onClose, shifted = false, ...listProps }: SavedPanelProps) {
+export function SavedPanel({ onClose, shifted = false, nested = false, ...listProps }: SavedPanelProps) {
+  const aside = (
+    <aside className={nested ? styles.l3 : styles.sidebar} aria-label={t("saved", listProps.lang)}>
+      <header className={styles.header}>
+        <h2 className={styles.title}>{t("savedPlaces", listProps.lang)}</h2>
+        <button type="button" className={styles.close} onClick={onClose} aria-label={t("closePanel", listProps.lang)}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </header>
+      {nested ? (
+        <div className={styles.l3Body}>
+          <SavedList {...listProps} />
+        </div>
+      ) : (
+        <SavedList {...listProps} />
+      )}
+    </aside>
+  );
+  if (nested) return aside;
   return (
     <div className={`${styles.cluster} ${shifted ? styles.shifted : ""}`}>
-      <aside className={styles.sidebar} aria-label={t("saved", listProps.lang)}>
-        <header className={styles.header}>
-          <h2 className={styles.title}>{t("savedPlaces", listProps.lang)}</h2>
-          <button type="button" className={styles.close} onClick={onClose} aria-label={t("closePanel", listProps.lang)}>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
-        </header>
-        <SavedList {...listProps} />
-      </aside>
+      {aside}
     </div>
   );
 }

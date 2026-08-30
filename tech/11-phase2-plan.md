@@ -567,9 +567,9 @@
 
 Phase 2 完成后，Phase 3 将实现：
 - 秋招 / 社招继续作为工作模式筛选插件（不是新地图模式）
-- 收藏功能（`008_saved_places` + `/api/me/saved` + Saved L2；游客不写云端）
+- 收藏功能（`008_saved_places` + `/api/me/saved` + Layers L3；游客不写云端）
 - 用户投递记录（`009_applications` + `021_application_pipeline` + `/api/me/applications`；JD 点投递写入，监视列表在 Recent L2，Profile 只跳转）
-- 数据对比（Saved 二级卡内勾选两家招聘点；`lib/compare-saved.ts`；catalog / seed 优先，快照兜底；不新开一层。手机抽屉工具栏切到 Saved，复用同一张 `SavedList`）
+- 数据对比（图层 L3 内勾选两家招聘点；`lib/compare-saved.ts`；catalog / seed 优先，快照兜底；不新开第四层。手机图层 sheet 打开收藏图层后复用同一张 `SavedList`）
 - 通知系统（偏好已在 Profile；`010_notifications` + `/api/me/notifications` 写入账户收件箱；邮件/短信只记 `queued` 渠道，本阶段不真发）
 
 ---
