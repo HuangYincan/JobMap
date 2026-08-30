@@ -252,8 +252,8 @@ WS2 已合并 Agent 域工具（岗位搜索/详情、规划、比较、通勤�
 `/api/agent/chat` 与 navigation handlers 共享的会话 cookie。
 
 WS4 已实现 `MapView.createPolyline`、`MapBridge.drawRoute`、合法 `showRoute` 的同会话 GET 画线、
-Work 通勤对比表/来源条与 Explore 内页签（岗位 / 对比 / 行程）。Explore 不再展示起点/出行方式/
-上限分钟/严格命中粗筛头，列表不按通勤裁剪。生产构造器仍注册零个 live provider，因此 overlay 在生产中只能展示
+Work 通勤对比表组件与地图来源条。Explore 内页签（岗位 / 对比 / 行程）已于 2026-08-31 按用户要求移除；
+Explore 不再展示起点/出行方式/上限分钟/严格命中粗筛头，列表不按通勤裁剪。生产构造器仍注册零个 live provider，因此 overlay 在生产中只能展示
 直线估算或（若存在未过期 provider artifact 的）已签发折线；没有真实路况或供应商 arrival-by。
 
 WS3 已实现可替换产品事件 sink（`createMemorySink` / `createJsonlSink`）和离线 eval runner

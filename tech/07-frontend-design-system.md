@@ -294,8 +294,8 @@
 - 桌面:地图底部霜面条(`RouteOverlayBar`)，`z-index: 6`，不得盖住 `.mapControls`(`z-index: 10`)；Explore 打开时 `shifted` 让出侧栏。
 - `idle` / 直线 `estimate` / 缺起点 / 定位拒绝不渲染(避免「路线来源 / 直线估算，无路况」或定位提示占位)；供应商结果、加载中、过期/离线/岗位下线等状态仍显示。
 - 字段(可见态):供应商、获取时间、是否含路况；错误态带重试。不能只藏 tooltip。
-- 移动:Explore 内页签「行程」嵌入同一来源条；工具栏仍为 5 项，AI 仍开 agent sheet。
-- **Work Explore 通勤头已移除(2026-08-29)**:不展示「起点已用当前定位」、步行/骑行/公交/驾车、上限分钟 slider、严格命中/接近条件/对比计数。列表不按通勤粗筛裁剪。对比与行程走 `WorkExploreTabs`（岗位 / 对比 / 行程；桌面在 Explore L2 `workCommute` 槽，移动在抽屉内页签）。卡片不显示直线估算分钟，也不显示对比勾选。Agent `navigation__filterByCommute` 不受影响。
+- 移动:地图底部来源条在 ≤767px 隐藏(`.bar:not(.embedded)`);工具栏仍为 5 项，AI 仍开 agent sheet。Explore 不再提供岗位 / 对比 / 行程内页签。
+- **Work Explore 通勤头已移除(2026-08-29);岗位/对比/行程页签已移除(2026-08-31)**:不展示「起点已用当前定位」、步行/骑行/公交/驾车、上限分钟 slider、严格命中/接近条件/对比计数。列表不按通勤粗筛裁剪。Explore L2 / 移动抽屉只展示岗位列表,不再切对比表或行程来源条。卡片不显示直线估算分钟，也不显示对比勾选。Agent `navigation__filterByCommute` 不受影响。收藏图层里的两家公司对比仍在 Layers L3。
 - **岗位卡片显示距离(2026-08-29)**:卡片/公司详情上的直线距离按用户定位计算,没定位再回落视野中心(`cardDisplayOrigin` / `cardDisplayMeters`)。列表排序、距离筛选、距离圈仍按视野中心(`distanceOrigin = mapCenter`),与「当前视野里谁更近」一致。
 
 #### 5. 比例尺(展示性,桌面端 + 移动端)

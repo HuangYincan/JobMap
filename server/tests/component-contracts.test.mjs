@@ -1770,28 +1770,29 @@ test('cluster effect 依赖含 engineView(2026-08-25 ws-b bug 4 修复:切引擎
   assert.match(shell, /useEffect\(\(\) => \{\s*const view = mapInstance\.current;\s*if \(!view \|\| !clusterState\) return;/);
 });
 
-test('ws4: map-shell 来源条与 explore 三页签;无通勤粗筛头;不 POST plan;不写 audit_events', () => {
+test('ws4: map-shell 来源条;无 Explore 岗位/对比/行程页签;无通勤粗筛头;不 POST plan;不写 audit_events', () => {
   const shell = src('components/map-shell.tsx');
   const overlay = src('components/route-overlay-bar.tsx');
-  const chrome = src('components/commute-chrome.tsx');
+  const sidebar = src('components/secondary-sidebar.tsx');
   const compare = src('components/commute-compare-table.tsx');
   const filter = src('lib/commute-filter.ts');
   const compareLib = src('lib/commute-compare.ts');
 
+  assert.equal(existsSync(join(root, 'components/commute-chrome.tsx')), false);
   assert.match(shell, /<RouteOverlayBar/);
   assert.match(overlay, /data-route-overlay="true"/);
   assert.match(overlay, /model\.kind === "estimate"/, '直线估算不渲染路线来源条');
   assert.match(overlay, /model\.kind === "location-denied"/, '定位拒绝不渲染路线来源条');
   assert.match(overlay, /model\.kind === "missing-origin"/, '缺起点不渲染路线来源条');
-  assert.match(shell, /<WorkExploreTabs/);
-  assert.match(chrome, /data-work-explore-tabs="true"/);
-  assert.match(chrome, /exploreJobsTab/);
-  assert.match(shell, /workExploreTab === "trip"/);
+  assert.doesNotMatch(shell, /<WorkExploreTabs/);
+  assert.doesNotMatch(shell, /workExploreTab/);
+  assert.doesNotMatch(shell, /data-work-explore-tabs/);
+  assert.doesNotMatch(sidebar, /workCommute/);
+  assert.doesNotMatch(sidebar, /workListReplace/);
   assert.doesNotMatch(shell, /setMobileSheet\("trip"\)/, '行程不是第 6 个工具栏 sheet');
   assert.doesNotMatch(shell, /<CommuteChrome/);
-  assert.doesNotMatch(chrome, /data-commute-chrome/);
-  assert.doesNotMatch(chrome, /commuteStrictTab/);
-  assert.doesNotMatch(chrome, /commuteMaxMinutes/);
+  assert.doesNotMatch(shell, /commuteStrictTab/);
+  assert.doesNotMatch(shell, /commuteMaxMinutes/);
   assert.doesNotMatch(shell, /listedCommuteHits/);
   assert.doesNotMatch(shell, /fetch\([^)]*\/api\/navigation\/routes\/plan/);
   assert.doesNotMatch(filter, /fetch\([^)]*\/api\/navigation\/routes\/plan/);
@@ -1800,6 +1801,6 @@ test('ws4: map-shell 来源条与 explore 三页签;无通勤粗筛头;不 POST 
   assert.doesNotMatch(overlay, /audit_events/);
   assert.doesNotMatch(compare, /\bscore\b/);
   assert.doesNotMatch(compareLib, /\bscore\b/);
-  assert.match(shell, /filterByCommuteEstimate/);
+  assert.match(filter, /export function filterByCommuteEstimate/);
   assert.match(shell, /drawRoute\(estimatePath/);
 });

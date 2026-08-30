@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-31
+
+### Changed
+
+- **Explore 去掉岗位 / 对比 / 行程页签。** 工作模式二级卡片和手机抽屉不再切换对比表或行程来源条，只保留岗位列表。收藏图层里的两家公司对比仍在。
+
 ## 2026-08-30
 
 ### Fixed

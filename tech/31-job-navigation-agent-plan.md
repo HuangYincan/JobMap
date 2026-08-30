@@ -15,7 +15,7 @@
 > 会话隔离 artifact 与两个 route handler 已实现；WS2 的 Work/Navigation 域工具、`showRoute` 动作与 chat 会话共享已实现；
 > WS3 的可替换事件 sink、离线 runner 与 SQL/Python 报告已完成并合并(不落库、不复用 `audit_events`)。
 > §8 的 ASCII 布局已于 **2026-08-28 用户明确批准**；WS4 已完成并合并 MapView polyline、
-> 客户端 `GET` artifact 后画线、Work 通勤对比表/来源条与 Explore 内页签（岗位 / 对比 / 行程）。
+> 客户端 `GET` artifact 后画线、Work 通勤对比表组件与地图来源条。Explore 内页签（岗位 / 对比 / 行程）已于 2026-08-31 移除。
 > Explore 通勤粗筛头（起点/方式/上限分钟/严格命中页签）已于 2026-08-29 按用户要求移除。
 > 生产构造器仍注册零个 live provider，规划结果仍是明确标注的直线 `estimate`，不宣称真实道路或实时路况。
 
@@ -358,7 +358,7 @@ sink、`eval-runner.ts` / `eval-policy.ts` 离线评测与 SQL/Python 报告；s
 正常结果为明确的 `estimate`，不带 geometry/`routeId`；GET 只向同一 navigation session 返回
 未过期的 provider artifact 公共形状。`providers/` 与 analytics persistence 仍未实现。
 WS4 已完成并合并 `MapView.createPolyline`、`MapBridge.drawRoute`、合法 `showRoute` 的同会话 GET 画线、
-Work 通勤对比表/来源条与 Explore 内页签（岗位 / 对比 / 行程）；Explore 通勤粗筛头已于 2026-08-29 移除。生产无 live provider，因此 UI 不会出现真实道路
+Work 通勤对比表组件与地图来源条；Explore 通勤粗筛头已于 2026-08-29 移除，Explore 内页签（岗位 / 对比 / 行程）已于 2026-08-31 移除。生产无 live provider，因此 UI 不会出现真实道路
 或实时路况，估算直线不得伪装成 `provider_route`。以下结构图不表示真实路线或实时交通已可用。
 
 ```text
@@ -496,11 +496,12 @@ playbook、离线 runner、可替换事件 sink 和 SQL/Python 报告；runner �
 ## 8. 前端布局审批稿
 
 > **审批状态：已于 2026-08-28 用户明确批准。** 桌面来源条在地图底部且不得挡住 zoom/locate；
-> 移动三页签是 Explore 抽屉内页签，不是第 6 个工具栏按钮。生产仍为 estimate-only。
+> 移动不新增第 6 个工具栏按钮。Explore 内页签（岗位 / 对比 / 行程）已于 2026-08-31 移除。生产仍为 estimate-only。
 
 ### 8.1 桌面端（建议）
 
-> 2026-08-29：用户要求移除 Explore 通勤粗筛头（起点/方式/上限分钟/严格命中·接近条件·对比计数）。下列 ASCII 仍是 2026-08-28 已批稿；当前实现以 `tech/07-frontend-design-system.md` 为准。
+> 2026-08-29：用户要求移除 Explore 通勤粗筛头（起点/方式/上限分钟/严格命中·接近条件·对比计数）。
+> 2026-08-31：用户要求移除 Explore 岗位 / 对比 / 行程页签。下列 ASCII 仍是 2026-08-28 已批稿；当前实现以 `tech/07-frontend-design-system.md` 为准。
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐

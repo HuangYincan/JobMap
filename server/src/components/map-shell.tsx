@@ -48,18 +48,11 @@ import { ModeSwitcher } from "./mode-switcher";
 import { FilterPanel } from "./filter-panel";
 import { SortSelector } from "./sort-selector";
 import { createAgentBridge, type MapBridge } from "@/lib/agent-map-bridge";
-import {
-  COMMUTE_SLIDER_DEFAULT,
-  estimatePath,
-  filterByCommuteEstimate,
-} from "@/lib/commute-filter";
-import { buildCommuteCompareColumns } from "@/lib/commute-compare";
+import { estimatePath } from "@/lib/commute-filter";
 import { isAlivePosition } from "@/lib/position-alive";
 import type { RouteOverlayMeta } from "@/lib/navigation/route-client";
 import AgentBall from "./agent-ball";
 import { AgentPanel } from "./agent-panel";
-import { WorkExploreTabs } from "./commute-chrome";
-import { CommuteCompareTable } from "./commute-compare-table";
 import { RouteOverlayBar, type RouteOverlayModel } from "./route-overlay-bar";
 
 /**
@@ -96,8 +89,6 @@ const RAIL_PANEL_MODULES = {
   "saved-panel": () => import("./saved-panel"),
   "layers-panel": () => import("./layers-panel"),
 } as const satisfies Record<string, () => Promise<unknown>>;
-
-const EMPTY_COMPARE_IDS: string[] = [];
 
 /** 悬停/聚焦兜底:按面板名预载对应模块子集 */
 function prefetchRail(panel: "layers" | "recent" | "profile" | "auth" | "detail") {
@@ -315,7 +306,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [mountError]);
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
-  const [workExploreTab, setWorkExploreTab] = useState<"jobs" | "compare" | "trip">("jobs");
   const [routeOverlay, setRouteOverlay] = useState<RouteOverlayModel>({ kind: "idle" });
   const estimateRouteCleanupRef = useRef<(() => void) | null>(null);
   const providerRouteSelectedIdRef = useRef<string | null>(null);
@@ -1381,33 +1371,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   poisRef.current = pois;
 
   const workMode = canonicalMode(mode) === "work";
-  const commuteResult = useMemo(
-    () =>
-      workMode
-        ? filterByCommuteEstimate(pois, userLocation, "transit", COMMUTE_SLIDER_DEFAULT)
-        : { strict: [] as ReturnType<typeof filterByCommuteEstimate>["strict"], near: [], closest: null },
-    [workMode, pois, userLocation],
-  );
-  const commuteMinutesById = useMemo(() => {
-    const out: Record<string, number> = {};
-    for (const hit of [...commuteResult.strict, ...commuteResult.near]) {
-      out[hit.poi.id] = hit.minutes;
-    }
-    return out;
-  }, [commuteResult]);
-  const comparePois = useMemo(
-    () => EMPTY_COMPARE_IDS.map((id) => pois.find((p) => p.id === id) ?? catalog.find((p) => p.id === id)).filter(Boolean) as POI[],
-    [pois, catalog],
-  );
-  const compareColumns = useMemo(
-    () =>
-      buildCommuteCompareColumns(comparePois, commuteMinutesById, "estimate", {
-        estimate: t("commuteQualityEstimate", lang),
-        provider: t("commuteQualityProvider", lang),
-        minutes: t("commuteMinutes", lang),
-      }),
-    [comparePois, commuteMinutesById, lang],
-  );
   const partialFail = workMode && userLocation
     ? pois.filter((p) => !p.location || !Number.isFinite(p.location.lng)).length
     : 0;
@@ -2358,24 +2321,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     }
   }, [detailPoi]);
 
-  const workExploreTabsNode = workMode ? (
-    <WorkExploreTabs lang={lang} value={workExploreTab} onChange={setWorkExploreTab} />
-  ) : null;
-  const commuteCompareNode = (
-    <CommuteCompareTable columns={compareColumns} lang={lang} />
-  );
   const handleRouteRetry = () => {
     if (typeof navigator !== "undefined" && navigator.onLine) setOnline(true);
     handleLocate();
   };
-  const tripOverlayNode = (
-    <RouteOverlayBar
-      model={displayOverlay}
-      lang={lang}
-      embedded
-      onRetry={handleRouteRetry}
-    />
-  );
 
   return (
     <main className={styles.shell}>
@@ -2561,16 +2510,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         savedCatalog={compareCatalog}
         savedOrigin={distanceOrigin}
         lang={lang}
-        workCommute={savedLayerEnabled ? undefined : workExploreTabsNode}
-        workListReplace={
-          savedLayerEnabled || !workMode
-            ? undefined
-            : workExploreTab === "compare"
-              ? commuteCompareNode
-              : workExploreTab === "trip"
-                ? tripOverlayNode
-                : undefined
-        }
         displayOrigin={displayOrigin}
         onClose={() => {
           setRailPanel(null);
@@ -3140,9 +3079,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 </div>
               ) : (
               <>
-              {workMode && !savedLayerEnabled && (
-                <WorkExploreTabs lang={lang} value={workExploreTab} onChange={setWorkExploreTab} />
-              )}
               {savedLayerEnabled ? (
                 /* 收藏图层互斥开:移动 Explore 列表切为收藏卡片列表(2026-08-22 卡片化,
                    POIList + POICard,与普通模式同组件/同样式;卡片右上「移除收藏」;
@@ -3169,10 +3105,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   onRemove={user ? (poi) => handleRemoveSaved(poi.id) : undefined}
                   displayOrigin={displayOrigin}
                 />
-              ) : workMode && workExploreTab === "compare" ? (
-                commuteCompareNode
-              ) : workMode && workExploreTab === "trip" ? (
-                tripOverlayNode
               ) : (
               <>
               <div className={styles.mobileActions}>

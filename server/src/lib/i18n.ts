@@ -1420,18 +1420,6 @@ export const translations = {
     zh: '勾选 2–5 个岗位做事实对比（无总分）',
     en: 'Pick 2–5 jobs for a fact table (no score)',
   },
-  exploreJobsTab: {
-    zh: '岗位',
-    en: 'Jobs',
-  },
-  exploreCompareTab: {
-    zh: '对比',
-    en: 'Compare',
-  },
-  exploreTripTab: {
-    zh: '行程',
-    en: 'Trip',
-  },
   routeSource: {
     zh: '路线来源',
     en: 'Route source',
