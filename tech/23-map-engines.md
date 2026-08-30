@@ -1907,3 +1907,17 @@ getscript 本体是 https(允许),但 SDK 用 `location.protocol` 拼后续 URL:
 浏览器 mixed-content 不会加载明文脚本);`waitForMapReady` 在真实 DOM 上等到
 `canvas` 再返回,mock 无 `querySelector` 仍认 `loaded`(AlreadyLoadedMap)。
 空 canvas 4s 超时回滚,避免再把空图当成功。
+
+## 2026-08-30:切百度 Next 红屏 script-blocked-by-client(fix/baidu-load-keep-view)
+
+`to.load()` 在 `from.destroy()` 之前。getscript `onerror`(广告拦截或误判)会让
+`failBaidu` 上抛,`use-map-engine` 的 `console.error("[use-map-engine] switchEngine
+failed:", err)` 触发 Next 开发 overlay,用户看到红屏;旧高德其实还在。
+
+另:Chrome Resource Timing 默认缓冲 250。工作模式先加载高德瓦片/POI 图后缓冲已满,
+成功的 getscript 也不在 `performance.getEntriesByType('resource')` 里,启发式把
+「无 entry」当成 `ERR_BLOCKED_BY_CLIENT`。
+
+修复:load 失败且有旧 view → `rolledBack` 保留旧视图不上抛;切换失败改
+`console.warn`;缓冲 ≥250 时不判拦截,load 时 `setResourceTimingBufferSize(1000)`。
+真拦截仍须扩展白名单 / 无痕窗口。

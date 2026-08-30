@@ -6,6 +6,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
+- **切百度时 Next 红屏 `script-blocked-by-client`。** getscript `onerror` 后 `load()` 上抛,`switchEngine` 走 `console.error`,开发 overlay 把可恢复失败画成未处理异常;此时旧高德还没销毁。现 load 失败直接保留旧视图(rolledBack)。Resource Timing 默认只留 250 条,POI/瓦片先占满后 getscript 不在 entries 里,会被误判成广告拦截;缓冲打满不再当拦截,并扩容到 1000。真被扩展拦截时无痕窗口或把 `api.map.baidu.com` 加白名单。
 - **百度底图切过去是灰底、没有图。** `/` 的 CSP `script-src` 只放行 `https://*.map.baidu.com`。BMapGL 在 `http://localhost` 按页面协议去拉 `http://api.map.baidu.com/getmodules`(含 mapgl 渲染器)和 `http://*.bdimg.com` 样式脚本,请求被 CSP 拦;getscript(https)仍成功,所以 chip 显示「百度」、DOM 有 `#platform`,但 **canvas 永不出现**。先前把 `map.loaded` 当就绪会把这张空图当成成功。地图 CSP 补上百度/bdimg 的 `http:`(https 部署仍走 https,明文脚本会被 mixed-content 拦);真实 DOM 等到 `canvas` 再放行,否则超时回滚。
 - **人在杭州高频平移/缩放时其他地区 POI 消失。** Domain 视口刷新曾用 `existing:[]` 整表替换,略放大视野超出杭州导入框会 400,再被 25 条高德结果盖掉累计池;分叉还看定位点不看镜头,人在杭州镜头在上海仍打本地库。现按视野框分叉、越界框先裁成杭州交集再查本地,新批次并入累计池(新视野优先,外地点保留到 cap 1000)。AMap LabelsLayer `allowCollision:true` + zoomend 重推位置;腾讯 idle 后把 SDK LOD 摘掉的可见点 `setGeometries` 补回。列表仍按当前视野裁,marker 实例不随裁剪销毁。
 

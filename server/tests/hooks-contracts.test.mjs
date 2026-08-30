@@ -204,7 +204,7 @@ test('useMapEngine:最新意图优先 + 错误态清理(ws-3 生命周期契约)
   assert.match(hook, /activeSignalRef/);
   assert.match(hook, /activeSignalRef\.current\.aborted = true;/);
   // 失败路径:清空视图状态暴露可重试
-  assert.match(hook, /console\.error\("\[use-map-engine\] switchEngine failed:", err\);/);
+  assert.match(hook, /console\.warn\(\s*"\[use-map-engine\] switchEngine failed:"/);
   assert.match(hook, /viewRef\.current = null;/);
   // 挂载/teardown 竞态:teardown 在 createView resolve 后发生 → 已建视图销毁
   // (ws-2 起取消语义 ref 化为挂载代际 seq !== mountSeqRef.current)

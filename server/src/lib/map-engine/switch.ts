@@ -7,7 +7,8 @@
 // 编排顺序(契约,ws-3 改为「先就绪、后销毁」的安全顺序):
 //   1. 状态捕获:opts.state 由调用方传入(旧 view 的 getState() 或初始值)
 //   2. to.load() —— 幂等脚本注入(可重复调用)。最耗时步骤,旧 view 全程
-//      存活、画面不中断;此间 signal.aborted → 直接放弃,旧 view 零触碰
+//      存活、画面不中断;此间 signal.aborted → 直接放弃,旧 view 零触碰。
+//      load 抛错 → 旧 view 未销毁,返回 rolledBack(调用方保留旧引擎,不上抛)
 //   3. from.getState() 再捕获(加载期间用户可能已移图)→ from?.destroy()
 //   4. to.createView({ container, center, zoom, pitch, rotation, style })
 //      —— 失败时**回滚**:重建旧引擎 view(from.engine 脚本已加载,重建快速)。
@@ -147,7 +148,17 @@ export async function switchMapEngine(opts: SwitchMapEngineOptions): Promise<Swi
 
   // 步骤 1:脚本加载(最耗时)。旧 view 全程存活,画面不中断;加载期间被取消
   // → 直接放弃,旧 view 零触碰(「最新意图优先」的早期让路)。
-  await to.load();
+  // load 抛错(广告拦截/CSP/网络):此时尚未 destroy 旧 view,不得上抛到
+  // switchEngine 的 console.error(Next overlay 把可恢复失败画成红屏)。
+  try {
+    await to.load();
+  } catch (err) {
+    if (signal?.aborted) return { view: null, created: false, aborted: true };
+    if (from) {
+      return { view: from, created: false, rolledBack: true, error: err };
+    }
+    throw err;
+  }
   if (signal?.aborted) return { view: null, created: false, aborted: true };
 
   // 步骤 2:最终相机状态(加载期间用户可能已移图)再捕获,然后销毁旧 view。

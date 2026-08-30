@@ -1929,6 +1929,35 @@ test('失败分类:script onerror + Resource Timing 无该 URL(请求未发出)�
   }
 });
 
+test('失败分类:Resource Timing 缓冲打满且无 getscript entry → 不误判 script-blocked-by-client', async () => {
+  resetScriptLoader();
+  const e = createBaiduEngine();
+  const restore = setEnv(KEY_VAR, 'test-key');
+  const savedWindow = globalThis.window;
+  const savedDocument = globalThis.document;
+  const savedPerf = globalThis.performance;
+  const { doc, scripts } = makeFakeDocument();
+  globalThis.window = globalThis;
+  globalThis.document = doc;
+  const filled = Array.from({ length: 250 }, () => ({ name: 'https://example.com/tile.png' }));
+  globalThis.performance = {
+    getEntriesByType: () => filled,
+    setResourceTimingBufferSize() {},
+  };
+  try {
+    const p = e.load();
+    scripts()[0].onerror(new Error('boom'));
+    const err = await p.then(() => null, (e) => e);
+    assert.equal(err.code, 'script-load-failed', '缓冲打满时缺 entry 不能当拦截');
+  } finally {
+    delete globalThis.BMapGL;
+    globalThis.window = savedWindow;
+    globalThis.document = savedDocument;
+    globalThis.performance = savedPerf;
+    restore();
+  }
+});
+
 test('失败分类:performance 不可用/抛错 → 保守归 script-load-failed(指引含拦截分支)', async () => {
   resetScriptLoader();
   const e = createBaiduEngine();

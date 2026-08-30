@@ -134,14 +134,23 @@ const BAIDU_FAILURE_GUIDANCE: Record<BaiduLoadErrorCode, string> = {
  * 诚实标注的局限:performance 被清空/不可用时无法区分(回退 script-load-failed,
  * 其指引文本已同时覆盖拦截分支);同一 URL 历史成功 entry 存在时可能误判为
  * 网络失败(保守方向:归网络类,指引含拦截分支)。
+ * Chrome 默认 Resource Timing 缓冲 250 条:工作模式 POI 图/瓦片会先填满,
+ * getscript 即便发出也不在 entries 里 → 不得据此判「从未发出」(2026-08-30
+ * 真机:成功加载后 buffer=250、getscript 0 条)。缓冲打满时回退 script-load-failed。
  * 2026-08-22 boss 证据:用户 console `GET ...getscript... net::ERR_BLOCKED_BY_CLIENT`
  * —— 浏览器扩展拦截,非服务器拒绝、非 key 问题;Playwright 干净浏览器加载正常。 */
+const RESOURCE_TIMING_BUFFER_DEFAULT = 250;
+
 function isLikelyClientBlocked(url: string): boolean {
   try {
     const perf = globalThis.performance;
     if (typeof perf?.getEntriesByType !== 'function') return false;
     const entries = perf.getEntriesByType('resource') as Array<{ name?: string }>;
-    return !entries.some((entry) => entry.name?.includes(url));
+    const needle = url.includes('getscript') ? 'api.map.baidu.com/getscript' : url;
+    if (entries.some((entry) => entry.name?.includes(needle))) return false;
+    // 缓冲打满:缺 entry 不能说明请求未发出
+    if (entries.length >= RESOURCE_TIMING_BUFFER_DEFAULT) return false;
+    return true;
   } catch {
     return false;
   }
@@ -1917,6 +1926,11 @@ class BaiduEngine implements MapEngine {
     if (baiduScriptLoadBroken) {
       baiduScriptLoadBroken = false;
       recoverBaiduScriptLoad();
+    }
+    try {
+      globalThis.performance?.setResourceTimingBufferSize?.(1000);
+    } catch {
+      // 缓冲扩容失败不影响加载
     }
     // 同步注入(async=false + head 最前)直连 getscript 本体:getscript 零
     // document.write(2026-08-22 实测),同步执行保证 onload 即完整命名空间;
