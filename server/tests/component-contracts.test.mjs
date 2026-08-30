@@ -160,12 +160,13 @@ test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   const shell = src('components/map-shell.tsx');
   const gesture = src('hooks/use-mobile-drawer-gesture.ts');
   const css = src('components/map-shell.module.css');
-  assert.match(shell, /import \{ useMobileDrawerGesture, type DrawerState \} from "@\/hooks\/use-mobile-drawer-gesture"/);
+  assert.match(shell, /import \{ useMobileDrawerGesture, type DrawerState, type MobileSheet \} from "@\/hooks\/use-mobile-drawer-gesture"/);
   assert.match(shell, /useMobileDrawerGesture\(\{/);
   assert.match(gesture, /export type DrawerState = "mini" \| "half" \| "full"/);
+  assert.match(gesture, /export type MobileSheet = "explore" \| "layers" \| "account" \| "recent" \| "agent"/);
   assert.match(gesture, /handleDrawerPointerDown/);
   assert.match(gesture, /finishDrawerGesture/);
-  assert.match(shell, /mobileSheet === "saved"/);
+  assert.doesNotMatch(shell, /mobileSheet === "saved"/);
   assert.match(shell, /mobileSheet === "layers"/);
   assert.match(shell, /mobileSheet === "account"/);
   assert.match(shell, /openMobileAccount/);
@@ -989,24 +990,22 @@ test('agent ball is controlled: open/onOpenChange props drive the panel (ws-mt)'
   assert.doesNotMatch(panelCss, /@media \(max-width: 767px\)[\s\S]*z-index: 13/);
 });
 
-test('map shell mobile toolbar: 5 icon items + auth gate + agent sheet + back target (ws-mt/ws-ae)', () => {
+test('map shell mobile toolbar: 4 icon items + agent sheet + back target (ws-mt/ws-ae)', () => {
   const shell = src('components/map-shell.tsx');
   const css = src('components/map-shell.module.css');
-  // 左簇容器:ModeSwitcher + 图层/已保存/探索/最近/AI 图标钮,aria-label 走 i18n 键
+  // 左簇容器:ModeSwitcher + 图层/探索/最近/AI 图标钮,aria-label 走 i18n 键
   assert.match(shell, /<div className=\{styles\.mobileToolbarItems\}>[\s\S]{0,60}<ModeSwitcher/);
   assert.match(shell, /aria-label=\{t\("layers", lang\)\}/);
-  assert.match(shell, /aria-label=\{t\("saved", lang\)\}/);
   assert.match(shell, /aria-label=\{t\("explore", lang\)\}/);
   assert.match(shell, /aria-label=\{t\("recent", lang\)\}/);
   assert.match(shell, /aria-label=\{t\("agentBall", lang\)\}/);
-  // 图标与桌面 rail 同款:layers/bookmark/grid/history + 新 agent(sparkle)
+  assert.doesNotMatch(shell, /aria-label=\{t\("saved", lang\)\}/);
+  // 图标:layers/grid/history + agent;无独立已保存 bookmark 入口
   assert.match(shell, /<Icon name="layers" \/>/);
-  assert.match(shell, /<Icon name="bookmark" \/>/);
+  assert.doesNotMatch(shell, /<Icon name="bookmark" \/>/);
   assert.match(shell, /<Icon name="grid" \/>/);
   assert.match(shell, /<Icon name="history" \/>/);
   assert.match(shell, /<Icon name="agent" \/>/);
-  // 已保存:未登录 → auth 流程;已登录 → saved sheet + full drawer
-  assert.match(shell, /if \(!user\) \{[\s\S]{0,40}setAuthOpen\(true\)[\s\S]{0,200}setMobileSheet\("saved"\)/);
   // AI item(ws-ae):打开 drawer 内嵌 agent sheet(与图层/最近同构:full drawer + back 追踪),
   // 激活态 = mobileSheet === "agent"(不再驱动 agentOpen 浮层)
   assert.match(shell, /if \(mobileSheet === "agent"\) \{[\s\S]{0,60}setMobileSheet\("explore"\)/);
@@ -1017,7 +1016,7 @@ test('map shell mobile toolbar: 5 icon items + auth gate + agent sheet + back ta
   // 重复点激活项 → 回 explore(镜像桌面 openRail toggle 语义)
   assert.match(shell, /if \(mobileSheet === "layers"\) \{[\s\S]{0,60}setMobileSheet\("explore"\)/);
   assert.match(shell, /if \(mobileSheet === "recent"\) \{[\s\S]{0,60}setMobileSheet\("explore"\)/);
-  // back 目标追踪:工具栏入口 → "explore";account 导航 → "account";四个 sheet 的 back 走 mobileSheetBack
+  // back 目标追踪:工具栏入口 → "explore";account 导航 → "account";sheet back 走 mobileSheetBack
   assert.match(shell, /setMobileSheetBack\("explore"\)/);
   assert.match(shell, /setMobileSheetBack\("account"\)/);
   assert.match(shell, /setMobileSheet\(mobileSheetBack\)/);
@@ -1037,8 +1036,8 @@ test('agent sheet embeds in mobile drawer: mobileSheet "agent" branch + embedded
   assert.match(shell, /className=\{styles\.mobileSheetBar\}[\s\S]{0,200}className=\{styles\.mobileBackBtn\}[\s\S]{0,120}onClick=\{\(\) => setMobileSheet\(mobileSheetBack\)\}/);
   // 内嵌渲染:bridge/lang/user/userLocation + embedded + onClose 走 mobileSheetBack(与 sheet bar back 等价)
   assert.match(shell, /<AgentPanel[\s\S]{0,220}bridge=\{agentBridgeRef\.current\}[\s\S]{0,220}userLocation=\{userLocation\}[\s\S]{0,80}embedded[\s\S]{0,80}onClose=\{\(\) => setMobileSheet\(mobileSheetBack\)\}/);
-  // mobileSheet union 含 "agent"
-  assert.match(shell, /"recent" \| "agent">/);
+  assert.match(shell, /import \{ useMobileDrawerGesture, type DrawerState, type MobileSheet \} from "@\/hooks\/use-mobile-drawer-gesture"/);
+  assert.match(shell, /useState<MobileSheet>\("explore"\)/);
   // AgentPanel:embedded prop 默认 false;锚定 props 全部可选(嵌入式实例不传)
   assert.match(panel, /embedded\?: boolean;/);
   assert.match(panel, /embedded = false/);
@@ -1694,6 +1693,34 @@ test('mobile sheets: agent fills drawer + saved-layer toggle copy (ws-fx)', () =
   assert.match(shell, /: t\("savedOverlayShow"/, '关态取 savedOverlayShow');
   assert.match(shell, /overlayPois\.length/, '计数保留');
   assert.match(shell, /aria-pressed=\{savedOverlay\}/, 'aria-pressed 保留');
+});
+
+test('saved list is Layers L3 after overlay on; no Saved rail/toolbar item', () => {
+  const shell = src('components/map-shell.tsx');
+  const layers = src('components/layers-panel.tsx');
+  const saved = src('components/saved-panel.tsx');
+  const css = src('components/recent-panel.module.css');
+  const mobileCss = src('components/map-shell.module.css');
+
+  assert.doesNotMatch(shell, /openRail\("saved"\)/);
+  assert.doesNotMatch(shell, /railPanel === "saved"/);
+  assert.doesNotMatch(shell, /type RailPanel = "explore" \| "recent" \| "saved"/);
+  assert.doesNotMatch(shell, /setMobileSheet\("saved"\)/);
+
+  assert.match(layers, /savedCard\?: ReactNode/);
+  assert.match(layers, /\{savedCard\}/);
+  assert.match(shell, /savedOverlay && user \? \(/);
+  assert.match(shell, /<SavedPanel/);
+  assert.match(shell, /nested/);
+  assert.match(saved, /nested\?: boolean/);
+  assert.match(saved, /nested \? styles\.l3 : styles\.sidebar/);
+  assert.match(css, /\.l3 \{/);
+  assert.match(css, /align-items: stretch/);
+  assert.match(css, /gap: 6px/);
+
+  assert.match(shell, /className=\{styles\.mobileSavedL3\}/);
+  assert.match(mobileCss, /\.mobileSavedL3 \{/);
+  assert.match(shell, /onClose=\{hideSavedOverlay\}/);
 });
 
 test('cluster effect 依赖含 engineView(2026-08-25 ws-b bug 4 修复:切引擎后徽章重建)', () => {

@@ -1333,6 +1333,15 @@
     margin-bottom: 10px;
   }
 
+  .mobileSavedL3 {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0 0 12px;
+    max-height: min(52vh, 420px);
+    overflow: auto;
+  }
+
   .mobileFilterBtn {
     position: relative;
     display: inline-flex;

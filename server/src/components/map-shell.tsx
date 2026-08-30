@@ -38,7 +38,7 @@ import { useSavedLayer } from "@/hooks/use-saved-layer";
 import { useSearchState } from "@/hooks/use-search-state";
 import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { useMapEngine, type UseMapEngineResult } from "@/hooks/use-map-engine";
-import { useMobileDrawerGesture, type DrawerState } from "@/hooks/use-mobile-drawer-gesture";
+import { useMobileDrawerGesture, type DrawerState, type MobileSheet } from "@/hooks/use-mobile-drawer-gesture";
 import type { MapMarker, MapMarkerOptions, MapView } from "@/lib/map-engine/types";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
@@ -90,10 +90,11 @@ const RAIL_PANEL_MODULES = {
 } as const satisfies Record<string, () => Promise<unknown>>;
 
 /** 悬停/聚焦兜底:按面板名预载对应模块子集 */
-function prefetchRail(panel: "layers" | "saved" | "recent" | "profile" | "auth" | "detail") {
-  if (panel === "layers") void RAIL_PANEL_MODULES["layers-panel"]();
-  else if (panel === "saved") void RAIL_PANEL_MODULES["saved-panel"]();
-  else if (panel === "recent") void RAIL_PANEL_MODULES["recent-panel"]();
+function prefetchRail(panel: "layers" | "recent" | "profile" | "auth" | "detail") {
+  if (panel === "layers") {
+    void RAIL_PANEL_MODULES["layers-panel"]();
+    void RAIL_PANEL_MODULES["saved-panel"]();
+  } else if (panel === "recent") void RAIL_PANEL_MODULES["recent-panel"]();
   else if (panel === "profile") void RAIL_PANEL_MODULES["account-panel"]();
   else if (panel === "auth") void RAIL_PANEL_MODULES["auth-modal"]();
   else {
@@ -107,7 +108,7 @@ function prefetchAllRail() {
   for (const load of Object.values(RAIL_PANEL_MODULES)) void load();
 }
 
-type RailPanel = "explore" | "recent" | "saved" | "layers" | "profile" | null;
+type RailPanel = "explore" | "recent" | "layers" | "profile" | null;
 
 /**
  * ws-3 加载覆盖层失败态(2026-08-22):useMapEngine 新增契约(与 ws-2 钉死)——
@@ -370,9 +371,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     setMapStyle(readMapStylePref(system));
   }, []);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [mobileSheet, setMobileSheet] = useState<"explore" | "saved" | "layers" | "account" | "recent" | "agent">("explore");
-  /** 移动 sheet 来源追踪(ws-mt):工具栏 item 打开 saved/layers/recent/agent → "explore";
-   *  account 内导航打开 → "account";四个 sheet 的 back 按钮按此回退。 */
+  const [mobileSheet, setMobileSheet] = useState<MobileSheet>("explore");
+  /** 移动 sheet 来源追踪:工具栏 item 打开 layers/recent/agent → "explore";
+   *  account 内导航打开 → "account";sheet back 按钮按此回退。 */
   const [mobileSheetBack, setMobileSheetBack] = useState<"explore" | "account">("explore");
   /** AI 助手开关(ws-mt 受控提升):仅桌面悬浮球入口使用;移动端球隐藏,
    *  AI 入口 = 工具栏 item → drawer 内嵌 agent sheet(mobileSheet "agent",ws-ae)。 */
@@ -2228,7 +2229,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         setApplications([]);
         setInbox([]);
         setRailPanel((current) =>
-          current === "profile" || current === "saved" || current === "recent" ? null : current,
+          current === "profile" || current === "recent" ? null : current,
         );
       });
       return;
@@ -2454,23 +2455,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
             <span>{t("layers", lang)}</span>
           </button>
           <button
-            className={`${styles.navItem} ${railPanel === "saved" ? styles.navItemActive : ""}`}
-            data-tooltip={t('saved', lang)}
-            aria-pressed={railPanel === "saved"}
-            onClick={() => {
-              if (!user) {
-                setAuthOpen(true);
-                return;
-              }
-              openRail("saved");
-            }}
-            onMouseEnter={() => prefetchRail(user ? "saved" : "auth")}
-            onFocus={() => prefetchRail(user ? "saved" : "auth")}
-          >
-            <Icon name="bookmark" />
-            <span>{t('saved', lang)}</span>
-          </button>
-          <button
             className={`${styles.navItem} ${railPanel === "recent" ? styles.navItemActive : ""}`}
             data-tooltip={t('recent', lang)}
             aria-pressed={railPanel === "recent"}
@@ -2640,21 +2624,22 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           onToggleOverlay={handleToggleSavedOverlay}
           onMapStyle={handleMapStyleChange}
           onClose={() => setRailPanel(null)}
-        />
-      )}
-
-      {railPanel === "saved" && (
-        <SavedPanel
-          items={savedPlaces}
-          signedIn={Boolean(user)}
-          lang={lang}
-          catalog={compareCatalog}
-          origin={distanceOrigin}
-          shifted={sidebarOpen}
-          onClose={() => setRailPanel(null)}
-          onPick={handlePickSaved}
-          onHover={handleHover}
-          onRemove={user ? handleRemoveSaved : undefined}
+          savedCard={
+            savedOverlay && user ? (
+              <SavedPanel
+                nested
+                items={savedPlaces}
+                signedIn
+                lang={lang}
+                catalog={compareCatalog}
+                origin={distanceOrigin}
+                onClose={hideSavedOverlay}
+                onPick={handlePickSaved}
+                onHover={handleHover}
+                onRemove={handleRemoveSaved}
+              />
+            ) : undefined
+          }
         />
       )}
 
@@ -2836,28 +2821,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 </button>
                 <button
                   type="button"
-                  className={`${styles.mobileToolbarItem} ${mobileSheet === "saved" ? styles.mobileToolbarItemActive : ""}`}
-                  aria-label={t("saved", lang)}
-                  title={t("saved", lang)}
-                  aria-pressed={mobileSheet === "saved"}
-                  onClick={() => {
-                    if (!user) {
-                      setAuthOpen(true);
-                      return;
-                    }
-                    if (mobileSheet === "saved") {
-                      setMobileSheet("explore");
-                      return;
-                    }
-                    setMobileSheetBack("explore");
-                    setMobileSheet("saved");
-                    setDrawer("full");
-                  }}
-                >
-                  <Icon name="bookmark" />
-                </button>
-                <button
-                  type="button"
                   className={`${styles.mobileToolbarItem} ${mobileSheet === "explore" ? styles.mobileToolbarItemActive : ""}`}
                   aria-label={t("explore", lang)}
                   title={t("explore", lang)}
@@ -3028,20 +2991,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                       type="button"
                       className={styles.mobileFilterBtn}
                       onClick={() => {
-                        if (!user) {
-                          setAuthOpen(true);
-                          return;
-                        }
-                        setMobileSheetBack("account");
-                        setMobileSheet("saved");
-                      }}
-                    >
-                      {t("saved", lang)}
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.mobileFilterBtn}
-                      onClick={() => {
                         setMobileSheetBack("account");
                         setMobileSheet("layers");
                       }}
@@ -3104,28 +3053,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   onStatusChange={handleApplicationStatus}
                   onStatusesChange={handleApplicationPipeline}
                 />
-              ) : mobileSheet === "saved" ? (
-                <div className={styles.mobileAccount}>
-                  <div className={styles.mobileSheetBar}>
-                    <button
-                      type="button"
-                      className={styles.mobileBackBtn}
-                      onClick={() => setMobileSheet(mobileSheetBack)}
-                    >
-                      {t("back", lang)}
-                    </button>
-                  </div>
-                  <SavedList
-                    items={savedPlaces}
-                    signedIn={Boolean(user)}
-                    lang={lang}
-                    catalog={compareCatalog}
-                    origin={distanceOrigin}
-                    onPick={handlePickSaved}
-                    onHover={handleHover}
-                    onRemove={user ? handleRemoveSaved : undefined}
-                  />
-                </div>
               ) : mobileSheet === "layers" ? (
                 <div className={styles.mobileLayers}>
                   <div className={styles.mobileSheetBar}>
@@ -3145,6 +3072,20 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   >
                     {savedOverlay ? t("savedOverlayHide", lang) : t("savedOverlayShow", lang)} {overlayPois.length}
                   </button>
+                  {savedOverlay && user ? (
+                    <div className={styles.mobileSavedL3}>
+                      <SavedList
+                        items={savedPlaces}
+                        signedIn
+                        lang={lang}
+                        catalog={compareCatalog}
+                        origin={distanceOrigin}
+                        onPick={handlePickSaved}
+                        onHover={handleHover}
+                        onRemove={handleRemoveSaved}
+                      />
+                    </div>
+                  ) : null}
                   <div className={styles.mobileStyleRow} role="listbox" aria-label={t("mapStyle", lang)}>
                     {(
                       [

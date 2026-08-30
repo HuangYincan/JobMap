@@ -11,6 +11,7 @@ import {
 import type { POI, Position } from "@/lib/types";
 
 export type DrawerState = "mini" | "half" | "full";
+export type MobileSheet = "explore" | "layers" | "account" | "recent" | "agent";
 
 const DRAWER_MINI_H = 96;
 const DRAWER_HALF_RATIO = 0.42;
@@ -51,11 +52,11 @@ interface DrawerGestureActions {
   drawer: DrawerState;
   detailPoi: POI | null;
   mobileJd: Position | null;
-  mobileSheet: "explore" | "saved" | "layers" | "account" | "recent" | "agent";
+  mobileSheet: MobileSheet;
   setDrawer: Dispatch<SetStateAction<DrawerState>>;
   setDetailPoi: Dispatch<SetStateAction<POI | null>>;
   setMobileJd: Dispatch<SetStateAction<Position | null>>;
-  setMobileSheet: Dispatch<SetStateAction<"explore" | "saved" | "layers" | "account" | "recent" | "agent">>;
+  setMobileSheet: Dispatch<SetStateAction<MobileSheet>>;
 }
 
 /** Mobile drawer pointer state machine, extracted unchanged from MapShell. */

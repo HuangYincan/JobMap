@@ -402,7 +402,7 @@ Content-Type: application/json
 
 ### 9.4 移动端适配
 
-移动端 AI 与 已保存/图层/最近 同构:**drawer 内嵌 sheet**,非独立浮层——工具栏
+移动端 AI 与 图层/最近 同构:**drawer 内嵌 sheet**,非独立浮层——工具栏
 **AI item**(✦ 图标钮,§9.6)打开 `mobileSheet === "agent"` + full drawer + back 追踪
 (`mobileSheetBack`);`AgentPanel` 以 `embedded` 渲染在 `mobileAgent` 包装内
 (`agent-panel.module.css` 的 `.panel.embedded`:position static 随抽屉流、填满 sheet
@@ -426,7 +426,7 @@ min-height: 0 }`(drawer flex column 的可伸缩子项)撑起 `.mobileAgent`/`.p
 **ws-mt 追加(2026-08-22,仍只追加)**:`agentOpen` state 提升至 MapShell(`useState(false)`),
 `<AgentBall ... open={agentOpen} onOpenChange={setAgentOpen} />` 受控透传;移动工具栏
 (`.mobileToolbarItems` 左簇)新增 **AI item**(✦ `Icon name="agent"`,`aria-label={t('agentBall', lang)}`,
-激活态 = `agentOpen`,onClick `setAgentOpen(v => !v)`),与图层/已保存/探索/最近 4 个 item 并列;
+激活态 = `agentOpen`,onClick `setAgentOpen(v => !v)`),与图层/探索/最近 3 个 item 并列;
 另新增 `mobileSheetBack` state 供三个 sheet 的 back 按钮按来源回退(工具栏入口 → explore,
 account 内导航 → account)。
 
@@ -508,7 +508,7 @@ drawer body 新增 `mobileSheet === "agent"` 分支:`mobileAgent` 包装 + sheet
 | enh | `tests/component-contracts.test.mjs`(**追加**) | markdown-text 引用 marked+dompurify 且 sanitize 先于注入;面板 transform 锚定(--px/--py)+z-index 12;思考/工具活动类名;i18n 新键 |
 | panel2 | `tests/agent-session-store.test.mjs`(新) | create/switch/delete/list/append/saveMessages/标题派生(12 码点截断)/cap 裁剪(10 会话 × 30 条,平局丢最先生成)/旧历史迁移(含空旧键、坏 v1 回落、幂等)/activeId 语义/relativeTime 分段 |
 | panel2 | `tests/component-contracts.test.mjs`(**追加**) | header 双入口按钮(会话 → 记忆(徽章计数渲染条件)→ 关闭)、agentSessions* i18n 键、会话弹层结构(当前高亮/删除/新建/空态)、记忆弹层重设计(卡片/三点加载/失败+重试/清除 hover 红)、消息变更统一走 store 不再直写旧键 |
-| mt | `tests/component-contracts.test.mjs`(**追加**) | AgentBall 受控契约(`open`/`onOpenChange` props,onClose → `onOpenChange(false)`,无本地 `setOpen`;≤767px 球 `display:none`;面板 ≤767px 块 z-index 13、桌面 z-12 不变);移动工具栏契约(5 item 各有 `aria-label` layers/saved/explore/recent/agentBall + 图标;已保存未登录 → auth 流程;AI item toggle `agentOpen`;重复点激活项 → 回 explore;back 目标追踪 explore/account;CSS 40px 钮/gap 4px/激活 `var(--blue)`) |
+| mt | `tests/component-contracts.test.mjs`(**追加**) | AgentBall 受控契约(`open`/`onOpenChange` props,onClose → `onOpenChange(false)`,无本地 `setOpen`;≤767px 球 `display:none`;面板 ≤767px 块 z-index 13、桌面 z-12 不变);移动工具栏契约(4 item 各有 `aria-label` layers/explore/recent/agentBall + 图标;无独立已保存项,收藏列表在图层 L3;AI item 打开 agent sheet;重复点激活项 → 回 explore;back 目标追踪 explore/account;CSS 40px 钮/gap 4px/激活 `var(--blue)`) |
 
 合计:**9 个新测试文件(后端核心 7:ws-a 5 + ws-b 2;前端 2:ws-c)+ 2 处追加**(component-contracts,原批次)+ **ws-c-enhance:1 新测试文件 + 4 处追加**(2026-08-21)+ **ws-panel2:1 新测试文件 + 1 处追加**(2026-08-22)+ **ws-mt:1 处追加**(2026-08-22)。
 
