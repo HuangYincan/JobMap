@@ -791,8 +791,9 @@ usePOIMap 接线):
   同 URL 历史成功 entry 存在时可能误判为网络失败(保守方向);
 - **无 toast/alert 共享基建**(已核查:account-panel toast 为局部 demo note,map-shell
   注明「后续可接 toast 提示、不新增 UI」)→ 按任务书「无则仅在 console 输出结构化
-  错误」:`console.error('[map-engine] baidu 加载失败分类', {code, stage, detail,
-  guidance, cause})` + use-map-engine 两个 catch(挂载/切换)补输出分类;不新增 UI 组件;
+  错误」:`console.warn('[map-engine] baidu 加载失败分类', {code, stage, detail,
+  guidance, cause})`(warn 而非 error:Next.js 把 console.error 当成 overlay,
+  可回滚的切换失败会红屏空 `{}`);use-map-engine 切换回滚同样 warn;不新增 UI 组件;
 - message 保留原始细节文本(「命名空间未就绪」「BMapGL 地图就绪超时」等)——switch
   回滚契约与既有断言按子串匹配,不得改写。
 

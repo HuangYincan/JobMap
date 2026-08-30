@@ -444,6 +444,15 @@ class NeverReadyMap {
   }
 }
 
+/** v1.0 真实形态:centerAndZoom 同步置 loaded=true 并派发 load(在
+ * waitForMapReady 注册之前)。tile 事件永不派发——旧实现会 1.5s 误超时。 */
+class AlreadyLoadedMap extends NeverReadyMap {
+  centerAndZoom(center, zoom) {
+    super.centerAndZoom(center, zoom);
+    this.loaded = true;
+  }
+}
+
 /** 带 setMapReadyCallback(BMapGL 2.0 官方就绪回调)的 Map:是否触发回调由
  * 测试手动控制(fireReady);无 tilesloaded 自动触发。 */
 class CallbackReadyMap extends NeverReadyMap {
@@ -985,6 +994,7 @@ test('createView:就绪多通道——onfirsttilesloaded/tilesloaded/onstyle_loa
     // 通道 1:onstyle_loaded(样式层早期信号,先于瓦片)→ 即就绪
     let p = e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
     let map = captures.maps[0];
+    assert.ok(map.listeners.has('load'), '注册 v1.0 load(相机应用当下派发)');
     assert.ok(map.listeners.has('onfirsttilesloaded'), '注册首帧瓦片完成事件(v1.0 派发原名)');
     assert.ok(map.listeners.has('tilesloaded'), '注册瓦片全部完成事件(SDK 派发 ontilesloaded,注册名归一命中)');
     assert.ok(map.listeners.has('onstyle_loaded'), '注册样式加载事件');
@@ -1004,9 +1014,29 @@ test('createView:就绪多通道——onfirsttilesloaded/tilesloaded/onstyle_loa
     map.trigger('tilesloaded');
     await p;
     assert.equal(map.listeners.size, 0, 'tilesloaded 触发就绪 → 全部解绑');
+    // 通道 4:load(v1.0 构造/相机当下派发)
+    p = e.createView({ container: {}, center: GCJ, zoom: 12, style: 'normal' });
+    map = captures.maps[3];
+    map.trigger('load');
+    await p;
+    assert.equal(map.listeners.size, 0, 'load 触发就绪 → 全部解绑');
   } finally {
     mock.timers.reset();
   }
+});
+
+test('createView:v1.0 map.loaded 已 true(错过 load 事件)→ 立即就绪,不等 tile 事件', async () => {
+  setup();
+  mockNs.ns.Map = AlreadyLoadedMap;
+  const e = createBaiduEngine();
+  const view = await e.createView({
+    container: {},
+    center: GCJ,
+    zoom: 12,
+    style: 'normal',
+  });
+  assert.equal(view.raw.loaded, true);
+  assert.equal(view.raw.listeners.size, 0, '已 loaded → 立即就绪并解绑,不挂 1.5s 超时');
 });
 
 test('getState:厂商 bd09 中心 → gcj02 返回(±1e-5)+ 形状', async () => {
