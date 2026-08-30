@@ -857,6 +857,10 @@ export const translations = {
     zh: '已投递',
     en: 'Applied',
   },
+  appStatusInterview: {
+    zh: '面试中',
+    en: 'Interview',
+  },
   appStatusWaiting: {
     zh: '等面',
     en: 'Waiting',

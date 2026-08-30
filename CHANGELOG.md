@@ -10,6 +10,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Changed
 
+- **最近投递监视默认收成 6 档。** 默认阶段改为已投递 / 面试中 / Offer / 未通过 / 已撤回 / 已接受。筛条只留全部 / 进行中 / 已结束。未改过的旧 12 档词表读时自动收档；等面/一面/二面/三面并进面试中，一面挂/二面挂/三面挂并进未通过。改名或自加过的阶段不动。用户仍可在「阶段」里加减。
 - **百度底图切换不再 1.5s 误超时。** v1.0 在 `centerAndZoom` 当下就把 `map.loaded` 设 true 并派发 `load`；旧逻辑在这之后才等 `onfirsttilesloaded`，健康 AK 下 tile 事件也不来，于是 `failBaidu` + Next 红屏。就绪判定认已 `loaded` / `load`；可恢复的切换失败改 `console.warn`，不再触发 overlay。
 - **重新打开高德 / 腾讯 / 百度底图切换。** `ENGINE_PRIORITY` 从只留高德恢复为 `['amap','tencent','baidu']`。图层面板「地图源」重新列出三家(未配 JSAPI key 的仍显示为禁用);会话偏好可切腾讯/百度。2026-08-23 因切换 POI 消失曾关掉此入口,引擎实现一直保留。
 - **登录面板去掉密码登录。** AuthModal 只保留 手机 / 邮箱 / 其他登录。密码 tab、用户名注册、忘记密码链接、注册后绑定引导一并拿掉。账户页「密码与安全」和 `/api/auth/password/*` 仍在。

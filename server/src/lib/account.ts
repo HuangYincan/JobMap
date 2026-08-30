@@ -160,7 +160,7 @@ export interface SavedPlace {
   createdAt: string;
 }
 
-/** 阶段 id：内置 applied/waiting/r1… 或用户自定义 c_* 。旧 viewed 读时归一成 applied。 */
+/** 阶段 id：内置 applied/interview/offer…（旧 waiting/r1… 仍合法）或用户自定义 c_* 。旧 viewed 读时归一成 applied。 */
 export type ApplicationStatusId = string;
 
 export interface ApplicationRecord {

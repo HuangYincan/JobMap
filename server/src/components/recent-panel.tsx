@@ -205,14 +205,6 @@ export function RecentPanel({
                 pressed={filter.kind === "group" && filter.group === "active"}
                 onClick={() => setFilter({ kind: "group", group: "active" })}
               />
-              {statuses.map((def) => (
-                <FilterChip
-                  key={def.id}
-                  label={resolveStatusLabel(def, lang)}
-                  pressed={filter.kind === "status" && filter.id === def.id}
-                  onClick={() => setFilter({ kind: "status", id: def.id })}
-                />
-              ))}
               <FilterChip
                 label={t("watchClosed", lang)}
                 pressed={filter.kind === "group" && filter.group === "closed"}
