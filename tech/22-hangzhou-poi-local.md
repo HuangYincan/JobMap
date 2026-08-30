@@ -100,8 +100,12 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
 
 ## 前端分叉(poi-service + map-shell)
 
-`fetchDomainPOIs` 按 `inHangzhouBox(center)`(`HANGZHOU_BBOX`:
-{west:118.3, south:29.1, east:120.8, north:30.7})分叉:
+`fetchDomainPOIs` 按 `shouldUseHangzhouLocal(center, bounds)` 分叉
+(`HANGZHOU_BBOX`:{west:118.3, south:29.1, east:120.8, north:30.7}):
+**以视野框为准,不用用户定位 / `searchOrigin`**。有 bounds 时与杭州有交集才走
+本地(略超出导入框先 `clipToHangzhouExtent` 再请求,避免 400
+`BOUNDS_OUT_OF_RANGE`);镜头在上海即使人在杭州也走高德。无 bounds 才回退
+`inHangzhouBox(center)`。
 
 - **杭州内 + 关键词**:先 `GET /api/pois/domain-local?q=...`(视口 bbox 内
   `name ILIKE`);本地 0 命中(如搜「北京天安门」)才回退高德 1 次
@@ -134,15 +138,20 @@ Demo 阶段先做杭州:全量数据入库,地图 POI 全量分层展示(取决�
 - **价格档位**(`fd9608a`):`hz_pois.cost`(83,667 行,8.3%)此前入库未读出,
   本地卡 priceLevel 恒空。现 `SELECT p.cost` + 与 `normalizeAMapPOI` 同口径
   映射(`min(4, ceil(cost/100))`),休闲/健身/娱乐类目可显示 ¥ 档
-- **视口变化刷新**:平移/缩放 → 800ms 防抖 → 按 live bounds 替换 + 淡入
-  (`existing: []`,offset 归零;`VIEWPORT_DEBOUNCE_MS` 为 work/domain 共享,
-  work 视口按需加载同样变为 800ms)
-  - **work 分支同样为「替换」**(`fix/viewport-refresh`,2026-08-19):早期 work 视口
+- **视口变化刷新**:平移/缩放 → 800ms 防抖 → 按 live 相机 bounds 取新视野批次
+  (`existing: []` 只表示本轮请求不要旧池,offset 归零),**onBatch 用
+  `mergePreferringViewport` 并入累计池**(新视野优先,仍在视野内的旧点其次,
+  外区/外地点最后;cap 1000 满时淘汰最旧的视野外点)。不再 `setCatalog(batch)`
+  整表替换——人在杭州缩放时外区 POI 否则总是被当前框抹掉。
+  `VIEWPORT_DEBOUNCE_MS` 为 work/domain 共享;work 2026-08-20 起全量加载后
+  视口 loader 对 work 是 no-op,列表按 `mapBounds` 客户端裁剪。
+  - **work 历史「替换」**(`fix/viewport-refresh`,2026-08-19,已被全量加载取代):早期 work 视口
     刷新是**增量合并**(`loadWorkViewport` 传 `existing: catalogRef.current`),工作目录仅
     ~79 家公司,首屏+加载更多几乎全捕获 → 刷新返回 0–11 家全部被去重,列表冻结。
-    现镜像 domain:`existing: []` 按 live bounds 替换、`viewportEpochRef += 1` 丢弃在飞
-    主加载的旧视野追加批次、`setPageOffset(0)` + skipFetch 武装、视口替换时复位 noMore
-    (与 w3 noMore 对接)。
+    当时镜像 domain:`existing: []` 按 live bounds 替换。2026-08-30 Domain 改为
+    视口合并,work 仍全量一次加载。
+  - Domain 视口仍 `viewportEpochRef += 1` 丢弃在飞旧视野批次、`setPageOffset(0)`
+    + skipFetch 武装、视口刷新时复位 noMore(与 w3 noMore 对接)。
   - **主加载在飞不吞视口刷新**:视口 loader 遇 `loadingRef.current` 不再静默 return,而是
     置 `viewportRefreshPendingRef` 标记;主加载 `finally` 释放 loadingRef 后补跑
     `viewportLoaderRef.schedule()`(防抖内合并,不重复加载)。
@@ -188,7 +197,7 @@ false`,被取消后该 ref 永久卡 true → 后续所有 load() 直接短路�
 | 导入幂等 | ✅ 重跑 count 保持 1,006,158 |
 | 本地首屏 | ✅ 1 次 `/api/pois/domain-local`(替代 36 次 AMap),50 条 |
 | 无限滚动 | ✅ 50→100→…→1000(offset +50 链),到顶停止 + 已达上限提示 |
-| 视口刷新 | ✅ zoom out 1000→100,offset 归零,替换 + 淡入 |
+| 视口刷新 | ✅ zoom out 新视野并入累计池(外区保留到 cap),offset 归零 |
 | 关键词链 | ✅ 杭州内先本地 q=(0 命中)→ 回退 AMap 1 次;失败返回 0 不卡死 |
 | 详情照片 | ✅ 本地库渲染(3 张,含地址/电话/评分) |
 | 测试 | ✅ 271 个(`node --test tests/*.test.mjs`)、typecheck、build |

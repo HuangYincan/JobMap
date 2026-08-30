@@ -20,9 +20,10 @@ import {
   DOMAIN_POI_OFFSET_CAP,
   DOMAIN_BATCH_SIZE,
   fallbackTaskWindow,
-  inHangzhouBox,
+  clipToHangzhouExtent,
   isCommonOrExactName,
   isCommonPoi,
+  shouldUseHangzhouLocal,
   keywordsFor,
   mergePoisById,
   MORE_PAGE_SIZE,
@@ -138,14 +139,19 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<FetchPOIResult
   const center = options.center ?? { lng: 120.15, lat: 30.27 };
   const zoom = options.zoom ?? 13;
   const existing = (options.existing ?? []) as DomainPOI[];
-  const inHz = inHangzhouBox(center);
+  // 分叉看视野框,不用定位点:人在杭州但镜头在外地时不得锁死杭州本地库。
+  const inHz = shouldUseHangzhouLocal(center, options.bounds);
+  const localOptions = {
+    ...options,
+    bounds: clipToHangzhouExtent(options.bounds) ?? options.bounds,
+  };
 
   if (options.query) {
     if (inHz) {
       // 杭州内关键词搜索 → 先试本地库 name ILIKE;本地 0 命中(如搜外地词)
       // 或库不可用(null)再回退高德 searchPOI,避免「北京天安门」在杭州库
       // 查不到就空白/返回无关分类 POI。
-      const local = await fetchLocalPois(options, existing, zoom, options.query);
+      const local = await fetchLocalPois(localOptions, existing, zoom, options.query);
       if (local !== null && local.pois.length > existing.length) return local;
     }
     try {
@@ -197,7 +203,7 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<FetchPOIResult
     // 分类已选(poi-category-loading)时按类全量循环拉取;
     // 库不可用时内部已回退高德 fallback,null 兜底为现有池
     const local = await fetchLocalPois(
-      options,
+      localOptions,
       existing,
       zoom,
       undefined,

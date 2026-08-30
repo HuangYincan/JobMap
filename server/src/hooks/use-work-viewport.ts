@@ -6,7 +6,7 @@
 // 抽取自 map-shell(QA scan #6):视口加载器创建/调度 + 挂载对齐加载。
 // - work:全量加载后无需视口请求——marker 池(catalog)首载一次取尽,
 //   侧栏列表按视野的裁剪移到 map-shell 客户端(pois memo 按 mapBounds 过滤);
-// - domain:随视角变化刷新(替换+淡入),无分类选择 → 视口移动不拉取;
+// - domain:随视角变化刷新(新视野并入累计池,视野外 POI 保留到 cap),无分类选择 → 视口移动不拉取;
 // - moveend/zoomend 防抖调度,主加载在飞时置 pending 由主加载 finally 补跑;
 // - 收藏 toggle 不移动相机(2026-08-22):moveend/zoomend 只来自用户操作,
 //   直接防抖调度,无需任何程序化相机抑制(「收藏相机同步」状态机已随
@@ -25,6 +25,8 @@ import {
   batchMatchesCurrentMode,
   createViewportLoader,
   DOMAIN_BATCH_SIZE,
+  DOMAIN_POI_HARD_CAP,
+  mergePreferringViewport,
   needsViewportAlign,
   VIEWPORT_DEBOUNCE_MS,
   type ViewportBounds,
@@ -173,8 +175,10 @@ export function useWorkViewport(
           // (pois memo 按 mapBounds 过滤)。moveend/zoomend 只驱动 domain。
           return;
         }
-        // Domain:随视角变化刷新(替换+淡入)——按 live bounds 重新取第一批,
-        // existing=[] 清空旧列表,offset 归零(新视野 = 新一批)。
+        // Domain:随视角变化刷新——按 live bounds 取新视野批次,再并入累计池
+        // (mergePreferringViewport:新视野优先,视野外旧点保留到 cap)。
+        // 旧 existing:[] + setCatalog(batch) 会把外地/外区 POI 整表换成当前框,
+        // 人在杭州缩放时外地点「总是消失」。
         if (mode === "domain") {
           // 分类门控(poi-category-loading):无分类选择 → 视口移动不拉取
           // (目录保持空、无 domain marker);搜索(query)豁免。已选分类 →
@@ -200,10 +204,10 @@ export function useWorkViewport(
               mode,
               query: v.query || undefined,
               filters: v.filters, // 分类驱动加载(poi-category-loading)
-              center: v.searchOrigin ?? undefined,
+              center: center ?? v.searchOrigin ?? undefined,
               zoom,
               bounds,
-              existing: [], // 替换:新视野清空旧卡片
+              existing: [], // 本轮只要新视野批次;与旧池的合并在 onBatch
               addCap: DOMAIN_BATCH_SIZE,
               pageOffset: 0,
               // loader 的协作取消信号透传:dispose(卸载/重绑)后在飞请求
@@ -226,11 +230,18 @@ export function useWorkViewport(
                 // 目录只在真正搜索/非空批次(新视野新数据)时重建,空视野列表仍显示
                 // 旧结果,由下一次非空刷新替换。
                 if (batch.length === 0) return;
-                catalogRef.current = batch;
-                setCatalog(batch);
+                // 并入累计池:新视野优先,外地/外区旧点保留(cap 满才淘汰视野外)。
+                const next = mergePreferringViewport(
+                  catalogRef.current,
+                  batch,
+                  bounds,
+                  DOMAIN_POI_HARD_CAP,
+                );
+                catalogRef.current = next;
+                setCatalog(next);
                 writeModeCache({
                   mode,
-                  catalog: batch,
+                  catalog: next,
                   pageOffset: 0,
                   searchOrigin: v.searchOrigin,
                   query: v.query,

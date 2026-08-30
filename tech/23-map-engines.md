@@ -1858,15 +1858,21 @@ mu.addEventListener("animation_start", C); mu.addEventListener("animation_end", 
 
 **改动:**
 
-- `createMarker({ icon })` → 共享 `AMap.LabelsLayer`(collision:false,重叠点全画)
-  + `LabelMarker`;无 icon 的 content(距离手柄等少量 DOM)仍用 `AMap.Marker`。
+- `createMarker({ icon })` → 共享 `AMap.LabelsLayer`(collision:false 层内重叠全画;
+  **allowCollision:true** 底图文字给 POI 让路,false 时缩放避让会把外地/远点
+  永久藏掉;`zoomend`/`moveend` 对可见 LabelMarker 重推同坐标 `setPosition`,
+  把 SDK 从渲染列表摘掉但 `isAttached` 仍为 true 的点补回)
+  + `LabelMarker`(zooms `[2,20]`);无 icon 的 content(距离手柄等少量 DOM)仍用 `AMap.Marker`。
 - 控制器对 AMap+Tencent 传契约 `icon`(data URI SVG / 内联 logo,与原 TMap 路径
   相同,CORS-clean);选中/高亮走新增的 `MapMarker.setIcon`。
 - `setPOIs` 坐标未变不 `setPosition`;`setVisiblePOIs` 可见性未变不 `show/hide`。
 - `usePOIMap` 不再在 `zoomchange` 上做 O(n) `sync()`(该事件在缩放动画中连续
   触发);完整性补回只挂 `moveend`。
 - TMap `isAttached` 改为「仍在 geometry 登记簿」,hide 不再被 sync 当成外部删除
-  而整批重建。
+  而整批重建。`idle`(契约 moveend)后对仍在 `multiAttached` 的 geometry
+  `setGeometries` 全量补回——SDK LOD 会把视野外 id 从 `_idSet` 摘掉,适配层
+  仍记为已挂,放大视野不会自己加回;显式 `setVisible(false)` 不在 attached,
+  不会被误挂。
 - 选中/高亮换肤用实例侧记住的内联 logo,不回查 128 槽全局 LRU(否则目录一大
   点选就把真 logo 盖成 emoji)。
 

@@ -7,6 +7,7 @@ import {
   DOMAIN_POI_HARD_CAP,
   fallbackTaskWindow,
   inHangzhouBox,
+  shouldUseHangzhouLocal,
   HANGZHOU_BBOX,
   mergePoisById,
 } from '../src/lib/viewport-search.ts';
@@ -28,6 +29,12 @@ test('inHangzhouBox: 框内/框外', () => {
   assert.equal(inHangzhouBox({ lng: 119.0, lat: 29.5 }), true); // 淳安县
   assert.equal(inHangzhouBox({ lng: 121.4, lat: 31.2 }), false); // 上海
   assert.equal(inHangzhouBox({ lng: 116.4, lat: 39.9 }), false); // 北京
+  const sh = { west: 121.0, south: 30.9, east: 121.8, north: 31.5 };
+  assert.equal(
+    shouldUseHangzhouLocal({ lng: 120.15, lat: 30.27 }, sh),
+    false,
+    '人在杭州镜头在上海 → 不得锁死本地库',
+  );
 });
 
 test('fallbackTaskWindow: 每次滚动 1 次(25 条)', () => {

@@ -5,6 +5,28 @@
 
 ---
 
+## 2026-08-30 — 人在杭州缩放时其他地区 POI 消失
+
+**状态:** 已修代码(worktree `fix/poi-zoom-other-regions`);浏览器端到端未在本条宣称已过
+
+### 现象
+
+定位在杭州,频繁平移/缩放后其他区/城市 POI 从地图消失。
+
+### 根因
+
+Domain 视口整表替换 + 越界 400;分叉看定位不看镜头;AMap LabelsLayer 避让/腾讯 LOD 摘点后补不回;`mapBounds` 漏 zoomend。
+
+### 修复
+
+视野框分叉 + 裁剪本地查询;视口合并而非替换;AMap `allowCollision:true` + zoomend 重推;腾讯 idle `setGeometries` 补回。
+
+### 回归
+
+- `shouldUseHangzhouLocal` / `clipToHangzhouExtent` / `mergePreferringViewport`
+- `fetchPOIsForMode` 略超框走本地、上海视野不打 domain-local
+- AMap zoomend 重推可见点;腾讯 idle 补回 LOD 摘点
+
 ## 2026-08-29 — 全国视野深圳/广州等城市聚合点消失
 
 **状态:** 已修复(AMap 聚合徽章改回独立 HTML Marker)

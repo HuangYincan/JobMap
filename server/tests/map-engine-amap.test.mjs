@@ -221,6 +221,10 @@ function makeNs() {
     }
     setPosition(p) {
       this.position = p;
+      this.positionWrites = (this.positionWrites || 0) + 1;
+    }
+    getPosition() {
+      return this.position;
     }
     setIcon(icon) {
       this.icon = icon;
@@ -561,9 +565,10 @@ test('createMarker:icon 规格 → 共享 LabelsLayer + LabelMarker(WebGL 海量
   const layers = ns.instances.labelsLayers;
   assert.equal(layers.length, 1, '共享一层 LabelsLayer');
   assert.equal(layers[0].opts.collision, false, '重叠点全部绘制,不避让隐藏');
-  assert.equal(layers[0].opts.allowCollision, false);
+  assert.equal(layers[0].opts.allowCollision, true, '底图文字给 POI 让路,不藏外地点');
   assert.equal(ns.instances.map.added[0], layers[0], '层已 map.add');
   const raw = ns.instances.labelMarkers[0];
+  assert.deepEqual(raw.opts.zooms, [2, 20], '低/高 zoom 都画,不被默认 zooms 摘掉');
   assert.deepEqual(raw.opts.position, [120.1, 30.2]);
   assert.equal(raw.icon.image, 'data:image/svg+xml;utf8,<svg/>');
   assert.equal(raw.icon.type, 'image', '官方 IconOptions.type=image');
@@ -576,6 +581,28 @@ test('createMarker:icon 规格 → 共享 LabelsLayer + LabelMarker(WebGL 海量
   assert.equal(layers[0].items.length, 0, 'remove 从层摘除');
   view.destroy();
   assert.equal(layers[0].items.length, 0, 'destroy 清层');
+});
+
+test('LabelsLayer:zoomend 对可见 LabelMarker 重推 setPosition(补回视野外被摘的点)', async () => {
+  const ns = installNs();
+  const view = await createView(ns, 'normal');
+  view.createMarker({
+    position: { lng: 116.4, lat: 39.9 },
+    icon: { src: 'data:image/svg+xml;utf8,<svg/>', size: [40, 40] },
+  });
+  const hidden = view.createMarker({
+    position: { lng: 120.1, lat: 30.2 },
+    icon: { src: 'data:image/svg+xml;utf8,<svg/>', size: [40, 40] },
+  });
+  hidden.setVisible(false);
+  const shownRaw = ns.instances.labelMarkers[0];
+  const hiddenRaw = ns.instances.labelMarkers[1];
+  const shownBefore = shownRaw.positionWrites || 0;
+  const hiddenBefore = hiddenRaw.positionWrites || 0;
+  ns.instances.map.trigger('zoomend');
+  assert.ok((shownRaw.positionWrites || 0) > shownBefore, 'zoomend 重推可见点');
+  assert.equal(hiddenRaw.positionWrites || 0, hiddenBefore, '隐藏点不重推');
+  view.destroy();
 });
 
 test('createMarker:icon 无 size → image only;同层复用;content+icon 仍走 LabelMarker', async () => {

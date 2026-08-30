@@ -797,6 +797,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       offRotate?.();
       offMoveEnd?.();
       offComplete?.();
+      offZoomEnd?.();
       offDragStart?.();
       offZoomStart?.();
       offClick?.();
@@ -881,6 +882,9 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     };
     const offMoveEnd = view.on("moveend", syncView);
     const offComplete = view.on("complete", syncView);
+    // zoomend 不在 MapViewEvent 联合里,经 onViewEvent 转发。AMap 滚轮缩放
+    // 有时不派 moveend,mapBounds 停在旧的杭州小框,列表/可见集把外地 POI 裁没。
+    const offZoomEnd = onViewEvent(view, "zoomend", syncView);
     // 首帧立即同步一次视野:mapBounds 在第一批数据到达前就绪,
     // work 列表客户端裁剪(全量池按视野过滤)从第一次渲染起就有 bounds 可用
     syncView();
@@ -1053,7 +1057,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
               mode,
               query: query || undefined,
               filters, // 分类驱动加载(poi-category-loading):filters 下行到数据源
-              center: origin,
+              center: view.center,
               zoom: view.zoom,
               bounds: view.bounds ?? undefined,
               existing: mode === "domain" ? catalogRef.current : undefined,
@@ -1347,11 +1351,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const pois = useMemo(
     () =>
       runPOIPipeline(
-        // work 列表 = 全量池按当前视野 bounds 客户端裁剪(2026-08-20 修复:
+        // 列表 = 全量池按当前视野 bounds 客户端裁剪(2026-08-20 修复:
         // 全量加载后无增量可取,「侧栏二级卡片展示当前视角」改为本地过滤,
-        // 不再发视口请求;mapBounds 由 syncView(moveend)驱动);bounds 未就绪
-        // (首帧前)回退全量;domain 无列表池概念,恒用 catalog。
-        canonicalMode(mode) === "work" && mapBounds
+        // 不再发视口请求;mapBounds 由 syncView(moveend/zoomend)驱动);bounds 未就绪
+        // (首帧前)回退全量。domain 累计池跨视口保留外区 POI,列表同样按视野裁,
+        // 否则并入后列表会被外地卡占满。
+        (canonicalMode(mode) === "work" || canonicalMode(mode) === "domain") && mapBounds
           ? catalog.filter((p) => inBounds(p.location, mapBounds))
           : catalog,
         {

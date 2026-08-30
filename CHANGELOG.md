@@ -4,6 +4,10 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ## 2026-08-30
 
+### Fixed
+
+- **人在杭州高频平移/缩放时其他地区 POI 消失。** Domain 视口刷新曾用 `existing:[]` 整表替换,略放大视野超出杭州导入框会 400,再被 25 条高德结果盖掉累计池;分叉还看定位点不看镜头,人在杭州镜头在上海仍打本地库。现按视野框分叉、越界框先裁成杭州交集再查本地,新批次并入累计池(新视野优先,外地点保留到 cap 1000)。AMap LabelsLayer `allowCollision:true` + zoomend 重推位置;腾讯 idle 后把 SDK LOD 摘掉的可见点 `setGeometries` 补回。列表仍按当前视野裁,marker 实例不随裁剪销毁。
+
 ### Changed
 
 - **百度底图切换不再 1.5s 误超时。** v1.0 在 `centerAndZoom` 当下就把 `map.loaded` 设 true 并派发 `load`；旧逻辑在这之后才等 `onfirsttilesloaded`，健康 AK 下 tile 事件也不来，于是 `failBaidu` + Next 红屏。就绪判定认已 `loaded` / `load`；可恢复的切换失败改 `console.warn`，不再触发 overlay。
