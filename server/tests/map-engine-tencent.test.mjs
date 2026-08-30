@@ -2174,6 +2174,33 @@ test('createMarker(MultiMarker):LOD 摘挂后 click 分发不失效 + 隐藏期 
   }
 });
 
+test('createMarker(MultiMarker):idle 后把 SDK LOD 摘掉的可见 geometry 补回', async () => {
+  setKey('test-key');
+  globalThis.window = globalThis;
+  const { ns, restore } = installTMapDouble();
+  try {
+    delete ns.Marker;
+    ns.MultiMarker = MockMultiMarker;
+    const view = await createView();
+    const m1 = view.createMarker({ position: { lng: 120.16, lat: 30.28 } });
+    const m2 = view.createMarker({ position: { lng: 116.4, lat: 39.9 } });
+    const raw = m1.raw;
+    const g2 = raw.geometries[1];
+    assert.equal(raw.geometries.length, 2);
+    raw.remove([g2.id]);
+    assert.equal(raw.geometries.length, 1, '模拟 SDK LOD 摘掉北京点');
+    view.raw.trigger('idle');
+    assert.equal(raw.geometries.length, 2, 'idle 把仍应可见的点 setGeometries 补回');
+    assert.ok(raw.geometries.some((g) => g.id === g2.id));
+    m2.setVisible(false);
+    assert.equal(raw.geometries.length, 1, '显式隐藏仍摘除');
+    view.raw.trigger('idle');
+    assert.equal(raw.geometries.length, 1, '隐藏点不会被 idle 误挂回');
+  } finally {
+    restore();
+  }
+});
+
 test('createMarker(MultiMarker):同一 cb 注册到两个 marker → off/remove 按 id 精确解绑(不误伤)', async () => {
   setKey('test-key');
   globalThis.window = globalThis;

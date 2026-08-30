@@ -83,11 +83,14 @@ class AmapView implements MapView {
   /**
    * 海量 POI 共享标注层(AMap.LabelsLayer,WebGL)。有 icon 的 createMarker
    * 走 LabelMarker 入本层;无 icon 的 content(距离手柄等少量 DOM)仍用 Marker。
-   * collision:false —— 重叠点全部绘制,不因避让把 POI 藏掉。
+   * collision:false —— 层内重叠点全部绘制。
+   * allowCollision:true —— 底图文字给 POI 让路,而不是把外地/远点 POI 藏掉
+   * (false 时缩放重算避让,人在杭州高频缩放会把视野外城市点永久吃掉)。
    */
   private labelsLayer: any = null;
   /** 本视图登记的 LabelMarker(isAttached / destroy 清扫) */
   private readonly labelMarkers = new Set<any>();
+  private readonly onCameraSettled = () => this.refreshLabelsLayer();
 
   constructor(AMap: any, map: any, style: MapStyleId, engine: MapEngine) {
     this.AMap = AMap;
@@ -96,6 +99,8 @@ class AmapView implements MapView {
     this.engine = engine;
     this.currentStyle = style;
     if (style === 'satellite') this.ensureSatelliteLayer();
+    this.map.on?.('zoomend', this.onCameraSettled);
+    this.map.on?.('moveend', this.onCameraSettled);
   }
 
   getState(): MapViewState {
@@ -225,7 +230,7 @@ class AmapView implements MapView {
       zooms: [2, 20],
       zIndex: 120,
       collision: false,
-      allowCollision: false,
+      allowCollision: true,
     });
     this.map.add(layer);
     this.labelsLayer = layer;
@@ -246,11 +251,13 @@ class AmapView implements MapView {
     const markerOpts: Record<string, unknown> = {
       position: [opts.position.lng, opts.position.lat],
       icon: this.toLabelIcon(opts),
+      zooms: [2, 20],
     };
     if (opts.zIndex !== undefined) markerOpts.zIndex = opts.zIndex;
     const marker = new this.AMap.LabelMarker(markerOpts);
     layer.add(marker);
     this.labelMarkers.add(marker);
+    marker._dmVisible = true;
     if (typeof opts.onClick === 'function') {
       marker.on?.('click', () => opts.onClick?.());
     }
@@ -275,6 +282,7 @@ class AmapView implements MapView {
       setVisible: (v: boolean) => {
         if (v === visible) return;
         visible = v;
+        marker._dmVisible = v;
         if (v) {
           if (typeof marker.show === 'function') marker.show();
           else if (typeof marker.setVisible === 'function') marker.setVisible(true);
@@ -534,8 +542,34 @@ class AmapView implements MapView {
     create(); // 无 plugin 环境(测试):构造失败走 catch 分支
   }
 
+  /**
+   * 缩放/平移结束后重推 LabelMarker 位置。LabelsLayer 在相机变化时会把
+   * 视野外点从渲染列表摘掉,isAttached 仍为 true,sync() 补不回来。
+   * setPosition 同坐标强制图层重算,隐藏点(_dmVisible=false)跳过。
+   */
+  private refreshLabelsLayer(): void {
+    if (this.destroyedFlag || !this.labelsLayer) return;
+    for (const marker of this.labelMarkers) {
+      if (marker._dmVisible === false) continue;
+      if (typeof marker.setPosition !== 'function') continue;
+      const pos = typeof marker.getPosition === 'function' ? marker.getPosition() : null;
+      if (!pos) continue;
+      if (Array.isArray(pos) && pos.length >= 2) {
+        marker.setPosition(pos);
+      } else if (typeof pos.getLng === 'function' && typeof pos.getLat === 'function') {
+        marker.setPosition([pos.getLng(), pos.getLat()]);
+      }
+    }
+  }
+
   destroy(): void {
     this.destroyedFlag = true;
+    try {
+      this.map.off?.('zoomend', this.onCameraSettled);
+      this.map.off?.('moveend', this.onCameraSettled);
+    } catch {
+      // 地图已销毁:忽略
+    }
     const waiters = this.scaleWaiters;
     this.scaleWaiters = [];
     for (const w of waiters) w(null);

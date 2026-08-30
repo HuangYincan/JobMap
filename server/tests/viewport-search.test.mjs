@@ -21,6 +21,11 @@ import {
   popularityScore,
   searchRadiusMeters,
   zoomStrategy,
+  HANGZHOU_BBOX,
+  clipToHangzhouExtent,
+  mergePreferringViewport,
+  shouldUseHangzhouLocal,
+  DOMAIN_POI_HARD_CAP,
 } from '../src/lib/viewport-search.ts';
 import {
   createViewportLoader,
@@ -931,4 +936,37 @@ test('needsViewportAlign: 无快照/远中心/zoom 差超阈值 → 不符(触�
   // 同城 ~5km 且 zoom 差 ≤ 2 → 相符,不触发
   assert.equal(needsViewportAlign(hz, { lng: 120.2, lat: 30.25 }, 13), false);
   assert.equal(needsViewportAlign(hz, { lng: 120.15, lat: 30.27 }, 15), false);
+});
+
+test('clipToHangzhouExtent: 略超出杭州框裁成交集,上海框为 null', () => {
+  const inside = { west: 120.0, south: 30.2, east: 120.3, north: 30.4 };
+  assert.deepEqual(clipToHangzhouExtent(inside), inside);
+  const overflow = { west: 118.0, south: 28.5, east: 121.2, north: 31.0 };
+  const clipped = clipToHangzhouExtent(overflow);
+  assert.deepEqual(clipped, HANGZHOU_BBOX);
+  const shanghai = { west: 121.0, south: 30.9, east: 121.8, north: 31.5 };
+  assert.equal(clipToHangzhouExtent(shanghai), null);
+  assert.equal(clipToHangzhouExtent(null), null);
+});
+
+test('shouldUseHangzhouLocal: 看视野框不看定位点', () => {
+  const hz = { lng: 120.15, lat: 30.27 };
+  const sh = { west: 121.0, south: 30.9, east: 121.8, north: 31.5 };
+  const overflowHz = { west: 118.0, south: 28.5, east: 121.2, north: 31.0 };
+  assert.equal(shouldUseHangzhouLocal(hz, overflowHz), true, '杭州中心+略超框 → 本地');
+  assert.equal(shouldUseHangzhouLocal(hz, sh), false, 'searchOrigin 在杭州但镜头在上海 → 不锁本地');
+  assert.equal(shouldUseHangzhouLocal(hz, undefined), true, '无 bounds 回退中心点');
+});
+
+test('mergePreferringViewport: 新视野优先,外地旧点保留到 cap', () => {
+  const hz = (id) => ({ id, location: { lng: 120.15, lat: 30.27 } });
+  const bj = (id) => ({ id, location: { lng: 116.4, lat: 39.9 } });
+  const westLake = { west: 120.1, south: 30.2, east: 120.2, north: 30.35 };
+  const existing = [bj('bj-1'), hz('old-hz')];
+  const incoming = [hz('new-hz')];
+  const merged = mergePreferringViewport(existing, incoming, westLake, 10);
+  assert.deepEqual(merged.map((p) => p.id), ['new-hz', 'old-hz', 'bj-1']);
+  const capped = mergePreferringViewport(existing, incoming, westLake, 2);
+  assert.deepEqual(capped.map((p) => p.id), ['new-hz', 'old-hz'], 'cap 先保新视野,再保视野内旧点,外地点最后淘汰');
+  assert.equal(DOMAIN_POI_HARD_CAP, 1000);
 });

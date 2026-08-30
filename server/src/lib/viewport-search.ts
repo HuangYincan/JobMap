@@ -86,6 +86,66 @@ export function inHangzhouBox(loc: { lng: number; lat: number }): boolean {
   return loc.lng >= west && loc.lng <= east && loc.lat >= south && loc.lat <= north;
 }
 
+/** 两框相交;无重叠或非法框 → null。 */
+export function intersectBounds(
+  a: ViewportBounds,
+  b: ViewportBounds,
+): ViewportBounds | null {
+  const west = Math.max(a.west, b.west);
+  const south = Math.max(a.south, b.south);
+  const east = Math.min(a.east, b.east);
+  const north = Math.min(a.north, b.north);
+  if (!(west < east && south < north)) return null;
+  return { west, south, east, north };
+}
+
+/**
+ * 把视野裁到杭州导入范围。略超出(zoom 9 常见)不再 400,而是查交集;
+ * 与杭州不相交(上海/北京视野)→ null,调用方走高德。
+ */
+export function clipToHangzhouExtent(
+  bounds: ViewportBounds | null | undefined,
+): ViewportBounds | null {
+  if (!bounds) return null;
+  return intersectBounds(bounds, HANGZHOU_BBOX);
+}
+
+/**
+ * Domain 是否走 hz_pois:以**视野框**为准,不用用户定位/searchOrigin。
+ * 人在杭州但镜头在上海时,旧逻辑 inHangzhouBox(searchOrigin) 仍打本地库,
+ * 越界 bounds → 400 → 25 条高德整表替换,外地 POI 被抹掉。
+ * 有 bounds:与杭州有交集才走本地;无 bounds 才回退中心点。
+ */
+export function shouldUseHangzhouLocal(
+  center: LngLat,
+  bounds?: ViewportBounds | null,
+): boolean {
+  if (bounds) return clipToHangzhouExtent(bounds) !== null;
+  return inHangzhouBox(center);
+}
+
+/**
+ * 视口刷新合并:新视野批次优先入池,再保留仍在视野内的旧点,最后才是
+ * 视野外旧点(外地/外区)。cap 满时丢掉最旧的视野外点,不整表替换。
+ * incoming 在前 — mergePoisById 先保留 existing,新视野否则永远挤不进 1000。
+ */
+export function mergePreferringViewport<T extends { id: string; location?: { lng: number; lat: number } }>(
+  existing: T[],
+  incoming: T[],
+  bounds: ViewportBounds | null | undefined,
+  cap = DOMAIN_POI_HARD_CAP,
+): T[] {
+  const incomingIds = new Set(incoming.map((p) => p.id).filter(Boolean));
+  const leftover = existing.filter((p) => p?.id && !incomingIds.has(p.id));
+  const inView: T[] = [];
+  const outView: T[] = [];
+  for (const poi of leftover) {
+    if (bounds && inBounds(poi.location, bounds)) inView.push(poi);
+    else outView.push(poi);
+  }
+  return mergePoisById(incoming, [...inView, ...outView], cap);
+}
+
 /** 低层级只搜地标，避免全国铺满杂店 */
 export const LANDMARK_KEYWORDS = [
   '风景名胜',

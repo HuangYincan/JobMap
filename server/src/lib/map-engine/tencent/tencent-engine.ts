@@ -430,6 +430,8 @@ class TencentView implements MapView {
   private scaleOffs: Array<() => void> = [];
   /** 自绘比例尺降级说明一次性标记(防 resize 重建刷屏) */
   private scaleFallbackWarned = false;
+  /** idle 后把 SDK LOD 摘掉但仍应可见的 geometry 补回图层 */
+  private lodRestoreOff: (() => void) | null = null;
 
   constructor(tmap: any, raw: any, engine: MapEngine) {
     this.tmap = tmap;
@@ -888,6 +890,7 @@ class TencentView implements MapView {
         }, 0);
       }
       this.multiMarker = raw;
+      this.ensureLodRestore();
     } else {
       // 增量添加(SDK 核实:add 跳过已存在 id;新样式已在 resolveMultiStyle
       // 经 setStyles 上实例,必须先于 add——geometry 引用的 styleId 不能缺失)
@@ -1297,9 +1300,41 @@ class TencentView implements MapView {
     this.scaleOffs = [];
   }
 
+  /**
+   * 首次 MultiMarker 才挂 idle 补回。构造时绑会让就绪等待的 idle 解绑断言失败,
+   * 也会让 content overlay 的「idle 恰一个监听」多出一个 LOD handler。
+   */
+  private ensureLodRestore(): void {
+    if (this.lodRestoreOff || this.destroyed) return;
+    // idle = 底层 zoomend/moveend 后 300ms。SDK 会把视野外 geometry 从
+    // _idSet 摘掉,适配层 multiAttached 仍认为挂着 → zoom 出杭州后外地点不回来。
+    this.lodRestoreOff = this.on('moveend', () => this.restoreAttachedMultiGeometries());
+  }
+
+  /**
+   * 把 multiAttached 的 geometry 全量 setGeometries 回图层。
+   * SDK LOD 摘视野外点后 _idSet 缺 id,适配层仍记为已挂;缩放回大视野时
+   * 不会自己加回。隐藏点不在 multiAttached,不会被误挂。
+   */
+  private restoreAttachedMultiGeometries(): void {
+    if (!this.multiMarker || typeof this.multiMarker.setGeometries !== 'function') return;
+    const attached: Array<{ id: string; position: unknown; styleId: string }> = [];
+    for (const id of this.multiAttached) {
+      const g = this.multiGeometries.get(id);
+      if (g) attached.push(g);
+    }
+    this.multiMarker.setGeometries(attached.slice());
+  }
+
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
+    try {
+      this.lodRestoreOff?.();
+    } catch {
+      // 解绑失败不影响销毁
+    }
+    this.lodRestoreOff = null;
     // 自绘比例尺摘除(降级路径 DOM + 事件解绑)
     this.removeFallbackScale();
     // content DOM 覆盖物摘除(div 直挂容器,销毁必须手动清理,防 DOM 泄漏)

@@ -2,6 +2,31 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-30: 人在杭州高频缩放时其他地区 POI 消失
+
+**症状**:用户定位在杭州,频繁平移/缩放地图后,其他区/其他城市的 POI 从地图上消失,再缩回去也不回来。
+
+**根因**(叠加):
+
+1. **Domain 视口 REPLACE**:`use-work-viewport` 每次 moveend/zoomend 以 `existing: []` 取新视野再 `setCatalog(batch)`,累计池被当前框整表替换。杭州略放大超出 `HANGZHOU_BBOX` → `/api/pois/domain-local` 400 `BOUNDS_OUT_OF_RANGE` → 高德 25 条兜底再盖掉本地 ~1000 条。
+2. **分叉看定位不看镜头**:`inHangzhouBox(searchOrigin)`。人在杭州、镜头在上海仍打杭州本地库(或 400)。
+3. **AMap LabelsLayer**:`allowCollision:false` 让底图文字把远点永久避让隐藏;`use-poi-map` 不再 `zoomchange` sync,`isAttached` 仍为 true,被摘的点补不回来。
+4. **腾讯 MultiMarker LOD**:SDK 把视野外 geometry 从 `_idSet` 摘掉,适配层 `multiAttached` 仍认为挂着,放大视野不会 `add` 回去。
+5. **列表 `mapBounds`**:`syncView` 只挂 `moveend`/`complete`,AMap 滚轮缩放有时不派 moveend,列表/可见集停在旧的杭州小框。
+
+**修复**:
+
+- `shouldUseHangzhouLocal(center, bounds)`:有 bounds 以与杭州是否相交为准;相交则 `clipToHangzhouExtent` 再查本地,不相交走高德。
+- Domain 视口 `onBatch` 用 `mergePreferringViewport`(新视野优先,外地点保留到 cap),不再整表替换。
+- 视口请求 `center` 用 live 相机,不是 `searchOrigin`。
+- AMap:`allowCollision:true`;LabelMarker `zooms:[2,20]`;`zoomend`/`moveend` 对可见点重推 `setPosition`。
+- 腾讯:`idle`(契约 moveend)后对 `multiAttached` `setGeometries` 补回;显式隐藏不在 attached,不会误挂。
+- `map-shell` `zoomend` 也 `syncView`;Domain 列表按 `mapBounds` 裁,marker 池仍是 catalog 全量。
+
+**相关文件**:`viewport-search.ts`、`poi-service.ts`、`use-work-viewport.ts`、`map-shell.tsx`、`amap-engine.ts`、`tencent-engine.ts`。
+
+**验证**: worktree `fix/poi-zoom-other-regions` 上 `cd server && npm test` → **1896 tests / 1893 pass / 3 skip / 0 fail**; `npm run typecheck` 通过; `make docs-check` + `git diff --check` 通过。浏览器端到端未在本条目宣称已过。
+
 ## 2026-08-29: 全国视野深圳/广州等城市聚合点消失
 
 **症状**:工作模式缩到 zoom ≤ 8,珠海/惠州等小城徽章还在,深圳/广州/东莞/佛山

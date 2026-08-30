@@ -59,6 +59,14 @@ test('work viewport scheduling conditions live in the hook, not map-shell', () =
   // 客户端裁剪(work 模式),marker 源 catalog 只增不减(全量加载后恒定)
   assert.doesNotMatch(shell, /listCatalog|setListCatalog|listCatalogRef/);
   assert.match(shell, /catalog\.filter\(\(p\) => inBounds\(p\.location, mapBounds\)\)/);
+  // 列表裁剪 work+domain 共用;marker 池仍是 catalog 全量(外区点不销毁)
+  assert.match(
+    shell,
+    /canonicalMode\(mode\) === "work" \|\| canonicalMode\(mode\) === "domain"\) && mapBounds/,
+  );
+  // AMap 滚轮缩放常不派 moveend:zoomend 也要 syncView,否则 mapBounds 停在旧框
+  assert.match(shell, /onViewEvent\(view, "zoomend", syncView\)/);
+  assert.match(shell, /offZoomEnd\?\.\(\);/);
   // work 主加载:全量取尽(不传 bounds/maxTier,page 恒 1)
   assert.match(shell, /maxPages: WORK_FULL_LOAD_MAX_PAGES,/);
   assert.doesNotMatch(shell, /maxTier: maxTierForZoom\(view\.zoom\)/);
@@ -87,8 +95,10 @@ test('useWorkViewport: 视口世代 epoch 校验 + loader 协作取消信号(epo
   // onBatch 入口:mode 守卫旁加 epoch 校验(丢弃过期世代:不 setCatalog、不写缓存)
   assert.match(hook, /epoch !== viewportEpochRef\.current/);
   const guardAt = hook.indexOf('epoch !== viewportEpochRef.current');
-  const writeAt = hook.indexOf('catalogRef.current = batch;');
+  const writeAt = hook.indexOf('catalogRef.current = next;');
   assert.ok(guardAt !== -1 && writeAt !== -1 && guardAt < writeAt, 'epoch 校验必须先于 catalog 落地');
+  assert.match(hook, /mergePreferringViewport\(/);
+  assert.match(hook, /center: center \?\? v\.searchOrigin \?\? undefined/);
   // loader 信号:load 签名收 signal;透传进 fetchPOIsForMode(domain 分支已支持 signal)
   assert.match(hook, /load: async \(signal\) =>/);
   const fetchAt = hook.indexOf('fetchPOIsForMode({');

@@ -441,3 +441,66 @@ test('fetchPOIsForMode(domain + 关键词): provider.searchPOI 抛错 → 错误
     setActiveSearchProvider(null);
   }
 });
+
+test('fetchPOIsForMode(domain): 杭州中心但视野略超出导入框 → 裁剪后走本地,不 400', async () => {
+  const originalFetch = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (url) => {
+    urls.push(String(url));
+    return {
+      ok: true,
+      json: async () => ({ total: 1, offset: 0, limit: 50, results: [domainPoi('hz')] }),
+    };
+  };
+  try {
+    const { pois } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 9,
+      bounds: { west: 118.0, south: 28.5, east: 121.2, north: 31.0 },
+      existing: [],
+    });
+    assert.equal(pois.length, 1);
+    assert.equal(urls.length, 1);
+    assert.match(urls[0], /domain-local/);
+    const u = new URL(urls[0], 'http://local.test');
+    const parts = u.searchParams.get('bounds').split(',').map(Number);
+    assert.ok(parts[0] >= 118.3 && parts[1] >= 29.1 && parts[2] <= 120.8 && parts[3] <= 30.7);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('fetchPOIsForMode(domain): 上海视野即使 center 仍是杭州 → 不打 domain-local', async () => {
+  const originalFetch = globalThis.fetch;
+  const urls = [];
+  const providerCalls = [];
+  setActiveSearchProvider({
+    searchPOI: async (params) => {
+      providerCalls.push(params);
+      return [domainPoi('sh')];
+    },
+    fetchSuggestions: async () => [],
+    getCurrentPosition: async () => null,
+    geocodeAddress: async () => null,
+  });
+  globalThis.fetch = async (url) => {
+    urls.push(String(url));
+    throw new Error(`unexpected fetch: ${url}`);
+  };
+  try {
+    const { pois } = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 13,
+      bounds: { west: 121.0, south: 30.9, east: 121.8, north: 31.5 },
+      existing: [],
+    });
+    assert.equal(urls.filter((u) => u.includes('domain-local')).length, 0);
+    assert.ok(providerCalls.length >= 1);
+    assert.ok(pois.some((p) => p.id === 'sh'));
+  } finally {
+    globalThis.fetch = originalFetch;
+    setActiveSearchProvider(null);
+  }
+});
