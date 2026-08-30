@@ -1921,3 +1921,17 @@ failed:", err)` 触发 Next 开发 overlay,用户看到红屏;旧高德其实还
 修复:load 失败且有旧 view → `rolledBack` 保留旧视图不上抛;切换失败改
 `console.warn`;缓冲 ≥250 时不判拦截,load 时 `setResourceTimingBufferSize(1000)`。
 真拦截仍须扩展白名单 / 无痕窗口。
+
+## 2026-08-30:favicon.im 静态跳过 CORS 预检(fix/icon-cors-skip-favicon-im)
+
+全国工作目录加载后,AMap LabelMarker / TMap MultiMarker 对每家公司的
+`favicon.im` URL 做 `new Image({crossOrigin:'anonymous'})` 预检。该源不返回
+ACAO(常 302),浏览器每 URL 打 2 行 CORS + `ERR_FAILED`,控制台被打满。
+
+`icon-preflight.ts` 把 `favicon.im` / `*.favicon.im` 标成已知无 CORS:**不探测、
+status='fail'**。`resolveTMapIconSrc` 同拍把第一个 unknown 推到 `icon.horse`
+(有 `access-control-allow-origin: *`)。HTML `<img>`(卡片/详情/百度 content,
+无 crossOrigin)仍走 favicon.im → icon.horse onerror 链。
+
+回归:`tests/icon-preflight.test.mjs` 钉死零 Image;`map-engine-tencent` 钉死
+toPreflight=`[icon.horse]`。

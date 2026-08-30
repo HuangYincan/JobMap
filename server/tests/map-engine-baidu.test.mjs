@@ -2252,7 +2252,7 @@ test('createMarker icon 防御(ws-e):远程未验证 → 回退 content 锚点�
     const marker = view.createMarker({
       position: GCJ,
       content: '<b>徽章</b>',
-      icon: { src: 'https://favicon.im/example.com', size: [24, 24] },
+      icon: { src: 'https://icons.test/example.com', size: [24, 24] },
     });
     const raw = marker.raw;
     assert.ok(raw.icon instanceof FakeIcon, '远程未验证 → 不构造远程 Icon,回退 content 锚点图标');
@@ -2260,7 +2260,7 @@ test('createMarker icon 防御(ws-e):远程未验证 → 回退 content 锚点�
     assert.equal(raw.icon.size.width, 1, '锚点图标 1×1');
     assert.equal(raw.content, '<b>徽章</b>', 'content 已设(msTarget DOM 渲染,<img> 无需 CORS)');
     assert.equal(image.calls.length, 1, '未验证 → 触发后台预检');
-    assert.equal(image.calls[0].src, 'https://favicon.im/example.com');
+    assert.equal(image.calls[0].src, 'https://icons.test/example.com');
     assert.equal(image.calls[0].crossOrigin, 'anonymous', '匿名 CORS 预检(与 WebGL 纹理加载同源)');
   } finally {
     image.restore();
@@ -2270,29 +2270,29 @@ test('createMarker icon 防御(ws-e):远程未验证 → 回退 content 锚点�
 test('createMarker icon 防御(ws-e):预检 ok → 真 URL Icon;fail → 回退 content 路径不重试', async () => {
   setup();
   const { view } = await makeView();
-  const image = installImageMock({ failUrls: ['https://favicon.im/fail.example'] });
+  const image = installImageMock({ failUrls: ['https://icons.test/fail.example'] });
   try {
     // 预检成功 → 真 logo 直通,缓存命中不重复预检
-    preflightRemoteIcon('https://favicon.im/ok.example');
+    preflightRemoteIcon('https://icons.test/ok.example');
     await settle();
-    assert.equal(remoteIconStatus('https://favicon.im/ok.example'), 'ok');
+    assert.equal(remoteIconStatus('https://icons.test/ok.example'), 'ok');
     const m1 = view.createMarker({
       position: GCJ,
-      icon: { src: 'https://favicon.im/ok.example', size: [24, 24] },
+      icon: { src: 'https://icons.test/ok.example', size: [24, 24] },
     });
     assert.ok(m1.raw.icon instanceof FakeIcon);
-    assert.equal(m1.raw.icon.url, 'https://favicon.im/ok.example', 'ok → 真 logo 直通');
+    assert.equal(m1.raw.icon.url, 'https://icons.test/ok.example', 'ok → 真 logo 直通');
     assert.equal(image.calls.length, 1, 'ok 缓存命中不重复预检');
 
     // 预检失败 → 回退 content 锚点路径;失败记忆化同一 URL 不重试
     resetIconPreflightCache();
-    preflightRemoteIcon('https://favicon.im/fail.example');
+    preflightRemoteIcon('https://icons.test/fail.example');
     await settle();
-    assert.equal(remoteIconStatus('https://favicon.im/fail.example'), 'fail');
+    assert.equal(remoteIconStatus('https://icons.test/fail.example'), 'fail');
     const m2 = view.createMarker({
       position: GCJ,
       content: '<b>徽章2</b>',
-      icon: { src: 'https://favicon.im/fail.example', size: [24, 24] },
+      icon: { src: 'https://icons.test/fail.example', size: [24, 24] },
     });
     assert.ok(String(m2.raw.icon.url).startsWith('data:'), 'fail → 回退 content 锚点(dataURL)');
     assert.equal(m2.raw.icon.size.width, 1);
@@ -2780,7 +2780,7 @@ test('createMarker(content+icon):icon 为渲染主机制,content 不注入(防�
     const marker = view.createMarker({
       position: GCJ,
       content: '<b>徽章</b>',
-      icon: { src: 'https://favicon.im/example.com', size: [24, 24] },
+      icon: { src: 'https://icons.test/example.com', size: [24, 24] },
     });
     assert.ok(marker.raw instanceof FakeNoContentMarker, 'content+icon → 厂商 Marker');
     assert.ok(marker.raw.icon instanceof FakeIcon, '远程 icon 未预检 → 空白锚点图标(回落 content 注入渲染)');
@@ -2788,13 +2788,13 @@ test('createMarker(content+icon):icon 为渲染主机制,content 不注入(防�
     assert.equal(marker.raw.domElement.innerHTML, '<b>徽章</b>', '回落 content 注入(不丢视觉)');
     assert.equal(image.calls.length, 1, '远程 icon 触发预检一次(与 icon-only 路径同契约)');
     // 预检成功后重建 → 真图标纹理 + content 不注入(防双渲染)
-    preflightRemoteIcon('https://favicon.im/ok.example');
+    preflightRemoteIcon('https://icons.test/ok.example');
     await settle();
-    assert.equal(remoteIconStatus('https://favicon.im/ok.example'), 'ok');
+    assert.equal(remoteIconStatus('https://icons.test/ok.example'), 'ok');
     const m2 = view.createMarker({
       position: GCJ,
       content: '<b>徽章2</b>',
-      icon: { src: 'https://favicon.im/ok.example', size: [24, 24] },
+      icon: { src: 'https://icons.test/ok.example', size: [24, 24] },
     });
     assert.ok(m2.raw.icon instanceof FakeIcon, '预检 ok → 真图标纹理(GL 渲染)');
     assert.equal(m2.raw.domElement.innerHTML, '', 'content 不注入(icon 主机制,防双渲染)');

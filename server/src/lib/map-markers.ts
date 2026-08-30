@@ -264,16 +264,14 @@ function logoFallbackUrls(poi: RecruitmentPOI): string[] {
  * - 无 logoUrl → 直接 fallback（与 AMap 徽章路径一致：缺 logo 不试候选，
  *   零预检）；
  * - logoUrl 本地（data:/相对，同源 CORS-clean）或已预检 ok → 直接作 icon.src；
- * - logoUrl 已失败（favicon.im 实测场景）→ 依次试
+ * - logoUrl 已失败（favicon.im 静态跳过 / 预检失败）→ 依次试
  *   `faviconCandidatesFromUrl(careerUrl)` 候选（跳过与 logoUrl 相同的 URL）：
  *   首个本地/已 ok 者作 icon.src；未预检（unknown）候选收入 toPreflight
  *   （调用方后台触发预检，失败记忆化不重复；下次重建自然升级真 logo）；
- * - **链式预检（2026-08-23 ws-i）**：toPreflight 只含候选链中**第一个
- *   unknown**（logoUrl 优先，其次候选链顺序）——一次性把全部 unknown 候选
- *   都入清单会让每个 POI 的整条候选链同时后台预检（24 POI × ~8 URL ≈ 192
- *   个失败请求刷屏，首会话 370-740 行 CORS error 根因）。只预检第一个：
- *   成功 → 下次重建用真 logo；失败记忆化 → 下次重建自然试下一个候选，
- *   每 POI 最多 1 个预检请求，失败一次多一个（渐进收敛，绝不刷屏）；
+ * - **链式预检（2026-08-23 ws-i；2026-08-30 静态跳过 favicon.im）**：
+ *   toPreflight 只含候选链中**第一个 unknown**。favicon.im 在 icon-preflight
+ *   里静态 fail（不 new Image），故首个 unknown 通常是 icon.horse——首会话
+ *   不再对每家公司打一遍无 CORS 的 favicon.im。
  * - 全部失败/无候选 → 降级 fallbackSrc（本地 dataURL emoji 徽章）。
  *
  * @returns src 最终 icon.src；toPreflight 需要调用方后台预检的 URL 清单
