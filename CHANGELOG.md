@@ -6,6 +6,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Changed
 
+- **百度底图切换不再 1.5s 误超时。** v1.0 在 `centerAndZoom` 当下就把 `map.loaded` 设 true 并派发 `load`；旧逻辑在这之后才等 `onfirsttilesloaded`，健康 AK 下 tile 事件也不来，于是 `failBaidu` + Next 红屏。就绪判定认已 `loaded` / `load`；可恢复的切换失败改 `console.warn`，不再触发 overlay。
 - **重新打开高德 / 腾讯 / 百度底图切换。** `ENGINE_PRIORITY` 从只留高德恢复为 `['amap','tencent','baidu']`。图层面板「地图源」重新列出三家(未配 JSAPI key 的仍显示为禁用);会话偏好可切腾讯/百度。2026-08-23 因切换 POI 消失曾关掉此入口,引擎实现一直保留。
 - **登录面板去掉密码登录。** AuthModal 只保留 手机 / 邮箱 / 其他登录。密码 tab、用户名注册、忘记密码链接、注册后绑定引导一并拿掉。账户页「密码与安全」和 `/api/auth/password/*` 仍在。
 - **已保存并入收藏图层三级卡。** 桌面侧栏和手机工具栏不再有独立「已保存」。图层 L2 只留开关 / 底图 / 地图源；打开收藏图层后右侧出 L3 霜面卡（列表 + 两家对比）。关掉开关或关掉该卡会卸下卡片。手机在图层 sheet 里、开关打开后把同一份列表叠在开关下方。未登录点开关仍弹出登录。

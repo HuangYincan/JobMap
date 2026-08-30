@@ -283,7 +283,7 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
           viewRef.current = next;
           setView(next);
           setMountError(null); // 活 view 落地:无挂载错误(错误态诚实化)
-          console.error("[use-map-engine] switchEngine 目标创建失败,已回滚旧引擎视图", result.error);
+          console.warn("[use-map-engine] switchEngine 目标创建失败,已回滚旧引擎视图", result.error);
           return;
         }
         // 切换期间挂载 createView 落地(挂载与切换并发):最新意图(切换)赢,

@@ -165,7 +165,10 @@ function failBaidu(
   err.stage = stage;
   err.guidance = BAIDU_FAILURE_GUIDANCE[code];
   if (cause !== undefined) (err as { cause?: unknown }).cause = cause;
-  console.error('[map-engine] baidu 加载失败分类', {
+  // warn 而非 error:失败已被 switch 回滚/调用方捕获;Next.js 把
+  // console.error 当成 overlay(用户看到空 {} 红屏),会把可恢复的切换失败
+  // 误报成未处理异常。
+  console.warn('[map-engine] baidu 加载失败分类', {
     code,
     stage,
     detail,
@@ -399,6 +402,12 @@ interface BMapInstance {
   addControl?(control: unknown): unknown;
   addEventListener?(event: string, cb: () => void): unknown;
   removeEventListener?(event: string, cb: () => void): unknown;
+  /**
+   * v1.0 GL:centerAndZoomIn 内 `_addTileLayer` 后同步置 true(图层已建,
+   * 不是瓦片已绘完)。真实 SDK 在相机应用后立刻为 true,此时 `load` 事件
+   * 也已派发——若 waitForMapReady 在相机之后才注册,会错过该事件。
+   */
+  loaded?: boolean;
   destroy(): unknown;
 }
 
@@ -783,6 +792,9 @@ function applyMapStyle(map: BMapInstance, style: MapStyleId): void {
 /**
  * BMapGL v1.0 真实就绪事件(2026-08-22 SDK 源码核实,getscript?type=webgl&v=1.0
  * 直连本体 1.2MB,见 tech/23-map-engines.md 回填):
+ *   - `load`:v1.0 在构造/`centerAndZoomIn` 内同步派发(2026-08-30 真机坐实:
+ *     派发于相机应用当下;tile 事件 8s 内 0 次)。本函数若在相机之后才注册
+ *     会错过,故同时认 `map.loaded === true`
  *   - `onfirsttilesloaded` / `onfirsttileloaded`:首帧瓦片批加载完成(GL 路径
  *     map 级 `_checkTilesLoaded` 派发;第一相机操作后才可能触发)
  *   - `tilesloaded`:当前视野瓦片全部完成(80ms 稳定期后派发;SDK 派发名为
@@ -793,16 +805,18 @@ function applyMapStyle(map: BMapInstance, style: MapStyleId): void {
  * setMapReadyCallback 是 BMapGL **2.0** API,v1.0 不存在(0 处命中),仅作
  * 升级兼容保留。
  */
-const BAIDU_READY_EVENTS = ['onfirsttilesloaded', 'tilesloaded', 'onstyle_loaded'] as const;
+const BAIDU_READY_EVENTS = ['load', 'onfirsttilesloaded', 'tilesloaded', 'onstyle_loaded'] as const;
 
 /**
  * 等待 BMapGL 地图就绪再返回(BMapGL 异步渲染:`new Map()` 立即返回,首帧
  * 渲染完成才派发就绪事件)。就绪信号**多通道**,任一先到即就绪:
  *   1. setMapReadyCallback(BMapGL 2.0 官方就绪回调;v1.0 不存在,保留兼容)
- *   2. BAIDU_READY_EVENTS(v1.0 真实派发事件,见上)
- * **AK 被禁用/渲染失败时 SDK 内部异步失败——瓦片请求走 4s×3 重试路径,1.5s
- * 内无任何信号 → BAIDU_MAP_READY_TIMEOUT_MS 超时 reject(文案含「BMapGL 地图
- * 就绪超时」),switch.ts 回滚契约依赖 createView 抛错(绝不返回空图)。
+ *   2. BAIDU_READY_EVENTS(`load` / `onfirsttilesloaded` / `tilesloaded` /
+ *      `onstyle_loaded`;v1.0 真实 `load` 在相机当下派发,tile 事件经常不来)
+ * **已 `map.loaded === true` 则立即就绪**(相机应用后 v1.0 同步置位;`load`
+ * 若已错过事件仍认 loaded)。AK 被禁用且 loaded 也永不置位时,仍走
+ * BAIDU_MAP_READY_TIMEOUT_MS 超时 reject(文案含「BMapGL 地图就绪超时」),
+ * switch.ts 回滚契约依赖 createView 抛错(绝不返回空图)。
  * ⚠️ 就绪事件只在**相机操作之后**才可能派发(GL 构造不设默认视图、底图图层
  * 在 centerAndZoomIn 内才创建,见 createView 注释)→ 本函数必须晚于相机应用。
  * 事件系统/回调通道均不可用 → 立即放行(测试 mock/异常形态不阻塞);
@@ -859,6 +873,13 @@ function waitForMapReady(map: BMapInstance): Promise<void> {
     }
     if (channels === 0) {
       onReady(); // 事件系统不可用 → 立即放行(不阻塞 createView)
+      return;
+    }
+    // 相机已应用后 `map.loaded` 为 true、`load` 已派发完毕(v1.0 同步)。
+    // 只等 tile 事件会在健康 AK 下 1.5s 误超时(2026-08-30 真机:tile 事件
+    // 8s 内 0 次,loaded 在 centerAndZoom 当下已 true)。
+    if (map.loaded === true) {
+      onReady();
       return;
     }
     timer = setTimeout(onTimeout, BAIDU_MAP_READY_TIMEOUT_MS);
