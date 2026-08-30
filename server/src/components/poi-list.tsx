@@ -42,9 +42,6 @@ export interface POIListProps {
   noMore?: boolean;
   /** 卡片右上「移除收藏」按钮(仅收藏模式传入;不传则 POICard 完全不渲染) */
   onRemove?: (poi: POI) => void;
-  commuteMinutesById?: Record<string, number>;
-  compareSelected?: string[];
-  onToggleCompare?: (poi: POI) => void;
   /**
    * 岗位卡片展示距离圆心（用户定位，缺则视野中心）。
    * 不改变列表排序（排序仍用 poi.distance / 视野中心）。
@@ -78,9 +75,6 @@ export function POIList({
   atCap = false,
   noMore = false,
   onRemove,
-  commuteMinutesById,
-  compareSelected,
-  onToggleCompare,
   displayOrigin,
 }: POIListProps) {
   const showEmpty = !loading && (empty || pois.length === 0);
@@ -238,10 +232,6 @@ export function POIList({
                 lang={lang}
                 accentColor={accentColor}
                 onRemove={onRemove}
-                commuteMinutes={commuteMinutesById?.[poi.id]}
-                commuteEstimated={typeof commuteMinutesById?.[poi.id] === "number"}
-                compareChecked={compareSelected?.includes(poi.id)}
-                onToggleCompare={onToggleCompare}
                 displayOrigin={displayOrigin}
               />
             </div>

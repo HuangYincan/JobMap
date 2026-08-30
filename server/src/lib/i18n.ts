@@ -1388,10 +1388,6 @@ export const translations = {
     zh: '对比',
     en: 'Compare',
   },
-  commuteEstimateBadge: {
-    zh: '估算',
-    en: 'Est.',
-  },
   commuteQualityEstimate: {
     zh: '估算',
     en: 'Estimate',

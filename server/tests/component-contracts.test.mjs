@@ -24,6 +24,27 @@ test('POICard is a keyboard button with selected/highlight states', () => {
   assert.match(card, /onClick=\{\s*\(e\) => \{[\s\S]*onClick\?\.\(poi\)/);
 });
 
+test('POICard does not show commute estimate minutes or compare checkbox', () => {
+  const card = src('components/poi-card.tsx');
+  const list = src('components/poi-list.tsx');
+  const css = src('components/poi-card.module.css');
+  const i18n = src('lib/i18n.ts');
+  assert.doesNotMatch(card, /commuteEstimateBadge/);
+  assert.doesNotMatch(card, /commuteMinutes/);
+  assert.doesNotMatch(card, /commuteEstimated/);
+  assert.doesNotMatch(card, /onToggleCompare/);
+  assert.doesNotMatch(card, /compareChecked/);
+  assert.doesNotMatch(card, /type="checkbox"/);
+  assert.doesNotMatch(list, /commuteMinutesById/);
+  assert.doesNotMatch(list, /commuteMinutes=/);
+  assert.doesNotMatch(list, /onToggleCompare/);
+  assert.doesNotMatch(list, /compareSelected/);
+  assert.doesNotMatch(css, /\.commuteBadge/);
+  assert.doesNotMatch(css, /\.commuteRow/);
+  assert.doesNotMatch(css, /\.compareLabel/);
+  assert.doesNotMatch(i18n, /commuteEstimateBadge/);
+});
+
 test('job POI card display distance uses user location; sort stays view center', () => {
   const card = src('components/poi-card.tsx');
   const list = src('components/poi-list.tsx');
@@ -116,6 +137,18 @@ test('map shell lazy-loads rail panels and detail chrome', () => {
   assert.match(shell, /function prefetchRail/);
   assert.match(shell, /onMouseEnter=\{\(\) => prefetchRail\("layers"\)\}/);
   assert.doesNotMatch(shell, /import \{ AuthModal \} from "\.\/auth-modal"/);
+});
+
+test('inner MapShell dynamic() panels have their own Suspense boundary', () => {
+  // Default next/dynamic (ssr:true, loading:null) has no local Suspense.
+  // First mount of Layers/Recent/Profile then bubbles to HomeMap's
+  // "Loading map…" fallback — the user-visible first-click refresh.
+  const shell = src('components/map-shell.tsx');
+  const calls = [...shell.matchAll(/const \w+ = dynamic\(\(\) => import\([^;]+;/g)].map((m) => m[0]);
+  assert.equal(calls.length, 9);
+  for (const call of calls) {
+    assert.match(call, /\{\s*ssr:\s*false\s*\}/, `missing ssr:false literal: ${call.slice(0, 90)}`);
+  }
 });
 
 test('home page lazy-loads MapShell on the client', () => {

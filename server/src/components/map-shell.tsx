@@ -52,7 +52,6 @@ import {
   COMMUTE_SLIDER_DEFAULT,
   estimatePath,
   filterByCommuteEstimate,
-  toggleCommuteCompare,
 } from "@/lib/commute-filter";
 import { buildCommuteCompareColumns } from "@/lib/commute-compare";
 import { isAlivePosition } from "@/lib/position-alive";
@@ -63,15 +62,24 @@ import { WorkExploreTabs } from "./commute-chrome";
 import { CommuteCompareTable } from "./commute-compare-table";
 import { RouteOverlayBar, type RouteOverlayModel } from "./route-overlay-bar";
 
-const POIDetailView = dynamic(() => import("./poi-detail").then((mod) => mod.POIDetailView));
-const JdPanel = dynamic(() => import("./jd-panel").then((mod) => mod.JdPanel));
-const AuthModal = dynamic(() => import("./auth-modal").then((mod) => mod.AuthModal));
-const ProfilePanel = dynamic(() => import("./account-panel").then((mod) => mod.ProfilePanel));
-const RecentPanel = dynamic(() => import("./recent-panel").then((mod) => mod.RecentPanel));
-const SavedList = dynamic(() => import("./saved-panel").then((mod) => mod.SavedList));
-const SavedPanel = dynamic(() => import("./saved-panel").then((mod) => mod.SavedPanel));
-const LayersPanel = dynamic(() => import("./layers-panel").then((mod) => mod.LayersPanel));
-const MapSourceSection = dynamic(() => import("./layers-panel").then((mod) => mod.MapSourceSection));
+/**
+ * Inner next/dynamic inside MapShell MUST own a Suspense boundary.
+ * next/dynamic defaults to ssr:true and loading:null → hasSuspenseBoundary is
+ * false (next/dist/shared/lib/lazy-dynamic/loadable.js). React.lazy then
+ * bubbles to HomeMap's MapShell loading fallback, so the first click of
+ * Layers / Recent / Profile / Auth replaces the whole shell with
+ * "Loading map…". ssr:false creates a local boundary with a null fallback.
+ * Options must be an object literal (Next "invalid-dynamic-options-type").
+ */
+const POIDetailView = dynamic(() => import("./poi-detail").then((mod) => mod.POIDetailView), { ssr: false });
+const JdPanel = dynamic(() => import("./jd-panel").then((mod) => mod.JdPanel), { ssr: false });
+const AuthModal = dynamic(() => import("./auth-modal").then((mod) => mod.AuthModal), { ssr: false });
+const ProfilePanel = dynamic(() => import("./account-panel").then((mod) => mod.ProfilePanel), { ssr: false });
+const RecentPanel = dynamic(() => import("./recent-panel").then((mod) => mod.RecentPanel), { ssr: false });
+const SavedList = dynamic(() => import("./saved-panel").then((mod) => mod.SavedList), { ssr: false });
+const SavedPanel = dynamic(() => import("./saved-panel").then((mod) => mod.SavedPanel), { ssr: false });
+const LayersPanel = dynamic(() => import("./layers-panel").then((mod) => mod.LayersPanel), { ssr: false });
+const MapSourceSection = dynamic(() => import("./layers-panel").then((mod) => mod.MapSourceSection), { ssr: false });
 
 /**
  * Rail 面板懒加载模块清单:与上方 dynamic() 声明同源路径(SavedList/SavedPanel 同文件去重)。
@@ -88,6 +96,8 @@ const RAIL_PANEL_MODULES = {
   "saved-panel": () => import("./saved-panel"),
   "layers-panel": () => import("./layers-panel"),
 } as const satisfies Record<string, () => Promise<unknown>>;
+
+const EMPTY_COMPARE_IDS: string[] = [];
 
 /** 悬停/聚焦兜底:按面板名预载对应模块子集 */
 function prefetchRail(panel: "layers" | "recent" | "profile" | "auth" | "detail") {
@@ -305,7 +315,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }, [mountError]);
   const [userLocation, setUserLocation] = useState<{ lng: number; lat: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
-  const [compareIds, setCompareIds] = useState<string[]>([]);
   const [workExploreTab, setWorkExploreTab] = useState<"jobs" | "compare" | "trip">("jobs");
   const [routeOverlay, setRouteOverlay] = useState<RouteOverlayModel>({ kind: "idle" });
   const estimateRouteCleanupRef = useRef<(() => void) | null>(null);
@@ -1387,8 +1396,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     return out;
   }, [commuteResult]);
   const comparePois = useMemo(
-    () => compareIds.map((id) => pois.find((p) => p.id === id) ?? catalog.find((p) => p.id === id)).filter(Boolean) as POI[],
-    [compareIds, pois, catalog],
+    () => EMPTY_COMPARE_IDS.map((id) => pois.find((p) => p.id === id) ?? catalog.find((p) => p.id === id)).filter(Boolean) as POI[],
+    [pois, catalog],
   );
   const compareColumns = useMemo(
     () =>
@@ -2562,13 +2571,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 ? tripOverlayNode
                 : undefined
         }
-        commuteMinutesById={workMode ? commuteMinutesById : undefined}
-        compareSelected={workMode ? compareIds : undefined}
-        onToggleCompare={
-          workMode
-            ? (poi) => setCompareIds((ids) => toggleCommuteCompare(ids, poi.id))
-            : undefined
-        }
         displayOrigin={displayOrigin}
         onClose={() => {
           setRailPanel(null);
@@ -3254,13 +3256,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 onRetry={handleRetry}
                 atCap={canonicalMode(mode) === "domain" && pois.length >= DOMAIN_POI_HARD_CAP}
                 noMore={noMoreData}
-                commuteMinutesById={workMode ? commuteMinutesById : undefined}
-                compareSelected={workMode ? compareIds : undefined}
-                onToggleCompare={
-                  workMode
-                    ? (poi) => setCompareIds((ids) => toggleCommuteCompare(ids, poi.id))
-                    : undefined
-                }
                 displayOrigin={displayOrigin}
               />
               </>

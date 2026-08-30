@@ -2,6 +2,28 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-30: 首点侧栏全屏「Loading map…」(dynamic Suspense 冒泡)
+
+**症状**:地图已出来后,第一次点侧栏图层(或最近/资料),整页变成只有「Loading map…」,再回到图层面板已打开。浏览器不是 `location.reload`(侧栏状态还在)。
+
+**根因**:`home-map.tsx` 用 `dynamic(MapShell, { ssr:false, loading: MapLoadingGuard })` 包了一层 Suspense。MapShell 里 Layers/Recent/Profile/Auth/详情 的 `next/dynamic` 走默认 `ssr:true` + `loading:null` → Next `loadable.js` 的 `hasSuspenseBoundary` 为 false,不包本地 Suspense。首次渲染 `React.lazy` 把 Promise 抛到 HomeMap,整棵 MapShell 被换成加载态。
+
+**修复**:这些 `dynamic()` 一律 `ssr: false`,本地 fallback 为 null,挂起只挡住该面板。
+
+**相关文件**:`map-shell.tsx`、`component-contracts.test.mjs`。
+
+## 2026-08-30: `next start` 底图空白(生产 CSP 禁 eval)
+
+**症状**:`npm run build && npm start` 后侧栏/控件都在,底图是一片浅灰;点侧栏会闪一下。开发 `next dev` 底图正常。
+
+**根因**:`q-csp` 把 `'unsafe-eval'` 收成仅 development。AMap JSAPI 2.0 用 eval 构造 WebGL 模块。生产 CSP 拦下后 console 是 `EvalError` + `U.Module.WebGLRender is not a constructor`:`.amap-container` 和 canvas 都有,瓦片不绘。侧栏打开引起地图 resize,渲染器再失败一次,观感像刷新。浏览器 `navigation.type` 仍是 `navigate`,并不是整页 reload。
+
+**修复**:`MAP_CSP` 的 `script-src` 在生产也放行 `'unsafe-eval'` 和 `'wasm-unsafe-eval'`。仍只作用于 `/`;`STRICT_CSP` 不含 `'unsafe-*'`。
+
+**相关文件**:`server/next.config.ts`、`server/tests/security-headers.test.mjs`、`tech/15-deploy.md`。
+
+**验证**:`cd server && node --test tests/security-headers.test.mjs`;`npm run build && npm start` 后首页 canvas>1、无 EvalError、底图有瓦片;点搜索侧栏 `beforeunload` 计数为 0。
+
 ## 2026-08-30: 人在杭州高频缩放时其他地区 POI 消失
 
 **症状**:用户定位在杭州,频繁平移/缩放地图后,其他区/其他城市的 POI 从地图上消失,再缩回去也不回来。

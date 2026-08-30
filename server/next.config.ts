@@ -10,6 +10,10 @@ import type { NextConfig } from "next";
 // and http://*.bdimg.com. A https-only script-src lets getscript (https)
 // through, then CSP-blocks the GL renderer module — Map DOM exists, no
 // canvas. http: tokens are inert on https deployments (mixed content).
+// AMap JSAPI 2.0 and BMapGL instantiate WebGL modules via eval
+// (`U.Module.WebGLRender is not a constructor` when blocked). Keep
+// 'unsafe-eval' / 'wasm-unsafe-eval' on `/` in production too; STRICT_CSP
+// on other routes stays without them.
 const MAP_CSP = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -19,7 +23,7 @@ const MAP_CSP = [
   "img-src 'self' data: blob: https: http://*.map.baidu.com http://*.bdimg.com",
   "media-src 'self' data:",
   "font-src 'self' data: https://*.amap.com https://*.map.baidu.com http://*.map.baidu.com https://*.bdimg.com http://*.bdimg.com https://map.qq.com https://*.map.qq.com",
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://*.amap.com https://*.map.baidu.com http://*.map.baidu.com https://*.bdimg.com http://*.bdimg.com https://map.qq.com https://*.map.qq.com`,
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://*.amap.com https://*.map.baidu.com http://*.map.baidu.com https://*.bdimg.com http://*.bdimg.com https://map.qq.com https://*.map.qq.com",
   "style-src 'self' 'unsafe-inline' https://*.map.baidu.com http://*.map.baidu.com https://*.amap.com https://map.qq.com https://*.map.qq.com",
   "connect-src 'self' data: blob: https: http://*.map.baidu.com http://*.bdimg.com",
   "worker-src 'self' blob:",

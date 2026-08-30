@@ -6,6 +6,8 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
+- **点侧栏图层/最近/资料会全屏闪「Loading map…」。** MapShell 里的 `next/dynamic` 默认没有自己的 Suspense,React.lazy 冒泡到 HomeMap 的加载态,整棵地图被卸掉再挂上(状态还在,所以闪完图层是开着的)。这些面板改为 `ssr: false`,用本地空 fallback,不再掀掉底图。
+- **`next start` 底图空白。** `/` 的 CSP 曾只在 `NODE_ENV=development` 放行 `'unsafe-eval'`。生产构建下 AMap JSAPI 2.0 无法实例化 WebGL 模块(`EvalError` + `U.Module.WebGLRender is not a constructor`),容器在、瓦片不绘。现 `/` 的 `script-src` 固定含 `'unsafe-eval'` / `'wasm-unsafe-eval'`;API 等非地图路由仍禁止。
 - **切百度时 Next 红屏 `script-blocked-by-client`。** getscript `onerror` 后 `load()` 上抛,`switchEngine` 走 `console.error`,开发 overlay 把可恢复失败画成未处理异常;此时旧高德还没销毁。现 load 失败直接保留旧视图(rolledBack)。Resource Timing 默认只留 250 条,POI/瓦片先占满后 getscript 不在 entries 里,会被误判成广告拦截;缓冲打满不再当拦截,并扩容到 1000。真被扩展拦截时无痕窗口或把 `api.map.baidu.com` 加白名单。
 - **百度底图切过去是灰底、没有图。** `/` 的 CSP `script-src` 只放行 `https://*.map.baidu.com`。BMapGL 在 `http://localhost` 按页面协议去拉 `http://api.map.baidu.com/getmodules`(含 mapgl 渲染器)和 `http://*.bdimg.com` 样式脚本,请求被 CSP 拦;getscript(https)仍成功,所以 chip 显示「百度」、DOM 有 `#platform`,但 **canvas 永不出现**。先前把 `map.loaded` 当就绪会把这张空图当成成功。地图 CSP 补上百度/bdimg 的 `http:`(https 部署仍走 https,明文脚本会被 mixed-content 拦);真实 DOM 等到 `canvas` 再放行,否则超时回滚。
 - **人在杭州高频平移/缩放时其他地区 POI 消失。** Domain 视口刷新曾用 `existing:[]` 整表替换,略放大视野超出杭州导入框会 400,再被 25 条高德结果盖掉累计池;分叉还看定位点不看镜头,人在杭州镜头在上海仍打本地库。现按视野框分叉、越界框先裁成杭州交集再查本地,新批次并入累计池(新视野优先,外地点保留到 cap 1000)。AMap LabelsLayer `allowCollision:true` + zoomend 重推位置;腾讯 idle 后把 SDK LOD 摘掉的可见点 `setGeometries` 补回。列表仍按当前视野裁,marker 实例不随裁剪销毁。
@@ -14,6 +16,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 - **最近投递监视默认收成 6 档。** 默认阶段改为已投递 / 面试中 / Offer / 未通过 / 已撤回 / 已接受。筛条只留全部 / 进行中 / 已结束。未改过的旧 12 档词表读时自动收档；等面/一面/二面/三面并进面试中，一面挂/二面挂/三面挂并进未通过。改名或自加过的阶段不动。用户仍可在「阶段」里加减。
 - **百度底图切换不再 1.5s 误超时。** v1.0 在 `centerAndZoom` 当下就把 `map.loaded` 设 true 并派发 `load`；旧逻辑在这之后才等 `onfirsttilesloaded`，健康 AK 下 tile 事件也不来，于是 `failBaidu` + Next 红屏。就绪判定认已 `loaded` / `load`；可恢复的切换失败改 `console.warn`，不再触发 overlay。
+- **岗位卡片去掉通勤估算与对比勾选。** Work Explore 列表卡片不再显示「估算 xx 分钟」和对比复选框；对比表通勤列仍在。
 - **重新打开高德 / 腾讯 / 百度底图切换。** `ENGINE_PRIORITY` 从只留高德恢复为 `['amap','tencent','baidu']`。图层面板「地图源」重新列出三家(未配 JSAPI key 的仍显示为禁用);会话偏好可切腾讯/百度。2026-08-23 因切换 POI 消失曾关掉此入口,引擎实现一直保留。
 - **登录面板去掉密码登录。** AuthModal 只保留 手机 / 邮箱 / 其他登录。密码 tab、用户名注册、忘记密码链接、注册后绑定引导一并拿掉。账户页「密码与安全」和 `/api/auth/password/*` 仍在。
 - **已保存并入收藏图层三级卡。** 桌面侧栏和手机工具栏不再有独立「已保存」。图层 L2 只留开关 / 底图 / 地图源；打开收藏图层后右侧出 L3 霜面卡（列表 + 两家对比）。关掉开关或关掉该卡会卸下卡片。手机在图层 sheet 里、开关打开后把同一份列表叠在开关下方。未登录点开关仍弹出登录。

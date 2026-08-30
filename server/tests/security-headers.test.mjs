@@ -53,9 +53,10 @@ test('map-only CSP relaxations do not spread to non-map routes', () => {
   assert.match(strictPolicy, /"style-src 'self'"/);
 });
 
-test('map CSP keeps explicit SDK script hosts and limits unsafe-eval to development', () => {
+test('map CSP keeps explicit SDK script hosts and allows eval on the map route only', () => {
   const mapPolicy = policySource('MAP_CSP');
-  const scriptDirective = mapPolicy.match(/`script-src [^`]+`/u)?.[0];
+  const strictPolicy = policySource('STRICT_CSP');
+  const scriptDirective = mapPolicy.match(/"script-src [^"]+"/u)?.[0];
   assert.ok(scriptDirective, 'map script-src directive is missing');
 
   for (const host of [
@@ -69,9 +70,8 @@ test('map CSP keeps explicit SDK script hosts and limits unsafe-eval to developm
   ]) {
     assert.ok(scriptDirective.includes(host), `map script host is not allowed: ${host}`);
   }
-  assert.doesNotMatch(scriptDirective, /script-src[^`]*\shttps:\s/u);
-  assert.match(
-    config,
-    /process\.env\.NODE_ENV === "development" \? " 'unsafe-eval'" : ""/u,
-  );
+  assert.doesNotMatch(scriptDirective, /script-src[^"]*\shttps:\s/u);
+  assert.match(scriptDirective, /'unsafe-eval'/);
+  assert.match(scriptDirective, /'wasm-unsafe-eval'/);
+  assert.doesNotMatch(strictPolicy, /unsafe-(?:inline|eval)/);
 });

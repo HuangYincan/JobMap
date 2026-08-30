@@ -224,9 +224,6 @@ export interface SecondarySidebarProps {
   savedOrigin?: { lng: number; lat: number } | null;
   workCommute?: ReactNode;
   workListReplace?: ReactNode;
-  commuteMinutesById?: Record<string, number>;
-  compareSelected?: string[];
-  onToggleCompare?: (poi: POI) => void;
   /** 岗位卡片/详情展示距离圆心（用户定位，缺则视野中心）。 */
   displayOrigin?: { lng: number; lat: number } | null;
 }
@@ -279,9 +276,6 @@ export function SecondarySidebar({
   savedOrigin = null,
   workCommute,
   workListReplace,
-  commuteMinutesById,
-  compareSelected,
-  onToggleCompare,
   displayOrigin,
 }: SecondarySidebarProps) {
   const [showFilters, setShowFilters] = useState(false);
@@ -629,9 +623,6 @@ export function SecondarySidebar({
           onRetry={onRetry}
           atCap={atCap}
           noMore={noMore}
-          commuteMinutesById={commuteMinutesById}
-          compareSelected={compareSelected}
-          onToggleCompare={onToggleCompare}
           displayOrigin={displayOrigin}
         />
         )}

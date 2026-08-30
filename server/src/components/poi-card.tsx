@@ -70,10 +70,6 @@ export interface POICardProps {
   accentColor?: string;
   /** 卡片右上「移除收藏」按钮(仅收藏模式传入;不传则完全不渲染,零影响普通模式) */
   onRemove?: (poi: POI) => void;
-  commuteMinutes?: number;
-  commuteEstimated?: boolean;
-  compareChecked?: boolean;
-  onToggleCompare?: (poi: POI) => void;
   /**
    * 岗位卡片展示距离圆心（用户定位，缺则视野中心）。
    * 不传则回落 poi.distance（排序/筛选字段，视野中心）。
@@ -207,10 +203,6 @@ export function POICard({
   lang = "zh",
   accentColor,
   onRemove,
-  commuteMinutes,
-  commuteEstimated = true,
-  compareChecked = false,
-  onToggleCompare,
   displayOrigin,
 }: POICardProps) {
   const accent = accentColor || DEFAULT_ACCENT;
@@ -259,26 +251,6 @@ export function POICard({
           displayOrigin={displayOrigin}
         />
       ) : null}
-      {(typeof commuteMinutes === "number" || onToggleCompare) && (
-        <div className={styles.commuteRow}>
-          {onToggleCompare && (
-            <label className={styles.compareLabel} onClick={(e) => e.stopPropagation()}>
-              <input
-                type="checkbox"
-                checked={compareChecked}
-                onChange={() => onToggleCompare(poi)}
-                aria-label={t("commuteCompare", lang)}
-              />
-            </label>
-          )}
-          {typeof commuteMinutes === "number" && (
-            <span className={styles.commuteBadge}>
-              {commuteEstimated ? `${t("commuteEstimateBadge", lang)} ` : ""}
-              {commuteMinutes} {t("commuteMinutes", lang)}
-            </span>
-          )}
-        </div>
-      )}
     </article>
   );
 }
