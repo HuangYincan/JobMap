@@ -15,11 +15,11 @@ import { readEnginePreference } from './engine-preference.ts';
 
 /**
  * 引擎优先级:无偏好 / 指定项未配置时的默认选择顺序。
- * 2026-08-23 用户决策:三家底图切换有 POI 消失 bug,禁用腾讯/百度(实现代码保留,
- * 仅从候选列表移除);UI 无入口、解析与回退恒为高德,历史 sessionStorage 偏好经
- * resolveEngine 过滤自动回落;后续修好可加回。
+ * 图层面板「地图源」、resolveEngine、挂载/切换回退、sessionStorage 偏好过滤
+ * 全部经此列表。2026-08-23 曾因切换 POI 消失 bug 只留 amap;2026-08-30 用户
+ * 要求重新打开高德/腾讯/百度切换,恢复三家候选。
  */
-export const ENGINE_PRIORITY: MapEngineId[] = ['amap'];
+export const ENGINE_PRIORITY: MapEngineId[] = ['amap', 'tencent', 'baidu'];
 
 interface EngineDescriptor {
   id: MapEngineId;

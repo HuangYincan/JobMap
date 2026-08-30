@@ -66,8 +66,7 @@ test('三引擎描述:label/namespace/coordSystem/keyVar 与契约一致,优先�
   assert.equal(BAIDU_ENGINE.coordSystem, 'bd09');
   assert.equal(BAIDU_ENGINE.keyVar, 'NEXT_PUBLIC_BAIDU_AK');
 
-  // 2026-08-23 用户决策:腾讯/百度禁用(实现保留,仅移出候选列表)→ 只留 amap
-  assert.deepEqual(ENGINE_PRIORITY, ['amap']);
+  assert.deepEqual(ENGINE_PRIORITY, ['amap', 'tencent', 'baidu']);
 });
 
 test('isConfigured 跟随 env 掩码(运行时读 process.env)', () => {
@@ -82,27 +81,26 @@ test('isConfigured 跟随 env 掩码(运行时读 process.env)', () => {
   assert.equal(BAIDU_ENGINE.isConfigured(), true);
 });
 
-test('全配:腾讯/百度已禁用 → configured 只含 amap,preferred 指定也回落 amap', () => {
+test('全配:按优先级过滤,resolveEngine 取第一个,preferred 生效', () => {
   setEngineEnv({ amap: true, tencent: true, baidu: true });
-  // 三 key 都在,但 ENGINE_PRIORITY 只留 amap → 腾讯/百度不进候选列表
   assert.deepEqual(
     getConfiguredEngines().map((e) => e.id),
-    ['amap'],
+    ['amap', 'tencent', 'baidu'],
   );
   assert.equal(resolveEngine()?.id, 'amap');
-  // 显式 preferred 指定禁用引擎 → 不在候选 → 回落优先级第一(amap)
-  assert.equal(resolveEngine('tencent')?.id, 'amap');
-  assert.equal(resolveEngine('baidu')?.id, 'amap');
+  assert.equal(resolveEngine('tencent')?.id, 'tencent');
+  assert.equal(resolveEngine('baidu')?.id, 'baidu');
 });
 
-test('仅 tencent key(禁用引擎)→ 无候选引擎,resolveEngine 返回 null', () => {
-  // 腾讯被禁用(不在 ENGINE_PRIORITY)→ 即使 key 配置了也不可用;
-  // 高德 key 缺失 → 零可用引擎 → null(调用方回退 CSS fallback 地图)
+test('单配:只有 tencent,任何 preferred 都回落唯一已配置引擎', () => {
   setEngineEnv({ tencent: true });
-  assert.deepEqual(getConfiguredEngines(), []);
-  assert.equal(resolveEngine(), null);
-  assert.equal(resolveEngine('amap'), null);
-  assert.equal(resolveEngine('baidu'), null);
+  assert.deepEqual(
+    getConfiguredEngines().map((e) => e.id),
+    ['tencent'],
+  );
+  assert.equal(resolveEngine()?.id, 'tencent');
+  assert.equal(resolveEngine('amap')?.id, 'tencent');
+  assert.equal(resolveEngine('baidu')?.id, 'tencent');
 });
 
 test('零配:返回 null(调用方回退 CSS fallback 地图)', () => {
@@ -113,18 +111,16 @@ test('零配:返回 null(调用方回退 CSS fallback 地图)', () => {
   assert.equal(resolveEngine('baidu'), null);
 });
 
-test('历史偏好 tencent(禁用引擎)→ resolveEngine 经优先级过滤回落 amap', () => {
+test('preference 优先:全配时偏好 tencent → resolveEngine() 取 tencent', () => {
   setEngineEnv({ amap: true, tencent: true, baidu: true });
   globalThis.window = { sessionStorage: makeStorage({ 'domain-map:engine': 'tencent' }) };
-  // ENGINE_IDS 仍含 tencent → 读偏好原样返回(历史遗留值保留,不迁移不清除)
   assert.equal(readEnginePreference(), 'tencent');
-  // resolveEngine 过滤:偏好不在 ENGINE_PRIORITY 候选 → 回落 amap
-  assert.equal(resolveEngine()?.id, 'amap');
-  // 显式 preferred 覆盖偏好(同样被禁用过滤 → amap)
-  assert.equal(resolveEngine('baidu')?.id, 'amap');
+  assert.equal(resolveEngine()?.id, 'tencent');
+  // 显式 preferred 覆盖偏好
+  assert.equal(resolveEngine('baidu')?.id, 'baidu');
 });
 
-test('preference 指定禁用引擎:未在候选 → 回落优先级第一个已配置(amap)', () => {
+test('preference 未配置回落:偏好 tencent 但未配置 → 取优先级第一个已配置', () => {
   setEngineEnv({ amap: true });
   globalThis.window = { sessionStorage: makeStorage({ 'domain-map:engine': 'tencent' }) };
   assert.equal(resolveEngine()?.id, 'amap');
