@@ -404,6 +404,35 @@ test('失败回滚:目标 createView 抛错 → 重建旧引擎视图(rolledBack
   assert.match(events[4], /^marker:/);
 });
 
+test('失败回滚:目标 load 抛错 → 旧 view 不销毁,rolledBack 保留(不上抛)', async () => {
+  globalThis.window = { NS };
+  const amapEngine = makeMockEngine('amap');
+  const from = makeMockView(amapEngine, { id: 'from' });
+  const to = makeMockEngine('tencent', {
+    overrides: {
+      load: async () => {
+        events.push('load:tencent');
+        throw new Error('[map-engine] baidu load 失败(script-blocked-by-client):BMapGL script failed to load');
+      },
+    },
+  });
+
+  const result = await switchMapEngine({
+    from,
+    to,
+    container,
+    state: STATE,
+    style: 'normal',
+  });
+
+  assert.equal(result.created, false);
+  assert.equal(result.rolledBack, true);
+  assert.equal(result.view, from, 'load 失败时旧 view 原样保留');
+  assert.equal(from.destroyed, false, '尚未 destroy,不得拆掉可用底图');
+  assert.match(result.error?.message ?? '', /script-blocked-by-client/);
+  assert.deepEqual(events, ['load:tencent']);
+});
+
 test('失败回滚:回滚也失败 → 抛错(容器无视图,调用方清 ref 暴露重试)', async () => {
   globalThis.window = { NS };
   const amapEngine = makeMockEngine('amap', {
