@@ -871,8 +871,8 @@ test('map-engine core contract: env keyVars + priority order + coordinate norm (
   assert.match(registry, /NEXT_PUBLIC_BAIDU_AK/);
   // 注册表不 import amap-api(AMap 完整实现由 ws-c 独立完成,内核不反向依赖厂商适配)
   assert.doesNotMatch(registry, /from\s+['"].*amap-api['"]/);
-  // 优先级顺序断言(2026-08-23 起只留 amap:腾讯/百度禁用,实现保留,仅移出候选列表)
-  assert.match(registry, /ENGINE_PRIORITY: MapEngineId\[\] = \['amap'\]/);
+  // 优先级顺序断言(2026-08-30 起恢复三家:高德 → 腾讯 → 百度)
+  assert.match(registry, /ENGINE_PRIORITY: MapEngineId\[\] = \['amap', 'tencent', 'baidu'\]/);
   // types.ts keyVar 闭合联合(与注册表三引擎一一对应)
   assert.match(
     types,

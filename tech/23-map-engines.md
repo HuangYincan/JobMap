@@ -12,9 +12,9 @@ Domain 主地图原本由 `map-shell.tsx` 直连 `window.AMap`(8 处直引用)+
 
 - 三家厂商(高德 AMap / 腾讯 TMap / 百度 BMapGL)各自完整实现
   `MapEngine` 契约,业务组件只依赖契约,不触碰厂商 API;
-- 图层面板「地图源」section 提供引擎入口;**2026-08-23 起仅高德可用**:
-  三家底图切换有 POI 消失 bug,用户决策禁用腾讯/百度(实现代码保留,仅从
-  `ENGINE_PRIORITY` 候选列表移除,后续修好可加回);引擎偏好写入 sessionStorage;
+- 图层面板「地图源」section 提供引擎入口;用户可切换高德 / 腾讯 / 百度
+  (2026-08-30 重新打开;`ENGINE_PRIORITY = ['amap','tencent','baidu']`);
+  引擎偏好写入 sessionStorage(新会话无偏好则回落优先级第一=高德);
 - `lib/map-adapter.ts` 已删除(零引用确认后移除,ws-g)。
 
 ## 引擎插件架构(三层接口)
@@ -42,17 +42,14 @@ Domain 主地图原本由 `map-shell.tsx` 直连 `window.AMap`(8 处直引用)+
 ### 注册表与优先级(`engine-registry.ts`)
 
 ```ts
-// 2026-08-23 用户决策:三家切换有 POI 消失 bug,禁用腾讯/百度(实现保留,
-// 仅从候选列表移除;后续修好可加回)
-ENGINE_PRIORITY: MapEngineId[] = ['amap'];
+ENGINE_PRIORITY: MapEngineId[] = ['amap', 'tencent', 'baidu'];
 ```
 
-> **2026-08-23 决策说明**:`ENGINE_PRIORITY` 是底图引擎唯一事实源(UI 入口、
-> `resolveEngine` 解析、挂载/切换回退、历史 sessionStorage 偏好过滤全部经它)。
-> 改为 `['amap']` 后:图层面板无腾讯/百度 chip、解析与回退恒为高德、历史
-> 遗留偏好(`domain-map:engine` = tencent/baidu)自动回落高德;tencent/baidu
-> 引擎描述、`registerEngine` 装配、引擎实现文件一行不删。旧 deferred #4
-> 「三家同配真实冒烟(手动切腾讯/百度)」随禁用失效。
+> `ENGINE_PRIORITY` 是底图引擎唯一事实源(UI 入口、`resolveEngine` 解析、
+> 挂载/切换回退、sessionStorage 偏好过滤全部经它)。2026-08-23 曾因切换
+> POI 消失 bug 改为 `['amap']`;2026-08-30 用户要求重新打开三家切换,恢复
+> 上列顺序。未配置 key 的引擎在图层面板显示为禁用 chip(tooltip「未配置
+> NEXT_PUBLIC_…」);偏好指向未配置引擎时回落优先级第一个已配置引擎。
 
 - `getConfiguredEngines()`:按优先级过滤 `isConfigured()`(key 存在即配置);
 - `resolveEngine(preferred?)`:`preferred` 存在且已配置 → 它;否则读本地偏好
