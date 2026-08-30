@@ -2658,7 +2658,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         onRetry={handleRouteRetry}
       />
 
-      {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点;user 透传 → 记忆入口登录才渲染;
+      {/* AI Agent 悬浮球(seam:agent-map-bridge 挂载点;user 透传给面板;
           ws-mt 受控:agentOpen/onOpenChange 提升至 MapShell,移动端球隐藏、入口为工具栏 AI item) */}
       <AgentBall
         bridge={agentBridgeRef.current}

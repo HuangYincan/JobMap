@@ -1,28 +1,13 @@
 "use client";
 
-// AI Agent 聊天面板:360px × 70vh liquid glass 卡片浮层,**以悬浮球为锚实时跟随**
+// AI Agent 聊天面板:360px × 70vh 霜面卡片浮层,**以悬浮球为锚实时跟随**
 // (transform 驱动,computePanelPlacement 纯函数;拖动球时同步移动,松手平滑归位)。
 // 移动端(≤767px)与极窄视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。
-// - 消息列表(用户纯文本 / 助手 MarkdownText 渲染,助手侧可含建议卡片)+ 输入框 +
-//   输入行 [输入框][发送|停止](ws-inputbar:流式中发送位原位变「停止」,红系警示,
-//   点击 = 中止)+ 控件行 [清屏][撤销](清屏最左,独立停止控件已并入发送位);
-// - 按轮交替:reduceAgentEvent 纯状态机把每轮(delta→tool)拆成独立 assistant 消息,
-//   视觉上「文本1、工具1、文本2、工具2…」;reasoning 事件前端不消费(no-op,
-//   2026-08-22 ws-bubble:思考提示与空白气泡已删除);
-// - 工具活动列表:每条 tool 事件(⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案;失败附
-//   「调用失败」弱提示),渲染在文本气泡下方;运行中工具另有顶部状态条;
-// - 未配置提示:503 LLM_UNCONFIGURED → agentNotConfigured;RATE_LIMITED → agentRateLimited;
-// - 建议卡片:执行器捕获 action 时渲染动作摘要按钮,点击 = 重放该 action(execute);
-// - 会话:localStorage 'dm.agent-sessions.v1' 多会话管理(cap 10 会话 × 30 条,
-//   agent-session-store 纯函数;旧 sessionStorage 'dm.agent-history.v1' 仅迁移读,
-//   不再直写);「💬 会话」入口登录/guest 均可用(本地功能,与账号无关);
-//   **每会话独立流(2026-08-22 ws-pstream)**:流状态在 Map<sessionId, SessionStream>
-//   (lib/agent-stream-store 纯函数,内存为事实源)——切会话只改 activeId,**不 stop、
-//   不打断**,切走后台继续跑;同一时刻可多会话流式(并行),done/error 只落所属会话;
-//   显示 = streams.get(activeId)?.messages ?? 从 store 载入;完成/停止状态行、
-//   顶部工具条 per-session(切走再切回状态仍正确);停止/清屏只作用于当前会话;
-//   会话删除终止并移除该会话流;组件卸载 abort 全部流(不泄漏);
-// - 「停止」→ abort(链到 fetch);「撤销」→ executor.undo()。
+//
+// 2026-08-31 UI:顶栏仅 ✦ 助手 + 清屏/撤销/关闭;无会话/记忆弹层。输入为圆角
+// composer + 圆形发送。清屏 abort 当前流并丢掉未完成助手输出(不归档)。
+// 流式中输入可打字;有字再发送 = 打断(abort + discardTrailingAssistants + 新一轮);
+// 输入为空点发送位 = 停止(保留已输出)。迟到 SSE 用 controller 身份校验丢弃。
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import styles from "./agent-panel.module.css";
@@ -31,7 +16,7 @@ import type { AccountUser } from "@/lib/account";
 import type { AgentAction, AgentEvent } from "@/lib/agent/types";
 import type { MapBridge } from "@/lib/agent-map-bridge";
 import type { RouteOverlayMeta } from "@/lib/navigation/route-client";
-import { stripActionJsonBlocks, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
+import { discardTrailingAssistants, stripActionJsonBlocks, type AgentMessage, type ToolActivity } from "@/lib/agent-panel-state";
 import { agentChatMapFields, streamAgentChat, toAgentChatMessages, type AgentChatRequest } from "./agent-chat-client";
 import {
   createAgentMapExecutor,
@@ -42,8 +27,9 @@ import {
 import { computePanelPlacement, type BallRect, type BallSnapEdge, type ViewportSize } from "@/lib/agent-panel-placement";
 import {
   abortAllStreams,
-  finishStream,
+  finishStreamIfCurrent,
   getStreamMessages,
+  isCurrentController,
   isStreaming,
   markDone,
   markStreamError,
@@ -59,42 +45,22 @@ import {
 } from "@/lib/agent-stream-store";
 import {
   appendMessage,
-  archiveAndNew,
   createSession,
   createSessionId,
-  deleteSession as storeDeleteSession,
   emptyState,
-  listSessions,
   loadSessionState,
-  relativeTime,
   saveMessages,
   saveSessionState,
-  switchSession as storeSwitchSession,
   type AgentSessionState,
-  type SessionRelativeTime,
 } from "@/lib/agent-session-store";
 import { MarkdownText } from "./markdown-text";
 
 export type { AgentMessage, ToolActivity } from "@/lib/agent-panel-state";
 
-/** 会话相对时间 → i18n 文案(纯函数,便于契约测试)。 */
-function sessionTimeLabel(time: SessionRelativeTime, lang: Language): string {
-  switch (time.kind) {
-    case "justNow":
-      return t("agentSessionJustNow", lang);
-    case "minutes":
-      return t("agentSessionMinutesAgo", lang).replace("{n}", String(time.n));
-    case "hours":
-      return t("agentSessionHoursAgo", lang).replace("{n}", String(time.n));
-    case "date":
-      return `${time.month}/${time.day}`;
-  }
-}
-
 interface Props {
   bridge: MapBridge | null;
   lang: Language;
-  /** 登录态;非空才渲染记忆管理入口(guest 不渲染,记忆是账号级数据;会话是本地功能,guest 可用)。 */
+  /** 登录态;记忆走后端工具,面板不再渲染管理入口。MapShell/AgentBall 仍透传。 */
   user: AccountUser | null;
   /** 悬浮球当前矩形(viewport 坐标);面板以此为锚实时跟随。嵌入式(drawer sheet)实例不传。 */
   ballRect?: BallRect | null;
@@ -103,6 +69,10 @@ interface Props {
   /** 球当前吸附边缘(拖拽中/未吸附为 null → 面板按球心半区分侧,旧行为)。 */
   snapEdge?: BallSnapEdge | null;
   onClose: () => void;
+  /** 关闭动画结束(仅桌面浮层);由 AgentBall 卸掉面板。 */
+  onExitEnd?: () => void;
+  /** 正在播放关闭动画。 */
+  closing?: boolean;
   /** 用户定位(GCJ-02);每条请求带上,岗位/附近检索起点优先于视野中心。 */
   userLocation?: { lng: number; lat: number } | null;
   /** 内嵌模式(ws-ae):drawer 内 agent sheet 渲染(mobileSheet "agent"),
@@ -170,71 +140,74 @@ function toolCategoryName(name: string, lang: Language): string {
   }
 }
 
-/** 记忆条目(GET /api/me/memories 列表项;id 兼容 number/string,仅作 key 与删除入参)。 */
-export interface AgentMemoryItem {
-  id: number | string;
-  content: string;
-  createdAt?: string;
+function IconTrash() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 7h16" />
+      <path d="M9 7V5h6v2" />
+      <path d="M6 7l1 13h10l1-13" />
+      <path d="M10 11v6M14 11v6" />
+    </svg>
+  );
 }
 
-/**
- * GET /api/me/memories 响应解析(纯函数):接受 {items:[...]}(saved 路由范式)/
- * {memories:[...]}/裸数组三种形态(与 ws-mem-a 并行开发,宽松兼容);
- * 缺 id 或 content 非字符串的条目丢弃。解析失败 → 空数组(调用方走弱提示)。
- */
-export function parseMemories(json: unknown): AgentMemoryItem[] {
-  if (!json || typeof json !== "object") return [];
-  let raw: unknown;
-  if (Array.isArray(json)) raw = json;
-  else if (Array.isArray((json as { items?: unknown }).items)) raw = (json as { items: unknown }).items;
-  else if (Array.isArray((json as { memories?: unknown }).memories)) raw = (json as { memories: unknown }).memories;
-  else return [];
-  return (raw as unknown[]).flatMap((m): AgentMemoryItem[] => {
-    if (!m || typeof m !== "object") return [];
-    const item = m as { id?: unknown; content?: unknown; createdAt?: unknown };
-    if (item.id === undefined || item.id === null || typeof item.content !== "string") return [];
-    return [
-      {
-        id: item.id as number | string,
-        content: item.content,
-        ...(typeof item.createdAt === "string" ? { createdAt: item.createdAt } : {}),
-      },
-    ];
-  });
+function IconUndo() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 14H4V9" />
+      <path d="M4 9c2.2-3.8 6.8-6 11.2-4.8A8 8 0 1 1 5.2 16" />
+    </svg>
+  );
 }
 
-/** 记忆弹层渲染状态机(纯函数):加载中 → 失败弱提示 → 空态 → 列表。 */
-export type MemoryViewState = "loading" | "error" | "empty" | "list";
-
-export function memoryViewState(loading: boolean, error: boolean, count: number): MemoryViewState {
-  if (loading) return "loading";
-  if (error) return "error";
-  return count > 0 ? "list" : "empty";
+function IconClose() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  );
 }
 
-export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, onClose, userLocation = null, embedded = false, onRouteMeta, onRouteError, onRouteLoading }: Props) {
-  // 会话存储(多会话,localStorage);**每会话独立流状态**(Map<sessionId, SessionStream>,
-  // 内存为事实源)与 store 双轨:
-  // - 流式会话:entry.messages 是工作副本,事件只改内存;显示 = entry.messages;
-  // - 非流式会话:内存 entry 保留(streaming=false)或不存在 → 显示从 store 载入;
-  // - 边界(发送/完成/停止/切换/删除/清屏)经 saveMessages 落库 localStorage。
+function IconSend() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 19V5" />
+      <path d="M5 12l7-7 7 7" />
+    </svg>
+  );
+}
+
+function IconStop() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function AgentPanel({
+  bridge,
+  lang,
+  ballRect,
+  dragging,
+  snapEdge,
+  onClose,
+  onExitEnd,
+  closing = false,
+  userLocation = null,
+  embedded = false,
+  onRouteMeta,
+  onRouteError,
+  onRouteLoading,
+}: Props) {
   const [sessionState, setSessionState] = useState<AgentSessionState>(initSessionState);
   const [streams, setStreams] = useState<SessionStreamMap>(EMPTY_STREAM_MAP);
   const [input, setInput] = useState("");
-  // 会话弹层:登录/guest 均可用(会话是本地功能,与账号无关)。
-  const [sessionsOpen, setSessionsOpen] = useState(false);
-  // 记忆弹层:打开(登录)时拉取列表;失败弱提示;不随「清屏」清除(记忆跨会话)。
-  // memoriesRefresh:打开弹层/重试时 +1 触发重新拉取;已加载后的静默刷新不闪加载态。
-  const [memoriesOpen, setMemoriesOpen] = useState(false);
-  const [memoriesRefresh, setMemoriesRefresh] = useState(0);
-  const [memories, setMemories] = useState<AgentMemoryItem[]>([]);
-  const [memoriesLoading, setMemoriesLoading] = useState(false);
-  const [memoriesError, setMemoriesError] = useState(false);
-  // undo 可用性重渲染信号(执行器实例在 ref 中,栈变化不触发渲染)
   const [, setUndoVersion] = useState(0);
 
   const listRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const langRef = useRef(lang);
   langRef.current = lang;
   const userLocationRef = useRef(userLocation);
@@ -245,13 +218,12 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   onRouteErrorRef.current = onRouteError;
   const onRouteLoadingRef = useRef(onRouteLoading);
   onRouteLoadingRef.current = onRouteLoading;
-  // 会话/流镜像:回调内读最新值(避免闭包陈旧;与 langRef 同模式)。
+  const onExitEndRef = useRef(onExitEnd);
+  onExitEndRef.current = onExitEnd;
   const sessionStateRef = useRef(sessionState);
   sessionStateRef.current = sessionState;
   const streamsRef = useRef<SessionStreamMap>(streams);
   streamsRef.current = streams;
-  // 当前事件所属流 sessionId:dispatchEvent 在事件分流前写入(执行器回调同步读);
-  // 并行流在同一 tick 内串行 dispatch,回调读取时恒为本流会话。
   const streamSessionRef = useRef<string | null>(null);
 
   /** 流状态入口:setStreams + 同步镜像(ref 写入幂等,供回调读最新副本)。 */
@@ -274,7 +246,7 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     (sessionId: string, msgs: AgentMessage[]) => {
       const cur = sessionStateRef.current;
       const next = saveMessages(cur, sessionId, msgs);
-      if (next === cur) return; // 会话已删 → store no-op
+      if (next === cur) return;
       sessionStateRef.current = next;
       setSessionState(next);
       persist(next);
@@ -294,7 +266,6 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     return sess ? sess.messages : [];
   }, []);
 
-  // ---- 面板跟随:视口 + 实测尺寸 → 锚定位置(transform)----
   const [viewport, setViewport] = useState<ViewportSize>(() => ({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -304,31 +275,26 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  // 初始尺寸用 CSS 规格(360 × 70vh)估算,layout effect 实测后校正——避免
-  // 首帧 placement 用 (360, 0) 导致的高度回弹
-  const [panelSize, setPanelSize] = useState({ width: 360, height: Math.round((typeof window !== "undefined" ? window.innerHeight : 0) * 0.7) });
+  const [panelSize, setPanelSize] = useState({
+    width: 360,
+    height: Math.round((typeof window !== "undefined" ? window.innerHeight : 0) * 0.7),
+  });
   useLayoutEffect(() => {
     const el = panelRef.current;
     if (!el) return;
     setPanelSize({ width: el.offsetWidth, height: el.offsetHeight });
-  }, [viewport]); // 视口变化(70vh 高度随之变)→ 重测
+  }, [viewport]);
 
-  // 嵌入式(drawer sheet):不做锚点跟随定位,placement 为 null,panelStyle 不注入
-  // --px/--py(基类 transform 由 .panel.embedded 覆盖为 none)。
   const placement = useMemo(
     () => (embedded || !ballRect ? null : computePanelPlacement(ballRect, panelSize, viewport, snapEdge ?? undefined)),
     [embedded, ballRect, panelSize, viewport, snapEdge],
   );
   const isSheet = placement ? placement.mode === "sheet" : false;
-  // side 模式:transform 锚定(--px/--py 供 CSS translate3d 与入场动画共用)
   const panelStyle: CSSProperties | undefined =
     placement && placement.mode === "side"
       ? ({ "--px": `${placement.left}px`, "--py": `${placement.top}px` } as CSSProperties)
       : undefined;
 
-  // ---- 渲染回调(供执行器分流;bridge 缺失时面板直接渲染无地图事件)----
-  // 事件按**流所属 sessionId** 路由(并行流互不打断):回调经 streamSessionRef
-  // 取得当前 dispatch 的会话,只更新该会话 entry;其余会话不受影响。
   const handleDelta = useCallback(
     (text: string) => {
       const sid = streamSessionRef.current;
@@ -385,7 +351,6 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
 
   const handleAction = useCallback(
     (action: AgentAction) => {
-      // 动作已执行:在消息底部渲染「重放」建议卡片(落在该流所属会话)
       const sid = streamSessionRef.current;
       if (sid) setStreamsBoth((prev) => routeAction(prev, sid, action));
       setUndoVersion((v) => v + 1);
@@ -401,30 +366,27 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     [setStreamsBoth],
   );
 
-  // ---- 执行器实例:bridge 可用时惰性创建,bridge 实例变更时重建 ----
   const bridgeRef = useRef<MapBridge | null>(null);
   const executorRef = useRef<AgentMapExecutor | null>(null);
   if (bridgeRef.current !== bridge) {
     bridgeRef.current = bridge;
     executorRef.current = bridge
-      ? createAgentMapExecutor(
-          bridge,
-          {
-            onDelta: handleDelta,
-            onTool: handleTool,
-            onDone: handleDone,
-            onError: handleError,
-            onAction: handleAction,
-            onRouteMeta: (meta) => onRouteMetaRef.current?.(meta),
-            onRouteLoading: () => onRouteLoadingRef.current?.(),
-          } satisfies AgentMapExecutorCallbacks,
-        )
+      ? createAgentMapExecutor(bridge, {
+          onDelta: handleDelta,
+          onTool: handleTool,
+          onDone: handleDone,
+          onError: handleError,
+          onAction: handleAction,
+          onRouteMeta: (meta) => onRouteMetaRef.current?.(meta),
+          onRouteLoading: () => onRouteLoadingRef.current?.(),
+        } satisfies AgentMapExecutorCallbacks)
       : null;
   }
 
-  /** 统一事件入口:按流所属 sessionId 分流;有执行器走执行器(动作落地地图),否则只渲染无地图事件 */
+  /** 统一事件入口:按流所属 sessionId 分流;迟到事件若 controller 已换代则丢弃。 */
   const dispatchEvent = useCallback(
-    (sessionId: string, ev: AgentEvent) => {
+    (sessionId: string, ev: AgentEvent, controller: AbortController) => {
+      if (!isCurrentController(streamsRef.current, sessionId, controller)) return;
       streamSessionRef.current = sessionId;
       if (ev.type === "images") {
         handleImages(ev.images);
@@ -449,9 +411,9 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
           handleError(ev.code);
           break;
         case "action":
-          break; // 无地图桥接:不执行动作
+          break;
         case "reasoning":
-          break; // 2026-08-22 ws-bubble:思考内容前端不消费(no-op)
+          break;
       }
     },
     [handleDelta, handleTool, handleDone, handleError, handleImages],
@@ -461,21 +423,20 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     async (sessionId: string, req: AgentChatRequest, controller: AbortController) => {
       try {
         for await (const ev of streamAgentChat(req, controller.signal)) {
-          dispatchEvent(sessionId, ev);
+          dispatchEvent(sessionId, ev, controller);
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
+          if (!isCurrentController(streamsRef.current, sessionId, controller)) return;
           setStreamsBoth((prev) =>
             markStreamError(prev, sessionId, { notConfigured: false, fatalText: t("agentError", langRef.current) }),
           );
         }
       } finally {
-        // 完成状态以 finally 为准(done 事件 → 'done';用户停止 → 'stopped';异常 → null);
-        // 流结束只触碰本流所属会话(并行流互不影响);会话已删/已清屏 → entry 缺失 no-op
         setStreamsBoth((prev) => {
-          const next = finishStream(prev, sessionId, controller.signal.aborted);
+          const next = finishStreamIfCurrent(prev, sessionId, controller, controller.signal.aborted);
           const entry = next.get(sessionId);
-          if (entry) persistSessionMessages(sessionId, entry.messages);
+          if (entry && entry.controller === controller) persistSessionMessages(sessionId, entry.messages);
           return next;
         });
       }
@@ -486,26 +447,32 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   const send = useCallback(
     (text?: string) => {
       const content = (text ?? input).trim();
+      if (!content) return;
       const state = sessionStateRef.current;
       const activeId = state.activeId;
-      if (!content || isStreaming(streamsRef.current, activeId)) return;
-      const curMessages = sessionMessages(activeId);
+      const interrupted = Boolean(activeId && isStreaming(streamsRef.current, activeId));
+      let curMessages = sessionMessages(activeId);
+      if (interrupted && activeId) {
+        const live = getStreamMessages(streamsRef.current, activeId) ?? curMessages;
+        curMessages = discardTrailingAssistants(live);
+        setStreamsBoth((prev) => removeStream(prev, activeId));
+      }
       const userMsg: AgentMessage = { role: "user", content };
       const nextMessages = [...curMessages, userMsg];
       setInput("");
-      // 会话存储:无当前会话 → 先建空会话;appendMessage 落库(刷新/中断保留本条用户消息)
+      if (composerRef.current) composerRef.current.style.height = "";
       let nextState = state;
       let sessionId = activeId;
       if (!sessionId) {
         sessionId = createSessionId();
         nextState = createSession(nextState, { id: sessionId });
+      } else if (interrupted) {
+        nextState = saveMessages(nextState, sessionId, curMessages);
       }
       nextState = appendMessage(nextState, sessionId, userMsg);
       sessionStateRef.current = nextState;
       setSessionState(nextState);
       persist(nextState);
-      // 每会话独立流:新 AbortController + 内存消息为事实源(切走不打断);
-      // 覆盖式建流(上一轮完成/停止状态随新一轮清零)
       const controller = new AbortController();
       setStreamsBoth((prev) => startStream(prev, sessionId, controller, nextMessages));
       const snapshot = bridgeRef.current?.getSnapshot() ?? null;
@@ -520,7 +487,6 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   );
 
   const stop = useCallback(() => {
-    // 停止**当前会话**的流(其余会话不受影响)
     stopStream(streamsRef.current, sessionStateRef.current.activeId ?? "");
   }, []);
 
@@ -528,180 +494,35 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
     if (executorRef.current?.undo()) setUndoVersion((v) => v + 1);
   }, []);
 
-  // 清屏:清覆盖物(仅 overlay 类 undo 条目)+ 归档当前会话(有消息才归档,
-  // 标题保留原样)+ 新建空会话并激活;**流式时先停当前会话并移除其流**
-  // (其余会话的流不受影响);记忆不动;相机/select 逆操作保留(可继续撤销)。
+  // 清屏:清覆盖物 + abort 当前流(removeStream 使迟到事件 no-op)+ 当前会话消息
+  // 置空(不归档,半成品不落库)。停止 ≠ 清屏:停止保留已输出。
   const clearScreen = useCallback(() => {
     executorRef.current?.clearOverlays();
-    setUndoVersion((v) => v + 1); // clearOverlays 可能改变 canUndo
+    setUndoVersion((v) => v + 1);
     const cur = sessionStateRef.current;
     const activeId = cur.activeId;
-    const curSession = activeId ? cur.sessions.find((s) => s.id === activeId) : null;
-    const next = archiveAndNew(cur, {
-      activeId,
-      messages: sessionMessages(activeId),
-      title: curSession?.title,
-    });
     if (activeId) setStreamsBoth((prev) => removeStream(prev, activeId));
+    if (!activeId) return;
+    const next = saveMessages(cur, activeId, []);
     sessionStateRef.current = next;
     setSessionState(next);
     persist(next);
-  }, [persist, sessionMessages, setStreamsBoth]);
-
-  /** 切换会话:只改 activeId,**不 stop、不打断**(并行流后台继续跑);
-   *  工作副本落库旧会话 → 目标会话显示 = streams 内存态 ?? store 载入。 */
-  const switchToSession = useCallback(
-    (id: string) => {
-      const cur = sessionStateRef.current;
-      if (cur.activeId === id) {
-        setSessionsOpen(false); // 已是当前会话:只关弹层
-        return;
-      }
-      let next = cur;
-      if (cur.activeId) {
-        next = saveMessages(next, cur.activeId, sessionMessages(cur.activeId));
-      }
-      next = storeSwitchSession(next, id);
-      const target = next.sessions.find((s) => s.id === id);
-      sessionStateRef.current = next;
-      setSessionState(next);
-      persist(next);
-      if (target) {
-        setSessionsOpen(false);
-      }
-      // 未知 id:仅提交落库(保存生效),消息/UI 不动
-    },
-    [persist, sessionMessages],
-  );
-
-  /** 新建会话:不 stop、不打断;工作副本落库旧会话 → 空消息。 */
-  const newSession = useCallback(() => {
-    const cur = sessionStateRef.current;
-    let next = cur;
-    if (cur.activeId) {
-      next = saveMessages(next, cur.activeId, sessionMessages(cur.activeId));
-    }
-    next = createSession(next);
-    sessionStateRef.current = next;
-    setSessionState(next);
-    persist(next);
-    setSessionsOpen(false);
-  }, [persist, sessionMessages]);
-
-  /** 删除会话:终止并移除该会话的流(无论是否当前;迟到事件 entry 缺失 no-op);
-   *  store 处理「切最近 / 全删建新」。 */
-  const deleteSession = useCallback(
-    (id: string) => {
-      const cur = sessionStateRef.current;
-      const next = storeDeleteSession(cur, id);
-      if (next === cur) return; // 未知 id:不动
-      setStreamsBoth((prev) => removeStream(prev, id));
-      sessionStateRef.current = next;
-      setSessionState(next);
-      persist(next);
-    },
-    [persist, setStreamsBoth],
-  );
+  }, [persist, setStreamsBoth]);
 
   const replayAction = useCallback((action: AgentAction) => {
-    // 纯执行语义:只在地图上重放动作,不再回调 onAction(否则按钮翻倍 + 地图反复定位)
     executorRef.current?.execute(action);
   }, []);
 
-  // ---- 记忆列表:登录即拉取(header 徽章计数);打开弹层/重试 → memoriesRefresh +1 再拉。
-  // 首次加载显示加载态;已加载后的刷新为静默(不闪加载态、徽章不抖动);失败 → 弱提示(不打断对话)。
-  // 账号切换(登出/换号)→ 清掉上一账号的记忆残留再拉。
-  const memoriesLoadedRef = useRef(false);
-  const memoriesUserKeyRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    const userKey = String(user.id);
-    const userChanged = memoriesUserKeyRef.current !== userKey;
-    if (userChanged) {
-      memoriesUserKeyRef.current = userKey;
-      setMemories([]);
-      memoriesLoadedRef.current = false;
-    }
-    const isFirst = (memoriesRefresh === 0 || memories.length === 0) && !memoriesLoadedRef.current;
-    if (isFirst) {
-      setMemoriesLoading(true);
-      setMemoriesError(false);
-    }
-    fetch("/api/me/memories")
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`memories list ${res.status}`);
-        const json: unknown = await res.json();
-        if (!cancelled) {
-          setMemories(parseMemories(json));
-          memoriesLoadedRef.current = true;
-          setMemoriesLoading(false);
-        }
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setMemories([]);
-        setMemoriesLoading(false);
-        setMemoriesError(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user, memoriesRefresh]);
-
-  /** 逐条删除:DELETE /api/me/memories?id=N(saved 路由范式);失败 → 复用弱提示。 */
-  const deleteMemory = useCallback(async (id: number | string) => {
-    try {
-      const res = await fetch(`/api/me/memories?id=${encodeURIComponent(String(id))}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(`memories delete ${res.status}`);
-      setMemories((prev) => prev.filter((m) => m.id !== id));
-    } catch {
-      setMemoriesError(true);
-    }
-  }, []);
-
-  /** 一键清除:轻确认(原生 confirm,用 langRef 避免闭包依赖)后 DELETE 全量。 */
-  const clearMemories = useCallback(() => {
-    if (!window.confirm(t("agentMemoryClearConfirm", langRef.current))) return;
-    void (async () => {
-      try {
-        const res = await fetch("/api/me/memories", { method: "DELETE" });
-        if (!res.ok) throw new Error(`memories clear ${res.status}`);
-        setMemories([]);
-      } catch {
-        setMemoriesError(true);
-      }
-    })();
-  }, []);
-
-  /** 会话弹层开关(互斥:开会话关记忆)。 */
-  const toggleSessions = useCallback(() => {
-    setSessionsOpen((v) => {
-      const next = !v;
-      if (next) setMemoriesOpen(false);
-      return next;
-    });
-  }, []);
-
-  /** 记忆弹层开关(互斥:开记忆关会话;打开时刷新列表)。 */
-  const toggleMemories = useCallback(() => {
-    setMemoriesOpen((v) => {
-      const next = !v;
-      if (next) {
-        setSessionsOpen(false);
-        setMemoriesRefresh((r) => r + 1);
-      }
-      return next;
-    });
-  }, []);
-
-  // ---- 卸载清理:组件卸载/严格模式销毁时 abort 全部流(不泄漏)----
   useEffect(() => {
     return () => abortAllStreams(streamsRef.current);
   }, []);
 
-  // ---- 当前会话显示(派生):显示 = streams.get(activeId)?.messages ?? 从 store 载入;
-  // 完成/停止、工具条、错误提示均 per-session(切走再切回状态仍正确)----
+  useEffect(() => {
+    if (!closing || embedded) return;
+    const id = window.setTimeout(() => onExitEndRef.current?.(), 400);
+    return () => window.clearTimeout(id);
+  }, [closing, embedded]);
+
   const activeId = sessionState.activeId;
   const activeEntry = activeId ? streams.get(activeId) : undefined;
   const activeSession = activeId ? sessionState.sessions.find((s) => s.id === activeId) : undefined;
@@ -711,12 +532,10 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
   );
   const streaming = activeEntry?.streaming ?? false;
   const tool = activeEntry?.tool ?? null;
-  const completion = activeEntry?.completion ?? null;
   const truncated = activeEntry?.truncated ?? false;
   const notConfigured = activeEntry?.notConfigured ?? false;
   const fatalError = activeEntry?.fatalError ?? null;
 
-  // 消息/状态变化 → 滚动到底部
   useEffect(() => {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -724,17 +543,24 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
 
   const canUndo = Boolean(executorRef.current?.canUndo());
   const lastIsAssistant = messages[messages.length - 1]?.role === "assistant";
-  const memoryView = memoryViewState(memoriesLoading, memoriesError, memories.length);
-  const sessionList = useMemo(() => listSessions(sessionState), [sessionState]);
-  // 记忆计数徽章渲染条件:登录 + 非加载/失败 + 有数据(加载/失败期不显示计数)
-  const showMemoryBadge = Boolean(user) && !memoriesLoading && !memoriesError && memories.length > 0;
+  const showStop = streaming && !input.trim();
+  const canSend = Boolean(input.trim());
+
+  const resizeComposer = useCallback((el: HTMLTextAreaElement) => {
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 96)}px`;
+  }, []);
 
   return (
     <section
       ref={panelRef}
-      className={`${styles.panel} ${embedded ? styles.embedded : ""} ${isSheet ? styles.panelSheet : ""} ${dragging ? styles.panelDragging : ""}`}
+      className={`${styles.panel} ${embedded ? styles.embedded : ""} ${isSheet ? styles.panelSheet : ""} ${dragging ? styles.panelDragging : ""} ${closing ? styles.panelClosing : ""}`}
       style={panelStyle}
       aria-label={t("agentTitle", lang)}
+      onAnimationEnd={(e) => {
+        if (e.target !== panelRef.current) return;
+        if (closing) onExitEndRef.current?.();
+      }}
     >
       <header className={styles.header}>
         <span className={styles.titleIcon} aria-hidden="true">
@@ -742,145 +568,25 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
         </span>
         <strong className={styles.title}>{t("agentTitle", lang)}</strong>
         <div className={styles.headerActions}>
+          <button type="button" className={styles.iconBtn} onClick={clearScreen} aria-label={t("agentClear", lang)}>
+            <IconTrash />
+          </button>
           <button
             type="button"
-            className={styles.sessionsBtn}
-            onClick={toggleSessions}
-            aria-label={t("agentSessions", lang)}
-            aria-expanded={sessionsOpen}
+            className={styles.iconBtn}
+            onClick={undo}
+            disabled={!canUndo}
+            aria-label={t("agentUndo", lang)}
           >
-            💬 {t("agentSessions", lang)}
+            <IconUndo />
           </button>
-          {user && (
-            <button
-              type="button"
-              className={styles.memoryBtn}
-              onClick={toggleMemories}
-              aria-label={t("agentMemory", lang)}
-              aria-expanded={memoriesOpen}
-            >
-              🧠 {t("agentMemory", lang)}
-              {showMemoryBadge && (
-                <span className={styles.memoryBadge} aria-hidden="true">
-                  {memories.length}
-                </span>
-              )}
+          {!embedded && (
+            <button type="button" className={styles.close} onClick={onClose} aria-label={t("agentClose", lang)}>
+              <IconClose />
             </button>
           )}
-          <button type="button" className={styles.close} onClick={onClose} aria-label={t("agentClose", lang)}>
-            ✕
-          </button>
         </div>
       </header>
-
-      {/* 会话弹层(glass 卡,面板内嵌,与记忆弹层同体系;登录/guest 均可用):
-          列表(标题 + 相对时间 + 删除 ×,当前会话蓝底高亮 + ●;**流式中的会话
-          显示「进行中」弱化蓝点标记**)+ 新建会话 + 空态。 */}
-      {sessionsOpen && (
-        <div className={styles.sessionsPanel} role="region" aria-label={t("agentSessions", lang)}>
-          <div className={styles.sessionsHead}>
-            <span className={styles.sessionsTitle}>💬 {t("agentSessions", lang)}</span>
-            <button type="button" className={styles.sessionsNew} onClick={newSession}>
-              ＋ {t("agentSessionNew", lang)}
-            </button>
-          </div>
-          {sessionList.length === 0 ? (
-            <p className={styles.sessionsEmpty}>{t("agentSessionEmpty", lang)}</p>
-          ) : (
-            <ul className={styles.sessionsList}>
-              {sessionList.map((s) => {
-                const isActive = s.id === sessionState.activeId;
-                const isRunning = isStreaming(streams, s.id);
-                return (
-                  <li key={s.id} className={isActive ? styles.sessionRowActive : styles.sessionRow}>
-                    <button
-                      type="button"
-                      className={styles.sessionMain}
-                      onClick={() => switchToSession(s.id)}
-                      aria-current={isActive ? "true" : undefined}
-                    >
-                      <span className={styles.sessionDot} aria-hidden="true">
-                        {isActive ? "●" : "○"}
-                      </span>
-                      <span className={styles.sessionTitle}>{s.title}</span>
-                      {isRunning && (
-                        <span
-                          className={styles.sessionStreaming}
-                          role="status"
-                          title={t("agentSessionStreaming", lang)}
-                          aria-label={t("agentSessionStreaming", lang)}
-                        />
-                      )}
-                      <span className={styles.sessionTime}>{sessionTimeLabel(relativeTime(s.updatedAt, Date.now()), lang)}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.sessionDelete}
-                      onClick={() => deleteSession(s.id)}
-                      aria-label={t("agentSessionDelete", lang)}
-                    >
-                      ×
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {/* 记忆弹层(liquid glass 卡,面板内嵌;登录用户打开时渲染):标题「🧠 记忆 · N」
-          计数徽章(蓝底白字圆角)+ 清除(橙边 hover 红);条目卡片式(soft-strong 底、
-          圆角 12px、12px 内边距、行距 8px、删除 × hover 红);加载三点 / 空态 /
-          失败弱提示 + 重试;与「清屏」互不相干(记忆跨会话)。 */}
-      {user && memoriesOpen && (
-        <div className={styles.memoryPanel} role="region" aria-label={t("agentMemory", lang)}>
-          <div className={styles.memoryHead}>
-            <span className={styles.memoryTitle}>
-              🧠 {t("agentMemory", lang)}
-              {memoryView === "list" && <span className={styles.memoryCountBadge}>{memories.length}</span>}
-            </span>
-            {memoryView === "list" && (
-              <button type="button" className={styles.memoryClear} onClick={clearMemories}>
-                🗑 {t("agentMemoryClear", lang)}
-              </button>
-            )}
-          </div>
-          {memoryView === "loading" && (
-            <p className={styles.memoryDots} role="status" aria-label={t("agentMemoryLoading", lang)}>
-              <span className={styles.memoryDot} aria-hidden="true" />
-              <span className={styles.memoryDot} aria-hidden="true" />
-              <span className={styles.memoryDot} aria-hidden="true" />
-            </p>
-          )}
-          {memoryView === "error" && (
-            <p className={styles.memoryError}>
-              <span className={styles.memoryHint}>{t("agentMemoryError", lang)}</span>
-              <button type="button" className={styles.memoryRetry} onClick={() => setMemoriesRefresh((r) => r + 1)}>
-                {t("retry", lang)}
-              </button>
-            </p>
-          )}
-          {memoryView === "empty" && <p className={styles.memoryEmpty}>{t("agentMemoryEmpty", lang)}</p>}
-          {memoryView === "list" && (
-            <ul className={styles.memoryList}>
-              {memories.map((m) => (
-                <li key={m.id} className={styles.memoryRow}>
-                  <span className={styles.memoryContent}>{m.content}</span>
-                  <button
-                    type="button"
-                    className={styles.memoryDelete}
-                    onClick={() => void deleteMemory(m.id)}
-                    aria-label={t("agentMemoryDelete", lang)}
-                  >
-                    ✕
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
 
       {tool && (
         <div className={styles.toolBar} role="status">
@@ -893,9 +599,6 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
         {messages.length === 0 && !streaming && <p className={styles.welcome}>{t("agentWelcome", lang)}</p>}
         {messages.map((m, i) => (
           <div key={i} className={`${styles.msg} ${m.role === "user" ? styles.msgUser : styles.msgAssistant}`}>
-            {/* 气泡条件渲染(2026-08-22 ws-bubble):assistant 内容为空(trim 后)→ 不渲染
-                气泡 div(纯工具轮只显示工具活动;避免空白气泡);动作按钮/工具列表在
-                气泡之外各自渲染,不受影响。 */}
             {m.role === "user" || m.content.trim() ? (
               <div className={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
                 {m.role === "assistant" ? (
@@ -909,12 +612,7 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
               <ul className={styles.imageStrip} aria-label={t("agentSearchImages", lang)}>
                 {m.images.map((img, j) => (
                   <li key={`${img.url}-${j}`}>
-                    <a
-                      className={styles.imageLink}
-                      href={img.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a className={styles.imageLink} href={img.url} target="_blank" rel="noopener noreferrer">
                       <img
                         className={styles.imageThumb}
                         src={img.url}
@@ -949,9 +647,7 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
                     <button type="button" className={styles.actionBtn} onClick={() => replayAction(a)}>
                       {actionLabel(a, lang)}
                     </button>
-                    {a.type === "showRoute" && (
-                      <span className={styles.routeHint}>{routeCardHint(a, lang)}</span>
-                    )}
+                    {a.type === "showRoute" && <span className={styles.routeHint}>{routeCardHint(a, lang)}</span>}
                   </div>
                 ))}
               </div>
@@ -960,7 +656,6 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
         ))}
         {streaming && !lastIsAssistant && (
           <div className={`${styles.msg} ${styles.msgAssistant}`}>
-            {/* 流式输入指示(2026-08-22 ws-bubble):三点跳动,纯视觉无文字,不再显示思考提示 */}
             <div className={`${styles.bubbleAssistant} ${styles.typing}`} role="status" aria-label={t("agentTyping", lang)}>
               <span className={styles.typingDot} aria-hidden="true" />
               <span className={styles.typingDot} aria-hidden="true" />
@@ -970,57 +665,51 @@ export function AgentPanel({ bridge, lang, user, ballRect, dragging, snapEdge, o
         )}
         {notConfigured && <p className={styles.notice}>{t("agentNotConfigured", lang)}</p>}
         {fatalError && <p className={styles.notice}>{fatalError}</p>}
-        {/* 完成/停止显式状态:流结束后渲染在消息列表尾部(弱化小字);流式期间不显示 */}
-        {completion && !streaming && (
-          <p className={styles.completion} role="status">
-            {completion === "done"
-              ? `✓ ${t("agentDone", lang)}${truncated ? ` · ${t("agentTruncated", lang)}` : ""}`
-              : `■ ${t("agentStopped", lang)}`}
-          </p>
-        )}
+        {truncated && !streaming && <p className={styles.notice}>{t("agentTruncated", lang)}</p>}
       </div>
 
       <footer className={styles.footer}>
-        <div className={styles.inputRow}>
-          <input
-            className={styles.input}
+        <div className={styles.composer}>
+          <textarea
+            ref={composerRef}
+            className={styles.composerInput}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            rows={1}
+            onChange={(e) => {
+              setInput(e.target.value);
+              resizeComposer(e.target);
+            }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.nativeEvent.isComposing) send();
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                send();
+              }
             }}
             placeholder={t("agentInput", lang)}
             aria-label={t("agentInput", lang)}
-            disabled={streaming}
           />
-          {streaming ? (
-            <button
-              type="button"
-              className={`${styles.send} ${styles.sendStop}`}
-              onClick={stop}
-              aria-label={t("agentStop", lang)}
-            >
-              ■ {t("agentStop", lang)}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={styles.send}
-              onClick={() => send()}
-              disabled={!input.trim() || streaming}
-              aria-label={t("agentSend", lang)}
-            >
-              {t("agentSend", lang)}
-            </button>
-          )}
-        </div>
-        <div className={styles.controls}>
-          <button type="button" className={styles.controlBtn} onClick={clearScreen} aria-label={t("agentClear", lang)}>
-            {t("agentClear", lang)}
-          </button>
-          <button type="button" className={styles.controlBtn} onClick={undo} disabled={!canUndo} aria-label={t("agentUndo", lang)}>
-            {t("agentUndo", lang)}
-          </button>
+          <div className={styles.composerTools}>
+            {showStop ? (
+              <button
+                type="button"
+                className={`${styles.sendFab} ${styles.sendFabStop}`}
+                onClick={stop}
+                aria-label={t("agentStop", lang)}
+              >
+                <IconStop />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={`${styles.sendFab} ${canSend ? styles.sendFabReady : ""}`}
+                onClick={() => send()}
+                disabled={!canSend}
+                aria-label={t("agentSend", lang)}
+              >
+                <IconSend />
+              </button>
+            )}
+          </div>
         </div>
       </footer>
     </section>

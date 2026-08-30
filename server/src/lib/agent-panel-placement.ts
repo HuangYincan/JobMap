@@ -14,6 +14,8 @@
 export const PANEL_BALL_GAP = 8;
 export const PANEL_EDGE_MARGIN = 12;
 export const MOBILE_MAX_WIDTH = 767;
+/** 悬浮球吸附 / 面板跟随共用时长(CSS 同步写 0.45s)。 */
+export const BALL_SNAP_MS = 450;
 
 /** 悬浮球吸附边缘(四向)。 */
 export type BallSnapEdge = 'left' | 'right' | 'top' | 'bottom';
@@ -119,6 +121,54 @@ export function clampBallPosition(
     right: position.right,
     top: clamp(position.top, margin, maxTop),
   };
+}
+
+/**
+ * 运行时球位一律 left+top(right 恒 null)。从 left/right 混用的持久化格式
+ * 转过来,避免 CSS 在 left↔right 之间切换时吸附过渡对不上。
+ */
+export function toLeftTopBallPos(
+  position: BallPosition,
+  viewportWidth: number,
+  ballSize: number,
+): BallPosition {
+  const left =
+    position.left ?? (position.right !== null ? viewportWidth - position.right - ballSize : 0);
+  return { left, right: null, top: position.top };
+}
+
+/**
+ * 视口变化时把球重新钉在当前吸附边上(右缘球随窗口变宽/变窄仍贴右)。
+ * 只使用 left+top,与 toLeftTopBallPos 配套。
+ */
+export function pinBallToSnapEdge(
+  edge: BallSnapEdge,
+  position: BallPosition,
+  viewport: ViewportSize,
+  ballSize: number,
+  margin: number,
+): BallPosition {
+  const leftTop = toLeftTopBallPos(position, viewport.width, ballSize);
+  if (edge === "right") {
+    return clampBallPosition(
+      { left: viewport.width - ballSize - margin, right: null, top: leftTop.top },
+      viewport,
+      ballSize,
+      margin,
+    );
+  }
+  if (edge === "left") {
+    return clampBallPosition({ left: margin, right: null, top: leftTop.top }, viewport, ballSize, margin);
+  }
+  if (edge === "top") {
+    return clampBallPosition({ left: leftTop.left, right: null, top: margin }, viewport, ballSize, margin);
+  }
+  return clampBallPosition(
+    { left: leftTop.left, right: null, top: viewport.height - ballSize - margin },
+    viewport,
+    ballSize,
+    margin,
+  );
 }
 
 /**

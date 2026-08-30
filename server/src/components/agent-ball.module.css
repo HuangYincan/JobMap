@@ -7,7 +7,7 @@
   border: 1px solid var(--line);
   border-radius: 50%;
   box-shadow: var(--shadow);
-  color: #007aFF;
+  color: #007aff;
   cursor: grab;
   display: inline-flex;
   height: 44px;
@@ -15,14 +15,15 @@
   padding: 0;
   position: fixed;
   transition:
-    left 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-    right 0.35s cubic-bezier(0.32, 0.72, 0, 1),
-    top 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-  touch-action: none; /* 拖拽不触发页面滚动/缩放 */
+    left 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    top 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   width: 44px;
-  z-index: 11; /* 高于地图控件(.mapControls z-index 10) */
+  z-index: 11;
 }
 
 .ball:hover {
@@ -33,9 +34,13 @@
   cursor: grabbing;
 }
 
-/* 拖拽期间禁用吸附动画(跟手),松手后恢复过渡吸附 */
+.ballOpen {
+  box-shadow: 0 10px 28px rgba(0, 122, 255, 0.18);
+}
+
 .dragging {
   cursor: grabbing;
+  transform: scale(1.08);
   transition: none;
 }
 
@@ -44,7 +49,6 @@
   line-height: 1;
 }
 
-/* 深色模式(参照 .toolButton 深色:rgba(28,28,30,0.72)) */
 @media (prefers-color-scheme: dark) {
   .ball {
     background: rgba(28, 28, 30, 0.72);
@@ -56,8 +60,6 @@
   }
 }
 
-/* 移动端(≤767px):球隐藏,入口改为移动工具栏 AI item(面板与球是 fragment 兄弟,
-   隐藏球不影响面板渲染;桌面端球照常) */
 @media (max-width: 767px) {
   .ball {
     display: none;

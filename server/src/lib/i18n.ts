@@ -1165,16 +1165,16 @@ export const translations = {
     en: 'AI Assistant',
   },
   agentTitle: {
-    zh: 'AI 助手',
-    en: 'AI Assistant',
+    zh: '助手',
+    en: 'Assistant',
   },
   agentClose: {
     zh: '关闭助手',
     en: 'Close assistant',
   },
   agentInput: {
-    zh: '输入问题…',
-    en: 'Ask anything…',
+    zh: '提出问题…',
+    en: 'Ask a question…',
   },
   agentSend: {
     zh: '发送',

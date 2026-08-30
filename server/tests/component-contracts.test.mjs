@@ -1015,6 +1015,8 @@ test('agent ball is controlled: open/onOpenChange props drive the panel (ws-mt)'
   // 点击(非拖动)→ onOpenChange(!open);面板 onClose → onOpenChange(false)
   assert.match(ball, /onOpenChange\(!open\)/);
   assert.match(ball, /onClose=\{\(\) => onOpenChange\(false\)\}/);
+  assert.match(ball, /closing=\{panelClosing\}/);
+  assert.match(css, /left 0\.45s cubic-bezier\(0\.32, 0\.72, 0, 1\)/);
   // 移动端(≤767px)球隐藏——球与面板是 fragment 兄弟,隐藏球不影响面板渲染
   assert.match(css, /@media \(max-width: 767px\)[\s\S]*\.ball \{\s*display: none;\s*\}/);
   // 移动端:锚定面板 ≤767px display:none(桌面实例缩窗也不漂浮,z-index 13 浮层已撤销);
@@ -1080,8 +1082,9 @@ test('agent sheet embeds in mobile drawer: mobileSheet "agent" branch + embedded
   assert.match(panel, /ballRect\?: BallRect \| null;/);
   assert.match(panel, /dragging\?: boolean;/);
   assert.match(panel, /snapEdge\?: BallSnapEdge \| null;/);
-  // 根类:embedded 修饰类与 .panel 并存;.close 保留(embedded 不隐藏 close)
+  // 根类:embedded 修饰类与 .panel 并存;内嵌隐藏关闭钮(抽屉已有返回)
   assert.match(panel, /styles\.panel\} \$\{embedded \? styles\.embedded : ""\}/);
+  assert.match(panel, /!embedded && \(/);
   assert.match(panel, /className=\{styles\.close\}/);
   // CSS:.mobileAgent flex column 撑满 drawerContent,内嵌面板接管高度
   assert.match(css, /\.mobileAgent \{[\s\S]{0,160}height: 100%;[\s\S]{0,80}min-height: 0/);
@@ -1120,40 +1123,30 @@ test('agent panel has input, send/stop/undo buttons and tool status bar (ws-c)',
 
 test('agent panel completion status + clear screen (ws-done)', () => {
   const panel = src('components/agent-panel.tsx');
-  const css = src('components/agent-panel.module.css');
   const executor = src('components/agent-map-executor.ts');
   const i18n = src('lib/i18n.ts');
-  // i18n 新键:完成 / 停止 / 截断 / 清屏(双语文案)
   assert.match(i18n, /agentDone: \{\s*zh: '回答完成',\s*en: 'Done',\s*\},/);
   assert.match(i18n, /agentStopped: \{\s*zh: '已停止',\s*en: 'Stopped',\s*\},/);
   assert.match(i18n, /agentTruncated: \{\s*zh: '已达回答上限,部分内容被截断',\s*en: 'Reached reply limit, truncated',\s*\},/);
   assert.match(i18n, /agentClear: \{\s*zh: '清屏',\s*en: 'Clear',\s*\},/);
-  // 完成状态:'done'/'stopped' 双分支渲染在消息列表尾部(流式期间不显示,role=status)
-  assert.match(panel, /completion === "done"/);
-  assert.match(panel, /t\("agentDone", lang\)/);
-  assert.match(panel, /t\("agentStopped", lang\)/);
+  assert.match(i18n, /agentTitle: \{\s*zh: '助手',\s*en: 'Assistant',\s*\},/);
+  assert.match(i18n, /agentInput: \{\s*zh: '提出问题…',\s*en: 'Ask a question…',\s*\},/);
+  // 截断弱提示仍渲染;完成/停止状态行已从 UI 去掉
   assert.match(panel, /t\("agentTruncated", lang\)/);
-  assert.match(panel, /completion && !streaming/);
-  assert.match(panel, /styles\.completion\}[^]*role="status"/);
-  assert.match(css, /\.completion \{\s*align-self: center;\s*color: var\(--muted\)/);
-  // 完成状态 per-session(ws-pstream):done 事件经 markDone 只落本会话 entry;
-  // 停止 abort → finally 的 finishStream 判定 'stopped'(与 executor resolveCompletion
-  // 同款规则,纯函数在 lib/agent-stream-store)
+  assert.doesNotMatch(panel, /t\("agentDone", lang\)/);
+  assert.doesNotMatch(panel, /t\("agentStopped", lang\)/);
   assert.match(panel, /setStreamsBoth\(\(prev\) => markDone\(prev, sid, Boolean\(truncated\)\)\)/);
-  assert.match(panel, /finishStream\(prev, sessionId, controller\.signal\.aborted\)/);
+  assert.match(panel, /finishStreamIfCurrent\(prev, sessionId, controller, controller\.signal\.aborted\)/);
   assert.match(executor, /export function resolveCompletion\(doneReceived: boolean, aborted: boolean\)/);
-  // 新消息发送清零完成状态:startStream 覆盖式建流(createSessionStream 重置
-  // done/completion/truncated/notConfigured/fatalError/tool)
   assert.match(panel, /startStream\(prev, sessionId, controller, nextMessages\)/);
-  // 清屏按钮:clearOverlays + 归档当前会话(有消息才归档,标题保留)+ 新建空会话
-  // 并激活(ws-clearfix);**流式时先停当前会话并移除其流**(不再禁用,其余会话流不受影响)
+  // 清屏:abort+removeStream 丢掉未完成输出,saveMessages([],) 清空当前会话,不归档
   assert.match(panel, /onClick=\{clearScreen\}/);
   assert.match(panel, /t\("agentClear", lang\)/);
   assert.match(panel, /executorRef\.current\?\.clearOverlays\(\)/);
-  assert.match(panel, /archiveAndNew\(cur, \{\s*activeId,\s*messages: sessionMessages\(activeId\),\s*title: curSession\?\.title,/); // 归档当前会话 + 新建空会话
-  assert.match(panel, /removeStream\(prev, activeId\)/); // 停止并移除当前会话流(迟到事件 no-op)
-  assert.doesNotMatch(panel, /sessionStorage\.removeItem/); // 不再直写旧键(迁移归 store)
-  // 执行器:undo 栈条目带 kind 标记(overlay 类供清屏识别);clearOverlays 只清 overlay
+  assert.match(panel, /saveMessages\(cur, activeId, \[\]\)/);
+  assert.match(panel, /removeStream\(prev, activeId\)/);
+  assert.doesNotMatch(panel, /archiveAndNew/);
+  assert.doesNotMatch(panel, /sessionStorage\.removeItem/);
   assert.match(executor, /kind: "camera"/);
   assert.match(executor, /kind: "overlay"/);
   assert.match(executor, /kind: "select"/);
@@ -1162,181 +1155,54 @@ test('agent panel completion status + clear screen (ws-done)', () => {
   assert.match(executor, /undoStack\[i\]\.kind === "overlay"/);
 });
 
-test('agent panel input row: send↔stop in-place dual state, controls = clear then undo (ws-inputbar)', () => {
+test('agent panel composer: send↔stop dual state + interrupt while streaming', () => {
   const panel = src('components/agent-panel.tsx');
   const css = src('components/agent-panel.module.css');
-  // 双态(2026-08-22 用户要求):流式中输入行右侧发送位原位变「停止」(onClick=stop、
-  // 复用 agentStop 文案 + ■ 图标 + sendStop 红系警示样式);非流式渲染「发送」
-  // (onClick=send,disabled 条件不变)
-  const inputRowAt = panel.indexOf('<div className={styles.inputRow}>');
-  assert.ok(inputRowAt !== -1, 'inputRow 锚点存在');
-  const inputRowBlock = panel.slice(inputRowAt, panel.indexOf('</footer>'));
-  assert.match(
-    inputRowBlock,
-    /streaming \? \([\s\S]{0,80}className=\{`\$\{styles\.send\} \$\{styles\.sendStop\}`\}[\s\S]{0,120}onClick=\{stop\}[\s\S]{0,120}t\("agentStop", lang\)/,
-    '流式中发送位渲染「停止」(sendStop 样式 + onClick=stop + agentStop 文案)',
-  );
-  assert.match(inputRowBlock, /■ \{t\("agentStop", lang\)\}/, '停止态带 ■ 图标');
-  assert.match(
-    inputRowBlock,
-    /: \([\s\S]{0,80}className=\{styles\.send\}[\s\S]{0,120}onClick=\{\(\) => send\(\)\}[\s\S]{0,120}disabled=\{!input\.trim\(\) \|\| streaming\}/,
-    '非流式渲染「发送」且 disabled 条件不变',
-  );
-  assert.match(inputRowBlock, /t\("agentSend", lang\)/);
-  // 控件行:独立停止控件已移除;顺序 = [清屏] [撤销](清屏最左)
-  const controlsAt = panel.indexOf('<div className={styles.controls}>');
-  assert.ok(controlsAt !== -1, 'controls 锚点存在');
-  const controlsBlock = panel.slice(controlsAt, panel.indexOf('</footer>'));
-  assert.doesNotMatch(controlsBlock, /onClick=\{stop\}|disabled=\{!streaming\}/, '控件行不再有独立停止控件');
-  const clearAt = controlsBlock.indexOf('clearScreen');
-  const undoAt = controlsBlock.indexOf('onClick={undo}');
-  assert.ok(clearAt !== -1 && undoAt !== -1 && clearAt < undoAt, '控件行顺序:清屏在撤销前');
-  // 全 footer 仅一处 onClick={stop}(并入发送位,原控件行停止钮已移除)
   const footerBlock = panel.slice(panel.indexOf('<footer className={styles.footer}>'), panel.indexOf('</footer>'));
+  assert.match(footerBlock, /styles\.composer/);
+  assert.match(footerBlock, /showStop \? \(/);
+  assert.match(footerBlock, /onClick=\{stop\}/);
+  assert.match(footerBlock, /t\("agentStop", lang\)/);
+  assert.match(footerBlock, /onClick=\{\(\) => send\(\)\}/);
+  assert.match(footerBlock, /t\("agentSend", lang\)/);
+  assert.doesNotMatch(footerBlock, /disabled=\{streaming\}/, '流式中输入框保持可输入以便打断');
   assert.equal((footerBlock.match(/onClick=\{stop\}/g) ?? []).length, 1, 'stop 只存在于发送位');
-  // CSS:sendStop 红系警示底 + 控件行左对齐(清屏最左)
-  assert.match(css, /\.sendStop \{[\s\S]*background: #ff3b30/, 'sendStop 红系警示底');
-  assert.match(css, /\.controls \{[\s\S]*justify-content: flex-start;/, '控件行左对齐');
+  assert.doesNotMatch(panel, /styles\.controls/, '底栏不再有清屏/撤销文字行');
+  assert.match(panel, /discardTrailingAssistants/);
+  assert.match(panel, /const interrupted = Boolean\(activeId && isStreaming\(streamsRef\.current, activeId\)\)/);
+  assert.match(panel, /isCurrentController/);
+  assert.match(css, /\.sendFabStop \{[\s\S]*background: #ff3b30/);
+  assert.match(css, /\.sendFabReady \{[\s\S]*background: #007aff/);
 });
 
-test('agent panel memory: login-only entry + embedded overlay (ws-mem-b)', () => {
+test('agent panel chrome: no session/memory UI, header icons only', () => {
   const panel = src('components/agent-panel.tsx');
   const ball = src('components/agent-ball.tsx');
   const shell = src('components/map-shell.tsx');
   const css = src('components/agent-panel.module.css');
   const i18n = src('lib/i18n.ts');
-  // user 透传链:map-shell(已有 user 状态)→ agent-ball → agent-panel
+  const store = src('lib/agent-session-store.ts');
   assert.match(ball, /user: AccountUser \| null/);
   assert.match(ball, /user=\{user\}/);
   assert.match(panel, /user: AccountUser \| null/);
-  // ws-mt 受控化:agentOpen/onOpenChange 一并透传(移动端入口为工具栏 AI item)
   assert.match(shell, /<AgentBall[\s\S]{0,160}bridge=\{agentBridgeRef\.current\}[\s\S]{0,160}user=\{user\}[\s\S]{0,80}userLocation=\{userLocation\}[\s\S]{0,80}open=\{agentOpen\}[\s\S]{0,120}onOpenChange=\{setAgentOpen\}/);
-  // 记忆按钮:仅在 user 非空时渲染(guest 不渲染);位于 header 右侧(关闭钮旁)
-  assert.match(panel, /\{user && \([\s\S]{0,160}styles\.memoryBtn/);
-  assert.match(panel, /aria-label=\{t\("agentMemory", lang\)\}/);
-  assert.match(panel, /aria-expanded=\{memoriesOpen\}/);
-  assert.match(panel, /className=\{styles\.close\}/);
-  // 记忆计数徽章渲染条件:登录 + 非加载/失败 + 有数据(蓝底白字圆角)
-  assert.match(panel, /const showMemoryBadge = Boolean\(user\) && !memoriesLoading && !memoriesError && memories\.length > 0/);
-  assert.match(panel, /\{showMemoryBadge && \([\s\S]{0,80}styles\.memoryBadge/);
-  assert.match(css, /\.memoryBadge \{[\s\S]*background: #007aFF[\s\S]*border-radius: 999px/);
-  // 弹层:登录 + 打开才渲染;内容 = 加载三点 / 空态 / 失败+重试 / 条目卡 + 逐条删除/一键清除(轻确认)
-  assert.match(panel, /\{user && memoriesOpen && \(/);
-  assert.match(panel, /t\("agentMemoryLoading", lang\)/);
-  assert.match(panel, /t\("agentMemoryEmpty", lang\)/);
-  assert.match(panel, /t\("agentMemoryError", lang\)/);
-  assert.match(panel, /t\("retry", lang\)/); // 失败弱提示 + 重试(ws-panel2)
-  assert.match(panel, /setMemoriesRefresh\(\(r\) => r \+ 1\)/);
-  assert.match(panel, /t\("agentMemoryDelete", lang\)/);
-  assert.match(panel, /t\("agentMemoryClear", lang\)/);
-  assert.match(panel, /t\("agentMemoryClearConfirm", langRef\.current\)/);
-  assert.match(panel, /memoryViewState\(memoriesLoading, memoriesError, memories\.length\)/);
-  // 标题计数徽章:「🧠 记忆 · N」(仅 list 视图)
-  assert.match(panel, /memoryView === "list" && <span className=\{styles\.memoryCountBadge\}>/);
-  assert.match(css, /\.memoryCountBadge \{/);
-  // 数据契约:GET 列表 / DELETE 逐条(id 查询参数,saved 范式)/ DELETE 清除全量
-  assert.match(panel, /fetch\("\/api\/me\/memories"\)/);
-  assert.match(panel, /\/api\/me\/memories\?id=\$\{encodeURIComponent\(String\(id\)\)\}/);
-  assert.match(panel, /method: "DELETE"/);
-  assert.match(panel, /window\.confirm\(t\("agentMemoryClearConfirm", langRef\.current\)\)/);
-  // 纯函数:响应解析(兼容 items/memories/裸数组)+ 视图状态机
-  assert.match(panel, /export function parseMemories\(json: unknown\)/);
-  assert.match(panel, /export function memoryViewState\(/);
-  assert.match(panel, /export type MemoryViewState = "loading" \| "error" \| "empty" \| "list"/);
-  // 清屏语义不变:clearScreen 只清对话/覆盖物,不触碰记忆状态(记忆跨会话)
-  const clearAt = panel.indexOf('const clearScreen = useCallback');
-  const clearEnd = panel.indexOf('const replayAction = useCallback', clearAt);
-  assert.ok(clearAt !== -1 && clearEnd > clearAt, 'clearScreen anchor exists');
-  const clearBlock = panel.slice(clearAt, clearEnd);
-  assert.doesNotMatch(clearBlock, /setMemories|memoriesOpen|agentMemory/);
-  // i18n 键齐全(双语文案)
-  assert.match(i18n, /agentMemory: \{\s*zh: '记忆',\s*en: 'Memory',\s*\},/);
-  assert.match(i18n, /agentMemoryEmpty: \{\s*zh: '暂无记忆',\s*en: 'No memories yet',\s*\},/);
-  assert.match(i18n, /agentMemoryClear: \{\s*zh: '清除全部记忆',\s*en: 'Clear all memories',\s*\},/);
-  assert.match(i18n, /agentMemoryDelete: \{\s*zh: '删除',\s*en: 'Delete',\s*\},/);
-  assert.match(i18n, /agentMemoryLoading: \{\s*zh: '加载中…',\s*en: 'Loading…',\s*\},/);
-  assert.match(i18n, /agentMemoryError: \{\s*zh: '记忆加载失败',\s*en: 'Failed to load memories',\s*\},/);
-  assert.match(i18n, /agentMemoryClearConfirm: \{\s*zh: '确认清除全部记忆\?',\s*en: 'Clear all memories\?',\s*\},/);
-  assert.match(i18n, /agentToolMemory: \{\s*zh: '记忆',\s*en: 'Memory',\s*\},/);
-  // CSS:弹层 glass 卡(圆角 16px + blur + 细描边,与面板同体系)+ 条目卡(soft-strong/圆角 12px/12px 内边距)
-  assert.match(css, /\.memoryPanel,[\s\S]*?\.sessionsPanel \{[\s\S]*backdrop-filter: blur\(24px\) saturate\(165%\)[\s\S]*border-radius: 16px/);
-  assert.match(css, /\.memoryRow \{\s*[\s\S]*background: var\(--soft-strong[\s\S]*border-radius: 12px[\s\S]*padding: 12px/);
-  // 清除按钮:橙边 hover 红(语义保留)
-  assert.match(css, /\.memoryClear:hover \{[\s\S]*color: #ff3b30/);
-});
-
-test('agent panel sessions: header entry + popover + local store (ws-panel2)', () => {
-  const panel = src('components/agent-panel.tsx');
-  const css = src('components/agent-panel.module.css');
-  const i18n = src('lib/i18n.ts');
-  const store = src('lib/agent-session-store.ts');
-  // header 双入口:会话钮(登录/guest 均可用,本地功能)+ 关闭钮;会话钮在记忆钮前
-  assert.match(panel, /styles\.sessionsBtn/);
-  assert.match(panel, /t\("agentSessions", lang\)/);
-  assert.match(panel, /aria-expanded=\{sessionsOpen\}/);
-  const sessionsBtnAt = panel.indexOf('styles.sessionsBtn');
-  const memoryBtnAt = panel.indexOf('styles.memoryBtn');
-  const closeAt = panel.indexOf('styles.close');
-  assert.ok(sessionsBtnAt !== -1 && memoryBtnAt !== -1 && closeAt !== -1);
-  assert.ok(sessionsBtnAt < memoryBtnAt && memoryBtnAt < closeAt, 'header 顺序:会话 → 记忆 → 关闭');
-  // 会话弹层:glass 卡(面板内嵌)+ 列表(标题+相对时间+删除 ×,当前高亮 ●)+ 新建 + 空态
-  assert.match(panel, /\{sessionsOpen && \(/);
-  assert.match(panel, /styles\.sessionsPanel/);
-  assert.match(panel, /t\("agentSessionNew", lang\)/);
-  assert.match(panel, /t\("agentSessionEmpty", lang\)/);
-  assert.match(panel, /t\("agentSessionDelete", lang\)/);
-  assert.match(panel, /switchToSession\(s\.id\)/);
-  assert.match(panel, /sessionTimeLabel\(relativeTime\(s\.updatedAt, Date\.now\(\)\), lang\)/);
-  assert.match(panel, /sessionRowActive/);
-  assert.match(panel, /isActive \? "●" : "○"/);
-  assert.match(panel, /aria-current=\{isActive \? "true" : undefined\}/);
-  // 切换会话(ws-pstream):只改 activeId,**不 stop、不打断**(正则断言切换路径无
-  // stop()/abort —— 并行流后台继续跑);切换前工作副本落库旧会话
-  const switchAt = panel.indexOf('const switchToSession = useCallback');
-  assert.ok(switchAt !== -1, 'switchToSession anchor exists');
-  const switchBlock = panel.slice(switchAt, panel.indexOf('const newSession = useCallback', switchAt));
-  assert.doesNotMatch(switchBlock, /stop\(\)/, '切换会话不再调用 stop(切走不打断)');
-  assert.doesNotMatch(switchBlock, /abort/, '切换会话不终止任何流');
-  assert.match(panel, /saveMessages\(next, cur\.activeId, sessionMessages\(cur\.activeId\)\)/);
-  // 流式中的会话显示「进行中」弱化蓝点标记(per-session 条件渲染,addon 必做)
-  assert.match(panel, /const isRunning = isStreaming\(streams, s\.id\)/);
-  assert.match(panel, /\{isRunning && \([\s\S]{0,120}styles\.sessionStreaming[\s\S]{0,120}t\("agentSessionStreaming", lang\)/);
-  // 清屏/会话语义:清屏 = archiveAndNew(归档当前会话 + 新建空会话),其余消息
-  // 变更统一走 store;旧键仅迁移读(不再直写)
-  assert.match(panel, /archiveAndNew\(cur, \{/);
-  assert.doesNotMatch(panel, /HISTORY_KEY/); // 旧键常量已移除(注释提及不算直写)
-  assert.doesNotMatch(panel, /sessionStorage\.setItem/);
-  assert.match(panel, /loadSessionState\(window\.localStorage, window\.sessionStorage\)/);
-  // store 契约:key/cap/纯函数齐全
+  assert.doesNotMatch(panel, /sessionsBtn|memoryBtn|sessionsOpen|memoriesOpen|parseMemories|memoryViewState/);
+  assert.doesNotMatch(css, /sessionsPanel|memoryPanel|memoryBadge|sessionRowActive/);
+  assert.match(panel, /t\("agentTitle", lang\)/);
+  assert.match(panel, /t\("agentClear", lang\)/);
+  assert.match(panel, /t\("agentUndo", lang\)/);
+  assert.match(panel, /className=\{styles\.iconBtn\}/);
+  const headerAt = panel.indexOf('<header className={styles.header}>');
+  const headerEnd = panel.indexOf('</header>');
+  const header = panel.slice(headerAt, headerEnd);
+  const clearAt = header.indexOf('clearScreen');
+  const undoAt = header.indexOf('onClick={undo}');
+  const closeAt = header.indexOf('styles.close');
+  assert.ok(clearAt !== -1 && undoAt !== -1 && closeAt !== -1 && clearAt < undoAt && undoAt < closeAt, 'header 顺序:清屏 → 撤销 → 关闭');
   assert.match(store, /SESSIONS_KEY = "dm\.agent-sessions\.v1"/);
-  assert.match(store, /LEGACY_HISTORY_KEY = "dm\.agent-history\.v1"/);
-  assert.match(store, /SESSIONS_CAP = 10/);
-  assert.match(store, /SESSION_MESSAGES_CAP = 30/);
-  assert.match(store, /export function createSession\(/);
-  assert.match(store, /export function switchSession\(/);
-  assert.match(store, /export function deleteSession\(/);
-  assert.match(store, /export function listSessions\(/);
-  assert.match(store, /export function appendMessage\(/);
+  assert.match(store, /export function archiveAndNew\(/);
   assert.match(store, /export function saveMessages\(/);
-  assert.match(store, /export function archiveAndNew\(/); // 清屏:归档当前会话 + 新建空会话
-  assert.match(store, /export function loadSessionState\(/);
-  assert.match(store, /export function saveSessionState\(/);
-  assert.match(store, /export function deriveTitle\(/);
-  assert.match(store, /\[\.\.\.text\]\.slice\(0, TITLE_MAX\)\.join\(""\)/); // 标题按码点截断 12 字
-  // i18n 新键(双语文案)
-  assert.match(i18n, /agentSessions: \{\s*zh: '会话',\s*en: 'Sessions',\s*\},/);
-  assert.match(i18n, /agentSessionNew: \{\s*zh: '新建会话',\s*en: 'New session',\s*\},/);
-  assert.match(i18n, /agentSessionEmpty: \{\s*zh: '暂无会话',\s*en: 'No sessions yet',\s*\},/);
-  assert.match(i18n, /agentSessionDelete: \{\s*zh: '删除会话',\s*en: 'Delete session',\s*\},/);
-  assert.match(i18n, /agentSessionJustNow: \{\s*zh: '刚刚',\s*en: 'Just now',\s*\},/);
-  assert.match(i18n, /agentSessionMinutesAgo: \{\s*zh: '\{n\} 分钟前',\s*en: '\{n\} min ago',\s*\},/);
-  assert.match(i18n, /agentSessionHoursAgo: \{\s*zh: '\{n\} 小时前',\s*en: '\{n\} hr ago',\s*\},/);
-  assert.match(i18n, /agentSessionStreaming: \{\s*zh: '进行中',\s*en: 'Running',\s*\},/); // 流式进行中标记(ws-pstream)
-  // CSS:会话弹层 + 当前会话蓝底高亮 + 删除 hover 红 + 进行中弱化蓝点脉冲
-  assert.match(css, /\.sessionsPanel \{/);
-  assert.match(css, /\.sessionRowActive \{[\s\S]*rgba\(0, 122, 255, 0\.1\)/);
-  assert.match(css, /\.sessionDelete:hover \{[\s\S]*color: #ff3b30/);
-  assert.match(css, /\.sessionStreaming \{[\s\S]*animation: sessionStreamingPulse/);
+  assert.match(i18n, /agentToolMemory: \{\s*zh: '记忆',\s*en: 'Memory',\s*\},/);
 });
 
 test('agent memory DELETE distinguishes one-item removal from clear-all', () => {
@@ -1346,15 +1212,6 @@ test('agent memory DELETE distinguishes one-item removal from clear-all', () => 
   assert.match(route, /if \(!memoryId\) \{[\s\S]*await clearMemories\(user\.id\)/);
   assert.match(route, /await removeMemory\(user\.id, memoryId\)/);
   assert.match(route, /MEMORY_ID_TOO_LONG/);
-
-  const panel = src('components/agent-panel.tsx');
-  const deleteAt = panel.indexOf('const deleteMemory = useCallback');
-  const clearAt = panel.indexOf('const clearMemories = useCallback');
-  assert.ok(deleteAt !== -1 && clearAt !== -1 && deleteAt < clearAt);
-  assert.match(panel, /\/api\/me\/memories\?id=\$\{encodeURIComponent\(String\(id\)\)\}/);
-  const singleDeleteAt = panel.indexOf('{ method: "DELETE" }', deleteAt);
-  const clearAllAt = panel.indexOf('fetch("/api/me/memories", { method: "DELETE" })', clearAt);
-  assert.ok(singleDeleteAt !== -1 && clearAllAt !== -1 && singleDeleteAt < clearAllAt);
 });
 
 test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
@@ -1482,7 +1339,7 @@ test('agent panel follows the ball via transform anchor (ws-c-enhance)', () => {
   assert.match(panel, /"--px": `\$\{placement\.left\}px`/);
   assert.match(panel, /"--py": `\$\{placement\.top\}px`/);
   assert.match(css, /transform: translate3d\(var\(--px, 0px\), var\(--py, 12px\), 0\)/);
-  assert.match(css, /transition: transform 0\.35s cubic-bezier\(0\.32, 0\.72, 0, 1\)/);
+  assert.match(css, /transition: transform 0\.45s cubic-bezier\(0\.32, 0\.72, 0, 1\)/);
   assert.match(css, /\.panelDragging \{\s*animation: none;\s*transition: none;/);
   // z-index:球 11、面板 12
   assert.match(css, /z-index: 12/);
@@ -1499,7 +1356,7 @@ test('agent panel follows the ball via transform anchor (ws-c-enhance)', () => {
   assert.match(ball, /ballRect=\{ballRect\}/);
   assert.match(ball, /dragging=\{dragging\}/);
   // 窗口缩小后，当前球位也要收敛；否则旧视口坐标会落在可视区域外。
-  assert.match(ball, /clampBallPosition\(current, viewport, BALL_SIZE, EDGE_MARGIN\)/);
+  assert.match(ball, /pinBallToSnapEdge\(snapEdge, current, viewport, BALL_SIZE, EDGE_MARGIN\)/);
   assert.match(ball, /window\.addEventListener\("resize", handleResize\)/);
 });
 
@@ -1542,8 +1399,9 @@ test('agent panel: 思考提示与空白气泡已删除,工具活动保留 (ws-b
     bubbleIdx !== -1 && imagesIdx !== -1 && toolsIdx !== -1 && bubbleIdx < imagesIdx && imagesIdx < toolsIdx,
     '搜索结果图片应在最终回答气泡下方、工具活动列表上方',
   );
-  // 消息状态机走纯函数 reducer(按轮拆分)
-  assert.match(panel, /reduceAgentEvent/);
+  // 消息状态机走纯函数 reducer(按轮拆分,stream-store 的 routeDelta 调用)
+  const store = src('lib/agent-stream-store.ts');
+  assert.match(store, /reduceAgentEvent/);
   // 助手消息体走 MarkdownText(用户消息保持纯文本);渲染前剥离正文动作 JSON + 传 lang
   assert.match(panel, /import \{ MarkdownText \} from "\.\/markdown-text"/);
   assert.match(panel, /<MarkdownText text=\{stripActionJsonBlocks\(m\.content\)\} lang=\{lang\} \/>/);
@@ -1552,7 +1410,7 @@ test('agent panel: 思考提示与空白气泡已删除,工具活动保留 (ws-b
   // 既有能力保留
   assert.match(panel, /replayAction/);
   assert.match(panel, /LLM_UNCONFIGURED/);
-  assert.match(panel, /dm\.agent-history\.v1/);
+  assert.match(src('lib/agent-session-store.ts'), /dm\.agent-history\.v1/);
 });
 
 test('map-shell 弹卡不动相机(2026-08-21 热修:二级卡片 = 侧控栏纯视图)', () => {
@@ -1672,14 +1530,13 @@ test('agent panel dark mode: 深色覆盖块 + 关键类无硬编码白底 (ws-d
   assert.ok(darkAt !== -1, 'agent-panel.module.css 必须带 prefers-color-scheme: dark 覆盖块(与 agent-ball 同模式)');
   const darkBlock = css.slice(darkAt);
 
-  // 深色覆盖块:弹层玻璃底 / 输入行 / 助手气泡底均改深底,块内不得出现高不透明白底
-  assert.match(darkBlock, /\.memoryPanel,[\s\S]{0,80}background: rgba\(28, 28, 30, 0\.92\)/);
-  assert.match(darkBlock, /\.input \{[\s\S]{0,80}background: rgba\(255, 255, 255, 0\.06\)/);
+  // 深色覆盖块:输入 composer / 助手气泡底均改深底,块内不得出现高不透明白底
+  assert.match(darkBlock, /\.composer \{[\s\S]{0,80}background: rgba\(255, 255, 255, 0\.06\)/);
   assert.match(darkBlock, /\.bubbleAssistant \{[\s\S]{0,80}background: rgba\(255, 255, 255, 0\.07\)/);
   assert.doesNotMatch(darkBlock, /background: rgba\(255, 255, 255, 0\.[5-9]\)/);
 
-  // 面板容器 / 记忆卡:玻璃底必须走变量(--soft-strong 随系统翻转),不得硬编码白底
-  for (const selector of ['.panel {', '.memoryRow {']) {
+  // 面板容器:玻璃底必须走变量(--soft-strong 随系统翻转),不得硬编码白底
+  for (const selector of ['.panel {']) {
     const at = css.indexOf(selector);
     assert.ok(at !== -1, `${selector} 块存在`);
     const block = css.slice(at, css.indexOf('\n}', at) + 1);

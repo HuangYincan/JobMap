@@ -1,28 +1,32 @@
 "use client";
 
 // AI Agent 悬浮球:44px 圆形玻璃按钮,可拖拽吸附,点击(非拖动)切换聊天面板。
-// - 初始位 right:12px / bottom:179px(地图控件上方,mapControls 实测高 ~147 + 底距 20 + 间距 12);
+// - 初始位 right 缘 / bottom:179px(地图控件上方);
 // - 拖拽:pointer 事件,3px 阈值区分点击/拖动;松手按球心到四边最近距离四向吸附
-//   (左/右/上/下,平局 左→右→上→下;computeBallSnap 纯函数),正交方向保留松手坐标,
-//   clamp 12px 边距,吸附动画 cubic-bezier(0.32, 0.72, 0, 1) 0.35s;
-// - 位置持久化 localStorage 'dm.agent-ball-pos'({edge, top, left?};兼容旧 {edge:'left'|'right', top});
-// - 面板以球为锚实时跟随(ballRect 由 pos 状态派生,面板经 computePanelPlacement 定位,
-//   吸附 edge 传入 → 垂直锚定;拖拽中不传 → 面板跟手)。
-// - 受控化(2026-08-22 ws-mt):open/onOpenChange 由 MapShell 提升提供(local state 移除);
-//   移动端(≤767px)球隐藏,入口改为移动工具栏 AI item(见 map-shell mobileToolbarItems)。
+//   (computeBallSnap 纯函数)。运行时位置一律 left+top,避免 left↔right 切换
+//   导致过渡对不上;吸附 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+// - 位置持久化 localStorage 'dm.agent-ball-pos'({edge, top, left?});
+// - 面板以球为锚实时跟随;开关带动画(缩放到球再卸载)。
+// - 受控化:open/onOpenChange 由 MapShell 提升;移动端(≤767px)球隐藏。
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./agent-ball.module.css";
 import { t, type Language } from "@/lib/i18n";
 import type { AccountUser } from "@/lib/account";
 import type { MapBridge } from "@/lib/agent-map-bridge";
 import type { RouteOverlayMeta } from "@/lib/navigation/route-client";
-import { clampBallPosition, computeBallSnap, type BallRect, type BallSnapEdge } from "@/lib/agent-panel-placement";
+import {
+  computeBallSnap,
+  pinBallToSnapEdge,
+  toLeftTopBallPos,
+  type BallRect,
+  type BallSnapEdge,
+} from "@/lib/agent-panel-placement";
 import { AgentPanel } from "./agent-panel";
 
 const BALL_SIZE = 44;
 const EDGE_MARGIN = 12;
-const DEFAULT_BOTTOM = 179; // mapControls 实测高 ~147 + 底距 20 + 间距 12
+const DEFAULT_BOTTOM = 179;
 const DRAG_THRESHOLD_PX = 3;
 const POS_KEY = "dm.agent-ball-pos";
 
@@ -40,11 +44,8 @@ interface InitialState {
 interface Props {
   bridge: MapBridge | null;
   lang: Language;
-  /** 登录态:原样透传给 AgentPanel(记忆入口只对登录用户渲染)。 */
   user: AccountUser | null;
-  /** 用户定位;透传给面板,岗位检索起点优先于视野中心。 */
   userLocation?: { lng: number; lat: number } | null;
-  /** 受控开关(ws-mt):面板开合由 MapShell 提升提供;点击 toggle / 面板 onClose 都走 onOpenChange。 */
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRouteMeta?: (meta: RouteOverlayMeta) => void;
@@ -52,12 +53,10 @@ interface Props {
   onRouteLoading?: () => void;
 }
 
-/** 初始位(含 localStorage 恢复):{edge, top, left?} 持久化格式;默认 right:12 / bottom:179。 */
 function readInitialState(): InitialState {
-  // SSR 安全:window 不存在时直接返回默认位(top 占位,客户端 hydration 时重算)
-  if (typeof window === "undefined") return { pos: { left: null, right: EDGE_MARGIN, top: 0 }, edge: "right" };
+  if (typeof window === "undefined") return { pos: { left: EDGE_MARGIN, right: null, top: 0 }, edge: "right" };
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
   try {
-    const viewport = { width: window.innerWidth, height: window.innerHeight };
     const raw = window.localStorage.getItem(POS_KEY);
     if (raw) {
       const parsed: unknown = JSON.parse(raw);
@@ -68,33 +67,17 @@ function readInitialState(): InitialState {
           typeof top === "number" &&
           Number.isFinite(top)
         ) {
-          if (edge === "left") {
-            return {
-              pos: clampBallPosition({ left: EDGE_MARGIN, right: null, top }, viewport, BALL_SIZE, EDGE_MARGIN),
-              edge,
-            };
-          }
-          if (edge === "right") {
-            return {
-              pos: clampBallPosition({ left: null, right: EDGE_MARGIN, top }, viewport, BALL_SIZE, EDGE_MARGIN),
-              edge,
-            };
-          }
-          // top/bottom 吸附:left 存水平位置;缺失/非法 → 默认贴左
           const savedLeft = typeof left === "number" && Number.isFinite(left) ? left : EDGE_MARGIN;
-          if (edge === "top") {
-            return {
-              pos: clampBallPosition({ left: savedLeft, right: null, top: EDGE_MARGIN }, viewport, BALL_SIZE, EDGE_MARGIN),
-              edge,
-            };
-          }
+          const rawPos: BallPos =
+            edge === "right"
+              ? { left: null, right: EDGE_MARGIN, top }
+              : edge === "left"
+                ? { left: EDGE_MARGIN, right: null, top }
+                : edge === "top"
+                  ? { left: savedLeft, right: null, top: EDGE_MARGIN }
+                  : { left: savedLeft, right: null, top: viewport.height - BALL_SIZE - EDGE_MARGIN };
           return {
-            pos: clampBallPosition(
-              { left: savedLeft, right: null, top: viewport.height - BALL_SIZE - EDGE_MARGIN },
-              viewport,
-              BALL_SIZE,
-              EDGE_MARGIN,
-            ),
+            pos: pinBallToSnapEdge(edge, rawPos, viewport, BALL_SIZE, EDGE_MARGIN),
             edge,
           };
         }
@@ -104,16 +87,32 @@ function readInitialState(): InitialState {
     // 坏数据 → 默认位
   }
   const top = Math.max(EDGE_MARGIN, window.innerHeight - DEFAULT_BOTTOM - BALL_SIZE);
-  return { pos: { left: null, right: EDGE_MARGIN, top }, edge: "right" };
+  return {
+    pos: pinBallToSnapEdge("right", { left: null, right: EDGE_MARGIN, top }, viewport, BALL_SIZE, EDGE_MARGIN),
+    edge: "right",
+  };
 }
 
-export default function AgentBall({ bridge, lang, user, userLocation = null, open, onOpenChange, onRouteMeta, onRouteError, onRouteLoading }: Props) {
+export default function AgentBall({
+  bridge,
+  lang,
+  user,
+  userLocation = null,
+  open,
+  onOpenChange,
+  onRouteMeta,
+  onRouteError,
+  onRouteLoading,
+}: Props) {
   const [initial] = useState(readInitialState);
   const [pos, setPos] = useState<BallPos>(initial.pos);
-  // 当前吸附边缘:松手吸附时更新,拖拽中保持旧值(面板拖拽中不消费)
   const [snapEdge, setSnapEdge] = useState<BallSnapEdge>(initial.edge);
   const [dragging, setDragging] = useState(false);
+  const [panelMounted, setPanelMounted] = useState(open);
+  const [panelClosing, setPanelClosing] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const openRef = useRef(open);
+  openRef.current = open;
   const dragRef = useRef<{
     startX: number;
     startY: number;
@@ -122,12 +121,27 @@ export default function AgentBall({ bridge, lang, user, userLocation = null, ope
     baseTop: number;
   } | null>(null);
 
-  // Resize 后重新收敛：持久化位置可能来自更大的视口。
+  useEffect(() => {
+    if (open) {
+      setPanelMounted(true);
+      setPanelClosing(false);
+      return;
+    }
+    if (panelMounted) setPanelClosing(true);
+  }, [open, panelMounted]);
+
+  const handlePanelExitEnd = useCallback(() => {
+    if (!openRef.current) {
+      setPanelMounted(false);
+      setPanelClosing(false);
+    }
+  }, []);
+
   useEffect(() => {
     const handleResize = () => {
       const viewport = { width: window.innerWidth, height: window.innerHeight };
       setPos((current) => {
-        const next = clampBallPosition(current, viewport, BALL_SIZE, EDGE_MARGIN);
+        const next = pinBallToSnapEdge(snapEdge, current, viewport, BALL_SIZE, EDGE_MARGIN);
         return next.left === current.left && next.right === current.right && next.top === current.top
           ? current
           : next;
@@ -135,13 +149,12 @@ export default function AgentBall({ bridge, lang, user, userLocation = null, ope
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [snapEdge]);
 
-  /** 球当前矩形(viewport 坐标):pos 状态派生;面板锚定用。 */
   const ballRect: BallRect = useMemo(() => {
     const viewportW = typeof window !== "undefined" ? window.innerWidth : 0;
-    const left = pos.left ?? (pos.right !== null ? viewportW - pos.right - BALL_SIZE : 0);
-    return { left, top: pos.top, width: BALL_SIZE, height: BALL_SIZE };
+    const resolved = toLeftTopBallPos(pos, viewportW, BALL_SIZE);
+    return { left: resolved.left ?? 0, top: pos.top, width: BALL_SIZE, height: BALL_SIZE };
   }, [pos]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -167,7 +180,7 @@ export default function AgentBall({ bridge, lang, user, userLocation = null, ope
     if (!g) return;
     const dx = e.clientX - g.startX;
     const dy = e.clientY - g.startY;
-    if (!g.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return; // 3px 阈值区分点击/拖动
+    if (!g.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
     if (!g.moved) {
       g.moved = true;
       setDragging(true);
@@ -180,11 +193,10 @@ export default function AgentBall({ bridge, lang, user, userLocation = null, ope
     dragRef.current = null;
     if (!g) return;
     if (!g.moved) {
-      onOpenChange(!open); // 点击(非拖动)→ toggle 面板(受控,走 MapShell agentOpen)
+      onOpenChange(!open);
       return;
     }
     setDragging(false);
-    // 松手四向吸附:球心到四边最近距离(平局 左→右→上→下),正交方向保留松手坐标
     const finalLeft = g.baseLeft + (e.clientX - g.startX);
     const finalTop = g.baseTop + (e.clientY - g.startY);
     const snap = computeBallSnap(
@@ -195,13 +207,8 @@ export default function AgentBall({ bridge, lang, user, userLocation = null, ope
     );
     const { edge, left, top } = snap;
     setSnapEdge(edge);
-    if (edge === "right") {
-      setPos({ left: null, right: EDGE_MARGIN, top });
-    } else {
-      setPos({ left, right: null, top });
-    }
+    setPos({ left, right: null, top });
     try {
-      // 持久化:{edge, top}(left/right)或 {edge, top, left}(top/bottom 存水平位置)
       const payload = edge === "left" || edge === "right" ? { edge, top } : { edge, top, left };
       window.localStorage.setItem(POS_KEY, JSON.stringify(payload));
     } catch {
@@ -214,8 +221,8 @@ export default function AgentBall({ bridge, lang, user, userLocation = null, ope
       <button
         ref={buttonRef}
         type="button"
-        className={`${styles.ball} ${dragging ? styles.dragging : ""}`}
-        style={{ left: pos.left ?? undefined, right: pos.right ?? undefined, top: pos.top }}
+        className={`${styles.ball} ${dragging ? styles.dragging : ""} ${open || panelMounted ? styles.ballOpen : ""}`}
+        style={{ left: pos.left ?? 0, top: pos.top }}
         aria-label={t("agentBall", lang)}
         aria-expanded={open}
         onPointerDown={handlePointerDown}
@@ -230,7 +237,7 @@ export default function AgentBall({ bridge, lang, user, userLocation = null, ope
           ✦
         </span>
       </button>
-      {open && (
+      {panelMounted && (
         <AgentPanel
           bridge={bridge}
           lang={lang}
@@ -239,6 +246,8 @@ export default function AgentBall({ bridge, lang, user, userLocation = null, ope
           ballRect={ballRect}
           dragging={dragging}
           snapEdge={dragging ? null : snapEdge}
+          closing={panelClosing}
+          onExitEnd={handlePanelExitEnd}
           onClose={() => onOpenChange(false)}
           onRouteMeta={onRouteMeta}
           onRouteError={onRouteError}

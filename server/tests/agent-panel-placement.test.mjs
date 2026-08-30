@@ -8,6 +8,8 @@ import {
   PANEL_BALL_GAP,
   PANEL_EDGE_MARGIN,
   pickPanelSide,
+  pinBallToSnapEdge,
+  toLeftTopBallPos,
 } from '../src/lib/agent-panel-placement.ts';
 
 // 桌面视口默认 1280×800;球 44×44;面板 360×560(70vh)
@@ -321,4 +323,26 @@ test('edge 缺省/undefined 与不传等价(旧行为回归)', () => {
 test('垂直锚定:移动端(≤767px)→ 恒 sheet,edge 无关', () => {
   assert.deepEqual(computePanelPlacement({ left: 100, top: 12, width: 44, height: 44 }, PANEL, { width: 430, height: 800 }, 'top'), { mode: 'sheet' });
   assert.deepEqual(computePanelPlacement({ left: 100, top: 700, width: 44, height: 44 }, PANEL, { width: MOBILE_MAX_WIDTH, height: 800 }, 'bottom'), { mode: 'sheet' });
+});
+
+test('toLeftTopBallPos: right 边距转成 left,right 恒 null', () => {
+  assert.deepEqual(toLeftTopBallPos({ left: null, right: 12, top: 200 }, 1280, 44), {
+    left: 1280 - 44 - 12,
+    right: null,
+    top: 200,
+  });
+  assert.deepEqual(toLeftTopBallPos({ left: 40, right: 12, top: 10 }, 1280, 44), {
+    left: 40,
+    right: null,
+    top: 10,
+  });
+});
+
+test('pinBallToSnapEdge: 右缘球随视口变宽仍贴右', () => {
+  const narrow = pinBallToSnapEdge('right', { left: 944, right: null, top: 200 }, { width: 1000, height: 800 }, 44, 12);
+  assert.deepEqual(narrow, { left: 1000 - 44 - 12, right: null, top: 200 });
+  const wide = pinBallToSnapEdge('right', narrow, { width: 1400, height: 800 }, 44, 12);
+  assert.equal(wide.left, 1400 - 44 - 12);
+  const leftEdge = pinBallToSnapEdge('left', { left: 80, right: null, top: 300 }, V, 44, 12);
+  assert.equal(leftEdge.left, 12);
 });

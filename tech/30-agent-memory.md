@@ -2,7 +2,7 @@
 
 **文档版本:** 1.0
 **创建日期:** 2026-08-22
-**状态:** 已实现(批次 `20260822-boss-agent-memory`,ws-mem-a 后端核心;前端面板/管理 UI 由 ws-mem-b 负责;2026-08-22 ws-panel2 起管理弹层按 liquid glass 重设计——计数徽章/卡片条目/失败重试,见批次 `20260822-boss-agent-panel-v2`)
+**状态:** 已实现(批次 `20260822-boss-agent-memory`,ws-mem-a 后端核心 + `builtin__memory_save` 工具;2026-08-31 起助手面板不再露出记忆管理 UI,记忆仍由工具写入、请求时注入 system prompt。历史面板弹层见批次 `20260822-boss-agent-panel-v2`)
 **相关:** `tech/24-agent-feature.md`(AI Agent 全链路)、`db/migrations/018_user_memories.sql`、批次目录 `tech/roles/development/parallel-sessions/20260822-boss-agent-memory/`
 
 ---
@@ -95,6 +95,7 @@ CREATE INDEX user_memories_user_created_idx ON user_memories (user_id, created_a
 
 - `GET`:返回 `{ items: [{id, content, createdAt}] }`;guest → `{ items: [] }`(仿 saved 路由范式)。
 - `DELETE`:无 `id` 时清除当前用户全部记忆；带 `id` 时仅删除该条（仍强制 `user_id` 归属）；guest → 401 `UNAUTHORIZED`。
+- 2026-08-31:助手面板不再调用这些端点(无管理 UI);接口保留。
 
 ## 7. 隐私边界
 

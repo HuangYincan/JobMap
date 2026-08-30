@@ -322,7 +322,7 @@ Content-Type: application/json
 - 44×44 圆形玻璃按钮,内容 ✦;`aria-label={t('agentBall', lang)}`;`z-index:11`。
 - 造型参照 `map-shell.module.css` 的 `.toolButton`/`.locateButton`:浅色 `rgba(255,255,255,0.72)` + `backdrop-filter: blur(24px) saturate(165%)` + 1px `--line` 边框 + `--shadow`;深色 `rgba(28,28,30,0.72)`。
 - **初始位**:`right:12px; bottom:179px`(mapControls 实测高 ~147 + 底距 20 + 间距 12),位于现有地图控件上方。
-- **拖拽吸附**:pointerdown/move/up,3px 阈值区分点击/拖动;松手按**球心到四边最近距离四向吸附**(左/右/上/下,平局 左→右→上→下),正交方向保留松手坐标,clamp 12px 边距;吸附动画 `cubic-bezier(0.32,0.72,0,1) 0.35s`;位置持久化 `localStorage 'dm.agent-ball-pos'`(`{edge, top, left?}`:top/bottom 新增 left 存水平位置;兼容旧 `{edge:'left'|'right', top}`)。
+- **拖拽吸附**:pointerdown/move/up,3px 阈值区分点击/拖动;松手按**球心到四边最近距离四向吸附**(左/右/上/下,平局 左→右→上→下),正交方向保留松手坐标,clamp 12px 边距;运行时位置一律 `left+top`(避免 CSS `left`↔`right` 切换导致过渡对不上);吸附动画 `cubic-bezier(0.32,0.72,0,1) 0.45s`;面板开合从球缩放淡入/淡出后再卸载;位置持久化 `localStorage 'dm.agent-ball-pos'`(`{edge, top, left?}`:top/bottom 新增 left 存水平位置;兼容旧 `{edge:'left'|'right', top}`)。
 - 点击(非拖动)→ toggle 聊天面板。
 - **受控化(2026-08-22 ws-mt)**:`open`/`onOpenChange` props 由 `MapShell` 提升提供
   (`agentOpen` state),本地 open state 移除;球点击 toggle 与面板 `onClose` 都走
@@ -335,7 +335,7 @@ Content-Type: application/json
 
 ### 9.2 聊天面板(AgentPanel)
 
-- 360px × 70vh,**liquid glass 卡片浮层**(玻璃只用于卡片类浮层,符合设计系统);外壳霜面 `--soft-strong`;**以悬浮球为锚实时跟随**(见 §9.9,2026-08-21 起替代「贴吸附侧固定」);消息列表滚动 + 输入框 + 发送 / 停止 / 撤销 + tool 状态条 + 建议卡片。
+- 360px × 70vh,**霜面卡片浮层**(外壳 `--soft-strong`);**以悬浮球为锚实时跟随**(见 §9.9);消息列表滚动 + 圆角 composer(圆形发送 / 流式空输入时变停止) + tool 状态条 + 建议卡片。顶栏:✦ 助手 + 清屏 / 撤销 / 关闭(无放大;内嵌模式隐藏关闭,抽屉已有返回)。无会话/记忆管理入口(记忆仍走后端工具,见 `tech/30-agent-memory.md`)。
 - **tool 状态条**:`{type:'tool'}` 事件驱动,显示「正在查询周边…」等(`agentToolRunning`,友好工具名)。
 - **思考过程**:`reasoning` 仅在服务端保留用于 provider `tool_calls` replay,不经 SSE
   下发;前端不接收、不渲染内部推理内容。
@@ -343,17 +343,12 @@ Content-Type: application/json
 - **搜索结果图片(2026-08-28)**:`{type:'images'}` 在 `done` 前下发,挂到最后一条助手消息,**渲染在最终回答气泡正下方**(横滑缩略图,最多 6 张,https 或短 data URL)。无图不占位。
 - **建议卡片**:执行器捕获 action 时,面板在消息底部渲染动作摘要按钮(「在地图上定位」等),点击 = 重放该 action。
 - **未配置提示**:503 `LLM_UNCONFIGURED` → 显示 `t('agentNotConfigured')`(「AI 助手未配置,请在服务器配置」)。
-- **会话管理(2026-08-22 ws-panel2)**:localStorage `dm.agent-sessions.v1` 多会话
+- **会话存储(2026-08-22 ws-panel2;2026-08-31 UI 不再露出)**:localStorage `dm.agent-sessions.v1` 仍作当前对话持久化
   (`{sessions:[{id,title,messages,updatedAt}],activeId}`,cap 10 会话 × 30 条,
-  `lib/agent-session-store.ts` 纯函数,注入式存储 node 可测);header「💬 会话」入口
-  登录/guest 均可用(本地功能,与账号无关);弹层列表(标题 + 相对时间 + 删除 ×,
-  当前会话蓝底高亮 + ●)+ 新建会话 + 空态;新建/切换若 streaming 先 stop,切换即载入
-  该会话消息(替换 messages 状态),完成/停止状态行、工具活动均按当前会话;清屏 =
-  归档当前会话(有消息才归档,标题保留原样)+ 新建空会话并激活,旧内容在会话
-  列表可回溯(记忆不动;ws-clearfix);消息变更统一走 store
-  (appendMessage/saveMessages/archiveAndNew),不再直写旧键——旧 sessionStorage
-  `dm.agent-history.v1` 仅迁移读(无 v1 键时迁为第一个会话,迁移后旧键清除);每条请求附带当前视野与用户位置(有定位时);发给 chat 的 messages 经 `toAgentChatMessages` 裁到 30 条且首条 user。
-- 「停止」→ abort(链到 fetch);「撤销」→ `executor.undo()`。
+  `lib/agent-session-store.ts` 纯函数);**面板不提供会话列表/新建/切换**。清屏 =
+  abort 当前流(`removeStream`,迟到事件 no-op)+ `saveMessages(activeId, [])` 清空当前会话,**不归档**;流式中的未完成助手输出丢弃、不落库。流式中输入保持可打字:有字再发送 = 打断(`discardTrailingAssistants` 丢掉本轮尾部 assistant 后发新问题);输入为空点发送位 = 停止(保留已输出)。迟到 SSE 用 `isCurrentController` / `finishStreamIfCurrent` 丢弃。旧 sessionStorage
+  `dm.agent-history.v1` 仅迁移读。每条请求附带当前视野与用户位置(有定位时);发给 chat 的 messages 经 `toAgentChatMessages` 裁到 30 条且首条 user。
+- 「停止」→ abort(链到 fetch);「撤销」→ `executor.undo()`(顶栏图标,不可用时变淡)。
 - **助手消息体用 MarkdownText 渲染**(marked → DOMPurify,见 §9.10);用户消息保持纯文本。
 
 ### 9.3 ASCII 布局图(设计定稿)
@@ -371,30 +366,28 @@ Content-Type: application/json
 │                          │  ◎   │ (不动)   │
 │                          └──────┘          │
 └────────────────────────────────────────────┘
-初始:right:12px; bottom:179px(mapControls 实测高 ~147 + 底距 20 + 间距 12)
+初始:贴右缘,bottom:179px(mapControls 实测高 ~147 + 底距 20 + 间距 12)
 拖拽:pointer 事件,3px 阈值区分点击/拖动;松手按球心最近边四向吸附(左/右/上/下),
-正交方向保留松手坐标,clamp 12px 边距,动画 cubic-bezier(0.32,0.72,0,1) 0.35s
+正交方向保留松手坐标,clamp 12px 边距;运行时 left+top;动画 cubic-bezier(0.32,0.72,0,1) 0.45s
 
 ┌─ 点击展开 ──────────────────────────────────┐
 │  ┌─ agent-panel(贴吸附侧)──────────────┐    │
-│  │  ✦ AI 助手                    ✕    │    │
-│  │  ───────────────────────────────   │    │
+│  │  ✦ 助手              🗑  ↩  ✕     │    │
+│  │                         ┌──────┐  │    │
+│  │                         │用户  │  │    │  ← 淡蓝气泡
+│  │                         └──────┘  │    │
 │  │  ┌────────────────────────────┐    │
-│  │  │ 附近有这些前端岗位…         │    │  ← 最终回答气泡
+│  │  │ 附近有这些前端岗位…         │    │  ← 助手浅底细边
 │  │  └────────────────────────────┘    │
-│  │  ┌────┐ ┌────┐ ┌────┐         │    │  ← 搜索结果图片(有则,气泡正下方)
+│  │  ┌────┐ ┌────┐ ┌────┐         │    │  ← 搜索结果图片(有则)
 │  │  │img │ │img │ │img │         │    │
 │  │  └────┘ └────┘ └────┘         │    │
+│  │  [在地图上定位]                │    │
 │  │  ┌────────────────────────────┐    │
-│  │  │ 建议:滨江区长河街道…        │    │
-│  │  │ [在地图上定位]              │    │
+│  │  │ 提出问题…              (↑) │    │  ← 圆角 composer + 圆形发送
 │  │  └────────────────────────────┘    │
-│  │  ┌────────────────────────────┐    │    │
-│  │  │ 输入问题…              [发送]│    │    │
-│  │  │ [⏹ 停止] [↩ 撤销上一步]     │    │    │
-│  │  └────────────────────────────┘    │    │
 │  └──────────────────────────────────────┘    │
-│  360px × 70vh;liquid glass 卡片;消息列表滚动  │
+│  360px × 70vh;霜面卡片;消息列表滚动          │
 └────────────────────────────────────────────┘
 ```
 
@@ -417,7 +410,7 @@ min-height: 0 }`(drawer flex column 的可伸缩子项)撑起 `.mobileAgent`/`.p
 
 ### 9.5 i18n 键清单(`i18n.ts` 追加 `agent*` 组,zh/en,约 20 键)
 
-`agentBall`(AI 助手)/ `agentTitle` / `agentInput`(输入问题…)/ `agentSend` / `agentStop` / `agentUndo` / `agentThinking` / `agentThinkingSection`(思考过程,2026-08-21 增)/ `agentToolsSection`(工具调用,2026-08-21 增)/ `agentSearchImages`(相关图片,2026-08-28 增)/ `agentNotConfigured`(AI 助手未配置,请在服务器配置)/ `agentError` / `agentLocate`(在地图上定位)/ `agentSearch`(搜索)/ `agentToolRunning`({name} 正在执行…)等,文案简短,中文为主。
+`agentBall`(AI 助手)/ `agentTitle`(助手 / Assistant)/ `agentInput`(提出问题…)/ `agentSend` / `agentStop` / `agentUndo` / `agentToolsSection`(工具调用)/ `agentSearchImages`(相关图片)/ `agentNotConfigured`(AI 助手未配置,请在服务器配置)/ `agentError` / `agentLocate`(在地图上定位)/ `agentSearch`(搜索)/ `agentToolRunning`({name} 正在执行…)等,文案简短,中文为主。
 
 ### 9.6 map-shell seam(boss 裁决红线豁免,~30 行)
 

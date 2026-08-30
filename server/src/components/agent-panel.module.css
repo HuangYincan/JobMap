@@ -1,10 +1,10 @@
-/* AI Agent 聊天面板:360px × 70vh liquid glass 卡片浮层,以悬浮球为锚实时跟随
-   (transform 锚定,--px/--py 由组件 inline 注入;入场动画与定位共用同一变量);
+/* AI Agent 聊天面板:360px × 70vh 霜面卡片,以悬浮球为锚实时跟随
+   (transform 锚定,--px/--py 由组件 inline 注入;入场/出场与定位共用同一变量);
    移动端(≤767px):浮动实例 display:none,AI 内嵌进移动抽屉 agent sheet(见 .panel.embedded);
    极窄桌面视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。 */
 
 .panel {
-  animation: panelIn 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  animation: panelIn 0.32s cubic-bezier(0.32, 0.72, 0, 1);
   background: var(--soft-strong, rgba(255, 255, 255, 0.84));
   backdrop-filter: blur(24px) saturate(165%);
   border: 1px solid var(--line);
@@ -18,20 +18,23 @@
   position: fixed;
   top: 0;
   transform: translate3d(var(--px, 0px), var(--py, 12px), 0);
-  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); /* 松手吸附平滑归位 */
+  transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
   width: 360px;
-  z-index: 12; /* 高于悬浮球(11)与地图控件 */
+  z-index: 12;
 }
 
-/* 拖拽中:关闭吸附过渡,transform 实时跟手 */
 .panelDragging {
   animation: none;
   transition: none;
 }
 
-/* 极窄视口(桌面窗口过窄,两侧都放不下)→ 全宽底部 sheet(复用移动端抽屉模式) */
+.panelClosing {
+  animation: panelOut 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  pointer-events: none;
+}
+
 .panelSheet {
-  animation: sheetIn 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  animation: sheetIn 0.32s cubic-bezier(0.32, 0.72, 0, 1);
   border-bottom: 0;
   border-radius: 20px 20px 0 0;
   bottom: 0;
@@ -44,14 +47,29 @@
   width: 100%;
 }
 
+.panelSheet.panelClosing {
+  animation: sheetOut 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
 @keyframes panelIn {
   from {
     opacity: 0;
-    transform: translate3d(var(--px, 0px), calc(var(--py, 12px) + 8px), 0) scale(0.98);
+    transform: translate3d(var(--px, 0px), var(--py, 12px), 0) scale(0.92);
   }
   to {
     opacity: 1;
     transform: translate3d(var(--px, 0px), var(--py, 12px), 0);
+  }
+}
+
+@keyframes panelOut {
+  from {
+    opacity: 1;
+    transform: translate3d(var(--px, 0px), var(--py, 12px), 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(var(--px, 0px), var(--py, 12px), 0) scale(0.92);
   }
 }
 
@@ -66,17 +84,27 @@
   }
 }
 
+@keyframes sheetOut {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
 .header {
   align-items: center;
-  border-bottom: 1px solid var(--line);
   display: flex;
   flex: 0 0 auto;
   gap: 8px;
-  padding: 12px 14px;
+  padding: 12px 14px 8px;
 }
 
 .titleIcon {
-  color: #007aFF;
+  color: #007aff;
   font-size: 15px;
   line-height: 1;
 }
@@ -87,53 +115,14 @@
   font-weight: 650;
 }
 
-/* header 右侧操作组(会话钮 + 记忆按钮(登录)+ 关闭钮) */
 .headerActions {
   align-items: center;
   display: inline-flex;
-  gap: 6px;
+  gap: 2px;
   margin-left: auto;
 }
 
-/* 会话钮 / 记忆按钮:关闭钮旁的小蓝标入口;会话钮 guest 可用(本地功能),
-   记忆按钮仅登录(账号级数据) */
-.sessionsBtn,
-.memoryBtn {
-  align-items: center;
-  background: rgba(0, 122, 255, 0.08);
-  border: 1px solid rgba(0, 122, 255, 0.25);
-  border-radius: 8px;
-  color: #007aFF;
-  cursor: pointer;
-  display: inline-flex;
-  font-size: 12px;
-  gap: 4px;
-  height: 28px;
-  justify-content: center;
-  padding: 0 10px;
-}
-
-.sessionsBtn:hover,
-.memoryBtn:hover {
-  background: rgba(0, 122, 255, 0.14);
-}
-
-/* 记忆计数徽章(蓝底白字圆角):header 记忆按钮上的条数;加载/失败/0 条不渲染 */
-.memoryBadge {
-  align-items: center;
-  background: #007aFF;
-  border-radius: 999px;
-  color: #fff;
-  display: inline-flex;
-  font-size: 10px;
-  font-weight: 600;
-  height: 16px;
-  justify-content: center;
-  line-height: 1;
-  min-width: 16px;
-  padding: 0 4px;
-}
-
+.iconBtn,
 .close {
   align-items: center;
   background: transparent;
@@ -142,324 +131,28 @@
   color: var(--muted);
   cursor: pointer;
   display: inline-flex;
-  font-size: 14px;
   height: 28px;
   justify-content: center;
   padding: 0;
   width: 28px;
 }
 
+.iconBtn:hover,
 .close:hover {
   background: rgba(120, 140, 160, 0.12);
   color: var(--ink);
 }
 
-/* 弹层(会话/记忆共用):面板内嵌 glass 卡,绝对定位浮于消息列表之上;
-   header 下方 10px 起,圆角 16px + 模糊 + 细描边;超长独立滚动;
-   与聊天列表互不相干(清屏不清记忆);会话/记忆互斥(不会同时渲染) */
-.memoryPanel,
-.sessionsPanel {
-  backdrop-filter: blur(24px) saturate(165%);
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  left: 10px;
-  max-height: 46%;
-  overflow-y: auto;
-  padding: 10px 12px;
-  position: absolute;
-  right: 10px;
-  top: 52px; /* header(12 + 28 + 12 + 1 border)下方 */
-  z-index: 6; /* 高于消息列表与工具状态条 */
-}
-
-.memoryHead,
-.sessionsHead {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
-
-.memoryTitle,
-.sessionsTitle {
-  align-items: center;
-  color: var(--ink);
-  display: inline-flex;
-  font-size: 12px;
-  font-weight: 600;
-  gap: 6px;
-}
-
-/* 计数徽章(蓝底白字圆角):弹层标题「记忆 · N」 */
-.memoryCountBadge {
-  align-items: center;
-  background: #007aFF;
-  border-radius: 999px;
-  color: #fff;
-  display: inline-flex;
-  font-size: 10px;
-  font-weight: 600;
-  height: 16px;
-  justify-content: center;
-  line-height: 1;
-  min-width: 16px;
-  padding: 0 4px;
-}
-
-/* 清除全部记忆:橙边 hover 红(语义保留) */
-.memoryClear {
-  background: transparent;
-  border: 1px solid rgba(255, 149, 0, 0.35);
-  border-radius: 8px;
-  color: #b25e00;
-  cursor: pointer;
-  font-size: 11px;
-  padding: 3px 8px;
-}
-
-.memoryClear:hover {
-  background: rgba(255, 59, 48, 0.08);
-  border-color: rgba(255, 59, 48, 0.4);
-  color: #ff3b30;
-}
-
-.memoryHint {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 0;
-  padding: 2px 0;
-}
-
-/* 加载中:三点跳动(纯视觉;aria-label 承载语义文案) */
-.memoryDots {
-  align-items: center;
-  display: inline-flex;
-  gap: 4px;
-  margin: 4px 0;
-}
-
-.memoryDot {
-  animation: typingDot 1.2s ease-in-out infinite;
-  background: #007aFF;
-  border-radius: 50%;
-  height: 5px;
+.iconBtn:disabled {
+  cursor: default;
   opacity: 0.35;
-  width: 5px;
 }
 
-.memoryDot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.memoryDot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-/* 失败:弱提示 + 重试 */
-.memoryError {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  margin: 0;
-}
-
-.memoryRetry {
-  background: rgba(0, 122, 255, 0.08);
-  border: 1px solid rgba(0, 122, 255, 0.25);
-  border-radius: 8px;
-  color: #007aFF;
-  cursor: pointer;
-  flex: 0 0 auto;
-  font-size: 11px;
-  padding: 2px 10px;
-}
-
-.memoryRetry:hover {
-  background: rgba(0, 122, 255, 0.14);
-}
-
-/* 空态:居中弱化 */
-.memoryEmpty,
-.sessionsEmpty {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 12px 0;
-  text-align: center;
-}
-
-/* 记忆条目卡:soft-strong 底、圆角 12px、12px 内边距、行距 8px */
-.memoryList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.memoryRow {
-  align-items: flex-start;
-  background: var(--soft-strong, rgba(255, 255, 255, 0.84));
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  display: flex;
-  font-size: 12px;
-  gap: 10px;
-  justify-content: space-between;
-  line-height: 1.5;
-  padding: 12px;
-}
-
-.memoryContent {
-  color: var(--ink);
-  min-width: 0;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-/* 删除 ×:右侧,hover 红 */
-.memoryDelete {
+.iconBtn:disabled:hover {
   background: transparent;
-  border: 0;
-  border-radius: 6px;
   color: var(--muted);
-  cursor: pointer;
-  flex: 0 0 auto;
-  font-size: 13px;
-  line-height: 1;
-  padding: 2px 4px;
 }
 
-.memoryDelete:hover {
-  background: rgba(255, 59, 48, 0.1);
-  color: #ff3b30;
-}
-
-/* 新建会话按钮 */
-.sessionsNew {
-  background: rgba(0, 122, 255, 0.08);
-  border: 1px solid rgba(0, 122, 255, 0.25);
-  border-radius: 8px;
-  color: #007aFF;
-  cursor: pointer;
-  font-size: 11px;
-  padding: 3px 9px;
-}
-
-.sessionsNew:hover {
-  background: rgba(0, 122, 255, 0.14);
-}
-
-/* 会话列表:行 = 主按钮(切换)+ 删除 ×;当前会话蓝底高亮 + ● */
-.sessionsList {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.sessionRow,
-.sessionRowActive {
-  align-items: center;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  display: flex;
-  gap: 4px;
-}
-
-.sessionRowActive {
-  background: rgba(0, 122, 255, 0.1);
-  border-color: rgba(0, 122, 255, 0.25);
-}
-
-.sessionMain {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-  display: flex;
-  flex: 1 1 auto;
-  gap: 6px;
-  min-width: 0;
-  padding: 7px 8px;
-  text-align: left;
-}
-
-.sessionMain:hover {
-  background: rgba(120, 140, 160, 0.08);
-}
-
-.sessionDot {
-  color: #007aFF;
-  flex: 0 0 auto;
-  font-size: 10px;
-  line-height: 1;
-}
-
-/* 流式中的会话「进行中」标记(ws-pstream):弱化蓝点脉冲,liquid glass 弱化样式,
-   与当前会话 ●/○ 圆点并存(不抢高亮)。 */
-.sessionStreaming {
-  animation: sessionStreamingPulse 1.2s ease-in-out infinite;
-  background: rgba(0, 122, 255, 0.55);
-  border-radius: 50%;
-  flex: 0 0 auto;
-  height: 6px;
-  width: 6px;
-}
-
-@keyframes sessionStreamingPulse {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.sessionTitle {
-  color: var(--ink);
-  flex: 1 1 auto;
-  font-size: 12px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sessionTime {
-  color: var(--muted);
-  flex: 0 0 auto;
-  font-size: 10px;
-}
-
-.sessionDelete {
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-  color: var(--muted);
-  cursor: pointer;
-  flex: 0 0 auto;
-  font-size: 13px;
-  line-height: 1;
-  padding: 4px 6px;
-}
-
-.sessionDelete:hover {
-  background: rgba(255, 59, 48, 0.1);
-  color: #ff3b30;
-}
-
-/* tool 状态条(「{name} 正在执行…」,只反映运行中的工具) */
 .toolBar {
   align-items: center;
   background: rgba(0, 122, 255, 0.06);
@@ -474,7 +167,7 @@
 
 .toolDot {
   animation: toolPulse 1.2s ease-in-out infinite;
-  background: #007aFF;
+  background: #007aff;
   border-radius: 50%;
   height: 6px;
   width: 6px;
@@ -494,15 +187,16 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   overflow-y: auto;
-  padding: 12px 14px;
+  padding: 8px 16px 12px;
 }
 
 .welcome {
   color: var(--muted);
-  font-size: 12px;
-  margin: 24px auto 0;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 28px auto 0;
   max-width: 240px;
   text-align: center;
 }
@@ -521,31 +215,30 @@
 }
 
 .bubbleUser {
-  background: #007aFF;
-  border-radius: 14px 14px 4px 14px;
-  color: #fff;
+  background: rgba(0, 122, 255, 0.12);
+  border-radius: 16px 16px 6px 16px;
+  color: var(--ink);
   font-size: 13px;
-  line-height: 1.5;
-  max-width: 86%;
-  padding: 8px 12px;
+  line-height: 1.55;
+  max-width: 82%;
+  padding: 10px 14px;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .bubbleAssistant {
   align-self: flex-start;
-  background: rgba(120, 140, 160, 0.1);
+  background: rgba(255, 255, 255, 0.72);
   border: 1px solid var(--line);
-  border-radius: 4px 14px 14px 14px;
+  border-radius: 6px 16px 16px 16px;
   color: var(--ink);
   font-size: 13px;
-  line-height: 1.5;
-  max-width: 86%;
-  padding: 8px 12px;
+  line-height: 1.55;
+  max-width: 88%;
+  padding: 10px 14px;
   word-break: break-word;
 }
 
-/* 搜索结果图片:贴在最终回答气泡下方,横滑缩略图,不进气泡正文 */
 .imageStrip {
   align-self: flex-start;
   display: flex;
@@ -573,7 +266,6 @@
   width: 96px;
 }
 
-/* 流式输入指示(2026-08-22 ws-bubble:思考提示已删除)——三点跳动,纯视觉无文字 */
 .typing {
   align-items: center;
   display: inline-flex;
@@ -583,7 +275,7 @@
 
 .typingDot {
   animation: typingDot 1.2s ease-in-out infinite;
-  background: #007aFF;
+  background: #007aff;
   border-radius: 50%;
   height: 5px;
   opacity: 0.35;
@@ -610,7 +302,6 @@
   }
 }
 
-/* 工具活动列表(⟳ 开始 / ✓ 完成 / ✗ 失败 + 类别文案;失败附「调用失败」弱提示;渲染在文本气泡下方) */
 .toolActivity {
   align-self: flex-start;
   display: flex;
@@ -642,7 +333,7 @@
 }
 
 .toolStatus {
-  color: #007aFF;
+  color: #007aff;
   font-size: 11px;
   line-height: 1;
 }
@@ -662,7 +353,6 @@
   white-space: nowrap;
 }
 
-/* 建议卡片(动作摘要按钮,点击 = 重放该 action) */
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -674,7 +364,7 @@
   background: rgba(0, 122, 255, 0.08);
   border: 1px solid rgba(0, 122, 255, 0.25);
   border-radius: 99px;
-  color: #007aFF;
+  color: #007aff;
   cursor: pointer;
   font-size: 12px;
   padding: 5px 11px;
@@ -705,118 +395,93 @@
   padding: 8px 12px;
 }
 
-/* 完成/停止状态行(流结束后尾部弱化小字:✓ 回答完成 / ■ 已停止;流式期间不显示) */
-.completion {
-  align-self: center;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.5;
-  margin: 0;
-  padding: 2px 0 0;
-}
-
 .footer {
-  border-top: 1px solid var(--line);
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
+  padding: 4px 12px 12px;
 }
 
-.inputRow {
-  display: flex;
-  gap: 8px;
-}
-
-.input {
-  background: rgba(255, 255, 255, 0.6);
+.composer {
+  background: rgba(255, 255, 255, 0.62);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 10px 8px;
+}
+
+.composer:focus-within {
+  border-color: rgba(0, 122, 255, 0.45);
+}
+
+.composerInput {
+  background: transparent;
+  border: 0;
   color: var(--ink);
-  flex: 1;
+  font: inherit;
   font-size: 13px;
-  min-width: 0;
+  line-height: 1.5;
+  max-height: 96px;
+  min-height: 40px;
   outline: none;
-  padding: 8px 12px;
+  overflow-y: auto;
+  padding: 0 4px;
+  resize: none;
+  width: 100%;
 }
 
-.input:focus {
-  border-color: rgba(0, 122, 255, 0.5);
-}
-
-.input:disabled {
-  opacity: 0.6;
-}
-
-.input::placeholder {
+.composerInput::placeholder {
   color: var(--muted);
 }
 
-.send {
-  background: #007aFF;
+.composerTools {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sendFab {
+  align-items: center;
+  background: rgba(120, 140, 160, 0.16);
   border: 0;
-  border-radius: 12px;
-  color: #fff;
+  border-radius: 50%;
+  color: var(--muted);
   cursor: pointer;
-  font-size: 13px;
-  padding: 0 14px;
+  display: inline-flex;
+  height: 32px;
+  justify-content: center;
+  padding: 0;
+  width: 32px;
 }
 
-.send:disabled {
+.sendFab:disabled {
   cursor: default;
-  opacity: 0.45;
 }
 
-/* 发送↔停止双态(ws-inputbar):流式中发送位原位变「停止」——红系警示语义,
-   几何/圆角沿用 .send(同槽位同尺寸),颜色红系覆盖(替代原控件行独立停止钮) */
-.sendStop {
-  background: #ff3b30;
-  border: 0;
+.sendFabReady {
+  background: #007aff;
   color: #fff;
 }
 
-.sendStop:hover {
+.sendFabReady:hover {
+  background: #0066d6;
+}
+
+.sendFabStop {
+  background: #ff3b30;
+  color: #fff;
+}
+
+.sendFabStop:hover {
   background: #d9352b;
 }
 
-/* 控件行(ws-inputbar):停止已并入发送位,剩 [清屏][撤销];清屏最左(左对齐) */
-.controls {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-start;
-}
-
-.controlBtn {
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 12px;
-  padding: 4px 10px;
-}
-
-.controlBtn:hover:not(:disabled) {
-  color: var(--ink);
-}
-
-.controlBtn:disabled {
-  cursor: default;
-  opacity: 0.4;
-}
-
-/* 移动端(≤767px):桌面浮动实例整体隐藏(悬浮球 ≤767px 已隐藏,浮动面板不再出现——
-   桌面开着面板缩窗到移动端也不得漂浮);移动端 AI 入口 = 工具栏 AI item →
-   drawer 内嵌 agent sheet(embedded 修饰类随抽屉流,由 map-shell .mobileAgent 包装) */
 @media (max-width: 767px) {
   .panel {
     display: none;
   }
 
-  /* 内嵌(drawer sheet body):回归文档流,填满 .mobileAgent 包装(flex column,
-     height: 100%; min-height: 0),面板 flex: 1 接管高度;圆角/边框/阴影跟随抽屉
-     sheet(不叠加第二层玻璃);消息列表内部滚动 + 输入贴底沿用 .list/.inputRow flex 结构 */
   .panel.embedded {
     animation: none;
     backdrop-filter: none;
@@ -837,23 +502,16 @@
   }
 }
 
-/* 深色模式(与 agent-ball.module.css 同模式):--ink/--muted/--line/--soft-strong
-   已由 globals.css 随系统翻转(.panel/.memoryRow 玻璃底走变量即自适应),
-   此处仅覆盖本文件硬编码的浅色:
-   弹层玻璃底(白 0.86 → 深 0.92,比面板底略深以保持浮层层级)、
-   输入行(白 0.6 → 白 0.06)、助手气泡底(中性灰 0.1 → 白 0.07);
-   语义色(主蓝 #007aFF、错误红 #ff3b30、清除橙 #b25e00)深浅两态通用,不覆盖 */
 @media (prefers-color-scheme: dark) {
-  .memoryPanel,
-  .sessionsPanel {
-    background: rgba(28, 28, 30, 0.92);
-  }
-
-  .input {
+  .composer {
     background: rgba(255, 255, 255, 0.06);
   }
 
   .bubbleAssistant {
     background: rgba(255, 255, 255, 0.07);
+  }
+
+  .bubbleUser {
+    background: rgba(0, 122, 255, 0.22);
   }
 }
