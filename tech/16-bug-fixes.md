@@ -2,6 +2,18 @@
 
 记录所有重要的bug修复，包括问题描述、根本原因、解决方案和相关文件。
 
+## 2026-08-30: 控制台刷 favicon.im CORS(GL 图标预检)
+
+**症状**:工作模式加载后 DevTools 被 `favicon.im` 打满:`Access to image ... blocked by CORS policy` + `GET ... net::ERR_FAILED 302`,栈在 `icon-preflight.ts` `preflightRemoteIcon` → `resolveGlIcon` → `setPOIs`。每家公司一个唯一 URL,全国目录一次上百行。
+
+**根因**:AMap LabelMarker / TMap MultiMarker 用 WebGL 纹理,远程 logo 必须 CORS-clean。`favicon.im` 不返回 `Access-Control-Allow-Origin`(常 302 到 CDN)。预检用 `new Image({crossOrigin:'anonymous'})` 探测,浏览器对每个失败 URL 打 2 行。链式预检只减「每 POI 多候选」,拦不住「每家公司一个 favicon.im」。
+
+**修复**:`isKnownCorsIncompatibleIconUrl` 把 `favicon.im` / `*.favicon.im` 标成静态 `fail`,不 `new Image`。GL 候选链同拍推进到 `icon.horse`(有 `ACAO:*`)。卡片/详情/百度 HTML `<img>`(无 crossOrigin)仍可用 favicon.im。
+
+**相关文件**:`icon-preflight.ts`、`map-markers.ts`、`tests/icon-preflight.test.mjs`、`tests/map-engine-tencent.test.mjs`、`tests/map-engine-baidu.test.mjs`、`tech/23-map-engines.md`。
+
+**验证**:`node --test tests/icon-preflight.test.mjs tests/map-engine-tencent.test.mjs tests/map-engine-baidu.test.mjs`(206 pass)。
+
 ## 2026-08-30: 首点侧栏全屏「Loading map…」(dynamic Suspense 冒泡)
 
 **症状**:地图已出来后,第一次点侧栏图层(或最近/资料),整页变成只有「Loading map…」,再回到图层面板已打开。浏览器不是 `location.reload`(侧栏状态还在)。

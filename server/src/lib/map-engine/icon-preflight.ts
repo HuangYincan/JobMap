@@ -5,9 +5,9 @@
 // 不返回 CORS 头,TMap GL 是 WebGL 渲染——marker 图标作为 GPU 纹理加载,
 // 纹理必须 CORS-clean → 远程无 CORS 头的图标**恒加载失败**,SDK 疯狂刷
 // 「Image加载失败」并降级 SDK 默认 marker(单次引擎加载 179-190 errors)。
-// AMap 是 DOM 渲染(<img> 无需 CORS),百度公司 POI 走 content DOM 覆盖层,
-// 均不受影响——本模块只服务 **icon 纹理路径**的引擎(TMap MarkerStyle src、
-// BMapGL Icon url),AMap/BMapGL content 路径不消费。
+// AMap LabelMarker 与 TMap MultiMarker 同走 WebGL 纹理;百度公司 POI 走
+// content DOM 覆盖层(HTML <img> 无需 CORS)。本模块服务 **icon 纹理路径**
+// (AMap LabelMarker / TMap MarkerStyle src / BMapGL Icon url)。
 //
 // 策略(幂等 + 失败记忆化):
 // - data: URI → 本地安全,恒 'data',不预检;
@@ -27,6 +27,15 @@
 // - 失败 URL 记入 sessionStorage(单次写入合并防抖,不逐 URL 一写);
 //   remoteIconStatus / preflightRemoteIcon 先查 sessionStorage 失败清单 →
 //   同会话刷新/切引擎不再预检已知失败 URL,噪音只在首次会话出现一次。
+//
+// 静态跳过(2026-08-30,fix/icon-cors-skip-favicon-im):
+// - favicon.im / *.favicon.im **实测从不返回 ACAO**(且常 302 到 CDN),
+//   浏览器对 crossOrigin=anonymous 的 Image 每 URL 刷 2 行 CORS +
+//   ERR_FAILED。全国目录每家公司一个唯一 favicon.im URL → 首会话
+//   控制台被预检打满。已知恒失败的源不再探测:remoteIconStatus='fail',
+//   preflightRemoteIcon 不 new Image。HTML <img>(无 crossOrigin)不受影响
+//   (卡片/详情/百度 content 仍可显示 favicon.im);GL 纹理链立刻推进到
+//   icon.horse(ACAO:*)。
 //
 // 纯模块:无 React / 引擎依赖,node 可直接测试。Image 以全局存在为前提
 // (浏览器;Node 需 mock 或缺失时 no-op——保持 unknown,消费方继续降级,
@@ -80,6 +89,20 @@ function touchResultCache(src: string, status: 'ok' | 'fail'): void {
  */
 export function isRemoteIconUrl(src: string): boolean {
   return src.length <= ICON_PREFLIGHT_URL_MAX && /^https?:\/\//i.test(src);
+}
+
+/**
+ * 已知对 WebGL 纹理恒 CORS 失败的图源(不探测、不刷控制台)。
+ * HTML `<img>` 无 crossOrigin 仍可加载这些 URL;本闸只服务预检/纹理路径。
+ */
+export function isKnownCorsIncompatibleIconUrl(src: string): boolean {
+  if (!isRemoteIconUrl(src)) return false;
+  try {
+    const host = new URL(src).hostname.toLowerCase();
+    return host === 'favicon.im' || host.endsWith('.favicon.im');
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -142,12 +165,15 @@ function scheduleWriteFailSet(): void {
  * 查询远程图标的预检状态。
  * - 'data':data: URI,本地安全,无需预检;
  * - 'ok':已预检成功(可作纹理/图标真 src);
- * - 'fail':已预检失败(CORS/网络/不可解码,含 sessionStorage 会话记忆);
+ * - 'fail':已预检失败(CORS/网络/不可解码,含 sessionStorage 会话记忆,
+ *   以及已知无 CORS 的 favicon.im 静态失败);
  * - 'unknown':未预检(调用方应先降级,再触发 preflightRemoteIcon)。
  * 内存未命中时回退 sessionStorage 失败清单(同会话刷新后仍在)。
  */
 export function remoteIconStatus(src: string): IconPreflightStatus {
   if (src.startsWith('data:')) return 'data';
+  // 已知无 CORS 的图源:不进缓存/sessionStorage,避免把唯一 URL 填满失败清单
+  if (isKnownCorsIncompatibleIconUrl(src)) return 'fail';
   const cached = resultCache.get(src);
   if (cached) {
     touchResultCache(src, cached);
@@ -168,12 +194,15 @@ export function remoteIconStatus(src: string): IconPreflightStatus {
  * 失败(与 WebGL 纹理加载路径同源,且 console 只报 1 行,优于 fetch 的 2 行);
  * onload 表示图像可解码(2xx + 有效图像数据,纹理可用)。结果写入模块级缓存,
  * 同会话同 URL 不重复;pending 期间不重复发起;会话内已知失败(sessionStorage
- * 记忆)直接记 fail 不再发起网络。data: URI 与已缓存 URL 直接 no-op;无全局
- * Image(异常环境)或构造异常时 no-op,保持 unknown,消费方继续降级,绝不抛错。
+ * 记忆)直接记 fail 不再发起网络。**favicon.im / *.favicon.im 静态 fail,不
+ * new Image**(已知无 ACAO,探测只会刷 CORS 控制台)。data: URI 与已缓存 URL
+ * 直接 no-op;无全局 Image(异常环境)或构造异常时 no-op,保持 unknown,消费方
+ * 继续降级,绝不抛错。
  */
 export function preflightRemoteIcon(src: string): void {
   if (src.startsWith('data:')) return;
   if (!isRemoteIconUrl(src)) return;
+  if (isKnownCorsIncompatibleIconUrl(src)) return;
   if (resultCache.has(src) || pending.has(src)) return;
   if (pending.size >= MAX_PENDING_ICON_PREFLIGHTS) return;
   if (typeof Image !== 'function') return;

@@ -14,7 +14,8 @@
 //   未验证 → 徽章 dataURL + 后台预检触发;ok → fetch 字节内联进徽章 SVG
 //   (ws-k:SVG-as-image 不抓远程子资源,必须内联);fail → 徽章且不重试;
 //   成功升级路径(下次重建真 logo);data URL / 缺 logo → 徽章或直通零预检;
-//   AMap 与 TMap 同走 GL icon(dataURL 徽章;LabelMarker 纹理须 CORS-clean)。
+//   AMap 与 TMap 同走 GL icon(dataURL 徽章;LabelMarker 纹理须 CORS-clean);
+// - 2026-08-30:favicon.im / *.favicon.im 静态 fail(零 Image),icon.horse 仍预检。
 // ============================================================
 
 import test from 'node:test';
@@ -24,6 +25,7 @@ import {
   ICON_PREFLIGHT_FAIL_RAW_MAX,
   ICON_PREFLIGHT_FAIL_LIST_MAX,
   ICON_PREFLIGHT_URL_MAX,
+  isKnownCorsIncompatibleIconUrl,
   isRemoteIconUrl,
   preflightRemoteIcon,
   remoteIconStatus,
@@ -32,9 +34,9 @@ import {
 import { createPOIMarkerController, resetRemoteIconDataUriCache } from '../src/lib/map-markers.ts';
 import { makePoi } from './fixtures/amap-mock.mjs';
 
-const REMOTE = 'https://favicon.im/example.com';
+const REMOTE = 'https://icons.test/logo.png';
 const OTHER = 'https://icon.horse/icon/example.com';
-const THIRD = 'https://favicon.im/third.com';
+const THIRD = 'https://icons.test/third.png';
 
 // ---- Image mock 基建 ------------------------------------------------------
 //
@@ -164,6 +166,31 @@ test('isRemoteIconUrl:仅 http(s) 为远程;data/相对/blob 恒 false', () => {
   assert.equal(isRemoteIconUrl('blob:http://localhost:3000/uuid'), false);
 });
 
+test('isKnownCorsIncompatibleIconUrl:仅 favicon.im 及其子域', () => {
+  assert.equal(isKnownCorsIncompatibleIconUrl('https://favicon.im/x?size=128'), true);
+  assert.equal(isKnownCorsIncompatibleIconUrl('https://a.favicon.im/x'), true);
+  assert.equal(isKnownCorsIncompatibleIconUrl('https://www.favicon.im/x'), true);
+  assert.equal(isKnownCorsIncompatibleIconUrl('https://icon.horse/icon/x'), false);
+  assert.equal(isKnownCorsIncompatibleIconUrl('https://favicon.im.evil.com/x'), false);
+  assert.equal(isKnownCorsIncompatibleIconUrl('data:image/png,abc'), false);
+});
+
+test('favicon.im 是已知无 CORS 源:status=fail,预检零 Image(控制台不刷 CORS)', async () => {
+  const image = installImageMock();
+  try {
+    assert.equal(remoteIconStatus('https://favicon.im/www.dewu.com?size=128'), 'fail');
+    assert.equal(remoteIconStatus('https://a.favicon.im/www.nio.com?size=128'), 'fail');
+    assert.equal(remoteIconStatus('https://www.favicon.im/x'), 'fail');
+    preflightRemoteIcon('https://favicon.im/jzfz.zhiye.com?size=128');
+    preflightRemoteIcon('https://a.favicon.im/www.deepseek.com?size=128');
+    await settle();
+    assert.equal(image.calls.length, 0, '已知无 CORS → 不 new Image,浏览器不报 CORS/ERR_FAILED');
+    assert.equal(remoteIconStatus('https://icon.horse/icon/example.com'), 'unknown', 'icon.horse 仍走预检');
+  } finally {
+    image.restore();
+  }
+});
+
 test('preflightRemoteIcon:图像可解码(onload)→ ok;Image 以匿名 CORS 加载', async () => {
   const image = installImageMock();
   try {
@@ -290,7 +317,7 @@ test('sessionStorage:失败 URL 防抖写入;reset 后状态从 sessionStorage �
 });
 
 test('sessionStorage:多次失败合并为单次 setItem(防抖);后续失败与既有清单合并', async () => {
-  const FOURTH = 'https://favicon.im/fourth.com';
+  const FOURTH = 'https://icons.test/fourth.png';
   const image = installImageMock({ failUrls: [REMOTE, OTHER, THIRD, FOURTH] });
   const ss = installSessionStorageMock();
   try {
@@ -322,7 +349,7 @@ test('sessionStorage:隐私模式(get/set throw)→ 静默降级,内存记忆照
     assert.equal(remoteIconStatus(REMOTE), 'fail', '内存记忆不依赖 sessionStorage');
     assert.equal(ss.opLog.sets, 0, '写入被拒 → 放弃持久化');
     // 新 URL 查询也不因读取失败抛错
-    assert.equal(remoteIconStatus('https://favicon.im/unseen.com'), 'unknown');
+    assert.equal(remoteIconStatus('https://icons.test/unseen.png'), 'unknown');
   } finally {
     image.restore();
     ss.restore();
