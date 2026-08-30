@@ -269,10 +269,20 @@ test('phone/email login shows auto-register hint under the button', () => {
   assert.match(modal, /onClick=\{signIn\}[^]*autoRegisterHint/);
   assert.match(modal, /t\("autoRegisterHint", lang\)/);
   assert.match(modal, /styles\.autoRegisterHint/);
-  // 密码 tab 分支不含该提示
-  assert.doesNotMatch(modal, /tab === "password"[\s\S]{0,800}autoRegisterHint/);
   // i18n 双语文案存在
   assert.match(i18n, /autoRegisterHint: \{\s*zh: '新用户将自动注册',\s*en: 'New users are registered automatically',\s*\},/);
+});
+
+test('auth modal has no password tab or password login/register fetch', () => {
+  const modal = src('components/auth-modal.tsx');
+  const css = src('components/auth-modal.module.css');
+  assert.match(modal, /\(\["phone", "email", "other"\] as const\)/);
+  assert.doesNotMatch(modal, /"password"/);
+  assert.doesNotMatch(modal, /\/api\/auth\/password\/login/);
+  assert.doesNotMatch(modal, /\/api\/auth\/password\/register/);
+  assert.doesNotMatch(modal, /bindGuide/);
+  assert.doesNotMatch(css, /\.pwdLoginHint/);
+  assert.doesNotMatch(css, /\.forgotLink/);
 });
 
 test('auth Other is icon rows without X', () => {

@@ -34,7 +34,7 @@
 | [26-aliyun-sms.md](26-aliyun-sms.md) | 阿里云短信认证服务(phone OTP 真发:签名/错误映射/开通步骤) | 后端 |
 | [30-agent-memory.md](30-agent-memory.md) | 用户个性化记忆(Agent Memory:表结构/注入预算/工具契约/隐私边界) | 后端 |
 | [27-oauth-login.md](27-oauth-login.md) | 第三方登录(GitHub/Google/微信 OAuth:契约/手动配置/回退) | 后端 |
-| [28-account-security.md](28-account-security.md) | 账号安全:密码/手机/邮箱管理、邮箱+密码登录(2026-08-22) | 后端 |
+| [28-account-security.md](28-account-security.md) | 账号安全:密码/手机/邮箱管理;登录面板无密码 tab(2026-08-30),密码 API 保留 | 后端 |
 | [29-geocode-r5-status.md](29-geocode-r5-status.md) | geocode r5 状态与操作清单:城市中心假坐标修复链(基线/配额/import/UI 验证) | 数据/后端 |
 | [31-job-navigation-agent-plan.md](31-job-navigation-agent-plan.md) | 📌 求职导航 Agent 下一阶段计划(岗位/通勤/面试到达) | 产品/前端/后端/数据 |
 

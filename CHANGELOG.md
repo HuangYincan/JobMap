@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-08-30
+
+### Changed
+
+- **登录面板去掉密码登录。** AuthModal 只保留 手机 / 邮箱 / 其他登录。密码 tab、用户名注册、忘记密码链接、注册后绑定引导一并拿掉。账户页「密码与安全」和 `/api/auth/password/*` 仍在。
+
 ## 2026-08-29
 
 ### Changed
