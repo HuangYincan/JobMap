@@ -9,6 +9,8 @@
 //   fatalError/tool),done 只落本会话;
 // - finishStream(流 finally):streaming=false + completion 判定(与 resolveCompletion
 //   同款规则:done 事件 → 'done';用户停止 → 'stopped';异常/静默 → null);
+// - finishStreamIfCurrent / isCurrentController:打断后同 sessionId 换新 controller,
+//   旧 finally 不得落定到新流;
 // - stopStream / removeStream / abortAllStreams:终止/移除/卸载清理(controller.abort,
 //   不泄漏);removeStream 同时删 entry —— 之后 finally 的迟到事件安全落空(no-op);
 // - 未知 sessionId 一律 no-op 且返回原 map 引用(会话已删的迟到事件安全落空)。
@@ -153,6 +155,30 @@ export function finishStream(map: SessionStreamMap, sessionId: string, aborted: 
     streaming: false,
     completion: e.done ? "done" : aborted ? "stopped" : null,
   }));
+}
+
+/** 该会话当前 entry 是否仍是这次 run 的 controller(打断后同 sessionId 会换新流)。 */
+export function isCurrentController(
+  map: SessionStreamMap,
+  sessionId: string,
+  controller: AbortController,
+): boolean {
+  return map.get(sessionId)?.controller === controller;
+}
+
+/**
+ * 仅当 finally 仍对应本 run 的 controller 时落定。
+ * 打断/清屏会 removeStream 后再 startStream 同一 sessionId:旧 finally 不得
+ * 把新流标成 stopped,也不得把半成品写进新 entry。
+ */
+export function finishStreamIfCurrent(
+  map: SessionStreamMap,
+  sessionId: string,
+  controller: AbortController,
+  aborted: boolean,
+): SessionStreamMap {
+  if (!isCurrentController(map, sessionId, controller)) return map;
+  return finishStream(map, sessionId, aborted);
 }
 
 /** 停止某会话的流(abort 该会话 controller;其余会话不受影响;map 不变)。 */

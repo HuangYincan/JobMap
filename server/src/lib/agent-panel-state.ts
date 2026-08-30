@@ -180,3 +180,14 @@ export function reduceAgentEvent(messages: AgentMessage[], ev: AgentEvent): Agen
       return messages;
   }
 }
+
+/**
+ * 丢掉本轮未完成的助手输出(打断/清屏在 abort 流之后调用)。
+ * 从尾部连续弹出 assistant,停在最后一条 user(或空列表)。
+ * 无尾部 assistant → 原数组引用(调用方可 ident 判断)。
+ */
+export function discardTrailingAssistants(messages: AgentMessage[]): AgentMessage[] {
+  let end = messages.length;
+  while (end > 0 && messages[end - 1]?.role === "assistant") end--;
+  return end === messages.length ? messages : messages.slice(0, end);
+}

@@ -10,7 +10,9 @@ import {
   abortAllStreams,
   createSessionStream,
   finishStream,
+  finishStreamIfCurrent,
   getStreamMessages,
+  isCurrentController,
   isStreaming,
   markDone,
   markStreamError,
@@ -207,4 +209,19 @@ test('createSessionStream:全字段初始值', () => {
   assert.equal(s.notConfigured, false);
   assert.equal(s.fatalError, null);
   assert.equal(s.tool, null);
+});
+
+test('finishStreamIfCurrent: 同 sessionId 换新 controller 后旧 finally 不得落定新流', () => {
+  const oldC = new AbortController();
+  const newC = new AbortController();
+  let m = startStream(EMPTY, sidA, oldC, [user('问')]);
+  m = startStream(m, sidA, newC, [user('问'), user('打断')]);
+  assert.equal(isCurrentController(m, sidA, oldC), false);
+  assert.equal(isCurrentController(m, sidA, newC), true);
+  const afterOld = finishStreamIfCurrent(m, sidA, oldC, true);
+  assert.equal(afterOld, m, '旧 controller 的 finally no-op,返回原 map');
+  assert.equal(afterOld.get(sidA).streaming, true, '新流仍在 streaming');
+  assert.equal(afterOld.get(sidA).completion, null);
+  const afterNew = finishStreamIfCurrent(m, sidA, newC, false);
+  assert.equal(afterNew.get(sidA).streaming, false);
 });

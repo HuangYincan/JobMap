@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { reduceAgentEvent, stripActionJsonBlocks } from '../src/lib/agent-panel-state.ts';
+import { discardTrailingAssistants, reduceAgentEvent, stripActionJsonBlocks } from '../src/lib/agent-panel-state.ts';
 
 const delta = (text) => ({ type: 'delta', text });
 const reasoning = (text) => ({ type: 'reasoning', text });
@@ -200,4 +200,18 @@ test('images 事件挂到最后一条助手消息(最终回答气泡下方)', ()
     { url: 'https://store.is.autonavi.com/a.png', alt: '店' },
     { url: 'https://store.is.autonavi.com/b.jpg' },
   ]);
+});
+
+test('discardTrailingAssistants: 丢掉尾部连续 assistant,停在最后一条 user', () => {
+  const u1 = user('问1');
+  const a1 = { role: 'assistant', content: '答1' };
+  const u2 = user('问2');
+  const a2 = { role: 'assistant', content: '半成品' };
+  const a3 = { role: 'assistant', content: '', tools: [{ name: 'search', status: 'start' }] };
+  const live = [u1, a1, u2, a2, a3];
+  assert.deepEqual(discardTrailingAssistants(live), [u1, a1, u2]);
+  const done = [u1, a1, u2];
+  assert.equal(discardTrailingAssistants(done), done, '尾部是 user → 原引用');
+  assert.deepEqual(discardTrailingAssistants([]), []);
+  assert.deepEqual(discardTrailingAssistants([a1, a2]), []);
 });
