@@ -82,6 +82,7 @@ temp/
 
 # Docker
 docker-compose.override.yml
+/deploy/
 
 # Misc
 .agents/
