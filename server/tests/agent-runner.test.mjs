@@ -318,6 +318,46 @@ test('runAgent: 纯文本回复(无动作) → 仅 delta + done', async () => {
   );
 });
 
+test('runAgent: work 工具带回 mapHints 且 LLM 未发动作 → 合成 flyTo/addMarkers/select', async () => {
+  const tool = mockTool('work__getPositionDetail', () => ({
+    ok: true,
+    text: 'title=全栈 · 安克',
+    mapHints: [{ lng: 113.953431, lat: 22.569079, label: '安克创新 · 全栈', mapId: 'anker:sz', positionId: 'portal-1' }],
+  }));
+  const mp = mockProvider([
+    { toolCalls: [{ id: 'c1', name: 'work__getPositionDetail', arguments: '{"positionId":"portal-1"}' }] },
+    { deltas: ['推荐安克创新的全栈岗位。'] },
+  ]);
+  const events = await collectEvents(baseReq({ tools: [tool], provider: mp }));
+  const actions = events.filter((e) => e.type === 'action').map((e) => e.action);
+  assert.deepEqual(
+    actions.map((a) => a.type),
+    ['addMarkers', 'flyTo', 'select'],
+  );
+  assert.equal(actions[0].payload.points[0].lng, 113.953431);
+  assert.equal(actions[0].payload.points[0].label, '安克创新 · 全栈');
+  assert.equal(actions[1].payload.zoom, 15);
+  assert.deepEqual(actions[2].payload, { id: 'anker:sz', mode: 'card' });
+  assert.equal(events.at(-1).type, 'done');
+});
+
+test('runAgent: LLM 已发 flyTo 时不重复合成 flyTo', async () => {
+  const tool = mockTool('work__getPositionDetail', () => ({
+    ok: true,
+    text: 'ok',
+    mapHints: [{ lng: 113.95, lat: 22.56, mapId: 'anker:sz' }],
+  }));
+  const mp = mockProvider([
+    { toolCalls: [{ id: 'c1', name: 'work__getPositionDetail', arguments: '{}' }] },
+    { deltas: ['好的 {"actions":[{"type":"flyTo","payload":{"center":{"lng":113.95,"lat":22.56},"zoom":14}}]}'] },
+  ]);
+  const events = await collectEvents(baseReq({ tools: [tool], provider: mp }));
+  const actions = events.filter((e) => e.type === 'action').map((e) => e.action);
+  assert.equal(actions.filter((a) => a.type === 'flyTo').length, 1);
+  assert.equal(actions.some((a) => a.type === 'addMarkers'), true);
+  assert.equal(actions[0].type, 'flyTo');
+});
+
 test('extractActions: 纯函数 — 围栏/前后缀/多个动作块/损坏段', () => {
   assert.deepEqual(
     extractActions('```json\n{"actions":[{"type":"search","payload":{"query":"杭州"}}]}\n```'),

@@ -16,8 +16,18 @@ export interface AgentTool {
   call(input: Record<string, unknown>, ctx: AgentContext): Promise<ToolResult>;
 }
 
+/** 岗位/办公点地图落点(不进 LLM 正文、不下发公开 SSE;仅供 runner 合成动作)。 */
+export interface AgentMapHint {
+  lng: number;
+  lat: number;
+  label?: string;
+  /** 公司目录 POI id,select/openDetail 必须用此 id。 */
+  mapId?: string;
+  positionId?: string;
+}
+
 export type ToolResult =
-  | { ok: true; text: string; images?: Array<{ url: string; alt?: string }> }
+  | { ok: true; text: string; images?: Array<{ url: string; alt?: string }>; mapHints?: AgentMapHint[] }
   | { ok: false; error: string };
 
 export interface AgentContext {

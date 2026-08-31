@@ -114,6 +114,17 @@ test('buildSystemPrompt: 岗位检索以用户位置为起点,图片在气泡下
   assert.match(withCtx, /121\.470000/);
 });
 
+test('buildSystemPrompt: 推荐岗位必须落地图且不得把内部 ID 写给用户(zh/en)', () => {
+  const zh = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'zh');
+  const en = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'en');
+  assert.match(zh, /禁止把 positionId、portal-feishu、mapId 等内部 ID 写给用户/);
+  assert.match(zh, /推荐或列出带坐标的岗位时必须同时输出地图动作/);
+  assert.match(zh, /至少 addMarkers \+ flyTo/);
+  assert.match(en, /never print positionId, portal-feishu, mapId/);
+  assert.match(en, /must also emit map actions/);
+  assert.match(en, /at least addMarkers \+ flyTo/);
+});
+
 test('buildSystemPrompt: 求职导航纪律禁止编造岗位/polyline,showRoute 仅 routeId(zh/en)', () => {
   const zh = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'zh');
   const en = buildSystemPrompt({ maxTurns: 8, hasTools: true }, 'en');

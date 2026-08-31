@@ -2,7 +2,7 @@
 // catalog / position-filter / alive pipeline; they do not copy a second job
 // filter engine. Tool text is sanitized and never includes full JD text.
 
-import type { AgentTool, AgentContext, ToolResult } from '../types.ts';
+import type { AgentTool, AgentContext, ToolResult, AgentMapHint } from '../types.ts';
 import { sanitizeToolText } from '../run-agent.ts';
 import { agentSearchOrigin } from '../search-origin.ts';
 import { mergeAgentImages, type AgentImage } from '../result-images.ts';
@@ -51,6 +51,7 @@ export interface WorkPositionSummary {
   deadline?: string;
   distanceMeters?: number;
   logoUrl?: string;
+  location?: { lng: number; lat: number };
 }
 
 export interface WorkToolDeps {
@@ -59,10 +60,14 @@ export interface WorkToolDeps {
   now?: () => Date;
 }
 
-function textOk(text: string, images?: AgentImage[]): ToolResult {
-  return images && images.length > 0
-    ? { ok: true, text: sanitizeToolText(text), images }
-    : { ok: true, text: sanitizeToolText(text) };
+function textOk(text: string, images?: AgentImage[], mapHints?: AgentMapHint[]): ToolResult {
+  const result: { ok: true; text: string; images?: AgentImage[]; mapHints?: AgentMapHint[] } = {
+    ok: true,
+    text: sanitizeToolText(text),
+  };
+  if (images && images.length > 0) result.images = images;
+  if (mapHints && mapHints.length > 0) result.mapHints = mapHints;
+  return result;
 }
 
 function textErr(text: string): ToolResult {
@@ -135,19 +140,39 @@ function toSummary(
   const logoUrl = companyLogoUrl(poi);
   if (logoUrl) summary.logoUrl = logoUrl;
   const loc = positionOrigin(poi, position);
+  if (loc) summary.location = loc;
   if (origin && loc) summary.distanceMeters = haversineDistance(origin, loc);
   return summary;
 }
 
+function hintLabel(companyName: string, title: string): string {
+  const full = `${companyName} · ${title}`;
+  if (full.length <= 50) return full;
+  if (companyName.length <= 50) return companyName;
+  return companyName.slice(0, 50);
+}
+
+function toMapHint(row: { location?: { lng: number; lat: number }; companyName: string; title: string; companyCatalogId: string; positionId: string }): AgentMapHint | undefined {
+  if (!row.location) return undefined;
+  return {
+    lng: row.location.lng,
+    lat: row.location.lat,
+    label: hintLabel(row.companyName, row.title),
+    mapId: row.companyCatalogId,
+    positionId: row.positionId,
+  };
+}
+
 function formatSummary(row: WorkPositionSummary, index: number): string {
   const parts = [
-    `${index}. ${row.positionId}`,
-    row.title,
+    `${index}. ${row.title} · ${row.companyName}`,
     row.city ?? '城市未提供',
     row.siteLabel ?? '办公点未提供',
     row.family,
-    `company=${row.companyCatalogId}`,
+    `mapId=${row.companyCatalogId}`,
+    `positionId=${row.positionId}`,
   ];
+  if (row.location) parts.push(`办公点 GCJ-02 ${row.location.lng},${row.location.lat}`);
   if (row.distanceMeters !== undefined) parts.push(`距起点 ${formatDistance(row.distanceMeters)}`);
   if (row.salary) parts.push(`薪资 ${row.salary.min}-${row.salary.max}`);
   if (row.applySource) parts.push(`来源 ${row.applySource}`);
@@ -160,6 +185,7 @@ function formatDetail(row: WorkPositionDetailRecord): string {
     `positionId=${row.positionId}`,
     `title=${row.title}`,
     `company=${row.companyName} (${row.companyCatalogId})`,
+    `mapId=${row.companyCatalogId}`,
     `family=${row.family}`,
     `status=${row.status}`,
   ];
@@ -228,7 +254,7 @@ export function workTools(deps: WorkToolDeps = {}): AgentTool[] {
     {
       name: 'work__searchPositions',
       description:
-        '在当前招聘目录中搜索仍在招的岗位摘要。默认以用户位置为起点由近到远排序,用户位置未知时才用视野中心;输入关键词、城市和有限结构化条件;返回稳定岗位 ID、标题、城市、办公点与薪资(若有),不含全文 JD。',
+        '在当前招聘目录中搜索仍在招的岗位摘要。默认以用户位置为起点由近到远排序,用户位置未知时才用视野中心;输入关键词、城市和有限结构化条件。返回岗位名、公司、mapId(select/openDetail 必须用此 id)、办公点 GCJ-02 坐标、positionId(仅供 getPositionDetail,禁止展示给用户)。不含全文 JD。',
       inputSchema: {
         type: 'object',
         properties: {
@@ -304,19 +330,20 @@ export function workTools(deps: WorkToolDeps = {}): AgentTool[] {
         const originNote = origin
           ? `起点 ${origin.lng.toFixed(6)},${origin.lat.toFixed(6)}(用户位置优先,无定位才用视野中心)`
           : '未提供用户位置或视野,未按距离排序';
-        const header = `找到 ${rows.length} 个岗位摘要(第 ${page} 页,每页 ${pageSize},${originNote},不含全文 JD):`;
+        const header = `找到 ${rows.length} 个岗位摘要(第 ${page} 页,每页 ${pageSize},${originNote},不含全文 JD)。mapId 用于 select/openDetail;positionId 仅供 getPositionDetail,禁止写入对用户正文:`;
         const images = mergeAgentImages(
           pageRows.map((row) => (row.logoUrl ? { url: row.logoUrl, alt: row.companyName } : undefined)).filter(
             (img): img is { url: string; alt: string } => Boolean(img),
           ),
         );
-        return textOk([header, ...pageRows.map((row, i) => formatSummary(row, start + i + 1))].join('\n'), images);
+        const mapHints = pageRows.map(toMapHint).filter((hint): hint is AgentMapHint => Boolean(hint));
+        return textOk([header, ...pageRows.map((row, i) => formatSummary(row, start + i + 1))].join('\n'), images, mapHints);
       },
     },
     {
       name: 'work__getPositionDetail',
       description:
-        '按岗位 ID 读取当前仍可见(open 且在招)的岗位事实、办公点坐标(含坐标系)与来源/新鲜度。找不到或已下线时失败,不猜测。不含全文 JD。',
+        '按岗位 ID 读取当前仍可见(open 且在招)的岗位事实、办公点坐标(含坐标系)与来源/新鲜度。找不到或已下线时失败,不猜测。select/openDetail 必须用返回的 mapId,禁止把 positionId 给用户。不含全文 JD。',
       inputSchema: {
         type: 'object',
         properties: {
@@ -334,7 +361,16 @@ export function workTools(deps: WorkToolDeps = {}): AgentTool[] {
         if (!isAlivePosition({ ...record, id: record.positionId, type: record.family }, nowFn())) {
           return textErr('岗位不存在或已下线');
         }
-        return textOk(formatDetail(record));
+        const mapHints = record.location
+          ? [{
+              lng: record.location.lng,
+              lat: record.location.lat,
+              label: hintLabel(record.companyName, record.title),
+              mapId: record.companyCatalogId,
+              positionId: record.positionId,
+            }]
+          : undefined;
+        return textOk(formatDetail(record), undefined, mapHints);
       },
     },
   ];

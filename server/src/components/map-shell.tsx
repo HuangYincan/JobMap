@@ -12,13 +12,14 @@ import { applyTagSuggestion, distanceFilterMeters, metersToDistanceKm, planExplo
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, isNearDefaultCenter } from "@/lib/camera-center";
 import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchPOIDetail } from "@/lib/api";
+import { findPoiByCatalogOrPositionId } from "@/lib/poi-lookup";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, cardDisplayOrigin, type Position } from "@/lib/types";
 import { batchMatchesCurrentMode, catalogCoversView, inBounds, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { loadWorkViewport, WORK_FULL_LOAD_MAX_PAGES } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, syncModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
 import { entityRefFromSelection, initialsFromName } from "@/lib/account";
-import { sanitizeApplicationPipeline, type ApplicationStatusDef } from "@/lib/application-pipeline";
+import { sanitizeApplicationPipeline } from "@/lib/application-pipeline";
 import {
   isManualApplicationId,
   reconcileApplications,
@@ -349,28 +350,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [applications, setApplications] = useState<ApplicationRecord[]>([]);
   const [inbox, setInbox] = useState<NotificationRecord[]>([]);
 
-  // ---- AI Agent 悬浮球 seam(boss 红线豁免,只追加,不动任何现有逻辑)----
-  // agentBridge 惰性初始化:活跃视图可用后建一次;视图实例变更(引擎重建)时重建。
-  const agentBridgeViewRef = useRef<MapView | null>(null);
-  const agentBridgeRef = useRef<MapBridge | null>(null);
-  if (engineView && agentBridgeViewRef.current !== engineView) {
-    agentBridgeViewRef.current = engineView;
-    agentBridgeRef.current = createAgentBridge(engineView, {
-      onSelect: (id) => setSelectedId(id),
-      onOpenDetail: (id) => {
-        const poi =
-          catalogRef.current.find((p) => p.id === id) ??
-          poisRef.current.find((p) => p.id === id);
-        setSelectedId(id);
-        if (poi) setDetailPoi(poi);
-        setRailPanel("explore");
-        if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-          setDrawer("full");
-        }
-      },
-    });
-  }
-
   useEffect(() => {
     const system: BasemapStyle = window.matchMedia("(prefers-color-scheme: dark)").matches ? "whitesmoke" : "normal";
     setMapStyle(readMapStylePref(system));
@@ -385,6 +364,47 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const [agentOpen, setAgentOpen] = useState(false);
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
+
+  // ---- AI Agent 悬浮球 seam(boss 红线豁免,只追加,不动任何现有逻辑)----
+  // agentBridge 惰性初始化:活跃视图可用后建一次;视图实例变更(引擎重建)时重建。
+  const agentBridgeViewRef = useRef<MapView | null>(null);
+  const agentBridgeRef = useRef<MapBridge | null>(null);
+  if (engineView && agentBridgeViewRef.current !== engineView) {
+    agentBridgeViewRef.current = engineView;
+    agentBridgeRef.current = createAgentBridge(engineView, {
+      onSelect: (id) => {
+        const hit = findPoiByCatalogOrPositionId(id, catalogRef.current, poisRef.current);
+        setSelectedId(hit?.poi.id ?? id);
+      },
+      onOpenDetail: (id) => {
+        const openHit = (poi: POI, position?: Position) => {
+          setSelectedId(poi.id);
+          setDetailPoi(poi);
+          setRailPanel("explore");
+          if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+            setDrawer("full");
+          }
+          if (position && isRecruitmentPOI(poi)) {
+            setOpenPositionId(position.id);
+            setMobileJd(position);
+          }
+        };
+        const hit = findPoiByCatalogOrPositionId(id, catalogRef.current, poisRef.current);
+        if (hit) {
+          openHit(hit.poi, hit.position);
+          return;
+        }
+        void fetchPOIDetail(id, "work")
+          .then((detail) => {
+            const nested = findPoiByCatalogOrPositionId(id, [detail]);
+            openHit(nested?.poi ?? detail, nested?.position);
+          })
+          .catch(() => {
+            setSelectedId(id);
+          });
+      },
+    });
+  }
   const [mobileSuggestIndex, setMobileSuggestIndex] = useState(-1);
   const [online, setOnline] = useState(true);
   const drawerFullishRef = useRef(false);
@@ -1948,26 +1968,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     }
   }, [user, refreshApplications]);
 
-  const handleApplicationPipeline = useCallback(async (next: ApplicationStatusDef[]) => {
-    if (!user) {
-      setAuthOpen(true);
-      return;
-    }
-    try {
-      const res = await fetch("/api/me/applications/pipeline", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ statuses: next }),
-      });
-      const body = await res.json();
-      if (body.user) setUser(body.user as AccountUser);
-      await refreshApplications();
-    } catch {
-      await refreshAccount();
-      await refreshApplications();
-    }
-  }, [user, refreshAccount, refreshApplications]);
-
   // ---- 地图联动 ----
   // view 来自 useMapEngine 的 state(engineView)而非 mapInstance ref:引擎切换
   // 时 setView(新视图)触发重渲染,usePOIMap 创建 effect deps [view] 随切换
@@ -2663,7 +2663,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           onPick={handleOpenApplication}
           onSignIn={() => setAuthOpen(true)}
           onStatusChange={handleApplicationStatus}
-          onStatusesChange={handleApplicationPipeline}
           onRemove={handleRemoveApplication}
           onAdd={handleAddApplication}
           onImport={handleImportApplications}
@@ -3109,7 +3108,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   }}
                   onSignIn={() => setAuthOpen(true)}
                   onStatusChange={handleApplicationStatus}
-                  onStatusesChange={handleApplicationPipeline}
                   onRemove={handleRemoveApplication}
                   onAdd={handleAddApplication}
                   onImport={handleImportApplications}

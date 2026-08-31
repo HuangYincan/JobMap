@@ -702,108 +702,6 @@ div.watchMain {
   color: var(--blue-ink, #0062cc);
 }
 
-.manage {
-  margin-top: 8px;
-  padding: 8px 4px 4px;
-}
-
-.manageGroup + .manageGroup {
-  margin-top: 10px;
-}
-
-.manageChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.manageChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  background: var(--soft);
-  padding: 3px 4px 3px 8px;
-}
-
-.manageName,
-.manageMove {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 4px;
-}
-
-.manageMove {
-  color: var(--blue-ink, #0062cc);
-}
-
-.manageInput {
-  width: 88px;
-  border: 0;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 2px;
-}
-
-.manageRemove {
-  width: 22px;
-  height: 22px;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--muted);
-  font-size: 16px;
-  line-height: 1;
-}
-
-.manageRemove:disabled {
-  opacity: 0.4;
-}
-
-.addRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.addInput {
-  flex: 1 1 120px;
-  min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: transparent;
-  padding: 8px 10px;
-  font-size: 13px;
-}
-
-.groupToggle {
-  display: inline-flex;
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-.groupBtn {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 10px;
-}
-
-.groupBtnOn {
-  background: rgba(0, 122, 255, 0.12);
-  color: var(--blue-ink, #0062cc);
-}
-
 .addBtn {
   border: 0;
   border-radius: 12px;
@@ -912,13 +810,7 @@ div.watchMain {
 .signInBtn:focus-visible,
 .watchMain:focus-visible,
 .watchRemove:focus-visible,
-.manageName:focus-visible,
-.manageMove:focus-visible,
-.manageRemove:focus-visible,
-.groupBtn:focus-visible,
-.addBtn:focus-visible,
-.addInput:focus-visible,
-.manageInput:focus-visible {
+.addBtn:focus-visible {
   outline: 2px solid var(--blue, #007aff);
   outline-offset: 2px;
 }

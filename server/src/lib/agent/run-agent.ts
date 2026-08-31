@@ -3,7 +3,8 @@
 // runAgent 是 AsyncGenerator,route 侧(ws-b)消费后再过滤为 SSE:
 //   - delta / reasoning / tool start 事件随 LLM 流式进入服务端事件队列;
 //     reasoning 只留给服务端,网络出口由 route 的 allowlist 丢弃
-//   - 流结束无 tool_calls → 容错提取文本内 {"actions":[...]} → 逐个校验后下发
+//   - 流结束无 tool_calls → 容错提取文本内 {"actions":[...]} → 逐个校验后下发;
+//     若本轮 work 工具带回办公点 mapHints 且 LLM 未 flyTo/addMarkers,补合成地图动作
 //   - 有 tool_calls → 白名单查表、sanitize、执行、结果回流 → 下一轮
 //     (assistant 消息附回本轮 reasoning_content 累计——DeepSeek 思考模式必需,否则 400)
 //   - unsupported_tools → 无 tools 降级重跑一次(最多一次)
@@ -18,6 +19,12 @@ import { validateAction } from './action-schema.ts';
 import { listMemories } from '../memory-store.ts';
 import { buildSystemPrompt } from './prompts.ts';
 import { collectToolImages, mergeAgentImages, type AgentImage } from './result-images.ts';
+import {
+  emptyWorkHintBuckets,
+  hintsForJobMapActions,
+  ingestWorkMapHints,
+  synthesizeJobMapActions,
+} from './map-hints.ts';
 import { formatAgentMapContext } from './search-origin.ts';
 import type { AgentConfig } from './config.ts';
 import type { AgentAction, AgentContext, AgentEvent, AgentTool, ToolKind, ToolResult } from './types.ts';
@@ -269,6 +276,15 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
     ...(req.navigationSession ? { navigationSession: req.navigationSession } : {}),
   };
   const collectedImages: AgentImage[] = [];
+  let hintBuckets = emptyWorkHintBuckets();
+
+  function* emitResolvedActions(text: string): Generator<AgentEvent> {
+    const llmActions = extractActions(text);
+    for (const action of llmActions) yield { type: 'action', action };
+    for (const action of synthesizeJobMapActions(llmActions, hintsForJobMapActions(hintBuckets))) {
+      yield { type: 'action', action };
+    }
+  }
 
   let noTools = false; // unsupported_tools 降级标志(最多一次)
   let reasoningSent = 0; // 思考内容累计转发量(总量上限 REASONING_MAX,超限截断;streamRound 共用)
@@ -316,8 +332,8 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
       }
 
       if (calls.length === 0) {
-        // 无工具调用:提取动作 JSON 逐个下发,然后 done
-        for (const action of extractActions(text)) yield { type: 'action', action };
+        // 无工具调用:提取动作 JSON 逐个下发;岗位办公点若 LLM 漏发则补合成,然后 done
+        yield* emitResolvedActions(text);
         if (collectedImages.length > 0) yield { type: 'images', images: collectedImages };
         yield { type: 'done' };
         return;
@@ -342,6 +358,7 @@ export async function* runAgent(req: RunAgentRequest): AsyncGenerator<AgentEvent
             collectedImages.length,
             ...mergeAgentImages(collectedImages, collectToolImages(result)),
           );
+          hintBuckets = ingestWorkMapHints(hintBuckets, call.name, result.mapHints);
         }
         const summary = sanitizeToolText(result.ok ? result.text : result.error);
         // 公开 tool 事件:name 收敛为类别,summary 不携带(结果全文只进 toolMessages 回流 LLM)

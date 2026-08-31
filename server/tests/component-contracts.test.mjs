@@ -359,14 +359,15 @@ test('persistable guest history and catalog-only save are wired', () => {
   assert.match(history, /NOT_PERSISTABLE/);
 });
 
-test('Recent L2 is application watch with user-editable stages', () => {
+test('Recent L2 is application watch without a header stage editor', () => {
   const recent = src('components/recent-panel.tsx');
   const shell = src('components/map-shell.tsx');
   const jd = src('components/jd-panel.tsx');
   const route = src('app/api/me/applications/route.ts');
   const pipeline = src('app/api/me/applications/pipeline/route.ts');
-  assert.match(recent, /createCustomStatus/);
-  assert.match(recent, /onStatusesChange/);
+  assert.doesNotMatch(recent, /createCustomStatus/);
+  assert.doesNotMatch(recent, /onStatusesChange/);
+  assert.doesNotMatch(recent, /doneManageStatuses/);
   assert.match(recent, /watchAll/);
   assert.match(recent, /watchActive/);
   assert.match(recent, /watchClosed/);
@@ -379,7 +380,7 @@ test('Recent L2 is application watch with user-editable stages', () => {
   assert.match(recent, /removeApplication/);
   assert.doesNotMatch(recent, /statuses\.map\(\(def\) =>/);
   assert.match(shell, /items=\{applications\}/);
-  assert.match(shell, /\/api\/me\/applications\/pipeline/);
+  assert.doesNotMatch(shell, /\/api\/me\/applications\/pipeline/);
   assert.match(shell, /\/api\/me\/applications\/import/);
   assert.match(shell, /handleRemoveApplication/);
   assert.match(route, /export async function PATCH/);
@@ -1248,6 +1249,7 @@ test('map shell has the AgentBall seam (ws-c, 红线豁免只追加)', () => {
   assert.match(shell, /import AgentBall from "\.\/agent-ball";/);
   assert.match(shell, /agentBridgeRef = useRef<MapBridge \| null>\(null\)/);
   assert.match(shell, /createAgentBridge\(engineView/);
+  assert.match(shell, /findPoiByCatalogOrPositionId/);
   // 接线(ws-mem-b):登录态 user 一并透传(记忆入口只对登录用户渲染);
   // ws-mt 受控化:agentOpen/onOpenChange 提升至 MapShell
   assert.match(shell, /<AgentBall[\s\S]{0,160}bridge=\{agentBridgeRef\.current\}[\s\S]{0,160}user=\{user\}[\s\S]{0,80}userLocation=\{userLocation\}[\s\S]{0,80}open=\{agentOpen\}[\s\S]{0,120}onOpenChange=\{setAgentOpen\}/);

@@ -326,8 +326,8 @@ WS0 的资料审查只记录已审核的产品接口，不代表已注册适配�
 
 | 工具 | 输入 | 输出边界 |
 |---|---|---|
-| `work__searchPositions` | 关键词、城市、结构化岗位条件、分页上限;检索起点=用户位置,未知才用视野中心 | 当前 DB 中的岗位摘要和稳定 ID,由近到远;公司 logo 作可选图片;不返回全量 JD |
-| `work__getPositionDetail` | `positionId` | 单个仍可见岗位的事实、来源、新鲜度和办公点 |
+| `work__searchPositions` | 关键词、城市、结构化岗位条件、分页上限;检索起点=用户位置,未知才用视野中心 | 当前 DB 中的岗位摘要(岗位名/公司优先)、`mapId`(公司目录 id)、`positionId`(仅工具链)、办公点 GCJ-02;公司 logo 作可选图片;附 `mapHints` 供 runner 在 LLM 漏发时合成地图动作;不返回全量 JD |
+| `work__getPositionDetail` | `positionId` | 单个仍可见岗位的事实、来源、新鲜度、办公点与 `mapId`;附 `mapHints` |
 | `navigation__planRoute` | 已验证起终点、方式、时间条件 | `RoutePlan` 摘要；不返回几何或原始供应商数据 |
 | `navigation__compareCommutes` | 1 个起点、2–5 个候选办公点、方式 | 统一口径的路线矩阵、失败项和质量标签 |
 | `navigation__filterByCommute` | 候选岗位 ID、起点、上限、方式、Top-K | 严格命中与近似候选，含调用预算和降级说明 |

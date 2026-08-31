@@ -237,6 +237,13 @@ test('work__searchPositions uses injected catalog; omits full JD; clamps pageSiz
   const result = await search.call({ query: 'AI产品', city: '杭州', family: 'intern', pageSize: 100 }, ctx());
   assert.equal(result.ok, true);
   assert.match(result.text, /pos-tx-ai/);
+  assert.match(result.text, /mapId=tencent:11/);
+  assert.match(result.text, /办公点 GCJ-02 120\.12,30\.28/);
+  assert.match(result.text, /禁止写入对用户正文/);
+  assert.equal(result.mapHints?.length, 1);
+  assert.equal(result.mapHints[0].mapId, 'tencent:11');
+  assert.equal(result.mapHints[0].positionId, 'pos-tx-ai');
+  assert.equal(result.mapHints[0].lng, 120.12);
   assert.match(result.text, /每页 20/);
   assert.doesNotMatch(result.text, new RegExp(FULL_JD));
   assert.doesNotMatch(result.text, /pos-tx-closed/);
@@ -256,8 +263,12 @@ test('work__getPositionDetail fail-closed for missing/offline; no full JD', asyn
   const ok = await detail.call({ positionId: 'pos-tx-ai' }, ctx());
   assert.equal(ok.ok, true);
   assert.match(ok.text, /pos-tx-ai/);
+  assert.match(ok.text, /mapId=tencent:11/);
   assert.match(ok.text, /gcj02/);
   assert.doesNotMatch(ok.text, new RegExp(FULL_JD));
+  assert.equal(ok.mapHints?.length, 1);
+  assert.equal(ok.mapHints[0].mapId, 'tencent:11');
+  assert.equal(ok.mapHints[0].lng, 120.12);
 });
 
 test('loadWorkPositionByExternalIdFromDb is a targeted open/alive read without description', async () => {
