@@ -794,8 +794,64 @@ export const translations = {
     en: 'Applications',
   },
   applicationsEmpty: {
-    zh: '还没有投递。从岗位详情点「投递」后会出现在这里。',
-    en: 'No applications yet. Apply from a job detail to see it here.',
+    zh: '还没有投递。从岗位详情点「投递」，或在这里添加、导入 CSV。',
+    en: 'No applications yet. Apply from a job, or add and import CSV here.',
+  },
+  watchJoin: {
+    zh: '加入监视',
+    en: 'Add to watch',
+  },
+  addApplication: {
+    zh: '添加',
+    en: 'Add',
+  },
+  importCsv: {
+    zh: '导入 CSV',
+    en: 'Import CSV',
+  },
+  exportCsv: {
+    zh: '导出 CSV',
+    en: 'Export CSV',
+  },
+  downloadCsvTemplate: {
+    zh: '下载模板',
+    en: 'Download template',
+  },
+  chooseCsvFile: {
+    zh: '选择文件',
+    en: 'Choose file',
+  },
+  confirmImport: {
+    zh: '确认导入',
+    en: 'Import',
+  },
+  addApplicationCompany: {
+    zh: '公司',
+    en: 'Company',
+  },
+  addApplicationTitle: {
+    zh: '岗位',
+    en: 'Title',
+  },
+  addApplicationUrl: {
+    zh: '链接',
+    en: 'Link',
+  },
+  addApplicationOptional: {
+    zh: '选填',
+    en: 'Optional',
+  },
+  importCsvFormat: {
+    zh: '格式 公司,岗位,阶段,投递链接,投递时间',
+    en: 'Format company, title, status, apply_url, applied_at',
+  },
+  importCsvPreview: {
+    zh: '将写入 {n} 条 · 跳过 {s} 条',
+    en: 'Will import {n} · skip {s}',
+  },
+  invalidApplyUrl: {
+    zh: '链接须为 http(s)',
+    en: 'Link must be http(s)',
   },
   recentWatch: {
     zh: '投递监视',

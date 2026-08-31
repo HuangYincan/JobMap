@@ -19,6 +19,8 @@ import { clearModeCache, readModeCache, syncModeCache, writeModeCache } from "@/
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
 import { entityRefFromSelection, initialsFromName } from "@/lib/account";
 import { sanitizeApplicationPipeline, type ApplicationStatusDef } from "@/lib/application-pipeline";
+import type { ApplicationCsvRow } from "@/lib/application-csv";
+import { isManualApplicationId } from "@/lib/application-csv";
 import { isPersistableMode, isPersistablePoi } from "@/lib/persistable";
 import { addGuestHistory, listGuestHistory, mergeGuestHistoryIntoAccount } from "@/lib/guest-search-history";
 import {
@@ -1757,6 +1759,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
    *  拉 work 详情(mode=work),positions 匹配 positionId → 桌面详情高亮 +
    *  移动 JD。岗位已下线 / 拉取失败 → 不崩溃,console.warn + 保持面板原样。 */
   const handleOpenApplication = useCallback((ref: { positionId: string; companyPoiId: string }) => {
+    if (isManualApplicationId(ref.companyPoiId)) return;
     const openCompany = (company: POI) => {
       // 2026-08-21 热修:弹卡不动相机——岗位打开仅侧栏详情,不 flyTo、
       // 不置位 userMovedMapRef(同 handlePickSaved 注释)。
@@ -1799,8 +1802,23 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       setAuthOpen(true);
       return;
     }
+    const now = new Date().toISOString();
+    setApplications((current) => {
+      const without = current.filter((row) => row.positionId !== input.position.id);
+      return [{
+        id: `tmp:${input.position.id}`,
+        positionId: input.position.id,
+        companyPoiId: input.company.id,
+        title: input.position.title,
+        companyName: input.company.name,
+        applyUrl: input.url,
+        status: "applied",
+        createdAt: now,
+        updatedAt: now,
+      }, ...without];
+    });
     try {
-      await fetch("/api/me/applications", {
+      const res = await fetch("/api/me/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1812,8 +1830,48 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         }),
       });
       await refreshApplications();
+      if (!res.ok) return;
     } catch {
-      // ignore
+      await refreshApplications();
+    }
+  }, [user, refreshApplications]);
+
+  const handleAddApplication = useCallback(async (input: {
+    title: string;
+    companyName: string;
+    applyUrl?: string;
+    status: string;
+  }) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    try {
+      await fetch("/api/me/applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      await refreshApplications();
+    } catch {
+      await refreshApplications();
+    }
+  }, [user, refreshApplications]);
+
+  const handleImportApplications = useCallback(async (rows: ApplicationCsvRow[]) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    try {
+      await fetch("/api/me/applications/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows }),
+      });
+      await refreshApplications();
+    } catch {
+      await refreshApplications();
     }
   }, [user, refreshApplications]);
 
@@ -2502,6 +2560,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         saved={Boolean(detailPoi && savedPlaces.some((item) => item.poiId === detailPoi.id))}
         onToggleSave={detailPoi && isPersistablePoi(detailPoi) ? handleToggleSave : undefined}
         onApply={handleApply}
+        signedIn={Boolean(user)}
         totalCount={pois.length}
         savedMode={savedLayerEnabled}
         savedItems={savedPlaces}
@@ -2556,6 +2615,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           onSignIn={() => setAuthOpen(true)}
           onStatusChange={handleApplicationStatus}
           onStatusesChange={handleApplicationPipeline}
+          onAdd={handleAddApplication}
+          onImport={handleImportApplications}
         />
       )}
 
@@ -2717,6 +2778,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
               accentColor={modeConfig.color}
               onClose={() => setMobileJd(null)}
               onApply={handleApply}
+              signedIn={Boolean(user)}
             />
           </div>
         ) : detailPoi ? (
@@ -2998,6 +3060,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   onSignIn={() => setAuthOpen(true)}
                   onStatusChange={handleApplicationStatus}
                   onStatusesChange={handleApplicationPipeline}
+                  onAdd={handleAddApplication}
+                  onImport={handleImportApplications}
                 />
               ) : mobileSheet === "layers" ? (
                 <div className={styles.mobileLayers}>

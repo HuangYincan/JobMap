@@ -17,6 +17,7 @@ export interface JdPanelProps {
   onClose: () => void;
   lang?: Language;
   accentColor?: string;
+  signedIn?: boolean;
   onApply?: (input: { position: Position; company: RecruitmentPOI; url?: string }) => void;
 }
 
@@ -56,6 +57,7 @@ export function JdPanel({
   onClose,
   lang = "zh",
   accentColor = "#007AFF",
+  signedIn = false,
   onApply,
 }: JdPanelProps) {
   const typeLabel = t(TYPE_KEY[position.type], lang);
@@ -129,13 +131,20 @@ export function JdPanel({
             href={apply.url}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => onApply?.({ position, company, url: apply.url })}
+            onClick={(event) => {
+              if (!signedIn) event.preventDefault();
+              onApply?.({ position, company, url: apply.url });
+            }}
           >
             {applyLabel}
           </a>
         ) : (
-          <button type="button" className={`${styles.apply} ${styles.applyDisabled}`} disabled>
-            {applyLabel}
+          <button
+            type="button"
+            className={styles.apply}
+            onClick={() => onApply?.({ position, company })}
+          >
+            {t("watchJoin", lang)}
           </button>
         )}
       </footer>

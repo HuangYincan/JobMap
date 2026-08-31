@@ -1208,40 +1208,85 @@ export async function listApplications(userId: string): Promise<ApplicationRecor
   }, () => memListApplications(userId));
 }
 
+type ApplicationWriteInput = Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'> & {
+  status?: ApplicationRecord['status'];
+  createdAt?: string;
+};
+
+async function upsertApplicationRow(
+  db: Pool,
+  userId: string,
+  input: ApplicationWriteInput,
+  status: string,
+): Promise<ApplicationRecord> {
+  const createdAt = input.createdAt ?? null;
+  const result = await db.query<{
+    id: string;
+    position_id: string;
+    company_poi_id: string;
+    title: string;
+    company_name: string;
+    apply_url: string | null;
+    status: ApplicationRecord['status'];
+    created_at: Date;
+    updated_at: Date;
+  }>(
+    `INSERT INTO applications (
+       user_id, position_id, company_poi_id, title, company_name, apply_url, status, created_at, updated_at
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8::timestamptz, now()), now())
+     ON CONFLICT (user_id, position_id) DO UPDATE SET
+       title = EXCLUDED.title,
+       company_name = EXCLUDED.company_name,
+       company_poi_id = EXCLUDED.company_poi_id,
+       apply_url = COALESCE(EXCLUDED.apply_url, applications.apply_url),
+       status = EXCLUDED.status,
+       created_at = COALESCE($8::timestamptz, applications.created_at),
+       updated_at = now()
+     RETURNING ${APPLICATION_RETURNING}`,
+    [
+      userId,
+      input.positionId,
+      input.companyPoiId,
+      input.title,
+      input.companyName,
+      input.applyUrl ?? null,
+      status,
+      createdAt,
+    ],
+  );
+  return asApplication(result.rows[0]);
+}
+
 export async function recordApplication(
   userId: string,
-  input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { status?: ApplicationRecord['status'] },
+  input: ApplicationWriteInput,
 ): Promise<ApplicationRecord> {
   const status = sanitizeApplicationStatusId(input.status) ?? 'applied';
   return withDbWrite(async (db) => {
-    const result = await db.query<{
-      id: string;
-      position_id: string;
-      company_poi_id: string;
-      title: string;
-      company_name: string;
-      apply_url: string | null;
-      status: ApplicationRecord['status'];
-      created_at: Date;
-      updated_at: Date;
-    }>(
-      `INSERT INTO applications (user_id, position_id, company_poi_id, title, company_name, apply_url, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (user_id, position_id) DO UPDATE SET title = EXCLUDED.title
-       RETURNING ${APPLICATION_RETURNING}`,
-      [
-        userId,
-        input.positionId,
-        input.companyPoiId,
-        input.title,
-        input.companyName,
-        input.applyUrl ?? null,
-        status,
-      ],
-    );
+    const item = await upsertApplicationRow(db, userId, input, status);
     await db.query(recentRowsPruneSql('applications'), [userId, APPLICATION_STORAGE_MAX]);
-    return asApplication(result.rows[0]);
+    return item;
   }, () => memRecordApplication(userId, { ...input, status }));
+}
+
+export async function recordApplications(
+  userId: string,
+  inputs: ApplicationWriteInput[],
+): Promise<ApplicationRecord[]> {
+  if (inputs.length === 0) return [];
+  return withDbWrite(async (db) => {
+    const items: ApplicationRecord[] = [];
+    for (const input of inputs) {
+      const status = sanitizeApplicationStatusId(input.status) ?? 'applied';
+      items.push(await upsertApplicationRow(db, userId, input, status));
+    }
+    await db.query(recentRowsPruneSql('applications'), [userId, APPLICATION_STORAGE_MAX]);
+    return items;
+  }, () => inputs.map((input) => memRecordApplication(userId, {
+    ...input,
+    status: sanitizeApplicationStatusId(input.status) ?? 'applied',
+  })));
 }
 
 export async function updateApplicationStatus(
