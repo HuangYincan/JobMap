@@ -1,7 +1,7 @@
 /* AI Agent 聊天面板:360px × 70vh 霜面卡片,以悬浮球为锚实时跟随
    (transform 锚定,--px/--py 由组件 inline 注入;入场/出场与定位共用同一变量);
-   移动端(≤767px):浮动实例 display:none,AI 内嵌进移动抽屉 agent sheet(见 .panel.embedded);
-   极窄桌面视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。 */
+   移动端(≤767px):浮动实例 display:none,AI 内嵌进移动抽屉 agent sheet(见 .panel.embedded:
+   背景透明铺平,无第二张玻璃卡);极窄桌面视口 → 全宽底部 sheet。 */
 
 .panel {
   animation: panelIn 0.32s cubic-bezier(0.32, 0.72, 0, 1);
@@ -484,7 +484,9 @@
 
   .panel.embedded {
     animation: none;
+    background: transparent;
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border: 0;
     border-radius: 0;
     box-shadow: none;
@@ -500,11 +502,67 @@
     transition: none;
     width: 100%;
   }
+
+  .panel.embedded .header {
+    min-height: 40px;
+    padding: 0 0 4px;
+  }
+
+  .panel.embedded .iconBtn {
+    height: 40px;
+    width: 40px;
+  }
+
+  .panel.embedded .list {
+    min-height: 0;
+    padding: 4px 0 8px;
+  }
+
+  .panel.embedded .welcome {
+    margin: 8px 0 0;
+    max-width: none;
+    text-align: left;
+  }
+
+  .panel.embedded .footer {
+    padding: 4px 0 0;
+  }
+
+  .panel.embedded .toolBar {
+    padding: 7px 0;
+  }
+
+  /* 与探索 .mobileSearch 同款:12px 圆角、同填充/描边,发送钮贴右侧 */
+  .panel.embedded .composer {
+    align-items: flex-end;
+    background: rgba(126, 150, 149, 0.13);
+    border-radius: 12px;
+    flex-direction: row;
+    gap: 8px;
+    min-height: 43px;
+    padding: 5px 6px 5px 12px;
+  }
+
+  .panel.embedded .composerInput {
+    flex: 1 1 auto;
+    min-height: 32px;
+    min-width: 0;
+    padding: 6px 0;
+    width: auto;
+  }
+
+  .panel.embedded .composerTools {
+    flex: 0 0 auto;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   .composer {
     background: rgba(255, 255, 255, 0.06);
+  }
+
+  .panel.embedded .composer {
+    background: rgba(126, 150, 149, 0.13);
   }
 
   .bubbleAssistant {

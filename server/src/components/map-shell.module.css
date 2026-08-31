@@ -1226,8 +1226,17 @@
   .mobileAgent {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
     height: 100%;
     min-height: 0;
+  }
+
+  /* 助手 sheet:抽屉本身不滚,由消息列表内部滚;底 padding 交给 drawer 安全区 */
+  .drawerContentFill {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 0;
   }
 
   .mobileSheetBar {
