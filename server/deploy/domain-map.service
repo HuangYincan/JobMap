@@ -1,0 +1,17 @@
+[Unit]
+Description=Domain Map production application
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/domain-map/current
+ExecStart=/usr/bin/docker compose --project-name domain-map-prod --env-file /etc/domain-map/compose.env --file /opt/domain-map/current/deploy/compose.prod.yml up -d db app
+ExecStop=/usr/bin/docker compose --project-name domain-map-prod --env-file /etc/domain-map/compose.env --file /opt/domain-map/current/deploy/compose.prod.yml stop app
+TimeoutStartSec=0
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

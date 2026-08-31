@@ -1,0 +1,81 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    env_file:
+      - /etc/domain-map/db.env
+    volumes:
+      - domain_map_pgdata:/var/lib/postgresql/data
+    networks:
+      - private
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  app:
+    image: domain-map-app:${DOMAIN_MAP_RELEASE_TAG:?DOMAIN_MAP_RELEASE_TAG is required}
+    build:
+      context: ..
+      dockerfile: deploy/domain-map.Dockerfile
+      args:
+        NEXT_PUBLIC_AMAP_KEY: ${NEXT_PUBLIC_AMAP_KEY-}
+        NEXT_PUBLIC_AMAP_SECURITY_CODE: ${NEXT_PUBLIC_AMAP_SECURITY_CODE-}
+        NEXT_PUBLIC_TENCENT_JSAPI_KEY: ${NEXT_PUBLIC_TENCENT_JSAPI_KEY-}
+        NEXT_PUBLIC_BAIDU_AK: ${NEXT_PUBLIC_BAIDU_AK-}
+    env_file:
+      - /etc/domain-map/db.env
+      - /etc/domain-map/app.env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3002:3000"
+    networks:
+      - private
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/modes').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "5"
+
+  migrate:
+    image: domain-map-migrate:${DOMAIN_MAP_RELEASE_TAG:?DOMAIN_MAP_RELEASE_TAG is required}
+    build:
+      context: ..
+      dockerfile: deploy/migrate.Dockerfile
+    env_file:
+      - /etc/domain-map/db.env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - private
+    profiles:
+      - ops
+    restart: "no"
+
+volumes:
+  domain_map_pgdata:
+
+networks:
+  private:
+    driver: bridge
+    internal: true
