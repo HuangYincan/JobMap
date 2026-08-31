@@ -1,0 +1,20 @@
+{
+  "slug": "qq-三菱东京日联银行",
+  "name": "三菱东京日联银行",
+  "official_url": "https://www.bk.mufg.jp/global/careers/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-三菱东京日联银行-site-hq",
+      "name": "三菱东京日联银行",
+      "city": "三菱东京日联银行总部",
+      "province": "",
+      "location": {
+        "address": "日本东京都千代田区丸之内二丁目7番1号(邮编100-8388)"
+      }
+    }
+  ],
+  "city_pending": true
+}

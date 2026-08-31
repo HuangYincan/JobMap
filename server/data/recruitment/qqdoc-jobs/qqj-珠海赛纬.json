@@ -1,0 +1,21 @@
+{
+  "slug": "qqj-珠海赛纬",
+  "name": "珠海赛纬",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "研发技术类  质量管理类  制造类 销售及职能类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-珠海赛纬-site",
+      "name": "珠海赛纬",
+      "city": "珠海市",
+      "province": "",
+      "location": {
+        "address": "广东省珠海市高栏港经济区南水镇南化二路2号"
+      }
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "slug": "embj-Apptronik",
+  "source": "embodied-jobs",
+  "name": "Apptronik",
+  "sites": [
+    {
+      "id": "embj-Apptronik-site",
+      "name": "Apptronik",
+      "city": "Austin, TX",
+      "province": "",
+      "location": {
+        "address": "Apptronik, 11701, Stonehollow Drive, 奥斯汀;奧斯汀;柯士甸, Travis County, 得克萨斯州;德克薩斯州;德薩斯州, 78758, 美国;美國",
+        "lng": -97.709785,
+        "lat": 30.397231
+      }
+    }
+  ],
+  "careerUrl": "https://job-boards.greenhouse.io/apptronik/jobs/5848437004?gh_jid=5848437004",
+  "positions": [
+    {
+      "externalId": "embj-Apptronik-1",
+      "title": "Principal Software Engineer - AI and Simulation",
+      "siteId": "embj-Apptronik-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/apptronik/jobs/5848437004?gh_jid=5848437004",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Apptronik-2",
+      "title": "Reinforcement Learning Engineer",
+      "siteId": "embj-Apptronik-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/apptronik/jobs/5813695004",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Apptronik-3",
+      "title": "Senior Robotics Software & Integration Engineer",
+      "siteId": "embj-Apptronik-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/apptronik/jobs/5735869004",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Apptronik-4",
+      "title": "Senior Mechanical Engineer, Actuation",
+      "siteId": "embj-Apptronik-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/apptronik/jobs/5739881004",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Apptronik-5",
+      "title": "Senior Perception Learning Engineer",
+      "siteId": "embj-Apptronik-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/apptronik/jobs/5678268004",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Apptronik-6",
+      "title": "Autonomy Software Intern — Humanoid Robotics",
+      "siteId": "embj-Apptronik-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/apptronik/jobs/5813869004",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

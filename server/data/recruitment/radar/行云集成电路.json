@@ -1,0 +1,64 @@
+{
+  "slug": "行云集成电路",
+  "source": "xiaozhao-radar",
+  "name": "行云集成电路",
+  "tier": 10,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://pqpx9g5df7x.jobs.feishu.cn/414549",
+  "sites": [
+    {
+      "id": "行云集成电路-site-beijing",
+      "name": "行云集成电路",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区海淀街道苏州街3号大恒科技大厦7层703",
+        "lng": 116.305328,
+        "lat": 39.982357
+      }
+    },
+    {
+      "id": "行云集成电路-site-shanghai",
+      "name": "行云集成电路",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "浦东新区纳贤路800号科海大楼(中科路地铁站2号口步行280米)",
+        "lng": 121.605125,
+        "lat": 31.178476
+      }
+    },
+    {
+      "id": "行云集成电路-site-chengdu",
+      "name": "行云集成电路",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e0389ab20110",
+      "title": "SOC 设计工程师  GPGPU 设计工程师  验证工程师  FIRMWARE 固件开发工程师 大模型推理开发工程师  高性能计算库开发工程师  CUDA 开发",
+      "siteId": "行云集成电路-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://pqpx9g5df7x.jobs.feishu.cn/414549",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

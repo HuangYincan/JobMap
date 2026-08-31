@@ -1,0 +1,90 @@
+{
+  "slug": "中国平安",
+  "source": "xiaozhao-radar",
+  "name": "中国平安",
+  "tier": 5,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://smics.zhiye.com/campus",
+  "sites": [
+    {
+      "id": "中国平安-site-beijing",
+      "name": "中国平安",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市昌平区马池口(地区)镇X006(满白路)",
+        "lng": 116.242747,
+        "lat": 40.185752
+      }
+    },
+    {
+      "id": "中国平安-site-shanghai",
+      "name": "中国平安",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市虹口区四川北路街道中州路19号",
+        "lng": 121.483594,
+        "lat": 31.252466
+      }
+    },
+    {
+      "id": "中国平安-site-guangzhou",
+      "name": "中国平安",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市海珠区赤岗街道新港中路381-1",
+        "lng": 113.323024,
+        "lat": 23.09675
+      }
+    },
+    {
+      "id": "中国平安-site-shenzhen",
+      "name": "中国平安",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "福田区益田路5033号平安金融中心",
+        "lng": 114.055674,
+        "lat": 22.533074
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-fc94b19ba2cb",
+      "title": "业务类  投融类 产品类  投资支持 类  职能类  科技类  医疗类  运营类",
+      "siteId": "中国平安-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://smics.zhiye.com/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-46649abe239c",
+      "title": "业务类 投融类  产品类 投资支持类 共同资源类 科技类 医疗类 运营类",
+      "siteId": "中国平安-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.pingan.com/internStudent",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "68"
+}

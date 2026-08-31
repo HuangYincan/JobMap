@@ -1,0 +1,75 @@
+{
+  "slug": "南芯科技",
+  "source": "xiaozhao-radar",
+  "name": "南芯科技",
+  "tier": 8,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://nanxin.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "南芯科技-site-beijing",
+      "name": "南芯科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区海淀街道北一街2号",
+        "lng": 116.313125,
+        "lat": 39.984626
+      }
+    },
+    {
+      "id": "南芯科技-site-shanghai",
+      "name": "南芯科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "南芯科技-site-shenzhen",
+      "name": "南芯科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "南芯科技-site-chengdu",
+      "name": "南芯科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2e9d48cceb4d",
+      "title": "研发类 系统应用类  生产运营类 质量类  业务类 其他职业",
+      "siteId": "南芯科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://nanxin.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

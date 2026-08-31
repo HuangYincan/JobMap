@@ -1,0 +1,282 @@
+// company-logo 解析链单测 (2026-08-19 Bug2: 公司无 icon)。
+// 链: 站点 logo → 站点域名映射 → 站点 favicon → 公司 logo → 公司域名映射 →
+//     公司 favicon → emoji(兜底 🏢)。
+// 2026-08-20 (ws3): 裸 IP host 不直连 favicon 服务;DOMAIN_LOGO_MAP 映射
+// IP → 官方域名;favicon 候选链 [favicon.im, icon.horse]。
+// 离线 seed 路径 (logoForSite) 与 DB 读路径 (resolveDbCompanyLogo) 共用。
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  BRAND_LOGO_MAP,
+  DOMAIN_LOGO_MAP,
+  faviconCandidatesFromUrl,
+  faviconFromUrl,
+  resolveCompanyLogo,
+} from '../src/lib/company-logo.ts';
+import { resolveDbCompanyLogo } from '../src/lib/recruitment-store.ts';
+
+test('faviconFromUrl builds a favicon.im URL from any http(s) url', () => {
+  const url = faviconFromUrl('https://talent.alibaba.com/');
+  assert.ok(url, 'host with protocol resolves');
+  assert.ok(url?.startsWith('https://favicon.im/'), 'favicon.im, not blocked google s2');
+  assert.ok(url?.includes('talent.alibaba.com'), 'subdomain host is preserved');
+  assert.ok(url?.includes('size=128'), 'default size param');
+  assert.equal(faviconFromUrl('https://x.com'), 'https://favicon.im/x.com?size=128');
+  assert.equal(faviconFromUrl('not-a-url'), undefined);
+  assert.equal(faviconFromUrl(undefined), undefined);
+  assert.equal(faviconFromUrl('ftp://x.com'), undefined, 'non-http(s) scheme rejected');
+  assert.equal(faviconFromUrl('https://talent.alibaba.com/', 64), 'https://favicon.im/talent.alibaba.com?size=64');
+});
+
+test('faviconCandidatesFromUrl returns the favicon.im → icon.horse chain (ADR-007 backup)', () => {
+  assert.deepEqual(faviconCandidatesFromUrl('https://alibaba.com/'), [
+    'https://favicon.im/alibaba.com?size=128',
+    'https://icon.horse/icon/alibaba.com',
+  ]);
+  assert.equal(faviconCandidatesFromUrl('https://alibaba.com/', 64)[0], 'https://favicon.im/alibaba.com?size=64');
+  assert.deepEqual(faviconCandidatesFromUrl(undefined), []);
+  assert.deepEqual(faviconCandidatesFromUrl('not-a-url'), []);
+});
+
+test('bare IPv4 hosts never hit favicon services (favicon.im 实测 404)', () => {
+  // 未映射的裸 IP → 空候选,不产生任何 favicon 服务请求
+  assert.equal(faviconFromUrl('http://192.168.1.1/'), undefined);
+  assert.equal(faviconFromUrl('http://203.0.113.5/zhaopin.php'), undefined);
+  assert.deepEqual(faviconCandidatesFromUrl('http://203.0.113.5/'), []);
+});
+
+test('DOMAIN_LOGO_MAP covers the bare IP hosts actually present in data (2026-08-20 grep)', () => {
+  // 全库 grep(crawler/ + server/data + seed)唯一的裸 IP:浙江省发展规划研究院 radar drop
+  assert.deepEqual(Object.keys(DOMAIN_LOGO_MAP), ['47.96.146.209']);
+});
+
+test('mapped bare IP resolves via the official domain (chain layer, source=company)', () => {
+  const r = resolveCompanyLogo({
+    siteCareerUrl: 'http://47.96.146.209:8111/zhaopin_sx.php',
+    fallbackEmoji: '🏢',
+  });
+  assert.equal(r.source, 'company');
+  assert.equal(r.url, 'https://favicon.im/zdpi.org.cn?size=128');
+  // 消费组件 onerror 的候选链同样走映射
+  assert.deepEqual(faviconCandidatesFromUrl('http://47.96.146.209:8111/zhaopin_sx.php'), [
+    'https://favicon.im/zdpi.org.cn?size=128',
+    'https://icon.horse/icon/zdpi.org.cn',
+  ]);
+});
+
+test('unmapped bare IP falls back to emoji (no favicon service request)', () => {
+  const r = resolveCompanyLogo({ siteCareerUrl: 'http://203.0.113.5/zhaopin.php' });
+  assert.equal(r.source, 'emoji');
+  assert.equal(r.url, undefined);
+  assert.equal(r.emoji, '🏢');
+});
+
+test('chain layer 1: site logo url wins over everything else', () => {
+  const r = resolveCompanyLogo({
+    siteLogoUrl: 'https://cdn.example.com/site.png',
+    siteCareerUrl: 'https://site.example.com/',
+    companyLogoUrl: 'https://cdn.example.com/company.png',
+    companyCareerUrl: 'https://www.example.com/',
+    fallbackEmoji: '🛰️',
+  });
+  assert.equal(r.source, 'site');
+  assert.equal(r.url, 'https://cdn.example.com/site.png');
+  assert.equal(r.emoji, '🛰️');
+});
+
+test('chain layer 2: site career url falls back to its favicon (before company logo)', () => {
+  const r = resolveCompanyLogo({
+    siteCareerUrl: 'https://talent.alibaba.com/',
+    companyLogoUrl: 'https://cdn.example.com/company.png',
+  });
+  assert.equal(r.source, 'favicon');
+  assert.equal(r.url, 'https://favicon.im/talent.alibaba.com?size=128');
+});
+
+test('chain layer 3: company logo url after site-level candidates', () => {
+  const r = resolveCompanyLogo({
+    companyLogoUrl: 'https://cdn.example.com/company.png',
+    companyCareerUrl: 'https://www.example.com/',
+  });
+  assert.equal(r.source, 'company');
+  assert.equal(r.url, 'https://cdn.example.com/company.png');
+});
+
+test('chain layer 4: company career url favicon as last url candidate', () => {
+  const r = resolveCompanyLogo({ companyCareerUrl: 'https://www.alibaba.com/' });
+  assert.equal(r.source, 'favicon');
+  assert.equal(r.url, 'https://favicon.im/www.alibaba.com?size=128');
+});
+
+test('chain layer 5: no url candidates → emoji fallback (default 🏢)', () => {
+  const plain = resolveCompanyLogo({});
+  assert.equal(plain.source, 'emoji');
+  assert.equal(plain.emoji, '🏢');
+  assert.equal(plain.url, undefined);
+  const custom = resolveCompanyLogo({ fallbackEmoji: '🐧' });
+  assert.equal(custom.source, 'emoji');
+  assert.equal(custom.emoji, '🐧');
+});
+
+test('company with no careerUrl/logoUrl keeps its emoji logo (曦曦AI pattern)', () => {
+  // seed 全量 50 家 seed 公司中仅曦曦AI 无 careerUrl/logoUrl(2026-08-20 核对) →
+  // 直接 emoji,不产生任何 favicon 请求
+  const r = resolveCompanyLogo({ fallbackEmoji: '✨' });
+  assert.equal(r.source, 'emoji');
+  assert.equal(r.emoji, '✨');
+  assert.equal(r.url, undefined);
+});
+
+test('resolveDbCompanyLogo maps a bare-IP career_url through DOMAIN_LOGO_MAP', () => {
+  // DB 读路径(导入 radar drop 后 career_url 即裸 IP)与离线链共用映射
+  const r = resolveDbCompanyLogo(
+    { logo_url: null, logo_emoji: null, career_url: 'http://47.96.146.209:8111/zhaopin_sx.php' },
+    { career_url: null, logo_url: null },
+  );
+  assert.equal(r.source, 'company');
+  assert.equal(r.url, 'https://favicon.im/zdpi.org.cn?size=128');
+});
+
+test('resolveDbCompanyLogo keeps stored logo_url/logo_emoji (no favicon override)', () => {
+  // 2026-08-19 Bug2 回归: DB 读路径曾直接读列绕过解析链 → 全 🏢;
+  // 现在落库值优先, 空才走链。
+  const r = resolveDbCompanyLogo(
+    { logo_url: 'https://cdn.example.com/db.png', logo_emoji: '🛰️', career_url: 'https://talent.alibaba.com/' },
+    { career_url: 'https://site.example.com/', logo_url: null },
+  );
+  assert.equal(r.url, 'https://cdn.example.com/db.png');
+  assert.equal(r.emoji, '🛰️');
+  assert.equal(r.source, 'company');
+});
+
+test('resolveDbCompanyLogo keeps a stored emoji when only logo_url is empty', () => {
+  const r = resolveDbCompanyLogo(
+    { logo_url: null, logo_emoji: '🐧', career_url: 'https://careers.tencent.com/' },
+    { career_url: null, logo_url: null },
+  );
+  assert.equal(r.url, undefined);
+  assert.equal(r.emoji, '🐧');
+});
+
+test('resolveDbCompanyLogo runs the shared chain for empty-logo companies', () => {
+  // 672 家 DB 公司 logo_url/logo_emoji 全空 → 按链解析 (careerUrl → favicon 兜底)。
+  const siteWins = resolveDbCompanyLogo(
+    { logo_url: null, logo_emoji: null, career_url: 'https://talent.alibaba.com/' },
+    { career_url: 'https://talent.alibaba.com/hz', logo_url: null },
+  );
+  assert.equal(siteWins.source, 'favicon');
+  assert.equal(siteWins.url, 'https://favicon.im/talent.alibaba.com?size=128');
+  assert.equal(siteWins.emoji, '🏢');
+
+  const companyFavicon = resolveDbCompanyLogo(
+    { logo_url: null, logo_emoji: null, career_url: 'https://www.alibaba.com/' },
+    { career_url: null, logo_url: null },
+  );
+  assert.equal(companyFavicon.source, 'favicon');
+  assert.equal(companyFavicon.url, 'https://favicon.im/www.alibaba.com?size=128');
+
+  // 完全无 careerUrl → emoji 兜底 (672 家中仅 1 家无 careerUrl)。
+  const emoji = resolveDbCompanyLogo(
+    { logo_url: null, logo_emoji: null, career_url: null },
+    { career_url: null, logo_url: null },
+  );
+  assert.equal(emoji.source, 'emoji');
+  assert.equal(emoji.emoji, '🏢');
+  assert.equal(emoji.url, undefined);
+});
+
+// ---- 品牌映射层 (2026-08-26, fix/brand-logo-landmark) ----
+// BRAND_LOGO_MAP: 公司名 → 品牌官网 host。插入在 companyCareerUrl favicon 之前，
+// 让第三方招聘托管平台 (mokahr / feishu / zhiye / hotjob) 的 favicon 指向品牌主 logo。
+// companyName 不传 = 行为不变 (见上方既有链用例)。
+
+test('brand map: known 大厂 name → favicon points to brand官网 host (source=company)', () => {
+  const tencent = resolveCompanyLogo({
+    companyName: '腾讯',
+    companyCareerUrl: 'https://join.qq.com/post.html?query=p_2',
+  });
+  assert.equal(tencent.source, 'company');
+  assert.equal(tencent.url, 'https://favicon.im/www.tencent.com?size=128');
+
+  const bytedance = resolveCompanyLogo({
+    companyName: '字节跳动',
+    companyCareerUrl: 'https://jobs.bytedance.com/',
+  });
+  assert.equal(bytedance.url, 'https://favicon.im/www.bytedance.com?size=128');
+
+  const ali = resolveCompanyLogo({
+    companyName: '阿里巴巴',
+    companyCareerUrl: 'https://talent.alibaba.com/',
+  });
+  // 品牌映射在 companyCareerUrl favicon 之前 → 取品牌官网, 而非 talent 招聘子域
+  assert.equal(ali.url, 'https://favicon.im/www.alibaba.com?size=128');
+});
+
+test('brand map: careerUrl on 3rd-party platform (feishu) → brand favicon, not platform icon', () => {
+  // 小米 careerUrl 落在 jobs.feishu.cn → favicon.im 会返回平台默认图标; 品牌映射指向 mi.com
+  const r = resolveCompanyLogo({
+    companyName: '小米',
+    companyCareerUrl: 'https://xiaomi.jobs.feishu.cn/',
+  });
+  assert.equal(r.source, 'company');
+  assert.equal(r.url, 'https://favicon.im/www.mi.com?size=128');
+});
+
+test('brand map: unknown companyName keeps existing chain (companyCareerUrl favicon)', () => {
+  const r = resolveCompanyLogo({
+    companyName: '某不知名公司',
+    companyCareerUrl: 'https://www.example.com/',
+  });
+  assert.equal(r.source, 'favicon');
+  assert.equal(r.url, 'https://favicon.im/www.example.com?size=128');
+});
+
+test('brand map: unknown name with no careerUrl falls back to emoji', () => {
+  const r = resolveCompanyLogo({ companyName: '某不知名公司', fallbackEmoji: '🛰️' });
+  assert.equal(r.source, 'emoji');
+  assert.equal(r.emoji, '🛰️');
+  assert.equal(r.url, undefined);
+});
+
+test('brand map: explicit companyLogoUrl wins over brand', () => {
+  const r = resolveCompanyLogo({
+    companyName: '腾讯',
+    companyLogoUrl: 'https://cdn.example.com/tx.png',
+    companyCareerUrl: 'https://join.qq.com/',
+  });
+  assert.equal(r.source, 'company');
+  assert.equal(r.url, 'https://cdn.example.com/tx.png');
+});
+
+test('brand map: site layer is not brand-mapped (site favicon wins over brand)', () => {
+  // 站点层不插: 有 siteCareerUrl 时以站点 favicon 为准, 品牌映射只作用于公司层
+  const r = resolveCompanyLogo({
+    companyName: '腾讯',
+    siteCareerUrl: 'https://campus.example.com/',
+    companyCareerUrl: 'https://join.qq.com/',
+  });
+  assert.equal(r.source, 'favicon');
+  assert.equal(r.url, 'https://favicon.im/campus.example.com?size=128');
+});
+
+test('brand map keys are real catalog companies, not fabricated (只收录实际存在的公司名)', () => {
+  assert.ok('腾讯' in BRAND_LOGO_MAP);
+  assert.ok('字节跳动' in BRAND_LOGO_MAP);
+  assert.ok('比亚迪' in BRAND_LOGO_MAP);
+  assert.ok('米哈游' in BRAND_LOGO_MAP);
+  // 数据里不存在的大厂不做品牌映射 (不造表)
+  assert.ok(!('特斯拉' in BRAND_LOGO_MAP));
+  assert.ok(!('苹果' in BRAND_LOGO_MAP));
+  assert.ok(!('小红书' in BRAND_LOGO_MAP));
+  assert.ok(!('宁德时代' in BRAND_LOGO_MAP));
+});
+
+test('resolveDbCompanyLogo passes companyName → brand mapping for empty-logo Tencent', () => {
+  const r = resolveDbCompanyLogo(
+    { name: '腾讯', logo_url: null, logo_emoji: null, career_url: 'https://join.qq.com/post.html?query=p_2' },
+    { career_url: null, logo_url: null },
+  );
+  assert.equal(r.source, 'company');
+  assert.equal(r.url, 'https://favicon.im/www.tencent.com?size=128');
+});

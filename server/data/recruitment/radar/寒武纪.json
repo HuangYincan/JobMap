@@ -1,0 +1,120 @@
+{
+  "slug": "寒武纪",
+  "source": "xiaozhao-radar",
+  "name": "寒武纪",
+  "tier": 6,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/cambricon/44201?locale=zh-CN&sessionid=#/jobs?project=100124265",
+  "sites": [
+    {
+      "id": "寒武纪-site-beijing",
+      "name": "寒武纪",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "海淀区知春路7号致真大厦D座",
+        "lng": 116.351125,
+        "lat": 39.977582
+      }
+    },
+    {
+      "id": "寒武纪-site-shanghai",
+      "name": "寒武纪",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/南京",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "寒武纪-site-shenzhen",
+      "name": "寒武纪",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区桃园路8号田厦金牛广场a座35层",
+        "lng": 113.926135,
+        "lat": 22.532838
+      }
+    },
+    {
+      "id": "寒武纪-site-nanjing",
+      "name": "寒武纪",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京市江宁区运粮河东路南京市政务数据中心(建设中)",
+        "lng": 118.877384,
+        "lat": 32.008193
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d6419dd3c406",
+      "title": "芯片类 软件类  职能类与研发支持类",
+      "siteId": "寒武纪-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/cambricon/44201?locale=zh-CN&sessionid=#/jobs?project=100124265",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-0a0c206d3a69",
+      "title": "芯片类 软件类  职能与支持类",
+      "siteId": "寒武纪-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/cambricon/44201?locale=zh-CN&sessionid=#/jobs?project=100104477",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-d6419dd3c406-nanjing",
+      "title": "芯片类 软件类  职能类与研发支持类",
+      "siteId": "寒武纪-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/cambricon/44201?locale=zh-CN&sessionid=#/jobs?project=100124265",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-0a0c206d3a69-nanjing",
+      "title": "芯片类 软件类  职能与支持类",
+      "siteId": "寒武纪-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/cambricon/44201?locale=zh-CN&sessionid=#/jobs?project=100104477",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

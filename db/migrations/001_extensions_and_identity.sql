@@ -1,0 +1,6 @@
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE TABLE users (id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, subject text NOT NULL UNIQUE, display_name text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), CHECK (subject <> ''));
+CREATE TABLE maps (id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, owner_user_id bigint NOT NULL REFERENCES users(id) ON DELETE RESTRICT, name text NOT NULL, visibility text NOT NULL DEFAULT 'private', config jsonb NOT NULL DEFAULT '{}'::jsonb, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), CHECK (name <> ''), CHECK (visibility IN ('private','public')), CHECK (jsonb_typeof(config)='object'), UNIQUE (id, owner_user_id));
+CREATE TABLE map_memberships (map_id bigint NOT NULL REFERENCES maps(id) ON DELETE CASCADE, user_id bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE, role text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (map_id,user_id), CHECK (role IN ('editor','viewer')));
+CREATE INDEX maps_owner_user_id_idx ON maps(owner_user_id); CREATE INDEX map_memberships_user_id_idx ON map_memberships(user_id);

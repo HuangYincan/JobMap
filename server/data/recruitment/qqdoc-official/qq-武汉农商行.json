@@ -1,0 +1,21 @@
+{
+  "slug": "qq-武汉农商行",
+  "name": "武汉农商行",
+  "official_url": "https://www.whrcbank.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-武汉农商行-site-hq",
+      "name": "武汉农商行",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市江岸区建设大道618号",
+        "lng": 114.273599,
+        "lat": 30.596733
+      }
+    }
+  ]
+}

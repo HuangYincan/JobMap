@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-对点咨询",
+  "name": "对点咨询",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "猎头实习生/猎头管培生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-对点咨询-site",
+      "name": "对点咨询",
+      "city": "杭州市",
+      "province": "",
+      "location": {
+        "address": "浙江省杭州市西湖区万塘路317号华星世纪大楼10层1001、1002、1008号",
+        "lng": 120.122997,
+        "lat": 30.280678
+      }
+    }
+  ]
+}

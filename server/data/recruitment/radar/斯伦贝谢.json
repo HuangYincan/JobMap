@@ -1,0 +1,42 @@
+{
+  "slug": "斯伦贝谢",
+  "source": "xiaozhao-radar",
+  "name": "斯伦贝谢",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://slb.tupu360.com/position/list?enter=menu&type=INTERNSHIPRECRUITMENT",
+  "sites": [
+    {
+      "id": "斯伦贝谢-site-beijing",
+      "name": "斯伦贝谢",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区中关村东路创新大厦a座",
+        "lng": 116.330614,
+        "lat": 39.995964
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cbb557adac1c",
+      "title": "生产支持 机械制造 现场工程师 油田技术专家 维修工程师 软件研发实习生",
+      "siteId": "斯伦贝谢-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://slb.tupu360.com/position/list?enter=menu&type=INTERNSHIPRECRUITMENT",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "25"
+}

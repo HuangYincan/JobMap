@@ -1,0 +1,53 @@
+{
+  "slug": "国科长三角资本",
+  "source": "xiaozhao-radar",
+  "name": "国科长三角资本",
+  "tier": 9,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://n0kwkp76gi.jobs.feishu.cn/campus/position/list?spread=R17V84A",
+  "sites": [
+    {
+      "id": "国科长三角资本-site-beijing",
+      "name": "国科长三角资本",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/杭州",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "国科长三角资本-site-hangzhou",
+      "name": "国科长三角资本",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/杭州",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-59cee43f4be2",
+      "title": "投资分析类 职能管理类文化创意类;",
+      "siteId": "国科长三角资本-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://n0kwkp76gi.jobs.feishu.cn/campus/position/list?spread=R17V84A",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

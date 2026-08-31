@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国远洋海运集团",
+  "name": "中国远洋海运集团",
+  "official_url": "https://www.coscoshipping.com/col9555/art/2022/art_9555_287771.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国远洋海运集团-site-hq",
+      "name": "中国远洋海运集团",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市浦东新区滨江大道5299号",
+        "lng": 121.509038,
+        "lat": 31.24487
+      }
+    }
+  ],
+  "city_pending": true
+}

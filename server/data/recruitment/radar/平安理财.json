@@ -1,0 +1,42 @@
+{
+  "slug": "平安理财",
+  "source": "xiaozhao-radar",
+  "name": "平安理财",
+  "tier": 7,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wetalent.pingan.com/b69618aabe9e33c3aa2a57186bdabab8/campus/home",
+  "sites": [
+    {
+      "id": "平安理财-site-shenzhen",
+      "name": "平安理财",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市福田区益田路5033号",
+        "lng": 114.055536,
+        "lat": 22.532794
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3b513c9cd2c0",
+      "title": "研究方向 交易方向 金融算法及AI研发方向",
+      "siteId": "平安理财-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wetalent.pingan.com/b69618aabe9e33c3aa2a57186bdabab8/campus/home",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

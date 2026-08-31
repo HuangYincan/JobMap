@@ -1,0 +1,90 @@
+{
+  "slug": "乐学培优",
+  "source": "xiaozhao-radar",
+  "name": "乐学培优",
+  "tier": 11,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://lexue.com/join?referralCode=A01-XY-whx",
+  "sites": [
+    {
+      "id": "乐学培优-site-beijing",
+      "name": "乐学培优",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "西湖区文一路122号天阳亲子广场二楼",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "乐学培优-site-guangzhou",
+      "name": "乐学培优",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "西湖区文一路122号天阳亲子广场二楼",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "乐学培优-site-hangzhou",
+      "name": "乐学培优",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "西湖区文一路122号天阳亲子广场二楼",
+        "lng": 120.136685,
+        "lat": 30.289235
+      }
+    },
+    {
+      "id": "乐学培优-site-xian",
+      "name": "乐学培优",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/广州/杭州/西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6bdd9316152f",
+      "title": "小学主讲教师  理科竞赛教练  初中主讲教师  英语管培生  高中主讲教师   奥数管培生",
+      "siteId": "乐学培优-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lexue.com/join?referralCode=A01-XY-whx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-6bdd9316152f-xian",
+      "title": "小学主讲教师  理科竞赛教练  初中主讲教师  英语管培生  高中主讲教师   奥数管培生",
+      "siteId": "乐学培优-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lexue.com/join?referralCode=A01-XY-whx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "82"
+}

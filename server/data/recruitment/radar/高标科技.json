@@ -1,0 +1,39 @@
+{
+  "slug": "高标科技",
+  "name": "高标科技",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kjgb.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "高标科技-site-chongqing",
+      "name": "高标科技",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "重庆/天津/东莞/无锡"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-14275c456b88",
+      "title": "研发类  销服类  供应类 职能类",
+      "siteId": "高标科技-site-chongqing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kjgb.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

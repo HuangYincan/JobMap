@@ -1,0 +1,42 @@
+{
+  "slug": "天演资本",
+  "source": "xiaozhao-radar",
+  "name": "天演资本",
+  "tier": 8,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/tianyancapital/98902#/",
+  "sites": [
+    {
+      "id": "天演资本-site-shanghai",
+      "name": "天演资本",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-07c3c58a2573",
+      "title": "量化研究员 量化交易员 量化开发工程师 Python后端开发工程师",
+      "siteId": "天演资本-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/tianyancapital/98902#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

@@ -1,0 +1,75 @@
+{
+  "slug": "中国银河证劵",
+  "source": "xiaozhao-radar",
+  "name": "中国银河证劵",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://chinastock.zhiye.com/custom/campus",
+  "sites": [
+    {
+      "id": "中国银河证劵-site-beijing",
+      "name": "中国银河证劵",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "中国银河证劵-site-shanghai",
+      "name": "中国银河证劵",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "浦东新区富城路99号震旦国际大楼31层",
+        "lng": 121.499576,
+        "lat": 31.234607
+      }
+    },
+    {
+      "id": "中国银河证劵-site-guangzhou",
+      "name": "中国银河证劵",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "中国银河证劵-site-shenzhen",
+      "name": "中国银河证劵",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-862c977f065b",
+      "title": "投行业务类  投资研究类 机构业务类 财富管理类 金融科技类  职能支持类",
+      "siteId": "中国银河证劵-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://chinastock.zhiye.com/custom/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

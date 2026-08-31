@@ -1,0 +1,90 @@
+{
+  "slug": "北京润科",
+  "source": "xiaozhao-radar",
+  "name": "北京润科",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/jingweirunke/170057#/jobs/",
+  "sites": [
+    {
+      "id": "北京润科-site-beijing",
+      "name": "北京润科",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/成都/西安",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "北京润科-site-shanghai",
+      "name": "北京润科",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/成都/西安",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "北京润科-site-chengdu",
+      "name": "北京润科",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/成都/西安",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "北京润科-site-xian",
+      "name": "北京润科",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/上海/成都/西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6fb38d4e17c9",
+      "title": "FPGA类 仿真建模类 结构设计类 软件类 算法类 通信射频类 系统类 销售与管理类  硬件类 智能制造类",
+      "siteId": "北京润科-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/jingweirunke/170057#/jobs/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-6fb38d4e17c9-xian",
+      "title": "FPGA类 仿真建模类 结构设计类 软件类 算法类 通信射频类 系统类 销售与管理类  硬件类 智能制造类",
+      "siteId": "北京润科-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/jingweirunke/170057#/jobs/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

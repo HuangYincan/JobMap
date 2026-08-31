@@ -1,40 +1,54 @@
-name: Test
+name: CI
 
 on:
   push:
-    branches: [ dev, main ]
+    branches: [dev, main]
   pull_request:
-    branches: [ dev, main ]
+    branches: [dev, main]
 
 jobs:
-  lint:
+  docs-policy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify canonical documentation references
+        run: make docs-check
+      - name: Report scaffold state
+        run: make scaffold-status
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+  python-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version-file: crawler/.python-version
+      - name: Run importer unit tests
+        run: make test-unit
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          python-version: '3.12'
-
+          node-version-file: server/.nvmrc
+          cache: npm
+          cache-dependency-path: server/package-lock.json
       - name: Install dependencies
-        run: |
-          cd server && npm ci
-          pip install uv
-          cd ../crawler && uv sync
+        working-directory: server
+        run: npm ci
+      - name: Typecheck
+        working-directory: server
+        run: npm run typecheck
+      - name: Smoke test
+        working-directory: server
+        run: npm test
+      - name: Production build
+        working-directory: server
+        run: npm run build
 
-      - name: Lint frontend
-        run: cd server && npm run lint
-
-      - name: Lint backend
-        run: cd crawler && uv run ruff check .
-
-  test:
+  db-integration:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -43,44 +57,19 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: domain_map_test
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
           - 5432:5432
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies
+      - name: Install PostgreSQL client
         run: |
-          cd server && npm ci
-          pip install uv
-          cd ../crawler && uv sync
-
-      - name: Run database migrations
-        run: cd db && bash scripts/apply.sh
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Run database integration tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/domain_map_test
-
-      - name: Run unit tests (frontend)
-        run: cd server && npm run test
-
-      - name: Run unit tests (backend)
-        run: cd crawler && uv run pytest tests/unit/ --cov=app
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./crawler/coverage.xml
+        run: make test-integration

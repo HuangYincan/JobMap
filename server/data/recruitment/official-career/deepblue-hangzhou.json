@@ -1,0 +1,75 @@
+{
+  "slug": "deepblue-hangzhou",
+  "source": "official-career",
+  "name": "云深处科技",
+  "industries": [
+    "hardware",
+    "ai"
+  ],
+  "scale": "startup",
+  "careerUrl": "https://www.deeprobotics.cn/join",
+  "sites": [
+    {
+      "id": "deepblue-hangzhou-site",
+      "name": "云深处科技",
+      "location": {
+        "lng": 120.118,
+        "lat": 30.286,
+        "address": "余杭区仓前街道"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "deepblue-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "deepblue-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "软件平台",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.deeprobotics.cn/join"
+    },
+    {
+      "externalId": "embj-云深处科技-1",
+      "title": "算法工程师（具身导航）",
+      "siteId": "deepblue-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app135149.eapps.dingtalkcloud.com/campus-recruitment/yunshenchu/#/job/e3c336dc-2714-4185-99b2-aad2616ff10f",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-云深处科技-2",
+      "title": "算法工程师（模仿学习）",
+      "siteId": "deepblue-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app135149.eapps.dingtalkcloud.com/campus-recruitment/yunshenchu/#/job/5b223e0a-9d66-46c0-88fd-bc48e8d48d51",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "tier": 9,
+  "category": "39"
+}

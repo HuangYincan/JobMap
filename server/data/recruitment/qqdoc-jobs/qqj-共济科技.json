@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-共济科技",
+  "name": "共济科技",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "http://doc.xbrother.com:50015/apply/campus",
+  "direction": "软件与智能研发类  热管研发类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-共济科技-site",
+      "name": "共济科技",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "深圳市南山区高新中三道2号深圳软件园七栋四层",
+        "lng": 113.942586,
+        "lat": 22.533627
+      }
+    }
+  ]
+}

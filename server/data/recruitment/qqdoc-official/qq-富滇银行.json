@@ -1,0 +1,21 @@
+{
+  "slug": "qq-富滇银行",
+  "name": "富滇银行",
+  "official_url": "https://www.fudian-bank.com/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-富滇银行-site-hq",
+      "name": "富滇银行",
+      "city": "昆明市",
+      "province": "云南省",
+      "location": {
+        "address": "昆明市西山区西园路1912号",
+        "lng": 102.678908,
+        "lat": 25.043952
+      }
+    }
+  ]
+}

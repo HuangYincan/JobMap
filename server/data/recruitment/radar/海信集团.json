@@ -1,0 +1,101 @@
+{
+  "slug": "海信集团",
+  "source": "xiaozhao-radar",
+  "name": "海信集团",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.hisense.com/7/jobs",
+  "sites": [
+    {
+      "id": "海信集团-site-shanghai",
+      "name": "海信集团—信动力计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "滨江区聚才路239号火炬创新中心5号楼6楼",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "海信集团-site-shenzhen",
+      "name": "海信集团—信动力计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市南山区创业路海信南方大厦",
+        "lng": 113.940356,
+        "lat": 22.512292
+      }
+    },
+    {
+      "id": "海信集团-site-chengdu",
+      "name": "海信集团—信动力计划",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "滨江区聚才路239号火炬创新中心5号楼6楼",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "海信集团-site-wuhan",
+      "name": "海信集团—信动力计划",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市洪山区关山大道332号武汉保利广场F1",
+        "lng": 114.410289,
+        "lat": 30.490556
+      }
+    },
+    {
+      "id": "海信集团-site-hangzhou",
+      "name": "海信集团",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "滨江区聚才路239号火炬创新中心5号楼6楼",
+        "lng": 120.198625,
+        "lat": 30.180325
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7a7dac27e2e5",
+      "title": "软件算法类  硬件研发类 光学及显示类 芯片类 仿真研发类 暖通制冷类 技术工艺类  技术类 营销类 运营类 质量类 制造工艺类 生产制造类 供应管理类硬件",
+      "siteId": "海信集团-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.hisense.com/7/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-589b7c8000fb",
+      "title": "软件算法类 硬件研发类 技术类 暖通制冷类 光学与显示类   芯片类 结构类 技术与工艺类 营销类 供应链 管理类 生产制造类 质量类 职能类 其他类",
+      "siteId": "海信集团-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.hisense.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "38"
+}

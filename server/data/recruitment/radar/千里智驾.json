@@ -1,0 +1,53 @@
+{
+  "slug": "千里智驾",
+  "source": "xiaozhao-radar",
+  "name": "千里智驾",
+  "tier": 12,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus-recruitment/qianli1/147197?recommendCode=DSdVcc4M&hash=%23%2Fjobs#/jobs",
+  "sites": [
+    {
+      "id": "千里智驾-site-beijing",
+      "name": "千里智驾",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "千里智驾-site-shanghai",
+      "name": "千里智驾",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海嘉定区极氪i驾空间1层",
+        "lng": 121.316489,
+        "lat": 31.228501
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0878e0a725ee",
+      "title": "自动驾驶车端地图感知实习生\n自动驾驶软件实习生（模型部署/量化/前后处理）\nBEV Occupancy 算法实习生（纯视觉与多模态方向）\nTL&RV实习生\nOD",
+      "siteId": "千里智驾-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/qianli1/147197?recommendCode=DSdVcc4M&hash=%23%2Fjobs#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

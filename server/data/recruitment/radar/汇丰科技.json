@@ -1,0 +1,68 @@
+{
+  "slug": "汇丰科技",
+  "source": "xiaozhao-radar",
+  "name": "汇丰科技",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.hsbc.com/careers/students-and-graduates/find-a-programme?programme-type=graduate-programme%7Cinternship-programme&page=1&take=20&location=mainland-china&area-of-interest=business-analysis-and-consulting%7Ccyber%7Cdata-analytics%7Cengineering",
+  "sites": [
+    {
+      "id": "汇丰科技-site-guangzhou",
+      "name": "汇丰科技",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市天河区石牌街道石牌西路117号",
+        "lng": 113.338381,
+        "lat": 23.127681
+      }
+    },
+    {
+      "id": "汇丰科技-site-xian",
+      "name": "汇丰科技",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "广州/西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6fada7af83fc",
+      "title": "实习生项目 具体见投递方式链接",
+      "siteId": "汇丰科技-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hsbc.com/careers/students-and-graduates/find-a-programme?programme-type=graduate-programme%7Cinternship-programme&page=1&take=20&location=mainland-china&area-of-interest=business-analysis-and-consulting%7Ccyber%7Cdata-analytics%7Cengineering",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-6fada7af83fc-xian",
+      "title": "实习生项目 具体见投递方式链接",
+      "siteId": "汇丰科技-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hsbc.com/careers/students-and-graduates/find-a-programme?programme-type=graduate-programme%7Cinternship-programme&page=1&take=20&location=mainland-china&area-of-interest=business-analysis-and-consulting%7Ccyber%7Cdata-analytics%7Cengineering",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "66"
+}

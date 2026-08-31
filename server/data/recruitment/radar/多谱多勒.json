@@ -1,0 +1,68 @@
+{
+  "slug": "多谱多勒",
+  "source": "xiaozhao-radar",
+  "name": "多谱多勒",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://mh.hire66.com/position?secret_key=McdjxrT8Qc",
+  "sites": [
+    {
+      "id": "多谱多勒-site-wuhan",
+      "name": "多谱多勒",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市江夏区汤逊湖北路武汉长城创新科技园1栋A座510室",
+        "lng": 114.392204,
+        "lat": 30.451393
+      }
+    },
+    {
+      "id": "多谱多勒-site-xian",
+      "name": "多谱多勒",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "武汉/西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a0e21f06eafb",
+      "title": "研发类  市场类  综合类  专业不限 欢迎电子  微电子 光学  计算机  自动化 通信  机械  数学  为物理  人力 等相关专业同学加入",
+      "siteId": "多谱多勒-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mh.hire66.com/position?secret_key=McdjxrT8Qc",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-a0e21f06eafb-xian",
+      "title": "研发类  市场类  综合类  专业不限 欢迎电子  微电子 光学  计算机  自动化 通信  机械  数学  为物理  人力 等相关专业同学加入",
+      "siteId": "多谱多勒-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mh.hire66.com/position?secret_key=McdjxrT8Qc",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

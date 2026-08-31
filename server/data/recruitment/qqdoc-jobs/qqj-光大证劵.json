@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-光大证劵",
+  "name": "光大证劵",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://ebscn.zhiye.com/campus",
+  "direction": "投行行业业务类  研究业务类  自营投资类  机构销售 类  金融科技类   合规风控类  职能管理类 子公司/分支机构岗位",
+  "deadline": "2026  09  06",
+  "sites": [
+    {
+      "id": "qqj-光大证劵-site",
+      "name": "光大证劵",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市静安区新闸路1508号",
+        "lng": 121.448097,
+        "lat": 31.23082
+      }
+    }
+  ]
+}

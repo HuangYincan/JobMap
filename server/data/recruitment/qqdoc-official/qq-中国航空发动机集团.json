@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中国航空发动机集团",
+  "name": "中国航空发动机集团",
+  "official_url": "https://aecc.iguopin.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国航空发动机集团-site-hq",
+      "name": "中国航空发动机集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区蓝靛厂南路5号",
+        "lng": 116.293892,
+        "lat": 39.9556
+      }
+    }
+  ]
+}

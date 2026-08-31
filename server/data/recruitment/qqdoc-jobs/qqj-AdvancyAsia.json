@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-AdvancyAsia",
+  "name": "Advancy Asia",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://文中扫码投递简历",
+  "direction": "初级顾问  实习生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-AdvancyAsia-site",
+      "name": "Advancy Asia",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市黄浦区徐家汇路610号C栋31层(名义楼层)02、03、05室",
+        "lng": 121.468657,
+        "lat": 31.205889
+      }
+    }
+  ]
+}

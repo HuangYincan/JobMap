@@ -1,0 +1,21 @@
+{
+  "slug": "qq-国家电投",
+  "name": "国家电投",
+  "official_url": "http://www.spic.com.cn/2021/jrwm/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国家电投-site-hq",
+      "name": "国家电投",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区北三环中路29号院1号楼国家电投大厦",
+        "lng": 116.383453,
+        "lat": 39.969273
+      }
+    }
+  ]
+}

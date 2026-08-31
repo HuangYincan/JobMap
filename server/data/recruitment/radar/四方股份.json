@@ -1,0 +1,90 @@
+{
+  "slug": "四方股份",
+  "source": "xiaozhao-radar",
+  "name": "四方股份",
+  "tier": 8,
+  "industries": [
+    "energy"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://sf-auto.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "四方股份-site-beijing",
+      "name": "四方股份",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区上地四街9号",
+        "lng": 116.306688,
+        "lat": 40.038029
+      }
+    },
+    {
+      "id": "四方股份-site-shenzhen",
+      "name": "四方股份",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳/武汉/南京",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "四方股份-site-wuhan",
+      "name": "四方股份",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市江岸区石桥路23-1号",
+        "lng": 114.278629,
+        "lat": 30.626632
+      }
+    },
+    {
+      "id": "四方股份-site-nanjing",
+      "name": "四方股份",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/武汉/南京",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8fdd6346995c",
+      "title": "软件算法类  硬件研发类  测试开发类",
+      "siteId": "四方股份-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sf-auto.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-8fdd6346995c-nanjing",
+      "title": "软件算法类  硬件研发类  测试开发类",
+      "siteId": "四方股份-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sf-auto.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "38"
+}

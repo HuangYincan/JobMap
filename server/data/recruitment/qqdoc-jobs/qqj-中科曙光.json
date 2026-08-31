@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-中科曙光",
+  "name": "中科曙光",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://sugon.zhiye.com/campus/jobs?sessionid=",
+  "direction": "计算机 硬件 软件 电子 通信 自动化  物理 化学  气象  机械等相关专业",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中科曙光-site",
+      "name": "中科曙光",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区东北旺西路8号院36号楼",
+        "lng": 116.290946,
+        "lat": 40.046523
+      }
+    }
+  ]
+}

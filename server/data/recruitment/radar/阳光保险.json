@@ -1,0 +1,42 @@
+{
+  "slug": "阳光保险",
+  "source": "xiaozhao-radar",
+  "name": "阳光保险",
+  "tier": 6,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://sunzhaopin.sinosig.com/intern/jobs?shareId=1bc828a2-4ed4-461f-b123-b9bf23257c4f&shareSource=2",
+  "sites": [
+    {
+      "id": "阳光保险-site-beijing",
+      "name": "阳光保险",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市顺义区顺航路北京龙锦阳光汽车销售服务有限公司",
+        "lng": 116.585766,
+        "lat": 40.129038
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-aa03a143e1c4",
+      "title": "集团董事长办公室\n*   集团人力资源部\n*   集团精算部\n*   集团风险管理部\n*   集团品牌发展部\n*   集团战略客户部\n*   集团战略企划部\n*",
+      "siteId": "阳光保险-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sunzhaopin.sinosig.com/intern/jobs?shareId=1bc828a2-4ed4-461f-b123-b9bf23257c4f&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "68"
+}

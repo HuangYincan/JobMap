@@ -1,0 +1,53 @@
+{
+  "slug": "阿里灵犀互娱",
+  "source": "xiaozhao-radar",
+  "name": "阿里灵犀互娱",
+  "tier": 0,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=FM%2F_nRDVg3LqXpF5K4oMgqmcmm4FTYCoUNXBZKRgAK0%3D&batchId=100000540002",
+  "sites": [
+    {
+      "id": "阿里灵犀互娱-site-shanghai",
+      "name": "阿里灵犀互娱",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/广州",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "阿里灵犀互娱-site-guangzhou",
+      "name": "阿里灵犀互娱",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "天河区高普路38号",
+        "lng": 113.410357,
+        "lat": 23.18516
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-382cd4a6d640",
+      "title": "游戏、技术、产品、运营、设计等",
+      "siteId": "阿里灵犀互娱-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=FM%2F_nRDVg3LqXpF5K4oMgqmcmm4FTYCoUNXBZKRgAK0%3D&batchId=100000540002",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

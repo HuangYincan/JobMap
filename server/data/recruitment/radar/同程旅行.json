@@ -1,0 +1,90 @@
+{
+  "slug": "同程旅行",
+  "source": "xiaozhao-radar",
+  "name": "同程旅行",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://mhr.ly.com/recruit/schoolPortal/#/postDelivery?srt=0.7926961158555046",
+  "sites": [
+    {
+      "id": "同程旅行-site-beijing",
+      "name": "同程旅行",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市大兴区兴丰大街兴华园",
+        "lng": 116.337952,
+        "lat": 39.74722
+      }
+    },
+    {
+      "id": "同程旅行-site-shanghai",
+      "name": "同程旅行",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区金杨新村街道金杨路220弄-43号-501室",
+        "lng": 121.574288,
+        "lat": 31.246533
+      }
+    },
+    {
+      "id": "同程旅行-site-chengdu",
+      "name": "同程旅行",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "武侯区四川省成都市高新区盛通街16号天府长岛52栋",
+        "lng": 104.04226,
+        "lat": 30.568001
+      }
+    },
+    {
+      "id": "同程旅行-site-nanjing",
+      "name": "同程旅行",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京市玄武区苏宁大道苏盐生活家股份有限公司",
+        "lng": 118.88901,
+        "lat": 32.084225
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c086ff381625",
+      "title": "技术岗 （大数据 前端 后端 大模型算法 ）产品岗 运营岗 商务港",
+      "siteId": "同程旅行-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mhr.ly.com/recruit/schoolPortal/#/postDelivery?srt=0.7926961158555046",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-c086ff381625-nanjing",
+      "title": "技术岗 （大数据 前端 后端 大模型算法 ）产品岗 运营岗 商务港",
+      "siteId": "同程旅行-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mhr.ly.com/recruit/schoolPortal/#/postDelivery?srt=0.7926961158555046",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

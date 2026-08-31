@@ -1,0 +1,42 @@
+{
+  "slug": "西南技术物理研究所",
+  "source": "xiaozhao-radar",
+  "name": "西南技术物理研究所",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://norincogroupzhaopin.zhiye.com/campus/detail?jobAdId=22b88565-6944-4e13-b411-6cefe41a2bcd",
+  "sites": [
+    {
+      "id": "西南技术物理研究所-site-chengdu",
+      "name": "西南技术物理研究所—暑期开放日",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cff72106e9ce",
+      "title": "光学工程 集成电路 电子科学与技术 微电子与固体电子学 兵器科学与技术电子对抗技术 通信工程 人工智能 计算机技术仪器科学与技术图像处理 控制理论与控制工程 制",
+      "siteId": "西南技术物理研究所-site-chengdu",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://norincogroupzhaopin.zhiye.com/campus/detail?jobAdId=22b88565-6944-4e13-b411-6cefe41a2bcd",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "73"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "酷哇科技",
+  "source": "xiaozhao-radar",
+  "name": "酷哇科技",
+  "tier": 9,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/cowarobot/43487?locale=zh-CN#/jobs?page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "酷哇科技-site-shanghai",
+      "name": "酷哇科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市嘉定区安亭镇安驰路915-1号",
+        "lng": 121.165915,
+        "lat": 31.281881
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e17c6690e55c",
+      "title": "算法与数据方向   机器人软件方向  软件工程师方向  实习生岗位",
+      "siteId": "酷哇科技-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/cowarobot/43487?locale=zh-CN#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

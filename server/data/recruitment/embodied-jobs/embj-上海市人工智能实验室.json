@@ -1,0 +1,99 @@
+{
+  "slug": "embj-上海市人工智能实验室",
+  "source": "embodied-jobs",
+  "name": "上海市人工智能实验室",
+  "sites": [
+    {
+      "id": "embj-上海市人工智能实验室-site",
+      "name": "上海市人工智能实验室",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市徐汇区龙文路129号国际传媒港L1楼",
+        "lng": 121.462269,
+        "lat": 31.159513
+      }
+    }
+  ],
+  "careerUrl": "https://www.shlab.org.cn/joinus/detail/7587270254460455206?mode=social",
+  "positions": [
+    {
+      "externalId": "embj-上海市人工智能实验室-1",
+      "title": "具身智能操作算法工程师",
+      "siteId": "embj-上海市人工智能实验室-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.shlab.org.cn/joinus/detail/7587270254460455206?mode=social",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-上海市人工智能实验室-2",
+      "title": "具身智能算法工程师",
+      "siteId": "embj-上海市人工智能实验室-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.shlab.org.cn/joinus/detail/7617693362335025418?mode=social",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-上海市人工智能实验室-3",
+      "title": "导航感知大模型算法工程师-具身智能中心",
+      "siteId": "embj-上海市人工智能实验室-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.shlab.org.cn/joinus/detail/7551681677601278259?mode=social",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-上海市人工智能实验室-4",
+      "title": "具身智能开放平台产品经理",
+      "siteId": "embj-上海市人工智能实验室-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.shlab.org.cn/joinus/detail/7453857240626874662?mode=social",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-上海市人工智能实验室-5",
+      "title": "全栈开发实习生 — 具身智能中心",
+      "siteId": "embj-上海市人工智能实验室-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.shlab.org.cn/joinus/detail/7604704515585296694?jobFunction=&jobType=&keyword=&location=&mode=campus&subject=",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-上海市人工智能实验室-6",
+      "title": "具身智能/强化学习研究实习生-AI for Science中心",
+      "siteId": "embj-上海市人工智能实验室-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.shlab.org.cn/joinus/detail/7576254442812999974?jobFunction=&jobType=&keyword=&location=&mode=campus&subject=",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "智源研究员",
+  "source": "xiaozhao-radar",
+  "name": "智源研究员",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/baai/42174#/jobs?zhineng%5B0%5D=252091",
+  "sites": [
+    {
+      "id": "智源研究员-site-beijing",
+      "name": "智源研究员",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f555166e284e",
+      "title": "研究员  工程师岗位  具体见投递方式链接",
+      "siteId": "智源研究员-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/baai/42174#/jobs?zhineng%5B0%5D=252091",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "73"
+}

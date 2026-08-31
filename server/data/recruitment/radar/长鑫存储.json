@@ -1,0 +1,79 @@
+{
+  "slug": "长鑫存储",
+  "source": "xiaozhao-radar",
+  "name": "长鑫存储",
+  "tier": 6,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://cxmt.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "长鑫存储-site-beijing",
+      "name": "长鑫存储",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/西安/合肥",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "长鑫存储-site-shanghai",
+      "name": "长鑫存储",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市闵行区漕宝路1355弄科技绿洲五期26号",
+        "lng": 121.391045,
+        "lat": 31.160805
+      }
+    },
+    {
+      "id": "长鑫存储-site-xian",
+      "name": "长鑫存储",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "雁塔区陕西省西安市高新区科技六路西段88号新加坡腾飞科汇城东楼23层2301室",
+        "lng": 108.843013,
+        "lat": 34.210709
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2d1bdd0c791f",
+      "title": "电路设计类  研发技术类  量产技术类  正版汇总表认证  公众号—校招推推",
+      "siteId": "长鑫存储-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cxmt.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-2d1bdd0c791f-xian",
+      "title": "电路设计类  研发技术类  量产技术类  正版汇总表认证  公众号—校招推推",
+      "siteId": "长鑫存储-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cxmt.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

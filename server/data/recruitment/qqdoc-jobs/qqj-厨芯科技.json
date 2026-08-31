@@ -1,0 +1,21 @@
+{
+  "slug": "qqj-厨芯科技",
+  "name": "厨芯科技",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://app.mokahr.com/campus-recruitment/honganrobots/150155?sessionid=#/jobs?zhineng%5B0%5D=19802",
+  "direction": "全栈开发工程师 （偏前端  偏后端）",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-厨芯科技-site",
+      "name": "厨芯科技",
+      "city": "苏州市",
+      "province": "",
+      "location": {
+        "address": "苏州高新区嘉陵江路198号11幢-12-1202（01）、11幢-12-1202（02）"
+      }
+    }
+  ]
+}

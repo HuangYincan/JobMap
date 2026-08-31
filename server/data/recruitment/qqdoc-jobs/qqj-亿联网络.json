@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-亿联网络",
+  "name": "亿联网络",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://yealink.zhiye.com/campus/jobs?sessionid=",
+  "direction": "营销类 产品类 研发类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-亿联网络-site",
+      "name": "亿联网络",
+      "city": "厦门市",
+      "province": "",
+      "location": {
+        "address": "福建省厦门市湖里区岭下北路666号",
+        "lng": 118.158237,
+        "lat": 24.534239
+      }
+    }
+  ]
+}

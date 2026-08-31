@@ -1,0 +1,42 @@
+{
+  "slug": "搜狐集团ai",
+  "source": "xiaozhao-radar",
+  "name": "搜狐集团AI",
+  "tier": 6,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/sohu/5682?sourceToken=b74e8a9dc0050254f9ae3f3c501d21bb&sessionid=#/jobs?page=1&anchorName=jobsList&project%5B0%5D=100120113",
+  "sites": [
+    {
+      "id": "搜狐集团ai-site-beijing",
+      "name": "搜狐集团AI—人才专项",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-70233273030c",
+      "title": "AI全栈研发工程师  大模型算法工程师  AI 算法研发工程师  AI 助理研究员",
+      "siteId": "搜狐集团ai-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/sohu/5682?sourceToken=b74e8a9dc0050254f9ae3f3c501d21bb&sessionid=#/jobs?page=1&anchorName=jobsList&project%5B0%5D=100120113",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

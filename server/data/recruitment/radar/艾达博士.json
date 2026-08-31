@@ -1,0 +1,53 @@
+{
+  "slug": "艾达博士",
+  "source": "xiaozhao-radar",
+  "name": "艾达博士",
+  "tier": 12,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/social-recruitment/zqxmkw/148707?locale=zh-CN#/jobs?page=1&anchorName=jobsList&commitment%5B0%5D=%E5%AE%9E%E4%B9%A0",
+  "sites": [
+    {
+      "id": "艾达博士-site-beijing",
+      "name": "艾达博士",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "艾达博士-site-chengdu",
+      "name": "艾达博士",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-abdd50d869c2",
+      "title": "游戏策划  游戏设计师  （UI/原画）开发工程师  （Python /ios)平台产品经理",
+      "siteId": "艾达博士-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/zqxmkw/148707?locale=zh-CN#/jobs?page=1&anchorName=jobsList&commitment%5B0%5D=%E5%AE%9E%E4%B9%A0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

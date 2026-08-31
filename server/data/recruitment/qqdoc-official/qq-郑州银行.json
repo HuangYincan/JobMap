@@ -1,0 +1,21 @@
+{
+  "slug": "qq-郑州银行",
+  "name": "郑州银行",
+  "official_url": "https://wecruit.hotjob.cn/SU64f952b41eb8051fabaed066/pb/index.html#/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-郑州银行-site-hq",
+      "name": "郑州银行",
+      "city": "郑州市",
+      "province": "",
+      "location": {
+        "address": "河南省郑州市金水区商务外环路22号",
+        "lng": 113.734444,
+        "lat": 34.775097
+      }
+    }
+  ]
+}

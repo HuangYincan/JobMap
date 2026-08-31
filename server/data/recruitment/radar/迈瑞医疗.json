@@ -1,0 +1,131 @@
+{
+  "slug": "迈瑞医疗",
+  "source": "xiaozhao-radar",
+  "name": "迈瑞医疗",
+  "tier": 6,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.mindray.com/8/jobs",
+  "sites": [
+    {
+      "id": "迈瑞医疗-site-beijing",
+      "name": "迈瑞医疗",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "上城区市民街200号圣奥中央商务大厦F21层",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "迈瑞医疗-site-shenzhen",
+      "name": "迈瑞医疗",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "南山区高新技术产业园科技南十二路迈瑞大厦",
+        "lng": 113.955276,
+        "lat": 22.535063
+      }
+    },
+    {
+      "id": "迈瑞医疗-site-wuhan",
+      "name": "迈瑞医疗",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市江夏区高新大道828号",
+        "lng": 114.531978,
+        "lat": 30.486515
+      }
+    },
+    {
+      "id": "迈瑞医疗-site-hangzhou",
+      "name": "迈瑞医疗—技能人才",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上城区市民街200号圣奥中央商务大厦F21层",
+        "lng": 120.206961,
+        "lat": 30.2422
+      }
+    },
+    {
+      "id": "迈瑞医疗-site-nanjing",
+      "name": "迈瑞医疗",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/武汉/南京",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7161819c9d72",
+      "title": "硬件开发工程师 系统控制算法研究工程师 医学信号处理算法研究工程师 医学图像处理研究工程师 软件开发工程师机械开发工程师 光学系统工程师 气路结构工程师 液路系",
+      "siteId": "迈瑞医疗-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.mindray.com/8/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-3db0222b3e2d",
+      "title": "装配调试技术员  数控科技员  调剂技术员  自动化设备操作员",
+      "siteId": "迈瑞医疗-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jnrc.mindray.com/5/jobs?activityGuid=3a7a67e7-ad1b-4823-89eb-d96a9bea24f6&ActivityJumpPage=PortalPage",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-7161819c9d72-nanjing",
+      "title": "硬件开发工程师 系统控制算法研究工程师 医学信号处理算法研究工程师 医学图像处理研究工程师 软件开发工程师机械开发工程师 光学系统工程师 气路结构工程师 液路系",
+      "siteId": "迈瑞医疗-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.mindray.com/8/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-3db0222b3e2d-nanjing",
+      "title": "装配调试技术员  数控科技员  调剂技术员  自动化设备操作员",
+      "siteId": "迈瑞医疗-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jnrc.mindray.com/5/jobs?activityGuid=3a7a67e7-ad1b-4823-89eb-d96a9bea24f6&ActivityJumpPage=PortalPage",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "27"
+}

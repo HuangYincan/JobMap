@@ -1,0 +1,42 @@
+{
+  "slug": "dexmai原力灵机",
+  "source": "xiaozhao-radar",
+  "name": "DexmaI原力灵机",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/list?keywords=&category=&location=&project=7579564645791910153&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+  "sites": [
+    {
+      "id": "dexmai原力灵机-site-beijing",
+      "name": "DexmaI原力灵机",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5c7bc560ce51",
+      "title": "具身智能  VLA 大模型算法实习生 具身智能仿真算法实习生 强化（VLA大模型）算法实习生  算法实习生（灵巧手方向）具身运控算法实习生 感知算法实习生 机器",
+      "siteId": "dexmai原力灵机-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dexmal-inc.jobs.feishu.cn/285572/position/list?keywords=&category=&location=&project=7579564645791910153&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,72 @@
+{
+  "slug": "莉莉丝游戏",
+  "source": "xiaozhao-radar",
+  "name": "莉莉丝游戏",
+  "tier": 6,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://lilithgames.jobs.feishu.cn/s/QRsYm_4BJbU",
+  "sites": [
+    {
+      "id": "莉莉丝游戏-site-shanghai",
+      "name": "莉莉丝游戏",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-992f988e27e8",
+      "title": "技术 / 数值 / 关卡策划、引擎开发、战略分析、发行管培、2D动画",
+      "siteId": "莉莉丝游戏-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lilithgames.jobs.feishu.cn/s/QRsYm_4BJbU",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-e72580c14b9c",
+      "title": "技术  产品  艺术  发行  质量  战略  项目  管理  职能",
+      "siteId": "莉莉丝游戏-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lilithgames.jobs.feishu.cn/s/QRsYm_4BJbU",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-4810619a9f08",
+      "title": "技术类  产品类  发行类  质量类  项目管理类",
+      "siteId": "莉莉丝游戏-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lilithgames.jobs.feishu.cn/s/QRsYm_4BJbU",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

@@ -1,0 +1,47 @@
+{
+  "slug": "embj-Cruise",
+  "source": "embodied-jobs",
+  "name": "Cruise",
+  "sites": [
+    {
+      "id": "embj-Cruise-site",
+      "name": "Cruise",
+      "city": "San Francisco, CA",
+      "province": "",
+      "location": {
+        "address": "Cruise, 329;333, Brannan Street, 南滩区, 索玛区, 旧金山;舊金山;三藩市, 加利福尼亚州;加利福尼亞州, 94017, 美国;美國",
+        "lng": -122.392529,
+        "lat": 37.780856
+      }
+    }
+  ],
+  "careerUrl": "https://getcruise.com/careers/",
+  "positions": [
+    {
+      "externalId": "embj-Cruise-1",
+      "title": "VLM/VLA Research Intern (PhD)",
+      "siteId": "embj-Cruise-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://getcruise.com/careers/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Cruise-2",
+      "title": "PhD Intern, AI Research",
+      "siteId": "embj-Cruise-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://getcruise.com/careers/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

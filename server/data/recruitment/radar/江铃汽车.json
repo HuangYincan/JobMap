@@ -1,0 +1,42 @@
+{
+  "slug": "江铃汽车",
+  "source": "xiaozhao-radar",
+  "name": "江铃汽车",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://bsurl.cn/v2/TI2noJOM",
+  "sites": [
+    {
+      "id": "江铃汽车-site-shanghai",
+      "name": "江铃汽车",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b299e40cf05a",
+      "title": "数字体验实习生  UE设计师  3D动效设计师  用户研究员  品牌视觉传达设计师",
+      "siteId": "江铃汽车-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bsurl.cn/v2/TI2noJOM",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "36"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "认养",
+  "source": "xiaozhao-radar",
+  "name": "认养",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ryytn.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "认养-site-hangzhou",
+      "name": "认养—头牛济源",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "余杭区余杭街道云联路2-150号菜鸟智谷产业园一期A3幢",
+        "lng": 119.965853,
+        "lat": 30.264615
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ead92f332f01",
+      "title": "场控实习生 主播实习生 人力实习生 达播实习生 供应链实习生 电育设计实习生 拍摄剪辑实习生 电商店铺运营实习生",
+      "siteId": "认养-site-hangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ryytn.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "14"
+}

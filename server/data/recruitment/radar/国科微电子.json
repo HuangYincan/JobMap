@@ -1,0 +1,75 @@
+{
+  "slug": "国科微电子",
+  "source": "xiaozhao-radar",
+  "name": "国科微电子",
+  "tier": 8,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://goke1.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "国科微电子-site-shanghai",
+      "name": "国科微电子",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "萧山区金二路153号信息港六期11栋7楼",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "国科微电子-site-shenzhen",
+      "name": "国科微电子",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "萧山区金二路153号信息港六期11栋7楼",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "国科微电子-site-chengdu",
+      "name": "国科微电子",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "萧山区金二路153号信息港六期11栋7楼",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "国科微电子-site-hangzhou",
+      "name": "国科微电子",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "萧山区金二路153号信息港六期11栋7楼",
+        "lng": 120.255893,
+        "lat": 30.202574
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a596255735d5",
+      "title": "芯片类 软件类  算法类 模拟类 测试类  质量类   销售类  职能类",
+      "siteId": "国科微电子-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://goke1.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

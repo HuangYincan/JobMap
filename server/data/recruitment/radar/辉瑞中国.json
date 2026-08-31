@@ -1,0 +1,64 @@
+{
+  "slug": "辉瑞中国",
+  "source": "xiaozhao-radar",
+  "name": "辉瑞中国",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careersite.tupu360.com/pfizercampus/position/detail?positionId=6a5dc53acf856c3f733f81b3",
+  "sites": [
+    {
+      "id": "辉瑞中国-site-beijing",
+      "name": "辉瑞中国",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "大兴区北京市-经济技术开发区-中科电商谷-广德大街20号院8号楼2层204~206室",
+        "lng": 116.421443,
+        "lat": 39.779899
+      }
+    },
+    {
+      "id": "辉瑞中国-site-shanghai",
+      "name": "辉瑞中国",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区纳贤路60弄火炬莲花商务园3号楼",
+        "lng": 121.602457,
+        "lat": 31.183388
+      }
+    },
+    {
+      "id": "辉瑞中国-site-wuhan",
+      "name": "辉瑞中国",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市洪山区九峰街道高新大道666号光谷生物城B14栋辉瑞大楼1楼大厅",
+        "lng": 114.476545,
+        "lat": 30.48635
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e02dda89dce7",
+      "title": "研发AI Pi1ot实习生顶目:人工智能、计算机科学、数据科学、生物信息等相管专业",
+      "siteId": "辉瑞中国-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careersite.tupu360.com/pfizercampus/position/detail?positionId=6a5dc53acf856c3f733f81b3",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "27"
+}

@@ -1,0 +1,75 @@
+{
+  "slug": "麒麟软件",
+  "source": "xiaozhao-radar",
+  "name": "麒麟软件",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kylinos.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "麒麟软件-site-beijing",
+      "name": "麒麟软件—顶尖技术实习生",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区北四环西路9号银谷大厦20层",
+        "lng": 116.334218,
+        "lat": 39.987059
+      }
+    },
+    {
+      "id": "麒麟软件-site-shanghai",
+      "name": "麒麟软件—顶尖技术实习生",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市徐汇区徐家汇街道番禺路1028号数娱大厦12层",
+        "lng": 121.427803,
+        "lat": 31.194557
+      }
+    },
+    {
+      "id": "麒麟软件-site-guangzhou",
+      "name": "麒麟软件—顶尖技术实习生",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市黄埔区开泰大道28号c1栋23层",
+        "lng": 113.469306,
+        "lat": 23.162507
+      }
+    },
+    {
+      "id": "麒麟软件-site-wuhan",
+      "name": "麒麟软件—顶尖技术实习生",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/广州/武汉",
+        "lng": 114.3,
+        "lat": 30.59
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4fde4107759e",
+      "title": "人工智能研发类 操作系统&内核研发类 安全研发类研发类 职能类岗位;",
+      "siteId": "麒麟软件-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kylinos.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

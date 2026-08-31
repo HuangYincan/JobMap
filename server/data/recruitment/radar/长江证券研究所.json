@@ -1,0 +1,64 @@
+{
+  "slug": "长江证券研究所",
+  "source": "xiaozhao-radar",
+  "name": "长江证券研究所",
+  "tier": 7,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://cjzq3.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "长江证券研究所-site-beijing",
+      "name": "长江证券研究所",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "长江证券研究所-site-shanghai",
+      "name": "长江证券研究所",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "长江证券研究所-site-shenzhen",
+      "name": "长江证券研究所",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-96cb8415b0d8",
+      "title": "研究类 中台类 销售类;",
+      "siteId": "长江证券研究所-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cjzq3.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

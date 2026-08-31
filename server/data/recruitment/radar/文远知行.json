@@ -1,0 +1,90 @@
+{
+  "slug": "文远知行",
+  "source": "xiaozhao-radar",
+  "name": "文远知行",
+  "tier": 7,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus_apply/jingchi/2137?sessionid=-216910244#/jobs?page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "文远知行-site-beijing",
+      "name": "文远知行",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市大兴区荣华西二路朝林广场",
+        "lng": 116.505725,
+        "lat": 39.793126
+      }
+    },
+    {
+      "id": "文远知行-site-shanghai",
+      "name": "文远知行",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "文远知行-site-guangzhou",
+      "name": "文远知行",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "黄埔区国际生物岛螺旋大道68号合景科盛广场",
+        "lng": 113.375718,
+        "lat": 23.06607
+      }
+    },
+    {
+      "id": "文远知行-site-shenzhen",
+      "name": "文远知行",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9af04758650f",
+      "title": "援救算法类  硬件类   市场类  其他类岗位",
+      "siteId": "文远知行-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/jingchi/2137?sessionid=-216910244#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-4bc93f67f1c2",
+      "title": "算法类 研发类 测试类 硬件类",
+      "siteId": "文远知行-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/jingchi/2137#/page/%E5%AE%9E%E4%B9%A0%E5%B2%97%E4%BD%8D",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "54"
+}

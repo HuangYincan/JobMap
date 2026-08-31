@@ -1,0 +1,21 @@
+{
+  "slug": "qq-杭州银行",
+  "name": "杭州银行",
+  "official_url": "https://myjob.hzbank.com.cn/hzzp-apply-web/static/index.html#/index",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-杭州银行-site-hq",
+      "name": "杭州银行",
+      "city": "杭州市",
+      "province": "",
+      "location": {
+        "address": "浙江省杭州市上城区解放东路168号杭州银行大厦",
+        "lng": 120.202048,
+        "lat": 30.247226
+      }
+    }
+  ]
+}

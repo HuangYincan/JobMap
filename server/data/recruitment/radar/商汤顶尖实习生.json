@@ -1,0 +1,63 @@
+{
+  "slug": "商汤顶尖实习生",
+  "source": "xiaozhao-radar",
+  "name": "商汤顶尖实习生",
+  "tier": 6,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.sensetime.com/SU6522677e1c240e3d6825d64c/pb/school.html",
+  "sites": [
+    {
+      "id": "商汤顶尖实习生-site-beijing",
+      "name": "商汤（AT先锋）顶尖实习生",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "商汤顶尖实习生-site-shanghai",
+      "name": "商汤（AT先锋）顶尖实习生",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "商汤顶尖实习生-site-shenzhen",
+      "name": "商汤（AT先锋）顶尖实习生",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-53f4264139ef",
+      "title": "AT先锋顶尖实习生",
+      "siteId": "商汤顶尖实习生-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.sensetime.com/SU6522677e1c240e3d6825d64c/pb/school.html",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "65"
+}

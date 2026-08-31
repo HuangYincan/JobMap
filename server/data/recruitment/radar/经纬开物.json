@@ -1,0 +1,42 @@
+{
+  "slug": "经纬开物",
+  "source": "xiaozhao-radar",
+  "name": "经纬开物",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jwkaiwu2.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "经纬开物-site-shenzhen",
+      "name": "经纬开物",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7c4bb46b1607",
+      "title": "工艺技术类  质量管理类  生产运营类  设备技术类  硬件设计类  信息工程类  职能类",
+      "siteId": "经纬开物-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jwkaiwu2.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "other"
+}

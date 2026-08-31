@@ -1,0 +1,75 @@
+{
+  "slug": "金证科技",
+  "source": "xiaozhao-radar",
+  "name": "金证科技",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://szkingdom.zhiye.com/campus/jobs?sessionid=",
+  "sites": [
+    {
+      "id": "金证科技-site-beijing",
+      "name": "金证科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区彩和坊路海置创投大厦",
+        "lng": 116.30796,
+        "lat": 39.982129
+      }
+    },
+    {
+      "id": "金证科技-site-shanghai",
+      "name": "金证科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区唐镇虹盛路20号",
+        "lng": 121.68481,
+        "lat": 31.230441
+      }
+    },
+    {
+      "id": "金证科技-site-shenzhen",
+      "name": "金证科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市南山区科技园高新南五道9号",
+        "lng": 113.947619,
+        "lat": 22.534894
+      }
+    },
+    {
+      "id": "金证科技-site-chengdu",
+      "name": "金证科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6570c5e9eba4",
+      "title": "Java开发工程师 测试工程师 实施工程师 售前工程师 （软件方向）销售经理",
+      "siteId": "金证科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://szkingdom.zhiye.com/campus/jobs?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

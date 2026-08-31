@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国铝业集团",
+  "name": "中国铝业集团",
+  "official_url": "https://www.chinalco.com.cn/rlzy/rlzy_zpxx/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国铝业集团-site-hq",
+      "name": "中国铝业集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区西直门北大街62号",
+        "lng": 116.357479,
+        "lat": 39.945151
+      }
+    }
+  ],
+  "city_pending": true
+}

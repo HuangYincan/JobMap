@@ -1,0 +1,38 @@
+{
+  "slug": "qqj-中船七二五所",
+  "name": "中船七二五所",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://xiaoyuan.zhaopin.com/company/KA1511175220D90000001000",
+  "direction": "材料学 材料加工工程 材料科学与工程 高分子材料与工程  材料物理与化学  机械制造与自动化  机械工程  船舶与海洋 结构物设计制造  水声工程  化工过程机械  热能工程  精密仪器及机械  测量计量技术及仪器等专业",
+  "deadline": "2026  08 09",
+  "sites": [
+    {
+      "id": "qqj-中船七二五所-site",
+      "name": "中船七二五所",
+      "city": "洛阳市",
+      "province": "",
+      "location": {
+        "address": "河南省洛阳市洛龙区滨河南路169号",
+        "lng": 112.401723,
+        "lat": 34.60586
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-00hq3vt9",
+      "title": "人力资源许可证 1101052003273号",
+      "siteId": "qqj-中船七二五所-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://img09.zhaopin.com/2012/other/mobile/msite/bottom/renliziyuan.html",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

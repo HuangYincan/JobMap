@@ -1,0 +1,41 @@
+{
+  "slug": "燧石投资",
+  "source": "xiaozhao-radar",
+  "name": "燧石投资",
+  "tier": 12,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/apply/causis/163969?sourceToken=7dfc3ef7f5cbcd57be0377d4c56e6906#/job/341e3363-df0e-417a-ba4d-31afbc5eeb3b",
+  "sites": [
+    {
+      "id": "燧石投资-site-wuhan",
+      "name": "燧石投资",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "蔡甸区武汉经济技术开发区神龙大道18号太子湖文化数字创意产业园创谷启动区B1004号",
+        "lng": 114.18381,
+        "lat": 30.491402
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-196087ed0ed3",
+      "title": "量化测策略实习生 （股票日内高频方向）",
+      "siteId": "燧石投资-site-wuhan",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/causis/163969?sourceToken=7dfc3ef7f5cbcd57be0377d4c56e6906#/job/341e3363-df0e-417a-ba4d-31afbc5eeb3b",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "67"
+}

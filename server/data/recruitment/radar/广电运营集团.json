@@ -1,0 +1,42 @@
+{
+  "slug": "广电运营集团",
+  "source": "xiaozhao-radar",
+  "name": "广电运营集团",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/grgbanking/39448?sessionid=#/jobs?zhineng%5B0%5D=150841&keyword=&page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "广电运营集团-site-guangzhou",
+      "name": "广电运营集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-42dd9a20acd6",
+      "title": "实习生(AI智能体开发)产品经理实习生  (医疗方向)java开发实习 生产品助理实习生  (云平台)医疗数据质控实习生  机器人算法实习生 算法开发实习生 (",
+      "siteId": "广电运营集团-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/grgbanking/39448?sessionid=#/jobs?zhineng%5B0%5D=150841&keyword=&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "63"
+}

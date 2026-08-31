@@ -1,0 +1,74 @@
+{
+  "slug": "长亭科技",
+  "source": "xiaozhao-radar",
+  "name": "长亭科技",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://join.chaitin.cn/plugins/career_site/sites/default/jobs/636afb92-e779-422d-b5ca-68ba32793c62?tab=&job_category=%E5%AE%89%E5%85%A8%E6%9C%8D%E5%8A%A1%E7%B1%BB&job_id=636afb92-e779-422d-b5ca-68ba32793c62",
+  "sites": [
+    {
+      "id": "长亭科技-site-beijing",
+      "name": "长亭科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市朝阳区天辰东路7号楼2-8层101内北区6层602室",
+        "lng": 116.389825,
+        "lat": 40.001469
+      }
+    },
+    {
+      "id": "长亭科技-site-shanghai",
+      "name": "长亭科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区上海国际财富中心北塔801号、803号室",
+        "lng": 121.591721,
+        "lat": 31.247077
+      }
+    },
+    {
+      "id": "长亭科技-site-shenzhen",
+      "name": "长亭科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区科苑路8号讯美科技广场2号楼2205室",
+        "lng": 113.947458,
+        "lat": 22.544734
+      }
+    },
+    {
+      "id": "长亭科技-site-wuhan",
+      "name": "长亭科技",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉",
+        "lng": 114.3,
+        "lat": 30.59
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-899d043eccc6",
+      "title": "安服校招提前批",
+      "siteId": "长亭科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.chaitin.cn/plugins/career_site/sites/default/jobs/636afb92-e779-422d-b5ca-68ba32793c62?tab=&job_category=%E5%AE%89%E5%85%A8%E6%9C%8D%E5%8A%A1%E7%B1%BB&job_id=636afb92-e779-422d-b5ca-68ba32793c62",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "65"
+}

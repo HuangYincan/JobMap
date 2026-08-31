@@ -1,0 +1,22 @@
+{
+  "slug": "qq-花旗银行",
+  "name": "花旗银行",
+  "official_url": "https://jobs.citi.com/search-jobs",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-花旗银行-site-hq",
+      "name": "花旗银行",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市浦东新区花园石桥路33号花旗集团大厦",
+        "lng": 121.500461,
+        "lat": 31.233978
+      }
+    }
+  ],
+  "city_pending": true
+}

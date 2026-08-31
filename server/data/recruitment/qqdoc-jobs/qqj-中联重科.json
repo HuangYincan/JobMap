@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-中联重科",
+  "name": "中联重科",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://文中扫码投递简历",
+  "direction": "机械研发工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中联重科-site",
+      "name": "中联重科",
+      "city": "长沙市",
+      "province": "",
+      "location": {
+        "address": "湖南省长沙市岳麓区银盆南路361号",
+        "lng": 112.953601,
+        "lat": 28.221244
+      }
+    }
+  ]
+}

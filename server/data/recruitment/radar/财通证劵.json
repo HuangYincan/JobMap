@@ -1,0 +1,75 @@
+{
+  "slug": "财通证劵",
+  "source": "xiaozhao-radar",
+  "name": "财通证劵",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.hotjob.cn/wt/CT/web/index/campus",
+  "sites": [
+    {
+      "id": "财通证劵-site-beijing",
+      "name": "财通证劵",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "拱墅区庆春路186号金融大厦西座1层",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "财通证劵-site-shanghai",
+      "name": "财通证劵",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区栖霞路26弄陆家嘴富汇大厦B栋",
+        "lng": 121.513828,
+        "lat": 31.234372
+      }
+    },
+    {
+      "id": "财通证劵-site-shenzhen",
+      "name": "财通证劵",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市福田区金田路3088号",
+        "lng": 114.063771,
+        "lat": 22.53721
+      }
+    },
+    {
+      "id": "财通证劵-site-hangzhou",
+      "name": "财通证劵",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "拱墅区庆春路186号金融大厦西座1层",
+        "lng": 120.168018,
+        "lat": 30.25845
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cb4bea3f919e",
+      "title": "总部  参股公司 分公司岗位  具体见投递方式链接",
+      "siteId": "财通证劵-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.hotjob.cn/wt/CT/web/index/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

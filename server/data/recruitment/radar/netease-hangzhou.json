@@ -1,0 +1,208 @@
+{
+  "slug": "netease-hangzhou",
+  "source": "xiaozhao-radar",
+  "name": "网易游戏雷火",
+  "tier": 5,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://leihuo.163.com/xcxtyzz/?game=hr&activity=neituicandidate&q=%26introduceId%3DUoaHMqP7SxKqKf8k",
+  "sites": [
+    {
+      "id": "netease-hangzhou-site-shanghai",
+      "name": "网易游戏雷火",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/广州/杭州",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "netease-hangzhou-site-guangzhou",
+      "name": "网易游戏雷火",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "天河区科韵路16号",
+        "lng": 113.377943,
+        "lat": 23.143271
+      }
+    },
+    {
+      "id": "netease-hangzhou-site-hangzhou",
+      "name": "网易游戏雷火",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上海/广州/杭州",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    },
+    {
+      "id": "netease-hangzhou-site-beijing",
+      "name": "网易智邮",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/杭州",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5759723b290a",
+      "title": "客户端/服务端开发、引擎/图形渲染、AI算法、测试开发、数据、安全、工具开发",
+      "siteId": "netease-hangzhou-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://leihuo.163.com/xcxtyzz/?game=hr&activity=neituicandidate&q=%26introduceId%3DUoaHMqP7SxKqKf8k",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-aaa9f37cff75",
+      "title": "策划 / 技术 / 美术 / 测试 / 用户体验 / 市场 / 运营 / PM 等多类岗位",
+      "siteId": "netease-hangzhou-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://game.campus.163.com/m/home?st=YzYyMjM2MmQtODVkMC00M2I5LTljMmItOWQ2MGQzZWNjNGZh",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-aa075489b81c",
+      "title": "游戏策划类  游戏程序类  游戏艺术类  技术类  运营类  市场渠道类 用户体验及设计类  人工智能类  游戏测试  产品  项目管理类职能支持类",
+      "siteId": "netease-hangzhou-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.game.163.com?referralCode=ZJwCjn",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-6f30bff4a21b",
+      "title": "游戏策划类  游戏程序类 游戏艺术类 技术类 运营类 市场渠道类 用户体验及设计类 人工智能类游戏测试类 产品类  羡慕管理类  职能支持类",
+      "siteId": "netease-hangzhou-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://game.campus.163.com/m/home?st=YzYyMjM2MmQtODVkMC00M2I5LTljMmItOWQ2MGQzZWNjNGZh",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-cd428d2a74c9",
+      "title": "虚拟世界架构师  （游戏策划）技术类  人工智能类  游戏艺术 /设计类  综合类",
+      "siteId": "netease-hangzhou-site-hangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-10-15",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://leihuo.163.com/xcxtyzz/?game=hr&activity=neituicandidate&q=%26introduceId%3DUoaHMqP7SxKqKf8k",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-f8caa68b5929",
+      "title": "HR精英实习生专项",
+      "siteId": "netease-hangzhou-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.163.com/job-detail.html?id=72605&lang=zh",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-608f80a40d88",
+      "title": "游戏客户端开发  游戏服务端开发游戏引擎/渲染开发  游戏综合测试游戏测试开发",
+      "siteId": "netease-hangzhou-site-hangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://leihuo.163.com/campus/?sessionid=#/intern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-48357e58ca40",
+      "title": "AI产品实习生  邮件安全实习生  内容营销实习生  SEM投放实习生",
+      "siteId": "netease-hangzhou-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.163.com/app/job/position?id=76",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-75ceb1771b05",
+      "title": "TL&RV实习生",
+      "siteId": "netease-hangzhou-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://game.campus.163.com/position/30?sessionid=",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-478318ecf3a7",
+      "title": "策划类 技术类 艺术与设计类 用户体验类 运营类 市场渠道类 游戏测试类 项目管理类",
+      "siteId": "netease-hangzhou-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://game.campus.163.com/position/30?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

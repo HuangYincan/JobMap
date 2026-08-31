@@ -1,0 +1,22 @@
+{
+  "slug": "qq-江西银行",
+  "name": "江西银行",
+  "official_url": "https://www.jx-bank.com/col226/list.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-江西银行-site-hq",
+      "name": "江西银行",
+      "city": "南昌市",
+      "province": "",
+      "location": {
+        "address": "江西省南昌市红谷滩区金融大街699号",
+        "lng": 115.850582,
+        "lat": 28.685452
+      }
+    }
+  ],
+  "city_pending": true
+}

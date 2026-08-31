@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-中国人民保险集团",
+  "name": "中国人民保险集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://picc.zhiye.com/custom/xiaoyuan?hideAll=true",
+  "direction": "科技类岗位   综合类岗位  下属各单位岗位  具体见投递方式链接",
+  "deadline": "2026  04  25",
+  "sites": [
+    {
+      "id": "qqj-中国人民保险集团-site",
+      "name": "中国人民保险集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区西长安街88号中国人保大厦",
+        "lng": 116.375485,
+        "lat": 39.906121
+      }
+    }
+  ]
+}

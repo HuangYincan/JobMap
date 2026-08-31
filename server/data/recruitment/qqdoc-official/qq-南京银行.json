@@ -1,0 +1,21 @@
+{
+  "slug": "qq-南京银行",
+  "name": "南京银行",
+  "official_url": "https://job.njcb.com.cn/#/home",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-南京银行-site-hq",
+      "name": "南京银行",
+      "city": "南京市",
+      "province": "",
+      "location": {
+        "address": "南京市建邺区江山大街88号",
+        "lng": 118.712604,
+        "lat": 31.984164
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-心田花开",
+  "name": "心田花开",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://xintianhuakai1.zhiye.com/campus/jobs?memory=%7B%7D&silence=1",
+  "direction": "教师类岗位  教研类岗位   市场类岗位",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-心田花开-site",
+      "name": "心田花开",
+      "city": "成都市",
+      "province": "",
+      "location": {
+        "address": "锦江区成都市人民东路48号四川物资大厦3层(青羊区)",
+        "lng": 104.069189,
+        "lat": 30.658675
+      }
+    }
+  ]
+}

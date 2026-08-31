@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-星龙数智",
+  "name": "星龙数智",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "Java开发  大数据开发  大模型开发Unity开发",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-星龙数智-site",
+      "name": "星龙数智",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "大兴区北京市北京经济技术开发区科谷一街10号院6号楼3层305-6A室",
+        "lng": 116.506622,
+        "lat": 39.795275
+      }
+    }
+  ]
+}

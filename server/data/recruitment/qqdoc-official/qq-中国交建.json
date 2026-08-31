@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国交建",
+  "name": "中国交建",
+  "official_url": "https://www.ccccltd.cn/rlzy/rczp/zpgg/zpgg_zgjjzp/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国交建-site-hq",
+      "name": "中国交建",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区德胜门外大街85号",
+        "lng": 116.378462,
+        "lat": 39.953901
+      }
+    }
+  ],
+  "city_pending": true
+}

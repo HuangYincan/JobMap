@@ -1,0 +1,41 @@
+{
+  "slug": "西安近代化学研究所暑期博士夏令营",
+  "name": "西安近代化学研究所暑期博士夏令营",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://form.wjx.com/vm/hAGLxzK.aspx",
+  "sites": [
+    {
+      "id": "西安近代化学研究所暑期博士夏令营-site-xian",
+      "name": "西安近代化学研究所暑期博士夏令营",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-00e089fce5f9",
+      "title": "化学类  化学工程类 力学类 航天航空类 兵器类 动力工程及工程热物理类  仪器类 控制类 材料类 安全类 机械类 物理学类  软件类 电子科学类",
+      "siteId": "西安近代化学研究所暑期博士夏令营-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://form.wjx.com/vm/hAGLxzK.aspx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

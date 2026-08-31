@@ -1,0 +1,21 @@
+{
+  "slug": "qq-重庆农村商业银行",
+  "name": "重庆农村商业银行",
+  "official_url": "https://campus.51job.com/CQRCB2023/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-重庆农村商业银行-site-hq",
+      "name": "重庆农村商业银行",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "两江新区重庆市江北区金沙门路36号",
+        "lng": 106.573137,
+        "lat": 29.569968
+      }
+    }
+  ]
+}

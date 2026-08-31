@@ -1,0 +1,83 @@
+{
+  "slug": "禾赛科技",
+  "source": "xiaozhao-radar",
+  "name": "禾赛科技",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kwh0jtf778.jobs.feishu.cn/073183/m/?external_referral_code=N2X8TM6",
+  "sites": [
+    {
+      "id": "禾赛科技-site-shanghai",
+      "name": "禾赛科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "嘉定区新徕路468号园区二号楼",
+        "lng": 121.213711,
+        "lat": 31.408064
+      }
+    },
+    {
+      "id": "禾赛科技-site-hangzhou",
+      "name": "禾赛科技",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "萧山区奔竞大道3300号19号楼",
+        "lng": 120.33505,
+        "lat": 30.238072
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-08cf2de08841",
+      "title": "算法/软件/硬件/测试/产品",
+      "siteId": "禾赛科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kwh0jtf778.jobs.feishu.cn/073183/m/?external_referral_code=N2X8TM6",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-fd48a0cca2f6",
+      "title": "空间智能方向 机器人动力模组方向  雷达研究方向  智能制造&质量方向",
+      "siteId": "禾赛科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-31",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kwh0jtf778.jobs.feishu.cn/229043/?spread=KHWW5AC",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-20bda7f34732",
+      "title": "空间智能方向 机器人动力模组方向 雷达研发方向 智能制造&质量方向;",
+      "siteId": "禾赛科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-31",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kwh0jtf778.jobs.feishu.cn/229043/?spread=KHWW5AC",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

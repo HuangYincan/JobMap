@@ -1,0 +1,49 @@
+{
+  "slug": "transsion-hangzhou",
+  "source": "official-career",
+  "name": "传音控股",
+  "industries": [
+    "hardware",
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.transsion.com/career",
+  "sites": [
+    {
+      "id": "transsion-hangzhou-site",
+      "name": "传音控股",
+      "location": {
+        "lng": 120.118,
+        "lat": 30.272,
+        "address": "滨江区网商路599号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "transsion-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "transsion-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "软件平台",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.transsion.com/career"
+    }
+  ],
+  "tier": 6,
+  "category": "39"
+}

@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国有色矿业集团",
+  "name": "中国有色矿业集团",
+  "official_url": "https://hrcnmc.iguopin.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国有色矿业集团-site-hq",
+      "name": "中国有色矿业集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市朝阳区安定路10号中国有色大厦",
+        "lng": 116.408223,
+        "lat": 39.974728
+      }
+    }
+  ],
+  "city_pending": true
+}

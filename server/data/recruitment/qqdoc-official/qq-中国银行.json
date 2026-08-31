@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国银行",
+  "name": "中国银行",
+  "official_url": "https://www.boc.cn/aboutboc/bi4/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国银行-site-hq",
+      "name": "中国银行",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区复兴门内大街1号",
+        "lng": 116.372643,
+        "lat": 39.908172
+      }
+    }
+  ],
+  "city_pending": true
+}

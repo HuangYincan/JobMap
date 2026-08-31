@@ -1,0 +1,140 @@
+{
+  "slug": "士兰微电子",
+  "source": "xiaozhao-radar",
+  "name": "士兰微电子",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.silan.com.cn/index.php/about/post.html",
+  "sites": [
+    {
+      "id": "士兰微电子-site-beijing",
+      "name": "士兰微电子",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "士兰微电子-site-shanghai",
+      "name": "士兰微电子",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "士兰微电子-site-shenzhen",
+      "name": "士兰微电子",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "士兰微电子-site-chengdu",
+      "name": "士兰微电子",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9706c1794971",
+      "title": "模拟IC研发类  数字IC研发类 MEMS传感器技术研发类 器件/模块及工艺研发类 封装设计研发类 系统应用测试开发类 AI芯片研发类销售市场类 职能管理类",
+      "siteId": "士兰微电子-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.silan.com.cn/index.php/about/post.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-009n6h4f",
+      "title": "销售网络",
+      "siteId": "士兰微电子-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.silan.com.cn/index.php/serves.html#uid1",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00clm5bl",
+      "title": "绿色产品生产",
+      "siteId": "士兰微电子-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.silan.com.cn/index.php/quality.html?id=2",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00cattoq",
+      "title": "社会招聘",
+      "siteId": "士兰微电子-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.silan.com.cn/index.php/about/social.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00b3r85j",
+      "title": "校园招聘",
+      "siteId": "士兰微电子-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.silan.com.cn/index.php/about/post.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00dpbrse",
+      "title": "校招岗位",
+      "siteId": "士兰微电子-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.silan.com.cn/index.php/about/post.html",
+      "retrievedAt": "2026-08-20"
+    }
+  ],
+  "category": "39"
+}

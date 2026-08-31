@@ -1,0 +1,79 @@
+{
+  "slug": "广联达",
+  "source": "xiaozhao-radar",
+  "name": "广联达",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/glodon/91966?sourceToken=714fbfb024039ca2a8bc9af7708ac373#/jobs",
+  "sites": [
+    {
+      "id": "广联达-site-beijing",
+      "name": "广联达",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区东北旺西路10号院中关村软件园二期东区13号楼",
+        "lng": 116.283224,
+        "lat": 40.046029
+      }
+    },
+    {
+      "id": "广联达-site-shanghai",
+      "name": "广联达",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区张江镇祖冲之路2288弄",
+        "lng": 121.627583,
+        "lat": 31.210792
+      }
+    },
+    {
+      "id": "广联达-site-xian",
+      "name": "广联达",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "未央区西安经济技术开发区明光路168号",
+        "lng": 108.929227,
+        "lat": 34.362651
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-57691c1c859a",
+      "title": "AI算法 C++开发  Java开发  产品需求业务测试  几何算法  仿真算法  CAD建模计算机图形学  三维图形渲染",
+      "siteId": "广联达-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/glodon/91966?sourceToken=714fbfb024039ca2a8bc9af7708ac373#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-57691c1c859a-xian",
+      "title": "AI算法 C++开发  Java开发  产品需求业务测试  几何算法  仿真算法  CAD建模计算机图形学  三维图形渲染",
+      "siteId": "广联达-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/glodon/91966?sourceToken=714fbfb024039ca2a8bc9af7708ac373#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

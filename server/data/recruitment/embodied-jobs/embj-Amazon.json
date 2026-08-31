@@ -1,0 +1,47 @@
+{
+  "slug": "embj-Amazon",
+  "source": "embodied-jobs",
+  "name": "Amazon",
+  "sites": [
+    {
+      "id": "embj-Amazon-site",
+      "name": "Amazon",
+      "city": "Seattle, WA",
+      "province": "",
+      "location": {
+        "address": "2111, 7th Avenue, Amazon, Belltown, 西雅圖, King County, 华盛顿州;華盛頓州, 98121, 美国;美國",
+        "lng": -122.339002,
+        "lat": 47.615863
+      }
+    }
+  ],
+  "careerUrl": "https://www.amazon.science/research-awards",
+  "positions": [
+    {
+      "externalId": "embj-Amazon-1",
+      "title": "Amazon Research Awards",
+      "siteId": "embj-Amazon-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.amazon.science/research-awards",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Amazon-2",
+      "title": "Amazon Robotics - PhD Internship",
+      "siteId": "embj-Amazon-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.amazon.jobs/en/teams/amazon-robotics",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

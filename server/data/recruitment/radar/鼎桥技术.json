@@ -1,0 +1,42 @@
+{
+  "slug": "鼎桥技术",
+  "source": "xiaozhao-radar",
+  "name": "鼎桥技术",
+  "tier": 8,
+  "industries": [
+    "telecom"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://td-tech.zhiye.com/intern/jobs?sessionid=",
+  "sites": [
+    {
+      "id": "鼎桥技术-site-chengdu",
+      "name": "鼎桥技术",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "四川省成都市武侯区天华二路219号天府软件园c区c3座",
+        "lng": 104.070243,
+        "lat": 30.539086
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-17bcf125f3bf",
+      "title": "软件开发类  硬件开发类 算法类 测试类",
+      "siteId": "鼎桥技术-site-chengdu",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://td-tech.zhiye.com/intern/jobs?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "qq-广发银行",
+  "name": "广发银行",
+  "official_url": "https://www.cgbchina.com.cn/Channel/11581868",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-广发银行-site-hq",
+      "name": "广发银行",
+      "city": "广州市",
+      "province": "",
+      "location": {
+        "address": "广东省广州市越秀区东风东路713号广发银行大厦",
+        "lng": 113.297462,
+        "lat": 23.131539
+      }
+    }
+  ]
+}

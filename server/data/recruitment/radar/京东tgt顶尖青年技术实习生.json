@@ -1,0 +1,64 @@
+{
+  "slug": "京东tgt顶尖青年技术实习生",
+  "source": "xiaozhao-radar",
+  "name": "京东TGT顶尖青年技术实习生",
+  "tier": 4,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.jd.com/#/jobs?to=internship&type=internship",
+  "sites": [
+    {
+      "id": "京东tgt顶尖青年技术实习生-site-beijing",
+      "name": "京东TGT顶尖青年技术实习生",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "京东tgt顶尖青年技术实习生-site-shanghai",
+      "name": "京东TGT顶尖青年技术实习生",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "京东tgt顶尖青年技术实习生-site-shenzhen",
+      "name": "京东TGT顶尖青年技术实习生",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2786ee7e5b6b",
+      "title": "多模态大模型与应用方向，空间与具身智能方向，AI  Infra方向，搜索推荐广告方向，安全方向，机器学习方向 ，大数据方向",
+      "siteId": "京东tgt顶尖青年技术实习生-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.jd.com/#/jobs?to=internship&type=internship",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

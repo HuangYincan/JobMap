@@ -1,0 +1,75 @@
+{
+  "slug": "燧原科技",
+  "source": "xiaozhao-radar",
+  "name": "燧原科技",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/enflame/168420?locale=zh-CN#/",
+  "sites": [
+    {
+      "id": "燧原科技-site-beijing",
+      "name": "燧原科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区知春路23号量子银座F14",
+        "lng": 116.346066,
+        "lat": 39.977267
+      }
+    },
+    {
+      "id": "燧原科技-site-shanghai",
+      "name": "燧原科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区金秋路158号张润大厦2号楼3层",
+        "lng": 121.630326,
+        "lat": 31.21528
+      }
+    },
+    {
+      "id": "燧原科技-site-shenzhen",
+      "name": "燧原科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "南山区深圳市软件产业基地5B座501号",
+        "lng": 113.939771,
+        "lat": 22.52398
+      }
+    },
+    {
+      "id": "燧原科技-site-chengdu",
+      "name": "燧原科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "四川省成都市双流区华阳街道AI创新中心B6-2(14楼)",
+        "lng": 104.08577,
+        "lat": 30.509084
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-857a168bb067",
+      "title": "软件研发  芯片硬件类  客户成功与解决方案  产品系统类",
+      "siteId": "燧原科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/enflame/168420?locale=zh-CN#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

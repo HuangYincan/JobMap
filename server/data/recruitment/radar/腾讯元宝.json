@@ -1,0 +1,75 @@
+{
+  "slug": "腾讯元宝",
+  "source": "xiaozhao-radar",
+  "name": "腾讯元宝",
+  "tier": 0,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://join.qq.com/land.html?pageId=10016",
+  "sites": [
+    {
+      "id": "腾讯元宝-site-beijing",
+      "name": "腾讯元宝",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "腾讯元宝-site-shanghai",
+      "name": "腾讯元宝",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "腾讯元宝-site-guangzhou",
+      "name": "腾讯元宝",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "腾讯元宝-site-shenzhen",
+      "name": "腾讯元宝",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2be3017e8b26",
+      "title": "技术研究类、软件开发类、安全技术类、产品类、设计类",
+      "siteId": "腾讯元宝-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.qq.com/land.html?pageId=10016",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

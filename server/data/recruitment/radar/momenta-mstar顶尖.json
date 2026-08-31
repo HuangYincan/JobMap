@@ -1,0 +1,62 @@
+{
+  "slug": "momenta-mstar顶尖",
+  "source": "xiaozhao-radar",
+  "name": "Momenta Mstar顶尖",
+  "tier": 7,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://momenta.jobs.feishu.cn/campus/?keywords=&category=&location=&project=7537265013606943018&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+  "sites": [
+    {
+      "id": "momenta-mstar顶尖-site-beijing",
+      "name": "Momenta Mstar顶尖人才计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/苏州",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "momenta-mstar顶尖-site-shanghai",
+      "name": "Momenta Mstar顶尖人才计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/苏州",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "momenta-mstar顶尖-site-suzhou",
+      "name": "Momenta Mstar顶尖人才计划",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6359847e0bd4",
+      "title": "端到端大模型算法实习生 训练推理优化实习生 4D重建算法实习生",
+      "siteId": "momenta-mstar顶尖-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://momenta.jobs.feishu.cn/campus/?keywords=&category=&location=&project=7537265013606943018&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

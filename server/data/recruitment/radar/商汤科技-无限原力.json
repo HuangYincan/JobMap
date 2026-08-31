@@ -1,0 +1,153 @@
+{
+  "slug": "商汤科技-无限原力",
+  "source": "xiaozhao-radar",
+  "name": "商汤科技「无限原力」",
+  "tier": 6,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.sensetime.com/top/?keywords=&category=&location=&project=7654524986392824115&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+  "sites": [
+    {
+      "id": "商汤科技-无限原力-site-beijing",
+      "name": "商汤科技「无限原力」人才计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区北四环西路58号理想国际大厦F11",
+        "lng": 116.310084,
+        "lat": 39.984342
+      }
+    },
+    {
+      "id": "商汤科技-无限原力-site-shanghai",
+      "name": "商汤科技「无限原力」人才计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市宝山区逸仙路新业坊源创6号楼603室",
+        "lng": 121.483575,
+        "lat": 31.317476
+      }
+    },
+    {
+      "id": "商汤科技-无限原力-site-shenzhen",
+      "name": "商汤科技「无限原力」人才计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区高新南十道3区11栋11a",
+        "lng": 113.950494,
+        "lat": 22.530059
+      }
+    },
+    {
+      "id": "商汤科技-无限原力-site-hangzhou",
+      "name": "商汤科技「无限原力」人才计划",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "萧山区宁围街道盈丰街道利一路188号天人大厦29楼",
+        "lng": 120.239876,
+        "lat": 30.239141
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-095896b7edfa",
+      "title": "招聘方向：模型研究  AI  Infra   模型应用开发  FDE",
+      "siteId": "商汤科技-无限原力-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.sensetime.com/top/?keywords=&category=&location=&project=7654524986392824115&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "embj-商汤科技-1",
+      "title": "26届AI领航员-具身智能-算法工程师",
+      "siteId": "商汤科技-无限原力-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.sensetime.com/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-商汤科技-2",
+      "title": "26届AI领航员-具身智能-结构设计工程师",
+      "siteId": "商汤科技-无限原力-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.sensetime.com/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-商汤科技-3",
+      "title": "26届AI领航员-研究院-算法研究员",
+      "siteId": "商汤科技-无限原力-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.sensetime.com/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-商汤科技-4",
+      "title": "26届AI领航员-具身智能-算法工程师",
+      "siteId": "商汤科技-无限原力-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.sensetime.com/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-商汤科技-5",
+      "title": "26届AI领航员-具身智能-结构设计工程师",
+      "siteId": "商汤科技-无限原力-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.sensetime.com/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-商汤科技-6",
+      "title": "26届AI领航员-研究院-算法研究员",
+      "siteId": "商汤科技-无限原力-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.sensetime.com/",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "category": "65"
+}

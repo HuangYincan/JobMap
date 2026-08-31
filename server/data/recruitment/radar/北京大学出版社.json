@@ -1,0 +1,42 @@
+{
+  "slug": "北京大学出版社",
+  "source": "xiaozhao-radar",
+  "name": "北京大学出版社",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://mp.weixin.qq.com/s/axlBNTyo7FstWV3c9ysvCQ",
+  "sites": [
+    {
+      "id": "北京大学出版社-site-beijing",
+      "name": "北京大学出版社",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a8bf65388aa9",
+      "title": "图书编辑助理 数字编辑助理 音视频编辑助理  质检编辑助理",
+      "siteId": "北京大学出版社-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mp.weixin.qq.com/s/axlBNTyo7FstWV3c9ysvCQ",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "85"
+}

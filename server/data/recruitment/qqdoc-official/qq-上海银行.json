@@ -1,0 +1,21 @@
+{
+  "slug": "qq-上海银行",
+  "name": "上海银行",
+  "official_url": "https://bosc.zhiye.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-上海银行-site-hq",
+      "name": "上海银行",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市浦东新区银城中路168号上海银行大厦",
+        "lng": 121.504577,
+        "lat": 31.239896
+      }
+    }
+  ]
+}

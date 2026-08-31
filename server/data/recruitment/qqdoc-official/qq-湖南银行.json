@@ -1,0 +1,21 @@
+{
+  "slug": "qq-湖南银行",
+  "name": "湖南银行",
+  "official_url": "https://www.hunan-bank.com/96599/gywx/rczp/index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-湖南银行-site-hq",
+      "name": "湖南银行",
+      "city": "长沙市",
+      "province": "湖南省",
+      "location": {
+        "address": "湖南省长沙市天心区湘江中路二段210号",
+        "lng": 112.970787,
+        "lat": 28.184524
+      }
+    }
+  ]
+}

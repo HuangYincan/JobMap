@@ -1,0 +1,90 @@
+{
+  "slug": "oppo",
+  "source": "xiaozhao-radar",
+  "name": "OPPO",
+  "tier": 5,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careers.oppo.com/university/oppo/campus/post?shareId=18342",
+  "sites": [
+    {
+      "id": "oppo-site-beijing",
+      "name": "OPPO",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "oppo-site-shanghai",
+      "name": "OPPO",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "oppo-site-shenzhen",
+      "name": "OPPO",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "oppo-site-chengdu",
+      "name": "OPPO",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f8728fbf7b0c",
+      "title": "AI/算法类  软件类 硬件类   标准研发类  产品类  设计类  品牌策划类  销售服务类  工程技术类  采购类  综合职能类",
+      "siteId": "oppo-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.oppo.com/university/oppo/campus/post?shareId=18342",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-05703506d4ec",
+      "title": "AI/算法类 标准研究类 品牌策划类 工程技术类 软件类  产品类 采购类 硬件类 设计类 销售服务类 综合职能类",
+      "siteId": "oppo-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.oppo.com/university/oppo/campus/post?recruitType=Intern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

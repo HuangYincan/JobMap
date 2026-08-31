@@ -1,0 +1,42 @@
+{
+  "slug": "中欧基金",
+  "source": "xiaozhao-radar",
+  "name": "中欧基金",
+  "tier": 7,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zofund.zhiye.com/campus/?PageIndex=1",
+  "sites": [
+    {
+      "id": "中欧基金-site-shanghai",
+      "name": "中欧基金",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市虹口区公平路18号嘉昱大厦F7",
+        "lng": 121.509612,
+        "lat": 31.250699
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0066fc592e0e",
+      "title": "权益研究 多资产策略研究 量化研究 量化风控 投资监督 数智稽核 财务管理 固收交易 系统开发 AI应用开发 中欧盛世—量化研究 中欧财富—电商运营",
+      "siteId": "中欧基金-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zofund.zhiye.com/campus/?PageIndex=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

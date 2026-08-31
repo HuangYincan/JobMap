@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-优衣库",
+  "name": "优衣库",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://uniqlo.zhiye.com/campus/detail?jobAdId=b4f2dd8d-3a74-4f0f-b4a9-d0cc4398db96",
+  "direction": "2027迅销集团优衣库UMC经营管理培训生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-优衣库-site",
+      "name": "优衣库",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市徐汇区虹桥路183号徐家汇中心三期A座办公楼",
+        "lng": 121.434872,
+        "lat": 31.193645
+      }
+    }
+  ]
+}

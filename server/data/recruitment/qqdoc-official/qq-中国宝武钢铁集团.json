@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国宝武钢铁集团",
+  "name": "中国宝武钢铁集团",
+  "official_url": "https://campus.51job.com/baowugroup2024/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国宝武钢铁集团-site-hq",
+      "name": "中国宝武钢铁集团",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市浦东新区世博大道1859号宝武大厦1号楼",
+        "lng": 121.492926,
+        "lat": 31.187978
+      }
+    }
+  ],
+  "city_pending": true
+}

@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国一汽",
+  "name": "中国一汽",
+  "official_url": "https://faw-zhaopin.hotjob.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国一汽-site-hq",
+      "name": "中国一汽",
+      "city": "长春市",
+      "province": "",
+      "location": {
+        "address": "绿园区吉林省长春市汽车经济技术开发区东风大街8899号(新红旗大街1号一汽NBD总部)",
+        "lng": 125.164714,
+        "lat": 43.831737
+      }
+    }
+  ],
+  "city_pending": true
+}

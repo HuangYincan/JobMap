@@ -1,0 +1,75 @@
+{
+  "slug": "毕马威中国全球日本业务发展中心",
+  "source": "xiaozhao-radar",
+  "name": "毕马威中国全球日本业务发展中心",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/kpmg/76195#/jobs?page=1&anchorName=jobsList&keyword=GJP&project%5B0%5D=100126048",
+  "sites": [
+    {
+      "id": "毕马威中国全球日本业务发展中心-site-beijing",
+      "name": "毕马威中国全球日本业务发展中心",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "毕马威中国全球日本业务发展中心-site-shanghai",
+      "name": "毕马威中国全球日本业务发展中心",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "毕马威中国全球日本业务发展中心-site-guangzhou",
+      "name": "毕马威中国全球日本业务发展中心",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "毕马威中国全球日本业务发展中心-site-shenzhen",
+      "name": "毕马威中国全球日本业务发展中心",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c2b44145bffd",
+      "title": "税务日语组  审计日语组",
+      "siteId": "毕马威中国全球日本业务发展中心-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/kpmg/76195#/jobs?page=1&anchorName=jobsList&keyword=GJP&project%5B0%5D=100126048",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "72"
+}

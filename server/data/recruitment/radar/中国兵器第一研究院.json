@@ -1,0 +1,42 @@
+{
+  "slug": "中国兵器第一研究院",
+  "source": "xiaozhao-radar",
+  "name": "中国兵器第一研究院",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://norincogroupzhaopin.zhiye.com/jobs?activityGuid=34239536-2bc9-4f04-b6a5-7d744a0e1d59",
+  "sites": [
+    {
+      "id": "中国兵器第一研究院-site-beijing",
+      "name": "中国兵器第一研究院（中国北方车辆研究所）",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e9bff4bdabc6",
+      "title": "电气工程 软件工程 电子信息 机械类 材料科学与工程类 仪器类 航空航天类 计算机类 自动化类  控制科学与工程类 材料类 核科学与技术类 航空宇航科学与技术类",
+      "siteId": "中国兵器第一研究院-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://norincogroupzhaopin.zhiye.com/jobs?activityGuid=34239536-2bc9-4f04-b6a5-7d744a0e1d59",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "73"
+}

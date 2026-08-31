@@ -1,0 +1,49 @@
+{
+  "slug": "souche-hangzhou",
+  "source": "official-career",
+  "name": "大搜车",
+  "industries": [
+    "internet",
+    "automotive"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.souche.com/jobs",
+  "sites": [
+    {
+      "id": "souche-hangzhou-site",
+      "name": "大搜车",
+      "location": {
+        "lng": 120.118,
+        "lat": 30.286,
+        "address": "余杭区仓前街道欧美金融城"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "souche-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "souche-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "工程",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.souche.com/jobs"
+    }
+  ],
+  "tier": 7,
+  "category": "52"
+}

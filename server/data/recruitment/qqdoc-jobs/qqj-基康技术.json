@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-基康技术",
+  "name": "基康技术",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "水利 水电 工程师  桥隧工程师 机械工程师   嵌入式工程师  销售工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-基康技术-site",
+      "name": "基康技术",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市房山区良乡凯旋大街滨河西街3号",
+        "lng": 116.13341,
+        "lat": 39.722611
+      }
+    }
+  ]
+}

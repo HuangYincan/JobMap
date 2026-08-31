@@ -1,0 +1,41 @@
+{
+  "slug": "宝时得集团",
+  "name": "宝时得集团",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU64ae431b2f9d24760adab44f/mc/position/intern",
+  "sites": [
+    {
+      "id": "宝时得集团-site-suzhou",
+      "name": "宝时得集团",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "虎丘区江苏省苏州市苏州工业园区东旺路18号",
+        "lng": 120.762284,
+        "lat": 31.288721
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5e8a5c2d861e",
+      "title": "集团管培生  海外市场  算法研发岗  软件研发岗  质量技术岗",
+      "siteId": "宝时得集团-site-suzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU64ae431b2f9d24760adab44f/mc/position/intern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

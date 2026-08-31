@@ -1,0 +1,90 @@
+{
+  "slug": "为旌科技",
+  "source": "xiaozhao-radar",
+  "name": "为旌科技",
+  "tier": 10,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/visinextek/41636#/jobs?page=1&anchorName=jobsList&keyword=%E5%AE%9E%E4%B9%A0",
+  "sites": [
+    {
+      "id": "为旌科技-site-beijing",
+      "name": "为旌科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/南京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "为旌科技-site-shanghai",
+      "name": "为旌科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区祖冲之路2290号展想广场8栋2楼",
+        "lng": 121.627733,
+        "lat": 31.210607
+      }
+    },
+    {
+      "id": "为旌科技-site-shenzhen",
+      "name": "为旌科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/南京",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "为旌科技-site-nanjing",
+      "name": "为旌科技",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/深圳/南京",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-eeac4f23dd28",
+      "title": "图形算法类 AI算法类 软件类 芯片类",
+      "siteId": "为旌科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/visinextek/41636#/jobs?page=1&anchorName=jobsList&keyword=%E5%AE%9E%E4%B9%A0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-eeac4f23dd28-nanjing",
+      "title": "图形算法类 AI算法类 软件类 芯片类",
+      "siteId": "为旌科技-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/visinextek/41636#/jobs?page=1&anchorName=jobsList&keyword=%E5%AE%9E%E4%B9%A0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "信步科技",
+  "source": "xiaozhao-radar",
+  "name": "信步科技",
+  "tier": 10,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://seavo.hotjob.cn/",
+  "sites": [
+    {
+      "id": "信步科技-site-shenzhen",
+      "name": "信步科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市宝安区万乐路沙一恒昌荣科技园",
+        "lng": 113.781698,
+        "lat": 22.724282
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-095fc495a391",
+      "title": "硬件  软件  产品 市场   供应链  职能",
+      "siteId": "信步科技-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://seavo.hotjob.cn/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,75 @@
+{
+  "slug": "小鹏集团",
+  "source": "xiaozhao-radar",
+  "name": "小鹏集团",
+  "tier": 5,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://xiaopeng.jobs.feishu.cn/307999",
+  "sites": [
+    {
+      "id": "小鹏集团-site-beijing",
+      "name": "小鹏集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "小鹏集团-site-shanghai",
+      "name": "小鹏集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "小鹏集团-site-guangzhou",
+      "name": "小鹏集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "小鹏集团-site-shenzhen",
+      "name": "小鹏集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bd3baf8808ac",
+      "title": "通用智能板块  芯片板块  数据智能板块 汽车研发板块  智能机器人板块  动力三电板块  测试板块  制造与工艺板块  营销服板块  商品企划板块 充电板块",
+      "siteId": "小鹏集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaopeng.jobs.feishu.cn/307999",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "36"
+}

@@ -1,0 +1,34 @@
+{
+  "slug": "embj-Microsoft",
+  "source": "embodied-jobs",
+  "name": "Microsoft",
+  "sites": [
+    {
+      "id": "embj-Microsoft-site",
+      "name": "Microsoft",
+      "city": "Redmond, WA",
+      "province": "",
+      "location": {
+        "address": "Microsoft Building 2, 15935, NE One Microsoft Way, Microsoft Redmond East Campus, Overlake, 雷德蒙德, King County, 华盛顿州;華盛頓州, 98052, 美国;美國",
+        "lng": -122.127838,
+        "lat": 47.640599
+      }
+    }
+  ],
+  "careerUrl": "https://www.microsoft.com/en-us/research/academic-program/microsoft-research-fellowship/",
+  "positions": [
+    {
+      "externalId": "embj-Microsoft-1",
+      "title": "Microsoft Research PhD Fellowship",
+      "siteId": "embj-Microsoft-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.microsoft.com/en-us/research/academic-program/microsoft-research-fellowship/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

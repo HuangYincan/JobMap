@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-江森自控",
+  "name": "江森自控",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "销售实习生 （可转正）",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-江森自控-site",
+      "name": "江森自控",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市长宁区福泉北路518号11号楼(江森自控总部大楼)",
+        "lng": 121.357409,
+        "lat": 31.227742
+      }
+    }
+  ]
+}

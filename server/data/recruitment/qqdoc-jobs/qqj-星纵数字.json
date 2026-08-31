@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-星纵数字",
+  "name": "星纵数字",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://yeastar.zhiye.com/campus",
+  "direction": "研发序列  市场营销序列  供应链序列  职能序列",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-星纵数字-site",
+      "name": "星纵数字",
+      "city": "厦门市",
+      "province": "",
+      "location": {
+        "address": "思明区厦门市软件园二期望海路63-2号4-5楼",
+        "lng": 118.187042,
+        "lat": 24.487203
+      }
+    }
+  ]
+}

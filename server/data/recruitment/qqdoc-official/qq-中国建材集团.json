@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国建材集团",
+  "name": "中国建材集团",
+  "official_url": "https://www.cnbm.com.cn/CNBM/000000090005/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国建材集团-site-hq",
+      "name": "中国建材集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区复兴路17号国海广场2号楼",
+        "lng": 116.313494,
+        "lat": 39.909281
+      }
+    }
+  ],
+  "city_pending": true
+}

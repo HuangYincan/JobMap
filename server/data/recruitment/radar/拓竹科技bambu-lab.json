@@ -1,0 +1,53 @@
+{
+  "slug": "拓竹科技bambu-lab",
+  "source": "xiaozhao-radar",
+  "name": "拓竹科技Bambu Lab",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://bambulab.jobs.feishu.cn/s/caf52wpV4Wc",
+  "sites": [
+    {
+      "id": "拓竹科技bambu-lab-site-shanghai",
+      "name": "拓竹科技Bambu Lab",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "拓竹科技bambu-lab-site-shenzhen",
+      "name": "拓竹科技Bambu Lab",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f4c8061c4c39",
+      "title": "算法类、软件类、机械类、硬件类、运营类、内容类、设计类等",
+      "siteId": "拓竹科技bambu-lab-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bambulab.jobs.feishu.cn/s/caf52wpV4Wc",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "瑞众保险总公司",
+  "source": "xiaozhao-radar",
+  "name": "瑞众保险总公司",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ruiinsurance.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "瑞众保险总公司-site-beijing",
+      "name": "瑞众保险总公司",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c559bd044fcf",
+      "title": "销售管理  信息科技  保险精算 纪检监察",
+      "siteId": "瑞众保险总公司-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ruiinsurance.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "68"
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-中大咨询集团",
+  "name": "中大咨询集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "博士顾问  顾问培训生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中大咨询集团-site",
+      "name": "中大咨询集团",
+      "city": "广州市",
+      "province": "",
+      "location": {
+        "address": "广州市海珠区沥滘路368号广州之窗商务港A区7楼",
+        "lng": 113.313007,
+        "lat": 23.054485
+      }
+    }
+  ]
+}

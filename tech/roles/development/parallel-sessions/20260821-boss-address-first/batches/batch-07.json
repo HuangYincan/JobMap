@@ -1,0 +1,435 @@
+{
+ "batch": 7,
+ "companies": [
+  {
+   "file": "qqdoc-jobs/qqj-宽德智能学习实验室.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-宽德智能学习实验室.json",
+     "slug": "qqj-宽德智能学习实验室",
+     "company": "宽德智能学习实验室",
+     "site_id": "qqj-宽德智能学习实验室-site",
+     "site_name": "宽德智能学习实验室",
+     "city": "上海 北京",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-寅成智能.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-寅成智能.json",
+     "slug": "qqj-寅成智能",
+     "company": "寅成智能",
+     "site_id": "qqj-寅成智能-site",
+     "site_name": "寅成智能",
+     "city": "上海",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告 "
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-对点咨询.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-对点咨询.json",
+     "slug": "qqj-对点咨询",
+     "company": "对点咨询",
+     "site_id": "qqj-对点咨询-site",
+     "site_name": "对点咨询",
+     "city": "北京  天津  大连 青岛  西安  南京  上海  杭州  成都  重庆 广州  深圳",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-库洛游戏.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-库洛游戏.json",
+     "slug": "qqj-库洛游戏",
+     "company": "库洛游戏",
+     "site_id": "qqj-库洛游戏-site",
+     "site_name": "库洛游戏",
+     "city": "上海市",
+     "province": "",
+     "careerUrl": "https://docs.qq.com/smartsheet/DTkRMUVhoUWJXZEhJ?tab=sc_tBQ8lN"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-库洛游戏.json",
+     "slug": "qqj-库洛游戏",
+     "company": "库洛游戏",
+     "site_id": "qqj-库洛游戏-site-广州",
+     "site_name": "库洛游戏",
+     "city": "广州市",
+     "province": "",
+     "careerUrl": "https://docs.qq.com/smartsheet/DTkRMUVhoUWJXZEhJ?tab=sc_tBQ8lN"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-微风安全.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-微风安全.json",
+     "slug": "qqj-微风安全",
+     "company": "微风安全",
+     "site_id": "qqj-微风安全-site",
+     "site_name": "微风安全",
+     "city": "北京 上海 广州 苏州 浙江 湖北",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-心田花开.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-心田花开.json",
+     "slug": "qqj-心田花开",
+     "company": "心田花开",
+     "site_id": "qqj-心田花开-site",
+     "site_name": "心田花开",
+     "city": "成都 重庆  郑州  西安 武汉  长沙 南京 杭州  广州  深圳  全国",
+     "province": "",
+     "careerUrl": "https://xintianhuakai1.zhiye.com/campus/jobs?memory=%7B%7D&silence=1"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-招银云创.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-招银云创.json",
+     "slug": "qqj-招银云创",
+     "company": "招银云创",
+     "site_id": "qqj-招银云创-site",
+     "site_name": "招银云创",
+     "city": "深圳市、武汉市、杭州市",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/m/campus_apply/mbcloud/150116?recommendCode=DSmnP5XC#/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-捷讯光电.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-捷讯光电.json",
+     "slug": "qqj-捷讯光电",
+     "company": "捷讯光电",
+     "site_id": "qqj-捷讯光电-site",
+     "site_name": "捷讯光电",
+     "city": "合肥市",
+     "province": "",
+     "careerUrl": "https://www.hfjiexun.com/info.php?class_id=106103&page=1"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-数码视讯.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-数码视讯.json",
+     "slug": "qqj-数码视讯",
+     "company": "数码视讯",
+     "site_id": "qqj-数码视讯-site",
+     "site_name": "数码视讯",
+     "city": "北京  西安  全国其他",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-斯道德机械.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-斯道德机械.json",
+     "slug": "qqj-斯道德机械",
+     "company": "斯道德机械",
+     "site_id": "qqj-斯道德机械-site",
+     "site_name": "斯道德机械",
+     "city": "江苏无锡",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-新东方西安学校.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-新东方西安学校.json",
+     "slug": "qqj-新东方西安学校",
+     "company": "新东方西安学校",
+     "site_id": "qqj-新东方西安学校-site",
+     "site_name": "新东方西安学校",
+     "city": "西安 咸阳",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-新大陆自动识别.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-新大陆自动识别.json",
+     "slug": "qqj-新大陆自动识别",
+     "company": "新大陆自动识别",
+     "site_id": "qqj-新大陆自动识别-site",
+     "site_name": "新大陆自动识别",
+     "city": "福州 全国其他  海外",
+     "province": "",
+     "careerUrl": "https://nlscan.zhiye.com/campus/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-新易盛.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-新易盛.json",
+     "slug": "qqj-新易盛",
+     "company": "新易盛",
+     "site_id": "qqj-新易盛-site",
+     "site_name": "新易盛",
+     "city": "成都",
+     "province": "",
+     "careerUrl": "https://eoptolink.zhiye.com/campus/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-新现代教育.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-新现代教育.json",
+     "slug": "qqj-新现代教育",
+     "company": "新现代教育",
+     "site_id": "qqj-新现代教育-site",
+     "site_name": "新现代教育",
+     "city": "深圳",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-新能安AGT全球顶尖人才招募.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-新能安AGT全球顶尖人才招募.json",
+     "slug": "qqj-新能安AGT全球顶尖人才招募",
+     "company": "新能安AGT全球顶尖人才招募",
+     "site_id": "qqj-新能安AGT全球顶尖人才招募-site",
+     "site_name": "新能安AGT全球顶尖人才招募",
+     "city": "厦门",
+     "province": "",
+     "careerUrl": "https://wecruit.hotjob.cn/SU6a602354ba2dc64cbb8b78b8/pb/school.html?projectCode=505401&showProjectBanner=true"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-新能德.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-新能德.json",
+     "slug": "qqj-新能德",
+     "company": "新能德",
+     "site_id": "qqj-新能德-site",
+     "site_name": "新能德",
+     "city": "东莞",
+     "province": "",
+     "careerUrl": "https://nvtpower.zhiye.com/campus/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-施耐德电气.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site",
+     "site_name": "施耐德电气",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-上海",
+     "site_name": "施耐德电气",
+     "city": "上海市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-广州",
+     "site_name": "施耐德电气",
+     "city": "广州市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-厦门",
+     "site_name": "施耐德电气",
+     "city": "厦门市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-南京",
+     "site_name": "施耐德电气",
+     "city": "南京市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-杭州",
+     "site_name": "施耐德电气",
+     "city": "杭州市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-武汉",
+     "site_name": "施耐德电气",
+     "city": "武汉市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-苏州",
+     "site_name": "施耐德电气",
+     "city": "苏州市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-重庆",
+     "site_name": "施耐德电气",
+     "city": "重庆市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-西安",
+     "site_name": "施耐德电气",
+     "city": "西安市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气.json",
+     "slug": "qqj-施耐德电气",
+     "company": "施耐德电气",
+     "site_id": "qqj-施耐德电气-site-珠海",
+     "site_name": "施耐德电气",
+     "city": "珠海市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-施耐德电气AI星火实习生计划.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气AI星火实习生计划.json",
+     "slug": "qqj-施耐德电气AI星火实习生计划",
+     "company": "施耐德电气— AI星火实习生计划",
+     "site_id": "qqj-施耐德电气AI星火实习生计划-site",
+     "site_name": "施耐德电气— AI星火实习生计划",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气AI星火实习生计划.json",
+     "slug": "qqj-施耐德电气AI星火实习生计划",
+     "company": "施耐德电气— AI星火实习生计划",
+     "site_id": "qqj-施耐德电气AI星火实习生计划-site-上海",
+     "site_name": "施耐德电气— AI星火实习生计划",
+     "city": "上海市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-施耐德电气AI星火实习生计划.json",
+     "slug": "qqj-施耐德电气AI星火实习生计划",
+     "company": "施耐德电气— AI星火实习生计划",
+     "site_id": "qqj-施耐德电气AI星火实习生计划-site-广州",
+     "site_name": "施耐德电气— AI星火实习生计划",
+     "city": "广州市",
+     "province": "",
+     "careerUrl": "https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-时代共赢私募基金.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-时代共赢私募基金.json",
+     "slug": "qqj-时代共赢私募基金",
+     "company": "时代共赢私募基金",
+     "site_id": "qqj-时代共赢私募基金-site",
+     "site_name": "时代共赢私募基金",
+     "city": "北京 上海",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-昂瑞微电子.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-昂瑞微电子.json",
+     "slug": "qqj-昂瑞微电子",
+     "company": "昂瑞微电子",
+     "site_id": "qqj-昂瑞微电子-site",
+     "site_name": "昂瑞微电子",
+     "city": "北京 成都 深圳 香港",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  }
+ ]
+}

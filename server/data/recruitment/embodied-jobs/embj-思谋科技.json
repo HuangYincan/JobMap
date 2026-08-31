@@ -1,0 +1,112 @@
+{
+  "slug": "embj-思谋科技",
+  "source": "embodied-jobs",
+  "name": "思谋科技",
+  "sites": [
+    {
+      "id": "embj-思谋科技-site",
+      "name": "思谋科技",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "南山区深圳市前海深港合作区南山街道前海大道前海嘉里商务中心四期T2写字楼2201A",
+        "lng": 113.891749,
+        "lat": 22.526535
+      }
+    }
+  ],
+  "careerUrl": "https://app.mokahr.com/m/campus-recruitment/smartmore/40506#/job/1758bda9-1d08-48c7-9930-10105329a460",
+  "positions": [
+    {
+      "externalId": "embj-思谋科技-1",
+      "title": "机器人软件工程师-校招/实习",
+      "siteId": "embj-思谋科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/smartmore/40506#/job/1758bda9-1d08-48c7-9930-10105329a460",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-思谋科技-2",
+      "title": "算法工程师（机器视觉方向）-校招/实习",
+      "siteId": "embj-思谋科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/smartmore/40506#/job/786a211a-b117-4df2-91a8-736f14ad79e2",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-思谋科技-3",
+      "title": "算法工程师（强化学习方向）-校招/实习",
+      "siteId": "embj-思谋科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/smartmore/40506#/job/cf270fc1-d224-425f-912a-fc0b05c29b1c",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-思谋科技-4",
+      "title": "应用开发工程师（C++）-校招/实习",
+      "siteId": "embj-思谋科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/smartmore/40506#/job/af7f8a9b-1503-4de3-8da0-c11dbba8d3f0",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-思谋科技-5",
+      "title": "机械工程师（机械臂方向）-26届",
+      "siteId": "embj-思谋科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/smartmore/40506#/job/9e72db2c-1da0-44b9-a635-ca345be6565f",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-思谋科技-6",
+      "title": "产品经理（具身智能方向）-26届",
+      "siteId": "embj-思谋科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/smartmore/40506#/job/8633b3da-6f87-4635-8375-761f33c3677d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-思谋科技-7",
+      "title": "全栈工程师-校招/实习",
+      "siteId": "embj-思谋科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/smartmore/40506#/job/350896a6-68b5-46e4-9d62-df7597edbc50",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

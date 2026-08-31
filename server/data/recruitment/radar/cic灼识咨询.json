@@ -1,0 +1,52 @@
+{
+  "slug": "cic灼识咨询",
+  "source": "xiaozhao-radar",
+  "name": "CIC灼识咨询",
+  "tier": 10,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.cninsights.com/job-cn",
+  "sites": [
+    {
+      "id": "cic灼识咨询-site-beijing",
+      "name": "CIC灼识咨询",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "cic灼识咨询-site-shanghai",
+      "name": "CIC灼识咨询",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e6e1cc8657e8",
+      "title": "咨询实习生",
+      "siteId": "cic灼识咨询-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.cninsights.com/job-cn",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "72"
+}

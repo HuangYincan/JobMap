@@ -1,0 +1,73 @@
+{
+  "slug": "埃科光电",
+  "source": "xiaozhao-radar",
+  "name": "埃科光电",
+  "tier": 9,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "http://career.i-tek.cn/front.home.index/schoolList",
+  "sites": [
+    {
+      "id": "埃科光电-site-beijing",
+      "name": "埃科光电",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳/成都/苏州",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "埃科光电-site-shenzhen",
+      "name": "埃科光电",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市龙岗区坂田街道坂田社区吉华路489号6栋24B区",
+        "lng": 114.079138,
+        "lat": 22.639708
+      }
+    },
+    {
+      "id": "埃科光电-site-chengdu",
+      "name": "埃科光电",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都市武侯区环球中心n2号4-1-1214B",
+        "lng": 104.062902,
+        "lat": 30.571045
+      }
+    },
+    {
+      "id": "埃科光电-site-suzhou",
+      "name": "埃科光电",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/成都/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-93234c6475aa",
+      "title": "FPGA硬件开发工程师  嵌入式开发工程师  软件开发工程师  图像算法工程师  光学系统工程师  结构设计工程师  销售工程师  现场应用工程师",
+      "siteId": "埃科光电-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://career.i-tek.cn/front.home.index/schoolList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "35"
+}

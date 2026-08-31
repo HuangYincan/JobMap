@@ -1,0 +1,75 @@
+{
+  "slug": "昆仑芯",
+  "source": "xiaozhao-radar",
+  "name": "昆仑芯",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kunlunxin1.zhiye.com/custom/shixisheng?hideAll=true",
+  "sites": [
+    {
+      "id": "昆仑芯-site-beijing",
+      "name": "昆仑芯",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/杭州",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "昆仑芯-site-shanghai",
+      "name": "昆仑芯",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/杭州",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "昆仑芯-site-shenzhen",
+      "name": "昆仑芯",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/杭州",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "昆仑芯-site-hangzhou",
+      "name": "昆仑芯",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/上海/深圳/杭州",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-08cedca75355",
+      "title": "软件研发类   芯片研发类",
+      "siteId": "昆仑芯-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kunlunxin1.zhiye.com/custom/shixisheng?hideAll=true",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

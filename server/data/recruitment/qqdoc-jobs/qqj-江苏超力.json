@@ -1,0 +1,21 @@
+{
+  "slug": "qqj-江苏超力",
+  "name": "江苏超力",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "研发类  工程/技术类 管理 /综合类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-江苏超力-site",
+      "name": "江苏超力",
+      "city": "丹阳市",
+      "province": "",
+      "location": {
+        "address": "江苏省丹阳市访仙工业园兴园路1号"
+      }
+    }
+  ]
+}

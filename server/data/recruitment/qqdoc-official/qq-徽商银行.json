@@ -1,0 +1,21 @@
+{
+  "slug": "qq-徽商银行",
+  "name": "徽商银行",
+  "official_url": "https://rczp.hsbank.com.cn/#/homepage",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-徽商银行-site-hq",
+      "name": "徽商银行",
+      "city": "合肥市",
+      "province": "",
+      "location": {
+        "address": "安徽省合肥市包河区云谷路1699号徽银大厦",
+        "lng": 117.300971,
+        "lat": 31.711998
+      }
+    }
+  ]
+}

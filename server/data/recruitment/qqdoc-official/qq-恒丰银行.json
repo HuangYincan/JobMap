@@ -1,0 +1,22 @@
+{
+  "slug": "qq-恒丰银行",
+  "name": "恒丰银行",
+  "official_url": "https://career.hfbank.com.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-恒丰银行-site-hq",
+      "name": "恒丰银行",
+      "city": "济南市",
+      "province": "",
+      "location": {
+        "address": "山东省济南市历下区泺源大街8号绿城金融中心",
+        "lng": 117.035563,
+        "lat": 36.659901
+      }
+    }
+  ],
+  "city_pending": true
+}

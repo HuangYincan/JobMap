@@ -1,0 +1,119 @@
+.wrap {
+  display: inline-flex;
+  position: relative;
+}
+
+.trigger {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 10px;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  justify-content: space-between;
+  min-width: 0;
+  max-width: 108px;
+  padding: 8px 9px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+.triggerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  color: var(--muted);
+  flex: 0 0 auto;
+  transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.menu {
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
+  backdrop-filter: blur(24px) saturate(165%);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  list-style: none;
+  margin: 6px 0 0;
+  min-width: 132px;
+  padding: 5px;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  z-index: 50;
+}
+
+.option {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  font-size: 12px;
+  font-weight: 500;
+  justify-content: space-between;
+  padding: 8px 10px;
+  text-align: left;
+  transition: background 0.15s cubic-bezier(0.32, 0.72, 0, 1),
+    color 0.15s cubic-bezier(0.32, 0.72, 0, 1);
+  width: 100%;
+}
+
+.option:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.optionActive {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.check {
+  color: var(--blue);
+  font-size: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .trigger {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .trigger:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .menu {
+    background: rgba(26, 34, 39, 0.92);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .option {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .option:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}

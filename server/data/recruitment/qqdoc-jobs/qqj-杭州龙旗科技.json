@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-杭州龙旗科技",
+  "name": "杭州龙旗科技",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "AI研究员  量化研究员  高频算法研究员  AI Infra 工程师  策略技术支持  后端开发工程师  海外IR  法务合规负责人",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-杭州龙旗科技-site",
+      "name": "杭州龙旗科技",
+      "city": "杭州市",
+      "province": "",
+      "location": {
+        "address": "余杭区浙江省杭州市访溪路西溪艺术集合村21栋",
+        "lng": 120.049022,
+        "lat": 30.254167
+      }
+    }
+  ]
+}

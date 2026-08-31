@@ -1,0 +1,42 @@
+{
+  "slug": "羊晚集团",
+  "source": "xiaozhao-radar",
+  "name": "羊晚集团",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://job.ycwb.com.cn/ycwb/selectYourChannel",
+  "sites": [
+    {
+      "id": "羊晚集团-site-guangzhou",
+      "name": "羊晚集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-37c9ece8e21b",
+      "title": "经管类  融媒类 经管类等岗位",
+      "siteId": "羊晚集团-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.ycwb.com.cn/ycwb/selectYourChannel",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "85"
+}

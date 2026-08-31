@@ -1,0 +1,73 @@
+{
+  "slug": "锐石创芯",
+  "source": "xiaozhao-radar",
+  "name": "锐石创芯",
+  "tier": 11,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://radrocktech.jobs.feishu.cn/531403/position/list?spread=Q13728Z",
+  "sites": [
+    {
+      "id": "锐石创芯-site-shanghai",
+      "name": "锐石创芯",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区盛夏路光大安石科技园",
+        "lng": 121.628742,
+        "lat": 31.209287
+      }
+    },
+    {
+      "id": "锐石创芯-site-shenzhen",
+      "name": "锐石创芯",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市福田区上梅林中康路深圳新一代产业园",
+        "lng": 114.060837,
+        "lat": 22.573473
+      }
+    },
+    {
+      "id": "锐石创芯-site-chengdu",
+      "name": "锐石创芯",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都市武侯区益州大道南段港汇天地",
+        "lng": 104.057147,
+        "lat": 30.537162
+      }
+    },
+    {
+      "id": "锐石创芯-site-chongqing",
+      "name": "锐石创芯",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "上海/深圳/成都/重庆"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-205d3bf9514a",
+      "title": "RF设计工程师(PA) RF设计工程师(Switch&LNA) Analog  IC设计工程师 滤波器设计工程师 工艺工程师 生产计划工程师 采购工程师 AE射",
+      "siteId": "锐石创芯-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://radrocktech.jobs.feishu.cn/531403/position/list?spread=Q13728Z",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,49 @@
+{
+  "slug": "huawei-hangzhou",
+  "source": "official-career",
+  "name": "华为",
+  "industries": [
+    "hardware",
+    "ai"
+  ],
+  "scale": "bigtech",
+  "careerUrl": "https://career.huawei.com/",
+  "sites": [
+    {
+      "id": "huawei-hangzhou-site",
+      "name": "华为",
+      "location": {
+        "lng": 120.098,
+        "lat": 30.306,
+        "address": "滨江区江淑路1000号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "huawei-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "huawei-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "2012实验室",
+      "salary": {
+        "min": 15,
+        "max": 26
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "HarmonyOS"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.huawei.com/"
+    }
+  ],
+  "tier": 0,
+  "category": "39"
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-亿道集团",
+  "name": "亿道集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://emdoor1.zhiye.com/campus/jobs?shareId=fba9ddeb-446d-4698-bf76-42ebf54ab11a&shareSource=2",
+  "direction": "研发类、营销类、其他（会计/采购/销售）",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-亿道集团-site",
+      "name": "亿道集团",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "广东省深圳市坪山区光科一路8号亿道大厦",
+        "lng": 114.377363,
+        "lat": 22.731684
+      }
+    }
+  ]
+}

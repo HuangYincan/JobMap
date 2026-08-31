@@ -1,0 +1,57 @@
+{
+  "slug": "凡岛",
+  "source": "xiaozhao-radar",
+  "name": "凡岛",
+  "tier": 10,
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://job.fandow.com?pushCode=MKKMJ8Z",
+  "sites": [
+    {
+      "id": "凡岛-site-guangzhou",
+      "name": "凡岛",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市黄埔区科学大道18号芯大厦B座",
+        "lng": 113.424172,
+        "lat": 23.165213
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3d07e3c3efb9",
+      "title": "设计、技术、营销等",
+      "siteId": "凡岛-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.fandow.com?pushCode=MKKMJ8Z",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-9aa25291179d",
+      "title": "广告营销类 日化产品类  综合职能类 市场商务类 财务类 投资类 日化研发类 设计类",
+      "siteId": "凡岛-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.fandow.com/holidayIntern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "52"
+}

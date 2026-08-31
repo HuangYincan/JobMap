@@ -1,0 +1,68 @@
+{
+  "slug": "神州信息",
+  "source": "xiaozhao-radar",
+  "name": "神州信息",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://dcits.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "神州信息-site-beijing",
+      "name": "神州信息—AI实习生",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市西城区展览路街道西直门外大街136-2",
+        "lng": 116.33965,
+        "lat": 39.937641
+      }
+    },
+    {
+      "id": "神州信息-site-xian",
+      "name": "神州信息—AI实习生",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-91e3f4c8c453",
+      "title": "AI算法工程师  大模型应用开发工程师",
+      "siteId": "神州信息-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dcits.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-91e3f4c8c453-xian",
+      "title": "AI算法工程师  大模型应用开发工程师",
+      "siteId": "神州信息-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dcits.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

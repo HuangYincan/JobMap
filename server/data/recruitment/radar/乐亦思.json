@@ -1,0 +1,53 @@
+{
+  "slug": "乐亦思",
+  "source": "xiaozhao-radar",
+  "name": "乐亦思",
+  "tier": 12,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.wjx.top/vm/tFMrhjw.aspx",
+  "sites": [
+    {
+      "id": "乐亦思-site-shanghai",
+      "name": "乐亦思",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上城区平安金融中心A座32层",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "乐亦思-site-hangzhou",
+      "name": "乐亦思",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上城区平安金融中心A座32层",
+        "lng": 120.212713,
+        "lat": 30.250925
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-58f213bd2ffe",
+      "title": "SAT/雅思拓福教师 国际学科理科赦师国际高申备考核师 青少权师 督导班主任学管师",
+      "siteId": "乐亦思-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-11-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.wjx.top/vm/tFMrhjw.aspx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "82"
+}

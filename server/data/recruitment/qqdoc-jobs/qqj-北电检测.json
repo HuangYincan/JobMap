@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-北电检测",
+  "name": "北电检测",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://文中扫码投递简历",
+  "direction": "技术研发类  技能类 经营管理类  市场营销类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-北电检测-site",
+      "name": "北电检测",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "大兴区北京市北京经济技术开发区隆庆街9号1幢",
+        "lng": 116.510433,
+        "lat": 39.802774
+      }
+    }
+  ]
+}

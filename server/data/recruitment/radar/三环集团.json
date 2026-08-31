@@ -1,0 +1,64 @@
+{
+  "slug": "三环集团",
+  "source": "xiaozhao-radar",
+  "name": "三环集团",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.cctc.cc/school",
+  "sites": [
+    {
+      "id": "三环集团-site-shenzhen",
+      "name": "三环集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市光明区光源五路邦凯城4号楼13楼",
+        "lng": 113.93931,
+        "lat": 22.740229
+      }
+    },
+    {
+      "id": "三环集团-site-chengdu",
+      "name": "三环集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "四川省成都市金牛区蜀西路30号",
+        "lng": 103.999075,
+        "lat": 30.708945
+      }
+    },
+    {
+      "id": "三环集团-site-suzhou",
+      "name": "三环集团",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "吴中区金枫路218号",
+        "lng": 120.528201,
+        "lat": 31.280726
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cae051439751",
+      "title": "材料研发-无机/有机/浆料/金属方向AI+无机/有机材料研发AI+燃料电池非标机械设计 自动化应用开发机器视觉应用开发热工模拟设计热工结构设计",
+      "siteId": "三环集团-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.cctc.cc/school",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

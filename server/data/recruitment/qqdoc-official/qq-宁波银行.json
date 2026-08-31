@@ -1,0 +1,21 @@
+{
+  "slug": "qq-宁波银行",
+  "name": "宁波银行",
+  "official_url": "https://zhaopin.nbcb.com.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-宁波银行-site-hq",
+      "name": "宁波银行",
+      "city": "宁波市",
+      "province": "",
+      "location": {
+        "address": "浙江省宁波市鄞州区宁东路345号",
+        "lng": 121.614526,
+        "lat": 29.865136
+      }
+    }
+  ]
+}

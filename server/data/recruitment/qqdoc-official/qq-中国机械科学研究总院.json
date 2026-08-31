@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国机械科学研究总院",
+  "name": "中国机械科学研究总院",
+  "official_url": "https://www.cam.com.cn/channels/175.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国机械科学研究总院-site-hq",
+      "name": "中国机械科学研究总院",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区首体南路2号",
+        "lng": 116.324192,
+        "lat": 39.935706
+      }
+    }
+  ],
+  "city_pending": true
+}

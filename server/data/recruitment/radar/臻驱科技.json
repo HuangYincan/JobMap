@@ -1,0 +1,52 @@
+{
+  "slug": "臻驱科技",
+  "source": "xiaozhao-radar",
+  "name": "臻驱科技",
+  "tier": 9,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://leadrive.jobs.feishu.cn/391532/?spread=AMJWGFQ",
+  "sites": [
+    {
+      "id": "臻驱科技-site-shanghai",
+      "name": "臻驱科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区康桥镇叠桥路39号张江机器人谷4号楼9~12楼",
+        "lng": 121.623313,
+        "lat": 31.119683
+      }
+    },
+    {
+      "id": "臻驱科技-site-hangzhou",
+      "name": "臻驱科技",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "拱墅区祥园路88号5幢8层802室(中国智慧信息产业园M座)",
+        "lng": 120.117599,
+        "lat": 30.3362
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e41f5a792824",
+      "title": "LEDP-ETR卓越工程师",
+      "siteId": "臻驱科技-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://leadrive.jobs.feishu.cn/391532/?spread=AMJWGFQ",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "36"
+}

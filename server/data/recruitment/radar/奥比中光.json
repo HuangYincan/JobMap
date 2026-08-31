@@ -1,0 +1,168 @@
+{
+  "slug": "奥比中光",
+  "source": "xiaozhao-radar",
+  "name": "奥比中光",
+  "tier": 8,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://job.orbbec.com.cn/campus",
+  "sites": [
+    {
+      "id": "奥比中光-site-shanghai",
+      "name": "奥比中光",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/深圳/杭州/西安",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "奥比中光-site-shenzhen",
+      "name": "奥比中光",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳/杭州/西安",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "奥比中光-site-hangzhou",
+      "name": "奥比中光",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上海/深圳/杭州/西安",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    },
+    {
+      "id": "奥比中光-site-xian",
+      "name": "奥比中光",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "上海/深圳/杭州/西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1e1598be0b27",
+      "title": "算法类 软件类 硬件类 结构类 产品类  技术支持类  销售类 芯片类",
+      "siteId": "奥比中光-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.orbbec.com.cn/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-1e1598be0b27-xian",
+      "title": "算法类 软件类 硬件类 结构类 产品类  技术支持类  销售类 芯片类",
+      "siteId": "奥比中光-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.orbbec.com.cn/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "embj-奥比中光-1",
+      "title": "AI算法研究专家（大模型与飞轮方向）",
+      "siteId": "奥比中光-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.orbbec.com.cn/social/detail?jobAdId=57aa90e9-0c39-4594-a28d-e8c312517c82",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-奥比中光-2",
+      "title": "电机控制工程师（机械臂方向）",
+      "siteId": "奥比中光-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.orbbec.com.cn/social/detail?jobAdId=c1dce45b-2644-4c36-a357-109e9c8c7c89",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-奥比中光-3",
+      "title": "机械臂/四足机器人产研负责人",
+      "siteId": "奥比中光-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.orbbec.com.cn/social/detail?jobAdId=7c3c47df-5213-4c55-aa02-60a34eaf782f",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-奥比中光-4",
+      "title": "机器人开发者平台运营负责人",
+      "siteId": "奥比中光-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.orbbec.com.cn/social/detail?jobAdId=d5e75f85-7704-4c8f-8dfa-53872f5da41d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-奥比中光-5",
+      "title": "电机控制工程师",
+      "siteId": "奥比中光-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.orbbec.com.cn/social/detail?jobAdId=65f39f31-8d69-4e82-a13d-0c053c4a3f35",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-奥比中光-6",
+      "title": "算法优化工程师",
+      "siteId": "奥比中光-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.orbbec.com.cn/campus/detail?jobAdId=05c64a68-0855-4900-93c4-e4c2ed7fba4b",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "category": "39"
+}

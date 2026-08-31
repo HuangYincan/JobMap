@@ -1,0 +1,75 @@
+{
+  "slug": "杰瑞集团",
+  "source": "xiaozhao-radar",
+  "name": "杰瑞集团",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jereh.zhiye.com/campus",
+  "sites": [
+    {
+      "id": "杰瑞集团-site-beijing",
+      "name": "杰瑞集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "杰瑞集团-site-shanghai",
+      "name": "杰瑞集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "杰瑞集团-site-shenzhen",
+      "name": "杰瑞集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "杰瑞集团-site-chengdu",
+      "name": "杰瑞集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c3ba63fdd79e",
+      "title": "青年合伙人计划  技术研发 类  销售&技术服务类  职能&采购类",
+      "siteId": "杰瑞集团-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jereh.zhiye.com/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "35"
+}

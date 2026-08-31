@@ -1,0 +1,21 @@
+{
+  "slug": "qq-温州银行",
+  "name": "温州银行",
+  "official_url": "https://hr.wzbank.cn/apply/index.action",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-温州银行-site-hq",
+      "name": "温州银行",
+      "city": "温州市",
+      "province": "浙江省",
+      "location": {
+        "address": "浙江省温州市鹿城区会展路1316号",
+        "lng": 120.723447,
+        "lat": 28.009862
+      }
+    }
+  ]
+}

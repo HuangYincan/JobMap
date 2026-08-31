@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-苏纳",
+  "name": "苏纳",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://suna-opto.zhiye.com/campus/detail?jobAdId=35cc995a-3680-44aa-9bcd-7aeb857c3bf0",
+  "direction": "研发类工程师(27届提前批):研发工程师 电学设计工程师 测试研发工程师失效分析工程师 设备工程师 射频工程师 SIPI工程师 封装设计工程师 硬件工程师",
+  "deadline": "2026  08  05",
+  "sites": [
+    {
+      "id": "qqj-苏纳-site",
+      "name": "苏纳",
+      "city": "苏州市",
+      "province": "",
+      "location": {
+        "address": "吴中区江苏省苏州市工业园区华凌街9号泰凌产业园2号楼",
+        "lng": 120.770163,
+        "lat": 31.347566
+      }
+    }
+  ]
+}

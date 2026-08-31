@@ -1,0 +1,68 @@
+{
+  "slug": "舞肌科技",
+  "source": "xiaozhao-radar",
+  "name": "舞肌科技",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/wuji/145173?locale=zh-CN#/jobs",
+  "sites": [
+    {
+      "id": "舞肌科技-site-shenzhen",
+      "name": "舞肌科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "舞肌科技-site-beijing",
+      "name": "舞肌科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-60a751ffd4c5",
+      "title": "研发类 产品类  智造类 市场类 职能类",
+      "siteId": "舞肌科技-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/wuji/145173?locale=zh-CN#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-b074c633312d",
+      "title": "市场，平面设计，财务，人力实习生",
+      "siteId": "舞肌科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/wuji/145173?locale=zh-CN#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

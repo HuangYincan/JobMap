@@ -1,0 +1,75 @@
+{
+  "slug": "豪威集团",
+  "source": "xiaozhao-radar",
+  "name": "豪威集团",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ovt-omnivision.zhiye.com/jobs",
+  "sites": [
+    {
+      "id": "豪威集团-site-beijing",
+      "name": "豪威集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区丰豪东路中关村集成电路设计园2C号楼F7-702-705",
+        "lng": 116.248803,
+        "lat": 40.073359
+      }
+    },
+    {
+      "id": "豪威集团-site-shanghai",
+      "name": "豪威集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区上科路88号",
+        "lng": 121.602975,
+        "lat": 31.184976
+      }
+    },
+    {
+      "id": "豪威集团-site-shenzhen",
+      "name": "豪威集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区白石路高新安荟邻F1",
+        "lng": 113.952541,
+        "lat": 22.533453
+      }
+    },
+    {
+      "id": "豪威集团-site-chengdu",
+      "name": "豪威集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-42d47b4779db",
+      "title": "模拟IC设计 数字电路设计 图像算法 图像质量 模拟IC设计 数字芯片设计流程 实习生",
+      "siteId": "豪威集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ovt-omnivision.zhiye.com/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

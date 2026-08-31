@@ -1,0 +1,116 @@
+{
+  "slug": "德州仪器",
+  "source": "xiaozhao-radar",
+  "name": "德州仪器",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/ti/143986?sourceToken=654bdeefdeafd58dacbeefe00a5aaf88#/jobs",
+  "sites": [
+    {
+      "id": "德州仪器-site-beijing",
+      "name": "德州仪器",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "德州仪器-site-shanghai",
+      "name": "德州仪器",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "浦东新区亮秀路72号",
+        "lng": 121.602065,
+        "lat": 31.199689
+      }
+    },
+    {
+      "id": "德州仪器-site-guangzhou",
+      "name": "德州仪器",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "德州仪器-site-shenzhen",
+      "name": "德州仪器",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "德州仪器-site-chengdu",
+      "name": "德州仪器—成都制造基地",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b8878ca4454d",
+      "title": "销售与市场  研发 业务 支持  质量   生产 制造—成都制造基地  业务支持—成都制造基地",
+      "siteId": "德州仪器-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/ti/143986?sourceToken=654bdeefdeafd58dacbeefe00a5aaf88#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-1b9ce117968d",
+      "title": "质量工程师实习生 设备工程师实习生  工艺工程师实习生  产品工程师实习生  人力资源发展项目实习生 IT  自动化软件工程师实习生",
+      "siteId": "德州仪器-site-chengdu",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/ti/143986?sourceToken=18df34a6fe7bca5ac6c576bda5b266dd#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-48a1a933dc56",
+      "title": "销售与市场 研发  制造 业务支持 质量 生成",
+      "siteId": "德州仪器-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/ti/142216?sourceToken=48ea342d6a82b5481b606423d888d353#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,123 @@
+{
+  "slug": "embj-Figure AI",
+  "source": "embodied-jobs",
+  "name": "Figure AI",
+  "sites": [
+    {
+      "id": "embj-Figure AI-site",
+      "name": "Figure AI",
+      "city": "San Jose, CA",
+      "province": "",
+      "location": {
+        "address": "3960 N First St, San Jose, CA 95134"
+      }
+    }
+  ],
+  "careerUrl": "https://job-boards.greenhouse.io/figureai/jobs/4431092006",
+  "positions": [
+    {
+      "externalId": "embj-Figure AI-1",
+      "title": "Helix AI Engineer, Training Infrastructure",
+      "siteId": "embj-Figure AI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/figureai/jobs/4431092006",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Figure AI-2",
+      "title": "Helix AI Engineer, Robot Learning",
+      "siteId": "embj-Figure AI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/figureai/jobs/4649851006",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Figure AI-3",
+      "title": "Helix AI Engineer, Generative AI",
+      "siteId": "embj-Figure AI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/figureai/jobs/4671699006",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Figure AI-4",
+      "title": "Helix AI Engineer, Agentic Systems",
+      "siteId": "embj-Figure AI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/figureai/jobs/4659175006",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Figure AI-5",
+      "title": "Helix AI Engineer, Pretraining",
+      "siteId": "embj-Figure AI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/figureai/jobs/4671704006",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Figure AI-6",
+      "title": "Helix AI Engineer, Tooling",
+      "siteId": "embj-Figure AI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/figureai/jobs/4660876006",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Figure AI-7",
+      "title": "Embedded Actuation Engineer",
+      "siteId": "embj-Figure AI-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/figureai/jobs/4443990006?source=LinkedIn",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Figure AI-8",
+      "title": "Firmware Intern [Summer 2026]",
+      "siteId": "embj-Figure AI-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/figureai/jobs/4618805006",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

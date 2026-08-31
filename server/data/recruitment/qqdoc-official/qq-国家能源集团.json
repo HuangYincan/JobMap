@@ -1,0 +1,21 @@
+{
+  "slug": "qq-国家能源集团",
+  "name": "国家能源集团",
+  "official_url": "https://zhaopin.chnenergy.com.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国家能源集团-site-hq",
+      "name": "国家能源集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市东城区安定门西滨河路22号",
+        "lng": 116.399507,
+        "lat": 39.950134
+      }
+    }
+  ]
+}

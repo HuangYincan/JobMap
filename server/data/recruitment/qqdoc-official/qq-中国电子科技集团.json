@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中国电子科技集团",
+  "name": "中国电子科技集团",
+  "official_url": "http://www.cetc.com.cn/zgdk/1593022/1592495/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国电子科技集团-site-hq",
+      "name": "中国电子科技集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区海淀北二街6号",
+        "lng": 116.311777,
+        "lat": 39.983687
+      }
+    }
+  ]
+}

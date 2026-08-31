@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-鹏芯微",
+  "name": "鹏芯微",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://career.pxwsemi.com/campus/jobs",
+  "direction": "工艺研发工程师、工艺整合研发工程师、分析技术工程师、硬件系统整合工程师、半导体工艺工程师、工艺整合工程师、良率工程师、生产管理工程师、生产系统开发工程师、AMHS 系统工程师、AMHS 设备工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-鹏芯微-site",
+      "name": "鹏芯微",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "深圳市龙岗区平湖街道山厦社区中环大道中科谷产业园D栋",
+        "lng": 114.11359,
+        "lat": 22.704473
+      }
+    }
+  ]
+}

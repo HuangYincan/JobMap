@@ -1,0 +1,57 @@
+{
+  "slug": "思特威",
+  "source": "xiaozhao-radar",
+  "name": "思特威",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/smartsenstech1/56088?sessionid=#/jobs",
+  "sites": [
+    {
+      "id": "思特威-site-shanghai",
+      "name": "思特威",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区东业路上海星月金融湾东南侧约80米",
+        "lng": 121.580131,
+        "lat": 31.17806
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-29f16b582918",
+      "title": "研发类  职能类 运营类",
+      "siteId": "思特威-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/smartsenstech1/56088?sessionid=#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-660a9cc26ec2",
+      "title": "技术研发类 运营类  职能类 岗位",
+      "siteId": "思特威-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/smartsenstech1/56088?sessionid=#/jobs?commitment%5B0%5D=%E5%85%A8%E8%81%8C&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

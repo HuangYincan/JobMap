@@ -1,0 +1,41 @@
+{
+  "slug": "成都新东方",
+  "source": "xiaozhao-radar",
+  "name": "成都新东方",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jsj.top/f/fYqENY",
+  "sites": [
+    {
+      "id": "成都新东方-site-chengdu",
+      "name": "成都新东方",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d3491e83c93d",
+      "title": "教学管培生",
+      "siteId": "成都新东方-site-chengdu",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jsj.top/f/fYqENY",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "82"
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-迈睿机器人",
+  "name": "迈睿机器人",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "算法类  软件类   硬件/机械类  营销类  技术支持类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-迈睿机器人-site",
+      "name": "迈睿机器人",
+      "city": "杭州市",
+      "province": "",
+      "location": {
+        "address": "浙江省杭州市萧山区闻堰街道时代大道4887号(湘湖科创园)",
+        "lng": 120.188,
+        "lat": 30.112758
+      }
+    }
+  ]
+}

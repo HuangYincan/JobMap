@@ -1,0 +1,33 @@
+export const NavigationTasks = ['job_search', 'job_compare', 'interview_arrival'] as const;
+export const TravelModes = ['walk', 'bike', 'transit', 'drive'] as const;
+export const CoordinateSystems = ['wgs84', 'gcj02', 'bd09ll'] as const;
+export const LocationKinds = ['current_location', 'coordinate', 'poi', 'text'] as const;
+export const LocationPrecisions = ['exact', 'approximate'] as const;
+export const MissingSlotNames = ['origin', 'destination', 'city', 'position', 'appointment_time'] as const;
+export const RouteProviderIds = ['amap', 'tencent', 'baidu', 'estimate'] as const;
+export const RouteQualities = ['provider_route', 'estimate'] as const;
+
+export const MAX_QUERY_LENGTH = 200;
+export const MAX_CITY_LENGTH = 64;
+export const MAX_LABEL_LENGTH = 120;
+export const MAX_ID_LENGTH = 128;
+export const MAX_CANDIDATE_IDS = 5;
+export const MAX_PREFERRED_MODES = TravelModes.length;
+export const MAX_MISSING_SLOTS = MissingSlotNames.length;
+export const MAX_ROUTE_WARNINGS = 8;
+export const MAX_WARNING_LENGTH = 160;
+export const MAX_APPOINTMENT_TIME_LENGTH = 64;
+export const MAX_TIMEZONE_LENGTH = 64;
+export const MAX_ROUTE_ID_LENGTH = 128;
+export const MAX_SESSION_ID_LENGTH = 128;
+export const MAX_COMMUTE_MINUTES = 1_440;
+export const MIN_COMMUTE_MINUTES = 1;
+export const MAX_ARRIVAL_BUFFER_MINUTES = 180;
+export const MIN_ARRIVAL_BUFFER_MINUTES = 0;
+export const MAX_ROUTE_DURATION_SECONDS = 172_800;
+export const MAX_ROUTE_DISTANCE_METERS = 2_000_000;
+export const MAX_ROUTE_TTL_SECONDS = 3_600;
+export const MAX_TRANSFER_COUNT = 100;
+export const MAX_GEOMETRY_POINTS = 10_000;
+
+export const OPAQUE_ROUTE_ID_PATTERN = /^rte_[a-f0-9]{32,124}$/;

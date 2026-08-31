@@ -1,0 +1,88 @@
+{
+  "slug": "wind万得",
+  "source": "xiaozhao-radar",
+  "name": "Wind万得",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.wind.com.cn/portal/zh/JoinUs/recruit.html?positionType=9002",
+  "sites": [
+    {
+      "id": "wind万得-site-shanghai",
+      "name": "Wind万得",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "浦东新区浦明路1500号万得大厦",
+        "lng": 121.511817,
+        "lat": 31.208503
+      }
+    },
+    {
+      "id": "wind万得-site-shenzhen",
+      "name": "Wind万得",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳/南京/苏州",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "wind万得-site-nanjing",
+      "name": "Wind万得",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/深圳/南京/苏州",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    },
+    {
+      "id": "wind万得-site-suzhou",
+      "name": "Wind万得",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/深圳/南京/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-842233373ca3",
+      "title": "数据挖掘工程师  大数据工程师  HR 视频制作  客户服务股份  品面设计师  培训讲师  AI算法工程师  数据分析师  管培生  测试开发工程师  博士后",
+      "siteId": "wind万得-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.wind.com.cn/portal/zh/JoinUs/recruit.html?positionType=9002",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-842233373ca3-nanjing",
+      "title": "数据挖掘工程师  大数据工程师  HR 视频制作  客户服务股份  品面设计师  培训讲师  AI算法工程师  数据分析师  管培生  测试开发工程师  博士后",
+      "siteId": "wind万得-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.wind.com.cn/portal/zh/JoinUs/recruit.html?positionType=9002",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

@@ -1,0 +1,64 @@
+{
+  "slug": "mks集团",
+  "source": "xiaozhao-radar",
+  "name": "MKS集团",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://mks.tupu360.com/pageQrCode?targetUrl=a7f4739eb94ec9ef30b20404ffc1f9fcd476fd99ad24ebac1882f5427f22f1abb3843af9a039e761c5a66c8bec5ae6acd003554fd30c89f8dff4f13e9f5fa3e8ceb78e5abb1c40c7ac964afdb486ca04",
+  "sites": [
+    {
+      "id": "mks集团-site-shanghai",
+      "name": "MKS集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/广州/深圳/无锡",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "mks集团-site-guangzhou",
+      "name": "MKS集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市越秀区较场西路23号中华国际中心b座3301号",
+        "lng": 113.28249,
+        "lat": 23.125682
+      }
+    },
+    {
+      "id": "mks集团-site-shenzhen",
+      "name": "MKS集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/广州/深圳/无锡",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-47814c061aff",
+      "title": "产品应用实习生（工艺研发）  EHS实习生  市场营销实习生  电镀工艺实习生  材料分析实习生  内勤销售实习生  制程工艺工程师实习生",
+      "siteId": "mks集团-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mks.tupu360.com/pageQrCode?targetUrl=a7f4739eb94ec9ef30b20404ffc1f9fcd476fd99ad24ebac1882f5427f22f1abb3843af9a039e761c5a66c8bec5ae6acd003554fd30c89f8dff4f13e9f5fa3e8ceb78e5abb1c40c7ac964afdb486ca04",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

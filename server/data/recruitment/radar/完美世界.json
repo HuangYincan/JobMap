@@ -1,0 +1,62 @@
+{
+  "slug": "完美世界",
+  "source": "xiaozhao-radar",
+  "name": "完美世界",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.games.wanmei.com/school.html?sessionid=",
+  "sites": [
+    {
+      "id": "完美世界-site-beijing",
+      "name": "完美世界",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市朝阳区北苑路86号院嘉铭桐城306号楼",
+        "lng": 116.423631,
+        "lat": 40.003593
+      }
+    },
+    {
+      "id": "完美世界-site-shanghai",
+      "name": "完美世界",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市杨浦区大连路500号西门子上海中心D栋",
+        "lng": 121.513681,
+        "lat": 31.258978
+      }
+    },
+    {
+      "id": "完美世界-site-suzhou",
+      "name": "完美世界",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-217a4337b62a",
+      "title": "程序类 游戏策划类 美术设计类 综合类",
+      "siteId": "完美世界-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.games.wanmei.com/school.html?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

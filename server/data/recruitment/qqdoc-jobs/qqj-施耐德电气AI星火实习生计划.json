@@ -1,0 +1,58 @@
+{
+  "slug": "qqj-施耐德电气AI星火实习生计划",
+  "name": "施耐德电气— AI星火实习生计划",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html",
+  "direction": "AI工具开发 intern AI咨询实习生 数系统/工字化创新实习生 AI-PMO项目实习生 AI数据模型开发实习生 AI开发实习生 AI产品实习生 AI解决方案设计实习生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-施耐德电气AI星火实习生计划-site",
+      "name": "施耐德电气— AI星火实习生计划",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市朝阳区望京东路6号A座施耐德电气大厦",
+        "lng": 116.488634,
+        "lat": 40.007064
+      }
+    },
+    {
+      "id": "qqj-施耐德电气AI星火实习生计划-site-上海",
+      "name": "施耐德电气— AI星火实习生计划",
+      "city": "上海市",
+      "location": {
+        "address": "上海市普陀区云岭东路89号长风国际大厦5-14层",
+        "lng": 121.393773,
+        "lat": 31.223061
+      }
+    },
+    {
+      "id": "qqj-施耐德电气AI星火实习生计划-site-广州",
+      "name": "施耐德电气— AI星火实习生计划",
+      "city": "广州市",
+      "location": {
+        "address": "广州市天河区金穗路62号侨鑫国际金融中心20层02A单元",
+        "lng": 113.322939,
+        "lat": 23.118339
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-00cm1vlw",
+      "title": "AI星火实习生计划",
+      "siteId": "qqj-施耐德电气AI星火实习生计划-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

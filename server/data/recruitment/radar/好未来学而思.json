@@ -1,0 +1,42 @@
+{
+  "slug": "好未来学而思",
+  "source": "xiaozhao-radar",
+  "name": "好未来学而思",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/tal/95443?sourceToken=38176e8b61d4d5c11d4aa9b436d6c4e7#/jobs",
+  "sites": [
+    {
+      "id": "好未来学而思-site-beijing",
+      "name": "好未来学而思",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-fddd7bf6a360",
+      "title": "运营类  市场与公关类  课程策划类   专业支持类",
+      "siteId": "好未来学而思-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/tal/95443?sourceToken=38176e8b61d4d5c11d4aa9b436d6c4e7#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "82"
+}

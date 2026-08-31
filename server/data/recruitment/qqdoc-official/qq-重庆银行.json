@@ -1,0 +1,21 @@
+{
+  "slug": "qq-重庆银行",
+  "name": "重庆银行",
+  "official_url": "https://www.cqcbank.com/cn/jrch/rczp/xyzp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-重庆银行-site-hq",
+      "name": "重庆银行",
+      "city": "重庆市",
+      "province": "",
+      "location": {
+        "address": "两江新区重庆市江北区江北城街道永平门街6号",
+        "lng": 106.568869,
+        "lat": 29.573272
+      }
+    }
+  ]
+}

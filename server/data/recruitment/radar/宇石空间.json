@@ -1,0 +1,42 @@
+{
+  "slug": "宇石空间",
+  "source": "xiaozhao-radar",
+  "name": "宇石空间",
+  "tier": 9,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/astronstone/168327?locale=zh-CN#/jobs",
+  "sites": [
+    {
+      "id": "宇石空间-site-beijing",
+      "name": "宇石空间",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/长沙",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a63c2060d218",
+      "title": "发动机研发 结构域发射 动力 系统 电力系统  软件/控制  材料工艺  技术管理 总体",
+      "siteId": "宇石空间-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/astronstone/168327?locale=zh-CN#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "37"
+}

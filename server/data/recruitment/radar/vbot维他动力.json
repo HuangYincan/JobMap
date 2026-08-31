@@ -1,0 +1,53 @@
+{
+  "slug": "vbot维他动力",
+  "source": "xiaozhao-radar",
+  "name": "Vbot维他动力",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://vitadynamics.jobs.feishu.cn/501772",
+  "sites": [
+    {
+      "id": "vbot维他动力-site-beijing",
+      "name": "Vbot维他动力",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "vbot维他动力-site-shanghai",
+      "name": "Vbot维他动力",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-63c683c46cb8",
+      "title": "具身智能数据算法工程师 语音前端算法工程师 具身智能 Agent 开发工程师 具身智能运控算法工程师 世界模型算法工程师  操作算法工程师",
+      "siteId": "vbot维他动力-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://vitadynamics.jobs.feishu.cn/501772",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

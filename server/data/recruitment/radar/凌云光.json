@@ -1,0 +1,64 @@
+{
+  "slug": "凌云光",
+  "source": "xiaozhao-radar",
+  "name": "凌云光",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/lusterinc/44882?sessionid=#/jobs?zhineng%5B0%5D=239907",
+  "sites": [
+    {
+      "id": "凌云光-site-beijing",
+      "name": "凌云光",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区翠湖南环路13号7号楼",
+        "lng": 116.179337,
+        "lat": 40.073204
+      }
+    },
+    {
+      "id": "凌云光-site-shenzhen",
+      "name": "凌云光",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市龙华区塘前樟企路1号",
+        "lng": 114.017386,
+        "lat": 22.742788
+      }
+    },
+    {
+      "id": "凌云光-site-suzhou",
+      "name": "凌云光",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "苏州市吴中区层阁路滨湖大厦南侧约150米",
+        "lng": 120.539709,
+        "lat": 31.193093
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6146c4b05e87",
+      "title": "AI算法工程师  光学工程师  软件工程师  客户技术支持工程师",
+      "siteId": "凌云光-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/lusterinc/44882?sessionid=#/jobs?zhineng%5B0%5D=239907",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "35"
+}

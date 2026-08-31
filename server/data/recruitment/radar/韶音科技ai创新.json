@@ -1,0 +1,41 @@
+{
+  "slug": "韶音科技ai创新",
+  "source": "xiaozhao-radar",
+  "name": "韶音科技AI创新",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/aftershokzhr/36940#/job/81aab138-acf0-4995-a00a-dbde38850385?from=qrcode",
+  "sites": [
+    {
+      "id": "韶音科技ai创新-site-shenzhen",
+      "name": "韶音科技AI创新专项",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-550b8185ec4c",
+      "title": "AI 创新专项实习生",
+      "siteId": "韶音科技ai创新-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/aftershokzhr/36940#/job/81aab138-acf0-4995-a00a-dbde38850385?from=qrcode",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "39"
+}

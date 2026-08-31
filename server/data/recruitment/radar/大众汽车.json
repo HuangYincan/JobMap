@@ -1,0 +1,42 @@
+{
+  "slug": "大众汽车",
+  "source": "xiaozhao-radar",
+  "name": "大众汽车",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.duomian.com/project/13806486/",
+  "sites": [
+    {
+      "id": "大众汽车-site-beijing",
+      "name": "大众汽车",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-50f11959ec4e",
+      "title": "市场营销  销售支持  政府事务  法务合规   信息技术  企业融资  人力资源 内部审核计",
+      "siteId": "大众汽车-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.duomian.com/project/13806486/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "36"
+}

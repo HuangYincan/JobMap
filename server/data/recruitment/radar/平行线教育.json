@@ -1,0 +1,75 @@
+{
+  "slug": "平行线教育",
+  "source": "xiaozhao-radar",
+  "name": "平行线教育",
+  "tier": 9,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zzpxx.zhiye.com/jobs?activityGuid=32e0ac7b-5779-44bf-b95b-c3dd495a3db1",
+  "sites": [
+    {
+      "id": "平行线教育-site-beijing",
+      "name": "平行线教育",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/广州/深圳/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "平行线教育-site-guangzhou",
+      "name": "平行线教育",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州/深圳/成都",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "平行线教育-site-shenzhen",
+      "name": "平行线教育",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "平行线教育-site-chengdu",
+      "name": "平行线教育",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/广州/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-83e1fe3ecc00",
+      "title": "竞赛教练/清北教师  主讲教师（数理化英）英计划管培生  高中寒假暑期助教",
+      "siteId": "平行线教育-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zzpxx.zhiye.com/jobs?activityGuid=32e0ac7b-5779-44bf-b95b-c3dd495a3db1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "82"
+}

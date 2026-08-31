@@ -1,0 +1,64 @@
+{
+  "slug": "英特尔中国",
+  "source": "xiaozhao-radar",
+  "name": "英特尔中国",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://chinacampus.jobs.intel.cn/intel/position/index?recruitmentType=INTERNSHIPRECRUITMENT",
+  "sites": [
+    {
+      "id": "英特尔中国-site-beijing",
+      "name": "英特尔中国",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区科学院南路2号融科资讯中心a座",
+        "lng": 116.325436,
+        "lat": 39.984273
+      }
+    },
+    {
+      "id": "英特尔中国-site-shanghai",
+      "name": "英特尔中国",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "闵行区紫星路880号",
+        "lng": 121.454877,
+        "lat": 31.021508
+      }
+    },
+    {
+      "id": "英特尔中国-site-shenzhen",
+      "name": "英特尔中国",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区粤海街道高新南九道9号威新软件园3号楼",
+        "lng": 113.949267,
+        "lat": 22.529927
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cd4439761662",
+      "title": "研发类 销售与市场类  生产制造类 职能类 具体见投递方式链接",
+      "siteId": "英特尔中国-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://chinacampus.jobs.intel.cn/intel/position/index?recruitmentType=INTERNSHIPRECRUITMENT",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

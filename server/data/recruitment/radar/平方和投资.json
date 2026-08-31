@@ -1,0 +1,68 @@
+{
+  "slug": "平方和投资",
+  "source": "xiaozhao-radar",
+  "name": "平方和投资",
+  "tier": 8,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/alpha2fund/151124?locale=zh-CN#/jobs?page=1&anchorName=jobsList&commitment%5B0%5D=%E5%85%A8%E8%81%8C",
+  "sites": [
+    {
+      "id": "平方和投资-site-beijing",
+      "name": "平方和投资",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "海淀区鼎好大厦A座8楼",
+        "lng": 116.314525,
+        "lat": 39.984476
+      }
+    },
+    {
+      "id": "平方和投资-site-shanghai",
+      "name": "平方和投资",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "浦东新区东亚银行金融大厦1502",
+        "lng": 121.5024,
+        "lat": 31.233997
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-61581d4e247b",
+      "title": "机器学习研究员  量化策略研究员 市场运营 经理",
+      "siteId": "平方和投资-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/alpha2fund/151124?locale=zh-CN#/jobs?page=1&anchorName=jobsList&commitment%5B0%5D=%E5%85%A8%E8%81%8C",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-6d06348f2d6a",
+      "title": "量化策略 机器学习实习生 量化系统开发实习生 市场运营实习生",
+      "siteId": "平方和投资-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mp.weixin.qq.com/s/PvJ94SS7DTATKZgCkuc81Q",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

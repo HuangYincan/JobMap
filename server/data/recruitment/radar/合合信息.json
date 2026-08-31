@@ -1,0 +1,57 @@
+{
+  "slug": "合合信息",
+  "source": "xiaozhao-radar",
+  "name": "合合信息",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://intsig.zhiye.com/campus/jobs?shareId=adf0a291-6379-4265-a3f2-61fd4bafe92c&shareSource=2",
+  "sites": [
+    {
+      "id": "合合信息-site-shanghai",
+      "name": "合合信息",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市静安区万荣路1260号",
+        "lng": 121.439766,
+        "lat": 31.294655
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6086b81e59ff",
+      "title": "算法、软件、产品、运营、硬件等",
+      "siteId": "合合信息-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://intsig.zhiye.com/campus/jobs?shareId=adf0a291-6379-4265-a3f2-61fd4bafe92c&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-c9fe077352ab",
+      "title": "大模型算法工程师  数据分析师  测试工程师  运营经理  客户成功  产运管培生  AI全栈开发工程师  用户研究 产品经理  AI创新设计师  AI数据分析",
+      "siteId": "合合信息-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://intsig.zhiye.com/campus/jobs?shareId=adf0a291-6379-4265-a3f2-61fd4bafe92c&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

@@ -1,0 +1,207 @@
+{
+  "slug": "中望软件",
+  "source": "xiaozhao-radar",
+  "name": "中望软件",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.zwsoft.cn/job/campus",
+  "sites": [
+    {
+      "id": "中望软件-site-shanghai",
+      "name": "中望软件",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "虹口区海伦路440号金融街海伦中心A座23层",
+        "lng": 121.489551,
+        "lat": 31.258033
+      }
+    },
+    {
+      "id": "中望软件-site-guangzhou",
+      "name": "中望软件",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州市天河区健明三路培英职业技术学校西北侧约300米",
+        "lng": 113.398776,
+        "lat": 23.140588
+      }
+    },
+    {
+      "id": "中望软件-site-wuhan",
+      "name": "中望软件",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市洪山区关山大道保利天悦中心6楼",
+        "lng": 114.409472,
+        "lat": 30.489327
+      }
+    },
+    {
+      "id": "中望软件-site-xian",
+      "name": "中望软件",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "上海/广州/武汉/西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-281b1dc6d8a0",
+      "title": "图形算法工程师 算法研究员 AI算法工程师  C++研发工程师  CAE研发工程师 C++研发工程师 C++研发工程师 CAM工程师  AI算法工程师",
+      "siteId": "中望软件-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zwsoft.cn/job/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-281b1dc6d8a0-xian",
+      "title": "图形算法工程师 算法研究员 AI算法工程师  C++研发工程师  CAE研发工程师 C++研发工程师 C++研发工程师 CAM工程师  AI算法工程师",
+      "siteId": "中望软件-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zwsoft.cn/job/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-00ftp2pa",
+      "title": "博超产品",
+      "siteId": "中望软件-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://youpin.bochao.com.cn/channels/stdr/",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-005hwaw1",
+      "title": "隆迪产品",
+      "siteId": "中望软件-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zwsoft.cn/longdi/download/241?code=KrNPFxfNkr1B",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00qsyqlq",
+      "title": "产品应用支持",
+      "siteId": "中望软件-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zwsoft.cn/job/campus/javascript:;",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-019v674n",
+      "title": "产品安全通告",
+      "siteId": "中望软件-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zwsoft.cn/job/campus/javascript:;",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00j6tzry",
+      "title": "人才招聘",
+      "siteId": "中望软件-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zwsoft.cn/job/campus/javascript:;",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01qplydf",
+      "title": "社会招聘",
+      "siteId": "中望软件-site-shanghai",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/zwcad/28355#/jobs",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00d5scu0",
+      "title": "实习招聘",
+      "siteId": "中望软件-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/zwcad/91960#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01ovwj8l",
+      "title": "全部产品",
+      "siteId": "中望软件-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zwsoft.cn/download",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00dm7ir9",
+      "title": "热门技术问题",
+      "siteId": "中望软件-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zwsoft.cn/tutorial",
+      "retrievedAt": "2026-08-20"
+    }
+  ],
+  "category": "65"
+}

@@ -1,0 +1,41 @@
+{
+  "slug": "高频杭州",
+  "source": "xiaozhao-radar",
+  "name": "高频杭州",
+  "tier": 12,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://mba.jinshuju.com/f/I6XNMU",
+  "sites": [
+    {
+      "id": "高频杭州-site-hangzhou",
+      "name": "高频杭州",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "杭州",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-627a9c1b5874",
+      "title": "市场运营",
+      "siteId": "高频杭州-site-hangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://mba.jinshuju.com/f/I6XNMU",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "67"
+}

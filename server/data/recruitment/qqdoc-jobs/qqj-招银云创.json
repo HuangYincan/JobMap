@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-招银云创",
+  "name": "招银云创",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://app.mokahr.com/m/campus_apply/mbcloud/150116?recommendCode=DSmnP5XC#/jobs",
+  "direction": "JAVA开发工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-招银云创-site",
+      "name": "招银云创",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "深圳市福田区梅林街道梅都社区中康路136号深圳新一代产业园5栋1901",
+        "lng": 114.061757,
+        "lat": 22.573335
+      }
+    }
+  ]
+}

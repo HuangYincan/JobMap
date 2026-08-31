@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中国旅游集团",
+  "name": "中国旅游集团",
+  "official_url": "https://www.ctg.cn/talent-concept",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国旅游集团-site-hq",
+      "name": "中国旅游集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市东城区东单北大街1号国旅大厦",
+        "lng": 116.417252,
+        "lat": 39.915319
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-天加",
+  "name": "天加",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://tica.zhiye.com/campus/jobs?memory=%7B%7D&silence=1",
+  "direction": "研发技术类  营销支持类  质量制造类  职能管理类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-天加-site",
+      "name": "天加",
+      "city": "南京市",
+      "province": "",
+      "location": {
+        "address": "栖霞区南京经济技术开发区恒业路6号",
+        "lng": 118.899361,
+        "lat": 32.130566
+      }
+    }
+  ]
+}

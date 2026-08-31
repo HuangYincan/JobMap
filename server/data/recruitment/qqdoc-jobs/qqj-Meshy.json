@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-Meshy",
+  "name": "Meshy",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "Generative AI ResearcherGeometry Processing EngineerCreator Marketing SpecialistFullstack Engineer Machine  Learning  Engineer  Dataset",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-Meshy-site",
+      "name": "Meshy",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区海淀大街34号6层601房间",
+        "lng": 116.307461,
+        "lat": 39.98223
+      }
+    }
+  ]
+}

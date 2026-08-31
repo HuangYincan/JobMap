@@ -1,0 +1,64 @@
+{
+  "slug": "深信服-x-star",
+  "source": "xiaozhao-radar",
+  "name": "深信服[X-STAR]",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/sangfor/27944?locale=zh-CN#/jobs?commitment%5B0%5D=%E5%85%A8%E8%81%8C&zhineng%5B0%5D=192154",
+  "sites": [
+    {
+      "id": "深信服-x-star-site-beijing",
+      "name": "深信服[X-STAR]计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区北三环中路43号院19号楼",
+        "lng": 116.372525,
+        "lat": 39.974308
+      }
+    },
+    {
+      "id": "深信服-x-star-site-shenzhen",
+      "name": "深信服[X-STAR]计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "南山区H568线",
+        "lng": 113.939677,
+        "lat": 22.57499
+      }
+    },
+    {
+      "id": "深信服-x-star-site-chengdu",
+      "name": "深信服[X-STAR]计划",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "武侯区四川省成都市桂溪街道锦城大道694号奥克斯广场b座",
+        "lng": 104.06172,
+        "lat": 30.575915
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-51de8215fcda",
+      "title": "AI算法类、AI-infra类、Agent开发类",
+      "siteId": "深信服-x-star-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/sangfor/27944?locale=zh-CN#/jobs?commitment%5B0%5D=%E5%85%A8%E8%81%8C&zhineng%5B0%5D=192154",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

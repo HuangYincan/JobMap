@@ -1,0 +1,74 @@
+{
+  "slug": "betta-hangzhou",
+  "source": "official-career",
+  "name": "贝达药业",
+  "industries": [
+    "biotech"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.bettapharma.com/Jobs/campus",
+  "sites": [
+    {
+      "id": "betta-hangzhou-site",
+      "name": "贝达药业",
+      "location": {
+        "lng": 120.258,
+        "lat": 30.438,
+        "address": "临平区兴中路355号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "betta-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "betta-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "研发",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.bettapharma.com/joinus"
+    },
+    {
+      "externalId": "portal-betta-campus",
+      "title": "校园招聘（官网投递）",
+      "siteId": "betta-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.bettapharma.com/Jobs/campus",
+      "retrievedAt": "2026-08-17"
+    },
+    {
+      "externalId": "portal-betta-social",
+      "title": "社会招聘（官网投递）",
+      "siteId": "betta-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bettapharma.zhiye.com/Social",
+      "retrievedAt": "2026-08-17"
+    }
+  ],
+  "tier": 6,
+  "category": "27"
+}

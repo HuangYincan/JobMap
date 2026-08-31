@@ -1,0 +1,75 @@
+{
+  "slug": "珞石机器人",
+  "source": "xiaozhao-radar",
+  "name": "珞石机器人",
+  "tier": 8,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app135149.eapps.dingtalkcloud.com/campus-recruitment/luoshi/100004651?locale=zh-CN#/",
+  "sites": [
+    {
+      "id": "珞石机器人-site-beijing",
+      "name": "珞石机器人",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区农科院西路6号海青大厦A座7楼",
+        "lng": 116.282212,
+        "lat": 39.945598
+      }
+    },
+    {
+      "id": "珞石机器人-site-shanghai",
+      "name": "珞石机器人",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/武汉",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "珞石机器人-site-shenzhen",
+      "name": "珞石机器人",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市宝安区大洋路中粮(福安)智汇创新园",
+        "lng": 113.814932,
+        "lat": 22.691563
+      }
+    },
+    {
+      "id": "珞石机器人-site-wuhan",
+      "name": "珞石机器人",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉",
+        "lng": 114.3,
+        "lat": 30.59
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ac6a9f8f28f8",
+      "title": "机器人工程  机械电子  自动化  计算机力学  航空航天  应用数学 电气工程  电机电控  控制理论与控制工程  人工智能  机器视觉  电子信息等专业",
+      "siteId": "珞石机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app135149.eapps.dingtalkcloud.com/campus-recruitment/luoshi/100004651?locale=zh-CN#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

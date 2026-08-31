@@ -1,0 +1,56 @@
+{
+  "slug": "途游游戏",
+  "source": "xiaozhao-radar",
+  "name": "途游游戏",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus_apply/tuyoogame/71965?recommendCode=DSjm96j8&hash=%23%2Fjobs#/jobs",
+  "sites": [
+    {
+      "id": "途游游戏-site-beijing",
+      "name": "途游游戏",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0eeee39ea387",
+      "title": "创意策划 广告投放  AI 视频设计  动作设计师  动效设计师  模型设计师  平面设计师  原画设计师  游戏UI设计师",
+      "siteId": "途游游戏-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/tuyoogame/71965?recommendCode=DSjm96j8&hash=%23%2Fjobs#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-c004c9892d09",
+      "title": "创意策划训练生  （2027届暑期实习生转正通道）",
+      "siteId": "途游游戏-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/tuyoogame/71965?sourceToken=1ab57d132009d150ff3924b66a5af602#/job/fb47f99f-8573-4d82-bf5b-bb205d4b0ac7",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "64"
+}

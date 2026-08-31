@@ -1,0 +1,41 @@
+{
+  "slug": "货拉拉全球拓展管培生",
+  "source": "xiaozhao-radar",
+  "name": "货拉拉全球拓展管培生",
+  "tier": 6,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/huolalahr/98660?sourceToken=832309c8596be192c0b5f5120dd1960a#/jobs?zhineng%5B0%5D=72638",
+  "sites": [
+    {
+      "id": "货拉拉全球拓展管培生-site-shenzhen",
+      "name": "货拉拉全球拓展管培生",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7e04a6f3f09a",
+      "title": "全球拓展管培生  GMT",
+      "siteId": "货拉拉全球拓展管培生-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/huolalahr/98660?sourceToken=832309c8596be192c0b5f5120dd1960a#/jobs?zhineng%5B0%5D=72638",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "54"
+}

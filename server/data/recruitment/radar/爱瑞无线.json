@@ -1,0 +1,53 @@
+{
+  "slug": "爱瑞无线",
+  "source": "xiaozhao-radar",
+  "name": "爱瑞无线",
+  "tier": 12,
+  "industries": [
+    "telecom"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/arraycomm/70372#/jobs",
+  "sites": [
+    {
+      "id": "爱瑞无线-site-shanghai",
+      "name": "爱瑞无线",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市松江区洞泾镇高技路60弄B1B2幢",
+        "lng": 121.295786,
+        "lat": 31.093893
+      }
+    },
+    {
+      "id": "爱瑞无线-site-chengdu",
+      "name": "爱瑞无线",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "四川省成都市武侯区天府二街139号水电大厦8层",
+        "lng": 104.065299,
+        "lat": 30.550678
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ade74a9d8c6b",
+      "title": "核心网软件开发工程师  管培生 网管开发工程师  财务管培生 供应链专员  GPU优化工程师",
+      "siteId": "爱瑞无线-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/arraycomm/70372#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

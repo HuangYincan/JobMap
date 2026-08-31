@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中原银行",
+  "name": "中原银行",
+  "official_url": "https://zybank.zhiye.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中原银行-site-hq",
+      "name": "中原银行",
+      "city": "郑州市",
+      "province": "",
+      "location": {
+        "address": "金水区郑州市郑东新区CBD商务外环23号中科金座大厦",
+        "lng": 113.735108,
+        "lat": 34.774271
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "韶音科技-寻星",
+  "source": "xiaozhao-radar",
+  "name": "韶音科技-寻星",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/aftershokzhr/36940#/jobs?page=1&anchorName=jobsList&commitment%5B0%5D=%E5%AE%9E%E4%B9%A0&keyword=%E5%AF%BB%E6%98%9F",
+  "sites": [
+    {
+      "id": "韶音科技-寻星-site-shenzhen",
+      "name": "韶音科技-寻星计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-732453e6e096",
+      "title": "营销运营类产品创新类 设计策划类IT类品质管理类职能类",
+      "siteId": "韶音科技-寻星-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/aftershokzhr/36940#/jobs?page=1&anchorName=jobsList&commitment%5B0%5D=%E5%AE%9E%E4%B9%A0&keyword=%E5%AF%BB%E6%98%9F",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

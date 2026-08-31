@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-FMCConsulting",
+  "name": "FMC Consulting",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://www.fmces.com/candidate",
+  "direction": "猎头顾问管培生 /实习生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-FMCConsulting-site",
+      "name": "FMC Consulting",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市黄浦区马当路388号SOHO复兴广场A栋501室",
+        "lng": 121.474439,
+        "lat": 31.214724
+      }
+    }
+  ]
+}

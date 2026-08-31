@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-航天502所",
+  "name": "航天502所",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://app.mokahr.com/campus-recruitment/bice/144168#/jobs",
+  "direction": "智能科学与技术  控制科学与工程   航空宇航科学与技术  仪器科学与技术  计算机科学与技术  电子科学与技术  信息与通讯工程  光学工程  电气工程  电子信息  软件工程 网络空间安全  机械  机械工程",
+  "deadline": "2026  07 29",
+  "sites": [
+    {
+      "id": "qqj-航天502所-site",
+      "name": "航天502所",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区中关村南三街16号",
+        "lng": 116.328716,
+        "lat": 39.979749
+      }
+    }
+  ]
+}

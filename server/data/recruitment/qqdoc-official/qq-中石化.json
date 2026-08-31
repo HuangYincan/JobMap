@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中石化",
+  "name": "中石化",
+  "official_url": "http://job.sinopec.com/#/index",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中石化-site-hq",
+      "name": "中石化",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市朝阳区朝阳门北大街22号",
+        "lng": 116.436303,
+        "lat": 39.925133
+      }
+    }
+  ],
+  "city_pending": true
+}

@@ -1,0 +1,94 @@
+{
+  "slug": "智元机器人",
+  "source": "xiaozhao-radar",
+  "name": "智元机器人",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://agirobot.jobs.feishu.cn/s/FahuJHPMrOQ",
+  "sites": [
+    {
+      "id": "智元机器人-site-shanghai",
+      "name": "智元机器人",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "浦东新区秀浦路2555号29幢",
+        "lng": 121.60761,
+        "lat": 31.13053
+      }
+    },
+    {
+      "id": "智元机器人-site-beijing",
+      "name": "智元机器人",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "海淀区丹棱街1号互联网金融中心1楼",
+        "lng": 116.313241,
+        "lat": 39.979313
+      }
+    },
+    {
+      "id": "智元机器人-site-shenzhen",
+      "name": "智元机器人",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市南山区高新南环路深圳湾科技生态园",
+        "lng": 113.950958,
+        "lat": 22.531989
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a465d571ae45",
+      "title": "算法/软件/硬件/测试/产品等",
+      "siteId": "智元机器人-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/s/FahuJHPMrOQ",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-e911922e8807",
+      "title": "技术类  战略与产品类  营销服类  供应链与制造类  职能类",
+      "siteId": "智元机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/s/FahuJHPMrOQ",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-f847f73a1976",
+      "title": "本体类 大模型类 算法类 软件类 测试类",
+      "siteId": "智元机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://agirobot.jobs.feishu.cn/internrecruitment/?spread=SR5WGWA",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

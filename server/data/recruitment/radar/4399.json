@@ -1,0 +1,42 @@
+{
+  "slug": "4399",
+  "source": "xiaozhao-radar",
+  "name": "4399",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.4399om.com/weixin/?r=job/agent&type=2&isOpen=0&jobTableType=1&code=nczui",
+  "sites": [
+    {
+      "id": "4399-site-guangzhou",
+      "name": "4399",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5cb388c597f8",
+      "title": "策划、技术、美术、运营、职能",
+      "siteId": "4399-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.4399om.com/weixin/?r=job/agent&type=2&isOpen=0&jobTableType=1&code=nczui",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

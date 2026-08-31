@@ -1,0 +1,42 @@
+{
+  "slug": "烽火通信",
+  "source": "xiaozhao-radar",
+  "name": "烽火通信",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://v.wjx.cn/vm/OtJsHsZ.aspx",
+  "sites": [
+    {
+      "id": "烽火通信-site-wuhan",
+      "name": "烽火通信—暑期开放日",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市江夏区高新四路6号",
+        "lng": 114.424246,
+        "lat": 30.447121
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b16364fc624f",
+      "title": "技术支持 芯片研发 硬件研发智能制造产品测试  软件研发解决方案等方向;",
+      "siteId": "烽火通信-site-wuhan",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://v.wjx.cn/vm/OtJsHsZ.aspx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

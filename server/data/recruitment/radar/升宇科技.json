@@ -1,0 +1,79 @@
+{
+  "slug": "升宇科技",
+  "source": "xiaozhao-radar",
+  "name": "升宇科技",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/apply/luoshu/39933#/job/3063ce1f-78a2-4d54-b85b-fd1902f638a2",
+  "sites": [
+    {
+      "id": "升宇科技-site-beijing",
+      "name": "升宇科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区学院路街道学清路逸成东苑3号楼一层",
+        "lng": 116.351357,
+        "lat": 40.013843
+      }
+    },
+    {
+      "id": "升宇科技-site-shanghai",
+      "name": "升宇科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市闵行区新源路1356弄正珏大厦A栋920",
+        "lng": 121.398872,
+        "lat": 31.048342
+      }
+    },
+    {
+      "id": "升宇科技-site-xian",
+      "name": "升宇科技",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/上海/西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1c8cbecde24a",
+      "title": "模拟电路 数字电路 版图 电源设计工程师 应用工程师 其他产研及职能类岗位",
+      "siteId": "升宇科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/luoshu/39933#/job/3063ce1f-78a2-4d54-b85b-fd1902f638a2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-1c8cbecde24a-xian",
+      "title": "模拟电路 数字电路 版图 电源设计工程师 应用工程师 其他产研及职能类岗位",
+      "siteId": "升宇科技-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/luoshu/39933#/job/3063ce1f-78a2-4d54-b85b-fd1902f638a2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "35"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "正浩ecofiow",
+  "source": "xiaozhao-radar",
+  "name": "正浩EcofIow",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.ecoflow.com/602892/position/list?keywords=&category=&location=&project=7383906321248880908&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+  "sites": [
+    {
+      "id": "正浩ecofiow-site-shenzhen",
+      "name": "正浩EcofIow",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d08e6e36457a",
+      "title": "研发类  产品类  供应链管理类  采购管理类  专业职能类",
+      "siteId": "正浩ecofiow-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.ecoflow.com/602892/position/list?keywords=&category=&location=&project=7383906321248880908&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "38"
+}

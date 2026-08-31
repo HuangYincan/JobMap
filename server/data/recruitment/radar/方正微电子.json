@@ -1,0 +1,42 @@
+{
+  "slug": "方正微电子",
+  "source": "xiaozhao-radar",
+  "name": "方正微电子",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://founderic.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "方正微电子-site-shenzhen",
+      "name": "方正微电子",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市龙岗区宝龙七路5号",
+        "lng": 114.307817,
+        "lat": 22.6932
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6e8f43da93a6",
+      "title": "技术研发类  工程技术类 其他类",
+      "siteId": "方正微电子-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://founderic.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

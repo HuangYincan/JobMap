@@ -1,0 +1,22 @@
+{
+  "slug": "qq-湖北银行",
+  "name": "湖北银行",
+  "official_url": "http://www.hubeibank.cn/cn/rczp/zhbbzp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-湖北银行-site-hq",
+      "name": "湖北银行",
+      "city": "武汉市",
+      "province": "",
+      "location": {
+        "address": "湖北省武汉市武昌区中北路86号湖北银行大厦",
+        "lng": 114.347571,
+        "lat": 30.554549
+      }
+    }
+  ],
+  "city_pending": true
+}

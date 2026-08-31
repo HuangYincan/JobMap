@@ -1,0 +1,68 @@
+{
+  "slug": "是为科技",
+  "source": "xiaozhao-radar",
+  "name": "是为科技",
+  "tier": 9,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://56rfo.fanqier.cn/f/ud7jtfap",
+  "sites": [
+    {
+      "id": "是为科技-site-shanghai",
+      "name": "是为科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/南京",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "是为科技-site-nanjing",
+      "name": "是为科技",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "江苏省南京市江宁区秣陵街道清水亭西路2号秣陵中心C栋601~602室",
+        "lng": 118.819698,
+        "lat": 31.916153
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-994dd6055698",
+      "title": "硬件工程师 软件工程师 EMC工程师  结构工程师 工艺设备开发工程师 管培生物流计划工程师 现场工艺/设备工程师  质量工程师  采购工程师 项目运营",
+      "siteId": "是为科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://56rfo.fanqier.cn/f/ud7jtfap",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-994dd6055698-nanjing",
+      "title": "硬件工程师 软件工程师 EMC工程师  结构工程师 工艺设备开发工程师 管培生物流计划工程师 现场工艺/设备工程师  质量工程师  采购工程师 项目运营",
+      "siteId": "是为科技-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://56rfo.fanqier.cn/f/ud7jtfap",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "36"
+}

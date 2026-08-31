@@ -1,0 +1,21 @@
+{
+  "slug": "qq-吉林银行",
+  "name": "吉林银行",
+  "official_url": "https://www.jlbank.com.cn/jlbank/gyjx/rczp/xyzp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-吉林银行-site-hq",
+      "name": "吉林银行",
+      "city": "长春市",
+      "province": "吉林省",
+      "location": {
+        "address": "吉林省长春市南关区人民大街10666号",
+        "lng": 125.33002,
+        "lat": 43.812796
+      }
+    }
+  ]
+}

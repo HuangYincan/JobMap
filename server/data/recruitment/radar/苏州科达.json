@@ -1,0 +1,51 @@
+{
+  "slug": "苏州科达",
+  "source": "xiaozhao-radar",
+  "name": "苏州科达",
+  "tier": 8,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kedacom.zhiye.com/Campus",
+  "sites": [
+    {
+      "id": "苏州科达-site-shanghai",
+      "name": "苏州科达",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/苏州",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "苏州科达-site-suzhou",
+      "name": "苏州科达",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3697b1750ab1",
+      "title": "算法类  开发类  测试支持类 产品管理类  专业类岗位",
+      "siteId": "苏州科达-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kedacom.zhiye.com/Campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

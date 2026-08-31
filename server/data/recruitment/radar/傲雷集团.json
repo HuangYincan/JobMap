@@ -1,0 +1,42 @@
+{
+  "slug": "傲雷集团",
+  "source": "xiaozhao-radar",
+  "name": "傲雷集团",
+  "tier": 9,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://olight.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "傲雷集团-site-shenzhen",
+      "name": "傲雷集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市宝安区宝安大道福海信息港a3栋",
+        "lng": 113.804699,
+        "lat": 22.674224
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-85caba3745ab",
+      "title": "结构工程师  电子工程师  软件工程师  视频剪辑  付费推广  渠道销售  文案策划  客服专员",
+      "siteId": "傲雷集团-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://olight.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

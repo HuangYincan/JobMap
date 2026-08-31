@@ -1,0 +1,146 @@
+{
+  "slug": "极飞科技",
+  "source": "xiaozhao-radar",
+  "name": "极飞科技",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhaopin.xa.com/intern/jobs",
+  "sites": [
+    {
+      "id": "极飞科技-site-guangzhou",
+      "name": "极飞科技",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市天河区高普路115号",
+        "lng": 113.415104,
+        "lat": 23.176201
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-660f3606e784",
+      "title": "机器人算法实习生（路径规划）招聘助理 物资专员 定位算法工程师 生产实习生",
+      "siteId": "极飞科技-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.xa.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "embj-极飞科技-1",
+      "title": "机器人算法工程师（电机控制）",
+      "siteId": "极飞科技-site-guangzhou",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.xa.com/social/detail?jobAdId=f26f62a8-7b6c-42df-aa22-e38ea9d55c13",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极飞科技-2",
+      "title": "高级电机控制算法工程师",
+      "siteId": "极飞科技-site-guangzhou",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.xa.com/social/detail?jobAdId=3eaca699-b097-48f2-9b14-2e5b20e4b644",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极飞科技-3",
+      "title": "AI训练师",
+      "siteId": "极飞科技-site-guangzhou",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.xa.com/social/detail?jobAdId=7436c45e-e6ef-4f17-8c9f-2c75b53b2a38",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极飞科技-4",
+      "title": "高级产品工程师",
+      "siteId": "极飞科技-site-guangzhou",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.xa.com/social/detail?jobAdId=e3cd9924-7ef4-44e0-9292-344395ade5ba",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极飞科技-5",
+      "title": "高级项目管理工程师",
+      "siteId": "极飞科技-site-guangzhou",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.xa.com/social/detail?jobAdId=7990dc0d-3c85-456d-8738-0f32d7b26741",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极飞科技-6",
+      "title": "硬件工程师（电控方向）",
+      "siteId": "极飞科技-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://zhaopin.xa.com/campus/detail?jobAdId=5232db36-710a-4be8-8eb9-824959b8d40a",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极飞科技-7",
+      "title": "AI训练师",
+      "siteId": "极飞科技-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.xa.com/campus/detail?jobAdId=8a842af9-c860-45a9-8a87-7e2943517891",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极飞科技-8",
+      "title": "应用开发工程师",
+      "siteId": "极飞科技-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.xa.com/campus/detail?jobAdId=733bd371-19fc-4b3d-88ec-3b56f44fcadd",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "category": "39"
+}

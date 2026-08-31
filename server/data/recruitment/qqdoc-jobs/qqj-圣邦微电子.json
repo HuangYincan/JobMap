@@ -1,0 +1,120 @@
+{
+  "slug": "qqj-圣邦微电子",
+  "name": "圣邦微电子",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://campus.51job.com/sgmicro2027/job.html",
+  "direction": "模拟集成电路设计工程师 数字集成电路设计工程师 数字验证工程师 工艺开发工程师 版图设计工程师 版图工程师PDK 工程师 测试研发工程师 项目管理工程师 TPE测试产品工程师 应用工程师 销售工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-圣邦微电子-site",
+      "name": "圣邦微电子",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区西三环北路87号国际财经中心D座11层",
+        "lng": 116.308969,
+        "lat": 39.934921
+      }
+    },
+    {
+      "id": "qqj-圣邦微电子-site-成都",
+      "name": "圣邦微电子",
+      "city": "成都市",
+      "location": {
+        "address": "成都市成华区双庆路10号(17层1702B室)",
+        "lng": 104.115933,
+        "lat": 30.650308
+      }
+    },
+    {
+      "id": "qqj-圣邦微电子-site-武汉",
+      "name": "圣邦微电子",
+      "city": "武汉市",
+      "location": {
+        "address": "武汉市洪山区关山大道332号(1808室)",
+        "lng": 114.409814,
+        "lat": 30.49075
+      }
+    },
+    {
+      "id": "qqj-圣邦微电子-site-上海",
+      "name": "圣邦微电子",
+      "city": "上海市",
+      "location": {
+        "address": "上海市徐汇区漕溪北路88号圣爱大厦1706室",
+        "lng": 121.437325,
+        "lat": 31.191849
+      }
+    },
+    {
+      "id": "qqj-圣邦微电子-site-苏州",
+      "name": "圣邦微电子",
+      "city": "苏州市",
+      "location": {
+        "address": "虎丘区苏州工业园区星湖街328号创意产业园2幢603室",
+        "lng": 120.731127,
+        "lat": 31.264353
+      }
+    },
+    {
+      "id": "qqj-圣邦微电子-site-杭州",
+      "name": "圣邦微电子",
+      "city": "杭州市",
+      "location": {
+        "lng": 120.15,
+        "lat": 30.27,
+        "address": "杭州市滨江区启飞路350号(1号楼2001-1室)"
+      }
+    },
+    {
+      "id": "qqj-圣邦微电子-site-深圳",
+      "name": "圣邦微电子",
+      "city": "深圳市",
+      "location": {
+        "address": "深圳市南山区高新南六道6号(15层)",
+        "lng": 113.954237,
+        "lat": 22.535638
+      }
+    },
+    {
+      "id": "qqj-圣邦微电子-site-厦门",
+      "name": "圣邦微电子",
+      "city": "厦门市",
+      "location": {
+        "lng": 118.09,
+        "lat": 24.48
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-01cyw50a",
+      "title": "招聘职位",
+      "siteId": "qqj-圣邦微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/sgmicro2027/job.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00ndm47l",
+      "title": "招聘流程",
+      "siteId": "qqj-圣邦微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/sgmicro2027/job.html",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "slug": "deepway-hangzhou",
+  "source": "official-career",
+  "name": "深势科技",
+  "industries": [
+    "ai",
+    "biotech"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.dp.tech/career",
+  "sites": [
+    {
+      "id": "deepway-hangzhou-site",
+      "name": "深势科技",
+      "location": {
+        "lng": 120.098,
+        "lat": 30.286,
+        "address": "西湖区西溪谷国际商务中心"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "deepway-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "deepway-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "算法工程",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.dp.tech/career"
+    }
+  ],
+  "tier": 7,
+  "category": "65"
+}

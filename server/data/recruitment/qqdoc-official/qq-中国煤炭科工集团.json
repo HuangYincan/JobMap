@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中国煤炭科工集团",
+  "name": "中国煤炭科工集团",
+  "official_url": "https://www.ccteg.cn/zh/article/textList/70",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国煤炭科工集团-site-hq",
+      "name": "中国煤炭科工集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市朝阳区和平街13区煤炭大厦",
+        "lng": 116.425682,
+        "lat": 39.962562
+      }
+    }
+  ]
+}

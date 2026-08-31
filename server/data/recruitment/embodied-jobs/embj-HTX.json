@@ -1,0 +1,71 @@
+{
+  "slug": "embj-HTX",
+  "source": "embodied-jobs",
+  "name": "HTX",
+  "sites": [
+    {
+      "id": "embj-HTX-site",
+      "name": "HTX",
+      "city": "Singapore",
+      "province": "",
+      "location": {
+        "address": "1 Stars Avenue, Singapore 138507"
+      }
+    }
+  ],
+  "careerUrl": "https://jobs.careers.gov.sg/jobs/hrp/16942564/005056a3-d347-1fe0-b9f5-c21905af6284",
+  "positions": [
+    {
+      "externalId": "embj-HTX-1",
+      "title": "Engineer / Lead Engineer - Embodied AI Research & Development, RAUS COE",
+      "siteId": "embj-HTX-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.careers.gov.sg/jobs/hrp/16942564/005056a3-d347-1fe0-b9f5-c21905af6284",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-HTX-2",
+      "title": "Engineer / Lead Engineer - Robotics, Automation & Unmanned Systems",
+      "siteId": "embj-HTX-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.careers.gov.sg/jobs/hrp/16722255/005056a3-d347-1fe0-acf8-2d9fa698e281",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-HTX-3",
+      "title": "Engineer / Lead Engineer, Product management, AI Products",
+      "siteId": "embj-HTX-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.careers.gov.sg/jobs/hrp/16373654/005056a3-d347-1fe0-a7da-26d97a89e27d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-HTX-4",
+      "title": "Engineer / Lead Engineer, Applied Vision AI R&D, S&S CoE",
+      "siteId": "embj-HTX-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.careers.gov.sg/jobs/hrp/16942580/005056a3-d347-1fe0-b9f5-df148d8f6284",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

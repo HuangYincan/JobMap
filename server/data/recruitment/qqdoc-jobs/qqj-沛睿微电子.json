@@ -1,0 +1,151 @@
+{
+  "slug": "qqj-沛睿微电子",
+  "name": "沛睿微电子",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://www.raymx-micro.com/Home/Position",
+  "direction": "IC验证工程师 算法/架构工程师 数字IC设计工程师  模拟IC设计工程师  固件/软件开发工程师  布局布线/SOC后端工程师",
+  "deadline": "2026  09 30",
+  "sites": [
+    {
+      "id": "qqj-沛睿微电子-site",
+      "name": "沛睿微电子",
+      "city": "合肥市",
+      "province": "",
+      "location": {
+        "address": "瑶海区安徽省合肥市新站高新区萧城路6号",
+        "lng": 117.312455,
+        "lat": 31.914878
+      }
+    },
+    {
+      "id": "qqj-沛睿微电子-site-苏州",
+      "name": "沛睿微电子",
+      "city": "苏州市",
+      "location": {
+        "lng": 120.58,
+        "lat": 31.3
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-00lsgz5n",
+      "title": "招聘公告",
+      "siteId": "qqj-沛睿微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position/Home/Campus",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01m6rfkj",
+      "title": "校园招聘",
+      "siteId": "qqj-沛睿微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position/Home/Position",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01a6ekg7",
+      "title": "社会招聘",
+      "siteId": "qqj-沛睿微电子-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position/Home/Social",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00ok8z2d",
+      "title": "IC验证工程师",
+      "siteId": "qqj-沛睿微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position/Home/PositionDetails/94",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00gq0pvz",
+      "title": "数字IC设计工程师",
+      "siteId": "qqj-沛睿微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position/Home/PositionDetails/93",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00k6n9dn",
+      "title": "模拟IC设计工程师",
+      "siteId": "qqj-沛睿微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position/Home/PositionDetails/96",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01shjb3e",
+      "title": "固件/软件开发工程师",
+      "siteId": "qqj-沛睿微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position/Home/PositionDetails/95",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-011njxrt",
+      "title": "算法/架构工程师",
+      "siteId": "qqj-沛睿微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position/Home/PositionDetails/98",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-015qyqcl",
+      "title": "布局布线/SoC后端工程师",
+      "siteId": "qqj-沛睿微电子-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.raymx-micro.com/Home/Position/Home/PositionDetails/97",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

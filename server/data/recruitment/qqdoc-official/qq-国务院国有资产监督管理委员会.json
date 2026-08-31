@@ -1,0 +1,22 @@
+{
+  "slug": "qq-国务院国有资产监督管理委员会",
+  "name": "国务院国有资产监督管理委员会",
+  "official_url": "https://www.mohrss.gov.cn/SYrlzyhshbzb/fwyd/SYkaoshizhaopin/zyhgjjgsydwgkzp/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国务院国有资产监督管理委员会-site-hq",
+      "name": "国务院国有资产监督管理委员会",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区宣武门西大街26号",
+        "lng": 116.356829,
+        "lat": 39.89776
+      }
+    }
+  ],
+  "city_pending": true
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "玖治科技",
+  "source": "xiaozhao-radar",
+  "name": "玖治科技",
+  "tier": 10,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://nzx0bhokwn.jobs.feishu.cn/266184/position/list",
+  "sites": [
+    {
+      "id": "玖治科技-site-shenzhen",
+      "name": "玖治科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区粤海街道高新南七道128号国家工程实验室大楼B栋8楼",
+        "lng": 113.94841,
+        "lat": 22.533981
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e8286cc23abc",
+      "title": "医学产品实习生 算法实习生 用户洞察实习生 国内电商运营实习生 国内营销实习生  招聘实习生 雇主品牌设计实习生 AI法务实习生 财务实习生",
+      "siteId": "玖治科技-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://nzx0bhokwn.jobs.feishu.cn/266184/position/list",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

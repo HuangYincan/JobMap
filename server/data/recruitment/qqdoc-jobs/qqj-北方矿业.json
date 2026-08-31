@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-北方矿业",
+  "name": "北方矿业",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://bfky.iguopin.com/?sessionid=",
+  "direction": "专业技术类  运营管理类  矿业类  理工科类  经营类  财会类岗位",
+  "deadline": "2026  07 31",
+  "sites": [
+    {
+      "id": "qqj-北方矿业-site",
+      "name": "北方矿业",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区新街口外大街28号C座6层618号",
+        "lng": 116.372279,
+        "lat": 39.953832
+      }
+    }
+  ]
+}

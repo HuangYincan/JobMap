@@ -1,0 +1,68 @@
+{
+  "slug": "qqj-芯原股份",
+  "name": "芯原股份",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://campus.51job.com/VeriSilicon2027/post.html",
+  "direction": "数字前端设计验证工程师 数字后端设计工程师 模拟电路设计工程师 基础IP 电路设计工程师 射频集成电路设计工程 数字基带设计工程师版图设计工程 硬件测试工程师 软件工程师 编译器工程师",
+  "deadline": "2026 08  23",
+  "sites": [
+    {
+      "id": "qqj-芯原股份-site",
+      "name": "芯原股份",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市浦东新区春晓路289号20楼(张江大厦)",
+        "lng": 121.584726,
+        "lat": 31.205543
+      }
+    },
+    {
+      "id": "qqj-芯原股份-site-南京",
+      "name": "芯原股份",
+      "city": "南京市",
+      "location": {
+        "address": "浦口区江苏省南京市江北新区星火路17号创智大厦B座22层",
+        "lng": 118.697767,
+        "lat": 32.155896
+      }
+    },
+    {
+      "id": "qqj-芯原股份-site-成都",
+      "name": "芯原股份",
+      "city": "成都市",
+      "location": {
+        "address": "武侯区四川省成都市高新区天府软件园C区10栋23层",
+        "lng": 104.073428,
+        "lat": 30.538004
+      }
+    },
+    {
+      "id": "qqj-芯原股份-site-广州",
+      "name": "芯原股份",
+      "city": "广州市",
+      "location": {
+        "address": "广东省广州市白云区石门街道兴湖街1号白云湖滨未来科技产业园1期C栋13楼",
+        "lng": 113.225754,
+        "lat": 23.224449
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-01lj3j8j",
+      "title": "直通校招",
+      "siteId": "qqj-芯原股份-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/VeriSilicon2027/post.html/#",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

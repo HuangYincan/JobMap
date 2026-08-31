@@ -1,0 +1,53 @@
+{
+  "slug": "科尔尼大中华区",
+  "source": "xiaozhao-radar",
+  "name": "科尔尼大中华区",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kearney.taleo.net/careersection/01c/jobdetail.ftl?job=006JY",
+  "sites": [
+    {
+      "id": "科尔尼大中华区-site-beijing",
+      "name": "科尔尼大中华区",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "科尔尼大中华区-site-shanghai",
+      "name": "科尔尼大中华区",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ca949539b415",
+      "title": "商业 分析师 （Business  AnaIyst)",
+      "siteId": "科尔尼大中华区-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-24",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kearney.taleo.net/careersection/01c/jobdetail.ftl?job=006JY",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "72"
+}

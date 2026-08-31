@@ -1,0 +1,64 @@
+{
+  "slug": "unity-中国",
+  "source": "xiaozhao-radar",
+  "name": "Unity 中国",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://recruiting.unity.cn/982864/?sessionid=",
+  "sites": [
+    {
+      "id": "unity-中国-site-beijing",
+      "name": "Unity 中国",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "unity-中国-site-shanghai",
+      "name": "Unity 中国",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市虹口区东大名路上海白玉兰广场",
+        "lng": 121.497931,
+        "lat": 31.249066
+      }
+    },
+    {
+      "id": "unity-中国-site-guangzhou",
+      "name": "Unity 中国",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e7d61732125c",
+      "title": "Unity云原生AI开发实习生 技术美术实习生 软件工程实习生-AI Agent开发引擎研发实习生-团结引擎 AI数据工程实习生  （训练数据&清晰方向）",
+      "siteId": "unity-中国-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://recruiting.unity.cn/982864/?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

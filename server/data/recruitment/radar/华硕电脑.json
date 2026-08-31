@@ -1,0 +1,75 @@
+{
+  "slug": "华硕电脑",
+  "source": "xiaozhao-radar",
+  "name": "华硕电脑",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://asus.zhiye.com/Intern",
+  "sites": [
+    {
+      "id": "华硕电脑-site-beijing",
+      "name": "华硕电脑",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/重庆",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "华硕电脑-site-shanghai",
+      "name": "华硕电脑",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/重庆",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "华硕电脑-site-guangzhou",
+      "name": "华硕电脑",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/重庆",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "华硕电脑-site-chongqing",
+      "name": "华硕电脑",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "重庆市城口县葛城街道后南街15号附10号",
+        "lng": 108.669037,
+        "lat": 31.944257
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-6447c06ee4d6",
+      "title": "业务类岗位  运营类岗位",
+      "siteId": "华硕电脑-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://asus.zhiye.com/Intern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

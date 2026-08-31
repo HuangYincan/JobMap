@@ -1,0 +1,49 @@
+{
+  "slug": "hundsun-hangzhou",
+  "source": "official-career",
+  "name": "恒生电子",
+  "industries": [
+    "finance",
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.hundsun.com/",
+  "sites": [
+    {
+      "id": "hundsun-hangzhou-site",
+      "name": "恒生电子",
+      "location": {
+        "lng": 120.124,
+        "lat": 30.287,
+        "address": "滨江区江南大道3588号恒生大厦"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "hundsun-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "hundsun-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "财富业务",
+      "salary": {
+        "min": 13,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "React",
+        "TypeScript"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.hundsun.com/"
+    }
+  ],
+  "tier": 6,
+  "category": "65"
+}

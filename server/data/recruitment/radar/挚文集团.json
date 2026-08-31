@@ -1,0 +1,42 @@
+{
+  "slug": "挚文集团",
+  "source": "xiaozhao-radar",
+  "name": "挚文集团",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/immomo/54299?sessionid=&sourceToken=42725e9e0f9c9c5a9ded2e9ce7b17eeb#/jobs/?zhineng%5B0%5D=240098",
+  "sites": [
+    {
+      "id": "挚文集团-site-beijing",
+      "name": "挚文集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市朝阳区将台(地区)乡酒仙桥北路甲12号",
+        "lng": 116.506209,
+        "lat": 39.981447
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f1a49024d72b",
+      "title": "工程开发类  算法类  测试类  数据类   运维类 产品类  运营类",
+      "siteId": "挚文集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/immomo/54299?sessionid=&sourceToken=42725e9e0f9c9c5a9ded2e9ce7b17eeb#/jobs/?zhineng%5B0%5D=240098",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

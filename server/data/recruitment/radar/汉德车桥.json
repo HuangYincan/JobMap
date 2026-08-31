@@ -1,0 +1,41 @@
+{
+  "slug": "汉德车桥",
+  "name": "汉德车桥",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hdcq.zhiye.com/campus/detail/detail?jobAdId=b7c4f2b0-2bd8-45b0-a51d-bca383271c4d",
+  "sites": [
+    {
+      "id": "汉德车桥-site-xian",
+      "name": "汉德车桥",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "西安市灞桥区港兴三路中源国际汽配港",
+        "lng": 109.090055,
+        "lat": 34.37137
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2425f4d56cec",
+      "title": "岗位方向： 结构设计  CAE分析岗  电控软件设计  电控硬件设计：需求专业：机械类  车辆类 控制工程类 自动化类 电器类",
+      "siteId": "汉德车桥-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hdcq.zhiye.com/campus/detail/detail?jobAdId=b7c4f2b0-2bd8-45b0-a51d-bca383271c4d",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

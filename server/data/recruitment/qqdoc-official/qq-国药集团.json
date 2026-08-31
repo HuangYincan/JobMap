@@ -1,0 +1,21 @@
+{
+  "slug": "qq-国药集团",
+  "name": "国药集团",
+  "official_url": "http://www.sinopharm.com/recruitment.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国药集团-site-hq",
+      "name": "国药集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区知春路20号中国医药大厦",
+        "lng": 116.346336,
+        "lat": 39.97599
+      }
+    }
+  ]
+}

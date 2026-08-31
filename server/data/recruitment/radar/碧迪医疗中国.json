@@ -1,0 +1,75 @@
+{
+  "slug": "碧迪医疗中国",
+  "source": "xiaozhao-radar",
+  "name": "碧迪医疗中国",
+  "tier": 6,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.ajinga.com/recruiting/company/8501/job-list?aj_source=%20BD_WeChat&aj_code=Campus2026",
+  "sites": [
+    {
+      "id": "碧迪医疗中国-site-beijing",
+      "name": "碧迪医疗中国",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "碧迪医疗中国-site-shanghai",
+      "name": "碧迪医疗中国",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区桃仙路与咸阳路交叉路口往东南约170米",
+        "lng": 121.773133,
+        "lat": 31.141432
+      }
+    },
+    {
+      "id": "碧迪医疗中国-site-guangzhou",
+      "name": "碧迪医疗中国",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/成都",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "碧迪医疗中国-site-chengdu",
+      "name": "碧迪医疗中国",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/广州/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2912196b091c",
+      "title": "销售实习生 高管助理实习生HR&PR",
+      "siteId": "碧迪医疗中国-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.ajinga.com/recruiting/company/8501/job-list?aj_source=%20BD_WeChat&aj_code=Campus2026",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "35"
+}

@@ -1,0 +1,203 @@
+[
+  {
+    "site_id": "embj-1X Technologies-site",
+    "company": "1X Technologies",
+    "city": "San Carlos, CA",
+    "address": null,
+    "source_url": null,
+    "address_type": null,
+    "confidence": "low",
+    "note": "未找到街道地址。尝试:Wikipedia(1X Technologies)仅称 HQ 在 Palo Alto、制造在 Hayward(未提 San Carlos);1x.tech 主页/contact(404)/press/privacy-policy 均无地址。"
+  },
+  {
+    "site_id": "embj-AIM Intelligent Machines-site",
+    "company": "AIM Intelligent Machines",
+    "city": "Seattle, WA, USA",
+    "address": null,
+    "source_url": null,
+    "address_type": null,
+    "confidence": "low",
+    "note": "未找到街道地址。尝试:aim.vision 主页/about/careers 均无地址(仅有联系表单);城市 Seattle 未在页面确认。"
+  },
+  {
+    "site_id": "embj-Amazon Robotics-site",
+    "company": "Amazon Robotics",
+    "city": "North Reading, MA Bellevue, WA Westborough, MA USA",
+    "address": null,
+    "source_url": null,
+    "address_type": null,
+    "confidence": "low",
+    "note": "未找到街道地址。多办公室:North Reading(总部)、Bellevue WA、Westborough MA。Wikipedia(Amazon Robotics)仅称 Massachusetts-based,无街道;amazonrobotics.com 301 至 amazon.jobs 内部登录页;bizapedia 注册页被安全拦截。"
+  },
+  {
+    "site_id": "embj-Amazon-site",
+    "company": "Amazon",
+    "city": "全球 北美",
+    "address": "2111 7th Avenue, Seattle, WA",
+    "source_url": "https://en.wikipedia.org/wiki/Amazon_Spheres",
+    "address_type": "office",
+    "confidence": "medium",
+    "note": "Amazon Spheres 为西雅图总部园区(Denny Triangle)建筑,Wikipedia 确认地址 2111 7th Avenue。官方 10-K HQ 地址 410 Terry Ave N 未获可直接访问的来源(Wikipedia 主条目无街道、aboutamazon.com/SEC 均被拦截)。"
+  },
+  {
+    "site_id": "embj-Apple-site",
+    "company": "Apple",
+    "city": "Cupertino, CA 全球",
+    "address": "One Apple Park Way, Cupertino, CA 95014",
+    "source_url": "https://www.apple.com/contact/",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "Apple 官网联系页 Corporate Address 字段。Wikipedia(Apple Inc.)亦确认 HQ 为 Apple Park, Cupertino。"
+  },
+  {
+    "site_id": "embj-Apptronik-site",
+    "company": "Apptronik",
+    "city": "Sunnyvale, CA, USA Austin, TX",
+    "address": null,
+    "source_url": null,
+    "address_type": null,
+    "confidence": "low",
+    "note": "未找到街道地址。尝试:apptronik.com 主页/contact/privacy-policy 均无地址(仅有联系表单);Wikipedia 无 Apptronik 条目(404);bizapedia 被拦截。公开报道称 HQ 在 Austin TX,Sunnyvale 为早期办公室,但未获直接来源。"
+  },
+  {
+    "site_id": "embj-Aurora-site",
+    "company": "Aurora",
+    "city": "Pittsburgh, PA Mountain View, CA USA",
+    "address": "1600 Smallman Street, Pittsburgh, PA",
+    "source_url": "https://en.wikipedia.org/wiki/Aurora_Innovation",
+    "address_type": "office",
+    "confidence": "medium",
+    "note": "Wikipedia(Aurora Innovation)记载 2020 年总部迁至 Strip District,引用 Pittsburgh Post-Gazette 文章标题含 1600 Smallman Street。Mountain View 办公室未获街道地址来源(aurora.tech 官网不可达/无地址页)。"
+  },
+  {
+    "site_id": "embj-Boston Dynamics-site",
+    "company": "Boston Dynamics",
+    "city": "Waltham, MA Billerica, MA",
+    "address": null,
+    "source_url": null,
+    "address_type": null,
+    "confidence": "low",
+    "note": "未找到街道地址。Wikipedia(Boston Dynamics)仅确认 HQ 在 Waltham MA;Billerica 为设施。尝试 bostondynamics.com 主页/contact/privacy-policy/about/press 均无地址;crunchbase 与 Wayback Machine 被拦截。"
+  },
+  {
+    "site_id": "embj-Cruise-site",
+    "company": "Cruise",
+    "city": "USA San Francisco, CA",
+    "address": null,
+    "source_url": null,
+    "address_type": null,
+    "confidence": "low",
+    "note": "未找到街道地址。Wikipedia(Cruise)仅确认 HQ 在 San Francisco;getcruise.com 已 301 并入 GM(gm.com 403);opencorporates 被 CAPTCHA 拦截。"
+  },
+  {
+    "site_id": "embj-Figure AI-site",
+    "company": "Figure AI",
+    "city": "San Jose, CA",
+    "address": "3960 N First St, San Jose, CA 95134",
+    "source_url": "https://www.figure.ai/privacy-policy",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "Figure AI 官网隐私政策 Contact Information 字段。Wikipedia 亦确认 HQ 在 San Jose, CA。"
+  },
+  {
+    "site_id": "embj-Google DeepMind-site",
+    "company": "Google DeepMind",
+    "city": "Mountain View, CA New York, NY London, UK",
+    "address": "Platform 37, King's Cross Central, London, UK",
+    "source_url": "https://en.wikipedia.org/wiki/Google_DeepMind",
+    "address_type": "office",
+    "confidence": "medium",
+    "note": "Wikipedia(Google DeepMind)记载 2026 年夏迁入 Google King's Cross 的 Platform 37 大楼(无门牌号)。Mountain View 与纽约办公室为 Google 园区,未获专门街道地址来源。"
+  },
+  {
+    "site_id": "embj-Google-site",
+    "company": "Google",
+    "city": "全球 美国",
+    "address": "1600 Amphitheatre Parkway, Mountain View, CA",
+    "source_url": "https://en.wikipedia.org/wiki/Google",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "Wikipedia(Google)history 章节记载 Googleplex 地址 1600 Amphitheatre Parkway, Mountain View, CA。"
+  },
+  {
+    "site_id": "embj-Grit Ventures-site",
+    "company": "Grit Ventures",
+    "city": "USA | Summer 2026",
+    "address": null,
+    "source_url": null,
+    "address_type": null,
+    "confidence": "low",
+    "note": "未找到总部街道地址。gritventures.com 主页/about 仅列出投资枢纽(Grit Tier 1/2 Hubs: Austin、Boston、LA、Pittsburgh、Silicon Valley 等),无总部地址;城市字段 'USA' 无具体城市。"
+  },
+  {
+    "site_id": "embj-HTX-site",
+    "company": "HTX",
+    "city": "Singapore",
+    "address": null,
+    "source_url": null,
+    "address_type": null,
+    "confidence": "low",
+    "note": "未找到街道地址。HTX 为新加坡政府机构(Home Team Science and Technology Agency)。官网 htx.gov.sg 主页/contact-us 仅提供交通指引(nearest MRT: one-north, CC23),无街道地址;Wikipedia 无该机构条目(404);careers.gov.sg 招聘页不可达。"
+  },
+  {
+    "site_id": "embj-Microsoft-site",
+    "company": "Microsoft",
+    "city": "美国 全球",
+    "address": "One Microsoft Way, Redmond, WA 98052-6399",
+    "source_url": "https://www.microsoft.com/en-us/legal/terms-of-use/",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "Microsoft 官网 Terms of Use 页脚确认 'One Microsoft Way, Redmond, WA 98052-6399';Wikipedia 'One Microsoft Way' 亦重定向至 Microsoft campus 条目(佐证)。"
+  },
+  {
+    "site_id": "embj-Nuro-site",
+    "company": "Nuro",
+    "city": "Mountain View, CA",
+    "address": "1290 Terra Bella Ave, Mountain View, CA 94043",
+    "source_url": "https://nuro.ai/privacy-policy",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "Nuro 官网隐私政策(Data Protection Information for Germany, Controller 字段)确认 'Nuro, Inc., 1290 Terra Bella Ave, Mountain View, CA 94043 USA'。"
+  },
+  {
+    "site_id": "embj-OpenAI-site",
+    "company": "OpenAI",
+    "city": "San Francisco, CA",
+    "address": "1455 3rd Street, San Francisco, CA",
+    "source_url": "https://en.wikipedia.org/wiki/OpenAI",
+    "address_type": "office",
+    "confidence": "high",
+    "note": "Wikipedia(OpenAI)infobox 记载 HQ 为 1455 3rd Street, San Francisco, CA(前址为 Mission District Pioneer Building)。"
+  },
+  {
+    "site_id": "embj-Stanford Robotics Lab-site",
+    "company": "Stanford Robotics Lab",
+    "city": "Stanford, CA",
+    "address": "Gates Computer Science Building, Stanford, CA 94305-9010",
+    "source_url": "https://ai.stanford.edu/about/",
+    "address_type": "office",
+    "confidence": "medium",
+    "note": "Stanford AI Lab 官网 about 页:'We are located on the second floor of the Gates Computer Science Building',地址 'Gates Computer Science Building, Stanford, CA 94305-9010'。SRL 与该实验室同址(Stanford 工程学院)。"
+  },
+  {
+    "site_id": "embj-Tactus-site",
+    "company": "Tactus",
+    "city": "Irvine, CA, USA",
+    "address": null,
+    "source_url": null,
+    "address_type": null,
+    "confidence": "low",
+    "note": "未找到街道地址。tactus.com 多次尝试均连接失败;Wikipedia 无 Tactus Technology 条目(404)。careerUrl 指向 career.calvin.edu(Calvin University 职业中心),疑为数据抓取错配,公司实体与城市 Irvine 的关系未能验证。"
+  },
+  {
+    "site_id": "embj-Tesla-site",
+    "company": "Tesla",
+    "city": "Palo Alto, CA",
+    "address": "1 Tesla Road, Austin, TX 78725",
+    "source_url": "https://stockanalysis.com/stocks/tsla/company/",
+    "address_type": "office",
+    "confidence": "medium",
+    "note": "Tesla 现 HQ 为 Gigafactory Texas(1 Tesla Road, Austin, TX),stockanalysis.com 公司信息页(基于 10-K)确认;Wikipedia 亦记载 2021-12 法律总部迁至 Austin。注意:city 字段为 Palo Alto(2023 年起为 Tesla 全球工程总部,前 HP 园区,未获街道地址来源),与现 HQ 城市不一致。"
+  }
+]
+ADDR_BATCH_DONE: 11/20

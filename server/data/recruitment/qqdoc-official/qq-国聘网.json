@@ -1,0 +1,22 @@
+{
+  "slug": "qq-国聘网",
+  "name": "国聘网",
+  "official_url": "https://job.iguopin.com/company?id=c9675c1112d741480481894415200256",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国聘网-site-hq",
+      "name": "国聘网",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区阜成门北大街6-6号国际投资大厦A座",
+        "lng": 116.357559,
+        "lat": 39.928801
+      }
+    }
+  ],
+  "city_pending": true
+}

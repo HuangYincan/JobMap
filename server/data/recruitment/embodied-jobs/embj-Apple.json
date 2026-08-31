@@ -1,0 +1,47 @@
+{
+  "slug": "embj-Apple",
+  "source": "embodied-jobs",
+  "name": "Apple",
+  "sites": [
+    {
+      "id": "embj-Apple-site",
+      "name": "Apple",
+      "city": "Cupertino, CA",
+      "province": "",
+      "location": {
+        "address": "Apple Park Visitor Center, 10600, North Tantau Avenue, Cupertino, Santa Clara County, 加利福尼亚州;加利福尼亞州, 95014, 美国;美國",
+        "lng": -122.005374,
+        "lat": 37.332843
+      }
+    }
+  ],
+  "careerUrl": "https://machinelearning.apple.com/",
+  "positions": [
+    {
+      "externalId": "embj-Apple-1",
+      "title": "Apple PhD Fellowship - ML/AI",
+      "siteId": "embj-Apple-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://machinelearning.apple.com/",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Apple-2",
+      "title": "Apple Scholar - PhD",
+      "siteId": "embj-Apple-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://machinelearning.apple.com/",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

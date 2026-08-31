@@ -1,0 +1,22 @@
+{
+  "slug": "qq-国机招聘",
+  "name": "国机招聘",
+  "official_url": "https://zhaopin.sinomach.com.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国机招聘-site-hq",
+      "name": "国机招聘",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区丹棱街3号国机大厦",
+        "lng": 116.311761,
+        "lat": 39.979716
+      }
+    }
+  ],
+  "city_pending": true
+}

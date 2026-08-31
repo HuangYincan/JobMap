@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-极客未来",
+  "name": "极客未来",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://geek3.zhiye.com/campus/jobs",
+  "direction": "小学班课主教师   初中班课主讲教师  学科校长管培生（教学方向）运营校长管培生 （销售方向）",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-极客未来-site",
+      "name": "极客未来",
+      "city": "成都市",
+      "province": "",
+      "location": {
+        "address": "成都市锦江区华润广场B座",
+        "lng": 104.090605,
+        "lat": 30.619747
+      }
+    }
+  ]
+}

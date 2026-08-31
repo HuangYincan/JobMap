@@ -1,0 +1,42 @@
+{
+  "slug": "洋葱学园",
+  "source": "xiaozhao-radar",
+  "name": "洋葱学园",
+  "tier": 10,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://guanghe.jobs.feishu.cn/s/R8OcgLBbeyk",
+  "sites": [
+    {
+      "id": "洋葱学园-site-beijing",
+      "name": "洋葱学园",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f63a87ce8848",
+      "title": "开发技术、运营、产品、教育、销售等",
+      "siteId": "洋葱学园-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://guanghe.jobs.feishu.cn/s/R8OcgLBbeyk",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "82"
+}

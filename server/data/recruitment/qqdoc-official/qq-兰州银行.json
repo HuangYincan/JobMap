@@ -1,0 +1,21 @@
+{
+  "slug": "qq-兰州银行",
+  "name": "兰州银行",
+  "official_url": "https://www.lzbank.com/public/pjiarulh/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-兰州银行-site-hq",
+      "name": "兰州银行",
+      "city": "兰州市",
+      "province": "",
+      "location": {
+        "address": "甘肃省兰州市城关区酒泉路211号",
+        "lng": 103.825902,
+        "lat": 36.056237
+      }
+    }
+  ]
+}

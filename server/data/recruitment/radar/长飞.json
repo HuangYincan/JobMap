@@ -1,0 +1,42 @@
+{
+  "slug": "长飞",
+  "source": "xiaozhao-radar",
+  "name": "长飞",
+  "tier": 6,
+  "industries": [
+    "telecom"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://yofc2.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "长飞-site-wuhan",
+      "name": "长飞",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "洪山区光谷三路196号",
+        "lng": 114.47934,
+        "lat": 30.46752
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a41cb642fc4d",
+      "title": "技术研发类 生产制造类 运营管理类  市场销售类  职能类",
+      "siteId": "长飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://yofc2.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,49 @@
+{
+  "slug": "megvii-hangzhou",
+  "source": "official-career",
+  "name": "旷视科技",
+  "industries": [
+    "ai",
+    "hardware"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.megvii.com/careers",
+  "sites": [
+    {
+      "id": "megvii-hangzhou-site",
+      "name": "旷视科技",
+      "location": {
+        "lng": 120.112,
+        "lat": 30.288,
+        "address": "西湖区文一西路98号数娱大厦"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "megvii-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "megvii-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "算法工程",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.megvii.com/careers"
+    }
+  ],
+  "tier": 6,
+  "category": "65"
+}

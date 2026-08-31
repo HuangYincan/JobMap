@@ -1,0 +1,21 @@
+{
+  "slug": "qq-台州银行",
+  "name": "台州银行",
+  "official_url": "https://wecruit.hotjob.cn/SU63ae8855bef57c0c2eb75e63/pb/index.html#/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-台州银行-site-hq",
+      "name": "台州银行",
+      "city": "台州市",
+      "province": "浙江省",
+      "location": {
+        "address": "浙江省台州市椒江区市府大道699号",
+        "lng": 121.409719,
+        "lat": 28.655013
+      }
+    }
+  ]
+}

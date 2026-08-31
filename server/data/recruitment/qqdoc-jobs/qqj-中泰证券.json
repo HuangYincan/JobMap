@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-中泰证券",
+  "name": "中泰证券",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://zts.hotjob.cn/",
+  "direction": "金融类 财会类 管理类  法学类 信息技术类  理工类  新闻传播类等相关专业",
+  "deadline": "2026  08 16",
+  "sites": [
+    {
+      "id": "qqj-中泰证券-site",
+      "name": "中泰证券",
+      "city": "济南市",
+      "province": "",
+      "location": {
+        "address": "山东省济南市市中区经七路86号",
+        "lng": 117.001471,
+        "lat": 36.655856
+      }
+    }
+  ]
+}

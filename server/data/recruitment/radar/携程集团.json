@@ -1,0 +1,53 @@
+{
+  "slug": "携程集团",
+  "source": "xiaozhao-radar",
+  "name": "携程集团",
+  "tier": 5,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careers.ctrip.com/#/campus/jobList?sourceTag=da464cee%23%2Fcampus%2FjobList%3FsourceTag%3Dda464cee&kind=3",
+  "sites": [
+    {
+      "id": "携程集团-site-beijing",
+      "name": "携程集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "携程集团-site-shanghai",
+      "name": "携程集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市长宁区金钟路968号凌空soho16号楼",
+        "lng": 121.351149,
+        "lat": 31.221404
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-657053c3e899",
+      "title": "研发类，产品类，设计类，综合类，人才项目",
+      "siteId": "携程集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.ctrip.com/#/campus/jobList?sourceTag=da464cee%23%2Fcampus%2FjobList%3FsourceTag%3Dda464cee&kind=3",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

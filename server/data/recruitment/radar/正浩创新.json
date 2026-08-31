@@ -1,0 +1,42 @@
+{
+  "slug": "正浩创新",
+  "source": "xiaozhao-radar",
+  "name": "正浩创新",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.ecoflow.com/s/Xr9bwVYmpaw",
+  "sites": [
+    {
+      "id": "正浩创新-site-shenzhen",
+      "name": "正浩创新",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区创智云城B1栋",
+        "lng": 113.938399,
+        "lat": 22.578423
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8d6a84f508d9",
+      "title": "算法、运营等",
+      "siteId": "正浩创新-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.ecoflow.com/s/Xr9bwVYmpaw",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "38"
+}

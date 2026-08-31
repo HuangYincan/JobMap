@@ -1,0 +1,49 @@
+{
+  "slug": "wedoctor-hangzhou",
+  "source": "official-career",
+  "name": "微医",
+  "industries": [
+    "biotech",
+    "internet"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.guahao.com/job",
+  "sites": [
+    {
+      "id": "wedoctor-hangzhou-site",
+      "name": "微医",
+      "location": {
+        "lng": 120.118,
+        "lat": 30.291,
+        "address": "余杭区梦想小镇"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "wedoctor-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "wedoctor-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "研发",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.guahao.com/job"
+    }
+  ],
+  "tier": 7,
+  "category": "64"
+}

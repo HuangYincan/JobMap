@@ -1,0 +1,21 @@
+{
+  "slug": "qq-常熟农商行",
+  "name": "常熟农商行",
+  "official_url": "http://www.csrcbank.com/tb/rczp/zxzp_358/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-常熟农商行-site-hq",
+      "name": "常熟农商行",
+      "city": "常熟市",
+      "province": "江苏省",
+      "location": {
+        "address": "江苏省常熟市新世纪大道58号",
+        "lng": 120.776617,
+        "lat": 31.649451
+      }
+    }
+  ]
+}

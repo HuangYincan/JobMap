@@ -1,0 +1,75 @@
+{
+  "slug": "杰华特",
+  "source": "xiaozhao-radar",
+  "name": "杰华特",
+  "tier": 8,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://joulwatt.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "杰华特-site-shanghai",
+      "name": "杰华特",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "西湖区三墩镇圣塘坝街19号圣塘芯城",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "杰华特-site-shenzhen",
+      "name": "杰华特",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "西湖区三墩镇圣塘坝街19号圣塘芯城",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "杰华特-site-chengdu",
+      "name": "杰华特",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "西湖区三墩镇圣塘坝街19号圣塘芯城",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "杰华特-site-hangzhou",
+      "name": "杰华特",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "西湖区三墩镇圣塘坝街19号圣塘芯城",
+        "lng": 120.039975,
+        "lat": 30.327125
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-92e5f5d57136",
+      "title": "微电子学与固体电子学、集成电路工程电力电子与电力传动、电气工程、电子科学与技术、控制工程、电子封装、计算机科学(人工智能、机器学习)等相关专业:电子、电气类相关",
+      "siteId": "杰华特-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://joulwatt.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

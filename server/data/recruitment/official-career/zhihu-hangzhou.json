@@ -1,0 +1,49 @@
+{
+  "slug": "zhihu-hangzhou",
+  "source": "official-career",
+  "name": "知乎",
+  "industries": [
+    "internet",
+    "ai"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.zhihu.com/careers",
+  "sites": [
+    {
+      "id": "zhihu-hangzhou-site",
+      "name": "知乎",
+      "location": {
+        "lng": 120.162,
+        "lat": 30.258,
+        "address": "西湖区文三路90号东部软件园"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "zhihu-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "zhihu-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "知乎社区",
+      "salary": {
+        "min": 15,
+        "max": 24
+      },
+      "education": "本科",
+      "skills": [
+        "React",
+        "TypeScript"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhihu.com/careers"
+    }
+  ],
+  "tier": 6,
+  "category": "64"
+}

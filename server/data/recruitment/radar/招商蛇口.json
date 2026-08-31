@@ -1,0 +1,75 @@
+{
+  "slug": "招商蛇口",
+  "source": "xiaozhao-radar",
+  "name": "招商蛇口",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://cmsk1979.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "招商蛇口-site-beijing",
+      "name": "招商蛇口",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "招商蛇口-site-shanghai",
+      "name": "招商蛇口",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市长宁区友乐路上海虹桥国际机场",
+        "lng": 121.354247,
+        "lat": 31.193765
+      }
+    },
+    {
+      "id": "招商蛇口-site-shenzhen",
+      "name": "招商蛇口",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市光明区南元一巷东海明珠酒店东北侧约40米",
+        "lng": 113.893745,
+        "lat": 22.785777
+      }
+    },
+    {
+      "id": "招商蛇口-site-chengdu",
+      "name": "招商蛇口",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都市武侯区锦城大道招商玺悦",
+        "lng": 104.070728,
+        "lat": 30.575527
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b68545339f0d",
+      "title": "工程管理类 设计管理类  营销管理类  运营管理类 成本招采类 客服管理类 产业园区类 邮轮业务类 商业管理类 物业服务类  会展业务类  综合管理类  财务管",
+      "siteId": "招商蛇口-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cmsk1979.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "70"
+}

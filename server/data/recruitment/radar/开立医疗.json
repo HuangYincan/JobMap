@@ -1,0 +1,75 @@
+{
+  "slug": "开立医疗",
+  "source": "xiaozhao-radar",
+  "name": "开立医疗",
+  "tier": 8,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.sonoscape.com/campus-recruitment/sonoscape/94392/#/jobs?project=100120039",
+  "sites": [
+    {
+      "id": "开立医疗-site-beijing",
+      "name": "开立医疗",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区学清路甲18号学院8号C区3层S01号",
+        "lng": 116.353986,
+        "lat": 40.009645
+      }
+    },
+    {
+      "id": "开立医疗-site-shanghai",
+      "name": "开立医疗",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/武汉",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "开立医疗-site-shenzhen",
+      "name": "开立医疗",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市光明区华夏路与木墩路交叉路口往西南约170米",
+        "lng": 113.921633,
+        "lat": 22.767875
+      }
+    },
+    {
+      "id": "开立医疗-site-wuhan",
+      "name": "开立医疗",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉",
+        "lng": 114.3,
+        "lat": 30.59
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8a38d5a02114",
+      "title": "硬件，图像处理算法工程师（超声）图像处理算法工程师（内镜）电源工程师，软件工程师（C++）材料工艺工程师，器械工程师 博士学位",
+      "siteId": "开立医疗-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.sonoscape.com/campus-recruitment/sonoscape/94392/#/jobs?project=100120039",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "35"
+}

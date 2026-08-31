@@ -1,0 +1,6 @@
+# Rules from both wildcard groups must be combined.
+User-agent: *
+Disallow: /private
+
+User-agent: *
+Allow: /private/public

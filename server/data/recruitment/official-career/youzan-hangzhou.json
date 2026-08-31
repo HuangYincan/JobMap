@@ -1,0 +1,49 @@
+{
+  "slug": "youzan-hangzhou",
+  "source": "official-career",
+  "name": "有赞",
+  "industries": [
+    "ecommerce",
+    "internet"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://job.youzan.com/",
+  "sites": [
+    {
+      "id": "youzan-hangzhou-site",
+      "name": "有赞",
+      "location": {
+        "lng": 120.101,
+        "lat": 30.289,
+        "address": "西湖区西溪路698号华泰创业园"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "youzan-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "youzan-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "零售中台",
+      "salary": {
+        "min": 14,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "Vue",
+        "TypeScript"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.youzan.com/"
+    }
+  ],
+  "tier": 7,
+  "category": "65"
+}

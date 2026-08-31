@@ -1,0 +1,53 @@
+{
+  "slug": "万家基金",
+  "source": "xiaozhao-radar",
+  "name": "万家基金",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wjasset.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "万家基金-site-beijing",
+      "name": "万家基金",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市东城区朝阳门北大街9号泓晟国际中心F1层",
+        "lng": 116.432894,
+        "lat": 39.93064
+      }
+    },
+    {
+      "id": "万家基金-site-shanghai",
+      "name": "万家基金",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区浦电路360号陆家嘴投资大厦",
+        "lng": 121.530466,
+        "lat": 31.221717
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cb40f51b6edf",
+      "title": "投资研究类  市场营销类 运营支持类   金融科技类",
+      "siteId": "万家基金-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wjasset.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

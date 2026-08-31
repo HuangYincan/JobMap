@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-明义微电子",
+  "name": "明义微电子",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "电源设计工程师  电源芯片设计工程师 嵌入式软件工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-明义微电子-site",
+      "name": "明义微电子",
+      "city": "苏州市",
+      "province": "",
+      "location": {
+        "address": "虎丘区江苏省苏州市苏州工业园区扬富路11号南岸新地一期5号楼1002室",
+        "lng": 120.671226,
+        "lat": 31.332033
+      }
+    }
+  ]
+}

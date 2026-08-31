@@ -1,0 +1,62 @@
+{
+  "slug": "乐鑫科技",
+  "source": "xiaozhao-radar",
+  "name": "乐鑫科技",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.espressif.com.cn/zh-hans/join-us/job-search?field_job_classification_tid%5B2%5D=2573&field_job_classification_tid%5B1%5D=2577&field_job_classification_tid%5B0%5D=2575",
+  "sites": [
+    {
+      "id": "乐鑫科技-site-shanghai",
+      "name": "乐鑫科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "浦东新区碧波路235弄3号楼",
+        "lng": 121.582851,
+        "lat": 31.203651
+      }
+    },
+    {
+      "id": "乐鑫科技-site-shenzhen",
+      "name": "乐鑫科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市南山区粤海街道高新区社区白石路3609号深圳湾科技生态园二区9栋A1711",
+        "lng": 113.953374,
+        "lat": 22.532137
+      }
+    },
+    {
+      "id": "乐鑫科技-site-suzhou",
+      "name": "乐鑫科技",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/深圳/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a1d54b6704a4",
+      "title": "芯片设计 嵌入式软件 人工智能  产品工程  企业职能  商务与市场",
+      "siteId": "乐鑫科技-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.espressif.com.cn/zh-hans/join-us/job-search?field_job_classification_tid%5B2%5D=2573&field_job_classification_tid%5B1%5D=2577&field_job_classification_tid%5B0%5D=2575",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "鹏新旭",
+  "source": "xiaozhao-radar",
+  "name": "鹏新旭",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://pensun.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "鹏新旭-site-shenzhen",
+      "name": "鹏新旭—博士招聘",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市坪山区龙田街道丹锦路18号",
+        "lng": 114.364029,
+        "lat": 22.714499
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b22428c1e9e9",
+      "title": "集成电路、微电子、材料、物理、光学  化学等相关专业",
+      "siteId": "鹏新旭-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://pensun.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "中国信通院",
+  "source": "xiaozhao-radar",
+  "name": "中国信通院",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU643e3338bef57c46afe6213d/mc/position/intern?projectCode=102201&showProjectBanner=true",
+  "sites": [
+    {
+      "id": "中国信通院-site-beijing",
+      "name": "中国信通院",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区高里掌路中关村翠湖科技园云中心",
+        "lng": 116.159643,
+        "lat": 40.064334
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4e718b3b41c6",
+      "title": "人工智能  网络安全  信息化 智能制造   大数据  元宇宙  数字化等方向",
+      "siteId": "中国信通院-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU643e3338bef57c46afe6213d/mc/position/intern?projectCode=102201&showProjectBanner=true",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "73"
+}

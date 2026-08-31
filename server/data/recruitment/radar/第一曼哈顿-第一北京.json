@@ -1,0 +1,52 @@
+{
+  "slug": "第一曼哈顿-第一北京",
+  "source": "xiaozhao-radar",
+  "name": "第一曼哈顿  第一北京",
+  "tier": 10,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://fbwecruit.hotjob.cn/SU67ae91bb1eb80555b79f6730/pb/posDetail.html?postId=699eabfbbe908548be1dd49e&postType=campus",
+  "sites": [
+    {
+      "id": "第一曼哈顿-第一北京-site-shanghai",
+      "name": "第一曼哈顿  第一北京",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "第一曼哈顿-第一北京-site-shenzhen",
+      "name": "第一曼哈顿  第一北京",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4bf4be4e1f36",
+      "title": "基本面实习生Intern  Ana Iyst",
+      "siteId": "第一曼哈顿-第一北京-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://fbwecruit.hotjob.cn/SU67ae91bb1eb80555b79f6730/pb/posDetail.html?postId=699eabfbbe908548be1dd49e&postType=campus",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "67"
+}

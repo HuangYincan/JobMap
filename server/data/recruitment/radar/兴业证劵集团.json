@@ -1,0 +1,75 @@
+{
+  "slug": "兴业证劵集团",
+  "source": "xiaozhao-radar",
+  "name": "兴业证劵集团",
+  "tier": 6,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU68fb2499b7da1347a9dd852c/pb/school.html",
+  "sites": [
+    {
+      "id": "兴业证劵集团-site-beijing",
+      "name": "兴业证劵集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "兴业证劵集团-site-shanghai",
+      "name": "兴业证劵集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "兴业证劵集团-site-guangzhou",
+      "name": "兴业证劵集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "兴业证劵集团-site-shenzhen",
+      "name": "兴业证劵集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2f03a8b4d36a",
+      "title": "总部业务类 子公司业务类 IT类",
+      "siteId": "兴业证劵集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU68fb2499b7da1347a9dd852c/pb/school.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

@@ -1,0 +1,61 @@
+{
+  "slug": "tigermed-hangzhou",
+  "source": "xiaozhao-radar",
+  "name": "泰格医药",
+  "tier": 6,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://tigermed.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "tigermed-hangzhou-site-shanghai",
+      "name": "泰格医药",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市长宁区中山西路999号华闻国际大厦16楼",
+        "lng": 121.41418,
+        "lat": 31.19963
+      }
+    },
+    {
+      "id": "tigermed-hangzhou-site-hangzhou",
+      "name": "泰格医药",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "浙江省杭州市滨江区聚工路19号盛大科技园a座",
+        "lng": 120.212591,
+        "lat": 30.182156
+      }
+    },
+    {
+      "id": "tigermed-hangzhou-site-chongqing",
+      "name": "泰格医药",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "上海/杭州/重庆/济南"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cc28c37c40e1",
+      "title": "临床实验助理实习生  CRA  Intern",
+      "siteId": "tigermed-hangzhou-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://tigermed.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "73"
+}

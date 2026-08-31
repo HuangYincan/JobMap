@@ -1,0 +1,216 @@
+{
+  "slug": "embj-极佳",
+  "source": "embodied-jobs",
+  "name": "极佳",
+  "sites": [
+    {
+      "id": "embj-极佳-site",
+      "name": "极佳",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市昌平区能源东路1号院1号楼3层304-68(集群注册)",
+        "lng": 116.249674,
+        "lat": 40.154624
+      }
+    }
+  ],
+  "careerUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7636991424973785407/detail",
+  "positions": [
+    {
+      "externalId": "embj-极佳-1",
+      "title": "后端工程师（AI / Agent 系统）",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7636991424973785407/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-2",
+      "title": "3D 引擎开发工程师（Unity",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7636991168706758975/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-3",
+      "title": "Web 前端工程师（内容创作方向）",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7636990998786640137/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-4",
+      "title": "Agentic算法工程师/研究员",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7634117725241116937/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-5",
+      "title": "双足机器人结构设计工程师",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7631439757704382726/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-6",
+      "title": "机器人测试工程师",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7624117601698318655/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-7",
+      "title": "具身机器人本体硬件产品经理",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7624117601539885350/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-8",
+      "title": "具身智能机器人数据采集运营",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7620754759066290468/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-9",
+      "title": "机器人供应链专家",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7620647625164359972/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-10",
+      "title": "世界模型算法专家-具身方向",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7620298392292477193/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-11",
+      "title": "高级机械工程师（人形机器人）",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7614081027497642266/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-12",
+      "title": "机器人物料质量工程师",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7614068905337981210/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-13",
+      "title": "关节及通讯研发工程师",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7614029193920645386/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-14",
+      "title": "机器人结构工程师",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7613997783272605978/detail",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极佳-15",
+      "title": "具身智能-框架开发架构师",
+      "siteId": "embj-极佳-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gigaai0118.jobs.feishu.cn/index/position/7613993841625123115/detail",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

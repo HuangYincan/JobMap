@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-天岳先进",
+  "name": "天岳先进",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "技术类 （材料 物理 化学  机械 自动化 等  ）业务/职能类  （销售/供应链/人力/行政 /法务 /财务等",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-天岳先进-site",
+      "name": "天岳先进",
+      "city": "济南市",
+      "province": "",
+      "location": {
+        "address": "山东省济南市槐荫区天岳南路99号",
+        "lng": 116.918593,
+        "lat": 36.710187
+      }
+    }
+  ]
+}

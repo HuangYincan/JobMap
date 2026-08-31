@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-天府江东",
+  "name": "天府江东",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "机械类 公艺类  电器类 数字化类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-天府江东-site",
+      "name": "天府江东",
+      "city": "眉山市",
+      "province": "",
+      "location": {
+        "address": "四川省眉山市仁寿县视高街道腾飞大道二段3号",
+        "lng": 104.050853,
+        "lat": 30.226836
+      }
+    }
+  ]
+}

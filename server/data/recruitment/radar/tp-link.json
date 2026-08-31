@@ -1,0 +1,90 @@
+{
+  "slug": "tp-link",
+  "source": "xiaozhao-radar",
+  "name": "TP-LINK",
+  "tier": 7,
+  "industries": [
+    "telecom"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.tp-link.com.cn/",
+  "sites": [
+    {
+      "id": "tp-link-site-beijing",
+      "name": "TP-LINK",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "滨江区聚才路与江二路交叉口东南80米",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "tp-link-site-shenzhen",
+      "name": "TP-LINK",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "滨江区聚才路与江二路交叉口东南80米",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "tp-link-site-hangzhou",
+      "name": "TP-LINK",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "滨江区聚才路与江二路交叉口东南80米",
+        "lng": 120.200293,
+        "lat": 30.183539
+      }
+    },
+    {
+      "id": "tp-link-site-nanjing",
+      "name": "TP-LINK",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/杭州/南京",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a4cb1ea531a1",
+      "title": "软件类  算法类  硬件类  测试类",
+      "siteId": "tp-link-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.tp-link.com.cn/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-a4cb1ea531a1-nanjing",
+      "title": "软件类  算法类  硬件类  测试类",
+      "siteId": "tp-link-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.tp-link.com.cn/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

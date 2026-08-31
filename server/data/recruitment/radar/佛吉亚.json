@@ -1,0 +1,53 @@
+{
+  "slug": "佛吉亚",
+  "source": "xiaozhao-radar",
+  "name": "佛吉亚",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/faurecia/146093?sessionid=-1000648541&sharePageId=4134611#/jobs?commitment%5B0%5D=%E5%AE%9E%E4%B9%A0&page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "佛吉亚-site-beijing",
+      "name": "佛吉亚",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "佛吉亚-site-shanghai",
+      "name": "佛吉亚",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市闵行区元江路3438号",
+        "lng": 121.400801,
+        "lat": 31.049469
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-51ea36f9c738",
+      "title": "财务实习生  采购实习生  HR实习生（招聘）研发实习生",
+      "siteId": "佛吉亚-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/faurecia/146093?sessionid=-1000648541&sharePageId=4134611#/jobs?commitment%5B0%5D=%E5%AE%9E%E4%B9%A0&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "36"
+}

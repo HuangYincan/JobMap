@@ -1,0 +1,42 @@
+{
+  "slug": "贪玩游戏",
+  "source": "xiaozhao-radar",
+  "name": "贪玩游戏",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/tanwanhr/166213#/jobs",
+  "sites": [
+    {
+      "id": "贪玩游戏-site-guangzhou",
+      "name": "贪玩游戏",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市天河区员村街道黄埔大道中656号(科韵路地铁站旁)",
+        "lng": 113.379968,
+        "lat": 23.117536
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8292171e15bc",
+      "title": "广告投放  设计类  运营类  直播运营  AI产品/工程师  营销策划",
+      "siteId": "贪玩游戏-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/tanwanhr/166213#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

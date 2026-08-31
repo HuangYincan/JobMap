@@ -1,0 +1,40 @@
+{
+  "slug": "苏商银行",
+  "name": "苏商银行",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/snb/45592#/job/3fdcdf28-cadc-4457-8c35-109739177557?from=qrcode",
+  "sites": [
+    {
+      "id": "苏商银行-site-nanjing",
+      "name": "苏商银行",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "江苏省南京市建邺区庐山路248号金融城4号楼第7-9、27-29层、4号楼裙楼第1-2层",
+        "lng": 118.718713,
+        "lat": 31.987365
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e33ef02219c1",
+      "title": "企业金融营销岗",
+      "siteId": "苏商银行-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/snb/45592#/job/3fdcdf28-cadc-4457-8c35-109739177557?from=qrcode",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

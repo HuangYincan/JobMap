@@ -1,0 +1,42 @@
+{
+  "slug": "祖龙娱乐",
+  "source": "xiaozhao-radar",
+  "name": "祖龙娱乐",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.zulong.com/campus_apply/zulong/25158/?sessionid=#/",
+  "sites": [
+    {
+      "id": "祖龙娱乐-site-beijing",
+      "name": "祖龙娱乐",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市东城区和平里东街11号航星科技园航星8号楼",
+        "lng": 116.420821,
+        "lat": 39.95195
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b1b44fc7be59",
+      "title": "图形渲染开发工程师  UE特效设计师  海外营销  游戏视频设计师  韩语 女性向游  戏市场营销  创作者方向 UI策划",
+      "siteId": "祖龙娱乐-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.zulong.com/campus_apply/zulong/25158/?sessionid=#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

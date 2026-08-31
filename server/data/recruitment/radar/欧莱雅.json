@@ -1,0 +1,42 @@
+{
+  "slug": "欧莱雅",
+  "source": "xiaozhao-radar",
+  "name": "欧莱雅",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://u.hrtps.com/r/dlV8DKGNk",
+  "sites": [
+    {
+      "id": "欧莱雅-site-shanghai",
+      "name": "欧莱雅—补录",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "徐汇区嘉善路508号尚街Loft时尚生活园区1号楼503-505",
+        "lng": 121.459573,
+        "lat": 31.204804
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-870e57832e55",
+      "title": "产品营销  电商  销售与大客户管理",
+      "siteId": "欧莱雅-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://u.hrtps.com/r/dlV8DKGNk",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "52"
+}

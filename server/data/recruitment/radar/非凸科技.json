@@ -1,0 +1,75 @@
+{
+  "slug": "非凸科技",
+  "source": "xiaozhao-radar",
+  "name": "非凸科技",
+  "tier": 11,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/social-recruitment/ftkj/146869#/jobs?295097%5B0%5D=%E6%A0%A1%E6%8B%9B%2F%E5%AE%9E%E4%B9%A0&page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "非凸科技-site-beijing",
+      "name": "非凸科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市东城区和平里街道中关村雍和航星科技园-3号楼",
+        "lng": 116.423159,
+        "lat": 39.951192
+      }
+    },
+    {
+      "id": "非凸科技-site-shanghai",
+      "name": "非凸科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市徐汇区漕河泾新兴技术开发区虹梅路1801号凯科国际大厦",
+        "lng": 121.39795,
+        "lat": 31.168546
+      }
+    },
+    {
+      "id": "非凸科技-site-shenzhen",
+      "name": "非凸科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市南山区粤海街道高新区社区高新南九道55号微软科通大厦21B",
+        "lng": 113.940348,
+        "lat": 22.526623
+      }
+    },
+    {
+      "id": "非凸科技-site-chengdu",
+      "name": "非凸科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "武侯区萃华路89号(天府三街地铁站A口步行410米)",
+        "lng": 104.066204,
+        "lat": 30.549091
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c0d4e5d9c459",
+      "title": "大模型应用开发工程师实习生 Rust开发工程师实习生 深度学习专家实习生 策略研究员实习生 策略分析师实习生 数据工程师实习生",
+      "siteId": "非凸科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/ftkj/146869#/jobs?295097%5B0%5D=%E6%A0%A1%E6%8B%9B%2F%E5%AE%9E%E4%B9%A0&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "69"
+}

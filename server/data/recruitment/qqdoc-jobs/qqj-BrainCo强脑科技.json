@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-BrainCo强脑科技",
+  "name": "BrainCo强脑科技",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "产品与设计岗  硬件开发岗  软件开发岗  具身智能算法岗",
+  "deadline": "2026  12 31",
+  "sites": [
+    {
+      "id": "qqj-BrainCo强脑科技-site",
+      "name": "BrainCo强脑科技",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "广东省深圳市南山区同方科兴科学园F栋28层",
+        "lng": 113.949392,
+        "lat": 22.554854
+      }
+    }
+  ]
+}

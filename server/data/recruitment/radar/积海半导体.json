@@ -1,0 +1,42 @@
+{
+  "slug": "积海半导体",
+  "source": "xiaozhao-radar",
+  "name": "积海半导体",
+  "tier": 10,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ghsmc.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "积海半导体-site-hangzhou",
+      "name": "积海半导体",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "钱塘区东垦路811号",
+        "lng": 120.485846,
+        "lat": 30.347226
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b0edbab0a9d1",
+      "title": "芯片技术类  技术研发类  工程技术类  质量管理类  信息技术类  市场营销类",
+      "siteId": "积海半导体-site-hangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ghsmc.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

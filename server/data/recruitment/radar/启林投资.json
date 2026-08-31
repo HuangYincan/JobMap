@@ -1,0 +1,42 @@
+{
+  "slug": "启林投资",
+  "source": "xiaozhao-radar",
+  "name": "启林投资",
+  "tier": 8,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU67ac68866202cc7916aea66e/pb/school.html",
+  "sites": [
+    {
+      "id": "启林投资-site-shanghai",
+      "name": "启林投资",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市虹口区吴淞路575号吉汇大厦18楼1803室",
+        "lng": 121.486631,
+        "lat": 31.253293
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-db1201053534",
+      "title": "高频系统开发工程师 AI算法研究员 高频因子策略研究员 机构销售",
+      "siteId": "启林投资-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU67ac68866202cc7916aea66e/pb/school.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

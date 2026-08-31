@@ -1,0 +1,138 @@
+{
+  "slug": "三一集团",
+  "source": "xiaozhao-radar",
+  "name": "三一集团",
+  "tier": 6,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://sany.zhiye.com/4/jobs",
+  "sites": [
+    {
+      "id": "三一集团-site-beijing",
+      "name": "三一集团—星辰计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "钱塘区江东大道与新世纪大道交叉口西300米",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "三一集团-site-guangzhou",
+      "name": "三一集团—星辰计划",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州市海珠区琶洲芳园路53号三一华南总部大厦",
+        "lng": 113.339988,
+        "lat": 23.104016
+      }
+    },
+    {
+      "id": "三一集团-site-shanghai",
+      "name": "三一集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区川沙路与川大路交叉路口往西约140米",
+        "lng": 121.703533,
+        "lat": 31.167278
+      }
+    },
+    {
+      "id": "三一集团-site-chengdu",
+      "name": "三一集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "钱塘区江东大道与新世纪大道交叉口西300米",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "三一集团-site-hangzhou",
+      "name": "三一集团",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "钱塘区江东大道与新世纪大道交叉口西300米",
+        "lng": 120.598954,
+        "lat": 30.30582
+      }
+    },
+    {
+      "id": "三一集团-site-xian",
+      "name": "三一集团—星辰计划",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "北京/广州/西安/苏州",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    },
+    {
+      "id": "三一集团-site-suzhou",
+      "name": "三一集团—星辰计划",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "昆山市昆山16路;昆山216路",
+        "lng": 121.065971,
+        "lat": 31.404551
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bb7ace90e1fb",
+      "title": "智能感知与控制  先进仿真与数字栾生机电液系统工程  绿色动力与系能源",
+      "siteId": "三一集团-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sany.zhiye.com/4/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-4c84225e7f3f",
+      "title": "机械与结构设计 电气与控制  动力与能源  质量与工艺  软件与算法 项目管理与综合",
+      "siteId": "三一集团-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sany.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-bb7ace90e1fb-xian",
+      "title": "智能感知与控制  先进仿真与数字栾生机电液系统工程  绿色动力与系能源",
+      "siteId": "三一集团-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sany.zhiye.com/4/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "35"
+}

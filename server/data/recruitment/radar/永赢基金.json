@@ -1,0 +1,75 @@
+{
+  "slug": "永赢基金",
+  "source": "xiaozhao-radar",
+  "name": "永赢基金",
+  "tier": 8,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU628a429c0dcad41af38720c0/pb/interns.html",
+  "sites": [
+    {
+      "id": "永赢基金-site-beijing",
+      "name": "永赢基金",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市西城区锦什坊街泰康国际大厦",
+        "lng": 116.362662,
+        "lat": 39.917689
+      }
+    },
+    {
+      "id": "永赢基金-site-shanghai",
+      "name": "永赢基金",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区陆家嘴街道世纪大道210号-1楼",
+        "lng": 121.509671,
+        "lat": 31.234306
+      }
+    },
+    {
+      "id": "永赢基金-site-guangzhou",
+      "name": "永赢基金",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "永赢基金-site-shenzhen",
+      "name": "永赢基金",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2064aa86c414",
+      "title": "权益研究员 固收研究员 指数研究员 机构销售经理 渠道销售经理 开发工程师",
+      "siteId": "永赢基金-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU628a429c0dcad41af38720c0/pb/interns.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

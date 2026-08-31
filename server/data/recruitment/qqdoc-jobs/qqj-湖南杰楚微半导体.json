@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-湖南杰楚微半导体",
+  "name": "湖南杰楚微半导体",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "技术研发类  工程技术类  职能支持类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-湖南杰楚微半导体-site",
+      "name": "湖南杰楚微半导体",
+      "city": "长沙市",
+      "province": "",
+      "location": {
+        "address": "岳麓区长沙高新开发区青山西路60号",
+        "lng": 112.838917,
+        "lat": 28.244154
+      }
+    }
+  ]
+}

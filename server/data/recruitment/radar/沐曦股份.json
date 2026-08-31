@@ -1,0 +1,75 @@
+{
+  "slug": "沐曦股份",
+  "source": "xiaozhao-radar",
+  "name": "沐曦股份",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/metax-tech/58131?locale=zh-CN#/jobs/",
+  "sites": [
+    {
+      "id": "沐曦股份-site-beijing",
+      "name": "沐曦股份",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区丰豪东路中关村集成电路设计园2C号楼F9-906-910号",
+        "lng": 116.248803,
+        "lat": 40.073359
+      }
+    },
+    {
+      "id": "沐曦股份-site-shanghai",
+      "name": "沐曦股份",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "沐曦股份-site-shenzhen",
+      "name": "沐曦股份",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "沐曦股份-site-chengdu",
+      "name": "沐曦股份",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "武侯区四川省成都市高新区世纪城路1129号天府软件园A区8栋3楼",
+        "lng": 104.071352,
+        "lat": 30.548639
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-fee82f1922bb",
+      "title": "硬件类 软件类  商务类 滚利类",
+      "siteId": "沐曦股份-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/metax-tech/58131?locale=zh-CN#/jobs/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

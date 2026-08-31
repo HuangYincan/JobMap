@@ -1,0 +1,64 @@
+{
+  "slug": "中国兵器",
+  "source": "xiaozhao-radar",
+  "name": "中国兵器",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://norincogroupzhaopin.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "中国兵器-site-beijing",
+      "name": "中国兵器—兵器未来科学家",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市丰台区海鹰路总部国际6号院21号楼",
+        "lng": 116.280869,
+        "lat": 39.825661
+      }
+    },
+    {
+      "id": "中国兵器-site-chengdu",
+      "name": "中国兵器—兵器未来科学家",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/成都/重庆/太原",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "中国兵器-site-chongqing",
+      "name": "中国兵器—兵器未来科学家",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "重庆市江津区枫林大道重庆铁马专用车有限公司",
+        "lng": 106.31673,
+        "lat": 29.407655
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-26b2d9af7765",
+      "title": "人工智能 兵器/武器研发 计算机/软件电子/电器化学/材料光学/光电数学/物理  航空航天 仪器/设备",
+      "siteId": "中国兵器-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://norincogroupzhaopin.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "37"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "浙江省发展规划研究院",
+  "source": "xiaozhao-radar",
+  "name": "浙江省发展规划研究院",
+  "tier": 9,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "http://47.96.146.209:8111/zhaopin_sx.php",
+  "sites": [
+    {
+      "id": "浙江省发展规划研究院-site-hangzhou",
+      "name": "浙江省发展规划研究院",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "西湖区三墩镇同人广场C座(三坝地铁站F口步行120米)",
+        "lng": 120.098701,
+        "lat": 30.29854
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bace887980f2",
+      "title": "战略所经济所 区域所城镇所 基础所产业所 能环所 社会所 铁路所 智库部机关党委岗位",
+      "siteId": "浙江省发展规划研究院-site-hangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://47.96.146.209:8111/zhaopin_sx.php",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "73"
+}

@@ -1,0 +1,138 @@
+{
+  "slug": "软通动力",
+  "source": "xiaozhao-radar",
+  "name": "软通动力",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.itongxue.net/folder/promotion/isoftstone/",
+  "sites": [
+    {
+      "id": "软通动力-site-beijing",
+      "name": "软通动力",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区地锦路8号院4号楼一楼",
+        "lng": 116.17265,
+        "lat": 40.056745
+      }
+    },
+    {
+      "id": "软通动力-site-shanghai",
+      "name": "软通动力",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区新金桥路1999号东方万国c1栋2层",
+        "lng": 121.622396,
+        "lat": 31.255204
+      }
+    },
+    {
+      "id": "软通动力-site-shenzhen",
+      "name": "软通动力",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市福田区莲科二路新浩e都",
+        "lng": 114.068269,
+        "lat": 22.56445
+      }
+    },
+    {
+      "id": "软通动力-site-chengdu",
+      "name": "软通动力",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "武侯区武兴四路166号西部智谷B区三栋二单元",
+        "lng": 103.972606,
+        "lat": 30.632503
+      }
+    },
+    {
+      "id": "软通动力-site-guangzhou",
+      "name": "软通动力",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市黄埔区鱼珠街道护林路",
+        "lng": 113.443675,
+        "lat": 23.118775
+      }
+    },
+    {
+      "id": "软通动力-site-wuhan",
+      "name": "软通动力",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "洪山区文化大道553号创意大厦办公楼5层1号",
+        "lng": 114.319288,
+        "lat": 30.452782
+      }
+    },
+    {
+      "id": "软通动力-site-xian",
+      "name": "软通动力",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "广州/深圳/武汉/西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b97162a915b8",
+      "title": "技术类岗位  职能类岗位  销售咨询将诶岗位  数字化运营岗位",
+      "siteId": "软通动力-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.itongxue.net/folder/promotion/isoftstone/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-c844e0f7c85a",
+      "title": "智能体开发 项目助理 CoIang开发  项目助理 接听坐席客服",
+      "siteId": "软通动力-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.itongxue.net/folder/promotion/isoftstone/schoolhire?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-c844e0f7c85a-xian",
+      "title": "智能体开发 项目助理 CoIang开发  项目助理 接听坐席客服",
+      "siteId": "软通动力-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.itongxue.net/folder/promotion/isoftstone/schoolhire?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

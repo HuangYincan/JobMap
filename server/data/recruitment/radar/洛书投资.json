@@ -1,0 +1,56 @@
+{
+  "slug": "洛书投资",
+  "source": "xiaozhao-radar",
+  "name": "洛书投资",
+  "tier": 12,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/apply/luoshu/39933#/job/3296273c-be57-4062-b588-61feefb08492",
+  "sites": [
+    {
+      "id": "洛书投资-site-shanghai",
+      "name": "洛书投资",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区花木街道杨高南路729号陆家嘴世纪金融广场1号楼35层",
+        "lng": 121.535154,
+        "lat": 31.213545
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-197f3898ecd7",
+      "title": "Summer Intern(暑期实习):硕士及以上在读，数学、统计、物理、计算机、金融工程等相关专业;",
+      "siteId": "洛书投资-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/luoshu/39933#/job/3296273c-be57-4062-b588-61feefb08492",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-25a6d9463916",
+      "title": "量化实习生（fInaI year)",
+      "siteId": "洛书投资-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/luoshu/39933#/job/3063ce1f-78a2-4d54-b85b-fd1902f638a2",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "67"
+}

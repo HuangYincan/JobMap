@@ -1,0 +1,42 @@
+{
+  "slug": "圣湘生物",
+  "source": "xiaozhao-radar",
+  "name": "圣湘生物",
+  "tier": 8,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://sansurehr.zhiye.com/campus/jobs?2=%5B%7B%22id%22%3A%222%22%2C%22label%22%3A%22%E5%AE%9E%E4%B9%A0%E7%94%9F%E6%8B%9B%E8%81%98%22%7D%5D",
+  "sites": [
+    {
+      "id": "圣湘生物-site-shanghai",
+      "name": "圣湘生物",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市闵行区颛桥镇华西路680号",
+        "lng": 121.365194,
+        "lat": 31.06931
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-80737305fd6b",
+      "title": "生产实习生  检验实习生  体系实习生  QC  实习生  QA  实习生",
+      "siteId": "圣湘生物-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://sansurehr.zhiye.com/campus/jobs?2=%5B%7B%22id%22%3A%222%22%2C%22label%22%3A%22%E5%AE%9E%E4%B9%A0%E7%94%9F%E6%8B%9B%E8%81%98%22%7D%5D",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "27"
+}

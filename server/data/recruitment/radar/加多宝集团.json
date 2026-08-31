@@ -1,0 +1,75 @@
+{
+  "slug": "加多宝集团",
+  "source": "xiaozhao-radar",
+  "name": "加多宝集团",
+  "tier": 7,
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jdbchina.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "加多宝集团-site-beijing",
+      "name": "加多宝集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/广州/深圳/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "加多宝集团-site-guangzhou",
+      "name": "加多宝集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州/深圳/成都",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "加多宝集团-site-shenzhen",
+      "name": "加多宝集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市罗湖区桂园街道宝安南路2084",
+        "lng": 114.110475,
+        "lat": 22.550126
+      }
+    },
+    {
+      "id": "加多宝集团-site-chengdu",
+      "name": "加多宝集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/广州/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c071fd0d810a",
+      "title": "生产管培生   营销管培生",
+      "siteId": "加多宝集团-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jdbchina.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "15"
+}

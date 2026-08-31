@@ -1,0 +1,74 @@
+{
+  "slug": "云和恩墨",
+  "source": "xiaozhao-radar",
+  "name": "云和恩墨",
+  "tier": 10,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/enmotech/47098#/",
+  "sites": [
+    {
+      "id": "云和恩墨-site-beijing",
+      "name": "云和恩墨—销售实习生专项",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市朝阳区东三环北路8号院6号楼亮马河大厦2座办公楼4层01-03室",
+        "lng": 116.464548,
+        "lat": 39.945924
+      }
+    },
+    {
+      "id": "云和恩墨-site-shanghai",
+      "name": "云和恩墨—销售实习生专项",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市长宁区淮海西路666号25层2505-B室",
+        "lng": 121.4226,
+        "lat": 31.196911
+      }
+    },
+    {
+      "id": "云和恩墨-site-shenzhen",
+      "name": "云和恩墨—销售实习生专项",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "云和恩墨-site-chengdu",
+      "name": "云和恩墨—销售实习生专项",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "武侯区四川省成都市桂溪街道天府四街199号长虹科技大厦A座22层0304单元",
+        "lng": 104.063778,
+        "lat": 30.541541
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-09f7bd7cfee9",
+      "title": "销售实习生",
+      "siteId": "云和恩墨-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/enmotech/47098#/",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "65"
+}

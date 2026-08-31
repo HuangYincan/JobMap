@@ -1,0 +1,72 @@
+{
+  "slug": "叠纸游戏",
+  "source": "xiaozhao-radar",
+  "name": "叠纸游戏",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.papegames.com/campus/position/list?keywords=&category=&location=&project=7667093166210763044&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+  "sites": [
+    {
+      "id": "叠纸游戏-site-shanghai",
+      "name": "叠纸游戏",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市杨浦区五角场街道淞沪路290号",
+        "lng": 121.513032,
+        "lat": 31.306011
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0afc046609ed",
+      "title": "技术研发类  策划类  美术类  动画CC类  市场运营类  游戏音频类 职能支持类",
+      "siteId": "叠纸游戏-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-10-31",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.papegames.com/campus/position/list?keywords=&category=&location=&project=7667093166210763044&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-a092d6a57e96",
+      "title": "技术研发类 产品策划类 美术设计类 动画 CG类 市场运营类 游戏音频类 质量管理类 职能支持类",
+      "siteId": "叠纸游戏-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.papegames.com/campus/position/list?keywords=&category=&location=&project=7602113143352248639&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-90feccfbec13",
+      "title": "技术、美术、产品、运营等",
+      "siteId": "叠纸游戏-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.pingan.com/internStudent",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

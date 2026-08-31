@@ -1,0 +1,21 @@
+{
+  "slug": "qq-大连银行",
+  "name": "大连银行",
+  "official_url": "https://www.bankofdl.com/home/pc/gywm/cpyc/rczp/index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-大连银行-site-hq",
+      "name": "大连银行",
+      "city": "大连市",
+      "province": "辽宁省",
+      "location": {
+        "address": "辽宁省大连市中山区中山路88号天安国际大厦",
+        "lng": 121.636521,
+        "lat": 38.918756
+      }
+    }
+  ]
+}

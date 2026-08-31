@@ -1,0 +1,53 @@
+{
+  "slug": "思考乐教育集团",
+  "source": "xiaozhao-radar",
+  "name": "思考乐教育集团",
+  "tier": 9,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.skledu.com/jobs",
+  "sites": [
+    {
+      "id": "思考乐教育集团-site-guangzhou",
+      "name": "思考乐教育集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市天河区体育西路191号中石化大厦B塔20楼思考乐教育",
+        "lng": 113.320917,
+        "lat": 23.140236
+      }
+    },
+    {
+      "id": "思考乐教育集团-site-shenzhen",
+      "name": "思考乐教育集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市龙岗区朝阳路20号",
+        "lng": 114.119849,
+        "lat": 22.692498
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9f2599344dc8",
+      "title": "小学  初中  高州 教室岗位",
+      "siteId": "思考乐教育集团-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.skledu.com/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "82"
+}

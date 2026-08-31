@@ -1,0 +1,53 @@
+{
+  "slug": "钛动科技",
+  "source": "xiaozhao-radar",
+  "name": "钛动科技",
+  "tier": 9,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/tec-do/41717?sourceToken=e84f5e1f268b393430cc76c14c91feba&sessionid=#/jobs?zhineng%5B0%5D=215794",
+  "sites": [
+    {
+      "id": "钛动科技-site-guangzhou",
+      "name": "钛动科技",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州/成都",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "钛动科技-site-chengdu",
+      "name": "钛动科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都市武侯区峰汇金街峰汇中心",
+        "lng": 104.061105,
+        "lat": 30.547287
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d40e7383633a",
+      "title": "广告设计实习生 海外KOL运营实习生 广告优化实习生",
+      "siteId": "钛动科技-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/tec-do/41717?sourceToken=e84f5e1f268b393430cc76c14c91feba&sessionid=#/jobs?zhineng%5B0%5D=215794",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "72"
+}

@@ -1,0 +1,19 @@
+{
+  "slug": "qq-东莞农村商业银行",
+  "name": "东莞农村商业银行",
+  "official_url": "https://www.drcbank.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-东莞农村商业银行-site-hq",
+      "name": "东莞农村商业银行",
+      "city": "东莞市",
+      "province": "广东省",
+      "location": {
+        "address": "东莞市东城区鸿福东路2号"
+      }
+    }
+  ]
+}

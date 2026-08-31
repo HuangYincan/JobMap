@@ -1,0 +1,61 @@
+{
+  "slug": "deepseek",
+  "source": "official-career",
+  "name": "深度求索",
+  "industries": [
+    "ai"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.deepseek.com/",
+  "sites": [
+    {
+      "id": "deepseek-site",
+      "name": "深度求索",
+      "location": {
+        "lng": 120.173,
+        "lat": 30.274,
+        "address": "拱墅区环城北路169号汇金国际大厦"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "deepseek-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "deepseek-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "应用工程",
+      "salary": {
+        "min": 20,
+        "max": 35
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "Python"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.deepseek.com/"
+    },
+    {
+      "externalId": "portal-deepseek",
+      "title": "加入 DeepSeek（官方人才站）",
+      "siteId": "deepseek-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.deepseek.com/",
+      "retrievedAt": "2026-08-17"
+    }
+  ],
+  "tier": 1,
+  "category": "65"
+}

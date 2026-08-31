@@ -1,0 +1,75 @@
+{
+  "slug": "兆易创新",
+  "source": "xiaozhao-radar",
+  "name": "兆易创新",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/gigadevice/92215?locale=zh-CN#/jobs?page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "兆易创新-site-beijing",
+      "name": "兆易创新",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区丰豪东路9号院8号楼1至5层101",
+        "lng": 116.250514,
+        "lat": 40.073379
+      }
+    },
+    {
+      "id": "兆易创新-site-shanghai",
+      "name": "兆易创新",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区张江路505号展想中心F15层",
+        "lng": 121.614144,
+        "lat": 31.207558
+      }
+    },
+    {
+      "id": "兆易创新-site-shenzhen",
+      "name": "兆易创新",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市南山区高新南环路深圳湾科技生态园-三四区",
+        "lng": 113.951803,
+        "lat": 22.53082
+      }
+    },
+    {
+      "id": "兆易创新-site-chengdu",
+      "name": "兆易创新",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "四川省成都市武侯区银泰城9号楼19层",
+        "lng": 104.059783,
+        "lat": 30.541792
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-070b7dc0fa67",
+      "title": "模拟设计师   模拟电路设计工程师    电路设计工程师  射频模拟设计工程师  数字电路设计工程师  高速接口设计工程师  数字设计/验证工程师 逻辑设计/验",
+      "siteId": "兆易创新-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/gigadevice/92215?locale=zh-CN#/jobs?page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

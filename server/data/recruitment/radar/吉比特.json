@@ -1,0 +1,42 @@
+{
+  "slug": "吉比特",
+  "source": "xiaozhao-radar",
+  "name": "吉比特",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.g-bits.com/mobile/index.html#/?referralCode=367RVG",
+  "sites": [
+    {
+      "id": "吉比特-site-shenzhen",
+      "name": "吉比特",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "福田区深圳/厦门",
+        "lng": 114.057939,
+        "lat": 22.543527
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-38450ce821b8",
+      "title": "研发技术 / 美术设计 / 产品运营 / 市场营销 / 游戏客服",
+      "siteId": "吉比特-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.g-bits.com/mobile/index.html#/?referralCode=367RVG",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

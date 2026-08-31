@@ -1,0 +1,53 @@
+{
+  "slug": "shein",
+  "source": "xiaozhao-radar",
+  "name": "SHEIN",
+  "tier": 1,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careers.shein.cn/All-Jobs?key=-%E6%9A%91%E6%9C%9F%E5%AE%9E%E4%B9%A0",
+  "sites": [
+    {
+      "id": "shein-site-shanghai",
+      "name": "SHEIN",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市静安区广延路宏慧视界",
+        "lng": 121.456271,
+        "lat": 31.293386
+      }
+    },
+    {
+      "id": "shein-site-shenzhen",
+      "name": "SHEIN",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区留仙大道4168号众冠时代广场二期8栋1楼",
+        "lng": 113.963356,
+        "lat": 22.582606
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-647528e9dced",
+      "title": "产品实习生 算法实习生",
+      "siteId": "shein-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.shein.cn/All-Jobs?key=-%E6%9A%91%E6%9C%9F%E5%AE%9E%E4%B9%A0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

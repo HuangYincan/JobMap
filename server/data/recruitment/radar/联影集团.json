@@ -1,0 +1,64 @@
+{
+  "slug": "联影集团",
+  "source": "xiaozhao-radar",
+  "name": "联影集团",
+  "tier": 6,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://united-imaging.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "联影集团-site-shanghai",
+      "name": "联影集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市嘉定区城北路2258号",
+        "lng": 121.212484,
+        "lat": 31.42115
+      }
+    },
+    {
+      "id": "联影集团-site-shenzhen",
+      "name": "联影集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上海/深圳/武汉",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "联影集团-site-wuhan",
+      "name": "联影集团",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市江夏区高科园路99号",
+        "lng": 114.52234,
+        "lat": 30.474465
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8f5cfa6e8ebc",
+      "title": "电力电子 芯片应用 电子精密机械FPGA  算法 射频 科研合作 传感器临床应用  模拟设计  软件开发",
+      "siteId": "联影集团-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://united-imaging.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "27"
+}

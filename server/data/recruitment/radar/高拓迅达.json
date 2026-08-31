@@ -1,0 +1,42 @@
+{
+  "slug": "高拓迅达",
+  "source": "xiaozhao-radar",
+  "name": "高拓迅达",
+  "tier": 10,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://altobeam.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "高拓迅达-site-beijing",
+      "name": "高拓迅达",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-df251669cc5d",
+      "title": "通信算法工程师  数字IC设计工程师  数字IC验证工程师  PLL工程师  模拟IC设计工程师  射频IC设计工程师",
+      "siteId": "高拓迅达-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-10-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://altobeam.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

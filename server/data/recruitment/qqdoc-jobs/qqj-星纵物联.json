@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-星纵物联",
+  "name": "星纵物联",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://milesight.zhiye.com/campus",
+  "direction": "研发序列  市场营销序列  供应链序列  职能序列",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-星纵物联-site",
+      "name": "星纵物联",
+      "city": "厦门市",
+      "province": "",
+      "location": {
+        "address": "厦门市集美区软件园三期C09栋",
+        "lng": 118.035658,
+        "lat": 24.622107
+      }
+    }
+  ]
+}

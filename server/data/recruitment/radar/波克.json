@@ -1,0 +1,42 @@
+{
+  "slug": "波克",
+  "source": "xiaozhao-radar",
+  "name": "波克",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://boke.jobs.feishu.cn/581609/?keywords=&category=&location=&project=&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=7615065632384928036&sessionid=",
+  "sites": [
+    {
+      "id": "波克-site-shanghai",
+      "name": "波克",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市普陀区金沙江路1628弄绿洲中环中心10号楼",
+        "lng": 121.380274,
+        "lat": 31.233376
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bfe506f5d318",
+      "title": "2D动画 2D特效 unity开发工程师",
+      "siteId": "波克-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://boke.jobs.feishu.cn/581609/?keywords=&category=&location=&project=&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=7615065632384928036&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

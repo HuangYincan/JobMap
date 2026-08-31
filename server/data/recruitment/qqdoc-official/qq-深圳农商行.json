@@ -1,0 +1,21 @@
+{
+  "slug": "qq-深圳农商行",
+  "name": "深圳农商行",
+  "official_url": "https://wecruit.hotjob.cn/SU601ce262bef57c66a91d41fa/pb/index.html#/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-深圳农商行-site-hq",
+      "name": "深圳农商行",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市宝安区新安街道海旺社区海秀路2028号农商银行大厦",
+        "lng": 113.881091,
+        "lat": 22.550376
+      }
+    }
+  ]
+}

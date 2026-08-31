@@ -1,0 +1,205 @@
+{
+  "slug": "美团",
+  "source": "xiaozhao-radar",
+  "name": "美团",
+  "tier": 5,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhaopin.meituan.com/web/beidou",
+  "sites": [
+    {
+      "id": "美团-site-beijing",
+      "name": "美团—北斗计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市朝阳区小营北路11号鼎成中心D座",
+        "lng": 116.433755,
+        "lat": 39.999415
+      }
+    },
+    {
+      "id": "美团-site-shanghai",
+      "name": "美团—北斗计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市杨浦区黄兴路221号互联宝地24楼",
+        "lng": 121.52841,
+        "lat": 31.272821
+      }
+    },
+    {
+      "id": "美团-site-shenzhen",
+      "name": "美团—北斗计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市福田区沙头街道深南大道6011号",
+        "lng": 114.029575,
+        "lat": 22.535725
+      }
+    },
+    {
+      "id": "美团-site-chengdu",
+      "name": "美团—北斗计划",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "四川省成都市武侯区世外桃源广场B座1118室",
+        "lng": 104.077412,
+        "lat": 30.630329
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-abf0a290df8e",
+      "title": "大模型  自动驾驶  无人机 具身智能  智能决策等方向",
+      "siteId": "美团-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.meituan.com/web/beidou",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "embj-美团-1",
+      "title": "具身智能系统工程师",
+      "siteId": "美团-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3370570061&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-2",
+      "title": "具身智能算法工程师",
+      "siteId": "美团-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3370509617&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-3",
+      "title": "基座大模型算法研究员（预训练/原生多模态/智能体系统）",
+      "siteId": "美团-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3375720050&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-4",
+      "title": "多模态基座大模型算法研究员（视觉/语音/全模态融合）",
+      "siteId": "美团-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3375700771&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-5",
+      "title": "具身智能技术研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3153985413&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-6",
+      "title": "具身智能前沿研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=4348855149&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-7",
+      "title": "具身智能前沿技术研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=4348824362&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-8",
+      "title": "具身智能系统与开放物理世界探索能力研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=4348797539&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-9",
+      "title": "视觉生成与世界模型技术研究",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=4348830639&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-美团-10",
+      "title": "多模态智能体算法研究与自主规划",
+      "siteId": "美团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.meituan.com/web/position/detail?jobUnionId=3153873069&jobShareType=1",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "category": "64"
+}

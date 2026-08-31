@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中国电子",
+  "name": "中国电子",
+  "official_url": "https://cec.hotjob.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国电子-site-hq",
+      "name": "中国电子",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "广东省深圳市南山区科发路3号中电长城大厦A座",
+        "lng": 113.946034,
+        "lat": 22.542061
+      }
+    }
+  ]
+}

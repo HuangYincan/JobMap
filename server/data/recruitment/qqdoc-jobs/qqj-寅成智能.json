@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-寅成智能",
+  "name": "寅成智能",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告 ",
+  "direction": "AI算法工程师  软件开发工程师  机械/电气工程师  方案与售前工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-寅成智能-site",
+      "name": "寅成智能",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "闵行区上海市青浦区华新镇纪鹤公路1301号3幢1层",
+        "lng": 121.243676,
+        "lat": 31.240648
+      }
+    }
+  ]
+}

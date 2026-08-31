@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-凯莱英",
+  "name": "凯莱英",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://asymchem.zhiye.com/jobs?activityGuid=28ad6996-d458-4a2f-b4ec-4e954f3194ff",
+  "direction": "分析类岗位  制剂类岗位  生物研发类岗位  化学研发类岗位 —小分子/ 大分子",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-凯莱英-site",
+      "name": "凯莱英",
+      "city": "天津市",
+      "province": "",
+      "location": {
+        "address": "天津市滨海新区第七大街71号",
+        "lng": 117.728709,
+        "lat": 39.046398
+      }
+    }
+  ]
+}

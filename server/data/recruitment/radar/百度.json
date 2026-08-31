@@ -1,0 +1,157 @@
+{
+  "slug": "百度",
+  "source": "xiaozhao-radar",
+  "name": "百度",
+  "tier": 5,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://dwz.cn/uBmEsGqL",
+  "sites": [
+    {
+      "id": "百度-site-beijing",
+      "name": "百度",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "海淀区西北旺东路10号院百度科技园",
+        "lng": 116.273585,
+        "lat": 40.043453
+      }
+    },
+    {
+      "id": "百度-site-shanghai",
+      "name": "百度",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市嘉定区汇发路301号盛剑大厦5~7层",
+        "lng": 121.212553,
+        "lat": 31.411437
+      }
+    },
+    {
+      "id": "百度-site-guangzhou",
+      "name": "百度",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市番禺区沙头街禺山西路329号4座2栋2~7层",
+        "lng": 113.34229,
+        "lat": 22.937596
+      }
+    },
+    {
+      "id": "百度-site-shenzhen",
+      "name": "百度",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区学府路63号百度国际大厦西塔西塔楼",
+        "lng": 113.942725,
+        "lat": 22.524675
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2cd67fc6880f",
+      "title": "技术类、产品类、专业服务和管理支持类、政企行业解决方案和服务类",
+      "siteId": "百度-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dwz.cn/uBmEsGqL",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-eb16cb39c88a",
+      "title": "产品  运营  财务  战略HR",
+      "siteId": "百度-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-14",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/list",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-cb538f43adec",
+      "title": "管培实习生 专业不限 ，工科（计算机等相关专业），商科（经营，金融等相关专业）背景优先",
+      "siteId": "百度-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://dwz.cn/0DO8N4tK",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-00ilmfcy",
+      "title": "招聘帮助",
+      "siteId": "百度-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/list?recommendCode=IZH1K1&recruitType=GRADUATE/static/index.html#/recruitHelp",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "embj-百度-1",
+      "title": "AIDU计划自动驾驶-深度学习决策规划算法工程师",
+      "siteId": "百度-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/detail/GRADUATE/795d6cd1-4b53-4733-a553-a5b96bef9111",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-百度-2",
+      "title": "AIDU计划 - 自动驾驶-感知算法工程师(VLM语义方向)",
+      "siteId": "百度-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/detail/GRADUATE/69b11b84-fe6c-4287-8502-b09b6d27faed",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-百度-3",
+      "title": "AIDU计划- 自动驾驶-感知算法工程师(多模态障碍物检测方向)",
+      "siteId": "百度-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://talent.baidu.com/jobs/detail/GRADUATE/ef698f72-e6ad-480e-9438-446eaed91c76",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "category": "64"
+}

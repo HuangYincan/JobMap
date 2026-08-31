@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-同惠电子",
+  "name": "同惠电子",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "硬件开发工程师  软件开发工程师  销售工程师 测试/应用工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-同惠电子-site",
+      "name": "同惠电子",
+      "city": "常州市",
+      "province": "",
+      "location": {
+        "address": "江苏省常州市新北区新竹路1号",
+        "lng": 119.995073,
+        "lat": 31.88544
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "qq-西安银行",
+  "name": "西安银行",
+  "official_url": "https://job.xacbank.com:8001/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-西安银行-site-hq",
+      "name": "西安银行",
+      "city": "西安市",
+      "province": "",
+      "location": {
+        "address": "陕西省西安市雁塔区高新路60号",
+        "lng": 108.900624,
+        "lat": 34.229351
+      }
+    }
+  ]
+}

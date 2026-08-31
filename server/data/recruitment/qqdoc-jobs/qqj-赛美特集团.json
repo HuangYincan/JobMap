@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-赛美特集团",
+  "name": "赛美特集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://semi.zhiye.com/campus/jobs",
+  "direction": "软件研发工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-赛美特集团-site",
+      "name": "赛美特集团",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市闵行区七宝生态商务区虹桥万创中心T1栋10层",
+        "lng": 121.353386,
+        "lat": 31.16061
+      }
+    }
+  ]
+}

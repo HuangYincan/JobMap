@@ -1,0 +1,65 @@
+[
+ {
+  "file": "embodied-jobs/embj-1X Technologies.json",
+  "site_id": "embj-1X Technologies-site",
+  "company": "1X Technologies",
+  "city": "San Carlos, CA",
+  "tried": "未找到街道地址。尝试:Wikipedia(1X Technologies)仅称 HQ 在 Palo Alto、制造在 Hayward(未提 San Carlos);1x.tech 主页/contact(404)/press/privacy-policy 均无地址。"
+ },
+ {
+  "file": "embodied-jobs/embj-AIM Intelligent Machines.json",
+  "site_id": "embj-AIM Intelligent Machines-site",
+  "company": "AIM Intelligent Machines",
+  "city": "Seattle, WA, USA",
+  "tried": "未找到街道地址。尝试:aim.vision 主页/about/careers 均无地址(仅有联系表单);城市 Seattle 未在页面确认。"
+ },
+ {
+  "file": "embodied-jobs/embj-Amazon Robotics.json",
+  "site_id": "embj-Amazon Robotics-site",
+  "company": "Amazon Robotics",
+  "city": "North Reading, MA Bellevue, WA Westborough, MA USA",
+  "tried": "未找到街道地址。多办公室:North Reading(总部)、Bellevue WA、Westborough MA。Wikipedia(Amazon Robotics)仅称 Massachusetts-based,无街道;amazonrobotics.com 301 至 amazon.jobs 内部"
+ },
+ {
+  "file": "embodied-jobs/embj-Apptronik.json",
+  "site_id": "embj-Apptronik-site",
+  "company": "Apptronik",
+  "city": "Sunnyvale, CA, USA Austin, TX",
+  "tried": "未找到街道地址。尝试:apptronik.com 主页/contact/privacy-policy 均无地址(仅有联系表单);Wikipedia 无 Apptronik 条目(404);bizapedia 被拦截。公开报道称 HQ 在 Austin TX,Sunnyvale 为早期办公室,但未获直"
+ },
+ {
+  "file": "embodied-jobs/embj-Boston Dynamics.json",
+  "site_id": "embj-Boston Dynamics-site",
+  "company": "Boston Dynamics",
+  "city": "Waltham, MA Billerica, MA",
+  "tried": "未找到街道地址。Wikipedia(Boston Dynamics)仅确认 HQ 在 Waltham MA;Billerica 为设施。尝试 bostondynamics.com 主页/contact/privacy-policy/about/press 均无地址;crunchbase 与 Wayb"
+ },
+ {
+  "file": "embodied-jobs/embj-Cruise.json",
+  "site_id": "embj-Cruise-site",
+  "company": "Cruise",
+  "city": "USA San Francisco, CA",
+  "tried": "未找到街道地址。Wikipedia(Cruise)仅确认 HQ 在 San Francisco;getcruise.com 已 301 并入 GM(gm.com 403);opencorporates 被 CAPTCHA 拦截。"
+ },
+ {
+  "file": "embodied-jobs/embj-Grit Ventures.json",
+  "site_id": "embj-Grit Ventures-site",
+  "company": "Grit Ventures",
+  "city": "USA | Summer 2026",
+  "tried": "未找到总部街道地址。gritventures.com 主页/about 仅列出投资枢纽(Grit Tier 1/2 Hubs: Austin、Boston、LA、Pittsburgh、Silicon Valley 等),无总部地址;城市字段 'USA' 无具体城市。"
+ },
+ {
+  "file": "embodied-jobs/embj-HTX.json",
+  "site_id": "embj-HTX-site",
+  "company": "HTX",
+  "city": "Singapore",
+  "tried": "未找到街道地址。HTX 为新加坡政府机构(Home Team Science and Technology Agency)。官网 htx.gov.sg 主页/contact-us 仅提供交通指引(nearest MRT: one-north, CC23),无街道地址;Wikipedia 无该机构条目"
+ },
+ {
+  "file": "embodied-jobs/embj-Tactus.json",
+  "site_id": "embj-Tactus-site",
+  "company": "Tactus",
+  "city": "Irvine, CA, USA",
+  "tried": "未找到街道地址。tactus.com 多次尝试均连接失败;Wikipedia 无 Tactus Technology 条目(404)。careerUrl 指向 career.calvin.edu(Calvin University 职业中心),疑为数据抓取错配,公司实体与城市 Irvine 的关系未"
+ }
+]

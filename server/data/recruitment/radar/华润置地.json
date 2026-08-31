@@ -1,0 +1,75 @@
+{
+  "slug": "华润置地",
+  "source": "xiaozhao-radar",
+  "name": "华润置地",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/crland/166206?locale=zh-CN&sessionid=#/home",
+  "sites": [
+    {
+      "id": "华润置地-site-shanghai",
+      "name": "华润置地",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市杨浦区翔殷路1099号(10号线五角场5号口)合生汇综合广场F1",
+        "lng": 121.517199,
+        "lat": 31.299585
+      }
+    },
+    {
+      "id": "华润置地-site-shenzhen",
+      "name": "华润置地",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市宝安区环镇路191号",
+        "lng": 113.812322,
+        "lat": 22.740208
+      }
+    },
+    {
+      "id": "华润置地-site-chengdu",
+      "name": "华润置地",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "上城区钱江路1366号华润大厦A座14楼",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "华润置地-site-hangzhou",
+      "name": "华润置地",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上城区钱江路1366号华润大厦A座14楼",
+        "lng": 120.214933,
+        "lat": 30.25378
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9c8bbe382e7c",
+      "title": "招商运营类  物业管理类  场馆运营类 人力资源类  财务管理类",
+      "siteId": "华润置地-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/crland/166206?locale=zh-CN&sessionid=#/home",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "70"
+}

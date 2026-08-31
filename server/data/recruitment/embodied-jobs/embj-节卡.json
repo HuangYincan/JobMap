@@ -1,0 +1,86 @@
+{
+  "slug": "embj-节卡",
+  "source": "embodied-jobs",
+  "name": "节卡",
+  "sites": [
+    {
+      "id": "embj-节卡-site",
+      "name": "节卡",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市闵行区剑川路610号33-35栋",
+        "lng": 121.435402,
+        "lat": 31.032033
+      }
+    }
+  ],
+  "careerUrl": "https://jaka.zhiye.com/social/detail?jobAdId=75c99003-aff5-4812-8c31-68d15caab061",
+  "positions": [
+    {
+      "externalId": "embj-节卡-1",
+      "title": "产品验证工程师",
+      "siteId": "embj-节卡-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jaka.zhiye.com/social/detail?jobAdId=75c99003-aff5-4812-8c31-68d15caab061",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡-2",
+      "title": "高级机械工程师",
+      "siteId": "embj-节卡-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jaka.zhiye.com/social/detail?jobAdId=0171b2f9-370a-44dd-99a7-dea980f0a43c",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡-3",
+      "title": "机械系统研究员",
+      "siteId": "embj-节卡-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://alidocs.dingtalk.com/notable/share/form/v013BMqYyb52jJVAqwZ_dv19yqvsgs3oebp3pcjys_1qX0QQ0",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡-4",
+      "title": "具身智能算法研究员(感知方向)",
+      "siteId": "embj-节卡-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://alidocs.dingtalk.com/notable/share/form/v013BMqYyb52jJVAqwZ_dv19yqvsgs3oebp3pcjys_1qX0QQ0",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-节卡-5",
+      "title": "具身智能算法研究员(控制方向)",
+      "siteId": "embj-节卡-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://alidocs.dingtalk.com/notable/share/form/v013BMqYyb52jJVAqwZ_dv19yqvsgs3oebp3pcjys_1qX0QQ0",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

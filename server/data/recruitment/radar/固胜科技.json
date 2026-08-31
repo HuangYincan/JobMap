@@ -1,0 +1,53 @@
+{
+  "slug": "固胜科技",
+  "source": "xiaozhao-radar",
+  "name": "固胜科技",
+  "tier": 9,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.mozaracing.cn/recruitment/",
+  "sites": [
+    {
+      "id": "固胜科技-site-shenzhen",
+      "name": "固胜科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区桃源街道福光社区留仙大道3370号南山智园崇文园区3号楼1903、1904",
+        "lng": 113.993194,
+        "lat": 22.588137
+      }
+    },
+    {
+      "id": "固胜科技-site-wuhan",
+      "name": "固胜科技",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "江夏区湖北省武汉市东湖新技术开发区光谷三路777号A塔楼405室405-151",
+        "lng": 114.483194,
+        "lat": 30.430252
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-06a8aefecea1",
+      "title": "供应链管理类  销售类  研发类  职能类 产品项目类  制造类",
+      "siteId": "固胜科技-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.mozaracing.cn/recruitment/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

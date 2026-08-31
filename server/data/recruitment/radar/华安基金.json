@@ -1,0 +1,42 @@
+{
+  "slug": "华安基金",
+  "source": "xiaozhao-radar",
+  "name": "华安基金",
+  "tier": 7,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://huaan.m.zhiye.com/xzzw.html",
+  "sites": [
+    {
+      "id": "华安基金-site-shanghai",
+      "name": "华安基金",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市杨浦区四平路1398号同济联合广场b座",
+        "lng": 121.506798,
+        "lat": 31.28181
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d952c6bead2b",
+      "title": "投资研究类 市场营销类 金融科技类",
+      "siteId": "华安基金-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://huaan.m.zhiye.com/xzzw.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

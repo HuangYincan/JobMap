@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-玫瑰岛集团",
+  "name": "玫瑰岛集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "管培生岗位:品牌推广 市场营销 研发技术 智能制造 供应链管理 信息技术  职能管理  语言类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-玫瑰岛集团-site",
+      "name": "玫瑰岛集团",
+      "city": "中山市",
+      "province": "",
+      "location": {
+        "address": "广东省中山市港口镇新胜六街2号",
+        "lng": 113.397983,
+        "lat": 22.570857
+      }
+    }
+  ]
+}

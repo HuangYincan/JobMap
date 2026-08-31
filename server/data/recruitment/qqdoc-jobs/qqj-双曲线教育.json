@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-双曲线教育",
+  "name": "双曲线教育",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递简历看官方公告",
+  "direction": "数学老师  物理老师 化学老师  竞赛教练",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-双曲线教育-site",
+      "name": "双曲线教育",
+      "city": "南昌市",
+      "province": "",
+      "location": {
+        "address": "江西省南昌市西湖区朝阳洲双联时代广场2楼",
+        "lng": 115.907671,
+        "lat": 28.670735
+      }
+    }
+  ]
+}

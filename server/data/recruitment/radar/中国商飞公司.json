@@ -1,0 +1,64 @@
+{
+  "slug": "中国商飞公司",
+  "source": "xiaozhao-radar",
+  "name": "中国商飞公司",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhaopin.comac.cc/zp/ct/out/position",
+  "sites": [
+    {
+      "id": "中国商飞公司-site-beijing",
+      "name": "中国商飞公司",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/成都/乌鲁木齐",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "中国商飞公司-site-shanghai",
+      "name": "中国商飞公司",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区国耀路中国商飞总部基地2期",
+        "lng": 121.48563,
+        "lat": 31.184414
+      }
+    },
+    {
+      "id": "中国商飞公司-site-chengdu",
+      "name": "中国商飞公司",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/成都/乌鲁木齐",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3831874ffe71",
+      "title": "机械  动力 力学  航空航天  电气工程  电子信息  自动化 计算机  材料等专业",
+      "siteId": "中国商飞公司-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.comac.cc/zp/ct/out/position",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "37"
+}

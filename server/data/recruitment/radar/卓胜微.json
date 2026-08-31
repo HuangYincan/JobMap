@@ -1,0 +1,42 @@
+{
+  "slug": "卓胜微",
+  "source": "xiaozhao-radar",
+  "name": "卓胜微",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://maxscend.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "卓胜微-site-chengdu",
+      "name": "卓胜微",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "双流区四川省成都高新区和乐二街171号5栋18层",
+        "lng": 104.085448,
+        "lat": 30.510176
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1b16ec3682cf",
+      "title": "设计研发类  制造研发类  业务支持类",
+      "siteId": "卓胜微-site-chengdu",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://maxscend.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

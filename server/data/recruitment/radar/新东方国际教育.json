@@ -1,0 +1,42 @@
+{
+  "slug": "新东方国际教育",
+  "source": "xiaozhao-radar",
+  "name": "新东方国际教育",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhaopin.xdf.cn/jobs?activityGuid=a43b35a9-bcb4-4138-a078-c2e9e32acfcd",
+  "sites": [
+    {
+      "id": "新东方国际教育-site-guangzhou",
+      "name": "新东方国际教育",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-be16c83f2c81",
+      "title": "雅思托福教师  国际青少教师  国际学科教师  国际备考教师(数学)菁英班课教师(英语)  DSE教师(英文写作)",
+      "siteId": "新东方国际教育-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.xdf.cn/jobs?activityGuid=a43b35a9-bcb4-4138-a078-c2e9e32acfcd",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "82"
+}

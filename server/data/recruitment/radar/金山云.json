@@ -1,0 +1,53 @@
+{
+  "slug": "金山云",
+  "source": "xiaozhao-radar",
+  "name": "金山云",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jssoft.zhiye.com/intern/jobs?memory=%7B%7D&silence=1",
+  "sites": [
+    {
+      "id": "金山云-site-beijing",
+      "name": "金山云",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/武汉",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "金山云-site-wuhan",
+      "name": "金山云",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "洪山区湖北省武汉市东湖新技术开发区光谷四路306号金山集团武汉总部项目(11号地块)一期5栋2层R1",
+        "lng": 114.484781,
+        "lat": 30.503109
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2b8a3c6e1f50",
+      "title": "售后工程师 产品运营 产品经理  CDN研发 调度研发",
+      "siteId": "金山云-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jssoft.zhiye.com/intern/jobs?memory=%7B%7D&silence=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "qq-江苏银行",
+  "name": "江苏银行",
+  "official_url": "https://hr.jsbchina.cn/spa/custom/static/index.html?WxUg5ztDmi=1760852192815#/main/cs/app/415469a50449415a9b56642c69728966_jscb?_key=bws1ga",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-江苏银行-site-hq",
+      "name": "江苏银行",
+      "city": "南京市",
+      "province": "",
+      "location": {
+        "address": "秦淮区江苏省南京市中华路26号",
+        "lng": 118.785578,
+        "lat": 32.027668
+      }
+    }
+  ]
+}

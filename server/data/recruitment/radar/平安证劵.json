@@ -1,0 +1,42 @@
+{
+  "slug": "平安证劵",
+  "source": "xiaozhao-radar",
+  "name": "平安证劵",
+  "tier": 7,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.pingan.com/securities/position",
+  "sites": [
+    {
+      "id": "平安证劵-site-shenzhen",
+      "name": "平安证劵",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-eaa01bbe5622",
+      "title": "行研类  投行类  经纪类  投资交易类 信息技术类",
+      "siteId": "平安证劵-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.pingan.com/securities/position",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

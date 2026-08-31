@@ -1,0 +1,22 @@
+{
+  "slug": "qq-广西北部湾银行",
+  "name": "广西北部湾银行",
+  "official_url": "https://www.bankofbbg.com/bbgow/gywx/xwzx/rczp/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-广西北部湾银行-site-hq",
+      "name": "广西北部湾银行",
+      "city": "南宁市",
+      "province": "",
+      "location": {
+        "address": "广西南宁市良庆区云英路8号五象总部大厦A座",
+        "lng": 108.380158,
+        "lat": 22.764718
+      }
+    }
+  ],
+  "city_pending": true
+}

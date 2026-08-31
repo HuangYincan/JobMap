@@ -1,0 +1,131 @@
+{
+  "slug": "momenta",
+  "source": "xiaozhao-radar",
+  "name": "Momenta",
+  "tier": 7,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://momenta.jobs.feishu.cn/s/KIU_aWZmYqA",
+  "sites": [
+    {
+      "id": "momenta-site-beijing",
+      "name": "Momenta",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区学清路甲18号学院8号5楼AB区",
+        "lng": 116.35389,
+        "lat": 40.00949
+      }
+    },
+    {
+      "id": "momenta-site-shanghai",
+      "name": "Momenta",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市嘉定区安虹路汽车·创新港",
+        "lng": 121.196045,
+        "lat": 31.279511
+      }
+    },
+    {
+      "id": "momenta-site-guangzhou",
+      "name": "Momenta",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "增城区永宁街凤凰北横路1号广汇新世界金融中心(南塔)",
+        "lng": 113.598622,
+        "lat": 23.133929
+      }
+    },
+    {
+      "id": "momenta-site-shenzhen",
+      "name": "Momenta",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市龙岗区宝龙大道智慧家园3A座10楼",
+        "lng": 114.299868,
+        "lat": 22.689037
+      }
+    },
+    {
+      "id": "momenta-site-suzhou",
+      "name": "Momenta",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "江苏省苏州市相城区青龙港路59号",
+        "lng": 120.641429,
+        "lat": 31.418581
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b18f9d66bbb7",
+      "title": "算法、软件、产品、运营、硬件等",
+      "siteId": "momenta-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://momenta.jobs.feishu.cn/s/KIU_aWZmYqA",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-5de6e0bc2999",
+      "title": "嵌入式软件工程师 基础组件研发工程师\n功能安全工程师\nSDK开发工程师  电子工程师 系统基础工程师",
+      "siteId": "momenta-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://momenta.jobs.feishu.cn/s/ep9lyzJSM_0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-7238b8ea1711",
+      "title": "系统集成工程师  SDK开发工程师  功能安全工程师  嵌入式软件工程师  基础组件研发工程师  电子工程师",
+      "siteId": "momenta-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://momenta.jobs.feishu.cn/campus/?keywords=&category=&location=&project=7664524042879830335&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-12dadc9571b9",
+      "title": "世界模型算法工程师&实习生 端到\n端大模型算法工程师&实习生 端到\n端决策规划工程师 &实习生 训练推理优化工程师  &实习生",
+      "siteId": "momenta-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://momenta.jobs.feishu.cn/campus/?keywords=&category=&location=&project=7537265013606943018&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

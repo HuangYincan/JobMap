@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-微风安全",
+  "name": "微风安全",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "安全服务工程师  销售代表",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-微风安全-site",
+      "name": "微风安全",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区永澄北路2号院1号楼1层872号",
+        "lng": 116.227928,
+        "lat": 40.079612
+      }
+    }
+  ]
+}

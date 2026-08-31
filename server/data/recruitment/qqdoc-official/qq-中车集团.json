@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中车集团",
+  "name": "中车集团",
+  "official_url": "https://www.crrcgc.cc/crrcgc/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中车集团-site-hq",
+      "name": "中车集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区西四环中路16号",
+        "lng": 116.276793,
+        "lat": 39.916504
+      }
+    }
+  ]
+}

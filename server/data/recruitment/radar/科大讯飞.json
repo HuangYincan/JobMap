@@ -1,0 +1,434 @@
+{
+  "slug": "科大讯飞",
+  "source": "xiaozhao-radar",
+  "name": "科大讯飞",
+  "tier": 5,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://iflytek.zhiye.com/campus/jobs?shareId=03577689-c7d4-4fcb-8df4-b84cd83250cf&shareSource=2",
+  "sites": [
+    {
+      "id": "科大讯飞-site-wuhan",
+      "name": "科大讯飞",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "武汉/西安/合肥",
+        "lng": 114.3,
+        "lat": 30.59
+      }
+    },
+    {
+      "id": "科大讯飞-site-beijing",
+      "name": "科大讯飞",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市通州区运河东大街51号(地铁6号线东夏园地铁站B口西北侧)万象汇F3",
+        "lng": 116.735183,
+        "lat": 39.904364
+      }
+    },
+    {
+      "id": "科大讯飞-site-shanghai",
+      "name": "科大讯飞",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "科大讯飞-site-guangzhou",
+      "name": "科大讯飞",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "番禺区市桥街光明北路34、36号西街111号铺科大讯飞",
+        "lng": 113.362375,
+        "lat": 22.941274
+      }
+    },
+    {
+      "id": "科大讯飞-site-chengdu",
+      "name": "科大讯飞",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/广州/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "科大讯飞-site-xian",
+      "name": "科大讯飞",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "陕西省西安市雁塔区天谷八路156号软件新城2期云汇谷d座",
+        "lng": 108.834084,
+        "lat": 34.205988
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1c3cb117acbe",
+      "title": "后端/前端/嵌入式/测试研发、产品经理、解决方案、市场营销、职能、视觉交互设计等岗位全覆盖",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/jobs?shareId=03577689-c7d4-4fcb-8df4-b84cd83250cf&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-4a64e04415f3",
+      "title": "研发管培、产品管培、营销管培",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/5/jobs?shareId=0b5e40b5-8a44-45cc-aa33-d4bd87f3191b&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-b871edcdf925",
+      "title": "顶尖AI算法人才（27届硕博）\n面向算法研发核心人才，主攻前沿大模型、语音、视觉技术\n招聘岗位：AI研究算法工程师\n细分方向：语音大模型、NLP、多模态、计算机",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/4/jobs?shareId=9528e9e5-9be3-4112-ac29-e84ba5390857&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-f5734a52dc55",
+      "title": "研究算法类 研发类 AI研发类 大数据类 产品类 测试类 营销类  教育类 设计类 职能类 资源类 医学类 工程类 交付类",
+      "siteId": "科大讯飞-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/5/jobs?shareId=0b5e40b5-8a44-45cc-aa33-d4bd87f3191b&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-1c3cb117acbe-xian",
+      "title": "后端/前端/嵌入式/测试研发、产品经理、解决方案、市场营销、职能、视觉交互设计等岗位全覆盖",
+      "siteId": "科大讯飞-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/jobs?shareId=03577689-c7d4-4fcb-8df4-b84cd83250cf&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-4a64e04415f3-xian",
+      "title": "研发管培、产品管培、营销管培",
+      "siteId": "科大讯飞-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/5/jobs?shareId=0b5e40b5-8a44-45cc-aa33-d4bd87f3191b&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-b871edcdf925-xian",
+      "title": "顶尖AI算法人才（27届硕博）\n面向算法研发核心人才，主攻前沿大模型、语音、视觉技术\n招聘岗位：AI研究算法工程师\n细分方向：语音大模型、NLP、多模态、计算机",
+      "siteId": "科大讯飞-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/4/jobs?shareId=9528e9e5-9be3-4112-ac29-e84ba5390857&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "embj-科大讯飞-1",
+      "title": "聆动通用-C++软件开发工程师-深圳(J11600)",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/social/detail?jobAdId=49ebd688-eb40-4693-8de3-75dba484deda",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-2",
+      "title": "聆动通用-AI视觉感知算法工程师-深圳(J11870)",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/social/detail?jobAdId=3437cdb9-4151-4ddc-88f0-a1c292be6b9f",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-3",
+      "title": "聆动通用-机械臂运动规划算法工程师",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/social/detail?jobAdId=451ca8e0-3cbe-42b8-b0f6-a59252c908ac",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-4",
+      "title": "聆动通用-机械臂运动规划算法工程师",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/social/detail?jobAdId=730828c6-45bb-489d-bf8a-d3287d7e25d2",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-5",
+      "title": "聆动通用-硬件工程师",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/social/detail?jobAdId=bb00c1d3-1aea-4b3a-b25b-c33def8e0949",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-6",
+      "title": "前端开发工程师",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=ef7cf2db-0be2-42e1-806f-674d628a466c",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-7",
+      "title": "Go开发工程师",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=9aa042cf-7177-4cb7-bdfa-bb71f07b15de",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-8",
+      "title": "AI研究算法工程师-机器人AI运动控制方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=61007c8c-8961-43ec-bee9-12e744a5e770",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-9",
+      "title": "AI研究算法工程师-推荐算法方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=69eac602-4d55-43f4-b827-6065a7a172b3",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-10",
+      "title": "AI研究算法工程师-计算机视觉方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=ef6cfea1-e861-41fd-9228-b771cefc7538",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-11",
+      "title": "AI研究算法工程师-多模态大模型方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=77fb4db1-98f2-4ce3-9242-aaef5cfe6ec0",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-12",
+      "title": "AI研究算法工程师-语音大模型方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=caa0e1dc-61d4-48da-aca0-e245b868c64f",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-13",
+      "title": "AI研究算法工程师-具身智能和机器人方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=a7b1630e-cd18-4426-b8ec-62f97b287c28",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-14",
+      "title": "AI研究算法工程师-认知大模型方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=e7a75392-79d2-4d82-b7ec-a23f47a2ca31",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-15",
+      "title": "AI研究算法工程师-自然语言处理方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=1bf6a473-83d2-4415-a578-27a9d7eea87c",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-16",
+      "title": "AI研发工程师",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=c99c33b0-a0a8-4b83-91e2-7299702a6f62",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-17",
+      "title": "AI研究算法工程师-智能语音方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=56c06237-cd71-478b-b807-a5e076957c15",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-18",
+      "title": "AI研究算法工程师-深度学习框架和平台方向",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=ed3189ee-aa47-4f92-b012-bf4499a7f40e",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-科大讯飞-19",
+      "title": "Java开发工程师",
+      "siteId": "科大讯飞-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://iflytek.zhiye.com/campus/detail?jobAdId=abfdd1bb-6b9f-47c7-95a7-3a5f417cd297",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "category": "65"
+}

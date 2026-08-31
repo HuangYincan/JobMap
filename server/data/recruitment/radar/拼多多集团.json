@@ -1,0 +1,42 @@
+{
+  "slug": "拼多多集团",
+  "source": "xiaozhao-radar",
+  "name": "拼多多集团",
+  "tier": 4,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careers.pddglobalhr.com/campus/grad?t=aL2TxHRZc0",
+  "sites": [
+    {
+      "id": "拼多多集团-site-shanghai",
+      "name": "拼多多集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4c1c8a20a847",
+      "title": "商家运营 服务端研发工程师 AI Agent研发工程师算法工程师 客户端研发工程师 Web前端研发工程师 数据分析师 安全工程师 产品管培生 市场管培生 运营管",
+      "siteId": "拼多多集团-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.pddglobalhr.com/campus/grad?t=aL2TxHRZc0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

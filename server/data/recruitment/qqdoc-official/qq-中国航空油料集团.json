@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国航空油料集团",
+  "name": "中国航空油料集团",
+  "official_url": "http://www.cnaf.com/PORTAL_LNG_RLS_XWGJ.getFormList.do?LM_CODE=CNAF_HR_RCZLHLN&amp;LM_CONTENT_TYPE=2",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国航空油料集团-site-hq",
+      "name": "中国航空油料集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区马甸路2号中国航油大厦",
+        "lng": 116.377592,
+        "lat": 39.971312
+      }
+    }
+  ],
+  "city_pending": true
+}

@@ -1,0 +1,325 @@
+{
+ "batch": 5,
+ "companies": [
+  {
+   "file": "qqdoc-jobs/qqj-亿联网络.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-亿联网络.json",
+     "slug": "qqj-亿联网络",
+     "company": "亿联网络",
+     "site_id": "qqj-亿联网络-site",
+     "site_name": "亿联网络",
+     "city": "厦门",
+     "province": "",
+     "careerUrl": "https://yealink.zhiye.com/campus/jobs?sessionid="
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-亿道集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-亿道集团.json",
+     "slug": "qqj-亿道集团",
+     "company": "亿道集团",
+     "site_id": "qqj-亿道集团-site",
+     "site_name": "亿道集团",
+     "city": "深圳、上海、九江、北京、珠海",
+     "province": "",
+     "careerUrl": "https://emdoor1.zhiye.com/campus/jobs?shareId=fba9ddeb-446d-4698-bf76-42ebf54ab11a&shareSource=2"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-优衣库.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-优衣库.json",
+     "slug": "qqj-优衣库",
+     "company": "优衣库",
+     "site_id": "qqj-优衣库-site",
+     "site_name": "优衣库",
+     "city": "全国",
+     "province": "",
+     "careerUrl": "https://uniqlo.zhiye.com/campus/detail?jobAdId=b4f2dd8d-3a74-4f0f-b4a9-d0cc4398db96"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-优衣库UMC早鸟计划.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-优衣库UMC早鸟计划.json",
+     "slug": "qqj-优衣库UMC早鸟计划",
+     "company": "优衣库—“UMC早鸟计划",
+     "site_id": "qqj-优衣库UMC早鸟计划-site",
+     "site_name": "优衣库—“UMC早鸟计划",
+     "city": "北京 上海  广州  全国",
+     "province": "",
+     "careerUrl": "https://uniqlo.zhiye.com/campus/detail?jobAdId=e4f28a5f-c434-46de-a73a-5db32762bee4"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-佳驰科技.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-佳驰科技.json",
+     "slug": "qqj-佳驰科技",
+     "company": "佳驰科技",
+     "site_id": "qqj-佳驰科技-site",
+     "site_name": "佳驰科技",
+     "city": "成都",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-兆芯.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-兆芯.json",
+     "slug": "qqj-兆芯",
+     "company": "兆芯",
+     "site_id": "qqj-兆芯-site",
+     "site_name": "兆芯",
+     "city": "上海市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/zhaoxin2027/job.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-兆芯.json",
+     "slug": "qqj-兆芯",
+     "company": "兆芯",
+     "site_id": "qqj-兆芯-site-北京",
+     "site_name": "兆芯",
+     "city": "北京市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/zhaoxin2027/job.html"
+    },
+    {
+     "file": "qqdoc-jobs/qqj-兆芯.json",
+     "slug": "qqj-兆芯",
+     "company": "兆芯",
+     "site_id": "qqj-兆芯-site-西安",
+     "site_name": "兆芯",
+     "city": "西安市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/zhaoxin2027/job.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-光大证劵.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-光大证劵.json",
+     "slug": "qqj-光大证劵",
+     "company": "光大证劵",
+     "site_id": "qqj-光大证劵-site",
+     "site_name": "光大证劵",
+     "city": "北京 上海  深圳 广州 全国",
+     "province": "",
+     "careerUrl": "https://ebscn.zhiye.com/campus"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-光迅科技暑期开放日.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-光迅科技暑期开放日.json",
+     "slug": "qqj-光迅科技暑期开放日",
+     "company": "光迅科技—暑期开放日",
+     "site_id": "qqj-光迅科技暑期开放日-site",
+     "site_name": "光迅科技—暑期开放日",
+     "city": "武汉",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-全芯智造.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-全芯智造.json",
+     "slug": "qqj-全芯智造",
+     "company": "全芯智造",
+     "site_id": "qqj-全芯智造-site",
+     "site_name": "全芯智造",
+     "city": "合肥 上海 北京 广州 济南 深圳  武汉  杭州  岘港",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-共济科技.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-共济科技.json",
+     "slug": "qqj-共济科技",
+     "company": "共济科技",
+     "site_id": "qqj-共济科技-site",
+     "site_name": "共济科技",
+     "city": "深圳 苏州 全国",
+     "province": "",
+     "careerUrl": "http://doc.xbrother.com:50015/apply/campus"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-凯莱英.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-凯莱英.json",
+     "slug": "qqj-凯莱英",
+     "company": "凯莱英",
+     "site_id": "qqj-凯莱英-site",
+     "site_name": "凯莱英",
+     "city": "天津",
+     "province": "",
+     "careerUrl": "https://asymchem.zhiye.com/jobs?activityGuid=28ad6996-d458-4a2f-b4ec-4e954f3194ff"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-北京润料.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-北京润料.json",
+     "slug": "qqj-北京润料",
+     "company": "北京润料",
+     "site_id": "qqj-北京润料-site",
+     "site_name": "北京润料",
+     "city": "北京 上海 天津 西安成都  沈阳 南昌  合肥",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/campus-recruitment/runketongyong/170057?locale=zh-CN#/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-北方矿业.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-北方矿业.json",
+     "slug": "qqj-北方矿业",
+     "company": "北方矿业",
+     "site_id": "qqj-北方矿业-site",
+     "site_name": "北方矿业",
+     "city": "北京",
+     "province": "",
+     "careerUrl": "https://bfky.iguopin.com/?sessionid="
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-北电检测.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-北电检测.json",
+     "slug": "qqj-北电检测",
+     "company": "北电检测",
+     "site_id": "qqj-北电检测-site",
+     "site_name": "北电检测",
+     "city": "北京",
+     "province": "",
+     "careerUrl": "https://文中扫码投递简历"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-华硕科技补录.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-华硕科技补录.json",
+     "slug": "qqj-华硕科技补录",
+     "company": "华硕科技—补录",
+     "site_id": "qqj-华硕科技补录-site",
+     "site_name": "华硕科技—补录",
+     "city": "苏州",
+     "province": "",
+     "careerUrl": "https://asustek.zhiye.com/intern/jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-南京841研究所.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-南京841研究所.json",
+     "slug": "qqj-南京841研究所",
+     "company": "南京841研究所",
+     "site_id": "qqj-南京841研究所-site",
+     "site_name": "南京841研究所",
+     "city": "南京市",
+     "province": "",
+     "careerUrl": "https://campus.51job.com/2027njxx/p2.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-南宁星火教育.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-南宁星火教育.json",
+     "slug": "qqj-南宁星火教育",
+     "company": "南宁星火教育",
+     "site_id": "qqj-南宁星火教育-site",
+     "site_name": "南宁星火教育",
+     "city": "南宁",
+     "province": "",
+     "careerUrl": "https://投递链接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-博通集成电路.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-博通集成电路.json",
+     "slug": "qqj-博通集成电路",
+     "company": "博通集成电路",
+     "site_id": "qqj-博通集成电路-site",
+     "site_name": "博通集成电路",
+     "city": "上海 深圳",
+     "province": "",
+     "careerUrl": "https://投递连接看官方公告"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-厨芯科技.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-厨芯科技.json",
+     "slug": "qqj-厨芯科技",
+     "company": "厨芯科技",
+     "site_id": "qqj-厨芯科技-site",
+     "site_name": "厨芯科技",
+     "city": "苏州",
+     "province": "",
+     "careerUrl": "https://app.mokahr.com/campus-recruitment/honganrobots/150155?sessionid=#/jobs?zhineng%5B0%5D=19802"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-jobs/qqj-双曲线教育.json",
+   "sites": [
+    {
+     "file": "qqdoc-jobs/qqj-双曲线教育.json",
+     "slug": "qqj-双曲线教育",
+     "company": "双曲线教育",
+     "site_id": "qqj-双曲线教育-site",
+     "site_name": "双曲线教育",
+     "city": "南昌  赣州",
+     "province": "",
+     "careerUrl": "https://投递简历看官方公告"
+    }
+   ]
+  }
+ ]
+}

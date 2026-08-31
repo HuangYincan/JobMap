@@ -1,0 +1,90 @@
+{
+  "slug": "拓竹科技",
+  "source": "xiaozhao-radar",
+  "name": "拓竹科技",
+  "tier": 8,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://bambulab.jobs.feishu.cn/s/gezHtYuCXKw",
+  "sites": [
+    {
+      "id": "拓竹科技-site-beijing",
+      "name": "拓竹科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/杭州",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "拓竹科技-site-shanghai",
+      "name": "拓竹科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/杭州",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "拓竹科技-site-shenzhen",
+      "name": "拓竹科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/杭州",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "拓竹科技-site-hangzhou",
+      "name": "拓竹科技",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/上海/深圳/杭州",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7729f26a963d",
+      "title": "机械结构 硬件设计 视觉算法 控制算法 机电 项目管理 生产软件开发嵌入式组装工艺、测试工艺 自动化电子、自动华机械",
+      "siteId": "拓竹科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bambulab.jobs.feishu.cn/s/gezHtYuCXKw",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-d7dcf54118fd",
+      "title": "图像算法 视觉算法 热设计 软件开发 软件测试 嵌入式开发 材料 数据 客户体验 产品运营 供应链 销售 内容运营 财务物流设计等",
+      "siteId": "拓竹科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bambulab.jobs.feishu.cn/campus/?keywords=&category=&location=&project=7597705346824833307&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

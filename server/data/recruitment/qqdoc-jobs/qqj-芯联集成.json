@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-芯联集成",
+  "name": "芯联集成",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://smec.zhiye.com/campus/jobs",
+  "direction": "研发类 工程技术类  职能运营类  市场销售类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-芯联集成-site",
+      "name": "芯联集成",
+      "city": "绍兴市",
+      "province": "",
+      "location": {
+        "address": "浙江省绍兴市越城区皋埠镇临江路518号",
+        "lng": 120.676358,
+        "lat": 29.990928
+      }
+    }
+  ]
+}

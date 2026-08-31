@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-上海立芯",
+  "name": "上海立芯",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "EDA算法工程师  EDA测试工程师 AI平台I程师 AI fOr EDA算法工程师 EDA算法工程师  EDA应用工程师 EDA产品工程师  后端设计工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-上海立芯-site",
+      "name": "上海立芯",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市浦东新区碧波路690号张江微电子港",
+        "lng": 121.583526,
+        "lat": 31.199828
+      }
+    }
+  ]
+}

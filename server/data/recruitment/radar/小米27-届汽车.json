@@ -1,0 +1,68 @@
+{
+  "slug": "小米27-届汽车",
+  "source": "xiaozhao-radar",
+  "name": "小米27 届汽车",
+  "tier": 5,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://xiaomi.jobs.f.mioffice.cn/referral/campus/position?keywords=&category=&location=&project=7618105734127782170&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=7620719405253675318&token=MzsxNzc0MzU2Mzk1MjA0Ozc0MTc4Nzc3NjYwMjcwNjc1MDE7MDs",
+  "sites": [
+    {
+      "id": "小米27-届汽车-site-shanghai",
+      "name": "小米27 届汽车实习专项",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/南京",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "小米27-届汽车-site-nanjing",
+      "name": "小米27 届汽车实习专项",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/南京",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ac7e8074a16f",
+      "title": "AI应用开发工程师 ，AI  Agent开发工程师 ，AI算法工程师",
+      "siteId": "小米27-届汽车-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/referral/campus/position?keywords=&category=&location=&project=7618105734127782170&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=7620719405253675318&token=MzsxNzc0MzU2Mzk1MjA0Ozc0MTc4Nzc3NjYwMjcwNjc1MDE7MDs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-ac7e8074a16f-nanjing",
+      "title": "AI应用开发工程师 ，AI  Agent开发工程师 ，AI算法工程师",
+      "siteId": "小米27-届汽车-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/referral/campus/position?keywords=&category=&location=&project=7618105734127782170&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=7620719405253675318&token=MzsxNzc0MzU2Mzk1MjA0Ozc0MTc4Nzc3NjYwMjcwNjc1MDE7MDs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

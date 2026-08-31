@@ -1,0 +1,138 @@
+{
+  "slug": "qqj-施耐德电气",
+  "name": "施耐德电气",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://www.zhipin.com/zt/schneider/xingyipeixunsheng.html",
+  "direction": "星培训生计划   商业新星计划 研发新星计划  供应链新星计划",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-施耐德电气-site",
+      "name": "施耐德电气",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市朝阳区望京东路6号A座施耐德电气大厦",
+        "lng": 116.488634,
+        "lat": 40.007064
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-上海",
+      "name": "施耐德电气",
+      "city": "上海市",
+      "location": {
+        "address": "上海市普陀区云岭东路89号长风国际大厦5-14层",
+        "lng": 121.393773,
+        "lat": 31.223061
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-广州",
+      "name": "施耐德电气",
+      "city": "广州市",
+      "location": {
+        "address": "广州市天河区金穗路62号侨鑫国际金融中心20层02A单元",
+        "lng": 113.322939,
+        "lat": 23.118339
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-厦门",
+      "name": "施耐德电气",
+      "city": "厦门市",
+      "location": {
+        "address": "翔安区福建省厦门市湖里区火炬北路22号(火炬高新区火炬园)",
+        "lng": 118.243009,
+        "lat": 24.63652
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-南京",
+      "name": "施耐德电气",
+      "city": "南京市",
+      "location": {
+        "address": "南京市建邺区河西大街66号明星商务中心8层北侧",
+        "lng": 118.73338,
+        "lat": 31.978614
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-杭州",
+      "name": "施耐德电气",
+      "city": "杭州市",
+      "location": {
+        "address": "浙江省杭州市滨江区长河街道江南大道618号东冠大厦主楼5层501、503、505室",
+        "lng": 120.201125,
+        "lat": 30.201763
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-武汉",
+      "name": "施耐德电气",
+      "city": "武汉市",
+      "location": {
+        "address": "江夏区武汉东湖新技术开发区光谷大道77号金融后台服务中心基地二期B11栋1-5层01室",
+        "lng": 114.42079,
+        "lat": 30.453579
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-苏州",
+      "name": "施耐德电气",
+      "city": "苏州市",
+      "location": {
+        "address": "江苏省苏州市张家港市盛兴路五金机电广场23幢B8-B10",
+        "lng": 120.588139,
+        "lat": 31.879868
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-重庆",
+      "name": "施耐德电气",
+      "city": "重庆市",
+      "location": {
+        "address": "重庆市万州区陈家坝街道联合坝M3地块3#厂房",
+        "lng": 108.436057,
+        "lat": 30.771752
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-西安",
+      "name": "施耐德电气",
+      "city": "西安市",
+      "location": {
+        "address": "雁塔区西安市高新区天谷八路211号环普科技产业园C栋1-4层",
+        "lng": 108.914802,
+        "lat": 34.22207
+      }
+    },
+    {
+      "id": "qqj-施耐德电气-site-珠海",
+      "name": "施耐德电气",
+      "city": "珠海市",
+      "location": {
+        "address": "珠海市香洲区屏北一路与屏东五路交叉口东140米(施耐德电气珠海工厂·优力厂)",
+        "lng": 113.486813,
+        "lat": 22.219847
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-00cm1vlw",
+      "title": "AI星火实习生计划",
+      "siteId": "qqj-施耐德电气-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/zt/schneider/ai_star_shixisheng.html",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

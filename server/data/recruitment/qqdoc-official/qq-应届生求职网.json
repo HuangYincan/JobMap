@@ -1,0 +1,22 @@
+{
+  "slug": "qq-应届生求职网",
+  "name": "应届生求职网",
+  "official_url": "https://www.yingjiesheng.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-应届生求职网-site-hq",
+      "name": "应届生求职网",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市静安区灵石路697号巨丰商务5楼",
+        "lng": 121.446438,
+        "lat": 31.283896
+      }
+    }
+  ],
+  "city_pending": true
+}

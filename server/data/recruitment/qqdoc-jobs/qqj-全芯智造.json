@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-全芯智造",
+  "name": "全芯智造",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "人工智能类  技术研发类  现场应用类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-全芯智造-site",
+      "name": "全芯智造",
+      "city": "合肥市",
+      "province": "",
+      "location": {
+        "address": "蜀山区安徽省合肥市高新区创新大道2800号创新产业园二期J2C栋13楼",
+        "lng": 117.139379,
+        "lat": 31.833196
+      }
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "slug": "晶泰科技",
+  "source": "xiaozhao-radar",
+  "name": "晶泰科技",
+  "tier": 8,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/jingtai/2143?locale=zh-CN#/jobs/",
+  "sites": [
+    {
+      "id": "晶泰科技-site-beijing",
+      "name": "晶泰科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "晶泰科技-site-shanghai",
+      "name": "晶泰科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区环桥路207号张江集创园",
+        "lng": 121.608507,
+        "lat": 31.120531
+      }
+    },
+    {
+      "id": "晶泰科技-site-shenzhen",
+      "name": "晶泰科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市福田区红柳道2号国际生物医药产业园期3楼福田保税区289室",
+        "lng": 114.051177,
+        "lat": 22.503086
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-55e15edbacbe",
+      "title": "AI计算方向  具身算法方向  药物研发—生物方向  药物研发—化学方向  自动化方向",
+      "siteId": "晶泰科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/jingtai/2143?locale=zh-CN#/jobs/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "73"
+}

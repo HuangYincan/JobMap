@@ -1,0 +1,42 @@
+{
+  "slug": "曼伦",
+  "source": "xiaozhao-radar",
+  "name": "曼伦",
+  "tier": 12,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/manon/94861?sessionid=&sourceToken=e5e68a70a1dc9dca8c0011e86699568c#/job/7d846946-b885-479d-8ed4-8d7126a47576?from=qrcode",
+  "sites": [
+    {
+      "id": "曼伦-site-shanghai",
+      "name": "曼伦—组织发展预习班",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cf5a954e8f78",
+      "title": "人力资源预习班",
+      "siteId": "曼伦-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/manon/94861?sessionid=&sourceToken=e5e68a70a1dc9dca8c0011e86699568c#/job/7d846946-b885-479d-8ed4-8d7126a47576?from=qrcode",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "other"
+}

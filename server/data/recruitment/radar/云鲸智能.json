@@ -1,0 +1,53 @@
+{
+  "slug": "云鲸智能",
+  "source": "xiaozhao-radar",
+  "name": "云鲸智能",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careers.narwal.com/intern/jobs",
+  "sites": [
+    {
+      "id": "云鲸智能-site-shenzhen",
+      "name": "云鲸智能",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市南山区西丽街道西丽社区打石二路万科云城六期一栋云中城A2902室",
+        "lng": 113.944951,
+        "lat": 22.57446
+      }
+    },
+    {
+      "id": "云鲸智能-site-hangzhou",
+      "name": "云鲸智能",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "滨江区滨康路与聚才路交叉口西南160米",
+        "lng": 120.198314,
+        "lat": 30.180848
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9c9b475ca34a",
+      "title": "研发/供应链类 市场/营销类",
+      "siteId": "云鲸智能-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.narwal.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

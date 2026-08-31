@@ -1,0 +1,68 @@
+{
+  "slug": "舍弗勒",
+  "source": "xiaozhao-radar",
+  "name": "舍弗勒",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://schaeffler.tupu360.com/position/list?type=TECHNOLOGYRUITMENT&lang=zh_CN&sessionid=",
+  "sites": [
+    {
+      "id": "舍弗勒-site-shanghai",
+      "name": "舍弗勒",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市嘉定区恒定路联东U谷",
+        "lng": 121.183846,
+        "lat": 31.344703
+      }
+    },
+    {
+      "id": "舍弗勒-site-nanjing",
+      "name": "舍弗勒",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "江苏省南京市江宁区建衡路88号",
+        "lng": 118.916588,
+        "lat": 31.950535
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d1567becbaff",
+      "title": "AI  系统 机械  软件   测试  产品 采购供应链  质量  工艺  IE 生产",
+      "siteId": "舍弗勒-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://schaeffler.tupu360.com/position/list?type=TECHNOLOGYRUITMENT&lang=zh_CN&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-d1567becbaff-nanjing",
+      "title": "AI  系统 机械  软件   测试  产品 采购供应链  质量  工艺  IE 生产",
+      "siteId": "舍弗勒-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://schaeffler.tupu360.com/position/list?type=TECHNOLOGYRUITMENT&lang=zh_CN&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "36"
+}

@@ -1,0 +1,489 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+  background: rgba(18, 24, 28, 0.28);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100%);
+  min-height: 420px;
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  overflow: hidden;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 28px 80px rgba(24, 45, 57, 0.22);
+  backdrop-filter: blur(36px) saturate(190%);
+  -webkit-backdrop-filter: blur(36px) saturate(190%);
+  color: var(--ink);
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: var(--ink);
+}
+
+.promo {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 420px;
+  padding: 28px;
+  border-right: 1px solid rgba(217, 247, 255, 0.16);
+  background:
+    linear-gradient(145deg, rgba(31, 91, 125, 0.98), rgba(18, 63, 92, 0.98) 52%, rgba(10, 41, 62, 0.99));
+}
+
+.promo::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, rgba(219, 249, 255, 0.15), transparent 28%),
+    linear-gradient(294deg, rgba(166, 241, 210, 0.08), transparent 34%);
+  mix-blend-mode: screen;
+}
+
+.brandArt {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(100%, 316px);
+  height: auto;
+  overflow: visible;
+}
+
+.brandSurface {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: surfaceBreathe 8s ease-in-out infinite;
+}
+
+.mapContour {
+  fill: none;
+  stroke: #BDEAF3;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  opacity: 0.2;
+}
+
+.mapRoad {
+  fill: none;
+  stroke: #C6EFF5;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  opacity: 0.13;
+}
+
+.mapBoundary {
+  fill: none;
+  stroke: #A6F1D2;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-dasharray: 3 8;
+  opacity: 0.18;
+}
+
+.mapPoint {
+  fill: #D8FBFF;
+  opacity: 0.42;
+}
+
+.routeHalo {
+  fill: none;
+  animation: routeHaloPulse 4.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.route {
+  fill: none;
+  animation: routeFlow 7s linear infinite;
+}
+
+.routeNodeOne,
+.routeNodeTwo,
+.routeNodeThree {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.routeNodeOne {
+  animation: nodePulse 3.4s ease-in-out infinite;
+}
+
+.routeNodeTwo {
+  animation: nodePulse 3.4s 0.7s ease-in-out infinite;
+}
+
+.routeNodeThree {
+  animation: nodePulse 3.4s 1.4s ease-in-out infinite;
+}
+
+.signalDot,
+.signalRing {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.signalDot {
+  animation: nodePulse 3.8s 1.2s ease-in-out infinite;
+}
+
+.signalRing {
+  fill: none;
+  animation: ringPulse 3.8s 1.2s ease-out infinite;
+}
+
+.focusRing {
+  fill: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ringPulse 4.2s ease-out infinite;
+}
+
+.focusMarker {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: markerFloat 5.2s ease-in-out infinite;
+}
+
+.crosshair {
+  fill: none;
+  stroke: #D8FBFF;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.56;
+}
+
+.crosshairCore {
+  animation: nodePulse 4.2s ease-in-out infinite;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 28px 24px;
+}
+
+.methods {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.method {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 0;
+  min-height: 44px;
+  position: relative;
+}
+
+.method + .method::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  width: 1px;
+  height: 12px;
+  transform: translateY(-50%);
+  background: var(--muted);
+  opacity: 0.45;
+}
+
+.method:hover {
+  color: #64b5ff;
+  text-decoration: none;
+}
+
+.methodActive {
+  color: var(--blue, #007AFF);
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+.methodActive:hover {
+  color: #64b5ff;
+  text-decoration: none;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.field input,
+.inputShell {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.38);
+  color: var(--ink);
+}
+
+.field input {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 11px 12px;
+}
+
+.inputShell {
+  display: flex;
+  align-items: center;
+  padding-right: 8px;
+}
+
+.inputShell input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  min-width: 0;
+}
+
+.inlineSend {
+  border: 0;
+  background: transparent;
+  color: var(--blue, #007AFF);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  padding: 6px 4px;
+}
+
+.inlineSend:disabled {
+  opacity: 0.4;
+}
+
+.login {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: #34c759;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  min-height: 44px;
+  margin-top: 4px;
+}
+
+.login:disabled {
+  opacity: 0.45;
+}
+
+.autoRegisterHint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.socialGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.social {
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.32);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 14px;
+}
+
+/* 灰度期禁用(google/wechat):中性灰态,降低可读性、无 hover 反馈;尺寸/图标照旧 */
+.social:disabled {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #ff3b30;
+}
+
+/* 发送成功顶部气泡:fixed 水平居中,高于 modal overlay(z-40) */
+.topToast {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  translate: -50% 0;
+  z-index: 60;
+  background: rgba(0, 122, 255, 0.1);
+  border: 1px solid rgba(0, 122, 255, 0.28);
+  color: var(--blue-ink);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 99px;
+  padding: 10px 16px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  animation: toastIn 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    translate: -50% -4px;
+  }
+  to {
+    opacity: 1;
+    translate: -50% 0;
+  }
+}
+
+@keyframes surfaceBreathe {
+  0%,
+  100% { transform: scale(1); }
+  50% { transform: scale(1.012); }
+}
+
+@keyframes routeFlow {
+  to { stroke-dashoffset: -116; }
+}
+
+@keyframes routeHaloPulse {
+  0%,
+  100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+@keyframes nodePulse {
+  0%,
+  100% { transform: scale(0.92); opacity: 0.76; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+
+@keyframes ringPulse {
+  0%,
+  100% { transform: scale(0.86); opacity: 0.18; }
+  55% { transform: scale(1.08); opacity: 0.52; }
+}
+
+@keyframes markerFloat {
+  0%,
+  100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topToast,
+  .brandSurface,
+  .routeHalo,
+  .route,
+  .routeNodeOne,
+  .routeNodeTwo,
+  .routeNodeThree,
+  .signalDot,
+  .signalRing,
+  .focusRing,
+  .focusMarker,
+  .crosshairCore {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .card {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .promo {
+    display: none;
+  }
+
+  .methods {
+    gap: 24px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: linear-gradient(160deg, rgba(32, 40, 46, 0.96), rgba(20, 26, 30, 0.92));
+  }
+
+  .promo {
+    background:
+      linear-gradient(145deg, rgba(24, 76, 107, 0.99), rgba(13, 48, 73, 0.99) 52%, rgba(7, 29, 45, 1));
+  }
+
+  .field input,
+  .inputShell,
+  .social {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* 深色卡片上 disabled 更暗:弱于 enabled 的 rgba(255,255,255,0.06) */
+  .social:disabled {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+}

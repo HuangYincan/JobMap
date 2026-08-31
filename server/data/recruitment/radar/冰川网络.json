@@ -1,0 +1,42 @@
+{
+  "slug": "冰川网络",
+  "source": "xiaozhao-radar",
+  "name": "冰川网络",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://bingchuan1.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "冰川网络-site-shenzhen",
+      "name": "冰川网络",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区科技中二路1号软件园二期9栋",
+        "lng": 113.936513,
+        "lat": 22.543536
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f273364f7ea7",
+      "title": "产品策划类  技术开发类  美术设计类  发型运营类",
+      "siteId": "冰川网络-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bingchuan1.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

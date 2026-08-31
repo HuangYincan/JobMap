@@ -1,0 +1,53 @@
+{
+  "slug": "公牛集团",
+  "source": "xiaozhao-radar",
+  "name": "公牛集团",
+  "tier": 7,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://gongniu.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "公牛集团-site-shanghai",
+      "name": "公牛集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市青浦区盈港东路3888号A7栋",
+        "lng": 121.220391,
+        "lat": 31.164441
+      }
+    },
+    {
+      "id": "公牛集团-site-shenzhen",
+      "name": "公牛集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区粤海街道高新南深圳湾科技生态园12栋A座20楼",
+        "lng": 113.950998,
+        "lat": 22.531986
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-179515e47cee",
+      "title": "研发岗 供应链岗 职能岗 营销岗",
+      "siteId": "公牛集团-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://gongniu.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "38"
+}

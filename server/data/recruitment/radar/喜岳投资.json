@@ -1,0 +1,42 @@
+{
+  "slug": "喜岳投资",
+  "source": "xiaozhao-radar",
+  "name": "喜岳投资",
+  "tier": 10,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app135149.dingtalkoxm.com/campus-recruitment/xy-inv/100004326?locale=zh-CN#/",
+  "sites": [
+    {
+      "id": "喜岳投资-site-shanghai",
+      "name": "喜岳投资",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区兰花路333号世纪大厦25楼2504号",
+        "lng": 121.562727,
+        "lat": 31.206089
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c16fd4814f47",
+      "title": "投研 交易 数据 AI开发 系统开发 基金运营 市场销售 人力资源",
+      "siteId": "喜岳投资-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app135149.dingtalkoxm.com/campus-recruitment/xy-inv/100004326?locale=zh-CN#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

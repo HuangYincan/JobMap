@@ -1,0 +1,75 @@
+{
+  "slug": "菜鸟",
+  "source": "xiaozhao-radar",
+  "name": "菜鸟",
+  "tier": 6,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RgiJHeBmgLLxLCxxXBV4qjk%3D&batchId=100000540002",
+  "sites": [
+    {
+      "id": "菜鸟-site-beijing",
+      "name": "菜鸟",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "菜鸟-site-shanghai",
+      "name": "菜鸟",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "菜鸟-site-shenzhen",
+      "name": "菜鸟",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "菜鸟-site-chengdu",
+      "name": "菜鸟",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-1d0adad115e0",
+      "title": "设计、运营、营销、技术、产品等",
+      "siteId": "菜鸟-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RgiJHeBmgLLxLCxxXBV4qjk%3D&batchId=100000540002",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "59"
+}

@@ -1,0 +1,75 @@
+{
+  "slug": "奇安信",
+  "source": "xiaozhao-radar",
+  "name": "奇安信",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.qianxin.com/campus/jobSearch?type=shixishen",
+  "sites": [
+    {
+      "id": "奇安信-site-beijing",
+      "name": "奇安信",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市西城区西直门外南路26号",
+        "lng": 116.34163,
+        "lat": 39.936917
+      }
+    },
+    {
+      "id": "奇安信-site-guangzhou",
+      "name": "奇安信",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州市海珠区芳园路宝地广场西北侧约90米",
+        "lng": 113.341323,
+        "lat": 23.104026
+      }
+    },
+    {
+      "id": "奇安信-site-chengdu",
+      "name": "奇安信",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "西湖区莲花街333号莲花商务中心b座9楼",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "奇安信-site-hangzhou",
+      "name": "奇安信",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "西湖区莲花街333号莲花商务中心b座9楼",
+        "lng": 120.099425,
+        "lat": 30.269625
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e49ce7364a1a",
+      "title": "攻防渗透工程师",
+      "siteId": "奇安信-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.qianxin.com/campus/jobSearch?type=shixishen",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

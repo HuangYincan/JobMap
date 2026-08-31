@@ -1,0 +1,53 @@
+{
+  "slug": "普渡机器人",
+  "source": "xiaozhao-radar",
+  "name": "普渡机器人",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://pudutech1.zhiye.com/campus/jobs?shareId=56aeb803-2fdc-46ca-a97c-ccbd5ef3596a&shareSource=2",
+  "sites": [
+    {
+      "id": "普渡机器人-site-shenzhen",
+      "name": "普渡机器人",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区桃源街道龙珠大道69号益力家属楼",
+        "lng": 113.973048,
+        "lat": 22.568757
+      }
+    },
+    {
+      "id": "普渡机器人-site-chengdu",
+      "name": "普渡机器人",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "四川省成都市武侯区天府大道北段1480号成都高新孵化园5号楼4楼408室",
+        "lng": 104.063103,
+        "lat": 30.572951
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b3ac95b38bfd",
+      "title": "VLA大模型、世界模型、SLAM、感知/规划/强化学习、人形机器人控制",
+      "siteId": "普渡机器人-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://pudutech1.zhiye.com/campus/jobs?shareId=56aeb803-2fdc-46ca-a97c-ccbd5ef3596a&shareSource=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "碧桂园服务",
+  "source": "xiaozhao-radar",
+  "name": "碧桂园服务",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.wjx.top/vm/Qc15Aop.aspx",
+  "sites": [
+    {
+      "id": "碧桂园服务-site-guangzhou",
+      "name": "碧桂园服务—  产业园区运营公司",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州市白云区富林路富力桃园-A区",
+        "lng": 113.23146,
+        "lat": 23.149127
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-500f3fef967d",
+      "title": "管理培训生  物业管理岗  客户服务岗  绿化环境岗",
+      "siteId": "碧桂园服务-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.wjx.top/vm/Qc15Aop.aspx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "70"
+}

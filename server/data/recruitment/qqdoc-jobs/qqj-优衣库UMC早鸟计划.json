@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-优衣库UMC早鸟计划",
+  "name": "优衣库—“UMC早鸟计划",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://uniqlo.zhiye.com/campus/detail?jobAdId=e4f28a5f-c434-46de-a73a-5db32762bee4",
+  "direction": "UMC早鸟计划",
+  "deadline": "2026  07  22",
+  "sites": [
+    {
+      "id": "qqj-优衣库UMC早鸟计划-site",
+      "name": "优衣库—“UMC早鸟计划",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市徐汇区虹桥路183号徐家汇中心三期A座办公楼",
+        "lng": 121.434872,
+        "lat": 31.193645
+      }
+    }
+  ]
+}

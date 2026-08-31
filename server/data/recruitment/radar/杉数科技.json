@@ -1,0 +1,64 @@
+{
+  "slug": "杉数科技",
+  "source": "xiaozhao-radar",
+  "name": "杉数科技",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://join.shanshu.ai/campus-recruitment/shanshu/57987#/jobs?zhineng%5B0%5D=87475",
+  "sites": [
+    {
+      "id": "杉数科技-site-beijing",
+      "name": "杉数科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市东城区景山街道美术馆后街77号77文化创意产业园1号楼3层301室",
+        "lng": 116.40839,
+        "lat": 39.92741
+      }
+    },
+    {
+      "id": "杉数科技-site-shanghai",
+      "name": "杉数科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市杨浦区纪念路8号财大科技园5号楼1层左手侧109室",
+        "lng": 121.49111,
+        "lat": 31.297291
+      }
+    },
+    {
+      "id": "杉数科技-site-guangzhou",
+      "name": "杉数科技",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市天河区体育东路116~118号财富广场西塔西塔F14-1401",
+        "lng": 113.329099,
+        "lat": 23.135786
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f8742e1def17",
+      "title": "算法工程师—运筹优化方向 算法工程师—机器学习方向 高级求解器开发工程师 高性能计算研发工程师 硬件性能优化工程师 数据分析师 业务顾问",
+      "siteId": "杉数科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://join.shanshu.ai/campus-recruitment/shanshu/57987#/jobs?zhineng%5B0%5D=87475",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

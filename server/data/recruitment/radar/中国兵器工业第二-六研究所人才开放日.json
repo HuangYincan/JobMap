@@ -1,0 +1,41 @@
+{
+  "slug": "中国兵器工业第二-六研究所人才开放日",
+  "name": "中国兵器工业第二〇六研究所人才开放日",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://xadzgc.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "中国兵器工业第二-六研究所人才开放日-site-xian",
+      "name": "中国兵器工业第二〇六研究所人才开放日",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "西安",
+        "lng": 108.94,
+        "lat": 34.34
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0e4fbf486789",
+      "title": "雷达总体设计师 电子对抗系统设计师 信号与信息处理设计师 AI架构/算法设计师 总体结构设计师 通信信号处理架构设计师 微波量子/光子设计师 高功率微波总体/防",
+      "siteId": "中国兵器工业第二-六研究所人才开放日-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xadzgc.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "slug": "qq-电网招聘平台",
+  "name": "电网招聘平台",
+  "official_url": "https://zhaopin.sgcc.com.cn/sgcchr/static/home.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-电网招聘平台-site-hq",
+      "name": "电网招聘平台",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区西长安街86号",
+        "lng": 116.377261,
+        "lat": 39.90626
+      }
+    }
+  ],
+  "city_pending": true
+}

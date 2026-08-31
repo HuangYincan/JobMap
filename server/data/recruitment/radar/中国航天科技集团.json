@@ -1,0 +1,105 @@
+{
+  "slug": "中国航天科技集团",
+  "source": "xiaozhao-radar",
+  "name": "中国航天科技集团",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.spacetalent.com.cn/xcjh.html",
+  "sites": [
+    {
+      "id": "中国航天科技集团-site-beijing",
+      "name": "中国航天科技集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区阜成路16号",
+        "lng": 116.312665,
+        "lat": 39.923565
+      }
+    },
+    {
+      "id": "中国航天科技集团-site-shanghai",
+      "name": "中国航天科技集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市松江区贵德路1号",
+        "lng": 121.212516,
+        "lat": 30.96919
+      }
+    },
+    {
+      "id": "中国航天科技集团-site-chengdu",
+      "name": "中国航天科技集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/成都/西安",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "中国航天科技集团-site-xian",
+      "name": "中国航天科技集团",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "陕西省西安市长安区信息大道26号",
+        "lng": 108.84983,
+        "lat": 34.166336
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a9210b5bca17",
+      "title": "集团下属各单位 岗位  具体见投递方式链接",
+      "siteId": "中国航天科技集团-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.spacetalent.com.cn/xcjh.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-3a30f65d1cdd",
+      "title": "下属各单位提前批岗位  具体见投递方式链接",
+      "siteId": "中国航天科技集团-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-12-31",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://casicjob.iguopin.com/job",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-a9210b5bca17-xian",
+      "title": "集团下属各单位 岗位  具体见投递方式链接",
+      "siteId": "中国航天科技集团-site-xian",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.spacetalent.com.cn/xcjh.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "37"
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "qq-成都农商行",
+  "name": "成都农商行",
+  "official_url": "https://www.cdrcb.com/pin/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-成都农商行-site-hq",
+      "name": "成都农商行",
+      "city": "成都市",
+      "province": "",
+      "location": {
+        "address": "四川省成都市武侯区科华中路88号",
+        "lng": 104.076927,
+        "lat": 30.614388
+      }
+    }
+  ]
+}

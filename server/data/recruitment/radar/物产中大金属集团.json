@@ -1,0 +1,75 @@
+{
+  "slug": "物产中大金属集团",
+  "source": "xiaozhao-radar",
+  "name": "物产中大金属集团",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.zmmc.com.cn:1688/recruit.aspx?category_id=55",
+  "sites": [
+    {
+      "id": "物产中大金属集团-site-shanghai",
+      "name": "物产中大金属集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区世纪大道1198号世纪汇广场一座1803室",
+        "lng": 121.528297,
+        "lat": 31.227092
+      }
+    },
+    {
+      "id": "物产中大金属集团-site-guangzhou",
+      "name": "物产中大金属集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "拱墅区凤起路78号杭州国际假日酒店商务楼",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "物产中大金属集团-site-chengdu",
+      "name": "物产中大金属集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都市青白江区桂平大道与天星路交叉路口往东北约270米",
+        "lng": 104.255594,
+        "lat": 30.843266
+      }
+    },
+    {
+      "id": "物产中大金属集团-site-hangzhou",
+      "name": "物产中大金属集团",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "拱墅区凤起路78号杭州国际假日酒店商务楼",
+        "lng": 120.180262,
+        "lat": 30.264945
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-513e297beee8",
+      "title": "大宗商品贸易  财务审计类",
+      "siteId": "物产中大金属集团-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zmmc.com.cn:1688/recruit.aspx?category_id=55",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "52"
+}

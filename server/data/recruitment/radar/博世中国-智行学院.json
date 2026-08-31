@@ -1,0 +1,62 @@
+{
+  "slug": "博世中国-智行学院",
+  "source": "xiaozhao-radar",
+  "name": "博世中国-智行学院",
+  "tier": 7,
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/bosch/151492?sessionid=&sourceToken=3945c52a61789719ee49f814f3b62413#/",
+  "sites": [
+    {
+      "id": "博世中国-智行学院-site-beijing",
+      "name": "博世中国-智行学院",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/苏州/长沙",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "博世中国-智行学院-site-shanghai",
+      "name": "博世中国-智行学院",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/苏州/长沙",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "博世中国-智行学院-site-suzhou",
+      "name": "博世中国-智行学院",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/苏州/长沙"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ec6b85c64475",
+      "title": "AI  智行学院  工程智行学院  制造智行学院  商务共享智行学院  JMP  预备役",
+      "siteId": "博世中国-智行学院-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/bosch/151492?sessionid=&sourceToken=3945c52a61789719ee49f814f3b62413#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "36"
+}

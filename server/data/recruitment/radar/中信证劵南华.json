@@ -1,0 +1,41 @@
+{
+  "slug": "中信证劵南华",
+  "source": "xiaozhao-radar",
+  "name": "中信证劵南华",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://careers.citics.com/branch/interns",
+  "sites": [
+    {
+      "id": "中信证劵南华-site-guangzhou",
+      "name": "中信证劵南华",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州/东莞/佛山",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a6a104980035",
+      "title": "实习生(研究/投行方向)",
+      "siteId": "中信证劵南华-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.citics.com/branch/interns",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "67"
+}

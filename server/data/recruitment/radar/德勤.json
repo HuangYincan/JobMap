@@ -1,0 +1,75 @@
+{
+  "slug": "德勤",
+  "source": "xiaozhao-radar",
+  "name": "德勤",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU648133e50dcad45af15e3cb1/mc/position/intern?projectCode=106602&showProjectBanner=true",
+  "sites": [
+    {
+      "id": "德勤-site-beijing",
+      "name": "德勤",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "德勤-site-shanghai",
+      "name": "德勤",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "黄浦区延安东路222号外滩中心27层",
+        "lng": 121.487222,
+        "lat": 31.232481
+      }
+    },
+    {
+      "id": "德勤-site-guangzhou",
+      "name": "德勤",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市番禺区大罗塘金信工业大厦一梯502号",
+        "lng": 113.352964,
+        "lat": 22.958844
+      }
+    },
+    {
+      "id": "德勤-site-shenzhen",
+      "name": "德勤",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市龙岗区横岗街道红棉二路102号",
+        "lng": 114.199513,
+        "lat": 22.651444
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9a7f7202f3e0",
+      "title": "审计，税务，咨询三大业务部分岗位，具体见投递方式链接",
+      "siteId": "德勤-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU648133e50dcad45af15e3cb1/mc/position/intern?projectCode=106602&showProjectBanner=true",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "72"
+}

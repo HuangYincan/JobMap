@@ -1,0 +1,50 @@
+/* GATE_A 守卫失败态(2026-08-22 ws-gate-a):dynamic chunk 加载超时后的出口 UI。
+   视觉语言与 map-shell ws-3 失败态(loadFailed*)一致:
+   胶囊按钮 / 16px 标题 / 12px 小字;蓝色 #007AFF 双模式同 token(见 globals.css)。 */
+
+.failed {
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  max-width: min(360px, 80vw);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.failedTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.retry {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #007aff;
+  background: rgba(0, 122, 255, 0.12);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.retry:hover {
+  background: rgba(0, 122, 255, 0.2);
+}
+
+.retry:focus-visible {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
+}
+
+.hint {
+  margin: 0;
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--muted);
+}

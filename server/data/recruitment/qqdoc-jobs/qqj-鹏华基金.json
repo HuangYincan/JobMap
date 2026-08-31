@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-鹏华基金",
+  "name": "鹏华基金",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "研究 运营 营销类岗位",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-鹏华基金-site",
+      "name": "鹏华基金",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "深圳市福田区福华三路168号深圳国际商会中心43楼",
+        "lng": 114.057083,
+        "lat": 22.533214
+      }
+    }
+  ]
+}

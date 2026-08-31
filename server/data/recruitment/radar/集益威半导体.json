@@ -1,0 +1,64 @@
+{
+  "slug": "集益威半导体",
+  "source": "xiaozhao-radar",
+  "name": "集益威半导体",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/joywellsemi/166372?locale=zh-CN#/jobs",
+  "sites": [
+    {
+      "id": "集益威半导体-site-shanghai",
+      "name": "集益威半导体",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/成都/杭州",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "集益威半导体-site-chengdu",
+      "name": "集益威半导体",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "上海/成都/杭州",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "集益威半导体-site-hangzhou",
+      "name": "集益威半导体",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上海/成都/杭州",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-987bf2e8503e",
+      "title": "软件测试工程师 数字芯片验证工程师Serdes模拟设计工程师 soc数字设计工程师 PLL模拟设计工程师 数字IP设计工程师 车规数字设计工程师 ADC模拟设计",
+      "siteId": "集益威半导体-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/joywellsemi/166372?locale=zh-CN#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

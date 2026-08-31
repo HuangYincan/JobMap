@@ -1,0 +1,54 @@
+{
+  "slug": "厨芯科技",
+  "name": "厨芯科技",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/honganrobots/150155?sessionid=#/jobs?zhineng%5B0%5D=19802",
+  "sites": [
+    {
+      "id": "厨芯科技-site-suzhou",
+      "name": "厨芯科技",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "虎丘区苏州高新区科技城嘉陵江路198号11栋1202号",
+        "lng": 120.420307,
+        "lat": 31.327649
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-55469600b05a",
+      "title": "全栈开发工程师 （偏前端  偏后端）",
+      "siteId": "厨芯科技-site-suzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/honganrobots/150155?sessionid=#/jobs?zhineng%5B0%5D=19802",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-0b9b991cb552",
+      "title": "嵌入式软件工程 （图像识别方向）",
+      "siteId": "厨芯科技-site-suzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/honganrobots/150155?sessionid=#/job/d768bd4a-a1a2-4339-8e37-704d2a687e73",
+      "retrievedAt": "2026-08-11"
+    }
+  ]
+}

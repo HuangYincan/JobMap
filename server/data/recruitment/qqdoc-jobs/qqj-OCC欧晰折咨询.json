@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-OCC欧晰折咨询",
+  "name": "OC&C欧晰折咨询",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "助理咨询顾问",
+  "deadline": "2026  08 21",
+  "sites": [
+    {
+      "id": "qqj-OCC欧晰折咨询-site",
+      "name": "OC&C欧晰折咨询",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市黄浦区淮海中路333号瑞安广场19楼1909室",
+        "lng": 121.473934,
+        "lat": 31.222633
+      }
+    }
+  ]
+}

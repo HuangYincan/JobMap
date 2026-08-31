@@ -1,0 +1,118 @@
+:root {
+  color-scheme: light dark;
+  --ink: #18212c;
+  --muted: #4f5b65;
+  --soft: rgba(255, 255, 255, 0.68);
+  --soft-strong: rgba(255, 255, 255, 0.84);
+  --line: rgba(26, 45, 62, 0.12);
+  --shadow: 0 18px 50px rgba(24, 45, 57, 0.15);
+  --blue: #007AFF;
+  --blue-ink: #0062CC;
+  --green: #1B7F3A;
+  --map: #dcebd8;
+  --map-dark: #203b3a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #dce8e3;
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "Helvetica Neue", "Noto Sans SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--blue, #007aff);
+  outline-offset: 2px;
+}
+
+button {
+  color: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(35, 119, 243, 0.48);
+  outline-offset: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f4f7f5;
+    --muted: #a4b0b5;
+    --soft: rgba(24, 31, 35, 0.74);
+    --soft-strong: rgba(26, 34, 39, 0.9);
+    --line: rgba(255, 255, 255, 0.13);
+    --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    --blue: #007AFF;
+    --blue-ink: #7ab8ff;
+    --green: #3dce6a;
+    --map: #1d3835;
+  }
+  body {
+    background: #1d3835;
+  }
+}
+
+/* Apple-style scrollbars */
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.22);
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background-clip: padding-box;
+  transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
+  background-clip: padding-box;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.28);
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.42);
+    background-clip: padding-box;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

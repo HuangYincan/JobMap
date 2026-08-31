@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+# worktree node_modules symlink (git treats a symlink as a file, so `node_modules/` doesn't cover it)
+server/node_modules
 .pnp
 .pnp.js
 
@@ -8,6 +10,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .Python
+.python-version.local
 *.so
 .venv/
 venv/
@@ -27,12 +30,20 @@ test-results/
 out/
 build/
 dist/
+*.tsbuildinfo
 
 # Environment
 .env
 .env.local
 .env.*.local
 *.env
+
+# Geocode multi-day run progress (report/scheduling aid, written by
+# server/scripts/geocode-sites-apply.mjs; never participates in decisions)
+/server/.geocode-progress.json
+# Geocode place-search success memo (cross-process cache, written by
+# server/scripts/geocode-sites-apply.mjs; only successful hits, never failures)
+/server/.geocode-memo.json
 
 # IDEs
 .vscode/
@@ -74,3 +85,18 @@ docker-compose.override.yml
 
 # Misc
 .claude/jobs/
+.agents/
+*.egg-info/
+.playwright-mcp/
+
+# Local UI captures (not product assets)
+/*.png
+tech/roles/data/validation-report-*.json
+
+# Parallel dev session artifacts (worker/merger claude -p output, not docs)
+tech/roles/development/parallel-sessions/*/logs/
+tech/roles/development/parallel-sessions/*/repro-artifacts/
+tech/roles/development/quality-scans/*/scan-stdout.log
+
+# Misplaced copies of repo-level tech/ (workers sometimes write under server/)
+/server/tech/

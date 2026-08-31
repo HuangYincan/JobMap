@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中国移动",
+  "name": "中国移动",
+  "official_url": "https://job.10086.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国移动-site-hq",
+      "name": "中国移动",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区金融大街29号",
+        "lng": 116.359028,
+        "lat": 39.911662
+      }
+    }
+  ]
+}

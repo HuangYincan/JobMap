@@ -1,0 +1,42 @@
+{
+  "slug": "均胜集团",
+  "source": "xiaozhao-radar",
+  "name": "均胜集团",
+  "tier": 7,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/joyson/94311?sharePageId=4594512#/jobs?department%5B0%5D=2071467&department%5B1%5D=2074655&page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "均胜集团-site-shanghai",
+      "name": "均胜集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/大连",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cb8e806d32d5",
+      "title": "软件 硬件  测试  机械  职能等岗位 具体见投递方式链接",
+      "siteId": "均胜集团-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/joyson/94311?sharePageId=4594512#/jobs?department%5B0%5D=2071467&department%5B1%5D=2074655&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "36"
+}

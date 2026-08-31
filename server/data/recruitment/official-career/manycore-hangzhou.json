@@ -1,0 +1,49 @@
+{
+  "slug": "manycore-hangzhou",
+  "source": "official-career",
+  "name": "群核科技",
+  "industries": [
+    "internet",
+    "ai"
+  ],
+  "scale": "unicorn",
+  "careerUrl": "https://www.kujiale.com/job",
+  "sites": [
+    {
+      "id": "manycore-hangzhou-site",
+      "name": "群核科技",
+      "location": {
+        "lng": 120.109,
+        "lat": 30.293,
+        "address": "西湖区余杭塘路515号莱茵·矩阵国际"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "manycore-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "manycore-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "工程",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.kujiale.com/job"
+    }
+  ],
+  "tier": 7,
+  "category": "65"
+}

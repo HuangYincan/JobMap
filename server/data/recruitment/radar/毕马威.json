@@ -1,0 +1,114 @@
+{
+  "slug": "毕马威",
+  "source": "xiaozhao-radar",
+  "name": "毕马威",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kpmg.com/cn/zh/careers/campus/graduate-applications.html",
+  "sites": [
+    {
+      "id": "毕马威-site-beijing",
+      "name": "毕马威",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市东城区东长安街1号东2座",
+        "lng": 116.416528,
+        "lat": 39.909089
+      }
+    },
+    {
+      "id": "毕马威-site-shanghai",
+      "name": "毕马威",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "静安区南京西路1266号恒隆广场",
+        "lng": 121.45378,
+        "lat": 31.227635
+      }
+    },
+    {
+      "id": "毕马威-site-guangzhou",
+      "name": "毕马威",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "毕马威-site-shenzhen",
+      "name": "毕马威",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "毕马威-site-chengdu",
+      "name": "毕马威",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/广州/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-62d7a3d54309",
+      "title": "审计与签证  税务  咨询类岗位",
+      "siteId": "毕马威-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kpmg.com/cn/zh/careers/campus/graduate-applications.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-bcb81d11a77f",
+      "title": "审计 税务 咨询",
+      "siteId": "毕马威-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/kpmg/74356#/jobs?project%5B0%5D=100096754&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-01rhdat9",
+      "title": "校园招聘",
+      "siteId": "毕马威-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kpmg.com/cn/zh/careers/campus/graduate-applications.html",
+      "retrievedAt": "2026-08-20"
+    }
+  ],
+  "category": "72"
+}

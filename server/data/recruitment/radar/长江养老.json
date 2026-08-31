@@ -1,0 +1,42 @@
+{
+  "slug": "长江养老",
+  "source": "xiaozhao-radar",
+  "name": "长江养老",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://cjpension1.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "长江养老-site-shanghai",
+      "name": "长江养老",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2ac032b7efe1",
+      "title": "投资方向实习生  风险管理方向实习生 金融AI方向实习生 —AI数据工程  金融AI方向实习生—AI应用",
+      "siteId": "长江养老-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://cjpension1.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "68"
+}

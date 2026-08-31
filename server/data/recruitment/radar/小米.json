@@ -1,0 +1,103 @@
+{
+  "slug": "小米",
+  "source": "xiaozhao-radar",
+  "name": "小米",
+  "tier": 5,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://xiaomi.jobs.f.mioffice.cn/s/NwUaFVDBB8E",
+  "sites": [
+    {
+      "id": "小米-site-beijing",
+      "name": "小米",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "海淀区安宁庄路小米科技园",
+        "lng": 116.31797,
+        "lat": 40.048476
+      }
+    },
+    {
+      "id": "小米-site-shanghai",
+      "name": "小米",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "小米-site-shenzhen",
+      "name": "小米—全球顶尖人才",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/武汉",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "小米-site-wuhan",
+      "name": "小米—全球顶尖人才",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市洪山区花山大道与九峰一路交叉路口往西南约100米",
+        "lng": 114.501978,
+        "lat": 30.491727
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-0e36d97d310e",
+      "title": "AI专项",
+      "siteId": "小米-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/s/NwUaFVDBB8E",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-a4c8585842bd",
+      "title": "技术类",
+      "siteId": "小米-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/s/hUDJ8kU_Ozw",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-24d0d8ecd420",
+      "title": "大模型  机器学习 具身智能   AI4S OS芯片  通信  安全  先进材料  智驾 三电 动力地盘  智能座舱等方向",
+      "siteId": "小米-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xiaomi.jobs.f.mioffice.cn/toptalent",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

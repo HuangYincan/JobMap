@@ -1,0 +1,47 @@
+{
+  "slug": "embj-大疆创新",
+  "source": "embodied-jobs",
+  "name": "大疆创新",
+  "sites": [
+    {
+      "id": "embj-大疆创新-site",
+      "name": "大疆创新",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "广东省深圳市南山区西丽街道仙元路53号大疆天空之城T2",
+        "lng": 113.942888,
+        "lat": 22.577473
+      }
+    }
+  ],
+  "careerUrl": "https://we.dji.com/zh-CN/campus/position",
+  "positions": [
+    {
+      "externalId": "embj-大疆创新-1",
+      "title": "机器人算法工程师（精英计划）",
+      "siteId": "embj-大疆创新-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://we.dji.com/zh-CN/campus/position",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-大疆创新-2",
+      "title": "AI算法工程师（顶尖人才）",
+      "siteId": "embj-大疆创新-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://we.dji.com/zh-CN/campus/position",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

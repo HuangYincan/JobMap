@@ -1,0 +1,21 @@
+{
+  "slug": "qqj-斯道德机械",
+  "name": "斯道德机械",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "生产制造岗  研发工程师岗   外贸业务岗",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-斯道德机械-site",
+      "name": "斯道德机械",
+      "city": "宜兴市",
+      "province": "",
+      "location": {
+        "address": "江苏省宜兴市芳桥工业集中开发区郁南路18号"
+      }
+    }
+  ]
+}

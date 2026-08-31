@@ -1,0 +1,22 @@
+{
+  "slug": "qq-昆仑银行",
+  "name": "昆仑银行",
+  "official_url": "https://www.klb.cn/eportal/ui?pageId=488946",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-昆仑银行-site-hq",
+      "name": "昆仑银行",
+      "city": "克拉玛依市",
+      "province": "",
+      "location": {
+        "address": "新疆克拉玛依市克拉玛依区世纪大道7号",
+        "lng": 84.896469,
+        "lat": 45.576464
+      }
+    }
+  ],
+  "city_pending": true
+}

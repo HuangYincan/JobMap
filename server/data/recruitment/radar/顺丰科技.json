@@ -1,0 +1,75 @@
+{
+  "slug": "顺丰科技",
+  "source": "xiaozhao-radar",
+  "name": "顺丰科技",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.sf-express.com/#/positionList?intern=1",
+  "sites": [
+    {
+      "id": "顺丰科技-site-shanghai",
+      "name": "顺丰科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海/深圳/成都/武汉",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "顺丰科技-site-shenzhen",
+      "name": "顺丰科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区深投控创智天地大厦B栋一楼",
+        "lng": 113.944223,
+        "lat": 22.538227
+      }
+    },
+    {
+      "id": "顺丰科技-site-chengdu",
+      "name": "顺丰科技",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "上海/深圳/成都/武汉",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "顺丰科技-site-wuhan",
+      "name": "顺丰科技",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "武汉市洪山区光谷创业街关东康居园东南侧约130米",
+        "lng": 114.438853,
+        "lat": 30.50035
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cf3a6dd67af5",
+      "title": "算法及大数据类 研发类 产品及方案类 其他类",
+      "siteId": "顺丰科技-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.sf-express.com/#/positionList?intern=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "图拉斯",
+  "source": "xiaozhao-radar",
+  "name": "图拉斯",
+  "tier": 9,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://lanhevip.jobs.feishu.cn/372804/position/list?spread=27C128X",
+  "sites": [
+    {
+      "id": "图拉斯-site-shenzhen",
+      "name": "图拉斯",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市龙华区民治街道新牛社区民治大道与工业东路交汇处展滔科技大厦C座C1215",
+        "lng": 114.03711,
+        "lat": 22.639986
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-509d6621af84",
+      "title": "国内电商运营类  海外电商运营类  电商平面设计类 传媒类  营销类",
+      "siteId": "图拉斯-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lanhevip.jobs.feishu.cn/372804/position/list?spread=27C128X",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

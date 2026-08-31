@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-新能德",
+  "name": "新能德",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://nvtpower.zhiye.com/campus/jobs",
+  "direction": "电子研发测试类  产品结构工程类  外语项目管理类  质量管理类  制造技术研发类  运营支持类 芯片/PCBA工程类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-新能德-site",
+      "name": "新能德",
+      "city": "东莞市",
+      "province": "",
+      "location": {
+        "address": "广东省东莞市东坑镇角社村兴国中路8号",
+        "lng": 113.918266,
+        "lat": 23.024272
+      }
+    }
+  ]
+}

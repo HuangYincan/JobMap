@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-双胞胎集团",
+  "name": "双胞胎集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://wecruit.hotjob.cn/SU6a5f1fabba2dc64cbb887983/pb/school.html",
+  "direction": "养猪BG  饲料与服务BG   采购物流中心职能后台",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-双胞胎集团-site",
+      "name": "双胞胎集团",
+      "city": "南昌市",
+      "province": "",
+      "location": {
+        "address": "江西省南昌市青山湖区昌东大道7003号",
+        "lng": 115.991011,
+        "lat": 28.682721
+      }
+    }
+  ]
+}

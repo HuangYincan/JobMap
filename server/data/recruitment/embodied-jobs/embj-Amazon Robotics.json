@@ -1,0 +1,84 @@
+{
+  "slug": "embj-Amazon Robotics",
+  "source": "embodied-jobs",
+  "name": "Amazon Robotics",
+  "sites": [
+    {
+      "id": "embj-Amazon Robotics-site",
+      "name": "Amazon Robotics",
+      "city": "North Reading, MA",
+      "province": "",
+      "location": {
+        "address": "300 Riverpark Drive, North Reading, MA 01864, USA"
+      }
+    }
+  ],
+  "careerUrl": "https://amazon.jobs/jobs/3207170",
+  "positions": [
+    {
+      "externalId": "embj-Amazon Robotics-1",
+      "title": "Applied Scientist - ML and Robotics",
+      "siteId": "embj-Amazon Robotics-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://amazon.jobs/jobs/3207170",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Amazon Robotics-2",
+      "title": "Applied Scientist, SLAM, Industrial Robotics Group",
+      "siteId": "embj-Amazon Robotics-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.amazon.jobs/en/jobs/3192845/applied-scientist-slam-industrial-robotics-group",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Amazon Robotics-3",
+      "title": "Sr. Software Engineer, Mobile Manipulation Robotics",
+      "siteId": "embj-Amazon Robotics-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.amazon.jobs/en/jobs/3204896/sr-software-engineer-mobile-manipulation-robotics",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Amazon Robotics-4",
+      "title": "Amazon Robotics - 2026 Robotics Systems Engineer Intern/Co-op, Robotics Deployment Engineering",
+      "siteId": "embj-Amazon Robotics-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.amazon.jobs/en/jobs/3088749/amazon-robotics-2026-robotics-systems-engineer-intern-co-op-robotics-deployment-engineering",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Amazon Robotics-5",
+      "title": "Personal Robotics Group - Research Scientist II Intern / Co-op - 2026",
+      "siteId": "embj-Amazon Robotics-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.amazon.jobs/en-gb/jobs/3164675/personal-robotics-group-research-scientist-ii-intern-co-op-2026-robotics-manipulation-locomotion-controls-reinforcement-learning-perception-manipulation-planning-hri-and-more",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

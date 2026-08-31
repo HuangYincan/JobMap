@@ -1,0 +1,75 @@
+{
+  "slug": "h3c-hangzhou",
+  "source": "xiaozhao-radar",
+  "name": "新华三集团",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.h3c.com/intern/jobs",
+  "sites": [
+    {
+      "id": "h3c-hangzhou-site-beijing",
+      "name": "新华三集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "海淀区永嘉北路与丰秀东路交叉口东南140米海国永丰科技园",
+        "lng": 116.25033,
+        "lat": 40.07673
+      }
+    },
+    {
+      "id": "h3c-hangzhou-site-chengdu",
+      "name": "新华三集团",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "四川省成都市双流区和乐二街150号c区c6栋",
+        "lng": 104.082283,
+        "lat": 30.514932
+      }
+    },
+    {
+      "id": "h3c-hangzhou-site-hangzhou",
+      "name": "新华三集团",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "浙江省杭州市滨江区长河路466号11楼",
+        "lng": 120.198037,
+        "lat": 30.185189
+      }
+    },
+    {
+      "id": "h3c-hangzhou-site-wuhan",
+      "name": "新华三集团",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/成都/杭州/武汉",
+        "lng": 114.3,
+        "lat": 30.59
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bd06bbf679a7",
+      "title": "AI算法实习生  软件开发实习生  软件测试实习生  硬件实习  售前产品经理实习生",
+      "siteId": "h3c-hangzhou-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.h3c.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

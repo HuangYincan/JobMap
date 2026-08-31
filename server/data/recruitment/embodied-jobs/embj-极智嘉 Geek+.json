@@ -1,0 +1,918 @@
+{
+  "slug": "embj-极智嘉 Geek+",
+  "source": "embodied-jobs",
+  "name": "极智嘉 Geek+",
+  "sites": [
+    {
+      "id": "embj-极智嘉 Geek+-site",
+      "name": "极智嘉 Geek+",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市长宁区金钟路968号凌空SOHO 7号楼10层",
+        "lng": 121.352205,
+        "lat": 31.221836
+      }
+    }
+  ],
+  "careerUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/ea5138d0-82f0-4bc2-ae8c-d1938753dddc",
+  "positions": [
+    {
+      "externalId": "embj-极智嘉 Geek+-1",
+      "title": "3D感知算法工程师（部署优化方向）",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/ea5138d0-82f0-4bc2-ae8c-d1938753dddc",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-2",
+      "title": "3D激光SLAM/3D点云感知算法",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/debca098-c339-4f5a-ac51-90c0c0bc626a",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-3",
+      "title": "C++机器人软件工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/6358109f-236c-47a6-aad5-5fe8a45e8b4a",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-4",
+      "title": "Senior Software Architect",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/63f9803b-d613-40d7-b581-06798f55a3b0",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-5",
+      "title": "VLA算法工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/c266791a-6ff9-41ff-ac11-927d041decb0",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-6",
+      "title": "世界模型算法工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/eaf69837-64ce-4c76-b6cf-b6fbc62dd5c2",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-7",
+      "title": "产品工程-机械臂",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/b08a191a-faf6-492c-a06e-31f140d2db90",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-8",
+      "title": "产品工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/aa208cef-b103-441e-bff5-0118a0d62d88",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-9",
+      "title": "产品测试工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/5c2f6fa5-3715-46d9-b291-bde84df0e0ed",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-10",
+      "title": "仿真平台开发Leader",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/78932dbc-b3d3-44e2-9857-0313cec29aba",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-11",
+      "title": "全栈开发工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/ce6d54e5-bfd9-4ce1-8789-c03335891cf7",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-12",
+      "title": "具身机器人数采/数据leader",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/671007b0-1b3b-4de2-9f5b-59330cf71c0e",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-13",
+      "title": "具身机器人整机测试工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/05110c5d-f003-4407-83d4-3ad823b2b2fa",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-14",
+      "title": "具身机器人灵巧手Leader",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/8b189741-5882-42a4-996e-6169a55e7868",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-15",
+      "title": "具身机器人软件系统架构Leader",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/04185f75-2763-44fe-9886-118f801da906",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-16",
+      "title": "前端工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/40087c09-5790-435a-a4f9-429522d16b73",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-17",
+      "title": "区域渠道经理（华东）",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/ea92371e-a557-4582-a50c-6bb773c39634",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-18",
+      "title": "后端开发工程师（数据平台）",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/a440c39f-002c-4c7f-bf8a-8f414f1686ca",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-19",
+      "title": "壳体结构工程师-轮臂式机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/95c67513-de31-444b-99ac-0d8f3ade0ca8",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-20",
+      "title": "大模型算法与应用开发",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/1b544101-5bb2-4dd5-8639-f99734f48a9c",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-21",
+      "title": "工业设计师-轮臂式机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/9f19940d-9939-4a13-9b34-e0c9e46b5aec",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-22",
+      "title": "操作算法工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/b4167640-44cc-4429-84c7-5a142b1c1c84",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-23",
+      "title": "数据采集工厂运营负责人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/fe5cf393-0ab0-48e3-9929-b789d3aec1ac",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-24",
+      "title": "整机结构工程师-轮臂式机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/03e4652a-3dca-4389-8e68-472ead545ba9",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-25",
+      "title": "方案规划工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/0c763234-3217-4437-95f7-70a94221464f",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-26",
+      "title": "方案规划负责人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/4d891400-e629-4190-a9d7-71d12c745e83",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-27",
+      "title": "机器人产品经理",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/e5b1b574-fc55-4d2b-8b86-9dd38fd485f9",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-28",
+      "title": "机器人仿真与运控工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/331f9227-e277-496e-8b2a-845739535625",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-29",
+      "title": "机器人控制算法工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/3876668f-c1b6-4061-89df-493791c6f469",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-30",
+      "title": "机器人控制软件工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/64ebf97f-611e-4ed6-b476-4cc1aa5b94e6",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-31",
+      "title": "机器人数采软件工程师-轮臂式机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/55a7b6cf-823c-4a1b-9069-ee5dca2ce942",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-32",
+      "title": "机器人软件工程师(AMR方向)-轮臂式机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/f7601370-026e-489d-b725-25b7f23ddf3d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-33",
+      "title": "机器人软件工程师-机械臂拣选方向",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/60228ac2-6f9f-49b9-94cf-114b4a04e8f7",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-34",
+      "title": "机器人软件工程师（数采设备）",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/d1aea566-4bde-4c82-a28f-3844afd2401a",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-35",
+      "title": "机器人软件开发工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/9dcc4cf6-3af9-4f63-b3e6-97c2fe6a0c09",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-36",
+      "title": "机器人运动规划算法工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/84a181b3-39ff-4b79-943d-a8415e5a2bad",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-37",
+      "title": "机械工程师(精密机械&材料)-机械臂",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/85d18c70-6775-49db-9dcf-2ef877b15947",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-38",
+      "title": "机械工程师-HF",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/5c020252-835d-426c-813a-f2c5f71fd9bf",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-39",
+      "title": "机械结构工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/499006a0-1110-4225-bb4c-3c9a2cc4236b",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-40",
+      "title": "机械臂应用工程师（实施方向）",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/2f6e9b56-15a6-41c7-a575-6165b591d565",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-41",
+      "title": "机械臂算法专家-轮臂式机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/862d1bfa-d0b4-4642-9075-080b5c8fbb65",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-42",
+      "title": "机电控制专家",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/62835449-67e4-4faa-a96b-9c5a6ab4a84a",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-43",
+      "title": "核心部件结构工程师-机械臂",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/c5f21db4-7484-45a0-a647-e5227ae50a2c",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-44",
+      "title": "核心部件结构工程师-灵巧手",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/8ddf1905-6041-4725-a1d7-26b2a7a93e54",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-45",
+      "title": "电机控制硬件工程师-轮臂式机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/7a6353fc-f9e5-4784-bf9e-cc894a683a20",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-46",
+      "title": "电机控制软件工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/734636f1-ed9d-4ecb-8300-f20b03c6aa0a",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-47",
+      "title": "电气工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/4357f0f3-bfe3-43b4-a5e1-5639146a725b",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-48",
+      "title": "电气工程师-AMR-北京",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/71c57407-08c2-49a0-ade1-ad0faa78b8d6",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-49",
+      "title": "电气工程师-AMR-合肥",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/20369a07-df12-40a6-83d3-dd0873b5792a",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-50",
+      "title": "电气工程师-机械臂",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/5d0be579-44a7-42b8-a466-c37d483f7248",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-51",
+      "title": "电气工程师-机械臂-合肥",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/a8f5e82a-28cc-40d5-b758-22c702dee3d1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-52",
+      "title": "电气工程师-轮臂机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/af923771-8c37-41e3-a513-21bdbf78fdb1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-53",
+      "title": "硬件工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/2eb3335d-0ef8-41a6-95ed-6aeedde731a5",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-54",
+      "title": "硬件测试工程师-AMR方向",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/c6c48bd5-0a6a-4369-aa9e-660bfb09fd3d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-55",
+      "title": "硬件研发项目经理",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/14170775-c5ef-447e-bc2c-54229da94e73",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-56",
+      "title": "算法优化与部署工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/c9f1b9d0-62a0-41f0-bce5-b074fb373a9b",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-57",
+      "title": "系统测试工程师-轮臂式机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/1fcf04c7-9c14-40d9-bdb2-450a198e2e1d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-58",
+      "title": "视觉SLAM算法工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/30cf10f0-e766-47c5-b7f4-3d3983ec5a12",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-59",
+      "title": "视觉算法工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/f4f621a7-02d2-4884-9b03-272cf13659ef",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-60",
+      "title": "视觉算法应用开发工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/cbd4114f-e7c1-4d9a-b829-db850009cc29",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-61",
+      "title": "解决方案产品经理",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/17242173-f2fe-4917-8060-d116fa3fb289",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-62",
+      "title": "解决方案产品经理-机械臂",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/59ced781-4eb1-42c8-a99d-f4655e69fbb3",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-63",
+      "title": "运动控制算法工程师",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/0abe76eb-4d05-4a68-8287-95bf6338e0c3",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-64",
+      "title": "销售经理",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/6620a4e4-bf18-49e8-b058-76e76b1edbaa",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-65",
+      "title": "销售经理（华东）",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/af9ff712-71c7-451e-a684-7adfe2cec429",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-66",
+      "title": "项目经理",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/1758aeb1-7816-4e71-9d43-92b2ce7bd9c6",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-67",
+      "title": "高级嵌入式软件工程师-轮臂式机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/b15c7ff3-b427-486c-ab90-1633e4b03749",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-68",
+      "title": "高级硬件工程师-轮臂机器人",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/2cf7f936-98df-4eba-8df4-64ad570c86fb",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-极智嘉 Geek+-69",
+      "title": "视觉感知算法实习生",
+      "siteId": "embj-极智嘉 Geek+-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/geekplus/5030#/job/cefcd59c-0258-4f9d-bb96-c3bc18ceb555",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "智能精准学",
+  "source": "xiaozhao-radar",
+  "name": "智能精准学",
+  "tier": 12,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.91jzx.cn/join-us/",
+  "sites": [
+    {
+      "id": "智能精准学-site-hangzhou",
+      "name": "智能精准学",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "西湖区紫霞街与崇仁路交叉口西南220米",
+        "lng": 120.074826,
+        "lat": 30.288688
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-5a8d657e96d0",
+      "title": "产品岗  教研岗  职能岗",
+      "siteId": "智能精准学-site-hangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.91jzx.cn/join-us/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "82"
+}

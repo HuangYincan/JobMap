@@ -1,0 +1,22 @@
+{
+  "slug": "qq-烟草招聘平台",
+  "name": "烟草招聘平台",
+  "official_url": "http://www.tobacco.gov.cn/gjyc/zpxx/list.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-烟草招聘平台-site-hq",
+      "name": "烟草招聘平台",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市西城区月坛南街55号",
+        "lng": 116.344052,
+        "lat": 39.914246
+      }
+    }
+  ],
+  "city_pending": true
+}

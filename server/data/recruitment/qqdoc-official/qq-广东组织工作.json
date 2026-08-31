@@ -1,0 +1,22 @@
+{
+  "slug": "qq-广东组织工作",
+  "name": "广东组织工作",
+  "official_url": "https://www.gdzz.gov.cn/gwygz/lypytzgg/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-广东组织工作-site-hq",
+      "name": "广东组织工作",
+      "city": "广州市",
+      "province": "",
+      "location": {
+        "address": "广州市越秀区合群三马路省委大院1号楼",
+        "lng": 113.296453,
+        "lat": 23.117428
+      }
+    }
+  ],
+  "city_pending": true
+}

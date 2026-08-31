@@ -1,0 +1,49 @@
+{
+  "slug": "h3c-hangzhou",
+  "source": "official-career",
+  "name": "新华三",
+  "industries": [
+    "hardware",
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.h3c.com/",
+  "sites": [
+    {
+      "id": "h3c-hangzhou-site",
+      "name": "新华三",
+      "location": {
+        "lng": 120.198,
+        "lat": 30.185,
+        "address": "滨江区长河路466号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "h3c-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "h3c-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "软件平台",
+      "salary": {
+        "min": 12,
+        "max": 22
+      },
+      "education": "本科",
+      "skills": [
+        "TypeScript",
+        "React"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.h3c.com/"
+    }
+  ],
+  "tier": 7,
+  "category": "39"
+}

@@ -1,0 +1,53 @@
+{
+  "slug": "metapp",
+  "source": "xiaozhao-radar",
+  "name": "METAPP",
+  "tier": 10,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://meta.jobs.feishu.cn/s/aHxH3llfccU",
+  "sites": [
+    {
+      "id": "metapp-site-beijing",
+      "name": "METAPP",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/成都/厦门",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "metapp-site-chengdu",
+      "name": "METAPP",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/成都/厦门",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-81770b68df29",
+      "title": "产品、研发、运营、职能岗等",
+      "siteId": "metapp-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://meta.jobs.feishu.cn/s/aHxH3llfccU",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

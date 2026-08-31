@@ -1,0 +1,85 @@
+import type { NextConfig } from "next";
+
+// The home route is the map shell. Map SDKs dynamically load scripts, styles,
+// workers, tiles, and remote logo/photo images from vendor origins. Keep those
+// allowances on that route only: account/agent UI is rendered inside the home
+// route today, so it intentionally inherits the map policy without changing
+// its existing behavior.
+// BMapGL v1.0 picks `location.protocol` for getmodules / JSONP / tiles.
+// On http://localhost the SDK therefore requests http://api.map.baidu.com
+// and http://*.bdimg.com. A https-only script-src lets getscript (https)
+// through, then CSP-blocks the GL renderer module — Map DOM exists, no
+// canvas. http: tokens are inert on https deployments (mixed content).
+// AMap JSAPI 2.0 and BMapGL instantiate WebGL modules via eval
+// (`U.Module.WebGLRender is not a constructor` when blocked). Keep
+// 'unsafe-eval' / 'wasm-unsafe-eval' on `/` in production too; STRICT_CSP
+// on other routes stays without them.
+const MAP_CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "img-src 'self' data: blob: https: http://*.map.baidu.com http://*.bdimg.com",
+  "media-src 'self' data:",
+  "font-src 'self' data: https://*.amap.com https://*.map.baidu.com http://*.map.baidu.com https://*.bdimg.com http://*.bdimg.com https://map.qq.com https://*.map.qq.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://*.amap.com https://*.map.baidu.com http://*.map.baidu.com https://*.bdimg.com http://*.bdimg.com https://map.qq.com https://*.map.qq.com",
+  "style-src 'self' 'unsafe-inline' https://*.map.baidu.com http://*.map.baidu.com https://*.amap.com https://map.qq.com https://*.map.qq.com",
+  "connect-src 'self' data: blob: https: http://*.map.baidu.com http://*.bdimg.com",
+  "worker-src 'self' blob:",
+].join("; ");
+
+// Non-map routes have no browser-side SDK contract. In particular, do not
+// carry the map route's unsafe-inline/unsafe-eval allowances to API or future
+// server-rendered account routes. Next's own generated assets remain same-origin.
+const STRICT_CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "img-src 'self' data: blob:",
+  "media-src 'self' data:",
+  "font-src 'self' data:",
+  "script-src 'self'",
+  "style-src 'self'",
+  "connect-src 'self' data: blob:",
+  "worker-src 'self' blob:",
+].join("; ");
+
+type ResponseHeader = { key: string; value: string };
+
+function securityHeaders(csp: string): ResponseHeader[] {
+  return [
+    { key: "Content-Security-Policy", value: csp },
+    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self)" },
+    { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+    { key: "X-Content-Type-Options", value: "nosniff" },
+    { key: "X-Frame-Options", value: "DENY" },
+    ...(process.env.NODE_ENV === "production"
+      ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }]
+      : []),
+  ];
+}
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  async headers() {
+    return [
+      // Only the home route mounts MapShell (including its account and Agent
+      // overlays), so this is the sole route that receives SDK allowances.
+      {
+        source: "/",
+        headers: securityHeaders(MAP_CSP),
+      },
+      // `:path+` excludes `/` while covering API and future non-map routes.
+      {
+        source: "/:path+",
+        headers: securityHeaders(STRICT_CSP),
+      },
+    ];
+  },
+};
+
+export default nextConfig;

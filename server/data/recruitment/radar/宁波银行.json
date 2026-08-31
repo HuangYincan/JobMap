@@ -1,0 +1,88 @@
+{
+  "slug": "宁波银行",
+  "source": "xiaozhao-radar",
+  "name": "宁波银行",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhaopin.nbcb.com.cn/#/internship-recruitment",
+  "sites": [
+    {
+      "id": "宁波银行-site-shanghai",
+      "name": "宁波银行",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上城区市民街69号2幢306室16-19层、21-27层",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "宁波银行-site-shenzhen",
+      "name": "宁波银行",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "上城区市民街69号2幢306室16-19层、21-27层",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "宁波银行-site-hangzhou",
+      "name": "宁波银行",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "上城区市民街69号2幢306室16-19层、21-27层",
+        "lng": 120.207694,
+        "lat": 30.237175
+      }
+    },
+    {
+      "id": "宁波银行-site-nanjing",
+      "name": "宁波银行",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "上海/深圳/杭州/南京",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-f55922d1f4c8",
+      "title": "各分行岗位持续更新中",
+      "siteId": "宁波银行-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.nbcb.com.cn/#/internship-recruitment",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-f55922d1f4c8-nanjing",
+      "title": "各分行岗位持续更新中",
+      "siteId": "宁波银行-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.nbcb.com.cn/#/internship-recruitment",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "66"
+}

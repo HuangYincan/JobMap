@@ -1,0 +1,103 @@
+{
+  "slug": "荣耀honor",
+  "source": "xiaozhao-radar",
+  "name": "荣耀HONOR",
+  "tier": 5,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://career.honor.com/SU61b9b9992f9d24431f5050a5/pb/interns.html",
+  "sites": [
+    {
+      "id": "荣耀honor-site-beijing",
+      "name": "荣耀HONOR—逐梦计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/南京",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "荣耀honor-site-shanghai",
+      "name": "荣耀HONOR—逐梦计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/南京",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "荣耀honor-site-shenzhen",
+      "name": "荣耀HONOR—逐梦计划",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "福田区红荔西路8089号深业中城6号楼",
+        "lng": 114.024073,
+        "lat": 22.54083
+      }
+    },
+    {
+      "id": "荣耀honor-site-nanjing",
+      "name": "荣耀HONOR—逐梦计划",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/深圳/南京",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-00e31a7642da",
+      "title": "研发类（AI类 软件类 算法类 硬件类 测试类 结构类 射频天线类 仿真类 芯片类 安全类）产品类 设计类 营销类 流程IT与质量运营类",
+      "siteId": "荣耀honor-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.honor.com/SU61b9b9992f9d24431f5050a5/pb/interns.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-00e31a7642da-nanjing",
+      "title": "研发类（AI类 软件类 算法类 硬件类 测试类 结构类 射频天线类 仿真类 芯片类 安全类）产品类 设计类 营销类 流程IT与质量运营类",
+      "siteId": "荣耀honor-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://career.honor.com/SU61b9b9992f9d24431f5050a5/pb/interns.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "embj-荣耀-1",
+      "title": "全球百万雄鹰计划",
+      "siteId": "荣耀honor-site-beijing",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.honor.com/cn/career/",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "category": "39"
+}

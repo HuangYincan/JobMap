@@ -1,0 +1,41 @@
+{
+  "slug": "广东华兴银行",
+  "source": "xiaozhao-radar",
+  "name": "广东华兴银行",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://ghbank.zhiye.com/intern/detail?jobAdId=526983cb-10e5-4add-ab21-0c58f4f71e9d",
+  "sites": [
+    {
+      "id": "广东华兴银行-site-guangzhou",
+      "name": "广东华兴银行",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市天河区科韵路24-26号禾田大厦北楼首层",
+        "lng": 113.373938,
+        "lat": 23.123392
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e68e7b97c815",
+      "title": "总行业务实习生",
+      "siteId": "广东华兴银行-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://ghbank.zhiye.com/intern/detail?jobAdId=526983cb-10e5-4add-ab21-0c58f4f71e9d",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "66"
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "4399游戏",
+  "source": "xiaozhao-radar",
+  "name": "4399游戏",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hr.4399om.com/campus/graduate/?jobType=campus_chanpinlei&jobID=JO20260728001",
+  "sites": [
+    {
+      "id": "4399游戏-site-guangzhou",
+      "name": "4399游戏",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市黄埔区黄埔大道东840号保利鱼珠港G3栋",
+        "lng": 113.417232,
+        "lat": 23.100202
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9b22e3c31b02",
+      "title": "产品类 技术类  职能类  美术类 国内发行运营类  海外发行运营类",
+      "siteId": "4399游戏-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.4399om.com/campus/graduate/?jobType=campus_chanpinlei&jobID=JO20260728001",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

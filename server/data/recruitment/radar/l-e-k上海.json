@@ -1,0 +1,42 @@
+{
+  "slug": "l-e-k上海",
+  "source": "xiaozhao-radar",
+  "name": "L.E.k上海",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://lek.tal.net/vx/appcentre-3/brand-2/spa-1/candidate/so/pm/1/pl/8/opp/3926-2026-Summer-Intern-Shanghai/en-GB?sessionid=",
+  "sites": [
+    {
+      "id": "l-e-k上海-site-shanghai",
+      "name": "L.E.k上海（艾意凯咨询）",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-52e776ddb58f",
+      "title": "暑期实习(咨询顾问方向)",
+      "siteId": "l-e-k上海-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lek.tal.net/vx/appcentre-3/brand-2/spa-1/candidate/so/pm/1/pl/8/opp/3926-2026-Summer-Intern-Shanghai/en-GB?sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "72"
+}

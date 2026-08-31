@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中国冶金地质总局",
+  "name": "中国冶金地质总局",
+  "official_url": "https://www.cmgb.com.cn/cmgb/84783/85056/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国冶金地质总局-site-hq",
+      "name": "中国冶金地质总局",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市朝阳区姚家园路105号2座",
+        "lng": 116.493805,
+        "lat": 39.934931
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-奥马冰箱",
+  "name": "奥马冰箱",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://homa-hr.zhiye.com/campus/jobs",
+  "direction": "研发技术类  工业设计类  工艺技术类  设备技术类  品质技术类  信息技术类  财务管理类  企业管理类  国内营销类  国际营销类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-奥马冰箱-site",
+      "name": "奥马冰箱",
+      "city": "中山市",
+      "province": "",
+      "location": {
+        "address": "广东省中山市南头镇东福北路54号",
+        "lng": 113.318126,
+        "lat": 22.722103
+      }
+    }
+  ]
+}

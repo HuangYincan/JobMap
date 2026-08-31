@@ -1,0 +1,41 @@
+{
+  "slug": "嘉吉",
+  "source": "xiaozhao-radar",
+  "name": "嘉吉",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.duomian.com/project/14002967/",
+  "sites": [
+    {
+      "id": "嘉吉-site-shanghai",
+      "name": "嘉吉",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市徐汇区桂箐路65号新研大厦一期b座905室",
+        "lng": 121.4049,
+        "lat": 31.172798
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-29e32993f00f",
+      "title": "农产品交易培训生",
+      "siteId": "嘉吉-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.duomian.com/project/14002967/",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "14"
+}

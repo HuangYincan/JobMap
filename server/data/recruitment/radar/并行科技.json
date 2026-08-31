@@ -1,0 +1,75 @@
+{
+  "slug": "并行科技",
+  "source": "xiaozhao-radar",
+  "name": "并行科技",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://paratera.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "并行科技-site-beijing",
+      "name": "并行科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区厢黄旗东路1号院清控银杏科技园2号楼4层",
+        "lng": 116.294463,
+        "lat": 40.033431
+      }
+    },
+    {
+      "id": "并行科技-site-shanghai",
+      "name": "并行科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "并行科技-site-guangzhou",
+      "name": "并行科技",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "并行科技-site-shenzhen",
+      "name": "并行科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9da33a4b52a3",
+      "title": "智算中心存储  智算中心网络  智算中心系统工程师 AI解决方案工程师  AI研发工程师 AI云服务工程师 大客户经理 人力资源 AI业务运营助理 AI业务运营",
+      "siteId": "并行科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://paratera.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

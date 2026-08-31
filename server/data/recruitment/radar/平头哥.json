@@ -1,0 +1,75 @@
+{
+  "slug": "平头哥",
+  "source": "xiaozhao-radar",
+  "name": "平头哥",
+  "tier": 6,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RlIPR85%2FMC5Qg8_hT84aeW1h0nrA7fCxSoMSG_1Xxvbe&batchId=100000760001",
+  "sites": [
+    {
+      "id": "平头哥-site-beijing",
+      "name": "平头哥",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "平头哥-site-shanghai",
+      "name": "平头哥",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "平头哥-site-shenzhen",
+      "name": "平头哥",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市福田区华强北街道荔村社区振兴路120号赛格科技工业园4栋9楼D-(A)轴1-3轴9A23",
+        "lng": 114.087631,
+        "lat": 22.547318
+      }
+    },
+    {
+      "id": "平头哥-site-chengdu",
+      "name": "平头哥",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-38fee690d25f",
+      "title": "前端研发、软件研发、平台技术",
+      "siteId": "平头哥-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=fR4QVhNlRKk_t3Tv16P1RlIPR85%2FMC5Qg8_hT84aeW1h0nrA7fCxSoMSG_1Xxvbe&batchId=100000760001",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

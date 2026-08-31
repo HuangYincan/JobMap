@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-新现代教育",
+  "name": "新现代教育",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "小学初高中教师岗位  助教  课程顾问  晚辅老师  学管老师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-新现代教育-site",
+      "name": "新现代教育",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "深圳市宝安区西乡街道永丰社区金海路23号三层",
+        "lng": 113.855658,
+        "lat": 22.574045
+      }
+    }
+  ]
+}

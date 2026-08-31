@@ -1,0 +1,42 @@
+{
+  "slug": "东风奕派汽车科技公司",
+  "source": "xiaozhao-radar",
+  "name": "东风奕派汽车科技公司",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/dfmc/182169?locale=zh-CN#/jobs",
+  "sites": [
+    {
+      "id": "东风奕派汽车科技公司-site-wuhan",
+      "name": "东风奕派汽车科技公司",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "蔡甸区经济技术开发区东风大道1969号",
+        "lng": 114.079941,
+        "lat": 30.449484
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-fd36b49043cb",
+      "title": "研发领域  制造领域  营销-管培生计划 职能管理类",
+      "siteId": "东风奕派汽车科技公司-site-wuhan",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/dfmc/182169?locale=zh-CN#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "36"
+}

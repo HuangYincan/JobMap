@@ -1,0 +1,101 @@
+{
+  "slug": "微步在线",
+  "source": "xiaozhao-radar",
+  "name": "微步在线",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus_apply/threatbook/39679?recommendCode=DS9xNUay#/jobs",
+  "sites": [
+    {
+      "id": "微步在线-site-beijing",
+      "name": "微步在线",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区中关村街道知春路76号2层",
+        "lng": 116.332332,
+        "lat": 39.975996
+      }
+    },
+    {
+      "id": "微步在线-site-shanghai",
+      "name": "微步在线",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "微步在线-site-shenzhen",
+      "name": "微步在线",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "微步在线-site-chengdu",
+      "name": "微步在线",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "微步在线-site-guangzhou",
+      "name": "微步在线",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-3b43963826d3",
+      "title": "研发｜安全｜产品｜设计｜销售管培｜市场运营",
+      "siteId": "微步在线-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/threatbook/39679?recommendCode=DS9xNUay#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-15a6184abd50",
+      "title": "研发类  安全类  产品类  设计类  业务类  市场类",
+      "siteId": "微步在线-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-08-31",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/threatbook/39679?recommendCode=DS9xNUay#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

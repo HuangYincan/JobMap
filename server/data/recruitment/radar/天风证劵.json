@@ -1,0 +1,75 @@
+{
+  "slug": "天风证劵",
+  "source": "xiaozhao-radar",
+  "name": "天风证劵",
+  "tier": 7,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU6114cab40dcad4106ffc953b/pb/interns.html",
+  "sites": [
+    {
+      "id": "天风证劵-site-beijing",
+      "name": "天风证劵",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "天风证劵-site-shanghai",
+      "name": "天风证劵",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "天风证劵-site-guangzhou",
+      "name": "天风证劵",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "天风证劵-site-shenzhen",
+      "name": "天风证劵",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-c3b891460534",
+      "title": "投资银行类 投资研究类  资产管理类  市场销售类 运营管理类",
+      "siteId": "天风证劵-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6114cab40dcad4106ffc953b/pb/interns.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

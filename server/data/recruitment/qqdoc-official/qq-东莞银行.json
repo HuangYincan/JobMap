@@ -1,0 +1,19 @@
+{
+  "slug": "qq-东莞银行",
+  "name": "东莞银行",
+  "official_url": "https://dongguanbank.zhiye.com/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-东莞银行-site-hq",
+      "name": "东莞银行",
+      "city": "东莞市",
+      "province": "",
+      "location": {
+        "address": "东莞市莞城区体育路21号"
+      }
+    }
+  ]
+}

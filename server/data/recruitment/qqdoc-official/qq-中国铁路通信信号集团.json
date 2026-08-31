@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国铁路通信信号集团",
+  "name": "中国铁路通信信号集团",
+  "official_url": "http://www.crsc.cn/1095.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国铁路通信信号集团-site-hq",
+      "name": "中国铁路通信信号集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市丰台区汽车博物馆南路1号院",
+        "lng": 116.306575,
+        "lat": 39.828586
+      }
+    }
+  ],
+  "city_pending": true
+}

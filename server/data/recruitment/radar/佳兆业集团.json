@@ -1,0 +1,75 @@
+{
+  "slug": "佳兆业集团",
+  "source": "xiaozhao-radar",
+  "name": "佳兆业集团",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/kaisa/167955?locale=zh-CN",
+  "sites": [
+    {
+      "id": "佳兆业集团-site-beijing",
+      "name": "佳兆业集团",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "佳兆业集团-site-shanghai",
+      "name": "佳兆业集团",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市普陀区交通路2800号",
+        "lng": 121.419453,
+        "lat": 31.260402
+      }
+    },
+    {
+      "id": "佳兆业集团-site-guangzhou",
+      "name": "佳兆业集团",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省广州市天河区沙太南路20号1栋",
+        "lng": 113.322028,
+        "lat": 23.160864
+      }
+    },
+    {
+      "id": "佳兆业集团-site-shenzhen",
+      "name": "佳兆业集团",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市光明区福前路68号2楼",
+        "lng": 113.874576,
+        "lat": 22.781325
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d7640500e98e",
+      "title": "集团控股（人力岗 财务岗 法务岗 品牌岗 投融岗）；文商旅集团（招商岗 运营岗 市场推广岗  场馆运营岗 市场开发岗 赛事演绎岗 酒店运营岗 新媒体运营岗",
+      "siteId": "佳兆业集团-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/kaisa/167955?locale=zh-CN",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "70"
+}

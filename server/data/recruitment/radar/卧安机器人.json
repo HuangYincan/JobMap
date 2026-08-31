@@ -1,0 +1,42 @@
+{
+  "slug": "卧安机器人",
+  "source": "xiaozhao-radar",
+  "name": "卧安机器人",
+  "tier": 8,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://woanhome.zhiye.com/intern/jobs?memory=%7B%7D&silence=1",
+  "sites": [
+    {
+      "id": "卧安机器人-site-shenzhen",
+      "name": "卧安机器人",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市宝安区海城路5号前城中心16层",
+        "lng": 113.871661,
+        "lat": 22.56936
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-17bcf72072e9",
+      "title": "算法实习生(VLA、VLN、世界模型、数据)规划导航控制算法实习生数据标注实习生 AI产品实习生市场营销实习生(日语/德语)人力资源实习生(招聘方向）",
+      "siteId": "卧安机器人-site-shenzhen",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://woanhome.zhiye.com/intern/jobs?memory=%7B%7D&silence=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

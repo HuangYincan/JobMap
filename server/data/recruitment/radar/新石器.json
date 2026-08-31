@@ -1,0 +1,75 @@
+{
+  "slug": "新石器",
+  "source": "xiaozhao-radar",
+  "name": "新石器",
+  "tier": 8,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://r3c0qt6yjw.jobs.feishu.cn/campus/position/list?keywords=&category=&location=&project=7647438600203880747&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+  "sites": [
+    {
+      "id": "新石器-site-beijing",
+      "name": "新石器",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "桐庐县尹家路66号",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "新石器-site-shanghai",
+      "name": "新石器",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "桐庐县尹家路66号",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "新石器-site-chengdu",
+      "name": "新石器",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "桐庐县尹家路66号",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "新石器-site-hangzhou",
+      "name": "新石器",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "桐庐县尹家路66号",
+        "lng": 119.730184,
+        "lat": 29.795856
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ed0ac472c500",
+      "title": "研发类  产品/策划/项目类  销售类 市场类 运营类",
+      "siteId": "新石器-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://r3c0qt6yjw.jobs.feishu.cn/campus/position/list?keywords=&category=&location=&project=7647438600203880747&type=&job_hot_flag=&current=1&limit=10&functionCategory=&tag=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

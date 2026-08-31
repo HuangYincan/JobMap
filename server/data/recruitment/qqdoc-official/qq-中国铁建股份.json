@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国铁建股份",
+  "name": "中国铁建股份",
+  "official_url": "https://www.crcc.cn/col/col214/index.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国铁建股份-site-hq",
+      "name": "中国铁建股份",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区复兴路40号",
+        "lng": 116.256476,
+        "lat": 39.906058
+      }
+    }
+  ],
+  "city_pending": true
+}

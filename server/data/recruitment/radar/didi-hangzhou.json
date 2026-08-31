@@ -1,0 +1,68 @@
+{
+  "slug": "didi-hangzhou",
+  "source": "xiaozhao-radar",
+  "name": "滴滴",
+  "tier": 5,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus_apply/didiglobal/96064?recommendCode=DS6KUPnd&hash=%23%2Fjobs#/jobs?project%5B0%5D=100107161",
+  "sites": [
+    {
+      "id": "didi-hangzhou-site-beijing",
+      "name": "滴滴",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区西北旺东路10号院东区2号楼二层202",
+        "lng": 116.282666,
+        "lat": 40.049837
+      }
+    },
+    {
+      "id": "didi-hangzhou-site-hangzhou",
+      "name": "滴滴",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "北京/杭州",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e95bf4b7278c",
+      "title": "开发，算法，运营等",
+      "siteId": "didi-hangzhou-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus_apply/didiglobal/96064?recommendCode=DS6KUPnd&hash=%23%2Fjobs#/jobs?project%5B0%5D=100107161",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-171ed8a068c9",
+      "title": "自动驾驶感知和定位技术挑战，自动驾驶中智能体的行为理解 /预测和规划                          自动驾驶地图技术研究  大规模自动驾驶数",
+      "siteId": "didi-hangzhou-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/didiglobal/116021?sessionid=#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "54"
+}

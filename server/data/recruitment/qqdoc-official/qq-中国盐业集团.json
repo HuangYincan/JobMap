@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中国盐业集团",
+  "name": "中国盐业集团",
+  "official_url": "http://www.chinasalt.com.cn/rlzy/rczp/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国盐业集团-site-hq",
+      "name": "中国盐业集团",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市丰台区莲花池中盐大厦",
+        "lng": 116.319849,
+        "lat": 39.889506
+      }
+    }
+  ]
+}

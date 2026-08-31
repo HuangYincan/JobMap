@@ -1,0 +1,8 @@
+# Rules in duplicate exact-UA groups are evaluated together.
+User-agent: DomainMapImporter
+Disallow: /jobs
+Allow: /jobs/public
+
+User-agent: DomainMapImporter
+Disallow: /jobs/public
+Allow: /jobs/public/open

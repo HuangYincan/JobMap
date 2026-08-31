@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国东方电气集团",
+  "name": "中国东方电气集团",
+  "official_url": "https://www.dongfang.com/zxns/gdrc.htm",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国东方电气集团-site-hq",
+      "name": "中国东方电气集团",
+      "city": "成都市",
+      "province": "",
+      "location": {
+        "address": "四川省成都市金牛区蜀汉路333号",
+        "lng": 104.017234,
+        "lat": 30.690726
+      }
+    }
+  ],
+  "city_pending": true
+}

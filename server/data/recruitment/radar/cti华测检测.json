@@ -1,0 +1,75 @@
+{
+  "slug": "cti华测检测",
+  "source": "xiaozhao-radar",
+  "name": "CTI华测检测",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/cti/142093?locale=zh-CN#/",
+  "sites": [
+    {
+      "id": "cti华测检测-site-beijing",
+      "name": "CTI华测检测",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "cti华测检测-site-shanghai",
+      "name": "CTI华测检测",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区祝桥镇大飞机园专业厂房3期",
+        "lng": 121.850599,
+        "lat": 31.07888
+      }
+    },
+    {
+      "id": "cti华测检测-site-guangzhou",
+      "name": "CTI华测检测",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "cti华测检测-site-shenzhen",
+      "name": "CTI华测检测",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e898656df545",
+      "title": "技术类 销售类 技术支持类 客服类 职能类",
+      "siteId": "cti华测检测-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/cti/142093?locale=zh-CN#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "74"
+}

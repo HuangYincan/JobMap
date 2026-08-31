@@ -1,0 +1,53 @@
+{
+  "slug": "哔哩哔哩b-up顶尖技术",
+  "source": "xiaozhao-radar",
+  "name": "哔哩哔哩B-UP顶尖技术",
+  "tier": 6,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jobs.bilibili.com/campus/positions?type=3&channel=bilibiliaccounts",
+  "sites": [
+    {
+      "id": "哔哩哔哩b-up顶尖技术-site-beijing",
+      "name": "哔哩哔哩B-UP顶尖技术人才项目",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "哔哩哔哩b-up顶尖技术-site-shanghai",
+      "name": "哔哩哔哩B-UP顶尖技术人才项目",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9bf91e00f3c3",
+      "title": "研究方向: 视频生成 视频理解语音算法  语言大模型  AI Infra 推荐算法  搜索算法  高性能计算 大数据架构 模型 工程",
+      "siteId": "哔哩哔哩b-up顶尖技术-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.bilibili.com/campus/positions?type=3&channel=bilibiliaccounts",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

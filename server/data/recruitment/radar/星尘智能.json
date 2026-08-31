@@ -1,0 +1,42 @@
+{
+  "slug": "星尘智能",
+  "source": "xiaozhao-radar",
+  "name": "星尘智能",
+  "tier": 9,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/astribot/144862?locale=zh-CN&sessionid=#/jobs",
+  "sites": [
+    {
+      "id": "星尘智能-site-shenzhen",
+      "name": "星尘智能",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市南山区粤海街道高新区社区科苑南路3156号深圳湾创新科技中心2栋A座",
+        "lng": 113.94635,
+        "lat": 22.528736
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-af414ffc54a2",
+      "title": "技术类 产品类  市场类  职能类",
+      "siteId": "星尘智能-site-shenzhen",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/astribot/144862?locale=zh-CN&sessionid=#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

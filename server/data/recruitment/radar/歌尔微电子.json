@@ -1,0 +1,53 @@
+{
+  "slug": "歌尔微电子",
+  "source": "xiaozhao-radar",
+  "name": "歌尔微电子",
+  "tier": 6,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU65fba2e21c240e0a227cf96f/pb/school.html",
+  "sites": [
+    {
+      "id": "歌尔微电子-site-shanghai",
+      "name": "歌尔微电子",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区X630(张东路)",
+        "lng": 121.630975,
+        "lat": 31.209124
+      }
+    },
+    {
+      "id": "歌尔微电子-site-shenzhen",
+      "name": "歌尔微电子",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市南山区粤海街道高新区社区高新南环路43号威新软件科技园8号楼3层301",
+        "lng": 113.949437,
+        "lat": 22.52759
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bb421f94a080",
+      "title": "芯片设计岗 测试开发岗 硬件研发岗 仿真设计岗  NPI 岗  工艺整合岗  产品研发岗 软件研发岗 算法研发岗  器件开发岗  材料开发岗  封装设计岗",
+      "siteId": "歌尔微电子-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU65fba2e21c240e0a227cf96f/pb/school.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

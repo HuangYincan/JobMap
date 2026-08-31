@@ -1,0 +1,53 @@
+{
+  "slug": "维信诺",
+  "source": "xiaozhao-radar",
+  "name": "维信诺",
+  "tier": 8,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus_apply/newvisionox/24735#/jobs?commitment=%E5%85%A8%E8%81%8C&zhineng=&page=1",
+  "sites": [
+    {
+      "id": "维信诺-site-beijing",
+      "name": "维信诺",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/广州/合肥",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "维信诺-site-guangzhou",
+      "name": "维信诺",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/广州/合肥",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4614e541f45c",
+      "title": "产品研发类 技术研发类  数智化（AI）类 工艺技术类  市场营销类  质量管理类 智能制造类 供应链管理类  生产计划类  项目管理类 职能类  厂务环安类",
+      "siteId": "维信诺-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/newvisionox/24735#/jobs?commitment=%E5%85%A8%E8%81%8C&zhineng=&page=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

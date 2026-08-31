@@ -1,0 +1,21 @@
+{
+  "slug": "qq-交通银行",
+  "name": "交通银行",
+  "official_url": "https://job.bankcomm.com/#/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-交通银行-site-hq",
+      "name": "交通银行",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市浦东新区银城中路188号交银金融大厦",
+        "lng": 121.503745,
+        "lat": 31.239244
+      }
+    }
+  ]
+}

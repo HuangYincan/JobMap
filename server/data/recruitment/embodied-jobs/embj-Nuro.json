@@ -1,0 +1,60 @@
+{
+  "slug": "embj-Nuro",
+  "source": "embodied-jobs",
+  "name": "Nuro",
+  "sites": [
+    {
+      "id": "embj-Nuro-site",
+      "name": "Nuro",
+      "city": "Mountain View, CA",
+      "province": "",
+      "location": {
+        "address": "Nuro, 1300, Terra Bella Avenue, 山景城, Santa Clara County, 加利福尼亚州;加利福尼亞州, 94043, 美国;美國",
+        "lng": -122.080831,
+        "lat": 37.410496
+      }
+    }
+  ],
+  "careerUrl": "https://job-boards.greenhouse.io/embed/job_app?for=nuro&t=Blind&token=5416913",
+  "positions": [
+    {
+      "externalId": "embj-Nuro-1",
+      "title": "Machine Learning Research Scientist: Generative Modeling for Planning",
+      "siteId": "embj-Nuro-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/embed/job_app?for=nuro&t=Blind&token=5416913",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Nuro-2",
+      "title": "Machine Learning Research Scientist, Behavior Planning and Prediction",
+      "siteId": "embj-Nuro-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://boards.greenhouse.io/embed/job_app?token=5434059",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Nuro-3",
+      "title": "Senior Software Engineer, Machine Learning, 3D Reconstruction",
+      "siteId": "embj-Nuro-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job-boards.greenhouse.io/embed/job_app?for=nuro&token=6824589%252Fapply",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

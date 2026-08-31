@@ -1,0 +1,1704 @@
+.shell {
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+.skipLink {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 40;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--soft-strong);
+  color: var(--blue-ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+
+.skipLink:focus,
+.skipLink:focus-visible {
+  transform: translateY(0);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mapCanvas {
+  background: var(--map);
+  inset: 0;
+  overflow: hidden;
+  position: absolute;
+  /* 层级隔离(2026-08-21 ws-4):mapCanvas 自身构成独立 stacking context
+     (z-index:0 + isolation:isolate),厂商内部高 z-index 层(TMap 控件/覆盖物
+     面板、BMapGL .BMap_omView z-index 1000 量级)被困在容器内,不再参与
+     shell 全局竞争——sidebar(5)/topTools(5)/mapControls(10)/AgentBall(11)
+     相对关系不变,「原组件点不了」根治 */
+  z-index: 0;
+  isolation: isolate;
+}
+
+/* 加载覆盖层失败态(ws-3,fix/loading-error-ui):引擎挂载失败时替代无反馈永转,
+   提供可操作的重试。加载中/配置缺失文案不归本态(覆盖层容器 inline 样式零改动) */
+.loadFailed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: min(360px, 80vw);
+}
+
+.loadFailedTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.loadFailedRetry {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.loadFailedRetry:hover {
+  background: color-mix(in srgb, var(--blue) 20%, transparent);
+}
+
+.loadFailedRetry:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.loadFailedRetry:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.loadFailedDetail {
+  margin: 0;
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 隐藏高德地图版权信息和 logo，但不影响比例尺 */
+.mapCanvas :global(.amap-copyright) {
+  display: none !important;
+}
+
+.mapCanvas :global(.amap-logo) {
+  display: none !important;
+}
+
+/* 腾讯 TMap 版权/默认控件隐藏(与 .amap-copyright 同款模式;构造 showControl:false
+   后仍可能残留的 DOM 兜底)。只兜 zoom/rotate/copyright——不碰引擎 addControl
+   自建的比例尺(tencent-map-ctrl-scale),防误伤 UI */
+.mapCanvas :global([class*="tencent-map-ctrl-zoom"]),
+.mapCanvas :global([class*="tencent-map-ctrl-rotate"]),
+.mapCanvas :global([class*="tencent-map-ctrl-copyright"]),
+.mapCanvas :global([class*="tencent-map-copyright"]) {
+  display: none !important;
+}
+
+/* 腾讯水印 DOM 隐藏(用户真机 2026-08-22:logo_def.png + ©2026 Tencent 文字;
+   SDK v1.8.0.2 源码核实类名:img[src*="logo_def.png"] + div.logo-text;与
+   .amap-copyright 同款模式,是引擎 hideControlDom 隐藏之外的双保险) */
+.mapCanvas :global(img[src*="logo_def.png"]),
+.mapCanvas :global(.logo-text) {
+  display: none !important;
+}
+
+/* 百度 BMapGL 版权/默认控件隐藏:.BMap_cpyCtrl 版权右下、.BMap_omView 3D 指北针
+   左上(z-index 1000 量级,盖过 app UI 拦截点击)、.BMap_zoomCtrl 默认缩放左上;
+   .BMap_scaleCtrl 为引擎 addControl 自建比例尺,保留 */
+.mapCanvas :global(.BMap_cpyCtrl),
+.mapCanvas :global(.BMap_omView),
+.mapCanvas :global(.BMap_zoomCtrl) {
+  display: none !important;
+}
+
+/* 百度左下角 logo 水印隐藏(anchorBL,SDK 注入,与腾讯 logo_def 同款处理) */
+.mapCanvas :global(img[src*="logo_hd"]) {
+  display: none !important;
+}
+
+/* 确保比例尺文字在所有底图下可见 - 黑色文字带白色描边 */
+.mapCanvas :global(.amap-scale-text) {
+  color: #000 !important;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.8) !important;
+}
+
+.mapTexture {
+  background-image: radial-gradient(rgba(73, 120, 99, 0.12) 1px, transparent 1px),
+    radial-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+  background-position: 0 0, 11px 13px;
+  background-size: 21px 21px;
+  inset: 0;
+  opacity: 0.64;
+  position: absolute;
+}
+
+.mapGlow {
+  background: radial-gradient(ellipse at 72% 34%, rgba(255, 255, 255, 0.84), transparent 33%),
+    radial-gradient(ellipse at 32% 84%, rgba(166, 218, 192, 0.52), transparent 35%);
+  inset: 0;
+  position: absolute;
+}
+
+.water {
+  background: rgba(114, 180, 198, 0.35);
+  clip-path: polygon(0 0, 24% 0, 21% 13%, 29% 28%, 22% 43%, 29% 60%, 20% 74%, 27% 100%, 0 100%);
+  inset: 0;
+  position: absolute;
+}
+
+.road {
+  background: rgba(255, 250, 226, 0.72);
+  box-shadow: 0 0 0 2px rgba(201, 186, 145, 0.18);
+  height: 26px;
+  position: absolute;
+  transform-origin: center;
+}
+
+.roadOne {
+  left: -8%;
+  top: 47%;
+  transform: rotate(-29deg);
+  width: 125%;
+}
+
+.roadTwo {
+  left: 26%;
+  top: -10%;
+  transform: rotate(61deg);
+  width: 115%;
+}
+
+.roadThree {
+  height: 18px;
+  left: 22%;
+  top: 76%;
+  transform: rotate(8deg);
+  width: 100%;
+}
+
+.mapLabel {
+  color: rgba(60, 93, 85, 0.58);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  position: absolute;
+}
+
+.labelNorth {
+  left: 60%;
+  top: 20%;
+  transform: rotate(-20deg);
+}
+
+.labelSouth {
+  left: 58%;
+  top: 78%;
+}
+
+.labelWest {
+  left: 8%;
+  top: 28%;
+  transform: rotate(-28deg);
+}
+
+.mapAttribution {
+  bottom: 13px;
+  color: rgba(31, 70, 63, 0.54);
+  font-size: 10px;
+  left: 50%;
+  letter-spacing: 0.04em;
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.topTools,
+.mapControls,
+.mobileDrawer {
+  z-index: 3;
+}
+
+/* 主栏高于次级侧栏（z-index: 4），折叠态 tooltip 才能盖在筛选面板上 */
+.sidebar {
+  background: var(--soft);
+  backdrop-filter: blur(24px) saturate(165%);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 18px;
+  bottom: 12px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  left: 12px;
+  padding: 12px;
+  position: absolute;
+  top: 12px;
+  transition: width 0.35s cubic-bezier(0.32, 0.72, 0, 1), background 0.2s;
+  width: 58px;
+  overflow: visible;
+  z-index: 5;
+}
+
+.sidebarOpen {
+  width: 215px;
+}
+
+.toolButton,
+.locateButton {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--line);
+  display: inline-flex;
+  justify-content: center;
+}
+
+.menuWrap {
+  position: relative;
+  align-items: center;
+  display: flex;
+  flex: 0 0 42px;
+  height: 42px;
+  width: 100%;
+}
+
+.menuButton {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: inherit;
+  display: inline-flex;
+  height: 42px;
+  justify-content: center;
+  left: 50%;
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  width: 42px;
+  transition:
+    left 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    color 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sidebarOpen .menuButton {
+  left: 100%;
+  transform: translateX(-100%);
+}
+
+.menuButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.menuGlyph {
+  display: grid;
+  height: 18px;
+  place-items: center;
+  width: 18px;
+}
+
+.menuIconExpand,
+.menuIconCollapse {
+  display: grid;
+  grid-area: 1 / 1;
+  place-items: center;
+  transition:
+    opacity 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.menuIconExpand,
+.menuIconCollapse {
+  height: 18px;
+  width: 18px;
+}
+
+.menuIconExpand svg,
+.menuIconCollapse svg,
+.menuButton svg {
+  display: block;
+  height: 18px;
+  width: 18px;
+}
+
+.menuIconCollapse {
+  opacity: 0;
+  transform: translateX(5px);
+}
+
+.sidebarOpen .menuIconExpand {
+  opacity: 0;
+  transform: translateX(-5px);
+}
+
+.sidebarOpen .menuIconCollapse {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* 品牌行：Logo + 「地图」+ BETA pill，折叠按钮右侧；折叠态整行隐藏 */
+.brandRow {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  padding-left: 10px;
+}
+
+.sidebar:not(.sidebarOpen) .brandRow {
+  display: none;
+}
+
+.brandLogo {
+  align-items: center;
+  background: var(--blue, #007aff);
+  border-radius: 6px;
+  color: #fff;
+  display: inline-flex;
+  flex: 0 0 24px;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.brandLogo svg {
+  display: block;
+  height: 14px;
+  width: 14px;
+}
+
+.brandName {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.betaPill {
+  flex: 0 0 42px;
+  height: 19px;
+  width: 42px;
+}
+
+.betaPill rect {
+  fill: color-mix(in srgb, var(--blue, #007aff) 14%, transparent);
+}
+
+.betaPill text {
+  fill: var(--blue, #007aff);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Noto Sans SC", sans-serif;
+}
+
+.mobileSearch input::placeholder {
+  color: var(--muted);
+}
+
+.navItem span,
+.profileCopy {
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.32, 0.72, 0, 1) 0s;
+  pointer-events: none;
+  position: absolute;
+  visibility: hidden;
+}
+
+.sidebarOpen .navItem span,
+.sidebarOpen .profileCopy {
+  opacity: 1;
+  transition: opacity 0.25s cubic-bezier(0.32, 0.72, 0, 1) 0.1s;
+  pointer-events: auto;
+  position: static;
+  visibility: visible;
+}
+
+.railDivider {
+  display: none;
+}
+
+.sidebar:not(.sidebarOpen) .railDivider {
+  display: block;
+  height: 1px;
+  margin: 8px 0 4px;
+  background: var(--line);
+  border: 0;
+  opacity: 0.9;
+}
+
+/* 侧边栏折叠状态下的 tooltip */
+.sidebar:not(.sidebarOpen) .navItem[data-tooltip]:hover::after,
+.sidebar:not(.sidebarOpen) .profile[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 12px;
+  padding: 6px 12px;
+  background: rgba(60, 60, 67, 0.92);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.modeSwitcherWrapper {
+  padding: 0 12px;
+  margin-bottom: 12px;
+}
+
+.sidebar:not(.sidebarOpen) .modeSwitcherWrapper {
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: visible;
+}
+
+.sidebarOpen .navList {
+  margin-top: 8px;
+  overflow: auto;
+}
+
+.navItem {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: inherit;
+  display: flex;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 10px;
+  text-align: left;
+  white-space: nowrap;
+  transition:
+    padding 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sidebar:not(.sidebarOpen) .navItem {
+  justify-content: center;
+  padding: 0;
+  position: relative;
+}
+
+.sidebar:not(.sidebarOpen) .profile {
+  position: relative;
+}
+
+.navItem:hover,
+.navItemActive {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.navItem svg {
+  flex: 0 0 auto;
+  width: 18px;
+  color: inherit;
+  transition: color 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.navItemActive svg {
+  color: var(--blue);
+}
+
+.navItem span {
+  font-size: 13px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.profileRow {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 4px;
+  margin-top: auto;
+  min-height: 52px;
+  padding: 11px 0 0;
+}
+
+.profile {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  display: flex;
+  flex: 1;
+  gap: 9px;
+  min-height: 40px;
+  min-width: 0;
+  padding: 0 4px;
+  text-align: left;
+  transition: justify-content 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.profile:hover {
+  background: transparent;
+}
+
+.sidebar:not(.sidebarOpen) .profileRow {
+  justify-content: center;
+}
+
+.sidebar:not(.sidebarOpen) .profile {
+  justify-content: center;
+}
+
+.authGlyph {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: var(--ink);
+  display: inline-flex;
+  flex: 0 0 36px;
+  height: 36px;
+  justify-content: center;
+}
+
+.authGlyph:hover {
+  background: rgba(120, 134, 145, 0.12);
+  color: var(--ink);
+}
+
+.authGlyph svg {
+  width: 18px;
+  height: 18px;
+}
+
+.avatar {
+  align-items: center;
+  background: linear-gradient(135deg, #5ac8fa, #007aff);
+  border: 0.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  color: white;
+  display: inline-flex;
+  flex: 0 0 32px;
+  font-size: 10px;
+  font-weight: 800;
+  height: 32px;
+  justify-content: center;
+  object-fit: cover;
+  width: 32px;
+}
+
+.avatarGuest {
+  background: rgba(120, 134, 145, 0.28);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--muted);
+}
+
+.avatarGuest svg {
+  width: 16px;
+  height: 16px;
+}
+
+.profileCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileCopy strong {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profileCopy small {
+  color: var(--muted);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topTools {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 5;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* 抽屉全开/详情打开时隐藏整组(指南针+定位);过渡 ~200ms。仅移动端:桌面端抽屉不可见,
+   detailPoi 在左侧栏打开,不能隐藏 top-right compass / locate */
+@media (max-width: 767px) {
+  .topToolsHidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+.toolButton {
+  border-radius: 50%;
+  height: 44px;
+  width: 44px;
+}
+
+/* 深色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .toolButton {
+    background: rgba(28, 28, 30, 0.72);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .sidebar:not(.sidebarOpen) .railDivider {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.toolButton svg {
+  width: 19px;
+}
+
+/* 指北针按钮 */
+.compassButton {
+  position: relative;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+}
+
+.compassNeedle {
+  width: 26px !important;
+  height: 26px !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.compassHeading {
+  font-size: 10px;
+  font-weight: 600;
+  color: #000;
+  line-height: 1;
+  margin-top: -2px;
+}
+
+/* 深色模式下指北针文字颜色 */
+@media (prefers-color-scheme: dark) {
+  .compassHeading {
+    color: #fff;
+  }
+}
+
+.basemapLogo {
+  align-items: center;
+  background: conic-gradient(from 10deg, #65b4d5, #f4c76a, #88c58b, #65b4d5);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  color: rgba(30, 80, 90, 0.7);
+  display: flex;
+  font-size: 25px;
+  height: 23px;
+  justify-content: center;
+  width: 23px;
+}
+
+.basemapCluster {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.basemapRow {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8px;
+  padding: 6px;
+  background: var(--soft-strong, rgba(255, 255, 255, 0.9));
+  backdrop-filter: blur(24px) saturate(165%);
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.72));
+  border-radius: 16px;
+  box-shadow: var(--shadow, 0 18px 50px rgba(24, 45, 57, 0.15));
+  animation: basemap-in 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes basemap-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.basemapOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 72px;
+  padding: 6px 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink, #18212c);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.basemapOption:hover {
+  background: rgba(35, 119, 243, 0.08);
+}
+
+.basemapOptionActive {
+  background: rgba(35, 119, 243, 0.1);
+  border-color: color-mix(in srgb, var(--blue, #2377f3) 42%, transparent);
+}
+
+.toolButtonActive {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--blue, #2377f3) 28%, transparent);
+}
+
+.mapThumb {
+  background: #cddfc5;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  height: 44px;
+  width: 60px;
+}
+
+.thumb1 {
+  background: linear-gradient(135deg, #345d58, #6d8b74 45%, #b2b173);
+}
+
+.thumb2 {
+  background: linear-gradient(90deg, #dcebd8 40%, #e4bb9a 41% 50%, #dcebd8 51%);
+}
+
+.thumb3 {
+  background: linear-gradient(135deg, #2a2a2a, #4a4a4a 45%, #6a6a6a);
+}
+
+.mapControls {
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: absolute;
+  right: 12px;
+  z-index: 10;
+}
+
+.zoomControls {
+  background: var(--soft);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 15px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.zoomControls button,
+.zoomControls span {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  display: flex;
+  height: 31px;
+  justify-content: center;
+  width: 44px;
+}
+
+.zoomControls button {
+  font-size: 20px;
+}
+
+.zoomControls span {
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+}
+
+.locateButton {
+  border-radius: 50%;
+  box-shadow: var(--shadow);
+  height: 44px;
+  width: 44px;
+}
+
+.locateButton svg {
+  width: 18px;
+}
+
+/* 桌面端已有 .mapControls 的定位按钮,topTools 内定位按钮仅在移动端展示 */
+@media (min-width: 768px) {
+  .topTools .locateButton {
+    display: none;
+  }
+}
+
+.scale {
+  align-items: center;
+  color: rgba(31, 70, 63, 0.68);
+  display: flex;
+  font-size: 10px;
+  gap: 6px;
+  justify-content: flex-end;
+  width: fit-content;
+}
+
+.scale i {
+  border-bottom: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  height: 5px;
+  width: 46px;
+}
+
+.poi {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  display: flex;
+  gap: 7px;
+  padding: 0;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.poiDot {
+  background: var(--blue);
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  box-shadow: 0 3px 10px rgba(25, 76, 118, 0.3);
+  height: 17px;
+  width: 17px;
+}
+
+.poiCard {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(30, 70, 80, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0;
+  padding: 7px 9px;
+  text-align: left;
+  transform: translateX(-4px);
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+}
+
+.poi:hover .poiCard,
+.poi:focus-visible .poiCard {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.poiCard strong {
+  font-size: 11px;
+}
+
+.poiCard small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.orange .poiDot {
+  background: #e88b42;
+}
+
+.purple .poiDot {
+  background: #8a6bc7;
+}
+
+.mobileDrawer {
+  display: none;
+}
+
+.offlineBanner {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  padding: 8px 14px;
+  border-radius: 99px;
+  background: var(--soft-strong, rgba(255, 255, 255, 0.9));
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 650;
+  pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mapTexture {
+    opacity: 0.38;
+  }
+
+  .mapGlow {
+    background: radial-gradient(ellipse at 72% 34%, rgba(128, 183, 163, 0.2), transparent 33%),
+      radial-gradient(ellipse at 32% 84%, rgba(36, 92, 84, 0.5), transparent 35%);
+  }
+
+  .water {
+    background: rgba(52, 116, 132, 0.38);
+  }
+
+  .road {
+    background: rgba(206, 196, 156, 0.22);
+  }
+
+  .mapLabel,
+  .mapAttribution,
+  .scale {
+    color: rgba(221, 240, 230, 0.55);
+  }
+
+  .poiCard {
+    background: rgba(29, 43, 43, 0.86);
+  }
+
+  .basemapCard {
+    background: rgba(29, 43, 43, 0.92);
+    backdrop-filter: blur(24px) saturate(165%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .basemapCard .eyebrow {
+    color: rgba(221, 240, 230, 0.6);
+  }
+
+  .basemapCard > strong {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .basemapCard button {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .basemapCard button:hover,
+  .basemapCard .activeMap {
+    background: rgba(100, 150, 200, 0.15);
+  }
+
+  .mapThumb {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar,
+  .mapControls {
+    display: none;
+  }
+
+  .topTools {
+    right: 12px;
+    top: max(12px, env(safe-area-inset-top));
+  }
+
+  .topTools > .toolButton {
+    height: 40px;
+    width: 40px;
+  }
+
+  .mapAttribution {
+    bottom: auto;
+    left: 16px;
+    top: 14px;
+    transform: none;
+  }
+
+  .mobileDrawer {
+    --drawer-handle-gap: 8px;
+    background: var(--soft-strong);
+    backdrop-filter: blur(28px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
+    bottom: 0;
+    box-shadow: 0 -10px 40px rgba(26, 60, 67, 0.16);
+    display: flex;
+    flex-direction: column;
+    left: 0;
+    z-index: 5;
+    max-height: calc(100svh - max(12px, env(safe-area-inset-top)) - 20px); /* 顶边=指南针中心 */
+    min-height: 90px;
+    padding: 0 16px max(12px, env(safe-area-inset-bottom));
+    position: absolute;
+    right: 0;
+    overflow: visible;
+    transition: height 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .drawerMini {
+    height: 96px;
+  }
+
+  .drawerHalf {
+    height: 42svh;
+  }
+
+  .drawerFull {
+    height: calc(100svh - max(12px, env(safe-area-inset-top)) - 20px); /* 顶边=指南针中心 */
+  }
+
+  /* 拖拽态:跟手期间禁用缓动,避免手指延迟;结束后移除 */
+  .drawerDragging {
+    transition: none !important;
+    will-change: height;
+  }
+
+  .drawerHandle {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    display: flex;
+    height: 30px;
+    justify-content: center;
+    margin: 0 auto;
+    padding-bottom: var(--drawer-handle-gap);
+    touch-action: none;
+    width: 100%;
+  }
+
+  .drawerHalf .drawerHandle,
+  .drawerFull .drawerHandle {
+    height: 44px;
+  }
+
+  .drawerHandle span {
+    background: rgba(115, 130, 133, 0.42);
+    border-radius: 99px;
+    height: 4px;
+    width: 42px;
+  }
+
+  .drawerHalf .drawerHandle span,
+  .drawerFull .drawerHandle span {
+    height: 6px;
+    width: 64px;
+  }
+
+  .mobileSearch {
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+    background: rgba(126, 150, 149, 0.13);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: flex;
+    gap: 9px;
+    height: 43px;
+    padding: 0 12px;
+    position: relative;
+  }
+
+  .mobileSearchStack {
+    position: relative;
+    z-index: 8;
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .mobileSearchRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .mobileAvatarBtn {
+    flex: 0 0 auto;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 50%;
+    line-height: 0;
+  }
+
+  .mobileToolbar .mobileAvatarBtn {
+    margin-left: auto;
+  }
+
+  .drawerMini .mobileToolbar {
+    display: none;
+  }
+
+  .drawerMini .mobileSearchAvatar {
+    display: inline-flex;
+  }
+
+  .mobileSearchAvatar {
+    display: none;
+  }
+
+  .drawerContent {
+    flex: 1 1 auto;
+    min-height: 0;
+    opacity: 1;
+    overflow: auto;
+    overflow-x: hidden;
+    padding: 10px 1px 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .mobileAccount,
+  .mobileLayers,
+  .mobileAgent {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* ws-ae:AI 内嵌 sheet body — flex column 撑满 drawerContent(height: 100%;
+     min-height: 0),内嵌 AgentPanel flex: 1 接管高度:消息列表内部滚动、输入贴底 */
+  .mobileAgent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .mobileSheetBar {
+    display: flex;
+    align-items: center;
+    margin: 0 0 10px;
+  }
+
+  .mobileBackBtn {
+    border: 0;
+    background: transparent;
+    color: var(--blue-ink, #0062cc);
+    font-size: 13px;
+    font-weight: 650;
+    padding: 4px 0;
+  }
+
+  .drawerMini .drawerContent,
+  .drawerMini .mobileActions,
+  .drawerMini .mobileFilters {
+    display: none;
+  }
+
+  .mobileToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 0 8px;
+  }
+
+  /* ws-mt 移动工具栏左簇:ModeSwitcher + 图层/已保存/探索/最近/AI 图标钮
+     (与 ModeSwitcher / 桌面折叠 rail 同构;头像仍 margin-left:auto 右置) */
+  .mobileToolbarItems {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .mobileToolbarItem {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: var(--ink);
+    cursor: pointer;
+    display: inline-flex;
+    height: 40px;
+    justify-content: center;
+    min-height: 40px; /* 40px 触控目标 */
+    min-width: 40px;
+    padding: 0;
+    transition:
+      background 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+      color 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+    -webkit-tap-highlight-color: transparent;
+    width: 40px;
+  }
+
+  .mobileToolbarItem:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .mobileToolbarItem:active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .mobileToolbarItem svg {
+    height: 20px;
+    width: 20px;
+  }
+
+  .mobileToolbarItemActive,
+  .mobileToolbarItemActive:hover {
+    color: var(--blue); /* 激活蓝 #007AFF(参照 .navItemActive) */
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .drawerMini .mobileSearchStack {
+    margin-top: 0;
+  }
+
+  .mobileStyleRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .mobileLayers {
+    padding: 4px 2px 12px;
+  }
+
+  .mobileLayers > .mobileFilterBtn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .mobileSavedL3 {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0 0 12px;
+    max-height: min(52vh, 420px);
+    overflow: auto;
+  }
+
+  .mobileFilterBtn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    background: rgba(126, 150, 149, 0.1);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .mobileFilterBtnActive {
+    background: color-mix(in srgb, var(--blue, #007aff) 12%, transparent);
+    border-color: color-mix(in srgb, var(--blue, #007aff) 28%, var(--line));
+    color: var(--blue, #007aff);
+  }
+
+  .mobileFilterDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--blue, #007aff);
+  }
+
+  .mobileFilters {
+    margin-bottom: 10px;
+    max-height: 36svh;
+    overflow: auto;
+  }
+
+  .mobileMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .mobileMetaActions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .mobileIconBtn {
+    border: 0;
+    background: transparent;
+    color: var(--blue, #007aff);
+    font-size: 12px;
+    font-weight: 650;
+    padding: 4px 2px;
+  }
+
+  .mobileIconBtn:disabled {
+    opacity: 0.45;
+  }
+
+  .mobileSuggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 12;
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: min(42svh, 280px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(22px) saturate(170%);
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    box-shadow:
+      0 0 0 0.5px rgba(255, 255, 255, 0.38) inset,
+      0 12px 32px rgba(0, 0, 0, 0.14);
+  }
+
+  .drawerHalf .mobileSuggestions {
+    max-height: min(18svh, 160px);
+  }
+
+  .drawerHalf .mobileSuggestions li {
+    display: none;
+  }
+
+  .drawerHalf .mobileSuggestions li:nth-child(-n+3) {
+    display: block;
+  }
+
+  .drawerMini .mobileSuggestions {
+    display: none;
+  }
+
+  .mobileSuggestions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobileSuggestions button {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+  }
+
+  .mobileSuggestions button:hover,
+  .mobileSuggestActive {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.28) inset;
+  }
+
+  .mobileSuggestions strong {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .mobileSuggestRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .mobileSuggestIcon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .mobileSuggestDist {
+    flex-shrink: 0;
+    margin-left: auto;
+    padding-left: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mobileSuggestions small {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .mobileActions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 10px;
+  }
+
+  .mobileAccountNav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 14px;
+  }
+
+  .mobileAccountHint {
+    margin: 8px 2px 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .mobileDetail {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: auto;
+    padding-bottom: 8px;
+  }
+
+  .mobileSearch input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    outline: none;
+  }
+
+  .mobileSearch svg {
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    flex: 0 0 auto;
+  }
+
+  .drawerContent h1 {
+    font-size: 25px;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+    margin: 7px 0 7px;
+  }
+
+  .drawerContent p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .quickGrid {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 22px;
+  }
+
+  .quickGrid button {
+    align-items: center;
+    background: rgba(126, 150, 149, 0.1);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    display: flex;
+    font-size: 12px;
+    justify-content: space-between;
+    padding: 13px 12px;
+    text-align: left;
+  }
+
+  .quickGrid span {
+    color: var(--muted);
+  }
+
+  .selectedPlace {
+    align-items: center;
+    background: rgba(35, 119, 243, 0.08);
+    border: 1px solid rgba(35, 119, 243, 0.16);
+    border-radius: 13px;
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 12px;
+  }
+
+  .selectedIcon {
+    align-items: center;
+    background: var(--blue);
+    border-radius: 9px;
+    color: white;
+    display: flex;
+    height: 29px;
+    justify-content: center;
+    width: 29px;
+  }
+
+  .selectedPlace div {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .selectedPlace small {
+    color: var(--muted);
+    font-size: 10px;
+  }
+
+  .selectedPlace strong {
+    font-size: 12px;
+  }
+
+  .selectedPlace button {
+    background: transparent;
+    border: 0;
+    font-size: 17px;
+  }
+
+  .snapControls {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    margin-top: auto;
+    padding-top: 4px;
+  }
+
+  .snapControls button {
+    background: transparent;
+    border: 0;
+    border-radius: 99px;
+    color: var(--muted);
+    font-size: 10px;
+    padding: 4px 9px;
+    text-transform: capitalize;
+  }
+
+  .snapControls .snapActive {
+    background: rgba(35, 119, 243, 0.12);
+    color: var(--blue);
+    font-weight: 700;
+  }
+
+  .basemapCard {
+    right: 46px;
+    top: 0;
+  }
+
+  .poiCard {
+    display: none;
+  }
+
+  .poiDot {
+    height: 14px;
+    width: 14px;
+  }
+}
+
+@media (max-width: 767px) and (prefers-color-scheme: dark) {
+  .mobileSuggestions {
+    background: rgba(28, 28, 30, 0.42);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 0 0 0.5px rgba(255, 255, 255, 0.06) inset,
+      0 16px 36px rgba(0, 0, 0, 0.36);
+  }
+
+  .mobileSuggestions button:hover,
+  .mobileSuggestActive {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+  }
+}
+
+/* 无障碍:减少动态效果时抽屉吸附瞬时完成,不做过渡动画 */
+@media (prefers-reduced-motion: reduce) {
+  .mobileDrawer {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "slug": "bytedance-hangzhou",
+  "source": "official-career",
+  "name": "字节跳动",
+  "industries": [
+    "internet",
+    "ai",
+    "ecommerce"
+  ],
+  "scale": "bigtech",
+  "careerUrl": "https://jobs.bytedance.com/",
+  "sites": [
+    {
+      "id": "bytedance-hangzhou-site",
+      "name": "字节跳动",
+      "location": {
+        "lng": 120.003,
+        "lat": 30.281,
+        "address": "余杭区向往街1118号"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "bytedance-campus-frontend-2026",
+      "title": "前端开发工程师（2026 秋招）",
+      "siteId": "bytedance-hangzhou-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus",
+        "campusSeason": "autumn"
+      },
+      "department": "抖音",
+      "salary": {
+        "min": 18,
+        "max": 30
+      },
+      "education": "本科",
+      "skills": [
+        "React",
+        "TypeScript"
+      ],
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jobs.bytedance.com/"
+    },
+    {
+      "externalId": "embj-字节跳动-1",
+      "title": "具身智能算法研究员-Seed",
+      "siteId": "bytedance-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.toutiao.com/s/7ETv1459N6U",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-字节跳动-2",
+      "title": "具身智能3D仿真专家-Seed",
+      "siteId": "bytedance-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.toutiao.com/s/_mW2UTYD9kA",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-字节跳动-3",
+      "title": "多模态世界模型算法工程师/专家-豆包大模型",
+      "siteId": "bytedance-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.toutiao.com/s/NaeT0DuPwNE",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-字节跳动-4",
+      "title": "大语言模型可解释性研究员-Seed",
+      "siteId": "bytedance-hangzhou-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.toutiao.com/s/OZqN_gW0dqM",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-字节跳动-5",
+      "title": "具身智能算法实习生-Seed大模型人才实习",
+      "siteId": "bytedance-hangzhou-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.toutiao.com/s/edLWnrv69uY",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "tier": 0,
+  "category": "64"
+}

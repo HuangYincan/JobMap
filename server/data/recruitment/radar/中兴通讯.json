@@ -1,0 +1,101 @@
+{
+  "slug": "中兴通讯",
+  "source": "xiaozhao-radar",
+  "name": "中兴通讯",
+  "tier": 5,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://job.zte.com.cn/cn/campus-recruitment/Recruitment_positions/future.html",
+  "sites": [
+    {
+      "id": "中兴通讯-site-beijing",
+      "name": "中兴通讯——未来领军人才招聘",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "通州区北京市经济技术开发区经惠东路15号院1号楼",
+        "lng": 116.58533,
+        "lat": 39.781232
+      }
+    },
+    {
+      "id": "中兴通讯-site-shanghai",
+      "name": "中兴通讯——未来领军人才招聘",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "浦东新区张江高科技园区碧波路889号",
+        "lng": 121.588071,
+        "lat": 31.197738
+      }
+    },
+    {
+      "id": "中兴通讯-site-guangzhou",
+      "name": "中兴通讯——未来领军人才招聘",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "中兴通讯-site-shenzhen",
+      "name": "中兴通讯——未来领军人才招聘",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市南山区科技南路55号",
+        "lng": 113.947931,
+        "lat": 22.53746
+      }
+    },
+    {
+      "id": "中兴通讯-site-chengdu",
+      "name": "中兴通讯",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都市武侯区天府大道中段800号",
+        "lng": 104.067852,
+        "lat": 30.543208
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-cd630eda6697",
+      "title": "研发类  营销类  供应链类",
+      "siteId": "中兴通讯-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.zte.com.cn/cn/campus-recruitment/Recruitment_positions/future.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-5b4d6d92efaf",
+      "title": "研发类 营销类 供应链类 运营支持类",
+      "siteId": "中兴通讯-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://job.zte.com.cn/cn/campus-recruitment/Recruitment_positions/intern.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

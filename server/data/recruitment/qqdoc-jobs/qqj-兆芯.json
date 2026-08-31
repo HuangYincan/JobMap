@@ -1,0 +1,84 @@
+{
+  "slug": "qqj-兆芯",
+  "name": "兆芯",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://campus.51job.com/zhaoxin2027/job.html",
+  "direction": "架构工程师 架构工程师编译器方向ASIC设计工程师 ASIC验证工程师 物理设计工程师 可测性设计工程师可测性设计工程师实验室方向 系统建模与性能分析工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-兆芯-site",
+      "name": "兆芯",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市浦东新区金科路2860号",
+        "lng": 121.599351,
+        "lat": 31.206791
+      }
+    },
+    {
+      "id": "qqj-兆芯-site-北京",
+      "name": "兆芯",
+      "city": "北京市",
+      "location": {
+        "address": "北京市海淀区丰豪东路IC PARK园区9号院2号楼F座",
+        "lng": 116.304367,
+        "lat": 39.939475
+      }
+    },
+    {
+      "id": "qqj-兆芯-site-西安",
+      "name": "兆芯",
+      "city": "西安市",
+      "location": {
+        "address": "雁塔区西安市高新区高新六路38号西安腾飞创新中心B座3层305",
+        "lng": 108.876943,
+        "lat": 34.225899
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-01cyw50a",
+      "title": "招聘职位",
+      "siteId": "qqj-兆芯-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/zhaoxin2027/job.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01ijr4xj",
+      "title": "校招Q&A",
+      "siteId": "qqj-兆芯-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/zhaoxin2027/job.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00ndm47l",
+      "title": "招聘流程",
+      "siteId": "qqj-兆芯-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.51job.com/zhaoxin2027/job.html",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

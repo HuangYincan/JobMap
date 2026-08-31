@@ -1,0 +1,198 @@
+{
+  "slug": "润石科技",
+  "source": "xiaozhao-radar",
+  "name": "润石科技",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.run-ic.com/list/68.html",
+  "sites": [
+    {
+      "id": "润石科技-site-beijing",
+      "name": "润石科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/南京/无锡",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "润石科技-site-nanjing",
+      "name": "润石科技",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/南京/无锡",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-06745e29652a",
+      "title": "模拟设计工程师 （信号链方向） 模拟设计工程师（电源方向） 数字设计工程师  AE工程师",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-06745e29652a-nanjing",
+      "title": "模拟设计工程师 （信号链方向） 模拟设计工程师（电源方向） 数字设计工程师  AE工程师",
+      "siteId": "润石科技-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-00l9rrgf",
+      "title": "产品中心",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00ppa7go",
+      "title": "电源类产品",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-009sgrxe",
+      "title": "数据转换",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01kukv3f",
+      "title": "技术与支持",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01d5amd4",
+      "title": "技术资料",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01635wrv",
+      "title": "润石招聘",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-010vir6u",
+      "title": "技术知识",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.run-ic.com/list/68.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00fnhefe",
+      "title": "电子技术设计网",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.ednchina.com/",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-016bfr3i",
+      "title": "电子产品世界",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://www.eepw.com.cn/",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00ua16b9",
+      "title": "21ic电子技术论坛",
+      "siteId": "润石科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bbs.21ic.com/",
+      "retrievedAt": "2026-08-20"
+    }
+  ],
+  "category": "other"
+}

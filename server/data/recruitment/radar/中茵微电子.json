@@ -1,0 +1,90 @@
+{
+  "slug": "中茵微电子",
+  "source": "xiaozhao-radar",
+  "name": "中茵微电子",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://joinsilicon.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "中茵微电子-site-beijing",
+      "name": "中茵微电子",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京大兴区北京亦庄荣科中路1号楼",
+        "lng": 116.291637,
+        "lat": 39.653088
+      }
+    },
+    {
+      "id": "中茵微电子-site-shanghai",
+      "name": "中茵微电子",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/成都/南京",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "中茵微电子-site-chengdu",
+      "name": "中茵微电子",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "武侯区成都市高新区益州大道北段777号中航国际交流中心B栋-1602",
+        "lng": 104.060689,
+        "lat": 30.578307
+      }
+    },
+    {
+      "id": "中茵微电子-site-nanjing",
+      "name": "中茵微电子",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/上海/成都/南京",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-215b7913d37d",
+      "title": "Serdes模拟设计工程师  Serdes数字设计工程师  DDR模拟设计工程师  DDR数字设计工程师SoC设计工程师 SoC验证工程师  原型验证工程师",
+      "siteId": "中茵微电子-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-09-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://joinsilicon.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-215b7913d37d-nanjing",
+      "title": "Serdes模拟设计工程师  Serdes数字设计工程师  DDR模拟设计工程师  DDR数字设计工程师SoC设计工程师 SoC验证工程师  原型验证工程师",
+      "siteId": "中茵微电子-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-09-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://joinsilicon.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

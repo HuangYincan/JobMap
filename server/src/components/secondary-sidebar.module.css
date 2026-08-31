@@ -1,0 +1,557 @@
+/* ============================================================
+   SecondarySidebar — Apple Maps 风格二级侧控栏
+   从左侧主导航栏展开（非右侧独立面板），380px 液态玻璃面板
+   ============================================================ */
+
+/* 二级 + 三级 JD 成组停靠：随主栏展开一起右移，JD 永远贴在公司详情右侧 */
+.cluster {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 76px;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  z-index: 4;
+  pointer-events: none;
+  transition: left 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.cluster.shifted {
+  left: 233px; /* 215 + 12 + 6 */
+}
+
+@media (max-width: 767px) {
+  .cluster {
+    display: none;
+  }
+}
+
+.sidebar {
+  position: relative;
+  width: 380px;
+  height: 100%;
+  pointer-events: auto;
+
+  /* 液态玻璃 */
+  background: var(--soft-strong, rgba(255, 255, 255, 0.84));
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.72));
+  border-radius: 20px;
+  box-shadow: var(--shadow, 0 18px 50px rgba(24, 45, 57, 0.15));
+
+  /* 布局 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  animation: slide-in 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  transition: width 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  transform-origin: left center;
+}
+
+/* 详情与列表同宽 380px：detailMode 类在 TSX 中保留，不再扩展宽度 */
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 顶部标题栏：模式切换 + 关闭按钮 */
+.headerBar {
+  display: flex;
+  align-items: center;
+  padding: 12px 10px 8px 14px;
+  flex-shrink: 0;
+}
+
+.modeBar {
+  flex: 1;
+  min-width: 0;
+}
+
+.closeButton {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.72));
+  background: var(--soft, rgba(255, 255, 255, 0.68));
+  color: var(--muted, #6c7882);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.closeButton:hover {
+  background: var(--soft-strong, rgba(255, 255, 255, 0.9));
+  color: var(--ink, #18212c);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--blue, #007aff);
+  outline-offset: 2px;
+}
+
+/* 搜索行 */
+.searchRow {
+  padding: 0 14px 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* 搜索框 + 建议下拉的定位容器 */
+.searchWrap {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.38) inset,
+    0 1px 2px rgba(255, 255, 255, 0.16) inset;
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  transition:
+    border-color 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    background 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.22s cubic-bezier(0.32, 0.72, 0, 1),
+    backdrop-filter 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.searchBox:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.36);
+  backdrop-filter: blur(18px) saturate(170%);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+}
+
+/* 建议下拉 */
+.suggestionList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.38) inset,
+    0 12px 32px rgba(0, 0, 0, 0.14);
+  z-index: 20;
+  animation: panel-in 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.suggestionList::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.suggestionItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 8px;
+  color: var(--ink, #18212c);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.suggestionItem:hover,
+.suggestionActive {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.28) inset;
+}
+
+.suggestionIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.suggestionText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestionDistance {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 10px;
+  font-size: 12px;
+  color: var(--muted, #6c7882);
+  font-variant-numeric: tabular-nums;
+}
+
+.suggestionName {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggestionSub {
+  font-size: 11px;
+  color: var(--muted, #6c7882);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchBox:focus-within {
+  border-color: color-mix(in srgb, var(--blue, #2377f3) 42%, rgba(255, 255, 255, 0.2));
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.45) inset,
+    0 0 0 3px color-mix(in srgb, var(--blue, #2377f3) 16%, transparent);
+}
+
+.searchIcon {
+  color: var(--muted, #6c7882);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ink, #18212c);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.searchInput::-webkit-search-decoration,
+.searchInput::-webkit-search-cancel-button,
+.searchInput::-webkit-search-results-button,
+.searchInput::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.searchInput:focus,
+.searchInput:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.searchInput::placeholder {
+  color: var(--muted, #6c7882);
+}
+
+.clearButton {
+  border: none;
+  background: transparent;
+  color: var(--muted, #6c7882);
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 0.15s ease;
+}
+
+.clearButton:hover {
+  color: var(--ink, #18212c);
+}
+
+/* 筛选 + 排序按钮组 */
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  color: var(--ink, #18212c);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.actionButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+.filterButton {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex: 0 0 36px;
+}
+
+.actionActive {
+  border-color: var(--blue, #2377f3);
+  color: var(--blue, #2377f3);
+}
+
+.filterBadge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue, #2377f3);
+  border: 2px solid var(--soft-strong, rgba(255, 255, 255, 0.84));
+}
+
+/* 筛选 + 结果 + 列表共享滚动容器：headerBar/searchRow 固定在外 */
+.scrollRegion {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* 筛选面板（折叠动画） */
+.filterPanel {
+  padding: 0 14px 8px;
+  animation: panel-in 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 结果标题 */
+.resultHeader {
+  padding: 4px 16px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resultCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted, #6c7882);
+  letter-spacing: 0.02em;
+}
+
+.resultMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.refreshIcon {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--blue, #007aff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.refreshIcon:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--blue, #007aff) 12%, transparent);
+}
+
+.refreshIcon:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* 桌面「加载更多」文字按钮(12px 小字用 --blue-ink;加载中禁用) */
+.loadMore {
+  flex: 0 0 auto;
+  margin-left: 12px;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--blue, #007aff) 8%, transparent);
+  color: var(--blue-ink, #0062cc);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.loadMore:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--blue, #007aff) 14%, transparent);
+}
+
+.loadMore:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.moreIcon {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--blue, #007aff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.moreIcon:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--blue, #007aff) 12%, transparent);
+}
+
+.moreIcon:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ============================================================
+   响应式：移动端（<768px）隐藏（保留现有 bottom drawer）
+   ============================================================ */
+@media (max-width: 767px) {
+  .cluster,
+  .sidebar {
+    display: none;
+  }
+}
+
+/* 暗黑模式 */
+@media (prefers-color-scheme: dark) {
+  .sidebar {
+    background: rgba(28, 28, 30, 0.84);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .searchBox,
+  .actionButton {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.12) inset;
+  }
+
+  .searchBox:hover,
+  .actionButton:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .searchBox:focus-within {
+    border-color: color-mix(in srgb, var(--blue, #2377f3) 46%, rgba(255, 255, 255, 0.12));
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .suggestionList {
+    background: rgba(28, 28, 30, 0.42);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 0 0 0.5px rgba(255, 255, 255, 0.06) inset,
+      0 16px 36px rgba(0, 0, 0, 0.36);
+  }
+
+  .suggestionItem {
+    color: var(--ink, #f4f7f5);
+  }
+
+  .suggestionItem:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+  }
+
+  .closeButton {
+    background: rgba(28, 28, 30, 0.6);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .closeButton:hover {
+    background: rgba(28, 28, 30, 0.85);
+  }
+
+  .filterBadge {
+    border-color: rgba(28, 28, 30, 0.84);
+  }
+}
+
+/* 减少动效 */
+@media (prefers-reduced-motion: reduce) {
+  .cluster,
+  .sidebar,
+  .actionButton,
+  .filterPanel {
+    transition: none;
+    animation: none;
+  }
+}

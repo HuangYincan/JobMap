@@ -1,0 +1,53 @@
+{
+  "slug": "bdo立信",
+  "source": "xiaozhao-radar",
+  "name": "BDO立信",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://bdochina.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "bdo立信-site-beijing",
+      "name": "BDO立信",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳/佛山",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "bdo立信-site-shenzhen",
+      "name": "BDO立信",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/深圳/佛山",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-920725e42d59",
+      "title": "审计 IT审计 税务 咨询  会计 函证",
+      "siteId": "bdo立信-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://bdochina.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "72"
+}

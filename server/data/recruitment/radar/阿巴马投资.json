@@ -1,0 +1,41 @@
+{
+  "slug": "阿巴马投资",
+  "source": "xiaozhao-radar",
+  "name": "阿巴马投资",
+  "tier": 12,
+  "industries": [
+    "finance"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/social-recruitment/abmfund/142724?locale=zh-CN&sessionid=#/job/80db0ac2-6df3-4fd2-b24b-2b0a2d342231",
+  "sites": [
+    {
+      "id": "阿巴马投资-site-guangzhou",
+      "name": "阿巴马投资",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-87280730f36c",
+      "title": "量化研究实习生",
+      "siteId": "阿巴马投资-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/social-recruitment/abmfund/142724?locale=zh-CN&sessionid=#/job/80db0ac2-6df3-4fd2-b24b-2b0a2d342231",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "67"
+}

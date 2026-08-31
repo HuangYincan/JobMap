@@ -1,0 +1,41 @@
+{
+  "slug": "航空工业自控所",
+  "name": "航空工业自控所",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://h618.zhiye.com/intern/jobs?memory=%7B%7D&silence=1",
+  "sites": [
+    {
+      "id": "航空工业自控所-site-xian",
+      "name": "航空工业自控所",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "陕西省西安市雁塔区锦业路129号",
+        "lng": 108.834606,
+        "lat": 34.196176
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a9a43a140185",
+      "title": "量子传感器及导航系统研制 人形机器人 研制  无人系统研制  人工智能应用  机电产品研制  液压系统研制  GNC系统研制  机械结构设计  软件设计与测试",
+      "siteId": "航空工业自控所-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://h618.zhiye.com/intern/jobs?memory=%7B%7D&silence=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

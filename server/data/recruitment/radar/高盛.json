@@ -1,0 +1,64 @@
+{
+  "slug": "高盛",
+  "source": "xiaozhao-radar",
+  "name": "高盛",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.goldmansachs.com/careers/students/programs-and-internships?1=gscom%3Aprogram-region-careers%2Fasia-pacific&sessionid=",
+  "sites": [
+    {
+      "id": "高盛-site-beijing",
+      "name": "高盛",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市西城区金融大街7号王府仓胡同英蓝国际金融中心",
+        "lng": 116.357773,
+        "lat": 39.920583
+      }
+    },
+    {
+      "id": "高盛-site-shanghai",
+      "name": "高盛",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区陆家嘴世纪大道八号国金中心47层",
+        "lng": 121.502236,
+        "lat": 31.23703
+      }
+    },
+    {
+      "id": "高盛-site-shenzhen",
+      "name": "高盛",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省深圳市宝安区新桥街道万丰社区沙井中心路18号",
+        "lng": 113.825319,
+        "lat": 22.704158
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-8f3f3e063058",
+      "title": "暑期分析员  全职分析员",
+      "siteId": "高盛-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-10-05",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.goldmansachs.com/careers/students/programs-and-internships?1=gscom%3Aprogram-region-careers%2Fasia-pacific&sessionid=",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "67"
+}

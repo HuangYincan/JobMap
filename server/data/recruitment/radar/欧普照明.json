@@ -1,0 +1,53 @@
+{
+  "slug": "欧普照明",
+  "source": "xiaozhao-radar",
+  "name": "欧普照明",
+  "tier": 7,
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU646ed9920dcad45af14821b4/mc/position/intern",
+  "sites": [
+    {
+      "id": "欧普照明-site-shanghai",
+      "name": "欧普照明",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市金山区金康东路3989号",
+        "lng": 121.360947,
+        "lat": 30.757344
+      }
+    },
+    {
+      "id": "欧普照明-site-suzhou",
+      "name": "欧普照明",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "苏州市常熟市东三环路常熟市建材市场",
+        "lng": 120.796507,
+        "lat": 31.645416
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ffdd0f77899e",
+      "title": "研发类 产品类 算法类 营销类 品牌类 职能类",
+      "siteId": "欧普照明-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU646ed9920dcad45af14821b4/mc/position/intern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "38"
+}

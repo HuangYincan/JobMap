@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-易思维",
+  "name": "易思维",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "现场技术支持工程师  （实习）",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-易思维-site",
+      "name": "易思维",
+      "city": "杭州市",
+      "province": "",
+      "location": {
+        "address": "浙江省杭州市滨江区长河街道江南大道1088号",
+        "lng": 120.189773,
+        "lat": 30.196833
+      }
+    }
+  ]
+}

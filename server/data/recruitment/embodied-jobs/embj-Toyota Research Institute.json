@@ -1,0 +1,71 @@
+{
+  "slug": "embj-Toyota Research Institute",
+  "source": "embodied-jobs",
+  "name": "Toyota Research Institute",
+  "sites": [
+    {
+      "id": "embj-Toyota Research Institute-site",
+      "name": "Toyota Research Institute",
+      "city": "Los Altos, CA",
+      "province": "",
+      "location": {
+        "address": "4440 El Camino Real, Los Altos, CA 94022, USA"
+      }
+    }
+  ],
+  "careerUrl": "https://careers.toyota.com/us/en/c/research-development-jobs?s=1",
+  "positions": [
+    {
+      "externalId": "embj-Toyota Research Institute-1",
+      "title": "Senior Research Scientist, Large Behavior Models",
+      "siteId": "embj-Toyota Research Institute-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.toyota.com/us/en/c/research-development-jobs?s=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Toyota Research Institute-2",
+      "title": "Research Scientist - Robotics, Learning From Videos",
+      "siteId": "embj-Toyota Research Institute-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.toyota.com/us/en/c/research-development-jobs?s=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Toyota Research Institute-3",
+      "title": "Robotics Intern - Mobile Manipulation, Perception",
+      "siteId": "embj-Toyota Research Institute-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.toyota.com/us/en/students",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Toyota Research Institute-4",
+      "title": "Robotics Intern - Mobile Manipulation, Learned Policies",
+      "siteId": "embj-Toyota Research Institute-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.toyota.com/us/en/students",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

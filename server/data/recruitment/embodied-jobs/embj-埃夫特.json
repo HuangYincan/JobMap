@@ -1,0 +1,151 @@
+{
+  "slug": "embj-埃夫特",
+  "source": "embodied-jobs",
+  "name": "埃夫特",
+  "sites": [
+    {
+      "id": "embj-埃夫特-site",
+      "name": "埃夫特",
+      "city": "芜湖市",
+      "province": "",
+      "location": {
+        "address": "鸠江区安徽省芜湖市鸠江经济开发区万春东路96号",
+        "lng": 118.514631,
+        "lat": 31.365636
+      }
+    }
+  ],
+  "careerUrl": "https://efort.zhiye.com/social/detail?jobAdId=c06f88b9-6225-426e-a755-4b53cda1ef25",
+  "positions": [
+    {
+      "externalId": "embj-埃夫特-1",
+      "title": "机械臂视觉算法工程师",
+      "siteId": "embj-埃夫特-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/social/detail?jobAdId=c06f88b9-6225-426e-a755-4b53cda1ef25",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃夫特-2",
+      "title": "机器人操作算法工程师",
+      "siteId": "embj-埃夫特-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/social/detail?jobAdId=3cd68281-cbdd-4f5a-ab26-3f289dec6829",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃夫特-3",
+      "title": "机器人软件开发工程师-人形机器人",
+      "siteId": "embj-埃夫特-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/social/detail?jobAdId=f3ca9c4b-c371-416e-9ca2-6fe8d9123c3d",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃夫特-4",
+      "title": "机械臂算法专家",
+      "siteId": "embj-埃夫特-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/social/detail?jobAdId=12b04844-15f4-49a7-b4d4-67cd9a57842b",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃夫特-5",
+      "title": "视觉感知算法工程师",
+      "siteId": "embj-埃夫特-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/campus/detail?jobAdId=701d79dc-baf6-4fc1-b05d-3af8701874d3",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃夫特-6",
+      "title": "路径规划算法工程师",
+      "siteId": "embj-埃夫特-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/campus/detail?jobAdId=f4ff67d6-09a8-48b0-af92-26bb96c135a0",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃夫特-7",
+      "title": "多模态大模型算法工程师",
+      "siteId": "embj-埃夫特-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/campus/detail?jobAdId=607008f1-9418-40a6-8446-88f24bd5f291",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃夫特-8",
+      "title": "机械臂运控算法工程师-复合机器人",
+      "siteId": "embj-埃夫特-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/campus/detail?jobAdId=d30c82e0-cfd6-48bb-9bde-bcd972749db4",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃夫特-9",
+      "title": "强化学习算法工程师",
+      "siteId": "embj-埃夫特-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/campus/detail?jobAdId=0b98214f-1a48-4434-aaff-a12868894ecb",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-埃夫特-10",
+      "title": "高级机械工程师-人形机器人",
+      "siteId": "embj-埃夫特-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://efort.zhiye.com/social/detail?jobAdId=caa9b559-2aa4-4df9-b0db-d7f1025c4a86",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

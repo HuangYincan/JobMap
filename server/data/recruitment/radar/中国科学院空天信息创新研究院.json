@@ -1,0 +1,51 @@
+{
+  "slug": "中国科学院空天信息创新研究院",
+  "source": "xiaozhao-radar",
+  "name": "中国科学院空天信息创新研究院",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhaopin.aircas.ac.cn/",
+  "sites": [
+    {
+      "id": "中国科学院空天信息创新研究院-site-beijing",
+      "name": "中国科学院空天信息创新研究院",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区邓庄南路9号",
+        "lng": 116.282528,
+        "lat": 40.071589
+      }
+    },
+    {
+      "id": "中国科学院空天信息创新研究院-site-suzhou",
+      "name": "中国科学院空天信息创新研究院",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/苏州/济南"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2dbd42329f67",
+      "title": "研发岗  技术岗  管理岗",
+      "siteId": "中国科学院空天信息创新研究院-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhaopin.aircas.ac.cn/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "73"
+}

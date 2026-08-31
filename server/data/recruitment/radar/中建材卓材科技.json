@@ -1,0 +1,42 @@
+{
+  "slug": "中建材卓材科技",
+  "source": "xiaozhao-radar",
+  "name": "中建材卓材科技",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.iguopin.com/company/jobs?id=134132979705318044",
+  "sites": [
+    {
+      "id": "中建材卓材科技-site-beijing",
+      "name": "中建材卓材科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市海淀区北新路建材城西路16号院西侧约40米",
+        "lng": 116.348381,
+        "lat": 40.059833
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-48fdc3aaa081",
+      "title": "电商运营辅助 绿链运营辅助  财务核算辅助  财务资金辅助",
+      "siteId": "中建材卓材科技-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.iguopin.com/company/jobs?id=134132979705318044",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "26"
+}

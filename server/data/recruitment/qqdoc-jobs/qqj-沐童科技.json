@@ -1,0 +1,1327 @@
+{
+  "slug": "qqj-沐童科技",
+  "name": "沐童科技",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://moonton.jobs.feishu.cn/s/1zCmgpiKokg",
+  "direction": "开发、测试、运营等",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-沐童科技-site",
+      "name": "沐童科技",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市闵行区浦江镇浦星路1769号",
+        "lng": 121.50813,
+        "lat": 31.103617
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-feishu-7675688671308073222",
+      "title": "国内信息流投放（实习生）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7675688671308073222/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.广告投放执行：协助完成国内游戏发行的广告投放全链路工作，包括广告账户搭建、素材上线审核、投放计划调优、预算分配与日常监控，确保投放稳定运行。 2.数据分析与优化：定期整理投放数据（曝光、点击、转化、ROI 等），输出数据报表与分析结论，为投放策略调整和素材方向提供数据支撑。 3.素材创意协同：跟进广告素材的制作进度与质量审核，结合投放数据反馈，与设计 / 视频团队协作优化素材方向，提升素材跑量能力。 4.渠道与代理沟通：对接主流广告媒体（巨量引擎、腾讯广告、快手等）及代理商，协调资源、解决投放问题，保障投放顺利推进。\n\n岗位要求:\n1.学历专业：本科及以上在读，理科、广告学、市场营销、传媒、数据统计等相关专业优先。 2.基础能力：具备良好的数据分析能力，熟练使用 Excel（数据透视表、函数）、PPT 等办公软件。 3.行业热情：热爱游戏，对游戏行业有基本认知；短视频 / 直播重度用户，对网感和热点有敏锐嗅觉。 4.综合素质：做事认真细致，责任心强，具备良好的沟通能力和团队协作精神。 5.实习时间：每周到岗不少于 4 天，可长期实习（3 个月以上）者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7675314509786958107",
+      "title": "【2027届秋招】C++服务器开发工程师（MOBA）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7675314509786958107/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与游戏服务器底层基础框架的开发与日常维护工作； 2. 协助完成服务器性能优化、问题排查及技术文档编写； 3. 探索AI技术在底层基础场景的应用，如AI辅助代码审查、智能日志分析、自动化测试生成、性能瓶颈智能诊断等； 4. 配合团队完成模块联调，保障服务稳定运行。\n\n岗位要求:\n1. 2027届本科及以上学历，计算机、软件工程、人工智能等相关专业优先； 2. 熟悉至少一门编程语言（C++/Go均可），有良好的编码习惯； 3. 了解Linux基本操作和网络编程基础，对数据结构有一定认识； 4. 对AI技术有热情，了解代码大模型（Code LLM）基本原理，有使用AI编程助手（如GitHub Copilot、Cursor、Codex等）辅助C++/Golang开发的经验； 5. 具备基础的分析问题能力，乐于学习新技术，有良好的团队协作意识。"
+    },
+    {
+      "externalId": "portal-feishu-7675267656237631798",
+      "title": "【2027届秋招】交互设计师",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7675267656237631798/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与游戏产品的前期规划，理解游戏的核心玩法和目标用户，为游戏的交互体验提供创新的设计方案。 2. 负责游戏界面的信息架构、流程设计和交互原型制作，确保玩家能够轻松、直观地与游戏进行交互。 3. 与美术团队紧密合作，对游戏界面的视觉效果进行优化，提升整体的美观度和易用性。 4. 收集和分析用户反馈，通过用户研究和数据分析，不断优化游戏的交互体验，提高用户满意度和留存率。 5. 参与制定和优化游戏交互设计的规范和流程，提高团队的工作效率和设计质量。\n\n岗位要求:\n1. 2027届获得大学本科及以上学历，交互设计、工业设计、数字媒体等相关专业优先。 2. 熟练掌握至少一种交互设计工具，如 Sketch、Adobe XD、Axure 等。 3. 具备扎实的交互设计理论知识，熟悉用户体验设计原则和方法。 4. 对游戏充满热情，有丰富的游戏经验，能够深入理解玩家的需求和心理。 5. 具备良好的沟通能力和团队合作精神，能够与不同职能的团队成员协作完成项目。 6. 有较强的学习能力和创新精神，能够快速适应新的技术和设计趋势 *投递请附带相关作品集"
+    },
+    {
+      "externalId": "portal-feishu-7673712287361993003",
+      "title": "【2027届秋招】资源运营-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7673712287361993003/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、基于运营目标和内容规划，负责美术资源类商品的规划和创意提案设计； 2、推动商业化资源的高品质制作，过程中结合用户偏好把控资源质量，并做好进度管理； 3、与活动、内宣、发行等部门高效协作，强化商业化资源的传播和营销，实现资源价值最大化； 4、结合售卖数据分析和用户调研，总结运营经验，驱动美术调优。\n\n岗位要求:\n1、大学本科及以上学历，艺术设计类专业优先，有游戏/互联网等行业策划/运营岗位实习经验优先； 2、熟悉MOBA和其他换装品类相关游戏； 3、兴趣广泛，在全球化的动漫、影视、音乐、历史等领域有广泛的知识储备； 4、对新鲜事物抱有好奇心，有丰富的想象力和创意力，对年轻用户的兴趣偏好有所研究； 5、熟练操作办公软件，熟悉使用数据分析工具和技术，擅长使用AI； 6、具有良好的团队协作能力、语言表达能力，注重细节并能够按时交付工作成果。热爱游戏。"
+    },
+    {
+      "externalId": "portal-feishu-7673023051731503402",
+      "title": "【2027届秋招】后端开发工程师（AI向/数据平台）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7673023051731503402/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 数据产品后端研发：负责游戏数据产品（如内容洞察平台、玩家行为分析平台、运营数据看板等）的核心业务系统后端架构设计、开发与维护，保障系统的高可用、高性能与稳定运行； 2. AI 能力工程化落地：对接内部算法团队，负责将 AI 能力（如大模型、智能推荐等）进行工程化落地与产品功能集成，推动算法能力高效转化为用户价值； 3. 数据服务与架构演进：参与平台核心架构的设计与演进，设计并优化数据模型，处理高并发场景下的数据交互，保障数据接口的稳定输出； 4. 性能优化与系统治理：持续优化服务性能，参与线上问题排查、技术债务治理与监控体系建设，提升整体工程质量与开发效率； 5. 跨部门协同：与产品经理、前端工程师、数据分析师及算法团队紧密合作，深入理解业务需求，共同推进数据产品的迭代与功能落地。\n\n岗位要求:\n1. 学历与专业：2027届本科及以上学历，计算机、软件工程、数据科学、人工智能等相关专业优先； 2. 编程基础：具备扎实的计算机基础（数据结构与算法、操作系统、计算机网络等），熟练掌握至少一种主流后端开发语言（如 Java / Go / Python 等），具备良好的编程习惯与工程素养； 3. 后端技术栈：熟悉 MySQL、Redis、Kafka 等常用存储与消息中间件，具备独立设计数据模型与处理高并发场景的能力，了解 Docker、Kubernetes 等容器化技术及微服务架构者优先； 4. AI 探索精神：对 AI 工具保持热诚与好奇心，能够主动探索并将 AI 工具融入日常开发流程，了解 LLM、Agent 架构或有 AI 产品相关开发经验者优先； 5. 综合素质：具备优秀的逻辑思维能力与问题解决能力，对数据有高度敏感性，拥有良好的沟通协作能力与团队意识，能够跨部门推动项目落地； 6. 加分项：热爱游戏，对游戏行业有深入理解，是重度游戏玩家者优先，有知名开源项目贡献经历、个人技术产出或 ACM/ICPC 等算法竞赛获奖经历者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7672695503336180009",
+      "title": "招聘实习生",
+      "siteId": "qqj-沐童科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7672695503336180009/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "负责面试官赋能、伯乐内推等招聘项目的内容策划与传播； 独立完成推文、海报、长图及短视频等内容创作； 挖掘招聘及员工故事，打造年轻化、游戏化的传播内容； 联动招聘、业务及设计团队，推动项目落地并复盘传播效果。\n\n岗位要求:\n本科及以上学历，新闻传播、广告、市场营销、人力资源等相关专业优先； 具备内容策划、文案撰写及项目运营能力； 具备良好的审美、沟通协作和项目推进能力； 对游戏行业感兴趣，了解年轻化内容及传播趋势。 加分项 有招聘运营、雇主品牌或企业文化项目经验； 有微信公众号、视频号、小红书等内容平台的运营经验； 具备设计、短视频拍摄或剪辑能力； 英文良好，可支持双语内容创作。"
+    },
+    {
+      "externalId": "portal-feishu-7669743558489327913",
+      "title": "[Campus Hiring] Esports Business Development & Marketing",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669743558489327913/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "Responsibilities: 1、Marketing (primary anchor) - Coordinate and support end-to-end campaign execution across incubation markets — adapting regional marketing frameworks to each market's audience behavior, language, and platform mix. - Build and maintain a comprehensive map of KOLs, streamers, and community channels across markets; support relationship management through local partners and agencies. - Track cross-market campaign performance against viewership, engagement, and PCU targets, and translate data into next-cycle recommendations. - Serve as the marketing coordination point between regional frameworks and on-the-ground local execution partners. 2、Business Development (secondary scope) - Support sponsorship and partnership pipeline development across markets - prospecting, deck preparation, and partner research across regional and local brands, telcos, and media. - Assist in structuring and tracking deal terms across the standard revenue lines: sponsorship, media/broadcast, merchandise, and in-game activation. - Coordinate partner deliverables and act as execution support for signed deals across territories. 3、Market Operations Exposure - Rotate through tournament operations, broadcast coordination, and community management to build end-to-end ecosystem literacy. - Support stakeholder coordination across each local scene: teams, talent, production vendors, and government/regulatory touchpoints where relevant.\n\n岗位要求:\nRequirements: - Fresh graduates with demonstrated esports/gaming immersion strongly encouraged - Strong understanding of MLBB and the competitive esports landscape — you understand the product, the scene, and fandom, not just marketing theory. - Strong communication and relationship instincts; comfortable being the youngest person in a room of team owners, talent, and partners. - Strong analytical foundation — comfortable turning campaign and viewership data into actionable insights. - Language: professional fluency in English required. Fluency in an additional SEA language (Thai, Khmer, Burmese, Vietnamese, Laos, Bahasa) is a strong advantage, particularly for the Mekong cluster. - High-ownership, ambiguity-tolerant, and highly mobile - this is a builder's role across markets still being built, with regional travel expected."
+    },
+    {
+      "externalId": "portal-feishu-7669742053904271622",
+      "title": "[Campus Hiring] Client Service Executive",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669742053904271622/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、Sponsor Client Service & Communication Serve as day-to-day point of contact for assigned sponsors Coordinate sponsor onboarding and deliverable tracking Manage sponsor asset collection and approval processes Support sponsor sync-up calls and meeting minutes 2、Post-Event Reporting & Analysis Assist in building Event Reports using various data points Compile sponsor execution data, media value, and social metrics Create post-event case studies and sponsor testimonial documents 3、Pitch Deck & Sales Material Development Build and customize sponsor pitch decks and proposals Maintain case-study library and research repository Support sales team with market research and competitor analysis 4、Research & Data Analysis Conduct market research on brand partnership opportunities Track sponsorship trends in event commercialization, i.e. esports, traditional sports, and live events 5、Guidebook building and documentation enhancement Support building of Client Service guidebook Assist with template creation, documentation, and process improvement Help maintain BD documentation and cloud repository\n\n岗位要求:\n1、Bachelor's degree in Business Studies, Social Science, Hospitality, or related field 2、Strong interest in esports, gaming, or traditional sports/live events; understanding of MOBA or MLBB is a bonus 3、English (mandatory - written and verbal). Mandarin (preferred - written and verbal) 4、Proficiency in Google Workspace (Slides, Docs, Sheets, Drive) and Microsoft Office. Familiarity with data analysis tools is a plus 5、Highly organized, self-motivated, resilient, and able to work independently in a fast-paced environment 6、Strong written and verbal communication skills 7、Detail-oriented with ability to multi-task across projects"
+    },
+    {
+      "externalId": "portal-feishu-7669738611562858794",
+      "title": "【2027届秋招】技术运营-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669738611562858794/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、基础网络排查、日志查看，使用 SQL 完成数据统计与体验分析 2、参与服务质量监控看板的迭代优化，定期输出业务对比分析（如服务器/渠道/地区维度） 3、与产品、研发、客服等团队紧密协作，将数据洞察转化为可执行的改进建议 4、针对游戏项目进行专项数据分析，包括并不限于用户网络、性能、服务器成本流量、用户画像分析等，为运营决策、产品方向提供数据支持。\n\n岗位要求:\n1、2027届本科及以上学历，计算机、数学、统计学相关专业优先 2、对Moba型手游有深刻认知者优先，熟悉行业发展动态趋势，深度理解用户需求 3、具备良好的逻辑思考和分析能力，对数据敏感，熟悉数据收集，数据分析，数据建模和数据挖掘方法 4、扎实计算机网络基础，了解 TCP/IP；懂 Linux 基础、基础 SQL 5、有优秀ai实践案例优先"
+    },
+    {
+      "externalId": "portal-feishu-7669738344003143979",
+      "title": "【2027届秋招】平台产品经理（AI向）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669738344003143979/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位定位 我们正在建设面向游戏研发与发行场景的 Web 平台能力，覆盖本地化翻译、游戏版本运营、官网及营销活动等业务。 你将围绕这些平台探索 AI 的落地机会，将大模型、智能工作流和 Agent 能力转化为真正可用的产品，帮助内容、发行、本地化和运营团队提升效率与质量。我们更希望你能够理解业务问题、快速完成产品验证，并推动 AI 能力进入真实生产流程。 岗位职责 1.深入官网活动、本地化、版本运营等业务场景，理解内容从生产、翻译、审核到发布的完整链路，识别适合 AI 改造的环节。 2.参与 AI 产品方向规划，重点探索但不限于： 3.游戏文本翻译、术语管理、风格一致性与翻译质量评估； 4.版本内容生成、信息抽取、任务编排、风险检查与自动发布； 5.官网和活动页的内容生成、页面搭建、素材处理、埋点与运营分析； 6.基于知识库、工作流和 Agent 的业务自动化； 7.人机协作、结果评测、反馈学习和安全治理机制。 8.将模糊的业务问题转化为清晰的产品方案，完成用户调研、流程梳理、原型设计、需求文档和效果指标定义。 9.使用大模型、低代码工具、原型工具或简单脚本快速搭建 Demo，验证产品价值，而不是只停留在概念和文档阶段。 10.与 Web 开发、算法、设计、本地化、游戏发行和运营团队协作，推动 MVP 上线、试点应用和持续迭代。 11.建立 AI 产品评估体系，关注准确率、采纳率、人工修改率、任务完成时间、内容质量、成本和用户满意度。 12.跟踪大模型、Agent、AI 编程及内容生成领域的新进展，判断哪些能力适合进入游戏 Web 平台生态。\n\n岗位要求:\n任职要求 1.面向2027届毕业生，计算机、软件工程、人工智能、交互设计、信息管理、语言、本地化、游戏及相关专业优先，专业不是硬性限制。 2.对 AI 产品、Web 平台或游戏行业有浓厚兴趣，主动使用过主流大模型及相关产品，对其能力边界有基本判断。 3.具备较强的结构化思考能力，能够从复杂流程中识别关键问题，并拆解出可验证的产品方案。 4.具备良好的产品表达能力，能够通过流程图、原型和文档准确描述需求。 5.有较强的学习和动手能力，愿意亲自搭建原型、配置工作流、分析数据并验证效果。 6.具备良好的沟通与协作意识，能够理解内容、运营、技术等不同角色的目标和限制。 7.对产品质量有责任感，理解 AI 输出存在幻觉、不稳定、版权、隐私和安全风险，不盲目追求“全自动化”。 加分项 1.满足以下任意一项即可： 2.做过 AI、Agent、知识库、工作流或内容生成相关项目； 3.有产品实习、校园项目、创业或独立产品经历； 4.使用过 Figma、Axure、SQL、Python、JavaScript 或低代码自动化工具； 5.了解 Prompt、RAG、模型评测、Function Calling、MCP 或多 Agent 协作； 6.了解 CMS、翻译管理系统、内容发布平台或营销活动平台； 7.有游戏、国际化发行、本地化翻译或社区运营经验； 8.具备良好的英语或其他外语能力； 9.能够提供可体验的 Demo、作品集、项目复盘或个人产品。 我们期待的候选人 我们不要求你已经是一名成熟的 AI 产品经理，但希望你： 1.对新技术保持好奇，同时能够理性判断实际价值； 2.不满足于“接入一个大模型”，而是关注完整业务闭环； 3.能主动找到问题，并快速做出可以验证的东西； 4.愿意深入游戏内容生产和发行流程，而不是只做表层功能； 5.既关注用户体验，也关注质量、成本、数据和长期平台化能力。"
+    },
+    {
+      "externalId": "portal-feishu-7669736363574479113",
+      "title": "【2027届秋招】研发PM-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669736363574479113/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "【职位描述】 1. 协助制定符合项目情况的开发计划并推动落地； 2. 负责推动团队日常执行工作，负责进度跟踪和控制，协调部门与管线间的资源与进度，确保工作按计划完成； 3. 负责保持团队内清晰、透明和高效的信息沟通； 4. 负责团队内部项目管理流程和工具的执行，并从项目管理的角度对开发流程进行定期复盘和优化。\n\n岗位要求:\n【职位需求】 1. 了解3D游戏的基础开发流程，并理解项目管理的核心重点； 2. 具备较强的学习能力和上进的求取精神，具备AI应用探索能力加分； 3. 有责任心，逻辑思维强，拥有较好的沟通能力与协调能力，并善于团队合作； 4. 热爱游戏，游戏经历丰富这加分； 5. 有项目管理或校园活动组织经历者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669735616444516651",
+      "title": "【2027届秋招】关卡策划-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669735616444516651/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "【岗位职责】 1.协助/参与多人合作类动作类项目关卡玩法从设计到资源跟进与配置落地的全流程工作。 2.在 Unity 引擎及项目编辑器中，完成完整关卡流程以及任务流程编辑工作。 3.协同程序、美术、特效等团队完成关卡场景地形地貌风格设计落地，以及随机场景POI库搭建和完善工作。 4.参与群体AI，动态补怪等随机关卡流程生成功能的研发。 5.参与日常体验测试，定位并处理关卡相关 Bug，持续跟进关卡体验迭代。\n\n岗位要求:\n【任职要求】 1.本科或研究生，专业不限，具备严密的逻辑思维与开放灵动的设计创意。 2.乐于接受新鲜事物，学习能力强，能快速通过使用AI分析等方式上手项目配置调试流程。 3.了解或擅长合作类型玩法设计以及对大战场玩法设计有一定的涉猎。 4.具备优秀的拆解分析能力，能将关卡“好玩 / 不好玩”进一步分析为跑图感受，战斗节奏投放密度，流程组织形式，数值压力和反馈投放合理性等具体问题。 5.具备清晰的沟通表达能力与主动推进事物的能力，能深度参与跨职能（程序/美术/QA）的工作流程，确保设计内容落地。 【加分项】 1.有过合作动作类项目的开发经验，参与过具体的关卡相关设计落地工作。 2.具备一定的建筑，地理或者美术基础。 3.熟悉 Unity 引擎，熟悉蓝图，AI选择器等工具使用。 【你将获得】 1.掌握合作动作类游戏从关卡概念设计到实机落地的完整开发管线。 2.获得随机关卡场景，流程，补怪全流程开发经验。 3.积累深度参与各管线工作、与程序/场景原画/地编等多工种紧密协作推进复杂关卡需求落地的项目实战经验。 4建立系统性的非线性关卡设计方法论，掌握可重复体验关卡设计核心思路。"
+    },
+    {
+      "externalId": "portal-feishu-7669735314894555411",
+      "title": "【2027届秋招】AI Agent 产品经理（平台）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669735314894555411/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "职位描述 1.参与 AI Agent 平台及智能工作工具的产品规划，探索 AI 在游戏研发和日常工作中的应用场景。 2.深入了解用户在需求分析、内容生产、开发、测试和协作中的实际问题，提炼产品需求并设计解决方案。 3.参与 Agent 工作流、上下文管理、知识检索、工具调用和自动化任务等能力的产品设计。 4.参与 Agent、Skill、插件及 AI 应用的创建、使用、分享和复用机制建设。 5.负责需求分析、产品方案、原型和 PRD 输出，协同设计、研发和测试推动功能落地。 6.建立产品效果指标，结合用户反馈、任务完成率、结果采纳率和使用数据持续优化体验。 7.跟进大模型、Agent 产品和 AI 编程工具的发展，开展竞品研究、产品验证和趋势分析。\n\n岗位要求:\n职位要求 1.本科及以上学历，计算机、人工智能、软件工程、交互设计、信息管理等相关专业优先。 2.对大模型、AI Agent、开发者工具和智能工作流有浓厚兴趣，并有相关产品的实际使用经验。 3.具备良好的用户洞察、逻辑分析和问题拆解能力，能够将复杂问题转化为清晰的产品方案。 4.具备基本的产品设计能力，能够独立完成流程设计、产品原型和需求文档。 5.具备一定的数据意识，能够通过用户反馈和数据指标分析产品问题。 6.具备良好的沟通协调和项目推进能力，能够与研发、设计、测试及业务团队高效协作。 7.学习能力和执行力强，愿意深入技术原理和游戏研发流程理解真实需求。 加分项 1.了解 Prompt Engineering、RAG、MCP、Tool Use、Agent 工作流等概念。 2.有 AI 产品、开发者工具、平台型产品或效率工具相关项目经验。 3.使用过 ChatGPT、Claude、Cursor、Claude Code、Copilot、Codex 等 AI 工具。 4.有用户调研、数据分析、产品竞品研究或产品从零到一实践。 5.了解游戏研发流程、游戏引擎、内容生产、自动化测试或项目协作。 6.对 AI Native 产品形态和人机协作方式有自己的思考或实践。"
+    },
+    {
+      "externalId": "portal-feishu-7669734139020478758",
+      "title": "【2027届秋招】系统策划-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669734139020478758/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "【岗位职责】 1.参与多人动作游戏的核心系统设计，完成系统功能的需求拆解、逻辑梳理与设计文档撰写。 2.协同程序、UI、美术，跟进系统功能的开发落地，保证系统功能的操作体验和视觉表现符合要求。 3.维护策划配置表，确保系统规则与数据配置的准确性，跟踪开发落地过程中的配置问题。 4.参与日常版本体验测试，发现并提出体验问题，处理系统、数值相关BUG。\n\n岗位要求:\n【任职要求】 1.大学本科或研究生，游戏设计、数学、计算机等相关专业优先。 2.思维缜密，逻辑清晰，能将核心玩法或系统拆解为可执行的规则、流程与边界条件。 3.准确表达，主动推进，能在跨职能的协作过程中，确保设计内容落地。 4.对多人合作游戏有深入体验，玩过如《绝地潜兵2》《星际战甲》《深岩银河》等作品，并能分析游戏内的系统机制设计。 5.熟练使用Excel、Word、脑图工具，并愿意在工作中主动学习新工具、新技能。 【加分项】 1.有策划案、系统设计文档，或参与过GameJam、自研小型项目。 2.有 Unity编辑器使用经验，了解策划配置表与引擎的对接方式。 3.对数值敏感，了解战斗数值、产销投放、成长曲线等数值设计内容。 4.了解近未来科幻题材的视觉语言与世界观构建逻辑。 【你将获得】 1.参与多人动作游戏的研发流程，了解从框架搭建到功能落地的完整开发管线。 2.深度理解多人动作游戏的核心系统，包括协同机制、成长积累、局内外系统衔接等模块的设计思路。 3.熟悉系统策划与战斗、数值、关卡、叙事、美术、程序等多职能的协作方式，积累跨岗沟通与推进落地的实战经验。 4.掌握系统策划的核心工作方法：拆解模块功能、梳理规则逻辑、定义边界条件、UI/UX原型配合等。 5.在工作中同步培养玩法、数值感知，获得复合能力的成长路径。"
+    },
+    {
+      "externalId": "portal-feishu-7669732386770471222",
+      "title": "【2027届秋招】版本运营-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669732386770471222/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责： 1、负责游戏的上线筹备工作，涵盖版本管理、渠道对接、服务器部署以及 BUG 收集反馈等一系列模块。 2、负责跟进版本发布的各个阶段进度，积极协调并化解节点过程中难题，合理调配资源，确保项目按时上线。 3、负责对游戏的日常指标监控，能够敏锐且及时地定位游戏存在的问题，并将其反馈给相关部门，推动问题解决并落地。 4、能够主动发掘问题，并与研发、策划等技术支持部门积极沟通，对游戏的稳定性和版本质量负责。\n\n岗位要求:\n职位要求： 1、2027届拥有本科及以上学历，专业为计算机或统计学相关优先。 2、对Moba型手游有深刻认知者优先，熟悉行业发展动态趋势，深度理解用户需求。 3、性格开朗，具备出色的表达能力，拥有良好的归纳总结能力，能熟练运用办公软件。 4、具备较强的学习能力与自我提升意识，能够持续适应行业的发展和变化。"
+    },
+    {
+      "externalId": "portal-feishu-7669731319341517099",
+      "title": "【2027届秋招】英雄&玩法内容运营-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669731319341517099/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责 1. 参与MLBB（海外）内容运营相关工作，持续为海外用户提供优质内容。 2. 协助团队进行产品中英雄玩法内容的相关推广策划工作，挖掘提炼产品卖点。 3. 独立负责部分中轻型内容的策划和落地，确保内容质量和吸引力。 4. 协助内容发布工作，提高内容的曝光度和传播效果。 5. 跟踪和分析内容数据，收集用户反馈，为内容优化提供依据。 6. 参与tiktok内容探索和制作，独立完成创意提案，协助部分内容的制作落地。\n\n岗位要求:\n任职资格 1. 本科及以上学历毕业生，新闻学、传播学、广告学、出版等相关专业优先考虑。 2. 有耐心和责任心，具备良好的沟通协调能力和抗压能力。 3. 具备良好的学习能力和自我驱动力。 4. 对MOBA游戏品类有一定熟悉度。 5. 英语要求通过CET-6对应水平，拥有第二外语能力者优先。 6. 熟练掌握办公软件，能应用AIGC相关工具者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669730333851650313",
+      "title": "【2027届秋招】数据分析",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669730333851650313/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "职位描述 1、构建并完善游戏项目运营数据分析体系，负责日常业务的数据整理、统计分析，撰写并汇总分析报告； 2、针对游戏项目开展专项数据分析，包括但不限于用户价值、游戏生态、活动/版本效果评估、用户画像与人群分层等，为运营决策、产品方向、商业化策略提供数据支持。 3、研究用户精细化运营方法，如用户画像应用、人群分层运营、A/B 实验设计与效果评估等。 4、对产品、运营、市场团队提供数据分析支持，推动数据驱动决策文化。 5、沉淀分析思路与方法论框架，提炼数据产品需求，与数据研发/算法团队协作推进数据建模、指标体系与自动化分析工具建设；探索并落地 AI 辅助分析（如智能取数、自动报告生成、对话式数据洞察）在业务场景中的应用。\n\n岗位要求:\n职位要求 1、2027届本科以上学历，对数据分析有浓厚兴趣，有游戏/互联网行业数据分析相关实习经验优先。 2、具备完整的手游项目数据分析经验或相关课程/竞赛项目经验，具备良好的团队协作能力与表达能力、跨团队资源整合能力，能够独立推进分析项目。 3、逻辑思维清晰，对数据敏感，熟悉数据收集、清洗、分析全流程； 4、精通 SQL，能独立完成复杂查询与数据处理；熟练使用 Excel 及至少一种可视化/BI 工具（如 Tableau、Power BI等） 5、了解基础统计与实验设计方法（显著性检验、A/B Test指标分析）。 6、了解LLM等模型底层原理，能结合 AI 工具提升报告自动化与洞察产出效率，具备利用 AI 工具提效的意识和实践经验。 7、熟悉常见机器学习方法（聚类、分类、回归）在用户分群、系统设计中的应用，了解常用因果推断框架（DID/PSM/DML）的应用场景。 8、具备快速学习新工具/新方法的意愿和能力，能主动尝试并评估新技术在分析场景中的适用性。 9、有游戏项目数据模型搭建、精细化运营、A/B 实验分析或全生命周期数据分析规划经验优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669728979753929001",
+      "title": "【2027届秋招】项目管理-卡牌",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669728979753929001/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、深入理解项目整体目标与里程碑节点，协助项目经理完成计划拆解、任务跟踪与进度管控，保障版本按期交付； 2、主动识别项目推进中的潜在风险，及时组织讨论、推动问题闭环，并沉淀经验教训； 3、积极探索 AI 工具在研发管线中的落地场景，推动工具化、自动化实践以提升生产力。\n\n岗位要求:\n1、2027届本科及以上学历，对游戏行业有强烈热情，愿意在游戏研发领域长期深耕； 2、对游戏研发全流程有一定认知，系统学习过或了解过项目管理相关理论与方法； 3、拥有较强的沟通协调能力与执行推动力，能够高效推动多线程任务落地； 4、性格积极阳光、逻辑清晰，具备良好的适应性、主观能动性与抗压能力。 加分项 1、理工科或管理相关专业背景； 2、在校期间有学生干部经历，曾主导或深度参与过社团、学生活动的组织与运营； 3、拥有游戏项目开发经验，或曾参与软件开发相关的项目管理实习工作； 4、对 AI 技术在游戏开发及项目管理中的应用有持续关注或实践积累； 5、持有 PMP、ACP等相关项目管理认证。"
+    },
+    {
+      "externalId": "portal-feishu-7669727358828251398",
+      "title": "【2027届秋招】资源&表现策划-卡牌",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669727358828251398/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责游戏制作中的资源管理; 2. 负责游戏中主线、活动玩法中的“机关、怪物、Boss”的表现设计与跟进工作; 3. 负责以上内容美术需求文档的撰写、沟通、跟进、验收与后续调优工作; 4. 负责制作内容所需的功能开发工具的设计及验收。\n\n岗位要求:\n1. 2027届获得大学本科及以上学历，获得游戏相关奖项或荣誉优先； 2. 了解AI的发展现状，擅长各类主流AI工具，使用AI制作过小游戏或者游戏相关的工具优先考虑（提供作品）; 3. 对游戏有极致的热爱，主流的主机游戏，动作游戏，卡牌游戏有较多的涉猎，并擅长对其美术表达，核心玩法有自己的理解和总结; 4. 逻辑能力强，能口头及书面清晰表达出复杂问题，并能结构化地陈述； 5. 对unity引擎有基础的了解。"
+    },
+    {
+      "externalId": "portal-feishu-7669727346161617162",
+      "title": "【2027届秋招】关卡策划-卡牌",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669727346161617162/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责游戏关卡、相关怪物的玩法、表现设计与跟进工作; 2.负责以上内容在策划文档需求撰写、沟通、跟进、验收与后续调优工作; 3.负责相关内容的工具等相关内容设计与跟进验收。\n\n岗位要求:\n1.2027届获得大学本科及以上学历，有游戏相关特殊奖项或成就者特例考虑； 2.逻辑能力强，能口头及书面清晰表达出复杂问题，并能结构化地陈述； 3.具备较强的审美能力，有自己的审美逻辑； 4.热爱游戏，有丰富的游戏经验，对塔防游戏和卡牌游戏有深入研究的优先； 5.熟练使用AI和文档处理软件； 6.责任心强，善于沟通，开放合作。"
+    },
+    {
+      "externalId": "portal-feishu-7669727270622251273",
+      "title": "【2027届秋招】战斗策划-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669727270622251273/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "【岗位职责】 1.协助/参与动作类项目核心战斗模块的设计与落地，协助/参与主角及怪物从玩法设计到资源跟进与配置落地的全流程工作。 2.在 Unity 引擎及项目编辑器中，负责完整技能逻辑的配置，包含玩法逻辑、动画跳转、效果播放、命中判定、硬直及取消等常规帧数据与打击表现相关参数的精细化配置。 3.协同程序、动画、特效等团队跟进战斗表现，确保动作手感、机制逻辑、特效表现等内容符合设计预期。 4.参与设计与配置怪物 AI ，确保基础行为逻辑及局内战斗体验符合项目设计预期。 5.参与日常体验测试，定位并处理战斗相关 Bug，持续跟进迭代优化战斗体验。\n\n岗位要求:\n【任职要求】 1.本科或研究生，专业不限，具备严密的逻辑思维与开放灵动的设计创意。 2.乐于接受新鲜事物，学习能力强，能快速通过使用AI分析等方式上手项目配置调试流程。 3.热爱动作类游戏，对角色操作、怪物设计、动作表现、打击反馈等有较强兴趣，且有一定自己认知体系。 4.具备优秀的拆解分析能力，能将“好玩 / 不好玩”“手感好 / 手感差”进一步分析为操作、动作、判定、反馈、节奏、数值等具体问题。 5.具备清晰的沟通表达能力与主动推进事物的能力，能深度参与跨职能（程序/美术/QA）的工作流程，确保设计内容落地。 【加分项】 1.有过动作类项目的开发经验，参与过具体的战斗相关设计落地工作。 2.具备一定的动画或美术基础，能高效寻找并准确传达动作资源参考。 3.熟悉 Unity 引擎，有状态机、Timeline 或行为树的实际使用经验，受过基础编程训练。 【你将获得】 1.掌握动作类游戏从概念设计到实机落地的完整开发管线。 2.深入理解动作类的角色控制、攻击判定、受击反馈及怪物 AI 的基础实现方法与调优思路。 3.积累深度参与各管线工作、与程序/动画/特效等多工种紧密协作推进复杂战斗需求落地的项目实战经验。 4.建立系统性的战斗设计方法论，掌握拆解、构建及验证战斗手感与博弈节奏的核心能力。"
+    },
+    {
+      "externalId": "portal-feishu-7669725982999185718",
+      "title": "【2027届秋招】游戏运营分析师（竞品追踪与商业化）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669725982999185718/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、宏观洞察与市场追踪： 密切关注游戏行业发展趋势，跟进热门产品迭代，开展常态化竞品研究，分析整理游戏相关数据变化。 2、玩法与版本迭代剖析： 密切跟进核心竞品（特别是MOBA类）的版本更新、英雄/装备重做、战场节奏调整等底层机制改动。深度剖析各项数值平衡与机制调整背后的真实设计目的（如：改善特定圈层体验、调控对局时长、配合商业化售卖等），并评估其对游戏生态与Meta环境的影响。 3、商业化与运营机制拆解： 深度拆解核心竞品的长线运营（LiveOps）与变现模式。针对具体游戏内重磅活动（如大型IP联动、节日庆典等），对比分析不同发行地区（如台湾、泰国、越南等）的运营差异、资源投放分布及底层货币转化比例，输出精准的量化对比。 4、专项课题与舆情分析： 支持并协助完整执行专项研究类课题（包括但不限于需求分析、方法选取、方案设计、数据收集和报告产出）。追踪海外核心社媒阵地，梳理核心节点的讨论内容与舆情倾向，评估玩家真实反馈。\n\n岗位要求:\n1、2027届本科及以上学历，对游戏广泛的兴趣或者实践。 2、深度品类阅历： 熟悉目前市场热门竞技类产品（移动端/主机端/PC端），有长期的游戏经历，是MOBA或战术竞技/射击类（如王者荣耀、Arena of Valor、Free Fire、Pubgm等）游戏发烧友。对产品能快速上手，敏锐把握竞技游戏特征与核心圈层文化。 3、理性分析与数值敏锐度： 能将对游戏的“感性体验”清晰转化为“理性分析”。对商业化数值敏感，具备逆向推演能力，能够通过表面规则精算活动保底消耗、抽奖模型及玩家获取资源的极限效率，拥有独到且严谨的见解。 4、信息检索与洞察力： 思维活跃，好奇心强。具备极强的情报搜集与信息结构化提炼能力，面对海外繁杂的活动规则和海量讨论，能迅速剔除干扰信息，直击核心商业诉求或玩家痛点。 5、沟通交流与语言优势： 沟通及人际交往能力突出，具备优秀的英语读写能力，能熟练进行海外信息溯源与交叉比对。"
+    },
+    {
+      "externalId": "portal-feishu-7669724870918621459",
+      "title": "【2027届秋招】支付渠道运营",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669724870918621459/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责第三方支付渠道的接入与运营，参与渠道选型、成本核算与效果评估，形成渠道选型建议； 2.建立并跟踪渠道核心指标（成功率、通道稳定性、成本、时效），主动发现波动并牵头推动优化； 3.主导渠道相关问题闭环：交易异常、查单、失败归因、风控拦截排查，输出问题定位与改进方案； 4.分析支付链路数据，产出运营报表与专题分析，为渠道策略与商务决策提供数据支撑； 5.作为渠道对接窗口，协调渠道方与内部技术、风控、财务、商务，推动跨部门协作落地； 6.参与支付产品与风控策略优化，从运营视角提出迭代需求。\n\n岗位要求:\n1.本科及以上学历，2027 届毕业生，金融、经济、计算机、数据、统计、国际贸易等相关专业优先； 2.对支付行业有清晰认知与兴趣，理解收单、清结算、风控、3DS 等核心支付流程； 3.具备较强的数据分析与逻辑思维能力，能从数据中定位问题、提出结论； 4.沟通协调能力突出，能独立推动跨部门与外部渠道协作； 5.英语可作为工作语言，能对接海外渠道、阅读英文文档并进行邮件沟通； 6.主动、抗压、有 owner 意识，能在快节奏中独立承担模块。 加分项 1.有支付 / 跨境电商 / 聚合支付 / 金融科技相关实习或项目经历； 2.熟练使用 Excel、SQL 等数据分析工具，有数据建模或可视化经验； 3.有海外背景或跨文化沟通经验。"
+    },
+    {
+      "externalId": "portal-feishu-7669724870918179091",
+      "title": "【2027届秋招】APM",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669724870918179091/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "职位描述 1. 负责游戏项目开发（美术方向）研发管线的管理工作，组织并执行从需求、计划、制作、审核，验收、入版的整个过程； 2. 负责制定游戏美术开发需求规划和详细计划，跟进执行推动项目进展，并定期总结； 3. 负责对内外部的开发制作进度、成本、质量的沟通和数据管理； 4. 参与支持美术部数据度量体系的建设和AIGC流程的搭建以及推动落地工作； 5. 协助职能美术负责人做好团队管理工作； 6. 负责接口其他相关部门工作，并合理安排档期。\n\n岗位要求:\n职位要求 1、2027届毕业的同学 2、 热爱游戏，有志于在游戏行业一展才华； 3、良好的逻辑分析数据分析能力、学习能力； 4、优秀的沟通、组织与协调能力，能很快融入团队，能清晰、准确的在团队中传达自己的想法，并敢于提出自己的想法和建议； 5、做事认真负责、细心严谨，具备自我激励、团队精神、责任心和工作主动性； 6、具备一定的管理能力，能够承受工作压力，具有抗压能力和多任务处理能力； 7、参与或主导过学校社团活动，能够理解并清晰传达信息使团队目标一致； 8、对AI、绘画、摄影、音乐、CG等有一定的兴趣，愿意学习美术基础知识； 9、项目管理、自动化、电子信息、计算机、软件工程等相关专业，本科及以上学历。 10、有APM相关实习经历的优先"
+    },
+    {
+      "externalId": "portal-feishu-7669724870917638419",
+      "title": "【2027届秋招】繁中本地化",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669724870917638419/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "职位描述 1. 负责公司各类项目的繁中本地化工作，确保本地化内容高质量、按时交付； 2. 持续关注线上与社区用户反馈，并结合对繁体中文的理解，跟进并解决繁中相关问题； 3. 协助管理繁中本地化资源，如语言风格指南、术语库、翻译记忆库等，确保语言资产的持续更新与优化。\n\n岗位要求:\n职位要求 1. 本科及以上学历，繁中母语者或同等水平，英语CET-6或同等水平； 2. 熟悉繁中用户习惯，理解文化敏感点，具备良好的文化适配意识； 3. 对游戏行业、文化和社区有一定了解，愿意深入学习本地化相关知识； 4. 语言基础扎实，能够准确表达复杂概念与情感； 5. 思维灵活，具备自我学习和自我管理能力，能够主动适应新工具和流程。 优先条件 1. 有游戏本地化经验者优先（包括实习、翻译项目或个人游戏翻译经历）； 2. 熟悉翻译CAT工具（如Trados、SmartCat、Phrase等），善于使用AI工具或愿意学习相关软件； 3. 有游戏行业经验者优先，热爱游戏并对游戏本地化充满兴趣。"
+    },
+    {
+      "externalId": "portal-feishu-7669723798895577354",
+      "title": "【2027届秋招】英语本地化",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669723798895577354/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责公司游戏产品的中文-英语本地化工作，包括 - 游戏版本内容 - 游戏外宣发内容 - 沉淀与更新相应的本地化资产 - 辅助优化相应本地化流程 2. 负责公司游戏产品的IP衍生内容的英文本地化及英文原创写作工作 - 游戏世界观内容的本地化及二次创作 - 游戏外宣发音视频内容台本的本地化及二次创作 - 部分世界观台词、叙事性内容英文原创 3. 负责公司运营/市场活动的英文本地化支持，包括英文创意产出及包装工作 - 用户研究内容的本地化 - 市场execution plan的本地化 - 宣发内容的创意包装，包括Theme、Slogan等内容的英文本地化或原创 4. 对公司游戏产品的内外部反馈敏捷响应、优化\n\n岗位要求:\n职位要求 1. 大学本科英语专业及以上学历，或罗曼语族、日耳曼语族语言专业及以上学历 2. 英语TEM-8及以上（托福100及以上，雅思7.5及以上） 3. 能够使用英语作为工作语言，口语能力佳 4. 善于内外部沟通合作，有较强的学习能力 5. 抗压能力强，责任感强，保证按时交付工作产出 6. 熟练使用至少一种CAT工具 7. 热爱游戏 优先条件： 1. 有游戏项目的本地化工作经验 2. 熟悉多种游戏品类和流行文化 3. 有第二外语能力者优先 4. 对AI翻译工具有一定的认识"
+    },
+    {
+      "externalId": "portal-feishu-7669722225075751195",
+      "title": "【2027届秋招】系统策划-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669722225075751195/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "我们致力于打造顶级的创新型游戏，拥有一支充满激情和创造力的团队。在这里，您将有机会参与到最前沿的游戏开发项目中，与行业内顶尖人才一起，为玩家带来前所未有的游戏体验。 职位描述 1. 负责游戏内系统功能的设计及开发跟进； 2. 与交互和美术配合，保证系统功能在游戏内有合理的操作体验和视觉表现； 3. 积极参与产品相关设计及优化工作，关注产品表现，参与产品测试，不断发现产品不足及有待提高的方面。\n\n岗位要求:\n1. 2027届获得大学本科及以上学历； 2. 良好的学习能力，逻辑分析能力，抗压能力强，对成功和失败的经验有总结思考并且有改进的意识； 3. 有独立思考能力，在游戏现象背后有自己深入见解或独到观点； 4. 对游戏狂热，有广泛的游戏涉猎（常玩主机游戏的更佳），在至少一款MOBA类型游戏上有较深度的体验(500场以上)； 5. 有使用AI agent进行文档、UI、代码设计编写的经验者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669721601587333402",
+      "title": "【2027届秋招】全球品牌创意",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669721601587333402/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "你可以获得： 1. 全球化视野：MLBB作为全球MOBA游戏，覆盖全球两百多个国家和地区，与来自不同文化背景的团队和玩家打交道，快速建立全球视野。 2. 提升创意能力：通过大型项目沉淀系统性的创意能力，负责创作逻辑、撰写、生产、结果验收等全流程。 3. 参与头部项目：参与MLBB全球重点节点宣发项目，顶级行业资源支持，从策划到执行积累宝贵实战经验。 4. 导师制培养：资深创意导师带教，快速提升职业专业能力，同时快速适应游戏行业的节奏与规则。 5. 行业前沿技术：提供熟悉和AI应用工具，提升你的技术竞争力。 职位描述 1. 协助MLBB全球节点宣发工作，完成品牌物料方案撰写及执行落地把控； 2. 深度理解产品，洞察海外用户/文化，做好品牌信息视觉翻译，挖掘对需求目标有价值的内容，产出视觉创意方案，能用AI做好示意/参考。（包括不限于：如平面/动画/实拍/H5/创新形式等。） 3. 梳理清晰执行BRF，对接管理执行供应商团队，确保物料按里程碑稳步推进及高品质交付； 4. 关键节点做好内外部高效对齐、跨部门沟通，输出专业的观点； 5. 协助统筹做好宣发物料目标达成追踪，复盘，资源经验沉淀。 6. 分析全球游戏内容流行趋势及创意表达，支持其他品牌创意相关的项目执行。\n\n岗位要求:\n职位要求 1. 2027届本科及以上学历，八大美院及海外艺术院校加分，英语听说读写能力加分。 2. 有游戏热爱，MOBA玩家加分；对游戏、影视、音乐、动漫等领域有长期兴趣且有深度理解。 3. 有创意热情，对全球时下流行内容平台（YTB/TT/INS）创意内容及行业趋势有了解。 4. 具备良好表达能力、洞察能力、AI能力、自我驱动力，能在高压下保持高效执行和热情； 5. 有过互联网营销创意或广告美术指导/文案实习经验加分，视觉传达/影视/广告等专业加分。"
+    },
+    {
+      "externalId": "portal-feishu-7669721509438851371",
+      "title": "【2027届秋招】系统策划（攻坚）-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669721509438851371/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责新增用户、回流用户前 30 日生命周期内的体验痛点挖掘与总结； 2. 负责游戏系统与活动的设计及开发工作，包括策划文档需求撰写、沟通、跟进、验收等相关环节； 3. 负责游戏系统与玩法的持续迭代和优化工作，包括数据分析，用户调研，功能迭代等相关环节。\n\n岗位要求:\n1. 2027 届毕业生，本科及以上学历，拥有游戏相关特殊奖项或成就者加分； 2. 能够熟练使用 AI 工具提升学习与工作效率，在 AI 应用领域有自身独特见解者优先； 3. 逻辑能力较强，可通过口头及书面形式清晰表述复杂问题，并能进行结构化陈述； 4. 具备独立思考能力，对游戏现象背后的逻辑有自身深入见解或独到观点； 5. 热爱游戏，在 MOBA 游戏领域经验资深，且广泛接触并持续体验其他品类游戏者优先； 6. 熟练使用 Word、Excel、PPT、脑图等文档工具。"
+    },
+    {
+      "externalId": "portal-feishu-7669720854154217764",
+      "title": "【2027届秋招】战斗策划-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669720854154217764/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "我们专注于打造高品质的 MOBA 游戏。现正寻找充满激情和创造力的战斗策划人才，加入我们的团队，共同开创游戏的新篇章。 岗位职责 1. 设计 MOBA 游戏中的战斗机制、规则和玩法，包括英雄技能、战斗流程、操作手感等，确保战斗体验的趣味性和策略性。 2. 负责英雄的战斗属性、成长曲线、技能效果等数值设定，保证英雄之间的平衡性和差异化。 3. 与美术、程序团队紧密合作，将战斗策划的设计理念转化为实际的游戏功能和表现。 4. 深入研究和分析竞品游戏的战斗系统，借鉴优秀经验，提出创新的设计思路和优化方案。 5. 参与游戏的测试和优化工作，根据玩家反馈和数据表现，对战斗系统进行持续调整和改进。\n\n岗位要求:\n1. 2027届获得大学本科及以上学历，游戏设计、计算机相关专业优先。 2. 热爱游戏，尤其是 MOBA 游戏，对游戏战斗系统有深入的理解和研究。 3. 具备良好的逻辑思维和分析能力，能够从复杂的战斗场景中提炼关键要素。 4. 乐于探索AI工具，对AI工具在游戏开发中的应用有自己的思考。 5. 有一定的数值敏感度，能够运用数值工具进行简单的战斗数值计算和平衡。 6. 具备良好的团队协作能力，善于沟通和表达自己的想法。 7. 具有较强的学习能力和创新精神，能够快速适应新的挑战和变化。 *简历请附上游戏经历"
+    },
+    {
+      "externalId": "portal-feishu-7669720585748482358",
+      "title": "【2027届秋招】海外品牌营销",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669720585748482358/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责 1.支持MCGG发行团队进行海外地区市场推广工作； 2.参与整体发行策略的制定与落地，保证内容准确传递游戏趣味、策略深度、赛季调性及推广主题； 3.透过市场分析、竞品监测、用户洞察与社媒舆情，结合游戏内外节点进行市场营销策划和落地； 4.协调海外 KOL/主播（YouTube\\Tiktok）、内容创作者、供应商及商务资源，将方案完整落地于区域市场并达成营销目标； 5.跟踪推广效果，从市场反馈、流量数据、社媒舆情等多维度归因核心问题，指导后续策略迭代； 6.与研发、运营、美术、电竞等团队协同，参与并协助区域市场整体发行策略的制定与执行追踪。\n\n岗位要求:\n岗位要求 1.2027届本科及以上学历，英语听说读写能力优秀，可作为工作语言； 2.热爱游戏，对自走棋/策略品类有一定认知，熟悉 1-2 款目标品类（自走棋/休闲/策略等），了解玩家动机与品类演变； 3.逻辑思维优秀，思路清晰，对数据敏感，能从杂乱数据中梳理和归因核心问题，辅助营销决策； 4.保持对海外市场与新型营销手段的关注，快速吸收并举一反三； 5.较强的自我管理能力与抗压能力，性格开朗，沟通协调能力强； 优先考虑： a）有过往游戏海外发行或互联网市场营销相关实习经验； b）对游戏、营销、用户洞察有热情，具备跨文化沟通意识，熟悉东南亚及全球区域文化禁忌与热点； c）对 AI 工具与内容热点敏感、持续关注，能将新趋势新手段融入营销思考。"
+    },
+    {
+      "externalId": "portal-feishu-7669719103016012059",
+      "title": "【2027届秋招】玩法策划-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669719103016012059/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "我们专注于打造高品质的 MOBA 游戏。现正寻找充满激情和创造力的玩法策划人才，加入我们的团队，共同开创游戏的新篇章。 岗位职责 1. 设计 MOBA 游戏中的战斗规则和玩法，如新的娱乐模式的设计和实际落地制作。 2. 与美术、程序团队紧密合作，将策划的设计理念转化为实际的游戏功能和表现。 3. 深入研究和分析竞品游戏，借鉴优秀经验，提出创新的设计思路和优化方案。 4. 参与游戏的测试和优化工作，根据玩家反馈和数据表现，对线上的模式进行持续调整和改进。\n\n岗位要求:\n1. 2027届获得大学本科及以上学历，游戏设计、计算机相关专业优先。 2. 热爱游戏，尤其是 MOBA 游戏，对游戏战斗系统以及不同模式玩法有深入的理解和研究。 3. 具备良好的逻辑思维和分析能力，能够从复杂的战斗场景中提炼关键要素。 4. 乐于探索AI工具，对AI工具在游戏开发中的应用有自己的思考。 5. 有一定的数值敏感度，能够运用数值工具进行简单的战斗数值计算和平衡。 6. 具备良好的团队协作能力，善于沟通和表达自己的想法。 7. 具有较强的学习能力和创新精神，能够快速适应新的挑战和变化。 *简历请附上游戏经历"
+    },
+    {
+      "externalId": "portal-feishu-7669718472025377060",
+      "title": "【2027届秋招】全球品牌营销",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669718472025377060/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "职位描述 1.协助MLBB进行全球市场推广工作； 2.通过市场分析、用户洞察等手段，整合推广背景信息，协助进行市场营销策划； 3.跟进核心创意物料的策划、执行、复盘工作，保证官方内容能够准确传递游戏品质、品牌调性及推广主题； 4.跨部门协作，保证端内外活动的顺利推进； 5.参与并协助全球整体发行策略制定。\n\n岗位要求:\n职位要求 1.2027届本科及以上学历，优秀的英语听说读写能力； 2.热爱游戏，对游戏行业有一定认知，MOBA深度玩家更佳； 3.比较强自我管理能力，上进心，抗压能力强； 4.性格开朗，沟通能力强，逻辑清晰； 5.熟悉海外主流内容平台（YouTube、TT、Ins），自身为内容创作者更佳。"
+    },
+    {
+      "externalId": "portal-feishu-7669718375493683506",
+      "title": "【2027届秋招】技术策划-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669718375493683506/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.前线嵌入与AI工具落地：深入MLBB模式业务一线的开发与运营场景，将模糊的业务提效需求拆解为可执行的工程任务。基于AI大模型/Agent框架，在现场构建生产级的前端应用、自动化脚本或内部提效工具链； 2.AI输出的质量把关与二次开发：拒绝简单的\"复制粘贴AI结果\"。你需要根据MLBB模式业务的具体场景（如活动H5页、运营后台、数据看板），对AI生成的代码进行现场裁剪、重构和性能优化，确保输出物符合工程规范与业务预期； 3.复杂问题的AI辅助攻坚与人工兜底：在真实的项目环境下进行全栈调试，解决AI工具难以独立处理的\"水土不服\"问题（如极端兼容性、性能瓶颈、边界Case覆盖、安全漏洞等）。当AI输出不达标时，你能第一时间人工兜底、现场救火； 4.研发闭环与方法论沉淀：作为双向沟通的硬核桥梁，将一线使用AI工具踩过的\"坑\"、最真实的效率反馈以及业务场景的特殊需求，沉淀为标准化Prompt模板、AI辅助工作流和最佳实践，反哺并推动团队AI工具链的迭代升级。\n\n岗位要求:\n1.热爱游戏：始于热爱玩游戏，不止于“玩”游戏； 2.硬核技术底子：计算机或相关专业本科及以上学历； 3.日常使用ChatGPT/Claude/GitHub Copilot等AI编程工具，理解Prompt基本技巧，知道如何让AI输出更贴合工程需求，对特定应用场景、编写过有效的prompt，并举证； 4.有RAG+LLM使用经验或者模型微调能力的优先考虑； 5.极强的自驱与适应力：接受高频的跨工种协作模式，有较强的适应不同工种的心理弹性和主动学习能力。拒绝\"只动口不动手\"，必须是能写代码、能交付、能下地的实干派； 6.复合型沟通与业务理解力：具备优秀的跨部门沟通能力与共情能力，能够听懂策划的业务语言和运营的数据诉求，将其转化为精准的工程实现。能快速理解MLBB模式业务的场景语境； 7.前线破局与批判判断力：面对AI生成的代码，具备独立甄别能力——能敏捷定位潜在Bug、性能隐患、逻辑漏洞和边界遗漏，不盲从AI结果。面对高压的项目节点，能第一时间判断\"哪些可以AI做、哪些必须人来做\"，并给出可靠的现场方案。 加分项 (Preferred Qualifications) 1.有利用AI工具完成完整前端模块或项目的实战经验（含个人项目/开源项目），能用成果证明自己\"会用AI，更敢改AI\"； 2.熟悉Prompt Engineering，能设计结构化Prompt提升AI输出质量，或有过AI工作流自动化（如n8n、Dify等）实践经验； 3.有前端性能优化、可视化开发（ECharts/Canvas/WebGL）或Node.js工具链开发经验； 4.了解主流大模型（GPT-4、Claude、Gemini等）在前端开发场景的适用边界与局限性，对AI能力的\"天花板\"有清醒认知； 5.热爱游戏，对《Mobile Legends: Bang Bang》或MOBA品类有深入了解，能快速融入业务语境。"
+    },
+    {
+      "externalId": "portal-feishu-7669716736396904740",
+      "title": "【2027届秋招】区域发行营销",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669716736396904740/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责： 1.协助MLBB进行海外地区市场推广工作； 2.平面/视频类广告创意的策划、执行、复盘工作，保证官方内容能够准确传递游戏品质、品牌调性及推广主题； 3.透过市场分析、用户分析，结合游戏内外的节点，进行市场营销策划； 4.与外部供应商或是合作方配合，将方案完整落地于区域市场，并达成营销目标； 5.跨部门合作，参予并协助区域市场的整体发行策略制定。\n\n岗位要求:\n岗位要求： 1.2027届本科及以上学历，优秀的英语听说读写能力； 2.热爱游戏，对游戏行业有一定认知； 3.比较强自我管理能力，上进心，抗压能力强； 4.性格开朗，沟通能力强，逻辑清晰； 5.优先考虑：a）对Facebook、Youtube、Twitter等平台比较熟悉，b）市场营销/广告/新闻传播等专业。"
+    },
+    {
+      "externalId": "portal-feishu-7669715742754375962",
+      "title": "【2027届秋招】海外平台运营",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669715742754375962/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责 Google Play / App Store / 渠道商店或其他开发者平台的日常管理与运营，熟练使用各类工具，根据不同平台特点，制定并持续优化开发、接入、维护的追踪流程； 2. 配合研发团队完成平台参数配置、数据抓取和问题排查，严格遵守平台规范与信息安全，确保产品上线与长期稳定运营；作为跨部门协作枢纽，负责拉齐多个团队沟通的时间线与交付标准，把控项目进度并实现需求闭环； 3. 与营销、渠道等发行模块协作，为各发行模块提供运营资源和支持，保障各项发行动作高效落地； 4. 运营双端商店的持续推广，包括但不限于商店推荐、推广内容、ASO等模块，持续输出并总结商店平台运营经验，探索商店增长方向。\n\n岗位要求:\n1. 优秀的英语能力：雅思7分及以上（或同等水平），能独立处理英文邮件和平台文档，可以流利使用英语进行工作交流； 2. 有较强的责任心、执行力和Owner意识，愿意主动跟进问题直到解决；具备较强的“结果导向”沟通思维与闭环意识； 3. 具备优秀的团队协作能力，能在多方参与的协作中理清各方分工、明确关键时间节点，推动项目按计划落地； 4. 做事有条理，具备良好的文档写作能力，能将工作流程整理成清晰、可复用的文档； 5. 抗压能力强，遇到突发问题时能主动思考、带着初步方案协同推进，能系统性管理多线并发任务； 6. 学习能力强，能快速上手新工具、新平台规则； 7. 具备数据分析能力，能使用工具处理数据，并从数据变化中发现问题、初步定位原因。 加分项 1. 热爱游戏，对移动应用/游戏出海生态感兴趣； 2. 有游戏行业相关实习经验； 3. 使用过 Google Play Console、App Store Connect 等开发者后台； 4. 拥抱 AI，有成功 AI 实践案例。"
+    },
+    {
+      "externalId": "portal-feishu-7669715067428702474",
+      "title": "【2027届秋招】市场营销策划",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669715067428702474/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责： 1.协助MLBB进行海外地区市场推广工作； 2.平面/视频类广告创意的策划、执行、复盘工作，保证官方内容能够准确传递游戏品质、品牌调性及推广主题； 3.透过市场分析、用户分析，结合游戏内外的节点，进行市场营销策划； 4.与外部供应商或是合作方配合，将方案完整落地于区域市场，并达成营销目标； 5.跨部门合作，参予并协助区域市场的整体发行策略制定。\n\n岗位要求:\n岗位要求： 1.2027届本科及以上学历，优秀的英语听说读写能力； 2.热爱游戏，对游戏行业有一定认知； 3.比较强自我管理能力，上进心，抗压能力强； 4.性格开朗，沟通能力强，逻辑清晰； 5.优先考虑：a）对Facebook、Youtube、Twitter等平台比较熟悉，b）市场营销/广告/新闻传播等专业。"
+    },
+    {
+      "externalId": "portal-feishu-7669714774092089641",
+      "title": "【2027届秋招】海外市场营销",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669714774092089641/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责： 1.协助MLBB进行海外地区市场推广工作； 2.平面/视频类广告创意的策划、执行、复盘工作，保证官方内容能够准确传递游戏品质、品牌调性及推广主题； 3.透过市场分析、用户分析，结合游戏内外的节点，进行市场营销策划； 4.与外部供应商或是合作方配合，将方案完整落地于区域市场，并达成营销目标； 5.跨部门合作，参予并协助区域市场的整体发行策略制定。\n\n岗位要求:\n岗位要求： 1.2027届本科及以上学历，优秀的英语听说读写能力； 2.热爱游戏，对游戏行业有一定认知； 3.比较强自我管理能力，上进心，抗压能力强； 4.性格开朗，沟通能力强，逻辑清晰； 5.优先考虑：a）对Facebook、Youtube、Twitter等平台比较熟悉，b）市场营销/广告/新闻传播等专业。"
+    },
+    {
+      "externalId": "portal-feishu-7669713250409793818",
+      "title": "【2027届秋招】游戏用户洞察分析师",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669713250409793818/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、持续洞察游戏市场与玩家变化，跟踪全球游戏市场趋势、品类演进、玩家需求变化与用户群体差异，沉淀对游戏行业底层规律的理解，为业务发现潜在机会、识别产品风险提供前瞻性支持； 2、基于定性与定量研究方法，围绕游戏玩法、系统设计、版本体验、玩家动机、用户分层、留存流失等议题开展研究，将市场与玩家声音转化为客观、全面、可执行的决策信息，助力产品体验持续优化； 3、综合问卷、访谈、可用性测试、行为数据、社区舆情、竞品表现等多维信息，进行系统分析与交叉验证，提炼具备业务价值的用户洞察、市场判断与产品建议； 4、面向产品、研发、发行、运营及管理决策团队，清晰表达研究发现与业务影响，协助团队识别优先级、制定优化方向，并推动研究结论在实际产品和业务场景中落地。\n\n岗位要求:\n1、深度热爱游戏，有志于投身游戏研发与用户体验研究事业；具备丰富的游戏经历，对至少一个或多个游戏品类有较深入理解，能够从玩家体验、系统设计和产品目标之间建立分析联系； 2、了解用户体验研究、市场研究、心理学、社会学、人机交互等相关理论与方法；熟悉定性定量等方法和工具者优先； 3、具备较强的信息整合与逻辑分析能力，能够从复杂、分散甚至矛盾的信息中提炼关键问题，建立清晰分析框架，并形成有证据支撑、具备业务指导意义的结论； 4、积极使用 AI 工具辅助研究、分析和表达，具备主动探索新工具、新方法的意愿； 5、关注全球游戏市场与海外玩家生态，具备英文外的其他外语工作能力者优先，有海外游戏社区观察、海外产品体验或跨文化研究经验者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669713220388047146",
+      "title": "【2027届秋招】日本商务",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669713220388047146/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、整合内部需求，对提交监修的内容进行初审并负责监修资料的制作、翻译、提交及反馈跟进等完整监修对接流程 2、作为内外沟通桥梁对齐内外认知，消除项目组与版权方的认知偏差，提高监修通过率 3、有风险管理意识，能及时发现并解决项目卡点，确保监修顺利推进 4、辅助管理项目排期，把控监修进度，确保项目按期上线 5、行业动态信息收集、相关资料整理及翻译\n\n岗位要求:\n1、本科及以上学历，日语听说读写均达到商务水平 2、有在日留学/实习经历，熟悉日本人的思维方式和与日本人的沟通方式 3、思维灵活，有责任心和良好的沟通协调能力，细心、有好奇心且善于思考，能持续发现问题解决问题 4、热爱游戏及动漫，熟悉游戏联动，对于游戏和动漫均有一定的基础阅读量，涉猎品类多更优 5、理解IP，对IP和版权行业感兴趣，对版权及游戏行业有基础认知更优"
+    },
+    {
+      "externalId": "portal-feishu-7669710410455173417",
+      "title": "【2027届秋招】用户与社区运营",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669710410455173417/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、负责规划游戏社区内容（包括图文、视频、话题活动等），提升玩家活跃度与社区氛围；根据产品节点（版本更新、赛事活动等），配合制定社区运营方案，推动玩家参与和传播。 2、负责游戏官方社区（论坛、社交媒体、社群等）的日常维护，及时回复玩家问题，收集反馈并整理；挖掘并培养核心玩家/KOL，搭建用户分层运营体系，增强玩家归属感。 3、协助策划线上/线下玩家活动（如福利发放、直播互动、玩家见面会等），提升用户粘性；跟踪社区数据（如DAU、互动量、舆情等），整理分析报告并提出优化建议。协助处理突发舆情事件，维护游戏品牌形象。\n\n岗位要求:\n1、本科及以上学历，市场营销、新闻传播、数字媒体相关优先； 2、高度细心与责任心‌：能够高效处理多线程任务，确保社区内容、活动规则、用户反馈等信息的准确性与完整性； 3、优秀的跨部门协作能力‌：具备清晰的逻辑表达与沟通技巧，能够快速理解业务需求，推动市场、研发、客服等多团队协同落地； 4、熟悉B站、微博、抖音、TapTap等平台玩法，了解玩家社群运营逻辑。有游戏社区/自媒体运营、社团管理、内容创作经验者优先； 5、热爱游戏行业，熟悉主流游戏类型，重度手游/端游玩家优先；具备基础PS/视频剪辑能力，或对AIGC工具（如ChatGPT、Midjourney）有实践者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669710280314898729",
+      "title": "【2027届秋招】商业化运营-自走棋",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669710280314898729/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责自走棋游戏商业化设计及开发工作； 2.协助美术、程序、测试完成商业化研发流程且保障品质和数据结果； 3.负责商业化的数据分析和用户问卷调查，并根据以上内容进行后续调优。\n\n岗位要求:\n1. 2027届获得大学本科及以上学历，具备游戏公司实习经历者优先; 2. 逻辑能力强，能口头及书面清晰表达出复杂问题，并能结构化地陈述; 3. 有独立思考能力，在游戏现象背后有自己深入见解或独到观点; 4. 游戏狂热爱好者，对竞技/策略类游戏有浓厚兴趣； 5. 熟练使用Word、Excel、PPT、脑图等文档工具，有SQL语句基础者优先; 6. 英语过6级，并具备一定的口语能力。"
+    },
+    {
+      "externalId": "portal-feishu-7669709429079935242",
+      "title": "【2027届秋招】战斗策划-自走棋",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669709429079935242/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 战斗系统设计协助：协助主策完成英雄技能、羁绊效果、战斗规则、赛季特殊机制的设计与规范文档输出。运用 AI 工具快速产出多版设计方案、逻辑梳理与细节补全，提升设计初稿的产出效率； 2. 落地跟进与验收：对接程序、美术团队同步战斗设计需求，跟进功能开发与效果实现。运用 AI 工具快速产出战斗表现参考、特效描述与验收标准，保障设计落地质量； 3. 体验优化与分析：跟进战斗相关的测试反馈与玩家意见，使用 AI 工具对反馈数据进行分类统计、问题归因，输出结构化的优化建议与迭代方案。\n\n岗位要求:\n1. 2027 届本科及以上学历应届毕业生，专业不限，游戏设计、数字媒体、计算机、数学、统计学相关专业优先； 2. 热爱策略游戏，深度体验过至少 2 款主流自走棋产品（如云顶之弈 / 金铲铲之战、刀塔自走棋、多多自走棋等），对自走棋的战斗逻辑、羁绊设计、平衡体系有独立思考； 3. 逻辑清晰，具备良好的数值敏感度与系统分析能力，能够拆解复杂规则的底层逻辑； 4. 具备良好的沟通协作能力与书面表达能力，能够准确输出设计思路与规范文档。 专业与 AI 能力要求 1. 具备 AI 工具实操意识与应用能力：熟练使用至少 1 款主流大语言模型产品，能够运用 AI 完成资料整理、方案脑暴、文档润色、逻辑校验等策划日常工作； 2. 具备 AI vibe coding 开发能力者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669707822539753778",
+      "title": "【2027届秋招】U3D引擎开发工程师-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669707822539753778/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与实时渲染管线内核迭代：光栅化、延迟渲染、前向管线、全局光照 GI、Lumen / 光线追踪模块 C++ 开发与 BUG 修复； 2.渲染性能排查：使用 PIX/RenderDoc 定位 GPU 瓶颈，优化 Overdraw、DrawCall、显存占用，基于 DX12/Vulkan/Metal 做渲染层优化； 3.前沿图形预研：神经渲染、AI 超分、DLSS、移动端 Vulkan 光追落地验证，自研 BRDF、降噪、大气散射算法原型实现； 4.团队配合：配合 TA 团队，提供底层接口，支撑上层美术渲染需求； 5.文档整理：整理渲染向相关特性，输出引擎渲染配置文档。\n\n岗位要求:\n1.计算机 / 应用数学 / 图形学本硕在读，扎实线性代数、光学、实时渲染管线理论； 2.熟练 C++、C#，掌握内存、多线程、指针，能看懂引擎源码；熟悉至少一门图形 API：DX12/Vulkan/Metal； 3.熟练 HLSL/GLSL，可独立手写 PBR 材质 Shader，不依赖可视化 ShaderGraph； 4.掌握 1 款主流引擎：Unity（URP/HDRP）或 UE5 其一，了解 UE/Unity 源码架构。 加分项 1.有开源引擎 (Godot/O3DE) 二次开发、个人渲染 Demo （光追、PBR、后处理）优先； 2.图形学课程项目、光线追踪自研 Demo、CUDA/AI 渲染相关实践优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669707802554747162",
+      "title": "【2027届秋招】赛事运营",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669707802554747162/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与海外知名MOBA手游的电竞赛事运营（包括但不限于职业联赛、次级联赛以及校园城市赛事），促进各项赛事数据的增长（包括但不限于赛事用户及直播数据、赛事满意度、赛事观看体验等维度）； 2. 负责中国总部与海外赛事团队的沟通与协作，帮助海外团队更好的对接游戏侧资源，促进游戏侧资源（如道具资源、宣传资源等）和赛事侧落地的更广泛和深度的结合； 3. 参与职业赛事联盟的体系搭建，电竞联盟的规则设计与管理，战队生态建设，部分联盟商业化等相关事宜。\n\n岗位要求:\n1. 大学英语六级及以上英文水平，英文可作为工作语言，听说读写均良好； 2. 热爱游戏，热爱电子竞技，有游戏或电竞行业相关实习经验者优先； 3. 执行力强，敢于承担责任；思维活跃，在工作过程中能有较强的思考及总结能力； 4. 大学本科及以上学历，有海外留学经验者优先，接受偶尔出差者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669706369792035114",
+      "title": "【2027届秋招】游戏测试工程师（系统）-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669706369792035114/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 深度参与项目测试方案制定与计划评审，以质量为核心，保障线上功能稳定； 2. 深入理解产品需求与技术实现原理，独自设计测试方案、测试用例等，并进行持续完善和维护； 3. 对游戏的功能性、数值、活动、系统等进行全面的产品质量保障工作； 4. 积极发现并推动解决项目中存在的进度、流程、质量风险等； 5. 结合AI测试工具与方法，提升测试效率、覆盖度，合理运用AI能力在游戏测试场景的落地。\n\n岗位要求:\n1. 本科及以上学历，计算机相关专业； 2. 竞技游戏资深玩家，拥有大型游戏项目实习经验优先； 3. 精通 Python / Go / C 中至少一门编程语言，有工具平台开发经验； 4. 掌握良好的全局思考能力和问题解决能力，能够理解业务需求并转化为技术实现； 5. 具备优秀的沟通与协作能力，推动跨团队问题解决； 6. 做事细致主动，执行力强，有高度责任心； 7. 对AI测试领域有探索意愿，愿意主动学习AI相关测试技术，适配项目AI化发展需求。"
+    },
+    {
+      "externalId": "portal-feishu-7669704278038530345",
+      "title": "【2027届秋招】Unity客户端开发工程师（活动）-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669704278038530345/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与基于 Unity3D 引擎的移动端游戏客户端开发，负责游戏核心玩法、战斗系统及相关功能模块的设计与实现； 2、参与 MOBA 类游戏项目的客户端开发，深入理解并实现角色控制、技能系统、战斗逻辑、UI 交互等游戏核心模块； 3、负责游戏功能的开发、调试与性能优化，持续提升游戏运行效率、稳定性及用户体验； 4、与策划、美术、服务器等团队密切协作，推动需求高质量落地，解决开发过程中的技术问题，提高团队协作效率； 5、关注 AI、大语言模型（LLM）等前沿技术发展，对 AI 与游戏行业的结合感兴趣，有机会参与 AI 技术在游戏研发流程及实际项目中的探索与落地。\n\n岗位要求:\n1、全日制本科及以上学历，计算机科学、软件工程及相关专业，具备扎实的计算机基础和良好的编程能力； 2、熟悉 C#、C++、Lua、Python 等至少一种编程语言，具备良好的代码规范意识，能够编写结构清晰、易于维护的代码； 3、掌握常用数据结构与算法，具备较好的逻辑分析和问题解决能力，能够独立分析并解决开发过程中遇到的技术问题； 4、熟悉 Unity3D 引擎及常用开发流程，了解 Unity 生命周期、UGUI、Prefab、Asset 等常用模块；有 Unity 项目开发经验、完整游戏项目经验或相关实习经历者优先； 5、具备一定的游戏客户端开发基础，了解游戏常见模块及开发流程；对游戏战斗系统、角色控制、技能系统、网络同步等方向有一定了解或实践经验者优先； 6、对移动端游戏开发及性能优化有一定认识，了解 Draw Call、GC、内存、CPU/GPU 性能等基础概念，有实际性能分析和优化经验者优先； 7、热爱游戏，对游戏行业及游戏研发工作有深入了解，有较强的游戏体验和独立思考能力，能够从玩家和开发者视角对游戏设计提出自己的见解； 8、对 AI、大语言模型等新技术保持关注和学习热情，有 AI 相关项目、工具开发或实践经验者优先； 9、思维敏捷，学习能力和理解能力强，具备较强的技术钻研意识，能够快速学习和适应新技术、新工具及新的业务需求； 10、工作积极主动，责任心强，具备良好的沟通能力和团队协作精神，能够主动承担任务并推动问题解决； 11、有较强的自驱力和成长意愿，对游戏客户端开发有长期职业规划，并愿意在游戏研发领域持续深耕。 加分项 1、有完整的 Unity 独立游戏或团队项目开发经验，并有可展示的项目作品； 2、有 MOBA、ARPG、FPS 等实时对战类游戏开发或相关项目经验； 3、熟悉 Unity 性能分析与优化工具，有移动端性能优化实践经验； 4、了解网络通信、客户端与服务器架构、帧同步或状态同步等相关技术； 5、熟悉 Lua 热更新、资源管理、AssetBundle/Addressables 等相关技术； 6、有 Git 等版本管理工具使用经验，了解基本的软件工程开发流程； 7、参加过游戏开发相关比赛、Game Jam、程序设计竞赛或有开源项目贡献； 8、有 AI、大模型、Agent 等相关项目实践，或对 AI 在游戏研发中的应用有深入思考。"
+    },
+    {
+      "externalId": "portal-feishu-7669703248115632390",
+      "title": "【2027届秋招】游戏测试工程师（战场）-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669703248115632390/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与游戏开发过程中的各类需求测试跟进,利用各类测试方法与技术手段找出缺陷并跟进解决; 2.开发与维护适用于组内的各类测试工具和平台,持续提升团队的测试效率与质量; 3.利用AI能力,解决复杂测试场景的构建问题,降低人工测试成本; 4.观察思考测试团队在工作中存在的不足,提出改进建议并落地,帮助团队持续进步; 5.对游戏内的疑难缺陷进行复现与分析,帮助问题尽快解决,提升游戏最终品质。\n\n岗位要求:\n1. 大学本科或研究生在读，计算机科学、人工智能、软件工程或相关专业； 2. 熟练掌握一门及以上编程语言,了解计算机系统相关知识; 3. 对AI技术有浓厚兴趣，了解AI当下的前沿技术； 4. 有软件开发或AI项目经验者优先（如基于AI模型构建过简单应用）； 5. 具备良好的学习能力、团队合作精神和解决问题的能力； 6. 热爱游戏,积极主动,具备良好的沟通表达能力。"
+    },
+    {
+      "externalId": "portal-feishu-7669702553915443462",
+      "title": "【2027届秋招】AI客户端开发工程师-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669702553915443462/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、战斗与 AI 开发辅助：协助团队完成 Unity3D 手游客户端战斗模块开发，参与行为树（Behavior Tree）、状态机（FSM）的设计与实现，了解深度学习 AI（如强化学习、决策模型）及大语言模型（LLM）在游戏场景的应用逻辑。 2、帧同步战斗逻辑学习实践：在指导下参与高实时性、强同步要求的帧同步战斗逻辑开发，助力保障战斗体验流畅性，积累相关技术经验。 3、AI 技术探索与应用：关注 AI 算法（深度学习、LLM 等）在游戏中的落地场景，协助优化 AI 性能与策略，参与战斗系统智能化升级相关的基础工作。 4、工程开发基础工作：编写规范、可维护的 C# 代码，学习代码优化技巧，确保代码具备可扩展性，逐步提升工程开发能力。 5、跨团队协作配合：积极与策划、算法、服务器团队沟通协作，配合完成技术方案落地，学习跨角色协同工作流程。\n\n岗位要求:\n1、技术基础： -了解 Unity 引擎基本架构，掌握 C# 编程语言，有 Unity 项目开发经验（课程设计、个人项目均可）优先。 -对 C++ 底层原理有初步认知，或有学习意愿与能力。 -了解行为树、状态机等 AI 框架基本概念，具备一定的系统设计思维。 2、经验与技能： -有游戏开发相关实习、个人项目经验，或接触过帧同步、MOBA/RTS 类游戏开发逻辑者优先。 -拥有代码 AI Agent 实战开发经验：实际使用过 Claude Code、Kimi Code、Cursor Composer、OpenAI Codex 同类工具完成demo或者项目功能开发；能够自主设计提示词、识别 AI 代码缺陷、校验并重构生成代码；简历附带项目 Demo/Git 仓库更佳； 3、个人素质： -逻辑思维清晰，具备较强的学习能力和问题解决能力，能快速适应新环境与技术。 -抗压能力强，有责任心，具备良好的沟通表达与团队协作意识。 4、行业热情：热爱游戏行业，对 AI 技术在游戏中的创新应用有浓厚兴趣，愿意在该领域长期发展。"
+    },
+    {
+      "externalId": "portal-feishu-7669701442051393838",
+      "title": "【2027届秋招】Unity客户端开发工程师（系统）-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669701442051393838/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、负责移动端 MOBA 游戏客户端的系统框架与工程基础设施建设，包括 UI 框架、资源管理、配置系统、热更新机制、编辑器工具链等模块的设计与开发； 2、参与客户端工程化建设，承担通用组件与自动化工具的抽象与实现，提升项目研发效率与代码复用水平； 3、参与客户端架构治理与质量体系维护，包括模块解耦、依赖梳理、代码重构、性能与内存问题的系统化定位与修复； 4、与项目内各业务开发团队、TA、服务器及工具组密切协作，识别共性技术需求，制定通用技术方案并推动落地。\n\n岗位要求:\n1、全日制本科及以上学历，计算机科学、软件工程及相关专业，具备扎实的计算机基础与良好的编程能力； 2、熟练掌握 C# 或 Lua，具备清晰的代码结构和模块化设计意识，关注代码可读性、可维护性与可扩展性； 3、掌握常用数据结构与算法，具备较强的逻辑分析与问题归纳能力，能够从具体业务需求中提炼通用技术方案； 4、有 Unity3D 项目开发经验，了解 Unity 生命周期、UGUI、Prefab、Asset 等常用模块，对引擎底层机制（资源加载、序列化、脚本生命周期管理等）有一定认知； 5、了解游戏客户端系统框架，对以下至少两个方向有基础认知或实践：UI 框架设计（如 MVC、MVVM）、资源管线（AssetBundle、Addressables、依赖管理）、Lua 热更新机制、配置表驱动开发、编辑器扩展； 6、对移动端性能与内存治理有一定认识，了解 Draw Call、GC、内存管理、包体优化等基础概念，有实际性能分析或优化经验者优先； 7、具备良好的沟通能力与技术文档撰写习惯，能够清晰表达设计方案并推动跨团队技术协作； 8、对 AI 辅助开发工具（如代码生成、静态分析、自动化测试等）有学习热情，有相关使用或实践经历者优先。 加分项 1、有长期维护的个人项目或开源贡献，对项目架构设计有自己的理解和总结； 2、有编辑器工具或内部开发工具的实际开发经验，且工具被团队成员实际使用； 3、了解 CI/CD、自动化构建、静态检查或代码生成等技术，有相关搭建或使用经验； 4、有中大型项目的代码重构或模块解耦实践经验； 5、了解 Lua 热更新方案（如 XLua、ToLua、sLua），有实际项目使用经验； 6、熟悉 Python、Shell 等胶水语言，具备脱离 Unity 编辑器独立开发辅助工具的能力； 7、有 AI 相关项目、Agent 或大模型调用经验，对 AI 在工程效率领域的应用有实践或思考。"
+    },
+    {
+      "externalId": "portal-feishu-7669699688718911785",
+      "title": "【2027届秋招】AI 应用开发工程师（游戏性能与研发效能方向）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669699688718911785/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "面向大型移动游戏，建设 AI 驱动的性能工程体系。你将把大模型、Agent、数据分析和工程工具接入游戏研发流程，围绕内存、卡顿、功耗建立“提前发现回归—快速定位根因—持续挖掘优化机会”的闭环。 岗位不以模型训练或性能报表为主：一方面通过自动化防守降低高频版本的性能回归风险，另一方面从线上数据、调用堆栈、代码和资源中挖掘优化机会。 岗位职责 1. 参与游戏性能分析平台建设，将 RAG、Agent、Tool Calling 等能力接入代码、性能数据、测试任务和研发知识库。 2. 建设提交、每日巡检、版本准入和线上灰度等性能防线，实现风险识别、测试推荐、异常检测、回归归因和告警自动化。 3. 分析性能指标、Profiler、调用堆栈、日志和版本变更，辅助定位代码、资源、配置、SDK 或引擎问题。 4. 从线上数据和历史案例中挖掘高收益优化点，围绕 GC、资源生命周期、渲染、脚本和线程耗时开展实验与收益验证。 5. 建设可评估、可观测、可回溯的 AI 工作流，并将分析经验沉淀为规则、工具和知识。 6. 与客户端、引擎、测试、数据及业务团队协作，推动分析结论落地和同类经验复用。\n\n岗位要求:\n1. 计算机、软件工程、人工智能等相关专业，本科及以上学历。 2. 具备良好的 Python 以及 C++、C# 中至少一种语言的编程和系统集成能力。 3. 熟悉游戏研发流程和 Unity、Unreal 等主流游戏引擎，有实际游戏开发经历。 4. 有 Agent、LLM 应用或研发效能工具实践，理解 Prompt、Tool Calling、RAG 等技术。 5. 熟练使用 Codex、Claude Code 等 AI 编程工具，能够独立完成原型或工具开发。 6. 具备问题抽象、数据验证和跨策划、美术、程序、QA 协作能力，对游戏性能优化有浓厚兴趣。 加分项 - 有 AI 应用、代码分析或研发工具相关项目、实习或竞赛经历。 - 接触过 Spark、Presto/Trino、ClickHouse 等数据工具，或有大规模日志分析经验。 - 了解 Android、iOS 移动端开发，有完整游戏项目或 Game Jam 经历。 - 使用过 Unity Profiler、Memory Profiler、Perfetto、Simpleperf 等性能工具。 - 有大规模日志分析经验，或在 GC、内存、渲染、资源、帧率、功耗等方向有实践。 你将获得 - 参与大型移动游戏从研发提交、自动测试到线上运行的完整性能链路。 - 将 AI 从原型落地到生产流程，学习工具、评测和工程闭环建设。 - 在导师指导下参与真实问题定位与优化，建立游戏客户端、数据和 AI 应用的交叉能力。 - 面向明确业务结果工作：更早发现回归、更快定位根因，并取得可量化的优化收益。"
+    },
+    {
+      "externalId": "portal-feishu-7669698572300044590",
+      "title": "【2027届秋招】海外广告投放",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669698572300044590/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责Facebook、Google等海外广告渠道投放，通过数据监控等对投放效果进行分析并优化； 2. 了解市场&区域目标，制定定制化广告投放策略，达成项目期望； 3. 负责市场洞察，熟悉市场动态，掌握竞品信息。\n\n岗位要求:\n1. 大学本科及以上学历，专业不限； 2. 英语听说读写能力良好，具备其他小语种特长优先； 3. 具备良好的数据敏感度和数据分析能力，能够独立分析并解决问题； 4. 热爱游戏行业，沟通表达逻辑清晰，责任心强，具备良好的团队合作精神； 5. 外语专业，有广告投放或数据分析的相关实习优先。"
+    },
+    {
+      "externalId": "portal-feishu-7669697458340317467",
+      "title": "【2027届秋招】海外欧美社区运营",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7669697458340317467/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责： 1.熟悉游戏市场动态，了解各大海外社区/社群，以及各项规划并执行，能够针对重点社区做专属运营及内容规划; 2.负责各社区/社群渠道/网站操作运营，善于利用名类社区/社群网站运营工具(Facebook、Youtube等渠道); 3.负责游戏外社区/社群活动策划执行，每月策划及举办社区/社群活动，能够配合投放、市场及游戏运营补充用户视角及社区/社群信息; 4.了解KOC生态搭建与培养，并能够持续完成长线运营(需要进行数据复盘，签约筛选，并且能与产品运营合作进行游戏内推广)； 5.收集竞业社区/社群活动资讯，能独立作业善于团队沟通。\n\n岗位要求:\n职位要求: 1.2027年毕业，大学本科及以上学历，专业不限; 2.英语或俄语能力良好，能作为工作语言优先; 3.对欧美卡牌 RPG 游戏有浓厚兴趣，深度了解此类游戏的玩法、文化及市场动态，是资深玩家优先。 4.熟练使用办公软件，具备较强的数据分析能力，能够通过数据洞察社区运营情况； 5.对欧美主流社媒平台有深刻理解，熟悉社媒操作。"
+    },
+    {
+      "externalId": "portal-feishu-7668613146092783923",
+      "title": "【2027届秋招】场景概念设计师-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668613146092783923/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、负责MOBA类游戏内场景原画设计； 2、负责道具，地表，展示场景等原画设计； 3、配合美术负责人，尝试各类场景概念预演。\n\n岗位要求:\n1. 美术相关专业本科及以上学历； 2. 理解MOBA竞技底层逻辑与45度俯视角下游戏场景设计需求 3. 良好的审美能力 4.熟练掌握Photoshop、Painter等绘图软件，一定的3D辅助制作和搭建能力，手绘能力强； 5.可以较好的适应各种设计风格和题材的变化； 6.基本功扎实，具备优秀的造型能力、设计能力和色彩控制能力； 7.有很强的责任心，善于沟通，工作投入度高，配合团队完成目标； 8.有很强的学习能力，主动研究或学习新的技术运用到工作中； 9.熟练使用AI能力拓展设计边界和提高细化效率，熟练掌握 Banana，Stable Diffusion（WebUI/ComfyUI） 节点工作流及 Midjourney。 10.热爱游戏行业，热爱竞技类游戏。"
+    },
+    {
+      "externalId": "portal-feishu-7668576434755897642",
+      "title": "【2027届秋招】导演-自走棋",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668576434755897642/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责游戏CG、宣传视频、剧情动画、英雄展示、商业化内容等项目的分镜设计与视觉叙事。 2.根据文案、剧本及项目需求，完成镜头设计、节奏规划、构图设计及故事表达。 3.运用导演思维设计镜头语言，包括景别、机位、运镜、镜头节奏及情绪表达。 4.与动画、特效、角色、场景、美术及视频团队协同，推动分镜方案高质量落地。 5.使用AI创作工具（Seedance、Runway、Kling、Pika、Midjourney、ComfyUI等）辅助完成镜头预演（Previs）、动态分镜及创意探索，提升创作效率。 6.持续关注影视、动画、游戏CG及AI创作领域的新技术与新趋势，不断优化视觉表现。\n\n岗位要求:\n1.本科及以上学历，美术、动画、数字媒体、影视、游戏设计等相关专业。 2.扎实的美术基础，具备良好的构图、透视、光影及镜头表现能力。 3.具备较强的故事表达能力，能够通过画面讲述完整、有感染力的故事。 4.理解影视导演语言，熟悉景别、镜头衔接、节奏控制及视觉叙事。 5.熟悉动画运动规律，能够设计具有节奏感和表现力的动态镜头。 6.熟练使用 Photoshop、Storyboard Pro、Blender 等创作工具。 7.熟悉至少一种AI创作工具，并能够将AI融入分镜设计及动态预演流程。 8.良好的沟通能力、学习能力和团队合作意识。 我们期待你具备以下核心能力 导演能力。 1.能够理解剧本意图，并转化为具有感染力的镜头语言。 2.熟悉电影、动画、游戏CG的镜头设计及视觉节奏。 3.能够独立完成完整分镜方案及镜头规划。 动画能力 1.理解动画运动规律及时间节奏。 2.能够设计角色表演、镜头运动及关键动作。 3.对镜头切换、镜头衔接及情绪表达有较好的把控能力。 设计能力 1.具备优秀的构图、造型、色彩及空间设计能力。 2.能快速完成角色、场景及镜头概念设计。 3.能够兼顾视觉美感与游戏项目落地需求。 AI创作能力 1.熟悉 Midjourney、Flux、Stable Diffusion、ComfyUI 等AI视觉工具。 2.熟悉 Seedance、Runway、Kling、Pika 等AI视频工具。 3.能够利用AI完成分镜探索、动态预演、镜头迭代及视觉方案验证。 4.对AI工作流有一定理解，能够结合传统设计流程提升创作效率。 加分项 1.有动画短片、游戏CG、影视分镜或漫画创作经验。 2.熟悉After Effects、Premiere、DaVinci Resolve等后期软件。 3.有动画导演、独立动画、Game Jam或个人作品集经历。 4.对镜头调度、角色表演、摄影语言有深入研究。 5.有AI视频创作、AI动画生成或完整AI工作流实践经验。 简历投递要求 请附上以下内容： 1.分镜作品集 2.动态分镜作品 3.剧情或CG镜头设计案例 4.AI辅助创作案例（包含创意过程、Prompt、迭代过程及最终成果） 5.如有动画短片、独立创作、商业项目请一并提供 我们更关注你的导演思维、视觉叙事能力、镜头表达能力，以及AI时代下的创作方法，而不仅仅是单张画面的完成度。"
+    },
+    {
+      "externalId": "portal-feishu-7668574061979486474",
+      "title": "【2027届秋招】角色概念设计师-自走棋",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668574061979486474/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与游戏项目视觉风格探索，与策划、美术团队共同完成世界观视觉设定。 2.负责游戏角色、场景、道具等概念设计，输出高质量设计方案及视觉提案。 3.运用AI创作工具（Midjourney、Flux、Stable Diffusion、ComfyUI、Seedance等）进行视觉探索、方案迭代及设计提效。 4.根据项目需求，快速完成不同风格的概念设计，包括但不限于写实、二次元、卡通、幻想等。 5.配合角色原画、场景原画、3D、美术特效等团队，持续优化设计方案，保证最终落地效果。 6.关注游戏美术及AI创作前沿趋势，积极探索新的设计流程和创作方式。\n\n岗位要求:\n1.本科及以上学历，美术、视觉传达、数字媒体、动画、游戏设计等相关专业。 2.扎实的美术基础，具备良好的造型、色彩、构图及设计能力。 3.热爱游戏，对游戏视觉表现和设计趋势保持敏锐观察。 4.熟练使用 Photoshop、Blender 等常用设计软件。 5.熟悉至少一种AI创作工具，并能够将AI融入设计流程，提高创作效率。 6.具备优秀的学习能力、沟通能力和团队协作意识。 7.对设计品质有追求，善于思考并乐于持续优化作品。 加分项（满足任意一项即可） 1.熟悉 Midjourney、Flux、Stable Diffusion、ComfyUI、Seedance、Runway 等AI工具，并有完整作品案例。 2.有角色、场景、IP设定、世界观设计等相关作品。 3.能独立完成从创意发想到视觉提案的完整设计流程。 4.熟悉3D辅助设计（Blender、Cinema4D等）。 5.有游戏Demo、Game Jam、商业项目或个人独立创作经历。 6.了解LoRA训练、ControlNet、风格一致性、AI工作流搭建等相关技术。 我们期待这样的你 热爱游戏，也热爱创造。 对新技术保持好奇，愿意尝试AI带来的设计变革。 不局限于执行，更愿意思考\"为什么这样设计\"。 既有创意，也有把创意落地的能力。 简历投递要求 请附上以下内容： 1.个人作品集（PDF或网页链接）。 2.角色概念设计作品。 3.场景概念设计作品。 4.AI辅助创作案例（包含Prompt、迭代过程、最终成果更佳）。 5.如有个人项目、独立游戏、商业作品请一并提供。"
+    },
+    {
+      "externalId": "portal-feishu-7668537666107984154",
+      "title": "【2027届秋招】特效原画设计师-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668537666107984154/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 根据皮肤形象，绘制技能特效设计稿； 2. 参与管线内特效设计的落地和协作，确保技能特效实现设计效果； 3. 配合导师探索新的特效表现效果和设计；\n\n岗位要求:\n1. 能操作PS等软件绘制设计特效; 2. 思路开阔，爱好广泛，性格开朗，善于沟通和表达; 3. 热爱游戏，了解MOBA游戏者优先；"
+    },
+    {
+      "externalId": "portal-feishu-7668257490513070378",
+      "title": "【2027届秋招】全栈开发工程师",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668257490513070378/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 前端需求开发：负责Web端页面开发，参与需求评审、技术方案设计及代码实现； 2. 全栈能力拓展：在熟悉业务后，参与Node.js服务端开发，完成前后端联调及接口对接； 3. 业务梳理与沉淀：系统整理现有前端业务模块、技术文档及代码规范，输出可维护的业务知识库 ； 4. 技术基础建设：参与前端组件库、工具链的搭建与优化，提升团队开发效率。\n\n岗位要求:\n1. 扎实的HTML/CSS/JavaScript基础，熟悉ES6+语法； 2. 熟悉至少一种主流前端框架（React/Vue）； 3. 了解Node.js，有全栈开发意愿和学习能力； 4. 熟悉TypeScript、前端工程化、了解数据库基础知识； 5. 逻辑清晰，具备文档整理和知识沉淀能力； 6. 主动性强，能快速理解业务并推动落地。 加分项 1. 有个人技术博客/GitHub项目/Vibe Coding经验优先。"
+    },
+    {
+      "externalId": "portal-feishu-7668255125144176937",
+      "title": "【2027届秋招】后端开发工程师（IT信息化）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668255125144176937/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与公司内部各类信息化系统的后端开发，包括但不限于自研系统、外采系统代码二次开发； 2、在导师指导下理解业务需求，参与需求分析、技术方案设计、任务拆分及工作量评估，按计划完成开发、测试和上线交付； 3、基于 Java、Spring Boot 完成业务接口、数据模型、权限、流程及系统集成等后端功能开发； 4、配合产品、前端及业务部门完成中后台功能建设，保障业务流程的准确性、系统稳定性和使用体验； 5、参与线上问题排查、性能优化和系统维护，持续提升代码质量、系统可维护性及交付效率； 6、参与项目技术体系和研发规范建设，完善开发工具与技术文档，参与团队技术分享； 7、逐步建立业务 Sense，能够在指导下独立完成边界清晰的业务模块开发； 8、根据项目安排，参与 AI 基建及 AI 应用在企业信息化场景中的探索与落地。\n\n岗位要求:\n1、2027届本科及以上学历在校生，计算机相关专业； 2、至少具备一段 Java 后端开发实习经历，能够清晰说明本人承担的工作、技术方案及实际产出； 3、Java 基础扎实，了解集合、多线程、JVM等基础知识，具备良好的编码习惯； 4、熟悉 Spring Boot、MySQL、REST API、Git 等常用开发技术和工具，具备实际项目开发经验； 5、掌握常见数据结构与算法，了解操作系统、计算机网络、数据库及基础安全知识； 6、具备良好的业务理解、逻辑分析和问题解决能力，能够与产品、前端及业务部门顺畅协作； 7、主动性和责任心强，能够持续学习新技术、新工具，并在指导下推动任务按质量完成； 8、具有 To B、中后台、企业信息化、低代码平台或系统集成开发经验者优先； 9、熟悉 Redis、消息队列、Docker、微服务等技术者优先； 10、具备大模型应用、RAG、Agent、模型服务接入等 AI 实习或高质量项目经验者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7668253932858362118",
+      "title": "【2027届秋招】Agent开发工程师（平台）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668253932858362118/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与 AI Agent 平台及智能工作工具的建设，探索 AI 在游戏研发和日常工作中的应用； 2. 参与 Agent 工作流、上下文工程、知识检索、工具调用和自动化任务等能力的研发与优化； 3. 参与 Agent、Skill、插件及 AI 应用的接入、调试、发布和复用，推动优秀实践沉淀为标准化能力； 4. 推动 AI 能力与项目管理、文档、消息及研发工具等现有系统集成，融入真实业务流程； 5. 参与模型调用、运行追踪、效果评测和成本分析，持续提升 Agent 的稳定性、易用性和任务完成效果； 6. 跟进大模型、Agent 框架和 AI 编程工具等前沿技术，参与技术调研、原型验证与工程化落地； 7. 与产品、研发、TA、引擎、工具链等团队协作，理解实际问题并提供 AI Native 的解决方案。\n\n岗位要求:\n1. 本科及以上学历，计算机、软件工程、人工智能等相关专业优先； 2. 具备扎实的编程基础，熟悉 Go、Python等主流编程语言，具备良好的代码习惯和工程意识； 3. 了解数据结构、算法、操作系统、计算机网络、数据库等基础知识，能够理解并参与平台型系统的设计与开发； 4. 了解服务端开发基础，熟悉 HTTP/gRPC API、数据库、缓存、消息队列、任务调度、权限控制、日志监控等常见后端开发概念；有 Go 服务端开发经验优先； 5. 对大模型、AI Agent、开发者工具和智能工作流有浓厚兴趣，并有相关工具的实际使用经验； 6. 了解 Prompt Engineering、LLM API、RAG、Function Calling / Tool Use、Agent 工作流等基本概念；课程、实习或个人项目经验均可； 7. 具备较强的学习能力、问题拆解能力和动手能力，能够完成方案分析、原型开发和效果验证； 8. 具备良好的沟通协作能力，愿意深入游戏研发及不同业务流程理解真实需求，并推动 AI 能力在实际场景中落地。 加分项 1. 了解 Agent SDK、LangChain、AutoGen、MCP、RAG、上下文工程、Prompt 编排、多 Agent 协作或自动化工作流等相关技术者优先； 2. 了解 Agent 调试、运行追踪、效果评测、日志分析、Token 成本分析或可观测性建设者优先； 3. 对 AI Native 产品、人机协作方式、Agent 工作台形态或智能研发工具有自己的思考或实践。"
+    },
+    {
+      "externalId": "portal-feishu-7668250253573572915",
+      "title": "【2027届秋招】游戏开发工程师-Lovania",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668250253573572915/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与游戏客户端与服务器端核心系统、功能的设计、开发与优化； 2、负责物理系统、动画系统、工具链、游戏性能等某一模块的开发与优化； 3、与策划、美术、测试等团队紧密合作，完成功能开发与联调； 4、学习和研究游戏开发新技术，推动项目技术升级。\n\n岗位要求:\n1、熟练掌握至少一门主流程开发语言（C++ 或 C# 优先）； 2、扎实的计算机基础，深入理解操作系统、内存管理、多线程，或具备优秀的数据结构与算法基础； 3、具备良好的数学基础，特别是线性代数、三维几何、微积分； 4、了解客户端渲染管线、性能优化或客户端引擎； 5、具备出色的钻研精神、系统思维和问题分解能力；具备良好的适应能力和抗压能力； 6、有计算机竞赛获奖经验、实习经验，或有高质量技术博客/GitHub项目者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7668246673966385451",
+      "title": "【2027届秋招】平台运维工程师（AI向）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668246673966385451/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责平台业务的部署、新版本的发布、服务端的变更； 2. 负责与平台运营的日常沟通交流，接受并处理项目组提出的运维需求； 3. 负责日常运维工作的自动化、工具化建设； 4. 负责平台业务运行状况监控，及时处理游戏运行中出现的故障，保证游戏服务的正常提供。\n\n岗位要求:\n1. 专业不限，计算机、软件工程、信息管理类优先，本科或以上学历； 2. 熟悉linux操作系统，熟练使用各种linux日常命令，熟悉shell、python、golang等至少一种语言； 3. 熟悉使用mysql数据库，熟悉日常的sql语句，能够对数据库进行管理、配置、部署； 4. 了解zabbix、prometheus等至少一种开源监控方案； 5. 了解docker容器，k8s/kubernetes容器编排工具； 6. 了解各类公有云服务器、网络、安全、存储等设备和服务； 7. 具有良好文档编写和文字表达能力，以及独立思考并解决问题的能力； 对AIOps、AIAgent、LLM工程等AI技术在运维领域的应用有基础了解或浓厚兴趣，愿意探索用AI提升运维效率（如智能告警、故障根因分析、自动化修复等）； 9. 具有良好的沟通能力和团队合作精神。"
+    },
+    {
+      "externalId": "portal-feishu-7668245171318458670",
+      "title": "【2027届秋招】信息安全工程师（AI向）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668245171318458670/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1、参与业务需求的安全设计与风险评估，指出方案设计中的网络、应用、数据等方向的安全问题，主动挖掘和分析潜在安全风险，提供最佳安全解决方案并推动落地； 2、参与安全团队基础安全、应用安全、业务安全的基础设施建设。\n\n岗位要求:\n1、本科及以上学历在读，计算机/信息安全等相关专业； 2、对攻防、AI安全领域有浓厚兴趣，了解基础的Web渗透、漏洞挖掘的相关知识； 3、理解传统网络安全攻防基础，了解云计算基础核心概念； 4、熟悉至少一种编程语言（Go/Python/Java）； 5、学习能力强、态度积极，具备良好的沟通能力与团队协作意识。 加分项 1、有CTF比赛参与经历、在校AI/安全相关项目经验、国内外SRC发布过高危漏洞者优先； 2、有相关技术博客、开源贡献者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7668243937878870323",
+      "title": "【2027届秋招】数仓开发工程师（AI向）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668243937878870323/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与游戏业务数据仓库的设计、开发与维护，构建高质量的离线/实时数据模型； 2. 负责游戏核心数据指标体系的建设，包括用户行为、营收、留存、运营活动等场景； 3. 参与数据平台工具链的开发与优化，提升数据研发效率和数据质量； 4. 参与 AI Agent 在游戏数据场景中的应用探索，构建智能数据分析助手、自动化数据治理等 Agent 应用； 5. 与游戏策划、运营、分析团队紧密协作，深入理解业务并提供数据解决方案。\n\n岗位要求:\n1. 2027届毕业生，计算机、软件工程、数据科学、统计学等相关专业本科及以上学历； 2. 熟悉 SQL，了解至少一种大数据技术栈（Hive / Spark / Flink / Doris / ClickHouse 等）； 3. 了解 Python 或 Java/Scala，具备良好的编程习惯； 4. 对数据仓库建模理论有基本认知（维度建模、Data Vault 等）。 加分项（满足其一即可） 1. 有 AI Agent 开发经验，熟悉 LangChain / LlamaIndex / CrewAI / AutoGen 等框架，或有 MCP 工具调用、Function Calling 相关实践； 2. 有 LLM 应用开发经验，了解 Prompt Engineering、RAG、知识库构建等方向； 熟悉游戏行业，对游戏数据场景有理解（如玩家行为分析、经济系统建模、A/B 测试等）； 3. 有数据平台/数据产品开发经验，如任务调度、数据质量监控、元数据管理等； 在 ACM / Kaggle / 开源社区有活跃贡献。"
+    },
+    {
+      "externalId": "portal-feishu-7668242771564251435",
+      "title": "【2027届秋招】音效设计师",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668242771564251435/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责游戏音效资源制作，从概念设计、资源生产、中间件整合到引擎集成闭环交付； 2. 制定音频设计方案与音乐、美术、导演、策划等协作，完成不同场景、需求下的听觉体验设计； 3. 使用录音棚完成录音、Foley 音效设计、视频混音等工作； 4. 将 AI 工具融入音效设计与生产流程，利用 AI 辅助创意构思、素材生成、批量处理及文档撰写、流程优化，提升交付效率与品控能力； 5. 参与产品测试，撰写分析文档，为音频设计的优化提出反馈及建议。\n\n岗位要求:\n1. 有扎实的音频知识基础，精通主流 DAW 操作，能够熟练运用素材库、合成器与效果器链高效、稳定产出特色化音效素材； 2. 熟练掌握第三方音频中间件（如 FMOD、Wwise、Criware），熟悉游戏引擎（Unity / Unreal Engine）基础操作； 3. 具备良好的抗压能力与团队协作意识； 4. 英语能力、AI应用优秀者优先（CET-6 或同等水平）。"
+    },
+    {
+      "externalId": "portal-feishu-7668241663227578678",
+      "title": "【2027届秋招】后端开发工程师（AI向/web平台）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668241663227578678/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "我们希望寻找对技术充满好奇、学习能力强，并善于借助 AI 解决真实问题的同学。你将参与中台 Web 平台及 AI 应用能力建设，与团队共同探索 AI 时代的软件研发方式。 1. 参与中台 Web 后端服务的需求分析、方案设计、开发、测试和持续优化，完成从问题理解到产品交付的完整过程； 2. 参与平台架构和通用能力建设，持续提升系统的可靠性、可扩展性、可维护性及研发效率； 3. 将大模型能力与业务场景结合，参与 Agent、RAG、企业知识库、Workflow、Tool Calling、MCP 等 AI 应用的设计与落地； 4. 熟练运用 AI 辅助需求分析、技术调研、编码、测试、调试和文档编写，并能够判断、验证和改进 AI 生成结果； 5. 探索 AI 在研发提效、内容处理、智能运营和数据分析等场景中的应用，快速完成原型验证并推动有价值的方案落地； 6. 与产品、前端、测试及其他技术团队紧密协作，共同分析问题、权衡方案并高质量完成交付。\n\n岗位要求:\n1. 2027届毕业生，本科及以上学历，专业不限； 2. 具备扎实的计算机基础和良好的编程能力，理解数据结构、算法、操作系统、计算机网络及数据库等基础知识； 3. 熟悉至少一门编程语言，具备后端开发或完整项目实践；有 Golang 使用经验者优先，但不以语言语法熟练度作为唯一判断标准； 4. 能够将复杂问题拆解为可执行步骤，快速学习陌生领域，并通过实验、数据或工程手段验证自己的判断； 5. 能够熟练使用 AI 编程工具解决真实问题，并清楚说明问题拆解、上下文组织、方案选择、结果验证和迭代优化的过程； 6. 对大模型及 AI 应用技术保持热情，愿意持续探索 Agent、RAG、Workflow、Tool Calling、MCP 等方向；不要求已经熟悉所有概念； 7. 具备良好的沟通协作、独立思考和复盘总结能力，对结果负责，乐于接受挑战。 加分项 1. 使用 AI 独立或主导完成过具有实际价值的项目，能够展示成果并深入说明关键决策、技术取舍及验证过程； 2. 有 Agent、RAG、MCP、企业知识库、向量数据库、大模型评测或 AI 应用平台相关实践； 3. 有 Golang 后端、分布式系统、高并发、高可用或性能优化实践； 4. 熟悉 MySQL、Redis、Kafka、Elasticsearch、MongoDB、Docker、Kubernetes、Prometheus 等技术中的一种或多种； 5. 有高质量开源项目、技术竞赛、科研课题或互联网公司实习经历； 6. 具备良好的工程习惯，重视代码质量、测试、可观测性、安全性及持续交付。"
+    },
+    {
+      "externalId": "portal-feishu-7668241185568246054",
+      "title": "【2027届秋招】Agent开发工程师（FDE）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668241185568246054/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与 AI 辅助游戏开发体系的建设与落地，协助设计 AI 开发流程、Agent 工作流、编程工具链等，探索 AI 在游戏研发中的应用场景； 2. 参与 AI 编程配套工具的研发与优化，包括上下文工程、Agent Skill / 工具接入、Prompt 优化、Token 成本分析、调试体验改进等方向； 3. 配合游戏项目组和工具团队，将 AI 能力接入现有研发流程、工具管线或引擎能力中，提升开发效率与协作体验； 4. 跟进大模型、AI 编程工具、Agent 框架等前沿技术，参与技术调研、原型验证和工程化落地； 5. 与产品、研发、TA、引擎、工具链等同学协作，理解游戏开发中的实际问题，并尝试用 AI Native 的方式提供解决方案。\n\n岗位要求:\n1. 本科及以上学历，计算机、软件工程、人工智能、游戏开发等相关专业优先； 2. 具备扎实的编程基础，熟悉至少一门主流编程语言，如 C#、C++、Python、TypeScript 等；有 Unity、Unreal 或游戏开发项目经验者优先； 3. 了解常见软件工程基础，包括数据结构、算法、操作系统、网络、设计模式等，有良好的代码习惯和工程意识； 4. 对大模型、AI Agent、AI 编程工具有浓厚兴趣，使用过 Claude Code、Cursor、Copilot、ChatGPT、通义灵码等工具者优先； 5. 了解 Prompt Engineering、RAG、LLM API 调用、Agent 工作流、工具调用等概念，有相关课程项目、实习项目或个人项目经验者优先； 6. 具备较强的学习能力、问题拆解能力和动手能力，愿意深入游戏研发流程，探索 AI 与游戏开发结合的新范式； 加分项 1. 熟悉 Claude Agent SDK、LangChain、AutoGen、MCP、RAG、Function Calling / Tool Use 等技术； 2. 有 Harness Engineering、Context Engineering、Agent Skill 设计、Prompt 编排经验； 3. 对游戏研发流程有理解，例如客户端开发、服务器开发、资源管线、编辑器扩展、自动化测试、构建发布等； 4. 对 AI Native 产品形态、开发者工具、编程助手、智能工作流有自己的思考和实践。"
+    },
+    {
+      "externalId": "portal-feishu-7668238439854967049",
+      "title": "【2027届秋招】AI测试工程师（web平台）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668238439854967049/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "我们希望招聘的不是只负责执行测试用例、发现产品缺陷的传统测试工程师，而是具备工程思维、质量意识和技术潜力的质量工程人才； 你将从业务测试和交付质量保障出发，逐步参与测试工程能力、AI 测试能力、质量度量与治理机制的建设。长期来看，你将有机会成长为质量体系的构建者，以及能够深入业务现场、结合工程能力解决复杂质量问题的质量领域 FDE（Forward Deployed Engineer）； 作为校园招聘岗位，我们不要求你已经具备成熟的质量体系建设经验，但希望你具备良好的技术基础、问题分析能力和持续学习潜力。 岗位职责： 一、业务质量保障 1. 参与产品需求分析、技术方案评审和测试方案设计，识别需求中的缺失、歧义、冲突及潜在质量风险； 2. 负责功能、接口、兼容性、性能、稳定性等测试工作，保障需求按计划、高质量交付； 3. 结合业务链路、系统架构和用户场景，设计有效的测试策略，而非简单执行既定用例。 二、测试工程能力建设 1. 参与接口自动化、UI 自动化、测试数据构造、流量回放、质量巡检等测试工具或平台的建设； 2. 通过脚本、工具和工程化方法减少重复劳动，提升测试覆盖率、执行效率和结果可信度； 3. 参与测试资产、测试标准和工程实践的沉淀，使测试能力能够被复用和持续演进。 三、AI 测试能力探索 1. 探索大模型及 Agent 在需求分析、测试设计、自动化生成、测试执行、缺陷分析等场景中的应用； 2. 参与 AI 测试工具、Skill、Agent 或 Harness 能力的设计、开发、评测和优化； 3. 建立对 AI 生成结果的准确性、稳定性、采纳率、误报率等效果评估意识，推动 AI 能力从 Demo 走向实际业务应用。 四、质量分析与治理 1. 参与交付质量、线上问题、缺陷分布和研发过程数据的分析，识别质量问题的共性规律和根因； 2. 协同产品、研发及相关团队，通过流程、规范、工具和技术方案推动问题解决； 3. 逐步参与质量指标、风险识别机制和质量治理体系建设，推动质量保障从交付末端向研发全流程延伸。\n\n岗位要求:\n1. 2027届本科及以上学历，计算机、软件工程、人工智能、信息安全、数学等相关专业优先； 2. 具备扎实的计算机基础，了解数据结构、计算机网络、操作系统、数据库及软件工程基本知识； 3. 掌握至少一门编程语言，如 Python、Java、JavaScript、Go、C++ 等，能够独立完成基础编码和问题调试； 4. 具备良好的逻辑分析能力，能够将复杂问题进行拆解、定位和验证； 5. 对软件质量、工程效率或 AI 技术有兴趣，愿意深入理解系统实现，而不满足于完成表面测试； 6. 具备较强的责任意识、沟通协作能力和主动学习能力，能够推动问题形成闭环； 7. 能够接受从业务测试实践出发，逐步向测试工程、AI 测试及质量治理方向发展。 加分项 1. 有测试开发、软件开发、AI 应用、数据分析或开源项目实践； 2. 熟悉接口测试、自动化测试、持续集成、性能测试或稳定性测试中的一种或多种； 3. 使用过大模型 API、Agent、RAG、MCP、Prompt Engineering 等相关技术，并有实际项目经验； 4. 了解软件研发流程、DevOps、可观测性、微服务或云原生相关技术； 5. 参加过程序设计、软件测试、人工智能、数学建模、CTF 等竞赛； 6. 有较强的问题意识，能够主动发现现有流程或方案中的不足，并尝试通过技术手段解决。 我们看重的潜力 1. 质量意识，不仅关注功能是否正确，也关注系统是否稳定、过程是否可靠、问题是否能够被长期解决； 2. 工程思维，愿意通过代码、工具和系统化方法解决重复性、规模化问题； 3. 分析能力，能够从现象出发定位根因，而不是停留在问题表面； 4. AI 素养，理解 AI 能力的价值与边界，能够对生成结果进行验证、评测和持续优化； 5. 业务理解，能够进入真实业务场景，在约束条件下设计可执行的质量解决方案； 6. 成长潜力，愿意从测试执行者逐步成长为质量工程师、质量体系构建者和质量领域 FDE。 发展方向，入职后，你将根据个人能力和兴趣，逐步向以下方向发展 1. 业务质量与复杂系统测试； 2. 测试开发与质量工程平台； 3. AI 测试 Agent 与 Harness； 4. 稳定性、性能与可靠性工程； 5. 质量度量、分析与研发过程治理； 6. 质量领域 FDE 与综合质量解决方案。"
+    },
+    {
+      "externalId": "portal-feishu-7668233992961689902",
+      "title": "【2027届秋招】美术TA-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668233992961689902/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. PCG算法研发与系统设计：参与程序化生成算法研发，覆盖地形、植被、建筑布局、道路河流等场景内容；协助前沿PCG技术方案的研究、技术验证与效果落地；配合团队落地生成内容的算法配置模块，确保结果可调、可控、可迭代； 2. PCG工具链开发与管线优化：参与程序化生成工具链的开发与维护，使用Houdini、UE5 PCG工具等进行地形、植被、建筑布局等内容的自动化生成系统设计与实现，优化美术生产管线； 3. 渲染与材质配合：为程序化生成资产配套PBR或风格化材质，调试引擎内光影与后处理，保障程序化场景的整体美感与主题一致性； 4. 跨程序协同：对接引擎程序，反馈渲染异常与PCG工具链问题，协同解决项目性能瓶颈； 5. 跨岗技术支持：对接模型/地编/特效美术，输出程序化资源制作规范文档，解答引擎导入、效果实现相关技术问题； 6. 技术沉淀：编写PCG技术白皮书、工具使用教程，参与美术团队培训，推动程序化工作流规范化。\n\n岗位要求:\n1. 本科在读，计算机、数字媒体技术、游戏开发、动画、图形学等相关专业优先； 2. 掌握1款主流引擎：Unity（URP/HDRP）或UE5，熟练材质编辑器、粒子系统； 3. 了解至少一种程序化生成工具（Houdini、UE5 PCG）； 4. 了解至少一款主流DCC软件（Maya/Blender/3ds Max/Substance Painter/PS），了解次世代PBR基础流程； 5. 基础代码：掌握Python脚本，能编写简单工具脚本，了解常用数据结构和算法原理； 6. 具备基础美术素养，对色彩、光影、构图有基本感知力，能理解美术效果需求； 7. 具备良好的沟通能力和团队协作精神，能作为美术与程序之间的桥梁。 加分项 1. 附带作品集（PCG生成示例、技术Demo、工具脚本、游戏Mod等）； 2. 有PCG相关项目实践经验（课程作业、毕业设计、个人项目）； 3. 具备图形学基础知识，能完成简单Shader开发； 4. 了解AI在程序化生成中的应用（如AI驱动场景生成、3D资产生成），或掌握Stable Diffusion/Midjourney等AI绘图工具辅助美术流程优化。"
+    },
+    {
+      "externalId": "portal-feishu-7668232964945217842",
+      "title": "【2027届秋招】服务器开发工程师-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7668232964945217842/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责游戏后端日常开发与版本迭代，根据业务需求完成功能设计与代码落地； 2.负责服务端性能调优、内部工具链研发、运维对接协同等相关工作； 3.保障服务端在高并发、高负载场景下稳定运行，持续优化服务表现，为玩家提供流畅的游戏体验。\n\n岗位要求:\n1.全日制本科以上学历，AI、计算机、软件工程等相关专业； 2.拥有扎实的计算机底层功底，具备数据结构、网络通信、操作系统、数据库等基础知识； 3.扎实的编程能力，熟练掌握C#、Go、Python 任一开发语言； 4.具备较强的问题排查与技术攻坚能力，团队协作意识良好，有较好的抗压能力； 5.热爱游戏开发，具备较强的主观能动性与责任心。 加分项 1.熟悉 Docker、K8s、Helm/Chart 等云原生技术，有容器化部署实践优先； 2.有游戏开发经验或实习经验优先； 3.熟悉 Git 基础操作，了解分支管理、代码提交、合并、冲突解决等常见协作流程。"
+    },
+    {
+      "externalId": "portal-feishu-7667891320506550534",
+      "title": "【2027届秋招】项目管理-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667891320506550534/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "我们是一家专注于游戏开发与运营的创新型企业，致力于为全球玩家带来高品质、富有创意和竞技性的游戏。现诚邀优秀的项目管理人才加入我们的团队，共同创造游戏的辉煌。本岗位将深度使用 AI Agent 参与项目协调与过程推进，以提升跨职能协作与交付效率。 1.项目目标与规划： 1）心怀热爱，追求极致，持续为全球玩家提供深刻而积极的游戏体验，不断丰富玩家的生活； 2）协助主创团队规划游戏世界蓝图，推动游戏愿景与策略的演变与落地； 3）确保游戏功能和产品的交付过程不偏离游戏愿景与策略的大方向； 4）基于核心团队决策的产品优先级及数据反馈，不断优化调整开发过程管理的支点； 5）将版本目标、依赖关系与优先级结构化为可执行任务，明确人与 AI Agent 的协作边界，保障推进方向一致。 2.过程管理与交付： 1）全面负责游戏项目研发管理工作，组织并执行需求整理、计划、开发、验收、测试的整个过程； 2）识别关键路径的风险问题，消除障碍，并提高交付效率，完善责任制度； 3）负责需求管理与详细计划制定，跟进执行推动项目进展，并定期总结； 4）以 AI Agent 为默认协作者，推动需求拆解、进度汇总、风险扫描、会议纪要与行动项跟踪、跨组催办与信息对齐； 5）设计并执行人机协作流程：定义 Agent 自主处理范围与人工介入门禁，对 Agent 输出进行校验与纠偏，对结果负责； 6）推动人工推进事务逐步标准化、流程化、可 Agent 化，持续提升团队交付效率。 3.团队协作与沟通： 1）协助职能经理，建立一支高素质的开发团队来落地游戏愿景； 2）负责接口其他相关部门工作，并合理安排档期； 3）推进团队内部的知识分享和知识管理； 4）为团队建立及时反馈的学习环境，帮助团队持续进步，并在各自领域取得成功； 5）建立人与 Agent、跨职能之间的清晰沟通机制，减少信息差与重复沟通，保障项目在统一节奏下推进。\n\n岗位要求:\n1.2027届本科及以上学历，计算机、软件、自动化等相关专业优先； 2.有独立思考能力，在现象背后有自己深入见解或独到观点； 3.清晰的逻辑思维和书面表达能力，英语听说读写能力优秀者优先； 4.具备 AI 学习意愿与实践习惯，了解常见 AI / Agent 工具与使用边界，能用于信息整理、数据分析、进度跟踪或效率提升； 5.能写清任务背景、目标、约束与验收标准，并指导 Agent 完成协调类事务；能对 Agent 输出进行校验、纠偏与责任闭环者优先； 6.具备基础代码与技术理解能力者优先（如了解基本编程概念/脚本能力，能阅读简单日志与接口文档，理解研发流程中的技术协作点）； 7.热爱游戏优先，尤其偏好 MOBA 类；对游戏体验细节敏感，对性能表现（如帧率、卡顿、加载、发热、网络波动等）有一定感知与判断能力者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7667889237337426202",
+      "title": "【2027届秋招】匹配策划-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667889237337426202/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 协助分析、迭代、改进和设计游戏中匹配系统相关功能。 2. 与算法同学合作，探索更多的匹配模块可前进方向 3. 负责匹配模块的数据监控和客诉跟进\n\n岗位要求:\n1. 2027届获得大学本科、硕士及以上学历，计算机、人工智能、统计学等专业优先； 2. 热爱游戏，有大量游戏尤其是竞技游戏经验者优先； 3. 逻辑能力强，抗压能力强；熟悉SQL和python, 有推荐算法功底, 对AI工具熟练掌握者优先考虑。"
+    },
+    {
+      "externalId": "portal-feishu-7667886610840062234",
+      "title": "【2027届秋招】新立绘设计师-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667886610840062234/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.按照角色皮肤设计，可以完成写实类气氛图/立绘插图。 2.能够完成立绘/插画的细节完善和设计优化。 3.应用AI等工具生成创意视频/短片故事CG。 4.根据策划文案，梳理创意想法脑暴报告文档。\n\n岗位要求:\n1.具备本科以上学历且有良好的美术基础，热爱学习和创作。 2.熟练掌握AIGC，PS，平板等绘画工具。 3.对ACG和AI漫剧有着浓厚的兴趣，并且有相关动态类作品（或个人IP静态作品）。 4.具备较强的表达欲，喜欢与人沟通，并喜好把自己的所想和作品介绍给他人。"
+    },
+    {
+      "externalId": "portal-feishu-7667885742328744218",
+      "title": "【2027届秋招】营销采购专员",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667885742328744218/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责 1.支持游戏市场宣发素材相关采购需求，包括平面设计、视频剪辑、KV延展、动画/CG等素材制作方向的寻源、询价、发包与交付跟进； 2.协助维护素材制作供应商资源，参与供应商信息整理、报价分析、能力评估及合作记录沉淀； 3.跟进素材制作项目进度，协调业务方、供应商、法务、财务等多方，推动合同、订单、验收、结算等流程顺利完成； 4.协助整理素材采购价格、交付周期、供应商表现等数据，支持价格基线、成本分析和供应商管理； 5.参与素材采购流程、台账、SOP等基础建设，提升需求响应和项目交付效率。\n\n岗位要求:\n任职要求 1.本科及以上学历，供应链管理、市场营销、广告传播、数字媒体、设计管理等相关专业优先； 2.对游戏行业、市场宣发、创意素材制作或采购工作有兴趣，愿意从基础采购执行和项目跟进做起； 3.具备较好的信息整理、数据分析和逻辑表达能力，熟练使用Excel、PPT等办公工具； 4.沟通清晰，执行力强，细心负责，能够主动跟进问题并推动结果； 5.学习能力强，能适应多任务并行和一定节奏的项目交付压力； 6.英语CET-6及以上，具备良好的英文读写能力。"
+    },
+    {
+      "externalId": "portal-feishu-7667884041329707290",
+      "title": "【2027届秋招】技术采购专员",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667884041329707290/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "岗位职责: 1.负责技术类如IT软硬件、云服务和大模型相关品类的采购工作，包括供应商资源拓展与管理、供应商开发与审核、价格谈判、合同订单管理，有效满足业务对技术类采购的需求； 2.协助收集与分析采购市场行情，熟悉采购品类的供应渠道和市场变化，确保业务交付和采购价格合理性，并形成品类洞察，参与制定采购策略； 3.参与供应商资源拓展、成本管理及供应商绩效考核与分级，协助搭建品类供应商管理体系； 4.跟进具体采购项目落地，与研发、财务、法务等内部部门协同，参与采购需求整合与端到端流程管理，保障交付时效与成本优势； 5.协助优化采购流程，探索用AI工具提升采购分析与执行效率。\n\n岗位要求:\n岗位要求: 1.本科及以上学历，2027届应届毕业生；计算机、软件工程、电子信息、供应链管理、经济管理等相关专业优先； 2.对游戏行业以及IT技术类采购领域有浓厚兴趣，了解大模型、云计计算等基础概念者优先； 3.具备较强的数据分析能力，熟练使用办公软件(Excel、PPT等)，有AI工具使用意识和能力； 4.良好的沟通协调与谈判潜质，有团队合作精神，具备较强的执行力； 5.学习能力强，思维敏捷，有内驱力，对创新与变化持积极态度； 6.工作积极主动，责任心强，诚信，具备良好的职业素养和一定的抗压能力。"
+    },
+    {
+      "externalId": "portal-feishu-7667881397869447430",
+      "title": "【2027届秋招】人才发展专员",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667881397869447430/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "职位描述 你将深度参与公司各项人才发展项目的策划与落地。作为连接学员、讲师与组织的重要纽带，你将在培训运营、课程研发、项目管理等维度获得一线实战历练。 岗位职责 1.校招人才发展项目运营：支持校招生培养项目的全流程落地，包括课程内容开发与迭代、讲师沟通与维护、培训现场实施、学员档案管理及学习资料整理归档，确保项目体验感与交付质量。 2.校招生群体连接与支持：持续关注校招生状态，敏锐识别群体融入、角色转换、专业成长等不同阶段的真实需求，灵活运用专业方法或工具，协同团队制定有针对性的解决方案，做他们成长路上的“陪伴者”。 3.多维度人才发展项目历练：除校招项目外，你还有机会参与专业力、领导力等其他人才发展项目的策划与落地，充分体验人才发展的各个模块，在实践中逐步构建自己的专业版图。\n\n岗位要求:\n职位要求 1.2027届应届毕业生，本科及以上学历，专业不限（人力资源、心理学、教育学等相关专业优先）。 2.了解人力资源培训或人才发展的基本理论与实践流程；具备良好的PPT制作、视频剪辑、数据分析能力；有相关实习经验是加分项。 3.积极主动：遇到问题主动思考、主动反馈；对新鲜事物保持好奇心，持续学习。 4.善于沟通：在协作中既懂得倾听，也能清晰表达，能够快速与学员、讲师等不同群体建立信任，用良好的沟通方式推动工作达成。 5.成就他人：认同“帮助他人成功也是自己成功”的价值观，乐于分享、与团队中的伙伴共同成长。 6.逻辑清晰：能在琐碎事务中理清头绪，关注细节；善于复盘与提炼，不断迭代自己的工作方法。"
+    },
+    {
+      "externalId": "portal-feishu-7667880665563744554",
+      "title": "【2027届秋招】HRBP",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667880665563744554/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "你将融入具体的业务团队，作为HR中的全能选手，深度、全面负责人才发展、团队运营、组织发展、文化&氛围建设等各个维度，构建起人力资源与组织成员间的桥梁链接。 岗位职责： 1. 负责人力资源模块项目与解决方案在业务团队中扎实落地，包括但不限于编制规划、招聘、培训、绩效、薪酬与员工关系等； 2. 落实公司人力资源战略和政策在业务团队中的有效推动与执行，持续跟踪并保障实施效果； 3. 持续关注团队状态，及时、准确洞察团队中的问题，灵活运用专业方法论与工具，制定针对性的解决方案，支持业务团队在人才发展、组织发展、氛围建设等维度的发展需求； 4. 链接管理者、员工、校招生等群体，建立多种形式的沟通形式与机制，保证组织与个体的声音都能高效传递； 5. 担任“瞳仁范”在业务团队中的宣传大使，能够牵引沐瞳价值观在业务场景中的推广与应用，推动团队成员的认同与践行。\n\n岗位要求:\n1. 2027届应届毕业生，本科及以上学历，专业不限，人力资源、心理学等相关专业优先； 2. 了解人力资源多模块(两个及以上)理论基础与实践流程，具备互联网或游戏公司人力资源实习经验优先； 3. 具备敏锐的自我洞察与人际洞察能力，能够在动态的场景下独立、全面地思考并分析，通过系统化的方案设计推动问题的解决； 4. 积极开放的协作心态，自驱主动的使命意识，坦诚简单的做事风格，成就他人的价值感建设，我们期待这样的你！"
+    },
+    {
+      "externalId": "portal-feishu-7667878288485091638",
+      "title": "【2027届秋招】招聘专员",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667878288485091638/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 接受专业的目标选才培训和岗位历练后，逐渐独立负责一个业务模块/职能模块的招聘需求管理工作，推动人才招聘目标达成，你需要追求效率与质量的平衡，而不是仅仅重复完成招聘动作，这需要你不断复盘和思考更优做法； 2. 基于你对业务人才需求优先级和紧急程度的独立判断，自主选择你的招聘渠道资源的维护和投入；除常规招聘外，你还有机会参与行业标杆人才Mapping项目，与跨公司人才交流，不仅仅是寻访优秀人才，更是为业务提供决策所需的人才信息输入； 3. 招聘运营管理的参与，作为招聘专家，你除了是个人交付者，更应该从入职场开始，就养成系统思考的习惯，善于通过招聘运营来推动获得更高效的人才招募结果，包括但不限于内推运营、渠道运营、校园招聘、数据分析等项目中，以产品思维持续迭代招聘流程和体系。\n\n岗位要求:\n1. 本科及以上学历，面向27届毕业生，专业不限（人力资源/心理学相关专业可优先考虑，有互联网/游戏行业HR实习工作经验更佳）； 2. 对人好奇，对人的各种能力和个性差异有兴趣了解，与人打交道和互动是你的能量来源之一，认为先帮助他人成功才是自己的成功； 3. 积极主动，及时采取行动达成工作目标，并取得超越要求的成果，对此你感到满足和有成就感； 4. 乐于思考，善于学习，有强烈的好奇心和自驱力，能以开放的心态吸收新事物，能通过良好的沟通和合作。"
+    },
+    {
+      "externalId": "portal-feishu-7667871805985949993",
+      "title": "【2027届秋招】3D特效设计师-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667871805985949993/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.按照设定与需求，使用unity引擎粒子系统制作游戏中写实特效，包括但不限于角色技能，怪物技能，场景等效果； 2.按照排期计划准时完成工作内容； 3.需要不断地自我学习和提升来满足越来越高的质量要求。\n\n岗位要求:\n1.具备较强的学习能力和上进的探索精神，美术与技术双修； 2.丰富的视觉阅历，想象力丰富，拥有良好的静态思维和动态思维； 3.热爱游戏，有责任心，良好沟通能力，并善于团队合作； 4.能熟练使用Unity引擎制作3d特效，并能使用制作特效所需元素的辅助工具如：Photoshop，3dmax，Ae等。 【加分项】 1.美术专业出身，并且能提供使用unity引擎制作的写实风格特效作品； 2.至少有过一段Unity3D特效实习经验。"
+    },
+    {
+      "externalId": "portal-feishu-7667870599390431542",
+      "title": "【2027届秋招】3D动作设计师-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667870599390431542/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 按照设定与需求，可以完成写实类动作制作与修改； 2. 负责Unity引擎动作资源的导入导出与简单设置； 3. 可以按照排期计划准时完成工作内容。\n\n岗位要求:\n1. 熟悉maya动画模块； 2. 理解运动规律（角色肢体动态、重力传递、力学表现）； 3. 具有个人作品，可以体现运动流畅性、角色性格表达、镜头设计能力； 4. 参与过1-2个完整项目（实习/毕设/比赛）优先； 5. 对角色性格、动态表现有独特见解； 6. 对unity引擎动画模块有一定了解； 7. 有较好的沟通能力，具有团队合作精神，有责任心，做事认真细致； 8. 能够独立完成角色绑定、蒙皮、关键帧动画设计最佳。"
+    },
+    {
+      "externalId": "portal-feishu-7667869475723184430",
+      "title": "【2027届秋招】场景概念设计师-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667869475723184430/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.协助/参与游戏项目场景与组件的概念设计工作，围绕玩法与世界观需求，参与从前期概念探索到场景落地方案的设计支持； 2.参与前期场景概念的创意探索与讨论，通过草图快速表达设计想法，协助团队完成场景视觉方案的构建，并参与后续方案的持续优化与完善； 3.对日系科幻风格游戏的视觉调研与设计学习，收集并拆解相关参考，参与项目场景美术风格的延展与视觉体系构建； 4.输出结构清晰、具备可落地性的场景概念设计方案，为3D制作团队提供明确的结构与制作依据，并配合场景相关美术职能（动画、特效、TA等）完善场景表现。\n\n岗位要求:\n1.本科或研究生在读，美术或设计相关专业优先，具备扎实的造型与色彩基础，拥有良好的审美判断与持续学习能力； 2.具备熟练的数位板手绘进行方案稿输出设计，并且掌握至少一款3D软件辅助设计；作品集中需有一定完成度的场景设计练习，且能体现对工业或场景结构设计能力的作品； 3.热爱动作类游戏，对日系科幻风格或者相关动画有较强兴趣，具备优秀的游戏美术分析与视觉专研能力； 4.具备清晰的沟通表达能力与主动推进能力，能够以概念设计身份参与跨部门协作，为项目提供美术建议并推动设计落地。 【加分项】 1.有写实科幻或场景概念设计相关项目经验（含课程项目、实习或实际开发经历），参与过具体的场景概念相关设计落地工作； 2.对日本工业设计、特摄作品或相关科幻作品有系统性研究，能够清晰表达个人理解； 3.对场景概念设计领域有持续关注，熟悉行业优秀设计案例，具备主动收集与整理视觉参考的习惯，并具有一定审美积累。 【你将获得】 1.系统参与高品质写实动作类游戏场景概念设计从前期探索到落地的完整开发流程经验； 2.在真实项目中参与场景概念设计相关管线工作，获得资深的美术指导，项目内高频的设计经验与行业信息交流； 3.建立系统性的场景概念设计方法论，包括设计拆解、结构设计与落地表达能力。"
+    },
+    {
+      "externalId": "portal-feishu-7667869409847609606",
+      "title": "【2027届秋招】角色概念设计师-PC动作游戏",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667869409847609606/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.协助/参与游戏项目角色概念设计工作，针对玩法和项目风格，协助/参与从草图到完整角色视觉探索的角色概念设计； 2.参与前期角色概念探索，协助/参与设计讨论与方案沟通，通过草图快速表达设计思路，协助/推进设计方案的迭代与优化； 3.对日系科幻风格（如EVA、死亡搁浅、合金装备等）的视觉调研与设计学习，拆解与收集相关参考，参与项目整体角色风格设计延展延展，探索前所未有的高品质主机游戏视觉表现； 4.输出角色设计图，为3D团队提供结构清晰、可落地的设计参考，协助动画、特效完善场景表现。\n\n岗位要求:\n1.本科或研究生在读，美术相关专业，造型与色彩基础扎实，整体审美优秀，具备良好的艺术理解力和自我提升动力; 2.乐于接受新鲜事物，学习能力强，需要有相关角色美术作品，展现出对图形、工业科幻的一些理解; 3.热爱动作类游戏，对日系科幻风格或者相关动画有较强兴趣，具备优秀的游戏美术分析与视觉专研能力; 4.具备清晰的沟通表达能力与主动推进事物的动力，以概念设计身份能深度参与项目多部门工作流程，给出美术建议，确保设计内容落地。 【加分项] 1.参与过写实科幻风格项目的开发经验，参与过具体的角色概念相关设计落地工作； 2.对日本工业设计、特摄动画等过深入研究，并且有自己的理解； 3.有较多的概念阅图积累，有审美积累。 【你将获得】 1.掌握PC动作类游戏从概念设计到实机落地的完整经验; 2.积累深度参与各管线工作、与程序/动画/特效等多工种紧密协作推进复杂战斗需求落地的项目实战经验。"
+    },
+    {
+      "externalId": "portal-feishu-7667865986905770246",
+      "title": "【2027届秋招】平面设计师（发行美宣）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667865986905770246/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责协助导师完成公司公共职能相关的视觉设计工作，根据反馈优化设计作品，确保设计贴合需求。如招聘海报、节日宣传图，周边相关等。 2.在重要节点项目上，能积极参与项目，提供创意思路，并协助导师顺利完成项目所需的物料产出。如年会，周年庆等。 3.能独立完成简单的线上视觉相关工作，如模板图的替换工作，保证最终效果符合产出标准。\n\n岗位要求:\n1.2027届应届毕业生，视觉传达设计相关专业。 2.具备基础的视觉设计功底（如了解基本的构图、色彩、排版常识），有良好的审美潜力，愿意尝试不同风格的视觉设计。 3.熟练使用 Photoshop、Illustrator 等基础平面设计软件；对 AI 设计工具有所了解或日常有过兴趣尝试/体验者加分。 4.具备良好的沟通意愿，积极主动。 5.热爱游戏及流行文化，有良好的学习自驱力。"
+    },
+    {
+      "externalId": "portal-feishu-7667864685618530579",
+      "title": "【2027届秋招】PV原画师（发行美宣）",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667864685618530579/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.配合PV编导对产出的AI原画进行细节调整和拆图补图； 2.配合PV编导完成视频中所需的原画素材在故事板的基础上进行绘制和优化调整； 3.根据游戏PV的剧本和方案要求，运用AI工具产出视频中可用的原画素材，并进行优化调整至符合要求到可以使使用；\n\n岗位要求:\n1.有良好的美术绘画基础，熟练使用各类数字绘图工具，熟练使用Photoshop进行绘图和拆图； 2.对AI有高接受度和包容度，愿意积极主动去学习市面上各类主流AIGC工具，如Nanobanana、GPT image 2等； 3.自驱力强，有主动尝试的意愿及动力，拥有良好的沟通表达能力，有优秀的学习能力，能够快速吸收并掌握新的设计方法、流程和工具； 4.热爱ACG文化，对不同美术风格的游戏均有涉猎，对于Q版、欧美奇幻、二次元等美术风格接受度高； 加分项 有AI作品，对游戏PV游戏动画感兴趣者优先；"
+    },
+    {
+      "externalId": "portal-feishu-7667863949291391278",
+      "title": "【2027届秋招】3D特效设计师-Lovania",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667863949291391278/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 在导师带领下，参与项目美术风格的提炼与特效品质标杆的打磨； 2. 配合原画设计敲定制作方案，参与卡通/风格化特效的创作； 3. 从特效概念设计出发，逐步掌握从初版到最终版的全流程制作； 4. 与程序、策划协作，了解特效在游戏内的落地逻辑；\n\n岗位要求:\n1. 美术、设计、动画、数字媒体等相关专业背景； 2. 对游戏特效设计/制作有明确的兴趣和热情，愿意以此为职业方向； 3. 提供一份作品集，能体现你的审美取向与创作热情 a. 插画、概念设计、动态图形、短片、引擎 Demo、Game Jam 作品均可； b. 不要求有商业项目经验，个人创作、学校作业、练习作品都欢迎； 4. 具备基础的手绘能力或视觉表达能力； 5. 对现实世界中物体的运动规律、节奏与动态有基本的观察与感知； 6. 沟通表达清晰，乐于与团队协作。 加分项 1. 熟悉 Unity3D / UE5 任一引擎的特效制作流程； 2. 熟悉 DCC 软件（Maya / Blender / 3ds Max / PS 等），能自主制作模型与贴图； 3. 了解材质编写、蓝图脚本等技术向知识； 4. 对风格化项目（尤其是 Lovania 这类风格）有强烈的参与热情。"
+    },
+    {
+      "externalId": "portal-feishu-7667862411882121510",
+      "title": "【2027届秋招】2D场景原画师-Lovania",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667862411882121510/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 根据LOVANIA游戏IP已有的风格标杆，负责设计符合世界观和游玩体验的游戏场景，确保风格的统一性。 2. 根据项目玩法和游戏体验设计人文建筑与功能物件等。 3. 设计风格需兼顾多平台开发，与上下游协作，把控场景整体品质。\n\n岗位要求:\n1. 擅长场景设计，有扎实手绘功底。 2. 精通Photoshop等绘图工具，有Blender等3D建模软件可加分。 3. 有较强的团队沟通能力、理解能力，积极配合。 加分项 1. 对游戏美术风格化有较高的审美和创新能力。 2. 有丰富的多平台游戏游玩经验，对游戏风格、品质和创作思维有认知。 3. 熟悉多平台（PC、移动端或主机等）游戏场景设计思路。"
+    },
+    {
+      "externalId": "portal-feishu-7667861775140194614",
+      "title": "【2027届秋招】3D场景设计师-Lovania",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667861775140194614/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 参与项目3D场景关卡美术的生产与制作 2. 能够理解适应风格化场景的创作思路，适应项目规则和制作流程 3. 根据关卡策划案，搭建美术白盒场景 4. 协同跨部门团队，对接理解3D场景美术需求，提供3D场景美术支持并转化为具体的落地方案 5. 理解并结合场景实际落地效果，调整模型和贴图\n\n岗位要求:\n1. 本科学历及以上，美术相关专业 2. 较深入的使用UE/Unity商业引擎的场景美术基础模块。 3. 熟悉 3DMAX/Maya 等主流3D游戏建模软件、Adobe Substance Painter、Adobe Photoshop，Toolbag 等纹理烘焙软件 4. 有 3D 场景模型全流程制作相关经验 5. 具备扎实的光照色彩理论构图及比例关系等美术基础能力 6. 有3D关卡游戏游玩经验，有较深入的游戏关卡美术理解能力 7. 有良好的团队协作能力 加分项： 1. 有参与过游戏类型的毕设创作或游戏项目开发的经验 2. 在校有参加过美术专业比赛并有奖项记录 3. 有组织过大型校园或社会实践活动"
+    },
+    {
+      "externalId": "portal-feishu-7667860836588996927",
+      "title": "【2027届秋招】UI视觉设计师-Lovania",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667860836588996927/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 在 UED 团队指导下，参与游戏界面、平面视觉、运营活动包装等相关设计工作。 2. 与 UI、交互、美术等岗位协作，理解游戏设计需求并逐步提升视觉表达与落地能力。 3. 参与前期风格探索、概念发散和设计参考收集，逐步建立对项目整体视觉气质的理解。 4. 协助完成游戏内界面的视觉延展、装饰元素、局部包装和素材创意设计。 5. 支持项目中的平面宣传、周边素材、视觉参考整理等内容制作。 6. 在带教机制下学习使用 AI 工具辅助设计，提高参考收集、方向探索和素材生产效率。\n\n岗位要求:\n1. 本科及以上学历，视觉传达、数字媒体、动画、游戏设计、插画、美术等相关专业优先。 2. 喜欢平面设计、视觉设计或 UI 相关方向，没有 UI 经验也没关系，但需要对这一方向有长期成长意愿。 3. 热爱游戏，对生活模拟、经营养成、治愈向或相邻品类有兴趣和基本体验积累。 4. 具备一定的审美基础、画面表达能力和设计感，对色彩、排版、构图、氛围有基本感知。 5. 学习能力强，愿意主动吸收反馈、快速调整方案，并持续提升自己的设计能力。 6. 对 AI 辅助设计、前沿设计、概念探索等新工具和新方法接受度高，愿意尝试并形成自己的工作方式。 7. 具备基础设计软件使用能力，如 Photoshop、Illustrator、Figma 等至少一种或多种工具。 优先项: a. 有平面设计、插画、视觉创作相关作品集。 b. 有手绘、原画、绘本风格、装饰画风格等基础，能在视觉探索阶段提供更多灵感表达。 c. 有参与校园项目、比赛、社团活动、独立练习作品等经历，能体现主动创作意愿。 d. 对游戏视觉风格有较强兴趣，愿意分析不同游戏的界面、包装和氛围表达。 e. 有基础 AI 使用经验，如辅助出图、参考探索、情绪板整理、素材方向尝试等。"
+    },
+    {
+      "externalId": "portal-feishu-7667859960639047999",
+      "title": "【2027届秋招】3D角色设计师-Lovania",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667859960639047999/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 熟练运用专业 3D 建模软件（如 Maya、ZBrush、SubstancePainter 等）构建并优化高品质的游戏角色模型，具备一定的风格化高模效果掌控能力，可根据模糊设计进行丰富的二次创作。 2. 熟练掌握 Unity、UE5 等游戏引擎的运用，具备渲染管线相关知识，能够依据上游示意图效果明确提出技术需求，在引擎内调试材质效果，并提供专业的美术反馈与优化建议。 3. 依据角色设计稿对角色的外观与细节开展精细化处理，涉及肌肉结构、服装纹理、面部效果、风格化衣褶等方面，同时能够将有效的制作思路反馈至上游环节，协同对美术落地流程进行优化。 4. 与动画环节紧密绑定合作，能够依据复杂的动画效果提出绑定建议，并通过优化和重构低模布线或Blend Shape等方式，创建并优化适用于骨骼和蒙皮的低模，以满足高质量动画需求。 5. 能够与上游原画和技术美术进行高效沟通交流，参与过项目内角色换装、换色等相关流程，对角色LOD、性能优化等相关数据有一定了解，确保角色模型在技术性能方面得到优化，输出角色制作模板和规范。 6. 具备一定的需求专业能力，能够独立挖掘需求资产问题，主动开展跨团队沟通，推动问题落实解决，提高问题解决和执行效率。\n\n岗位要求:\n1. 本科及以上学历，艺术院系科班在读，数字媒体、动画、计算机图形、游戏设计相关专业。 2. 对二次元、卡通或风格化游戏的制作规范有研究或感兴趣，精通 PBR 与 NPR 角色全流程制作的关键要点，具备一定的手绘贴图绘制能力。 3. 掌握 1 款主流引擎：Unity（URP/HDRP）或 UE5 其一。 4. 拥有卓越的艺术与设计才能，能够依据角色设计稿打造出精致且独具个性的角色模型。 5. 对风格化人体结构以及动态肌肉具备深入的理解和精确的把控。 6. 具备出色的团队合作精神与沟通能力，能够与项目内的其它环节紧密协同。 7. 思维清晰， 善于交流，拥有解决问题的能力以及自我管理能力，能够按时达成任务。 加分项： 1. 附带成熟的作品集 2. 具备一定的AI 3D工具使用经验，并积累了相关心得。"
+    },
+    {
+      "externalId": "portal-feishu-7667858241817053466",
+      "title": "【2027届秋招】3D特效设计师-卡牌",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667858241817053466/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1. 负责游戏各类unity3D特效制作，技能、场景、或ui动效，贴合项目废土末日美术风格； 2. 配合团队完成特效落地、优化迭代，把控特效视觉效果与运行性能； 3. 跟进项目进度，高效完成特效制作、修改及优化相关工作。\n\n岗位要求:\n1. 本科及以上学历，美术功底扎实，精通色彩、光影、动态节奏与质感表现，对游戏特效视觉韵律有良好把控力； 2. 掌握Unity3D / 虚幻5（UE5）任意一款引擎，精通粒子、材质、特效调试等核心功能； 3. 熟练使用3Dmax、PS、AE等特效常用软件，可独立完成基础特效全流程制作； 4. 学习能力、执行力强，能快速适配项目需求，配合迭代修改； 5. 加分项：掌握双引擎、有特效实训/独立作品、熟悉特效性能优化者优先。"
+    },
+    {
+      "externalId": "portal-feishu-7667832950197766419",
+      "title": "【2027届秋招】数值策划-MOBA",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7667832950197766419/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责战斗数值模块的设计及配置工作; 2.与各部门合作保障各个模块的数值体验，并提供数值支持； 3.负责以上内容的策划文档需求中的撰写、沟通、跟进、验收与后续调优工作。\n\n岗位要求:\n1.2027届获得大学本科及以上学历，有游戏相关特殊奖项或成就者特例考虑； 2.逻辑能力强，能口头及书面清晰表达出复杂问题，并能结构化地陈述； 3.对游戏狂热，在至少一款MOBA类型游戏上特别资深，MOBA游戏水平优异者优先考虑； 4.计算机，数学相关专业优先考虑； 5.有游戏行业的策划岗位实习经历优先考虑； 6.具备基础的AI工具使用能力，有相关经验或项目优先考虑。"
+    },
+    {
+      "externalId": "portal-feishu-7631847304912374025",
+      "title": "商业化运营实习生",
+      "siteId": "qqj-沐童科技-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7631847304912374025/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.负责自走棋游戏商业化设计及开发工作； 2.协助美术、程序、测试完成商业化研发流程且保障品质和数据结果； 3.负责商业化的数据分析和用户问卷调查，并根据以上内容进行后续调优。\n\n岗位要求:\n1. 2027届获得大学本科及以上学历，具备游戏公司实习经历者优先; 2. 逻辑能力强，能口头及书面清晰表达出复杂问题，并能结构化地陈述; 3. 有独立思考能力，在游戏现象背后有自己深入见解或独到观点; 4. 游戏狂热爱好者，对竞技/策略类游戏有浓厚兴趣； 5. 熟练使用Word、Excel、PPT、脑图等文档工具，有SQL语句基础者优先; 6. 英语过6级，并具备一定的口语能力。"
+    },
+    {
+      "externalId": "portal-feishu-7602560576607602954",
+      "title": "【2027届】战斗策划",
+      "siteId": "qqj-沐童科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://moonton.jobs.feishu.cn/campus/position/7602560576607602954/detail",
+      "retrievedAt": "2026-08-20",
+      "description": "1.参与自走棋核心战斗玩法设计，涵盖英雄技能、羁绊效果、战斗规则等 2.输出清晰需求文档，并与其他职能协作，将设计落地实现到游戏内 3.分析玩家反馈及竞品机制，迭代优化玩法体验，推进版本新内容落地\n\n岗位要求:\n1.2027届本科及以上，游戏设计、计算机等相关专业优先； 2.深度热爱自走棋，至少精通 1 款主流产品（累计时长≥500 小时 或 达到最高段位），能拆解核心体验和优缺点； 3.逻辑清晰、数值敏感，具备良好文档撰写与沟通能力； 4.有相关设计作品、编程基础或实习经历者优先。 投递请附带游戏经历*"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "slug": "qq-中国农业银行",
+  "name": "中国农业银行",
+  "official_url": "https://career.abchina.com.cn/build/index.html#/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国农业银行-site-hq",
+      "name": "中国农业银行",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市东城区建国门内大街69号",
+        "lng": 116.419891,
+        "lat": 39.909258
+      }
+    }
+  ],
+  "city_pending": true
+}

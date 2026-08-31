@@ -1,0 +1,63 @@
+{
+  "slug": "nvidia英伟达",
+  "source": "xiaozhao-radar",
+  "name": "NVIDIA英伟达",
+  "tier": 0,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite?sessionid=&workerSubType=0c40f6bd1d8f10adf6dae42e46d44a17&locationHierarchy1=2fcb99c455831013ea529fe151e3323c",
+  "sites": [
+    {
+      "id": "nvidia英伟达-site-beijing",
+      "name": "NVIDIA英伟达",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "nvidia英伟达-site-shanghai",
+      "name": "NVIDIA英伟达",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "浦东新区张江纳贤路600号",
+        "lng": 121.60555,
+        "lat": 31.18044
+      }
+    },
+    {
+      "id": "nvidia英伟达-site-shenzhen",
+      "name": "NVIDIA英伟达",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4d4a8036a53f",
+      "title": "AI  Computing  Software DeveIopment  Intern .AI  DeveIoPer  TechnoIogy  Engineer",
+      "siteId": "nvidia英伟达-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite?sessionid=&workerSubType=0c40f6bd1d8f10adf6dae42e46d44a17&locationHierarchy1=2fcb99c455831013ea529fe151e3323c",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "39"
+}

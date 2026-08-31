@@ -1,0 +1,272 @@
+{
+  "slug": "银河通用机器人",
+  "source": "xiaozhao-radar",
+  "name": "银河通用机器人",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/m/campus-recruitment/yinhetongyong/165930?recommendCode=DSAAkVmW#/jobs",
+  "sites": [
+    {
+      "id": "银河通用机器人-site-beijing",
+      "name": "银河通用机器人",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/深圳/苏州",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "银河通用机器人-site-shenzhen",
+      "name": "银河通用机器人",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "宝安区大铲湾蓝色未来科技园-4栋",
+        "lng": 113.860013,
+        "lat": 22.553621
+      }
+    },
+    {
+      "id": "银河通用机器人-site-suzhou",
+      "name": "银河通用机器人",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "北京/深圳/苏州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b5d31012c9f4",
+      "title": "模态大模型、操作算法、规划控制、大硬件、系统开发等不同需求方向",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/yinhetongyong/165930?recommendCode=DSAAkVmW#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-e8c3c459ae3c",
+      "title": "具身多模态大模型  机器人规划与控制  机器人硬件与量产 具身智能操作算法  人形强化学习控制 具身软件系统开发",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/m/campus-recruitment/yinhetongyong/165930?recommendCode=DSAAkVmW#/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "embj-银河通用机器人-1",
+      "title": "人形强化学习算法工程师（26届）",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/572d9f5c-1340-47b0-8aa4-c4b01b3b79d9",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-2",
+      "title": "具身操作算法工程师(26届)",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/b6d8e177-18c5-419f-af0a-13ed36c5df31",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-3",
+      "title": "重定向算法实习生",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/5c53daa9-38b5-4ef0-9646-0ac65e25b4b7",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-4",
+      "title": "人形机器人强化学习算法实习生（机器人操作方向）",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/30b0c8f5-dbdd-4f43-b24b-678c0543dd0e",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-5",
+      "title": "具身 VLA 大模型实习生",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/02e56e93-01ba-4717-9ed7-b407e403a6a5",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-6",
+      "title": "灵巧手操作算法实习生",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/50716205-bf26-4cda-afbb-327f0ee38fa2",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-7",
+      "title": "足式强化学习控制算法实习生",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/a1367571-024b-4d61-8731-39d4b170e980",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-8",
+      "title": "具身智能算法实习生-移动操作方向",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/a42fe642-b9f4-4b5c-8ac6-733338f3ae33",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-9",
+      "title": "具身多模态大模型算法实习生",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/a52d3610-5caf-4e5f-8088-babf0009b519",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-10",
+      "title": "具身大模型数据和算法（实习）",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/c4e701ff-b9aa-4dbc-a749-98f65d81245e",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-11",
+      "title": "人形机器人工程开发实习生(长期)",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/cebfd57c-ef58-42ff-99ed-ceceb2754451",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-12",
+      "title": "具身智能科研实习生",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/d5a1d10d-9135-4bf4-85f1-ccacf2671fda",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-13",
+      "title": "机器人物理仿真实习生",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/26e28271-1fb1-4bf2-a91e-7fc4d20e7e60",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-14",
+      "title": "机器人控制算法实习生",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/38c300d1-2214-462d-82b2-fc4f847cbcf3",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-银河通用机器人-15",
+      "title": "仿真研发实习生",
+      "siteId": "银河通用机器人-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/yinhetongyong/165930#/job/3b46f4ce-be71-46ae-9742-606db3c30eb7",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "category": "39"
+}

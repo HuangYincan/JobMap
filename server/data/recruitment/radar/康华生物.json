@@ -1,0 +1,64 @@
+{
+  "slug": "康华生物",
+  "source": "xiaozhao-radar",
+  "name": "康华生物",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kangh.zhiye.com/social/detail?jobAdId=1b14e271-cce8-4d23-88f7-b2b76f3dd405",
+  "sites": [
+    {
+      "id": "康华生物-site-beijing",
+      "name": "康华生物—管培生计划",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/成都",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "康华生物-site-shanghai",
+      "name": "康华生物—管培生计划",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/成都",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "康华生物-site-chengdu",
+      "name": "康华生物—管培生计划",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-b017d29933de",
+      "title": "管理培训生 岗位  医学 药学 生物科学  生物技术    经管 金融  管理 财务会  法律相关专业",
+      "siteId": "康华生物-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kangh.zhiye.com/social/detail?jobAdId=1b14e271-cce8-4d23-88f7-b2b76f3dd405",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "27"
+}

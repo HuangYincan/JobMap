@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-中科天算",
+  "name": "中科天算",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "下属各部门岗位  具体见官方公告及投递方式链接",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中科天算-site",
+      "name": "中科天算",
+      "city": "上海市",
+      "province": "",
+      "location": {
+        "address": "上海市松江区千帆路288弄G60科创云廊6号楼",
+        "lng": 121.324369,
+        "lat": 31.088205
+      }
+    }
+  ]
+}

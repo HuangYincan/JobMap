@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-远景动力",
+  "name": "远景动力",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://app.mokahr.com/campus-recruitment/envisiongroup/43123?sharePageId=4688577&sourceToken=d744864c724488515e88c7cb4885e2c9#/page/%E8%BF%9C%E6%99%AF%E5%8A%A8%E5%8A%9B",
+  "direction": "研发类 工程技术类  深度制造类  质量管理类  解决方案类  项目管理类  工程管理类   智慧供应链类  综合类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-远景动力-site",
+      "name": "远景动力",
+      "city": "无锡市",
+      "province": "",
+      "location": {
+        "address": "江苏省无锡市江阴市申泰路66号",
+        "lng": 120.107123,
+        "lat": 31.906922
+      }
+    }
+  ]
+}

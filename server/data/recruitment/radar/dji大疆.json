@@ -1,0 +1,64 @@
+{
+  "slug": "dji大疆",
+  "source": "xiaozhao-radar",
+  "name": "DJI大疆",
+  "tier": 1,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://apply.careers.dji.com/campus-recruitment/dji/143359?sourceToken=5cd9fb9b74debe3bc869e3bacef2d4b7#/",
+  "sites": [
+    {
+      "id": "dji大疆-site-beijing",
+      "name": "DJI大疆",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "dji大疆-site-shanghai",
+      "name": "DJI大疆",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "闵行区紫星路588号(紫竹)",
+        "lng": 121.463449,
+        "lat": 31.021239
+      }
+    },
+    {
+      "id": "dji大疆-site-shenzhen",
+      "name": "DJI大疆",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-7c91e15876f2",
+      "title": "管法类 软件类 软件产品类 嵌入式类芯片类 光学类 硬件类 机械与力学类 测试与测试开发类 工艺开发类 项目管管理类   质量类",
+      "siteId": "dji大疆-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://apply.careers.dji.com/campus-recruitment/dji/143359?sourceToken=5cd9fb9b74debe3bc869e3bacef2d4b7#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

@@ -1,0 +1,64 @@
+{
+  "slug": "多益网络",
+  "source": "xiaozhao-radar",
+  "name": "多益网络",
+  "tier": 9,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://xz.duoyi.com/v40/#/",
+  "sites": [
+    {
+      "id": "多益网络-site-guangzhou",
+      "name": "多益网络",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "黄埔区新阳东路27号多益网络总部大楼",
+        "lng": 113.48828,
+        "lat": 23.168199
+      }
+    },
+    {
+      "id": "多益网络-site-hangzhou",
+      "name": "多益网络",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "广州/杭州/武汉",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    },
+    {
+      "id": "多益网络-site-wuhan",
+      "name": "多益网络",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "武汉市洪山区花城大道武汉软件新城3期",
+        "lng": 114.508625,
+        "lat": 30.548925
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-e348b59a9286",
+      "title": "程序类  策划类  艺术类  市场类  职能类",
+      "siteId": "多益网络-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://xz.duoyi.com/v40/#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "64"
+}

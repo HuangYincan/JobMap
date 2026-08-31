@@ -1,0 +1,75 @@
+{
+  "slug": "台达",
+  "source": "xiaozhao-radar",
+  "name": "台达",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://v.wjx.cn/vm/tKW356q.aspx",
+  "sites": [
+    {
+      "id": "台达-site-shanghai",
+      "name": "台达—研发暑期营",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市闵行区申长路618号虹桥绿谷广场a座7楼",
+        "lng": 121.315869,
+        "lat": 31.189297
+      }
+    },
+    {
+      "id": "台达-site-hangzhou",
+      "name": "台达—研发暑期营",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "滨江区江汉路1785号双城国际3幢9楼",
+        "lng": 120.201279,
+        "lat": 30.207736
+      }
+    },
+    {
+      "id": "台达-site-wuhan",
+      "name": "台达—研发暑期营",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "滨江区江汉路1785号双城国际3幢9楼",
+        "lng": 114.3,
+        "lat": 30.59
+      }
+    },
+    {
+      "id": "台达-site-chongqing",
+      "name": "台达—研发暑期营",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "重庆市南岸区迎龙镇美渝路",
+        "lng": 106.7025,
+        "lat": 29.528891
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-da2edd85a210",
+      "title": "台达电力电子研发暑期体验营  硬件设计工程师  控制算法工程师  嵌入式软件工程师",
+      "siteId": "台达-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://v.wjx.cn/vm/tKW356q.aspx",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "38"
+}

@@ -1,0 +1,41 @@
+{
+  "slug": "我乐家居",
+  "name": "我乐家居",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "consumer"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://olo-home.zhiye.com/campus/jobs",
+  "sites": [
+    {
+      "id": "我乐家居-site-nanjing",
+      "name": "我乐家居",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "南京",
+        "lng": 118.78,
+        "lat": 32.06
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d6a0f1cc0081",
+      "title": "营销实习生  制造实习生  原创设计实习生",
+      "siteId": "我乐家居-site-nanjing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://olo-home.zhiye.com/campus/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

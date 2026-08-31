@@ -1,0 +1,21 @@
+{
+  "slug": "qq-河北银行",
+  "name": "河北银行",
+  "official_url": "https://hebbank.zhiye.com/home",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-河北银行-site-hq",
+      "name": "河北银行",
+      "city": "石家庄市",
+      "province": "河北省",
+      "location": {
+        "address": "长安区石家庄市建设南大街21号",
+        "lng": 114.512652,
+        "lat": 38.040159
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-核力电科",
+  "name": "核力电科",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://www.iguopin.com/company/jobs?id=10685379671379867&sessionid=",
+  "direction": "微波研发工程师 束流动力学/光学研发工程师 信号处理研发工程师 控制研发工程师 机械研发工程师 电源研发工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-核力电科-site",
+      "name": "核力电科",
+      "city": "无锡市",
+      "province": "",
+      "location": {
+        "address": "无锡市锡山区安镇街道东盛路789号",
+        "lng": 120.493223,
+        "lat": 31.589748
+      }
+    }
+  ]
+}

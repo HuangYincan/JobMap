@@ -1,0 +1,22 @@
+{
+  "slug": "qq-国家技能人才评价服务",
+  "name": "国家技能人才评价服务",
+  "official_url": "http://osta.mohrss.gov.cn/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-国家技能人才评价服务-site-hq",
+      "name": "国家技能人才评价服务",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市朝阳区育慧路3号",
+        "lng": 116.430723,
+        "lat": 39.986412
+      }
+    }
+  ],
+  "city_pending": true
+}

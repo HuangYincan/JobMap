@@ -1,0 +1,21 @@
+{
+  "slug": "qq-珠海华润银行",
+  "name": "珠海华润银行",
+  "official_url": "https://crc.wintalent.cn/wt/crcbank/web/index?brandCode=1",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-珠海华润银行-site-hq",
+      "name": "珠海华润银行",
+      "city": "珠海市",
+      "province": "广东省",
+      "location": {
+        "address": "广东省珠海市香洲区唐家湾镇北城东三路88号1栋",
+        "lng": 113.555707,
+        "lat": 22.40451
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "中铁设计",
+  "source": "xiaozhao-radar",
+  "name": "中铁设计",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://zhr.crec.cn/zhaopin/#/webLogin?pkQrCode=459&pkCompany=12400000&companyName=%E4%B8%AD%E9%93%81%E5%B7%A5%E7%A8%8B%E8%AE%BE%E8%AE%A1%E5%92%A8%E8%AF%A2%E9%9B%86%E5%9B%A2%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8&pkOrg=12400000",
+  "sites": [
+    {
+      "id": "中铁设计-site-beijing",
+      "name": "中铁设计",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市丰台区广安路15号(湾子地铁站A西北口步行440米)",
+        "lng": 116.32214,
+        "lat": 39.890565
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-353c5f7f7f64",
+      "title": "交通运输类 测绘类 土木建筑类 电气通信类  机械类 工程管理类",
+      "siteId": "中铁设计-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://zhr.crec.cn/zhaopin/#/webLogin?pkQrCode=459&pkCompany=12400000&companyName=%E4%B8%AD%E9%93%81%E5%B7%A5%E7%A8%8B%E8%AE%BE%E8%AE%A1%E5%92%A8%E8%AF%A2%E9%9B%86%E5%9B%A2%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8&pkOrg=12400000",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "74"
+}

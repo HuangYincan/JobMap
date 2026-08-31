@@ -1,0 +1,24 @@
+[
+  {
+    "company": "航天502所",
+    "site_id": "qqj-航天502所-site",
+    "city": "北京",
+    "address": null,
+    "address_source": null
+  },
+  {
+    "company": "航天东方红",
+    "site_id": "qqj-航天东方红-site",
+    "city": "北京",
+    "address": "北京市海淀区友谊路104号",
+    "address_source": "https://baike.baidu.com/item/航天东方红卫星有限公司"
+  },
+  {
+    "company": "航天五院",
+    "site_id": "qqj-航天五院-site",
+    "city": "北京 天津 烟台  西安  兰州 深圳  杭州",
+    "address": "北京市海淀区友谊路104号",
+    "address_source": "https://www.cast.cn/contactus"
+  }
+]
+CHANNEL_TEST2_DONE

@@ -1,0 +1,86 @@
+{
+  "slug": "embj-Waymo",
+  "source": "embodied-jobs",
+  "name": "Waymo",
+  "sites": [
+    {
+      "id": "embj-Waymo-site",
+      "name": "Waymo",
+      "city": "Mountain View, CA",
+      "province": "",
+      "location": {
+        "address": "Waymo, 690, East Middlefield Road, 山景城, Santa Clara County, 加利福尼亚州;加利福尼亞州, 94035, 美国;美國",
+        "lng": -122.050347,
+        "lat": 37.394484
+      }
+    }
+  ],
+  "careerUrl": "https://careers.withwaymo.com/jobs/software-engineer-embedded-mountain-view-california-united-states",
+  "positions": [
+    {
+      "externalId": "embj-Waymo-1",
+      "title": "Software Engineer, Embedded",
+      "siteId": "embj-Waymo-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.withwaymo.com/jobs/software-engineer-embedded-mountain-view-california-united-states",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Waymo-2",
+      "title": "Software Engineer, Perception Data Primary",
+      "siteId": "embj-Waymo-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.withwaymo.com/jobs/software-engineer-perception-data-primary-mountain-view-california-united-states",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Waymo-3",
+      "title": "Embedded Software Technical Lead & Manager, Simulation",
+      "siteId": "embj-Waymo-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.withwaymo.com/jobs/embedded-software-technical-lead-manager-simulation-mountain-view-california-united-states",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Waymo-4",
+      "title": "Applied Research Scientist, Perception LLM/VLM (PhD, New Grad)",
+      "siteId": "embj-Waymo-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.withwaymo.com/jobs/applied-research-scientist-perception-llm-vlm-phd-new-grad-mountain-view-california-united-states-san-francisco",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-Waymo-5",
+      "title": "Applied Research Scientist, 3D Object Detection (PhD New Grad)",
+      "siteId": "embj-Waymo-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://careers.withwaymo.com/jobs/applied-research-scientist-3d-object-detection-phd-new-grad-mountain-view-california-united-states-san-francisco",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

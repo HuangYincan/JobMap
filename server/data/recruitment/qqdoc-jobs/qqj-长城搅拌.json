@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-长城搅拌",
+  "name": "长城搅拌",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递连接看官方公告",
+  "direction": "机械类  电气控之类  其他类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-长城搅拌-site",
+      "name": "长城搅拌",
+      "city": "温州市",
+      "province": "",
+      "location": {
+        "address": "浙江省温州市鹿城区戍浦江路28号",
+        "lng": 120.563858,
+        "lat": 28.082134
+      }
+    }
+  ]
+}

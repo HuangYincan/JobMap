@@ -1,0 +1,42 @@
+{
+  "slug": "建信融通",
+  "source": "xiaozhao-radar",
+  "name": "建信融通",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://jxrt.zhiye.com/intern/jobs?queryId=ec6555db-6512-4212-80ac-62d796c21aa7",
+  "sites": [
+    {
+      "id": "建信融通-site-beijing",
+      "name": "建信融通",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "东城区北京/厦门",
+        "lng": 116.407387,
+        "lat": 39.904179
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-44741f843d79",
+      "title": "数据分析师  后端工程师  测试工程师",
+      "siteId": "建信融通-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://jxrt.zhiye.com/intern/jobs?queryId=ec6555db-6512-4212-80ac-62d796c21aa7",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "69"
+}

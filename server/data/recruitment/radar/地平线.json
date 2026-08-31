@@ -1,0 +1,298 @@
+{
+  "slug": "地平线",
+  "source": "xiaozhao-radar",
+  "name": "地平线",
+  "tier": 7,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU62d915040dcad43c775ec12c/mc/position/campus?acotycoCode=dcdzfb&projectId=101201%2C102801&recruitType=1&isLimitShowPostScope=1",
+  "sites": [
+    {
+      "id": "地平线-site-beijing",
+      "name": "地平线",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "海淀区丰豪东路9号院2号楼",
+        "lng": 116.247921,
+        "lat": 40.073819
+      }
+    },
+    {
+      "id": "地平线-site-shanghai",
+      "name": "地平线",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区法拉第路258弄6号楼",
+        "lng": 121.618723,
+        "lat": 31.19349
+      }
+    },
+    {
+      "id": "地平线-site-shenzhen",
+      "name": "地平线",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    },
+    {
+      "id": "地平线-site-chengdu",
+      "name": "地平线",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "北京/上海/深圳/成都",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9a08a56e30c1",
+      "title": "算法、芯片、软件、硬件、测试、系统安全、设计、财务等",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU62d915040dcad43c775ec12c/mc/position/campus?acotycoCode=dcdzfb&projectId=101201%2C102801&recruitType=1&isLimitShowPostScope=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-cc9933a616c0",
+      "title": "算法  芯片  软件 硬件  测试  业务拓展",
+      "siteId": "地平线-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2026-10-30",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU62d915040dcad43c775ec12c/mc/position/campus?acotycoCode=mtqrmd&projectId=103302&recruitType=1&isLimitShowPostScope=1",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "embj-地平线-1",
+      "title": "具身生成方向实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69a940618e515379dc081ec9&postType=campus",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-2",
+      "title": "机器人运动控制算法实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69eefaa71f17c37251077100&postType=campus",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-3",
+      "title": "Linux / QNX 底层软件开发实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69fecb4fe49e0e559f6213e8&postType=campus",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-4",
+      "title": "机器人运动控制算法实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69eefaa71f17c37251077100&postType=campus",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-5",
+      "title": "感知算法实习生(OCC方向)",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69a940618e515379dc081eb9&postType=campus",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-6",
+      "title": "测试开发工程师实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69cc9708e49e0e559feff72f&postType=campus",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-7",
+      "title": "世界模型算法研究实习生-具身智能方向",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb6ce49e0e559fba79c3&postType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-8",
+      "title": "VLA算法实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb6fbe908548be3d2423&postType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-9",
+      "title": "世界模型算法实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb6d10919a570b70c007&postType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-10",
+      "title": "三维重建与世界模型实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb70be908548be3d2429&postType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-11",
+      "title": "多模态大模型算法实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb6abe908548be3d240a&postType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-12",
+      "title": "自动驾驶基座模型实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb708e515379dc190b6a&postType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-13",
+      "title": "智能驾驶大模型算法实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb698e515379dc190b33&postType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-14",
+      "title": "端到端算法实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb71e49e0e559fba79e5&postType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-15",
+      "title": "自动驾驶 4D 重建算法实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb6a10919a570b70bff6&postType=1",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-地平线-16",
+      "title": "强化学习算法实习生",
+      "siteId": "地平线-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU6409ef49bef57c635fd390a6/pb/posDetail.html?postId=69b8bb698e515379dc190b37&postType=1",
+      "retrievedAt": "2026-08-21"
+    }
+  ],
+  "category": "39"
+}

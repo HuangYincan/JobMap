@@ -1,0 +1,68 @@
+{
+  "slug": "海天集团",
+  "source": "xiaozhao-radar",
+  "name": "海天集团",
+  "tier": 6,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://haitian.zhiye.com/5/detail?jobAdId=aa2088b8-00fd-46b4-8ef4-8f42f09cdfa0",
+  "sites": [
+    {
+      "id": "海天集团-site-guangzhou",
+      "name": "海天集团—高潜专项",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州/佛山/宁波",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "海天集团-site-hangzhou",
+      "name": "海天集团—组内直招）",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "杭州",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-9604ac4283a9",
+      "title": "机械类  电器类  自动化类  财务类专业",
+      "siteId": "海天集团-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://haitian.zhiye.com/5/detail?jobAdId=aa2088b8-00fd-46b4-8ef4-8f42f09cdfa0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-e95b2dce02d7",
+      "title": "AI Agent优化工程师—训练/数据/评测，AI应用研发工程师",
+      "siteId": "海天集团-site-hangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus-talent.alibaba.com/campus/position?campusShareCode=v%2FKCt9aGj8_gyg9KDwSutRIvGiJa8AaCcZoSeeTecsg%3D&batchId=100000540002&filterParams=%7B%22customDept%22%3A%5B%22LWEPZA%22%5D%7D",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "14"
+}

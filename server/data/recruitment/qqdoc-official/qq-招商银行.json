@@ -1,0 +1,21 @@
+{
+  "slug": "qq-招商银行",
+  "name": "招商银行",
+  "official_url": "https://career.cmbchina.com/home",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-招商银行-site-hq",
+      "name": "招商银行",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "广东省深圳市南山区滨海大道2388号招银环球金融中心",
+        "lng": 113.970218,
+        "lat": 22.521591
+      }
+    }
+  ]
+}

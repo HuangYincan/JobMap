@@ -1,0 +1,41 @@
+{
+  "slug": "龙蟠科技",
+  "name": "龙蟠科技",
+  "tier": 12,
+  "category": "other",
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://lopal.zhiye.com/jobs?activityGuid=4feba390-c41b-4101-b4f7-e9a588c64efd",
+  "sites": [
+    {
+      "id": "龙蟠科技-site-nanjing",
+      "name": "龙蟠科技",
+      "city": "南京市",
+      "province": "江苏省",
+      "location": {
+        "address": "江苏省南京市栖霞区恒通大道11号",
+        "lng": 118.860044,
+        "lat": 32.14643
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bacc31da2acc",
+      "title": "博士专项 研发技术岗类  AI数字化类  精英职能类",
+      "siteId": "龙蟠科技-site-nanjing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": "2027-06-01",
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://lopal.zhiye.com/jobs?activityGuid=4feba390-c41b-4101-b4f7-e9a588c64efd",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "slug": "恒瑞医药",
+  "source": "xiaozhao-radar",
+  "name": "恒瑞医药",
+  "tier": 6,
+  "industries": [
+    "pharma"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/hengrui/145997?locale=zh-CN#/jobs?page=1&anchorName=jobsList&keyword=2027%E5%B1%8A&commitment%5B0%5D=%E5%AE%9E%E4%B9%A0",
+  "sites": [
+    {
+      "id": "恒瑞医药-site-chengdu",
+      "name": "恒瑞医药",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都/杭州/宁波/合肥",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "恒瑞医药-site-hangzhou",
+      "name": "恒瑞医药",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "成都/杭州/宁波/合肥",
+        "lng": 120.15,
+        "lat": 30.27
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ada23820d70a",
+      "title": "医药信息沟通专员",
+      "siteId": "恒瑞医药-site-chengdu",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/hengrui/145997?locale=zh-CN#/jobs?page=1&anchorName=jobsList&keyword=2027%E5%B1%8A&commitment%5B0%5D=%E5%AE%9E%E4%B9%A0",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "27"
+}

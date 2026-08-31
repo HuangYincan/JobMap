@@ -1,0 +1,165 @@
+{
+  "slug": "qqj-中科本原",
+  "name": "中科本原",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://www.fdmtek.com/fresh-graduate.html",
+  "direction": "IC前端工程师  软件开发工程师  电机控制软件工程师",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中科本原-site",
+      "name": "中科本原",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区知春路68号领航科技大厦16层",
+        "lng": 116.334769,
+        "lat": 39.976015
+      }
+    },
+    {
+      "id": "qqj-中科本原-site-青岛",
+      "name": "中科本原",
+      "city": "青岛市",
+      "location": {
+        "address": "山东省青岛市即墨区蓝色新区鑫诚恒业大厦4层",
+        "lng": 120.536677,
+        "lat": 36.407775
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "portal-qqdoc-00es2jmg",
+      "title": "产品中心",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/real-time.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01yrlikp",
+      "title": "RV335教育开发板",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01tl1nqu",
+      "title": "CodeCanvas集成开发环境（IDE）",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00rqzdrh",
+      "title": "开发者社区",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://www.dsp-expert.com/",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-00rlrr6a",
+      "title": "开发者论坛",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://www.dsp-expert.com/",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01xanh12",
+      "title": "社会招聘",
+      "siteId": "qqj-中科本原-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01v27aj8",
+      "title": "校园招聘",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01s549o2",
+      "title": "实习生招聘",
+      "siteId": "qqj-中科本原-site",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-01bw4czq",
+      "title": "应届生招聘",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-005hq6mt",
+      "title": "开发套件",
+      "siteId": "qqj-中科本原-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.fdmtek.com/fresh-graduate.html",
+      "retrievedAt": "2026-08-20"
+    }
+  ]
+}

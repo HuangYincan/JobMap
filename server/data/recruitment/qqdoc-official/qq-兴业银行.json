@@ -1,0 +1,21 @@
+{
+  "slug": "qq-兴业银行",
+  "name": "兴业银行",
+  "official_url": "https://www.cib.com.cn/cn/aboutCIB/about/jobs/2022/index.html_917596316.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-兴业银行-site-hq",
+      "name": "兴业银行",
+      "city": "福州市",
+      "province": "",
+      "location": {
+        "address": "福建省福州市台江区鳌峰街道江滨中大道398号",
+        "lng": 119.362381,
+        "lat": 26.043463
+      }
+    }
+  ]
+}

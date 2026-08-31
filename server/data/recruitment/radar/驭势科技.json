@@ -1,0 +1,75 @@
+{
+  "slug": "驭势科技",
+  "source": "xiaozhao-radar",
+  "name": "驭势科技",
+  "tier": 9,
+  "industries": [
+    "auto"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus_apply/yushi/3773#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
+  "sites": [
+    {
+      "id": "驭势科技-site-beijing",
+      "name": "驭势科技",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市朝阳区东三环北路霞光里18号佳程广场B座12层C单元",
+        "lng": 116.458869,
+        "lat": 39.9562
+      }
+    },
+    {
+      "id": "驭势科技-site-shanghai",
+      "name": "驭势科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市黄浦区延安东路175号旺角广场1204号",
+        "lng": 121.487681,
+        "lat": 31.232682
+      }
+    },
+    {
+      "id": "驭势科技-site-shenzhen",
+      "name": "驭势科技",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "深圳市福田区沙头街道天安社区深南路与广深高速公路交汇处东南侧大庆大厦8B11F",
+        "lng": 114.021878,
+        "lat": 22.534625
+      }
+    },
+    {
+      "id": "驭势科技-site-wuhan",
+      "name": "驭势科技",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "北京/上海/深圳/武汉",
+        "lng": 114.3,
+        "lat": 30.59
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2da82180927b",
+      "title": "算法类 开发类  商务类 交付类",
+      "siteId": "驭势科技-site-beijing",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/yushi/3773#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

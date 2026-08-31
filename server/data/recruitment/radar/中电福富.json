@@ -1,0 +1,51 @@
+{
+  "slug": "中电福富",
+  "source": "xiaozhao-radar",
+  "name": "中电福富",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.ffcs.cn/recruitment/frontend-client/index.html?sessionid=&SflKxwRJ=MDVjMDE0NWViNTJhZmEyZTRhZWVkYzU1ZTAwYzI1YTF8Y3lNNUJJYz18TUh3eE9EazRNekl4TVRFeWZIVjZiREl5YjJGNE1UaDhNVGM0TURZMU5qSXlPRGN5TVh3d3xNWHd4ZkRGOE1UVTNNakE1T0E9PQ==#/resumer-list?rid=2",
+  "sites": [
+    {
+      "id": "中电福富-site-chengdu",
+      "name": "中电福富",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "成都/重庆/厦门/福州",
+        "lng": 104.07,
+        "lat": 30.66
+      }
+    },
+    {
+      "id": "中电福富-site-chongqing",
+      "name": "中电福富",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "成都/重庆/厦门/福州"
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-598ee43873d2",
+      "title": "AI类 技术研发类   安全类  交付运维类",
+      "siteId": "中电福富-site-chengdu",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.ffcs.cn/recruitment/frontend-client/index.html?sessionid=&SflKxwRJ=MDVjMDE0NWViNTJhZmEyZTRhZWVkYzU1ZTAwYzI1YTF8Y3lNNUJJYz18TUh3eE9EazRNekl4TVRFeWZIVjZiREl5YjJGNE1UaDhNVGM0TURZMU5qSXlPRGN5TVh3d3xNWHd4ZkRGOE1UVTNNakE1T0E9PQ==#/resumer-list?rid=2",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

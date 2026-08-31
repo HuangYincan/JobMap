@@ -1,0 +1,20 @@
+{
+  "slug": "qq-中国矿产资源集团",
+  "name": "中国矿产资源集团",
+  "official_url": "https://campus.51job.com/p/cmr/campus",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国矿产资源集团-site-hq",
+      "name": "中国矿产资源集团",
+      "city": "中国矿产资源集团总部",
+      "province": "",
+      "location": {
+        "address": "河北省雄安新区启动区中谷甲1号"
+      }
+    }
+  ],
+  "city_pending": true
+}

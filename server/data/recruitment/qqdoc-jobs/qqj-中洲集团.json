@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-中洲集团",
+  "name": "中洲集团",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://career.shenzhouintl.com/campus/jobs?sessionid=",
+  "direction": "市场开发类   研发类  服装技术类  IT数字化类  国际业务类  供应链类  职能管理类 生产触感  高潜管培生",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-中洲集团-site",
+      "name": "中洲集团",
+      "city": "宁波市",
+      "province": "",
+      "location": {
+        "address": "浙江省宁波市北仑区甬江路18号",
+        "lng": 121.799943,
+        "lat": 29.918369
+      }
+    }
+  ]
+}

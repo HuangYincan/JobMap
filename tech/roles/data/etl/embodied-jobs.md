@@ -1,0 +1,21 @@
+# ETL 来源记录 — embodied-jobs(Embodied-AI 具身智能岗位聚合列表)
+
+- **日期**: 2026-08-21
+- **来源**: github.com/Octoday-Hub/Embodied-AI `topics/02-jobs.md`(社区维护的具身智能行业岗位聚合列表,「实时追踪具身智能领域的全职 / 实习 / 校招岗位」)
+  - URL: `https://github.com/Octoday-Hub/Embodied-AI/blob/main/topics/02-jobs.md`
+  - raw: `https://raw.githubusercontent.com/Octoday-Hub/Embodied-AI/main/topics/02-jobs.md`
+  - 快照 sha256: `d862c540ed3d7ee7c0ed53dd2dbfb2b3798de6fa50b07fd45891df2e804d79ff`
+  - **授权事实**: GitHub API 返回 `license: null` —— 仓库**无 LICENSE 文件**;社区维护列表。采集方式为读公开 GitHub 文件(快照),零网络抓取
+- **采集方式**: 读公开 GitHub 原始文件(2026-08-21 快照),纯快照解析;不抓取任何招聘站点,不登录、不绕过验证码/限流
+- **提取内容**: 538 个机会,三节分布:
+  - 国内 `## 国内机会` 354 个
+  - 海外 `## Overseas Opportunities` 85 个
+  - 专项 `## 人才计划` 99 个
+  - `## HR专属通道` 节无岗位,跳过
+  - 表格列:公司 / 岗位 / 类型 / 地点 / 投递链接
+- **质量评估**: 社区人工维护、持续更新(文档头部注明「实时追踪」);表格结构规整(HTML 表格、公司级 rowspan 分组),公司/岗位/地点/投递链接字段齐全;地点为城市文本、无坐标(与 radar 同级信任度,坐标待 geocode 流程)
+- **类型 → family 映射**: 社招 → `social`、校招 → `campus`、实习 → `intern`(SourcePosition.family)
+- **同名公司追加**: 同一公司可能多次出现(不同岗位组)/与既有 catalog 或其他来源重名——合并为同一公司的 positions,externalId 一律以 `embj-` 前缀标识来源,不与 portal-*/radar-* 混淆
+- **产出**: `server/data/recruitment/embodied-jobs/*.json`(每公司一文件,SourceCompany 形状:slug `embj-*`、source `'embodied-jobs'`、单 site id `embj-<name>-site`、positions externalId `embj-*`、每岗 applyUrl、retrievedAt)
+- **真实性登记(2026-08-27)**:本来源已注册进 `server/src/lib/recruitment-provenance.ts` 的 `SOURCE_META`,authenticity 策略 = `source`(整源真实)。此前 `isAuthenticPositionId` 只认 `radar-*`/`portal-*` 前缀,`embj-*` 在 apply 阶段会被整源过滤;现在真实性判定优先走来源注册表,`embj-*` 岗位正常入库(扫描 #4 修复)。
+- **红线核对**: 零网络抓取(纯快照解析);不涉及 BOSS/牛客/小红书/实习僧;不登录/验证码/限流绕过

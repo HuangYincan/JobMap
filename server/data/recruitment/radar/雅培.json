@@ -1,0 +1,52 @@
+{
+  "slug": "雅培",
+  "source": "xiaozhao-radar",
+  "name": "雅培",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://www.moseeker.com/position/index/pid/3431275?recom=Olfzxxxxxe&wechat_signature=Y2FiODg5NDQzOGQ0NjE1Y2NlM2I4MWNkOGE3NzQyMGJkMzRjM2IyMQ%3D%3D&forward_id=a261fa465a5411f1ba9300163e083938&share_time=1779945496026",
+  "sites": [
+    {
+      "id": "雅培-site-shanghai",
+      "name": "雅培",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "西湖区教工路18世贸丽晶城·欧美中心15层",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "雅培-site-hangzhou",
+      "name": "雅培",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "西湖区教工路18世贸丽晶城·欧美中心15层",
+        "lng": 120.137199,
+        "lat": 30.273106
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-4061d6f5486a",
+      "title": "运营管理培训生",
+      "siteId": "雅培-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.moseeker.com/position/index/pid/3431275?recom=Olfzxxxxxe&wechat_signature=Y2FiODg5NDQzOGQ0NjE1Y2NlM2I4MWNkOGE3NzQyMGJkMzRjM2IyMQ%3D%3D&forward_id=a261fa465a5411f1ba9300163e083938&share_time=1779945496026",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "27"
+}

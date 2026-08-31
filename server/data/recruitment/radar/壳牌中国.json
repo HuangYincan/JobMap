@@ -1,0 +1,52 @@
+{
+  "slug": "壳牌中国",
+  "source": "xiaozhao-radar",
+  "name": "壳牌中国",
+  "tier": 6,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://shell.wd3.myworkdayjobs.com/zh-CN/shellcareers/job/Beijing/Shell-Assessed-Internship-Program-2026---China_R182099?locationCountry=6cb77610a8a543aea2d6bc10457e35d4",
+  "sites": [
+    {
+      "id": "壳牌中国-site-beijing",
+      "name": "壳牌中国",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "朝阳区北京市建国门外大街1号国贸大厦2座33层",
+        "lng": 116.463629,
+        "lat": 39.912785
+      }
+    },
+    {
+      "id": "壳牌中国-site-shanghai",
+      "name": "壳牌中国",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市嘉定区嘉定南大街汇龙公寓-西区",
+        "lng": 121.253877,
+        "lat": 31.378913
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-037c56c3a5a0",
+      "title": "sheII Assessed InternshIp progra",
+      "siteId": "壳牌中国-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://shell.wd3.myworkdayjobs.com/zh-CN/shellcareers/job/Beijing/Shell-Assessed-Internship-Program-2026---China_R182099?locationCountry=6cb77610a8a543aea2d6bc10457e35d4",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "25"
+}

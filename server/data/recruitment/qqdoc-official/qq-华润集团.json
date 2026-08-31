@@ -1,0 +1,21 @@
+{
+  "slug": "qq-华润集团",
+  "name": "华润集团",
+  "official_url": "https://www.crc.com.hk/talent/concepts/",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-华润集团-site-hq",
+      "name": "华润集团",
+      "city": "深圳市",
+      "province": "",
+      "location": {
+        "address": "广东省深圳市南山区粤海街道科苑南路2666号中国华润大厦",
+        "lng": 113.946487,
+        "lat": 22.514871
+      }
+    }
+  ]
+}

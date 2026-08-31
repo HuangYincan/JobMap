@@ -1,0 +1,42 @@
+{
+  "slug": "湖北省电力规划设计研究院",
+  "source": "xiaozhao-radar",
+  "name": "湖北省电力规划设计研究院",
+  "tier": 9,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/hbpower/95447?locale=zh-CN#/",
+  "sites": [
+    {
+      "id": "湖北省电力规划设计研究院-site-wuhan",
+      "name": "湖北省电力规划设计研究院",
+      "city": "武汉市",
+      "province": "湖北省",
+      "location": {
+        "address": "湖北省武汉市东西湖区新桥四路1号",
+        "lng": 114.161156,
+        "lat": 30.643455
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-a3b0a4411e7d",
+      "title": "电气工程类  能源动力类 土木工程类  工程勘察类 经营管理类",
+      "siteId": "湖北省电力规划设计研究院-site-wuhan",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/hbpower/95447?locale=zh-CN#/",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "74"
+}

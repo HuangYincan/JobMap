@@ -1,0 +1,74 @@
+{
+  "slug": "hrnetgronp",
+  "source": "xiaozhao-radar",
+  "name": "HRnetGronp",
+  "tier": 10,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://hrnetgroup.mikecrm.com/td1aiPH",
+  "sites": [
+    {
+      "id": "hrnetgronp-site-beijing",
+      "name": "HRnetGronp",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 116.4,
+        "lat": 39.9
+      }
+    },
+    {
+      "id": "hrnetgronp-site-shanghai",
+      "name": "HRnetGronp",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 121.47,
+        "lat": 31.23
+      }
+    },
+    {
+      "id": "hrnetgronp-site-guangzhou",
+      "name": "HRnetGronp",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "hrnetgronp-site-shenzhen",
+      "name": "HRnetGronp",
+      "city": "深圳市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/深圳",
+        "lng": 114.06,
+        "lat": 22.55
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-d5f463bdcec1",
+      "title": "猎头顾问实习生",
+      "siteId": "hrnetgronp-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hrnetgroup.mikecrm.com/td1aiPH",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "72"
+}

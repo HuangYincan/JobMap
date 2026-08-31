@@ -1,0 +1,42 @@
+{
+  "slug": "中国联合工程有限公司",
+  "source": "xiaozhao-radar",
+  "name": "中国联合工程有限公司",
+  "tier": 8,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://chinacuc.zhiye.com/intern/jobs",
+  "sites": [
+    {
+      "id": "中国联合工程有限公司-site-hangzhou",
+      "name": "中国联合工程有限公司",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "滨江区滨安路1060号",
+        "lng": 120.186162,
+        "lat": 30.186911
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-bd0cba7fb7c0",
+      "title": "策划咨询   产业规划计划  城乡规划设计工艺设计  建筑设计  结构设计 给排水设计 电气设计  幕墙设计  室内设计 园林设计 园林景观设计数据治理  信息",
+      "siteId": "中国联合工程有限公司-site-hangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://chinacuc.zhiye.com/intern/jobs",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "74"
+}

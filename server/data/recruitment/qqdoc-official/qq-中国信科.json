@@ -1,0 +1,19 @@
+{
+  "slug": "qq-中国信科",
+  "name": "中国信科",
+  "official_url": "https://campus.51job.com/cict2024/about.html",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国信科-site-hq",
+      "name": "中国信科",
+      "city": "武汉市",
+      "province": "",
+      "location": {
+        "address": "湖北省武汉市东湖新技术开发区(中国光谷)"
+      }
+    }
+  ]
+}

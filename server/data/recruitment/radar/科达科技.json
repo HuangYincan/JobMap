@@ -1,0 +1,53 @@
+{
+  "slug": "科达科技",
+  "source": "xiaozhao-radar",
+  "name": "科达科技",
+  "tier": 8,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://kedacom.zhiye.com/Intern",
+  "sites": [
+    {
+      "id": "科达科技-site-shanghai",
+      "name": "科达科技",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市徐汇区虹梅路2007弄远中产业园2号楼",
+        "lng": 121.394178,
+        "lat": 31.171652
+      }
+    },
+    {
+      "id": "科达科技-site-suzhou",
+      "name": "科达科技",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "江苏苏州市吴中区合丰路66号",
+        "lng": 120.471944,
+        "lat": 31.23935
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-02467cff4ccf",
+      "title": "算法类  开发类 测试类 专业类",
+      "siteId": "科达科技-site-shanghai",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://kedacom.zhiye.com/Intern",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "65"
+}

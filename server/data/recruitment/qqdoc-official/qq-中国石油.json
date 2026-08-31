@@ -1,0 +1,21 @@
+{
+  "slug": "qq-中国石油",
+  "name": "中国石油",
+  "official_url": "https://www.cnpc.com.cn/cnpc/jrwm/jrwm_index.shtml",
+  "sources": [
+    "qqdoc-official"
+  ],
+  "sites": [
+    {
+      "id": "qq-中国石油-site-hq",
+      "name": "中国石油",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市东城区东直门北大街9号",
+        "lng": 116.432525,
+        "lat": 39.94274
+      }
+    }
+  ]
+}

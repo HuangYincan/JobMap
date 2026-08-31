@@ -1,0 +1,42 @@
+{
+  "slug": "上海宇量昇",
+  "source": "xiaozhao-radar",
+  "name": "上海宇量昇",
+  "tier": 12,
+  "industries": [
+    "manufacturing"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://wecruit.hotjob.cn/SU63847447bef57c649c3505b5/mc/position/campus",
+  "sites": [
+    {
+      "id": "上海宇量昇-site-shanghai",
+      "name": "上海宇量昇",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区曹路镇民冬路500号",
+        "lng": 121.65993,
+        "lat": 31.287963
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-04d9888eebfe",
+      "title": "光学光电类 机械机电类 软件算法类 电子电气类 环境控制类 集成工艺&材料类 制造类  职能类",
+      "siteId": "上海宇量昇-site-shanghai",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://wecruit.hotjob.cn/SU63847447bef57c649c3505b5/mc/position/campus",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    }
+  ],
+  "category": "39"
+}

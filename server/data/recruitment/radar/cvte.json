@@ -1,0 +1,157 @@
+{
+  "slug": "cvte",
+  "source": "xiaozhao-radar",
+  "name": "CVTE",
+  "tier": 6,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://campus.cvte.com/project/7304f092b3cc11f083a91070fd64d1d0",
+  "sites": [
+    {
+      "id": "cvte-site-guangzhou",
+      "name": "CVTE",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "广州",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "cvte-site-xian",
+      "name": "CVTE—人力资源",
+      "city": "西安市",
+      "province": "陕西省",
+      "location": {
+        "address": "西安市长安区站前四路与沣泾大道交叉路口东南侧",
+        "lng": 108.761153,
+        "lat": 34.267873
+      }
+    },
+    {
+      "id": "cvte-site-chongqing",
+      "name": "CVTE—人力资源",
+      "city": "重庆市",
+      "province": "重庆市",
+      "location": {
+        "address": "广州/重庆/西安/苏州"
+      }
+    },
+    {
+      "id": "cvte-site-suzhou",
+      "name": "CVTE—人力资源",
+      "city": "苏州市",
+      "province": "江苏省",
+      "location": {
+        "address": "苏州市吴中区外塘路苏州太湖假日酒店西侧约190米",
+        "lng": 120.446191,
+        "lat": 31.225168
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-2d5958650ee9",
+      "title": "开发、硬件、算法、嵌入式、销售等",
+      "siteId": "cvte-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/project/7304f092b3cc11f083a91070fd64d1d0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-8d276e042a2c",
+      "title": "人力资源岗位",
+      "siteId": "cvte-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/position/19ee6b5050414e898785dcd993499bab",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-e5bb84a1b94d",
+      "title": "硬件类，软件类，商务类，其他类，算法类",
+      "siteId": "cvte-site-guangzhou",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/project/7304f092b3cc11f083a91070fd64d1d0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-8d276e042a2c-xian",
+      "title": "人力资源岗位",
+      "siteId": "cvte-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/position/19ee6b5050414e898785dcd993499bab",
+      "retrievedAt": "2026-08-11"
+    },
+    {
+      "externalId": "radar-e5bb84a1b94d-xian",
+      "title": "硬件类，软件类，商务类，其他类，算法类",
+      "siteId": "cvte-site-xian",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/project/7304f092b3cc11f083a91070fd64d1d0",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "portal-qqdoc-01rdbhxi",
+      "title": "校园招聘",
+      "siteId": "cvte-site-guangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://campus.cvte.com/",
+      "retrievedAt": "2026-08-20"
+    },
+    {
+      "externalId": "portal-qqdoc-005pgjpv",
+      "title": "社会招聘",
+      "siteId": "cvte-site-guangzhou",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://hr.cvte.com",
+      "retrievedAt": "2026-08-20"
+    }
+  ],
+  "category": "39"
+}

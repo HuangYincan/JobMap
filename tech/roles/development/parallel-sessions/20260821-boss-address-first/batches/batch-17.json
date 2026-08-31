@@ -1,0 +1,200 @@
+{
+ "batch": 17,
+ "companies": [
+  {
+   "file": "qqdoc-official/qq-珠海华润银行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-珠海华润银行.json",
+     "slug": "qq-珠海华润银行",
+     "company": "珠海华润银行",
+     "site_id": "qq-珠海华润银行-site-hq",
+     "site_name": "珠海华润银行",
+     "city": "珠海市",
+     "province": "广东省",
+     "careerUrl": "https://crc.wintalent.cn/wt/crcbank/web/index?brandCode=1"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-电网招聘平台.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-电网招聘平台.json",
+     "slug": "qq-电网招聘平台",
+     "company": "电网招聘平台",
+     "site_id": "qq-电网招聘平台-site-hq",
+     "site_name": "电网招聘平台",
+     "city": "电网招聘平台总部",
+     "province": "",
+     "careerUrl": "https://zhaopin.sgcc.com.cn/sgcchr/static/home.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-盛京银行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-盛京银行.json",
+     "slug": "qq-盛京银行",
+     "company": "盛京银行",
+     "site_id": "qq-盛京银行-site-hq",
+     "site_name": "盛京银行",
+     "city": "沈阳市",
+     "province": "",
+     "careerUrl": "https://zhaopin.shengjingbank.com.cn:8080/zp.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-花旗银行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-花旗银行.json",
+     "slug": "qq-花旗银行",
+     "company": "花旗银行",
+     "site_id": "qq-花旗银行-site-hq",
+     "site_name": "花旗银行",
+     "city": "花旗银行总部",
+     "province": "",
+     "careerUrl": "https://jobs.citi.com/search-jobs"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-西安银行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-西安银行.json",
+     "slug": "qq-西安银行",
+     "company": "西安银行",
+     "site_id": "qq-西安银行-site-hq",
+     "site_name": "西安银行",
+     "city": "西安市",
+     "province": "",
+     "careerUrl": "https://job.xacbank.com:8001/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-郑州银行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-郑州银行.json",
+     "slug": "qq-郑州银行",
+     "company": "郑州银行",
+     "site_id": "qq-郑州银行-site-hq",
+     "site_name": "郑州银行",
+     "city": "郑州市",
+     "province": "",
+     "careerUrl": "https://wecruit.hotjob.cn/SU64f952b41eb8051fabaed066/pb/index.html#/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-重庆农村商业银行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-重庆农村商业银行.json",
+     "slug": "qq-重庆农村商业银行",
+     "company": "重庆农村商业银行",
+     "site_id": "qq-重庆农村商业银行-site-hq",
+     "site_name": "重庆农村商业银行",
+     "city": "重庆市",
+     "province": "重庆市",
+     "careerUrl": "https://campus.51job.com/CQRCB2023/index.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-重庆银行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-重庆银行.json",
+     "slug": "qq-重庆银行",
+     "company": "重庆银行",
+     "site_id": "qq-重庆银行-site-hq",
+     "site_name": "重庆银行",
+     "city": "重庆市",
+     "province": "",
+     "careerUrl": "https://www.cqcbank.com/cn/jrch/rczp/xyzp/index.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-长沙银行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-长沙银行.json",
+     "slug": "qq-长沙银行",
+     "company": "长沙银行",
+     "site_id": "qq-长沙银行-site-hq",
+     "site_name": "长沙银行",
+     "city": "长沙市",
+     "province": "",
+     "careerUrl": "https://wecruit.hotjob.cn/SU628ddf200dcad4099b64f468/pb/index.html#/notFound?prompt=500"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-青岛农商行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-青岛农商行.json",
+     "slug": "qq-青岛农商行",
+     "company": "青岛农商行",
+     "site_id": "qq-青岛农商行-site-hq",
+     "site_name": "青岛农商行",
+     "city": "青岛市",
+     "province": "",
+     "careerUrl": "https://www.qrcb.com.cn/qrcb/rczp/#/home"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-鞍钢集团.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-鞍钢集团.json",
+     "slug": "qq-鞍钢集团",
+     "company": "鞍钢集团",
+     "site_id": "qq-鞍钢集团-site-hq",
+     "site_name": "鞍钢集团",
+     "city": "鞍山市",
+     "province": "",
+     "careerUrl": "http://www.ansteel.cn/kechixufazhan/renliziyuan/zhaopinxinxi/"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-顺德农商行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-顺德农商行.json",
+     "slug": "qq-顺德农商行",
+     "company": "顺德农商行",
+     "site_id": "qq-顺德农商行-site-hq",
+     "site_name": "顺德农商行",
+     "city": "佛山市",
+     "province": "广东省",
+     "careerUrl": "https://www.sdebank.com/mainsite/rczp/index.html"
+    }
+   ]
+  },
+  {
+   "file": "qqdoc-official/qq-齐鲁银行.json",
+   "sites": [
+    {
+     "file": "qqdoc-official/qq-齐鲁银行.json",
+     "slug": "qq-齐鲁银行",
+     "company": "齐鲁银行",
+     "site_id": "qq-齐鲁银行-site-hq",
+     "site_name": "齐鲁银行",
+     "city": "齐鲁银行总部",
+     "province": "",
+     "careerUrl": "https://www.qlbchina.com/qlbchina/rczp/shzp/zpgg/index.html"
+    }
+   ]
+  }
+ ]
+}

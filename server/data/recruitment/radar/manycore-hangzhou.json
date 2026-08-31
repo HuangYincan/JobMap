@@ -1,0 +1,116 @@
+{
+  "slug": "manycore-hangzhou",
+  "source": "xiaozhao-radar",
+  "name": "群核科技",
+  "tier": 7,
+  "industries": [
+    "internet"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus_apply/qunhemail/2832#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
+  "sites": [
+    {
+      "id": "manycore-hangzhou-site-hangzhou",
+      "name": "群核科技",
+      "city": "杭州市",
+      "province": "浙江省",
+      "location": {
+        "address": "西湖区余杭塘路515号莱茵·矩阵国际",
+        "lng": 120.109,
+        "lat": 30.293
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-735415a42603",
+      "title": "科研算法 AI  Infra 工程师  AI产品经理",
+      "siteId": "manycore-hangzhou-site-hangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "closed",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/qunhemail/2832#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
+      "retrievedAt": "2026-08-11",
+      "aggregate": true
+    },
+    {
+      "externalId": "radar-735415a42603-xinghe",
+      "title": "【星核人才计划】-2027届校招生",
+      "siteId": "manycore-hangzhou-site-hangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/qunhemail/2832#/job/0fb79a20-2644-41b6-b888-d12076b57152",
+      "retrievedAt": "2026-08-11",
+      "description": "【关于星核人才计划】\n「星核人才计划」是群核科技面向全球顶尖校园技术人才而特别推出的人才培养项目，涵盖正式校招与实习岗位。入选同学将进入公司核心战略项目，由公司创始人及首席科学家直带。我们提供有竞争力的薪酬待遇，丰富的算力资源，鼓励创新的容错资金，共同投身空间智能前沿技术的探索。\n\n【你将从事】\n负责面向空间智能的 AI 算法研发工作，持续追踪并研究前沿技术，推动算法的落地与产品化创新。可选方向：\n- 大模型与 AIGC 方向\n- 图形 3D 重建与生成方向\n- Neural Rendering 方向\n- 世界模型方向\n- 3D 几何方向\n- AI Infra 方向\n\n【我们期待你是】\n在计算机或数学等专业有扎实过硬的知识储备的顶尖学霸；\n拥有国内外顶级赛事获奖经历的竞赛赢家；\n有丰富的实战或实习项目经验的实战高手；\n在国际顶级会议或期刊上发表过重要学术论文，或已经获得图形图像学、AIGC 或计算机算法等领域相关专利的学术大拿。\n\n【我们可以提供】\n与世界级精英团队，共同深耕空间智能技术课题；\n硬核技术资产，全球化的视野；\n纯粹极客文化，工作零内耗；\n极具竞争力的薪酬福利，尊重你的技术价值。"
+    },
+    {
+      "externalId": "radar-735415a42603-suanfa",
+      "title": "科研算法工程师",
+      "siteId": "manycore-hangzhou-site-hangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/qunhemail/2832#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
+      "retrievedAt": "2026-08-11",
+      "description": "【岗位概述】负责神经渲染技术研究与产品落地，重点探索 3D 高斯场景重建和渲染、真实感渲染算法，并将研究成果应用于实际产品。\n【核心职责】1、算法研究：开发高质量 3D 高斯场景重建算法，3D 高斯与网格模型混合渲染算法、神经渲染算法等，优化渲染效果与性能；2、技术创新：探索 NeRF、3DGS、可微渲染等前沿技术在真实感渲染引擎/产品中的应用；3、工程实现：将研究成果转化为高性能、可部署的产品功能；4、学术跟踪：关注 SIGGRAPH、CVPR 等顶级会议，快速理解和实现最新算法。\n【岗位要求】1、教育背景：计算机科学、图形学、机器学习相关专业本科及以上学历；深度学习或计算机图形学领域研究经验。2、科研素养：对前沿技术敏感，能快速学习和实现新算法；具备独立解决问题的能力和创新思维；良好的团队协作与沟通能力。3、核心技能：扎实的算法实现与工程开发能力；熟悉 PyTorch/TensorFlow，具备模型设计与优化能力；熟悉光线追踪、3DGS、NeRF 等现代渲染技术。加分项：在 SIGGRAPH、TOG、CVPR、NeurIPS 等顶级会议/期刊发表相关论文；具备完整的端到端渲染系统开发经验。"
+    },
+    {
+      "externalId": "radar-735415a42603-ai-infra",
+      "title": "AI Infra 工程师",
+      "siteId": "manycore-hangzhou-site-hangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/qunhemail/2832#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
+      "retrievedAt": "2026-08-11",
+      "description": "1、针对扩散模型（如图像生成、视频生成、3D 生成）的高性能推理引擎，支持多步采样、动态分辨率、多种调度算法等特性；\n2、借鉴 PagedAttention 等思想，优化扩散模型中的 KV Cache（或中间状态）管理，减少显存碎片和冗余存储。探索步数压缩（如 LCM/LoRA）、模型剪枝等技术与推理的协同设计；\n3、应用 INT8/FP8/INT4 等量化技术，在最小化画质损失前提下大幅提升推理速度；\n4、基于 K8S 构建弹性的推理服务集群，实现动态批处理、自动扩缩容，提升 GPU 平均利用率。设计优雅的请求排队和负载均衡策略；\n5、跟踪业界最新的推理加速技术，评估并引入新技术以持续优化生产环境成本结构和性能天花板。"
+    },
+    {
+      "externalId": "radar-735415a42603-ai-pm",
+      "title": "AI产品经理",
+      "siteId": "manycore-hangzhou-site-hangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus_apply/qunhemail/2832#/jobs?zhineng=&page=1&commitment=%E5%85%A8%E8%81%8C",
+      "retrievedAt": "2026-08-11",
+      "description": "【岗位职责】\n1. 前沿研究与技术探索：调研 AI 在 CAD 领域的技术趋势、应用场景及竞品动态，输出研究报告并提出创新方向；结合公司技术积累，探索 AI 驱动的建模工具、智能化设计流程等新方向的可能性；基于业界前沿技术栈，动手搭建 AI 赋能的建模或设计 Demo，验证创新想法的可行性。\n2. 产品开发与跨团队支持：参与产品功能原型设计，协助优化现有产品功能，提出改进建议，提升产品在 AI 赋能设计场景中的竞争力；与算法工程师、产品经理及设计师密切协作，配合团队验证关键模块，推动产品从概念到落地的全流程；整理实验数据、技术文档与项目总结，输出高质量的研发成果与案例分享。\n【任职要求】\n1. 基础条件：硕士及以上学历，计算机科学、人工智能、机械工程或相关专业；熟悉 CAD 软件或 3D 建模引擎，具备参数化建模或设计自动化相关经验；了解 AI/ML 基本知识并有相关实践经验。\n2. 核心特质：对 AI 与设计领域有强烈兴趣和从事志向，主动学习和实践最新技术；学习能力强，能独立完成技术调研、竞品分析，跟踪前沿产品和技术的最新进展；对 AI+设计场景有敏锐洞察，能突破传统工具限制，探索下一代智能化设计产品；具备与工程师、算法科学家、设计师沟通的能力，推动需求落地；可流畅阅读国际论文、技术文档，跟踪全球前沿技术动态。\n3. 加分项：在校参与过 AI、生成式设计、参数化建模或设计自动化相关项目；发表过相关领域论文或拥有专利；熟悉 Autodesk Generative Design、Onshape、Blender 等设计工具或生态；熟悉 AI 框架或设计相关工具链。"
+    },
+    {
+      "externalId": "radar-21c6183e2b66",
+      "title": "公共战略培训生",
+      "siteId": "manycore-hangzhou-site-hangzhou",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/apply/qunhemail/2833#/job/b4405f43-bbcf-477e-905a-23a3c63633b5",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "65"
+}

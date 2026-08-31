@@ -1,0 +1,74 @@
+{
+  "slug": "ge医疗",
+  "source": "xiaozhao-radar",
+  "name": "GE医疗",
+  "tier": 7,
+  "industries": [
+    "other"
+  ],
+  "scale": "enterprise",
+  "careerUrl": "https://app.mokahr.com/campus-recruitment/gehc/142250?locale=zh-CN#/jobs?keyword=EID&page=1&anchorName=jobsList",
+  "sites": [
+    {
+      "id": "ge医疗-site-beijing",
+      "name": "GE医疗",
+      "city": "北京市",
+      "province": "北京市",
+      "location": {
+        "address": "北京市大兴区同济南路1号",
+        "lng": 116.530767,
+        "lat": 39.784126
+      }
+    },
+    {
+      "id": "ge医疗-site-shanghai",
+      "name": "GE医疗",
+      "city": "上海市",
+      "province": "上海市",
+      "location": {
+        "address": "上海市浦东新区华佗路1号",
+        "lng": 121.583269,
+        "lat": 31.190801
+      }
+    },
+    {
+      "id": "ge医疗-site-guangzhou",
+      "name": "GE医疗",
+      "city": "广州市",
+      "province": "广东省",
+      "location": {
+        "address": "北京/上海/广州/成都",
+        "lng": 113.26,
+        "lat": 23.13
+      }
+    },
+    {
+      "id": "ge医疗-site-chengdu",
+      "name": "GE医疗",
+      "city": "成都市",
+      "province": "四川省",
+      "location": {
+        "address": "四川省成都市郫都区国腾工业园3幢国腾科技园-3号楼F5",
+        "lng": 103.969019,
+        "lat": 30.73363
+      }
+    }
+  ],
+  "positions": [
+    {
+      "externalId": "radar-ecee8fe0aba4",
+      "title": "爱迪生工程技术发展培训生项目暑期实习生（EEopEID)生产运营管理领导力项目暑期实习生（0MLP EID）商业领导力管理培训生项目暑期实习生（cLp EID)",
+      "siteId": "ge医疗-site-beijing",
+      "family": "intern",
+      "taxonomy": {
+        "family": "intern"
+      },
+      "deadline": null,
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://app.mokahr.com/campus-recruitment/gehc/142250?locale=zh-CN#/jobs?keyword=EID&page=1&anchorName=jobsList",
+      "retrievedAt": "2026-08-11"
+    }
+  ],
+  "category": "35"
+}

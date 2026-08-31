@@ -1,0 +1,23 @@
+{
+  "slug": "qqj-数码视讯",
+  "name": "数码视讯",
+  "sources": [
+    "qqdoc-jobs"
+  ],
+  "apply_url": "https://投递链接看官方公告",
+  "direction": "研发类 营销类 交付类  职能类",
+  "deadline": "招满即止",
+  "sites": [
+    {
+      "id": "qqj-数码视讯-site",
+      "name": "数码视讯",
+      "city": "北京市",
+      "province": "",
+      "location": {
+        "address": "北京市海淀区开拓路15号数码视讯大厦",
+        "lng": 116.306263,
+        "lat": 40.039585
+      }
+    }
+  ]
+}

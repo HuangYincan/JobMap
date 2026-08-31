@@ -1,0 +1,177 @@
+{
+  "slug": "embj-迦智科技",
+  "source": "embodied-jobs",
+  "name": "迦智科技",
+  "sites": [
+    {
+      "id": "embj-迦智科技-site",
+      "name": "迦智科技",
+      "city": "杭州市",
+      "province": "",
+      "location": {
+        "address": "浙江省杭州市滨江区东冠路611号金盛科技园8幢1层101-110室",
+        "lng": 120.155687,
+        "lat": 30.160435
+      }
+    }
+  ],
+  "careerUrl": "https://www.zhipin.com/gongsi/job/bcd987db80a996f61nR_09-6Eg~~.html?ka=company-jobs",
+  "positions": [
+    {
+      "externalId": "embj-迦智科技-1",
+      "title": "深度学习算法工程师",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/gongsi/job/bcd987db80a996f61nR_09-6Eg~~.html?ka=company-jobs",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-2",
+      "title": "规划控制算法实习生（强化学习）",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/gongsi/job/100000/bcd987db80a996f61nR_09-6Eg~~.html",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-3",
+      "title": "AGV实施实习生",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/gongsi/job/100000/bcd987db80a996f61nR_09-6Eg~~.html",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-4",
+      "title": "实施工程师",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/gongsi/job/100000/bcd987db80a996f61nR_09-6Eg~~.html",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-5",
+      "title": "高级嵌入式工程师",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/gongsi/job/100000/bcd987db80a996f61nR_09-6Eg~~.html?page=2",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-6",
+      "title": "测试实习生",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/gongsi/job/100000/bcd987db80a996f61nR_09-6Eg~~.html?page=2",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-7",
+      "title": "机器人软件测试实习生",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://zhipin.com/gongsi/job/100000/bcd987db80a996f61nR_09-6Eg~~.html?page=2",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-8",
+      "title": "结构设计工程师（机器人关节 / 机械臂）",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/gongsi/job/300000/bcd987db80a996f61nR_09-6Eg~~.html",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-9",
+      "title": "机器人运动控制工程师（底层运控方向",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/gongsi/job/300000/bcd987db80a996f61nR_09-6Eg~~.html",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-10",
+      "title": "资深关节模组设计工程师",
+      "siteId": "embj-迦智科技-site",
+      "family": "social",
+      "taxonomy": {
+        "family": "social"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.zhipin.com/gongsi/job/300000/bcd987db80a996f61nR_09-6Eg~~.html",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-11",
+      "title": "博士研究员",
+      "siteId": "embj-迦智科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "https://www.iplusmobot.cn/joinus_social_info/index?cid=3",
+      "retrievedAt": "2026-08-21"
+    },
+    {
+      "externalId": "embj-迦智科技-12",
+      "title": "测试实习生",
+      "siteId": "embj-迦智科技-site",
+      "family": "campus",
+      "taxonomy": {
+        "family": "campus"
+      },
+      "status": "open",
+      "applySource": "official",
+      "applyUrl": "http://iplusmobot.cn/joinus_social_info/index?cid=5",
+      "retrievedAt": "2026-08-21"
+    }
+  ]
+}

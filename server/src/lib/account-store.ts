@@ -1,0 +1,1442 @@
+// ============================================================
+// 账户仓储门面
+//
+// 有 DATABASE_URL 且 005 已应用：identities / sessions / OTP / history 上云。
+// 否则回落到进程内 session-store，单测不依赖库。
+//
+// 读路径：DB 查询失败允许回落到内存实现（降级合理）。
+// 写路径：DB 故障直接抛 DbUnavailableError（route 层转 503），
+//         绝不静默回落内存——否则数据在内存与 DB 间分裂，保存看似成功实则丢失。
+// ============================================================
+
+import { createHash } from 'node:crypto';
+import type { Pool, PoolClient, QueryResult } from 'pg';
+import {
+  DEFAULT_PREFERENCES,
+  mergePreferences,
+  sanitizeEntityRef,
+  type AccountUser,
+  type AuthProvider,
+  type ApplicationRecord,
+  type NotificationRecord,
+  type SavedPlace,
+  type SearchHistoryEntry,
+  type SearchHistoryEntityRef,
+  type UserPreferences,
+} from './account.ts';
+import { getPool } from './db.ts';
+import { canonicalMode } from './modes.ts';
+import { sanitizeApplicationStatusId } from './application-pipeline.ts';
+import { hashPassword, verifyPassword } from './password.ts';
+import type { MapMode } from './types.ts';
+import { BoundedRateStore } from './bounded-rate-store.ts';
+import { normalizeContact, normalizeEmail, normalizePhone } from './contact-validation.ts';
+import {
+  addHistory as memAddHistory,
+  clearHistory as memClearHistory,
+  consumeOtp as memConsumeOtp,
+  createSession as memCreateSession,
+  destroySession as memDestroySession,
+  getSessionUser as memGetSessionUser,
+  issueOtp as memIssueOtp,
+  revokeOtpChallenge as memRevokeOtp,
+  listHistory as memListHistory,
+  listApplications as memListApplications,
+  listNotifications as memListNotifications,
+  listSaved as memListSaved,
+  enqueueNotification as memEnqueueNotification,
+  recordApplication as memRecordApplication,
+  reassignApplicationStatuses as memReassignApplicationStatuses,
+  removeApplication as memRemoveApplication,
+  removeSaved as memRemoveSaved,
+  updateApplicationStatus as memUpdateApplicationStatus,
+  savePlace as memSavePlace,
+  resolveAccountBySubject as memResolveAccountBySubject,
+  updateUser as memUpdateUser,
+  updateAvatar as memUpdateAvatar,
+  getAvatarData as memGetAvatarData,
+  upsertIdentity as memUpsertIdentity,
+  registerWithPassword as memRegisterWithPassword,
+  loginWithPassword as memLoginWithPassword,
+  verifyUserPassword as memVerifyUserPassword,
+  setPassword as memSetPassword,
+  bindPhone as memBindPhone,
+  bindEmail as memBindEmail,
+  UsernameTakenError,
+  PhoneTakenError,
+  EmailTakenError,
+} from './session-store.ts';
+
+export { UsernameTakenError, PhoneTakenError, EmailTakenError };
+
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+function hashOtp(code: string): string {
+  return createHash('sha256').update(`otp:${code.trim()}`).digest('hex');
+}
+
+/** 登录「查无此人/无密码」时执行的 dummy 校验:用真实 scrypt 参数跑一次,
+ *  抹平「账号不存在」与「密码错误」的响应时间差(时间侧信道,scan #3/#17)。
+ *  lazy 生成(仅首次命中时 50ms),非秘密。 */
+let dummyVerifyHash: string | null = null;
+function dummyVerifyPassword(password: string): void {
+  if (!dummyVerifyHash) dummyVerifyHash = hashPassword('domain-map-dummy-verify');
+  verifyPassword(password, dummyVerifyHash);
+}
+
+function subjectKey(provider: AuthProvider, subject: string): string {
+  return `${provider}:${subject.trim().toLowerCase()}`;
+}
+
+function asUser(row: {
+  id: string | number;
+  display_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  email: string | null;
+  username?: string | null;
+  password_hash?: string | null;
+  preferences: UserPreferences | null;
+  provider: AuthProvider | null;
+}): AccountUser {
+  const phone = row.phone ?? undefined;
+  const email = row.email ?? undefined;
+  const prefs = row.preferences ?? DEFAULT_PREFERENCES;
+  return {
+    id: String(row.id),
+    displayName: row.display_name || defaultName(row.provider, phone, email),
+    accountLabel: phone || email || (row.username ?? ''),
+    avatarUrl: row.avatar_url ?? undefined,
+    phone,
+    email,
+    username: row.username ?? undefined,
+    hasPassword: !!row.password_hash,
+    provider: row.provider ?? 'email',
+    preferences: mergePreferences(prefs),
+  };
+}
+
+function defaultName(provider: AuthProvider | null, phone?: string, email?: string): string {
+  if (provider === 'phone' && phone) {
+    const digits = phone.replace(/\D/g, '');
+    return digits.length >= 4 ? `用户 ${digits.slice(-4)}` : '用户';
+  }
+  if (email) return email.split('@')[0] || 'User';
+  return 'GitHub User';
+}
+
+// ---- 错误类型(route 层映射 HTTP 状态) ----
+
+/** 发送限流(60s 冷却 / 24h 上限):route 层转 429 RATE_LIMITED。 */
+export class OtpRateLimitedError extends Error {
+  readonly retryAfterMs: number;
+  constructor(retryAfterMs: number, message: string) {
+    super(message);
+    this.name = 'OtpRateLimitedError';
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+/** 验证尝试超限锁(15min 窗口 ≥5 错 → 锁 15min):route 层转 429 TOO_MANY_ATTEMPTS。 */
+export class OtpTooManyAttemptsError extends Error {
+  readonly retryAfterMs: number;
+  constructor(retryAfterMs: number, message: string) {
+    super(message);
+    this.name = 'OtpTooManyAttemptsError';
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+/** 写路径 DB 不可用:route 层转 503 DB_UNAVAILABLE,绝不静默回落内存。 */
+export class DbUnavailableError extends Error {
+  constructor(cause: unknown) {
+    super(`database unavailable: ${(cause as Error)?.message ?? String(cause)}`);
+    this.name = 'DbUnavailableError';
+  }
+}
+
+// ---- OTP 限流与尝试上限(进程内守卫;DB 行仍是权威的 code/过期) ----
+// 演示为单实例部署,进程内守卫足够;多实例需换 Redis 等共享状态(deferred)。
+// 选内存+DB 双写而非给 auth_otp_challenges 加列:迁移 apply 是 Env-only,
+// 守卫必须在无库测试与内存模式下同样生效。
+
+const OTP_COOLDOWN_MS = 60_000;
+const OTP_DAILY_LIMIT = 10;
+const OTP_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
+const OTP_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+const OTP_MAX_WRONG_ATTEMPTS = 5;
+const OTP_LOCK_MS = 15 * 60 * 1000;
+/** 每 IP 24h OTP 发送上限(防轮换 target 绕过 per-target 限额持续耗配额,scan #2)。 */
+const OTP_IP_DAILY_LIMIT = 20;
+/** 每账号 24h OTP 发送上限:账号 = 绑定用户(手机/邮箱共享同一桶),未绑定 → provider:target。 */
+const OTP_ACCOUNT_DAILY_LIMIT = 10;
+
+/** OTP 限流参数(生产用默认常量;测试可临时缩小窗口,用后还原)。 */
+export const otpRateConfig = {
+  cooldownMs: OTP_COOLDOWN_MS,
+  dailyLimit: OTP_DAILY_LIMIT,
+  dailyWindowMs: OTP_DAILY_WINDOW_MS,
+  attemptWindowMs: OTP_ATTEMPT_WINDOW_MS,
+  maxWrongAttempts: OTP_MAX_WRONG_ATTEMPTS,
+  lockMs: OTP_LOCK_MS,
+  ipDailyLimit: OTP_IP_DAILY_LIMIT,
+  accountDailyLimit: OTP_ACCOUNT_DAILY_LIMIT,
+};
+
+interface OtpGuard {
+  lastSentAt: number;
+  sentAt: number[]; // 24h 窗口内的发送时间戳
+  wrongAt: number[]; // 15min 窗口内的错误尝试时间戳
+  lockedUntil: number; // 0 = 未锁
+}
+
+const otpGuardCapacity = 10_000;
+const otpGuards = new BoundedRateStore<OtpGuard>(otpGuardCapacity);
+const otpIpGuards = new BoundedRateStore<OtpGuard>(otpGuardCapacity);
+const otpAccountGuards = new BoundedRateStore<OtpGuard>(otpGuardCapacity);
+
+function otpKey(provider: 'phone' | 'email', target: string): string {
+  return `${provider}:${normalizeContact(provider, target)}`;
+}
+
+function otpGuardTtlMs(): number {
+  return Math.max(
+    otpRateConfig.dailyWindowMs,
+    otpRateConfig.attemptWindowMs,
+    otpRateConfig.lockMs,
+  ) * 2;
+}
+
+function getOtpGuard(bucket: BoundedRateStore<OtpGuard>, key: string): OtpGuard {
+  let guard = bucket.get(key);
+  if (!guard) {
+    guard = { lastSentAt: 0, sentAt: [], wrongAt: [], lockedUntil: 0 };
+    bucket.set(key, guard, otpGuardTtlMs());
+  }
+  return guard;
+}
+
+function pruneOtpGuard(guard: OtpGuard, now: number): void {
+  const cfg = otpRateConfig;
+  guard.sentAt = guard.sentAt.filter((t) => t > now - cfg.dailyWindowMs);
+  guard.wrongAt = guard.wrongAt.filter((t) => t > now - cfg.attemptWindowMs);
+  if (guard.lockedUntil <= now) guard.lockedUntil = 0;
+}
+
+/**
+ * 账号级发送桶的 key:target 已绑定账户 → `user:<id>`(手机/邮箱共享同一桶,
+ * 防止用同一账号的两个标识轮流发送翻倍配额);未绑定 → `account:<provider>:<target>`。
+ * 只做身份映射查询;DB 不可用时回退 target 键(随后 issueOtp 的写路径仍会抛
+ * DbUnavailableError,不存在借回退绕过发送的可能)。
+ */
+async function resolveOtpAccountKey(provider: 'phone' | 'email', normalized: string): Promise<string> {
+  const pool = getPoolForCall();
+  if (pool) {
+    try {
+      const result = await pool.query<{ user_id: string }>(
+        `SELECT user_id::text FROM auth_identities WHERE provider = $1 AND subject = $2 LIMIT 1`,
+        [provider, normalized],
+      );
+      const userId = result.rows[0]?.user_id;
+      if (userId) return `user:${userId}`;
+    } catch {
+      // DB 不可用:回退 target 键(见函数注释)。
+    }
+  } else {
+    const userId = memResolveAccountBySubject(provider, normalized);
+    if (userId) return `user:${userId}`;
+  }
+  return `account:${provider}:${normalized}`;
+}
+
+/**
+ * OTP 发送前追加守卫(scan #2):在 issueOtp 的 per-target(60s 冷却 / 24h 10 次)之上,
+ * 增加 per-IP(默认 20/24h)与 per-账号(默认 10/24h,账号 = 绑定用户,未绑定 → target)
+ * 两个独立 24h 发送桶。超出 → OtpRateLimitedError(route 层转 429 RATE_LIMITED)。
+ * 与 per-target 守卫同构:计数先于实际发送(发送失败也不退配额,防绕过)。
+ * 进程内守卫,适用于单实例演示(与 otpGuards 同一信任假设;IP 取自请求头,见 send route)。
+ */
+export async function checkOtpSendLimits(
+  ip: string,
+  provider: 'phone' | 'email',
+  target: string,
+): Promise<void> {
+  const normalized = normalizeContact(provider, target);
+  const now = Date.now();
+  const cfg = otpRateConfig;
+
+  const ipGuard = getOtpGuard(otpIpGuards, `ip:${ip}`);
+  pruneOtpGuard(ipGuard, now);
+  if (ipGuard.sentAt.length >= cfg.ipDailyLimit) {
+    const retryAfterMs = Math.max(cfg.cooldownMs, ipGuard.sentAt[0] + cfg.dailyWindowMs - now);
+    throw new OtpRateLimitedError(retryAfterMs, 'per-IP daily send limit reached');
+  }
+  ipGuard.sentAt.push(now);
+
+  const accountGuard = getOtpGuard(otpAccountGuards, await resolveOtpAccountKey(provider, normalized));
+  pruneOtpGuard(accountGuard, now);
+  if (accountGuard.sentAt.length >= cfg.accountDailyLimit) {
+    const retryAfterMs = Math.max(cfg.cooldownMs, accountGuard.sentAt[0] + cfg.dailyWindowMs - now);
+    throw new OtpRateLimitedError(retryAfterMs, 'per-account daily send limit reached');
+  }
+  accountGuard.sentAt.push(now);
+}
+
+// ---- DB 连接与故障策略 ----
+
+/**
+ * 测试钩子(仅测试使用,生产调用方不碰):
+ * - poolOverride:注入 fake 池(可让 query 抛错模拟 DB 故障)或 null(强制内存模式),
+ *   绕过 getPool 的进程级缓存,让「写路径抛 / 读路径降级」可被确定性单测覆盖。
+ */
+export const __accountStoreTest = {
+  poolOverride: undefined as (() => Pool | null) | undefined,
+};
+
+function getPoolForCall(): Pool | null {
+  return __accountStoreTest.poolOverride ? __accountStoreTest.poolOverride() : getPool();
+}
+
+/** 读路径:DB 故障回落内存(降级合理,读不到不至于崩)。 */
+async function withDbRead<T>(fn: (pool: Pool) => Promise<T>, fallback: () => T | Promise<T>): Promise<T> {
+  const db = getPoolForCall();
+  if (!db) return fallback();
+  try {
+    return await fn(db);
+  } catch (err) {
+    // 用户名冲突不是「库不可用」,必须原样抛出(409),不能回落内存。
+    if (err instanceof UsernameTakenError) throw err;
+    console.warn('[account-store] postgres unavailable, using memory:', (err as Error).message);
+    return fallback();
+  }
+}
+
+/**
+ * 在单个 PoolClient 上执行一个原子写操作。client 的生命周期必须覆盖
+ * BEGIN 到 COMMIT/ROLLBACK；回滚失败时保留原始错误，避免掩盖冲突/数据库错误。
+ */
+async function runDbTransaction<T>(
+  db: Pool,
+  fn: (client: PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    try {
+      const result = await fn(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (err) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        // Preserve the statement/constraint error for the route mapper.
+      }
+      throw err;
+    }
+  } finally {
+    client.release();
+  }
+}
+
+/** 认证多语句写路径的 DB 封装:冲突只在回滚完成后映射,client 必 release。 */
+async function withDbTransactionWrite<T>(
+  fn: (client: PoolClient) => Promise<T>,
+  memory: () => T | Promise<T>,
+): Promise<T> {
+  const db = getPoolForCall();
+  if (!db) return memory();
+  try {
+    return await runDbTransaction(db, fn);
+  } catch (err) {
+    if (err instanceof UsernameTakenError || err instanceof PhoneTakenError || err instanceof EmailTakenError) {
+      throw err;
+    }
+    throw new DbUnavailableError(err);
+  }
+}
+
+/** 写路径 DB 故障直接抛 DbUnavailableError,绝不静默回落内存造成数据分裂。 */
+async function withDbWrite<T>(fn: (pool: Pool) => Promise<T>, memory: () => T | Promise<T>): Promise<T> {
+  const db = getPoolForCall();
+  if (!db) return memory(); // 未配置 DB:内存模式本身就是存储,写内存。
+  try {
+    return await fn(db);
+  } catch (err) {
+    // 占用类冲突不是「库不可用」,必须原样抛出(409),不能回落内存。
+    if (err instanceof UsernameTakenError || err instanceof PhoneTakenError || err instanceof EmailTakenError) {
+      throw err;
+    }
+    throw new DbUnavailableError(err);
+  }
+}
+
+type UpsertUserRow = {
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  email: string | null;
+  username: string | null;
+  password_hash: string | null;
+  preferences: UserPreferences | null;
+};
+
+/** UPDATE...RETURNING + provider 子查询的写路径行(updateUser/updateAvatar/setPassword/bindPhone/bindEmail)。 */
+type UserRowWithProvider = UpsertUserRow & { provider: AuthProvider | null };
+
+/**
+ * 23505 邮箱冲突分支(users_email_uidx):Google 邮箱撞已有 OTP 邮箱用户时
+ * INSERT 抛 23505 → 按 lower(email) 查到已有用户 → 为其挂接 auth_identities
+ * (provider, subject) → 返回该用户,不新建。只在 23505 时走此分支;
+ * 其余错误照旧上抛(外层 withDbTransactionWrite 包 DbUnavailableError)。
+ */
+async function attachIdentityToExistingEmailUser(
+  db: PoolClient,
+  input: { provider: AuthProvider; subject: string; email?: string },
+  originalError: unknown,
+): Promise<AccountUser> {
+  if (!input.email) throw originalError; // 理论上 23505 只可能来自 email 唯一键
+  const existing = await db.query<UpsertUserRow>(
+    `SELECT id::text, display_name, avatar_url, phone, email, username, password_hash, preferences
+     FROM users
+     WHERE lower(email) = lower($1)`,
+    [input.email],
+  );
+  const row = existing.rows[0];
+  if (!row) throw originalError; // 竞态下查无此人 → 原样上抛,不静默
+  await db.query(
+    `INSERT INTO auth_identities (user_id, provider, subject)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (provider, subject) DO NOTHING`,
+    [row.id, input.provider, input.subject.trim().toLowerCase()],
+  );
+  return asUser({ ...row, provider: input.provider });
+}
+
+export async function upsertIdentity(input: {
+  provider: AuthProvider;
+  subject: string;
+  email?: string;
+  phone?: string;
+  displayName?: string;
+  avatarUrl?: string;
+}): Promise<AccountUser> {
+  const subjectValue = input.provider === 'phone' || input.provider === 'email'
+    ? normalizeContact(input.provider, input.subject)
+    : input.subject.trim().toLowerCase();
+  const phone = input.provider === 'phone'
+    ? normalizePhone(input.phone ?? subjectValue)
+    : input.phone?.trim();
+  const email = input.provider === 'email'
+    ? normalizeEmail(input.email ?? subjectValue)
+    : input.email?.trim();
+  const normalizedInput: typeof input = { ...input, subject: subjectValue, phone, email };
+
+  return withDbTransactionWrite(async (db) => {
+    const subject = subjectKey(input.provider, subjectValue);
+    const prefs = JSON.stringify(DEFAULT_PREFERENCES);
+    let inserted: { rows: UpsertUserRow[] };
+    // A unique-email violation aborts a PostgreSQL transaction. Use a savepoint
+    // so the verified-email auto-link can continue on this same client, while
+    // every later failure still reaches the outer ROLLBACK.
+    await db.query('SAVEPOINT oauth_user_insert');
+    try {
+      inserted = await db.query<UpsertUserRow>(
+        `INSERT INTO users (subject, display_name, phone, email, avatar_url, preferences)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+         ON CONFLICT (subject) DO UPDATE SET
+           display_name = COALESCE(users.display_name, EXCLUDED.display_name),
+           phone = COALESCE(EXCLUDED.phone, users.phone),
+           email = COALESCE(EXCLUDED.email, users.email),
+           avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
+           updated_at = now()
+         RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences`,
+        [
+          subject,
+          input.displayName ?? null,
+          phone ?? null,
+          email ?? null,
+          input.avatarUrl ?? null,
+          prefs,
+        ],
+      );
+      await db.query('RELEASE SAVEPOINT oauth_user_insert');
+    } catch (err) {
+      if ((err as { code?: string }).code !== '23505') throw err;
+      await db.query('ROLLBACK TO SAVEPOINT oauth_user_insert');
+      await db.query('RELEASE SAVEPOINT oauth_user_insert');
+      return attachIdentityToExistingEmailUser(db, normalizedInput, err);
+    }
+    const user = inserted.rows[0];
+    await db.query(
+      `INSERT INTO auth_identities (user_id, provider, subject)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (provider, subject) DO NOTHING`,
+      [user.id, input.provider, subjectValue],
+    );
+    return asUser({ ...user, provider: input.provider });
+  }, () => memUpsertIdentity(normalizedInput));
+}
+
+/** 注册密码账号:subject = password:<username>;用户名冲突抛 UsernameTakenError(→409)。 */
+export async function registerWithPassword(
+  username: string,
+  password: string,
+  displayName?: string,
+): Promise<AccountUser> {
+  const name = username.trim();
+  const subject = `password:${name.toLowerCase()}`;
+  const prefs = JSON.stringify(DEFAULT_PREFERENCES);
+  return withDbTransactionWrite(
+    async (db) => {
+      const existing = await db.query<{ id: string }>(
+        `SELECT id::text FROM users WHERE lower(username) = $1`,
+        [name.toLowerCase()],
+      );
+      if (existing.rows[0]) throw new UsernameTakenError(name);
+      const inserted = await db.query<{
+        id: string;
+        display_name: string | null;
+        avatar_url: string | null;
+        phone: string | null;
+        email: string | null;
+        username: string | null;
+        password_hash: string | null;
+        preferences: UserPreferences;
+      }>(
+        `INSERT INTO users (subject, display_name, username, password_hash, preferences)
+         VALUES ($1, $2, $3, $4, $5::jsonb)
+         RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences`,
+        [subject, displayName?.trim() || name, name, hashPassword(password), prefs],
+      ).catch((err: unknown) => {
+        if ((err as { code?: string }).code === '23505') throw new UsernameTakenError(name);
+        throw err;
+      });
+      const user = inserted.rows[0];
+      await db.query(
+        `INSERT INTO auth_identities (user_id, provider, subject)
+         VALUES ($1, 'password', $2)
+         ON CONFLICT (provider, subject) DO NOTHING`,
+        [user.id, name.toLowerCase()],
+      );
+      return asUser({ ...user, provider: 'password' });
+    },
+    () => memRegisterWithPassword(username, password, displayName),
+  );
+}
+
+/** 密码登录(username 或邮箱):失败统一返回 null(调用方 401,不泄露账号是否存在)。 */
+export async function loginWithPassword(username: string, password: string): Promise<AccountUser | null> {
+  const name = username.trim();
+  return withDbRead(
+    async (db) => {
+      const result = await db.query<{
+        id: string;
+        display_name: string | null;
+        avatar_url: string | null;
+        phone: string | null;
+        email: string | null;
+        username: string | null;
+        password_hash: string | null;
+        preferences: UserPreferences;
+        provider: AuthProvider | null;
+      }>(
+        `SELECT u.id::text, u.display_name, u.avatar_url, u.phone, u.email, u.username, u.password_hash, u.preferences, i.provider
+         FROM users u
+         LEFT JOIN LATERAL (
+           SELECT provider FROM auth_identities
+           WHERE user_id = u.id
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) i ON true
+         WHERE (lower(u.username) = $1 OR lower(u.email) = $1) AND u.password_hash IS NOT NULL`,
+        [name.toLowerCase()],
+      );
+      const row = result.rows[0];
+      if (!row || !row.password_hash) {
+        // 查无此人/无密码:也执行一次真实 scrypt,抹平「账号不存在」时间侧信道(scan #3/#17)。
+        dummyVerifyPassword(password);
+        return null;
+      }
+      if (!verifyPassword(password, row.password_hash)) return null;
+      return asUser({ ...row, provider: row.provider ?? 'password' });
+    },
+    () => memLoginWithPassword(username, password),
+  );
+}
+
+/** 校验当前密码(改密用):无密码或错 → false,不泄露。 */
+export async function verifyUserPassword(userId: string, password: string): Promise<boolean> {
+  return withDbRead(async (db) => {
+    const result = await db.query<{ password_hash: string | null }>(
+      `SELECT password_hash FROM users WHERE id = $1`,
+      [userId],
+    );
+    const hash = result.rows[0]?.password_hash;
+    if (!hash) return false;
+    return verifyPassword(password, hash);
+  }, () => memVerifyUserPassword(userId, password));
+}
+
+/** 设置/修改密码:hashPassword 落库,返回更新后的用户(hasPassword 翻 true)。 */
+export async function setPassword(userId: string, newPassword: string): Promise<AccountUser | null> {
+  return withDbWrite(async (db) => {
+    const result = await db.query<UserRowWithProvider>(
+      `UPDATE users SET password_hash = $2, updated_at = now()
+       WHERE id = $1
+       RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
+         (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
+      [userId, hashPassword(newPassword)],
+    );
+    return result.rows[0] ? asUser(result.rows[0]) : memSetPassword(userId, newPassword);
+  }, () => memSetPassword(userId, newPassword));
+}
+
+/** 绑定/更换手机:users.phone 更新 + auth_identities 新 phone 行 upsert + 旧 phone 行删除;
+ *  手机已被他人绑定 → 23505 → PhoneTakenError(→409)。 */
+export async function bindPhone(userId: string, phone: string): Promise<AccountUser | null> {
+  const normalized = normalizePhone(phone);
+  return withDbTransactionWrite(async (db) => {
+    try {
+      const result = await db.query<UserRowWithProvider>(
+        `UPDATE users SET phone = $2, updated_at = now()
+         WHERE id = $1
+         RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
+           (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
+        [userId, normalized],
+      );
+      if (!result.rows[0]) return memBindPhone(userId, normalized);
+      const user = result.rows[0];
+      await db.query(`DELETE FROM auth_identities WHERE user_id = $1 AND provider = 'phone'`, [userId]);
+      await db.query(
+        `INSERT INTO auth_identities (user_id, provider, subject)
+         VALUES ($1, 'phone', $2)
+         ON CONFLICT (provider, subject) DO NOTHING`,
+        [userId, normalized],
+      );
+      return asUser(user);
+    } catch (err) {
+      if ((err as { code?: string }).code === '23505') throw new PhoneTakenError(normalized);
+      throw err;
+    }
+  }, () => memBindPhone(userId, normalized));
+}
+
+/** 绑定/更换邮箱:与 bindPhone 对称(lower(email) 唯一 → 23505 → EmailTakenError)。 */
+export async function bindEmail(userId: string, email: string): Promise<AccountUser | null> {
+  const normalized = normalizeEmail(email);
+  return withDbTransactionWrite(async (db) => {
+    try {
+      const result = await db.query<UserRowWithProvider>(
+        `UPDATE users SET email = $2, updated_at = now()
+         WHERE id = $1
+         RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
+           (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
+        [userId, normalized],
+      );
+      if (!result.rows[0]) return memBindEmail(userId, normalized);
+      const user = result.rows[0];
+      await db.query(`DELETE FROM auth_identities WHERE user_id = $1 AND provider = 'email'`, [userId]);
+      await db.query(
+        `INSERT INTO auth_identities (user_id, provider, subject)
+         VALUES ($1, 'email', $2)
+         ON CONFLICT (provider, subject) DO NOTHING`,
+        [userId, normalized],
+      );
+      return asUser(user);
+    } catch (err) {
+      if ((err as { code?: string }).code === '23505') throw new EmailTakenError(normalized);
+      throw err;
+    }
+  }, () => memBindEmail(userId, normalized));
+}
+
+export async function createSession(userId: string): Promise<{ token: string; expiresAt: number }> {
+  let memory: { token: string; expiresAt: number } | undefined;
+  try {
+    return await withDbTransactionWrite(async (db) => {
+      memory = memCreateSession(userId);
+      await db.query(
+        `DELETE FROM auth_sessions WHERE expires_at <= now()`,
+      );
+      await db.query(
+        `INSERT INTO auth_sessions (user_id, token_hash, expires_at)
+         VALUES ($1, $2, to_timestamp($3 / 1000.0))`,
+        [userId, hashToken(memory.token), memory.expiresAt],
+      );
+      return memory;
+    }, () => memCreateSession(userId));
+  } catch (err) {
+    if (memory) memDestroySession(memory.token);
+    throw err;
+  }
+}
+
+export async function getSessionUser(token: string | undefined | null): Promise<AccountUser | null> {
+  if (!token) return null;
+  return withDbRead(async (db) => {
+    const result = await db.query<{
+      id: string;
+      display_name: string | null;
+      avatar_url: string | null;
+      phone: string | null;
+      email: string | null;
+      username: string | null;
+      password_hash: string | null;
+      preferences: UserPreferences;
+      provider: AuthProvider | null;
+    }>(
+      `SELECT u.id::text, u.display_name, u.avatar_url, u.phone, u.email, u.username, u.password_hash, u.preferences, i.provider
+       FROM auth_sessions s
+       JOIN users u ON u.id = s.user_id
+       LEFT JOIN LATERAL (
+         SELECT provider FROM auth_identities
+         WHERE user_id = u.id
+         ORDER BY created_at DESC
+         LIMIT 1
+       ) i ON true
+       WHERE s.token_hash = $1 AND s.expires_at > now()`,
+      [hashToken(token)],
+    );
+    if (result.rows[0]) return asUser(result.rows[0]);
+    await db.query(`DELETE FROM auth_sessions WHERE expires_at <= now() OR token_hash = $1`, [
+      hashToken(token),
+    ]);
+    return memGetSessionUser(token);
+  }, () => memGetSessionUser(token));
+}
+
+export async function destroySession(token: string | undefined | null): Promise<void> {
+  if (!token) return;
+  await withDbWrite(async (db) => {
+    await db.query(`DELETE FROM auth_sessions WHERE token_hash = $1`, [hashToken(token)]);
+    return undefined;
+  }, () => undefined);
+  memDestroySession(token);
+}
+
+export async function updateUser(
+  userId: string,
+  patch: Partial<Pick<AccountUser, 'displayName' | 'avatarUrl'>> & {
+    preferences?: Partial<UserPreferences>;
+  },
+): Promise<AccountUser | null> {
+  return withDbWrite(async (db) => {
+    const current = await db.query<{ preferences: UserPreferences | null }>(
+      `SELECT preferences FROM users WHERE id = $1`,
+      [userId],
+    );
+    if (!current.rows[0]) return memUpdateUser(userId, patch);
+    const nextPrefs = patch.preferences
+      ? mergePreferences(current.rows[0].preferences, patch.preferences)
+      : null;
+    const result = await db.query<{
+      id: string;
+      display_name: string | null;
+      avatar_url: string | null;
+      phone: string | null;
+      email: string | null;
+      username: string | null;
+      password_hash: string | null;
+      preferences: UserPreferences;
+      provider: AuthProvider | null;
+    }>(
+      `UPDATE users SET
+         display_name = COALESCE($2, display_name),
+         avatar_url = COALESCE($3, avatar_url),
+         avatar_data = CASE WHEN $3 = '' THEN NULL ELSE avatar_data END,
+         preferences = COALESCE($4::jsonb, preferences),
+         updated_at = now()
+       WHERE id = $1
+       RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
+         (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
+      [
+        userId,
+        patch.displayName ?? null,
+        patch.avatarUrl ?? null,
+        nextPrefs ? JSON.stringify(nextPrefs) : null,
+      ],
+    );
+    return result.rows[0] ? asUser(result.rows[0]) : memUpdateUser(userId, patch);
+  }, () => memUpdateUser(userId, patch));
+}
+
+/** 上传头像:data 非空 → avatar_data 存字节 + avatar_url 写服务端路径;data=null → 整头像清空。 */
+export async function updateAvatar(
+  userId: string,
+  input: { data: Uint8Array; url: string } | { data: null },
+): Promise<AccountUser | null> {
+  return withDbWrite(async (db) => {
+    const result = await db.query<{
+      id: string;
+      display_name: string | null;
+      avatar_url: string | null;
+      phone: string | null;
+      email: string | null;
+      username: string | null;
+      password_hash: string | null;
+      preferences: UserPreferences;
+      provider: AuthProvider | null;
+    }>(
+      `UPDATE users SET
+         avatar_data = $2,
+         avatar_url = $3,
+         updated_at = now()
+       WHERE id = $1
+       RETURNING id::text, display_name, avatar_url, phone, email, username, password_hash, preferences,
+         (SELECT provider FROM auth_identities WHERE user_id = users.id ORDER BY created_at DESC LIMIT 1) AS provider`,
+      [
+        userId,
+        input.data === null ? null : Buffer.from(input.data),
+        input.data === null ? null : input.url,
+      ],
+    );
+    return result.rows[0] ? asUser(result.rows[0]) : memUpdateAvatar(userId, input);
+  }, () => memUpdateAvatar(userId, input));
+}
+
+/** 取上传头像字节(无 → null)。只在 GET /api/me/avatar 内部使用,绝不进 user 对象。 */
+export async function getAvatarData(userId: string): Promise<Uint8Array | null> {
+  return withDbRead(async (db) => {
+    const result = await db.query<{ avatar_data: Buffer | null }>(
+      `SELECT avatar_data FROM users WHERE id = $1`,
+      [userId],
+    );
+    const buf = result.rows[0]?.avatar_data;
+    return buf ? new Uint8Array(buf) : null;
+  }, () => memGetAvatarData(userId));
+}
+
+export async function issueOtp(
+  provider: 'phone' | 'email',
+  target: string,
+): Promise<{ expiresAt: number; code: string }> {
+  const normalized = normalizeContact(provider, target);
+  const now = Date.now();
+  const cfg = otpRateConfig;
+  const guard = getOtpGuard(otpGuards, otpKey(provider, normalized));
+  pruneOtpGuard(guard, now);
+  // 锁定期内不允许补发新码(防止绕过尝试上限)。
+  if (guard.lockedUntil > now) {
+    throw new OtpTooManyAttemptsError(guard.lockedUntil - now, 'too many failed attempts, try again later');
+  }
+  if (now - guard.lastSentAt < cfg.cooldownMs) {
+    const retryAfterMs = cfg.cooldownMs - (now - guard.lastSentAt);
+    throw new OtpRateLimitedError(retryAfterMs, 'resend too soon');
+  }
+  if (guard.sentAt.length >= cfg.dailyLimit) {
+    const retryAfterMs = Math.max(cfg.cooldownMs, guard.sentAt[0] + cfg.dailyWindowMs - now);
+    throw new OtpRateLimitedError(retryAfterMs, 'daily send limit reached');
+  }
+  guard.lastSentAt = now;
+  guard.sentAt.push(now);
+
+  const memory = memIssueOtp(provider, normalized);
+  try {
+    await withDbTransactionWrite(async (db) => {
+      // 顺手清掉该 target 的过期挑战行,控制 auth_otp_challenges 膨胀。
+      await db.query(
+        `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
+        [provider, normalized],
+      );
+      await db.query(
+        `DELETE FROM auth_otp_challenges WHERE expires_at <= now()`,
+      );
+      await db.query(
+        `INSERT INTO auth_otp_challenges (provider, target, code_hash, expires_at)
+         VALUES ($1, $2, $3, to_timestamp($4 / 1000.0))`,
+        [provider, normalized, hashOtp(memory.code), memory.expiresAt],
+      );
+      return undefined;
+    }, () => undefined);
+  } catch (err) {
+    memRevokeOtp(provider, normalized);
+    throw err;
+  }
+  return memory;
+}
+
+export async function consumeOtp(provider: 'phone' | 'email', target: string, code: string): Promise<boolean> {
+  const normalized = normalizeContact(provider, target);
+  const now = Date.now();
+  const cfg = otpRateConfig;
+  const guard = getOtpGuard(otpGuards, otpKey(provider, normalized));
+  pruneOtpGuard(guard, now);
+  if (guard.lockedUntil > now) {
+    throw new OtpTooManyAttemptsError(guard.lockedUntil - now, 'too many failed attempts, locked');
+  }
+
+  const ok = await withDbTransactionWrite(async (db) => {
+    const result = await db.query<{ id: string }>(
+      `SELECT id::text
+       FROM auth_otp_challenges
+       WHERE provider = $1 AND target = $2 AND consumed_at IS NULL AND expires_at > now()
+         AND code_hash = $3
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [provider, normalized, hashOtp(code)],
+    );
+    const row = result.rows[0];
+    if (!row) {
+      await db.query(
+        `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
+        [provider, normalized],
+      );
+      return false;
+    }
+    // Successful verification destroys the credential immediately. Keeping a
+    // consumed hash until expiry extends the lifetime of authentication data.
+    await db.query(`DELETE FROM auth_otp_challenges WHERE id = $1`, [row.id]);
+    return true;
+  }, () => memConsumeOtp(provider, normalized, code));
+
+  if (ok) {
+    // 单次性契约(scan #1):成功路径无条件删除挑战。DB 模式双写时,DB 行已
+    // 删除;若不删内存挑战,同一 code 会在 10min TTL 内经内存分支再次成功
+    // (重放)。内存模式此调用幂等(挑战已被 fallback 删除,重复调用无副作用)。
+    memConsumeOtp(provider, normalized, code);
+    guard.wrongAt = [];
+    return true;
+  }
+  // 记录错误尝试;15min 窗口内 ≥5 次 → 锁 15min。
+  guard.wrongAt.push(now);
+  if (guard.wrongAt.length >= cfg.maxWrongAttempts) {
+    guard.lockedUntil = now + cfg.lockMs;
+    guard.wrongAt = [];
+    throw new OtpTooManyAttemptsError(cfg.lockMs, 'too many failed attempts, locked');
+  }
+  return false;
+}
+
+// ---- search_history 实体引用列（db/migrations/014_recent_entity.sql）----
+// 迁移 apply 是 Env-only，未 apply 时 entity 列不存在：SELECT/INSERT/UPDATE
+// 遇到 42703(undefined_column) 自动退回不含 entity 列的语句，系统不崩。
+
+type HistoryRow = {
+  id: string;
+  query: string;
+  mode: MapMode;
+  created_at: Date;
+  entity?: unknown;
+};
+
+function toHistoryEntry(row: HistoryRow): SearchHistoryEntry {
+  const base = {
+    id: row.id,
+    query: row.query,
+    mode: canonicalMode(row.mode),
+    createdAt: row.created_at.toISOString(),
+  };
+  const entity = sanitizeEntityRef(row.entity);
+  return entity ? { ...base, entity } : base;
+}
+
+async function withEntityColumnFallback<T>(
+  withEntity: () => Promise<T>,
+  withoutEntity: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await withEntity();
+  } catch (err) {
+    if ((err as { code?: string })?.code !== '42703') throw err;
+    return withoutEntity();
+  }
+}
+
+const HISTORY_SELECT = `
+  SELECT id::text, query, mode, created_at
+  FROM search_history
+  WHERE user_id = $1
+  ORDER BY created_at DESC
+  LIMIT $2`;
+const HISTORY_SELECT_WITH_ENTITY = `
+  SELECT id::text, query, mode, entity, created_at
+  FROM search_history
+  WHERE user_id = $1
+  ORDER BY created_at DESC
+  LIMIT $2`;
+/** Keep durable rows aligned with the in-memory history cap. */
+const HISTORY_STORAGE_MAX = 50;
+const HISTORY_PRUNE_SQL = `
+  DELETE FROM search_history
+  WHERE user_id = $1
+    AND id NOT IN (
+      SELECT id FROM search_history
+      WHERE user_id = $1
+      ORDER BY created_at DESC, id DESC
+      LIMIT $2
+    )`;
+/** Authenticated collections are bounded to prevent durable storage exhaustion. */
+export const SAVED_STORAGE_MAX = 500;
+export const APPLICATION_STORAGE_MAX = 500;
+export const NOTIFICATION_STORAGE_MAX = 200;
+
+function recentRowsPruneSql(table: string): string {
+  return `
+    DELETE FROM ${table}
+    WHERE user_id = $1
+      AND id NOT IN (
+        SELECT id FROM ${table}
+        WHERE user_id = $1
+        ORDER BY created_at DESC, id DESC
+        LIMIT $2
+      )`;
+}
+
+export async function listHistory(userId: string, limit = 30): Promise<SearchHistoryEntry[]> {
+  return withDbRead(async (db) => {
+    const result = await withEntityColumnFallback(
+      () => db.query<HistoryRow>(HISTORY_SELECT_WITH_ENTITY, [userId, limit]),
+      () => db.query<HistoryRow>(HISTORY_SELECT, [userId, limit]),
+    );
+    return result.rows.map(toHistoryEntry);
+  }, () => memListHistory(userId, limit));
+}
+
+export async function addHistory(
+  userId: string,
+  query: string,
+  mode: SearchHistoryEntry['mode'],
+  entity?: SearchHistoryEntityRef,
+): Promise<SearchHistoryEntry | null> {
+  const q = query.trim();
+  if (!q) return null;
+  const canon = canonicalMode(mode);
+  const ent = sanitizeEntityRef(entity) ?? null;
+  return withDbWrite(async (db) => {
+    const last = await withEntityColumnFallback(
+      () => db.query<HistoryRow>(
+        `SELECT id::text, query, mode, entity, created_at
+         FROM search_history
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [userId],
+      ),
+      () => db.query<HistoryRow>(
+        `SELECT id::text, query, mode, created_at
+         FROM search_history
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [userId],
+      ),
+    );
+    const prev = last.rows[0];
+    let current: QueryResult<HistoryRow> | undefined;
+    if (prev && prev.query === q && canonicalMode(prev.mode) === canon) {
+      current = await withEntityColumnFallback(
+        () => db.query<HistoryRow>(
+          `UPDATE search_history
+           SET created_at = now(), entity = COALESCE($2::jsonb, entity)
+           WHERE id = $1
+           RETURNING id::text, query, mode, entity, created_at`,
+          [prev.id, ent],
+        ),
+        () => db.query<HistoryRow>(
+          `UPDATE search_history SET created_at = now() WHERE id = $1
+           RETURNING id::text, query, mode, created_at`,
+          [prev.id],
+        ),
+      );
+    }
+
+    if (!current) {
+      current = await withEntityColumnFallback(
+        () => db.query<HistoryRow>(
+          `INSERT INTO search_history (user_id, query, mode, entity)
+           VALUES ($1, $2, $3, $4::jsonb)
+           RETURNING id::text, query, mode, entity, created_at`,
+          [userId, q, canon, ent],
+        ),
+        () => db.query<HistoryRow>(
+          `INSERT INTO search_history (user_id, query, mode)
+           VALUES ($1, $2, $3)
+           RETURNING id::text, query, mode, created_at`,
+          [userId, q, canon],
+        ),
+      );
+    }
+
+    await db.query(HISTORY_PRUNE_SQL, [userId, HISTORY_STORAGE_MAX]);
+    return toHistoryEntry(current.rows[0]);
+  }, () => memAddHistory(userId, q, canon, entity));
+}
+
+export async function clearHistory(userId: string): Promise<void> {
+  await withDbWrite(async (db) => {
+    await db.query(`DELETE FROM search_history WHERE user_id = $1`, [userId]);
+    return undefined;
+  }, () => undefined);
+  memClearHistory(userId);
+}
+
+function asSaved(row: {
+  id: string;
+  poi_id: string;
+  name: string;
+  mode: MapMode;
+  kind: SavedPlace['kind'];
+  address: string | null;
+  lng: number | null;
+  lat: number | null;
+  created_at: Date;
+}): SavedPlace {
+  return {
+    id: row.id,
+    poiId: row.poi_id,
+    name: row.name,
+    mode: canonicalMode(row.mode),
+    kind: row.kind,
+    address: row.address ?? undefined,
+    lng: row.lng ?? undefined,
+    lat: row.lat ?? undefined,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+export async function listSaved(userId: string): Promise<SavedPlace[]> {
+  return withDbRead(async (db) => {
+    const result = await db.query<{
+      id: string;
+      poi_id: string;
+      name: string;
+      mode: MapMode;
+      kind: SavedPlace['kind'];
+      address: string | null;
+      lng: number | null;
+      lat: number | null;
+      created_at: Date;
+    }>(
+       `SELECT id::text, poi_id, name, mode, kind, address, lng, lat, created_at
+       FROM saved_places
+       WHERE user_id = $1
+       ORDER BY created_at DESC, id DESC
+       LIMIT $2`,
+      [userId, SAVED_STORAGE_MAX],
+    );
+    return result.rows.map(asSaved);
+  }, () => memListSaved(userId));
+}
+
+export async function savePlace(
+  userId: string,
+  place: Omit<SavedPlace, 'id' | 'createdAt'>,
+): Promise<SavedPlace> {
+  const canon = canonicalMode(place.mode);
+  return withDbWrite(async (db) => {
+    const result = await db.query<{
+      id: string;
+      poi_id: string;
+      name: string;
+      mode: MapMode;
+      kind: SavedPlace['kind'];
+      address: string | null;
+      lng: number | null;
+      lat: number | null;
+      created_at: Date;
+    }>(
+      `INSERT INTO saved_places (user_id, poi_id, name, mode, kind, address, lng, lat)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (user_id, poi_id) DO UPDATE SET name = EXCLUDED.name
+       RETURNING id::text, poi_id, name, mode, kind, address, lng, lat, created_at`,
+      [userId, place.poiId, place.name, canon, place.kind, place.address ?? null, place.lng ?? null, place.lat ?? null],
+    );
+    await db.query(recentRowsPruneSql('saved_places'), [userId, SAVED_STORAGE_MAX]);
+    return asSaved(result.rows[0]);
+  }, () => memSavePlace(userId, { ...place, mode: canon }));
+}
+
+export async function removeSaved(userId: string, poiId: string): Promise<boolean> {
+  return withDbWrite(async (db) => {
+    const result = await db.query(`DELETE FROM saved_places WHERE user_id = $1 AND poi_id = $2`, [userId, poiId]);
+    return (result.rowCount ?? 0) > 0;
+  }, () => memRemoveSaved(userId, poiId));
+}
+
+function asApplication(row: {
+  id: string;
+  position_id: string;
+  company_poi_id: string;
+  title: string;
+  company_name: string;
+  apply_url: string | null;
+  status: ApplicationRecord['status'];
+  created_at: Date;
+  updated_at?: Date | null;
+}): ApplicationRecord {
+  const createdAt = row.created_at.toISOString();
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    companyPoiId: row.company_poi_id,
+    title: row.title,
+    companyName: row.company_name,
+    applyUrl: row.apply_url ?? undefined,
+    status: sanitizeApplicationStatusId(row.status) ?? 'applied',
+    createdAt,
+    updatedAt: (row.updated_at ?? row.created_at).toISOString(),
+  };
+}
+
+const APPLICATION_RETURNING =
+  'id::text, position_id, company_poi_id, title, company_name, apply_url, status, created_at, COALESCE(updated_at, created_at) AS updated_at';
+
+export async function listApplications(userId: string): Promise<ApplicationRecord[]> {
+  return withDbRead(async (db) => {
+    const result = await db.query<{
+      id: string;
+      position_id: string;
+      company_poi_id: string;
+      title: string;
+      company_name: string;
+      apply_url: string | null;
+      status: ApplicationRecord['status'];
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `SELECT ${APPLICATION_RETURNING}
+       FROM applications
+       WHERE user_id = $1
+       ORDER BY COALESCE(updated_at, created_at) DESC, id DESC
+       LIMIT $2`,
+      [userId, APPLICATION_STORAGE_MAX],
+    );
+    return result.rows.map(asApplication);
+  }, () => memListApplications(userId));
+}
+
+type ApplicationWriteInput = Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'> & {
+  status?: ApplicationRecord['status'];
+  createdAt?: string;
+};
+
+async function upsertApplicationRow(
+  db: Pool,
+  userId: string,
+  input: ApplicationWriteInput,
+  status: string,
+): Promise<ApplicationRecord> {
+  const createdAt = input.createdAt ?? null;
+  const result = await db.query<{
+    id: string;
+    position_id: string;
+    company_poi_id: string;
+    title: string;
+    company_name: string;
+    apply_url: string | null;
+    status: ApplicationRecord['status'];
+    created_at: Date;
+    updated_at: Date;
+  }>(
+    `INSERT INTO applications (
+       user_id, position_id, company_poi_id, title, company_name, apply_url, status, created_at, updated_at
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8::timestamptz, now()), now())
+     ON CONFLICT (user_id, position_id) DO UPDATE SET
+       title = EXCLUDED.title,
+       company_name = EXCLUDED.company_name,
+       company_poi_id = EXCLUDED.company_poi_id,
+       apply_url = COALESCE(EXCLUDED.apply_url, applications.apply_url),
+       status = EXCLUDED.status,
+       created_at = COALESCE($8::timestamptz, applications.created_at),
+       updated_at = now()
+     RETURNING ${APPLICATION_RETURNING}`,
+    [
+      userId,
+      input.positionId,
+      input.companyPoiId,
+      input.title,
+      input.companyName,
+      input.applyUrl ?? null,
+      status,
+      createdAt,
+    ],
+  );
+  return asApplication(result.rows[0]);
+}
+
+export async function recordApplication(
+  userId: string,
+  input: ApplicationWriteInput,
+): Promise<ApplicationRecord> {
+  const status = sanitizeApplicationStatusId(input.status) ?? 'applied';
+  return withDbWrite(async (db) => {
+    const item = await upsertApplicationRow(db, userId, input, status);
+    await db.query(recentRowsPruneSql('applications'), [userId, APPLICATION_STORAGE_MAX]);
+    return item;
+  }, () => memRecordApplication(userId, { ...input, status }));
+}
+
+export async function recordApplications(
+  userId: string,
+  inputs: ApplicationWriteInput[],
+): Promise<ApplicationRecord[]> {
+  if (inputs.length === 0) return [];
+  return withDbWrite(async (db) => {
+    const items: ApplicationRecord[] = [];
+    for (const input of inputs) {
+      const status = sanitizeApplicationStatusId(input.status) ?? 'applied';
+      items.push(await upsertApplicationRow(db, userId, input, status));
+    }
+    await db.query(recentRowsPruneSql('applications'), [userId, APPLICATION_STORAGE_MAX]);
+    return items;
+  }, () => inputs.map((input) => memRecordApplication(userId, {
+    ...input,
+    status: sanitizeApplicationStatusId(input.status) ?? 'applied',
+  })));
+}
+
+export async function updateApplicationStatus(
+  userId: string,
+  id: string,
+  status: string,
+): Promise<ApplicationRecord | null> {
+  const nextStatus = sanitizeApplicationStatusId(status);
+  if (!nextStatus) return null;
+  return withDbWrite(async (db) => {
+    const result = await db.query<{
+      id: string;
+      position_id: string;
+      company_poi_id: string;
+      title: string;
+      company_name: string;
+      apply_url: string | null;
+      status: ApplicationRecord['status'];
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `UPDATE applications
+       SET status = $3, updated_at = now()
+       WHERE user_id = $1 AND id::text = $2
+       RETURNING ${APPLICATION_RETURNING}`,
+      [userId, id, nextStatus],
+    );
+    return result.rows[0] ? asApplication(result.rows[0]) : null;
+  }, () => memUpdateApplicationStatus(userId, id, nextStatus));
+}
+
+export async function removeApplication(userId: string, id: string): Promise<boolean> {
+  const key = id.trim();
+  if (!key) return false;
+  return withDbWrite(async (db) => {
+    const result = await db.query(
+      `DELETE FROM applications WHERE user_id = $1 AND id::text = $2`,
+      [userId, key],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }, () => memRemoveApplication(userId, key));
+}
+
+export async function reassignApplicationStatuses(
+  userId: string,
+  fromIds: string[],
+  toId: string,
+): Promise<number> {
+  const nextStatus = sanitizeApplicationStatusId(toId);
+  const from = fromIds
+    .map((id) => sanitizeApplicationStatusId(id))
+    .filter((id): id is string => Boolean(id));
+  if (!nextStatus || from.length === 0) return 0;
+  return withDbWrite(async (db) => {
+    const result = await db.query(
+      `UPDATE applications
+       SET status = $3, updated_at = now()
+       WHERE user_id = $1 AND status = ANY($2::text[])`,
+      [userId, from, nextStatus],
+    );
+    return result.rowCount ?? 0;
+  }, () => memReassignApplicationStatuses(userId, from, nextStatus));
+}
+
+function asNotification(row: {
+  id: string;
+  kind: NotificationRecord['kind'];
+  position_id: string | null;
+  company_poi_id: string | null;
+  title: string;
+  company_name: string | null;
+  apply_url: string | null;
+  channels: string[] | null;
+  status: NotificationRecord['status'];
+  created_at: Date;
+}): NotificationRecord {
+  return {
+    id: row.id,
+    kind: row.kind,
+    positionId: row.position_id ?? undefined,
+    companyPoiId: row.company_poi_id ?? undefined,
+    title: row.title,
+    companyName: row.company_name ?? undefined,
+    applyUrl: row.apply_url ?? undefined,
+    channels: (row.channels ?? ['inbox']) as NotificationRecord['channels'],
+    status: row.status,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+export async function listNotifications(userId: string): Promise<NotificationRecord[]> {
+  return withDbRead(async (db) => {
+    const result = await db.query<{
+      id: string;
+      kind: NotificationRecord['kind'];
+      position_id: string | null;
+      company_poi_id: string | null;
+      title: string;
+      company_name: string | null;
+      apply_url: string | null;
+      channels: string[] | null;
+      status: NotificationRecord['status'];
+      created_at: Date;
+    }>(
+       `SELECT id::text, kind, position_id, company_poi_id, title, company_name, apply_url, channels, status, created_at
+       FROM notifications
+       WHERE user_id = $1
+       ORDER BY created_at DESC, id DESC
+       LIMIT $2`,
+      [userId, NOTIFICATION_STORAGE_MAX],
+    );
+    return result.rows.map(asNotification);
+  }, () => memListNotifications(userId));
+}
+
+export async function enqueueNotification(
+  userId: string,
+  input: Omit<NotificationRecord, 'id' | 'createdAt' | 'status'> & { status?: NotificationRecord['status'] },
+): Promise<NotificationRecord> {
+  return withDbWrite(async (db) => {
+    const result = await db.query<{
+      id: string;
+      kind: NotificationRecord['kind'];
+      position_id: string | null;
+      company_poi_id: string | null;
+      title: string;
+      company_name: string | null;
+      apply_url: string | null;
+      channels: string[] | null;
+      status: NotificationRecord['status'];
+      created_at: Date;
+    }>(
+      `INSERT INTO notifications (user_id, kind, position_id, company_poi_id, title, company_name, apply_url, channels, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (user_id, kind, position_id) DO UPDATE SET title = EXCLUDED.title
+       RETURNING id::text, kind, position_id, company_poi_id, title, company_name, apply_url, channels, status, created_at`,
+      [
+        userId,
+        input.kind,
+        input.positionId ?? null,
+        input.companyPoiId ?? null,
+        input.title,
+        input.companyName ?? null,
+        input.applyUrl ?? null,
+        input.channels,
+        input.status ?? 'queued',
+      ],
+    );
+    await db.query(recentRowsPruneSql('notifications'), [userId, NOTIFICATION_STORAGE_MAX]);
+    return asNotification(result.rows[0]);
+  }, () => memEnqueueNotification(userId, input));
+}
