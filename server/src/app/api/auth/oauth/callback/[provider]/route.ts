@@ -9,6 +9,7 @@ import {
   errorRedirectPath,
   runOauthCallback,
 } from '@/lib/oauth/oauth-flow';
+import { publicOriginFromRequest } from '@/lib/oauth/request-origin';
 
 /**
  * GET /api/auth/oauth/callback/<provider>?code=&state=
@@ -25,7 +26,7 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> },
 ) {
   const url = new URL(request.url);
-  const base = url.origin;
+  const base = publicOriginFromRequest(request);
   const { provider } = await params;
   try {
     const jar = await cookies();
@@ -34,7 +35,7 @@ export async function GET(
       code: url.searchParams.get('code'),
       state: url.searchParams.get('state'),
       cookieJar: jar,
-      origin: url.origin,
+      origin: base,
     });
     await writeSessionCookie(result.session.token, result.session.expiresAt);
     return NextResponse.redirect(absoluteRedirect(result.next, base), 302);

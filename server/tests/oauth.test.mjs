@@ -52,6 +52,11 @@ import {
   startOauthFlow,
 } from '../src/lib/oauth/oauth-flow.ts';
 import {
+  isBindHostname,
+  parsePublicOriginEnv,
+  resolvePublicOrigin,
+} from '../src/lib/oauth/request-origin.ts';
+import {
   DbUnavailableError,
   __accountStoreTest,
   getSessionUser,
@@ -539,6 +544,46 @@ test('absoluteRedirect:与 errorRedirectPath 组合 → 同源 auth_error 绝对
   );
 });
 
+test('resolvePublicOrigin: PUBLIC_ORIGIN 覆盖 Docker HOSTNAME=0.0.0.0', () => {
+  assert.equal(isBindHostname('0.0.0.0'), true);
+  assert.equal(isBindHostname('::'), true);
+  assert.equal(isBindHostname('jobmap.nvc.ac'), false);
+  assert.equal(parsePublicOriginEnv('https://jobmap.nvc.ac/'), 'https://jobmap.nvc.ac');
+  assert.equal(parsePublicOriginEnv('https://0.0.0.0:3000'), null);
+  assert.equal(
+    resolvePublicOrigin({
+      requestOrigin: 'https://0.0.0.0:3000',
+      env: { PUBLIC_ORIGIN: 'https://jobmap.nvc.ac' },
+    }),
+    'https://jobmap.nvc.ac',
+  );
+  assert.equal(
+    resolvePublicOrigin({
+      requestOrigin: 'https://0.0.0.0:3000',
+      forwardedHost: 'jobmap.nvc.ac',
+      forwardedProto: 'https',
+      env: {},
+    }),
+    'https://jobmap.nvc.ac',
+  );
+  assert.equal(
+    resolvePublicOrigin({
+      requestOrigin: 'https://0.0.0.0:3000',
+      host: 'jobmap.nvc.ac',
+      forwardedProto: 'https',
+      env: {},
+    }),
+    'https://jobmap.nvc.ac',
+  );
+  assert.equal(
+    resolvePublicOrigin({
+      requestOrigin: 'http://localhost:3000',
+      env: {},
+    }),
+    'http://localhost:3000',
+  );
+});
+
 test('absoluteRedirect:跨源防御(//host / 绝对 URL 直传)→ 回落 origin + /', () => {
   assert.equal(absoluteRedirect('//evil.com/x', 'http://localhost:3000'), 'http://localhost:3000/');
   assert.equal(absoluteRedirect('https://evil.com/x', 'http://localhost:3000'), 'http://localhost:3000/');
@@ -927,6 +972,7 @@ test('route providers:返回 listOAuthProviders 的 { providers },零敏感字�
 test('route start:flow 接线 + 400 BAD_REQUEST + 503 OAUTH_NOT_CONFIGURED + cookie 写入 + 302', () => {
   const route = src('app/api/auth/oauth/start/route.ts');
   assert.match(route, /startOauthFlow\(\{/);
+  assert.match(route, /publicOriginFromRequest\(request\)/);
   assert.match(route, /jar\.set\(result\.cookie\.name, result\.cookie\.value, result\.cookie\.options\)/);
   assert.match(route, /NextResponse\.redirect\(result\.location, 302\)/);
   assert.match(route, /code: 'BAD_REQUEST'/);
@@ -938,6 +984,8 @@ test('route start:flow 接线 + 400 BAD_REQUEST + 503 OAUTH_NOT_CONFIGURED + coo
 test('route callback:runOauthCallback 接线 + session cookie + 全部 302 经 absoluteRedirect(Next 16 绝对 URL)', () => {
   const route = src('app/api/auth/oauth/callback/[provider]/route.ts');
   assert.match(route, /runOauthCallback\(\{/);
+  assert.match(route, /publicOriginFromRequest\(request\)/);
+  assert.ok(!route.includes('origin: url.origin'), 'callback 不得把 0.0.0.0 bind origin 交给 GitHub');
   assert.match(route, /writeSessionCookie\(result\.session\.token, result\.session\.expiresAt\)/);
   assert.match(route, /NextResponse\.redirect\(absoluteRedirect\(result\.next, base\), 302\)/);
   assert.match(route, /NextResponse\.redirect\(absoluteRedirect\(errorRedirectPath\(err\.next, 'oauth_state_invalid'\), base\), 302\)/);

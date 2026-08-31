@@ -5,6 +5,7 @@ import {
   OauthNotConfiguredError,
   startOauthFlow,
 } from '@/lib/oauth/oauth-flow';
+import { publicOriginFromRequest } from '@/lib/oauth/request-origin';
 
 /**
  * GET /api/auth/oauth/start?provider=<id>&next=<path>
@@ -16,11 +17,12 @@ import {
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const origin = publicOriginFromRequest(request);
   try {
     const result = startOauthFlow({
       provider: url.searchParams.get('provider'),
       next: url.searchParams.get('next'),
-      origin: url.origin,
+      origin,
     });
     const jar = await cookies();
     jar.set(result.cookie.name, result.cookie.value, result.cookie.options);
