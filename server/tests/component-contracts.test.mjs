@@ -207,20 +207,23 @@ test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   assert.match(shell, /mobileSearchStack/);
   assert.match(shell, /drawer !== "mini" && suggestions\.length > 0/);
   assert.match(shell, /mobileJd && isRecruitmentPOI/);
-  assert.match(shell, /mobileBackBtn/);
+  assert.doesNotMatch(shell, /mobileBackBtn/);
+  assert.doesNotMatch(shell, /mobileSheetBar/);
   assert.match(shell, /mobileSheet === "account"/);
   assert.match(css, /\.mobileFilterBtn/);
   assert.doesNotMatch(css, /\.mobileChips/); // chips 行已整体移除
   assert.match(css, /\.mobileSearchRow/);
-  assert.match(css, /\.mobileBackBtn/);
+  assert.doesNotMatch(css, /\.mobileBackBtn/);
   assert.match(css, /@media \(max-width: 767px\)/);
 });
 
-test('embedded Profile keeps a close control and fluid card width', () => {
+test('embedded Profile hides close; desktop keeps it; sheet is fluid', () => {
   const panel = src('components/account-panel.tsx');
   const css = src('components/account-panel.module.css');
-  assert.match(panel, /embedded \? t\("backToExplore", lang\) : t\("closePanel", lang\)/);
-  assert.doesNotMatch(panel, /\{!embedded && \([\s\S]*styles\.close/);
+  assert.match(panel, /\{!embedded && \([\s\S]*?styles\.close/);
+  assert.doesNotMatch(panel, /embedded \? t\("backToExplore", lang\) : t\("closePanel", lang\)/);
+  assert.doesNotMatch(panel, /passwordSecurity/);
+  assert.doesNotMatch(panel, /setView\("password"\)/);
   assert.match(css, /\.sidebar[\s\S]*width:\s*380px[\s\S]*max-width:\s*100%/);
   assert.match(css, /\.sheet[\s\S]*width:\s*100%[\s\S]*max-width:\s*100%/);
   const sheetAt = css.indexOf('\n.sheet {');
@@ -236,9 +239,12 @@ test('profile inbox rows jump to jobs; applications jump to Recent watch', () =>
   assert.match(panel, /onOpenRecent\?: \(\) => void/);
   assert.match(panel, /onClick=\{\(\) => onOpenRecent\?\.\(\)\}/);
   assert.match(panel, /onOpenApplication\?: \(record: \{ positionId: string; companyPoiId: string \}\) => void/);
-  // 通知行:缺 positionId/companyPoiId 禁用 + 回调内守卫
+  // 通知行:缺 positionId/companyPoiId 禁用 + 回调内守卫 + 未读点 + 相对时间
   assert.match(panel, /disabled=\{!item\.positionId \|\| !item\.companyPoiId\}/);
   assert.match(panel, /if \(item\.positionId && item\.companyPoiId\)/);
+  assert.match(panel, /formatInboxTime/);
+  assert.match(panel, /inboxDot/);
+  assert.match(panel, /inboxEmptyTitle/);
   // 按钮态样式:pointer + hover 高亮(与 .rowBtn 同语义)
   const css = src('components/account-panel.module.css');
   assert.match(css, /\.appRow \{\s*display: flex;[\s\S]*cursor: pointer/);
@@ -1096,11 +1102,11 @@ test('agent sheet embeds in mobile drawer: mobileSheet "agent" branch + embedded
   const shell = src('components/map-shell.tsx');
   const panel = src('components/agent-panel.tsx');
   const css = src('components/map-shell.module.css');
-  // drawerContent 分支:mobileSheet === "agent" → mobileAgent 包装 + sheet bar + 内嵌 AgentPanel
+  // drawerContent 分支:mobileSheet === "agent" → mobileAgent 包装 + 内嵌 AgentPanel(无返回条)
   assert.match(shell, /mobileSheet === "agent" \? \(/);
   assert.match(shell, /<div className=\{styles\.mobileAgent\}>/);
-  assert.match(shell, /className=\{styles\.mobileSheetBar\}[\s\S]{0,200}className=\{styles\.mobileBackBtn\}[\s\S]{0,120}onClick=\{\(\) => setMobileSheet\(mobileSheetBack\)\}/);
-  // 内嵌渲染:bridge/lang/user/userLocation + embedded + onClose 走 mobileSheetBack(与 sheet bar back 等价)
+  assert.doesNotMatch(shell, /mobileSheet === "agent"[\s\S]{0,500}mobileSheetBar/);
+  // 内嵌渲染:bridge/lang/user/userLocation + embedded + onClose 走 mobileSheetBack
   assert.match(shell, /<AgentPanel[\s\S]{0,220}bridge=\{agentBridgeRef\.current\}[\s\S]{0,220}userLocation=\{userLocation\}[\s\S]{0,80}embedded[\s\S]{0,80}onClose=\{\(\) => setMobileSheet\(mobileSheetBack\)\}/);
   assert.match(shell, /import \{ useMobileDrawerGesture, type DrawerState, type MobileSheet \} from "@\/hooks\/use-mobile-drawer-gesture"/);
   assert.match(shell, /useState<MobileSheet>\("explore"\)/);
