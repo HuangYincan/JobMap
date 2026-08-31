@@ -626,14 +626,17 @@ test('createMarker:icon 无 size → image only;同层复用;content+icon 仍走
   view.destroy();
 });
 
-test('createCityClusterMarker:AMap 走 DOM Marker,不进 LabelsLayer(密集城聚合不被 hide 的公司点吃掉)', async () => {
+test('createCityClusterMarker:AMap 聚合徽章进独立 LabelsLayer,hide 的公司点从公司层摘掉', async () => {
   const ns = installNs();
   const view = await createView(ns, 'normal');
-  view.createMarker({
+  const pin = view.createMarker({
     position: { lng: 114.06, lat: 22.55 },
     icon: { src: 'data:image/svg+xml;utf8,<svg/>', size: [40, 40] },
   });
-  assert.equal(ns.instances.labelMarkers.length, 1, '公司 pin 在 LabelsLayer');
+  assert.equal(ns.instances.labelsLayers.length, 1, '公司 pin 在公司层');
+  assert.equal(ns.instances.labelsLayers[0].items.length, 1);
+  pin.setVisible(false);
+  assert.equal(ns.instances.labelsLayers[0].items.length, 0, 'hide 从公司层摘掉,不占碰撞');
   const cluster = createCityClusterMarker(view, {
     city: '深圳',
     count: 111,
@@ -641,10 +644,12 @@ test('createCityClusterMarker:AMap 走 DOM Marker,不进 LabelsLayer(密集城�
     lat: 22.55,
   });
   assert.ok(cluster);
-  assert.equal(ns.instances.labelMarkers.length, 1, '聚合徽章不进 LabelsLayer');
-  assert.equal(ns.instances.markers.length, 1, '聚合徽章走独立 DOM Marker');
-  assert.match(ns.instances.markers[0].opts.content, /深圳/);
-  assert.equal(ns.instances.markers[0].opts.icon, undefined);
+  assert.equal(ns.instances.labelMarkers.length, 2, '公司点对象仍在,只是不在公司层');
+  assert.equal(ns.instances.labelsLayers.length, 2, '聚合徽章独立一层');
+  assert.equal(ns.instances.labelsLayers[1].opts.zIndex, 160);
+  assert.equal(ns.instances.labelsLayers[1].items.length, 1, '徽章在聚合层');
+  assert.match(ns.instances.labelMarkers[1].icon.image, /深圳|svg/);
+  assert.equal(ns.instances.markers, undefined, '不再走 DOM Marker');
   view.destroy();
 });
 

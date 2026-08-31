@@ -433,11 +433,8 @@ test('createCityClusterMarker: 构造契约(位置/中心锚定/点击回调/防
   assert.equal(created[0].opts.bubble, false); // 点击不冒泡到地图(duck-type 透传)
   assert.ok(created[0].opts.content.includes('杭州'));
   assert.ok(created[0].opts.content.includes('15'));
-  assert.equal(
-    created[0].opts.icon,
-    undefined,
-    'AMap 聚合徽章不传 icon:避免进 LabelsLayer 被同城 hide 的公司点吃掉',
-  );
+  assert.ok(created[0].opts.icon?.src, 'AMap 聚合徽章走 WebGL icon');
+  assert.equal(created[0].opts.clusterLayer, true, 'AMap 徽章进独立 cluster LabelsLayer');
 
   created[0].handlers.click();
   assert.equal(clicks, 1);
