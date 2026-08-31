@@ -361,7 +361,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
    *  account 内导航打开 → "account";sheet back 按钮按此回退。 */
   const [mobileSheetBack, setMobileSheetBack] = useState<"explore" | "account">("explore");
   /** AI 助手开关(ws-mt 受控提升):仅桌面悬浮球入口使用;移动端球隐藏,
-   *  AI 入口 = 工具栏 item → drawer 内嵌 agent sheet(mobileSheet "agent",ws-ae)。 */
+   *  AI 入口 = 工具栏 item → drawer 内嵌 agent sheet(mobileSheet "agent",
+   *  默认半屏露出地图,再点 ✦ 回探索)。 */
   const [agentOpen, setAgentOpen] = useState(false);
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
@@ -2928,7 +2929,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     }
                     setMobileSheetBack("explore");
                     setMobileSheet("agent");
-                    setDrawer("full");
+                    setDrawer("half");
                   }}
                 >
                   <Icon name="agent" />
@@ -3038,7 +3039,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
             )}
             </div>
             )}
-            <div ref={drawerContentRef} className={styles.drawerContent}>
+            <div
+              ref={drawerContentRef}
+              className={`${styles.drawerContent} ${mobileSheet === "agent" ? styles.drawerContentFill : ""}`}
+            >
               {mobileSheet === "account" ? (
                 <div className={styles.mobileAccount}>
                   <div className={styles.mobileSheetBar}>
@@ -3176,15 +3180,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 </div>
               ) : mobileSheet === "agent" ? (
                 <div className={styles.mobileAgent}>
-                  <div className={styles.mobileSheetBar}>
-                    <button
-                      type="button"
-                      className={styles.mobileBackBtn}
-                      onClick={() => setMobileSheet(mobileSheetBack)}
-                    >
-                      {t("back", lang)}
-                    </button>
-                  </div>
                   <AgentPanel
                     bridge={agentBridgeRef.current}
                     lang={lang}

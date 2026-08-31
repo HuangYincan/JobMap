@@ -582,6 +582,13 @@ test('resolvePublicOrigin: PUBLIC_ORIGIN 覆盖 Docker HOSTNAME=0.0.0.0', () => 
     }),
     'http://localhost:3000',
   );
+  assert.equal(
+    resolvePublicOrigin({
+      requestOrigin: 'https://0.0.0.0:3000',
+      env: { NODE_ENV: 'production' },
+    }),
+    'https://jobmap.nvc.ac',
+  );
 });
 
 test('absoluteRedirect:跨源防御(//host / 绝对 URL 直传)→ 回落 origin + /', () => {

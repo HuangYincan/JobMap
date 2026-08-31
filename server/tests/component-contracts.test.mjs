@@ -102,7 +102,7 @@ test('map shell saves and restores the mobile drawer scroll across detail', () =
   // 交互 1：.drawerContent 挂 ref，进详情前保存 scrollTop，返回后 layout effect 恢复
   assert.match(shell, /drawerContentRef = useRef<HTMLDivElement>\(null\)/);
   assert.match(shell, /drawerScrollRef = useRef\(0\)/);
-  assert.match(shell, /ref=\{drawerContentRef\} className=\{styles\.drawerContent\}/);
+  assert.match(shell, /ref=\{drawerContentRef\}[\s\S]{0,180}styles\.drawerContent/);
   assert.match(shell, /drawerScrollRef\.current = drawerContentRef\.current\?\.scrollTop \?\? 0/);
   assert.match(shell, /useLayoutEffect\([\s\S]*detailPoi === null[\s\S]*scrollTop = drawerScrollRef\.current/);
   // 交互 2：移动端 POIList 传 onDeselect 清空选中/高亮（桌面 secondary-sidebar 不传）
@@ -1050,11 +1050,12 @@ test('agent ball is controlled: open/onOpenChange props drive the panel (ws-mt)'
   // 移动端(≤767px)球隐藏——球与面板是 fragment 兄弟,隐藏球不影响面板渲染
   assert.match(css, /@media \(max-width: 767px\)[\s\S]*\.ball \{\s*display: none;\s*\}/);
   // 移动端:锚定面板 ≤767px display:none(桌面实例缩窗也不漂浮,z-index 13 浮层已撤销);
-  // 移动端 AI 入口 = 工具栏 item → drawer 内嵌 agent sheet(embedded 类随抽屉流,ws-ae)
+  // 移动端 AI 入口 = 工具栏 item → drawer 内嵌 agent sheet(embedded 铺平,默认半屏)
   const panelCss = src('components/agent-panel.module.css');
   assert.match(panelCss, /z-index: 12/);
   assert.match(panelCss, /@media \(max-width: 767px\)[\s\S]*\.panel \{\s*display: none;\s*\}/);
   assert.match(panelCss, /@media \(max-width: 767px\)[\s\S]*\.panel\.embedded[\s\S]*position: static/);
+  assert.match(panelCss, /@media \(max-width: 767px\)[\s\S]*\.panel\.embedded[\s\S]*background: transparent/);
   assert.doesNotMatch(panelCss, /@media \(max-width: 767px\)[\s\S]*z-index: 13/);
 });
 
@@ -1074,10 +1075,10 @@ test('map shell mobile toolbar: 4 icon items + agent sheet + back target (ws-mt/
   assert.match(shell, /<Icon name="grid" \/>/);
   assert.match(shell, /<Icon name="history" \/>/);
   assert.match(shell, /<Icon name="agent" \/>/);
-  // AI item(ws-ae):打开 drawer 内嵌 agent sheet(与图层/最近同构:full drawer + back 追踪),
+  // AI item(ws-ae):打开 drawer 内嵌 agent sheet(默认半屏露出地图;再点 ✦ 回探索),
   // 激活态 = mobileSheet === "agent"(不再驱动 agentOpen 浮层)
   assert.match(shell, /if \(mobileSheet === "agent"\) \{[\s\S]{0,60}setMobileSheet\("explore"\)/);
-  assert.match(shell, /setMobileSheetBack\("explore"\);[\s\S]{0,60}setMobileSheet\("agent"\);[\s\S]{0,40}setDrawer\("full"\)/);
+  assert.match(shell, /setMobileSheetBack\("explore"\);[\s\S]{0,60}setMobileSheet\("agent"\);[\s\S]{0,40}setDrawer\("half"\)/);
   assert.match(shell, /mobileSheet === "agent" \? styles\.mobileToolbarItemActive/);
   assert.match(shell, /aria-pressed=\{mobileSheet === "agent"\}/);
   assert.doesNotMatch(shell, /setAgentOpen\(\(v\) => !v\)/, 'AI item 不再 toggle agentOpen(浮层语义已撤销)');
@@ -1098,11 +1099,18 @@ test('agent sheet embeds in mobile drawer: mobileSheet "agent" branch + embedded
   const shell = src('components/map-shell.tsx');
   const panel = src('components/agent-panel.tsx');
   const css = src('components/map-shell.module.css');
-  // drawerContent 分支:mobileSheet === "agent" → mobileAgent 包装 + sheet bar + 内嵌 AgentPanel
+  const panelCss = src('components/agent-panel.module.css');
+  // drawerContent 分支:mobileSheet === "agent" → mobileAgent 包装 + 内嵌 AgentPanel(无独立返回条)
   assert.match(shell, /mobileSheet === "agent" \? \(/);
   assert.match(shell, /<div className=\{styles\.mobileAgent\}>/);
-  assert.match(shell, /className=\{styles\.mobileSheetBar\}[\s\S]{0,200}className=\{styles\.mobileBackBtn\}[\s\S]{0,120}onClick=\{\(\) => setMobileSheet\(mobileSheetBack\)\}/);
-  // 内嵌渲染:bridge/lang/user/userLocation + embedded + onClose 走 mobileSheetBack(与 sheet bar back 等价)
+  const agentAt = shell.indexOf('mobileSheet === "agent" ? (');
+  assert.ok(agentAt !== -1, 'agent sheet 分支存在');
+  const agentBranch = shell.slice(agentAt, agentAt + 900);
+  assert.match(agentBranch, /<div className=\{styles\.mobileAgent\}>/);
+  assert.doesNotMatch(agentBranch, /mobileSheetBar/, '助手 sheet 不再套一层「返回」');
+  assert.doesNotMatch(agentBranch, /mobileBackBtn/);
+  assert.match(shell, /drawerContentFill/);
+  // 内嵌渲染:bridge/lang/user/userLocation + embedded + onClose 走 mobileSheetBack
   assert.match(shell, /<AgentPanel[\s\S]{0,220}bridge=\{agentBridgeRef\.current\}[\s\S]{0,220}userLocation=\{userLocation\}[\s\S]{0,80}embedded[\s\S]{0,80}onClose=\{\(\) => setMobileSheet\(mobileSheetBack\)\}/);
   assert.match(shell, /import \{ useMobileDrawerGesture, type DrawerState, type MobileSheet \} from "@\/hooks\/use-mobile-drawer-gesture"/);
   assert.match(shell, /useState<MobileSheet>\("explore"\)/);
@@ -1112,13 +1120,17 @@ test('agent sheet embeds in mobile drawer: mobileSheet "agent" branch + embedded
   assert.match(panel, /ballRect\?: BallRect \| null;/);
   assert.match(panel, /dragging\?: boolean;/);
   assert.match(panel, /snapEdge\?: BallSnapEdge \| null;/);
-  // 根类:embedded 修饰类与 .panel 并存;内嵌隐藏关闭钮(抽屉已有返回)
+  // 根类:embedded 修饰类与 .panel 并存;内嵌隐藏 ✦ 与关闭钮(再点工具栏 ✦ 回探索)
   assert.match(panel, /styles\.panel\} \$\{embedded \? styles\.embedded : ""\}/);
   assert.match(panel, /!embedded && \(/);
   assert.match(panel, /className=\{styles\.close\}/);
-  // CSS:.mobileAgent flex column 撑满 drawerContent,内嵌面板接管高度
+  assert.match(panel, /\{!embedded && \(\s*<span className=\{styles\.titleIcon\}/);
+  // CSS:.mobileAgent flex column 撑满 drawerContent,内嵌面板接管高度;铺平无第二张玻璃
   assert.match(css, /\.mobileAgent \{[\s\S]{0,160}height: 100%;[\s\S]{0,80}min-height: 0/);
   assert.match(css, /\.mobileAgent \{[\s\S]{0,120}flex-direction: column/);
+  assert.match(css, /\.drawerContentFill \{[\s\S]{0,120}overflow: hidden/);
+  assert.match(panelCss, /background: transparent/);
+  assert.match(panelCss, /rgba\(126, 150, 149, 0\.13\)/);
 });
 
 test('agent panel has input, send/stop/undo buttons and tool status bar (ws-c)', () => {
