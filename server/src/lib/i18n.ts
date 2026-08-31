@@ -1057,6 +1057,34 @@ export const translations = {
     zh: '打开邮件或短信开关后，匹配到的岗位会先记在这里，暂不真发。',
     en: 'Turn on email or SMS to queue matching jobs here. Nothing is sent yet.',
   },
+  inboxEmptyTitle: {
+    zh: '暂无提醒',
+    en: 'No alerts yet',
+  },
+  inboxKindSchool: {
+    zh: '校园提醒',
+    en: 'School alert',
+  },
+  inboxJustNow: {
+    zh: '刚刚',
+    en: 'Just now',
+  },
+  inboxMinutesAgo: {
+    zh: '{n}分钟前',
+    en: '{n}m ago',
+  },
+  inboxHoursAgo: {
+    zh: '{n}小时前',
+    en: '{n}h ago',
+  },
+  inboxYesterday: {
+    zh: '昨天',
+    en: 'Yesterday',
+  },
+  inboxDaysAgo: {
+    zh: '{n}天前',
+    en: '{n}d ago',
+  },
   inboxOnly: {
     zh: '仅收件箱',
     en: 'Inbox only',

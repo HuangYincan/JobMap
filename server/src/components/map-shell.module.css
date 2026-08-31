@@ -147,7 +147,11 @@
 }
 
 /* 确保比例尺文字在所有底图下可见 - 黑色文字带白色描边 */
-.mapCanvas :global(.amap-scale-text) {
+.mapCanvas :global(.amap-scale-text),
+.mapCanvas :global(.tmap-scale-text),
+.mapCanvas :global(.BMap_scaleCtrl-text),
+.mapCanvas :global(.BMap_scaleCtrl),
+.mapCanvas :global(.BMapGL_scaleCtrl) {
   color: #000 !important;
   text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.8) !important;
 }
@@ -1262,20 +1266,6 @@
     padding-bottom: 0;
   }
 
-  .mobileSheetBar {
-    display: flex;
-    align-items: center;
-    margin: 0 0 10px;
-  }
-
-  .mobileBackBtn {
-    border: 0;
-    background: transparent;
-    color: var(--blue-ink, #0062cc);
-    font-size: 13px;
-    font-weight: 650;
-    padding: 4px 0;
-  }
 
   .drawerMini .drawerContent,
   .drawerMini .mobileActions,

@@ -413,6 +413,7 @@ interface BMapInstance {
   addOverlay?(overlay: unknown): unknown;
   removeOverlay?(overlay: unknown): unknown;
   addControl?(control: unknown): unknown;
+  removeControl?(control: unknown): unknown;
   addEventListener?(event: string, cb: () => void): unknown;
   removeEventListener?(event: string, cb: () => void): unknown;
   /**
@@ -458,7 +459,7 @@ interface BMapGLNamespace {
    * 继承并实现 initialize(map)/draw() 两方法) */
   Overlay?: new () => object;
   Icon?: new (url: string, size: BSize, opts?: Record<string, unknown>) => unknown;
-  ScaleControl?: new () => unknown;
+  ScaleControl?: new (opts?: unknown) => { hide?: () => void; show?: () => void };
   PlaceSearch?: new (opts: Record<string, unknown>) => BPlaceSearch;
   Geocoder?: new () => BGeocoder;
   Geolocation?: new () => BGeolocation;
@@ -752,6 +753,56 @@ function resolveGlobalConstant(name: string): unknown {
   return (globalThis as Record<string, unknown>)[name];
 }
 
+/** 比例尺档位(WebMercator 常用档;与腾讯自绘同款,BMapGL ScaleControl 缺失时降级) */
+const BAIDU_SCALE_NICE_METERS = [
+  2e6, 2e6, 2e6, 2e6, 1e6, 5e5, 2e5, 1e5, 5e4, 2e4, 1e4, 5e3, 2e3, 1e3, 500, 200, 100, 50, 20, 10, 5,
+  2, 1,
+] as const;
+/** 每像素米数基数(6378137·2π/256) */
+const BAIDU_SCALE_RESOLUTION_BASE = 156543.04;
+
+const SCALE_ANCHOR_CONST: Record<string, string> = {
+  LT: 'BMAP_ANCHOR_TOP_LEFT',
+  LB: 'BMAP_ANCHOR_BOTTOM_LEFT',
+  RT: 'BMAP_ANCHOR_TOP_RIGHT',
+  RB: 'BMAP_ANCHOR_BOTTOM_RIGHT',
+};
+/** BMap 官方枚举缺省值:TL=0 TR=1 BL=2 BR=3 */
+const SCALE_ANCHOR_FALLBACK: Record<string, number> = { LT: 0, LB: 2, RT: 1, RB: 3 };
+
+type ScaleControlOpts = { position?: string; offset?: [number, number] };
+
+function scaleAnchor(position?: string): unknown {
+  const pos = position && SCALE_ANCHOR_FALLBACK[position] !== undefined ? position : 'LB';
+  const resolved = resolveGlobalConstant(SCALE_ANCHOR_CONST[pos] ?? SCALE_ANCHOR_CONST.LB);
+  return resolved !== undefined ? resolved : SCALE_ANCHOR_FALLBACK[pos];
+}
+
+function applyScaleBoxPosition(
+  el: { style: { left?: string; right?: string; top?: string; bottom?: string } },
+  opts?: ScaleControlOpts,
+): void {
+  const pos = opts?.position ?? 'LB';
+  const offset = opts?.offset ?? [10, 10];
+  el.style.left = '';
+  el.style.right = '';
+  el.style.top = '';
+  el.style.bottom = '';
+  if (pos === 'LT') {
+    el.style.left = `${offset[0]}px`;
+    el.style.top = `${offset[1]}px`;
+  } else if (pos === 'RT') {
+    el.style.right = `${offset[0]}px`;
+    el.style.top = `${offset[1]}px`;
+  } else if (pos === 'RB') {
+    el.style.right = `${offset[0]}px`;
+    el.style.bottom = `${offset[1]}px`;
+  } else {
+    el.style.left = `${offset[0]}px`;
+    el.style.bottom = `${offset[1]}px`;
+  }
+}
+
 /**
  * 样式 → 厂商底图(ws-a 2026-08-22;ws-e 深色+卫星组合修复):
  * - normal/satellite → setMapType(常量经 resolveGlobalConstant 解析,缺失静默
@@ -964,6 +1015,14 @@ class BaiduMapView implements MapView {
   private cameraAnimSyncStalledFrames = 0;
   /** 相机动画同步上次相机键(zoom:center,停摆判定用) */
   private cameraAnimSyncLastKey = '';
+  /** 引擎 addControl 自建的 SDK ScaleControl(重复调用时摘除重建) */
+  private sdkScale: { hide?: () => void; show?: () => void } | null = null;
+  /** 自绘比例尺 DOM(SDK ScaleControl 缺失时的降级路径) */
+  private scaleEl: HTMLDivElement | null = null;
+  /** 自绘比例尺事件解绑 */
+  private scaleOffs: Array<() => void> = [];
+  /** 自绘比例尺降级说明一次性标记 */
+  private scaleFallbackWarned = false;
 
   // 注:不用 TS 参数属性(node 测试 strip-only 模式不支持,ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX)
   constructor(map: BMapInstance, ns: BMapGLNamespace, engine: MapEngine) {
@@ -1558,15 +1617,133 @@ class BaiduMapView implements MapView {
     };
   }
 
-  addControl(kind: 'scale'): void {
-    if (kind !== 'scale') return;
+  /**
+   * 比例尺。map-shell duck-type 传入 position/offset(与 AMap/腾讯同语义:
+   * LT 左上 / LB 左下 / RT 右上 / RB 右下)。
+   * 旧实现 `new ScaleControl()` 无锚点无偏移,默认贴左下,被侧栏/抽屉挡住;
+   * 且返回 void → map-shell `if (!pending) return` 接不上 hide/show。
+   * v1.0 getscript 也可能不暴露 ScaleControl → 自绘降级(类名 BMap_scaleCtrl)。
+   */
+  addControl(
+    kind: 'scale',
+    opts?: ScaleControlOpts,
+  ): Promise<{ hide: () => void; show: () => void } | null> | null {
+    if (kind !== 'scale' || this.destroyed) return null;
+    this.clearScaleControl();
     const Ctor = this.ns.ScaleControl;
-    if (Ctor) this.map.addControl?.(new Ctor());
+    if (Ctor) {
+      const controlOpts: Record<string, unknown> = { anchor: scaleAnchor(opts?.position) };
+      const offset = opts?.offset ?? [10, 10];
+      if (typeof this.ns.Size === 'function') {
+        controlOpts.offset = new this.ns.Size(offset[0], offset[1]);
+      }
+      const control = new Ctor(controlOpts);
+      this.map.addControl?.(control);
+      this.sdkScale = control;
+      return Promise.resolve({
+        hide: () => {
+          if (typeof control.hide === 'function') control.hide();
+        },
+        show: () => {
+          if (typeof control.show === 'function') control.show();
+        },
+      });
+    }
+    return Promise.resolve(this.ensureFallbackScale(opts));
+  }
+
+  /** 摘除 SDK / 自绘比例尺,避免 resize 重建出双控件 */
+  private clearScaleControl(): void {
+    if (this.sdkScale) {
+      try {
+        this.map.removeControl?.(this.sdkScale);
+      } catch {
+        // 控件已摘除/地图销毁:忽略
+      }
+      this.sdkScale = null;
+    }
+    this.removeFallbackScale();
+  }
+
+  /**
+   * 自绘比例尺(ScaleControl 缺失时)。公式与腾讯降级同款 WebMercator:
+   * m/px = 156543.04 · cos(lat) / 2^zoom;档位 BAIDU_SCALE_NICE_METERS。
+   */
+  private ensureFallbackScale(opts?: ScaleControlOpts): { hide: () => void; show: () => void } | null {
+    if (typeof document === 'undefined') return null;
+    const container = this.map.getContainer?.() as
+      | { appendChild?: (n: HTMLDivElement) => void }
+      | undefined;
+    if (!container || typeof container.appendChild !== 'function') return null;
+    this.removeFallbackScale();
+    const el = document.createElement('div');
+    el.className = 'BMap_scaleCtrl';
+    el.style.cssText = 'position:absolute;width:100px;height:35px;pointer-events:none;z-index:1000;';
+    applyScaleBoxPosition(el, opts);
+    const line = document.createElement('div');
+    line.className = 'BMap_scaleCtrl-line';
+    line.style.cssText = 'position:absolute;bottom:8px;left:0;height:7px;background:#333;';
+    const text = document.createElement('div');
+    text.className = 'BMap_scaleCtrl-text';
+    text.style.cssText =
+      'position:absolute;bottom:16px;left:0;font-size:11px;color:#333;' +
+      'text-shadow:0 0 3px #fff,0 0 6px #fff;white-space:nowrap;';
+    el.appendChild(line);
+    el.appendChild(text);
+    container.appendChild(el);
+    this.scaleEl = el;
+    const update = () => this.updateFallbackScale(line, text);
+    this.scaleOffs.push(this.on('zoomchange', update), this.on('moveend', update));
+    update();
+    if (!this.scaleFallbackWarned) {
+      this.scaleFallbackWarned = true;
+      console.info('[map-engine] BMapGL 无 ScaleControl,使用自绘比例尺');
+    }
+    return {
+      hide: () => {
+        el.style.display = 'none';
+      },
+      show: () => {
+        el.style.display = '';
+      },
+    };
+  }
+
+  private updateFallbackScale(line: HTMLDivElement, text: HTMLDivElement): void {
+    const state = this.getState();
+    const z = state.zoom;
+    const lat = state.center.lat;
+    if (typeof z !== 'number' || typeof lat !== 'number') return;
+    const mpp = Math.abs((BAIDU_SCALE_RESOLUTION_BASE * Math.cos((lat * Math.PI) / 180)) / Math.pow(2, z));
+    const g = z > 22 ? 1 : (BAIDU_SCALE_NICE_METERS[Math.round(z)] ?? 1);
+    const px = Math.max(12, Math.round(g / mpp) - 10);
+    line.style.width = `${px}px`;
+    text.textContent = g < 1000 ? `${g} 米` : `${g / 1000} 公里`;
+  }
+
+  private removeFallbackScale(): void {
+    if (this.scaleEl) {
+      try {
+        this.scaleEl.parentNode?.removeChild(this.scaleEl);
+      } catch {
+        // 已脱离 DOM:忽略
+      }
+      this.scaleEl = null;
+    }
+    for (const off of this.scaleOffs) {
+      try {
+        off();
+      } catch {
+        // 解绑失败不影响主流程
+      }
+    }
+    this.scaleOffs = [];
   }
 
   destroy(): void {
     this.destroyed = true;
     this.cameraAnimSyncRunning = false; // ws-l:终止相机动画同步 rAF 循环
+    this.clearScaleControl();
     for (const unsub of this.viewUnsubscribers.splice(0)) unsub(); // r5:解绑相机/瓦片监听
     this.contentMarkers.clear();
     this.map.destroy();
