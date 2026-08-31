@@ -1,8 +1,8 @@
-# Domain Map Frontend
+# JobMap frontend
 
-**Status:** Phase 2–4 + 全国 work 模式已合入 `dev`(2026-08-21 起,真实招聘 catalog + Postgres + auth);地图引擎打磨系列 2026-08-22/23 持续合入。当前状态以仓库根 [README](../README.md) 与 `tech/` 为准,本文件只保留本目录可操作信息与历史快照。
+**Status:** JobMap app on `dev`. How to run: repo-root [README](../README.md). This file keeps directory-local notes.
 **Framework:** Next.js 16.3.1 (App Router) + React 19.2.8 + TypeScript 5.9 (以 `package.json` 为准)
-**Map Engine:** 三引擎插件契约 —— AMap / 腾讯 TMap / 百度 BMapGL(图层面板「地图源」切换,偏好存 localStorage;架构见仓库根 `tech/23-map-engines.md`)
+**Map Engine:** AMap / 腾讯 TMap / 百度 BMapGL（图层面板「地图源」切换，偏好存 localStorage）
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ NEXT_PUBLIC_AMAP_KEY=your_amap_key_here
 NEXT_PUBLIC_AMAP_SECURITY_CODE=your_security_code_here
 ```
 
-**Note:** These are `NEXT_PUBLIC_*` variables, meaning they are exposed to the browser. Only use client-safe API keys with domain restrictions configured in AMap console. 三引擎各自的 key(s) 见 [docs/environment-variables.md](docs/environment-variables.md)(AMap / `TENCENT_MAP_KEY` / `BAIDU_MAP_AK`;引擎 `isConfigured` 判定按引擎实现)。
+**Note:** These are `NEXT_PUBLIC_*` variables, meaning they are exposed to the browser. Only use client-safe API keys with domain restrictions configured in AMap console. Optional Tencent / Baidu JS keys and server-side REST keys (`AMAP_WEB_KEY` / `BAIDU_MAP_AK` / `TENCENT_MAP_KEY`) are documented in `.env.example`.
 
 ### Obtaining AMap Credentials
 

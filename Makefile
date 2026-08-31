@@ -1,8 +1,8 @@
-# Makefile for Domain Map Platform (Phase 1 scaffold)
+# Makefile for JobMap
 .PHONY: help db-up db-down db-status docs-check scaffold-status preflight db-migrate test-unit test-integration
 
 help: ## Show currently supported commands
-	@printf '%s\n' 'Domain Map Platform'
+	@printf '%s\n' 'JobMap'
 	@printf '%s\n' '  make preflight        Verify DATABASE_URL and PostGIS preflight'
 	@printf '%s\n' '  make db-up            Start the local PostGIS database'
 	@printf '%s\n' '  make db-migrate       Apply pending SQL migrations (requires DATABASE_URL)'
@@ -54,7 +54,10 @@ test-integration: ## Run database integration tests (SKIP/BLOCKED if unavailable
 	tests/integration/db/test_migrations.sh
 
 docs-check: ## Check repository documentation path and policy drift
-	@! grep -R -nE 'docs/roles/|docs/zh-cn/|预计发布时间.*2026-02-10|BOSS.*MVP.*爬|小红书.*MVP.*爬' --include='*.md' --exclude-dir=parallel-sessions .
+	@! grep -R -nE 'docs/roles/|docs/zh-cn/|预计发布时间.*2026-02-10|BOSS.*MVP.*爬|小红书.*MVP.*爬' --include='*.md' \
+		--exclude-dir=.git --exclude-dir=.claude --exclude-dir=.Codex \
+		--exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.playwright-mcp \
+		--exclude-dir=parallel-sessions .
 	@printf '%s\n' 'Documentation policy check passed.'
 
 scaffold-status: ## Show implementation prerequisites present/planned
