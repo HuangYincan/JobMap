@@ -11,4 +11,4 @@ RUN apt-get update \
 WORKDIR /workspace
 COPY db ./db
 
-CMD ["bash", "-lc", "db/scripts/apply.sh"]
+CMD ["bash", "-lc", "db/scripts/apply.sh && db/scripts/preflight.sh"]

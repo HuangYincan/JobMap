@@ -21,15 +21,8 @@ services:
         max-file: "3"
 
   app:
-    image: domain-map-app:${DOMAIN_MAP_RELEASE_TAG:?DOMAIN_MAP_RELEASE_TAG is required}
-    build:
-      context: ..
-      dockerfile: deploy/domain-map.Dockerfile
-      args:
-        NEXT_PUBLIC_AMAP_KEY: ${NEXT_PUBLIC_AMAP_KEY-}
-        NEXT_PUBLIC_AMAP_SECURITY_CODE: ${NEXT_PUBLIC_AMAP_SECURITY_CODE-}
-        NEXT_PUBLIC_TENCENT_JSAPI_KEY: ${NEXT_PUBLIC_TENCENT_JSAPI_KEY-}
-        NEXT_PUBLIC_BAIDU_AK: ${NEXT_PUBLIC_BAIDU_AK-}
+    image: ${DOMAIN_MAP_APP_IMAGE:?DOMAIN_MAP_APP_IMAGE is required}
+    pull_policy: never
     env_file:
       - /etc/domain-map/db.env
       - /etc/domain-map/app.env
@@ -45,7 +38,7 @@ services:
       - private
       - edge
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/modes').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -58,10 +51,8 @@ services:
         max-file: "5"
 
   migrate:
-    image: domain-map-migrate:${DOMAIN_MAP_RELEASE_TAG:?DOMAIN_MAP_RELEASE_TAG is required}
-    build:
-      context: ..
-      dockerfile: deploy/migrate.Dockerfile
+    image: ${DOMAIN_MAP_MIGRATE_IMAGE:?DOMAIN_MAP_MIGRATE_IMAGE is required}
+    pull_policy: never
     env_file:
       - /etc/domain-map/db.env
     depends_on:

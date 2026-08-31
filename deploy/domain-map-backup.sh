@@ -12,7 +12,11 @@ chmod 700 "$BACKUP_DIR"
 
 # Prevent a timer run from racing a manually requested pre-release dump.
 exec 9>/run/lock/domain-map-backup.lock
-flock -n 9 || exit 0
+if [[ "${DOMAIN_MAP_BACKUP_REQUIRED:-0}" == 1 ]]; then
+  flock -w 120 9 || { printf '%s\n' 'timed out waiting for backup lock' >&2; exit 1; }
+else
+  flock -n 9 || exit 0
+fi
 
 set -a
 . "$DB_ENV"
