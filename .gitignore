@@ -84,19 +84,18 @@ temp/
 docker-compose.override.yml
 
 # Misc
-.claude/jobs/
 .agents/
 *.egg-info/
 .playwright-mcp/
 
 # Local UI captures (not product assets)
 /*.png
-tech/roles/data/validation-report-*.json
 
-# Parallel dev session artifacts (worker/merger claude -p output, not docs)
-tech/roles/development/parallel-sessions/*/logs/
-tech/roles/development/parallel-sessions/*/repro-artifacts/
-tech/roles/development/quality-scans/*/scan-stdout.log
-
-# Misplaced copies of repo-level tech/ (workers sometimes write under server/)
+# Internal agent tooling and docs (kept locally, not published)
+.claude/
+.Codex/
+/tech/
+/docs/
+/DOCS/
+/server/docs/
 /server/tech/
