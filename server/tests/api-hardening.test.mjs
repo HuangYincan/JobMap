@@ -324,6 +324,8 @@ test('applications persist bounded fields and only http(s) apply links', () => {
   assert.ok(parseIdx !== -1 && recordIdx !== -1 && parseIdx < recordIdx);
   assert.match(route, /export async function PATCH/);
   assert.match(route, /code: "UNKNOWN_STATUS"/);
+  assert.match(route, /export const dynamic = "force-dynamic"/);
+  assert.match(route, /DB_UNAVAILABLE/);
   assert.match(imported, /APPLICATION_CSV_IMPORT_MAX/);
   assert.match(imported, /recordApplications/);
   const pipeline = src('app/api/me/applications/pipeline/route.ts');

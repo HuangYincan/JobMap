@@ -118,6 +118,14 @@
   gap: 8px;
 }
 
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
 .title {
   margin: 0;
   font-size: 17px;
@@ -559,7 +567,6 @@
   list-style: none;
   margin: 8px 0 0;
   padding: 0;
-  overflow: auto;
 }
 
 .watchItem {
@@ -584,6 +591,13 @@
   background: transparent;
   padding: 10px 8px;
   text-align: left;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+div.watchMain {
+  cursor: default;
 }
 
 .watchMain:hover {

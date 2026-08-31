@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
-import { listApplications, recordApplication, updateApplicationStatus } from "@/lib/account-store";
+import { DbUnavailableError, listApplications, recordApplication, updateApplicationStatus } from "@/lib/account-store";
 import {
   coerceStatusToCatalog,
   sanitizeApplicationPipeline,
@@ -11,15 +11,24 @@ import { RequestBodyTooLargeError, readJsonBody } from "@/lib/request-body";
 
 const MAX_ID_LENGTH = 200;
 
+export const dynamic = "force-dynamic";
+
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  return NextResponse.json(body, {
+    ...init,
+    headers: { "Cache-Control": "no-store" },
+  });
+}
+
 export async function GET() {
   const user = await readSessionUser();
-  if (!user) return NextResponse.json({ items: [] });
+  if (!user) return noStoreJson({ items: [] });
   const catalog = sanitizeApplicationPipeline(user.preferences.applicationPipeline).statuses;
   const items = (await listApplications(user.id)).map((item) => {
     const status = coerceStatusToCatalog(item.status, catalog);
     return status && status !== item.status ? { ...item, status } : item;
   });
-  return NextResponse.json({ items });
+  return noStoreJson({ items });
 }
 
 export async function POST(request: Request) {
@@ -55,8 +64,18 @@ export async function POST(request: Request) {
   if (!parsed.ok) {
     return NextResponse.json({ code: parsed.code, message: parsed.message }, { status: 400 });
   }
-  const item = await recordApplication(user.id, parsed.value);
-  return NextResponse.json({ item });
+  try {
+    const item = await recordApplication(user.id, parsed.value);
+    return noStoreJson({ item });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return NextResponse.json(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
 }
 
 export async function PATCH(request: Request) {

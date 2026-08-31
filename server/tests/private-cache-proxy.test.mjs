@@ -10,6 +10,7 @@ test('authenticated APIs receive an explicit no-store cache policy', () => {
   for (const path of [
     '/api/auth/:path*',
     '/api/agent/:path*',
+    '/api/me/applications',
     '/api/me/applications/:path*',
     '/api/me/memories/:path*',
     '/api/me/notifications/:path*',

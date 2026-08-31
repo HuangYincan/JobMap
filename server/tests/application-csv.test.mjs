@@ -8,6 +8,8 @@ import {
   serializeApplicationCsv,
   serializeApplicationCsvTemplate,
   isHttpApplyUrl,
+  reconcileApplications,
+  upsertApplicationInList,
   APPLICATION_CSV_IMPORT_MAX,
 } from '../src/lib/application-csv.ts';
 import { assignApplicationIds, manualPositionId } from '../src/lib/application-ids.ts';
@@ -123,4 +125,25 @@ test('parseApplicationWrite generates ids and rejects bad URLs unless omitted', 
     assert.equal(omitted.value.applyUrl, undefined);
     assert.equal(omitted.value.status, 'interview');
   }
+});
+
+test('reconcileApplications keeps a POST row when GET is still empty', () => {
+  const posted = {
+    id: '1',
+    positionId: 'manual:abc',
+    companyPoiId: 'manual:co:abc',
+    title: '前端',
+    companyName: '测试公司',
+    status: 'applied',
+    createdAt: '2026-08-31T00:00:00.000Z',
+    updatedAt: '2026-08-31T00:00:00.000Z',
+  };
+  const shown = reconcileApplications([], posted);
+  assert.equal(shown.length, 1);
+  assert.equal(shown[0].title, '前端');
+  assert.equal(shown[0].companyName, '测试公司');
+  assert.equal(reconcileApplications([posted], posted).length, 1);
+  const replaced = upsertApplicationInList(shown, { ...posted, title: '后端' });
+  assert.equal(replaced.length, 1);
+  assert.equal(replaced[0].title, '后端');
 });

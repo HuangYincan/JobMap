@@ -385,6 +385,20 @@ test('Recent L2 is application watch with user-editable stages', () => {
   assert.match(jd, /watchJoin/);
 });
 
+test('Recent add merges the POST item so an empty GET cannot hide the new row', () => {
+  const shell = src('components/map-shell.tsx');
+  const recent = src('components/recent-panel.tsx');
+  const csv = src('lib/application-csv.ts');
+  const addFn = shell.slice(shell.indexOf('handleAddApplication'), shell.indexOf('handleImportApplications'));
+  assert.match(csv, /export function reconcileApplications/);
+  assert.match(addFn, /if \(!res\.ok\)/);
+  assert.match(addFn, /body\.item/);
+  assert.match(addFn, /upsertApplicationInList/);
+  assert.match(addFn, /refreshApplications\(posted\)/);
+  assert.match(recent, /const ok = await onAdd/);
+  assert.match(recent, /if \(ok === false\)/);
+});
+
 test('map shell zoom 按钮契约化:不再出现 raw.zoomIn/zoomOut 直连(ws-b bug 7)', () => {
   const shell = src('components/map-shell.tsx');
   // 直连逃生舱已移除(AMap 有 zoomIn/zoomOut,TMap raw 无 → 点击无效的根因)
