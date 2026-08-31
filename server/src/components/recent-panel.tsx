@@ -40,8 +40,8 @@ export interface RecentPanelProps {
   onSignIn?: () => void;
   onStatusChange?: (item: ApplicationRecord, statusId: string) => void;
   onStatusesChange?: (next: ApplicationStatusDef[]) => void;
-  onAdd?: (input: { title: string; companyName: string; applyUrl?: string; status: string }) => void | Promise<void>;
-  onImport?: (rows: ApplicationCsvRow[]) => void | Promise<void>;
+  onAdd?: (input: { title: string; companyName: string; applyUrl?: string; status: string }) => void | boolean | Promise<void | boolean>;
+  onImport?: (rows: ApplicationCsvRow[]) => void | boolean | Promise<void | boolean>;
   shifted?: boolean;
   embedded?: boolean;
 }
@@ -116,12 +116,12 @@ export function RecentPanel({
     setManaging(false);
     setPickerId(null);
     setComposer((current) => (current === next ? null : next));
+    setAddError("");
     if (next === "add") {
       setAddCompany("");
       setAddTitle("");
       setAddUrl("");
       setAddStatusId(defaultStatus);
-      setAddError("");
     }
   };
 
@@ -137,12 +137,16 @@ export function RecentPanel({
     setAddError("");
     setBusy(true);
     try {
-      await onAdd({
+      const ok = await onAdd({
         companyName,
         title,
         applyUrl: applyUrl || undefined,
         status: addStatusId || defaultStatus,
       });
+      if (ok === false) {
+        setAddError(t("addApplicationFailed", lang));
+        return;
+      }
       setAddCompany("");
       setAddTitle("");
       setAddUrl("");
@@ -161,9 +165,14 @@ export function RecentPanel({
 
   const confirmImport = async () => {
     if (!csvParse || !onImport || csvParse.rows.length === 0) return;
+    setAddError("");
     setBusy(true);
     try {
-      await onImport(csvParse.rows);
+      const ok = await onImport(csvParse.rows);
+      if (ok === false) {
+        setAddError(t("importApplicationsFailed", lang));
+        return;
+      }
       setCsvParse(null);
       setCsvName("");
       setComposer(null);
@@ -220,7 +229,7 @@ export function RecentPanel({
             )}
           </div>
         ) : (
-          <>
+          <div className={styles.body}>
             {managing && (
               <section className={styles.manage} aria-label={t("manageStatuses", lang)}>
                 <StatusGroupEditor
@@ -460,6 +469,7 @@ export function RecentPanel({
                       .replace("{s}", String(csvParse.skipped.length))}
                   </p>
                 ) : null}
+                {addError ? <p className={styles.fieldError}>{addError}</p> : null}
                 <div className={styles.formActions}>
                   <button type="button" className={styles.ghostBtn} onClick={() => setComposer(null)}>
                     {t("cancel", lang)}
@@ -487,24 +497,35 @@ export function RecentPanel({
                   const tone = pillTone(def);
                   const open = pickerId === item.id;
                   const catalogRow = !isManualApplicationId(item.companyPoiId);
+                  const rowBody = (
+                    <>
+                      <span className={styles.watchTitle}>{item.title}</span>
+                      <span className={styles.watchMeta}>
+                        {[item.companyName, formatRelativeTime(item.updatedAt || item.createdAt, lang)]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </>
+                  );
                   return (
                     <li key={item.id} className={styles.watchItem}>
                       <div className={styles.watchRow}>
-                        <button
-                          type="button"
-                          className={styles.watchMain}
-                          onClick={() => {
-                            if (!catalogRow) return;
-                            onPick(item);
-                          }}
-                        >
-                          <span className={styles.watchTitle}>{item.title}</span>
-                          <span className={styles.watchMeta}>
-                            {[item.companyName, formatRelativeTime(item.updatedAt || item.createdAt, lang)]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </span>
-                        </button>
+                        {catalogRow ? (
+                          <button type="button" className={styles.watchMain} onClick={() => onPick(item)}>
+                            {rowBody}
+                          </button>
+                        ) : item.applyUrl ? (
+                          <a
+                            className={styles.watchMain}
+                            href={item.applyUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {rowBody}
+                          </a>
+                        ) : (
+                          <div className={styles.watchMain}>{rowBody}</div>
+                        )}
                         <button
                           type="button"
                           className={`${styles.statusPill} ${
@@ -566,7 +587,7 @@ export function RecentPanel({
                 })}
               </ul>
             )}
-          </>
+          </div>
         )}
       </aside>
     </div>

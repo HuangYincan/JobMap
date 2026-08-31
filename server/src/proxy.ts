@@ -14,6 +14,7 @@ export const config = {
   matcher: [
     '/api/auth/:path*',
     '/api/agent/:path*',
+    '/api/me/applications',
     '/api/me/applications/:path*',
     '/api/me/memories/:path*',
     '/api/me/notifications/:path*',

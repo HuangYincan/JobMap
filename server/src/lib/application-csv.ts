@@ -269,3 +269,38 @@ export function statusForCsvRow(
 ): string {
   return resolveWatchStatus(row.status, catalog, lang) || fallbackStatusId(catalog);
 }
+
+function isPostedApplication(value: unknown): value is ApplicationRecord {
+  if (!value || typeof value !== 'object') return false;
+  const rec = value as ApplicationRecord;
+  return typeof rec.id === 'string'
+    && typeof rec.positionId === 'string'
+    && typeof rec.title === 'string'
+    && typeof rec.companyName === 'string';
+}
+
+/** 同一岗位只留一行；新写入的排在最前。 */
+export function upsertApplicationInList(
+  current: ApplicationRecord[],
+  item: ApplicationRecord,
+): ApplicationRecord[] {
+  return [item, ...current.filter((row) => row.id !== item.id && row.positionId !== item.positionId)];
+}
+
+/**
+ * GET 列表与刚写入的 POST 行对账。服务端暂时为空（缓存/读降级）时仍保留刚添加的行，
+ * 否则「加入监视」成功后列表毫无变化。
+ */
+export function reconcileApplications(
+  serverItems: ApplicationRecord[],
+  posted?: ApplicationRecord | ApplicationRecord[] | null,
+): ApplicationRecord[] {
+  const extras = (Array.isArray(posted) ? posted : posted ? [posted] : []).filter(isPostedApplication);
+  let next = Array.isArray(serverItems) ? serverItems.filter(isPostedApplication) : [];
+  for (const item of extras) {
+    if (!next.some((row) => row.id === item.id || row.positionId === item.positionId)) {
+      next = upsertApplicationInList(next, item);
+    }
+  }
+  return next;
+}

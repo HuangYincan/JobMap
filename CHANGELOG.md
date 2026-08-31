@@ -9,6 +9,10 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - **最近投递监视支持手动添加和 CSV 导入导出。** 二级卡在筛条下增加添加 / 导入 CSV / 导出 CSV。CSV 为 UTF-8 BOM，五列：公司,岗位,阶段,投递链接,投递时间（英文表头同样认）。同一用户「公司+岗位」重复则更新。`POST /api/me/applications` 允许不带目录 id（生成 `manual:` 哈希）；`POST /api/me/applications/import` 一次最多 200 行。
 - **点投递会写入最近列表。** 已登录乐观插入后刷新；未登录拦住招聘页并打开登录。没有投递链接的岗位改为「加入监视」。不强制切走岗位卡。
 
+### Fixed
+
+- **最近里「加入监视」后列表毫无变化。** 添加成功只再拉一次 GET；GET 空或失败时表单关掉、计数仍是 0。现在用 POST 返回的 `{ item }` 立刻写入列表；失败则留在表单并提示。
+
 ### Changed
 
 - **Explore 去掉岗位 / 对比 / 行程页签。** 工作模式二级卡片和手机抽屉不再切换对比表或行程来源条，只保留岗位列表。收藏图层里的两家公司对比仍在。

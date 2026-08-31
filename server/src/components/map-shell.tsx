@@ -19,8 +19,12 @@ import { clearModeCache, readModeCache, syncModeCache, writeModeCache } from "@/
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
 import { entityRefFromSelection, initialsFromName } from "@/lib/account";
 import { sanitizeApplicationPipeline, type ApplicationStatusDef } from "@/lib/application-pipeline";
-import type { ApplicationCsvRow } from "@/lib/application-csv";
-import { isManualApplicationId } from "@/lib/application-csv";
+import {
+  isManualApplicationId,
+  reconcileApplications,
+  upsertApplicationInList,
+  type ApplicationCsvRow,
+} from "@/lib/application-csv";
 import { isPersistableMode, isPersistablePoi } from "@/lib/persistable";
 import { addGuestHistory, listGuestHistory, mergeGuestHistoryIntoAccount } from "@/lib/guest-search-history";
 import {
@@ -467,13 +471,20 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     }
   }, []);
 
-  const refreshApplications = useCallback(async () => {
+  const refreshApplications = useCallback(async (posted?: ApplicationRecord | ApplicationRecord[]) => {
     try {
-      const res = await fetch("/api/me/applications");
+      const res = await fetch("/api/me/applications", { cache: "no-store" });
+      if (!res.ok) return;
       const body = await res.json();
-      setApplications(Array.isArray(body.items) ? body.items : []);
+      if (!Array.isArray(body.items)) return;
+      setApplications(reconcileApplications(body.items, posted));
     } catch {
-      setApplications([]);
+      if (!posted) return;
+      const extras = Array.isArray(posted) ? posted : [posted];
+      setApplications((current) => extras.reduce(
+        (list, item) => upsertApplicationInList(list, item),
+        current,
+      ));
     }
   }, []);
 
@@ -1821,6 +1832,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       const res = await fetch("/api/me/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({
           positionId: input.position.id,
           companyPoiId: input.company.id,
@@ -1829,8 +1841,13 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           applyUrl: input.url,
         }),
       });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.item) {
+        setApplications((current) => upsertApplicationInList(current, body.item as ApplicationRecord));
+        await refreshApplications(body.item as ApplicationRecord);
+        return;
+      }
       await refreshApplications();
-      if (!res.ok) return;
     } catch {
       await refreshApplications();
     }
@@ -1844,34 +1861,51 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   }) => {
     if (!user) {
       setAuthOpen(true);
-      return;
+      return false;
     }
     try {
-      await fetch("/api/me/applications", {
+      const res = await fetch("/api/me/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify(input),
       });
-      await refreshApplications();
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) return false;
+      const posted = body.item as ApplicationRecord | undefined;
+      if (posted) setApplications((current) => upsertApplicationInList(current, posted));
+      await refreshApplications(posted);
+      return Boolean(posted);
     } catch {
-      await refreshApplications();
+      return false;
     }
   }, [user, refreshApplications]);
 
   const handleImportApplications = useCallback(async (rows: ApplicationCsvRow[]) => {
     if (!user) {
       setAuthOpen(true);
-      return;
+      return false;
     }
     try {
-      await fetch("/api/me/applications/import", {
+      const res = await fetch("/api/me/applications/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({ rows }),
       });
-      await refreshApplications();
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) return false;
+      const posted = Array.isArray(body.items) ? body.items as ApplicationRecord[] : undefined;
+      if (posted) {
+        setApplications((current) => posted.reduce(
+          (list, item) => upsertApplicationInList(list, item),
+          current,
+        ));
+      }
+      await refreshApplications(posted);
+      return true;
     } catch {
-      await refreshApplications();
+      return false;
     }
   }, [user, refreshApplications]);
 
@@ -1891,6 +1925,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       await fetch("/api/me/applications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({ id: item.id, status: statusId }),
       });
       await refreshApplications();
