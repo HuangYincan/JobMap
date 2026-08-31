@@ -192,11 +192,13 @@ test('mobile JD panel stays visible inside the drawer', () => {
 test('mobile drawer owns Explore and hides desktop L2 at 767px', () => {
   const shell = src('components/map-shell.tsx');
   const gesture = src('hooks/use-mobile-drawer-gesture.ts');
+  const chrome = src('lib/mobile-drawer-chrome.ts');
   const css = src('components/map-shell.module.css');
   assert.match(shell, /import \{ useMobileDrawerGesture, type DrawerState, type MobileSheet \} from "@\/hooks\/use-mobile-drawer-gesture"/);
   assert.match(shell, /useMobileDrawerGesture\(\{/);
-  assert.match(gesture, /export type DrawerState = "mini" \| "half" \| "full"/);
-  assert.match(gesture, /export type MobileSheet = "explore" \| "layers" \| "account" \| "recent" \| "agent"/);
+  assert.match(chrome, /export type DrawerState = 'mini' \| 'half' \| 'full'/);
+  assert.match(chrome, /export type MobileSheet = 'explore' \| 'layers' \| 'account' \| 'recent' \| 'agent'/);
+  assert.match(gesture, /export type \{ DrawerState, MobileSheet \}/);
   assert.match(gesture, /handleDrawerPointerDown/);
   assert.match(gesture, /finishDrawerGesture/);
   assert.doesNotMatch(shell, /mobileSheet === "saved"/);

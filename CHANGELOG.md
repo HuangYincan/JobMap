@@ -21,7 +21,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 ### Fixed
 
 - **百度底图没有比例尺。** `ScaleControl` 未传锚点/偏移,默认贴左下被侧栏和抽屉挡住,且返回 void 让外壳接不上显隐;v1.0 无控件时还会静默失败。现按高德同款 LT/LB 定位,没有官方控件则自绘,并返回 hide/show。
-
+- **手机搜索框和全国视野 POI 会一起消失。** 安卓 Chrome 把抽屉收到 mini、或拖到系统底栏松手时,非探索 sheet 把搜索卸掉、工具栏/列表被 CSS 藏掉,底栏只剩一条把手;AMap 3D 上 HTML 城市徽章经常不画,zoomend 又不写 `realZoom`,缩到 50km 后个体 pin 被藏、深圳/广州徽章也没有。mini 档强制回到探索并保住搜索;松手走 `lostpointercapture`/`pointerup`;模糊层改挂 `::before`;pinch 后 `syncView` 同步 zoom;AMap 徽章改独立 LabelsLayer,隐藏的公司点从公司层摘掉。
 - **助手推荐岗位后地图不跳转、不标注。** 模型常把 `portal-feishu-*` 岗位 ID 写进正文且不发 `flyTo`/`addMarkers`;即便发了 `select`,用岗位 ID 也点不亮公司 pin。岗位工具现在带办公点坐标和公司 `mapId`;LLM 漏动作时 runner 按工具结果补 `addMarkers`+`flyTo`+`select`。正文应写岗位名/公司,不要把内部 ID 给用户。
 - **最近里「加入监视」后列表毫无变化。** 添加成功只再拉一次 GET；GET 空或失败时表单关掉、计数仍是 0。现在用 POST 返回的 `{ item }` 立刻写入列表；失败则留在表单并提示。
 

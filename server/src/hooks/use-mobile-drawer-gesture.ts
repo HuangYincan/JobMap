@@ -9,9 +9,13 @@ import {
   type SetStateAction,
 } from "react";
 import type { POI, Position } from "@/lib/types";
+import {
+  sheetAfterDrawerSnap,
+  type DrawerState,
+  type MobileSheet,
+} from "@/lib/mobile-drawer-chrome";
 
-export type DrawerState = "mini" | "half" | "full";
-export type MobileSheet = "explore" | "layers" | "account" | "recent" | "agent";
+export type { DrawerState, MobileSheet };
 
 const DRAWER_MINI_H = 96;
 const DRAWER_HALF_RATIO = 0.42;
@@ -161,8 +165,15 @@ export function useMobileDrawerGesture(actions: DrawerGestureActions) {
       return;
     }
     if (actions.mobileSheet !== "explore") {
-      if (vel > DRAWER_FLING_V) actions.setMobileSheet("explore");
-      else actions.setDrawer(nearestDrawerState(currentH, halfH, fullH));
+      if (vel > DRAWER_FLING_V) {
+        actions.setMobileSheet("explore");
+        actions.setDrawer("mini");
+      } else {
+        const next = nearestDrawerState(currentH, halfH, fullH);
+        actions.setDrawer(next);
+        const sheet = sheetAfterDrawerSnap(actions.mobileSheet, next);
+        if (sheet !== actions.mobileSheet) actions.setMobileSheet(sheet);
+      }
       return;
     }
     // 三态判定:向上快滑→full,向下快滑→mini,慢拖→就近档位
@@ -171,12 +182,31 @@ export function useMobileDrawerGesture(actions: DrawerGestureActions) {
     else actions.setDrawer(nearestDrawerState(currentH, halfH, fullH));
   };
 
+  const handleDrawerLostPointerCapture = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    finishDrawerGesture(event.clientY);
+  };
+
+  const finishRef = useRef(finishDrawerGesture);
+  finishRef.current = finishDrawerGesture;
+
+  useEffect(() => {
+    if (!drawerDragging) return;
+    const onUp = (event: PointerEvent) => finishRef.current(event.clientY);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [drawerDragging]);
+
   return {
     drawerDragging,
     drawerRef,
     drawerSuppressClickRef,
     handleDrawerPointerDown,
     handleDrawerPointerMove,
+    handleDrawerLostPointerCapture,
     finishDrawerGesture,
   };
 }

@@ -46,6 +46,7 @@ import { useSearchState } from "@/hooks/use-search-state";
 import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { useMapEngine, type UseMapEngineResult } from "@/hooks/use-map-engine";
 import { useMobileDrawerGesture, type DrawerState, type MobileSheet } from "@/hooks/use-mobile-drawer-gesture";
+import { shouldShowMobileSearch } from "@/lib/mobile-drawer-chrome";
 import type { MapMarker, MapMarkerOptions, MapView } from "@/lib/map-engine/types";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
@@ -415,6 +416,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     drawerSuppressClickRef,
     handleDrawerPointerDown,
     handleDrawerPointerMove,
+    handleDrawerLostPointerCapture,
     finishDrawerGesture,
   } = useMobileDrawerGesture({
     drawer,
@@ -908,6 +910,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       // 圆心直接跟随相机:收藏 toggle 不再移动相机(ws1 saved-layer-nofly),
       // moveend/complete 只来自用户操作,无需任何圆心冻结。
       setMapCenter(center);
+      // pinch/滚轮常只派 zoomend、不派 zoomchange。不在这里写 realZoom 的话
+      // 聚合边界停在旧 zoom,全国视野个体 pin 被藏、徽章又没切出来。
+      setRealZoom(state.zoom);
+      setZoom(Math.round(state.zoom));
       const b = view.getBounds();
       if (b) {
         setMapBounds({ west: b.west, south: b.south, east: b.east, north: b.north });
@@ -2815,6 +2821,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           onPointerMove={(event) => handleDrawerPointerMove(event)}
           onPointerUp={(event) => finishDrawerGesture(event.clientY)}
           onPointerCancel={(event) => finishDrawerGesture(event.clientY)}
+          onLostPointerCapture={handleDrawerLostPointerCapture}
           aria-label={mobileJd ? t("closeJd", lang) : detailPoi ? t("backToList", lang) : t("expandDrawer", lang)}
         >
           <span />
@@ -2943,7 +2950,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 )}
               </button>
             </div>
-            {mobileSheet === "explore" && (
+            {shouldShowMobileSearch(mobileSheet, drawer) && (
             <div className={styles.mobileSearchStack}>
             <div className={styles.mobileSearchRow}>
               <div className={styles.mobileSearch}>

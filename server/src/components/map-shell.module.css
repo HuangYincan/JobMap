@@ -1056,6 +1056,10 @@
 }
 
 @media (max-width: 767px) {
+  .shell {
+    min-height: 0;
+  }
+
   .sidebar,
   .mapControls {
     display: none;
@@ -1080,8 +1084,8 @@
 
   .mobileDrawer {
     --drawer-handle-gap: 8px;
-    background: var(--soft-strong);
-    backdrop-filter: blur(28px) saturate(170%);
+    background: transparent;
+    isolation: isolate;
     border: 1px solid rgba(255, 255, 255, 0.72);
     border-bottom: 0;
     border-radius: 20px 20px 0 0;
@@ -1098,6 +1102,25 @@
     right: 0;
     overflow: visible;
     transition: height 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* 模糊层单独挂在 ::before:安卓 Chrome + 高德 WebGL 时,backdrop-filter
+     写在同一元素上会把子节点(搜索框/工具栏)合成丢了,底栏只剩一条把手。 */
+  .mobileDrawer::before {
+    background: var(--soft-strong);
+    backdrop-filter: blur(28px) saturate(170%);
+    -webkit-backdrop-filter: blur(28px) saturate(170%);
+    border-radius: inherit;
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: -1;
+  }
+
+  .mobileDrawer > * {
+    position: relative;
+    z-index: 1;
   }
 
   .drawerMini {
