@@ -583,6 +583,13 @@ export function updateApplicationStatus(
   return next;
 }
 
+export function removeApplication(userId: string, id: string): boolean {
+  const items = applications.get(userId) ?? [];
+  const next = items.filter((item) => item.id !== id);
+  applications.set(userId, next);
+  return next.length !== items.length;
+}
+
 export function reassignApplicationStatuses(
   userId: string,
   fromIds: string[],

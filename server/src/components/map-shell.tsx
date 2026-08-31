@@ -1808,6 +1808,20 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     void fetch(`/api/me/saved?poiId=${encodeURIComponent(poiId)}`, { method: "DELETE" }).then(refreshSaved);
   }, [refreshSaved]);
 
+  const handleRemoveApplication = useCallback((item: ApplicationRecord) => {
+    if (!user) {
+      setAuthOpen(true);
+      return;
+    }
+    setApplications((current) => current.filter((row) => row.id !== item.id));
+    void fetch(`/api/me/applications?id=${encodeURIComponent(item.id)}`, {
+      method: "DELETE",
+      cache: "no-store",
+    }).then((res) => {
+      if (!res.ok) return refreshApplications();
+    }).catch(() => refreshApplications());
+  }, [user, refreshApplications]);
+
   const handleApply = useCallback(async (input: { position: { id: string; title: string }; company: { id: string; name: string }; url?: string }) => {
     if (!user) {
       setAuthOpen(true);
@@ -2650,6 +2664,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           onSignIn={() => setAuthOpen(true)}
           onStatusChange={handleApplicationStatus}
           onStatusesChange={handleApplicationPipeline}
+          onRemove={handleRemoveApplication}
           onAdd={handleAddApplication}
           onImport={handleImportApplications}
         />
@@ -3095,6 +3110,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                   onSignIn={() => setAuthOpen(true)}
                   onStatusChange={handleApplicationStatus}
                   onStatusesChange={handleApplicationPipeline}
+                  onRemove={handleRemoveApplication}
                   onAdd={handleAddApplication}
                   onImport={handleImportApplications}
                 />

@@ -8,6 +8,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 - **最近投递监视支持手动添加和 CSV 导入导出。** 二级卡在筛条下增加添加 / 导入 CSV / 导出 CSV。CSV 为 UTF-8 BOM，五列：公司,岗位,阶段,投递链接,投递时间（英文表头同样认）。同一用户「公司+岗位」重复则更新。`POST /api/me/applications` 允许不带目录 id（生成 `manual:` 哈希）；`POST /api/me/applications/import` 一次最多 200 行。
 - **点投递会写入最近列表。** 已登录乐观插入后刷新；未登录拦住招聘页并打开登录。没有投递链接的岗位改为「加入监视」。不强制切走岗位卡。
+- **最近监视行可删除。** 每行右侧 × 立刻去掉该条（`DELETE /api/me/applications?id=`），不弹确认。
 
 ### Fixed
 
@@ -15,6 +16,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Changed
 
+- **未通过阶段改成红色。** 最近列表 pill：未通过（及旧一面挂/二面挂/三面挂）红字浅红底；已撤回仍灰；Offer / 已接受仍绿。
 - **Explore 去掉岗位 / 对比 / 行程页签。** 工作模式二级卡片和手机抽屉不再切换对比表或行程来源条，只保留岗位列表。收藏图层里的两家公司对比仍在。
 - **助手面板去掉会话/记忆入口,顶栏只留清屏、撤销、关闭。** 标题为「助手」。清屏会 abort 当前流并丢掉未完成回复,不归档。流式中仍可输入:有字再发送即打断本轮;空输入点发送位则停止并保留已输出。悬浮球吸附改用 left+top,开合从球缩放淡入淡出。
 - **助手地点检索先查本地目录。** `rest__placeSearch` / 地理编码以及 MCP 检索类工具先命中招聘办公点(及杭州 POI),未命中才打地图 API。默认工具轮数从 8 提到 16。

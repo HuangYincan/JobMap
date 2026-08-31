@@ -853,6 +853,10 @@ export const translations = {
     zh: '链接须为 http(s)',
     en: 'Link must be http(s)',
   },
+  removeApplication: {
+    zh: '删除',
+    en: 'Remove',
+  },
   addApplicationFailed: {
     zh: '没能加入监视，请再试一次',
     en: 'Could not add to watch. Try again.',
