@@ -87,11 +87,24 @@ not put the private key in the repository or in a release bundle.
 The host directories are created as follows:
 
 ```text
-/opt/domain-map/current       -> /opt/domain-map/releases/<commit-sha>
+/opt/domain-map/current       -> /opt/domain-map/releases/<release-id>
 /opt/domain-map/previous      -> previous application release
 /opt/domain-map/incoming/     writable only by domainmap-deploy
 /opt/domain-map/releases/     root-owned release metadata and packaging
 ```
+
+A release id is normally the 40-character commit SHA. If the same commit is
+rebuilt with different browser-visible build configuration, the wrapper keeps
+the original release and creates a deterministic variant:
+
+```text
+<commit-sha>--<app-digest-64hex>--<migrate-digest-64hex>
+```
+
+This prevents a changed `NEXT_PUBLIC_*` build from overwriting an immutable
+release or destroying its rollback target. Reapplying the same commit and
+image pair remains idempotent; retained variants should be included in normal
+release-disk maintenance.
 
 The existing database volume and the other VPS services are not removed or
 recreated. The app remains bound to `127.0.0.1:3002`; PostgreSQL remains
@@ -126,14 +139,14 @@ Runtime-only values stay on the VPS, root-owned with mode `0600`:
   server-side map, OAuth, mail/SMS values, and
   `PUBLIC_ORIGIN=https://jobmap.nvc.ac`.
 - `/etc/domain-map/compose.env`: current release SHA and full GHCR image
-  digests.
+  digests. The selected release directory may be a digest variant.
 - `/etc/domain-map/registry.env`: optional read-only GHCR credentials.
 
 ## Automatic apply and rollback
 
 The host wrapper serializes operations with `/run/lock/domain-map-deploy.lock`
-and accepts only lowercase 40-character commit SHAs and approved GHCR
-`sha256` digests. An apply performs these steps:
+and accepts only lowercase 40-character commit SHAs, strict release ids, and
+approved GHCR `sha256` digests. An apply performs these steps:
 
 1. Validate host-only configuration and the incoming non-secret packaging.
 2. Copy the Compose/backup files into a root-owned release directory.
@@ -160,8 +173,14 @@ For an intentional application rollback on the VPS:
 ```bash
 sudo /usr/local/sbin/domain-map-deploy rollback
 # or select a retained release explicitly:
-sudo /usr/local/sbin/domain-map-deploy rollback <40-character-commit-sha>
+sudo /usr/local/sbin/domain-map-deploy rollback <release-id>
 ```
+
+With no argument, rollback uses the exact `previous` symlink target. An
+explicit release id may be a canonical commit SHA or the complete digest
+variant id shown above. A SHA-only selector is accepted only when it resolves
+to one retained release; when multiple builds of that commit exist, use the
+full id so the app and migration image pair cannot be guessed.
 
 This changes the application image only. It does not reverse database schema.
 `status` prints the current/previous release and Compose service status without

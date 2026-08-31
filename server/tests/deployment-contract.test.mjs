@@ -34,6 +34,16 @@ test('VPS wrapper validates digests and protects the database volume', () => {
   const wrapper = read('deploy/domain-map-deploy.sh');
   assert.match(wrapper, /sha256:\[0-9a-f\]\{64\}/);
   assert.match(wrapper, /domain-map-deploy\.lock/);
+  assert.match(wrapper, /release_id_for/);
+  assert.match(wrapper, /release_path_for/);
+  assert.match(wrapper, /release=\$\(release_path_for "\$sha" "\$app_image" "\$migrate_image"\)/);
+  assert.match(wrapper, /\[0-9a-f\]\{40\}--\[0-9a-f\]\{64\}--\[0-9a-f\]\{64\}/);
+  assert.match(wrapper, /validate_release_id/);
+  assert.match(wrapper, /resolve_release_selector/);
+  assert.match(wrapper, /release SHA is ambiguous; use the full release id/);
+  assert.match(wrapper, /existing app digest differs/);
+  assert.match(wrapper, /rollback \[release-id\]/);
+  assert.match(wrapper, /restore_previous_link/);
   const backup = read('deploy/domain-map-backup.sh');
   assert.match(wrapper, /domain-map-backup\.sh/);
   assert.match(backup, /pg_dump/);

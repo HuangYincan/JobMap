@@ -22,7 +22,7 @@ usage() {
   cat >&2 <<'EOF'
 usage:
   domain-map-deploy apply <release-sha> <app-image-digest> <migrate-image-digest>
-  domain-map-deploy rollback [release-sha]
+  domain-map-deploy rollback [release-id]
   domain-map-deploy status
 EOF
   exit 2
@@ -34,6 +34,25 @@ require_root() {
 
 validate_sha() {
   [[ "$1" =~ ^[0-9a-f]{40}$ ]] || die 'release SHA must be a 40-character lowercase hexadecimal commit'
+}
+
+validate_release_id() {
+  if [[ "$1" =~ ^[0-9a-f]{40}$ ]]; then
+    return
+  fi
+  [[ "$1" =~ ^[0-9a-f]{40}--[0-9a-f]{64}--[0-9a-f]{64}$ ]] \
+    || die 'release id must be a commit SHA or a commit plus both image digests'
+}
+
+release_sha_for_id() {
+  local release_id=$1
+  validate_release_id "$release_id"
+  printf '%s\n' "${release_id%%--*}"
+}
+
+release_id_for() {
+  local sha=$1 app_image=$2 migrate_image=$3
+  printf '%s--%s--%s\n' "$sha" "${app_image##*@sha256:}" "${migrate_image##*@sha256:}"
 }
 
 validate_image() {
@@ -141,6 +160,30 @@ previous_target() {
   fi
 }
 
+resolve_release_selector() {
+  local selector=$1 candidate
+  if [[ "$selector" =~ ^[0-9a-f]{40}$ ]]; then
+    local -a matches=()
+    candidate="$RELEASE_ROOT/$selector"
+    if [[ -e "$candidate" ]]; then
+      matches+=("$candidate")
+    fi
+    while IFS= read -r candidate; do
+      matches+=("$candidate")
+    done < <(find "$RELEASE_ROOT" -mindepth 1 -maxdepth 1 -type d -name "${selector}--*" -print | sort)
+    if [[ "${#matches[@]}" -eq 1 ]]; then
+      printf '%s\n' "${matches[0]}"
+      return
+    fi
+    if [[ "${#matches[@]}" -gt 1 ]]; then
+      die 'release SHA is ambiguous; use the full release id'
+    fi
+    die "release does not exist: $selector"
+  fi
+  validate_release_id "$selector"
+  printf '%s/%s\n' "$RELEASE_ROOT" "$selector"
+}
+
 assert_legacy_release() {
   local release=$1
   [[ "$release" == "$RELEASE_ROOT"/* ]] || die 'legacy release path is outside the release root'
@@ -162,12 +205,24 @@ assert_release() {
   [[ "$(stat -c '%u' "$release/deploy/domain-map-backup.sh")" == 0 ]] || die 'release backup script is not root-owned'
   [[ "$(stat -c '%a' "$release/deploy/domain-map-backup.sh")" == 755 ]] || die 'release backup script must have mode 0755'
   [[ "$(stat -c '%u' "$release/release.env")" == 0 ]] || die 'release metadata is not root-owned'
-  validate_sha "$(basename "$release")"
-  grep -Fxq "DOMAIN_MAP_RELEASE_SHA=$(basename "$release")" "$release/release.env" || die 'release SHA metadata differs from its directory'
+  validate_release_id "$(basename "$release")"
+  local release_sha
+  release_sha=$(release_sha_for_id "$(basename "$release")")
+  grep -Fxq "DOMAIN_MAP_RELEASE_SHA=$release_sha" "$release/release.env" || die 'release SHA metadata differs from its directory'
   local release_app release_migrate
   release_app=$(awk -F= '$1 == "DOMAIN_MAP_APP_IMAGE" { print $2 }' "$release/release.env")
   release_migrate=$(awk -F= '$1 == "DOMAIN_MAP_MIGRATE_IMAGE" { print $2 }' "$release/release.env")
   validate_image "$release_app" "$release_migrate"
+  local release_id id_app_digest id_migrate_digest app_digest migrate_digest
+  release_id=$(basename "$release")
+  if [[ "$release_id" =~ ^[0-9a-f]{40}--([0-9a-f]{64})--([0-9a-f]{64})$ ]]; then
+    id_app_digest=${BASH_REMATCH[1]}
+    id_migrate_digest=${BASH_REMATCH[2]}
+    app_digest=${release_app##*@sha256:}
+    migrate_digest=${release_migrate##*@sha256:}
+    [[ "$id_app_digest" == "$app_digest" && "$id_migrate_digest" == "$migrate_digest" ]] \
+      || die 'release id digests differ from release metadata'
+  fi
   if [[ -n "$(find "$release" -type l -print -quit)" ]]; then
     die 'release contains a symlink'
   fi
@@ -214,6 +269,15 @@ atomic_link() {
   mv -Tf -- "$tmp" "$link"
 }
 
+restore_previous_link() {
+  local target=${1:-}
+  if [[ -n "$target" ]]; then
+    atomic_link "$PREVIOUS" "$target"
+  else
+    rm -f -- "$PREVIOUS"
+  fi
+}
+
 set_compose_env() {
   local release=$1 tmp
   tmp="${COMPOSE_ENV}.tmp.$$"
@@ -230,6 +294,26 @@ set_compose_env_file() {
 
 compose_file_for() { printf '%s/deploy/compose.prod.yml\n' "$1"; }
 compose_env_for() { printf '%s/release.env\n' "$1"; }
+
+release_path_for() {
+  local sha=$1 app_image=$2 migrate_image=$3 canonical canonical_app canonical_migrate
+  canonical="$RELEASE_ROOT/$sha"
+  if [[ -e "$canonical" ]]; then
+    [[ -d "$canonical" && ! -L "$canonical" ]] || die 'canonical release path is invalid'
+    if [[ -f "$canonical/release.env" ]]; then
+      assert_release "$canonical"
+      canonical_app=$(awk -F= '$1 == "DOMAIN_MAP_APP_IMAGE" { print $2 }' "$canonical/release.env")
+      canonical_migrate=$(awk -F= '$1 == "DOMAIN_MAP_MIGRATE_IMAGE" { print $2 }' "$canonical/release.env")
+      if [[ "$canonical_app" == "$app_image" && "$canonical_migrate" == "$migrate_image" ]]; then
+        printf '%s\n' "$canonical"
+        return
+      fi
+    else
+      assert_legacy_release "$canonical"
+    fi
+  fi
+  printf '%s/%s\n' "$RELEASE_ROOT" "$(release_id_for "$sha" "$app_image" "$migrate_image")"
+}
 
 wait_for_db() {
   local compose_file=$1 compose_env=$2 container state
@@ -307,7 +391,8 @@ apply_release() {
   ensure_host_config
 
   local incoming="$INCOMING_ROOT/$sha"
-  local release="$RELEASE_ROOT/$sha"
+  local release
+  release=$(release_path_for "$sha" "$app_image" "$migrate_image")
   write_release "$sha" "$app_image" "$migrate_image" "$incoming" "$release"
   local compose_file compose_env
   compose_file=$(compose_file_for "$release")
@@ -321,8 +406,9 @@ apply_release() {
   compose "$compose_env" "$compose_file" up -d db >/dev/null
   wait_for_db "$compose_file" "$compose_env"
 
-  local old_target
+  local old_target old_previous
   old_target=$(current_target || true)
+  old_previous=$(previous_target || true)
   if [[ -n "$old_target" && ! -f "$old_target/release.env" ]]; then
     [[ "$old_target" == "$RELEASE_ROOT"/* && -d "$old_target" && ! -L "$old_target" ]] \
       || die 'legacy current release path is invalid'
@@ -345,7 +431,7 @@ apply_release() {
   set_compose_env "$release"
 
   local switched=1
-  trap 'rc=$?; if [[ "$switched" == 1 && "$rc" -ne 0 ]]; then printf "%s\n" "domain-map deploy: app health failed; restoring previous app (database schema is not rolled back)" >&2; restore_app "$old_target" || true; fi; exit "$rc"' EXIT
+  trap 'rc=$?; if [[ "$switched" == 1 && "$rc" -ne 0 ]]; then printf "%s\n" "domain-map deploy: app health failed; restoring previous app (database schema is not rolled back)" >&2; restore_app "$old_target" || true; restore_previous_link "$old_previous" || true; fi; exit "$rc"' EXIT
   compose "$compose_env" "$compose_file" up -d --no-build app >/dev/null
   wait_for_app /api/health/ready
   wait_for_app /api/modes
@@ -361,8 +447,7 @@ rollback_release() {
   ensure_host_config
   local target managed=1
   if [[ $# -eq 1 ]]; then
-    validate_sha "$1"
-    target="$RELEASE_ROOT/$1"
+    target=$(resolve_release_selector "$1")
   else
     target=$(previous_target || true)
   fi
@@ -374,8 +459,9 @@ rollback_release() {
     assert_legacy_release "$target"
   fi
 
-  local old_target
+  local old_target old_previous
   old_target=$(current_target || true)
+  old_previous=$(previous_target || true)
   [[ "$target" != "$old_target" ]] || die 'requested rollback is already current'
   local compose_file compose_env
   compose_file=$(compose_file_for "$target")
@@ -406,7 +492,7 @@ rollback_release() {
     set_compose_env_file "$compose_env"
   fi
   local switched=1
-  trap 'rc=$?; if [[ "$switched" == 1 && "$rc" -ne 0 ]]; then printf "%s\n" "domain-map deploy: rollback health failed; restoring prior app" >&2; restore_app "$old_target" || true; fi; exit "$rc"' EXIT
+  trap 'rc=$?; if [[ "$switched" == 1 && "$rc" -ne 0 ]]; then printf "%s\n" "domain-map deploy: rollback health failed; restoring prior app" >&2; restore_app "$old_target" || true; restore_previous_link "$old_previous" || true; fi; exit "$rc"' EXIT
   compose "$compose_env" "$compose_file" up -d --no-build app >/dev/null
   wait_for_app /api/health/ready
   wait_for_app /api/modes
