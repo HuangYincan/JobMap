@@ -47,6 +47,7 @@ import {
   enqueueNotification as memEnqueueNotification,
   recordApplication as memRecordApplication,
   reassignApplicationStatuses as memReassignApplicationStatuses,
+  removeApplication as memRemoveApplication,
   removeSaved as memRemoveSaved,
   updateApplicationStatus as memUpdateApplicationStatus,
   savePlace as memSavePlace,
@@ -1316,6 +1317,18 @@ export async function updateApplicationStatus(
     );
     return result.rows[0] ? asApplication(result.rows[0]) : null;
   }, () => memUpdateApplicationStatus(userId, id, nextStatus));
+}
+
+export async function removeApplication(userId: string, id: string): Promise<boolean> {
+  const key = id.trim();
+  if (!key) return false;
+  return withDbWrite(async (db) => {
+    const result = await db.query(
+      `DELETE FROM applications WHERE user_id = $1 AND id::text = $2`,
+      [userId, key],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }, () => memRemoveApplication(userId, key));
 }
 
 export async function reassignApplicationStatuses(

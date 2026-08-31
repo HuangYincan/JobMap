@@ -634,9 +634,33 @@ div.watchMain {
   background: rgba(27, 127, 58, 0.12);
 }
 
+.statusPillRejected {
+  color: var(--danger, #ff3b30);
+  background: rgba(255, 59, 48, 0.12);
+}
+
 .statusPillClosed {
   color: var(--muted);
   background: rgba(120, 120, 128, 0.12);
+}
+
+.watchRemove {
+  flex: 0 0 auto;
+  margin-top: 8px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.watchRemove:hover {
+  color: var(--danger, #ff3b30);
+  background: rgba(255, 59, 48, 0.1);
 }
 
 .picker {
@@ -887,6 +911,7 @@ div.watchMain {
 .pickerChip:focus-visible,
 .signInBtn:focus-visible,
 .watchMain:focus-visible,
+.watchRemove:focus-visible,
 .manageName:focus-visible,
 .manageMove:focus-visible,
 .manageRemove:focus-visible,

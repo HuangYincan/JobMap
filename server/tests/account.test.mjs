@@ -45,6 +45,7 @@ import {
   SAVED_PLACES_MEMORY_MAX,
   recordApplication,
   reassignApplicationStatuses,
+  removeApplication,
   removeSaved,
   registerWithPassword,
   savePlace,
@@ -361,6 +362,27 @@ test('recordApplication is idempotent per position', () => {
   assert.equal(listApplications(user.id).length, 1);
   assert.equal(first.status, 'applied');
   assert.ok(first.updatedAt);
+});
+
+test('removeApplication deletes one watch row by id', () => {
+  const user = upsertIdentity({ provider: 'email', subject: 'unwatch@example.com', email: 'unwatch@example.com' });
+  const first = recordApplication(user.id, {
+    positionId: 'job-keep',
+    companyPoiId: 'co-keep',
+    title: '前端',
+    companyName: '阿里',
+  });
+  const second = recordApplication(user.id, {
+    positionId: 'job-drop',
+    companyPoiId: 'co-drop',
+    title: '后端',
+    companyName: '字节',
+  });
+  assert.equal(removeApplication(user.id, second.id), true);
+  assert.equal(removeApplication(user.id, second.id), false);
+  const left = listApplications(user.id);
+  assert.equal(left.length, 1);
+  assert.equal(left[0].id, first.id);
 });
 
 test('application status updates reorder by updatedAt and viewed aliases to applied', () => {

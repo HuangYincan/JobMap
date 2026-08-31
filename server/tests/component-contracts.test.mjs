@@ -374,11 +374,16 @@ test('Recent L2 is application watch with user-editable stages', () => {
   assert.match(recent, /importCsv/);
   assert.match(recent, /exportCsv/);
   assert.match(recent, /parseApplicationCsv/);
+  assert.match(recent, /onRemove/);
+  assert.match(recent, /statusPillRejected/);
+  assert.match(recent, /removeApplication/);
   assert.doesNotMatch(recent, /statuses\.map\(\(def\) =>/);
   assert.match(shell, /items=\{applications\}/);
   assert.match(shell, /\/api\/me\/applications\/pipeline/);
   assert.match(shell, /\/api\/me\/applications\/import/);
+  assert.match(shell, /handleRemoveApplication/);
   assert.match(route, /export async function PATCH/);
+  assert.match(route, /export async function DELETE/);
   assert.match(pipeline, /export async function PUT/);
   assert.match(shell, /if \(!user\) \{\s*setAuthOpen\(true\);\s*return;\s*\}\s*openRail\("recent"\)/);
   assert.match(jd, /if \(!signedIn\) event\.preventDefault\(\)/);

@@ -40,6 +40,7 @@ export interface RecentPanelProps {
   onSignIn?: () => void;
   onStatusChange?: (item: ApplicationRecord, statusId: string) => void;
   onStatusesChange?: (next: ApplicationStatusDef[]) => void;
+  onRemove?: (item: ApplicationRecord) => void;
   onAdd?: (input: { title: string; companyName: string; applyUrl?: string; status: string }) => void | boolean | Promise<void | boolean>;
   onImport?: (rows: ApplicationCsvRow[]) => void | boolean | Promise<void | boolean>;
   shifted?: boolean;
@@ -66,6 +67,7 @@ export function RecentPanel({
   onSignIn,
   onStatusChange,
   onStatusesChange,
+  onRemove,
   onAdd,
   onImport,
   shifted = false,
@@ -529,7 +531,13 @@ export function RecentPanel({
                         <button
                           type="button"
                           className={`${styles.statusPill} ${
-                            tone === "offer" ? styles.statusPillOffer : tone === "closed" ? styles.statusPillClosed : styles.statusPillActive
+                            tone === "offer"
+                              ? styles.statusPillOffer
+                              : tone === "rejected"
+                                ? styles.statusPillRejected
+                                : tone === "closed"
+                                  ? styles.statusPillClosed
+                                  : styles.statusPillActive
                           }`}
                           aria-expanded={open}
                           aria-haspopup="listbox"
@@ -537,6 +545,18 @@ export function RecentPanel({
                         >
                           {resolveStatusLabel(def, lang)}
                         </button>
+                        {onRemove && (
+                          <button
+                            type="button"
+                            className={styles.watchRemove}
+                            aria-label={`${t("removeApplication", lang)} ${item.title}`}
+                            onClick={() => onRemove(item)}
+                          >
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
+                              <path d="M6 6l12 12M18 6L6 18" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                       {open && (
                         <div className={styles.picker} role="listbox" aria-label={t("manageStatuses", lang)}>

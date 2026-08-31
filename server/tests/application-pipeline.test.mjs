@@ -13,6 +13,7 @@ import {
   formatRelativeTime,
   lookupStatusDef,
   matchesWatchFilter,
+  pillTone,
   removeStatus,
   renameStatus,
   resolveStatusLabel,
@@ -60,6 +61,15 @@ test('default pipeline has six builtin stages', () => {
   assert.equal(statuses.find((item) => item.id === 'interview')?.group, 'active');
   assert.equal(statuses.find((item) => item.id === 'rejected')?.group, 'closed');
   assert.equal(fallbackStatusId(statuses), 'applied');
+});
+
+test('pillTone paints rejected red and leaves withdrawn muted', () => {
+  const statuses = defaultApplicationStatuses();
+  assert.equal(pillTone(statuses.find((item) => item.id === 'rejected')), 'rejected');
+  assert.equal(pillTone(statuses.find((item) => item.id === 'withdrawn')), 'closed');
+  assert.equal(pillTone(statuses.find((item) => item.id === 'offer')), 'offer');
+  assert.equal(pillTone(statuses.find((item) => item.id === 'applied')), 'active');
+  assert.equal(pillTone({ id: 'rejected_r1', label: '', group: 'closed', builtin: true }), 'rejected');
 });
 
 test('sanitize aliases viewed and drops illegal ids', () => {

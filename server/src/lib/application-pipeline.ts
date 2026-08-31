@@ -245,8 +245,13 @@ export function isOfferLike(id: string): boolean {
   return id === 'offer' || id === 'accepted';
 }
 
-export function pillTone(def: ApplicationStatusDef): 'active' | 'offer' | 'closed' {
+export function isRejectedLike(id: string): boolean {
+  return id === 'rejected' || id === 'rejected_r1' || id === 'rejected_r2' || id === 'rejected_r3';
+}
+
+export function pillTone(def: ApplicationStatusDef): 'active' | 'offer' | 'rejected' | 'closed' {
   if (isOfferLike(def.id)) return 'offer';
+  if (isRejectedLike(def.id)) return 'rejected';
   return def.group === 'closed' ? 'closed' : 'active';
 }
 

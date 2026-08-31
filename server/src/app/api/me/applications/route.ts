@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
-import { DbUnavailableError, listApplications, recordApplication, updateApplicationStatus } from "@/lib/account-store";
+import { DbUnavailableError, listApplications, recordApplication, removeApplication, updateApplicationStatus } from "@/lib/account-store";
 import {
   coerceStatusToCatalog,
   sanitizeApplicationPipeline,
@@ -110,4 +110,27 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ code: "NOT_FOUND", message: "application not found" }, { status: 404 });
   }
   return NextResponse.json({ item });
+}
+
+export async function DELETE(request: Request) {
+  const user = await readSessionUser();
+  if (!user) {
+    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+  }
+  const id = new URL(request.url).searchParams.get("id")?.trim() || "";
+  if (!id || id.length > MAX_ID_LENGTH) {
+    return NextResponse.json({ code: "BAD_REQUEST", message: "id required" }, { status: 400 });
+  }
+  try {
+    await removeApplication(user.id, id);
+    return noStoreJson({ ok: true });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return NextResponse.json(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
 }

@@ -323,6 +323,7 @@ test('applications persist bounded fields and only http(s) apply links', () => {
   const recordIdx = route.indexOf('recordApplication(user.id, parsed.value)');
   assert.ok(parseIdx !== -1 && recordIdx !== -1 && parseIdx < recordIdx);
   assert.match(route, /export async function PATCH/);
+  assert.match(route, /export async function DELETE/);
   assert.match(route, /code: "UNKNOWN_STATUS"/);
   assert.match(route, /export const dynamic = "force-dynamic"/);
   assert.match(route, /DB_UNAVAILABLE/);
