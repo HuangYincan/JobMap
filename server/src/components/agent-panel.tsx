@@ -2,12 +2,14 @@
 
 // AI Agent 聊天面板:360px × 70vh 霜面卡片浮层,**以悬浮球为锚实时跟随**
 // (transform 驱动,computePanelPlacement 纯函数;拖动球时同步移动,松手平滑归位)。
-// 移动端(≤767px)与极窄视口 → 全宽底部 sheet(参照 mobileDrawer 动效)。
+// 移动端(≤767px):内嵌抽屉 agent sheet(铺平、无第二张玻璃卡);默认半屏露出地图,
+// 再点工具栏 ✦ 回探索。极窄桌面视口仍走全宽底部 sheet。
 //
 // 2026-08-31 UI:顶栏仅 ✦ 助手 + 清屏/撤销/关闭;无会话/记忆弹层。输入为圆角
 // composer + 圆形发送。清屏 abort 当前流并丢掉未完成助手输出(不归档)。
 // 流式中输入可打字;有字再发送 = 打断(abort + discardTrailingAssistants + 新一轮);
 // 输入为空点发送位 = 停止(保留已输出)。迟到 SSE 用 controller 身份校验丢弃。
+// 移动内嵌顶栏去掉 ✦(工具栏已是入口)与关闭钮;composer 与探索搜索条同款。
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import styles from "./agent-panel.module.css";
@@ -76,7 +78,8 @@ interface Props {
   /** 用户定位(GCJ-02);每条请求带上,岗位/附近检索起点优先于视野中心。 */
   userLocation?: { lng: number; lat: number } | null;
   /** 内嵌模式(ws-ae):drawer 内 agent sheet 渲染(mobileSheet "agent"),
-   *  不做锚点跟随定位(placement/panelStyle 跳过),随抽屉流填满 sheet body。 */
+   *  不做锚点跟随定位(placement/panelStyle 跳过),随抽屉流填满 sheet body;
+   *  无独立「返回」(再点工具栏 ✦ 回探索)。 */
   embedded?: boolean;
   onRouteMeta?: (meta: RouteOverlayMeta) => void;
   onRouteError?: (code: string) => void;
@@ -563,9 +566,11 @@ export function AgentPanel({
       }}
     >
       <header className={styles.header}>
-        <span className={styles.titleIcon} aria-hidden="true">
-          ✦
-        </span>
+        {!embedded && (
+          <span className={styles.titleIcon} aria-hidden="true">
+            ✦
+          </span>
+        )}
         <strong className={styles.title}>{t("agentTitle", lang)}</strong>
         <div className={styles.headerActions}>
           <button type="button" className={styles.iconBtn} onClick={clearScreen} aria-label={t("agentClear", lang)}>
