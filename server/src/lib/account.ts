@@ -4,6 +4,7 @@
 // 默认地图模式是 work。语言：已登录读偏好，未登录跟浏览器。
 // Recent L2 是投递监视（applications + 用户可自定义阶段）。
 // 搜索历史仍写 /api/me/search-history 与游客 dm.guest-search-history.v1，不再进 Recent。
+// 手动 / CSV 行使用 manual: 前缀 id；目录投递仍用岗位/公司 catalog id。
 // ============================================================
 
 import type { Language } from './i18n.ts';
@@ -174,6 +175,11 @@ export interface ApplicationRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+/** 写入投递监视：id / 时间戳由存储层生成；createdAt 仅 CSV 导入带投递时间时传入。 */
+export type ApplicationUpsertInput = Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt'> & {
+  createdAt?: string;
+};
 
 export type NotificationKind = 'job' | 'school';
 export type NotificationStatus = 'queued' | 'read' | 'sent' | 'failed';

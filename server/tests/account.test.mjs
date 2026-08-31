@@ -352,10 +352,12 @@ test('recordApplication is idempotent per position', () => {
   const again = recordApplication(user.id, {
     positionId: 'alibaba-fe',
     companyPoiId: 'alibaba-xixi',
-    title: '前端实习',
+    title: '前端工程师',
     companyName: '阿里巴巴',
   });
   assert.equal(first.id, again.id);
+  assert.equal(again.title, '前端工程师');
+  assert.equal(again.applyUrl, 'https://talent.alibaba.com/job/1');
   assert.equal(listApplications(user.id).length, 1);
   assert.equal(first.status, 'applied');
   assert.ok(first.updatedAt);

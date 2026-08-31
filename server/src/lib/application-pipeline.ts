@@ -219,6 +219,28 @@ export function fallbackStatusId(catalog: ApplicationStatusDef[]): string {
     ?? 'applied';
 }
 
+/** CSV / 手动添加:认阶段 id、别名、或当前词表中/英/自定义名；对不上落到 fallback。 */
+export function resolveWatchStatus(
+  raw: unknown,
+  catalog: ApplicationStatusDef[],
+  lang: Language = 'zh',
+): string {
+  const fallback = fallbackStatusId(catalog);
+  if (typeof raw !== 'string') return fallback;
+  const trimmed = raw.trim();
+  if (!trimmed) return fallback;
+  const coerced = coerceStatusToCatalog(trimmed, catalog);
+  if (coerced) return coerced;
+  const lower = trimmed.toLowerCase();
+  for (const def of catalog) {
+    if (def.label && def.label.trim().toLowerCase() === lower) return def.id;
+    if (resolveStatusLabel(def, 'zh').toLowerCase() === lower) return def.id;
+    if (resolveStatusLabel(def, 'en').toLowerCase() === lower) return def.id;
+    if (resolveStatusLabel(def, lang).toLowerCase() === lower) return def.id;
+  }
+  return fallback;
+}
+
 export function isOfferLike(id: string): boolean {
   return id === 'offer' || id === 'accepted';
 }

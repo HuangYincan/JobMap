@@ -780,6 +780,94 @@
   opacity: 0.4;
 }
 
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 2px 8px;
+}
+
+.composer {
+  margin: 0 2px 10px;
+  padding: 10px 10px 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--soft);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.fieldInput,
+.fieldSelect {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.fieldHint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.fieldError {
+  margin: 0;
+  color: #c4314b;
+  font-size: 12px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.formActionsStart {
+  justify-content: flex-start;
+}
+
+.ghostBtn {
+  border: 0;
+  background: transparent;
+  color: var(--blue-ink, #0062cc);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 10px;
+}
+
+.fileName {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .filterChip:focus-visible,
 .statusPill:focus-visible,
 .pickerChip:focus-visible,

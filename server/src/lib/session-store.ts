@@ -530,21 +530,42 @@ export function listApplications(userId: string): ApplicationRecord[] {
 
 export function recordApplication(
   userId: string,
-  input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { status?: ApplicationRecord['status'] },
+  input: Omit<ApplicationRecord, 'id' | 'createdAt' | 'updatedAt' | 'status'> & {
+    status?: ApplicationRecord['status'];
+    createdAt?: string;
+  },
 ): ApplicationRecord {
   const items = applications.get(userId) ?? [];
   const existing = items.find((item) => item.positionId === input.positionId);
-  if (existing) return normalizeApplication(existing);
   const now = new Date().toISOString();
+  const status = sanitizeApplicationStatusId(input.status) ?? 'applied';
+  if (existing) {
+    const next: ApplicationRecord = {
+      ...existing,
+      title: input.title,
+      companyName: input.companyName,
+      companyPoiId: input.companyPoiId,
+      applyUrl: input.applyUrl !== undefined ? input.applyUrl : existing.applyUrl,
+      status,
+      createdAt: input.createdAt || existing.createdAt,
+      updatedAt: now,
+    };
+    applications.set(userId, [next, ...items.filter((item) => item.id !== existing.id)]);
+    return normalizeApplication(next);
+  }
   const entry: ApplicationRecord = {
-    ...input,
-    status: sanitizeApplicationStatusId(input.status) ?? 'applied',
+    positionId: input.positionId,
+    companyPoiId: input.companyPoiId,
+    title: input.title,
+    companyName: input.companyName,
+    applyUrl: input.applyUrl,
+    status,
     id: randomUUID(),
-    createdAt: now,
+    createdAt: input.createdAt || now,
     updatedAt: now,
   };
   applications.set(userId, [entry, ...items].slice(0, APPLICATIONS_MEMORY_MAX));
-  return entry;
+  return normalizeApplication(entry);
 }
 
 export function updateApplicationStatus(

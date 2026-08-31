@@ -210,6 +210,7 @@ export interface SecondarySidebarProps {
   saved?: boolean;
   onToggleSave?: (poi: POI) => void;
   onApply?: (input: { position: Position; company: RecruitmentPOI; url?: string }) => void;
+  signedIn?: boolean;
   /** 收藏图层互斥开:列表区切换为收藏卡片列表(2026-08-22 卡片化,关时恢复搜索管线) */
   savedMode?: boolean;
   /** 收藏列表数据(互斥开时经 savedPlacesToListPois 桥接为卡片 POIList) */
@@ -266,6 +267,7 @@ export function SecondarySidebar({
   saved = false,
   onToggleSave,
   onApply,
+  signedIn = false,
   savedMode = false,
   savedItems = [],
   onPickSaved,
@@ -631,6 +633,7 @@ export function SecondarySidebar({
         onClose={() => setJdPosition(null)}
         lang={lang}
         accentColor={config.color}
+        signedIn={signedIn}
         onApply={onApply}
       />
     )}

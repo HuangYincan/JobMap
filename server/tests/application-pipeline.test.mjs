@@ -16,6 +16,7 @@ import {
   removeStatus,
   renameStatus,
   resolveStatusLabel,
+  resolveWatchStatus,
   sanitizeApplicationPipeline,
   sanitizeApplicationStatusId,
 } from '../src/lib/application-pipeline.ts';
@@ -137,6 +138,15 @@ test('labels fall back to i18n and relative time formats', () => {
   const date = new Date(Date.parse(old));
   const expected = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   assert.equal(formatRelativeTime(old, 'zh', now), expected);
+});
+
+test('resolveWatchStatus accepts ids, aliases, and localized labels', () => {
+  const catalog = defaultApplicationStatuses();
+  assert.equal(resolveWatchStatus('', catalog, 'zh'), 'applied');
+  assert.equal(resolveWatchStatus('已投递', catalog, 'zh'), 'applied');
+  assert.equal(resolveWatchStatus('Interview', catalog, 'en'), 'interview');
+  assert.equal(resolveWatchStatus('waiting', catalog, 'zh'), 'interview');
+  assert.equal(resolveWatchStatus('未知阶段', catalog, 'zh'), 'applied');
 });
 
 test('021 migration widens status ids and adds updated_at', () => {

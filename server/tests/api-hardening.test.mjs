@@ -312,15 +312,20 @@ test('search history persists only bounded queries and entity refs', () => {
 
 test('applications persist bounded fields and only http(s) apply links', () => {
   const route = src('app/api/me/applications/route.ts');
+  const write = src('lib/application-write.ts');
+  const csv = src('lib/application-csv.ts');
+  const imported = src('app/api/me/applications/import/route.ts');
   assert.match(route, /MAX_ID_LENGTH = 200/);
-  assert.match(route, /code: "APPLICATION_FIELD_TOO_LONG"/);
-  assert.match(route, /code: "INVALID_APPLY_URL"/);
-  assert.match(route, /url\.protocol === "http:" \|\| url\.protocol === "https:"/);
-  const guardIdx = route.indexOf('recordApplication(user.id,');
-  const urlIdx = route.indexOf('code: "INVALID_APPLY_URL"');
-  assert.ok(urlIdx !== -1 && guardIdx !== -1 && urlIdx < guardIdx);
+  assert.match(write, /code: 'APPLICATION_FIELD_TOO_LONG'/);
+  assert.match(write, /code: 'INVALID_APPLY_URL'/);
+  assert.match(csv, /url\.protocol === 'http:' \|\| url\.protocol === 'https:'/);
+  const parseIdx = route.indexOf('parseApplicationWrite(body, catalog');
+  const recordIdx = route.indexOf('recordApplication(user.id, parsed.value)');
+  assert.ok(parseIdx !== -1 && recordIdx !== -1 && parseIdx < recordIdx);
   assert.match(route, /export async function PATCH/);
   assert.match(route, /code: "UNKNOWN_STATUS"/);
+  assert.match(imported, /APPLICATION_CSV_IMPORT_MAX/);
+  assert.match(imported, /recordApplications/);
   const pipeline = src('app/api/me/applications/pipeline/route.ts');
   assert.match(pipeline, /reassignApplicationStatuses/);
   assert.match(pipeline, /sanitizeApplicationPipeline/);

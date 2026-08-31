@@ -362,6 +362,7 @@ test('persistable guest history and catalog-only save are wired', () => {
 test('Recent L2 is application watch with user-editable stages', () => {
   const recent = src('components/recent-panel.tsx');
   const shell = src('components/map-shell.tsx');
+  const jd = src('components/jd-panel.tsx');
   const route = src('app/api/me/applications/route.ts');
   const pipeline = src('app/api/me/applications/pipeline/route.ts');
   assert.match(recent, /createCustomStatus/);
@@ -369,12 +370,19 @@ test('Recent L2 is application watch with user-editable stages', () => {
   assert.match(recent, /watchAll/);
   assert.match(recent, /watchActive/);
   assert.match(recent, /watchClosed/);
+  assert.match(recent, /addApplication/);
+  assert.match(recent, /importCsv/);
+  assert.match(recent, /exportCsv/);
+  assert.match(recent, /parseApplicationCsv/);
   assert.doesNotMatch(recent, /statuses\.map\(\(def\) =>/);
   assert.match(shell, /items=\{applications\}/);
   assert.match(shell, /\/api\/me\/applications\/pipeline/);
+  assert.match(shell, /\/api\/me\/applications\/import/);
   assert.match(route, /export async function PATCH/);
   assert.match(pipeline, /export async function PUT/);
   assert.match(shell, /if \(!user\) \{\s*setAuthOpen\(true\);\s*return;\s*\}\s*openRail\("recent"\)/);
+  assert.match(jd, /if \(!signedIn\) event\.preventDefault\(\)/);
+  assert.match(jd, /watchJoin/);
 });
 
 test('map shell zoom 按钮契约化:不再出现 raw.zoomIn/zoomOut 直连(ws-b bug 7)', () => {

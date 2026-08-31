@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ApplicationRecord } from "@/lib/account";
 import {
   addStatus,
   createCustomStatus,
+  fallbackStatusId,
   formatRelativeTime,
   lookupStatusDef,
   matchesWatchFilter,
@@ -17,6 +18,15 @@ import {
   type ApplicationStatusGroup,
   type ApplicationWatchFilter,
 } from "@/lib/application-pipeline";
+import {
+  isHttpApplyUrl,
+  isManualApplicationId,
+  parseApplicationCsv,
+  serializeApplicationCsv,
+  serializeApplicationCsvTemplate,
+  type ApplicationCsvParseResult,
+  type ApplicationCsvRow,
+} from "@/lib/application-csv";
 import { t, type Language } from "@/lib/i18n";
 import styles from "./recent-panel.module.css";
 
@@ -30,8 +40,20 @@ export interface RecentPanelProps {
   onSignIn?: () => void;
   onStatusChange?: (item: ApplicationRecord, statusId: string) => void;
   onStatusesChange?: (next: ApplicationStatusDef[]) => void;
+  onAdd?: (input: { title: string; companyName: string; applyUrl?: string; status: string }) => void | Promise<void>;
+  onImport?: (rows: ApplicationCsvRow[]) => void | Promise<void>;
   shifted?: boolean;
   embedded?: boolean;
+}
+
+function downloadText(filename: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export function RecentPanel({
@@ -44,16 +66,28 @@ export function RecentPanel({
   onSignIn,
   onStatusChange,
   onStatusesChange,
+  onAdd,
+  onImport,
   shifted = false,
   embedded = false,
 }: RecentPanelProps) {
   const [filter, setFilter] = useState<ApplicationWatchFilter>({ kind: "all" });
   const [pickerId, setPickerId] = useState<string | null>(null);
   const [managing, setManaging] = useState(false);
+  const [composer, setComposer] = useState<"add" | "import" | null>(null);
   const [draftLabel, setDraftLabel] = useState("");
   const [draftGroup, setDraftGroup] = useState<ApplicationStatusGroup>("active");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
+  const [addCompany, setAddCompany] = useState("");
+  const [addTitle, setAddTitle] = useState("");
+  const [addUrl, setAddUrl] = useState("");
+  const [addStatusId, setAddStatusId] = useState(fallbackStatusId(statuses));
+  const [addError, setAddError] = useState("");
+  const [csvName, setCsvName] = useState("");
+  const [csvParse, setCsvParse] = useState<ApplicationCsvParseResult | null>(null);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const visible = useMemo(
     () => items.filter((item) => matchesWatchFilter(item.status, filter, statuses)),
@@ -61,6 +95,7 @@ export function RecentPanel({
   );
   const activeStatuses = statuses.filter((item) => item.group === "active");
   const closedStatuses = statuses.filter((item) => item.group === "closed");
+  const defaultStatus = fallbackStatusId(statuses);
 
   const commitStatuses = (next: ApplicationStatusDef[]) => {
     onStatusesChange?.(next);
@@ -75,6 +110,67 @@ export function RecentPanel({
     if (editingId) commitStatuses(renameStatus(statuses, editingId, editingLabel));
     setEditingId(null);
     setEditingLabel("");
+  };
+
+  const openComposer = (next: "add" | "import") => {
+    setManaging(false);
+    setPickerId(null);
+    setComposer((current) => (current === next ? null : next));
+    if (next === "add") {
+      setAddCompany("");
+      setAddTitle("");
+      setAddUrl("");
+      setAddStatusId(defaultStatus);
+      setAddError("");
+    }
+  };
+
+  const submitAdd = async () => {
+    const companyName = addCompany.trim();
+    const title = addTitle.trim();
+    const applyUrl = addUrl.trim();
+    if (!companyName || !title || !onAdd) return;
+    if (applyUrl && !isHttpApplyUrl(applyUrl)) {
+      setAddError(t("invalidApplyUrl", lang));
+      return;
+    }
+    setAddError("");
+    setBusy(true);
+    try {
+      await onAdd({
+        companyName,
+        title,
+        applyUrl: applyUrl || undefined,
+        status: addStatusId || defaultStatus,
+      });
+      setAddCompany("");
+      setAddTitle("");
+      setAddUrl("");
+      setComposer(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onPickFile = async (file: File | undefined) => {
+    if (!file) return;
+    setCsvName(file.name);
+    const text = await file.text();
+    setCsvParse(parseApplicationCsv(text));
+  };
+
+  const confirmImport = async () => {
+    if (!csvParse || !onImport || csvParse.rows.length === 0) return;
+    setBusy(true);
+    try {
+      await onImport(csvParse.rows);
+      setCsvParse(null);
+      setCsvName("");
+      setComposer(null);
+      if (fileRef.current) fileRef.current.value = "";
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -95,7 +191,11 @@ export function RecentPanel({
                 className={styles.textBtn}
                 aria-pressed={managing}
                 onClick={() => {
-                  setManaging((open) => !open);
+                  setManaging((open) => {
+                    const next = !open;
+                    if (next) setComposer(null);
+                    return next;
+                  });
                   setPickerId(null);
                 }}
               >
@@ -212,6 +312,170 @@ export function RecentPanel({
               />
             </div>
 
+            <div className={styles.tools}>
+              <button
+                type="button"
+                className={styles.textBtn}
+                aria-pressed={composer === "add"}
+                onClick={() => openComposer("add")}
+              >
+                {t("addApplication", lang)}
+              </button>
+              <button
+                type="button"
+                className={styles.textBtn}
+                aria-pressed={composer === "import"}
+                onClick={() => openComposer("import")}
+              >
+                {t("importCsv", lang)}
+              </button>
+              <button
+                type="button"
+                className={styles.textBtn}
+                onClick={() => downloadText(
+                  "applications.csv",
+                  serializeApplicationCsv(items, { statuses, lang }),
+                  "text/csv;charset=utf-8",
+                )}
+              >
+                {t("exportCsv", lang)}
+              </button>
+            </div>
+
+            {composer === "add" && (
+              <form
+                className={styles.composer}
+                aria-label={t("addApplication", lang)}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void submitAdd();
+                }}
+              >
+                <label className={styles.field}>
+                  <span className={styles.fieldLabel}>{t("addApplicationCompany", lang)}</span>
+                  <input
+                    className={styles.fieldInput}
+                    value={addCompany}
+                    maxLength={200}
+                    required
+                    autoComplete="organization"
+                    onChange={(event) => setAddCompany(event.target.value)}
+                  />
+                </label>
+                <label className={styles.field}>
+                  <span className={styles.fieldLabel}>{t("addApplicationTitle", lang)}</span>
+                  <input
+                    className={styles.fieldInput}
+                    value={addTitle}
+                    maxLength={200}
+                    required
+                    onChange={(event) => setAddTitle(event.target.value)}
+                  />
+                </label>
+                <label className={styles.field}>
+                  <span className={styles.fieldLabel}>
+                    {t("addApplicationUrl", lang)} · {t("addApplicationOptional", lang)}
+                  </span>
+                  <input
+                    className={styles.fieldInput}
+                    value={addUrl}
+                    maxLength={2048}
+                    inputMode="url"
+                    placeholder="https://"
+                    onChange={(event) => {
+                      setAddUrl(event.target.value);
+                      if (addError) setAddError("");
+                    }}
+                  />
+                </label>
+                <label className={styles.field}>
+                  <span className={styles.fieldLabel}>{t("manageStatuses", lang)}</span>
+                  <select
+                    className={styles.fieldSelect}
+                    value={addStatusId}
+                    onChange={(event) => setAddStatusId(event.target.value)}
+                  >
+                    {statuses.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {resolveStatusLabel(option, lang)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {addError ? <p className={styles.fieldError}>{addError}</p> : null}
+                <div className={styles.formActions}>
+                  <button type="button" className={styles.ghostBtn} onClick={() => setComposer(null)}>
+                    {t("cancel", lang)}
+                  </button>
+                  <button
+                    type="submit"
+                    className={styles.addBtn}
+                    disabled={busy || !addCompany.trim() || !addTitle.trim()}
+                  >
+                    {t("watchJoin", lang)}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {composer === "import" && (
+              <div className={styles.composer} aria-label={t("importCsv", lang)}>
+                <p className={styles.fieldHint}>{t("importCsvFormat", lang)}</p>
+                <div className={`${styles.formActions} ${styles.formActionsStart}`}>
+                  <button
+                    type="button"
+                    className={styles.ghostBtn}
+                    onClick={() => downloadText(
+                      "applications-template.csv",
+                      serializeApplicationCsvTemplate(lang),
+                      "text/csv;charset=utf-8",
+                    )}
+                  >
+                    {t("downloadCsvTemplate", lang)}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.ghostBtn}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    {t("chooseCsvFile", lang)}
+                  </button>
+                  {csvName ? <span className={styles.fileName}>{csvName}</span> : null}
+                </div>
+                <input
+                  ref={fileRef}
+                  className={styles.srOnly}
+                  type="file"
+                  accept=".csv,text/csv,text/plain"
+                  aria-label={t("chooseCsvFile", lang)}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    void onPickFile(file);
+                  }}
+                />
+                {csvParse ? (
+                  <p className={styles.fieldHint}>
+                    {t("importCsvPreview", lang)
+                      .replace("{n}", String(csvParse.rows.length))
+                      .replace("{s}", String(csvParse.skipped.length))}
+                  </p>
+                ) : null}
+                <div className={styles.formActions}>
+                  <button type="button" className={styles.ghostBtn} onClick={() => setComposer(null)}>
+                    {t("cancel", lang)}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.addBtn}
+                    disabled={busy || !csvParse || csvParse.rows.length === 0}
+                    onClick={() => void confirmImport()}
+                  >
+                    {t("confirmImport", lang)}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {items.length === 0 ? (
               <p className={styles.empty}>{t("applicationsEmpty", lang)}</p>
             ) : visible.length === 0 ? (
@@ -222,10 +486,18 @@ export function RecentPanel({
                   const def = lookupStatusDef(statuses, item.status);
                   const tone = pillTone(def);
                   const open = pickerId === item.id;
+                  const catalogRow = !isManualApplicationId(item.companyPoiId);
                   return (
                     <li key={item.id} className={styles.watchItem}>
                       <div className={styles.watchRow}>
-                        <button type="button" className={styles.watchMain} onClick={() => onPick(item)}>
+                        <button
+                          type="button"
+                          className={styles.watchMain}
+                          onClick={() => {
+                            if (!catalogRow) return;
+                            onPick(item);
+                          }}
+                        >
                           <span className={styles.watchTitle}>{item.title}</span>
                           <span className={styles.watchMeta}>
                             {[item.companyName, formatRelativeTime(item.updatedAt || item.createdAt, lang)]
