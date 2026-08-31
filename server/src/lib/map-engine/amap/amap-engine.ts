@@ -60,7 +60,7 @@ interface ScaleControlOptions {
 }
 
 /** 经 view.createMarker duck-type 透传的 AMap 专属 marker 选项(契约 MapMarkerOptions 未含) */
-type MarkerExtras = { cursor?: string; bubble?: boolean };
+type MarkerExtras = { cursor?: string; bubble?: boolean; clusterLayer?: boolean };
 
 // ---------------------------------------------------------------------------
 // 视图实现
@@ -88,6 +88,12 @@ class AmapView implements MapView {
    * (false 时缩放重算避让,人在杭州高频缩放会把视野外城市点永久吃掉)。
    */
   private labelsLayer: any = null;
+  /**
+   * 城市聚合徽章独立 LabelsLayer(zIndex 160,介于公司层 120 与蓝点 DOM 200)。
+   * 与公司点分层后,hide 后仍留在公司层上的 LabelMarker 无法把深圳/广州徽章吃掉;
+   * WebGL 纹理在安卓 AMap 3D 上比 HTML Marker 可靠。
+   */
+  private clusterLabelsLayer: any = null;
   /** 本视图登记的 LabelMarker(isAttached / destroy 清扫) */
   private readonly labelMarkers = new Set<any>();
   private readonly onCameraSettled = () => this.refreshLabelsLayer();
@@ -214,7 +220,10 @@ class AmapView implements MapView {
    * 老 SDK 无 LabelsLayer → 回退 DOM Marker+Icon(行为与改前 icon 路径一致)。
    */
   createMarker(opts: MapMarkerOptions): MapMarker {
-    if (opts.icon && this.canUseLabelLayer()) return this.createLabelMarker(opts);
+    const extras = opts as unknown as MarkerExtras;
+    if (opts.icon && this.canUseLabelLayer()) {
+      return this.createLabelMarker(opts, extras.clusterLayer ? 'cluster' : 'poi');
+    }
     return this.createDomMarker(opts);
   }
 
@@ -237,6 +246,19 @@ class AmapView implements MapView {
     return layer;
   }
 
+  private ensureClusterLabelsLayer(): any {
+    if (this.clusterLabelsLayer) return this.clusterLabelsLayer;
+    const layer = new this.AMap.LabelsLayer({
+      zooms: [2, 20],
+      zIndex: 160,
+      collision: false,
+      allowCollision: true,
+    });
+    this.map.add(layer);
+    this.clusterLabelsLayer = layer;
+    return layer;
+  }
+
   /** 契约 icon+offset → LabelMarker icon(type/image/size/anchor=-offset)。 */
   private toLabelIcon(opts: Pick<MapMarkerOptions, 'icon' | 'offset'>): Record<string, unknown> {
     const icon = opts.icon!;
@@ -246,8 +268,8 @@ class AmapView implements MapView {
     return spec;
   }
 
-  private createLabelMarker(opts: MapMarkerOptions): MapMarker {
-    const layer = this.ensureLabelsLayer();
+  private createLabelMarker(opts: MapMarkerOptions, kind: 'poi' | 'cluster' = 'poi'): MapMarker {
+    const layer = kind === 'cluster' ? this.ensureClusterLabelsLayer() : this.ensureLabelsLayer();
     const markerOpts: Record<string, unknown> = {
       position: [opts.position.lng, opts.position.lat],
       icon: this.toLabelIcon(opts),
@@ -284,12 +306,19 @@ class AmapView implements MapView {
         visible = v;
         marker._dmVisible = v;
         if (v) {
+          try {
+            layer.add(marker);
+          } catch {
+            // 已在层上:忽略
+          }
           if (typeof marker.show === 'function') marker.show();
           else if (typeof marker.setVisible === 'function') marker.setVisible(true);
-        } else if (typeof marker.hide === 'function') {
-          marker.hide();
-        } else if (typeof marker.setVisible === 'function') {
-          marker.setVisible(false);
+        } else {
+          try {
+            layer.remove(marker);
+          } catch {
+            // 已摘层 / 层已销毁:忽略
+          }
         }
       },
       on: (event: 'click', cb: () => void) => {
@@ -548,7 +577,7 @@ class AmapView implements MapView {
    * setPosition 同坐标强制图层重算,隐藏点(_dmVisible=false)跳过。
    */
   private refreshLabelsLayer(): void {
-    if (this.destroyedFlag || !this.labelsLayer) return;
+    if (this.destroyedFlag || (!this.labelsLayer && !this.clusterLabelsLayer)) return;
     for (const marker of this.labelMarkers) {
       if (marker._dmVisible === false) continue;
       if (typeof marker.setPosition !== 'function') continue;
@@ -581,6 +610,15 @@ class AmapView implements MapView {
         // 地图已销毁等场景:忽略
       }
       this.labelsLayer = null;
+    }
+    if (this.clusterLabelsLayer) {
+      try {
+        this.clusterLabelsLayer.clear?.();
+        this.map.remove?.(this.clusterLabelsLayer);
+      } catch {
+        // 地图已销毁等场景:忽略
+      }
+      this.clusterLabelsLayer = null;
     }
     this.labelMarkers.clear();
     try {

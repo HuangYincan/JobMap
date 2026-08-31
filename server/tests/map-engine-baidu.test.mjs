@@ -208,6 +208,9 @@ class FakeMap {
   addControl(control) {
     this.controls.push(control);
   }
+  removeControl(control) {
+    this.controls = this.controls.filter((c) => c !== control);
+  }
   getContainer() {
     return this.container;
   }
@@ -386,8 +389,16 @@ class FakePolyline {
 }
 
 class FakeScaleControl {
-  constructor() {
+  constructor(opts = {}) {
     this.scale = true;
+    this.opts = opts;
+    this.hidden = false;
+  }
+  hide() {
+    this.hidden = true;
+  }
+  show() {
+    this.hidden = false;
   }
 }
 
@@ -1535,14 +1546,107 @@ test('createPolyline:路径 bd09 + 虚线样式 + remove;非法路径不挂图',
   assert.doesNotThrow(() => noop.remove());
 });
 
-test('addControl:scale → ScaleControl;未知 kind no-op', async () => {
+test('addControl:scale → ScaleControl 带锚点/偏移 + hide/show;未知 kind no-op', async () => {
   setup();
   const { view } = await makeView();
-  view.addControl('scale');
+  const pending = view.addControl('scale', { position: 'LB', offset: [90, 25] });
   assert.equal(view.raw.controls.length, 1);
   assert.equal(view.raw.controls[0].scale, true);
+  assert.equal(view.raw.controls[0].opts.anchor, 2, 'LB → BMAP_ANCHOR_BOTTOM_LEFT 缺省值 2');
+  assert.equal(view.raw.controls[0].opts.offset.width, 90);
+  assert.equal(view.raw.controls[0].opts.offset.height, 25);
+  assert.ok(pending && typeof pending.then === 'function', '返回 Promise,map-shell 可接线 hide/show');
+  const ctl = await pending;
+  assert.ok(ctl && typeof ctl.hide === 'function' && typeof ctl.show === 'function');
+  ctl.hide();
+  assert.equal(view.raw.controls[0].hidden, true);
+  ctl.show();
+  assert.equal(view.raw.controls[0].hidden, false);
   view.addControl('legend');
   assert.equal(view.raw.controls.length, 1, '未知 kind 不添加');
+});
+
+test('addControl:scale → 无 ScaleControl 时自绘比例尺(位置/公式/hide/show/destroy)', async () => {
+  setup();
+  delete mockNs.ns.ScaleControl;
+  const children = [];
+  const container = {
+    children,
+    appendChild(child) {
+      child.parentNode = container;
+      children.push(child);
+      return child;
+    },
+    removeChild(child) {
+      const i = children.indexOf(child);
+      if (i >= 0) children.splice(i, 1);
+      child.parentNode = null;
+    },
+    querySelectorAll() {
+      return [];
+    },
+  };
+  const origDoc = globalThis.document;
+  globalThis.document = {
+    createElement(tag) {
+      const node = {
+        tagName: tag,
+        className: '',
+        style: {},
+        children: [],
+        textContent: '',
+        parentNode: null,
+        appendChild(child) {
+          child.parentNode = node;
+          node.children.push(child);
+          return child;
+        },
+      };
+      return node;
+    },
+  };
+  const origInfo = console.info;
+  const infoCalls = [];
+  console.info = (...args) => infoCalls.push(args);
+  try {
+    const { view } = await makeView({ container });
+    const pending = view.addControl('scale', { position: 'LT', offset: [12, 22] });
+    const control = await pending;
+    assert.ok(control, '自绘比例尺控件对象');
+    const bar = children.find((el) => el.className === 'BMap_scaleCtrl');
+    assert.ok(bar, '比例尺容器已创建');
+    assert.equal(bar.style.left, '12px');
+    assert.equal(bar.style.top, '22px');
+    const line = bar.children.find((c) => c.className === 'BMap_scaleCtrl-line');
+    const textEl = bar.children.find((c) => c.className === 'BMap_scaleCtrl-text');
+    assert.ok(line && textEl, '比例尺条 + 文字');
+    const state = view.getState();
+    const mpp = (156543.04 * Math.cos((state.center.lat * Math.PI) / 180)) / Math.pow(2, Math.round(state.zoom));
+    assert.equal(line.style.width, `${Math.max(12, Math.round(2000 / mpp) - 10)}px`);
+    assert.equal(textEl.textContent, '2 公里');
+    control.hide();
+    assert.equal(bar.style.display, 'none');
+    control.show();
+    assert.equal(bar.style.display, '');
+    assert.equal(infoCalls.length, 1);
+    assert.match(String(infoCalls[0][0]), /自绘比例尺/);
+    view.destroy();
+    assert.equal(children.includes(bar), false, 'destroy 后比例尺 DOM 摘除');
+  } finally {
+    console.info = origInfo;
+    if (origDoc === undefined) delete globalThis.document;
+    else globalThis.document = origDoc;
+  }
+});
+
+test('addControl:scale → 重复调用摘除旧控件,不产生双比例尺', async () => {
+  setup();
+  const { view } = await makeView();
+  await view.addControl('scale', { position: 'LB', offset: [90, 25] });
+  await view.addControl('scale', { position: 'LT', offset: [12, 22] });
+  assert.equal(view.raw.controls.length, 1, '重建只保留一个 SDK 比例尺');
+  assert.equal(view.raw.controls[0].opts.anchor, 0, '第二次 LT → TOP_LEFT=0');
+  assert.equal(view.raw.controls[0].opts.offset.width, 12);
 });
 
 test('createView:BMapGL 默认控件 DOM 防御——zoom/omView 隐藏,版权/比例尺不误伤', async () => {

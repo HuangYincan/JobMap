@@ -46,6 +46,7 @@ import { useSearchState } from "@/hooks/use-search-state";
 import { useWorkViewport, readMapViewSnapshot, type WorkViewportState } from "@/hooks/use-work-viewport";
 import { useMapEngine, type UseMapEngineResult } from "@/hooks/use-map-engine";
 import { useMobileDrawerGesture, type DrawerState, type MobileSheet } from "@/hooks/use-mobile-drawer-gesture";
+import { shouldShowMobileSearch } from "@/lib/mobile-drawer-chrome";
 import type { MapMarker, MapMarkerOptions, MapView } from "@/lib/map-engine/types";
 import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
 import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
@@ -360,7 +361,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
    *  account 内导航打开 → "account";sheet back 按钮按此回退。 */
   const [mobileSheetBack, setMobileSheetBack] = useState<"explore" | "account">("explore");
   /** AI 助手开关(ws-mt 受控提升):仅桌面悬浮球入口使用;移动端球隐藏,
-   *  AI 入口 = 工具栏 item → drawer 内嵌 agent sheet(mobileSheet "agent",ws-ae)。 */
+   *  AI 入口 = 工具栏 item → drawer 内嵌 agent sheet(mobileSheet "agent",
+   *  默认半屏露出地图,再点 ✦ 回探索)。 */
   const [agentOpen, setAgentOpen] = useState(false);
   const [mobileJd, setMobileJd] = useState<Position | null>(null);
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
@@ -414,6 +416,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     drawerSuppressClickRef,
     handleDrawerPointerDown,
     handleDrawerPointerMove,
+    handleDrawerLostPointerCapture,
     finishDrawerGesture,
   } = useMobileDrawerGesture({
     drawer,
@@ -907,6 +910,10 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       // 圆心直接跟随相机:收藏 toggle 不再移动相机(ws1 saved-layer-nofly),
       // moveend/complete 只来自用户操作,无需任何圆心冻结。
       setMapCenter(center);
+      // pinch/滚轮常只派 zoomend、不派 zoomchange。不在这里写 realZoom 的话
+      // 聚合边界停在旧 zoom,全国视野个体 pin 被藏、徽章又没切出来。
+      setRealZoom(state.zoom);
+      setZoom(Math.round(state.zoom));
       const b = view.getBounds();
       if (b) {
         setMapBounds({ west: b.west, south: b.south, east: b.east, north: b.north });
@@ -2814,6 +2821,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           onPointerMove={(event) => handleDrawerPointerMove(event)}
           onPointerUp={(event) => finishDrawerGesture(event.clientY)}
           onPointerCancel={(event) => finishDrawerGesture(event.clientY)}
+          onLostPointerCapture={handleDrawerLostPointerCapture}
           aria-label={mobileJd ? t("closeJd", lang) : detailPoi ? t("backToList", lang) : t("expandDrawer", lang)}
         >
           <span />
@@ -2921,7 +2929,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                     }
                     setMobileSheetBack("explore");
                     setMobileSheet("agent");
-                    setDrawer("full");
+                    setDrawer("half");
                   }}
                 >
                   <Icon name="agent" />
@@ -2942,7 +2950,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 )}
               </button>
             </div>
-            {mobileSheet === "explore" && (
+            {shouldShowMobileSearch(mobileSheet, drawer) && (
             <div className={styles.mobileSearchStack}>
             <div className={styles.mobileSearchRow}>
               <div className={styles.mobileSearch}>
@@ -3031,18 +3039,12 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
             )}
             </div>
             )}
-            <div ref={drawerContentRef} className={styles.drawerContent}>
+            <div
+              ref={drawerContentRef}
+              className={`${styles.drawerContent} ${mobileSheet === "agent" ? styles.drawerContentFill : ""}`}
+            >
               {mobileSheet === "account" ? (
                 <div className={styles.mobileAccount}>
-                  <div className={styles.mobileSheetBar}>
-                    <button
-                      type="button"
-                      className={styles.mobileBackBtn}
-                      onClick={() => setMobileSheet("explore")}
-                    >
-                      {t("backToExplore", lang)}
-                    </button>
-                  </div>
                   <div className={styles.mobileAccountNav} role="navigation" aria-label={t("profile", lang)}>
                     <button
                       type="button"
@@ -3114,15 +3116,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 />
               ) : mobileSheet === "layers" ? (
                 <div className={styles.mobileLayers}>
-                  <div className={styles.mobileSheetBar}>
-                    <button
-                      type="button"
-                      className={styles.mobileBackBtn}
-                      onClick={() => setMobileSheet(mobileSheetBack)}
-                    >
-                      {t("back", lang)}
-                    </button>
-                  </div>
                   <button
                     type="button"
                     className={`${styles.mobileFilterBtn} ${savedOverlay ? styles.mobileFilterBtnActive : ""}`}
@@ -3169,15 +3162,6 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
                 </div>
               ) : mobileSheet === "agent" ? (
                 <div className={styles.mobileAgent}>
-                  <div className={styles.mobileSheetBar}>
-                    <button
-                      type="button"
-                      className={styles.mobileBackBtn}
-                      onClick={() => setMobileSheet(mobileSheetBack)}
-                    >
-                      {t("back", lang)}
-                    </button>
-                  </div>
                   <AgentPanel
                     bridge={agentBridgeRef.current}
                     lang={lang}

@@ -13,7 +13,7 @@
 //   TMap·BMapGL 大写 setZIndex、BMapGL addEventListener 等）由适配层吸收
   // - 公司/领域 POI 在 AMap+TMap 走契约 icon(WebGL:AMap LabelsLayer+LabelMarker /
   //   TMap MultiMarker);远程 logo 须 CORS 预检+内联。百度仍走 HTML content。
-  //   AMap 城市聚合徽章只传 content(独立 DOM),不进 LabelsLayer。
+  //   AMap 城市聚合徽章走独立 cluster LabelsLayer 的 WebGL icon,不和公司点同层。
 // - 状态样式 = content 重渲染 + GL setIcon + zIndex：offset 恒为基准锚点（图钉底尖 /
 //   徽章中心），HTML 状态尺寸经内容负 margin 补偿；无浏览器环境（node 测试）下静默降级
 //
@@ -647,8 +647,8 @@ function badgeCleanupHandle(wrapper: MapMarker): any {
   const spreadable = raw as Record<string, unknown> | undefined;
   const base =
     spreadable && typeof spreadable === 'object' ? { ...spreadable } : {};
-  // 始终收敛到契约 remove:TMap 徽章挂共享 MultiMarker;AMap 公司 pin 挂
-  // LabelsLayer(raw 往往无 setMap),AMap 聚合徽章是 DOM Marker。map-shell
+  // 始终收敛到契约 remove:TMap 徽章挂共享 MultiMarker;AMap 公司 pin 与
+  // 聚合徽章都挂 LabelsLayer(raw 往往无 setMap)。map-shell
   // 按 setMap/remove 分派摘除,必须打到 wrapper.remove,否则跨 zoom 分桶泄漏。
   if (typeof wrapper.remove === 'function') {
     return { ...base, setMap: () => wrapper.remove(), remove: () => wrapper.remove() };
@@ -659,21 +659,21 @@ function badgeCleanupHandle(wrapper: MapMarker): any {
 /**
  * 聚合徽章是否必须走契约 icon(WebGL 纹理)。
  * TMap MultiMarker 不渲染 HTML content → 必须传 SVG dataURL。
- * AMap 有 icon 会进共享 LabelsLayer:城市徽章与上百个 hide() 后仍在层上的
- * 公司 LabelMarker 叠在同一城几像素内,密集城(深圳/广州/东莞…)的徽章被
- * 吃掉,看起来像「深圳之类的点没了」。AMap/百度只传 content,走独立 DOM。
+ * AMap 3D 安卓上 HTML Marker 经常不画;徽章改走独立 cluster LabelsLayer
+ * (createMarker duck-type clusterLayer),与 hide 后摘层的公司点隔离。
+ * 百度仍走 HTML content。
  */
 function clusterBadgeUsesGlIcon(view: MapView): boolean {
-  return view.engine?.id === 'tencent';
+  return view.engine?.id === 'tencent' || view.engine?.id === 'amap';
 }
 
 /**
  * 创建城市聚合徽章 Marker(tech/21)。
  * 中心锚定(offset 居中,元组 → 引擎内部转 Pixel);`bubble: false` 阻止点击冒泡
  * 到地图(地图 click 会清选中);防御性守卫:无 view/构造失败 → 返回 null,
- * node 测试下不抛错。AMap/BMapGL 只传 content(HTML);TMap 另传 icon 数据图。
- * 返回清理句柄(见 badgeCleanupHandle,测试探针 + 调用方摘除,duck-type
- * 兼容 map-shell ws-5 分派)。
+ * node 测试下不抛错。AMap/TMap 传 content+icon;AMap 另打 clusterLayer 进独立层。
+ * BMapGL 只传 content。返回清理句柄(见 badgeCleanupHandle,测试探针 + 调用方摘除,
+ * duck-type 兼容 map-shell ws-5 分派)。
  */
 export function createCityClusterMarker(
   view: MapView | null,
@@ -686,15 +686,17 @@ export function createCityClusterMarker(
 
   let wrapper: MapMarker;
   try {
-    const markerOpts: MapMarkerOptions = {
+    const markerOpts = {
       position: { lng: group.lng, lat: group.lat },
       offset: [-size / 2, -size / 2],
       content: cityClusterBadgeHTML(group, opts.color, size),
       zIndex: 50,
       onClick: opts.onClick,
-      // AMap 专属选项(契约未含):duck-type 透传,点击不冒泡到地图
+      // AMap 专属选项(契约未含):duck-type 透传,点击不冒泡到地图;
+      // clusterLayer 让徽章进独立 LabelsLayer,不被公司点吃掉。
       bubble: false,
-    } as MapMarkerOptions;
+      clusterLayer: view.engine?.id === 'amap',
+    } as MapMarkerOptions & { bubble?: boolean; clusterLayer?: boolean };
     if (clusterBadgeUsesGlIcon(view)) {
       markerOpts.icon = {
         src: cityClusterBadgeIcon(group, opts.color, size),

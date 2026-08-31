@@ -108,7 +108,7 @@
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  padding: 0 2px 8px;
+  padding: 0 12px 20px;
 }
 
 .header {
