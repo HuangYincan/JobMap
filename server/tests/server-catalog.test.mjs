@@ -12,6 +12,7 @@ import {
   loadWorkCatalogByIdFromDb,
   loadWorkCatalogFromDb,
   loadWorkSuggestionsFromDb,
+  searchWorkSitesForPlace,
 } from '../src/lib/recruitment-store.ts';
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
@@ -597,6 +598,29 @@ test('loadWorkSuggestionsFromDb returns capped SQL matches without loading the c
   assert.ok(queries.some(({ sql }) => sql.includes('ILIKE')));
   assert.ok(queries.every(({ params }) => params.at(-1) === 10));
   assert.ok(queries.every(({ sql }) => !sql.includes('FROM companies ORDER BY slug')));
+});
+
+test('searchWorkSitesForPlace matches company/site by ILIKE and optional city, no open-job requirement', async () => {
+  const queries = [];
+  const pool = {
+    async query(sql, params) {
+      queries.push({ sql, params });
+      return {
+        rows: [{
+          slug: 'tencent', company_name: '腾讯', site_id: '9', site_name: '滨海大厦',
+          address: '南山区', city: '深圳市', lng: 113.93, lat: 22.54,
+        }],
+      };
+    },
+  };
+  const rows = await searchWorkSitesForPlace(['腾讯', 'tencent'], '深圳', 8, pool);
+  assert.equal(rows?.length, 1);
+  assert.equal(rows?.[0].company_name, '腾讯');
+  assert.match(queries[0].sql, /c\.name ILIKE/);
+  assert.match(queries[0].sql, /s\.city ILIKE/);
+  assert.doesNotMatch(queries[0].sql, /ep\.status = 'open'/);
+  assert.ok(queries[0].params.includes('%腾讯%'));
+  assert.ok(queries[0].params.includes('%深圳%'));
 });
 
 test('countWorkTagMatchesFromDb uses an aggregate SQL count, not catalog materialization', async () => {

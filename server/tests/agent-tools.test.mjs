@@ -10,6 +10,7 @@ import { navigationTools } from '../src/lib/agent/tools/navigation.ts';
 import { __memoryStoreTest, clearMemories, listMemories } from '../src/lib/memory-store.ts';
 
 const MAP_KEYS = ['AMAP_WEB_KEY', 'BAIDU_MAP_AK', 'TENCENT_MAP_KEY', 'BAIDU_MAP_AUTH_TOKEN'];
+const NO_LOCAL = { searchLocal: async () => [] };
 
 async function withEnv(env, fn) {
   const saved = new Map();
@@ -89,7 +90,7 @@ test('builtin: listTools 通过工厂 getter 返回当前工具集', async () =>
 // ---------------------------------------------------------------------------
 
 test('rest__geocodeAddress: 缺参 → error;无 key → no-key error;成功 → 坐标转述', async () => {
-  const [tool] = restFallbackTools();
+  const [tool] = restFallbackTools(fetch, NO_LOCAL);
   const missing = await tool.call({}, CTX);
   assert.equal(missing.ok, false);
 
@@ -104,7 +105,7 @@ test('rest__geocodeAddress: 缺参 → error;无 key → no-key error;成功 →
       assert.ok(String(url).includes('restapi.amap.com/v3/geocode/geo'));
       return restJson({ status: '1', geocodes: [{ location: '120.1563,30.2733' }] });
     };
-    const r = await restFallbackTools(fetchImpl).find((t) => t.name === 'rest__geocodeAddress').call(
+    const r = await restFallbackTools(fetchImpl, NO_LOCAL).find((t) => t.name === 'rest__geocodeAddress').call(
       { address: '杭州大厦', city: '杭州' },
       CTX,
     );
@@ -128,7 +129,7 @@ test('rest__placeSearch: 缺参 → error;空结果 → 提示;成功 → POI �
       assert.ok(String(url).includes('/v3/place/text'));
       return restJson({ status: '1', pois: [] });
     };
-    const empty = await restFallbackTools(fetchEmpty).find((t) => t.name === 'rest__placeSearch').call({ query: '不存在的东西xyz' }, CTX);
+    const empty = await restFallbackTools(fetchEmpty, NO_LOCAL).find((t) => t.name === 'rest__placeSearch').call({ query: '不存在的东西xyz' }, CTX);
     assert.ok(empty.ok && /没有找到 POI/.test(empty.text));
 
     // 正常列表 → POI 逐项转述
@@ -142,7 +143,7 @@ test('rest__placeSearch: 缺参 → error;空结果 → 提示;成功 → POI �
         ],
       });
     };
-    const r = await restFallbackTools(fetchList).find((t) => t.name === 'rest__placeSearch').call({ query: '咖啡' }, CTX);
+    const r = await restFallbackTools(fetchList, NO_LOCAL).find((t) => t.name === 'rest__placeSearch').call({ query: '咖啡' }, CTX);
     assert.equal(r.ok, true);
     if (r.ok) {
       assert.match(r.text, /找到 2 个 POI/);
@@ -154,13 +155,38 @@ test('rest__placeSearch: 缺参 → error;空结果 → 提示;成功 → POI �
     // 超长输出 → sanitizeToolText 截断 3000
     const longName = '长'.repeat(4000);
     const fetchLong = async () => restJson({ status: '1', pois: [{ name: longName, address: 'a', location: '120.2,30.2' }] });
-    const rLong = await restFallbackTools(fetchLong).find((t) => t.name === 'rest__placeSearch').call({ query: '咖啡' }, CTX);
+    const rLong = await restFallbackTools(fetchLong, NO_LOCAL).find((t) => t.name === 'rest__placeSearch').call({ query: '咖啡' }, CTX);
     assert.equal(rLong.ok, true);
     if (rLong.ok) {
       assert.ok(rLong.text.length <= 3000, `输出必须截断 3000,实际 ${rLong.text.length}`);
       assert.ok(!rLong.text.includes('长'.repeat(3001)));
     }
   });
+});
+
+test('rest__placeSearch: 本地目录命中则不打地图 API', async () => {
+  let fetched = 0;
+  const fetchImpl = async () => {
+    fetched += 1;
+    return restJson({ status: '1', pois: [] });
+  };
+  const searchLocal = async (query, city) => {
+    assert.equal(query, '深圳腾讯');
+    assert.equal(city, '深圳');
+    return [{ source: 'work', name: '腾讯', address: '腾讯大厦', city: '深圳市', lng: 113.93, lat: 22.54, id: 'tencent' }];
+  };
+  const r = await restFallbackTools(fetchImpl, { searchLocal }).find((t) => t.name === 'rest__placeSearch').call(
+    { query: '深圳腾讯' },
+    CTX,
+  );
+  assert.equal(fetched, 0);
+  assert.equal(r.ok, true);
+  if (r.ok) {
+    assert.match(r.text, /本地目录命中/);
+    assert.match(r.text, /腾讯/);
+    assert.match(r.text, /113\.93,22\.54/);
+    assert.match(r.text, /未请求地图 API/);
+  }
 });
 
 test('rest__regeo: 非有限坐标 → error;成功 → 省/市/区', async () => {

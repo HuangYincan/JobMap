@@ -690,3 +690,66 @@ export async function countWorkTagMatchesFromDb(
     return null;
   }
 }
+
+export interface WorkPlaceRow {
+  slug: string;
+  company_name: string;
+  site_id: string;
+  site_name: string | null;
+  address: string | null;
+  city: string | null;
+  lng: number;
+  lat: number;
+}
+
+/**
+ * Agent 地点检索:按公司名/slug/站点名查已落坐标的办公点。
+ * 不要求在招岗位(导航要的是办公点,不是 JD)。无库/失败 → null。
+ */
+export async function searchWorkSitesForPlace(
+  terms: string[],
+  city?: string,
+  limit = 8,
+  pool: DbPoolLike | null = getPool(),
+): Promise<WorkPlaceRow[] | null> {
+  if (!pool) return null;
+  const needles = [...new Set(terms.map((t) => t.trim()).filter((t) => t.length >= 2))].slice(0, 8);
+  if (needles.length === 0) return [];
+  const n = Math.min(20, Math.max(1, Math.floor(limit)));
+  const params: unknown[] = [];
+  let index = 1;
+  const fieldMatch = needles
+    .map((term) => {
+      const pattern = /[\u4e00-\u9fff]/.test(term) || term.length >= 3 ? `%${term}%` : `${term}%`;
+      const placeholder = `$${index++}`;
+      params.push(pattern);
+      return `(c.name ILIKE ${placeholder} OR c.slug ILIKE ${placeholder} OR s.name ILIKE ${placeholder})`;
+    })
+    .join(' OR ');
+  let citySql = '';
+  if (city && city.trim()) {
+    const placeholder = `$${index++}`;
+    params.push(`%${city.trim()}%`);
+    citySql = ` AND (s.city ILIKE ${placeholder} OR s.province ILIKE ${placeholder})`;
+  }
+  const limitPlaceholder = `$${index++}`;
+  params.push(n);
+  const sql = `
+    SELECT c.slug, c.name AS company_name, s.id::text AS site_id,
+           s.name AS site_name, s.address, s.city, s.lng, s.lat
+    FROM companies c
+    JOIN company_sites s ON s.company_id = c.id
+    WHERE s.geom IS NOT NULL
+      AND (${fieldMatch})
+      ${citySql}
+    ORDER BY c.slug, s.id
+    LIMIT ${limitPlaceholder}`;
+  try {
+    const result = await queryPublicRead<WorkPlaceRow>(pool, sql, params);
+    return result.rows.filter(
+      (row) => hasPlausibleCoord(row.lng, row.lat) && !isCityCenterPin(row.lng, row.lat),
+    );
+  } catch {
+    return null;
+  }
+}

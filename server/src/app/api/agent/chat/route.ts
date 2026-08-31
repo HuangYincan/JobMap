@@ -24,6 +24,7 @@ import { parseAgentUserLocation, parseAgentViewport } from '@/lib/agent/search-o
 import { filterPublicSseEvent } from '@/lib/agent/public-sse';
 import { builtinTools, memorySaveTool } from '@/lib/agent/tools/builtin';
 import { restFallbackTools } from '@/lib/agent/tools/rest-fallback';
+import { preferLocalPlaceSearch } from '@/lib/agent/local-place-search';
 import { baiduAgentPlanTools } from '@/lib/agent/tools/baidu-agent-plan';
 import { workTools } from '@/lib/agent/tools/work';
 import { navigationTools } from '@/lib/agent/tools/navigation';
@@ -190,7 +191,7 @@ export async function POST(request: Request) {
     try {
       for (const meta of await p.listTools()) {
         const t = normalizeTool(id, meta);
-        tools.push({
+        tools.push(preferLocalPlaceSearch({
           name: t.name,
           description: t.description,
           inputSchema: t.inputSchema,
@@ -201,7 +202,7 @@ export async function POST(request: Request) {
               ? { ok: false, error: r.text }
               : { ok: true, text: r.text, ...(r.images && r.images.length > 0 ? { images: r.images } : {}) };
           },
-        });
+        }));
       }
     } catch {
       /* 跳过该 provider */

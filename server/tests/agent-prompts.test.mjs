@@ -148,3 +148,13 @@ test('buildSystemPrompt: 记忆段仅 memory 非空时注入(zh/en,2026-08-22 ws
     assert.ok(!empty.includes('用户记忆') && !empty.includes('User memory'), `lang=${lang} 空 memory 不注入`);
   }
 });
+
+test('buildSystemPrompt: 地点检索本地优先并避免连打地图源', () => {
+  const zh = buildSystemPrompt({ maxTurns: 16, hasTools: true }, 'zh');
+  const en = buildSystemPrompt({ maxTurns: 16, hasTools: true }, 'en');
+  assert.match(zh, /rest__placeSearch/);
+  assert.match(zh, /本地招聘目录/);
+  assert.match(zh, /禁止连打多家地图源/);
+  assert.match(en, /rest__placeSearch/);
+  assert.match(en, /local catalog/);
+});

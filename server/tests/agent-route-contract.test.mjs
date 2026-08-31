@@ -134,7 +134,7 @@ test('工具集构建:builtin + MCP(失败跳过) + rest 兜底 + work/navigatio
   assert.match(route, /navigationTools\(\)/);
   assert.match(route, /hasBaiduAgentPlan\(\) \? baiduAgentPlanTools\(\)/);
   assert.match(route, /getMcpProvider\(id\)/);
-  assert.match(route, /normalizeTool\(id, meta\)/);
+  assert.match(route, /preferLocalPlaceSearch\(/);
   // 单个 provider listTools 失败不致命
   assert.match(route, /跳过该 provider/);
 });

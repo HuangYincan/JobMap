@@ -1,6 +1,9 @@
 // env 读取单点(secret 只在此处读)。AGENT_LLM_* 优先,回退 LLM_*。
 // 只读 process.env,绝不打印/记录/落日志任何 secret 值;reason 只含变量名。
 
+/** 跨城导航等真实任务 8 轮不够(检索失败会连打多家地图源)。 */
+export const DEFAULT_MAX_TOOL_TURNS = 16;
+
 export interface AgentConfig {
   /** AGENT_LLM_BASE_URL → 回退 LLM_BASE_URL。 */
   baseUrl: string;
@@ -8,7 +11,7 @@ export interface AgentConfig {
   apiKey: string;
   /** AGENT_LLM_MODEL → 回退 LLM_MODEL。 */
   model: string;
-  /** AGENT_MAX_TOOL_TURNS,默认 8。 */
+  /** AGENT_MAX_TOOL_TURNS,默认 16。 */
   maxTurns: number;
   /** AGENT_HISTORY_LIMIT(历史字符上限),默认 6000。 */
   maxHistoryChars: number;
@@ -44,7 +47,7 @@ export function readAgentConfig(): { ok: true; cfg: AgentConfig } | { ok: false;
       baseUrl: baseUrl as string,
       apiKey: apiKey as string,
       model: model as string,
-      maxTurns: positiveInt('AGENT_MAX_TOOL_TURNS', 8),
+      maxTurns: positiveInt('AGENT_MAX_TOOL_TURNS', DEFAULT_MAX_TOOL_TURNS),
       maxHistoryChars: positiveInt('AGENT_HISTORY_LIMIT', 6000),
     },
   };

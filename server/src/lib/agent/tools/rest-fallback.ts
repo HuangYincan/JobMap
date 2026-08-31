@@ -1,5 +1,6 @@
 // REST 兜底工具(常备,tech/24 §5.3/5.4):geocode / placeSearch / regeo。
-// 只 import site-geocode.ts 的 geocodeAddressRest / placeTextSearchRest /
+// 地点检索/地理编码先查本地招聘目录与杭州 POI,未命中再走
+// site-geocode.ts 的 geocodeAddressRest / placeTextSearchRest /
 // regeoCityRest(自带 AMap→百度→腾讯三级兜底,**不改该文件**);输出统一转述
 // 纯文本 + sanitizeToolText 截断 3000(复用 ws-a 的净化,防超长/script 串进
 // LLM 上下文)。
@@ -7,6 +8,12 @@
 import type { AgentTool, ToolResult } from '../types.ts';
 import { geocodeAddressRest, placeTextSearchRest, regeoCityRest } from '../../site-geocode.ts';
 import { sanitizeToolText } from '../run-agent.ts';
+import {
+  formatLocalPlaceHits,
+  parsePlaceQuery,
+  searchLocalPlaces,
+  type LocalPlaceHit,
+} from '../local-place-search.ts';
 
 function textOk(text: string): ToolResult {
   return { ok: true, text: sanitizeToolText(text) };
@@ -24,19 +31,28 @@ function num(v: unknown): number | undefined {
   return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
 }
 
+export interface RestFallbackDeps {
+  searchLocal?: (query: string, city?: string) => Promise<LocalPlaceHit[]>;
+}
+
 /**
  * 构建 REST 兜底工具组(fetchImpl 可注入,测试用;route 侧默认全局 fetch)。
  */
-export function restFallbackTools(fetchImpl: typeof fetch = fetch): AgentTool[] {
+export function restFallbackTools(
+  fetchImpl: typeof fetch = fetch,
+  deps: RestFallbackDeps = {},
+): AgentTool[] {
+  const searchLocal = deps.searchLocal ?? searchLocalPlaces;
   return [
     {
       name: 'rest__geocodeAddress',
-      description: '地址/地名 → GCJ-02 经纬度(AMap→百度→腾讯三级兜底);返回坐标与来源',
+      description:
+        '地址/地名 → GCJ-02 经纬度。先查本地招聘目录与杭州 POI,未命中再走 AMap→百度→腾讯 REST;返回坐标与来源',
       inputSchema: {
         type: 'object',
         properties: {
           address: { type: 'string', description: '地址或地名,如「滨江区长河街道」' },
-          city: { type: 'string', description: '城市,默认杭州' },
+          city: { type: 'string', description: '城市;可从地址中的城市名推断,不要默认当成杭州' },
         },
         required: ['address'],
       },
@@ -44,7 +60,10 @@ export function restFallbackTools(fetchImpl: typeof fetch = fetch): AgentTool[] 
       async call(input: Record<string, unknown>): Promise<ToolResult> {
         const address = str(input.address);
         if (!address) return textErr('geocodeAddress 需要 address 参数');
-        const city = str(input.city) ?? '杭州';
+        const parsed = parsePlaceQuery(address, str(input.city));
+        const local = await searchLocal(address, parsed.city);
+        if (local.length > 0) return textOk(formatLocalPlaceHits(local));
+        const city = parsed.city ?? '杭州';
         const r = await geocodeAddressRest(address, city, fetchImpl);
         if (!r.ok || !r.location) return textErr(`地理编码失败: ${r.reason ?? 'unknown'}`);
         return textOk(`坐标(GCJ-02): ${r.location.lng},${r.location.lat}(来源: ${r.provider ?? 'rest'};地址: ${address})`);
@@ -52,12 +71,13 @@ export function restFallbackTools(fetchImpl: typeof fetch = fetch): AgentTool[] 
     },
     {
       name: 'rest__placeSearch',
-      description: '关键词 → POI 列表(名称/地址/经纬度,GCJ-02;AMap→百度→腾讯三级兜底)',
+      description:
+        '关键词 → POI。先查本地招聘目录与杭州 POI(如「深圳腾讯」),未命中再走 AMap→百度→腾讯 REST;返回名称/地址/GCJ-02 经纬度',
       inputSchema: {
         type: 'object',
         properties: {
-          query: { type: 'string', description: '检索关键词,如「咖啡」' },
-          city: { type: 'string', description: '城市,默认杭州' },
+          query: { type: 'string', description: '检索关键词,如「深圳腾讯」或「咖啡」' },
+          city: { type: 'string', description: '城市;可从关键词中的城市名推断,不要默认当成杭州' },
         },
         required: ['query'],
       },
@@ -65,8 +85,11 @@ export function restFallbackTools(fetchImpl: typeof fetch = fetch): AgentTool[] 
       async call(input: Record<string, unknown>): Promise<ToolResult> {
         const query = str(input.query);
         if (!query) return textErr('placeSearch 需要 query 参数');
-        const city = str(input.city) ?? '杭州';
-        const r = await placeTextSearchRest(query, city, fetchImpl);
+        const parsed = parsePlaceQuery(query, str(input.city));
+        const local = await searchLocal(query, parsed.city);
+        if (local.length > 0) return textOk(formatLocalPlaceHits(local));
+        const city = parsed.city ?? '杭州';
+        const r = await placeTextSearchRest(parsed.keyword || query, city, fetchImpl);
         if (!r.ok) return textErr(`搜索失败: ${r.reason ?? 'unknown'}`);
         if (r.pois.length === 0) return textOk(`「${query}」在 ${city} 没有找到 POI`);
         const lines = r.pois.map((p, i) => `${i + 1}. ${p.name} — ${p.address} — ${p.lng},${p.lat}`);

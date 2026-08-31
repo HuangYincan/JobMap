@@ -86,18 +86,18 @@ test('readAgentConfig: 部分缺失(只有 baseUrl) → ok:false', () => {
   });
 });
 
-test('readAgentConfig: AGENT_MAX_TOOL_TURNS 默认 8,非法值回退默认', () => {
+test('readAgentConfig: AGENT_MAX_TOOL_TURNS 默认 16,非法值回退默认', () => {
   withEnv({ LLM_BASE_URL: 'u', LLM_API_KEY: 'k', LLM_MODEL: 'm' }, () => {
-    assert.equal(readAgentConfig().ok && readAgentConfig().cfg.maxTurns, 8);
+    assert.equal(readAgentConfig().ok && readAgentConfig().cfg.maxTurns, 16);
   });
   withEnv({ LLM_BASE_URL: 'u', LLM_API_KEY: 'k', LLM_MODEL: 'm', AGENT_MAX_TOOL_TURNS: '3' }, () => {
     assert.equal(readAgentConfig().ok && readAgentConfig().cfg.maxTurns, 3);
   });
   withEnv({ LLM_BASE_URL: 'u', LLM_API_KEY: 'k', LLM_MODEL: 'm', AGENT_MAX_TOOL_TURNS: 'abc' }, () => {
-    assert.equal(readAgentConfig().ok && readAgentConfig().cfg.maxTurns, 8);
+    assert.equal(readAgentConfig().ok && readAgentConfig().cfg.maxTurns, 16);
   });
   withEnv({ LLM_BASE_URL: 'u', LLM_API_KEY: 'k', LLM_MODEL: 'm', AGENT_MAX_TOOL_TURNS: '-2' }, () => {
-    assert.equal(readAgentConfig().ok && readAgentConfig().cfg.maxTurns, 8);
+    assert.equal(readAgentConfig().ok && readAgentConfig().cfg.maxTurns, 16);
   });
 });
 
