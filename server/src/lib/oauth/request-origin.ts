@@ -2,8 +2,10 @@
 //
 // `next start -H 0.0.0.0` plus ENV HOSTNAME=0.0.0.0 makes request.url
 // `https://0.0.0.0:3000` behind Cloudflare. GitHub then rejects that
-// redirect_uri. Prefer PUBLIC_ORIGIN, then forwarded/Host headers, and
-// never keep a bind address (0.0.0.0 / ::) as the public origin.
+// redirect_uri. Prefer PUBLIC_ORIGIN, then forwarded/Host headers.
+// Production still falls back to the public site if the origin is a bind address.
+
+export const DEFAULT_PRODUCTION_ORIGIN = 'https://jobmap.nvc.ac';
 
 export function parsePublicOriginEnv(raw: string | undefined): string | null {
   const trimmed = (raw ?? '').trim().replace(/\/+$/, '');
@@ -66,6 +68,7 @@ export function resolvePublicOrigin(input: {
   return (
     originFromHostHeader(input.forwardedHost ?? '', proto) ??
     originFromHostHeader(input.host ?? '', proto || 'https') ??
+    ((env.NODE_ENV ?? '').trim() === 'production' ? DEFAULT_PRODUCTION_ORIGIN : null) ??
     input.requestOrigin
   );
 }
