@@ -114,9 +114,11 @@ export interface FetchPOIResult {
    * 「错误 ≠ 没有更多」,失败可重试,不污染 noMore。
    */
   noMore?: boolean;
+  /** 本地库失败后降级到地图搜索时为 false，避免把降级结果当完整缓存快照。 */
+  cacheable?: boolean;
 }
 
-/** 获取指定模式的 POI。失败抛错(错误信号),成功返回 { pois, noMore? }。 */
+/** 获取指定模式的 POI。失败抛错(错误信号),成功返回 { pois, noMore?, cacheable? }。 */
 export async function fetchPOIsForMode(options: FetchPOIOptions): Promise<FetchPOIResult> {
   const { mode } = options;
 
@@ -147,12 +149,14 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<FetchPOIResult
   };
 
   if (options.query) {
+    let localFailed = false;
     if (inHz) {
       // 杭州内关键词搜索 → 先试本地库 name ILIKE;本地 0 命中(如搜外地词)
       // 或库不可用(null)再回退高德 searchPOI,避免「北京天安门」在杭州库
       // 查不到就空白/返回无关分类 POI。
       const local = await fetchLocalPois(localOptions, existing, zoom, options.query);
       if (local !== null && local.pois.length > existing.length) return local;
+      localFailed = local === null;
     }
     try {
       // 关键词回退与视口兜底同口径(ws-5 修):活跃引擎优先——引擎切换(腾讯/百度)
@@ -184,7 +188,7 @@ async function fetchDomainPOIs(options: FetchPOIOptions): Promise<FetchPOIResult
         DOMAIN_POI_HARD_CAP,
       );
       options.onBatch?.(next);
-      return { pois: next };
+      return { pois: next, cacheable: !localFailed };
     } catch (err) {
       // 失败 = 错误信号(可重试),不是「没有更多」;绝不静默 return existing
       throw new Error(`domain keyword search failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -274,7 +278,7 @@ async function fetchLocalPois(
     // 过滤(common/筛选)导致可见列表不变不再误判「没有更多」
     const noMore = total >= 0 ? offset + rows.length >= total : rows.length === 0;
     options.onBatch?.(next);
-    return { pois: next, noMore };
+    return { pois: next, noMore, cacheable: true };
   } catch (err) {
     // 库未导入 / 网络错 → 浏览路径回退高德 fallback(杭州内兜底),不白屏;
     // 关键词路径返回 null 让调用方走 searchPOI(带词,而不是无关分类 POI)。
@@ -294,7 +298,7 @@ async function fetchLocalPois(
           options.onBatch?.(batch);
         },
       });
-      return { pois };
+      return { pois, cacheable: false };
     } catch (fallbackErr) {
       // 本地库 + 高德兜底都失败 = 错误信号,不静默 return existing(poi-loading A)
       throw new Error(
@@ -358,7 +362,7 @@ async function fetchLocalPoisAll(
       if (rows.length < DOMAIN_POI_FULL_PAGE_SIZE) break; // 短页 → 到底
       if (noMore) break; // 服务端 total 已取到 → 到底
     }
-    return { pois: merged, noMore };
+    return { pois: merged, noMore, cacheable: true };
   } catch (err) {
     // 库未导入 / 网络错 → 回退高德 fallback(带 categories),不白屏
     console.warn('[poi-service] local category POIs failed, fallback to AMap:', err);
@@ -377,7 +381,7 @@ async function fetchLocalPoisAll(
           options.onBatch?.(batch);
         },
       });
-      return { pois };
+      return { pois, cacheable: false };
     } catch (fallbackErr) {
       // 本地库 + 高德兜底都失败 = 错误信号,不静默 return existing(poi-loading A)
       throw new Error(

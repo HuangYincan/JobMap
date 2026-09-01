@@ -18,7 +18,7 @@ DATABASE_URL="$DATABASE_URL" "$ROOT/db/scripts/apply.sh"
 DATABASE_URL="$DATABASE_URL" "$ROOT/db/scripts/preflight.sh"
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -X <<'SQL'
 DO $$
-DECLARE required text[] := ARRAY['users','maps','map_memberships','plugin_manifests','plugin_schema_versions','sources','source_records','import_runs','entities','items','map_entity_overlays','map_annotations','map_favorites','audit_events','user_memories','companies','company_sites','positions'];
+DECLARE required text[] := ARRAY['users','maps','map_memberships','plugin_manifests','plugin_schema_versions','sources','source_records','import_runs','entities','items','map_entity_overlays','map_annotations','map_favorites','audit_events','user_memories','companies','company_sites','positions','hz_pois'];
 BEGIN
   IF EXISTS (SELECT 1 FROM unnest(required) r(name) WHERE to_regclass('public.' || name) IS NULL) THEN RAISE EXCEPTION 'required table missing'; END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname='postgis') OR NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname='pg_trgm') THEN RAISE EXCEPTION 'required extension missing'; END IF;
@@ -75,6 +75,68 @@ BEGIN
     RAISE EXCEPTION 'positions.site_id RESTRICT foreign key changed';
   END IF;
 END $$;
+SQL
+
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -X <<'SQL'
+DO $$
+DECLARE
+  photos_default text;
+BEGIN
+  SELECT column_default
+    INTO photos_default
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'hz_pois'
+    AND column_name = 'photos';
+
+  IF photos_default IS NULL OR photos_default NOT LIKE '%[]%' THEN
+    RAISE EXCEPTION 'hz_pois.photos default is not []: %', photos_default;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint AS c
+    WHERE c.conrelid = 'public.hz_pois'::regclass
+      AND c.conname = 'hz_pois_photos_array_check'
+      AND c.contype = 'c'
+      AND pg_get_constraintdef(c.oid) ILIKE '%jsonb_typeof(photos)%array%'
+  ) THEN
+    RAISE EXCEPTION 'hz_pois.photos array shape check is missing';
+  END IF;
+END $$;
+SQL
+
+# Probe the shape constraint with a rolled-back insert. A scalar must be
+# rejected while the existing [] default remains an accepted array value.
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -X <<'SQL'
+BEGIN;
+DO $$
+DECLARE
+  suffix text := txid_current()::text;
+  rejected boolean := false;
+BEGIN
+  BEGIN
+    INSERT INTO hz_pois (
+      poi_id, name, lng_gcj, lat_gcj, big_type, adname, photos, source_file
+    ) VALUES (
+      '__migration_photos_probe_' || suffix,
+      'migration photos probe',
+      120.1,
+      30.2,
+      '餐饮服务',
+      '西湖区',
+      '{}'::jsonb,
+      'migration probe'
+    );
+  EXCEPTION WHEN check_violation THEN
+    rejected := true;
+  END;
+
+  IF NOT rejected THEN
+    RAISE EXCEPTION 'hz_pois.photos accepted a non-array JSON value';
+  END IF;
+END $$;
+ROLLBACK;
 SQL
 
 # Probe the live constraints with rows that are rolled back.  The two

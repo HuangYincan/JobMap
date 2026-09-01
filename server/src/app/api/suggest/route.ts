@@ -12,7 +12,7 @@
 import { NextResponse } from 'next/server';
 import { suggestSearchTags } from '@/lib/search';
 import {
-  countWorkTagMatchesFromDb,
+  countWorkTagMatchesBatchFromDb,
   loadWorkSuggestionsFromDb,
 } from '@/lib/recruitment-store';
 import { isRecruitmentMode, haversineDistance } from '@/lib/types';
@@ -106,13 +106,13 @@ export async function GET(request: Request) {
       }
     }
     const tags = suggestSearchTags(q, 6);
-    const counts = await Promise.all(tags.map((tag) => countWorkTagMatchesFromDb(tag)));
+    const counts = await countWorkTagMatchesBatchFromDb(tags);
     tags.forEach((tag, index) => {
       suggestions.push({
         type: 'tag',
         id: tag.id,
         title: tag.title,
-        subtitle: `${counts[index] ?? 0} 个公司`,
+        subtitle: `${counts?.[index] ?? 0} 个公司`,
         icon: '🏷️',
       });
     });

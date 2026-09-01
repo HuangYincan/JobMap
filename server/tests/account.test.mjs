@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { DEFAULT_PREFERENCES, emptyPreferences, entityRefFromSelection, initialsFromName, mergePreferences, resolvePreferences, sanitizeEntityRef } from '../src/lib/account.ts';
 import {
   __accountStoreTest,
+  DbUnavailableError,
   addHistory as storeAddHistory,
   APPLICATION_STORAGE_MAX,
   clearHistory as storeClearHistory,
@@ -16,6 +17,8 @@ import {
   listHistory as storeListHistory,
   listNotifications as storeListNotifications,
   listSaved as storeListSaved,
+  listSavedStrict as storeListSavedStrict,
+  removeSavedStrict as storeRemoveSavedStrict,
   issueOtp as storeIssueOtp,
   NOTIFICATION_STORAGE_MAX,
   recordApplication as storeRecordApplication,
@@ -339,6 +342,26 @@ test('saved places are per user and idempotent', () => {
   assert.equal(listSaved(user.id).length, 1);
   assert.equal(removeSaved(user.id, 'alibaba-xixi'), true);
   assert.equal(listSaved(user.id).length, 0);
+});
+
+test('saved strict route storage does not hide missing or failed DB behind memory fallback', async () => {
+  __accountStoreTest.poolOverride = () => null;
+  try {
+    await assert.rejects(storeListSavedStrict('strict-no-db'), DbUnavailableError);
+    await assert.rejects(storeRemoveSavedStrict('strict-no-db', 'poi-1'), DbUnavailableError);
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+  }
+
+  __accountStoreTest.poolOverride = () => ({
+    query: async () => { throw new Error('db down'); },
+  });
+  try {
+    await assert.rejects(storeListSavedStrict('strict-db-down'), DbUnavailableError);
+    await assert.rejects(storeRemoveSavedStrict('strict-db-down', 'poi-1'), DbUnavailableError);
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+  }
 });
 
 test('recordApplication is idempotent per position', () => {

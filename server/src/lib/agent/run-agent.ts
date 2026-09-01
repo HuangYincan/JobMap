@@ -16,7 +16,7 @@ import { createLlmProvider } from './llm-provider.ts';
 import type { AgentProviderError, ChatMessage, LLMProvider, StreamChatOptions } from './llm-provider.ts';
 import { HttpError } from '../llm-validate.ts';
 import { validateAction } from './action-schema.ts';
-import { listMemories } from '../memory-store.ts';
+import { isSensitiveMemoryContent, listMemories } from '../memory-store.ts';
 import { buildSystemPrompt } from './prompts.ts';
 import { collectToolImages, mergeAgentImages, type AgentImage } from './result-images.ts';
 import {
@@ -76,6 +76,7 @@ export async function loadUserMemory(userId?: string): Promise<string | undefine
   const lines: string[] = [];
   let used = 0;
   for (const item of items) {
+    if (isSensitiveMemoryContent(item.content)) continue;
     if (lines.length >= MEMORY_LINE_MAX) break;
     const line = `- ${item.content.slice(0, MEMORY_ITEM_MAX)}`;
     const newlineCost = lines.length > 0 ? 1 : 0; // join('\n') 分隔符计入总长预算

@@ -12,7 +12,7 @@ const migration = readFileSync(
   'utf8',
 );
 
-test('020 has no skipped predecessor and 021 is the current last migration', () => {
+test('020 has no skipped predecessor and 022 follows current migrations', () => {
   const migrationNumbers = readdirSync(migrationDir)
     .filter((name) => /^\d{3}_[^/]+\.sql$/.test(name))
     .map((name) => Number(name.slice(0, 3)))
@@ -22,7 +22,8 @@ test('020 has no skipped predecessor and 021 is the current last migration', () 
   assert.equal(priorNumbers.at(-1), 19);
   assert.equal(migrationNumbers.filter((number) => number === 20).length, 1);
   assert.equal(migrationNumbers.filter((number) => number === 21).length, 1);
-  assert.equal(migrationNumbers.at(-1), 21);
+  assert.equal(migrationNumbers.filter((number) => number === 22).length, 1);
+  assert.equal(migrationNumbers.at(-1), 22);
 });
 
 test('006 has independent company and site foreign keys', () => {

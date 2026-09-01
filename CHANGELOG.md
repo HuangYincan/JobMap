@@ -1,12 +1,16 @@
 # Changelog
 
-Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
+Dates are UTC+8. This file is a historical release log for work merged to `dev`; the current source of truth is tracked code, migrations, tests, `Makefile`, CI, and README files. Private internal design/scan documents are not part of this checkout. Test counts in entries below are historical measurements, not a current baseline; run the documented command to obtain the current result. No SAST, DAST, or dependency-scanning job is configured.
 
 ## 2026-09-01
 
+### Changed
+
+- **Documentation baseline aligned with the tracked implementation.** Removed current references to unavailable private design trees, legacy Codex paths, and old parallel-batch locations; documented migrations `001`–`021`, the official MCP SDK `@modelcontextprotocol/sdk` `1.30.0`, command-derived test reporting, existing Node security contract tests, and the fact that CI has no SAST/DAST/dependency-scanning jobs. This documentation-only change does not claim that migration apply, deployment, or any unrun security gate succeeded.
+
 ### Fixed
 
-- **POI 经常先出现再消失。** 审查见 `tech/roles/development/quality-scans/20260901-poi-lifecycle/scan-report.md`。针消失的主路径是可见集收空或控制器拆掉,不是 `setPOIs([])`。七条修复:标记控制器与底图同款 keepalive(StrictMode / 详情面板重连不拆针);工作模式搜索/筛选只 hide、池保持 catalog 全量;聚合下串味公司仍画个体针;非法/过期视野框不再把 Domain 针裁空,程序化定位立刻同步 bounds;AMap/腾讯意图可见但加层失败时 `isAttached=false` 让 sync 补回;logo 升级改原地 `setIcon`;主加载空批次不再按框清空非空目录。
+- **POI 经常先出现再消失。** 针消失的主路径是可见集收空或控制器拆掉,不是 `setPOIs([])`。七条修复:标记控制器与底图同款 keepalive(StrictMode / 详情面板重连不拆针);工作模式搜索/筛选只 hide、池保持 catalog 全量;聚合下串味公司仍画个体针;非法/过期视野框不再把 Domain 针裁空,程序化定位立刻同步 bounds;AMap/腾讯意图可见但加层失败时 `isAttached=false` 让 sync 补回;logo 升级改原地 `setIcon`;主加载空批次不再按框清空非空目录。
 
 ## 2026-08-31
 
@@ -101,53 +105,53 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
-- **点击部分 POI 后全部消失(`fix/poi-click-markers-vanish`).** 用户实测(深圳街景级,移动端):点快手 marker → 详情面板打开,但地图全部徽章 + 列表消失,永久不恢复。ego-browser 插桩定位根因链:① 点 marker(≤767px)挂载 dynamic 详情面板 → MapShell fiber disconnect/reconnect(keepalive 链);② React 重放 mount-only effects,`useModeCacheRestore` 的 `[]`-effect 被再次执行,把 sessionStorage 快照盖回活目录;③ 快照是全量加载中途的残缺批次(`loadWorkViewport` 曾每页 onBatch 写缓存,实测定格 350 条、无深圳公司)→ work 池塌缩 → `visiblePOIIds` 清空 → 屏上全部 marker 隐藏 + 列表归零,主加载缓存早退致永久不恢复。修复两处:① `useModeCacheRestore` 加 once 守卫(`didRestoreRef`),fiber reconnect 重放短路,活目录不被覆盖;② 主加载 `onBatch` 不再逐页写缓存(中途批次只落 React 状态,缓存仅在最终结果落库时写一次),消灭「残缺池」污染 sessionStorage 的源头(domain 视口替换 onBatch 属完整批次,保留写缓存)。回归:`poi-click-vanish.test.mjs`(最小 hook 运行时 + 源码契约)3 条,过滤独角兽契约测试同步新口径。全量套件实测:**npm test 1686 tests / 1683 pass / 3 skip**(2026-08-26,dev 41d8b82)。
+- **点击部分 POI 后全部消失(`fix/poi-click-markers-vanish`).** 用户实测(深圳街景级,移动端):点快手 marker → 详情面板打开,但地图全部徽章 + 列表消失,永久不恢复。ego-browser 插桩定位根因链:① 点 marker(≤767px)挂载 dynamic 详情面板 → MapShell fiber disconnect/reconnect(keepalive 链);② React 重放 mount-only effects,`useModeCacheRestore` 的 `[]`-effect 被再次执行,把 sessionStorage 快照盖回活目录;③ 快照是全量加载中途的残缺批次(`loadWorkViewport` 曾每页 onBatch 写缓存,实测定格 350 条、无深圳公司)→ work 池塌缩 → `visiblePOIIds` 清空 → 屏上全部 marker 隐藏 + 列表归零,主加载缓存早退致永久不恢复。修复两处:① `useModeCacheRestore` 加 once 守卫(`didRestoreRef`),fiber reconnect 重放短路,活目录不被覆盖;② 主加载 `onBatch` 不再逐页写缓存(中途批次只落 React 状态,缓存仅在最终结果落库时写一次),消灭「残缺池」污染 sessionStorage 的源头(domain 视口替换 onBatch 属完整批次,保留写缓存)。回归:`poi-click-vanish.test.mjs`(最小 hook 运行时 + 源码契约)3 条,过滤独角兽契约测试同步新口径。全量套件实测:`npm test`（历史结果，不作为当前基线）。
 
 ## 2026-08-25
 
 ### Fixed
 
-- **高优先级修复批次(`20260825-boss-hi-priority-fixes`,fix/server-catalog-semantics 25498d9 + fix/site-place-search 3ca0efb + fix/work-lod-marker-pool 16a3add).** 读路径语义两连修:`MODE_CACHE_VERSION` 17→18(中心钉排除后目录口径变化,+ 版本历史注释);裁剪空语义契约 —— SQL 命中但 JS 侧过滤后为空返回 `[]`(DB 健康 + 范围空,不再回退离线目录),`null` 仅表无 DB/失败。数据补全工具链:占位/无地址带岗位站 →「公司名+城市」地点检索(`cityNameOnlyAddress`/`siteNeedsPlaceSearch`/`pickPlaceSearchPoi`;plan/audit/apply 感知 needsPlaceSearch,`ps:` memo 前缀隔离;仅实现+dry-run+测试,apply 执行 Env-only 延后)。前端:工作模式取消 zoom 层 tier 隐藏(公司全量展示,zoom ≤ 8 城市聚合保留,服务端 maxTier API 契约不变);Domain 按「目录全量 = marker 池、筛选只算 visiblePOIIds」拆分(`domainMarkerPool` 不经 query/filters/sort 管线,仅真换视口/换目录才 replace);`setPOIs([])` 空守卫(空列表不触碰实例,显式清空仅 `clear()`/`destroy()`,`use-poi-map` 加 `resetKey` 防跨模式泄漏)。全量套件实测:**npm test 1667 tests / 1664 pass / 3 skip**(2026-08-25,dev 16a3add)。
+- **高优先级修复批次(`20260825-boss-hi-priority-fixes`,fix/server-catalog-semantics 25498d9 + fix/site-place-search 3ca0efb + fix/work-lod-marker-pool 16a3add).** 读路径语义两连修:`MODE_CACHE_VERSION` 17→18(中心钉排除后目录口径变化,+ 版本历史注释);裁剪空语义契约 —— SQL 命中但 JS 侧过滤后为空返回 `[]`(DB 健康 + 范围空,不再回退离线目录),`null` 仅表无 DB/失败。数据补全工具链:占位/无地址带岗位站 →「公司名+城市」地点检索(`cityNameOnlyAddress`/`siteNeedsPlaceSearch`/`pickPlaceSearchPoi`;plan/audit/apply 感知 needsPlaceSearch,`ps:` memo 前缀隔离;仅实现+dry-run+测试,apply 执行 Env-only 延后)。前端:工作模式取消 zoom 层 tier 隐藏(公司全量展示,zoom ≤ 8 城市聚合保留,服务端 maxTier API 契约不变);Domain 按「目录全量 = marker 池、筛选只算 visiblePOIIds」拆分(`domainMarkerPool` 不经 query/filters/sort 管线,仅真换视口/换目录才 replace);`setPOIs([])` 空守卫(空列表不触碰实例,显式清空仅 `clear()`/`destroy()`,`use-poi-map` 加 `resetKey` 防跨模式泄漏)。全量套件实测:`npm test`（历史结果，不作为当前基线）。
 
 ## 2026-08-24
 
 ### Fixed
 
-- **阿里云短信模板双变量修复(`fix/sms`,07dc34b).** 真实账号实测发现「短信认证服务」赠送模板为 `{code, min}` 双变量:原实现只传 `{"code"}` 触发 `isv.INVALID_PARAMETERS`(模版变量min内容非法),短信从未送出,用户只见「验证码错误或已过期」。`aliyun-sms-client` 补 `min` 变量,值取新可选 env `ALIYUN_SMS_TEMPLATE_MINUTES`(缺省 5);用户配真四件套后冒烟通过,TTL 口径拍板 `ALIYUN_SMS_TEMPLATE_MINUTES=10` 对齐本地 10 分钟(tech/26 §3/§5/§9,台账 D-29 关闭)。全量套件实测:**npm test 1611 tests / 1609 pass / 2 skip**(2026-08-24)。
-- **持续安全加固(无人值守循环).** 头像上传按已登录用户 5 次/小时滑动窗口限流(`429 AVATAR_RATE_LIMITED`),限流先于 multipart 解析和字节上限检查;用户记忆与无库会话回退的进程内用户/身份/历史/收藏/投递/通知存储统一收敛到有界 LRU(`BoundedLruStore`,用户键上限 1000);地图视图订阅在 `createMap` cleanup 中完整解绑(zoom/rotate/move/complete/drag/click),避免 StrictMode/引擎重建后旧监听重复叠加;Agent 会话、Guest Recent、模式缓存在 `JSON.parse` 前增加本地原文长度上限,异常大值按损坏存储处理;删除被 `tech/30-agent-memory.md` 取代的孤儿 `tech/26-agent-memory.md`。本轮续扫:work 目录读取共享 promise(同轮不再重复拉 `/api/pois`,同时保留 raw/geocoded 两次 `onBatch`);`college`/`overseas` 即使传 `onlyActive:false` 也不再误走 work 读取;`source` 增加与 `sources.code` 同款约束校验,DB 导入/裁剪路径用 fake pool 覆盖事务 upsert、回滚与 `maxTier` 参数下推;收藏列表补距离改为返回新对象,不再污染共享 catalog;账号仓储 DB 写失败时回滚/保留进程镜像(`createSession` 失败删内存会话、`issueOtp` 失败撤内存验证码、logout/清历史先确认 DB 成功再清内存),避免失败写路径产生数据分裂;AMap AutoComplete/Geolocation/Geocoder 低层回调统一加 8s 超时兜底,同步抛出的插件方法也降级为空结果/null,不再留下永久挂起或未处理拒绝;外部 HTTP 调用(地图 Web 服务/OAuth 交换/腾讯 WebService/远程图标内联/百度智能体工具/Resend/阿里云短信)统一走 20s fetch 超时守卫,配合调用方 abort 信号,避免上游无响应时 API 路由或 Agent 工具永久挂起;厂商脚本加载器补 15s 超时,CDN 卡死同样走移除标签 + 清缓存 + 可重试路径。生产依赖 `npm audit` 0 漏洞。全量套件实测:**npm test 1610 tests / 1608 pass / 2 skip**(2026-08-24)。
+- **阿里云短信模板双变量修复(`fix/sms`,07dc34b).** 真实账号实测发现「短信认证服务」赠送模板为 `{code, min}` 双变量:原实现只传 `{"code"}` 触发 `isv.INVALID_PARAMETERS`(模版变量min内容非法),短信从未送出,用户只见「验证码错误或已过期」。`aliyun-sms-client` 补 `min` 变量,值取新可选 env `ALIYUN_SMS_TEMPLATE_MINUTES`(缺省 5);用户配真四件套后冒烟通过,TTL 口径拍板 `ALIYUN_SMS_TEMPLATE_MINUTES=10` 对齐本地 10 分钟(internal SMS record (§3/§5/§9),台账 D-29 关闭)。全量套件实测:`npm test`（历史结果，不作为当前基线）。
+- **持续安全加固(无人值守循环).** 头像上传按已登录用户 5 次/小时滑动窗口限流(`429 AVATAR_RATE_LIMITED`),限流先于 multipart 解析和字节上限检查;用户记忆与无库会话回退的进程内用户/身份/历史/收藏/投递/通知存储统一收敛到有界 LRU(`BoundedLruStore`,用户键上限 1000);地图视图订阅在 `createMap` cleanup 中完整解绑(zoom/rotate/move/complete/drag/click),避免 StrictMode/引擎重建后旧监听重复叠加;Agent 会话、Guest Recent、模式缓存在 `JSON.parse` 前增加本地原文长度上限,异常大值按损坏存储处理;删除被历史内部设计记录取代的孤儿旧 agent-memory 记录。本轮续扫:work 目录读取共享 promise(同轮不再重复拉 `/api/pois`,同时保留 raw/geocoded 两次 `onBatch`);`college`/`overseas` 即使传 `onlyActive:false` 也不再误走 work 读取;`source` 增加与 `sources.code` 同款约束校验,DB 导入/裁剪路径用 fake pool 覆盖事务 upsert、回滚与 `maxTier` 参数下推;收藏列表补距离改为返回新对象,不再污染共享 catalog;账号仓储 DB 写失败时回滚/保留进程镜像(`createSession` 失败删内存会话、`issueOtp` 失败撤内存验证码、logout/清历史先确认 DB 成功再清内存),避免失败写路径产生数据分裂;AMap AutoComplete/Geolocation/Geocoder 低层回调统一加 8s 超时兜底,同步抛出的插件方法也降级为空结果/null,不再留下永久挂起或未处理拒绝;外部 HTTP 调用(地图 Web 服务/OAuth 交换/腾讯 WebService/远程图标内联/百度智能体工具/Resend/阿里云短信)统一走 20s fetch 超时守卫,配合调用方 abort 信号,避免上游无响应时 API 路由或 Agent 工具永久挂起;厂商脚本加载器补 15s 超时,CDN 卡死同样走移除标签 + 清缓存 + 可重试路径。生产依赖曾手动执行 `npm audit` 无已知漏洞（不是 CI 依赖扫描 job）。全量套件实测:`npm test`（历史结果，不作为当前基线）。
 
 ## 2026-08-23
 
 ### Fixed
 
-- **引擎打磨系列收尾(`20260822-boss-engine-polish-2` 轮8–10).** 腾讯 MultiMarker 初始渲染竞态——构造不传 map、挂图后全量 `setGeometries` 重推,首帧徽章即完整,图层落 MARKER 层不被底图文字标注遮挡(ws-i,cd27acd+441231a)+ icon 预检链式推进(只预检候选链第一个 unknown,失败记忆化下次重建推进,26e7673);腾讯矢量底图排除 `point`(POI 图标层)——light 样式「混合块」根因修复,保留地名/路名标注(ws-j,e1f37a8);腾讯 POI 徽章自然升级真 logo——`badgeWithRemoteIcon` 包裹 icon.horse 保留徽章形态 + 远程真 logo 改 fetch 字节内联(SVG-as-image 实测不抓远程子资源,ws-k,0345983+52a3d0e)+ pan/LOD 可见集切换 `maybeUpgradeIcon` 预检链原地重建(5b3c17d);百度滚轮缩放徽章闪烁——SDK webgl 隐藏 markerMouseTarget pane 时同步恢复 + rAF 按帧重算定位(rAF 停摆自终止,ws-l,99ef028)。全量套件实测:**npm test 1517 tests / 1515 pass / 2 skip**(2026-08-23,dev 99281c1 ws-a 合并后实测)。
+- **引擎打磨系列收尾(`20260822-boss-engine-polish-2` 轮8–10).** 腾讯 MultiMarker 初始渲染竞态——构造不传 map、挂图后全量 `setGeometries` 重推,首帧徽章即完整,图层落 MARKER 层不被底图文字标注遮挡(ws-i,cd27acd+441231a)+ icon 预检链式推进(只预检候选链第一个 unknown,失败记忆化下次重建推进,26e7673);腾讯矢量底图排除 `point`(POI 图标层)——light 样式「混合块」根因修复,保留地名/路名标注(ws-j,e1f37a8);腾讯 POI 徽章自然升级真 logo——`badgeWithRemoteIcon` 包裹 icon.horse 保留徽章形态 + 远程真 logo 改 fetch 字节内联(SVG-as-image 实测不抓远程子资源,ws-k,0345983+52a3d0e)+ pan/LOD 可见集切换 `maybeUpgradeIcon` 预检链原地重建(5b3c17d);百度滚轮缩放徽章闪烁——SDK webgl 隐藏 markerMouseTarget pane 时同步恢复 + rAF 按帧重算定位(rAF 停摆自终止,ws-l,99ef028)。全量套件实测:`npm test`（历史结果，不作为当前基线）。
 
 ## 2026-08-22
 
 ### Added
 
-- **OAuth 登录(`tech/27-oauth-login.md`;`feature/oauth-backend` d22c3f8 + `oauth-frontend` 8e8d07ca + `oauth-docs` 9300fd1).** 真实 OAuth2 authorization code flow:`lib/oauth`(provider registry + signed state cookie + github/google/wechat code exchange client)+ `api/auth/oauth/{providers,start,callback}` 路由 + upsertIdentity 邮箱冲突挂接(41 用例);前端登录按钮 providers 探测(已配置 → 跳 start,未配置 → 回退 demo POST)+ `auth_error` 处理;`fix/oauth-callback-500`(Next 16 absolute redirect URLs,ef20c09)。同日 auth-recovery(`feature/auth-recovery`,15eafb1):注册成功弹窗引导绑定手机/邮箱(OTP 验证,可跳过)+ password 模式忘记密码入口(切 email 验证码登录)。
-- **阿里云短信 OTP 真发(`feature/aliyun-sms-send`,76eec04;`tech/26-aliyun-sms.md`).** phone OTP 经阿里云短信认证服务真发(`lib/aliyun-sms-client`),email 经 Resend 真发;删除 demo `000000` stub 与 hint(server/src 全量 grep 0 命中);缺配置 → 503 `EMAIL_NOT_CONFIGURED` / `SMS_NOT_CONFIGURED`,无效 AccessKey/签名 → `SMS_PROVIDER_ERROR` 短路。
-- **Agent Memory(`feature/agent-memory-core` a34da06 + `agent-memory-ui` d7452bf;`tech/30-agent-memory.md`).** 迁移 `018_user_memories` + `lib/memory-store` + agent prompt 注入 + `builtin__memory_save` 工具 + `/api/me/memories`;前端记忆管理 UI(入口/列表/逐条删除/一键清除/弱提示,i18n `agentMemory*` 七键,登录才渲染)。
+- **OAuth 登录(the ignored OAuth design record;`feature/oauth-backend` d22c3f8 + `oauth-frontend` 8e8d07ca + `oauth-docs` 9300fd1).** 真实 OAuth2 authorization code flow:`lib/oauth`(provider registry + signed state cookie + github/google/wechat code exchange client)+ `api/auth/oauth/{providers,start,callback}` 路由 + upsertIdentity 邮箱冲突挂接(41 用例);前端登录按钮 providers 探测(已配置 → 跳 start,未配置 → 回退 demo POST)+ `auth_error` 处理;`fix/oauth-callback-500`(Next 16 absolute redirect URLs,ef20c09)。同日 auth-recovery(`feature/auth-recovery`,15eafb1):注册成功弹窗引导绑定手机/邮箱(OTP 验证,可跳过)+ password 模式忘记密码入口(切 email 验证码登录)。
+- **阿里云短信 OTP 真发(`feature/aliyun-sms-send`,76eec04;the ignored SMS design record).** phone OTP 经阿里云短信认证服务真发(`lib/aliyun-sms-client`),email 经 Resend 真发;删除 demo `000000` stub 与 hint(server/src 全量 grep 0 命中);缺配置 → 503 `EMAIL_NOT_CONFIGURED` / `SMS_NOT_CONFIGURED`,无效 AccessKey/签名 → `SMS_PROVIDER_ERROR` 短路。
+- **Agent Memory(`feature/agent-memory-core` a34da06 + `agent-memory-ui` d7452bf;the ignored agent-memory design record).** 迁移 `018_user_memories` + `lib/memory-store` + agent prompt 注入 + `builtin__memory_save` 工具 + `/api/me/memories`;前端记忆管理 UI(入口/列表/逐条删除/一键清除/弱提示,i18n `agentMemory*` 七键,登录才渲染)。
 
 ### Fixed
 
 - **收藏图层 mobile sheet 修复(fx,09a5cd7).** layers sheet 收藏图层 toggle 按态文案(`savedOverlayShow`/`savedOverlayHide`,保留计数)+ `drawerContent` flex 高度链撑起 AI sheet。
-- **首访卡死修复(loading-hang ws1–4 + docs 回填).** `loadAMap` 超时化 + 失败可重试(f5c3d17);引擎挂载失败暴露 `mountError` + `retryMount` 重试状态机(6c780dc);加载覆盖层失败态 UI + 重试按钮(8e05d2d);首访全量加载逐页超时 + 连续失败止损(5165904);根因与修复回填 `tech/16`、`tech/23`(1d586e7/5a2e649)。
+- **首访卡死修复(loading-hang ws1–4 + docs 回填).** `loadAMap` 超时化 + 失败可重试(f5c3d17);引擎挂载失败暴露 `mountError` + `retryMount` 重试状态机(6c780dc);加载覆盖层失败态 UI + 重试按钮(8e05d2d);首访全量加载逐页超时 + 连续失败止损(5165904);根因与修复回填 the ignored bug-fix and map-engine records(1d586e7/5a2e649)。
 - **三引擎打磨系列(`20260822-boss-tmap-polish` 轮1–2、`20260822-boss-tmap-interaction` 轮1–3、`20260822-boss-engine-polish-2` 轮1–6)。** 腾讯:zoom 契约化(`raw.zoomIn` 逃生舱废止)、卫星/深色暴露、比例尺、水印隐藏、公司 POI icon 候选链、POI 锚点契约修正、locate 高精度、滚轮平滑(`smoothWheelZoom`)、切回引擎 POI 丢失修复、content marker DOM overlay 双路径、MultiMarker 构造时序落 MARKER 层。百度:就绪信号修正、卫星常量/深色、单点级 content 注入兜底、r3 厂商 Marker 主路径、r4 重负载定时器兜底(rAF 停摆免疫)、r5 `fixPosition` 反绕修正 + 实例遮蔽。通用:`mountError.engine` 语义归一(245039d)+ dynamic chunk 15s 超时守卫 GATE_A(f25ad78)。
 - **AI agent 系列(`20260822-boss-agent-bugfix` / `agent-inputbar` / `agent-navi` / `agent-parallel-stream`).** 深色适配;清屏 = 归档当前会话 + 新建空会话(旧内容可回溯);send↔stop in-place 双态 + clear 左移;navi 按钮 `.md` 前缀 specificity + 空 name 去尾逗号;每会话独立流(切会话不打断);AI 移动端并入抽屉 sheet(撤销独立浮层,`feature/mobile-agent-embed`)。
-- **geocode r4/r5(`20260821-boss-address-first` 批次收尾).** 地址回填 342/373 站(首轮 353 条 + 二轮 18 站;最终 13 站 null);geocode 覆盖 5 源(radar/official-career/qqdoc-jobs/qqdoc-official/embodied-jobs);office POI 限定词 token 序列放宽(r5 16 站复合限定词 POI 落真实坐标);城市中心堆叠修复闭环 r4+r5 共 304 站落真实坐标;`audit-city-center-pins` 只读诊断脚本(`tech/29`)。
+- **geocode r4/r5(`20260821-boss-address-first` 批次收尾).** 地址回填 342/373 站(首轮 353 条 + 二轮 18 站;最终 13 站 null);geocode 覆盖 5 源(radar/official-career/qqdoc-jobs/qqdoc-official/embodied-jobs);office POI 限定词 token 序列放宽(r5 16 站复合限定词 POI 落真实坐标);城市中心堆叠修复闭环 r4+r5 共 304 站落真实坐标;`audit-city-center-pins` 只读诊断脚本(the ignored location-audit record)。
 
 ## 2026-08-21
 
 ### Added
 
-- **腾讯 WebService 第三级兜底(AMap→百度→腾讯,`feature/geocode-tencent`).** `site-geocode.ts` 三入口(地址 geocode / 地点搜索 / regeo)在高德日配额(10044/10043)或百度日配额(302)双耗尽后自动切腾讯(`TENCENT_MAP_KEY`):新增 `tencentGeocodeAddressRest` / `tencentPlaceSearchRest` / `tencentRegeoCityRest`(ws/geocoder/v1 + ws/place/v1/search,原生 GCJ-02)+ `fallbackChain` 链式 helper 收敛兜底分支;腾讯个人开发者每接口 10000 次/天、5 QPS。错误码分类(真实探测校准):121/321/322 每日上限归配额类短路、120 每秒限流重试一次、110/112/190/199/311 配置永久失效归短路(缺 key→301、错 key 格式→311、缺参→404,均与预设无冲突)。`geocode-sites-apply.mjs` 接 env 注入/DRY_RUN 判定/节流 provider 感知(百度 600ms、其余 340ms)/REPORT 三 key 状态。测试 +12(全量 549:547 pass / 2 skip)。
-- **geocode 双配额耗尽短路(`fix/geocode-quota-short-circuit`,`3d51d7a`+`808414a`+`89103b3`,merge `83fc6d0`).** 配额类失败(`quota` / `baidu-status:302` / `no-key`)连续 5 站 → 提前停止(`QUOTA_EXHAUSTED` 行 + exit(2));成功解析/非配额失败冲窗口防误停(401/http/间歇性可重试不误伤);7 新用例(全量 520:518 pass / 2 skip)。同日 `4b05e64` 写入 20 家公司站点坐标(2026-08-21,配额耗尽前完成)。报告 `tech/roles/development/parallel-sessions/20260821-boss-geocode-quota/`。
-- **place-text 结果缓存(`fix/geocode-place-memo`,`4ffebe6`+`a41e5e1`+`64e8be6`,merge `9d5ed19`).** 同 (query, province, city) 进程内复用,只缓存成功命中(失败/空结果/配额类/低置信度一律不写);10 新用例(全量 530:528 pass / 2 skip);同城多站点实例调用削减 97%+(安克创新 38→1 / 元气森林 71→1 / 小鹏 52→1)。报告 `tech/roles/development/parallel-sessions/20260821-boss-geocode-memo/`。
-- **全量计数输出修正(`fix/geocode-plan-count`,`e5cd04d`+`fa5f854`,merge `6737a6b`).** 只读预扫统计过滤前全量 `planTotal`;配额短路后剩余 = planTotal − resolutions − unresolved − skipped(旧口径短路后恒为 0,误导);8 新用例(全量 536:534 pass / 2 skip);实跑:1783 站待 geocode、attempted 5、剩余 1778 如实报告。报告 `tech/roles/development/parallel-sessions/20260821-boss-geocode-count/`。
-- **腾讯文档官方招聘源 142 家入库(`feat/qqdoc-official-source`,merge `1ec3fff`).** qqdoc-official 适配器 + 礼貌官网地址提取(壳 HTML → 官方招聘 URL + 城市/街道地址,`extract-qqdoc-addresses.mjs` / `official-site-parse.ts`),142 央企/银行/国企 drops(name + 官方招聘 URL),19 家城市+街道地址提取、50 家 `city_pending` 待后续;19 用例(全量 568:566 pass / 2 skip)。采集仅礼貌 GET + robots(RFC 9309 重定向跟随)。Docs:`tech/roles/data/etl/qqdoc-official.md`;报告 `tech/roles/development/parallel-sessions/20260821-boss-qqdoc-official/`。
-- **多地图引擎插件契约落地(`feature/map-engine` 批次 a–f,`tech/23-map-engines.md`,2026-08-21).** `lib/map-adapter.ts` 删除(零引用确认);AMap / 腾讯 TMap / 百度 BMapGL 各实现 `MapEngine` 契约(生命周期 `isConfigured/load/isLoaded/createView` + `searchPOI`),图层面板「地图源」切换 + localStorage 偏好;`use-map-engine` 把活跃引擎 search provider 注入 poi-service。后续打磨见 2026-08-22/23 条目。
+- **腾讯 WebService 第三级兜底(AMap→百度→腾讯,`feature/geocode-tencent`).** `site-geocode.ts` 三入口(地址 geocode / 地点搜索 / regeo)在高德日配额(10044/10043)或百度日配额(302)双耗尽后自动切腾讯(`TENCENT_MAP_KEY`):新增 `tencentGeocodeAddressRest` / `tencentPlaceSearchRest` / `tencentRegeoCityRest`(ws/geocoder/v1 + ws/place/v1/search,原生 GCJ-02)+ `fallbackChain` 链式 helper 收敛兜底分支;腾讯个人开发者每接口 10000 次/天、5 QPS。错误码分类(真实探测校准):121/321/322 每日上限归配额类短路、120 每秒限流重试一次、110/112/190/199/311 配置永久失效归短路(缺 key→301、错 key 格式→311、缺参→404,均与预设无冲突)。`geocode-sites-apply.mjs` 接 env 注入/DRY_RUN 判定/节流 provider 感知(百度 600ms、其余 340ms)/REPORT 三 key 状态。测试:`npm test`（历史结果，不作为当前基线）。
+- **geocode 双配额耗尽短路(`fix/geocode-quota-short-circuit`,`3d51d7a`+`808414a`+`89103b3`,merge `83fc6d0`).** 配额类失败(`quota` / `baidu-status:302` / `no-key`)连续 5 站 → 提前停止(`QUOTA_EXHAUSTED` 行 + exit(2));成功解析/非配额失败冲窗口防误停(401/http/间歇性可重试不误伤);测试:`npm test`（历史结果，不作为当前基线）。同日 `4b05e64` 写入 20 家公司站点坐标(2026-08-21,配额耗尽前完成)。报告 the ignored geocode quota batch record。
+- **place-text 结果缓存(`fix/geocode-place-memo`,`4ffebe6`+`a41e5e1`+`64e8be6`,merge `9d5ed19`).** 同 (query, province, city) 进程内复用,只缓存成功命中(失败/空结果/配额类/低置信度一律不写);测试:`npm test`（历史结果，不作为当前基线）;同城多站点实例调用削减 97%+(安克创新 38→1 / 元气森林 71→1 / 小鹏 52→1)。报告 the ignored geocode memo batch record。
+- **全量计数输出修正(`fix/geocode-plan-count`,`e5cd04d`+`fa5f854`,merge `6737a6b`).** 只读预扫统计过滤前全量 `planTotal`;配额短路后剩余 = planTotal − resolutions − unresolved − skipped(旧口径短路后恒为 0,误导);测试:`npm test`（历史结果，不作为当前基线）;实跑:1783 站待 geocode、attempted 5、剩余 1778 如实报告。报告 the ignored geocode-count batch record。
+- **腾讯文档官方招聘源 142 家入库(`feat/qqdoc-official-source`,merge `1ec3fff`).** qqdoc-official 适配器 + 礼貌官网地址提取(壳 HTML → 官方招聘 URL + 城市/街道地址,`extract-qqdoc-addresses.mjs` / `official-site-parse.ts`),142 央企/银行/国企 drops(name + 官方招聘 URL),19 家城市+街道地址提取、50 家 `city_pending` 待后续;测试:`npm test`（历史结果，不作为当前基线）。采集仅礼貌 GET + robots(RFC 9309 重定向跟随)。历史来源记录未随仓库发布；旧批次报告同样不在当前 checkout。
+- **多地图引擎插件契约落地(`feature/map-engine` 批次 a–f,历史记录,2026-08-21).** `lib/map-adapter.ts` 删除(零引用确认);AMap / 腾讯 TMap / 百度 BMapGL 各实现 `MapEngine` 契约(生命周期 `isConfigured/load/isLoaded/createView` + `searchPOI`),图层面板「地图源」切换 + localStorage 偏好;`use-map-engine` 把活跃引擎 search provider 注入 poi-service。后续打磨见 2026-08-22/23 条目。
 - **头像真实存储(迁移 `017_avatar_data`;`feat/avatar-username` f1dc329 + `fix/avatar-account-label` 782d2ca,2026-08-21).** 上传接口 + bytea 落库 + 账户/用户名分离;`updateUser`/`updateAvatar` RETURNING 带回 username,改用户名/传头像后账户不再消失。
 - **i18n 选项标签(2026-08-21;`feature/i18n-option-labels-foundation|renderers|prefs`).** i18n 类型扩展(SortOption/FilterOption/FilterConfig 加可选 `labelEn`/`unitEn`/`searchPlaceholderEn`);modes.ts 全量补 labelEn;filter-panel/sort-selector 渲染层走 `uiLabel`(英文 UI 用 labelEn,缺失回退中文 label);账户偏好 defaultMode/industries 选项英文;OTP 发送反馈 i18n keys(倒计时文案 + 成功气泡)。
 
@@ -155,17 +159,17 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Added
 
-- **zhiye(北森 italent `*.zhiye.com`)ATS 适配器 + feishu 租户扩充(national w2,`feacd10`+`bf68d37`+`7d50d21`,merge `cebdc8e`).** 三步探针(壳 HTML → SPA bundle → API 端点探测)固化为运行时流程,`cli.py` 新增 `zhiye` 子命令,`FEISHU_TENANTS` 24→28(英科医疗/真格基金/原力灵机/算秩未来);37 个 fixture 驱动单测(server 全量 500 pass / 2 skip;crawler pytest 103 全绿,boss 复验)。采集未执行(Env E3 留给 boss/用户)。Docs:`tech/roles/data/etl/zhiye-ats.md` / `feishu-ats.md`;报告 `tech/roles/development/parallel-sessions/20260820-boss-national-data/reports/w2.md`。
+- **zhiye(北森 italent `*.zhiye.com`)ATS 适配器 + feishu 租户扩充(national w2,`feacd10`+`bf68d37`+`7d50d21`,merge `cebdc8e`).** 三步探针(壳 HTML → SPA bundle → API 端点探测)固化为运行时流程,`cli.py` 新增 `zhiye` 子命令,`FEISHU_TENANTS` 24→28(英科医疗/真格基金/原力灵机/算秩未来);37 个 fixture 驱动单测；crawler pytest 通过（均为历史结果，不作为当前基线）。采集未执行(Env E3 留给 boss/用户)。历史来源记录与旧批次报告未随仓库发布。
 - **南京/西安 drops 增量并入(boss E1,`45bd9fa`).** 16 新公司 + 74 站点 + 83 岗位,externalId 跨城重写;dev@45bd9fa 门禁全绿。
 - **飞书 28 租户采集合入(`a8a9df7`).** 4 新租户 + 岗位刷新,import 计划 11602 岗位 0 dropped。
 
 ### Changed
 
-- **Next.js 15.5.23 → 16.3.1、React/ReactDOM 19.0.8 → 19.2.8(清 version-staleness 警告,`chore/next-16`).** 依赖升级由 boss 预置(`server/package.json`/`package-lock.json`),本批仅修破坏点:实际**零代码改动**——`npm run typecheck` 0 错误、`npm test` 488(486 pass / 2 skip)、`npm run build`(Next 16.3.1 + Turbopack)21 路由全部产出。Next 16 自动迁移两项:tsconfig `jsx: preserve → react-jsx`(强制)与 include 增 `.next/dev/types/**/*.ts`;`next-env.d.ts` 按新 typed-routes 格式重生成(`import` 替代 `/// <reference path>`,新增 `root-params.d.ts`)。项目无 middleware / 无 ESLint 配置 / next.config.ts 仅 `reactStrictMode`,均无需迁移。报告:`tech/roles/development/parallel-sessions/20260820-boss-bugfix/reports/b3.md`。
+- **Next.js 15.5.23 → 16.3.1、React/ReactDOM 19.0.8 → 19.2.8(清 version-staleness 警告,`chore/next-16`).** 依赖升级由 boss 预置(`server/package.json`/`package-lock.json`),本批仅修破坏点:`npm run typecheck` 0 错误；`npm test` 与 `npm run build` 当时通过（历史结果，不作为当前基线）Next 16 自动迁移两项:tsconfig `jsx: preserve → react-jsx`(强制)与 include 增 `.next/dev/types/**/*.ts`;`next-env.d.ts` 按新 typed-routes 格式重生成(`import` 替代 `/// <reference path>`,新增 `root-params.d.ts`)。项目无 middleware / 无 ESLint 配置 / next.config.ts 仅 `reactStrictMode`,均无需迁移。相关历史内部记录未随仓库发布。
 
 ### Fixed
 
-- **work 全量加载(首点刷新 / 聚合计数漂移 / 死代码清理,`933f972`,`fix/poi-zoom-full-load`).** work 视口加载原以 geolocation settle 为门:首点触发定位完成 → 依赖变化取消在飞加载并重载,首帧 `syncView()` 又被视口对齐拉回杭州。现改**全量加载**(`WORK_FULL_LOAD_MAX_PAGES=10_000`,不传 bounds/maxTier,page 恒 1;侧栏列表客户端按 `mapBounds` 裁剪,浏览器实测平移 0 视口请求),`load()` 门控仅 `mapReady`——首点详情立即打开、视角保持。聚合计数取消 LOD(tier)过滤(徽章 N 与 zoom 无关),「杭州市」/「杭州」归入同一徽章。死代码清理净删 566 行(视口增量加载 / 首点 flyTo 队列 / 视口搜索堆栈 / marker 同步注册表等)。`MODE_CACHE_VERSION` 14→15。14 文件(server/src 9 + tests 5);全量 488 通过(486 pass / 0 fail / 2 skip)。Docs:`tech/16-bug-fixes.md` §2026-08-20、`tech/21` 计数口径。
+- **work 全量加载(首点刷新 / 聚合计数漂移 / 死代码清理,`933f972`,`fix/poi-zoom-full-load`).** work 视口加载原以 geolocation settle 为门:首点触发定位完成 → 依赖变化取消在飞加载并重载,首帧 `syncView()` 又被视口对齐拉回杭州。现改**全量加载**(`WORK_FULL_LOAD_MAX_PAGES=10_000`,不传 bounds/maxTier,page 恒 1;侧栏列表客户端按 `mapBounds` 裁剪,浏览器实测平移 0 视口请求),`load()` 门控仅 `mapReady`——首点详情立即打开、视角保持。聚合计数取消 LOD(tier)过滤(徽章 N 与 zoom 无关),「杭州市」/「杭州」归入同一徽章。死代码清理净删 566 行(视口增量加载 / 首点 flyTo 队列 / 视口搜索堆栈 / marker 同步注册表等)。`MODE_CACHE_VERSION` 14→15。14 文件(server/src 9 + tests 5);全量套件实测:`npm test`（历史结果，不作为当前基线）。相关历史内部记录未随仓库发布。
 - **positions import 自愈去重(先删重后迁移,`788e9c6`,`fix/positions-dedup-order`,b1f).** 同 `external_id` 在旧 source(seed)与新真实 source 下各存一行(upsert 唯一键 `(source_id, external_id)`,source 变了就插新行、旧行不删)→ poi-card 同 key 警告上百条。修复:apply 事务内先按 `external_id` 保 `MIN(id)` 删重(applications.`position_id` 多指向旧行,保留最早 id 避免悬空),再迁移旧 source 行到本次 source,后照常 `ON CONFLICT` upsert;顺序不可颠倒——先迁移会让同 `external_id` 的旧/新行共享唯一键,UPDATE 内即触发 `positions_source_id_external_id_key`(`_bt_check_unique`)导致整个事务回滚(boss 实测:重跑 `import:seed:apply` 报唯一键冲突,DB 未变)。契约测试断言 dedup-before-migration 顺序(`server/tests/recruitment-import.test.mjs`)。
 - **LOD 徽章计数一致性(optimize w1,`b178cb0`,`fix/cluster-consistency`).** `cityLabelMatchesCoordinates` + LOD 徽章计数口径统一(聚合徽章不再随 zoom 漂移)。
 - **首点 flyTo 延迟(optimize w2,`fe2aee9`,`fix/poi-first-locate`).** `pendingFlyToRef` 推迟首点飞行,消除定位/首点交互竞态。
@@ -180,7 +184,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - **地图 remount 相机恢复(poi-vanish2,`5fd4c2f`,`fix/map-remount-camera`).** createMap 初始相机改用 state(`DEFAULT_MAP_CENTER`/`DEFAULT_MAP_ZOOM` 常量)+ settle 仅默认中心附近时飞用户位置(`isNearDefaultCenter` 0.1 度阈值);新增 camera-center 契约测试。
 - **dev 冷启动首点整页刷新(rail-prefetch,`51c0406`,merge `d61e720`).** 挂载时预载 rail 面板 chunk。
 - **settle 自动定位「用户已交互」门控(rail-settle,`863f7f2`,merge `870af90`).** 门控由「双门控」扩为「三门控」(`!userMovedMapRef.current && !userInteractedRef.current && isNearDefaultCenter(...)`),消除首点整幅跳变;浏览器实测留给 boss VERIFY。
-- **事故坐标清扫(national w1,`460867b`+`f389d1b`,merge `ecef347`).** 115 个非杭州事故站点坐标(49 文件:46 radar + 3 official)删除——任务字面「清为 null」与 importer 契约冲突(`lng: null` 判 invalid),改为删键(偏离字面,报备);防回归契约 4 用例;全量 504 pass / 2 skip。DB 侧坐标清扫留待 boss 裁决。
+- **事故坐标清扫(national w1,`460867b`+`f389d1b`,merge `ecef347`).** 115 个非杭州事故站点坐标(49 文件:46 radar + 3 official)删除——任务字面「清为 null」与 importer 契约冲突(`lng: null` 判 invalid),改为删键(偏离字面,报备);防回归契约 4 用例；`npm test` 当时通过（历史结果，不作为当前基线）。DB 侧坐标清扫留待 boss 裁决。
 - **zhiye job_city 归一 + 分页到 total(national w3,`f078359`,merge `3da1c8e`).** 城市文本归一(「上海市浦东新区」→「上海市」);已知 total 时翻页到 `len(jobs) ≥ total`(短页兜底不再提前停);crawler pytest 103 全绿。
 - **BAIDU_MAP_AK 注入(`0b7c1da`).** AMap 配额耗尽时百度兜底可触发(process.env 注入)。
 - **geocode fetch 20s 超时守卫(`ca54ce7`).** 防挂起代理连接。
@@ -199,8 +203,8 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
   在重挂载后恢复;模式切换/新搜索/刷新/桌面详情路径清零保存值。② 点卡片边缘空隙取消选中:
   `POIList` 新增 `onDeselect` prop(仅移动端传,桌面 secondary-sidebar 不传),
   `.cardSlot` + `.list` 容器接 onClick,`poi-card` 卡片 `<article>` onClick 加 `stopPropagation`
-  不冒泡触发取消;取消时清 `selectedId` + `highlightedId`。测试:+3(该批;全量基线 423 通过 / 0 失败 / 2 跳过,2026-08-19)。
-  Docs:`tech/16-bug-fixes.md`。
+  不冒泡触发取消;取消时清 `selectedId` + `highlightedId`。测试:+3(该批;测试:`npm test`（历史结果，不作为当前基线）)。
+  相关历史内部记录未随仓库发布。
 - **工作模式 poi 列表不随视角刷新(Bug 7,`fix/viewport-refresh`).** 工作视口刷新原为
   **增量合并**(`loadWorkViewport` 传 `existing: catalogRef.current`):工作目录仅 ~79 家公司,
   首屏+加载更多几乎全捕获 → 刷新返回 0–11 家全部被 `mergePoisById` 去重,`setCatalog` 不变,
@@ -209,8 +213,8 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
   视口替换时复位 noMore(与 w3 noMore 判定对接)。另修复主加载在飞时视口刷新被静默丢弃:
   `loadingRef.current` 在飞时置 `viewportRefreshPendingRef` 标记,主加载 `finally` 释放后补跑
   `viewportLoaderRef.schedule()`(防抖合并,不引入重复加载竞态)。domain 视口刷新(替换+淡入)
-  行为不变。Docs:`tech/22-hangzhou-poi-local.md` §视口变化刷新。
-- **`portal-megvii-campus` 官网入口移除（用户拍板，B2.1 同型追加）。** megvii-hangzhou 的「校园招聘(官网投递)」入口与已删的 `portal-megvii-social` 同型（warn 非 fail）,drop 对象删除 + DB 行删除（SELECT 确认）;该文件只剩真实岗位「前端开发工程师(2026 秋招)」。全量统计 813 → 812 条（下次全量校验落数）。记录:`fix-plan-20260817.md` / `data-quality.md`。
+  行为不变。相关历史内部记录未随仓库发布。
+- **`portal-megvii-campus` 官网入口移除（用户拍板，B2.1 同型追加）。** megvii-hangzhou 的「校园招聘(官网投递)」入口与已删的 `portal-megvii-social` 同型（warn 非 fail）,drop 对象删除 + DB 行删除（SELECT 确认）;该文件只剩真实岗位「前端开发工程师(2026 秋招)」。全量统计 813 → 812 条（下次全量校验落数）。相关数据质量记录属于未跟踪的历史内部材料。
 
 ### Changed
 
@@ -218,16 +222,16 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
   - 全开抽屉高度从 `86svh` 拔高到**顶边=指南针中心**:CSS `.drawerFull`/`.mobileDrawer max-height` 同步为 `calc(100svh - max(12px, env(safe-area-inset-top)) - 20px)`;拖拽全开阈值从 `vh*0.86` 改为同口径 `vh - (max(12, safeAreaTop) + 20)`(safeAreaTop 在 pointerdown 用探测元素实测 `env(safe-area-inset-top)`),松手 snap 不再回弹错档;`.drawerHalf`/`.drawerMini` 不变。
   - **全开隐藏指南针+比例尺**:`.topTools`(指南针 + 移动端定位按钮)在 `drawer==="full" || !!detailPoi` 时挂 `topToolsHidden`(opacity/visibility 过渡 200ms);`AMap.Scale` 提升到 `scaleControlRef` 由 effect 显隐,插件异步/resize 重建时同步初始态。
   - **移动端新增「显示用户当前位置」按钮**:`.topTools` 指南针正下方,同款 `.toolButton` 40×40 + `box-shadow:var(--shadow)`,复用 `handleLocate`/`Icon name="locate"`/`t("locateMe")`;桌面端 `@media (min-width:768px)` 隐藏(右下角已有 `.mapControls` 定位按钮)。
-  - Docs:`tech/07` 抽屉/工具组/比例尺节、`tech/16` 本批问题与方案。
+  - 相关实现与历史内部记录未随仓库发布。
 
 ## 2026-08-18
 
 ### Added
 
-- **Parallel role skills** (`.claude/skills/main-agent|workstream-agent|merge-agent`): a fresh Claude session picks its role in a parallel batch by triggering a skill. `main-agent` decomposes goals into workstreams and writes per-workstream prompt files; `workstream-agent` develops in its own worktree and writes a report (never merges); `merge-agent` reads the batch manifest + reports and runs the parallel-development merge orchestration. Batch directory convention: `tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/` (`README.md` manifest, `prompts/<ws>.md`, `reports/<ws>.md`, `merge-report.md`). Docs: `agent.md` §0.5, `tech/04-workflow.md` "Parallel role skills", `CLAUDE.md`.
+- **Parallel role skills（历史内部流程）。** 当时的 Claude 会话通过技能选择并行批次角色，分别在独立 worktree 开发、汇报和合并；相关批次目录、prompt、report 与 merger 状态文件均属于旧的未跟踪材料，不是当前 checkout 的入口。当前协作规则见本仓库的 `AGENTS.md`、`CLAUDE.md` 与 `agent.md`。
 - `SearchSuggestion.distance` (meters) + optional `center` param on `GET /api/suggest`; company rows use site coordinates. Client recomputes against the live origin (user location / map center) for freshness.
 - Suggestion rows render kind-based icons (place 📍 / company 🏢 or logo emoji / job 💼) and right-aligned grey 12 px distance on desktop (`secondary-sidebar.tsx`) and mobile (`map-shell.tsx`); the API's previously unused `icon` field is wired through. Layout L3 approved 2026-08-18.
-- Tests: domain suggest route contract, `loadHzPoiSuggestions` (prefix SQL + clamp + DB-error fallback), client LRU empty-result behavior, updated component contracts. 283 pass / 0 fail; docs `tech/22-hangzhou-poi-local.md` §搜索建议.
+- Tests: domain suggest route contract, `loadHzPoiSuggestions` (prefix SQL + clamp + DB-error fallback), client LRU empty-result behavior, updated component contracts. Run `cd server && npm test` for the current suite result.
 
 ### Changed
 
@@ -244,17 +248,17 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
   - 「偏好 / 求职偏好 / 通知 / 收件箱 / 我的投递」按 L4 分组保留原功能;偏好与通知改动即时后台 PATCH 持久化(不再依赖手动保存)。
   - 行高 46px、右侧 ›、inset 分隔线(14px 内缩)、SF Symbols 风格描边图标(与 map-shell `Icon` 同一套 viewBox 24 / stroke 2 / round 风格,本地化到 `account-panel.tsx`)。
   - 主题对齐:保存按钮由绿改蓝(`--blue`);深色/浅色 + `prefers-reduced-motion` 适配。桌面侧控栏 `authGlyph` 保留(签名状态快速入口,卡片内退出登录为新增)。
-- **Mobile drawer follow-finger physics (`feature/mobile-drawer-physics`).** The bottom drawer (mini `96px` / half `42svh` / full `86svh`) now follows the finger on the grabber: `pointerdown/move/up` with pointer capture writes inline `height` (px) every move under a `.drawerDragging` class that disables `transition`, so the panel tracks the gesture with zero easing lag; CSS `min/max-height` acts as the bounds. On release a position + velocity state machine decides the detent — upward fling (>900 px/s) → `full`, downward fling → `mini`, slow drag → nearest detent by height midpoints — and content visibility follows the finger across detent boundaries (mini shows search only). Content-stack pops are preserved and velocity-aware: detail/JD pulled past the half-way point (or flung) closes to its previous level, non-explore sheets fling back to explore. The snap animates with `cubic-bezier(0.32, 0.72, 0, 1)` over `0.32s` via a rAF hand-off that releases the inline height to the CSS `svh` classes; `prefers-reduced-motion: reduce` snaps instantly. Taps (≤8px) keep the original cycle/back `onClick`; real drags suppress the click. Desktop (≥768px) unaffected — the drawer is hidden there. Docs: `tech/07` drawer interaction section updated to the live gesture contract.
+- **Mobile drawer follow-finger physics (`feature/mobile-drawer-physics`).** The bottom drawer (mini `96px` / half `42svh` / full `86svh`) now follows the finger on the grabber: `pointerdown/move/up` with pointer capture writes inline `height` (px) every move under a `.drawerDragging` class that disables `transition`, so the panel tracks the gesture with zero easing lag; CSS `min/max-height` acts as the bounds. On release a position + velocity state machine decides the detent — upward fling (>900 px/s) → `full`, downward fling → `mini`, slow drag → nearest detent by height midpoints — and content visibility follows the finger across detent boundaries (mini shows search only). Content-stack pops are preserved and velocity-aware: detail/JD pulled past the half-way point (or flung) closes to its previous level, non-explore sheets fling back to explore. The snap animates with `cubic-bezier(0.32, 0.72, 0, 1)` over `0.32s` via a rAF hand-off that releases the inline height to the CSS `svh` classes; `prefers-reduced-motion: reduce` snaps instantly. Taps (≤8px) keep the original cycle/back `onClick`; real drags suppress the click. Desktop (≥768px) unaffected — the drawer is hidden there. The interaction contract is historical; the current implementation is in tracked source and `server/README.md`.
 
 ### Fixed
 
-- **LLM 校验 10 条 fail 数据修正（B2.1，`fix/b2-1-validation-fails`）.** 用户已批准 `tech/roles/data/fix-plan-20260817.md` 方案并全量执行（2026-08-17 首跑 817 条:82 pass / 724 warn / 10 fail / 1 error）:
+- **LLM 校验 10 条 fail 数据修正（B2.1，`fix/b2-1-validation-fails`）.** 用户已批准当时的内部数据修正方案并全量执行（2026-08-17 首跑 817 条:82 pass / 724 warn / 10 fail / 1 error）:
   - **移除 4 条**（整个 position 对象删除）:`radar-c08140d30e81`（博世智能驾控，问卷星投递硬伤）、`radar-732fce657587`（学而思网校，标题=城市列表）、`portal-megvii-social`（megvii 官网入口）、`portal-tigermed-moka`（tigermed 官网入口）。
   - **修正标题 3 条**（仅 title）:`radar-52e776ddb58f` →「暑期实习(咨询顾问方向)」、`radar-a6a104980035` →「实习生(研究/投行方向)」、`radar-e49ce7364a1a` →「攻防渗透工程师」。
   - **标注聚合 3 条**（补 `aggregate: true`）:`radar-ce7419500bcc`（度小满）、`radar-cf5a954e8f78`（曼伦）、`radar-a72738f8085f`（申万宏源研究）。
   - **DB 清理**:`positions` 表删除 2 行（博世/学而思不在 DB）,删除前已 SELECT 确认。
   - **全量重跑（2026-08-18）:813 条 = 86 pass / 718 warn / 8 fail / 1 error**。修正的 3 条 titleReal 全部翻 true;讯飞 `radar-b871edcdf925`（原 error）被覆盖为 warn;C 组标注聚合行按预期仍可能 fail/warn（标注即交付物,不改标题不修校验器）。剩余 8 fail 为同类「招聘计划/专项/入口名」标题,留待后续拆解/决策;剩余 1 error 为腾讯 `radar-302c5ea36a84`（LLM 空响应,与本次数据修正无关,下次全量自动覆盖）。
-  - 报告 `tech/roles/data/validation-report-20260818.json`（gitignored）;统计同步 `data-quality.md`。
+  - 报告为未跟踪的历史内部材料；统计同步当时的 data-quality 记录。
 - **筛选相关测试同步新范围/新筛选（`search-logic` / `search-integration`）.** `metersToDistanceKm` 吸附断言按 step 1 / max 50 更新；price 档位中点映射与真实 cost 优先各有新断言；`minRating` range 与旧数值兼容覆盖；work filter-options 契约断言移除 industry/district/providesShuttle 并锁定新范围。
 - **Search suggestions (autocomplete) — candidate list never landed / clicks did nothing (`feature/suggest-fix`).** Four verified causes, all fixed:
   1. Suggest effect deps `[query, mode, zoom, catalog]` — `catalog` replaces on every batch (hz-poi Stage 4) and `zoom` on every pan, so the 200 ms debounce timer was reset before firing; candidates never rendered. Deps narrowed to `[query, mode]`; `zoom`/`catalog` read via refs.
@@ -264,7 +268,7 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Fixed
 
-- **公司 POI 与地图 POI 混合展示(视口批次跨模式污染,`fix/poi-mixing`).** 视口加载器(moveend/zoomend 防抖)的 `onBatch` 缺模式守卫:工作模式的在飞批次在切换模式后落进 Domain 的 catalog,列表出现公司卡、地图出现公司徽章;被污染的 catalog 又经模式切换写入 sessionStorage 缓存,跨会话粘住(「经常」的根因).修复:新增 `batchMatchesCurrentMode` 模式守卫,主加载 + 视口加载的工作/Domain 四处落库点统一校验;`MODE_CACHE_VERSION` 5→6 使已污染缓存失效.复现/根因/修复详 `tech/roles/testing/test-reports/bug-reports.md`.
+- **公司 POI 与地图 POI 混合展示(视口批次跨模式污染,`fix/poi-mixing`).** 视口加载器(moveend/zoomend 防抖)的 `onBatch` 缺模式守卫:工作模式的在飞批次在切换模式后落进 Domain 的 catalog,列表出现公司卡、地图出现公司徽章;被污染的 catalog 又经模式切换写入 sessionStorage 缓存,跨会话粘住(「经常」的根因).修复:新增 `batchMatchesCurrentMode` 模式守卫,主加载 + 视口加载的工作/Domain 四处落库点统一校验;`MODE_CACHE_VERSION` 5→6 使已污染缓存失效.历史测试报告未随当前 checkout 发布.
 
 ### 产品口径确认(2026-08-18,未改数据语义)
 
@@ -278,21 +282,21 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ### Added
 
-- **Hangzhou POI localization (`feature/hz-poi-local`, Stages 1–4).** AMap quota (10044) hit on 2026-08-17 made the browser 36-call PlaceSearch viewport refresh untenable. User's 1,006,185-row Hangzhou POI export (authorized, photos included) now lives in `hz_pois` (migration `013`): GCJ-02 geom (zero-conversion, matches AMap tiles), tier 0..21 visible-min-zoom mapping (noise classes hidden at 21), idempotent staged import (`server/scripts/import-hz-pois.mjs`, `npm run import:hz:pois:apply`, re-run keeps count 1,006,158). Read path `GET /api/pois/domain-local` (bbox + zoom tier + ILIKE + big_type, common-filter pushed down, rating/photos order, 30s cache). Frontend forks on `inHangzhouBox`: in-HZ browse = local 50/batch infinite scroll capped 1000 (IntersectionObserver sentinel, 「已达加载上限」); in-HZ keyword = local first, AMap 1-call fallback on 0 hits; out-of-HZ = AMap fallback 1 call (25) per scroll, failures return 0 without hanging. UI per user spec: viewport-change replace+fade refresh (800ms debounce), load-more button removed, refresh button only at 0 cards, top counter removed (bottom sentinel text only). Docs: `tech/22-hangzhou-poi-local.md`, `tech/roles/data/etl/hangzhou-poi.md`, `data-sources.md` register row.
+- **Hangzhou POI localization (`feature/hz-poi-local`, Stages 1–4).** AMap quota (10044) hit on 2026-08-17 made the browser 36-call PlaceSearch viewport refresh untenable. User's 1,006,185-row Hangzhou POI export (authorized, photos included) now lives in `hz_pois` (migration `013`): GCJ-02 geom (zero-conversion, matches AMap tiles), tier 0..21 visible-min-zoom mapping (noise classes hidden at 21), idempotent staged import (`server/scripts/import-hz-pois.mjs`, `npm run import:hz:pois:apply`, re-run keeps count 1,006,158). Read path `GET /api/pois/domain-local` (bbox + zoom tier + ILIKE + big_type, common-filter pushed down, rating/photos order, 30s cache). Frontend forks on `inHangzhouBox`: in-HZ browse = local 50/batch infinite scroll capped 1000 (IntersectionObserver sentinel, 「已达加载上限」); in-HZ keyword = local first, AMap 1-call fallback on 0 hits; out-of-HZ = AMap fallback 1 call (25) per scroll, failures return 0 without hanging. UI per user spec: viewport-change replace+fade refresh (800ms debounce), load-more button removed, refresh button only at 0 cards, top counter removed (bottom sentinel text only). Current implementation details are in tracked source, `server/README.md`, and migration `013`; historical source-review records are not in this checkout.
 
 - Guest Recent in the browser: persistable (work/internship) queries write `dm.guest-search-history.v1` (cap 30). Sign-in merges rows the account does not have and keeps a local mirror; sign-out restores. `lib/persistable.ts` is the extension seam (`PERSISTABLE_MODES`; add `college` when that catalog lands).
 - Saved + Recent persist only recruitment catalog POIs. Domain AMap bookmarks are hidden; `POST /api/me/saved` and `POST /api/me/search-history` return 400 `NOT_PERSISTABLE` for non-persistable rows.
 - Map-mode suggestion pick upserts a session `DomainPOI` (`suggestionToDomainPoi` + `mergePoisById`) so a card exists. Empty search boxes no longer render trending tags (Recent L2 still does).
 - Login: Other = GitHub / Google / WeChat icon rows (X removed); mobile hides the promo and spaces method tabs with vertical dividers. Drawer handle gap unified via `--drawer-handle-gap`.
-- Real recruitment data: `crawler/app/domain_map_importer/` — polite acquisition (`acquire.py`: robots + blocked commercial hosts; `html_jobs.py`: JSON-LD then link fallback; `radar_jobs.py`: maps the published Apache-2.0 `jobs.json`; `official_refresh.py`; `cli.py`). Server `radar` adapter + `mergeCompaniesIntoPois`; offline catalog filters ungeocoded sites (no (0,0) pins). Drops: `server/data/recruitment/radar/` (98 companies / 125 jobs) + curated verified official portals (betta / megvii / deepseek). Import plan now 137 companies / 240 positions. Source reviews: `tech/roles/data/etl/`; evidence: `tech/roles/data/data-quality.md`. `make refresh-radar` / `make crawl-official`.
-- Freshness presentation proposal (awaiting approval): `tech/17-freshness-presentation-proposal.md`.
-- Parallel-development principle (worktree-first, user-stated): always develop in a git worktree cut from `dev` (`feature/` / `fix/`), merge back to `dev`; subagents each own a worktree. Persisted in `CLAUDE.md` (new always-on instruction), `agent.md`, `tech/04-workflow.md`, `.claude/skills/parallel-development/SKILL.md`, and project memory.
+- Real recruitment data: `crawler/app/domain_map_importer/` — polite acquisition (`acquire.py`: robots + blocked commercial hosts; `html_jobs.py`: JSON-LD then link fallback; `radar_jobs.py`: maps the published Apache-2.0 `jobs.json`; `official_refresh.py`; `cli.py`). Server `radar` adapter + `mergeCompaniesIntoPois`; offline catalog filters ungeocoded sites (no (0,0) pins). Drops: `server/data/recruitment/radar/` (98 companies / 125 jobs) + curated verified official portals (betta / megvii / deepseek). Import plan now 137 companies / 240 positions. Source-review and evidence records are historical internal materials not included in this checkout. `make refresh-radar` / `make crawl-official`.
+- Freshness presentation proposal (awaiting approval): historical proposal record not included in this checkout.
+- Parallel-development principle (worktree-first, user-stated): always develop in a git worktree cut from `dev` (`feature/` / `fix/`), merge back to `dev`; subagents each own a worktree. Persisted in `CLAUDE.md` (new always-on instruction), `agent.md`, 历史内部流程记录, 当前 agent harness, and project memory.
 - **dev sync (2026-08-17):** `feature/phase-2-multi-mode` merged into `dev` (fast-forward, no conflicts) — all of Phase 1/2 now lives on `dev`; new work cuts `feature/` / `fix/` branches from `dev`.
-- **National-scale plan + parallel workstreams (2026-08-17):** `tech/18-national-scale-plan.md` records the architecture decisions — D1 (Domain mode calls AMap API directly, no POI import; work mode is nationwide, pre-crawled into Postgres), A1 (only live real positions show), B1 (company↔site↔position authenticity, LLM concurrent validation), D2 (pre-crawl 北上广深成都武汉 first). Four parallel agent sessions defined with file boundaries + merge order: `tech/roles/development/parallel-sessions/` (ws1 national-db-schema / ws2 multi-city-data / ws3 llm-validation / ws4 work-viewport-lod).
+- **National-scale plan + parallel workstreams (2026-08-17):** 历史内部规划记录了架构决策 — D1 (Domain mode calls AMap API directly, no POI import; work mode is nationwide, pre-crawled into Postgres), A1 (only live real positions show), B1 (company↔site↔position authenticity, LLM concurrent validation), D2 (pre-crawl 北上广深成都武汉 first). 当时定义的四个并行 agent workstream 及合并顺序属于历史批次材料，不是当前 checkout 的入口。
 - **WS1–4 merged to `dev` (2026-08-17, `4ea0c79`..`12c00df`):** national DB schema + read paths (migration `011`: `companies.tier` / `company_sites.province`/`city_code` / `geom_geog` gist / alive partial index), multi-city radar drops (630 companies / 761 jobs, per-city sites, aggregate flags), LLM validation script (`server/scripts/validate-positions-llm.mjs`, env `LLM_API_KEY`/`LLM_MODEL`/`LLM_BASE_URL`, dry-run without key), work-mode viewport loading + LOD + client alive filter. Zero manual merge conflicts; gates green at every step.
-- **Tier model rework + company category (2026-08-17):** `tier` is now the visible-min-zoom 0..21 (`lod.ts` identity mapping `maxTierForZoom(zoom)=floor(zoom)`; 0=always visible, 21=never, default 12; SQL `tier <= zoom` unchanged; migration `012` replaces the `1..3` CHECK). New `companies.category` = national-standard GB/T 4754-2017 industry class code (`text`, default `'other'`). Labeling guide + dev plan: `tech/19-company-labeling.md` / `tech/20-development-plan.md`. `isAlivePosition` consolidated into `lib/position-alive.ts` (was duplicated in `freshness.ts`).
+- **Tier model rework + company category (2026-08-17):** `tier` is now the visible-min-zoom 0..21 (`lod.ts` identity mapping `maxTierForZoom(zoom)=floor(zoom)`; 0=always visible, 21=never, default 12; SQL `tier <= zoom` unchanged; migration `012` replaces the `1..3` CHECK). New `companies.category` = national-standard GB/T 4754-2017 industry class code (`text`, default `'other'`). Labeling support is in tracked `server/scripts/apply-company-labels.mjs` and `server/scripts/qa-labels.mjs`; the historical guide and development plan are not in this checkout. `isAlivePosition` consolidated into `lib/position-alive.ts` (was duplicated in `freshness.ts`).
 - **Company labeling, all 668 drops (2026-08-17):** tier (0..21) + category (GB/T class) for every company — 28 hand-approved anchors + 5 parallel shard labelers, QA-gated (`server/scripts/qa-labels.mjs`: coverage / value ranges / anchor bands / variant consistency; drift unified: 京东/美团/拼多多/比亚迪/百度 → national 4-6). 30 GB classes hit, `other` only 8. Tools kept: `apply-company-labels.mjs` (idempotent write-back), `split-aggregates-report.mjs` (696 aggregate-row split plan). Import plan unchanged: 669 companies / 1440 sites / 877 positions, 0 issues.
-- **LLM validation full run + verdict fix (2026-08-17):** 817 items validated with user's DeepSeek key: 82 pass / 724 warn / 10 fail / 1 error. Fixed `verdictLevel`: aggregate rows are warn, not fail (first run misjudged 692 catalog titles as fake). 10 real fails await user decision (`tech/roles/data/fix-plan-20260817.md`).
+- **LLM validation full run + verdict fix (2026-08-17):** 817 items validated with user's DeepSeek key: 82 pass / 724 warn / 10 fail / 1 error. Fixed `verdictLevel`: aggregate rows are warn, not fail (first run misjudged 692 catalog titles as fake). 10 real fails awaited a user decision in the historical internal data-fix record, which is not in this checkout.
 
 ### Fixed
 
@@ -340,8 +344,8 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 - Layers L2 frost card: saved overlay + persisted basemap style.
 - Public read API 30s process cache (`lib/public-cache.ts`).
 - Shared `lib/server-catalog.ts` for `/api/pois`, `/api/pois/[id]`, `/api/search`, `/api/suggest`.
-- Home lazy-loads `MapShell` from a Client Component (`home-map.tsx` + `next/dynamic`, `ssr: false`). Next 15 rejects `ssr: false` on the Server Component `page.tsx`. Rail panels (detail / JD / auth / Profile / Recent / Saved / Layers) are split the same way inside the shell; hover/focus on the rail prefetches the matching chunk. See `tech/12-bundle-notes.md`.
-- Account SQL / index inventory: `tech/13-db-query-notes.md`.
+- Home lazy-loads `MapShell` from a Client Component (`home-map.tsx` + `next/dynamic`, `ssr: false`). Next 15 rejects `ssr: false` on the Server Component `page.tsx`. Rail panels (detail / JD / auth / Profile / Recent / Saved / Layers) are split the same way inside the shell; hover/focus on the rail prefetches the matching chunk. The implementation remains in tracked source.
+- Account SQL / index inventory was recorded in historical internal notes; current query behavior is in tracked source and tests.
 - Search/filter integration tests: `server/tests/search-integration.test.mjs`.
 - Recruitment import planner: validate / dedupe seed companies (`lib/recruitment-import.ts`, `npm run import:seed`). Live upsert still waits on Postgres.
 - Work seed expanded to 50 Hangzhou public-career companies (still representative examples, not a live crawl).
@@ -388,4 +392,4 @@ Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` a
 
 ## Earlier
 
-Phase 0 docs scaffold and Phase 1 platform baseline (importer, migrations `001`–`004`, Apple Maps shell) landed on `feature/phase-1-platform-baseline`. See `tech/05-milestones.md`.
+Phase 0 docs scaffold and Phase 1 platform baseline (importer, migrations `001`–`004`, Apple Maps shell) landed on `feature/phase-1-platform-baseline`; this historical entry predates the current tracked documentation baseline.

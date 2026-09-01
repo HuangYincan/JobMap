@@ -1122,6 +1122,38 @@ export async function listSaved(userId: string): Promise<SavedPlace[]> {
   }, () => memListSaved(userId));
 }
 
+/**
+ * Strict authenticated read for routes that must never expose the process-local
+ * fallback. `null`/query failure is an availability error, not an empty list.
+ */
+export async function listSavedStrict(userId: string): Promise<SavedPlace[]> {
+  const db = getPoolForCall();
+  if (!db) throw new DbUnavailableError(new Error('database not configured'));
+  try {
+    const result = await db.query<{
+      id: string;
+      poi_id: string;
+      name: string;
+      mode: MapMode;
+      kind: SavedPlace['kind'];
+      address: string | null;
+      lng: number | null;
+      lat: number | null;
+      created_at: Date;
+    }>(
+      `SELECT id::text, poi_id, name, mode, kind, address, lng, lat, created_at
+       FROM saved_places
+       WHERE user_id = $1
+       ORDER BY created_at DESC, id DESC
+       LIMIT $2`,
+      [userId, SAVED_STORAGE_MAX],
+    );
+    return result.rows.map(asSaved);
+  } catch (err) {
+    throw new DbUnavailableError(err);
+  }
+}
+
 export async function savePlace(
   userId: string,
   place: Omit<SavedPlace, 'id' | 'createdAt'>,
@@ -1155,6 +1187,18 @@ export async function removeSaved(userId: string, poiId: string): Promise<boolea
     const result = await db.query(`DELETE FROM saved_places WHERE user_id = $1 AND poi_id = $2`, [userId, poiId]);
     return (result.rowCount ?? 0) > 0;
   }, () => memRemoveSaved(userId, poiId));
+}
+
+/** Strict counterpart used by the catalog-only saved API. */
+export async function removeSavedStrict(userId: string, poiId: string): Promise<boolean> {
+  const db = getPoolForCall();
+  if (!db) throw new DbUnavailableError(new Error('database not configured'));
+  try {
+    const result = await db.query(`DELETE FROM saved_places WHERE user_id = $1 AND poi_id = $2`, [userId, poiId]);
+    return (result.rowCount ?? 0) > 0;
+  } catch (err) {
+    throw new DbUnavailableError(err);
+  }
 }
 
 function asApplication(row: {

@@ -700,17 +700,22 @@ test('runAgent: 带 userId 且有记忆 → system 首条含记忆段(最新在�
   }
 });
 
-test('runAgent: 无 userId / 空记忆 → system 不含记忆段', async () => {
+test('runAgent: 被拒绝的敏感记忆与无 userId 均不进入 system prompt', async () => {
   __memoryStoreTest.poolOverride = () => null;
   try {
     await clearMemories('mem-run-2');
+    await addMemory('mem-run-2', '我的密码是 123456');
     const mp1 = mockProvider([{ deltas: ['a'] }]);
-    await collectEvents(baseReq({ provider: mp1 }));
-    assert.ok(!mp1.seen[0].messages[0].content.includes('用户记忆'), '无 userId 不注入记忆段');
+    await collectEvents(baseReq({ userId: 'mem-run-2', provider: mp1 }));
+    assert.ok(!mp1.seen[0].messages[0].content.includes('用户记忆'), '被拒绝的敏感记忆不进入 prompt');
 
     const mp2 = mockProvider([{ deltas: ['b'] }]);
-    await collectEvents(baseReq({ userId: 'mem-run-2', provider: mp2 }));
-    assert.ok(!mp2.seen[0].messages[0].content.includes('用户记忆'), '空记忆不注入记忆段');
+    await collectEvents(baseReq({ provider: mp2 }));
+    assert.ok(!mp2.seen[0].messages[0].content.includes('用户记忆'), '无 userId 不注入记忆段');
+
+    const mp3 = mockProvider([{ deltas: ['c'] }]);
+    await collectEvents(baseReq({ userId: 'mem-run-2', provider: mp3 }));
+    assert.ok(!mp3.seen[0].messages[0].content.includes('用户记忆'), '拒绝敏感内容后该用户无可注入记忆');
   } finally {
     __memoryStoreTest.poolOverride = undefined;
   }

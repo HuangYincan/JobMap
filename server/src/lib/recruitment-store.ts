@@ -8,6 +8,7 @@ import { getPool, queryPublicRead } from './db.ts';
 import { isCityCenterPin } from './city-centers.ts';
 import { resolveCompanyLogo, type ResolvedLogo } from './company-logo.ts';
 import { cityBoundsConsistencySql, companySitesSpatialSql, hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
+import { ilike, likeContains, likePrefix } from './sql-like.ts';
 import type { ApplySource, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
 
 type DbPoolLike = {
@@ -542,14 +543,14 @@ function sqlSuggestionMatch(
   const terms = suggestSearchGroups(query);
   const clauses = terms.map((group) => {
     const alternatives = group.flatMap((term) => {
-      const patterns = [`${term}%`];
+      const patterns = [likePrefix(term)];
       // The existing title trigram index can serve longer contains matches;
       // short aliases stay prefix-only to avoid broad two-character scans.
-      if (term.length >= 3) patterns.push(`%${term}%`);
+      if (term.length >= 3) patterns.push(likeContains(term));
       return patterns.flatMap((pattern) => {
         const placeholder = `$${index++}`;
         params.push(pattern);
-        return fields.map((field) => `${field} ILIKE ${placeholder}`);
+        return fields.map((field) => ilike(field, placeholder));
       });
     });
     return alternatives.length > 1 ? `(${alternatives.join(' OR ')})` : alternatives[0];
@@ -623,54 +624,101 @@ export async function loadWorkSuggestionsFromDb(
   }
 }
 
-/** Count a tag without materializing all company/site/position rows. */
+type WorkTag = { key: string; value: string };
+
+function tagCountClause(tag: WorkTag, start: number): { clause: string; params: unknown[] } | null {
+  // benefits/班车 are not persisted by buildRecruitmentPois, so preserve the
+  // existing zero-count semantics without touching the database.
+  if (tag.key === 'providesHousing' || tag.key === 'providesShuttle') return null;
+  if (tag.key === 'scale') return { clause: `c.scale = $${start}`, params: [tag.value] };
+  if (tag.key === 'education') return { clause: `p.education = $${start}`, params: [tag.value] };
+  if (tag.key === 'jobTaxonomy') {
+    const [family, detail] = tag.value.split('/');
+    if (detail && family === 'intern') {
+      return {
+        clause: `p.family = $${start} AND (p.taxonomy->>'internKind' = $${start + 1} OR p.taxonomy->>'conversion' = $${start + 1})`,
+        params: [family, detail],
+      };
+    }
+    return {
+      clause: detail
+        ? `p.family = $${start} AND p.taxonomy->>$${start + 1} = $${start + 2}`
+        : `p.family = $${start}`,
+      params: detail
+        ? [family, family === 'intern' ? 'internKind' : 'campusSeason', detail]
+        : [family],
+    };
+  }
+  if (tag.key !== 'roleFamily') return null;
+  // Keep this regex list aligned with job-taxonomy.ts. These are constants,
+  // not user-supplied regular expressions.
+  const hay = `concat_ws(' ', p.title, COALESCE(p.department, ''), array_to_string(p.skills, ' '))`;
+  if (tag.value === 'ops') return { clause: `${hay} ~* $${start}`, params: ['运营'] };
+  if (tag.value === 'product') {
+    return { clause: `${hay} ~* $${start} AND NOT ${hay} ~* $${start + 1}`, params: ['产品', '运营'] };
+  }
+  if (tag.value === 'design') {
+    return { clause: `${hay} ~* $${start} AND NOT ${hay} ~* $${start + 1}`, params: ['视觉|设计师|UI|UX', '芯片'] };
+  }
+  if (tag.value === 'tech') {
+    return {
+      clause: `${hay} ~* $${start} AND NOT ${hay} ~* $${start + 1} AND NOT ${hay} ~* $${start + 2}`,
+      params: [
+        '前端|后端|算法|开发|工程|Java|Android|iOS|SLAM|NLP|Infra|芯片|嵌入式|SRE|测试|数据',
+        '运营',
+        '产品经理',
+      ],
+    };
+  }
+  return null;
+}
+
+/** Batch all tag counts into one bounded aggregate join per suggestion miss. */
+export async function countWorkTagMatchesBatchFromDb(
+  tags: readonly WorkTag[],
+  pool: DbPoolLike | null = getPool(),
+): Promise<number[] | null> {
+  if (!pool) return null;
+  if (tags.length === 0) return [];
+  if (!tags.some((tag) => tagCountClause(tag, 1) !== null)) return tags.map(() => 0);
+
+  const params: unknown[] = [];
+  let index = 1;
+  const expressions = tags.map((tag, tagIndex) => {
+    const built = tagCountClause(tag, index);
+    if (!built) return `0::bigint AS count_${tagIndex}`;
+    params.push(...built.params);
+    index += built.params.length;
+    return `count(DISTINCT s.id) FILTER (WHERE ${built.clause})::text AS count_${tagIndex}`;
+  });
+  try {
+    const result = await queryPublicRead<Record<string, string>>(
+      pool,
+      `SELECT ${expressions.join(',\n              ')}
+       FROM companies c
+       JOIN company_sites s ON s.company_id = c.id
+       JOIN positions p ON p.company_id = c.id
+       WHERE s.geom IS NOT NULL
+         AND (p.site_id = s.id OR p.taxonomy->>'aggregate' = 'true')
+         AND p.status = 'open'
+         AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)`,
+      params,
+    );
+    const row = result.rows[0] ?? {};
+    return tags.map((_, tagIndex) => Number(row[`count_${tagIndex}`] ?? 0));
+  } catch {
+    return null;
+  }
+}
+
+/** Count one tag via a legacy-shaped aggregate for direct callers/tests. */
 export async function countWorkTagMatchesFromDb(
-  tag: { key: string; value: string },
+  tag: WorkTag,
   pool: DbPoolLike | null = getPool(),
 ): Promise<number | null> {
   if (!pool) return null;
-  // benefits/班车 未持久化到 DB（buildRecruitmentPois 不产出 benefits），与旧
-  // JS countPoisMatchingTag 对 DB catalog 的行为一致：恒为 0，不按全量计数。
-  if (tag.key === 'providesHousing' || tag.key === 'providesShuttle') return 0;
-  let clause = `TRUE`;
-  const params: unknown[] = [];
-  if (tag.key === 'scale') {
-    clause = 'c.scale = $1';
-    params.push(tag.value);
-  } else if (tag.key === 'jobTaxonomy') {
-    const [family, detail] = tag.value.split('/');
-    if (detail && family === 'intern') {
-      // 与 positionMatchesTaxonomy 的 intern 语义一致：internKind 或 conversion。
-      clause = `p.family = $1 AND (p.taxonomy->>'internKind' = $2 OR p.taxonomy->>'conversion' = $2)`;
-      params.push(family, detail);
-    } else {
-      clause = detail
-        ? `p.family = $1 AND p.taxonomy->>$2 = $3`
-        : 'p.family = $1';
-      params.push(family);
-      if (detail) params.push(family === 'intern' ? 'internKind' : 'campusSeason', detail);
-    }
-  } else if (tag.key === 'education') {
-    clause = 'p.education = $1';
-    params.push(tag.value);
-  } else if (tag.key === 'roleFamily') {
-    // 对齐 job-taxonomy.ts 的 positionMatchesRole 关键词（含 skills），
-    // 避免「技术」「设计」这种窄模式把 tech/design 计数显著低估。
-    const hay = `concat_ws(' ', p.title, COALESCE(p.department, ''), array_to_string(p.skills, ' '))`;
-    if (tag.value === 'ops') {
-      clause = `${hay} ~* $1`;
-      params.push('运营');
-    } else if (tag.value === 'product') {
-      clause = `${hay} ~* $1 AND NOT ${hay} ~* $2`;
-      params.push('产品', '运营');
-    } else if (tag.value === 'design') {
-      clause = `${hay} ~* $1 AND NOT ${hay} ~* $2`;
-      params.push('视觉|设计师|UI|UX', '芯片');
-    } else if (tag.value === 'tech') {
-      clause = `${hay} ~* $1 AND NOT ${hay} ~* $2 AND NOT ${hay} ~* $3`;
-      params.push('前端|后端|算法|开发|工程|Java|Android|iOS|SLAM|NLP|Infra|芯片|嵌入式|SRE|测试|数据', '运营', '产品经理');
-    }
-  }
+  const built = tagCountClause(tag, 1);
+  if (!built) return 0;
   try {
     const result = await queryPublicRead<{ count: string }>(
       pool,
@@ -682,14 +730,15 @@ export async function countWorkTagMatchesFromDb(
          AND (p.site_id = s.id OR p.taxonomy->>'aggregate' = 'true')
          AND p.status = 'open'
          AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
-         AND ${clause}`,
-      params,
+         AND ${built.clause}`,
+      built.params,
     );
     return Number(result.rows[0]?.count ?? 0);
   } catch {
     return null;
   }
 }
+
 
 export interface WorkPlaceRow {
   slug: string;
@@ -720,17 +769,19 @@ export async function searchWorkSitesForPlace(
   let index = 1;
   const fieldMatch = needles
     .map((term) => {
-      const pattern = /[\u4e00-\u9fff]/.test(term) || term.length >= 3 ? `%${term}%` : `${term}%`;
+      const pattern = /[\u4e00-\u9fff]/.test(term) || term.length >= 3
+        ? likeContains(term)
+        : likePrefix(term);
       const placeholder = `$${index++}`;
       params.push(pattern);
-      return `(c.name ILIKE ${placeholder} OR c.slug ILIKE ${placeholder} OR s.name ILIKE ${placeholder})`;
+      return `(${ilike('c.name', placeholder)} OR ${ilike('c.slug', placeholder)} OR ${ilike('s.name', placeholder)})`;
     })
     .join(' OR ');
   let citySql = '';
   if (city && city.trim()) {
     const placeholder = `$${index++}`;
-    params.push(`%${city.trim()}%`);
-    citySql = ` AND (s.city ILIKE ${placeholder} OR s.province ILIKE ${placeholder})`;
+    params.push(likeContains(city.trim()));
+    citySql = ` AND (${ilike('s.city', placeholder)} OR ${ilike('s.province', placeholder)})`;
   }
   const limitPlaceholder = `$${index++}`;
   params.push(n);

@@ -7,6 +7,7 @@ import {
   inHangzhouBox,
   parseBizExt,
   parsePhotosUrlArray,
+  normalizePhotoUrls,
   parseTelCell,
   splitLocation,
   tierForCategory,
@@ -17,6 +18,21 @@ test('parsePhotosUrlArray: 空/畸形 → []', () => {
   assert.deepEqual(parsePhotosUrlArray('[]'), []);
   assert.deepEqual(parsePhotosUrlArray('{}'), []);
   assert.deepEqual(parsePhotosUrlArray('{'), []);
+});
+
+test('parsePhotosUrlArray: 非字符串输入 → []', () => {
+  assert.deepEqual(parsePhotosUrlArray(null), []);
+  assert.deepEqual(parsePhotosUrlArray({ url: 'http://a.com' }), []);
+  assert.deepEqual(parsePhotosUrlArray(['http://a.com']), []);
+});
+
+test('normalizePhotoUrls: 只接受字符串数组,脏形状 → []/过滤非字符串', () => {
+  assert.deepEqual(normalizePhotoUrls(null), []);
+  assert.deepEqual(normalizePhotoUrls('http://a.com'), []);
+  assert.deepEqual(normalizePhotoUrls(['http://a.com/1', 42, null, '', 'http://a.com/2']), [
+    'http://a.com/1',
+    'http://a.com/2',
+  ]);
 });
 
 test('parsePhotosUrlArray: 单引号 python-repr → url 数组', () => {

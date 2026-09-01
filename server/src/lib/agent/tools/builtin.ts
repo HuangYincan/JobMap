@@ -7,7 +7,12 @@
 
 import type { AgentTool, ToolResult } from '../types.ts';
 import { DbUnavailableError } from '../../account-store.ts';
-import { addMemory, sanitizeMemoryContent } from '../../memory-store.ts';
+import {
+  addMemory,
+  isSensitiveMemoryContent,
+  MEMORY_SENSITIVE_CONTENT_MESSAGE,
+  sanitizeMemoryContent,
+} from '../../memory-store.ts';
 
 /**
  * 构建 builtin 工具组。
@@ -57,14 +62,14 @@ export function builtinTools(getToolNames?: () => string[]): AgentTool[] {
 /**
  * 用户记忆保存工具(2026-08-22 ws-mem-a;tech/30-agent-memory.md §4)。
  * 仅在会话用户已登录时由 route 追加进工具集;ctx.userId 缺失(guest/防御)一律拒绝。
- * 敏感信息不做硬性拦截——由工具描述约束 LLM 不保存密码/密钥/完整地址等,
- * 存储层只做纯文本 sanitize(trim + 截断 200 字),不解析内容。
+ * 仅保存个人偏好、城市、求职意向等低敏事实;密码、API key/secret/token、验证码、
+ * 私钥/JWT、精确住宅地址与联系方式由工具层先拒绝,存储层另有第二道写入边界。
  */
 export function memorySaveTool(): AgentTool {
   return {
     name: 'builtin__memory_save',
     description:
-      '当用户明确表达个人偏好、身份信息、常驻城市、求职意向等希望长期记住的事实,且对未来的对话有用时,调用本工具保存一条记忆。禁止保存密码、密钥、验证码、完整家庭住址等敏感信息;只保存用户主动表达、可长期复用的事实。',
+      '当用户明确表达个人偏好、身份信息、常驻城市、求职意向等希望长期记住的事实,且对未来的对话有用时,调用本工具保存一条记忆。禁止保存密码、API key/secret/token、验证码、私钥/JWT、精确住宅地址或联系方式等敏感信息;只保存用户主动表达、可长期复用的低敏事实。',
     inputSchema: {
       type: 'object',
       properties: { content: { type: 'string', description: '记忆内容,≤200 字' } },
@@ -73,6 +78,9 @@ export function memorySaveTool(): AgentTool {
     provider: 'builtin',
     async call(input: Record<string, unknown>, ctx): Promise<ToolResult> {
       if (!ctx.userId) return { ok: false, error: '请先登录后再保存记忆' };
+      if (isSensitiveMemoryContent(input.content)) {
+        return { ok: false, error: MEMORY_SENSITIVE_CONTENT_MESSAGE };
+      }
       const content = sanitizeMemoryContent(input.content);
       if (!content) return { ok: false, error: '记忆内容不能为空' };
       try {

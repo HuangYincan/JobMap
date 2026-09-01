@@ -599,6 +599,26 @@ test('saved overlay toggle: camera does not move at all (ws1 saved-layer-nofly)'
   assert.match(shell, /onToggleOverlay=\{handleToggleSavedOverlay\}/);
 });
 
+test('account default mode changes use the full mode transition protocol', () => {
+  const shell = src('components/map-shell.tsx');
+  assert.doesNotMatch(shell, /setMode\(next\.preferences\.defaultMode\)/);
+
+  const refDeclAt = shell.indexOf('const handleModeChangeRef = useRef<(nextMode: MapMode) => void>(() => {});');
+  const refreshAt = shell.indexOf('refreshAccount().then((next) => {');
+  const refreshCallAt = shell.indexOf('handleModeChangeRef.current(next.preferences.defaultMode)', refreshAt);
+  const signedInAt = shell.indexOf('onSignedIn={() => {');
+  const signedInRefreshAt = shell.indexOf('refreshAccount().then((next) => {', signedInAt);
+  const signedInCallAt = shell.indexOf('handleModeChangeRef.current(next.preferences.defaultMode)', signedInRefreshAt);
+  const handlerAt = shell.indexOf('const handleModeChange = useCallback');
+  const refAssignAt = shell.indexOf('handleModeChangeRef.current = handleModeChange;');
+
+  assert.ok(refDeclAt !== -1 && refDeclAt < refreshAt, 'transition ref is stable and declared before account refresh');
+  assert.ok(refreshCallAt > refreshAt, 'initial account refresh routes default mode through transition ref');
+  assert.ok(signedInAt !== -1 && signedInRefreshAt > signedInAt, 'sign-in refresh exists');
+  assert.ok(signedInCallAt > signedInRefreshAt, 'sign-in refresh routes default mode through transition ref');
+  assert.ok(handlerAt !== -1 && refAssignAt > handlerAt, 'transition ref follows handler initialization');
+});
+
 test('geocode apply: manual overrides are city-gated (override poisons multi-city sites)', () => {
   // 2026-08-19 事故:8/17 的杭州 override 被原样套到 -shanghai 站点(禾赛 →
   // 萧山赫兹智造中心)。override 必须按站点城市过滤;legacy 无 city 字段默认杭州市。
