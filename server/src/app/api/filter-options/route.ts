@@ -6,17 +6,17 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { MODES } from '@/lib/modes';
-import type { MapMode } from '@/lib/types';
+import { MODES, parseKnownMode } from '@/lib/modes';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 export function GET(request: Request) {
   const url = new URL(request.url);
-  const mode = url.searchParams.get('mode') as MapMode | null;
+  const rawMode = url.searchParams.get('mode');
+  const mode = rawMode ? parseKnownMode(rawMode) : null;
 
-  if (!mode || !MODES[mode]) {
+  if (!mode) {
     return NextResponse.json(
-      { code: 'INVALID_MODE', message: `unknown mode: ${mode}` },
+      { code: 'INVALID_MODE', message: `unknown mode: ${rawMode}` },
       { status: 400 }
     );
   }

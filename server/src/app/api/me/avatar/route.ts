@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
+
+function noStoreJson(body: unknown, init?: { status?: number; headers?: HeadersInit }) {
+  const response = NextResponse.json(body, {
+    ...init,
+    headers: { "Cache-Control": "no-store", ...(init?.headers ?? {}) },
+  });
+  return response;
+}
 import { readSessionUser } from "@/lib/http-session";
 import { BoundedRateStore } from "@/lib/bounded-rate-store";
-import { getAvatarData, updateAvatar } from "@/lib/account-store";
+import { getAvatarData, updateAvatar, DbUnavailableError } from "@/lib/account-store";
 import { checkAvatarImage, MAX_AVATAR_BYTES, MAX_AVATAR_REQUEST_BYTES } from "@/lib/avatar-image";
 import { readBoundedRequestBody, RequestBodyTooLargeError } from "@/lib/request-body";
 
@@ -16,7 +24,7 @@ import { readBoundedRequestBody, RequestBodyTooLargeError } from "@/lib/request-
 export async function POST(request: Request) {
   const user = await readSessionUser();
   if (!user) {
-    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+    return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
 
   // Authenticated users are still bounded before reading multipart bytes:
@@ -24,7 +32,7 @@ export async function POST(request: Request) {
   const now = Date.now();
   const retryAfterMs = checkAvatarUploadLimit(user.id, now);
   if (retryAfterMs > 0) {
-    return NextResponse.json(
+    return noStoreJson(
       {
         code: "AVATAR_RATE_LIMITED",
         message: "too many avatar uploads, try again later",
@@ -39,7 +47,7 @@ export async function POST(request: Request) {
   // uploads cannot bypass the Content-Length fast path.
   const contentLength = Number(request.headers.get("content-length"));
   if (Number.isInteger(contentLength) && contentLength > MAX_AVATAR_REQUEST_BYTES) {
-    return NextResponse.json({ code: "AVATAR_TOO_LARGE", message: "avatar too large" }, { status: 400 });
+    return noStoreJson({ code: "AVATAR_TOO_LARGE", message: "avatar too large" }, { status: 400 });
   }
 
   let file: File | null = null;
@@ -59,18 +67,18 @@ export async function POST(request: Request) {
     file = entry instanceof File ? entry : null;
   } catch (error) {
     if (error instanceof RequestBodyTooLargeError) {
-      return NextResponse.json({ code: "AVATAR_TOO_LARGE", message: "avatar too large" }, { status: 400 });
+      return noStoreJson({ code: "AVATAR_TOO_LARGE", message: "avatar too large" }, { status: 400 });
     }
-    return NextResponse.json({ code: "BAD_REQUEST", message: "invalid multipart form" }, { status: 400 });
+    return noStoreJson({ code: "BAD_REQUEST", message: "invalid multipart form" }, { status: 400 });
   }
   if (!file) {
-    return NextResponse.json({ code: "BAD_REQUEST", message: "missing file field" }, { status: 400 });
+    return noStoreJson({ code: "BAD_REQUEST", message: "missing file field" }, { status: 400 });
   }
 
   // Reject by File.size first so an oversized upload is never materialized in a
   // full ArrayBuffer just to fail the same byte-limit check.
   if (file.size > MAX_AVATAR_BYTES) {
-    return NextResponse.json(
+    return noStoreJson(
       { code: "AVATAR_TOO_LARGE", message: "avatar too large" },
       { status: 400 },
     );
@@ -86,14 +94,24 @@ export async function POST(request: Request) {
         : check.reason === "not-image"
           ? "avatar must be a JPEG or PNG image"
           : "unreadable or oversized image dimensions";
-    return NextResponse.json({ code, message }, { status: 400 });
+    return noStoreJson({ code, message }, { status: 400 });
   }
 
-  const next = await updateAvatar(user.id, {
-    data: bytes,
-    url: `/api/me/avatar?v=${Date.now()}`,
-  });
-  return NextResponse.json({ user: next });
+  try {
+    const next = await updateAvatar(user.id, {
+      data: bytes,
+      url: `/api/me/avatar?v=${Date.now()}`,
+    });
+    return noStoreJson({ user: next });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
 }
 
 const AVATAR_UPLOAD_WINDOW_MS = 60 * 60 * 1000;
@@ -119,11 +137,11 @@ function recordAvatarUpload(userId: string, now: number): void {
 export async function GET() {
   const user = await readSessionUser();
   if (!user) {
-    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+    return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
   const data = await getAvatarData(user.id);
   if (!data || data.length === 0) {
-    return NextResponse.json({ code: "NOT_FOUND", message: "no avatar uploaded" }, { status: 404 });
+    return noStoreJson({ code: "NOT_FOUND", message: "no avatar uploaded" }, { status: 404 });
   }
   const check = checkAvatarImage(data);
   const mime = check.ok ? check.mime : "image/jpeg";

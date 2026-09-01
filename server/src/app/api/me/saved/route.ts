@@ -6,8 +6,8 @@ import {
   removeSavedStrict,
   savePlace,
 } from "@/lib/account-store";
-import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
-import { canonicalMode } from "@/lib/modes";
+import { RequestBodyTooLargeError, readJsonObjectBody } from '@/lib/request-body';
+import { canonicalMode, parseKnownMode } from "@/lib/modes";
 import { loadServerCatalogByIdStrict } from "@/lib/server-catalog";
 import { isPersistableSavedSnapshot } from "@/lib/persistable";
 import type { MapMode, RecruitmentPOI } from "@/lib/types";
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     lat?: number;
   };
   try {
-    body = await readJsonBody<typeof body>(request);
+    body = await readJsonObjectBody<typeof body>(request);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
       return noStoreJson(
@@ -80,8 +80,20 @@ export async function POST(request: Request) {
     }
     return noStoreJson({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
   }
-  const poiId = (typeof body.poiId === "string" ? body.poiId : "").trim();
-  const name = (typeof body.name === "string" ? body.name : "").trim();
+  if (typeof body.poiId !== "string" || typeof body.name !== "string") {
+    return noStoreJson({ code: "BAD_REQUEST", message: "poiId and name must be strings" }, { status: 400 });
+  }
+  if (body.mode !== undefined && typeof body.mode !== "string") {
+    return noStoreJson({ code: "BAD_REQUEST", message: "mode must be a string" }, { status: 400 });
+  }
+  if (body.address !== undefined && typeof body.address !== "string") {
+    return noStoreJson({ code: "BAD_REQUEST", message: "address must be a string" }, { status: 400 });
+  }
+  if (body.kind !== undefined && body.kind !== "domain" && body.kind !== "recruitment") {
+    return noStoreJson({ code: "BAD_REQUEST", message: "invalid kind" }, { status: 400 });
+  }
+  const poiId = body.poiId.trim();
+  const name = body.name.trim();
   if (!poiId || !name) {
     return noStoreJson({ code: "BAD_REQUEST", message: "poiId and name required" }, { status: 400 });
   }
@@ -97,7 +109,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  if (typeof body.address === "string" && body.address.length > MAX_ADDRESS_LENGTH) {
+  if (body.address !== undefined && body.address.length > MAX_ADDRESS_LENGTH) {
     return noStoreJson(
       { code: "ADDRESS_TOO_LONG", message: `address must be at most ${MAX_ADDRESS_LENGTH} chars` },
       { status: 400 },
@@ -121,8 +133,10 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const rawMode = typeof body.mode === "string" ? body.mode : "work";
-  const mode = canonicalMode(rawMode as MapMode);
+  const mode = parseKnownMode(body.mode);
+  if (!mode) {
+    return noStoreJson({ code: "INVALID_MODE", message: "unknown mode" }, { status: 400 });
+  }
   const kind = body.kind === "recruitment" ? "recruitment" : "domain";
   if (!isPersistableSavedSnapshot({ mode, kind })) {
     return noStoreJson(

@@ -5,6 +5,7 @@ import {
   DEFAULT_JSON_BODY_MAX_CHARS,
   readBoundedRequestBody,
   readJsonBody,
+  readJsonObjectBody,
   RequestBodyTooLargeError,
 } from '../src/lib/request-body.ts';
 
@@ -51,7 +52,13 @@ test('readJsonBody rejects oversized bodies before JSON.parse semantics', async 
   await assert.rejects(readJsonBody(request, 64), RequestBodyTooLargeError);
 });
 
-test('readJsonBody rejects malformed JSON with SyntaxError', async () => {
-  await assert.rejects(readJsonBody(jsonRequest('{broken'), 64), SyntaxError);
-  assert.equal(DEFAULT_JSON_BODY_MAX_CHARS, 16 * 1024);
+test('readJsonObjectBody accepts only plain object roots', async () => {
+  assert.deepEqual(await readJsonObjectBody(jsonRequest({ ok: true }), 64), { ok: true });
+  for (const body of [null, [], 'text', 42, true]) {
+    await assert.rejects(readJsonObjectBody(jsonRequest(JSON.stringify(body)), 64), (error) => {
+      assert.ok(error instanceof TypeError);
+      assert.equal(error.message, 'JSON body must be a plain object');
+      return true;
+    });
+  }
 });

@@ -1,31 +1,35 @@
-// 客户端 IP / 限流桶键共享解析(quality-scan r2 #1,2026-08-23)。
+// 客户端 IP / 限流桶键共享解析。
 //
-// 三路由(agent/chat、auth/otp/send、auth/password/login)统一代理信任语义:
-// x-forwarded-for 由网络代理注入;客户端直连 Next 时可任意伪造并轮换该头,仅凭
-// 首段取 IP 会让 per-IP 限流桶被绕过(LLM 费用 / OTP 短信 / 登录爆破三处滥用面)。
-// 因此仅当部署在可信反代之后(配置 TRUSTED_PROXY_IPS,逗号分隔的代理出站地址)
-// 才信任转发头;未配置时完全忽略转发头,桶键改用会话指纹(登录用户按会话 cookie
-// 哈希;匿名无 cookie 归入固定桶)——伪造 XFF 不再换桶。
-//
-// 本模块保持零 Next.js 依赖(node:crypto + 标准 Request),node:test 可直接 import;
-// 会话 cookie 的读取(Next 请求上下文,见 lib/http-session readSessionToken)由
-// 调用方完成并注入,本模块只做纯函数解析。
+// Request headers are attacker-controlled. A non-empty TRUSTED_PROXY_IPS is
+// only a configuration allowlist; it cannot prove which peer opened this
+// request. Forwarded headers are therefore ignored unless the caller supplies
+// a separately verified peer address from the hosting/runtime seam. Next.js
+// Request does not expose that peer, so the three public routes deliberately
+// use the session-fingerprint fallback today.
 
 import { createHash } from 'node:crypto';
 
-/** 可信反代出站地址白名单(逗号分隔;空 = 未配置,不信任任何转发头)。 */
+/** 可信反代出站地址白名单(逗号分隔;不等于已验证 peer)。 */
 export const TRUSTED_PROXY_IPS: string[] = (process.env.TRUSTED_PROXY_IPS ?? '')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
 
+/** Only a runtime-provided peer address can activate forwarded-header trust. */
+export function isTrustedProxyPeer(peerAddress: string | null | undefined): boolean {
+  const peer = peerAddress?.trim();
+  return Boolean(peer && TRUSTED_PROXY_IPS.includes(peer));
+}
+
 /**
- * 可信反代之后 → 转发头首段(代理注入,客户端不可控):x-forwarded-for 首段 →
- * x-real-ip → 'unknown'。未配置 TRUSTED_PROXY_IPS → 一律 null(调用方必须改用
- * 会话指纹桶键,不得回退直取请求头——XFF 可伪造,直取等于可换桶)。
+ * Read forwarded client headers only after the caller has supplied a verified
+ * peer address. Never derive that peer address from another request header.
  */
-export function resolveClientIp(request: Request): string | null {
-  if (TRUSTED_PROXY_IPS.length === 0) return null;
+export function resolveClientIp(
+  request: Request,
+  verifiedPeerAddress: string | null = null,
+): string | null {
+  if (!isTrustedProxyPeer(verifiedPeerAddress)) return null;
   const fwd = request.headers.get('x-forwarded-for');
   if (fwd) {
     const first = fwd.split(',')[0].trim();
@@ -38,7 +42,7 @@ export function resolveClientIp(request: Request): string | null {
 
 /**
  * 会话指纹桶键:登录用户(有会话 cookie)→ `session:<sha256(token)>`;
- * 匿名(无 cookie)→ 固定桶 `anon:public`。未配置可信代理时,桶键唯一来源。
+ * 匿名(无 cookie)→固定桶 `anon:public`。
  */
 export function sessionFingerprintKey(token: string | null): string {
   if (!token) return 'anon:public';
@@ -46,12 +50,15 @@ export function sessionFingerprintKey(token: string | null): string {
 }
 
 /**
- * per-IP 维度桶键(三路由统一):可信反代之后 → `ip:<IP>`;否则 → 会话指纹。
- * token 由调用方从会话 cookie 读取(读 cookie 属 Next 请求上下文,调用方注入,
- * 本模块保持可单测)。
+ * per-IP 维度桶键。Without a verified peer seam, forwarded headers never
+ * influence this value, even when TRUSTED_PROXY_IPS is configured.
  */
-export function clientIpBucketKey(request: Request, token: string | null): string {
-  const ip = resolveClientIp(request);
+export function clientIpBucketKey(
+  request: Request,
+  token: string | null,
+  verifiedPeerAddress: string | null = null,
+): string {
+  const ip = resolveClientIp(request, verifiedPeerAddress);
   if (ip !== null) return `ip:${ip}`;
   return sessionFingerprintKey(token);
 }

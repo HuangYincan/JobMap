@@ -9,7 +9,8 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
+import { RequestBodyTooLargeError, isPlainObject, readJsonObjectBody } from '@/lib/request-body';
+import { parseKnownMode } from '@/lib/modes';
 import { loadServerCatalog } from '@/lib/server-catalog';
 import { searchPublicCatalog, shouldWritePublicCatalogCache, spatialClipFromSearch } from '@/lib/public-search';
 import type { MapMode } from '@/lib/types';
@@ -40,7 +41,7 @@ const MAX_PAGE_SIZE = 100;
 export async function POST(request: Request) {
   let body: SearchBody;
   try {
-    body = await readJsonBody<SearchBody>(request, MAX_BODY_CHARS);
+    body = await readJsonObjectBody<SearchBody>(request, MAX_BODY_CHARS);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
       return NextResponse.json(
@@ -61,8 +62,26 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  // #10：filters 必须是普通对象，且序列化长度受限（防缓存 key 无上限膨胀）。
-  if (body.filters != null && (typeof body.filters !== 'object' || Array.isArray(body.filters))) {
+  if (body.mode != null && parseKnownMode(body.mode) === null) {
+    return NextResponse.json(
+      { code: 'INVALID_MODE', message: `unknown mode: ${String(body.mode)}` },
+      { status: 400 },
+    );
+  }
+  if (body.sort != null && typeof body.sort !== 'string') {
+    return NextResponse.json(
+      { code: 'BAD_REQUEST', message: 'sort must be a string' },
+      { status: 400 },
+    );
+  }
+  if (body.bounds != null && typeof body.bounds !== 'string') {
+    return NextResponse.json(
+      { code: 'BAD_REQUEST', message: 'bounds must be a string' },
+      { status: 400 },
+    );
+  }
+  // #10：filters 必须是 JSON plain object，且序列化长度受限。
+  if (body.filters != null && !isPlainObject(body.filters)) {
     return NextResponse.json(
       { code: 'BAD_REQUEST', message: 'filters must be an object' },
       { status: 400 }
@@ -98,7 +117,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const mode = body.mode || 'work';
+  const mode = parseKnownMode(body.mode);
+  if (!mode) {
+    return NextResponse.json(
+      { code: 'INVALID_MODE', message: `unknown mode: ${String(body.mode)}` },
+      { status: 400 },
+    );
+  }
   const cacheKey = publicCacheKey([
     'search',
     mode,

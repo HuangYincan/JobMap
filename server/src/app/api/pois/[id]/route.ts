@@ -6,8 +6,8 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { loadServerCatalogById } from '@/lib/server-catalog';
-import type { MapMode } from '@/lib/types';
+import { loadServerCatalogByIdStrict } from '@/lib/server-catalog';
+import { parseKnownMode } from '@/lib/modes';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 // Next 动态段参数在 router 层已解码，二次解码遇裸 `%`（如 /api/pois/100%25 → "100%"）
@@ -19,7 +19,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const url = new URL(request.url);
-  const mode = (url.searchParams.get('mode') || 'work') as MapMode;
+  const rawMode = url.searchParams.get('mode');
+  const mode = parseKnownMode(rawMode);
+  if (!mode) {
+    return NextResponse.json(
+      { code: 'INVALID_MODE', message: `unknown mode: ${rawMode}` },
+      { status: 400, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
   const { id } = await params;
   if (id.length > MAX_ID_LENGTH) {
     return NextResponse.json(
@@ -33,7 +40,13 @@ export async function GET(
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  const poi = await loadServerCatalogById(mode, id);
+  const poi = await loadServerCatalogByIdStrict(mode, id);
+  if (poi === null) {
+    return NextResponse.json(
+      { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
   if (!poi) {
     return NextResponse.json(
       { code: 'NOT_FOUND', message: `POI ${id} not found` },

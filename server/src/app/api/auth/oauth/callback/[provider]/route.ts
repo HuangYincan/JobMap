@@ -9,7 +9,7 @@ import {
   errorRedirectPath,
   runOauthCallback,
 } from '@/lib/oauth/oauth-flow';
-import { publicOriginFromRequest } from '@/lib/oauth/request-origin';
+import { publicOriginFromRequest, PublicOriginConfigurationError } from '@/lib/oauth/request-origin';
 
 /**
  * GET /api/auth/oauth/callback/<provider>?code=&state=
@@ -26,7 +26,18 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> },
 ) {
   const url = new URL(request.url);
-  const base = publicOriginFromRequest(request);
+  let base: string;
+  try {
+    base = publicOriginFromRequest(request);
+  } catch (err) {
+    if (err instanceof PublicOriginConfigurationError) {
+      return NextResponse.json(
+        { code: 'OAUTH_ORIGIN_NOT_CONFIGURED', message: 'OAuth origin is not configured' },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+    throw err;
+  }
   const { provider } = await params;
   try {
     const jar = await cookies();

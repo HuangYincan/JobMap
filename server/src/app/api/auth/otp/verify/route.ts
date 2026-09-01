@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
+
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  const response = NextResponse.json(body, { ...init, headers: { 'Cache-Control': 'no-store' } });
+  return response;
+}
+import { RequestBodyTooLargeError, readJsonObjectBody } from '@/lib/request-body';
 import {
   consumeOtp,
   createSession,
@@ -17,20 +22,26 @@ import { isValidEmail, isValidPhone, normalizeContact } from '@/lib/contact-vali
 export async function POST(request: Request) {
   let body: { provider?: 'phone' | 'email'; target?: string; code?: string };
   try {
-    body = await readJsonBody<typeof body>(request);
+    body = await readJsonObjectBody<typeof body>(request);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'BODY_TOO_LARGE', message: 'request body too large' },
         { status: 400 },
       );
     }
-    return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
-  const provider = body.provider === 'email' ? 'email' : 'phone';
-  const inputTarget = (body.target || '').trim();
-  const code = (body.code || '').trim();
+  if (body.provider !== 'email' && body.provider !== 'phone') {
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'invalid provider' }, { status: 400 });
+  }
+  if (typeof body.target !== 'string' || typeof body.code !== 'string') {
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'invalid provider target or code' }, { status: 400 });
+  }
+  const provider = body.provider;
+  const inputTarget = body.target.trim();
+  const code = body.code.trim();
   if (
     !inputTarget ||
     !code ||
@@ -38,13 +49,13 @@ export async function POST(request: Request) {
     (provider === 'phone' && !isValidPhone(inputTarget)) ||
     !/^\d{6}$/.test(code)
   ) {
-    return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid provider target or code' }, { status: 400 });
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'invalid provider target or code' }, { status: 400 });
   }
   const target = normalizeContact(provider, inputTarget);
 
   try {
     if (!(await consumeOtp(provider, target, code))) {
-      return NextResponse.json({ code: 'INVALID_CODE', message: 'invalid or expired code' }, { status: 401 });
+      return noStoreJson({ code: 'INVALID_CODE', message: 'invalid or expired code' }, { status: 401 });
     }
 
     const user = await upsertIdentity({
@@ -55,16 +66,16 @@ export async function POST(request: Request) {
     });
     const session = await createSession(user.id);
     await writeSessionCookie(session.token, session.expiresAt);
-    return NextResponse.json({ user });
+    return noStoreJson({ user });
   } catch (err) {
     if (err instanceof OtpTooManyAttemptsError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'TOO_MANY_ATTEMPTS', message: err.message, retryAfterMs: err.retryAfterMs },
         { status: 429 },
       );
     }
     if (err instanceof DbUnavailableError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
         { status: 503 },
       );

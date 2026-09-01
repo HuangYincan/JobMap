@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
-import { createSession, registerWithPassword, UsernameTakenError } from '@/lib/account-store';
+import { RequestBodyTooLargeError, readJsonObjectBody } from '@/lib/request-body';
+import { createSession, DbUnavailableError, registerWithPassword, UsernameTakenError } from '@/lib/account-store';
 import { readSessionToken, writeSessionCookie } from '@/lib/http-session';
 import { isValidPassword, isValidUsername } from '@/lib/password';
 import { clientIpBucketKey } from '@/lib/client-ip';
 import { BoundedRateStore } from '@/lib/bounded-rate-store';
-import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
+
+function noStoreJson(body: unknown, init?: { status?: number; headers?: HeadersInit }) {
+  const response = NextResponse.json(body, {
+    ...init,
+    headers: { 'Cache-Control': 'no-store', ...(init?.headers ?? {}) },
+  });
+  return response;
+}
 
 /** Registration performs scrypt and writes durable rows, so fail before parsing huge bodies. */
 const MAX_BODY_CHARS = 4 * 1024;
@@ -45,33 +53,45 @@ function recordRegistration(key: string): void {
 export async function POST(request: Request) {
   let body: { username?: string; password?: string; confirmPassword?: string };
   try {
-    body = await readJsonBody<typeof body>(request, MAX_BODY_CHARS);
+    body = await readJsonObjectBody<typeof body>(request, MAX_BODY_CHARS);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
-      return NextResponse.json(
+      return noStoreJson(
         { ok: false, code: 'BODY_TOO_LARGE', message: 'request body too large' },
         { status: 400 },
       );
     }
-    return NextResponse.json({ ok: false, code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
+    return noStoreJson({ ok: false, code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
-  const username = (body.username ?? '').trim();
-  const password = body.password ?? '';
+  if (typeof body.username !== 'string' || typeof body.password !== 'string') {
+    return noStoreJson(
+      { ok: false, code: 'BAD_REQUEST', message: 'username and password are required strings' },
+      { status: 400 },
+    );
+  }
+  if (body.confirmPassword !== undefined && typeof body.confirmPassword !== 'string') {
+    return noStoreJson(
+      { ok: false, code: 'BAD_REQUEST', message: 'confirmPassword must be a string' },
+      { status: 400 },
+    );
+  }
+  const username = body.username.trim();
+  const password = body.password;
   if (!isValidUsername(username)) {
-    return NextResponse.json(
+    return noStoreJson(
       { ok: false, code: 'INVALID_USERNAME', message: 'username must be 2-32 letters, digits, underscore or Chinese' },
       { status: 400 },
     );
   }
   if (!isValidPassword(password)) {
-    return NextResponse.json(
+    return noStoreJson(
       { ok: false, code: 'PASSWORD_TOO_SHORT', message: 'password must be at least 8 characters' },
       { status: 400 },
     );
   }
   if (body.confirmPassword !== undefined && body.confirmPassword !== password) {
-    return NextResponse.json(
+    return noStoreJson(
       { ok: false, code: 'PASSWORD_MISMATCH', message: 'passwords do not match' },
       { status: 400 },
     );
@@ -84,7 +104,7 @@ export async function POST(request: Request) {
     checkRegistrationLimit(bucketKey);
   } catch (err) {
     if (err instanceof RegistrationRateLimitedError) {
-      return NextResponse.json(
+      return noStoreJson(
         { ok: false, code: 'RATE_LIMITED', message: err.message, retryAfterMs: err.retryAfterMs },
         { status: 429, headers: { 'Retry-After': Math.ceil(err.retryAfterMs / 1000).toString() } },
       );
@@ -96,17 +116,22 @@ export async function POST(request: Request) {
   let user;
   try {
     user = await registerWithPassword(username, password);
+    const session = await createSession(user.id);
+    await writeSessionCookie(session.token, session.expiresAt);
+    return noStoreJson({ ok: true, user });
   } catch (err) {
     if (err instanceof UsernameTakenError) {
-      return NextResponse.json(
+      return noStoreJson(
         { ok: false, code: 'USERNAME_TAKEN', message: 'username already taken' },
         { status: 409 },
       );
     }
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { ok: false, code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+        { status: 503 },
+      );
+    }
     throw err;
   }
-
-  const session = await createSession(user.id);
-  await writeSessionCookie(session.token, session.expiresAt);
-  return NextResponse.json({ ok: true, user });
 }

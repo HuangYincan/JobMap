@@ -1,6 +1,6 @@
 import {
   RequestBodyTooLargeError,
-  readJsonBody,
+  readJsonObjectBody,
 } from '../request-body.ts';
 import { createRouteError } from './errors.ts';
 import {
@@ -88,7 +88,7 @@ export async function handleNavigationPlanRequest(
 
   let body: unknown;
   try {
-    body = await readJsonBody(request, NAVIGATION_ROUTE_BODY_MAX_CHARS);
+    body = await readJsonObjectBody(request, NAVIGATION_ROUTE_BODY_MAX_CHARS);
   } catch (error) {
     if (
       error instanceof RequestBodyTooLargeError ||

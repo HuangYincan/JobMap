@@ -51,14 +51,14 @@ function memoryMode() {
 test('password register: body limit + registration rate limit precede scrypt and durable writes', () => {
   const route = src('app/api/auth/password/register/route.ts');
   assert.match(route, /const MAX_BODY_CHARS = 4 \* 1024/);
-  assert.match(route, /readJsonBody<typeof body>\(request, MAX_BODY_CHARS\)/);
+  assert.match(route, /readJsonObjectBody<typeof body>\(request, MAX_BODY_CHARS\)/);
   assert.match(route, /RequestBodyTooLargeError/);
   assert.match(route, /const REGISTER_MAX_PER_KEY = 5/);
   assert.match(route, /registrationAttempts = new BoundedRateStore<number\[\]>\(/);
   assert.match(route, /REGISTRATION_GUARD_CAPACITY = 10_000/);
   assert.match(route, /clientIpBucketKey\(request, await readSessionToken\(\)\)/);
 
-  const parseIdx = route.indexOf('readJsonBody<typeof body>');
+  const parseIdx = route.indexOf('readJsonObjectBody<typeof body>');
   const bucketIdx = route.indexOf('clientIpBucketKey(request');
   const recordIdx = route.indexOf('recordRegistration(bucketKey)');
   const registerIdx = route.indexOf('registerWithPassword(username, password)');

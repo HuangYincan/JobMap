@@ -1,38 +1,46 @@
 import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
-import { recordApplications } from "@/lib/account-store";
+import { DbUnavailableError, recordApplications } from "@/lib/account-store";
 import { sanitizeApplicationPipeline } from "@/lib/application-pipeline";
 import {
   APPLICATION_CSV_IMPORT_MAX,
   type ApplicationCsvRow,
 } from "@/lib/application-csv";
 import { parseApplicationWrite } from "@/lib/application-write";
-import { RequestBodyTooLargeError, readJsonBody } from "@/lib/request-body";
+import { RequestBodyTooLargeError, readJsonObjectBody } from "@/lib/request-body";
+
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  const response = NextResponse.json(body, {
+    ...init,
+    headers: { "Cache-Control": "no-store" },
+  });
+  return response;
+}
 
 const IMPORT_JSON_MAX_CHARS = 128 * 1024;
 
 export async function POST(request: Request) {
   const user = await readSessionUser();
   if (!user) {
-    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+    return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
   let body: { rows?: unknown };
   try {
-    body = await readJsonBody<typeof body>(request, IMPORT_JSON_MAX_CHARS);
+    body = await readJsonObjectBody<typeof body>(request, IMPORT_JSON_MAX_CHARS);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: "BODY_TOO_LARGE", message: "request body too large" },
         { status: 400 },
       );
     }
-    return NextResponse.json({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
+    return noStoreJson({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
   }
   if (!Array.isArray(body.rows)) {
-    return NextResponse.json({ code: "BAD_REQUEST", message: "rows array required" }, { status: 400 });
+    return noStoreJson({ code: "BAD_REQUEST", message: "rows array required" }, { status: 400 });
   }
   if (body.rows.length > APPLICATION_CSV_IMPORT_MAX) {
-    return NextResponse.json(
+    return noStoreJson(
       { code: "IMPORT_TOO_LARGE", message: `at most ${APPLICATION_CSV_IMPORT_MAX} rows` },
       { status: 400 },
     );
@@ -65,10 +73,20 @@ export async function POST(request: Request) {
     writes.push(parsed.value);
   }
 
-  const items = await recordApplications(user.id, writes);
-  return NextResponse.json({
-    items,
-    imported: items.length,
-    skipped,
-  });
+  try {
+    const items = await recordApplications(user.id, writes);
+    return noStoreJson({
+      items,
+      imported: items.length,
+      skipped,
+    });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
 }

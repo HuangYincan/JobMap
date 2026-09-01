@@ -36,6 +36,27 @@ export function parseApplicationWrite(
   catalog: ApplicationStatusDef[],
   options: { lang?: Language; invalidUrl?: 'reject' | 'omit' } = {},
 ): { ok: true; value: ApplicationWriteValue } | { ok: false; code: string; message: string } {
+  if (body.positionId !== undefined && typeof body.positionId !== 'string') {
+    return { ok: false, code: 'BAD_REQUEST', message: 'positionId must be a string' };
+  }
+  if (body.companyPoiId !== undefined && typeof body.companyPoiId !== 'string') {
+    return { ok: false, code: 'BAD_REQUEST', message: 'companyPoiId must be a string' };
+  }
+  if (body.title !== undefined && typeof body.title !== 'string') {
+    return { ok: false, code: 'BAD_REQUEST', message: 'title must be a string' };
+  }
+  if (body.companyName !== undefined && typeof body.companyName !== 'string') {
+    return { ok: false, code: 'BAD_REQUEST', message: 'companyName must be a string' };
+  }
+  if (body.applyUrl !== undefined && typeof body.applyUrl !== 'string') {
+    return { ok: false, code: 'BAD_REQUEST', message: 'applyUrl must be a string' };
+  }
+  if (body.status !== undefined && typeof body.status !== 'string') {
+    return { ok: false, code: 'BAD_REQUEST', message: 'status must be a string' };
+  }
+  if (body.appliedAt !== undefined && typeof body.appliedAt !== 'string') {
+    return { ok: false, code: 'BAD_REQUEST', message: 'appliedAt must be a string' };
+  }
   const title = (body.title || '').trim();
   const companyName = (body.companyName || '').trim();
   if (!title || !companyName) {

@@ -7,17 +7,18 @@ import {
   sanitizeApplicationStatusId,
 } from "@/lib/application-pipeline";
 import { parseApplicationWrite } from "@/lib/application-write";
-import { RequestBodyTooLargeError, readJsonBody } from "@/lib/request-body";
+import { RequestBodyTooLargeError, readJsonObjectBody } from "@/lib/request-body";
 
 const MAX_ID_LENGTH = 200;
 
 export const dynamic = "force-dynamic";
 
 function noStoreJson(body: unknown, init?: { status?: number }) {
-  return NextResponse.json(body, {
+  const response = NextResponse.json(body, {
     ...init,
     headers: { "Cache-Control": "no-store" },
   });
+  return response;
 }
 
 export async function GET() {
@@ -34,7 +35,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const user = await readSessionUser();
   if (!user) {
-    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+    return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
   let body: {
     positionId?: string;
@@ -46,15 +47,15 @@ export async function POST(request: Request) {
     appliedAt?: string;
   };
   try {
-    body = await readJsonBody<typeof body>(request);
+    body = await readJsonObjectBody<typeof body>(request);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: "BODY_TOO_LARGE", message: "request body too large" },
         { status: 400 },
       );
     }
-    return NextResponse.json({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
+    return noStoreJson({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
   }
   const catalog = sanitizeApplicationPipeline(user.preferences.applicationPipeline).statuses;
   const parsed = parseApplicationWrite(body, catalog, {
@@ -62,14 +63,14 @@ export async function POST(request: Request) {
     invalidUrl: "reject",
   });
   if (!parsed.ok) {
-    return NextResponse.json({ code: parsed.code, message: parsed.message }, { status: 400 });
+    return noStoreJson({ code: parsed.code, message: parsed.message }, { status: 400 });
   }
   try {
     const item = await recordApplication(user.id, parsed.value);
     return noStoreJson({ item });
   } catch (err) {
     if (err instanceof DbUnavailableError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
         { status: 503 },
       );
@@ -81,52 +82,55 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const user = await readSessionUser();
   if (!user) {
-    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+    return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
   let body: { id?: string; status?: string };
   try {
-    body = await readJsonBody<typeof body>(request);
+    body = await readJsonObjectBody<typeof body>(request);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: "BODY_TOO_LARGE", message: "request body too large" },
         { status: 400 },
       );
     }
-    return NextResponse.json({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
+    return noStoreJson({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
   }
-  const id = (body.id || "").trim();
+  if (typeof body.id !== "string" || typeof body.status !== "string") {
+    return noStoreJson({ code: "BAD_REQUEST", message: "id and status must be strings" }, { status: 400 });
+  }
+  const id = body.id.trim();
   const requested = sanitizeApplicationStatusId(body.status);
   if (!id || id.length > MAX_ID_LENGTH || !requested) {
-    return NextResponse.json({ code: "BAD_REQUEST", message: "id and status required" }, { status: 400 });
+    return noStoreJson({ code: "BAD_REQUEST", message: "id and status required" }, { status: 400 });
   }
   const catalog = sanitizeApplicationPipeline(user.preferences.applicationPipeline).statuses;
   const status = coerceStatusToCatalog(requested, catalog);
   if (!status) {
-    return NextResponse.json({ code: "UNKNOWN_STATUS", message: "status is not in the user pipeline" }, { status: 400 });
+    return noStoreJson({ code: "UNKNOWN_STATUS", message: "status is not in the user pipeline" }, { status: 400 });
   }
   const item = await updateApplicationStatus(user.id, id, status);
   if (!item) {
-    return NextResponse.json({ code: "NOT_FOUND", message: "application not found" }, { status: 404 });
+    return noStoreJson({ code: "NOT_FOUND", message: "application not found" }, { status: 404 });
   }
-  return NextResponse.json({ item });
+  return noStoreJson({ item });
 }
 
 export async function DELETE(request: Request) {
   const user = await readSessionUser();
   if (!user) {
-    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+    return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
   const id = new URL(request.url).searchParams.get("id")?.trim() || "";
   if (!id || id.length > MAX_ID_LENGTH) {
-    return NextResponse.json({ code: "BAD_REQUEST", message: "id required" }, { status: 400 });
+    return noStoreJson({ code: "BAD_REQUEST", message: "id required" }, { status: 400 });
   }
   try {
     await removeApplication(user.id, id);
     return noStoreJson({ ok: true });
   } catch (err) {
     if (err instanceof DbUnavailableError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
         { status: 503 },
       );

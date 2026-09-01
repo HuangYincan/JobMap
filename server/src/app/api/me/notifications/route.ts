@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
-import { enqueueNotification, listNotifications } from "@/lib/account-store";
+import { DbUnavailableError, enqueueNotification, listNotifications } from "@/lib/account-store";
 import { BoundedRateStore } from "@/lib/bounded-rate-store";
 import { matchJobAlerts } from "@/lib/job-alerts";
 import { loadServerCatalog } from "@/lib/server-catalog";
@@ -14,43 +14,68 @@ const NOTIFY_COOLDOWN_MS = 60_000;
 const NOTIFY_COOLDOWN_CAPACITY = 10_000;
 const notifyCooldown = new BoundedRateStore<number>(NOTIFY_COOLDOWN_CAPACITY); // userId → lastScanAt
 
+function noStoreJson(body: unknown, init?: { status?: number; headers?: HeadersInit }) {
+  const response = NextResponse.json(body, {
+    ...init,
+    headers: { "Cache-Control": "no-store", ...(init?.headers ?? {}) },
+  });
+  return response;
+}
+
 export async function GET() {
   const user = await readSessionUser();
-  if (!user) return NextResponse.json({ items: [] });
-  return NextResponse.json({ items: await listNotifications(user.id) });
+  if (!user) return noStoreJson({ items: [] });
+  return noStoreJson({ items: await listNotifications(user.id) });
 }
 
 export async function POST() {
   const user = await readSessionUser();
   if (!user) {
-    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+    return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
   const now = Date.now();
   const last = notifyCooldown.get(user.id, now);
   if (last != null && now - last < NOTIFY_COOLDOWN_MS) {
     const waitSec = Math.ceil((NOTIFY_COOLDOWN_MS - (now - last)) / 1000);
-    return NextResponse.json(
+    return noStoreJson(
       { code: "RATE_LIMITED", message: `notification scan cooled down; retry in ${waitSec}s` },
       { status: 429, headers: { "Retry-After": String(waitSec) } },
     );
   }
-  notifyCooldown.set(user.id, now, NOTIFY_COOLDOWN_MS, now);
-  const catalog = (await loadServerCatalog("work")) ?? [];
-  const matches = matchJobAlerts(catalog, user.preferences.career, user.preferences.notifications);
-  const items = [];
-  for (const match of matches) {
-    items.push(
-      await enqueueNotification(user.id, {
-        kind: match.kind,
-        positionId: match.positionId,
-        companyPoiId: match.companyPoiId,
-        title: match.title,
-        companyName: match.companyName,
-        applyUrl: match.applyUrl,
-        channels: match.channels,
-        status: "queued",
-      }),
+  const catalog = await loadServerCatalog("work");
+  if (catalog === null) {
+    return noStoreJson(
+      { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+      { status: 503 },
     );
   }
-  return NextResponse.json({ items, scanned: matches.length });
+  // Only a successful catalog read consumes cooldown; a DB outage must be retryable.
+  notifyCooldown.set(user.id, now, NOTIFY_COOLDOWN_MS, now);
+  const matches = matchJobAlerts(catalog, user.preferences.career, user.preferences.notifications);
+  const items = [];
+  try {
+    for (const match of matches) {
+      items.push(
+        await enqueueNotification(user.id, {
+          kind: match.kind,
+          positionId: match.positionId,
+          companyPoiId: match.companyPoiId,
+          title: match.title,
+          companyName: match.companyName,
+          applyUrl: match.applyUrl,
+          channels: match.channels,
+          status: "queued",
+        }),
+      );
+    }
+    return noStoreJson({ items, scanned: matches.length });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
 }

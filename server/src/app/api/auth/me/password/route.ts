@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
+import { RequestBodyTooLargeError, readJsonObjectBody } from '@/lib/request-body';
 import { readSessionUser } from '@/lib/http-session';
 import {
   consumeOtp,
@@ -9,6 +9,11 @@ import {
   verifyUserPassword,
 } from '@/lib/account-store';
 import { isValidPassword } from '@/lib/password';
+
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  const response = NextResponse.json(body, { ...init, headers: { 'Cache-Control': 'no-store' } });
+  return response;
+}
 
 /**
  * 设置/修改密码。
@@ -23,25 +28,25 @@ import { isValidPassword } from '@/lib/password';
 export async function POST(request: Request) {
   const user = await readSessionUser();
   if (!user) {
-    return NextResponse.json({ code: 'UNAUTHORIZED', message: 'not signed in' }, { status: 401 });
+    return noStoreJson({ code: 'UNAUTHORIZED', message: 'not signed in' }, { status: 401 });
   }
 
   let body: { oldPassword?: unknown; otp?: unknown; newPassword?: unknown };
   try {
-    body = await readJsonBody<typeof body>(request);
+    body = await readJsonObjectBody<typeof body>(request);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'BODY_TOO_LARGE', message: 'request body too large' },
         { status: 400 },
       );
     }
-    return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
   const newPassword = typeof body.newPassword === 'string' ? body.newPassword : '';
   if (!isValidPassword(newPassword)) {
-    return NextResponse.json(
+    return noStoreJson(
       { code: 'PASSWORD_TOO_SHORT', message: 'password must be at least 8 characters' },
       { status: 400 },
     );
@@ -52,20 +57,20 @@ export async function POST(request: Request) {
       // OTP 身份验证(有密码用户亦可选):target 必须命中已绑定凭证
       const otp = parseOtp(body.otp);
       if (!otp) {
-        return NextResponse.json(
+        return noStoreJson(
           { code: 'BAD_REQUEST', message: 'otp must be { provider, target, code }' },
           { status: 400 },
         );
       }
       const bound = otp.provider === 'email' ? user.email : user.phone;
       if (!bound || bound.toLowerCase() !== otp.target.toLowerCase()) {
-        return NextResponse.json(
+        return noStoreJson(
           { code: 'NOT_BOUND', message: 'otp target does not match a bound credential' },
           { status: 401 },
         );
       }
       if (!(await consumeOtp(otp.provider, otp.target, otp.code))) {
-        return NextResponse.json(
+        return noStoreJson(
           { code: 'INVALID_CODE', message: 'invalid or expired code' },
           { status: 401 },
         );
@@ -74,36 +79,36 @@ export async function POST(request: Request) {
       // 已有密码:必填 oldPassword
       const oldPassword = typeof body.oldPassword === 'string' ? body.oldPassword : '';
       if (!oldPassword) {
-        return NextResponse.json(
+        return noStoreJson(
           { code: 'BAD_REQUEST', message: 'oldPassword required' },
           { status: 400 },
         );
       }
       if (!(await verifyUserPassword(user.id, oldPassword))) {
-        return NextResponse.json(
+        return noStoreJson(
           { code: 'WRONG_PASSWORD', message: 'current password is incorrect' },
           { status: 401 },
         );
       }
     } else {
       // 无密码账号:OTP 是唯一身份验证途径
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'BAD_REQUEST', message: 'otp required to set a password' },
         { status: 400 },
       );
     }
 
     const next = await setPassword(user.id, newPassword);
-    return NextResponse.json({ ok: true, user: next });
+    return noStoreJson({ ok: true, user: next });
   } catch (err) {
     if (err instanceof OtpTooManyAttemptsError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'TOO_MANY_ATTEMPTS', message: err.message, retryAfterMs: err.retryAfterMs },
         { status: 429 },
       );
     }
     if (err instanceof DbUnavailableError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
         { status: 503 },
       );
