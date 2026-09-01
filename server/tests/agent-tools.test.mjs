@@ -226,7 +226,7 @@ test('memory_save: guest(无 ctx.userId)→ 拒绝「请先登录后再保存记
   if (!r.ok) assert.match(r.error, /请先登录/);
 });
 
-test('memory_save: 登录成功保存;超长截断 200;敏感词不做硬性拦截(只靠描述约束)', async () => {
+test('memory_save: 登录成功保存;超长截断 200;高置信敏感内容拒绝且不写入', async () => {
   __memoryStoreTest.poolOverride = () => null; // 内存模式
   try {
     await clearMemories('tool-mem');
@@ -244,11 +244,30 @@ test('memory_save: 登录成功保存;超长截断 200;敏感词不做硬性拦�
     assert.equal(items.length, 2);
     assert.equal(items[0].content.length, 200, '超长截断 200');
 
-    // 敏感词不做硬性拦截(禁止保存密码/密钥是描述级约束)→ 保存成功
     const sensitive = await tool.call({ content: '我的密码是 123456' }, ctx);
-    assert.equal(sensitive.ok, true);
+    assert.equal(sensitive.ok, false);
+    if (!sensitive.ok) assert.match(sensitive.error, /不能保存.*密码/);
     const after = await listMemories('tool-mem');
-    assert.equal(after[0].content, '我的密码是 123456');
+    assert.equal(after.length, 2, '拒绝敏感内容后原有记忆保持不变');
+    assert.ok(!after.some((item) => item.content.includes('123456')));
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
+});
+
+test('memory_save: 敏感内容在 addMemory 前拒绝,DB 故障不改变拒绝结果', async () => {
+  let calls = 0;
+  __memoryStoreTest.poolOverride = () => ({
+    query: async () => {
+      calls += 1;
+      throw new Error('db down');
+    },
+  });
+  try {
+    const r = await memorySaveTool().call({ content: '我的 token 是 abc' }, { ...CTX, userId: 'tool-sensitive' });
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.match(r.error, /不能保存.*令牌/);
+    assert.equal(calls, 0, '敏感内容不得调用 addMemory/DB');
   } finally {
     __memoryStoreTest.poolOverride = undefined;
   }

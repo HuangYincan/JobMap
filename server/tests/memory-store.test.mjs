@@ -7,6 +7,7 @@ import {
   __memoryStoreTest,
   addMemory,
   clearMemories,
+  isSensitiveMemoryContent,
   listMemories,
   MEMORY_CONTENT_MAX,
   MEMORY_LIST_MAX,
@@ -32,7 +33,32 @@ test('sanitizeMemoryContent: 非 string / 空白 / 超长截断 200', () => {
   assert.equal(sanitizeMemoryContent('短'), '短');
 });
 
-// ---- 内存模式(poolOverride → null) ----
+test('isSensitiveMemoryContent: 仅拒绝高置信秘密/精确联系方式,不误伤普通偏好', () => {
+  const sensitive = [
+    '我的密码是 123456',
+    'api_key: sk-live-1234567890',
+    'access token = abcdefghijklmnop',
+    '验证码为 123456',
+    '私钥是 secret-material',
+    '-----BEGIN PRIVATE KEY-----',
+    'jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature',
+    '我的手机号是 13800138000',
+    '邮箱: person@example.com',
+    '我家地址是浙江省杭州市西湖区文三路123号2单元301室',
+  ];
+  for (const content of sensitive) assert.equal(isSensitiveMemoryContent(content), true, content);
+
+  const ordinary = [
+    '我喜欢研究密码学',
+    '我想学习 API 设计',
+    '我常驻杭州',
+    '我在找前端岗位',
+    '我住在杭州',
+    'OTP 机制值得研究',
+  ];
+  for (const content of ordinary) assert.equal(isSensitiveMemoryContent(content), false, content);
+});
+
 
 test('memory(内存模式): add/list/remove/clear + userId 隔离', async () => {
   __memoryStoreTest.poolOverride = () => null;
@@ -81,7 +107,18 @@ test('memory(内存模式): 空内容不写入', async () => {
   }
 });
 
-// ---- DB 模式(fake pool) ----
+test('memory: 敏感内容在写入边界直接丢弃,DB 不可用时也不触发查询', async () => {
+  const db = fakeDb({ failWrite: true });
+  __memoryStoreTest.poolOverride = () => db;
+  try {
+    await addMemory('sensitive-boundary', '我的 API key 是 sk-live-1234567890');
+    assert.equal(db.calls.length, 0, '敏感内容不得调用 DB 写入');
+    assert.deepEqual(await listMemories('sensitive-boundary'), [], '敏感内容不得进入读取/后续 prompt');
+  } finally {
+    __memoryStoreTest.poolOverride = undefined;
+  }
+});
+
 
 /** 极简 fake 池:按 SQL 分支维护行集,可注入读写故障;记录调用。 */
 function fakeDb({ failRead = false, failWrite = false } = {}) {
