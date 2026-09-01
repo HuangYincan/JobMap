@@ -16,6 +16,9 @@ type DbPoolLike = {
   query<T>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
 };
 
+const AUTHENTIC_POSITION_SQL = authenticPositionSql('source_registry', 'positions');
+const AUTHENTIC_POSITION_SQL_P = authenticPositionSql('source_registry', 'p');
+
 export interface CompanyRow {
   id: string;
   slug: string;

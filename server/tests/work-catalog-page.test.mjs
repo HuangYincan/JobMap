@@ -19,6 +19,7 @@ const position = {
   department: 'RD', family: 'social', taxonomy: { family: 'social' }, salary_min: 20, salary_max: 30,
   education: '本科', majors: [], skills: ['TypeScript'], description: 'Build the platform',
   deadline: null, apply_source: 'official', apply_url: 'https://apply.example', status: 'open',
+  expires_at: null, source_code: 'embodied-jobs',
 };
 
 function fakePool() {
@@ -109,6 +110,30 @@ test('bounded Work page numbers sort-center parameters before offset and limit',
   assert.match(rows.sql, /OFFSET \$3 LIMIT \$4/);
   assert.deepEqual(rows.params, [120.15, 30.27, 8, 4]);
 });
+
+test('bounded Work page applies the public source and freshness gate to eligibility, sort, and hydration', async () => {
+  const pool = fakePool();
+  await loadWorkCatalogPageFromDb({ q: 'platform', filters: {}, sort: 'positionCount' }, pool);
+
+  const count = pool.calls.find((call) => call.sql.includes('/* work-page count */'));
+  const aggregates = pool.calls.find((call) => call.sql.includes('/* work-page aggregations */'));
+  const rows = pool.calls.find((call) => call.sql.includes('/* work-page rows */'));
+  const positions = pool.calls.find((call) => call.sql.includes('/* work-page positions */'));
+  for (const call of [count, aggregates, rows, positions]) {
+    assert.ok(call, 'every bounded phase should issue a query');
+    // A missing source_id cannot pass the inner source-registry join; seed and
+    // none-policy rows cannot pass the registry allow-list; official-career
+    // rows must also carry the portal-* identity.
+    assert.match(call.sql, /JOIN sources/);
+    assert.match(call.sql, /code IN \('feishu-ats', 'xiaozhao-radar', 'radar', 'qqdoc-jobs', 'embodied-jobs'\)/);
+    assert.match(call.sql, /official-career.*external_id LIKE 'portal-%'/);
+    assert.match(call.sql, /expires_at IS NULL OR [a-z]+\.expires_at >= CURRENT_TIMESTAMP/);
+  }
+  assert.doesNotMatch(count.sql, /code = 'seed'/);
+  assert.doesNotMatch(count.sql, /code = 'qqdoc-official'/);
+  assert.match(positions.sql, /position_source\.code AS source_code/);
+});
+
 
 test('bounded Work page keeps multi-word aliases as one phrase group', async () => {
   const pool = fakePool();

@@ -3,10 +3,11 @@
 // This module is deliberately separate from the full catalog loader: public list
 // callers can page a filtered site relation first, then hydrate only the selected
 // sites and their companies' aggregate positions. It never changes recruitment
-// source eligibility; the SQL uses the same open + deadline predicate as the
-// existing DB read path.
+// source eligibility: the SQL reuses the source-registry authenticity predicate
+// and the public open + deadline + expires_at freshness gate.
 
 import { getPool, queryPublicRead } from './db.ts';
+import { authenticPositionSql } from './freshness.ts';
 import { CITY_CENTERS, CITY_CENTER_EPS } from './city-centers.ts';
 import { parseMaxTier } from './spatial-query.ts';
 import { ilike, likeContains } from './sql-like.ts';
@@ -266,7 +267,12 @@ function positionFilterClauses(filters: Record<string, unknown>, b: SqlBuilder):
 }
 
 function activePositionSql(alias: string): string {
-  return `${alias}.status = 'open' AND (${alias}.deadline IS NULL OR ${alias}.deadline >= CURRENT_DATE)`;
+  return `${alias}.status = 'open' AND (${alias}.deadline IS NULL OR ${alias}.deadline >= CURRENT_DATE)
+    AND (${alias}.expires_at IS NULL OR ${alias}.expires_at >= CURRENT_TIMESTAMP)`;
+}
+
+function authenticPositionPredicate(positionAlias: string, sourceAlias: string): string {
+  return authenticPositionSql(sourceAlias, positionAlias);
 }
 
 function cityCenterExclusionSql(alias = 's'): string {
@@ -310,25 +316,31 @@ function candidateSql(query: WorkCatalogPageQuery): CandidateSql {
 
   const positionClauses = [
     activePositionSql('p'),
+    authenticPositionPredicate('p', 'p_source'),
     '(p.site_id = s.id OR p.taxonomy->>\'aggregate\' = \'true\')',
     ...positionFilterClauses(filters, b),
   ];
-  const positionMatch = `EXISTS (SELECT 1 FROM positions p WHERE ${positionClauses.join(' AND ')})`;
+  const positionMatch = `EXISTS (SELECT 1 FROM positions p
+    JOIN sources p_source ON p_source.id = p.source_id
+    WHERE ${positionClauses.join(' AND ')})`;
   clauses.push(positionMatch);
 
   const groups = literalQuery(query.q) ?? [];
   if (groups.length) {
     const companyMatch = querySql(COMPANY_HAYSTACK, groups, b);
-    const positionMatchWithQuery = `EXISTS (SELECT 1 FROM positions qp WHERE ${[
-      activePositionSql('qp'),
-      '(qp.site_id = s.id OR qp.taxonomy->>\'aggregate\' = \'true\')',
-      querySql(positionHaystack('qp'), groups, b),
-    ].join(' AND ')})`;
+    const positionMatchWithQuery = `EXISTS (SELECT 1 FROM positions qp
+      JOIN sources qp_source ON qp_source.id = qp.source_id
+      WHERE ${[
+        activePositionSql('qp'),
+        authenticPositionPredicate('qp', 'qp_source'),
+        '(qp.site_id = s.id OR qp.taxonomy->>\'aggregate\' = \'true\')',
+        querySql(positionHaystack('qp'), groups, b),
+      ].join(' AND ')})`;
     clauses.push(`(${companyMatch} OR ${positionMatchWithQuery})`);
   }
 
   return {
-    from: 'FROM companies c JOIN company_sites s ON s.company_id = c.id',
+    from: 'FROM companies c JOIN company_sites s ON s.company_id = c.id\n    JOIN sources site_source ON site_source.id = s.source_id',
     where: `WHERE ${clauses.filter(Boolean).join(' AND ')}`,
     params: b.params,
   };
@@ -341,7 +353,9 @@ function activePositionAggregateSql(kind: 'count' | 'salary' | 'deadline'): stri
       ? 'max(COALESCE(sp.salary_max, 0))'
       : 'min(sp.deadline)';
   return `(SELECT ${select} FROM positions sp
+    JOIN sources sp_source ON sp_source.id = sp.source_id
     WHERE ${activePositionSql('sp')}
+      AND ${authenticPositionPredicate('sp', 'sp_source')}
       AND (sp.site_id = s.id OR sp.taxonomy->>'aggregate' = 'true'))`;
 }
 
@@ -372,6 +386,7 @@ function pageRowSql(query: WorkCatalogPageQuery, candidate: CandidateSql, page: 
       SELECT c.id::text AS company_id, c.slug, c.name, c.industries, c.scale, c.rating,
              c.summary, c.career_url, c.logo_url, c.logo_emoji, c.tier, c.category,
              (SELECT COUNT(*) FROM company_sites all_sites
+              JOIN sources all_site_source ON all_site_source.id = all_sites.source_id
               WHERE all_sites.company_id = c.id AND ${locatedSiteSql('all_sites')})::text AS site_count,
              s.id::text AS site_id, s.name AS site_name, s.address, s.city, s.province,
              s.city_code, s.lng, s.lat, s.career_url AS site_career_url, s.logo_url AS site_logo_url
@@ -447,10 +462,12 @@ function pagePositionSql(siteIds: string[], companyIds: string[]): { sql: string
     sql: `/* work-page positions */
       SELECT p.company_id::text, p.site_id::text, p.external_id, p.title, p.department,
              p.family, p.taxonomy, p.salary_min, p.salary_max, p.education, p.majors,
-             p.skills, p.description, p.deadline, p.apply_source, p.apply_url, p.status
+             p.skills, p.description, p.deadline, p.expires_at,
+             p.apply_source, p.apply_url, p.status, position_source.code AS source_code
       FROM positions p
-      WHERE p.status = 'open'
-        AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+      JOIN sources position_source ON position_source.id = p.source_id
+      WHERE ${activePositionSql('p')}
+        AND ${authenticPositionPredicate('p', 'position_source')}
         AND (p.site_id = ANY($1::bigint[])
              OR (p.taxonomy->>'aggregate' = 'true' AND p.company_id = ANY($2::bigint[])))`,
     params: [siteIds, companyIds],
