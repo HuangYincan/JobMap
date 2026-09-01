@@ -1,5 +1,6 @@
 // Boss file-drop adapter. Curated JSON only — no live crawl.
-// Empty / missing dir → []. Override with BOSS_DIR.
+// Empty / missing dir → [] for the legacy list() contract; listDetailed() marks
+// those inputs incomplete. Override with BOSS_DIR.
 
 import { defaultDropDir, fileDropAdapter } from './file-drop.ts';
 import type { RecruitmentAdapter } from '../recruitment-source.ts';

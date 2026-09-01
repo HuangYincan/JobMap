@@ -4,6 +4,12 @@
 // 无 DATABASE_URL / DB 故障 → 返回 null(路由 502,不写公开缓存),不得伪装成 []。
 
 import { loadWorkCatalogByIdFromDb, loadWorkCatalogFromDb } from './recruitment-store.ts';
+import {
+  loadWorkCatalogPageFromDb,
+  supportsWorkCatalogPageQuery,
+  type WorkCatalogPage,
+  type WorkCatalogPageQuery,
+} from './work-catalog-page.ts';
 import type { SpatialClip } from './spatial-query.ts';
 import { isRecruitmentMode, type MapMode, type POI } from './types.ts';
 
@@ -20,10 +26,19 @@ export async function loadServerCatalog(mode: MapMode, clip?: SpatialClip): Prom
 }
 
 /**
- * Targeted catalog lookup with an availability signal for authenticated writes.
- * `null` means no DB/query failure; `undefined` means the id is absent or not
- * currently visible in the public work catalog.
+ * Bounded national Work page lookup. Unsupported query shapes return null so
+ * callers can keep the legacy clipped/alias-aware pipeline unchanged.
  */
+export async function loadServerCatalogPage(
+  mode: MapMode,
+  query: WorkCatalogPageQuery,
+): Promise<WorkCatalogPage | null> {
+  if (!isRecruitmentMode(mode) || !supportsWorkCatalogPageQuery(query)) return null;
+  return loadWorkCatalogPageFromDb(query);
+}
+
+export { supportsWorkCatalogPageQuery };
+
 export async function loadServerCatalogByIdStrict(
   mode: MapMode,
   id: string,

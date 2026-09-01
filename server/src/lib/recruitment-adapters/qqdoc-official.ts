@@ -9,16 +9,20 @@
 // company name until the polite official-site extractor
 // (scripts/extract-qqdoc-addresses.mjs) fills the real 城市/街道地址;
 // empty location objects are preserved (pending geocode) — never dropped.
+// A missing/empty directory remains [] through legacy list(), while
+// listDetailed() marks it incomplete so import callers cannot reconcile it.
 //
 // industries: drops carry no industry data; a conservative name-based tag
 // keeps the detail card readable (bank → finance, 航空/海运/铁路 →
 // transport, …). Unknown sectors fall back to 'other' (未标, mirrors the
 // category 'other' convention) — per-company curation can refine later.
 
-import { readdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { defaultDropDir } from './file-drop.ts';
-import type { RecruitmentAdapter, RecruitmentSourceKind, SourceCompany } from '../recruitment-source.ts';
+import {
+  defaultDropDir,
+  listSourceCompanyFilesDetailed,
+  type ParsedSourceCompanyPayload,
+} from './file-drop.ts';
+import type { RecruitmentAdapter, SourceCompany } from '../recruitment-source.ts';
 import type { CompanySite, POILocation } from '../types.ts';
 
 export const QQDOC_OFFICIAL_DIR = process.env.QQDOC_OFFICIAL_DIR || defaultDropDir('qqdoc-official');
@@ -110,30 +114,27 @@ export function parseQqdocOfficialPayload(raw: unknown): SourceCompany[] {
     .filter((company): company is SourceCompany => company !== null);
 }
 
+function parseQqdocOfficialPayloadDetailed(raw: unknown): ParsedSourceCompanyPayload {
+  const records = Array.isArray(raw) ? raw : [raw];
+  const companies = records
+    .map(qqdocOfficialToSourceCompany)
+    .filter((company): company is SourceCompany => company !== null);
+  return { companies, invalidRecords: records.length - companies.length };
+}
+
 export async function listQqdocOfficialFiles(dir = QQDOC_OFFICIAL_DIR): Promise<SourceCompany[]> {
-  let names: string[];
-  try {
-    names = await readdir(dir);
-  } catch {
-    return [];
-  }
-  const companies: SourceCompany[] = [];
-  for (const name of names.sort()) {
-    if (!name.endsWith('.json') || name.startsWith('.')) continue;
-    try {
-      const text = await readFile(join(dir, name), 'utf8');
-      companies.push(...parseQqdocOfficialPayload(JSON.parse(text)));
-    } catch {
-      // Skip unreadable / invalid files; the import planner reports validation issues later.
-    }
-  }
-  return companies;
+  return (await listQqdocOfficialFilesDetailed(dir)).companies;
+}
+
+export async function listQqdocOfficialFilesDetailed(dir = QQDOC_OFFICIAL_DIR) {
+  return listSourceCompanyFilesDetailed(dir, parseQqdocOfficialPayloadDetailed);
 }
 
 export function qqdocOfficialAdapter(dir = QQDOC_OFFICIAL_DIR): RecruitmentAdapter {
   return {
     kind: 'qqdoc-official',
     list: () => listQqdocOfficialFiles(dir),
+    listDetailed: () => listQqdocOfficialFilesDetailed(dir),
   };
 }
 

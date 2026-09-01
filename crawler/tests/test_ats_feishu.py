@@ -5,11 +5,15 @@
 # The old documented GET /api/v1/search_job shape is a catch-all HTML shell —
 # the fixtures here are what the real API returns.
 
+import io
 import json
+import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from types import SimpleNamespace
 
-from domain_map_importer import ats_feishu
+from domain_map_importer import ats_feishu, cli
 from domain_map_importer.acquire import PoliteFetcher
 from domain_map_importer.official_refresh import refresh_company_from_source
 
@@ -159,6 +163,13 @@ class PositionMappingTests(unittest.TestCase):
         with self.assertRaises(ats_feishu.AdapterError):
             ats_feishu.job_to_position({"title": "无 id"}, "s", "t")
 
+    def test_jobs_to_positions_reports_non_object_rows(self):
+        diagnostics = []
+        positions = ats_feishu.jobs_to_positions([None], COMPANY, "t", diagnostics=diagnostics)
+        self.assertEqual(positions, [])
+        self.assertEqual(len(diagnostics), 1)
+        self.assertIn("must be an object", diagnostics[0]["error"])
+
     def test_job_addresses_extracts_ats_office(self):
         # 2026-08-19: ATS address_list 提供精确办公地址(区+路+门牌),是
         # geocoding v3(5000 次/天)落点的基础 —— 城市名只有城市中心点。
@@ -207,7 +218,7 @@ class PositionMappingTests(unittest.TestCase):
 class PaginationTests(unittest.TestCase):
     def test_fetches_all_pages_with_offset(self):
         fetcher = make_fetcher([(200, json.dumps(PAGE1)), (200, json.dumps(PAGE2))])
-        jobs, errors = ats_feishu.fetch_all_jobs(fetcher, "nio.jobs.feishu.cn", page_size=2)
+        jobs, errors = ats_feishu.fetch_all_jobs(fetcher, "nio.jobs.feishu.cn", page_size=2, allow_live_refresh=True)
         self.assertEqual(len(jobs), 3)
         self.assertEqual(errors, [])
         api_calls = [c for c in fetcher._get.calls if "/api/" in c["url"]]
@@ -221,21 +232,21 @@ class PaginationTests(unittest.TestCase):
 
     def test_website_path_header_sent(self):
         fetcher = make_fetcher([(200, json.dumps(PAGE1)), (200, json.dumps(PAGE2))])
-        jobs, errors = ats_feishu.fetch_all_jobs(fetcher, "poizon.jobs.feishu.cn", website_path="578078", page_size=2)
+        jobs, errors = ats_feishu.fetch_all_jobs(fetcher, "poizon.jobs.feishu.cn", website_path="578078", page_size=2, allow_live_refresh=True)
         self.assertEqual(len(jobs), 3)
         api_calls = [c for c in fetcher._get.calls if "/api/" in c["url"]]
         self.assertEqual(api_calls[0]["headers"].get("website-path"), "578078")
 
     def test_stops_on_api_error_code(self):
         fetcher = make_fetcher([(200, json.dumps({"code": 9, "message": "boom"}))])
-        jobs, errors = ats_feishu.fetch_all_jobs(fetcher, "nio.jobs.feishu.cn", page_size=2)
+        jobs, errors = ats_feishu.fetch_all_jobs(fetcher, "nio.jobs.feishu.cn", page_size=2, allow_live_refresh=True)
         self.assertEqual(jobs, [])
         self.assertEqual(len(errors), 1)
         self.assertIn("code=9", errors[0]["error"])
 
     def test_degrades_on_non_json(self):
         fetcher = make_fetcher([(200, "<html>challenge page</html>")])
-        jobs, errors = ats_feishu.fetch_all_jobs(fetcher, "nio.jobs.feishu.cn", page_size=2)
+        jobs, errors = ats_feishu.fetch_all_jobs(fetcher, "nio.jobs.feishu.cn", page_size=2, allow_live_refresh=True)
         self.assertEqual(jobs, [])
         self.assertEqual(errors[0]["error"], "non-JSON response body")
 
@@ -243,7 +254,7 @@ class PaginationTests(unittest.TestCase):
 class SourceRoutingTests(unittest.TestCase):
     def test_feishu_host_uses_api_and_merges_positions(self):
         fetcher = make_fetcher([(200, json.dumps(PAGE1)), (200, json.dumps(PAGE2))])
-        refreshed, meta = refresh_company_from_source(COMPANY, fetcher, SAMPLE_HTML, "https://nio.jobs.feishu.cn/", page_size=2)
+        refreshed, meta = refresh_company_from_source(COMPANY, fetcher, SAMPLE_HTML, "https://nio.jobs.feishu.cn/", page_size=2, allow_live_refresh=True)
         self.assertEqual(meta["source"], "feishu-api")
         self.assertEqual(meta["api_jobs"], 3)
         ids = {p["externalId"] for p in refreshed["positions"]}
@@ -251,12 +262,70 @@ class SourceRoutingTests(unittest.TestCase):
         with_desc = [p for p in refreshed["positions"] if p.get("description")]
         self.assertEqual(len(with_desc), 3)
 
-    def test_api_failure_falls_back_to_html_path(self):
+    def test_api_failure_is_frozen_without_html_fallback(self):
         fetcher = make_fetcher([(500, "")])
-        refreshed, meta = refresh_company_from_source(COMPANY, fetcher, SAMPLE_HTML, "https://nio.jobs.feishu.cn/")
-        self.assertEqual(meta["source"], "html")
+        refreshed, meta = refresh_company_from_source(COMPANY, fetcher, SAMPLE_HTML, "https://nio.jobs.feishu.cn/", allow_live_refresh=True)
+        self.assertEqual(meta["source"], "feishu-api")
+        self.assertFalse(meta["complete"])
         self.assertTrue(meta["api_errors"])
-        self.assertEqual(refreshed["positions"], [])  # sample HTML carries no jobs
+        self.assertEqual(refreshed["positions"], [])
+
+    def test_api_malformed_row_is_frozen_without_partial_merge(self):
+        payload = {"code": 0, "data": {"job_post_list": [CAMPUS_JOB, {"title": "missing id"}], "count": 2}}
+        fetcher = make_fetcher([(200, json.dumps(payload))])
+        refreshed, meta = refresh_company_from_source(
+            COMPANY,
+            fetcher,
+            SAMPLE_HTML,
+            "https://nio.jobs.feishu.cn/",
+            allow_live_refresh=True,
+        )
+        self.assertFalse(meta["complete"])
+        self.assertEqual(len(meta["diagnostics"]), 1)
+        self.assertEqual(refreshed, COMPANY)
+
+        fetcher = make_fetcher([(200, json.dumps(PAGE1))])
+        refreshed, meta = refresh_company_from_source(COMPANY, fetcher, SAMPLE_HTML, "https://nio.jobs.feishu.cn/")
+        self.assertEqual(meta["source"], "feishu-frozen")
+        self.assertFalse(meta["complete"])
+        self.assertTrue(meta["api_errors"])
+        self.assertEqual(fetcher._get.calls, [])
+        self.assertEqual(refreshed, COMPANY)
+
+    def test_cli_dry_run_does_not_create_output_directory(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out_dir = Path(temp) / "feishu-drops"
+            args = SimpleNamespace(
+                out_dir=str(out_dir),
+                radar_dir=str(Path(temp) / "radar"),
+                interval=0.0,
+                max_jobs=10,
+                only="nio",
+                write=False,
+                allow_live=False,
+                tenants=[{
+                    "host": "nio.jobs.feishu.cn",
+                    "slug": "nio",
+                    "name": "NIO",
+                    "industries": ["auto"],
+                    "scale": "enterprise",
+                    "careerUrl": "https://nio.jobs.feishu.cn/",
+                }],
+            )
+            output = io.StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(cli.cmd_feishu(args), 0)
+            self.assertFalse(out_dir.exists(), "dry-run must not create the output directory")
+            result = json.loads(output.getvalue())
+            self.assertEqual(result["companies"], 1)
+            self.assertFalse(result["results"][0]["complete"])
+            self.assertFalse(result["results"][0]["wrote"])
+
+    def test_live_api_never_overrides_importer_ua(self):
+        fetcher = make_fetcher([(200, json.dumps(PAGE1)), (200, json.dumps(PAGE2))])
+        ats_feishu.fetch_all_jobs(fetcher, "nio.jobs.feishu.cn", page_size=2, allow_live_refresh=True)
+        api_calls = [call for call in fetcher._get.calls if "/api/" in call["url"]]
+        self.assertNotIn("User-Agent", api_calls[0]["headers"])
 
     def test_non_feishu_host_uses_html_only(self):
         company = {**COMPANY, "careerUrl": "https://talent.example.com/"}
@@ -271,10 +340,10 @@ class SourceRoutingTests(unittest.TestCase):
         # company uses a fresh fetcher (fresh responses) against the already
         # merged company.
         responses = [(200, json.dumps(PAGE1)), (200, json.dumps(PAGE2))]
-        first, _ = refresh_company_from_source(COMPANY, make_fetcher(list(responses)), SAMPLE_HTML, "https://nio.jobs.feishu.cn/", page_size=2)
-        second, meta = refresh_company_from_source(first, make_fetcher(list(responses)), SAMPLE_HTML, "https://nio.jobs.feishu.cn/", page_size=2)
+        first, _ = refresh_company_from_source(COMPANY, make_fetcher(list(responses)), SAMPLE_HTML, "https://nio.jobs.feishu.cn/", page_size=2, allow_live_refresh=True)
+        second, meta = refresh_company_from_source(first, make_fetcher(list(responses)), SAMPLE_HTML, "https://nio.jobs.feishu.cn/", page_size=2, allow_live_refresh=True)
         self.assertEqual(meta["api_jobs"], 3)
-        self.assertEqual(len(second["positions"]), 3)  # no duplicates
+        self.assertEqual(len(second["positions"]), 3)
 
 
 if __name__ == "__main__":

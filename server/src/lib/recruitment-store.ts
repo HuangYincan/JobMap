@@ -7,6 +7,7 @@
 import { getPool, queryPublicRead } from './db.ts';
 import { isCityCenterPin } from './city-centers.ts';
 import { resolveCompanyLogo, type ResolvedLogo } from './company-logo.ts';
+import { authenticPositionSql, isAuthenticPositionRecord } from './freshness.ts';
 import { cityBoundsConsistencySql, companySitesSpatialSql, hasSpatialClip, parseMaxTier, type SpatialClip } from './spatial-query.ts';
 import { ilike, likeContains, likePrefix } from './sql-like.ts';
 import type { ApplySource, JobFamily, JobTaxonomy, RecruitmentPOI } from './types.ts';
@@ -15,7 +16,10 @@ type DbPoolLike = {
   query<T>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
 };
 
-interface CompanyRow {
+const AUTHENTIC_POSITION_SQL = authenticPositionSql('source_registry', 'positions');
+const AUTHENTIC_POSITION_SQL_P = authenticPositionSql('source_registry', 'p');
+
+export interface CompanyRow {
   id: string;
   slug: string;
   name: string;
@@ -30,7 +34,7 @@ interface CompanyRow {
   logo_emoji: string | null;
 }
 
-interface SiteRow {
+export interface SiteRow {
   id: string;
   company_id: string;
   name: string;
@@ -44,7 +48,7 @@ interface SiteRow {
   logo_url: string | null;
 }
 
-interface PositionRow {
+export interface PositionRow {
   company_id: string;
   site_id: string;
   external_id: string;
@@ -59,9 +63,11 @@ interface PositionRow {
   skills: string[] | null;
   description: string | null;
   deadline: Date | string | null;
+  expires_at: Date | string | null;
   apply_source: ApplySource | null;
   apply_url: string | null;
   status: 'open' | 'closed' | 'paused';
+  source_code?: string;
 }
 
 function num(value: string | number | null | undefined): number | undefined {
@@ -84,6 +90,16 @@ function isoDate(value: Date | string | null | undefined): string | undefined {
     return `${y}-${m}-${d}`;
   }
   return String(value).slice(0, 10);
+}
+
+function isCatalogAuthenticPosition(position: PositionRow): boolean {
+  // Production queries always populate source_code and exclude source-less rows
+  // in SQL. The undefined fallback keeps injected legacy rows testable while
+  // retaining the historical portal/radar identity rule.
+  return isAuthenticPositionRecord({
+    externalId: position.external_id,
+    source: position.source_code,
+  });
 }
 
 /**
@@ -139,10 +155,11 @@ export function resolveDbCompanyLogo(
   });
 }
 
-function buildRecruitmentPois(
+export function buildRecruitmentPois(
   companies: CompanyRow[],
   located: SiteRow[],
   positions: PositionRow[],
+  siteCounts?: ReadonlyMap<string, number>,
 ): RecruitmentPOI[] {
   const sitesByCompany = new Map<string, SiteRow[]>();
   for (const site of located) {
@@ -150,22 +167,25 @@ function buildRecruitmentPois(
     list.push(site);
     sitesByCompany.set(site.company_id, list);
   }
+  const catalogPositions = positions.filter(isCatalogAuthenticPosition);
   const positionsBySite = new Map<string, PositionRow[]>();
-  for (const pos of positions) {
+  for (const pos of catalogPositions) {
     const list = positionsBySite.get(pos.site_id) ?? [];
     list.push(pos);
     positionsBySite.set(pos.site_id, list);
   }
   // 聚合行(taxonomy.aggregate, crawler 全国大类标题的 site_id 只是首城占位)
   // 是公司级在招信号，计入公司每个站点。
-  const aggregateRows = positions.filter((pos) => pos.taxonomy?.aggregate === true);
+  const aggregateRows = catalogPositions.filter((pos) => pos.taxonomy?.aggregate === true);
 
   const pois: RecruitmentPOI[] = [];
   for (const company of companies) {
     const companySites = sitesByCompany.get(company.id) ?? [];
     if (companySites.length === 0) continue;
     for (const site of companySites) {
-      const id = companySites.length === 1 ? company.slug : `${company.slug}:${site.id}`;
+      const id = siteCounts
+        ? (siteCounts.get(company.id) === 1 ? company.slug : `${company.slug}:${site.id}`)
+        : (companySites.length === 1 ? company.slug : `${company.slug}:${site.id}`);
       const loc = {
         lng: site.lng ?? 0,
         lat: site.lat ?? 0,
@@ -246,9 +266,11 @@ export async function loadWorkCatalogFromDb(
     const siteSql = clipped
       ? `SELECT s.id::text, s.company_id::text, s.name, s.address, s.city, s.province, s.city_code, s.lng, s.lat, s.career_url, s.logo_url
          FROM company_sites s
+         JOIN sources site_source ON site_source.id = s.source_id
          WHERE s.geom IS NOT NULL${spatial.sql}${consistency.sql}`
-      : `SELECT id::text, company_id::text, name, address, city, province, city_code, lng, lat, career_url, logo_url
-         FROM company_sites`;
+      : `SELECT s.id::text, s.company_id::text, s.name, s.address, s.city, s.province, s.city_code, s.lng, s.lat, s.career_url, s.logo_url
+         FROM company_sites s
+         JOIN sources site_source ON site_source.id = s.source_id`;
     const sites = await queryPublicRead<SiteRow>(pool, siteSql, [...spatial.params, ...consistency.params]);
     // SQL 级裁剪未命中 = 空：已知 clip 范围内无行 → 调用方保持空、不回退离线目录。
     if (clipped && sites.rows.length === 0) return [];
@@ -282,15 +304,33 @@ export async function loadWorkCatalogFromDb(
     // (未裁剪)查询一致。
     const positionSql = clipped
       ? `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
-                salary_min, salary_max, education, majors, skills, description, deadline,
-                apply_source, apply_url, status
-         FROM positions WHERE status = 'open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)
+                salary_min, salary_max, education, majors, skills, description, deadline, expires_at,
+                apply_source, apply_url, status,
+                (SELECT source_registry.code FROM sources source_registry
+                   WHERE source_registry.id = positions.source_id) AS source_code
+         FROM positions
+         WHERE status = 'open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)
+           AND (expires_at IS NULL OR expires_at >= CURRENT_TIMESTAMP)
+           AND EXISTS (
+             SELECT 1 FROM sources source_registry
+              WHERE source_registry.id = positions.source_id
+                AND ${AUTHENTIC_POSITION_SQL}
+           )
            AND (site_id = ANY($1::bigint[])
                 OR (taxonomy->>'aggregate' = 'true' AND company_id = ANY($2::bigint[])))`
       : `SELECT company_id::text, site_id::text, external_id, title, department, family, taxonomy,
-                salary_min, salary_max, education, majors, skills, description, deadline,
-                apply_source, apply_url, status
-         FROM positions WHERE status = 'open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)`;
+                salary_min, salary_max, education, majors, skills, description, deadline, expires_at,
+                apply_source, apply_url, status,
+                (SELECT source_registry.code FROM sources source_registry
+                   WHERE source_registry.id = positions.source_id) AS source_code
+         FROM positions
+         WHERE status = 'open' AND (deadline IS NULL OR deadline >= CURRENT_DATE)
+           AND (expires_at IS NULL OR expires_at >= CURRENT_TIMESTAMP)
+           AND EXISTS (
+             SELECT 1 FROM sources source_registry
+              WHERE source_registry.id = positions.source_id
+                AND ${AUTHENTIC_POSITION_SQL}
+           )`;
     const [companies, positions] = await Promise.all([
       queryPublicRead<CompanyRow>(
         pool,
@@ -349,6 +389,7 @@ export async function loadWorkCatalogByIdFromDb(
       `SELECT s.id::text, s.company_id::text, s.name, s.address, s.city, s.province,
               s.city_code, s.lng, s.lat, s.career_url, s.logo_url
        FROM company_sites s
+       JOIN sources site_source ON site_source.id = s.source_id
        WHERE s.company_id = $1::bigint
          AND s.geom IS NOT NULL`,
       [company.id],
@@ -366,11 +407,15 @@ export async function loadWorkCatalogByIdFromDb(
       pool,
       `SELECT p.company_id::text, p.site_id::text, p.external_id, p.title, p.department,
               p.family, p.taxonomy, p.salary_min, p.salary_max, p.education, p.majors,
-              p.skills, p.description, p.deadline, p.apply_source, p.apply_url, p.status
+              p.skills, p.description, p.deadline, p.expires_at,
+              p.apply_source, p.apply_url, p.status, source_registry.code AS source_code
        FROM positions p
+       JOIN sources source_registry ON source_registry.id = p.source_id
        WHERE p.company_id = $2::bigint
          AND p.status = 'open'
          AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+         AND (p.expires_at IS NULL OR p.expires_at >= CURRENT_TIMESTAMP)
+         AND ${AUTHENTIC_POSITION_SQL_P}
          AND (p.site_id = ANY($1::bigint[])
               OR p.taxonomy->>'aggregate' = 'true')`,
       [siteIds, company.id],
@@ -419,9 +464,11 @@ interface PositionDetailRow {
   salary_max: string | number | null;
   education: string | null;
   deadline: Date | string | null;
+  expires_at: Date | string | null;
   apply_source: ApplySource | null;
   status: 'open' | 'closed' | 'paused';
   site_id: string | null;
+  source_code?: string;
   slug: string;
   company_name: string;
   site_name: string | null;
@@ -442,16 +489,19 @@ export async function loadWorkPositionByExternalIdFromDb(
     const result = await queryPublicRead<PositionDetailRow>(
       pool,
       `SELECT p.external_id, p.title, p.department, p.family,
-              p.salary_min, p.salary_max, p.education, p.deadline,
-              p.apply_source, p.status, p.site_id::text,
+              p.salary_min, p.salary_max, p.education, p.deadline, p.expires_at,
+              p.apply_source, p.status, p.site_id::text, source_registry.code AS source_code,
               c.slug, c.name AS company_name,
               s.name AS site_name, s.city, s.lng, s.lat
        FROM positions p
        INNER JOIN companies c ON c.id = p.company_id
+       INNER JOIN sources source_registry ON source_registry.id = p.source_id
        LEFT JOIN company_sites s ON s.id = p.site_id
        WHERE p.external_id = $1
          AND p.status = 'open'
          AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+         AND (p.expires_at IS NULL OR p.expires_at >= CURRENT_TIMESTAMP)
+         AND ${AUTHENTIC_POSITION_SQL_P}
        LIMIT 1`,
       [id],
     );
@@ -581,14 +631,18 @@ export async function loadWorkSuggestionsFromDb(
            s.lng, s.lat
     FROM companies c
     JOIN company_sites s ON s.company_id = c.id
+    JOIN sources site_source ON site_source.id = s.source_id
     WHERE s.geom IS NOT NULL
       AND (${companyMatch.sql})
       AND EXISTS (
         SELECT 1 FROM positions ep
+        JOIN sources ep_source ON ep_source.id = ep.source_id
         WHERE ep.company_id = c.id
           AND (ep.site_id = s.id OR ep.taxonomy->>'aggregate' = 'true')
           AND ep.status = 'open'
           AND (ep.deadline IS NULL OR ep.deadline >= CURRENT_DATE)
+          AND (ep.expires_at IS NULL OR ep.expires_at >= CURRENT_TIMESTAMP)
+          AND ${authenticPositionSql('ep_source', 'ep')}
       )
     ORDER BY c.slug, s.id
     LIMIT $${companyMatch.params.length + 1}`;
@@ -600,12 +654,15 @@ export async function loadWorkSuggestionsFromDb(
            s.lng, s.lat, p.external_id AS position_id, p.title AS position_title,
            p.department, p.education
     FROM positions p
+    JOIN sources position_source ON position_source.id = p.source_id
     JOIN companies c ON c.id = p.company_id
     JOIN company_sites s ON s.company_id = p.company_id
       AND (s.id = p.site_id OR p.taxonomy->>'aggregate' = 'true')
     WHERE s.geom IS NOT NULL
       AND p.status = 'open'
       AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+      AND (p.expires_at IS NULL OR p.expires_at >= CURRENT_TIMESTAMP)
+      AND ${authenticPositionSql('position_source', 'p')}
       AND (${jobMatch.sql})
     ORDER BY p.title, c.slug, s.id
     LIMIT $${jobMatch.params.length + 1}`;
@@ -698,10 +755,13 @@ export async function countWorkTagMatchesBatchFromDb(
        FROM companies c
        JOIN company_sites s ON s.company_id = c.id
        JOIN positions p ON p.company_id = c.id
+       JOIN sources position_source ON position_source.id = p.source_id
        WHERE s.geom IS NOT NULL
          AND (p.site_id = s.id OR p.taxonomy->>'aggregate' = 'true')
          AND p.status = 'open'
-         AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)`,
+         AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+         AND (p.expires_at IS NULL OR p.expires_at >= CURRENT_TIMESTAMP)
+         AND ${authenticPositionSql('position_source', 'p')}`,
       params,
     );
     const row = result.rows[0] ?? {};
@@ -726,10 +786,13 @@ export async function countWorkTagMatchesFromDb(
        FROM companies c
        JOIN company_sites s ON s.company_id = c.id
        JOIN positions p ON p.company_id = c.id
+       JOIN sources position_source ON position_source.id = p.source_id
        WHERE s.geom IS NOT NULL
          AND (p.site_id = s.id OR p.taxonomy->>'aggregate' = 'true')
          AND p.status = 'open'
          AND (p.deadline IS NULL OR p.deadline >= CURRENT_DATE)
+         AND (p.expires_at IS NULL OR p.expires_at >= CURRENT_TIMESTAMP)
+         AND ${authenticPositionSql('position_source', 'p')}
          AND ${built.clause}`,
       built.params,
     );
@@ -790,6 +853,7 @@ export async function searchWorkSitesForPlace(
            s.name AS site_name, s.address, s.city, s.lng, s.lat
     FROM companies c
     JOIN company_sites s ON s.company_id = c.id
+    JOIN sources site_source ON site_source.id = s.source_id
     WHERE s.geom IS NOT NULL
       AND (${fieldMatch})
       ${citySql}

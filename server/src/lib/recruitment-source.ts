@@ -12,6 +12,28 @@ import type { ApplySource, CompanySite, JobFamily, JobTaxonomy, RecruitmentPOI }
 
 export type RecruitmentSourceKind = 'seed' | 'official-career' | 'catalog' | 'boss' | 'nowcoder' | 'shixiseng' | 'radar' | 'qqdoc-official' | 'qqdoc-jobs' | 'embodied-jobs';
 
+export type SourceFileDiagnosticKind =
+  | 'missing-directory'
+  | 'read-directory-failed'
+  | 'empty-directory'
+  | 'no-json-files'
+  | 'invalid-json'
+  | 'unreadable-file'
+  | 'invalid-record';
+
+export interface SourceFileDiagnostic {
+  file: string;
+  kind: SourceFileDiagnosticKind;
+  message: string;
+}
+
+export interface RecruitmentAdapterResult {
+  companies: SourceCompany[];
+  diagnostics: SourceFileDiagnostic[];
+  /** Complete means every expected input file was read and parsed. */
+  completeness: 'complete' | 'incomplete';
+}
+
 export interface SourcePosition {
   externalId: string;
   title: string;
@@ -60,6 +82,17 @@ export interface SourceCompany {
 export interface RecruitmentAdapter {
   kind: RecruitmentSourceKind;
   list(): Promise<SourceCompany[]>;
+  /** Detailed read contract used by import/reconciliation callers. */
+  listDetailed?(): Promise<RecruitmentAdapterResult>;
+}
+
+export async function listAdapter(adapter: RecruitmentAdapter): Promise<RecruitmentAdapterResult> {
+  if (adapter.listDetailed) return adapter.listDetailed();
+  return {
+    companies: await adapter.list(),
+    diagnostics: [],
+    completeness: 'complete',
+  };
 }
 
 /** 现有 RecruitmentPOI → 源记录（seed / 回写库表）。一 POI 一职场。 */

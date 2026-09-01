@@ -1,6 +1,7 @@
 // Radar file-drop adapter: published xiaozhao-radar snapshot mapped to SourceCompany.
 // Lower trust than official-career: sites carry city text, not coordinates.
-// Empty / missing dir → []. Override with RADAR_DIR.
+// Empty / missing dir → [] for the legacy list() contract; listDetailed() marks
+// those inputs incomplete. Override with RADAR_DIR.
 
 import { defaultDropDir, fileDropAdapter } from './file-drop.ts';
 import type { RecruitmentAdapter } from '../recruitment-source.ts';

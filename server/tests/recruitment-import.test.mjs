@@ -14,17 +14,18 @@ import {
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
 import { bossAdapter } from '../src/lib/recruitment-adapters/boss.ts';
-import { officialCareerAdapter, parseOfficialCareerPayload } from '../src/lib/recruitment-adapters/official-career.ts';
+import { officialCareerAdapter, parseOfficialCareerPayload, listOfficialCareerFilesDetailed } from '../src/lib/recruitment-adapters/official-career.ts';
 import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
 import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
 import { mergeCompaniesIntoPois, poiToSourceCompany } from '../src/lib/recruitment-source.ts';
-import { isAuthenticPositionRecord } from '../src/lib/freshness.ts';
+import { authenticPositionSql, isAuthenticPositionRecord } from '../src/lib/freshness.ts';
 import { embodiedJobsAdapter } from '../src/lib/recruitment-adapters/embodied-jobs.ts';
 import { WORK_SEED } from './fixtures/seed-data.ts';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
 
 function sample() {
   return poiToSourceCompany(WORK_SEED[0]);
@@ -135,6 +136,15 @@ test('authenticity uses registered source provenance for embodied jobs', () => {
   assert.equal(isAuthenticPositionRecord({ externalId: 'embj-迦智科技-1', source: 'official-career' }), false);
   assert.equal(isAuthenticPositionRecord({ externalId: 'portal-deepseek', source: 'official-career' }), true);
   assert.equal(isAuthenticPositionRecord({ externalId: 'embj-迦智科技-1' }), false);
+});
+
+test('public-read authenticity SQL follows the source registry and rejects none-policy rows', () => {
+  const sql = authenticPositionSql('src', 'pos');
+  assert.match(sql, /src\.code IN/);
+  assert.match(sql, /'embodied-jobs'/);
+  assert.match(sql, /src\.code = 'official-career'.*pos\.external_id LIKE 'portal-%'/);
+  assert.doesNotMatch(sql, /qqdoc-official/);
+  assert.doesNotMatch(sql, /seed/);
 });
 
 test('embodied-jobs plan records survive authenticity filtering as a whole source', async () => {
@@ -491,6 +501,7 @@ function fakeImportPlan() {
             externalId: 'seed-fake',
             title: 'Example',
             siteId: 'fake-site',
+            source: 'seed',
             family: 'campus',
             status: 'open',
           },
@@ -499,6 +510,7 @@ function fakeImportPlan() {
     ],
     issues: [],
     dropped: 0,
+    complete: true,
   };
 }
 
@@ -562,6 +574,10 @@ test('applyRecruitmentImport runs a transactional upsert with an injected pool',
   assert.ok(sqls.some((sql) => sql.includes('INSERT INTO companies')));
   assert.ok(sqls.some((sql) => sql.includes('INSERT INTO company_sites')));
   assert.ok(sqls.some((sql) => sql.includes('DELETE FROM positions')));
+  assert.ok(sqls.some((sql) => sql.includes("SET status = 'closed'")));
+  const reconciliation = fake.calls.find((call) => call.sql.includes("SET status = 'closed'"));
+  assert.deepEqual(reconciliation.params, ['source-fake', ['radar-fake-1']]);
+  assert.match(reconciliation.sql, /expires_at = CURRENT_TIMESTAMP/);
   assert.ok(!sqls.some((sql) => sql.includes('UPDATE positions SET source_id')));
 
   const companyCall = fake.calls.find((call) => call.sql.includes('INSERT INTO companies'));
@@ -579,6 +595,31 @@ test('applyRecruitmentImport runs a transactional upsert with an injected pool',
   assert.equal(positionCall.params[17], 'source-fake');
   assert.equal(positionCall.params[18], '2026-08-20T10:30:00Z');
   assert.equal(positionCall.params[19], '2026-12-31T23:59:59Z');
+});
+
+test('complete source snapshot reconciles a source with zero positions', async () => {
+  const plan = {
+    companies: [{
+      slug: 'empty-radar',
+      name: 'Empty Radar',
+      source: 'xiaozhao-radar',
+      industries: ['internet'],
+      scale: 'startup',
+      sites: [{ id: 'empty-site', name: 'HQ' }],
+      positions: [],
+    }],
+    issues: [],
+    dropped: 0,
+    complete: true,
+  };
+  const fake = fakeApplyPool({ sourceIds: { 'xiaozhao-radar': 'source-radar' } });
+  const result = await applyRecruitmentImport(plan, fake.pool);
+  assert.equal(result.wrote, true);
+  const reconciliation = fake.calls.find((call) => call.sql.includes("SET status = 'closed'"));
+  assert.ok(reconciliation);
+  assert.deepEqual(reconciliation.params, ['source-radar']);
+  assert.match(reconciliation.sql, /WHERE source_id = \$1/);
+  assert.match(reconciliation.sql, /expires_at = CURRENT_TIMESTAMP/);
 });
 
 test('applyRecruitmentImport writes each site/position source provenance independently', async () => {
@@ -618,6 +659,7 @@ test('applyRecruitmentImport writes each site/position source provenance indepen
     ],
     issues: [],
     dropped: 0,
+    complete: true,
   };
   const fake = fakeApplyPool({ sourceIds: { 'official-career': 'source-official', 'xiaozhao-radar': 'source-radar' } });
   const result = await applyRecruitmentImport(plan, fake.pool);
@@ -629,6 +671,11 @@ test('applyRecruitmentImport writes each site/position source provenance indepen
   const recordCalls = fake.calls.filter((call) => call.sql.includes('INSERT INTO source_records'));
   assert.equal(recordCalls.length, 2);
   assert.deepEqual(recordCalls.map((call) => call.params[0]), ['source-official', 'source-radar']);
+  const reconciliationCalls = fake.calls.filter((call) => call.sql.includes("SET status = 'closed'"));
+  assert.deepEqual(
+    reconciliationCalls.map((call) => call.params),
+    [['source-official', ['portal-deepseek']], ['source-radar', ['radar-deepseek']]],
+  );
 });
 
 test('applyRecruitmentImport reuses an existing company site instead of inserting', async () => {
@@ -658,6 +705,7 @@ test('applyRecruitmentImport records missing retrieval time as a failed audit re
   const runUpdates = fake.calls.filter((call) => call.sql.includes('UPDATE import_runs'));
   assert.ok(runUpdates.some((call) => call.params[1] === 'failed'));
   assert.doesNotMatch(JSON.stringify(runUpdates), /2026-08-27/);
+  assert.equal(fake.calls.some((call) => call.sql.includes("SET status = 'closed'")), false);
 });
 
 test('applyRecruitmentImport returns early for an empty plan', async () => {
@@ -703,6 +751,47 @@ test('boss / nowcoder / shixiseng adapters read file drops and skip missing dirs
   const rows = await bossAdapter(dir).list();
   assert.equal(rows[0]?.slug, 'fixture-boss');
   assert.equal(rows[0]?.positions[0]?.applySource, 'boss');
+});
+
+test('file-drop diagnostics distinguish missing, empty, malformed, and partial inputs', async () => {
+  const missing = await officialCareerAdapter(join(tmpdir(), 'domain-map-missing-drop')).listDetailed();
+  assert.equal(missing.completeness, 'incomplete');
+  assert.equal(missing.diagnostics[0].kind, 'missing-directory');
+
+  const empty = mkdtempSync(join(tmpdir(), 'domain-map-empty-drop-'));
+  try {
+    const emptyResult = await listOfficialCareerFilesDetailed(empty);
+    assert.equal(emptyResult.completeness, 'incomplete');
+    assert.equal(emptyResult.diagnostics[0].kind, 'empty-directory');
+
+    writeFileSync(
+      join(empty, 'valid.json'),
+      JSON.stringify([{ slug: 'x', name: 'X', sites: [], positions: [] }, { slug: 'bad' }]),
+    );
+    writeFileSync(join(empty, 'broken.json'), '{not-json');
+    const partial = await listOfficialCareerFilesDetailed(empty);
+    assert.equal(partial.completeness, 'incomplete');
+    assert.equal(partial.companies.length, 1, 'valid JSON shape remains available for diagnostics');
+    assert.ok(partial.diagnostics.some((row) => row.kind === 'invalid-json'));
+    assert.ok(partial.diagnostics.some((row) => row.kind === 'invalid-record'));
+  } finally {
+    rmSync(empty, { recursive: true, force: true });
+  }
+});
+
+test('incomplete import plans cannot reach destructive apply', async () => {
+  const plan = { ...planRecruitmentImport([sample()]), complete: false, diagnostics: [{ file: 'x', kind: 'missing-directory', message: 'missing' }] };
+  const result = await applyRecruitmentImport(plan, { connect: async () => { throw new Error('must not connect'); } });
+  assert.equal(result.wrote, false);
+  assert.equal(result.reason, 'incomplete-input');
+});
+
+test('import apply fails closed when completeness evidence is absent', async () => {
+  const plan = planRecruitmentImport([sample()]);
+  delete plan.complete;
+  const result = await applyRecruitmentImport(plan, { connect: async () => { throw new Error('must not connect'); } });
+  assert.equal(result.wrote, false);
+  assert.equal(result.reason, 'incomplete-input');
 });
 
 test('siteCityOf prefers site.city then parses known cities from the address', () => {

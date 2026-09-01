@@ -11,9 +11,13 @@
 import { NextResponse } from 'next/server';
 import { RequestBodyTooLargeError, isPlainObject, readJsonObjectBody } from '@/lib/request-body';
 import { parseKnownMode } from '@/lib/modes';
-import { loadServerCatalog } from '@/lib/server-catalog';
+import {
+  loadServerCatalog,
+  loadServerCatalogPage,
+  supportsWorkCatalogPageQuery,
+} from '@/lib/server-catalog';
 import { searchPublicCatalog, shouldWritePublicCatalogCache, spatialClipFromSearch } from '@/lib/public-search';
-import type { MapMode } from '@/lib/types';
+import { isRecruitmentMode, type MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 interface SearchBody {
@@ -149,6 +153,46 @@ export async function POST(request: Request) {
     pageSize: body.pageSize,
   };
   const clip = spatialClipFromSearch(query);
+  const nationalPage = isRecruitmentMode(mode)
+    && supportsWorkCatalogPageQuery({
+      q: body.q,
+      filters: body.filters,
+      sort: body.sort,
+      page: body.page,
+      pageSize: body.pageSize,
+    })
+    && !clip?.bounds
+    && !clip?.origin
+    && !clip?.districts?.length
+    && !clip?.city;
+  if (nationalPage) {
+    const found = await loadServerCatalogPage(mode, {
+      q: body.q,
+      filters: body.filters,
+      sort: body.sort,
+      page: body.page,
+      pageSize: body.pageSize,
+    });
+    if (found === null) {
+      return NextResponse.json(
+        { error: 'work_db_unavailable' },
+        { status: 502, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+    const payload = {
+      total: found.total,
+      page: found.page,
+      pageSize: found.pageSize,
+      results: found.results,
+      aggregations: found.aggregations,
+    };
+    if (shouldWritePublicCatalogCache(mode, clip, found.total)) {
+      writePublicCache(cacheKey, payload);
+      return NextResponse.json(payload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+    }
+    return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } });
+  }
+
   const pois = await loadServerCatalog(mode, clip);
   if (pois === null) {
     return NextResponse.json(

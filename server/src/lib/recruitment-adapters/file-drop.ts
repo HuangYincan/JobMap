@@ -1,9 +1,18 @@
 // Shared file-drop reader for curated recruitment JSON.
-// One file = one company (or an array). No crawl. Missing / empty dir → [].
+// One file = one company (or an array). File reads are observable: callers get
+// per-file diagnostics and a completeness bit instead of treating failures as
+// a legitimate empty snapshot. An empty directory is incomplete unless a
+// caller has an explicit, separately documented empty-snapshot contract.
 
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { RecruitmentAdapter, RecruitmentSourceKind, SourceCompany } from '../recruitment-source.ts';
+import type {
+  RecruitmentAdapter,
+  RecruitmentAdapterResult,
+  RecruitmentSourceKind,
+  SourceCompany,
+  SourceFileDiagnostic,
+} from '../recruitment-source.ts';
 
 function asCompany(raw: unknown): SourceCompany | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -13,36 +22,111 @@ function asCompany(raw: unknown): SourceCompany | null {
   return row as SourceCompany;
 }
 
-export function parseSourceCompanyPayload(raw: unknown): SourceCompany[] {
-  if (Array.isArray(raw)) return raw.map(asCompany).filter((row): row is SourceCompany => !!row);
-  const one = asCompany(raw);
-  return one ? [one] : [];
+export interface ParsedSourceCompanyPayload {
+  companies: SourceCompany[];
+  invalidRecords: number;
 }
 
-export async function listSourceCompanyFiles(dir: string): Promise<SourceCompany[]> {
+export function parseSourceCompanyPayloadDetailed(raw: unknown): ParsedSourceCompanyPayload {
+  const records = Array.isArray(raw) ? raw : [raw];
+  const companies: SourceCompany[] = [];
+  let invalidRecords = 0;
+  for (const record of records) {
+    const company = asCompany(record);
+    if (company) companies.push(company);
+    else invalidRecords += 1;
+  }
+  return { companies, invalidRecords };
+}
+
+/** Backwards-compatible pure parser for callers that only need valid rows. */
+export function parseSourceCompanyPayload(raw: unknown): SourceCompany[] {
+  return parseSourceCompanyPayloadDetailed(raw).companies;
+}
+
+type SourceCompanyParser = (raw: unknown) => ParsedSourceCompanyPayload;
+
+export async function listSourceCompanyFilesDetailed(
+  dir: string,
+  parse: SourceCompanyParser = parseSourceCompanyPayloadDetailed,
+): Promise<RecruitmentAdapterResult> {
   let names: string[];
   try {
     names = await readdir(dir);
-  } catch {
-    return [];
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    return {
+      companies: [],
+      diagnostics: [{
+        file: dir,
+        kind: code === 'ENOENT' ? 'missing-directory' : 'read-directory-failed',
+        message: code === 'ENOENT' ? 'directory does not exist' : `directory read failed: ${code ?? 'unknown error'}`,
+      }],
+      completeness: 'incomplete',
+    };
   }
+
+  const jsonNames = names.filter((name) => name.endsWith('.json') && !name.startsWith('.')).sort();
+  const diagnostics: SourceFileDiagnostic[] = [];
+  let complete = true;
+  if (names.length === 0) {
+    diagnostics.push({ file: dir, kind: 'empty-directory', message: 'directory exists and contains no entries' });
+    complete = false;
+  } else if (jsonNames.length === 0) {
+    diagnostics.push({ file: dir, kind: 'no-json-files', message: 'directory contains no readable JSON drop files' });
+    complete = false;
+  }
+
   const companies: SourceCompany[] = [];
-  for (const name of names.sort()) {
-    if (!name.endsWith('.json') || name.startsWith('.')) continue;
+  for (const name of jsonNames) {
+    const file = join(dir, name);
+    let text: string;
     try {
-      const text = await readFile(join(dir, name), 'utf8');
-      companies.push(...parseSourceCompanyPayload(JSON.parse(text)));
+      text = await readFile(file, 'utf8');
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      diagnostics.push({
+        file,
+        kind: 'unreadable-file',
+        message: `file read failed: ${code ?? 'unknown error'}`,
+      });
+      complete = false;
+      continue;
+    }
+
+    let raw: unknown;
+    try {
+      raw = JSON.parse(text);
     } catch {
-      // Skip unreadable / invalid files; the import planner reports validate issues later.
+      diagnostics.push({ file, kind: 'invalid-json', message: 'file is not valid JSON' });
+      complete = false;
+      continue;
+    }
+
+    const parsed = parse(raw);
+    companies.push(...parsed.companies);
+    if (parsed.invalidRecords > 0) {
+      diagnostics.push({
+        file,
+        kind: 'invalid-record',
+        message: `${parsed.invalidRecords} record(s) failed the source-company shape`,
+      });
+      complete = false;
     }
   }
-  return companies;
+
+  return { companies, diagnostics, completeness: complete ? 'complete' : 'incomplete' };
+}
+
+export async function listSourceCompanyFiles(dir: string): Promise<SourceCompany[]> {
+  return (await listSourceCompanyFilesDetailed(dir)).companies;
 }
 
 export function fileDropAdapter(kind: RecruitmentSourceKind, dir: string): RecruitmentAdapter {
   return {
     kind,
     list: () => listSourceCompanyFiles(dir),
+    listDetailed: () => listSourceCompanyFilesDetailed(dir),
   };
 }
 

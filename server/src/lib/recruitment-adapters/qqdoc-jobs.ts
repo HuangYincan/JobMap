@@ -8,15 +8,19 @@
 //   { slug, name, sources: ['qqdoc-jobs'], apply_url, direction, deadline,
 //     sites: [{ id, name, city, province, location }] }
 //
+// A missing/empty directory remains [] through legacy list(), while
+// listDetailed() marks it incomplete so import callers cannot reconcile it.
 // sites[].city may hold a multi-city text like 「北京、杭州、上海」 (kept
 // verbatim, same as radar drops treat city text); location is empty (pending
 // geocode) — never dropped. careerUrl is surfaced only when apply_url is a
 // real URL (placeholders like 「投递连接看官方公告」 are not URLs and must not
 // reach the UI as broken links).
 
-import { readdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { defaultDropDir } from './file-drop.ts';
+import {
+  defaultDropDir,
+  listSourceCompanyFilesDetailed,
+  type ParsedSourceCompanyPayload,
+} from './file-drop.ts';
 import { industriesOf } from './qqdoc-official.ts';
 import type { RecruitmentAdapter, SourceCompany } from '../recruitment-source.ts';
 import type { CompanySite, POILocation } from '../types.ts';
@@ -96,30 +100,27 @@ export function parseQqdocJobsPayload(raw: unknown): SourceCompany[] {
     .filter((company): company is SourceCompany => company !== null);
 }
 
+function parseQqdocJobsPayloadDetailed(raw: unknown): ParsedSourceCompanyPayload {
+  const records = Array.isArray(raw) ? raw : [raw];
+  const companies = records
+    .map(qqdocJobsToSourceCompany)
+    .filter((company): company is SourceCompany => company !== null);
+  return { companies, invalidRecords: records.length - companies.length };
+}
+
 export async function listQqdocJobsFiles(dir = QQDOC_JOBS_DIR): Promise<SourceCompany[]> {
-  let names: string[];
-  try {
-    names = await readdir(dir);
-  } catch {
-    return [];
-  }
-  const companies: SourceCompany[] = [];
-  for (const name of names.sort()) {
-    if (!name.endsWith('.json') || name.startsWith('.')) continue;
-    try {
-      const text = await readFile(join(dir, name), 'utf8');
-      companies.push(...parseQqdocJobsPayload(JSON.parse(text)));
-    } catch {
-      // Skip unreadable / invalid files; the import planner reports validation issues later.
-    }
-  }
-  return companies;
+  return (await listQqdocJobsFilesDetailed(dir)).companies;
+}
+
+export async function listQqdocJobsFilesDetailed(dir = QQDOC_JOBS_DIR) {
+  return listSourceCompanyFilesDetailed(dir, parseQqdocJobsPayloadDetailed);
 }
 
 export function qqdocJobsAdapter(dir = QQDOC_JOBS_DIR): RecruitmentAdapter {
   return {
     kind: 'qqdoc-jobs',
     list: () => listQqdocJobsFiles(dir),
+    listDetailed: () => listQqdocJobsFilesDetailed(dir),
   };
 }
 
