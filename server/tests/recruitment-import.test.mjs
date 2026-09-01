@@ -764,7 +764,10 @@ test('file-drop diagnostics distinguish missing, empty, malformed, and partial i
     assert.equal(emptyResult.completeness, 'incomplete');
     assert.equal(emptyResult.diagnostics[0].kind, 'empty-directory');
 
-    writeFileSync(join(empty, 'valid.json'), JSON.stringify({ slug: 'x', name: 'X', sites: [], positions: [] }));
+    writeFileSync(
+      join(empty, 'valid.json'),
+      JSON.stringify([{ slug: 'x', name: 'X', sites: [], positions: [] }, { slug: 'bad' }]),
+    );
     writeFileSync(join(empty, 'broken.json'), '{not-json');
     const partial = await listOfficialCareerFilesDetailed(empty);
     assert.equal(partial.completeness, 'incomplete');
