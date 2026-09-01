@@ -27,15 +27,15 @@ export function getPool(): Pool | null {
   return pool;
 }
 
+type QueryPool = {
+  query<T = unknown>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
+};
+
 /**
  * Run a bounded public read. Real pg pools receive statement_timeout so the
  * server cancels a slow statement; injected pools retain the string/params
  * call shape and are covered by the client-side timeout race in tests.
  */
-export type QueryPool = {
-  query<T = unknown>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
-};
-
 export async function queryPublicRead<T>(
   db: QueryPool,
   sql: string,
@@ -59,34 +59,5 @@ export async function queryPublicRead<T>(
     return await Promise.race([query, timeout]);
   } finally {
     if (timer) clearTimeout(timer);
-  }
-}
-
-export const READINESS_QUERY = `
-  SELECT
-    to_regclass('public.companies') IS NOT NULL AS has_companies,
-    to_regclass('public.company_sites') IS NOT NULL AS has_company_sites,
-    to_regclass('public.positions') IS NOT NULL AS has_positions
-`;
-
-/**
- * Check both database connectivity and the minimum schema required by Work
- * mode. The result intentionally contains no database details for callers to
- * expose in a health response.
- */
-export async function checkDatabaseReadiness(db: QueryPool | null): Promise<boolean> {
-  if (!db) return false;
-  try {
-    const result = await queryPublicRead<{
-      has_companies: boolean;
-      has_company_sites: boolean;
-      has_positions: boolean;
-    }>(db, READINESS_QUERY);
-    const row = result.rows[0];
-    return row?.has_companies === true
-      && row.has_company_sites === true
-      && row.has_positions === true;
-  } catch {
-    return false;
   }
 }

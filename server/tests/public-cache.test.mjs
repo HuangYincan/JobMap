@@ -14,6 +14,8 @@ import {
   resetSuggestCache,
   suggestCacheKey,
   suggestCacheSize,
+  suggestOriginBucket,
+  SUGGEST_ORIGIN_BUCKET_DECIMALS,
   writeSuggestCache,
 } from '../src/lib/public-cache.ts';
 
@@ -75,6 +77,28 @@ test('public response cache is bounded against unique query flooding', () => {
   assert.equal(readPublicCache('unique:0'), undefined);
   assert.deepEqual(readPublicCache(`unique:${PUBLIC_CACHE_MAX}`), { i: PUBLIC_CACHE_MAX });
   resetPublicCache();
+});
+
+test('suggest origin buckets are finite and stable for micro-moves', () => {
+  const a = { lng: 120.1501, lat: 30.2501 };
+  const sameBucket = { lng: 120.1504, lat: 30.2504 };
+  const nextBucket = { lng: 120.1506, lat: 30.2506 };
+  assert.equal(suggestOriginBucket(a), '120.150,30.250');
+  assert.equal(suggestOriginBucket(a), suggestOriginBucket(sameBucket));
+  assert.notEqual(suggestOriginBucket(a), suggestOriginBucket(nextBucket));
+  assert.equal(suggestOriginBucket(null), undefined);
+  assert.equal(suggestOriginBucket(undefined), undefined);
+  assert.equal(suggestCacheKey('domain', '西湖'), suggestCacheKey('domain', '西湖', null));
+  assert.notEqual(suggestCacheKey('domain', '西湖'), suggestCacheKey('domain', '西湖', a));
+  assert.equal(SUGGEST_ORIGIN_BUCKET_DECIMALS, 3);
+  assert.equal(
+    new Set(Array.from({ length: 1_000 }, (_, i) => suggestCacheKey('domain', '西湖', {
+      lng: 120.1501 + i / 10_000_000,
+      lat: 30.2501 + i / 10_000_000,
+    }))).size,
+    1,
+    'micro-moves must not create unbounded cache keys',
+  );
 });
 
 test('suggest cache is a separate 5-minute LRU', () => {

@@ -19,7 +19,20 @@ export async function loadServerCatalog(mode: MapMode, clip?: SpatialClip): Prom
   return loadWorkCatalogFromDb(clip);
 }
 
-export async function loadServerCatalogById(mode: MapMode, id: string): Promise<POI | undefined> {
+/**
+ * Targeted catalog lookup with an availability signal for authenticated writes.
+ * `null` means no DB/query failure; `undefined` means the id is absent or not
+ * currently visible in the public work catalog.
+ */
+export async function loadServerCatalogByIdStrict(
+  mode: MapMode,
+  id: string,
+  pool?: Parameters<typeof loadWorkCatalogByIdFromDb>[1],
+): Promise<POI | null | undefined> {
   if (!isRecruitmentMode(mode)) return undefined;
-  return (await loadWorkCatalogByIdFromDb(id)) ?? undefined;
+  return loadWorkCatalogByIdFromDb(id, pool);
+}
+
+export async function loadServerCatalogById(mode: MapMode, id: string): Promise<POI | undefined> {
+  return (await loadServerCatalogByIdStrict(mode, id)) ?? undefined;
 }

@@ -25,13 +25,13 @@ test('hzPoiSpatialSql: bbox + zoom + q + categories + common 过滤', () => {
   assert.match(where, /p\.tier <= \$5/);
   assert.match(where, /p\.name ILIKE \$6/);
   assert.match(where, /p\.big_type = ANY\(\$7::text\[\]\)/);
-  assert.match(where, /\(p\.rating > 0 OR jsonb_array_length\(p\.photos\) > 0 OR p\.tier <= 3\)/);
+  assert.match(where, /\(p\.rating > 0 OR jsonb_array_length\(CASE WHEN jsonb_typeof\(p\.photos\) = 'array' THEN p\.photos ELSE '\[\]'::jsonb END\) > 0 OR p\.tier <= 3\)/);
   assert.deepEqual(params, [120.0, 30.2, 120.2, 30.3, 13, '%肯德基%', ['餐饮服务', '购物服务']]);
 });
 
 test('hzPoiSpatialSql: 无 clip 时仍有 common 过滤', () => {
   const { where, params } = hzPoiSpatialSql({});
-  assert.match(where, /\(p\.rating > 0 OR jsonb_array_length\(p\.photos\) > 0 OR p\.tier <= 3\)/);
+  assert.match(where, /\(p\.rating > 0 OR jsonb_array_length\(CASE WHEN jsonb_typeof\(p\.photos\) = 'array' THEN p\.photos ELSE '\[\]'::jsonb END\) > 0 OR p\.tier <= 3\)/);
   assert.deepEqual(params, []);
 });
 
@@ -134,6 +134,28 @@ test('hzRowToDomainPoi: rating null → undefined;无 photos → undefined', () 
   assert.equal(poi.photos, undefined);
   assert.equal(poi.subcategory, undefined);
   assert.equal(poi.priceLevel, undefined);
+});
+
+test('hzRowToDomainPoi: photos 默认空数组保持 API 形状', () => {
+  const poi = hzRowToDomainPoi({
+    poi_id: 'EMPTY', name: '测试', address: null, tel: null, rating: null, cost: null,
+    lng_gcj: 120.1, lat_gcj: 30.2, big_type: '餐饮服务', mid_type: null,
+    photos: [], open_hours: null, total: '1',
+  });
+  assert.deepEqual(poi.photos, []);
+});
+
+test('hzRowToDomainPoi: photos 脏形状安全归一化,仅保留非空字符串', () => {
+  const base = {
+    poi_id: 'DIRTY', name: '测试', address: null, tel: null, rating: null, cost: null,
+    lng_gcj: 120.1, lat_gcj: 30.2, big_type: '餐饮服务', mid_type: null,
+    open_hours: null, total: '1',
+  };
+  assert.equal(hzRowToDomainPoi({ ...base, photos: { url: 'http://a.com/1' } }).photos, undefined);
+  assert.deepEqual(
+    hzRowToDomainPoi({ ...base, photos: ['http://a.com/1', 7, '', 'http://a.com/2'] }).photos,
+    ['http://a.com/1', 'http://a.com/2'],
+  );
 });
 
 test('hzRowToDomainPoi: tel 脏数据防御 — "[]"/空串 → undefined,真实电话保留', () => {
@@ -279,7 +301,7 @@ test('loadHzPoiSuggestions: name 前缀匹配 + limit 钳位 + adname 返回', a
   assert.ok(calls[0].sql.includes('p.city_code = $1'));
   assert.ok(calls[0].sql.includes('p.name ILIKE $2'));
   assert.ok(calls[0].sql.includes('LIMIT $3'));
-  assert.ok(calls[0].sql.includes('(p.rating > 0 OR jsonb_array_length(p.photos) > 0 OR p.tier <= 3)'));
+  assert.ok(calls[0].sql.includes("p.rating > 0 OR jsonb_array_length(CASE WHEN jsonb_typeof(p.photos) = 'array' THEN p.photos ELSE '[]'::jsonb END) > 0 OR p.tier <= 3"));
   assert.deepEqual(calls[0].params, [HANGZHOU_CITY_CODE, '肯德基%', 5]); // 城内前缀
 });
 

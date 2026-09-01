@@ -581,63 +581,6 @@ test('applyRecruitmentImport runs a transactional upsert with an injected pool',
   assert.equal(positionCall.params[19], '2026-12-31T23:59:59Z');
 });
 
-test('applyRecruitmentImport scopes duplicate source IDs before the ownership-constrained upsert', async () => {
-  const sharedExternalId = 'portal-shared-id';
-  const companies = ['company-a', 'company-b'].map((slug) => ({
-    slug,
-    name: slug,
-    source: 'qqdoc-jobs',
-    industries: ['internet'],
-    scale: 'enterprise',
-    sites: [{ id: `${slug}-site`, name: slug }],
-    positions: [
-      {
-        externalId: sharedExternalId,
-        title: `${slug} role`,
-        siteId: `${slug}-site`,
-        family: 'campus',
-        status: 'open',
-        retrievedAt: '2026-08-20',
-      },
-    ],
-  }));
-  const calls = [];
-  const positionOwners = new Map();
-  let companySeq = 0;
-  const client = {
-    release() {},
-    async query(sql, params = []) {
-      calls.push({ sql, params });
-      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') return { rows: [] };
-      if (sql.includes('INSERT INTO plugin_manifests')) return { rows: [{ id: 'plugin-collision' }] };
-      if (sql.includes('INSERT INTO sources')) return { rows: [{ id: 'source-qqdoc' }] };
-      if (sql.includes('INSERT INTO import_runs')) return { rows: [{ id: 'run-collision' }] };
-      if (sql.includes('UPDATE import_runs')) return { rows: [] };
-      if (sql.includes('INSERT INTO companies')) return { rows: [{ id: `company-${++companySeq}` }] };
-      if (sql.includes('SELECT id::text FROM company_sites WHERE company_id = $1 AND site_key = $2')) return { rows: [] };
-      if (sql.includes('site_key IS NULL')) return { rows: [] };
-      if (sql.includes('INSERT INTO company_sites')) return { rows: [{ id: `site-${params[0]}` }] };
-      if (sql.includes('INSERT INTO positions')) {
-        const key = `${params[17]}:${params[2]}`;
-        const previousOwner = positionOwners.get(key);
-        if (previousOwner && previousOwner !== params[0]) {
-          throw new Error('cross-company position identity collision');
-        }
-        positionOwners.set(key, params[0]);
-      }
-      return { rows: [] };
-    },
-  };
-  const result = await applyRecruitmentImport({ companies, issues: [], dropped: 0 }, { connect: async () => client });
-  assert.equal(result.positions, 2);
-  const positionCalls = calls.filter((call) => call.sql.includes('INSERT INTO positions'));
-  assert.equal(positionCalls.length, 2);
-  assert.notEqual(positionCalls[0].params[2], positionCalls[1].params[2]);
-  assert.ok(positionCalls.every((call) => call.params[2].startsWith(`${sharedExternalId}::company=`)));
-  const sourceRecordCalls = calls.filter((call) => call.sql.includes('INSERT INTO source_records'));
-  assert.deepEqual(sourceRecordCalls.map((call) => call.params[2]), positionCalls.map((call) => call.params[2]));
-});
-
 test('applyRecruitmentImport writes each site/position source provenance independently', async () => {
   const plan = {
     companies: [

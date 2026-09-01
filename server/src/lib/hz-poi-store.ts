@@ -13,6 +13,7 @@
 // ============================================================
 
 import { getPool, queryPublicRead } from './db.ts';
+import { normalizePhotoUrls } from './hz-poi-import.ts';
 import type { DomainPOI, POILocation } from './types.ts';
 import { HANGZHOU_BBOX, parseBoundsParam, type ViewportBounds } from './viewport-search.ts';
 
@@ -77,7 +78,11 @@ const CITY_CODE_RE = /^[0-9]{6}$/;
 const LIST_COLUMNS = `p.poi_id, p.name, p.address, p.tel, p.rating, p.cost,
            p.lng_gcj, p.lat_gcj, p.big_type, p.mid_type, p.photos, p.open_hours`;
 
-const ORDER_BY_RATING = `rating DESC NULLS LAST, jsonb_array_length(photos) DESC, poi_id`;
+const photosArrayLengthSql = (column: string) =>
+  // 022 enforces this shape for new writes; CASE keeps reads safe before an
+  // operator has diagnosed and applied that ENV_ONLY migration to old rows.
+  `jsonb_array_length(CASE WHEN jsonb_typeof(${column}) = 'array' THEN ${column} ELSE '[]'::jsonb END)`;
+const ORDER_BY_RATING = `rating DESC NULLS LAST, ${photosArrayLengthSql('photos')} DESC, poi_id`;
 
 interface HzPoiRow {
   poi_id: string;
@@ -90,7 +95,7 @@ interface HzPoiRow {
   lat_gcj: number;
   big_type: string;
   mid_type: string | null;
-  photos: string[] | null; // jsonb → array
+  photos: unknown; // jsonb → runtime-validated array
   open_hours: string | null;
   total: string | number | null; // CTE count → int; 全市路径可能为 null
 }
@@ -165,7 +170,7 @@ export function hzPoiSpatialSql(
   }
 
   // common 门槛下推:有评分 / 有照片 / 地标类(tier<=3)——避免返回大量无图无分噪声
-  clauses.push(`(p.rating > 0 OR jsonb_array_length(p.photos) > 0 OR p.tier <= 3)`);
+  clauses.push(`(p.rating > 0 OR ${photosArrayLengthSql('p.photos')} > 0 OR p.tier <= 3)`);
 
   return { where: clauses.length ? ` WHERE ${clauses.join(' AND ')}` : '', params };
 }
@@ -206,7 +211,7 @@ export function hzPoiPageSql(
            NULL::int AS total
     FROM hz_pois p
     ${where}
-    ORDER BY p.rating DESC NULLS LAST, jsonb_array_length(p.photos) DESC, p.poi_id
+    ORDER BY p.rating DESC NULLS LAST, ${photosArrayLengthSql('p.photos')} DESC, p.poi_id
     LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
     params: [...params, limit, offset],
   };
@@ -223,6 +228,7 @@ export function hzRowToDomainPoi(row: HzPoiRow): DomainPOI {
     lat: row.lat_gcj,
     address: row.address ?? undefined,
   };
+  const photos = normalizePhotoUrls(row.photos);
   return {
     id: row.poi_id,
     kind: 'domain',
@@ -238,7 +244,7 @@ export function hzRowToDomainPoi(row: HzPoiRow): DomainPOI {
     openHours: row.open_hours ?? undefined,
     // 防御清洗:旧数据未重导时 DB 里 tel 可能是字面量 '[]'(源 CSV 空电话)
     tel: tel && tel !== '[]' && tel !== '{}' ? tel : undefined,
-    photos: Array.isArray(row.photos) ? row.photos.slice(0, 3) : undefined,
+    photos: Array.isArray(row.photos) ? photos.slice(0, 3) : undefined,
   };
 }
 
@@ -345,8 +351,8 @@ export async function loadHzPoiSuggestions(
     FROM hz_pois p
     WHERE p.city_code = $1
       AND p.name ILIKE $2
-      AND (p.rating > 0 OR jsonb_array_length(p.photos) > 0 OR p.tier <= 3)
-    ORDER BY p.rating DESC NULLS LAST, jsonb_array_length(p.photos) DESC, p.poi_id
+      AND (p.rating > 0 OR ${photosArrayLengthSql('p.photos')} > 0 OR p.tier <= 3)
+    ORDER BY p.rating DESC NULLS LAST, ${photosArrayLengthSql('p.photos')} DESC, p.poi_id
     LIMIT $3`;
   try {
     const result = await queryPublicRead<HzPoiSuggestionRow>(pool, sql, [city, `${kw}%`, n]);
