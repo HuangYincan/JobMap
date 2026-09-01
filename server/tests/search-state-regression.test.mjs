@@ -115,3 +115,17 @@ test('readiness retry contract keeps debounce/cancellation and mode boundaries',
   const effectAt = hook.indexOf('useEffect(() => {', readyKeyAt);
   assert.ok(readyKeyAt !== -1 && effectAt > readyKeyAt, 'readiness key must be captured before the suggest effect');
 });
+
+test('origin bucket refresh updates distance without replacing suggestion identities', () => {
+  const hook = src('hooks/use-search-state.ts');
+  assert.match(hook, /const originBucket = suggestOriginBucket\(distanceOriginRef\.current\);/);
+  assert.match(hook, /const originBucketRef = useRef\(originBucket\);/);
+  assert.match(hook, /const requestedBucket = originBucket;/);
+  assert.match(hook, /fetchSearchSuggest\(requestedQuery, requestedMode, requestOrigin\)/);
+  assert.match(hook, /export function refreshSuggestionDistances\(/);
+  assert.match(hook, /return tip\.distance === distance \? tip : \{ \.\.\.tip, distance \};/);
+  assert.match(hook, /setSuggestions\(\(current\) => refreshSuggestionDistances\(current, distanceOriginRef\.current\)\)/);
+  assert.match(hook, /ORIGIN_DISTANCE_REFRESH_DEBOUNCE_MS = 500/);
+  assert.match(hook, /\}, \[originBucket\]\);/);
+  assert.doesNotMatch(hook, /\}, \[query, mode, zoom, catalog, distanceOrigin\]\);/);
+});

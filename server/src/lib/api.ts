@@ -75,14 +75,14 @@ export function fetchPOIDetail(id: string, mode: MapMode): Promise<POI> {
   return request<POI>(`/api/pois/${encodeURIComponent(id)}?mode=${mode}`);
 }
 
-/** 搜索（含建议）。同一 mode+q 五分钟内走客户端 LRU,最多 100 条。
+/** 搜索（含建议）。同一 mode+q+origin bucket 五分钟内走客户端 LRU,最多 100 条。
  *  空结果不写缓存——首次空「死」5 分钟会挡住 domain 本地优先→高德回退。 */
 export async function fetchSearchSuggest(
   q: string,
   mode: MapMode,
   center?: { lng: number; lat: number } | null
 ): Promise<SuggestResponse> {
-  const key = suggestCacheKey(mode, q);
+  const key = suggestCacheKey(mode, q, center);
   const cached = readSuggestCache<SuggestResponse>(key);
   if (cached) return cached;
   const params = new URLSearchParams({ q, mode });

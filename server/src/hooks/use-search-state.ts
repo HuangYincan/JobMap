@@ -7,9 +7,10 @@
 // - work：/api/suggest 服务端目录（公司 + 岗位 + 标签），0 命中/报错回退本地池；
 // - domain：本地优先（/api/suggest → hz_pois 前缀匹配），0 命中/报错回退高德
 //   AutoComplete 一次，回退失败返回空列表不卡死。
-// 依赖只留 [query, mode]：之前 [query, mode, zoom, catalog] 里 catalog 每批替换、
-// zoom 每次平移都取消 200ms 定时器——hz-poi Stage 4 后 catalog 高频变化，
-// 候选列表永远不落地。zoom/catalog 改经 ref 读取。
+// 依赖只留 [query, mode, searchReadyKey]：之前 [query, mode, zoom, catalog] 里
+// catalog 每批替换、zoom 每次平移都取消 200ms 定时器——hz-poi Stage 4 后
+// catalog 高频变化，候选列表永远不落地。originBucket 由独立的低频 effect 观察，
+// 只在有限精度的中心桶变化后刷新并重算已有建议距离；zoom/catalog 改经 ref 读取。
 // ============================================================
 
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
@@ -17,11 +18,28 @@ import type { MapMode, POI } from "@/lib/types";
 import { haversineDistance, isRecruitmentMode } from "@/lib/types";
 import type { MapEngine } from "@/lib/map-engine/types";
 import { suggestRecruitment, suggestSearchTags } from "@/lib/search";
+import { suggestOriginBucket } from "@/lib/public-cache";
 import {
   fetchSearchSuggest,
   type SearchSuggestion as ApiSearchSuggestion,
 } from "@/lib/api";
 import type { SearchSuggestion } from "@/components/secondary-sidebar";
+
+/** Origin changes are intentionally coalesced separately from the 200ms query debounce. */
+export const ORIGIN_DISTANCE_REFRESH_DEBOUNCE_MS = 500;
+
+/** Recompute only distance fields, preserving suggestion objects without locations. */
+export function refreshSuggestionDistances(
+  items: SearchSuggestion[],
+  origin: { lng: number; lat: number } | null,
+): SearchSuggestion[] {
+  if (!origin) return items;
+  return items.map((tip) => {
+    if (!tip.location) return tip;
+    const distance = haversineDistance(tip.location, origin);
+    return tip.distance === distance ? tip : { ...tip, distance };
+  });
+}
 
 /** /api/suggest 服务端建议 → 客户端 UI 形态。
  *  距离优先用客户端实时 origin 重算（地图平移/定位后仍新鲜），服务端 center
@@ -61,7 +79,13 @@ export interface SearchStateOptions {
 export function useSearchState(options: SearchStateOptions) {
   const { query, mode, distanceOriginRef, zoomRef, catalogRef, engine, engineReady = Boolean(engine) } = options;
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
-  // 引擎经 ref 读取:依赖保持原始 query/mode + 稳定 readiness key(引擎切换/地图
+  const originBucket = suggestOriginBucket(distanceOriginRef.current);
+  const originBucketRef = useRef(originBucket);
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  // 引擎经 ref 读取:依赖保持原始 query/mode + 稳定 readiness key(引擎/地图
   // 就绪时重跑;每次 render 不因对象引用变化而重置 200ms 防抖)。
   const engineRef = useRef(engine);
   engineRef.current = engine;
@@ -79,7 +103,7 @@ export function useSearchState(options: SearchStateOptions) {
       const origin = distanceOriginRef.current;
 
       if (isRecruitmentMode(mode)) {
-        const fallback = () => {
+        const fallback = (fallbackOrigin = distanceOriginRef.current) => {
           // DB-only：兜底只用已加载 catalog；目录空时仅返回标签（无示例数据池）。
           const pool = catalogRef.current;
           const tags = suggestSearchTags(query, 3).map((tag) => ({
@@ -96,6 +120,7 @@ export function useSearchState(options: SearchStateOptions) {
             poiId: tip.poiId,
             positionId: tip.positionId,
             kind: tip.kind,
+            distance: tip.location && fallbackOrigin ? haversineDistance(tip.location, fallbackOrigin) : undefined,
           }));
           return [...tags, ...tips].slice(0, 8);
         };
@@ -106,7 +131,7 @@ export function useSearchState(options: SearchStateOptions) {
             setSuggestions(fallback());
             return;
           }
-          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, origin)));
+          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, distanceOriginRef.current)));
         } catch {
           if (!cancelled) setSuggestions(fallback());
         }
@@ -118,7 +143,7 @@ export function useSearchState(options: SearchStateOptions) {
         const res = await fetchSearchSuggest(query.trim(), mode, origin);
         if (cancelled) return;
         if (res.suggestions.length) {
-          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, origin)));
+          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, mode, distanceOriginRef.current)));
           return;
         }
       } catch {
@@ -138,6 +163,7 @@ export function useSearchState(options: SearchStateOptions) {
             location: tip.location,
             kind: "place",
             icon: "📍",
+            distance: tip.location && origin ? haversineDistance(tip.location, origin) : undefined,
           }))
         );
       } catch {
@@ -149,6 +175,48 @@ export function useSearchState(options: SearchStateOptions) {
       clearTimeout(timer);
     };
   }, [query, mode, searchReadyKey]);
+
+  // Map move/zoom updates mapCenter frequently. Refresh the current suggestions on
+  // a coarse origin bucket timer so those updates never cancel the 200ms query timer.
+  useEffect(() => {
+    if (originBucketRef.current === originBucket) return;
+    originBucketRef.current = originBucket;
+    if (!originBucket || !queryRef.current.trim()) return;
+    const requestedQuery = queryRef.current.trim();
+    const requestedMode = modeRef.current;
+    const requestedBucket = originBucket;
+    const timer = setTimeout(async () => {
+      if (
+        queryRef.current.trim() !== requestedQuery ||
+        modeRef.current !== requestedMode ||
+        suggestOriginBucket(distanceOriginRef.current) !== requestedBucket
+      ) return;
+      const requestOrigin = distanceOriginRef.current;
+      try {
+        const res = await fetchSearchSuggest(requestedQuery, requestedMode, requestOrigin);
+        if (
+          queryRef.current.trim() !== requestedQuery ||
+          modeRef.current !== requestedMode ||
+          suggestOriginBucket(distanceOriginRef.current) !== requestedBucket
+        ) return;
+        const currentOrigin = distanceOriginRef.current;
+        if (res.suggestions.length) {
+          setSuggestions(res.suggestions.map((tip) => mapApiSuggestion(tip, requestedMode, currentOrigin)));
+        } else {
+          setSuggestions((current) => refreshSuggestionDistances(current, currentOrigin));
+        }
+      } catch {
+        if (
+          queryRef.current.trim() === requestedQuery &&
+          modeRef.current === requestedMode &&
+          suggestOriginBucket(distanceOriginRef.current) === requestedBucket
+        ) {
+          setSuggestions((current) => refreshSuggestionDistances(current, distanceOriginRef.current));
+        }
+      }
+    }, ORIGIN_DISTANCE_REFRESH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [originBucket]);
 
   return { suggestions, setSuggestions };
 }

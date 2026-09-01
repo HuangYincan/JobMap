@@ -135,10 +135,40 @@ export function resetPublicCache(): void {
 export const SUGGEST_CACHE_TTL_MS = 5 * 60 * 1000;
 export const SUGGEST_CACHE_MAX = 100;
 
+/**
+ * Origin bucket precision for the browser suggest cache.
+ * Three decimal places keep ordinary map nudges in one bucket (about 100m)
+ * while still separating materially different search origins.
+ */
+export const SUGGEST_ORIGIN_BUCKET_DECIMALS = 3;
+const SUGGEST_ORIGIN_BUCKET_SCALE = 10 ** SUGGEST_ORIGIN_BUCKET_DECIMALS;
+
+export interface SuggestOrigin {
+  lng: number;
+  lat: number;
+}
+
+/**
+ * Normalize an origin for bounded client-cache cardinality.
+ * Invalid/absent origins deliberately share the no-center cache key.
+ */
+export function suggestOriginBucket(center?: SuggestOrigin | null): string | undefined {
+  if (!center || !Number.isFinite(center.lng) || !Number.isFinite(center.lat)) return undefined;
+  const lng = Math.round(center.lng * SUGGEST_ORIGIN_BUCKET_SCALE) / SUGGEST_ORIGIN_BUCKET_SCALE;
+  const lat = Math.round(center.lat * SUGGEST_ORIGIN_BUCKET_SCALE) / SUGGEST_ORIGIN_BUCKET_SCALE;
+  // Geographic centers are finite and small; retain a defensive fallback for
+  // hostile numeric inputs whose multiplication overflows during rounding.
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return undefined;
+  return `${lng.toFixed(SUGGEST_ORIGIN_BUCKET_DECIMALS)},${lat.toFixed(SUGGEST_ORIGIN_BUCKET_DECIMALS)}`;
+}
+
 const suggestStore = createTtlCache(Date.now, { max: SUGGEST_CACHE_MAX });
 
-export function suggestCacheKey(mode: string, q: string): string {
-  return publicCacheKey(['suggest', mode, q.trim().toLowerCase()]);
+export function suggestCacheKey(mode: string, q: string, center?: SuggestOrigin | null): string {
+  const parts: Array<string | number | boolean | null | undefined> = ['suggest', mode, q.trim().toLowerCase()];
+  const bucket = suggestOriginBucket(center);
+  if (bucket !== undefined) parts.push('origin', bucket);
+  return publicCacheKey(parts);
 }
 
 export function readSuggestCache<T>(key: string): T | undefined {
