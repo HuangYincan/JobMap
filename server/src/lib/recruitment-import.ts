@@ -472,6 +472,23 @@ export async function applyRecruitmentImport(
       positions: authentic.reduce((n, c) => n + c.positions.length, 0),
     };
   }
+  // planSeedImport is an all-source snapshot. If any adapter could not produce
+  // a complete snapshot, keep all validated records available for diagnostics
+  // but refuse the entire DB apply. The explicit `true` check also fails closed
+  // for legacy or hand-built plans that do not carry completeness evidence.
+  // This prevents a missing/broken optional drop directory from being interpreted
+  // as a legitimate empty snapshot and triggering stale-row reconciliation. A
+  // future per-source lifecycle runner may narrow this gate once it can isolate
+  // reconciliation by source.
+  if (plan.complete !== true) {
+    return {
+      wrote: false,
+      reason: 'incomplete-input',
+      companies: authentic.length,
+      sites: authentic.reduce((n, company) => n + company.sites.length, 0),
+      positions: authentic.reduce((n, company) => n + company.positions.length, 0),
+    };
+  }
 
   const audit = prepareAudit(authentic);
   const client = await pool.connect();
@@ -813,6 +830,27 @@ export async function applyRecruitmentImport(
         );
         positions += 1;
       }
+    }
+    // A complete, failure-free source batch is an authoritative snapshot for
+    // that source. Rows absent from it become explicit closed/expired
+    // tombstones; rows from other sources are never touched. Any record-level
+    // audit failure skips reconciliation for the whole source, even when other
+    // records from that source were valid.
+    for (const [code, batch] of audit) {
+      if (batch.failures.length > 0) continue;
+      const sourceId = await sourceIdFor(code);
+      const externalIds = [...new Set(batch.records.map((record) => record.position.externalId))];
+      const absent = externalIds.length > 0
+        ? ' AND NOT (external_id = ANY($2::text[]))'
+        : '';
+      const params = externalIds.length > 0 ? [sourceId, externalIds] : [sourceId];
+      await client.query(
+        `UPDATE positions
+            SET status = 'closed', expires_at = CURRENT_TIMESTAMP, updated_at = now()
+          WHERE source_id = $1${absent}
+            AND (status <> 'closed' OR expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)`,
+        params,
+      );
     }
     await finalizeRuns('succeeded');
     await client.query('COMMIT');

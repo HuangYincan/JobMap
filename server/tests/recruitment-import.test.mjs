@@ -500,6 +500,7 @@ function fakeImportPlan() {
             externalId: 'seed-fake',
             title: 'Example',
             siteId: 'fake-site',
+            source: 'seed',
             family: 'campus',
             status: 'open',
           },
@@ -508,6 +509,7 @@ function fakeImportPlan() {
     ],
     issues: [],
     dropped: 0,
+    complete: true,
   };
 }
 
@@ -571,6 +573,10 @@ test('applyRecruitmentImport runs a transactional upsert with an injected pool',
   assert.ok(sqls.some((sql) => sql.includes('INSERT INTO companies')));
   assert.ok(sqls.some((sql) => sql.includes('INSERT INTO company_sites')));
   assert.ok(sqls.some((sql) => sql.includes('DELETE FROM positions')));
+  assert.ok(sqls.some((sql) => sql.includes("SET status = 'closed'")));
+  const reconciliation = fake.calls.find((call) => call.sql.includes("SET status = 'closed'"));
+  assert.deepEqual(reconciliation.params, ['source-fake', ['radar-fake-1']]);
+  assert.match(reconciliation.sql, /expires_at = CURRENT_TIMESTAMP/);
   assert.ok(!sqls.some((sql) => sql.includes('UPDATE positions SET source_id')));
 
   const companyCall = fake.calls.find((call) => call.sql.includes('INSERT INTO companies'));
@@ -588,6 +594,31 @@ test('applyRecruitmentImport runs a transactional upsert with an injected pool',
   assert.equal(positionCall.params[17], 'source-fake');
   assert.equal(positionCall.params[18], '2026-08-20T10:30:00Z');
   assert.equal(positionCall.params[19], '2026-12-31T23:59:59Z');
+});
+
+test('complete source snapshot reconciles a source with zero positions', async () => {
+  const plan = {
+    companies: [{
+      slug: 'empty-radar',
+      name: 'Empty Radar',
+      source: 'xiaozhao-radar',
+      industries: ['internet'],
+      scale: 'startup',
+      sites: [{ id: 'empty-site', name: 'HQ' }],
+      positions: [],
+    }],
+    issues: [],
+    dropped: 0,
+    complete: true,
+  };
+  const fake = fakeApplyPool({ sourceIds: { 'xiaozhao-radar': 'source-radar' } });
+  const result = await applyRecruitmentImport(plan, fake.pool);
+  assert.equal(result.wrote, true);
+  const reconciliation = fake.calls.find((call) => call.sql.includes("SET status = 'closed'"));
+  assert.ok(reconciliation);
+  assert.deepEqual(reconciliation.params, ['source-radar']);
+  assert.match(reconciliation.sql, /WHERE source_id = \$1/);
+  assert.match(reconciliation.sql, /expires_at = CURRENT_TIMESTAMP/);
 });
 
 test('applyRecruitmentImport writes each site/position source provenance independently', async () => {
@@ -627,6 +658,7 @@ test('applyRecruitmentImport writes each site/position source provenance indepen
     ],
     issues: [],
     dropped: 0,
+    complete: true,
   };
   const fake = fakeApplyPool({ sourceIds: { 'official-career': 'source-official', 'xiaozhao-radar': 'source-radar' } });
   const result = await applyRecruitmentImport(plan, fake.pool);
@@ -638,6 +670,11 @@ test('applyRecruitmentImport writes each site/position source provenance indepen
   const recordCalls = fake.calls.filter((call) => call.sql.includes('INSERT INTO source_records'));
   assert.equal(recordCalls.length, 2);
   assert.deepEqual(recordCalls.map((call) => call.params[0]), ['source-official', 'source-radar']);
+  const reconciliationCalls = fake.calls.filter((call) => call.sql.includes("SET status = 'closed'"));
+  assert.deepEqual(
+    reconciliationCalls.map((call) => call.params),
+    [['source-official', ['portal-deepseek']], ['source-radar', ['radar-deepseek']]],
+  );
 });
 
 test('applyRecruitmentImport reuses an existing company site instead of inserting', async () => {
@@ -667,6 +704,7 @@ test('applyRecruitmentImport records missing retrieval time as a failed audit re
   const runUpdates = fake.calls.filter((call) => call.sql.includes('UPDATE import_runs'));
   assert.ok(runUpdates.some((call) => call.params[1] === 'failed'));
   assert.doesNotMatch(JSON.stringify(runUpdates), /2026-08-27/);
+  assert.equal(fake.calls.some((call) => call.sql.includes("SET status = 'closed'")), false);
 });
 
 test('applyRecruitmentImport returns early for an empty plan', async () => {
@@ -712,6 +750,14 @@ test('boss / nowcoder / shixiseng adapters read file drops and skip missing dirs
   const rows = await bossAdapter(dir).list();
   assert.equal(rows[0]?.slug, 'fixture-boss');
   assert.equal(rows[0]?.positions[0]?.applySource, 'boss');
+});
+
+test('import apply fails closed when completeness evidence is absent', async () => {
+  const plan = planRecruitmentImport([sample()]);
+  delete plan.complete;
+  const result = await applyRecruitmentImport(plan, { connect: async () => { throw new Error('must not connect'); } });
+  assert.equal(result.wrote, false);
+  assert.equal(result.reason, 'incomplete-input');
 });
 
 test('siteCityOf prefers site.city then parses known cities from the address', () => {
