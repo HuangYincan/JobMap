@@ -59,10 +59,10 @@ test('work viewport scheduling conditions live in the hook, not map-shell', () =
   // 客户端裁剪(work 模式),marker 源 catalog 只增不减(全量加载后恒定)
   assert.doesNotMatch(shell, /listCatalog|setListCatalog|listCatalogRef/);
   assert.match(shell, /catalog\.filter\(\(p\) => inBounds\(p\.location, mapBounds\)\)/);
-  // 列表裁剪 work+domain 共用;marker 池仍是 catalog 全量(外区点不销毁)
+  // 列表裁剪 work+domain 共用;非法/翻转框当无框(回退全量,不裁成空)
   assert.match(
     shell,
-    /canonicalMode\(mode\) === "work" \|\| canonicalMode\(mode\) === "domain"\) && mapBounds/,
+    /canonicalMode\(mode\) === "work" \|\| canonicalMode\(mode\) === "domain"\) && isUsableViewportBounds\(mapBounds\)/,
   );
   // AMap 滚轮缩放常不派 moveend:zoomend 也要 syncView,否则 mapBounds 停在旧框
   assert.match(shell, /onViewEvent\(view, "zoomend", syncView\)/);
@@ -261,14 +261,21 @@ test('usePOIMap:applySync 末尾 sync() + 视图事件自动补回(外部删除�
     '顺序:setPOIs → setVisiblePOIs → … → sync(末尾)'
   );
   // 无状态变化自动补回:moveend 触发 sync(zoomchange 在缩放动画中连续
-  // 触发,海量点 O(n) 扫描会卡,不再挂)。cleanup 用解绑函数停止。
+  // 触发,海量点 O(n) 扫描会卡,不再挂)。cleanup 交棒 keepalive,延迟 destroy。
   assert.match(hook, /view\.on\('moveend', \(\) => \{\s*controller\.sync\(\);\s*\}\);/);
   assert.doesNotMatch(
     hook,
     /view\.on\('zoomchange', \(\) => \{\s*controller\.sync\(\);\s*\}\);/,
     'zoomchange 不得触发全量 sync'
   );
-  assert.match(hook, /offMove\(\);\s*controller\.destroy\(\);/);
+  assert.match(hook, /keepaliveRef/);
+  assert.match(hook, /offMove\(\);\s*if \(controllerRef\.current === controller\) controllerRef\.current = null;/);
+  assert.doesNotMatch(
+    hook,
+    /offMove\(\);\s*controller\.destroy\(\);/,
+    'cleanup 不得立即 destroy(poi-lifecycle #1 keepalive)',
+  );
+  assert.match(hook, /setTimeout\(\(\) => \{[\s\S]*?doomed\.destroy\(\);/);
 });
 
 // ---- 2026-08-25 f-lod-pool:工作 LOD 取消 + domain 池/可见集拆分 + 空池守卫 ----
@@ -279,9 +286,13 @@ test('fix 4:map-shell 工作模式取消 LOD tier 过滤——全量公司恒显
   // 客户端不再 import / 使用 tier 过滤符号(服务端 /api/pois 的 maxTier 契约保留)
   assert.doesNotMatch(shell, /maxTierForZoom|TIER_DEFAULT/);
   assert.doesNotMatch(shell, /company\?\.tier|\.tier \?\?/);
-  // 可见性 work 分支 = markerPois 全量(无 tier <= maxTier 过滤;zoom > 8 个体
-  // pin 全量出现,含未打标 tier 12);domain 分支 = 管线结果 ∪ overlay
-  assert.match(shell, /return markerPois\.map\(\(p\) => p\.id\);/);
+  // 可见性 work 分支 = 管线结果 ∪ overlay(池 = catalog 全量;搜索/距离只 hide)
+  assert.match(shell, /workVisiblePois \?\? \[\]\)\.map\(\(p\) => p\.id\)/);
+  assert.doesNotMatch(
+    shell,
+    /return markerPois\.map\(\(p\) => p\.id\);/,
+    'work 可见集不得再等于 marker 全池(poi-lifecycle #2)',
+  );
   // 全片段内不再存在 tier 过滤表达式(maxTier 变量、tier 条件均退役)
   assert.doesNotMatch(shell, /tier\s*[<>=!]=?\s*maxTier|maxTier\s*[<>=!]=?\s*/);
   // lod.ts 模块导出保留(API 契约 + 数据管线),仅注释声明客户端退役
@@ -301,6 +312,11 @@ test('fix 5:map-shell domain marker 池 = 目录全量(catalog 原始),筛选只
     shell,
     /canonicalMode\(mode\) === "domain"\s*\? mergeMapPois\(catalog, overlayPois, savedOverlay && Boolean\(user\)\)/
   );
+  assert.match(
+    shell,
+    /canonicalMode\(mode\) === "work"\s*\? mergeMapPois\(catalog, overlayPois, savedOverlay && Boolean\(user\)\)/,
+  );
+  assert.match(shell, /const workVisiblePois = useMemo\(/);
   // 依赖数组不含 query/filters/sort → 纯客户端筛选变化池引用不变(零 setPOIs)
   assert.match(shell, /\[mode, catalog, overlayPois, savedOverlay, user\],/);
   // markerPois 的 domain 分支 = 池(非管线 pois)——列表变化不触碰 marker 源

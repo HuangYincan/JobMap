@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file tracks shipped work on `feature/phase-2-multi-mode` and later. It is not a substitute for `tech/05-milestones.md`.
 
+## 2026-09-01
+
+### Fixed
+
+- **POI 经常先出现再消失。** 审查见 `tech/roles/development/quality-scans/20260901-poi-lifecycle/scan-report.md`。针消失的主路径是可见集收空或控制器拆掉,不是 `setPOIs([])`。七条修复:标记控制器与底图同款 keepalive(StrictMode / 详情面板重连不拆针);工作模式搜索/筛选只 hide、池保持 catalog 全量;聚合下串味公司仍画个体针;非法/过期视野框不再把 Domain 针裁空,程序化定位立刻同步 bounds;AMap/腾讯意图可见但加层失败时 `isAttached=false` 让 sync 补回;logo 升级改原地 `setIcon`;主加载空批次不再按框清空非空目录。
+
 ## 2026-08-31
 
 ### Added

@@ -13,6 +13,13 @@
 //   marker 自动补回（完整性扫描，幂等 O(n)）
 // - moveend 时也触发 sync：外部删除不经过 React 状态。不挂 zoomchange
 //   （缩放动画中连续触发，海量点 O(n) 扫描会卡）
+//
+// 控制器 keepalive(2026-09-01 poi-lifecycle):与 use-map-engine 活图交棒
+// 同款——effect cleanup 不立即 destroy()。StrictMode / next/dynamic 详情
+// 面板触发的 MapShell fiber disconnect→reconnect 会重放本 effect;若当帧
+// 拆掉全部 marker,屏上 POI 闪没,且 applySync 若碰上空可见集就回不来。
+// 同 view + 同 accentColor 重连复用控制器(针零丢失);换 view/换色/真卸载
+// 才延迟销毁。
 // ============================================================
 
 import { useEffect, useRef } from 'react';
@@ -21,7 +28,6 @@ import type { MapView } from '../lib/map-engine/types.ts';
 import {
   createPOIMarkerController,
   type POIMarkerController,
-  type POIMarkerControllerOptions,
 } from '../lib/map-markers.ts';
 
 /** usePOIMap 的配置项。 */
@@ -84,6 +90,12 @@ function applySync(
   controller.sync();
 }
 
+type ControllerKeepalive = {
+  controller: POIMarkerController;
+  view: MapView;
+  color: string | undefined;
+};
+
 // ---------------------------------------------------------------------------
 // usePOIMap — React Hook
 // ---------------------------------------------------------------------------
@@ -91,7 +103,8 @@ function applySync(
 /**
  * 将 MapView 实例与 POI 数据绑定：管理地图标记并处理卡片↔地图双向联动。
  *
- * 内部持有持久控制器，随 view / accentColor 变化重建，随组件卸载销毁。
+ * 内部持有持久控制器。同 view / 同强调色在 fiber reconnect 时复用(keepalive);
+ * 换 view、换强调色或真卸载才销毁。
  *
  * @param view MapView 实例（可为 null，此时不创建任何标记）。
  * @param opts POI 列表、选中/高亮状态、强调色与点击回调。
@@ -111,6 +124,7 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
 
   // 缓存最新的回调与状态，避免 effect 依赖函数/对象导致频繁重建
   const latest = useRef({
+    pois,
     accentColor,
     onMarkerClick,
     selectedId,
@@ -121,6 +135,7 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
     resetKey,
   });
   latest.current = {
+    pois,
     accentColor,
     onMarkerClick,
     selectedId,
@@ -132,23 +147,41 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
   };
 
   const controllerRef = useRef<POIMarkerController | null>(null);
+  const keepaliveRef = useRef<ControllerKeepalive | null>(null);
 
-  // 创建 / 销毁控制器：view 实例或强调色变化时重建
+  // 创建 / 销毁控制器：view 实例或强调色变化时重建;同 view 重连复用
   useEffect(() => {
     if (!view) {
-      controllerRef.current?.destroy();
-      controllerRef.current = null;
       return;
     }
 
-    const controller = createPOIMarkerController(view, {
-      color: latest.current.accentColor,
-      onMarkerClick: (id) => latest.current.onMarkerClick?.(id),
-    });
+    const keep = keepaliveRef.current;
+    const viewAlive = typeof view.isDestroyed !== 'function' || !view.isDestroyed();
+    const reusable =
+      Boolean(keep) &&
+      keep!.view === view &&
+      keep!.color === latest.current.accentColor &&
+      viewAlive;
+
+    let controller: POIMarkerController;
+    if (reusable && keep) {
+      keepaliveRef.current = null;
+      controller = keep.controller;
+    } else {
+      if (keep) {
+        keep.controller.destroy();
+        keepaliveRef.current = null;
+      }
+      controllerRef.current?.destroy();
+      controller = createPOIMarkerController(view, {
+        color: latest.current.accentColor,
+        onMarkerClick: (id) => latest.current.onMarkerClick?.(id),
+      });
+    }
     controllerRef.current = controller;
     applySync(
       controller,
-      pois,
+      latest.current.pois,
       latest.current,
       latest.current.selectedId,
       latest.current.highlightedId,
@@ -165,8 +198,18 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
 
     return () => {
       offMove();
-      controller.destroy();
-      controllerRef.current = null;
+      if (controllerRef.current === controller) controllerRef.current = null;
+      keepaliveRef.current = {
+        controller,
+        view,
+        color: latest.current.accentColor,
+      };
+      const doomed = controller;
+      setTimeout(() => {
+        if (keepaliveRef.current?.controller !== doomed) return;
+        doomed.destroy();
+        keepaliveRef.current = null;
+      }, 0);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, accentColor]);
@@ -187,7 +230,7 @@ export function usePOIMap(view: MapView | null, opts: UsePOIMapOptions): void {
     if (reset) controller.clear();
     applySync(
       controller,
-      pois,
+      latest.current.pois,
       latest.current,
       latest.current.selectedId,
       latest.current.highlightedId,

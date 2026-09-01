@@ -64,7 +64,7 @@ test('all three geolocation exits (!loc / success / error) settle via settleGeol
   // 已移图/已交互/恢复视野 → 不 setCenter)
   assert.match(
     shell,
-    /isNearDefaultCenter\([\s\S]*?setMapCenter\(\{ lng, lat \}\);\s*\}\s*settleGeolocation\(\);/
+    /isNearDefaultCenter\([\s\S]*?applyLiveViewState\(view\);\s*\}\s*settleGeolocation\(\);/
   );
   // 失败分支
   assert.match(shell, /\.catch\(\(\) => \{\s*settleGeolocation\(\);/);

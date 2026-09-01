@@ -12,6 +12,7 @@ import {
   isCommonOrExactName,
   isCommonPoi,
   inBounds,
+  isUsableViewportBounds,
   mapScaleMetersPerCm,
   mergePoisById,
   MORE_PAGE_SIZE,
@@ -157,6 +158,17 @@ test('parseBoundsParam and inBounds clip to the requested box', () => {
   assert.equal(inBounds({ lng: 120.1, lat: 30.25 }, box), true);
   assert.equal(inBounds({ lng: 121, lat: 30.25 }, box), false);
   assert.equal(inBounds({ lng: 120.1, lat: 30.25 }, [120, 30.2, 120.2, 30.3]), true);
+});
+
+test('isUsableViewportBounds:翻转/零面积/缺边不算可用框(poi-lifecycle #4)', () => {
+  assert.equal(isUsableViewportBounds(null), false);
+  assert.equal(isUsableViewportBounds(undefined), false);
+  assert.equal(isUsableViewportBounds({ west: 121, south: 30, east: 120, north: 31 }), false);
+  assert.equal(isUsableViewportBounds({ west: 120, south: 30, east: 120, north: 31 }), false);
+  assert.equal(isUsableViewportBounds({ west: 120, south: 30, east: 121, north: 31 }), true);
+  assert.equal(isUsableViewportBounds([120, 30, 121, 31]), true);
+  assert.equal(isUsableViewportBounds([121, 30, 120, 31]), false);
+  assert.equal(inBounds({ lng: 120.5, lat: 30.5 }, { west: 121, south: 30, east: 120, north: 31 }), false);
 });
 
 // ---- 工作模式视口按需加载(WS4)----

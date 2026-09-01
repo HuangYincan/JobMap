@@ -14,7 +14,7 @@ import { suggestKeyAction } from "@/lib/suggest-nav";
 import { fetchPOIDetail } from "@/lib/api";
 import { findPoiByCatalogOrPositionId } from "@/lib/poi-lookup";
 import { haversineDistance, isRecruitmentMode, isRecruitmentPOI, formatDistance, cardDisplayOrigin, type Position } from "@/lib/types";
-import { batchMatchesCurrentMode, catalogCoversView, inBounds, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
+import { batchMatchesCurrentMode, inBounds, isUsableViewportBounds, mergePoisById, MORE_PAGE_SIZE, POI_SOFT_CAP, DOMAIN_POI_HARD_CAP, DOMAIN_BATCH_SIZE, type ViewportBounds } from "@/lib/viewport-search";
 import { loadWorkViewport, WORK_FULL_LOAD_MAX_PAGES } from "@/lib/viewport-search";
 import { clearModeCache, readModeCache, syncModeCache, writeModeCache } from "@/lib/mode-cache";
 import type { AccountUser, ApplicationRecord, NotificationRecord, SavedPlace, SearchHistoryEntry, SearchHistoryEntityRef, UserPreferences } from "@/lib/account";
@@ -48,7 +48,7 @@ import { useMapEngine, type UseMapEngineResult } from "@/hooks/use-map-engine";
 import { useMobileDrawerGesture, type DrawerState, type MobileSheet } from "@/hooks/use-mobile-drawer-gesture";
 import { shouldShowMobileSearch } from "@/lib/mobile-drawer-chrome";
 import type { MapMarker, MapMarkerOptions, MapView } from "@/lib/map-engine/types";
-import { CLUSTER_DRILL_ZOOM, clusterCities, poiCity } from "@/lib/city-cluster";
+import { CLUSTER_DRILL_ZOOM, clusterCities, clusterUngroupedPois } from "@/lib/city-cluster";
 import { clusterZoomForZoom, createCityClusterMarker } from "@/lib/map-markers";
 import { SecondarySidebar, suggestionDisplayIcon, candidateCategoriesFor, pickCategoryFilter, type SearchSuggestion } from "./secondary-sidebar";
 import { POIList } from "./poi-list";
@@ -678,6 +678,19 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 视图接线只随 view 实例变化
   }, [engineView]);
 
+  /** 程序化改相机后立刻把 React 视野(含 bounds)跟上 live view。
+   *  只等 moveend 时 Domain 可见集会按过期框裁成空(poi-lifecycle #4)。 */
+  function applyLiveViewState(view: MapView) {
+    const state = view.getState();
+    setMapCenter({ lng: state.center.lng, lat: state.center.lat });
+    setRealZoom(state.zoom);
+    setZoom(Math.round(state.zoom));
+    const b = view.getBounds();
+    if (b) {
+      setMapBounds({ west: b.west, south: b.south, east: b.east, north: b.north });
+    }
+  }
+
   /**
    * 非 AMap 引擎用户定位蓝点同步(2026-08-22 ws-d,bug 5「腾讯地图之类连用户
    * 定位点都消失了」):
@@ -753,7 +766,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         ) {
           view.setCenter({ lng, lat });
           view.setZoom(15);
-          setMapCenter({ lng, lat });
+          applyLiveViewState(view);
         }
         settleGeolocation();
       })
@@ -1119,22 +1132,17 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
               (canonicalMode(mode) === "domain" && beforeLen > 0 && data.length <= beforeLen);
           }
         }
-        // ---- 空批次三态(ws1 Bug1 视口)----
-        // 请求成功但 0 条(未并入新行):旧目录若仍有 POI 落在当前视野 bounds
-        // 内 → 保留旧目录(空批次 ≠ 无数据:滤波/层级裁剪可致整页为空,清空会
-        // 闪没——收藏 toggle 已不移动相机(no-fly),此兜底独立成立);否则视为
-        // 真空 → 清空走空态(整城空白不再被旧城市 pin 占住,列表显示现有空态
-        // 文案)。请求失败不走到这里(上方 catch 保留旧目录)。保留时跳过缓存
-        // 写入:旧目录顶着「当前视野」快照会污染挂载对齐判定(下次刷新不再
-        // 触发对齐加载)。
+        // ---- 空批次三态(ws1 Bug1 视口;2026-09-01 poi-lifecycle #7)----
+        // 请求成功但 0 条且旧目录非空 → 一律保留旧目录(空批次 ≠ 无数据)。
+        // 不再按 catalogCoversView 清空:过期/非法 bounds 会把全国池误删。
+        // 请求失败不走到这里(上方 catch 保留旧目录)。保留时跳过缓存写入。
         if (vacant && beforeLen > 0) {
-          if (catalogCoversView(catalogRef.current, view.bounds)) {
-            noMoreRef.current = noMore;
-            setNoMoreData(noMore);
-            return;
-          }
-          data = [];
-          noMore = false; // 真空 ≠ 到底:当前视野仍可能有数据,不闩锁
+          // 有旧目录时空批次一律保留(2026-09-01 poi-lifecycle #7):
+          // 不再用 catalogCoversView 决定是否清空——过期/非法 bounds 会把
+          // 全国池误判成「盖不住当前框」整表抹掉,visiblePOIIds=[] 全图隐藏。
+          noMoreRef.current = noMore;
+          setNoMoreData(noMore);
+          return;
         }
         if (signal.cancelled) return;
         if (viewportEpochRef.current !== epoch) return; // 视口已刷新,丢弃过期结果
@@ -1395,7 +1403,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         // 不再发视口请求;mapBounds 由 syncView(moveend/zoomend)驱动);bounds 未就绪
         // (首帧前)回退全量。domain 累计池跨视口保留外区 POI,列表同样按视野裁,
         // 否则并入后列表会被外地卡占满。
-        (canonicalMode(mode) === "work" || canonicalMode(mode) === "domain") && mapBounds
+        (canonicalMode(mode) === "work" || canonicalMode(mode) === "domain") && isUsableViewportBounds(mapBounds)
           ? catalog.filter((p) => inBounds(p.location, mapBounds))
           : catalog,
         {
@@ -1538,36 +1546,31 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   // 「可见性/排除」层落地:开时 visible 只含 overlay id,关时恢复正常(全量/
   // 聚合)可见性——catalog marker 实例全程保留,关时秒恢复、不触发重查。
   const savedLayerEnabled = savedOverlay && Boolean(user);
-  // ---- marker 池(b2 + 2026-08-25 f-lod-pool 拆分):marker 源与列表分离 ----
-  // work 的 marker 源 = catalog(全量池,2026-08-20 起一次取尽,跨视口/跨 zoom
-  // 保留实例)+ 同一客户端管线(查询/筛选/排序,与列表同口径)。
-  // workMarkerPois 不依赖 pois(列表按视野裁剪):列表变化不触碰 marker 池引用
-  // → usePOIMap 不触发 setPOIs(零 marker 触碰)。
+  // ---- marker 池(b2 + 2026-08-25 f-lod-pool 拆分 + 2026-09-01 工作池与 domain 同构)----
+  // work / domain 的 marker 源都 = catalog 全量 + overlay。搜索/筛选/距离
+  // 只进可见集(workVisiblePois / domain 的 pois),不再经 setPOIs 换池。
+  // workMarkerPois 不依赖 pois(列表按视野裁剪)也不依赖 distanceOrigin:
+  // 列表/筛选变化不触碰 marker 池引用 → usePOIMap 不触发 setPOIs。
   const workMarkerPois = useMemo(
     () =>
       canonicalMode(mode) === "work"
-        ? mergeMapPois(
-            runPOIPipeline(catalog, {
-              query: query || undefined,
-              filters: effectiveFilters && Object.keys(effectiveFilters).length ? effectiveFilters : undefined,
-              sort: sort || undefined,
-              center: distanceOrigin,
-            }),
-            overlayPois,
-            savedOverlay && Boolean(user),
-          )
+        ? mergeMapPois(catalog, overlayPois, savedOverlay && Boolean(user))
         : null,
-    [
-      mode,
-      catalog,
-      overlayPois,
-      savedOverlay,
-      user,
-      query,
-      effectiveFilters,
-      sort,
-      distanceOrigin,
-    ],
+    [mode, catalog, overlayPois, savedOverlay, user],
+  );
+  // 工作可见集口径(poi-lifecycle #2):搜索/筛选/距离只 hide,不换池。
+  // 不按 mapBounds 裁——全国针留在地图上,列表才按视野裁(pois memo)。
+  const workVisiblePois = useMemo(
+    () =>
+      canonicalMode(mode) === "work"
+        ? runPOIPipeline(catalog, {
+            query: query || undefined,
+            filters: effectiveFilters && Object.keys(effectiveFilters).length ? effectiveFilters : undefined,
+            sort: sort || undefined,
+            center: distanceOrigin,
+          })
+        : null,
+    [mode, catalog, query, effectiveFilters, sort, distanceOrigin],
   );
   // domain 的 marker 池 = 目录全量(2026-08-25 f-lod-pool):catalog 原始行
   // (不经 query/filters/sort 管线)+ overlay + saved overlay——与「列表(pois)
@@ -1613,7 +1616,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
     if (groups === null) return null; // zoom > 8 → 个体 pin
     return {
       groups,
-      individual: source.filter((p) => !poiCity(p)), // 无 city 的 pin 保持个体
+      individual: clusterUngroupedPois(source, groups),
     };
   }, [mode, markerPois, overlayPois, clusterZoom, savedLayerEnabled]);
 
@@ -1692,10 +1695,11 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       // 空批次/筛选瞬态 → 空集(全部隐藏,实例保留,恢复零重建)
       return Array.from(new Set([...pois.map((p) => p.id), ...overlayPois.map((p) => p.id)]));
     }
-    // work:全量显示(2026-08-25 用户裁定取消 LOD——tier 只作数据标注,
-    // 不再按 zoom 隐藏公司;聚合区间由上方 clusterState 分支代表)
-    return markerPois.map((p) => p.id);
-  }, [clusterState, markerPois, overlayPois, savedLayerEnabled, mode, pois]);
+    // work:筛选/搜索只改可见集(池 = catalog 全量,与 domain 同构)
+    return Array.from(
+      new Set([...(workVisiblePois ?? []).map((p) => p.id), ...overlayPois.map((p) => p.id)]),
+    );
+  }, [clusterState, markerPois, overlayPois, savedLayerEnabled, mode, pois, workVisiblePois]);
 
   const handleRefreshHere = useCallback(() => {
     const view = mapInstance.current;
@@ -2270,7 +2274,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         if (mapInstance.current) syncUserBlueDot(mapInstance.current, lng, lat);
         mapInstance.current?.setCenter({ lng, lat });
         mapInstance.current?.setZoom(15);
-        setMapCenter({ lng, lat });
+        if (mapInstance.current) applyLiveViewState(mapInstance.current);
       })
       .catch((err) => {
         // 定位异常同失败:保持当前视野(ws-poi-vanish),不跳回杭州默认中心

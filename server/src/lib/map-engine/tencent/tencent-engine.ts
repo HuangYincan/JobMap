@@ -899,6 +899,7 @@ class TencentView implements MapView {
     }
     this.multiAttached.add(id);
     if (opts.onClick) this.bindMultiMarkerClick(raw, id, opts.onClick);
+    let wantVisible = true;
     return {
       // 逃生舱 = 共享 MultiMarker 实例(契约「厂商 marker 实例」语义不变)
       raw,
@@ -940,10 +941,15 @@ class TencentView implements MapView {
       setVisible: (v: boolean) => {
         if (!this.multiMarker) return;
         if (!this.multiGeometries.has(id)) return;
+        wantVisible = v;
         if (v) {
           if (!this.multiAttached.has(id)) {
-            this.multiMarker.add([geometry]);
-            this.multiAttached.add(id);
+            try {
+              this.multiMarker.add([geometry]);
+              this.multiAttached.add(id);
+            } catch {
+              // add 失败:意图可见但不在层上 → isAttached false
+            }
           }
         } else if (this.multiAttached.has(id)) {
           this.multiMarker.remove([id]);
@@ -968,11 +974,14 @@ class TencentView implements MapView {
         }
         this.multiClickBindings = rest;
       },
-      // 挂载探测(契约 isAttached):仍在 geometry 登记簿 = 未被 remove,与
-      // 可见性无关。hide 只从图层摘 geometry(multiAttached),实例仍由适配层
-      // 持有——若把 hide 当成 isAttached=false,控制器 sync() 会在每次
-      // moveend 把隐藏点整批销毁重建(聚合/筛选下的卡顿源)。
-      isAttached: () => this.multiGeometries.has(id),
+      // 挂载探测:仍在 geometry 登记簿 = 未被 remove。隐藏期(wantVisible=false)
+      // 仍为 true,避免 sync() 把 hide 当外部删除整批重建。意图可见但不在
+      // multiAttached(add 失败)→ false,让 sync 补回(poi-lifecycle #5)。
+      isAttached: () => {
+        if (!this.multiGeometries.has(id)) return false;
+        if (!wantVisible) return true;
+        return this.multiAttached.has(id);
+      },
       // 移除 = 摘除该 geometry + 清理全部簿记(共享实例保留挂图)
       remove: () => {
         if (!this.multiMarker) return;

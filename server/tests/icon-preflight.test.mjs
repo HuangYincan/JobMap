@@ -384,9 +384,10 @@ test('sessionStorage:非数组内容按空清单处理,不抛', () => {
 
 // ---- map-markers TMap icon 构造(控制器级)----------------------------------
 
-/** 假 tencent view:记录 createMarker 收到的 opts,返回契约包装。 */
+/** 假 tencent view:记录 createMarker 与原地 setIcon(poi-lifecycle #6 不再拆针重建)。 */
 function makeTencentView() {
   const calls = [];
+  const iconUpdates = [];
   const view = {
     engine: { id: 'tencent' },
     isDestroyed: () => false,
@@ -397,11 +398,15 @@ function makeTencentView() {
         setPosition: () => {},
         setZIndex: () => {},
         setVisible: () => {},
+        setContent: () => {},
+        setIcon: (icon) => {
+          iconUpdates.push(icon);
+        },
         remove: () => {},
       };
     },
   };
-  return { view, calls };
+  return { view, calls, iconUpdates };
 }
 
 /** GL view:同时记录 createMarker 与契约 setIcon(AMap LabelMarker / TMap MultiMarker 点选换肤路径)。 */
@@ -475,21 +480,23 @@ test('TMap icon:预检成功 → 真 logo(字节内联进徽章 SVG,ws-k);升级
     preflightRemoteIcon(REMOTE);
     await settle();
     assert.equal(remoteIconStatus(REMOTE), 'ok');
-    const { view, calls } = makeTencentView();
+    const { view, calls, iconUpdates } = makeTencentView();
     const c = createPOIMarkerController(view, {});
     c.setPOIs([makeRecruitPoi('p1', REMOTE)]);
     // 内联未就绪(字节未 fetch)→ 先挂 emoji 徽章(绝不裸 URL 作纹理)
     assert.ok(String(calls[0].icon.src).startsWith('data:image/svg+xml'), '内联未就绪 → emoji 徽章(不裸传 URL,ws-k)');
     assert.equal(image.calls.length, 1, 'ok 缓存命中,不重复预检');
     await settle();
-    // fetch 完成 → 原地重建升级:徽章包裹 base64 dataURI
+    // fetch 完成 → 原地 setIcon(poi-lifecycle #6:不再 remove+add)
     assert.equal(fetchMock.calls.length, 1, '远程字节 fetch 1 次(CORS 可读)');
-    const svg1 = decodeURIComponent(String(calls[1].icon.src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+    assert.equal(calls.length, 1, '升级不拆针(poi-lifecycle #6)');
+    assert.equal(iconUpdates.length, 1, '原地 setIcon');
+    const svg1 = decodeURIComponent(String(iconUpdates[0].src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
     assert.ok(svg1.includes(`href="${PNG_DATA_URI}"`), 'fetch 字节 base64 内联进徽章 SVG(真 logo 进入白底边框徽章)');
     assert.ok(svg1.includes('fill="#ffffff"') && svg1.includes('stroke-width="2"'), '白底 + 边框保留(升级不丢徽章形态)');
-    // 升级路径:LOD 重建新增同 URL 新 POI → 缓存命中,同步徽章包裹真 logo
+    // 新 POI 同 URL → 缓存命中,createMarker 同步徽章包裹真 logo
     c.setPOIs([makeRecruitPoi('p1', REMOTE), makeRecruitPoi('p2', REMOTE)]);
-    const svg2 = decodeURIComponent(String(calls[2].icon.src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+    const svg2 = decodeURIComponent(String(calls[1].icon.src).replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
     assert.ok(svg2.includes(`href="${PNG_DATA_URI}"`), '重建的新 marker 缓存命中 → 同步徽章包裹真 logo');
     assert.equal(fetchMock.calls.length, 1, '缓存记忆化:同 URL 零重复 fetch');
     assert.equal(image.calls.length, 1);
