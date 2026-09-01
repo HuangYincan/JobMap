@@ -8,6 +8,8 @@ import { toolKind } from '../src/lib/agent/run-agent.ts';
 import { workTools, resolvePositionsFromCatalog } from '../src/lib/agent/tools/work.ts';
 import { navigationTools } from '../src/lib/agent/tools/navigation.ts';
 import { loadWorkPositionByExternalIdFromDb } from '../src/lib/recruitment-store.ts';
+import { loadWorkPositionsByExternalIdsFromDb } from '../src/lib/navigation/position-resolver.ts';
+import { parseTopK } from '../src/lib/agent/tools/navigation.ts';
 import { createRouteService } from '../src/lib/navigation/route-service.ts';
 import { createRouteArtifactStore } from '../src/lib/navigation/route-artifacts.ts';
 import { OPAQUE_ROUTE_ID_PATTERN } from '../src/lib/navigation/constants.ts';
@@ -313,6 +315,46 @@ test('loadWorkPositionByExternalIdFromDb is a targeted open/alive read without d
   assert.equal(await loadWorkPositionByExternalIdFromDb('', pool), undefined);
 });
 
+test('loadWorkPositionsByExternalIdsFromDb batches, de-duplicates, and restores request order', async () => {
+  const calls = [];
+  const pool = {
+    async query(sql, params) {
+      calls.push({ sql, params });
+      return {
+        rows: [
+          {
+            external_id: 'pos-b', title: 'B', department: null, family: 'social',
+            salary_min: null, salary_max: null, education: null, deadline: null,
+            apply_source: null, status: 'open', site_id: '2', slug: 'co', company_name: 'Co',
+            site_name: 'Site B', city: '杭州', lng: 120.2, lat: 30.2,
+          },
+          {
+            external_id: 'pos-a', title: 'A', department: null, family: 'social',
+            salary_min: null, salary_max: null, education: null, deadline: null,
+            apply_source: null, status: 'open', site_id: '1', slug: 'co', company_name: 'Co',
+            site_name: 'Site A', city: '杭州', lng: 120.1, lat: 30.1,
+          },
+        ],
+      };
+    },
+  };
+  const records = await loadWorkPositionsByExternalIdsFromDb(['pos-a', 'pos-a', 'missing', 'pos-b'], pool);
+  assert.deepEqual(records.map((record) => record.positionId), ['pos-a', 'pos-b']);
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].sql, /ANY\(\$1::text\[\]\)/);
+  assert.match(calls[0].sql, /array_position/);
+  assert.deepEqual(calls[0].params, [['pos-a', 'missing', 'pos-b']]);
+});
+
+test('parseTopK rejects non-finite, fractional, and out-of-range values', () => {
+  assert.equal(parseTopK(undefined), 5);
+  assert.equal(parseTopK(1), 1);
+  assert.equal(parseTopK(5), 5);
+  for (const value of [NaN, Infinity, 0, -1, 1.5, 6, '5', null]) {
+    assert.equal(parseTopK(value), null, `invalid topK ${String(value)} must be rejected`);
+  }
+});
+
 test('planRoute without session or missing origin does not call the provider', async () => {
   const inner = countingService(createRouteService({ providers: [fakeProvider()], clock: () => NOW }));
   const tools = navigationTools({ routeService: inner });
@@ -468,6 +510,24 @@ test('filterByCommute keeps strict hits vs over-limit nearest; Top-K budget bloc
   assert.equal(budget.ok, true);
   assert.ok(calls.length <= 5, `Top-K budget, got ${calls.length} route calls`);
   assert.match(budget.text, /Top-K=5|路线调用预算/);
+});
+
+test('filterByCommute returns input error for invalid topK instead of empty candidates', async () => {
+  let hydrated = false;
+  const filter = tool(navigationTools({
+    routeService: { async plan() { throw new Error('must not route'); } },
+    resolvePositions: async () => { hydrated = true; return []; },
+  }), 'navigation__filterByCommute');
+  const result = await filter.call({
+    positionIds: ['pos-a'],
+    origin: coord('家', 120.1, 30.2),
+    maxMinutes: 45,
+    mode: 'transit',
+    topK: NaN,
+  }, ctx());
+  assert.equal(result.ok, false);
+  assert.match(result.error, /Top-K/);
+  assert.equal(hydrated, false);
 });
 
 test('validateAction showRoute accepts opaque ids and rejects geometry', () => {
