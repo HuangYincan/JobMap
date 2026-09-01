@@ -1,11 +1,15 @@
 // Public site origin for OAuth redirect_uri.
 //
-// `next start -H 0.0.0.0` plus ENV HOSTNAME=0.0.0.0 makes request.url
-// `https://0.0.0.0:3000` behind Cloudflare. GitHub then rejects that
-// redirect_uri. Prefer PUBLIC_ORIGIN, then forwarded/Host headers.
-// Production still falls back to the public site if the origin is a bind address.
+// Production must configure PUBLIC_ORIGIN explicitly. Request URL and host
+// headers are deployment input, not an authentication trust anchor, so they
+// are deliberately available only for the safe non-production fallback.
 
-export const DEFAULT_PRODUCTION_ORIGIN = 'https://jobmap.nvc.ac';
+export class PublicOriginConfigurationError extends Error {
+  constructor(message = 'PUBLIC_ORIGIN must be a valid non-bind origin in production') {
+    super(message);
+    this.name = 'PublicOriginConfigurationError';
+  }
+}
 
 export function parsePublicOriginEnv(raw: string | undefined): string | null {
   const trimmed = (raw ?? '').trim().replace(/\/+$/, '');
@@ -54,6 +58,13 @@ export function resolvePublicOrigin(input: {
   const configured = parsePublicOriginEnv(env.PUBLIC_ORIGIN);
   if (configured) return configured;
 
+  // Never let request-derived values select an OAuth redirect/error origin in
+  // production. A missing or malformed PUBLIC_ORIGIN is an operator error and
+  // must fail closed rather than redirecting an attacker-chosen host.
+  if ((env.NODE_ENV ?? '').trim() === 'production') {
+    throw new PublicOriginConfigurationError();
+  }
+
   let requestHost = '';
   try {
     requestHost = new URL(input.requestOrigin).hostname;
@@ -68,7 +79,6 @@ export function resolvePublicOrigin(input: {
   return (
     originFromHostHeader(input.forwardedHost ?? '', proto) ??
     originFromHostHeader(input.host ?? '', proto || 'https') ??
-    ((env.NODE_ENV ?? '').trim() === 'production' ? DEFAULT_PRODUCTION_ORIGIN : null) ??
     input.requestOrigin
   );
 }

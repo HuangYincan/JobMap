@@ -12,6 +12,26 @@ export class RequestBodyTooLargeError extends Error {
   }
 }
 
+/** JSON object roots are deliberately stricter than `typeof value === 'object'`:
+ * null and arrays must never reach route field access or be treated as records. */
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+/** Parse a bounded JSON body and require a plain-object root. */
+export async function readJsonObjectBody<T>(
+  request: Request,
+  maxChars: number = DEFAULT_JSON_BODY_MAX_CHARS,
+): Promise<T> {
+  const value = await readJsonBody<unknown>(request, maxChars);
+  if (!isPlainObject(value)) {
+    throw new TypeError('JSON body must be a plain object');
+  }
+  return value as T;
+}
+
 /** Stream-read at most maxBytes without materializing an unbounded request. */
 export async function readBoundedRequestBody(
   request: Request,

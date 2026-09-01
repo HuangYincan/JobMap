@@ -1,28 +1,36 @@
 import { NextResponse } from "next/server";
 import { readSessionUser } from "@/lib/http-session";
-import { reassignApplicationStatuses, updateUser } from "@/lib/account-store";
+import { DbUnavailableError, reassignApplicationStatuses, updateUser } from "@/lib/account-store";
 import {
   fallbackStatusId,
   sanitizeApplicationPipeline,
 } from "@/lib/application-pipeline";
-import { RequestBodyTooLargeError, readJsonBody } from "@/lib/request-body";
+import { RequestBodyTooLargeError, readJsonObjectBody } from "@/lib/request-body";
+
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  const response = NextResponse.json(body, {
+    ...init,
+    headers: { "Cache-Control": "no-store" },
+  });
+  return response;
+}
 
 export async function PUT(request: Request) {
   const user = await readSessionUser();
   if (!user) {
-    return NextResponse.json({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+    return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
   let body: { statuses?: unknown };
   try {
-    body = await readJsonBody<typeof body>(request);
+    body = await readJsonObjectBody<typeof body>(request);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: "BODY_TOO_LARGE", message: "request body too large" },
         { status: 400 },
       );
     }
-    return NextResponse.json({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
+    return noStoreJson({ code: "BAD_REQUEST", message: "invalid JSON" }, { status: 400 });
   }
 
   const previous = sanitizeApplicationPipeline(user.preferences.applicationPipeline);
@@ -32,14 +40,24 @@ export async function PUT(request: Request) {
     .map((item) => item.id)
     .filter((id) => !nextIds.has(id));
 
-  const nextUser = await updateUser(user.id, {
-    preferences: { applicationPipeline: pipeline },
-  });
-  if (removed.length) {
-    await reassignApplicationStatuses(user.id, removed, fallbackStatusId(pipeline.statuses));
+  try {
+    const nextUser = await updateUser(user.id, {
+      preferences: { applicationPipeline: pipeline },
+    });
+    if (removed.length) {
+      await reassignApplicationStatuses(user.id, removed, fallbackStatusId(pipeline.statuses));
+    }
+    return noStoreJson({
+      pipeline,
+      user: nextUser,
+    });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
   }
-  return NextResponse.json({
-    pipeline,
-    user: nextUser,
-  });
 }

@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
-import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
-import { createSession, loginWithPassword } from '@/lib/account-store';
+import { RequestBodyTooLargeError, readJsonObjectBody } from '@/lib/request-body';
+import { createSession, DbUnavailableError, loginWithPassword } from '@/lib/account-store';
 import { writeSessionCookie, readSessionToken } from '@/lib/http-session';
 import { clientIpBucketKey } from '@/lib/client-ip';
 import { BoundedRateStore } from '@/lib/bounded-rate-store';
+
+function noStoreJson(body: unknown, init?: { status?: number; headers?: HeadersInit }) {
+  const response = NextResponse.json(body, {
+    ...init,
+    headers: { 'Cache-Control': 'no-store', ...(init?.headers ?? {}) },
+  });
+  return response;
+}
 
 /**
  * 密码登录(username + password)。成功写 dm_session cookie。
@@ -15,21 +23,27 @@ import { BoundedRateStore } from '@/lib/bounded-rate-store';
 export async function POST(request: Request) {
   let body: { username?: string; password?: string };
   try {
-    body = await readJsonBody<typeof body>(request);
+    body = await readJsonObjectBody<typeof body>(request);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
-      return NextResponse.json(
+      return noStoreJson(
         { ok: false, code: 'BODY_TOO_LARGE', message: 'request body too large' },
         { status: 400 },
       );
     }
-    return NextResponse.json({ ok: false, code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
+    return noStoreJson({ ok: false, code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
-  const username = (body.username ?? '').trim();
-  const password = body.password ?? '';
+  if (typeof body.username !== 'string' || typeof body.password !== 'string') {
+    return noStoreJson(
+      { ok: false, code: 'BAD_REQUEST', message: 'username and password required' },
+      { status: 400 },
+    );
+  }
+  const username = body.username.trim();
+  const password = body.password;
   if (!username || !password) {
-    return NextResponse.json(
+    return noStoreJson(
       { ok: false, code: 'BAD_REQUEST', message: 'username and password required' },
       { status: 400 },
     );
@@ -50,29 +64,39 @@ export async function POST(request: Request) {
     throw err;
   }
 
-  const user = await loginWithPassword(username, password);
-  if (!user) {
-    // 失败计数(5 次内仍是普通 401;触发锁定 → 429,与 OTP consumeOtp 同语义)。
-    try {
-      recordLoginFailure(ipKey, LOGIN_IP_MAX_FAILURES);
-      recordLoginFailure(accountKey, LOGIN_MAX_FAILURES);
-    } catch (err) {
-      if (err instanceof LoginRateLimitedError) {
-        return rateLimited(err);
+  try {
+    const user = await loginWithPassword(username, password);
+    if (!user) {
+      // 失败计数(5 次内仍是普通 401;触发锁定 → 429,与 OTP consumeOtp 同语义)。
+      try {
+        recordLoginFailure(ipKey, LOGIN_IP_MAX_FAILURES);
+        recordLoginFailure(accountKey, LOGIN_MAX_FAILURES);
+      } catch (err) {
+        if (err instanceof LoginRateLimitedError) {
+          return rateLimited(err);
+        }
+        throw err;
       }
-      throw err;
+      return noStoreJson(
+        { ok: false, code: 'INVALID_CREDENTIALS', message: 'invalid username or password' },
+        { status: 401 },
+      );
     }
-    return NextResponse.json(
-      { ok: false, code: 'INVALID_CREDENTIALS', message: 'invalid username or password' },
-      { status: 401 },
-    );
-  }
 
-  clearLoginFailures(ipKey);
-  clearLoginFailures(accountKey);
-  const session = await createSession(user.id);
-  await writeSessionCookie(session.token, session.expiresAt);
-  return NextResponse.json({ ok: true, user });
+    clearLoginFailures(ipKey);
+    clearLoginFailures(accountKey);
+    const session = await createSession(user.id);
+    await writeSessionCookie(session.token, session.expiresAt);
+    return noStoreJson({ ok: true, user });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { ok: false, code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
 }
 
 // ---- 防爆破滑动窗口(scan #3;与 account-store 的 otpGuard 同构:进程内、
@@ -138,7 +162,7 @@ function clearLoginFailures(key: string): void {
 }
 
 function rateLimited(err: LoginRateLimitedError): NextResponse {
-  return NextResponse.json(
+  return noStoreJson(
     { ok: false, code: 'TOO_MANY_ATTEMPTS', message: err.message, retryAfterMs: err.retryAfterMs },
     { status: 429 },
   );

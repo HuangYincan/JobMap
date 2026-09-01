@@ -49,12 +49,38 @@ function otpDbPool() {
     query: async (sql, params = []) => {
       queries.push({ sql, params });
       if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') return { rows: [], rowCount: 0 };
-      if (sql.includes('DELETE FROM auth_otp_challenges') && sql.includes('WHERE id = $1')) {
-        const hit = challenges.find((c) => c.id === params[0]);
-        if (hit) hit.deleted = true;
-        return { rows: [], rowCount: 1 };
+      if (sql.includes('DELETE FROM auth_otp_challenges') && sql.includes('RETURNING id::text')) {
+        const hit = challenges.find(
+          (c) =>
+            !c.consumed &&
+            !c.deleted &&
+            c.provider === params[0] &&
+            c.target === params[1] &&
+            c.expiresAtMs > Date.now() &&
+            c.codeHash === params[2],
+        );
+        if (!hit) return { rows: [], rowCount: 0 };
+        hit.deleted = true;
+        return { rows: [{ id: hit.id }], rowCount: 1 };
       }
-      if (sql.includes('DELETE FROM auth_otp_challenges')) {
+      if (sql.includes('DELETE FROM auth_otp_challenges') && sql.includes('expires_at <= now()')) {
+        const provider = params[0];
+        const target = params[1];
+        for (const challenge of challenges) {
+          if (
+            (!provider || (challenge.provider === provider && challenge.target === target)) &&
+            challenge.expiresAtMs <= Date.now()
+          ) {
+            challenge.deleted = true;
+          }
+        }
+        return { rows: [], rowCount: 0 };
+      }
+      if (sql.includes('DELETE FROM auth_otp_challenges') && sql.includes('provider = $1 AND target = $2')) {
+        const [provider, target] = params;
+        for (const challenge of challenges) {
+          if (challenge.provider === provider && challenge.target === target) challenge.deleted = true;
+        }
         return { rows: [], rowCount: 0 };
       }
       if (sql.includes('INSERT INTO auth_otp_challenges')) {
@@ -116,8 +142,8 @@ test('#1 DB 模式:成功验证立即删除 OTP 行且不可重放', async () =>
     const { code } = await storeIssueOtp('email', target);
     assert.equal(await storeConsumeOtp('email', target, code), true);
     assert.ok(
-      pool.queries.some(({ sql }) => sql.includes('DELETE FROM auth_otp_challenges WHERE id = $1')),
-      'successful verification must destroy the durable OTP row immediately',
+      pool.queries.some(({ sql }) => sql.includes('DELETE FROM auth_otp_challenges') && sql.includes('RETURNING id::text')),
+      'successful verification must atomically destroy the durable OTP row immediately',
     );
     assert.equal(await storeConsumeOtp('email', target, code), false);
     // 独立 target 不受影响:错码 false → 正确码 true(原契约保持)
@@ -130,9 +156,46 @@ test('#1 DB 模式:成功验证立即删除 OTP 行且不可重放', async () =>
   }
 });
 
-// ============================================================
-// #2 OTP 发送 per-IP / per-账号 24h 桶
-// ============================================================
+test('#1 DB 模式:补发同 provider/target 使旧 code 立即失效', async () => {
+  const pool = otpDbPool();
+  const prev = { ...otpRateConfig };
+  otpRateConfig.cooldownMs = 0;
+  __accountStoreTest.poolOverride = () => pool;
+  try {
+    const target = `db-resend-${Date.now()}@test.local`;
+    const first = await storeIssueOtp('email', target);
+    const second = await storeIssueOtp('email', target);
+    assert.notEqual(first.code, second.code);
+    assert.equal(await storeConsumeOtp('email', target, first.code), false);
+    assert.equal(await storeConsumeOtp('email', target, second.code), true);
+    const deletes = pool.queries.filter(({ sql }) => sql.includes('DELETE FROM auth_otp_challenges'));
+    assert.ok(
+      deletes.some(({ sql }) => sql.includes('provider = $1 AND target = $2') && !sql.includes('expires_at <= now()')),
+      'resend must delete all active challenges for this provider/target',
+    );
+  } finally {
+    Object.assign(otpRateConfig, prev);
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
+test('#1 DB 模式:并发 consume 同一 code 只有一次成功', async () => {
+  const pool = otpDbPool();
+  __accountStoreTest.poolOverride = () => pool;
+  try {
+    const target = `db-concurrent-${Date.now()}@test.local`;
+    const { code } = await storeIssueOtp('email', target);
+    const results = await Promise.all([
+      storeConsumeOtp('email', target, code),
+      storeConsumeOtp('email', target, code),
+    ]);
+    assert.equal(results.filter(Boolean).length, 1);
+    assert.equal(results.filter((value) => value === false).length, 1);
+  } finally {
+    __accountStoreTest.poolOverride = undefined;
+  }
+});
+
 
 test('#2 per-IP 24h 发送桶:同 IP 轮换 target 超出即限流(429 语义)', async () => {
   __accountStoreTest.poolOverride = () => null;

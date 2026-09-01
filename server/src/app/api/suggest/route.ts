@@ -15,11 +15,11 @@ import {
   countWorkTagMatchesBatchFromDb,
   loadWorkSuggestionsFromDb,
 } from '@/lib/recruitment-store';
-import { isRecruitmentMode, haversineDistance } from '@/lib/types';
-import type { MapMode } from '@/lib/types';
+import { isRecruitmentMode, haversineDistance, type MapMode } from '@/lib/types';
 import { loadHzPoiSuggestions } from '@/lib/hz-poi-store';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 import { trendingForMode } from '@/lib/trending-search';
+import { parseKnownMode } from '@/lib/modes';
 
 /** q 上限：与 /api/search 一致。超长 q 对 autocomplete 无意义，直接 400。 */
 const MAX_Q_LENGTH = 100;
@@ -40,16 +40,24 @@ function parseCenter(raw: string | null): { lng: number; lat: number } | null {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const rawQ = url.searchParams.get('q') || '';
-  const mode = (url.searchParams.get('mode') || 'work') as MapMode;
+  const rawMode = url.searchParams.get('mode');
+  const modeValue = rawMode || 'work';
   const centerRaw = url.searchParams.get('center');
   if (
     rawQ.length > MAX_Q_LENGTH ||
-    mode.length > MAX_MODE_LENGTH ||
+    modeValue.length > MAX_MODE_LENGTH ||
     (centerRaw && centerRaw.length > MAX_CENTER_LENGTH)
   ) {
     return NextResponse.json(
       { code: 'PARAM_TOO_LARGE', message: 'one or more query parameters exceed their length limit' },
       { status: 400 }
+    );
+  }
+  const mode = parseKnownMode(modeValue);
+  if (!mode) {
+    return NextResponse.json(
+      { code: 'INVALID_MODE', message: `unknown mode: ${modeValue}` },
+      { status: 400 },
     );
   }
   const q = rawQ.trim().toLowerCase();

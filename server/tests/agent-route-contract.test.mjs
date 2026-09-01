@@ -103,7 +103,7 @@ test('#11 限流键:经 lib/client-ip 统一解析 — 仅可信代理(TRUSTED_P
 
 test('输入上限:body 32KB / messages 30 条 / 单条 4000 字符 / SSE 输出 200KB', () => {
   assert.match(route, /const MAX_BODY_CHARS = 32 \* 1024/);
-  assert.match(route, /readJsonBody<ChatBody>\(request, MAX_BODY_CHARS\)/);
+  assert.match(route, /readJsonObjectBody<ChatBody>\(request, MAX_BODY_CHARS\)/);
   assert.doesNotMatch(route, /await request\.text\(\)/, 'chunked bodies must be stream-bounded');
   assert.match(route, /toAgentChatMessages\(body\.messages\)/);
   assert.match(route, /AGENT_CHAT_MAX_MESSAGES/);

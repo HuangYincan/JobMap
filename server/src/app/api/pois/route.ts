@@ -17,7 +17,7 @@
 import { NextResponse } from 'next/server';
 import { loadServerCatalog } from '@/lib/server-catalog';
 import { searchPublicCatalog, shouldWritePublicCatalogCache, spatialClipFromSearch } from '@/lib/public-search';
-import type { MapMode } from '@/lib/types';
+import { parseKnownMode } from '@/lib/modes';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 /** 解析筛选 JSON，非法时返回空对象（宽容处理） */
@@ -55,14 +55,15 @@ function pagedParam(raw: string | null, fallback: number, max: number): number |
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const mode = (url.searchParams.get('mode') || 'work') as MapMode;
+  const rawMode = url.searchParams.get('mode');
+  const modeValue = rawMode || 'work';
   const q = url.searchParams.get('q') || undefined;
   const sort = url.searchParams.get('sort') || undefined;
   const bounds = url.searchParams.get('bounds');
 
   const filtersRaw = url.searchParams.get('filters');
   if (
-    mode.length > MAX_MODE_LENGTH ||
+    modeValue.length > MAX_MODE_LENGTH ||
     (q && q.length > MAX_Q_LENGTH) ||
     (sort && sort.length > MAX_SORT_LENGTH) ||
     (filtersRaw && filtersRaw.length > MAX_FILTERS_JSON_LENGTH) ||
@@ -71,6 +72,13 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { code: 'PARAM_TOO_LARGE', message: 'one or more query parameters exceed their length limit' },
       { status: 400 }
+    );
+  }
+  const mode = parseKnownMode(modeValue);
+  if (!mode) {
+    return NextResponse.json(
+      { code: 'INVALID_MODE', message: `unknown mode: ${modeValue}` },
+      { status: 400 },
     );
   }
   const filters = parseFilters(filtersRaw);

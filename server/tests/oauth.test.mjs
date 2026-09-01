@@ -54,6 +54,7 @@ import {
 import {
   isBindHostname,
   parsePublicOriginEnv,
+  PublicOriginConfigurationError,
   resolvePublicOrigin,
 } from '../src/lib/oauth/request-origin.ts';
 import {
@@ -582,12 +583,27 @@ test('resolvePublicOrigin: PUBLIC_ORIGIN 覆盖 Docker HOSTNAME=0.0.0.0', () => 
     }),
     'http://localhost:3000',
   );
-  assert.equal(
-    resolvePublicOrigin({
+  assert.throws(
+    () => resolvePublicOrigin({
       requestOrigin: 'https://0.0.0.0:3000',
+      host: 'attacker.example',
+      forwardedHost: 'attacker.example',
+      forwardedProto: 'https',
       env: { NODE_ENV: 'production' },
     }),
-    'https://jobmap.nvc.ac',
+    PublicOriginConfigurationError,
+    'production must fail closed when PUBLIC_ORIGIN is missing',
+  );
+  assert.throws(
+    () => resolvePublicOrigin({
+      requestOrigin: 'https://0.0.0.0:3000',
+      host: 'attacker.example',
+      forwardedHost: 'attacker.example',
+      forwardedProto: 'https',
+      env: { NODE_ENV: 'production', PUBLIC_ORIGIN: 'not-an-origin' },
+    }),
+    PublicOriginConfigurationError,
+    'invalid production PUBLIC_ORIGIN must not fall back to request headers',
   );
 });
 

@@ -310,6 +310,17 @@ export function canonicalMode(mode: MapMode): MapMode {
   return mode === 'internship' ? 'work' : mode;
 }
 
+/** Runtime guard for values arriving from public query strings or JSON. */
+export function isKnownMode(value: unknown): value is MapMode {
+  return typeof value === 'string' && (value === 'internship' || (ALL_MODES as readonly string[]).includes(value));
+}
+
+/** Parse a public mode, preserving the historical internship alias. */
+export function parseKnownMode(value: unknown, fallback: MapMode = 'work'): MapMode | null {
+  const candidate = value === null || value === undefined || value === '' ? fallback : value;
+  return isKnownMode(candidate) ? canonicalMode(candidate) : null;
+}
+
 /** Recent 回放：切到记录当时的模式（internship → work），再带上那次关键词。 */
 export function replayRecentSearch(
   currentMode: MapMode,

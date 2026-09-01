@@ -63,7 +63,7 @@ test('POST 校验:缺 file 字段 / 非图片 / 超限 → 400 并带对应 code
 test('POST 成功 → 版本化 URL(/api/me/avatar?v=) 写入 user.avatarUrl', () => {
   assert.match(route, /updateAvatar\(user\.id, \{/);
   assert.match(route, /`\/api\/me\/avatar\?v=\$\{Date\.now\(\)\}`/);
-  assert.match(route, /NextResponse\.json\(\{ user: next \}\)/);
+  assert.match(route, /noStoreJson\(\{ user: next \}\)/);
 });
 
 test('GET 未登录 → 401;无头像 → 404;有头像 → 字节 + immutable 缓存', () => {

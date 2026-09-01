@@ -5,7 +5,7 @@ import {
   OauthNotConfiguredError,
   startOauthFlow,
 } from '@/lib/oauth/oauth-flow';
-import { publicOriginFromRequest } from '@/lib/oauth/request-origin';
+import { PublicOriginConfigurationError, publicOriginFromRequest } from '@/lib/oauth/request-origin';
 
 /**
  * GET /api/auth/oauth/start?provider=<id>&next=<path>
@@ -17,8 +17,8 @@ import { publicOriginFromRequest } from '@/lib/oauth/request-origin';
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const origin = publicOriginFromRequest(request);
   try {
+    const origin = publicOriginFromRequest(request);
     const result = startOauthFlow({
       provider: url.searchParams.get('provider'),
       next: url.searchParams.get('next'),
@@ -28,6 +28,12 @@ export async function GET(request: Request) {
     jar.set(result.cookie.name, result.cookie.value, result.cookie.options);
     return NextResponse.redirect(result.location, 302);
   } catch (err) {
+    if (err instanceof PublicOriginConfigurationError) {
+      return NextResponse.json(
+        { code: 'OAUTH_ORIGIN_NOT_CONFIGURED', message: 'OAuth origin is not configured' },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
     if (err instanceof OauthBadRequestError) {
       return NextResponse.json({ code: 'BAD_REQUEST', message: err.message }, { status: 400 });
     }

@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
-import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
+
+function noStoreJson(body: unknown, init?: { status?: number; headers?: HeadersInit }) {
+  const response = NextResponse.json(body, {
+    ...init,
+    headers: { 'Cache-Control': 'no-store', ...(init?.headers ?? {}) },
+  });
+  return response;
+}
+import { RequestBodyTooLargeError, readJsonObjectBody } from '@/lib/request-body';
 import { readSessionToken } from '@/lib/http-session';
 import { clientIpBucketKey } from '@/lib/client-ip';
 import {
@@ -38,31 +46,37 @@ import {
 export async function POST(request: Request) {
   let body: { provider?: 'phone' | 'email'; target?: string };
   try {
-    body = await readJsonBody<typeof body>(request);
+    body = await readJsonObjectBody<typeof body>(request);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'BODY_TOO_LARGE', message: 'request body too large' },
         { status: 400 },
       );
     }
-    return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'invalid JSON' }, { status: 400 });
   }
 
-  const provider = body.provider === 'email' ? 'email' : 'phone';
-  const inputTarget = (body.target || '').trim();
+  if (body.provider !== 'email' && body.provider !== 'phone') {
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'invalid provider' }, { status: 400 });
+  }
+  if (typeof body.target !== 'string') {
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'target required' }, { status: 400 });
+  }
+  const provider = body.provider;
+  const inputTarget = body.target.trim();
   const target = (provider === 'phone' && isValidPhone(inputTarget)) ||
       (provider === 'email' && isValidEmail(inputTarget))
     ? normalizeContact(provider, inputTarget)
     : inputTarget;
   if (!target) {
-    return NextResponse.json({ code: 'BAD_REQUEST', message: 'target required' }, { status: 400 });
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'target required' }, { status: 400 });
   }
   if (provider === 'phone' && !isValidPhone(target)) {
-    return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid phone' }, { status: 400 });
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'invalid phone' }, { status: 400 });
   }
   if (provider === 'email' && !isValidEmail(target)) {
-    return NextResponse.json({ code: 'BAD_REQUEST', message: 'invalid email' }, { status: 400 });
+    return noStoreJson({ code: 'BAD_REQUEST', message: 'invalid email' }, { status: 400 });
   }
 
   try {
@@ -75,15 +89,15 @@ export async function POST(request: Request) {
       // 先 issueOtp:守卫先行,配额(60s 冷却/24h 上限)不因发送失败被绕过。
       const { expiresAt, code } = await issueOtp(provider, target);
       const { messageId } = await sendVerificationEmail({ to: target, code, expiresAt });
-      return NextResponse.json({ ok: true, provider, expiresAt, messageId });
+      return noStoreJson({ ok: true, provider, expiresAt, messageId });
     }
     // phone:先 issueOtp 守卫先行保配额,再经阿里云短信认证服务真发。
     const { expiresAt, code } = await issueOtp(provider, target);
     const { requestId } = await sendSmsVerifyCode({ phoneNumber: target, code });
-    return NextResponse.json({ ok: true, provider, expiresAt, requestId });
+    return noStoreJson({ ok: true, provider, expiresAt, requestId });
   } catch (err) {
     if (err instanceof OtpRateLimitedError || err instanceof OtpTooManyAttemptsError) {
-      return NextResponse.json(
+      return noStoreJson(
         {
           code: err instanceof OtpTooManyAttemptsError ? 'TOO_MANY_ATTEMPTS' : 'RATE_LIMITED',
           message: err.message,
@@ -93,61 +107,61 @@ export async function POST(request: Request) {
       );
     }
     if (err instanceof DbUnavailableError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
         { status: 503 },
       );
     }
     if (err instanceof EmailConfigError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'EMAIL_NOT_CONFIGURED', message: '验证码服务暂不可用,请稍后再试' },
         { status: 503 },
       );
     }
     if (err instanceof EmailRateLimitedError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'EMAIL_RATE_LIMITED', message: '发送太频繁,请稍后再试' },
         { status: 429 },
       );
     }
     if (err instanceof EmailAuthError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'EMAIL_PROVIDER_ERROR', message: '验证码服务暂不可用,请稍后再试' },
         { status: 503 },
       );
     }
     if (err instanceof EmailSendFailedError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'EMAIL_SEND_FAILED', message: '验证码发送失败,请稍后再试' },
         { status: 500 },
       );
     }
     if (err instanceof SmsConfigError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'SMS_NOT_CONFIGURED', message: '验证码服务暂不可用,请稍后再试' },
         { status: 503 },
       );
     }
     if (err instanceof SmsRateLimitedError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'SMS_RATE_LIMITED', message: '发送太频繁,请稍后再试' },
         { status: 429 },
       );
     }
     if (err instanceof SmsDayLimitedError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'SMS_DAY_LIMITED', message: '今日发送次数已达上限,请稍后再试' },
         { status: 429 },
       );
     }
     if (err instanceof SmsAuthError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'SMS_PROVIDER_ERROR', message: '验证码服务暂不可用,请稍后再试' },
         { status: 503 },
       );
     }
     if (err instanceof SmsSendFailedError) {
-      return NextResponse.json(
+      return noStoreJson(
         { code: 'SMS_SEND_FAILED', message: '验证码发送失败,请稍后再试' },
         { status: 500 },
       );

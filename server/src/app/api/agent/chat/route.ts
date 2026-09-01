@@ -11,7 +11,7 @@
 
 import { NextResponse } from 'next/server';
 import { BoundedRateStore } from '@/lib/bounded-rate-store';
-import { RequestBodyTooLargeError, readJsonBody } from '@/lib/request-body';
+import { RequestBodyTooLargeError, readJsonObjectBody } from '@/lib/request-body';
 import { readSessionToken, readSessionUser } from '@/lib/http-session';
 import { clientIpBucketKey } from '@/lib/client-ip';
 import { readAgentConfig, hasBaiduAgentPlan } from '@/lib/agent/config';
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
   // 3. JSON 解析 + messages 整形(空/首条非 user → 400;超 cap 从最旧裁,缺 content 补 "")
   let body: ChatBody;
   try {
-    body = await readJsonBody<ChatBody>(request, MAX_BODY_CHARS);
+    body = await readJsonObjectBody<ChatBody>(request, MAX_BODY_CHARS);
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) {
       return bad('BODY_TOO_LARGE', `request body must be ≤ ${MAX_BODY_CHARS} bytes`);

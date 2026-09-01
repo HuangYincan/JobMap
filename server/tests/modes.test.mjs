@@ -11,6 +11,8 @@ import {
   MODES,
   canonicalMode,
   getMode,
+  isKnownMode,
+  parseKnownMode,
 } from '../src/lib/modes.ts';
 
 test('MODES: 无 internship 条目,其余条目与顺序保持', () => {
@@ -24,6 +26,19 @@ test('canonicalMode: internship → work,其余原样', () => {
   assert.equal(canonicalMode('domain'), 'domain');
   assert.equal(canonicalMode('college'), 'college');
   assert.equal(canonicalMode('overseas'), 'overseas');
+});
+
+test('parseKnownMode: unknown runtime values are rejected while internship aliases to work', () => {
+  assert.equal(isKnownMode('work'), true);
+  assert.equal(isKnownMode('internship'), true);
+  assert.equal(isKnownMode('unknown'), false);
+  assert.equal(isKnownMode(null), false);
+  assert.equal(isKnownMode([]), false);
+  assert.equal(parseKnownMode('internship'), 'work');
+  assert.equal(parseKnownMode(undefined), 'work');
+  assert.equal(parseKnownMode(''), 'work');
+  assert.equal(parseKnownMode('unknown'), null);
+  assert.equal(parseKnownMode(42), null);
 });
 
 test('getMode: internship 落到 work 配置(不读 MODES.internship)', () => {

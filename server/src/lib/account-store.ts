@@ -837,9 +837,15 @@ export async function issueOtp(
   const memory = memIssueOtp(provider, normalized);
   try {
     await withDbTransactionWrite(async (db) => {
-      // 顺手清掉该 target 的过期挑战行,控制 auth_otp_challenges 膨胀。
+      // Re-sending invalidates every previous challenge for this provider/target.
+      // Keep the cleanup separate so old deployments still benefit from the
+      // existing expiry sweep while the active-row delete enforces latest-only.
       await db.query(
         `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
+        [provider, normalized],
+      );
+      await db.query(
+        `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2`,
         [provider, normalized],
       );
       await db.query(
@@ -870,27 +876,22 @@ export async function consumeOtp(provider: 'phone' | 'email', target: string, co
   }
 
   const ok = await withDbTransactionWrite(async (db) => {
+    // Match and consume in one SQL statement. PostgreSQL locks the row for the
+    // DELETE, so concurrent verifications cannot both observe the same code.
     const result = await db.query<{ id: string }>(
-      `SELECT id::text
-       FROM auth_otp_challenges
+      `DELETE FROM auth_otp_challenges
        WHERE provider = $1 AND target = $2 AND consumed_at IS NULL AND expires_at > now()
          AND code_hash = $3
-       ORDER BY created_at DESC
-       LIMIT 1`,
+       RETURNING id::text`,
       [provider, normalized, hashOtp(code)],
     );
-    const row = result.rows[0];
-    if (!row) {
-      await db.query(
-        `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
-        [provider, normalized],
-      );
-      return false;
-    }
-    // Successful verification destroys the credential immediately. Keeping a
-    // consumed hash until expiry extends the lifetime of authentication data.
-    await db.query(`DELETE FROM auth_otp_challenges WHERE id = $1`, [row.id]);
-    return true;
+    if ((result.rowCount ?? result.rows.length) > 0) return true;
+
+    await db.query(
+      `DELETE FROM auth_otp_challenges WHERE provider = $1 AND target = $2 AND expires_at <= now()`,
+      [provider, normalized],
+    );
+    return false;
   }, () => memConsumeOtp(provider, normalized, code));
 
   if (ok) {

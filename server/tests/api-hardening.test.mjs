@@ -28,7 +28,7 @@ test('#10 search: q 超长 → 400（不做静默截断）', () => {
 test('#10 search: body 大小超限（64KB）→ 400', () => {
   const route = src('app/api/search/route.ts');
   assert.match(route, /const MAX_BODY_CHARS = 64 \* 1024/);
-  assert.match(route, /readJsonBody<SearchBody>\(request, MAX_BODY_CHARS\)/);
+  assert.match(route, /readJsonObjectBody<SearchBody>\(request, MAX_BODY_CHARS\)/);
   assert.match(route, /RequestBodyTooLargeError/);
   assert.match(route, /code: 'BODY_TOO_LARGE'/);
   assert.match(route, /status: 400/);
@@ -41,7 +41,7 @@ test('#10 search: filters 序列化超限 → 400，且限长结果复用为缓�
   assert.match(route, /code: 'FILTERS_TOO_LARGE'/);
   assert.match(route, /status: 400/);
   // filters 非对象（数组/标量）也拒绝
-  assert.match(route, /Array\.isArray\(body\.filters\)/);
+  assert.match(route, /isPlainObject\(body\.filters\)/);
   // 缓存 key 卫生：只序列化一次，复用限长后的 filtersJson
   assert.match(route, /const filtersJson = JSON\.stringify\(body\.filters \?\? \{\}\)/);
   const keyBlock = route.slice(route.indexOf('publicCacheKey(['), route.indexOf(']);'));
@@ -97,7 +97,7 @@ test('#10 suggest: q/mode/center 超长 → 400（在缓存 key 之前拦截）'
   assert.match(route, /const MAX_MODE_LENGTH = 32/);
   assert.match(route, /const MAX_CENTER_LENGTH = 128/);
   assert.match(route, /rawQ\.length > MAX_Q_LENGTH/);
-  assert.match(route, /mode\.length > MAX_MODE_LENGTH/);
+  assert.match(route, /modeValue\.length > MAX_MODE_LENGTH/);
   assert.match(route, /centerRaw\.length > MAX_CENTER_LENGTH/);
   assert.match(route, /code: 'PARAM_TOO_LARGE'/);
   assert.match(route, /status: 400/);
@@ -116,7 +116,7 @@ test('#7 pois/[id]: 不再二次解码（Next 动态段已解码），畸形 % �
   // 裸 %（如 /api/pois/100%25 → "100%"）二次解码会抛 URIError → 500；路由内不得再调用解码
   assert.doesNotMatch(route, /decodeURIComponent\(/);
   // 原契约保持：共享 catalog 查询 + 404 + 缓存
-  assert.match(route, /loadServerCatalogById/);
+  assert.match(route, /loadServerCatalogByIdStrict/);
   assert.match(route, /status: 404/);
   assert.match(route, /writePublicCache/);
   assert.match(route, /publicCacheKey/);
@@ -143,10 +143,12 @@ test('#11 notifications: 同用户 60s 冷却 → 429 + Retry-After', () => {
   assert.match(route, /code: "RATE_LIMITED"/);
   assert.match(route, /status: 429/);
   assert.match(route, /"Retry-After"/);
-  // 冷却通过后才执行扫描 + 入队
+  // 只有成功读到目录才消耗冷却；DB 故障可重试，随后才执行扫描 + 入队
   const scanIdx = route.indexOf('loadServerCatalog("work")');
+  const nullIdx = route.indexOf('catalog === null');
   const setIdx = route.indexOf('notifyCooldown.set(user.id, now, NOTIFY_COOLDOWN_MS, now)');
-  assert.ok(setIdx !== -1 && scanIdx !== -1 && setIdx < scanIdx, '冷却记录先于全量扫描');
+  assert.ok(nullIdx !== -1 && scanIdx !== -1 && nullIdx > scanIdx, '目录故障分支必须在查库之后');
+  assert.ok(setIdx !== -1 && scanIdx !== -1 && setIdx > scanIdx, '冷却记录必须在成功查库之后');
   // 原有行为保持
   assert.match(route, /matchJobAlerts/);
   assert.match(route, /enqueueNotification/);
