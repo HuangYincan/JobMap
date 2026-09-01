@@ -637,6 +637,19 @@ test('createCityClusterMarker:AMap 聚合徽章进独立 LabelsLayer,hide 的公
   assert.equal(ns.instances.labelsLayers[0].items.length, 1);
   pin.setVisible(false);
   assert.equal(ns.instances.labelsLayers[0].items.length, 0, 'hide 从公司层摘掉,不占碰撞');
+  assert.equal(pin.isAttached(), true, '隐藏期 isAttached 仍 true,sync 不把 hide 当外部删除');
+  pin.setVisible(true);
+  assert.equal(ns.instances.labelsLayers[0].items.length, 1, 'show 加回公司层');
+  const layer = ns.instances.labelsLayers[0];
+  const origAdd = layer.add.bind(layer);
+  layer.add = () => {
+    throw new Error('add failed');
+  };
+  pin.setVisible(false);
+  pin.setVisible(true);
+  assert.equal(pin.isAttached(), false, '意图可见但 add 失败 → isAttached false,sync 可重建');
+  layer.add = origAdd;
+  pin.setVisible(false);
   const cluster = createCityClusterMarker(view, {
     city: '深圳',
     count: 111,

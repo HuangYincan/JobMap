@@ -57,6 +57,23 @@ export function poiCity(poi: POI): string | undefined {
 }
 
 /**
+ * 聚合激活时仍应画个体 pin 的 POI:无 city、该城没有徽章、或有徽章但本点
+ * 被串味防御剔除(旧实现 `!poiCity` 把有 city 的串味点两头丢掉——既无针
+ * 也无徽章,zoom≤8 看起来像「渲染后又消失」)。不得把串味点藏在远方徽章下。
+ */
+export function clusterUngroupedPois(source: readonly POI[], groups: readonly CityCluster[]): POI[] {
+  const grouped = new Set(groups.map((g) => g.city));
+  return source.filter((p) => {
+    const city = poiCity(p);
+    if (!city) return true;
+    const key = bareCityName(city);
+    if (!grouped.has(key)) return true;
+    // 该城有徽章,但本点被串味防御剔除 → 不能藏在远方徽章下,保持个体
+    return !cityLabelMatchesCoordinates(city, p.location?.lng, p.location?.lat);
+  });
+}
+
+/**
  * 将 POI 列表按城市分组聚合。
  *
  * 规则(tech/21 + 2026-08-20 修订):

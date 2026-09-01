@@ -469,15 +469,17 @@ export function useMapEngine(options: UseMapEngineOptions): UseMapEngineResult {
         const doomed = viewRef.current;
         keepaliveRef.current = { view: doomed, container };
         setTimeout(() => {
-          if (viewRef.current !== doomed) {
-            if (keepaliveRef.current?.view === doomed) keepaliveRef.current = null;
-            doomed.destroy();
-          }
+          // 重连已把同一 view 写回 viewRef → 跳过销毁。
+          if (viewRef.current === doomed) return;
+          if (keepaliveRef.current?.view === doomed) keepaliveRef.current = null;
+          doomed.destroy();
+          if (!aliveRef.current) return;
+          // 真卸载:这才清 React view。交棒当帧不得同步把 view 置空,
+          // 否则 usePOIMap 随 view 变空拆掉全部 POI marker(poi-lifecycle #1)。
+          setView((current) => (current === doomed ? null : current));
         }, 0);
       }
       viewRef.current = null;
-      setView(null);
-      setActiveSearchProvider(null);
     };
 
     // 重连接管:上一 effect 实例 cleanup 留下的活图(同容器、同引擎、未销毁、容器仍

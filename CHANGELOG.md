@@ -8,6 +8,11 @@ Dates are UTC+8. This file is a historical release log for work merged to `dev`;
 
 - **Documentation baseline aligned with the tracked implementation.** Removed current references to unavailable private design trees, legacy Codex paths, and old parallel-batch locations; documented migrations `001`–`021`, the official MCP SDK `@modelcontextprotocol/sdk` `1.30.0`, command-derived test reporting, existing Node security contract tests, and the fact that CI has no SAST/DAST/dependency-scanning jobs. This documentation-only change does not claim that migration apply, deployment, or any unrun security gate succeeded.
 
+### Fixed
+
+- **POI 经常先出现再消失。** 针消失的主路径是可见集收空或控制器拆掉,不是 `setPOIs([])`。七条修复:标记控制器与底图同款 keepalive(StrictMode / 详情面板重连不拆针);工作模式搜索/筛选只 hide、池保持 catalog 全量;聚合下串味公司仍画个体针;非法/过期视野框不再把 Domain 针裁空,程序化定位立刻同步 bounds;AMap/腾讯意图可见但加层失败时 `isAttached=false` 让 sync 补回;logo 升级改原地 `setIcon`;主加载空批次不再按框清空非空目录。
+
+## 2026-08-31
 
 ### Added
 

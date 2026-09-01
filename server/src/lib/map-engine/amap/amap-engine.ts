@@ -284,6 +284,7 @@ class AmapView implements MapView {
       marker.on?.('click', () => opts.onClick?.());
     }
     let visible = true;
+    let onLayer = true;
     const wrapped: MapMarker = {
       raw: marker,
       setPosition: (p: LngLat) => {
@@ -308,8 +309,10 @@ class AmapView implements MapView {
         if (v) {
           try {
             layer.add(marker);
+            onLayer = true;
           } catch {
-            // 已在层上:忽略
+            // add 失败:意图可见但不在层上 → isAttached false,sync 可重建
+            onLayer = false;
           }
           if (typeof marker.show === 'function') marker.show();
           else if (typeof marker.setVisible === 'function') marker.setVisible(true);
@@ -319,6 +322,7 @@ class AmapView implements MapView {
           } catch {
             // 已摘层 / 层已销毁:忽略
           }
+          onLayer = false;
         }
       },
       on: (event: 'click', cb: () => void) => {
@@ -334,9 +338,13 @@ class AmapView implements MapView {
         }
         if (cb) marker.off('click', cb);
       },
-      // hide ≠ 摘层:isAttached 在隐藏期仍为 true,避免 sync() 把隐藏点当外部
-      // 删除整批重建(TMap 旧 multiAttached 语义曾踩过这个坑)。
-      isAttached: () => this.labelMarkers.has(marker),
+      // 隐藏期 isAttached 仍为 true,避免 sync() 把 hide 当外部删除整批重建。
+      // 意图可见却不在层上(add 失败)→ false,让 sync 补回(poi-lifecycle #5)。
+      isAttached: () => {
+        if (!this.labelMarkers.has(marker)) return false;
+        if (!visible) return true;
+        return onLayer;
+      },
       remove: () => {
         try {
           layer.remove(marker);

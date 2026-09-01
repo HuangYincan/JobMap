@@ -6,6 +6,7 @@ import {
   CLUSTER_DRILL_ZOOM,
   CLUSTER_MAX_ZOOM,
   clusterCities,
+  clusterUngroupedPois,
   poiCity,
 } from '../src/lib/city-cluster.ts';
 import { INTERNSHIP_SEED } from './fixtures/seed-data.ts';
@@ -222,6 +223,12 @@ test('clusterCities: 剔除「city 标签与坐标参考框不符」的串味行
   assert.deepEqual(
     groups.map((g) => [g.city, g.count]),
     [['成都', 2], ['杭州', 2]],
+  );
+  const visible = clusterUngroupedPois(pois, groups).map((p) => p.id);
+  assert.deepEqual(
+    visible.sort(),
+    ['fake-cd-1', 'fake-cd-2', 'fake-sz'].sort(),
+    '串味点保持个体 pin,不得既无针也无徽章(poi-lifecycle #3)',
   );
 });
 
