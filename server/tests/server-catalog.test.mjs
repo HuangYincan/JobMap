@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { loadServerCatalog, loadServerCatalogById } from '../src/lib/server-catalog.ts';
+import { loadServerCatalog, loadServerCatalogById, loadServerCatalogByIdStrict } from '../src/lib/server-catalog.ts';
 import {
   countWorkTagMatchesFromDb,
   loadWorkCatalogByIdFromDb,
@@ -28,7 +28,9 @@ test('strict DB-only: no DATABASE_URL → work catalog is null (no seed fallback
   assert.equal(await loadServerCatalog('internship'), null);
   assert.deepEqual(await loadServerCatalog('domain'), []);
   assert.equal(await loadServerCatalogById('work', 'alibaba-xixi'), undefined);
+  assert.equal(await loadServerCatalogByIdStrict('work', 'alibaba-xixi'), null);
   assert.equal(await loadServerCatalogById('domain', 'hz-westlake'), undefined);
+  assert.equal(await loadServerCatalogByIdStrict('domain', 'hz-westlake'), undefined);
   assert.deepEqual(await loadServerCatalog('college'), []);
 });
 
@@ -563,6 +565,48 @@ test('loadWorkCatalogByIdFromDb preserves 404 semantics for unknown/malformed id
   assert.equal(calls, 0, 'malformed site ids are rejected before SQL');
   assert.equal(await loadWorkCatalogByIdFromDb('missing', pool), undefined);
   assert.equal(calls, 1, 'unknown slug uses one targeted company query');
+});
+
+test('strict saved catalog lookup accepts company/site ids and internship alias, rejects cross-mode/fake ids', async () => {
+  const makePool = (siteRows) => ({
+    async query(sql, params) {
+      if (sql.includes('FROM companies c')) {
+        return {
+          rows: params[0] === 'acme'
+            ? [{
+                id: '10', slug: 'acme', name: 'Acme', industries: ['internet'], scale: 'startup',
+                tier: 1, category: '64', rating: null, summary: null,
+                career_url: null, logo_url: null, logo_emoji: 'A',
+              }]
+            : [],
+        };
+      }
+      if (sql.includes('FROM company_sites s')) return { rows: siteRows };
+      if (sql.includes('FROM positions p')) {
+        return {
+          rows: [{
+            company_id: '10', site_id: siteRows.at(-1).id, external_id: 'open-1', title: 'Frontend',
+            department: null, family: 'campus', taxonomy: { family: 'campus' },
+            salary_min: null, salary_max: null, education: null, majors: [], skills: [],
+            description: null, deadline: null, apply_source: null, apply_url: null, status: 'open',
+          }],
+        };
+      }
+      throw new Error(`unexpected query: ${sql}`);
+    },
+  });
+  const site = (id) => ({
+    id, company_id: '10', name: `Site ${id}`, address: 'West Rd', city: '杭州市',
+    province: '浙江省', city_code: '330100', lng: 120.1 + Number(id) / 10000, lat: 30.2,
+    career_url: null, logo_url: null,
+  });
+
+  assert.equal((await loadServerCatalogByIdStrict('work', 'acme', makePool([site('101')]))).id, 'acme');
+  const multiSitePool = makePool([site('101'), site('102')]);
+  assert.equal((await loadServerCatalogByIdStrict('internship', 'acme:102', multiSitePool))?.id, 'acme:102');
+  assert.equal(await loadServerCatalogByIdStrict('domain', 'acme:102', multiSitePool), undefined);
+  assert.equal(await loadServerCatalogByIdStrict('work', 'missing', multiSitePool), undefined);
+  assert.equal(await loadServerCatalogByIdStrict('work', 'acme:bad', multiSitePool), undefined);
 });
 
 test('loadWorkSuggestionsFromDb returns capped SQL matches without loading the catalog', async () => {

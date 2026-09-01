@@ -166,7 +166,7 @@ test('#12 saved: name/poiId 长度上限 + lng/lat 范围校验 → 400', () => 
   assert.match(route, /code: "POI_ID_TOO_LONG"/);
   const deleteIdx = route.indexOf('export async function DELETE');
   const deleteLimitIdx = route.indexOf('poiId.length > MAX_POI_ID_LENGTH', deleteIdx);
-  const removeIdx = route.indexOf('removeSaved(user.id, poiId)', deleteIdx);
+  const removeIdx = route.indexOf('removeSavedStrict(user.id, poiId)', deleteIdx);
   assert.ok(deleteLimitIdx !== -1 && removeIdx !== -1 && deleteLimitIdx < removeIdx, 'DELETE poiId is bounded before storage');
   assert.match(route, /code: "INVALID_LNG"/);
   assert.match(route, /code: "INVALID_LAT"/);
@@ -178,9 +178,21 @@ test('#12 saved: name/poiId 长度上限 + lng/lat 范围校验 → 400', () => 
   const saveIdx = route.indexOf('savePlace(user.id,');
   const lngIdx = route.indexOf('code: "INVALID_LNG"');
   assert.ok(lngIdx !== -1 && saveIdx !== -1 && lngIdx < saveIdx, 'lng 校验先于落库');
-  // 原有行为保持
+  // 原有参数契约保持
   assert.match(route, /poiId and name required/);
   assert.match(route, /isPersistableSavedSnapshot/);
+  // 目录权威写入:只用 poiId 查询 work catalog,不信任浏览器快照字段
+  assert.match(route, /loadServerCatalogByIdStrict/);
+  assert.match(route, /listSavedStrict/);
+  assert.match(route, /removeSavedStrict/);
+  const saveBlock = route.slice(saveIdx, route.indexOf('});', saveIdx) + 3);
+  assert.doesNotMatch(saveBlock, /body\.(name|address|lng|lat)/, '保存不得使用浏览器快照字段');
+  assert.match(saveBlock, /catalog\.name/);
+  assert.match(saveBlock, /catalog\.location\.(address|lng|lat)/);
+  assert.match(route, /code: "DB_UNAVAILABLE"/);
+  assert.match(route, /status: 503/);
+  assert.match(route, /Cache-Control.*no-store/);
+  assert.match(route, /body\.kind === "recruitment"/);
   assert.match(route, /canonicalMode/);
 });
 

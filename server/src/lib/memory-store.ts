@@ -30,6 +30,54 @@ export const MEMORY_STORAGE_MAX = MEMORY_LIST_MAX;
 /** 进程内回退存储的用户键上限;键洪泛时淘汰最早未活跃用户。 */
 export const MEMORY_USER_STORE_MAX = 1_000;
 
+/** 工具层与存储层共用的敏感内容拒绝原因;不回显用户输入。 */
+export const MEMORY_SENSITIVE_CONTENT_MESSAGE =
+  '出于安全原因,不能保存密码、密钥、令牌、验证码、私钥、JWT、精确住址或联系方式';
+
+/**
+ * 记忆写入的高置信敏感内容规则。
+ *
+ * 关键词本身不构成拒绝条件:只有显式的「字段 + 是/为/分隔符 + 值」才命中,
+ * 以免把“我喜欢研究密码学”“我想学习 API”之类普通偏好误判为秘密。
+ * 电话、邮箱和带街道/门牌号的地址是高置信直接识别,因为它们本身就是可用的
+ * 联系方式/精确位置。规则只用于阻止写入,不会把原文记录到日志或错误中。
+ */
+const PASSWORD_DISCLOSURE_RE = /(?:密码|口令|password|passwd|pwd)\s*(?:是|为|[:：=])\s*\S+/iu;
+const CREDENTIAL_DISCLOSURE_RE =
+  /(?:api[\s_-]*key|api[\s_-]*secret|access[\s_-]*token|refresh[\s_-]*token|client[\s_-]*secret|密钥|秘钥|令牌|token|secret)\s*(?:是|为|[:：=])\s*\S+/iu;
+const OTP_DISCLOSURE_RE =
+  /(?:验证码|一次性密码|动态密码)\s*(?:(?:是|为)\s*)?[:：=]?\s*\d{4,8}(?!\d)|\botp\b\s*(?:code\s*)?(?:is|[:=])\s*[A-Za-z0-9-]{4,}/iu;
+const PRIVATE_KEY_DISCLOSURE_RE = /(?:私钥|private\s+key)\s*(?:是|为|[:：=])\s*\S+/iu;
+const PRIVATE_KEY_PEM_RE = /-----BEGIN(?: [A-Z0-9]+)* PRIVATE KEY-----/iu;
+const JWT_RE = /(?:^|[^A-Za-z0-9_-])eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:$|[^A-Za-z0-9_-])/u;
+const KNOWN_TOKEN_RE = /(?:sk-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9_]{12,}|AIza[A-Za-z0-9_-]{20,}|AKIA[A-Z0-9]{12,}|Bearer\s+[A-Za-z0-9._~+/=-]{12,})/iu;
+const PHONE_RE = /(?:^|[^0-9])(?:\+?86[ -]?)?1[3-9][0-9]{9}(?![0-9])/u;
+const EMAIL_RE = /(?:^|[^A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?:$|[^A-Za-z0-9._%+-])/u;
+const CONTACT_DISCLOSURE_RE =
+  /(?:手机号|手机号码|电话号码|联系电话|联系方式|微信号|wechat\s*id)\s*(?:是|为|[:：=])\s*[A-Za-z0-9_+.-]{4,}/iu;
+const PRECISE_ADDRESS_RE =
+  /(?:家庭住址|住宅地址|家庭地址|详细地址|具体住址|居住地址|住址|我家地址|家住|住在|home\s+address|residential\s+address)[^。\n]{0,120}?(?:[0-9]+\s*(?:号|弄|栋|幢|单元|室)(?!线)|(?:路|街|巷)[^。\n]{0,24}?[0-9]+\s*号?|[0-9]+\s+[^,。\n]{1,40}\s+(?:street|st\b|road|rd\b|avenue|ave\b))/iu;
+
+/** 判断一条记忆是否包含高置信凭据、联系方式或精确住宅地址。 */
+export function isSensitiveMemoryContent(raw: unknown): boolean {
+  if (typeof raw !== 'string') return false;
+  const content = raw.trim().normalize('NFKC').replace(/[​-‍﻿]/g, '');
+  if (!content) return false;
+  return [
+    PASSWORD_DISCLOSURE_RE,
+    CREDENTIAL_DISCLOSURE_RE,
+    OTP_DISCLOSURE_RE,
+    PRIVATE_KEY_DISCLOSURE_RE,
+    PRIVATE_KEY_PEM_RE,
+    JWT_RE,
+    KNOWN_TOKEN_RE,
+    PHONE_RE,
+    EMAIL_RE,
+    CONTACT_DISCLOSURE_RE,
+    PRECISE_ADDRESS_RE,
+  ].some((pattern) => pattern.test(content));
+}
+
 /** 纯函数:记忆内容清洗——非 string/trim 后空串 → '',超长截断 200 字。 */
 export function sanitizeMemoryContent(raw: unknown): string {
   if (typeof raw !== 'string') return '';
@@ -42,7 +90,7 @@ export function sanitizeMemoryContent(raw: unknown): string {
 const memMemories = new BoundedLruStore<UserMemory[]>(MEMORY_USER_STORE_MAX);
 
 function memList(userId: string): UserMemory[] {
-  return [...(memMemories.get(userId) ?? [])];
+  return [...(memMemories.get(userId) ?? [])].filter((item) => !isSensitiveMemoryContent(item.content));
 }
 
 function memPut(userId: string, items: UserMemory[]): void {
@@ -123,15 +171,22 @@ export async function listMemories(userId: string): Promise<UserMemory[]> {
          LIMIT $2`,
         [userId, MEMORY_LIST_MAX],
       );
-      return result.rows.map((r) => ({ id: r.id, content: r.content, createdAt: r.created_at.toISOString() }));
+      return result.rows
+        .map((r) => ({ id: r.id, content: r.content, createdAt: r.created_at.toISOString() }))
+        .filter((item) => !isSensitiveMemoryContent(item.content));
     },
     () => memList(userId),
   );
 }
 
-/** 新增一条记忆(入参经 sanitizeMemoryContent:trim + 截断 200 字;空 → 不写)。 */
+/** 新增一条记忆(入参经 sanitizeMemoryContent:trim + 截断 200 字;空/敏感内容 → 不写)。 */
 export async function addMemory(userId: string, content: string): Promise<void> {
+  // Check before the 200-character cap so a secret appended after harmless text
+  // cannot be hidden by truncation.
+  if (isSensitiveMemoryContent(content)) return;
   const clean = sanitizeMemoryContent(content);
+  // 第二道边界必须位于 DB/内存写入之前:即使调用方绕过 builtin 工具,
+  // 高置信秘密也不会进入存储,也不会因 DB 故障触发任何查询。
   if (!clean) return;
   await withDbWrite(
     async (db) => {
