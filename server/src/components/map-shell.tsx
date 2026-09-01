@@ -258,6 +258,8 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
   const noMoreRef = useRef(false);
   /** 视口替换世代:主加载在 onBatch/落库前校验,丢弃过期的追加批次 */
   const viewportEpochRef = useRef(0);
+  /** 账号刷新/登录回调使用稳定入口,避免提前引用后置声明的模式切换 handler。 */
+  const handleModeChangeRef = useRef<(nextMode: MapMode) => void>(() => {});
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawer, setDrawer] = useState<DrawerState>("mini");
@@ -573,7 +575,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       document.addEventListener("wheel", markInteracted, { once: true, passive: true });
     }
     refreshAccount().then((next) => {
-      if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
+      if (next?.preferences.defaultMode) handleModeChangeRef.current(next.preferences.defaultMode);
       void refreshHistory(Boolean(next));
       if (next) void mergeGuestHistoryOnSignIn();
     });
@@ -2119,6 +2121,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
       searchOrigin: userLocation,
     };
   }, [mode, pageOffset, searchOrigin, query, filters, sort, userLocation]);
+  handleModeChangeRef.current = handleModeChange;
 
   // ---- 搜索建议 ----
   // 建议获取/清理逻辑抽到 useSearchState(work:/api/suggest 服务端目录 + 本地回退;
@@ -2730,7 +2733,7 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
         onClose={() => setAuthOpen(false)}
         onSignedIn={() => {
           void refreshAccount().then((next) => {
-            if (next?.preferences.defaultMode) setMode(next.preferences.defaultMode);
+            if (next?.preferences.defaultMode) handleModeChangeRef.current(next.preferences.defaultMode);
             void mergeGuestHistoryOnSignIn();
           });
           void refreshSaved();

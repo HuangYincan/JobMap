@@ -199,6 +199,7 @@ export function useWorkViewport(
           // 同值 no-op,不 arm skipFetch,避免吞掉下一次合法的滚动加载)
           if (v.pageOffset !== 0) skipFetchRef.current = true;
           setPageOffset(0);
+          let acceptedNonEmptyBatch = false;
           try {
             const result = await fetchPOIsForMode({
               mode,
@@ -239,20 +240,27 @@ export function useWorkViewport(
                 );
                 catalogRef.current = next;
                 setCatalog(next);
-                writeModeCache({
-                  mode,
-                  catalog: next,
-                  pageOffset: 0,
-                  searchOrigin: v.searchOrigin,
-                  query: v.query,
-                  filters: v.filters,
-                  sort: v.sort,
-                  viewport: snapshot ?? undefined,
-                });
+                acceptedNonEmptyBatch = true;
               },
             });
-            // 过期世代/dispose 后 noMore 同样不得落地(旧视野结果污染新刷新状态)
+            // 完整请求成功后才提交视口缓存:分页中间批次可能在后续页失败/取消,
+            // 不得把部分 catalog 当作完整快照;提交前重新检查当前世代、模式和 dispose。
             if (signal?.cancelled || epoch !== viewportEpochRef.current) return;
+            if (!batchMatchesCurrentMode(viewStateRef.current.mode, mode)) return;
+            if (acceptedNonEmptyBatch && result.cacheable !== false) {
+              const latest = viewStateRef.current;
+              writeModeCache({
+                mode,
+                catalog: catalogRef.current,
+                pageOffset: 0,
+                searchOrigin: latest.searchOrigin,
+                query: latest.query,
+                filters: latest.filters,
+                sort: latest.sort,
+                viewport: snapshot ?? undefined,
+              });
+            }
+            // 过期世代/dispose 后 noMore 同样不得落地(旧视野结果污染新刷新状态)
             // 分类全量加载带 total:新视野是否已到底由循环结果决定
             // (短页/total 取尽;硬顶 1000 时 noMore=false,由 atCap 停止哨兵)
             if (result.noMore !== undefined) {
