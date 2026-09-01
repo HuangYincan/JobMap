@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Domain Map PostgreSQL backup timer
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=domain-map-backup.service
+
+[Install]
+WantedBy=timers.target

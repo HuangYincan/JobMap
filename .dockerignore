@@ -1,0 +1,23 @@
+# Docker build context: only the runtime sources and production packaging are needed.
+.git
+.gitignore
+.github
+.claude
+.Codex
+.tech
+tech
+DOCS
+docs
+.playwright-mcp
+**/.env
+**/.env.*
+**/node_modules
+**/.next
+**/__pycache__
+**/.venv
+**/coverage
+**/*.log
+server/docs
+server/tech
+server/tests
+crawler/tests

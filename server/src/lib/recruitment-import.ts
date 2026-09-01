@@ -356,6 +356,7 @@ interface AuditPosition {
   companySlug: string;
   siteId: string;
   position: SourcePosition;
+  externalId: string;
   sourceCode: string;
   retrievedAt: string;
   expiresAt: string | null;
@@ -379,7 +380,71 @@ function effectiveSource(position: SourcePosition, company: SourceCompany): stri
   return position.source?.trim() || company.source?.trim() || 'seed';
 }
 
-function prepareAudit(plan: SourceCompany[]): Map<string, AuditSourceBatch> {
+interface PositionIdentityInput {
+  company: SourceCompany;
+  position: SourcePosition;
+  sourceCode: string;
+}
+
+/**
+ * Keep the source's external id when it is unambiguous. When a source emits the
+ * same id for multiple companies (for example, a generic QQDoc landing page),
+ * scope only those records to their company before they reach the DB's
+ * source/external-id unique key. The original id remains in original_payload and
+ * normalized_evidence; the scoped id is persisted as the canonical external_id so
+ * each company has an independent position and the ownership FK cannot be crossed.
+ */
+function positionExternalIds(companies: SourceCompany[]): Map<SourcePosition, string> {
+  const groups = new Map<string, PositionIdentityInput[]>();
+  for (const company of companies) {
+    for (const position of company.positions) {
+      const sourceCode = effectiveSource(position, company);
+      const key = `${sourceCode}\u0000${position.externalId}`;
+      const group = groups.get(key) ?? [];
+      group.push({ company, position, sourceCode });
+      groups.set(key, group);
+    }
+  }
+
+  const ids = new Map<SourcePosition, string>();
+  const usedBySource = new Map<string, Set<string>>();
+  const usedFor = (sourceCode: string): Set<string> => {
+    const existing = usedBySource.get(sourceCode);
+    if (existing) return existing;
+    const created = new Set<string>();
+    usedBySource.set(sourceCode, created);
+    return created;
+  };
+
+  // Reserve unscoped ids first so a scoped id can never shadow a different
+  // source record that legitimately already uses that text.
+  for (const group of groups.values()) {
+    if (group.length !== 1) continue;
+    const item = group[0];
+    ids.set(item.position, item.position.externalId);
+    usedFor(item.sourceCode).add(item.position.externalId);
+  }
+  for (const group of groups.values()) {
+    if (group.length === 1) continue;
+    const used = usedFor(group[0].sourceCode);
+    for (const item of group) {
+      const suffix = encodeURIComponent(item.company.slug);
+      let candidate = `${item.position.externalId}::company=${suffix}`;
+      if (used.has(candidate)) {
+        const digest = createHash('sha256')
+          .update(`${item.sourceCode}\u0000${item.company.slug}\u0000${item.position.externalId}`)
+          .digest('hex');
+        candidate = `${candidate}::${digest}`;
+      }
+      while (used.has(candidate)) candidate += '-x';
+      used.add(candidate);
+      ids.set(item.position, candidate);
+    }
+  }
+  return ids;
+}
+
+function prepareAudit(plan: SourceCompany[], externalIds: Map<SourcePosition, string>): Map<string, AuditSourceBatch> {
   const batches = new Map<string, AuditSourceBatch>();
   const ensure = (sourceCode: string): AuditSourceBatch => {
     const existing = batches.get(sourceCode);
@@ -432,6 +497,7 @@ function prepareAudit(plan: SourceCompany[]): Map<string, AuditSourceBatch> {
         companySlug: company.slug,
         siteId: position.siteId,
         position,
+        externalId: externalIds.get(position) ?? position.externalId,
         sourceCode,
         retrievedAt,
         expiresAt,
@@ -473,7 +539,7 @@ export async function applyRecruitmentImport(
     };
   }
 
-  const audit = prepareAudit(authentic);
+  const audit = prepareAudit(authentic, positionExternalIds(authentic));
   const client = await pool.connect();
   const sourceIds = new Map<string, string>();
   const runIds = new Map<string, string>();
@@ -584,7 +650,7 @@ export async function applyRecruitmentImport(
     // provenance. It deliberately does not migrate a row from another source:
     // that old behavior was the provenance corruption this importer is fixing.
     for (const [code, batch] of audit) {
-      const ids = [...new Set(batch.records.map((record) => record.position.externalId))];
+      const ids = [...new Set(batch.records.map((record) => record.externalId))];
       if (ids.length === 0) continue;
       const sourceId = await sourceIdFor(code);
       await client.query(
@@ -750,7 +816,7 @@ export async function applyRecruitmentImport(
           [
             sourceId,
             runId,
-            pos.externalId,
+            record.externalId,
             record.recordVersion,
             record.retrievedAt,
             record.contentHash,
@@ -791,7 +857,7 @@ export async function applyRecruitmentImport(
           [
             companyId,
             siteRowId,
-            pos.externalId,
+            record.externalId,
             pos.title,
             pos.department ?? null,
             pos.family,
