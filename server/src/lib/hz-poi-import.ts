@@ -49,15 +49,21 @@ export const HANGZHOU_BBOX = { west: 118.3, south: 29.1, east: 120.8, north: 30.
  *   JSON 双引号         [{"title":"Logo","url":"https://..."}]
  * 值可单引号也可双引号,键可带可不带引号 → 统一 ['"]([^'"]+)['"] 取值。
  */
-export function parsePhotosUrlArray(photos: string): string[] {
-  if (!photos) return [];
+export function parsePhotosUrlArray(photos: unknown): string[] {
+  if (typeof photos !== 'string' || !photos) return [];
   const urls: string[] = [];
   const re = /['"]?url['"]?\s*:\s*['"]([^'"]+)['"]/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(photos)) !== null) {
     if (m[1]) urls.push(m[1]);
   }
-  return urls;
+  return normalizePhotoUrls(urls);
+}
+
+/** Runtime boundary for photos values read from untrusted/imported data. */
+export function normalizePhotoUrls(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((photo): photo is string => typeof photo === 'string' && photo.length > 0);
 }
 
 /**
