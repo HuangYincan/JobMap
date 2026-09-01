@@ -191,6 +191,7 @@ test('fetchPOIsForMode(domain 杭州内浏览): route 502 → 高德视口兜底
 test('fetchPOIsForMode(domain 杭州内 + 分类): categories 参数构造 + 全量分页循环(短页到底)', async () => {
   const originalFetch = globalThis.fetch;
   const urls = [];
+  const batches = [];
   globalThis.fetch = async (url) => {
     urls.push(String(url));
     const u = new URL(String(url), 'http://x');
@@ -217,6 +218,7 @@ test('fetchPOIsForMode(domain 杭州内 + 分类): categories 参数构造 + 全
       pageOffset: 0,
       existing: [],
       filters: { category: '餐饮服务' },
+      onBatch: (batch) => batches.push(batch.length),
     });
     assert.equal(urls.length, 3); // offset 0/300/600,短页(100<300)停
     for (const raw of urls) {
@@ -229,8 +231,51 @@ test('fetchPOIsForMode(domain 杭州内 + 分类): categories 参数构造 + 全
     assert.match(urls[2], /offset=600/);
     assert.equal(pois.length, 700);
     assert.equal(noMore, true);
+    assert.deepEqual(batches, [300, 600, 700], 'pagination emits cumulative live batches');
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+test('fetchPOIsForMode(domain 分类): 分页中断后 fallback 成功也不可作为完整缓存', async () => {
+  const originalFetch = globalThis.fetch;
+  const providerCalls = [];
+  setActiveSearchProvider({
+    searchPOI: async (params) => {
+      providerCalls.push(params);
+      return [domainPoi('fallback-after-page-error')];
+    },
+    fetchSuggestions: async () => [],
+    getCurrentPosition: async () => null,
+    geocodeAddress: async () => null,
+  });
+  globalThis.fetch = async (url) => {
+    const offset = Number(new URL(String(url), 'http://x').searchParams.get('offset'));
+    if (offset === 0) {
+      return {
+        ok: true,
+        json: async () => ({
+          total: 700,
+          results: Array.from({ length: 300 }, (_, i) => domainPoi(`partial-${i}`)),
+        }),
+      };
+    }
+    return { ok: false, status: 502, json: async () => ({}) };
+  };
+  try {
+    const result = await fetchPOIsForMode({
+      mode: 'domain',
+      center: HZ_CENTER,
+      zoom: 13,
+      pageOffset: 0,
+      existing: [],
+      filters: { category: '餐饮服务' },
+    });
+    assert.equal(result.cacheable, false, 'degraded fallback result must not commit a partial cache');
+    assert.ok(providerCalls.length > 0, 'page failure must use the configured fallback provider');
+  } finally {
+    globalThis.fetch = originalFetch;
+    setActiveSearchProvider(null);
   }
 });
 

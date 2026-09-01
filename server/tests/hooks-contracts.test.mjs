@@ -117,6 +117,42 @@ test('useWorkViewport: 视口世代 epoch 校验 + loader 协作取消信号(epo
   assert.match(vp, /options\.load\(cancelSignal\)/);
 });
 
+test('useWorkViewport commits Domain cache only after a complete accepted load', () => {
+  const hook = src('hooks/use-work-viewport.ts');
+  const loadAt = hook.indexOf('load: async (signal) => {');
+  const viewChangeAt = hook.indexOf('    const onViewChange = () => {', loadAt);
+  assert.ok(loadAt !== -1 && viewChangeAt > loadAt, 'viewport loader block exists');
+  const load = hook.slice(loadAt, viewChangeAt);
+
+  const onBatchAt = load.indexOf('onBatch: (batch) => {');
+  const onBatchEnd = load.indexOf('\n              },', onBatchAt);
+  assert.ok(onBatchAt !== -1 && onBatchEnd > onBatchAt, 'Domain onBatch block exists');
+  assert.doesNotMatch(load.slice(onBatchAt, onBatchEnd), /writeModeCache/);
+  assert.match(load, /let acceptedNonEmptyBatch = false;/);
+  assert.match(load, /acceptedNonEmptyBatch = true;/);
+  assert.match(load, /cacheable !== false/);
+
+  const fetchAt = load.indexOf('const result = await fetchPOIsForMode({');
+  const finalCommitAt = load.indexOf('writeModeCache({', fetchAt);
+  const noMoreAt = load.indexOf('if (result.noMore !== undefined)', fetchAt);
+  assert.ok(fetchAt !== -1 && finalCommitAt > fetchAt, 'cache commit follows complete fetch');
+  assert.ok(noMoreAt !== -1 && finalCommitAt < noMoreAt, 'cache commit is before independent noMore update');
+
+  const beforeCommit = load.slice(fetchAt, finalCommitAt);
+  assert.match(beforeCommit, /if \(signal\?\.cancelled \|\| epoch !== viewportEpochRef\.current\) return;/);
+  assert.match(beforeCommit, /batchMatchesCurrentMode\(viewStateRef\.current\.mode, mode\)/);
+  const acceptedGuardAt = load.lastIndexOf('if (acceptedNonEmptyBatch && result.cacheable !== false)', finalCommitAt);
+  assert.ok(acceptedGuardAt > fetchAt, 'cache commit is gated by accepted nonempty data');
+  const commit = load.slice(acceptedGuardAt, noMoreAt);
+  assert.match(commit, /if \(acceptedNonEmptyBatch && result\.cacheable !== false\)/);
+  assert.match(commit, /const latest = viewStateRef\.current/);
+  assert.match(commit, /catalog: catalogRef\.current/);
+  assert.match(commit, /query: latest\.query/);
+  assert.match(commit, /searchOrigin: latest\.searchOrigin/);
+  assert.match(commit, /filters: latest\.filters/);
+  assert.match(commit, /sort: latest\.sort/);
+});
+
 // ---- useSearchState(搜索/建议状态)----
 
 test('useSearchState hook exists and owns suggest/cleanup logic', () => {
