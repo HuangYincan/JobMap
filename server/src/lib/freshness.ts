@@ -7,7 +7,7 @@
 // done in recruitment-provenance.ts, not by scattering another prefix check.
 // ============================================================
 
-import { sourceAuthenticityPolicy } from './recruitment-provenance.ts';
+import { sourceAuthenticityPolicy, SOURCE_META } from './recruitment-provenance.ts';
 
 export type FreshnessKind = 'radar' | 'portal' | 'seed';
 
@@ -50,6 +50,26 @@ export function isAuthenticPositionRecord(position: PositionProvenance): boolean
   if (policy === 'source') return true;
   if (policy === 'id-prefix') return isAuthenticPositionId(position.externalId);
   return false;
+}
+
+/**
+ * SQL equivalent of isAuthenticPositionRecord for public DB reads. Source
+ * codes are emitted from SOURCE_META so unknown/source-less rows remain
+ * excluded. The id-prefix policy currently applies to official-career's
+ * portal-* rows; add a registry-aware branch here when another such source is
+ * introduced.
+ */
+export function authenticPositionSql(sourceAlias = 'source_registry', positionAlias = 'p'): string {
+  const sourceCodes = Object.entries(SOURCE_META)
+    .filter(([, metadata]) => metadata.authenticity === 'source')
+    .map(([code]) => `'${code.replaceAll("'", "''")}'`)
+    .join(', ');
+  const sourceClause = sourceCodes ? `${sourceAlias}.code IN (${sourceCodes})` : 'FALSE';
+  const idPrefixCodes = Object.entries(SOURCE_META)
+    .filter(([, metadata]) => metadata.authenticity === 'id-prefix')
+    .map(([code]) => `(${sourceAlias}.code = '${code.replaceAll("'", "''")}' AND ${positionAlias}.external_id LIKE 'portal-%')`)
+    .join(' OR ');
+  return `(${[sourceClause, idPrefixCodes].filter(Boolean).join(' OR ')})`;
 }
 
 export interface FreshnessSummary {

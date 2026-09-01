@@ -38,7 +38,11 @@ test('loadWorkCatalogFromDb joins companies + sites + open positions', () => {
   const store = src('lib/recruitment-store.ts');
   assert.match(store, /FROM companies ORDER BY slug/);
   assert.match(store, /FROM company_sites/);
-  assert.match(store, /FROM positions WHERE status = 'open'/);
+  assert.match(store, /FROM positions[\s\S]*WHERE status = 'open'/);
+  assert.match(store, /expires_at IS NULL OR expires_at >= CURRENT_TIMESTAMP/);
+  assert.match(store, /authenticPositionSql/);
+  assert.match(store, /JOIN sources site_source ON site_source\.id = s\.source_id/);
+  assert.match(store, /source_registry\.code.*AS source_code/);
   assert.match(store, /companySites\.length === 1 \? company\.slug : `\$\{company\.slug\}:\$\{site\.id\}`/);
   assert.match(store, /companySitesSpatialSql/);
   assert.match(store, /s\.geom IS NOT NULL/);
@@ -581,7 +585,6 @@ test('strict saved catalog lookup accepts company/site ids and internship alias,
             : [],
         };
       }
-      if (sql.includes('FROM company_sites s')) return { rows: siteRows };
       if (sql.includes('FROM positions p')) {
         return {
           rows: [{
@@ -589,9 +592,11 @@ test('strict saved catalog lookup accepts company/site ids and internship alias,
             department: null, family: 'campus', taxonomy: { family: 'campus' },
             salary_min: null, salary_max: null, education: null, majors: [], skills: [],
             description: null, deadline: null, apply_source: null, apply_url: null, status: 'open',
+            source_code: 'embodied-jobs',
           }],
         };
       }
+      if (sql.includes('FROM company_sites s')) return { rows: siteRows };
       throw new Error(`unexpected query: ${sql}`);
     },
   });
