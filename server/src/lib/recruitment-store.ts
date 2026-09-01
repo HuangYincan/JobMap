@@ -15,7 +15,7 @@ type DbPoolLike = {
   query<T>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
 };
 
-interface CompanyRow {
+export interface CompanyRow {
   id: string;
   slug: string;
   name: string;
@@ -30,7 +30,7 @@ interface CompanyRow {
   logo_emoji: string | null;
 }
 
-interface SiteRow {
+export interface SiteRow {
   id: string;
   company_id: string;
   name: string;
@@ -44,7 +44,7 @@ interface SiteRow {
   logo_url: string | null;
 }
 
-interface PositionRow {
+export interface PositionRow {
   company_id: string;
   site_id: string;
   external_id: string;
@@ -139,10 +139,11 @@ export function resolveDbCompanyLogo(
   });
 }
 
-function buildRecruitmentPois(
+export function buildRecruitmentPois(
   companies: CompanyRow[],
   located: SiteRow[],
   positions: PositionRow[],
+  siteCounts?: ReadonlyMap<string, number>,
 ): RecruitmentPOI[] {
   const sitesByCompany = new Map<string, SiteRow[]>();
   for (const site of located) {
@@ -165,7 +166,9 @@ function buildRecruitmentPois(
     const companySites = sitesByCompany.get(company.id) ?? [];
     if (companySites.length === 0) continue;
     for (const site of companySites) {
-      const id = companySites.length === 1 ? company.slug : `${company.slug}:${site.id}`;
+      const id = siteCounts
+        ? (siteCounts.get(company.id) === 1 ? company.slug : `${company.slug}:${site.id}`)
+        : (companySites.length === 1 ? company.slug : `${company.slug}:${site.id}`);
       const loc = {
         lng: site.lng ?? 0,
         lat: site.lat ?? 0,

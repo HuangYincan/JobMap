@@ -15,9 +15,13 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { loadServerCatalog } from '@/lib/server-catalog';
+import {
+  loadServerCatalog,
+  loadServerCatalogPage,
+  supportsWorkCatalogPageQuery,
+} from '@/lib/server-catalog';
 import { searchPublicCatalog, shouldWritePublicCatalogCache, spatialClipFromSearch } from '@/lib/public-search';
-import type { MapMode } from '@/lib/types';
+import { isRecruitmentMode, type MapMode } from '@/lib/types';
 import { PUBLIC_CACHE_CONTROL, publicCacheKey, readPublicCache, writePublicCache } from '@/lib/public-cache';
 
 /** 解析筛选 JSON，非法时返回空对象（宽容处理） */
@@ -44,6 +48,7 @@ const MAX_MODE_LENGTH = 32;
 const MAX_PAGE = 10_000;
 /** pageSize 上限：无 bounds 全量搜索时防单次大响应（客户端语义不变，正常请求恒 ≤50）。 */
 const MAX_PAGE_SIZE = 100;
+const WORK_DB_UNAVAILABLE = 'work_db_unavailable';
 
 /** 分页参数：缺失/空串 → fallback；非整数或越出 1..max → null（调用方回 400）。 */
 function pagedParam(raw: string | null, fallback: number, max: number): number | null {
@@ -100,6 +105,33 @@ export async function GET(request: Request) {
 
   const query = { mode, q, filters, sort, bounds, page, pageSize };
   const clip = spatialClipFromSearch(query);
+  const nationalPage = isRecruitmentMode(mode)
+    && supportsWorkCatalogPageQuery({ q, filters, sort, page, pageSize })
+    && !clip?.bounds
+    && !clip?.origin
+    && !clip?.districts?.length
+    && !clip?.city;
+  if (nationalPage) {
+    const found = await loadServerCatalogPage(mode, { q, filters, sort, page, pageSize });
+    if (found === null) {
+      return NextResponse.json(
+        { error: WORK_DB_UNAVAILABLE },
+        { status: 502, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+    const pagePayload = {
+      total: found.total,
+      page: found.page,
+      pageSize: found.pageSize,
+      results: found.results,
+    };
+    if (shouldWritePublicCatalogCache(mode, clip, found.total)) {
+      writePublicCache(cacheKey, pagePayload);
+      return NextResponse.json(pagePayload, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
+    }
+    return NextResponse.json(pagePayload, { headers: { 'Cache-Control': 'no-store' } });
+  }
+
   const pois = await loadServerCatalog(mode, clip);
   // 与 domain-local 同款:DB 故障(null)≠ 真空 []。200 空结果会被 30s 公开缓存,
   // 工作模式默认 sort=distance 首屏会把整图 POI 吃成空目录。
