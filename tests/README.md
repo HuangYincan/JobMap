@@ -1,11 +1,11 @@
 # Test Strategy
 
-> **Status:** current; Phase 1 unit and integration test infrastructure exists, live DB verification pending
-> **Last reviewed:** 2026-08-15
+> **Status:** current; Node/crawler/database test infrastructure exists, but live database verification depends on the configured PostGIS service
+> **Last reviewed:** 2026-09-01
 
 ## Current State
 
-Phase 1 added the importer unit tests (`crawler/tests`, run via `make test-unit`), the database integration runner (`tests/integration/db/test_migrations.sh`, run via `make test-integration`), and a frontend smoke test (`server/tests/smoke.test.mjs`). CI runs docs policy, Python unit, frontend typecheck/test/build, and the database integration job against a PostGIS 16-3.4 service. E2E, coverage thresholds, accessibility, security, and performance scans are not yet configured; do not report them as passing.
+The repository has importer unit tests (`crawler/tests`, run via `make test-unit`), a database integration runner (`tests/integration/db/test_migrations.sh`, run via `make test-integration`), and the Node `server/tests/*.test.mjs` suite. CI (`.github/workflows/test.yml`) runs docs policy, Python unit tests, frontend typecheck/test/build, and database integration against a PostGIS 16-3.4 service. The Node suite includes security contract tests in `security-headers.test.mjs`, `account-security.test.mjs`, `agent-route-contract.test.mjs`, `rate-limit-xff.test.mjs`, and `agent-mcp.test.mjs`; these are application tests, not static or dynamic scanners. E2E, accessibility, performance, SAST, DAST, and dependency scanning are not configured; do not report them as passing or as having been run.
 
 ## Phase 1 Test Baseline
 

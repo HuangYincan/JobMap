@@ -57,7 +57,38 @@ server/
 └── README.md
 ```
 
-Never print or commit `.env` / `.env.local`.
+**Never print or commit `.env` / `.env.local` or their secret values.**
+
+## Database migrations
+
+`db/scripts/apply.sh` is the only migration runner. `make db-migrate` acquires a transaction-scoped advisory lock, applies pending files in lexical order, and records each filename and SHA-256 checksum in `schema_migrations`; it is an Env-only operation that requires `DATABASE_URL`. The tracked migration set is `001`–`021`:
+
+| Migration | Actual schema change |
+|---|---|
+| `001_extensions_and_identity.sql` | Enables PostGIS/pg_trgm; creates `users`, `maps`, and `map_memberships`. |
+| `002_plugins_and_provenance.sql` | Creates plugin manifests/schema versions, source registry, import runs, and source records. |
+| `003_canonical_entities_and_items.sql` | Creates canonical `entities`/`items` with provenance FKs and spatial/text indexes. |
+| `004_overlays_and_audit.sql` | Creates map overlays, annotations, favorites, and `audit_events`. |
+| `005_accounts_sessions_history.sql` | Adds user profile fields, auth identities/sessions/OTP challenges, and search history. |
+| `006_recruitment_sites.sql` | Creates companies, company sites, positions, logo assets, and recruitment indexes/constraints. |
+| `007_profile_prefs_oauth.sql` | Expands OAuth provider values and backfills nested career/notification preferences. |
+| `008_saved_places.sql` | Creates account-scoped saved places with mode/kind and coordinate constraints. |
+| `009_applications.sql` | Creates the initial per-user application tracking table and status constraint. |
+| `010_notifications.sql` | Creates the queued in-account notification inbox; email/SMS remain queued. |
+| `011_national_scope.sql` | Adds the initial company tier 1–3 check, site province/city fields, geography, and alive-read indexes. |
+| `012_tier_zoom_category.sql` | Revises company tier to visible-min-zoom 0–21 (default 12) and adds `companies.category`. |
+| `013_hangzhou_pois.sql` | Creates the Hangzhou POI table with GCJ-02 geometry, classification, tier, photos, and indexes. |
+| `014_credentials_auth.sql` | Adds username/password hash fields, a case-insensitive username index, and the `password` provider. |
+| `015_recent_entity.sql` | Adds nullable JSON `entity` references to `search_history`. |
+| `016_site_key.sql` | Adds `company_sites.site_key` and a per-company partial unique index for site merging. |
+| `017_avatar_data.sql` | Adds PostgreSQL `bytea` storage for uploaded avatar bytes. |
+| `018_user_memories.sql` | Creates account-scoped user memory facts and a user/time index. |
+| `019_user_memory_unique.sql` | Removes duplicate user/content facts and adds the unique user/content index. |
+| `020_position_site_company_fk.sql` | Preflights cross-company links, then adds the composite site/company foreign-key invariant. |
+| `021_application_pipeline.sql` | Allows user-defined stage IDs, migrates `viewed` to `applied`, adds `updated_at`, and indexes activity order. |
+
+Do not describe a migration as applied unless an operator has run `make db-migrate` against the target database.
+
 
 ## Test
 
@@ -117,7 +148,7 @@ npm run dev          # Start dev server (port 3000)
 npm run build        # Production build
 npm run start        # Run production server
 npm run typecheck    # Run TypeScript compiler check
-npm test             # node:test 全量(1689 tests / 1686 pass / 3 skip,2026-08-27,commit d899b3f 快照)
+npm test             # node:test 全量；测试数随当前 `tests/*.test.mjs` 变化，不写固定快照
 ```
 
 `package.json` 没有 `lint` script(项目无 ESLint 配置);写 DB 的数据命令(`import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)见根 README,属 Env-only 用户步骤。
@@ -148,7 +179,7 @@ t('search', 'en')     // → "Search"
 t('search', 'zh')     // → "搜索"
 ```
 
-See `docs/i18n.md` for full documentation.
+The i18n implementation is in `src/lib/i18n.ts`; update its message catalog and tests together.
 
 ## Architecture
 
@@ -158,7 +189,11 @@ See `docs/i18n.md` for full documentation.
 
 - 契约定义于 `src/lib/map-engine/types.ts`:每引擎实现 `MapEngine`(生命周期 `isConfigured` / `load` / `isLoaded` / `createView` + `searchPOI` 检索能力)与 `MapView`(相机 / 样式 / 事件 / overlay / scale 控件)。
 - 已实现:`amap/`(高德)、`tencent/`(腾讯 TMap)、`baidu/`(百度 BMapGL);`engine-registry.ts` 注册与优先级,`engine-preference.ts` 存本地偏好,`switch.ts` 交互式切换回滚,`mount.ts` 挂载回退。
-- 用户在图层面板「地图源」section 切换引擎;`use-map-engine` 把活跃引擎的 `searchPOI` 注入 `poi-service`(域外 POI 检索随之切换,未注入时回落 amap-api)。架构详见仓库根 `tech/23-map-engines.md`。
+- 用户在图层面板「地图源」section 切换引擎;`use-map-engine` 把活跃引擎的 `searchPOI` 注入 `poi-service`(域外 POI 检索随之切换,未注入时回落 `amap-api`)。
+
+### Agent MCP client
+
+The agent uses the official `@modelcontextprotocol/sdk`, declared as `^1.30.0` in `package.json` and resolved to `1.30.0` in `package-lock.json`; it does not use a hand-written MCP protocol client. `src/lib/agent/mcp-providers.ts` composes the SDK `Client` with `StreamableHTTPClientTransport` and `SSEClientTransport`. The current endpoints use Streamable HTTP for AMap, SSE for Tencent, and Streamable HTTP with an SSE fallback for Baidu. MCP contract tests use the SDK's `InMemoryTransport` and mock network responses; API keys remain environment-only.
 
 ### Data Flow
 
@@ -240,11 +275,11 @@ Desktop-first for main shell, mobile-optimized for drawer and controls.
 ### Automated Tests
 
 ```bash
-npm test        # 1689 tests / 1686 pass / 0 fail / 3 skip (2026-08-27, commit d899b3f, npm test 实测)
+npm test        # node:test suite; run it for the current count and pass/skip result
 npm run typecheck
 ```
 
-Tests live in `server/tests/` (`node --test`, unit + component contracts + API integration with the same pipeline as `/api/search`). 2 skips are the DB-gated tests. Playwright E2E is not implemented yet (deferred).
+Tests live in `server/tests/` (`node --test`, unit + component contracts + API integration with the same pipeline as `/api/search`). Security contract coverage includes `security-headers.test.mjs`, `account-security.test.mjs`, `agent-route-contract.test.mjs`, `rate-limit-xff.test.mjs`, and `agent-mcp.test.mjs`. The suite is command-discovered rather than documented with a fixed count. Playwright E2E is not implemented yet. The repository has no configured SAST, DAST, or dependency-scanning job/tool; do not report those scans as run or passing.
 
 ## Troubleshooting
 
@@ -287,7 +322,7 @@ Tests live in `server/tests/` (`node --test`, unit + component contracts + API i
 
 Live account flows run against Postgres when `DATABASE_URL` is set (cookie session; guests get 401, never a fabricated list):
 
-1. **Auth:** phone/email OTP 真发 —— phone 经阿里云短信认证服务、email 经 Resend(未配置 → 503 `SMS_NOT_CONFIGURED` / `EMAIL_NOT_CONFIGURED`;demo `000000` stub 已删)+ password accounts (`/api/auth/password/register|login`, scrypt-hashed, migration 014);OAuth 登录(github / google / wechat,authorization code flow)见 `tech/27-oauth-login.md`
+1. **Auth:** phone/email OTP 真发 —— phone 经阿里云短信认证服务、email 经 Resend(未配置 → 503 `SMS_NOT_CONFIGURED` / `EMAIL_NOT_CONFIGURED`;demo `000000` stub 已删)+ password accounts (`/api/auth/password/register|login`, scrypt-hashed, migration 014);OAuth 登录(github / google / wechat, authorization code flow)实现于 `src/lib/oauth/` 与 `src/app/api/auth/oauth/`
 2. **Persistence:** search history, saved places, applications, job-alert queue (`/api/me/*`); saved/compare are catalog-recruitment only (domain snapshots → 400 `NOT_PERSISTABLE`); guest Recent is browser-localStorage
 3. **Public reads:** `/api/pois`, `/api/search`, `/api/suggest` — Work mode is strict DB-only (Postgres; no DB/failure → 502, not a cached empty list), Domain mode uses `hz_pois` in Hangzhou plus the active map engine outside; public cache is 30s except Work faults and unclipped Work `total=0`; spatial clip uses `geom && ST_MakeEnvelope` + `ST_DWithin` (PostGIS)
 4. **Loading states:** map-shell lazy-loads (`next/dynamic`, `ssr: false`); viewport loader debounces 800ms with per-batch epoch guards
@@ -302,5 +337,5 @@ See `LICENSE` in the repository root.
 
 ---
 
-**Phase 2–4 + 全国 work 模式(merged to `dev`)** — real catalog, auth (OTP 真发 / password / OAuth), saved, applications, alerts queue;地图引擎三引擎插件契约 + 源切换(tech/23)
-**Last Updated:** 2026-08-23
+**Phase 2–4 + 全国 work 模式(merged to `dev`)** — real catalog, auth (OTP 真发 / password / OAuth), saved, applications, alerts queue;地图引擎三引擎插件契约 + 源切换(见本 README 的 Map Engine/MCP 小节)
+**Last Updated:** 2026-09-01
