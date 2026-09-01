@@ -27,8 +27,27 @@ export function inBounds(
   const box = Array.isArray(bounds)
     ? { west: bounds[0], south: bounds[1], east: bounds[2], north: bounds[3] }
     : bounds;
-  if (box.west >= box.east || box.south >= box.north) return false;
+  if (!isUsableViewportBounds(box)) return false;
   return loc.lng >= box.west && loc.lng <= box.east && loc.lat >= box.south && loc.lat <= box.north;
+}
+
+/**
+ * 视野框能否用来裁剪列表/可见集。翻转、零面积、缺边、NaN → false。
+ * 调用方应把 false 当成「尚无可用框」回退全量,而不是裁成空集
+ * (poi-lifecycle #4:非法框曾让 Domain 针整批 hide)。
+ */
+export function isUsableViewportBounds(
+  bounds: ViewportBounds | [number, number, number, number] | null | undefined,
+): bounds is ViewportBounds {
+  if (!bounds) return false;
+  const box = Array.isArray(bounds)
+    ? { west: bounds[0], south: bounds[1], east: bounds[2], north: bounds[3] }
+    : bounds;
+  const { west, south, east, north } = box;
+  if (![west, south, east, north].every((n) => typeof n === 'number' && Number.isFinite(n))) {
+    return false;
+  }
+  return west < east && south < north;
 }
 
 export function parseBoundsParam(raw: string | null | undefined): ViewportBounds | null {

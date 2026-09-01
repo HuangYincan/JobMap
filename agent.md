@@ -2,14 +2,14 @@
 
 你是 Domain Map Platform 项目的 AI 开发者。本文档定义了你的职责、工作流程和协作规范。
 
-> **状态：当前 AI 开发契约；最后审查：2026-08-21**
+> **状态：当前 AI 开发契约；最后审查：2026-09-01**
 >
-> 本仓库是可运行应用(Next.js 前端 + `/api/*` + PostGIS + 爬虫,Phase 2/3/4 已并入 `dev`)。文档必须反映可验证事实；不存在的代码、迁移、测试或部署文件不得被描述为已实现。
+> 本仓库是可运行应用(Next.js 前端 + `/api/*` + PostGIS + 爬虫)。私有内部文档未纳入此 checkout（由 `.gitignore` 排除）；文档必须反映可验证事实，当前以 tracked 源码、迁移、测试、`Makefile`、CI workflow 和 README 为准。不存在的代码、迁移、测试或部署文件不得被描述为已实现。
 
 ## 核心原则
 
 1. **插件化思维**:一切功能皆插件,一切数据皆可换源
-2. **文档先行**:文档必须反映可验证事实；代码变更同步更新 `tech/` 与对应角色记录
+2. **文档先行**:文档必须反映可验证事实；代码变更同步更新 tracked README、migration 注释、测试契约或 issue/PR
 3. **测试驱动**:关键模块使用 TDD,确保覆盖率 > 80%
 4. **角色协作**:按现代化团队角色维护文档(产品/开发/测试/运维/安全)
 
@@ -17,17 +17,16 @@
 
 ```
 domain-map/
-├── tech/              # 技术文档、公众文档草稿与角色协作记录
-│   ├── zh-cn/         # 未来公众文档（当前尚未创建页面）
-│   └── roles/         # 内部角色记录
 ├── server/            # Next.js 前后端
 ├── crawler/           # Python 爬虫
-├── db/                # 数据库 migrations
-├── tests/             # 测试代码
-└── scripts/           # 自动化脚本
+├── db/migrations/     # 按序 SQL schema migrations
+├── db/scripts/        # migration runner / preflight
+├── tests/             # 数据库集成测试
+├── .github/workflows/ # CI 定义
+└── Makefile           # 可执行开发与验证命令
 ```
 
-详见 `tech/01-architecture.md`
+架构以 `server/src/app/`、`server/src/lib/`、`server/package.json`、`db/migrations/`、`Makefile` 和 CI workflow 为准；本仓库不承诺私有内部目录或旧批次目录存在。
 
 ### 数据维护脚本(server/scripts/)
 
@@ -42,10 +41,9 @@ domain-map/
 | `audit-pin-locations.mjs` | 地图 pin 坐标审计 | `npm run audit:pins`,需 `AMAP_WEB_KEY` + `DATABASE_URL` |
 | `geocode-sites-apply.mjs` | 站点落真实办公点 | `npm run geocode:sites:apply`;city-scoped place-text + regeo;需 `AMAP_WEB_KEY`(配额耗尽自动切百度→腾讯,`BAIDU_MAP_AK` / `TENCENT_MAP_KEY`) |
 | `plan-site-geocode.mjs` | 待 geocode 站点清单 | `npm run geocode:sites`;只列出缺坐标站点,不写 |
-| `label-categories.mjs` | category 国标大类打标辅助 | 见 `tech/19-company-labeling.md` |
+| `label-categories.mjs` | category 国标大类打标辅助 | 与 `server/src/lib/recruitment-*` 的字段契约保持一致 |
 
-打标口径与国标大类字典:`tech/19-company-labeling.md`;tier 语义(2026-08-25 起为数据标注字段——工作地图客户端已取消按 zoom 隐藏公司,`maxTier` 仅存于服务端 API 契约;历史 LOD 模型同 `tech/19`/`tech/18` §2.2)。
-杭州 POI 本地化(表/导入/tier/回退预算/API 契约):`tech/22-hangzhou-poi-local.md`;来源审查:`tech/roles/data/etl/hangzhou-poi.md`。
+`tier` 语义以 `server/src/lib/lod.ts`、迁移 `012_tier_zoom_category.sql` 和 API 测试为准：它是公司可见最小 zoom 的 0..21 字段；工作地图客户端不再按 zoom 隐藏公司，`maxTier` 仅是服务端 API 契约。杭州 POI 的 schema/导入/读取以迁移 `013_hangzhou_pois.sql`、`server/scripts/import-hz-pois.mjs` 和 `server/src/lib/hz-poi-store.ts` 为准。
 
 ## 工作流程
 
@@ -66,58 +64,28 @@ domain-map/
 
 4. **冲突处理**:功能 worktree 里定期 `git merge dev` 让分叉保持小;冲突在各自 worktree 内解决,再合回 `dev`。每次冲突都是小而可审查的 diff。
 
-5. 详见 `tech/04-workflow.md` 与 `.claude/skills/parallel-development/`。
+### 0.5 并行任务协作
 
-### 0.5 并行角色 Skills(2026-08-18)
+并行任务必须各自使用独立 worktree 和 `feature/` / `fix/` 分支；开发者只在自己的 worktree 修改，验证后由负责人按顺序合并回 `dev`。当前会话的 agent harness 负责调度，不应假定仓库内存在私有工具目录、旧批次、prompt、report 或 merger 状态文件。子 Agent 只回报改动、证据和实际门禁结果；负责人必须二次验证，不把未运行的检查写成已通过。
 
-开启一批并行开发时,新会话通过触发 skill 得知自己的角色:
 
-- **`/main-agent`**(派发者):接收一组目标,拆解为并行 workstream,生成每个开发会话的
-  prompt 文件(含已批布局图/文件边界/门禁),写入批次目录并回报路径;只计划不开发。
-- **`/workstream-agent`**(执行者):读主 Agent 的 prompt 文件,在独立 worktree 开发,
-  写汇报文件,不 merge 回 dev。
-- **`/merge-agent`**(合并者):本批全部完成后,读批次 manifest + 各开发汇报,按
-  `parallel-development` 的 merge orchestration 逐个 merge 回 dev、处理冲突、写合并报告。
-- **`/boss-agent`**(超级 Boss,总控/编排者,2026-08-19):由用户显式调用,自动跑完
-  规划 → 预建 worktree → 并行派发 headless worker(`.claude/agents/boss-worker.md`)→
-  收汇报/自主裁决 → 派 headless merger(`.claude/agents/boss-merger.md`)合并+push dev →
-  按门禁结果自动决定 fix 批次或推进下一里程碑。全程无人值守、不打断用户;push dev
-  自动、main 只提 PR 不等待;新 UI 按 Apple/liquid glass 设计系统自主开发,改现有 UI
-  设计/Env-only 步骤跳过并记入 `deferred-notes.md`,结束时一次性总汇报。细则见
-  `.claude/skills/boss-agent/SKILL.md`。
-  boss 可派**只读质量扫描**(`boss-scanner`,干净上下文、严格只读、不修改任何文件)按 scope
-  检查 文档过时/矛盾/缺失、代码冗余/死代码/可优化/健壮性/安全性、数据源正确性,写
-  `scan-report.md`;boss 审批后把技术项拆成 fix 批次派 worker,需用户决策项(改现有 UI
-  设计/Env-only/数据口径)记 `deferred-notes.md`。扫描报告存
-  `tech/roles/development/quality-scans/<YYYYMMDD>-<scope>/`。
-  **故障恢复**:所有 Agent 共用同一 API,一次欠费/故障会同时打掉所有会话;磁盘状态
-  (`boss-state.md` + worktree/分支 + logs)不丢。恢复入口:
-  `bash .claude/skills/boss-agent/bin/resume-boss.sh <批次目录> [--headless]`(探测 API
-  就绪后自动按 --resume 对账协议幂等续跑),或手动 `/boss-agent --resume <批次目录>`。
 
-批次目录约定:`tech/roles/development/parallel-sessions/<YYYYMMDD>-<slug>/`,内含
-`README.md`(manifest:分支表/合并顺序)、`prompts/<ws>.md`(主 Agent 写,开发读)、
-`reports/<ws>.md`(开发写,收尾读)、`merge-report.md`(收尾写)、`logs/`(boss 派发的
-headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-notes.md`
-(boss 记录的需用户决策项)。skill 细则见
-`.claude/skills/{main,workstream,merge,boss}-agent/SKILL.md`。
 
 ### 1. 接到新任务时
 
 1. **理解需求**:
-   - 阅读相关 PRD:`tech/roles/product/PRD/*.md`(规划路径,目录尚未建立)
-   - 查看架构文档:`tech/01-architecture.md`
-   - 确认数据模型:`tech/02-data-model.md`
+   - 阅读本仓库 tracked README、相关源码、测试与 `Makefile`；如涉及数据或认证，先核对 `db/migrations/` 和对应 API/存储实现。
+   - 不把缺失的内部计划或历史扫描记录当成当前规范。
 
 2. **规划实施**:
-   - 如果是新插件:参考 `tech/03-plugin-system.md`
-   - 如果是 Bug 修复:系统化排查(定位 → 假设 → 验证;`/diagnosing-bugs` skill 规划中,尚未实现)
-   - 如果是新功能:先写技术方案到 `tech/roles/development/implementation/`(现有 phase-1.md / phase-2.md;新 phase 文件按需建立)
+   - 如果是新插件:先核对 `server/src/lib/plugins/` 及现有注册/数据契约。
+   - 如果是 Bug 修复:系统化排查(定位 → 假设 → 验证;可用当前会话提供的 diagnosing-bugs skill)。
+   - 如果是新功能:先在现有 tracked 文档或代码注释中记录必要方案，不创建不存在的文档树。
 
 3. **选择开发方式**:
    - 关键模块(实力评分/推荐算法):先写测试再实现(TDD;`/tdd` skill 规划中,尚未实现)
-   - UI 组件开发:参考 `.claude/skills/frontend-component-dev/` 与 `.claude/skills/liquid-glass-components/`
-   - 领域插件开发:参考 `.claude/skills/plugin-dev/`(`/domain-modeling` skill 规划中,尚未实现)
+   - UI 组件开发:先阅读相关现有组件和 `server/README.md` 的交互/设计约定。
+   - 领域插件开发:先核对 `server/src/lib/plugins/` 的当前实现；未实现的插件能力只能标为规划。
    - 一般开发:直接实现
 
 ### 2. 开发过程中
@@ -140,11 +108,9 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
      - **像自己亲手写的那样熟悉它**
      - 慢一点没关系,理解比速度重要
    - 现有设计系统:CSS Modules + 自研液态玻璃卡片(liquid glass 只用于 POI/岗位卡片,
-     panel chrome 保持 `--soft-strong`);组件开发技能见
-     `.claude/skills/liquid-glass-components/` 与 `.claude/skills/frontend-component-dev/`
+     panel chrome 保持 `--soft-strong`);以 `server/README.md` 和现有组件源码为准。
    - 引入新组件库前必须按 CONTRIBUTING 门禁审查(源码/许可证/安全/SSR 体积/记录理由);
-     `server/package.json` 当前运行时依赖包括 Next/React/ReactDOM/pg、MCP SDK、DOMPurify 与 marked；不要凭空引用未安装依赖，也不要把现有依赖当作格式化或 lint 工具链
-   - 详见 `tech/07-frontend-design-system.md`
+     `server/package.json` 当前运行时依赖包括 Next/React/ReactDOM/pg、`@modelcontextprotocol/sdk`、DOMPurify 与 marked；不要凭空引用未安装依赖，也不要把现有依赖当作格式化或 lint 工具链。
 
 3. **遵循 Apple 设计风格**:
    - 参考 [Apple Maps](https://maps.apple.com.cn/) 布局
@@ -157,7 +123,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
    - 深色/浅色自动切换(跟随系统设置)
    - 左侧边栏:折叠式 + 四周圆角 + 与页边有空隙
    - 地图工具:指南针(右上)+ 缩放定位(右下)+ 底图切换(右上)
-   - 详见 `tech/07-frontend-design-system.md`
+   - 交互约定以 `server/README.md` 与现有组件/CSS 为准。
 
 4. **二次审查子 Agent 结果**:
    - ⚠️ **不要轻易相信子 Agent 返回的结果**
@@ -174,7 +140,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
    - 液态玻璃质感(半透明、毛玻璃、流动感)
    - 深色/浅色模式自动适应系统设置
    - 极简主义,去除冗余元素
-   - 详见 `tech/07-frontend-design-system.md`
+   - 交互约定以 `server/README.md` 与现有组件/CSS 为准。
 
 4. **遵循规范**:
    - TypeScript/React:以 `server/package.json` 中的 `npm run typecheck` 和 `npm test` 为可执行门禁；保持仓库现有 CSS Modules 与 2 空格风格。
@@ -184,9 +150,9 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
    - 注释:复杂逻辑必须注释,简单代码不过度注释
 
 5. **及时记录**:
-   - 遇到问题记录到 `tech/16-bug-fixes.md`(问题描述/根因/解决方案/相关文件)
-   - 技术决策记录到 `tech/06-decisions.md`(ADR 格式)
-   - **布局示意图**记录到对应 Phase 的实施文档中
+   - 遇到问题记录在本次变更的 tracked 文档或 issue/PR 中(问题描述/根因/解决方案/相关文件)。
+   - 技术决策直接以实现、迁移注释、README 或测试契约为证；不要引用缺失的内部文档路径。
+   - 前端布局示意图与批准证据随对应变更保留在可审查的工作记录中。
 
 6. **编写测试**:
    - 单元测试/契约测试:`server/tests/`(Node `node --test`)+ `crawler/tests/`(Python `unittest`,通过 `make test-unit`)
@@ -207,9 +173,8 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
      - 示例:`feat(user-profile): add resume upload and AI parsing`
 
 3. **更新文档**:
-   - 同步技术文档:`tech/` 相关章节
-   - 如果是新功能,写教程:`tech/zh-cn/tutorial/<feature>.md`
-   - 更新角色文档:`tech/roles/development/implementation/`(phase-1.md / phase-2.md;新 phase 按需建立)
+   - 变更必须同步到相关 tracked README、源码注释、migration 注释、测试契约或 issue/PR；不要创建或引用此 checkout 不提供的内部文档树。
+   - 新功能与 API 的可验证行为写在 `server/README.md` 或相邻源码/测试中；安全记录使用 tracked `security/` 文件。
 
 ### 4. Code Review
 
@@ -227,37 +192,24 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 
 ## 文档维护契约
 
-### 何时更新 tech/(技术文档)
+内部设计记录不在本仓库中；不要恢复整棵私有目录，也不要把历史路径当作当前入口。维护依据按变更类型选择 tracked 文件:
 
-| 变更类型 | 需要更新的文档 |
+| 变更类型 | 需要更新的 tracked 依据 |
 |---|---|
-| 数据库 schema 变更 | `tech/02-data-model.md` + migration 文件注释 |
-| API 端点新增/修改 | `tech/01-architecture.md`(API 清单) |
-| 新增插件 | `tech/03-plugin-system.md`(插件注册表) |
-| 工作流程变更 | `tech/04-workflow.md` |
-| 重大技术决策 | `tech/06-decisions.md`(ADR 格式) |
-
-### 何时更新 tech/(公众文档+角色文档)
-
-| 变更类型 | 需要更新的文档 |
-|---|---|
-| 新功能上线 | `tech/zh-cn/tutorial/<feature>.md`(使用教程) |
-| 功能说明变更 | `tech/zh-cn/features/<feature>.md` |
-| 部署流程变更 | `tech/zh-cn/deployment/*.md` |
-| 产品需求确定 | `tech/roles/product/PRD/<feature>.md`(规划路径,目录尚未建立) |
-| 开发过程记录 | `tech/roles/development/implementation/`(phase-1.md / phase-2.md;bug 记录另见 `tech/16-bug-fixes.md`) |
-| 测试发现 Bug | `tech/roles/testing/test-reports/bug-reports.md` |
-| 部署/运维操作 | `tech/roles/operations/monitoring/incident-log.md`(规划路径,目录尚未建立) |
-| 安全漏洞发现 | `tech/roles/security/<red/blue>-team/*.md`(规划路径,目录尚未建立) |
+| 数据库 schema 变更 | `db/migrations/` 对应文件注释、`server/README.md`、`tests/README.md`(如测试契约改变) |
+| API 端点新增/修改 | `server/src/app/api/`、对应测试、`server/README.md` |
+| 新增插件 | `server/src/lib/plugins/`、对应测试、`server/README.md` |
+| 工作流程或命令变更 | `Makefile`、相关 README、`.github/workflows/` |
+| 安全发现或处理 | `security/` tracked 记录；不得把未配置的扫描写成通过 |
+| 产品/设计约定 | 相关源码、测试和 `server/README.md`；前端仍须先获布局批准 |
 
 ### 文档同步检查清单
 
 每次提交代码前,问自己:
-- [ ] 我改了数据库 schema 吗?→ 更新 `tech/02-data-model.md`
-- [ ] 我加了新 API 端点吗?→ 更新 `tech/01-architecture.md`
-- [ ] 我实现了新功能吗?→ 写 `tech/zh-cn/tutorial/<feature>.md`
-- [ ] 我修了 Bug 吗?→ 记录到 `tech/roles/testing/test-reports/bug-reports.md`
-- [ ] 我遇到技术问题吗?→ 记录到 `tech/roles/development/implementation/<phase>.md`
+- [ ] 我改了数据库 schema 吗?→ 更新对应 migration 注释与 README/测试契约
+- [ ] 我加了新 API 端点吗?→ 更新对应测试和 `server/README.md`
+- [ ] 我改了工作流程或命令吗?→ 更新 `Makefile` 与 CI workflow/README
+- [ ] 我修了安全问题吗?→ 更新 tracked `security/` 记录(如适用)
 - [ ] **我写了前端代码吗?→ 检查布局示意图是否已获用户批准**
 - [ ] **我用了第三方组件吗?→ 检查是否已审查其源码**
 - [ ] **我用了子 Agent 吗?→ 检查是否已二次验证其结果**
@@ -268,13 +220,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 新增领域插件完整清单(以"高考院校"为例):
 
 ### 1. 定义 schema
-在 `tech/02-data-model.md` 增加领域定义:
-```markdown
-## 高考院校插件(domain='gaokao')
-- entity_type: 'university'
-- item_type: 'major'
-- 特殊字段:type(985/211)/rank/score_line/tuition
-```
+在对应 migration 或 `server/src/lib/plugins/` 增加领域定义，并以现有 API/测试契约验证字段。
 
 ### 2. 后端插件
 创建 `server/src/lib/plugins/gaokao/`:
@@ -297,8 +243,7 @@ headless worker/merger 输出)、`boss-state.md`(boss 状态机)、`deferred-not
 - 代码:在 `server/src/lib/plugins/registry.ts` 注册
 
 ### 6. 文档
-- 更新 `tech/03-plugin-system.md`:插件清单
-- 写教程:`tech/zh-cn/tutorial/gaokao-map.md`
+更新 `server/README.md`、对应测试契约或 migration 注释；只有真实实现和用户批准的约定才能写成当前状态。
 
 ## 与子 Agent 协作
 
@@ -342,7 +287,7 @@ grep -q '^DATABASE_URL=' server/.env.local && echo "DATABASE_URL: configured" ||
 
 ## 当前工具与命令
 
-以下命令均已实现并验证；清单与 `Makefile` / `server/package.json` 对齐。声称运行过某命令前，必须先确认对应文件存在且已通过验证。
+当前可执行命令以 `Makefile` / `server/package.json` 为准。声称运行过某命令前，必须实际运行并记录结果；下列清单不代表本次或最近门禁已通过。
 
 ```bash
 make help             # 列出全部 make target
@@ -359,8 +304,8 @@ make refresh-radar    # 下载已审查 radar 快照、重映射 drops、校验 
 make geocode-sites    # 城市文本站点解析为真实办公点(需 AMAP_WEB_KEY + BAIDU/TENCENT 兜底 key;--dry-run 只列计划)
 ```
 
-Server 侧(`cd server`):`npm test`(1689 测试 / 1686 pass / 0 fail / 3 skip,2026-08-27,commit `d899b3f` 快照)、`npm run typecheck`、
-`npm run dev` / `build` / `start`。写 Postgres 的数据命令
+Server 侧(`cd server`):`npm test`(node:test，当前总数随 `server/tests/*.test.mjs` 变化)、`npm run typecheck`、`npm run dev` / `build` / `start`。Node 安全契约测试包括 `security-headers.test.mjs`、`account-security.test.mjs`、`agent-route-contract.test.mjs`、`rate-limit-xff.test.mjs` 与 `agent-mcp.test.mjs`。CI 尚未配置 SAST、DAST 或依赖扫描 job/tool；这些检查不属于当前 blocking gate。
+写 Postgres 的数据命令
 (`npm run import:seed:apply` / `geocode:sites:apply` / `audit:pins` / `import:hz:pois:apply`)
 需要 `server/.env.local` 的 `DATABASE_URL`(绝不打印、不提交)，个别还需 `AMAP_WEB_KEY`(geocode 另可配 `BAIDU_MAP_AK` / `TENCENT_MAP_KEY` 兜底)。
 Env-only 步骤(迁移 apply / 导入 apply / geocode apply)属用户操作，Agent 不得擅自执行。
@@ -368,7 +313,7 @@ Env-only 步骤(迁移 apply / 导入 apply / geocode apply)属用户操作，Ag
 ## 外部数据采集门禁
 
 - 没有来源授权、条款/robots、访问方式、速率、保留和删除记录，不得实现或运行自动采集。
-- `xiaozhao-radar` 已审查（`tech/roles/data/etl/xiaozhao-radar.md`）：可映射其已发布的 `jobs.json`；不采纳其隐身/腾讯文档抓取栈。官方招聘页仅礼貌 GET + robots（`etl/official-career.md`）。BOSS 直聘、牛客、小红书、实习僧不属于 MVP，不得直接抓取。
+- `xiaozhao-radar` 数据适配器只映射已审查的公开 `jobs.json`;官方招聘页仅礼貌 GET + robots。BOSS 直聘、牛客、小红书、实习僧不属于当前允许的直接采集源。
 - 插件注册不等于数据采集授权；不得绕过登录、验证码、限流或检测。
 
 ## 记住

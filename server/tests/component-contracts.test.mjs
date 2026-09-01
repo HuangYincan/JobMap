@@ -599,6 +599,26 @@ test('saved overlay toggle: camera does not move at all (ws1 saved-layer-nofly)'
   assert.match(shell, /onToggleOverlay=\{handleToggleSavedOverlay\}/);
 });
 
+test('account default mode changes use the full mode transition protocol', () => {
+  const shell = src('components/map-shell.tsx');
+  assert.doesNotMatch(shell, /setMode\(next\.preferences\.defaultMode\)/);
+
+  const refDeclAt = shell.indexOf('const handleModeChangeRef = useRef<(nextMode: MapMode) => void>(() => {});');
+  const refreshAt = shell.indexOf('refreshAccount().then((next) => {');
+  const refreshCallAt = shell.indexOf('handleModeChangeRef.current(next.preferences.defaultMode)', refreshAt);
+  const signedInAt = shell.indexOf('onSignedIn={() => {');
+  const signedInRefreshAt = shell.indexOf('refreshAccount().then((next) => {', signedInAt);
+  const signedInCallAt = shell.indexOf('handleModeChangeRef.current(next.preferences.defaultMode)', signedInRefreshAt);
+  const handlerAt = shell.indexOf('const handleModeChange = useCallback');
+  const refAssignAt = shell.indexOf('handleModeChangeRef.current = handleModeChange;');
+
+  assert.ok(refDeclAt !== -1 && refDeclAt < refreshAt, 'transition ref is stable and declared before account refresh');
+  assert.ok(refreshCallAt > refreshAt, 'initial account refresh routes default mode through transition ref');
+  assert.ok(signedInAt !== -1 && signedInRefreshAt > signedInAt, 'sign-in refresh exists');
+  assert.ok(signedInCallAt > signedInRefreshAt, 'sign-in refresh routes default mode through transition ref');
+  assert.ok(handlerAt !== -1 && refAssignAt > handlerAt, 'transition ref follows handler initialization');
+});
+
 test('geocode apply: manual overrides are city-gated (override poisons multi-city sites)', () => {
   // 2026-08-19 事故:8/17 的杭州 override 被原样套到 -shanghai 站点(禾赛 →
   // 萧山赫兹智造中心)。override 必须按站点城市过滤;legacy 无 city 字段默认杭州市。
@@ -626,11 +646,10 @@ test('work viewport empty batch three-state (ws1 Bug1): 空批次 ≠ 无数据,
   // 保留旧目录 = 保留 marker 池实例(b2),目录只在真正搜索/非空批次时重建
   assert.match(hook, /空批次 ≠ 无数据/);
   assert.doesNotMatch(hook, /catalogRef\.current = \[\];[\s\S]*?setCatalog\(\[\]\);/);
-  // 主加载路径(existing=旧目录)留在 map-shell:真空仍可清空走空态(整城空白
-  // 不再被旧城市 pin 占住),保留时跳过缓存写入(旧目录顶着「当前视野」快照
-  // 会污染挂载对齐判定,下次刷新不再触发对齐加载)
-  assert.match(shell, /空批次三态\(ws1 Bug1 视口\)/);
-  assert.match(shell, /catalogCoversView\(catalogRef\.current, view\.bounds\)/);
+  // 主加载路径:旧目录非空时 vacant 一律保留,不再 catalogCoversView 清空
+  assert.match(shell, /空批次三态\(ws1 Bug1 视口/);
+  assert.match(shell, /有旧目录时空批次一律保留/);
+  assert.doesNotMatch(shell, /catalogCoversView\(catalogRef\.current, view\.bounds\)/);
   // 请求失败(网络/非 2xx):保留旧目录 + console.warn(2026-08-20 修订:
   // work 视口请求已删,只余 domain 分支保留该行为)
   assert.doesNotMatch(hook, /console\.warn\("\[map-shell\] work viewport load failed:/);
@@ -701,10 +720,10 @@ test('map shell Bug3 locate: 挂载定位不抢占已移图相机(首点 pin 不
   assert.match(shell, /setSearchOrigin\(\(prev\) => prev \?\? \{ lng, lat \}\)/);
   assert.match(
     shell,
-    /isNearDefaultCenter\(view\.getState\(\)\.center\)\s*\)\s*\{[\s\S]{0,160}view\.setCenter\(\{ lng, lat \}\)[\s\S]{0,120}view\.setZoom\(15\)[\s\S]{0,120}setMapCenter\(\{ lng, lat \}\)/
+    /isNearDefaultCenter\(view\.getState\(\)\.center\)\s*\)\s*\{[\s\S]{0,160}view\.setCenter\(\{ lng, lat \}\)[\s\S]{0,120}view\.setZoom\(15\)[\s\S]{0,160}applyLiveViewState\(view\)/
   );
   // 已移图/已交互/已恢复视野 → 锁定 mapCenter 不更新(距离圆心/相机都不甩去用户位置)
-  assert.match(shell, /isNearDefaultCenter\(view\.getState\(\)\.center\)\s*\)\s*\{[\s\S]{0,160}setMapCenter\(\{ lng, lat \}\)/);
+  assert.match(shell, /isNearDefaultCenter\(view\.getState\(\)\.center\)\s*\)\s*\{[\s\S]{0,200}applyLiveViewState\(view\)/);
   // 只有相机手势(drag/zoom)置位;空白点击与 marker 点击不置位
   // (选择/取消选择公司 ≠ 放弃定位,settle 仍会飞用户位置——ws-poi-vanish)
   assert.match(shell, /onViewEvent\(view, "dragstart", \(\) => \{\s*userMovedMapRef\.current = true/);
@@ -798,9 +817,9 @@ test('map shell ws-poi-vanish distance 圆心:定位落地前 distance 筛选不
     shell,
     /const effectiveFilters: FilterState \| undefined =[\s\S]{0,240}Object\.fromEntries\(Object\.entries\(filters\)\.filter\(\(\[key\]\) => key !== "distance"\)\);/
   );
-  // 列表(pois)与 marker 池(workMarkerPois)两个 pipeline 调用点都吃 effectiveFilters
+  // 列表(pois)与工作可见集(workVisiblePois)两个 pipeline 调用点都吃 effectiveFilters
   const matches = shell.match(/filters: effectiveFilters && Object\.keys\(effectiveFilters\)\.length \? effectiveFilters : undefined/g);
-  assert.ok(matches && matches.length >= 2, 'both pipeline call sites use effectiveFilters');
+  assert.ok(matches && matches.length >= 2, 'list + work visible pipeline both use effectiveFilters');
 });
 
 test('logout resets saved overlay state and pref alongside saved places', () => {
@@ -1512,9 +1531,14 @@ test('StrictMode 双调用不再杀活图(2026-08-21 热修:dynamic 面板挂载
   // use-map-engine:cleanup 不再无条件销毁活图(交棒 keepalive + 延迟销毁兜底)
   const cleanupAt = hook.indexOf('keepaliveRef.current = { view: doomed, container }');
   assert.ok(cleanupAt !== -1, 'keepalive 交棒锚点存在');
-  const cleanupBlock = hook.slice(cleanupAt, cleanupAt + 420);
+  const cleanupBlock = hook.slice(cleanupAt, cleanupAt + 900);
   assert.match(cleanupBlock, /setTimeout/, '延迟销毁(真卸载兜底)');
-  assert.match(cleanupBlock, /if \(viewRef\.current !== doomed\)/, '已被接管则跳过销毁');
+  assert.match(cleanupBlock, /if \(viewRef\.current === doomed\) return/, '已被接管则跳过销毁');
+  assert.doesNotMatch(
+    cleanupBlock,
+    /viewRef\.current = null;\s*setView\(null\)/,
+    '交棒当帧不得 setView(null)(poi-lifecycle #1)',
+  );
   assert.doesNotMatch(hook, /viewRef\.current\?\.destroy\(\)/, 'cleanup 不得直接销毁活图');
 
   // use-map-engine:重连接管(同容器、同引擎、未销毁、容器挂载)

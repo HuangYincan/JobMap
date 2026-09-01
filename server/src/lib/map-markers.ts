@@ -937,14 +937,23 @@ class POIMarkerControllerImpl implements POIMarkerController {
   }
 
   /**
-   * 远程 logo 内联化后的原地升级(ws-k,2026-08-23 fix/tmap-icon-frame)。
-   * fetchRemoteIconDataUri 成功(base64 dataURI,icon.horse ACAO:* 可读)→
-   * 摘除当前 marker 并重建:addMarker 重新走 resolveTMapIconSrc(缓存命中 →
-   * 同步 badgeWithRemoteIcon(dataUri)),徽章 = 白底 + 边框 + 居中真 logo。
-   * 守卫:控制器已销毁 / 该 poi 的 marker 已被 clear/差分摘除或重建(指针
-   * 变化)→ 跳过;fetch 失败(网络/非 2xx)→ 保持 emoji 徽章静默降级(与预检
-   * 失败同语义,不刷屏;不记失败缓存,下次重建自然重试)。
+   * 远程 logo 内联化后的原地升级(ws-k,2026-08-23 fix/tmap-icon-frame;
+   * 2026-09-01 poi-lifecycle #6:不再 remove+add)。
+   * fetchRemoteIconDataUri 成功 → 实例侧记住 data URI,强制 applyStyle 换
+   * GL icon。失败保持 emoji。守卫:控制器已销毁 / marker 已被摘除或重建 → 跳过。
    */
+  private applyLogoUpgrade(poi: POI, wrapper: MapMarker, dataUri: string): void {
+    if (this.destroyed) return;
+    if (this.markers.get(poi.id) !== wrapper) return;
+    this.markerLogoDataUris.set(poi.id, dataUri);
+    this.markerIconKinds.set(poi.id, 'logo');
+    const state =
+      this.markerStates.get(poi.id) ??
+      resolveMarkerState(poi.id, this.selectedId, this.highlightedId);
+    this.markerStates.delete(poi.id);
+    this.applyStyle(wrapper, poi, state);
+  }
+
   private async upgradeMarkerIcon(poi: POI, url: string, wrapper: MapMarker): Promise<void> {
     let dataUri: string;
     try {
@@ -952,12 +961,7 @@ class POIMarkerControllerImpl implements POIMarkerController {
     } catch {
       return; // fetch 失败 → 保持 emoji 徽章(静默,下次重建重试)
     }
-    if (this.destroyed) return;
-    if (this.markers.get(poi.id) !== wrapper) return; // 已被摘除/重建
-    this.removeMarker(poi.id);
-    this.addMarker(poi); // 缓存命中 → 同步徽章包裹真 logo
-    // 实例侧记住内联字节,即使随后全局 LRU 被挤掉,点选也不退回 emoji
-    if (this.markers.has(poi.id)) this.markerLogoDataUris.set(poi.id, dataUri);
+    this.applyLogoUpgrade(poi, wrapper, dataUri);
   }
 
   /**
@@ -981,9 +985,8 @@ class POIMarkerControllerImpl implements POIMarkerController {
     for (const url of toPreflight) preflightRemoteIcon(url);
     if (!isRemoteIconUrl(src)) return; // 仍未通过预检 → 保持 emoji,下次再查
     if (remoteIconDataUriCache.has(src)) {
-      // 字节已就绪 → 同步重建升级
-      this.removeMarker(poi.id);
-      this.addMarker(poi);
+      const dataUri = remoteIconDataUriCache.get(src);
+      if (dataUri) this.applyLogoUpgrade(poi, wrapper, dataUri);
     } else {
       void this.upgradeMarkerIcon(poi, src, wrapper); // 异步 fetch → 完成后升级
     }
