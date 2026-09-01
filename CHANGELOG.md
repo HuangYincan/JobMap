@@ -6,7 +6,7 @@ Dates are UTC+8. This file is a historical release log for work merged to `dev`;
 
 ### Changed
 
-- **Documentation baseline aligned with the tracked implementation.** Removed current references to unavailable private design trees, legacy Codex paths, and old parallel-batch locations; documented migrations `001`–`021`, the official MCP SDK `@modelcontextprotocol/sdk` `1.30.0`, command-derived test reporting, existing Node security contract tests, and the fact that CI has no SAST/DAST/dependency-scanning jobs. This documentation-only change does not claim that migration apply, deployment, or any unrun security gate succeeded.
+- **Documentation baseline aligned with the tracked implementation.** Removed current references to unavailable private design trees, legacy Codex paths, and old parallel-batch locations; documented migrations `001`–`022`, including the fail-closed `022_hz_pois_photos_shape.sql` preflight and JSON-array constraint, the official MCP SDK `@modelcontextprotocol/sdk` `1.30.0`, command-derived test reporting, existing Node security contract tests, and the fact that CI has no SAST/DAST/dependency-scanning jobs. This documentation-only change does not claim that migration apply, deployment, or any unrun security gate succeeded.
 
 ### Fixed
 
