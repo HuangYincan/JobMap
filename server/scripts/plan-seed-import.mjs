@@ -35,6 +35,8 @@ console.log(
       sites,
       positions,
       dropped: plan.dropped,
+      complete: plan.complete !== false,
+      diagnostics: plan.diagnostics ?? [],
       issues: plan.issues,
       apply: result,
     },

@@ -29,6 +29,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from typing import Any
 
@@ -36,6 +37,17 @@ SEARCH_JOB_PATH = "/api/v1/search/job/posts"
 DEFAULT_PAGE_SIZE = 50
 MAX_JOBS = 2000  # safety cap per tenant
 MAX_JD_CHARS = 8000
+
+# Live access is intentionally opt-in.  The source currently answers the
+# importer UA with 405; using a browser UA to get around that is not an
+# authorized access method.  Set this only after an operator has recorded
+# source authorization and the allowed access/rate policy.
+FEISHU_LIVE_REFRESH_ENV = "DOMAIN_MAP_FEISHU_LIVE_REFRESH_AUTHORIZED"
+
+
+def feishu_live_refresh_authorized() -> bool:
+    """Return whether an operator explicitly enabled live Feishu refresh."""
+    return os.environ.get(FEISHU_LIVE_REFRESH_ENV, "").strip().lower() in {"1", "true", "yes"}
 
 # ATS 录入笔误归一(2026-08-19 实测禾赛租户出现 "北揽"):
 CITY_ALIASES = {"北揽": "北京"}
@@ -265,6 +277,8 @@ def job_to_position(job: dict[str, Any], site_id: str, retrieved_at: str, host: 
     externalId 必须是 portal-* 前缀才被 isAuthenticPositionId 视为真实岗位
     (旧实现用 feishu-* 前缀,import 时被过滤,图上永远不出现 —— 2026-08-19 教训)。
     """
+    if not isinstance(job, dict):
+        raise AdapterError(f"feishu job row must be an object: {type(job).__name__}")
     job_id = _string(job.get("id"))
     title = _string(job.get("title"))
     if not job_id or not title:
@@ -297,25 +311,38 @@ def jobs_to_positions(
     retrieved_at: str,
     host: str = "",
     website_path: str = "",
+    diagnostics: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Map crawled jobs onto the company's sites (per-job city → site)."""
+    """Map crawled jobs onto the company's sites (per-job city → site).
+
+    Malformed rows are retained as diagnostics when the optional list is
+    provided. Callers writing a snapshot must treat any such diagnostic as a
+    partial result rather than silently reconciling the valid subset.
+    """
     positions = []
-    for job in jobs:
+    for index, job in enumerate(jobs):
         try:
+            if not isinstance(job, dict):
+                raise AdapterError(f"feishu job row must be an object: {type(job).__name__}")
             positions.append(job_to_position(job, site_id_for_job(company, job), retrieved_at, host=host, website_path=website_path))
-        except AdapterError:
-            continue  # skip malformed rows, keep the batch
+        except AdapterError as exc:
+            if diagnostics is not None:
+                diagnostics.append({"index": index, "error": str(exc)})
     return positions
 
 
 def fetch_page(fetcher, host: str, offset: int, limit: int = DEFAULT_PAGE_SIZE, website_path: str = "") -> tuple[list[dict[str, Any]], int]:
-    """Fetch one POST page; return (jobs, total_count)."""
+    """Fetch one POST page; return (jobs, total_count).
+
+    The caller must explicitly opt in to the live adapter.  In particular, a
+    405 response is never retried with a browser User-Agent: that would cross
+    the source's stated crawler access boundary.
+    """
     url = build_search_url(host, offset=offset, limit=limit, website_path=website_path)
     body = json.dumps(build_search_body(offset=offset, limit=limit))
     headers = {
-        # 公共端点实测: 爬虫 UA 一律 405, 浏览器 UA 200 (2026-08-19 定位)。
-        # 无登录/无验证码/无限流绕过, 仅伪装 UA 通过端点自身的 UA 门禁。
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+        # Keep the honest importer UA supplied by PoliteFetcher.  Do not add a
+        # browser UA here to bypass a source-side crawler gate (VULN-20260901-01).
         "Content-Type": "application/json",
         "portal-channel": "saas-career",
         "portal-platform": "pc",
@@ -342,12 +369,26 @@ def fetch_all_jobs(
     page_size: int = DEFAULT_PAGE_SIZE,
     max_jobs: int = MAX_JOBS,
     website_path: str = "",
+    allow_live_refresh: bool = False,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     """Fetch every page of the tenant's job list via limit+offset.
 
+    Live Feishu refresh is frozen by default pending explicit source
+    authorization.  Tests may pass ``allow_live_refresh=True`` with an
+    injected fake fetcher; production callers must make the same explicit
+    authorization decision before enabling network access.  A frozen call
+    returns an incomplete diagnostic without touching the network.
+
     Returns (jobs, page_errors). Malformed pages abort pagination but surface
-    as errors (never crash the batch).
+    as errors (never crash the batch). Any non-empty errors make the result
+    incomplete and callers must not reconcile or write it as a full snapshot.
     """
+    if not allow_live_refresh:
+        return [], [{
+            "url": f"https://{host}{SEARCH_JOB_PATH}",
+            "error": "live Feishu refresh is frozen pending explicit source authorization",
+        }]
+
     jobs: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
     offset = 0

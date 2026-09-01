@@ -69,38 +69,53 @@ def refresh_company_from_source(
     *,
     retrieved_at: str | None = None,
     page_size: int = 20,
+    allow_live_refresh: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Refresh a company through the ATS adapter matching its careerUrl host.
 
-    Feishu jobs hosts are read through the public search_job JSON API (real JD
-    text + per-job apply links); every other host keeps the HTML heuristic.
-    API failures degrade to the HTML path instead of dropping the company.
+    Feishu jobs hosts are frozen unless the caller explicitly authorizes the
+    live adapter.  A 405 is never bypassed with a browser User-Agent, and a
+    frozen or partially fetched result never falls back to HTML or replaces
+    the existing snapshot.  This prevents an access-policy failure from being
+    interpreted as an empty/complete source.
 
     Returns (refreshed_company, meta) where meta carries the source used,
-    counts and any API page errors for the CLI summary.
+    completeness, counts and any API page errors for the CLI summary.
     """
     from urllib.parse import urlparse
 
     host = (urlparse(page_url).hostname or "").lower()
     stamp = retrieved_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    meta: dict[str, Any] = {"source": "html", "api_errors": [], "api_jobs": 0}
+    meta: dict[str, Any] = {"source": "html", "api_errors": [], "api_jobs": 0, "complete": True}
     if is_feishu_jobs_host(host):
-        try:
-            jobs, api_errors = fetch_all_jobs(fetcher, host, page_size=page_size)
-        except AdapterError as exc:
-            jobs, api_errors = [], [{"url": page_url, "error": str(exc)}]
+        jobs, api_errors = fetch_all_jobs(
+            fetcher,
+            host,
+            page_size=page_size,
+            allow_live_refresh=allow_live_refresh,
+        )
+        mapping_errors: list[dict[str, Any]] = []
+        positions = jobs_to_positions(
+            jobs,
+            company,
+            stamp,
+            host=host,
+            diagnostics=mapping_errors,
+        )
+        complete = not api_errors and not mapping_errors
         meta = {
-            "source": "feishu-api" if jobs else "html",
+            "source": "feishu-api" if allow_live_refresh else "feishu-frozen",
             "api_errors": api_errors,
+            "diagnostics": mapping_errors,
             "api_jobs": len(jobs),
+            "complete": complete,
         }
-        if jobs:
-            next_company = apply_extracted_jobs(
-                company, jobs_to_positions(jobs, company, stamp), retrieved_at=stamp
-            )
-            return next_company, meta
-        # API yielded nothing usable → polite HTML fallback (existing behavior).
-        # meta is kept so the CLI summary still reports api_errors/api_jobs.
+        # Only an explicitly enabled, error-free page set is a complete
+        # snapshot.  In particular, do not use the HTML shell as a fallback:
+        # it has no trustworthy job rows and could hide a failed API refresh.
+        if complete:
+            return apply_extracted_jobs(company, positions, retrieved_at=stamp), meta
+        return json.loads(json.dumps(company)), meta
     return refresh_company_from_html(company, html, page_url, retrieved_at=stamp), meta
 
 

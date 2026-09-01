@@ -14,7 +14,7 @@ import {
   validateSourceCompany,
 } from '../src/lib/recruitment-import.ts';
 import { bossAdapter } from '../src/lib/recruitment-adapters/boss.ts';
-import { officialCareerAdapter, parseOfficialCareerPayload } from '../src/lib/recruitment-adapters/official-career.ts';
+import { officialCareerAdapter, parseOfficialCareerPayload, listOfficialCareerFilesDetailed } from '../src/lib/recruitment-adapters/official-career.ts';
 import { nowcoderAdapter } from '../src/lib/recruitment-adapters/nowcoder.ts';
 import { radarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
 import { shixisengAdapter } from '../src/lib/recruitment-adapters/shixiseng.ts';
@@ -22,9 +22,10 @@ import { mergeCompaniesIntoPois, poiToSourceCompany } from '../src/lib/recruitme
 import { authenticPositionSql, isAuthenticPositionRecord } from '../src/lib/freshness.ts';
 import { embodiedJobsAdapter } from '../src/lib/recruitment-adapters/embodied-jobs.ts';
 import { WORK_SEED } from './fixtures/seed-data.ts';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
 
 function sample() {
   return poiToSourceCompany(WORK_SEED[0]);
@@ -750,6 +751,36 @@ test('boss / nowcoder / shixiseng adapters read file drops and skip missing dirs
   const rows = await bossAdapter(dir).list();
   assert.equal(rows[0]?.slug, 'fixture-boss');
   assert.equal(rows[0]?.positions[0]?.applySource, 'boss');
+});
+
+test('file-drop diagnostics distinguish missing, empty, malformed, and partial inputs', async () => {
+  const missing = await officialCareerAdapter(join(tmpdir(), 'domain-map-missing-drop')).listDetailed();
+  assert.equal(missing.completeness, 'incomplete');
+  assert.equal(missing.diagnostics[0].kind, 'missing-directory');
+
+  const empty = mkdtempSync(join(tmpdir(), 'domain-map-empty-drop-'));
+  try {
+    const emptyResult = await listOfficialCareerFilesDetailed(empty);
+    assert.equal(emptyResult.completeness, 'incomplete');
+    assert.equal(emptyResult.diagnostics[0].kind, 'empty-directory');
+
+    writeFileSync(join(empty, 'valid.json'), JSON.stringify({ slug: 'x', name: 'X', sites: [], positions: [] }));
+    writeFileSync(join(empty, 'broken.json'), '{not-json');
+    const partial = await listOfficialCareerFilesDetailed(empty);
+    assert.equal(partial.completeness, 'incomplete');
+    assert.equal(partial.companies.length, 1, 'valid JSON shape remains available for diagnostics');
+    assert.ok(partial.diagnostics.some((row) => row.kind === 'invalid-json'));
+    assert.ok(partial.diagnostics.some((row) => row.kind === 'invalid-record'));
+  } finally {
+    rmSync(empty, { recursive: true, force: true });
+  }
+});
+
+test('incomplete import plans cannot reach destructive apply', async () => {
+  const plan = { ...planRecruitmentImport([sample()]), complete: false, diagnostics: [{ file: 'x', kind: 'missing-directory', message: 'missing' }] };
+  const result = await applyRecruitmentImport(plan, { connect: async () => { throw new Error('must not connect'); } });
+  assert.equal(result.wrote, false);
+  assert.equal(result.reason, 'incomplete-input');
 });
 
 test('import apply fails closed when completeness evidence is absent', async () => {

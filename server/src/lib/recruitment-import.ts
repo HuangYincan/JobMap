@@ -4,7 +4,12 @@
 
 import { createHash } from 'node:crypto';
 import { getPool } from './db.ts';
-import type { SourceCompany, SourcePosition } from './recruitment-source.ts';
+import type {
+  RecruitmentAdapter,
+  SourceCompany,
+  SourceFileDiagnostic,
+  SourcePosition,
+} from './recruitment-source.ts';
 import { TIER_DEFAULT } from './lod.ts';
 import { bossAdapter } from './recruitment-adapters/boss.ts';
 import { embodiedJobsAdapter } from './recruitment-adapters/embodied-jobs.ts';
@@ -18,6 +23,7 @@ import { isAuthenticPositionRecord } from './freshness.ts';
 import { HANGZHOU_DISTRICTS } from './spatial-filters.ts';
 import type { CompanySite, JobTaxonomy } from './types.ts';
 import { sourceMetadataFor, SOURCE_META } from './recruitment-provenance.ts';
+import { listAdapter } from './recruitment-source.ts';
 
 export interface ImportIssue {
   slug: string;
@@ -29,6 +35,9 @@ export interface ImportPlan {
   companies: SourceCompany[];
   issues: ImportIssue[];
   dropped: number;
+  diagnostics?: SourceFileDiagnostic[];
+  /** False means at least one source input was not a complete snapshot. */
+  complete?: boolean;
 }
 
 const FAMILIES = new Set(['intern', 'campus', 'social']);
@@ -241,20 +250,26 @@ export function planRecruitmentImport(input: SourceCompany[]): ImportPlan {
     companies,
     issues,
     dropped: merged.length - companies.length,
+    diagnostics: [],
+    complete: true,
   };
 }
 
 export async function planSeedImport(): Promise<ImportPlan> {
-  const [qqdocOfficial, qqdocJobs, official, boss, nowcoder, shixiseng, radar, embodiedJobs] = await Promise.all([
-    qqdocOfficialAdapter().list(),
-    qqdocJobsAdapter().list(),
-    officialCareerAdapter().list(),
-    bossAdapter().list(),
-    nowcoderAdapter().list(),
-    shixisengAdapter().list(),
-    radarAdapter().list(),
-    embodiedJobsAdapter().list(),
-  ]);
+  const adapters: RecruitmentAdapter[] = [
+    qqdocOfficialAdapter(),
+    qqdocJobsAdapter(),
+    officialCareerAdapter(),
+    bossAdapter(),
+    nowcoderAdapter(),
+    shixisengAdapter(),
+    radarAdapter(),
+    embodiedJobsAdapter(),
+  ];
+  const batches = await Promise.all(adapters.map((adapter) => listAdapter(adapter)));
+  const [qqdocOfficial, qqdocJobs, official, boss, nowcoder, shixiseng, radar, embodiedJobs] = batches.map(
+    (batch) => batch.companies,
+  );
   // 严格 DB-only(2026-08-26): seed 示例数据已归档 tech/backup/seed-data,
   // 不再作为灌库数据源; 仅真实 drop(radar/portal/qqdoc/official/embodied 等)入库。
   const plan = planRecruitmentImport([
@@ -270,7 +285,11 @@ export async function planSeedImport(): Promise<ImportPlan> {
   // 数据策略 (2026-08-19): 公司有 portal-* 官方直爬岗位时, 抑制其 radar-*
   // 聚合行。radar 是快照聚合 (合成岗位, 非真实 JD); 官方 ATS 直爬是雇主录入
   // 的真实岗位 —— 同 slug 并存时后者优先 (dedupe 已保官方站点/坐标)。
-  return suppressRadarForPortalCompanies(plan);
+  return suppressRadarForPortalCompanies({
+    ...plan,
+    diagnostics: batches.flatMap((batch) => batch.diagnostics),
+    complete: batches.every((batch) => batch.completeness === 'complete'),
+  });
 }
 
 /** 有 portal-* 真实岗位的公司 → 丢弃同公司的 radar-* 快照行 (2026-08-19)。 */
@@ -287,12 +306,18 @@ export function suppressRadarForPortalCompanies(plan: ImportPlan): ImportPlan {
 }
 
 export async function planOfficialCareerImport(dir?: string): Promise<ImportPlan> {
-  return planRecruitmentImport(await officialCareerAdapter(dir).list());
+  const batch = await listAdapter(officialCareerAdapter(dir));
+  const plan = planRecruitmentImport(batch.companies);
+  return {
+    ...plan,
+    diagnostics: batch.diagnostics,
+    complete: batch.completeness === 'complete',
+  };
 }
 
 export interface ImportApplyResult {
   wrote: boolean;
-  reason?: 'no-database' | 'empty-plan';
+  reason?: 'no-database' | 'empty-plan' | 'incomplete-input';
   companies: number;
   sites: number;
   positions: number;
@@ -472,6 +497,8 @@ export async function applyRecruitmentImport(
       positions: authentic.reduce((n, c) => n + c.positions.length, 0),
     };
   }
+  // planSeedImport is an all-source snapshot. If any adapter could not produce
+  // a complete snapshot, keep all validated records available for diagnostics
   // planSeedImport is an all-source snapshot. If any adapter could not produce
   // a complete snapshot, keep all validated records available for diagnostics
   // but refuse the entire DB apply. The explicit `true` check also fails closed

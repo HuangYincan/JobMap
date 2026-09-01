@@ -11,11 +11,14 @@
 //     (永不空,validateSourceCompany「need at least one」不触发);
 //   - scale: 'enterprise' — qqdoc 先例缺省(per-company 规模无法从 drop 推导,
 //     固定缺省保证 type 契约与 UI 规模徽章不空)。
-// Empty / missing dir → []. Override with EMBODIED_JOBS_DIR.
+// Empty / missing dir → [] for the legacy list() contract; listDetailed() marks
+// those inputs incomplete. Override with EMBODIED_JOBS_DIR.
 
-import { readdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { defaultDropDir } from './file-drop.ts';
+import {
+  defaultDropDir,
+  listSourceCompanyFilesDetailed,
+  type ParsedSourceCompanyPayload,
+} from './file-drop.ts';
 import { industriesOf } from './qqdoc-official.ts';
 import type { RecruitmentAdapter, SourceCompany } from '../recruitment-source.ts';
 import type { CompanySite } from '../types.ts';
@@ -71,30 +74,27 @@ export function parseEmbodiedJobsPayload(raw: unknown): SourceCompany[] {
     .filter((company): company is SourceCompany => company !== null);
 }
 
+function parseEmbodiedJobsPayloadDetailed(raw: unknown): ParsedSourceCompanyPayload {
+  const records = Array.isArray(raw) ? raw : [raw];
+  const companies = records
+    .map(embodiedJobsToSourceCompany)
+    .filter((company): company is SourceCompany => company !== null);
+  return { companies, invalidRecords: records.length - companies.length };
+}
+
 export async function listEmbodiedJobsFiles(dir = EMBODIED_JOBS_DIR): Promise<SourceCompany[]> {
-  let names: string[];
-  try {
-    names = await readdir(dir);
-  } catch {
-    return [];
-  }
-  const companies: SourceCompany[] = [];
-  for (const name of names.sort()) {
-    if (!name.endsWith('.json') || name.startsWith('.')) continue;
-    try {
-      const text = await readFile(join(dir, name), 'utf8');
-      companies.push(...parseEmbodiedJobsPayload(JSON.parse(text)));
-    } catch {
-      // Skip unreadable / invalid files; the import planner reports validation issues later.
-    }
-  }
-  return companies;
+  return (await listEmbodiedJobsFilesDetailed(dir)).companies;
+}
+
+export async function listEmbodiedJobsFilesDetailed(dir = EMBODIED_JOBS_DIR) {
+  return listSourceCompanyFilesDetailed(dir, parseEmbodiedJobsPayloadDetailed);
 }
 
 export function embodiedJobsAdapter(dir = EMBODIED_JOBS_DIR): RecruitmentAdapter {
   return {
     kind: 'embodied-jobs',
     list: () => listEmbodiedJobsFiles(dir),
+    listDetailed: () => listEmbodiedJobsFilesDetailed(dir),
   };
 }
 

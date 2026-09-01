@@ -10,7 +10,17 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from .acquire import AcquisitionError, PoliteFetcher
-from .ats_feishu import CITY_PINYIN, CITY_PROVINCE, AdapterError, city_site_id, fetch_all_jobs, job_addresses, job_city, jobs_to_positions
+from .ats_feishu import (
+    CITY_PINYIN,
+    CITY_PROVINCE,
+    AdapterError,
+    city_site_id,
+    feishu_live_refresh_authorized,
+    fetch_all_jobs,
+    job_addresses,
+    job_city,
+    jobs_to_positions,
+)
 from .ats_zhiye import crawl_company, is_zhiye_host
 from .official_refresh import refresh_company_from_source, write_company
 from .radar_jobs import load_radar_jobs, radar_fixture
@@ -364,8 +374,17 @@ def cmd_feishu(args: argparse.Namespace) -> int:
     social pool, deduped by job id.
     """
     out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    # Dry-run is read-only: do not create the requested output directory until
+    # a complete, explicitly authorized snapshot is actually being written.
+    write_requested = bool(getattr(args, "write", False))
     radar_dir = Path(args.radar_dir)
+    allow_live = bool(getattr(args, "allow_live", False) and feishu_live_refresh_authorized())
+    authorization_error = (
+        "live refresh requested but "
+        "DOMAIN_MAP_FEISHU_LIVE_REFRESH_AUTHORIZED is not enabled"
+        if getattr(args, "allow_live", False) and not allow_live
+        else ""
+    )
     fetcher = PoliteFetcher(min_interval_s=args.interval)
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     summary = []
@@ -394,16 +413,29 @@ def cmd_feishu(args: argparse.Namespace) -> int:
         all_jobs: list[dict] = []
         pool_counts: dict[str, int] = {}
         api_errors: list[dict] = []
+        row_errors: list[dict] = []
         for label, website_path in pools:
             try:
-                jobs, errors = fetch_all_jobs(fetcher, host, website_path=website_path, max_jobs=args.max_jobs)
+                jobs, errors = fetch_all_jobs(
+                    fetcher,
+                    host,
+                    website_path=website_path,
+                    max_jobs=args.max_jobs,
+                    allow_live_refresh=allow_live,
+                )
             except AdapterError as exc:
                 errors = [{"pool": label, "error": str(exc)}]
                 jobs = []
-            api_errors.extend(errors)
+            api_errors.extend({**error, "pool": label} for error in errors)
             pool_counts[label] = len(jobs)
-            seen = {j["id"] for j in all_jobs}
-            all_jobs.extend(j for j in jobs if j["id"] not in seen)
+            seen = {j.get("id") for j in all_jobs if isinstance(j, dict) and j.get("id")}
+            for index, job in enumerate(jobs):
+                if not isinstance(job, dict) or not job.get("id"):
+                    row_errors.append({"pool": label, "index": index, "error": "job row missing id"})
+                    continue
+                if job["id"] not in seen:
+                    all_jobs.append(job)
+                    seen.add(job["id"])
         # 翻页漂移兜底: 爬取期间岗位池变化, offset 窗口滑动可能让同一岗位
         # 出现在两页 → 按 id 去重(保留首个), 否则 plan 报 duplicate externalId
         # (2026-08-19: 蔚来 2223 岗池实测出现)。
@@ -454,13 +486,38 @@ def cmd_feishu(args: argparse.Namespace) -> int:
                 continue
             if current_addr in ("", site_city, f"{site_city}市") or "/" in current_addr:
                 site.setdefault("location", {})["address"] = ats_address
-        company["positions"] = jobs_to_positions(all_jobs, company, stamp, host=host, website_path=tenant.get("website_path", ""))
-        entry = {"slug": slug, "jobs": len(all_jobs), "campus": pool_counts.get("campus", 0), "social": pool_counts.get("social", 0), "sites": len(company["sites"])}
-        if api_errors:
-            entry["api_errors"] = api_errors
-        if args.write:
+        position_errors: list[dict] = []
+        company["positions"] = jobs_to_positions(
+            all_jobs,
+            company,
+            stamp,
+            host=host,
+            website_path=tenant.get("website_path", ""),
+            diagnostics=position_errors,
+        )
+        diagnostics = [*api_errors, *row_errors, *position_errors]
+        complete = not diagnostics and allow_live
+        entry = {
+            "slug": slug,
+            "jobs": len(all_jobs),
+            "campus": pool_counts.get("campus", 0),
+            "social": pool_counts.get("social", 0),
+            "sites": len(company["sites"]),
+            "complete": complete,
+        }
+        if diagnostics:
+            entry["diagnostics"] = diagnostics
+        if authorization_error:
+            entry["authorization"] = authorization_error
+        # Never write a frozen, partial, or malformed snapshot.  A complete
+        # authorized empty snapshot is still valid and may intentionally close
+        # all prior source positions during the later import reconciliation.
+        if write_requested and complete:
+            out_dir.mkdir(parents=True, exist_ok=True)
             (out_dir / f"{slug}.json").write_text(json.dumps(company, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             entry["wrote"] = True
+        else:
+            entry["wrote"] = False
         summary.append(entry)
     print(json.dumps({"companies": len(summary), "results": summary}, ensure_ascii=False))
     return 0
@@ -586,7 +643,8 @@ def main(argv: list[str] | None = None) -> int:
     feishu.add_argument("--interval", type=float, default=2.0, help="Seconds between requests")
     feishu.add_argument("--max-jobs", type=int, default=2000, help="Safety cap per tenant per pool")
     feishu.add_argument("--only", default="", help="Comma-separated slugs/hosts to crawl (default: all)")
-    feishu.add_argument("--write", action="store_true", help="Write drops (dry-run default)")
+    feishu.add_argument("--write", action="store_true", help="Write complete drops (dry-run default)")
+    feishu.add_argument("--allow-live", action="store_true", help="Request live refresh; requires DOMAIN_MAP_FEISHU_LIVE_REFRESH_AUTHORIZED=1")
     feishu.set_defaults(func=cmd_feishu, tenants=FEISHU_TENANTS)
 
     zhiye = sub.add_parser("zhiye", help="Crawl zhiye (Beisen *.zhiye.com) ATS portals into official-career drops")
