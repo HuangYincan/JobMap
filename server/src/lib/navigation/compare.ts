@@ -18,13 +18,6 @@ export const COMMUTE_COMPARE_CONCURRENCY = 3;
 export const MAX_COMMUTE_ROUTE_CALLS = MAX_CANDIDATE_IDS;
 export const MIN_COMPARE_DESTINATIONS = 2;
 
-export function parseCommuteTopK(value: unknown): number | null {
-  if (value === undefined) return DEFAULT_COMMUTE_TOP_K;
-  if (typeof value !== 'number' || !Number.isFinite(value) || !Number.isInteger(value)) return null;
-  if (value < 1 || value > MAX_CANDIDATE_IDS) return null;
-  return value;
-}
-
 export interface CompareDestination {
   id: string;
   label: string;
@@ -236,8 +229,10 @@ export async function filterCandidatesByCommute(
   if (!Array.isArray(input.candidates)) {
     return { ok: false, error: '候选岗位无效' };
   }
-  const topK = parseCommuteTopK(input.topK);
-  if (topK === null) return { ok: false, error: 'Top-K 必须是 1–5 的有限整数' };
+  const topK = Math.min(
+    MAX_CANDIDATE_IDS,
+    Math.max(1, Math.floor(input.topK ?? DEFAULT_COMMUTE_TOP_K)),
+  );
   const maxRouteCalls = Math.min(runtime.maxRouteCalls ?? MAX_COMMUTE_ROUTE_CALLS, topK);
   const selected = input.candidates.slice(0, maxRouteCalls);
   const matrix = await planDestinations(

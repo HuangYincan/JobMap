@@ -24,18 +24,18 @@ import type {
 import { TravelModes } from '../../navigation/constants.ts';
 import {
   COMMUTE_COMPARE_CONCURRENCY,
+  DEFAULT_COMMUTE_TOP_K,
   compareCommutes,
   filterCandidatesByCommute,
   formatCommuteMatrix,
   formatFilterResult,
   formatRoutePlanSummary,
-  parseCommuteTopK,
   type CompareDestination,
 } from '../../navigation/compare.ts';
 import {
+  loadWorkPositionByExternalIdFromDb,
   type WorkPositionDetailRecord,
 } from '../../recruitment-store.ts';
-import { loadWorkPositionsByExternalIdsFromDb } from '../../navigation/position-resolver.ts';
 
 const MAX_FILTER_CANDIDATE_IDS = 20;
 
@@ -133,7 +133,12 @@ function destinationFromDetail(record: WorkPositionDetailRecord): CompareDestina
 }
 
 async function defaultResolvePositions(ids: string[]): Promise<WorkPositionDetailRecord[]> {
-  return loadWorkPositionsByExternalIdsFromDb(ids);
+  const out: WorkPositionDetailRecord[] = [];
+  for (const id of ids) {
+    const record = await loadWorkPositionByExternalIdFromDb(id);
+    if (record) out.push(record);
+  }
+  return out;
 }
 
 function parseOrigin(raw: unknown): NavigationLocationRef | null {
@@ -151,20 +156,11 @@ function parseIdList(value: unknown, max: number): string[] | null {
   if (!Array.isArray(value)) return null;
   if (value.length === 0 || value.length > max) return null;
   const ids: string[] = [];
-  const seen = new Set<string>();
   for (const item of value) {
     if (typeof item !== 'string' || !item.trim() || item.length > MAX_ID_LENGTH) return null;
-    const id = item.trim();
-    if (seen.has(id)) continue;
-    seen.add(id);
-    ids.push(id);
+    ids.push(item.trim());
   }
-  if (ids.length === 0 || ids.length > max) return null;
   return ids;
-}
-
-export function parseTopK(value: unknown): number | null {
-  return parseCommuteTopK(value);
 }
 
 export function navigationTools(deps: NavigationToolDeps = {}): AgentTool[] {
@@ -299,20 +295,16 @@ export function navigationTools(deps: NavigationToolDeps = {}): AgentTool[] {
         }
         const ids = parseIdList(input.positionIds, MAX_FILTER_CANDIDATE_IDS);
         if (!ids) return textErr('候选岗位 ID 无效');
-        const topK = parseTopK(input.topK);
-        if (topK === null) return textErr('Top-K 必须是 1–5 的有限整数');
+        const topK = typeof input.topK === 'number' ? input.topK : DEFAULT_COMMUTE_TOP_K;
         const records = await resolvePositions(ids);
         const candidates = records
           .map(destinationFromDetail)
           .filter((item): item is CompareDestination => item != null);
         const filtered = await filterCandidatesByCommute(
           { origin, candidates, mode, maxMinutes, topK },
-          { routeService, fingerprint, signal: ctx.signal, concurrency, maxRouteCalls: Math.min(MAX_CANDIDATE_IDS, topK) },
+          { routeService, fingerprint, signal: ctx.signal, concurrency, maxRouteCalls: Math.min(MAX_CANDIDATE_IDS, Math.floor(topK) || DEFAULT_COMMUTE_TOP_K) },
         );
         if (!filtered.ok) return textErr(filtered.error);
-        if (Array.isArray(input.positionIds) && input.positionIds.length > topK && !filtered.result.matrix.budgetNote) {
-          filtered.result.matrix.budgetNote = `Top-K=${topK}，已限制路线请求以免 N+1`;
-        }
         return textOk(formatFilterResult(filtered.result, maxMinutes));
       },
     },
