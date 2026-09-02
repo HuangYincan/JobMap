@@ -43,6 +43,10 @@
 //   占位/中心钉坐标落真实办公点（address/lng/lat 改写）——旧缓存含旧坐标，bump
 //   使其失效重拉。
 //
+// v16（2026-08-22 ws8 poi-card 地址）：geocode:apply r3 重解 293 站点坐标/地址
+// （province-infer 修复）且列表卡片新增渲染 location.address——旧缓存含旧/空
+// 地址行, bump 使其失效重拉一次。
+//
 // 视野快照（v13 兼容字段，2026-08-19 ws1）：ModeCacheEntry.viewport 记录写入时的
 // 地图视野（center+zoom+bounds），供刷新页面后的「挂载对齐加载」判断缓存目录是否
 // 仍覆盖当前视野。旧缓存无此字段 → 调用方按「与当前视野不符」处理，触发一次对齐

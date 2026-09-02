@@ -292,6 +292,34 @@
   white-space: nowrap;
 }
 
+/* ---------- 地址行（2026-08-22 ws8） ----------
+   卡片 flex column gap 10px 与 metaRow 保持同节奏,无需额外 margin。
+   颜色沿用 var(--muted)(与 .metaRow 同 token,dark 模式全局自适应)。 */
+
+.address {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.addressIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.addressText {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---------- 照片预览 ---------- */
 
 .photos {
