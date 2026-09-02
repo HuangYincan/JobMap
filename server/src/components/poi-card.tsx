@@ -139,6 +139,36 @@ function RemoveSavedButton({
   );
 }
 
+/**
+ * 地址行(2026-08-22 ws8):metaRow 下方一行,16px pin 图标 + 地址文本。
+ * 地址空(trim 后)时不渲染——无地址的卡片不高变。图标装饰性 aria-hidden,
+ * 文本保留给读屏(卡片 aria-label 之外的补充信息)。
+ */
+function AddressRow({ address }: { address?: string }) {
+  const text = address?.trim();
+  if (!text) return null;
+  return (
+    <div className={styles.address}>
+      <span className={styles.addressIcon} aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+      </span>
+      <p className={styles.addressText}>{text}</p>
+    </div>
+  );
+}
+
 /** 行业标签映射（seed / amap 返回行业 key → 显示文本） */
 const INDUSTRY_LABELS: Record<string, { zh: string; en: string }> = {
   internet: { zh: "互联网", en: "Internet" },
@@ -295,6 +325,8 @@ function DomainCardContent({
         )}
       </div>
 
+      <AddressRow address={poi.location.address} />
+
       {photos.length > 0 && (
         <div
           className={styles.photos}
@@ -397,6 +429,8 @@ function RecruitmentCardContent({
           {formatDistance(cardDisplayMeters(poi, displayOrigin))}
         </span>
       </div>
+
+      <AddressRow address={poi.location.address} />
 
       {positionsPreview.length > 0 && (
         <div className={styles.positions}>
