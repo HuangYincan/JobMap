@@ -46,6 +46,7 @@ cd server && npm run typecheck
 cd server && npm test     # node:test，数量随当前源码变化
 cd server && npm run build
 make db-migrate           # 应用待执行 migrations(Env-only，需 DATABASE_URL)
+make db-repair-020        # 020 预检脏数据：把跨公司 site_id 改挂回岗位自己的公司(Env-only)
 make db-up                # 启动本地 PostGIS
 ```
 

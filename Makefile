@@ -1,11 +1,12 @@
 # Makefile for JobMap
-.PHONY: help db-up db-down db-status docs-check scaffold-status preflight db-migrate test-unit test-integration
+.PHONY: help db-up db-down db-status docs-check scaffold-status preflight db-migrate db-repair-020 test-unit test-integration
 
 help: ## Show currently supported commands
 	@printf '%s\n' 'JobMap'
 	@printf '%s\n' '  make preflight        Verify DATABASE_URL and PostGIS preflight'
 	@printf '%s\n' '  make db-up            Start the local PostGIS database'
 	@printf '%s\n' '  make db-migrate       Apply pending SQL migrations (requires DATABASE_URL)'
+	@printf '%s\n' '  make db-repair-020    Retarget cross-company position sites (ENV_ONLY; run before 020 on dirty DBs)'
 	@printf '%s\n' '  make test-unit        Run importer unit tests (no database required)'
 	@printf '%s\n' '  make crawl-official   Dry-run polite GET of official careerUrl pages (no write)'
 	@printf '%s\n' '  make refresh-radar     Download reviewed radar snapshot and remap drops'
@@ -28,6 +29,9 @@ preflight: ## Verify DATABASE_URL and PostGIS availability
 
 db-migrate: ## Apply pending SQL migrations (requires DATABASE_URL)
 	db/scripts/apply.sh
+
+db-repair-020: ## Retarget cross-company position sites so migration 020 can install (ENV_ONLY)
+	db/scripts/repair-020-position-site-company.sh
 
 test-unit: ## Run importer unit tests (Python 3.12; uv when available)
 	@if command -v uv >/dev/null 2>&1; then \
