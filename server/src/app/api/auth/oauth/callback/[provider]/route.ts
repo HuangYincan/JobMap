@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { writeSessionCookie } from '@/lib/http-session';
+import { DbUnavailableError } from '@/lib/account-store';
 import {
   OauthBadRequestError,
   OauthProviderError,
@@ -51,6 +52,12 @@ export async function GET(
     await writeSessionCookie(result.session.token, result.session.expiresAt);
     return NextResponse.redirect(absoluteRedirect(result.next, base), 302);
   } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return NextResponse.json(
+        { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
     if (err instanceof OauthBadRequestError) {
       return NextResponse.json({ code: 'BAD_REQUEST', message: err.message }, { status: 400 });
     }

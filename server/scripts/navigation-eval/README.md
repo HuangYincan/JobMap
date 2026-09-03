@@ -6,7 +6,7 @@ Offline SQL/Python reports for the WS3 job-navigation eval runner.
 - **Does not** read or write `audit_events`.
 - stdlib only (`python3`); no pip dependencies.
 
-Event field dictionary: `tech/roles/development/eval/navigation-events.md`.
+Event field dictionary: `report.py` declares the accepted JSONL columns (`EVENT_COLUMNS` and `CAMEL_TO_SNAKE`); keep it in sync with the runner tests when adding a field.
 
 ```bash
 # From the repo worktree, after the Node runner wrote results.json + events.jsonl:

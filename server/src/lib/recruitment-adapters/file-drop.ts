@@ -13,6 +13,7 @@ import type {
   SourceCompany,
   SourceFileDiagnostic,
 } from '../recruitment-source.ts';
+import { canonicalSourceForAdapter } from '../recruitment-source.ts';
 
 function asCompany(raw: unknown): SourceCompany | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -46,23 +47,51 @@ export function parseSourceCompanyPayload(raw: unknown): SourceCompany[] {
 
 type SourceCompanyParser = (raw: unknown) => ParsedSourceCompanyPayload;
 
+export interface FileDropOptions {
+  /** Canonical source code to stamp onto source-less nested records. */
+  sourceCode?: string;
+  /** README-only/missing directories are an explicit no-op, not a snapshot. */
+  optionalNoop?: boolean;
+}
+
+function stampSource(company: SourceCompany, sourceCode: string): SourceCompany {
+  return {
+    ...company,
+    source: company.source?.trim() || sourceCode,
+    sites: company.sites.map((site) => ({
+      ...site,
+      source: site.source?.trim() || sourceCode,
+    })),
+    positions: company.positions.map((position) => ({
+      ...position,
+      source: position.source?.trim() || sourceCode,
+    })),
+  };
+}
+
 export async function listSourceCompanyFilesDetailed(
   dir: string,
   parse: SourceCompanyParser = parseSourceCompanyPayloadDetailed,
+  options: FileDropOptions = {},
 ): Promise<RecruitmentAdapterResult> {
+  const sourceCode = options.sourceCode?.trim() || 'seed';
   let names: string[];
   try {
     names = await readdir(dir);
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
+    const noOp = options.optionalNoop && code === 'ENOENT';
     return {
+      sourceCode,
       companies: [],
       diagnostics: [{
         file: dir,
         kind: code === 'ENOENT' ? 'missing-directory' : 'read-directory-failed',
         message: code === 'ENOENT' ? 'directory does not exist' : `directory read failed: ${code ?? 'unknown error'}`,
+        ...(noOp ? { blocking: false } : {}),
       }],
-      completeness: 'incomplete',
+      completeness: noOp ? 'complete' : 'incomplete',
+      snapshot: noOp ? 'noop' : 'authoritative',
     };
   }
 
@@ -75,6 +104,16 @@ export async function listSourceCompanyFilesDetailed(
   } else if (jsonNames.length === 0) {
     diagnostics.push({ file: dir, kind: 'no-json-files', message: 'directory contains no readable JSON drop files' });
     complete = false;
+  }
+
+  if (!complete && options.optionalNoop && (names.length === 0 || jsonNames.length === 0)) {
+    return {
+      sourceCode,
+      companies: [],
+      diagnostics: diagnostics.map((diagnostic) => ({ ...diagnostic, blocking: false })),
+      completeness: 'complete',
+      snapshot: 'noop',
+    };
   }
 
   const companies: SourceCompany[] = [];
@@ -115,18 +154,33 @@ export async function listSourceCompanyFilesDetailed(
     }
   }
 
-  return { companies, diagnostics, completeness: complete ? 'complete' : 'incomplete' };
+  return {
+    sourceCode,
+    companies: companies.map((company) => stampSource(company, sourceCode)),
+    diagnostics,
+    completeness: complete ? 'complete' : 'incomplete',
+    snapshot: 'authoritative',
+  };
 }
 
-export async function listSourceCompanyFiles(dir: string): Promise<SourceCompany[]> {
-  return (await listSourceCompanyFilesDetailed(dir)).companies;
+export async function listSourceCompanyFiles(
+  dir: string,
+  parse: SourceCompanyParser = parseSourceCompanyPayloadDetailed,
+  options: FileDropOptions = {},
+): Promise<SourceCompany[]> {
+  return (await listSourceCompanyFilesDetailed(dir, parse, options)).companies;
 }
 
-export function fileDropAdapter(kind: RecruitmentSourceKind, dir: string): RecruitmentAdapter {
+export function fileDropAdapter(
+  kind: RecruitmentSourceKind,
+  dir: string,
+  options: Omit<FileDropOptions, 'sourceCode'> = {},
+): RecruitmentAdapter {
+  const sourceCode = canonicalSourceForAdapter(kind);
   return {
     kind,
-    list: () => listSourceCompanyFiles(dir),
-    listDetailed: () => listSourceCompanyFilesDetailed(dir),
+    list: () => listSourceCompanyFiles(dir, parseSourceCompanyPayloadDetailed, { ...options, sourceCode }),
+    listDetailed: () => listSourceCompanyFilesDetailed(dir, parseSourceCompanyPayloadDetailed, { ...options, sourceCode }),
   };
 }
 

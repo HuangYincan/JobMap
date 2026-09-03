@@ -1019,6 +1019,10 @@ test('route callback:runOauthCallback 接线 + session cookie + 全部 302 经 a
   assert.match(route, /code: 'BAD_REQUEST'/);
   assert.match(route, /status: 400/);
   assert.match(route, /params: Promise<\{ provider: string \}>/);
+  assert.match(route, /err instanceof DbUnavailableError/);
+  assert.match(route, /code: 'DB_UNAVAILABLE'/);
+  assert.match(route, /status: 503/);
+  assert.match(route, /Cache-Control': 'no-store'/);
 });
 
 test('demo login is gated by provider configuration and never enabled in production', () => {

@@ -543,6 +543,9 @@ class RadarMapTests(unittest.TestCase):
         }
         fixture = radar_fixture(payload)
         self.assertTrue(validate_local_fixture(fixture).valid)
+        self.assertEqual(fixture["companies"][0]["source"], "xiaozhao-radar")
+        self.assertEqual(fixture["companies"][0]["sites"][0]["source"], "xiaozhao-radar")
+        self.assertEqual(fixture["companies"][0]["positions"][0]["source"], "xiaozhao-radar")
         # Default target set = all ten cities (2026-08-20 ws-w5) → both rows map.
         self.assertEqual(len(fixture["companies"]), 2)
         self.assertEqual(len(merge_radar_companies(payload["jobs"])), 2)

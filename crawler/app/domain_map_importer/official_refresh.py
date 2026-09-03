@@ -41,6 +41,7 @@ def apply_extracted_jobs(company: dict[str, Any], jobs: list[dict[str, str]], *,
         family = job.get("family") or guess_family(title)
         position = {
             "externalId": external_id,
+            "source": job.get("source") or next_company.get("source") or "official-career",
             "title": title[:120],
             "siteId": site_id,
             "family": family,
@@ -114,7 +115,8 @@ def refresh_company_from_source(
         # snapshot.  In particular, do not use the HTML shell as a fallback:
         # it has no trustworthy job rows and could hide a failed API refresh.
         if complete:
-            return apply_extracted_jobs(company, positions, retrieved_at=stamp), meta
+            feishu_company = {**company, "source": "feishu-ats"}
+            return apply_extracted_jobs(feishu_company, positions, retrieved_at=stamp), meta
         return json.loads(json.dumps(company)), meta
     return refresh_company_from_html(company, html, page_url, retrieved_at=stamp), meta
 

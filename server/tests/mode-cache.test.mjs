@@ -166,6 +166,7 @@ test('stale cache version is rejected so refreshed data loads', () => {
 
 // 2026-08-26 (r5 geocode 数据落地, commit 313fc61): 135 站占位/中心钉坐标落真实办公点
 // (address/lng/lat 改写), MODE_CACHE_VERSION 18 → 19。v18 缓存含旧坐标, 必须失效重拉。
+// POI 地址行只读取可选的现有 location.address，不额外改变缓存版本。
 test('current MODE_CACHE_VERSION is 20 (city-clip aggregate fanout landing forces refresh)', () => {
   assert.equal(MODE_CACHE_VERSION, 20);
 });

@@ -87,7 +87,7 @@ export async function listEmbodiedJobsFiles(dir = EMBODIED_JOBS_DIR): Promise<So
 }
 
 export async function listEmbodiedJobsFilesDetailed(dir = EMBODIED_JOBS_DIR) {
-  return listSourceCompanyFilesDetailed(dir, parseEmbodiedJobsPayloadDetailed);
+  return listSourceCompanyFilesDetailed(dir, parseEmbodiedJobsPayloadDetailed, { sourceCode: 'embodied-jobs' });
 }
 
 export function embodiedJobsAdapter(dir = EMBODIED_JOBS_DIR): RecruitmentAdapter {

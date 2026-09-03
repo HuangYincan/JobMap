@@ -32,7 +32,7 @@ domain-map/
 
 | 脚本 | 用途 | 说明 |
 |---|---|---|
-| `plan-seed-import.mjs` | import plan 校验 | 0 issues / 0 dropped 才算通过 |
+| `plan-seed-import.mjs` | import plan 校验 | complete 且 0 issues / 0 dropped 才算通过；`--apply` 还必须实际写入 |
 | `apply-company-labels.mjs` | 打标结果写回 drops | `{slug:{tier,category}}[]` 幂等写回,校验值域 |
 | `qa-labels.mjs` | 打标 QA | 覆盖率/值域/锚点带(前缀+排除)/变体一致性 |
 | `validate-positions-llm.mjs` | LLM 岗位真实性校验 | 需 `LLM_API_KEY`/`LLM_MODEL`;无 key dry-run |

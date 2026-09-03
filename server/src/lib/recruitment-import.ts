@@ -22,13 +22,20 @@ import { shixisengAdapter } from './recruitment-adapters/shixiseng.ts';
 import { isAuthenticPositionRecord } from './freshness.ts';
 import { HANGZHOU_DISTRICTS } from './spatial-filters.ts';
 import type { CompanySite, JobTaxonomy } from './types.ts';
-import { sourceMetadataFor, SOURCE_META } from './recruitment-provenance.ts';
+import { sourceMetadataFor } from './recruitment-provenance.ts';
 import { listAdapter } from './recruitment-source.ts';
 
 export interface ImportIssue {
   slug: string;
   field: string;
   message: string;
+}
+
+export interface ImportSourceSnapshot {
+  /** Canonical sources.code represented by one adapter input. */
+  sourceCode: string;
+  /** Only a complete, explicitly supplied snapshot may reconcile stale rows. */
+  reconcile: boolean;
 }
 
 export interface ImportPlan {
@@ -38,6 +45,8 @@ export interface ImportPlan {
   diagnostics?: SourceFileDiagnostic[];
   /** False means at least one source input was not a complete snapshot. */
   complete?: boolean;
+  /** Adapter identity survives even when a source snapshot contains zero companies. */
+  sourceSnapshots?: ImportSourceSnapshot[];
 }
 
 const FAMILIES = new Set(['intern', 'campus', 'social']);
@@ -80,7 +89,7 @@ export function hasValidUrlScheme(raw: string | null | undefined): boolean {
   return fileIndex === -1 || fileIndex === segments.length - 1;
 }
 
-/** 首批目标城市（tech/18 D2）。地址解析只认这些城市的名字。 */
+/** 首批目标城市（当前全国读取范围）。地址解析只认这些城市的名字。 */
 const TARGET_CITIES = ['北京', '上海', '广州', '深圳', '成都', '武汉', '杭州'] as const;
 
 /**
@@ -270,6 +279,13 @@ export async function planSeedImport(): Promise<ImportPlan> {
   const [qqdocOfficial, qqdocJobs, official, boss, nowcoder, shixiseng, radar, embodiedJobs] = batches.map(
     (batch) => batch.companies,
   );
+  // Keep source identity independent from company rows: a valid [] file is an
+  // authoritative zero-record snapshot, while an optional README-only source
+  // is an observable no-op that must never reconcile stale rows.
+  const sourceSnapshots = batches.map((batch) => ({
+    sourceCode: batch.sourceCode,
+    reconcile: batch.snapshot === 'authoritative' && batch.completeness === 'complete',
+  }));
   // 严格 DB-only(2026-08-26): seed 示例数据已归档 tech/backup/seed-data,
   // 不再作为灌库数据源; 仅真实 drop(radar/portal/qqdoc/official/embodied 等)入库。
   const plan = planRecruitmentImport([
@@ -289,6 +305,7 @@ export async function planSeedImport(): Promise<ImportPlan> {
     ...plan,
     diagnostics: batches.flatMap((batch) => batch.diagnostics),
     complete: batches.every((batch) => batch.completeness === 'complete'),
+    sourceSnapshots,
   });
 }
 
@@ -312,12 +329,16 @@ export async function planOfficialCareerImport(dir?: string): Promise<ImportPlan
     ...plan,
     diagnostics: batch.diagnostics,
     complete: batch.completeness === 'complete',
+    sourceSnapshots: [{
+      sourceCode: batch.sourceCode,
+      reconcile: batch.snapshot === 'authoritative' && batch.completeness === 'complete',
+    }],
   };
 }
 
 export interface ImportApplyResult {
   wrote: boolean;
-  reason?: 'no-database' | 'empty-plan' | 'incomplete-input';
+  reason?: 'no-database' | 'empty-plan' | 'incomplete-input' | 'invalid-plan';
   companies: number;
   sites: number;
   positions: number;
@@ -404,7 +425,10 @@ function effectiveSource(position: SourcePosition, company: SourceCompany): stri
   return position.source?.trim() || company.source?.trim() || 'seed';
 }
 
-function prepareAudit(plan: SourceCompany[]): Map<string, AuditSourceBatch> {
+function prepareAudit(
+  plan: SourceCompany[],
+  sourceSnapshots: ImportSourceSnapshot[] = [],
+): Map<string, AuditSourceBatch> {
   const batches = new Map<string, AuditSourceBatch>();
   const ensure = (sourceCode: string): AuditSourceBatch => {
     const existing = batches.get(sourceCode);
@@ -413,6 +437,10 @@ function prepareAudit(plan: SourceCompany[]): Map<string, AuditSourceBatch> {
     batches.set(sourceCode, created);
     return created;
   };
+
+  for (const snapshot of sourceSnapshots) {
+    if (snapshot.reconcile) ensure(snapshot.sourceCode);
+  }
 
   for (const company of plan) {
     // A source with no eligible positions still gets a zero-record import run;
@@ -476,48 +504,42 @@ export async function applyRecruitmentImport(
   plan: ImportPlan,
   pool: ApplyDbPool | null = getPool(),
 ): Promise<ImportApplyResult> {
-  if (plan.companies.length === 0) {
-    return { wrote: false, reason: 'empty-plan', companies: 0, sites: 0, positions: 0 };
-  }
-  // Authenticity is source-provenance driven. official-career retains its
-  // historical portal-* compatibility rule; embodied-jobs is approved by its
-  // registered source policy, so embj-* is not silently discarded.
   const authentic = plan.companies.map((company) => ({
     ...company,
     positions: company.positions.filter((pos) =>
       isAuthenticPositionRecord({ externalId: pos.externalId, source: effectiveSource(pos, company) }),
     ),
   }));
-  if (!pool) {
-    return {
-      wrote: false,
-      reason: 'no-database',
-      companies: authentic.length,
-      sites: authentic.reduce((n, c) => n + c.sites.length, 0),
-      positions: authentic.reduce((n, c) => n + c.positions.length, 0),
-    };
+  const counts = (): Pick<ImportApplyResult, 'companies' | 'sites' | 'positions'> => ({
+    companies: authentic.length,
+    sites: authentic.reduce((n, company) => n + company.sites.length, 0),
+    positions: authentic.reduce((n, company) => n + company.positions.length, 0),
+  });
+  // Validate the whole snapshot before opening a DB connection. Otherwise a
+  // partial plan can reconcile valid rows and close rows omitted by malformed
+  // input, which is worse than rejecting the import.
+  const issueCount = plan.issues?.length ?? 0;
+  if (issueCount > 0 || plan.dropped > 0) {
+    return { wrote: false, reason: 'invalid-plan', ...counts() };
   }
-  // planSeedImport is an all-source snapshot. If any adapter could not produce
-  // a complete snapshot, keep all validated records available for diagnostics
-  // planSeedImport is an all-source snapshot. If any adapter could not produce
-  // a complete snapshot, keep all validated records available for diagnostics
-  // but refuse the entire DB apply. The explicit `true` check also fails closed
-  // for legacy or hand-built plans that do not carry completeness evidence.
-  // This prevents a missing/broken optional drop directory from being interpreted
-  // as a legitimate empty snapshot and triggering stale-row reconciliation. A
-  // future per-source lifecycle runner may narrow this gate once it can isolate
-  // reconciliation by source.
+  const hasAuthoritativeSnapshot = plan.sourceSnapshots?.some((snapshot) => snapshot.reconcile) ?? false;
+  if (plan.companies.length === 0 && !hasAuthoritativeSnapshot && plan.complete === undefined) {
+    return { wrote: false, reason: 'empty-plan', companies: 0, sites: 0, positions: 0 };
+  }
   if (plan.complete !== true) {
-    return {
-      wrote: false,
-      reason: 'incomplete-input',
-      companies: authentic.length,
-      sites: authentic.reduce((n, company) => n + company.sites.length, 0),
-      positions: authentic.reduce((n, company) => n + company.positions.length, 0),
-    };
+    return { wrote: false, reason: 'incomplete-input', ...counts() };
+  }
+  if (plan.companies.length === 0 && !hasAuthoritativeSnapshot) {
+    return { wrote: false, reason: 'empty-plan', companies: 0, sites: 0, positions: 0 };
+  }
+  // Authenticity is source-provenance driven. official-career retains its
+  // historical portal-* compatibility rule; embodied-jobs is approved by its
+  // registered source policy, so embj-* is not silently discarded.
+  if (!pool) {
+    return { wrote: false, reason: 'no-database', ...counts() };
   }
 
-  const audit = prepareAudit(authentic);
+  const audit = prepareAudit(authentic, plan.sourceSnapshots?.filter((snapshot) => snapshot.reconcile));
   const client = await pool.connect();
   const sourceIds = new Map<string, string>();
   const runIds = new Map<string, string>();

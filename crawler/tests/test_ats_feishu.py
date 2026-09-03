@@ -159,7 +159,10 @@ class PositionMappingTests(unittest.TestCase):
         self.assertEqual(ats_feishu.job_to_position(outsource, "s", "t")["family"], "social")
         self.assertEqual(ats_feishu.job_to_position(by_title, "s", "t")["family"], "social")
 
-    def test_missing_id_raises(self):
+    def test_maps_source_provenance(self):
+        position = ats_feishu.job_to_position(CAMPUS_JOB, "nio-site", "t")
+        self.assertEqual(position["source"], "feishu-ats")
+
         with self.assertRaises(ats_feishu.AdapterError):
             ats_feishu.job_to_position({"title": "无 id"}, "s", "t")
 
@@ -244,7 +247,25 @@ class PaginationTests(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         self.assertIn("code=9", errors[0]["error"])
 
-    def test_degrades_on_non_json(self):
+    def test_rejects_invalid_limits_without_network(self):
+        for kwargs in ({"page_size": 0}, {"page_size": -1}, {"page_size": 51}, {"max_jobs": 0}, {"max_jobs": -1}):
+            fetcher = make_fetcher([])
+            with self.assertRaises(ValueError):
+                ats_feishu.fetch_all_jobs(fetcher, "nio.jobs.feishu.cn", allow_live_refresh=True, **kwargs)
+            self.assertEqual(fetcher._get.calls, [])
+
+    def test_truncates_at_safety_cap_and_marks_incomplete(self):
+        page = {"code": 0, "data": {"job_post_list": [CAMPUS_JOB, SOCIAL_JOB], "count": 3}}
+        fetcher = make_fetcher([(200, json.dumps(page))])
+        jobs, errors = ats_feishu.fetch_all_jobs(
+            fetcher, "nio.jobs.feishu.cn", page_size=2, max_jobs=1, allow_live_refresh=True,
+        )
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("max_jobs=1", errors[0]["error"])
+        api_call = [call for call in fetcher._get.calls if "/api/" in call["url"]][0]
+        self.assertEqual(json.loads(api_call["body"])["limit"], 1)
+
         fetcher = make_fetcher([(200, "<html>challenge page</html>")])
         jobs, errors = ats_feishu.fetch_all_jobs(fetcher, "nio.jobs.feishu.cn", page_size=2, allow_live_refresh=True)
         self.assertEqual(jobs, [])
@@ -257,6 +278,7 @@ class SourceRoutingTests(unittest.TestCase):
         refreshed, meta = refresh_company_from_source(COMPANY, fetcher, SAMPLE_HTML, "https://nio.jobs.feishu.cn/", page_size=2, allow_live_refresh=True)
         self.assertEqual(meta["source"], "feishu-api")
         self.assertEqual(meta["api_jobs"], 3)
+        self.assertEqual(refreshed["source"], "feishu-ats")
         ids = {p["externalId"] for p in refreshed["positions"]}
         self.assertEqual(ids, {"portal-feishu-759213000000000001", "portal-feishu-759213000000000002", "portal-feishu-759213000000000003"})
         with_desc = [p for p in refreshed["positions"] if p.get("description")]

@@ -35,6 +35,7 @@ from typing import Any
 
 SEARCH_JOB_PATH = "/api/v1/search/job/posts"
 DEFAULT_PAGE_SIZE = 50
+MAX_PAGE_SIZE = 50
 MAX_JOBS = 2000  # safety cap per tenant
 MAX_JD_CHARS = 8000
 
@@ -291,6 +292,7 @@ def job_to_position(job: dict[str, Any], site_id: str, retrieved_at: str, host: 
     site_prefix = f"/{website_path}" if website_path else ""
     position: dict[str, Any] = {
         "externalId": f"portal-feishu-{job_id}",
+        "source": "feishu-ats",
         "title": title[:120],
         "siteId": site_id,
         "family": family,
@@ -383,6 +385,11 @@ def fetch_all_jobs(
     as errors (never crash the batch). Any non-empty errors make the result
     incomplete and callers must not reconcile or write it as a full snapshot.
     """
+    if not isinstance(page_size, int) or isinstance(page_size, bool) or page_size < 1 or page_size > MAX_PAGE_SIZE:
+        raise ValueError(f"page_size must be an integer between 1 and {MAX_PAGE_SIZE}")
+    if not isinstance(max_jobs, int) or isinstance(max_jobs, bool) or max_jobs < 1:
+        raise ValueError("max_jobs must be a positive integer")
+    max_jobs = min(max_jobs, MAX_JOBS)
     if not allow_live_refresh:
         return [], [{
             "url": f"https://{host}{SEARCH_JOB_PATH}",
@@ -394,17 +401,30 @@ def fetch_all_jobs(
     offset = 0
     total = None
     while offset < (total if total is not None else max_jobs):
-        url = build_search_url(host, offset=offset, limit=page_size, website_path=website_path)
+        remaining = max_jobs - len(jobs)
+        if remaining <= 0:
+            break
+        limit = min(page_size, remaining)
+        url = build_search_url(host, offset=offset, limit=limit, website_path=website_path)
         try:
-            page_jobs, total = fetch_page(fetcher, host, offset, limit=page_size, website_path=website_path)
+            page_jobs, total = fetch_page(fetcher, host, offset, limit=limit, website_path=website_path)
         except AdapterError as exc:
             errors.append({"url": url, "error": str(exc)})
             break
-        jobs.extend(page_jobs)
-        if total <= offset + page_size:
+        if not page_jobs and total > offset:
+            errors.append({"url": url, "error": "empty page before reported total"})
             break
-        offset += page_size
+        jobs.extend(page_jobs[:remaining])
+        page_exceeded_cap = len(page_jobs) > remaining
         if len(jobs) >= max_jobs:
-            errors.append({"url": url, "error": f"reached max_jobs={max_jobs}"})
+            if page_exceeded_cap or total > offset + len(page_jobs):
+                errors.append({"url": url, "error": f"reached max_jobs={max_jobs}"})
             break
+        if total <= offset + len(page_jobs):
+            break
+        next_offset = offset + limit
+        if next_offset <= offset:
+            errors.append({"url": url, "error": "pagination offset did not advance"})
+            break
+        offset = next_offset
     return jobs, errors

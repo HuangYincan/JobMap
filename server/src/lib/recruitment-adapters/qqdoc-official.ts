@@ -127,7 +127,7 @@ export async function listQqdocOfficialFiles(dir = QQDOC_OFFICIAL_DIR): Promise<
 }
 
 export async function listQqdocOfficialFilesDetailed(dir = QQDOC_OFFICIAL_DIR) {
-  return listSourceCompanyFilesDetailed(dir, parseQqdocOfficialPayloadDetailed);
+  return listSourceCompanyFilesDetailed(dir, parseQqdocOfficialPayloadDetailed, { sourceCode: 'qqdoc-official' });
 }
 
 export function qqdocOfficialAdapter(dir = QQDOC_OFFICIAL_DIR): RecruitmentAdapter {
