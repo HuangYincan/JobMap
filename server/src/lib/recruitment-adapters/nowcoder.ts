@@ -8,7 +8,7 @@ import type { RecruitmentAdapter } from '../recruitment-source.ts';
 export const NOWCODER_DIR = process.env.NOWCODER_DIR || defaultDropDir('nowcoder');
 
 export function nowcoderAdapter(dir = NOWCODER_DIR): RecruitmentAdapter {
-  return fileDropAdapter('nowcoder', dir);
+  return fileDropAdapter('nowcoder', dir, { optionalNoop: true });
 }
 
 export const fileNowcoderAdapter = nowcoderAdapter();

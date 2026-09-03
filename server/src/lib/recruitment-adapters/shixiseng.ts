@@ -8,7 +8,7 @@ import type { RecruitmentAdapter } from '../recruitment-source.ts';
 export const SHIXISENG_DIR = process.env.SHIXISENG_DIR || defaultDropDir('shixiseng');
 
 export function shixisengAdapter(dir = SHIXISENG_DIR): RecruitmentAdapter {
-  return fileDropAdapter('shixiseng', dir);
+  return fileDropAdapter('shixiseng', dir, { optionalNoop: true });
 }
 
 export const fileShixisengAdapter = shixisengAdapter();

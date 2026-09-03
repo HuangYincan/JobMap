@@ -2,7 +2,7 @@
 // 招聘数据源插件
 //
 // 一家公司多个职场；一个岗位必须挂一个 site。
-// 2026-08-26 起严格 DB-only：seed 示例数据已归档 tech/backup/seed-data，
+// 2026-08-26 起严格 DB-only：seed 示例数据已归档，
 // 导入只走 official-career / boss / radar / qqdoc / embodied 等真实 adapter。
 // 过期岗位由 adapter 标 closed，新岗增量 upsert。
 // ============================================================
@@ -25,13 +25,23 @@ export interface SourceFileDiagnostic {
   file: string;
   kind: SourceFileDiagnosticKind;
   message: string;
+  /** Optional-source no-op diagnostics are informational and do not block apply. */
+  blocking?: boolean;
 }
 
 export interface RecruitmentAdapterResult {
+  /** Canonical source code represented by this adapter's snapshot. */
+  sourceCode: string;
   companies: SourceCompany[];
   diagnostics: SourceFileDiagnostic[];
   /** Complete means every expected input file was read and parsed. */
   completeness: 'complete' | 'incomplete';
+  /** No-op means no authoritative snapshot was supplied for this source. */
+  snapshot: 'authoritative' | 'noop';
+}
+
+export function canonicalSourceForAdapter(kind: RecruitmentSourceKind): string {
+  return kind === 'radar' ? 'xiaozhao-radar' : kind;
 }
 
 export interface SourcePosition {
@@ -62,7 +72,7 @@ export interface SourceCompany {
   slug: string;
   name: string;
   /** 数据来源 code(对应 db sources.code,如 'xiaozhao-radar' / 'feishu-ats');
-   *  缺省时落库回退 'seed'(见 recruitment-import.ts SOURCE_META) */
+   *  file-drop adapter 会在边界补齐缺省值，手写计划缺省时才回退 'seed'。 */
   source?: string;
   industries: string[];
   scale: RecruitmentPOI['company']['scale'];
@@ -89,9 +99,11 @@ export interface RecruitmentAdapter {
 export async function listAdapter(adapter: RecruitmentAdapter): Promise<RecruitmentAdapterResult> {
   if (adapter.listDetailed) return adapter.listDetailed();
   return {
+    sourceCode: canonicalSourceForAdapter(adapter.kind),
     companies: await adapter.list(),
     diagnostics: [],
     completeness: 'complete',
+    snapshot: 'authoritative',
   };
 }
 

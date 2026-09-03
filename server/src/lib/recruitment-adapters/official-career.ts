@@ -15,9 +15,9 @@ export const OFFICIAL_CAREER_DIR = process.env.OFFICIAL_CAREER_DIR || defaultDro
 
 export const parseOfficialCareerPayload = parseSourceCompanyPayload;
 export const listOfficialCareerFiles = (dir = OFFICIAL_CAREER_DIR): Promise<SourceCompany[]> =>
-  listSourceCompanyFiles(dir);
+  listSourceCompanyFiles(dir, undefined, { sourceCode: 'official-career' });
 export const listOfficialCareerFilesDetailed = (dir = OFFICIAL_CAREER_DIR) =>
-  listSourceCompanyFilesDetailed(dir);
+  listSourceCompanyFilesDetailed(dir, undefined, { sourceCode: 'official-career' });
 
 export function officialCareerAdapter(dir = OFFICIAL_CAREER_DIR): RecruitmentAdapter {
   return fileDropAdapter('official-career', dir);

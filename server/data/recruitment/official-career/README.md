@@ -1,6 +1,8 @@
 # Official-career drops
 
-Drop one JSON file per company (or an array of companies). `npm run import:seed` and the no-DB work catalog (`loadOfflineWorkCatalog`) merge these with `WORK_SEED` (same slug → sites/positions union; new slugs become catalog POIs). Samples: 2026 autumn frontend drops on every seed slug that already has a public career URL (plus 之江实验室 as a new slug). 曦曦AI has no official career page and stays seed-only. Empty directory is a no-op. Same-slug `sites.id` must match the seed (`${slug}-site`) or the merge adds a second map pin. `boss/`, `nowcoder/`, and `shixiseng/` use the same shape; empty dirs stay a no-op.
+Drop one JSON file per company (or an array of companies). The DB-only importer reads this directory as the authoritative `official-career` snapshot; it does not merge with `WORK_SEED` or an offline fallback. Source-less nested rows inherit `official-career`; explicit `source` values are preserved. For public Work reads, only `portal-*` positions from this source pass the authenticity rule.
+
+A readable JSON file containing `[]` is a complete zero-row snapshot and reconciles stale `official-career` positions closed. Missing, empty, README-only, malformed, unreadable, or semantically invalid input is not an authoritative successful snapshot and blocks apply. Do not put secrets here. Override the directory with `OFFICIAL_CAREER_DIR`.
 
 Shape matches `SourceCompany` in `lib/recruitment-source.ts`:
 
@@ -8,6 +10,7 @@ Shape matches `SourceCompany` in `lib/recruitment-source.ts`:
 {
   "slug": "example-hz",
   "name": "Example",
+  "source": "official-career",
   "industries": ["internet"],
   "scale": "startup",
   "careerUrl": "https://example.com/jobs",
@@ -20,9 +23,10 @@ Shape matches `SourceCompany` in `lib/recruitment-source.ts`:
   ],
   "positions": [
     {
-      "externalId": "example-fe",
+      "externalId": "portal-example-fe",
       "title": "前端",
       "siteId": "hq",
+      "source": "official-career",
       "family": "intern",
       "status": "open",
       "applyUrl": "https://example.com/jobs/fe"
@@ -30,5 +34,3 @@ Shape matches `SourceCompany` in `lib/recruitment-source.ts`:
   ]
 }
 ```
-
-Do not put secrets here. Override the directory with `OFFICIAL_CAREER_DIR`.

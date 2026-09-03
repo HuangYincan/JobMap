@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   loadWorkCatalogPageFromDb,
   supportsWorkCatalogPageQuery,
+  isValidCalendarDate,
 } from '../src/lib/work-catalog-page.ts';
 
 const candidate = {
@@ -47,6 +48,23 @@ test('bounded Work page supports literal and alias national queries, rejects sem
   assert.equal(supportsWorkCatalogPageQuery({ q: '#大厂', filters: {}, sort: 'rating' }), false);
   assert.equal(supportsWorkCatalogPageQuery({ filters: { city: '杭州' }, sort: 'rating' }), false);
   assert.equal(supportsWorkCatalogPageQuery({ filters: {}, sort: 'relevance' }), false);
+});
+
+test('bounded Work date filters require a real YYYY-MM-DD calendar date', () => {
+  assert.equal(isValidCalendarDate('2024-02-29'), true);
+  assert.equal(isValidCalendarDate('2025-02-29'), false);
+  assert.equal(isValidCalendarDate('2026-02-31'), false);
+  assert.equal(isValidCalendarDate('2026-2-03'), false);
+  assert.equal(supportsWorkCatalogPageQuery({ filters: { deadline: '2026-02-31' } }), false);
+  assert.equal(supportsWorkCatalogPageQuery({ filters: { deadline: '2026-09-03' } }), true);
+});
+
+test('bounded Work binds the validated deadline unchanged', async () => {
+  const pool = fakePool();
+  await loadWorkCatalogPageFromDb({ filters: { deadline: '2026-09-03' } }, pool);
+  const count = pool.calls.find((call) => call.sql.includes('/* work-page count */'));
+  assert.ok(count.sql.includes('::date'));
+  assert.ok(count.params.includes('2026-09-03'));
 });
 
 test('bounded Work page pushes filters, sort, offset/limit, and hydrates only selected sites', async () => {

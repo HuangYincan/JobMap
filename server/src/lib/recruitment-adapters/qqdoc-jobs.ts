@@ -113,7 +113,7 @@ export async function listQqdocJobsFiles(dir = QQDOC_JOBS_DIR): Promise<SourceCo
 }
 
 export async function listQqdocJobsFilesDetailed(dir = QQDOC_JOBS_DIR) {
-  return listSourceCompanyFilesDetailed(dir, parseQqdocJobsPayloadDetailed);
+  return listSourceCompanyFilesDetailed(dir, parseQqdocJobsPayloadDetailed, { sourceCode: 'qqdoc-jobs' });
 }
 
 export function qqdocJobsAdapter(dir = QQDOC_JOBS_DIR): RecruitmentAdapter {

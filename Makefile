@@ -44,8 +44,8 @@ refresh-radar: ## Download the reviewed radar snapshot, remap drops, and validat
 		--out-dir ../server/data/recruitment/radar
 	@rm -f server/data/recruitment/radar/_radar-fixture.json
 	@cd crawler && PYTHONPATH=app python3 -m unittest discover -s tests -q >/dev/null && echo "crawler tests OK"
-	@cd server && node --experimental-strip-types --no-warnings scripts/plan-seed-import.mjs 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(f'import plan: {d[\"companies\"]} companies / {d[\"positions\"]} positions, {len(d[\"issues\"])} issues, {d[\"dropped\"]} dropped'); sys.exit(1 if d[\"dropped\"] or d[\"issues\"] else 0)" && echo "import plan OK"
-	@echo "Refresh done. Record the SHA-256 in tech/roles/data/data-quality.md."
+	@cd server && node --experimental-strip-types --no-warnings scripts/plan-seed-import.mjs 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(f'import plan: {d[\"companies\"]} companies / {d[\"positions\"]} positions, {len(d[\"issues\"])} issues, {d[\"dropped\"]} dropped'); sys.exit(1 if (not d[\"complete\"] or d[\"dropped\"] or d[\"issues\"]) else 0)" && echo "import plan OK"
+	@echo "Refresh done. Record the source SHA-256 in server/data/recruitment/radar/README.md."
 
 geocode-sites: ## Real office coords for city-list drops, city-scoped (AMAP_WEB_KEY + BAIDU/TENCENT fallback keys; --dry-run prints the plan)
 	cd server && node --no-warnings scripts/geocode-sites-apply.mjs $(filter-out $@,$(MAKECMDGOALS))

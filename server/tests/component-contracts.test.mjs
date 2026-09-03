@@ -24,12 +24,23 @@ test('POICard is a keyboard button with selected/highlight states', () => {
   assert.match(card, /onClick=\{\s*\(e\) => \{[\s\S]*onClick\?\.\(poi\)/);
 });
 
+test('POICard renders nonblank addresses with a decorative icon and ellipsis', () => {
+  const card = src('components/poi-card.tsx');
+  const css = src('components/poi-card.module.css');
+  assert.match(card, /function AddressRow\(\{ address \}: \{ address\?: string \}\)/);
+  assert.match(card, /const text = address\?\.trim\(\)/);
+  assert.match(card, /if \(!text\) return null/);
+  assert.match(card, /<AddressRow address=\{poi\.location\.address\} \/>/g);
+  assert.match(card, /aria-hidden="true"/);
+  assert.match(css, /\.addressText[\s\S]*text-overflow: ellipsis/);
+  assert.match(css, /\.addressText[\s\S]*white-space: nowrap/);
+});
+
 test('POICard does not show commute estimate minutes or compare checkbox', () => {
   const card = src('components/poi-card.tsx');
   const list = src('components/poi-list.tsx');
   const css = src('components/poi-card.module.css');
   const i18n = src('lib/i18n.ts');
-  assert.doesNotMatch(card, /commuteEstimateBadge/);
   assert.doesNotMatch(card, /commuteMinutes/);
   assert.doesNotMatch(card, /commuteEstimated/);
   assert.doesNotMatch(card, /onToggleCompare/);

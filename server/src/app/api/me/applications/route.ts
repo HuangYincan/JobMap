@@ -109,11 +109,21 @@ export async function PATCH(request: Request) {
   if (!status) {
     return noStoreJson({ code: "UNKNOWN_STATUS", message: "status is not in the user pipeline" }, { status: 400 });
   }
-  const item = await updateApplicationStatus(user.id, id, status);
-  if (!item) {
-    return noStoreJson({ code: "NOT_FOUND", message: "application not found" }, { status: 404 });
+  try {
+    const item = await updateApplicationStatus(user.id, id, status);
+    if (!item) {
+      return noStoreJson({ code: "NOT_FOUND", message: "application not found" }, { status: 404 });
+    }
+    return noStoreJson({ item });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
   }
-  return noStoreJson({ item });
 }
 
 export async function DELETE(request: Request) {

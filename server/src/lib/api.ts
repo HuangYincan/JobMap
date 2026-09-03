@@ -1,7 +1,7 @@
 // ============================================================
 // 前端 API 客户端 — 当前后端契约
 //
-// 路由遵循 tech/11-phase2-plan.md + tech/10-search-filter.md：
+// 路由遵循当前 App Router API 契约：
 // - GET /api/suggest        搜索建议（客户端直连，带 LRU）
 // - GET /api/pois/[id]      POI 详情（客户端直连）
 // - GET /api/modes          模式列表（备用；前端 MODES 注册表是权威）
@@ -19,7 +19,7 @@ import { readSuggestCache, suggestCacheKey, writeSuggestCache } from './public-c
 /** API 基础路径（Next 同源部署时为空） */
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
-/** 统一错误形状（tech/01-architecture.md） */
+/** 统一错误形状（由各路由当前 API 契约约束） */
 export interface ApiError {
   code: string;
   message: string;

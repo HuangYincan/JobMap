@@ -35,7 +35,7 @@ console.log(
       sites,
       positions,
       dropped: plan.dropped,
-      complete: plan.complete !== false,
+      complete: plan.complete === true,
       diagnostics: plan.diagnostics ?? [],
       issues: plan.issues,
       apply: result,
@@ -44,4 +44,7 @@ console.log(
     2,
   ),
 );
-if (plan.dropped > 0) process.exitCode = 1;
+const blockingDiagnostics = (plan.diagnostics ?? []).some((diagnostic) => diagnostic.blocking !== false);
+if (plan.complete !== true || blockingDiagnostics || plan.issues.length > 0 || plan.dropped > 0 || (apply && !result?.wrote)) {
+  process.exitCode = 1;
+}

@@ -8,7 +8,7 @@ import type { RecruitmentAdapter } from '../recruitment-source.ts';
 export const BOSS_DIR = process.env.BOSS_DIR || defaultDropDir('boss');
 
 export function bossAdapter(dir = BOSS_DIR): RecruitmentAdapter {
-  return fileDropAdapter('boss', dir);
+  return fileDropAdapter('boss', dir, { optionalNoop: true });
 }
 
 export const fileBossAdapter = bossAdapter();

@@ -19,7 +19,7 @@ export const SOURCE_META: Record<string, RecruitmentSourceMetadata> = {
   seed: {
     // 2026-08-26 起 seed 示例数据已归档 tech/backup/seed-data(不再作为导入源);
     // 此处保留 provenance 供历史行(早期 import:seed 写入的 source_id='seed')追溯。
-    originUri: 'local:WORK_SEED (archived 2026-08-26: tech/backup/seed-data/work-seed.json)',
+    originUri: 'local:WORK_SEED (archived 2026-08-26)',
     authorizationBasis: 'curated-public',
     accessMethod: 'manual',
     attribution: 'Domain Map curated seed',
@@ -42,7 +42,7 @@ export const SOURCE_META: Record<string, RecruitmentSourceMetadata> = {
     originUri: 'https://*.jobs.feishu.cn',
     authorizationBasis: 'public-api',
     accessMethod: 'polite-json-api',
-    attribution: 'Feishu ATS public job search API (tech/roles/data/etl/feishu-ats.md)',
+    attribution: 'Feishu ATS public job search API; Domain Map field mapping',
     retention: 'until-replaced',
     deletion: 'delete-with-source',
     authenticity: 'source',
@@ -84,6 +84,33 @@ export const SOURCE_META: Record<string, RecruitmentSourceMetadata> = {
     retention: 'until-replaced',
     deletion: 'delete-with-source',
     authenticity: 'source',
+  },
+  boss: {
+    originUri: 'local:server/data/recruitment/boss/',
+    authorizationBasis: 'curated-public',
+    accessMethod: 'manual',
+    attribution: 'Domain Map curated Boss source drop',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+    authenticity: 'none',
+  },
+  nowcoder: {
+    originUri: 'local:server/data/recruitment/nowcoder/',
+    authorizationBasis: 'curated-public',
+    accessMethod: 'manual',
+    attribution: 'Domain Map curated Nowcoder source drop',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+    authenticity: 'none',
+  },
+  shixiseng: {
+    originUri: 'local:server/data/recruitment/shixiseng/',
+    authorizationBasis: 'curated-public',
+    accessMethod: 'manual',
+    attribution: 'Domain Map curated Shixiseng source drop',
+    retention: 'until-replaced',
+    deletion: 'delete-with-source',
+    authenticity: 'none',
   },
   'embodied-jobs': {
     originUri: 'https://raw.githubusercontent.com/Octoday-Hub/Embodied-AI/main/topics/02-jobs.md',

@@ -13,6 +13,9 @@ from .acquire import AcquisitionError, PoliteFetcher
 from .ats_feishu import (
     CITY_PINYIN,
     CITY_PROVINCE,
+    DEFAULT_PAGE_SIZE,
+    MAX_JOBS,
+    MAX_PAGE_SIZE,
     AdapterError,
     city_site_id,
     feishu_live_refresh_authorized,
@@ -377,6 +380,13 @@ def cmd_feishu(args: argparse.Namespace) -> int:
     # Dry-run is read-only: do not create the requested output directory until
     # a complete, explicitly authorized snapshot is actually being written.
     write_requested = bool(getattr(args, "write", False))
+    requested_page_size = getattr(args, "page_size", DEFAULT_PAGE_SIZE)
+    requested_max_jobs = getattr(args, "max_jobs", MAX_JOBS)
+    if not isinstance(requested_page_size, int) or isinstance(requested_page_size, bool) or not 1 <= requested_page_size <= MAX_PAGE_SIZE:
+        raise ValueError(f"page_size must be an integer between 1 and {MAX_PAGE_SIZE}")
+    if not isinstance(requested_max_jobs, int) or isinstance(requested_max_jobs, bool) or requested_max_jobs < 1:
+        raise ValueError("max_jobs must be a positive integer")
+    tenant_max_jobs = min(requested_max_jobs, MAX_JOBS)
     radar_dir = Path(args.radar_dir)
     allow_live = bool(getattr(args, "allow_live", False) and feishu_live_refresh_authorized())
     authorization_error = (
@@ -401,6 +411,7 @@ def cmd_feishu(args: argparse.Namespace) -> int:
         company = {
             "slug": slug,
             "name": tenant["name"],
+            "source": "feishu-ats",
             "industries": tenant["industries"],
             "scale": tenant["scale"],
             "tier": tenant.get("tier", 7),
@@ -414,18 +425,25 @@ def cmd_feishu(args: argparse.Namespace) -> int:
         pool_counts: dict[str, int] = {}
         api_errors: list[dict] = []
         row_errors: list[dict] = []
+        fetched_jobs = 0
         for label, website_path in pools:
+            remaining_jobs = tenant_max_jobs - fetched_jobs
+            if remaining_jobs <= 0:
+                api_errors.append({"pool": label, "error": f"reached max_jobs={tenant_max_jobs} across tenant pools"})
+                break
             try:
                 jobs, errors = fetch_all_jobs(
                     fetcher,
                     host,
                     website_path=website_path,
-                    max_jobs=args.max_jobs,
+                    max_jobs=remaining_jobs,
+                    page_size=requested_page_size,
                     allow_live_refresh=allow_live,
                 )
             except AdapterError as exc:
                 errors = [{"pool": label, "error": str(exc)}]
                 jobs = []
+            fetched_jobs += len(jobs)
             api_errors.extend({**error, "pool": label} for error in errors)
             pool_counts[label] = len(jobs)
             seen = {j.get("id") for j in all_jobs if isinstance(j, dict) and j.get("id")}
@@ -462,6 +480,7 @@ def cmd_feishu(args: argparse.Namespace) -> int:
             company["sites"].append({
                 "id": site_id,
                 "name": company["name"],
+                "source": "feishu-ats",
                 "city": city_name,
                 "province": CITY_PROVINCE.get(city, ""),
                 "location": {"address": ats_address or city_name},
@@ -641,7 +660,8 @@ def main(argv: list[str] | None = None) -> int:
     feishu.add_argument("--out-dir", required=True, help="official-career JSON directory")
     feishu.add_argument("--radar-dir", default="", help="radar JSON directory (inherits curated sites/addresses)")
     feishu.add_argument("--interval", type=float, default=2.0, help="Seconds between requests")
-    feishu.add_argument("--max-jobs", type=int, default=2000, help="Safety cap per tenant per pool")
+    feishu.add_argument("--page-size", type=int, default=50, help="API page size (1-50)")
+    feishu.add_argument("--max-jobs", type=int, default=2000, help="Safety cap per tenant across pools (max 2000)")
     feishu.add_argument("--only", default="", help="Comma-separated slugs/hosts to crawl (default: all)")
     feishu.add_argument("--write", action="store_true", help="Write complete drops (dry-run default)")
     feishu.add_argument("--allow-live", action="store_true", help="Request live refresh; requires DOMAIN_MAP_FEISHU_LIVE_REFRESH_AUTHORIZED=1")

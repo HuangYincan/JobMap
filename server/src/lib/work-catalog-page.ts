@@ -79,9 +79,18 @@ function stringArray(value: unknown): string[] | null {
   return value.filter((item): item is string => typeof item === 'string');
 }
 
+export function isValidCalendarDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
+}
+
 function validDateFilter(value: unknown): boolean {
   if (value === undefined || value === null || value === '') return true;
-  return Number.isFinite(Date.parse(String(value)));
+  return isValidCalendarDate(value);
 }
 
 function literalQuery(q: unknown): string[][] | null {
@@ -260,8 +269,8 @@ function positionFilterClauses(filters: Record<string, unknown>, b: SqlBuilder):
   }
 
   const deadline = filters.deadline;
-  if (deadline !== undefined && deadline !== null && deadline !== '' && Number.isFinite(Date.parse(String(deadline)))) {
-    clauses.push(`(p.deadline IS NULL OR p.deadline >= ${b.bind(String(deadline).slice(0, 10))}::date)`);
+  if (isValidCalendarDate(deadline)) {
+    clauses.push(`(p.deadline IS NULL OR p.deadline >= ${b.bind(deadline)}::date)`);
   }
   return clauses;
 }

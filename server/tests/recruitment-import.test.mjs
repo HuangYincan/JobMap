@@ -464,6 +464,17 @@ test('planSeedImport merges real drops onto catalog slugs (no seed scaffold)', a
   assert.ok(xiaomi.positions.some((p) => p.externalId.startsWith('portal-feishu-')));
 });
 
+test('planSeedImport preserves authoritative and optional source snapshot identity', async () => {
+  const plan = await planSeedImport();
+  const bySource = new Map(plan.sourceSnapshots?.map((snapshot) => [snapshot.sourceCode, snapshot.reconcile]));
+  assert.equal(plan.complete, true);
+  assert.equal(bySource.get('xiaozhao-radar'), true);
+  assert.equal(bySource.get('official-career'), true);
+  assert.equal(bySource.get('boss'), false);
+  assert.equal(bySource.get('nowcoder'), false);
+  assert.equal(bySource.get('shixiseng'), false);
+});
+
 test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {
   delete process.env.DATABASE_URL;
   const plan = await planSeedImport();
@@ -727,6 +738,29 @@ test('applyRecruitmentImport returns early for an empty plan', async () => {
   assert.equal(connected, false);
 });
 
+test('complete empty authoritative snapshot reconciles without company rows', async () => {
+  const fake = fakeApplyPool({ sourceIds: { 'xiaozhao-radar': 'source-radar' } });
+  const result = await applyRecruitmentImport({
+    companies: [],
+    issues: [],
+    dropped: 0,
+    complete: true,
+    sourceSnapshots: [{ sourceCode: 'xiaozhao-radar', reconcile: true }],
+  }, fake.pool);
+  assert.equal(result.wrote, true);
+  assert.equal(result.companies, 0);
+  const reconciliation = fake.calls.find((call) => call.sql.includes("SET status = 'closed'"));
+  assert.ok(reconciliation);
+  assert.deepEqual(reconciliation.params, ['source-radar']);
+});
+
+test('invalid import plans are rejected before opening the database', async () => {
+  const plan = { ...planRecruitmentImport([sample()]), issues: [{ slug: 'bad', field: 'name', message: 'required' }], dropped: 1 };
+  const result = await applyRecruitmentImport(plan, { connect: async () => { throw new Error('must not connect'); } });
+  assert.equal(result.wrote, false);
+  assert.equal(result.reason, 'invalid-plan');
+});
+
 test('official-career adapter reads JSON drops and skips a missing dir', async () => {
   const parsed = parseOfficialCareerPayload({ slug: 'x', name: 'X', sites: [], positions: [] });
   assert.equal(parsed[0].slug, 'x');
@@ -792,6 +826,51 @@ test('import apply fails closed when completeness evidence is absent', async () 
   const result = await applyRecruitmentImport(plan, { connect: async () => { throw new Error('must not connect'); } });
   assert.equal(result.wrote, false);
   assert.equal(result.reason, 'incomplete-input');
+});
+
+test('optional file-drop sources report no-op diagnostics without becoming authoritative', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'domain-map-optional-drop-'));
+  try {
+    writeFileSync(join(dir, 'README.md'), 'reserved for future curated rows\\n');
+    const result = await bossAdapter(dir).listDetailed();
+    assert.equal(result.completeness, 'complete');
+    assert.equal(result.snapshot, 'noop');
+    assert.equal(result.sourceCode, 'boss');
+    assert.equal(result.companies.length, 0);
+    assert.equal(result.diagnostics[0].kind, 'no-json-files');
+    assert.equal(result.diagnostics[0].blocking, false);
+    writeFileSync(join(dir, 'broken.json'), '{not-json');
+    const broken = await bossAdapter(dir).listDetailed();
+    assert.equal(broken.completeness, 'incomplete');
+    assert.equal(broken.snapshot, 'authoritative');
+    assert.equal(broken.diagnostics[0].kind, 'invalid-json');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('file-drop stamps canonical source provenance without overwriting explicit values', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'domain-map-source-drop-'));
+  try {
+    writeFileSync(join(dir, 'rows.json'), JSON.stringify({
+      slug: 'radar-company', name: 'Radar Company', industries: ['internet'], scale: 'startup',
+      sites: [{ id: 'hq', name: 'HQ' }, { id: 'other', name: 'Other', source: 'custom-source' }],
+      positions: [
+        { externalId: 'radar-1', title: 'Role', siteId: 'hq', family: 'campus', status: 'open' },
+        { externalId: 'radar-2', title: 'Role 2', siteId: 'other', family: 'campus', status: 'open', source: 'custom-source' },
+      ],
+    }));
+    const result = await radarAdapter(dir).listDetailed();
+    assert.equal(result.sourceCode, 'xiaozhao-radar');
+    assert.equal(result.snapshot, 'authoritative');
+    assert.equal(result.companies[0].source, 'xiaozhao-radar');
+    assert.equal(result.companies[0].sites[0].source, 'xiaozhao-radar');
+    assert.equal(result.companies[0].sites[1].source, 'custom-source');
+    assert.equal(result.companies[0].positions[0].source, 'xiaozhao-radar');
+    assert.equal(result.companies[0].positions[1].source, 'custom-source');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('siteCityOf prefers site.city then parses known cities from the address', () => {

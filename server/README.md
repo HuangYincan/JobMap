@@ -210,6 +210,14 @@ Map Engine (契约层:AMap / 腾讯 TMap / 百度 BMapGL)
 
 Work mode public reads **require Postgres** (imported SQL rows via `loadServerCatalog`); no `DATABASE_URL` or a DB failure is HTTP 502 (not a cached empty list)—there is no offline seed fallback. A healthy DB that is actually empty still returns `[]`. Domain mode: in-Hangzhou browse uses the local `hz_pois` table (`/api/pois/domain-local`); outside Hangzhou (or a local zero-hit search) the **active engine**'s `searchPOI` handles the lookup (`poi-service` receives the provider through `use-map-engine`; SSR/tests/no engine configuration fall back to `amap-api`). The frontend no longer uses a hardcoded `places` array for live data.
 
+### Recruitment import contract
+
+`plan-seed-import.mjs` reads curated JSON drops and emits source-level diagnostics before any DB connection. Every accepted company, site, and position carries a canonical source code; source-less nested records inherit the adapter source, while explicit source values are preserved. `radar` is normalized to `xiaozhao-radar`. The plan must be complete with zero semantic issues and zero dropped companies before apply; invalid or incomplete plans exit nonzero and cannot reconcile the database.
+
+A missing/README-only directory for optional `boss`, `nowcoder`, or `shixiseng` is a diagnostic no-op and never reconciles that source. A readable JSON `[]` is different: it is a complete authoritative zero-row snapshot and closes only stale positions belonging to that source. An incomplete or malformed snapshot never triggers reconciliation. Public Work reads apply the source registry authenticity and alive-position predicates; non-authentic source rows remain excluded.
+
+Account write routes map `DbUnavailableError` to `503 DB_UNAVAILABLE` with `Cache-Control: no-store`. Public bounded Work date filters accept only real calendar dates in `YYYY-MM-DD` form (including leap-year validation); malformed dates use the semantic fallback instead of being interpolated into PostgreSQL `::date`.
+
 ### Plugin Readiness
 
 The frontend establishes foundations for plugin architecture but is not yet fully modular. Phase 2+ will extract:

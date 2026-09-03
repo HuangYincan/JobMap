@@ -270,6 +270,7 @@ def map_radar_job(
         {
             "id": f"{slug}-site-{CITY_KEY[city]}",
             "name": company,
+            "source": "xiaozhao-radar",
             "city": CITY_FULL[city],
             "province": CITY_PROVINCE[city],
             "location": {"address": location},
@@ -286,6 +287,7 @@ def map_radar_job(
     digest = hashlib.sha1(f"{company}|{title}|{location}".encode("utf-8")).hexdigest()[:12]
     position: dict[str, Any] = {
         "externalId": f"radar-{digest}",
+        "source": "xiaozhao-radar",
         "title": title[:120],
         "siteId": site_id,
         "family": family,
@@ -301,6 +303,7 @@ def map_radar_job(
     return {
         "slug": slug,
         "name": normalized,
+        "source": "xiaozhao-radar",
         "tier": 12,
         "category": "other",
         "industries": [industry],
