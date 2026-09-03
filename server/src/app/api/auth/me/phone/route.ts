@@ -21,7 +21,18 @@ function noStoreJson(body: unknown, init?: { status?: number }) {
  * 400 BAD_REQUEST(格式/缺 code)、429/503 照 otp/verify 模式。
  */
 export async function POST(request: Request) {
-  const user = await readSessionUser();
+  let user;
+  try {
+    user = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!user) {
     return noStoreJson({ code: 'UNAUTHORIZED', message: 'not signed in' }, { status: 401 });
   }

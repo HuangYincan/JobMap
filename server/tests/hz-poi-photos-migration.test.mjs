@@ -17,10 +17,11 @@ function migrationNumbers() {
     .sort((a, b) => a - b);
 }
 
-test('022 is the next ordered migration and leaves 013 photos default unchanged', () => {
+test('022 remains ordered before 023 and leaves 013 photos default unchanged', () => {
   const numbers = migrationNumbers();
-  assert.equal(numbers.at(-1), 22);
+  assert.equal(numbers.at(-1), 23);
   assert.equal(numbers.filter((number) => number === 22).length, 1);
+  assert.equal(numbers.filter((number) => number === 23).length, 1);
   assert.match(baseline, /photos\s+jsonb NOT NULL DEFAULT '\[\]'/);
 });
 

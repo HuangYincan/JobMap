@@ -4,7 +4,7 @@
 // 与 account-store 同构:有 DATABASE_URL 且 018 已应用 → 上云。
 // 否则回落到进程内内存实现,单测不依赖库。
 //
-// 读路径:DB 查询失败允许回落内存(降级合理,读不到不至于崩)。
+// 读路径:未配置 DATABASE_URL 时走内存;已配置但查询失败时抛 DbUnavailableError。
 // 写路径:DB 故障直接抛 DbUnavailableError(工具/route 层转可恢复错误),
 //         绝不静默回落内存——否则数据在内存与 DB 间分裂,保存看似成功实则丢失。
 // ============================================================
@@ -136,15 +136,14 @@ function getPoolForCall(): Pool | null {
   return __memoryStoreTest.poolOverride ? __memoryStoreTest.poolOverride() : getPool();
 }
 
-/** 读路径:DB 故障回落内存(降级合理,读不到不至于崩)。 */
+/** 未配置 DATABASE_URL 时走内存。已配置但查询失败时抛 DbUnavailableError。 */
 async function withDbRead<T>(fn: (pool: Pool) => Promise<T>, fallback: () => T | Promise<T>): Promise<T> {
   const db = getPoolForCall();
   if (!db) return fallback();
   try {
     return await fn(db);
   } catch (err) {
-    console.warn('[memory-store] postgres unavailable, using memory:', (err as Error).message);
-    return fallback();
+    throw new DbUnavailableError(err);
   }
 }
 

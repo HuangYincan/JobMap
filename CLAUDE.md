@@ -53,7 +53,7 @@ CI 当前定义于 `.github/workflows/test.yml`:docs policy、`make test-unit`�
 
 MCP agent 使用官方 `@modelcontextprotocol/sdk`：`server/package.json` 声明 `^1.30.0`，当前 lockfile 解析为 `1.30.0`；实现使用 SDK `Client`、`StreamableHTTPClientTransport` 与 `SSEClientTransport`，见 `server/src/lib/agent/mcp-providers.ts`。
 
-数据库迁移由 `db/scripts/apply.sh` 按文件名顺序 `001`–`022` 执行，以 `schema_migrations` ledger 与 SHA-256 checksum 保证幂等和漂移检测；`022_hz_pois_photos_shape.sql` 会先检查 `hz_pois.photos` 的历史脏数据，再安装 JSON 数组约束；apply 是 Env-only 操作，Agent 不得擅自执行。
+数据库迁移由 `db/scripts/apply.sh` 按文件名顺序 `001`–`023` 执行，以 `schema_migrations` ledger 与 SHA-256 checksum 保证幂等和漂移检测；`022_hz_pois_photos_shape.sql` 会先检查 `hz_pois.photos` 的历史脏数据，再安装 JSON 数组约束；`023_recruitment_source_record_fk.sql` 为招聘站点/岗位增加指向 `source_records` 的可空复合外键，不回填历史行。apply 是 Env-only 操作，Agent 不得擅自执行。
 
 ## 并行任务协作
 

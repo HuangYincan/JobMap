@@ -61,7 +61,7 @@ server/
 
 ## Database migrations
 
-`db/scripts/apply.sh` is the only migration runner. `make db-migrate` acquires a transaction-scoped advisory lock, applies pending files in lexical order, and records each filename and SHA-256 checksum in `schema_migrations`; it is an Env-only operation that requires `DATABASE_URL`. The tracked migration set is `001`–`022`:
+`db/scripts/apply.sh` is the only migration runner. `make db-migrate` acquires a transaction-scoped advisory lock, applies pending files in lexical order, and records each filename and SHA-256 checksum in `schema_migrations`; it is an Env-only operation that requires `DATABASE_URL`. The tracked migration set is `001`–`023`:
 
 | Migration | Actual schema change |
 |---|---|
@@ -87,6 +87,7 @@ server/
 | `020_position_site_company_fk.sql` | Preflights cross-company links, then adds the composite site/company foreign-key invariant. |
 | `021_application_pipeline.sql` | Allows user-defined stage IDs, migrates `viewed` to `applied`, adds `updated_at`, and indexes activity order. |
 | `022_hz_pois_photos_shape.sql` | Preflights existing `hz_pois.photos` values and adds a check requiring JSON arrays; it does not repair or rewrite dirty rows. |
+| `023_recruitment_source_record_fk.sql` | Adds nullable `source_record_id` on `company_sites` and `positions` with a composite FK to `source_records(id, source_id)`; it does not backfill historical rows. |
 
 Do not describe a migration as applied unless an operator has run `make db-migrate` against the target database.
 

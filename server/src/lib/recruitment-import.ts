@@ -1,5 +1,5 @@
 // Validate and dedupe recruitment source companies before a DB upsert.
-// Live insert waits on DATABASE_URL + migrations 002/006. Tests cover
+// Live insert waits on DATABASE_URL + migrations 002/006/023. Tests cover
 // the dry-run path only.
 
 import { createHash } from 'node:crypto';
@@ -389,6 +389,58 @@ function hashJson(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
 
+async function upsertSourceRecord(
+  client: ApplyDbClient,
+  input: {
+    sourceId: string;
+    runId: string;
+    externalId: string;
+    recordVersion: string;
+    retrievedAt: string;
+    contentHash: string;
+    originalPayload: unknown;
+    normalizedEvidence: unknown;
+  },
+): Promise<string> {
+  const result = await client.query<{ id: string }>(
+    `INSERT INTO source_records (
+       source_id, import_run_id, external_id, record_version, retrieved_at,
+       content_hash, parser_version, original_payload, normalized_evidence
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb)
+     ON CONFLICT (source_id, external_id, record_version) DO UPDATE SET
+       import_run_id = EXCLUDED.import_run_id,
+       retrieved_at = EXCLUDED.retrieved_at,
+       content_hash = EXCLUDED.content_hash,
+       parser_version = EXCLUDED.parser_version,
+       original_payload = EXCLUDED.original_payload,
+       normalized_evidence = EXCLUDED.normalized_evidence
+     RETURNING id::text`,
+    [
+      input.sourceId,
+      input.runId,
+      input.externalId,
+      input.recordVersion,
+      input.retrievedAt,
+      input.contentHash,
+      IMPORT_PARSER_VERSION,
+      JSON.stringify(input.originalPayload),
+      JSON.stringify(input.normalizedEvidence),
+    ],
+  );
+  const id = result.rows[0]?.id;
+  if (!id) throw new Error(`source_record upsert returned no id for ${input.externalId}`);
+  return id;
+}
+
+/** Earliest source-supplied retrieval on this site; never `now()`. */
+function siteRetrievedAt(company: SourceCompany, siteId: string): string | null {
+  const stamps = company.positions
+    .map((position) => (position.siteId === siteId ? normalizeAuditTimestamp(position.retrievedAt) : null))
+    .filter((value): value is string => Boolean(value))
+    .sort();
+  return stamps[0] ?? null;
+}
+
 /** Return a source-supplied timestamp without inventing one at apply time. */
 function normalizeAuditTimestamp(raw: string | undefined): string | null {
   if (!raw) return null;
@@ -711,7 +763,30 @@ export async function applyRecruitmentImport(
       const siteIds = new Map<string, string>();
       for (const site of company.sites) {
         const siteCity = siteCityOf(site);
-        const siteSourceId = await sourceIdFor(site.source?.trim() || company.source?.trim() || 'seed');
+        const siteSourceCode = site.source?.trim() || company.source?.trim() || 'seed';
+        const siteSourceId = await sourceIdFor(siteSourceCode);
+        const siteRetrieved = siteRetrievedAt(company, site.id);
+        let siteRecordId: string | null = null;
+        if (siteRetrieved) {
+          const siteEvidence = {
+            entityType: 'site',
+            companySlug: company.slug,
+            siteId: site.id,
+            source: siteSourceCode,
+            name: site.name,
+          };
+          const siteHash = hashJson({ source: siteSourceCode, site });
+          siteRecordId = await upsertSourceRecord(client, {
+            sourceId: siteSourceId,
+            runId: await runFor(siteSourceCode),
+            externalId: `${company.slug}:${site.id}`,
+            recordVersion: `${IMPORT_PARSER_VERSION}:site:${siteHash.slice(0, 24)}`,
+            retrievedAt: siteRetrieved,
+            contentHash: siteHash,
+            originalPayload: site,
+            normalizedEvidence: siteEvidence,
+          });
+        }
         const existing = await client.query<{ id: string }>(
           `SELECT id::text FROM company_sites WHERE company_id = $1 AND site_key = $2 LIMIT 1`,
           [companyId, site.id],
@@ -735,8 +810,8 @@ export async function applyRecruitmentImport(
         }
         if (!siteRowId) {
           const inserted = await client.query<{ id: string }>(
-            `INSERT INTO company_sites (company_id, name, site_key, address, city, province, city_code, lng, lat, career_url, logo_url, source_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            `INSERT INTO company_sites (company_id, name, site_key, address, city, province, city_code, lng, lat, career_url, logo_url, source_id, source_record_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
              RETURNING id::text`,
             [
               companyId,
@@ -751,6 +826,7 @@ export async function applyRecruitmentImport(
               site.careerUrl ?? null,
               site.logoUrl ?? null,
               siteSourceId,
+              siteRecordId,
             ],
           );
           siteRowId = inserted.rows[0]?.id;
@@ -760,7 +836,8 @@ export async function applyRecruitmentImport(
                site_key = $3,
                address = $4, city = $5, province = $6, city_code = $7,
                lng = COALESCE($8, lng), lat = COALESCE($9, lat),
-               career_url = $10, logo_url = $11, source_id = $12, updated_at = now()
+               career_url = $10, logo_url = $11, source_id = $12,
+               source_record_id = $13, updated_at = now()
              WHERE id = $1 AND company_id = $2`,
             [
               siteRowId,
@@ -775,6 +852,7 @@ export async function applyRecruitmentImport(
               site.careerUrl ?? null,
               site.logoUrl ?? null,
               siteSourceId,
+              siteRecordId,
             ],
           );
         }
@@ -801,39 +879,25 @@ export async function applyRecruitmentImport(
           family: pos.family,
           status: pos.status,
         };
-        await client.query(
-          `INSERT INTO source_records (
-             source_id, import_run_id, external_id, record_version, retrieved_at,
-             content_hash, parser_version, original_payload, normalized_evidence
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb)
-           ON CONFLICT (source_id, external_id, record_version) DO UPDATE SET
-             import_run_id = EXCLUDED.import_run_id,
-             retrieved_at = EXCLUDED.retrieved_at,
-             content_hash = EXCLUDED.content_hash,
-             parser_version = EXCLUDED.parser_version,
-             original_payload = EXCLUDED.original_payload,
-             normalized_evidence = EXCLUDED.normalized_evidence`,
-          [
-            sourceId,
-            runId,
-            pos.externalId,
-            record.recordVersion,
-            record.retrievedAt,
-            record.contentHash,
-            IMPORT_PARSER_VERSION,
-            JSON.stringify(pos),
-            JSON.stringify(evidence),
-          ],
-        );
+        const sourceRecordId = await upsertSourceRecord(client, {
+          sourceId,
+          runId,
+          externalId: pos.externalId,
+          recordVersion: record.recordVersion,
+          retrievedAt: record.retrievedAt,
+          contentHash: record.contentHash,
+          originalPayload: pos,
+          normalizedEvidence: evidence,
+        });
         await client.query(
           `INSERT INTO positions (
              company_id, site_id, external_id, title, department, family, taxonomy,
              salary_min, salary_max, education, majors, skills, description, deadline,
-             apply_source, apply_url, status, source_id, retrieved_at, expires_at
+             apply_source, apply_url, status, source_id, source_record_id, retrieved_at, expires_at
            ) VALUES (
              $1, $2, $3, $4, $5, $6, $7::jsonb,
              $8, $9, $10, $11, $12, $13, $14,
-             $15, $16, $17, $18, $19, $20
+             $15, $16, $17, $18, $19, $20, $21
            )
            ON CONFLICT (source_id, external_id) DO UPDATE SET
              title = EXCLUDED.title,
@@ -851,6 +915,7 @@ export async function applyRecruitmentImport(
              apply_url = EXCLUDED.apply_url,
              status = EXCLUDED.status,
              site_id = EXCLUDED.site_id,
+             source_record_id = EXCLUDED.source_record_id,
              retrieved_at = EXCLUDED.retrieved_at,
              expires_at = EXCLUDED.expires_at,
              updated_at = now()`,
@@ -873,6 +938,7 @@ export async function applyRecruitmentImport(
             pos.applyUrl ?? null,
             pos.status,
             sourceId,
+            sourceRecordId,
             record.retrievedAt,
             record.expiresAt,
           ],

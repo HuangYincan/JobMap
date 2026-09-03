@@ -166,20 +166,18 @@ test('write paths throw DbUnavailableError instead of silently degrading to memo
   }
 });
 
-test('read paths still fall back to memory on DB failure', async () => {
+test('configured database read failures are availability errors, not memory fallback', async () => {
   __accountStoreTest.poolOverride = () => null; // 内存模式落数据
   const target = `r-${Date.now()}@test.local`;
   const user = await storeUpsert({ provider: 'email', subject: target, email: target });
   await storeSavePlace(user.id, { poiId: 'alibaba-xixi', name: '阿里巴巴', mode: 'work', kind: 'recruitment' });
   const { token } = await storeCreateSession(user.id);
 
-  __accountStoreTest.poolOverride = () => failingPool; // DB 故障
+  __accountStoreTest.poolOverride = () => failingPool; // 已配置但查询失败
   try {
-    const saved = await storeListSaved(user.id); // 读 → 降级内存,不抛
-    assert.equal(saved.length, 1);
-    assert.equal(saved[0].poiId, 'alibaba-xixi');
-    assert.ok(Array.isArray(await storeListHistory(user.id)));
-    assert.equal((await storeGetSessionUser(token))?.id, user.id);
+    await assert.rejects(storeListSaved(user.id), DbUnavailableError);
+    await assert.rejects(storeListHistory(user.id), DbUnavailableError);
+    await assert.rejects(storeGetSessionUser(token), DbUnavailableError);
   } finally {
     __accountStoreTest.poolOverride = undefined;
   }

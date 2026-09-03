@@ -22,7 +22,18 @@ import { readBoundedRequestBody, RequestBodyTooLargeError } from "@/lib/request-
 // ============================================================
 
 export async function POST(request: Request) {
-  const user = await readSessionUser();
+  let user;
+  try {
+    user = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!user) {
     return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
@@ -135,24 +146,34 @@ function recordAvatarUpload(userId: string, now: number): void {
 }
 
 export async function GET() {
-  const user = await readSessionUser();
-  if (!user) {
-    return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+  try {
+    const user = await readSessionUser();
+    if (!user) {
+      return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
+    }
+    const data = await getAvatarData(user.id);
+    if (!data || data.length === 0) {
+      return noStoreJson({ code: "NOT_FOUND", message: "no avatar uploaded" }, { status: 404 });
+    }
+    const check = checkAvatarImage(data);
+    const mime = check.ok ? check.mime : "image/jpeg";
+    // 拷进独立的 ArrayBuffer(TS:Buffer 派生 Uint8Array 不满足 BodyInit)
+    const body = new Uint8Array(data.byteLength);
+    body.set(data);
+    return new Response(body, {
+      headers: {
+        "Content-Type": mime,
+        // URL 带 ?v= 版本号(换头像即换 URL),可放心 immutable。
+        "Cache-Control": "private, max-age=31536000, immutable",
+      },
+    });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
   }
-  const data = await getAvatarData(user.id);
-  if (!data || data.length === 0) {
-    return noStoreJson({ code: "NOT_FOUND", message: "no avatar uploaded" }, { status: 404 });
-  }
-  const check = checkAvatarImage(data);
-  const mime = check.ok ? check.mime : "image/jpeg";
-  // 拷进独立的 ArrayBuffer(TS:Buffer 派生 Uint8Array 不满足 BodyInit)
-  const body = new Uint8Array(data.byteLength);
-  body.set(data);
-  return new Response(body, {
-    headers: {
-      "Content-Type": mime,
-      // URL 带 ?v= 版本号(换头像即换 URL),可放心 immutable。
-      "Cache-Control": "private, max-age=31536000, immutable",
-    },
-  });
 }

@@ -1,5 +1,5 @@
 // memory-store 单测:内存模式(poolOverride → null)与 DB 模式(fake pool)双覆盖。
-// 语义对齐 account-store:读失败回落内存(可恢复),写失败抛 DbUnavailableError。
+// 语义对齐 account-store:已配置 DB 时读写失败都抛 DbUnavailableError。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DbUnavailableError } from '../src/lib/account-store.ts';
@@ -251,18 +251,14 @@ test('memory(DB 模式): userId 隔离', async () => {
   }
 });
 
-test('memory(DB 模式): 读失败回落(可恢复,返回空/内存),写失败抛 DbUnavailableError', async () => {
+test('memory(DB 模式): 读失败与写失败均抛 DbUnavailableError', async () => {
   const down = fakeDb({ failRead: true, failWrite: true });
   __memoryStoreTest.poolOverride = () => down;
   try {
-    // 读失败 → 回落,不抛
-    assert.deepEqual(await listMemories('db-down'), []);
-    // 写失败 → DbUnavailableError(绝不静默回落内存)
+    await assert.rejects(listMemories('db-down'), DbUnavailableError);
     await assert.rejects(addMemory('db-down', '内容'), DbUnavailableError);
     await assert.rejects(removeMemory('db-down', '1'), DbUnavailableError);
     await assert.rejects(clearMemories('db-down'), DbUnavailableError);
-    // 故障期间内存不残留(写从未成功)
-    assert.equal((await listMemories('db-down')).length, 0);
   } finally {
     __memoryStoreTest.poolOverride = undefined;
   }

@@ -22,18 +22,39 @@ function noStoreJson(body: unknown, init?: { status?: number }) {
 }
 
 export async function GET() {
-  const user = await readSessionUser();
-  if (!user) return noStoreJson({ items: [] });
-  const catalog = sanitizeApplicationPipeline(user.preferences.applicationPipeline).statuses;
-  const items = (await listApplications(user.id)).map((item) => {
-    const status = coerceStatusToCatalog(item.status, catalog);
-    return status && status !== item.status ? { ...item, status } : item;
-  });
-  return noStoreJson({ items });
+  try {
+    const user = await readSessionUser();
+    if (!user) return noStoreJson({ items: [] });
+    const catalog = sanitizeApplicationPipeline(user.preferences.applicationPipeline).statuses;
+    const items = (await listApplications(user.id)).map((item) => {
+      const status = coerceStatusToCatalog(item.status, catalog);
+      return status && status !== item.status ? { ...item, status } : item;
+    });
+    return noStoreJson({ items });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
 }
 
 export async function POST(request: Request) {
-  const user = await readSessionUser();
+  let user;
+  try {
+    user = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!user) {
     return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
@@ -80,7 +101,18 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const user = await readSessionUser();
+  let user;
+  try {
+    user = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!user) {
     return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }
@@ -127,7 +159,18 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const user = await readSessionUser();
+  let user;
+  try {
+    user = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!user) {
     return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }

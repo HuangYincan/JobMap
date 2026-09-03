@@ -549,6 +549,7 @@ function fakeApplyPool(opts = {}) {
         return { rows: opts.existingSite ? [{ id: 'site-fake' }] : [] };
       }
       if (sql.includes('site_key IS NULL')) return { rows: [] };
+      if (sql.includes('INSERT INTO source_records')) return { rows: [{ id: opts.recordId ?? 'record-fake' }] };
       if (sql.includes('INSERT INTO company_sites')) return { rows: [{ id: 'site-fake' }] };
       if (sql.includes('INSERT INTO positions') && opts.failAt === 'position') {
         throw new Error('position upsert failed');
@@ -604,8 +605,17 @@ test('applyRecruitmentImport runs a transactional upsert with an injected pool',
   assert.equal(positionCall.params[14], 'official');
   assert.equal(positionCall.params[16], 'open');
   assert.equal(positionCall.params[17], 'source-fake');
-  assert.equal(positionCall.params[18], '2026-08-20T10:30:00Z');
-  assert.equal(positionCall.params[19], '2026-12-31T23:59:59Z');
+  assert.equal(positionCall.params[18], 'record-fake');
+  assert.equal(positionCall.params[19], '2026-08-20T10:30:00Z');
+  assert.equal(positionCall.params[20], '2026-12-31T23:59:59Z');
+  assert.match(positionCall.sql, /source_record_id/);
+  const siteInsert = fake.calls.find((call) => call.sql.includes('INSERT INTO company_sites'));
+  assert.equal(siteInsert.params[11], 'source-fake');
+  assert.equal(siteInsert.params[12], 'record-fake');
+  const recordCalls = fake.calls.filter((call) => call.sql.includes('INSERT INTO source_records'));
+  assert.ok(recordCalls.length >= 2, 'site and position each write a source_record');
+  assert.ok(recordCalls.some((call) => call.params[2] === 'fake-hz:fake-site'));
+  assert.ok(recordCalls.some((call) => call.params[2] === 'radar-fake-1'));
 });
 
 test('complete source snapshot reconciles a source with zero positions', async () => {
@@ -677,11 +687,19 @@ test('applyRecruitmentImport writes each site/position source provenance indepen
   assert.equal(result.positions, 2);
   const positionCalls = fake.calls.filter((call) => call.sql.includes('INSERT INTO positions'));
   assert.deepEqual(positionCalls.map((call) => call.params[17]), ['source-official', 'source-radar']);
+  assert.deepEqual(positionCalls.map((call) => call.params[18]), ['record-fake', 'record-fake']);
   const siteCalls = fake.calls.filter((call) => call.sql.includes('INSERT INTO company_sites'));
   assert.deepEqual(siteCalls.map((call) => call.params[11]), ['source-official', 'source-radar']);
+  assert.deepEqual(siteCalls.map((call) => call.params[12]), ['record-fake', 'record-fake']);
   const recordCalls = fake.calls.filter((call) => call.sql.includes('INSERT INTO source_records'));
-  assert.equal(recordCalls.length, 2);
-  assert.deepEqual(recordCalls.map((call) => call.params[0]), ['source-official', 'source-radar']);
+  assert.deepEqual(
+    recordCalls.map((call) => call.params[0]),
+    ['source-official', 'source-radar', 'source-official', 'source-radar'],
+  );
+  assert.deepEqual(
+    recordCalls.map((call) => call.params[2]),
+    ['deepseek:official-site', 'deepseek:radar-site', 'portal-deepseek', 'radar-deepseek'],
+  );
   const reconciliationCalls = fake.calls.filter((call) => call.sql.includes("SET status = 'closed'"));
   assert.deepEqual(
     reconciliationCalls.map((call) => call.params),

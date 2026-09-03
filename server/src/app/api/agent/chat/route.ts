@@ -13,6 +13,7 @@ import { NextResponse } from 'next/server';
 import { BoundedRateStore } from '@/lib/bounded-rate-store';
 import { RequestBodyTooLargeError, readJsonObjectBody } from '@/lib/request-body';
 import { readSessionToken, readSessionUser } from '@/lib/http-session';
+import { DbUnavailableError } from '@/lib/account-store';
 import { clientIpBucketKey } from '@/lib/client-ip';
 import { readAgentConfig, hasBaiduAgentPlan } from '@/lib/agent/config';
 import { runAgent } from '@/lib/agent/run-agent';
@@ -147,7 +148,18 @@ export async function POST(request: Request) {
   // 6. 身份读取(会话 cookie → userId;guest = null)。位于全部前置校验之后、
   //    任何 MCP/LLM 连接之前(保持既有行序契约):登录 → 注入用户记忆段并追加
   //    memory_save 工具;guest → userId 不传、不加工具(tech/30-agent-memory.md §5)。
-  const sessionUser = await readSessionUser();
+  let sessionUser;
+  try {
+    sessionUser = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return NextResponse.json(
+        { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }
+    throw err;
+  }
 
   // Navigation session cookie is shared with /api/navigation/routes/* (Path=/api,
   // HttpOnly, SameSite=Lax, Secure in production). Mint after request validation

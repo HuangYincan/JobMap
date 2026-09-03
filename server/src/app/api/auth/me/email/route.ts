@@ -20,7 +20,18 @@ function noStoreJson(body: unknown, init?: { status?: number }) {
  * 401 INVALID_CODE、409 EMAIL_TAKEN(lower(email) 唯一)、400 BAD_REQUEST、429/503。
  */
 export async function POST(request: Request) {
-  const user = await readSessionUser();
+  let user;
+  try {
+    user = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!user) {
     return noStoreJson({ code: 'UNAUTHORIZED', message: 'not signed in' }, { status: 401 });
   }
