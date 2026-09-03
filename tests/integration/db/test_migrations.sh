@@ -79,6 +79,35 @@ SQL
 
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -X <<'SQL'
 DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint AS c
+    WHERE c.conrelid = 'public.positions'::regclass
+      AND c.conname = 'positions_source_record_fkey'
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) LIKE
+        'FOREIGN KEY (source_record_id, source_id) REFERENCES source_records(id, source_id)%'
+  ) THEN
+    RAISE EXCEPTION 'positions source_record composite foreign key is missing';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint AS c
+    WHERE c.conrelid = 'public.company_sites'::regclass
+      AND c.conname = 'company_sites_source_record_fkey'
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) LIKE
+        'FOREIGN KEY (source_record_id, source_id) REFERENCES source_records(id, source_id)%'
+  ) THEN
+    RAISE EXCEPTION 'company_sites source_record composite foreign key is missing';
+  END IF;
+END $$;
+SQL
+
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -X <<'SQL'
+DO $$
 DECLARE
   photos_default text;
 BEGIN

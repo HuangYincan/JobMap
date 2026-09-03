@@ -12,8 +12,18 @@ function noStoreJson(body: unknown, init?: { status?: number }) {
 }
 
 export async function GET() {
-  const user = await readSessionUser();
-  return noStoreJson({ user });
+  try {
+    const user = await readSessionUser();
+    return noStoreJson({ user });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
 }
 
 // ---- 输入上限（quality-scan #18，2026-08-23）----
@@ -32,7 +42,18 @@ function isHttpUrl(value: string): boolean {
 }
 
 export async function PATCH(request: Request) {
-  const user = await readSessionUser();
+  let user;
+  try {
+    user = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!user) {
     return noStoreJson({ code: 'UNAUTHORIZED', message: 'not signed in' }, { status: 401 });
   }
@@ -131,6 +152,16 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE() {
-  await clearSessionCookie();
-  return noStoreJson({ ok: true });
+  try {
+    await clearSessionCookie();
+    return noStoreJson({ ok: true });
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: 'DB_UNAVAILABLE', message: 'database unavailable, try again later' },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
 }

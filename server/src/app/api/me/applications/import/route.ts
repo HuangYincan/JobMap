@@ -20,7 +20,18 @@ function noStoreJson(body: unknown, init?: { status?: number }) {
 const IMPORT_JSON_MAX_CHARS = 128 * 1024;
 
 export async function POST(request: Request) {
-  const user = await readSessionUser();
+  let user;
+  try {
+    user = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!user) {
     return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }

@@ -16,7 +16,18 @@ function noStoreJson(body: unknown, init?: { status?: number }) {
 }
 
 export async function PUT(request: Request) {
-  const user = await readSessionUser();
+  let user;
+  try {
+    user = await readSessionUser();
+  } catch (err) {
+    if (err instanceof DbUnavailableError) {
+      return noStoreJson(
+        { code: "DB_UNAVAILABLE", message: "database unavailable, try again later" },
+        { status: 503 },
+      );
+    }
+    throw err;
+  }
   if (!user) {
     return noStoreJson({ code: "UNAUTHORIZED", message: "not signed in" }, { status: 401 });
   }

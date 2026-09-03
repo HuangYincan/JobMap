@@ -351,3 +351,21 @@ test('applications persist bounded fields and only http(s) apply links', () => {
   assert.match(pipeline, /reassignApplicationStatuses/);
   assert.match(pipeline, /sanitizeApplicationPipeline/);
 });
+
+test('account GET routes map configured DB failures to 503 DB_UNAVAILABLE', () => {
+  const me = src('app/api/auth/me/route.ts');
+  const applications = src('app/api/me/applications/route.ts');
+  const history = src('app/api/me/search-history/route.ts');
+  const memories = src('app/api/me/memories/route.ts');
+  const notifications = src('app/api/me/notifications/route.ts');
+  const avatar = src('app/api/me/avatar/route.ts');
+  const saved = src('app/api/me/saved/route.ts');
+  for (const route of [me, applications, history, memories, notifications, avatar, saved]) {
+    assert.match(route, /export async function GET/);
+    const get = route.slice(route.indexOf('export async function GET'));
+    assert.match(get, /try \{/);
+    assert.match(get, /err instanceof DbUnavailableError/);
+    assert.match(get, /code: ['"]DB_UNAVAILABLE['"]/);
+    assert.match(get, /status: 503/);
+  }
+});

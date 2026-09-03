@@ -26,6 +26,7 @@ import {
   SAVED_STORAGE_MAX,
   updateAvatar as storeUpdateAvatar,
   getAvatarData as storeGetAvatarData,
+  getSessionUser as storeGetSessionUser,
   upsertIdentity as storeUpsert,
 } from '../src/lib/account-store.ts';
 import {
@@ -359,6 +360,11 @@ test('saved strict route storage does not hide missing or failed DB behind memor
   try {
     await assert.rejects(storeListSavedStrict('strict-db-down'), DbUnavailableError);
     await assert.rejects(storeRemoveSavedStrict('strict-db-down', 'poi-1'), DbUnavailableError);
+    await assert.rejects(storeGetSessionUser('tok'), DbUnavailableError);
+    await assert.rejects(storeListApplications('u1'), DbUnavailableError);
+    await assert.rejects(storeListHistory('u1'), DbUnavailableError);
+    await assert.rejects(storeListNotifications('u1'), DbUnavailableError);
+    await assert.rejects(storeGetAvatarData('u1'), DbUnavailableError);
   } finally {
     __accountStoreTest.poolOverride = undefined;
   }

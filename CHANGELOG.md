@@ -2,6 +2,14 @@
 
 Dates are UTC+8. This file is a historical release log for work merged to `dev`; the current source of truth is tracked code, migrations, tests, `Makefile`, CI, and README files. Private internal design/scan documents are not part of this checkout. Test counts in entries below are historical measurements, not a current baseline; run the documented command to obtain the current result. No SAST, DAST, or dependency-scanning job is configured.
 
+## 2026-09-04
+
+### Fixed
+
+- **Recruitment rows can point at the source-record version that produced them.** Migration `023_recruitment_source_record_fk.sql` adds nullable `source_record_id` on `company_sites` and `positions` with a composite FK to `source_records(id, source_id)`. Import apply now stores the upserted record id. Historical rows stay NULL until an operator apply/backfill. This change does not claim that `make db-migrate` ran.
+- **Configured-database account reads no longer look like empty success.** Session, applications, history, memories, notifications, avatar, and saved GET paths map query failure to no-store `503 DB_UNAVAILABLE` instead of a memory fallback. Unconfigured (test) memory mode is unchanged.
+- **Crawler Make targets require Python 3.12.** `make test-unit` uses `uv run --python 3.12` when uv is present; otherwise it refuses a non-3.12 `python3`.
+
 ## 2026-09-01
 
 ### Changed
