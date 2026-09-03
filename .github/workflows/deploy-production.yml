@@ -1,0 +1,233 @@
+name: Production deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 40-character commit SHA already merged to main
+        required: true
+        type: string
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish-and-deploy:
+    name: Build immutable images and deploy VPS
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      GHCR_PREFIX: ghcr.io/huangyincan
+      EVENT_RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+      INPUT_RELEASE_SHA: ${{ inputs.sha }}
+      NEXT_PUBLIC_AMAP_KEY: ${{ vars.NEXT_PUBLIC_AMAP_KEY || secrets.NEXT_PUBLIC_AMAP_KEY }}
+      NEXT_PUBLIC_AMAP_SECURITY_CODE: ${{ vars.NEXT_PUBLIC_AMAP_SECURITY_CODE || secrets.NEXT_PUBLIC_AMAP_SECURITY_CODE }}
+      NEXT_PUBLIC_TENCENT_JSAPI_KEY: ${{ vars.NEXT_PUBLIC_TENCENT_JSAPI_KEY || secrets.NEXT_PUBLIC_TENCENT_JSAPI_KEY }}
+      NEXT_PUBLIC_BAIDU_AK: ${{ vars.NEXT_PUBLIC_BAIDU_AK || secrets.NEXT_PUBLIC_BAIDU_AK }}
+    steps:
+      - name: Select release commit
+        id: release
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            release_sha="$INPUT_RELEASE_SHA"
+          else
+            release_sha="$EVENT_RELEASE_SHA"
+          fi
+          [[ "$release_sha" =~ ^[0-9a-f]{40}$ ]] || {
+            printf '%s\n' 'release SHA must be 40 lowercase hexadecimal characters' >&2
+            exit 1
+          }
+          printf 'sha=%s\n' "$release_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Check out release commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ steps.release.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Verify manual commit belongs to main
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$INPUT_RELEASE_SHA" origin/main || {
+            printf '%s\n' 'manual release SHA is not an ancestor of origin/main' >&2
+            exit 1
+          }
+
+      - name: Set up BuildKit
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if docker buildx inspect domain-map-builder >/dev/null 2>&1; then
+            docker buildx use domain-map-builder
+          else
+            docker buildx create --name domain-map-builder --driver docker-container --use
+          fi
+          docker buildx inspect --bootstrap
+
+      - name: Log in to GHCR
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin >/dev/null
+
+      - name: Build and push application image
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          set -Eeuo pipefail
+          docker buildx build \
+            --builder domain-map-builder \
+            --platform linux/amd64 \
+            --file deploy/domain-map.Dockerfile \
+            --tag "$GHCR_PREFIX/jobmap-app:$RELEASE_SHA" \
+            --build-arg "NEXT_PUBLIC_AMAP_KEY=$NEXT_PUBLIC_AMAP_KEY" \
+            --build-arg "NEXT_PUBLIC_AMAP_SECURITY_CODE=$NEXT_PUBLIC_AMAP_SECURITY_CODE" \
+            --build-arg "NEXT_PUBLIC_TENCENT_JSAPI_KEY=$NEXT_PUBLIC_TENCENT_JSAPI_KEY" \
+            --build-arg "NEXT_PUBLIC_BAIDU_AK=$NEXT_PUBLIC_BAIDU_AK" \
+            --provenance=false \
+            --sbom=true \
+            --push .
+
+      - name: Build and push migration image
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          set -Eeuo pipefail
+          docker buildx build \
+            --builder domain-map-builder \
+            --platform linux/amd64 \
+            --file deploy/migrate.Dockerfile \
+            --tag "$GHCR_PREFIX/jobmap-migrate:$RELEASE_SHA" \
+            --provenance=false \
+            --sbom=true \
+            --push .
+
+      - name: Resolve immutable image digests
+        id: images
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          set -Eeuo pipefail
+          app_digest="$(docker buildx imagetools inspect \
+            "$GHCR_PREFIX/jobmap-app:$RELEASE_SHA" \
+            --format '{{.Manifest.Digest}}')"
+          migrate_digest="$(docker buildx imagetools inspect \
+            "$GHCR_PREFIX/jobmap-migrate:$RELEASE_SHA" \
+            --format '{{.Manifest.Digest}}')"
+          [[ "$app_digest" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+          [[ "$migrate_digest" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+          printf 'app_digest=%s@%s\n' "$GHCR_PREFIX/jobmap-app" "$app_digest" >> "$GITHUB_OUTPUT"
+          printf 'migrate_digest=%s@%s\n' "$GHCR_PREFIX/jobmap-migrate" "$migrate_digest" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare release bundle
+        shell: bash
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          set -Eeuo pipefail
+          bundle="$RUNNER_TEMP/domain-map-release"
+          mkdir -p "$bundle/deploy"
+          install -m 644 deploy/compose.prod.yml "$bundle/deploy/compose.prod.yml"
+          install -m 755 deploy/domain-map-backup.sh "$bundle/deploy/domain-map-backup.sh"
+          tar -C "$bundle" -czf "$RUNNER_TEMP/domain-map-release.tgz" deploy
+
+      - name: Configure pinned VPS host key
+        shell: bash
+        env:
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          [[ -n "$VPS_KNOWN_HOSTS" ]] || {
+            printf '%s\n' 'VPS_KNOWN_HOSTS is required' >&2
+            exit 1
+          }
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$RUNNER_TEMP/known_hosts"
+          chmod 600 "$RUNNER_TEMP/known_hosts"
+          printf '%s\n' 'pinned VPS host key configured'
+
+      - name: Upload release bundle
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          set -Eeuo pipefail
+          key="$RUNNER_TEMP/vps_key"
+          printf '%s\n' "$VPS_SSH_KEY" > "$key"
+          chmod 600 "$key"
+          trap 'rm -f "$key"' EXIT
+          ssh_opts=(-o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o ConnectTimeout=15 \
+            -i "$key" -p "$VPS_PORT")
+          scp_opts=(-o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o ConnectTimeout=15 \
+            -i "$key" -P "$VPS_PORT")
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" \
+            "mkdir -p -- /opt/domain-map/incoming/$RELEASE_SHA/deploy"
+          scp "${scp_opts[@]}" "$RUNNER_TEMP/domain-map-release.tgz" \
+            "$VPS_USER@$VPS_HOST:/opt/domain-map/incoming/$RELEASE_SHA/"
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" \
+            "tar -xzf /opt/domain-map/incoming/$RELEASE_SHA/domain-map-release.tgz -C /opt/domain-map/incoming/$RELEASE_SHA && rm -f /opt/domain-map/incoming/$RELEASE_SHA/domain-map-release.tgz"
+          rm -f "$key"
+
+      - name: Apply release through restricted VPS wrapper
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+          APP_DIGEST: ${{ steps.images.outputs.app_digest }}
+          MIGRATE_DIGEST: ${{ steps.images.outputs.migrate_digest }}
+        run: |
+          set -Eeuo pipefail
+          key="$RUNNER_TEMP/vps_key"
+          printf '%s\n' "$VPS_SSH_KEY" > "$key"
+          chmod 600 "$key"
+          trap 'rm -f "$key"' EXIT
+          ssh_opts=(-o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" -o ConnectTimeout=15 \
+            -i "$key" -p "$VPS_PORT")
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" \
+            "sudo --non-interactive /usr/local/sbin/domain-map-deploy apply '$RELEASE_SHA' '$APP_DIGEST' '$MIGRATE_DIGEST'"
+          rm -f "$key"
+
+      - name: Verify public deployment
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          for path in \
+            /api/health/ready \
+            /api/modes \
+            '/api/pois?mode=work&page=1&pageSize=1'; do
+            curl --fail --silent --show-error --max-time 20 \
+              --header 'Cache-Control: no-cache' \
+              "https://jobmap.nvc.ac$path" >/dev/null
+          done

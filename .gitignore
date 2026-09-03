@@ -80,10 +80,8 @@ temp/
 *.tgz
 *.zip
 
-# Docker (production packaging stays local)
-.dockerignore
+# Docker (production packaging is versioned)
 docker-compose.override.yml
-/deploy/
 
 # Misc
 .agents/

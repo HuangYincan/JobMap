@@ -10,6 +10,7 @@ Dates are UTC+8. This file is a historical release log for work merged to `dev`;
 - **Configured-database account reads no longer look like empty success.** Session, applications, history, memories, notifications, avatar, and saved GET paths map query failure to no-store `503 DB_UNAVAILABLE` instead of a memory fallback. Unconfigured (test) memory mode is unchanged.
 - **Crawler Make targets require Python 3.12.** `make test-unit` uses `uv run --python 3.12` when uv is present; otherwise it refuses a non-3.12 `python3`.
 - **Cross-company position/site rows can be retargeted without merging employers.** `make db-repair-020` points a mismatched position at a site already owned by the same company (same city first). It does not merge companies or rewrite `company_id`. Migration `020` stays fail-closed.
+- **Production deploy packaging is back on `dev`.** A revert had removed `deploy/`, the production workflow, and `/api/health/ready`. Those files are restored from `main`, with database readiness helpers wired on the current `db.ts`.
 
 ## 2026-09-01
 

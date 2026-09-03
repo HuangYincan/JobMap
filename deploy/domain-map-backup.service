@@ -1,0 +1,8 @@
+[Unit]
+Description=Domain Map PostgreSQL backup
+Requires=domain-map.service
+After=domain-map.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/domain-map-backup.sh
