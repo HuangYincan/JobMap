@@ -84,7 +84,7 @@ server/
 | `017_avatar_data.sql` | Adds PostgreSQL `bytea` storage for uploaded avatar bytes. |
 | `018_user_memories.sql` | Creates account-scoped user memory facts and a user/time index. |
 | `019_user_memory_unique.sql` | Removes duplicate user/content facts and adds the unique user/content index. |
-| `020_position_site_company_fk.sql` | Preflights cross-company links, then adds the composite site/company foreign-key invariant. |
+| `020_position_site_company_fk.sql` | Preflights cross-company links, then adds the composite site/company foreign-key invariant. Historical mismatches are not repaired here; run `make db-repair-020` first on a dirty database. |
 | `021_application_pipeline.sql` | Allows user-defined stage IDs, migrates `viewed` to `applied`, adds `updated_at`, and indexes activity order. |
 | `022_hz_pois_photos_shape.sql` | Preflights existing `hz_pois.photos` values and adds a check requiring JSON arrays; it does not repair or rewrite dirty rows. |
 | `023_recruitment_source_record_fk.sql` | Adds nullable `source_record_id` on `company_sites` and `positions` with a composite FK to `source_records(id, source_id)`; it does not backfill historical rows. |
