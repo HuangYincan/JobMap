@@ -3,9 +3,12 @@
 
 import { poiToSourceCompany, type RecruitmentAdapter } from '../recruitment-source.ts';
 import type { RecruitmentPOI } from '../types.ts';
+import { workCatalogSqlWindowDone } from '../viewport-search.ts';
 
-const PAGE_SIZE = 50;
-const MAX_PAGES = 20;
+/** Align with GET /api/pois MAX_PAGE_SIZE / WORK_VIEWPORT_PAGE_SIZE. */
+const PAGE_SIZE = 100;
+/** 防呆上限。有 total 时按候选行翻页,不再把水合短页当成整库到底。 */
+const MAX_PAGES = 10_000;
 
 function isRecruitmentPoi(value: unknown): value is RecruitmentPOI {
   if (!value || typeof value !== 'object') return false;
@@ -28,8 +31,12 @@ export async function fetchWorkCatalogFromApi(): Promise<RecruitmentPOI[]> {
     }
     const batch = (payload.results ?? []).filter(isRecruitmentPoi);
     collected.push(...batch);
+    const total = typeof payload.total === 'number' ? payload.total : -1;
+    if (total >= 0) {
+      if (workCatalogSqlWindowDone(page, PAGE_SIZE, total)) break;
+      continue;
+    }
     if (batch.length < PAGE_SIZE) break;
-    if (typeof payload.total === 'number' && collected.length >= payload.total) break;
   }
   return collected;
 }

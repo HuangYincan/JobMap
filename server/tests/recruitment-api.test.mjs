@@ -48,7 +48,29 @@ test('fetchWorkCatalogFromApi pages /api/pois and keeps catalog ids', async () =
     const pois = await fetchWorkCatalogFromApi();
     assert.equal(pois.length, 1);
     assert.equal(pois[0].id, 'alibaba-xixi');
-    assert.match(calls[0], /\/api\/pois\?mode=work&page=1/);
+    assert.match(calls[0], /\/api\/pois\?mode=work&page=1&pageSize=100/);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('fetchWorkCatalogFromApi: 水合短页但 total 未取尽 → 继续翻页', async () => {
+  const calls = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    const page = Number(new URL(String(url), 'http://x').searchParams.get('page'));
+    const row = page === 1 ? SAMPLE : { ...SAMPLE, id: `site-${page}` };
+    return {
+      ok: true,
+      json: async () => ({ total: 150, page, pageSize: 100, results: [row] }),
+    };
+  };
+  try {
+    const pois = await fetchWorkCatalogFromApi();
+    assert.equal(calls.length, 2);
+    assert.equal(pois.length, 2);
+    assert.equal(pois[1].id, 'site-2');
   } finally {
     globalThis.fetch = original;
   }

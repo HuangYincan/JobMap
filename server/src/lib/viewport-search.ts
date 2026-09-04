@@ -324,8 +324,8 @@ export function batchMatchesCurrentMode(
 
 /** moveend/zoomend 防抖时长 */
 export const VIEWPORT_DEBOUNCE_MS = 800;
-/** 视口请求每页大小(服务端 pageSize 上限) */
-export const WORK_VIEWPORT_PAGE_SIZE = 50;
+/** 视口/全量请求每页大小(对齐 GET /api/pois 与 work-catalog-page 上限 100) */
+export const WORK_VIEWPORT_PAGE_SIZE = 100;
 
 export interface WorkViewportQuery {
   /** 当前视野;缺省时不带 bounds 参数(服务端返回整库首页,仅首屏兜底) */
@@ -340,8 +340,8 @@ export interface WorkViewportQuery {
   pageSize?: number;
   /**
    * 从 page 起连取几页。首屏/刷新取前几页填满视野(默认 4 页=200);
-   * 视口增量加载(wsv)传大 maxPages(如 10000)循环取尽,短页/空页 break 提前停
-   * (见 loadWorkViewport 短页语义),防呆上限不白打请求。
+   * 视口增量加载(wsv)传大 maxPages(如 10000)循环取尽。有服务端 total 时按
+   * SQL OFFSET 窗口停(水合后 results 变短不算到底);无 total 才短页/空页 break。
    */
   maxPages?: number;
 }
@@ -365,10 +365,36 @@ export interface LoadWorkViewportOptions extends WorkViewportQuery {
 
 /**
  * work 全量加载防呆上限(2026-08-20 修复):主加载一次取尽整库
- * (672 公司 / ~1843 站点 POI,pageSize 50 → ~37 页),不传 bounds/maxTier
- * 服务端返回全量;实际由短页/空页 break 提前停,此值只是防呆。
+ * (pageSize 100),不传 bounds/maxTier 服务端返回全量。有 total 时按候选行
+ * OFFSET 翻页;无 total 才短页 break。此值只是防呆。
  */
 export const WORK_FULL_LOAD_MAX_PAGES = 10_000;
+
+/**
+ * SQL 候选窗口是否已经走完。`total` 计的是站点候选行,水合/在招过滤后
+ * `results` 可以短于 pageSize——那不是整库到底。未知 total(负数)→ false,
+ * 调用方回退短页判定。
+ */
+export function workCatalogSqlWindowDone(pageNo: number, pageSize: number, total: number): boolean {
+  if (!Number.isInteger(pageNo) || pageNo < 1) return true;
+  if (!Number.isInteger(pageSize) || pageSize < 1) return true;
+  if (!(total >= 0)) return false;
+  return pageNo * pageSize >= total;
+}
+
+/**
+ * 全国列表(无 bounds)不要把 sort=distance 传给服务端:缺省圆心是杭州,
+ * 第一页会变成杭州附近站点;水合再变短后,旧短页停刷会把全国目录钉死在杭州。
+ * 距离排序仍由客户端 pipeline 对全量池做。带 bounds 的距离序保持原样。
+ */
+export function workCatalogRequestSort(
+  sort: string | undefined,
+  bounds?: ViewportBounds | null,
+): string | undefined {
+  if (!sort) return undefined;
+  if (sort === 'distance' && !bounds) return undefined;
+  return sort;
+}
 
 /**
  * 单页请求超时(ms)(2026-08-22,first-load-bounded):loadWorkViewport 每页
@@ -460,7 +486,8 @@ export async function fetchWorkViewportPage(
   params.set('page', String(query.page ?? 1));
   params.set('pageSize', String(query.pageSize ?? WORK_VIEWPORT_PAGE_SIZE));
   if (query.q) params.set('q', query.q);
-  if (query.sort) params.set('sort', query.sort);
+  const sort = workCatalogRequestSort(query.sort, query.bounds);
+  if (sort) params.set('sort', sort);
   const filters = query.maxTier !== undefined && query.maxTier !== null
     ? { ...query.filters, maxTier: query.maxTier }
     : { ...(query.filters ?? {}) };
@@ -484,7 +511,7 @@ export async function fetchWorkViewportPage(
 export interface LoadWorkViewportResult {
   /** 合并后的累计池 */
   pois: POI[];
-  /** 数据源是否到底(本页不满页即停):true = 已加载全部 */
+  /** 数据源是否到底(有 total 时按 SQL 窗口;无 total 时短页):true = 已加载全部 */
   noMore: boolean;
   /**
    * 本次请求是否取回 0 条(首取页即空,未并入任何新行)。空批次≠到底
@@ -537,9 +564,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
  * 工作模式视口加载:从 page 起连取 maxPages 页(默认 1 页) → 每页 alive 过滤
  * → 按 poi.id 增量合并进现有池(不清空已有 marker;重复 id 跳过;
  * cap 缺省 POI_HARD_CAP 防无限堆,work 视口传 Infinity 去上限)。
- * 每页合并后回调 onBatch(完整累计池)。页数取完或某页不满页即停。
- * 返回值 { pois, noMore, vacant }:noMore 表示数据源到底(短页 break / total
- * 取尽),供调用方停止哨兵并显示「没有更多结果」;空页不置 noMore(空批次≠
+ * 每页合并后回调 onBatch(完整累计池)。
+ * 返回值 { pois, noMore, vacant }:noMore 表示数据源到底。有服务端 total 时,
+ * 按 SQL 页窗口(page * pageSize)对照 total,水合短页不算到底——默认
+ * sort=distance 时 LIMIT 站点水合后可能只剩杭州 20 来条,旧逻辑会把全国
+ * 目录停在第一页。全国请求不再下发无圆心的 distance。无 total(-1)才回退短页判定。空页不置 noMore(空批次≠
  * 到底,ws1 Bug1),vacant 标记「整个请求 0 条」供空批次三态判定。
  * 取消时不置位 noMore(状态未知)。
  * 单页失败/超时(first-load-bounded):warn(页码+原因)后跳过该页继续,
@@ -602,27 +631,29 @@ export async function loadWorkViewport(
     okPages += 1;
     consecutiveFailures = 0;
     if (signal?.cancelled) return result({ noMore: false, vacant });
-    const offset = (pageNo - 1) * pageSize;
     merged = mergePoisById(merged, page.pois, cap);
     onBatch?.(merged);
+    const totalKnown = page.total >= 0;
+    const sqlWindowDone = workCatalogSqlWindowDone(pageNo, pageSize, page.total);
+
     // 空批次(0 条)≠ 到底(ws1 Bug1 视口):滤波/层级 maxTier 裁剪可致整页为空,
-    // 不代表数据源已取尽——不闩锁 noMore,保留无限滚动重试与下一次视口刷新的
-    // 恢复能力,避免「整城无 POI」时粘滞「没有更多结果」(恢复只能等 moveend)。
+    // 不代表数据源已取尽——不闩锁 noMore。有 total 且 SQL 窗口未走完时继续
+    // 翻页(水合可能把一整页站点丢掉);否则提前停,保留无限滚动重试。
     if (page.pois.length === 0) {
-      // 真空标记仅对「整个请求 0 条」(首取页即空)成立;若前面页已并入行,
-      // 只是本轮追加无新增(加载更多越过上限),不算真空。
-      vacant = p === 0;
+      if (totalKnown && !sqlWindowDone) continue;
+      vacant = merged.length === 0;
       noMore = false;
       break;
     }
-    // 本页不满页 → 没有更多数据,提前停(避免白打请求);同时上报 noMore
-    if (page.pois.length < pageSize) {
-      noMore = true;
-      break;
+    if (totalKnown) {
+      if (sqlWindowDone) {
+        noMore = true;
+        break;
+      }
+      continue;
     }
-    // 服务端 total 判定:已取到 total 之后 → 数据到底(poi-loading D)。
-    // 「过滤导致可见列表不变」不再误判;无 total(-1)时保持短页判定。
-    if (page.total >= 0 && offset + page.pois.length >= page.total) {
+    // 无 total:本页不满页 → 没有更多数据,提前停(避免白打请求)
+    if (page.pois.length < pageSize) {
       noMore = true;
       break;
     }

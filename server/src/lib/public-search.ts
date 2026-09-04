@@ -33,7 +33,7 @@ export function clampPage(page: number | undefined): number {
 }
 
 export function clampPageSize(pageSize: number | undefined): number {
-  return Math.min(50, Math.max(1, Math.floor(pageSize || 20)));
+  return Math.min(100, Math.max(1, Math.floor(pageSize || 20)));
 }
 
 export function spatialClipFromSearch(input: PublicSearchInput): SpatialClip | undefined {

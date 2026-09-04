@@ -113,7 +113,7 @@ test('bounded Work page preserves slug:site ids when a company has multiple nati
   assert.deepEqual(page.results.map((poi) => poi.id), ['acme:101']);
 });
 
-test('bounded Work page numbers sort-center parameters before offset and limit', async () => {
+test('bounded Work page uses slug order for distance sort when center is omitted', async () => {
   const pool = fakePool();
   pool.query = async (sql, params) => {
     pool.calls.push({ sql, params });
@@ -124,9 +124,32 @@ test('bounded Work page numbers sort-center parameters before offset and limit',
   };
   await loadWorkCatalogPageFromDb({ filters: {}, sort: 'distance', page: 3, pageSize: 4 }, pool);
   const rows = pool.calls.find((call) => call.sql.includes('/* work-page rows */'));
+  assert.match(rows.sql, /ORDER BY c\.slug ASC, s\.id ASC/);
+  assert.doesNotMatch(rows.sql, /ST_DistanceSphere/);
+  assert.match(rows.sql, /OFFSET \$1 LIMIT \$2/);
+  assert.deepEqual(rows.params, [8, 4]);
+});
+
+test('bounded Work page numbers explicit sort-center parameters before offset and limit', async () => {
+  const pool = fakePool();
+  pool.query = async (sql, params) => {
+    pool.calls.push({ sql, params });
+    if (sql.includes('/* work-page count */')) return { rows: [{ total: '0' }] };
+    if (sql.includes('/* work-page aggregations */')) return { rows: [] };
+    if (sql.includes('/* work-page rows */')) return { rows: [] };
+    throw new Error(`unexpected SQL: ${sql}`);
+  };
+  await loadWorkCatalogPageFromDb({
+    filters: {},
+    sort: 'distance',
+    page: 3,
+    pageSize: 4,
+    center: { lng: 116.4, lat: 39.9 },
+  }, pool);
+  const rows = pool.calls.find((call) => call.sql.includes('/* work-page rows */'));
   assert.match(rows.sql, /ST_DistanceSphere\(s\.geom, ST_SetSRID\(ST_MakePoint\(\$1, \$2\), 4326\)\)/);
   assert.match(rows.sql, /OFFSET \$3 LIMIT \$4/);
-  assert.deepEqual(rows.params, [120.15, 30.27, 8, 4]);
+  assert.deepEqual(rows.params, [116.4, 39.9, 8, 4]);
 });
 
 test('bounded Work page applies the public source and freshness gate to eligibility, sort, and hydration', async () => {

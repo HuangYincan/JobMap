@@ -24,7 +24,7 @@ export interface WorkCatalogPageQuery {
   sort?: string;
   page?: number;
   pageSize?: number;
-  /** Distance sort uses the same fallback as public-search when omitted. */
+  /** Distance ORDER BY only when this is a finite lng/lat; omitted → slug pages. */
   center?: { lng: number; lat: number };
 }
 
@@ -37,7 +37,8 @@ export interface WorkCatalogPage {
 }
 
 const DEFAULT_CENTER = { lng: 120.15, lat: 30.27 };
-const MAX_PAGE_SIZE = 50;
+/** Align with GET /api/pois MAX_PAGE_SIZE so national full-load pages are not silently truncated. */
+const MAX_PAGE_SIZE = 100;
 
 const SEARCH_QUERY_ALIASES: string[][] = [
   ['前端', 'fe', 'frontend', 'front-end'],
@@ -66,12 +67,17 @@ const UNSUPPORTED_FILTERS = new Set([
 ]);
 
 function finiteCenter(value: unknown): { lng: number; lat: number } {
-  if (!value || typeof value !== 'object') return DEFAULT_CENTER;
+  return explicitCenter(value) ?? DEFAULT_CENTER;
+}
+
+/** Distance paging needs a real origin; Hangzhou default must not lock national pages. */
+function explicitCenter(value: unknown): { lng: number; lat: number } | null {
+  if (!value || typeof value !== 'object') return null;
   const candidate = value as { lng?: unknown; lat?: unknown };
   return typeof candidate.lng === 'number' && Number.isFinite(candidate.lng)
     && typeof candidate.lat === 'number' && Number.isFinite(candidate.lat)
     ? { lng: candidate.lng, lat: candidate.lat }
-    : DEFAULT_CENTER;
+    : null;
 }
 
 function stringArray(value: unknown): string[] | null {
@@ -371,10 +377,13 @@ function activePositionAggregateSql(kind: 'count' | 'salary' | 'deadline'): stri
 function orderBy(query: WorkCatalogPageQuery, b: SqlBuilder): string {
   const sort = query.sort || '';
   if (sort === 'distance') {
-    const center = finiteCenter(query.center);
-    const lng = b.bind(center.lng);
-    const lat = b.bind(center.lat);
-    return `ST_DistanceSphere(s.geom, ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)) ASC, c.slug ASC, s.id ASC`;
+    const center = explicitCenter(query.center);
+    if (center) {
+      const lng = b.bind(center.lng);
+      const lat = b.bind(center.lat);
+      return `ST_DistanceSphere(s.geom, ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)) ASC, c.slug ASC, s.id ASC`;
+    }
+    return 'c.slug ASC, s.id ASC';
   }
   if (sort === 'rating') return 'COALESCE(c.rating, 0) DESC, c.slug ASC, s.id ASC';
   if (sort === 'salaryDesc') return `${activePositionAggregateSql('salary')} DESC, c.slug ASC, s.id ASC`;

@@ -1061,10 +1061,11 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
           if (batch.length > 0) setLoading(false);
         };
         // 工作模式:全量加载(2026-08-20 修复)——不传 bounds/maxTier,服务端
-        // 无 clip 返回整库(672 公司 / ~1843 站点 POI,ORDER BY slug 稳定分页),
+        // 无 clip 返回整库。sort=distance 不下发(无 center 时服务端改 slug
+        // 分页,避免杭州圆心锁死第一页)。pageSize 100,有 total 按候选行翻页,
         // 一次取尽。此后 pool 与 zoom 无关:聚合徽章计数稳定(bug 1)、缩放/
-        // 平移不再触发任何重拉(首点刷新 bug 的根因之一)。列表按视野的裁剪
-        // 移到客户端(pois memo 按 mapBounds 过滤,不再发视口请求)。
+        // 平移不再触发任何重拉。列表按视野的裁剪移到客户端(pois memo 按
+        // mapBounds 过滤,不再发视口请求)。
         // distance 筛选不下行服务端:无 bounds 时服务端以杭州为中心裁剪,
         // 与客户端 distanceOrigin(当前视野中心)口径不一致——全量池 + 客户端
         // 按 distanceOrigin 过滤,结果等价且中心正确。
@@ -1079,14 +1080,14 @@ export function MapShell() {  const mapContainer = useRef<HTMLDivElement>(null);
             maxPages: WORK_FULL_LOAD_MAX_PAGES,
             filters: serverFilters,
             q: query || undefined,
-            sort: sort || undefined,
+            sort: sort && sort !== 'distance' ? sort : undefined,
             existing: catalogRef.current,
             signal,
             onBatch,
           });
           data = result.pois;
-          // work 数据到底由 loadWorkViewport 上报(短页 break):
-          // 「没有更多」= 数据源到底,不是 3000 封顶。
+          // work 数据到底由 loadWorkViewport 上报(有 total 按 SQL 页窗口;
+          // 无 total 才短页 break):「没有更多」= 数据源到底,不是 3000 封顶。
           noMore = result.noMore;
           vacant = result.vacant;
           // 全量加载后 work 无「加载更多」分页;pageOffset 归零(旧会话缓存
