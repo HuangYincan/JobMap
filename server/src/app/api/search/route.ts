@@ -39,7 +39,7 @@ const MAX_BODY_CHARS = 64 * 1024;
 const MAX_FILTERS_JSON_LENGTH = 4000;
 /** page 上限：与 GET /api/pois 一致，防止异常分页偏移。 */
 const MAX_PAGE = 10_000;
-/** pageSize 上限：无 bounds 全量搜索时防单次大响应（客户端语义不变，正常请求恒 ≤50）。 */
+/** pageSize 上限：无 bounds 全量搜索时防单次大响应（工作全量加载用 100）。 */
 const MAX_PAGE_SIZE = 100;
 
 export async function POST(request: Request) {

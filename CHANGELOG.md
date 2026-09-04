@@ -11,6 +11,7 @@ Dates are UTC+8. This file is a historical release log for work merged to `dev`;
 - **Crawler Make targets require Python 3.12.** `make test-unit` uses `uv run --python 3.12` when uv is present; otherwise it refuses a non-3.12 `python3`.
 - **Cross-company position/site rows can be retargeted without merging employers.** `make db-repair-020` points a mismatched position at a site already owned by the same company (same city first). It does not merge companies or rewrite `company_id`. Migration `020` stays fail-closed.
 - **Production deploy packaging is back on `dev`.** A revert had removed `deploy/`, the production workflow, and `/api/health/ready`. Those files are restored from `main`, with database readiness helpers wired on the current `db.ts`.
+- **工作模式全国目录不再停在杭州。** 默认 `sort=distance` 圆心落在杭州,一页 SQL 水合后只剩 20 来条;客户端把短页当成整库到底。现有服务端 `total` 时按候选行翻页,水合变短仍继续装完全国池;全国请求不再下发无圆心的 `sort=distance`;每页 100 条;服务端 `sort=distance` 且未带 `center` 时改 slug 分页。
 
 ## 2026-09-01
 

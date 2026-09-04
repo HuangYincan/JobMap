@@ -34,6 +34,8 @@ import {
   fetchWorkViewportPage,
   loadWorkViewport,
   needsViewportAlign,
+  workCatalogRequestSort,
+  workCatalogSqlWindowDone,
   VIEWPORT_ALIGN_CENTER_KM,
   VIEWPORT_ALIGN_ZOOM_DELTA,
   VIEWPORT_DEBOUNCE_MS,
@@ -243,6 +245,37 @@ test('fetchWorkViewportPage sends maxTier=0 and omits only undefined/null', asyn
   assert.equal(seenFilters[0], JSON.stringify({ maxTier: 0 }));
   assert.equal(seenFilters[1], null);
   assert.equal(seenFilters[2], null);
+});
+
+test('workCatalogSqlWindowDone: hydration-short pages are not EOF while SQL total remains', () => {
+  assert.equal(workCatalogSqlWindowDone(1, 50, 1293), false);
+  assert.equal(workCatalogSqlWindowDone(26, 50, 1293), true);
+  assert.equal(workCatalogSqlWindowDone(1, 50, 21), true);
+  assert.equal(workCatalogSqlWindowDone(1, 50, -1), false);
+});
+
+test('workCatalogRequestSort: national distance sort is dropped; bounded distance sort is kept', () => {
+  assert.equal(workCatalogRequestSort('distance'), undefined);
+  assert.equal(workCatalogRequestSort('distance', null), undefined);
+  assert.equal(workCatalogRequestSort('distance', VIEWPORT_BOX), 'distance');
+  assert.equal(workCatalogRequestSort('rating'), 'rating');
+  assert.equal(workCatalogRequestSort(undefined), undefined);
+});
+
+test('fetchWorkViewportPage: national sort=distance is not sent (Hangzhou default center)', async () => {
+  let seenUrl = '';
+  const fetcher = async (url) => {
+    seenUrl = String(url);
+    return { ok: true, json: async () => ({ results: [] }) };
+  };
+  await fetchWorkViewportPage({ sort: 'distance', page: 1 }, fetcher);
+  const national = new URL(seenUrl, 'http://x');
+  assert.equal(national.searchParams.get('sort'), null);
+  assert.equal(national.searchParams.get('pageSize'), '100');
+
+  await fetchWorkViewportPage({ sort: 'distance', bounds: VIEWPORT_BOX, page: 1 }, fetcher);
+  const bounded = new URL(seenUrl, 'http://x');
+  assert.equal(bounded.searchParams.get('sort'), 'distance');
 });
 
 test('fetchWorkViewportPage: 透出服务端 total(poi-loading D noMore 判定用)', async () => {
@@ -834,6 +867,60 @@ test('loadWorkViewport: 0 条 → noMore=false(空批次不闩锁,ws1 Bug1)', as
     assert.equal(vacant, true); // 整个请求 0 条 → 真空标记(三态判定用)
     assert.equal(unavailable, false); // 200 空 ≠ 库故障
     assert.deepEqual(seenPages, ['1']); // 空页提前停,不白打后续页
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport: 水合短页但 SQL total 未取尽 → 继续翻页(全国 distance 分页)', async () => {
+  // 生产:sort=distance 默认圆心杭州,LIMIT 50 站点水合后只剩 ~21 条杭州 POI。
+  // 旧逻辑把 21 < 50 当成整库到底,全国目录永远装不完。
+  const seenPages = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const page = Number(new URL(String(url), 'http://x').searchParams.get('page'));
+    seenPages.push(page);
+    const count = page === 1 ? 21 : 50;
+    const results = Array.from({ length: count }, (_, i) =>
+      recruitmentPoi(`p${page}-${i}`, [{ id: `job-${page}-${i}`, title: '岗位', type: 'social', status: 'open' }]),
+    );
+    return { ok: true, json: async () => ({ results, total: 1293 }) };
+  };
+  try {
+    const { pois, noMore } = await loadWorkViewport({
+      pageSize: 50,
+      maxPages: 3,
+      existing: [],
+    });
+    assert.deepEqual(seenPages, [1, 2, 3]);
+    assert.equal(pois.length, 21 + 50 + 50);
+    assert.equal(noMore, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loadWorkViewport: 整页水合为空但 SQL total 未取尽 → 继续翻页', async () => {
+  const seenPages = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const page = Number(new URL(String(url), 'http://x').searchParams.get('page'));
+    seenPages.push(page);
+    const results = page === 1
+      ? []
+      : [recruitmentPoi('later', [{ id: 'job-2', title: '岗位', type: 'social', status: 'open' }])];
+    return { ok: true, json: async () => ({ results, total: 80 }) };
+  };
+  try {
+    const { pois, noMore, vacant } = await loadWorkViewport({
+      pageSize: 50,
+      maxPages: 3,
+      existing: [],
+    });
+    assert.deepEqual(seenPages, [1, 2]);
+    assert.equal(pois.length, 1);
+    assert.equal(vacant, false);
+    assert.equal(noMore, true);
   } finally {
     globalThis.fetch = originalFetch;
   }

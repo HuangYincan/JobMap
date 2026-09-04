@@ -205,6 +205,8 @@ test('#12 pois: 超长外部参数 / page / pageSize 非法 → 400,且先于缓
   assert.match(route, /const MAX_BOUNDS_LENGTH = 128/);
   assert.match(route, /const MAX_PAGE_SIZE = 100/);
   assert.match(route, /const MAX_PAGE = 10_000/);
+  assert.match(route, /const MAX_CENTER_LENGTH = 128/);
+  assert.match(route, /function parseCenter/);
   assert.match(route, /code: 'PARAM_TOO_LARGE'/);
   assert.match(route, /code: 'INVALID_PAGE'/);
   assert.match(route, /code: 'INVALID_PAGE_SIZE'/);

@@ -47,8 +47,9 @@ const MAX_SORT_LENGTH = 50;
 const MAX_MODE_LENGTH = 32;
 /** page 上限：超过即视为越界请求（正常分页恒远小于此）。 */
 const MAX_PAGE = 10_000;
-/** pageSize 上限：无 bounds 全量搜索时防单次大响应（客户端语义不变，正常请求恒 ≤50）。 */
+/** pageSize 上限：无 bounds 全量搜索时防单次大响应（工作全量加载用 100）。 */
 const MAX_PAGE_SIZE = 100;
+const MAX_CENTER_LENGTH = 128;
 const WORK_DB_UNAVAILABLE = 'work_db_unavailable';
 
 /** 分页参数：缺失/空串 → fallback；非整数或越出 1..max → null（调用方回 400）。 */
@@ -59,6 +60,16 @@ function pagedParam(raw: string | null, fallback: number, max: number): number |
   return n;
 }
 
+/** 解析可选 center=lng,lat。非法值忽略(distance 排序改走 slug 分页,不默认杭州)。 */
+function parseCenter(raw: string | null): { lng: number; lat: number } | null {
+  if (!raw) return null;
+  const [lngStr, latStr] = raw.split(',');
+  const lng = Number.parseFloat(lngStr ?? '');
+  const lat = Number.parseFloat(latStr ?? '');
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+  return { lng, lat };
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const rawMode = url.searchParams.get('mode');
@@ -66,6 +77,7 @@ export async function GET(request: Request) {
   const q = url.searchParams.get('q') || undefined;
   const sort = url.searchParams.get('sort') || undefined;
   const bounds = url.searchParams.get('bounds');
+  const centerRaw = url.searchParams.get('center');
 
   const filtersRaw = url.searchParams.get('filters');
   if (
@@ -73,7 +85,8 @@ export async function GET(request: Request) {
     (q && q.length > MAX_Q_LENGTH) ||
     (sort && sort.length > MAX_SORT_LENGTH) ||
     (filtersRaw && filtersRaw.length > MAX_FILTERS_JSON_LENGTH) ||
-    (bounds && bounds.length > MAX_BOUNDS_LENGTH)
+    (bounds && bounds.length > MAX_BOUNDS_LENGTH) ||
+    (centerRaw && centerRaw.length > MAX_CENTER_LENGTH)
   ) {
     return NextResponse.json(
       { code: 'PARAM_TOO_LARGE', message: 'one or more query parameters exceed their length limit' },
@@ -106,13 +119,18 @@ export async function GET(request: Request) {
     );
   }
 
-  const cacheKey = publicCacheKey(['pois', mode, q, sort, url.searchParams.get('filters'), bounds, page, pageSize]);
+  const center = parseCenter(centerRaw);
+  const cacheKey = publicCacheKey(
+    center
+      ? ['pois', mode, q, sort, url.searchParams.get('filters'), bounds, page, pageSize, `${center.lng},${center.lat}`]
+      : ['pois', mode, q, sort, url.searchParams.get('filters'), bounds, page, pageSize],
+  );
   const cached = readPublicCache(cacheKey);
   if (cached) {
     return NextResponse.json(cached, { headers: { 'Cache-Control': PUBLIC_CACHE_CONTROL } });
   }
 
-  const query = { mode, q, filters, sort, bounds, page, pageSize };
+  const query = { mode, q, filters, sort, bounds, page, pageSize, ...(center ? { center } : {}) };
   const clip = spatialClipFromSearch(query);
   const nationalPage = isRecruitmentMode(mode)
     && supportsWorkCatalogPageQuery({ q, filters, sort, page, pageSize })
@@ -121,7 +139,9 @@ export async function GET(request: Request) {
     && !clip?.districts?.length
     && !clip?.city;
   if (nationalPage) {
-    const found = await loadServerCatalogPage(mode, { q, filters, sort, page, pageSize });
+    const found = await loadServerCatalogPage(mode, {
+      q, filters, sort, page, pageSize, ...(center ? { center } : {}),
+    });
     if (found === null) {
       return NextResponse.json(
         { error: WORK_DB_UNAVAILABLE },
