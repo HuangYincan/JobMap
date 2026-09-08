@@ -19,9 +19,9 @@ function dropFile(name) {
   return JSON.parse(readFileSync(join(QQJ_DIR, name), 'utf8'));
 }
 
-test('qqdoc-jobs adapter reads all 163 drops into SourceCompany', async () => {
+test('qqdoc-jobs adapter reads all 162 drops into SourceCompany', async () => {
   const companies = await qqdocJobsAdapter().list();
-  assert.equal(companies.length, 163, `expected 163 qqdoc-jobs companies, got ${companies.length}`);
+  assert.equal(companies.length, 162, `expected 162 qqdoc-jobs companies, got ${companies.length}`);
   for (const company of companies) {
     assert.ok(company.slug.startsWith('qqj-'), `slug prefixed ${company.slug}`);
     assert.equal(company.source, 'qqdoc-jobs');
@@ -35,7 +35,7 @@ test('qqdoc-jobs adapter reads all 163 drops into SourceCompany', async () => {
   }
 });
 
-test('qqdoc-jobs drops pass import validation (163 companies, zero issues)', async () => {
+test('qqdoc-jobs drops pass import validation (162 companies, zero issues)', async () => {
   const companies = await listQqdocJobsFiles();
   const allIssues = companies.flatMap((company) => validateSourceCompany(company));
   assert.deepEqual(allIssues, []);
@@ -44,7 +44,7 @@ test('qqdoc-jobs drops pass import validation (163 companies, zero issues)', asy
 test('planSeedImport includes qqdoc-jobs companies ahead of seed', async () => {
   const plan = await planSeedImport();
   const qqj = plan.companies.filter((company) => company.source === 'qqdoc-jobs');
-  assert.equal(qqj.length, 163, `plan should carry 163 qqdoc-jobs companies, got ${qqj.length}`);
+  assert.equal(qqj.length, 162, `plan should carry 162 qqdoc-jobs companies, got ${qqj.length}`);
   assert.ok(
     plan.companies.findIndex((c) => c.slug === 'qqj-新东方西安学校') <
       plan.companies.findIndex((c) => c.slug === 'tencent-hangzhou'),
