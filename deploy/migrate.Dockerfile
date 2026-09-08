@@ -1,12 +1,10 @@
 FROM postgis/postgis:16-3.4
 
-# db/scripts/apply.sh records SHA-256 checksums with shasum. Keep the
-# migration image self-contained instead of depending on host packages.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends perl \
-    && rm -rf /var/lib/apt/lists/* \
-    && command -v psql >/dev/null \
-    && command -v shasum >/dev/null
+# apply.sh / preflight.sh prefer sha256sum from coreutils, which this image
+# already ships. Do not apt-get: the Debian 11 bullseye-security InRelease on
+# this base can expire and fail production image builds.
+RUN command -v psql >/dev/null \
+    && command -v sha256sum >/dev/null
 
 WORKDIR /workspace
 COPY db ./db

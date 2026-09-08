@@ -40,7 +40,9 @@ The host ultimately stores full `@sha256:...` references in
 - `domain-map.Dockerfile`: Node 22 multi-stage app image. Browser-visible
   `NEXT_PUBLIC_*` values are build arguments; server secrets are not copied.
 - `migrate.Dockerfile`: PostGIS-based one-shot migration image with `psql` and
-  `shasum`; it runs both `db/scripts/apply.sh` and `db/scripts/preflight.sh`.
+  `sha256sum`; it runs both `db/scripts/apply.sh` and `db/scripts/preflight.sh`.
+  It does not `apt-get`, so Debian security-mirror InRelease expiry cannot
+  block the image build.
 - `compose.prod.yml`: PostGIS, app, and migration services. It does not
   publish a database port and uses immutable image variables.
 - `domain-map-deploy.sh`: root-owned host wrapper with only `apply`, `rollback`,
