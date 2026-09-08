@@ -2,6 +2,12 @@
 set -Eeuo pipefail
 : "${DATABASE_URL:?DATABASE_URL is required}"
 command -v psql >/dev/null 2>&1 || { echo "psql is required" >&2; exit 127; }
+if command -v sha256sum >/dev/null 2>&1; then
+  SHA=(sha256sum)
+else
+  command -v shasum >/dev/null 2>&1 || { echo "neither sha256sum nor shasum is available" >&2; exit 127; }
+  SHA=(shasum -a 256)
+fi
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 PSQL=(psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -X)
 
@@ -11,7 +17,7 @@ PSQL=(psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -X)
 for file in "$ROOT"/migrations/[0-9][0-9][0-9]_*.sql; do
   version=$(basename "$file" .sql)
   filename=$(basename "$file")
-  checksum=$(shasum -a 256 "$file" | cut -d' ' -f1)
+  checksum=$("${SHA[@]}" "$file" | cut -d' ' -f1)
   # One transaction per migration. The applied-check runs AFTER the
   # transaction-scoped advisory lock, so concurrent runners serialize: the
   # loser observes the winner's ledger row and skips instead of re-running.

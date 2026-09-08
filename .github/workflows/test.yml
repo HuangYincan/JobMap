@@ -13,6 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify canonical documentation references
         run: make docs-check
+      - name: Verify migrate image does not apt-get
+        run: bash tests/unit/test_migrate_image_contract.sh
       - name: Report scaffold state
         run: make scaffold-status
 
