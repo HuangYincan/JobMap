@@ -15,15 +15,14 @@
 //
 // 用法:
 //   node scripts/merge-radar-remap.mjs <remapped-dir> [--dry-run]
-//   (缺 --dry-run 时直接写 server/data/recruitment/radar/)
+//   (缺 --dry-run 时直接写 JobMap-data/recruitment/radar/)
 // ============================================================
 
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { defaultDropDir } from '../src/lib/recruitment-data-root.ts';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const RADAR_DIR = join(__dirname, '..', 'data', 'recruitment', 'radar');
+const RADAR_DIR = defaultDropDir('radar');
 const DRY_RUN = process.argv.includes('--dry-run');
 const srcDir = process.argv[2];
 

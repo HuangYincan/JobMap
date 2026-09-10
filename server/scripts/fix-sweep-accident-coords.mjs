@@ -30,11 +30,11 @@
 // ============================================================
 
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { cityCenter } from '../src/lib/city-centers.ts';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
 
-const dataRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment');
+const dataRoot = recruitmentDataRoot();
 const DROP_DIRS = ['radar', 'official-career'];
 
 // 杭州参考框 (与 src/lib/spatial-query.ts CITY_REFERENCE_BOXES 杭州框一致)

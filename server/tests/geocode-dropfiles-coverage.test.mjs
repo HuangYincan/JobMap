@@ -13,6 +13,8 @@ import {
   siteHasStreetAddress,
   sitesNeedingGeocode,
 } from '../src/lib/site-geocode.ts';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
+import { corpusTest } from './helpers/recruitment-corpus.mjs';
 
 // 2026-08-22 (fix/geocode-qqdoc-embodied, w3): geocode-sites-apply.mjs 的
 // dropFiles() 原只扫描 radar + official-career 两个目录 — w2 回填进
@@ -98,10 +100,7 @@ test('dropFiles: 契约 — 扫描数组列出全部 5 个源目录常量', () =
   assert.deepEqual(listed, [...DIR_CONSTANT_NAMES].sort());
 });
 
-test('5 源目录常量互不相同且真实存在、含 json drops (dropFiles 运行时扫描)', async () => {
-  // 脚本的运行契约是 cwd=server (npm run geocode:sites:apply); adapter 的
-  // *_DIR 常量在模块加载时按 process.cwd() 解析 — 测试先锚定 cwd 再动态
-  // import, 与脚本同契约 (node --test 每文件独立进程, chdir 不外泄)。
+corpusTest('5 源目录常量互不相同且真实存在、含 json drops (dropFiles 运行时扫描)', async () => {
   process.chdir(SERVER_DIR);
   const [radar, official, qqdocJobs, qqdocOfficial, embodied] = await Promise.all([
     import('../src/lib/recruitment-adapters/radar.ts'),
@@ -113,8 +112,9 @@ test('5 源目录常量互不相同且真实存在、含 json drops (dropFiles �
   const dirs = [radar.RADAR_DIR, official.OFFICIAL_CAREER_DIR, qqdocJobs.QQDOC_JOBS_DIR, qqdocOfficial.QQDOC_OFFICIAL_DIR, embodied.EMBODIED_JOBS_DIR];
   assert.equal(new Set(dirs).size, 5, '5 个目录常量应互不相同 (非同一目录别名)');
   const files = [];
+  const root = recruitmentDataRoot();
   for (const dir of dirs) {
-    assert.equal(path.dirname(dir), path.join(SERVER_DIR, 'data', 'recruitment'), `目录应锚定 server/data/recruitment: ${dir}`);
+    assert.equal(path.dirname(dir), root, `目录应锚定 recruitment data root: ${dir}`);
     assert.ok(existsSync(dir), `目录应存在: ${dir}`);
     const names = readdirSync(dir).filter((n) => n.endsWith('.json') && !n.startsWith('.'));
     assert.ok(names.length > 0, `目录应含 json drops: ${dir}`);

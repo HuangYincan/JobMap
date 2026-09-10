@@ -26,6 +26,8 @@ import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
+import { corpusTest } from './helpers/recruitment-corpus.mjs';
 
 function sample() {
   return poiToSourceCompany(WORK_SEED[0]);
@@ -89,9 +91,9 @@ test('validateSourceCompany rejects source codes that would violate sources.code
   assert.deepEqual(validateSourceCompany(company), []);
 });
 
-test('radar drops with the scan #4 double-prefix fix stay clean (2 files, 4 URLs)', () => {
+corpusTest('radar drops with the scan #4 double-prefix fix stay clean (2 files, 4 URLs)', () => {
   // 数据级回归: 修正过的 2 个 drop 不再含 https://https:// (careerUrl/applyUrl 各 2 处)。
-  const radarDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment', 'radar');
+  const radarDir = join(recruitmentDataRoot(), 'radar');
   for (const name of ['中国科学院空天信息创新研究院.json', 'bdo立信.json']) {
     const raw = readFileSync(join(radarDir, name), 'utf8');
     assert.doesNotMatch(raw, /https:\/\/https:\/\//, `${name} has no repeated scheme`);
@@ -100,8 +102,8 @@ test('radar drops with the scan #4 double-prefix fix stay clean (2 files, 4 URLs
   }
 });
 
-test('施耐德 drops use canonical apply URL and reject extracted path fragments', () => {
-  const dir = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment', 'qqdoc-jobs');
+corpusTest('施耐德 drops use canonical apply URL and reject extracted path fragments', () => {
+  const dir = join(recruitmentDataRoot(), 'qqdoc-jobs');
   for (const name of ['qqj-施耐德电气.json', 'qqj-施耐德电气AI星火实习生计划.json']) {
     const raw = JSON.parse(readFileSync(join(dir, name), 'utf8'));
     const applyUrl = raw.positions[0].applyUrl;
@@ -147,7 +149,7 @@ test('public-read authenticity SQL follows the source registry and rejects none-
   assert.doesNotMatch(sql, /seed/);
 });
 
-test('embodied-jobs plan records survive authenticity filtering as a whole source', async () => {
+corpusTest('embodied-jobs plan records survive authenticity filtering as a whole source', async () => {
   const companies = await embodiedJobsAdapter().list();
   assert.ok(companies.length > 0);
   const plan = planRecruitmentImport(companies);
@@ -165,7 +167,7 @@ test('embodied-jobs plan records survive authenticity filtering as a whole sourc
 });
 
 
-test('applyRecruitmentImport only counts authentic positions (no re-opening example jobs)', async () => {
+corpusTest('applyRecruitmentImport only counts authentic positions (no re-opening example jobs)', async () => {
   const plan = await planSeedImport();
   const result = await applyRecruitmentImport(plan);
   assert.equal(result.wrote, false);
@@ -176,7 +178,7 @@ test('applyRecruitmentImport only counts authentic positions (no re-opening exam
   assert.ok(planPositions > result.positions, 'example jobs are filtered out at apply time');
 });
 
-test('radar adapter reads the mapped drop directory', async () => {
+corpusTest('radar adapter reads the mapped drop directory', async () => {
   const companies = await radarAdapter().list();
   assert.ok(companies.length >= 90, `expected >= 90 radar companies, got ${companies.length}`);
   const netease = companies.find((c) => c.slug === 'netease-hangzhou');
@@ -184,7 +186,7 @@ test('radar adapter reads the mapped drop directory', async () => {
   assert.ok(netease.positions.some((p) => p.externalId.startsWith('radar-')));
 });
 
-test('manycore drop keeps a closed aggregate tombstone and 4 split positions with real JDs', async () => {
+corpusTest('manycore drop keeps a closed aggregate tombstone and 4 split positions with real JDs', async () => {
   const companies = await radarAdapter().list();
   const manycore = companies.find((c) => c.slug === 'manycore-hangzhou');
   assert.ok(manycore, 'manycore-hangzhou drop is present');
@@ -321,7 +323,7 @@ test('planRecruitmentImport drops invalid companies and keeps the rest', () => {
   assert.ok(plan.issues.length > 0);
 });
 
-test('planSeedImport accepts every real drop with valid sites (strict DB-only import)', async () => {
+corpusTest('planSeedImport accepts every real drop with valid sites (strict DB-only import)', async () => {
   const plan = await planSeedImport();
   assert.equal(plan.dropped, 0);
   assert.equal(plan.issues.length, 0);
@@ -426,7 +428,7 @@ test('mergeCompaniesIntoPois hides closed jobs on the read path', () => {
   assert.equal(merged.find((p) => p.id === 'closed-only-lab'), undefined);
 });
 
-test('planSeedImport merges real drops onto catalog slugs (no seed scaffold)', async () => {
+corpusTest('planSeedImport merges real drops onto catalog slugs (no seed scaffold)', async () => {
   const plan = await planSeedImport();
   // 官方 career drop 携带 seed 风格 slug(alibaba-xixi 等), 是真实数据而非 seed 示例。
   const alibaba = plan.companies.find((c) => c.slug === 'alibaba-xixi');
@@ -464,7 +466,7 @@ test('planSeedImport merges real drops onto catalog slugs (no seed scaffold)', a
   assert.ok(xiaomi.positions.some((p) => p.externalId.startsWith('portal-feishu-')));
 });
 
-test('planSeedImport preserves authoritative and optional source snapshot identity', async () => {
+corpusTest('planSeedImport preserves authoritative and optional source snapshot identity', async () => {
   const plan = await planSeedImport();
   const bySource = new Map(plan.sourceSnapshots?.map((snapshot) => [snapshot.sourceCode, snapshot.reconcile]));
   assert.equal(plan.complete, true);
@@ -477,11 +479,11 @@ test('planSeedImport preserves authoritative and optional source snapshot identi
 
 test('applyRecruitmentImport is a no-op without DATABASE_URL', async () => {
   delete process.env.DATABASE_URL;
-  const plan = await planSeedImport();
+  const plan = fakeImportPlan();
   const result = await applyRecruitmentImport(plan);
   assert.equal(result.wrote, false);
   assert.equal(result.reason, 'no-database');
-  assert.equal(result.companies, plan.companies.length);
+  assert.equal(result.companies, 1);
 });
 
 function fakeImportPlan() {

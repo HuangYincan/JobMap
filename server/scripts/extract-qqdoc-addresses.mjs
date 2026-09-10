@@ -21,14 +21,13 @@
 
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
 import {
   companyNameCity,
   extractCityAndAddress,
 } from '../src/lib/recruitment-adapters/official-site-parse.ts';
+import { defaultDropDir } from '../src/lib/recruitment-data-root.ts';
 
-const QQDOC_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment', 'qqdoc-official');
+const QQDOC_DIR = defaultDropDir('qqdoc-official');
 const UA = 'domain-map-etl/1.0 (research; polite single-threaded ETL; no login, no bypass)';
 const MIN_INTERVAL_MS = 500;
 const TIMEOUT_MS = 10_000;

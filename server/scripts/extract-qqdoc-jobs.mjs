@@ -52,10 +52,11 @@ import {
   siteIdForJobCity,
   familyForText,
 } from '../src/lib/recruitment-adapters/qqdoc-jobs-parse.ts';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const WORKTREE_ROOT = join(SCRIPT_DIR, '..', '..'); // worktree 根 (server/scripts → server → 根)
-const RECRUITMENT_DIR = join(WORKTREE_ROOT, 'server', 'data', 'recruitment');
+const RECRUITMENT_DIR = recruitmentDataRoot();
 const ROWS_DEFAULT = '/Users/acccan/domain-map/.playwright-mcp/qqdoc/tvVDZj-rows.json';
 const UA = 'domain-map-etl/1.0 (research; polite single-threaded ETL; no login, no bypass)';
 // 飞书公共 API 端点自身 UA 门禁: 爬虫 UA 一律 405, 浏览器 UA 200

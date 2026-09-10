@@ -99,3 +99,6 @@ docker-compose.override.yml
 /DOCS/
 /server/docs/
 /server/tech/
+
+# Recruitment JSON drops live in the private JobMap-data repo.
+/server/data/recruitment/**/*.json

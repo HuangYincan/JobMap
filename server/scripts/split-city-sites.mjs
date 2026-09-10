@@ -35,9 +35,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bareCityName, cityCenter } from '../src/lib/city-centers.ts';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, '..', 'data', 'recruitment');
+const DATA_DIR = recruitmentDataRoot();
 const TARGET_DIRS = ['radar', 'qqdoc-jobs', 'qqdoc-official', 'official-career'];
 
 /** 非城市说明词(整词剔除):多城市字符串里的「等」「全国其他」等尾巴。 */

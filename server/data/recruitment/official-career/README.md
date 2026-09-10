@@ -1,8 +1,11 @@
 # Official-career drops
 
+JSON files for this source live in the private JobMap-data repository
+(`recruitment/official-career/`). This public folder is README-only.
+
 Drop one JSON file per company (or an array of companies). The DB-only importer reads this directory as the authoritative `official-career` snapshot; it does not merge with `WORK_SEED` or an offline fallback. Source-less nested rows inherit `official-career`; explicit `source` values are preserved. For public Work reads, only `portal-*` positions from this source pass the authenticity rule.
 
-A readable JSON file containing `[]` is a complete zero-row snapshot and reconciles stale `official-career` positions closed. Missing, empty, README-only, malformed, unreadable, or semantically invalid input is not an authoritative successful snapshot and blocks apply. Do not put secrets here. Override the directory with `OFFICIAL_CAREER_DIR`.
+A readable JSON file containing `[]` is a complete zero-row snapshot and reconciles stale `official-career` positions closed. Missing, empty, README-only, malformed, unreadable, or semantically invalid input is not an authoritative successful snapshot and blocks apply. Do not put secrets here. Override the directory with `OFFICIAL_CAREER_DIR` or the shared `JOBMAP_DATA_DIR`.
 
 Shape matches `SourceCompany` in `lib/recruitment-source.ts`:
 

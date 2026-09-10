@@ -4,7 +4,7 @@
 
 > **状态：当前 AI 开发契约；最后审查：2026-09-01**
 >
-> 本仓库是可运行应用(Next.js 前端 + `/api/*` + PostGIS + 爬虫)。私有内部文档未纳入此 checkout（由 `.gitignore` 排除）；文档必须反映可验证事实，当前以 tracked 源码、迁移、测试、`Makefile`、CI workflow 和 README 为准。不存在的代码、迁移、测试或部署文件不得被描述为已实现。
+> 本仓库是可运行应用(Next.js 前端 + `/api/*` + PostGIS + 爬虫)。私有内部文档未纳入此 checkout（由 `.gitignore` 排除）；招聘 JSON drops 在私有 `JobMap-data` 仓库。文档必须反映可验证事实，当前以 tracked 源码、迁移、测试、`Makefile`、CI workflow 和 README 为准。不存在的代码、迁移、测试或部署文件不得被描述为已实现。
 
 ## 核心原则
 
@@ -26,7 +26,7 @@ domain-map/
 └── Makefile           # 可执行开发与验证命令
 ```
 
-架构以 `server/src/app/`、`server/src/lib/`、`server/package.json`、`db/migrations/`、`Makefile` 和 CI workflow 为准；本仓库不承诺私有内部目录或旧批次目录存在。
+架构以 `server/src/app/`、`server/src/lib/`、`server/package.json`、`db/migrations/`、`Makefile` 和 CI workflow 为准；本仓库不承诺私有内部目录或旧批次目录存在。招聘 JSON drops 在私有 `JobMap-data`（`JOBMAP_DATA_DIR` 或同级 `../JobMap-data`）。`plan-seed-import.mjs` 等写回脚本解析该根目录，不把 drops 提交进本仓库。
 
 ### 数据维护脚本(server/scripts/)
 

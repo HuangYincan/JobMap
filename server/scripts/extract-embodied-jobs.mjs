@@ -42,9 +42,11 @@ import { createHash } from 'node:crypto';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
+
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const WORKTREE_ROOT = join(SCRIPT_DIR, '..', '..'); // server/scripts → server → worktree 根
-const RECRUITMENT_DIR = join(WORKTREE_ROOT, 'server', 'data', 'recruitment');
+const RECRUITMENT_DIR = recruitmentDataRoot();
 const EMBJ_DIR = join(RECRUITMENT_DIR, 'embodied-jobs');
 const SNAPSHOT_DEFAULT =
   '/Users/acccan/domain-map/tech/roles/development/parallel-sessions/20260821-boss-embodied-jobs/source/embodied-02-jobs.md';

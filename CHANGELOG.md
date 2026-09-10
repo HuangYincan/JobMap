@@ -2,6 +2,12 @@
 
 Dates are UTC+8. This file is a historical release log for work merged to `dev`; the current source of truth is tracked code, migrations, tests, `Makefile`, CI, and README files. Private internal design/scan documents are not part of this checkout. Test counts in entries below are historical measurements, not a current baseline; run the documented command to obtain the current result. No SAST, DAST, or dependency-scanning job is configured.
 
+## 2026-09-10
+
+### Changed
+
+- **Recruitment JSON drops moved to private JobMap-data.** The public tree keeps README stubs under `server/data/recruitment/`. Operators clone `HuangYincan/JobMap-data` as a sibling or set `JOBMAP_DATA_DIR`. Adapters and import/geocode scripts resolve that root. Corpus tests skip when drops are absent so public CI does not need the private repo. This does not rewrite git history; old commits on GitHub still contain the files until an operator history purge.
+
 ## 2026-09-04
 
 ### Fixed

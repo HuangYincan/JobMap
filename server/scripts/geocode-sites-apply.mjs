@@ -60,7 +60,7 @@
 //     memo 键在 place-search 模式加 "ps:" 前缀, 与地址 geocode 站选点不串。
 //   - 写回口径不变: 仅 confidence === 'high' 写回 drop JSON (regeo 城市闸门
 //     照常), 近似城市 (同省不同市) 候选等级 low 不写, medium 同既有行为不写。
-// Hand-curated resolutions can be dropped into data/recruitment/geocode-overrides.json
+// Hand-curated resolutions live in geocode-overrides.json under the private data root.
 // as { "<slug>": { "name", "address", "lng", "lat" } } — they apply verbatim.
 
 import fs from 'node:fs';
@@ -106,6 +106,7 @@ import { OFFICIAL_CAREER_DIR } from '../src/lib/recruitment-adapters/official-ca
 import { QQDOC_JOBS_DIR } from '../src/lib/recruitment-adapters/qqdoc-jobs.ts';
 import { QQDOC_OFFICIAL_DIR } from '../src/lib/recruitment-adapters/qqdoc-official.ts';
 import { EMBODIED_JOBS_DIR } from '../src/lib/recruitment-adapters/embodied-jobs.ts';
+import { geocodeOverridesPath } from '../src/lib/recruitment-data-root.ts';
 
 // 代理/网络挂起防御:所有 fetch 默认 20s 超时(不覆盖调用方显式 signal)。
 // 背景:Node 原生 fetch 无超时,请求卡死在代理(Clash 198.18.0.0/15,
@@ -120,8 +121,7 @@ globalThis.fetch = (input, init) => {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SERVER_DIR = path.resolve(__dirname, '..');
-const DATA_DIR = path.join(SERVER_DIR, 'data', 'recruitment');
-const OVERRIDES_FILE = path.join(DATA_DIR, 'geocode-overrides.json');
+const OVERRIDES_FILE = geocodeOverridesPath();
 
 // --- env (server/.env.local, 共享 loadEnv, 不打印 key) ----------------------
 const env = { ...loadEnv(), ...process.env };

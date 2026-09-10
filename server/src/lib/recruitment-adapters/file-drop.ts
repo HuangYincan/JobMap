@@ -6,6 +6,7 @@
 
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { defaultDropDir } from '../recruitment-data-root.ts';
 import type {
   RecruitmentAdapter,
   RecruitmentAdapterResult,
@@ -184,6 +185,4 @@ export function fileDropAdapter(
   };
 }
 
-export function defaultDropDir(folder: string): string {
-  return join(process.cwd(), 'data', 'recruitment', folder);
-}
+export { defaultDropDir };
