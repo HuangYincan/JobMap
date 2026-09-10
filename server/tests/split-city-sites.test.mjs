@@ -2,8 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
 import { cityCenter, bareCityName } from '../src/lib/city-centers.ts';
 import { cityLabelMatchesCoordinates } from '../src/lib/spatial-query.ts';
@@ -18,8 +17,10 @@ import {
   splittableCities,
   splitCityText,
 } from '../scripts/split-city-sites.mjs';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
+import { corpusTest } from './helpers/recruitment-corpus.mjs';
 
-const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment');
+const DATA_DIR = recruitmentDataRoot();
 const TARGET_DIRS = ['radar', 'qqdoc-jobs', 'qqdoc-official', 'official-career'];
 
 // —— 字符串解析 ——
@@ -255,7 +256,7 @@ test('processCompany: 幂等 —— 二次运行不再拆分/补点', () => {
 
 // —— 真实数据冒烟(引用一致性,结构与 adapters 契约一致) ——
 
-test('真实数据: 四目录全量跑一遍,site id 唯一 + 岗位 siteId 全部可解析(拆分后不破坏契约)', () => {
+corpusTest('真实数据: 四目录全量跑一遍,site id 唯一 + 岗位 siteId 全部可解析(拆分后不破坏契约)', () => {
   let files = 0;
   for (const dir of TARGET_DIRS) {
     const dirPath = join(DATA_DIR, dir);
@@ -281,7 +282,7 @@ test('真实数据: 四目录全量跑一遍,site id 唯一 + 岗位 siteId 全�
   assert.ok(files >= 1000, `至少扫描全部 drop 文件(实际 ${files})`);
 });
 
-test('真实数据: qqj-临界点(上海 深圳 北京,100 岗)拆分后主站点补点、岗位仍可解析、二次运行幂等', () => {
+corpusTest('真实数据: qqj-临界点(上海 深圳 北京,100 岗)拆分后主站点补点、岗位仍可解析、二次运行幂等', () => {
   const raw = JSON.parse(
     readFileSync(join(DATA_DIR, 'qqdoc-jobs', 'qqj-临界点.json'), 'utf8'),
   );

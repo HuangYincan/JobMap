@@ -38,7 +38,7 @@ make refresh-radar       # reviewed radar snapshot → import plan
 make geocode-sites       # office coords (AMAP_WEB_KEY; --dry-run prints the plan)
 ```
 
-In `server/`: `npm test`, `npm run typecheck`, `npm run dev`. Data commands that write Postgres (`npm run import:seed:apply`, `geocode:sites:apply`) read `server/.env.local`. Never print or commit that file.
+In `server/`: `npm test`, `npm run typecheck`, `npm run dev`. Data commands that write Postgres (`npm run import:seed:apply`, `geocode:sites:apply`) read `server/.env.local` and JSON drops from private JobMap-data (`JOBMAP_DATA_DIR` or sibling `../JobMap-data`). Never print or commit `.env.local` or recruitment JSON drops.
 
 `make db-up` starts PostGIS only; apply schema with `make db-migrate`.
 

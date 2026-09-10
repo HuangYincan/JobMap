@@ -6,17 +6,17 @@
 // 用 industriesOf 启发式, scale 缺省 enterprise — 见 qqdoc-official/qqdoc-jobs
 // adapter), 再跑 recruitment-import.validateSourceCompany (纯函数, 无 DB)。
 // 断言零 bad issues — 有任一 issue 即 FAILED (回归防线: 追加不得破坏现有 drop)。
-import test from 'node:test';
+import { corpusTest as test } from './helpers/recruitment-corpus.mjs';
 import assert from 'node:assert/strict';
 
 import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
 import { validateSourceCompany } from '../src/lib/recruitment-import.ts';
 import { industriesOf } from '../src/lib/recruitment-adapters/qqdoc-official.ts';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
 
-const RECRUITMENT_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment');
+const RECRUITMENT_ROOT = recruitmentDataRoot();
 const DIRS = ['embodied-jobs', 'radar', 'official-career', 'qqdoc-official', 'qqdoc-jobs'];
 const FAMILIES = new Set(['social', 'campus', 'intern']);
 const FAMILY_CODES = /^(social|campus|intern)$/;

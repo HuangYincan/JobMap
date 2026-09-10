@@ -16,6 +16,7 @@ import {
   parseLlmVerdict,
   verdictLevel,
 } from '../src/lib/llm-validate.ts';
+import { corpusTest } from './helpers/recruitment-corpus.mjs';
 
 const SERVER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -220,7 +221,7 @@ test('isRetryableStatus: 429 / 5xx / network retried; 400 permanent', () => {
   assert.equal(isRetryableStatus(422), false);
 });
 
-test('CLI dry-run without LLM keys: exits 0 and prints sample input', () => {
+corpusTest('CLI dry-run without LLM keys: exits 0 and prints sample input', () => {
   const env = { ...process.env, LLM_API_KEY: '', LLM_MODEL: '', LLM_BASE_URL: '' };
   const res = spawnSync(process.execPath, ['scripts/validate-positions-llm.mjs'], {
     cwd: SERVER_DIR,
@@ -235,7 +236,7 @@ test('CLI dry-run without LLM keys: exits 0 and prints sample input', () => {
   assert.ok(!res.stdout.includes('sk-'), '不得打印任何 key');
 });
 
-test('CLI --only filters to the given slugs (dry-run)', () => {
+corpusTest('CLI --only filters to the given slugs (dry-run)', () => {
   const env = { ...process.env, LLM_API_KEY: '', LLM_MODEL: '', LLM_BASE_URL: '' };
   const res = spawnSync(process.execPath, ['scripts/validate-positions-llm.mjs', '--only', 'deepseek'], {
     cwd: SERVER_DIR,

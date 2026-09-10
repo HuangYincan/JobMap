@@ -14,11 +14,10 @@
 // ============================================================
 
 import { readFileSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const dataRoot = join(root, 'server', 'data', 'recruitment');
+const dataRoot = recruitmentDataRoot();
 const labelFiles = process.argv.slice(2);
 
 const labels = {};

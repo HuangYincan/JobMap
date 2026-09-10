@@ -213,7 +213,7 @@ Work mode public reads **require Postgres** (imported SQL rows via `loadServerCa
 
 ### Recruitment import contract
 
-`plan-seed-import.mjs` reads curated JSON drops and emits source-level diagnostics before any DB connection. Every accepted company, site, and position carries a canonical source code; source-less nested records inherit the adapter source, while explicit source values are preserved. `radar` is normalized to `xiaozhao-radar`. The plan must be complete with zero semantic issues and zero dropped companies before apply; invalid or incomplete plans exit nonzero and cannot reconcile the database.
+`plan-seed-import.mjs` reads curated JSON drops from `JOBMAP_DATA_DIR` / sibling `JobMap-data` / `server/data/recruitment` and emits source-level diagnostics before any DB connection. Public clones have README stubs only; JSON lives in private JobMap-data. Every accepted company, site, and position carries a canonical source code; source-less nested records inherit the adapter source, while explicit source values are preserved. `radar` is normalized to `xiaozhao-radar`. The plan must be complete with zero semantic issues and zero dropped companies before apply; invalid or incomplete plans exit nonzero and cannot reconcile the database.
 
 A missing/README-only directory for optional `boss`, `nowcoder`, or `shixiseng` is a diagnostic no-op and never reconciles that source. A readable JSON `[]` is different: it is a complete authoritative zero-row snapshot and closes only stale positions belonging to that source. An incomplete or malformed snapshot never triggers reconciliation. Public Work reads apply the source registry authenticity and alive-position predicates; non-authentic source rows remain excluded.
 

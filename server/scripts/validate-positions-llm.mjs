@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // LLM 并发岗位真实性验证(工作模式数据质量)。
 //
-//   读取 server/data/recruitment/{radar,official-career} 的全部 drop,对每条
+//   读取 recruitment/{radar,official-career} 的全部 drop,对每条
 //   公司/岗位调用一次 OpenAI 兼容 chat completions,按确定性 JSON schema 判定:
 //     - title 真实性 + 聚合行检测(附拆解建议)
 //     - 公司 ↔ 岗位 一致性

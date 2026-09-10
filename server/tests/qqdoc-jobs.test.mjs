@@ -10,16 +10,17 @@ import {
 } from '../src/lib/recruitment-adapters/qqdoc-jobs.ts';
 import { planSeedImport, validateSourceCompany } from '../src/lib/recruitment-import.ts';
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { defaultDropDir } from '../src/lib/recruitment-data-root.ts';
+import { corpusTest } from './helpers/recruitment-corpus.mjs';
 
-const QQJ_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment', 'qqdoc-jobs');
+const QQJ_DIR = defaultDropDir('qqdoc-jobs');
 
 function dropFile(name) {
   return JSON.parse(readFileSync(join(QQJ_DIR, name), 'utf8'));
 }
 
-test('qqdoc-jobs adapter reads all 162 drops into SourceCompany', async () => {
+corpusTest('qqdoc-jobs adapter reads all 162 drops into SourceCompany', async () => {
   const companies = await qqdocJobsAdapter().list();
   assert.equal(companies.length, 162, `expected 162 qqdoc-jobs companies, got ${companies.length}`);
   for (const company of companies) {
@@ -35,13 +36,13 @@ test('qqdoc-jobs adapter reads all 162 drops into SourceCompany', async () => {
   }
 });
 
-test('qqdoc-jobs drops pass import validation (162 companies, zero issues)', async () => {
+corpusTest('qqdoc-jobs drops pass import validation (162 companies, zero issues)', async () => {
   const companies = await listQqdocJobsFiles();
   const allIssues = companies.flatMap((company) => validateSourceCompany(company));
   assert.deepEqual(allIssues, []);
 });
 
-test('planSeedImport includes qqdoc-jobs companies ahead of seed', async () => {
+corpusTest('planSeedImport includes qqdoc-jobs companies ahead of seed', async () => {
   const plan = await planSeedImport();
   const qqj = plan.companies.filter((company) => company.source === 'qqdoc-jobs');
   assert.equal(qqj.length, 162, `plan should carry 162 qqdoc-jobs companies, got ${qqj.length}`);
@@ -113,7 +114,7 @@ test('parseQqdocJobsPayload handles array / single / garbage', () => {
   assert.deepEqual(parseQqdocJobsPayload({ slug: 'qqj-y', name: 'Y' }), []);
 });
 
-test('qqdoc-jobs drops carry no city_pending-style placeholders as sites', async () => {
+corpusTest('qqdoc-jobs drops carry no city_pending-style placeholders as sites', async () => {
   // 2026-08-22 地址回填 (e506c4d): 单城市 site 的 city 归一为「西安市」, location 带回填 address;
   // 未回填时 location 仍可为空对象 {}, 不得被丢弃。
   const raw = dropFile('qqj-新东方西安学校.json');

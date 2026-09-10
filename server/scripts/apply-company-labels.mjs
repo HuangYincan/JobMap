@@ -9,17 +9,16 @@
 //     /tmp/label_batch_2.json /tmp/label_batch_3.json /tmp/label_batch_4.json
 //   --dry-run:只报告不改写
 //
-// 行为:遍历 server/data/recruitment/{radar,official-career}/*.json,
+// 行为:遍历 JobMap-data/recruitment/{radar,official-career}/*.json,
 //   slug 命中 → 更新 tier、设置 category(保持原字段不变);
 //   未命中 → 记录警告。幂等,可重复运行。
 // ============================================================
 
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const dataRoot = join(root, 'server', 'data', 'recruitment');
+const dataRoot = recruitmentDataRoot();
 const DRY_RUN = process.argv.includes('--dry-run');
 const labelFiles = process.argv.slice(2).filter((a) => !a.startsWith('-'));
 

@@ -15,11 +15,10 @@
 // 无地址 5)。断言下限 900 只防「中心钉桶整体消失 / 源缺失」类退化, 允许后续 apply 继续
 // 把站点挪出中心桶 — 快照基准漂移时同步调下限。
 // 城市中心钉点数据契约: 中心钉点站语义与数据一致, 只钉不变式不钉会漂移的计数。
-import test from 'node:test';
+import { corpusTest as test } from './helpers/recruitment-corpus.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import {
   cityCenterBareNames,
@@ -28,15 +27,16 @@ import {
   siteNeedsGeocode,
   siteNeedsPlaceSearch,
 } from '../src/lib/site-geocode.ts';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
 
-const SERVER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DROP_DIRS = ['radar', 'official-career', 'qqdoc-jobs', 'qqdoc-official', 'embodied-jobs'];
+const DATA_ROOT = recruitmentDataRoot();
 
 /** 全部 drop 中坐标命中城市中心 (±0.0005) 的站点。 */
 function centerSites() {
   const rows = [];
   for (const d of DROP_DIRS) {
-    const dir = path.join(SERVER_DIR, 'data', 'recruitment', d);
+    const dir = path.join(DATA_ROOT, d);
     if (!fs.existsSync(dir)) continue;
     for (const name of fs.readdirSync(dir)) {
       if (!name.endsWith('.json') || name.startsWith('.')) continue;

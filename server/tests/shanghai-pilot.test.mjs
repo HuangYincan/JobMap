@@ -1,7 +1,7 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { fileRadarAdapter } from '../src/lib/recruitment-adapters/radar.ts';
+import { corpusTest } from './helpers/recruitment-corpus.mjs';
 
 // 上海试点公司清单 (tech/roles/data/shanghai-pilot.md)。试点跑法在 boss 合并后
 // 执行 geocode:sites:apply (AMap→Baidu 兜底, 2026-08-19 落地)——之后契约升级:
@@ -41,7 +41,7 @@ function inBox(bbox, lng, lat) {
   return lng >= bbox.lngMin && lng <= bbox.lngMax && lat >= bbox.latMin && lat <= bbox.latMax;
 }
 
-test('shanghai pilot: every pilot company exists and carries a -shanghai site', async () => {
+corpusTest('shanghai pilot: every pilot company exists and carries a -shanghai site', async () => {
   const companies = await fileRadarAdapter.list();
   const bySlug = new Map(companies.map((c) => [c.slug, c]));
   for (const slug of PILOT_SLUGS) {
@@ -54,7 +54,7 @@ test('shanghai pilot: every pilot company exists and carries a -shanghai site', 
   }
 });
 
-test('shanghai pilot: every -shanghai site carries coords inside 上海市 (geocode applied)', async () => {
+corpusTest('shanghai pilot: every -shanghai site carries coords inside 上海市 (geocode applied)', async () => {
   const companies = await fileRadarAdapter.list();
   const bySlug = new Map(companies.map((c) => [c.slug, c]));
   for (const slug of PILOT_SLUGS) {
@@ -70,7 +70,7 @@ test('shanghai pilot: every -shanghai site carries coords inside 上海市 (geoc
   }
 });
 
-test('shanghai pilot: every coord sits inside its own site city (no cross-city leftovers)', async () => {
+corpusTest('shanghai pilot: every coord sits inside its own site city (no cross-city leftovers)', async () => {
   const companies = await fileRadarAdapter.list();
   const bySlug = new Map(companies.map((c) => [c.slug, c]));
   for (const slug of PILOT_SLUGS) {

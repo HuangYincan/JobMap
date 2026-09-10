@@ -6,7 +6,7 @@ A map-first job explorer: company offices on the map, real open positions, and a
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
 [![PostGIS](https://img.shields.io/badge/PostGIS-3.4-green.svg)](https://postgis.net/)
 
-Work mode reads an imported recruitment catalog from Postgres (no offline seed fallback). Domain mode is a general POI map. Data comes only from reviewed sources (campus-hire radar snapshot, official career pages, reviewed ATS JSON). Direct scraping of BOSS / 牛客 / 小红书 / 实习僧 is not supported.
+Work mode reads an imported recruitment catalog from Postgres (no offline seed fallback). Domain mode is a general POI map. Data comes only from reviewed sources (campus-hire radar snapshot, official career pages, reviewed ATS JSON). Direct scraping of BOSS / 牛客 / 小红书 / 实习僧 is not supported. Curated JSON drops are stored in the private [JobMap-data](https://github.com/HuangYincan/JobMap-data) repository, not in this public tree.
 
 ## Quick start
 
@@ -17,12 +17,16 @@ Needs Node 20+, Docker (PostGIS), and an [AMap JS API](https://lbs.amap.com/) ke
 make db-up
 make db-migrate          # needs DATABASE_URL, see server/.env.example
 
-# 2. App
+# 2. Private source data (operators only; skip if you do not have access)
+git clone git@github.com:HuangYincan/JobMap-data.git ../JobMap-data
+# or: JOBMAP_DATA_DIR=/path/to/JobMap-data
+
+# 3. App
 cd server
 cp .env.example .env.local
 # fill NEXT_PUBLIC_AMAP_KEY + NEXT_PUBLIC_AMAP_SECURITY_CODE
 npm install
-npm run import:seed:apply
+npm run import:seed:apply   # no-op / incomplete without JobMap-data
 npm run dev
 ```
 
@@ -40,6 +44,9 @@ JobMap/
 ├── tests/               # database integration tests
 ├── Makefile             # db-up, migrate, importer tests, …
 └── docker-compose.yml   # local PostGIS only
+
+# sibling (private, not this repo)
+JobMap-data/recruitment/ # curated JSON drops for import:seed:apply
 ```
 
 ```bash

@@ -16,11 +16,10 @@
 //      (聚合徽章防御同源函数, 覆盖全部已知参考框);
 //   3. 杭州站点真坐标存在性抽查 (快手 / 蚂蚁集团等);
 //   4. 清扫不得制造半边坐标 (lng 或 lat 单边为 null)。
-import test from 'node:test';
+import { corpusTest as test } from './helpers/recruitment-corpus.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
 import {
   bareCityName,
@@ -28,8 +27,9 @@ import {
   cityLabelMatchesCoordinates,
 } from '../src/lib/spatial-query.ts';
 import { cityCenter } from '../src/lib/city-centers.ts';
+import { recruitmentDataRoot } from '../src/lib/recruitment-data-root.ts';
 
-const dataRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment');
+const dataRoot = recruitmentDataRoot();
 const DROP_DIRS = ['radar', 'official-career'];
 
 /** 载入全部 drops: [{ dir, file, data }]. */

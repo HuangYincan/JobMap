@@ -14,16 +14,17 @@ import {
 } from '../src/lib/recruitment-adapters/official-site-parse.ts';
 import { planSeedImport, validateSourceCompany } from '../src/lib/recruitment-import.ts';
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { defaultDropDir } from '../src/lib/recruitment-data-root.ts';
+import { corpusTest } from './helpers/recruitment-corpus.mjs';
 
-const QQDOC_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'recruitment', 'qqdoc-official');
+const QQDOC_DIR = defaultDropDir('qqdoc-official');
 
 function dropFile(name) {
   return JSON.parse(readFileSync(join(QQDOC_DIR, name), 'utf8'));
 }
 
-test('qqdoc-official adapter reads all 142 drops into SourceCompany', async () => {
+corpusTest('qqdoc-official adapter reads all 142 drops into SourceCompany', async () => {
   const companies = await qqdocOfficialAdapter().list();
   assert.equal(companies.length, 142, `expected 142 qqdoc companies, got ${companies.length}`);
   for (const company of companies) {
@@ -37,13 +38,13 @@ test('qqdoc-official adapter reads all 142 drops into SourceCompany', async () =
   }
 });
 
-test('qqdoc drops pass import validation (142 companies, zero issues)', async () => {
+corpusTest('qqdoc drops pass import validation (142 companies, zero issues)', async () => {
   const companies = await listQqdocOfficialFiles();
   const allIssues = companies.flatMap((company) => validateSourceCompany(company));
   assert.deepEqual(allIssues, []);
 });
 
-test('planSeedImport includes qqdoc-official companies ahead of seed', async () => {
+corpusTest('planSeedImport includes qqdoc-official companies ahead of seed', async () => {
   const plan = await planSeedImport();
   const qqdoc = plan.companies.filter((company) => company.source === 'qqdoc-official');
   assert.equal(qqdoc.length, 142, `plan should carry 142 qqdoc companies, got ${qqdoc.length}`);
@@ -238,7 +239,7 @@ test('qqdoc drops are idempotent input for the extraction script', () => {
   assert.equal(needs('', '某公司'), true);
 });
 
-test('qqdoc drops data integrity: every city is a known full name, pending is explicit', async () => {
+corpusTest('qqdoc drops data integrity: every city is a known full name, pending is explicit', async () => {
   // 提取脚本更新后: 城市必须是已知城市全称 (市/自治区后缀, 可被 geocode 使用);
   // 无法确定的公司必须带显式 city_pending 标记, 不得残留公司名占位城市。
   const companies = await listQqdocOfficialFiles();

@@ -29,7 +29,7 @@ Next.js 16 + React 19(`server/`)、Python 爬虫(`crawler/`)、PostGIS(`db/`)。
 - 🎨 **前端代码编写前必须先做 ASCII/文字布局图并获用户批准**;只有用户明确批准后才能写前端代码。
 - 🧩 使用组件库前必须审查其源码,像自己写的那样理解;不无脑用。
 - 🔬 **子 Agent 结果必须二次验证**:亲自跑测试 / 逐行读代码 / 截图看视觉效果,「信任但验证」。
-- 📡 外部数据采集必须有来源审查记录（记录应与 `server/data/`、`crawler/` 中的实际来源和适配器保持一致）；BOSS 直聘 / 牛客 / 小红书 / 实习僧不得直接抓取;不得绕过登录、验证码、限流。
+- 📡 外部数据采集必须有来源审查记录（记录应与私有 `JobMap-data` 的 `recruitment/` drops、`crawler/` 中的实际来源和适配器保持一致）；BOSS 直聘 / 牛客 / 小红书 / 实习僧不得直接抓取;不得绕过登录、验证码、限流。
 - 🔑 **不打印 / 不提交 `.env`、`.env.local`、`AMAP_WEB_KEY`、`BAIDU_MAP_AK`、`TENCENT_MAP_KEY` 等密钥**;调用 AMap/Baidu/Tencent REST 必须先有对应 key(`AMAP_WEB_KEY` / `BAIDU_MAP_AK` / `TENCENT_MAP_KEY`),且绝不打印;AMap 日配额耗尽(10044)时 geocode 工具链自动切百度→腾讯兜底。
 - 📄 文档必须反映可验证事实；当前受维护的依据是 tracked 源码、`db/migrations/`、`Makefile`、CI workflow 与 README；`make docs-check` + `git diff --check` 通过后再提交。
 - 🖼️ **Playwright 截图与产物统一存 `.playwright-mcp/`**(已 gitignore):`browser_take_screenshot` 用**相对文件名**(自动落在输出目录内),绝不写到仓库根目录;只有用户显式要求时才指定其他路径。

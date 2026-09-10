@@ -1,6 +1,17 @@
 # Makefile for JobMap
 .PHONY: help db-up db-down db-status docs-check scaffold-status preflight db-migrate db-repair-020 test-unit test-integration
 
+# Private recruitment drops: clone https://github.com/HuangYincan/JobMap-data
+# as a sibling, or set JOBMAP_DATA_DIR to that checkout (directory containing recruitment/).
+ifndef JOBMAP_DATA_DIR
+  ifneq ($(wildcard $(CURDIR)/../JobMap-data/recruitment),)
+    JOBMAP_DATA_DIR := $(CURDIR)/../JobMap-data
+  else
+    JOBMAP_DATA_DIR := $(CURDIR)/server/data
+  endif
+endif
+RECRUITMENT_DIR := $(JOBMAP_DATA_DIR)/recruitment
+
 help: ## Show currently supported commands
 	@printf '%s\n' 'JobMap'
 	@printf '%s\n' '  make preflight        Verify DATABASE_URL and PostGIS preflight'
@@ -44,11 +55,11 @@ test-unit: ## Run importer unit tests (Python 3.12; uv when available)
 
 crawl-official: ## Dry-run polite GET of curated official career pages (no file write)
 	@if command -v uv >/dev/null 2>&1; then \
-	  cd crawler && PYTHONPATH=app uv run --python 3.12 python -m domain_map_importer.cli official --dir ../server/data/recruitment/official-career --limit 5 --interval 2; \
+	  cd crawler && PYTHONPATH=app uv run --python 3.12 python -m domain_map_importer.cli official --dir "$(RECRUITMENT_DIR)/official-career" --limit 5 --interval 2; \
 	else \
 	  python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' \
 	    || { echo "crawler requires Python 3.12; install uv or put 3.12 on PATH"; exit 1; }; \
-	  cd crawler && PYTHONPATH=app python3 -m domain_map_importer.cli official --dir ../server/data/recruitment/official-career --limit 5 --interval 2; \
+	  cd crawler && PYTHONPATH=app python3 -m domain_map_importer.cli official --dir "$(RECRUITMENT_DIR)/official-career" --limit 5 --interval 2; \
 	fi
 
 refresh-radar: ## Download the reviewed radar snapshot, remap drops, and validate the import plan
@@ -58,15 +69,15 @@ refresh-radar: ## Download the reviewed radar snapshot, remap drops, and validat
 	@if command -v uv >/dev/null 2>&1; then \
 	  cd crawler && PYTHONPATH=app uv run --python 3.12 python -m domain_map_importer.cli radar \
 		--input /tmp/domain-map-radar/jobs.json \
-		--out-dir ../server/data/recruitment/radar; \
+		--out-dir "$(RECRUITMENT_DIR)/radar"; \
 	else \
 	  python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' \
 	    || { echo "crawler requires Python 3.12; install uv or put 3.12 on PATH"; exit 1; }; \
 	  cd crawler && PYTHONPATH=app python3 -m domain_map_importer.cli radar \
 		--input /tmp/domain-map-radar/jobs.json \
-		--out-dir ../server/data/recruitment/radar; \
+		--out-dir "$(RECRUITMENT_DIR)/radar"; \
 	fi
-	@rm -f server/data/recruitment/radar/_radar-fixture.json
+	@rm -f "$(RECRUITMENT_DIR)/radar/_radar-fixture.json"
 	@if command -v uv >/dev/null 2>&1; then \
 	  cd crawler && PYTHONPATH=app uv run --python 3.12 python -m unittest discover -s tests -q >/dev/null && echo "crawler tests OK"; \
 	else \
@@ -75,7 +86,7 @@ refresh-radar: ## Download the reviewed radar snapshot, remap drops, and validat
 	  cd crawler && PYTHONPATH=app python3 -m unittest discover -s tests -q >/dev/null && echo "crawler tests OK"; \
 	fi
 	@cd server && node --experimental-strip-types --no-warnings scripts/plan-seed-import.mjs 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(f'import plan: {d[\"companies\"]} companies / {d[\"positions\"]} positions, {len(d[\"issues\"])} issues, {d[\"dropped\"]} dropped'); sys.exit(1 if (not d[\"complete\"] or d[\"dropped\"] or d[\"issues\"]) else 0)" && echo "import plan OK"
-	@echo "Refresh done. Record the source SHA-256 in server/data/recruitment/radar/README.md."
+	@echo "Refresh done. Record the source SHA-256 in $(RECRUITMENT_DIR)/radar/README.md (private JobMap-data)."
 
 geocode-sites: ## Real office coords for city-list drops, city-scoped (AMAP_WEB_KEY + BAIDU/TENCENT fallback keys; --dry-run prints the plan)
 	cd server && node --no-warnings scripts/geocode-sites-apply.mjs $(filter-out $@,$(MAKECMDGOALS))
